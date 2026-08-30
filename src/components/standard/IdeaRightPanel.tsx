@@ -71,10 +71,12 @@
  */
 import {
   FileSpreadsheet,
+  History as HistoryIcon,
   Lightbulb,
   Link2,
   MessageSquare,
   Repeat,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
@@ -217,22 +219,37 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
 
     const hasActions = actionButtons.length > 0;
 
-    // Krok 1 (docs/program/grafika/ANALIZA_PRAWY_PANEL.md §7): pięć sekcji
-    // idei (bez 'evidence'/'results' — dziś bez zastosowania tutaj, zobacz
-    // `evidenceArtifactId` niżej, wciąż scalone w Powiązania jak przed Z8)
-    // budujemy jako mapę id→sekcja, a KOLEJNOŚĆ renderu pochodzi z filtracji
-    // kanonicznej `ARTIFACT_PANEL_SECTION_ORDER` — nie z własnej literałowej
-    // listy. Filtr zachowuje 1:1 dawną kolejność (actions, properties,
-    // relations, comments, history).
+    // ★ NAPRAWA 2026-08-30 (przegląd `PRZEGLAD_PRZED_ODBIOREM.md` §Z-2 + kanon
+    // z odbiorów): panel idei łamał kanon w DWÓCH miejscach naraz.
+    //  1. „Źródła i założenia" nie istniały jako sekcja — `EvidencePanelSection`
+    //     był doklejony pod treścią „Powiązań" (scalenie Z8). Czwarta sekcja
+    //     kanonu po prostu nie miała nagłówka, więc na zrzucie jej nie było.
+    //     Teraz jest własną sekcją `evidence`, a gdy idea nie ma jeszcze
+    //     artefaktu dowodowego — mówi to wprost stanem pustym (nie znika).
+    //  2. CAŁA Teresa (komendy + strumień sugestii) siedziała w środku sekcji
+    //     „Historia". To łamie kontrakt `ArtifactRailTeresaMode`
+    //     (`ArtifactRightRail.tsx`): „② Tryb Teresa — pełna wysokość, własne
+    //     pole pisania. NIGDY sekcja akordeonu." Dopóki wspólny pas jest za
+    //     flagą OFF, kanonicznym miejscem wejścia do Teresy jest sekcja AKCJE —
+    //     dokładnie tak, jak w odebranym przez właściciela `deck-artifact`
+    //     („Zapytaj Teresę" jako czwarty przycisk Akcji). „Historia" zostaje
+    //     historią i uczciwie mówi, że jest pusta.
+    // KOLEJNOŚĆ renderu pochodzi z kanonicznej `ARTIFACT_PANEL_SECTION_ORDER`,
+    // nazwy i domknięcie sześciu sekcji narzuca `ArtifactRightPanel`.
     const byId: Partial<Record<ArtifactRightPanelSection['id'], ArtifactRightPanelSection>> = {
       actions: {
         id: 'actions',
         label: isPolish ? 'Akcje' : 'Actions',
         icon: Sparkles,
-        defaultOpen: activeSection === null,
-        isEmpty: !hasActions,
+        defaultOpen: activeSection === null || activeSection === 'teresa',
+        isEmpty: !hasActions && !teresaContent,
         emptyLabel: isPolish ? 'Brak dostępnych akcji.' : 'No actions available.',
-        children: hasActions ? <PreviewActionBar rows={[{ buttons: actionButtons }]} /> : null,
+        children: (
+          <div className="space-y-4">
+            {hasActions ? <PreviewActionBar rows={[{ buttons: actionButtons }]} /> : null}
+            {teresaContent}
+          </div>
+        ),
       },
       properties: {
         id: 'properties',
@@ -246,20 +263,24 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         label: isPolish ? 'Powiązania' : 'Relations',
         icon: Link2,
         defaultOpen: activeSection === 'relations',
-        children: (
-          <div className="space-y-4">
-            {relationsContent}
-            {evidenceArtifactId ? (
-              <div className="border-t border-c-border-subtle pt-3">
-                <EvidencePanelSection
-                  artifactType="canvas"
-                  artifactId={evidenceArtifactId}
-                  isPolish={isPolish}
-                />
-              </div>
-            ) : null}
-          </div>
-        ),
+        children: relationsContent,
+      },
+      evidence: {
+        id: 'evidence',
+        label: isPolish ? 'Źródła i założenia' : 'Sources and assumptions',
+        icon: ShieldCheck,
+        defaultOpen: false,
+        isEmpty: !evidenceArtifactId,
+        emptyLabel: isPolish
+          ? 'Brak zapisanych źródeł i założeń.'
+          : 'No sources or assumptions recorded.',
+        children: evidenceArtifactId ? (
+          <EvidencePanelSection
+            artifactType="canvas"
+            artifactId={evidenceArtifactId}
+            isPolish={isPolish}
+          />
+        ) : null,
       },
       comments: {
         id: 'comments',
@@ -273,9 +294,11 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
       history: {
         id: 'history',
         label: isPolish ? 'Historia' : 'History',
-        icon: Sparkles,
-        children: teresaContent,
-        defaultOpen: activeSection === 'teresa',
+        icon: HistoryIcon,
+        defaultOpen: false,
+        isEmpty: true,
+        emptyLabel: isPolish ? 'Brak zapisanej historii.' : 'No history recorded.',
+        children: null,
       },
     };
     return ARTIFACT_PANEL_SECTION_ORDER.map((id) => byId[id]).filter(

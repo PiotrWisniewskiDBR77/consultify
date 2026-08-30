@@ -11,8 +11,10 @@
  * 1:1, but presents them as accordion sections instead of tabs:
  *
  *   Akcje · Właściwości (was "Work") · Powiązania (was "Context")
+ *   · Źródła i założenia (2026-08-30 — sekcja kanonu, której brakowało)
  *   · Komentarze (new, empty placeholder — no comment system on notes yet)
- *   · Historia i AI (version history + "Open Teresa")
+ *   · Historia (version history + "Open Teresa"); nazwa BEZ dopisku „i AI" —
+ *     SSOT nazw = `ARTIFACT_PANEL_SECTION_LABELS`
  *
  * State (open/tab) is still owned by the caller for the `open`/`activeTab`
  * props — `activeTab` now means "which section an external caller wants
@@ -45,6 +47,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { NotebookPage } from '@/types/myWork';
 import {
+  ARTIFACT_PANEL_SECTION_LABELS,
   ARTIFACT_PANEL_SECTION_ORDER,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -70,18 +73,20 @@ interface NotebookRailPage {
   wordCount: number;
 }
 
-// Krok 1 (docs/program/grafika/ANALIZA_PRAWY_PANEL.md §7): kolejność sekcji
-// czytana z kanonu (`ARTIFACT_PANEL_SECTION_ORDER`), nie z własnej kopii —
-// notatnik pomija 'evidence'/'results' (bez zastosowania), ale kolejność
-// pozostałych pięciu pochodzi z JEDNEGO miejsca. Filtr zachowuje kolejność
-// kanonu 1:1 z dawną literałową listą.
+// Kolejność sekcji czytana z kanonu (`ARTIFACT_PANEL_SECTION_ORDER`), nie
+// z własnej kopii.
+//
+// ★ NAPRAWA 2026-08-30 (przegląd `PRZEGLAD_PRZED_ODBIOREM.md` §Z-2): notatnik
+// pomijał 'evidence' („Źródła i założenia") i nazywał ostatnią sekcję
+// „Historia i AI". Sekcja kanonu nie może zniknąć dlatego, że jest pusta —
+// mówi wprost, że jest pusta. Ta ścieżka (flaga `ff_notebookSpecAShell` OFF)
+// renderuje własny akordeon, więc domknięcie z `ArtifactRightPanel` jej nie
+// dosięga; nazwy bierze jednak z TEGO SAMEGO źródła co powłoka.
+// 'results' zostaje pominięte — notatka nic nie produkuje (kanon: sekcja
+// warunkowa).
 const RAIL_SECTION_ORDER = ARTIFACT_PANEL_SECTION_ORDER.filter(
-  (id): id is 'actions' | 'properties' | 'relations' | 'comments' | 'history' =>
-    id === 'actions' ||
-    id === 'properties' ||
-    id === 'relations' ||
-    id === 'comments' ||
-    id === 'history'
+  (id): id is 'actions' | 'properties' | 'relations' | 'evidence' | 'comments' | 'history' =>
+    id !== 'results'
 );
 type RailSectionId = (typeof RAIL_SECTION_ORDER)[number];
 
@@ -294,7 +299,14 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   versionHistoryOpen,
   defaultRailModeId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Nazwy sekcji kanonu pochodzą z JEDNEGO miejsca w całej aplikacji
+  // (`ARTIFACT_PANEL_SECTION_LABELS`) — moduł ich nie wymyśla.
+  const isPolishRail = !!i18n.language?.startsWith('pl');
+  const canonLabel = (id: RailSectionId) => {
+    const entry = ARTIFACT_PANEL_SECTION_LABELS[id];
+    return t(`artifactPanel.section.${id}`, isPolishRail ? entry.pl : entry.en);
+  };
   const isReceiptCapable = (actionId: string) =>
     receiptCapableActionIds === undefined || receiptCapableActionIds.includes(actionId);
 
@@ -388,7 +400,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         {/* 1 · AKCJE */}
         {section(
           'actions',
-          t('notebook.rightRail.actions', 'Akcje'),
+          canonLabel('actions'),
           undefined,
           <div className="space-y-0.5">
             <ActionRow
@@ -424,7 +436,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         {/* 2 · WŁAŚCIWOŚCI (was "Work") */}
         {section(
           'properties',
-          t('notebook.rightRail.properties', 'Właściwości'),
+          canonLabel('properties'),
           undefined,
           <div className="space-y-3">
             {receiptCapableActionIds?.length === 0 ? (
@@ -721,7 +733,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         {/* 3 · POWIĄZANIA (was "Context") */}
         {section(
           'relations',
-          t('notebook.rightRail.relations', 'Powiązania'),
+          canonLabel('relations'),
           undefined,
           <NotebookContextPanel
             embedded
@@ -736,20 +748,48 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
           />
         )}
 
-        {/* 4 · KOMENTARZE (new — no comment system on notes yet) */}
+        {/* 4 · ŹRÓDŁA I ZAŁOŻENIA — sekcja kanonu, której notatnik nie miał.
+             Notatka nie prowadzi dziś własnego rejestru źródeł/założeń; gdy
+             powstała z przechwytu, pokazujemy realne pochodzenie, a gdy nie —
+             mówimy to wprost zamiast chować nagłówek. */}
+        {section(
+          'evidence',
+          canonLabel('evidence'),
+          undefined,
+          activePage.captureMetadata?.sourceId ? (
+            <div className="space-y-1 text-[11.5px] text-c-text-secondary">
+              <p>
+                {t('notebook.rightRail.evidenceCaptured', 'Notatka powstała z przechwytu:')}
+              </p>
+              <code className="block break-all text-[10px] text-c-text-muted">
+                {activePage.captureMetadata.sourceType || 'source'}:
+                {activePage.captureMetadata.sourceId}
+              </code>
+            </div>
+          ) : (
+            <p className="text-xs italic text-c-text-muted">
+              {t(
+                'notebook.rightRail.noEvidence',
+                'Ta notatka nie ma zapisanych źródeł ani założeń.'
+              )}
+            </p>
+          )
+        )}
+
+        {/* 5 · KOMENTARZE (new — no comment system on notes yet) */}
         {section(
           'comments',
-          t('notebook.rightRail.comments', 'Komentarze'),
+          canonLabel('comments'),
           0,
           <p className="text-xs italic text-c-text-muted">
             {t('notebook.rightRail.noComments', 'Brak komentarzy do tego dokumentu.')}
           </p>
         )}
 
-        {/* 5 · HISTORIA I AI */}
+        {/* 6 · HISTORIA */}
         {section(
           'history',
-          t('notebook.rightRail.historyAndAi', 'Historia i AI'),
+          canonLabel('history'),
           undefined,
           <div className="space-y-2">
             {versionHistoryOpen ? (

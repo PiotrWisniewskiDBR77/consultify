@@ -10118,7 +10118,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // („Tryb pokazu"), zdjęte z „Akcji" zgodnie z §6.4. Pozycja KANONICZNA
         // §7.2: Akcje · Właściwości · Powiązania · Źródła i założenia · REZULTATY
         // · Komentarze · Historia (pozycja 5 — nie tuż po Akcjach).
-        id: 'outcomes',
+        // ★ 2026-08-30: id ZMIENIONE z 'outcomes' na kanoniczne 'results'.
+        // Sekcja stała na właściwym miejscu tylko dlatego, że wołający wpisał
+        // ją w dobrej kolejności ręcznie — id spoza `ARTIFACT_PANEL_SECTION_ORDER`
+        // nie jest sekcją kanonu i powłoka nie ma jak jej utrzymać na pozycji 5.
+        id: 'results',
         label: t('initiatives.panel.outcomes', 'Outcomes'),
         icon: Presentation,
         defaultOpen: false,

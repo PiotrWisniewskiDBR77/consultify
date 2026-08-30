@@ -13,10 +13,24 @@
  *
  * Reguły kolejności/nazewnictwa (obowiązują WSZYSTKIE 6 kart N — Decyzja, Zadanie,
  * Powiadomienie, Wniosek, Narzędzie, Inicjatywa):
- *  - Sekcja BEZ ZASTOSOWANIA może być NIEOBECNA (lepiej brak niż pusty akordeon
- *    udający funkcję), ale sekcje OBECNE zachowują powyższą kolejność.
+ *  - ★ ZMIANA 2026-08-30 (decyzja właściciela po odbiorze `deck-artifact`, zapis
+ *    w `docs/program/grafika/KANON_Z_ODBIOROW.md`: „sekcja mieszka w jednym
+ *    miejscu w całej aplikacji"). SZEŚĆ sekcji (wszystkie oprócz warunkowych
+ *    „Rezultatów") jest OBOWIĄZKOWYCH i WIDOCZNYCH. Sekcja bez treści mówi to
+ *    wprost stanem pustym — NIE znika. Poprzednia reguła („sekcja bez
+ *    zastosowania może być nieobecna") jest UCHYLONA: to ona pozwoliła trzem
+ *    rodzinom artefaktów (Idee, Notatnik, Tabela idei) zgubić „Źródła
+ *    i założenia", a Warsztatowi SWOT — „Historię".
+ *  - Nazwy sekcji NIE są w gestii wołającego: SSOT =
+ *    `ARTIFACT_PANEL_SECTION_LABELS` niżej, a ten komponent NADPISUJE `label`
+ *    dla każdego kanonicznego `id`. Dlatego „HISTORIA / AI" i „HISTORIA I AI"
+ *    nie mogą już powstać w żadnym module.
  *  - Sekcja historii nazywa się „Historia" — bez „/ AI". AI zostaje jako TYP WPISU
  *    i filtr wewnątrz strumienia, nie w nazwie sekcji.
+ *  - Teresa NIGDY nie jest treścią sekcji „Historia" (kontrakt
+ *    `ArtifactRailTeresaMode` w `ArtifactRightRail.tsx`: „NIGDY sekcja
+ *    akordeonu"). Wzorzec odebrany przez właściciela (`deck-artifact`): wejście
+ *    do Teresy to PRZYCISK w sekcji Akcje.
  *  - Domyślnie ROZWINIĘTE: Akcje i Właściwości. Reszta `defaultOpen: false`.
  *  - Kanoniczne id sekcji: patrz `ARTIFACT_PANEL_SECTION_ORDER` niżej.
  *
@@ -29,8 +43,18 @@
  *    ten komponent jest tylko kontenerem-accordion, nie renderuje treści sam.
  *  - Brak Headless UI w projekcie → własny collapsible (useState).
  */
-import { ChevronDown, type LucideIcon } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ChevronDown,
+  History,
+  Lightbulb,
+  Link2,
+  MessageSquare,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -49,6 +73,82 @@ export const ARTIFACT_PANEL_SECTION_ORDER = [
 ] as const;
 
 export type ArtifactPanelSectionId = (typeof ARTIFACT_PANEL_SECTION_ORDER)[number];
+
+/**
+ * ★ SSOT NAZW SEKCJI (2026-08-30). Dopóki nazwy budował każdy moduł u siebie,
+ * ta sama sekcja nazywała się „HISTORIA", „HISTORIA / AI" i „HISTORIA I AI" na
+ * trzech ekranach naraz (przegląd `docs/program/grafika/PRZEGLAD_PRZED_ODBIOREM.md`
+ * §Z-2). Kolejność miała wspólne źródło (`ARTIFACT_PANEL_SECTION_ORDER`) —
+ * nazwy nie miały żadnego. Tu jest to jedno miejsce.
+ *
+ * `ArtifactRightPanel` NADPISUJE `label` wołającego dla każdego kanonicznego
+ * `id`; `label` z modułu liczy się wyłącznie dla sekcji SPOZA kanonu.
+ */
+export const ARTIFACT_PANEL_SECTION_LABELS: Record<
+  ArtifactPanelSectionId,
+  { pl: string; en: string }
+> = {
+  actions: { pl: 'Akcje', en: 'Actions' },
+  properties: { pl: 'Właściwości', en: 'Properties' },
+  relations: { pl: 'Powiązania', en: 'Relations' },
+  evidence: { pl: 'Źródła i założenia', en: 'Sources and assumptions' },
+  results: { pl: 'Rezultaty', en: 'Results' },
+  comments: { pl: 'Komentarze', en: 'Comments' },
+  // Bez dopisku „/ AI" ani „i AI" — AI jest TYPEM WPISU w strumieniu, nie nazwą
+  // sekcji (SPEC-A §11.2 + decyzja z odbioru `deck-artifact`).
+  history: { pl: 'Historia', en: 'History' },
+};
+
+/** Ikona kanoniczna sekcji — używana, gdy moduł nie poda własnej. */
+const CANONICAL_SECTION_ICONS: Record<ArtifactPanelSectionId, LucideIcon> = {
+  actions: Sparkles,
+  properties: SlidersHorizontal,
+  relations: Link2,
+  evidence: ShieldCheck,
+  results: Lightbulb,
+  comments: MessageSquare,
+  history: History,
+};
+
+/**
+ * SZEŚĆ sekcji obowiązkowych. „Rezultaty" (`results`) zostają warunkowe — są
+ * pojęciem tylko tam, gdzie artefakt coś produkuje (karty N, sesja narzędzia),
+ * i kanon z odbiorów wymienia sześć nazw, nie siedem.
+ */
+export const ARTIFACT_PANEL_MANDATORY_SECTIONS: ArtifactPanelSectionId[] =
+  ARTIFACT_PANEL_SECTION_ORDER.filter((id) => id !== 'results');
+
+/**
+ * Uczciwe stany puste dla sekcji dołożonej automatycznie. Zasada właściciela:
+ * „sekcja pusta ma być widoczna i uczciwa, nie ukryta" — komunikat mówi, że
+ * czegoś NIE MA, i nie udaje funkcji, której nie ma.
+ */
+const CANONICAL_SECTION_EMPTY_LABELS: Record<
+  ArtifactPanelSectionId,
+  { pl: string; en: string }
+> = {
+  actions: { pl: 'Brak dostępnych akcji.', en: 'No actions available.' },
+  properties: { pl: 'Brak właściwości.', en: 'No properties.' },
+  relations: { pl: 'Brak powiązań.', en: 'No relations.' },
+  evidence: {
+    pl: 'Brak zapisanych źródeł i założeń.',
+    en: 'No sources or assumptions recorded.',
+  },
+  results: { pl: 'Brak rezultatów.', en: 'No results.' },
+  comments: { pl: 'Brak komentarzy.', en: 'No comments.' },
+  history: { pl: 'Brak zapisanej historii.', en: 'No history recorded.' },
+};
+
+const CANONICAL_SECTION_IDS = new Set<string>(ARTIFACT_PANEL_SECTION_ORDER);
+
+/**
+ * Ile kanonicznych `id` musi zadeklarować wołający, żeby panel został uznany za
+ * panel ARTEFAKTU i domknięty do kanonu. Poniżej progu komponent nie rusza
+ * niczego — `ArtifactRightPanel` bywa użyty jako czysty akordeon z własnym
+ * zestawem `id` (np. `AgentPlanPanel`: plan/progress/approvals/report), a
+ * dokładanie mu „Źródeł i założeń" byłoby wymyślaniem funkcji.
+ */
+const CANONICAL_SHELL_THRESHOLD = 3;
 
 /**
  * Wygląd wzorcowy panelu karty N (ETAP 1.4): JASNY ZAOKRĄGLONY KOMPONENT
@@ -210,7 +310,7 @@ const SectionRow: React.FC<{
 };
 
 export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
-  sections,
+  sections: declaredSections,
   width = 'var(--ntype-right-panel-width)',
   className,
   ariaLabel,
@@ -222,6 +322,93 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
     'common.artifactDetailsPanel',
     isPolish ? 'Szczegóły artefaktu' : 'Artifact details'
   );
+
+  /**
+   * ★ DOMKNIĘCIE DO KANONU W JEDNYM MIEJSCU (2026-08-30).
+   *
+   * Trzy rzeczy, których wołający NIE ustala już sam:
+   *  1. KOLEJNOŚĆ sekcji kanonu — z `ARTIFACT_PANEL_SECTION_ORDER`;
+   *  2. NAZWA sekcji kanonu — z `ARTIFACT_PANEL_SECTION_LABELS`;
+   *  3. OBECNOŚĆ sześciu sekcji obowiązkowych — brakująca dokłada się jako
+   *     widoczny, zwinięty akordeon z uczciwym stanem pustym.
+   *
+   * Sekcje spoza kanonu (moduł ma prawo dołożyć własną) lądują NA KOŃCU,
+   * w kolejności deklaracji, z własną nazwą — nie mogą wcisnąć się pomiędzy
+   * sekcje kanonu. Panel, który nie deklaruje co najmniej
+   * `CANONICAL_SHELL_THRESHOLD` kanonicznych `id`, przechodzi 1:1 bez zmian.
+   *
+   * Dlaczego tutaj, a nie w każdym module: naprawa per artefakt w tym repo
+   * ODRASTA — ten sam defekt załatany per wywołanie wrócił po ośmiu tygodniach
+   * w dwunastu plikach. `ArtifactRightRail` (flaga `ff_artifact_right_rail`,
+   * domyślnie OFF) miał tę normalizację od początku; ścieżka, którą realnie
+   * widzi użytkownik, nie miała jej wcale.
+   */
+  const sections = useMemo<ArtifactRightPanelSection[]>(() => {
+    const declaredCanonical = declaredSections.filter((section) =>
+      CANONICAL_SECTION_IDS.has(section.id)
+    );
+    if (declaredCanonical.length < CANONICAL_SHELL_THRESHOLD) return declaredSections;
+
+    const label = (id: ArtifactPanelSectionId): string => {
+      const entry = ARTIFACT_PANEL_SECTION_LABELS[id];
+      return t(`artifactPanel.section.${id}`, isPolish ? entry.pl : entry.en);
+    };
+    const emptyLabel = (id: ArtifactPanelSectionId): string => {
+      const entry = CANONICAL_SECTION_EMPTY_LABELS[id];
+      return t(`artifactPanel.sectionEmpty.${id}`, isPolish ? entry.pl : entry.en);
+    };
+
+    /**
+     * Ranga sortowania. Sekcja kanonu dostaje swój indeks z
+     * `ARTIFACT_PANEL_SECTION_ORDER`. Sekcja SPOZA kanonu (moduł ma prawo
+     * dołożyć własną) dziedziczy rangę OSTATNIEJ kanonicznej sekcji przed nią
+     * w deklaracji + 0.5 — czyli zostaje TAM, GDZIE ją postawiono, zamiast
+     * lecieć na koniec panelu. Wypychanie ich na koniec zmierzono na karcie
+     * Inicjatywy: sekcja „Rezultaty" (zadeklarowana pod nie-kanonicznym id)
+     * przeskoczyła pod „Historię".
+     */
+    type Ranked = { section: ArtifactRightPanelSection; rank: number; seq: number };
+    const ranked: Ranked[] = [];
+    let lastRank = -1;
+    declaredSections.forEach((section, seq) => {
+      const canonIndex = ARTIFACT_PANEL_SECTION_ORDER.indexOf(
+        section.id as ArtifactPanelSectionId
+      );
+      if (canonIndex >= 0) {
+        lastRank = canonIndex;
+        ranked.push({
+          section: { ...section, label: label(section.id as ArtifactPanelSectionId) },
+          rank: canonIndex,
+          seq,
+        });
+        return;
+      }
+      ranked.push({ section, rank: lastRank + 0.5, seq });
+    });
+
+    // Domknięcie do sześciu sekcji obowiązkowych. „Rezultaty" zostają
+    // warunkowe — nie wymyślamy ich artefaktowi, który nic nie produkuje.
+    const declaredIds = new Set(declaredSections.map((section) => section.id));
+    ARTIFACT_PANEL_MANDATORY_SECTIONS.forEach((id) => {
+      if (declaredIds.has(id)) return;
+      ranked.push({
+        section: {
+          id,
+          label: label(id),
+          icon: CANONICAL_SECTION_ICONS[id],
+          defaultOpen: false,
+          isEmpty: true,
+          emptyLabel: emptyLabel(id),
+          children: null,
+        },
+        rank: ARTIFACT_PANEL_SECTION_ORDER.indexOf(id),
+        seq: -1,
+      });
+    });
+
+    ranked.sort((a, b) => (a.rank === b.rank ? a.seq - b.seq : a.rank - b.rank));
+    return ranked.map((entry) => entry.section);
+  }, [declaredSections, isPolish, t]);
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(sections.filter((s) => s.defaultOpen ?? true).map((s) => s.id))
   );

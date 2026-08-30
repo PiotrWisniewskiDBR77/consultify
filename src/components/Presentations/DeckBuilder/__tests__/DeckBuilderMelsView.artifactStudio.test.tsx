@@ -114,8 +114,19 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
       .map((label) => label.replace(/\d+$/, '').trim());
 
     // Kolejność kanonu: Akcje · Właściwości · Powiązania · Źródła i założenia
-    // · Komentarze · Historia. Sekcje bez treści są pominięte, nie puste.
-    expect(naglowki).toEqual(['Actions', 'Sources and assumptions', 'Comments']);
+    // · Komentarze · Historia.
+    // ★ 2026-08-30 (decyzja właściciela po odbiorze `deck-artifact`): sekcja
+    // bez treści NIE znika — jest widoczna, zwinięta i mówi wprost, że jest
+    // pusta. Domknięcie do sześciu robi powłoka `ArtifactRightPanel`, więc
+    // ten adapter nie musi (i nie może) deklarować ich sam.
+    expect(naglowki).toEqual([
+      'Actions',
+      'Properties',
+      'Relations',
+      'Sources and assumptions',
+      'Comments',
+      'History',
+    ]);
   });
 
   it('★ prawy panel NIE pojawia się poza trybem warsztatu (zmiana addytywna)', () => {

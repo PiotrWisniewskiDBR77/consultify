@@ -92,14 +92,25 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     );
   });
 
-  it('renders the five canonical sections in the fixed order', () => {
+  it('renders the six canonical sections in the fixed order', () => {
     render(<Harness />);
     const headers = screen
       .getAllByRole('button')
       .map((btn) => btn.textContent?.replace(/\s+/g, ' ').trim())
       .filter((text): text is string => !!text);
     // Every section header renders regardless of collapsed state.
-    const known = ['Akcje', 'Właściwości', 'Powiązania', 'Komentarze', 'Historia i AI'];
+    // ★ 2026-08-30: SZEŚĆ sekcji, nie pięć. „Źródła i założenia" to sekcja
+    // kanonu, której notatnik nie miał, a ostatnia sekcja nazywa się
+    // „Historia" — bez dopisku „i AI" (SSOT nazw:
+    // `ARTIFACT_PANEL_SECTION_LABELS` w `standard/ArtifactRightPanel.tsx`).
+    const known = [
+      'Akcje',
+      'Właściwości',
+      'Powiązania',
+      'Źródła i założenia',
+      'Komentarze',
+      'Historia',
+    ];
     const seen = known.filter((label) => headers.some((h) => h?.startsWith(label)));
     expect(seen).toEqual(known);
   });
