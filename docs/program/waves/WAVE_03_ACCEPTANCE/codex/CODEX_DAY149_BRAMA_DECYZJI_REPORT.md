@@ -139,3 +139,114 @@ dokładnie zakazane przez Z40.
 `W-A`, B3 i B4 nie mają zastosowania: nie ma pozycji naprawczej licencjonowanej
 przez R3. Nie wpisuję `FIXED`, `VERIFIED` ani `ZROBIONE_WG_DoD`.
 
+## R4 — inne routery zapisujące tabele execution-work
+
+Pomiar statyczny objął wszystkie pliki tras (bez `__tests__`) zawierające
+dosłowne `INSERT`/`UPDATE`/`DELETE` tabel `tasks`, `decisions` lub `initiatives`,
+a następnie sprawdzenie bramy zarówno w pliku, jak i w miejscu montażu Gateway.
+To inwentarz kandydatów, nie automatyczny werdykt o luce: sam zapis do tabeli
+o tej nazwie nie dowodzi, że operacja należy do kanonu Runtime-v1.
+
+| Router | Zapisy wykryte statycznie | Stan tej konkretnej bramy |
+|---|---|---|
+| `pmo/tasks.routes.ts` | `UPDATE tasks` (handler ma też kontrolery zapisujące) | globalnie w pliku, linia 67 |
+| `pmo/initiatives.routes.ts` | `INSERT decisions/tasks`, `UPDATE decisions/initiatives` | selektywnie w pliku, linia 160 |
+| `executionControl.routes.ts` | `INSERT tasks`, `UPDATE initiatives` | globalnie przy montażu w `Gateway.ts:1384-1390` |
+| `v8/execution-control.routes.ts` | `UPDATE initiatives/tasks` | globalnie przez `v8/index.ts:107` |
+| `assessment-workflow-v2.routes.ts` | `INSERT/UPDATE initiatives` | brak tej bramy |
+| `economics.routes.ts` | `INSERT initiatives` | brak tej bramy |
+| `feedback.routes.ts` | `INSERT/UPDATE tasks` | brak tej bramy |
+| `integrations/automation.routes.ts` | `INSERT tasks` | brak tej bramy |
+| `integrations/webhooks.routes.ts` | `UPDATE tasks` | brak tej bramy |
+| `my-work.routes.ts` | `INSERT/UPDATE/DELETE tasks`, `INSERT/UPDATE decisions`, `INSERT/UPDATE initiatives` | brak tej bramy |
+| `my-work/calendar.routes.ts` | `INSERT/UPDATE tasks`, `UPDATE decisions` | brak tej bramy |
+| `pmo/workstreams.routes.ts` | `UPDATE initiatives` | brak tej bramy |
+| `portfolioOptimization.routes.ts` | `UPDATE initiatives` | brak tej bramy |
+| `report-builder.routes.ts` | `INSERT/UPDATE initiatives` | brak tej bramy |
+| `v8/interview-insights.routes.ts` | `UPDATE decisions/initiatives/tasks` | brak tej bramy |
+| `v8/my-work.routes.ts` | `INSERT/UPDATE tasks`, `UPDATE decisions/initiatives` | brak tej bramy |
+| `v8/results.routes.ts` | `INSERT tasks` | brak tej bramy |
+
+Wynik R4: 17 innych plików tras z bezpośrednim zapisem do trzech tabel; 4 są
+objęte badaną bramą w pliku albo na montażu, 13 nie jest nią objętych. Dla tych
+13 potrzebne jest osobne rozstrzygnięcie „legalny producent czy legacy writer”
+na podstawie kontraktu domenowego. Zgodnie z licencją R4 nie zmieniono żadnego
+z nich.
+
+Ograniczenie pomiaru: SQL składany w usługach/kontrolerach lub przez buildery
+może nie wystąpić dosłownie w pliku trasy. Dlatego `13` jest liczbą kandydatów
+znalezionych tym pomiarem, nie mianownikiem wszystkich writerów repozytorium.
+
+## Testy, pomiar różnicowy i pułapki środowiska
+
+Nie uruchamiano pakietu Vitest jako dowodu R3, ponieważ R2 nie znalazło żadnej
+pozycji (b), a więc nie było licencjonowanej zmiany produktu. `W-A` i `W-C` są
+`NIE DOTYCZY`: nie istnieje para „przed/po” dla nieistniejącej naprawy. Nie
+wykorzystano zielonego testu jako substytutu dowodu runtime.
+
+Pułapki (a)–(e):
+
+- (a) i (b) — nie dotyczyły statycznego inwentarza; nie uruchamiano ścieżek V8
+  ani beta-visibility;
+- (c) — nie użyto chronionego `server/vitest.config.ts`; nie uruchamiano
+  Vitest. Realny silnik potwierdziły dwa przebiegi migratora z pełnym env na
+  `postgresql://...@127.0.0.1:6035/cx149`;
+- (d) — nie twierdzono, że wykonano HTTP/JWT; `ENABLE_TEST_AUTH_BYPASS` nie
+  służyło do budowania dowodu;
+- (e) — rozstrzygnięta przez enumerację kanonicznych `commandType`: brak
+  polecenia odpowiadającego któremukolwiek legacy handlerowi R1. Dlatego żadna
+  mutacja nie została objęta bramą.
+
+## Protokół Z30
+
+```text
+$ env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL|ENABLE_LIVE_EMAIL)" || echo "BRAK ZMIENNYCH POCZTY"
+BRAK ZMIENNYCH POCZTY
+$ docker exec cx-day149-pg psql -U postgres -d cx149 -c "SELECT key, left(coalesce(value,''),8) FROM settings WHERE key LIKE 'smtp%';"
+ key | left
+-----+------
+(0 rows)
+$ grep -n "startNotificationOutboxDrainCron\|outboxWorker\|platformOutboxDrainCron" server/src/Gateway.ts
+[brak trafień]
+```
+
+Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani
+żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało
+wysłane.
+
+## Granica zmian (W-D)
+
+Stan oczekiwany po końcowym commicie:
+
+```text
+$ git diff --name-only 793fdd073f..HEAD
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY149_BRAMA_DECYZJI_REPORT.md
+```
+
+Jest to jedyny plik zmieniony w repo i znajduje się w tabeli licencji. Zero
+zmian w bramie, innych routerach, migracjach, froncie, flagach i konfiguracji
+testowej. Nie utworzono artefaktów binarnych ani logów poza raportem, więc nie
+ma plików artefaktów do zahashowania.
+
+## TWIERDZENIA NIEZWERYFIKOWANE
+
+1. Nie zweryfikowano realnym HTTP, że każda z 21 tras działa dziś na markerze.
+   R1 dowodzi rejestracji i implementowanego skutku zapisu, nie pełnej
+   osiągalności `ApiGateway → JWT → handler → DB → readback → frontend`.
+2. Nie zweryfikowano, czy 13 kandydatów R4 bez tej bramy to luki authority,
+   czy świadomie niezależni producenci. Do rozstrzygnięcia potrzebny jest
+   osobny kontrakt domenowy i runtime dla każdej powierzchni.
+3. Nie zweryfikowano kompatybilności przyszłych poleceń drogi (a) z pełnymi
+   skutkami ubocznymi `DecisionController` (historia, impacty, zadania, graf,
+   powiadomienia i reguły współpracy).
+4. Teza T4 o komentarzu Zadania nie była przedmiotem osobnego runtime testu;
+   potwierdzono jedynie, że obecna globalna brama odrzuca każdą mutację bez
+   jawnego wyjątku, a jej lista wyjątków nie zawiera komentarza.
+
+## Werdykt
+
+`R1 ZROBIONE`, `R2 ZROBIONE`, `R3 NIE DOTYCZY (0 pozycji b)`, `R4 ZROBIONE
+STATYCZNIE / PARTIAL semantycznie`. Bramy B1, B2, B5, B6, B7 i B8 spełnione.
+B3/B4 nie mają zastosowania bez pozycji (b). Produktu nie zmieniono, ponieważ
+jedyna licencjonowana zmiana R3 nie miała żadnego bezpiecznego celu.
