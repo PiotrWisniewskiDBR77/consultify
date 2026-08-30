@@ -166,6 +166,13 @@ OBJECT, MINUTES, DECISIONS i NOTE. To dowód strukturalny, nie przeglądarkowy.
 3. `CLAUDE.md` wymaga skilla `consultify-artefakty`, ale skill nie był dostępny
    w sesji. Zastosowano istniejący kod SPEC-A i pre-commit `check-artefakt`, który
    przeszedł bez nowego naruszenia.
+4. Z24 trzykrotnie odsyła do `§0.4a`, ale wydana instrukcja nie zawiera takiej
+   sekcji (wyszukanie `0.4a` daje wyłącznie trzy odsyłacze, zero definicji
+   pomiaru). Zamiast przepisać nieistniejącą liczbę zmierzono pełny dostępny
+   pakiet komponentu (`10` pełnych nazw: `9 PASS`, `1` zastany `FAIL`) oraz cały
+   nowy pakiet Gateway (`3/3 PASS`). Lista plików zmienionych została zmierzona
+   przez `git diff --name-only 6894f3da05..HEAD` i zawiera dokładnie pięć ścieżek
+   wymienionych w §8.
 
 ## 6. TWIERDZENIA NIEZWERYFIKOWANE
 
