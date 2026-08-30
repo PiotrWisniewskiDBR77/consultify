@@ -145,3 +145,45 @@ Twierdzenie „sześć plików ma widoczny defekt" jest **wnioskiem z kodu**, ni
 **Do zrobienia w torze funkcji:** albo naprawić `parsePx`, żeby procent liczył
 względem szerokości tabeli, albo zamienić procenty na piksele w tych sześciu
 plikach — po uprzednim **wyrenderowaniu co najmniej jednego z nich**.
+
+### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: cztery sekcje karty zadania nie mają skąd się wczytać
+
+**Zweryfikowane w źródle przeze mnie, nie przepisane z raportu robotnika.**
+
+`src/components/MyWork/TaskDetailView.tsx`: `setRisks`, `setAlternatives`,
+`setImplementationIdeas`, `setEvidenceItems`, `setStakeholders` są wołane **wyłącznie**
+z akcji użytkownika i z odpowiedzi AI (linie 1994, 2096, 2163, 2189, 2244, 2264,
+2315, 3102). **Ani razu przy wczytaniu rekordu.** `setStakeholders([])` w linii 1136
+to reset do pustej listy. Typ rekordu zadania nie niesie tych pól w ogóle.
+
+**Co to znaczy dla użytkownika:** cztery z ośmiu sekcji karty zadania — Pomysły
+realizacji, Ryzyka i alternatywy, Dowody, RACI i eskalacja — istnieją **tylko
+w tej sesji przeglądarki**. Wypełniasz je, zamykasz kartę, wracasz — pusto.
+
+**Czego NIE zweryfikowałem:** czy cokolwiek te dane **zapisuje**. Sprawdziłem
+wyłącznie ścieżkę odczytu. Możliwe, że zapis działa i brakuje tylko wczytania —
+i to jest pierwsza rzecz do zmierzenia, bo rozstrzyga, czy dane są tracone,
+czy tylko niewidoczne.
+
+**Drugie, mniejsze:** sekcja nazywa się „Ryzyka i alternatywy", ale w tym trybie
+renderuje wyłącznie ryzyka — `alternatives` nie ma żadnego odbiorcy w UI. Połowa
+nazwy sekcji jest martwa niezależnie od danych.
+
+---
+
+### 2026-08-30 · SPROSTOWANIE własnego zgłoszenia: hipoteza inicjatywy DZIAŁA
+
+Robotnik zgłosił „potwierdzony błąd w `InitiativeDocumentView`: `hypothesisDraft`
+i `lessonsDraft` nigdy się nie hydratują z rekordu". **To jest nieprawda i nie
+weszło do żadnego dyżuru.**
+
+Efekt hydratujący **istnieje** — `InitiativeDocumentView.tsx:1573-1578`,
+`useEffect(() => setHypothesisDraft(savedHypothesis), [savedHypothesis])`. Robotnik
+przeczytał linie 1569-1570 i 1596-1609, i **przeoczył efekt leżący dokładnie między
+nimi**. Sprawdziłem na żywym renderze: pole zawiera wstrzykniętą treść (tylko jest
+w trybie tylko-do-odczytu, bo karta stoi w Podglądzie — dlatego nie widać jej
+w tekście strony).
+
+**Wniosek metodyczny:** fragment kodu wycięty z dwóch stron to nie jest dowód.
+Sąsiednie linie potrafią obalić tezę. Każde „potwierdzony błąd w src/" z raportu
+robotnika sprawdzam sam, zanim wejdzie do rejestru.
