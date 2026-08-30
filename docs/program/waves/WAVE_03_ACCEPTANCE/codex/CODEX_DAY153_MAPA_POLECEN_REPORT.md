@@ -231,11 +231,32 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 ## W-D — granica rozłączności
 
-Do uzupełnienia po commitach komendą `git diff --name-only e4ff8e21ae..HEAD`. Oczekiwany i licencjonowany jedyny plik: ten raport.
+```text
+$ git diff --name-only e4ff8e21ae..HEAD
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY153_MAPA_POLECEN_REPORT.md
+```
+
+Jedyny zmieniony plik jest imiennie licencjonowany. Brak testów `day153.*` i zero zmian produktu.
 
 ## Artefakty
 
-Artefakty pozostają poza repo w `/private/tmp/cx-day153-mapa-polecen-artefakty`. Sumy SHA-256 zostaną dopisane po domknięciu zbioru.
+Artefakty pozostają poza repo w `/private/tmp/cx-day153-mapa-polecen-artefakty`. Komenda: `shasum -a 256 /private/tmp/cx-day153-mapa-polecen-artefakty/*`.
+
+```text
+4adc0b3bc413f18f00a4f9378e627d3cd729faf0d63841ee5edc9bfd9166bda2  command-handler-map.txt
+aaff8a436c438b6b9b1872b38d36edc63f2ab00e93b00eb991862a251581077b  command-route-map.txt
+a9adff60dfea112392fd65f5ace7cef1daace3366d8e14e5652e03a1d776f940  domain-command-evidence.log
+ce63134a3bfecd9cda42dd745a7aae57b4a82453c1dd644121a2f07c5d6ca122  domain-coverage.txt
+0f97b6198928d4ae3f68b93ffef4d0468569cb6c5da45aa3677b2a5e8c382c01  gate-identifiers.log
+4890c1b7ac490b3a2c8902ddf7ef9f60c5211f02fad5fae3f5ad43373347dbb7  handler-declarations.txt
+ff5578b183838e7f387b50cd4c80cef6e658b71496589bc7c3b2501d4e396e18  input-measurements.log
+8df2c6cdd7d4898e3fa4662d9993d502ac139266062f618fbcded914025f785c  legacy-mutation-routes.log
+1182b02dd363800d2e6687a138566c3989c94984e4e6dfb558133e0a7854979e  legacy-operations.log
+99a1191ec44f38f21f83751eafc56c6219dcde26164a7d3069eb06591938d4c1  migrate-1.log
+80a29a7c87e73fcf756fcd66d104e3b0f4854d5a8cf5cd99a19928d1a681fc35  migrate-2.log
+5db1a7c000241e03f2060da247bfb6b82c5d6608fe52c92a2818cc4a7314709f  runtime-command-literals.log
+fa320b41affda6bc71480137e07bad2ce58b6ffb29d11acbcab77912a22447fb  task-comments-evidence.log
+```
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
