@@ -7684,6 +7684,20 @@
       "apply": "Zastosuj"
     },
     "reportsTable": {
+      "sourceType": {
+        "ASSESSMENT": "Ocena"
+      },
+      "status": {
+        "draft": "Szkic",
+        "configuring": "Konfiguracja",
+        "generating": "Generowanie",
+        "generated": "Wygenerowany",
+        "inReview": "W przeglądzie",
+        "approved": "Zatwierdzony",
+        "sentInternal": "Wysłany wewnętrznie",
+        "sentExternal": "Wysłany zewnętrznie",
+        "utilized": "Wykorzystany"
+      },
       "toastApproved": "Raport zatwierdzony",
       "toastApproveFailed": "Nie udało się zatwierdzić raportu",
       "toastSentInternal": "Oznaczono jako wysłany wewnętrznie",
@@ -17705,6 +17719,16 @@
     "deletedBanner": "Ta rozmowa została usunięta.",
     "permissionDenied": "Nie masz dostępu do tej rozmowy. Poproś właściciela folderu o dostęp.",
     "notFound": "Ta rozmowa nie istnieje lub została trwale usunięta.",
+    "partialRecovery": {
+      "discoveryFailed": "Nie udało się sprawdzić przerwanej odpowiedzi.",
+      "missingPrompt": "Oryginalne zapytanie jest niedostępne — rozpocznij nową wiadomość.",
+      "resumeFailed": "Nie udało się wznowić przerwanej odpowiedzi.",
+      "forbidden": "Twój dostęp do tego obszaru roboczego został cofnięty, więc nie można otworzyć przerwanej odpowiedzi.",
+      "stale": "Ta przerwana odpowiedź jest nieaktualna — rozmowa już potoczyła się dalej.",
+      "available": "Dostępna jest przerwana odpowiedź.",
+      "resuming": "Wznawianie…",
+      "resume": "Wznów"
+    },
     "startNewConversation": "Rozpocznij nową rozmowę",
     "openHistory": "Otwórz historię rozmów",
     "composer": {
@@ -26278,7 +26302,9 @@
       "formulaBarEmpty": "Zaznacz komórkę, aby zobaczyć jej treść",
       "saving": "Zapisywanie…",
       "saved": "Zapisano",
-      "saveFailed": "Błąd zapisu"
+      "saveFailed": "Błąd zapisu",
+      "workbookSummary": "Skoroszyt „{{title}}” — {{count}} arkuszy.",
+      "sheetsLabel": "Arkusze"
     },
     "xlsxPreview": "Podgląd arkusza",
     "deckPreview": "Podgląd prezentacji",
@@ -37004,6 +37030,7 @@
       "riskCount": "{{count}} ryzyk"
     },
     "aiConsultantPanel": {
+      "title": "Konsultant AI",
       "systemPromptNoun": {
         "initiative": "inicjatywy",
         "insight": "insightu"
@@ -41442,7 +41469,9 @@
       "size": "Rozmiar",
       "inAiKnowledge": "W wiedzy AI",
       "indexingErrors": "Błędy indeksowania",
-      "indexingErrorsCount": "{{count}} błąd(y)",
+      "indexingErrorsCount_one": "{{count}} błąd",
+      "indexingErrorsCount_few": "{{count}} błędy",
+      "indexingErrorsCount_many": "{{count}} błędów",
       "lastModified": "Ostatnia zmiana",
       "emptyTitle": "Brak sejfów",
       "rowOpen": "Otwórz",

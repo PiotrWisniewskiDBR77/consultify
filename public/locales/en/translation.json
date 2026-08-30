@@ -8237,6 +8237,20 @@
       "apply": "Apply"
     },
     "reportsTable": {
+      "sourceType": {
+        "ASSESSMENT": "Assessment"
+      },
+      "status": {
+        "draft": "Draft",
+        "configuring": "Configuring",
+        "generating": "Generating",
+        "generated": "Generated",
+        "inReview": "In Review",
+        "approved": "Approved",
+        "sentInternal": "Sent Internal",
+        "sentExternal": "Sent External",
+        "utilized": "Utilized"
+      },
       "toastApproved": "Report approved",
       "toastApproveFailed": "Failed to approve report",
       "toastSentInternal": "Marked as sent internally",
@@ -16529,6 +16543,16 @@
     "deletedBanner": "This conversation has been deleted.",
     "permissionDenied": "You do not have access to this conversation. Contact the folder owner for access.",
     "notFound": "This conversation does not exist or has been permanently removed.",
+    "partialRecovery": {
+      "discoveryFailed": "Interrupted response could not be checked.",
+      "missingPrompt": "The original request is unavailable; start a new message.",
+      "resumeFailed": "The interrupted response could not be resumed.",
+      "forbidden": "Your access to this workspace was revoked, so the interrupted response cannot be opened.",
+      "stale": "This interrupted response is out of date — the conversation already continued past it.",
+      "available": "An interrupted response is available.",
+      "resuming": "Resuming…",
+      "resume": "Resume"
+    },
     "startNewConversation": "Start a new conversation",
     "openHistory": "Open conversation history",
     "composer": {
@@ -24799,7 +24823,9 @@
       "formulaBarEmpty": "Select a cell to see its content",
       "saving": "Saving…",
       "saved": "Saved",
-      "saveFailed": "Save failed"
+      "saveFailed": "Save failed",
+      "workbookSummary": "Workbook \"{{title}}\" — {{count}} sheets.",
+      "sheetsLabel": "Sheets"
     },
     "xlsxPreview": "Spreadsheet preview",
     "deckPreview": "Presentation preview",
@@ -34493,6 +34519,7 @@
       "riskCount": "{{count}} risks"
     },
     "aiConsultantPanel": {
+      "title": "AI Consultant",
       "systemPromptNoun": {
         "initiative": "initiative",
         "insight": "insight"

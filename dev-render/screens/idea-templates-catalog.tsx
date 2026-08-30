@@ -28,11 +28,16 @@ const TOOL_LABEL: Record<string, string> = {
   table: 'Table',
 };
 
+// Zgodnie z kanonicznym mapowaniem produkcyjnym (TOOL_ICON_COLOR_VAR,
+// src/components/MyWork/MyIdeasListContent.tsx:251) — crimson (--c-accent)
+// zarezerwowany dla Mind Map (flagowe narzędzie, jedyny wyjątek), reszta
+// narzędzi = kolory semantyczne. PRZED tej naprawy Whiteboard miał crimson =
+// złamanie reguły "czerwień tylko semantyka krytyczna" (CLAUDE.md #3).
 const TOOL_TONE: Record<string, string> = {
-  whiteboard: 'var(--c-accent)',
-  mindmap: 'var(--c-info)',
-  process_flow: 'var(--c-warning)',
-  table: 'var(--c-success)',
+  whiteboard: 'var(--c-warning)',
+  mindmap: 'var(--c-accent)',
+  process_flow: 'var(--c-success)',
+  table: 'var(--c-info)',
 };
 
 /** Wyciąga zwięzłe streszczenie seedu danego szablonu (co użytkownik dostaje). */

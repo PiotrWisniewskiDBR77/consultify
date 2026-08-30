@@ -434,7 +434,11 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       {
         id: 'priority',
         label: 'Priority',
-        width: '100px',
+        // 100px ucinało „CRITICAL"/„MEDIUM" w StatusChip (ChipBase wymusza
+        // `truncate` — kanon #4 tekst ucięty). 140px mieści najdłuższą
+        // etykietę bez elipsy, 1:1 z szerokością kolumny Status (190px dla
+        // krótszych „Draft"/„Planning").
+        width: '140px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
           return (

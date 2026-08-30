@@ -304,7 +304,7 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
           <StatusChip
             label={String(
               t('vault.safes.indexingErrorsCount', {
-                defaultValue: isPolish ? '{{count}} błąd(y)' : '{{count}} error(s)',
+                defaultValue: isPolish ? 'Błędy: {{count}}' : '{{count}} error(s)',
                 count: errors,
               })
             )}

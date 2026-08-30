@@ -134,6 +134,7 @@ export function buildRoiCaseColumns(
       width: '200px',
       render: (row: RoiCaseListItem) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.nextActionType}
           format={(v) => (
             <span className="text-sm text-c-text-secondary">{humanizeActionType(v, isPolish)}</span>
@@ -201,6 +202,7 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
       align: 'right',
       render: (row: RoiBenefitsRealizationRowVm) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.approvedFinancialBenefits}
           align="right"
           format={(v) => (
@@ -216,6 +218,7 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
       align: 'right',
       render: (row: RoiBenefitsRealizationRowVm) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.actualFinancialBenefits}
           align="right"
           format={(v) => (
@@ -231,6 +234,7 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
       align: 'right',
       render: (row: RoiBenefitsRealizationRowVm) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.benefitsRealizationPct}
           align="right"
           notCalculableReason={
@@ -396,6 +400,7 @@ export function buildRoiCasePreview(
           label: 'NPV',
           value: runResolved ? (
             <HonestValueCell
+              isPolish={isPolish}
               value={npv}
               align="left"
               notCalculableReason={npvNotCalculableReason(run, isPolish)}
@@ -412,6 +417,7 @@ export function buildRoiCasePreview(
           label: 'IRR',
           value: runResolved ? (
             <HonestValueCell
+              isPolish={isPolish}
               value={irr}
               align="left"
               notCalculableReason={irrNotCalculableReason(run, isPolish)}
@@ -428,6 +434,7 @@ export function buildRoiCasePreview(
           label: isPolish ? 'Okres zwrotu' : 'Payback period',
           value: runResolved ? (
             <HonestValueCell
+              isPolish={isPolish}
               value={payback}
               align="left"
               notCalculableReason={
@@ -514,6 +521,7 @@ export function buildRoiBenefitsRealizationPreview(
           label: isPolish ? 'Zaakceptowane korzyści' : 'Approved benefits',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={row.approvedFinancialBenefits}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -524,6 +532,7 @@ export function buildRoiBenefitsRealizationPreview(
           label: isPolish ? 'Rzeczywiste korzyści' : 'Actual benefits',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={row.actualFinancialBenefits}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -534,6 +543,7 @@ export function buildRoiBenefitsRealizationPreview(
           label: isPolish ? 'Realizacja' : 'Realization',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={row.benefitsRealizationPct}
               notCalculableReason={
                 isPolish

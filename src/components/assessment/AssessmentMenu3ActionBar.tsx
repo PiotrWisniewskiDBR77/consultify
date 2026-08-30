@@ -61,7 +61,10 @@ export const AssessmentMenu3ActionBar: React.FC<AssessmentMenu3ActionBarProps> =
               {chip.icon || <span className={MENU_3_ALL_DOT_CLASS} />}
               <span className="truncate">{chip.label}</span>
               {chip.badge !== undefined && chip.badge !== null ? (
-                <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                <span
+                  className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}
+                  title={typeof chip.badge === 'string' ? chip.badge : undefined}
+                >
                   {chip.badge}
                 </span>
               ) : null}

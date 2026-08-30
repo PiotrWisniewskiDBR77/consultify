@@ -190,8 +190,8 @@ function formatDate(iso: string | null | undefined, isPolish: boolean): string {
   return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function honestNumber(value: number | null): React.ReactNode {
-  return <HonestValueCell value={value} align="right" />;
+function honestNumber(value: number | null, isPolish: boolean): React.ReactNode {
+  return <HonestValueCell isPolish={isPolish} value={value} align="right" />;
 }
 
 /** Contract section (task 3) — exactly the bound fields
@@ -203,37 +203,37 @@ function targetGeometryRows(v: KpiDefinitionVersionDto, isPolish: boolean): Arti
   switch (v.targetGeometry) {
     case 'threshold_min':
       return [
-        { id: 'targetValue', label: isPolish ? 'Próg (min.)' : 'Threshold (min)', value: honestNumber(v.targetValue), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow), mono: true },
-        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow), mono: true },
+        { id: 'targetValue', label: isPolish ? 'Próg (min.)' : 'Threshold (min)', value: honestNumber(v.targetValue, isPolish), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow, isPolish), mono: true },
+        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow, isPolish), mono: true },
       ];
     case 'threshold_max':
       return [
-        { id: 'targetValue', label: isPolish ? 'Próg (maks.)' : 'Threshold (max)', value: honestNumber(v.targetValue), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning up to', value: honestNumber(v.warningHigh), mono: true },
-        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical up to', value: honestNumber(v.criticalHigh), mono: true },
+        { id: 'targetValue', label: isPolish ? 'Próg (maks.)' : 'Threshold (max)', value: honestNumber(v.targetValue, isPolish), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning up to', value: honestNumber(v.warningHigh, isPolish), mono: true },
+        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical up to', value: honestNumber(v.criticalHigh, isPolish), mono: true },
       ];
     case 'range':
       return [
-        { id: 'targetMin', label: isPolish ? 'Cel od' : 'Target from', value: honestNumber(v.targetMin), mono: true },
-        { id: 'targetMax', label: isPolish ? 'Cel do' : 'Target to', value: honestNumber(v.targetMax), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning to', value: honestNumber(v.warningHigh), mono: true },
+        { id: 'targetMin', label: isPolish ? 'Cel od' : 'Target from', value: honestNumber(v.targetMin, isPolish), mono: true },
+        { id: 'targetMax', label: isPolish ? 'Cel do' : 'Target to', value: honestNumber(v.targetMax, isPolish), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow, isPolish), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning to', value: honestNumber(v.warningHigh, isPolish), mono: true },
       ];
     case 'exact':
       return [
-        { id: 'targetValue', label: isPolish ? 'Wartość dokładna' : 'Exact value', value: honestNumber(v.targetValue), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Tolerancja od' : 'Tolerance from', value: honestNumber(v.warningLow), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Tolerancja do' : 'Tolerance to', value: honestNumber(v.warningHigh), mono: true },
-        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow), mono: true },
-        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical to', value: honestNumber(v.criticalHigh), mono: true },
+        { id: 'targetValue', label: isPolish ? 'Wartość dokładna' : 'Exact value', value: honestNumber(v.targetValue, isPolish), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Tolerancja od' : 'Tolerance from', value: honestNumber(v.warningLow, isPolish), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Tolerancja do' : 'Tolerance to', value: honestNumber(v.warningHigh, isPolish), mono: true },
+        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow, isPolish), mono: true },
+        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical to', value: honestNumber(v.criticalHigh, isPolish), mono: true },
       ];
     case 'binary':
       return [
         {
           id: 'binarySuccessValue',
           label: isPolish ? 'Wartość sukcesu (0 lub 1)' : 'Success value (0 or 1)',
-          value: honestNumber(v.binarySuccessValue),
+          value: honestNumber(v.binarySuccessValue, isPolish),
           mono: true,
         },
       ];
@@ -596,6 +596,7 @@ export const KpiToolPage: React.FC = () => {
           ) : (
             <div className="flex items-center gap-4">
               <HonestValueCell
+                isPolish={isPolish}
                 value={measurement ? measurement.actualValue : null}
                 format={(v) => <span className="text-2xl font-semibold tabular-nums text-c-text">{v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}</span>}
               />

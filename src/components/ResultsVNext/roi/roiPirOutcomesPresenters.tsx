@@ -81,6 +81,7 @@ export function buildRoiPirOutcomesColumns(isPolish: boolean): TableColumn[] {
       align: 'right',
       render: (row: RoiOrgPirOutcomeCaseRow) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.benefitsRealizationPct}
           align="right"
           notCalculableReason={
@@ -142,6 +143,7 @@ export function buildRoiPirOutcomesPreview(
           label: isPolish ? 'Realizacja' : 'Realization',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={row.benefitsRealizationPct}
               notCalculableReason={
                 isPolish

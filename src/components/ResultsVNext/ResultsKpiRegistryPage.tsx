@@ -640,6 +640,7 @@ function buildPreview(
             <span className="text-c-text-muted">{t('Ładowanie…', 'Loading…')}</span>
           ) : (
             <HonestValueCell
+              isPolish={ctx.isPolish}
               value={measurement ? measurement.actualValue : null}
               format={(v) => (
                 <span className="tabular-nums font-medium text-c-text">

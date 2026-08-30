@@ -2631,17 +2631,25 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
               !activeDocumentId &&
               assessments.length === 0
             ) && (
-              <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              // Light-mode-readability §5/§18.2 (SYS-3/VIS-001, wzór StatusChip.tsx
+              // TONE_SHELL.warning): `text-amber-100`/`text-amber-300` bez pary
+              // jasnego motywu były dobrane pod ciemne tło i w light mode dawały
+              // prawie niewidoczny tekst na jasnym tle (kanon: kontrast czytelny
+              // w OBU motywach, nie tylko dark).
+              <div className="mx-4 mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+                    <AlertCircle
+                      size={16}
+                      className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300"
+                    />
                     <p>{loadWarning}</p>
                   </div>
                   <button
                     onClick={() => refreshData()}
-                    className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
+                    className="shrink-0 rounded-lg border border-amber-400/50 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-400/10 dark:border-amber-400/30 dark:text-amber-100"
                   >
-                    Retry
+                    {t('common.retry', 'Retry')}
                   </button>
                 </div>
               </div>

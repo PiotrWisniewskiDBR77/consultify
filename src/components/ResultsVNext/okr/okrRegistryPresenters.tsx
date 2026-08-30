@@ -136,6 +136,7 @@ export function buildOkrSetColumns(
       align: 'right',
       render: (row: OkrSetDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrProgress(row.overallProgress)}
           align="right"
           // No `notCalculableReason` — this branch is unreachable for real
@@ -361,6 +362,7 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
           label: isPolish ? 'Ogólny postęp' : 'Overall progress',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={progress}
               align="left"
               format={(v) => formatOkrProgressPercent(v, isPolish)}

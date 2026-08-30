@@ -2070,22 +2070,30 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     // the editor instance. Reading this revision deliberately refreshes the
     // registry predicates after each editor transaction.
     void editorCommandRevision;
+    // Guard against a destroyed-but-not-yet-cleared editor instance (e.g.
+    // React StrictMode's dev-only mount→unmount→mount cycle): TipTap's
+    // `Editor.destroy()` nulls out `commandManager` but the React state
+    // holding `tiptapEditor` can still reference that stale instance for
+    // one render, and calling `.can()`/`.chain()` on it throws
+    // "Cannot read properties of null (reading 'can')" — a real crash
+    // (ErrorBoundary "Something went wrong"), not a display-only defect.
+    const editorLive = tiptapEditor && !tiptapEditor.isDestroyed ? tiptapEditor : null;
     return createDocumentArtifactCommandRegistry(
       {
-        undo: () => tiptapEditor?.chain().focus().undo().run(),
-        redo: () => tiptapEditor?.chain().focus().redo().run(),
-        setParagraph: () => tiptapEditor?.chain().focus().setParagraph().run(),
-        setHeading: (level) => tiptapEditor?.chain().focus().toggleHeading({ level }).run(),
-        toggleBulletList: () => tiptapEditor?.chain().focus().toggleBulletList().run(),
-        toggleOrderedList: () => tiptapEditor?.chain().focus().toggleOrderedList().run(),
-        toggleBold: () => tiptapEditor?.chain().focus().toggleBold().run(),
-        toggleItalic: () => tiptapEditor?.chain().focus().toggleItalic().run(),
-        toggleUnderline: () => tiptapEditor?.chain().focus().toggleUnderline().run(),
+        undo: () => editorLive?.chain().focus().undo().run(),
+        redo: () => editorLive?.chain().focus().redo().run(),
+        setParagraph: () => editorLive?.chain().focus().setParagraph().run(),
+        setHeading: (level) => editorLive?.chain().focus().toggleHeading({ level }).run(),
+        toggleBulletList: () => editorLive?.chain().focus().toggleBulletList().run(),
+        toggleOrderedList: () => editorLive?.chain().focus().toggleOrderedList().run(),
+        toggleBold: () => editorLive?.chain().focus().toggleBold().run(),
+        toggleItalic: () => editorLive?.chain().focus().toggleItalic().run(),
+        toggleUnderline: () => editorLive?.chain().focus().toggleUnderline().run(),
       },
       {
-        canUndo: tiptapEditor?.can().undo() ?? false,
-        canRedo: tiptapEditor?.can().redo() ?? false,
-        editorReady: Boolean(tiptapEditor),
+        canUndo: editorLive?.can().undo() ?? false,
+        canRedo: editorLive?.can().redo() ?? false,
+        editorReady: Boolean(editorLive),
       }
     );
   }, [tiptapEditor, editorCommandRevision]);

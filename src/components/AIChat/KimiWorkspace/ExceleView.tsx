@@ -235,9 +235,12 @@ export const ExceleView: React.FC = () => {
         type: 'xlsx',
         title,
         fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-        summary: `Workbook "${title}" — ${sheets.length || 1} sheets.`,
+        summary: t('kimi.excele.workbookSummary', 'Workbook "{{title}}" — {{count}} sheets.', {
+          title,
+          count: sheets.length || 1,
+        }),
         kpiItems: [
-          { label: 'Sheets', value: String(sheets.length || 1) },
+          { label: t('kimi.excele.sheetsLabel', 'Sheets'), value: String(sheets.length || 1) },
           { label: 'Format', value: 'XLSX' },
         ],
         sheetNames: sheets.map((s: any) => s.name || 'Sheet'),

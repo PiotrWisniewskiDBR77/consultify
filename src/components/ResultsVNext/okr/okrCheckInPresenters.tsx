@@ -42,6 +42,7 @@ export function buildOkrCheckInColumns(isPolish: boolean): TableColumn[] {
       align: 'right',
       render: (row: OkrCheckInDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrNumericField(row.newValue)}
           align="right"
           format={(v) => <span className="tabular-nums text-sm text-c-text">{v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}</span>}
@@ -55,6 +56,7 @@ export function buildOkrCheckInColumns(isPolish: boolean): TableColumn[] {
       align: 'right',
       render: (row: OkrCheckInDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrCheckInProgress(row.calculatedProgress)}
           align="right"
           format={(v) => <span className="tabular-nums text-sm text-c-text">{formatOkrProgressPercent(v, isPolish)}</span>}
@@ -182,8 +184,8 @@ export function buildOkrCheckInPreview(row: OkrCheckInDto, deps: OkrCheckInPrevi
       valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
         { id: 'note', label: isPolish ? 'Notatka' : 'Note', value: row.note },
-        { id: 'previousValue', label: isPolish ? 'Wartość poprzednia' : 'Previous value', value: <HonestValueCell value={previousValue} format={(v) => v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')} /> },
-        { id: 'newValue', label: isPolish ? 'Nowa wartość' : 'New value', value: <HonestValueCell value={newValue} format={(v) => v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')} /> },
+        { id: 'previousValue', label: isPolish ? 'Wartość poprzednia' : 'Previous value', value: <HonestValueCell isPolish={isPolish} value={previousValue} format={(v) => v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')} /> },
+        { id: 'newValue', label: isPolish ? 'Nowa wartość' : 'New value', value: <HonestValueCell isPolish={isPolish} value={newValue} format={(v) => v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')} /> },
         {
           id: 'calculatedProgress',
           label: isPolish ? 'Wyliczony postęp' : 'Calculated progress',
@@ -191,7 +193,7 @@ export function buildOkrCheckInPreview(row: OkrCheckInDto, deps: OkrCheckInPrevi
           // column (see `okrCheckInApi.ts` header), so this branch is
           // unreachable from real data, same posture as the Set's own
           // `overallProgress` (OQ-UI-C).
-          value: <HonestValueCell value={progress} format={(v) => formatOkrProgressPercent(v, isPolish)} />,
+          value: <HonestValueCell isPolish={isPolish} value={progress} format={(v) => formatOkrProgressPercent(v, isPolish)} />,
         },
         {
           id: 'systemSuggestedStatus',
