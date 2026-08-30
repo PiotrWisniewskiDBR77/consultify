@@ -7676,11 +7676,19 @@ Return ONLY the answer text (no markdown fences).`;
                     label: `${t('interview.hub.insight2')}: ${(src.title || src.id).slice(0, 40)}`,
                     tone: 'text-amber-600 dark:text-amber-300',
                   });
-                if (item.priority)
+                if (item.priority) {
+                  // Surowa wartość enuma ("medium") pokazywana wprost — naprawione na
+                  // etykietę z tej samej mapy tłumaczeń, której używa NewSessionModal
+                  // (interview.newSessionModal.priorityLabel.<low|medium|high|urgent>).
+                  const priorityKey = String(item.priority).toLowerCase();
                   relations.push({
-                    label: `${t('interview.hub.priority')}: ${String(item.priority).toLowerCase()}`,
+                    label: `${t('interview.hub.priority')}: ${t(
+                      `interview.newSessionModal.priorityLabel.${priorityKey}`,
+                      String(item.priority)
+                    )}`,
                     tone: 'text-c-text-secondary',
                   });
+                }
                 if (item.updatedAt || item.createdAt)
                   relations.push({
                     label: `${t('interview.hub.updated')}: ${new Date(

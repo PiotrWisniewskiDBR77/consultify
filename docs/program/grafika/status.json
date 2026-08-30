@@ -677,11 +677,10 @@
           "ocena": "A",
           "co": "Pelna powloka artefaktu: menu po lewej, panel po prawej. Tekst wprost mowi, czym narzedzie NIE jest i kiedy go NIE uzywac.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Kategoria pokazywala surowe strategy zamiast etykiety — teraz tlumaczona (KnownToolDetailView.tsx)"
           ],
-          "wyjatki": [
-            "Kategoria pokazuje surowe strategic zamiast polskiej nazwy"
-          ],
+          "wyjatki": [],
           "warianty": [
             "karta-tool"
           ],
@@ -693,10 +692,11 @@
           "ocena": "A",
           "co": "Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "AI-PROPOSED/RETHINKING surowe wartosci — tlumaczone (SwotLiveArtifact.tsx)"
           ],
           "wyjatki": [
-            "Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING"
+            "SwotLiveArtifact nie ma zadnego wolacza w produkcie (grep: zero uzyc poza harnessem i komentarzem) — komponent zbudowany, nigdy nie montowany w ToolWorkspace"
           ],
           "gdzie": "Narzędzia → sesja narzędzia „Dynamiczny SWOT\" → pole robocze na żywo — cztery obszary (SO/WO/ST/WT) z punktami oznaczonymi FAKT/HIPOTEZA/OBSERWACJA."
         },
@@ -707,10 +707,11 @@
           "co": "Piec krokow, propozycja AI z uzasadnieniem, liczniki zaakceptowanych punktow.",
           "naprawione": [
             "CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po",
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Kategoria surowe strategic — tlumaczona; Find Signals labelPl byl kopia angielskiego — Znajdz sygnaly (toolAiActions.ts)"
           ],
           "wyjatki": [
-            "DRAFT, COPILOT AI i Find Signals po angielsku"
+            "COPILOT AI po angielsku (klucz i18n istnieje, PL = kopia EN literalna)"
           ],
           "gdzie": "Narzędzia → sesja narzędzia „Dynamiczny SWOT\" → warsztat sesji — pięć kroków, propozycje AI z uzasadnieniem, liczniki zaakceptowanych punktów."
         },
@@ -729,12 +730,15 @@
         {
           "id": "tools-outputs-insights-tab",
           "nazwa": "Narzedzia — zakladka wnioskow",
-          "ocena": "A",
+          "ocena": "B",
           "co": "Tabela kanoniczna, statusy i daty po polsku.",
           "naprawione": [
             "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "Zakladka Insighty nie jest slowem polskim (tools.hub.tabs.outputs w locale)",
+            "Nazwy narzedzi Value Chain/Dynamic SWOT surowe w tabeli (karta-tool ma je poprawnie po polsku — inna droga danych)"
+          ],
           "warianty": [
             "tools-sesja-wyjscie"
           ],
@@ -764,21 +768,24 @@
           "ocena": "A",
           "co": "Wyniki i gotowosc z paskiem postepu.",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "Checklista Mission brief jest jasny — angielskie Mission brief wklejone w polskie zdanie (locale)"
+          ],
           "gdzie": "Narzędzia → sesja „Dynamiczny SWOT\" → podsumowanie sesji — propozycja inicjatyw wynikających z zaakceptowanych ruchów, z paskiem gotowości do przekształcenia w prawdziwą inicjatywę."
         },
         {
           "id": "tools-sesja-wyjscie",
           "nazwa": "Narzedzia — wyjscie z sesji",
-          "ocena": "B",
+          "ocena": "A",
           "co": "Powloka artefaktu z sesja, pytania po polsku.",
           "naprawione": [
             "Ekran nie byl podlaczony do harnessu",
-            "CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po"
+            "CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po",
+            "Nazwa sesji Dynamic SWOT - Session na sztywno w fixture — Sesja (dev-render), domyslna nazwa sesji w produkcie tez PL (ToolDocumentView defaultSessionName); Kategoria tlumaczona"
           ],
           "wyjatki": [
-            "Session, DRAFT, COPILOT AI, AI Frame, AI Draft i naglowek OUTPUTS po angielsku",
-            "Surowe dynamic-swot i strategic we wlasciwosciach"
+            "COPILOT AI po angielsku (locale)",
+            "Surowe dynamic-swot w polu Typ narzedzia (identyfikator techniczny, nie nazwa)"
           ],
           "warianty": [
             "tools-outputs-insights-tab"
@@ -791,10 +798,12 @@
           "ocena": "C",
           "co": "Lista rezultatow sesji z wersjami.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Data US-format (toLocaleDateString bez locale) — formatListDate (ToolOutputsPanel.tsx)"
           ],
           "wyjatki": [
-            "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy"
+            "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy",
+            "Przyczyna ustalona: ~15 kluczy toolOutputs.* nie istnieje w ogole w public/locales/{pl,en}/translation.json — component jest i18n-ready, slownik pusty"
           ],
           "gdzie": "Narzędzia → panel rezultatów sesji — lista zapisanych wyjść (outputs) z wersjami, z możliwością ponownego otwarcia."
         }
@@ -2595,10 +2604,10 @@
           "nazwa": "Rekord wskaznika OEE",
           "ocena": "A",
           "co": "Karty metryk i panel wlasciwosci.",
-          "naprawione": [],
-          "wyjatki": [
-            "Pola Wlasciciel i Proces pokazuja surowe identyfikatory zamiast nazw — dane testowe"
+          "naprawione": [
+            "Fixture Wlasciciel/Proces pokazywal surowe ID — nazwy (dev-render)"
           ],
+          "wyjatki": [],
           "warianty": [
             "assessment-matryca",
             "idea-table"

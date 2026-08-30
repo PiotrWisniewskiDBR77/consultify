@@ -102,7 +102,15 @@ export const DrdLibraryEntryHarness: React.FC<{ onOpen?: (id: string) => void }>
         ]}
         activeTab="processes"
       />
-      <div className="flex items-center gap-2 border-b border-c-border-subtle bg-c-info/5 px-4 py-2 text-xs text-c-text-secondary">
+      {/* Pasek wyjaśniający flagę dla inżyniera obsługującego harness — NIE
+          część produktu. Bez `data-dev-render-chrome` zrzuty `grafika-zrzuty.mjs`
+          (chowa elementy z tym atrybutem) pokazywały go jako pasek z kodem
+          w kadrze — pułapka z CLAUDE.md #7. Przegląd nocny 03-wywiad/05-ocena,
+          2026-08-30 (ta sama klasa defektu naprawiona w siri-workspace.tsx). */}
+      <div
+        data-dev-render-chrome="true"
+        className="flex items-center gap-2 border-b border-c-border-subtle bg-c-info/5 px-4 py-2 text-xs text-c-text-secondary"
+      >
         <FolderKanban size={13} className="text-c-info" />
         Flaga <code className="rounded bg-c-surface-raised px-1 py-0.5">drdMethodWorkspaceSliceV1</code> = ON — PODWÓJNE
         kliknięcie wiersza DRD (albo „Otwórz proces") otwiera <code className="rounded bg-c-surface-raised px-1 py-0.5">MethodWorkspaceShell</code>{' '}
