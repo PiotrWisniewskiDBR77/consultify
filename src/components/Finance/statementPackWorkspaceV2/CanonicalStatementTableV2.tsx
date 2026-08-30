@@ -29,9 +29,9 @@
 import React, { useMemo } from 'react';
 
 import {
+  financeUnitLabel,
   financeValueDisplayReasonLabel,
   formatFinanceValueForDisplay,
-  type FinanceValue,
 } from '@/services/api/financeV2.types';
 
 import {
@@ -83,12 +83,6 @@ function cellKey(rowKey: string, periodId: string): string {
   return `${rowKey}::${periodId}`;
 }
 
-const UNIT_LABELS: Record<FinanceValue['unit'], string> = {
-  UNITS: 'jednostki',
-  THOUSANDS: 'tysiące',
-  MILLIONS: 'miliony',
-  BILLIONS: 'miliardy',
-};
 
 export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props): React.ReactElement {
   const { lines, resolveLineLabel, selectedCellKey, onSelectCell, emptyLabel } = props;
@@ -116,7 +110,7 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
           {headerScale ? (
             <>
               Waluta: <span className="font-semibold text-c-text">{headerScale.currency}</span> · Skala:{' '}
-              <span className="font-semibold text-c-text">{UNIT_LABELS[headerScale.unit]}</span>
+              <span className="font-semibold text-c-text">{financeUnitLabel(headerScale.unit)}</span>
             </>
           ) : (
             'Waluta/skala nieznana — brak danych w tej tabeli'

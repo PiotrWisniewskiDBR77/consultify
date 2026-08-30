@@ -32,6 +32,14 @@ export interface HonestValueCellProps<T> {
   /** Right-align + tabular-nums (use for numeric columns). */
   align?: 'left' | 'right';
   className?: string;
+  /**
+   * Bramka parytetu jezykowego (2026-08-30): bez tego propu chip zawsze
+   * pokazuje angielskie "n/a", nawet na polskim ekranie (zrzut
+   * results-vnext-okr-objectives PRZED). Domyslnie undefined/false zachowuje
+   * dotychczasowy tekst — zmiana jest wyliczana per-wywolanie, nie zmienia
+   * zachowania callerow, ktore jeszcze go nie przekazuja.
+   */
+  isPolish?: boolean;
 }
 
 export function HonestValueCell<T>({
@@ -40,6 +48,7 @@ export function HonestValueCell<T>({
   notCalculableReason,
   align = 'left',
   className = '',
+  isPolish = false,
 }: HonestValueCellProps<T>): React.ReactElement {
   const alignCls = align === 'right' ? 'text-right tabular-nums' : 'text-left';
 
@@ -62,9 +71,14 @@ export function HonestValueCell<T>({
       >
         <span
           className="inline-flex h-5 items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-1.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted"
-          title={notCalculableReason ?? 'Not calculable — the formula is structurally undefined'}
+          title={
+            notCalculableReason ??
+            (isPolish
+              ? 'Nie do obliczenia — formuła jest strukturalnie niezdefiniowana'
+              : 'Not calculable — the formula is structurally undefined')
+          }
         >
-          n/a
+          {isPolish ? 'n.d.' : 'n/a'}
         </span>
       </span>
     );

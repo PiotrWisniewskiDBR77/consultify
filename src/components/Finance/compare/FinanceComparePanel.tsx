@@ -91,6 +91,21 @@ function formatPct(n: number | null): string {
   return `${(n * 100).toLocaleString('pl-PL', { maximumFractionDigits: 1 })}%`;
 }
 
+/**
+ * TOR GRAFIKI 2026-08-30 — "prawa liczby": każda liczba w tabeli A/B/Δ musi mieć
+ * nazwaną jednostkę. `CompareCellPointDto.presentationCurrency` już niesie tę
+ * informację (real dane, nie zgadywana) — tylko nigdzie się nie renderowała.
+ * Zwraca walutę TYLKO gdy wszystkie komórki obu stron się zgadzają (typowy
+ * przypadek); przy realnej niezgodności walut panel ma już osobny kafelek
+ * „Niezgodność walut" — tu unikamy fałszywej pojedynczej etykiety.
+ */
+function comparePanelCurrencyLabel(rows: CompareRowDto[]): string | null {
+  const currencies = new Set(
+    rows.flatMap((r) => [r.a.presentationCurrency, r.b.presentationCurrency]).filter((c): c is string => !!c)
+  );
+  return currencies.size === 1 ? [...currencies][0] : null;
+}
+
 function rowsToCsv(rows: CompareRowDto[]): string {
   const header = ['Wymiary', 'A', 'B', 'Δ', 'Δ%', 'Kind', 'Istotne'];
   const lines = [header.join(';')];
@@ -213,6 +228,7 @@ export function FinanceComparePanel({
             <p className="text-xs text-c-text-secondary">
               {result.sourceA.label} vs {result.sourceB.label} · próg istotności{' '}
               {result.materialityThresholdPct}%
+              {comparePanelCurrencyLabel(result.rows) && ` · waluta: ${comparePanelCurrencyLabel(result.rows)}`}
             </p>
           </div>
           <button

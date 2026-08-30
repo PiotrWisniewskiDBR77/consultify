@@ -13,12 +13,55 @@ import {
 } from './resultsDomainNavigation';
 import { ResultsVNextRegistryShell } from './ResultsVNextRegistryShell';
 import { searchResults, type ResultsSearchHit } from './resultsSearchApi';
+import { ROI_STATUS_LABELS } from './roi/roiRegistryMappers';
+import { OKR_SET_STATUS_LABELS } from './okr/okrRegistryMappers';
 
 const KIND_LABEL: Record<ResultsSearchHit['kind'], string> = {
   kpi: 'KPI',
   okr_set: 'OKR',
   roi_case: 'ROI',
 };
+
+// Bramka parytetu jezykowego (2026-08-30): przed ta zmiana `row.status`
+// (surowy string z serwera, np. "active"/"modeling") renderowal sie 1:1 —
+// angielski technicz enum w polskim interfejsie (zrzut
+// results-vnext-search-registry, zapytanie "linia"). Ten widok laczy trzy
+// domeny (KPI/OKR/ROI), kazda ma wlasny, juz przetlumaczony slownik statusow
+// gdzie indziej w pakiecie — tu tylko dysponujemy po `row.kind`, zeby uzyc
+// tego samego slownika, nie wymyslac czwartego. KPI nie eksportuje swojej
+// (malej, 5-stanowej) mapy z `ResultsKpiRegistryPage.tsx`, wiec kopia lokalna
+// — zrodlo: `KPI_STATUSES` w `kpiApi.ts`.
+const KPI_SEARCH_STATUS_LABELS: Record<string, { pl: string; en: string }> = {
+  draft: { pl: 'Szkic', en: 'Draft' },
+  pending_approval: { pl: 'Do zatwierdzenia', en: 'Pending approval' },
+  active: { pl: 'Aktywny', en: 'Active' },
+  suspended: { pl: 'Zawieszony', en: 'Suspended' },
+  archived: { pl: 'Zarchiwizowany', en: 'Archived' },
+};
+
+function searchHitStatusLabel(row: ResultsSearchHit, isPolish: boolean): string {
+  const table: Record<string, { pl: string; en: string }> =
+    row.kind === 'kpi'
+      ? KPI_SEARCH_STATUS_LABELS
+      : row.kind === 'roi_case'
+        ? ROI_STATUS_LABELS
+        : OKR_SET_STATUS_LABELS;
+  const entry = table[row.status];
+  // Nieznany/niedopasowany status nigdy nie znika po cichu — surowa wartosc
+  // zostaje widoczna (lepsze niz pusty ekran), po prostu bez tlumaczenia.
+  if (!entry) return row.status;
+  return isPolish ? entry.pl : entry.en;
+}
+
+const MATCHED_FIELD_LABEL: Record<ResultsSearchHit['matchedField'], { pl: string; en: string }> = {
+  title: { pl: 'Nazwa', en: 'Title' },
+  code: { pl: 'Kod', en: 'Code' },
+  description: { pl: 'Opis', en: 'Description' },
+};
+
+function matchedFieldLabel(field: ResultsSearchHit['matchedField'], isPolish: boolean): string {
+  return isPolish ? MATCHED_FIELD_LABEL[field].pl : MATCHED_FIELD_LABEL[field].en;
+}
 
 export const ResultsSearchRegistry: React.FC = () => {
   const { i18n } = useTranslation();
@@ -84,13 +127,13 @@ export const ResultsSearchRegistry: React.FC = () => {
         id: 'status',
         label: 'Status',
         width: '150px',
-        render: (row: ResultsSearchHit) => row.status,
+        render: (row: ResultsSearchHit) => searchHitStatusLabel(row, isPolish),
       },
       {
         id: 'matchedField',
         label: isPolish ? 'Dopasowane pole' : 'Matched field',
         width: '150px',
-        render: (row: ResultsSearchHit) => row.matchedField,
+        render: (row: ResultsSearchHit) => matchedFieldLabel(row.matchedField, isPolish),
       },
       {
         id: 'updatedAt',
@@ -190,11 +233,11 @@ export const ResultsSearchRegistry: React.FC = () => {
                 propertyLabel: isPolish ? 'Właściwość' : 'Property',
                 valueLabel: isPolish ? 'Wartość' : 'Value',
                 properties: [
-                  { id: 'status', label: 'Status', value: selected.status },
+                  { id: 'status', label: 'Status', value: searchHitStatusLabel(selected, isPolish) },
                   {
                     id: 'matched',
                     label: isPolish ? 'Dopasowane pole' : 'Matched field',
-                    value: selected.matchedField,
+                    value: matchedFieldLabel(selected.matchedField, isPolish),
                   },
                   {
                     id: 'updated',

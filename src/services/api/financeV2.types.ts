@@ -253,6 +253,32 @@ export function financeArtifactTypeLabel(artifactType: FinanceArtifactType): str
   }
 }
 
+/**
+ * Polska etykieta jednostki skali (`FinanceValue['unit']` i pokrewne, np.
+ * `FinanceExcelManifestDto.defaultUnit`) — CLAUDE.md enum-leak rule: nigdy
+ * surowy token. Znany wzorzec defektu tej klasy w produkcie: token jednostki
+ * renderowany po angielsku wprost w polskim zdaniu (np. „jednostka
+ * THOUSANDS" zamiast „jednostka: tysiące" — złapane na
+ * finance-export-import-panel, port etykiet z `CanonicalStatementTableV2`,
+ * który miał tę samą mapę tylko lokalnie, nie do współdzielenia).
+ */
+export function financeUnitLabel(unit: 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BILLIONS'): string {
+  switch (unit) {
+    case 'UNITS':
+      return 'jednostki';
+    case 'THOUSANDS':
+      return 'tysiące';
+    case 'MILLIONS':
+      return 'miliony';
+    case 'BILLIONS':
+      return 'miliardy';
+    default: {
+      const _exhaustive: never = unit;
+      return _exhaustive;
+    }
+  }
+}
+
 export interface ArtifactRef {
   organizationId: string;
   artifactType: FinanceArtifactType;
@@ -2331,7 +2357,7 @@ export function compareComparisonTypeLabel(type: CompareComparisonTypeDto): stri
     case 'VALUATION_METHOD':
       return 'Metoda / metoda';
     case 'ACTUAL_VS_FORECAST':
-      return 'Actual / forecast';
+      return 'Rzeczywiste / prognoza';
     case 'GENERIC':
       return 'Porównanie ogólne';
     default: {

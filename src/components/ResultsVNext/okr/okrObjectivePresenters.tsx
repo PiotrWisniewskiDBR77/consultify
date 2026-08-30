@@ -87,6 +87,7 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       align: 'right',
       render: (row: OkrObjectiveWithKeyResultsDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrObjectiveProgress(row.progress, row.progressCalcReason)}
           align="right"
           notCalculableReason={row.progressCalcReason ?? undefined}
@@ -100,6 +101,7 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       width: '120px',
       render: (row: OkrObjectiveWithKeyResultsDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrObjectiveConfidence(row.confidence, row.confidenceCalcReason)}
           notCalculableReason={row.confidenceCalcReason ?? undefined}
           format={(v) => <StatusChip label={okrObjectiveConfidenceLabel(v, isPolish)} tone="neutral" />}
@@ -227,6 +229,7 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
           label: isPolish ? 'Postęp' : 'Progress',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={progress}
               notCalculableReason={row.progressCalcReason ?? undefined}
               format={(v) => formatOkrProgressPercent(v, isPolish)}
@@ -238,6 +241,7 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
           label: isPolish ? 'Pewność' : 'Confidence',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={confidence}
               notCalculableReason={row.confidenceCalcReason ?? undefined}
               format={(v) => okrObjectiveConfidenceLabel(v, isPolish)}

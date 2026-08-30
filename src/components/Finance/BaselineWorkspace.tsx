@@ -178,7 +178,12 @@ function BaselineWorkspaceContextLoader(props: BaselineWorkspaceProps): React.Re
         <EmptyStateInline
           message="Nie można otworzyć kontekstu modelu bazowego."
           hint={state.message}
-          action={{ label: 'Spróbuj ponownie', onClick: () => setAttempt((value) => value + 1) }}
+          action={{
+            label: 'Spróbuj ponownie',
+            onClick: () => setAttempt((value) => value + 1),
+            showPrefix: false,
+            neutralAccent: true,
+          }}
         />
       </div>
     );
