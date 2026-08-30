@@ -98,10 +98,16 @@ export interface RoiCaseRealizeValueWorkspaceProps {
   onBack: () => void;
   phase: RoiCasePhase;
   onPhaseChange: (phase: RoiCasePhase) => void;
+  /** Tryb JEDNEJ KARTY N — patrz `RoiCaseCardSections.ts`. Gdy podany, rząd
+   * zakładek i stan aktywnej zakładki należą do karty, a pasek faz (Menu 3)
+   * i okruszki znikają: niesie je Menu 1 karty i jej lewa nawigacja. */
+  cardMode?: RoiCardModeProps;
 }
 
-export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange }) => {
-  const [tab, setTab] = useState<RealizeTab>('forecast-versions');
+export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+  const [localTab, setLocalTab] = useState<RealizeTab>('forecast-versions');
+  const tab = (cardMode ? cardMode.activeTab : localTab) as RealizeTab;
+  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as RealizeTab));
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
   const messageOf = (err: unknown) => toUserFacingErrorMessage(err, isPolish);
@@ -221,15 +227,21 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  const breadcrumbs = [{ label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack }, { label: roiCase.title }];
-  const tabs: StandardModuleTab[] = [
-    { id: 'forecast-versions', label: isPolish ? 'Prognoza' : 'Forecast' },
-    { id: 'actuals', label: isPolish ? 'Wykonania' : 'Actuals' },
-    { id: 'actual-snapshots', label: isPolish ? 'Migawki wykonania' : 'Actual snapshots' },
-    { id: 'variances', label: isPolish ? 'Wariancje' : 'Variances' },
-    { id: 'benefits-realization', label: isPolish ? 'Realizacja korzyści' : 'Benefits realization' },
-  ];
-  const chipsBar = { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
+  const breadcrumbs = cardMode
+    ? undefined
+    : [{ label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack }, { label: roiCase.title }];
+  const tabs: StandardModuleTab[] = cardMode
+    ? cardMode.tabs
+    : [
+      { id: 'forecast-versions', label: isPolish ? 'Prognoza' : 'Forecast' },
+      { id: 'actuals', label: isPolish ? 'Wykonania' : 'Actuals' },
+      { id: 'actual-snapshots', label: isPolish ? 'Migawki wykonania' : 'Actual snapshots' },
+      { id: 'variances', label: isPolish ? 'Wariancje' : 'Variances' },
+      { id: 'benefits-realization', label: isPolish ? 'Realizacja korzyści' : 'Benefits realization' },
+      ];
+  const chipsBar = cardMode
+    ? {}
+    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
 
   // ── Forecast versions tab ──────────────────────────────────────────────
   if (tab === 'forecast-versions') {
@@ -240,7 +252,7 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as RealizeTab),
+            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
             showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Opublikuj prognozę' : 'Publish forecast',
@@ -290,7 +302,7 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as RealizeTab),
+            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
             showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Zarejestruj wykonanie' : 'Record actual',
@@ -376,7 +388,7 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as RealizeTab),
+            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
             showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Opublikuj migawkę' : 'Publish snapshot',
@@ -423,7 +435,7 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as RealizeTab),
+            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
             showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Zarejestruj wariancję' : 'Record variance',
@@ -516,7 +528,7 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
     <ResultsVNextRegistryShell
       domain="roi"
       moduleBar={{
-        breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as RealizeTab),
+        breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
         showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
       }}
       table={{

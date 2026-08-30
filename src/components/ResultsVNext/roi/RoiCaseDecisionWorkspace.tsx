@@ -43,11 +43,20 @@ export interface RoiCaseDecisionWorkspaceProps {
   onBack: () => void;
   phase: RoiCasePhase;
   onPhaseChange: (phase: RoiCasePhase) => void;
+  /** Tryb JEDNEJ KARTY N — patrz `RoiCaseCardSections.ts`. Gdy podany, rząd
+   * zakładek i stan aktywnej zakładki należą do karty, a pasek faz (Menu 3)
+   * i okruszki znikają: niesie je Menu 1 karty i jej lewa nawigacja. */
+  cardMode?: RoiCardModeProps;
 }
 
-export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange }) => {
-  const [tab, setTab] = useState<DecisionTab>('approval-snapshots');
+export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+  const [localTab, setLocalTab] = useState<DecisionTab>('approval-snapshots');
+  const tab = (cardMode ? cardMode.activeTab : localTab) as DecisionTab;
+  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as DecisionTab));
   const phaseChips = buildRoiCasePhaseChips(isPolish);
+  const chipsBar = cardMode
+    ? {}
+    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
 
   const [snapshots, setSnapshots] = useState<RoiApprovalSnapshot[] | null>(null);
   const [snapshotsError, setSnapshotsError] = useState<string | null>(null);
@@ -83,14 +92,18 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  const breadcrumbs = [
-    { label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack },
-    { label: roiCase.title },
-  ];
-  const tabs: StandardModuleTab[] = [
-    { id: 'approval-snapshots', label: isPolish ? 'Migawki zatwierdzenia' : 'Approval snapshots' },
-    { id: 'compare', label: isPolish ? 'Porównanie' : 'Compare' },
-  ];
+  const breadcrumbs = cardMode
+    ? undefined
+    : [
+        { label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack },
+        { label: roiCase.title },
+      ];
+  const tabs: StandardModuleTab[] = cardMode
+    ? cardMode.tabs
+    : [
+        { id: 'approval-snapshots', label: isPolish ? 'Migawki zatwierdzenia' : 'Approval snapshots' },
+        { id: 'compare', label: isPolish ? 'Porównanie' : 'Compare' },
+      ];
 
   if (tab === 'compare') {
     const rows: TableRow[] = compare === undefined ? [] : buildRoiCaseViewsRows(compare, null).filter((r) => r.id === 'compare').map((r) => withRoiFullToolId(r, 'id'));
@@ -99,9 +112,9 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
-          breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as DecisionTab),
+          breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
           showTabCounts: false, viewModes: ['table'], viewMode: 'table',
-          chips: phaseChips, activeChip: phase, onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+          ...chipsBar,
         }}
         table={{
           columns: buildRoiCaseViewsColumns(isPolish),
@@ -125,9 +138,9 @@ export const RoiCaseDecisionWorkspace: React.FC<RoiCaseDecisionWorkspaceProps> =
     <ResultsVNextRegistryShell
       domain="roi"
       moduleBar={{
-        breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as DecisionTab),
+        breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
         showTabCounts: false, viewModes: ['table'], viewMode: 'table',
-        chips: phaseChips, activeChip: phase, onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+        ...chipsBar,
       }}
       table={{
         columns: buildRoiApprovalSnapshotColumns(isPolish),
