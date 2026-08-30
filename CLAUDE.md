@@ -73,7 +73,12 @@ Dane demo = twarz produktu: probe'y sprzątają po sobie, zero rekordów testowy
 ## ZŁOTE REGUŁY (dwie pułapki, które kosztowały tygodnie — nienaruszalne)
 1. **Weryfikuj REALNY runtime, nie docy/flagi.** Audyty starzeją się w ~3 dni i zawyżają. Zanim
    powiesz „działa/gotowe": `grep` realnego callera w `src/`/`server/src/` (URL/handler), sprawdź
-   czy flaga ma implementację (bywają FANTOMY — `ENABLE_TERESA_NOTE_CREATE` = 0 kodu), a stan danych
+   czy flaga ma implementację (bywają FANTOMY — trzeba to mierzyć ZA KAŻDYM RAZEM;
+   przykład użyty tu wcześniej, `ENABLE_TERESA_NOTE_CREATE`, przestał być fantomem:
+   zmierzone 2026-08-30 — ma `notebookService.createNote`, potwierdzenie w
+   `creationConfirmation.ts` i domyślnie jest WŁĄCZONA. Fantom bywa czasowy —
+   dlatego reguła brzmi „zmierz", a nie „pamiętaj, która flaga była pusta"),
+   a stan danych
    czytaj z ŻYWEJ bazy, nie z kodu. „Testy przeszły" ≠ „działa".
 2. **Baza gałęzi ZAWSZE `origin/demo`** (od 07-08: demo = target deployu, niesie ~130 commitów mechaniki,
    których Londyn nie ma; Londyn dostaje forward-port per-SHA osobnym blokiem B7 — skill `consultify-petla`).
