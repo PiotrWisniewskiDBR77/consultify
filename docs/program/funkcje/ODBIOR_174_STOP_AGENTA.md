@@ -7,6 +7,15 @@ established: 2026-08-30
 
 # ODBIÓR 174 — stop agenta · SCALONO Z ERRATĄ · agent: TAK-Z-WARUNKAMI (staging)
 
+★ **FIX-174 WYKONANY** (merge `18661cc6a0`): cennik wyczerpujący dla 20 narzędzi,
+2 płatne wycenione (0.01/0.05 z uzasadnieniem), nieznane narzędzie RZUCA
+`unknown_tool_cost`; okno a2 domknięte (finalizePlan przy cancelled czyści dzierżawę
+i zwraca spokojnie — mutacja M4 teraz CZERWONA bez warunku statusu); pin day164
+zdjęty (strażnik pokwitowań żyje na dowolnej bazie); errata w raporcie.
+**Warunki K6 pozostałe:** (3) ścieżka planów z czatu poza limitami → dyżur 180;
+(6) decyzja właściciela o fail-open polityk dla 3 serwisów; (7) monitoring czasu
+kroku przy włączeniu; (8) pomiar przypadku (b) → dyżur 180.
+
 Gałąź `codex/day174-stop-agenta-20260830` (2 commity nad `d3d36cd5f5`). Odbiór:
 własne kontenery PG 6081 + Redis 6406, day161 od pustej bazy PASS, **4 mutacje
 niezależne czerwone** (M1 aiWorker-cancelled · M2 pętla-status · M3 cennik ·
