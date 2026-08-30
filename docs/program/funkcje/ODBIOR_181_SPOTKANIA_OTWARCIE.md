@@ -5,7 +5,17 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 181 — otwarcie Spotkań · NIE SCALAĆ (FIX-181 wydany)
+# ODBIÓR 181 — otwarcie Spotkań · SCALONO PO FIX-181
+
+★ FIX-181 wykonany (`4a6f6487b8`): `/meetings` w `PILOT_ALLOWED_ROUTE_PREFIXES`
+(mutacja routera: bez prefiksu → realny navigate('/interview'); z → render) —
+**D-1 spełnione end-to-end**. Karta 08_MEETINGS sprostowana erratą (przekreślenia,
+nic nie skasowane; 12/21 spinnerów nazwane per plik). Diagnoza spinnera: hipoteza
+membership-403 OBALONA na fixture właściciela (persony ACTIVE, spotkania dostępne)
+— przyczyna głębsza, opisana plik:linia w CODEX_FIX181_REPORT →
+**dyżur 194 (181-bis): strona obiektu spotkania**. Do tego czasu: lista+kalendarz
+działają, obiekt NIE — zapisane w karcie, żeby nikt nie pokazał właścicielowi
+„gotowego" obiektu.
 
 Flip bety realny (mutacja odbioru: closed→3 FAIL, open→8/8; mirror identyczny),
 4 zastane testy potraktowane wzorowo (podmiana przykładu w finance-teście zamiast
