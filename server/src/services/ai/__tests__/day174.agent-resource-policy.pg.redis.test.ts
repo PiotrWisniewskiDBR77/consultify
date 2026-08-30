@@ -99,3 +99,50 @@ describe.skipIf(!enabled)('DAY174 resource policy and cost — real PG + Redis',
     ).rejects.toThrow('resource_policy_not_found');
   });
 });
+
+// FIX-174 (ERRATA ODBIOR_174 pkt 2): the cost map must be EXHAUSTIVE — an
+// unregistered/typo'd tool name must fail loudly (`unknown_tool_cost`)
+// instead of silently costing $0 through the old `?? 0` catch-all. Pure
+// function, no DB/Redis needed, so this runs unconditionally (not gated by
+// `enabled`).
+describe('DAY174 tool cost table — exhaustive, no silent zero', () => {
+  it('throws unknown_tool_cost for an unregistered tool name', () => {
+    expect(() => estimateAgentToolCostUsd('this_tool_does_not_exist')).toThrow(
+      'unknown_tool_cost'
+    );
+  });
+
+  it('prices the two previously-fictitiously-free tools', () => {
+    expect(estimateAgentToolCostUsd('search_knowledge_base')).toBe(0.01);
+    expect(estimateAgentToolCostUsd('search_enterprise_connector')).toBe(0.05);
+  });
+
+  it('covers every tool registered in toolDefinitions.ts, including wait_until', () => {
+    const registeredToolNames = [
+      'search_web',
+      'search_knowledge_base',
+      'list_enterprise_connectors',
+      'search_enterprise_connector',
+      'get_assessment_data',
+      'calculate_financial',
+      'run_monte_carlo',
+      'get_initiative_status',
+      'compare_benchmarks',
+      'find_similar_decisions',
+      'get_stakeholder_analysis',
+      'create_initiative_draft',
+      'generate_report_section',
+      'schedule_meeting',
+      'create_notebook_entry',
+      'query_structured_data',
+      'create_task',
+      'update_task',
+      'create_decision',
+      'wait_until',
+    ];
+    for (const toolName of registeredToolNames) {
+      expect(() => estimateAgentToolCostUsd(toolName)).not.toThrow();
+      expect(typeof estimateAgentToolCostUsd(toolName)).toBe('number');
+    }
+  });
+});
