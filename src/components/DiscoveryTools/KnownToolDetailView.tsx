@@ -539,57 +539,92 @@ export function KnownToolDetailView(props: {
         outcome: string;
       }>,
       limitToOne = false
-    ) => (
-      <div className="grid gap-4 lg:grid-cols-3">
-        {(limitToOne ? cases.slice(0, 1) : cases).map((item) => (
-          <div
-            key={item.title}
-            className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
-          >
-            <div className={TEXT_L1}>{t('discoveryToolsMain.knownToolDetailView.case')}</div>
-            <h3 className="mt-2 text-sm font-semibold text-c-text">{item.title}</h3>
-            <div className="mt-3 space-y-2 text-xs leading-relaxed max-w-prose text-c-text-secondary">
-              <div>
-                <span className="font-semibold text-c-text">
-                  {t('discoveryToolsMain.knownToolDetailView.context')}
-                </span>
-                {item.context}
+    ) => {
+      /*
+       * ── ZGŁOSZENIE WŁAŚCICIELA 2026-08-30 ────────────────────────────────
+       * „Mieliśmy usunąć dwa przykłady, bo mieliśmy trzy. Został jeden, ale
+       *  w postaci jednej kolumny. To wygląda bez sensu."
+       *
+       * Zmierzone na zrzucie (karta-tool → sekcja Przykład): siatka miała
+       * SZTYWNE `lg:grid-cols-3`, więc po `slice(0, 1)` jedyny przypadek siedział
+       * w wąskiej lewej trzeciej, dwie trzecie szerokości zostawały puste, a treść
+       * ściśnięta w 340 px uciekała poniżej ekranu.
+       *
+       * Siatka dostosowuje się teraz do LICZBY elementów (1 → pełna szerokość,
+       * 2 → dwie kolumny, 3+ → trzy). Przy jednym przypadku sześć pól układa się
+       * WEWNĄTRZ karty w kolumny — inaczej pełna szerokość dałaby linie po ~1100 px,
+       * czyli drugi zły skrajny przypadek. Mikro-etykiety są tym samym wzorcem,
+       * którego używają sąsiednie bloki tej karty (`blockGrid`), więc to nie jest
+       * nowy język wizualny, tylko ten sam.
+       *
+       * Dotyczy WSZYSTKICH pięciu wywołań (dynamicSwot i marketForces mają
+       * `limitToOne`, growthPaths/portfolioPriority/riskUncertainty nadal po trzy) —
+       * naprawa siedzi we wspólnym helperze, nie per narzędzie.
+       */
+      const shown = limitToOne ? cases.slice(0, 1) : cases;
+      const single = shown.length === 1;
+      const gridCols =
+        shown.length >= 3 ? 'lg:grid-cols-3' : shown.length === 2 ? 'md:grid-cols-2' : '';
+
+      // Etykiety w i18n kończą się dwukropkiem („Kontekst:") — w układzie
+      // mikro-etykiet nad wartością dwukropek jest zbędny, więc ucinamy.
+      const bare = (key: string) => t(key).replace(/[:\s]+$/, '');
+
+      return (
+        <div className={`grid gap-4 ${gridCols}`}>
+          {shown.map((item) => {
+            const fields = [
+              { k: 'context', label: 'context', value: item.context },
+              { k: 'question', label: 'question', value: item.question },
+              { k: 'evidence', label: 'evidence', value: item.evidence.join(' ') },
+              { k: 'aiDraft', label: 'aIDraft', value: item.aiDraft },
+              { k: 'approvedUse', label: 'afterApproval', value: item.approvedUse },
+              { k: 'outcome', label: 'outcome', value: item.outcome },
+            ];
+            return (
+              <div
+                key={item.title}
+                className={`rounded-2xl border border-c-border-subtle bg-c-surface ${
+                  single ? 'p-5' : 'p-4'
+                }`}
+              >
+                <div className={TEXT_L1}>{t('discoveryToolsMain.knownToolDetailView.case')}</div>
+                <h3
+                  className={`mt-2 font-semibold text-c-text ${single ? 'text-base' : 'text-sm'}`}
+                >
+                  {item.title}
+                </h3>
+                {single ? (
+                  <div className="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {fields.map((f) => (
+                      <div key={f.k}>
+                        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
+                          {bare(`discoveryToolsMain.knownToolDetailView.${f.label}`)}
+                        </div>
+                        <div className="text-sm leading-relaxed max-w-prose text-c-text-secondary">
+                          {f.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-3 space-y-2 text-xs leading-relaxed max-w-prose text-c-text-secondary">
+                    {fields.map((f) => (
+                      <div key={f.k}>
+                        <span className="font-semibold text-c-text">
+                          {t(`discoveryToolsMain.knownToolDetailView.${f.label}`)}
+                        </span>
+                        {f.value}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div>
-                <span className="font-semibold text-c-text">
-                  {t('discoveryToolsMain.knownToolDetailView.question')}
-                </span>
-                {item.question}
-              </div>
-              <div>
-                <span className="font-semibold text-c-text">
-                  {t('discoveryToolsMain.knownToolDetailView.evidence')}
-                </span>
-                {item.evidence.join(' ')}
-              </div>
-              <div>
-                <span className="font-semibold text-c-text">
-                  {t('discoveryToolsMain.knownToolDetailView.aIDraft')}
-                </span>
-                {item.aiDraft}
-              </div>
-              <div>
-                <span className="font-semibold text-c-text">
-                  {t('discoveryToolsMain.knownToolDetailView.afterApproval')}
-                </span>
-                {item.approvedUse}
-              </div>
-              <div>
-                <span className="font-semibold text-c-text">
-                  {t('discoveryToolsMain.knownToolDetailView.outcome')}
-                </span>
-                {item.outcome}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+            );
+          })}
+        </div>
+      );
+    };
 
     const goalSection = (
       <div className="space-y-6">

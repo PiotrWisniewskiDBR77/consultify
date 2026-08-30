@@ -121,6 +121,19 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
       : modeTiles
     : [];
 
+  // Podtytuł nagłówka — ten sam slot w obu krokach (patrz komentarz przy nagłówku).
+  const headerHint = format ? stepTwoHint?.(format) : stepOneHint;
+
+  // Wspólna powłoka kafla: KROK 1 i KROK 2 wyglądały inaczej (krok 1 miał cień,
+  // podskok `-translate-y-0.5` i `min-h-40`, krok 2 nie miał nic), więc przejście
+  // między krokami zmieniało język wizualny okna w połowie zadania. Teraz jeden
+  // zestaw klas: kafel na `c-surface-raised` (czytelny stopień względem `c-surface`
+  // ramki W OBU MOTYWACH — przedtem kafel i ramka miały ten sam kolor i kafel
+  // trzymał się wyłącznie włoskowatą kreską), hover = mocniejsza ramka + tło,
+  // bez ruchu i bez skoków cienia. Fokus niebieski `c-focus`, zero crimsonu.
+  const TILE_BASE =
+    'group flex flex-col items-start rounded-2xl border border-c-border-subtle bg-c-surface-raised p-4 text-left transition-colors hover:border-c-border-strong hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
   return (
     <div
       className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm"
@@ -136,103 +149,132 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
         data-testid={testId}
         className="mx-4 w-[640px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-c-border bg-c-surface shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-c-border px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2">
+        {/*
+          RYTM (odbiór właściciela 2026-08-30: „mogłoby być trochę bardziej
+          seksowne"). PRZED: nagłówek `px-4 py-3`, treść `p-4`, gap-3 — jedna
+          wartość odstępu wszędzie, więc nic nie prowadziło wzroku. PO: ramka
+          dostaje `px-6 py-5`, treść `px-6 pb-6`, siatka `gap-4` — okno oddycha,
+          a kafle (czyli właściwa treść) mają większy udział w kompozycji.
+
+          PODTYTUŁ WEWNĄTRZ NAGŁÓWKA. PRZED: pytanie („Co chcesz utworzyć?")
+          siedziało POD kreską nagłówka jako osobny akapit, więc akcent brał
+          rzeczownik („Nowy materiał"), a właściwe pytanie było zdegradowane —
+          w dodatku KROK 2 nie miał podtytułu w ogóle i oba kroki wyglądały
+          strukturalnie inaczej. PO: tytuł + pytanie tworzą JEDEN blok, tak
+          samo w obu krokach. `id` opisu bez zmian (aria-describedby).
+        */}
+        <div className="flex items-start justify-between gap-3 border-b border-c-border px-6 py-5">
+          <div className="flex min-w-0 items-start gap-2">
             {format ? (
               <button
                 type="button"
                 onClick={() => setFormat(null)}
                 data-testid={`${testId}-back`}
-                className="rounded p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                className="-ml-1 mt-0.5 rounded-lg p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 aria-label="Back"
               >
                 <ArrowLeft size={18} />
               </button>
             ) : null}
-            <h2
-              id="create-format-mode-launcher-title"
-              className="truncate text-lg font-semibold text-c-text"
-            >
-              {format ? (stepTwoTitle?.(format) ?? title) : title}
-            </h2>
+            <div className="min-w-0">
+              <h2
+                id="create-format-mode-launcher-title"
+                className="truncate text-lg font-semibold text-c-text"
+              >
+                {format ? (stepTwoTitle?.(format) ?? title) : title}
+              </h2>
+              {headerHint ? (
+                <p
+                  id={`${testId}-description`}
+                  className="mt-1 text-sm text-c-text-secondary"
+                >
+                  {headerHint}
+                </p>
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
             onClick={handleFullClose}
             data-testid={`${testId}-close`}
             aria-label="Close"
-            className="rounded p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className="-mr-1 shrink-0 rounded-lg p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <X size={18} />
           </button>
         </div>
 
         {!format ? (
-          <>
-            {stepOneHint ? (
-              <p id={`${testId}-description`} className="px-4 pt-4 text-sm text-c-text-secondary">
-                {stepOneHint}
-              </p>
-            ) : null}
-            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
-              {formatTiles.map(({ id, icon, title: tileTitle, hint }) => {
-                const Icon = resolveFormatIcon(id, icon);
-                return (
-                  <button
+          <div className="grid grid-cols-1 gap-4 px-6 pb-6 pt-5 sm:grid-cols-3">
+            {formatTiles.map(({ id, icon, title: tileTitle, hint }) => {
+              const Icon = resolveFormatIcon(id, icon);
+              return (
+                <button
                   key={id}
                   type="button"
                   data-testid={`${testId}-format-${id}`}
                   onClick={() => setFormat(id)}
                   aria-label={hint ? `${tileTitle}. ${hint}` : tileTitle}
-                  className="group flex min-h-40 flex-col items-start rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-c-border-strong hover:bg-c-surface-raised hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  className={TILE_BASE}
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-c-border-subtle bg-c-surface-raised text-c-text transition-colors group-hover:border-c-border-strong">
+                  {/*
+                    PRZED: kafel miał sztywne `min-h-40` (160 px), a strzałkę
+                    dociskał `mt-auto` do dołu. Przy kaflu bez `hint` — czyli w
+                    KAŻDYM realnym wywołaniu (Materiały i Biblioteka wzorców
+                    podają sam tytuł) — między tytułem a strzałką zostawała
+                    pusta dziura na ~60 px i to ONA była pierwszą rzeczą, którą
+                    widać. PO: kafel ma wysokość swojej treści, a strzałka stoi
+                    w jednym rzędzie z tytułem, więc „Dokument →" czyta się jako
+                    jeden gest, nie jako dwa osierocone elementy.
+                  */}
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-c-border-subtle bg-c-surface text-c-text transition-colors group-hover:border-c-border-strong">
                     <Icon size={21} strokeWidth={1.8} aria-hidden />
                   </span>
-                  <span className="mt-4 text-sm font-semibold text-c-text">{tileTitle}</span>
+                  <span className="mt-4 flex w-full items-center justify-between gap-2">
+                    {/* Kafle są treścią tego okna, więc to ONE mają nieść wagę
+                        (text-base), a tytuł okna zostaje ramką. Przedtem oba
+                        były `font-semibold` w podobnym stopniu i nic nie wiodło. */}
+                    <span className="min-w-0 truncate text-base font-semibold text-c-text">
+                      {tileTitle}
+                    </span>
+                    <ArrowRight
+                      size={16}
+                      aria-hidden
+                      className="shrink-0 text-c-text-muted transition-colors group-hover:text-c-text"
+                    />
+                  </span>
                   {hint ? (
-                    <span className="mt-1 text-xs leading-relaxed text-c-text-secondary">
+                    <span className="mt-1.5 text-xs leading-relaxed text-c-text-secondary">
                       {hint}
                     </span>
                   ) : null}
-                  <span className="mt-auto flex w-full items-center justify-end pt-3 text-c-text-muted transition-colors group-hover:text-c-text">
-                    <ArrowRight size={16} aria-hidden />
-                  </span>
-                  </button>
-                );
-              })}
-            </div>
-          </>
+                </button>
+              );
+            })}
+          </div>
         ) : (
-          <>
-            {stepTwoHint ? (
-              <p id={`${testId}-description`} className="px-4 pt-4 text-sm text-c-text-secondary">
-                {stepTwoHint(format)}
-              </p>
-            ) : null}
-            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
-              {resolvedModeTiles.map(
-                ({ id, icon: Icon, title: modeTitle, desc, testId: modeTestId }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-label={`${modeTitle}. ${desc}`}
-                    data-testid={modeTestId ?? `${testId}-mode-${id}`}
-                    onClick={() => onSelect(format, id)}
-                    className="group flex h-full flex-col items-start gap-3 rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-left transition-all hover:border-c-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-secondary transition-colors group-hover:text-c-text">
-                      <Icon size={20} aria-hidden />
-                    </span>
-                    <span className="flex flex-col gap-1">
-                      <span className="text-sm font-semibold text-c-text">{modeTitle}</span>
-                      <span className="text-xs leading-relaxed text-c-text-secondary">{desc}</span>
-                    </span>
-                  </button>
-                )
-              )}
-            </div>
-          </>
+          <div className="grid grid-cols-1 gap-4 px-6 pb-6 pt-5 sm:grid-cols-3">
+            {resolvedModeTiles.map(
+              ({ id, icon: Icon, title: modeTitle, desc, testId: modeTestId }) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-label={`${modeTitle}. ${desc}`}
+                  data-testid={modeTestId ?? `${testId}-mode-${id}`}
+                  onClick={() => onSelect(format, id)}
+                  className={`${TILE_BASE} h-full`}
+                >
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-c-border-subtle bg-c-surface text-c-text transition-colors group-hover:border-c-border-strong">
+                    <Icon size={21} strokeWidth={1.8} aria-hidden />
+                  </span>
+                  <span className="mt-4 text-base font-semibold text-c-text">{modeTitle}</span>
+                  <span className="mt-1.5 text-xs leading-relaxed text-c-text-secondary">
+                    {desc}
+                  </span>
+                </button>
+              )
+            )}
+          </div>
         )}
       </div>
     </div>
