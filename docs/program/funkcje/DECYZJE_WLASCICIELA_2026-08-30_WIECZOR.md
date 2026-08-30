@@ -27,3 +27,9 @@ Pytanie o powierzchnię Audytów (hub vs warsztat) — zadane ponownie w rundzie
 | D-6 | Moja praca | **Kalendarz ON TERAZ; Radar po-MVP** | dyżur: włączenie flagi kalendarza + retest; Radar → backlog po-MVP (literał zostaje) |
 | D-7 | Realizacja: magazyn zadań | **MIGRACJA legacy→kanon W MVP** (najdroższa opcja — decyzja świadoma) | najpierw dyżur ANALIZY (inwentarz danych `tasks` vs `ie_aggregate_state`, plan migracji addytywnej, ryzyka), potem dyżur wykonania; brama 409 zostaje do końca migracji |
 | D-8 | Materiały: strażnik groundingu | **POLUZOWAĆ + rubryka** | dyżur GEN-2: liczby-założenia dopuszczone i oznaczone; jakość pilnowana rubryką 15/18 przy odbiorze pliku |
+
+## Runda 3 (31.08 noc)
+
+| # | Pytanie | Decyzja | Skutek |
+|---|---|---|---|
+| D-9 | Auto-polityka limitów agenta obejmuje też wave8/multiAgent/adapter (fail-open) | **ZAAKCEPTOWAĆ** | ostatni warunek K6 zamknięty — `ENABLE_AI_TASKS_WORKER=true` na STAGINGU przy deployu kandydata (K5); obserwacja licznika `[AgentResource] admission denied`; demo dopiero po akcepcie na stagingu |

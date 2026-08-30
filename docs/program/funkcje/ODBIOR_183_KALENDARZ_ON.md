@@ -5,7 +5,12 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 183 — kalendarz ON · FLIP WSTRZYMANY do FIX-183 (wydany)
+# ODBIÓR 183 — kalendarz ON · SCALONO PO FIX-183 (D-6 wykonane)
+
+★ FIX-183 (`cd9c545dc1`): dedup źródeł + `sources` zawsze jawne (dowód mutacyjny:
+przywrócenie starego warunku → test trafia w złą trasę V8 → czerwony); test
+„own event survives reload" na realnym PG; **4 zrzuty, w tym FULL obejrzany:
+wydarzenie widoczne PO pełnym przeładowaniu** — dokładnie zepsuty scenariusz.
 
 R1 (przyczyna rewertu 25.08) — **A**: rewert był zbiorczy dla 2 flag, techniczna
 regresja P0 dotyczyła `ff_ideaInspectorRightRail`, kalendarz miał osobny ACCEPT

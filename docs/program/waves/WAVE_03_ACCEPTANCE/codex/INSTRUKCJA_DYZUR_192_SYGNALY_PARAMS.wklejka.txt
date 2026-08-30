@@ -1,0 +1,16 @@
+NOWY — DYŻUR 192
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_192_SYGNALY_PARAMS.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 192.
+
+Marker: b4651675f6
+Zasoby wyłączne: baza 6112, runtime 5056 i 5057.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
