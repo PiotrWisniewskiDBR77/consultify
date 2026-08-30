@@ -42,6 +42,7 @@ import type { RelationItem, StandardModuleTab, TableRow } from '@/components/sta
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
 import type { RoiCaseListItem } from './roiApi';
+import type { RoiCardModeProps } from './RoiCaseCardSections';
 import { isRoiCaseLocked, getRoiCaseLockInfo } from './roiRegistryMappers';
 import { roiEvidenceLinkPurposeLabel } from './roiCaseFullToolMappers';
 import {

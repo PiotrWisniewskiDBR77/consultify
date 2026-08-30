@@ -24,6 +24,7 @@ import type { StandardModuleTab, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import type { RoiCaseListItem, RoiCaseStatus } from './roiApi';
+import type { RoiCardModeProps } from './RoiCaseCardSections';
 import type { RoiCostLine, RoiBenefitLine } from './roiCaseDetailApi';
 import { listRoiBenefitLines, listRoiCostLines } from './roiCaseDetailApi';
 import {

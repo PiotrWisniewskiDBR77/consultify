@@ -21,6 +21,7 @@ import type { StandardModuleTab, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import type { RoiCaseListItem } from './roiApi';
+import type { RoiCardModeProps } from './RoiCaseCardSections';
 import { getRoiCaseCompareView, listRoiApprovalSnapshots, type RoiApprovalSnapshot, type RoiCompareView } from './roiCaseFullToolApi';
 import {
   buildRoiApprovalSnapshotColumns,

@@ -35,6 +35,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
 import type { RoiCaseListItem } from './roiApi';
+import type { RoiCardModeProps } from './RoiCaseCardSections';
 import {
   buildRoiPirLessonsDraftHandoffContext,
   buildRoiPirLessonsDraftSuggestion,
