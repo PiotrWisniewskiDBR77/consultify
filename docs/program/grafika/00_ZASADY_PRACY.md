@@ -106,6 +106,26 @@ Wiążąca jest **powłoka** i — ważniejsze — **język uczciwości**:
   - uprawnienia jako **Możesz / Nie możesz** z zamkami
 - kolor: neutralny; **crimson wyłącznie semantyka krytyczna**; fokus niebieski
 
+## ★★ REGUŁA NR 0 — NADRZĘDNA NAD WSZYSTKIMI (2026-08-30, słowa właściciela)
+
+> „Pytaj mnie o to, co masz mnie pytać, bo nie rozumiem, o co teraz chodzi.
+> Tego mniej decydujmy."
+
+**Nadzorca decyduje sam we wszystkim, co techniczne.** Konflikt między dwiema
+starymi decyzjami, kolejność sekcji, zależności komponentu, nazwa klasy, wybór
+tokenu, sprzeczność w dokumentacji — **to nie są pytania do właściciela**.
+Rozstrzyga je nadzorca, zapisuje w kanonie i idzie dalej.
+
+**Właściciela pytamy WYŁĄCZNIE o dwie rzeczy:**
+1. **To, co widzi oczami na ekranie** — „podoba się / nie podoba".
+2. **Decyzje biznesowe** — zakres oferty, priorytet, pieniądze, co idzie do klienta.
+
+**Nigdy o mechanizm.** Jeśli pytanie wymaga, żeby właściciel zrozumiał, jak coś
+działa w środku — to jest złe pytanie i nadzorca ma je rozstrzygnąć sam.
+
+**Kontrola przed każdym pytaniem:** czy właściciel odpowie na nie, patrząc na
+ekran albo myśląc o swoim biznesie? Jeśli nie — nie zadawaj go.
+
 ## ★★ REGUŁA NR 7 — protokół odbioru na żywym podglądzie (2026-08-30)
 
 Właściciel pracuje na kilku ekranach naraz i może przegapić wpis. Dlatego **każdy
