@@ -218,6 +218,39 @@ export const ROW_ACTIONS_COLUMN_WIDTH = 80;
 export const FIT_MIN_COLUMN_WIDTH = 112;
 export const FIT_MIN_PRIMARY_COLUMN_WIDTH = 180;
 
+/**
+ * ŁAMANIE TEKSTU W KOMÓRCE — granica wyrazu, nigdy środek wyrazu (2026-08-30).
+ *
+ * Skąd to się wzięło: commit „ostatnia kolumna przestaje być ucinana" dołożył
+ * `break-words` do nagłówków i komórek, żeby długie etykiety nie wylewały się
+ * poza kolumnę i nie chowały pod przypiętą (`sticky right-0`) kolumną akcji.
+ * `break-words` to w Tailwind 3.4 (`corePlugins.js:1605`) DOKŁADNIE
+ * `overflow-wrap: break-word` — a ta reguła z definicji rozrywa wyraz, który
+ * sam z siebie nie mieści się w linii. Po zwężeniu kolumn odpaliła realnie
+ * i produkt zaczął pokazywać „ZAKTUALI ZOWANO", „OGÓLNA INTERPRETAC JA",
+ * „engineerin g team", „Ograniczen ie". To NIE było `word-break: break-all`
+ * (tej klasy w pliku nigdy nie było) — sprawdzone w źródle Tailwinda.
+ *
+ * Oba skrajne zachowania są złe: bez łamania tekst ucieka poza komórkę,
+ * z `overflow-wrap: break-word` rozrywa się w połowie wyrazu. Trzecia droga,
+ * zmierzona w Chromium przed wdrożeniem:
+ *   `break-normal`   → `overflow-wrap: normal` — łam TYLKO na spacji,
+ *   `overflow-hidden`+`text-ellipsis` → wyraz szerszy niż kolumna dostaje
+ *                      wielokropek zamiast rozdarcia.
+ * `text-overflow: ellipsis` działa także przy zawijaniu (`white-space: normal`),
+ * nie tylko przy `nowrap` — zmierzone: „OGOLNA / INTERPR…", nie „INTERPRETAC / JA".
+ *
+ * ŚWIADOMIE stosowane na WARSTWIE TEKSTU (span etykiety, span wartości), a NIE
+ * na `th`/`td`. Powód: `overflow: hidden` na komórce przycięłoby popovery i menu,
+ * które komórki renderują (filtr w nagłówku, kebab, chipy z tooltipem) — dlatego
+ * `break-words` zostaje na samej komórce jako ostatnia deska ratunku dla treści
+ * renderowanej przez moduł jako ELEMENTY. `overflow-wrap` jest dziedziczone,
+ * więc `break-normal` na spanie musi być podane jawnie, żeby zbić to z komórki.
+ *
+ * Pełna treść nie ginie: element dostaje `title` z całym tekstem.
+ */
+export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-ellipsis';
+
 // True when a regular cell value should render as an em-dash placeholder
 // (null / undefined / empty-or-whitespace string).
 const isEmptyCell = (value: unknown): boolean =>
@@ -1140,11 +1173,21 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                 column: column.label,
                               })}
                             >
-                              <span className="min-w-0 break-words">{column.label}</span>
+                              <span
+                                className={`min-w-0 ${CELL_TEXT_CLAMP_CLASS}`}
+                                title={column.label}
+                              >
+                                {column.label}
+                              </span>
                               <SortIcon columnId={column.id} />
                             </button>
                           ) : (
-                            <span className="min-w-0 break-words">{column.label}</span>
+                            <span
+                              className={`min-w-0 ${CELL_TEXT_CLAMP_CLASS}`}
+                              title={column.label}
+                            >
+                              {column.label}
+                            </span>
                           )}
                           {column.filterable && (
                             <FilterDropdown
@@ -1433,7 +1476,24 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       .filter(Boolean)
                       .join(' ')}
                   >
-                    {visibleColumns.map((column) => (
+                    {visibleColumns.map((column) => {
+                      /**
+                       * Moduły bardzo często zwracają z `render` GOŁY tekst
+                       * (zmierzone: 18 z 22 komórek ekranu „Obciążenie" to
+                       * czysty string bez żadnego elementu). Taki tekst ląduje
+                       * bezpośrednio w `td` i dziedziczy z niego
+                       * `overflow-wrap: break-word` — to on rozrywał
+                       * „engineerin g team" i „Ograniczen ie".
+                       *
+                       * Owijamy go w warstwę tekstu z `CELL_TEXT_CLAMP_CLASS`
+                       * (łamanie na spacji + wielokropek + `title`). Treść
+                       * renderowana jako ELEMENTY zostaje nietknięta — tam
+                       * `overflow-hidden` przycinałby popovery.
+                       */
+                      const rendered = column.render ? column.render(row) : undefined;
+                      const renderedIsPlainText =
+                        typeof rendered === 'string' || typeof rendered === 'number';
+                      return (
                       <td
                         key={column.id}
                         // `break-words` — treść komórki musi łamać się DO
@@ -1441,9 +1501,18 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         // poza komórkę i przy wąskiej kolumnie chowa się pod
                         // przypiętą (`sticky right-0`) kolumną akcji — dokładnie
                         // ten sam objaw „ucięcia w połowie znaku", tylko piętro
-                        // niżej. Świadomie NIE `overflow-hidden`: komórki
-                        // renderują popovery/menu, które muszą móc wyjść poza
-                        // obrys wiersza.
+                        // niżej. Świadomie NIE `overflow-hidden` ani
+                        // `overflow-x: clip`: komórki renderują popovery/menu,
+                        // które muszą móc wyjść poza obrys wiersza. To NIE jest
+                        // teoria — sprawdzone 2026-08-30:
+                        // `PMO/StatusTransitionDropdown.tsx:259` rysuje panel
+                        // `absolute z-overlay w-48` (192 px) BEZ portalu, prosto
+                        // w komórce `assessment/InitiativesTable.tsx:389`.
+                        // Przycięcie komórki obcięłoby go do szerokości kolumny.
+                        // Dlatego wielokropek zakłada się PIĘTRO NIŻEJ, na
+                        // warstwie tekstu (CELL_TEXT_CLAMP_CLASS), a `break-words`
+                        // zostaje tu jako ostatnia deska ratunku dla treści,
+                        // którą moduł renderuje jako własne ELEMENTY.
                         className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''}`}
                       >
                         {column.type === 'select' && selection ? (
@@ -1459,7 +1528,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-info focus:ring-c-focus cursor-pointer"
                           />
                         ) : column.render ? (
-                          column.render(row)
+                          renderedIsPlainText ? (
+                            <span className={CELL_TEXT_CLAMP_CLASS} title={String(rendered)}>
+                              {rendered}
+                            </span>
+                          ) : (
+                            rendered
+                          )
                         ) : column.id === 'status' ? (
                           <EntityStatusChip status={row.status} />
                         ) : column.id === 'progress' ? (
@@ -1475,9 +1550,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             <span
                               className={[
                                 'text-sm text-slate-700 dark:text-slate-200',
+                                // `title`/`name` mają WŁASNY, ostrzejszy kanon:
+                                // jedna linia + wielokropek (`truncate`). Reszta
+                                // kolumn zawija na spacji i skraca dopiero wyraz
+                                // szerszy niż kolumna (patrz CELL_TEXT_CLAMP_CLASS).
                                 column.id === 'title' || column.id === 'name'
                                   ? 'block truncate'
-                                  : '',
+                                  : CELL_TEXT_CLAMP_CLASS,
                               ].join(' ')}
                               title={
                                 typeof row[column.id] === 'string' ? row[column.id] : undefined
@@ -1503,7 +1582,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             })()
                           : null}
                       </td>
-                    ))}
+                      );
+                    })}
                     {!hideRowActions ? (
                       // R09-1a — sam mirror nagłówka: kebab przypięty do prawej
                       // krawędzi, żeby nie wypadał poza widoczny obszar razem z
