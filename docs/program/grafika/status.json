@@ -1313,6 +1313,175 @@
      ]
     }
    ]
+  },
+  {
+   "katalog": "07-realizacja-narzedzia-admin",
+   "nazwa": "Realizacja, Narzedzia i Administracja",
+   "opis": "Raporty z realizacji, SWOT, katalog modeli, centrum dowodzenia, profil organizacji, rozliczenia partnerskie.",
+   "ekrany": [
+    {
+     "id": "zwornik-projects",
+     "nazwa": "Projekty",
+     "ocena": "A",
+     "co": "Lista projektow ze statusami jako pigulki z kropka.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "tools-swot-report",
+     "nazwa": "Raport SWOT",
+     "ocena": "A",
+     "co": "Fakt i hipoteza oznaczone etykieta, kompromisy nazwane.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "tools-swot-initiative-proposal",
+     "nazwa": "SWOT — propozycja inicjatywy",
+     "ocena": "A",
+     "co": "Wyniki i gotowosc z paskiem postepu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "prompt-registry-tab",
+     "nazwa": "Rejestr promptow",
+     "ocena": "A",
+     "co": "Narzedzie inzynierskie, spojnie w jednym jezyku — nie mieszanka.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "admin-command-center-panel",
+     "nazwa": "Centrum dowodzenia",
+     "ocena": "A",
+     "co": "Zrodla danych nazwane, zero nagich zer.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "admin-sso-self-service-card",
+     "nazwa": "Logowanie firmowe SSO",
+     "ocena": "A",
+     "co": "Formularz SAML i OIDC.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "public-booking-widget",
+     "nazwa": "Publiczna rezerwacja spotkania",
+     "ocena": "A",
+     "co": "W pelni po polsku. Crimson tylko w logo — to marka, nie stan.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "execution-report-day11",
+     "nazwa": "Raport inteligencji pracy",
+     "ocena": "A",
+     "co": "Raport w pelni po polsku.",
+     "naprawione": [
+      "Surowe angielskie stale FACT, RECOMMENDATION, UNKNOWN, RED, AMBER wsrod polskiego tekstu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "plan-scenario-d1",
+     "nazwa": "Plan inicjatyw",
+     "ocena": "A",
+     "co": "Tabela planu.",
+     "naprawione": [
+      "Surowe UNKNOWN, KNOWN, CURRENT, NONE w dziewieciu kolumnach i w panelu podgladu"
+     ],
+     "wyjatki": [
+      "Kolumna Koszt opoznienia nadal sie ucina przy czternastu kolumnach"
+     ]
+    },
+    {
+     "id": "capacity-advisor-a3",
+     "nazwa": "Obciazenie zespolu",
+     "ocena": "A",
+     "co": "Tabela obciazenia z jednostkami.",
+     "naprawione": [
+      "Surowe UNKNOWN i KNOWN w siedmiu kolumnach"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "superadmin-platform-operations-day15",
+     "nazwa": "Operacje platformowe",
+     "ocena": "A",
+     "co": "Panel operacji.",
+     "naprawione": [
+      "Odznaka ryzyka pokazywala surowe HIGH i CRITICAL bez tlumaczenia i bez koloru, obok polskiego naglowka"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "org-identity-operating",
+     "nazwa": "Profil organizacji — tozsamosc i skala",
+     "ocena": "A",
+     "co": "Profil organizacji z podpowiedzia Teresy.",
+     "naprawione": [
+      "CRIMSON poza semantyka krytyczna: pierscien kompletnosci, panel Teresy i wszystkie ikony sekcji"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "partner-settlements-view",
+     "nazwa": "Rozliczenia partnerskie",
+     "ocena": "A",
+     "co": "Zestawienie rozliczen.",
+     "naprawione": [
+      "One_time zamiast One Time — podkreslnik nie zamienial sie na spacje"
+     ],
+     "wyjatki": [
+      "Ekran w calosci po angielsku — narzedzie wewnetrzne"
+     ]
+    },
+    {
+     "id": "model-catalog-table",
+     "nazwa": "Katalog modeli",
+     "ocena": "B",
+     "co": "Katalog modeli AI.",
+     "naprawione": [
+      "Surowe TEXT_LLM, IMAGE_MODEL, BUSINESS_MODEL w kartach, chipach i opisie"
+     ],
+     "wyjatki": [
+      "Reszta tabeli po angielsku — osobny, duzo wiekszy dlug tego ekranu nadzorcy"
+     ]
+    },
+    {
+     "id": "exe-002-004-ui-audit",
+     "nazwa": "Audyt kregoslupa realizacji",
+     "ocena": "B",
+     "co": "Realny rekord inicjatywy, dane dzialaja.",
+     "naprawione": [],
+     "wyjatki": [
+      "Status w pasku tozsamosci to zwykly tekst zamiast pigulki — kanon artefaktow wymaga pigulki. Komponent wspoldzielony przez caly modul, za szeroki promien razenia na jeden ekran"
+     ]
+    },
+    {
+     "id": "execution-change-signals",
+     "nazwa": "Sygnaly zmiany w realizacji",
+     "ocena": "D",
+     "co": "Nie istnieje — komponent zostal usuniety z produktu jako fantom bez implementacji.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ekran harnessu wyrejestrowany, plik zostaje"
+     ]
+    },
+    {
+     "id": "execution-export-prezentacja",
+     "nazwa": "Eksport realizacji do prezentacji",
+     "ocena": "D",
+     "co": "Nie istnieje w tej postaci — produkt dawno przeszedl na inna sciezke, ekran testowy nigdy nie zostal zaktualizowany.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ekran harnessu wyrejestrowany, plik zostaje"
+     ]
+    }
+   ]
   }
  ]
 }
