@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { type Attachment, AttachmentsSection } from '@/components/MyWork/shared/AttachmentsSection';
+import {
+  type Attachment,
+  AttachmentsSection,
+  type MutationResult,
+} from '@/components/MyWork/shared/AttachmentsSection';
 import { Api } from '@/services/api';
 import type { NotebookAttachment } from '@/types/myWork';
 
@@ -110,13 +114,22 @@ export const NotebookAttachmentsSection: React.FC<NotebookAttachmentsSectionProp
     [attachments, previewUrls]
   );
 
+  const adaptMutation = async (mutation: () => Promise<void>): Promise<MutationResult> => {
+    try {
+      await mutation();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  };
+
   return (
     <AttachmentsSection
       attachments={sectionAttachments}
       expanded={expanded}
       onToggleExpand={() => setExpanded((current) => !current)}
-      onUpload={onUpload}
-      onDelete={onDelete}
+      onUpload={(files) => adaptMutation(() => onUpload(files))}
+      onDelete={(attachmentId) => adaptMutation(() => onDelete(attachmentId))}
       onDownload={(attachment) => {
         void Api.downloadNotebookAttachment(noteId, attachment.id).then(({ blob, filename }) => {
           const url = URL.createObjectURL(blob);

@@ -37,10 +37,12 @@ export interface Attachment {
   uploadedBy?: string;
 }
 
+export type MutationResult<T = unknown> = { ok: true; value?: T } | { ok: false; error: unknown };
+
 interface AttachmentsSectionProps {
   attachments: Attachment[];
-  onUpload: (files: FileList) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onUpload: (files: FileList) => Promise<MutationResult>;
+  onDelete: (id: string) => Promise<MutationResult>;
   onDownload?: (attachment: Attachment) => void;
   readOnly?: boolean;
   maxFiles?: number;
@@ -114,12 +116,16 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 
       try {
         setUploading(true);
-        await onUpload(files);
-        toast.success(
-          t('myWork.attachments.uploadedCount', 'Uploaded {{count}} file(s)', {
-            count: files.length,
-          })
-        );
+        const result = await onUpload(files);
+        if (result.ok) {
+          toast.success(
+            t('myWork.attachments.uploadedCount', 'Uploaded {{count}} file(s)', {
+              count: files.length,
+            })
+          );
+        } else {
+          toast.error(t('myWork.attachments.toastError', 'Failed to upload files'));
+        }
       } catch (error) {
         console.error('Upload failed', error);
         toast.error(t('myWork.attachments.toastError', 'Failed to upload files'));
@@ -154,8 +160,12 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     }
 
     try {
-      await onDelete(attachment.id);
-      toast.success(t('myWork.attachments.toastSuccess', 'Attachment deleted'));
+      const result = await onDelete(attachment.id);
+      if (result.ok) {
+        toast.success(t('myWork.attachments.toastSuccess', 'Attachment deleted'));
+      } else {
+        toast.error(t('myWork.attachments.toastError2', 'Failed to delete attachment'));
+      }
     } catch (error) {
       toast.error(t('myWork.attachments.toastError2', 'Failed to delete attachment'));
     }
