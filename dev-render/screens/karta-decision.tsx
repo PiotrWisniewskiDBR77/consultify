@@ -40,6 +40,8 @@ import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
 
+const DECISION_ID = 'decision-prv-mywork-1';
+
 /**
  * `DecisionDetailView.loadDecision()` ma WBUDOWANY fallback na angielskie
  * stałe `DEMO_ALTERNATIVES`/`DEMO_RISKS`/`DEMO_COMMENTS`/`DEMO_ATTACHMENTS`/
@@ -63,7 +65,62 @@ const __danePelneWczesnie = new URLSearchParams(window.location.search).get('dan
   });
 }
 
-const DECISION_ID = 'decision-prv-mywork-1';
+/**
+ * `consequenceScenarios` (macierz 3×3: optymistyczny/neutralny/pesymistyczny ×
+ * 7/30/90 dni) NIE MA ŻADNEGO mapowania z API w `loadDecision()` — grep
+ * potwierdza zero `setConsequenceScenarios(decision....)`. Jedyna ścieżka
+ * wczytania to `localStorage['consultify-decision-enhancements:<id>']`
+ * (blok „Hydrate local enhancements", ok. linii 2115-2148 w src) — dokładnie
+ * ten sam mechanizm lokalnej trwałości, którego komponent używa jako JEDYNEGO
+ * źródła prawdy dla tego pola (nawet po stronie produkcyjnej). Zasianie tego
+ * klucza stąd NIE jest symulacją kliknięcia AI — to ten sam „rekord", który
+ * produkt sam czyta przy starcie; bez tego kroku sekcja „Konsekwencje"
+ * zostałaby pusta w wariancie `?dane=pelne` mimo istnienia treści w mocku,
+ * bo `loadDecision()` nie ma skąd jej wziąć z Api.get(.../detail).
+ * Historia treści: ta sama decyzja (rezydencja danych, 2 klientów enterprise,
+ * komitet inwestycyjny 5 sierpnia, budżet 168 000 PLN z wariantu A).
+ */
+const KARTA_DECYZJA_STORAGE_KEY = `consultify-decision-enhancements:${DECISION_ID}`;
+if (__danePelneWczesnie) {
+  try {
+    window.localStorage.setItem(
+      KARTA_DECYZJA_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 1,
+        savedAt: '2026-07-19T08:30:00Z',
+        consequenceScenarios: {
+          updatedAt: '2026-07-19T08:30:00Z',
+          source: 'ai',
+          optimistic: {
+            d7: 'Decyzja o wariancie A podjęta do 5 sierpnia. Budżet 168 000 PLN zatwierdzony w rezerwie programu bez korekty planu na Q4.',
+            d30: 'Migracja na instancję we Frankfurcie w toku zgodnie z oknem 10-24 sierpnia, bez kolizji z przebudową kolejek — rozdzielone na dwa etapy.',
+            d90: 'Obaj klienci enterprise odblokowują odbiór etapu (łącznie 1,4 mln PLN). Rezydencja danych w EU staje się argumentem w przetargach publicznych 2027.',
+          },
+          neutral: {
+            d7: 'Decyzja podjęta z 2-dniowym poślizgiem względem 5 sierpnia — tuż przed zamknięciem puli komitetu inwestycyjnego.',
+            d30: 'Migracja przesunięta o tydzień z powodu kolizji z zespołem platformowym; okno migracyjne wydłużone do 31 sierpnia.',
+            d90: 'Odbiór etapu zamknięty dla obu klientów, ale jeden z nich żąda dodatkowego potwierdzenia od zewnętrznej kancelarii — kolejny miesiąc administracji.',
+          },
+          pessimistic: {
+            d7: 'Brak decyzji do 5 sierpnia. Budżet na wariant A wypada z rezerwy programu i wraca dopiero w planie na 2027.',
+            d30: 'Zwłoka blokuje odbiór etapu w dwóch projektach (1,4 mln PLN) i wstrzymuje podpisanie aneksu z trzecim klientem — ok. 32 000 PLN niezafakturowanej pracy tygodniowo.',
+            d90: 'Obaj klienci enterprise eskalują do swoich zarządów; ryzyko wypowiedzenia kontraktu. Brak rezydencji danych wyklucza start w przetargach publicznych 2027.',
+          },
+        },
+      })
+    );
+  } catch {
+    // localStorage niedostępny (np. tryb prywatny) — sekcja Konsekwencje
+    // zostanie pusta, ale reszta karty działa normalnie.
+  }
+} else {
+  try {
+    window.localStorage.removeItem(KARTA_DECYZJA_STORAGE_KEY);
+    window.localStorage.removeItem(`consultify:accordionSections:decision:${DECISION_ID}`);
+  } catch {
+    // ignore
+  }
+}
 
 /**
  * ★ LICZBY MUSZĄ BYĆ WIDOCZNE NA EKRANIE, NIE TYLKO W DANYCH.
@@ -444,6 +501,42 @@ const MOCK_DECISION = {
   comments: MOCK_COMMENTS,
   linkedItems: MOCK_LINKED_ITEMS,
   attachments: MOCK_ATTACHMENTS,
+  // `RACI i eskalacja` = stakeholders (RACI, wyżej) + przypomnienia/eskalacja
+  // (poniżej). Oba pola CZYTANE wprost z rekordu w loadDecision() — w
+  // przeciwieństwie do consequenceScenarios nie trzeba ich zasiewać przez
+  // localStorage.
+  reminders: [
+    {
+      id: 'rem-1',
+      type: 'before_due',
+      days: 3,
+      recipients: 'both',
+      inAppNotification: true,
+      emailNotification: true,
+      message:
+        'Za 3 dni termin decyzji (5 sierpnia) — budżet 168 000 PLN na wariant A wypada z rezerwy programu, jeśli decyzja nie zapadnie na czas.',
+      enabled: true,
+    },
+    {
+      id: 'rem-2',
+      type: 'before_due',
+      days: 1,
+      recipients: 'stakeholders',
+      inAppNotification: true,
+      emailNotification: false,
+      message: 'Jutro komitet inwestycyjny — decyzja musi być zatwierdzona przed posiedzeniem.',
+      enabled: true,
+    },
+  ],
+  escalation: {
+    id: 'esc-1',
+    enabled: true,
+    escalateTo: 'user-marek',
+    escalateToName: 'Marek Zieliński',
+    afterDays: 2,
+    message:
+      'Decyzja przeterminowana o 2 dni — eskalacja do partnera prowadzącego, bo 5 sierpnia to twardy termin komitetu inwestycyjnego.',
+  },
 };
 
 const MOCK_USERS = [
@@ -524,6 +617,8 @@ const MOCK_DECISION_EFEKTYWNY = __danePelne
       comments: [],
       linkedItems: [],
       attachments: [],
+      reminders: [],
+      escalation: null,
     };
 const MOCK_STAKEHOLDERS_EFEKTYWNY = __danePelne ? MOCK_STAKEHOLDERS : [];
 

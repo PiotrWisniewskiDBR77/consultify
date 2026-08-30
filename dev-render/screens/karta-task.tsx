@@ -300,6 +300,66 @@ Api.getNotebookPages = (async () => []) as typeof Api.getNotebookPages;
 Api.suggestMyIdeas = (async () => []) as typeof Api.suggestMyIdeas;
 Api.getLinkGraphBacklinks = (async () => []) as typeof Api.getLinkGraphBacklinks;
 
+/**
+ * `?dane=pelne` (tor grafiki, 2026-08-30) — Piotr nigdy nie ocenia pustej
+ * karty (CLAUDE.md #7).
+ *
+ * ★ WAŻNE OGRANICZENIE, ZWERYFIKOWANE W ŹRÓDLE (nie zgadywane): `loadTask()`
+ * (src/components/MyWork/TaskDetailView.tsx, linie ~1016-1049) mapuje z
+ * rekordu WYŁĄCZNIE: title, description, expectedOutcome, status, priority,
+ * dueDate, startedAt, blockedReason, ownerId, assigneeId, initiativeId,
+ * projectId/-Name, createdBy(Name), tags, checklist, attachments,
+ * linkedItems, sourceType/-Id. Cztery stany — `risks`, `alternatives`,
+ * `implementationIdeas`, `evidenceRequired`/`evidenceItems`,
+ * `stakeholders`/`escalationRules` — NIE MAJĄ ani jednej linii mapowania z
+ * API w całym pliku (grep `setRisks(task`/`setImplementationIdeas(task`/
+ * `setEvidenceItems(task`/`setStakeholders(task` → 0 trafień) i NIE MAJĄ też
+ * (w odróżnieniu od DecisionDetailView) żadnego fallbacku do localStorage —
+ * jedyna ścieżka wypełnienia to kliknięcie AI albo ręczny dodatek w danej
+ * sesji przeglądarki. Efekt: sekcje „Pomysły realizacji", „Ryzyko i
+ * alternatywy", „Dowody", „RACI i eskalacja" NIE DAJĄ SIĘ wypełnić z
+ * dev-render bez zmiany w src/ — zgłoszone, nie obchodzone. (Osobno:
+ * „Ryzyko i alternatywy" w N-mode renderuje WYŁĄCZNIE `RiskCanvas(risks)` —
+ * `alternatives`/`AlternativesSection` nie są tam w ogóle montowane, więc
+ * nawet ta połowa etykiety sekcji nie ma odbiorcy w UI.)
+ *
+ * Co REALNIE daje się wypełnić z tego pliku: `checklist`/`attachments`/
+ * `linkedItems` (już wypełnione w MOCK_TASK — to uczciwy stan „praca w
+ * toku", nie fasada) oraz podsekcja Gantt w „Zależności"
+ * (`DependenciesSection` czyta osobny endpoint `Api.get('/tasks/:id/dependencies')`,
+ * niezwiązany z `getPersonalTask()` — mockowany niżej).
+ */
+const __danePelne = new URLSearchParams(window.location.search).get('dane') === 'pelne';
+
+const MOCK_TASK_DEPENDENCIES = {
+  predecessors: [
+    {
+      id: 'dep-1',
+      taskId: 'task-dbr77-demo-0',
+      taskTitle: 'Zamknięcie wywiadów klienckich dla 4 projektów (Termika, NordFarm, Bielmar, Kolej Wschodnia)',
+      taskStatus: 'done',
+      taskPriority: 'high',
+      dependencyType: 'FS',
+      lagDays: 0,
+      notes: 'Mapa AS-IS potrzebuje kompletnych notatek z wywiadów jako wsadu — nie da się liczyć lead time bez zamkniętych rozmów.',
+      direction: 'predecessor',
+    },
+  ],
+  successors: [
+    {
+      id: 'dep-2',
+      taskId: 'task-dbr77-demo-2',
+      taskTitle: 'Zaprojektować stan TO-BE procesu raportowania',
+      taskStatus: 'todo',
+      taskPriority: 'medium',
+      dependencyType: 'FS',
+      lagDays: 0,
+      notes: 'TO-BE startuje dopiero po walidacji mapy AS-IS z Markiem na warsztacie 29.07.',
+      direction: 'successor',
+    },
+  ],
+};
+
 const realApiGet = Api.get.bind(Api);
 Api.get = (async (url: string) => {
   if (url === '/users') return { users: MOCK_USERS };
@@ -307,6 +367,9 @@ Api.get = (async (url: string) => {
   if (url === '/assessments') return { assessments: [] };
   if (url === '/reports') return { reports: [] };
   if (url === '/interview/insights') return { insights: [] };
+  if (url.includes(`/tasks/${TASK_ID}/dependencies`)) {
+    return __danePelne ? MOCK_TASK_DEPENDENCIES : { predecessors: [], successors: [] };
+  }
   return realApiGet(url);
 }) as typeof Api.get;
 
