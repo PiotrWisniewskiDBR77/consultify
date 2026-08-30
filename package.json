@@ -9,6 +9,7 @@
     "apps/*/backend"
   ],
   "scripts": {
+    "test:migrations:day161:fresh": "bash scripts/dev/day161-fresh-migration-check.sh",
     "verify:canonical-16": "node scripts/dev/verify-canonical-16-module-bindings.mjs",
     "dev": "npm run dev:staging",
     "dev:stop": "node scripts/dev/stop-dev-ports.mjs",
