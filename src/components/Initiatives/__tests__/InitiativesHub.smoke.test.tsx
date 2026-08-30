@@ -126,6 +126,7 @@ vi.mock('../../../store/useAppStore', () => ({
 }));
 
 import { InitiativesHub, readV8InitiativeId } from '../InitiativesHub';
+import { resetInitiativeBridgeFlagCache } from '@/utils/initiativeBridgeFlag';
 
 const renderHub = () =>
   render(
@@ -142,6 +143,8 @@ const renderHubAt = (entry: string) =>
   );
 
 beforeEach(() => {
+  window.localStorage.clear();
+  resetInitiativeBridgeFlagCache();
   demoModeState.enabled = false;
   getPortfolio.mockReset();
   getPortfolio.mockResolvedValue({ initiatives: [] });
@@ -158,6 +161,40 @@ afterEach(() => {
 });
 
 describe('InitiativesHub smoke', () => {
+  it('keeps the accepted-classic bridge absent when its flag is off', async () => {
+    renderHub();
+    await screen.findByTestId('initiatives-hub');
+    expect(screen.queryByText('Adopt classic initiative')).not.toBeInTheDocument();
+  });
+
+  it('confirms and calls the accepted-classic bridge when its flag is on', async () => {
+    window.localStorage.setItem('ff.initiative_bridge', '1');
+    resetInitiativeBridgeFlagCache();
+    const prompt = vi.spyOn(window, 'prompt');
+    prompt.mockReturnValueOnce('classic-initiative-1').mockReturnValueOnce('candidate-1');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ status: 'APPLIED' }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderHub();
+    fireEvent.click(await screen.findByText('Adopt classic initiative'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [url, request] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/initiatives/runtime-v1/adoptions/accepted-classic');
+    expect(JSON.parse(String((request as RequestInit).body))).toMatchObject({
+      candidateId: 'candidate-1',
+      initiativeId: 'classic-initiative-1',
+      projectId: 'proj-1',
+      initiativeOwnerId: 'u1',
+      expectedVersion: 0,
+      visibility: 'PROJECT',
+    });
+  });
+
   it('reads a V8 initiative id from direct and canonical envelopes and fails closed otherwise', () => {
     expect(readV8InitiativeId({ id: 'direct-1' })).toBe('direct-1');
     expect(readV8InitiativeId({ initiative: { id: 'enveloped-1' } })).toBe('enveloped-1');
