@@ -82,3 +82,79 @@ server/src/services/ai/__tests__/day180.agent-plan-long-cancel.pg.redis.test.ts
 server/src/services/ai/__tests__/day180.agent-plan-resource-limit.pg.redis.test.ts
 docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY180_AGENT_LIMITY_REPORT.md
 ```
+
+---
+
+## ERRATA FIX-180 (2026-08-30, Opus) — cztery wady z sond odbioru
+
+Odbiór 180 (`docs/program/funkcje/ODBIOR_180_AGENT_LIMITY.md`) znalazł cztery
+wady, których w powyższym raporcie NIE MA. Wszystkie zamknięte na tej samej
+gałęzi, commit per naprawa, mutacja per naprawa. Dowody: własne kontenery
+`cx-fix180-pg` (6107) + `cx-fix180-redis` (6411), migracje od pustej bazy
+(drugi przebieg `Applying migrations: 0`), testy uruchamiane Z KATALOGU
+`server/`, `npx tsc --noEmit` czysto.
+
+- **F3 ZROBIONE** (`fa38aaf298`): krok, którego narzędzie było w locie w chwili
+  anulowania, zostawał `running` na zawsze (`cancelPlan` skipuje tylko
+  `pending`/`awaiting_approval`, a każda gałąź anulowania w `executePlan`
+  wracała bez dotknięcia wiersza — front pokazywał „W toku" bez końca). Obie
+  gałęzie (okno b i a2) zamykają go teraz terminalnie: `skipped` +
+  `completed_at`, w oknie b także realny `duration_ms`.
+  Mutacja: usunięcie obu wywołań → `expected 'running' not to be 'running'`.
+- **F4 ZROBIONE** (`ed2e6fc17f`): oba nowe env-y czytane były jako
+  `Math.max(x, Number(env || default))`, więc literówka dawała `NaN`:
+  `setInterval(NaN)` = 1 ms (UPDATE dzierżawy co milisekundę), a
+  `durationMs < NaN` = zawsze fałsz (ostrzeżenie na KAŻDYM kroku). `readEnvMs()`
+  wymaga wartości skończonej ≥ minimum, inaczej bierze dokumentowany default.
+  Mutacja w dwóch połówkach przy `env='nieprawidlowa'`: przywrócenie wyrażenia
+  heartbeatu → 128 renew w kroku 150 ms; przywrócenie progu → 1 ostrzeżenie
+  zamiast 0.
+- **Happy-path + licznik odmów ZROBIONE** (`77fef4f11e`): brakująca połowa
+  dowodu — zwykły plan z czatu (własny tenant, ZERO seedowanej polityki)
+  przechodzi end-to-end przez realną kolejkę i workera pod polityką, którą
+  governance sam provisionuje: plan `completed`, rezerwacja `settled`, skutek
+  narzędzia obecny dokładnie raz, zero odmów. Każda odmowa na tej ścieżce
+  przechodzi teraz przez jedno greppowalne miejsce:
+  `logger.warn('[AgentResource] admission denied', {reason, organizationId,
+  projectId, toolName})` — to jest monitoring z warunku K6(7).
+  Mutacje: usunięcie warna → test odmowy czerwony; przywrócenie ucieczki
+  „plany z czatu omijają rezerwację" → oba testy czerwone.
+- **F1 + F2 ZROBIONE** (`84cadd53fc`) — bez migracji i bez zmiany kontraktu dla
+  wave8/multiAgent/adaptera:
+  - **F1**: `reserveAgentResource` dostaje OPT-IN `recomputeDeniedAdmission`.
+    Wiersz `denied` zapisuje, że NIC się nie wykonało, więc jego wieczny replay
+    zamieniał chwilowy szczyt współbieżności w martwy krok na zawsze (retry i
+    wznowienie odtwarzają ten sam klucz). Z flagą odmowa jest przeliczana wobec
+    bieżącego zużycia, a TEN SAM wiersz aktualizowany w miejscu (bez drugiego
+    wiersza, bez podwójnego liczenia). Domyślnie wyłączone — wave8, multiAgent,
+    adapter i dowody A09 dostają dokładnie dzisiejszą, trwałą odmowę; nowy test
+    asertuje obie połowy. Flagę podaje wyłącznie `agentPlannerService`.
+  - **F2**: klucz idempotencji plannera jest teraz per PRÓBA (próba 1 zachowuje
+    historyczny klucz co do bajtu, próby 2-3 dostają sufiks `:attempt:N` — ten
+    sam kształt, którego od A09 używa wołacz work-graph). Wcześniej porażka
+    próby 1 zostawiała rezerwację `released`, a próby 2 i 3 odtwarzały tę odmowę
+    zamiast wywołać narzędzie: pętla ponowień była dekoracją, a
+    `step.error_message` niósł wewnętrzny kod governance zamiast realnej
+    przyczyny. Dedup redelivery zachowany, bo numer próby jest DETERMINISTYCZNY,
+    nie licznikiem w bazie: ponowna dostawa joba odtwarza najpierw próbę 1 i
+    znajduje `settled`, więc narzędzie, które już się udało, nie wykonuje się
+    drugi raz. (Licznik trzymany w bazie zrobiłby dokładnie odwrotnie — nowy
+    klucz po redelivery = drugie wykonanie skutku; dlatego go NIE ma.)
+  - Mutacje: `readmitDenial := false` → oba testy F1 czerwone (odmowa na zawsze
+    / 2 wiersze zamiast 1); `attemptSuffix := ''` → oba testy F2 czerwone
+    (1 wywołanie narzędzia zamiast 3, przejściowa porażka nieprzeżyta).
+
+### Stan sąsiadów (bez NOWYCH czerwonych)
+16 plików / 70 testów: **1 czerwony, ZASTANY** —
+`agentTaskDispatchService.pg.redis.test.ts:173` (`status 'RUNNING'` zamiast
+`'SUCCEEDED'`, `attempt_count 4`); identyczny przed zmianami, potwierdzony też w
+izolacji. Drugie zastane czerwone z odbioru (day165 `secretOrPrivateKey must
+have a value`) było brakiem `JWT_SECRET` w powłoce, nie defektem kodu — z
+ustawionym sekretem day165 jest ZIELONY (2/2).
+
+### Nowe pliki testowe
+```text
+server/src/services/ai/__tests__/day180.agent-plan-env-guard.pg.test.ts
+server/src/services/ai/__tests__/day180.agent-plan-retry-admission.pg.test.ts
+server/src/services/v8/__tests__/day180.agent-resource-denied-readmission.pg.test.ts
+```
