@@ -48,7 +48,10 @@ import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
+import {
+  getActiveVisibilityPolicy,
+  publishVisibilityPolicy,
+} from '../platform/visibilityResolver.js';
 
 import {
   toKpiDefinition,
@@ -260,6 +263,7 @@ export interface CreateKpiDraftInput {
    * comment. */
   binarySuccessValue?: number | null;
   formulaText?: string | null;
+  measurementFrequencyDays?: number | null;
   /** No FK, deferred (decyzja #5). */
   primaryProcessId?: string | null;
   /** No FK yet — KPI-E003 not in scope (decyzja #6). */
@@ -308,6 +312,7 @@ export async function createKpiDraft(
     criticalHigh = null,
     binarySuccessValue = null,
     formulaText = null,
+    measurementFrequencyDays = null,
     primaryProcessId = null,
     responsePolicyId = null,
     ownerUserId = null,
@@ -349,6 +354,24 @@ export async function createKpiDraft(
       // signature change if a future pakiet adds the baseline capability),
       // it is simply not asserted here.
       void access;
+
+      // Day 168: KPI has no Program-like parent lifecycle that could publish
+      // its first visibility policy. Mirror OKR's transactional bootstrap at
+      // the first product write, using the OPEN_ORG mode already established
+      // by the KPI rollout seed. The fail-closed read below remains the
+      // authority: bootstrap creates the prerequisite; it never bypasses it.
+      const existingPolicy = await getActiveVisibilityPolicy(client, {
+        organizationId,
+        domain: KPI_VISIBILITY_DOMAIN,
+      });
+      if (!existingPolicy) {
+        await publishVisibilityPolicy(client, {
+          organizationId,
+          domain: KPI_VISIBILITY_DOMAIN,
+          mode: 'OPEN_ORG',
+          publishedBy: createdBy,
+        });
+      }
 
       // Decyzja #11: fail closed if no active visibility policy exists for
       // this org/domain — never fabricate a default.
@@ -398,8 +421,8 @@ export async function createKpiDraft(
         `INSERT INTO rvn_kpi_definition_versions
            (kpi_id, organization_id, version_number, name, description, unit, target_geometry,
             target_value, target_min, target_max, warning_low, warning_high, critical_low, critical_high,
-            binary_success_value, formula_text, approval_status, created_by)
-         VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'draft', $16)
+            binary_success_value, formula_text, measurement_frequency_days, approval_status, created_by)
+         VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'draft', $17)
          RETURNING *`,
         [
           kpiRow.kpi_id,
@@ -417,6 +440,7 @@ export async function createKpiDraft(
           criticalHigh,
           binarySuccessValue,
           formulaText,
+          measurementFrequencyDays,
           createdBy,
         ]
       );
@@ -504,6 +528,7 @@ export interface EditDraftInput {
   criticalHigh?: number | null;
   binarySuccessValue?: number | null;
   formulaText?: string | null;
+  measurementFrequencyDays?: number | null;
   actorUserId: string;
   actorEffectiveRole: string;
   idempotencyKey: string;
@@ -574,6 +599,11 @@ export async function editDraft(
             ? edits.binarySuccessValue
             : currentRow.binary_success_value,
         formula_text: edits.formulaText !== undefined ? edits.formulaText : currentRow.formula_text,
+        measurement_frequency_days:
+          edits.measurementFrequencyDays !== undefined
+            ? edits.measurementFrequencyDays
+            : (currentRow as KpiDefinitionVersionRow & { measurement_frequency_days: number | null })
+                .measurement_frequency_days,
       };
 
       const updateResult = await client.query<KpiDefinitionVersionRow>(
@@ -581,8 +611,9 @@ export async function editDraft(
             SET name = $1, description = $2, unit = $3, target_geometry = $4,
                 target_value = $5, target_min = $6, target_max = $7,
                 warning_low = $8, warning_high = $9, critical_low = $10, critical_high = $11,
-                binary_success_value = $12, formula_text = $13, row_version = $14, updated_at = now()
-          WHERE definition_version_id = $15
+                binary_success_value = $12, formula_text = $13, measurement_frequency_days = $14,
+                row_version = $15, updated_at = now()
+          WHERE definition_version_id = $16
           RETURNING *`,
         [
           merged.name,
@@ -598,6 +629,7 @@ export async function editDraft(
           merged.critical_high,
           merged.binary_success_value,
           merged.formula_text,
+          merged.measurement_frequency_days,
           nextVersion,
           definitionVersionId,
         ]

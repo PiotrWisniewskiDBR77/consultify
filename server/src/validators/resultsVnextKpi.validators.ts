@@ -107,6 +107,7 @@ export const CreateKpiDraftSchema = z.object({
    * pairing either — see the migration's own column comment). */
   binarySuccessValue: nullableNumberField,
   formulaText: nullableReasonField,
+  measurementFrequencyDays: z.number().int().positive().nullable().optional(),
   primaryProcessId: nullableShortStringField,
   responsePolicyId: nullableShortStringField,
   ownerUserId: nullableShortStringField,
@@ -146,6 +147,7 @@ export const EditKpiDraftSchema = z.object({
   criticalHigh: nullableNumberField,
   binarySuccessValue: nullableNumberField,
   formulaText: nullableReasonField,
+  measurementFrequencyDays: z.number().int().positive().nullable().optional(),
   reason: nullableReasonField,
   idempotencyKey: idempotencyKeyField,
 });
