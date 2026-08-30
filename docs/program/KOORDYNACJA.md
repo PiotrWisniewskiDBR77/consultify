@@ -244,3 +244,49 @@ jest niemożliwa, bo nie ma czego wyświetlić. Kontrakt danych idzie pierwszy.
 **Kolejność uzgodniona z właścicielem:** najpierw jedno źródło kolejności sekcji
 (tor grafiki, zmiana mechaniczna), potem rozstrzygnięcie o miejscu Teresy, potem
 treść sekcji, na końcu siedem szyn poza kanonem — po jednej, każda z odbiorem.
+
+### 2026-08-30 · POMIAR OD KOŃCA DO KOŃCA: agent tworzy plan, ale go NIE WYKONUJE
+
+**Zlecenie właściciela:** *„wygląda tak samo jak to, co wyprodukowałem, i nigdy nie
+zostało przećwiczone"*. Test na jedną rzecz: czy agent działa od początku do końca.
+
+**Środowisko:** czysta baza lokalna (NIE demo, NIE staging), 714 migracji, serwer
+podniesiony, `GET /api/ready` → `{"status":"ready","database":"ready"}`. Wszystkie
+rekordy testowe usunięte razem z bazą po pomiarze.
+
+**Co DZIAŁA — zmierzone, nie założone:**
+- `POST /api/ai/agent-plan` → **HTTP 201**. W bazie: `ai_agent_plans` 1 wiersz
+  (status `planning`), `ai_agent_plan_steps` **3 wiersze**, wszystkie `pending`.
+- Router jest zamontowany **bezwarunkowo** (`server/src/routes/ai/index.ts:81`) —
+  flaga `ff_agentPlan` gatuje wyłącznie panel w przeglądarce, nie backend.
+
+**Gdzie łańcuch się urywa — dokładny punkt:**
+`POST /api/ai/agent-plan/:id/run` → **HTTP 200**, treść: `"dispatch":"unavailable"`.
+Stan bazy PO uruchomieniu: plan nadal `planning`, ten sam `updated_at`; wszystkie
+trzy kroki nadal `pending`, `result_json` puste, `started_at` puste;
+`ai_agent_job_receipts` — **zero wierszy**.
+
+Przyczyna, `server/src/services/ai/agentTaskDispatchService.ts:61` (sprawdzone
+osobiście, nie przepisane z raportu):
+```ts
+if (env[AI_TASKS_WORKER_FLAG] !== 'true') return { status: 'DISABLED' };
+```
+`ENABLE_AI_TASKS_WORKER` jest domyślnie wyłączona. Log serwera od startu:
+`[BullMQ] ai-tasks worker disabled; set ENABLE_AI_TASKS_WORKER=true after owner approval`.
+
+**★ To jest kształt „200 znaczy nic".** Uruchomienie odpowiada sukcesem i nic nie
+robi. Ekran nie ma jak tego pokazać, bo dostał odpowiedź poprawną.
+
+**Do realnego wykonania trzeba TRZECH rzeczy naraz**, żadnej nie ma domyślnie:
+1. `ENABLE_AI_TASKS_WORKER=true` (wymaga zgody właściciela — tak mówi komentarz w kodzie),
+2. **prawdziwy Redis** — przy `MOCK_REDIS=true` ta sama funkcja rzuca wyjątkiem,
+3. działający proces `aiWorker.ts`.
+
+**Osobne znalezisko:** `ENABLE_AI_TASKS_WORKER` **nie występuje w rejestrze flag**
+(`server/src/config/FeatureFlags.ts`) — jest surową zmienną środowiskową odczytywaną
+w dwóch miejscach. Kto przegląda rejestr flag, żeby zrozumieć, co jest włączone,
+tej nie zobaczy.
+
+**Czego NIE zmierzono:** czy silnik wykonawczy działa poprawnie PO odblokowaniu.
+Wiemy tylko, że jest zablokowany. To osobny pomiar i wymaga Redisa oraz kluczy
+dostawcy modelu.
