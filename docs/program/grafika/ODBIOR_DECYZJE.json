@@ -260,7 +260,182 @@
  },
  "sheet-artifact": {
   "decyzja": "poprawka",
-  "uwaga": "Tutaj mamy niestety trochę do poprawy. ",
-  "kiedy": "2026-08-30T10:22:19.717Z"
+  "uwaga": "Tutaj mamy niestety trochę do poprawy. Słuchaj, tak jak tabela w Excelu, sama tabela powinna zaczynać się od samej góry, więc powinniśmy mieć małe menu potencjalnych funkcjonalności. Poniżej powinniśmy mieć już tylko nazwę kolumn i samą tabelę. Teraz, jedna trzecia ekranu jest zużyta zupełnie niepotrzebnie na informacje albo funkcje, które mogłyby być w panelu bocznym rozwijanym. Mamy, rzeczywiście, upodobnić się tutaj do narzędzi tabelarycznych, takich jak Excel. ",
+  "kiedy": "2026-08-30T10:23:56.588Z"
+ },
+ "deck-artifact": {
+  "decyzja": "poprawka",
+  "uwaga": "Dobrze, jeśli chodzi o układ graficzny – pełna zgoda, ekran jest super. Do przepracowania mamy prawy panel. Nie, i nie widzę nigdzie, gdzie mogę edytować, nie? Czyli narzędzia do edycji ręcznej też nie widzę. Podobnie, zresztą, jak w Excelu. ",
+  "kiedy": "2026-08-30T10:25:41.856Z"
+ },
+ "deck-quality-badge": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:25:53.705Z"
+ },
+ "word-quality-badge": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:25:59.011Z"
+ },
+ "b2-template-gallery": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:26:19.205Z"
+ },
+ "document-studio-ai-teresa": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:26:27.413Z"
+ },
+ "document-studio-streaming-honesty-n3": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:26:45.970Z"
+ },
+ "audyty-warsztat-kryterium": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:30:27.147Z"
+ },
+ "assessment-five-surfaces": {
+  "decyzja": "poprawka",
+  "uwaga": "Niestety, tutaj tabela preview nie trzyma się opisanego standardu. ",
+  "kiedy": "2026-08-30T10:30:50.320Z"
+ },
+ "assessment-output-report": {
+  "decyzja": "poprawka",
+  "uwaga": "No dobra, i teraz tak: jeśli chodzi o raporty z oceny, trochę to pomieszaliśmy, nie? Audyt i oceny to dwie różne historie. Oceny mają swój framework i raporty. Jeżeli chodzi o DRD, mamy konkretną formułę, w której znajdują się wszystkie poszczególne osie. Dla każdej osi określony jest obszar analityczny, więc musimy zbudować raport o dosyć sformalizowanej strukturze:  1. Wstęp z opisem, jak było prowadzone badanie.   2. Siedem osi – dla każdej z nich opisujemy najpierw samą oś, a następnie obszar.   3. Opisujemy odpowiedzi oraz wstępną paletę wniosków.   4. Na koniec podsumowanie.  Tak więc raport jest znacznie bardziej sformalizowany.  Podobnie w przypadku Siri – istnieje dokument opisujący, jak ma wyglądać raport.    W audytach jest nieco większa dowolność, ale również trzeba przejść przez wnioski audytowe w kolejności, w jakiej audyt jest realizowany. ",
+  "kiedy": "2026-08-30T10:32:45.222Z"
+ },
+ "assessment-quality-review-panel": {
+  "decyzja": "poprawka",
+  "uwaga": "Znowu taki wniosek: taka tabela jest możliwa, tylko pamiętaj, że w asesmencie mamy macierz odpowiedzi i ona jest ważna, bo jest narzędziem. To nie jest tylko prezentacja, to jest narzędzie, które sprawia, że wchodzimy w interakcję. Nie wiem, czy to, co mi tu pokazujesz, ma zastąpić macierz. Jeśli tak, to nie działa w ten sposób.  Jeśli chcesz mieć oddzielną taką tabelę, to super, tylko to nie jest macierz. Dobrze, przejrzałem wszystkie karty. Nigdzie nie znalazłem macierzy. Macierz jest przedstawieniem graficznym na wszystkich osiach ze zmiennymi osiami. Poszukaj tego dokładnie. To w kodzie istnieje. To jest super ważne, bo ta macierz później wchodzi do raportu i wizualizuje poziomy oraz następne kroki. To jest jakby wizualizacja z głównym narzędziem tutaj. ",
+  "kiedy": "2026-08-30T10:39:42.429Z"
+ },
+ "assessment-reports-table": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:33:51.376Z"
+ },
+ "assessment-artifacts-restart": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:01.049Z"
+ },
+ "assessment-menu3-status-chips": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:17.283Z"
+ },
+ "drd-http-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:30.332Z"
+ },
+ "method-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:46.941Z"
+ },
+ "audyty-piec-powierzchni": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:52.366Z"
+ },
+ "audyty-raport-dokument": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:35:19.661Z"
+ },
+ "audyty-drd-report": {
+  "decyzja": "poprawka",
+  "uwaga": "Znowu nie wiem, gdzie to jest, ale to nie wygląda jak pełna tabela. To muszą być raporty, które są po prostu pełną tabelą na pełną szerokość. ",
+  "kiedy": "2026-08-30T10:35:46.932Z"
+ },
+ "assessment-list": {
+  "decyzja": "poprawka",
+  "uwaga": "To samo rozumiem, że to ma być tabela na całą szerokość ekranu, a nie jakaś fragmentaryczna. ",
+  "kiedy": "2026-08-30T10:36:11.797Z"
+ },
+ "assessment-presentation-view": {
+  "decyzja": "nie",
+  "uwaga": "Nie, no to wygląda fatalnie, nie wiem, co to jest, nie? Tutaj musi być. Jeśli to ma być raport, to musi być opis, muszą być na nim macierze, muszą być ich opisy, co na nich macierze muszą być. Teraz nie ma macierzy nawet. ",
+  "kiedy": "2026-08-30T10:36:54.214Z"
+ },
+ "assessment-reports-panel": {
+  "decyzja": "poprawka",
+  "uwaga": "No, to jest normalna tabela na pełną szerokość, jak rozumiem. ",
+  "kiedy": "2026-08-30T10:39:03.094Z"
+ },
+ "assessment-initiatives-table": {
+  "decyzja": "poprawka",
+  "uwaga": "No, już to jest po prostu pełna tabela na pełną szerokość, a to wygląda, jakby to był jakiś raport w raporcie albo nie wiem co, nie? To ma być normalna tabela inicjatyw. Na koniec inicjatywy, na koniec każdej oceny, czy na koniec assessmentu, to są po prostu drafty inicjatywy, a normalnie w tabeli inicjatyw. ",
+  "kiedy": "2026-08-30T10:37:43.799Z"
+ },
+ "siri-workspace": {
+  "decyzja": "ok",
+  "uwaga": "Ty, nie wiesz, co rozumiem, że okej, więc zobaczymy, jak to będzie, jak to wyjdzie. Ja nie znam Sir, więc trudno mi to ocenić. ",
+  "kiedy": "2026-08-30T10:38:49.665Z"
+ },
+ "chat-split-teresa-right": {
+  "decyzja": "ok",
+  "uwaga": "Znaczy, ja to akceptuję, ale trzeba mieć świadomość, że to nie jest pełen obraz, nie? To znaczy, na przykład w czacie nie ma wszystkich przycisków. Rozumiem, że pokazujemy tutaj koncepcyjnie, że po lewej stronie mamy artefakt, i to jest zgoda. ",
+  "kiedy": "2026-08-30T10:40:31.563Z"
+ },
+ "teresa-confirm-chip": {
+  "decyzja": "poprawka",
+  "uwaga": "A zaproponujmy może trochę bardziej delikatną formułę graficzną tego okna, bo ono teraz jest takie duże i trochę toporne, a dzisiaj standardy tego typu konwersacji są już bardziej delikatne. Jak na przykład to robi właśnie Claude. ",
+  "kiedy": "2026-08-30T10:47:21.742Z"
+ },
+ "teresa-chipy-panel-artefaktu": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:47:57.178Z"
+ },
+ "teresa-chipy-sugestii": {
+  "decyzja": "poprawka",
+  "uwaga": "A możemy gdzieś jakoś kontekstowo to włączać, wyłączać, bo ja generalnie jestem przeciwnikiem, ale pewnie są tacy, którzy dzięki temu rozumieją, co mają zrobić. Także wyrzucenie tego całkiem nie jest okej, ale w sobie tego nie lubię. Może tam, gdzie mamy plus, w nie wiem, zaproponuj coś – wiemy coś fajnego. ",
+  "kiedy": "2026-08-30T10:49:04.312Z"
+ },
+ "ntype-analizuj-ai": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:49:44.895Z"
+ },
+ "mindmap-canvas": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:49:48.695Z"
+ },
+ "mindmap-i18n-smoke": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:50:01.753Z"
+ },
+ "whiteboard-canvas": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:50:51.088Z"
+ },
+ "whiteboard-workshop": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:51:29.129Z"
+ },
+ "processflow-canvas": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:51:31.204Z"
+ },
+ "melscanvas-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:51:33.012Z"
+ },
+ "canvas-new-doc": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:52:03.930Z"
+ },
+ "canvas-kebab-restructure": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:52:24.096Z"
+ },
+ "canvas-toolbar-md-history": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:52:27.396Z"
+ },
+ "agent-plan-canvas": {
+  "decyzja": "poprawka",
+  "uwaga": "Uważam, że potrzebujemy tu popracować nad ikonami w poszczególnych oknach; powinny one startować zwinięte, a nie rozwinięte, bo tak przerażają swoją ilością. ",
+  "kiedy": "2026-08-30T10:54:27.906Z"
+ },
+ "agent-warsztat": {
+  "decyzja": "poprawka",
+  "uwaga": "Słuchaj, prokuruję tutaj narzędzia, jak na przykład dodanie, zrównoleglenie procesów. Merytorycznie ten agent jest jeszcze do wypracowania. Na tym poziomie myślę, że graficznie nam to pasuje – naprawdę za małe są te elementy. ",
+  "kiedy": "2026-08-30T10:54:48.218Z"
+ },
+ "ev-football-field": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:56:17.807Z"
  }
 }

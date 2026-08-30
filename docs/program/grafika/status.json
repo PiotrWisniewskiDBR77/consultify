@@ -1255,11 +1255,13 @@
     {
      "id": "agent-hub",
      "nazwa": "Centrum agentow",
-     "ocena": "D",
-     "co": "Nie wiem, jak wyglada — ekran wywraca sie w harnessie z powodu braku nawigacji.",
-     "naprawione": [],
+     "ocena": "B",
+     "co": "Agent Hub — wspolna przestrzen pracy. Teresa przygotowuje prace, Moja praca przechowuje kanoniczne Sprawy i Przebiegi; akcepty, wyniki, historia i odzyskiwanie w tym samym miejscu.",
+     "naprawione": [
+      "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione."
+     ],
      "wyjatki": [
-      "Zgloszone do naprawy narzedzia"
+      "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
      ]
     }
    ]
