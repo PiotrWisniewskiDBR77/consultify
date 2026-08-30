@@ -236,3 +236,24 @@ zawęża listę do obejrzenia okiem.
 **Stan domyślny zostaje prawdziwy.** Sekcji, które w produkcie zapełnia dopiero
 Teresa, NIE zakłamujemy. Dokładamy drugi, jawnie nazwany wariant `?dane=pelne`,
 żeby właściciel mógł ocenić wygląd karty wypełnionej — obok, a nie zamiast.
+
+## ★★ REGUŁA NR 8 — zakaz `git stash` u robotników (2026-08-30, po incydencie)
+
+**Żaden robotnik nie używa `git stash` w katalogu roboczym.** Stos stashu jest wspólny
+dla całego repozytorium i wszystkich drzew roboczych. Przy kilku robotnikach pracujących
+równolegle w jednym katalogu `git stash` **zabiera cudzą pracę w locie**.
+
+Zdarzyło się to 2026-08-30: robotnik schował zmiany, żeby zmierzyć stan testów sprzed
+własnej edycji. Stash zabrał plik innego robotnika. Ten w tym samym momencie zapisał
+swoją wersję, więc `stash pop` odmówił — i cudzy plik trzeba było **odtwarzać ręcznie**.
+Skończyło się dobrze wyłącznie dlatego, że robotnik to zgłosił.
+
+**Zamiast tego:** stan odniesienia mierzy się **przed pierwszą edycją** albo wcale.
+Jeśli robotnik musi porównać z HEAD, czyta `git show HEAD:<ścieżka>` do osobnego pliku
+— nigdy nie rusza drzewa roboczego.
+
+To jest młodsze rodzeństwo zakazu `git add -A`: obie reguły mówią to samo — **w katalogu
+z kilkoma robotnikami wolno dotykać wyłącznie plików wymienionych z nazwy.**
+
+**Sekcja „ZGŁASZAM" w raporcie robotnika uratowała tę sytuację.** To kolejny dowód,
+że nie jest szumem organizacyjnym i że ma być czytana pierwsza, nie ostatnia.
