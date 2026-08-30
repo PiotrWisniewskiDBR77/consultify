@@ -27,14 +27,27 @@ import { EmbeddedMatrix } from '@/components/Reports/EmbeddedMatrix';
 
 // Wszystkie 7 osi obsadzone tak, by dało się policzyć kolumny/poziomy.
 // culture i cybersecurity celowo na actual=target=6 (poziom najwyższy tych osi).
+//
+// UWAGA o kolejności: `MaturityOverviewMatrix`/`GapAnalysisMatrix` w
+// EmbeddedMatrix.tsx CELOWO sortują osie malejąco po wielkości luki
+// (`.sort((a, b) => b.gap - a.gap)` — istniejąca, zamierzona logika
+// priorytetyzacji, poza zakresem tej naprawy). Poprzednia wersja tego mocka
+// dawała aiMaturity gap=2 (remis z processes/digitalProducts, przed
+// businessModels), więc „Dojrzałość AI" lądowała na 3. miejscu zamiast na
+// 7. — to była wina DANYCH MOCKOWYCH harnessu, nie utrata kolejności w
+// komponencie (DRD_STRUCTURE wciąż ma AI jako oś 7). Poniższe luki są
+// dobrane tak, by malały monotonicznie zgodnie z numerem osi (6,4,3,2,0,0,0
+// — ostatnie trzy remisują na zero i stabilny sort JS zachowuje wtedy ich
+// oryginalną kolejność wstawienia: culture, cybersecurity, aiMaturity), więc
+// widok macierzy pokazuje naturalny porządek 1→7.
 const axisData = {
-  processes: { actual: 5, target: 7 },
-  digitalProducts: { actual: 3, target: 5 },
-  businessModels: { actual: 4, target: 5 },
-  dataManagement: { actual: 6, target: 7 },
+  processes: { actual: 1, target: 7 },
+  digitalProducts: { actual: 1, target: 5 },
+  businessModels: { actual: 2, target: 5 },
+  dataManagement: { actual: 5, target: 7 },
   culture: { actual: 6, target: 6 },
   cybersecurity: { actual: 6, target: 6 },
-  aiMaturity: { actual: 2, target: 4 },
+  aiMaturity: { actual: 4, target: 4 },
 };
 
 export default function DrdEmbeddedMatrixAxisLevelsScreen() {

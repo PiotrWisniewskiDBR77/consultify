@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
+import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '@/services/drdStructure';
+
 // Helper to get auth token from localStorage
 const getAuthToken = () => localStorage.getItem('token');
 
@@ -54,14 +56,26 @@ interface ImportReportModalProps {
   onImported: (reportId: string) => void;
 }
 
+// maxLevel per axis, read from the single source of truth
+// (src/services/drdStructure.ts). Do NOT hand-copy these numbers again:
+// DRD_STRUCTURE[*].levelCount is per-axis (5, 6 or 7 — culture and
+// cybersecurity are 6, not 5). This table previously hand-maintained
+// maxLevel: 5 for both, which capped the "Adjust Scores" input's `max` at 5
+// and made level 6 impossible to enter for culture/cybersecurity. `name`
+// stays hand-maintained — it's a shorter presentation label than
+// DRD_STRUCTURE's, not part of the source.
+const DRD_AXIS_LEVEL_COUNT: Record<string, number> = Object.fromEntries(
+  DRD_STRUCTURE.map((axis) => [DRD_AXIS_KEY_MAP[axis.id], axis.levelCount])
+);
+
 const DRD_AXES = [
-  { id: 'processes', name: 'Digital Processes', maxLevel: 7 },
-  { id: 'digitalProducts', name: 'Digital Products', maxLevel: 5 },
-  { id: 'businessModels', name: 'Business Models', maxLevel: 5 },
-  { id: 'dataManagement', name: 'Data Management', maxLevel: 7 },
-  { id: 'culture', name: 'Culture', maxLevel: 5 },
-  { id: 'cybersecurity', name: 'Cybersecurity', maxLevel: 5 },
-  { id: 'aiMaturity', name: 'AI Maturity', maxLevel: 5 },
+  { id: 'processes', name: 'Digital Processes', maxLevel: DRD_AXIS_LEVEL_COUNT.processes },
+  { id: 'digitalProducts', name: 'Digital Products', maxLevel: DRD_AXIS_LEVEL_COUNT.digitalProducts },
+  { id: 'businessModels', name: 'Business Models', maxLevel: DRD_AXIS_LEVEL_COUNT.businessModels },
+  { id: 'dataManagement', name: 'Data Management', maxLevel: DRD_AXIS_LEVEL_COUNT.dataManagement },
+  { id: 'culture', name: 'Culture', maxLevel: DRD_AXIS_LEVEL_COUNT.culture },
+  { id: 'cybersecurity', name: 'Cybersecurity', maxLevel: DRD_AXIS_LEVEL_COUNT.cybersecurity },
+  { id: 'aiMaturity', name: 'AI Maturity', maxLevel: DRD_AXIS_LEVEL_COUNT.aiMaturity },
 ];
 
 export const ImportReportModal: React.FC<ImportReportModalProps> = ({
