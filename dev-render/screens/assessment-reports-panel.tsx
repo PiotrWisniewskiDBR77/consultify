@@ -98,7 +98,10 @@ if (!g.__ASSESSMENT_REPORTS_FETCH__) {
 export default function AssessmentReportsPanelScreen(): React.ReactElement {
   return (
     <MemoryRouter initialEntries={['/']}>
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px' }}>
+      {/* GRAFIKA 20-tabele-szerokosc (2026-08-30): `maxWidth: 1180, margin: '0 auto'`
+          usunięty — HARNESS-ONLY (AssessmentManagePanel.tsx montuje
+          ReportsManagementPanel w zwykłym `<div className="p-4">`, bez limitu). */}
+      <div style={{ padding: '16px' }}>
         <ReportsManagementPanel
           assessmentId={ASSESSMENT_ID}
           assessmentName="DBR77 · Digital Readiness Diagnosis"

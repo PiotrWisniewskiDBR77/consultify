@@ -120,7 +120,9 @@ if (!g.__ASSESSMENT_INITIATIVES_TABLE_FETCH__) {
 export default function AssessmentInitiativesTableScreen(): React.ReactElement {
   return (
     <MemoryRouter initialEntries={['/']}>
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px', height: 640 }}>
+      {/* GRAFIKA 20-tabele-szerokosc (2026-08-30): `maxWidth: 1180, margin: '0 auto'`
+          usunięty — HARNESS-ONLY artefakt bez odpowiednika w realnym mounterze. */}
+      <div style={{ padding: '16px', height: 640 }}>
         <InitiativesTable projectId="proj-1" onOpenInitiative={() => {}} />
       </div>
     </MemoryRouter>

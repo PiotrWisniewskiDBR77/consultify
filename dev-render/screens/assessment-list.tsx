@@ -215,7 +215,12 @@ export function AssessmentListScreen(): React.ReactElement {
   });
 
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto' }}>
+    // GRAFIKA 20-tabele-szerokosc (2026-08-30): `maxWidth: 1180, margin: '0 auto'`
+    // usunięty — HARNESS-ONLY artefakt (nie istnieje w żadnym realnym mounterze
+    // StandardModuleBar+StandardTable w src/), przez który tabela w zrzutach
+    // renderowała się na ~1224px zamiast pełnej szerokości okna. Zgłoszenie
+    // właściciela dotyczyło m.in. tego ekranu.
+    <div>
       <StandardModuleBar
         tabs={[
           { id: 'all', label: 'Wszystkie' },

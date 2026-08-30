@@ -142,7 +142,7 @@ if (!g.__REPORT_BUILDER_BLOCK_TYPES_FETCH__) {
 
 export default function ReportBuilderBlockTypesScreen(): React.ReactElement {
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px', height: 720 }}>
+    <div style={{ padding: '16px', height: 720 }}>
       <BlockTypesManager />
     </div>
   );

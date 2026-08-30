@@ -277,7 +277,10 @@ export default function VaultSafesTableScreen(): React.ReactElement {
     // paint. Pattern from dev-render/screens/idea-table.tsx. Production
     // always mounts this inside the app's real Router.
     <MemoryRouter initialEntries={['/']}>
-      <div style={{ maxWidth: 1180, margin: '0 auto', height: '80vh' }}>
+      {/* GRAFIKA 20-tabele-szerokosc (2026-08-30): `maxWidth: 1180, margin: '0 auto'`
+          usunięty — HARNESS-ONLY artefakt (MyWorkHub.tsx montuje
+          <ClientDocumentsVault /> bez żadnego limitu szerokości). */}
+      <div style={{ height: '80vh' }}>
         <ClientDocumentsVault />
       </div>
     </MemoryRouter>

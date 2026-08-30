@@ -175,8 +175,6 @@ const IdeaTemplatesCatalogScreen: React.FC = () => {
   return (
     <div
       style={{
-        maxWidth: 1180,
-        margin: '0 auto',
         padding: '28px 24px 64px',
         fontFamily: 'Inter, system-ui, sans-serif',
       }}

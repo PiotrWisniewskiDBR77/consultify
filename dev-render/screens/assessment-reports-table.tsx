@@ -117,7 +117,7 @@ if (!g.__ASSESSMENT_REPORTS_TABLE_FETCH__) {
 export default function AssessmentReportsTableScreen(): React.ReactElement {
   return (
     <MemoryRouter initialEntries={['/']}>
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px', height: 640 }}>
+      <div style={{ padding: '16px', height: 640 }}>
         <ReportsTable projectId="proj-1" onCreateInitiatives={() => {}} onOpenReport={() => {}} />
       </div>
     </MemoryRouter>

@@ -299,6 +299,12 @@ InitiativeService.getAll = (async () => MOCK_INITIATIVES) as typeof InitiativeSe
 Api.getNotebookPages = (async () => []) as typeof Api.getNotebookPages;
 Api.suggestMyIdeas = (async () => []) as typeof Api.suggestMyIdeas;
 Api.getLinkGraphBacklinks = (async () => []) as typeof Api.getLinkGraphBacklinks;
+// POMIAR 2026-08-30 (robotnik, sesja lokalna, nie commitować): harness nie
+// miał stuba dla Api.getTaskComments — loadTask() woła ją realnie, fetch bez
+// backendu zwraca coś innego niż tablicę -> `serverComments.map is not a
+// function` i cały ekran wisi na "Ładowanie ekranu...". Stub pusty, tak samo
+// jak pozostałe źródła powyżej.
+Api.getTaskComments = (async () => []) as typeof Api.getTaskComments;
 
 /**
  * `?dane=pelne` (tor grafiki, 2026-08-30) — Piotr nigdy nie ocenia pustej
