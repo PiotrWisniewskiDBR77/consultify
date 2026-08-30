@@ -139,7 +139,18 @@ function readEnvMs(rawValue: string | undefined, defaultMs: number, minMs: numbe
 type PlanToolExecutor = (
   toolName: string,
   input: Record<string, unknown>,
-  execution?: { operationKey: string; ownerToken: string; fencingToken: number }
+  execution?: {
+    operationKey: string;
+    ownerToken: string;
+    fencingToken: number;
+    /**
+     * 1-based index of the retry attempt this call belongs to (FIX-180 / F2).
+     * Deterministic: attempt N of a given step is always attempt N, in this
+     * delivery and in any redelivery of the same job — which is exactly what
+     * lets it be part of an idempotency key.
+     */
+    attempt: number;
+  }
 ) => Promise<unknown>;
 
 class AgentPlannerService {
@@ -1135,6 +1146,24 @@ class AgentPlannerService {
 
     const executor: PlanToolExecutor = async (toolName, input, execution) => {
       const resourceRunId = plan.canonicalRunId || plan.id;
+      const operationKey = execution?.operationKey || `${plan.id}:${toolName}`;
+      // FIX-180 / F2: scope the key to the RETRY ATTEMPT.
+      //
+      // The key used to be per step, so `runToolWithRetry`'s attempts 2 and 3
+      // never reached the tool at all: the first failure left the reservation
+      // `released`, and every later attempt replayed that refusal — the step
+      // died with the internal code `resource_released_after_execution_failure`
+      // instead of the real reason, and the retry that exists to survive a
+      // transient tool fault did nothing. An attempt-scoped key gives each
+      // attempt a real admission decision and a real execution (the same shape
+      // the work-graph caller already uses: `...:attempt:N`).
+      //
+      // Redelivery dedup is preserved because the attempt index is
+      // deterministic, not a counter: a redelivered job replays attempt 1
+      // first, so a tool that already SUCCEEDED is found `settled` and is not
+      // executed twice. Attempt 1 also keeps the pre-FIX-180 key byte for byte,
+      // so reservations written before this change still match.
+      const attemptSuffix = (execution?.attempt ?? 1) > 1 ? `:attempt:${execution!.attempt}` : '';
       const resourceExecution = await executeWithAgentResourceReservation({
         organizationId: payload.organizationId,
         projectId: resourceScope!.project_id,
@@ -1143,8 +1172,10 @@ class AgentPlannerService {
         agentId: 'agent-planner',
         toolName,
         idempotencyKey: plan.canonicalRunId
-          ? `planner:${plan.canonicalRunId}:${execution?.operationKey || `${plan.id}:${toolName}`}`
-          : `planner-chat:${plan.id}:${execution?.operationKey || `${plan.id}:${toolName}`}`,
+          ? `planner:${plan.canonicalRunId}:${operationKey}${attemptSuffix}`
+          : `planner-chat:${plan.id}:${operationKey}${attemptSuffix}`,
+        // FIX-180 / F1: a refusal must not outlive the peak that caused it.
+        recomputeDeniedAdmission: true,
         estimatedCostUsd: estimateAgentToolCostUsd(toolName),
         execute: () =>
           executeToolCall(toolName, input, {
@@ -1422,7 +1453,7 @@ class AgentPlannerService {
     let lastError: unknown;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await toolExecutor(toolName, input, execution);
+        return await toolExecutor(toolName, input, { ...execution, attempt });
       } catch (err) {
         lastError = err;
         if (attempt < maxAttempts) {
