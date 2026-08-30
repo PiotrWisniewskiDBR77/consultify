@@ -3,131 +3,169 @@
 Data: 2026-08-30  
 Marker: `22124537f7`  
 Gałąź: `codex/day166-karta-decyzji-20260830`  
-Werdykt: **STOP CAŁEGO DYŻURU — ZASÓB WYŁĄCZNY ZAJĘTY**
+Werdykt: **PARTIAL — R2/R4 potwierdzone realnym HTTP+PG; R3 bez pełnego przebiegu przeglądarkowego dwóch loginów**
 
-## §0.1 — baza pracy i marker
+## Historia STOP i wznowienia
 
-Instrukcję wydaną odczytano w całości z
-`github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_166_KARTA_DECYZJI.md`.
-Worktree utworzono wyłącznie z bare-vaulta w
-`/private/tmp/cx-day166-karta-decyzji`.
+Pierwszy przebieg zasadnie zatrzymał zajęty port `5000` (`ControlCe`, PID 1122).
+Nadzorca wznowił dyżur i przybił: baza `6057`, runtime `5004/5005`. Po
+wznowieniu porty były wolne; marker nadal dał `MARKER OK`.
 
-Wynik komend (2), dosłownie:
+## §0.1
 
 ```text
-bda3e98958 pomiar mechaniki: ROI dziala, wskaznik ma blokade na starcie, cel ma dziure na check-inie
-332fa332bd lista inicjatyw: wyrenderowana pod wlasna nazwa — istniala schowana pod ekranem od i18n
-d3c30bfb06 docs(codex): dyzury 166 i 167 wydane — domkniecie karty decyzji, splata dlugu narzedzi pomiarowych
-76996ee069 odbior: wszystkie 196 ekranow ma opis GDZIE JEST i PO CO
-05c8df153d docs(codex): dyzur 165 wydany — wznowienie agenta po akcepcie kroku, koniec klamstwa 'zakolejkowane'
-1aa942cb32 ROI: trzy ekrany scalone w JEDNA karte N — prototyp do decyzji
-22124537f7 merge: dyzur 161 (lancuch migracji od pustej bazy przechodzi 868/868 — A; bramka niewpieta — C) — odbior adwersaryjny
-ac5ba6dc3d odbior 161: lancuch od zera przechodzi (868/868, A), inwentarz B z nieujawniona luka parsera, bramka C bo niewpieta
-a84f0deae3 merge: dyzur 162 (napis o cofaniu przestal klamac — A; pochodzenie B) — odbior adwersaryjny nadzorcy
-5e022a3e0a odbior 162: klamstwo o cofaniu usuniete (A, mutacja odtworzona), pochodzenie B — plakietka na dzialajacej sciezce nadal klamie
-2705ecc435 merge: dyzur 160 (brama zapisu zadan potwierdzona realnym HTTP — A, dowod mutacyjny niezalezny) — odbior adwersaryjny
-809414d395 odbior 160: A na rdzeniu z niezaleznym dowodem mutacyjnym; 22 pliki pisza do tabeli tasks; cztery ciche powierzchnie 409
-6b48e34d9c kanon: smuga Teresy zostaje czerwona (wyjatek zatwierdzony) + Ocena i Audyt to dwa moduly
-174080c277 koordynacja: jedna wspolna paczka odbioru — ekran wchodzi, gdy gotowe sa obie polowy
-56d289f0c4 koordynacja: co zostaje torowi funkcji po podlaczeniu karty decyzji
-3c62aeab3d karta decyzji: komentarze, alternatywy i ryzyka ida teraz NA SERWER
-bced36a6ff docs(day160): record owned resource cleanup
-d0b9784cd9 docs(day160): complete task writer evidence and decision brief
-21221ca50f docs(day162): record provenance closure evidence
-d48031ecfa test(day160): measure task write gate on real postgres
-894739cfc6 fix(day162): make task provenance and rollback audit honest
-52b6007faf docs(day161): clean report formatting
-0fe521cd02 docs(day161): record resumed fresh-chain revalidation
-4c8f2750a9 rejestr: cztery warianty prototypu prawego pasa do odbioru
-286ff49271 stany bledu + prototyp jednej formuly prawego pasa
 MARKER OK
-```
-
-Wynik komend (7), dosłownie:
-
-```text
 22124537f7c4e5ac523dc97ada2291f955721e3c
 ```
 
-`git status --short | head -3` nie wypisał żadnej linii.
+`git status --short | head -3` na wejściu nie wypisał żadnej linii. Dysk miał
+`37 GiB` wolnego. Tip wyprzedzał marker o sześć commitów; praca dokładnie z
+markera, bez rebase.
 
-Wolne miejsce przed startem:
+## R1 — pomiar przed kodem
+
+### Ryzyko
+
+| Warstwa | Stan wejściowy |
+|---|---|
+| Interfejs | `DecisionDetailView.tsx:330-348`: UI ma kategorię i contingency, mapper wpisywał stałe `business`/pusty tekst. |
+| Wysyłka | `riskToServerInput` nie wysyłał obu pól. |
+| Walidator | `decision.validators.ts:141-158`: oba schematy nie deklarowały pól. |
+| Serwis/kontroler | `decisionCollaborationService.ts:522-672`, `DecisionController.ts:2904-2985`: brak w DTO, SQL i wejściu. |
+| Baza | `932_decision_workflow_canonical.sql:130-142`: brak kolumn; realny SELECT przed migracją: `ERROR: column "category" does not exist`. |
+
+Teza instrukcji potwierdzona.
+
+### Pamięć przeglądarki
+
+| Warstwa | Stan wejściowy |
+|---|---|
+| Interfejs | Przypomnienia, eskalacje, linked items i context details są edytowalne. |
+| Wysyłka/walidator/backend | Brak serwera — świadomie poza zakresem przebudowy. |
+| Magazyn | `DecisionDetailView.tsx:2401/2447`: `consultify-decision-enhancements:<decisionId>` bez użytkownika i organizacji. |
+
+Teza wycieku między użytkownikami jednego profilu potwierdzona kodem.
+
+### RACI
+
+| Warstwa | Stan wejściowy |
+|---|---|
+| Interfejs | Cztery role RACI; mutacje wykonywały tylko `setStakeholders`. |
+| Wysyłka | GET `/decisions/:id/stakeholders`; zero wołaczy zapisu. |
+| Walidator/serwis/kontroler | Brak schematu, funkcji i handlerów. |
+| Baza | `decision_stakeholders` istnieje; `role` to `TEXT` bez CHECK. |
+
+Router miał **29** deklaracji według
+`grep -cE "^router\.(get|post|put|patch|delete)"`; zero `/stakeholders`.
+Notatka o „27” i „tylko odczycie” była nieaktualna. Inicjatywy mają osobne
+trasy w `initiatives.routes.ts:3673-3680`.
+
+## R2 — pola ryzyka
+
+- Migracja `20260830_day166_decision_risk_fields.sql` dodaje idempotentnie
+  `category TEXT` i `contingency TEXT`.
+- Pola przechodzą przez Zod, kontroler, DTO, INSERT/UPDATE/SELECT i frontend.
+- Istniejąca baza: pierwszy przebieg `Applying migrations: 1`, drugi `0`.
+- `information_schema` zwróciło obie kolumny typu `text`.
+- Pusta baza: `869` migracji, replay `0`, `DAY161_FRESH_MIGRATION_GATE=PASS`.
+
+## R3 — klucz pamięci
+
+Nowa konwencja:
 
 ```text
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk3s1s1   1.8Ti    12Gi    37Gi    25%    459k  383M    0%   /
+consultify-decision-enhancements:<organizationId>:<userId>:<decisionId>
 ```
 
-Marker jest przodkiem tipa. Tip wyprzedza marker o sześć commitów; zgodnie z
-`DEC-2026-08-26-95` worktree rozpoczęto dokładnie z markera, bez rebase.
+Odczyt i zapis używają tego samego klucza. Gdy zalogowany użytkownik nie ma
+nowego wpisu, legacy wpis jest jednokrotnie przenoszony pod jego klucz i
+usuwany ze starej lokalizacji. Pierwszy uwierzytelniony użytkownik przejmuje
+legacy wpis zgodnie z instrukcją.
 
-## STOP — BLOK 0 / cały dyżur
+Artefakt deterministyczny wykazał różne klucze dla A/B w jednej organizacji i
+dla tego samego użytkownika w dwóch organizacjach. Nie wykonano jednak realnego
+login A → zapis → logout → login B, dlatego B5 jest **PARTIAL**.
 
-Rodzaj: PROCEDURALNY — jeden z pięciu jawnych warunków zatrzymania całego dyżuru.  
-Powód: przybity zasób wyłączny runtime, port `5000`, jest zajęty.  
-Licencja, którą sprawdziłem: `Z7`: „Twój JEDYNY port harnessu to 5000 i 5001”; §0.5: „Port 6057 albo 5000 i 5001 jest zajęty — To JEST powód do STOP-u całości — nie bierzesz innego portu”. Wynik: port `5000` zajęty.  
-Dowód:
+### Materiał decyzyjny — przeniesienie na serwer
 
-```text
-PORT 6057
-PORT 5000
-COMMAND    PID            USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
-ControlCe 1122 piotrwisniewski   11u  IPv4 0x73a0c34d1fb6aa66      0t0  TCP *:5000 (LISTEN)
-ControlCe 1122 piotrwisniewski   12u  IPv6 0x6f883606c3a407aa      0t0  TCP *:5000 (LISTEN)
-PORT 5001
-BRAK KOLIZJI DOCKER
-```
+Rekomendacja: 4 encje (`decision_reminders`, `decision_escalation_rules`,
+`decision_context_notes`, `decision_linked_items`), 8 tras kolekcja/element
+albo 4 GET + 4 PUT, jeden `decisionEnhancementsService`, walidatory i testy
+tenant/auth. Nie używać `decision_history`: to audyt, nie bieżący model.
+Szacunek: 5–8 dni inżynierskich z migracją legacy i readbackiem. To materiał
+do decyzji właściciela; kodu serwera tej części nie dodano.
 
-Co dostarczyłem ZAMIAST zmiany: wykonany §0.1, dowód markera, pomiar zasobów i
-niniejszy raport STOP. Nie uruchomiłem kontenera, migracji, testów ani runtime'u;
-nie zmieniłem żadnego pliku produkcyjnego.  
-Co zrobiłbym, gdyby zapadła decyzja X: po zwolnieniu przybitego portu `5000`
-wznowiłbym od BLOKU 0, postawił `cx-day166-pg` na `6057`, wykonał pełne migracje,
-a dopiero potem R1–R4 i dowody mutacyjne. Zmiana przydziału portów wymaga nowej,
-jednoznacznej instrukcji; sam nie wybieram portu zastępczego.  
-Rekomendacja dla nadzorcy: zwolnić port `5000` albo wydać poprawioną instrukcję z
-jednym spójnym zestawem zasobów oraz zaktualizowaną regułą STOP.  
-Stan: zacommitowano wyłącznie raport; SHA zostanie uzupełniony przez historię gałęzi.  
-Czy kontynuowałem pozostałe pozycje: NIE — §0.5 nakazuje zatrzymać cały dyżur przy
-zajętym porcie `5000`.
+## R4 — trwały RACI
+
+- Przyjęto słownik frontendu:
+  `responsible|accountable|consulted|informed`; istniejące `informed` jest zgodne.
+- Dodano GET i PUT `/api/decisions/:id/stakeholders`.
+- PUT ma `requireDecisionCapability('decision.update', { shadow: true })`,
+  `isDossierEditor` i sprawdzenie przynależności użytkowników do organizacji
+  przed usunięciem starego zestawu.
+- Front zapisuje zestaw przez debounced PUT i odczytuje przez GET.
+- Router po zmianie: 31 deklaracji (29 + GET + PUT).
+
+## Real HTTP + PostgreSQL
+
+Pakiet: `day166.decision-card-persistence.pg.test.ts`. Użyto `--root server
+--config vitest.config.ts --retry=0` i pełnego inline env: `RUN_DB_TESTS=1`,
+`MOCK_DB=false`, `DB_TYPE=postgres`, `NODE_ENV=test`,
+`ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`,
+`RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`, lokalny DATABASE_URL
+`127.0.0.1:6057/cx166` oraz testowy JWT secret.
+
+Finalnie **2/2 PASS, 0 FAIL** po pełnych nazwach:
+
+1. `... persists risk category and contingency and reads them from the detail aggregate`
+2. `... replaces and then reads RACI stakeholders from PostgreSQL`
+
+Test montuje realny `ApiGateway`, podpisuje JWT, wykonuje HTTP, sprawdza wiersz
+PG i niezależny od cache readback. Pułapki Z33 wyłączono imiennymi env;
+DB_TYPE dodatkowo przybito i potwierdzono asercją w `beforeAll`.
+
+## Dowód mutacyjny
+
+Mutacja `toRiskDTO` ustawiła oba nowe pola na `null`: **1 PASS, 1 FAIL**;
+czerwony był dokładnie round-trip ryzyka. Po przywróceniu przez `cp`:
+**2 PASS, 0 FAIL**. `git diff --check` bez pozostałości mutacji.
+
+## Walidacja
+
+- ESLint sześciu zmienionych plików: exit `0`, 0 błędów; 33 zastane ostrzeżenia kontrolera.
+- `tsc --noEmit -p server/tsconfig.json`: exit `0`, pusty log.
+- `git diff --check`: PASS.
+
+## Artefakty SHA-256
+
+- `day166-vitest-final.json`: `7d269530cad5a23369200852d6cff46aaba3c0b848b22e9969c6c7a5cd654dd7`
+- `day166-vitest-mutated-red.json`: `672a9e3b4358869040d37a4aa7dc4e6a2ac2c487ed756f353fc0fbc49e0bee59`
+- `day166-vitest-restored-green.json`: `02e785ccb9cd4cd99d6d256526c0904c69e9052728f6f7a6914095710f225929`
+- `day166-storage-key-proof.json`: `436ae4317656ba34b1015c92bb63662f46b422bab7f5a1e97dab48a873a47c3f`
+- fresh-chain log: `eed0a83c5120b64c68c4df278b4571b1a0609881ca4ae88549529a1b3ec80c41`
+- fresh-chain replay: `093be3fc713b6735098c5344b47b7160ffc499846530fb25f51180e64ebf6332`
+
+Artefakty: `/private/tmp/cx-day166-karta-decyzji-artefakty`.
 
 ## Korekty wobec instrukcji
 
-Instrukcja jest wewnętrznie sprzeczna w przydziale zasobów:
+- Wznowienie rozstrzygnęło zasoby na `6057`, `5004/5005`.
+- Pierwsza komenda Vitest z błędnym rootem znalazła 0 testów i nie została
+  uznana za PASS. Poprawna użyła `--root server` i ścieżki `src/...`.
+- Config serwera nadpisał shellowy DB_TYPE; test przybił go w `beforeAll` i
+  natychmiast potwierdził asercją.
 
-- `Z7` przybija bazę `6057` i runtime `5000/5001`, a §0.5 nakazuje STOP przy ich zajęciu;
-- tabela licencji w §4 podaje bazę `6066`, runtime `4996/4997` i pozwala wybrać kolejny wolny port.
+## Z30
 
-Wybrano interpretację bezpieczniejszą i wcześniejszą w hierarchii zakazów:
-`6057`, `5000/5001`, bez samodzielnego wyboru zamiennika. Wklejka użytkownika jest
-zgodna z tym wyborem. Zajętość `5000` uruchomiła STOP całego dyżuru.
-
-## Pomiar wejściowy wykonany przed STOP-em
-
-Pomiar T1–T4 został wykonany w tej samej read-only kontroli zasobów, zanim wynik
-portu został oceniony. Nie jest przedstawiany jako ukończenie R1:
-
-- `decision_risks` ma `description`, `severity`, `likelihood`, `mitigation`,
-  `owner_id`; brak `category` i `contingency`;
-- `decisions.routes.ts` ma zero trafień `stakeholders`, frontend ma trafienia;
-- liczba deklaracji tras routera decyzji według przybitego grepu: `29`;
-- `UpdateDecisionSchema` już deklaruje `rationale`; notatka o jego utracie jest nieaktualna.
-
-Nie wykonano pełnych tabel R1 ani żadnego dowodu runtime/DB, ponieważ STOP nastąpił
-przed BLOKIEM 0.
+`BRAK ZMIENNYCH POCZTY`; tabela `settings`: 0 wierszy `smtp%`; `Gateway.ts`:
+zero drenaży. Nie uruchomiono `server/src/index.ts` ani runtime'u. Żaden e-mail,
+zaproszenie ani powiadomienie zewnętrzne nie zostało wysłane.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie zweryfikowano działania żadnej ścieżki HTTP przez `ApiGateway`.
-- Nie zweryfikowano migracji ani schematu na realnym PostgreSQL dnia 166.
-- Nie zweryfikowano round-trip ryzyka ani RACI.
-- Nie zweryfikowano izolacji localStorage dwiema tożsamościami.
-- Nie wykonano pomiaru zasięgu testów ani dowodu mutacyjnego red-green.
-- Nie uruchomiono Railway, demo, stagingu ani produkcji; ich zachowanie pozostaje
-  poza zakresem i jest niezweryfikowane.
-
-## Z30 — deklaracja
-
-Nie ustawiono żadnej zmiennej SMTP ani flagi wysyłki. Nie uruchomiono bazy,
-`server/src/index.ts`, żadnego drenażu outboxu ani runtime'u. Żaden e-mail,
-zaproszenie kalendarzowe ani powiadomienie zewnętrzne nie zostało wysłane.
+- Brak pełnego testu dwóch loginów w jednym profilu przeglądarki — B5 PARTIAL.
+- Brak screenshotów i porównania pikselowego — B6 wizualnie niezmierzone;
+  diff nie zmienia klas, układu, kolorów ani renderowanych tekstów.
+- Railway, demo, staging i produkcja niebadane (Z8/Z28).
+- Zastąpienie zestawu RACI jest wielozapytaniowe i nieatomowe; atomizacja to
+  dalszy hardening, nie zweryfikowany wynik tego dyżuru.

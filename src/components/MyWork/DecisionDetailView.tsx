@@ -260,8 +260,16 @@ export const alternativeToServerInput = (
 ) => ({
   title: (a.title || '').trim(),
   description: a.description?.trim() || undefined,
-  benefits: (a.pros || []).map((p) => p.trim()).filter(Boolean).join('\n') || undefined,
-  drawbacks: (a.cons || []).map((c) => c.trim()).filter(Boolean).join('\n') || undefined,
+  benefits:
+    (a.pros || [])
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .join('\n') || undefined,
+  drawbacks:
+    (a.cons || [])
+      .map((c) => c.trim())
+      .filter(Boolean)
+      .join('\n') || undefined,
   isRecommended: Boolean(a.isRecommended),
 });
 
@@ -313,12 +321,6 @@ export async function deleteDecisionAlternativeOnServer(
 }
 
 // ── MW-DEC-001 wiring: risks ────────────────────────────────────────────────
-// `decision_risks` rows carry description/severity/likelihood/mitigation/
-// ownerId only — no `category` or `contingency` column exists (verified
-// against 932_decision_workflow_canonical.sql). Those two RiskItem fields
-// stay UI-only: editable on screen, but they reset to their defaults on the
-// next server reload (honest, documented limitation — see the coordination
-// report — rather than a silent migration this task does not add).
 // `probability`/`impact` are UI-lowercase; the server enums are UPPERCASE
 // (severity: LOW/MEDIUM/HIGH/CRITICAL, likelihood: LOW/MEDIUM/HIGH — no
 // CRITICAL tier for likelihood, see decisionCollaborationService.ts
@@ -328,13 +330,15 @@ export async function deleteDecisionAlternativeOnServer(
 type DecisionRiskApi = Pick<typeof Api, 'post' | 'put' | 'delete'>;
 
 export const riskToServerInput = (
-  r: Pick<RiskItem, 'title' | 'probability' | 'impact' | 'mitigation'>
+  r: Pick<RiskItem, 'title' | 'probability' | 'impact' | 'mitigation' | 'category' | 'contingency'>
 ) => ({
   description: (r.title || '').trim(),
   severity: String(r.impact || 'medium').toUpperCase(),
   likelihood:
     r.probability === 'critical' ? 'HIGH' : String(r.probability || 'medium').toUpperCase(),
   mitigation: r.mitigation?.trim() || undefined,
+  category: r.category?.trim() || undefined,
+  contingency: r.contingency?.trim() || undefined,
 });
 
 export const mapDecisionServerRisk = (dto: any): RiskItem => ({
@@ -342,10 +346,21 @@ export const mapDecisionServerRisk = (dto: any): RiskItem => ({
   title: String(dto.description || ''),
   probability: String(dto.likelihood || 'MEDIUM').toLowerCase() as RiskItem['probability'],
   impact: String(dto.severity || 'MEDIUM').toLowerCase() as RiskItem['impact'],
-  category: 'business',
+  category: String(dto.category || 'business'),
   mitigation: String(dto.mitigation || ''),
-  contingency: '',
+  contingency: String(dto.contingency || ''),
 });
+
+export async function replaceDecisionStakeholdersOnServer(
+  api: Pick<typeof Api, 'put'>,
+  decisionId: string,
+  stakeholders: Stakeholder[]
+) {
+  const res = await api.put(`/decisions/${encodeURIComponent(decisionId)}/stakeholders`, {
+    stakeholders: stakeholders.map(({ userId, role }) => ({ userId, role })),
+  });
+  return res.data;
+}
 
 export async function createDecisionRiskOnServer(
   api: DecisionRiskApi,
@@ -374,7 +389,9 @@ export async function deleteDecisionRiskOnServer(
   decisionId: string,
   riskId: string
 ) {
-  await api.delete(`/decisions/${encodeURIComponent(decisionId)}/risks/${encodeURIComponent(riskId)}`);
+  await api.delete(
+    `/decisions/${encodeURIComponent(decisionId)}/risks/${encodeURIComponent(riskId)}`
+  );
 }
 
 type DecisionObjectAttachmentApi = Pick<typeof Api, 'get' | 'postMultipart' | 'delete'>;
@@ -2398,7 +2415,18 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       // classic two-sources-of-truth bug. localStorage stays a transitional
       // fallback for fields that genuinely have no backend endpoint yet.
       try {
-        const raw = localStorage.getItem(`consultify-decision-enhancements:${id}`);
+        // Browser-owned decision data is scoped by both tenant and user. The
+        // legacy key is claimed once by the first authenticated user loading it.
+        const storageKey = `consultify-decision-enhancements:${currentUser?.organizationId || 'no-organization'}:${currentUser?.id || 'anonymous'}:${id}`;
+        const legacyStorageKey = `consultify-decision-enhancements:${id}`;
+        let raw = localStorage.getItem(storageKey);
+        if (!raw && currentUser?.id) {
+          raw = localStorage.getItem(legacyStorageKey);
+          if (raw) {
+            localStorage.setItem(storageKey, raw);
+            localStorage.removeItem(legacyStorageKey);
+          }
+        }
         if (raw) {
           const local = JSON.parse(raw);
           if (Array.isArray(local.attachments))
@@ -2444,7 +2472,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (!isLocalHydrated || !decisionId) return;
     try {
       localStorage.setItem(
-        `consultify-decision-enhancements:${decisionId}`,
+        `consultify-decision-enhancements:${currentUser?.organizationId || 'no-organization'}:${currentUser?.id || 'anonymous'}:${decisionId}`,
         JSON.stringify({
           schemaVersion: 1,
           savedAt: new Date().toISOString(),
@@ -2464,6 +2492,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   }, [
     isLocalHydrated,
     decisionId,
+    currentUser?.id,
+    currentUser?.organizationId,
     attachments,
     linkedItems,
     reminders,
@@ -2473,6 +2503,16 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     contextDetails,
     consequenceScenarios,
   ]);
+
+  useEffect(() => {
+    if (!isLocalHydrated || !decisionId) return;
+    const timer = setTimeout(() => {
+      replaceDecisionStakeholdersOnServer(Api, decisionId, stakeholders).catch((err) => {
+        console.error('[DecisionDetailView] Failed to persist stakeholders', err);
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [isLocalHydrated, decisionId, stakeholders]);
 
   // SaaS autosave: persist edits to backend (debounced).
   useEffect(() => {
