@@ -36,6 +36,26 @@ import type {
 } from './useBaselineAssumptionsEditor';
 import { cellKeyOf } from './useBaselineAssumptionsEditor';
 
+/**
+ * Wartości z `unit === 'PCT'` (wzrost r/r, COGS/OPEX % przychodów, CAPEX %,
+ * oprocentowanie, stawka CIT) są w danych ułamkiem dziesiętnym (0,12 = 12%).
+ * `formatFinanceValueForDisplay`'s domyślny formatter pokazuje surowy ułamek
+ * ("0,12") bez znaku procenta — myląca ta sama klasa defektu co w
+ * `finance-analysis-workspace` ("wskaźniki bez %"), ale TU jednostka JEST
+ * znana (`cell.unit`/`historical.unit`), więc naprawialna w wyglądzie.
+ */
+function formatPctAwareValue(
+  value: Pick<FinanceValue, 'status' | 'valueDecimal'>,
+  unit: string | undefined
+): ReturnType<typeof formatFinanceValueForDisplay> {
+  return formatFinanceValueForDisplay(
+    value,
+    unit === 'PCT'
+      ? (n) => `${(n * 100).toLocaleString('pl-PL', { maximumFractionDigits: 2 })}%`
+      : undefined
+  );
+}
+
 /** Który harmonogram zasila które linie wyliczeń — port `DRIVING_SCHEDULE_TYPE` (baselineComputeService.ts:132-140), odwrócony do „podgląd wpływu". */
 const SCHEDULE_FEEDS_LINES: Record<string, string[]> = {
   revenue_pvm: ['REVENUE'],
@@ -336,15 +356,18 @@ export function AssumptionsView({
               const server = cell?.server ?? null;
               const historical = historicalValueOf(server);
               const historicalDisplay = historical
-                ? formatFinanceValueForDisplay(historical)
+                ? formatPctAwareValue(historical, historical.unit)
                 : { text: '—', isMissingLikeGlyph: true };
-              const valueDisplay = formatFinanceValueForDisplay({
-                status: cell?.valueStatus ?? 'MISSING',
-                valueDecimal:
-                  cell?.valueDecimal !== null && cell?.valueDecimal !== undefined
-                    ? String(cell.valueDecimal)
-                    : null,
-              });
+              const valueDisplay = formatPctAwareValue(
+                {
+                  status: cell?.valueStatus ?? 'MISSING',
+                  valueDecimal:
+                    cell?.valueDecimal !== null && cell?.valueDecimal !== undefined
+                      ? String(cell.valueDecimal)
+                      : null,
+                },
+                cell?.unit
+              );
               const control = controlKindForUnit(cell?.unit ?? 'PCT');
               const warning = preflightByKey.get(key);
               const feeds = SCHEDULE_FEEDS_LINES[spec.scheduleType] ?? [];

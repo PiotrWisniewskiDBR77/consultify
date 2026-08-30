@@ -321,6 +321,30 @@ if (!g.__BASELINE_WORKSPACE_FETCH__) {
 
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
 
+    // `BaselineWorkspace` (poza trybem testowym) NAJPIERW ładuje kontekst
+    // przez `getBaselineWorkspaceContext()` (`GET .../baseline/:id/context`)
+    // zanim w ogóle zamontuje `BaselineWorkspaceInner` z assumptions/outputs/
+    // compute poniżej. Bez tej gałęzi żądanie spadało na ogólny fallback
+    // `/api/` → `json([])`, czyli tablicę zamiast `BaselineWorkspaceContextDto`
+    // — `context.forecastPeriods.map(...)` rzucał (`undefined.map`), co
+    // Context Loader łapał jako trwały błąd niezależny od liczby prób
+    // ponowienia (przyczyna zgłoszonego w statusie "trwały stan błędu").
+    if (url.includes(`/baseline/${BV_ID}/context`)) {
+      return json({
+        businessVersionId: BV_ID,
+        entityId: ENTITY_ID,
+        openingBalanceSheetPeriodId: OPENING_BS_PERIOD_ID,
+        forecastPeriods: FORECAST_PERIODS.map((p) => ({
+          periodId: p.periodId,
+          label: p.label,
+          periodStart: `${p.yearMonth}-01`,
+          periodEnd: `${p.yearMonth}-28`,
+        })),
+        assumptionRowOrder: ASSUMPTION_ROW_ORDER,
+        version: 1,
+      });
+    }
+
     if (url.includes(`/baseline/${BV_ID}/assumptions`)) {
       if ((init?.method ?? 'GET').toUpperCase() === 'POST') {
         return json({ businessVersionId: BV_ID, writtenCount: 1, assumptions: [] });
