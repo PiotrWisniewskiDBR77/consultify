@@ -204,3 +204,33 @@ Suma pozycji w klastrach jest większa niż 63 — kilka uwag należy do dwóch 
 parametrów (K4, 9 uwag). To siedemnaście z sześćdziesięciu trzech. Nie znaczy to, że
 uwagi były błędne — znaczy, że **wina leży po stronie stanowiska pomiarowego i to ono
 wymaga naprawy w pierwszej kolejności**, inaczej następna partia zrzutów skłamie tak samo.
+
+---
+
+# DECYZJE WŁAŚCICIELA PODJĘTE PODCZAS TEJ SESJI
+
+## D-1 · Macierz oceny = SIEDEM OSI (2026-08-30, wieczór)
+
+Pytanie: którą z pięciu istniejących w kodzie macierzy robimy tą jedyną.
+**Odpowiedź właściciela: „Tak, 7 osi."**
+
+Wybrany kierunek: `src/components/Reports/EmbeddedMatrix.tsx` (543 linie) — siedem osi
+DRD ze **zmienną liczbą poziomów per oś** (7 dla Procesów i Danych, 5 dla pozostałych).
+To jedyna implementacja odpowiadająca opisowi właściciela („przedstawienie graficzne
+na wszystkich osiach ze zmiennymi osiami").
+
+Co z tego wynika do zrobienia:
+1. Flaga `isDrdReportEnabled` (`src/utils/drdReportFlag.ts:69`) jest domyślnie **wyłączona**,
+   a zmienna `VITE_DRD_REPORT_ENABLED` nigdzie nie ma przypisanej wartości → macierz
+   jest dziś nieosiągalna. Zrzut przed jakąkolwiek decyzją o włączeniu.
+2. `FrozenOutputHttpView` (`DrdHttpMethodWorkspaceScreen.tsx:977`) usuwa macierz z ekranu
+   po zamrożeniu sesji — czyli dokładnie wtedy, gdy ma wejść do raportu.
+3. Cztery pozostałe implementacje (`DRDMatrixSession`, `HeatmapMatrix`, `GapHeatmap`,
+   `AreaMatrixTable` — razem ~1900 linii) idą do `ODLOZONE.md` zgodnie z regułą nr 5:
+   **kod zostaje na miejscu**, zapisujemy dlaczego martwy, co niósł wartościowego,
+   jak przywrócić.
+
+**Właściciel wskazał źródło merytoryczne:** *„znajdziesz w repozytorium, gdzieś
+w dokumentach moją książkę, która dokładnie tę metodologię opisuje"*. Ten dokument
+jest nadrzędny wobec tego, co dziś jest w kodzie — nazwy osi, obszary analityczne
+i poziomy bierzemy z niego, nie z implementacji.
