@@ -2293,6 +2293,7 @@ router.post(
       return;
     }
     const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const materializedBrief = typeof req.body?.brief === 'string' ? req.body.brief.trim() : '';
 
     let resolved;
     try {
@@ -2315,7 +2316,7 @@ router.post(
     // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
     // doc comment for why this is a named, independently-tested export rather
     // than inline mapping.
-    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint);
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, materializedBrief);
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');
