@@ -26,8 +26,25 @@ Kolumny `metadata` **nie ma** w `knowledge_chunks` w tym momencie łańcucha:
 | **`20260830_day159_chunk_org_backfill.sql` czyta `k.metadata`** | **536** |
 | `20261120_fresh_db_schema_gap_closure.sql:2243` dodaje `metadata` | 670 |
 
-**134 pliki za późno.** Sortowanie jest zwykłym alfabetycznym `files.sort()`
-(`migrate.postgres.ts:188`), a `20260830` < `20261120`.
+**134 pliki za późno.**
+
+**SPROSTOWANIE mechanizmu (2026-08-30, przy składaniu dyżuru 161).** Napisałem tu
+pierwotnie, że kolejność wyznacza „zwykłe alfabetyczne `files.sort()`
+(`migrate.postgres.ts:188`)”. **To jest nieścisłe.** Linia 188 sortuje pliki tylko
+przy ZBIERANIU ich z dysku. Realną kolejność wykonania ustala osobny moduł
+`server/scripts/migrationOrdering.ts` przez `sortMigrationsDeterministically`,
+wołany w `migrate.postgres.ts:853` — z fazami (`NUMBERED` / `DATED` / `LATE` /
+`OTHER`) i tablicami wyjątków.
+
+**To czyni sprawę poważniejszą, nie lżejszą.** Ten moduł powstał po
+**poprzednim kryzysie tej samej klasy** (`STRICT_SCHEMA_REPAIR_REPORT.md`) i jest
+bezpiecznikiem. Ma jednak udokumentowaną ślepą plamkę: **inwersji producent–konsument
+WEWNĄTRZ tej samej fazy nie łapie automatycznie** — wymaga ręcznego wpisu do tablicy
+wyjątków. Oba nasze pliki są `DATED`, więc wpadliśmy dokładnie w tę plamkę.
+
+**Dowód pozostaje w mocy bez zmian** — nie opierał się na moim opisie mechanizmu,
+tylko na dwóch realnych przebiegach prawdziwego skryptu migracji na dwóch pustych
+bazach. Zmienia się wyjaśnienie *dlaczego*, nie *co*.
 
 ### Dowód różnicowy — dwie puste bazy, ten sam łańcuch
 

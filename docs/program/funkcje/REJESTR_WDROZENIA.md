@@ -247,8 +247,13 @@ dowód mutacyjny.
    do `127.0.0.1:6045/cx158`, czyli przechodziła wyłącznie na maszynie wykonawcy.
    Zamieniona na wzorzec zachowujący intencję (Postgres tak, sqlite nie).
 2. **`20260830_day159_chunk_org_backfill.sql`** — dodany strażnik kolumny `metadata`.
-   Bez niego łańcuch migracji ginął na pozycji 536 z 1072 i **odtworzenie bazy po
-   awarii nigdy nie dochodziło do końca**. Naprawa udowodniona różnicowo: przebieg
+   Bez niego łańcuch migracji ginął w połowie i **odtworzenie bazy po awarii nigdy
+   nie dochodziło do końca**. Kolejność wykonania ustala `migrationOrdering.ts`
+   (`sortMigrationsDeterministically`, wołane z `migrate.postgres.ts:853`) — nie
+   zwykły `files.sort()`, jak zapisałem najpierw. Ten moduł jest bezpiecznikiem
+   zbudowanym po poprzednim kryzysie tej samej klasy i ma **udokumentowaną ślepą
+   plamkę: inwersję producent–konsument wewnątrz jednej fazy**. Oba pliki były
+   `DATED`, więc bezpiecznik ich nie porównał. Naprawa udowodniona różnicowo: przebieg
    kontrolny na pustej bazie → `kod 1`, przebieg z naprawą → `✅ complete`, 867
    migracji, drugi przebieg `Applying migrations: 0`.
 
