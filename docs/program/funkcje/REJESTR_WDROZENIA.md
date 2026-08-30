@@ -221,3 +221,72 @@ jako otwarty i groźniejszy niż którakolwiek faza. Pomiar 30.08: `vitest.confi
 ma `retry: 0`, a pozostałe dziesięć konfiguracji nie ustawia `retry` wcale i dziedziczy
 zero z Vitest 4. **Wektor jest zamknięty** — dyżuru na fantom nie wydano. Do planu
 wchodzi jako pozycja do sprostowania, nie do naprawy.
+
+---
+
+## Seria 153 · 157 · 158 · 159 — odebrana i scalona 2026-08-30
+
+Cztery dyżury, cztery odbiory adwersaryjne, **cztery klony skasowane**.
+Karty: `ODBIOR_153_MAPA_POLECEN.md`, `ODBIOR_157_SLAD_POCHODZENIA.md`,
+`ODBIOR_158_CROSSWALK_WSKAZNIKA.md`, `ODBIOR_159_BACKFILL_WIEDZY.md`.
+
+| Dyżur | Wynik | Co odbiór znalazł ponad raport |
+| --- | --- | --- |
+| 153 mapa poleceń | **B** | inwentarz niepełny (21 zamiast 23); **przyczyna źródłowa nazwana** |
+| 157 ślad pochodzenia | **B** | `rollback_available` w audycie bez czytelnika — kłamstwo w dzienniku |
+| 158 crosswalk wskaźnika | **A/A/A + D** | odczyt-cień to martwy kod; test przypięty do jednej maszyny |
+| 159 backfill wiedzy | **A/A + D, było C** | migracja wywracała cały łańcuch na bazie od zera |
+
+**Trzy dowody mutacyjne przeszły** (157, 158×2, 159) — testy realnie wykrywają
+zepsucie kodu produkcyjnego. To pierwsza seria, w której **każdy** dyżur miał
+dowód mutacyjny.
+
+### Dwie naprawy wykonane przez nadzorcę przy odbiorze
+
+1. **`day158.kpi-crosswalk.pg.test.ts:116`** — asercja tożsamości bazy była przypięta
+   do `127.0.0.1:6045/cx158`, czyli przechodziła wyłącznie na maszynie wykonawcy.
+   Zamieniona na wzorzec zachowujący intencję (Postgres tak, sqlite nie).
+2. **`20260830_day159_chunk_org_backfill.sql`** — dodany strażnik kolumny `metadata`.
+   Bez niego łańcuch migracji ginął na pozycji 536 z 1072 i **odtworzenie bazy po
+   awarii nigdy nie dochodziło do końca**. Naprawa udowodniona różnicowo: przebieg
+   kontrolny na pustej bazie → `kod 1`, przebieg z naprawą → `✅ complete`, 867
+   migracji, drugi przebieg `Applying migrations: 0`.
+
+### ★ PRZYCZYNA ŹRÓDŁOWA — jedna, potwierdzona empirycznie
+
+Commit `bb57239243` z **2026-08-19** (`feat(execution): retire legacy write surfaces`)
+wyciął starą powierzchnię zapisu, **nie budując zamiennika dla tabeli `tasks`**.
+
+Brama `executionSpineLegacyReadOnly.middleware.ts` **nie ma flagi** — każda metoda
+spoza `GET/HEAD/OPTIONS` dostaje `409`. Uruchomiona realnie przez `esbuild`:
+
+```text
+POST   /                    tworzenie zadania      -> 409
+PUT    /abc-123             edycja zadania         -> 409
+POST   /abc-123/comments    komentarz (dyzur 140)  -> 409
+GET    /                    odczyt listy           -> PRZEPUSZCZONE
+```
+
+Wiersz komentarza **odtwarza `409` zmierzony w dyżurze 140 na żywym serwerze** —
+kontrola poprawności narzędzia zgodna ze znanym wynikiem prawdziwym.
+
+Polecenie kanoniczne **nie jest zamiennikiem**: legacy pisze `INSERT INTO tasks`
+(`TaskController.ts:1286`), kanoniczne pisze `INSERT INTO ie_aggregate_state`
+(`postgresMaterialCommandUnitOfWork.ts:295`). **Dwa rozłączne magazyny.**
+
+To jedna przyczyna dyżurów 140, 141, 149 **oraz** tworzenia i edycji zadania.
+Kategoria (a) to **22** operacje, nie 20.
+
+### ★ Jedenasty kształt fałszywego „gotowe"
+
+**Biblioteka bez wywołania, sprawdzona testami do zieloności.** Dyżury 158 i 159
+oba dostarczyły kod z zielonymi testami i **zerem konsumentów w produkcie** —
+nie „za flagą OFF", tylko bez żadnego mechanizmu wywołania. Obaj wykonawcy
+przyznali to wprost, więc nie było kłamstwa; ale w rejestrze zapisałoby się to
+jako „zrobione", gdyby nie odbiór.
+
+### Bezpiecznik do szkieletu instrukcji
+
+**Każda migracja czytająca kolumnę musi być sprawdzona pełnym przebiegiem od
+PUSTEJ bazy.** Przyrost na bazie już zmigrowanej **nie jest dowodem** — to
+dokładnie ta kolejność zdarzeń, która ukryła awarię 159.
