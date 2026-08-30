@@ -1065,8 +1065,15 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'mywork-notebook-rail-speca': {
     label:
-      'DEC-69 — prawa szyna Notatnika w kanonie SPEC-A (5 sekcji accordion, nie tabs) wg mywork-notatnik-szyna-prototyp.html',
-    render: () => <MyWorkNotebookRailSpecAScreen />,
+      'DEC-69 — prawa szyna Notatnika w kanonie SPEC-A (5 sekcji accordion, nie tabs) wg mywork-notatnik-szyna-prototyp.html. ' +
+      'NAPRAWA (2026-08-30): flaga ff_notebookSpecAShell jest domyślnie OFF i harness jej nie ustawiał — ten wpis teraz FORSUJE ją ON ' +
+      '(localStorage), więc ekran pokazuje SPEC-A, nie stary panel. Porównanie ze STARYM: mywork-notebook-rail-speca-stary.',
+    render: () => <MyWorkNotebookRailSpecAScreen specA />,
+  },
+  'mywork-notebook-rail-speca-stary': {
+    label:
+      'DEC-69 — jw., ale STARA szyna Notatnika (ff_notebookSpecAShell wymuszona OFF) — do porównania PRZED/PO z mywork-notebook-rail-speca.',
+    render: () => <MyWorkNotebookRailSpecAScreen specA={false} />,
   },
   'prawy-pas-notatnik-artefakt': {
     label:

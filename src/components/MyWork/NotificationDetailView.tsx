@@ -3187,7 +3187,15 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       ),
     },
     {
-      id: 'sources',
+      // NAPRAWA (2026-08-30, domknięcie próbki ArtifactRightPanel): ten id
+      // był 'sources' (nie kanoniczne 'evidence'), więc `ArtifactRightPanel`
+      // nie rozpoznawał tej sekcji jako kanonicznych „Źródeł i założeń" —
+      // dokładał WŁASNĄ, drugą, pustą sekcję o tej samej nazwie tuż pod nią
+      // (zmierzone na żywym renderze `karta-notification`: „ŹRÓDŁA
+      // I ZAŁOŻENIA" widniało dwa razy, druga zawsze pusta). Kanoniczne id
+      // scala treść w jedno miejsce, zgodnie z zasadą „sekcja mieszka
+      // w jednym miejscu w całej aplikacji" (KANON_Z_ODBIOROW.md).
+      id: 'evidence',
       label: t('myWork.notificationDetail.panelSources', 'Sources & assumptions'),
       icon: BookOpen,
       defaultOpen: false,
