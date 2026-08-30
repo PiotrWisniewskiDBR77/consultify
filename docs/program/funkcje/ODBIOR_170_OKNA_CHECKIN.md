@@ -5,7 +5,19 @@ truth_type: acceptance
 established: 2026-08-30
 ---
 
-# ODBIÓR 170 — okna check-inu OKR · WERDYKT: NIE SCALAĆ (naprawa wydana)
+# ODBIÓR 170 — okna check-inu OKR · WERDYKT KOŃCOWY: SCALONO PO FIX-170
+
+★ **AKTUALIZACJA 30.08 wieczór:** FIX-170 wykonany przez wewnętrznego robotnika
+(commity `080516f294` + `913edb8ad3`): daty `::text` (dowód mutacyjny w obie strony
+z `TZ=Europe/Warsaw`: mutacja 2/2 FAIL o dobę, naprawa 2/2 PASS), pin bazy zdjęty,
+ścieżka artefaktów przez env, B2 literalnie (cudzy KR → 404), `isCurrent`
+zasercjonowane, błąd pobrania odróżniony od pustki. Kontrola diffu przez nadzorcę.
+**Scalono do linii integracyjnej** (`ab82afbc1b`). Mechanika → **A**. UI zostaje **C**
+do zamknięcia bramki B1 (zrzut z `?ff_resultsVNextOkr=1` — reguła 7).
+Uwaga do rejestru błędów zleceń: ścieżka pliku testu w zleceniu FIX była błędna
+(realnie `server/src/routes/__tests__/`), robotnik słusznie znalazł właściwą.
+
+## Pierwotny werdykt (przed FIX): NIE SCALAĆ
 
 Gałąź `codex/day170-okna-checkin-20260830`, HEAD `89fd32e413`, 4 commity nad `514c60b355`.
 Odbiór adwersaryjny: niezależny kontener (port 6072), migracje 869, dowód mutacyjny
