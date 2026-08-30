@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import type {
   ArtifactFamily,
@@ -471,6 +472,7 @@ async function resolveAccessibleSheetTableId(candidateId: string): Promise<strin
 }
 
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
+  const { t } = useTranslation();
   const conversationId = useConversationStore((s) => s.activeConversationId);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
@@ -762,20 +764,44 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             });
             if (wbResult?.id) {
               const qualityLabel =
-                wbResult.qualityScore != null ? `${wbResult.qualityScore.toFixed(1)}/5` : 'N/A';
+                wbResult.qualityScore != null
+                  ? `${wbResult.qualityScore.toFixed(1)}/5`
+                  : t('kimi.excele.qualityUnavailable', 'N/A');
 
               setPreview({
                 type: 'xlsx',
                 title: wbResult.title || title,
                 fileName: wbResult.fileName || `${title.replace(/\s+/g, '_')}.xlsx`,
-                summary: `Workbook "${wbResult.title}" — ${wbResult.sheets?.length || 1} sheets. Quality: ${qualityLabel}`,
+                // i18n (2026-08-30): ta gałąź (świeża generacja) zostawała po
+                // angielsku, choć bliźniacza ścieżka „otwórz ponownie” w
+                // ExceleView.tsx była już przetłumaczona — te same klucze
+                // `kimi.excele.*` obsługują teraz oba wejścia do podglądu.
+                summary: `${t(
+                  'kimi.excele.workbookSummary',
+                  'Workbook "{{title}}" — {{count}} sheets.',
+                  {
+                    title: wbResult.title,
+                    count: wbResult.sheets?.length || 1,
+                  }
+                )} ${t('kimi.excele.workbookQualitySuffix', 'Quality: {{quality}}', {
+                  quality: qualityLabel,
+                })}`,
                 kpiItems: [
-                  { label: 'Sheets', value: String(wbResult.sheets?.length || 1) },
-                  { label: 'Quality', value: qualityLabel },
-                  { label: 'Size', value: `${Math.round((wbResult.fileSize || 0) / 1024)} KB` },
+                  {
+                    label: t('kimi.excele.sheetsLabel', 'Sheets'),
+                    value: String(wbResult.sheets?.length || 1),
+                  },
+                  { label: t('kimi.excele.qualityLabel', 'Quality'), value: qualityLabel },
+                  {
+                    label: t('kimi.excele.sizeLabel', 'Size'),
+                    value: `${Math.round((wbResult.fileSize || 0) / 1024)} KB`,
+                  },
                   ...(wbResult.sheets || []).map((s: any) => ({
                     label: s.name,
-                    value: `${s.rowCount} rows × ${s.columnCount} cols`,
+                    value: t('kimi.excele.rowsColsFormat', '{{rows}} rows × {{cols}} cols', {
+                      rows: s.rowCount,
+                      cols: s.columnCount,
+                    }),
                   })),
                 ],
                 sheetNames: (wbResult.sheets || []).map((s: any) => s.name),
@@ -936,7 +962,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     };
 
     void runContentGeneration();
-  }, [effectiveStatus, currentRun, lane, lastGoal, currentOrganization?.id, currentProjectId]);
+  }, [effectiveStatus, currentRun, lane, lastGoal, currentOrganization?.id, currentProjectId, t]);
 
   const startGeneration = useCallback(
     async (goal: string, templateArtifactId?: string) => {

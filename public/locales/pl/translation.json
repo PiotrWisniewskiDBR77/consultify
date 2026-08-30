@@ -8014,6 +8014,349 @@
       "addDimension": "Dodaj wymiar",
       "removeDimension": "Usuń wymiar",
       "evidenceReferenceOnFile": "Odniesienie w aktach"
+    },
+    "workflowStages": {
+      "stage": {
+        "draft": {
+          "label": "Szkic",
+          "description": "Ocena jest uzupełniana przez zespół"
+        },
+        "submitForReview": {
+          "label": "Przekaż do przeglądu",
+          "description": "Poproś lidera projektu o przegląd"
+        },
+        "inReview": {
+          "label": "W przeglądzie",
+          "description": "Ocena jest przeglądana"
+        },
+        "awaitingApproval": {
+          "label": "Oczekuje na zatwierdzenie",
+          "description": "Ocena czeka na ostateczne zatwierdzenie"
+        },
+        "generateReport": {
+          "label": "Wygeneruj raport",
+          "description": "Wygeneruj raport analityczny z danych oceny"
+        },
+        "approved": {
+          "label": "Zatwierdzona",
+          "description": "Ocena zatwierdzona, można generować inicjatywy"
+        }
+      },
+      "currentBadge": "AKTUALNY",
+      "gate": {
+        "requestReview": {
+          "name": "PROŚBA O PRZEGLĄD",
+          "action": "Przekaż do przeglądu"
+        },
+        "approveReport": {
+          "name": "ZATWIERDŹ RAPORT",
+          "action": "Zatwierdź raport"
+        },
+        "approveAssessment": {
+          "name": "ZATWIERDŹ OCENĘ",
+          "action": "Zatwierdź ocenę"
+        },
+        "generateReport": {
+          "name": "WYGENERUJ RAPORT",
+          "action": "Wygeneruj raport"
+        },
+        "generateInitiatives": {
+          "name": "WYGENERUJ INICJATYWY",
+          "action": "Wygeneruj inicjatywy"
+        }
+      },
+      "requirements": {
+        "blocked_one": "1 blokada",
+        "blocked_few": "{{count}} blokady",
+        "blocked_many": "{{count}} blokad",
+        "blocked_other": "{{count}} blokad",
+        "warnings_one": "1 ostrzeżenie",
+        "warnings_few": "{{count}} ostrzeżenia",
+        "warnings_many": "{{count}} ostrzeżeń",
+        "warnings_other": "{{count}} ostrzeżeń",
+        "allPassed": "Wszystko spełnione",
+        "title": "Wymagania bramki",
+        "pass": "OK",
+        "block": "BLOKADA",
+        "warn": "UWAGA"
+      },
+      "role": {
+        "manager": "Kierownik",
+        "admin": "Administrator",
+        "editor": "Edytor",
+        "viewer": "Obserwator"
+      },
+      "assignee": {
+        "unknown": "Nieznany",
+        "assign": "Przypisz...",
+        "notAssigned": "Nieprzypisane",
+        "eligibleApprovers": "Uprawnieni zatwierdzający",
+        "noEligibleApprovers": "Brak uprawnionych zatwierdzających"
+      },
+      "gateStatus": {
+        "notStarted": "Nierozpoczęte",
+        "pending": "Oczekuje",
+        "approved": "Zatwierdzone",
+        "rejected": "Odrzucone",
+        "skipped": "Pominięte"
+      },
+      "daysWaiting_one": "czeka 1 dzień",
+      "daysWaiting_few": "czeka {{count}} dni",
+      "daysWaiting_many": "czeka {{count}} dni",
+      "daysWaiting_other": "czeka {{count}} dni",
+      "actions": {
+        "request": "Poproś",
+        "approve": "Zatwierdź",
+        "reject": "Odrzuć",
+        "sendReminder": "Wyślij przypomnienie",
+        "blocked": "Zablokowane",
+        "done": "Gotowe"
+      },
+      "requirement": {
+        "dod": "Definicja ukończenia (DoD)",
+        "dodReason": "Uzupełnienie: {{completion}}% (≥100%), Pewność: {{confidence}} (≥3)",
+        "reportApproved": "Raport zatwierdzony",
+        "reportApprovedReason": "Najpierw trzeba zatwierdzić raport"
+      },
+      "columns": {
+        "stage": "Etap",
+        "gateDecision": "Decyzja bramki",
+        "requirements": "Wymagania",
+        "approver": "Zatwierdzający",
+        "assignee": "Przypisane do",
+        "status": "Status",
+        "actions": "Akcje"
+      },
+      "header": {
+        "title": "Postęp przepływu",
+        "current": "Aktualny",
+        "completion": "Uzupełnienie"
+      },
+      "workflowStatus": {
+        "DRAFT": "Szkic",
+        "IN_REVIEW": "W przeglądzie",
+        "AWAITING_APPROVAL": "Oczekuje na zatwierdzenie",
+        "APPROVED": "Zatwierdzona",
+        "REJECTED": "Odrzucona",
+        "ARCHIVED": "Zarchiwizowana"
+      },
+      "legend": {
+        "completed": "Ukończone",
+        "current": "Aktualne",
+        "pending": "Oczekujące",
+        "blocked": "Zablokowane",
+        "notStarted": "Nierozpoczęte"
+      }
+    },
+    "managePanel": {
+      "defaultAssessmentName": "Ocena",
+      "toast": {
+        "gateActionCompleted": "Akcja bramki wykonana: {{action}}",
+        "gateActionFailed": "Nie udało się wykonać akcji: {{action}}",
+        "assigneeUpdated": "Zaktualizowano przypisanie",
+        "assignGateFailed": "Nie udało się przypisać bramki",
+        "memberAdded": "Dodano członka zespołu",
+        "roleUpdated": "Zaktualizowano rolę",
+        "memberRemoved": "Usunięto członka zespołu",
+        "areaAssigned": "Przypisano obszar",
+        "assignmentRemoved": "Usunięto przypisanie"
+      },
+      "error": {
+        "loadFailed": "Nie udało się wczytać danych zarządzania",
+        "generateInitiativesFailed": "Nie udało się wygenerować inicjatyw",
+        "approveRequestFailed": "Nie udało się zatwierdzić wniosku",
+        "rejectRequestFailed": "Nie udało się odrzucić wniosku"
+      },
+      "header": {
+        "title": "Zarządzanie",
+        "subtitle": "{{name}} • uprawnienia, przepływ i dziennik"
+      },
+      "tabs": {
+        "workflow": "Przepływ",
+        "team": "Zespół",
+        "reports": "Raporty",
+        "initiatives": "Inicjatywy",
+        "logs": "Dziennik"
+      },
+      "loading": "Wczytywanie…",
+      "access": {
+        "empty": "Brak wniosków o dostęp.",
+        "summary": "wnioskuje o {{role}} • {{priority}} • {{status}}",
+        "working": "Pracuję…",
+        "approve": "Zatwierdź",
+        "reject": "Odrzuć",
+        "rejectPrompt": "Powód odrzucenia?"
+      },
+      "role": {
+        "editor": "Edytor",
+        "manager": "Kierownik"
+      },
+      "priority": {
+        "LOW": "Niski",
+        "NORMAL": "Normalny",
+        "HIGH": "Wysoki",
+        "URGENT": "Pilny"
+      },
+      "requestStatus": {
+        "PENDING": "Oczekuje",
+        "APPROVED": "Zatwierdzony",
+        "REJECTED": "Odrzucony",
+        "CANCELLED": "Anulowany"
+      }
+    },
+    "initiativesPanel": {
+      "status": {
+        "draft": "Szkic",
+        "pendingReview": "Do przeglądu",
+        "review": "Przegląd",
+        "promoted": "Promowana",
+        "planning": "Planowanie",
+        "approved": "Zatwierdzona",
+        "scheduled": "Zaplanowana",
+        "executing": "W realizacji",
+        "blocked": "Zablokowana",
+        "done": "Zakończona",
+        "tracking": "Śledzenie",
+        "cancelled": "Anulowana",
+        "archived": "Zarchiwizowana"
+      },
+      "priority": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "critical": "Krytyczny"
+      },
+      "methodology": {
+        "impactFeasibility": "Wpływ × Wykonalność",
+        "moscow": "MoSCoW",
+        "rice": "RICE",
+        "valueEffort": "Wartość × Wysiłek",
+        "strategicFit": "Dopasowanie strategiczne"
+      },
+      "generateModal": {
+        "title": "Wygeneruj inicjatywy",
+        "subtitle": "Generowanie inicjatyw przez AI",
+        "methodology": "Metodyka priorytetyzacji",
+        "count": "Liczba inicjatyw",
+        "countOption_one": "1 inicjatywa",
+        "countOption_few": "{{count}} inicjatywy",
+        "countOption_many": "{{count}} inicjatyw",
+        "countOption_other": "{{count}} inicjatyw",
+        "includeChat": "Uwzględnij kontekst czatu",
+        "includeChatHint": "Wykorzystaj historię rozmowy dla lepszych propozycji",
+        "cancel": "Anuluj",
+        "generating": "Generowanie...",
+        "generate": "Generuj"
+      },
+      "toast": {
+        "generateFailed": "Nie udało się wygenerować inicjatyw",
+        "createFailed": "Nie udało się utworzyć inicjatywy",
+        "updateStatusFailed": "Nie udało się zmienić statusu",
+        "updated": "Inicjatywa zaktualizowana",
+        "updateFailed": "Nie udało się zaktualizować inicjatywy",
+        "duplicated": "Inicjatywa zduplikowana",
+        "duplicateFailed": "Nie udało się zduplikować inicjatywy",
+        "deleted": "Inicjatywa usunięta",
+        "deleteFailed": "Nie udało się usunąć inicjatywy"
+      },
+      "copySuffix": "(kopia)",
+      "draftSuffix": "szkic",
+      "proceedAnyway": "Czy mimo to chcesz kontynuować?",
+      "confirmDelete": "Usunąć inicjatywę „{{title}}”?",
+      "filter": {
+        "allStatuses": "Wszystkie statusy",
+        "selected_one": "wybrano 1",
+        "selected_few": "wybrano {{count}}",
+        "selected_many": "wybrano {{count}}",
+        "selected_other": "wybrano {{count}}",
+        "status": "Status",
+        "byStatus": "Filtruj po statusie",
+        "all": "Wszystkie",
+        "clear": "Wyczyść",
+        "clearSelection": "Wyczyść zaznaczenie",
+        "showingOf": "Pokazano {{shown}} z {{total}}"
+      },
+      "columns": {
+        "initiative": "Inicjatywa",
+        "priority": "Priorytet",
+        "status": "Status",
+        "impactEffort": "Wpływ/Wysiłek",
+        "owner": "Właściciel",
+        "created": "Utworzono"
+      },
+      "menu": {
+        "openInInitiatives": "Otwórz w Inicjatywach",
+        "duplicate": "Duplikuj"
+      },
+      "header": {
+        "title": "Inicjatywy",
+        "counts": "{{initiatives}} • {{batches}}",
+        "initiativeCount_one": "1 inicjatywa",
+        "initiativeCount_few": "{{count}} inicjatywy",
+        "initiativeCount_many": "{{count}} inicjatyw",
+        "initiativeCount_other": "{{count}} inicjatyw",
+        "batchCount_one": "1 partia",
+        "batchCount_few": "{{count}} partie",
+        "batchCount_many": "{{count}} partii",
+        "batchCount_other": "{{count}} partii"
+      },
+      "actions": {
+        "new": "Nowa",
+        "quick": "Szybko",
+        "wizard": "Kreator (50+)",
+        "needsApprovalTooltip": "Ocena musi być zatwierdzona, aby generować inicjatywy"
+      },
+      "notApproved": {
+        "title": "Ocena niezatwierdzona",
+        "description": "Inicjatywy można generować tylko z zatwierdzonych ocen. Aktualny status:"
+      },
+      "workflowStatus": {
+        "DRAFT": "Szkic",
+        "IN_REVIEW": "W przeglądzie",
+        "AWAITING_APPROVAL": "Oczekuje na zatwierdzenie",
+        "APPROVED": "Zatwierdzona",
+        "REJECTED": "Odrzucona",
+        "ARCHIVED": "Zarchiwizowana"
+      },
+      "search": {
+        "placeholder": "Szukaj inicjatyw..."
+      },
+      "empty": {
+        "noMatch": "Brak inicjatyw pasujących do wyszukiwania",
+        "none": "Brak inicjatyw",
+        "hintApproved": "Wygeneruj inicjatywy z danych oceny",
+        "hintNotApproved": "Zatwierdź ocenę, aby generować inicjatywy",
+        "generate": "Wygeneruj inicjatywy"
+      },
+      "batches": {
+        "title": "Partie generowania",
+        "summary_one": "{{methodology}} • 1 pozycja",
+        "summary_few": "{{methodology}} • {{count}} pozycje",
+        "summary_many": "{{methodology}} • {{count}} pozycji",
+        "summary_other": "{{methodology}} • {{count}} pozycji",
+        "run": "przebieg {{id}}"
+      },
+      "legend": {
+        "planned": "Zaplanowane",
+        "inProgress": "W trakcie",
+        "completed": "Ukończone",
+        "criticalPriority": "Priorytet krytyczny"
+      },
+      "editModal": {
+        "title": "Edytuj inicjatywę",
+        "save": "Zapisz"
+      },
+      "runState": {
+        "completed": "zakończony",
+        "running": "w toku",
+        "draft": "szkic",
+        "awaiting_evidence": "oczekuje na dowody",
+        "waiting_for_review": "oczekuje na przegląd",
+        "interpretation_proposed": "interpretacja zaproponowana",
+        "interpretation_reviewed": "interpretacja przejrzana",
+        "score_proposed": "ocena zaproponowana",
+        "score_reviewed": "ocena przejrzana"
+      }
     }
   },
   "initiatives": {
@@ -26348,7 +26691,12 @@
       "saved": "Zapisano",
       "saveFailed": "Błąd zapisu",
       "workbookSummary": "Skoroszyt „{{title}}” — {{count}} arkuszy.",
-      "sheetsLabel": "Arkusze"
+      "sheetsLabel": "Arkusze",
+      "qualityLabel": "Jakość",
+      "qualityUnavailable": "brak",
+      "sizeLabel": "Rozmiar",
+      "workbookQualitySuffix": "Jakość: {{quality}}",
+      "rowsColsFormat": "{{rows}} wierszy × {{cols}} kolumn"
     },
     "xlsxPreview": "Podgląd arkusza",
     "deckPreview": "Podgląd prezentacji",
@@ -37228,7 +37576,13 @@
     "filterableTable": {
       "justNow": "Przed chwilą",
       "hoursAgo": "{{count}} h temu",
-      "daysAgo": "{{count}} dni temu"
+      "daysAgo": "{{count}} dni temu",
+      "daysAgo_one": "{{count}} dzień temu",
+      "daysAgo_few": "{{count}} dni temu",
+      "daysAgo_many": "{{count}} dni temu",
+      "hoursAgo_one": "{{count}} godzinę temu",
+      "hoursAgo_few": "{{count}} godziny temu",
+      "hoursAgo_many": "{{count}} godzin temu"
     },
     "nModeLeftNav": {
       "dragSection": "Przeciąganie zakładki",

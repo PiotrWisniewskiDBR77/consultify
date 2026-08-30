@@ -46,6 +46,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { FC, useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { StandardTable, type TableColumn as StandardTableColumn } from '@/components/standard';
 
@@ -105,6 +106,8 @@ export interface WorkflowStage {
   id: string;
   order: number;
   stage: WorkflowStatus;
+  /** i18n key segment under assessment.workflowStages.stage.* */
+  labelKey: string;
   label: string;
   description: string;
   gate: GateType | null;
@@ -153,6 +156,7 @@ const WORKFLOW_STAGES: Omit<
     id: 'draft',
     order: 1,
     stage: 'DRAFT',
+    labelKey: 'draft',
     label: 'Draft',
     description: 'Assessment is being filled in by the team',
     gate: null,
@@ -163,6 +167,7 @@ const WORKFLOW_STAGES: Omit<
     id: 'request-review',
     order: 2,
     stage: 'DRAFT',
+    labelKey: 'submitForReview',
     label: 'Submit for Review',
     description: 'Request review from Project Lead',
     gate: 'REQUEST_REVIEW',
@@ -173,6 +178,7 @@ const WORKFLOW_STAGES: Omit<
     id: 'in-review',
     order: 3,
     stage: 'IN_REVIEW',
+    labelKey: 'inReview',
     label: 'In Review',
     description: 'Assessment is being reviewed',
     gate: 'APPROVE_REPORT',
@@ -183,6 +189,7 @@ const WORKFLOW_STAGES: Omit<
     id: 'awaiting-approval',
     order: 4,
     stage: 'AWAITING_APPROVAL',
+    labelKey: 'awaitingApproval',
     label: 'Awaiting Approval',
     description: 'Assessment awaiting final approval',
     gate: 'APPROVE_ASSESSMENT',
@@ -193,6 +200,7 @@ const WORKFLOW_STAGES: Omit<
     id: 'generate-report',
     order: 5,
     stage: 'APPROVED',
+    labelKey: 'generateReport',
     label: 'Generate Report',
     description: 'Generate analytical report from assessment data',
     gate: 'GENERATE_REPORT',
@@ -203,6 +211,7 @@ const WORKFLOW_STAGES: Omit<
     id: 'approved',
     order: 6,
     stage: 'APPROVED',
+    labelKey: 'approved',
     label: 'Approved',
     description: 'Assessment approved, can generate initiatives',
     gate: 'GENERATE_INITIATIVES',
@@ -218,6 +227,8 @@ const GATE_CONFIG: Record<
     color: string;
     bgColor: string;
     borderColor: string;
+    /** i18n key segment under assessment.workflowStages.gate.* */
+    key: string;
     actionLabel: string;
   }
 > = {
@@ -234,6 +245,7 @@ const GATE_CONFIG: Record<
     color: 'text-slate-600 dark:text-slate-300',
     bgColor: 'bg-slate-100 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
+    key: 'requestReview',
     actionLabel: 'Submit for Review',
   },
   APPROVE_REPORT: {
@@ -241,6 +253,7 @@ const GATE_CONFIG: Record<
     color: 'text-slate-600 dark:text-slate-300',
     bgColor: 'bg-slate-100 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
+    key: 'approveReport',
     actionLabel: 'Approve Report',
   },
   APPROVE_ASSESSMENT: {
@@ -248,6 +261,7 @@ const GATE_CONFIG: Record<
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    key: 'approveAssessment',
     actionLabel: 'Approve Assessment',
   },
   GENERATE_REPORT: {
@@ -255,6 +269,7 @@ const GATE_CONFIG: Record<
     color: 'text-slate-600 dark:text-slate-300',
     bgColor: 'bg-slate-100 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
+    key: 'generateReport',
     actionLabel: 'Generate Report',
   },
   GENERATE_INITIATIVES: {
@@ -262,6 +277,7 @@ const GATE_CONFIG: Record<
     color: 'text-amber-600 dark:text-amber-400',
     bgColor: 'bg-amber-50 dark:bg-amber-500/10',
     borderColor: 'border-amber-200 dark:border-amber-500/30',
+    key: 'generateInitiatives',
     actionLabel: 'Generate Initiatives',
   },
 };
@@ -269,6 +285,8 @@ const GATE_CONFIG: Record<
 const STATUS_CONFIG: Record<
   GateStatus,
   {
+    /** i18n key segment under assessment.workflowStages.gateStatus.* */
+    labelKey: string;
     label: string;
     color: string;
     bgColor: string;
@@ -276,30 +294,35 @@ const STATUS_CONFIG: Record<
   }
 > = {
   NOT_STARTED: {
+    labelKey: 'notStarted',
     label: 'Not Started',
     color: 'text-slate-500 dark:text-slate-400',
     bgColor: 'bg-slate-100 dark:bg-slate-500/20',
     icon: Clock,
   },
   PENDING: {
+    labelKey: 'pending',
     label: 'Pending',
     color: 'text-amber-600 dark:text-amber-400',
     bgColor: 'bg-amber-100 dark:bg-amber-500/20',
     icon: Clock,
   },
   APPROVED: {
+    labelKey: 'approved',
     label: 'Approved',
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-100 dark:bg-emerald-500/20',
     icon: CheckCircle2,
   },
   REJECTED: {
+    labelKey: 'rejected',
     label: 'Rejected',
     color: 'text-danger-600 dark:text-danger-400',
     bgColor: 'bg-danger-100 dark:bg-danger-500/20',
     icon: X,
   },
   SKIPPED: {
+    labelKey: 'skipped',
     label: 'Skipped',
     color: 'text-slate-500 dark:text-slate-400',
     bgColor: 'bg-slate-100 dark:bg-slate-500/20',
@@ -307,8 +330,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
 // ============================================
 // Helper Functions
@@ -362,28 +384,32 @@ const OrderBadge: FC<{ stage: WorkflowStage }> = ({ stage }) => (
   </div>
 );
 
-const StageNameCell: FC<{ stage: WorkflowStage }> = ({ stage }) => (
-  <div className="flex items-center gap-3 min-w-0">
-    <OrderBadge stage={stage} />
-    <div className="min-w-0">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
-          {stage.label}
-        </span>
-        {stage.isCurrent && (
-          <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-navy-900 text-white shrink-0">
-            CURRENT
+const StageNameCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <OrderBadge stage={stage} />
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
+            {t(`assessment.workflowStages.stage.${stage.labelKey}.label`, stage.label)}
           </span>
-        )}
+          {stage.isCurrent && (
+            <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-navy-900 text-white shrink-0">
+              {t('assessment.workflowStages.currentBadge', 'CURRENT')}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+          {t(`assessment.workflowStages.stage.${stage.labelKey}.description`, stage.description)}
+        </p>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-        {stage.description}
-      </p>
     </div>
-  </div>
-);
+  );
+};
 
 const GateCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
+  const { t } = useTranslation();
   const gateConfig = stage.gate ? GATE_CONFIG[stage.gate] : null;
   if (!stage.gate || !gateConfig) {
     return <span className="text-xs text-slate-600 dark:text-slate-500">—</span>;
@@ -394,7 +420,9 @@ const GateCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border ${gateConfig.bgColor} ${gateConfig.color} ${gateConfig.borderColor}`}
     >
       <GateIcon size={14} />
-      <span>{stage.gate.replace(/_/g, ' ')}</span>
+      <span>
+        {t(`assessment.workflowStages.gate.${gateConfig.key}.name`, stage.gate.replace(/_/g, ' '))}
+      </span>
     </div>
   );
 };
@@ -404,6 +432,7 @@ const GateCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
  * old whole-row expand; same content, see file-header note).
  */
 const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   if (stage.requirements.length === 0) {
@@ -424,17 +453,21 @@ const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
         {blocking.length > 0 ? (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-danger-100 dark:bg-danger-500/20 text-danger-700 dark:text-danger-300">
             <X size={10} />
-            {blocking.length} blocked
+            {t('assessment.workflowStages.requirements.blocked', '{{count}} blocked', {
+              count: blocking.length,
+            })}
           </span>
         ) : warnings.length > 0 ? (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
             <AlertTriangle size={10} />
-            {warnings.length} warnings
+            {t('assessment.workflowStages.requirements.warnings', '{{count}} warnings', {
+              count: warnings.length,
+            })}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 size={10} />
-            All passed
+            {t('assessment.workflowStages.requirements.allPassed', 'All passed')}
           </span>
         )}
         <ChevronDown
@@ -454,7 +487,7 @@ const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
               className="absolute left-0 top-full mt-2 z-50 w-80 max-h-80 overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 shadow-xl p-3"
             >
               <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Gate Requirements
+                {t('assessment.workflowStages.requirements.title', 'Gate Requirements')}
               </div>
               <div className="grid gap-2">
                 {stage.requirements.map((req) => (
@@ -523,7 +556,11 @@ const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
                       }
                     `}
                     >
-                      {req.pass ? 'PASS' : req.severity === 'blocking' ? 'BLOCK' : 'WARN'}
+                      {req.pass
+                        ? t('assessment.workflowStages.requirements.pass', 'PASS')
+                        : req.severity === 'blocking'
+                          ? t('assessment.workflowStages.requirements.block', 'BLOCK')
+                          : t('assessment.workflowStages.requirements.warn', 'WARN')}
                     </span>
                   </div>
                 ))}
@@ -536,15 +573,17 @@ const RequirementsCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
   );
 };
 
-const ApproverCell: FC<{ stage: WorkflowStage }> = ({ stage }) =>
-  stage.approverRole ? (
+const ApproverCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
+  const { t } = useTranslation();
+  return stage.approverRole ? (
     <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
       <Users size={12} />
-      {stage.approverRole}
+      {t(`assessment.workflowStages.role.${stage.approverRole}`, stage.approverRole)}
     </span>
   ) : (
     <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
   );
+};
 
 const AssigneeCell: FC<{
   stage: WorkflowStage;
@@ -552,6 +591,7 @@ const AssigneeCell: FC<{
   canManage: boolean;
   onAssignGate: WorkflowStagesTableProps['onAssignGate'];
 }> = ({ stage, roles, canManage, onAssignGate }) => {
+  const { t } = useTranslation();
   const [showDropdown, setShowDropdown] = useState(false);
   const gateDecision = stage.gateDecision;
 
@@ -588,7 +628,8 @@ const AssigneeCell: FC<{
             </div>
             <div className="text-left min-w-0">
               <div className="font-medium text-slate-900 dark:text-white truncate">
-                {gateDecision.assigneeName || 'Unknown'}
+                {gateDecision.assigneeName ||
+                  t('assessment.workflowStages.assignee.unknown', 'Unknown')}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                 {gateDecision.assigneeEmail || ''}
@@ -601,7 +642,9 @@ const AssigneeCell: FC<{
               <User size={12} className="text-slate-500 dark:text-slate-400" />
             </div>
             <span className="text-slate-500 dark:text-slate-400 whitespace-nowrap">
-              {canManage ? 'Assign...' : 'Not assigned'}
+              {canManage
+                ? t('assessment.workflowStages.assignee.assign', 'Assign...')
+                : t('assessment.workflowStages.assignee.notAssigned', 'Not assigned')}
             </span>
           </>
         )}
@@ -616,13 +659,16 @@ const AssigneeCell: FC<{
           <div className="absolute left-0 top-full mt-1 z-50 w-56 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
             <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-600">
               <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Eligible Approvers
+                {t('assessment.workflowStages.assignee.eligibleApprovers', 'Eligible Approvers')}
               </div>
             </div>
             <div className="max-h-48 overflow-y-auto">
               {eligibleApprovers.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-                  No eligible approvers
+                  {t(
+                    'assessment.workflowStages.assignee.noEligibleApprovers',
+                    'No eligible approvers'
+                  )}
                 </div>
               ) : (
                 eligibleApprovers.map((user) => (
@@ -639,7 +685,9 @@ const AssigneeCell: FC<{
                       <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                         {user.userName || user.userEmail}
                       </div>
-                      <div className="text-[11px] text-slate-500 truncate">{user.role}</div>
+                      <div className="text-[11px] text-slate-500 truncate">
+                        {t(`assessment.workflowStages.role.${user.role}`, user.role)}
+                      </div>
                     </div>
                     {gateDecision?.assigneeId === user.userId && (
                       <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
@@ -656,6 +704,7 @@ const AssigneeCell: FC<{
 };
 
 const StatusCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
+  const { t } = useTranslation();
   const gateDecision = stage.gateDecision;
   const gateStatus = gateDecision?.status || 'NOT_STARTED';
   const statusConfig = STATUS_CONFIG[gateStatus];
@@ -671,11 +720,13 @@ const StatusCell: FC<{ stage: WorkflowStage }> = ({ stage }) => {
         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium w-fit ${statusConfig.bgColor} ${statusConfig.color}`}
       >
         <StatusIcon size={10} />
-        {statusConfig.label}
+        {t(`assessment.workflowStages.gateStatus.${statusConfig.labelKey}`, statusConfig.label)}
       </span>
       {gateDecision?.requestedAt && gateStatus === 'PENDING' && (
         <span className="text-[10px] text-slate-500 dark:text-slate-400">
-          {getDaysWaiting(gateDecision.requestedAt)}d waiting
+          {t('assessment.workflowStages.daysWaiting', '{{count}}d waiting', {
+            count: getDaysWaiting(gateDecision.requestedAt),
+          })}
         </span>
       )}
     </div>
@@ -687,6 +738,7 @@ const ActionsCell: FC<{
   canManage: boolean;
   onGateAction: WorkflowStagesTableProps['onGateAction'];
 }> = ({ stage, canManage, onGateAction }) => {
+  const { t } = useTranslation();
   const [actionBusy, setActionBusy] = useState(false);
   const [comment] = useState('');
 
@@ -717,7 +769,11 @@ const ActionsCell: FC<{
         disabled={actionBusy}
         className={`px-3 py-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-xs font-semibold transition-colors ${FOCUS_RING}`}
       >
-        {actionBusy ? <Loader2 size={12} className="animate-spin" /> : 'Generate Report'}
+        {actionBusy ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          t('assessment.workflowStages.gate.generateReport.action', 'Generate Report')
+        )}
       </button>
     );
   }
@@ -730,7 +786,11 @@ const ActionsCell: FC<{
         disabled={actionBusy}
         className={`px-3 py-1.5 rounded-lg bg-danger-500 hover:bg-danger-600 disabled:bg-danger-300 text-white text-xs font-semibold transition-colors ${FOCUS_RING}`}
       >
-        {actionBusy ? <Loader2 size={12} className="animate-spin" /> : 'Generate Initiatives'}
+        {actionBusy ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          t('assessment.workflowStages.gate.generateInitiatives.action', 'Generate Initiatives')
+        )}
       </button>
     );
   }
@@ -745,7 +805,13 @@ const ActionsCell: FC<{
             disabled={actionBusy}
             className={`px-3 py-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-xs font-semibold transition-colors ${FOCUS_RING}`}
           >
-            {actionBusy ? <Loader2 size={12} className="animate-spin" /> : gateConfig?.actionLabel || 'Request'}
+            {actionBusy ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : gateConfig ? (
+              t(`assessment.workflowStages.gate.${gateConfig.key}.action`, gateConfig.actionLabel)
+            ) : (
+              t('assessment.workflowStages.actions.request', 'Request')
+            )}
           </button>
         )}
         {gateStatus === 'PENDING' && (
@@ -754,7 +820,7 @@ const ActionsCell: FC<{
               type="button"
               onClick={() => handleAction('approve')}
               disabled={actionBusy}
-              title="Approve"
+              title={t('assessment.workflowStages.actions.approve', 'Approve')}
               className={`p-1.5 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30 transition-colors ${FOCUS_RING}`}
             >
               <CheckCircle2 size={14} />
@@ -763,14 +829,14 @@ const ActionsCell: FC<{
               type="button"
               onClick={() => handleAction('reject')}
               disabled={actionBusy}
-              title="Reject"
+              title={t('assessment.workflowStages.actions.reject', 'Reject')}
               className={`p-1.5 rounded-lg bg-danger-500/20 text-danger-600 dark:text-danger-400 hover:bg-danger-500/30 transition-colors ${FOCUS_RING}`}
             >
               <X size={14} />
             </button>
             <button
               type="button"
-              title="Send Reminder"
+              title={t('assessment.workflowStages.actions.sendReminder', 'Send Reminder')}
               className={`p-1.5 rounded-lg bg-slate-500/10 text-slate-600 dark:text-slate-300 hover:bg-slate-500/20 transition-colors ${FOCUS_RING}`}
             >
               <Bell size={14} />
@@ -785,7 +851,7 @@ const ActionsCell: FC<{
     return (
       <span className="text-xs text-danger-600 dark:text-danger-400 flex items-center gap-1">
         <Lock size={12} />
-        Blocked
+        {t('assessment.workflowStages.actions.blocked', 'Blocked')}
       </span>
     );
   }
@@ -794,7 +860,7 @@ const ActionsCell: FC<{
     return (
       <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
         <CheckCircle2 size={12} />
-        Done
+        {t('assessment.workflowStages.actions.done', 'Done')}
       </span>
     );
   }
@@ -819,6 +885,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
   onGateAction,
   onAssignGate,
 }) => {
+  const { t } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
 
   // Build workflow stages with current state
@@ -834,12 +901,19 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
         requirements = [
           {
             key: 'completion',
-            label: 'Definition of Done (DoD)',
+            label: t('assessment.workflowStages.requirement.dod', 'Definition of Done (DoD)'),
             pass: completionPercent >= 100 && confidenceAvg >= 3,
             severity: 'blocking',
             reason:
               completionPercent < 100 || confidenceAvg < 3
-                ? `Completion: ${Math.round(completionPercent)}% (≥100%), Confidence: ${confidenceAvg.toFixed(1)} (≥3)`
+                ? t(
+                    'assessment.workflowStages.requirement.dodReason',
+                    'Completion: {{completion}}% (≥100%), Confidence: {{confidence}} (≥3)',
+                    {
+                      completion: Math.round(completionPercent),
+                      confidence: confidenceAvg.toFixed(1),
+                    }
+                  )
                 : undefined,
             currentValue: `${Math.round(completionPercent)}%`,
             requiredValue: '≥100%',
@@ -850,10 +924,15 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
         requirements = [
           {
             key: 'report_approved',
-            label: 'Report Approved',
+            label: t('assessment.workflowStages.requirement.reportApproved', 'Report Approved'),
             pass: reportApproved,
             severity: 'blocking',
-            reason: !reportApproved ? 'Report must be approved first' : undefined,
+            reason: !reportApproved
+              ? t(
+                  'assessment.workflowStages.requirement.reportApprovedReason',
+                  'Report must be approved first'
+                )
+              : undefined,
           },
           ...eligibilityChecks,
         ];
@@ -884,6 +963,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
     reportApproved,
     eligibilityChecks,
     gateDecisions,
+    t,
   ]);
 
   const handleRefresh = async () => {
@@ -901,31 +981,31 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
     () => [
       {
         id: 'stage',
-        label: 'Stage',
+        label: t('assessment.workflowStages.columns.stage', 'Stage'),
         width: '260px',
         render: (row) => <StageNameCell stage={row as unknown as WorkflowStage} />,
       },
       {
         id: 'gate',
-        label: 'Gate Decision',
+        label: t('assessment.workflowStages.columns.gateDecision', 'Gate Decision'),
         width: '160px',
         render: (row) => <GateCell stage={row as unknown as WorkflowStage} />,
       },
       {
         id: 'requirements',
-        label: 'Requirements',
+        label: t('assessment.workflowStages.columns.requirements', 'Requirements'),
         width: '150px',
         render: (row) => <RequirementsCell stage={row as unknown as WorkflowStage} />,
       },
       {
         id: 'approver',
-        label: 'Approver',
+        label: t('assessment.workflowStages.columns.approver', 'Approver'),
         width: '110px',
         render: (row) => <ApproverCell stage={row as unknown as WorkflowStage} />,
       },
       {
         id: 'assignee',
-        label: 'Assignee',
+        label: t('assessment.workflowStages.columns.assignee', 'Assignee'),
         width: '180px',
         render: (row) => (
           <AssigneeCell
@@ -938,13 +1018,13 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('assessment.workflowStages.columns.status', 'Status'),
         width: '130px',
         render: (row) => <StatusCell stage={row as unknown as WorkflowStage} />,
       },
       {
         id: 'actions',
-        label: 'Actions',
+        label: t('assessment.workflowStages.columns.actions', 'Actions'),
         width: '160px',
         render: (row) => (
           <ActionsCell
@@ -955,7 +1035,7 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
         ),
       },
     ],
-    [roles, canManage, onAssignGate, onGateAction]
+    [roles, canManage, onAssignGate, onGateAction, t]
   );
 
   return (
@@ -969,10 +1049,14 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Workflow Progression
+                {t('assessment.workflowStages.header.title', 'Workflow Progression')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Current: <strong>{currentStatus}</strong> • Completion:{' '}
+                {t('assessment.workflowStages.header.current', 'Current')}:{' '}
+                <strong>
+                  {t(`assessment.workflowStages.workflowStatus.${currentStatus}`, currentStatus)}
+                </strong>{' '}
+                • {t('assessment.workflowStages.header.completion', 'Completion')}:{' '}
                 {Math.round(completionPercent)}%
               </p>
             </div>
@@ -1003,23 +1087,23 @@ export const WorkflowStagesTable: FC<WorkflowStagesTableProps> = ({
         <div className="flex items-center gap-6 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-emerald-500" />
-            <span>Completed</span>
+            <span>{t('assessment.workflowStages.legend.completed', 'Completed')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-navy-900 animate-pulse" />
-            <span>Current</span>
+            <span>{t('assessment.workflowStages.legend.current', 'Current')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-amber-500" />
-            <span>Pending</span>
+            <span>{t('assessment.workflowStages.legend.pending', 'Pending')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-danger-500/50 border border-danger-500" />
-            <span>Blocked</span>
+            <span>{t('assessment.workflowStages.legend.blocked', 'Blocked')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-navy-600" />
-            <span>Not Started</span>
+            <span>{t('assessment.workflowStages.legend.notStarted', 'Not Started')}</span>
           </div>
         </div>
       </div>

@@ -68,5 +68,112 @@
   "decyzja": "poprawka",
   "uwaga": "Dobrze, tutaj zgłaszałem, ja już to się zapisało. W prawym, głównym rogu powinien być przycisk „Nowe dodawanie OKR”, a teraz są jakieś inne niepotrzebne przyciski. ",
   "kiedy": "2026-08-30T09:08:34.429Z"
+ },
+ "finance-model-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:25:21.062Z"
+ },
+ "finance-analysis-workspace": {
+  "decyzja": "poprawka",
+  "uwaga": "Nie mam jak tego zatwierdzić, nic tu nie widać, nic z tego nie można wyciągnąć. ",
+  "kiedy": "2026-08-30T09:26:29.697Z"
+ },
+ "finance-valuation-workspace": {
+  "decyzja": "poprawka",
+  "uwaga": "Dobrze, słuchaj, to jak merytorycznie pewnie wygląda, to dobrze. Popracuj trochę nad grafiką. Zobacz, przyciski u góry są po prostu słowami, nie przyciskami okrągłymi. Popraw je graficznie, żeby wyglądały tak jak reszta naszego dokumentu. Układ merytoryczny i przepływ informacji są super. ",
+  "kiedy": "2026-08-30T09:26:56.063Z"
+ },
+ "finance-compare-panel": {
+  "decyzja": "nie",
+  "kiedy": "2026-08-30T09:44:03.654Z"
+ },
+ "finance-statement-pack-workspace-v2": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:11.116Z"
+ },
+ "finance-prediction-workspace": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:16.415Z"
+ },
+ "finance-export-import-panel": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:21.354Z"
+ },
+ "finance-saved-views-panel": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:22.780Z"
+ },
+ "finance-comments-panel": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:24.423Z"
+ },
+ "finance-lineage-navigator": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:25.957Z"
+ },
+ "finance-workspace-bar": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:28.247Z"
+ },
+ "idea-table": {
+  "decyzja": "poprawka",
+  "uwaga": "Tutaj podgląd, widoczny po prawej stronie ekranu, nie jest zgodny ze standardem. Układ od góry do dołu również nie spełnia wymagań. Zastanawiałem się, co mogło to spowodować. ",
+  "kiedy": "2026-08-30T09:45:26.610Z"
+ },
+ "idea-table-tool-empty-filter": {
+  "decyzja": "ok",
+  "uwaga": "Wiedziałem, że mamy taką tabelę w ogóle. ",
+  "kiedy": "2026-08-30T09:45:47.346Z"
+ },
+ "idea-table-tool-grouping": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:14.889Z"
+ },
+ "idea-table-tool-kebab": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:40.190Z"
+ },
+ "idea-table-tool-sortfilter": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:42.308Z"
+ },
+ "idea-table-tool-paste": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:45.240Z"
+ },
+ "idea-table-record-templates": {
+  "decyzja": "nie",
+  "kiedy": "2026-08-30T09:46:56.665Z"
+ },
+ "idea-templates-catalog": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:47:16.895Z"
+ },
+ "ideas-preview-overlay": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:47:34.211Z"
+ },
+ "ideas-teresa-panel": {
+  "decyzja": "nie",
+  "uwaga": "Dobra, przeanalizowałem i teraz tak: cały ten prawy panel jest ewidentnie do przepracowania. Zarówno w ujęciu graficznym, kolejności myśli, jak i merytorsnym, co się tutaj musi wydarzyć. Koniecznie trzeba wrzucić to do backlogu, aby przeanalizować, jak ten panel powinien być zorganizowany, żeby był w pełni pomocny i użyteczny. Jednocześnie grafiki, które tutaj mamy, rozwiązania graficzne, też nie są przeanalizowane przez Ciebie i nie są zgodne ze standardem grafik, tylko tak, jak zostały przekonane przeze mnie dawno temu automatycznie. To jest słabe. ",
+  "kiedy": "2026-08-30T09:52:53.808Z"
+ },
+ "idea-confidentiality-control": {
+  "decyzja": "nie",
+  "kiedy": "2026-08-30T09:52:55.242Z"
+ },
+ "mywork-idea-inspector-lekki": {
+  "decyzja": "ok",
+  "uwaga": "Nie wiem, nie mam pojęcia, gdzie ten plik, gdzie ten ekran jest, szczerze mówiąc. Domyślam się, że może tak wyglądać, bo jest techniczny, ale nie wiem, do czego służy. ",
+  "kiedy": "2026-08-30T09:53:32.783Z"
+ },
+ "mywork-idea-topbar": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:54:15.142Z"
+ },
+ "mywork-notebook-rail-speca": {
+  "decyzja": "poprawka",
+  "uwaga": "Teraz tak: on jest generalnie dużo lepszy niż to, co jest w Idea. Natomiast te dra‑meni, moim zdaniem, powinny wyglądać tak samo, mieć te same elementy albo prawie zbliżone, ale na pewno rządzić się tymi samymi zasadami. Więc jeśli tam zrobiliśmy informację, że idzie to do backlogu i trzeba to koniecznie przerobić gruntownie, myślę, że tutaj ta informacja powinna być powiązana z tym, co jest tam. ",
+  "kiedy": "2026-08-30T09:55:31.896Z"
  }
 }

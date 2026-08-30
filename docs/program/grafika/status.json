@@ -272,6 +272,20 @@
    "opis": "Modele, wyceny, prognozy i sprawozdania. Widziales stad wylacznie model finansowy — reszta jest dla Ciebie nowa.",
    "ekrany": [
     {
+     "id": "finance-hub",
+     "nazwa": "WEJSCIE do Finansow — piec zakladek",
+     "ocena": "A",
+     "co": "BRAKUJACY EKRAN WEJSCIOWY. Szesc analizowanych spolek z nazwa, kompletnoscia sprawozdan, okresem, waluta, liczba dokumentow i statusem. Tabela kanoniczna z filtrami, kebabem i zaznaczaniem. Piec zakladek: Sprawozdania, Analiza, Modele, Predykcja, Wycena.",
+     "naprawione": [
+      "Ekran NIGDY nie byl wyrenderowany — pokazywalismy same wnetrza modulu, bez wejscia",
+      "Kolumna daty mieszala 3 dni temu z 8/21/2026 w formacie amerykanskim — naprawione we WSPOLNEJ tabeli, wiec dotyczy calej aplikacji",
+      "1 dni temu zamiast 1 dzien temu — polska liczba mnoga w kanonicznej tabeli"
+     ],
+     "wyjatki": [
+      "Surowe kody typow w kolumnach: Investment_case, base/opt/cons, DCF_FCFF, Prediction, STM"
+     ]
+    },
+    {
      "id": "finance-model-workspace",
      "nazwa": "Model finansowy",
      "ocena": "B",

@@ -65,6 +65,7 @@ vi.mock('@/services/api', () => ({
     get: vi.fn().mockResolvedValue({ data: null }),
     post: vi.fn().mockResolvedValue({ data: null }),
     generateWorkbook: vi.fn().mockResolvedValue(null),
+    getWorkbookSchema: vi.fn().mockResolvedValue({ sheets: [] }),
     downloadWorkbook: vi.fn(),
   },
 }));
@@ -80,6 +81,23 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
   executeSchemaProposal: vi.fn().mockResolvedValue({ executed: true }),
   rejectSchemaProposal: vi.fn().mockResolvedValue(undefined),
   explainRelation: vi.fn().mockResolvedValue({ relations: [], cacheHit: false, computedInMs: 0 }),
+}));
+
+// i18n (2026-08-30): the GLOBAL mock in tests/setup.ts returns the English
+// `defaultValue`, so a t('…', 'Sheets') call and a hardcoded 'Sheets' render
+// identically — such a mock cannot tell a translated string from a forgotten
+// one. This file-level override echoes the KEY (plus the interpolation
+// payload), which is what the excele-preview assertions below check.
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, _defaultValue?: unknown, options?: Record<string, unknown>) =>
+      options && typeof options === 'object' ? `${key}|${JSON.stringify(options)}` : key,
+    i18n: { language: 'pl', changeLanguage: vi.fn() },
+    ready: true,
+  }),
+  Trans: ({ children }: any) => children,
+  I18nextProvider: ({ children }: any) => children,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -119,6 +137,8 @@ vi.mock('@/utils/sheetArtifactOpen', () => ({
 // ---------------------------------------------------------------------------
 // Import under test (after mocks are registered).
 // ---------------------------------------------------------------------------
+import { Api } from '@/services/api';
+
 import type { KimiLane } from '../KimiWorkspaceShell';
 import {
   createGovernedSheetMaterializationTarget,
@@ -262,6 +282,85 @@ describe('useKimiArtifactPipeline — 3-lane regression (L2.4)', () => {
     expect(result.current.failureReason).toBe('missing required source pack');
     expect(mockV8.acceptPlan).not.toHaveBeenCalled();
     expect(mockV8.materializeRun).not.toHaveBeenCalled();
+  });
+
+  // -------------------------------------------------------------------------
+  // i18n regression (2026-08-30): the excele success path built its preview
+  // summary and KPI labels from hardcoded English ("Sheets", "Quality",
+  // "N rows × M cols") while the app runs in Polish — the same defect already
+  // fixed on the sibling "reopen workbook" path in ExceleView.tsx.
+  // -------------------------------------------------------------------------
+  const generateWorkbookPreview = async (workbook: Record<string, unknown>) => {
+    conversationStoreState.activeConversationId = 'conversation-1';
+    // Sheet lane runs the full governed chain: accept → submitReview →
+    // approveRun (must report a ready state) → materialize.
+    mockV8.approveRun.mockResolvedValue({ state: 'approved_for_apply' });
+    mockV8.materializeRun.mockResolvedValue({
+      runId: 'run-1',
+      runStatus: 'completed',
+      plan: { titleHint: 'Budżet 2026' },
+      materializationOrigin: { originRuntime: 'sheet', originRecordId: 'table-1' },
+    });
+    (Api.generateWorkbook as ReturnType<typeof vi.fn>).mockResolvedValueOnce(workbook);
+
+    const { result } = renderHook(() => useKimiArtifactPipeline('excele'));
+    await act(async () => {
+      await result.current.startGeneration('Zrób arkusz budżetu');
+    });
+    await waitFor(() => {
+      expect(result.current.preview?.type).toBe('xlsx');
+    });
+    return result.current.preview!;
+  };
+
+  it('builds the generated-workbook preview from i18n keys, not English literals', async () => {
+    const preview = await generateWorkbookPreview({
+      id: 'wb-1',
+      title: 'Budżet 2026',
+      fileName: 'Budzet_2026.xlsx',
+      fileSize: 20480,
+      qualityScore: 4.2,
+      sheets: [
+        { name: 'Przychody', rowCount: 42, columnCount: 7 },
+        { name: 'Koszty', rowCount: 12, columnCount: 4 },
+      ],
+    });
+
+    expect(preview.summary).toContain('kimi.excele.workbookSummary');
+    expect(preview.summary).toContain('"title":"Budżet 2026"');
+    expect(preview.summary).toContain('"count":2');
+    expect(preview.summary).toContain('kimi.excele.workbookQualitySuffix');
+    expect(preview.summary).toContain('"quality":"4.2/5"');
+    expect(preview.summary).not.toMatch(/sheets|Quality:/);
+
+    expect(preview.kpiItems?.map((item) => item.label)).toEqual([
+      'kimi.excele.sheetsLabel',
+      'kimi.excele.qualityLabel',
+      'kimi.excele.sizeLabel',
+      'Przychody',
+      'Koszty',
+    ]);
+    expect(preview.kpiItems?.map((item) => item.value)).toEqual([
+      '2',
+      '4.2/5',
+      '20 KB',
+      'kimi.excele.rowsColsFormat|{"rows":42,"cols":7}',
+      'kimi.excele.rowsColsFormat|{"rows":12,"cols":4}',
+    ]);
+  });
+
+  it('translates the missing-quality placeholder instead of printing N/A', async () => {
+    const preview = await generateWorkbookPreview({
+      id: 'wb-2',
+      title: 'Arkusz bez oceny',
+      sheets: [{ name: 'Arkusz1', rowCount: 3, columnCount: 2 }],
+    });
+
+    expect(preview.kpiItems?.[1]).toEqual({
+      label: 'kimi.excele.qualityLabel',
+      value: 'kimi.excele.qualityUnavailable',
+    });
+    expect(preview.summary).toContain('"quality":"kimi.excele.qualityUnavailable"');
   });
 
   it('stops before materialize when approve step fails', async () => {

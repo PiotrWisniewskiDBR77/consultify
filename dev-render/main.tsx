@@ -190,6 +190,7 @@ const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-
 //   () => import('./screens/execution-export-prezentacja')
 // );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
+const FinanceHubScreen = React.lazy(() => import('./screens/finance-hub'));
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
 const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-mode'));
@@ -879,6 +880,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&tab=)',
     render: () => <AdminCommandCenterPanelScreen />,
+  },
+  'finance-hub': {
+    label:
+      'GRAFIKA 17 — REALNY <FinanceHub> (ekran wejściowy Finansów, brakująca „pierwsza karta" — sześć analizowanych spółek, PLN/EUR/USD/GBP). &tab=statements|analysis|models|prediction|valuation',
+    render: () => <FinanceHubScreen />,
   },
   'admin-sso-self-service-card': {
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',

@@ -24,6 +24,7 @@ import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
 import { TableSettingsPopover } from './TableSettingsPopover';
+import { localeListy } from '../../../utils/listDateFormat';
 
 // Column definition
 export interface TableColumn {
@@ -923,7 +924,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     if (hours < 1) return t('sharedComponents.filterableTable.justNow');
     if (hours < 24) return t('sharedComponents.filterableTable.hoursAgo', { count: hours });
     if (days < 7) return t('sharedComponents.filterableTable.daysAgo', { count: days });
-    return d.toLocaleDateString();
+    // Odbiór grafiki 2026-08-30: gołe `toLocaleDateString()` bierze format z
+    // PRZEGLĄDARKI, nie z języka konta — polski użytkownik na angielskim systemie
+    // widział „8/21/2026" obok „3 dni temu" w tej samej kolumnie. To domyślny
+    // renderer WSPÓLNEJ tabeli, więc dotyczyło każdego modułu z kolumną daty.
+    // SSOT formatu: src/utils/listDateFormat.ts.
+    return d.toLocaleDateString(localeListy());
   };
 
   return (

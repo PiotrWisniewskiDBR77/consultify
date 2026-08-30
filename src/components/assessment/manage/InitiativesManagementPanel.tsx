@@ -118,6 +118,8 @@ const STATUS_CONFIG: Partial<
   Record<
     InitiativeStatus,
     {
+      /** i18n key segment under assessment.initiativesPanel.status.* */
+      labelKey: string;
       label: string;
       color: string;
       bgColor: string;
@@ -127,6 +129,7 @@ const STATUS_CONFIG: Partial<
   >
 > = {
   [InitiativeStatus.DRAFT]: {
+    labelKey: 'draft',
     label: 'Draft',
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
@@ -134,6 +137,7 @@ const STATUS_CONFIG: Partial<
     icon: Edit3,
   },
   [InitiativeStatus.PENDING_REVIEW]: {
+    labelKey: 'pendingReview',
     label: 'Pending Review',
     // Pułapka #1 (kanon): `primary`=crimson; status informacyjny → niebieski, nie crimson.
     color: 'text-blue-600 dark:text-blue-400',
@@ -142,6 +146,7 @@ const STATUS_CONFIG: Partial<
     icon: Clock,
   },
   [InitiativeStatus.REVIEW]: {
+    labelKey: 'review',
     label: 'Review',
     color: 'text-indigo-600 dark:text-indigo-400',
     bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
@@ -149,6 +154,7 @@ const STATUS_CONFIG: Partial<
     icon: Eye,
   },
   [InitiativeStatus.PROMOTED]: {
+    labelKey: 'promoted',
     label: 'Promoted',
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
@@ -156,6 +162,7 @@ const STATUS_CONFIG: Partial<
     icon: TrendingUp,
   },
   [InitiativeStatus.PLANNING]: {
+    labelKey: 'planning',
     label: 'Planning',
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
@@ -163,6 +170,7 @@ const STATUS_CONFIG: Partial<
     icon: Calendar,
   },
   [InitiativeStatus.APPROVED]: {
+    labelKey: 'approved',
     label: 'Approved',
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
@@ -170,6 +178,7 @@ const STATUS_CONFIG: Partial<
     icon: CheckCircle2,
   },
   [InitiativeStatus.SCHEDULED]: {
+    labelKey: 'scheduled',
     label: 'Scheduled',
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
@@ -177,6 +186,7 @@ const STATUS_CONFIG: Partial<
     icon: Calendar,
   },
   [InitiativeStatus.EXECUTING]: {
+    labelKey: 'executing',
     label: 'Executing',
     color: 'text-amber-600 dark:text-amber-400',
     bgColor: 'bg-amber-50 dark:bg-amber-500/10',
@@ -184,6 +194,7 @@ const STATUS_CONFIG: Partial<
     icon: Play,
   },
   [InitiativeStatus.BLOCKED]: {
+    labelKey: 'blocked',
     label: 'Blocked',
     color: 'text-danger-600 dark:text-danger-400',
     bgColor: 'bg-danger-50 dark:bg-danger-500/10',
@@ -191,6 +202,7 @@ const STATUS_CONFIG: Partial<
     icon: AlertCircle,
   },
   [InitiativeStatus.DONE]: {
+    labelKey: 'done',
     label: 'Done',
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
@@ -198,6 +210,7 @@ const STATUS_CONFIG: Partial<
     icon: CheckCircle2,
   },
   [InitiativeStatus.TRACKING]: {
+    labelKey: 'tracking',
     label: 'Tracking',
     color: 'text-indigo-600 dark:text-indigo-400',
     bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
@@ -205,6 +218,7 @@ const STATUS_CONFIG: Partial<
     icon: Target,
   },
   [InitiativeStatus.CANCELLED]: {
+    labelKey: 'cancelled',
     label: 'Cancelled',
     color: 'text-danger-600 dark:text-danger-400',
     bgColor: 'bg-danger-50 dark:bg-danger-500/10',
@@ -212,6 +226,7 @@ const STATUS_CONFIG: Partial<
     icon: X,
   },
   [InitiativeStatus.ARCHIVED]: {
+    labelKey: 'archived',
     label: 'Archived',
     color: 'text-slate-500 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
@@ -223,27 +238,33 @@ const STATUS_CONFIG: Partial<
 const PRIORITY_CONFIG: Record<
   InitiativePriority,
   {
+    /** i18n key segment under assessment.initiativesPanel.priority.* */
+    labelKey: string;
     label: string;
     color: string;
     bgColor: string;
   }
 > = {
   low: {
+    labelKey: 'low',
     label: 'Low',
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-100 dark:bg-slate-500/20',
   },
   medium: {
+    labelKey: 'medium',
     label: 'Medium',
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-100 dark:bg-blue-500/20',
   },
   high: {
+    labelKey: 'high',
     label: 'High',
     color: 'text-amber-600 dark:text-amber-400',
     bgColor: 'bg-amber-100 dark:bg-amber-500/20',
   },
   critical: {
+    labelKey: 'critical',
     label: 'Critical',
     color: 'text-danger-600 dark:text-danger-400',
     bgColor: 'bg-danger-100 dark:bg-danger-500/20',
@@ -251,11 +272,11 @@ const PRIORITY_CONFIG: Record<
 };
 
 const METHODOLOGY_OPTIONS = [
-  { value: 'impact-feasibility', label: 'Impact x Feasibility' },
-  { value: 'moscow', label: 'MoSCoW' },
-  { value: 'rice', label: 'RICE' },
-  { value: 'value-effort', label: 'Value x Effort' },
-  { value: 'strategic-fit', label: 'Strategic Fit' },
+  { value: 'impact-feasibility', key: 'impactFeasibility', label: 'Impact x Feasibility' },
+  { value: 'moscow', key: 'moscow', label: 'MoSCoW' },
+  { value: 'rice', key: 'rice', label: 'RICE' },
+  { value: 'value-effort', key: 'valueEffort', label: 'Value x Effort' },
+  { value: 'strategic-fit', key: 'strategicFit', label: 'Strategic Fit' },
 ];
 
 const STATUS_FILTER_OPTIONS: InitiativeStatus[] = [
@@ -273,10 +294,17 @@ const STATUS_FILTER_OPTIONS: InitiativeStatus[] = [
   InitiativeStatus.ARCHIVED,
 ];
 
-/** Wspólny formatter daty — 1:1 z dawnym formatDate wiersza tabeli (przed migracją do StandardTable). */
-const formatInitiativeDate = (dateStr: string): string => {
+/**
+ * Wspólny formatter daty — 1:1 z dawnym formatDate wiersza tabeli (przed migracją
+ * do StandardTable). Locale idzie za aktywnym językiem UI (parytet pl/en, wzór
+ * z ReportsTable.tsx) — wcześniej było przybite `'pl-PL'`, więc data zostawała
+ * polska nawet w interfejsie angielskim.
+ */
+const dateLocale = (language?: string): string => (language?.startsWith('pl') ? 'pl-PL' : 'en-US');
+
+const formatInitiativeDate = (dateStr: string, language?: string): string => {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('pl-PL', {
+  return date.toLocaleDateString(dateLocale(language), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -296,6 +324,7 @@ const GenerateInitiativesModal: FC<{
     includeChatContext: boolean;
   }) => Promise<void>;
 }> = ({ isOpen, onClose, onGenerate }) => {
+  const { t } = useTranslation();
   const [methodologyId, setMethodologyId] = useState('impact-feasibility');
   const [count, setCount] = useState(5);
   const [includeChatContext, setIncludeChatContext] = useState(true);
@@ -307,7 +336,9 @@ const GenerateInitiativesModal: FC<{
       await onGenerate({ methodologyId, count, includeChatContext });
       onClose();
     } catch (err) {
-      toast.error('Failed to generate initiatives');
+      toast.error(
+        t('assessment.initiativesPanel.toast.generateFailed', 'Failed to generate initiatives')
+      );
     } finally {
       setGenerating(false);
     }
@@ -333,10 +364,13 @@ const GenerateInitiativesModal: FC<{
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  Generate Initiatives
+                  {t('assessment.initiativesPanel.generateModal.title', 'Generate Initiatives')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  AI-powered initiative generation
+                  {t(
+                    'assessment.initiativesPanel.generateModal.subtitle',
+                    'AI-powered initiative generation'
+                  )}
                 </p>
               </div>
             </div>
@@ -353,7 +387,10 @@ const GenerateInitiativesModal: FC<{
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Prioritization Methodology
+              {t(
+                'assessment.initiativesPanel.generateModal.methodology',
+                'Prioritization Methodology'
+              )}
             </label>
             <select
               value={methodologyId}
@@ -362,7 +399,7 @@ const GenerateInitiativesModal: FC<{
             >
               {METHODOLOGY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(`assessment.initiativesPanel.methodology.${opt.key}`, opt.label)}
                 </option>
               ))}
             </select>
@@ -370,7 +407,7 @@ const GenerateInitiativesModal: FC<{
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Number of Initiatives
+              {t('assessment.initiativesPanel.generateModal.count', 'Number of Initiatives')}
             </label>
             <select
               value={count}
@@ -379,7 +416,11 @@ const GenerateInitiativesModal: FC<{
             >
               {[3, 4, 5, 6, 7].map((n) => (
                 <option key={n} value={n}>
-                  {n} initiatives
+                  {t(
+                    'assessment.initiativesPanel.generateModal.countOption',
+                    '{{count}} initiatives',
+                    { count: n }
+                  )}
                 </option>
               ))}
             </select>
@@ -394,10 +435,13 @@ const GenerateInitiativesModal: FC<{
             />
             <div>
               <div className="text-sm font-medium text-slate-900 dark:text-white">
-                Include chat context
+                {t('assessment.initiativesPanel.generateModal.includeChat', 'Include chat context')}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Use conversation history for better suggestions
+                {t(
+                  'assessment.initiativesPanel.generateModal.includeChatHint',
+                  'Use conversation history for better suggestions'
+                )}
               </div>
             </div>
           </label>
@@ -409,7 +453,7 @@ const GenerateInitiativesModal: FC<{
             onClick={onClose}
             className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
           >
-            Cancel
+            {t('assessment.initiativesPanel.generateModal.cancel', 'Cancel')}
           </button>
           <button
             onClick={handleGenerate}
@@ -419,12 +463,12 @@ const GenerateInitiativesModal: FC<{
             {generating ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Generating...
+                {t('assessment.initiativesPanel.generateModal.generating', 'Generating...')}
               </>
             ) : (
               <>
                 <Sparkles size={16} />
-                Generate
+                {t('assessment.initiativesPanel.generateModal.generate', 'Generate')}
               </>
             )}
           </button>
@@ -447,7 +491,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   onRefresh,
   onGenerateInitiatives,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { isEnabled } = useFeatureFlagsContext();
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
@@ -481,6 +525,36 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
 
   const isApproved = workflowStatus === 'APPROVED';
+
+  /** Etykieta statusu/priorytetu przez t(); STATUS_CONFIG niesie tylko klucz + angielski domyślny. */
+  const statusLabel = useCallback(
+    (status: InitiativeStatus): string => {
+      const cfg = STATUS_CONFIG[status];
+      if (!cfg) return String(status);
+      return t(`assessment.initiativesPanel.status.${cfg.labelKey}`, cfg.label);
+    },
+    [t]
+  );
+
+  /**
+   * Etykiety przejść statusu pochodzą ze wspólnego `getStatusActions` (services/
+   * initiativeLifecycle), które niesie parę `label`/`labelPl` — bierzemy polską
+   * wersję przy polskim UI (ten sam wzór co ControlSection.tsx). Bez tego kebab
+   * i szybka zmiana statusu zostawały po angielsku mimo reszty ekranu po polsku.
+   */
+  const statusActionLabel = useCallback(
+    (action: { label: string; labelPl?: string }): string =>
+      i18n.language?.startsWith('pl') ? action.labelPl || action.label : action.label,
+    [i18n.language]
+  );
+
+  const priorityLabel = useCallback(
+    (priority: InitiativePriority): string => {
+      const cfg = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
+      return t(`assessment.initiativesPanel.priority.${cfg.labelKey}`, cfg.label);
+    },
+    [t]
+  );
 
   // Fetch initiatives for this assessment
   const fetchInitiatives = useCallback(async () => {
@@ -566,13 +640,17 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error || err?.message || 'Failed to create initiative');
+      throw new Error(
+        err?.error ||
+          err?.message ||
+          t('assessment.initiativesPanel.toast.createFailed', 'Failed to create initiative')
+      );
     }
     await fetchInitiatives();
   };
 
   const handleDuplicateInitiative = async (initiative: Initiative) => {
-    const title = `${initiative.title} (copy)`;
+    const title = `${initiative.title} ${t('assessment.initiativesPanel.copySuffix', '(copy)')}`;
     await handleCreateManualInitiative({
       title,
       description: initiative.description || '',
@@ -596,7 +674,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     if (!editInitiativeId) return;
     const title = editTitle.trim();
     if (title.length < 3) {
-      toast.error('Title is too short');
+      toast.error(t('initiatives.form.titleTooShort', 'Title is too short'));
       return;
     }
     try {
@@ -608,11 +686,14 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         riskLevel: editRisk,
         category: editCategory.trim() || undefined,
       });
-      toast.success('Initiative updated');
+      toast.success(t('assessment.initiativesPanel.toast.updated', 'Initiative updated'));
       setEditModalOpen(false);
       await fetchInitiatives();
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to update initiative');
+      toast.error(
+        e?.message ||
+          t('assessment.initiativesPanel.toast.updateFailed', 'Failed to update initiative')
+      );
     }
   };
 
@@ -628,7 +709,11 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error || err?.message || 'Failed to update status');
+      throw new Error(
+        err?.error ||
+          err?.message ||
+          t('assessment.initiativesPanel.toast.updateStatusFailed', 'Failed to update status')
+      );
     }
     await fetchInitiatives();
   };
@@ -710,13 +795,13 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   }, [initiatives]);
 
   const statusFilterLabel = useMemo(() => {
-    if (statusFilter.length === 0) return 'All statuses';
-    if (statusFilter.length === 1) {
-      const cfg = STATUS_CONFIG[statusFilter[0]];
-      return cfg?.label || String(statusFilter[0]);
-    }
-    return `${statusFilter.length} selected`;
-  }, [statusFilter]);
+    if (statusFilter.length === 0)
+      return t('assessment.initiativesPanel.filter.allStatuses', 'All statuses');
+    if (statusFilter.length === 1) return statusLabel(statusFilter[0]);
+    return t('assessment.initiativesPanel.filter.selected', '{{count}} selected', {
+      count: statusFilter.length,
+    });
+  }, [statusFilter, statusLabel, t]);
 
   // Triada standard (migracja bespoke tabeli, kanon TRIADA reguła #1): kolumny
   // deklaratywne StandardTable — 1:1 z dawnymi komórkami <InitiativeRow>.
@@ -724,7 +809,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     () => [
       {
         id: 'title',
-        label: 'Initiative',
+        label: t('assessment.initiativesPanel.columns.initiative', 'Initiative'),
         width: '260px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -745,7 +830,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       },
       {
         id: 'priority',
-        label: 'Priority',
+        label: t('assessment.initiativesPanel.columns.priority', 'Priority'),
         width: '110px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -755,23 +840,22 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bgColor} ${cfg.color}`}
             >
               <Flag size={10} />
-              {cfg.label}
+              {priorityLabel(initiative.priority)}
             </span>
           );
         },
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('assessment.initiativesPanel.columns.status', 'Status'),
         width: '170px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
-          const cfg = STATUS_CONFIG[initiative.status] || STATUS_CONFIG[InitiativeStatus.DRAFT]!;
           const actions = getStatusActions(initiative.status);
           const canMutate = canManage && actions.length > 0;
           return (
             <div className="relative">
-              <EntityStatusChip status={initiative.status} label={cfg.label} />
+              <EntityStatusChip status={initiative.status} label={statusLabel(initiative.status)} />
               {canMutate && (
                 <select
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -782,10 +866,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     }
                   }}
                 >
-                  <option value="">{cfg.label}</option>
+                  <option value="">{statusLabel(initiative.status)}</option>
                   {actions.map((a) => (
                     <option key={a.targetStatus} value={a.targetStatus}>
-                      {a.label}
+                      {statusActionLabel(a)}
                     </option>
                   ))}
                 </select>
@@ -796,7 +880,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       },
       {
         id: 'impactEffort',
-        label: 'Impact/Effort',
+        label: t('assessment.initiativesPanel.columns.impactEffort', 'Impact/Effort'),
         width: '110px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -820,7 +904,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       },
       {
         id: 'owner',
-        label: 'Owner',
+        label: t('assessment.initiativesPanel.columns.owner', 'Owner'),
         width: '110px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -838,20 +922,20 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       },
       {
         id: 'createdAt',
-        label: 'Created',
+        label: t('assessment.initiativesPanel.columns.created', 'Created'),
         width: '110px',
         sortable: true,
         render: (row) => {
           const initiative = row as unknown as Initiative;
           return (
             <span className="text-xs text-c-text-muted">
-              {formatInitiativeDate(initiative.createdAt)}
+              {formatInitiativeDate(initiative.createdAt, i18n.language)}
             </span>
           );
         },
       },
     ],
-    [canManage, handleUpdateStatus]
+    [canManage, handleUpdateStatus, statusLabel, priorityLabel, statusActionLabel, i18n.language, t]
   );
 
   // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
@@ -862,7 +946,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       primary: [
         {
           id: 'open-in-initiatives',
-          label: 'Open in Initiatives',
+          label: t('assessment.initiativesPanel.menu.openInInitiatives', 'Open in Initiatives'),
           icon: ExternalLink,
           onClick: () =>
             navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`),
@@ -871,15 +955,22 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           ? [
               {
                 id: 'duplicate',
-                label: 'Duplicate',
+                label: t('assessment.initiativesPanel.menu.duplicate', 'Duplicate'),
                 icon: Copy,
                 onClick: () => {
                   void (async () => {
                     try {
                       await handleDuplicateInitiative(initiative);
-                      toast.success('Initiative duplicated');
+                      toast.success(
+                        t('assessment.initiativesPanel.toast.duplicated', 'Initiative duplicated')
+                      );
                     } catch {
-                      toast.error('Failed to duplicate initiative');
+                      toast.error(
+                        t(
+                          'assessment.initiativesPanel.toast.duplicateFailed',
+                          'Failed to duplicate initiative'
+                        )
+                      );
                     }
                   })();
                 },
@@ -889,7 +980,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       ],
       statusTransitions: getStatusActions(initiative.status).map((action) => ({
         id: `status-${action.targetStatus}`,
-        label: action.label,
+        label: statusActionLabel(action),
         icon: ArrowRight,
         onClick: () => {
           void handleUpdateStatus(initiative.id, action.targetStatus);
@@ -904,13 +995,27 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       destructive: canManage
         ? {
             onClick: () => {
-              if (!confirm(`Delete initiative "${initiative.title}"?`)) return;
+              if (
+                !confirm(
+                  t('assessment.initiativesPanel.confirmDelete', 'Delete initiative "{{title}}"?', {
+                    title: initiative.title,
+                  })
+                )
+              )
+                return;
               void (async () => {
                 try {
                   await handleDelete(initiative.id);
-                  toast.success('Initiative deleted');
+                  toast.success(
+                    t('assessment.initiativesPanel.toast.deleted', 'Initiative deleted')
+                  );
                 } catch {
-                  toast.error('Failed to delete initiative');
+                  toast.error(
+                    t(
+                      'assessment.initiativesPanel.toast.deleteFailed',
+                      'Failed to delete initiative'
+                    )
+                  );
                 }
               })();
             },
@@ -925,6 +1030,8 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       handleOpenInitiative,
       openEditModal,
       handleDelete,
+      statusActionLabel,
+      t,
     ]
   );
 
@@ -940,11 +1047,26 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Initiatives
+                  {t('assessment.initiativesPanel.header.title', 'Initiatives')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {stats.total} initiative{stats.total !== 1 ? 's' : ''} • {batches.length} batch
-                  {batches.length !== 1 ? 'es' : ''}
+                  {t('assessment.initiativesPanel.header.counts', {
+                    defaultValue: '{{initiatives}} • {{batches}}',
+                    initiatives: t(
+                      'assessment.initiativesPanel.header.initiativeCount',
+                      '{{count}} initiatives',
+                      {
+                        count: stats.total,
+                      }
+                    ),
+                    batches: t(
+                      'assessment.initiativesPanel.header.batchCount',
+                      '{{count}} batches',
+                      {
+                        count: batches.length,
+                      }
+                    ),
+                  })}
                 </p>
               </div>
             </div>
@@ -962,7 +1084,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 transition-colors"
                 >
                   <Plus size={16} />
-                  New
+                  {t('assessment.initiativesPanel.actions.new', 'New')}
                 </button>
               )}
               {canManage && canGenerateInitiatives && (
@@ -977,12 +1099,15 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     }`}
                     title={
                       !isApproved
-                        ? 'Assessment must be approved to generate initiatives'
+                        ? t(
+                            'assessment.initiativesPanel.actions.needsApprovalTooltip',
+                            'Assessment must be approved to generate initiatives'
+                          )
                         : undefined
                     }
                   >
                     <Sparkles size={16} />
-                    Quick
+                    {t('assessment.initiativesPanel.actions.quick', 'Quick')}
                   </button>
                   {wizardEnabled && (
                     <button
@@ -995,12 +1120,15 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       }`}
                       title={
                         !isApproved
-                          ? 'Assessment must be approved to generate initiatives'
+                          ? t(
+                              'assessment.initiativesPanel.actions.needsApprovalTooltip',
+                              'Assessment must be approved to generate initiatives'
+                            )
                           : undefined
                       }
                     >
                       <Sparkles size={16} />
-                      Wizard (50+)
+                      {t('assessment.initiativesPanel.actions.wizard', 'Wizard (50+)')}
                     </button>
                   )}
                 </div>
@@ -1016,11 +1144,19 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
                 <div className="font-medium text-amber-800 dark:text-amber-200 text-sm">
-                  Assessment not approved
+                  {t('assessment.initiativesPanel.notApproved.title', 'Assessment not approved')}
                 </div>
                 <div className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                  Initiatives can only be generated from approved assessments. Current status:{' '}
-                  <strong>{workflowStatus}</strong>
+                  {t(
+                    'assessment.initiativesPanel.notApproved.description',
+                    'Initiatives can only be generated from approved assessments. Current status:'
+                  )}{' '}
+                  <strong>
+                    {t(
+                      `assessment.initiativesPanel.workflowStatus.${workflowStatus}`,
+                      workflowStatus
+                    )}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -1050,7 +1186,9 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       : 'text-slate-500'
                   }
                 />
-                <span className="text-slate-700 dark:text-slate-200">Status</span>
+                <span className="text-slate-700 dark:text-slate-200">
+                  {t('assessment.initiativesPanel.filter.status', 'Status')}
+                </span>
                 <span className="text-slate-500 dark:text-slate-400">{statusFilterLabel}</span>
                 <ChevronDown size={14} className="text-slate-500 dark:text-slate-400" />
               </button>
@@ -1066,7 +1204,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   >
                     <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between">
                       <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Filter by status
+                        {t('assessment.initiativesPanel.filter.byStatus', 'Filter by status')}
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -1074,15 +1212,18 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                           onClick={() => setStatusFilter([])}
                           className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                         >
-                          All
+                          {t('assessment.initiativesPanel.filter.all', 'All')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setStatusFilter([])}
                           className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                          title="Clear selection"
+                          title={t(
+                            'assessment.initiativesPanel.filter.clearSelection',
+                            'Clear selection'
+                          )}
                         >
-                          Clear
+                          {t('assessment.initiativesPanel.filter.clear', 'Clear')}
                         </button>
                       </div>
                     </div>
@@ -1126,7 +1267,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                                     : 'text-slate-700 dark:text-slate-200'
                                 )}
                               >
-                                {cfg.label}
+                                {statusLabel(s)}
                               </span>
                             </div>
                             <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -1142,12 +1283,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
             </div>
 
             <div className="text-xs text-slate-500 dark:text-slate-400">
-              Showing{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {filteredInitiatives.length}
-              </span>{' '}
-              of{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">{stats.total}</span>
+              {t('assessment.initiativesPanel.filter.showingOf', 'Showing {{shown}} of {{total}}', {
+                shown: filteredInitiatives.length,
+                total: stats.total,
+              })}
             </div>
           </div>
         </div>
@@ -1163,7 +1302,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search initiatives..."
+              placeholder={t(
+                'assessment.initiativesPanel.search.placeholder',
+                'Search initiatives...'
+              )}
               className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus/30 focus:border-c-focus transition-colors"
             />
           </div>
@@ -1179,12 +1321,23 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 <Lightbulb size={24} className="text-slate-500 dark:text-slate-400" />
               </div>
               <p className="text-sm font-medium text-slate-900 dark:text-white">
-                {searchQuery ? 'No initiatives match your search' : 'No initiatives yet'}
+                {searchQuery
+                  ? t(
+                      'assessment.initiativesPanel.empty.noMatch',
+                      'No initiatives match your search'
+                    )
+                  : t('assessment.initiativesPanel.empty.none', 'No initiatives yet')}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {isApproved
-                  ? 'Generate initiatives from the assessment data'
-                  : 'Approve the assessment to generate initiatives'}
+                  ? t(
+                      'assessment.initiativesPanel.empty.hintApproved',
+                      'Generate initiatives from the assessment data'
+                    )
+                  : t(
+                      'assessment.initiativesPanel.empty.hintNotApproved',
+                      'Approve the assessment to generate initiatives'
+                    )}
               </p>
               {isApproved && canManage && canGenerateInitiatives && (
                 <button
@@ -1192,7 +1345,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold transition-colors"
                 >
                   <Sparkles size={16} />
-                  Generate Initiatives
+                  {t('assessment.initiativesPanel.empty.generate', 'Generate Initiatives')}
                 </button>
               )}
             </div>
@@ -1218,7 +1371,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         {batches.length > 0 && (
           <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 bg-slate-50/50 dark:bg-navy-900/50">
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-              Generation Batches
+              {t('assessment.initiativesPanel.batches.title', 'Generation Batches')}
             </div>
             <div className="flex flex-wrap gap-2">
               {batches.map((batch) => (
@@ -1229,19 +1382,37 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   <Zap size={12} className="text-violet-500" />
                   <div className="flex flex-col">
                     <span className="text-slate-700 dark:text-slate-300">
-                      {batch.methodologyId} • {batch.initiativesCount} items
+                      {t(
+                        'assessment.initiativesPanel.batches.summary',
+                        '{{methodology}} • {{count}} items',
+                        {
+                          methodology: t(
+                            `assessment.initiativesPanel.methodology.${
+                              METHODOLOGY_OPTIONS.find((o) => o.value === batch.methodologyId)
+                                ?.key || batch.methodologyId
+                            }`,
+                            batch.methodologyId
+                          ),
+                          count: batch.initiativesCount,
+                        }
+                      )}
                     </span>
                     {batch.provenance?.assessmentRunId ? (
                       <span className="text-[10px] text-slate-600 dark:text-slate-500">
-                        run {batch.provenance.assessmentRunId}
+                        {t('assessment.initiativesPanel.batches.run', 'run {{id}}', {
+                          id: batch.provenance.assessmentRunId,
+                        })}
                         {batch.provenance.workbenchRunState
-                          ? ` • ${String(batch.provenance.workbenchRunState).replace(/_/g, ' ')}`
+                          ? ` • ${t(
+                              `assessment.initiativesPanel.runState.${batch.provenance.workbenchRunState}`,
+                              String(batch.provenance.workbenchRunState).replace(/_/g, ' ')
+                            )}`
                           : ''}
                       </span>
                     ) : null}
                   </div>
                   <span className="text-slate-600 dark:text-slate-500">
-                    {new Date(batch.createdAt).toLocaleDateString('pl-PL')}
+                    {new Date(batch.createdAt).toLocaleDateString(dateLocale(i18n.language))}
                   </span>
                 </div>
               ))}
@@ -1254,19 +1425,21 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           <div className="flex items-center gap-6 text-[11px] text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-1.5">
               <Calendar size={12} className="text-blue-500" />
-              <span>Planned</span>
+              <span>{t('assessment.initiativesPanel.legend.planned', 'Planned')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Play size={12} className="text-amber-500" />
-              <span>In Progress</span>
+              <span>{t('assessment.initiativesPanel.legend.inProgress', 'In Progress')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 size={12} className="text-emerald-500" />
-              <span>Completed</span>
+              <span>{t('assessment.initiativesPanel.legend.completed', 'Completed')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Flag size={12} className="text-danger-500" />
-              <span>Critical Priority</span>
+              <span>
+                {t('assessment.initiativesPanel.legend.criticalPriority', 'Critical Priority')}
+              </span>
             </div>
           </div>
         </div>
@@ -1293,7 +1466,8 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
             >
               <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
                 <div className="text-base font-semibold text-navy-900 dark:text-white">
-                  {t('initiatives.form.newInitiative')} (draft)
+                  {t('initiatives.form.newInitiative')} (
+                  {t('assessment.initiativesPanel.draftSuffix', 'draft')})
                 </div>
                 <button
                   onClick={() => setShowManualModal(false)}
@@ -1400,7 +1574,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                     );
                     if (duplicateName) {
                       const shouldProceed = window.confirm(
-                        `${t('initiatives.form.duplicateWarning', { name: duplicateName })}\n\n${t('initiatives.form.duplicateWarningDesc')}\n\n${t('common.confirm', 'Do you want to proceed anyway?')}`
+                        `${t('initiatives.form.duplicateWarning', { name: duplicateName })}\n\n${t('initiatives.form.duplicateWarningDesc')}\n\n${t('assessment.initiativesPanel.proceedAnyway', 'Do you want to proceed anyway?')}`
                       );
                       if (!shouldProceed) {
                         return;
@@ -1458,7 +1632,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
             >
               <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
                 <div className="text-base font-semibold text-navy-900 dark:text-white">
-                  Edit initiative
+                  {t('assessment.initiativesPanel.editModal.title', 'Edit initiative')}
                 </div>
                 <button
                   onClick={() => setEditModalOpen(false)}
@@ -1470,7 +1644,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               <div className="p-5 space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    Title
+                    {t('initiatives.form.title', 'Title')}
                   </label>
                   <input
                     value={editTitle}
@@ -1480,7 +1654,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    Description (optional)
+                    {t('initiatives.form.descriptionOptional', 'Description (optional)')}
                   </label>
                   <textarea
                     value={editDescription}
@@ -1492,37 +1666,39 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                      Priority
+                      {t('initiatives.form.priority', 'Priority')}
                     </label>
                     <select
                       value={editPriority}
                       onChange={(e) => setEditPriority(e.target.value as any)}
                       className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
+                      <option value="low">{t('initiatives.priority.low', 'Low')}</option>
+                      <option value="medium">{t('initiatives.priority.medium', 'Medium')}</option>
+                      <option value="high">{t('initiatives.priority.high', 'High')}</option>
+                      <option value="critical">
+                        {t('initiatives.priority.critical', 'Critical')}
+                      </option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                      Risk
+                      {t('initiatives.form.risk', 'Risk')}
                     </label>
                     <select
                       value={editRisk}
                       onChange={(e) => setEditRisk(e.target.value as any)}
                       className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
+                      <option value="low">{t('initiatives.risk.low', 'Low')}</option>
+                      <option value="medium">{t('initiatives.risk.medium', 'Medium')}</option>
+                      <option value="high">{t('initiatives.risk.high', 'High')}</option>
                     </select>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                    Category (optional)
+                    {t('initiatives.form.categoryOptional', 'Category (optional)')}
                   </label>
                   <input
                     value={editCategory}
@@ -1536,13 +1712,13 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   onClick={() => setEditModalOpen(false)}
                   className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
                 >
-                  Cancel
+                  {t('initiatives.form.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={handleSaveEdit}
                   className="h-10 px-4 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold"
                 >
-                  Save
+                  {t('assessment.initiativesPanel.editModal.save', 'Save')}
                 </button>
               </div>
             </motion.div>

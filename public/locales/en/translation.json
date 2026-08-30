@@ -8567,6 +8567,333 @@
       "addDimension": "Add dimension",
       "removeDimension": "Remove dimension",
       "evidenceReferenceOnFile": "Reference on file"
+    },
+    "workflowStages": {
+      "stage": {
+        "draft": {
+          "label": "Draft",
+          "description": "Assessment is being filled in by the team"
+        },
+        "submitForReview": {
+          "label": "Submit for Review",
+          "description": "Request review from Project Lead"
+        },
+        "inReview": {
+          "label": "In Review",
+          "description": "Assessment is being reviewed"
+        },
+        "awaitingApproval": {
+          "label": "Awaiting Approval",
+          "description": "Assessment awaiting final approval"
+        },
+        "generateReport": {
+          "label": "Generate Report",
+          "description": "Generate analytical report from assessment data"
+        },
+        "approved": {
+          "label": "Approved",
+          "description": "Assessment approved, can generate initiatives"
+        }
+      },
+      "currentBadge": "CURRENT",
+      "gate": {
+        "requestReview": {
+          "name": "REQUEST REVIEW",
+          "action": "Submit for Review"
+        },
+        "approveReport": {
+          "name": "APPROVE REPORT",
+          "action": "Approve Report"
+        },
+        "approveAssessment": {
+          "name": "APPROVE ASSESSMENT",
+          "action": "Approve Assessment"
+        },
+        "generateReport": {
+          "name": "GENERATE REPORT",
+          "action": "Generate Report"
+        },
+        "generateInitiatives": {
+          "name": "GENERATE INITIATIVES",
+          "action": "Generate Initiatives"
+        }
+      },
+      "requirements": {
+        "blocked_one": "1 blocked",
+        "blocked_other": "{{count}} blocked",
+        "warnings_one": "1 warning",
+        "warnings_other": "{{count}} warnings",
+        "allPassed": "All passed",
+        "title": "Gate Requirements",
+        "pass": "PASS",
+        "block": "BLOCK",
+        "warn": "WARN"
+      },
+      "role": {
+        "manager": "Manager",
+        "admin": "Admin",
+        "editor": "Editor",
+        "viewer": "Viewer"
+      },
+      "assignee": {
+        "unknown": "Unknown",
+        "assign": "Assign...",
+        "notAssigned": "Not assigned",
+        "eligibleApprovers": "Eligible Approvers",
+        "noEligibleApprovers": "No eligible approvers"
+      },
+      "gateStatus": {
+        "notStarted": "Not Started",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "skipped": "Skipped"
+      },
+      "daysWaiting_one": "1d waiting",
+      "daysWaiting_other": "{{count}}d waiting",
+      "actions": {
+        "request": "Request",
+        "approve": "Approve",
+        "reject": "Reject",
+        "sendReminder": "Send Reminder",
+        "blocked": "Blocked",
+        "done": "Done"
+      },
+      "requirement": {
+        "dod": "Definition of Done (DoD)",
+        "dodReason": "Completion: {{completion}}% (≥100%), Confidence: {{confidence}} (≥3)",
+        "reportApproved": "Report Approved",
+        "reportApprovedReason": "Report must be approved first"
+      },
+      "columns": {
+        "stage": "Stage",
+        "gateDecision": "Gate Decision",
+        "requirements": "Requirements",
+        "approver": "Approver",
+        "assignee": "Assignee",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "header": {
+        "title": "Workflow Progression",
+        "current": "Current",
+        "completion": "Completion"
+      },
+      "workflowStatus": {
+        "DRAFT": "Draft",
+        "IN_REVIEW": "In Review",
+        "AWAITING_APPROVAL": "Awaiting Approval",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "ARCHIVED": "Archived"
+      },
+      "legend": {
+        "completed": "Completed",
+        "current": "Current",
+        "pending": "Pending",
+        "blocked": "Blocked",
+        "notStarted": "Not Started"
+      }
+    },
+    "managePanel": {
+      "defaultAssessmentName": "Assessment",
+      "toast": {
+        "gateActionCompleted": "Gate action completed: {{action}}",
+        "gateActionFailed": "Failed to {{action}}",
+        "assigneeUpdated": "Assignee updated",
+        "assignGateFailed": "Failed to assign gate",
+        "memberAdded": "Member added successfully",
+        "roleUpdated": "Role updated",
+        "memberRemoved": "Member removed",
+        "areaAssigned": "Area assigned",
+        "assignmentRemoved": "Assignment removed"
+      },
+      "error": {
+        "loadFailed": "Failed to load Manage data",
+        "generateInitiativesFailed": "Failed to generate initiatives",
+        "approveRequestFailed": "Failed to approve request",
+        "rejectRequestFailed": "Failed to reject request"
+      },
+      "header": {
+        "title": "Manage",
+        "subtitle": "{{name}} • permissions, workflow, and logs"
+      },
+      "tabs": {
+        "workflow": "Workflow",
+        "team": "Team",
+        "reports": "Reports",
+        "initiatives": "Initiatives",
+        "logs": "Logs"
+      },
+      "loading": "Loading…",
+      "access": {
+        "empty": "No access requests.",
+        "summary": "requests {{role}} • {{priority}} • {{status}}",
+        "working": "Working…",
+        "approve": "Approve",
+        "reject": "Reject",
+        "rejectPrompt": "Reason for rejection?"
+      },
+      "role": {
+        "editor": "Editor",
+        "manager": "Manager"
+      },
+      "priority": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      },
+      "requestStatus": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "initiativesPanel": {
+      "status": {
+        "draft": "Draft",
+        "pendingReview": "Pending Review",
+        "review": "Review",
+        "promoted": "Promoted",
+        "planning": "Planning",
+        "approved": "Approved",
+        "scheduled": "Scheduled",
+        "executing": "Executing",
+        "blocked": "Blocked",
+        "done": "Done",
+        "tracking": "Tracking",
+        "cancelled": "Cancelled",
+        "archived": "Archived"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "methodology": {
+        "impactFeasibility": "Impact x Feasibility",
+        "moscow": "MoSCoW",
+        "rice": "RICE",
+        "valueEffort": "Value x Effort",
+        "strategicFit": "Strategic Fit"
+      },
+      "generateModal": {
+        "title": "Generate Initiatives",
+        "subtitle": "AI-powered initiative generation",
+        "methodology": "Prioritization Methodology",
+        "count": "Number of Initiatives",
+        "countOption_one": "1 initiative",
+        "countOption_other": "{{count}} initiatives",
+        "includeChat": "Include chat context",
+        "includeChatHint": "Use conversation history for better suggestions",
+        "cancel": "Cancel",
+        "generating": "Generating...",
+        "generate": "Generate"
+      },
+      "toast": {
+        "generateFailed": "Failed to generate initiatives",
+        "createFailed": "Failed to create initiative",
+        "updateStatusFailed": "Failed to update status",
+        "updated": "Initiative updated",
+        "updateFailed": "Failed to update initiative",
+        "duplicated": "Initiative duplicated",
+        "duplicateFailed": "Failed to duplicate initiative",
+        "deleted": "Initiative deleted",
+        "deleteFailed": "Failed to delete initiative"
+      },
+      "copySuffix": "(copy)",
+      "draftSuffix": "draft",
+      "proceedAnyway": "Do you want to proceed anyway?",
+      "confirmDelete": "Delete initiative \"{{title}}\"?",
+      "filter": {
+        "allStatuses": "All statuses",
+        "selected_one": "1 selected",
+        "selected_other": "{{count}} selected",
+        "status": "Status",
+        "byStatus": "Filter by status",
+        "all": "All",
+        "clear": "Clear",
+        "clearSelection": "Clear selection",
+        "showingOf": "Showing {{shown}} of {{total}}"
+      },
+      "columns": {
+        "initiative": "Initiative",
+        "priority": "Priority",
+        "status": "Status",
+        "impactEffort": "Impact/Effort",
+        "owner": "Owner",
+        "created": "Created"
+      },
+      "menu": {
+        "openInInitiatives": "Open in Initiatives",
+        "duplicate": "Duplicate"
+      },
+      "header": {
+        "title": "Initiatives",
+        "counts": "{{initiatives}} • {{batches}}",
+        "initiativeCount_one": "1 initiative",
+        "initiativeCount_other": "{{count}} initiatives",
+        "batchCount_one": "1 batch",
+        "batchCount_other": "{{count}} batches"
+      },
+      "actions": {
+        "new": "New",
+        "quick": "Quick",
+        "wizard": "Wizard (50+)",
+        "needsApprovalTooltip": "Assessment must be approved to generate initiatives"
+      },
+      "notApproved": {
+        "title": "Assessment not approved",
+        "description": "Initiatives can only be generated from approved assessments. Current status:"
+      },
+      "workflowStatus": {
+        "DRAFT": "Draft",
+        "IN_REVIEW": "In Review",
+        "AWAITING_APPROVAL": "Awaiting Approval",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "ARCHIVED": "Archived"
+      },
+      "search": {
+        "placeholder": "Search initiatives..."
+      },
+      "empty": {
+        "noMatch": "No initiatives match your search",
+        "none": "No initiatives yet",
+        "hintApproved": "Generate initiatives from the assessment data",
+        "hintNotApproved": "Approve the assessment to generate initiatives",
+        "generate": "Generate Initiatives"
+      },
+      "batches": {
+        "title": "Generation Batches",
+        "summary_one": "{{methodology}} • 1 item",
+        "summary_other": "{{methodology}} • {{count}} items",
+        "run": "run {{id}}"
+      },
+      "legend": {
+        "planned": "Planned",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "criticalPriority": "Critical Priority"
+      },
+      "editModal": {
+        "title": "Edit initiative",
+        "save": "Save"
+      },
+      "runState": {
+        "completed": "completed",
+        "running": "running",
+        "draft": "draft",
+        "awaiting_evidence": "awaiting evidence",
+        "waiting_for_review": "waiting for review",
+        "interpretation_proposed": "interpretation proposed",
+        "interpretation_reviewed": "interpretation reviewed",
+        "score_proposed": "score proposed",
+        "score_reviewed": "score reviewed"
+      }
     }
   },
   "initiatives": {
@@ -24869,7 +25196,12 @@
       "saved": "Saved",
       "saveFailed": "Save failed",
       "workbookSummary": "Workbook \"{{title}}\" — {{count}} sheets.",
-      "sheetsLabel": "Sheets"
+      "sheetsLabel": "Sheets",
+      "qualityLabel": "Quality",
+      "qualityUnavailable": "N/A",
+      "sizeLabel": "Size",
+      "workbookQualitySuffix": "Quality: {{quality}}",
+      "rowsColsFormat": "{{rows}} rows × {{cols}} cols"
     },
     "xlsxPreview": "Spreadsheet preview",
     "deckPreview": "Presentation preview",
@@ -34715,7 +35047,11 @@
     "filterableTable": {
       "justNow": "Just now",
       "hoursAgo": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago"
+      "daysAgo": "{{count}}d ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago"
     },
     "nModeLeftNav": {
       "dragSection": "Drag section",

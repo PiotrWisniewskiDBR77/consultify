@@ -138,7 +138,19 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
         <div className="space-y-3">
           {model.dimensionProfile.map((d) => (
             <div key={d.groupId} className="flex items-center gap-4">
-              <span className="w-28 flex-shrink-0 truncate text-sm font-semibold text-c-text-secondary" title={d.groupName}>
+              {/* ★ Width sized for a real DIMENSION NAME, not a raw id. `w-28`
+                  (112px) dated from when `groupName` echoed the raw
+                  `aggregation.byGroup` key (`axis-1`); now that
+                  `buildPresentationDeck` resolves real names, every DRD axis
+                  ("Cyfrowe Modele Biznesowe", "Cyberbezpieczeństwo") clipped
+                  to "Cyfrowe Mode…" on a board-facing deck. `title` stays as
+                  the fallback for an unusually long name from another pack.
+                  224px (`w-56`) clears the longest DRD axis label, measured at
+                  185px — verified in the dev-render harness, not estimated. */}
+              <span
+                className="w-56 flex-shrink-0 truncate text-sm font-semibold text-c-text-secondary"
+                title={d.groupName}
+              >
                 {d.groupName}
               </span>
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-c-surface-raised">

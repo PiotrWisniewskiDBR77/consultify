@@ -8,6 +8,8 @@ import { describe, expect, it } from 'vitest';
 
 import { makeEvidence, makeFinding, makeOutput } from '@/method-core/outputs/__tests__/testFixtures';
 
+import { DRD_METHOD_PACK_VERSION } from '@/method-core/methods/drd/compileDrdPack';
+
 import { buildPresentationDeck } from '../buildPresentationDeck';
 
 describe('buildPresentationDeck', () => {
@@ -49,6 +51,55 @@ describe('buildPresentationDeck', () => {
     const model = buildPresentationDeck(output);
     expect(model.dimensionProfile.map((d) => d.groupId)).toEqual(['d2', 'd3', 'd1']);
     expect(model.dimensionProfile.map((d) => d.currentLevel)).toEqual([5, 3, 1]);
+  });
+
+  it('dimensionProfile resolves real DRD axis names — slide 5 never prints a raw `axis-N` id', () => {
+    const output = makeOutput({
+      methodology: { methodPackId: 'drd', version: DRD_METHOD_PACK_VERSION },
+      aggregation: {
+        byGroup: { 'axis-1': 2.5, 'axis-4': 3, 'axis-6': 2 },
+        mappingVersion: '1.0.0',
+        rule: 'weighted-mean',
+        excluded: {},
+      },
+    });
+    const model = buildPresentationDeck(output);
+    expect(model.dimensionProfile.map((d) => d.groupName)).toEqual([
+      'Zarządzanie Danymi',
+      'Procesy Cyfrowe',
+      'Cyberbezpieczeństwo',
+    ]);
+    // The raw ids are still carried for keying/traceability — only the
+    // human-facing label changed.
+    expect(model.dimensionProfile.map((d) => d.groupId)).toEqual(['axis-4', 'axis-1', 'axis-6']);
+  });
+
+  it('dimensionProfile falls back to the raw group id on a version mismatch — an honest degrade, never a mislabel', () => {
+    const output = makeOutput({
+      methodology: { methodPackId: 'drd', version: '0.0.0-not-the-compiled-pack' },
+      aggregation: {
+        byGroup: { 'axis-1': 2.5 },
+        mappingVersion: '1.0.0',
+        rule: 'weighted-mean',
+        excluded: {},
+      },
+    });
+    const model = buildPresentationDeck(output);
+    expect(model.dimensionProfile[0].groupName).toBe('axis-1');
+  });
+
+  it('dimensionProfile falls back to the raw group id for a pack with no label dictionary (SIRI)', () => {
+    const output = makeOutput({
+      methodology: { methodPackId: 'siri', version: '2.1.0' },
+      aggregation: {
+        byGroup: { 'pillar-process': 3 },
+        mappingVersion: '1.0.0',
+        rule: 'weighted-mean',
+        excluded: {},
+      },
+    });
+    const model = buildPresentationDeck(output);
+    expect(model.dimensionProfile[0].groupName).toBe('pillar-process');
   });
 
   it('strengths = accepted findings with gap <= 0; gapsAndRisks = accepted findings with gap > 0', () => {
