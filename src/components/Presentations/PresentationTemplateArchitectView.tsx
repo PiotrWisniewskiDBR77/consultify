@@ -306,14 +306,25 @@ export const PresentationTemplateArchitectView: React.FC<
 
   const tableRows = useMemo<TableRow[]>(
     () =>
-      templates.map((template) => ({
-        id: template.id,
-        name: template.name,
-        deckType: String(template.deck_type || '').replace(/_/g, ' '),
-        meta: String(template.outline_json?.length ?? 0),
-        status: template.lifecycle_state ?? 'draft',
-      })),
-    [templates]
+      templates.map((template) => {
+        // GRAFIKA (2026-08-30): był surowy enum po .replace('_',' ')
+        // ("steering committee") — kanon zakazuje nieprzetłumaczonych enumów
+        // w UI. `DECK_TYPE_OPTIONS` ma już tłumaczone etykiety (public/
+        // locales/pl/translation.json, presentations.templateArchitect.
+        // deckType.*) — to samo mapowanie co dropdown „Deck type" powyżej,
+        // zamiast wyświetlać klucz wprost.
+        const opt = DECK_TYPE_OPTIONS.find((o) => o.value === template.deck_type);
+        return {
+          id: template.id,
+          name: template.name,
+          deckType: opt
+            ? t(opt.labelKey, opt.fallback)
+            : String(template.deck_type || '').replace(/_/g, ' '),
+          meta: String(template.outline_json?.length ?? 0),
+          status: template.lifecycle_state ?? 'draft',
+        };
+      }),
+    [templates, t]
   );
 
   const refresh = async (): Promise<void> => {

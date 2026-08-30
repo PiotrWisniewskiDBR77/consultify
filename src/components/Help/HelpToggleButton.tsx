@@ -34,7 +34,7 @@ export const HelpToggleButton: React.FC = () => {
       title={t('widgets.help.title', 'Help Center')}
       aria-label={t('widgets.help.title', 'Help Center')}
     >
-      <span className="relative z-10 text-sm font-semibold text-primary-400 group-hover:text-primary-300 transition-colors">
+      <span className="relative z-10 text-sm font-semibold text-slate-600 group-hover:text-slate-300 transition-colors">
         ?
       </span>
 

@@ -250,6 +250,11 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       )}
 
       {/* Sync Options */}
+      {/* Odbiór grafiki (2026-08-30): oba przełączniki miały peer-checked:bg-navy-900 —
+          w motywie ciemnym navy-900 (#0F172A) jest niemal nieodróżnialny od tła
+          panelu/karty, więc stan włączony był praktycznie niewidoczny (kontrast).
+          Kanoniczny <Switch> (src/components/ui/primitives/Switch.tsx) używa
+          bg-c-focus-solid dla stanu on — przełączam na ten sam token. */}
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-c-text-secondary">
           {t('settings.integrations.syncOptions', 'Sync Options')}
@@ -272,7 +277,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               disabled={savingSettings}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
 
@@ -293,7 +298,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               disabled={savingSettings}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
       </div>

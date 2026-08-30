@@ -47,6 +47,20 @@ const criticalityLabel: Record<string, string> = {
   KNOWN: 'Oceniona',
   UNKNOWN: 'Do oceny',
 };
+// Odbiór grafiki 07-realizacja (2026-08-30): kilka kolumn tabeli obciążenia
+// (demand/supply/gap/saturation/affectedInitiatives/freshness/proposedResponse)
+// dla wierszy typu CONSTRAINT nie mają jeszcze realnych danych i renderowały
+// surowy token stanu ('UNKNOWN'/'KNOWN') wprost — znany defekt "surowe enumy
+// zamiast etykiet". Ta funkcja tłumaczy WYŁĄCZNIE ten token (prefiks złożonych
+// napisów typu "UNKNOWN — brak pełnego zakresu" też), nie rusza już
+// sformatowanych wartości (liczby, zakresy, daty).
+const renderKnowledgeToken = (value: unknown): React.ReactNode => {
+  if (typeof value !== 'string') return value as React.ReactNode;
+  if (value in knowledgeLabel) return knowledgeLabel[value as K];
+  const composedMatch = value.match(/^(KNOWN|UNKNOWN|ESTIMATED|UNCONFIRMED)\b(.*)$/);
+  if (composedMatch) return `${knowledgeLabel[composedMatch[1] as K]}${composedMatch[2]}`;
+  return value;
+};
 const actorLabel = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(value)
     ? 'Właściciel zasobów'
@@ -915,15 +929,22 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               label: 'Zapotrzebowanie low / base / high',
               sortable: true,
               filterable: true,
+              render: (row) => renderKnowledgeToken(row.demand),
             },
             {
               id: 'supply',
               label: 'Stan / zakres dostępności',
               sortable: true,
               filterable: true,
+              render: (row) => renderKnowledgeToken(row.supply),
             },
-            { id: 'gap', label: 'Luka', sortable: true },
-            { id: 'saturation', label: 'Saturacja (zakres)', sortable: true },
+            { id: 'gap', label: 'Luka', sortable: true, render: (row) => renderKnowledgeToken(row.gap) },
+            {
+              id: 'saturation',
+              label: 'Saturacja (zakres)',
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.saturation),
+            },
             {
               id: 'confidence',
               label: 'Pewność',
@@ -945,9 +966,27 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               filterable: true,
               render: (row) => actorLabel(row.owner),
             },
-            { id: 'affectedInitiatives', label: 'Dotknięte inicjatywy', sortable: true },
-            { id: 'freshness', label: 'Aktualność założeń', sortable: true },
-            { id: 'proposedResponse', label: 'Proponowana reakcja', sortable: true },
+            {
+              id: 'affectedInitiatives',
+              label: 'Dotknięte inicjatywy',
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.affectedInitiatives),
+            },
+            {
+              id: 'freshness',
+              label: 'Aktualność założeń',
+              sortable: true,
+              render: (row) =>
+                row.freshness === 'UNKNOWN'
+                  ? knowledgeLabel.UNKNOWN
+                  : formatPeriodDate(row.freshness),
+            },
+            {
+              id: 'proposedResponse',
+              label: 'Proponowana reakcja',
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.proposedResponse),
+            },
           ]}
           data={visibleConstraintRows}
           selectedRowId={selectedConstraintId}

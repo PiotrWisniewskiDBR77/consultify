@@ -312,8 +312,14 @@ export const PartnerSettlementsView: React.FC = () => {
         width: '120px',
         sortable: true,
         render: (row: TableRow) => (
+          // Odbiór grafiki 07-realizacja (2026-08-30): `capitalize` + toLowerCase()
+          // na 'one_time' dawał "One_time" — CSS capitalize nie traktuje "_" jako
+          // separatora słów. Zamieniamy podkreślenie na spację przed renderem,
+          // tak jak już robi to kolumna attributionType niżej.
           <span className="text-sm text-c-text-secondary capitalize">
-            {String(row.transactionType || '').toLowerCase()}
+            {String(row.transactionType || '')
+              .toLowerCase()
+              .replace(/_/g, ' ')}
           </span>
         ),
       },
@@ -910,7 +916,12 @@ export const PartnerSettlementsView: React.FC = () => {
                 onClose={() => setPreviewCommissionId(null)}
                 meta={{
                   pills: [
-                    { label: previewCommission.transactionType, tone: 'neutral' },
+                    {
+                      label: String(previewCommission.transactionType || '')
+                        .toLowerCase()
+                        .replace(/_/g, ' '),
+                      tone: 'neutral',
+                    },
                     { label: previewCommission.status, tone: 'neutral' },
                   ],
                   trailing: (

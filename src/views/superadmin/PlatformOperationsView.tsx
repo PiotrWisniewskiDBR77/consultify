@@ -252,7 +252,18 @@ export const PlatformOperationsView: React.FC = () => {
                         {t(`superadmin.platformOperations.actions.${action.id}.description`)}
                       </p>
                     </div>
-                    <span className="text-xs uppercase text-c-text-muted">{action.risk}</span>
+                    {/* Odbiór grafiki 07-realizacja (2026-08-30): odznaka ryzyka
+                        renderowała surowe action.risk ('high'/'critical') — reszta
+                        ekranu jest po polsku, nagłówek sekcji już używa t() dla tej
+                        samej wartości kawałek wyżej. Kolor jak ikony sekcji (critical
+                        = c-danger, high = c-info) zamiast jednolitego muted. */}
+                    <span
+                      className={`text-xs font-semibold uppercase ${
+                        action.risk === 'critical' ? 'text-c-danger' : 'text-c-info'
+                      }`}
+                    >
+                      {t(`superadmin.platformOperations.riskBadge.${action.risk}`)}
+                    </span>
                   </div>
                   <label className="mt-4 block text-sm text-c-text-secondary">
                     {t('superadmin.platformOperations.target')}

@@ -387,11 +387,19 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       templates.map((template) => ({
         id: template.templateId,
         name: template.name,
-        documentType: template.documentType.replace(/_/g, ' '),
+        // GRAFIKA (2026-08-30): był surowy enum po .replace('_',' ')
+        // ("steering committee report") — kanon zakazuje nieprzetłumaczonych
+        // enumów w UI. `documentTypeOptions` ma już tłumaczone etykiety dla
+        // każdej wartości `documentType` (public/locales/pl/translation.json,
+        // documentStudio.docType.*) — używamy tego samego mapowania co
+        // dropdown „Typ dokumentu" zamiast wyświetlać klucz wprost.
+        documentType:
+          documentTypeOptions.find((opt) => opt.value === template.documentType)?.label ||
+          template.documentType.replace(/_/g, ' '),
         meta: `v${template.version} · ${template.sectionBlueprint.length}`,
         status: template.status,
       })),
-    [templates]
+    [templates, documentTypeOptions]
   );
 
   const getRowActions = (row: TableRow): RowAction[] => {

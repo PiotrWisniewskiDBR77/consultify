@@ -538,10 +538,15 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
   }> = ({ title, icon, badge }) => (
     <div className="w-full flex items-center justify-between p-4 bg-c-surface-raised/50 rounded-lg">
       <div className="flex items-center gap-3">
-        <div className="text-primary-500">{icon}</div>
+        {/* Odbiór grafiki 07-realizacja (2026-08-30): sekcja jest zwykłą ikoną
+            nawigacyjną (Typ organizacji, Tożsamość i skala...), nie stanem
+            krytycznym ani marką Teresy — poprzedni token rodziny akcentu
+            renderował tu czerwień zarezerwowaną dla semantyki krytycznej
+            (CLAUDE.md #3). Neutralny text-secondary. */}
+        <div className="text-c-text-secondary">{icon}</div>
         <span className="font-semibold text-navy-900 dark:text-white text-sm">{title}</span>
         {badge && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-c-surface-raised text-c-text-secondary">
             {badge}
           </span>
         )}
@@ -552,7 +557,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <Loader2 className="animate-spin text-c-text-secondary" size={32} />
       </div>
     );
   }
@@ -578,7 +583,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-            <Building2 className="text-primary-500" size={22} />
+            <Building2 className="text-c-text-secondary" size={22} />
             {t('organization.profile.title', 'Organization Profile')}
           </h2>
           <p className="text-c-text-muted text-sm mt-0.5">
@@ -609,7 +614,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 cx="24"
                 cy="24"
                 r="20"
-                className="stroke-primary-500"
+                className={completeness >= 100 ? 'stroke-c-success' : 'stroke-c-info'}
                 strokeWidth="3"
                 fill="none"
                 strokeDasharray={`${completeness * 1.26} 126`}
@@ -694,14 +699,20 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
       )}
 
       {teresaHint && (
-        <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-900 border border-primary-100 dark:border-primary-800/50 rounded-xl p-4 flex items-start gap-3">
-          <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 shrink-0">
+        // Odbiór grafiki 07-realizacja (2026-08-30): panel Teresy (asystenta AI)
+        // używał crimson-primary — poza semantyką krytyczną (CLAUDE.md #3).
+        // Ten sam wizualny moment ma już dedykowany token `c-ai` (index.css /
+        // tailwind.config: "fiolet świadomie ODDZIELNY od crimson — 'to zrobiła
+        // AI' nie jest stanem obiektu ani marką"), więc przełączam na niego
+        // zamiast na neutral, żeby zachować tożsamość "to jest AI".
+        <div className="bg-gradient-to-r from-c-ai/10 to-white dark:from-c-ai/10 dark:to-navy-900 border border-c-ai/20 rounded-xl p-4 flex items-start gap-3">
+          <div className="p-2 bg-c-ai/10 rounded-lg text-c-ai shrink-0">
             <TeresaMark size={18} />
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
               Teresa
-              <span className="text-[10px] font-normal px-1.5 py-0.5 bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-300 rounded-full">
+              <span className="text-[10px] font-normal px-1.5 py-0.5 bg-c-ai/10 text-c-ai rounded-full">
                 {t('organization.profile.aiGuide', 'AI Guide')}
               </span>
             </h4>
@@ -768,9 +779,9 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
 
       {/* Document extraction proposals (Phase 3.4) */}
       {activeProfileArea === 'document-extraction' && docExtractProposals.length > 0 && (
-        <div className="bg-c-surface rounded-xl border border-primary-200 dark:border-primary-700 p-4 space-y-3">
+        <div className="bg-c-surface rounded-xl border border-c-ai/20 p-4 space-y-3">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Sparkles size={16} className="text-primary-500" />
+            <Sparkles size={16} className="text-c-ai" />
             {t(
               'organization.profile.extraction.proposalsTitle',
               'Teresa extracted these fields from your document'
@@ -859,7 +870,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
       {activeProfileArea === 'readiness' && showReadiness && (
         <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
-            <Target size={16} className="text-primary-500" />
+            <Target size={16} className="text-c-text-secondary" />
             {t('organization.profile.readiness.title', 'Module Readiness')}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">

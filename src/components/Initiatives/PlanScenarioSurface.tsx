@@ -156,6 +156,43 @@ const planStatusKey: Record<PlanScenario['status'], string> = {
   SUPERSEDED: 'initiatives.planScenario.status.superseded',
 };
 
+// Odbiór grafiki 07-realizacja (2026-08-30): kolumny planu renderowały surowe
+// enumy backendu (UNKNOWN/KNOWN/CURRENT/NONE/HIGH…) wprost jako tekst komórki —
+// dokładnie znany defekt "surowe enumy zamiast etykiet" z kanonu grafiki.
+// Mapy niżej tłumaczą wartość na etykietę bez ruszania logiki filtrów/presetów,
+// które nadal porównują surowe stałe (row.dependency === 'UNKNOWN' itd.).
+const planReadinessStateKey: Record<string, string> = {
+  KNOWN: 'initiatives.planScenario.states.known',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planBacklogStateKey: Record<string, string> = {
+  CURRENT: 'initiatives.planScenario.states.current',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planConflictStateKey: Record<string, string> = {
+  NONE: 'initiatives.planScenario.states.none',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planConfidenceKey: Record<string, string> = {
+  HIGH: 'common.high',
+  MEDIUM: 'common.medium',
+  LOW: 'common.low',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planBandKey: Record<string, string> = {
+  NOW: 'initiatives.planScenario.band.now',
+  NEXT: 'initiatives.planScenario.band.next',
+  LATER: 'initiatives.planScenario.band.later',
+  UNSCHEDULED: 'initiatives.planScenario.band.unscheduled',
+};
+const planNextActionKey: Record<string, string> = {
+  PROPOSE_WINDOW: 'initiatives.planScenario.nextActions.proposeWindow',
+  RESOLVE_CAPACITY: 'initiatives.planScenario.nextActions.resolveCapacity',
+  REVIEW_TENTATIVE_WINDOW: 'initiatives.planScenario.nextActions.reviewTentativeWindow',
+  VALIDATE_DEPENDENCIES: 'initiatives.planScenario.nextActions.validateDependencies',
+  ADD_TO_PLAN_OR_EXCLUDE: 'initiatives.planScenario.nextActions.addToPlanOrExclude',
+};
+
 const planPresets = [
   'unscheduled',
   'now',
@@ -929,9 +966,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             onOpenFull={showWorkspace}
             meta={{
               pills: [
-                { label: row.band, tone: 'neutral' },
-                { label: row.confidence, tone: 'neutral' },
-                { label: row.published, tone: 'neutral' },
+                { label: t(planBandKey[row.band] ?? row.band), tone: 'neutral' },
+                { label: t(planConfidenceKey[row.confidence] ?? row.confidence), tone: 'neutral' },
+                { label: t(planStatusKey[row.published as PlanScenario['status']] ?? row.published), tone: 'neutral' },
               ],
               trailing: <span>{row.target}</span>,
             }}
@@ -939,7 +976,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               label: t('initiatives.planScenario.preview.windowLabel'),
               text: t('initiatives.planScenario.preview.windowText'),
               properties: [
-                { id: 'window', label: t('initiatives.planScenario.columns.window'), value: row.band },
+                {
+                  id: 'window',
+                  label: t('initiatives.planScenario.columns.window'),
+                  value: t(planBandKey[row.band] ?? row.band),
+                },
                 {
                   id: 'target',
                   label: t('initiatives.planScenario.columns.proposedTarget'),
@@ -948,17 +989,17 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 {
                   id: 'dependencies',
                   label: t('initiatives.planScenario.columns.dependencies'),
-                  value: row.dependency,
+                  value: t(planReadinessStateKey[row.dependency] ?? row.dependency),
                 },
                 {
                   id: 'capacity',
                   label: t('initiatives.planScenario.columns.capacity'),
-                  value: row.capacity,
+                  value: t(planReadinessStateKey[row.capacity] ?? row.capacity),
                 },
                 {
                   id: 'conflict',
                   label: t('initiatives.planScenario.columns.conflict'),
-                  value: row.conflict,
+                  value: t(planConflictStateKey[row.conflict] ?? row.conflict),
                 },
               ],
             }}
@@ -1001,6 +1042,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               label: t('initiatives.planScenario.columns.backlogState'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planBacklogStateKey[row.backlogState] ?? row.backlogState),
             },
             {
               id: 'proposedWindow',
@@ -1019,33 +1061,54 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               label: t('initiatives.planScenario.columns.dependencyReadiness'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planReadinessStateKey[row.dependency] ?? row.dependency),
             },
             {
               id: 'mandatoryDeadline',
               label: t('initiatives.planScenario.columns.mandatoryDeadline'),
               sortable: true,
+              render: (row) =>
+                t(planReadinessStateKey[row.mandatoryDeadline] ?? row.mandatoryDeadline),
             },
-            { id: 'costOfDelay', label: t('initiatives.planScenario.columns.costOfDelay'), sortable: true },
-            { id: 'roughDemand', label: t('initiatives.planScenario.columns.roughDemand'), sortable: true },
+            {
+              id: 'costOfDelay',
+              label: t('initiatives.planScenario.columns.costOfDelay'),
+              sortable: true,
+              render: (row) => t(planReadinessStateKey[row.costOfDelay] ?? row.costOfDelay),
+            },
+            {
+              id: 'roughDemand',
+              label: t('initiatives.planScenario.columns.roughDemand'),
+              sortable: true,
+              render: (row) => t(planReadinessStateKey[row.roughDemand] ?? row.roughDemand),
+            },
             {
               id: 'capacity',
               label: t('initiatives.planScenario.columns.capacityState'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planReadinessStateKey[row.capacity] ?? row.capacity),
             },
             {
               id: 'confidence',
               label: t('initiatives.planScenario.columns.scheduleConfidence'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planConfidenceKey[row.confidence] ?? row.confidence),
             },
             {
               id: 'conflict',
               label: t('initiatives.planScenario.columns.conflict'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planConflictStateKey[row.conflict] ?? row.conflict),
             },
-            { id: 'nextAction', label: t('initiatives.planScenario.columns.nextAction'), sortable: true },
+            {
+              id: 'nextAction',
+              label: t('initiatives.planScenario.columns.nextAction'),
+              sortable: true,
+              render: (row) => t(planNextActionKey[row.nextAction] ?? row.nextAction),
+            },
           ]}
           data={visiblePlanWindows}
           selectedRowId={selectedWindowId}

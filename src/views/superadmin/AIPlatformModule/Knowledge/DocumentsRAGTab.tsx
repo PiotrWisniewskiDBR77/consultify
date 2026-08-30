@@ -21,6 +21,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
 import { useAppStore } from '@/store/useAppStore';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 import { Api } from '../../../../services/api';
@@ -705,7 +706,7 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({
                         {doc.filename}
                       </h4>
                       <p className="text-slate-500 dark:text-slate-400 text-xs">
-                        {new Date(doc.created_at).toLocaleDateString()}
+                        {formatListDate(doc.created_at)}
                       </p>
                       {(() => {
                         const meta = scopeMeta(doc.scope);
@@ -720,7 +721,12 @@ export const DocumentsRAGTab: React.FC<DocumentsRAGTabProps> = ({
                         );
                       })()}
                       {doc.category && (
-                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary-100 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300 rounded">
+                        // Odbiór grafiki (2026-08-30): bg-primary-*/text-primary-* renderuje
+                        // crimson (CENTRAL RECOLOR LEVER, tailwind.config) — poza semantyką
+                        // krytyczną (CLAUDE.md Pułapka nr 1). To zwykła etykieta kategorii
+                        // dokumentu, nie stan błędu/uwagi — indigo spójne z ikoną pliku w tej
+                        // samej karcie (bg-indigo-50 text-indigo-500 kilka linii wyżej).
+                        <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300 rounded">
                           {doc.category}
                         </span>
                       )}
