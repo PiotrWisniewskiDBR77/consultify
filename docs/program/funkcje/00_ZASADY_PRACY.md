@@ -58,7 +58,11 @@ po pierwszym commicie**, nie na koniec · zakaz `git stash` (schowek współdzie
 między worktree — odkładanie przez `cp`) · maks. 3–4 tory równolegle · zakaz
 połączeń do demo, stagingu, produkcji i Railway z poziomu dyżuru.
 
-**Ekonomia modeli:** zarządzanie — Opus; mechanika i pomiary — Sonnet.
+**Ekonomia modeli (potwierdzone przez właściciela 30.08):** nadzorca NIE mierzy sam,
+gdy może zlecić — rekonesansy i weryfikacje tez robią **równoległe wewnętrzne Sonnety**
+(do odczytu, każda teza z dowodem plik:linia); Opus tylko do trudnego kodu i eskalacji;
+nadzorca zleca, scala i podpisuje. Wynik każdego rekonesansu ląduje w pliku repo,
+nie w rozmowie — pliki są kanałem między agentami i między sesjami.
 
 ## Pliki tego toru
 
