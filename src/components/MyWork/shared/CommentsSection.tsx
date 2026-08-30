@@ -22,6 +22,8 @@ import React, { useCallback, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { MutationResult } from './AttachmentsSection';
+
 export interface Comment {
   id: string;
   content: string;
@@ -39,10 +41,10 @@ export interface Comment {
 
 interface CommentsSectionProps {
   comments: Comment[];
-  onAddComment: (content: string, parentId?: string) => Promise<void>;
-  onDeleteComment: (commentId: string) => Promise<void>;
-  onLikeComment: (commentId: string) => Promise<void>;
-  onGenerateAIComment?: () => Promise<void>;
+  onAddComment: (content: string, parentId?: string) => Promise<MutationResult>;
+  onDeleteComment: (commentId: string) => Promise<MutationResult>;
+  onLikeComment: (commentId: string) => Promise<MutationResult>;
+  onGenerateAIComment?: () => Promise<MutationResult>;
   isGeneratingAI?: boolean;
   currentUserId?: string;
   readOnly?: boolean;
@@ -96,9 +98,13 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
     try {
       setSubmitting(true);
-      await onAddComment(newComment.trim());
-      setNewComment('');
-      toast.success(t('myWork.comments.toastSuccess', 'Comment added'));
+      const result = await onAddComment(newComment.trim());
+      if (result.ok) {
+        setNewComment('');
+        toast.success(t('myWork.comments.toastSuccess', 'Comment added'));
+      } else {
+        toast.error(t('myWork.comments.toastError', 'Failed to add comment'));
+      }
     } catch (error) {
       toast.error(t('myWork.comments.toastError', 'Failed to add comment'));
     } finally {
@@ -112,12 +118,16 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
 
       try {
         setSubmitting(true);
-        await onAddComment(replyContent.trim(), parentId);
-        setReplyContent('');
-        setReplyingTo(null);
-        // Auto-expand replies
-        setExpandedReplies((prev) => new Set([...prev, parentId]));
-        toast.success(t('myWork.comments.toastSuccess2', 'Reply added'));
+        const result = await onAddComment(replyContent.trim(), parentId);
+        if (result.ok) {
+          setReplyContent('');
+          setReplyingTo(null);
+          // Auto-expand replies
+          setExpandedReplies((prev) => new Set([...prev, parentId]));
+          toast.success(t('myWork.comments.toastSuccess2', 'Reply added'));
+        } else {
+          toast.error(t('myWork.comments.toastError2', 'Failed to add reply'));
+        }
       } catch (error) {
         toast.error(t('myWork.comments.toastError2', 'Failed to add reply'));
       } finally {
@@ -138,13 +148,31 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       }
 
       try {
-        await onDeleteComment(commentId);
-        toast.success(t('myWork.comments.toastSuccess3', 'Comment deleted'));
+        const result = await onDeleteComment(commentId);
+        if (result.ok) {
+          toast.success(t('myWork.comments.toastSuccess3', 'Comment deleted'));
+        } else {
+          toast.error(t('myWork.comments.toastError3', 'Failed to delete comment'));
+        }
       } catch (error) {
         toast.error(t('myWork.comments.toastError3', 'Failed to delete comment'));
       }
     },
     [onDeleteComment]
+  );
+
+  const handleLike = useCallback(
+    async (commentId: string) => {
+      try {
+        const result = await onLikeComment(commentId);
+        if (!result.ok) {
+          toast.error(t('myWork.comments.toastError4', 'Failed to update reaction'));
+        }
+      } catch (error) {
+        toast.error(t('myWork.comments.toastError4', 'Failed to update reaction'));
+      }
+    },
+    [onLikeComment, t]
   );
 
   const toggleReplies = (commentId: string) => {
@@ -237,7 +265,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             <div className="flex items-center gap-4 mt-2 ml-2">
               {/* Like */}
               <button
-                onClick={() => onLikeComment(comment.id)}
+                onClick={() => void handleLike(comment.id)}
                 className={`flex items-center gap-1.5 text-xs transition-colors ${
                   comment.likedByMe
                     ? 'text-c-info'

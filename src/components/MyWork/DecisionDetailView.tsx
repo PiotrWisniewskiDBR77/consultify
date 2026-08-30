@@ -4010,7 +4010,7 @@ Use userId only from this list:
       toast.error(
         t('decisions.detail.toast.contentLocked', 'Content is locked during decision-making stage')
       );
-      return;
+      return { ok: false as const, error: new Error('Decision content is locked') };
     }
     const newComment: Comment = {
       id: Math.random().toString(36).substr(2, 9),
@@ -4034,10 +4034,12 @@ Use userId only from this list:
       setComments([...comments, newComment]);
     }
     addActivityLogEntry('comment', t('decisions.detail.activityLog.commentAdded', 'Comment added'));
+    return { ok: true as const };
   };
 
   const handleDeleteComment = async (id: string) => {
     setComments(comments.filter((c) => c.id !== id));
+    return { ok: true as const };
   };
 
   const handleLikeComment = async (id: string) => {
@@ -4048,6 +4050,7 @@ Use userId only from this list:
           : c
       )
     );
+    return { ok: true as const };
   };
 
   const filteredComments = useMemo(() => {
