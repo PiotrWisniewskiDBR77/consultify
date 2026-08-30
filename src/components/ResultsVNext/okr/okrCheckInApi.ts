@@ -7,32 +7,10 @@
  *  - `server/src/validators/resultsVnextOkr.validators.ts` L511-570
  *  - `server/src/routes/resultsVnext/okr.routes.ts` L1723-1895
  *
- * ── REAL, CONFIRMED GAP — no way to discover a valid `cadenceOccurrenceId` ──
- * `RecordOkrCheckInSchema` (`resultsVnextOkr.validators.ts` L535-552)
- * requires `cadenceOccurrenceId: z.string().uuid()` — REQUIRED, not
- * optional. That id names a row in `okr_vnext_checkin_occurrences`
- * (`okrCheckInScheduler.ts` L77-78, L215), a table this epic's scheduler
- * seeds server-side (obligation/cadence generation) — but grepping the FULL
- * `okr.routes.ts` (2998 lines) for `checkin_occurrences`/`occurrences` finds
- * ZERO routes that list or expose them. There is no `GET
- * .../key-results/:id/due-check-in` or similar. This is a genuine backend
- * gap, not a client oversight — confirmed by reading the scheduler, the
- * repository, and every route in the file.
- *
- * Per CLAUDE.md ("Nigdy nie wymyślaj... wartości domenowej, której nie
- * definiuje... realny kod serwera"), this client does NOT fabricate, guess,
- * or silently generate a `cadenceOccurrenceId` (e.g. `crypto.randomUUID()`
- * would produce a value the server will happily accept as a NEW occurrence
- * with no real cadence backing it — worse than an honest block, because it
- * would silently corrupt the append-only check-in history with occurrences
- * that don't correspond to any real scheduled cadence). `recordCheckIn`
- * below still takes `cadenceOccurrenceId` as a required, literal input — the
- * UI layer (`OkrCheckInRecordDialog.tsx`) exposes it as a manually-entered
- * field with a persistent, honest explanation of this exact gap, mirroring
- * `RoiCaseCreateModal.tsx`'s own "read-only by design, not an oversight"
- * precedent for a field with no real picker source. Flagged for the next
- * package: either the scheduler needs a `GET` route, or `recordCheckIn`
- * needs a variant that resolves "the KR's current due occurrence" itself.
+ * Day 170 repaired the occurrence-picker source with a real, KR-scoped GET
+ * backed by `okr_vnext_checkin_occurrences`; see
+ * `CODEX_DAY170_OKNA_CHECKIN_REPORT.md`. The required occurrence id is still
+ * never fabricated client-side.
  */
 import { API_URL, getHeaders } from '@/services/api';
 
@@ -53,6 +31,14 @@ export type OkrCheckInStatus = (typeof OKR_CHECKIN_STATUS_VALUES)[number];
 
 export const OKR_CHECKIN_CONFIDENCE_VALUES = ['high', 'medium', 'low', 'numeric'] as const;
 export type OkrCheckInConfidence = (typeof OKR_CHECKIN_CONFIDENCE_VALUES)[number];
+
+export interface OkrCheckInOccurrenceOption {
+  cadenceOccurrenceId: string;
+  windowStart: string;
+  windowEnd: string;
+  used: boolean;
+  isCurrent: boolean;
+}
 
 // ==========================================
 // DTO — camelCase 1:1 with `toOkrCheckIn`
@@ -186,6 +172,13 @@ export async function listCheckIns(keyResultId: string, currentOnly = true): Pro
     { currentOnly }
   );
   return checkIns;
+}
+
+export async function listCheckInOccurrences(keyResultId: string): Promise<OkrCheckInOccurrenceOption[]> {
+  const { occurrences } = await getJson<{ occurrences: OkrCheckInOccurrenceOption[] }>(
+    `/vnext/results/okr/key-results/${encodeURIComponent(keyResultId)}/checkin-occurrences`
+  );
+  return occurrences;
 }
 
 // ==========================================
