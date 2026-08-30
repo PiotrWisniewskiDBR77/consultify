@@ -11775,7 +11775,12 @@
         "objective": "Objective"
       }
     },
-    "confirmStatusChangeTo": "Change status to {{status}}?"
+    "confirmStatusChangeTo": "Change status to {{status}}?",
+    "calendar": {
+      "toast": {
+        "rescheduleFailed": "Couldn't reschedule"
+      }
+    }
   },
   "execution": {
     "title": "Execution Center",
@@ -22517,7 +22522,8 @@
     "toast": {
       "cannotDowngrade": "Cannot downgrade status. Use Cancel or Archive.",
       "gateDecisionError": "Couldn't create the gate decision",
-      "projectRequired": "A project is required to raise a decision"
+      "projectRequired": "A project is required to raise a decision",
+      "taskSaveError": "Couldn't save the task"
     },
     "ai": {
       "selectedCount": "Selected",

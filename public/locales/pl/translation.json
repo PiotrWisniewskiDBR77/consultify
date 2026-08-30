@@ -11238,7 +11238,12 @@
         "objective": "Cel"
       }
     },
-    "confirmStatusChangeTo": "Zmienić status na: {{status}}?"
+    "confirmStatusChangeTo": "Zmienić status na: {{status}}?",
+    "calendar": {
+      "toast": {
+        "rescheduleFailed": "Nie udało się zmienić terminu"
+      }
+    }
   },
   "execution": {
     "title": "Centrum Realizacji",
@@ -23716,7 +23721,8 @@
     "toast": {
       "cannotDowngrade": "Nie można obniżyć statusu. Użyj „Anuluj” lub „Archiwizuj”.",
       "gateDecisionError": "Nie udało się utworzyć decyzji bramki",
-      "projectRequired": "Projekt jest wymagany do zgłoszenia decyzji"
+      "projectRequired": "Projekt jest wymagany do zgłoszenia decyzji",
+      "taskSaveError": "Nie udało się zapisać zadania"
     },
     "ai": {
       "selectedCount": "Zaznaczone",
