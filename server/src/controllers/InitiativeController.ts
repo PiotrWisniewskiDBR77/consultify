@@ -360,7 +360,7 @@ export class InitiativeController {
         initiativeTemplateId: (i as any).initiative_template_id ?? null,
         progress: i.progress || 0,
         currentStage: i.current_stage,
-        sourceType: i.source_framework || i.source_type,
+        sourceType: i.source_type,
         sourceId: i.source_id,
         actionContract: safeJsonParseObject(i.action_contract_json as string, {}),
         sourcePack: safeJsonParseObject(i.source_pack_json as string, {}),
