@@ -127,7 +127,7 @@ Co zrobiłbym, gdyby zapadła decyzja X: licencjonowany kolejny dyżur powinien 
 
 Rekomendacja dla nadzorcy: rozszerzyć licencję o `initiativesExecutionRuntime.routes.ts`, właściwy command service/repository i testy; nie dodawać wyjątku do bramy i nie kierować UI do `raid-mitigation.record`.
 
-Stan: zacommitowano częściowo w commicie R1 `3a0ec5b1f4`; czerwony kontrakt zostanie zacommitowany osobno.
+Stan: R1 zacommitowano w `3a0ec5b1f4`; czerwony kontrakt, STOP R2 i pomiar R3 zacommitowano w `70b9a4bae6`.
 Czy kontynuowałem pozostałe pozycje: TAK — R3 jest pomiarowe i nie wymaga zmiany bramy.
 
 Nie zmieniono `InitiativeDocumentView.tsx` ani `RaidSection.tsx`: przepięcie do mitygacji byłoby semantycznie błędne, a pozostawienie optymistycznego UI przy 404/409 byłoby atrapą.
@@ -207,6 +207,28 @@ Nie ma pary czerwony→zielony W-A dla R2 i nie ma porównania marker→naprawa 
 - (e) osiągalność konsumenta statycznie potwierdza `case 'risk-raid'` → `SECTION_REGISTRY['raid']`; realna ścieżka zapisu z tego widoku nadal jest legacy i jej 409 potwierdził pakiet przez produkcyjny `ApiGateway`.
 
 Pakiet używa `assertRealPostgresTestEnvironment()` bez argumentów, `--retry=0`, pełnych env w tej samej linii i sprząta wyłącznie własne rekordy.
+
+## W-D — granica rozłączności i stan końcowy
+
+```text
+$ git merge-base --is-ancestor 251ca29e53 HEAD && echo "BAZA OK" || echo "MARKER BRAK — STOP"
+BAZA OK
+$ git log --oneline 251ca29e53..HEAD
+70b9a4bae6 test(day141): expose missing canonical RAID item writer
+3a0ec5b1f4 docs(day141): record RAID runtime gate contract
+$ git diff --name-only 251ca29e53..HEAD
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY141_RAID_RUNTIME_REPORT.md
+server/src/routes/pmo/__tests__/day141.raid-runtime-contract.pg.test.ts
+$ git status --short
+[brak wyjścia]
+$ docker exec cx-day141-pg psql -U postgres -d cx141 -c "SELECT count(*) AS raid_rows FROM raid_items;"
+ raid_rows
+-----------
+         0
+(1 row)
+```
+
+Każdy plik jest w tabeli licencji. Nie zmieniono `MyWork/**`, `Benefits/**`, `Meeting/**`, migracji, flag, wyglądu, bramy ani infrastruktury testowej. Nie wykonano pushu.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
