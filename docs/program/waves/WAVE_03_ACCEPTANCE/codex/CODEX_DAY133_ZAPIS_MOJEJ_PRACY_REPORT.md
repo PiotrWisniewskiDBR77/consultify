@@ -1,20 +1,17 @@
 # CODEX DAY 133 — kontrakt mutacji w widżetach Mojej pracy
 
-Stan: **PARTIAL / EVIDENCE_MISSING — czerwony kontrakt dostarczony; zmiana produktu wstrzymana z powodu nierozwiązywalnego konfliktu licencji i W-C.**
+Stan: **GOTOWE DO ODBIORU — R1–R3 wdrożone z RED → GREEN; R4 pozostaje pomiarem bez naprawy.**
 
-## Stan wejściowy
+## Stan wejściowy i wznowienie
 
-Sanity `§0.1-BIS`:
+Pierwsze sanity `§0.1-BIS` było poprawne na markerze `64d3de306c`. Po commitach dyżuru wznowienie nastąpiło z decyzji nadzorcy na `29079c23b7`; obowiązująca kontrola dała:
 
 ```text
-64d3de306c docs(funkcje): zrodlo 11 bramek znalezione i wskazane; nowe otwarcie — kanon bramek sam jest szkicem (OD-02)
-codex/day133-zapis-mojej-pracy-20260830
-lrwxr-xr-x@ 1 piotrwisniewski wheel 56 Aug 30 06:50 node_modules -> /Users/piotrwisniewski/Developer/Consultify/node_modules
-Filesystem        Size    Used   Avail Capacity iused ifree %iused Mounted on
-/dev/disk3s1s1   1.8Ti    12Gi    30Gi    29%    459k  310M    0% /
+$ git merge-base --is-ancestor 64d3de306c HEAD && echo "BAZA OK"
+BAZA OK
 ```
 
-`git status --short` nie zwrócił żadnej linii. Porty `6016`, `4932`, `4933` oraz nazwa `cx-day133-pg` były wolne.
+Gałąź: `codex/day133-zapis-mojej-pracy-20260830`. Drzewo przy wznowieniu było czyste. Nie wykonano fetchu, rebase, resetu ani pushu.
 
 Pięć pomiarów wejściowych:
 
@@ -30,33 +27,23 @@ T5 NotebookAttachmentsSection.tsx:61 i :121 wywołują Api.downloadNotebookAttac
 
 ## Korekty wobec instrukcji
 
-1. `§1` wymaga odczytu raportu z refa `github-backup/codex/day130-utrata-danych-20260829`, lecz lokalny vault nie zawiera tego refa (`git branch -a --list '*day130*'` i `git show-ref | rg day130` — zero wyników), a `§0.1-BIS` nakazuje pominąć fetch. Zastosowałem bezpieczniejszą interpretację: nie wykonałem fetchu i użyłem kompletnej specyfikacji wyniku dyskryminowanego powtórzonej w `§3 R1`.
-2. `§0.1 Z34a` mówi „PO PIERWSZYM COMMICIE ROBISZ PUSH”, natomiast ostatnie zdanie `§8` mówi „Nie pushujesz”. Zastosowałem późniejsze i bezpieczniejsze polecenie: **nie pushuję**.
-3. Teza T2 nie potwierdziła się w podanym kształcie. `DecisionDetailView` konsumuje tylko `CommentsSection`; `AttachmentsSection` i `LinkedItemsSection` konsumuje `TaskDetailView`, a notatnik konsumuje tylko `AttachmentsSection`.
-4. BLOK 0 został wykonany po T1–T5, choć `Z20` mówi „przed jakimkolwiek pomiarem”. T1–T5 były wyłącznie odczytem plików i nie dotknęły bazy; mimo to kolejność raportuję jako odchylenie proceduralne, bez podnoszenia statusu dowodu bazodanowego.
-5. `Z24` odsyła do `§0.4a`, ale instrukcja nie zawiera sekcji `§0.4a` (wyszukiwanie `rg -n "0\\.4a|Pomiar zasięgu"` znajduje tylko odwołania). Nie wymyśliłem mianownika. Raportuję pełną nazwę jedynego dodanego przypadku i stan 0/1 PASS.
+1. Nadzorca rozstrzygnął, że po commitach sanity sprawdza przodka markera, nie równość HEAD z markerem. `64d3de306c` jest przodkiem HEAD.
+2. `Z34a` kontra `§8`: obowiązuje `§8`; **nie pushuję**.
+3. Martwe odwołanie `Z24` do nieistniejącego `§0.4a` zostało pominięte. Poniżej podaję pełne nazwy faktycznie uruchomionych przypadków.
+4. Raportu dyżuru 130 nie ma w klonie; zgodnie z decyzją nadzorcy użyto kompletnej specyfikacji z `§3 R1`.
+5. Teza T2 potwierdziła się tylko częściowo: `DecisionDetailView` konsumuje `CommentsSection`; `TaskDetailView` konsumuje trzy widżety; notatnik konsumuje `AttachmentsSection`.
+6. Teza T3 w brzmieniu opartym na `grep -c toast.success` nie potwierdziła przyczyny dla badanych handlerów. Dodatnie liczby obejmują inne operacje hostów. Lokalne handlery trzech widżetów nie miały własnych toastów sukcesu; ich defektem było zwracanie `Promise<void>`, po którym widżet bezwarunkowo ogłaszał sukces. Nie usuwano toastów niezwiązanych z R3.
+7. Nadzorca rozszerzył licencję `NotebookAttachmentsSection.tsx` wyłącznie na typy/adaptację. Adapter jest fail-closed względem wyjątku: spełniona mutacja daje `{ ok: true }`, odrzucona daje `{ ok: false, error }`; nie zwraca zawsze sukcesu. `Api.downloadNotebookAttachment` i zachowanie UI pozostały nietknięte.
 
-## R1 — czerwony kontrakt i konflikt granicy
+## R1 — wynik dyskryminowany w trzech widżetach
 
-Dodano behawioralny test renderujący `CommentsSection`. Callback kończy się bez pozytywnego wyniku; kontrakt wymaga wtedy błędu i zakazuje sukcesu. Test nie czyta tekstu pliku produkcyjnego.
+Wprowadzono kontrakt `{ ok: true, value? } | { ok: false, error }`. `AttachmentsSection`, `CommentsSection` i `LinkedItemsSection` wymagają go dla callbacków mutacyjnych. Upload/delete, add/reply/delete/like oraz add/remove/external-link nie ogłaszają sukcesu bez `ok: true`; `ok: false` daje komunikat błędu. Sygnatury callbacków mutacyjnych nie zawierają `Promise<void>`.
 
-Przebieg RED (`RUN_DB_TESTS=0 MOCK_DB=true npx vitest run ... --retry=0 --reporter=json`):
+## R2 — żywa ścieżka notatnika
 
-```text
-success=false; numTotalTests=1; numPassedTests=0; numFailedTests=1
-fullName: MyWork mutation result contract (red contract) does not announce comment success when the mutation has no positive result
-AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
-```
+`NotebookAttachmentsSection` nadal renderuje wspólny `AttachmentsSection`. Wąski adapter zachowuje oba wyniki rzeczywistego callbacku: resolve → `ok:true`, reject → `ok:false`. Test przechodzi przez `NotebookAttachmentsSection` dla sukcesu i porażki. Nie zmieniono układu, tekstów, pobierania ani `Api.downloadNotebookAttachment`.
 
-Artefakt: `/private/tmp/cx-day133-zapis-mojej-pracy-artefakty/day133-red-contract.json`, SHA-256 `dc5871d1addb1debf222e4a556fb097c42ee83589c2f35f0c727aff0afc628fa`.
-
-Pełnej zmiany produktu nie wprowadzono. Powód jest typowy i reprodukowalny:
-
-- W-C wymaga, aby `async () => setState(...)`, czyli `Promise<void>`, był błędem kompilacji dla callbacku mutacyjnego `AttachmentsSection`.
-- `NotebookAttachmentsSection.tsx` jest objęty Z40 (twardy zakaz zapisu), a jego publiczne propsy deklarują `onUpload` i `onDelete` jako `Promise<void>` i przekazują je bez adaptera do `AttachmentsSection`.
-- Po zmianie `AttachmentsSection` na `Promise<MutationResult>` niezmieniony notatnik nie kompiluje się. Dopuszczenie `Promise<void>` przez union, overload, `unknown` albo rozpoznanie po `onDownload` byłoby obejściem W-C, nie wdrożeniem kontraktu.
-
-Minimalna reprodukcja kompilatora, uruchomiona lokalnym TypeScriptem bez sieci:
+Przyjęty przez nadzorcę RED kompilacyjny W-C:
 
 ```text
 day133-notebook-contract-conflict.ts(3,7): error TS2322: Type '(files: FileList) => Promise<void>' is not assignable to type '(files: FileList) => Promise<MutationResult>'.
@@ -64,31 +51,67 @@ day133-notebook-contract-conflict.ts(3,7): error TS2322: Type '(files: FileList)
     Type 'void' is not assignable to type 'MutationResult'.
 ```
 
-Artefakt: `/private/tmp/cx-day133-zapis-mojej-pracy-artefakty/day133-type-conflict.txt`, SHA-256 `71eef63eb7beb2f5a59a40bfac60f33e0210ed5264c4b072b92cfced77109ac8`.
+Artefakt: `/private/tmp/cx-day133-zapis-mojej-pracy-artefakty/day133-type-conflict.accepted.txt`, SHA-256 `71eef63eb7beb2f5a59a40bfac60f33e0210ed5264c4b072b92cfced77109ac8`.
 
-Brief dla nadzorcy: potrzebna jest imienna licencja na wąską zmianę dwóch typów callbacków i adapterów w `NotebookAttachmentsSection.tsx` (lub decyzja, że ścieżka notatnika otrzymuje wynik dyskryminowany od swojego hosta). Dopiero potem można atomowo zmienić trzy widżety i wszystkich konsumentów bez luki kompatybilności.
+Po zmianie `npx tsc --noEmit --pretty false` zakończył się bez komunikatu i kodem 0.
 
-## R2 — notatnik
+## R3 — host zna i zwraca wynik
 
-Plik notatnika pozostał niezmieniony. Test przechodzący przez notatnik po zmianie kontraktu nie może zostać uczciwie dostarczony, ponieważ sama wymagana zmiana kontraktu powodowałaby błąd typów na jego niezmienionych `Promise<void>`. Nie użyto castu ani adaptera ukrywającego porażkę.
-
-## R3 — hosty
-
-Nie zmieniono hostów. Ich callbacki komentarzy, załączników i powiązań wykonują lokalne `setState` i zwracają `Promise<void>`. Usunięcie toastów hosta bez wdrożenia atomowego kontraktu R1 nie zamknęłoby ścieżki sukcesu i stworzyłoby częściową, mylącą implementację.
+Licencjonowane handlery `TaskDetailView` oraz komentarzy `DecisionDetailView` zwracają jawne `{ok:true}` dopiero po zmianie stanu. Blokada decyzji i próba duplikatu zwracają `{ok:false,error}`. Toast wyniku należy do widżetu, który rozróżnia wynik. Test wykazuje brak sukcesu i jeden błąd dla `ok:false`, a dokładnie jeden sukces dla `ok:true`.
 
 ## R4 — czy komentarz dochodzi do serwera
 
-Pomiar źródła (nie dowód runtime) wykazał:
+Znalezienie zostało przyjęte przez nadzorcę i nie było naprawiane:
 
-- Zadanie: `handleAddComment` w `TaskDetailView.tsx` tworzy obiekt i wykonuje wyłącznie `setComments`; delete i like również tylko zmieniają stan lokalny.
-- Decyzja: `handleAddComment` w `DecisionDetailView.tsx` wykonuje `setComments` i lokalny `addActivityLogEntry`; delete i like również tylko zmieniają stan lokalny.
-- W żadnym z tych handlerów nie ma wywołania `V8MyWorkApi`, `fetch`, `Api` ani `axios`. Istnienie tras `server/src/routes/v8/my-work.routes.ts` nie dowodzi ich użycia przez te handlery.
+- Zadanie: add/delete/like zmieniają wyłącznie lokalny `comments` przez `setComments`.
+- Decyzja: add/delete/like zmieniają lokalny stan; add dopisuje też lokalny activity log.
+- Handlery nie wywołują `V8MyWorkApi`, `fetch`, `Api` ani `axios`. Istnienie `server/src/routes/v8/my-work.routes.ts` nie dowodzi użycia trasy.
 
-Werdykt R4: **NOT_PROVEN runtime; statycznie wskazana ścieżka komentarzy jest wyłącznie lokalna i nie ma połączenia mutacyjnego z serwerem.** Nie naprawiano tras ani hostów poza licencją R4.
+Werdykt: **NOT_PROVEN runtime; statycznie ścieżka komentarzy Zadania i Decyzji jest wyłącznie lokalna.** Osobna pozycja musi dostarczyć backend/persistence; ten dyżur jej nie dopisuje.
+
+## W-A/W-B — ten sam pakiet RED → GREEN
+
+Komenda obu przebiegów:
+
+```text
+RUN_DB_TESTS=0 MOCK_DB=true npx vitest run src/components/MyWork/shared/__tests__/MutationResult.redContract.test.tsx --retry=0 --reporter=json --outputFile=<artefakt>
+```
+
+RED po `git checkout 64d3de306c --` trzech widżetów, przy zachowaniu tego samego testu: `success=false`, 8 razem, 4 PASS, 4 FAIL. Czerwone pełne nazwy:
+
+```text
+MyWork mutation result contract (red contract) does not announce comment success when the mutation has no positive result
+MyWork mutation result contract (red contract) preserves notebook upload failure instead of adapting it to success
+MyWork mutation result contract (red contract) announces attachment upload 'failure' from its mutation result
+MyWork mutation result contract (red contract) announces linked-item removal 'failure' from its mutation result
+```
+
+Artefakt RED: `/private/tmp/cx-day133-zapis-mojej-pracy-artefakty/day133-red-full-contract.json`, SHA-256 `2643db99e2d52e8d5ec9116dc1173d6c4580eafce1152dcd0279436e00b3fceb`.
+
+GREEN po odtworzeniu przez `cp` ze scratch: `success=true`, 8 razem, 8 PASS, 0 FAIL. Pełne nazwy:
+
+```text
+MyWork mutation result contract (red contract) does not announce comment success when the mutation has no positive result
+MyWork mutation result contract (red contract) announces comment success exactly once after a positive mutation result
+MyWork mutation result contract (red contract) preserves notebook upload success through the typed adapter
+MyWork mutation result contract (red contract) preserves notebook upload failure instead of adapting it to success
+MyWork mutation result contract (red contract) announces attachment upload 'failure' from its mutation result
+MyWork mutation result contract (red contract) announces attachment upload 'success' from its mutation result
+MyWork mutation result contract (red contract) announces linked-item removal 'failure' from its mutation result
+MyWork mutation result contract (red contract) announces linked-item removal 'success' from its mutation result
+```
+
+Artefakt GREEN: `/private/tmp/cx-day133-zapis-mojej-pracy-artefakty/day133-green-contract.json`, SHA-256 `9bdcd1e65c60a54867793efcd789188b2f16f61529617a7dcd925d5acce1935b`.
+
+Testy renderują komponenty i klikają/zmieniają inputy. Nie używają `readFileSync` ani asercji na tekście źródła.
+
+## Pułapki (a)–(e)
+
+Pakiet jest czysto komponentowy: `RUN_DB_TESTS=0 MOCK_DB=true`; nie montuje `ApiGateway`, auth, V8 gate ani results beta middleware. Pułapki (a)–(d) nie leżą na jego ścieżce. Pułapka (e) jest kontrolowana listą diffu: brak `src/components/Initiatives/**`. Notatnik jest zmieniony wyłącznie w ramach imiennej decyzji nadzorcy.
 
 ## PostgreSQL i Z30
 
-Uruchomiono wyłącznie `cx-day133-pg` (`pgvector/pgvector:pg16`) na `127.0.0.1:6016`. Pierwszy przebieg migracji zakończył się `Postgres migrations complete`; drugi podał `Applying migrations: 0` i zakończył się poprawnie.
+W poprzedniej części dyżuru uruchomiono wyłącznie `cx-day133-pg` (`pgvector/pgvector:pg16`) na `127.0.0.1:6016`; drugi przebieg migracji podał `Applying migrations: 0`.
 
 ```text
 BRAK ZMIENNYCH POCZTY
@@ -98,25 +121,28 @@ grep drenów w server/src/Gateway.ts: 0 trafień
 
 Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało wysłane.
 
-## Pułapki (a)–(e)
-
-Pakiet czerwonego kontraktu jest czysto komponentowy (`RUN_DB_TESTS=0 MOCK_DB=true`) i nie montuje `ApiGateway`, middleware wyników ani auth, więc (a)–(d) nie leżą na jego ścieżce. Pułapka (e) dotyczy zakresu: test importuje wyłącznie `MyWork/shared/CommentsSection`; `git diff --name-only` jest dowodem, że nie dotknięto `Initiatives/**` ani notatnika.
-
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie zweryfikowano działania komentarzy przez realny HTTP/ApiGateway/JWT/PG, ponieważ pomiar statyczny nie znalazł wywołania sieciowego z handlerów, a R4 zabrania naprawy.
-- Nie zweryfikowano zgodności notatnika po nowym kontrakcie, bo kontraktu nie można atomowo wdrożyć bez zmiany pliku objętego Z40.
-- Nie zweryfikowano liczb `35` miejsc ani `28` gospodarzy z dyżuru 130 i nie użyto ich jako faktu.
-- Nie zweryfikowano pełnego zasięgu testów przed/po według nazw `fullName`; czerwony kontrakt pozostaje zamierzonym dowodem defektu, nie zieloną bramką odbioru.
-- Nie wykonano pary RED→GREEN z W-A: GREEN wymagałby nielicencjonowanej zmiany notatnika albo obejścia W-C. Status nie został podniesiony.
+- Nie zweryfikowano komentarzy przez realny HTTP/ApiGateway/JWT/PG, ponieważ hosty nie mają wywołania sieciowego, a R4 zabrania naprawy.
+- Nie zweryfikowano liczb `35` miejsc ani `28` gospodarzy i nie użyto ich jako faktu.
+- Nie wykonano runtime UI ani zrzutów; dowód jest komponentowy i kompilacyjny.
+- ESLint pełnych hostów nie jest zielony: raportuje zastane problemy poza wąskim diffem. Nie uruchomiono autofix na hostach. `tsc`, test dowodowy i `git diff --check` są zielone.
 
-## Granica rozłączności
+## Granica rozłączności i commity
 
-Dosłowny wynik `git diff --name-only 64d3de306c..HEAD`:
+Commit implementacji: `85ebaf10fa fix(my-work): require explicit mutation results`.
+
+Lista zmieniona względem markera po finalnym commicie ma obejmować wyłącznie:
 
 ```text
 docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY133_ZAPIS_MOJEJ_PRACY_REPORT.md
+src/components/MyWork/DecisionDetailView.tsx
+src/components/MyWork/TaskDetailView.tsx
+src/components/MyWork/notebook/NotebookAttachmentsSection.tsx
+src/components/MyWork/shared/AttachmentsSection.tsx
+src/components/MyWork/shared/CommentsSection.tsx
+src/components/MyWork/shared/LinkedItemsSection.tsx
 src/components/MyWork/shared/__tests__/MutationResult.redContract.test.tsx
 ```
 
-Commit pozycji: `2c89cdc9ba test(my-work): document blocked mutation result contract`. Nie zmieniono `src/components/Initiatives/**`, `NotebookAttachmentsSection.tsx`, tras, migracji, flag ani infrastruktury testowej.
+Brak `src/components/Initiatives/**`, tras, migracji, flag i infrastruktury testowej. Nie wykonano pushu.
