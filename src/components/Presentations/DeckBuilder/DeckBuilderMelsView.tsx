@@ -41,6 +41,7 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CURATED_COLOR_SETS } from '@/components/shared/colorPatterns/curatedColorSets';
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
 import {
   ARTIFACT_PANEL_SECTION_ORDER,
@@ -502,7 +503,13 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
               )
             : null,
           artifactPanelMeta.colorSetId
-            ? detailRow(L('Motyw', 'Theme'), artifactPanelMeta.colorSetId.replace(/_/g, ' '))
+            ? detailRow(
+                L('Motyw', 'Theme'),
+                artifactPanelMeta.colorSetId === 'brand_kit'
+                  ? L('Identyfikacja marki', 'Brand kit')
+                  : (CURATED_COLOR_SETS.find((set) => set.id === artifactPanelMeta.colorSetId)
+                      ?.name ?? artifactPanelMeta.colorSetId.replace(/_/g, ' '))
+              )
             : null,
           typeof artifactPanelMeta.version === 'number'
             ? detailRow(L('Wersja', 'Version'), artifactPanelMeta.version)
