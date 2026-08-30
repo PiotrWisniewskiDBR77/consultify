@@ -12,6 +12,8 @@
  */
 import React, { useId, useState } from 'react';
 
+import { MENU_2_TAB_ACTIVE, MENU_2_TAB_INACTIVE } from '@/components/shared/ModuleMenu3';
+
 import {
   createEmptyScenarioDraft,
   detectClientSideOverlaps,
@@ -29,6 +31,27 @@ const CONTROL_CLASS =
   'min-h-11 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 const BUTTON_CLASS =
   'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50';
+
+/**
+ * ★ NAPRAWA GRAFIKI (uwaga Piotra z odbioru ekranu wyceny, 2026-08-30, ta sama
+ * wada żyła dalej tutaj): „przyciski u góry są po prostu słowami, nie
+ * przyciskami okrągłymi. Popraw je graficznie, żeby wyglądały tak jak reszta
+ * naszego dokumentu."
+ *
+ * Rozwiązanie 1:1 z `Finance/shared/FinanceWorkspaceBar.tsx` (podkomponent
+ * `ViewTab`): klasy pigułek bierzemy z SSOT Menu 2 — `MENU_2_TAB_ACTIVE` /
+ * `MENU_2_TAB_INACTIVE` w `shared/ModuleMenu3.tsx`, tych samych, których używa
+ * `ModuleHub/ModuleNavBar.tsx`. Notatka-prawo Piotra (`ModuleNavBar.tsx:125`):
+ * pigułki Menu 2 = zaokrąglone, Z WIDOCZNĄ RAMKĄ, aktywna = neutralne
+ * wypełnienie. Zero autorskiego kształtu, zero crimsonu (`primary-*` każdy
+ * numer = #85182F, tylko semantyka krytyczna).
+ *
+ * `PILL_DISABLED` to JEDYNY dodatek ponad kanon: oba rzędy tutaj (inaczej niż
+ * `ViewTab`) mają realny stan `disabled` (`allowedScenarioModes`), a kanon Menu 2
+ * go nie definiuje — bez tego wyłączona pigułka wyglądałaby jak klikalna.
+ * Wartości identyczne z tymi, które ten plik już stosował w `BUTTON_CLASS`.
+ */
+const PILL_DISABLED = 'disabled:cursor-not-allowed disabled:opacity-50';
 
 export interface ScenarioAssumptionsViewProps {
   draft: ScenarioDraft;
@@ -58,7 +81,14 @@ export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes 
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-4" data-testid="prediction-assumptions-view">
-      <div className="flex shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1" role="tablist" aria-label="Tryb budowy scenariusza">
+      {/*
+        Kontener był `rounded-lg bg-c-surface-raised p-1` (segmented control) —
+        czyli wypełnienie NIOSŁA obudowa, a nie sama zakładka. Kanon Menu 2
+        odwrotnie: pigułka niesie ramkę i wypełnienie, rząd jest przezroczysty
+        (patrz rząd widoków w `FinanceWorkspaceBar`). Podkładka pod
+        `bg-state-selected` dawałaby dodatkowo szarość na szarości.
+      */}
+      <div className="flex shrink-0 flex-wrap items-center gap-1.5" role="tablist" aria-label="Tryb budowy scenariusza">
         {MODE_TABS.map((tab) => (
           <button
             key={tab.track}
@@ -70,9 +100,7 @@ export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes 
               !allowedScenarioModes.some((mode) => scenarioModeToTrack(mode) === tab.track)
             }
             onClick={() => selectTrack(tab.track)}
-            className={`min-h-9 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-              activeTrack === tab.track ? 'bg-c-surface text-c-text shadow-sm' : 'text-c-text-secondary hover:bg-c-surface'
-            }`}
+            className={`${activeTrack === tab.track ? MENU_2_TAB_ACTIVE : MENU_2_TAB_INACTIVE} shrink-0 ${PILL_DISABLED}`}
           >
             {tab.label}
           </button>
@@ -111,7 +139,7 @@ function StandardScenarioPanel({ draft, onChange, allowedScenarioModes }: Scenar
             aria-checked={draft.scenarioMode === opt.mode}
             disabled={allowedScenarioModes != null && !allowedScenarioModes.includes(opt.mode)}
             onClick={() => onChange({ ...draft, scenarioMode: opt.mode, lastAssumptionChangeAt: new Date().toISOString() })}
-            className={`${BUTTON_CLASS} ${draft.scenarioMode === opt.mode ? 'border-c-text bg-c-surface-raised' : ''}`}
+            className={`${draft.scenarioMode === opt.mode ? MENU_2_TAB_ACTIVE : MENU_2_TAB_INACTIVE} shrink-0 ${PILL_DISABLED}`}
           >
             {opt.label}
           </button>
