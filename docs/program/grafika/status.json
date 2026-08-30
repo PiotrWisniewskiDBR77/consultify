@@ -1209,6 +1209,110 @@
      ]
     }
    ]
+  },
+  {
+   "katalog": "13-agent-planowanie",
+   "nazwa": "Agent, planowanie i portfel",
+   "opis": "Uruchamianie agentow, plan inicjatyw, obciazenie zespolu, wycena, rekord inicjatywy, biblioteka DRD.",
+   "ekrany": [
+    {
+     "id": "ev-football-field",
+     "nazwa": "Wycena metoda koszykowa",
+     "ocena": "A",
+     "co": "Ekran wzorcowy. Kwoty w mln PLN, rozjazd metod w procentach, mnozniki z jednostka, czytelna brama strefy przeciecia.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "agent-plan-view",
+     "nazwa": "Uruchom agenta",
+     "ocena": "A",
+     "co": "Lista czterech gotowych agentow w falach.",
+     "naprawione": [
+      "Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "plan-scenario-d1",
+     "nazwa": "Plan inicjatyw",
+     "ocena": "A",
+     "co": "Daty po polsku, stany po polsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "capacity-advisor-a3",
+     "nazwa": "Obciazenie zespolu",
+     "ocena": "A",
+     "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-report-contract",
+     "nazwa": "Kontrakt raportu z oceny",
+     "ocena": "A",
+     "co": "Siedem rozdzialow, macierz osi, limity slow, wersjonowanie.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-financial-case-persistence",
+     "nazwa": "Case finansowy pomyslu",
+     "ocena": "A",
+     "co": "Modal wyliczenia finansowego.",
+     "naprawione": [
+      "Osiem brakujacych kluczy tlumaczen"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-timeline-stuck",
+     "nazwa": "Tabela pomyslow — os czasu",
+     "ocena": "A",
+     "co": "Sprawdzone klikiem: przelaczanie widoku dziala, dawny blad zaciecia naprawiony w produkcie.",
+     "naprawione": [
+      "Surowe angielskie tokeny statusu w danych testowych"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "initiative-record",
+     "nazwa": "Rekord inicjatywy",
+     "ocena": "B",
+     "co": "Powloka, etykiety i akcje po polsku, dobry rytm.",
+     "naprawione": [
+      "Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Tresc danych demo po angielsku — nie ustalono, czy to defekt, czy wybor danych dla klienta miedzynarodowego"
+     ]
+    },
+    {
+     "id": "drd-library-entry",
+     "nazwa": "Biblioteka DRD",
+     "ocena": "B",
+     "co": "Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku.",
+     "naprawione": [
+      "Sciezka i zakladki przybite po angielsku",
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Kolumna Zaktualizowano pokazuje date w formacie amerykanskim — defekt wspolnej warstwy tabel, dotyka calej aplikacji"
+     ]
+    },
+    {
+     "id": "initiatives-portfolio-analysis",
+     "nazwa": "Analiza portfela",
+     "ocena": "D",
+     "co": "Nie wiem, jak wyglada — komponent zostal swiadomie usuniety jako martwy kod (12,8 tys. linii). Funkcja nie istnieje w produkcie.",
+     "naprawione": [],
+     "wyjatki": [
+      "To decyzja produktowa, nie kosmetyka — wymaga rozstrzygniecia wlasciciela"
+     ]
+    }
+   ]
   }
  ]
 }
