@@ -112,4 +112,11 @@ Pakiet czerwonego kontraktu jest czysto komponentowy (`RUN_DB_TESTS=0 MOCK_DB=tr
 
 ## Granica rozłączności
 
-Do uzupełnienia po commicie dosłownym wynikiem `git diff --name-only 64d3de306c..HEAD`. Nie zmieniono `src/components/Initiatives/**`, `NotebookAttachmentsSection.tsx`, tras, migracji, flag ani infrastruktury testowej.
+Dosłowny wynik `git diff --name-only 64d3de306c..HEAD`:
+
+```text
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY133_ZAPIS_MOJEJ_PRACY_REPORT.md
+src/components/MyWork/shared/__tests__/MutationResult.redContract.test.tsx
+```
+
+Commit pozycji: `2c89cdc9ba test(my-work): document blocked mutation result contract`. Nie zmieniono `src/components/Initiatives/**`, `NotebookAttachmentsSection.tsx`, tras, migracji, flag ani infrastruktury testowej.
