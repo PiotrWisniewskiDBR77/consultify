@@ -167,11 +167,16 @@ const DocumentStudioNowyDokumentMartweprzyciskiScreen = React.lazy(
   () => import('./screens/document-studio-nowy-dokument-martwe-przyciski')
 );
 const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-field'));
-const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
+// OSIEROCONY (odbior grafiki 2026-08-30): komponent ExecutionChangeSignalsPanel
+// zostal usuniety z produktu jako fantom (DEC-120/A7). Ekran nie moze sie
+// wyrenderowac, a jego zepsuty import zatruwal wspolny serwer dev-render —
+// blad z tego pliku wyciekal na zrzuty INNYCH ekranow. Wyrejestrowany, plik
+// zostaje. Powrot = odkomentowac po przywroceniu komponentu.
+// const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
 const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-report-day11'));
-const ExecutionExportPrezentacjaScreen = React.lazy(
-  () => import('./screens/execution-export-prezentacja')
-);
+// const ExecutionExportPrezentacjaScreen = React.lazy(
+//   () => import('./screens/execution-export-prezentacja')
+// );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
@@ -329,9 +334,9 @@ const ExceleJedenWidokMaterialyScreen = React.lazy(
 );
 const ExceleJedenWidokPustyScreen = React.lazy(() => import('./screens/excele-jeden-widok-pusty'));
 const OdbiorScreen = React.lazy(() => import('./screens/odbior'));
-const InitiativesPortfolioAnalysisScreen = React.lazy(
-  () => import('./screens/initiatives-portfolio-analysis')
-);
+// const InitiativesPortfolioAnalysisScreen = React.lazy(
+//   () => import('./screens/initiatives-portfolio-analysis')
+// );
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
 const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel-szyna-ikon'));
@@ -689,11 +694,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'SIDEBAR — potwierdzenie braku osobnej pozycji "Excel" po feat/materials-menu-canon-5-tabs.',
     render: () => <MenuCanonSidebarCheckScreen />,
   },
-  'initiatives-portfolio-analysis': {
-    label:
-      'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
-    render: () => <InitiativesPortfolioAnalysisScreen />,
-  },
+//  'initiatives-portfolio-analysis': {
+//    label:
+//      'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
+//    render: () => <InitiativesPortfolioAnalysisScreen />,
+//  },
   'ntype-analizuj-ai': {
     label:
       'n-Type ETAP 3 — „Analizuj z AI": menu 2 + panel wyników (Braki · Ryzyka · Sugestie · Zmiany)',
@@ -1029,20 +1034,20 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Finance export import panel',
     render: () => <FinanceExportImportPanelScreen />,
   },
-  'execution-change-signals': {
-    label:
-      'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
-    render: () => <ExecutionChangeSignalsScreen />,
-  },
+//  'execution-change-signals': {
+//    label:
+//      'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
+//    render: () => <ExecutionChangeSignalsScreen />,
+//  },
   'execution-report-day11': {
     label: 'Execution Day 11 — reports intelligence and governed generator',
     render: () => <ExecutionReportDay11Screen />,
   },
-  'execution-export-prezentacja': {
-    label:
-      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
-    render: () => <ExecutionExportPrezentacjaScreen />,
-  },
+//  'execution-export-prezentacja': {
+//    label:
+//      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
+//    render: () => <ExecutionExportPrezentacjaScreen />,
+//  },
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
