@@ -31,7 +31,7 @@ const REPORTS = [
   },
   {
     id: 'rep-2',
-    title: 'Segment Manufacturing — podsumowanie zarządcze',
+    title: 'Segment produkcyjny — podsumowanie zarządcze',
     status: 'IN_REVIEW',
     createdAt: '2026-06-20T08:00:00Z',
     updatedAt: '2026-07-08T11:00:00Z',
@@ -49,7 +49,7 @@ const REPORTS = [
   },
   {
     id: 'rep-4',
-    title: 'Draft: raport dla sponsora regionalnego',
+    title: 'Szkic: raport dla sponsora regionalnego',
     status: 'DRAFT',
     createdAt: '2026-07-11T08:00:00Z',
     updatedAt: '2026-07-11T08:00:00Z',
@@ -104,7 +104,7 @@ export default function AssessmentReportsPanelScreen(): React.ReactElement {
       <div style={{ padding: '16px' }}>
         <ReportsManagementPanel
           assessmentId={ASSESSMENT_ID}
-          assessmentName="DBR77 · Digital Readiness Diagnosis"
+          assessmentName="DBR77 · Diagnoza dojrzałości cyfrowej"
           workflowStatus="APPROVED"
           canManage
           onRefresh={async () => {}}

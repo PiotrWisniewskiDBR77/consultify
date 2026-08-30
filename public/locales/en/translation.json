@@ -8894,6 +8894,141 @@
         "score_proposed": "score proposed",
         "score_reviewed": "score reviewed"
       }
+    },
+    "reportsManagePanel": {
+      "defaultReportName": "Report",
+      "header": {
+        "title": "Reports",
+        "summary": "Total: {{total}} • In progress: {{draft}} • In review: {{inReview}} • Approved: {{approved}}",
+        "laneReadback": "Current report lane readback: run {{run}}",
+        "refresh": "Refresh list",
+        "newReport": "New Report",
+        "newReportUnavailable": "Report creation not available"
+      },
+      "provenance": {
+        "run": "run {{run}}",
+        "review": "review: {{state}}",
+        "state": "{{state}}"
+      },
+      "workbenchState": {
+        "not_started": "not started",
+        "in_progress": "in progress",
+        "completed": "completed",
+        "pending": "pending",
+        "approved": "approved",
+        "rejected": "rejected",
+        "blocked": "blocked"
+      },
+      "note": {
+        "text": "You can draft reports before approval. A report becomes visible in the global Reports tab only once it is",
+        "emphasis": "finalized"
+      },
+      "stats": {
+        "total": "Total: {{count}}",
+        "inProgress": "In progress: {{count}}",
+        "inReview": "In review: {{count}}",
+        "approved": "Approved: {{count}}"
+      },
+      "search": {
+        "placeholder": "Search reports..."
+      },
+      "columns": {
+        "report": "Report",
+        "author": "Author",
+        "status": "Status",
+        "initiatives": "Initiatives",
+        "updated": "Updated"
+      },
+      "status": {
+        "DRAFT": "Draft",
+        "CONFIGURING": "Configuring",
+        "GENERATING": "Generating",
+        "GENERATED": "Generated",
+        "IN_REVIEW": "In review",
+        "APPROVED": "Approved",
+        "SENT_INTERNAL": "Sent (internal)",
+        "SENT_EXTERNAL": "Sent (external)",
+        "UTILIZED": "Utilized",
+        "FINAL": "Final",
+        "ARCHIVED": "Archived"
+      },
+      "initiativesGenerated": "{{count}} generated",
+      "menu": {
+        "submitReview": "Submit Review",
+        "editReport": "Edit Report",
+        "review": "Review",
+        "viewReport": "View Report",
+        "exportPdf": "Export PDF",
+        "exportPptx": "Export PPTX",
+        "exportWord": "Export Word"
+      },
+      "confirmDelete": "Delete report “{{name}}”?",
+      "empty": {
+        "noMatchTitle": "No reports match your search",
+        "noneTitle": "No reports yet",
+        "approvedDesc": "Create a report to get started",
+        "notApprovedDesc": "Approve the assessment to create reports",
+        "createFirst": "Create First Report"
+      },
+      "footer": {
+        "draft": "Draft - Editable",
+        "final": "Final - Visible globally"
+      },
+      "toast": {
+        "finalized": "Report submitted for review",
+        "finalizeFailed": "Failed to submit report for review",
+        "pdfExported": "PDF exported",
+        "pdfExportFailed": "Failed to export PDF",
+        "pptxExported": "PPTX exported",
+        "pptxExportFailed": "Failed to export PPTX",
+        "wordExported": "Word exported",
+        "wordExportFailed": "Failed to export Word",
+        "excelExported": "Excel exported",
+        "excelExportFailed": "Failed to export Excel",
+        "deleted": "Report deleted",
+        "deleteFailed": "Failed to delete report"
+      }
+    },
+    "initiativesBoard": {
+      "defaultName": "Unnamed Initiative",
+      "header": {
+        "title": "Strategic Initiatives Board",
+        "subtitleOne": "Initiatives in phase: {{phases}} • total: {{total}}",
+        "subtitle": "Initiatives in phases: {{phases}} • total: {{total}}",
+        "generate": "Generate from Report"
+      },
+      "filter": {
+        "all": "All ({{count}})",
+        "tab": "{{label}} ({{count}})",
+        "allProjects": "All Projects",
+        "allLocations": "All Locations",
+        "refresh": "Refresh list"
+      },
+      "search": {
+        "placeholder": "Search initiatives..."
+      },
+      "columns": {
+        "initiative": "Initiative",
+        "status": "Status",
+        "completeness": "Completeness",
+        "owner": "Owner",
+        "priority": "Priority",
+        "budget": "Budget"
+      },
+      "openDetails": "Open initiative details",
+      "unassigned": "Unassigned",
+      "roi": "{{value}}x ROI",
+      "menu": {
+        "viewDetails": "View Details",
+        "duplicate": "Duplicate",
+        "deleteNote": "Only draft/planning initiatives can be deleted here"
+      },
+      "confirmDelete": "Are you sure you want to delete this initiative?",
+      "empty": {
+        "noMatchTitle": "No initiatives match your search",
+        "noneTitle": "No initiatives yet",
+        "description": "Generate initiatives from a finalized report"
+      }
     }
   },
   "initiatives": {
@@ -11253,7 +11388,8 @@
       "linkCopyError": "Copy failed",
       "archiveGoverned": "Archive is available only from the governed closure workflow.",
       "cancelled": "Initiative cancelled",
-      "cancelError": "Could not cancel initiative"
+      "cancelError": "Could not cancel initiative",
+      "statusChangedTo": "Status changed to {{status}}"
     },
     "decisions": {
       "decision": "Decision",
@@ -11638,7 +11774,8 @@
         "keyResult": "Key result",
         "objective": "Objective"
       }
-    }
+    },
+    "confirmStatusChangeTo": "Change status to {{status}}?"
   },
   "execution": {
     "title": "Execution Center",

@@ -8357,6 +8357,141 @@
         "score_proposed": "ocena zaproponowana",
         "score_reviewed": "ocena przejrzana"
       }
+    },
+    "reportsManagePanel": {
+      "defaultReportName": "Raport",
+      "header": {
+        "title": "Raporty",
+        "summary": "Łącznie: {{total}} • W toku: {{draft}} • W przeglądzie: {{inReview}} • Zatwierdzone: {{approved}}",
+        "laneReadback": "Bieżący tor raportu: przebieg {{run}}",
+        "refresh": "Odśwież listę",
+        "newReport": "Nowy raport",
+        "newReportUnavailable": "Tworzenie raportów jest niedostępne"
+      },
+      "provenance": {
+        "run": "przebieg {{run}}",
+        "review": "przegląd: {{state}}",
+        "state": "{{state}}"
+      },
+      "workbenchState": {
+        "not_started": "nierozpoczęty",
+        "in_progress": "w toku",
+        "completed": "zakończony",
+        "pending": "oczekuje",
+        "approved": "zatwierdzony",
+        "rejected": "odrzucony",
+        "blocked": "zablokowany"
+      },
+      "note": {
+        "text": "Raporty możesz przygotowywać jeszcze przed zatwierdzeniem oceny. Raport pojawia się w globalnej zakładce Raporty dopiero po",
+        "emphasis": "sfinalizowaniu"
+      },
+      "stats": {
+        "total": "Łącznie: {{count}}",
+        "inProgress": "W toku: {{count}}",
+        "inReview": "W przeglądzie: {{count}}",
+        "approved": "Zatwierdzone: {{count}}"
+      },
+      "search": {
+        "placeholder": "Szukaj raportów..."
+      },
+      "columns": {
+        "report": "Raport",
+        "author": "Autor",
+        "status": "Status",
+        "initiatives": "Inicjatywy",
+        "updated": "Zaktualizowano"
+      },
+      "status": {
+        "DRAFT": "Szkic",
+        "CONFIGURING": "Konfiguracja",
+        "GENERATING": "Generowanie",
+        "GENERATED": "Wygenerowany",
+        "IN_REVIEW": "W przeglądzie",
+        "APPROVED": "Zatwierdzony",
+        "SENT_INTERNAL": "Wysłany wewnętrznie",
+        "SENT_EXTERNAL": "Wysłany na zewnątrz",
+        "UTILIZED": "Wykorzystany",
+        "FINAL": "Finalny",
+        "ARCHIVED": "Zarchiwizowany"
+      },
+      "initiativesGenerated": "wygenerowano {{count}}",
+      "menu": {
+        "submitReview": "Wyślij do przeglądu",
+        "editReport": "Edytuj raport",
+        "review": "Przejrzyj",
+        "viewReport": "Podgląd raportu",
+        "exportPdf": "Eksportuj PDF",
+        "exportPptx": "Eksportuj PPTX",
+        "exportWord": "Eksportuj Word"
+      },
+      "confirmDelete": "Usunąć raport „{{name}}”?",
+      "empty": {
+        "noMatchTitle": "Brak raportów pasujących do wyszukiwania",
+        "noneTitle": "Brak raportów",
+        "approvedDesc": "Utwórz raport, aby zacząć",
+        "notApprovedDesc": "Zatwierdź ocenę, aby tworzyć raporty",
+        "createFirst": "Utwórz pierwszy raport"
+      },
+      "footer": {
+        "draft": "Szkic — edytowalny",
+        "final": "Finalny — widoczny globalnie"
+      },
+      "toast": {
+        "finalized": "Raport wysłany do przeglądu",
+        "finalizeFailed": "Nie udało się wysłać raportu do przeglądu",
+        "pdfExported": "Wyeksportowano PDF",
+        "pdfExportFailed": "Nie udało się wyeksportować PDF",
+        "pptxExported": "Wyeksportowano PPTX",
+        "pptxExportFailed": "Nie udało się wyeksportować PPTX",
+        "wordExported": "Wyeksportowano Word",
+        "wordExportFailed": "Nie udało się wyeksportować Worda",
+        "excelExported": "Wyeksportowano Excel",
+        "excelExportFailed": "Nie udało się wyeksportować Excela",
+        "deleted": "Raport usunięty",
+        "deleteFailed": "Nie udało się usunąć raportu"
+      }
+    },
+    "initiativesBoard": {
+      "defaultName": "Inicjatywa bez nazwy",
+      "header": {
+        "title": "Tablica inicjatyw strategicznych",
+        "subtitleOne": "Inicjatywy w fazie: {{phases}} • łącznie: {{total}}",
+        "subtitle": "Inicjatywy w fazach: {{phases}} • łącznie: {{total}}",
+        "generate": "Generuj z raportu"
+      },
+      "filter": {
+        "all": "Wszystkie ({{count}})",
+        "tab": "{{label}} ({{count}})",
+        "allProjects": "Wszystkie projekty",
+        "allLocations": "Wszystkie lokalizacje",
+        "refresh": "Odśwież listę"
+      },
+      "search": {
+        "placeholder": "Szukaj inicjatyw..."
+      },
+      "columns": {
+        "initiative": "Inicjatywa",
+        "status": "Status",
+        "completeness": "Kompletność",
+        "owner": "Właściciel",
+        "priority": "Priorytet",
+        "budget": "Budżet"
+      },
+      "openDetails": "Otwórz szczegóły inicjatywy",
+      "unassigned": "Nieprzypisany",
+      "roi": "ROI {{value}}x",
+      "menu": {
+        "viewDetails": "Zobacz szczegóły",
+        "duplicate": "Duplikuj",
+        "deleteNote": "Usunąć można tylko inicjatywy w statusie Szkic lub Planowanie"
+      },
+      "confirmDelete": "Czy na pewno usunąć tę inicjatywę?",
+      "empty": {
+        "noMatchTitle": "Brak inicjatyw pasujących do wyszukiwania",
+        "noneTitle": "Brak inicjatyw",
+        "description": "Wygeneruj inicjatywy ze sfinalizowanego raportu"
+      }
     }
   },
   "initiatives": {
@@ -10716,7 +10851,8 @@
       "linkCopyError": "Nie udało się skopiować",
       "archiveGoverned": "Archiwizacja jest dostępna wyłącznie z poziomu zarządzanego procesu zamknięcia.",
       "cancelled": "Inicjatywa anulowana",
-      "cancelError": "Nie udało się anulować inicjatywy"
+      "cancelError": "Nie udało się anulować inicjatywy",
+      "statusChangedTo": "Status zmieniony na: {{status}}"
     },
     "decisions": {
       "decision": "Decyzja",
@@ -11101,7 +11237,8 @@
         "keyResult": "Kluczowy rezultat",
         "objective": "Cel"
       }
-    }
+    },
+    "confirmStatusChangeTo": "Zmienić status na: {{status}}?"
   },
   "execution": {
     "title": "Centrum Realizacji",

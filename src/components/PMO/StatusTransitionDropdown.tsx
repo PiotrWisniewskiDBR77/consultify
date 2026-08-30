@@ -22,8 +22,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { getLocalizedStatusLabel } from '../../services/initiativeLifecycle';
 import { InitiativeStatus, StatusTransition } from '../../types';
 
 // Status colors and icons mapping
@@ -128,6 +130,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
   showLabel = true,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [allowedTransitions, setAllowedTransitions] = useState<StatusTransition[]>([]);
@@ -197,7 +200,12 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
       });
 
       if (response.success) {
-        toast.success(`Status changed to ${STATUS_CONFIG[newStatus]?.label || newStatus}`);
+        toast.success(
+          t('initiatives.toast.statusChangedTo', {
+            status: getLocalizedStatusLabel(newStatus, t),
+            defaultValue: `Status changed to ${getLocalizedStatusLabel(newStatus, t)}`,
+          })
+        );
         onStatusChange?.(newStatus, response.initiative?.moduleTransition);
       } else {
         toast.error(response.error || 'Failed to change status');
@@ -237,7 +245,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                     `}
         >
           {React.cloneElement(config.icon as any, { size: iconSize })}
-          {showLabel && <span>{config.label}</span>}
+          {showLabel && <span>{getLocalizedStatusLabel(currentStatus, t)}</span>}
           {!disabled && allowedTransitions.length > 0 && (
             <ChevronDown
               size={iconSize}
@@ -368,7 +376,10 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                     ? 'Mark this initiative as completed?'
                     : pendingStatus === InitiativeStatus.ARCHIVED
                       ? 'Move this initiative to archive?'
-                      : `Change status to ${STATUS_CONFIG[pendingStatus]?.label}?`}
+                      : t('initiatives.confirmStatusChangeTo', {
+                          status: getLocalizedStatusLabel(pendingStatus, t),
+                          defaultValue: `Change status to ${getLocalizedStatusLabel(pendingStatus, t)}?`,
+                        })}
                 </p>
               </div>
             </div>
