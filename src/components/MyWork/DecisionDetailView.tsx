@@ -242,6 +242,48 @@ export async function deleteDecisionCommentAndReload(
   return (detailResponse.data.comments || []).map(mapDecisionServerComment);
 }
 
+type DecisionObjectAttachmentApi = Pick<typeof Api, 'get' | 'postMultipart' | 'delete'>;
+
+const mapDecisionServerAttachment = (decisionId: string, attachment: any): Attachment => ({
+  id: String(attachment.id),
+  name: String(attachment.fileName || 'attachment'),
+  type: String(attachment.mimeType || 'application/octet-stream'),
+  size: Number(attachment.sizeBytes || 0),
+  url: `/my-work/object-attachments/decision/${encodeURIComponent(decisionId)}/${encodeURIComponent(String(attachment.id))}/download`,
+  uploadedAt: String(attachment.createdAt || ''),
+  uploadedBy: attachment.createdBy ? String(attachment.createdBy) : undefined,
+});
+
+export async function uploadDecisionAttachmentsAndReload(
+  api: DecisionObjectAttachmentApi,
+  decisionId: string,
+  files: File[]
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/decision/${encodeURIComponent(decisionId)}`;
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    await api.postMultipart(baseUrl, formData);
+  }
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapDecisionServerAttachment(decisionId, attachment)
+  );
+}
+
+export async function deleteDecisionAttachmentAndReload(
+  api: DecisionObjectAttachmentApi,
+  decisionId: string,
+  attachmentId: string
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/decision/${encodeURIComponent(decisionId)}`;
+  await api.delete(`${baseUrl}/${encodeURIComponent(attachmentId)}`);
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapDecisionServerAttachment(decisionId, attachment)
+  );
+}
+
 export const aggregateDecisionImpact = (
   impact: Pick<ImpactValues, 'scope' | 'schedule' | 'cost' | 'quality'>
 ): 'low' | 'medium' | 'high' => {
@@ -4018,7 +4060,7 @@ Use userId only from this list:
     return 'border-emerald-400/60 dark:border-emerald-500/40';
   }, [dueDate, status]);
 
-  // Attachment handlers (mock)
+  // Attachment handlers
   const handleUploadAttachments = async (files: FileList) => {
     if (isDecisionStageLocked) {
       toast.error(
@@ -4026,20 +4068,30 @@ Use userId only from this list:
       );
       return;
     }
-    const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: URL.createObjectURL(file),
-      uploadedAt: new Date().toISOString(),
-    }));
-    setAttachments([...attachments, ...newAttachments]);
+    if (!decisionId) {
+      toast.error(t('decisions.detail.toast.saveFirst', 'Save the decision first'));
+      return;
+    }
+    try {
+      setAttachments(
+        await uploadDecisionAttachmentsAndReload(Api, decisionId, Array.from(files))
+      );
+    } catch (error) {
+      toast.error(t('myWork.attachments.toastError', 'Failed to upload files'));
+    }
   };
 
   const handleDeleteAttachment = async (id: string) => {
     if (isDecisionStageLocked) return;
-    setAttachments(attachments.filter((a) => a.id !== id));
+    if (!decisionId) {
+      toast.error(t('decisions.detail.toast.saveFirst', 'Save the decision first'));
+      return;
+    }
+    try {
+      setAttachments(await deleteDecisionAttachmentAndReload(Api, decisionId, id));
+    } catch (error) {
+      toast.error(t('myWork.attachments.toastError2', 'Failed to delete attachment'));
+    }
   };
 
   // Comment handlers
