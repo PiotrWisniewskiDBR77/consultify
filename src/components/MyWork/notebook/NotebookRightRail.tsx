@@ -24,10 +24,13 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronDown,
+  ClipboardList,
   Copy,
   Download,
   Eye,
   History,
+  Layers,
+  ListTree,
   Loader2,
   RefreshCw,
   Share2,
@@ -46,6 +49,12 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import {
+  ArtifactRightRail,
+  type ArtifactRailTeresaCommand,
+  type ArtifactRailTypeMode,
+} from '@/components/standard/ArtifactRightRail';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 import type { ConvertTarget } from './AIChatInlinePanel';
 import { NotebookContextPanel } from './NotebookContextPanel';
@@ -118,7 +127,88 @@ interface NotebookRightRailProps {
   onShare?: () => void;
   onToggleVersionHistory?: () => void;
   versionHistoryOpen?: boolean;
+
+  /**
+   * Który TRYB wspólnego prawego pasa otwiera się na start
+   * (`artefakt` | `teresa` | `struktura`). Ma skutek WYŁĄCZNIE przy fladze
+   * `ff_artifact_right_rail`; przy fladze OFF prop jest martwy i ścieżka
+   * renderu go nie dotyka. Nieustawiony → pierwszy tryb (Artefakt).
+   * Realny konsument kontraktu: powierzchnia, która chce otworzyć pas na
+   * konkretnym trybie po akcji użytkownika (wzór z Worda: po generacji
+   * dokumentu pas otwiera się na „Kontrola jakości"), oraz harness
+   * dev-render, który robi deterministyczne zrzuty każdego trybu.
+   */
+  defaultRailModeId?: string;
 }
+
+/**
+ * Struktura notatki — nagłówki H1–H3 wprost z dokumentu.
+ *
+ * To jest treść klasy „PO artefakcie" (nawigacja), nie „O artefakcie"
+ * (metadane) — dokładnie ten rozdział, który
+ * `docs/program/grafika/ANALIZA_PRAWY_PANEL.md` (uzupełnienie „dokumenty")
+ * nazywa drugim rodzajem zawartości prawego pasa. Odpowiednik `structure`
+ * z Excela; dla notatnika to JEDYNY dziś realny tryb zależny od typu.
+ *
+ * Źródło danych jest REALNE, nie mockowane: żywy dokument edytora
+ * (`editor.getJSON()`), a gdy edytora nie ma (podgląd, harness) — zapisany
+ * `contentJson` strony. Brak nagłówków = jawny stan pusty, nie atrapa.
+ */
+interface NotebookOutlineEntry {
+  key: string;
+  level: number;
+  text: string;
+}
+
+function readNotebookOutline(
+  editor: Editor | null,
+  contentJson: unknown
+): NotebookOutlineEntry[] {
+  let doc: unknown = null;
+  try {
+    doc = editor ? editor.getJSON() : contentJson;
+  } catch {
+    doc = contentJson;
+  }
+  const content = (doc as { content?: unknown[] } | null)?.content;
+  if (!Array.isArray(content)) return [];
+  const out: NotebookOutlineEntry[] = [];
+  content.forEach((node, index) => {
+    const typed = node as {
+      type?: string;
+      attrs?: { level?: number };
+      content?: { text?: string }[];
+    };
+    if (typed?.type !== 'heading') return;
+    const text = (typed.content ?? [])
+      .map((child) => child?.text ?? '')
+      .join('')
+      .trim();
+    if (!text) return;
+    out.push({ key: `${index}-${text}`, level: Math.min(Math.max(typed.attrs?.level ?? 1, 1), 3), text });
+  });
+  return out;
+}
+
+const NotebookOutlineList: React.FC<{ entries: NotebookOutlineEntry[]; emptyLabel: string }> = ({
+  entries,
+  emptyLabel,
+}) =>
+  entries.length === 0 ? (
+    <p className="text-xs italic text-c-text-muted">{emptyLabel}</p>
+  ) : (
+    <ol className="flex flex-col gap-0.5">
+      {entries.map((entry) => (
+        <li
+          key={entry.key}
+          className="truncate rounded-md px-2 py-1 text-[12.5px] text-c-text-secondary"
+          style={{ paddingLeft: `${(entry.level - 1) * 12 + 8}px` }}
+        >
+          {entry.text}
+        </li>
+      ))}
+    </ol>
+  );
 
 const SectionHeader: React.FC<{
   id: RailSectionId;
@@ -192,12 +282,17 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   onSetReviewCadence,
   onMarkReviewed,
   getRelativeTime,
+  onFocusAICommand,
   onOpenAIChat,
+  onConvert,
+  canConvertDeliverable,
+  convertBlockedReason,
   receiptCapableActionIds,
   onExport,
   onShare,
   onToggleVersionHistory,
   versionHistoryOpen,
+  defaultRailModeId,
 }) => {
   const { t } = useTranslation();
   const isReceiptCapable = (actionId: string) =>
@@ -232,10 +327,17 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   if (!open || !activePage) return null;
 
   const specAShellEnabled = isNotebookSpecAShellEnabled();
+  // Wspólny prawy pas (`ArtifactRightRail`) — flaga DOMYŚLNIE OFF
+  // (src/utils/artifactRightRailFlag.ts). Przy OFF ta zmienna jest `false`,
+  // więc każda gałąź niżej wybiera dokładnie dotychczasową ścieżkę.
+  const artifactRailEnabled = isArtifactRightRailEnabled();
+  // Obie nowe powłoki konsumują sekcje jako DANE (a nie jako JSX z własnym
+  // nagłówkiem), więc `section()` zbiera je do listy w obu przypadkach.
+  const declareSections = specAShellEnabled || artifactRailEnabled;
   const specASections: ArtifactRightPanelSection[] = [];
 
   const section = (id: RailSectionId, label: string, count: number | undefined, body: React.ReactNode) => {
-    if (specAShellEnabled) {
+    if (declareSections) {
       specASections.push({
         id,
         label,
@@ -666,7 +768,11 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 )}
               </p>
             )}
-            {onOpenAIChat ? (
+            {/* Przycisk-wyjście „Open Teresa" znika, gdy Teresa jest IKONĄ
+                SZYNY (`ArtifactRightRail`) — dwa wejścia do tej samej rozmowy
+                w jednym pasie to dokładnie ten rozjazd, który likwidujemy.
+                Przy fladze OFF przycisk zostaje bez zmian. */}
+            {onOpenAIChat && !artifactRailEnabled ? (
               <button
                 type="button"
                 data-notebook-action-id="rail:open-teresa"
@@ -682,6 +788,105 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       </div>
     </aside>
   );
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WSPÓLNY PRAWY PAS (flaga ON) — jedyna dziś wpięta powierzchnia formuły.
+  // Notatnik deklaruje TREŚĆ trzech trybów; wygląd narzuca `ArtifactRightRail`.
+  // ═══════════════════════════════════════════════════════════════════
+  if (artifactRailEnabled) {
+    const noteLabel = activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu');
+
+    // Komendy Teresy = WYŁĄCZNIE realne akcje, które ta szyna już dostaje
+    // z NotebookContent. Zero chipów bez handlera — atrapa w pasie Teresy
+    // byłaby gorsza niż jej brak.
+    const teresaCommands: ArtifactRailTeresaCommand[] = [];
+    if (onFocusAICommand) {
+      teresaCommands.push({
+        id: 'ai-command',
+        label: t('notebook.rightRail.teresaCommandPrompt', 'Polecenie w dokumencie'),
+        icon: Sparkles,
+        onClick: onFocusAICommand,
+      });
+    }
+    if (onConvert) {
+      teresaCommands.push({
+        id: 'convert-task',
+        label: t('notebook.rightRail.teresaConvertTask', 'Zamień w zadanie'),
+        icon: ClipboardList,
+        onClick: () => onConvert('task'),
+      });
+      teresaCommands.push({
+        id: 'convert-initiative',
+        label: t('notebook.rightRail.teresaConvertInitiative', 'Zamień w inicjatywę'),
+        icon: Layers,
+        onClick: () => onConvert('initiative'),
+        disabled: canConvertDeliverable === false,
+        disabledReason: convertBlockedReason,
+      });
+    }
+
+    const outline = readNotebookOutline(editor, activePage.contentJson);
+    const typeModes: ArtifactRailTypeMode[] = [
+      {
+        id: 'struktura',
+        label: t('notebook.rightRail.structure', 'Struktura notatki'),
+        icon: ListTree,
+        contextLabel: t(
+          'notebook.rightRail.structureHint',
+          'Nagłówki dokumentu — nawigacja PO artefakcie, nie metadana o nim.'
+        ),
+        content: (
+          <NotebookOutlineList
+            entries={outline}
+            emptyLabel={t(
+              'notebook.rightRail.structureEmpty',
+              'Ta notatka nie ma jeszcze nagłówków — struktura pojawi się, gdy dodasz nagłówek.'
+            )}
+          />
+        ),
+      },
+    ];
+
+    return (
+      <ArtifactRightRail
+        title={noteLabel}
+        onClose={onClose}
+        ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
+        artifact={{ sections: specASections }}
+        teresa={{
+          contextLabel: t('notebook.rightRail.teresaContext', 'Notatka „{{title}}"', {
+            title: noteLabel,
+          }),
+          commands: teresaCommands,
+          // Notatka nie ma dziś WŁASNEGO wątku rozmowy zapisanego przy
+          // dokumencie — jest wspólny czat notatnika. Mówimy to wprost
+          // zamiast rysować pusty strumień udający historię.
+          messages: [],
+          emptyLabel: t(
+            'notebook.rightRail.teresaEmpty',
+            'Ta notatka nie ma jeszcze własnego wątku rozmowy — otwórz rozmowę, żeby zacząć.'
+          ),
+          // BRAK `onSend`: pole pisania renderuje się wyłączone z jawnym
+          // powodem. Wątek per-notatka to praca toru funkcji (kontrakt
+          // danych), nie toru grafiki — patrz §"Połowa funkcjonalna" analizy.
+          composeDisabledReason: t(
+            'notebook.rightRail.teresaComposeDisabled',
+            'Pisanie wprost w pasie będzie możliwe, gdy notatka dostanie własny wątek rozmowy.'
+          ),
+          footerAction: onOpenAIChat
+            ? {
+                label: t('notebook.rightRail.openTeresa', 'Open Teresa'),
+                icon: Sparkles,
+                onClick: onOpenAIChat,
+              }
+            : undefined,
+        }}
+        typeModes={typeModes}
+        defaultModeId={defaultRailModeId}
+        testId="notebook-artifact-right-rail"
+      />
+    );
+  }
 
   if (!specAShellEnabled) return legacyRail;
 
