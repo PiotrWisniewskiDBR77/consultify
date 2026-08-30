@@ -3,7 +3,7 @@
 Data: 2026-08-30  
 Gałąź: `codex/day183-kalendarz-on-20260830`  
 Baza: marker `18661cc6a0`  
-Werdykt pierwszego przebiegu: **STOP CAŁEGO DYŻURU — mniej niż 5 GiB wolnego miejsca po pełnych migracjach**.  
+Werdykt pierwszego przebiegu: **STOP CAŁEGO DYŻURU — mniej niż 5 GiB wolnego miejsca po pełnych migracjach**.
 Werdykt po wznowieniu przez nadzorcę: **PARTIAL / DO POPRAWY — default ON działa i widok tygodniowy jest potwierdzony, ale `includeOwnEvents` nie podnosi realnie zapisanego wydarzenia; pełny R2 nie jest spełniony**.
 
 ## Korekty wobec instrukcji
@@ -141,14 +141,14 @@ Zrzuty po QA:
 
 ### STOP — R2(ii) `includeOwnEvents`
 
-Rodzaj: **MERYTORYCZNY**  
-Powód: realnie zapisane własne wydarzenie nie jest zwracane/renderowane w domyślnym CalendarV2; nie można oddać wymaganego stanu pełnego ani twierdzić, że `includeOwnEvents` zmienia treść.  
-Licencja, którą sprawdziłem: tabela licencji nie daje zapisu do `src/components/MyWork/Calendar/useCalendarData.ts` ani `src/services/api.ts`; oba pliki są tylko do odczytu zgodnie z Z17.  
-Dowód: Postgres ma 1 wiersz `Day 183 Calendar V2 proof`; UI po pełnym reloadzie pokazuje `Own events (0)`; server log pokazuje GET `/api/v8/my-work/calendar/unified?...` zamiast legacy trasy z `sources=event`. Kod: `useCalendarData.ts` tworzy `sources: [...ALL_SOURCES, ...additionalSources]`, choć `ALL_SOURCES` już zawiera `event`; długość 8 powoduje przekazanie `undefined`, a `Api.getMyWorkCalendarUnified` wybiera wtedy V8.  
-Co dostarczyłem ZAMIAST zmiany: czerwony kontrakt, realny zapis/readback, dwa zrzuty po zapisie oraz dokładny brief naprawy.  
-Co zrobiłbym, gdyby zapadła decyzja X: deduplikowałbym źródła przed stanem filtra albo zmienił warunek przekazywania `sources`, dodał regresję „CalendarV2 own event survives full reload”, a następnie ponowił runtime i cztery zrzuty.  
-Rekomendacja dla nadzorcy: osobny FIX z licencją na `useCalendarData.ts` i test; promień rażenia obejmuje routing V8/legacy wszystkich odczytów My Work Calendar.  
-Stan: flip zacommitowany w `1b345e17be`; defekt nie został naprawiony poza licencją.  
+Rodzaj: **MERYTORYCZNY**
+Powód: realnie zapisane własne wydarzenie nie jest zwracane/renderowane w domyślnym CalendarV2; nie można oddać wymaganego stanu pełnego ani twierdzić, że `includeOwnEvents` zmienia treść.
+Licencja, którą sprawdziłem: tabela licencji nie daje zapisu do `src/components/MyWork/Calendar/useCalendarData.ts` ani `src/services/api.ts`; oba pliki są tylko do odczytu zgodnie z Z17.
+Dowód: Postgres ma 1 wiersz `Day 183 Calendar V2 proof`; UI po pełnym reloadzie pokazuje `Own events (0)`; server log pokazuje GET `/api/v8/my-work/calendar/unified?...` zamiast legacy trasy z `sources=event`. Kod: `useCalendarData.ts` tworzy `sources: [...ALL_SOURCES, ...additionalSources]`, choć `ALL_SOURCES` już zawiera `event`; długość 8 powoduje przekazanie `undefined`, a `Api.getMyWorkCalendarUnified` wybiera wtedy V8.
+Co dostarczyłem ZAMIAST zmiany: czerwony kontrakt, realny zapis/readback, dwa zrzuty po zapisie oraz dokładny brief naprawy.
+Co zrobiłbym, gdyby zapadła decyzja X: deduplikowałbym źródła przed stanem filtra albo zmienił warunek przekazywania `sources`, dodał regresję „CalendarV2 own event survives full reload”, a następnie ponowił runtime i cztery zrzuty.
+Rekomendacja dla nadzorcy: osobny FIX z licencją na `useCalendarData.ts` i test; promień rażenia obejmuje routing V8/legacy wszystkich odczytów My Work Calendar.
+Stan: flip zacommitowany w `1b345e17be`; defekt nie został naprawiony poza licencją.
 Czy kontynuowałem pozostałe pozycje: **TAK** — wykonano pozostałe testy, porównanie week/month, zapis/readback, zrzuty i cleanup; pełny stan pozostaje niemożliwy.
 
 ### R3
