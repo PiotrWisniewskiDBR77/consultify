@@ -58,9 +58,7 @@ describe('day155 attachment persistence callers', () => {
     const blob = new Blob(['day155-download'], { type: 'text/plain' });
     const api = { downloadObjectAttachment: vi.fn().mockResolvedValue(blob) };
 
-    await expect(
-      downloadDecisionAttachment(api, 'decision-155', 'att-155')
-    ).resolves.toBe(blob);
+    await expect(downloadDecisionAttachment(api, 'decision-155', 'att-155')).resolves.toBe(blob);
     expect(api.downloadObjectAttachment).toHaveBeenCalledWith(
       '/my-work/object-attachments/decision/decision-155/att-155/download'
     );

@@ -89,7 +89,7 @@ import { AppView } from '@/types';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
-import { API_URL, Api, getHeaders } from '../../services/api';
+import { Api, API_URL, getHeaders } from '../../services/api';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
@@ -97,7 +97,6 @@ import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 // pamięć ręcznej wysokości + tryb Podgląd). Jedna droga budowy pola karty.
 import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { CapabilityGate } from '../shared/CapabilityGate';
-import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
 // wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
@@ -127,6 +126,7 @@ import type {
 } from '../shared/NModeSections/CommentsCanvas';
 import { CommentsCanvas } from '../shared/NModeSections/CommentsCanvas';
 import { RiskCanvas } from '../shared/NModeSections/RiskCanvas';
+import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
 // POC (D-8): kompozycja kart Decision wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z luźnego DECISION_SPEC — patrz decisionCardContract.ts.
 import { DECISION_CARD_RENDER_IDS, DECISION_CARD_SPEC } from './decisionCardContract';
@@ -4102,9 +4102,7 @@ Use userId only from this list:
       return;
     }
     try {
-      setAttachments(
-        await uploadDecisionAttachmentsAndReload(Api, decisionId, Array.from(files))
-      );
+      setAttachments(await uploadDecisionAttachmentsAndReload(Api, decisionId, Array.from(files)));
     } catch (error) {
       toast.error(t('myWork.attachments.toastError', 'Failed to upload files'));
     }
@@ -8512,7 +8510,10 @@ Use userId only from this list:
                                         <button
                                           onClick={() => handleDownloadAttachment(a)}
                                           className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-info transition-colors"
-                                          title={t('myWork.attachments.downloadFile', 'Download file')}
+                                          title={t(
+                                            'myWork.attachments.downloadFile',
+                                            'Download file'
+                                          )}
                                         >
                                           <Download size={13} />
                                         </button>

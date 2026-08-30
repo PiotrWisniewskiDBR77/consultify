@@ -66,7 +66,7 @@ import {
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { API_URL, Api, getHeaders } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';

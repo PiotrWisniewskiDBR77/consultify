@@ -99,13 +99,25 @@ describe('day155 refresh and download through real ApiGateway and PostgreSQL', {
       [orgId]
     );
 
-    expect(taskAfterReload).toEqual([expect.objectContaining({ id: taskUploaded.id, name: 'task-after-f5.txt' })]);
+    expect(taskAfterReload).toEqual([
+      expect.objectContaining({ id: taskUploaded.id, name: 'task-after-f5.txt' }),
+    ]);
     expect(decisionAfterReload).toEqual([
       expect.objectContaining({ id: decisionUploaded.id, name: 'decision-after-f5.txt' }),
     ]);
     expect(rows).toEqual([
-      expect.objectContaining({ id: decisionUploaded.id, objectType: 'decision', objectId: decisionId, fileName: 'decision-after-f5.txt' }),
-      expect.objectContaining({ id: taskUploaded.id, objectType: 'task', objectId: taskId, fileName: 'task-after-f5.txt' }),
+      expect.objectContaining({
+        id: decisionUploaded.id,
+        objectType: 'decision',
+        objectId: decisionId,
+        fileName: 'decision-after-f5.txt',
+      }),
+      expect.objectContaining({
+        id: taskUploaded.id,
+        objectType: 'task',
+        objectId: taskId,
+        fileName: 'task-after-f5.txt',
+      }),
     ]);
   });
 
