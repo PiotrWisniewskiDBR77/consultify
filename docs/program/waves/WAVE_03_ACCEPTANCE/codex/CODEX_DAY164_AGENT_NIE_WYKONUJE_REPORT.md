@@ -136,3 +136,6 @@ Marker jest przodkiem bieżącego tipa `github-backup/codex/m03-admin-20260824` 
 - Exactly-once i rollback dla wszystkich 11 narzędzi: **NOT PROVEN**.
 - Sekcja `§0.4a`, do której odsyła instrukcja, nie występuje w odczytanym pliku instrukcji; nie można było zastosować nieistniejącego kontraktu pokrycia. Wykonano zamiast tego wąski test kontraktowy zmienionego/dodanego pliku z pełną nazwą i JSON.
 
+## Sprzątanie zasobów własnych
+
+Po utrwaleniu dowodów zatrzymano Vite i usunięto wyłącznie kontenery `cx-day164-pg` oraz `cx-day164-redis`. Końcowa kontrola nie wykazała listenerów na 6052, 4996, 4997 ani 6394. Dane pomiarowe pozostają w logach/JSON w katalogu artefaktów; disposable DB została usunięta razem z kontenerem.
