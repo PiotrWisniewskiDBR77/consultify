@@ -73,12 +73,12 @@ i `✅ Postgres migrations complete`.
 
 ## R1 — pomiar czterowarstwowy
 
-| Sekcja | W1 komponent | W2 trasa | W3 realny wołacz | W4 twardy klucz renderu / osiągalność |
-| --- | --- | --- | --- | --- |
-| Komentarze | `sections/CommentsSection.tsx`; produkcyjnie prawy panel | `initiatives.routes.ts:3720–3729` | GET `InitiativeDocumentView.tsx:2727`; POST `:3829`; DELETE `:6030+` | prawy `ArtifactRightPanel`, sekcja `id: 'comments'` przy `:10145`; osiągalna zawsze z otwartej karty |
-| Powiązania | `sections/LinkedItemsSection.tsx` | `initiatives.routes.ts:3960–3970` | wrapper wykonuje GET/POST/DELETE; główny ekran montuje go | `case 'attachments-links'` przy `InitiativeDocumentView.tsx:8142`, `registry:linkedItems` |
-| RAID | `sections/RaidSection.tsx` | `initiatives.routes.ts:3697–3713` | wrapper wykonuje POST/PATCH/DELETE, wejściowy fetch GET przy `InitiativeDocumentView.tsx:2611` | `case 'risk-raid'` przy `:7678`, `registry:raid`; osiągalny, lecz POST zatrzymuje bramka 409 |
-| Interesariusze | `sections/StakeholdersSection.tsx` | `initiatives.routes.ts:3673–3684` | wrapper wykonuje POST/DELETE, wejściowy fetch GET przy `InitiativeDocumentView.tsx:2666` | `case 'raci'` przy `:7515`, `registry:stakeholders` |
+| Sekcja         | W1 komponent                                             | W2 trasa                          | W3 realny wołacz                                                                               | W4 twardy klucz renderu / osiągalność                                                                |
+| -------------- | -------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Komentarze     | `sections/CommentsSection.tsx`; produkcyjnie prawy panel | `initiatives.routes.ts:3720–3729` | GET `InitiativeDocumentView.tsx:2727`; POST `:3829`; DELETE `:6030+`                           | prawy `ArtifactRightPanel`, sekcja `id: 'comments'` przy `:10145`; osiągalna zawsze z otwartej karty |
+| Powiązania     | `sections/LinkedItemsSection.tsx`                        | `initiatives.routes.ts:3960–3970` | wrapper wykonuje GET/POST/DELETE; główny ekran montuje go                                      | `case 'attachments-links'` przy `InitiativeDocumentView.tsx:8142`, `registry:linkedItems`            |
+| RAID           | `sections/RaidSection.tsx`                               | `initiatives.routes.ts:3697–3713` | wrapper wykonuje POST/PATCH/DELETE, wejściowy fetch GET przy `InitiativeDocumentView.tsx:2611` | `case 'risk-raid'` przy `:7678`, `registry:raid`; osiągalny, lecz POST zatrzymuje bramka 409         |
+| Interesariusze | `sections/StakeholdersSection.tsx`                       | `initiatives.routes.ts:3673–3684` | wrapper wykonuje POST/DELETE, wejściowy fetch GET przy `InitiativeDocumentView.tsx:2666`       | `case 'raci'` przy `:7515`, `registry:stakeholders`                                                  |
 
 Wynik: na markerze komentarze miały render, ale fail-open zapis; linked items i
 interesariusze miały wrappery bez montażu w aktywnym ekranie; RAID miał drugi,
@@ -98,12 +98,12 @@ lokalny canvas zamiast trwałego wrappera.
 
 Realny wynik mutacyjny:
 
-| Sekcja | HTTP → DB → GET → DELETE → DB/GET | Wynik |
-| --- | --- | --- |
-| Komentarze | 201 → wiersz → odczyt → 200 → brak | PASS |
-| Powiązania | 200 → wiersz → odczyt → 200 → brak | PASS |
-| Interesariusze | 201 → wiersz → odczyt → 200 → brak | PASS |
-| RAID | POST 409, liczba wierszy przed i po identyczna | STOP MERYTORYCZNY / czerwony kontrakt |
+| Sekcja         | HTTP → DB → GET → DELETE → DB/GET              | Wynik                                 |
+| -------------- | ---------------------------------------------- | ------------------------------------- |
+| Komentarze     | 201 → wiersz → odczyt → 200 → brak             | PASS                                  |
+| Powiązania     | 200 → wiersz → odczyt → 200 → brak             | PASS                                  |
+| Interesariusze | 201 → wiersz → odczyt → 200 → brak             | PASS                                  |
+| RAID           | POST 409, liczba wierszy przed i po identyczna | STOP MERYTORYCZNY / czerwony kontrakt |
 
 ### STOP — R2 / RAID
 
