@@ -179,6 +179,8 @@ Precedens T4 ma obecnie zasięg **trzech widocznie wyłączonych akcji**: Add Bu
 
 Jednoznaczny wynik: komentarz Decyzji przechodzi **nie dlatego, że spełnia warunek bramy, lecz dlatego, że nigdy do niej nie wchodzi**. Jest to osobna luka niespójności authority, nie wzorzec do naśladowania.
 
+Kontrola R4: trzy mutacje komentarza Decyzji (POST/PUT/DELETE) pozostają poza bramą, podczas gdy dwie mutacje komentarza Zadania (POST/DELETE) wpadają w globalną bramę Tasks; odczyty GET w obu routerach nie są blokowane.
+
 ## W-A — dowód mutacyjny
 
 Nie ma zastosowania: dyżur jest czysto pomiarowy i projektowy, bez pozycji naprawczej i bez zmiany produktu. Nie wykonywałem mutacji kodu produkcyjnego.
