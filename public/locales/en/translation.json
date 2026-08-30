@@ -1340,7 +1340,49 @@
       "deadline": "Deadline",
       "issued": "Issued",
       "validUntil": "Valid until",
-      "certificateUnavailable": "Certificate unavailable"
+      "certificateUnavailable": "Certificate unavailable",
+      "learningPathDesc": "Complete courses to earn certifications",
+      "noCertificates": "Complete courses and pass exams to earn certificates",
+      "modulesProgress": "{{completed}}/{{total}} modules",
+      "hideModules": "Hide modules",
+      "viewModules": "View modules",
+      "openGuide": "Open guide",
+      "minutes": "{{count}} min",
+      "reviewRequired": "Review required",
+      "openArticle": "Open article",
+      "completePrevious": "Complete previous courses to unlock",
+      "courseExam": "{{name}} exam",
+      "takeExam": "Take exam",
+      "examStatus": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "available": "Available to take",
+        "completeAcademy": "Complete academy first"
+      },
+      "score": "Score",
+      "apiStatus": {
+        "completed": "Completed",
+        "in_progress": "In progress",
+        "in-progress": "In progress",
+        "not_started": "Not started",
+        "locked": "Locked",
+        "not_required": "Not required",
+        "prerequisite_incomplete": "Prerequisite incomplete",
+        "academy_incomplete": "Academy incomplete"
+      },
+      "status": {
+        "completed": "Completed",
+        "inProgress": "In progress",
+        "locked": "Locked",
+        "notRequired": "Not required",
+        "prerequisiteIncomplete": "Prerequisite incomplete",
+        "academyIncomplete": "Academy incomplete",
+        "unknown": "Unknown status"
+      },
+      "examMode": {
+        "review": "Operator review",
+        "exam": "Exam-based"
+      }
     },
     "clients": {
       "organizations": "Organizations",
@@ -1352,6 +1394,8 @@
       "users": "Team Members",
       "usersDesc": "People in your partner organization",
       "usersEmpty": "No team members yet",
+      "usersCount": "{{count}} users",
+      "targetDate": "Target",
       "col": {
         "organization": "Organization",
         "assessment": "Assessment",
@@ -1364,7 +1408,10 @@
     "resources": {
       "desc": "Download partner toolkit resources",
       "empty": "No resources available in this category",
-      "downloadError": "Couldn't download the resource."
+      "downloadError": "Couldn't download the resource.",
+      "canonicalDocs": "Canonical partner docs",
+      "academyStatus": "Academy status",
+      "openGuide": "Open supporting guide"
     },
     "profile": {
       "companyInfo": "Company Info",
@@ -1374,7 +1421,19 @@
       "regions": "Regions",
       "regionsDesc": "Select the regions you operate in",
       "publicListing": "Public Listing",
-      "publicListingDesc": "Control your visibility in the partner directory"
+      "publicListingDesc": "Control your visibility in the partner directory",
+      "contactEmail": "Contact email",
+      "phone": "Phone",
+      "website": "Website",
+      "saveSpecializations": "Save specializations",
+      "saveRegions": "Save regions",
+      "directoryVisibility": "Directory visibility",
+      "directoryVisibilityDesc": "Show your profile in the public partner directory",
+      "preview": "Preview",
+      "yourCompany": "Your company",
+      "partnerTier": "Partner",
+      "noRegions": "No regions selected",
+      "noSpecializations": "No specializations selected"
     },
     "home": {
       "title": "Home",
@@ -1533,6 +1592,9 @@
       "v8ThisMonth": "Governed this month",
       "v8Pending": "Governed pending",
       "v8ReadyForPayout": "Governed ready for payout",
+      "transactionsPeriod": "{{count}} transactions • {{from}} to {{to}}",
+      "completedAt": "Completed {{date}}",
+      "reference": "Ref",
       "col": {
         "customer": "Customer",
         "type": "Type",
@@ -1544,7 +1606,9 @@
       "status": {
         "paid": "Paid",
         "approved": "Approved",
-        "pending": "Pending"
+        "pending": "Pending",
+        "completed": "Completed",
+        "processing": "Processing"
       }
     },
     "payouts": {
@@ -1570,7 +1634,15 @@
       }
     },
     "referrals": {
-      "deleteFailed": "Failed to delete deck"
+      "deleteFailed": "Failed to delete deck",
+      "campaignName": "Campaign Name",
+      "utmSource": "UTM Source",
+      "utmMedium": "UTM Medium",
+      "utmCampaign": "UTM Campaign",
+      "tipLinkedIn": "Share your link on LinkedIn with a compelling message about digital transformation",
+      "tipCampaigns": "Use campaign links to track which channels perform best",
+      "tipSignature": "Add your referral code to your email signature",
+      "tipCaseStudies": "Share case studies alongside your referral link for higher trust"
     },
     "canonicalRuntime": {
       "title": "Current partner programme status",
@@ -1607,7 +1679,8 @@
       }
     },
     "common": {
-      "comingSoon": "Coming soon"
+      "comingSoon": "Coming soon",
+      "progress": "Progress"
     }
   },
   "common": {

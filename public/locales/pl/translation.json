@@ -17562,7 +17562,47 @@
       "validUntil": "Ważny do",
       "certificateUnavailable": "Certyfikat jest niedostępny",
       "learningPathDesc": "Ukończ kursy, aby zdobywać certyfikaty",
-      "noCertificates": "Ukończ kursy i zdaj egzaminy, aby zdobyć certyfikaty"
+      "noCertificates": "Ukończ kursy i zdaj egzaminy, aby zdobyć certyfikaty",
+      "modulesProgress": "{{completed}}/{{total}} modułów",
+      "hideModules": "Ukryj moduły",
+      "viewModules": "Pokaż moduły",
+      "openGuide": "Otwórz przewodnik",
+      "minutes": "{{count}} min",
+      "reviewRequired": "Wymagana ocena",
+      "openArticle": "Otwórz artykuł",
+      "completePrevious": "Ukończ wcześniejsze kursy, aby odblokować",
+      "courseExam": "Egzamin: {{name}}",
+      "takeExam": "Rozpocznij egzamin",
+      "examStatus": {
+        "passed": "Zdano",
+        "failed": "Nie zdano",
+        "available": "Dostępny",
+        "completeAcademy": "Najpierw ukończ akademię"
+      },
+      "score": "Wynik",
+      "apiStatus": {
+        "completed": "Ukończono",
+        "in_progress": "W toku",
+        "in-progress": "W toku",
+        "not_started": "Nierozpoczęto",
+        "locked": "Zablokowano",
+        "not_required": "Niewymagane",
+        "prerequisite_incomplete": "Nieukończony warunek wstępny",
+        "academy_incomplete": "Nieukończona akademia"
+      },
+      "status": {
+        "completed": "Ukończono",
+        "inProgress": "W toku",
+        "locked": "Zablokowano",
+        "notRequired": "Niewymagane",
+        "prerequisiteIncomplete": "Nieukończony warunek wstępny",
+        "academyIncomplete": "Nieukończona akademia",
+        "unknown": "Nieznany status"
+      },
+      "examMode": {
+        "review": "Ocena operatora",
+        "exam": "Egzamin"
+      }
     },
     "clients": {
       "technicalId": "Identyfikator",
@@ -17577,6 +17617,8 @@
       "users": "Członkowie zespołu",
       "usersDesc": "Osoby w Twojej organizacji partnerskiej",
       "usersEmpty": "Brak członków zespołu",
+      "usersCount": "{{count}} użytkowników",
+      "targetDate": "Termin",
       "col": {
         "industry": "Branża",
         "projects": "Projekty",
@@ -17597,7 +17639,10 @@
       "downloadError": "Nie udało się pobrać zasobu.",
       "retry": "Spróbuj ponownie",
       "degradedDescription": "Nie udało się odczytać katalogu, dlatego liczba dostępnych materiałów jest nieznana.",
-      "degradedTitle": "Biblioteka materiałów jest chwilowo niedostępna"
+      "degradedTitle": "Biblioteka materiałów jest chwilowo niedostępna",
+      "canonicalDocs": "Dokumentacja programu partnerskiego",
+      "academyStatus": "Status akademii",
+      "openGuide": "Otwórz materiał pomocniczy"
     },
     "profile": {
       "companyInfo": "Dane firmy",
@@ -17609,7 +17654,19 @@
       "regions": "Regiony",
       "regionsDesc": "Wybierz regiony, w których działasz",
       "publicListing": "Wizytówka publiczna",
-      "publicListingDesc": "Steruj swoją widocznością w katalogu partnerów"
+      "publicListingDesc": "Steruj swoją widocznością w katalogu partnerów",
+      "contactEmail": "E-mail kontaktowy",
+      "phone": "Telefon",
+      "website": "Strona internetowa",
+      "saveSpecializations": "Zapisz specjalizacje",
+      "saveRegions": "Zapisz regiony",
+      "directoryVisibility": "Widoczność w katalogu",
+      "directoryVisibilityDesc": "Pokaż profil w publicznym katalogu partnerów",
+      "preview": "Podgląd",
+      "yourCompany": "Twoja firma",
+      "partnerTier": "Partner",
+      "noRegions": "Nie wybrano regionów",
+      "noSpecializations": "Nie wybrano specjalizacji"
     },
     "home": {
       "title": "Start",
@@ -17773,6 +17830,9 @@
       "approvedAmount": "Zatwierdzone: {{amount}}",
       "heldAmount": "Wstrzymane: {{amount}}",
       "lastMonthAmount": "Poprzedni miesiąc: {{amount}}",
+      "transactionsPeriod": "{{count}} transakcji • {{from}}–{{to}}",
+      "completedAt": "Zakończono {{date}}",
+      "reference": "Nr ref.",
       "col": {
         "customer": "Klient",
         "type": "Typ",
@@ -17784,7 +17844,9 @@
       "status": {
         "paid": "Wypłacone",
         "approved": "Zatwierdzone",
-        "pending": "Oczekujące"
+        "pending": "Oczekujące",
+        "completed": "Zakończono",
+        "processing": "Przetwarzanie"
       }
     },
     "payouts": {
@@ -17886,7 +17948,15 @@
       "v8ReferredOrganizationsRuntimeTitle": "Podsumowanie pozyskanych klientów",
       "v8ReferredOrganizationsRuntimeSubtitle": "Rejestracje, okresy próbne i przejścia do płatnej usługi wśród poleconych klientów.",
       "v8Signups": "Rejestracje",
-      "v8TotalClicks": "Łączna liczba kliknięć"
+      "v8TotalClicks": "Łączna liczba kliknięć",
+      "campaignName": "Nazwa kampanii",
+      "utmSource": "Źródło UTM",
+      "utmMedium": "Medium UTM",
+      "utmCampaign": "Kampania UTM",
+      "tipLinkedIn": "Udostępnij link na LinkedIn z konkretnym opisem transformacji cyfrowej",
+      "tipCampaigns": "Używaj linków kampanii, aby porównywać skuteczność kanałów",
+      "tipSignature": "Dodaj kod polecający do podpisu e-mail",
+      "tipCaseStudies": "Udostępniaj studia przypadków razem z linkiem polecającym"
     },
     "canonicalRuntime": {
       "title": "Aktualny stan programu partnerskiego",
@@ -17929,7 +17999,8 @@
       }
     },
     "common": {
-      "comingSoon": "Wkrótce"
+      "comingSoon": "Wkrótce",
+      "progress": "Postęp"
     },
     "program": {
       "truthBoundary": "Informacje handlowe oraz dostępne możliwości zależą od potwierdzonego statusu programu i obowiązującej umowy."

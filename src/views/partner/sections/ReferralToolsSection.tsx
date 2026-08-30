@@ -781,7 +781,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">Campaign Name*</label>
+                <label className="text-xs text-c-text-secondary mb-1 block">
+                  {t('partner.referrals.campaignName', 'Campaign Name')}*
+                </label>
                 <input
                   ref={campaignNameInputRef}
                   type="text"
@@ -792,7 +794,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">UTM Source</label>
+                <label className="text-xs text-c-text-secondary mb-1 block">
+                  {t('partner.referrals.utmSource', 'UTM Source')}
+                </label>
                 <input
                   type="text"
                   value={newCampaign.utmSource}
@@ -804,7 +808,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">UTM Medium</label>
+                <label className="text-xs text-c-text-secondary mb-1 block">
+                  {t('partner.referrals.utmMedium', 'UTM Medium')}
+                </label>
                 <input
                   type="text"
                   value={newCampaign.utmMedium}
@@ -816,7 +822,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-c-text-secondary mb-1 block">UTM Campaign</label>
+                <label className="text-xs text-c-text-secondary mb-1 block">
+                  {t('partner.referrals.utmCampaign', 'UTM Campaign')}
+                </label>
                 <input
                   type="text"
                   value={newCampaign.utmCampaign}
@@ -949,19 +957,28 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         <ul className="space-y-2 text-sm text-c-text-secondary">
           <li className="flex items-start gap-2">
             <span className="text-primary-400">•</span>
-            Share your link on LinkedIn with a compelling message about digital transformation
+            {t(
+              'partner.referrals.tipLinkedIn',
+              'Share your link on LinkedIn with a compelling message about digital transformation'
+            )}
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary-400">•</span>
-            Use campaign links to track which channels perform best
+            {t(
+              'partner.referrals.tipCampaigns',
+              'Use campaign links to track which channels perform best'
+            )}
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary-400">•</span>
-            Add your referral code to your email signature
+            {t('partner.referrals.tipSignature', 'Add your referral code to your email signature')}
           </li>
           <li className="flex items-start gap-2">
             <span className="text-primary-400">•</span>
-            Share case studies alongside your referral link for higher trust
+            {t(
+              'partner.referrals.tipCaseStudies',
+              'Share case studies alongside your referral link for higher trust'
+            )}
           </li>
         </ul>
       </div>
