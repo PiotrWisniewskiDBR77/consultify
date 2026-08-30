@@ -566,7 +566,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   const toolColumn: ColumnDef = useMemo(
     () => ({
       id: 'tool',
-      label: isPolish ? 'Narzedzie' : 'Tool',
+      label: isPolish ? 'Narzędzie' : 'Tool',
       width: columnWidths.tool,
       minWidth: 150,
       maxWidth: 220,
@@ -905,7 +905,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     onClick={() => onSort('title')}
                     className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
-                    {isPolish ? 'Tytul' : 'Title'}
+                    {isPolish ? 'Tytuł' : 'Title'}
                     <SortIndicator active={sortField === 'title'} direction={sortDir} />
                   </button>
                   <ColumnResizer
@@ -1016,7 +1016,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                               : ''
                           }
                         >
-                          {isPolish ? 'Narzedzie' : 'Tool'}
+                          {isPolish ? 'Narzędzie' : 'Tool'}
                         </span>
                         <SortIndicator active={sortField === 'tool'} direction={sortDir} />
                       </button>
@@ -1453,7 +1453,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           </button>
                         ) : null}
                         <div className="truncate pr-4 text-sm font-semibold leading-5 text-c-text">
-                          {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
+                          {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                         </div>
                       </div>
                       {showRowDescription && idea.body ? (
