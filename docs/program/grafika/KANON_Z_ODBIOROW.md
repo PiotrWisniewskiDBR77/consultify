@@ -74,3 +74,10 @@ Zróbmy to w trzech dużych wierszach z trzema kolorami, aby było czytelne od g
 dołu."* Zrobione w `InsightViewer`. Przy okazji wyszło, że kolory były realnie **dwa,
 nie trzy** — pierwszy kafel był szary. Dostał niebieski `c-info` (nie crimson: to nie
 jest stan krytyczny).
+
+2026-08-30 | ★ **Wyniki mają TRZY poziomy, nie dwa** (decyzja właściciela — pełny
+zapis: `DECYZJA_WYNIKI_TRZY_POZIOMY.md`). Rejestr zestawień okresowych → tabela
+zestawu (tu dodajesz wskaźniki, tu jest podsumowanie) → karta wskaźnika.
+**Wskaźnik ma JEDNĄ tożsamość na wszystkie okresy** — sierpień i wrzesień to ten
+sam wskaźnik, nie dwa. **Osoba przy OKR to kolumna, nie poziom.** **Analizy ROI
+zostają na dwóch poziomach** — bo ROI robi się raz, a wskaźnik rozlicza cyklicznie.
