@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   Clock,
   Cloud,
+  Download,
   Edit3,
   ExternalLink,
   Eye,
@@ -88,7 +89,7 @@ import { AppView } from '@/types';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
-import { Api } from '../../services/api';
+import { API_URL, Api, getHeaders } from '../../services/api';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
@@ -268,6 +269,34 @@ export async function uploadDecisionAttachmentsAndReload(
   const response = await api.get(baseUrl);
   return (response.data.data || []).map((attachment: any) =>
     mapDecisionServerAttachment(decisionId, attachment)
+  );
+}
+
+export async function loadDecisionAttachments(
+  api: Pick<typeof Api, 'get'>,
+  decisionId: string
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/decision/${encodeURIComponent(decisionId)}`;
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapDecisionServerAttachment(decisionId, attachment)
+  );
+}
+
+export function selectDecisionAttachments(
+  serverAttachments: Attachment[],
+  _localAttachments: Attachment[] | undefined
+): Attachment[] {
+  return serverAttachments;
+}
+
+export async function downloadDecisionAttachment(
+  api: { downloadObjectAttachment: (url: string) => Promise<Blob> },
+  decisionId: string,
+  attachmentId: string
+): Promise<Blob> {
+  return api.downloadObjectAttachment(
+    `/my-work/object-attachments/decision/${encodeURIComponent(decisionId)}/${encodeURIComponent(attachmentId)}/download`
   );
 }
 
@@ -2057,7 +2086,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       if (decision.impact) {
         setImpact(decision.impact);
       }
-      const apiAttachments = decision.attachments || [];
+      const apiAttachments = await loadDecisionAttachments(Api, id);
       setAttachments(apiAttachments.length > 0 ? apiAttachments : isDemo ? DEMO_ATTACHMENTS : []);
       const apiComments = decision.comments || [];
       setComments(
@@ -2161,8 +2190,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
           const local = JSON.parse(raw);
           if (Array.isArray(local.comments) && local.comments.length > 0)
             setComments(local.comments);
-          if (Array.isArray(local.attachments) && local.attachments.length > 0)
-            setAttachments(local.attachments);
+          if (Array.isArray(local.attachments))
+            setAttachments((current) => selectDecisionAttachments(current, local.attachments));
           if (Array.isArray(local.linkedItems) && local.linkedItems.length > 0)
             setLinkedItems(local.linkedItems);
           if (Array.isArray(local.risks) && local.risks.length > 0) setRisks(local.risks);
@@ -4091,6 +4120,34 @@ Use userId only from this list:
       setAttachments(await deleteDecisionAttachmentAndReload(Api, decisionId, id));
     } catch (error) {
       toast.error(t('myWork.attachments.toastError2', 'Failed to delete attachment'));
+    }
+  };
+
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    if (!decisionId) return;
+    try {
+      const blob = await downloadDecisionAttachment(
+        {
+          downloadObjectAttachment: async (url) => {
+            const response = await fetch(`${API_URL}${url}`, {
+              headers: getHeaders(),
+              credentials: 'include',
+            });
+            if (!response.ok) throw new Error('Failed to download attachment');
+            return response.blob();
+          },
+        },
+        decisionId,
+        attachment.id
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.name;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(t('myWork.attachments.toastDownloadError', 'Failed to download attachment'));
     }
   };
 
@@ -8452,6 +8509,13 @@ Use userId only from this list:
                                         </div>
                                       </td>
                                       <td className="py-2 text-right">
+                                        <button
+                                          onClick={() => handleDownloadAttachment(a)}
+                                          className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-info transition-colors"
+                                          title={t('myWork.attachments.downloadFile', 'Download file')}
+                                        >
+                                          <Download size={13} />
+                                        </button>
                                         <button
                                           disabled={isDecisionStageLocked}
                                           onClick={() =>
