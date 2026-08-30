@@ -1,0 +1,38 @@
+NOWY — DYŻUR 140
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day140-zapis-komentarzy-scratch/INSTRUKCJA_DYZUR_140.md
+
+Przeczytaj w CAŁOŚCI, potem wykonuj. Zacznij od „§0.1-BIS" — NADPISUJE §0.1.
+
+★ W §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Kontrola bazy: git merge-base --is-ancestor 251ca29e53 HEAD
+  NIE równość SHA. Twój HEAD po własnych commitach BĘDZIE inny — to poprawne.
+
+Katalog pracy:  /private/tmp/cx-day140-zapis-komentarzy
+Gałąź:          codex/day140-zapis-komentarzy-20260830   (już założona)
+Marker:         251ca29e53                (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day140-zapis-komentarzy-scratch
+Artefakty:      /private/tmp/cx-day140-zapis-komentarzy-artefakty
+
+Zasoby wyłączne: baza 6026, kontener cx-day140-pg, runtime 4946 i 4947 (PARA).
+ZAJĘTE: 6012, 5433 oraz zasoby trzech pozostałych dyżurów wydanych razem z tym.
+
+★ RÓWNOLEGLE BIEGNĄ CZTERY DYŻURY. Rozłączność licencji sprawdzona automatem:
+  ZERO KOLIZJI. Plik spoza Twojej tabeli = TYLKO DO ODCZYTU, nawet gdy widzisz
+  w nim defekt. Zgłoś go w raporcie.
+
+★ ROZSTRZYGNIĘTE Z GÓRY, nie zgłaszaj ponownie:
+  • Z34a kontra "nie pushujesz" → NIE PUSHUJESZ.
+  • Z24 odsyła do §0.4a, którego nie ma → odwołanie martwe, POMIŃ.
+  • server/vitest.config.ts PRZYPINA DB_TYPE='sqlite' i wygrywa z linią komend.
+    Test z asercją DB_TYPE='postgres' zostanie POMINIĘTY, a pominięty ≠ PASS.
+    Użyj configu POZA repo, bez tego przypięcia. Chronionego configu nie zmieniasz.
+
+★ NIE PUSHUJESZ. Commit per krok, potem zgłoszenie gotowości.
+
+Jeżeli cokolwiek w tej wklejce różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.
