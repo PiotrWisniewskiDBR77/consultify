@@ -2,9 +2,13 @@
  * Dev-render host dla JEDNEGO prawego panelu idei = DOK TERESY (D16/D17).
  *
  * Renderuje REALNY `<IdeaRightPanel>` (kanoniczny accordion `ArtifactRightPanel`)
- * z trzema sekcjami: Właściwości · Kontekst · Teresa — dokładnie ten sam
- * komponent, który wchodzi w `IdeaMapWorkspace` zamiast archaicznego
- * przełącznika 3 osobnych szuflad (#6q).
+ * z pięcioma sekcjami kanonu SPEC-A (Z8): Akcje · Właściwości · Powiązania ·
+ * Komentarze · Historia — dokładnie ten sam komponent, który wchodzi w
+ * `IdeaMapWorkspace` zamiast archaicznego przełącznika 3 osobnych szuflad (#6q).
+ * `relationsContent`/`onExport`/`onConvert` mockowane tu 1:1 pod nazwami
+ * propsów aktualnego `IdeaRightPanel` (Z8 zmienił `contextContent` →
+ * `relationsContent`; ten harness był z tego rozjechany — Powiązania
+ * renderowały się puste mimo rozwiniętego akordeonu).
  *
  * Treść sekcji jest MOCKOWANA (statyczne węzły), bo realne panele idei
  * (IdeaWorkspaceTools/IdeaContextPanel/IdeaAISuggestionsPanel) ciągną store/API
@@ -237,8 +241,10 @@ export default function IdeasTeresaPanelScreen(): React.ReactElement {
         <IdeaRightPanel
           isPolish={isPl}
           activeSection="teresa"
+          onExport={() => undefined}
+          onConvert={() => undefined}
           propertiesContent={<PropertiesMock isPl={isPl} />}
-          contextContent={<ContextMock isPl={isPl} />}
+          relationsContent={<ContextMock isPl={isPl} />}
           teresaContent={<TeresaMock isPl={isPl} />}
         />
       </div>
