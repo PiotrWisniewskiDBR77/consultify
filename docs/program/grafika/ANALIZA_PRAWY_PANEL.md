@@ -186,3 +186,84 @@ Kodeks zabrania włączania wielu zmian wizualnych naraz.
 3. **Czy „Rezultaty" liczą tylko obiekty utworzone z tej notatki, czy też te, które
    ktoś ręcznie z nią powiązał?** To rozstrzyga, czy sekcja jest zapisem faktu,
    czy wolnym zbiorem.
+
+---
+
+# Uzupełnienie: dokumenty (Word · Excel · PowerPoint) — zgłoszenie właściciela 2026-08-30
+
+Właściciel: *„tutaj też mamy prawy panel w poszczególnych dokumentach — w Wordzie,
+w Excelu i w PowerPoincie. Mamy do przepracowania temat, co ma być w tym menu.
+To kiedyś było zgłaszane, ale ewidentnie gdzieś nam to przeleciało."*
+
+## Najważniejsze: układ, który zaproponowałem w §4, JUŻ ISTNIEJE — w Wordzie
+
+Prawy pas Studia Dokumentów (`DocumentStudioDocumentPanel.tsx:2778-2890`) to
+**szyna narzędzi z ikonami**, a jednym z narzędzi jest **Teresa**:
+
+```
+sources · properties · qa · TERESA · comments · activity
+```
+
+To jest dokładnie ta architektura, którą opisałem w §4 jako propozycję: **Teresa
+jest TRYBEM prawego pasa, nie sekcją akordeonu.** Nie trzeba jej wymyślać — trzeba
+ją rozpoznać jako wzorzec i rozciągnąć na resztę.
+
+## Dlaczego nikt tego dotąd nie ujednolicił: JEDNO POJĘCIE, TRZY NAZWY
+
+| Rail | Identyfikatory narzędzi/sekcji |
+| --- | --- |
+| **Kanon** (akordeon) | actions · properties · relations · **evidence** · results · comments · **history** |
+| **Word** (Studio) | **sources** · properties · qa · **teresa** · comments · **activity** |
+| **Excel** | **sources** · structure · selected · **history** |
+| **Prezentacje** | **activity** |
+| **Deck Builder** | blocks · media · **evidence** · relations · comments · **activity** |
+| **Notatnik / Idee** | actions · properties · relations · comments · history |
+
+Dwa pojęcia mają po dwie–trzy nazwy:
+
+- **„na czym to oparto"** → `evidence` (kanon, Deck) **albo** `sources` (Word, Excel)
+- **„co się z tym działo"** → `history` (kanon, Excel) **albo** `activity` (Word, Prezentacje, Deck)
+
+**To jest przyczyna, dla której temat „przeleciał".** Nie da się zauważyć, że dwie
+powierzchnie robią to samo, jeśli nazywają to inaczej — ani greppem, ani okiem.
+Każdy kolejny budujący dokładał trzecią nazwę w dobrej wierze.
+
+## Co jest specyficzne dla dokumentów, a czego nie ma w kanonie
+
+Dokumenty mają realne potrzeby, których kanon siedmiu sekcji nie pokrywa:
+
+- **`qa`** (Word) — kontrola jakości dokumentu: fabrykacje, liczby bez pokrycia,
+  puste sekcje. To jest **sedno obietnicy produktu** („czy mogę to wysłać klientowi"),
+  a występuje w JEDNYM miejscu.
+- **`structure` / `blocks` / `media`** (Excel, Deck) — nawigacja po zawartości
+  artefaktu. To nie jest „o dokumencie", to jest „po dokumencie" — inna klasa niż
+  siedem sekcji kanonu.
+- **`selected`** (Excel) — kontekst zaznaczenia. Też nawigacja, nie metadana.
+
+**Wniosek:** prawy pas ma DWA rodzaje zawartości i mieszanie ich to osobny błąd:
+1. **O artefakcie** — siedem sekcji kanonu (kim jest, skąd, co z tego, kto mówił).
+2. **Po artefakcie** — nawigacja i narzędzia zależne od archetypu (struktura arkusza,
+   slajdy, media, zaznaczenie, kontrola jakości).
+
+Szyna ikon obsługuje oba, bo każde narzędzie dostaje pełną wysokość.
+
+## Praca do zgłoszenia — DWIE POŁOWY
+
+### Połowa graficzna (tor grafiki)
+1. **Jeden słownik.** `sources`≡`evidence`, `activity`≡`history` — wybrać po jednej
+   nazwie i przepisać resztę. Bez tego kroku żadne porównanie nie ma sensu.
+2. **Jeden mechanizm.** Szyna ikon 56 px wzorem Worda, dla wszystkich archetypów.
+3. **Teresa jako narzędzie szyny**, nie sekcja i nie przycisk-wyjście.
+4. **Rozdział „o artefakcie" od „po artefakcie"** — w szynie widoczny, nie zlepiony.
+
+### Połowa funkcjonalna (tor funkcji)
+Sekcje kanonu, których dokumenty **nie mogą dziś wypełnić, bo serwer tego nie zwraca**:
+- **Źródła i założenia** — dokument nie wie, z czego powstał. Potrzebny zapis
+  pochodzenia: która ocena, które wywiady, który model finansowy, jakie założenia
+  przyjęła Teresa. **Bez tego „czy mogę temu ufać" nie ma odpowiedzi.**
+- **Rezultaty** — dokument nie wie, co z niego wyszło (zadania, decyzje, kolejne
+  materiały).
+- **Kontrola jakości poza Wordem** — Excel i PowerPoint nie mają odpowiednika `qa`.
+
+To nie jest praca w panelu. To jest **kontrakt danych** i dopiero po nim panel ma co
+pokazać — dokładnie tak samo jak przy wskaźnikach, które nie mają nazw, tylko kody.
