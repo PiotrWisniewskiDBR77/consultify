@@ -1,0 +1,47 @@
+---
+doc_id: koordynacja-dwoch-torow
+status: canonical
+truth_type: process
+established: 2026-08-30
+---
+
+# Koordynacja dwóch torów — grafika i funkcje
+
+Dwa czaty pracują równolegle nad tym samym repozytorium. **Ten plik jest ich
+jedynym punktem styku.** Rozmowa nie jest nośnikiem — jeśli czegoś tu nie ma,
+drugi tor o tym nie wie.
+
+## Podział — nienaruszalny
+
+| | Tor GRAFIKA | Tor FUNKCJE |
+| --- | --- | --- |
+| Co robi | wygląd ekranów, zgodność z kanonem, zrzuty, odbiory wizualne | mechanika, dane, trasy, bezpieczeństwo, dyżury Codexa |
+| Kto wykonuje | nadzorca sam + wewnętrzni robotnicy | Codex (duże klocki) + wewnętrzni robotnicy (dokończenia) |
+| Rejestr | `grafika/REJESTR_EKRANOW.md` | `funkcje/REJESTR_WDROZENIA.md` |
+
+**Grafika nie zleca Codexowi. Funkcje nie przemalowują ekranów.**
+
+## Zasady styku
+
+1. **Jedna linia integracyjna** — `codex/m03-admin-20260824`. Oba tory scalają tam,
+   przez `merge`, nigdy `force`.
+2. **Kolizja plikowa** — tor, który dotyka pliku spoza swojego zakresu, **wpisuje to
+   tutaj przed dotknięciem**. Bez wpisu = naruszenie rozłączności.
+3. **Ekran zależny od funkcji** — grafika nie maluje ekranu, pod którym funkcja nie
+   działa; zgłasza go tutaj jako blokadę i idzie dalej.
+4. **Funkcja zmieniająca wygląd** — tor funkcji nie zmienia wyglądu przy okazji;
+   zgłasza tutaj i zostawia grafice.
+
+## Tablica bieżąca
+
+### Blokady zgłoszone przez grafikę do toru funkcji
+_(pusto)_
+
+### Blokady zgłoszone przez funkcje do toru grafiki
+_(pusto)_
+
+### Pliki zajęte w tej chwili
+| Plik / katalog | Tor | Od kiedy |
+| --- | --- | --- |
+| `docs/program/grafika/**` | grafika | 2026-08-30 |
+| `docs/program/funkcje/**` | funkcje | 2026-08-30 |
