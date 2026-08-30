@@ -312,7 +312,14 @@ dyżurze", nie kasujesz numeru.**
 ### 0.2b. ★★ PROTOKÓŁ `Z30` — ZERO WYSYŁKI, A MIMO TO PEŁNY DOWÓD
 
 **(1) Czego NIE WOLNO Ci zrobić — nigdy:**
-- ustawić `<<FLAGA_LIVE_WYSYLKI>>` na `true`;
+- ★ **UWAGA — SPROSTOWANIE 2026-08-30.** Ten szkielet wymieniał tu wcześniej
+  przełącznik `ENABLE_LIVE_EMAIL`. **Taka flaga NIE ISTNIEJE w kodzie** — `grep`
+  po całym `server/src` i `src` daje zero trafień. Był to fantom, powielany
+  w każdej wydanej instrukcji. **Nie szukaj go i nie raportuj, że jest wyłączony.**
+  Realny warunek wysyłki jest inny i opisany w punkcie (2) poniżej: poczta wychodzi
+  wyłącznie wtedy, gdy `emailService.ts:202` zobaczy **jednocześnie** `smtpConfig.host`
+  i `smtpConfig.auth.user`, sklejone **najpierw z tabeli `settings`**, dopiero potem
+  ze zmiennych środowiskowych. Bez tych dwóch wartości serwis pisze na konsolę;
 - ustawić `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM`
   w środowisku, w `.env*`, w `docker-compose*` ani nigdzie indziej;
 - wstawić wiersza konfiguracji SMTP do tabeli ustawień w swojej bazie;
@@ -332,7 +339,7 @@ zapisującego:**
 cd <<WORKTREE>>
 
 # (a) srodowisko nie ma ani jednej zmiennej poczty
-env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL|<<FLAGA_LIVE_WYSYLKI>>)" || echo "BRAK ZMIENNYCH POCZTY"
+env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL)" || echo "BRAK ZMIENNYCH POCZTY"
 
 # (b) ★ DRUGIE DNO: emailService czyta SMTP NAJPIERW Z BAZY (emailService.ts:180-185).
 #     Dowod „nie mam zmiennych" NIE WYSTARCZA. Po migracjach uruchom:
