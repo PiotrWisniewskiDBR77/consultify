@@ -38,7 +38,7 @@ import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import { ExceleRightPanel } from './ExceleRightPanel';
 import { ExceleRightRail } from './ExceleRightRail';
-import type { ArtifactPreview } from './KimiWorkspaceShell';
+import type { ArtifactPreview, TaskStep } from './KimiWorkspaceShell';
 import { type KimiHeaderKebabItem, KimiWorkspaceShell } from './KimiWorkspaceShell';
 import { SpreadsheetArtifactStudio } from './SpreadsheetArtifactStudio';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
@@ -104,6 +104,7 @@ export const ExceleView: React.FC = () => {
   startRef.current = pipeline.startGeneration;
 
   const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
+  const [reopenTaskSteps, setReopenTaskSteps] = useState<TaskStep[]>([]);
   const [reopenWorkbookId, setReopenWorkbookId] = useState<string | null>(null);
   // Naprawa 2026-07-23 (Excel — "nie mam czego otworzyć"): GET /workbook/:id
   // 404-uje dla artefaktów typu 'sheet', których origin to tp_tables (governed
@@ -227,6 +228,15 @@ export const ExceleView: React.FC = () => {
       }
 
       const wbData = identity.workbook;
+      const persistedPipelineLog = Array.isArray(wbData?.pipelineLog) ? wbData.pipelineLog : [];
+      setReopenTaskSteps(
+        persistedPipelineLog.map((entry: any, index: number) => ({
+          id: String(entry?.phase || `persisted-${index}`),
+          label: String(entry?.phase || `Step ${index + 1}`),
+          status: entry?.status === 'failed' ? 'failed' : 'completed',
+          detail: entry?.detail ? String(entry.detail) : undefined,
+        }))
+      );
       const title = wbData?.title || wbData?.schema_json?.title || 'Spreadsheet';
       const sheets = wbData?.schema_json?.sheets || [];
       setReopenWorkbookId(identity.workbookId);
@@ -310,6 +320,13 @@ export const ExceleView: React.FC = () => {
 
   const effectivePreview = pipeline.preview || reopenPreview;
   const effectiveCompleted = pipeline.isCompleted || (!!reopenPreview && !pipeline.currentRun);
+  const usesPersistedPipeline =
+    !!reopenPreview && !pipeline.currentRun && reopenTaskSteps.length > 0;
+  const effectiveTaskSteps = usesPersistedPipeline ? reopenTaskSteps : pipeline.taskSteps;
+  const effectiveTotalSteps = usesPersistedPipeline ? reopenTaskSteps.length : pipeline.totalSteps;
+  const effectiveCompletedSteps = usesPersistedPipeline
+    ? reopenTaskSteps.length
+    : pipeline.completedSteps;
 
   const handlePreviewFile = useCallback(() => {
     const workbookId = (pipeline.preview as any)?.workbookId || reopenWorkbookId;
@@ -533,9 +550,10 @@ export const ExceleView: React.FC = () => {
   return (
     <KimiWorkspaceShell
       lane="excele"
-      taskSteps={pipeline.taskSteps}
-      totalSteps={pipeline.totalSteps}
-      completedSteps={pipeline.completedSteps}
+      taskSteps={effectiveTaskSteps}
+      totalSteps={effectiveTotalSteps}
+      completedSteps={effectiveCompletedSteps}
+      showProgressCount={!reopenPreview || !!pipeline.currentRun || usesPersistedPipeline}
       isGenerating={pipeline.isGenerating}
       isCompleted={effectiveCompleted}
       isFailed={pipeline.isFailed || !!reopenError}
