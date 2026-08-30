@@ -89,13 +89,22 @@ describe('AIAssessmentPartnerService', () => {
             });
         });
 
-        it('should have 7 maturity levels for each axis', () => {
+        // Metodyka DRD daje osiom ROZNA liczbe poziomow: 7/5/5/7/6/6/5.
+        // Poprzednia wersja tego testu przybijala 7 dla kazdej osi i przez to
+        // UTRWALALA defekt — opisy poziomow 6 i 7 dla osi konczacych sie na 5.
+        // Skutek byl merytoryczny, nie kosmetyczny: partner AI mogl zasugerowac
+        // konsultantowi poziom dojrzalosci, ktorego w metodyce wlasciciela nie ma.
+        // Zrodlo prawdy: server/src/data/drdStructure.ts (axis.levelCount).
+        it('kazda os ma dokladnie tyle poziomow, ile mowi metodyka', () => {
             Object.values(DRD_AXES).forEach(axis => {
-                expect(Object.keys(axis.levels)).toHaveLength(7);
-                for (let i = 1; i <= 7; i++) {
+                expect(axis.levelCount).toBeGreaterThan(0);
+                expect(Object.keys(axis.levels)).toHaveLength(axis.levelCount);
+                for (let i = 1; i <= axis.levelCount; i++) {
                     expect(axis.levels[i]).toBeDefined();
                     expect(typeof axis.levels[i]).toBe('string');
                 }
+                // ponad skale nie moze byc NICZEGO — to jest wlasciwa bramka
+                expect(axis.levels[axis.levelCount + 1]).toBeUndefined();
             });
         });
 
