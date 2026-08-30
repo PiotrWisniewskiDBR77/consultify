@@ -96,6 +96,7 @@ import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV3';
+import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterChip,
@@ -5556,6 +5557,10 @@ Please return:
       // all chrome comes from the Standard* facades.
       const selectedRow = selectedSummaryInitiative;
       const previewModel = selectedRow ? mapToPreviewModel(selectedRow) : null;
+      const sourceLabel = previewModel?.sourceType
+        ? getSourceDisplayLabel(previewModel.sourceType)
+        : '';
+      const sourceFrameworkValue = String((selectedRow as any)?.sourceFramework || '').trim();
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -5677,8 +5682,16 @@ Please return:
                     onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
                   }}
                   relations={
-                    previewModel.sourceType
-                      ? [{ label: `${t('common.source', 'Source')}: ${previewModel.sourceType}` }]
+                    sourceLabel
+                      ? [
+                          {
+                            label: `${t('common.source', 'Source')}: ${
+                              sourceFrameworkValue
+                                ? `${sourceLabel} · ${sourceFrameworkValue}`
+                                : sourceLabel
+                            }`,
+                          },
+                        ]
                       : []
                   }
                   actions={listPreviewActions}
