@@ -366,10 +366,10 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
             return fresh;
           })();
     try {
-      const { plan: updated } = await runAgentPlan(planId, steps, idempotencyKey);
+      const { plan: updated, dispatch } = await runAgentPlan(planId, steps, idempotencyKey);
       runSubmissionRef.current = null; // success — a future run is a new intention, mint a new key
       setPlan(updated);
-      setLoadError(null);
+      setLoadError(dispatch === 'enqueued' ? null : 'Nie zakolejkowano nowego wykonania planu.');
       onRunEditedSchema?.(blocks);
     } catch (error) {
       setSchemaSubmitted(false);
@@ -416,8 +416,9 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
     async (step: AgentPlanStep) => {
       setBusy(step.id);
       try {
-        const { plan: updated } = await approveAgentPlanStep(planId, step.stepIndex);
+        const { plan: updated, dispatch } = await approveAgentPlanStep(planId, step.stepIndex);
         setPlan(updated);
+        setLoadError(dispatch === 'enqueued' ? null : 'Nie zakolejkowano nowego wykonania planu.');
       } catch (error) {
         setLoadError(error instanceof Error ? error.message : 'Failed to approve step');
       } finally {
