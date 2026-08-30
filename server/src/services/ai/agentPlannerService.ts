@@ -630,6 +630,12 @@ class AgentPlannerService {
                 [i, planId, lease.ownerToken, lease.fencingToken]
               );
               if (!released.changes) throw heartbeatFailure;
+              // FIX-180 / F3: the step whose tool was still in flight when the
+              // cancellation landed must not stay `running` forever (the canvas
+              // renders it as "W toku" for eternity). Close it terminally the
+              // same way `cancelPlan` closes the steps it can reach — `skipped`
+              // with a completion stamp — carrying the real elapsed time.
+              await this.closeInFlightStepsAfterCancellation(planId, Date.now() - startMs);
               const cancelled = await this.getPlan(planId);
               if (!cancelled) throw new Error(`Plan ${planId} disappeared after cancellation`);
               return cancelled;
@@ -1288,6 +1294,33 @@ class AgentPlannerService {
            execution_heartbeat_at = NULL
        WHERE id = ? AND status = 'cancelled' AND ${this.leasePredicate()}`,
       [currentStep, lease.planId]
+    );
+    await this.closeInFlightStepsAfterCancellation(lease.planId, null);
+  }
+
+  /**
+   * FIX-180 / F3: `cancelPlan` can only skip steps that have not started yet
+   * (`pending`/`awaiting_approval`). A step whose tool was ALREADY running when
+   * the cancellation landed is invisible to it, and every cancellation branch
+   * of `executePlan` returns without touching that row — so it stays `running`
+   * (front `AgentPlanCanvas` shows "W toku") for the lifetime of the record.
+   * This closes it terminally with the same status `cancelPlan` uses, plus the
+   * completion stamp every other terminal step write carries. `durationMs` is
+   * the real elapsed time when the caller knows it (window b), and `null` where
+   * it does not (window a2 / the top-of-loop branch) — there the column keeps
+   * whatever it already had rather than gaining an invented number.
+   */
+  private async closeInFlightStepsAfterCancellation(
+    planId: string,
+    durationMs: number | null
+  ): Promise<void> {
+    const durationClause = durationMs === null ? '' : ', duration_ms = COALESCE(duration_ms, ?)';
+    const params: unknown[] = durationMs === null ? [planId] : [durationMs, planId];
+    await dbRun(
+      `UPDATE ai_agent_plan_steps
+          SET status = 'skipped', completed_at = datetime('now')${durationClause}
+        WHERE plan_id = ? AND status = 'running'`,
+      params
     );
   }
 

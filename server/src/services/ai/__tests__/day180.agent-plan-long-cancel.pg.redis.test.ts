@@ -115,6 +115,18 @@ describe.skipIf(!enabled)('DAY180 long-step cancellation — real PG + Redis', (
       expect(Number(planRow.execution_fencing_token)).toBeGreaterThan(0);
       expect(planRow.execution_lease_expires_at).toBeNull();
       expect(planRow.execution_heartbeat_at).toBeNull();
+      // FIX-180 / F3: the step whose tool was in flight when the cancellation
+      // landed must be TERMINAL — not "W toku" forever on the canvas.
+      const stepRow = (
+        await pool.query(
+          `SELECT status,completed_at,duration_ms FROM ai_agent_plan_steps WHERE plan_id=$1`,
+          [plan.id]
+        )
+      ).rows[0];
+      expect(stepRow.status).not.toBe('running');
+      expect(stepRow.status).toBe('skipped');
+      expect(stepRow.completed_at).not.toBeNull();
+      expect(Number(stepRow.duration_ms)).toBeGreaterThan(0);
       const receiptRow = (
         await pool.query(
           `SELECT status,last_error_code FROM ai_agent_job_receipts WHERE receipt_id=$1`,
