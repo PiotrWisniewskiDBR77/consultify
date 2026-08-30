@@ -1102,6 +1102,20 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setCreatedAt(task.createdAt || '');
       setTags(task.tags || []);
       setChecklist(task.checklist || []);
+      try {
+        const riskAlternativesResponse = await Api.get(
+          `/tasks/${encodeURIComponent(id)}/risk-alternatives`
+        );
+        const riskAlternatives = riskAlternativesResponse?.data ?? riskAlternativesResponse;
+        setRisks(Array.isArray(riskAlternatives?.risks) ? riskAlternatives.risks : []);
+        setAlternatives(
+          Array.isArray(riskAlternatives?.alternatives) ? riskAlternatives.alternatives : []
+        );
+      } catch (error) {
+        console.warn('[TaskDetailView] Failed to load Risk & Alternatives', error);
+        setRisks([]);
+        setAlternatives([]);
+      }
       setAttachments(await loadTaskAttachments(Api, id));
       const serverComments = await Api.getTaskComments(id);
       setComments(serverComments.map(mapTaskServerComment));
@@ -1301,6 +1315,23 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
           emitMyWorkEvent({ type: 'item:completed', entityType: 'task', entityId: taskId });
         }
         onSaved?.({ ...personalPayload, id: taskId });
+
+        try {
+          await Api.put(`/tasks/${encodeURIComponent(taskId)}/risk-alternatives`, {
+            risks,
+            alternatives,
+          });
+        } catch (error) {
+          console.warn('[TaskDetailView] Risk & Alternatives were not saved', error);
+          if (!silent) {
+            toast.error(
+              t(
+                'myWork.taskDetail.riskAlternativesNotSaved',
+                'Task saved, but Risk & Alternatives could not be saved'
+              )
+            );
+          }
+        }
       } else {
         // Same payload (double-click, retry after a timeout) -> same key, so the
         // server collapses it to one row. Edited payload -> new key, so a

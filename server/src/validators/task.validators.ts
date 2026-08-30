@@ -84,6 +84,8 @@ export const CreateTaskSchema = z.object({
   kpiId: FlexibleId.optional().nullable(),
   raidItemId: FlexibleId.optional().nullable(),
   customFields: z.record(z.string(), z.unknown()).optional(),
+  risks: z.array(z.record(z.string(), z.unknown())).max(100).optional(),
+  alternatives: z.array(z.record(z.string(), z.unknown())).max(100).optional(),
   // EXE-002-004: retry-safe create. validateBody() replaces req.body with
   // this schema's parsed output (z.object() strips unknown keys by
   // default), so a field TaskController.createTask reads from req.body

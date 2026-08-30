@@ -1335,6 +1335,14 @@ router.get('/:id/blocking-decision', TaskController.getBlockingDecision);
 // TASK DEPENDENCIES (Gantt-style)
 // ==========================================
 
+router.get('/:id/risk-alternatives', TaskController.getTaskRiskAlternatives);
+router.put(
+  '/:id/risk-alternatives',
+  requireAudit,
+  validateBody(UpdateTaskSchema),
+  TaskController.updateTaskRiskAlternatives
+);
+
 /**
  * GET /api/tasks/:id/dependencies
  * Get all dependencies for a task
