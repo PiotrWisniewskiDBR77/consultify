@@ -127,7 +127,30 @@ type PlanToolExecutor = (
 
 class AgentPlannerService {
   private readonly executionLeaseSeconds = 300;
-  private readonly heartbeatIntervalMs = 60_000;
+  private readonly heartbeatIntervalMs = Math.max(
+    1,
+    Number(process.env.AGENT_PLAN_HEARTBEAT_INTERVAL_MS || 60_000)
+  );
+  private readonly longStepWarningThresholdMs = Math.max(
+    0,
+    Number(process.env.AGENT_PLAN_LONG_STEP_WARNING_MS || 120_000)
+  );
+
+  private warnIfLongStep(
+    planId: string,
+    stepIndex: number,
+    toolName: string,
+    durationMs: number
+  ): void {
+    if (durationMs < this.longStepWarningThresholdMs) return;
+    logger.warn('[AgentPlanner] long-running step completed', {
+      planId,
+      stepIndex,
+      toolName,
+      durationMs,
+      thresholdMs: this.longStepWarningThresholdMs,
+    });
+  }
 
   async executeGovernedEnqueue<T>(input: {
     planId: string;
@@ -590,8 +613,32 @@ class AgentPlannerService {
         } finally {
           clearInterval(heartbeat);
         }
-        if (heartbeatFailure) throw heartbeatFailure;
+        if (heartbeatFailure) {
+          if (heartbeatFailure instanceof AgentExecutionLeaseLostError) {
+            const current = (await dbGet(
+              `SELECT status FROM ai_agent_plans WHERE id = ?`,
+              [planId]
+            )) as { status?: PlanStatus } | undefined;
+            if (current?.status === 'cancelled') {
+              const released = await dbRun(
+                `UPDATE ai_agent_plans
+                    SET current_step_index = ?, updated_at = datetime('now'),
+                        execution_owner_token = NULL, execution_lease_expires_at = NULL,
+                        execution_heartbeat_at = NULL
+                  WHERE id = ? AND status = 'cancelled'
+                    AND execution_owner_token = ? AND execution_fencing_token = ?`,
+                [i, planId, lease.ownerToken, lease.fencingToken]
+              );
+              if (!released.changes) throw heartbeatFailure;
+              const cancelled = await this.getPlan(planId);
+              if (!cancelled) throw new Error(`Plan ${planId} disappeared after cancellation`);
+              return cancelled;
+            }
+          }
+          throw heartbeatFailure;
+        }
         const durationMs = Date.now() - startMs;
+        this.warnIfLongStep(planId, i, step.toolName, durationMs);
 
         step.result = result;
         step.status = 'completed';
@@ -625,6 +672,7 @@ class AgentPlannerService {
         )
           throw err;
         const durationMs = Date.now() - startMs;
+        this.warnIfLongStep(planId, i, step.toolName, durationMs);
         step.status = 'failed';
         step.errorMessage = err?.message || 'Unknown error';
         step.durationMs = durationMs;
@@ -1055,28 +1103,23 @@ class AgentPlannerService {
             WHERE c.execution_run_id = ? AND c.organization_id = ?`,
           [plan.canonicalRunId, payload.organizationId]
         )) as { project_id?: string | null } | null)
-      : null;
+      : { project_id: 'agent-plan-chat:v1' };
     if (plan.canonicalRunId && !resourceScope?.project_id) {
       throw new Error('planner_resource_project_scope_missing');
     }
 
     const executor: PlanToolExecutor = async (toolName, input, execution) => {
-      if (!plan.canonicalRunId) {
-        return executeToolCall(toolName, input, {
-          organizationId: payload.organizationId,
-          userId: payload.userId,
-          conversationId: plan.conversationId,
-          sessionId: execution?.operationKey,
-        });
-      }
+      const resourceRunId = plan.canonicalRunId || plan.id;
       const resourceExecution = await executeWithAgentResourceReservation({
         organizationId: payload.organizationId,
         projectId: resourceScope!.project_id,
-        runId: plan.canonicalRunId,
+        runId: resourceRunId,
         userId: payload.userId,
         agentId: 'agent-planner',
         toolName,
-        idempotencyKey: `planner:${plan.canonicalRunId}:${execution?.operationKey || `${plan.id}:${toolName}`}`,
+        idempotencyKey: plan.canonicalRunId
+          ? `planner:${plan.canonicalRunId}:${execution?.operationKey || `${plan.id}:${toolName}`}`
+          : `planner-chat:${plan.id}:${execution?.operationKey || `${plan.id}:${toolName}`}`,
         estimatedCostUsd: estimateAgentToolCostUsd(toolName),
         execute: () =>
           executeToolCall(toolName, input, {
