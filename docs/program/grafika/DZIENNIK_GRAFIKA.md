@@ -18,6 +18,54 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-08-30, sesja wieczorna (przejęcie toru po poprzedniku)
 
+### Z-12 · Macierz ZNALEZIONA — właściciel przysłał zrzuty z żywego produktu
+**Co się stało:** po dwóch moich pudłach właściciel przysłał **zrzuty ekranu z działającej
+aplikacji**. To rozstrzygnęło sprawę w dziesięć minut, po godzinach mojego szukania.
+
+**Czym jest ta macierz** (`src/components/assessment/drd/DRDAssessmentEditor.tsx`, **2333 linie,
+ŻYWA i wpięta** — `src/views/AssessmentSessionEditorView.tsx:28`, zakładka obok Formularza):
+- **wiersze = poziomy** dojrzałości, od najwyższego u góry („7. Autonomous") do „1. Basic / Manual"
+- **kolumny = obszary** osi (1A Sales Processes, 1B Marketing…), nagłówki obszarów w **dolnym**
+  wierszu „AREA", każdy z chipem stanu (`AS 2`, `TO 4`)
+- **komórka niesie treść merytoryczną**, nie kropkę: nazwę technologii/stanu dla tego poziomu
+  w tym obszarze („CRM", „ERP · WMS", „MES", „AI Support", „Basic Data Registration")
+- **dwa znaczniki naraz**: AS-IS (stan obecny) i TO-BE (cel) — legenda w prawym górnym rogu
+- **klik w komórkę otwiera popover** z opisem poziomu, przykładem („EXAMPLE" z dowodem, jaki
+  konsultant ma zebrać) i **dwoma przyciskami: „Set AS-IS" i „Set TO-BE"** — tak powstaje ocena
+- przełącznik gęstości („Spacious"), tryb pełnoekranowy, `Esc` zamyka
+- pod macierzą liczby zbiorcze osi (1.5 · 4.0 · 2.5 · 2/9)
+
+**Słowa właściciela:** *„tak ma wyglądać macierz. I ona pokazuje i pozwala się poruszać po niej.
+(…) Oczywiście to jest strasznie brzydkie, co tutaj masz (…) Cały ten stary ekran to jest jakby
+prehistoryczny ekran, ale ta logika pracy jest najłatwiejsza. Zresztą jak zajrzysz do mojej
+książki, do załączników, zobaczysz tę samą formułę."*
+
+**Czego to uczy — trzeci raz w tej samej sprawie:**
+1. Szukałem komponentu po **geometrii** (obszary × poziomy) i znalazłem `AreaMatrixTable` —
+   geometria się zgadzała, ale to była prezentacja raportowa. Właściciel mówił „**narzędzie**".
+2. Potem wskazał SIRI jako wzorzec — poszedłem tam i zobaczyłem macierz **transponowaną**
+   (poziomy na X), więc znów nie to.
+3. Rozstrzygnęły dopiero **jego zrzuty z żywej aplikacji**.
+
+**Wniosek operacyjny:** kiedy właściciel opisuje ekran, który u siebie widzi, **najtańszym ruchem
+jest poprosić o zrzut**, a nie szukać po opisie. Trzy podejścia i kilka godzin robotników
+zastąpiłby jeden obrazek. Formuła: *„pokaż mi to u siebie"* przed *„poszukam w kodzie"*.
+
+**Drugi wniosek:** macierz **nie była martwa ani pozbawiona wejścia** — była żywa cały czas.
+Moje trzy poprzednie znaleziska (`AreaMatrixTable`, `EmbeddedMatrix`, `DRDMatrixSession`) to
+**boczne, martwe warianty tej samej rzeczy**. Szukając „gdzie to jest", trafiałem w kopie,
+bo kopii jest w tym repo więcej niż oryginałów.
+
+**Co dalej (kolejność ustalona z właścicielem):** logika pracy zostaje nietknięta — jest,
+jego słowami, „najłatwiejsza". Do zmiany jest **wyłącznie warstwa wizualna**, i to formułą
+polerowania: audyt stanu zastanego → nazwanie defektów → prototyp → akcept na zrzucie →
+budowa 1:1. **Nie przebudowywać 2333 linii w ciemno.**
+
+**Do sprawdzenia:** właściciel wskazał **załączniki swojej książki** (`knowledge/DRD/*.pdf`,
+appendix od `extracted_content.txt:455`) jako źródło tej samej formuły — komórki macierzy mają
+odpowiadać opisom poziomów per obszar. To pozwala zweryfikować, czy treść komórek w produkcie
+zgadza się z metodyką.
+
 ### Z-10 · Macierz — WSTRZYMANE przez właściciela, wzorcem jest SIRI
 **Co się stało:** wyrenderowałem `AreaMatrixTable` (siatka obszary × poziomy) i pokazałem
 właścicielowi. Odpowiedź: *„Stary, to nie tak ma wyglądać. Zatrzymaj się z tą pracą.
