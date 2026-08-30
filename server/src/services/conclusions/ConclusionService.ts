@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 
 export type ConclusionStatus =
   | 'candidate'

@@ -8,10 +8,10 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
 import logger from '../../utils/Logger.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 describe('Day 154 — interview findings reach conclusions on real PostgreSQL', () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
