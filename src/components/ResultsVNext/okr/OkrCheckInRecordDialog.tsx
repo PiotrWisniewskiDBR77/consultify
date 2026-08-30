@@ -42,6 +42,10 @@ export interface OkrCheckInRecordDialogProps {
    * never a fabricated suggestion). */
   suggestion?: OkrSuggestNextCheckInValue | null;
   occurrences?: OkrCheckInOccurrenceOption[];
+  /** Set when the occurrence fetch itself failed — shown instead of the
+   * "no windows available" empty state, which means the fetch SUCCEEDED
+   * with zero rows. */
+  occurrencesError?: string | null;
   /** Set when the OWNING Set isn't `'active'` or the KR is `'cancelled'`
    * (`getOkrCheckInSetLock` in `okrObjectiveMappers.ts` / `KEY_RESULT_CANCELLED`)
    * — the dialog still opens (TRIADA §C3 posture: locked CTA still fires,
@@ -77,6 +81,7 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
   onSubmit,
   suggestion,
   occurrences,
+  occurrencesError = null,
   blockedReason = null,
   busy = false,
   errorMessage = null,
@@ -212,14 +217,16 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
             className={FIELD_CLASS}
             data-testid="okr-checkin-cadence"
             aria-invalid={cadenceError || undefined}
-            disabled={occurrences === undefined}
+            disabled={occurrences === undefined || !!occurrencesError}
           >
             <option value="">
               {occurrences === undefined
                 ? isPolish ? 'Wczytywanie okien…' : 'Loading windows…'
-                : occurrences.length === 0
-                  ? isPolish ? 'Brak dostępnych okien' : 'No windows available'
-                  : isPolish ? '— wybierz okno —' : '— select a window —'}
+                : occurrencesError
+                  ? isPolish ? 'Nie udało się pobrać okien' : 'Failed to load windows'
+                  : occurrences.length === 0
+                    ? isPolish ? 'Brak dostępnych okien' : 'No windows available'
+                    : isPolish ? '— wybierz okno —' : '— select a window —'}
             </option>
             {(occurrences ?? []).map((occurrence) => (
               <option key={occurrence.cadenceOccurrenceId} value={occurrence.cadenceOccurrenceId} disabled={occurrence.used}>
@@ -238,6 +245,16 @@ export const OkrCheckInRecordDialog: React.FC<OkrCheckInRecordDialogProps> = ({
           </p>
           {cadenceError ? (
             <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'To pole jest wymagane' : 'This field is required'}</p>
+          ) : null}
+          {occurrencesError ? (
+            <div
+              role="alert"
+              className="mt-2 flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+              data-testid="okr-checkin-occurrences-error"
+            >
+              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
+              <span>{occurrencesError}</span>
+            </div>
           ) : null}
         </div>
 

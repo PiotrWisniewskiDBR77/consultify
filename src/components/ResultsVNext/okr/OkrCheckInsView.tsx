@@ -77,6 +77,7 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
   const [recordConflict, setRecordConflict] = useState(false);
   const [suggestion, setSuggestion] = useState<OkrSuggestNextCheckInValue | null | undefined>(undefined);
   const [occurrences, setOccurrences] = useState<OkrCheckInOccurrenceOption[] | undefined>(undefined);
+  const [occurrencesError, setOccurrencesError] = useState<string | null>(null);
 
   const [correctTarget, setCorrectTarget] = useState<OkrCheckInDto | null>(null);
   const [correctBusy, setCorrectBusy] = useState(false);
@@ -103,14 +104,18 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
     setRecordConflict(false);
     setSuggestion(undefined);
     setOccurrences(undefined);
+    setOccurrencesError(null);
     setRecordOpen(true);
     suggestNextCheckInValue(keyResult.keyResultId)
       .then((s) => setSuggestion(s))
       .catch(() => setSuggestion(null));
     listCheckInOccurrences(keyResult.keyResultId)
       .then(setOccurrences)
-      .catch(() => setOccurrences([]));
-  }, [keyResult.keyResultId]);
+      .catch((err) => {
+        setOccurrences([]);
+        setOccurrencesError(toUserFacingErrorMessage(err, isPolish));
+      });
+  }, [keyResult.keyResultId, isPolish]);
 
   const handleRecordSubmit = useCallback(
     (values: OkrCheckInRecordFormValues) => {
@@ -218,6 +223,7 @@ export const OkrCheckInsView: React.FC<OkrCheckInsViewProps> = ({ set, keyResult
         onSubmit={handleRecordSubmit}
         suggestion={suggestion}
         occurrences={occurrences}
+        occurrencesError={occurrencesError}
         blockedReason={blockedReason}
         busy={recordBusy}
         errorMessage={recordError}
