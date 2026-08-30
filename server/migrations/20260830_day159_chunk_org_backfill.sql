@@ -1,6 +1,15 @@
 -- Day 159: additive organization provenance and quarantine for knowledge chunks.
 -- The live retrieval filter is deliberately not changed by this migration.
 
+-- NAPRAWA NADZORCY 2026-08-30: ta migracja czyta k.metadata w CTE ponizej, ale
+-- kolumne metadata dodaje dopiero 20261120_fresh_db_schema_gap_closure.sql, czyli
+-- 134 pliki PO tej migracji w porzadku files.sort() (pozycja 536 kontra 670 z 1072).
+-- Na bazie budowanej od zera caly lancuch migracji wywracal sie tutaj z bledem
+-- "column k.metadata does not exist" i pozostale 536 plikow nigdy sie nie wykonywalo.
+-- Straznik jest addytywny i idempotentny: na demo/staging, gdzie kolumna juz
+-- istnieje, jest to no-op.
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS metadata TEXT DEFAULT '{}';
+
 ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS organization_id TEXT;
 ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS org_backfill_source TEXT;
 ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS org_backfilled_at TIMESTAMP;
