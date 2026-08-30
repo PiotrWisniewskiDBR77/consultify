@@ -1406,10 +1406,12 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       uploadedAt: new Date().toISOString(),
     }));
     setAttachments([...attachments, ...newAttachments]);
+    return { ok: true as const };
   };
 
   const handleDeleteAttachment = async (id: string) => {
     setAttachments(attachments.filter((a) => a.id !== id));
+    return { ok: true as const };
   };
 
   // Comment handlers
@@ -1433,10 +1435,12 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     } else {
       setComments([...comments, newComment]);
     }
+    return { ok: true as const };
   };
 
   const handleDeleteComment = async (id: string) => {
     setComments(comments.filter((c) => c.id !== id));
+    return { ok: true as const };
   };
 
   const handleLikeComment = async (id: string) => {
@@ -1447,6 +1451,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
           : c
       )
     );
+    return { ok: true as const };
   };
 
   // Linked items handlers
@@ -1457,9 +1462,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       toast(t('myWork.taskDetail.toast', 'This item is already linked'), {
         icon: '⚠️',
       });
-      return;
+      return { ok: false as const, error: new Error('Item already linked') };
     }
     setLinkedItems((prev) => [...prev, item]);
+    return { ok: true as const };
   };
 
   const handleRemoveLinkedItem = async (item: Pick<LinkedItem, 'id' | 'type'>) => {
@@ -1468,6 +1474,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         item.type ? !(i.id === item.id && i.type === item.type) : i.id !== item.id
       )
     );
+    return { ok: true as const };
   };
 
   const searchLinkedItems = useCallback(async (query: string): Promise<LinkedItem[]> => {
