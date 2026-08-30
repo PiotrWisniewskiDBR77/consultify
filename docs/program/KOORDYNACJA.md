@@ -105,3 +105,21 @@ Moja praca (11+7), Wyniki (9), Wywiad (6).
 **Czego NIE zrobiłem i dlaczego:** nie robię masowej podmiany 254 miejsc. `CLAUDE.md`
 ostrzega wprost, że masowa operacja tego typu raz już zniszczyła wydane instrukcje.
 To zadanie na osobny dyżur z listą plików i odbiorem, nie poprawka przy okazji.
+
+### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: „Zadanie ukończone 0/8"
+
+**Co widać.** Przy **każdym ponownym otwarciu** zapisanego arkusza, tabeli albo
+prezentacji nagłówek pokazuje zielony ptaszek i napis „Zadanie ukończone" —
+a obok licznik **0/8 kroków**. Zielone „gotowe" stoi obok zera.
+
+**Gdzie.** `src/components/AIChat/KimiWorkspace/ExceleView.tsx:312`
+`effectiveCompleted = pipeline.isCompleted || (!!reopenPreview && !pipeline.currentRun)`
+— otwarcie istniejącego pliku ustawia „ukończone", ale `completedSteps/totalSteps`
+dalej czytają z **pustego** przebiegu, którego nigdy nie było.
+
+**Dlaczego to zgłaszam, a nie naprawiam.** To nie jest kolor ani tłumaczenie —
+to stan komponentu. Naprawa w torze grafiki byłaby zgadywaniem, który licznik
+jest prawdziwy.
+
+**Dlaczego to pilne.** To jedyna rzecz na sześciu ekranach arkusza, która na
+prawdziwym pokazie każe klientowi zapytać „to jest gotowe czy nie?".
