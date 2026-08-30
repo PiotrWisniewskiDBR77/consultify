@@ -55,7 +55,7 @@ export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
   MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
   MODULE_PREZENTACJE_GEN: 'open', // Presentation Studio
   MODULE_TABELE: 'open', // Table Studio
-  MODULE_MEETING: 'closed', // Meeting (M21 — post-GA beta per _FINISZ_MASTER_PLAN)
+  MODULE_MEETING: 'open', // FLIP — decyzja właściciela D-1, 2026-08-30
   // Zlecenia (Case Workspace E7/E8). ZAMKNIĘTE do akceptu właściciela.
   // ★ UWAGA: 'closed' NIE wystarczy jako jedyna bramka — `BETA_ADMINS_EXEMPT`
   // wyżej jest `true`, więc każdy admin/owner i tak by moduł zobaczył. Realną

@@ -181,10 +181,10 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       expect(res.body.meetings[0].title).toBe('Project scoped');
     });
 
-    it('GF-06 mirrors the closed MODULE_MEETING boundary after authentication', async () => {
-      const denied = await request(app).get('/api/meeting').set(member());
-      expect(denied.status).toBe(403);
-      expect(denied.body.code).toBe('BETA_LOCKED');
+    it('GF-06 mirrors the open MODULE_MEETING boundary after authentication', async () => {
+      const allowed = await request(app).get('/api/meeting').set(member());
+      expect(allowed.status).toBe(200);
+      expect(allowed.body.code).not.toBe('BETA_LOCKED');
       expect((await request(app).get('/api/meeting').set(betaAdmin())).status).toBe(200);
     });
   });
