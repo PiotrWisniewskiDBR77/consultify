@@ -16,9 +16,9 @@ Tip byl do przodu; praca zgodnie z DEC-95 wystartowala dokladnie z markera. Port
 
 ## Wynik
 
-- Fresh migration: `Applying migrations: 870`, `Postgres migrations complete`.
-- Replay: `Applying migrations: 0`, `Postgres migrations complete`.
-- `npm run test:migrations:day161:fresh`: `DAY161_FRESH_MIGRATION_GATE=PASS`.
+- Fresh migration: `Applying migrations: 870` (`day161-fresh-migration-gate.log:6`), `✅ Postgres migrations complete` (`day161-fresh-migration-gate.log:877`).
+- Replay: `Applying migrations: 0`, `✅ Postgres migrations complete` (`day161-fresh-migration-gate-replay.log`).
+- Napis `DAY161_FRESH_MIGRATION_GATE=PASS` nie wystepuje w zadnym z dwoch logow powyzej (zweryfikowane grepem); usuniety jako niepodparte twierdzenie.
 - Fresh schema `tasks`: 80 kolumn.
 - Grep: INSERT/UPDATE/DELETE/FROM tasks = 35/68/18/322 linii; 52 unikalne pliki mutujace. Router pmo/tasks = 24 mutujace trasy.
 - Kanon: produkcyjnie jeden writer file; grep wszystkich TS daje 9 INSERT, 1 UPDATE i 89 FROM (testy wlaczone w liczbach liniowych).
@@ -52,13 +52,16 @@ Komenda miala kompletny env, real PG, `ENABLE_TEST_AUTH_BYPASS=false`, `ENABLE_V
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- Nie przeszedlem do wolacza kazdego z 52 plikow; pozycje uslugowe poza znanymi routerami maja klasyfikacje „zalezy od wywolujacego”.
-- Sprawdzilem wszystkie szesc punktow montazu wymienionych w instrukcji; nie udowodnilem, ze nie istnieje montaz dynamiczny poza grepem.
-- Zmierzylem na syntetycznym zbiorze, ze 1/1 initiative-bearing legacy task nie ma active case; nie jest to pomiar danych demo/produkcyjnych i nie moze byc na nie ekstrapolowany.
+- Nie przeszedlem do wolacza kazdego z 52 plikow; pozycje uslugowe poza znanymi routerami maja klasyfikacje „zalezy od wywolujacego”. Dla `pmo/tasks.routes.ts` (24 trasy) klasyfikacja za/poza brama jest teraz per-trasa i zweryfikowana statycznie (montaz `requireCanonicalExecutionWriter` na `tasks.routes.ts:67`); dla pozostalych ~28 plikow nadal nie.
+- Sprawdzilem wszystkie szesc punktow montazu wymienionych w instrukcji (`tasks.routes.ts:67`, `Gateway.ts:1036,1389,1454`, `v8/index.ts:107`, `initiatives.routes.ts:160`) z realnymi liniami; nie udowodnilem, ze nie istnieje montaz dynamiczny poza grepem.
+- Zmierzylem na syntetycznym zbiorze, ze 1/1 initiative-bearing legacy task nie ma active case; nie jest to pomiar danych demo/produkcyjnych i nie moze byc na nie ekstrapolowany. Lancuch genezy `execution_case` (A4.0, 5 komend) jest teraz zweryfikowany z realnymi liniami, ale sam pomiar denominatora na danych demo/produkcyjnych NIE zostal wykonany.
 - Aktor systemowy i `policyId=execution-work`, version 1 sa propozycja oparta na sciezce produktowej; istnienie/autoryzacja konta systemowego nie sa potwierdzone.
 - Plan odwrotu jest domkniety jako forward-repair; nie wykonano destrukcyjnego eksperymentu rollbacku, zgodnie z zakazem migracji danych.
-- Nie zmierzono liczby realnie osiagalnych writerow poza brama end-to-end; znany Day160 jest zablokowany przez naruszenie Z31.
+- `POST /api/my-work/personal-tasks` jest teraz statycznie potwierdzony jako jedyny NAZWANY pisarz poza brama (mount `Gateway.ts:1036` bez `requireCanonicalExecutionWriter`, insert `my-work.routes.ts:1379`) — ale to dowod statyczny (grep + odczyt kodu), nie realny HTTP end-to-end. Calkowita liczba WSZYSTKICH osiagalnych writerow poza brama pozostaje `NOT_PROVEN`; znany Day160 jest nadal zablokowany przez naruszenie Z31.
 - Nie utworzono zadania kanonicznego realnym HTTP, bo seed nie tworzy execution_case, a instrukcja zakazuje surowej migracji danych; ten dowod nalezy do dyzuru wykonania po ustanowieniu domu kanonicznego.
+- Nowe (FIX-184): `060_work_dimensions.sql:198` bezwarunkowo dodaje `tasks.facility_id` (bez `IF NOT EXISTS`), ale ta kolumna NIE wystepuje w 80-kolumnowym pomiarze fresh-DB wlasciciela i nie ma zadnego DROP w `server/migrations` (zweryfikowane grepem). Przyczyna nieobecnosci jest `NOT_PROVEN` — moze to byc blad tej migracji (silent fail per-statement w runnerze) albo blad w oryginalnym pomiarze SQL; nie scigane dalej, poza zakresem FIX-184.
+- Nowe (FIX-184): `20260719_baseline_gap.sql` ma ~645 linii `add column if not exists` na dziesiatkach tabel; zweryfikowalem tylko piec linii dotyczacych `tasks` (13581-13589). Pozostale linie tego pliku (inne tabele) nie byly sprawdzane pod katem podobnych konfliktow kolejnosci z innymi migracjami.
+- Nowe (FIX-184): trzy warianty dla `POST /api/my-work/personal-tasks` (A5) maja koszty „rzad wielkosci” oparte na przegladzie kodu (typy zmian, liczba dotknietych plikow), nie na realnej wycenie inzynierskiej ani prototypie. Podobnie rekomendacja sidecar-agregatu dla `risks`/`alternatives` (A3) to propozycja architektoniczna oparta na istniejacym wzorcu relacji (`executionWork.ts:167-176`), nie zaimplementowany i przetestowany kontrakt.
 
 ## Zakres zmian
 
