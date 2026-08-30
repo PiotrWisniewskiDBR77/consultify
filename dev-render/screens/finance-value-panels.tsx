@@ -12,11 +12,16 @@
  * for DriverPlanner), so this host needs no backend/DB/login.
  *
  * URL params (in addition to the harness-wide ?lang= & ?theme=):
- *   &panel=value|driver   which panel to mount (default: value)
+ *   &panel=value|driver|monte-carlo|real-options|frontier|sensitivity|scenarios
  *   &state=populated|empty  which state (default: populated)
  */
 import React from 'react';
 
+import { EfficientFrontierPanel } from '../../src/components/Economics/panels/EfficientFrontierPanel';
+import { MonteCarloNpvPanel } from '../../src/components/Economics/panels/MonteCarloNpvPanel';
+import { RealOptionsPanel } from '../../src/components/Economics/panels/RealOptionsPanel';
+import { ScenarioComputePanel } from '../../src/components/Economics/panels/ScenarioComputePanel';
+import { WhatIfSensitivityPanel } from '../../src/components/Economics/panels/WhatIfSensitivityPanel';
 import {
   type DriverNode,
   DriverPlannerPanel,
@@ -191,7 +196,17 @@ export default function FinanceValuePanelsScreen(): React.ReactElement {
   const state = params.get('state') || 'populated';
 
   let body: React.ReactElement;
-  if (panel === 'driver') {
+  if (panel === 'monte-carlo') {
+    body = <MonteCarloNpvPanel />;
+  } else if (panel === 'real-options') {
+    body = <RealOptionsPanel />;
+  } else if (panel === 'frontier') {
+    body = <EfficientFrontierPanel />;
+  } else if (panel === 'sensitivity') {
+    body = <WhatIfSensitivityPanel />;
+  } else if (panel === 'scenarios') {
+    body = <ScenarioComputePanel />;
+  } else if (panel === 'driver') {
     body =
       state === 'empty' ? (
         <DriverPlannerPanel />
