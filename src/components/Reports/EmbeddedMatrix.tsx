@@ -2,20 +2,22 @@ import { AlertTriangle, CheckCircle, Info, Minus, TrendingDown, TrendingUp } fro
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// DRD Axis Configuration
-const DRD_AXES: Record<string, { name: string; namePl: string; maxLevel: number }> = {
-  processes: { name: 'Digital Processes', namePl: 'Procesy Cyfrowe', maxLevel: 7 },
-  digitalProducts: { name: 'Digital Products', namePl: 'Produkty Cyfrowe', maxLevel: 5 },
-  businessModels: {
-    name: 'Digital Business Models',
-    namePl: 'Cyfrowe Modele Biznesowe',
-    maxLevel: 5,
-  },
-  dataManagement: { name: 'Data Management', namePl: 'Zarządzanie Danymi', maxLevel: 7 },
-  culture: { name: 'Culture of Transformation', namePl: 'Kultura Transformacji', maxLevel: 5 },
-  cybersecurity: { name: 'Cybersecurity', namePl: 'Cyberbezpieczeństwo', maxLevel: 5 },
-  aiMaturity: { name: 'AI Maturity', namePl: 'Dojrzałość AI', maxLevel: 5 },
-};
+import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '@/services/drdStructure';
+
+// DRD Axis Configuration — thin adapter over the single source of truth
+// (src/services/drdStructure.ts). Do NOT hand-maintain axis names/maxLevel
+// here again: DRD_STRUCTURE[*].levelCount is per-axis (5, 6 or 7 — culture
+// and cybersecurity are 6, not 5) and DRD_AXIS_KEY_MAP maps its numeric
+// axis.id to the string key used in axisData/report snapshots. A second,
+// hand-copied table here previously drifted (culture/cybersecurity stuck at
+// maxLevel 5, making level 6 unreachable in this matrix).
+const DRD_AXES: Record<string, { name: string; namePl: string; maxLevel: number }> =
+  Object.fromEntries(
+    DRD_STRUCTURE.map((axis) => [
+      DRD_AXIS_KEY_MAP[axis.id],
+      { name: axis.name, namePl: axis.namePL || axis.name, maxLevel: axis.levelCount },
+    ])
+  );
 
 interface AxisData {
   actual?: number;

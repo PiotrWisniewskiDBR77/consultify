@@ -351,6 +351,9 @@ const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artif
 // (fallback = lista awaryjna), więc nie dało się go w ogóle zmierzyć.
 const ReportArtifactScreen = React.lazy(() => import('./screens/report-artifact'));
 const InsightArtifactScreen = React.lazy(() => import('./screens/insight-artifact'));
+const DrdEmbeddedMatrixAxisLevelsScreen = React.lazy(
+  () => import('./screens/drd-embedded-matrix-axis-levels')
+);
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
 const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'));
 const ExceleEdytowalnaSiatkaScreen = React.lazy(() => import('./screens/excele-edytowalna-siatka'));
@@ -1578,6 +1581,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'insight-artifact': {
     label: 'DOKUMENTY — Insight jako artefakt (tryb demo komponentu)',
     render: () => <InsightArtifactScreen />,
+  },
+  'drd-embedded-matrix-axis-levels': {
+    label:
+      'DRD — EmbeddedMatrix dowód naprawy maxLevel (culture/cybersecurity=6, SSOT drdStructure.ts)',
+    render: () => <DrdEmbeddedMatrixAxisLevelsScreen />,
   },
   'excele-edytowalna-siatka': {
     label:
