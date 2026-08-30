@@ -9933,18 +9933,37 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         // PREZENTACJI wyniku → przeniesiony do sekcji „Rezultaty" (§6.4/§6.5).
         //
         // ── PODGLĄD = TYLKO CZYTANIE (decyzja właściciela 2026-07-24) ──
-        // Sekcja jest PUSTA w Podglądzie — dokładnie jak w Zadaniu i Decyzji.
+        // Sekcja nie ma DZIAŁAŃ w Podglądzie — dokładnie jak w Zadaniu i Decyzji.
         // Wcześniej stał tu aktywny „Utwórz wariant", czyli akcja TWORZĄCA
         // nowy obiekt w trybie, który ma nic nie zmieniać. Chcesz wariant →
-        // przełącz na Edycję. Etap 4 gridu n-Type
-        // (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w Podglądzie sekcja jest
-        // ZWINIĘTA z licznikiem 0, bez komunikatu opisowego (był tu tekst
-        // „Actions are hidden in preview mode" — SSOT go zakazuje wprost).
-        defaultOpen: !readMode,
-        isEmpty: readMode,
+        // przełącz na Edycję.
+        //
+        // ★ AKTUALIZACJA 2026-08-30 — decyzja właściciela ZASTĘPUJE zakaz z 24.07.
+        // Etap 4 gridu n-Type zakazywał tu JAKIEGOKOLWIEK komunikatu, więc
+        // w Podglądzie zostawało nagie „0". Właściciel rozstrzygnął, że nagie
+        // zero WPROWADZA W BŁĄD („liczba 0 nie oznacza braku działań" — wzorzec
+        // ekranu z 2026-08-30) i kazał dopisać zdanie wyjaśniające.
+        // Zakazany był komunikat po angielsku, mówiący o trybie („Actions are
+        // hidden in preview mode"). Ten mówi o ZNACZENIU LICZBY, po polsku —
+        // i to jest różnica, której tamten zakaz dotyczył.
+        // Patrz: docs/program/grafika/KANON_Z_ODBIOROW.md
+        // ★ 2026-08-30: otwarta TAKŻE w Podglądzie. Zwinięcie było spójne
+        // z zakazem komunikatu (nie było czego pokazywać), ale po decyzji
+        // właściciela sekcja niesie zdanie wyjaśniające — zwinięta chowałaby
+        // dokładnie to, co miało przestać wprowadzać w błąd.
+        defaultOpen: true,
+        // Sekcja NIE jest już „pusta" w Podglądzie — niesie zdanie wyjaśniające
+        // znaczenie licznika. Licznik zostaje `0`, bo działań realnie tu nie ma.
+        isEmpty: false,
         badge: readMode ? 0 : undefined,
         showZeroBadge: true,
-        children: readMode ? null : (
+        children: readMode ? (
+          <p className="text-xs leading-relaxed text-c-text-muted">
+            {isPolish
+              ? 'W trybie Podglądu działania są niedostępne. Liczba 0 opisuje ten widok, nie inicjatywę — to ograniczenie podglądu, nie informacja, że działań nie ma. Przełącz na Edycję, żeby je zobaczyć.'
+              : 'Actions are unavailable in Preview. The 0 describes this view, not the initiative — it is a limit of the preview, not a statement that there are no actions. Switch to Edit to see them.'}
+          </p>
+        ) : (
           <div className="flex flex-col gap-2">
             <button type="button" onClick={() => void handleFork()} className={panelBtn}>
               <GitFork size={14} className="text-c-text-muted" />
@@ -10274,6 +10293,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     attachments.length,
     linkedItems.length,
     canEditCards,
+    // ★ 2026-08-30: `readMode` jest CZYTANY w tej sekcji (defaultOpen, badge,
+    // treść „Akcje"), a nie było go w zależnościach. Działało przypadkiem, bo
+    // `canEditCards` = capability && !readMode, więc zmieniało się razem z nim.
+    // Gdyby uprawnienie było `false`, panel zostawałby nieodświeżony przy
+    // przełączeniu Edycja/Podgląd. Jawna zależność zamiast sprzężenia.
+    readMode,
     canUseAi,
     isCommentsAIProposing,
     nCommentDraft,
