@@ -74,6 +74,11 @@ These are technical observations, not Piotr owner findings.
 | `MTG-PF-001` | The runtime smoke still required retired direct decision/follow-up API helpers and UI copy, contradicting the current governed proposal-only write contract.                                 | Initial smoke `3/5`; real-PG contracts remained green. Smoke now requires generate/list/decide governed-note APIs and the explicit human-approval boundary; replay `5/5`; commit `204293efff`. | `FIXED_VERIFIED` |
 | `MTG-PF-002` | The immutable-cleanup negative control inherited the invocation's permitted database prefix, so it could not prove rejection when the shared local database name itself matched that prefix. | Initial downstream run `32/33`; test now temporarily supplies a deliberately nonmatching prefix and restores the caller environment; replay `33/33`; commit `204293efff`.                      | `FIXED_VERIFIED` |
 
+| `MTG-PF-003` | G08 remains live: the approved object and preview expose raw user IDs, `Organizer null null`, and predominantly English UI copy. | Canonical local runtime `18661cc6a0`; `admin-meetings-approved-{light,dark}.png` and `admin-meetings-preview-light.png`. | `STILL_LIVE` |
+| `MTG-PF-004` | G09/G10 remain live: approved renders `Decisions 0` and an empty Decisions surface despite one materialization receipt in fixture readback. | `admin-meetings-approved-{light,dark}.png`, `admin-meetings-decisions-{light,dark}.png`; readback `receiptCount=1`. | `STILL_LIVE` |
+| `MTG-PF-005` | Pending and rejected object routes remain on two `Loading` indicators, while the approved object renders. | `admin-meetings-pending-{light,dark}.png` and `admin-meetings-rejected-{light,dark}.png`; repeated cold navigation. | `NEW_FINDING` |
+| `MTG-PF-006` | A regular fixture MEMBER is redirected from `/meetings` to `/interview`; the pilot route allowlist omits `/meetings` independently of the open beta flag. | `member-meetings-redirect-interview-dark.png`; `RouterSync.tsx:316-325`; `pilotAccess.ts:20-31`. | `ACCESS_BLOCKED` |
+
 ## Owner UI/UX/CX register
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
