@@ -1,0 +1,16 @@
+NOWY — DYŻUR 123
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_123_PROTO_DWA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 123.
+
+Marker: a1265154b73f57a43cbe468993e4317bb2e0f02b
+Zasoby wyłączne: baza 6006, runtime 4912 i 4913 (PARA — runtime wymaga obu).
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

@@ -46,11 +46,11 @@
 <p class="lead">Ekrany gotowe do obejrzenia na żywo. Każdy z nich oglądałem sam, w obu motywach, zanim tu trafił — <b>dostajesz je do akceptu, nie do odkrywania zepsucia</b>.</p>
 
 <div class="licz">
-  <div class="kafel"><b>22</b><span>do odbioru</span></div>
-  <div class="kafel"><b>20</b><span>bez zastrzeżeń</span></div>
-  <div class="kafel"><b>2</b><span>z nazwanymi wyjątkami</span></div>
-  <div class="kafel"><b>11</b><span>defektów naprawionych</span></div>
-  <div class="kafel"><b>2</b><span>świadomie niepokazane</span></div>
+  <div class="kafel"><b>33</b><span>do odbioru</span></div>
+  <div class="kafel"><b>24</b><span>bez zastrzeżeń</span></div>
+  <div class="kafel"><b>9</b><span>z nazwanymi wyjątkami</span></div>
+  <div class="kafel"><b>25</b><span>defektów naprawionych</span></div>
+  <div class="kafel"><b>6</b><span>świadomie niepokazane</span></div>
 </div>
 
 <div class="jak">
@@ -337,16 +337,160 @@
         
         <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Ogladana tylko domyslna zakladka</li></ul></div>
       </div>
+    </div><div class="modul">
+      <h2>Finanse</h2>
+      <p class="opis">Modele, wyceny, prognozy i sprawozdania. Widziales stad wylacznie model finansowy — reszta jest dla Ciebie nowa.</p>
+      
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Model finansowy<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-model-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-model-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Model bazowy z danymi wejsciowymi i bilansem otwarcia.</p>
+        <p class="naprawione"><b>Naprawione:</b> Surowy enum 'quarterly' zamiast etykiety · Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Analiza<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-analysis-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-analysis-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Uczciwy pusty stan i tabela wskaznikow z formulami.</p>
+        <p class="naprawione"><b>Naprawione:</b> Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Wartosci wskaznikow bez znaku procenta — brak metadanych jednostki w danych, nie do naprawy w wygladzie</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Wycena<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-valuation-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-valuation-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Lancuch pochodzenia wyceny i most od wartosci przedsiebiorstwa do kapitalu.</p>
+        <p class="naprawione"><b>Naprawione:</b> Dwa z trzech krokow lancucha po angielsku · Brak procenta przy wadze metody · Kropka zamiast przecinka dziesietnego</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Prognoza<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-prediction-workspace&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-prediction-workspace&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Budowa scenariuszy z paskiem statusu.</p>
+        <p class="naprawione"><b>Naprawione:</b> 'Rewizja authoringu: .' — pusta wartosc i znieksztalcone slowo</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Pakiet sprawozdan<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-statement-pack-workspace-v2&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-statement-pack-workspace-v2&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Tabela sprawozdania i panel powiazanych artefaktow.</p>
+        <p class="naprawione"><b>Naprawione:</b> Wszystkie naglowki panelu powiazan po angielsku · Surowe kody przeksztalcen</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Liczba przy etykiecie 'skala: tysiace' wyglada jak znany wzorzec podwojenia jednostki — dane makietowe, nie zweryfikowane wobec zywej bazy</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Porownanie okresow<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-compare-panel&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-compare-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Tabela porownania z roznicami.</p>
+        <p class="naprawione"><b>Naprawione:</b> Angielska etykieta trybu · Dodana waluta z istniejacych danych</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Kody pozycji w kolumnie wymiarow — dane makietowe</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Komentarze<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-comments-panel&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-comments-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Komentarze blokujace i lista kontrolna przegladu.</p>
+        <p class="naprawione"><b>Naprawione:</b> Angielski naglowek sekcji</p>
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Zapisane widoki<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-saved-views-panel&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-saved-views-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Widoki zespolowe i osobiste.</p>
+        
+        
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Eksport i import<span class="ocena o-B">B</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-export-import-panel&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-export-import-panel&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Wymiana arkusza z manifestem.</p>
+        <p class="naprawione"><b>Naprawione:</b> 'jednostka THOUSANDS' — surowy enum, ta sama klasa defektu co w prezentacji</p>
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>'Choose File' to natywna kontrolka przegladarki — nieprzetlumaczalna bez wlasnego uploadera</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Nawigator pochodzenia<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-lineage-navigator&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-lineage-navigator&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Lancuch powiazan z uczciwym zerem: '0 / Brak.'</p>
+        
+        <div class="wyjatki"><b>Wiesz o tym przed spojrzeniem:</b><ul><li>Wzorcowy przyklad prawa liczby — zero zawsze z wyjasnieniem</li></ul></div>
+      </div>
+      <div class="ekran">
+        <div class="glowna">
+          <span class="nazwa">Pasek tozsamosci<span class="ocena o-A">A</span></span>
+          <span class="akcje">
+            <a class="btn btn-glowny" href="http://127.0.0.1:3020/?screen=finance-workspace-bar&lang=pl&theme=light" target="_blank" rel="noopener">Otwórz</a>
+            <a class="btn" href="http://127.0.0.1:3020/?screen=finance-workspace-bar&lang=pl&theme=dark" target="_blank" rel="noopener">Ciemny</a>
+          </span>
+        </div>
+        <p class="co">Izolowany podglad wspolnego paska.</p>
+        
+        
+      </div>
     </div>
 
 <div class="odrzucone">
-  <h2>Świadomie Ci nie pokazuję — 2</h2>
+  <h2>Świadomie Ci nie pokazuję — 6</h2>
   <p class="opis">Te ekrany nie przeszły mojej oceny albo wymagają decyzji, nie naprawy. Wypisuję je, żebyś wiedział, czego brakuje w tej partii i dlaczego.</p>
   <div class="ekran"><div class="glowna"><span class="nazwa">Karta wywiadu<span class="ocena o-C">C</span></span></div>
       <p class="co">Prawy panel ma trzy z szesciu kanonicznych sekcji.</p>
       <div class="wyjatki"><b>Powód:</b><ul><li>Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Powloka rejestru<span class="ocena o-D">D</span></span></div>
       <p class="co">Ekran po angielsku.</p>
-      <div class="wyjatki"><b>Powód:</b><ul><li>Sprawdzone: to fixtura testujaca mechanike wspolnej powloki, nie ekran produktowy. Nie pokazuje sie wlascicielowi.</li></ul></div></div>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Sprawdzone: to fixtura testujaca mechanike wspolnej powloki, nie ekran produktowy. Nie pokazuje sie wlascicielowi.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Baza porownania<span class="ocena o-C">C</span></span></div>
+      <p class="co">Trwaly stan bledu — harness nie ma atrapy jednego wywolania.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Panele wartosci<span class="ocena o-C">C</span></span></div>
+      <p class="co">Most wartosci i planer nosnikow.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu.</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Tryb skupienia (diagnostyka)<span class="ocena o-D">D</span></span></div>
+      <p class="co">Narzedzie inzynierskie, nie ekran produktu.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nie pokazuje sie jako ekran produktu</li></ul></div></div><div class="ekran"><div class="glowna"><span class="nazwa">Most identyfikatorow (diagnostyka)<span class="ocena o-D">D</span></span></div>
+      <p class="co">Narzedzie inzynierskie, nie ekran produktu.</p>
+      <div class="wyjatki"><b>Powód:</b><ul><li>Nie pokazuje sie jako ekran produktu</li></ul></div></div>
 </div>
 
 </div></body></html>

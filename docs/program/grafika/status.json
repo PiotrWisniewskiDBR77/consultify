@@ -259,6 +259,180 @@
           ]
         }
       ]
+    },
+    {
+      "katalog": "09-finanse",
+      "nazwa": "Finanse",
+      "opis": "Modele, wyceny, prognozy i sprawozdania. Widziales stad wylacznie model finansowy — reszta jest dla Ciebie nowa.",
+      "ekrany": [
+        {
+          "id": "finance-model-workspace",
+          "nazwa": "Model finansowy",
+          "ocena": "B",
+          "co": "Model bazowy z danymi wejsciowymi i bilansem otwarcia.",
+          "naprawione": [
+            "Surowy enum 'quarterly' zamiast etykiety",
+            "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika"
+          ],
+          "wyjatki": [
+            "Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany"
+          ]
+        },
+        {
+          "id": "finance-analysis-workspace",
+          "nazwa": "Analiza",
+          "ocena": "B",
+          "co": "Uczciwy pusty stan i tabela wskaznikow z formulami.",
+          "naprawione": [
+            "Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku"
+          ],
+          "wyjatki": [
+            "Wartosci wskaznikow bez znaku procenta — brak metadanych jednostki w danych, nie do naprawy w wygladzie"
+          ]
+        },
+        {
+          "id": "finance-valuation-workspace",
+          "nazwa": "Wycena",
+          "ocena": "B",
+          "co": "Lancuch pochodzenia wyceny i most od wartosci przedsiebiorstwa do kapitalu.",
+          "naprawione": [
+            "Dwa z trzech krokow lancucha po angielsku",
+            "Brak procenta przy wadze metody",
+            "Kropka zamiast przecinka dziesietnego"
+          ],
+          "wyjatki": [
+            "Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty"
+          ]
+        },
+        {
+          "id": "finance-prediction-workspace",
+          "nazwa": "Prognoza",
+          "ocena": "B",
+          "co": "Budowa scenariuszy z paskiem statusu.",
+          "naprawione": [
+            "'Rewizja authoringu: .' — pusta wartosc i znieksztalcone slowo"
+          ],
+          "wyjatki": [
+            "Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module"
+          ]
+        },
+        {
+          "id": "finance-statement-pack-workspace-v2",
+          "nazwa": "Pakiet sprawozdan",
+          "ocena": "B",
+          "co": "Tabela sprawozdania i panel powiazanych artefaktow.",
+          "naprawione": [
+            "Wszystkie naglowki panelu powiazan po angielsku",
+            "Surowe kody przeksztalcen"
+          ],
+          "wyjatki": [
+            "Liczba przy etykiecie 'skala: tysiace' wyglada jak znany wzorzec podwojenia jednostki — dane makietowe, nie zweryfikowane wobec zywej bazy"
+          ]
+        },
+        {
+          "id": "finance-compare-panel",
+          "nazwa": "Porownanie okresow",
+          "ocena": "B",
+          "co": "Tabela porownania z roznicami.",
+          "naprawione": [
+            "Angielska etykieta trybu",
+            "Dodana waluta z istniejacych danych"
+          ],
+          "wyjatki": [
+            "Kody pozycji w kolumnie wymiarow — dane makietowe"
+          ]
+        },
+        {
+          "id": "finance-comments-panel",
+          "nazwa": "Komentarze",
+          "ocena": "A",
+          "co": "Komentarze blokujace i lista kontrolna przegladu.",
+          "naprawione": [
+            "Angielski naglowek sekcji"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "finance-saved-views-panel",
+          "nazwa": "Zapisane widoki",
+          "ocena": "A",
+          "co": "Widoki zespolowe i osobiste.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "finance-export-import-panel",
+          "nazwa": "Eksport i import",
+          "ocena": "B",
+          "co": "Wymiana arkusza z manifestem.",
+          "naprawione": [
+            "'jednostka THOUSANDS' — surowy enum, ta sama klasa defektu co w prezentacji"
+          ],
+          "wyjatki": [
+            "'Choose File' to natywna kontrolka przegladarki — nieprzetlumaczalna bez wlasnego uploadera"
+          ]
+        },
+        {
+          "id": "finance-lineage-navigator",
+          "nazwa": "Nawigator pochodzenia",
+          "ocena": "A",
+          "co": "Lancuch powiazan z uczciwym zerem: '0 / Brak.'",
+          "naprawione": [],
+          "wyjatki": [
+            "Wzorcowy przyklad prawa liczby — zero zawsze z wyjasnieniem"
+          ]
+        },
+        {
+          "id": "finance-workspace-bar",
+          "nazwa": "Pasek tozsamosci",
+          "ocena": "A",
+          "co": "Izolowany podglad wspolnego paska.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "finance-baseline-workspace",
+          "nazwa": "Baza porownania",
+          "ocena": "C",
+          "co": "Trwaly stan bledu — harness nie ma atrapy jednego wywolania.",
+          "naprawione": [
+            "Crimson na linku 'Sprobuj ponownie'"
+          ],
+          "wyjatki": [
+            "Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy."
+          ]
+        },
+        {
+          "id": "finance-value-panels",
+          "nazwa": "Panele wartosci",
+          "ocena": "C",
+          "co": "Most wartosci i planer nosnikow.",
+          "naprawione": [],
+          "wyjatki": [
+            "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu."
+          ]
+        },
+        {
+          "id": "finance-focus-mode",
+          "nazwa": "Tryb skupienia (diagnostyka)",
+          "ocena": "D",
+          "co": "Narzedzie inzynierskie, nie ekran produktu.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nie pokazuje sie jako ekran produktu"
+          ]
+        },
+        {
+          "id": "finance-id-bridge",
+          "nazwa": "Most identyfikatorow (diagnostyka)",
+          "ocena": "D",
+          "co": "Narzedzie inzynierskie, nie ekran produktu.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nie pokazuje sie jako ekran produktu"
+          ]
+        }
+      ]
     }
   ]
 }

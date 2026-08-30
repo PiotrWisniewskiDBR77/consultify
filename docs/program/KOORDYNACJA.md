@@ -35,7 +35,13 @@ drugi tor o tym nie wie.
 ## Tablica bieżąca
 
 ### Blokady zgłoszone przez grafikę do toru funkcji
-_(pusto)_
+
+| Data | Co | Dlaczego to nie jest sprawa wyglądu |
+| --- | --- | --- |
+| 2026-08-30 | **Karta inicjatywy nie ma przycisku głównego.** Przyczyna: `statusActions` twardo `[]` (`InitiativeDocumentView.tsx`, `DEC-104`) — ścieżka zapisu statusu rzuca wyjątkiem dla każdego statusu docelowego. | Wyłączenie było słuszne, ale znaczy, że **inicjatywy nie da się popchnąć do przodu z jej własnego ekranu**. To dziura funkcjonalna. |
+| 2026-08-30 | **Trzy ekrany Finansów pokazują duże kwoty bez waluty.** Kontrakt danych (`ValuationResultsDto`, propsy paneli wartości) nie niesie pola waluty. | Zmyślenie waluty byłoby gorsze niż jej brak. Wymaga uzupełnienia kontraktu danych. |
+| 2026-08-30 | **Wartości wskaźników w Analizie bez jednostki** (0,12 / 0,35 zamiast procentów). Brak metadanych jednostki w danych. | Jak wyżej — brak w kontrakcie, nie w wyglądzie. |
+| 2026-08-30 | **Harness nie ma atrapy jednego wywołania Bazy porównania** — ekran zawsze wpada w błąd, więc jego treści nie da się odebrać wizualnie. | Uzupełnienie atrapy to praca po stronie danych. |
 
 ### Blokady zgłoszone przez funkcje do toru grafiki
 
