@@ -1,7 +1,8 @@
 /** @vitest-environment node */
 
 import { randomUUID } from 'node:crypto';
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 
 import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
@@ -14,7 +15,8 @@ import { ApiGateway } from '../../Gateway.js';
 import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const NO_RETRY = { retry: 0 } as const;
-const ARTIFACT = '/private/tmp/cx-day170-okna-checkin-artefakty/day170-http-db-evidence.json';
+const ARTIFACTS_DIR = process.env.DAY170_ARTIFACTS_DIR;
+const ARTIFACT = ARTIFACTS_DIR ? path.join(ARTIFACTS_DIR, 'day170-http-db-evidence.json') : null;
 const API = '/api/vnext/results/okr';
 
 type Evidence = {
@@ -40,17 +42,15 @@ describe('Day 170 check-in occurrence picker through real ApiGateway and Postgre
     await assertRealPostgresTestEnvironment();
     sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
     await sql.connect();
-    const target = await sql.query<{ database: string; port: number }>(
-      'SELECT current_database() AS database, inet_server_port() AS port'
-    );
-    expect(target.rows[0]).toEqual({ database: 'cx170', port: 5432 });
     app = express();
     app.use(express.json());
     ApiGateway.getInstance().initializeRoutes(app);
   }, 30_000);
 
   afterAll(async () => {
-    writeFileSync(ARTIFACT, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
+    if (ARTIFACT && existsSync(path.dirname(ARTIFACT))) {
+      writeFileSync(ARTIFACT, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
+    }
     if (sql) await sql.end();
   });
 
@@ -217,6 +217,38 @@ describe('Day 170 check-in occurrence picker through real ApiGateway and Postgre
     const notFound = await get(owner, organizationId, `/key-results/${randomUUID()}/checkin-occurrences`, 404);
     expect(notFound.body.code).toBe('NOT_FOUND');
 
+    // Day170 FIX-170 #4 (literal B2): a key result that DOES exist, but
+    // belongs to a DIFFERENT organization, must 404 — not silently return an
+    // empty list — when queried with a token scoped to the wrong org.
+    const foreignOrganizationId = randomUUID();
+    const foreignOwnerId = randomUUID();
+    ownedOrganizationIds.push(foreignOrganizationId);
+    await sql.query(
+      `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
+       VALUES ($1, $2, 'enterprise', 'active', 1, now())`,
+      [foreignOrganizationId, `Day170 ${scenario} foreign`]
+    );
+    await sql.query(
+      `INSERT INTO users
+         (id, organization_id, email, password, first_name, last_name, role, status, created_at)
+       VALUES ($1, $2, $3, 'x', 'Day', '170-foreign', 'OWNER', 'active', now())`,
+      [foreignOwnerId, foreignOrganizationId, `${foreignOwnerId}@day170.test`]
+    );
+    await sql.query(
+      `INSERT INTO organization_members
+         (id, organization_id, user_id, role, status, created_at)
+       VALUES ($1, $2, $3, 'OWNER', 'ACTIVE', now())`,
+      [randomUUID(), foreignOrganizationId, foreignOwnerId]
+    );
+    const foreignOwner = authHeader(foreignOwnerId, foreignOrganizationId, 'OWNER');
+    const crossOrg = await get(
+      foreignOwner,
+      foreignOrganizationId,
+      `/key-results/${keyResultIds[0]}/checkin-occurrences`,
+      404
+    );
+    expect(crossOrg.body.code).toBe('NOT_FOUND');
+
     const before = await sql.query(
       `SELECT
          (SELECT count(*)::int FROM okr_vnext_checkin_occurrences WHERE cycle_id = $1) AS occurrences,
@@ -276,8 +308,45 @@ describe('Day 170 check-in occurrence picker through real ApiGateway and Postgre
     expect(listed.body.occurrences.map((row: any) => row.cadenceOccurrenceId)).toEqual(
       rawOccurrences.rows.map((row) => row.cadence_occurrence_id)
     );
+    // Day170 FIX-170 #1: dates must come back exactly as the DB stores them
+    // (::text on the SQL side), not shifted by a local-timezone
+    // `toISOString().slice(0, 10)` on a JS Date.
+    expect(listed.body.occurrences.map((row: any) => ({ windowStart: row.windowStart, windowEnd: row.windowEnd }))).toEqual(
+      rawOccurrences.rows.map((row) => ({ windowStart: row.window_start, windowEnd: row.window_end }))
+    );
     expect(listed.body.occurrences.filter((row: any) => row.isCurrent)).toHaveLength(1);
     expect(listed.body.occurrences.every((row: any) => row.used === false)).toBe(true);
+
+    // Day170 FIX-170 #5: `isCurrent` must be false for a past, unused window
+    // and true for the earliest still-open ("next due") window — guards
+    // commit 226b5aaae4, which shipped with zero assertions on this column.
+    const expiredRow = await sql.query<{ cadence_occurrence_id: string }>(
+      `SELECT cadence_occurrence_id FROM okr_vnext_checkin_occurrences
+        WHERE cycle_id = $1 AND window_end < CURRENT_DATE
+        ORDER BY window_end DESC LIMIT 1`,
+      [cycle.cycleId]
+    );
+    expect(expiredRow.rows.length).toBe(1);
+    const expiredOccurrence = listed.body.occurrences.find(
+      (row: any) => row.cadenceOccurrenceId === expiredRow.rows[0].cadence_occurrence_id
+    );
+    expect(expiredOccurrence).toBeDefined();
+    expect(expiredOccurrence.used).toBe(false);
+    expect(expiredOccurrence.isCurrent).toBe(false);
+
+    const nextDueRow = await sql.query<{ cadence_occurrence_id: string }>(
+      `SELECT cadence_occurrence_id FROM okr_vnext_checkin_occurrences
+        WHERE cycle_id = $1 AND window_end >= CURRENT_DATE
+        ORDER BY window_end ASC, window_start ASC LIMIT 1`,
+      [cycle.cycleId]
+    );
+    expect(nextDueRow.rows.length).toBe(1);
+    const nextDueOccurrence = listed.body.occurrences.find(
+      (row: any) => row.cadenceOccurrenceId === nextDueRow.rows[0].cadence_occurrence_id
+    );
+    expect(nextDueOccurrence).toBeDefined();
+    expect(nextDueOccurrence.isCurrent).toBe(true);
+
     evidence.push({ scenario, step: 'listed occurrences before check-in', status: listed.status, response: listed.body, database: rawOccurrences.rows });
 
     const checkIn = await post(owner, organizationId, `/key-results/${keyResultIds[0]}/check-ins`, {
