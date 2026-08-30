@@ -649,6 +649,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [riskAnalysisError, setRiskAnalysisError] = useState<string | null>(null);
   const riskAnalysisInFlightRef = useRef(false);
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+  // FIX-175 (Z-1): baseline snapshot of risks/alternatives AS LOADED, so
+  // handleSave can tell whether the user actually touched this section in
+  // this editing session. The PUT below always hits the gated route (409),
+  // so firing it unconditionally on every save produced a permanent red
+  // toast on every task save, even when Risk & Alternatives was untouched.
+  // Same "compare to a stored snapshot" pattern as `lastSavedSnapshot` above.
+  const riskAlternativesBaselineRef = useRef<string>(JSON.stringify({ risks: [], alternatives: [] }));
   const [selectedAlternativeId, setSelectedAlternativeId] = useState<string>('');
   const [implementationIdeas, setImplementationIdeas] = useState<ImplementationIdea[]>([]);
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
@@ -1107,14 +1114,23 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
           `/tasks/${encodeURIComponent(id)}/risk-alternatives`
         );
         const riskAlternatives = riskAlternativesResponse?.data ?? riskAlternativesResponse;
-        setRisks(Array.isArray(riskAlternatives?.risks) ? riskAlternatives.risks : []);
-        setAlternatives(
-          Array.isArray(riskAlternatives?.alternatives) ? riskAlternatives.alternatives : []
-        );
+        const loadedRisks = Array.isArray(riskAlternatives?.risks) ? riskAlternatives.risks : [];
+        const loadedAlternatives = Array.isArray(riskAlternatives?.alternatives)
+          ? riskAlternatives.alternatives
+          : [];
+        setRisks(loadedRisks);
+        setAlternatives(loadedAlternatives);
+        // FIX-175: remember exactly what loaded, so a later save can tell a
+        // real edit apart from an untouched section.
+        riskAlternativesBaselineRef.current = JSON.stringify({
+          risks: loadedRisks,
+          alternatives: loadedAlternatives,
+        });
       } catch (error) {
         console.warn('[TaskDetailView] Failed to load Risk & Alternatives', error);
         setRisks([]);
         setAlternatives([]);
+        riskAlternativesBaselineRef.current = JSON.stringify({ risks: [], alternatives: [] });
       }
       setAttachments(await loadTaskAttachments(Api, id));
       const serverComments = await Api.getTaskComments(id);
@@ -1316,20 +1332,29 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         }
         onSaved?.({ ...personalPayload, id: taskId });
 
-        try {
-          await Api.put(`/tasks/${encodeURIComponent(taskId)}/risk-alternatives`, {
-            risks,
-            alternatives,
-          });
-        } catch (error) {
-          console.warn('[TaskDetailView] Risk & Alternatives were not saved', error);
-          if (!silent) {
-            toast.error(
-              t(
-                'myWork.taskDetail.riskAlternativesNotSaved',
-                'Task saved, but Risk & Alternatives could not be saved'
-              )
-            );
+        // FIX-175 (Z-1): this route sits behind a gate and always answers
+        // 409 — firing it on every save meant a red toast on EVERY task
+        // save, whether or not Risk & Alternatives was touched. Only PUT
+        // when the section actually changed in this editing session; the
+        // 409's honest error toast still fires when it was edited.
+        const riskAlternativesSnapshot = JSON.stringify({ risks, alternatives });
+        if (riskAlternativesSnapshot !== riskAlternativesBaselineRef.current) {
+          try {
+            await Api.put(`/tasks/${encodeURIComponent(taskId)}/risk-alternatives`, {
+              risks,
+              alternatives,
+            });
+            riskAlternativesBaselineRef.current = riskAlternativesSnapshot;
+          } catch (error) {
+            console.warn('[TaskDetailView] Risk & Alternatives were not saved', error);
+            if (!silent) {
+              toast.error(
+                t(
+                  'myWork.taskDetail.riskAlternativesNotSaved',
+                  'Task saved, but Risk & Alternatives could not be saved'
+                )
+              );
+            }
           }
         }
       } else {

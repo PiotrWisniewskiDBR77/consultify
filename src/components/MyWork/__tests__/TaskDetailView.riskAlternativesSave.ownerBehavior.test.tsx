@@ -98,6 +98,22 @@ vi.mock('@/components/shared/NModeLayout/NModeHeader', () => ({
 
 vi.mock('../taskCardV2Flag', () => ({ isTaskCardV2Enabled: () => false }));
 
+// FIX-175 (Z-1): only the "Add risk" affordance is needed to prove the
+// section was touched in this editing session — everything else RiskCanvas
+// renders is irrelevant to the dirty-check under test, so it's swapped for a
+// minimal stand-in while every other NModeSections export stays real.
+vi.mock('../../shared/NModeSections', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    RiskCanvas: ({ onAddRisk }: { onAddRisk: () => void }) => (
+      <button type="button" onClick={onAddRisk}>
+        Add risk (mock)
+      </button>
+    ),
+  };
+});
+
 import { TaskDetailView } from '../TaskDetailView';
 
 describe('TaskDetailView Risk & Alternatives save regression', () => {
@@ -124,7 +140,7 @@ describe('TaskDetailView Risk & Alternatives save regression', () => {
     vi.useRealTimers();
   });
 
-  it('keeps the successful task save, reports the gated section, and stops the 900ms autosave loop', async () => {
+  it('does NOT call the gated risk-alternatives route when the section is untouched, and shows no error toast', async () => {
     const onSaved = vi.fn();
     render(<TaskDetailView taskId="task-175" onClose={vi.fn()} onSaved={onSaved} />);
 
@@ -133,6 +149,51 @@ describe('TaskDetailView Risk & Alternatives save regression', () => {
     await act(async () => {
       await Promise.resolve();
     });
+    fireEvent.click(screen.getByRole('button', { name: 'Save task' }));
+
+    await waitFor(() => expect(mocks.updatePersonalTask).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save task' })).toBeEnabled());
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      vi.advanceTimersByTime(900);
+      await Promise.resolve();
+    });
+
+    // Core of Z-1: risks/alternatives were never touched in this session ->
+    // zero PUT to the gated route, zero error toast about it, ever.
+    expect(mocks.put).not.toHaveBeenCalled();
+    expect(mocks.toastError).not.toHaveBeenCalled();
+    expect(mocks.consoleWarn).not.toHaveBeenCalledWith(
+      '[TaskDetailView] Risk & Alternatives were not saved',
+      expect.anything()
+    );
+    expect(mocks.toastSuccess).toHaveBeenCalledWith('Task updated');
+
+    // Second save (still untouched) confirms this isn't a one-shot fluke —
+    // the loop stays quiet indefinitely for an untouched section.
+    fireEvent.click(screen.getByRole('button', { name: 'Save task' }));
+    await waitFor(() => expect(mocks.updatePersonalTask).toHaveBeenCalledTimes(2));
+    expect(mocks.put).not.toHaveBeenCalled();
+  });
+
+  it('calls the gated risk-alternatives route and reports the honest 409 when risks were edited in this session', async () => {
+    const onSaved = vi.fn();
+    render(<TaskDetailView taskId="task-175" onClose={vi.fn()} onSaved={onSaved} />);
+
+    await waitFor(() => expect(screen.getByLabelText('Task title')).toHaveValue('Before'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Risk & Alternatives' }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add risk (mock)' }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     fireEvent.click(screen.getByRole('button', { name: 'Save task' }));
 
     await waitFor(() => expect(mocks.updatePersonalTask).toHaveBeenCalledTimes(1));
@@ -147,7 +208,8 @@ describe('TaskDetailView Risk & Alternatives save regression', () => {
       vi.advanceTimersByTime(900);
       await Promise.resolve();
     });
-    expect(mocks.updatePersonalTask).toHaveBeenCalledTimes(1);
+    // Loop still stays quiet: same edited-but-unpersisted risk state doesn't
+    // spawn extra PUTs from the autosave interval on its own.
     expect(mocks.put).toHaveBeenCalledTimes(1);
 
     expect(mocks.toastSuccess).toHaveBeenCalledWith('Task updated');
