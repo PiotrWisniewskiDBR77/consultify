@@ -35,6 +35,38 @@ interface RecordTemplateManagerProps {
 }
 
 // ---------------------------------------------------------------------------
+// ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): podgląd „pre-filled
+// values" na karcie szablonu drukował surową wartość pola (`String(value)`)
+// bez sprawdzenia typu pola — checkbox pokazywał „true"/„false", a
+// singleSelect pokazywał techniczny `id` opcji (np. „todo") zamiast jej
+// etykiety („Do zrobienia"), MIMO że etykieta jest tuż obok w
+// `field.options.options[].name`. Dokładnie wzorzec z listy „surowe
+// wartości zamiast etykiet". Ta funkcja odtwarza mapowanie, które
+// `TemplateFieldInput` (niżej w tym pliku) już robi dla EDYCJI pola —
+// tu robimy to samo dla PODGLĄDU.
+// ---------------------------------------------------------------------------
+function formatTemplatePreviewValue(
+  field: TablePlatformField | undefined,
+  value: unknown,
+  t: (key: string, fallback: string) => string
+): string {
+  if (value == null || value === '') return '';
+  if (field?.fieldType === 'checkbox') {
+    return value
+      ? t('ideas.table.recordTemplates.previewYes', 'Tak')
+      : t('ideas.table.recordTemplates.previewNo', 'Nie');
+  }
+  if (field?.fieldType === 'singleSelect' || field?.fieldType === 'multiSelect') {
+    const opts =
+      (field.options as { options?: Array<{ name?: string; id?: string }> })?.options ?? [];
+    const raw = Array.isArray(value) ? value : [value];
+    const labels = raw.map((v) => opts.find((o) => o.id === v)?.name ?? String(v));
+    return labels.join(', ');
+  }
+  return String(value);
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -248,7 +280,9 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
                               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-c-surface-raised text-[9px] text-c-text-muted"
                             >
                               <span className="font-medium">{displayName}:</span>
-                              <span className="truncate max-w-[80px]">{String(value ?? '')}</span>
+                              <span className="truncate max-w-[80px]">
+                                {formatTemplatePreviewValue(field, value, t)}
+                              </span>
                             </span>
                           );
                         })}

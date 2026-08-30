@@ -4684,7 +4684,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   ? handleApproveProcessFlowCandidate
                   : handlePreviewProcessFlowCandidate
               }
-              className="rounded-lg bg-c-brand-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              // ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): `bg-c-brand-primary`
+              // nie jest zdefiniowanym tokenem (grep całego repo: użyty TYLKO tutaj,
+              // brak w tailwind.config.js i src/index.css) — klasa nic nie robi, więc
+              // przycisk renderował się z przezroczystym tłem + twardo wpisanym białym
+              // tekstem: niewidoczny na jasnym motywie (biały tekst na jasnej stronie),
+              // przypadkiem czytelny na ciemnym. Zamiana na kanoniczny neutralny wzorzec
+              // przycisku głównego (`bg-c-text`/`text-c-bg`, wzorzec z
+              // DecisionDetailView.tsx:5121 `rpActionPrimary`) — auto-inwersja
+              // light/dark, zero crimson.
+              className="rounded-lg bg-c-text px-3 py-2 text-xs font-semibold text-c-bg hover:bg-c-text-secondary disabled:opacity-50"
             >
               {candidateHandoffBusy
                 ? isPolish

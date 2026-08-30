@@ -186,3 +186,111 @@ motywach, przeczytany narzędziem `Read`.
 ani `public/locales/**`. `scripts/check-list-canon.sh` i
 `scripts/check-triada.sh` przechodzą po wszystkich czterech plikach (dług
 kanonu tabel nie rośnie: 394/394; zero nowych naruszeń crimson).
+
+## Moduł 02-moja-praca
+
+Dyżur: `/private/tmp/m03`, gałąź `codex/m03-admin-20260824`, 2026-08-30 (noc).
+Zakres: **31 ekranów** (`docs/program/grafika/status.json`, moduł `02-moja-praca`).
+To POWTÓRKA — poprzedni robotnik nie zrobił ani jednego świeżego zrzutu, przepisał
+cudze oceny ze `status.json` i obejrzał 2 z 47 obrazów (szczegóły w brief). Ten dyżur:
+świeży zrzut **wszystkich 31 ekranów, oba motywy (62 PNG)** do
+`evidence/grafika/131-noc-moja-praca/`, każdy obejrzany `Read`em osobiście. Jedenaście
+ekranów z briefu, których poprzednik nie miał czym ocenić, dostało pierwszeństwo.
+
+### Tabela ekranów
+
+| Ekran (id) | Ocena | Co jest nie tak | Naprawione / zgłoszone | Zrzut (świeży, ten dyżur) |
+|---|---|---|---|---|
+| `karta-decision` | A | — | — | `karta-decision__PRZED__{light,dark}.png` |
+| `karta-notification` | A | Regresja z wieczora (dublująca się sekcja prawego panelu) **zweryfikowana jako NIEOBECNA** na świeżym zrzucie — już naprawiona wcześniej albo nigdy nie dotyczyła tego ekranu. | Zweryfikowane, nie naprawiane (nic do naprawy) | `karta-notification__PRZED__{light,dark}.png` |
+| `karta-task` | **A (było by D)** | ★ Realny DUPLIKAT sekcji prawego panelu: „ŹRÓDŁA I ZAŁOŻENIA" pokazywała się DWA RAZY (raz z treścią, raz jako pusty kanoniczny placeholder z innym ikoną-tarczą) — dokładnie ten sam wzorzec regresji, którego szukałem po ostrzeżeniu o `karta-notification`. Przyczyna: `TaskDetailView.tsx` deklarował sekcję pod id `'sources-assumptions'` zamiast kanonicznego `'evidence'`, więc `ArtifactRightPanel` (który auto-dokłada 6 obowiązkowych sekcji kanonu, jeśli brakuje ich `id`) nie rozpoznał już zadeklarowanej treści i dołożył DRUGĄ, pustą. | **NAPRAWIONE**: `src/components/MyWork/TaskDetailView.tsx` (zmiana `id` sekcji z `'sources-assumptions'` na `'evidence'`) | `karta-task__PO__{light,dark}.png` |
+| `karta-insight` | B | Sekcja „AKCJE" zwinięta z widocznym licznikiem `0` bez żadnego wyjaśniającego zdania — dokładnie wzorzec, który reguła z `KANON_Z_ODBIOROW.md` (2026-08-30) WYRAŹNIE zakazuje („nagie zero... sekcja z takim zdaniem jest ROZWINIĘTA"). Przyczyna: `src/components/Interview/InsightViewer.tsx:8906-8924` wciąż implementuje STARĄ regułę z 2026-07-24 („w Podglądzie sekcja zwinięta z licznikiem 0, bez komunikatu"), którą nowa reguła jawnie UCHYLIŁA. Plik jest w module Wywiadu (poza moim zakresem plików), a niezależnie od tego robotnik modułu 10-materiały tego samego dyżuru trafił na TEN SAM plik z innym objawem (angielska treść, zawieszona wartość ładowania jako dane) — dwa niezależne trafienia w jeden plik tej samej nocy. | **ZGŁOSZONE** (poza `src/components/MyWork/**`) | `karta-insight__PRZED__{light,dark}.png` |
+| `idea-templates-catalog` | A | Odznaka typu narzędzia na karcie szablonu ignorowała `?lang=` (zawsze angielska) — naprawione, ale PIERWSZA wersja naprawy przetłumaczyła też „Whiteboard"/„Process Flow" na polski, co złamałoby udokumentowaną decyzję właściciela (SSOT: `IdeaWorkspaceToolbar.tsx:51-52`, „owner request — »Mapa myśli · Whiteboard · Process Flow · Tabela«") — **cofnięte do właściwych etykiet w tym samym dyżurze, przed zgłoszeniem**. | **NAPRAWIONE**: `dev-render/screens/idea-templates-catalog.tsx` | `idea-templates-catalog__PO__{light,dark}.png` |
+| `idea-table-tool-kebab` | A (nieprzetestowana interakcja) | Kebab otwiera się prawym klikiem — zrzut statyczny nie łapie stanu menu; sama tabela czysta. | Zgłoszone jako ograniczenie pomiaru, nie defekt | `idea-table-tool-kebab__PRZED__{light,dark}.png` |
+| `ideas-teresa-panel` | A | — | — | `ideas-teresa-panel__PRZED__{light,dark}.png` |
+| `mywork-notebook-rail-speca` | **A (było B)** | Stopka sekcji AKCJE pokazywała surowy angielski enum: „Źródło: manual" zamiast etykiety — mimo że dokładnie taka etykietowana funkcja (`getNotebookUploadSourceSummary`) już istnieje w tym samym katalogu dla INNEGO miejsca (`NotebookMetadataBadges`), tylko celowo zwraca `null` dla źródeł typu 'manual'/'quick'. | **NAPRAWIONE**: `src/components/MyWork/notebook/NotebookRightRail.tsx` (nowa mapa etykiet `CAPTURE_SOURCE_LABELS` + `captureSourceLabel()`) | `mywork-notebook-rail-speca__PO__{light,dark}.png` |
+| `ideas-preview-overlay` | **A (było C)** | TRZY realne defekty na jednym ekranie: (1) obie daty wołały `toLocaleDateString()` bez argumentu → `7/11/2026` (amerykański M/D) zamiast kanonicznego `11/07/2026` (SSOT `listDateFormat.ts`); (2) przycisk „Konwertuj" używał `colorScheme: 'purple'`, jawnie `@deprecated` w `previewStyles.ts` (kanon dopuszcza 5 wariantów, nie 6); (3) mock danych PL miał niespójne etykiety narzędzi (`Mind Map`/`Process Flow` po angielsku obok `Tabela`/`Notatnik` po polsku w TYM SAMYM zestawie) — poprawione zgodnie z SSOT (patrz `idea-templates-catalog` wyżej: Whiteboard/Process Flow ZOSTAJĄ angielskie, reszta po polsku). | **NAPRAWIONE**: `dev-render/screens/ideas-preview-overlay.tsx` (import `formatListDate`, `colorScheme: 'primary'`, poprawione etykiety mocka) | `ideas-preview-overlay__PO__{light,dark}.png` |
+| `idea-confidentiality-control` | A | ★ PUŁAPKA STANOWISKA POMIAROWEGO potwierdzona: domyślny zrzut `fullPage` w ogóle NIE POKAZYWAŁ kontrolki poufności — siedzi niżej w przewijanym prawym panelu (dokładnie problem opisany w nagłówku harnessu). Przeleciałem `--przewin='[data-testid="idea-confidentiality-pill"]'`, dopiero wtedy kontrolka „Poufna"/„Wysoki" (bursztynowe chipy, poprawna semantyka) trafiła na zrzut. | Naprawione pomiarowo (zrzut z `--przewin`), produkt czysty | `idea-confidentiality-control__PO__{light,dark}.png` (z `--przewin`) |
+| `zwornik-projects` | A | Drobne: brak checkboxów po lewej wierszy i brak CTA/segmentu-widoków po prawej Menu 2 — możliwie zamierzone dla lekkiego ekranu-zwornika (indeks projektów), nie dogłębnie zbadane. | Zgłoszone jako obserwacja, nie potwierdzony defekt | `zwornik-projects__PRZED__{light,dark}.png` |
+| `idea-table-tool-empty-filter` | A | Domyślny zrzut pokazuje stan „9 rekordów"; stan „0 rekordów (naprawdę pusto)" wymaga kliknięcia — nieuchwytny statycznym zrzutem. | Zgłoszone jako ograniczenie pomiaru | `idea-table-tool-empty-filter__PRZED__{light,dark}.png` |
+| `idea-table-tool-sortfilter` | B | Liczby w kolumnach „Budżet"/„Priorytet (obliczany)" wyglądają na wyrównane do lewej, nie do prawej (kanon C6: `tabular-nums` do prawej) — nie dociekałem głębiej (proof harness Fali 7, wąski zakres). | Zgłoszone, nie naprawione | `idea-table-tool-sortfilter__PRZED__{light,dark}.png` |
+| `notebook-quick-capture` | A | — | — | `notebook-quick-capture__PRZED__{light,dark}.png` |
+| `idea-table-timeline-stuck` | **A (było D — kontrolka niewidoczna)** | ★ Przycisk „Przejrzyj kandydaturę" (zatwierdzanie kandydata Process Flow) był PRAKTYCZNIE NIEWIDOCZNY w jasnym motywie: biały tekst na niemal-białym tle. Przyczyna: `className="...bg-c-brand-primary..."` — `c-brand-primary` NIE JEST zdefiniowanym tokenem NIGDZIE w repo (zero trafień w `tailwind.config.js`/`index.css` poza tym jednym użyciem) — klasa nic nie robiła, tło zostawało przezroczyste. W ciemnym motywie wyglądało "dobrze" przez przypadek (ciemne tło strony pod spodem). | **NAPRAWIONE**: `src/components/MyWork/IdeaMapWorkspace.tsx` (`bg-c-brand-primary`+`text-white` → kanoniczny `bg-c-text`/`text-c-bg`, wzorzec z `DecisionDetailView.tsx`) — ta sama poprawka naprawiła TEN SAM przycisk widoczny też na `mywork-idea-topbar` (współdzielony komponent) | `idea-table-timeline-stuck__PO__{light,dark}.png` |
+| `vault-safes-table` | A | — | — | `vault-safes-table__PRZED__{light,dark}.png` |
+| `idea-table-tool-paste` | A | — | — | `idea-table-tool-paste__PRZED__{light,dark}.png` |
+| `vault-sejf-wnetrze` | B | Kolumna „Kategoria" pokazuje surowe angielskie wartości enuma: `Methodology`/`Other`/`Best Practices`/`Standards`/`Templates` — zero polskich etykiet. Przyczyna: `DOCUMENT_CATEGORIES` jest TWARDO wpisana po angielsku w TRZECH miejscach (`src/views/vault/vaultDocuments.ts`, `src/views/superadmin/components/AdminKnowledgeView.tsx`, `src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx`) — ten sam korzeń co defekt na `vault-scope-selector` niżej. Reszta ekranu (StandardTable, chipy statusu z licznikami, kebab, pstryczek) jest wzorcowa. | **ZGŁOSZONE** (`src/views/**`, poza moim zakresem) | `vault-sejf-wnetrze__PRZED__{light,dark}.png` |
+| `exec-summary-onelook` | B | Kolumna „TYP" w panelu „Co muszę rozstrzygnąć" TWARDO obcina tekst na krawędzi karty: „Przeterminowana" → „Przetermi", „Do decyzji" → „Do decy" (widoczne w obu motywach). Przyczyna: `src/components/Execution/ExecutionSummaryOneLook.tsx`, kolumna `kind` (`width: '150px'`) bez `truncate`/zawijania, karta zbyt wąska na deklarowaną szerokość. | **ZGŁOSZONE** (`src/components/Execution/**`, poza moim zakresem) | `exec-summary-onelook__PRZED__{light,dark}.png` |
+| `mywork-idea-topbar` | **B (było gorzej — ghost button)** | Pigułka „Projects" w rzędzie hubu Menu1 jest PO ANGIELSKU wśród dziewięciu polskich sąsiadek („Pomysły/Notatnik/Skrzynka/Kalendarz/Zadania/Decyzje/…/Sejf klienta/…/Menedżer") — brakujący klucz `myWork.projects.projects` (i aliasy `myWork.hub.projects`/`myWork.hub.labelProjects`) w `public/locales/pl/translation.json`. Osobny defekt na tym samym ekranie („Przejrzyj kandydaturę" niewidoczny w jasnym motywie) naprawiony automatycznie przez poprawkę współdzielonego komponentu z `idea-table-timeline-stuck` (patrz wyżej) — zweryfikowane na świeżym zrzucie PO. | „Projects" **ZGŁOSZONE** (`public/locales/**`, zakazany plik); ghost-button **NAPRAWIONE** (efekt uboczny wspólnej poprawki) | `mywork-idea-topbar__PO__{light,dark}.png` |
+| `idea-table-record-templates` | **A (było C)** | ★ Podgląd „pre-filled values" na karcie szablonu drukował SUROWE wartości pola: `Status: todo`, `Status: in_progress`, `Status: done`, `Pilne: true`, `Pilne: false` — mimo że etykiety (`Do zrobienia`/`W toku`/`Zrobione`) były DOSTĘPNE tuż obok w konfiguracji pola (`field.options.options[].name`), po prostu nieużyte. Dokładnie wzorzec „surowe wartości zamiast etykiet" z brief-u, na realnym produkcyjnym komponencie (nie na proof-harnessu). | **NAPRAWIONE**: `src/components/MyWork/table/RecordTemplateManager.tsx` (nowa funkcja `formatTemplatePreviewValue()` — mapuje `checkbox`→Tak/Nie, `singleSelect`/`multiSelect`→etykieta opcji, reszta bez zmian) | `idea-table-record-templates__PO__{light,dark}.png` |
+| `idea-table` | A | Odznaki „Whiteboard"/„Process Flow" po angielsku — **zweryfikowane jako ZGODNE z SSOT** (`IdeaWorkspaceToolbar.tsx`), nie defekt. | — | `idea-table__PRZED__{light,dark}.png` |
+| `decision-record` | **A (było D — treść niewidoczna)** | ★ NAJPOWAŻNIEJSZE znalezisko dyżuru — „awaria udająca pustkę". Ekran pokazywał pusty placeholder tytułu („Tytuł decyzji…"), pustą sekcję „Zakres decyzji", `Termin: —`, `Decydent: —` — wyglądało jak defekt SPEC-A/flagi. Realna przyczyna: `DecisionDetailView.tsx` (produkcja) czyta dane przez `Api.get('/decisions/:id/detail')`, ale harness mockował `Api.getDecision` — metodę, której `DecisionDetailView` W OGÓLE NIE WOŁA (używana gdzie indziej: `DecisionsPanelContent`/`IdeaMapWorkspace`/`DecisionPreviewPanel`, nie tutaj). Żądanie spadało na siatkę bezpieczeństwa `window.fetch`, która dla KAŻDEGO URL-a z `/decisions/` zwraca `{ data: [], items: [] }` — pustą TABLICĘ jako `data`, więc `decision.title` było `undefined`. Dodatkowo: flaga `&ff_vf1DecisionSpeca=1` z etykiety harnessu w `main.tsx` jest MARTWA na poziomie URL — `VF1_DECISION_SPECA` to zmienna `import.meta.env` (wymaga restartu serwera dev z `VITE_VF1_DECISION_SPECA=true`, nie parametru adresu) — etykieta wprowadza w błąd, ale samo to nie było przyczyną pustki. | **NAPRAWIONE**: `dev-render/screens/decision-record.tsx` (jawna obsługa `/decisions/:id/detail` w mocku `Api.get`, zwraca kompletny `MOCK_DECISION`) | `decision-record__PO__{light,dark}.png` |
+| `vault-scope-selector` | **D (gorzej niż poprzednia ocena C)** | Cały ekran po angielsku: „Document Vault", „Upload Knowledge Document", „Drag & drop PDF, DOCX...", „Upload & Index", „Category"/„Tags"/„Level", „Search documents...", „All Categories"/„All Levels", „INDEXED DOCUMENTS (3)", odznaki „INDEXED", „Private (only me)"/„Other"/„Project"/„Methodology"/„Organization"/„Standards" — ZERO polskiego tekstu, w obu motywach. Do tego bespoke UI (własne karty/dropdowny, nie `StandardTable`/`StandardModuleBar`) — narusza regułę „ekrany listowe WYŁĄCZNIE przez komponenty standard". Przyczyna: `src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx` — ten sam plik co skażony `DOCUMENT_CATEGORIES` na `vault-sejf-wnetrze`. | **ZGŁOSZONE** (`src/views/**`, poza moim zakresem — i poza zakresem MyWork w ogóle) | `vault-scope-selector__PRZED__{light,dark}.png` |
+| `idea-table-production` | A | — | — | `idea-table-production__PRZED__{light,dark}.png` |
+| `vault-folder-block-proof` | A | — | — | `vault-folder-block-proof__PRZED__{light,dark}.png` |
+| `idea-financial-case-persistence` | B | Trzy dropdowny w stanie „reopened" (dane przetrwały zimne otwarcie — działa poprawnie funkcjonalnie) pokazują surowe angielskie wartości enuma zamiast etykiet: `investment`/`cash` (typ czynnika), `medium`/`high` (pewność). Przyczyna: `t(\`ideas.financial.costType.${ct}\`, ct)` / `.benefitType.` / `.confidence.` w `FinancialDriverTable.tsx` mają fallback = surowa wartość, a klucze `ideas.financial.costType.*`/`.benefitType.*`/`.confidence.*` NIE ISTNIEJĄ w ogóle w `public/locales/pl/translation.json` ANI w `en/translation.json` (sprawdzone programowo, zero trafień). | **ZGŁOSZONE** (`public/locales/**`, zakazany plik) | `idea-financial-case-persistence__PRZED__{light,dark}.png` (stan `?state=reopened`) |
+| `notatnik-centrum-mysli` | A | — | — | `notatnik-centrum-mysli__PRZED__{light,dark}.png` |
+| `notatnik-osierocone-graf` | A | — | — | `notatnik-osierocone-graf__PRZED__{light,dark}.png` |
+| `idea-table-tool-grouping` | A | Domyślny stan `groupBy: null` — ekran nie demonstruje statycznie samego grupowania (wymaga kliknięcia „Grupuj"), ale infrastruktura (dropdown, tabela) czysta. | Zgłoszone jako ograniczenie pomiaru | `idea-table-tool-grouping__PRZED__{light,dark}.png` |
+| `mywork-idea-inspector-lekki` | A | — | — | `mywork-idea-inspector-lekki__PRZED__{light,dark}.png` |
+
+### Ekrany, których NIE obejrzałem
+
+Żadnych. Wszystkie 31 ekranów modułu 02-moja-praca mają świeży zrzut z tej sesji
+(`evidence/grafika/131-noc-moja-praca/`), w obu motywach, przeczytany `Read`em.
+
+### Podsumowanie ocen
+
+**A: 24 · B: 6 · C: 0 · D: 1** (na 31; siedem ekranów naprawionych w tym dyżurze
+podniosło ocenę — `karta-task` D→A, `decision-record` D→A, `idea-table-timeline-stuck`
+D→A, `idea-table-record-templates` C→A, `mywork-notebook-rail-speca` B→A,
+`ideas-preview-overlay` C→A, `mywork-idea-topbar` niejednoznaczne→B).
+
+### Defekty w plikach wspólnych / poza zakresem (tylko zgłoszenie)
+
+Żadnego naruszenia w `src/components/shared/**`/`src/components/standard/**` — pliki te
+nie były dotykane. Zgłoszone defekty leżą w `src/views/**` (vault/superadmin — poza
+zakresem MyWork), `src/components/Execution/**`, `src/components/Interview/**` i
+`public/locales/**` (zakazany do edycji):
+
+1. **`src/views/vault/vaultDocuments.ts`** (+ duplikaty w `AdminKnowledgeView.tsx`,
+   `DocumentsRAGTab.tsx`) — `DOCUMENT_CATEGORIES` na sztywno po angielsku, zero
+   tłumaczenia. Dotyka `vault-sejf-wnetrze` (B) i `vault-scope-selector` (D).
+2. **`src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx`** — cały
+   ekran `vault-scope-selector` po angielsku + bespoke UI zamiast komponentów standard.
+3. **`src/components/Execution/ExecutionSummaryOneLook.tsx`** — kolumna „TYP" bez
+   `truncate`, tekst obcięty na krawędzi karty (`exec-summary-onelook`).
+4. **`src/components/Interview/InsightViewer.tsx:8906-8924`** — sekcja „Akcje" wciąż
+   implementuje UCHYLONĄ regułę „zwinięte z 0 bez komunikatu" zamiast nowej reguły
+   z `KANON_Z_ODBIOROW.md` (2026-08-30). Ten sam plik trafiony niezależnie przez
+   robotnika modułu 10-materiały tej samej nocy (inny objaw, ten sam plik).
+5. **`public/locales/pl/translation.json`** (i `en/`) — brakujące klucze:
+   `ideas.financial.costType.{investment,recurring}`,
+   `ideas.financial.benefitType.{cash,non_cash,risk_avoidance}`,
+   `ideas.financial.confidence.{low,medium,high}` (dotyczy
+   `idea-financial-case-persistence`); `myWork.projects.projects` /
+   `myWork.hub.projects` / `myWork.hub.labelProjects` (dotyczy `mywork-idea-topbar`,
+   badge „Projects").
+
+### Pliki zmienione (mój zakres, zweryfikowane esbuild + oba hooki kanonu)
+
+- `src/components/MyWork/TaskDetailView.tsx` — id sekcji prawego panelu
+  `'sources-assumptions'` → kanoniczne `'evidence'` (usunięcie duplikatu „Źródła
+  i założenia" na `karta-task`)
+- `src/components/MyWork/IdeaMapWorkspace.tsx` — `bg-c-brand-primary` (niezdefiniowany
+  token) → `bg-c-text`/`text-c-bg` na przycisku „Przejrzyj kandydaturę"
+- `src/components/MyWork/notebook/NotebookRightRail.tsx` — nowa mapa
+  `CAPTURE_SOURCE_LABELS`/`captureSourceLabel()`, „Źródło: manual" → „Źródło: Ręcznie"
+- `src/components/MyWork/table/RecordTemplateManager.tsx` — nowa funkcja
+  `formatTemplatePreviewValue()`, surowe `todo`/`true`/`false` → etykiety pola
+- `dev-render/screens/decision-record.tsx` — mock `Api.get` obsługuje jawnie
+  `/decisions/:id/detail` (produkcyjny komponent nigdy nie wołał zamockowanego
+  wcześniej `Api.getDecision`)
+- `dev-render/screens/idea-templates-catalog.tsx` — odznaka narzędzia respektuje
+  `?lang=`, z poprawką zgodną z SSOT (Whiteboard/Process Flow zostają angielskie)
+- `dev-render/screens/ideas-preview-overlay.tsx` — `formatListDate()` zamiast
+  `toLocaleDateString()` (data amerykańska → kanoniczna), `colorScheme: 'purple'`
+  (deprecated) → `'primary'`, etykiety mocka zgodne z SSOT
+
+Żadna zmiana nie dotyka `src/components/shared/**`, `src/components/standard/**`
+ani `public/locales/**`. `scripts/check-list-canon.sh` i `scripts/check-triada.sh`
+przechodzą (dług kanonu tabel nie rośnie: 394/394; zero nowych naruszeń crimson).

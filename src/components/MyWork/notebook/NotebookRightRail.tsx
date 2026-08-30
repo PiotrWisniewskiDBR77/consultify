@@ -84,6 +84,40 @@ interface NotebookRailPage {
 // dosięga; nazwy bierze jednak z TEGO SAMEGO źródła co powłoka.
 // 'results' zostaje pominięte — notatka nic nie produkuje (kanon: sekcja
 // warunkowa).
+
+/**
+ * ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): stopka sekcji AKCJE
+ * pokazywała „Źródło: manual" — surowy `activePage.captureSource` wprost
+ * bez etykiety (linia ~706, poniżej). `getNotebookUploadSourceSummary()`
+ * (notebookCaptureSourceSummary.ts) już rozwiązuje ten problem dla
+ * NotebookMetadataBadges, ale celowo zwraca `null` dla zwykłych/częstych
+ * źródeł ('manual', 'quick') — bo te nie dostają odznaki. Tu w AKCJACH
+ * pole jest ZAWSZE widoczne, więc potrzebuje etykiety również dla nich.
+ * Lista pokrywa wartości realnie przypisywane w kodzie (grep
+ * `captureSource:` w src/ i server/src/); nieznana wartość nadal pokazuje
+ * surowy tekst — degradacja, nie awaria.
+ */
+const CAPTURE_SOURCE_LABELS: Record<string, { pl: string; en: string }> = {
+  manual: { pl: 'Ręcznie', en: 'Manual' },
+  quick: { pl: 'Szybkie wrzucanie', en: 'Quick capture' },
+  api_import: { pl: 'Import przez API', en: 'API import' },
+  web_clipper: { pl: 'Wycinek strony', en: 'Web clip' },
+  email_forward: { pl: 'Przekazany e-mail', en: 'Email forward' },
+  source_pack_create: { pl: 'Pakiet źródeł', en: 'Source pack' },
+  table_conversion: { pl: 'Konwersja tabeli', en: 'Table conversion' },
+  work_canvas: { pl: 'Kanwa', en: 'Canvas' },
+};
+
+function captureSourceLabel(
+  raw: string | null | undefined,
+  isPolish: boolean
+): string | null {
+  if (!raw) return null;
+  const entry = CAPTURE_SOURCE_LABELS[String(raw).trim().toLowerCase()];
+  if (!entry) return null;
+  return isPolish ? entry.pl : entry.en;
+}
+
 const RAIL_SECTION_ORDER = ARTIFACT_PANEL_SECTION_ORDER.filter(
   (id): id is 'actions' | 'properties' | 'relations' | 'evidence' | 'comments' | 'history' =>
     id !== 'results'
@@ -703,7 +737,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             <div className="space-y-1 border-t border-c-border-subtle pt-3 text-[12.5px]">
               <div className="text-c-text">
                 {t('notebook.rightRail.source', 'Source')}:{' '}
-                {activePage.captureSource ||
+                {captureSourceLabel(activePage.captureSource, isPolishRail) ||
+                  captureSourceLabel(activePage.captureMetadata?.sourceType, isPolishRail) ||
+                  activePage.captureSource ||
                   activePage.captureMetadata?.sourceType ||
                   t('notebook.rightRail.sourceNotRecorded', 'Not recorded')}
               </div>

@@ -21,11 +21,23 @@ import type { TemplateDefinition } from '../../src/components/MyWork/IdeaTemplat
 const isPl = () =>
   (new URLSearchParams(window.location.search).get('lang') || 'pl').startsWith('pl');
 
-const TOOL_LABEL: Record<string, string> = {
-  whiteboard: 'Whiteboard',
-  mindmap: 'Mind Map',
-  process_flow: 'Process Flow',
-  table: 'Table',
+// ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): etykieta typu narzędzia była
+// na sztywno po angielsku niezależnie od `?lang=` — jedyne miejsce w tym pliku,
+// które ignorowało `isPl()` mimo że reszta karty (nazwa PL/EN) go respektuje.
+// Ten katalog to harness akceptacyjny (KATALOG-AKCEPT #10-AB), nie ekran
+// produktu widziany przez klienta, ale skoro renderuje `?lang=pl` — badge też
+// powinien być po polsku.
+// ★ POPRAWKA (ten sam dyżur, po znalezieniu SSOT): „Whiteboard" i „Process Flow"
+// ZOSTAJĄ po angielsku w obu językach — to jest UDOKUMENTOWANA decyzja właściciela
+// (`src/components/MyWork/IdeaWorkspaceToolbar.tsx:51-52`, „owner request —
+// »Mapa myśli · Whiteboard · Process Flow · Tabela«"), nie brak tłumaczenia.
+// Pierwsza wersja tej naprawy błędnie przetłumaczyła je na „Tablica"/„Diagram
+// procesu" — rozjazd z SSOT, cofnięte.
+const TOOL_LABEL: Record<string, { pl: string; en: string }> = {
+  whiteboard: { pl: 'Whiteboard', en: 'Whiteboard' },
+  mindmap: { pl: 'Mapa myśli', en: 'Mind Map' },
+  process_flow: { pl: 'Process Flow', en: 'Process Flow' },
+  table: { pl: 'Tabela', en: 'Table' },
 };
 
 // Zgodnie z kanonicznym mapowaniem produkcyjnym (TOOL_ICON_COLOR_VAR,
@@ -134,7 +146,7 @@ const Card: React.FC<{ t: TemplateDefinition; pl: boolean }> = ({ t, pl }) => {
             {pl ? t.nameEn : t.namePl}
           </div>
         </div>
-        <Badge color={tone}>{TOOL_LABEL[t.tool]}</Badge>
+        <Badge color={tone}>{pl ? TOOL_LABEL[t.tool].pl : TOOL_LABEL[t.tool].en}</Badge>
       </div>
 
       <div style={{ fontSize: 11.5, color: 'var(--c-text-secondary)', lineHeight: 1.45 }}>

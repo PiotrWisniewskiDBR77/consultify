@@ -5619,7 +5619,16 @@ Return ONLY the final comment text.`;
         // ── Źródła i założenia (n-Type §7.2 poz. 4 / §6.6) ──────────────────
         // Trzecie miejsce, do którego zjechała treść usuniętego bannera:
         // KONTEKST UTWORZENIA zadania (z czego i kiedy powstało).
-        id: 'sources-assumptions',
+        // ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): id MUSI być
+        // kanonicznym 'evidence' (ArtifactRightPanel.ARTIFACT_PANEL_SECTION_ORDER),
+        // inaczej ArtifactRightPanel nie rozpoznaje tej sekcji jako już
+        // zadeklarowanej i DOKŁADA własną, pustą sekcję kanonu o tej samej
+        // etykiecie „Źródła i założenia" (ShieldCheck, „Brak zapisanych źródeł
+        // i założeń.") zaraz pod tą — realny, widoczny na zrzucie duplikat
+        // (dwa razy „ŹRÓDŁA I ZAŁOŻENIA" w prawym panelu karty Zadania).
+        // DecisionDetailView.tsx i NotificationDetailView.tsx już używają
+        // poprawnego id 'evidence' — tylko ten plik miał starą nazwę.
+        id: 'evidence',
         label: t('myWork.taskDetail.sourcesAndAssumptions', 'Sources and assumptions'),
         icon: FileText,
         defaultOpen: false,

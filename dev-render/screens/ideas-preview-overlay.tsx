@@ -32,6 +32,13 @@ import {
   type RelationItem,
 } from '../../src/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '../../src/components/shared/TableWithPreviewLayout';
+// ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): obie daty w tym harnessu
+// wołały `toLocaleDateString()` BEZ argumentu — bierze locale z przeglądarki
+// headless (en-US), nie z języka konta, więc renderowało się `7/11/2026`
+// (M/D, amerykański zapis) zamiast kanonicznego `11.07.2026`. Dokładnie ten
+// mechanizm opisuje `src/utils/listDateFormat.ts` (SSOT dat list/podglądów,
+// 270 takich wywołań znalezionych w przeglądzie 2026-07-27) — używam go tu.
+import { formatListDate } from '../../src/utils/listDateFormat';
 
 interface MockIdea {
   id: string;
@@ -49,7 +56,7 @@ const IDEAS_PL: MockIdea[] = [
     title: 'Ekspansja DE — mapa hipotez wejścia na rynek',
     body: 'Gałęzie: popyt, konkurencja, kanały sprzedaży, ryzyka regulacyjne. Priorytet: walidacja popytu w segmencie mid-market.',
     stage: 'Rośnie',
-    tool: 'Mind Map',
+    tool: 'Mapa myśli',
     tags: ['rynek', 'DE'],
     updatedAt: '2026-07-11',
   },
@@ -94,7 +101,7 @@ const IDEAS_PL: MockIdea[] = [
     title: 'Biblioteka wzorców doradczych',
     body: '~40 startowych szablonów w 7 kategoriach konsultingowych.',
     stage: 'Rośnie',
-    tool: 'Deck',
+    tool: 'Prezentacja',
     tags: ['content'],
     updatedAt: '2026-07-06',
   },
@@ -152,7 +159,7 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
     const metaPills: MetaPill[] = [{ label: idea.stage }, { label: idea.tool }];
     const metaTrailing = (
       <span className="text-[11px] font-medium text-c-text-muted">
-        {new Date(idea.updatedAt).toLocaleDateString()}
+        {formatListDate(idea.updatedAt)}
       </span>
     );
     return (
@@ -189,7 +196,11 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
             label: isPl ? 'Konwertuj' : 'Convert',
             icon: Sparkles,
             onClick: () => {},
-            colorScheme: 'purple',
+            // ★ NAPRAWA (2026-08-30): 'purple' jest @deprecated w PillColorScheme
+            // (previewStyles.ts §7.3b — "Uzyj 'primary' albo 'neutral'"). Kanon
+            // dopuszcza tylko 5 wariantów (TRIADA_KANON.md pkt 32); Convert to
+            // rozstrzygnięcie main-CTA charakteru, więc 'primary'.
+            colorScheme: 'primary',
           },
           {
             label: isPl ? 'Otwórz Flow' : 'Open Flow',
@@ -298,7 +309,7 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
                           ))}
                         </div>
                         <span className="shrink-0">
-                          {new Date(idea.updatedAt).toLocaleDateString()}
+                          {formatListDate(idea.updatedAt)}
                         </span>
                       </div>
                     </div>
