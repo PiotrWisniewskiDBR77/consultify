@@ -28,6 +28,7 @@
 import React from 'react';
 
 import { AssessmentPresentationView } from '../../src/components/assessment/presentation/AssessmentPresentationView';
+import { DRD_METHOD_PACK_VERSION } from '../../src/method-core/methods/drd/compileDrdPack';
 import type { PresentationFetchResult } from '../../src/components/assessment/presentation/AssessmentPresentationView';
 import type { RawAssessmentOutputRecord } from '../../src/components/assessment/presentation/rawOutputTypes';
 import { MethodCoreApiError } from '../../src/method-core/api/methodCoreApi';
@@ -69,7 +70,11 @@ function buildOutput(variant: string): RawAssessmentOutputRecord {
     snapshotId: 'snapshot-demo-0001',
     module: 'assessment',
     methodPackId: 'drd',
-    methodPackVersion: '1.2.0',
+    // ★ MUST be the REAL compiled pack version (`DRD_METHOD_PACK_VERSION`).
+    // `drdLabels.ts` gates every dimension-name lookup on the Output's pinned
+    // version matching the compiled pack, so a made-up version here would make
+    // the harness render raw ids and "prove" a bug that only the fixture has.
+    methodPackVersion: DRD_METHOD_PACK_VERSION,
     outputVersion: 2,
     revisionOfOutputId: 'output-demo-drd-0000',
     scope: 'DBR77 · Digital Readiness — Grupa Przemysłowa (runda Q3 2026)',
@@ -181,7 +186,11 @@ function buildOutput(variant: string): RawAssessmentOutputRecord {
     target,
     gap,
     aggregation: {
-      byGroup: { '1': 2.5, '2': 2, '3': 3, '6': 2 },
+      // ★ REAL key shape: `drdAdapter.aggregate()` keys `byGroup` by
+      // `unit.parentId`, i.e. `axis-${n}` (src/services/drdStructure.ts's
+      // `axisGroupId`) — never a bare ordinal. The previous `{ '1': ... }`
+      // fixture matched no real Output and no dictionary entry.
+      byGroup: { 'axis-1': 2.5, 'axis-2': 2, 'axis-3': 3, 'axis-6': 2 },
       mappingVersion: '1.2.0',
       rule: 'weighted-mean',
       excluded: {},

@@ -35,9 +35,33 @@ import { DecisionDetailView } from '../../src/components/MyWork/DecisionDetailVi
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
+import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
+
+/**
+ * `DecisionDetailView.loadDecision()` ma WBUDOWANY fallback na angielskie
+ * stałe `DEMO_ALTERNATIVES`/`DEMO_RISKS`/`DEMO_COMMENTS`/`DEMO_ATTACHMENTS`/
+ * `DEMO_STAKEHOLDERS`/`DEMO_ESCALATION`/`DEMO_REMINDERS` za każdym razem, gdy
+ * tablica z API jest pusta A `isDemo === true` (linie ~1983-2050 w src).
+ * `seedRealisticSession()` ustawia `isDemoMode: true` dla WSZYSTKICH ekranów
+ * (potrzebne dla currentUser/providerów) — bez wyłączenia tego przełącznika
+ * TUTAJ obie wersje karty (pusta i `?dane=pelne`) pokazywałyby gdzieniegdzie
+ * angielski seed deweloperski zamiast treści z MOCK_* poniżej, co łamie
+ * „jedna historia po polsku". Wyłączamy `isDemoMode`/`currentUser.isDemo` NA
+ * TYM EKRANIE ZAWSZE (obie wersje) i sami w 100% kontrolujemy puste/pełne
+ * przez `MOCK_DECISION_EFEKTYWNY` niżej — provider tree zostaje pełny, bo
+ * zależy od `currentUser?.id`, nie od `isDemo`.
+ */
+const __danePelneWczesnie = new URLSearchParams(window.location.search).get('dane') === 'pelne';
+{
+  const cu = useAppStore.getState().currentUser;
+  useAppStore.setState({
+    isDemoMode: false,
+    currentUser: cu ? ({ ...cu, isDemo: false } as any) : cu,
+  });
+}
 
 const DECISION_ID = 'decision-prv-mywork-1';
 
@@ -468,13 +492,46 @@ const MOCK_HISTORY = [
   },
 ];
 
+// ★ NAPRAWA (2026-08-30, tor grafiki): `DecisionDetailView.loadDecision()` NIE
+// wywołuje `Api.getDecision(id)` — realny caller to `Api.get('/decisions/:id/detail')`
+// (zwraca proxy, gdzie `.data` = rekord). Stary patch łatał metodę, której komponent
+// nigdy nie woła, więc `detailResponse.data` trafiał w siatkę bezpieczeństwa
+// (`window.fetch` → `{data:[],items:[]}`) i karta renderowała się PUSTA (tytuł
+// placeholder, „Ta sekcja jest jeszcze pusta") niezależnie od treści MOCK_DECISION.
+// `Api.getDecision` zostaje (nieużywany przez ten komponent, ale nieszkodliwy —
+// inne miejsca w apce mogą go wołać przez ten sam singleton).
 Api.getDecision = (async () => MOCK_DECISION) as typeof Api.getDecision;
 Api.getDecisionHistory = (async () => MOCK_HISTORY) as typeof Api.getDecisionHistory;
+
+/**
+ * `?dane=pelne` — Piotr nigdy nie ocenia pustej karty (CLAUDE.md #7). Domyślnie
+ * (bez parametru) rekord ma tylko opis i kontekst — sekcje, które w produkcie
+ * zapełnia Teresa po kliknięciu AI (Alternatywy = „Decision Option Analyzer",
+ * RACI = „RACI Team Advisor") albo dodaje człowiek (Ryzyka, Komentarze,
+ * Załączniki, Powiązania) zostają puste, tak jak świeża decyzja bez pracy.
+ * Z parametrem — komplet treści z MOCK_DECISION/MOCK_* powyżej (bez zmian —
+ * to ta sama polska historia: rezydencja danych wywiadowczych, 2 klientów
+ * enterprise, termin 5 sierpnia).
+ */
+const __danePelne = __danePelneWczesnie;
+const MOCK_DECISION_EFEKTYWNY = __danePelne
+  ? MOCK_DECISION
+  : {
+      ...MOCK_DECISION,
+      alternatives: [],
+      selectedAlternativeId: '',
+      risks: [],
+      comments: [],
+      linkedItems: [],
+      attachments: [],
+    };
+const MOCK_STAKEHOLDERS_EFEKTYWNY = __danePelne ? MOCK_STAKEHOLDERS : [];
 
 const realApiGet = Api.get.bind(Api);
 Api.get = (async (url: string) => {
   if (url === '/users') return { users: MOCK_USERS };
-  if (url.includes('/stakeholders')) return { stakeholders: MOCK_STAKEHOLDERS };
+  if (url.includes(`/decisions/${DECISION_ID}/detail`)) return { data: MOCK_DECISION_EFEKTYWNY };
+  if (url.includes('/stakeholders')) return { stakeholders: MOCK_STAKEHOLDERS_EFEKTYWNY };
   return realApiGet(url);
 }) as typeof Api.get;
 

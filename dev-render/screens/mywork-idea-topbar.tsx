@@ -179,12 +179,21 @@ if (GRAF_PER_NARZEDZIE[TOOL]) {
     scal(payload)) as typeof Api.saveMyIdeaMap;
 }
 
-// Rząd pilli huba odtwarza się z `sessionStorage` (`readStoredMyWorkDocuments`).
+// Rząd pilli huba odtwarza się z `sessionStorage` (`readStoredMyWorkDocuments`
+// w MyWorkHub.tsx). D1 (2026-08-12) zmieniło klucz z globalnego
+// `moduleHub.openDocuments.mywork` na klucz scoped org+user
+// (`moduleHub.openDocuments.mywork.<orgId>.<userId>`) — MyWorkHub.tsx
+// AKTYWNIE KASUJE stary klucz przy każdym odczycie ("best-effort cleanup"),
+// więc pisanie pod starą nazwą dawało pusty rząd pilli (ekran cicho spadał
+// na zwykłe zakładki Skrzynka/Pomysły, które błądziły dalej bo nie mają
+// mocków list). userId/orgId MUSZĄ być identyczne z tymi z
+// `seedRealisticSession()` (dev-render/mocks/seedStore.ts) — inaczej hub
+// czyta spod innego klucza i znowu widzi pusty rząd.
 // Zasiewamy DWIE otwarte idee — dokładnie jak na zrzucie właściciela („Proces
 // ofertowania" + aktywna) — żeby było widać kropki statusu i przewijanie kart.
 try {
   window.sessionStorage.setItem(
-    'moduleHub.openDocuments.mywork',
+    'moduleHub.openDocuments.mywork.org-dbr77-demo.user-piotr-demo',
     JSON.stringify({
       openDocuments: [
         {

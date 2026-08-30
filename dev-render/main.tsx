@@ -129,6 +129,7 @@ const AssessmentInitiativesTableScreen = React.lazy(
 const AssessmentFiveSurfacesScreen = React.lazy(() => import('./screens/assessment-five-surfaces'));
 const AssessmentManagePanelScreen = React.lazy(() => import('./screens/assessment-manage-panel'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
+const AssessmentMatrycaScreen = React.lazy(() => import('./screens/assessment-matryca'));
 const StandardModuleBarChildrenScreen = React.lazy(
   () => import('./screens/standard-module-bar-children')
 );
@@ -371,6 +372,8 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
 );
 const MethodWorkspaceScreen = React.lazy(() => import('./screens/method-workspace'));
 const DrdHttpWorkspaceScreen = React.lazy(() => import('./screens/drd-http-workspace'));
+const SiriWorkspaceScreen = React.lazy(() => import('./screens/siri-workspace'));
+const SiriTierScreen = React.lazy(() => import('./screens/siri-tier'));
 const AssessmentArtifactsRestartScreen = React.lazy(
   () => import('./screens/assessment-artifacts-restart')
 );
@@ -516,6 +519,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'A5 — Method Workspace shell (interview/split/matrix), ff methodWorkspaceShellV1. &view=interview|split|matrix &state=default|resolution|savefailed|teresaRich',
     render: () => <MethodWorkspaceScreen />,
+  },
+  'siri-workspace': {
+    label:
+      'A7 — SIRI vertical slice: REALNY <MethodWorkspaceShell> (A5) wpięty w dane SIRI (siriWorkspaceView/siriAdapter). &view=interview|split|matrix &case=default|leapfrog',
+    render: () => <SiriWorkspaceScreen />,
+  },
+  'siri-tier': {
+    label:
+      'A7 — SIRI TIER / Prioritisation Matrix (osobny widok po freeze, bez MethodWorkspaceShell; siriTierView → siriPrioritisation). &frozen=1|0 &flag=1|0 &horizon=strategic|tactical|operational',
+    render: () => <SiriTierScreen />,
   },
   'results-vnext-registry-shell': {
     label:
@@ -1103,6 +1116,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ASM-ID TRIADA — real <AssessmentManagePanel> (Workflow/Team/Reports/Initiatives tabs, crimson sweep verification) — &tab=workflow|team|reports|initiatives|logs',
     render: () => <AssessmentManagePanelScreen />,
+  },
+  'assessment-matryca': {
+    label:
+      'SPEC-A archetyp D — sesja Assessment jako Matryca: REALNY <DRDMatrixSession> w realnej powłoce <TopBar> (Menu 1) + <ArtifactRightPanel>. &lang=pl|en &theme=light|dark',
+    render: () => <AssessmentMatrycaScreen />,
   },
   'standard-module-bar-children': {
     label:
