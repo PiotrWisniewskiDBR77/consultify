@@ -1,0 +1,16 @@
+NOWY — DYŻUR 169
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_169_CELE_CHECKIN.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 169.
+
+Marker: 18ba1bd3cf
+Zasoby wyłączne: baza 6060, runtime 5008 i 5009.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
