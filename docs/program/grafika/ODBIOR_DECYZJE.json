@@ -40,5 +40,33 @@
  "results-vnext-kpi-scorecards": {
   "decyzja": "ok",
   "kiedy": "2026-08-30T08:50:24.222Z"
+ },
+ "results-vnext-kpi-tool": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:00:08.815Z"
+ },
+ "results-vnext-roi-registry": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:01:22.105Z"
+ },
+ "results-vnext-roi-full-tool": {
+  "decyzja": "nie",
+  "uwaga": "Wiesz co, wydaje mi się, że mamy do poprawki, bo ROI to jedna analiza i powinna mieć formułę N‑karty. Tak jak teraz, gdy tworzysz to w menu poziomym, nie mamy możliwości ułożenia tego w strukturze dokumentu. To musi być n‑karta, gdzie będziemy mieli z nowej strony te zakładki, które teraz masz w menu, bo to menu, które teraz masz, już się nie wciśnie – byłoby to czwarte menu, a to byłoby zupełnie niepotrzebne. Dlatego musi być n‑karta. Każda jedna analiza RI, łącznie z modelem, to jest po prostu jedna karta. ",
+  "kiedy": "2026-08-30T09:04:05.201Z"
+ },
+ "results-vnext-roi-model": {
+  "decyzja": "nie",
+  "uwaga": "Tutaj muszę to odrzucić, bo wniosek jest dokładnie taki, jak wcześniej opisałem. Musimy przenieść to do jednej n‑karty. ",
+  "kiedy": "2026-08-30T09:04:20.286Z"
+ },
+ "results-vnext-roi-pir-outcomes": {
+  "decyzja": "nie",
+  "uwaga": "I to jest, jak rozumiem, konsekwencja poprzednich, czyli to jest kolejna N‑karta w jednym ROI‑u. ",
+  "kiedy": "2026-08-30T09:04:37.778Z"
+ },
+ "results-vnext-okr-registry": {
+  "decyzja": "poprawka",
+  "uwaga": "Dobrze, tutaj zgłaszałem, ja już to się zapisało. W prawym, głównym rogu powinien być przycisk „Nowe dodawanie OKR”, a teraz są jakieś inne niepotrzebne przyciski. ",
+  "kiedy": "2026-08-30T09:08:34.429Z"
  }
 }

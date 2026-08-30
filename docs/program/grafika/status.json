@@ -146,8 +146,10 @@
      "id": "results-vnext-roi-full-tool",
      "nazwa": "Pelne narzedzie ROI",
      "ocena": "A",
-     "co": "Rejestr z kebabem prowadzacym do pelnego narzedzia.",
-     "naprawione": [],
+     "co": "Rejestr spraw ROI plus pelne narzedzie: cztery fazy, szesc wierszy budowy sprawy.",
+     "naprawione": [
+      "Pelne narzedzie bylo NIEOSIAGALNE — kebab nie robil nic, bo w harnessie brakowalo routingu. Nikt tego ekranu nigdy nie widzial."
+     ],
      "wyjatki": [
       "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
      ]
@@ -230,7 +232,9 @@
      "naprawione": [
       "Surowe statusy i nazwy pol dopasowania"
      ],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Wyszukiwarka przed zapytaniem — uczciwie pusta. Z zapytaniem pokazuje trzy trafienia."
+     ]
     },
     {
      "id": "results-vnext-teresa-kpi-deviation",
@@ -390,7 +394,9 @@
      "ocena": "A",
      "co": "Izolowany podglad wspolnego paska.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Pasek pelny; cialo ekranu to swiadoma zaslepka poza zakresem pakietu."
+     ]
     },
     {
      "id": "finance-baseline-workspace",
@@ -549,8 +555,10 @@
      "id": "mywork-idea-topbar",
      "nazwa": "Pasek gorny",
      "ocena": "B",
-     "co": "Scalenie menu w jedna linie.",
-     "naprawione": [],
+     "co": "Pasek gorny Mojej pracy z otwarta idea: pigulki dokumentow, menu modulu i mapa mysli.",
+     "naprawione": [
+      "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami."
+     ],
      "wyjatki": [
       "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
      ]
@@ -668,7 +676,9 @@
      "ocena": "A",
      "co": "Bez odchylen.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Formularz startowy — puste pole nazwy jest jego trescia."
+     ]
     },
     {
      "id": "template-library-new-entry",
@@ -676,7 +686,9 @@
      "ocena": "A",
      "co": "Wejscie sprawdzone klikiem: prowadzi do kreatora.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Dowod wpiecia przycisku, nie ekran danych."
+     ]
     },
     {
      "id": "materialy-launcher",
@@ -684,7 +696,9 @@
      "ocena": "A",
      "co": "Modal z trzema drogami startu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Modal wyboru formatu — z natury zwiezly."
+     ]
     },
     {
      "id": "materialy-template-library-slice",
@@ -738,7 +752,9 @@
      "ocena": "A",
      "co": "Puste stany po polsku i angielsku.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Ekran ISTNIEJE po to, zeby pokazac puste stany po polsku. Pustka to jego temat."
+     ]
     },
     {
      "id": "document-studio-context-chip",
@@ -785,7 +801,9 @@
      "ocena": "A",
      "co": "Panel kontroli jakosci z odznaka fabrykacji.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Przed uruchomieniem kontroli jakosci nie ma czego pokazac."
+     ]
     },
     {
      "id": "b2-template-gallery",
@@ -1061,7 +1079,9 @@
      "ocena": "A",
      "co": "Potwierdz albo Anuluj przed czynnoscia nieodwracalna, z wyjasnieniem po co.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Kontrolka potwierdzenia w czacie."
+     ]
     },
     {
      "id": "teresa-chipy-panel-artefaktu",
@@ -1511,7 +1531,9 @@
      "ocena": "A",
      "co": "Wniosek, inicjatywa, decyzja. Slowo Insight zostaje po angielsku swiadomie — to termin produktowy uzywany tak samo w calej aplikacji.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Modal wyboru rodzaju."
+     ]
     },
     {
      "id": "calendar-sync-settings",
@@ -1532,7 +1554,9 @@
      "naprawione": [
       "Ekran nie byl podlaczony do harnessu"
      ],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Jedno pole do wrzucenia mysli."
+     ]
     },
     {
      "id": "vault-scope-selector",
@@ -1584,7 +1608,9 @@
      "ocena": "A",
      "co": "Trzy karty wyboru: czysto, z AI, z szablonu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Dowod, ze pusty arkusz to klikalna siatka, a nie zaslepka."
+     ]
     },
     {
      "id": "excele-prawy-panel-standard",
@@ -1610,7 +1636,9 @@
      "naprawione": [
       "Powiadomienie ignorowalo motyw ciemny — biale okienko na czarnym tle, na WSZYSTKICH ekranach harnessu"
      ],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
+     ]
     },
     {
      "id": "prezentacje-template-states",
@@ -1783,7 +1811,9 @@
      "ocena": "A",
      "co": "Cytat: Nie znaleziono tego dokumentu. Mogl zostac usuniety albo odnosnik prowadzi do innego typu materialu. Plus przycisk Wroc do Materialow. Mowi co sie stalo i co zrobic. Zero kodu bledu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
+     ]
     },
     {
      "id": "document-studio-template-resolve-error",
@@ -1791,7 +1821,9 @@
      "ocena": "A",
      "co": "Cytat: Nie znaleziono zrodla tego wzorca. Plus przycisk Wroc do biblioteki wzorcow. Krotszy niz sasiedni, ale ludzki i z jasna akcja.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
+     ]
     },
     {
      "id": "word-intake-uselm-default",
