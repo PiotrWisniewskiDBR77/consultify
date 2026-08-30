@@ -192,6 +192,61 @@ z sekcji „TEZY ZLECENIA", z komentarzem `#   oczekiwane: …`>>
 
 ---
 
+
+---
+
+## A.1-BIS. ★★ TRZY POPRAWKI WYMUSZONE PRZEZ DYŻURY 130–135 (2026-08-30)
+
+Każda z nich spowodowała realny, **niezasadny merytorycznie** STOP albo sprzeczność
+zgłoszoną w „Korektach" przez wykonawcę. Autor instrukcji ma obowiązek je nanieść.
+
+### (1) Sanity worktree: marker ma być PRZODKIEM, nie równy
+
+Zapis „`git log --oneline -1` ma pokazać `<MARKER>`" jest poprawny **wyłącznie przy
+pierwszym uruchomieniu**. Wykonawca, który wznawia pracę po własnych commitach, widzi
+własny SHA i zgłasza STOP zgodnie z literą instrukcji. Zdarzyło się w dyżurze 133.
+
+**Poprawna kontrola bazy:**
+
+```bash
+git merge-base --is-ancestor <MARKER> HEAD \
+  && echo "BAZA OK — marker jest przodkiem HEAD" \
+  || echo "MARKER BRAK — STOP"
+```
+
+Kontrola równości SHA zostaje **tylko** jako informacja, nie jako warunek STOP-u.
+
+### (2) `Z34a` (push po pierwszym commicie) kontra „Nie pushujesz"
+
+Część wspólna `§0.1` nakazuje push, a treść merytoryczna dyżurów wewnętrznych go
+zabrania. Zgłoszone niezależnie przez dyżury **133 i 134**. Autor instrukcji
+**wybiera jedno** i usuwa drugie z wydanego dokumentu. Domyślnie dla dyżurów
+odbieranych przez nadzorcę: **nie pushuje wykonawca, pushuje nadzorca po odbiorze**.
+
+### (3) `Z24` odsyła do nieistniejącego `§0.4a`
+
+Zgłoszone przez dyżury **130, 133 i 134**. Albo wklejasz sekcję `§0.4a` z pomiarem
+pełnych nazw testów, albo **usuwasz odwołanie z `Z24`**. Odsyłacz do sekcji,
+której nie ma, kosztuje wykonawcę czas i produkuje pozorną korektę.
+
+### (4) Licencja musi obejmować **typy przechodnie**, nie tylko pliki
+
+Dyżur 133 stanął, bo instrukcja jednocześnie: (a) kazała zmienić typ callbacku
+w widżecie współdzielonym na poziomie kompilatora i (b) uczyniła jednego z jego
+konsumentów **nietykalnym**. To sprzeczność z konstrukcji — konsument przestaje się
+kompilować. Wykonawca udowodnił ją minimalną reprodukcją `TS2322` i słusznie nie
+obszedł jej rzutowaniem.
+
+**Reguła:** zanim zabronisz dotykać pliku, sprawdź, czy **typ**, który zmieniasz,
+przez niego przepływa:
+
+```bash
+grep -rl "<NazwaWidzetu>" src/ --include='*.tsx' | grep -v __tests__
+```
+
+Każdy znaleziony konsument albo wchodzi do licencji, albo zmiana typu jest
+niewykonalna i trzeba ją zaprojektować inaczej.
+
 ## A.2. `§0.2` — KOMPLET BEZPIECZNIKÓW `Z1`–`Z40` (kopiuj dosłownie)
 
 **Numeracja jest WSPÓLNA dla wszystkich dyżurów i NIE WOLNO jej przestawiać.**
