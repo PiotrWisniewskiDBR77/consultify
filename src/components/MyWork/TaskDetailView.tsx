@@ -230,6 +230,17 @@ export async function uploadTaskAttachmentsAndReload(
   );
 }
 
+export async function loadTaskAttachments(
+  api: Pick<typeof Api, 'get'>,
+  taskId: string
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/task/${encodeURIComponent(taskId)}`;
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapTaskServerAttachment(taskId, attachment)
+  );
+}
+
 export async function deleteTaskAttachmentAndReload(
   api: ObjectAttachmentApi,
   taskId: string,
@@ -1091,7 +1102,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setCreatedAt(task.createdAt || '');
       setTags(task.tags || []);
       setChecklist(task.checklist || []);
-      setAttachments(task.attachments || []);
+      setAttachments(await loadTaskAttachments(Api, id));
       const serverComments = await Api.getTaskComments(id);
       setComments(serverComments.map(mapTaskServerComment));
       setLinkedItems(task.linkedItems || []);
