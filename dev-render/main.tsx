@@ -99,6 +99,13 @@ const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
 const MenuDlugiDomkniecieScreen = React.lazy(() => import('./screens/menu-dlugi-domkniecie'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
+// GRAFIKA (2026-08-30, tor 13-agent-planowanie): drd-library-entry i
+// initiative-record istniały w dev-render/screens/ ale nigdy nie trafiły do
+// SCREENS — ten sam brak wpisu jak przy report-artifact/insight-artifact
+// (patrz komentarz niżej przy ReportArtifactScreen). Bez wpisu harness
+// pokazywał tylko awaryjną listę ekranów, więc nie dało się w ogóle zmierzyć.
+const DrdLibraryEntryScreen = React.lazy(() => import('./screens/drd-library-entry'));
+const InitiativeRecordScreen = React.lazy(() => import('./screens/initiative-record'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
 const VaultFolderBlockProofScreen = React.lazy(() => import('./screens/vault-folder-block-proof'));
 const MyWorkIdeaInspectorLekkiScreen = React.lazy(
@@ -107,6 +114,12 @@ const MyWorkIdeaInspectorLekkiScreen = React.lazy(
 const MyWorkNotebookRailSpecAScreen = React.lazy(
   () => import('./screens/mywork-notebook-rail-speca')
 );
+// Odbiór grafiki (2026-08-30): pliki ekranów już istniały (napisane, gotowe,
+// bez zależności Api/fetch) ale nigdy nie zostały wpięte do rejestru SCREENS —
+// `?screen=calendar-sync-settings` / `?screen=notebook-quick-capture` renderowały
+// awaryjną listę harnessu zamiast realnego ekranu. Dopisuję tylko rejestrację.
+const CalendarSyncSettingsScreen = React.lazy(() => import('./screens/calendar-sync-settings'));
+const NotebookQuickCaptureScreen = React.lazy(() => import('./screens/notebook-quick-capture'));
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -228,6 +241,7 @@ const RoseDangerTokenParityScreen = React.lazy(() => import('./screens/rose-dang
 const SettingsCrimsonNeutralizedScreen = React.lazy(
   () => import('./screens/settings-crimson-neutralized')
 );
+const StandardGridCardScreen = React.lazy(() => import('./screens/standard-grid-card'));
 const StandardKanbanCardScreen = React.lazy(() => import('./screens/standard-kanban-card'));
 const TemplateBuilderDeckScreen = React.lazy(() => import('./screens/template-builder-deck'));
 const TemplateBuilderDocScreen = React.lazy(() => import('./screens/template-builder-doc'));
@@ -277,6 +291,13 @@ const TeresaChipyPanelArtefaktuScreen = React.lazy(
 );
 const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
 const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
+// GRAFIKA (2026-08-30): report-artifact/insight-artifact istniały w
+// dev-render/screens/ od vf0 (1c97db682d) ale nigdy nie trafiły do SCREENS —
+// jedyne dwa z tamtej paczki, które ktoś pominął (deck/document/sheet-artifact
+// obok nich są zarejestrowane). Bez wpisu ekran nie istnieje dla harnessu
+// (fallback = lista awaryjna), więc nie dało się go w ogóle zmierzyć.
+const ReportArtifactScreen = React.lazy(() => import('./screens/report-artifact'));
+const InsightArtifactScreen = React.lazy(() => import('./screens/insight-artifact'));
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
 const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'));
 const ExceleEdytowalnaSiatkaScreen = React.lazy(() => import('./screens/excele-edytowalna-siatka'));
@@ -390,6 +411,16 @@ const ToolsSwotInitiativeProposalScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'calendar-sync-settings': {
+    label:
+      '#24b — UI „Połącz kalendarz" (Ustawienia → Calendar Sync). Mock providerów (Google połączony, Outlook/Apple do połączenia), zero Api/fetch.',
+    render: () => <CalendarSyncSettingsScreen />,
+  },
+  'notebook-quick-capture': {
+    label:
+      '#12a — REALNY <NotebookQuickCapture> (pasek szybkiego wrzucania w Notatniku). Wpisz tekst, aby zobaczyć przycisk „Wrzuć" w stanie aktywnym.',
+    render: () => <NotebookQuickCaptureScreen />,
+  },
   'meetings-module': {
     label:
       'MOD06 Meetings etap 2 — REALNY <MeetingHub> (lista) + <MeetingObjectPage> (Szczegóły/Protokół/Decyzje). &view=list|object &tab=details|minutes|decisions',
@@ -449,6 +480,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Tools — Dynamic SWOT: SummaryStep dynamic-swot branch (Results & Readiness, night-sweep-20260826 #3)',
     render: () => <ToolsSwotInitiativeProposalScreen />,
+  },
+  'drd-library-entry': {
+    label:
+      'GRAFIKA 13 — DRD Library/Processes entry point (StandardModuleBar + StandardTable, jeden mock-wiersz DRD; NIE mock AssessmentHub, patrz nagłówek pliku)',
+    render: () => <DrdLibraryEntryScreen />,
   },
   'drd-http-workspace': {
     label:
@@ -753,6 +789,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-tool': {
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
     render: () => <KartaToolScreen />,
+  },
+  'initiative-record': {
+    label:
+      'FORMULA-20 — REALNY <InitiativeDocumentView> (archetyp C·Rekord, SPEC-A), showcase fixture init-showcase-margin-leakage-recovery',
+    render: () => <InitiativeRecordScreen />,
   },
   'karta-initiative': {
     label: 'KARTY N — Initiative (harness odbioru 2026-07-21)',
@@ -1102,6 +1143,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'VF1-4 — REALNY <DecisionDetailView> (archetyp C·Rekord, SPEC-A powłoka) N-mode; &ff_vf1DecisionSpeca=1 wraz z VITE_VF1_DECISION_SPECA=true dla stanów gated',
     render: () => <DecisionRecordScreen />,
   },
+  'standard-grid-card': {
+    label: '#76a JEDEN kanon karty grid/kafelkowej (StandardGridCard)',
+    render: () => <StandardGridCardScreen />,
+  },
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
     render: () => <StandardKanbanCardScreen />,
@@ -1253,6 +1298,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'DOKUMENTY — Arkusz jako artefakt (pełny obiekt: zakładki, siatka, formuły)',
     render: () => <SheetArtifactScreen />,
   },
+  'report-artifact': {
+    label: 'DOKUMENTY — Report jako artefakt (GeneratedReportView, wariant „raport doradczy")',
+    render: () => <ReportArtifactScreen />,
+  },
+  'insight-artifact': {
+    label: 'DOKUMENTY — Insight jako artefakt (tryb demo komponentu)',
+    render: () => <InsightArtifactScreen />,
+  },
   'excele-edytowalna-siatka': {
     label:
       'DOKUMENTY — Excel EDYTOWALNY (NPV/IRR, za ff_excele_edit — klik→edycja→przeliczenie→zapis)',
@@ -1352,8 +1405,38 @@ createRoot(mount).render(
       {/* Toasty (react-hot-toast). Do 2026-07-23 harness NIE montował <Toaster/>,
           więc każdy `toast.error(...)` z ekranu był NIEWIDOCZNY — a to właśnie
           toastem produkt mówi „AI niedostępne, oto powód". Bez tego nie dało się
-          zweryfikować oczami ścieżki awaryjnej. */}
-      <Toaster position="bottom-center" />
+          zweryfikować oczami ścieżki awaryjnej.
+          GRAFIKA (2026-08-30): domyślny styl react-hot-toast jest NA SZTYWNO
+          biały/czarny — w motywie dark dawał jasną kartę na ciemnym tle
+          (odkryte na excele-reopen-verify__dark). Realny <Toaster/> produktu
+          (src/providers/AppProviders.tsx) jest tokenowy (--c-surface-raised/
+          --c-text/--c-border) i motyw śledzi poprawnie — kopiujemy DOKŁADNIE
+          te same tokeny tutaj, żeby zrzut harnessu pokazywał to, co naprawdę
+          zobaczy właściciel, nie domyślny styl biblioteki. */}
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            maxWidth: 'min(420px, calc(100vw - 2rem))',
+            padding: '10px 14px',
+            borderRadius: '12px',
+            fontSize: '14px',
+            lineHeight: '1.4',
+            background: 'var(--c-surface-raised)',
+            color: 'var(--c-text)',
+            border: '1px solid var(--c-border)',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.14)',
+          },
+          success: {
+            iconTheme: { primary: 'var(--c-success)', secondary: 'var(--c-surface-raised)' },
+          },
+          error: {
+            duration: 6000,
+            iconTheme: { primary: 'var(--c-danger)', secondary: 'var(--c-surface-raised)' },
+          },
+        }}
+      />
     </DebugBoundary>
   </React.StrictMode>
 );

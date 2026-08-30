@@ -1928,6 +1928,10 @@
         "high": "High risk",
         "critical": "Critical risk"
       },
+      "riskBadge": {
+        "high": "High",
+        "critical": "Critical"
+      },
       "session": {
         "title": "Recent operations in this session",
         "empty": "No operations executed.",
@@ -11639,6 +11643,27 @@
         "hurtsBody": "Overdue, due-today, blocked and undated records are derived from the exact register below.",
         "whyBody": "Blocked records and declared dependencies are shown without inferring unverified causes.",
         "actionsUnavailable": "No recommendation is issued without verified impact weights and evidence.",
+        "epistemic": {
+          "fact": "Fact",
+          "recommendation": "Recommendation",
+          "unknown": "Unknown",
+          "calculated": "Calculated"
+        },
+        "severity": {
+          "red": "Critical",
+          "amber": "Warning",
+          "neutral": "Neutral",
+          "unknown": "Unknown"
+        },
+        "reasons": {
+          "noApiHistory": "No history API available",
+          "noApiBsc": "No objective-mapping API available"
+        },
+        "kinds": {
+          "task": "Task",
+          "decision": "Decision",
+          "milestone": "Milestone"
+        },
         "workEmpty": "No work records are available for the selected scope.",
         "noContributors": "No contributing records",
         "sections": {
@@ -30732,9 +30757,19 @@
       "driverCounts": "Drivers",
       "minimumsNotMet": "Needs ≥{{min}} of each for the acceptance case",
       "engineNotWired": "Calculation engine not connected in this build — no numbers are being fabricated.",
+      "status": {
+        "empty": "No drivers yet",
+        "stale": "Stale — recompute needed",
+        "computing": "Computing…",
+        "fresh": "Up to date",
+        "blocked": "Blocked — calculation engine not connected",
+        "error": "Calculation error"
+      },
       "convert": {
         "reasonStale": "Recompute the case first — a stale case cannot be converted.",
-        "reasonNotBuilt": "Conversion to a governed downstream artifact is not built yet in this release (epic E11)."
+        "reasonNotBuilt": "Conversion to a governed downstream artifact is not built yet in this release (epic E11).",
+        "toModel": "Convert to Financial Model",
+        "toBudget": "Convert to Budget"
       },
       "analytics": "Analytics",
       "cost": "Cost",
@@ -38566,6 +38601,10 @@
   "agentPlan": {
     "loading": "Loading plan",
     "loadingBody": "Loading plan…",
+    "view": {
+      "title": "Run agent",
+      "body": "Pick a ready-made agent from the catalog and launch it as a background plan. Steps that need your sign-off wait in the Approvals section until you confirm them."
+    },
     "section": {
       "plan": "Plan",
       "progress": "Progress",

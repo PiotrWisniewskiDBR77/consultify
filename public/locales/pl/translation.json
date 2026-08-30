@@ -449,6 +449,10 @@
         "high": "Wysokie ryzyko",
         "critical": "Ryzyko krytyczne"
       },
+      "riskBadge": {
+        "high": "Wysokie",
+        "critical": "Krytyczne"
+      },
       "session": {
         "title": "Ostatnie operacje w tej sesji",
         "empty": "Brak wykonanych operacji.",
@@ -11101,6 +11105,27 @@
         "hurtsBody": "Rekordy zaległe, dzisiejsze, zablokowane i bez terminu wynikają dokładnie z rejestru poniżej.",
         "whyBody": "Zablokowane rekordy i zadeklarowane zależności są pokazywane bez wnioskowania o niezweryfikowanych przyczynach.",
         "actionsUnavailable": "Bez zweryfikowanych wag wpływu i dowodów rekomendacja nie jest wydawana.",
+        "epistemic": {
+          "fact": "Fakt",
+          "recommendation": "Rekomendacja",
+          "unknown": "Nieznane",
+          "calculated": "Wyliczone"
+        },
+        "severity": {
+          "red": "Krytyczne",
+          "amber": "Ostrzeżenie",
+          "neutral": "Neutralne",
+          "unknown": "Nieznane"
+        },
+        "reasons": {
+          "noApiHistory": "Brak API historii",
+          "noApiBsc": "Brak API mapowania celów"
+        },
+        "kinds": {
+          "task": "Zadanie",
+          "decision": "Decyzja",
+          "milestone": "Kamień milowy"
+        },
         "workEmpty": "Brak rekordów pracy w wybranym zakresie.",
         "noContributors": "Brak rekordów składowych",
         "sections": {
@@ -33176,9 +33201,19 @@
       "driverCounts": "Czynniki",
       "minimumsNotMet": "Wymaga ≥{{min}} każdego typu, aby case spełniał kryteria akceptacji",
       "engineNotWired": "Silnik obliczeniowy nie jest podłączony w tej wersji — żadne liczby nie są zmyślane.",
+      "status": {
+        "empty": "Brak czynników",
+        "stale": "Nieaktualne — wymaga przeliczenia",
+        "computing": "Przeliczanie…",
+        "fresh": "Aktualne",
+        "blocked": "Zablokowane — silnik obliczeniowy niepodłączony",
+        "error": "Błąd obliczeń"
+      },
       "convert": {
         "reasonStale": "Najpierw przelicz case — nieaktualnego case’a nie można skonwertować.",
-        "reasonNotBuilt": "Konwersja do zarządzanego artefaktu docelowego nie jest jeszcze zbudowana w tej wersji (epik E11)."
+        "reasonNotBuilt": "Konwersja do zarządzanego artefaktu docelowego nie jest jeszcze zbudowana w tej wersji (epik E11).",
+        "toModel": "Konwertuj na model finansowy",
+        "toBudget": "Konwertuj na budżet"
       },
       "analytics": "Analityka",
       "cost": "Koszt",
@@ -41079,6 +41114,10 @@
   "agentPlan": {
     "loading": "Wczytywanie planu",
     "loadingBody": "Wczytywanie planu…",
+    "view": {
+      "title": "Uruchom agenta",
+      "body": "Wybierz gotowego agenta z katalogu i uruchom go jako plan w tle. Kroki wymagające Twojej akceptacji czekają w sekcji Aprobaty, aż je potwierdzisz."
+    },
     "section": {
       "plan": "Plan",
       "progress": "Postęp",

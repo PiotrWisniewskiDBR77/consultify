@@ -37,14 +37,17 @@ export const DrdLibraryEntryHarness: React.FC<{ onOpen?: (id: string) => void }>
 
   return (
     <div className="flex h-full flex-col bg-c-bg" data-testid="drd-library-entry-harness">
+      {/* Etykiety 1:1 z realnym AssessmentHub (src/components/assessment/AssessmentHub.tsx,
+          klucze i18n assessment.hub.tabs.*) — harness był po angielsku mimo że
+          resztę ekranu (tabela, flaga) renderuje po polsku (mieszany język). */}
       <StandardModuleBar
-        breadcrumbs={[{ label: 'Assessment' }, { label: 'Library' }, { label: 'Processes' }]}
+        breadcrumbs={[{ label: 'Ocena' }, { label: 'Biblioteka' }, { label: 'Procesy' }]}
         tabs={[
-          { id: 'library', label: 'Library' },
-          { id: 'processes', label: 'Processes' },
-          { id: 'outputs', label: 'Outputs' },
-          { id: 'reports', label: 'Reports' },
-          { id: 'initiatives', label: 'Initiatives' },
+          { id: 'library', label: 'Biblioteka' },
+          { id: 'processes', label: 'Procesy' },
+          { id: 'outputs', label: 'Wnioski' },
+          { id: 'reports', label: 'Raporty' },
+          { id: 'initiatives', label: 'Inicjatywy' },
         ]}
         activeTab="processes"
       />
