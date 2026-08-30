@@ -219,3 +219,7 @@ Evidence manifest: —
 Własny pomiar na dokładnym markerze `714faf5f8b0d9cda8204fec9495893c9fe97bed7`, świeżej lokalnej bazie (`863` migracje, drugi przebieg `0`) i kanonicznym runtime `4918/4919` **obalił** tezę, że preferencja Light renderuje ciemną paletę. Jawny wybór Light usuwa klasę `dark` z `<html>` i daje tło `rgb(248,250,252)` oraz tekst `rgb(15,23,42)`; Dark przywraca klasę oraz tło `rgb(15,23,42)` i tekst `rgb(244,247,251)`. Wynik powtórzono dla connected i unconnected: `4/4` obrazy rozróżniają motywy.
 
 Nie zmieniono kodu produktu ani testów i nie wykonano pozornej „naprawy”. Dwukrotny pakiet Partnera zachował identyczne `181/181` par `(fullName,status)`; oba przebiegi miały ten sam zastany wynik `180 PASS / 1 FAIL`. G06 pozostaje `PARTIAL_BROWSER_PASS`, G18 i owner acceptance bez zmian. Pełne komendy, ograniczenia i hashe: `../../codex/CODEX_DAY126_PARTNER_PALETA_REPORT.md`.
+
+## Day177 — STOP zasobowy przed przejazdem G08 (2026-08-30)
+
+Dyżur wystartował dokładnie z markera `d3d36cd5f5`, lecz dedykowany port `6077` i nazwa kontenera `cx-day177-pg` zostały zajęte przez inny proces w wyścigu po poprawnej kontroli portów. Zgodnie z `Z7`, `Z9` i §0.5 nie adoptowano zastanej bazy i nie wybrano portu zastępczego. Seeder, logowanie, runtime `5024/5025` oraz przejazd 25 sekcji Light/Dark nie zostały uruchomione. Stan dowodowy pozostaje `EVIDENCE_MISSING`; `G08–G20` bez podniesienia. Szczegóły: `../../codex/CODEX_DAY177_PARTNER_REPORT.md`.
