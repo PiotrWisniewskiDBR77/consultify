@@ -7338,7 +7338,8 @@
       "sessionUnit_one": "session",
       "sessionUnit_other": "sessions",
       "usedNTimes": "used {{count}}×",
-      "close": "Close"
+      "close": "Close",
+      "requiredMarker": "required"
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transcript approved.",
@@ -28372,7 +28373,8 @@
       "planning": "Planning…",
       "submitTemplate": "Generate from template",
       "submitPlan": "Plan document",
-      "contextChip": "Context: {{organizationName}}"
+      "contextChip": "Context: {{organizationName}}",
+      "sectionBrief": "Brief"
     },
     "outline": {
       "type": "Type",
@@ -39331,6 +39333,25 @@
       "noMatch": "No block matches \"{{query}}\".",
       "comingSoon": "Coming soon",
       "approval": "approval"
+    },
+    "canvas": {
+      "moduleTag": {
+        "assessment": "Assessment",
+        "control": "Control",
+        "execution": "Execution",
+        "finance": "Finance",
+        "initiatives": "Initiatives",
+        "integrations": "Integrations",
+        "interview": "Interview",
+        "materials": "Materials",
+        "meeting": "Meeting",
+        "myWorkDecisions": "My Work · Decisions",
+        "myWork": "My Work",
+        "notebook": "Notebook",
+        "results": "Results",
+        "tables": "Tables",
+        "vault": "Vault"
+      }
     }
   },
   "views": {

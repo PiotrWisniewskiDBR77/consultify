@@ -24,6 +24,8 @@ import {
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { formatListDate } from '@/utils/listDateFormat';
+
 import { EmbeddedMatrix } from './EmbeddedMatrix';
 import { ReportSection } from './ReportSection';
 
@@ -297,8 +299,14 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
           </span>
           <span>•</span>
           <span>
+            {/* Odbiór 2026-08-30 (przegląd całości): `toLocaleDateString()`
+                BEZ argumentu bierze locale z PRZEGLĄDARKI, nie z języka
+                konta — dawało `7/21/2026` (amerykański zapis) w polskim
+                interfejsie. Kanon dat (`src/utils/listDateFormat.ts`,
+                SSOT list/podglądów) daje jeden zapis `DD/MM/YYYY`
+                niezależnie od locale przeglądarki. */}
             {t('reports.lastUpdated', 'Last updated')}:{' '}
-            {new Date(report.updatedAt).toLocaleDateString()}
+            {formatListDate(report.updatedAt)}
           </span>
           {readOnly && (
             <>

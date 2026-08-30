@@ -131,6 +131,7 @@ export function FinanceExportImportPanel({
   const { enabled } = useFinanceExportImportFlag();
   const [exportState, setExportState] = useState<ExportState>({ kind: 'idle' });
   const [importState, setImportState] = useState<ImportState>({ kind: 'idle' });
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const importFileInputId = useId();
 
   if (!enabled) return null;
@@ -260,17 +261,42 @@ export function FinanceExportImportPanel({
         <label htmlFor={importFileInputId} className="text-xs font-medium text-c-text-primary">
           Wybierz plik do importu (.xlsx)
         </label>
+        {/*
+          Odbiór 2026-08-30 (przegląd całości): natywny przycisk pola pliku
+          renderuje tekst z LOCALE PRZEGLĄDARKI, nie z języka konta — „Choose
+          File / No file chosen" po angielsku w polskim panelu, niezależnie od
+          klas `file:*` (te stylują tylko wygląd, nie tekst — przeglądarka go
+          nie oddaje). Wzorzec: prawdziwy `<input type="file">` zostaje w
+          DOM-ie (ten sam `id`/`data-testid`/`onChange` — testy i etykieta z
+          `htmlFor` powyżej działają bez zmian), ale wizualnie ukryty
+          (`sr-only`); to, co WIDAĆ, to `<label>` jako pigułka z własnym
+          polskim tekstem + status wybranego pliku, które klikając nadal
+          otwierają ten sam natywny dialog (dwa `<label htmlFor>` do jednego
+          inputu — standardowe, oba klikalne).
+        */}
         <input
           id={importFileInputId}
           type="file"
           accept=".xlsx"
           data-testid="import-file-input"
-          className="text-xs text-c-text-secondary file:mr-2 file:rounded-md file:border file:border-c-border-subtle file:bg-c-surface-raised file:px-2 file:py-1 file:text-xs"
+          className="sr-only"
           onChange={(e) => {
             const file = e.target.files?.[0];
+            setSelectedFileName(file ? file.name : null);
             if (file) void handleFileSelected(file);
           }}
         />
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor={importFileInputId}
+            className="cursor-pointer rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs font-medium text-c-text-primary hover:bg-c-surface"
+          >
+            Wybierz plik
+          </label>
+          <span className="text-xs text-c-text-secondary">
+            {selectedFileName ?? 'Nie wybrano pliku'}
+          </span>
+        </div>
 
         {importState.kind === 'parsing' ? (
           <p className="text-xs text-c-text-secondary">Wczytuję plik…</p>

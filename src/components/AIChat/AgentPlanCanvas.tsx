@@ -76,6 +76,48 @@ import { PALETTE_DND_MIME } from './AgentWorkshopPalette';
 export type { PlanBlockKind, ToolCatalogEntry };
 export { DEFAULT_TOOL_NAME, TOOL_CATALOG };
 
+/**
+ * Etykieta modułu pod nazwą klocka (`block.moduleType`, patrz
+ * `agentWorkshopCatalog.ts` → pole `module`) — WYŁĄCZNIE dla WYŚWIETLENIA na
+ * schemacie. Odbiór 2026-08-30 (przegląd całości): tag pod klockiem był
+ * gołym angielskim słowem z katalogu ("Assessment", "Finance", "My Work"…)
+ * niezależnie od języka konta — to jest chrom interfejsu (czytelnik widzi
+ * słowo na karcie), NIE zapis biznesowy kroku planu (to różni się od
+ * `toolLabel()`/`TOOL_LABEL_BY_NAME`, które celowo zostają angielskie, bo są
+ * migawką danych zapisywaną z krokiem — patrz komentarz w
+ * `agentWorkshopCatalog.ts`). Katalog i `block.moduleType` NIE są tu
+ * zmieniane — tylko to, co się pokazuje.
+ * `Teresa` i `Vault→Sejf`: `Teresa` to nazwa własna asystenta, zostaje;
+ * `Vault` tłumaczone na `Sejf` zgodnie z resztą aplikacji (`sidebar.clientVault`
+ * = „Sejf klienta", zakładki modułu Vault = „Sejfy/Foldery").
+ */
+const MODULE_TAG_TRANSLATIONS: Record<string, { key: string; fallback: string }> = {
+  Assessment: { key: 'agentPlan.canvas.moduleTag.assessment', fallback: 'Ocena' },
+  Control: { key: 'agentPlan.canvas.moduleTag.control', fallback: 'Kontrola' },
+  Execution: { key: 'agentPlan.canvas.moduleTag.execution', fallback: 'Realizacja' },
+  Finance: { key: 'agentPlan.canvas.moduleTag.finance', fallback: 'Finanse' },
+  Initiatives: { key: 'agentPlan.canvas.moduleTag.initiatives', fallback: 'Inicjatywy' },
+  Integrations: { key: 'agentPlan.canvas.moduleTag.integrations', fallback: 'Integracje' },
+  Interview: { key: 'agentPlan.canvas.moduleTag.interview', fallback: 'Wywiad' },
+  Materials: { key: 'agentPlan.canvas.moduleTag.materials', fallback: 'Materiały' },
+  Meeting: { key: 'agentPlan.canvas.moduleTag.meeting', fallback: 'Spotkania' },
+  'My Work · Decisions': {
+    key: 'agentPlan.canvas.moduleTag.myWorkDecisions',
+    fallback: 'Moja Praca · Decyzje',
+  },
+  'My Work': { key: 'agentPlan.canvas.moduleTag.myWork', fallback: 'Moja Praca' },
+  Notebook: { key: 'agentPlan.canvas.moduleTag.notebook', fallback: 'Notatnik' },
+  Results: { key: 'agentPlan.canvas.moduleTag.results', fallback: 'Resultaty' },
+  Tables: { key: 'agentPlan.canvas.moduleTag.tables', fallback: 'Tabele' },
+  Vault: { key: 'agentPlan.canvas.moduleTag.vault', fallback: 'Sejf' },
+};
+
+function moduleTagLabel(raw: string | undefined, t: (key: string, fallback: string) => string): string | undefined {
+  if (!raw) return raw;
+  const entry = MODULE_TAG_TRANSLATIONS[raw];
+  return entry ? t(entry.key, entry.fallback) : raw;
+}
+
 /** Typ MIME przeciąganego KLOCKA schematu (zmiana kolejności wewnątrz canvasu). */
 export const BLOCK_DND_MIME = 'application/x-consultify-agent-block-move';
 
@@ -661,7 +703,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                             BLOCK_KIND_LABEL_KEY[block.kind],
                             BLOCK_KIND_FALLBACK_LABEL[block.kind]
                           )}
-                          {block.moduleType ? ` · ${block.moduleType}` : ''}
+                          {block.moduleType ? ` · ${moduleTagLabel(block.moduleType, t)}` : ''}
                           {block.kind === 'vault-kontekst'
                             ? ` · ${
                                 typeof block.toolInput?.vault_safe_name === 'string'

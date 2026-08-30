@@ -1777,7 +1777,16 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             htmlFor="insight-creator-title"
             className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
           >
-            {t('interview.insightCreatorModal.insightTitle')} *
+            {t('interview.insightCreatorModal.insightTitle')}{' '}
+            {/*
+              KANON (CLAUDE.md §3, odbiór 2026-08-30): jedna konwencja pola
+              wymaganego w całej aplikacji — neutralne „(wymagane)", nie
+              gwiazdka (ta była szara, ale wciąż trzecia konwencja obok
+              czerwonej gwiazdki i neutralnego tekstu — ujednolicone).
+            */}
+            <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+              ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+            </span>
           </label>
           <input
             id="insight-creator-title"
@@ -1805,7 +1814,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {t('interview.insightCreatorModal.outputType')} *
+              {t('interview.insightCreatorModal.outputType')}{' '}
+              <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+                ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+              </span>
             </label>
             <span className="text-xs text-c-info">
               {t('interview.insightCreatorModal.selectedCountColon', {

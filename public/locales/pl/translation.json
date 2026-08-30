@@ -6753,7 +6753,8 @@
       "sessionUnit_many": "sesji",
       "sessionUnit_other": "sesji",
       "usedNTimes": "użyto {{count}}×",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "requiredMarker": "wymagane"
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transkrypcja zatwierdzona.",
@@ -30752,7 +30753,8 @@
       "planning": "Planowanie…",
       "submitTemplate": "Generuj z szablonu",
       "submitPlan": "Zaplanuj dokument",
-      "contextChip": "Kontekst: {{organizationName}}"
+      "contextChip": "Kontekst: {{organizationName}}",
+      "sectionBrief": "Treść i tytuł"
     },
     "outline": {
       "addSection": "+ Dodaj sekcję",
@@ -40321,7 +40323,7 @@
       "groupLabels": [
         "Sesja",
         "Analiza",
-        "Outputs",
+        "Rezultaty",
         "Współpraca",
         "Zapisy"
       ],
@@ -41862,6 +41864,25 @@
       "noMatch": "Żaden klocek nie pasuje do „{{query}}\".",
       "comingSoon": "Wkrótce",
       "approval": "zgoda"
+    },
+    "canvas": {
+      "moduleTag": {
+        "assessment": "Ocena",
+        "control": "Kontrola",
+        "execution": "Realizacja",
+        "finance": "Finanse",
+        "initiatives": "Inicjatywy",
+        "integrations": "Integracje",
+        "interview": "Wywiad",
+        "materials": "Materiały",
+        "meeting": "Spotkania",
+        "myWorkDecisions": "Moja Praca · Decyzje",
+        "myWork": "Moja Praca",
+        "notebook": "Notatnik",
+        "results": "Resultaty",
+        "tables": "Tabele",
+        "vault": "Sejf"
+      }
     }
   },
   "views": {

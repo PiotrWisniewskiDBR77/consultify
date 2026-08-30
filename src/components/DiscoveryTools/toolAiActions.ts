@@ -170,7 +170,11 @@ export function getToolPhaseAiActions(
         'frame-mission',
         'sparkles',
         'AI Frame',
-        'AI Frame',
+        // Odbiór 2026-08-30 (przegląd całości): `labelPl` był tu skopiowany
+        // 1:1 z `label` angielskim (kopiuj-wklej przy autorstwie) — jedyne
+        // dwa przyciski w tym słowniku bez realnego tłumaczenia, reszta
+        // (np. 'Buduj analizę', 'Buduj portfolio') już ma wzorzec.
+        'Wyostrz z AI',
         'Sharpen the strategic question before analysis',
         'Wyostrz pytanie strategiczne przed analizą'
       ),
@@ -178,7 +182,7 @@ export function getToolPhaseAiActions(
         'draft-session',
         'wand',
         'AI Draft',
-        'AI Draft',
+        'Szkicuj z AI',
         'Generate a controlled first draft of the full tool session',
         'Wygeneruj kontrolowany pierwszy szkic całej sesji narzędzia'
       ),

@@ -129,8 +129,15 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
           children: (
             <div className="space-y-2">
               {canRun ? (
+                // Odbiór 2026-08-30 (przegląd całości): `positive` (zielony) to
+                // semantyka Approve/Complete — "Uruchom proces" to start
+                // głównej akcji, nie potwierdzenie czegoś ukończonego.
+                // `primary` (granatowo-biały) to WŁAŚCIWY wariant dla jedynego
+                // CTA panelu (§ nagłówek `PreviewActionButton.tsx`). "Zatwierdź
+                // krok" niżej (sekcja Zgody) zostaje `positive` — to prawdziwe
+                // zatwierdzenie.
                 <PreviewActionButton
-                  variant="positive"
+                  variant="primary"
                   icon={Play}
                   label="Uruchom proces"
                   onClick={onRun}
