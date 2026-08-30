@@ -28,13 +28,19 @@ export const taskDueSoonNotStartedRule: SignalRule = {
         new Date(ctx.now.getTime() + 259_200_000).toISOString(),
       ]
     );
-    return rows.map((row) => ({
-      subjectId: row.id,
-      projectId: row.project_id,
-      observedValue: Math.ceil((new Date(row.due_date).getTime() - ctx.now.getTime()) / 86_400_000),
-      observedAt: ctx.now.toISOString(),
-      data: { assigneeId: row.assignee_id },
-    }));
+    return rows.map((row) => {
+      const observedValue = Math.ceil(
+        (new Date(row.due_date).getTime() - ctx.now.getTime()) / 86_400_000
+      );
+      return {
+        subjectId: row.id,
+        projectId: row.project_id,
+        observedValue,
+        observedAt: ctx.now.toISOString(),
+        data: { assigneeId: row.assignee_id },
+        bodyParams: { value: observedValue },
+      };
+    });
   },
   dedupeKey: (hit) => `exec.task.due_soon_not_started:${hit.subjectId}`,
   evidence: (hit) => [
