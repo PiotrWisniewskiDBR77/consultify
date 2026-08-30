@@ -32,6 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import {
   StandardModuleBar,
@@ -45,6 +46,7 @@ import {
 } from '@/components/standard';
 import { Api } from '@/services/api';
 import { type EffectiveStakeholder, StakeholderApi } from '@/services/api/stakeholders.api';
+import { ROUTES } from '@/routes/routeConfig';
 
 import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
 
@@ -184,6 +186,16 @@ const taskStatusTone = (status?: string): string => {
 export const MyProjects: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
+  // ★ Odbiór 2026-08-30 (droga-dojscia #4): breadcrumb pokazywał „My Work"
+  // jako martwy tekst (ten sam styl co link, zero onClick) — wygląda na
+  // nawigację, nic nie robi po kliknięciu. Kanon breadcrumbs (patrz
+  // SettingsView.tsx/OrganizationView.tsx: pierwszy człon zawsze ma
+  // onClick) — tu wraca do huba Moja Praca, jedynego realnego rodzica
+  // koncepcyjnego tego ekranu.
+  const handleBackToMyWork = useCallback(() => {
+    navigate(ROUTES.MY_WORK);
+  }, [navigate]);
 
   // ── Menu 2: Projekty | Programy (Zwornik D3) ─────────────────────────────
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('projects');
@@ -761,7 +773,7 @@ export const MyProjects: React.FC = () => {
       {/* MENU 1/2/3 — wyłącznie przez fasadę */}
       <StandardModuleBar
         breadcrumbs={[
-          { label: t('sidebar.myWork', 'My Work') },
+          { label: t('sidebar.myWork', 'My Work'), onClick: handleBackToMyWork },
           { label: t('myWork.projects.projects', 'Projects') },
         ]}
         tabs={[

@@ -398,7 +398,7 @@
           "co": "Lista projektow ze statusami jako pigulki z kropka.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Moja praca → zakładka „Projekty\" (Zwornik) — lista projektów ze statusami jako pigułki, z sekcjami interesariuszy, finansów, zespołu i zadań w podglądzie."
+          "gdzie": "UWAGA — BRAK DROGI WEJŚCIA: moduł „Moja Praca\" dziś NIE MA zakładki „Projekty\" (sprawdzone klikiem w src/components/MyWork/MyWorkHub.tsx — zero wystąpień). Jedyne odnalezione wywołanie nawigacji na trasę /projects to źle podpięta akcja Command Palette „Otwórz kalendarz\" (src/components/MyWork/CommandPalette.tsx:327 — nazwa mówi o kalendarzu, onClick faktycznie robi navigate('/projects')) — to wygląda na pomyłkę, nie świadomą ścieżkę. Ekran (real <MyProjects/>, lista projektów ze statusami jako pigułki + sekcje interesariuszy/finansów/zespołu/zadań w podglądzie) jest dziś osiągalny wyłącznie wpisaniem adresu /projects wprost w przeglądarce. Naprawione 2026-08-30: breadcrumb „Moja Praca › Projekty\" na ekranie wyglądał jak link, ale nic nie robił po kliknięciu — pierwszy człon ma teraz onClick i wraca do /my-work (src/components/MyWork/MyProjects.tsx) — to jednak NIE tworzy drogi w dół do tego ekranu, bo Moja Praca nadal go nie linkuje."
         },
         {
           "id": "idea-table-tool-empty-filter",
@@ -1703,7 +1703,7 @@
           "wyjatki": [
             "PUSTKA ZAMIERZONA: Dowod wpiecia przycisku, nie ekran danych."
           ],
-          "gdzie": "Materiały → zakładka „Biblioteka wzorców\" → „Nowy szablon\" — wejście prowadzące do kreatora szablonu."
+          "gdzie": "Materiały → zakładka „Biblioteka wzorców\" → przycisk „Nowy szablon\" w prawym górnym rogu paska — otwiera TemplateBuilderFlow (wizard→builder), sprawdzone klikiem (src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx). Realny przycisk używa dokładnie tych samych klas co kanoniczny ciemny CTA (bg-navy-900/dark:bg-[#F4F7FB]) i bywa split-buttonem z dodatkową strzałką (Architekt szablonów / Generator arkuszy w Excelu), gdy włączone są flagi deckArchitect/workbookTemplates — dziś domyślnie ON. UWAGA: ten konkretny dev-render to celowo uproszczony dowód wpięcia (własny, ręcznie zbity pasek, NIE realny StandardModuleBar) — PUSTKA ZAMIERZONA, dowód działania przycisku, nie ekran z danymi."
         },
         {
           "id": "document-studio-resume-error",
@@ -2346,7 +2346,7 @@
           "co": "Zrodla danych nazwane, zero nagich zer.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Admin (panel administratora organizacji) → sekcja „Trust & Control\" → pięć zakładek (Audyt SOC2 / DLP / Rezydencja danych / Retencja / Polityka AI) — kontrola bezpieczeństwa i zgodności organizacji w jednym miejscu."
+          "gdzie": "„Panel Administratora\" (lewe menu główne, widoczne tylko dla ról Admin/Owner/SuperAdmin) → wewnątrz panelu lewy pasek grup → grupa „Centrum administracyjne\" → zakładki „Audyt SOC2\" / „DLP\" / „Rezydencja danych\" / „Retencja\" / „Polityka AI\" (adres /admin/command/audit itd.), sprawdzone klikiem (src/components/Admin/adminNavigation.ts:175-188, src/views/admin/AdminSettingsModule.tsx). Sam ekran ma własny widoczny nagłówek „Centrum dowodzenia\" — inna nazwa niż etykieta w menu, stąd zamieszanie właściciela. UWAGA: w kodzie ta sekcja bywa nazywana „Trust & Control\" (src/utils/commandCenterFlag.ts) — ten napis NIGDZIE nie pojawia się w interfejsie, to wyłącznie żargon deweloperski. Bez flag: gejtująca flaga commandCenterFlag.ts istnieje, ale jej funkcja isCommandCenterEnabled() nie ma dziś ŻADNEGO wołającego w kodzie — sekcja jest zawsze widoczna, flaga jest martwa (fantom bez efektu)."
         },
         {
           "id": "admin-sso-self-service-card",
@@ -2566,7 +2566,7 @@
           "co": "Szesc wariantow paska. Aktywny filtr neutralny granat, nie czerwien.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Element wspólny (kanon) — StandardModuleBar, pasek na górze każdego ekranu listowego we WSZYSTKICH modułach — sześć wariantów zawartości paska."
+          "gdzie": "TO NIE JEST EKRAN PRODUKTOWY — to techniczny harness dev-render (galeria wariantów komponentu), nie da się w niego „wejść\" jednym kliknięciem z aplikacji. Sprawdza sześć wariantów właściwości wspólnego paska StandardModuleBar (Menu 1/2/3 na górze ekranów listowych). Każdy wariant to realny fragment innego ekranu: A/B — sam pasek z/bez własnej treści (np. Moja Praca, Assessment→Tabela, Client Vault, Agent Hub); C — zablokowany przycisk „Nowa inicjatywa\" (Initiatives); D — filtry statusu (Execution/Audyty); E — dwa przyciski CTA naraz (Interview); F — przyciski kategorii (Benefits). REKOMENDACJA: rozważyć zdjęcie z listy odbioru ekran-po-ekranie — to zestawienie stanów komponentu (dowód dla programistów), nie osobny ekran, który właściciel kiedykolwiek zobaczy w aplikacji."
         },
         {
           "id": "preview-4-zakladki",
