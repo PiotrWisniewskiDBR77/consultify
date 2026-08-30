@@ -437,5 +437,14 @@
  "ev-football-field": {
   "decyzja": "ok",
   "kiedy": "2026-08-30T10:56:17.807Z"
+ },
+ "agent-plan-view": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:19:50.777Z"
+ },
+ "plan-scenario-d1": {
+  "decyzja": "ok",
+  "uwaga": "Tutaj trzeba zrobić też przedstawienie tego na linii czasu. Czy, jak oddzielną kartę, zakładkę, przedstawienie na linii czasu, czyli harmonogram? Wtedy będziemy widzieli, jak one się za sobą łączą. No i może warto byłoby wtedy się zastanowić, czy nie pokazać jakiejś linii ścieżki krytycznej, które muszą być pierwsze, które muszą być dalej, albo na przykład użyć do tego kolorów. ",
+  "kiedy": "2026-08-30T11:20:37.644Z"
  }
 }

@@ -175,6 +175,7 @@ function strona() {
       ? `<div class="popr"><b>Poprawione — obejrzyj ponownie</b><span>${esc(popr.opis)}</span><time>${esc(new Date(popr.kiedy).toLocaleString('pl-PL'))}</time></div>`
       : ''
   }</div>
+  ${e.gdzie ? `<p class="gdzie">${esc(e.gdzie)}</p>` : ''}
   <p class="co">${esc(e.co)}</p>
   ${e.naprawione?.length ? `<ul class="nap">${e.naprawione.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
   ${e.wyjatki?.length ? `<ul class="wyj">${e.wyjatki.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -242,6 +243,10 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 .o{font-size:11px;font-weight:700;border-radius:5px;padding:2px 7px;flex:none}
 .oA{background:#dcfce7;color:#14532d}.oB{background:#fef3c7;color:#78350f}
 .oC{background:#e2e8f0;color:#334155}.oD{background:#fee2e2;color:#7f1d1d}
+/* Odbiór 2026-08-30: właściciel trzy razy napisał „nie wiem, gdzie to jest".
+   Karta pokazywała obrazek i nazwę, ale nie ŚCIEŻKĘ w aplikacji — więc ocena
+   szła w próżni. */
+.gdzie{margin:0 0 6px;font-size:12px;color:var(--nieb);background:#eff6ff;border-radius:6px;padding:4px 8px;display:inline-block}
 .co{margin:0 0 8px;font-size:13.5px;color:var(--drugi)}
 .nap,.wyj{margin:0 0 8px;padding-left:16px;font-size:12.5px}
 .nap li{color:var(--ok)}.wyj li{color:var(--pop)}

@@ -117,7 +117,8 @@
      "wyjatki": [
       "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
       "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)"
-     ]
+     ],
+     "gdzie": "Wyniki → KPI → rejestr zestawień okresowych (POZIOM 1, nowy)"
     },
     {
      "id": "results-vnext-kpi-registry",
@@ -135,7 +136,8 @@
      "naprawione": [
       "Angielskie naglowki podgladu"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → KPI → wejście w zestawienie (POZIOM 2)"
     },
     {
      "id": "results-vnext-kpi-tool",
@@ -145,7 +147,8 @@
      "naprawione": [
       "Surowe statusy pomiaru zamiast etykiet"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3)"
     },
     {
      "id": "results-vnext-roi-registry",
@@ -298,7 +301,8 @@
      ],
      "wyjatki": [
       "Surowe kody typow w kolumnach: Investment_case, base/opt/cons, DCF_FCFF, Prediction, STM"
-     ]
+     ],
+     "gdzie": "Finanse → wejście do modułu (pięć zakładek)"
     },
     {
      "id": "finance-model-workspace",
@@ -578,7 +582,8 @@
      "ocena": "A",
      "co": "Sekcje z licznikami.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → inspektor po prawej stronie"
     },
     {
      "id": "mywork-idea-topbar",
@@ -614,7 +619,8 @@
      "ocena": "A",
      "co": "Graf polaczen z soczewka osieroconych.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań)"
     },
     {
      "id": "vault-sejf-wnetrze",
@@ -989,7 +995,8 @@
       "Angielski naglowek zrodla ASSESSMENT",
       "Daty w formacie angielskim"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Audyty → zakładka „Raporty DRD\" → otwarcie raportu. UWAGA: ta zakładka jest ZA FLAGĄ, domyślnie WYŁĄCZONĄ — w aplikacji jej dziś nie zobaczysz. Dlatego nie wiesz, gdzie to jest."
     },
     {
      "id": "assessment-list",
@@ -1262,7 +1269,8 @@
      ],
      "wyjatki": [
       "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
-     ]
+     ],
+     "gdzie": "Centrum agentów — wspólna przestrzeń pracy Teresy i Mojej pracy"
     }
    ]
   },
