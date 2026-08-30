@@ -19,6 +19,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { DocumentIntake, DocumentSchema, DocumentSourceRef } from '../documentStudioTypes.js';
+import { renderSchemaToMarkdown } from '../documentSchemaRenderer.js';
 
 const generateChatResponseMock = vi.fn();
 
@@ -145,23 +146,58 @@ describe('generateBlockProse', () => {
     expect(section.blocks[0].isAssumption).toBe(false);
   });
 
-  it('removes unsupported claims introduced by the prose enrichment pass', async () => {
+  it('keeps a sentence with an unsupported numeric claim but flags the block as an assumption (D-8)', async () => {
+    const sentence = 'Reach 85% by entering DACH with 8 initiatives.';
     generateChatResponseMock.mockResolvedValue({
       content: JSON.stringify({
         blocks: [
           {
             blockId: 'blk-para',
-            text: 'Reach 85% by entering DACH with 8 initiatives.',
+            text: sentence,
           },
         ],
       }),
     });
 
     const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
-    expect((result.sections[0].blocks[0].content as { text: string }).text).toContain(
-      'unsupported claim'
-    );
+    // D-8: unsupported numeric claims are no longer stripped/replaced by a
+    // placeholder — the sentence is preserved verbatim and `changed: true`
+    // from enforceBlockGrounding surfaces as isAssumption on the block so
+    // downstream review can flag it instead.
+    expect((result.sections[0].blocks[0].content as { text: string }).text).toBe(sentence);
     expect(result.sections[0].blocks[0].isAssumption).toBe(true);
+  });
+
+  it('N-9: a GFM table paragraph with a number outside the sources renders as a valid table, without an inline assumption marker', async () => {
+    const tableText = [
+      '| Metric | Value |',
+      '| --- | --- |',
+      '| Adoption | 42% |',
+    ].join('\n');
+    generateChatResponseMock.mockResolvedValue({
+      content: JSON.stringify({
+        blocks: [{ blockId: 'blk-para', text: tableText }],
+      }),
+    });
+
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    const block = result.sections[0].blocks[0];
+
+    // "42" is not among the source-pack numbers (2.2, 1.08), so
+    // enforceBlockGrounding reports changed:true — but a table block must
+    // never be flagged as an assumption, because the renderer would then
+    // append "_[Assumption]_" right after the last "| … |" row and break
+    // the table's membership in marked.
+    expect(block.isAssumption).toBe(false);
+    expect((block.content as { text: string }).text).toBe(tableText);
+
+    const markdown = renderSchemaToMarkdown(result);
+    const lastTableLine = markdown
+      .split('\n')
+      .filter((line) => line.includes('Adoption'))[0];
+    expect(lastTableLine.trim().startsWith('|')).toBe(true);
+    expect(lastTableLine).not.toContain('[Assumption]');
+    expect(markdown).not.toContain('| Adoption | 42% | _[Assumption]_');
   });
 
   it('passes source evidence to the model and preserves claims grounded in that evidence', async () => {

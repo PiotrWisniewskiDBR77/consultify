@@ -5,7 +5,15 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 184 — plan migracji legacy→kanon · ODRZUCONY DO POPRAWY (B) · FIX-184 wydany
+# ODBIÓR 184 — plan migracji legacy→kanon · SCALONY PO FIX-184
+
+★ FIX-184 wykonany (`b89b02be04`): rozdział A4.0 z realnym łańcuchem 5 poleceń
+genezy domu (registerInitiative→…→execution_case v1) + SQL denominatora; fałszywy
+PASS zastąpiony cytatami z logów; 3 warianty personal-tasks (rekomendacja: zostają
+w legacy, migracja tylko zadań z inicjatywą); risks/alternatives → sidecar-agregat;
+tabele A1 (27/80 kolumn z initdb, 53 z późniejszych — znaleziono pominięte źródło
+`20260719_baseline_gap.sql`) i A2 (24/24 trasy ZA bramą). **Plan gotowy do decyzji
+właściciela o wykonaniu D-7 — z ostrzeżeniem o denominatorze na pierwszej stronie.**
 
 Gałąź `codex/day184-analiza-migracji-20260830` (2 commity). Diff czysty (2 pliki .md).
 Pomiary wykonawcy REALNE — audytor odtworzył każdą liczbę co do jedności (24 trasy,
