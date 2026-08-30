@@ -155,4 +155,43 @@ describe.skipIf(!enabled)('Day 158 KPI crosswalk on real PostgreSQL', () => {
     );
     expect(unmapped.rows.map((row) => row.id)).toEqual([sourceUnmappedId]);
   });
+
+  it('reports field-level divergences without changing either registry', async () => {
+    const { registerConfirmedInitiativeKpiMappings } =
+      await import('../../services/resultsVnext/kpi/kpiCrosswalkService.js');
+    const { runInitiativeKpiShadowRead } =
+      await import('../../services/resultsVnext/kpi/kpiShadowReadService.js');
+    await registerConfirmedInitiativeKpiMappings({
+      organizationId,
+      createdBy: 'day158',
+      mappings: [
+        { sourceId: sourceMappedId, canonicalKpiId: canonicalMappedId, matchBasis: 'manual' },
+      ],
+    });
+    const before = await pool.query(
+      `SELECT current_value, target_value, unit, status
+         FROM initiative_kpis WHERE id = $1`,
+      [sourceMappedId]
+    );
+
+    const result = await runInitiativeKpiShadowRead(organizationId);
+
+    expect(result.comparedPairs).toBe(1);
+    expect(result.matchingPairs).toBe(0);
+    expect(result.divergentPairs).toBe(1);
+    expect(result.pairs[0]?.differences).toEqual(
+      expect.arrayContaining([
+        { field: 'value', sourceValue: 12, canonicalValue: '11' },
+        { field: 'status', sourceValue: 'on_track', canonicalValue: 'active' },
+        { field: 'visibility', sourceValue: null, canonicalValue: 'OPEN_ORG' },
+      ])
+    );
+
+    const after = await pool.query(
+      `SELECT current_value, target_value, unit, status
+         FROM initiative_kpis WHERE id = $1`,
+      [sourceMappedId]
+    );
+    expect(after.rows).toEqual(before.rows);
+  });
 });
