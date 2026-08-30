@@ -2,6 +2,7 @@ import { AlertTriangle, Eye, Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
@@ -219,6 +220,27 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   const [nextInputKind, setNextInputKind] = useState<'MATERIAL_CHANGE' | 'SCHEDULE_DECISION'>(
     'MATERIAL_CHANGE'
   );
+
+  // 97-czternascie-kolumn (2026-08-30): 13 kolumny danych + kolumna akcji nie
+  // mieszczą się w typowym obszarze obciążenia (1334 px) nawet na podłodze
+  // czytelności FilterableTable (`FIT_MIN_COLUMN_WIDTH`/`_PRIMARY`). Brak tu
+  // dosłownej duplikacji jak w planie inicjatyw — chowamy więc trzy kolumny o
+  // najniższej wartości domyślnej: proposedResponse jest ZAWSZE 'UNKNOWN'
+  // (nieobliczane dla żadnego wiersza), a affectedInitiatives/freshness są
+  // realne wyłącznie dla wierszy okresu i zawsze 'UNKNOWN' dla ograniczeń.
+  // Pstryczek widoczności kolumn (FilterableTable) zostaje — użytkownik
+  // włącza je sam. Musi wykonać się PRZED montażem <StandardTable> (guard w
+  // ciele renderu, nie w useEffect) — patrz defaultHiddenColumns.ts.
+  const capacityColumnsSeeded = useRef(false);
+  if (!capacityColumnsSeeded.current) {
+    seedDefaultHiddenColumns('initiatives.capacity-constraints.v2', [
+      'proposedResponse',
+      'affectedInitiatives',
+      'freshness',
+    ]);
+    capacityColumnsSeeded.current = true;
+  }
+
   const constraintRows = useMemo(() => {
     if (!scenario) return [];
     const formatRange = (range: Range) =>
@@ -913,7 +935,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             { id: 'title', label: 'Okres / ograniczenie', sortable: true, width: '240px' },
             {
               id: 'roleTeamSkill',
-              label: 'Rola / zespół / kompetencja',
+              label: 'Rola / zespół',
               sortable: true,
               filterable: true,
             },
@@ -926,14 +948,14 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             },
             {
               id: 'demand',
-              label: 'Zapotrzebowanie low / base / high',
+              label: 'Potrzeby (zakres)',
               sortable: true,
               filterable: true,
               render: (row) => renderKnowledgeToken(row.demand),
             },
             {
               id: 'supply',
-              label: 'Stan / zakres dostępności',
+              label: 'Zasoby (zakres)',
               sortable: true,
               filterable: true,
               render: (row) => renderKnowledgeToken(row.supply),
@@ -941,7 +963,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             { id: 'gap', label: 'Luka', sortable: true, render: (row) => renderKnowledgeToken(row.gap) },
             {
               id: 'saturation',
-              label: 'Saturacja (zakres)',
+              label: 'Presja (zakres)',
               sortable: true,
               render: (row) => renderKnowledgeToken(row.saturation),
             },
@@ -954,14 +976,14 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             },
             {
               id: 'criticality',
-              label: 'Krytyczność',
+              label: 'Waga',
               sortable: true,
               filterable: true,
               render: (row) => criticalityLabel[row.criticality] ?? row.criticality,
             },
             {
               id: 'owner',
-              label: 'Właściciel',
+              label: 'Opiekun',
               sortable: true,
               filterable: true,
               render: (row) => actorLabel(row.owner),

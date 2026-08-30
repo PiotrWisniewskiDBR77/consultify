@@ -406,7 +406,12 @@ describe('PlanScenarioSurface', () => {
       />
     );
     expect(await screen.findByText('Automation in execution')).toBeInTheDocument();
-    expect(screen.getByText('Nie przypisano okna planu')).toBeInTheDocument();
+    // 97-czternascie-kolumn (2026-08-30): the zbiorcza "Wstępny .../.../..."
+    // column (previously the only place this text rendered) was a confirmed
+    // literal duplicate of the earliest/target/latest columns for SCHEDULED
+    // rows and was removed. For an unscheduled row those three columns each
+    // render '—' instead — that em dash is now how "no window" is shown.
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
     expect(screen.getByText('ADD_TO_PLAN_OR_EXCLUDE')).toBeInTheDocument();
   });
 

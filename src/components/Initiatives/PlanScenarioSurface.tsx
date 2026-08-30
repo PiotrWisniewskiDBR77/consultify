@@ -14,6 +14,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
@@ -238,6 +239,26 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [showCreate, setShowCreate] = useState(false);
   const [initiativeLifecycleFilter, setInitiativeLifecycleFilter] = useState('ALL');
   const commandIds = useRef(new Map<string, string>());
+
+  // 97-czternascie-kolumn (2026-08-30): 14 kolumny danych + kolumna akcji
+  // nie mieszczą się w typowym obszarze planu (1366 px) nawet na podłodze
+  // czytelności FilterableTable (`FIT_MIN_COLUMN_WIDTH`/`_PRIMARY`) — po
+  // usunięciu jawnie zduplikowanej kolumny "Wstępny.../.../..." zostaje 13,
+  // wciąż za dużo. mandatoryDeadline/costOfDelay/roughDemand są w tym
+  // ekranie zawsze 'UNKNOWN' (nieobliczane), więc chowamy je domyślnie przez
+  // istniejący pstryczek widoczności kolumn — użytkownik włącza je sam, gdy
+  // ta logika kiedyś zostanie policzona. Musi wykonać się PRZED montażem
+  // <StandardTable>/<FilterableTable> (stąd guard w ciele renderu, nie w
+  // useEffect) — patrz komentarz w defaultHiddenColumns.ts.
+  const planWindowsColumnsSeeded = useRef(false);
+  if (!planWindowsColumnsSeeded.current) {
+    seedDefaultHiddenColumns('initiatives.plan-windows.v2', [
+      'mandatoryDeadline',
+      'costOfDelay',
+      'roughDemand',
+    ]);
+    planWindowsColumnsSeeded.current = true;
+  }
 
   const loadHistory = useCallback(
     async (scenarioId: string) => {
@@ -1043,11 +1064,6 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               sortable: true,
               filterable: true,
               render: (row) => t(planBacklogStateKey[row.backlogState] ?? row.backlogState),
-            },
-            {
-              id: 'proposedWindow',
-              label: t('initiatives.planScenario.columns.tentativeWindow'),
-              sortable: true,
             },
             { id: 'earliest', label: t('initiatives.planScenario.columns.earliest'), sortable: true },
             {
