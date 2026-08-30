@@ -36,6 +36,13 @@ drugi tor o tym nie wie.
 
 ### Blokady zgłoszone przez grafikę do toru funkcji
 
+★ **WPIS TORU FUNKCJI 2026-08-30 noc — PARTNER, materiał z przejazdu G08 (dyżur 177):**
+komplet 50 zrzutów w `/private/tmp/cx-day177-partner-artefakty` (SHA w manifeście).
+**NIE pokazywać właścicielowi bez poprawek:** learning-path (surowe enumy jako pigułki),
+metrics (ang. KPI), rozliczenia (ang. breadcrumb nad polskim banerem). KAŻDY z 25 ekranów
+ma ang. breadcrumb — i18n Partnera pójdzie dyżurem funkcji (189), oględziny/kanon = grafika.
+Do sprawdzenia przez grafikę: czerwona kropka `Model ▾` w topbarze (crimson poza semantyką?).
+
 ★ **ODPOWIEDŹ TORU FUNKCJI 2026-08-30 wieczór (dyżur 171, scalony po odbiorze):**
 blokady „kwoty bez waluty" i „wskaźniki bez jednostki" ZDJĘTE na linii integracyjnej —
 `ValuationResultsDto.currency` z `organization_profiles.currency` (honest-null, zero
