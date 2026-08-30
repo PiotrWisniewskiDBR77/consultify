@@ -106,6 +106,7 @@ Lint zmienionych TS/TSX: 0 błędów, 99 zastanych ostrzeżeń. Pełny `tsc --no
 2. T2 grep zwrócił pusty wynik dla trzech enumów w `src/`; wartości potwierdzone są w dowodzie odbioru 177 i obsłużone po stronie frontu. Nie zmieniono `server/**`.
 3. Inwentarz AST wykazał 120 kluczy używanych przez `t()` z wpisem PL, lecz bez jawnego wpisu EN; UI EN korzysta z fallbacków podanych w wywołaniu. Nowe klucze day189 mają oba wpisy. Pełne uzupełnienie historycznych EN pozostaje poza pierwszym rdzeniem.
 4. R3 obalił założenie, że polskie klucze nagłówków metrics domykają ekran: wartości pomocnicze KPI i etykiety breakdownu były literalami angielskimi. Po pomiarze przeniesiono je do `partner.metrics.*` w PL/EN.
+5. Pierwszy render organizations ujawnił angielskie wartości systemowe `Unspecified` (fallback branży) oraz `Onboarding` (enum statusu). Nazwa `Wave 3 Referred Participant` jest daną fixture i zgodnie z T1 pozostała bez zmian; fallback oraz enum przeniesiono do `partner.clients.*`.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 

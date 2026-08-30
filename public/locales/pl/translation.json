@@ -17634,6 +17634,7 @@
       "usersEmpty": "Brak członków zespołu",
       "usersCount": "{{count}} użytkowników",
       "targetDate": "Termin",
+      "industryUnspecified": "Nie określono",
       "col": {
         "industry": "Branża",
         "projects": "Projekty",
@@ -17645,7 +17646,8 @@
       "status": {
         "active": "Aktywny",
         "inactive": "Nieaktywny",
-        "onboarding": "W trakcie uruchamiania"
+        "onboarding": "W trakcie uruchamiania",
+        "unknown": "Nieznany status"
       }
     },
     "resources": {

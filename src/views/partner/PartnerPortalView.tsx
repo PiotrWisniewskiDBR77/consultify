@@ -1290,7 +1290,11 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               label: t('partner.clients.col.industry', 'Industry'),
               width: '160px',
               render: (org) => (
-                <span className="text-sm text-c-text-secondary">{org.industry}</span>
+                <span className="text-sm text-c-text-secondary">
+                  {org.industry === 'Unspecified'
+                    ? t('partner.clients.industryUnspecified', 'Nie określono')
+                    : org.industry}
+                </span>
               ),
             },
             {
@@ -1331,7 +1335,15 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 },
                 { value: 'inactive', label: t('partner.clients.status.inactive', 'Inactive') },
               ],
-              render: (org) => <EntityStatusChip status={String(org.status)} />,
+              render: (org) => (
+                <EntityStatusChip
+                  status={String(org.status)}
+                  label={t(
+                    `partner.clients.status.${String(org.status).toLowerCase()}`,
+                    t('partner.clients.status.unknown', 'Nieznany status')
+                  )}
+                />
+              ),
             },
           ]}
           data={organizations.map((org) => ({ ...org, id: org.id }))}

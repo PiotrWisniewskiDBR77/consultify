@@ -1411,13 +1411,17 @@
       "usersEmpty": "No team members yet",
       "usersCount": "{{count}} users",
       "targetDate": "Target",
+      "industryUnspecified": "Unspecified",
       "col": {
         "organization": "Organization",
         "assessment": "Assessment",
         "status": "Status"
       },
       "status": {
-        "active": "Active"
+        "active": "Active",
+        "onboarding": "Onboarding",
+        "inactive": "Inactive",
+        "unknown": "Unknown status"
       }
     },
     "resources": {
