@@ -13,7 +13,8 @@
      "ocena": "A",
      "co": "Braki, ryzyka, sugestie, zmiany. Ekran sam mowi: ocena AI, nie bramka systemowa — nic nie jest blokowane.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wiele miejsc w aplikacji (Moja praca → karta Zadania/Decyzji/Powiadomienia, Inicjatywy → karta inicjatywy, Wywiad → karta Wniosku, Narzędzia → karta narzędzia) → przycisk „Analizuj z AI\" w prawym pasku karty — pokazuje braki, ryzyka i sugestie AI; to ocena doradcza, nic nie blokuje."
     },
     {
      "id": "chat-split-teresa-right",
@@ -21,7 +22,8 @@
      "ocena": "A",
      "co": "Uklad rozdzielony wedlug decyzji o miejscu Teresy.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Czat → widok z otwartym artefaktem (np. kanwą) obok rozmowy z Teresą — pokazuje układ D17: artefakt zawsze po lewej, Teresa zawsze po prawej (odwrotnie niż w ChatGPT/Claude)."
     },
     {
      "id": "processflow-canvas",
@@ -39,7 +41,8 @@
       "mindmap-canvas",
       "whiteboard-canvas",
       "whiteboard-workshop"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei jako kanwy → narzędzie „Diagram procesu\" (jedno z czterech narzędzi kanwy obok mapy myśli, tabeli i tablicy) — rysuje przepływ z krokami i punktami decyzyjnymi."
     },
     {
      "id": "canvas-kebab-restructure",
@@ -49,7 +52,8 @@
      "naprawione": [],
      "wyjatki": [
       "Stary dowod inzynierski, starszy niz stan produktu"
-     ]
+     ],
+     "gdzie": "Kanwa dokumentu roboczego (otwierana z Czatu/Mojej pracy) → menu „⋯\" w prawym górnym rogu — zapis PRZED/PO przebudowy tego menu (dowód historyczny z przeszłej naprawy, starszy niż dzisiejszy stan produktu)."
     },
     {
      "id": "canvas-new-doc",
@@ -59,7 +63,8 @@
      "naprawione": [],
      "wyjatki": [
       "Dane testowe nieaktualne wzgledem produktu — realny komponent ma juz polskie etykiety"
-     ]
+     ],
+     "gdzie": "Czat / Moja praca → kanwa dokumentu roboczego → przycisk „+\" (Nowa kanwa) — rozwijane menu z trzema drogami startu (czysty dokument / z szablonu / z istniejącej kanwy), żeby nie zaczynać zawsze od zera."
     },
     {
      "id": "canvas-toolbar-md-history",
@@ -69,7 +74,8 @@
      "naprawione": [],
      "wyjatki": [
       "Dane testowe pokazuja stara nazwe przycisku, juz poprawiona w produkcie"
-     ]
+     ],
+     "gdzie": "Kanwa dokumentu roboczego (otwierana z Czatu/Mojej pracy) → główny pasek narzędzi na górze — zapis zmiany paska (usunięcie przycisku „Historia\", import/eksport Markdown)."
     },
     {
      "id": "melscanvas-workspace",
@@ -85,7 +91,8 @@
       "processflow-canvas",
       "whiteboard-canvas",
       "whiteboard-workshop"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei jako mapy myśli — pokazuje starą i nową powłokę kanwy (MELS); UWAGA: dziś w kodzie MELS jest włączona NA STAŁE (bez flagi), więc wariant „stary\" pokazany tu już nie istnieje w produkcie."
     },
     {
      "id": "mindmap-canvas",
@@ -103,7 +110,8 @@
       "processflow-canvas",
       "whiteboard-canvas",
       "whiteboard-workshop"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei jako mapy myśli — realny graf doradczy (węzeł centralny + gałęzie + pod-węzły) z paskiem podpowiedzi AI."
     },
     {
      "id": "mindmap-i18n-smoke",
@@ -111,7 +119,8 @@
      "ocena": "A",
      "co": "Modal dodawania dowodu i zrodla.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → Idee → mapa myśli → modały „Dodaj dowód\" / „Przypisz osobę\" / „Dołącz artefakt\" otwierane z poziomu węzła — sprawdza, czy są w całości po polsku (i po angielsku)."
     },
     {
      "id": "chat-signals-feed",
@@ -123,7 +132,8 @@
      ],
      "wyjatki": [
       "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
-     ]
+     ],
+     "gdzie": "Czat → panel sygnałów w oknie rozmowy z Teresą (ChatSignalsPanel wewnątrz UnifiedChatPanel) — strumień zdarzeń z całej apki (opóźnione zadania, zablokowane decyzje, przekroczone KPI/budżet), pogrupowanych wg wagi."
     },
     {
      "id": "whiteboard-canvas",
@@ -141,7 +151,8 @@
       "mindmap-canvas",
       "processflow-canvas",
       "whiteboard-workshop"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei jako kanwy → narzędzie „Tablica\" (whiteboard) — wolna tablica z paskiem podpowiedzi AI."
     },
     {
      "id": "whiteboard-workshop",
@@ -159,7 +170,8 @@
       "mindmap-canvas",
       "processflow-canvas",
       "whiteboard-canvas"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei jako kanwy → narzędzie „Tablica\" oddalone — widok warsztatowy z wieloma elementami i scenami, do pracy z większą liczbą elementów naraz."
     },
     {
      "id": "teresa-chipy-panel-artefaktu",
@@ -172,7 +184,8 @@
      ],
      "wyjatki": [
       "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
-     ]
+     ],
+     "gdzie": "Panel Teresy (AIConsultantPanel, ~360px z prawej) osadzony wewnątrz innego modułu — np. Inicjatywy → karta inicjatywy albo Wywiad → karta wniosku — pokazuje, że po naprawie D4 chipy-przyciski pod oknem rozmowy zniknęły także tutaj, nie tylko w głównym Czacie."
     },
     {
      "id": "teresa-chipy-sugestii",
@@ -182,7 +195,8 @@
      "naprawione": [],
      "wyjatki": [
       "Ta sama czerwonawa linia"
-     ]
+     ],
+     "gdzie": "Czat → okno rozmowy z Teresą (UnifiedChatPanel) w kontekście otwartego raportu / wniosku — dowód, że dwa różowe chipy-przyciski pod oknem rozmowy („Open Outputs Library\" / „Review pending artifacts\") zostały usunięte w całej aplikacji."
     },
     {
      "id": "teresa-confirm-chip",
@@ -192,7 +206,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Kontrolka potwierdzenia w czacie."
-     ]
+     ],
+     "gdzie": "Czat → okno rozmowy z Teresą — kontrolka potwierdzenia przed czynnością nieodwracalną (przyciski „Potwierdź\"/„Anuluj\" pod wiadomością Teresy, z wyjaśnieniem po co)."
     }
    ]
   },
@@ -207,7 +222,8 @@
      "ocena": "A",
      "co": "Kontekst sejfu w kreatorze przeplywu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → zakładka Agent → kreator planu agenta (schemat z klockami) → klocek „Kontekst z sejfu\" — drugi wybór (folder wewnątrz wybranego sejfu), żeby agent czytał tylko właściwe dokumenty."
     },
     {
      "id": "idea-financial-case-persistence",
@@ -217,7 +233,8 @@
      "naprawione": [
       "Osiem brakujacych kluczy tlumaczen"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → Idee → tabela pomysłu → kolumna/akcja „Case finansowy\" — modal wyliczenia finansowego dla pojedynczej idei, który zapisuje się i wraca po ponownym otwarciu."
     },
     {
      "id": "notatnik-centrum-mysli",
@@ -225,7 +242,8 @@
      "ocena": "A",
      "co": "Wspolpraca z Teresa, karty propozycji.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "To NIE jest gotowy ekran aplikacji — to WIZJA notatnika jako „centrum myśli\" (nadbudowa na działającym rdzeniu). Realne są tylko dwa elementy: chip przypomnienia (NotebookReminderChip) i awatary współobecności (NotebookPresenceStack) — karta, na której Teresa PROPONUJE zapisanie notatki z rozmowy, jest ilustracją, nie działającą funkcją."
     },
     {
      "id": "notatnik-osierocone-graf",
@@ -234,7 +252,7 @@
      "co": "Graf polaczen z soczewka osieroconych.",
      "naprawione": [],
      "wyjatki": [],
-     "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań)"
+     "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań) — pokazuje, które notatki nie mają żadnego powiązania, żeby nie ginęły w archiwum."
     },
     {
      "id": "idea-table-tool-grouping",
@@ -248,7 +266,8 @@
       "idea-table-tool-kebab",
       "idea-table-tool-paste",
       "idea-table-tool-sortfilter"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → widok Tabela (Idea Table) → dropdown „Grupuj wg\" — grupowanie wierszy po dowolnej kolumnie, z pustą wartością jako osobną grupą „—\". UWAGA: ten widok tabeli działa dziś na starym silniku dla już istniejących tabel — nowy silnik platformowy (flaga włączona domyślnie) uruchamia się dopiero dla tabel bez danych, więc w obecnej bazie demo ten dokładny ekran może być trudno odtworzyć klikaniem."
     },
     {
      "id": "mywork-idea-inspector-lekki",
@@ -257,7 +276,7 @@
      "co": "Sekcje z licznikami.",
      "naprawione": [],
      "wyjatki": [],
-     "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → inspektor po prawej stronie"
+     "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → lekki inspektor po prawej stronie — szybki podgląd właściwości elementu (sekcje z licznikami zamiast pełnej tabeli), żeby nie trzeba było otwierać całej karty."
     },
     {
      "id": "karta-decision",
@@ -270,7 +289,8 @@
      "wyjatki": [],
      "warianty": [
       "decision-record"
-     ]
+     ],
+     "gdzie": "Moja praca → zakładka Decyzje → otwarcie pojedynczej decyzji — pełna karta z historią, interesariuszami i sekcjami panelu."
     },
     {
      "id": "karta-notification",
@@ -280,7 +300,8 @@
      "naprawione": [],
      "wyjatki": [
       "Kolory ostrzezenia i informacji uzywaja surowych wartosci zamiast tokenow — dlug zastany, do zbiorczego sweepu"
-     ]
+     ],
+     "gdzie": "Moja praca → Inbox/powiadomienia → otwarcie pojedynczego powiadomienia — karta ze źródłem, komentarzami i historią aktywności."
     },
     {
      "id": "karta-insight",
@@ -290,7 +311,8 @@
      "naprawione": [
       "ODBIOR 30.08: trzy kolumny zamienione na trzy duze wiersze z trzema kolorami, zgodnie z uwaga wlasciciela. Pierwszy wiersz dostal niebieski — wczesniej byl szary, wiec kolory byly realnie dwa."
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wywiad → karta Wniosku (Insight) — podsumowanie wykonawcze z wywiadu, z trzema licznikami jako pełnowymiarowymi wierszami."
     },
     {
      "id": "karta-task",
@@ -298,7 +320,8 @@
      "ocena": "A",
      "co": "Bez odchylen. Czerwien na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → zakładka Zadania → otwarcie pojedynczego zadania — pełna karta zadania."
     },
     {
      "id": "idea-templates-catalog",
@@ -308,7 +331,8 @@
      "naprawione": [
       "Crimson na tagu narzedzia"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → Idee → „Nowa idea\" → galeria szablonów — ok. 40 gotowych szablonów konsultingowych w 7 kategoriach (mapa myśli/tabela/tablica/proces), każdy z opisem po co i kiedy go użyć."
     },
     {
      "id": "idea-table-tool-kebab",
@@ -322,7 +346,8 @@
       "idea-table-tool-grouping",
       "idea-table-tool-paste",
       "idea-table-tool-sortfilter"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → widok Tabela (Idea Table) → menu „⋯\" przy wierszu — akcje wiersza, „Usuń\" poprawnie w czerwieni. Ten sam zastrzeżenie co przy grupowaniu: nowy silnik tabeli (Idea Table Tool) uruchamia się realnie dopiero dla tabel bez istniejących danych."
     },
     {
      "id": "ideas-teresa-panel",
@@ -333,7 +358,8 @@
      "wyjatki": [],
      "warianty": [
       "idea-confidentiality-control"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → prawy panel idei (IdeaRightPanel) → sekcja „Teresa\" — sugestie AI dopasowane do kontekstu otwartej idei."
     },
     {
      "id": "mywork-notebook-rail-speca",
@@ -341,7 +367,8 @@
      "ocena": "A",
      "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → Notatnik → prawy panel (accordion: Akcje·Właściwości·Powiązania·Komentarze·Historia i AI) — z uczciwie pokazanym pustym stanem powiązań, gdy notatka nic nie łączy."
     },
     {
      "id": "ideas-preview-overlay",
@@ -349,7 +376,8 @@
      "ocena": "A",
      "co": "Overlay bez przeskoku ukladu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → Idee → widok listy (karty) → klik w kartę na desktopie — panel podglądu nakłada się na siatkę kart z prawej krawędzi, bez przeskoku układu (zero-reflow)."
     },
     {
      "id": "idea-confidentiality-control",
@@ -360,7 +388,8 @@
      "wyjatki": [],
      "warianty": [
       "ideas-teresa-panel"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei → prawy panel → Właściwości → selektor poufności — oznacza ideę jako poufną w kolorze bursztynowym (nie czerwonym, bo to nie stan krytyczny)."
     },
     {
      "id": "zwornik-projects",
@@ -368,7 +397,8 @@
      "ocena": "A",
      "co": "Lista projektow ze statusami jako pigulki z kropka.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → zakładka „Projekty\" (Zwornik) — lista projektów ze statusami jako pigułki, z sekcjami interesariuszy, finansów, zespołu i zadań w podglądzie."
     },
     {
      "id": "idea-table-tool-empty-filter",
@@ -382,7 +412,8 @@
       "idea-table-tool-kebab",
       "idea-table-tool-paste",
       "idea-table-tool-sortfilter"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → widok Tabela (Idea Table) → filtr per kolumna — dwa różne uczciwe stany pustki: „brak wyników filtra\" i „brak rekordów w ogóle\". Ten sam zastrzeżenie o nowym silniku tabeli co przy grupowaniu/kebabie."
     },
     {
      "id": "idea-table-tool-sortfilter",
@@ -396,7 +427,8 @@
       "idea-table-tool-grouping",
       "idea-table-tool-kebab",
       "idea-table-tool-paste"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → widok Tabela (Idea Table) → klik nagłówka kolumny i filtr per kolumna — sortowanie i zawężanie wierszy bez opuszczania tabeli. Ten sam zastrzeżenie o nowym silniku tabeli co przy grupowaniu."
     },
     {
      "id": "notebook-quick-capture",
@@ -408,7 +440,8 @@
      ],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Jedno pole do wrzucenia mysli."
-     ]
+     ],
+     "gdzie": "Moja praca → Notatnik → pasek szybkiego wrzucania na górze (przycisk „Wrzuć\") — zapisanie luźnej myśli bez otwierania pełnej notatki."
     },
     {
      "id": "idea-table-timeline-stuck",
@@ -426,7 +459,8 @@
       "processflow-canvas",
       "whiteboard-canvas",
       "whiteboard-workshop"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei jako kanwy → narzędzie „Tabela\" → zakładka widoku „Oś czasu\" — dowód naprawy błędu, w którym przełączanie zakładek widoku się zacinało."
     },
     {
      "id": "vault-safes-table",
@@ -437,7 +471,8 @@
       "Ekran w ogole sie nie renderowal",
       "'1 blad(y)' — lamana polszczyzna"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → zakładka Sejf (Client Vault) — lista wszystkich sejfów (mój/organizacji/projektowe) na wspólnej tabeli, przed wejściem do środka jednego z nich."
     },
     {
      "id": "idea-table-tool-paste",
@@ -451,7 +486,8 @@
       "idea-table-tool-grouping",
       "idea-table-tool-kebab",
       "idea-table-tool-sortfilter"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → widok Tabela (Idea Table) → wklejanie ze schowka (Ctrl/Cmd+V) — szybkie wklejenie danych z arkusza zewnętrznego, z pominięciem kolumny obliczanej. Ten sam zastrzeżenie o nowym silniku tabeli co przy grupowaniu."
     },
     {
      "id": "vault-sejf-wnetrze",
@@ -461,7 +497,8 @@
      "naprawione": [],
      "wyjatki": [
       "Kolumna Kategoria po angielsku — dotyka trzech plikow, zgloszone osobno"
-     ]
+     ],
+     "gdzie": "Moja praca → zakładka Sejf → wejście w konkretny sejf — tabela dokumentów (7 kolumn), sortowanie, pstryczek kolumn, kebab wiersza, podgląd po kliknięciu."
     },
     {
      "id": "exec-summary-onelook",
@@ -473,7 +510,8 @@
      ],
      "wyjatki": [
       "Kolumny POZIOM i TYP ucinane na prawej krawedzi — Przetern, Do decy"
-     ]
+     ],
+     "gdzie": "Realizacja → zakładka „Kokpit\" (Summary one-look) — pięć pytań zarządczych, jedna odpowiedź na spojrzenie. UWAGA: za flagą domyślnie wyłączoną (ff_summaryOneLook), w aplikacji dziś tego nie zobaczysz."
     },
     {
      "id": "mywork-idea-topbar",
@@ -485,7 +523,8 @@
      ],
      "wyjatki": [
       "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarta idea — górny pasek całego huba z otwartą ideą: rząd pilli otwartych dokumentów + Menu 1 powłoki Idei + Menu 3, złożone w jedną linię."
     },
     {
      "id": "idea-table-record-templates",
@@ -495,7 +534,8 @@
      "naprawione": [],
      "wyjatki": [
       "Podwojny komunikat bledu to artefakt trybu deweloperskiego, nie defekt"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → widok Tabela (Idea Table) → toolbar → „Więcej\" → menedżer szablonów rekordu. UWAGA: ten komponent był martwym montażem (nigdzie nieużywany) do czasu podłączenia go do toolbara tabeli — sprawdź, czy wejście nadal działa w bieżącej wersji."
     },
     {
      "id": "idea-table",
@@ -511,7 +551,8 @@
      "warianty": [
       "assessment-matryca",
       "rn-g3-class-l-record-shell"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → widok Tabela (Idea Table jako artefakt typu Matryca) — pełna tabela z podglądem wiersza, kebabem, sortowaniem i filtrami per kolumna."
     },
     {
      "id": "decision-record",
@@ -526,7 +567,8 @@
      ],
      "warianty": [
       "karta-decision"
-     ]
+     ],
+     "gdzie": "Moja praca → zakładka Decyzje → otwarcie pojedynczej decyzji — ten sam komponent co „Karta decyzji\", inny zestaw danych demo."
     },
     {
      "id": "vault-scope-selector",
@@ -539,7 +581,8 @@
      ],
      "wyjatki": [
       "Komponent nie ma ani jednego klucza tlumaczen — obudowa w calosci po angielsku, a tytuly dokumentow wpisane przez uzytkownika po polsku. Efekt: jeden ekran, dwa jezyki. To retrofit architektury, nie poprawka koloru"
-     ]
+     ],
+     "gdzie": "Moja praca → zakładka Sejf → wgrywanie dokumentu — selektor poziomu widoczności (prywatny/organizacja) przy uploadzie, plus lista dokumentów z filtrem poziomu."
     },
     {
      "id": "idea-table-production",
@@ -549,7 +592,8 @@
      "naprawione": [],
      "wyjatki": [
       "Narzedzie pomiarowe"
-     ]
+     ],
+     "gdzie": "To NIE jest osobny ekran produktu — to harness porównawczy (kopiuje 1:1 opakowanie, którego realnie używa `MyIdeasListContent.tsx`), zrobiony do sprawdzenia szerokości tabeli. Docelowo ten sam ekran co „idea-table\", widziany dokładnie tak, jak widzi go użytkownik w Moja praca → Idee → Tabela."
     }
    ]
   },
@@ -564,7 +608,8 @@
      "ocena": "A",
      "co": "Trzy kroki, czysty formularz, po polsku.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wywiad → przycisk „+ Nowy\" → „Wniosek\" (Insight) → kreator 3 kroki. UWAGA: nowa powłoka kreatora jest za flagą domyślnie wyłączoną (ff.interview_creator_shell, opt-in do czasu akceptacji wizualnej) — dziś w aplikacji zobaczysz starszą wersję formularza, nie ten ekran."
     },
     {
      "id": "unified-create-launcher",
@@ -574,7 +619,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Modal wyboru rodzaju."
-     ]
+     ],
+     "gdzie": "Dostępne w kilku miejscach (m.in. Wywiad, Inicjatywy) → przycisk „+ Nowy\" — wybór rodzaju obiektu do utworzenia (Wniosek / Inicjatywa / Decyzja)."
     },
     {
      "id": "interview-preview-canon",
@@ -582,7 +628,8 @@
      "ocena": "A",
      "co": "Panel podgladu. Ucinany tytul to kanoniczne zachowanie z podpowiedzia, nie defekt.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wywiad → zakładka „Sesje\" lub „Inicjatywy\" → pojedyncze kliknięcie w wiersz — panel podglądu z prawej strony (bez otwierania pełnego ekranu)."
     },
     {
      "id": "interview-sessions-status",
@@ -590,7 +637,8 @@
      "ocena": "A",
      "co": "Lista sesji, statusy kolorowe — nie crimson.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wywiad → zakładka „Sesje\" — lista sesji wywiadu ze statusami jako kolorowe (neutralne) etykiety, nie czerwone."
     },
     {
      "id": "drd-http-workspace",
@@ -600,7 +648,8 @@
      "naprawione": [
       "Angielskie zakladki Interview/Matrix/Report i przycisk Settings"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "To NIE jest ekran dostępny dziś w aplikacji — nowy warsztat DRD (źródło prawdy przez HTTP, nie localStorage) jest za flagą domyślnie wyłączoną (drdHttpSourceOfTruthV1); domyślnie działa starszy warsztat DRD."
     },
     {
      "id": "karta-interview",
@@ -610,7 +659,8 @@
      "naprawione": [],
      "wyjatki": [
       "Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy."
-     ]
+     ],
+     "gdzie": "Wywiad → zakładka „Sesje\" → otwarcie pojedynczej sesji — karta sesji wywiadu z pytaniami, dowodami, odpowiedziami i podsumowaniem."
     }
    ]
   },
@@ -632,7 +682,8 @@
      ],
      "warianty": [
       "karta-tool"
-     ]
+     ],
+     "gdzie": "Narzędzia → Biblioteka → karta narzędzia „Dynamiczny SWOT\" — opis narzędzia przed startem sesji (co to jest, czym NIE jest, kiedy go NIE używać)."
     },
     {
      "id": "tools-swot-live",
@@ -644,7 +695,8 @@
      ],
      "wyjatki": [
       "Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING"
-     ]
+     ],
+     "gdzie": "Narzędzia → sesja narzędzia „Dynamiczny SWOT\" → pole robocze na żywo — cztery obszary (SO/WO/ST/WT) z punktami oznaczonymi FAKT/HIPOTEZA/OBSERWACJA."
     },
     {
      "id": "tools-swot-session-workspace",
@@ -657,7 +709,8 @@
      ],
      "wyjatki": [
       "DRAFT, COPILOT AI i Find Signals po angielsku"
-     ]
+     ],
+     "gdzie": "Narzędzia → sesja narzędzia „Dynamiczny SWOT\" → warsztat sesji — pięć kroków, propozycje AI z uzasadnieniem, liczniki zaakceptowanych punktów."
     },
     {
      "id": "karta-tool",
@@ -668,7 +721,8 @@
      "wyjatki": [],
      "warianty": [
       "tools-swot-library-detail"
-     ]
+     ],
+     "gdzie": "Narzędzia → Biblioteka → otwarcie karty narzędzia (np. znanego narzędzia konsultingowego) — pełna karta z sekcjami rozwijanymi."
     },
     {
      "id": "tools-outputs-insights-tab",
@@ -681,7 +735,8 @@
      "wyjatki": [],
      "warianty": [
       "tools-sesja-wyjscie"
-     ]
+     ],
+     "gdzie": "Narzędzia → zakładka „Wyjścia/Wnioski\" — tabela wniosków z sesji narzędzi. UWAGA: dane w tej zakładce są za flagą domyślnie wyłączoną (ff_toolsInsightsWiring) — w aplikacji dziś zakładka może wyglądać na pustą."
     },
     {
      "id": "tools-swot-report",
@@ -689,7 +744,8 @@
      "ocena": "A",
      "co": "Fakt i hipoteza oznaczone etykieta, kompromisy nazwane.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Narzędzia → sesja „Dynamiczny SWOT\" → po zatwierdzeniu wyniku → raport / prezentacja z sesji — fakty i hipotezy oznaczone etykietą, nazwane kompromisy."
     },
     {
      "id": "prompt-registry-tab",
@@ -697,7 +753,8 @@
      "ocena": "A",
      "co": "Narzedzie inzynierskie, spojnie w jednym jezyku — nie mieszanka.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "SuperAdmin → AI Platform → Development → Rejestr promptów — narzędzie inżynierskie do zarządzania promptami systemowymi, nie ekran dla klienta."
     },
     {
      "id": "tools-swot-initiative-proposal",
@@ -705,7 +762,8 @@
      "ocena": "A",
      "co": "Wyniki i gotowosc z paskiem postepu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Narzędzia → sesja „Dynamiczny SWOT\" → podsumowanie sesji — propozycja inicjatyw wynikających z zaakceptowanych ruchów, z paskiem gotowości do przekształcenia w prawdziwą inicjatywę."
     },
     {
      "id": "tools-sesja-wyjscie",
@@ -722,7 +780,8 @@
      ],
      "warianty": [
       "tools-outputs-insights-tab"
-     ]
+     ],
+     "gdzie": "Narzędzia → otwarta sesja narzędzia — sposób wyjścia z sesji (menu u góry, pauza/zakończenie), naprawiony po zgłoszeniu „wystartowałem sesję i nie mam jak z niej wyjść\"."
     },
     {
      "id": "tool-outputs-panel",
@@ -734,7 +793,8 @@
      ],
      "wyjatki": [
       "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy"
-     ]
+     ],
+     "gdzie": "Narzędzia → panel rezultatów sesji — lista zapisanych wyjść (outputs) z wersjami, z możliwością ponownego otwarcia."
     }
    ]
   },
@@ -753,7 +813,8 @@
      "warianty": [
       "assessment-artifacts-restart",
       "assessment-five-surfaces"
-     ]
+     ],
+     "gdzie": "Ocena → zakładka „Biblioteka\"/„Procesy\" → pasek Menu 3 — klikalne chipy filtra statusu z licznikami (zamiast samych informacyjnych etykiet)."
     },
     {
      "id": "method-workspace",
@@ -766,7 +827,8 @@
      "wyjatki": [],
      "warianty": [
       "siri-workspace"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie sesji metodyki (np. DRD) → warsztat pytań — ocena siły dowodu przy odpowiedzi."
     },
     {
      "id": "assessment-report-contract",
@@ -774,7 +836,8 @@
      "ocena": "A",
      "co": "Siedem rozdzialow, macierz osi, limity slow, wersjonowanie.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "To NIE jest ekran dostępny dziś w aplikacji — widok kontraktu raportu (siedem rozdziałów, macierz osi, limity słów) żyje wyłącznie w nowym warsztacie DRD za flagą domyślnie wyłączoną (drdHttpSourceOfTruthV1)."
     },
     {
      "id": "assessment-quality-review-panel",
@@ -782,7 +845,8 @@
      "ocena": "A",
      "co": "Slowo brak zamiast zera tam, gdzie dowodu nie ma.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" (Outputs) — panel oceny jakości i pokrycia dowodami, słowo „brak\" zamiast zera tam, gdzie dowodu po prostu nie ma."
     },
     {
      "id": "assessment-output-report",
@@ -790,7 +854,8 @@
      "ocena": "A",
      "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → raport z oceny — źródło wyniku widoczne, ograniczenia nazwane wprost, gotowy do pokazania klientowi."
     },
     {
      "id": "assessment-reports-table",
@@ -801,7 +866,8 @@
       "Angielskie statusy In Review/Sent Internal/Utilized w polskiej tabeli",
       "Daty w formacie Jul 10, 2026"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Ocena → zakładka „Raporty\" (widok globalny, wszystkie oceny naraz) — tabela raportów ze statusami i datami."
     },
     {
      "id": "assessment-artifacts-restart",
@@ -817,7 +883,8 @@
      "warianty": [
       "assessment-five-surfaces",
       "assessment-menu3-status-chips"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" (Outputs) → wewnętrzny segment Wnioski/Raporty/Inicjatywy — pięć statusów artefaktu (m.in. „zastąpiony\" po nowej wersji) z banerem ostrzegawczym."
     },
     {
      "id": "assessment-five-surfaces",
@@ -829,7 +896,8 @@
      "warianty": [
       "assessment-artifacts-restart",
       "assessment-menu3-status-chips"
-     ]
+     ],
+     "gdzie": "Ocena → wejście do modułu — pięć zakładek (Biblioteka/Procesy/Wnioski/Raporty/Inicjatywy); DRD dostępny, cztery pozostałe metodyki zablokowane ze statusem „Planowane\" — uczciwie, bez ukrywania."
     },
     {
      "id": "drd-library-entry",
@@ -842,7 +910,8 @@
      ],
      "wyjatki": [
       "Kolumna Zaktualizowano pokazuje date w formacie amerykanskim — defekt wspolnej warstwy tabel, dotyka calej aplikacji"
-     ]
+     ],
+     "gdzie": "Ocena → zakładka „Biblioteka\" — wejście do metodyki DRD, ścieżka i pasek modułu po polsku."
     },
     {
      "id": "assessment-list",
@@ -852,7 +921,8 @@
      "naprawione": [],
      "wyjatki": [
       "Kolumna Aktualizacja ucina naglowek i daty — szerokosc kolumn przy siedmiu kolumnach, defekt wspolnego silnika tabel, nie tego ekranu"
-     ]
+     ],
+     "gdzie": "Ocena → zakładka „Procesy\" — lista prowadzonych ocen (diagnoz DRD per jednostka biznesowa) na tabeli kanonicznej."
     },
     {
      "id": "assessment-reports-panel",
@@ -862,7 +932,8 @@
      "naprawione": [],
      "wyjatki": [
       "Obudowa ekranu po angielsku — inny komponent niz tabela raportow"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie sesji oceny → zakładka „Zarządzaj\" → panel zarządzania raportami — obsługa raportów TEJ KONKRETNEJ oceny (inny widok niż globalna zakładka „Raporty\" ze wszystkimi ocenami naraz)."
     },
     {
      "id": "assessment-presentation-view",
@@ -872,7 +943,8 @@
      "naprawione": [],
      "wyjatki": [
       "Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → eksport jako prezentacja — 9 slajdów z wyniku oceny."
     },
     {
      "id": "assessment-initiatives-table",
@@ -884,7 +956,8 @@
      ],
      "wyjatki": [
       "Obudowa ekranu po angielsku"
-     ]
+     ],
+     "gdzie": "To NIE jest ekran dostępny w aplikacji — komponent tabeli inicjatyw strategicznych (assessment/InitiativesTable) nie jest zamontowany nigdzie w kodzie produkcyjnym; to dowód/stanowisko testowe."
     },
     {
      "id": "siri-workspace",
@@ -899,7 +972,8 @@
      ],
      "warianty": [
       "method-workspace"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie sesji metodyki SIRI — wywiad z bankiem pytań; jeśli bank nie ma pytania dla danego wymiaru (bo treść jest licencjonowana), ekran mówi to wprost."
     },
     {
      "id": "assessment-initiatives-panel",
@@ -910,7 +984,8 @@
      "wyjatki": [
       "Caly ekran po angielsku",
       "Blad w konsoli: zdublowany klucz EXECUTING"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie sesji oceny → zakładka „Zarządzaj\" → panel zarządzania inicjatywami — śledzenie statusu inicjatyw, które wynikły z tej oceny."
     },
     {
      "id": "assessment-manage-panel",
@@ -920,7 +995,8 @@
      "naprawione": [],
      "wyjatki": [
       "Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie sesji oceny → zakładka „Zarządzaj\" — postęp procesu i tabela etapów/bramek tej konkretnej oceny."
     },
     {
      "id": "siri-tier",
@@ -931,7 +1007,8 @@
      "wyjatki": [
       "Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi",
       "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
-     ]
+     ],
+     "gdzie": "To NIE jest ekran dostępny w aplikacji — macierz priorytetów SIRI istnieje jako czysta logika wyliczeniowa (method-core), bez żadnego komponentu React, który by ją renderował w produkcie; to stanowisko testowe/diagnostyczne dla inżyniera."
     },
     {
      "id": "assessment-matryca",
@@ -945,7 +1022,8 @@
      "warianty": [
       "idea-table",
       "rn-g3-class-l-record-shell"
-     ]
+     ],
+     "gdzie": "Ocena → otwarcie sesji DRD jako artefaktu (Matryca) — realna siatka poziomów po osiach (DRDMatrixSession), klik w komórkę zmienia kolor/poziom."
     }
    ]
   },
@@ -960,7 +1038,8 @@
      "ocena": "A",
      "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Inicjatywy → zakładka „Obciążenie\" — obciążenie zespołu, wszędzie z jednostką (FTE-tydzień, procenty, zakresy)."
     },
     {
      "id": "plan-scenario-d1",
@@ -968,7 +1047,8 @@
      "ocena": "A",
      "co": "Daty po polsku, stany po polsku.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku."
     },
     {
      "id": "ev-football-field",
@@ -976,7 +1056,8 @@
      "ocena": "A",
      "co": "Ekran wzorcowy. Kwoty w mln PLN, rozjazd metod w procentach, mnozniki z jednostka, czytelna brama strefy przeciecia.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Inicjatywy → wycena metodą koszykową (Economics panels, EV Basket Football Field) — porównanie metod wyceny w jednym wykresie z jednostkami i strefą przecięcia."
     },
     {
      "id": "karta-initiative",
@@ -995,7 +1076,8 @@
      "warianty": [
       "exe-002-004-ui-audit",
       "initiative-record"
-     ]
+     ],
+     "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — pełna karta (pasek tożsamości, prawy panel accordion, lewy rail z licznikami)."
     },
     {
      "id": "initiative-record",
@@ -1011,7 +1093,8 @@
      "warianty": [
       "exe-002-004-ui-audit",
       "karta-initiative"
-     ]
+     ],
+     "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — ten sam komponent co „Karta inicjatywy\", inny zestaw danych demo."
     },
     {
      "id": "initiatives-portfolio-analysis",
@@ -1021,7 +1104,8 @@
      "naprawione": [],
      "wyjatki": [
       "To decyzja produktowa, nie kosmetyka — wymaga rozstrzygniecia wlasciciela"
-     ]
+     ],
+     "gdzie": "To NIE istnieje w produkcie — komponent analizy portfela (12,8 tys. linii) został świadomie usunięty jako martwy kod. Funkcja dziś nie istnieje w aplikacji."
     }
    ]
   },
@@ -1038,7 +1122,8 @@
      "naprawione": [
       "Surowe angielskie stale FACT, RECOMMENDATION, UNKNOWN, RED, AMBER wsrod polskiego tekstu"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Realizacja → zakładka „Raporty\" → raporty inteligencji pracy (kontrola realizacji, zasoby/obciążenie). UWAGA: cała ta powierzchnia jest za flagą domyślnie wyłączoną wszędzie (także na demo) — dziś jej nie zobaczysz bez ręcznego włączenia."
     },
     {
      "id": "exe-002-004-ui-audit",
@@ -1052,7 +1137,8 @@
      "warianty": [
       "initiative-record",
       "karta-initiative"
-     ]
+     ],
+     "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — realny rekord inicjatywy użyty jako dowód audytu „kręgosłupa\" realizacji (dane rzeczywiście działają)."
     },
     {
      "id": "execution-export-prezentacja",
@@ -1065,7 +1151,8 @@
      ],
      "warianty": [
       "prezentacje-template-states"
-     ]
+     ],
+     "gdzie": "To NIE istnieje w tej postaci w produkcie — eksport realizacji do prezentacji był testowany na starej ścieżce (KimiWorkspace/PrezentacjeView), a produkt dawno przeszedł na inną; ten ekran testowy nigdy nie został zaktualizowany."
     },
     {
      "id": "execution-change-signals",
@@ -1075,7 +1162,8 @@
      "naprawione": [],
      "wyjatki": [
       "Ekran harnessu wyrejestrowany, plik zostaje"
-     ]
+     ],
+     "gdzie": "To NIE istnieje w produkcie — panel sygnałów zmiany w realizacji (ExecutionChangeSignalsPanel) został usunięty jako fantom bez pełnej implementacji."
     }
    ]
   },
@@ -1090,7 +1178,8 @@
      "ocena": "A",
      "co": "Tabela archiwum tylko do odczytu. Zero rekordow to stan faktyczny tabeli, nie licznik trybu widoku — regula nagiego zera nie ma tu zastosowania.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → archiwum starych wskaźników (sprzed przebudowy Wyniki vNext) — tabela tylko do odczytu."
     },
     {
      "id": "results-vnext-okr-objectives",
@@ -1102,7 +1191,8 @@
      ],
      "wyjatki": [
       "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie"
-     ]
+     ],
+     "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → zakładka „Cele\" — pięć celów z kluczowymi rezultatami."
     },
     {
      "id": "results-vnext-kpi-scorecards",
@@ -1113,7 +1203,7 @@
       "Angielskie naglowki podgladu"
      ],
      "wyjatki": [],
-     "gdzie": "Wyniki → KPI → wejście w zestawienie (POZIOM 2)"
+     "gdzie": "Wyniki → KPI → wejście w zestawienie (POZIOM 2) — lista kart wskaźników z panelem podglądu."
     },
     {
      "id": "results-vnext-roi-model",
@@ -1121,7 +1211,8 @@
      "ocena": "A",
      "co": "Baza porownania i polityka kalkulacji.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → ROI → wejście w sprawę ROI (POZIOM 3, pełne narzędzie) — baza porównania i polityka kalkulacji."
     },
     {
      "id": "results-vnext-kpi-tool",
@@ -1132,7 +1223,7 @@
       "Surowe statusy pomiaru zamiast etykiet"
      ],
      "wyjatki": [],
-     "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3)"
+     "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3) — pełne narzędzie z ostatnim pomiarem i właściwościami wskaźnika."
     },
     {
      "id": "results-vnext-roi-full-tool",
@@ -1144,7 +1235,8 @@
      ],
      "wyjatki": [
       "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
-     ]
+     ],
+     "gdzie": "Wyniki → ROI → rejestr spraw ROI (POZIOM 1) i wejście w pełne narzędzie sprawy (POZIOM 3) — cztery fazy, sześć wierszy budowy sprawy."
     },
     {
      "id": "results-vnext-okr-admin",
@@ -1154,7 +1246,8 @@
      "naprawione": [],
      "wyjatki": [
       "To prawdziwy stan flagi, nie defekt"
-     ]
+     ],
+     "gdzie": "Wyniki → OKR → sekcja administracyjna „Programy OKR\" (programy i cykle) — pokazuje uczciwy stan: ta funkcja jeszcze nie jest włączona dla organizacji."
     },
     {
      "id": "results-vnext-teresa-okr-reflection",
@@ -1162,7 +1255,8 @@
      "ocena": "A",
      "co": "Formularz refleksji. Czerwony przycisk Zamknij zestaw to swiadomy wybor — zamkniecie cyklu jest nieodwracalne.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → OKR → zamknięcie zestawu celów → formularz refleksji prowadzony przez Teresę — czerwony przycisk „Zamknij zestaw\" bo to czynność nieodwracalna."
     },
     {
      "id": "results-vnext-okr-registry",
@@ -1172,7 +1266,8 @@
      "naprawione": [
       "Pigulka ucinana w kolumnie UWAGA"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → OKR → rejestr zestawów celów (POZIOM 1) — dziewięć zestawów, tabela ośmiu kolumn."
     },
     {
      "id": "results-vnext-roi-registry",
@@ -1182,7 +1277,8 @@
      "naprawione": [
       "Angielskie naglowki podgladu"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → ROI → rejestr spraw ROI (POZIOM 1) — siedem spraw z nazwiskami i statusami."
     },
     {
      "id": "results-vnext-kpi-registry",
@@ -1190,7 +1286,8 @@
      "ocena": "A",
      "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → KPI → rejestr wskaźników (POZIOM 1) — pełna tabela ze statusami, filtrami i kebabem."
     },
     {
      "id": "results-vnext-teresa-kpi-deviation",
@@ -1198,7 +1295,8 @@
      "ocena": "A",
      "co": "Formularz sprawy z uczciwymi komunikatami o brakach.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3) → „Sprawa odchylenia\" prowadzona przez Teresę, gdy wskaźnik odchyla się od celu — formularz z uczciwymi komunikatami o brakach."
     },
     {
      "id": "results-three-pairs",
@@ -1208,7 +1306,8 @@
      "naprawione": [],
      "wyjatki": [
       "Ogladana tylko domyslna zakladka"
-     ]
+     ],
+     "gdzie": "To NIE jest dziś dostępne w aplikacji — komponent (ResultsThreePairsView) należał do starego huba Wyników, który został wycofany; trasa /results dziś przekierowuje prosto do rejestru KPI (Wyniki vNext)."
     },
     {
      "id": "results-vnext-attention",
@@ -1218,7 +1317,8 @@
      "naprawione": [],
      "wyjatki": [
       "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
-     ]
+     ],
+     "gdzie": "Wyniki → sekcja „Uwaga\" — siedem zakładek z pozycjami wymagającymi uwagi, z realnymi kodami wskaźników."
     },
     {
      "id": "results-vnext-okr-workspace",
@@ -1226,7 +1326,8 @@
      "ocena": "A",
      "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → warsztat zestawu — pełne narzędzie z cyklem życia i wyjaśnieniami."
     },
     {
      "id": "results-vnext-roi-pir-outcomes",
@@ -1238,7 +1339,8 @@
      ],
      "wyjatki": [
       "Brak kebaba i filtrow — udokumentowany celowy, minimalny zakres widoku"
-     ]
+     ],
+     "gdzie": "Wyniki → ROI → wejście w sprawę ROI (POZIOM 3) → zakładka „Wyniki po wdrożeniu\" (PIR) — cztery sprawy z wynikiem przeglądu powdrożeniowego."
     },
     {
      "id": "results-vnext-search-registry",
@@ -1250,7 +1352,8 @@
      ],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Wyszukiwarka przed zapytaniem — uczciwie pusta. Z zapytaniem pokazuje trzy trafienia."
-     ]
+     ],
+     "gdzie": "Wyniki → zakładka „Search\" — wyszukiwarka po wskaźnikach, ROI i celach. UWAGA: za flagą domyślnie wyłączoną (resultsSearch) — w aplikacji dziś tej zakładki nie zobaczysz."
     },
     {
      "id": "results-zestawienia",
@@ -1266,7 +1369,7 @@
       "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
       "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)"
      ],
-     "gdzie": "Wyniki → KPI → rejestr zestawień okresowych (POZIOM 1, nowy)",
+     "gdzie": "Wyniki → KPI → rejestr zestawień okresowych (POZIOM 1, nowy) — sześć zestawień z okresem rozliczeniowym, właścicielem i liczbą wskaźników w środku.",
      "warianty": [
       "results-vnext-registry-shell"
      ]
@@ -1282,7 +1385,8 @@
      ],
      "warianty": [
       "results-zestawienia"
-     ]
+     ],
+     "gdzie": "Wspólna powłoka używana przez rejestry KPI/ROI/OKR w module Wyniki (nie osobny ekran sam w sobie) — pokazuje wspólne elementy: uczciwą wartość i plakietkę blokady cyklu życia. UWAGA: treść w tym zrzucie jest po angielsku, do sprawdzenia względem realnego stanu i18n."
     }
    ]
   },
@@ -1299,7 +1403,8 @@
      "naprawione": [
       "Angielski naglowek sekcji"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Finanse → otwarcie dokumentu finansowego → panel komentarzy — komentarze blokujące i lista kontrolna przeglądu."
     },
     {
      "id": "finance-lineage-navigator",
@@ -1309,7 +1414,8 @@
      "naprawione": [],
      "wyjatki": [
       "Wzorcowy przyklad prawa liczby — zero zawsze z wyjasnieniem"
-     ]
+     ],
+     "gdzie": "Finanse → otwarcie dokumentu finansowego → nawigator pochodzenia danych — łańcuch powiązań między dokumentami, z uczciwym „0 / Brak\" zamiast pustki bez wyjaśnienia."
     },
     {
      "id": "finance-workspace-bar",
@@ -1319,7 +1425,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Pasek pelny; cialo ekranu to swiadoma zaslepka poza zakresem pakietu."
-     ]
+     ],
+     "gdzie": "Finanse → dowolny warsztat finansowy (Model/Analiza/Prognoza/Wycena) → wspólny pasek tożsamości u góry — izolowany podgląd samego paska."
     },
     {
      "id": "finance-hub",
@@ -1334,7 +1441,7 @@
      "wyjatki": [
       "Surowe kody typow w kolumnach: Investment_case, base/opt/cons, DCF_FCFF, Prediction, STM"
      ],
-     "gdzie": "Finanse → wejście do modułu (pięć zakładek)"
+     "gdzie": "Finanse → wejście do modułu (pięć zakładek) — tabela analizowanych spółek (kompletność sprawozdań, okres, waluta, liczba dokumentów, status) plus pięć zakładek: Sprawozdania, Analiza, Modele, Predykcja, Wycena."
     },
     {
      "id": "finance-saved-views-panel",
@@ -1342,7 +1449,8 @@
      "ocena": "A",
      "co": "Widoki zespolowe i osobiste.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Finanse → dowolna zakładka → panel zapisanych widoków — widoki zespołowe i osobiste."
     },
     {
      "id": "finance-analysis-workspace",
@@ -1354,7 +1462,8 @@
      ],
      "wyjatki": [
       "Wartosci wskaznikow bez znaku procenta — brak metadanych jednostki w danych, nie do naprawy w wygladzie"
-     ]
+     ],
+     "gdzie": "Finanse → zakładka „Analiza\" → otwarcie analizy — tabela wskaźników z formułami i uczciwym pustym stanem, gdy danych jeszcze nie ma."
     },
     {
      "id": "finance-export-import-panel",
@@ -1366,7 +1475,8 @@
      ],
      "wyjatki": [
       "'Choose File' to natywna kontrolka przegladarki — nieprzetlumaczalna bez wlasnego uploadera"
-     ]
+     ],
+     "gdzie": "Finanse → dowolny warsztat → panel eksportu/importu arkusza — wymiana danych z manifestem."
     },
     {
      "id": "finance-model-workspace",
@@ -1379,7 +1489,8 @@
      ],
      "wyjatki": [
       "Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany"
-     ]
+     ],
+     "gdzie": "Finanse → zakładka „Modele\" → otwarcie modelu — model bazowy z danymi wejściowymi i bilansem otwarcia."
     },
     {
      "id": "finance-statement-pack-workspace-v2",
@@ -1392,7 +1503,8 @@
      ],
      "wyjatki": [
       "Liczba przy etykiecie 'skala: tysiace' wyglada jak znany wzorzec podwojenia jednostki — dane makietowe, nie zweryfikowane wobec zywej bazy"
-     ]
+     ],
+     "gdzie": "Finanse → zakładka „Sprawozdania\" → otwarcie pakietu sprawozdań — tabela sprawozdania i panel powiązanych artefaktów."
     },
     {
      "id": "finance-compare-panel",
@@ -1405,7 +1517,8 @@
      ],
      "wyjatki": [
       "Kody pozycji w kolumnie wymiarow — dane makietowe"
-     ]
+     ],
+     "gdzie": "Finanse → dowolny warsztat → panel porównania okresów — tabela porównania z różnicami."
     },
     {
      "id": "finance-prediction-workspace",
@@ -1417,7 +1530,8 @@
      ],
      "wyjatki": [
       "Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module"
-     ]
+     ],
+     "gdzie": "Finanse → zakładka „Predykcja\" → otwarcie prognozy — budowa scenariuszy z paskiem statusu."
     },
     {
      "id": "finance-valuation-workspace",
@@ -1431,7 +1545,8 @@
      ],
      "wyjatki": [
       "Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty"
-     ]
+     ],
+     "gdzie": "Finanse → zakładka „Wycena\" → otwarcie wyceny — łańcuch pochodzenia wyceny, most od wartości przedsiębiorstwa do wartości kapitału."
     },
     {
      "id": "finance-baseline-workspace",
@@ -1443,7 +1558,8 @@
      ],
      "wyjatki": [
       "Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy."
-     ]
+     ],
+     "gdzie": "Finanse → zakładka „Analiza\" → baza porównania (założenia + wyliczenia) — punkt odniesienia, do którego porównuje się dalsze analizy."
     },
     {
      "id": "finance-value-panels",
@@ -1453,7 +1569,8 @@
      "naprawione": [],
      "wyjatki": [
       "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu."
-     ]
+     ],
+     "gdzie": "Finanse → panele wartości (Economics panels: granica efektywna, Monte Carlo NPV, opcje realne, kalkulator scenariuszy, wrażliwość what-if) — most wartości i planer nośników."
     },
     {
      "id": "finance-id-bridge",
@@ -1463,7 +1580,8 @@
      "naprawione": [],
      "wyjatki": [
       "Nie pokazuje sie jako ekran produktu"
-     ]
+     ],
+     "gdzie": "Narzędzie inżynierskie do diagnostyki (most identyfikatorów między starym a nowym silnikiem Finansów) — nie jest to ekran, który widzi użytkownik/klient."
     },
     {
      "id": "finance-focus-mode",
@@ -1473,7 +1591,8 @@
      "naprawione": [],
      "wyjatki": [
       "Nie pokazuje sie jako ekran produktu"
-     ]
+     ],
+     "gdzie": "Narzędzie inżynierskie do diagnostyki (tryb skupienia paska tożsamości Finansów) — nie jest to ekran, który widzi użytkownik/klient."
     }
    ]
   },
@@ -1499,7 +1618,8 @@
       "excele-jeden-widok-recent",
       "excele-prawy-panel-standard",
       "excele-reopen-verify"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza — podgląd arkusza kalkulacyjnego."
     },
     {
      "id": "materialy-template-library-slice",
@@ -1507,7 +1627,8 @@
      "ocena": "A",
      "co": "Tabela wzorcow z uczciwymi statusami. Piec pozornych odchylen to swiadome decyzje wlasciciela.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → zakładka „Biblioteka wzorców\" — tabela wzorców z uczciwymi statusami."
     },
     {
      "id": "template-library-new-entry",
@@ -1517,7 +1638,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Dowod wpiecia przycisku, nie ekran danych."
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Biblioteka wzorców\" → „Nowy szablon\" — wejście prowadzące do kreatora szablonu."
     },
     {
      "id": "document-studio-resume-error",
@@ -1532,7 +1654,8 @@
       "document-studio-ai-teresa",
       "document-studio-streaming-honesty-n3",
       "document-studio-template-resolve-error"
-     ]
+     ],
+     "gdzie": "Materiały → otwarcie istniejącego dokumentu (Document Studio) po nieaktualnym odnośniku — ekran błędu „Nie znaleziono tego dokumentu\" z przyciskiem powrotu do Materiałów."
     },
     {
      "id": "document-studio-template-resolve-error",
@@ -1547,7 +1670,8 @@
       "document-studio-ai-teresa",
       "document-studio-resume-error",
       "document-studio-streaming-honesty-n3"
-     ]
+     ],
+     "gdzie": "Materiały → tworzenie dokumentu z wzorca, który zniknął — ekran błędu „Nie znaleziono źródła tego wzorca\" z przyciskiem powrotu do biblioteki wzorców."
     },
     {
      "id": "deck-artifact",
@@ -1557,7 +1681,8 @@
      "naprawione": [],
      "wyjatki": [
       "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
-     ]
+     ],
+     "gdzie": "Materiały → „Nowy\" → Prezentacja → kreator decka — sześć slajdów wg kanonu artefaktów."
     },
     {
      "id": "deck-quality-badge",
@@ -1568,7 +1693,8 @@
       "CRIMSON na przycisku glownym — Pulapka nr 1 z kodeksu",
       "Surowy angielski enum Internal/Briefing"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → kreator prezentacji → ekran wyniku (krok końcowy kreatora) — odznaka jakości wygenerowanego decka."
     },
     {
      "id": "document-artifact",
@@ -1585,7 +1711,8 @@
       "document-studio-menu-pliku",
       "document-studio-nowy-dokument-martwe-przyciski",
       "document-studio-save-as-template"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Dokumenty\" → otwarcie dokumentu doradczego (pełny widok) — raport z sekcjami, paskiem wskaźników, tabelą budżetu i wykresem trendu."
     },
     {
      "id": "excele-jeden-widok-materialy",
@@ -1602,7 +1729,8 @@
       "excele-prawy-panel-standard",
       "excele-reopen-verify",
       "sheet-artifact"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" — tabela kanoniczna arkuszy, polskie etykiety."
     },
     {
      "id": "excele-reopen-verify",
@@ -1623,7 +1751,8 @@
       "excele-jeden-widok-recent",
       "excele-prawy-panel-standard",
       "sheet-artifact"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" → ponowne otwarcie arkusza po błędzie generowania — czytelny komunikat błędu."
     },
     {
      "id": "excele-prawy-panel-standard",
@@ -1640,7 +1769,8 @@
       "excele-jeden-widok-recent",
       "excele-reopen-verify",
       "sheet-artifact"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza → prawy panel — szyna ikon (Akcje, Powiązania, Źródła, Rezultaty, Historia) zgodna z decyzją z 28.07 o jednym wspólnym wzorze panelu."
     },
     {
      "id": "excele-engine-reveal",
@@ -1657,7 +1787,8 @@
       "excele-prawy-panel-standard",
       "excele-reopen-verify",
       "sheet-artifact"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" → nowy arkusz — stan startowy silnika Excel przed pierwszym wywołaniem backendu."
     },
     {
      "id": "excele-jeden-widok-pusty",
@@ -1676,7 +1807,8 @@
       "excele-prawy-panel-standard",
       "excele-reopen-verify",
       "sheet-artifact"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" → „Nowy\" — trzy karty wyboru startu: czysto / z AI / z szablonu."
     },
     {
      "id": "excele-jeden-widok-recent",
@@ -1693,7 +1825,8 @@
       "excele-prawy-panel-standard",
       "excele-reopen-verify",
       "sheet-artifact"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" — strona główna zakładki, wzorce arkuszy widoczne na start."
     },
     {
      "id": "b2-template-gallery",
@@ -1711,7 +1844,8 @@
       "processflow-canvas",
       "whiteboard-canvas",
       "whiteboard-workshop"
-     ]
+     ],
+     "gdzie": "Moja praca → Idee → otwarcie idei jako kanwy → „Nowa kanwa\" → galeria szablonów mapy myśli — gotowe punkty startu zamiast pustej kanwy."
     },
     {
      "id": "word-intake-uselm-default",
@@ -1721,7 +1855,8 @@
      "naprawione": [
       "Ucinany tekst bez wielokropka w pieciu polach wyboru"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → „Nowy\" → Dokument → formularz startowy — pomoc AI włączona domyślnie (decyzja DEC-317), żeby nie trzeba było jej włączać ręcznie za każdym razem."
     },
     {
      "id": "gen-word-content-hints",
@@ -1731,7 +1866,8 @@
      "naprawione": [
       "Kolumna TYP pokazywala surowy kod zamiast nazwy"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → „Nowy\" → Dokument → kreator szablonów dokumentów (Word) — formularz w całości po polsku."
     },
     {
      "id": "gen-deck-content-hints",
@@ -1741,7 +1877,8 @@
      "naprawione": [
       "Ten sam surowy kod typu"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → „Nowy\" → Prezentacja → kreator szablonów prezentacji (Deck) — formularz w całości po polsku."
     },
     {
      "id": "template-builder-deck",
@@ -1749,7 +1886,8 @@
      "ocena": "A",
      "co": "Bez odchylen od kanonu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → Biblioteka wzorców → „Nowy szablon\" → kreator szablonu typu Deck — budowa własnego wzorca prezentacji do wielokrotnego użytku."
     },
     {
      "id": "template-builder-table",
@@ -1759,7 +1897,8 @@
      "naprawione": [
       "Twardy blad danych testowych — ekran padal calkowicie"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → Biblioteka wzorców → „Nowy szablon\" → kreator szablonu typu Excel (arkusz) — kreator z kolumnami."
     },
     {
      "id": "template-builder-doc",
@@ -1767,7 +1906,8 @@
      "ocena": "A",
      "co": "Bez odchylen od kanonu.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → Biblioteka wzorców → „Nowy szablon\" → kreator szablonu typu Word — budowa własnego wzorca dokumentu do wielokrotnego użytku."
     },
     {
      "id": "template-create-wizard",
@@ -1777,7 +1917,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Formularz startowy — puste pole nazwy jest jego trescia."
-     ]
+     ],
+     "gdzie": "Materiały → Biblioteka wzorców → „Nowy szablon\" → krok 1 z 3 wspólnego kreatora — pierwszy krok tworzenia nowego wzorca, niezależnie od formatu."
     },
     {
      "id": "materialy-launcher",
@@ -1787,7 +1928,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Modal wyboru formatu — z natury zwiezly."
-     ]
+     ],
+     "gdzie": "Materiały → przycisk „Nowy\" — modal z trzema drogami startu (format materiału)."
     },
     {
      "id": "prezentacje-template-states",
@@ -1798,7 +1940,8 @@
      "wyjatki": [],
      "warianty": [
       "execution-export-prezentacja"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Prezentacje\" → otwarcie prezentacji z wzorca — trzy stany: ładowanie, wzorzec bez rekordu, brak dostępu."
     },
     {
      "id": "report-artifact",
@@ -1806,7 +1949,8 @@
      "ocena": "A",
      "co": "NAJLEPSZY ekran partii. Pelna polska tresc, waluty wszedzie, procenty sformatowane, czerwien tylko dla Zagrozone. Gotowy do pokazania klientowi.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → zakładka „Dokumenty\" → otwarcie raportu dla komitetu sterującego — pełna polska treść, waluty i procenty sformatowane, gotowy do pokazania klientowi."
     },
     {
      "id": "document-studio-context-chip",
@@ -1814,7 +1958,8 @@
      "ocena": "A",
      "co": "Formularz z chipem kontekstu organizacji.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → „Nowy\" → Dokument → formularz startowy Document Studio → chip kontekstu organizacji — przypomnienie, dla jakiej firmy/klienta powstaje dokument."
     },
     {
      "id": "document-studio-menu-pliku",
@@ -1830,7 +1975,8 @@
       "document-studio-m1-share-primary",
       "document-studio-nowy-dokument-martwe-przyciski",
       "document-studio-save-as-template"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Dokumenty\" → otwarcie dokumentu w Document Studio → menu „Plik\" — standardowe akcje pliku (Nowy, Otwórz, Zapisz, Zapisz jako, Zrób z tego wzorzec)."
     },
     {
      "id": "document-studio-nowy-dokument-martwe-przyciski",
@@ -1846,7 +1992,8 @@
       "document-studio-m1-share-primary",
       "document-studio-menu-pliku",
       "document-studio-save-as-template"
-     ]
+     ],
+     "gdzie": "Materiały → „Nowy\" → Dokument → nowo utworzony pusty dokument w Document Studio — dowód, że tytuł jest klikalny a przyciski żywe (nie martwe)."
     },
     {
      "id": "document-studio-blocks-i18n",
@@ -1856,7 +2003,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Ekran ISTNIEJE po to, zeby pokazac puste stany po polsku. Pustka to jego temat."
-     ]
+     ],
+     "gdzie": "Materiały → otwarcie dokumentu w Document Studio → puste bloki treści — sprawdza, czy stany puste są po polsku i po angielsku."
     },
     {
      "id": "document-studio-save-as-template",
@@ -1872,7 +2020,8 @@
       "document-studio-m1-share-primary",
       "document-studio-menu-pliku",
       "document-studio-nowy-dokument-martwe-przyciski"
-     ]
+     ],
+     "gdzie": "Materiały → otwarcie dokumentu w Document Studio → menu „Plik\" → „Zrób z tego wzorzec\" — ścieżka od gotowego dokumentu do nowego szablonu."
     },
     {
      "id": "gen-excel-templates-tab",
@@ -1880,7 +2029,8 @@
      "ocena": "A",
      "co": "Model P&L, budzet, DCF. Terminologia finansowa to uznane zapozyczenia branzowe.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → Biblioteka wzorców → zakładka szablonów Excela — modele P&L, budżet, DCF (terminologia finansowa to uznane zapożyczenia branżowe)."
     },
     {
      "id": "materialy-draft-template-visibledraft-fix",
@@ -1888,7 +2038,8 @@
      "ocena": "A",
      "co": "Szkic widoczny z pigulka Szkic.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Materiały → Biblioteka wzorców → szkic szablonu w trakcie tworzenia — widoczny z pigułką „Szkic\"."
     },
     {
      "id": "word-quality-badge",
@@ -1898,7 +2049,8 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Przed uruchomieniem kontroli jakosci nie ma czego pokazac."
-     ]
+     ],
+     "gdzie": "Materiały → otwarcie dokumentu w Document Studio → panel kontroli jakości — odznaka wykrytej fabrykacji treści."
     },
     {
      "id": "excele-edytowalna-siatka",
@@ -1917,7 +2069,8 @@
       "excele-prawy-panel-standard",
       "excele-reopen-verify",
       "sheet-artifact"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza z produkcyjnego szablonu (np. NPV/IRR) — realna, edytowalna siatka."
     },
     {
      "id": "report-builder-library-template",
@@ -1927,7 +2080,8 @@
      "naprawione": [],
      "wyjatki": [
       "Cztery napisy przybite po angielsku w realnym komponencie"
-     ]
+     ],
+     "gdzie": "Silnik Report Builder (starsza ścieżka /reports/builder, poza głównym menu Materiałów) → nowy raport z wzorca — modal wyboru wzorca."
     },
     {
      "id": "materials-registry",
@@ -1940,7 +2094,8 @@
      ],
      "wyjatki": [
       "Kolumna ZRODLO nadal surowa — slownik otwarty, wymaga decyzji o pelnej liscie"
-     ]
+     ],
+     "gdzie": "Materiały → zakładka „Wszystkie\" (rejestr wspólny wszystkich materiałów) — po naprawie w całości po polsku."
     },
     {
      "id": "document-studio-streaming-honesty-n3",
@@ -1955,7 +2110,8 @@
       "document-studio-ai-teresa",
       "document-studio-resume-error",
       "document-studio-template-resolve-error"
-     ]
+     ],
+     "gdzie": "Materiały → otwarcie dokumentu w Document Studio → generowanie treści przez AI — tryb, w którym system pokazuje plan, zanim zacznie pisać."
     },
     {
      "id": "document-studio-ai-teresa",
@@ -1970,7 +2126,8 @@
       "document-studio-resume-error",
       "document-studio-streaming-honesty-n3",
       "document-studio-template-resolve-error"
-     ]
+     ],
+     "gdzie": "Materiały → otwarcie dokumentu w Document Studio → czat z Teresą w studiu — pisanie dokumentu przez rozmowę, bez wypełniania formularza."
     },
     {
      "id": "report-builder-block-types",
@@ -1980,7 +2137,8 @@
      "naprawione": [],
      "wyjatki": [
       "Caly komponent bez ani jednego klucza tlumaczen — nie pojedynczy napis, tylko brak lokalizacji ekranu"
-     ]
+     ],
+     "gdzie": "Silnik Report Builder (starsza ścieżka /reports/builder) → panel administracyjny „Rodzaje bloków raportu\" — narzędzie konfiguracyjne, nie ekran klienta."
     },
     {
      "id": "report-builder-templates",
@@ -1991,7 +2149,8 @@
      "wyjatki": [
       "Brak lokalizacji calego komponentu",
       "Kolumna SEKCJE pokazuje 0 bez wyjasnienia"
-     ]
+     ],
+     "gdzie": "Silnik Report Builder (starsza ścieżka /reports/builder) → panel administracyjny „Szablony raportów\" — narzędzie konfiguracyjne, nie ekran klienta."
     },
     {
      "id": "insight-artifact",
@@ -2004,7 +2163,8 @@
      "wyjatki": [
       "Streszczenie, kluczowe ustalenia, tematy i ryzyka to nie cytaty, tylko wygenerowana tresc — cala po angielsku",
       "Zdublowany cytat z poczwornym cudzyslowem"
-     ]
+     ],
+     "gdzie": "Wywiad → karta Wniosku (Insight) w trybie demo — powłoka poprawna po polsku, ale treść przykładowego wniosku jest w całości po angielsku (dane demo, nie kod)."
     },
     {
      "id": "document-studio-m1-share-primary",
@@ -2020,7 +2180,8 @@
       "document-studio-menu-pliku",
       "document-studio-nowy-dokument-martwe-przyciski",
       "document-studio-save-as-template"
-     ]
+     ],
+     "gdzie": "Materiały → otwarcie dokumentu w Document Studio → udostępnianie. UWAGA: ten konkretny ekran nie renderuje się w harnessie — ta sama treść jest dostępna i sprawdzona przez menu „Plik\", które działa."
     }
    ]
   },
@@ -2035,7 +2196,8 @@
      "ocena": "A",
      "co": "Ekran z akceptem wlasciciela z 26.08. Arkusz audytora, lancuch osiemnastu ogniw, prawy panel.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Audyty → otwarcie audytu → arkusz audytora dla pojedynczego kryterium — łańcuch osiemnastu ogniw, prawy panel. Zaakceptowane przez właściciela 26.08."
     },
     {
      "id": "audyty-piec-powierzchni",
@@ -2043,7 +2205,8 @@
      "ocena": "A",
      "co": "Weryfikacja i status publikacji.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Audyty → zakładka „Biblioteka audytów\" — weryfikacja metodyk i status publikacji."
     },
     {
      "id": "audyty-raport-dokument",
@@ -2051,7 +2214,8 @@
      "ocena": "A",
      "co": "Powloka artefaktu wzorcowa.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Audyty → otwarcie audytu → raport z audytu — powłoka artefaktu wzorcowa (dokument)."
     },
     {
      "id": "audyty-drd-report",
@@ -2078,7 +2242,8 @@
      "ocena": "A",
      "co": "W pelni po polsku. Crimson tylko w logo — to marka, nie stan.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Publiczna strona rezerwacji spotkania (poza zalogowaną aplikacją, link wysyłany klientowi) — formularz w całości po polsku, czerwień tylko w logo (to marka, nie stan)."
     },
     {
      "id": "meetings-module",
@@ -2086,7 +2251,8 @@
      "ocena": "A",
      "co": "Lista spotkan, daty po polsku.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Spotkania → wejście do modułu — lista spotkań z datami po polsku."
     },
     {
      "id": "calendar-sync-settings",
@@ -2097,7 +2263,8 @@
       "Ekran nie byl podlaczony do harnessu",
       "W motywie ciemnym przelacznik wlaczony byl nieodrozninalny od wylaczonego"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Ustawienia → Synchronizacja kalendarza — trzej dostawcy (np. Google/Outlook/inny) z przełącznikami."
     }
    ]
   },
@@ -2112,7 +2279,8 @@
      "ocena": "A",
      "co": "Zrodla danych nazwane, zero nagich zer.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Admin (panel administratora organizacji) → sekcja „Trust & Control\" → pięć zakładek (Audyt SOC2 / DLP / Rezydencja danych / Retencja / Polityka AI) — kontrola bezpieczeństwa i zgodności organizacji w jednym miejscu."
     },
     {
      "id": "admin-sso-self-service-card",
@@ -2120,7 +2288,8 @@
      "ocena": "A",
      "co": "Formularz SAML i OIDC.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Admin → sekcja „Security\" → zakładka „Policy\" → konfiguracja logowania firmowego SSO (SAML/OIDC) przez samego administratora organizacji, bez udziału SuperAdmina. UWAGA: za flagą domyślnie wyłączoną (ssoSelfServiceFlag) — w aplikacji dziś tego nie zobaczysz."
     },
     {
      "id": "superadmin-platform-operations-day15",
@@ -2130,7 +2299,8 @@
      "naprawione": [
       "Odznaka ryzyka pokazywala surowe HIGH i CRITICAL bez tlumaczenia i bez koloru, obok polskiego naglowka"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "SuperAdmin (panel dostępny tylko dla roli superadmina, osobna pozycja menu) → Operacje platformowe — narzędzia operacyjne dla obsługi całej platformy (organizacje, użytkownicy, konektory)."
     },
     {
      "id": "partner-settlements-view",
@@ -2142,7 +2312,8 @@
      ],
      "wyjatki": [
       "Ekran w calosci po angielsku — narzedzie wewnetrzne"
-     ]
+     ],
+     "gdzie": "SuperAdmin → Revenue → Rozliczenia partnerskie — pięć zakładek (Prowizje/Atrybucja/Wygasające/Analityka/Wypłaty)."
     },
     {
      "id": "model-catalog-table",
@@ -2154,7 +2325,8 @@
      ],
      "wyjatki": [
       "Reszta tabeli po angielsku — osobny, duzo wiekszy dlug tego ekranu nadzorcy"
-     ]
+     ],
+     "gdzie": "SuperAdmin → Model Registry → Katalog modeli AI — lista modeli językowych/obrazowych podłączonych do platformy, ze statusem i kosztem."
     }
    ]
   },
@@ -2173,7 +2345,8 @@
      ],
      "wyjatki": [
       "Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis."
-     ]
+     ],
+     "gdzie": "Organizacja (osobna pozycja w menu głównym) → profil organizacji — tożsamość i skala firmy, z podpowiedzią Teresy."
     }
    ]
   },
@@ -2190,7 +2363,8 @@
      "naprawione": [
       "Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → zakładka Agent → lista czterech gotowych agentów w falach — starszy widok wejściowy sprzed przebudowy na Agent Hub, do sprawdzenia, czy nadal jest używany."
     },
     {
      "id": "agent-warsztat",
@@ -2203,7 +2377,8 @@
      ],
      "wyjatki": [
       "Nazwy modulow w srodku schematu zostaja po angielsku — swiadoma decyzja: dane zapisane w schemacie nie sa tlumaczone na zywo"
-     ]
+     ],
+     "gdzie": "Moja praca → zakładka Agent → otwarcie/uruchomienie planu agenta → warsztat pełny — realny schemat procesu z paletą klocków."
     },
     {
      "id": "agent-plan-canvas",
@@ -2213,7 +2388,8 @@
      "naprawione": [
       "Cala paleta po angielsku mimo gotowych tlumaczen polskich — klucze byly, nikt ich nie wpial"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → zakładka Agent → otwarcie planu agenta → sam schemat (canvas) — dwie ścieżki budowy schematu i paleta klocków."
     },
     {
      "id": "agent-hub",
@@ -2226,7 +2402,7 @@
      "wyjatki": [
       "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
      ],
-     "gdzie": "Centrum agentów — wspólna przestrzeń pracy Teresy i Mojej pracy"
+     "gdzie": "Moja praca → zakładka Agent → wejście — wspólna przestrzeń pracy: Teresa przygotowuje pracę, Moja praca przechowuje kanoniczne Sprawy i Przebiegi (dwie pod-zakładki: „Moje procesy\" i „Szablony\"); akcepty, wyniki, historia i odzyskiwanie w jednym miejscu."
     }
    ]
   },
@@ -2239,7 +2415,7 @@
      "id": "prawy-pas-jedna-formula-idea-teresa",
      "nazwa": "PROTOTYP jednej formuly — idea, tryb Teresa",
      "ocena": "B",
-     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji. Pokazuje ideę pomysłu na wspólny prawy pas (stała szyna ikon, przełączanie Artefakt/Teresa) w trybie Teresa.",
      "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
      "naprawione": [],
      "wyjatki": [
@@ -2251,7 +2427,7 @@
      "id": "prawy-pas-jedna-formula-idea-artefakt",
      "nazwa": "PROTOTYP jednej formuly — idea, tryb Artefakt",
      "ocena": "B",
-     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji. Pokazuje ideę pomysłu na wspólny prawy pas w trybie Artefakt (siedem sekcji).",
      "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
      "naprawione": [],
      "wyjatki": [
@@ -2263,7 +2439,7 @@
      "id": "prawy-pas-jedna-formula-notatka-teresa",
      "nazwa": "PROTOTYP jednej formuly — notatka, tryb Teresa",
      "ocena": "B",
-     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji. To samo co dla idei, ale dla notatki, w trybie Teresa.",
      "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
      "naprawione": [],
      "wyjatki": [
@@ -2275,7 +2451,7 @@
      "id": "prawy-pas-jedna-formula-notatka-artefakt",
      "nazwa": "PROTOTYP jednej formuly — notatka, tryb Artefakt",
      "ocena": "B",
-     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji. To samo co dla idei, ale dla notatki, w trybie Artefakt.",
      "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
      "naprawione": [],
      "wyjatki": [
@@ -2292,7 +2468,8 @@
       "CRIMSON w czterech miejscach: aktywna zakladka Miesiac, dzien dzisiejszy, link do integracji, aktywny filtr",
       "Pasek narzedzi nie zawijal sie przy waskim ekranie — 100 px przewijania w bok"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Moja praca → zakładka Kalendarz — ten sam realny kalendarz, pokazany przy wąskim oknie/ekranie (test responsywności)."
     },
     {
      "id": "standard-grid-card",
@@ -2302,7 +2479,8 @@
      "naprawione": [
       "Ekran nie byl podlaczony do harnessu"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Element wspólny (kanon) używany w wielu modułach jako karta siatki (widok kart zamiast tabeli) — cztery warianty stanu karty, nie osobny ekran."
     },
     {
      "id": "standard-module-bar-children",
@@ -2310,7 +2488,8 @@
      "ocena": "A",
      "co": "Szesc wariantow paska. Aktywny filtr neutralny granat, nie czerwien.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Element wspólny (kanon) — StandardModuleBar, pasek na górze każdego ekranu listowego we WSZYSTKICH modułach — sześć wariantów zawartości paska."
     },
     {
      "id": "preview-4-zakladki",
@@ -2318,7 +2497,8 @@
      "ocena": "A",
      "co": "Cztery zakladki obok siebie. Jeden przycisk glowny na ekranie.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Element wspólny (kanon) — panel podglądu z prawej strony, używany w wielu modułach — wariant z czterema zakładkami obok siebie."
     },
     {
      "id": "prawy-panel-szyna-ikon",
@@ -2326,7 +2506,8 @@
      "ocena": "A",
      "co": "Realna szyna ikon, zawsze widoczna.",
      "naprawione": [],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Element wspólny (kanon) — szyna ikon prawego panelu (ExecutiveModuleShell/RightRail), używana w wielu modułach — zawsze widoczna, niezależnie od zawartości panelu."
     },
     {
      "id": "rn-g3-class-l-record-shell",
@@ -2340,7 +2521,8 @@
      "warianty": [
       "assessment-matryca",
       "idea-table"
-     ]
+     ],
+     "gdzie": "Wzorzec kanonu (SPEC-A, archetyp Rekord) pokazany na przykładzie rekordu wskaźnika OEE — karty metryk i panel właściwości; sam wskaźnik OEE to przykład demonstracyjny, nie osobny ekran produktu."
     },
     {
      "id": "fab-rail-kebab",
@@ -2351,7 +2533,8 @@
       "Ucinana kolumna Nazwa — szerokosc podana w procentach byla czytana jako piksele",
       "Crimson na ikonie pomocy"
      ],
-     "wyjatki": []
+     "wyjatki": [],
+     "gdzie": "Element wspólny (kanon) — szyna narzędzi (dokumenty/opinia/pomoc) i menu „⋯\" wiersza, pokazane razem z tabelą kanoniczną — używane w wielu modułach listowych."
     },
     {
      "id": "standard-kanban-card",
@@ -2361,7 +2544,8 @@
      "naprawione": [],
      "wyjatki": [
       "Etykiety w danych testowych mieszaja polski z angielskim — realne ekrany te same wartosci tlumacza"
-     ]
+     ],
+     "gdzie": "Element wspólny (kanon) — karta widoku kanban (używana m.in. w Zadaniach, Inicjatywach) — cztery kolumny, pasek pilności, stopka z następną bramą."
     }
    ]
   }
