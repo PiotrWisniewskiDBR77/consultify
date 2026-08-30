@@ -65,6 +65,7 @@ export const TaskExecutor = {
       add('task_type', 'personal');
       add('created_by', userId || null);
       add('updated_by', userId || null);
+      add('source', 'ai');
       await queryHelpers.queryRun(
         `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
         insertParams
