@@ -66,7 +66,7 @@ import {
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { API_URL, Api, getHeaders } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
@@ -224,6 +224,17 @@ export async function uploadTaskAttachmentsAndReload(
     formData.append('file', file);
     await api.postMultipart(baseUrl, formData);
   }
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapTaskServerAttachment(taskId, attachment)
+  );
+}
+
+export async function loadTaskAttachments(
+  api: Pick<typeof Api, 'get'>,
+  taskId: string
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/task/${encodeURIComponent(taskId)}`;
   const response = await api.get(baseUrl);
   return (response.data.data || []).map((attachment: any) =>
     mapTaskServerAttachment(taskId, attachment)
@@ -1091,7 +1102,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setCreatedAt(task.createdAt || '');
       setTags(task.tags || []);
       setChecklist(task.checklist || []);
-      setAttachments(task.attachments || []);
+      setAttachments(await loadTaskAttachments(Api, id));
       const serverComments = await Api.getTaskComments(id);
       setComments(serverComments.map(mapTaskServerComment));
       setLinkedItems(task.linkedItems || []);
