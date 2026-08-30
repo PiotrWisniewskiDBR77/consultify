@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import logger from '../../utils/Logger.js';
 
 export type ConclusionStatus =
   | 'candidate'
@@ -536,15 +537,21 @@ export class ConclusionService {
         f.created_by,
         i.title AS insight_title,
         i.status AS insight_status,
-        i.project_id,
-        i.reviewed_by
+        s.project_id,
+        NULL AS reviewed_by
        FROM interview_insight_findings f
        JOIN interview_insights i ON i.id = f.insight_id AND i.organization_id = f.organization_id
+       LEFT JOIN interview_sessions s
+         ON s.id = i.session_id AND s.organization_id = i.organization_id
        WHERE f.organization_id = ?
        ORDER BY f.updated_at DESC`,
         [organizationId]
       )
-      .catch(() => []);
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(`[ConclusionService] Interview finding sync query failed: ${message}`);
+        throw error;
+      });
 
     for (const row of rows) {
       const evidenceRows = await queryHelpers
