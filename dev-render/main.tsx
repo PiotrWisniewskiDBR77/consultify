@@ -172,6 +172,17 @@ const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-fie
 // wyrenderowac, a jego zepsuty import zatruwal wspolny serwer dev-render —
 // blad z tego pliku wyciekal na zrzuty INNYCH ekranow. Wyrejestrowany, plik
 // zostaje. Powrot = odkomentowac po przywroceniu komponentu.
+// Dopisane 2026-08-30 (odbiór grafiki): osiem ekranów istniało jako pliki
+// z domyślnym eksportem i NIGDY nie było zarejestrowanych — harness na każdy
+// z nich odpowiadał listą awaryjną „Unknown ?screen=…". Nikt ich nie widział.
+const ToolsSwotLiveScreen = React.lazy(() => import('./screens/tools-swot-live'));
+const ToolsSwotLibraryDetailScreen = React.lazy(() => import('./screens/tools-swot-library-detail'));
+const ToolsSwotSessionWorkspaceScreen = React.lazy(() => import('./screens/tools-swot-session-workspace'));
+const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
+const ToolOutputsPanelScreen = React.lazy(() => import('./screens/tool-outputs-panel'));
+const ToolsOutputsInsightsTabScreen = React.lazy(() => import('./screens/tools-outputs-insights-tab'));
+const ChatSignalsFeedScreen = React.lazy(() => import('./screens/chat-signals-feed'));
+const ExecSummaryOnelookScreen = React.lazy(() => import('./screens/exec-summary-onelook'));
 // const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
 const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-report-day11'));
 // const ExecutionExportPrezentacjaScreen = React.lazy(
@@ -1048,6 +1059,38 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
 //      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
 //    render: () => <ExecutionExportPrezentacjaScreen />,
 //  },
+  'tools-swot-live': {
+    label: 'Narzędzia → Dynamic SWOT: sesja na żywo',
+    render: () => <ToolsSwotLiveScreen />,
+  },
+  'tools-swot-library-detail': {
+    label: 'Narzędzia → Dynamic SWOT: karta w bibliotece',
+    render: () => <ToolsSwotLibraryDetailScreen />,
+  },
+  'tools-swot-session-workspace': {
+    label: 'Narzędzia → Dynamic SWOT: warsztat sesji',
+    render: () => <ToolsSwotSessionWorkspaceScreen />,
+  },
+  'tools-sesja-wyjscie': {
+    label: 'Narzędzia → wyjście z sesji',
+    render: () => <ToolsSesjaWyjscieScreen />,
+  },
+  'tool-outputs-panel': {
+    label: 'Narzędzia → panel rezultatów',
+    render: () => <ToolOutputsPanelScreen />,
+  },
+  'tools-outputs-insights-tab': {
+    label: 'Narzędzia → zakładka wniosków',
+    render: () => <ToolsOutputsInsightsTabScreen />,
+  },
+  'chat-signals-feed': {
+    label: 'Czat → strumień sygnałów',
+    render: () => <ChatSignalsFeedScreen />,
+  },
+  'exec-summary-onelook': {
+    label: 'Realizacja → streszczenie na jeden rzut oka',
+    render: () => <ExecSummaryOnelookScreen />,
+  },
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,

@@ -1878,6 +1878,110 @@
      ]
     }
    ]
+  },
+  {
+   "katalog": "15-narzedzia-domkniecie",
+   "nazwa": "Narzedzia — SWOT i rezultaty",
+   "opis": "Dynamiczny SWOT od biblioteki przez sesje do rezultatu, strumien sygnalow, kokpit menedzera.",
+   "ekrany": [
+    {
+     "id": "tools-swot-live",
+     "nazwa": "Dynamiczny SWOT — pole na zywo",
+     "ocena": "A",
+     "co": "Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING"
+     ]
+    },
+    {
+     "id": "tools-swot-library-detail",
+     "nazwa": "Dynamiczny SWOT — karta w bibliotece",
+     "ocena": "A",
+     "co": "Pelna powloka artefaktu: menu po lewej, panel po prawej. Tekst wprost mowi, czym narzedzie NIE jest i kiedy go NIE uzywac.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Kategoria pokazuje surowe strategic zamiast polskiej nazwy"
+     ]
+    },
+    {
+     "id": "tools-outputs-insights-tab",
+     "nazwa": "Narzedzia — zakladka wnioskow",
+     "ocena": "A",
+     "co": "Tabela kanoniczna, statusy i daty po polsku.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "chat-signals-feed",
+     "nazwa": "Strumien sygnalow",
+     "ocena": "A",
+     "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
+     ]
+    },
+    {
+     "id": "tools-swot-session-workspace",
+     "nazwa": "Dynamiczny SWOT — warsztat sesji",
+     "ocena": "A",
+     "co": "Piec krokow, propozycja AI z uzasadnieniem, liczniki zaakceptowanych punktow.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu",
+      "CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po"
+     ],
+     "wyjatki": [
+      "DRAFT, COPILOT AI i Find Signals po angielsku"
+     ]
+    },
+    {
+     "id": "exec-summary-onelook",
+     "nazwa": "Kokpit menedzera",
+     "ocena": "B",
+     "co": "Piec pytan zarzadczych, jedna odpowiedz na spojrzenie. Wszystkie liczby z jednostka: 71/100, 67%, 1,3 mln PLN, 88%.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Kolumny POZIOM i TYP ucinane na prawej krawedzi — Przetern, Do decy"
+     ]
+    },
+    {
+     "id": "tools-sesja-wyjscie",
+     "nazwa": "Narzedzia — wyjscie z sesji",
+     "ocena": "B",
+     "co": "Powloka artefaktu z sesja, pytania po polsku.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu",
+      "CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po"
+     ],
+     "wyjatki": [
+      "Session, DRAFT, COPILOT AI, AI Frame, AI Draft i naglowek OUTPUTS po angielsku",
+      "Surowe dynamic-swot i strategic we wlasciwosciach"
+     ]
+    },
+    {
+     "id": "tool-outputs-panel",
+     "nazwa": "Narzedzia — panel rezultatow",
+     "ocena": "C",
+     "co": "Lista rezultatow sesji z wersjami.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy"
+     ]
+    }
+   ]
   }
  ]
 }

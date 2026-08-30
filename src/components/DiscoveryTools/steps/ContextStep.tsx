@@ -642,7 +642,10 @@ export const ContextStep: React.FC<ContextStepProps> = ({
     const navButtonClass =
       'inline-flex rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200 dark:hover:bg-navy-700';
     const primaryNavButtonClass =
-      'inline-flex rounded-xl border border-primary-200 bg-primary-50 px-3 py-1.5 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-900/40 dark:bg-primary-950/20 dark:text-primary-200 dark:hover:bg-primary-950/30';
+      // Odbiór grafiki 2026-08-30: „Dalej" to zwykły przycisk nawigacji, nie stan
+      // krytyczny — rodzina akcentu renderuje tu czerwień zarezerwowaną dla rzeczy
+      // krytycznych (CLAUDE.md pułapka #1). Zmierzone pikselowo na zrzucie.
+      'inline-flex rounded-xl border border-c-border-strong bg-c-surface-raised px-3 py-1.5 text-sm font-medium text-c-text transition-colors hover:bg-c-surface disabled:cursor-not-allowed disabled:opacity-50';
 
     const toggleChoice = (
       field:
@@ -1101,7 +1104,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           <button
             type="button"
             onClick={() => handleMissionFeedbackAction(blockId, 'think-deeper')}
-            className="inline-flex rounded-full border border-primary-300/50 bg-white/80 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 shadow-sm transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
+            className="inline-flex rounded-full border border-c-border-strong bg-c-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary shadow-sm transition-colors hover:bg-c-surface-raised"
           >
             {labelsUi.thinkDeeper}
           </button>
