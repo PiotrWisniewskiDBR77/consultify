@@ -75,6 +75,12 @@ db.exec(`
     uwaga   TEXT,
     kiedy   TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS poprawki (
+    lp    INTEGER PRIMARY KEY AUTOINCREMENT,
+    ekran TEXT NOT NULL,
+    opis  TEXT NOT NULL,
+    kiedy TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS historia (
     lp      INTEGER PRIMARY KEY AUTOINCREMENT,
     ekran   TEXT NOT NULL,
@@ -113,10 +119,30 @@ function zapiszDecyzje(ekran, zmiana) {
   return db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje WHERE ekran = ?').get(ekran);
 }
 
+/** Ostatnia poprawka per ekran — to ona zapala zielony znacznik „obejrzyj ponownie". */
+const czytajPoprawki = () => {
+  const out = {};
+  for (const w of db
+    .prepare('SELECT ekran, opis, kiedy FROM poprawki ORDER BY lp')
+    .all()) {
+    out[w.ekran] = { opis: w.opis, kiedy: w.kiedy };
+  }
+  return out;
+};
+
+/**
+ * Czy poprawka czeka na ponowne obejrzenie?
+ * TAK, jeśli jest nowsza niż ostatnia decyzja właściciela o tym ekranie. Gdy
+ * właściciel kliknie cokolwiek po poprawce, znacznik gaśnie sam — bo to znaczy,
+ * że już ją zobaczył i się do niej odniósł.
+ */
+const czekaNaPonowne = (popr, dec) => !!popr && (!dec?.kiedy || popr.kiedy > dec.kiedy);
+
 function strona() {
   const status = JSON.parse(fs.readFileSync(STATUS, 'utf8'));
   const zrzuty = indeksZrzutow();
   const decyzje = czytajDecyzje();
+  const poprawki = czytajPoprawki();
 
   const doOdbioru = [];
   const niepokazane = [];
@@ -132,19 +158,29 @@ function strona() {
     const light = wybierz('light');
     const dark = wybierz('dark');
     const d = decyzje[e.id] || {};
+    const popr = poprawki[e.id];
+    const swieze = czekaNaPonowne(popr, d);
+    // Znacznik czasu poprawki w adresie obrazka — bez tego przeglądarka pokazałaby
+    // zrzut SPRZED naprawy i właściciel oceniłby nieaktualny obraz.
+    const wersja = popr ? `?v=${encodeURIComponent(popr.kiedy)}` : '';
     const btn = (kod, etykieta) =>
       `<button class="b ${kod} ${d.decyzja === kod ? 'on' : ''}" data-id="${esc(e.id)}" data-d="${kod}">${etykieta}</button>`;
-    return `<article class="k" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}">
+    return `<article class="k${swieze ? ' swieza' : ''}" id="k-${esc(e.id)}" data-stan="${esc(d.decyzja || '')}" data-swieza="${swieze ? '1' : ''}">
   <header>
     <h3>${esc(e.nazwa)}</h3>
     <span class="o o${esc(e.ocena)}">${esc(e.ocena)}</span>
   </header>
+  <div class="popr-slot">${
+    swieze
+      ? `<div class="popr"><b>Poprawione — obejrzyj ponownie</b><span>${esc(popr.opis)}</span><time>${esc(new Date(popr.kiedy).toLocaleString('pl-PL'))}</time></div>`
+      : ''
+  }</div>
   <p class="co">${esc(e.co)}</p>
   ${e.naprawione?.length ? `<ul class="nap">${e.naprawione.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
   ${e.wyjatki?.length ? `<ul class="wyj">${e.wyjatki.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
   <div class="obrazy">
-    ${light ? `<figure><figcaption>jasny</figcaption><a href="/png/${esc(light)}" target="_blank"><img loading="lazy" src="/png/${esc(light)}" alt=""></a></figure>` : ''}
-    ${dark ? `<figure><figcaption>ciemny</figcaption><a href="/png/${esc(dark)}" target="_blank"><img loading="lazy" src="/png/${esc(dark)}" alt=""></a></figure>` : ''}
+    ${light ? `<figure><figcaption>jasny</figcaption><a href="/png/${esc(light)}${wersja}" target="_blank"><img loading="lazy" src="/png/${esc(light)}${wersja}" alt=""></a></figure>` : ''}
+    ${dark ? `<figure><figcaption>ciemny</figcaption><a href="/png/${esc(dark)}${wersja}" target="_blank"><img loading="lazy" src="/png/${esc(dark)}${wersja}" alt=""></a></figure>` : ''}
   </div>
   <div class="akcje">
     ${btn('ok', 'Akceptuję')}
@@ -220,6 +256,13 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 .b.nie.on{background:var(--nie);color:#fff;border-color:var(--nie)}
 .b:focus-visible,.uw:focus-visible{outline:2px solid var(--nieb);outline-offset:1px}
 .zywo{font-size:12.5px;color:var(--nieb);margin-left:auto}
+.k.swieza{border-color:var(--ok);box-shadow:0 0 0 2px #86efac inset}
+.popr{background:#dcfce7;border:1px solid #86efac;border-radius:9px;padding:8px 11px;margin-bottom:9px;display:flex;flex-direction:column;gap:2px}
+.popr b{color:#14532d;font-size:12.5px}
+.popr b::before{content:"✔ ";font-weight:800}
+.popr span{color:#166534;font-size:12.5px}
+.popr time{color:#3f6212;font-size:11px}
+.filtry button[data-f=swieze].on{background:var(--ok);border-color:var(--ok)}
 .zapis{font-size:11.5px;margin-top:6px;min-height:15px;color:var(--drugi)}
 .zapis.jest{color:var(--ok)}
 .zapis.czeka{color:var(--drugi)}
@@ -237,6 +280,7 @@ th{background:#f1f5f9;font-size:12px;text-transform:uppercase;letter-spacing:.04
   <span class="filtry">
     <button data-f="wszystkie" class="on">Wszystkie</button>
     <button data-f="nierozstrzygniete">Nierozstrzygnięte</button>
+    <button data-f="swieze">Poprawione dla Ciebie</button>
     <button data-f="ok">Zaakceptowane</button>
     <button data-f="poprawka">Do poprawki</button>
     <button data-f="nie">Odrzucone</button>
@@ -269,6 +313,8 @@ const pokaz = (tekst, zle) => {
   stan.className = zle ? 'stan zle' : 'stan dobrze';
 };
 const SLOWO = { ok: 'Akceptuję', poprawka: 'Do poprawki', nie: 'Odrzucam' };
+/** Ekrany poprawione, których właściciel jeszcze nie widział. */
+const znane = new Set([...document.querySelectorAll('.k[data-swieza="1"]')].map((k) => k.id.slice(2)));
 const wyslij = (id, dane) => {
   const karta = document.getElementById('k-' + id);
   const znacznik = karta && karta.querySelector('.zapis');
@@ -289,6 +335,16 @@ const wyslij = (id, dane) => {
         .filter(Boolean)
         .join(', ');
       if (znacznik) { znacznik.textContent = 'w bazie: ' + opis + ' · ' + godzina; znacznik.className = 'zapis jest'; }
+      // Odniósł się do poprawki → zielony znacznik gaśnie od razu, żeby filtr
+      // „Poprawione dla Ciebie" pokazywał tylko to, czego jeszcze NIE widział.
+      if (karta && karta.dataset.swieza === '1') {
+        karta.dataset.swieza = '';
+        karta.classList.remove('swieza');
+        const slot = karta.querySelector('.popr-slot');
+        if (slot) slot.innerHTML = '';
+        znane.delete(id);
+        document.title = znane.size ? '(' + znane.size + ') Odbiór grafiki' : 'Odbiór grafiki';
+      }
       pokaz('zapisane w bazie · ' + dane.wpisowWHistorii + ' wpisów w historii', false);
     })
     .catch((e) => {
@@ -313,7 +369,13 @@ document.addEventListener('click', (ev) => {
     const tryb = f.dataset.f;
     document.querySelectorAll('.k').forEach((k) => {
       const pokaz =
-        tryb === 'wszystkie' || (tryb === 'nierozstrzygniete' ? !k.dataset.stan : k.dataset.stan === tryb);
+        tryb === 'wszystkie'
+          ? true
+          : tryb === 'nierozstrzygniete'
+            ? !k.dataset.stan
+            : tryb === 'swieze'
+              ? k.dataset.swieza === '1'
+              : k.dataset.stan === tryb;
       k.classList.toggle('ukryta', !pokaz);
     });
     document.querySelectorAll('.m').forEach((m) => {
@@ -330,6 +392,50 @@ document.addEventListener('input', (ev) => {
   t = setTimeout(() => wyslij(u.dataset.id, { uwaga: u.value }), 400);
 });
 licz();
+
+/**
+ * NASŁUCH POPRAWEK — właściciel nie musi odświeżać strony.
+ * Co 6 sekund pytamy serwer, które ekrany zostały poprawione i czekają na ponowne
+ * obejrzenie. Nowe zapalamy na miejscu: zielona ramka, opis co zmieniłem i ŚWIEŻY
+ * zrzut (adres obrazka dostaje znacznik czasu — inaczej przeglądarka pokazałaby
+ * obraz sprzed naprawy i ocena poszłaby na nieaktualny widok).
+ */
+async function sprawdzPoprawki() {
+  try {
+    const r = await fetch('/stan', { cache: 'no-store' });
+    if (!r.ok) return;
+    const { swieze } = await r.json();
+    let nowych = 0;
+    for (const [ekran, popr] of Object.entries(swieze || {})) {
+      if (znane.has(ekran)) continue;
+      const k = document.getElementById('k-' + ekran);
+      if (!k) continue;
+      znane.add(ekran);
+      nowych++;
+      k.classList.add('swieza');
+      k.dataset.swieza = '1';
+      const slot = k.querySelector('.popr-slot');
+      if (slot) {
+        slot.innerHTML =
+          '<div class="popr"><b>Poprawione — obejrzyj ponownie</b><span></span><time></time></div>';
+        slot.querySelector('span').textContent = popr.opis;
+        slot.querySelector('time').textContent = new Date(popr.kiedy).toLocaleString('pl-PL');
+      }
+      k.querySelectorAll('.obrazy img, .obrazy a').forEach((el) => {
+        const pole = el.tagName === 'IMG' ? 'src' : 'href';
+        const bazowy = el[pole].split('?')[0];
+        el[pole] = bazowy + '?v=' + encodeURIComponent(popr.kiedy);
+      });
+    }
+    if (nowych) {
+      pokaz(nowych + ' ' + (nowych === 1 ? 'karta poprawiona' : 'kart poprawionych') + ' — zobacz zielone', false);
+      document.title = '(' + znane.size + ') Odbiór grafiki';
+    }
+  } catch {
+    /* cisza — brak sieci nie ma prawa zepsuć strony, po prostu spróbujemy za chwilę */
+  }
+}
+setInterval(sprawdzPoprawki, 6000);
 </script>
 </body></html>`;
 }
@@ -355,6 +461,19 @@ http
         }
       });
       return;
+    }
+    if (req.url === '/stan') {
+      // Strona odpytuje to co kilka sekund. Dzięki temu poprawka zapala się
+      // u właściciela SAMA, bez odświeżania — nie musi zgadywać, czy już coś zrobiłem.
+      const decyzje = czytajDecyzje();
+      const poprawki = czytajPoprawki();
+      const swieze = {};
+      for (const [ekran, popr] of Object.entries(poprawki)) {
+        if (czekaNaPonowne(popr, decyzje[ekran])) swieze[ekran] = popr;
+      }
+      return res
+        .writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+        .end(JSON.stringify({ swieze }));
     }
     if (req.url.startsWith('/png/')) {
       const rel = decodeURIComponent(req.url.slice(5));
