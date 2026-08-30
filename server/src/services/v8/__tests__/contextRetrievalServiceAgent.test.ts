@@ -16,6 +16,11 @@ describe('ContextRetrievalService Agent hardening', () => {
 
   it('enforces project membership in SQL and preserves hybrid relevance', async () => {
     allMock.mockResolvedValueOnce([{ id: 'doc-1', filename: 'Policy.pdf', status: 'ready', scope: 'project', project_id: 'project-1', owner_id: null, version: 1, created_at: '2026-08-08T00:00:00Z' }]);
+    // Day 132: `fetchAccessibleDocuments` przepuszcza wiersze przez straznika poufnosci
+    // (`filterDocumentsByVisibility`), ktory robi WLASNE zapytanie do `knowledge_docs`.
+    // Bez tej atrapy straznik dostaje `undefined`, jest fail-closed i blokuje `doc-1` —
+    // test mierzylby wtedy brak atrapy, nie zachowanie produktu.
+    allMock.mockResolvedValueOnce([{ id: 'doc-1', ai_visibility: 'allowed', sensitivity: 'internal' }]);
     hybridMock.mockResolvedValue([{ id: 'chunk-1', filename: 'Policy.pdf', content: 'approved fact', chunkIndex: 1, hybridScore: 0.87, metadata: { nativeSourceLocator: { page: 2 } } }]);
     const result = await retrieveContext({ organizationId: 'org-1', userId: 'user-1', projectId: 'project-1', workflow: 'agent_execution', workflowMode: 'selected_material_plus_selected_context', selectedDocumentIds: ['doc-1'], retrievalQuery: 'policy' });
     expect(String(allMock.mock.calls[0][0])).toContain('EXISTS');
