@@ -18,6 +18,47 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-08-30, sesja wieczorna (przejęcie toru po poprzedniku)
 
+### Z-10 · Macierz — WSTRZYMANE przez właściciela, wzorcem jest SIRI
+**Co się stało:** wyrenderowałem `AreaMatrixTable` (siatka obszary × poziomy) i pokazałem
+właścicielowi. Odpowiedź: *„Stary, to nie tak ma wyglądać. Zatrzymaj się z tą pracą.
+To tak nie wygląda macierz. Jak wejdziesz w [SIRI], to sobie znajdziesz."*
+
+Zatrzymałem robotnika w trakcie (schodki + polskie poziomy + ciemny motyw) — **nie zdążył
+zmienić ani jednego pliku**, zweryfikowane `git status`.
+
+**Co pokazuje SIRI** (`dev-render/siri-workspace.html`, **wymaga `&view=matrix`** — bez tego
+renderuje widok wywiadu): „Macierz na żywo" — wiersze to jednostki oceny, kolumny to poziomy
+L0–L5, **komórki są klikalne**, ocena powstaje przez klikanie w siatce. Stan obecny wypełniony,
+cel obramowany, po prawej `Current · Target · Gap` na wiersz. Legenda stanów: propozycja AI,
+review, blocker, luka dowodowa, nieoceniony.
+
+**Na czym polegała moja pomyłka:** zbudowałem **prezentację do raportu**, a właściciel od
+początku mówił o **narzędziu**: *„macierz jest ważna, bo jest narzędziem. To nie jest tylko
+prezentacja, to jest narzędzie, które sprawia, że wchodzimy w interakcję."* Miałem to zdanie
+zapisane w `MAPA_UWAG_WLASCICIELA.md` (klaster K5) i **i tak zbudowałem prezentację** — bo
+szukałem komponentu pasującego do opisu geometrii („obszary na dole, poziomy na Y"), zamiast
+do opisu funkcji. Geometria była tylko pół specyfikacji; drugie pół brzmiało „ma być klikalna".
+
+**Co z tego wynika:**
+- Wzorzec macierzy DRD = **SIRI**, nie `AreaMatrixTable`. Potwierdzenie kierunku czeka
+  na właściciela (zapytany, obiecał wrócić z odpowiedzią).
+- **Nic z pracy nad macierzą nie idzie dalej bez tego potwierdzenia.** Zacommitowane zostaje
+  jako dowód (ekran harnessu + zrzuty), nie jako kierunek.
+- Reguła na przyszłość: **gdy właściciel opisuje rzecz dwoma zdaniami — o wyglądzie i o działaniu
+  — dopasowanie do jednego z nich nie jest trafieniem.** Szukaj komponentu spełniającego oba,
+  a jak nie ma takiego, powiedz to, zamiast wybierać ładniejszą połowę.
+
+**Nierozstrzygnięte:** czy macierz SIRI ma jedną siatkę dla wszystkich jednostek, a DRD ma mieć
+siedem (po jednej na oś) — właściciel mówił o „siedmiu macierzach". Nie zgadywać drugi raz.
+
+### Z-11 · Właściciel nie może się zalogować — odmówiłem ruszania hasła
+Zgłosił, że po wczorajszej wymuszonej zmianie hasła nie wpuszcza go do aplikacji. **Nie
+resetowałem hasła ani nie ruszałem konta** — to jego dane i jego konto, także w bazie demo.
+Zaproponowałem jedyną rzecz, która jest moją robotą: sprawdzenie, czy ścieżka „nie pamiętam
+hasła" **w ogóle działa**, bo jeśli nie działa, to defekt dotykający każdego klienta.
+Właściciel odłożył temat („wrócę do ciebie z tą informacją") — **zadanie otwarte, do podjęcia,
+gdy wskaże środowisko.**
+
 ### Z-9 · Prawda o osiach DRD żyła w SZEŚCIU kopiach — trzecie sprostowanie tego samego dnia
 **Co się stało:** naprawa liczby poziomów osi w macierzy odsłoniła, że konfiguracja
 osi DRD jest w kodzie powielona **sześć razy**. Jedna kopia jest źródłem prawdy
