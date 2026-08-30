@@ -290,3 +290,42 @@ tej nie zobaczy.
 **Czego NIE zmierzono:** czy silnik wykonawczy działa poprawnie PO odblokowaniu.
 Wiemy tylko, że jest zablokowany. To osobny pomiar i wymaga Redisa oraz kluczy
 dostawcy modelu.
+
+### 2026-08-30 · ★★★ NAJPOWAŻNIEJSZE ZNALEZISKO DNIA: karta decyzji z zapisem tylko w przeglądarce jest tym, co widzi KAŻDY
+
+**Zweryfikowane przeze mnie osobiście, nie przepisane z raportu.**
+
+**1. Zamiennik istnieje w kodzie i NIGDY nie został podłączony.**
+`src/components/MyWork/Decision/DecisionWorkspace.tsx` — komponent z prawdziwym
+zapisem na serwer. **Nie jest renderowany nigdzie w całym `src/`** (grep `<DecisionWorkspace`
+zwraca wyłącznie własną definicję). Flaga `isM05DecisionWorkspaceEnabled`
+(`src/utils/m05DecisionWorkspaceFlag.ts`) ma **ZERO wywołań** poza własnym plikiem.
+`MyWorkHub.tsx:3891` renderuje `<DecisionDetailView>` **bezwarunkowo**.
+
+**Skutek:** karta decyzji zapisująca wyłącznie do pamięci przeglądarki **nie jest
+trybem awaryjnym — to jest to, co widzi każdy użytkownik dzisiaj.**
+
+**2. Karta zadania: użytkownik TRACI pracę.**
+- Pomysły realizacji, Ryzyka i alternatywy, Dowody → **nie trafiają nigdzie**: ani na
+  serwer (`personalPayload` w `TaskDetailView.tsx:1231-1250` ich nie zawiera), ani do
+  pamięci przeglądarki.
+- RACI i eskalacja → trafiają do `localStorage['consultify-task-draft:<id>']`
+  (`TaskDetailView.tsx:1254, 1377`), ale **ten klucz nigdy nie jest odczytywany** —
+  sprawdzone przeze mnie: zero `getItem` w całym `src/`. Zapis bez odczytu to to samo
+  co brak zapisu.
+- Etykieta w UI mówi „local to this view" — **myląca**: pole nie przeżywa nawet
+  w przeglądarce.
+
+**3. Karta decyzji: przeżywa odświeżenie, ale nie dociera do zespołu.**
+Zmierzone round-tripem w przeglądarce, nie z kodu. Dwa dodatkowe defekty:
+- `alternatives` i `rationale` **są wysyłane** do `PUT /api/decisions/:id`, ale
+  `UpdateDecisionSchema` (`server/src/validators/decision.validators.ts:162-171`) ich
+  nie zna, a middleware podmienia body na oczyszczony wynik — **pola giną po drodze,
+  zanim dotrą do kontrolera**. Klient myśli, że wysłał.
+- Klucz `consultify-decision-enhancements:<id>` **nie jest zawężony do użytkownika ani
+  organizacji** — dwie osoby na jednym komputerze zobaczą nawzajem swoje notatki.
+- RACI (stakeholders) — wyłącznie odczyt, **zero ścieżki zapisu**.
+
+**Kolejność napraw (propozycja):** najpierw podłączyć `DecisionWorkspace` albo
+świadomie go usunąć — bo dopóki wisi niepodłączony, każda naprawa
+`DecisionDetailView` jest pracą w komponencie przeznaczonym do zastąpienia.
