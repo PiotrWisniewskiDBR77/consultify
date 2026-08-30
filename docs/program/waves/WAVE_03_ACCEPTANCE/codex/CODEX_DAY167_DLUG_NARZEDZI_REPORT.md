@@ -1,8 +1,10 @@
 # CODEX DAY 167 — dług narzędzi pomiarowych
 
-Data: 2026-08-30  
-Marker: `22124537f7`  
-Gałąź: `codex/day167-dlug-narzedzi-20260830`  
+Data: 2026-08-30
+
+Marker: `22124537f7`
+
+Gałąź: `codex/day167-dlug-narzedzi-20260830`
 Werdykt: **PARTIAL**
 
 ## §0.1 — baza i sanity (wynik dosłowny)
@@ -59,13 +61,19 @@ Commit/push: `2e89fc7bce`.
 
 ### STOP — R2 / `wave3-governance-contract.test.ts:116`
 
-Rodzaj: MERYTORYCZNY  
-Powód: licencja pozwala zmienić wyłącznie linię 116, lecz `rollbackStateForResult` jest prywatna, callback testu jest synchroniczny, a jedyną wartością dostępną w tej linii jest tekst źródła; w tych granicach nie da się wykonać zachowania. Regex lub `not.toContain` nadal mierzyłby tekst i osłabiał test.  
-Licencja, którą sprawdziłem: zapis `tests/unit/ai/wave3-governance-contract.test.ts` wyłącznie linia 116; pozostałe linie i `server/src/**` są nietykalne.  
-Dowód: `server/src/services/aiActionExecutor.ts:145` deklaruje funkcję bez `export`; test `:113` ma synchroniczny callback, `:114` ładuje tekst, `:116` wykonuje tekstowe `toContain`.  
-Co dostarczyłem ZAMIAST zmiany: zielony test behawioralny w pierwszym licencjonowanym pliku i brief: rozszerzyć licencję na osobny test/import lub eksportować czystą funkcję w osobnej decyzji.  
-Co zrobiłbym po decyzji: dodałbym bezpośredni kontrakt funkcji i mutację `rollback_available`, oczekując czerwonego testu, następnie przywrócił kod przez kopię i potwierdził zielony przebieg.  
-Rekomendacja: rozszerzyć licencję testową; nie eksportować prywatnej funkcji tylko dla testu bez decyzji właściciela.  
+Rodzaj: MERYTORYCZNY
+
+Powód: licencja pozwala zmienić wyłącznie linię 116, lecz `rollbackStateForResult` jest prywatna, callback testu jest synchroniczny, a jedyną wartością dostępną w tej linii jest tekst źródła; w tych granicach nie da się wykonać zachowania. Regex lub `not.toContain` nadal mierzyłby tekst i osłabiał test.
+
+Licencja, którą sprawdziłem: zapis `tests/unit/ai/wave3-governance-contract.test.ts` wyłącznie linia 116; pozostałe linie i `server/src/**` są nietykalne.
+
+Dowód: `server/src/services/aiActionExecutor.ts:145` deklaruje funkcję bez `export`; test `:113` ma synchroniczny callback, `:114` ładuje tekst, `:116` wykonuje tekstowe `toContain`.
+
+Co dostarczyłem ZAMIAST zmiany: zielony test behawioralny w pierwszym licencjonowanym pliku i brief: rozszerzyć licencję na osobny test/import lub eksportować czystą funkcję w osobnej decyzji.
+
+Co zrobiłbym po decyzji: dodałbym bezpośredni kontrakt funkcji i mutację `rollback_available`, oczekując czerwonego testu, następnie przywrócił kod przez kopię i potwierdził zielony przebieg.
+
+Rekomendacja: rozszerzyć licencję testową; nie eksportować prywatnej funkcji tylko dla testu bez decyzji właściciela.
 Stan: linia 116 niezmieniona. Pozostałe pozycje kontynuowane: TAK.
 
 Inwentarz własny: kryterium to plik testowy zawierający `readFileSync`, literalną ścieżkę `src/` lub `server/src/` oraz `toContain`. Wynik klasyfikacji strukturalnej: **107 plików / 1 557 linii asercji**. To nie twierdzi, że każda z 1 557 asercji dotyczy tej samej zmiennej; dlatego B4 pozostaje `PARTIAL`. Pełna lista `ścieżka:linia` znajduje się poza repo w `r2-source-tocontain-inventory.txt`; lista 107 plików w `r2-source-tocontain-files.txt`. Żaden z nich poza licencjonowanym pierwszym plikiem R2 nie został zmieniony.
