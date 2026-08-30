@@ -67,7 +67,44 @@ Cztery warstwy dla tworzenia zadania:
    `useActionHandler.ts:428`, `chatActionHandler.ts:120`, `TaskDetailModal.tsx:164`
 4. **czy się wykonuje** — trasa jest za bramą z `:67` → **`409`**
 
-**Wniosek: tworzenie i edycja zadania z interfejsu odpowiadają `409`.**
+**Wniosek — SPROSTOWANY 2026-08-30 tego samego dnia, przed wydaniem dyżuru 160.**
+
+Pierwotnie zapisałem tu: „tworzenie i edycja zadania z interfejsu odpowiadają `409`”.
+**To było za szerokie.** Przy składaniu dyżuru 160 wyszło, że istnieje **druga,
+nieosłonięta ścieżka zapisu do tej samej tabeli**:
+
+`POST /api/my-work/personal-tasks` — `my-work.routes.ts:1282`, `INSERT INTO tasks`
+w `:1379`, montaż `Gateway.ts:1036`. **Zero bramy w tym pliku** (sprawdzone:
+`grep -c requireCanonical` → `0`).
+
+Front ma więc **dwie różne drogi tworzenia zadania**:
+
+| komponent | wołacz | trasa | wynik |
+|---|---|---|---|
+| `TaskDetailView.tsx:1310` | `Api.createPersonalTask` | `/api/my-work/personal-tasks` | **działa** |
+| `TaskDetailModal.tsx:164` | `Api.post('/tasks')` | `/api/tasks` | **`409`** |
+
+`Api.createPersonalTask` jest wołane z **sześciu** miejsc (`NotebookContent.tsx:2045`,
+`PostDecisionFollowUp.tsx:102`, `ActionItemsPanel.tsx:73` i `:102`,
+`ConvertChecklistModal.tsx:87`, `TaskDetailView.tsx:1310`).
+
+**Ktoś już to obszedł i zostawił ślad.** Komentarz w `TaskDetailView.tsx:483-484`:
+„My Work Tasks' real create path — Api.createPersonalTask, **distinct from
+TaskDetailModal's pmo/TaskController path**”. Czyli obejście jest świadome
+i udokumentowane w kodzie, ale **stara droga nie została ani naprawiona, ani usunięta**.
+
+Ścieżka przez bramę kończy się w `catch` z `toast.error('Failed to save task')`
+(`TaskDetailModal.tsx:170`) — użytkownik dostaje komunikat o błędzie, nie awarię
+aplikacji.
+
+**Poprawne zdanie brzmi:** kanoniczna ścieżka `/api/tasks` odpowiada `409` dla
+wszystkich 23 operacji mutujących, ale produkt **nie jest przez to całkowicie
+pozbawiony tworzenia zadań** — istnieje równoległa trasa poza bramą. To zmienia
+skalę szkody, **nie zmienia faktu**, że kanoniczna ścieżka zapisu jest zamknięta
+bez zamiennika, a produkt ma dwie niespójne drogi do tej samej tabeli.
+
+Dyżur 160 ma ustalić pełny inwentarz pisarzy do tabeli `tasks` — wstępny `grep`
+pokazuje **ponad 20 miejsc** poza `tasks.routes.ts`.
 
 ## Kiedy to powstało
 
