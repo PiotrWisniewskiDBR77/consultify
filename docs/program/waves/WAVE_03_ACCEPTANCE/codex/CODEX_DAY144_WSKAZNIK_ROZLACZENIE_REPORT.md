@@ -1,8 +1,11 @@
 # CODEX DAY 144 — WSKAŹNIK ROZŁĄCZONY OD CYKLU ŻYCIA INICJATYWY
 
-Data pomiaru: 2026-08-30  
-Marker: `c685ea65af`  
-Gałąź: `codex/day144-wskaznik-rozlaczenie-20260830`  
+Data pomiaru: 2026-08-30
+
+Marker: `c685ea65af`
+
+Gałąź: `codex/day144-wskaznik-rozlaczenie-20260830`
+
 Werdykt: **R1–R4 wykonane; B1–B8 spełnione w zakresie bezpośredniego testu realnego PostgreSQL.**
 
 ## Stan wejściowy
@@ -212,9 +215,9 @@ Porównanie różnicowe po `fullName`: ten sam jeden przypadek zmienił stan `fa
 
 ```text
 $ git diff --name-only c685ea65af..HEAD
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY144_WSKAZNIK_ROZLACZENIE_REPORT.md
 server/migrations/20260830_day144_kpi_lifecycle_decouple.sql
 server/src/routes/__tests__/day144.kpi-physical-delete-survival.pg.test.ts
-docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY144_WSKAZNIK_ROZLACZENIE_REPORT.md
 ```
 
 Każdy plik ma imienną licencję. Nie zmieniono frontu, historycznej migracji `061`, configów testowych ani globalnych helperów. Nie wykonano pushu.
@@ -225,6 +228,7 @@ Każdy plik ma imienną licencję. Nie zmieniono frontu, historycznej migracji `
 | --------------------------- | ------------------------------------------------------------------ |
 | `day144-before.json`        | `350d9c2f38cb9cc2e12ceb357c453d65d255706534a7251a99365bbb7773e171` |
 | `day144-after.json`         | `53940e7a2616343008773f0b4b94a74a7c49737932b97a17fecd2f4d9225d33c` |
+| `day144-final.json`         | `b8e64cc1c3f019e68bf2c8a0088b4a6333a118036bf2cc4bc1502866444018c1` |
 | `day144-after-verbose.log`  | `811bcfff41b38bcaa08c9a87112b3dd5c5514b55658fc6c666596a67addfa88e` |
 | `migrate-first.log`         | `1c597592b3bc489b56af4016abba053f861b1f2408e3a9275435fedc9b466e79` |
 | `migrate-second.log`        | `3741d4a362ac4a53517ddb6e3e801d3d48346fb7c47757c80e584f35485a8df3` |
