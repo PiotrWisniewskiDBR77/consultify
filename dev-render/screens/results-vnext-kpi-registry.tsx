@@ -980,6 +980,13 @@ const ResultsVNextKpiRegistryScreen: React.FC = () => {
       <button
         type="button"
         data-testid="harness-actor-switch"
+        // ★ 2026-08-30: `data-dev-render-chrome` — to jest KONTROLKA HARNESSU,
+        // nie produkt, i nie może trafić na zrzut do akceptu (CLAUDE.md §7c
+        // „zrzut czysty"). Bez tego atrybutu pastylka „Aktor: Piotr" siedziała
+        // na zrzucie mimo `uwagi=0` i zasłaniała treść tabeli — złapane
+        // w przeglądzie przed odbiorem 30.08. `grafika-zrzuty.mjs` chowa
+        // wszystko z tym atrybutem regułą CSS przed zrzutem.
+        data-dev-render-chrome
         onClick={() => {
           const next = actor === 'piotr' ? 'anna' : 'piotr';
           useAppStore.setState({ currentUser: next === 'piotr' ? ACTOR_PIOTR : ACTOR_ANNA } as any);
