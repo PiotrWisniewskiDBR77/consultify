@@ -53,3 +53,20 @@ Migracje na `pgvector/pgvector:pg16`, kontener `cx-day150-pg`, baza `cx150`, bin
 | Inicjatywa/lineage | CZĘŚĆ BEZ LINEAGE ISTNIEJE; ODPOWIEDNIK HANDOFF NIE ISTNIEJE | `src/hooks/discovery/toolAi/marketForces.ts:592-603`; wzorzec `server/src/services/tools/swotCandidateHandoffService.ts:170-199,212-293` | `setInitiatives` mapuje ogólne pola i `source`, ale nie `tool_output_id/version/content_hash`. Inwentarz `server/src/services/tools` nie znalazł Porterowego handoff service. |
 
 Wniosek R1: granica nie leży na UI ani modelu stanu. Normalne wejście jest zamknięte; po kontrolowanym seedzie transport sesji działa, ale bridge wynikowy porzuca całą treść Porterową, a renderer uczciwie pokazuje degenerowany dokument.
+
+## R2 — porównanie ogniwo po ogniwie z `dynamic-swot`
+
+| Ogniwo | `dynamic-swot` | `market-forces` | Luka |
+|---|---|---|---|
+| Rozmowa | dedykowane moduły Dynamic SWOT w `src/hooks/discovery/toolAi/` | `marketForces.ts:78-628` | Brak luki plikowej; wykonania LLM nie mierzono (Z15). |
+| UI/prezentacja | `ToolCanvas.tsx:162` | `ToolCanvas.tsx:317`; `dedicatedToolTypes.ts:95` | Oba mają dedykowaną gałąź; Porter jest nieosiągalny od normalnego POST sesji. |
+| Model sesji | `SWOTData` i inicjalizacja w `useToolStore.ts` | `PorterData` `:373-407`, inicjalizacja `:2478-2514` | Brak luki modelu stanu; realny GET/PUT Portera PASS. |
+| Start sesji | obecny w `APPROVED_MVP_TOOL_TYPES` (`approvedMvpToolTypes.ts:21`) | brak w tym zbiorze; controller `:869-871` zwraca 409 | Plik istnieje, ale zbiór celowo nie obejmuje toolType. Nie zmieniono. |
+| Silnik metody | `src/config/swot/**` | `src/config/porter/porterQuestionBank.ts`, `porterSynthesisEngine.ts`, `porterInsightStaircase.ts` | Brak luki samego silnika; nie oznacza to bridge'a do outputu. |
+| Accept gate | `src/config/swot/swotAcceptGate.ts` (197 linii) | brak pliku/gate'u Porterowego | **Brak pliku** i kanonicznej decyzji accept dla siły/sygnału. |
+| Silnik → output | `src/toolOutputs/buildSwotOutput.ts` (246 linii) oraz `server/src/sharedRuntime/toolOutputs/buildSwotOutput.ts` (247 linii) | generic fallback w `toolOutputSnapshotService.ts:286-316` | **Brak pliku** `buildPorterOutput`; istniejący plik snapshotu nie obejmuje toolType i emituje 3 puste kolekcje. |
+| Nonempty-lineage | `EmptyToolOutputError`, `toolOutputSnapshotService.ts:192-218,273-282` | generic scope note `:305-316` | Plik istnieje, ale strażnik jawnie nie obejmuje Portera. |
+| Dokument | wspólny `renderReport.ts:53-114`, zasilany niepustym outputem SWOT | ten sam renderer, ale z pustym outputem | Brak gałęzi Porterowej nie jest sam w sobie problemem; brak danych wejściowych daje tylko signature visual. |
+| Candidate → initiative | `swotCandidateHandoffService.ts` (331 linii), pinning `tool_output_id/version/content_hash` `:170-199,212-293` | ogólny `setInitiatives`, `marketForces.ts:592-603` | **Brak pliku** Porter handoff oraz brak lineage receipt. |
+
+Wynik inwentarza referencyjnego: 11 plików testowych odwołuje się do `buildSwotOutput`, `swotAcceptGate`, `swotCandidateHandoff` lub `EmptyToolOutputError`; dokładna lista: artefakt `swot-reference-tests.txt`.
