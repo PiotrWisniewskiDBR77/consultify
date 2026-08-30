@@ -155,7 +155,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                   isSelected
                     ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
                     : isToday
-                      ? 'bg-primary-500/10 text-primary-500 font-bold'
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
@@ -217,7 +217,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                       : ''}
                   </span>
                   {!isAvailable && isExternalSource && (
-                    <span className="block text-[10px] font-normal normal-case text-primary-500 dark:text-primary-400">
+                    <span className="block text-[10px] font-normal normal-case text-blue-600 dark:text-blue-400">
                       {t(
                         'myWork.calendarSidebar.connectInIntegrations',
                         'Connect in Integrations →'
@@ -309,7 +309,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                 onClick={() => setOwnership(entry.id)}
                 className={`w-full px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-colors ${
                   active
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300'
+                    ? 'bg-slate-100 text-slate-900 dark:bg-navy-800 dark:text-white'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                 }`}
               >
