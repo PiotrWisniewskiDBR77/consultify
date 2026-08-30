@@ -4148,6 +4148,7 @@ router.get(
       file_name: string;
       file_size: number;
       quality_score: number | null;
+      pipeline_log?: string | null;
       version: number;
       action_contract_json?: string | null;
       source_pack_json?: string | null;
@@ -4163,7 +4164,7 @@ router.get(
       share_token: string | null;
       share_expires_at: string | null;
     }>(
-      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, COALESCE(version, 0) AS version, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, classification, lifecycle_status, approval_current, created_by, created_at, archived_at, archived_by, share_token, share_expires_at
+      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, pipeline_log, COALESCE(version, 0) AS version, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, classification, lifecycle_status, approval_current, created_by, created_at, archived_at, archived_by, share_token, share_expires_at
      FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
@@ -4190,6 +4191,7 @@ router.get(
       file_name: row.file_name,
       file_size: row.file_size,
       quality_score: row.quality_score,
+      pipelineLog: row.pipeline_log ? JSON.parse(row.pipeline_log) : [],
       version: Number(row.version ?? 0),
       actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
       sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
