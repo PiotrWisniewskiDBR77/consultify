@@ -329,3 +329,31 @@ Zmierzone round-tripem w przeglądarce, nie z kodu. Dwa dodatkowe defekty:
 **Kolejność napraw (propozycja):** najpierw podłączyć `DecisionWorkspace` albo
 świadomie go usunąć — bo dopóki wisi niepodłączony, każda naprawa
 `DecisionDetailView` jest pracą w komponencie przeznaczonym do zastąpienia.
+
+### 2026-08-30 · ODPOWIEDŹ NA PYTANIE WŁAŚCICIELA: dlaczego karta decyzji nie była podłączona
+
+**Bo była — przez dwanaście dni — i została po cichu usunięta przy scalaniu.**
+
+Prześledzone w historii repozytorium:
+- **1 sierpnia** (`ecc112daa9`, `90c43c4aef`, `51e700c21a`) — zbudowany REALNY backend
+  decyzji: 27 tras w `server/src/routes/pmo/decisions.routes.ts` (`/:id/detail`,
+  `/:id/decide`, komentarze, alternatywy, ryzyka, dowody), `DecisionController`,
+  `decisionCollaborationService`. Do tego frontend `DecisionWorkspace` **i wpięcie
+  w `MyWorkHub` za flagą domyślnie wyłączoną**.
+- **13 sierpnia** (`07bc597420`, „feat(integration): fan in and compose Initiatives
+  and Execution") — scalenie **usunęło** import, sprawdzenie flagi i render
+  `<DecisionWorkspace>`.
+
+**Dlaczego nikt nie zauważył:** flaga była domyślnie WYŁĄCZONA, więc usunięcie
+wpięcia **nie zmieniło niczego na ekranie**. Zniknęła możliwość włączenia, nie
+widok. Dokładnie ten sam kształt co „200 znaczy nic" — zmiana bez objawu.
+
+**KOREKTA MOJEJ WCZEŚNIEJSZEJ REKOMENDACJI.** Proponowałem podmianę widoku.
+**Nie należy tego robić.** Zmierzone: karta, którą właściciel przejrzał i
+zaakceptował (`DecisionDetailView`), ma **9446 linii i 66 sekcji**.
+`DecisionWorkspace` ma **771 linii**. Podmiana najprawdopodobniej **odebrałaby
+właścicielowi kartę, którą właśnie zaakceptował**.
+
+**Właściwa naprawa:** podłączyć kartę, którą właściciel lubi, do backendu, który
+JUŻ ISTNIEJE od 1 sierpnia. Nie budujemy niczego nowego po stronie serwera —
+27 tras czeka nieużywanych.
