@@ -38,10 +38,22 @@ drugi tor o tym nie wie.
 _(pusto)_
 
 ### Blokady zgłoszone przez funkcje do toru grafiki
-_(pusto)_
+
+**2026-08-30 · dyżur 135 — panele wyceny finansowej.** Tor funkcji podpina 19 gotowych
+paneli z `src/components/Economics/panels/` do trasy Finansów **za flagą domyślnie
+wyłączoną** i buduje harness w `dev-render/screens/`. Instrukcja zawiera **twardy zakaz
+projektowania wyglądu** — panele mają wyglądać dokładnie tak, jak dziś w harnessie.
+
+**Co z tego wynika dla grafiki:** po zamknięciu dyżuru 135 powstanie komplet ekranów
+gotowych do zrzutu bez logowania i bez żywej bazy. To jest krok (b) reguły 7 — materiał
+do odbioru wizualnego. **Odbiór i ewentualna zmiana wyglądu tych paneli należy do
+toru grafiki, nie do funkcji.**
 
 ### Pliki zajęte w tej chwili
 | Plik / katalog | Tor | Od kiedy |
 | --- | --- | --- |
 | `docs/program/grafika/**` | grafika | 2026-08-30 |
 | `docs/program/funkcje/**` | funkcje | 2026-08-30 |
+| `src/components/Economics/**` · `dev-render/screens/**` | funkcje (dyżur 135, do zamknięcia) | 2026-08-30 |
+| `src/components/MyWork/shared/**` · `TaskDetailView` · `DecisionDetailView` | funkcje (dyżur 133) | 2026-08-30 |
+| `src/components/Initiatives/InitiativesHub.tsx` | funkcje (dyżur 134) | 2026-08-30 |

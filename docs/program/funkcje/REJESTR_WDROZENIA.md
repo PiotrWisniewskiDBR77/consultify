@@ -88,6 +88,10 @@ z raportu wykonawcy (reguła nr 3 — raport wykonawcy nie jest dowodem).
 | --- | --- | --- | --- |
 | 130 | Utrata danych — miejsca zapisu bez trwałości | biegnie u wykonawcy | klon `/private/tmp/cx-day130-utrata-danych` |
 | 131 | Teresa i granice wiedzy | scalony po naprawie i odbiorze | **flagi `ENABLE_ORG_KNOWLEDGE_RETRIEVAL` nie wolno włączyć przed osobnym dyżurem** |
+| 130 | Utrata danych — miejsca zapisu bez trwałości | **zamknięty `PARTIAL / EVIDENCE_MISSING`** | instrukcja **nie miała tabeli licencji** — błąd autora, nie wykonawcy; wykonawca oddał czerwony kontrakt zamiast łamać zasady. `T3` potwierdzone: **0 tras uploadu i 0 migracji** załączników Inicjatywy/Zadania/Decyzji. Mianowniki `35` i `28` **niepotwierdzone — nie cytować** |
+| 133 | Kontrakt mutacji w widżetach Mojej pracy — produkt przestaje kłamać, że zapisał | **wydany 2026-08-30**, marker `64d3de306c` | wdraża czerwony kontrakt z §A.2 raportu 130; zasoby 6016 / 4932–4933; **żywa ścieżka notatnika do odczytu** |
+| 134 | Most inicjatyw dostaje wołacza w interfejsie | **wydany 2026-08-30**, marker `64d3de306c` | faza 3 **krok (a) wyłącznie**; flaga `initiativeBridgeFlag` domyślnie OFF; zasoby 6017 / 4934–4935 |
+| 135 | Dziewiętnaście paneli wyceny podpiętych za flagą + harness do zrzutów | **wydany 2026-08-30**, marker `64d3de306c` | flaga `financeValuePanelsFlag` domyślnie OFF; zakaz projektowania wyglądu; zasoby 6018 / 4936–4937 |
 | 132 | Jeden strażnik poufności na trzech żywych wejściach do promptu | **wydany 2026-08-30**, marker `c05c4c3910` | klon `/private/tmp/cx-day132-straznik-poufnosci` gotowy; instrukcja w scratchu, bez `git` i bez sieci; zasoby 6015 / 4930 i 4931 |
 
 
@@ -188,3 +192,29 @@ To domyka wątek zamknięty tezą, że winna była flaga `ENABLE_DELIVERABLES_PR
 Kodowo zaślepką nie są — jest realny router, serwisy, osiem tabel i testy na Postgresie.
 Zamknięte są dostępem beta dla zwykłych ról, co jest zupełnie innym problemem
 i inną naprawą.
+
+
+---
+
+## Rozłączność czterech biegnących dyżurów — sprawdzona automatem 2026-08-30
+
+Tabele licencji plikowych dyżurów 132, 133, 134 i 135 przecięto programowo
+(ścieżki z licencją `zapis`/`utworzenie`, porównanie każdy z każdym wraz z prefiksami
+katalogów). Wynik: **zero kolizji**.
+
+| Dyżur | Terytorium zapisu |
+| --- | --- |
+| 132 | `server/src/routes/ai.routes.ts` · `services/aiContextBuilder.ts` · `services/organizationContext/ContextRetrievalService.ts` |
+| 133 | `src/components/MyWork/shared/*Section.tsx` · `TaskDetailView` · `DecisionDetailView` |
+| 134 | `src/components/Initiatives/InitiativesHub.tsx` · `src/utils/initiativeBridgeFlag.ts` |
+| 135 | `src/components/Economics/**` · `dev-render/screens/**` · `src/utils/financeValuePanelsFlag.ts` |
+
+**Kolizja złapana i naprawiona przed wydaniem:** dyżury 134 i 135 miały w tabelach
+tę samą zaślepkę `src/utils/<nowa-flaga>.ts`. Nazwy zostały **przybite imiennie**
+w obu instrukcjach, z jawnym zdaniem, że nie wolno ich zmienić.
+
+**Kandydat odrzucony przed wydaniem — wektor maskowania testów.** Plan wymienia go
+jako otwarty i groźniejszy niż którakolwiek faza. Pomiar 30.08: `vitest.config.ts:331`
+ma `retry: 0`, a pozostałe dziesięć konfiguracji nie ustawia `retry` wcale i dziedziczy
+zero z Vitest 4. **Wektor jest zamknięty** — dyżuru na fantom nie wydano. Do planu
+wchodzi jako pozycja do sprostowania, nie do naprawy.
