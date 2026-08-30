@@ -1,8 +1,16 @@
 /**
  * AreaMatrixTable Component
  *
- * Displays a comprehensive matrix of 9 business areas × 7 maturity levels
- * for a specific DRD axis. Shows current state, target state, and gaps.
+ * Siatka DWUWYMIAROWA dla jednej osi DRD: kolumny = obszary, wiersze = poziomy
+ * dojrzałości (najwyższy u góry). Komórka pokazuje stan obecny (●) i docelowy
+ * (○). Pod siatką wiersze podsumowań: Aktualny / Docelowy / Luka / Priorytet.
+ *
+ * DOMYŚLNIE rysuje 9 sztywnych obszarów funkcyjnych × 7 poziomów
+ * (`BUSINESS_AREAS` / `MATURITY_LEVELS` poniżej) — to pasuje wyłącznie do osi 1.
+ * Osie 2..7 mają PIĘĆ obszarów i 5/6/7 poziomów, dlatego kolumny i wiersze da
+ * się podać propsami `areas` / `levels` z jedynego źródła prawdy
+ * (`src/services/drdStructure.ts`). Bez propsów zachowanie jest identyczne jak
+ * przed ich dodaniem.
  *
  * Based on BCG/McKinsey report standards.
  */
@@ -50,6 +58,26 @@ export interface AreaAssessment {
   intervieweeRole?: string;
 }
 
+/**
+ * Kolumna macierzy (obszar). Kształt zgodny z `BUSINESS_AREAS`.
+ */
+export interface MatrixAreaDef {
+  id: string;
+  name: string;
+  namePl: string;
+  icon?: string;
+}
+
+/**
+ * Wiersz macierzy (poziom dojrzałości). Kształt zgodny z `MATURITY_LEVELS`.
+ */
+export interface MatrixLevelDef {
+  level: number;
+  name: string;
+  namePl: string;
+  color: string;
+}
+
 interface AreaMatrixTableProps {
   axisId: string;
   axisName: string;
@@ -58,6 +86,20 @@ interface AreaMatrixTableProps {
   onAreaClick?: (areaId: string) => void;
   language?: 'pl' | 'en';
   showAnimation?: boolean;
+  /**
+   * Kolumny macierzy. DOMYŚLNIE `BUSINESS_AREAS` (9 sztywnych obszarów
+   * funkcyjnych) — czyli zachowanie sprzed wprowadzenia tego propa jest
+   * niezmienione. Przekazanie własnej listy pozwala nakarmić komponent
+   * jedynym źródłem prawdy (`src/services/drdStructure.ts` → `axis.areas`),
+   * bo osie DRD 2..7 mają PIĘĆ obszarów, nie dziewięć.
+   */
+  areas?: readonly MatrixAreaDef[];
+  /**
+   * Wiersze macierzy. DOMYŚLNIE `MATURITY_LEVELS` (7 sztywnych poziomów).
+   * Osie DRD mają 7, 6 albo 5 poziomów (`axis.levelCount`), więc bez tego
+   * propa macierz rysuje wiersze nieistniejące dla danej osi.
+   */
+  levels?: readonly MatrixLevelDef[];
 }
 
 // ============================================================================
@@ -72,6 +114,8 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
   onAreaClick,
   language = 'pl',
   showAnimation = true,
+  areas = BUSINESS_AREAS,
+  levels = MATURITY_LEVELS,
 }) => {
   const { t } = useTranslation();
   const isPolish = language === 'pl';
@@ -171,7 +215,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             </span>
           </div>
           <div className="summary-card">
-            <span className="summary-value">{stats.assessed}/9</span>
+            <span className="summary-value">
+              {stats.assessed}/{areas.length}
+            </span>
             <span className="summary-label">
               {t('reports.areaMatrixTable.assessedLabel', 'Assessed')}
             </span>
@@ -187,22 +233,22 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
           <thead>
             <tr>
               <th className="level-header">{t('reports.areaMatrixTable.levelLabel', 'Level')}</th>
-              {BUSINESS_AREAS.map((area) => (
+              {areas.map((area) => (
                 <th
                   key={area.id}
                   className="area-header"
                   onClick={() => onAreaClick?.(area.id)}
                   style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
                 >
-                  <span className="area-icon">{area.icon}</span>
+                  {area.icon ? <span className="area-icon">{area.icon}</span> : null}
                   <span className="area-name">{isPolish ? area.namePl : area.name}</span>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {/* Level rows (7 to 1) */}
-            {MATURITY_LEVELS.map((levelInfo) => (
+            {/* Wiersze = poziomy dojrzałości, malejąco (najwyższy u góry) */}
+            {levels.map((levelInfo) => (
               <motion.tr key={levelInfo.level} variants={cellVariants}>
                 <td
                   className="level-cell"
@@ -214,7 +260,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                   <span className="level-number">{levelInfo.level}.</span>
                   <span className="level-name">{isPolish ? levelInfo.namePl : levelInfo.name}</span>
                 </td>
-                {BUSINESS_AREAS.map((area) => {
+                {areas.map((area) => {
                   const assessment = getAreaAssessment(area.id);
                   const isCurrent = assessment?.currentLevel === levelInfo.level;
                   const isTarget = assessment?.targetLevel === levelInfo.level;
@@ -238,7 +284,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
 
             {/* Separator */}
             <tr className="separator-row">
-              <td colSpan={10}></td>
+              <td colSpan={areas.length + 1}></td>
             </tr>
 
             {/* Summary rows */}
@@ -246,7 +292,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               <td className="summary-label-cell">
                 {t('reports.areaMatrixTable.currentLabel', 'Current')}
               </td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 return (
                   <td key={`current-${area.id}`} className="summary-value-cell current">
@@ -259,7 +305,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               <td className="summary-label-cell">
                 {t('reports.areaMatrixTable.targetLabel', 'Target')}
               </td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 return (
                   <td key={`target-${area.id}`} className="summary-value-cell target">
@@ -270,7 +316,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             </tr>
             <tr className="summary-row gap-row">
               <td className="summary-label-cell">{t('reports.areaMatrixTable.gapLabel', 'Gap')}</td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
                 return (
@@ -288,7 +334,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               <td className="summary-label-cell">
                 {t('reports.areaMatrixTable.priorityLabel', 'Priority')}
               </td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
                 return (
