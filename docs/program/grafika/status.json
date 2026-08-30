@@ -1033,6 +1033,17 @@
    "opis": "Portfel inicjatyw, plan, obciążenie.",
    "ekrany": [
     {
+     "id": "inicjatywy-lista",
+     "nazwa": "Lista inicjatyw",
+     "ocena": "B",
+     "gdzie": "Inicjatywy → lista główna — jedenaście inicjatyw z cyklem życia, następną bramką, gotowością i właścicielem.",
+     "co": "Ekran istnial, ale byl schowany pod ekranem zrobionym do sprawdzania tlumaczen — dlatego nikt go nie widzial.",
+     "naprawione": [],
+     "wyjatki": [
+      "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
+     ]
+    },
+    {
      "id": "capacity-advisor-a3",
      "nazwa": "Obciazenie zespolu",
      "ocena": "A",
@@ -1172,6 +1183,39 @@
    "nazwa": "Wyniki",
    "opis": "Wskaźniki, ROI, cele OKR — trzy poziomy.",
    "ekrany": [
+    {
+     "id": "cel-jedna-karta",
+     "nazwa": "Cel (OKR) jako JEDNA karta N",
+     "ocena": "B",
+     "gdzie": "Wyniki → OKR → otwarcie celu (PROTOTYP) — Cel, Kluczowe rezultaty, Postęp, Powiązania, Refleksja.",
+     "co": "Naglowek mowi wprost: Zamkniety, 2 z 3 KR osiagniete. Drugi rezultat ma 70% i etykiete NIE OSIAGNIETY, z wyjasnieniem po ludzku dlaczego.",
+     "naprawione": [],
+     "wyjatki": [
+      "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
+     ]
+    },
+    {
+     "id": "wskaznik-jedna-karta",
+     "nazwa": "Wskaznik jako JEDNA karta N",
+     "ocena": "B",
+     "gdzie": "Wyniki → KPI → otwarcie wskaźnika (PROTOTYP) — Kontrakt, Pomiary, Odchylenia, Działania korygujące, Rodowód.",
+     "co": "Rodowod pokazuje, kiedy zmienil sie wzor i prog, i ze starych pomiarow NIE przeliczono wstecz. Ta sekcja broni wiarygodnosci liczby.",
+     "naprawione": [],
+     "wyjatki": [
+      "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
+     ]
+    },
+    {
+     "id": "roi-jedna-karta",
+     "nazwa": "ROI jako JEDNA karta N",
+     "ocena": "B",
+     "gdzie": "Wyniki → ROI → otwarcie analizy (PROTOTYP) — pięć sekcji jednej narracji: Założenia, Model, Wynik, Wyniki po wdrożeniu, Wnioski.",
+     "co": "Sekcja po wdrożeniu pokazuje UCZCIWIE, ze wyszlo gorzej niz prognoza: ROI 71% wobec 104%, rozjazd -166 000 zl wypisany kwartalnie.",
+     "naprawione": [],
+     "wyjatki": [
+      "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
+     ]
+    },
     {
      "id": "results-vnext-legacy-archive",
      "nazwa": "Archiwum wskaznikow",
@@ -2411,6 +2455,17 @@
    "nazwa": "Kanon i elementy wspólne",
    "opis": "Wzorcowe klocki, stany błędu, podglądy — nie moduł menu, ale odbieramy osobno.",
    "ekrany": [
+    {
+     "id": "prawy-pas-notatnik-system",
+     "nazwa": "Prawy pas — WSPOLNY SYSTEM na notatniku",
+     "ocena": "B",
+     "gdzie": "Kanon → wspólny system prawego pasa (za flagą, domyślnie wyłączoną) — dowód na jednej powierzchni.",
+     "co": "Przy fladze wylaczonej notatnik wyglada IDENTYCZNIE co do bajtu. Przy wlaczonej: szyna ikon, Teresa jako tryb z pelna wysokoscia.",
+     "naprawione": [],
+     "wyjatki": [
+      "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
+     ]
+    },
     {
      "id": "prawy-pas-jedna-formula-idea-teresa",
      "nazwa": "PROTOTYP jednej formuly — idea, tryb Teresa",
