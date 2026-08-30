@@ -172,20 +172,27 @@ const CreatePlanRequestSchema = z
   );
 
 /** Best-effort background dispatch — nigdy nie wysadza żądania HTTP (default: background, patrz nagłówek pliku). */
-async function tryDispatchBackgroundExecution(payload: {
+export async function tryDispatchBackgroundExecution(payload: {
   planId: string;
   organizationId: string;
   userId: string;
-}): Promise<'enqueued' | 'unavailable'> {
+}): Promise<'enqueued' | 'replayed' | 'unavailable'> {
   try {
     const { dispatchAgentTask } = await import('../../services/ai/agentTaskDispatchService.js');
+    const plan = await agentPlannerService.getPlan(payload.planId);
+    const approvalCount = plan?.steps.filter((step) => Boolean(step.approvedAt)).length ?? 0;
     const governed = await agentPlannerService.executeGovernedEnqueue({
       ...payload,
-      dispatchKey: `route:${payload.planId}`,
-      enqueue: () => dispatchAgentTask({ ...payload, dispatchKey: `route:${payload.planId}` }),
+      dispatchKey: `route:${payload.planId}:approval:${approvalCount}`,
+      enqueue: () =>
+        dispatchAgentTask({
+          ...payload,
+          dispatchKey: `route:${payload.planId}:approval:${approvalCount}`,
+        }),
     });
     const status = (governed.result as { status?: string } | undefined)?.status;
-    return status === 'ENQUEUED' || status === 'REPLAY' || governed.replayed ? 'enqueued' : 'unavailable';
+    if (status === 'REPLAY' || governed.replayed) return 'replayed';
+    return status === 'ENQUEUED' ? 'enqueued' : 'unavailable';
   } catch (error: unknown) {
     logger.warn('[AgentPlanRoutes] Background dispatch unavailable, plan left pending', {
       planId: payload.planId,
@@ -314,7 +321,7 @@ router.post(
     // dispatch). Ścieżka katalogu (`manifestId`) i jawne `steps` BEZ ZMIAN —
     // dispatch od razu, wstecznie zgodnie z HP-4.
     const effectiveDraft = body.draft ?? Boolean(body.processId);
-    const dispatch: 'enqueued' | 'unavailable' | 'deferred' = effectiveDraft
+    const dispatch: 'enqueued' | 'replayed' | 'unavailable' | 'deferred' = effectiveDraft
       ? 'deferred'
       : await tryDispatchBackgroundExecution({
           planId: plan.id,

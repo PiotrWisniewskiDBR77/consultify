@@ -108,7 +108,8 @@ export const processAiTaskJob = async (job) => {
         const { agentPlannerService } = await import('../services/ai/agentPlannerService.js');
         try {
           result = await agentPlannerService.executeBackgroundPlan(payload);
-          await finishAgentTask(receiptId, workerId, true);
+          if (result.status === 'completed' || result.status === 'completed_with_errors')
+            await finishAgentTask(receiptId, workerId, true);
         } catch (error) {
           await finishAgentTask(receiptId, workerId, false, error);
           throw error;
