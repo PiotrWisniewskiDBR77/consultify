@@ -5,7 +5,23 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 180 — plany z czatu pod limitami · NIE SCALAĆ (FIX-180/Opus wydany)
+# ODBIÓR 180 — plany z czatu pod limitami · SCALONO PO FIX-180
+
+★ FIX-180 wykonany (5 commitów, `fa38aaf298..a3a70b2878`), wszystkie 4 wady
+domknięte z mutacjami czerwonymi niezależnie: F3 krok terminalny po cancel ·
+F4 NaN-guard na obu env · happy-path + licznik odmów (`[AgentResource] admission
+denied` — metryka stagingu) · **F1/F2 rozwiązane projektowo bez migracji**:
+odmowa przeliczana opt-in tylko dla plannera (kontrakt A09/wave8 nietknięty,
+test asertuje obie połowy), klucz per próba z bajtowo-stabilną próbą 1 (dedup
+redelivery zachowany — robotnik słusznie ODRZUCIŁ licznik w bazie z briefu FIX).
+Sprostowanie: „zastany czerwony" day165 to brak JWT_SECRET w powłoce, nie defekt.
+
+## ★ K6 — STAN KOŃCOWY MECHANIKI: DOMKNIĘTA
+Wszystkie warunki twarde (1-5, 8) + F1-F4 zamknięte. Do włączenia
+`ENABLE_AI_TASKS_WORKER` na STAGINGU zostały wyłącznie:
+1. **Decyzja właściciela (6):** fail-open leniwego INSERT-u polityk obejmuje też
+   wave8/multiAgent/adapter (wcześniej fail-closed) — zaakceptować czy zawęzić?
+2. Ustawienie env przy deployu kandydata na staging (K5) + obserwacja licznika odmów.
 
 Oceny: R1 **C** · R2 **B** (najlepszy dowód okna (b) w partii: spy na realnym
 renewExecutionLease) · R3 **B** · uczciwość raportu **B+** (korekta T6 = realna
