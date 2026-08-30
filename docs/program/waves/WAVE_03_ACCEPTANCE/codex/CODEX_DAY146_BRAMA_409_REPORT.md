@@ -206,10 +206,22 @@ Deklaracja Z30: **Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza 
 | `/private/tmp/cx-day146-brama-zapisu-artefakty/day146-migrate-2.log` | `b236083fa9187fa6b8cd78ea1b0e9c1212ce3e8b9228a39b2a683531a4e83844` |
 | `/private/tmp/cx-day146-brama-zapisu-artefakty/day146-z30.txt` | `6c28fedcc4d2dc2ac8eb4e07b56a4ef0114f73a564308bd8388b18bb4fa8b6c9` |
 | `/private/tmp/cx-day146-brama-zapisu-artefakty/day146-extracted-routes.txt` | `02f0e03b8fd3a2a52b7f05b471225bc496e622b770dafd3f201336031caacf28` |
+| `/private/tmp/cx-day146-brama-zapisu-artefakty/day146-extracted-routes-after.txt` | `02f0e03b8fd3a2a52b7f05b471225bc496e622b770dafd3f201336031caacf28` |
 
 ## W-D — granica rozłączności
 
-Oczekiwany i wymagany wynik końcowy `git diff --name-only c685ea65af..HEAD`: wyłącznie ten raport. Zero zmian `src/**`, `server/src/routes/**`, `server/migrations/**` i bramy.
+Końcowy wynik przed commitem odbiorowym:
+
+```text
+$ git diff --name-only c685ea65af..HEAD
+docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY146_BRAMA_409_REPORT.md
+$ git status --short
+[brak wyjścia]
+$ cmp -s day146-extracted-routes.txt day146-extracted-routes-after.txt && echo 'AST SET IDENTICAL'
+AST SET IDENTICAL
+```
+
+Zero zmian `src/**`, `server/src/routes/**`, `server/migrations/**` i bramy.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
