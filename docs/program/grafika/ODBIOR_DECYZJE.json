@@ -1,1 +1,12 @@
-{}
+{
+ "karta-insight": {
+  "decyzja": "poprawka",
+  "uwaga": "Tutaj problemem jest to. W oknie centralnym mamy trzy kolumny; jest to zaciągnięte. Zróbmy to w trzech dużych wierszach z trzema kolorami, aby było czytelne od góry do dołu. ",
+  "kiedy": "2026-08-30T08:21:39.269Z"
+ },
+ "karta-decision": {
+  "decyzja": "ok",
+  "uwaga": "Tutaj ważne jest to, że mamy w górnym pasku przycisk „AI”, a później w pasku dalszego arkusza mamy „Analizuj z AI”. Pamiętaj, że to są dwie różne funkcjonalności. Górny pasek AI dotyczy wypełnienia całego narzędzia, a dolny pasek dotyczy danej karty. ",
+  "kiedy": "2026-08-30T08:21:05.940Z"
+ }
+}

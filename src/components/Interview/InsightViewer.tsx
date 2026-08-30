@@ -4103,38 +4103,48 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 {executiveSummary || t('interview.insightViewer.noSummaryAvailable')}
               </Callout>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-[inset_3px_0_0_var(--c-border-strong)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-muted">
+              {/* ODBIÓR WŁAŚCICIELA 2026-08-30 (karta-insight, „do poprawki"), dosłownie:
+                  „W oknie centralnym mamy trzy kolumny (…). Zróbmy to w trzech dużych
+                  wierszach z trzema kolorami, aby było czytelne od góry do dołu."
+                  Trzy kafle obok siebie zmuszały do czytania w poprzek; teraz to trzy
+                  pełnowymiarowe wiersze, każdy z własnym kolorem szyny po lewej.
+                  Pierwszy dostał niebieski `c-info` — wcześniej był szary, więc kolory
+                  były realnie DWA, nie trzy. Niebieski, nie crimson: to nie jest stan
+                  krytyczny (CLAUDE.md pułapka #1). */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-5 py-4 shadow-[inset_4px_0_0_var(--c-info)]">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info">
                     {t('interview.insightViewer.officialAnswers')}
                   </div>
-                  {/* Wszystkie trzy kafle czytają `insightCounts` — te same
+                  {/* Wszystkie trzy wiersze czytają `insightCounts` — te same
                       liczby, co plakietki nawigacji (R2/defekt #3). */}
-                  <div className="mt-1 text-2xl font-bold text-c-text">
+                  <div className="text-3xl font-bold leading-none text-c-text tabular-nums">
                     {insightCounts.officialAnswers}
                   </div>
                 </div>
-                <div className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.danger.400)]">
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-5 py-4 shadow-[inset_4px_0_0_theme(colors.danger.400)]">
                   {/* AA (sędzia grafiki, pkt 6): `danger-500` (#E80538) na jasnym
                       tle dawał 4,21:1 przy 11 px — poniżej progu 4,5. `danger-700`
                       (#910A28) to odcień opisany w palecie jako „AA text on white".
                       Ciemny motyw zmierzony na 7,3:1 → `danger-400` zostaje. */}
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks')}
                   </div>
-                  <div className="mt-1 text-2xl font-bold text-c-text">{insightCounts.issues}</div>
+                  <div className="text-3xl font-bold leading-none text-c-text tabular-nums">
+                    {insightCounts.issues}
+                  </div>
                 </div>
-                <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.emerald.400)]">
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-5 py-4 shadow-[inset_4px_0_0_theme(colors.emerald.400)]">
                   {/* AA (sędzia grafiki, pkt 6): `emerald-600` (#388A22) dawał
                       4,08:1 przy 11 px. `emerald-700` (#026833) = HBS Green 1,
                       w palecie opisany jako AA na białym. Dark bez zmian. */}
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities')}
                   </div>
-                  {/* Kafel łączy dwie sekcje nawigacji („Sygnały" +
+                  {/* Wiersz łączy dwie sekcje nawigacji („Sygnały" +
                       „Przestrzenie szans"), więc jego wartość musi być SUMĄ
                       dokładnie tych dwóch liczników — nie trzeciego zestawu. */}
-                  <div className="mt-1 text-2xl font-bold text-c-text">
+                  <div className="text-3xl font-bold leading-none text-c-text tabular-nums">
                     {insightCounts.signals + insightCounts.opportunities}
                   </div>
                 </div>

@@ -59,3 +59,18 @@ tak samo** jak „ekran się nie renderuje". Dwa ekrany SIRI dostały przez to
 choć były osiągalne — innymi drzwiami.
 **Naprawione u źródła:** `grafika-zrzuty.mjs --wejscie=html`.
 **Reguła:** zanim napiszesz „ekran nie istnieje", sprawdź `ls dev-render/*.html`.
+
+2026-08-30 | ★ **Dwa różne „AI" na jednym ekranie — nie mylić ich nigdy.**
+Słowa właściciela z odbioru karty decyzji, dosłownie: *„mamy w górnym pasku przycisk
+»AI«, a później w pasku dalszego arkusza mamy »Analizuj z AI«. Pamiętaj, że to są dwie
+różne funkcjonalności. Górny pasek AI dotyczy wypełnienia całego narzędzia, a dolny
+pasek dotyczy danej karty."*
+**Górny pasek = całe narzędzie. Pasek arkusza = ta jedna karta.** Nie scalać ich,
+nie ujednolicać etykiet i nie „porządkować" jednego przez usunięcie drugiego.
+
+2026-08-30 | ★ **Liczniki podsumowania czyta się z góry na dół, nie w poprzek.**
+Słowa właściciela z odbioru karty wniosku: *„W oknie centralnym mamy trzy kolumny (…).
+Zróbmy to w trzech dużych wierszach z trzema kolorami, aby było czytelne od góry do
+dołu."* Zrobione w `InsightViewer`. Przy okazji wyszło, że kolory były realnie **dwa,
+nie trzy** — pierwszy kafel był szary. Dostał niebieski `c-info` (nie crimson: to nie
+jest stan krytyczny).

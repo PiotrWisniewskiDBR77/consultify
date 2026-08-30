@@ -21,8 +21,10 @@
      "id": "karta-insight",
      "nazwa": "Karta wniosku",
      "ocena": "A",
-     "co": "Bez odchylen od kanonu.",
-     "naprawione": [],
+     "co": "Podsumowanie wykonawcze wniosku z wywiadu. Trzy liczniki jako trzy pelnowymiarowe wiersze, kazdy z wlasnym kolorem — czyta sie z gory na dol.",
+     "naprawione": [
+      "ODBIOR 30.08: trzy kolumny zamienione na trzy duze wiersze z trzema kolorami, zgodnie z uwaga wlasciciela. Pierwszy wiersz dostal niebieski — wczesniej byl szary, wiec kolory byly realnie dwa."
+     ],
      "wyjatki": []
     },
     {
