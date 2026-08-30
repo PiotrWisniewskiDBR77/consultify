@@ -294,8 +294,17 @@ export const MeetingObjectPage: React.FC = () => {
     setLoading(true);
     setLoadError(null);
     setNotFound(false);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
-      const response = await Api.getMeeting(meetingId);
+      const response = await Promise.race([
+        Api.getMeeting(meetingId),
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error('Meeting request timed out after 20 seconds')),
+            20_000
+          );
+        }),
+      ]);
       setMeeting((response?.meeting as MeetingItem) || null);
     } catch (error: unknown) {
       console.error('Failed to load meeting:', error);
@@ -309,6 +318,7 @@ export const MeetingObjectPage: React.FC = () => {
         setLoadError(t('meeting.errors.loadFailed', 'Failed to load meetings'));
       }
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       setLoading(false);
     }
   };
