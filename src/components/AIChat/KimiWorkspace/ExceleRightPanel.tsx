@@ -15,6 +15,21 @@
  * `ArtifactRightPanelSection[]`; wygląd (accordion, nagłówki, kolejność)
  * narzuca `ArtifactRightPanel`. Tokeny wyłącznie `c-*` — zero
  * navy/slate/hex, zero primary-*, zero crimson (CLAUDE.md UI pkt 6).
+ *
+ * ★ Rozwożenie prawego pasa (2026-08-30, docs/program/grafika/ANALIZA_PRAWY_PANEL.md
+ * §7 krok 4). Za flagą `ff_artifact_right_rail` (`isArtifactRightRailEnabled`,
+ * domyślnie OFF) ten sam accordion (`sections`, bez zmian) montuje się w
+ * trybie Artefakt wspólnej szyny (`ArtifactRightRail`), dokładając WŁASNĄ
+ * ikonę — tryb zależny od typu „Struktura": lista arkuszy skoroszytu
+ * (`preview.sheetNames`, realna dana, ta sama co licznik w sekcji
+ * Właściwości — nie mock). Brak trybu Teresa — ten panel nigdy nie miał
+ * treści Teresy (Excel oddaje Teresę drugiej szynie, `ExceleRightRail.tsx`,
+ * za osobną, wcześniejszą flagą `ff_excele_right_rail`), więc `teresa` prop
+ * pozostaje niezadeklarowany (brak tej ikony na szynie — kanon: „lepiej
+ * brak niż pusty tryb udający funkcję"). Przy fladze OFF ten plik renderuje
+ * dokładnie ten sam `<ArtifactRightPanel sections={sections} />` co dziś —
+ * `isArtifactRightRailEnabled`/`ArtifactRightRail`/`structureTypeMode` są
+ * wtedy martwe.
  */
 import {
   Download,
@@ -23,6 +38,7 @@ import {
   FolderOpen,
   History,
   Link2,
+  ListTree,
   ShieldOff,
   Sparkles,
 } from 'lucide-react';
@@ -35,6 +51,11 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import {
+  ArtifactRightRail,
+  type ArtifactRailTypeMode,
+} from '@/components/standard/ArtifactRightRail';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 import type { ArtifactPreview, TaskStep } from './KimiWorkspaceShell';
 
@@ -58,7 +79,15 @@ export interface ExceleRightPanelProps {
   onExportCsv?: () => void;
 }
 
-export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
+/**
+ * Buduje sekcje kanonu (Akcje·Właściwości·Powiązania·Komentarze·Historia) z
+ * danych arkusza. Wyekstrahowane z `ExceleRightPanel` (2026-08-30) jako
+ * WSPÓLNY hook, żeby `ExceleRightRail.tsx` (druga szyna Excela, item 3
+ * rozwożenia — patrz jej nagłówek) mogła zbudować swoją nową ikonę
+ * „Artefakt" z TEGO SAMEGO źródła treści zamiast drugiej kopii ~150 linii.
+ * Zero zmian zachowania — identyczna logika, tylko wyjęta z komponentu.
+ */
+export function useExceleRightPanelSections({
   preview,
   workbookId,
   taskSteps,
@@ -74,7 +103,7 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
   onRevokeShare,
   isShared,
   onExportCsv,
-}) => {
+}: ExceleRightPanelProps): ArtifactRightPanelSection[] {
   const { t } = useTranslation();
 
   const sheetCount = preview?.sheetNames?.length ?? 0;
@@ -252,6 +281,69 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = ({
   const sections: ArtifactRightPanelSection[] = ARTIFACT_PANEL_SECTION_ORDER.map(
     (id) => sectionsById[id]
   ).filter((section): section is ArtifactRightPanelSection => section !== undefined);
+
+  return sections;
+}
+
+/** Tryb zależny od typu „Struktura" — lista arkuszy skoroszytu. Wyjęty do
+ * osobnej funkcji (nie tylko hooka sekcji), bo `ExceleRightRail.tsx` go NIE
+ * potrzebuje — ma już własną, starszą, bogatszą „Struktura" (z liczbą
+ * wierszy per arkusz, kanon `_KANON_PRAWY_PANEL_2026-07-28.md`) i jej nie
+ * ruszamy. Ten typeMode żyje WYŁĄCZNIE tutaj. */
+function buildExceleStructureTypeMode(
+  preview: ArtifactPreview | null,
+  t: (key: string, fallback: string) => string
+): ArtifactRailTypeMode {
+  const sheetNames = preview?.sheetNames ?? [];
+  return {
+    id: 'struktura',
+    label: t('excele.rightPanel.structure', 'Struktura'),
+    icon: ListTree,
+    contextLabel: t(
+      'excele.rightPanel.structureHint',
+      'Arkusze skoroszytu — nawigacja PO artefakcie, nie metadana o nim.'
+    ),
+    content:
+      sheetNames.length === 0 ? (
+        <p className="text-xs italic text-c-text-muted">
+          {t(
+            'excele.rightPanel.structureEmpty',
+            'Ten skoroszyt nie ma jeszcze arkuszy — struktura pojawi się po wygenerowaniu.'
+          )}
+        </p>
+      ) : (
+        <ol className="flex flex-col gap-0.5">
+          {sheetNames.map((name, index) => (
+            <li
+              key={`${index}-${name}`}
+              className="truncate rounded-md px-2 py-1 text-[12.5px] text-c-text-secondary"
+            >
+              {name}
+            </li>
+          ))}
+        </ol>
+      ),
+  };
+}
+
+export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = (props) => {
+  const { t } = useTranslation();
+  const sections = useExceleRightPanelSections(props);
+
+  // Wspólny prawy pas (`ArtifactRightRail`) — flaga DOMYŚLNIE OFF
+  // (src/utils/artifactRightRailFlag.ts). Przy OFF ta zmienna jest `false`,
+  // więc poniższa gałąź nigdy nie renderuje się i `sections` idzie 1:1 do
+  // dawnej ścieżki bez zmian.
+  if (isArtifactRightRailEnabled()) {
+    return (
+      <ArtifactRightRail
+        title={props.preview?.fileName || undefined}
+        ariaLabel={t('excele.rightPanel.ariaLabel', 'Szczegóły arkusza')}
+        artifact={{ sections }}
+        typeModes={[buildExceleStructureTypeMode(props.preview, t)]}
+      />
+    );
+  }
 
   return (
     <ArtifactRightPanel

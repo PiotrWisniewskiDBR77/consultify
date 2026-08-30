@@ -26,6 +26,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { LoadingState, SkeletonState } from '@/components/shared/states';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
+import type { ArtifactRailTeresaCommand } from '@/components/standard/ArtifactRightRail';
 import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -116,7 +117,11 @@ import {
 } from './ideaSelectionTypes';
 import { IdeaTableTool } from './IdeaTableTool';
 import { applyIdeaTemplate, findIdeaTemplate, IdeaTemplateGallery } from './IdeaTemplateGallery';
-import { IdeaTeresaSection } from './IdeaTeresaSection';
+import {
+  IDEA_TERESA_COMMANDS,
+  IdeaTeresaSection,
+  seedIdeaTeresaPrompt,
+} from './IdeaTeresaSection';
 import { subscribeIdeaUndoState } from './ideaUndoStateBus';
 import { IdeaUnifiedSearch } from './IdeaUnifiedSearch';
 import { IdeaVotingMode } from './IdeaVotingMode';
@@ -5126,47 +5131,74 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         wątki to inny zakres). Ścieżka mels-canvas (eksperymentalna, default
         OFF) zostaje na starych szufladach — nietknięta.
       */}
-        {!melsCanvasEnabled && (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (
-          <IdeaRightPanel
-            isPolish={isPolish}
-            activeSection={
-              toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'
-            }
-            onExport={() => setExportMenuOpen(true)}
-            onConvert={() => handlePanelChange('tools')}
-            // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
-            // ff_evidencePanel (default OFF, patrz src/utils/evidencePanelFlag.ts).
-            // OFF → prop `undefined` → nic się nie dokłada pod Powiązania → zero
-            // zmian DOM wobec stanu sprzed HP-17/Z8.
-            evidenceArtifactId={isEvidencePanelEnabled() && realId ? realId : undefined}
-            propertiesContent={
-              <IdeaWorkspaceTools
-                {...ideaWorkspaceToolsSharedProps}
-                open
-                embedded
-                onClose={() => handlePanelChange(null)}
-              />
-            }
-            relationsContent={
-              <IdeaContextPanel
-                {...ideaContextPanelSharedProps}
-                open
-                embedded
-                onClose={() => handlePanelChange(null)}
-              />
-            }
-            teresaContent={
-              <IdeaTeresaSection
-                isPolish={isPolish}
-                aiSuggestionsProps={ideaAISuggestionsPanelSharedProps}
-                onDiscuss={() => {
-                  emitTeresaStatus('discuss', 'started');
-                  handleDiscussWithTeresa();
-                }}
-              />
-            }
-          />
-        )}
+        {!melsCanvasEnabled && (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (() => {
+          // Jedna definicja skrótu do dokowanej Teresy — używana zarówno przez
+          // legacy `teresaContent` (flaga OFF, bez zmian), jak i przez
+          // `onDiscussWithTeresa`/komendy trybu Teresa szyny (flaga ON).
+          const handleTeresaDiscuss = () => {
+            emitTeresaStatus('discuss', 'started');
+            handleDiscussWithTeresa();
+          };
+          // ★ Prawy pas — jedna formuła (docs/program/grafika/ANALIZA_PRAWY_PANEL.md
+          // §3/§4): te same 4 komendy co dawniej w karcie „Historia"
+          // (`IDEA_TERESA_COMMANDS`, JEDNO źródło treści z `IdeaTeresaSection.tsx`),
+          // przełożone na kontrakt trybu Teresa szyny. Ma skutek WYŁĄCZNIE za
+          // flagą `ff_artifact_right_rail` — przy OFF `IdeaRightPanel` tego
+          // propa nie dotyka.
+          const teresaCommands: ArtifactRailTeresaCommand[] = IDEA_TERESA_COMMANDS.map((cmd) => ({
+            id: cmd.id,
+            label: isPolish ? cmd.label : cmd.labelEn,
+            icon: cmd.icon,
+            onClick: () => {
+              handleTeresaDiscuss();
+              seedIdeaTeresaPrompt(isPolish ? cmd.promptPl : cmd.promptEn);
+            },
+          }));
+          return (
+            <IdeaRightPanel
+              isPolish={isPolish}
+              title={title}
+              activeSection={
+                toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'
+              }
+              onExport={() => setExportMenuOpen(true)}
+              onConvert={() => handlePanelChange('tools')}
+              // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
+              // ff_evidencePanel (default OFF, patrz src/utils/evidencePanelFlag.ts).
+              // OFF → prop `undefined` → nic się nie dokłada pod Powiązania → zero
+              // zmian DOM wobec stanu sprzed HP-17/Z8.
+              evidenceArtifactId={isEvidencePanelEnabled() && realId ? realId : undefined}
+              propertiesContent={
+                <IdeaWorkspaceTools
+                  {...ideaWorkspaceToolsSharedProps}
+                  open
+                  embedded
+                  onClose={() => handlePanelChange(null)}
+                />
+              }
+              relationsContent={
+                <IdeaContextPanel
+                  {...ideaContextPanelSharedProps}
+                  open
+                  embedded
+                  onClose={() => handlePanelChange(null)}
+                />
+              }
+              teresaContent={
+                <IdeaTeresaSection
+                  isPolish={isPolish}
+                  aiSuggestionsProps={ideaAISuggestionsPanelSharedProps}
+                  onDiscuss={handleTeresaDiscuss}
+                />
+              }
+              onDiscussWithTeresa={handleTeresaDiscuss}
+              teresaCommands={teresaCommands}
+              aiSuggestionsContent={
+                <IdeaAISuggestionsPanel {...ideaAISuggestionsPanelSharedProps} open embedded />
+              }
+            />
+          );
+        })()}
 
         {/* MELS owns exactly one semantic information panel. Legacy Context and
             AI Suggestions drawers remain available only on ff_melsCanvas=0;

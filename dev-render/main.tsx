@@ -130,6 +130,10 @@ const MyWorkNotebookRailSpecAScreen = React.lazy(
 const PrawyPasNotatnikSystemScreen = React.lazy(
   () => import('./screens/prawy-pas-notatnik-system')
 );
+// Drugi krok rozwożenia (2026-08-30, ANALIZA_PRAWY_PANEL.md §7 krok 4): Idee
+// na tym samym wzorcu — jeden plik ekranu, zarejestrowany 3× ze stałym
+// trybem startowym (Artefakt/Teresa/Sugestie).
+const PrawyPasIdeaSystemScreen = React.lazy(() => import('./screens/prawy-pas-idea-system'));
 // Odbiór grafiki (2026-08-30): pliki ekranów już istniały (napisane, gotowe,
 // bez zależności Api/fetch) ale nigdy nie zostały wpięte do rejestru SCREENS —
 // `?screen=calendar-sync-settings` / `?screen=notebook-quick-capture` renderowały
@@ -1055,6 +1059,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PRAWY PAS (system) — Notatnik, tryb zależny od typu: STRUKTURA NOTATKI. Wymaga ?ff_artifact_right_rail=1',
     render: () => <PrawyPasNotatnikSystemScreen tryb="struktura" />,
+  },
+  'prawy-pas-idea-artefakt': {
+    label:
+      'PRAWY PAS (system) — Idea, tryb ARTEFAKT (akordeon kanonu, bez „Historia" — bez zastosowania). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasIdeaSystemScreen tryb="artefakt" />,
+  },
+  'prawy-pas-idea-teresa': {
+    label:
+      'PRAWY PAS (system) — Idea, tryb TERESA (4 komendy + CTA „Rozmawiaj z Teresą", wyjęte z akordeonu). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasIdeaSystemScreen tryb="teresa" />,
+  },
+  'prawy-pas-idea-sugestie': {
+    label:
+      'PRAWY PAS (system) — Idea, tryb zależny od typu: SUGESTIE (IdeaAISuggestionsPanel, własna ikona szyny). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasIdeaSystemScreen tryb="sugestie" />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

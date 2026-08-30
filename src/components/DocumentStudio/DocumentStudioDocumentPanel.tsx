@@ -52,6 +52,7 @@ import {
   validateExecutionModuleManifest,
 } from '@/services/executionModuleStandard/api';
 import type { ExecutionModuleValidationResult } from '@/services/executionModuleStandard/types';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 import { isArtifactStudioLaneEnabled } from '@/utils/artifactStudioFlags';
 import { emitArtifactStudioShellSelected } from '@/utils/artifactStudioTelemetry';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
@@ -331,6 +332,13 @@ function SourceListPanel({
   assumptionCount: number;
 }): React.ReactElement {
   const { t } = useTranslation();
+  // ★ Rozwożenie prawego pasa — ten NAGŁÓWEK jest tekst, który użytkownik
+  // faktycznie CZYTA (w przeciwieństwie do etykiety ikony szyny, widocznej
+  // tylko jako tooltip po najechaniu) — więc to on jest prawdziwym celem
+  // „jednego słownika" (sources ≡ evidence). JEDEN klucz i18n z ikoną szyny
+  // (`toolEvidence`) niżej, nie druga kopia frazy. Przy OFF nagłówek zostaje
+  // 1:1 „Sources"/„Źródła".
+  const railEnabled = isArtifactRightRailEnabled();
   const usedSourceKeys = useMemo(() => collectBlockSourceKeys(sections), [sections]);
   const assumptionBlockCount = useMemo(
     () =>
@@ -359,7 +367,9 @@ function SourceListPanel({
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-c-text">
-          {t('documentStudio.panel.sourcesTitle', 'Sources')}
+          {railEnabled
+            ? t('documentStudio.panel.toolEvidence', 'Sources & assumptions')
+            : t('documentStudio.panel.sourcesTitle', 'Sources')}
         </h3>
         <p className="text-xs text-c-text-secondary">
           {t('documentStudio.panel.sourcesSummary', {
@@ -639,6 +649,10 @@ function OutlinePanel({
 
 function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactElement {
   const { t } = useTranslation();
+  // ★ Rozwożenie prawego pasa — `activity` ≡ kanoniczne `history`, JEDEN
+  // klucz i18n z chipem paska górnego (`chipHistory`), który już dziś
+  // otwiera dokładnie ten panel pod nazwą „History" — patrz `topBarChips`.
+  const railEnabled = isArtifactRightRailEnabled();
   const [entries, setEntries] = useState<DocumentAccessHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -668,7 +682,9 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-c-text">
-            {t('documentStudio.panel.activityTitle', 'Activity')}
+            {railEnabled
+              ? t('documentStudio.panel.chipHistory', 'History')
+              : t('documentStudio.panel.activityTitle', 'Activity')}
           </h3>
           <p className="text-xs text-c-text-secondary">
             {t(
@@ -2779,7 +2795,17 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     () => [
       {
         id: 'sources',
-        label: t('documentStudio.panel.toolSources', 'Sources'),
+        // ★ Rozwożenie prawego pasa (2026-08-30, ANALIZA_PRAWY_PANEL.md §7
+        // krok 4, uzupełnienie „dokumenty"): JEDEN słownik — `sources` ≡
+        // kanoniczne `evidence`. Za flagą `ff_artifact_right_rail`
+        // (domyślnie OFF) etykieta przechodzi na TĘ SAMĄ frazę, której ten
+        // plik już używa dla przeciwległej, flagowanej karty HP-17
+        // (`documentStudio.panel.toolEvidence`, patrz `overflowRightRailTools`
+        // niżej) — jeden klucz i18n, nie druga kopia tekstu. Przy OFF etykieta
+        // zostaje 1:1 „Sources"/„Źródła".
+        label: isArtifactRightRailEnabled()
+          ? t('documentStudio.panel.toolEvidence', 'Sources & assumptions')
+          : t('documentStudio.panel.toolSources', 'Sources'),
         icon: FileText,
         badge: sourceCount > 0 ? sourceCount : undefined,
         dotTone: assumptionCount > 0 ? 'warning' : sourceCount > 0 ? 'success' : 'warning',
@@ -2813,7 +2839,18 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     () => [
       {
         id: 'activity',
-        label: t('documentStudio.panel.toolActivity', 'Activity'),
+        // ★ Rozwożenie prawego pasa — `activity` ≡ kanoniczne `history`.
+        // Za flagą `ff_artifact_right_rail` (domyślnie OFF) etykieta
+        // przechodzi na TĘ SAMĄ frazę, której już używa pasek chipów tego
+        // pliku dla przycisku otwierającego dokładnie tę kartę
+        // (`documentStudio.panel.chipHistory` — patrz `topBarChips` wyżej,
+        // „Open the unified activity feed from the right rail"). Dziś chip
+        // mówi „History", a karta „Activity" — dwie nazwy jednej rzeczy w
+        // TYM SAMYM pliku. Jeden klucz i18n usuwa ten rozjazd. Przy OFF
+        // etykieta zostaje 1:1 „Activity"/„Aktywność".
+        label: isArtifactRightRailEnabled()
+          ? t('documentStudio.panel.chipHistory', 'History')
+          : t('documentStudio.panel.toolActivity', 'Activity'),
         icon: History,
       },
       {
