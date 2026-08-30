@@ -257,3 +257,53 @@ z kilkoma robotnikami wolno dotykać wyłącznie plików wymienionych z nazwy.**
 
 **Sekcja „ZGŁASZAM" w raporcie robotnika uratowała tę sytuację.** To kolejny dowód,
 że nie jest szumem organizacyjnym i że ma być czytana pierwsza, nie ostatnia.
+
+## ★★ REGUŁA NR 9 — praca robotnikami, model dobierany do trudności (2026-08-30, słowa właściciela)
+
+> „Zlecaj pracę agentom i oczywiście pracuj możliwie oszczędnymi agentami, czyli tam
+> gdzie możesz pracować z Sonnetem, pracuj z Sonnetem, tam gdzie musisz pracować
+> Opusem, pracuj Opusem."
+
+**Nadzorca zleca, nie wykonuje.** Robota własna nadzorcy to wyjątek na drobne rzeczy,
+nie tryb domyślny. Każde zadanie, które da się opisać instrukcją, idzie do robotnika.
+
+**Dobór modelu jest decyzją kosztową i należy do nadzorcy:**
+
+| model | do czego |
+| --- | --- |
+| **Haiku** | mechanika bez decyzji: zrzuty seriami, przepisanie ciągów, inwentaryzacja, zliczanie |
+| **Sonnet** | domyślny robotnik: naprawa graficzna wg istniejącego wzorca, tłumaczenia, diagnostyka „gdzie to jest", weryfikacja klikiem |
+| **Opus** | trudny kod i sprawy, gdzie pomyłka jest droga: wspólne jądro (`StandardTable`), zmiana dotykająca wielu ekranów, rozstrzyganie sprzeczności między źródłami, praca na metodyce właściciela |
+
+Zasada rozstrzygająca: **jeśli zadanie ma jednoznaczny wzorzec do skopiowania —
+Sonnet. Jeśli wymaga osądu, którego wzorzec nie rozstrzyga — Opus.**
+Token wydany na Opusa tam, gdzie wystarczał Sonnet, to token zabrany z innego ekranu.
+
+## ★★ REGUŁA NR 10 — dokumentuj KONTEKST ZDARZENIA, nie tylko wynik (2026-08-30, słowa właściciela)
+
+> „Dokumentuj wszystko trwale, czyli w plikach, które mamy zapisane, tak żebyśmy się
+> komunikowali zarówno pomiędzy agentami tutaj, jak i pomiędzy Twoimi następcami.
+> Wszystko trwale, szczególnie **kontekst zdarzenia**. Równie dobrze, że możesz
+> przejrzeć to, co się dzieje w projekcie od kilku dni i będziesz wszystko wiedział."
+
+To zaostrzenie reguły nr 6. Tamta mówiła „zapisuj ustalenia". Ta mówi: **zapisuj to,
+czego z samego wyniku nie da się odtworzyć.**
+
+Wynik zapisuje się sam — jest w kodzie i w commicie. **Ginie kontekst:**
+- **dlaczego** tak zdecydowano, a nie inaczej, i co odrzucono
+- **co się okazało nieprawdą** — obalone przekonanie jest cenniejsze od potwierdzonego
+- **kto co zgłosił** i czy zgłoszenie okazało się trafne
+- **czym się rzecz omal nie skończyła** — incydent bez szkody uczy tak samo jak ze szkodą
+- **na czym się pomylił nadzorca** — sprostowanie własnego błędu jest zapisem, nie wstydem
+- **skąd wiadomo** to, co się twierdzi — plik:linia albo zrzut, nigdy „sprawdziłem"
+
+Nośnikiem jest **plik w repo, w tej samej godzinie**. Rozmowa nie jest nośnikiem —
+kontekst sesji się urywa, model bywa podmieniany, następca dostaje puste ręce.
+
+**Test tej reguły:** czy ktoś, kto siada do projektu po kilku dniach nieobecności,
+odtworzy z plików nie tylko *co* jest zrobione, ale *dlaczego tak* i *czego nie próbować
+drugi raz*. Jeśli nie — dokumentacja jest niepełna, choćby wynik był opisany co do joty.
+
+Bieżący nośnik kontekstu w tym torze: `DZIENNIK_GRAFIKA.md` (chronologia zdarzeń),
+`MAPA_UWAG_WLASCICIELA.md` (lista robocza), `DRD_KSIAZKA_KONTRA_KOD.md` (źródła metodyki),
+`STAN_LISTY_POPRAWEK.md` (pomiary), ten plik (zasady).
