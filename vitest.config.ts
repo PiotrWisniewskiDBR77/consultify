@@ -207,7 +207,7 @@ export default defineConfig({
       },
     },
     env: {
-      DB_TYPE: 'sqlite',
+      DB_TYPE: process.env.DB_TYPE || 'sqlite',
       NODE_ENV: 'test',
       ENABLE_TEST_GATEWAY: 'true', // Mount full Gateway routes for integration tests
       // Pin encryption inputs so EncryptionService's module-singleton keyManager

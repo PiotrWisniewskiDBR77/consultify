@@ -2415,18 +2415,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       // classic two-sources-of-truth bug. localStorage stays a transitional
       // fallback for fields that genuinely have no backend endpoint yet.
       try {
-        // Browser-owned decision data is scoped by both tenant and user. The
-        // legacy key is claimed once by the first authenticated user loading it.
+        // Browser-owned decision data is scoped by both tenant and user. Legacy
+        // entries have no owner metadata, so they cannot be claimed safely.
         const storageKey = `consultify-decision-enhancements:${currentUser?.organizationId || 'no-organization'}:${currentUser?.id || 'anonymous'}:${id}`;
-        const legacyStorageKey = `consultify-decision-enhancements:${id}`;
-        let raw = localStorage.getItem(storageKey);
-        if (!raw && currentUser?.id) {
-          raw = localStorage.getItem(legacyStorageKey);
-          if (raw) {
-            localStorage.setItem(storageKey, raw);
-            localStorage.removeItem(legacyStorageKey);
-          }
-        }
+        const raw = localStorage.getItem(storageKey);
         if (raw) {
           const local = JSON.parse(raw);
           if (Array.isArray(local.attachments))

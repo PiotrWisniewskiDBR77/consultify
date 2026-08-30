@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -56,6 +57,7 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ onNavigate }) => {
       setShowModal(false);
       fetchTasks();
     } catch (error) {
+      toast.error('Failed to save task');
       setShowModal(false);
     }
   };

@@ -11,6 +11,7 @@
  */
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
@@ -162,6 +163,9 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
           return next;
         });
       } catch {
+        toast.error(
+          t('initiatives.calendar.toast.rescheduleFailed', 'Nie udało się zapisać terminu')
+        );
         // Rollback the optimistic move.
         setOverrides((prev) => {
           const next = new Map(prev);
@@ -170,7 +174,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
         });
       }
     },
-    [onReschedule]
+    [onReschedule, t]
   );
 
   const handleDrop = useCallback(
