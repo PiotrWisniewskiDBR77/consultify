@@ -66,7 +66,7 @@ import {
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { Api } from '@/services/api';
+import { API_URL, Api, getHeaders } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
@@ -199,6 +199,58 @@ export async function deleteTaskCommentAndReload(
 ): Promise<Comment[]> {
   await api.deleteTaskComment(taskId, commentId);
   return (await api.getTaskComments(taskId)).map(mapTaskServerComment);
+}
+
+type ObjectAttachmentApi = Pick<typeof Api, 'get' | 'postMultipart' | 'delete'>;
+
+const mapTaskServerAttachment = (taskId: string, attachment: any): Attachment => ({
+  id: String(attachment.id),
+  name: String(attachment.fileName || 'attachment'),
+  type: String(attachment.mimeType || 'application/octet-stream'),
+  size: Number(attachment.sizeBytes || 0),
+  url: `/my-work/object-attachments/task/${encodeURIComponent(taskId)}/${encodeURIComponent(String(attachment.id))}/download`,
+  uploadedAt: String(attachment.createdAt || ''),
+  uploadedBy: attachment.createdBy ? String(attachment.createdBy) : undefined,
+});
+
+export async function uploadTaskAttachmentsAndReload(
+  api: ObjectAttachmentApi,
+  taskId: string,
+  files: File[]
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/task/${encodeURIComponent(taskId)}`;
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    await api.postMultipart(baseUrl, formData);
+  }
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapTaskServerAttachment(taskId, attachment)
+  );
+}
+
+export async function deleteTaskAttachmentAndReload(
+  api: ObjectAttachmentApi,
+  taskId: string,
+  attachmentId: string
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/task/${encodeURIComponent(taskId)}`;
+  await api.delete(`${baseUrl}/${encodeURIComponent(attachmentId)}`);
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapTaskServerAttachment(taskId, attachment)
+  );
+}
+
+export async function downloadTaskAttachment(
+  api: { downloadObjectAttachment: (url: string) => Promise<Blob> },
+  taskId: string,
+  attachmentId: string
+): Promise<Blob> {
+  return api.downloadObjectAttachment(
+    `/my-work/object-attachments/task/${encodeURIComponent(taskId)}/${encodeURIComponent(attachmentId)}/download`
+  );
 }
 
 // VF1-1 (SPEC-A wzorzec): gate for visible token/shell fixes on the N-mode
@@ -1430,21 +1482,51 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // Attachment handlers
   const handleUploadAttachments = async (files: FileList) => {
-    const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: URL.createObjectURL(file),
-      uploadedAt: new Date().toISOString(),
-    }));
-    setAttachments([...attachments, ...newAttachments]);
-    return { ok: true as const };
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
+    try {
+      setAttachments(await uploadTaskAttachmentsAndReload(Api, taskId, Array.from(files)));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
   };
 
   const handleDeleteAttachment = async (id: string) => {
-    setAttachments(attachments.filter((a) => a.id !== id));
-    return { ok: true as const };
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
+    try {
+      setAttachments(await deleteTaskAttachmentAndReload(Api, taskId, id));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
+  };
+
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    if (!taskId) return;
+    try {
+      const blob = await downloadTaskAttachment(
+        {
+          downloadObjectAttachment: async (url) => {
+            const response = await fetch(`${API_URL}${url}`, {
+              headers: getHeaders(),
+              credentials: 'include',
+            });
+            if (!response.ok) throw new Error('Failed to download attachment');
+            return response.blob();
+          },
+        },
+        taskId,
+        attachment.id
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.name;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(t('myWork.attachments.toastDownloadError', 'Failed to download attachment'));
+    }
   };
 
   // Comment handlers
@@ -8327,6 +8409,7 @@ Return ONLY the final comment text.`;
               attachments={attachments}
               onUpload={handleUploadAttachments}
               onDelete={handleDeleteAttachment}
+              onDownload={handleDownloadAttachment}
               expanded={expandedSections.has('attachments')}
               onToggleExpand={() => toggleSection('attachments')}
             />
