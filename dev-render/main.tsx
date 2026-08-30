@@ -400,6 +400,7 @@ const ResultsVNextRoiModelScreen = React.lazy(() => import('./screens/results-vn
 const ResultsVNextRoiFullToolScreen = React.lazy(
   () => import('./screens/results-vnext-roi-full-tool')
 );
+const RoiJednaKartaScreen = React.lazy(() => import('./screens/roi-jedna-karta'));
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
@@ -569,6 +570,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'FALA 1 (ROI) — REALNY <ResultsRoiHub> -> <RoiCaseFullTool> (4 fazy: Build Case/Decision/Realize Value/Learn), window.fetch stubbed statefully for the whole /vnext/results/roi surface, real onClose (no harness no-op). Click the case row, then kebab "Otwórz pełne narzędzie".',
     render: () => <ResultsVNextRoiFullToolScreen />,
+  },
+  'roi-jedna-karta': {
+    label:
+      'DECYZJA WŁAŚCICIELA (2026-08-30) — PROTOTYP jednej N-karty ROI (wzorzec: karta Inicjatywy), zastępuje 3 osobne ekrany (registry zostaje listą poza kartą). 5 sekcji lewego menu: Założenia/Model/Wynik/Wyniki po wdrożeniu/Wnioski i rekomendacja + prawy panel 7 sekcji kanonu. &sekcja=zalozenia|model|wynik|wyniki-po-wdrozeniu|wnioski',
+    render: () => <RoiJednaKartaScreen />,
   },
   'results-vnext-okr-registry': {
     label:
