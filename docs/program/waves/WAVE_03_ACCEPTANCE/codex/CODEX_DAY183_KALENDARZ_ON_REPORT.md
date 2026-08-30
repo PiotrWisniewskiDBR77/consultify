@@ -62,7 +62,7 @@ Dowód: `df -h /` po migracjach: `/dev/disk3s1s1 1.8Ti 12Gi 3.9Gi 76%`.
 Co dostarczyłem ZAMIAST zmiany: kompletny R1, dwa przebiegi migracji z idempotencją, dowód Z30 i ten raport; żadnego flipu ani testu nie uruchomiono.  
 Co zrobiłbym, gdyby zwolniono bezpiecznie miejsce: ponownie sprawdziłbym próg 5 GiB i porty, odtworzył lokalną bazę, wykonał R2 dokładnie wzorem `b5cd84d663`, pełny retest i zrzuty na `5046/5047`.  
 Rekomendacja dla nadzorcy: zwolnić miejsce poza chronionymi checkoutami/worktree i wznowić dyżur dopiero po potwierdzeniu co najmniej 5 GiB.  
-Stan: raport do zacommitowania; zmiany produktowej brak.  
+Stan: raport zacommitowano na gałęzi dyżuru; zmiany produktowej brak.  
 Czy kontynuowałem pozostałe pozycje: **NIE**, ponieważ §0.5 nakazuje zatrzymać cały dyżur.
 
 ## Zasięg zmian
