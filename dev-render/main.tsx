@@ -72,6 +72,14 @@ const AssessmentQualityReviewPanelScreen = React.lazy(
 const AssessmentPresentationViewScreen = React.lazy(
   () => import('./screens/assessment-presentation-view')
 );
+// GRAFIKA (2026-08-30, ANALIZA_PRAWY_PANEL.md) — prototyp „prawy pas jako
+// jedna formuła" (szyna ikon 56px: Artefakt · Teresa · narzędzie zależne od
+// typu). Jeden plik/komponent, zarejestrowany 5×: interaktywny (przełącznik
+// klikany przez Piotra) + 4 warianty ze stałym stanem startowym potrzebne dla
+// deterministycznych zrzutów skryptowych (grafika-zrzuty.mjs nie klika UI).
+const PrawyPasJednaFormulaScreen = React.lazy(
+  () => import('./screens/prawy-pas-jedna-formula')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -719,6 +727,53 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ASSESSMENT — Widok prezentacji (9 slajdów z zamrożonego Outputu, tryb pełnoekranowy, zero recompute). ?variant=full|risksOnly|allMet|unknowns|empty|noOutput|notFound|forbidden|offline|badShape &narrative=1',
     render: () => <AssessmentPresentationViewScreen />,
+  },
+  'prawy-pas-jedna-formula': {
+    label:
+      'GRAFIKA — Prawy pas jako JEDNA FORMUŁA (szyna 56px: Artefakt · Teresa · narzędzie zależne od typu). Interaktywny — przełącznik notatka/idea i Artefakt/Teresa klikany na ekranie.',
+    render: () => <PrawyPasJednaFormulaScreen />,
+  },
+  'prawy-pas-jedna-formula-notatka-artefakt': {
+    label:
+      'GRAFIKA — jw., wariant do zrzutu: Notatka · tryb Artefakt (7 sekcji akordeonu, Akcje+Właściwości rozwinięte).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="notatka"
+        initialRailMode="artefakt"
+        interactive={false}
+      />
+    ),
+  },
+  'prawy-pas-jedna-formula-notatka-teresa': {
+    label: 'GRAFIKA — jw., wariant do zrzutu: Notatka · tryb Teresa (pełna wysokość, własne pole pisania).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="notatka"
+        initialRailMode="teresa"
+        interactive={false}
+      />
+    ),
+  },
+  'prawy-pas-jedna-formula-idea-artefakt': {
+    label:
+      'GRAFIKA — jw., wariant do zrzutu: Idea · tryb Artefakt (7 sekcji akordeonu, Akcje+Właściwości rozwinięte).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="idea"
+        initialRailMode="artefakt"
+        interactive={false}
+      />
+    ),
+  },
+  'prawy-pas-jedna-formula-idea-teresa': {
+    label: 'GRAFIKA — jw., wariant do zrzutu: Idea · tryb Teresa (pełna wysokość, własne pole pisania).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="idea"
+        initialRailMode="teresa"
+        interactive={false}
+      />
+    ),
   },
   'menu-canon-sidebar-check': {
     label:

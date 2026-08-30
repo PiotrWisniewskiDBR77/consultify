@@ -28319,7 +28319,9 @@
       "loadingDocument": "Loading document…",
       "noDocument": "No document loaded.",
       "backToMaterials": "Back to Materials",
-      "startOverConfirm": "Close this document and start a new one? The current document is saved — you can get back to it via \"Open\" in the File menu."
+      "startOverConfirm": "Close this document and start a new one? The current document is saved — you can get back to it via \"Open\" in the File menu.",
+      "artifactNotFoundTitle": "No document here",
+      "templateResolveTitle": "This template cannot be used"
     },
     "breadcrumb": {
       "new": "New document",

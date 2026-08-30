@@ -69,7 +69,11 @@ export default function DocumentStudioTemplateResolveErrorScreen(): React.ReactE
       <MemoryRouter
         initialEntries={['/document-studio?entry=template&templateArtifactId=art-index-123']}
       >
-        <div className="min-h-screen w-full bg-c-bg">
+        {/* GRAFIKA 2026-08-30: `min-h-screen` dawał kontenerowi wysokość NATURALNĄ,
+            więc wyśrodkowany w pionie komunikat błędu i tak lądował przy górze —
+            i wyglądał na niewyśrodkowany, choć w produkcie jest. Pełna wysokość
+            z rozciągliwym środkiem, żeby zrzut pokazywał to, co widzi użytkownik. */}
+        <div className="flex h-screen w-full flex-col overflow-hidden bg-c-bg">
           <div className="border-b border-c-border px-6 py-3">
             <div className="text-sm font-semibold text-c-text">
               Document Studio — „Użyj wzorca" odrzucone przez serwer
@@ -78,7 +82,9 @@ export default function DocumentStudioTemplateResolveErrorScreen(): React.ReactE
               case={caseKey} · stan blokujący: bez pickera, bez AI
             </div>
           </div>
-          <DocumentStudioView />
+          <div className="min-h-0 flex-1">
+            <DocumentStudioView />
+          </div>
         </div>
       </MemoryRouter>
     </QueryClientProvider>
