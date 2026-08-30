@@ -1,14 +1,34 @@
-import { readFileSync } from 'node:fs';
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
-import { describe, expect, it } from 'vitest';
+import { AssessmentLibraryTab } from '../library/AssessmentLibraryTab';
 
-describe('AssessmentLibraryTab day178 empty-state contract', () => {
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ i18n: { language: 'pl' } }),
+}));
+
+vi.mock('@/components/standard', () => ({
+  StandardPreview: () => null,
+  StandardTable: ({ empty }: any) =>
+    React.createElement(
+      'section',
+      { 'aria-label': 'assessment-library-empty-state' },
+      React.createElement('h2', null, empty.title),
+      React.createElement('p', null, empty.description)
+    ),
+}));
+
+describe('AssessmentLibraryTab day178 empty-state render contract', () => {
   it('describes an empty static catalog without claiming a load failure', () => {
-    const source = readFileSync('src/components/assessment/library/AssessmentLibraryTab.tsx', 'utf8');
+    render(React.createElement(AssessmentLibraryTab));
 
-    expect(source).toContain("isPolish ? 'Brak dostępnych metodyk oceny'");
-    expect(source).toContain("'Katalog metodyk nie zawiera obecnie żadnych pozycji.'");
-    expect(source).toContain("'The methodology catalog currently has no entries.'");
-    expect(source).not.toContain('The methodology catalog could not be loaded.');
+    expect(screen.getByRole('heading', { name: 'Brak dostępnych metodyk oceny' })).toBeInTheDocument();
+    expect(screen.getByText('Katalog metodyk nie zawiera obecnie żadnych pozycji.')).toBeInTheDocument();
+    expect(screen.queryByText('The methodology catalog could not be loaded.')).not.toBeInTheDocument();
   });
 });
