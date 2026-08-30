@@ -51,7 +51,13 @@ Kolejność podawana przez KOORDYNACJA.md; zaczynamy od modułów, gdzie oba tor
 właściciel ich nie widział), potem NO_GO (Ocena·Inicjatywy) i architektura
 (Realizacja·Moja praca) — PO decyzjach właściciela (8 pytań w rekonesansie).
 
-**K5 · Faza 3 — droga na demo.** Po pierwszej partii CLOSED_FINAL: frozen SHA →
+**K5 · Faza 3 — staging, potem demo.** ★ Doprecyzowanie po uwadze właściciela 30.08:
+instancje SĄ rozdzielone (workflow `railway-deploy.yml` job `deploy-staging`,
+strażnik `validate-deploy-target.sh` §A/§B) i **powierzchnią bieżącej pracy oraz
+odbiorów jest STAGING** — tam ląduje kandydat po każdej partii CLOSED_FINAL.
+**Demo dostaje wyłącznie stan zaakceptowany na stagingu.**
+
+Dalej (demo):  Po pierwszej partii CLOSED_FINAL: frozen SHA →
 staging (pełny przebieg migracji od zera już pilnowany bramką CI) → demo, merge nie
 force, tag `demo-safe-<data>`, skill `consultify-promocja-demo`. 3709 commitów
 dystansu schodzi JEDNYM zaplanowanym scaleniem kandydata, nie kroplówką.
