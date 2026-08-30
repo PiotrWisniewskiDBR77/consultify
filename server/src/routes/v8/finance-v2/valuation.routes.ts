@@ -30,6 +30,7 @@ import {
   evaluateAdvisorRules,
   generateValuationAdvisorOutput,
   listAdvisorOutputs,
+  loadValuationCurrency,
   loadValuationSnapshot,
   resolveHeadlineEnterpriseValue,
   type CompareVariantsParams,
@@ -681,6 +682,7 @@ router.get(
     const snap = await loadValuationSnapshot(organizationId, businessVersionId);
     if (!snap.ok) return sendError(res, 404, snap.code, snap.message);
     const snapshot = snap.snapshot;
+    const currency = await loadValuationCurrency(organizationId);
 
     const headline = resolveHeadlineEnterpriseValue(snapshot);
     const weighted = computeWeightedRecommendation(snapshot.methods);
@@ -692,6 +694,7 @@ router.get(
     return res.status(200).json({
       data: {
         businessVersionId,
+        currency,
         variant: snapshot.variant,
         status: snapshot.status,
         freshness: snapshot.freshness,

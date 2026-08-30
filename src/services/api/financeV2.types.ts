@@ -279,6 +279,32 @@ export function financeUnitLabel(unit: 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BIL
   }
 }
 
+export function formatAnalysisKpiValueForDisplay(
+  input: Pick<AnalysisKpiValueDto, 'unitType' | 'value'>,
+  formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
+): FinanceValueDisplay {
+  const numericFormatter = input.unitType === 'PERCENT' ? (n: number) => formatNumber(n * 100) : formatNumber;
+  const base = formatFinanceValueForDisplay(input.value, numericFormatter);
+  if (base.isMissingLikeGlyph) return base;
+
+  switch (input.unitType) {
+    case 'PERCENT':
+      return { ...base, text: `${base.text}%` };
+    case 'MULTIPLE':
+      return { ...base, text: `${base.text} ×` };
+    case 'DAYS':
+      return { ...base, text: `${base.text} dni` };
+    case 'MONETARY': {
+      const currency = input.value.presentationCurrency?.trim();
+      const unit = input.value.unit;
+      const scale = unit === 'THOUSANDS' || unit === 'MILLIONS' || unit === 'BILLIONS' ? financeUnitLabel(unit) : null;
+      return { ...base, text: `${base.text}${currency ? ` ${currency}` : ''}${scale ? `, ${scale}` : ''}` };
+    }
+    default:
+      return base;
+  }
+}
+
 export interface ArtifactRef {
   organizationId: string;
   artifactType: FinanceArtifactType;
@@ -1330,6 +1356,7 @@ export interface ValuationMethodAgreementWarningDto {
 
 export interface ValuationResultsDto {
   businessVersionId: string;
+  currency: string | null;
   variant: { id: string; case_id: string; name: string; description: string | null } | null;
   status: string;
   freshness: string;

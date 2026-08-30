@@ -29,6 +29,7 @@ export interface SensitivityStepProps {
     weightedRecommendation: ValuationWeightedRecommendationDto;
   } | null;
   getGrid: (methodId: string, gridLabel: string) => Promise<ValuationSensitivityGridRawDto>;
+  currency: string | null;
 }
 
 /** Decimal string -> pl-PL thousands-grouped display, `'—'` for null/unparsable (grid EV cells are large numbers — a raw un-grouped digit string is hard to scan, same defect class as the EV->Equity bridge in ResultsStep.tsx). */
@@ -39,7 +40,7 @@ function fmtCellValue(raw: string | null): string {
 }
 
 export function SensitivityStep(props: SensitivityStepProps): React.ReactElement {
-  const { methodsData, getGrid } = props;
+  const { methodsData, getGrid, currency } = props;
   const [methodId, setMethodId] = useState<string>('');
   const [gridLabel, setGridLabel] = useState('PRIMARY');
   const [grid, setGrid] = useState<ValuationSensitivityGridRawDto | null>(null);
@@ -174,7 +175,7 @@ export function SensitivityStep(props: SensitivityStepProps): React.ReactElement
                           data-testid={`sensitivity-cell-${r}-${c}`}
                           className={`border border-c-border-subtle p-1.5 ${cell?.is_base_cell ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-secondary'}`}
                         >
-                          {fmtCellValue(cell?.cell_value_decimal ?? null)}
+                          {fmtCellValue(cell?.cell_value_decimal ?? null)}{cell?.cell_value_decimal !== null && cell?.cell_value_decimal !== undefined && currency ? ` ${currency}` : ''}
                         </td>
                       );
                     })}

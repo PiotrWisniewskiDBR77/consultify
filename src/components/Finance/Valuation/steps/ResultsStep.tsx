@@ -49,7 +49,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
       <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
         <p className="text-xs text-c-text-muted">Wartość przedsiębiorstwa (EV) — nagłówek</p>
         <p className="mt-1 text-2xl font-semibold text-c-text" data-testid="headline-ev">
-          {headline.value === null ? '—' : fmt(headline.value)}
+          {headline.value === null ? '—' : `${fmt(headline.value)}${results.currency ? ` ${results.currency}` : ''}`}
         </p>
         <p className="mt-1 text-xs text-c-text-muted" data-testid="headline-ev-source">
           Źródło: {headlineSourceLabel(headline.source)}
@@ -63,8 +63,8 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
           data-material={range.hasMaterialDisagreement}
           className={`rounded-lg border px-3 py-2 text-xs ${range.hasMaterialDisagreement ? 'border-c-warning/30 bg-c-warning/10 text-c-warning' : 'border-c-border-subtle bg-c-surface text-c-text-secondary'}`}
         >
-          Przedział wyników metod: <span className="font-mono">{fmt(range.min as number)}</span> –{' '}
-          <span className="font-mono">{fmt(range.max as number)}</span>
+          Przedział wyników metod: <span className="font-mono">{fmt(range.min as number)}{results.currency ? ` ${results.currency}` : ''}</span> –{' '}
+          <span className="font-mono">{fmt(range.max as number)}{results.currency ? ` ${results.currency}` : ''}</span>
           {range.spreadPct !== null &&
             ` (rozrzut ${range.spreadPct.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)`}
           {range.hasMaterialDisagreement &&
@@ -88,7 +88,7 @@ export function ResultsStep(props: ResultsStepProps): React.ReactElement {
             <tr key={m.methodId} className="border-b border-c-border-subtle/60">
               <td className="py-1.5 pr-2 text-c-text">{valuationMethodTypeLabel(m.methodType)}</td>
               <td className="py-1.5 pr-2">
-                <ValuationValueCell status={m.result.status} valueDecimal={m.result.valueDecimal} />
+                <ValuationValueCell status={m.result.status} valueDecimal={m.result.valueDecimal} unitSuffix={results.currency ?? undefined} />
               </td>
               <td className="py-1.5 pr-2 text-c-text-muted">
                 {m.isInRecommendationBasket ? 'Tak' : 'Nie'}

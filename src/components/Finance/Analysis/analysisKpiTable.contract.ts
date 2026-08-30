@@ -18,7 +18,7 @@ import { Decimal } from 'decimal.js';
 
 import type { TableColumn, TableRow } from '../../standard/StandardTable';
 import type { AnalysisKpiTier, AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
-import { financeValueDisplayReasonLabel, formatFinanceValueForDisplay } from '../../../services/api/financeV2.types';
+import { financeValueDisplayReasonLabel, formatAnalysisKpiValueForDisplay } from '../../../services/api/financeV2.types';
 
 // ---------------------------------------------------------------------------
 // YoY delta — MISSING/NA nigdy nie stają się 0 przez odejmowanie/dzielenie.
@@ -185,22 +185,22 @@ export interface AnalysisKpiTableRowInput {
 }
 
 /** Komórka pojedynczego okresu — `undefined` (brak wiersza compute) dostaje WŁASNY powód, różny od MISSING/NA biznesowego. */
-function formatPeriodCell(value: AnalysisKpiValueDto['value'] | undefined): { text: string; isMissingLikeGlyph: boolean } {
+function formatPeriodCell(value: AnalysisKpiValueDto['value'] | undefined, unitType: string): { text: string; isMissingLikeGlyph: boolean } {
   if (value === undefined) {
     return { text: '—', isMissingLikeGlyph: true };
   }
-  return formatFinanceValueForDisplay(value);
+  return formatAnalysisKpiValueForDisplay({ value, unitType });
 }
 
 export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow {
   const { group } = input;
-  const display = formatFinanceValueForDisplay(group.latestValue.value);
+  const display = formatAnalysisKpiValueForDisplay(group.latestValue);
   const yoy = computeYoyDelta(group.latestValue.value, group.priorPeriodValue);
 
   const periodCells: Record<string, string> = {};
   const periodCellIsMissingLike: Record<string, boolean> = {};
   for (const [columnId, value] of Object.entries(group.periodValuesByColumnId)) {
-    const cell = formatPeriodCell(value);
+    const cell = formatPeriodCell(value, group.latestValue.unitType);
     periodCells[`period.${columnId}`] = cell.text;
     periodCellIsMissingLike[`period.${columnId}`] = cell.isMissingLikeGlyph;
   }

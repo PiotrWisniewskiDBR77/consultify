@@ -64,6 +64,7 @@ export interface KpiScorecardRow {
   scope_type: KpiScorecardScopeType;
   scope_id: string | null;
   owner_user_id: string;
+  owner_name?: string | null;
   review_frequency: KpiScorecardReviewFrequency;
   lifecycle_status: KpiScorecardLifecycleStatus;
   row_version: number;
@@ -80,6 +81,7 @@ export interface KpiScorecard {
   scopeType: KpiScorecardScopeType;
   scopeId: string | null;
   ownerUserId: string;
+  ownerName: string | null;
   reviewFrequency: KpiScorecardReviewFrequency;
   lifecycleStatus: KpiScorecardLifecycleStatus;
   rowVersion: number;
@@ -97,6 +99,7 @@ export function toKpiScorecard(row: KpiScorecardRow): KpiScorecard {
     scopeType: row.scope_type,
     scopeId: row.scope_id,
     ownerUserId: row.owner_user_id,
+    ownerName: row.owner_name ?? null,
     reviewFrequency: row.review_frequency,
     lifecycleStatus: row.lifecycle_status,
     rowVersion: row.row_version,
@@ -117,11 +120,13 @@ export interface KpiScorecardItemRow {
   item_id: string;
   scorecard_id: string;
   kpi_id: string;
+  kpi_name?: string | null;
   organization_id: string;
   role: KpiScorecardItemRole;
   sort_order: number;
   display_config: Record<string, unknown> | null;
   added_by: string;
+  added_by_name?: string | null;
   added_at: string;
 }
 
@@ -129,11 +134,13 @@ export interface KpiScorecardItem {
   itemId: string;
   scorecardId: string;
   kpiId: string;
+  kpiName: string | null;
   organizationId: string;
   role: KpiScorecardItemRole;
   sortOrder: number;
   displayConfig: Record<string, unknown> | null;
   addedBy: string;
+  addedByName: string | null;
   addedAt: string;
 }
 
@@ -142,11 +149,13 @@ export function toKpiScorecardItem(row: KpiScorecardItemRow): KpiScorecardItem {
     itemId: row.item_id,
     scorecardId: row.scorecard_id,
     kpiId: row.kpi_id,
+    kpiName: row.kpi_name ?? null,
     organizationId: row.organization_id,
     role: row.role,
     sortOrder: row.sort_order,
     displayConfig: row.display_config,
     addedBy: row.added_by,
+    addedByName: row.added_by_name ?? null,
     addedAt: row.added_at,
   };
 }
@@ -190,11 +199,13 @@ export interface KpiScorecardReviewSnapshotRow {
   status: KpiScorecardSnapshotStatus;
   content_hash: string | null;
   published_by: string | null;
+  published_by_name?: string | null;
   published_at: string | null;
   superseded_by_snapshot_id: string | null;
   superseded_at: string | null;
   row_version: number;
   created_by: string;
+  created_by_name?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -209,11 +220,13 @@ export interface KpiScorecardReviewSnapshot {
   status: KpiScorecardSnapshotStatus;
   contentHash: string | null;
   publishedBy: string | null;
+  publishedByName: string | null;
   publishedAt: string | null;
   supersededBySnapshotId: string | null;
   supersededAt: string | null;
   rowVersion: number;
   createdBy: string;
+  createdByName: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -229,11 +242,13 @@ export function toKpiScorecardReviewSnapshot(row: KpiScorecardReviewSnapshotRow)
     status: row.status,
     contentHash: row.content_hash,
     publishedBy: row.published_by,
+    publishedByName: row.published_by_name ?? null,
     publishedAt: row.published_at,
     supersededBySnapshotId: row.superseded_by_snapshot_id,
     supersededAt: row.superseded_at,
     rowVersion: row.row_version,
     createdBy: row.created_by,
+    createdByName: row.created_by_name ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
