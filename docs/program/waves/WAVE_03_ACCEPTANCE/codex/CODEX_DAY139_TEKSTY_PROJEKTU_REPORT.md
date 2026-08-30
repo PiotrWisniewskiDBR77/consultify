@@ -1,8 +1,11 @@
 # CODEX DAY 139 — TEKSTY PROJEKTU
 
-Stan: **ZROBIONE / dowód mutacyjny real-PG**  
-Gałąź: `codex/day139-teksty-projektu-20260830`  
-Marker: `4378136c7d`  
+Stan: **ZROBIONE / dowód mutacyjny real-PG**
+
+Gałąź: `codex/day139-teksty-projektu-20260830`
+
+Marker: `4378136c7d`
+
 Commit rdzenia: `9704dbb803`
 
 ## Stan wejściowy
