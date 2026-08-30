@@ -187,3 +187,26 @@ w tekście strony).
 **Wniosek metodyczny:** fragment kodu wycięty z dwóch stron to nie jest dowód.
 Sąsiednie linie potrafią obalić tezę. Każde „potwierdzony błąd w src/" z raportu
 robotnika sprawdzam sam, zanim wejdzie do rejestru.
+
+### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: wskaźniki nie mają nazw, tylko kody
+
+**Uwaga właściciela:** na tabeli zestawu nazwy wskaźników są ucięte do kodów —
+„kpi-oee-…", „kpi-defe-…", „kpi-czas-…".
+
+**To NIE jest wąska kolumna ani dane testowe. To brak pola w kontrakcie danych.**
+
+`KpiScorecardItemDto` (`src/components/ResultsVNext/kpiScorecards/kpiScorecardApi.ts:109-119`)
+**nie niesie nazwy wskaźnika** — wyłącznie `kpiId`. Kolumna renderuje
+`shortKpiScorecardId(row.kpiId)` (`kpiScorecardPresenters.tsx:387-398`), a ta funkcja
+(`kpiScorecardMappers.ts:184-187`) **zawsze** tnie do ośmiu znaków plus wielokropek,
+niezależnie od szerokości kolumny. Ten sam mechanizm tnie właściciela (`user-pio…`)
+i cel zakresu (`bu-jakosc`), a na poziomie 3 — właściciela i proces w panelu
+właściwości.
+
+**Co trzeba zrobić:** wzbogacić odpowiedź o nazwę wskaźnika (i nazwy osób), a potem
+przestać skracać identyfikator w miejscu, gdzie ma stać nazwa. Poprawka po stronie
+UI bez zmiany kontraktu **nie jest możliwa** — nie ma czego wyświetlić.
+
+**Dlaczego to jest pilne:** to jest tabela, w którą właściciel wchodzi za każdym
+razem, gdy patrzy na okres rozliczeniowy. Kod zamiast nazwy czyni ją nieczytelną
+dla człowieka, który nie zna identyfikatorów na pamięć.
