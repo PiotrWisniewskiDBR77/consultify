@@ -135,6 +135,20 @@ describe('Day 195 real HTTP -> LLM -> PostgreSQL -> DOCX probe', () => {
       });
     const durationMs = Date.now() - startedAt;
     artifactId = typeof generate.body?.artifactId === 'string' ? generate.body.artifactId : null;
+    await writeFile(
+      RESULT_PATH,
+      JSON.stringify(
+        {
+          phase: 'generate',
+          generateStatus: generate.status,
+          artifactId,
+          durationMs,
+          generationWarnings: generate.body?.generationWarnings ?? [],
+        },
+        null,
+        2
+      )
+    );
     expect(generate.status, JSON.stringify(generate.body)).toBe(200);
     expect(artifactId).toBeTruthy();
     expect(generate.body?.generationWarnings ?? []).toEqual([]);

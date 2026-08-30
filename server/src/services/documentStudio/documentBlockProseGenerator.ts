@@ -60,7 +60,7 @@ const PROSE_BATCH_SIZE = 2;
 /** Górny cap tokenów na jedną partię (bloki tabelaryczne bywają kosztowne). */
 const MAX_TOKENS_PER_BATCH = 4096;
 /** Budżet tokenów na blok w partii (tabele GFM potrzebują zapasu). */
-const TOKENS_PER_BLOCK = 700;
+const TOKENS_PER_BLOCK = 1200;
 /** Próby na jedną partię — jedno ponowienie łapie sporadyczny wolny/nieudany call. */
 const MAX_BATCH_ATTEMPTS = 2;
 /**

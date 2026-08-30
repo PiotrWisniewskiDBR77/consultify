@@ -130,6 +130,8 @@ describe('generateBlockProse', () => {
     });
 
     const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    expect(generateChatResponseMock).toHaveBeenCalledTimes(1);
+    expect(generateChatResponseMock.mock.calls[0]?.[0]?.maxTokens).toBe(2400);
 
     const section = result.sections[0];
     expect((section.blocks[0].content as { text: string }).text).toBe(
