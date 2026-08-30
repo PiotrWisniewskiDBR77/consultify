@@ -80,6 +80,7 @@ import focusRouter from './my-work/focus.routes.js';
 import homeRouter from './my-work/home.routes.js';
 import managerRouter from './my-work/manager.routes.js';
 import notebookRouter from './my-work/notebook.routes.js';
+import objectAttachmentsRouter from './my-work/object-attachments.routes.js';
 import radarRouter from './my-work/radar.routes.js';
 import signalsRouter from './my-work/signals.routes.js';
 import statsRouter from './my-work/stats.routes.js';
@@ -1733,6 +1734,8 @@ router.delete(
 router.use(calendarRouter);
 
 router.use(decisionsRouter);
+
+router.use(objectAttachmentsRouter);
 
 router.use(whiteboardUploadsRouter);
 

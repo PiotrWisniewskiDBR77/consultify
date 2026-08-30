@@ -23,6 +23,70 @@ function requireSingleRow(result: QueryResultRowCount, operation: string): void 
 class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
   constructor(private readonly client: PoolClient) {}
 
+  async createRaidItem(input: {
+    organizationId: string;
+    initiativeId: string;
+    raidItemId: string;
+    type: 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY';
+    title: string;
+    description: string | null;
+    status: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED';
+    probability: 'LOW' | 'MEDIUM' | 'HIGH' | null;
+    impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
+    ownerId: string | null;
+    dueDate: string | null;
+    mitigationPlan: string | null;
+    linkedItems: string[];
+  }): Promise<void> {
+    await this.client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+      `${input.organizationId}:initiative-raid:${input.initiativeId}`,
+    ]);
+    const initiative = await this.client.query(
+      'SELECT id FROM initiatives WHERE organization_id=$1 AND id=$2 FOR UPDATE',
+      [input.organizationId, input.initiativeId]
+    );
+    if (initiative.rowCount !== 1) {
+      throw new MaterialCommandValidationError('Initiative not found');
+    }
+    const result = await this.client.query(
+      `INSERT INTO raid_items
+       (id,organization_id,initiative_id,type,title,description,status,probability,impact,
+        owner_id,due_date,mitigation_plan,linked_items)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      [
+        input.raidItemId,
+        input.organizationId,
+        input.initiativeId,
+        input.type,
+        input.title,
+        input.description,
+        input.status,
+        input.probability,
+        input.impact,
+        input.ownerId,
+        input.dueDate,
+        input.mitigationPlan,
+        JSON.stringify(input.linkedItems),
+      ]
+    );
+    requireSingleRow(result, 'RAID item insert');
+  }
+
+  async deleteRaidItem(input: {
+    organizationId: string;
+    initiativeId: string;
+    raidItemId: string;
+  }): Promise<void> {
+    await this.client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+      `${input.organizationId}:initiative-raid:${input.initiativeId}`,
+    ]);
+    const result = await this.client.query(
+      'DELETE FROM raid_items WHERE id=$1 AND organization_id=$2 AND initiative_id=$3',
+      [input.raidItemId, input.organizationId, input.initiativeId]
+    );
+    if (result.rowCount !== 1) throw new MaterialCommandValidationError('RAID item not found');
+  }
+
   async adoptAcceptedClassicInitiative(input: {
     organizationId: string;
     candidateId: string;
