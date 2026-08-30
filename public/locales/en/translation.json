@@ -8921,6 +8921,25 @@
         "scheduleConfidence": "Schedule confidence",
         "nextAction": "Next action"
       },
+      "states": {
+        "known": "Known",
+        "unknown": "Unknown",
+        "current": "In backlog",
+        "none": "None"
+      },
+      "band": {
+        "now": "Now",
+        "next": "Next",
+        "later": "Later",
+        "unscheduled": "Unscheduled"
+      },
+      "nextActions": {
+        "proposeWindow": "Propose window",
+        "resolveCapacity": "Resolve capacity",
+        "reviewTentativeWindow": "Review tentative window",
+        "validateDependencies": "Validate dependencies",
+        "addToPlanOrExclude": "Add to plan or exclude"
+      },
       "archiveNote": "Published plan history is immutable",
       "destructiveNote": "Plans are superseded, not deleted",
       "emptyTitle": "No initiatives in this range",
@@ -22975,7 +22994,7 @@
   "modelRegistry": {
     "catalog": {
       "title": "Model Catalog",
-      "description": "All registered models across TEXT_LLM, IMAGE_MODEL, and BUSINESS_MODEL kinds",
+      "description": "All registered text, image, and business models",
       "addModel": "Add Model",
       "searchPlaceholder": "Search by name, model ID, provider..."
     },

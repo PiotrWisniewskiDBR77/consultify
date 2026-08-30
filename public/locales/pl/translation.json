@@ -8368,6 +8368,25 @@
         "scheduleConfidence": "Pewność harmonogramu",
         "nextAction": "Następna akcja"
       },
+      "states": {
+        "known": "Znane",
+        "unknown": "Nieznane",
+        "current": "W backlogu",
+        "none": "Brak"
+      },
+      "band": {
+        "now": "Teraz",
+        "next": "Kolejno",
+        "later": "Później",
+        "unscheduled": "Nie zaplanowano"
+      },
+      "nextActions": {
+        "proposeWindow": "Zaproponuj okno",
+        "resolveCapacity": "Rozwiąż moc przerobową",
+        "reviewTentativeWindow": "Przejrzyj wstępne okno",
+        "validateDependencies": "Zwaliduj zależności",
+        "addToPlanOrExclude": "Dodaj do planu lub wyklucz"
+      },
       "archiveNote": "Historia opublikowanego planu jest niezmienna",
       "destructiveNote": "Plany są zastępowane, nie usuwane",
       "emptyTitle": "Brak inicjatyw w tym zakresie",
@@ -24260,7 +24279,7 @@
   "modelRegistry": {
     "catalog": {
       "title": "Katalog modeli",
-      "description": "Wszystkie zarejestrowane modele TEXT_LLM, IMAGE_MODEL i BUSINESS_MODEL",
+      "description": "Wszystkie zarejestrowane modele tekstowe, obrazu i biznesowe",
       "addModel": "Dodaj model",
       "searchPlaceholder": "Szukaj po nazwie, ID modelu, dostawcy..."
     },

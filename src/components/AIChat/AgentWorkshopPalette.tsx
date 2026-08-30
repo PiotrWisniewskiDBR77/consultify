@@ -38,12 +38,18 @@ import {
   Wand2,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 
 import {
   AGENT_BLOCK_CATALOG,
   type AgentBlockCatalogEntry,
+  catalogGroupHintKey,
+  catalogGroupLabelKey,
+  catalogHintKey,
+  catalogLabelKey,
+  catalogSoonReasonKey,
   type PlanBlockKind,
 } from './agentWorkshopCatalog';
 
@@ -82,16 +88,19 @@ const PaletteItem: React.FC<{
   disabled: boolean;
   onAdd: (entry: AgentBlockCatalogEntry) => void;
 }> = ({ entry, disabled, onAdd }) => {
+  const { t } = useTranslation();
   const Icon = KIND_ICON[entry.kind];
   const soon = entry.status === 'soon';
   const blocked = soon || disabled;
+  const label = t(catalogLabelKey(entry), entry.label);
+  const hint = t(catalogHintKey(entry), entry.hint);
 
   if (soon) {
     // Wyszarzona pozycja mapy drogowej — świadomie NIE jest <button>: nic nie
     // robi, więc nie udaje kontrolki. `title` niesie powód (soonReason).
     return (
       <div
-        title={entry.soonReason}
+        title={entry.soonReason ? t(catalogSoonReasonKey(entry), entry.soonReason) : undefined}
         data-testid={`palette-entry-${entry.id}`}
         data-status="soon"
         className="flex items-start gap-2 rounded-lg border border-dashed border-c-border-subtle px-2 py-1.5 opacity-55"
@@ -99,12 +108,12 @@ const PaletteItem: React.FC<{
         <Icon size={14} className="mt-0.5 shrink-0 text-c-text-muted" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="truncate text-xs font-medium text-c-text-muted">{entry.label}</span>
+            <span className="truncate text-xs font-medium text-c-text-muted">{label}</span>
             <span className="shrink-0 rounded-full border border-c-border-subtle px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-c-text-muted">
-              Wkrótce
+              {t('agentPlan.catalog.soonBadge', 'Wkrótce')}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-[10px] text-c-text-muted">{entry.hint}</p>
+          <p className="mt-0.5 truncate text-[10px] text-c-text-muted">{hint}</p>
         </div>
       </div>
     );
@@ -118,25 +127,25 @@ const PaletteItem: React.FC<{
       data-status="active"
       onDragStart={(e) => {
         e.dataTransfer.setData(PALETTE_DND_MIME, entry.id);
-        e.dataTransfer.setData('text/plain', entry.label);
+        e.dataTransfer.setData('text/plain', label);
         e.dataTransfer.effectAllowed = 'copy';
       }}
       onClick={() => onAdd(entry)}
       disabled={blocked}
-      title={entry.hint}
+      title={hint}
       className="flex w-full items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 py-1.5 text-left transition-colors hover:border-c-info/50 hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
     >
       <Icon size={14} className="mt-0.5 shrink-0 text-c-text-muted" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-xs font-medium text-c-text">{entry.label}</span>
+          <span className="truncate text-xs font-medium text-c-text">{label}</span>
           {entry.approval ? (
             <span className="shrink-0 rounded-full border border-c-warning/40 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-c-warning">
-              zgoda
+              {t('agentPlan.catalog.approvalBadge', 'zgoda')}
             </span>
           ) : null}
         </div>
-        <p className="mt-0.5 truncate text-[10px] text-c-text-muted">{entry.hint}</p>
+        <p className="mt-0.5 truncate text-[10px] text-c-text-muted">{hint}</p>
       </div>
     </button>
   );
@@ -147,6 +156,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
   disabled = false,
   width = 300,
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
 
   const groups = useMemo(() => {
@@ -154,24 +164,31 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
     if (!q) return AGENT_BLOCK_CATALOG;
     return AGENT_BLOCK_CATALOG.map((group) => ({
       ...group,
-      entries: group.entries.filter(
-        (entry) =>
+      entries: group.entries.filter((entry) => {
+        const label = t(catalogLabelKey(entry), entry.label).toLowerCase();
+        const hint = t(catalogHintKey(entry), entry.hint).toLowerCase();
+        return (
+          label.includes(q) ||
+          hint.includes(q) ||
           entry.label.toLowerCase().includes(q) ||
           entry.hint.toLowerCase().includes(q) ||
           (entry.module ?? '').toLowerCase().includes(q)
-      ),
+        );
+      }),
     })).filter((group) => group.entries.length > 0);
-  }, [query]);
+  }, [query, t]);
 
   const sections = groups.map((group) => ({
     id: `palette-${group.id}`,
-    label: group.label,
+    label: t(catalogGroupLabelKey(group), group.label),
     icon: GROUP_ICON[group.id],
     badge: group.entries.length,
     defaultOpen: group.id === 'moduly' || group.id === 'kontrola' || query.trim().length > 0,
     children: (
       <div className="space-y-1.5">
-        <p className="text-[10px] text-c-text-muted">{group.hint}</p>
+        <p className="text-[10px] text-c-text-muted">
+          {t(catalogGroupHintKey(group), group.hint)}
+        </p>
         {group.entries.map((entry) => (
           <PaletteItem key={entry.id} entry={entry} disabled={disabled} onAdd={onAdd} />
         ))}

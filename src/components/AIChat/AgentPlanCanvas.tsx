@@ -630,7 +630,8 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                               value={block.name}
                               onChange={(e) => renameBlock(index, e.target.value)}
                               aria-label={t('agentPlan.canvas.blockName', 'Nazwa klocka')}
-                              className="-mx-1 min-w-0 flex-1 rounded bg-transparent px-1 text-sm font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                              title={block.name}
+                              className="-mx-1 min-w-0 flex-1 truncate rounded bg-transparent px-1 text-sm font-semibold text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             />
                           ) : (
                             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-c-text">

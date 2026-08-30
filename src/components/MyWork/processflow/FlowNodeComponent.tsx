@@ -235,6 +235,14 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     : shape === 'decision' || shape === 'auto_condition' || shape === 'bpmn_gateway'
       ? '-rotate-45'
       : '';
+  // Diamond/rotated-square shapes only read correctly when the box stays
+  // close to square: a long decision label (e.g. "Dane kompletne?") grows the
+  // box WIDE before rotation, so the counter-rotated text then spills past
+  // the diamond's narrow points and overlaps neighboring edge labels ("Tak"/
+  // "Nie"). Clamp the label width and let it wrap instead — keeps the box
+  // near-square so the 45° rotation actually looks like a diamond with the
+  // text inside it, not overflowing it.
+  const isDiamondLabel = innerRotate === '-rotate-45';
 
   return (
     <div
@@ -332,12 +340,16 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
             if (e.key === 'Escape') setEditing(false);
           }}
           style={objectText}
-          className={`bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-border-strong w-full ${innerRotate}`}
+          className={`bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-border-strong w-full ${innerRotate} ${
+            isDiamondLabel ? 'max-w-[64px]' : ''
+          }`}
         />
       ) : (
         <div
           style={objectText}
-          className={`text-xs font-medium text-c-text text-center ${innerRotate}`}
+          className={`text-xs font-medium text-c-text text-center ${innerRotate} ${
+            isDiamondLabel ? 'max-w-[64px] whitespace-normal break-words leading-tight' : ''
+          }`}
         >
           {data?.label || shape}
         </div>
