@@ -345,3 +345,34 @@ ma to być napisane wprost, nie przemilczane.
 **Przerzucenie na staging jest odłożone, nie odwołane.** Gdy nastąpi, pierwszą robotą jest
 porównanie harnessu ze stagingiem jeden do jednego na ekranach już odebranych — żeby zmierzyć,
 ile się rozjechało, zamiast zgadywać.
+
+## ★★ REGUŁA NR 12 — kadr zrzutu zawiera WYŁĄCZNIE produkt (2026-08-30, po czterech wpadkach)
+
+Przegląd przed odbiorem wykrył, że **każdy zrzut z tego dnia** — także te oglądane przez
+właściciela — zawierał kontrolki stanowiska pomiarowego. Cztery różne elementy, cztery różne
+przyczyny, jeden skutek: **właściciel oceniał kadr, w którym przyrząd zasłaniał produkt.**
+
+| element | dlaczego trafił na zrzut |
+| --- | --- |
+| pastylki „← Lista" / „Uwagi" | narzędzie chowało je selektorem, **którego nie ma w kodzie** — reguła CSS była martwa; właściwy wyłącznik `uwagi=0` istniał od początku i nie był podawany |
+| pastylka „Aktor: Piotr" | osobny element, nieobjęty żadnym wyłącznikiem |
+| baner deweloperski w kadrze | opis harnessu renderowany jak treść ekranu |
+| treść w przewijanym kontenerze | zrzut pełnostronicowy **nie sięga** wnętrza przewijanych paneli — kontrolka leżąca 1325 px w głąb nie trafiła na żaden zrzut i uznano ją za nieistniejącą |
+
+### Trzy obowiązki
+
+1. **Każdy element harnessu ma atrybut `data-dev-render-chrome`.** Narzędzie zrzutowe chowa
+   wszystko z tym atrybutem. Dodajesz kontrolkę do ekranu w `dev-render/` — oznaczasz ją od razu.
+2. **Przed serią zrzutów sprawdź jeden kadr kontrolny** i potwierdź, że nie ma na nim niczego,
+   czego nie ma w produkcie. To trwa minutę i jest warunkiem wstępnym, nie formalnością.
+3. **Treść w przewijanym kontenerze wymaga `--przewin=<selektor>`.** Brak przewinięcia jest
+   raportowany jako `przewin BRAK` — nie jako `OK`. Cicha porażka pomiaru jest gorsza niż brak pomiaru.
+
+### Dlaczego to jest reguła, a nie notatka
+
+**Patrzyłem na te pastylki cały dzień i ich nie zauważyłem.** Były na kilkunastu zrzutach, które
+sam czytałem „własnymi oczami" przed pokazaniem właścicielowi. Oko przyzwyczaja się do stałego
+elementu kadru i przestaje go widzieć — dlatego kontrola musi być **mechaniczna** (atrybut + kadr
+kontrolny), a nie oparta na uważności.
+
+Powiązane: `DZIENNIK_GRAFIKA.md` Z-13, `PRZEGLAD_PRZED_ODBIOREM.md`.
