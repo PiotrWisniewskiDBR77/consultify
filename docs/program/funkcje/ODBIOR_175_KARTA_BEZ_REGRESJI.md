@@ -5,7 +5,12 @@ truth_type: acceptance
 established: 2026-08-30
 ---
 
-# ODBIÓR 175 — karta zadania bez regresji · SCALIĆ PO FIX-175 (wydany)
+# ODBIÓR 175 — karta zadania bez regresji · SCALONO PO FIX-175
+
+★ FIX-175 wykonany (`ca2851caf9`): PUT ryzyk tylko gdy sekcja realnie edytowana
+(baseline-ref, wzorzec snapshotu) — koniec czerwonego toasta przy każdym zapisie;
+test izolacji najemcy dopisany i udowodniony mutacyjnie (zdjęcie filtra org →
+czerwony; przywrócenie → 3/3). Scalono do linii integracyjnej.
 
 Gałąź `codex/day175-karta-bez-regresji-20260830` (3 commity nad `d3d36cd5f5`).
 Odbiór: własny kontener 6084, migracja od pustej bazy 870/0 idempotentnie, testy 2/2 PG
