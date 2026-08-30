@@ -199,7 +199,7 @@ function strona() {
     const ekrany = m.ekrany.filter((e) => e.ocena === 'A' || e.ocena === 'B');
     if (!ekrany.length) continue;
     moduly.push(`<section class="m">
-  <h2>${esc(m.nazwa)} <small>${ekrany.length}</small></h2>
+  <h2><span class="nr">${esc(m.katalog.split('-')[0])}</span> ${esc(m.nazwa)} <small>${ekrany.length}</small></h2>
   <p class="opis">${esc(m.opis)}</p>
   <div class="karty">${ekrany.map(karta).join('')}</div>
 </section>`);
@@ -230,6 +230,7 @@ body{margin:0;background:var(--tlo);color:var(--tekst);font:15px/1.55 -apple-sys
 .filtry button.on{background:var(--tekst);color:#fff;border-color:var(--tekst)}
 main{padding:20px;max-width:1500px;margin:0 auto}
 .m{margin-bottom:34px}
+.m h2 .nr{display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:7px;background:var(--tekst);color:#fff;font-size:12px;font-weight:700;margin-right:7px;vertical-align:2px}
 .m h2{font-size:19px;margin:0 0 2px;font-weight:650}
 .m h2 small{color:var(--drugi);font-weight:500;font-size:13px}
 .opis{margin:0 0 14px;color:var(--drugi);font-size:13.5px}

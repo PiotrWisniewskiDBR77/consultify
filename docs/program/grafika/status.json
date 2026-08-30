@@ -3,10 +3,216 @@
  "_zaktualizowano": "2026-08-30",
  "moduly": [
   {
-   "katalog": "00-karty-artefaktow",
-   "nazwa": "Karty artefaktow",
-   "opis": "Obiekty pracy otwierane z listy: decyzja, wniosek, zadanie, narzedzie, powiadomienie, wywiad.",
+   "katalog": "01-czat",
+   "nazwa": "Czat",
+   "opis": "Rozmowa z Teresą, kanwy i sygnały.",
    "ekrany": [
+    {
+     "id": "ntype-analizuj-ai",
+     "nazwa": "Analizuj z AI — wynik",
+     "ocena": "A",
+     "co": "Braki, ryzyka, sugestie, zmiany. Ekran sam mowi: ocena AI, nie bramka systemowa — nic nie jest blokowane.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "chat-split-teresa-right",
+     "nazwa": "Czat — artefakt po lewej, Teresa po prawej",
+     "ocena": "A",
+     "co": "Uklad rozdzielony wedlug decyzji o miejscu Teresy.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "processflow-canvas",
+     "nazwa": "Diagram procesu",
+     "ocena": "A",
+     "co": "Start, decyzja, koniec, dwa tory.",
+     "naprawione": [
+      "Tekst wylewal sie poza romb decyzyjny i nachodzil na etykiete Tak"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "canvas-kebab-restructure",
+     "nazwa": "Kanwa — menu trzech kropek",
+     "ocena": "A",
+     "co": "Zapis przebudowy menu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Stary dowod inzynierski, starszy niz stan produktu"
+     ]
+    },
+    {
+     "id": "canvas-new-doc",
+     "nazwa": "Kanwa — nowy dokument",
+     "ocena": "A",
+     "co": "Rozwijana lista z trzema drogami startu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Dane testowe nieaktualne wzgledem produktu — realny komponent ma juz polskie etykiety"
+     ]
+    },
+    {
+     "id": "canvas-toolbar-md-history",
+     "nazwa": "Kanwa — pasek i historia",
+     "ocena": "A",
+     "co": "Zapis zmian paska glownego.",
+     "naprawione": [],
+     "wyjatki": [
+      "Dane testowe pokazuja stara nazwe przycisku, juz poprawiona w produkcie"
+     ]
+    },
+    {
+     "id": "melscanvas-workspace",
+     "nazwa": "Mala mapa mysli",
+     "ocena": "A",
+     "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "mindmap-canvas",
+     "nazwa": "Mapa mysli",
+     "ocena": "A",
+     "co": "Realna mapa mysli z paskiem podpowiedzi AI.",
+     "naprawione": [
+      "Angielski przycisk Apply"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "mindmap-i18n-smoke",
+     "nazwa": "Mapa mysli — dodaj dowod",
+     "ocena": "A",
+     "co": "Modal dodawania dowodu i zrodla.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "chat-signals-feed",
+     "nazwa": "Strumien sygnalow",
+     "ocena": "A",
+     "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny.",
+     "naprawione": [
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+     ],
+     "wyjatki": [
+      "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
+     ]
+    },
+    {
+     "id": "whiteboard-canvas",
+     "nazwa": "Tablica",
+     "ocena": "A",
+     "co": "Tablica z paskiem podpowiedzi AI.",
+     "naprawione": [
+      "Ten sam angielski Apply"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "whiteboard-workshop",
+     "nazwa": "Tablica — warsztat",
+     "ocena": "A",
+     "co": "Tablica oddalona, szesc elementow.",
+     "naprawione": [
+      "Ten sam angielski Apply"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "teresa-chipy-panel-artefaktu",
+     "nazwa": "Teresa w panelu artefaktu",
+     "ocena": "A",
+     "co": "Panel Teresy osadzony w innym module.",
+     "naprawione": [
+      "Tytul panelu przybity na sztywno po angielsku",
+      "Angielski komunikat odzysku rozmowy"
+     ],
+     "wyjatki": [
+      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
+     ]
+    },
+    {
+     "id": "teresa-chipy-sugestii",
+     "nazwa": "Teresa — podpowiedzi",
+     "ocena": "A",
+     "co": "Dwa panele rozmowy w kontekscie raportu i wniosku.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ta sama czerwonawa linia"
+     ]
+    },
+    {
+     "id": "teresa-confirm-chip",
+     "nazwa": "Teresa — potwierdzenie przed dzialaniem",
+     "ocena": "A",
+     "co": "Potwierdz albo Anuluj przed czynnoscia nieodwracalna, z wyjasnieniem po co.",
+     "naprawione": [],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Kontrolka potwierdzenia w czacie."
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "02-moja-praca",
+   "nazwa": "Moja praca",
+   "opis": "Pomysły, zadania, decyzje, notatnik, kalendarz, sejf.",
+   "ekrany": [
+    {
+     "id": "vault-folder-block-proof",
+     "nazwa": "Blok sejfu w kreatorze",
+     "ocena": "A",
+     "co": "Kontekst sejfu w kreatorze przeplywu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-financial-case-persistence",
+     "nazwa": "Case finansowy pomyslu",
+     "ocena": "A",
+     "co": "Modal wyliczenia finansowego.",
+     "naprawione": [
+      "Osiem brakujacych kluczy tlumaczen"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "notatnik-centrum-mysli",
+     "nazwa": "Centrum mysli",
+     "ocena": "A",
+     "co": "Wspolpraca z Teresa, karty propozycji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "notatnik-osierocone-graf",
+     "nazwa": "Graf notatek",
+     "ocena": "A",
+     "co": "Graf polaczen z soczewka osieroconych.",
+     "naprawione": [],
+     "wyjatki": [],
+     "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań)"
+    },
+    {
+     "id": "idea-table-tool-grouping",
+     "nazwa": "Grupowanie",
+     "ocena": "A",
+     "co": "Grupowanie z pusta komorka jako mysnik.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "mywork-idea-inspector-lekki",
+     "nazwa": "Inspektor pomyslu",
+     "ocena": "A",
+     "co": "Sekcje z licznikami.",
+     "naprawione": [],
+     "wyjatki": [],
+     "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → inspektor po prawej stronie"
+    },
     {
      "id": "karta-decision",
      "nazwa": "Karta decyzji",
@@ -16,6 +222,16 @@
       "Termin pokazywal surowe ISO zamiast daty po ludzku"
      ],
      "wyjatki": []
+    },
+    {
+     "id": "karta-notification",
+     "nazwa": "Karta powiadomienia",
+     "ocena": "A",
+     "co": "Bez odchylen.",
+     "naprawione": [],
+     "wyjatki": [
+      "Kolory ostrzezenia i informacji uzywaja surowych wartosci zamiast tokenow — dlug zastany, do zbiorczego sweepu"
+     ]
     },
     {
      "id": "karta-insight",
@@ -36,21 +252,174 @@
      "wyjatki": []
     },
     {
-     "id": "karta-tool",
-     "nazwa": "Karta narzedzia",
+     "id": "idea-templates-catalog",
+     "nazwa": "Katalog szablonow",
      "ocena": "A",
-     "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
+     "co": "Czterdziesci szablonow w siedmiu kategoriach.",
+     "naprawione": [
+      "Crimson na tagu narzedzia"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-kebab",
+     "nazwa": "Kebab wiersza",
+     "ocena": "A",
+     "co": "Realne menu; Usun poprawnie w czerwieni.",
      "naprawione": [],
      "wyjatki": []
     },
     {
-     "id": "karta-notification",
-     "nazwa": "Karta powiadomienia",
+     "id": "ideas-teresa-panel",
+     "nazwa": "Panel Teresy",
      "ocena": "A",
-     "co": "Bez odchylen.",
+     "co": "Sugestie AI, zero crimsonu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "mywork-notebook-rail-speca",
+     "nazwa": "Panel notatnika",
+     "ocena": "A",
+     "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "ideas-preview-overlay",
+     "nazwa": "Podglad pomyslu",
+     "ocena": "A",
+     "co": "Overlay bez przeskoku ukladu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-confidentiality-control",
+     "nazwa": "Poufnosc pomyslu",
+     "ocena": "A",
+     "co": "Selektor poufnosci w bursztynie, nie czerwieni.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "zwornik-projects",
+     "nazwa": "Projekty",
+     "ocena": "A",
+     "co": "Lista projektow ze statusami jako pigulki z kropka.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-empty-filter",
+     "nazwa": "Pusty filtr",
+     "ocena": "A",
+     "co": "Dwa odrebne uczciwe stany: brak wynikow filtra i brak rekordow — wzorcowy przyklad.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-sortfilter",
+     "nazwa": "Sortowanie i filtry",
+     "ocena": "A",
+     "co": "Sortowanie i filtr per kolumna.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "notebook-quick-capture",
+     "nazwa": "Szybkie wrzucanie notatek",
+     "ocena": "A",
+     "co": "Pasek wrzucania.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Jedno pole do wrzucenia mysli."
+     ]
+    },
+    {
+     "id": "idea-table-timeline-stuck",
+     "nazwa": "Tabela pomyslow — os czasu",
+     "ocena": "A",
+     "co": "Sprawdzone klikiem: przelaczanie widoku dziala, dawny blad zaciecia naprawiony w produkcie.",
+     "naprawione": [
+      "Surowe angielskie tokeny statusu w danych testowych"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "vault-safes-table",
+     "nazwa": "Tabela sejfow",
+     "ocena": "A",
+     "co": "Lista sejfow na wspolnej tabeli.",
+     "naprawione": [
+      "Ekran w ogole sie nie renderowal",
+      "'1 blad(y)' — lamana polszczyzna"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-paste",
+     "nazwa": "Wklejanie",
+     "ocena": "A",
+     "co": "Wklejanie z pominieciem kolumny obliczanej.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "vault-sejf-wnetrze",
+     "nazwa": "Wnetrze sejfu",
+     "ocena": "A",
+     "co": "Realna wspolna tabela, crimson tylko na bledzie.",
      "naprawione": [],
      "wyjatki": [
-      "Kolory ostrzezenia i informacji uzywaja surowych wartosci zamiast tokenow — dlug zastany, do zbiorczego sweepu"
+      "Kolumna Kategoria po angielsku — dotyka trzech plikow, zgloszone osobno"
+     ]
+    },
+    {
+     "id": "exec-summary-onelook",
+     "nazwa": "Kokpit menedzera",
+     "ocena": "B",
+     "co": "Piec pytan zarzadczych, jedna odpowiedz na spojrzenie. Wszystkie liczby z jednostka: 71/100, 67%, 1,3 mln PLN, 88%.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Kolumny POZIOM i TYP ucinane na prawej krawedzi — Przetern, Do decy"
+     ]
+    },
+    {
+     "id": "mywork-idea-topbar",
+     "nazwa": "Pasek gorny",
+     "ocena": "B",
+     "co": "Pasek gorny Mojej pracy z otwarta idea: pigulki dokumentow, menu modulu i mapa mysli.",
+     "naprawione": [
+      "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami."
+     ],
+     "wyjatki": [
+      "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
+     ]
+    },
+    {
+     "id": "idea-table-record-templates",
+     "nazwa": "Szablony rekordu",
+     "ocena": "B",
+     "co": "Menedzer szablonow z uczciwym pustym stanem.",
+     "naprawione": [],
+     "wyjatki": [
+      "Podwojny komunikat bledu to artefakt trybu deweloperskiego, nie defekt"
+     ]
+    },
+    {
+     "id": "idea-table",
+     "nazwa": "Tabela pomyslow",
+     "ocena": "B",
+     "co": "Pelna tabela z podgladem, kebabem, sortowaniem i filtrami per kolumna.",
+     "naprawione": [
+      "Cztery literowki bez polskich znakow"
+     ],
+     "wyjatki": [
+      "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku."
      ]
     },
     {
@@ -66,6 +435,80 @@
      ]
     },
     {
+     "id": "vault-scope-selector",
+     "nazwa": "Skarbiec dokumentow",
+     "ocena": "C",
+     "co": "Wgrywanie i lista dokumentow.",
+     "naprawione": [
+      "Crimson na odznakach kategorii",
+      "Daty w formacie amerykanskim"
+     ],
+     "wyjatki": [
+      "Komponent nie ma ani jednego klucza tlumaczen — obudowa w calosci po angielsku, a tytuly dokumentow wpisane przez uzytkownika po polsku. Efekt: jeden ekran, dwa jezyki. To retrofit architektury, nie poprawka koloru"
+     ]
+    },
+    {
+     "id": "idea-table-production",
+     "nazwa": "Tabela pomyslow (izolowana)",
+     "ocena": "D",
+     "co": "Harness porownawczy szerokosci, nie ekran produktu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Narzedzie pomiarowe"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "03-wywiad",
+   "nazwa": "Wywiad",
+   "opis": "Kreator wywiadu, sesje, wnioski.",
+   "ekrany": [
+    {
+     "id": "interview-creator-shell",
+     "nazwa": "Kreator wywiadu",
+     "ocena": "A",
+     "co": "Trzy kroki, czysty formularz, po polsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "unified-create-launcher",
+     "nazwa": "Nowy — wybor rodzaju",
+     "ocena": "A",
+     "co": "Wniosek, inicjatywa, decyzja. Slowo Insight zostaje po angielsku swiadomie — to termin produktowy uzywany tak samo w calej aplikacji.",
+     "naprawione": [],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Modal wyboru rodzaju."
+     ]
+    },
+    {
+     "id": "interview-preview-canon",
+     "nazwa": "Podglad sesji wywiadu",
+     "ocena": "A",
+     "co": "Panel podgladu. Ucinany tytul to kanoniczne zachowanie z podpowiedzia, nie defekt.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "interview-sessions-status",
+     "nazwa": "Sesje wywiadow",
+     "ocena": "A",
+     "co": "Lista sesji, statusy kolorowe — nie crimson.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "drd-http-workspace",
+     "nazwa": "Wywiad DRD",
+     "ocena": "A",
+     "co": "Pytanie, dowod, odpowiedz.",
+     "naprawione": [
+      "Angielskie zakladki Interview/Matrix/Report i przycisk Settings"
+     ],
+     "wyjatki": []
+    },
+    {
      "id": "karta-interview",
      "nazwa": "Karta wywiadu",
      "ocena": "C",
@@ -78,10 +521,343 @@
    ]
   },
   {
+   "katalog": "04-narzedzia",
+   "nazwa": "Narzędzia",
+   "opis": "Dynamiczny SWOT i pozostałe narzędzia doradcze.",
+   "ekrany": [
+    {
+     "id": "tools-swot-library-detail",
+     "nazwa": "Dynamiczny SWOT — karta w bibliotece",
+     "ocena": "A",
+     "co": "Pelna powloka artefaktu: menu po lewej, panel po prawej. Tekst wprost mowi, czym narzedzie NIE jest i kiedy go NIE uzywac.",
+     "naprawione": [
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+     ],
+     "wyjatki": [
+      "Kategoria pokazuje surowe strategic zamiast polskiej nazwy"
+     ]
+    },
+    {
+     "id": "tools-swot-live",
+     "nazwa": "Dynamiczny SWOT — pole na zywo",
+     "ocena": "A",
+     "co": "Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.",
+     "naprawione": [
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+     ],
+     "wyjatki": [
+      "Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING"
+     ]
+    },
+    {
+     "id": "tools-swot-session-workspace",
+     "nazwa": "Dynamiczny SWOT — warsztat sesji",
+     "ocena": "A",
+     "co": "Piec krokow, propozycja AI z uzasadnieniem, liczniki zaakceptowanych punktow.",
+     "naprawione": [
+      "CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po",
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+     ],
+     "wyjatki": [
+      "DRAFT, COPILOT AI i Find Signals po angielsku"
+     ]
+    },
+    {
+     "id": "karta-tool",
+     "nazwa": "Karta narzedzia",
+     "ocena": "A",
+     "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "tools-outputs-insights-tab",
+     "nazwa": "Narzedzia — zakladka wnioskow",
+     "ocena": "A",
+     "co": "Tabela kanoniczna, statusy i daty po polsku.",
+     "naprawione": [
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "tools-swot-report",
+     "nazwa": "Raport SWOT",
+     "ocena": "A",
+     "co": "Fakt i hipoteza oznaczone etykieta, kompromisy nazwane.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "prompt-registry-tab",
+     "nazwa": "Rejestr promptow",
+     "ocena": "A",
+     "co": "Narzedzie inzynierskie, spojnie w jednym jezyku — nie mieszanka.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "tools-swot-initiative-proposal",
+     "nazwa": "SWOT — propozycja inicjatywy",
+     "ocena": "A",
+     "co": "Wyniki i gotowosc z paskiem postepu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "tools-sesja-wyjscie",
+     "nazwa": "Narzedzia — wyjscie z sesji",
+     "ocena": "B",
+     "co": "Powloka artefaktu z sesja, pytania po polsku.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu",
+      "CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po"
+     ],
+     "wyjatki": [
+      "Session, DRAFT, COPILOT AI, AI Frame, AI Draft i naglowek OUTPUTS po angielsku",
+      "Surowe dynamic-swot i strategic we wlasciwosciach"
+     ]
+    },
+    {
+     "id": "tool-outputs-panel",
+     "nazwa": "Narzedzia — panel rezultatow",
+     "ocena": "C",
+     "co": "Lista rezultatow sesji z wersjami.",
+     "naprawione": [
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+     ],
+     "wyjatki": [
+      "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "05-ocena",
+   "nazwa": "Ocena",
+   "opis": "Metodyki, warsztat kryteriów, raporty i prezentacje z oceny.",
+   "ekrany": [
+    {
+     "id": "assessment-menu3-status-chips",
+     "nazwa": "Biblioteka metodyk — chipy",
+     "ocena": "A",
+     "co": "Korzysta z tej samej naprawy chipow.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "method-workspace",
+     "nazwa": "Diagnostyka gotowosci",
+     "ocena": "A",
+     "co": "Ocena sily dowodu.",
+     "naprawione": [
+      "Ta sama naprawa wspolnej powloki"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-report-contract",
+     "nazwa": "Kontrakt raportu z oceny",
+     "ocena": "A",
+     "co": "Siedem rozdzialow, macierz osi, limity slow, wersjonowanie.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-quality-review-panel",
+     "nazwa": "Ocena i pokrycie dowodami",
+     "ocena": "A",
+     "co": "Slowo brak zamiast zera tam, gdzie dowodu nie ma.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-output-report",
+     "nazwa": "Raport z oceny",
+     "ocena": "A",
+     "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-reports-table",
+     "nazwa": "Tabela raportow",
+     "ocena": "A",
+     "co": "Statusy i daty.",
+     "naprawione": [
+      "Angielskie statusy In Review/Sent Internal/Utilized w polskiej tabeli",
+      "Daty w formacie Jul 10, 2026"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "audyty-warsztat-kryterium",
+     "nazwa": "Warsztat kryterium (wzorzec)",
+     "ocena": "A",
+     "co": "Ekran z akceptem wlasciciela z 26.08. Arkusz audytora, lancuch osiemnastu ogniw, prawy panel.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-artifacts-restart",
+     "nazwa": "Wnioski z oceny",
+     "ocena": "A",
+     "co": "Piec statusow, baner ostrzegawczy.",
+     "naprawione": [
+      "Chipy statusu nachodzily na siebie",
+      "Baner bledu nieczytelny w motywie jasnym",
+      "Angielskie Retry"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-five-surfaces",
+     "nazwa": "Wybierak metodyk",
+     "ocena": "A",
+     "co": "DRD dostepny, cztery pozostale zablokowane ze statusem Planowane — uczciwie, bez ukrywania.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "drd-library-entry",
+     "nazwa": "Biblioteka DRD",
+     "ocena": "B",
+     "co": "Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku.",
+     "naprawione": [
+      "Sciezka i zakladki przybite po angielsku",
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Kolumna Zaktualizowano pokazuje date w formacie amerykanskim — defekt wspolnej warstwy tabel, dotyka calej aplikacji"
+     ]
+    },
+    {
+     "id": "assessment-list",
+     "nazwa": "Lista ocen",
+     "ocena": "B",
+     "co": "Tabela kanoniczna, statusy po polsku, kreska zamiast zera.",
+     "naprawione": [],
+     "wyjatki": [
+      "Kolumna Aktualizacja ucina naglowek i daty — szerokosc kolumn przy siedmiu kolumnach, defekt wspolnego silnika tabel, nie tego ekranu"
+     ]
+    },
+    {
+     "id": "assessment-reports-panel",
+     "nazwa": "Panel raportow",
+     "ocena": "B",
+     "co": "Mechanika czysta.",
+     "naprawione": [],
+     "wyjatki": [
+      "Obudowa ekranu po angielsku — inny komponent niz tabela raportow"
+     ]
+    },
+    {
+     "id": "assessment-presentation-view",
+     "nazwa": "Prezentacja z oceny (9 slajdow)",
+     "ocena": "B",
+     "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk"
+     ]
+    },
+    {
+     "id": "assessment-initiatives-table",
+     "nazwa": "Tablica inicjatyw strategicznych",
+     "ocena": "B",
+     "co": "Tablica inicjatyw.",
+     "naprawione": [
+      "Ucinane etykiety priorytetu — kolumna poszerzona"
+     ],
+     "wyjatki": [
+      "Obudowa ekranu po angielsku"
+     ]
+    },
+    {
+     "id": "siri-workspace",
+     "nazwa": "Warsztat SIRI",
+     "ocena": "B",
+     "co": "Wywiad SIRI. Pytanie wprost mowi, ze bank pytan nie ma pozycji dla tego wymiaru, bo tresc jest licencjonowana — uczciwosc wzorcowa. Szesc odpowiedzi lacznie z Nie wiem i Nie mam dowodu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Napis Help content unavailable po angielsku",
+      "Nazwy wymiarow po angielsku — to standardowa terminologia SIRI, nie defekt tlumaczenia",
+      "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
+     ]
+    },
+    {
+     "id": "assessment-initiatives-panel",
+     "nazwa": "Panel inicjatyw",
+     "ocena": "C",
+     "co": "Proces statusow inicjatywy.",
+     "naprawione": [],
+     "wyjatki": [
+      "Caly ekran po angielsku",
+      "Blad w konsoli: zdublowany klucz EXECUTING"
+     ]
+    },
+    {
+     "id": "assessment-manage-panel",
+     "nazwa": "Panel zarzadzania ocena",
+     "ocena": "C",
+     "co": "Mechanika solidna: postep procesu, tabela etapow bramek.",
+     "naprawione": [],
+     "wyjatki": [
+      "Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie"
+     ]
+    },
+    {
+     "id": "siri-tier",
+     "nazwa": "Poziomy SIRI",
+     "ocena": "C",
+     "co": "Macierz priorytetow SIRI — ekran diagnostyczny dla inzyniera, nie dla klienta.",
+     "naprawione": [],
+     "wyjatki": [
+      "Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi",
+      "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
+     ]
+    },
+    {
+     "id": "assessment-matryca",
+     "nazwa": "Matryca oceny",
+     "ocena": "D",
+     "co": "Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Zgloszone do naprawy narzedzia"
+     ]
+    }
+   ]
+  },
+  {
    "katalog": "06-inicjatywy",
    "nazwa": "Inicjatywy",
-   "opis": "Karta inicjatywy — najbogatszy artefakt w produkcie.",
+   "opis": "Portfel inicjatyw, plan, obciążenie.",
    "ekrany": [
+    {
+     "id": "capacity-advisor-a3",
+     "nazwa": "Obciazenie zespolu",
+     "ocena": "A",
+     "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "plan-scenario-d1",
+     "nazwa": "Plan inicjatyw",
+     "ocena": "A",
+     "co": "Daty po polsku, stany po polsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "ev-football-field",
+     "nazwa": "Wycena metoda koszykowa",
+     "ocena": "A",
+     "co": "Ekran wzorcowy. Kwoty w mln PLN, rozjazd metod w procentach, mnozniki z jednostka, czytelna brama strefy przeciecia.",
+     "naprawione": [],
+     "wyjatki": []
+    },
     {
      "id": "karta-initiative",
      "nazwa": "Karta inicjatywy",
@@ -96,110 +872,89 @@
       "Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu",
       "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna"
      ]
+    },
+    {
+     "id": "initiative-record",
+     "nazwa": "Rekord inicjatywy",
+     "ocena": "B",
+     "co": "Powloka, etykiety i akcje po polsku, dobry rytm.",
+     "naprawione": [
+      "Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Tresc danych demo po angielsku — nie ustalono, czy to defekt, czy wybor danych dla klienta miedzynarodowego"
+     ]
+    },
+    {
+     "id": "initiatives-portfolio-analysis",
+     "nazwa": "Analiza portfela",
+     "ocena": "D",
+     "co": "Nie wiem, jak wyglada — komponent zostal swiadomie usuniety jako martwy kod (12,8 tys. linii). Funkcja nie istnieje w produkcie.",
+     "naprawione": [],
+     "wyjatki": [
+      "To decyzja produktowa, nie kosmetyka — wymaga rozstrzygniecia wlasciciela"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "07-realizacja",
+   "nazwa": "Realizacja",
+   "opis": "Raporty z realizacji, kręgosłup zarządzania.",
+   "ekrany": [
+    {
+     "id": "execution-report-day11",
+     "nazwa": "Raport inteligencji pracy",
+     "ocena": "A",
+     "co": "Raport w pelni po polsku.",
+     "naprawione": [
+      "Surowe angielskie stale FACT, RECOMMENDATION, UNKNOWN, RED, AMBER wsrod polskiego tekstu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "exe-002-004-ui-audit",
+     "nazwa": "Audyt kregoslupa realizacji",
+     "ocena": "B",
+     "co": "Realny rekord inicjatywy, dane dzialaja.",
+     "naprawione": [],
+     "wyjatki": [
+      "Status w pasku tozsamosci to zwykly tekst zamiast pigulki — kanon artefaktow wymaga pigulki. Komponent wspoldzielony przez caly modul, za szeroki promien razenia na jeden ekran"
+     ]
+    },
+    {
+     "id": "execution-export-prezentacja",
+     "nazwa": "Eksport realizacji do prezentacji",
+     "ocena": "D",
+     "co": "Nie istnieje w tej postaci — produkt dawno przeszedl na inna sciezke, ekran testowy nigdy nie zostal zaktualizowany.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ekran harnessu wyrejestrowany, plik zostaje"
+     ]
+    },
+    {
+     "id": "execution-change-signals",
+     "nazwa": "Sygnaly zmiany w realizacji",
+     "ocena": "D",
+     "co": "Nie istnieje — komponent zostal usuniety z produktu jako fantom bez implementacji.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ekran harnessu wyrejestrowany, plik zostaje"
+     ]
     }
    ]
   },
   {
    "katalog": "08-wyniki",
    "nazwa": "Wyniki",
-   "opis": "Wskazniki, ROI i cele OKR. Modul, ktorego nigdy nie widziales — 14 z 16 ekranow bez zastrzezen.",
+   "opis": "Wskaźniki, ROI, cele OKR — trzy poziomy.",
    "ekrany": [
     {
-     "id": "results-zestawienia",
-     "nazwa": "POZIOM 1 — Rejestr zestawien okresowych",
-     "ocena": "B",
-     "co": "Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety.",
-     "naprawione": [
-      "Kolizja zapamietanych szerokosci kolumn z realnym rejestrem",
-      "Siedem kolumn nie miescilo sie przy otwartym podgladzie — scalone i zwezone",
-      "Angielskie naglowki Property/Value w panelu podgladu — naprawione w KANONICZNYM komponencie, wiec dotyczy calej aplikacji"
-     ],
-     "wyjatki": [
-      "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
-      "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)"
-     ],
-     "gdzie": "Wyniki → KPI → rejestr zestawień okresowych (POZIOM 1, nowy)"
-    },
-    {
-     "id": "results-vnext-kpi-registry",
-     "nazwa": "Rejestr wskaznikow",
+     "id": "results-vnext-legacy-archive",
+     "nazwa": "Archiwum wskaznikow",
      "ocena": "A",
-     "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
+     "co": "Tabela archiwum tylko do odczytu. Zero rekordow to stan faktyczny tabeli, nie licznik trybu widoku — regula nagiego zera nie ma tu zastosowania.",
      "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "results-vnext-kpi-scorecards",
-     "nazwa": "Karty wynikow",
-     "ocena": "A",
-     "co": "Lista kart z panelem podgladu.",
-     "naprawione": [
-      "Angielskie naglowki podgladu"
-     ],
-     "wyjatki": [],
-     "gdzie": "Wyniki → KPI → wejście w zestawienie (POZIOM 2)"
-    },
-    {
-     "id": "results-vnext-kpi-tool",
-     "nazwa": "Narzedzie wskaznika",
-     "ocena": "A",
-     "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.",
-     "naprawione": [
-      "Surowe statusy pomiaru zamiast etykiet"
-     ],
-     "wyjatki": [],
-     "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3)"
-    },
-    {
-     "id": "results-vnext-roi-registry",
-     "nazwa": "Rejestr ROI",
-     "ocena": "A",
-     "co": "Siedem spraw ROI z realnymi nazwiskami i statusami.",
-     "naprawione": [
-      "Angielskie naglowki podgladu"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "results-vnext-roi-full-tool",
-     "nazwa": "Pelne narzedzie ROI",
-     "ocena": "A",
-     "co": "Rejestr spraw ROI plus pelne narzedzie: cztery fazy, szesc wierszy budowy sprawy.",
-     "naprawione": [
-      "Pelne narzedzie bylo NIEOSIAGALNE — kebab nie robil nic, bo w harnessie brakowalo routingu. Nikt tego ekranu nigdy nie widzial."
-     ],
-     "wyjatki": [
-      "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
-     ]
-    },
-    {
-     "id": "results-vnext-roi-model",
-     "nazwa": "Model ROI",
-     "ocena": "A",
-     "co": "Baza porownania i polityka kalkulacji.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "results-vnext-roi-pir-outcomes",
-     "nazwa": "Wyniki po wdrozeniu",
-     "ocena": "A",
-     "co": "Cztery sprawy z wynikiem przegladu powdrozeniowego.",
-     "naprawione": [
-      "Angielskie naglowki podgladu"
-     ],
-     "wyjatki": [
-      "Brak kebaba i filtrow — udokumentowany celowy, minimalny zakres widoku"
-     ]
-    },
-    {
-     "id": "results-vnext-okr-registry",
-     "nazwa": "Rejestr OKR",
-     "ocena": "A",
-     "co": "Dziewiec zestawow celow, tabela osmiu kolumn.",
-     "naprawione": [
-      "Pigulka ucinana w kolumnie UWAGA"
-     ],
      "wyjatki": []
     },
     {
@@ -215,12 +970,46 @@
      ]
     },
     {
-     "id": "results-vnext-okr-workspace",
-     "nazwa": "Warsztat zestawu OKR",
+     "id": "results-vnext-kpi-scorecards",
+     "nazwa": "Karty wynikow",
      "ocena": "A",
-     "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
+     "co": "Lista kart z panelem podgladu.",
+     "naprawione": [
+      "Angielskie naglowki podgladu"
+     ],
+     "wyjatki": [],
+     "gdzie": "Wyniki → KPI → wejście w zestawienie (POZIOM 2)"
+    },
+    {
+     "id": "results-vnext-roi-model",
+     "nazwa": "Model ROI",
+     "ocena": "A",
+     "co": "Baza porownania i polityka kalkulacji.",
      "naprawione": [],
      "wyjatki": []
+    },
+    {
+     "id": "results-vnext-kpi-tool",
+     "nazwa": "Narzedzie wskaznika",
+     "ocena": "A",
+     "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.",
+     "naprawione": [
+      "Surowe statusy pomiaru zamiast etykiet"
+     ],
+     "wyjatki": [],
+     "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3)"
+    },
+    {
+     "id": "results-vnext-roi-full-tool",
+     "nazwa": "Pelne narzedzie ROI",
+     "ocena": "A",
+     "co": "Rejestr spraw ROI plus pelne narzedzie: cztery fazy, szesc wierszy budowy sprawy.",
+     "naprawione": [
+      "Pelne narzedzie bylo NIEOSIAGALNE — kebab nie robil nic, bo w harnessie brakowalo routingu. Nikt tego ekranu nigdy nie widzial."
+     ],
+     "wyjatki": [
+      "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
+     ]
     },
     {
      "id": "results-vnext-okr-admin",
@@ -233,26 +1022,40 @@
      ]
     },
     {
-     "id": "results-vnext-attention",
-     "nazwa": "Uwaga",
+     "id": "results-vnext-teresa-okr-reflection",
+     "nazwa": "Refleksja nad celami",
      "ocena": "A",
-     "co": "Siedem zakladek uwag z realnymi kodami wskaznikow.",
+     "co": "Formularz refleksji. Czerwony przycisk Zamknij zestaw to swiadomy wybor — zamkniecie cyklu jest nieodwracalne.",
      "naprawione": [],
-     "wyjatki": [
-      "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
-     ]
+     "wyjatki": []
     },
     {
-     "id": "results-vnext-search-registry",
-     "nazwa": "Wyszukiwarka",
+     "id": "results-vnext-okr-registry",
+     "nazwa": "Rejestr OKR",
      "ocena": "A",
-     "co": "Wyszukiwanie po wskaznikach, ROI i celach; uczciwy stan poczatkowy.",
+     "co": "Dziewiec zestawow celow, tabela osmiu kolumn.",
      "naprawione": [
-      "Surowe statusy i nazwy pol dopasowania"
+      "Pigulka ucinana w kolumnie UWAGA"
      ],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Wyszukiwarka przed zapytaniem — uczciwie pusta. Z zapytaniem pokazuje trzy trafienia."
-     ]
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-roi-registry",
+     "nazwa": "Rejestr ROI",
+     "ocena": "A",
+     "co": "Siedem spraw ROI z realnymi nazwiskami i statusami.",
+     "naprawione": [
+      "Angielskie naglowki podgladu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-kpi-registry",
+     "nazwa": "Rejestr wskaznikow",
+     "ocena": "A",
+     "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
+     "naprawione": [],
+     "wyjatki": []
     },
     {
      "id": "results-vnext-teresa-kpi-deviation",
@@ -273,6 +1076,64 @@
      ]
     },
     {
+     "id": "results-vnext-attention",
+     "nazwa": "Uwaga",
+     "ocena": "A",
+     "co": "Siedem zakladek uwag z realnymi kodami wskaznikow.",
+     "naprawione": [],
+     "wyjatki": [
+      "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
+     ]
+    },
+    {
+     "id": "results-vnext-okr-workspace",
+     "nazwa": "Warsztat zestawu OKR",
+     "ocena": "A",
+     "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-roi-pir-outcomes",
+     "nazwa": "Wyniki po wdrozeniu",
+     "ocena": "A",
+     "co": "Cztery sprawy z wynikiem przegladu powdrozeniowego.",
+     "naprawione": [
+      "Angielskie naglowki podgladu"
+     ],
+     "wyjatki": [
+      "Brak kebaba i filtrow — udokumentowany celowy, minimalny zakres widoku"
+     ]
+    },
+    {
+     "id": "results-vnext-search-registry",
+     "nazwa": "Wyszukiwarka",
+     "ocena": "A",
+     "co": "Wyszukiwanie po wskaznikach, ROI i celach; uczciwy stan poczatkowy.",
+     "naprawione": [
+      "Surowe statusy i nazwy pol dopasowania"
+     ],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Wyszukiwarka przed zapytaniem — uczciwie pusta. Z zapytaniem pokazuje trzy trafienia."
+     ]
+    },
+    {
+     "id": "results-zestawienia",
+     "nazwa": "POZIOM 1 — Rejestr zestawien okresowych",
+     "ocena": "B",
+     "co": "Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety.",
+     "naprawione": [
+      "Kolizja zapamietanych szerokosci kolumn z realnym rejestrem",
+      "Siedem kolumn nie miescilo sie przy otwartym podgladzie — scalone i zwezone",
+      "Angielskie naglowki Property/Value w panelu podgladu — naprawione w KANONICZNYM komponencie, wiec dotyczy calej aplikacji"
+     ],
+     "wyjatki": [
+      "To PROTOTYP nowego poziomu, nie realny komponent produkcyjny — czeka na Twoj wstepny OK, zanim tor funkcji go zbuduje",
+      "Domyslnie podswietlony jest pierwszy wiersz; watek trzech poziomow widac na drugim (KPI jakosci — Q3 2026)"
+     ],
+     "gdzie": "Wyniki → KPI → rejestr zestawień okresowych (POZIOM 1, nowy)"
+    },
+    {
      "id": "results-vnext-registry-shell",
      "nazwa": "Powloka rejestru",
      "ocena": "D",
@@ -287,8 +1148,38 @@
   {
    "katalog": "09-finanse",
    "nazwa": "Finanse",
-   "opis": "Modele, wyceny, prognozy i sprawozdania. Widziales stad wylacznie model finansowy — reszta jest dla Ciebie nowa.",
+   "opis": "Sprawozdania, analizy, modele, prognozy, wyceny.",
    "ekrany": [
+    {
+     "id": "finance-comments-panel",
+     "nazwa": "Komentarze",
+     "ocena": "A",
+     "co": "Komentarze blokujace i lista kontrolna przegladu.",
+     "naprawione": [
+      "Angielski naglowek sekcji"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "finance-lineage-navigator",
+     "nazwa": "Nawigator pochodzenia",
+     "ocena": "A",
+     "co": "Lancuch powiazan z uczciwym zerem: '0 / Brak.'",
+     "naprawione": [],
+     "wyjatki": [
+      "Wzorcowy przyklad prawa liczby — zero zawsze z wyjasnieniem"
+     ]
+    },
+    {
+     "id": "finance-workspace-bar",
+     "nazwa": "Pasek tozsamosci",
+     "ocena": "A",
+     "co": "Izolowany podglad wspolnego paska.",
+     "naprawione": [],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Pasek pelny; cialo ekranu to swiadoma zaslepka poza zakresem pakietu."
+     ]
+    },
     {
      "id": "finance-hub",
      "nazwa": "WEJSCIE do Finansow — piec zakladek",
@@ -305,17 +1196,12 @@
      "gdzie": "Finanse → wejście do modułu (pięć zakładek)"
     },
     {
-     "id": "finance-model-workspace",
-     "nazwa": "Model finansowy",
-     "ocena": "B",
-     "co": "Model bazowy z danymi wejsciowymi i bilansem otwarcia.",
-     "naprawione": [
-      "Surowy enum 'quarterly' zamiast etykiety",
-      "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika"
-     ],
-     "wyjatki": [
-      "Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany"
-     ]
+     "id": "finance-saved-views-panel",
+     "nazwa": "Zapisane widoki",
+     "ocena": "A",
+     "co": "Widoki zespolowe i osobiste.",
+     "naprawione": [],
+     "wyjatki": []
     },
     {
      "id": "finance-analysis-workspace",
@@ -330,29 +1216,28 @@
      ]
     },
     {
-     "id": "finance-valuation-workspace",
-     "nazwa": "Wycena",
+     "id": "finance-export-import-panel",
+     "nazwa": "Eksport i import",
      "ocena": "B",
-     "co": "Lancuch pochodzenia wyceny i most od wartosci przedsiebiorstwa do kapitalu.",
+     "co": "Wymiana arkusza z manifestem.",
      "naprawione": [
-      "Dwa z trzech krokow lancucha po angielsku",
-      "Brak procenta przy wadze metody",
-      "Kropka zamiast przecinka dziesietnego"
+      "'jednostka THOUSANDS' — surowy enum, ta sama klasa defektu co w prezentacji"
      ],
      "wyjatki": [
-      "Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty"
+      "'Choose File' to natywna kontrolka przegladarki — nieprzetlumaczalna bez wlasnego uploadera"
      ]
     },
     {
-     "id": "finance-prediction-workspace",
-     "nazwa": "Prognoza",
+     "id": "finance-model-workspace",
+     "nazwa": "Model finansowy",
      "ocena": "B",
-     "co": "Budowa scenariuszy z paskiem statusu.",
+     "co": "Model bazowy z danymi wejsciowymi i bilansem otwarcia.",
      "naprawione": [
-      "'Rewizja authoringu: .' — pusta wartosc i znieksztalcone slowo"
+      "Surowy enum 'quarterly' zamiast etykiety",
+      "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika"
      ],
      "wyjatki": [
-      "Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module"
+      "Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany"
      ]
     },
     {
@@ -382,53 +1267,29 @@
      ]
     },
     {
-     "id": "finance-comments-panel",
-     "nazwa": "Komentarze",
-     "ocena": "A",
-     "co": "Komentarze blokujace i lista kontrolna przegladu.",
-     "naprawione": [
-      "Angielski naglowek sekcji"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "finance-saved-views-panel",
-     "nazwa": "Zapisane widoki",
-     "ocena": "A",
-     "co": "Widoki zespolowe i osobiste.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "finance-export-import-panel",
-     "nazwa": "Eksport i import",
+     "id": "finance-prediction-workspace",
+     "nazwa": "Prognoza",
      "ocena": "B",
-     "co": "Wymiana arkusza z manifestem.",
+     "co": "Budowa scenariuszy z paskiem statusu.",
      "naprawione": [
-      "'jednostka THOUSANDS' — surowy enum, ta sama klasa defektu co w prezentacji"
+      "'Rewizja authoringu: .' — pusta wartosc i znieksztalcone slowo"
      ],
      "wyjatki": [
-      "'Choose File' to natywna kontrolka przegladarki — nieprzetlumaczalna bez wlasnego uploadera"
+      "Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module"
      ]
     },
     {
-     "id": "finance-lineage-navigator",
-     "nazwa": "Nawigator pochodzenia",
-     "ocena": "A",
-     "co": "Lancuch powiazan z uczciwym zerem: '0 / Brak.'",
-     "naprawione": [],
+     "id": "finance-valuation-workspace",
+     "nazwa": "Wycena",
+     "ocena": "B",
+     "co": "Lancuch pochodzenia wyceny i most od wartosci przedsiebiorstwa do kapitalu.",
+     "naprawione": [
+      "Dwa z trzech krokow lancucha po angielsku",
+      "Brak procenta przy wadze metody",
+      "Kropka zamiast przecinka dziesietnego"
+     ],
      "wyjatki": [
-      "Wzorcowy przyklad prawa liczby — zero zawsze z wyjasnieniem"
-     ]
-    },
-    {
-     "id": "finance-workspace-bar",
-     "nazwa": "Pasek tozsamosci",
-     "ocena": "A",
-     "co": "Izolowany podglad wspolnego paska.",
-     "naprawione": [],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Pasek pelny; cialo ekranu to swiadoma zaslepka poza zakresem pakietu."
+      "Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty"
      ]
     },
     {
@@ -454,16 +1315,6 @@
      ]
     },
     {
-     "id": "finance-focus-mode",
-     "nazwa": "Tryb skupienia (diagnostyka)",
-     "ocena": "D",
-     "co": "Narzedzie inzynierskie, nie ekran produktu.",
-     "naprawione": [],
-     "wyjatki": [
-      "Nie pokazuje sie jako ekran produktu"
-     ]
-    },
-    {
      "id": "finance-id-bridge",
      "nazwa": "Most identyfikatorow (diagnostyka)",
      "ocena": "D",
@@ -472,202 +1323,93 @@
      "wyjatki": [
       "Nie pokazuje sie jako ekran produktu"
      ]
-    }
-   ]
-  },
-  {
-   "katalog": "02-moja-praca",
-   "nazwa": "Moja praca i pomysly",
-   "opis": "Najwiekszy modul produktu — tabele pomyslow, notatnik, sejf klienta.",
-   "ekrany": [
-    {
-     "id": "idea-table",
-     "nazwa": "Tabela pomyslow",
-     "ocena": "B",
-     "co": "Pelna tabela z podgladem, kebabem, sortowaniem i filtrami per kolumna.",
-     "naprawione": [
-      "Cztery literowki bez polskich znakow"
-     ],
-     "wyjatki": [
-      "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku."
-     ]
     },
     {
-     "id": "idea-table-tool-empty-filter",
-     "nazwa": "Pusty filtr",
-     "ocena": "A",
-     "co": "Dwa odrebne uczciwe stany: brak wynikow filtra i brak rekordow — wzorcowy przyklad.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-table-tool-grouping",
-     "nazwa": "Grupowanie",
-     "ocena": "A",
-     "co": "Grupowanie z pusta komorka jako mysnik.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-table-tool-kebab",
-     "nazwa": "Kebab wiersza",
-     "ocena": "A",
-     "co": "Realne menu; Usun poprawnie w czerwieni.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-table-tool-sortfilter",
-     "nazwa": "Sortowanie i filtry",
-     "ocena": "A",
-     "co": "Sortowanie i filtr per kolumna.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-table-tool-paste",
-     "nazwa": "Wklejanie",
-     "ocena": "A",
-     "co": "Wklejanie z pominieciem kolumny obliczanej.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-table-record-templates",
-     "nazwa": "Szablony rekordu",
-     "ocena": "B",
-     "co": "Menedzer szablonow z uczciwym pustym stanem.",
-     "naprawione": [],
-     "wyjatki": [
-      "Podwojny komunikat bledu to artefakt trybu deweloperskiego, nie defekt"
-     ]
-    },
-    {
-     "id": "idea-templates-catalog",
-     "nazwa": "Katalog szablonow",
-     "ocena": "A",
-     "co": "Czterdziesci szablonow w siedmiu kategoriach.",
-     "naprawione": [
-      "Crimson na tagu narzedzia"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "ideas-preview-overlay",
-     "nazwa": "Podglad pomyslu",
-     "ocena": "A",
-     "co": "Overlay bez przeskoku ukladu.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "ideas-teresa-panel",
-     "nazwa": "Panel Teresy",
-     "ocena": "A",
-     "co": "Sugestie AI, zero crimsonu.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-confidentiality-control",
-     "nazwa": "Poufnosc pomyslu",
-     "ocena": "A",
-     "co": "Selektor poufnosci w bursztynie, nie czerwieni.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "mywork-idea-inspector-lekki",
-     "nazwa": "Inspektor pomyslu",
-     "ocena": "A",
-     "co": "Sekcje z licznikami.",
-     "naprawione": [],
-     "wyjatki": [],
-     "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → inspektor po prawej stronie"
-    },
-    {
-     "id": "mywork-idea-topbar",
-     "nazwa": "Pasek gorny",
-     "ocena": "B",
-     "co": "Pasek gorny Mojej pracy z otwarta idea: pigulki dokumentow, menu modulu i mapa mysli.",
-     "naprawione": [
-      "Kazda zakladka pokazywala blad wczytywania — klucz sesji w harnessie nie nadazyl za migracja z 12.08. Po naprawie: rzad pigulek, Menu 1 i 3, mapa mysli z szescioma galeziami."
-     ],
-     "wyjatki": [
-      "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
-     ]
-    },
-    {
-     "id": "mywork-notebook-rail-speca",
-     "nazwa": "Panel notatnika",
-     "ocena": "A",
-     "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "notatnik-centrum-mysli",
-     "nazwa": "Centrum mysli",
-     "ocena": "A",
-     "co": "Wspolpraca z Teresa, karty propozycji.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "notatnik-osierocone-graf",
-     "nazwa": "Graf notatek",
-     "ocena": "A",
-     "co": "Graf polaczen z soczewka osieroconych.",
-     "naprawione": [],
-     "wyjatki": [],
-     "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań)"
-    },
-    {
-     "id": "vault-sejf-wnetrze",
-     "nazwa": "Wnetrze sejfu",
-     "ocena": "A",
-     "co": "Realna wspolna tabela, crimson tylko na bledzie.",
-     "naprawione": [],
-     "wyjatki": [
-      "Kolumna Kategoria po angielsku — dotyka trzech plikow, zgloszone osobno"
-     ]
-    },
-    {
-     "id": "vault-safes-table",
-     "nazwa": "Tabela sejfow",
-     "ocena": "A",
-     "co": "Lista sejfow na wspolnej tabeli.",
-     "naprawione": [
-      "Ekran w ogole sie nie renderowal",
-      "'1 blad(y)' — lamana polszczyzna"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "vault-folder-block-proof",
-     "nazwa": "Blok sejfu w kreatorze",
-     "ocena": "A",
-     "co": "Kontekst sejfu w kreatorze przeplywu.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-table-production",
-     "nazwa": "Tabela pomyslow (izolowana)",
+     "id": "finance-focus-mode",
+     "nazwa": "Tryb skupienia (diagnostyka)",
      "ocena": "D",
-     "co": "Harness porownawczy szerokosci, nie ekran produktu.",
+     "co": "Narzedzie inzynierskie, nie ekran produktu.",
      "naprawione": [],
      "wyjatki": [
-      "Narzedzie pomiarowe"
+      "Nie pokazuje sie jako ekran produktu"
      ]
     }
    ]
   },
   {
    "katalog": "10-materialy",
-   "nazwa": "Materialy i dokumenty",
-   "opis": "Studio Dokumentow, kreatory szablonow Word/Deck/Excel, biblioteka wzorcow, gotowe artefakty.",
+   "nazwa": "Materiały",
+   "opis": "Dokumenty, arkusze, prezentacje, wzorce.",
    "ekrany": [
+    {
+     "id": "sheet-artifact",
+     "nazwa": "Arkusz (podglad)",
+     "ocena": "A",
+     "co": "Podglad arkusza kalkulacyjnego.",
+     "naprawione": [
+      "Angielskie naglowki Workbook/Sheets"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "materialy-template-library-slice",
+     "nazwa": "Biblioteka wzorcow",
+     "ocena": "A",
+     "co": "Tabela wzorcow z uczciwymi statusami. Piec pozornych odchylen to swiadome decyzje wlasciciela.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "template-library-new-entry",
+     "nazwa": "Biblioteka wzorcow — nowy szablon",
+     "ocena": "A",
+     "co": "Wejscie sprawdzone klikiem: prowadzi do kreatora.",
+     "naprawione": [],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Dowod wpiecia przycisku, nie ekran danych."
+     ]
+    },
+    {
+     "id": "document-studio-resume-error",
+     "nazwa": "Blad — nie znaleziono dokumentu",
+     "ocena": "A",
+     "co": "Cytat: Nie znaleziono tego dokumentu. Mogl zostac usuniety albo odnosnik prowadzi do innego typu materialu. Plus przycisk Wroc do Materialow. Mowi co sie stalo i co zrobic. Zero kodu bledu.",
+     "naprawione": [],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
+     ]
+    },
+    {
+     "id": "document-studio-template-resolve-error",
+     "nazwa": "Blad — nie znaleziono wzorca",
+     "ocena": "A",
+     "co": "Cytat: Nie znaleziono zrodla tego wzorca. Plus przycisk Wroc do biblioteki wzorcow. Krotszy niz sasiedni, ale ludzki i z jasna akcja.",
+     "naprawione": [],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
+     ]
+    },
+    {
+     "id": "deck-artifact",
+     "nazwa": "Deck (szesc slajdow)",
+     "ocena": "A",
+     "co": "Kreator decka wedlug kanonu artefaktow.",
+     "naprawione": [],
+     "wyjatki": [
+      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
+     ]
+    },
+    {
+     "id": "deck-quality-badge",
+     "nazwa": "Deck — ocena jakosci",
+     "ocena": "A",
+     "co": "Wynik kreatora z odznaka jakosci.",
+     "naprawione": [
+      "CRIMSON na przycisku glownym — Pulapka nr 1 z kodeksu",
+      "Surowy angielski enum Internal/Briefing"
+     ],
+     "wyjatki": []
+    },
     {
      "id": "document-artifact",
      "nazwa": "Dokument doradczy (pelny widok)",
@@ -680,11 +1422,97 @@
      "wyjatki": []
     },
     {
-     "id": "template-builder-doc",
-     "nazwa": "Kreator szablonu Word",
+     "id": "excele-jeden-widok-materialy",
+     "nazwa": "Excel — arkusze w Materialach",
      "ocena": "A",
-     "co": "Bez odchylen od kanonu.",
+     "co": "Tabela kanoniczna, polskie etykiety, szkic fioletowy — nie crimson.",
      "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-reopen-verify",
+     "nazwa": "Excel — blad generowania",
+     "ocena": "A",
+     "co": "Czytelny komunikat bledu, czerwien uzyta poprawnie.",
+     "naprawione": [
+      "Powiadomienie ignorowalo motyw ciemny — biale okienko na czarnym tle, na WSZYSTKICH ekranach harnessu"
+     ],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
+     ]
+    },
+    {
+     "id": "excele-prawy-panel-standard",
+     "nazwa": "Excel — prawy panel",
+     "ocena": "A",
+     "co": "Szyna ikon: Akcje, Powiazania, Zrodla, Rezultaty, Historia. Zgodnie z decyzja z 28.07.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-engine-reveal",
+     "nazwa": "Excel — silnik bez serwera",
+     "ocena": "A",
+     "co": "Stan startowy bez backendu, dokladnie jak zapowiada.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-jeden-widok-pusty",
+     "nazwa": "Excel — stan pusty",
+     "ocena": "A",
+     "co": "Trzy karty wyboru: czysto, z AI, z szablonu.",
+     "naprawione": [],
+     "wyjatki": [
+      "PUSTKA ZAMIERZONA: Dowod, ze pusty arkusz to klikalna siatka, a nie zaslepka."
+     ]
+    },
+    {
+     "id": "excele-jeden-widok-recent",
+     "nazwa": "Excel — strona glowna",
+     "ocena": "A",
+     "co": "Wzorce arkuszy, czysto po polsku, oba motywy.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "b2-template-gallery",
+     "nazwa": "Galeria szablonow mapy mysli",
+     "ocena": "A",
+     "co": "Galeria wzorcow.",
+     "naprawione": [
+      "Angielskie 0 nodes na karcie galezi"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "word-intake-uselm-default",
+     "nazwa": "Generuj bez szablonu",
+     "ocena": "A",
+     "co": "Formularz z AI wlaczonym domyslnie, zgodnie z decyzja DEC-317.",
+     "naprawione": [
+      "Ucinany tekst bez wielokropka w pieciu polach wyboru"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "gen-word-content-hints",
+     "nazwa": "Kreator szablonow dokumentow",
+     "ocena": "A",
+     "co": "Formularz w calosci po polsku.",
+     "naprawione": [
+      "Kolumna TYP pokazywala surowy kod zamiast nazwy"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "gen-deck-content-hints",
+     "nazwa": "Kreator szablonow prezentacji",
+     "ocena": "A",
+     "co": "Analogicznie czysty.",
+     "naprawione": [
+      "Ten sam surowy kod typu"
+     ],
      "wyjatki": []
     },
     {
@@ -706,6 +1534,14 @@
      "wyjatki": []
     },
     {
+     "id": "template-builder-doc",
+     "nazwa": "Kreator szablonu Word",
+     "ocena": "A",
+     "co": "Bez odchylen od kanonu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
      "id": "template-create-wizard",
      "nazwa": "Kreator szablonu — krok 1 z 3",
      "ocena": "A",
@@ -713,16 +1549,6 @@
      "naprawione": [],
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Formularz startowy — puste pole nazwy jest jego trescia."
-     ]
-    },
-    {
-     "id": "template-library-new-entry",
-     "nazwa": "Biblioteka wzorcow — nowy szablon",
-     "ocena": "A",
-     "co": "Wejscie sprawdzone klikiem: prowadzi do kreatora.",
-     "naprawione": [],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Dowod wpiecia przycisku, nie ekran danych."
      ]
     },
     {
@@ -736,18 +1562,26 @@
      ]
     },
     {
-     "id": "materialy-template-library-slice",
-     "nazwa": "Biblioteka wzorcow",
+     "id": "prezentacje-template-states",
+     "nazwa": "Prezentacje — trzy stany szablonu",
      "ocena": "A",
-     "co": "Tabela wzorcow z uczciwymi statusami. Piec pozornych odchylen to swiadome decyzje wlasciciela.",
+     "co": "Ladowanie, wzorzec bez rekordu, brak dostepu. Wszystkie po polsku.",
      "naprawione": [],
      "wyjatki": []
     },
     {
-     "id": "materialy-draft-template-visibledraft-fix",
-     "nazwa": "Szkic szablonu",
+     "id": "report-artifact",
+     "nazwa": "Raport dla komitetu sterujacego",
      "ocena": "A",
-     "co": "Szkic widoczny z pigulka Szkic.",
+     "co": "NAJLEPSZY ekran partii. Pelna polska tresc, waluty wszedzie, procenty sformatowane, czerwien tylko dla Zagrozone. Gotowy do pokazania klientowi.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-context-chip",
+     "nazwa": "Studio — chip kontekstu",
+     "ocena": "A",
+     "co": "Formularz z chipem kontekstu organizacji.",
      "naprawione": [],
      "wyjatki": []
     },
@@ -772,16 +1606,6 @@
      "wyjatki": []
     },
     {
-     "id": "document-studio-save-as-template",
-     "nazwa": "Studio — zrob z tego wzorzec",
-     "ocena": "A",
-     "co": "Sciezka z dokumentu do wzorca.",
-     "naprawione": [
-      "Ten sam crash silnika edytora"
-     ],
-     "wyjatki": []
-    },
-    {
      "id": "document-studio-blocks-i18n",
      "nazwa": "Studio — puste stany blokow",
      "ocena": "A",
@@ -792,42 +1616,29 @@
      ]
     },
     {
-     "id": "document-studio-context-chip",
-     "nazwa": "Studio — chip kontekstu",
+     "id": "document-studio-save-as-template",
+     "nazwa": "Studio — zrob z tego wzorzec",
      "ocena": "A",
-     "co": "Formularz z chipem kontekstu organizacji.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "sheet-artifact",
-     "nazwa": "Arkusz (podglad)",
-     "ocena": "A",
-     "co": "Podglad arkusza kalkulacyjnego.",
+     "co": "Sciezka z dokumentu do wzorca.",
      "naprawione": [
-      "Angielskie naglowki Workbook/Sheets"
+      "Ten sam crash silnika edytora"
      ],
      "wyjatki": []
     },
     {
-     "id": "deck-artifact",
-     "nazwa": "Deck (szesc slajdow)",
+     "id": "gen-excel-templates-tab",
+     "nazwa": "Szablony skoroszytow",
      "ocena": "A",
-     "co": "Kreator decka wedlug kanonu artefaktow.",
+     "co": "Model P&L, budzet, DCF. Terminologia finansowa to uznane zapozyczenia branzowe.",
      "naprawione": [],
-     "wyjatki": [
-      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
-     ]
+     "wyjatki": []
     },
     {
-     "id": "deck-quality-badge",
-     "nazwa": "Deck — ocena jakosci",
+     "id": "materialy-draft-template-visibledraft-fix",
+     "nazwa": "Szkic szablonu",
      "ocena": "A",
-     "co": "Wynik kreatora z odznaka jakosci.",
-     "naprawione": [
-      "CRIMSON na przycisku glownym — Pulapka nr 1 z kodeksu",
-      "Surowy angielski enum Internal/Briefing"
-     ],
+     "co": "Szkic widoczny z pigulka Szkic.",
+     "naprawione": [],
      "wyjatki": []
     },
     {
@@ -839,881 +1650,6 @@
      "wyjatki": [
       "PUSTKA ZAMIERZONA: Przed uruchomieniem kontroli jakosci nie ma czego pokazac."
      ]
-    },
-    {
-     "id": "b2-template-gallery",
-     "nazwa": "Galeria szablonow mapy mysli",
-     "ocena": "A",
-     "co": "Galeria wzorcow.",
-     "naprawione": [
-      "Angielskie 0 nodes na karcie galezi"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "document-studio-ai-teresa",
-     "nazwa": "Studio — z Teresa",
-     "ocena": "B",
-     "co": "Czat Teresy w studiu dokumentow, bez formularza.",
-     "naprawione": [],
-     "wyjatki": [
-      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
-     ]
-    },
-    {
-     "id": "document-studio-streaming-honesty-n3",
-     "nazwa": "Studio — plan przed pisaniem",
-     "ocena": "B",
-     "co": "Tryb, w ktorym system pokazuje plan zanim zacznie pisac.",
-     "naprawione": [],
-     "wyjatki": [
-      "Nie sprawdzono zachowania w trakcie pisania na zywo, tylko stan poczatkowy"
-     ]
-    },
-    {
-     "id": "document-studio-m1-share-primary",
-     "nazwa": "Studio — udostepnianie",
-     "ocena": "D",
-     "co": "Ekran nie renderuje sie w harnessie. Ta sama tresc jest dostepna przez menu Plik, ktore dziala.",
-     "naprawione": [],
-     "wyjatki": [
-      "Zdublowany ekran testowy, nie brak funkcji"
-     ]
-    }
-   ]
-  },
-  {
-   "katalog": "05-ocena-audyty",
-   "nazwa": "Ocena i Audyty",
-   "opis": "Warsztat kryteriow, biblioteka metodyk, raporty i prezentacje z oceny, wywiad DRD, biblioteka audytow.",
-   "ekrany": [
-    {
-     "id": "audyty-warsztat-kryterium",
-     "nazwa": "Warsztat kryterium (wzorzec)",
-     "ocena": "A",
-     "co": "Ekran z akceptem wlasciciela z 26.08. Arkusz audytora, lancuch osiemnastu ogniw, prawy panel.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "assessment-five-surfaces",
-     "nazwa": "Wybierak metodyk",
-     "ocena": "A",
-     "co": "DRD dostepny, cztery pozostale zablokowane ze statusem Planowane — uczciwie, bez ukrywania.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "assessment-output-report",
-     "nazwa": "Raport z oceny",
-     "ocena": "A",
-     "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "assessment-quality-review-panel",
-     "nazwa": "Ocena i pokrycie dowodami",
-     "ocena": "A",
-     "co": "Slowo brak zamiast zera tam, gdzie dowodu nie ma.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "assessment-reports-table",
-     "nazwa": "Tabela raportow",
-     "ocena": "A",
-     "co": "Statusy i daty.",
-     "naprawione": [
-      "Angielskie statusy In Review/Sent Internal/Utilized w polskiej tabeli",
-      "Daty w formacie Jul 10, 2026"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "assessment-artifacts-restart",
-     "nazwa": "Wnioski z oceny",
-     "ocena": "A",
-     "co": "Piec statusow, baner ostrzegawczy.",
-     "naprawione": [
-      "Chipy statusu nachodzily na siebie",
-      "Baner bledu nieczytelny w motywie jasnym",
-      "Angielskie Retry"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "assessment-menu3-status-chips",
-     "nazwa": "Biblioteka metodyk — chipy",
-     "ocena": "A",
-     "co": "Korzysta z tej samej naprawy chipow.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "drd-http-workspace",
-     "nazwa": "Wywiad DRD",
-     "ocena": "A",
-     "co": "Pytanie, dowod, odpowiedz.",
-     "naprawione": [
-      "Angielskie zakladki Interview/Matrix/Report i przycisk Settings"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "method-workspace",
-     "nazwa": "Diagnostyka gotowosci",
-     "ocena": "A",
-     "co": "Ocena sily dowodu.",
-     "naprawione": [
-      "Ta sama naprawa wspolnej powloki"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "audyty-piec-powierzchni",
-     "nazwa": "Biblioteka audytow",
-     "ocena": "A",
-     "co": "Weryfikacja i status publikacji.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "audyty-raport-dokument",
-     "nazwa": "Raport z audytu",
-     "ocena": "A",
-     "co": "Powloka artefaktu wzorcowa.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "audyty-drd-report",
-     "nazwa": "Raporty DRD wedlug programu",
-     "ocena": "A",
-     "co": "Zestawienie raportow.",
-     "naprawione": [
-      "Angielski naglowek zrodla ASSESSMENT",
-      "Daty w formacie angielskim"
-     ],
-     "wyjatki": [],
-     "gdzie": "Audyty → zakładka „Raporty DRD\" → otwarcie raportu. UWAGA: ta zakładka jest ZA FLAGĄ, domyślnie WYŁĄCZONĄ — w aplikacji jej dziś nie zobaczysz. Dlatego nie wiesz, gdzie to jest."
-    },
-    {
-     "id": "assessment-list",
-     "nazwa": "Lista ocen",
-     "ocena": "B",
-     "co": "Tabela kanoniczna, statusy po polsku, kreska zamiast zera.",
-     "naprawione": [],
-     "wyjatki": [
-      "Kolumna Aktualizacja ucina naglowek i daty — szerokosc kolumn przy siedmiu kolumnach, defekt wspolnego silnika tabel, nie tego ekranu"
-     ]
-    },
-    {
-     "id": "assessment-presentation-view",
-     "nazwa": "Prezentacja z oceny (9 slajdow)",
-     "ocena": "B",
-     "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu.",
-     "naprawione": [],
-     "wyjatki": [
-      "Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk"
-     ]
-    },
-    {
-     "id": "assessment-reports-panel",
-     "nazwa": "Panel raportow",
-     "ocena": "B",
-     "co": "Mechanika czysta.",
-     "naprawione": [],
-     "wyjatki": [
-      "Obudowa ekranu po angielsku — inny komponent niz tabela raportow"
-     ]
-    },
-    {
-     "id": "assessment-initiatives-table",
-     "nazwa": "Tablica inicjatyw strategicznych",
-     "ocena": "B",
-     "co": "Tablica inicjatyw.",
-     "naprawione": [
-      "Ucinane etykiety priorytetu — kolumna poszerzona"
-     ],
-     "wyjatki": [
-      "Obudowa ekranu po angielsku"
-     ]
-    },
-    {
-     "id": "assessment-manage-panel",
-     "nazwa": "Panel zarzadzania ocena",
-     "ocena": "C",
-     "co": "Mechanika solidna: postep procesu, tabela etapow bramek.",
-     "naprawione": [],
-     "wyjatki": [
-      "Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie"
-     ]
-    },
-    {
-     "id": "assessment-initiatives-panel",
-     "nazwa": "Panel inicjatyw",
-     "ocena": "C",
-     "co": "Proces statusow inicjatywy.",
-     "naprawione": [],
-     "wyjatki": [
-      "Caly ekran po angielsku",
-      "Blad w konsoli: zdublowany klucz EXECUTING"
-     ]
-    },
-    {
-     "id": "assessment-matryca",
-     "nazwa": "Matryca oceny",
-     "ocena": "D",
-     "co": "Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu.",
-     "naprawione": [],
-     "wyjatki": [
-      "Zgloszone do naprawy narzedzia"
-     ]
-    },
-    {
-     "id": "siri-workspace",
-     "nazwa": "Warsztat SIRI",
-     "ocena": "B",
-     "co": "Wywiad SIRI. Pytanie wprost mowi, ze bank pytan nie ma pozycji dla tego wymiaru, bo tresc jest licencjonowana — uczciwosc wzorcowa. Szesc odpowiedzi lacznie z Nie wiem i Nie mam dowodu.",
-     "naprawione": [],
-     "wyjatki": [
-      "Napis Help content unavailable po angielsku",
-      "Nazwy wymiarow po angielsku — to standardowa terminologia SIRI, nie defekt tlumaczenia",
-      "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
-     ]
-    },
-    {
-     "id": "siri-tier",
-     "nazwa": "Poziomy SIRI",
-     "ocena": "C",
-     "co": "Macierz priorytetow SIRI — ekran diagnostyczny dla inzyniera, nie dla klienta.",
-     "naprawione": [],
-     "wyjatki": [
-      "Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi",
-      "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
-     ]
-    }
-   ]
-  },
-  {
-   "katalog": "01-czat-kanwy",
-   "nazwa": "Czat, Teresa i kanwy",
-   "opis": "Rozmowa z Teresa obok artefaktu, mapa mysli, tablica, diagram procesu, warsztat agenta.",
-   "ekrany": [
-    {
-     "id": "chat-split-teresa-right",
-     "nazwa": "Czat — artefakt po lewej, Teresa po prawej",
-     "ocena": "A",
-     "co": "Uklad rozdzielony wedlug decyzji o miejscu Teresy.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "teresa-confirm-chip",
-     "nazwa": "Teresa — potwierdzenie przed dzialaniem",
-     "ocena": "A",
-     "co": "Potwierdz albo Anuluj przed czynnoscia nieodwracalna, z wyjasnieniem po co.",
-     "naprawione": [],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Kontrolka potwierdzenia w czacie."
-     ]
-    },
-    {
-     "id": "teresa-chipy-panel-artefaktu",
-     "nazwa": "Teresa w panelu artefaktu",
-     "ocena": "A",
-     "co": "Panel Teresy osadzony w innym module.",
-     "naprawione": [
-      "Tytul panelu przybity na sztywno po angielsku",
-      "Angielski komunikat odzysku rozmowy"
-     ],
-     "wyjatki": [
-      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
-     ]
-    },
-    {
-     "id": "teresa-chipy-sugestii",
-     "nazwa": "Teresa — podpowiedzi",
-     "ocena": "A",
-     "co": "Dwa panele rozmowy w kontekscie raportu i wniosku.",
-     "naprawione": [],
-     "wyjatki": [
-      "Ta sama czerwonawa linia"
-     ]
-    },
-    {
-     "id": "ntype-analizuj-ai",
-     "nazwa": "Analizuj z AI — wynik",
-     "ocena": "A",
-     "co": "Braki, ryzyka, sugestie, zmiany. Ekran sam mowi: ocena AI, nie bramka systemowa — nic nie jest blokowane.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "mindmap-canvas",
-     "nazwa": "Mapa mysli",
-     "ocena": "A",
-     "co": "Realna mapa mysli z paskiem podpowiedzi AI.",
-     "naprawione": [
-      "Angielski przycisk Apply"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "mindmap-i18n-smoke",
-     "nazwa": "Mapa mysli — dodaj dowod",
-     "ocena": "A",
-     "co": "Modal dodawania dowodu i zrodla.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "whiteboard-canvas",
-     "nazwa": "Tablica",
-     "ocena": "A",
-     "co": "Tablica z paskiem podpowiedzi AI.",
-     "naprawione": [
-      "Ten sam angielski Apply"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "whiteboard-workshop",
-     "nazwa": "Tablica — warsztat",
-     "ocena": "A",
-     "co": "Tablica oddalona, szesc elementow.",
-     "naprawione": [
-      "Ten sam angielski Apply"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "processflow-canvas",
-     "nazwa": "Diagram procesu",
-     "ocena": "A",
-     "co": "Start, decyzja, koniec, dwa tory.",
-     "naprawione": [
-      "Tekst wylewal sie poza romb decyzyjny i nachodzil na etykiete Tak"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "melscanvas-workspace",
-     "nazwa": "Mala mapa mysli",
-     "ocena": "A",
-     "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "canvas-new-doc",
-     "nazwa": "Kanwa — nowy dokument",
-     "ocena": "A",
-     "co": "Rozwijana lista z trzema drogami startu.",
-     "naprawione": [],
-     "wyjatki": [
-      "Dane testowe nieaktualne wzgledem produktu — realny komponent ma juz polskie etykiety"
-     ]
-    },
-    {
-     "id": "canvas-kebab-restructure",
-     "nazwa": "Kanwa — menu trzech kropek",
-     "ocena": "A",
-     "co": "Zapis przebudowy menu.",
-     "naprawione": [],
-     "wyjatki": [
-      "Stary dowod inzynierski, starszy niz stan produktu"
-     ]
-    },
-    {
-     "id": "canvas-toolbar-md-history",
-     "nazwa": "Kanwa — pasek i historia",
-     "ocena": "A",
-     "co": "Zapis zmian paska glownego.",
-     "naprawione": [],
-     "wyjatki": [
-      "Dane testowe pokazuja stara nazwe przycisku, juz poprawiona w produkcie"
-     ]
-    },
-    {
-     "id": "agent-plan-canvas",
-     "nazwa": "Warsztat agenta — schemat",
-     "ocena": "A",
-     "co": "Dwie sciezki budowy schematu i paleta klockow.",
-     "naprawione": [
-      "Cala paleta po angielsku mimo gotowych tlumaczen polskich — klucze byly, nikt ich nie wpial"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "agent-warsztat",
-     "nazwa": "Warsztat agenta — pelny",
-     "ocena": "A",
-     "co": "Realny schemat procesu z paleta klockow.",
-     "naprawione": [
-      "Ta sama paleta",
-      "Ucinany tytul kroku bez wielokropka"
-     ],
-     "wyjatki": [
-      "Nazwy modulow w srodku schematu zostaja po angielsku — swiadoma decyzja: dane zapisane w schemacie nie sa tlumaczone na zywo"
-     ]
-    },
-    {
-     "id": "agent-hub",
-     "nazwa": "Centrum agentow",
-     "ocena": "B",
-     "co": "Agent Hub — wspolna przestrzen pracy. Teresa przygotowuje prace, Moja praca przechowuje kanoniczne Sprawy i Przebiegi; akcepty, wyniki, historia i odzyskiwanie w tym samym miejscu.",
-     "naprawione": [
-      "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione."
-     ],
-     "wyjatki": [
-      "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
-     ],
-     "gdzie": "Centrum agentów — wspólna przestrzeń pracy Teresy i Mojej pracy"
-    }
-   ]
-  },
-  {
-   "katalog": "13-agent-planowanie",
-   "nazwa": "Agent, planowanie i portfel",
-   "opis": "Uruchamianie agentow, plan inicjatyw, obciazenie zespolu, wycena, rekord inicjatywy, biblioteka DRD.",
-   "ekrany": [
-    {
-     "id": "ev-football-field",
-     "nazwa": "Wycena metoda koszykowa",
-     "ocena": "A",
-     "co": "Ekran wzorcowy. Kwoty w mln PLN, rozjazd metod w procentach, mnozniki z jednostka, czytelna brama strefy przeciecia.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "agent-plan-view",
-     "nazwa": "Uruchom agenta",
-     "ocena": "A",
-     "co": "Lista czterech gotowych agentow w falach.",
-     "naprawione": [
-      "Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "plan-scenario-d1",
-     "nazwa": "Plan inicjatyw",
-     "ocena": "A",
-     "co": "Daty po polsku, stany po polsku.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "capacity-advisor-a3",
-     "nazwa": "Obciazenie zespolu",
-     "ocena": "A",
-     "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "assessment-report-contract",
-     "nazwa": "Kontrakt raportu z oceny",
-     "ocena": "A",
-     "co": "Siedem rozdzialow, macierz osi, limity slow, wersjonowanie.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-financial-case-persistence",
-     "nazwa": "Case finansowy pomyslu",
-     "ocena": "A",
-     "co": "Modal wyliczenia finansowego.",
-     "naprawione": [
-      "Osiem brakujacych kluczy tlumaczen"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "idea-table-timeline-stuck",
-     "nazwa": "Tabela pomyslow — os czasu",
-     "ocena": "A",
-     "co": "Sprawdzone klikiem: przelaczanie widoku dziala, dawny blad zaciecia naprawiony w produkcie.",
-     "naprawione": [
-      "Surowe angielskie tokeny statusu w danych testowych"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "initiative-record",
-     "nazwa": "Rekord inicjatywy",
-     "ocena": "B",
-     "co": "Powloka, etykiety i akcje po polsku, dobry rytm.",
-     "naprawione": [
-      "Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu"
-     ],
-     "wyjatki": [
-      "Tresc danych demo po angielsku — nie ustalono, czy to defekt, czy wybor danych dla klienta miedzynarodowego"
-     ]
-    },
-    {
-     "id": "drd-library-entry",
-     "nazwa": "Biblioteka DRD",
-     "ocena": "B",
-     "co": "Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku.",
-     "naprawione": [
-      "Sciezka i zakladki przybite po angielsku",
-      "Ekran nie byl podlaczony do harnessu"
-     ],
-     "wyjatki": [
-      "Kolumna Zaktualizowano pokazuje date w formacie amerykanskim — defekt wspolnej warstwy tabel, dotyka calej aplikacji"
-     ]
-    },
-    {
-     "id": "initiatives-portfolio-analysis",
-     "nazwa": "Analiza portfela",
-     "ocena": "D",
-     "co": "Nie wiem, jak wyglada — komponent zostal swiadomie usuniety jako martwy kod (12,8 tys. linii). Funkcja nie istnieje w produkcie.",
-     "naprawione": [],
-     "wyjatki": [
-      "To decyzja produktowa, nie kosmetyka — wymaga rozstrzygniecia wlasciciela"
-     ]
-    }
-   ]
-  },
-  {
-   "katalog": "07-realizacja-narzedzia-admin",
-   "nazwa": "Realizacja, Narzedzia i Administracja",
-   "opis": "Raporty z realizacji, SWOT, katalog modeli, centrum dowodzenia, profil organizacji, rozliczenia partnerskie.",
-   "ekrany": [
-    {
-     "id": "zwornik-projects",
-     "nazwa": "Projekty",
-     "ocena": "A",
-     "co": "Lista projektow ze statusami jako pigulki z kropka.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "tools-swot-report",
-     "nazwa": "Raport SWOT",
-     "ocena": "A",
-     "co": "Fakt i hipoteza oznaczone etykieta, kompromisy nazwane.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "tools-swot-initiative-proposal",
-     "nazwa": "SWOT — propozycja inicjatywy",
-     "ocena": "A",
-     "co": "Wyniki i gotowosc z paskiem postepu.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "prompt-registry-tab",
-     "nazwa": "Rejestr promptow",
-     "ocena": "A",
-     "co": "Narzedzie inzynierskie, spojnie w jednym jezyku — nie mieszanka.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "admin-command-center-panel",
-     "nazwa": "Centrum dowodzenia",
-     "ocena": "A",
-     "co": "Zrodla danych nazwane, zero nagich zer.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "admin-sso-self-service-card",
-     "nazwa": "Logowanie firmowe SSO",
-     "ocena": "A",
-     "co": "Formularz SAML i OIDC.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "public-booking-widget",
-     "nazwa": "Publiczna rezerwacja spotkania",
-     "ocena": "A",
-     "co": "W pelni po polsku. Crimson tylko w logo — to marka, nie stan.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "execution-report-day11",
-     "nazwa": "Raport inteligencji pracy",
-     "ocena": "A",
-     "co": "Raport w pelni po polsku.",
-     "naprawione": [
-      "Surowe angielskie stale FACT, RECOMMENDATION, UNKNOWN, RED, AMBER wsrod polskiego tekstu"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "superadmin-platform-operations-day15",
-     "nazwa": "Operacje platformowe",
-     "ocena": "A",
-     "co": "Panel operacji.",
-     "naprawione": [
-      "Odznaka ryzyka pokazywala surowe HIGH i CRITICAL bez tlumaczenia i bez koloru, obok polskiego naglowka"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "org-identity-operating",
-     "nazwa": "Profil organizacji — tozsamosc i skala",
-     "ocena": "A",
-     "co": "Profil organizacji z podpowiedzia Teresy.",
-     "naprawione": [
-      "CRIMSON poza semantyka krytyczna: pierscien kompletnosci, panel Teresy i wszystkie ikony sekcji"
-     ],
-     "wyjatki": [
-      "Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis."
-     ]
-    },
-    {
-     "id": "partner-settlements-view",
-     "nazwa": "Rozliczenia partnerskie",
-     "ocena": "A",
-     "co": "Zestawienie rozliczen.",
-     "naprawione": [
-      "One_time zamiast One Time — podkreslnik nie zamienial sie na spacje"
-     ],
-     "wyjatki": [
-      "Ekran w calosci po angielsku — narzedzie wewnetrzne"
-     ]
-    },
-    {
-     "id": "model-catalog-table",
-     "nazwa": "Katalog modeli",
-     "ocena": "B",
-     "co": "Katalog modeli AI.",
-     "naprawione": [
-      "Surowe TEXT_LLM, IMAGE_MODEL, BUSINESS_MODEL w kartach, chipach i opisie"
-     ],
-     "wyjatki": [
-      "Reszta tabeli po angielsku — osobny, duzo wiekszy dlug tego ekranu nadzorcy"
-     ]
-    },
-    {
-     "id": "exe-002-004-ui-audit",
-     "nazwa": "Audyt kregoslupa realizacji",
-     "ocena": "B",
-     "co": "Realny rekord inicjatywy, dane dzialaja.",
-     "naprawione": [],
-     "wyjatki": [
-      "Status w pasku tozsamosci to zwykly tekst zamiast pigulki — kanon artefaktow wymaga pigulki. Komponent wspoldzielony przez caly modul, za szeroki promien razenia na jeden ekran"
-     ]
-    },
-    {
-     "id": "execution-change-signals",
-     "nazwa": "Sygnaly zmiany w realizacji",
-     "ocena": "D",
-     "co": "Nie istnieje — komponent zostal usuniety z produktu jako fantom bez implementacji.",
-     "naprawione": [],
-     "wyjatki": [
-      "Ekran harnessu wyrejestrowany, plik zostaje"
-     ]
-    },
-    {
-     "id": "execution-export-prezentacja",
-     "nazwa": "Eksport realizacji do prezentacji",
-     "ocena": "D",
-     "co": "Nie istnieje w tej postaci — produkt dawno przeszedl na inna sciezke, ekran testowy nigdy nie zostal zaktualizowany.",
-     "naprawione": [],
-     "wyjatki": [
-      "Ekran harnessu wyrejestrowany, plik zostaje"
-     ]
-    }
-   ]
-  },
-  {
-   "katalog": "12-wywiad-spotkania-org",
-   "nazwa": "Wywiad, Spotkania i Organizacja",
-   "opis": "Kreator wywiadu, sesje, spotkania, kalendarz, publiczna rezerwacja, notatnik, skarbiec dokumentow.",
-   "ekrany": [
-    {
-     "id": "interview-creator-shell",
-     "nazwa": "Kreator wywiadu",
-     "ocena": "A",
-     "co": "Trzy kroki, czysty formularz, po polsku.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "interview-preview-canon",
-     "nazwa": "Podglad sesji wywiadu",
-     "ocena": "A",
-     "co": "Panel podgladu. Ucinany tytul to kanoniczne zachowanie z podpowiedzia, nie defekt.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "interview-sessions-status",
-     "nazwa": "Sesje wywiadow",
-     "ocena": "A",
-     "co": "Lista sesji, statusy kolorowe — nie crimson.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "meetings-module",
-     "nazwa": "Spotkania",
-     "ocena": "A",
-     "co": "Lista spotkan, daty po polsku.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "unified-create-launcher",
-     "nazwa": "Nowy — wybor rodzaju",
-     "ocena": "A",
-     "co": "Wniosek, inicjatywa, decyzja. Slowo Insight zostaje po angielsku swiadomie — to termin produktowy uzywany tak samo w calej aplikacji.",
-     "naprawione": [],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Modal wyboru rodzaju."
-     ]
-    },
-    {
-     "id": "calendar-sync-settings",
-     "nazwa": "Synchronizacja kalendarza",
-     "ocena": "A",
-     "co": "Trzej dostawcy, przelaczniki.",
-     "naprawione": [
-      "Ekran nie byl podlaczony do harnessu",
-      "W motywie ciemnym przelacznik wlaczony byl nieodrozninalny od wylaczonego"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "notebook-quick-capture",
-     "nazwa": "Szybkie wrzucanie notatek",
-     "ocena": "A",
-     "co": "Pasek wrzucania.",
-     "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
-     ],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Jedno pole do wrzucenia mysli."
-     ]
-    },
-    {
-     "id": "vault-scope-selector",
-     "nazwa": "Skarbiec dokumentow",
-     "ocena": "C",
-     "co": "Wgrywanie i lista dokumentow.",
-     "naprawione": [
-      "Crimson na odznakach kategorii",
-      "Daty w formacie amerykanskim"
-     ],
-     "wyjatki": [
-      "Komponent nie ma ani jednego klucza tlumaczen — obudowa w calosci po angielsku, a tytuly dokumentow wpisane przez uzytkownika po polsku. Efekt: jeden ekran, dwa jezyki. To retrofit architektury, nie poprawka koloru"
-     ]
-    }
-   ]
-  },
-  {
-   "katalog": "11-arkusze-raporty",
-   "nazwa": "Arkusze, raporty i prezentacje",
-   "opis": "Excel i arkusze, gotowy raport, wniosek, kreatory szablonow, rejestr wspolny Materialow.",
-   "ekrany": [
-    {
-     "id": "report-artifact",
-     "nazwa": "Raport dla komitetu sterujacego",
-     "ocena": "A",
-     "co": "NAJLEPSZY ekran partii. Pelna polska tresc, waluty wszedzie, procenty sformatowane, czerwien tylko dla Zagrozone. Gotowy do pokazania klientowi.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "excele-jeden-widok-recent",
-     "nazwa": "Excel — strona glowna",
-     "ocena": "A",
-     "co": "Wzorce arkuszy, czysto po polsku, oba motywy.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "excele-jeden-widok-materialy",
-     "nazwa": "Excel — arkusze w Materialach",
-     "ocena": "A",
-     "co": "Tabela kanoniczna, polskie etykiety, szkic fioletowy — nie crimson.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "excele-jeden-widok-pusty",
-     "nazwa": "Excel — stan pusty",
-     "ocena": "A",
-     "co": "Trzy karty wyboru: czysto, z AI, z szablonu.",
-     "naprawione": [],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Dowod, ze pusty arkusz to klikalna siatka, a nie zaslepka."
-     ]
-    },
-    {
-     "id": "excele-prawy-panel-standard",
-     "nazwa": "Excel — prawy panel",
-     "ocena": "A",
-     "co": "Szyna ikon: Akcje, Powiazania, Zrodla, Rezultaty, Historia. Zgodnie z decyzja z 28.07.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "excele-engine-reveal",
-     "nazwa": "Excel — silnik bez serwera",
-     "ocena": "A",
-     "co": "Stan startowy bez backendu, dokladnie jak zapowiada.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "excele-reopen-verify",
-     "nazwa": "Excel — blad generowania",
-     "ocena": "A",
-     "co": "Czytelny komunikat bledu, czerwien uzyta poprawnie.",
-     "naprawione": [
-      "Powiadomienie ignorowalo motyw ciemny — biale okienko na czarnym tle, na WSZYSTKICH ekranach harnessu"
-     ],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
-     ]
-    },
-    {
-     "id": "prezentacje-template-states",
-     "nazwa": "Prezentacje — trzy stany szablonu",
-     "ocena": "A",
-     "co": "Ladowanie, wzorzec bez rekordu, brak dostepu. Wszystkie po polsku.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "gen-word-content-hints",
-     "nazwa": "Kreator szablonow dokumentow",
-     "ocena": "A",
-     "co": "Formularz w calosci po polsku.",
-     "naprawione": [
-      "Kolumna TYP pokazywala surowy kod zamiast nazwy"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "gen-deck-content-hints",
-     "nazwa": "Kreator szablonow prezentacji",
-     "ocena": "A",
-     "co": "Analogicznie czysty.",
-     "naprawione": [
-      "Ten sam surowy kod typu"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "gen-excel-templates-tab",
-     "nazwa": "Szablony skoroszytow",
-     "ocena": "A",
-     "co": "Model P&L, budzet, DCF. Terminologia finansowa to uznane zapozyczenia branzowe.",
-     "naprawione": [],
-     "wyjatki": []
     },
     {
      "id": "excele-edytowalna-siatka",
@@ -1749,16 +1685,23 @@
      ]
     },
     {
-     "id": "insight-artifact",
-     "nazwa": "Wniosek z wywiadu",
-     "ocena": "C",
-     "co": "Powloka poprawna po polsku, ale TRESC wniosku w calosci po angielsku.",
-     "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
-     ],
+     "id": "document-studio-streaming-honesty-n3",
+     "nazwa": "Studio — plan przed pisaniem",
+     "ocena": "B",
+     "co": "Tryb, w ktorym system pokazuje plan zanim zacznie pisac.",
+     "naprawione": [],
      "wyjatki": [
-      "Streszczenie, kluczowe ustalenia, tematy i ryzyka to nie cytaty, tylko wygenerowana tresc — cala po angielsku",
-      "Zdublowany cytat z poczwornym cudzyslowem"
+      "Nie sprawdzono zachowania w trakcie pisania na zywo, tylko stan poczatkowy"
+     ]
+    },
+    {
+     "id": "document-studio-ai-teresa",
+     "nazwa": "Studio — z Teresa",
+     "ocena": "B",
+     "co": "Czat Teresy w studiu dokumentow, bez formularza.",
+     "naprawione": [],
+     "wyjatki": [
+      "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
      ]
     },
     {
@@ -1781,14 +1724,256 @@
       "Brak lokalizacji calego komponentu",
       "Kolumna SEKCJE pokazuje 0 bez wyjasnienia"
      ]
+    },
+    {
+     "id": "insight-artifact",
+     "nazwa": "Wniosek z wywiadu",
+     "ocena": "C",
+     "co": "Powloka poprawna po polsku, ale TRESC wniosku w calosci po angielsku.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Streszczenie, kluczowe ustalenia, tematy i ryzyka to nie cytaty, tylko wygenerowana tresc — cala po angielsku",
+      "Zdublowany cytat z poczwornym cudzyslowem"
+     ]
+    },
+    {
+     "id": "document-studio-m1-share-primary",
+     "nazwa": "Studio — udostepnianie",
+     "ocena": "D",
+     "co": "Ekran nie renderuje sie w harnessie. Ta sama tresc jest dostepna przez menu Plik, ktore dziala.",
+     "naprawione": [],
+     "wyjatki": [
+      "Zdublowany ekran testowy, nie brak funkcji"
+     ]
     }
    ]
   },
   {
-   "katalog": "14-kanon-stany",
-   "nazwa": "Elementy kanonu i stany bledu",
-   "opis": "Wzorcowe klocki, z ktorych zbudowana jest cala aplikacja, oraz komunikaty bledu.",
+   "katalog": "11-audyty",
+   "nazwa": "Audyty",
+   "opis": "Biblioteka audytów i raporty DRD.",
    "ekrany": [
+    {
+     "id": "audyty-piec-powierzchni",
+     "nazwa": "Biblioteka audytow",
+     "ocena": "A",
+     "co": "Weryfikacja i status publikacji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "audyty-raport-dokument",
+     "nazwa": "Raport z audytu",
+     "ocena": "A",
+     "co": "Powloka artefaktu wzorcowa.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "audyty-drd-report",
+     "nazwa": "Raporty DRD wedlug programu",
+     "ocena": "A",
+     "co": "Zestawienie raportow.",
+     "naprawione": [
+      "Angielski naglowek zrodla ASSESSMENT",
+      "Daty w formacie angielskim"
+     ],
+     "wyjatki": [],
+     "gdzie": "Audyty → zakładka „Raporty DRD\" → otwarcie raportu. UWAGA: ta zakładka jest ZA FLAGĄ, domyślnie WYŁĄCZONĄ — w aplikacji jej dziś nie zobaczysz. Dlatego nie wiesz, gdzie to jest."
+    }
+   ]
+  },
+  {
+   "katalog": "12-spotkania",
+   "nazwa": "Spotkania",
+   "opis": "Spotkania, kalendarz, publiczna rezerwacja.",
+   "ekrany": [
+    {
+     "id": "public-booking-widget",
+     "nazwa": "Publiczna rezerwacja spotkania",
+     "ocena": "A",
+     "co": "W pelni po polsku. Crimson tylko w logo — to marka, nie stan.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "meetings-module",
+     "nazwa": "Spotkania",
+     "ocena": "A",
+     "co": "Lista spotkan, daty po polsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "calendar-sync-settings",
+     "nazwa": "Synchronizacja kalendarza",
+     "ocena": "A",
+     "co": "Trzej dostawcy, przelaczniki.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu",
+      "W motywie ciemnym przelacznik wlaczony byl nieodrozninalny od wylaczonego"
+     ],
+     "wyjatki": []
+    }
+   ]
+  },
+  {
+   "katalog": "13-administracja",
+   "nazwa": "Administracja",
+   "opis": "Centrum dowodzenia, operacje platformowe, katalog modeli.",
+   "ekrany": [
+    {
+     "id": "admin-command-center-panel",
+     "nazwa": "Centrum dowodzenia",
+     "ocena": "A",
+     "co": "Zrodla danych nazwane, zero nagich zer.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "admin-sso-self-service-card",
+     "nazwa": "Logowanie firmowe SSO",
+     "ocena": "A",
+     "co": "Formularz SAML i OIDC.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "superadmin-platform-operations-day15",
+     "nazwa": "Operacje platformowe",
+     "ocena": "A",
+     "co": "Panel operacji.",
+     "naprawione": [
+      "Odznaka ryzyka pokazywala surowe HIGH i CRITICAL bez tlumaczenia i bez koloru, obok polskiego naglowka"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "partner-settlements-view",
+     "nazwa": "Rozliczenia partnerskie",
+     "ocena": "A",
+     "co": "Zestawienie rozliczen.",
+     "naprawione": [
+      "One_time zamiast One Time — podkreslnik nie zamienial sie na spacje"
+     ],
+     "wyjatki": [
+      "Ekran w calosci po angielsku — narzedzie wewnetrzne"
+     ]
+    },
+    {
+     "id": "model-catalog-table",
+     "nazwa": "Katalog modeli",
+     "ocena": "B",
+     "co": "Katalog modeli AI.",
+     "naprawione": [
+      "Surowe TEXT_LLM, IMAGE_MODEL, BUSINESS_MODEL w kartach, chipach i opisie"
+     ],
+     "wyjatki": [
+      "Reszta tabeli po angielsku — osobny, duzo wiekszy dlug tego ekranu nadzorcy"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "14-organizacja",
+   "nazwa": "Organizacja",
+   "opis": "Profil organizacji, tożsamość i skala.",
+   "ekrany": [
+    {
+     "id": "org-identity-operating",
+     "nazwa": "Profil organizacji — tozsamosc i skala",
+     "ocena": "A",
+     "co": "Profil organizacji z podpowiedzia Teresy.",
+     "naprawione": [
+      "CRIMSON poza semantyka krytyczna: pierscien kompletnosci, panel Teresy i wszystkie ikony sekcji"
+     ],
+     "wyjatki": [
+      "Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis."
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "15-agent",
+   "nazwa": "Agent",
+   "opis": "Centrum agentów, warsztat i uruchamianie planów.",
+   "ekrany": [
+    {
+     "id": "agent-plan-view",
+     "nazwa": "Uruchom agenta",
+     "ocena": "A",
+     "co": "Lista czterech gotowych agentow w falach.",
+     "naprawione": [
+      "Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "agent-warsztat",
+     "nazwa": "Warsztat agenta — pelny",
+     "ocena": "A",
+     "co": "Realny schemat procesu z paleta klockow.",
+     "naprawione": [
+      "Ta sama paleta",
+      "Ucinany tytul kroku bez wielokropka"
+     ],
+     "wyjatki": [
+      "Nazwy modulow w srodku schematu zostaja po angielsku — swiadoma decyzja: dane zapisane w schemacie nie sa tlumaczone na zywo"
+     ]
+    },
+    {
+     "id": "agent-plan-canvas",
+     "nazwa": "Warsztat agenta — schemat",
+     "ocena": "A",
+     "co": "Dwie sciezki budowy schematu i paleta klockow.",
+     "naprawione": [
+      "Cala paleta po angielsku mimo gotowych tlumaczen polskich — klucze byly, nikt ich nie wpial"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "agent-hub",
+     "nazwa": "Centrum agentow",
+     "ocena": "B",
+     "co": "Agent Hub — wspolna przestrzen pracy. Teresa przygotowuje prace, Moja praca przechowuje kanoniczne Sprawy i Przebiegi; akcepty, wyniki, historia i odzyskiwanie w tym samym miejscu.",
+     "naprawione": [
+      "Ekran nie renderowal sie w ogole — brak nawigacji w harnessie. Naprawione."
+     ],
+     "wyjatki": [
+      "Pierwszy raz widoczny — wymaga wstepnego OK, nie odbioru koncowego"
+     ],
+     "gdzie": "Centrum agentów — wspólna przestrzeń pracy Teresy i Mojej pracy"
+    }
+   ]
+  },
+  {
+   "katalog": "16-kanon",
+   "nazwa": "Kanon i elementy wspólne",
+   "opis": "Wzorcowe klocki, stany błędu, podglądy — nie moduł menu, ale odbieramy osobno.",
+   "ekrany": [
+    {
+     "id": "mw-007-calendar-narrow-viewport",
+     "nazwa": "Kalendarz przy waskim ekranie",
+     "ocena": "A",
+     "co": "Realny kalendarz Mojej pracy.",
+     "naprawione": [
+      "CRIMSON w czterech miejscach: aktywna zakladka Miesiac, dzien dzisiejszy, link do integracji, aktywny filtr",
+      "Pasek narzedzi nie zawijal sie przy waskim ekranie — 100 px przewijania w bok"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "standard-grid-card",
+     "nazwa": "Karta siatki — cztery warianty",
+     "ocena": "A",
+     "co": "Cztery warianty karty. Crimson tylko na Zablokowane i Krytyczne — poprawnie.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": []
+    },
     {
      "id": "standard-module-bar-children",
      "nazwa": "Pasek modulu — szesc wariantow",
@@ -1814,14 +1999,14 @@
      "wyjatki": []
     },
     {
-     "id": "standard-grid-card",
-     "nazwa": "Karta siatki — cztery warianty",
+     "id": "rn-g3-class-l-record-shell",
+     "nazwa": "Rekord wskaznika OEE",
      "ocena": "A",
-     "co": "Cztery warianty karty. Crimson tylko na Zablokowane i Krytyczne — poprawnie.",
-     "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
-     ],
-     "wyjatki": []
+     "co": "Karty metryk i panel wlasciwosci.",
+     "naprawione": [],
+     "wyjatki": [
+      "Pola Wlasciciel i Proces pokazuja surowe identyfikatory zamiast nazw — dane testowe"
+     ]
     },
     {
      "id": "fab-rail-kebab",
@@ -1835,73 +2020,6 @@
      "wyjatki": []
     },
     {
-     "id": "rn-g3-class-l-record-shell",
-     "nazwa": "Rekord wskaznika OEE",
-     "ocena": "A",
-     "co": "Karty metryk i panel wlasciwosci.",
-     "naprawione": [],
-     "wyjatki": [
-      "Pola Wlasciciel i Proces pokazuja surowe identyfikatory zamiast nazw — dane testowe"
-     ]
-    },
-    {
-     "id": "document-studio-resume-error",
-     "nazwa": "Blad — nie znaleziono dokumentu",
-     "ocena": "A",
-     "co": "Cytat: Nie znaleziono tego dokumentu. Mogl zostac usuniety albo odnosnik prowadzi do innego typu materialu. Plus przycisk Wroc do Materialow. Mowi co sie stalo i co zrobic. Zero kodu bledu.",
-     "naprawione": [],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
-     ]
-    },
-    {
-     "id": "document-studio-template-resolve-error",
-     "nazwa": "Blad — nie znaleziono wzorca",
-     "ocena": "A",
-     "co": "Cytat: Nie znaleziono zrodla tego wzorca. Plus przycisk Wroc do biblioteki wzorcow. Krotszy niz sasiedni, ale ludzki i z jasna akcja.",
-     "naprawione": [],
-     "wyjatki": [
-      "PUSTKA ZAMIERZONA: Stan bledu — komunikat JEST trescia."
-     ]
-    },
-    {
-     "id": "word-intake-uselm-default",
-     "nazwa": "Generuj bez szablonu",
-     "ocena": "A",
-     "co": "Formularz z AI wlaczonym domyslnie, zgodnie z decyzja DEC-317.",
-     "naprawione": [
-      "Ucinany tekst bez wielokropka w pieciu polach wyboru"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "mw-007-calendar-narrow-viewport",
-     "nazwa": "Kalendarz przy waskim ekranie",
-     "ocena": "A",
-     "co": "Realny kalendarz Mojej pracy.",
-     "naprawione": [
-      "CRIMSON w czterech miejscach: aktywna zakladka Miesiac, dzien dzisiejszy, link do integracji, aktywny filtr",
-      "Pasek narzedzi nie zawijal sie przy waskim ekranie — 100 px przewijania w bok"
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "results-vnext-legacy-archive",
-     "nazwa": "Archiwum wskaznikow",
-     "ocena": "A",
-     "co": "Tabela archiwum tylko do odczytu. Zero rekordow to stan faktyczny tabeli, nie licznik trybu widoku — regula nagiego zera nie ma tu zastosowania.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
-     "id": "results-vnext-teresa-okr-reflection",
-     "nazwa": "Refleksja nad celami",
-     "ocena": "A",
-     "co": "Formularz refleksji. Czerwony przycisk Zamknij zestaw to swiadomy wybor — zamkniecie cyklu jest nieodwracalne.",
-     "naprawione": [],
-     "wyjatki": []
-    },
-    {
      "id": "standard-kanban-card",
      "nazwa": "Karta kanban",
      "ocena": "B",
@@ -1912,110 +2030,7 @@
      ]
     }
    ]
-  },
-  {
-   "katalog": "15-narzedzia-domkniecie",
-   "nazwa": "Narzedzia — SWOT i rezultaty",
-   "opis": "Dynamiczny SWOT od biblioteki przez sesje do rezultatu, strumien sygnalow, kokpit menedzera.",
-   "ekrany": [
-    {
-     "id": "tools-swot-live",
-     "nazwa": "Dynamiczny SWOT — pole na zywo",
-     "ocena": "A",
-     "co": "Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.",
-     "naprawione": [
-      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
-     ],
-     "wyjatki": [
-      "Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING"
-     ]
-    },
-    {
-     "id": "tools-swot-library-detail",
-     "nazwa": "Dynamiczny SWOT — karta w bibliotece",
-     "ocena": "A",
-     "co": "Pelna powloka artefaktu: menu po lewej, panel po prawej. Tekst wprost mowi, czym narzedzie NIE jest i kiedy go NIE uzywac.",
-     "naprawione": [
-      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
-     ],
-     "wyjatki": [
-      "Kategoria pokazuje surowe strategic zamiast polskiej nazwy"
-     ]
-    },
-    {
-     "id": "tools-outputs-insights-tab",
-     "nazwa": "Narzedzia — zakladka wnioskow",
-     "ocena": "A",
-     "co": "Tabela kanoniczna, statusy i daty po polsku.",
-     "naprawione": [
-      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
-     ],
-     "wyjatki": []
-    },
-    {
-     "id": "chat-signals-feed",
-     "nazwa": "Strumien sygnalow",
-     "ocena": "A",
-     "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny.",
-     "naprawione": [
-      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
-     ],
-     "wyjatki": [
-      "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
-     ]
-    },
-    {
-     "id": "tools-swot-session-workspace",
-     "nazwa": "Dynamiczny SWOT — warsztat sesji",
-     "ocena": "A",
-     "co": "Piec krokow, propozycja AI z uzasadnieniem, liczniki zaakceptowanych punktow.",
-     "naprawione": [
-      "CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po",
-      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
-     ],
-     "wyjatki": [
-      "DRAFT, COPILOT AI i Find Signals po angielsku"
-     ]
-    },
-    {
-     "id": "exec-summary-onelook",
-     "nazwa": "Kokpit menedzera",
-     "ocena": "B",
-     "co": "Piec pytan zarzadczych, jedna odpowiedz na spojrzenie. Wszystkie liczby z jednostka: 71/100, 67%, 1,3 mln PLN, 88%.",
-     "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
-     ],
-     "wyjatki": [
-      "Kolumny POZIOM i TYP ucinane na prawej krawedzi — Przetern, Do decy"
-     ]
-    },
-    {
-     "id": "tools-sesja-wyjscie",
-     "nazwa": "Narzedzia — wyjscie z sesji",
-     "ocena": "B",
-     "co": "Powloka artefaktu z sesja, pytania po polsku.",
-     "naprawione": [
-      "Ekran nie byl podlaczony do harnessu",
-      "CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po"
-     ],
-     "wyjatki": [
-      "Session, DRAFT, COPILOT AI, AI Frame, AI Draft i naglowek OUTPUTS po angielsku",
-      "Surowe dynamic-swot i strategic we wlasciwosciach"
-     ]
-    },
-    {
-     "id": "tool-outputs-panel",
-     "nazwa": "Narzedzia — panel rezultatow",
-     "ocena": "C",
-     "co": "Lista rezultatow sesji z wersjami.",
-     "naprawione": [
-      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
-     ],
-     "wyjatki": [
-      "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy"
-     ]
-    }
-   ]
   }
- ]
+ ],
+ "_kolejnosc": "16 modułów w kolejności menu bocznego — od Czatu w dół (odbiór modułowy, ustalenie właściciela 2026-08-30)"
 }
