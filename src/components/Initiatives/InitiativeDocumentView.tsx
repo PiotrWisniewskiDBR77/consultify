@@ -169,11 +169,9 @@ import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shar
 import {
   type ActivityLogEntry as NModeActivityLogEntry,
   type ActivityTypeMeta,
-  AttachmentsLinksCanvas,
   type CommentItem,
   type CommentPriority,
   type DateFilter,
-  RaidCanvas as NModeRaidCanvas,
   type SortOrder,
 } from '../shared/NModeSections';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
@@ -317,6 +315,25 @@ const SECTION_AI_NOOP_IDS: ReadonlySet<string> = new Set([
   'workstream-owners',
   'suggested-changes',
 ]);
+
+const INITIATIVE_PERSISTED_SECTION_KEYS = {
+  comments: 'comments',
+  'attachments-links': 'linkedItems',
+  'risk-raid': 'raid',
+  raci: 'stakeholders',
+} as const;
+
+export function getInitiativePersistedSectionKey(
+  activeSectionId: string
+):
+  | (typeof INITIATIVE_PERSISTED_SECTION_KEYS)[keyof typeof INITIATIVE_PERSISTED_SECTION_KEYS]
+  | null {
+  return (
+    INITIATIVE_PERSISTED_SECTION_KEYS[
+      activeSectionId as keyof typeof INITIATIVE_PERSISTED_SECTION_KEYS
+    ] || null
+  );
+}
 
 /**
  * SPEC-N §2.5 — KONTRAKT AI PER SEKCJA, deklaracja KOMPLETNA (nie opt-in).
@@ -3816,29 +3833,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         'User'
       : 'User';
 
-    // Optimistic local update
-    const tempId = Math.random().toString(36).substr(2, 9);
-    const newComment: Comment = {
-      id: tempId,
-      content,
-      authorId: currentUserId,
-      authorName,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      likedByMe: false,
-    };
-    setComments((prev) => [...prev, newComment]);
-
-    // Persist to backend
     try {
       const saved = await Api.post(`/initiatives/${initiativeId}/comments`, { content });
-      // Replace temp ID with server-generated ID
-      if (saved?.id) {
-        setComments((prev) => prev.map((c) => (c.id === tempId ? { ...c, id: saved.id } : c)));
-      }
-    } catch {
-      // Comment is shown locally even if persist fails (best-effort)
-      // Endpoint may not exist yet — no toast to avoid noise
+      if (!saved?.id) throw new Error('Comment response did not contain an id');
+      const persistedComment: Comment = {
+        id: String(saved.id),
+        content: String(saved.content || content),
+        authorId: String(saved.authorId || saved.userId || currentUserId),
+        authorName: String(saved.authorName || authorName),
+        createdAt: String(saved.createdAt || new Date().toISOString()),
+        likes: Number(saved.likes || 0),
+        likedByMe: !!saved.likedByMe,
+      };
+      setComments((prev) => [...prev, persistedComment]);
+      toast.success(t('initiatives.commentAdded2', 'Comment added'));
+    } catch (error: any) {
+      toast.error(error?.message || t('initiatives.commentAddFailed2', 'Failed to add comment'));
+      throw error;
     }
   };
 
@@ -3869,18 +3880,43 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         });
         return;
       }
-      setLinkedItems((prev) => [...prev, item]);
+      try {
+        const res: any = await Api.post(`/initiatives/${initiativeId}/linked-items`, {
+          targetType: item.type,
+          targetId: item.id,
+          label: item.title,
+        });
+        const saved = res?.item ?? res;
+        if (!saved?.id) throw new Error('Link response did not contain an id');
+        setLinkedItems((prev) => [...prev, { ...item, id: String(saved.id) }]);
+        toast.success(t('initiatives.linkedItemsSection.itemLinked', 'Item linked'));
+      } catch (error: any) {
+        toast.error(
+          error?.message || t('initiatives.linkedItemsSection.linkError', 'Failed to link item')
+        );
+      }
     },
-    [linkedItems, isPolish]
+    [initiativeId, linkedItems, t]
   );
 
-  const handleRemoveLinkedItem = useCallback(async (item: Pick<LinkedItem, 'id' | 'type'>) => {
-    setLinkedItems((prev) =>
-      prev.filter((i) =>
-        item.type ? !(i.id === item.id && i.type === item.type) : i.id !== item.id
-      )
-    );
-  }, []);
+  const handleRemoveLinkedItem = useCallback(
+    async (item: Pick<LinkedItem, 'id' | 'type'>) => {
+      try {
+        await Api.delete(`/initiatives/${initiativeId}/linked-items/${item.id}`);
+        setLinkedItems((prev) =>
+          prev.filter((i) =>
+            item.type ? !(i.id === item.id && i.type === item.type) : i.id !== item.id
+          )
+        );
+        toast.success(t('initiatives.linkedItemsSection.linkRemoved', 'Link removed'));
+      } catch (error: any) {
+        toast.error(
+          error?.message || t('initiatives.linkedItemsSection.linkError', 'Failed to remove link')
+        );
+      }
+    },
+    [initiativeId, t]
+  );
 
   const searchLinkedItems = useCallback(async (query: string): Promise<LinkedItem[]> => {
     const q = query.trim().toLowerCase();
@@ -6024,16 +6060,28 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ? t('initiatives.informationalComment2')
         : t('initiatives.standardComment2');
 
-  const handleNModeSubmitComment = () => {
+  const handleNModeSubmitComment = async () => {
     if (!nCommentDraft.trim()) return;
-    handleAddComment(nCommentDraft);
-    setNCommentDraft('');
+    try {
+      await handleAddComment(nCommentDraft);
+      setNCommentDraft('');
+    } catch {
+      // Keep the draft so the user can retry after the server error is resolved.
+    }
   };
 
-  const handleDeleteComment = (commentId: string) => {
+  const handleDeleteComment = async (commentId: string) => {
+    const previous = comments;
     setComments((prev) => prev.filter((c) => c.id !== commentId));
-    // Best-effort backend delete (comments are stored in initiative_comments)
-    Api.delete(`/initiatives/${initiativeId}/comments/${commentId}`).catch(() => {});
+    try {
+      await Api.delete(`/initiatives/${initiativeId}/comments/${commentId}`);
+      toast.success(t('initiatives.commentRemoved2', 'Comment removed'));
+    } catch (error: any) {
+      setComments(previous);
+      toast.error(
+        error?.message || t('initiatives.commentRemoveFailed2', 'Failed to remove comment')
+      );
+    }
   };
 
   // ==========================================
@@ -7466,6 +7514,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
         case 'raci': {
           const RaciComp = SECTION_REGISTRY['raciEscalation'];
+          const StakeholdersComp =
+            SECTION_REGISTRY[getInitiativePersistedSectionKey(section.id) || 'stakeholders'];
+          const stakeholdersST = [...leftSections, ...rightSections].find(
+            (s) => s.key === 'stakeholders'
+          );
           const raciFallbackST = {
             id: 'raciEscalation',
             key: 'raciEscalation',
@@ -7483,9 +7536,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             isSystem: false,
             isActive: true,
           };
-          component = RaciComp ? (
-            <RaciComp sectionType={raciFallbackST} expanded={true} onToggle={() => {}} />
-          ) : null;
+          component = (
+            <div className="space-y-6">
+              {RaciComp ? (
+                <RaciComp sectionType={raciFallbackST} expanded={true} onToggle={() => {}} />
+              ) : null}
+              {StakeholdersComp && stakeholdersST ? (
+                <StakeholdersComp
+                  sectionType={stakeholdersST}
+                  expanded={true}
+                  onToggle={() => {}}
+                  readonly={!canEditCards}
+                />
+              ) : null}
+            </div>
+          );
           break;
         }
 
@@ -7611,97 +7676,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'risk-raid': {
-          // N-mode Risk & RAID — uses shared RaidCanvas component
-          const nModeRaidItems = raidItems.map((r: any) => ({
-            id: r.id,
-            type: r.type as any,
-            title: r.title,
-            description: r.description || '',
-            probability: r.probability || undefined,
-            impact: (r.severity || 'MEDIUM').toLowerCase(),
-            category: r.category || undefined,
-            mitigation: r.mitigation || r.mitigationPlan || '',
-            contingency: r.contingency || '',
-            proposedAction: r.proposedAction || '',
-            status: (r.status || 'OPEN').toLowerCase(),
-            responseStrategy: r.responseStrategy || undefined,
-            owner: r.owner || r.ownerName || '',
-            dueDate: r.dueDate || '',
-            source: r.source || '',
-          }));
-          const nModeRaidUsers = users.map((u: any) => ({
-            id: u.id,
-            name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || u.id,
-          }));
-          component = (
-            <NModeRaidCanvas
-              items={nModeRaidItems}
-              onAddItem={(type: any) => {
-                const newItem = {
-                  id: `raid-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                  type,
-                  title: '',
-                  severity: 'MEDIUM' as const,
-                  status: 'OPEN',
-                  owner: '',
-                  mitigationPlan: '',
-                };
-                setRaidItems((prev: any) => [newItem, ...prev]);
-              }}
-              onUpdateItem={(id: string, updates: any) => {
-                setRaidItems((prev: any) =>
-                  prev.map((item: any) => {
-                    if (item.id !== id) return item;
-                    const patch: any = { ...item };
-                    if (updates.title !== undefined) patch.title = updates.title;
-                    if (updates.type !== undefined) patch.type = updates.type;
-                    if (updates.impact !== undefined) patch.severity = updates.impact.toUpperCase();
-                    if (updates.status !== undefined) patch.status = updates.status.toUpperCase();
-                    if (updates.owner !== undefined) patch.owner = updates.owner;
-                    if (updates.mitigation !== undefined) patch.mitigationPlan = updates.mitigation;
-                    if (updates.probability !== undefined) patch.probability = updates.probability;
-                    if (updates.category !== undefined) patch.category = updates.category;
-                    if (updates.contingency !== undefined) patch.contingency = updates.contingency;
-                    if (updates.proposedAction !== undefined)
-                      patch.proposedAction = updates.proposedAction;
-                    if (updates.dueDate !== undefined) patch.dueDate = updates.dueDate;
-                    if (updates.source !== undefined) patch.source = updates.source;
-                    if (updates.responseStrategy !== undefined)
-                      patch.responseStrategy = updates.responseStrategy;
-                    if (updates.description !== undefined) patch.description = updates.description;
-                    return patch;
-                  })
-                );
-              }}
-              onRemoveItem={(id: string) => {
-                setRaidItems((prev: any) => prev.filter((item: any) => item.id !== id));
-              }}
-              onConvertToIssue={(id: string) => {
-                setRaidItems((prev: any) =>
-                  prev.map((item: any) => {
-                    if (item.id !== id) return item;
-                    return {
-                      ...item,
-                      type: 'issue',
-                      status: 'OPEN',
-                      source: `${t('initiatives.convertedFrom2')} ${item.type}: ${item.title}`,
-                    };
-                  })
-                );
-              }}
-              onAIGenerate={() => requestRaidAi()}
-              isGeneratingAI={!!raidAiRequest || isRaidAIProposing}
-              locked={!canEditCards}
-              artifactContext={{
-                title: initiative?.title || initiative?.name || '',
-                status: status || '',
-                priority: priority || '',
-                type: 'initiative',
-              }}
-              fieldKeyPrefix="init"
-              users={nModeRaidUsers}
-            />
-          );
+          const RaidComp = SECTION_REGISTRY[getInitiativePersistedSectionKey(section.id) || 'raid'];
+          const raidST = [...leftSections, ...rightSections].find((s) => s.key === 'raid');
+          component =
+            RaidComp && raidST ? (
+              <RaidComp
+                sectionType={raidST}
+                expanded={true}
+                onToggle={() => {}}
+                readonly={!canEditCards}
+              />
+            ) : null;
           break;
         }
 
@@ -8155,29 +8140,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
         // ── Attachments & Links (shared AttachmentsLinksCanvas — same as Task) ──
         case 'attachments-links': {
+          const AttachmentsComp = SECTION_REGISTRY['attachments'];
+          const LinkedItemsComp =
+            SECTION_REGISTRY[getInitiativePersistedSectionKey(section.id) || 'linkedItems'];
+          const allSectionTypes = [...leftSections, ...rightSections];
+          const attachmentsST = allSectionTypes.find((s) => s.key === 'attachments');
+          const linkedItemsST = allSectionTypes.find((s) => s.key === 'linkedItems');
           component = (
-            <AttachmentsLinksCanvas
-              attachments={attachments}
-              onUploadAttachments={handleUploadAttachments}
-              onDeleteAttachment={handleDeleteAttachment}
-              onEditAttachment={(id, patch) => {
-                setAttachments((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
-              }}
-              linkedItems={linkedItems}
-              onAddLinkedItem={handleAddLinkedItem}
-              onRemoveLinkedItem={handleRemoveLinkedItem}
-              onEditLinkedItem={(key, patch) => {
-                const [type, id] = key.split(':');
-                setLinkedItems((prev) =>
-                  prev.map((item) =>
-                    item.type === type && item.id === id ? { ...item, ...patch } : item
-                  )
-                );
-              }}
-              onNavigateLinkedItem={openLinkedItemTarget}
-              searchLinkedItems={searchLinkedItems}
-              readOnly={!canEditCards}
-            />
+            <div className="space-y-6">
+              {AttachmentsComp && attachmentsST ? (
+                <AttachmentsComp
+                  sectionType={attachmentsST}
+                  expanded={true}
+                  onToggle={() => {}}
+                  readonly={!canEditCards}
+                />
+              ) : null}
+              {LinkedItemsComp && linkedItemsST ? (
+                <LinkedItemsComp
+                  sectionType={linkedItemsST}
+                  expanded={true}
+                  onToggle={() => {}}
+                  readonly={!canEditCards}
+                />
+              ) : null}
+            </div>
           );
           break;
         }

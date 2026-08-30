@@ -25,6 +25,7 @@ import type {
   TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
+import { filterDocumentsByVisibility } from './documentGovernance.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
@@ -1102,15 +1103,40 @@ export class AIPipeline {
             try {
               const { all: dbAll } = await import('../../utils/DbPromise.js');
               const kRows = (await dbAll(
-                `SELECT k.title, k.content
+                `SELECT k.title, k.content, k.doc_id
                  FROM conversations c
                  JOIN project_knowledge k ON k.project_id = c.chat_project_id
                  WHERE c.id = ? AND k.kind = 'text' AND k.content IS NOT NULL
                  ORDER BY k.added_at DESC
                  LIMIT 12`,
                 [convIdForProject]
-              )) as Array<{ title?: string; content?: string }>;
+              )) as Array<{ title?: string; content?: string; doc_id?: string }>;
+              const linkedDocIds = Array.from(
+                new Set(
+                  (kRows || [])
+                    .map((row) => String(row.doc_id || '').trim())
+                    .filter(Boolean)
+                )
+              );
+              const access = await filterDocumentsByVisibility(
+                linkedDocIds,
+                String((request as any).projectId || (request.context as any)?.projectId || '') ||
+                  undefined,
+                String(convIdForProject)
+              );
+              const allowedDocIds = new Set((access.allowed || []).map(String));
+              const quarantinedCount = (kRows || []).filter(
+                (row) => !allowedDocIds.has(String(row.doc_id || '').trim())
+              ).length;
+              if (quarantinedCount > 0) {
+                logger.warn(
+                  `[AIPipeline] Quarantined ${quarantinedCount} project text entr${
+                    quarantinedCount === 1 ? 'y' : 'ies'
+                  } without an allowed governance parent`
+                );
+              }
               const snippets = (kRows || [])
+                .filter((row) => allowedDocIds.has(String(row.doc_id || '').trim()))
                 .map((r) => {
                   const body = String(r.content || '').trim();
                   if (!body) return '';
