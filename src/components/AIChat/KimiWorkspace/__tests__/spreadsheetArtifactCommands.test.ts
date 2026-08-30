@@ -107,21 +107,53 @@ describe('spreadsheetArtifactCommands', () => {
     expect(clearSelectedCell).toHaveBeenCalledOnce();
   });
 
-  it('exposes row and column structure commands only for their matching selections', async () => {
+  it('exposes row and column structure commands for every real selection, never for none', async () => {
+    // 2026-08-30: do tej pory `Wstaw kolumnę` wymagało zaznaczenia CAŁEJ
+    // kolumny, a nagłówki nie wyglądały na klikalne — polecenie było realnie
+    // nieosiągalne. Excel wstawia wiersz/kolumnę względem zaznaczonej KOMÓRKI,
+    // i tak samo liczy to `selectedAxis()` w studiu. Ale przy braku
+    // zaznaczenia polecenie nadal MUSI zniknąć — inaczej klik byłby ciszą.
     const insertRowsAbove = vi.fn();
     const deleteColumns = vi.fn();
+    const insertColumnsLeft = vi.fn();
     const registry = createSpreadsheetArtifactCommandRegistry(
-      payload({ insertRowsAbove, deleteColumns })
+      payload({ insertRowsAbove, deleteColumns, insertColumnsLeft })
     );
 
-    expect(registry.resolveState('xlsx.row.insertAbove', context('row'))).toEqual({ visibility: 'enabled' });
-    expect(registry.resolveState('xlsx.row.insertAbove', context('cell'))).toEqual({ visibility: 'hidden', reason: 'selection' });
+    for (const kind of ['cell', 'range', 'row', 'column'] as const) {
+      expect(registry.resolveState('xlsx.row.insertAbove', context(kind))).toEqual({ visibility: 'enabled' });
+      expect(registry.resolveState('xlsx.column.insertLeft', context(kind))).toEqual({ visibility: 'enabled' });
+    }
+    expect(registry.resolveState('xlsx.row.insertAbove', context('none'))).toEqual({ visibility: 'hidden', reason: 'selection' });
+    expect(registry.resolveState('xlsx.column.insertLeft', context('none'))).toEqual({ visibility: 'hidden', reason: 'selection' });
     expect(registry.resolveState('xlsx.column.delete', context('column'))).toEqual({ visibility: 'enabled' });
 
     await registry.execute('xlsx.row.insertAbove', context('row'));
+    await registry.execute('xlsx.column.insertLeft', context('cell'));
     await registry.execute('xlsx.column.delete', context('column'));
     expect(insertRowsAbove).toHaveBeenCalledOnce();
+    expect(insertColumnsLeft).toHaveBeenCalledOnce();
     expect(deleteColumns).toHaveBeenCalledOnce();
+  });
+
+  it('puts the commands the owner named first in the toolbar order', () => {
+    // ArtifactMenu3 bierze pierwsze `maxVisible` z tej kolejności, resztę
+    // chowa pod „Więcej". Waluta, procent i wstaw/usuń wiersz i kolumnę mają
+    // być WIDOCZNE — to dosłowna prośba właściciela (2026-08-30).
+    const registry = createSpreadsheetArtifactCommandRegistry(payload());
+    const menu3 = registry.query({ placement: 'menu3' }).map((command) => command.commandId);
+
+    expect(menu3.slice(0, 9)).toEqual([
+      'xlsx.history.undo',
+      'xlsx.history.redo',
+      'xlsx.format.currency',
+      'xlsx.format.percent',
+      'xlsx.format.bold',
+      'xlsx.row.insertAbove',
+      'xlsx.row.delete',
+      'xlsx.column.insertLeft',
+      'xlsx.column.delete',
+    ]);
   });
 
   it('exposes real formatting commands for every supported spreadsheet selection', async () => {

@@ -201,6 +201,22 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
     const activeRaw = localSheets[activeSheetIndex];
     const activeComputed = computedSheets[activeSheetIndex];
 
+    /*
+     * AKTYWNA KOMÓRKA OD PIERWSZEJ SEKUNDY (2026-08-30).
+     *
+     * Excel nigdy nie stoi „bez zaznaczenia". U nas stał, i to kosztowało
+     * cały pasek narzędzi: polecenia formatowania i struktury mają predykat
+     * zaznaczenia, więc przy `kind: 'none'` są UKRYTE — po otwarciu arkusza
+     * pasek pokazywał trzy pozycje (Znajdź · Znajdź i zamień · Zamroź),
+     * a pasek formuły napis „Zaznacz komórkę, aby zobaczyć jej treść".
+     * Właściciel widział z tego wniosek jedyny możliwy: „to nie jest Excel".
+     */
+    useEffect(() => {
+      if (selected) return;
+      if (!activeRaw?.rows?.length || !activeRaw.columns?.length) return;
+      setSelected({ rowIndex: 0, colIndex: 0, kind: 'cell' });
+    }, [activeRaw, selected]);
+
     const describeSelection = useCallback(
       (candidate: Selection): SpreadsheetCellSelection | null => {
         if (!activeRaw?.columns?.length) return null;
@@ -772,18 +788,48 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                   aria-label="Zaznacz wszystko"
                   className="sticky left-0 z-20 w-10 border-b border-r border-c-border-subtle bg-c-surface-raised"
                 />
-                {columns.map((col, ci) => (
+                {columns.map((col, ci) => {
+                  /*
+                   * KLIKALNOŚĆ NAGŁÓWKÓW (2026-08-30). `onClick` zaznaczający
+                   * całą kolumnę siedział tu od początku, ale nagłówek nie
+                   * miał ŻADNEJ oznaki, że jest przyciskiem: bez kursora, bez
+                   * podświetlenia, bez stanu zaznaczenia, bez fokusu z
+                   * klawiatury. Audyt: „poprzednik nie umiał wywołać dodawania
+                   * kolumn" — bo polecenie wymagało zaznaczenia, którego nikt
+                   * nie potrafił wykonać. Funkcja bez oznaki to funkcja,
+                   * której nie ma.
+                   *
+                   * Bez `aria-label`: nazwa dostępna nagłówka MUSI zostać
+                   * nazwą kolumny. Podpowiedź idzie przez `title`.
+                   */
+                  const columnSelected =
+                    selected?.kind === 'column' &&
+                    ci >= Math.min(selected.colIndex, selected.endColIndex ?? selected.colIndex) &&
+                    ci <= Math.max(selected.colIndex, selected.endColIndex ?? selected.colIndex);
+                  const selectColumn = (): void => {
+                    setSelected({
+                      rowIndex: 0,
+                      colIndex: ci,
+                      endRowIndex: Math.max((activeRaw.rows?.length ?? 1) - 1, 0),
+                      endColIndex: ci,
+                      kind: 'column',
+                    });
+                    containerRef.current?.focus();
+                  };
+                  return (
                   <th
                     key={`${col.key}-${ci}`}
+                    tabIndex={0}
+                    title={`Kliknij, aby zaznaczyć całą kolumnę ${col.header || col.key}`}
+                    data-selected={columnSelected ? 'true' : undefined}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        selectColumn();
+                      }
+                    }}
                     onClick={() => {
-                      setSelected({
-                        rowIndex: 0,
-                        colIndex: ci,
-                        endRowIndex: Math.max((activeRaw.rows?.length ?? 1) - 1, 0),
-                        endColIndex: ci,
-                        kind: 'column',
-                      });
-                      containerRef.current?.focus();
+                      selectColumn();
                     }}
                     onContextMenu={(event) => {
                       event.preventDefault();
@@ -803,11 +849,16 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                           selection: described,
                         });
                     }}
-                    className="px-3 py-2 text-left font-medium text-c-text-secondary border-b border-c-border-subtle whitespace-nowrap"
+                    className={`cursor-pointer select-none px-3 py-2 text-left font-medium border-b border-c-border-subtle whitespace-nowrap transition-colors hover:bg-c-surface hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
+                      columnSelected
+                        ? 'bg-c-surface text-c-text shadow-[inset_0_-2px_0_0_var(--c-focus-solid)]'
+                        : 'text-c-text-secondary'
+                    }`}
                   >
                     {col.header || col.key}
                   </th>
-                ))}
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -815,6 +866,28 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                 <tr key={ri} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
                   <th
                     scope="row"
+                    tabIndex={0}
+                    title={`Kliknij, aby zaznaczyć cały wiersz ${excelRowForDataRowIndex(ri)}`}
+                    data-selected={
+                      selected?.kind === 'row' &&
+                      ri >= Math.min(selected.rowIndex, selected.endRowIndex ?? selected.rowIndex) &&
+                      ri <= Math.max(selected.rowIndex, selected.endRowIndex ?? selected.rowIndex)
+                        ? 'true'
+                        : undefined
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setSelected({
+                          rowIndex: ri,
+                          colIndex: 0,
+                          endRowIndex: ri,
+                          endColIndex: Math.max(columns.length - 1, 0),
+                          kind: 'row',
+                        });
+                        containerRef.current?.focus();
+                      }
+                    }}
                     onClick={() => {
                       setSelected({
                         rowIndex: ri,
@@ -843,7 +916,7 @@ export const EditableSpreadsheetGrid = React.forwardRef<EditableSpreadsheetGridH
                           selection: described,
                         });
                     }}
-                    className="sticky left-0 z-[5] w-10 cursor-pointer border-r border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-center font-mono text-[10px] font-normal text-c-text-secondary"
+                    className="sticky left-0 z-[5] w-10 cursor-pointer select-none border-r border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-center font-mono text-[10px] font-normal text-c-text-secondary transition-colors hover:bg-c-surface hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] data-[selected=true]:bg-c-surface data-[selected=true]:font-semibold data-[selected=true]:text-c-text data-[selected=true]:shadow-[inset_-2px_0_0_0_var(--c-focus-solid)]"
                   >
                     {excelRowForDataRowIndex(ri)}
                   </th>

@@ -49,7 +49,37 @@ describe('Artifact Studio rollout flags', () => {
     };
     expect(isArtifactStudioLaneEnabled('document', source)).toBe(true);
     expect(isArtifactStudioLaneEnabled('presentation', source)).toBe(false);
-    expect(isArtifactStudioLaneEnabled('spreadsheet', source)).toBe(false);
+    // Arkusz jest DOMYŚLNIE włączony (decyzja właściciela 2026-08-30), więc
+    // globalna flaga na „1" bez jawnej wartości toru wystarcza.
+    expect(isArtifactStudioLaneEnabled('spreadsheet', source)).toBe(true);
+  });
+
+  it('has the spreadsheet lane on by default while document and presentation stay fail-closed', () => {
+    // ★ To jest bezpiecznik regresji WORDA. Gdyby ktoś przestawił domyślną
+    // wartość wspólnie dla wszystkich torów, `DocumentStudioDocumentPanel`
+    // wygasiłby prawy pas ikon — czyli zabrałby Wordowi panel, który
+    // właściciel uznaje za działający.
+    expect(isArtifactStudioLaneEnabled('spreadsheet', {})).toBe(true);
+    expect(isArtifactStudioLaneEnabled('document', {})).toBe(false);
+    expect(isArtifactStudioLaneEnabled('presentation', {})).toBe(false);
+  });
+
+  it('keeps an explicit off switch for the spreadsheet lane (przycisk cofania)', () => {
+    expect(
+      isArtifactStudioLaneEnabled('spreadsheet', {
+        query: new URLSearchParams('ff_spreadsheetStudioV2=0'),
+      })
+    ).toBe(false);
+    expect(
+      isArtifactStudioLaneEnabled('spreadsheet', {
+        query: new URLSearchParams('ff_artifactStudio=0'),
+      })
+    ).toBe(false);
+    expect(
+      isArtifactStudioLaneEnabled('spreadsheet', {
+        env: { VITE_SPREADSHEET_STUDIO_V2: 'false' },
+      })
+    ).toBe(false);
   });
 
   it('reports flag provenance without exposing raw values', () => {

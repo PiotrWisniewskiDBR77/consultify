@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -291,6 +291,56 @@ describe('SpreadsheetArtifactStudio', () => {
     expect(screen.getByRole('button', { name: 'Eksportuj XLSX' })).toBeInTheDocument();
   });
 
+  it('gives the workbook a right panel and moves file metadata into it', () => {
+    // 2026-08-30, uwaga właściciela powtórzona trzykrotnie: „Wyrzucamy całą tę
+    // zabawę z góry do prawego menu, do prawego panelu". Tryb warsztatu
+    // wygaszał KAŻDĄ prawą powierzchnię, więc nazwa pliku, format i liczba
+    // arkuszy nie miały dokąd zjechać z góry ekranu.
+    render(
+      <MemoryRouter>
+        <SpreadsheetArtifactStudio
+          preview={preview}
+          workbookId="wb-1"
+          onDownload={vi.fn()}
+          onCopyLink={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    const panel = screen.getByTestId('artifact-studio-right-panel');
+    expect(within(panel).getByText('Nazwa pliku')).toBeInTheDocument();
+    expect(within(panel).getByText('Format')).toBeInTheDocument();
+    expect(within(panel).getByText('Arkusze')).toBeInTheDocument();
+    // Eksport i udostępnianie zostają w pasku tytułu — panel ich NIE dubluje.
+    expect(within(panel).queryByRole('button', { name: 'Eksportuj XLSX' })).toBeNull();
+  });
+
+  it('keeps the owner-named commands visible in the toolbar instead of under „Więcej"', () => {
+    render(
+      <MemoryRouter>
+        <SpreadsheetArtifactStudio
+          preview={preview}
+          workbookId="wb-1"
+          onDownload={vi.fn()}
+          onCopyLink={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
+    const toolbar = screen.getByTestId('artifact-menu3');
+    for (const label of [
+      'Waluta',
+      'Procent',
+      'Wstaw wiersz',
+      'Usuń wiersz',
+      'Wstaw kolumnę',
+      'Usuń kolumnę',
+    ]) {
+      expect(within(toolbar).getByRole('button', { name: label })).toBeInTheDocument();
+    }
+  });
+
   it('renames the workbook from Menu2 and adopts the returned version', async () => {
     render(
       <MemoryRouter>
@@ -578,8 +628,13 @@ describe('SpreadsheetArtifactStudio', () => {
     expect(screen.queryByRole('button', { name: 'Edytuj komórkę' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'sheet:0' }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edytuj komórkę' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Wyczyść zawartość' }));
+    // Od 2026-08-30 pierwsze dziewięć miejsc w pasku zajmują polecenia, o które
+    // prosił właściciel (waluta, procent, wiersze, kolumny), więc „Edytuj
+    // komórkę" i „Wyczyść zawartość" mieszkają pod „Więcej".
+    fireEvent.click(screen.getByRole('button', { name: 'Więcej narzędzi' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edytuj komórkę' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Więcej narzędzi' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Wyczyść zawartość' }));
 
     expect(editSelectedCell).toHaveBeenCalledOnce();
     expect(clearSelectedCell).toHaveBeenCalledOnce();
@@ -839,8 +894,9 @@ describe('SpreadsheetArtifactStudio', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'zaznacz wiersze' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Więcej narzędzi' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Wstaw wiersz wyżej' }));
+    // „Wstaw wiersz" jest teraz WPROST w pasku, nie pod „Więcej" — to była
+    // dosłowna prośba właściciela (2026-08-30).
+    fireEvent.click(screen.getByRole('button', { name: 'Wstaw wiersz' }));
 
     await waitFor(() =>
       expect(apiMocks.applyWorkbookCommands).toHaveBeenCalledWith(
