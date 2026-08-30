@@ -38,6 +38,17 @@ const MOTYWY = arg('motywy', 'light,dark').split(',').map((s) => s.trim()).filte
 const SZEROKOSC = Number(arg('szerokosc', '1440'));
 const WYSOKOSC = Number(arg('wysokosc', '900'));
 const OSIAD = Number(arg('osiad', '2500')); // ile ms po networkidle — ekrany dociągają dane po kolei
+const JEZYK = arg('jezyk', 'pl');
+/**
+ * Dodatkowe parametry adresu, np. flagi funkcji: --parametry=ff_org_redesign_v1=1&sub=all
+ *
+ * POWÓD ISTNIENIA (odbiór grafiki 2026-08-30): ekran „Tożsamość i model działania"
+ * bez `ff_org_redesign_v1=1` renderuje STARĄ powierzchnię, nie docelową. Robotnik
+ * zmierzył wariant, którego nie oceniał, i o mało nie zgłosił defektu z ekranu,
+ * który nie jest tym ekranem. Bez tego przełącznika narzędzie po cichu mierzy
+ * niewłaściwą rzecz — a to jest gorsze niż brak pomiaru.
+ */
+const PARAMETRY = arg('parametry', '').replace(/^[?&]/, '');
 
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
@@ -68,7 +79,7 @@ for (const ekran of EKRANY) {
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
     });
-    const url = `${BASE}/?screen=${ekran}&lang=pl&theme=${motyw}`;
+    const url = `${BASE}/?screen=${ekran}&lang=${JEZYK}&theme=${motyw}${PARAMETRY ? `&${PARAMETRY}` : ''}`;
     const plik = path.join(OUT, `${ekran}__${FAZA}__${motyw}.png`);
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
