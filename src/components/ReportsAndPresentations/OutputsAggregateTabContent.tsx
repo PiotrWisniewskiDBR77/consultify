@@ -74,6 +74,47 @@ function formatLabel(value: string | null | undefined): string {
     .join(' ');
 }
 
+// GRAFIKA (2026-08-30): kolumny WIDOCZNOŚĆ/PRZEGLĄD renderowały surowy enum
+// przez formatLabel() (np. governance.visibilityScope='organization' →
+// "Organization") zamiast tłumaczenia — mimo że te same wartości mają już
+// gotowe klucze i18n używane przez filtr w ReportsAndPresentationsHub.tsx
+// (visibilityOptions/reviewStateOptions, linie ~843-893). Mapy niżej to
+// DOKŁADNIE ten sam zestaw klucz→wartość — jedno źródło prawdy, dwa miejsca
+// użycia. Wartość spoza mapy nadal spada na formatLabel() (bezpieczny
+// fallback identyczny ze stanem sprzed naprawy).
+const VISIBILITY_LABEL_KEYS: Record<string, string> = {
+  private: 'rap.outputs.visibility.private',
+  review_shared: 'rap.outputs.visibility.reviewShared',
+  project: 'rap.outputs.visibility.project',
+  organization: 'rap.outputs.visibility.organization',
+  demo: 'rap.outputs.visibility.demo',
+};
+
+const REVIEW_STATE_LABEL_KEYS: Record<string, string> = {
+  private_draft: 'rap.outputs.review.privateDraft',
+  reviewable_share: 'rap.outputs.review.reviewableShare',
+  in_review: 'rap.outputs.review.inReview',
+  approved: 'rap.outputs.review.approved',
+  published: 'rap.outputs.review.published',
+  archived: 'rap.outputs.review.archived',
+};
+
+function formatVisibilityLabel(
+  value: string | null | undefined,
+  t: (key: string, fallback?: string) => string
+): string {
+  const key = value ? VISIBILITY_LABEL_KEYS[value] : undefined;
+  return key ? t(key, formatLabel(value)) : formatLabel(value);
+}
+
+function formatReviewStateLabel(
+  value: string | null | undefined,
+  t: (key: string, fallback?: string) => string
+): string {
+  const key = value ? REVIEW_STATE_LABEL_KEYS[value] : undefined;
+  return key ? t(key, formatLabel(value)) : formatLabel(value);
+}
+
 /**
  * TYP column label for `kind === 'sheet'` rows (inwentarz Excel 27.07): a flat
  * Table Studio export ("tabela o niczym" bez treści) and a real generated
@@ -111,7 +152,7 @@ function formatReviewSummary(
   row: Pick<UnifiedOutputRow, 'governance'>,
   t: (key: string, fallback?: string) => string
 ): string {
-  const state = formatLabel(row.governance?.publishState);
+  const state = formatReviewStateLabel(row.governance?.publishState, t);
   if (state === '—') return '—';
   const gateCount = row.governance?.reviewGateCount;
   if (typeof gateCount === 'number' && gateCount > 0) {
@@ -482,7 +523,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           const row = rawRow as unknown as AggregateRow;
           return (
             <span className="text-xs text-c-text-secondary">
-              {formatLabel(row.governance?.visibilityScope)}
+              {formatVisibilityLabel(row.governance?.visibilityScope, translate)}
             </span>
           );
         },
@@ -1217,7 +1258,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               details={{
                 text: [
                   `${t('rap.columns.owner', 'Owner')}: ${previewItem.owner || '—'}`,
-                  `${t('rap.outputs.columns.visibility', 'Visibility')}: ${formatLabel(previewItem.governance?.visibilityScope)}`,
+                  `${t('rap.outputs.columns.visibility', 'Visibility')}: ${formatVisibilityLabel(previewItem.governance?.visibilityScope, translate)}`,
                   `${t('rap.outputs.columns.source', 'Source')}: ${formatSourceSummary(previewItem, translate)}`,
                   `${t('rap.outputs.columns.review', 'Review')}: ${formatReviewSummary(previewItem, translate)}`,
                   `${t('rap.outputs.columns.exports', 'Exports')}: ${previewItem.exportFormats.length ? previewItem.exportFormats.join(', ').toUpperCase() : '—'}`,
