@@ -1,8 +1,8 @@
 # CODEX DAY 161 — integralność łańcucha migracji
 
-Data pomiaru: 2026-08-30  
-Marker: `218d020958`  
-Gałąź: `codex/day161-lancuch-migracji-20260830`  
+Data pomiaru: 2026-08-30
+Marker: `218d020958`
+Gałąź: `codex/day161-lancuch-migracji-20260830`
 Werdykt: **R1 PASS, R3 PASS, R2 PARTIAL, R4 NIE DOTYCZY — brak nowego przypadku potwierdzonego przebiegiem**.
 
 Przyrost na bazie już zmigrowanej nie jest dowodem integralności łańcucha. Wszystkie twierdzenia o pełnym łańcuchu poniżej pochodzą z efemerycznej pustej bazy `cx-day161-pg`, `pgvector/pgvector:pg16`, opublikowanej wyłącznie na `127.0.0.1:6049`.
