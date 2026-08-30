@@ -1,622 +1,1041 @@
 {
-  "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
-  "_zaktualizowano": "2026-08-30",
-  "moduly": [
+ "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
+ "_zaktualizowano": "2026-08-30",
+ "moduly": [
+  {
+   "katalog": "00-karty-artefaktow",
+   "nazwa": "Karty artefaktow",
+   "opis": "Obiekty pracy otwierane z listy: decyzja, wniosek, zadanie, narzedzie, powiadomienie, wywiad.",
+   "ekrany": [
     {
-      "katalog": "00-karty-artefaktow",
-      "nazwa": "Karty artefaktow",
-      "opis": "Obiekty pracy otwierane z listy: decyzja, wniosek, zadanie, narzedzie, powiadomienie, wywiad.",
-      "ekrany": [
-        {
-          "id": "karta-decision",
-          "nazwa": "Karta decyzji",
-          "ocena": "A",
-          "co": "Pelna polszczyzna, przycisk glowny, szesc sekcji panelu, uczciwy baner o zapisie lokalnym.",
-          "naprawione": [
-            "Termin pokazywal surowe ISO zamiast daty po ludzku"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "karta-insight",
-          "nazwa": "Karta wniosku",
-          "ocena": "A",
-          "co": "Bez odchylen od kanonu.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "karta-task",
-          "nazwa": "Karta zadania",
-          "ocena": "A",
-          "co": "Bez odchylen. Czerwien na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "karta-tool",
-          "nazwa": "Karta narzedzia",
-          "ocena": "A",
-          "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "karta-notification",
-          "nazwa": "Karta powiadomienia",
-          "ocena": "A",
-          "co": "Bez odchylen.",
-          "naprawione": [],
-          "wyjatki": [
-            "Kolory ostrzezenia i informacji uzywaja surowych wartosci zamiast tokenow — dlug zastany, do zbiorczego sweepu"
-          ]
-        },
-        {
-          "id": "decision-record",
-          "nazwa": "Zapis decyzji",
-          "ocena": "B",
-          "co": "Ten sam komponent co karta decyzji, inne dane.",
-          "naprawione": [
-            "Angielskie tytuly powiazanych zadan na polskim ekranie"
-          ],
-          "wyjatki": [
-            "Nie otwieralem zwinietych sekcji Komentarze i Zrodla — moga tam byc jeszcze angielskie teksty"
-          ]
-        },
-        {
-          "id": "karta-interview",
-          "nazwa": "Karta wywiadu",
-          "ocena": "C",
-          "co": "Prawy panel ma trzy z szesciu kanonicznych sekcji.",
-          "naprawione": [],
-          "wyjatki": [
-            "Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy."
-          ]
-        }
-      ]
+     "id": "karta-decision",
+     "nazwa": "Karta decyzji",
+     "ocena": "A",
+     "co": "Pelna polszczyzna, przycisk glowny, szesc sekcji panelu, uczciwy baner o zapisie lokalnym.",
+     "naprawione": [
+      "Termin pokazywal surowe ISO zamiast daty po ludzku"
+     ],
+     "wyjatki": []
     },
     {
-      "katalog": "06-inicjatywy",
-      "nazwa": "Inicjatywy",
-      "opis": "Karta inicjatywy — najbogatszy artefakt w produkcie.",
-      "ekrany": [
-        {
-          "id": "karta-initiative",
-          "nazwa": "Karta inicjatywy",
-          "ocena": "B",
-          "co": "Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza.",
-          "naprawione": [
-            "Nagie zero przy Akcjach — dopisane zdanie, ze liczba opisuje widok, nie inicjatywe",
-            "Angielskie opisy cyklu zycia w sekcji Bramy — naprawione u zrodla, dziala teraz wszedzie"
-          ],
-          "wyjatki": [
-            "Zapisano bez daty i godziny",
-            "Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu",
-            "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna"
-          ]
-        }
-      ]
+     "id": "karta-insight",
+     "nazwa": "Karta wniosku",
+     "ocena": "A",
+     "co": "Bez odchylen od kanonu.",
+     "naprawione": [],
+     "wyjatki": []
     },
     {
-      "katalog": "08-wyniki",
-      "nazwa": "Wyniki",
-      "opis": "Wskazniki, ROI i cele OKR. Modul, ktorego nigdy nie widziales — 14 z 16 ekranow bez zastrzezen.",
-      "ekrany": [
-        {
-          "id": "results-vnext-kpi-registry",
-          "nazwa": "Rejestr wskaznikow",
-          "ocena": "A",
-          "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-kpi-scorecards",
-          "nazwa": "Karty wynikow",
-          "ocena": "A",
-          "co": "Lista kart z panelem podgladu.",
-          "naprawione": [
-            "Angielskie naglowki podgladu"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-kpi-tool",
-          "nazwa": "Narzedzie wskaznika",
-          "ocena": "A",
-          "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.",
-          "naprawione": [
-            "Surowe statusy pomiaru zamiast etykiet"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-roi-registry",
-          "nazwa": "Rejestr ROI",
-          "ocena": "A",
-          "co": "Siedem spraw ROI z realnymi nazwiskami i statusami.",
-          "naprawione": [
-            "Angielskie naglowki podgladu"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-roi-full-tool",
-          "nazwa": "Pelne narzedzie ROI",
-          "ocena": "A",
-          "co": "Rejestr z kebabem prowadzacym do pelnego narzedzia.",
-          "naprawione": [],
-          "wyjatki": [
-            "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
-          ]
-        },
-        {
-          "id": "results-vnext-roi-model",
-          "nazwa": "Model ROI",
-          "ocena": "A",
-          "co": "Baza porownania i polityka kalkulacji.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-roi-pir-outcomes",
-          "nazwa": "Wyniki po wdrozeniu",
-          "ocena": "A",
-          "co": "Cztery sprawy z wynikiem przegladu powdrozeniowego.",
-          "naprawione": [
-            "Angielskie naglowki podgladu"
-          ],
-          "wyjatki": [
-            "Brak kebaba i filtrow — udokumentowany celowy, minimalny zakres widoku"
-          ]
-        },
-        {
-          "id": "results-vnext-okr-registry",
-          "nazwa": "Rejestr OKR",
-          "ocena": "A",
-          "co": "Dziewiec zestawow celow, tabela osmiu kolumn.",
-          "naprawione": [
-            "Pigulka ucinana w kolumnie UWAGA"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-okr-objectives",
-          "nazwa": "Cele",
-          "ocena": "A",
-          "co": "Piec celow z kluczowymi rezultatami.",
-          "naprawione": [
-            "Angielskie N/A zamiast N.D."
-          ],
-          "wyjatki": [
-            "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie"
-          ]
-        },
-        {
-          "id": "results-vnext-okr-workspace",
-          "nazwa": "Warsztat zestawu OKR",
-          "ocena": "A",
-          "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-okr-admin",
-          "nazwa": "Programy OKR",
-          "ocena": "A",
-          "co": "Uczciwy stan: funkcja jeszcze nie wlaczona.",
-          "naprawione": [],
-          "wyjatki": [
-            "To prawdziwy stan flagi, nie defekt"
-          ]
-        },
-        {
-          "id": "results-vnext-attention",
-          "nazwa": "Uwaga",
-          "ocena": "A",
-          "co": "Siedem zakladek uwag z realnymi kodami wskaznikow.",
-          "naprawione": [],
-          "wyjatki": [
-            "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
-          ]
-        },
-        {
-          "id": "results-vnext-search-registry",
-          "nazwa": "Wyszukiwarka",
-          "ocena": "A",
-          "co": "Wyszukiwanie po wskaznikach, ROI i celach; uczciwy stan poczatkowy.",
-          "naprawione": [
-            "Surowe statusy i nazwy pol dopasowania"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "results-vnext-teresa-kpi-deviation",
-          "nazwa": "Sprawa odchylenia",
-          "ocena": "A",
-          "co": "Formularz sprawy z uczciwymi komunikatami o brakach.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "results-three-pairs",
-          "nazwa": "Trzy pary cel-wynik",
-          "ocena": "A",
-          "co": "Pary wskaznik/ROI/OKR z paskiem postepu i 'Brak danych' zamiast nagiego zera.",
-          "naprawione": [],
-          "wyjatki": [
-            "Ogladana tylko domyslna zakladka"
-          ]
-        },
-        {
-          "id": "results-vnext-registry-shell",
-          "nazwa": "Powloka rejestru",
-          "ocena": "D",
-          "co": "Ekran po angielsku.",
-          "naprawione": [],
-          "wyjatki": [
-            "Sprawdzone: to fixtura testujaca mechanike wspolnej powloki, nie ekran produktowy. Nie pokazuje sie wlascicielowi."
-          ]
-        }
-      ]
+     "id": "karta-task",
+     "nazwa": "Karta zadania",
+     "ocena": "A",
+     "co": "Bez odchylen. Czerwien na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona.",
+     "naprawione": [],
+     "wyjatki": []
     },
     {
-      "katalog": "09-finanse",
-      "nazwa": "Finanse",
-      "opis": "Modele, wyceny, prognozy i sprawozdania. Widziales stad wylacznie model finansowy — reszta jest dla Ciebie nowa.",
-      "ekrany": [
-        {
-          "id": "finance-model-workspace",
-          "nazwa": "Model finansowy",
-          "ocena": "B",
-          "co": "Model bazowy z danymi wejsciowymi i bilansem otwarcia.",
-          "naprawione": [
-            "Surowy enum 'quarterly' zamiast etykiety",
-            "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika"
-          ],
-          "wyjatki": [
-            "Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany"
-          ]
-        },
-        {
-          "id": "finance-analysis-workspace",
-          "nazwa": "Analiza",
-          "ocena": "B",
-          "co": "Uczciwy pusty stan i tabela wskaznikow z formulami.",
-          "naprawione": [
-            "Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku"
-          ],
-          "wyjatki": [
-            "Wartosci wskaznikow bez znaku procenta — brak metadanych jednostki w danych, nie do naprawy w wygladzie"
-          ]
-        },
-        {
-          "id": "finance-valuation-workspace",
-          "nazwa": "Wycena",
-          "ocena": "B",
-          "co": "Lancuch pochodzenia wyceny i most od wartosci przedsiebiorstwa do kapitalu.",
-          "naprawione": [
-            "Dwa z trzech krokow lancucha po angielsku",
-            "Brak procenta przy wadze metody",
-            "Kropka zamiast przecinka dziesietnego"
-          ],
-          "wyjatki": [
-            "Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty"
-          ]
-        },
-        {
-          "id": "finance-prediction-workspace",
-          "nazwa": "Prognoza",
-          "ocena": "B",
-          "co": "Budowa scenariuszy z paskiem statusu.",
-          "naprawione": [
-            "'Rewizja authoringu: .' — pusta wartosc i znieksztalcone slowo"
-          ],
-          "wyjatki": [
-            "Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module"
-          ]
-        },
-        {
-          "id": "finance-statement-pack-workspace-v2",
-          "nazwa": "Pakiet sprawozdan",
-          "ocena": "B",
-          "co": "Tabela sprawozdania i panel powiazanych artefaktow.",
-          "naprawione": [
-            "Wszystkie naglowki panelu powiazan po angielsku",
-            "Surowe kody przeksztalcen"
-          ],
-          "wyjatki": [
-            "Liczba przy etykiecie 'skala: tysiace' wyglada jak znany wzorzec podwojenia jednostki — dane makietowe, nie zweryfikowane wobec zywej bazy"
-          ]
-        },
-        {
-          "id": "finance-compare-panel",
-          "nazwa": "Porownanie okresow",
-          "ocena": "B",
-          "co": "Tabela porownania z roznicami.",
-          "naprawione": [
-            "Angielska etykieta trybu",
-            "Dodana waluta z istniejacych danych"
-          ],
-          "wyjatki": [
-            "Kody pozycji w kolumnie wymiarow — dane makietowe"
-          ]
-        },
-        {
-          "id": "finance-comments-panel",
-          "nazwa": "Komentarze",
-          "ocena": "A",
-          "co": "Komentarze blokujace i lista kontrolna przegladu.",
-          "naprawione": [
-            "Angielski naglowek sekcji"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "finance-saved-views-panel",
-          "nazwa": "Zapisane widoki",
-          "ocena": "A",
-          "co": "Widoki zespolowe i osobiste.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "finance-export-import-panel",
-          "nazwa": "Eksport i import",
-          "ocena": "B",
-          "co": "Wymiana arkusza z manifestem.",
-          "naprawione": [
-            "'jednostka THOUSANDS' — surowy enum, ta sama klasa defektu co w prezentacji"
-          ],
-          "wyjatki": [
-            "'Choose File' to natywna kontrolka przegladarki — nieprzetlumaczalna bez wlasnego uploadera"
-          ]
-        },
-        {
-          "id": "finance-lineage-navigator",
-          "nazwa": "Nawigator pochodzenia",
-          "ocena": "A",
-          "co": "Lancuch powiazan z uczciwym zerem: '0 / Brak.'",
-          "naprawione": [],
-          "wyjatki": [
-            "Wzorcowy przyklad prawa liczby — zero zawsze z wyjasnieniem"
-          ]
-        },
-        {
-          "id": "finance-workspace-bar",
-          "nazwa": "Pasek tozsamosci",
-          "ocena": "A",
-          "co": "Izolowany podglad wspolnego paska.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "finance-baseline-workspace",
-          "nazwa": "Baza porownania",
-          "ocena": "C",
-          "co": "Trwaly stan bledu — harness nie ma atrapy jednego wywolania.",
-          "naprawione": [
-            "Crimson na linku 'Sprobuj ponownie'"
-          ],
-          "wyjatki": [
-            "Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy."
-          ]
-        },
-        {
-          "id": "finance-value-panels",
-          "nazwa": "Panele wartosci",
-          "ocena": "C",
-          "co": "Most wartosci i planer nosnikow.",
-          "naprawione": [],
-          "wyjatki": [
-            "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu."
-          ]
-        },
-        {
-          "id": "finance-focus-mode",
-          "nazwa": "Tryb skupienia (diagnostyka)",
-          "ocena": "D",
-          "co": "Narzedzie inzynierskie, nie ekran produktu.",
-          "naprawione": [],
-          "wyjatki": [
-            "Nie pokazuje sie jako ekran produktu"
-          ]
-        },
-        {
-          "id": "finance-id-bridge",
-          "nazwa": "Most identyfikatorow (diagnostyka)",
-          "ocena": "D",
-          "co": "Narzedzie inzynierskie, nie ekran produktu.",
-          "naprawione": [],
-          "wyjatki": [
-            "Nie pokazuje sie jako ekran produktu"
-          ]
-        }
-      ]
+     "id": "karta-tool",
+     "nazwa": "Karta narzedzia",
+     "ocena": "A",
+     "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
+     "naprawione": [],
+     "wyjatki": []
     },
     {
-      "katalog": "02-moja-praca",
-      "nazwa": "Moja praca i pomysly",
-      "opis": "Najwiekszy modul produktu — tabele pomyslow, notatnik, sejf klienta.",
-      "ekrany": [
-        {
-          "id": "idea-table",
-          "nazwa": "Tabela pomyslow",
-          "ocena": "B",
-          "co": "Pelna tabela z podgladem, kebabem, sortowaniem i filtrami per kolumna.",
-          "naprawione": [
-            "Cztery literowki bez polskich znakow"
-          ],
-          "wyjatki": [
-            "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku."
-          ]
-        },
-        {
-          "id": "idea-table-tool-empty-filter",
-          "nazwa": "Pusty filtr",
-          "ocena": "A",
-          "co": "Dwa odrebne uczciwe stany: brak wynikow filtra i brak rekordow — wzorcowy przyklad.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "idea-table-tool-grouping",
-          "nazwa": "Grupowanie",
-          "ocena": "A",
-          "co": "Grupowanie z pusta komorka jako mysnik.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "idea-table-tool-kebab",
-          "nazwa": "Kebab wiersza",
-          "ocena": "A",
-          "co": "Realne menu; Usun poprawnie w czerwieni.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "idea-table-tool-sortfilter",
-          "nazwa": "Sortowanie i filtry",
-          "ocena": "A",
-          "co": "Sortowanie i filtr per kolumna.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "idea-table-tool-paste",
-          "nazwa": "Wklejanie",
-          "ocena": "A",
-          "co": "Wklejanie z pominieciem kolumny obliczanej.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "idea-table-record-templates",
-          "nazwa": "Szablony rekordu",
-          "ocena": "B",
-          "co": "Menedzer szablonow z uczciwym pustym stanem.",
-          "naprawione": [],
-          "wyjatki": [
-            "Podwojny komunikat bledu to artefakt trybu deweloperskiego, nie defekt"
-          ]
-        },
-        {
-          "id": "idea-templates-catalog",
-          "nazwa": "Katalog szablonow",
-          "ocena": "A",
-          "co": "Czterdziesci szablonow w siedmiu kategoriach.",
-          "naprawione": [
-            "Crimson na tagu narzedzia"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "ideas-preview-overlay",
-          "nazwa": "Podglad pomyslu",
-          "ocena": "A",
-          "co": "Overlay bez przeskoku ukladu.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "ideas-teresa-panel",
-          "nazwa": "Panel Teresy",
-          "ocena": "A",
-          "co": "Sugestie AI, zero crimsonu.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "idea-confidentiality-control",
-          "nazwa": "Poufnosc pomyslu",
-          "ocena": "A",
-          "co": "Selektor poufnosci w bursztynie, nie czerwieni.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "mywork-idea-inspector-lekki",
-          "nazwa": "Inspektor pomyslu",
-          "ocena": "A",
-          "co": "Sekcje z licznikami.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "mywork-idea-topbar",
-          "nazwa": "Pasek gorny",
-          "ocena": "B",
-          "co": "Scalenie menu w jedna linie.",
-          "naprawione": [],
-          "wyjatki": [
-            "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
-          ]
-        },
-        {
-          "id": "mywork-notebook-rail-speca",
-          "nazwa": "Panel notatnika",
-          "ocena": "A",
-          "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "notatnik-centrum-mysli",
-          "nazwa": "Centrum mysli",
-          "ocena": "A",
-          "co": "Wspolpraca z Teresa, karty propozycji.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "notatnik-osierocone-graf",
-          "nazwa": "Graf notatek",
-          "ocena": "A",
-          "co": "Graf polaczen z soczewka osieroconych.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "vault-sejf-wnetrze",
-          "nazwa": "Wnetrze sejfu",
-          "ocena": "A",
-          "co": "Realna wspolna tabela, crimson tylko na bledzie.",
-          "naprawione": [],
-          "wyjatki": [
-            "Kolumna Kategoria po angielsku — dotyka trzech plikow, zgloszone osobno"
-          ]
-        },
-        {
-          "id": "vault-safes-table",
-          "nazwa": "Tabela sejfow",
-          "ocena": "A",
-          "co": "Lista sejfow na wspolnej tabeli.",
-          "naprawione": [
-            "Ekran w ogole sie nie renderowal",
-            "'1 blad(y)' — lamana polszczyzna"
-          ],
-          "wyjatki": []
-        },
-        {
-          "id": "vault-folder-block-proof",
-          "nazwa": "Blok sejfu w kreatorze",
-          "ocena": "A",
-          "co": "Kontekst sejfu w kreatorze przeplywu.",
-          "naprawione": [],
-          "wyjatki": []
-        },
-        {
-          "id": "idea-table-production",
-          "nazwa": "Tabela pomyslow (izolowana)",
-          "ocena": "D",
-          "co": "Harness porownawczy szerokosci, nie ekran produktu.",
-          "naprawione": [],
-          "wyjatki": [
-            "Narzedzie pomiarowe"
-          ]
-        }
-      ]
+     "id": "karta-notification",
+     "nazwa": "Karta powiadomienia",
+     "ocena": "A",
+     "co": "Bez odchylen.",
+     "naprawione": [],
+     "wyjatki": [
+      "Kolory ostrzezenia i informacji uzywaja surowych wartosci zamiast tokenow — dlug zastany, do zbiorczego sweepu"
+     ]
+    },
+    {
+     "id": "decision-record",
+     "nazwa": "Zapis decyzji",
+     "ocena": "B",
+     "co": "Ten sam komponent co karta decyzji, inne dane.",
+     "naprawione": [
+      "Angielskie tytuly powiazanych zadan na polskim ekranie"
+     ],
+     "wyjatki": [
+      "Nie otwieralem zwinietych sekcji Komentarze i Zrodla — moga tam byc jeszcze angielskie teksty"
+     ]
+    },
+    {
+     "id": "karta-interview",
+     "nazwa": "Karta wywiadu",
+     "ocena": "C",
+     "co": "Prawy panel ma trzy z szesciu kanonicznych sekcji.",
+     "naprawione": [],
+     "wyjatki": [
+      "Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy."
+     ]
     }
-  ]
+   ]
+  },
+  {
+   "katalog": "06-inicjatywy",
+   "nazwa": "Inicjatywy",
+   "opis": "Karta inicjatywy — najbogatszy artefakt w produkcie.",
+   "ekrany": [
+    {
+     "id": "karta-initiative",
+     "nazwa": "Karta inicjatywy",
+     "ocena": "B",
+     "co": "Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza.",
+     "naprawione": [
+      "Nagie zero przy Akcjach — dopisane zdanie, ze liczba opisuje widok, nie inicjatywe",
+      "Angielskie opisy cyklu zycia w sekcji Bramy — naprawione u zrodla, dziala teraz wszedzie"
+     ],
+     "wyjatki": [
+      "Zapisano bez daty i godziny",
+      "Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu",
+      "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "08-wyniki",
+   "nazwa": "Wyniki",
+   "opis": "Wskazniki, ROI i cele OKR. Modul, ktorego nigdy nie widziales — 14 z 16 ekranow bez zastrzezen.",
+   "ekrany": [
+    {
+     "id": "results-vnext-kpi-registry",
+     "nazwa": "Rejestr wskaznikow",
+     "ocena": "A",
+     "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-kpi-scorecards",
+     "nazwa": "Karty wynikow",
+     "ocena": "A",
+     "co": "Lista kart z panelem podgladu.",
+     "naprawione": [
+      "Angielskie naglowki podgladu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-kpi-tool",
+     "nazwa": "Narzedzie wskaznika",
+     "ocena": "A",
+     "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.",
+     "naprawione": [
+      "Surowe statusy pomiaru zamiast etykiet"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-roi-registry",
+     "nazwa": "Rejestr ROI",
+     "ocena": "A",
+     "co": "Siedem spraw ROI z realnymi nazwiskami i statusami.",
+     "naprawione": [
+      "Angielskie naglowki podgladu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-roi-full-tool",
+     "nazwa": "Pelne narzedzie ROI",
+     "ocena": "A",
+     "co": "Rejestr z kebabem prowadzacym do pelnego narzedzia.",
+     "naprawione": [],
+     "wyjatki": [
+      "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
+     ]
+    },
+    {
+     "id": "results-vnext-roi-model",
+     "nazwa": "Model ROI",
+     "ocena": "A",
+     "co": "Baza porownania i polityka kalkulacji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-roi-pir-outcomes",
+     "nazwa": "Wyniki po wdrozeniu",
+     "ocena": "A",
+     "co": "Cztery sprawy z wynikiem przegladu powdrozeniowego.",
+     "naprawione": [
+      "Angielskie naglowki podgladu"
+     ],
+     "wyjatki": [
+      "Brak kebaba i filtrow — udokumentowany celowy, minimalny zakres widoku"
+     ]
+    },
+    {
+     "id": "results-vnext-okr-registry",
+     "nazwa": "Rejestr OKR",
+     "ocena": "A",
+     "co": "Dziewiec zestawow celow, tabela osmiu kolumn.",
+     "naprawione": [
+      "Pigulka ucinana w kolumnie UWAGA"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-okr-objectives",
+     "nazwa": "Cele",
+     "ocena": "A",
+     "co": "Piec celow z kluczowymi rezultatami.",
+     "naprawione": [
+      "Angielskie N/A zamiast N.D."
+     ],
+     "wyjatki": [
+      "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie"
+     ]
+    },
+    {
+     "id": "results-vnext-okr-workspace",
+     "nazwa": "Warsztat zestawu OKR",
+     "ocena": "A",
+     "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-okr-admin",
+     "nazwa": "Programy OKR",
+     "ocena": "A",
+     "co": "Uczciwy stan: funkcja jeszcze nie wlaczona.",
+     "naprawione": [],
+     "wyjatki": [
+      "To prawdziwy stan flagi, nie defekt"
+     ]
+    },
+    {
+     "id": "results-vnext-attention",
+     "nazwa": "Uwaga",
+     "ocena": "A",
+     "co": "Siedem zakladek uwag z realnymi kodami wskaznikow.",
+     "naprawione": [],
+     "wyjatki": [
+      "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
+     ]
+    },
+    {
+     "id": "results-vnext-search-registry",
+     "nazwa": "Wyszukiwarka",
+     "ocena": "A",
+     "co": "Wyszukiwanie po wskaznikach, ROI i celach; uczciwy stan poczatkowy.",
+     "naprawione": [
+      "Surowe statusy i nazwy pol dopasowania"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-teresa-kpi-deviation",
+     "nazwa": "Sprawa odchylenia",
+     "ocena": "A",
+     "co": "Formularz sprawy z uczciwymi komunikatami o brakach.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "results-three-pairs",
+     "nazwa": "Trzy pary cel-wynik",
+     "ocena": "A",
+     "co": "Pary wskaznik/ROI/OKR z paskiem postepu i 'Brak danych' zamiast nagiego zera.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ogladana tylko domyslna zakladka"
+     ]
+    },
+    {
+     "id": "results-vnext-registry-shell",
+     "nazwa": "Powloka rejestru",
+     "ocena": "D",
+     "co": "Ekran po angielsku.",
+     "naprawione": [],
+     "wyjatki": [
+      "Sprawdzone: to fixtura testujaca mechanike wspolnej powloki, nie ekran produktowy. Nie pokazuje sie wlascicielowi."
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "09-finanse",
+   "nazwa": "Finanse",
+   "opis": "Modele, wyceny, prognozy i sprawozdania. Widziales stad wylacznie model finansowy — reszta jest dla Ciebie nowa.",
+   "ekrany": [
+    {
+     "id": "finance-model-workspace",
+     "nazwa": "Model finansowy",
+     "ocena": "B",
+     "co": "Model bazowy z danymi wejsciowymi i bilansem otwarcia.",
+     "naprawione": [
+      "Surowy enum 'quarterly' zamiast etykiety",
+      "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika"
+     ],
+     "wyjatki": [
+      "Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany"
+     ]
+    },
+    {
+     "id": "finance-analysis-workspace",
+     "nazwa": "Analiza",
+     "ocena": "B",
+     "co": "Uczciwy pusty stan i tabela wskaznikow z formulami.",
+     "naprawione": [
+      "Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku"
+     ],
+     "wyjatki": [
+      "Wartosci wskaznikow bez znaku procenta — brak metadanych jednostki w danych, nie do naprawy w wygladzie"
+     ]
+    },
+    {
+     "id": "finance-valuation-workspace",
+     "nazwa": "Wycena",
+     "ocena": "B",
+     "co": "Lancuch pochodzenia wyceny i most od wartosci przedsiebiorstwa do kapitalu.",
+     "naprawione": [
+      "Dwa z trzech krokow lancucha po angielsku",
+      "Brak procenta przy wadze metody",
+      "Kropka zamiast przecinka dziesietnego"
+     ],
+     "wyjatki": [
+      "Glowna kwota wyceny BEZ WALUTY — kontrakt danych nie niesie tego pola. Zgloszone do toru funkcji, nie zmyslam waluty"
+     ]
+    },
+    {
+     "id": "finance-prediction-workspace",
+     "nazwa": "Prognoza",
+     "ocena": "B",
+     "co": "Budowa scenariuszy z paskiem statusu.",
+     "naprawione": [
+      "'Rewizja authoringu: .' — pusta wartosc i znieksztalcone slowo"
+     ],
+     "wyjatki": [
+      "Nazwy scenariuszy po angielsku — ustalony zargon finansowy, spojny w calym module"
+     ]
+    },
+    {
+     "id": "finance-statement-pack-workspace-v2",
+     "nazwa": "Pakiet sprawozdan",
+     "ocena": "B",
+     "co": "Tabela sprawozdania i panel powiazanych artefaktow.",
+     "naprawione": [
+      "Wszystkie naglowki panelu powiazan po angielsku",
+      "Surowe kody przeksztalcen"
+     ],
+     "wyjatki": [
+      "Liczba przy etykiecie 'skala: tysiace' wyglada jak znany wzorzec podwojenia jednostki — dane makietowe, nie zweryfikowane wobec zywej bazy"
+     ]
+    },
+    {
+     "id": "finance-compare-panel",
+     "nazwa": "Porownanie okresow",
+     "ocena": "B",
+     "co": "Tabela porownania z roznicami.",
+     "naprawione": [
+      "Angielska etykieta trybu",
+      "Dodana waluta z istniejacych danych"
+     ],
+     "wyjatki": [
+      "Kody pozycji w kolumnie wymiarow — dane makietowe"
+     ]
+    },
+    {
+     "id": "finance-comments-panel",
+     "nazwa": "Komentarze",
+     "ocena": "A",
+     "co": "Komentarze blokujace i lista kontrolna przegladu.",
+     "naprawione": [
+      "Angielski naglowek sekcji"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "finance-saved-views-panel",
+     "nazwa": "Zapisane widoki",
+     "ocena": "A",
+     "co": "Widoki zespolowe i osobiste.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "finance-export-import-panel",
+     "nazwa": "Eksport i import",
+     "ocena": "B",
+     "co": "Wymiana arkusza z manifestem.",
+     "naprawione": [
+      "'jednostka THOUSANDS' — surowy enum, ta sama klasa defektu co w prezentacji"
+     ],
+     "wyjatki": [
+      "'Choose File' to natywna kontrolka przegladarki — nieprzetlumaczalna bez wlasnego uploadera"
+     ]
+    },
+    {
+     "id": "finance-lineage-navigator",
+     "nazwa": "Nawigator pochodzenia",
+     "ocena": "A",
+     "co": "Lancuch powiazan z uczciwym zerem: '0 / Brak.'",
+     "naprawione": [],
+     "wyjatki": [
+      "Wzorcowy przyklad prawa liczby — zero zawsze z wyjasnieniem"
+     ]
+    },
+    {
+     "id": "finance-workspace-bar",
+     "nazwa": "Pasek tozsamosci",
+     "ocena": "A",
+     "co": "Izolowany podglad wspolnego paska.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "finance-baseline-workspace",
+     "nazwa": "Baza porownania",
+     "ocena": "C",
+     "co": "Trwaly stan bledu — harness nie ma atrapy jednego wywolania.",
+     "naprawione": [
+      "Crimson na linku 'Sprobuj ponownie'"
+     ],
+     "wyjatki": [
+      "Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy."
+     ]
+    },
+    {
+     "id": "finance-value-panels",
+     "nazwa": "Panele wartosci",
+     "ocena": "C",
+     "co": "Most wartosci i planer nosnikow.",
+     "naprawione": [],
+     "wyjatki": [
+      "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu."
+     ]
+    },
+    {
+     "id": "finance-focus-mode",
+     "nazwa": "Tryb skupienia (diagnostyka)",
+     "ocena": "D",
+     "co": "Narzedzie inzynierskie, nie ekran produktu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Nie pokazuje sie jako ekran produktu"
+     ]
+    },
+    {
+     "id": "finance-id-bridge",
+     "nazwa": "Most identyfikatorow (diagnostyka)",
+     "ocena": "D",
+     "co": "Narzedzie inzynierskie, nie ekran produktu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Nie pokazuje sie jako ekran produktu"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "02-moja-praca",
+   "nazwa": "Moja praca i pomysly",
+   "opis": "Najwiekszy modul produktu — tabele pomyslow, notatnik, sejf klienta.",
+   "ekrany": [
+    {
+     "id": "idea-table",
+     "nazwa": "Tabela pomyslow",
+     "ocena": "B",
+     "co": "Pelna tabela z podgladem, kebabem, sortowaniem i filtrami per kolumna.",
+     "naprawione": [
+      "Cztery literowki bez polskich znakow"
+     ],
+     "wyjatki": [
+      "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku."
+     ]
+    },
+    {
+     "id": "idea-table-tool-empty-filter",
+     "nazwa": "Pusty filtr",
+     "ocena": "A",
+     "co": "Dwa odrebne uczciwe stany: brak wynikow filtra i brak rekordow — wzorcowy przyklad.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-grouping",
+     "nazwa": "Grupowanie",
+     "ocena": "A",
+     "co": "Grupowanie z pusta komorka jako mysnik.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-kebab",
+     "nazwa": "Kebab wiersza",
+     "ocena": "A",
+     "co": "Realne menu; Usun poprawnie w czerwieni.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-sortfilter",
+     "nazwa": "Sortowanie i filtry",
+     "ocena": "A",
+     "co": "Sortowanie i filtr per kolumna.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-tool-paste",
+     "nazwa": "Wklejanie",
+     "ocena": "A",
+     "co": "Wklejanie z pominieciem kolumny obliczanej.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-record-templates",
+     "nazwa": "Szablony rekordu",
+     "ocena": "B",
+     "co": "Menedzer szablonow z uczciwym pustym stanem.",
+     "naprawione": [],
+     "wyjatki": [
+      "Podwojny komunikat bledu to artefakt trybu deweloperskiego, nie defekt"
+     ]
+    },
+    {
+     "id": "idea-templates-catalog",
+     "nazwa": "Katalog szablonow",
+     "ocena": "A",
+     "co": "Czterdziesci szablonow w siedmiu kategoriach.",
+     "naprawione": [
+      "Crimson na tagu narzedzia"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "ideas-preview-overlay",
+     "nazwa": "Podglad pomyslu",
+     "ocena": "A",
+     "co": "Overlay bez przeskoku ukladu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "ideas-teresa-panel",
+     "nazwa": "Panel Teresy",
+     "ocena": "A",
+     "co": "Sugestie AI, zero crimsonu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-confidentiality-control",
+     "nazwa": "Poufnosc pomyslu",
+     "ocena": "A",
+     "co": "Selektor poufnosci w bursztynie, nie czerwieni.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "mywork-idea-inspector-lekki",
+     "nazwa": "Inspektor pomyslu",
+     "ocena": "A",
+     "co": "Sekcje z licznikami.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "mywork-idea-topbar",
+     "nazwa": "Pasek gorny",
+     "ocena": "B",
+     "co": "Scalenie menu w jedna linie.",
+     "naprawione": [],
+     "wyjatki": [
+      "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
+     ]
+    },
+    {
+     "id": "mywork-notebook-rail-speca",
+     "nazwa": "Panel notatnika",
+     "ocena": "A",
+     "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "notatnik-centrum-mysli",
+     "nazwa": "Centrum mysli",
+     "ocena": "A",
+     "co": "Wspolpraca z Teresa, karty propozycji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "notatnik-osierocone-graf",
+     "nazwa": "Graf notatek",
+     "ocena": "A",
+     "co": "Graf polaczen z soczewka osieroconych.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "vault-sejf-wnetrze",
+     "nazwa": "Wnetrze sejfu",
+     "ocena": "A",
+     "co": "Realna wspolna tabela, crimson tylko na bledzie.",
+     "naprawione": [],
+     "wyjatki": [
+      "Kolumna Kategoria po angielsku — dotyka trzech plikow, zgloszone osobno"
+     ]
+    },
+    {
+     "id": "vault-safes-table",
+     "nazwa": "Tabela sejfow",
+     "ocena": "A",
+     "co": "Lista sejfow na wspolnej tabeli.",
+     "naprawione": [
+      "Ekran w ogole sie nie renderowal",
+      "'1 blad(y)' — lamana polszczyzna"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "vault-folder-block-proof",
+     "nazwa": "Blok sejfu w kreatorze",
+     "ocena": "A",
+     "co": "Kontekst sejfu w kreatorze przeplywu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "idea-table-production",
+     "nazwa": "Tabela pomyslow (izolowana)",
+     "ocena": "D",
+     "co": "Harness porownawczy szerokosci, nie ekran produktu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Narzedzie pomiarowe"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "10-materialy",
+   "nazwa": "Materialy i dokumenty",
+   "opis": "Studio Dokumentow, kreatory szablonow Word/Deck/Excel, biblioteka wzorcow, gotowe artefakty.",
+   "ekrany": [
+    {
+     "id": "document-artifact",
+     "nazwa": "Dokument doradczy (pelny widok)",
+     "ocena": "A",
+     "co": "Prawdziwy raport: szesc sekcji, pasek wskaznikow, tabela budzetu, wykres trendu z legenda, uczciwe oznaczenie poufnosci i zrodel.",
+     "naprawione": [
+      "Ekran w ogole sie nie renderowal — brak nawigacji w harnessie",
+      "Angielskie etykiety w danych testowych"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "template-builder-doc",
+     "nazwa": "Kreator szablonu Word",
+     "ocena": "A",
+     "co": "Bez odchylen od kanonu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "template-builder-deck",
+     "nazwa": "Kreator szablonu Deck",
+     "ocena": "A",
+     "co": "Bez odchylen od kanonu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "template-builder-table",
+     "nazwa": "Kreator szablonu Excel",
+     "ocena": "A",
+     "co": "Kreator arkusza z kolumnami.",
+     "naprawione": [
+      "Twardy blad danych testowych — ekran padal calkowicie"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "template-create-wizard",
+     "nazwa": "Kreator szablonu — krok 1 z 3",
+     "ocena": "A",
+     "co": "Bez odchylen.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "template-library-new-entry",
+     "nazwa": "Biblioteka wzorcow — nowy szablon",
+     "ocena": "A",
+     "co": "Wejscie sprawdzone klikiem: prowadzi do kreatora.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "materialy-launcher",
+     "nazwa": "Nowy material",
+     "ocena": "A",
+     "co": "Modal z trzema drogami startu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "materialy-template-library-slice",
+     "nazwa": "Biblioteka wzorcow",
+     "ocena": "A",
+     "co": "Tabela wzorcow z uczciwymi statusami. Piec pozornych odchylen to swiadome decyzje wlasciciela.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "materialy-draft-template-visibledraft-fix",
+     "nazwa": "Szkic szablonu",
+     "ocena": "A",
+     "co": "Szkic widoczny z pigulka Szkic.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-menu-pliku",
+     "nazwa": "Studio — menu Plik",
+     "ocena": "A",
+     "co": "Nowy, Otworz, Zapisz, Zapisz jako, Zrob z tego wzorzec.",
+     "naprawione": [
+      "Crash silnika edytora blokowal render calego ekranu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-nowy-dokument-martwe-przyciski",
+     "nazwa": "Studio — nowy dokument",
+     "ocena": "A",
+     "co": "Tytul klikalny, przyciski zywe.",
+     "naprawione": [
+      "Ten sam crash silnika edytora"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-save-as-template",
+     "nazwa": "Studio — zrob z tego wzorzec",
+     "ocena": "A",
+     "co": "Sciezka z dokumentu do wzorca.",
+     "naprawione": [
+      "Ten sam crash silnika edytora"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-blocks-i18n",
+     "nazwa": "Studio — puste stany blokow",
+     "ocena": "A",
+     "co": "Puste stany po polsku i angielsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-context-chip",
+     "nazwa": "Studio — chip kontekstu",
+     "ocena": "A",
+     "co": "Formularz z chipem kontekstu organizacji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "sheet-artifact",
+     "nazwa": "Arkusz (podglad)",
+     "ocena": "A",
+     "co": "Podglad arkusza kalkulacyjnego.",
+     "naprawione": [
+      "Angielskie naglowki Workbook/Sheets"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "deck-artifact",
+     "nazwa": "Deck (szesc slajdow)",
+     "ocena": "A",
+     "co": "Kreator decka wedlug kanonu artefaktow.",
+     "naprawione": [],
+     "wyjatki": [
+      "Cienka czerwonawa linia obok pola czatu — nie znaleziono zrodla w drzewie strony; podejrzenie artefaktu silnika zrzutow, wymaga potwierdzenia w zywej przegladarce"
+     ]
+    },
+    {
+     "id": "deck-quality-badge",
+     "nazwa": "Deck — ocena jakosci",
+     "ocena": "A",
+     "co": "Wynik kreatora z odznaka jakosci.",
+     "naprawione": [
+      "CRIMSON na przycisku glownym — Pulapka nr 1 z kodeksu",
+      "Surowy angielski enum Internal/Briefing"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "word-quality-badge",
+     "nazwa": "Word — ocena jakosci",
+     "ocena": "A",
+     "co": "Panel kontroli jakosci z odznaka fabrykacji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "b2-template-gallery",
+     "nazwa": "Galeria szablonow mapy mysli",
+     "ocena": "A",
+     "co": "Galeria wzorcow.",
+     "naprawione": [
+      "Angielskie 0 nodes na karcie galezi"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-ai-teresa",
+     "nazwa": "Studio — z Teresa",
+     "ocena": "B",
+     "co": "Czat Teresy w studiu dokumentow, bez formularza.",
+     "naprawione": [],
+     "wyjatki": [
+      "Ta sama czerwonawa linia co w decku — do potwierdzenia na zywo"
+     ]
+    },
+    {
+     "id": "document-studio-streaming-honesty-n3",
+     "nazwa": "Studio — plan przed pisaniem",
+     "ocena": "B",
+     "co": "Tryb, w ktorym system pokazuje plan zanim zacznie pisac.",
+     "naprawione": [],
+     "wyjatki": [
+      "Nie sprawdzono zachowania w trakcie pisania na zywo, tylko stan poczatkowy"
+     ]
+    },
+    {
+     "id": "document-studio-m1-share-primary",
+     "nazwa": "Studio — udostepnianie",
+     "ocena": "D",
+     "co": "Ekran nie renderuje sie w harnessie. Ta sama tresc jest dostepna przez menu Plik, ktore dziala.",
+     "naprawione": [],
+     "wyjatki": [
+      "Zdublowany ekran testowy, nie brak funkcji"
+     ]
+    }
+   ]
+  },
+  {
+   "katalog": "05-ocena-audyty",
+   "nazwa": "Ocena i Audyty",
+   "opis": "Warsztat kryteriow, biblioteka metodyk, raporty i prezentacje z oceny, wywiad DRD, biblioteka audytow.",
+   "ekrany": [
+    {
+     "id": "audyty-warsztat-kryterium",
+     "nazwa": "Warsztat kryterium (wzorzec)",
+     "ocena": "A",
+     "co": "Ekran z akceptem wlasciciela z 26.08. Arkusz audytora, lancuch osiemnastu ogniw, prawy panel.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-five-surfaces",
+     "nazwa": "Wybierak metodyk",
+     "ocena": "A",
+     "co": "DRD dostepny, cztery pozostale zablokowane ze statusem Planowane — uczciwie, bez ukrywania.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-output-report",
+     "nazwa": "Raport z oceny",
+     "ocena": "A",
+     "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-quality-review-panel",
+     "nazwa": "Ocena i pokrycie dowodami",
+     "ocena": "A",
+     "co": "Slowo brak zamiast zera tam, gdzie dowodu nie ma.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-reports-table",
+     "nazwa": "Tabela raportow",
+     "ocena": "A",
+     "co": "Statusy i daty.",
+     "naprawione": [
+      "Angielskie statusy In Review/Sent Internal/Utilized w polskiej tabeli",
+      "Daty w formacie Jul 10, 2026"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-artifacts-restart",
+     "nazwa": "Wnioski z oceny",
+     "ocena": "A",
+     "co": "Piec statusow, baner ostrzegawczy.",
+     "naprawione": [
+      "Chipy statusu nachodzily na siebie",
+      "Baner bledu nieczytelny w motywie jasnym",
+      "Angielskie Retry"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-menu3-status-chips",
+     "nazwa": "Biblioteka metodyk — chipy",
+     "ocena": "A",
+     "co": "Korzysta z tej samej naprawy chipow.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "drd-http-workspace",
+     "nazwa": "Wywiad DRD",
+     "ocena": "A",
+     "co": "Pytanie, dowod, odpowiedz.",
+     "naprawione": [
+      "Angielskie zakladki Interview/Matrix/Report i przycisk Settings"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "method-workspace",
+     "nazwa": "Diagnostyka gotowosci",
+     "ocena": "A",
+     "co": "Ocena sily dowodu.",
+     "naprawione": [
+      "Ta sama naprawa wspolnej powloki"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "audyty-piec-powierzchni",
+     "nazwa": "Biblioteka audytow",
+     "ocena": "A",
+     "co": "Weryfikacja i status publikacji.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "audyty-raport-dokument",
+     "nazwa": "Raport z audytu",
+     "ocena": "A",
+     "co": "Powloka artefaktu wzorcowa.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "audyty-drd-report",
+     "nazwa": "Raporty DRD wedlug programu",
+     "ocena": "A",
+     "co": "Zestawienie raportow.",
+     "naprawione": [
+      "Angielski naglowek zrodla ASSESSMENT",
+      "Daty w formacie angielskim"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "assessment-list",
+     "nazwa": "Lista ocen",
+     "ocena": "B",
+     "co": "Tabela kanoniczna, statusy po polsku, kreska zamiast zera.",
+     "naprawione": [],
+     "wyjatki": [
+      "Kolumna Aktualizacja ucina naglowek i daty — szerokosc kolumn przy siedmiu kolumnach, defekt wspolnego silnika tabel, nie tego ekranu"
+     ]
+    },
+    {
+     "id": "assessment-presentation-view",
+     "nazwa": "Prezentacja z oceny (9 slajdow)",
+     "ocena": "B",
+     "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk"
+     ]
+    },
+    {
+     "id": "assessment-reports-panel",
+     "nazwa": "Panel raportow",
+     "ocena": "B",
+     "co": "Mechanika czysta.",
+     "naprawione": [],
+     "wyjatki": [
+      "Obudowa ekranu po angielsku — inny komponent niz tabela raportow"
+     ]
+    },
+    {
+     "id": "assessment-initiatives-table",
+     "nazwa": "Tablica inicjatyw strategicznych",
+     "ocena": "B",
+     "co": "Tablica inicjatyw.",
+     "naprawione": [
+      "Ucinane etykiety priorytetu — kolumna poszerzona"
+     ],
+     "wyjatki": [
+      "Obudowa ekranu po angielsku"
+     ]
+    },
+    {
+     "id": "assessment-manage-panel",
+     "nazwa": "Panel zarzadzania ocena",
+     "ocena": "C",
+     "co": "Mechanika solidna: postep procesu, tabela etapow bramek.",
+     "naprawione": [],
+     "wyjatki": [
+      "Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie"
+     ]
+    },
+    {
+     "id": "assessment-initiatives-panel",
+     "nazwa": "Panel inicjatyw",
+     "ocena": "C",
+     "co": "Proces statusow inicjatywy.",
+     "naprawione": [],
+     "wyjatki": [
+      "Caly ekran po angielsku",
+      "Blad w konsoli: zdublowany klucz EXECUTING"
+     ]
+    },
+    {
+     "id": "assessment-matryca",
+     "nazwa": "Matryca oceny",
+     "ocena": "D",
+     "co": "Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Zgloszone do naprawy narzedzia"
+     ]
+    },
+    {
+     "id": "siri-workspace",
+     "nazwa": "Warsztat SIRI",
+     "ocena": "D",
+     "co": "Nie wiem, jak wyglada — brak rejestracji w harnessie.",
+     "naprawione": [],
+     "wyjatki": [
+      "Zgloszone do naprawy narzedzia"
+     ]
+    },
+    {
+     "id": "siri-tier",
+     "nazwa": "Poziomy SIRI",
+     "ocena": "D",
+     "co": "Nie wiem, jak wyglada — brak rejestracji w harnessie.",
+     "naprawione": [],
+     "wyjatki": [
+      "Zgloszone do naprawy narzedzia"
+     ]
+    }
+   ]
+  }
+ ]
 }
