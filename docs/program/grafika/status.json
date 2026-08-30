@@ -1044,26 +1044,6 @@
             "CALOSC PO ANGIELSKU — nazwy poziomow i obszarow nie maja polskich wariantow w danych"
           ],
           "gdzie": "Ocena -> sesja DRD -> zakladka obok Formularza. W harnessie: ?screen=drd-macierz-oceny&os=1..7"
-        },
-        {
-          "id": "drd-macierz-oceny",
-          "nazwa": "Macierz oceny DRD — obszary x poziomy",
-          "ocena": "B",
-          "co": "Glowne narzedzie pracy konsultanta: wiersze to poziomy dojrzalosci, kolumny to obszary osi, klik w komorke otwiera opis z przykladem i pozwala postawic AS-IS oraz TO-BE.",
-          "naprawione": [
-            "popover odzyskal tlo (bg-white/98 nie istnialo w Tailwindzie)",
-            "Set TO-BE: kontrast 1,36 -> 9,10",
-            "tresc komorek nieocenionych: 2,43 -> 7,58",
-            "9 z 9 kolumn w kadrze (bylo 488 px poza kadrem bez sygnalu)",
-            "przelacznik Spacious realnie zmienia gestosc",
-            "duplikat macierzy scalony w jeden komponent"
-          ],
-          "wyjatki": [
-            "TRESC KOMOREK KLAMIE — 23 z 63 komorek osi 1 falszywych, kolumna 1F to siedem razy MES",
-            "ETYKIETY WIERSZY ZMYSLONE — wlasna drabina zamiast drabiny z metodyki wlasciciela",
-            "CALOSC PO ANGIELSKU — brak polskich wariantow w danych"
-          ],
-          "gdzie": "Ocena -> sesja DRD -> zakladka obok Formularza. Harness: ?screen=drd-macierz-oceny&os=1..7"
         }
       ]
     },
