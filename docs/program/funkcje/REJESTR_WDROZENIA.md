@@ -48,6 +48,13 @@ ograniczeniami · `C` nie działa albo dowód nie trzyma · `D` martwe / za flag
 | Narzędzia | Wyniki narzędzi w zbiorczej liście Outputs/Insights | `GET /api/tool-outputs`, `toolOutputs.routes.ts` | `ZA_FLAGA` | `VITE_TOOLS_INSIGHTS_WIRING` (OFF — cofnięte 28.08, DEC-158) | `src/utils/toolsInsightsWiringFlag.ts:45`; migracja `server/migrations/946_tool_outputs_reports_lineage.sql` | `D` | — |
 | Czat | „Napisz raport" — lekka ścieżka `plan→generate→poll` | `POST /api/deliverables/generations` | `ZA_FLAGA` | `VITE_ENABLE_DELIVERABLES_LIGHT` (OFF) + bliźniacza flaga serwera **niezlokalizowana** | `src/utils/…deliverablesLight…`; 3 wołacze w `UnifiedChatPanel.tsx` | `D` | — |
 | Czat | Trasa `/internal/v10-runtime` | `AppView.AI_CHAT_V10_RUNTIME` | `ODLOZONE` | — | `src/routes/routeConfig.ts:32,365,747`; **zero `<Route>` w `AppRoutes.tsx`**; `V10RuntimeWorkspaceView.tsx` nie jest nigdzie renderowany | `D` | — |
+| Finanse | Dziewiętnaście paneli wyceny (Monte Carlo NPV, drzewo nośników, opcje realne, mostek odchyleń, biuro wartości…) | `src/components/Economics/panels/*` + `server/src/routes/v8/finance-valuation.routes.ts` | `ISTNIEJE_NIEAKTYWNE` **i** `ZA_FLAGA` | `ENABLE_V8_GLOBAL` — **domyślnie `false`** (`server/src/config/FeatureFlags.ts:31`) | **21 plików paneli; JSX-owego użycia w `src/` nie ma 19 z nich** (przeliczone przez nadzorcę); backend kompletny — **19 tras** w `finance-valuation.routes.ts`; render tylko w `dev-render/screens/finance-value-panels.tsx` | `D` | — |
+| Materiały | Generator prozy dokumentu | `DocumentStudioIntakeForm` | `DZIALA` | `useLlm` — stan React, **domyślnie `true`** | `src/components/DocumentStudio/DocumentStudioIntakeForm.tsx:171`; komentarz `:168` mówi wprost, że bramkuje CAŁĄ generację treści | `A/B` — do odbioru rubryką pliku | — |
+| Materiały | Pięć niezależnych systemów stylowania eksportu | `DeckStyler` · `DocxStyles` · `WorkbookStyler` · `report-pptx-designTokens` · `documentPdfRenderer` | `DZIALA` z ograniczeniem | brak | policzone wyczerpująco przez tor C, nie na próbce; **żaden nie czyta tokenów produktu** | `B` | — |
+| Audyty | Eksport raportu do PDF | — | `DO_ZBUDOWANIA` | — | dowód nieistnienia: zero trafień `export.pdf` w trasach audytów | `C` | — |
+| Audyty | Eksport raportu do DOCX | — | `ZA_FLAGA` | flaga domyślnie OFF | — | `D` | — |
+| Audyty | Kreator programu audytu (`AuditOrchestratorWizard`, 511 linii) | — | `ISTNIEJE_NIEAKTYWNE` | brak | własny komentarz w pliku: „owner flagged direction" | `D` | — |
+| Spotkania | Cały moduł — backend | `server/src/routes/meeting*` | `ZA_FLAGA` | `beta = 'closed'` dla zwykłych ról | **nie jest zaślepką**: 3077 linii serwisów, router 1348 linii, 8 tabel, testy na Postgresie — obala opis „zaślepka" w warstwie źródłowej | `D` | — |
 | Czat · Teresa | Strażnik poufności na drodze załączników (E1) | `ContextRetrievalService.ts:139` | `DO_ZBUDOWANIA` | brak | `DOWOD_2026-08-30_STRAZNIK_POUFNOSCI.md` | `C` | — |
 | Czat · Teresa | Strażnik poufności na drodze awaryjnej (E2) | `ai.routes.ts:4368` | `DO_ZBUDOWANIA` | brak | jw. | `C` | — |
 | Czat · Teresa | Strażnik poufności na drodze metadanych (E3) | `ai.routes.ts:4458` | `DO_ZBUDOWANIA` | brak | jw. | `C` | — |
@@ -69,7 +76,7 @@ ograniczeniami · `C` nie działa albo dowód nie trzyma · `D` martwe / za flag
 | --- | --- | --- | --- |
 | A | Chat · Moja praca · Wywiad · Narzędzia | 2026-08-30 | **wrócił, trzy twierdzenia przeliczone przez nadzorcę — zgadzają się** |
 | B | Ocena · Inicjatywy · Realizacja · Wyniki | 2026-08-30 | **wrócił, dwa twierdzenia przeliczone — zgadzają się** |
-| C | Finanse · Materiały · Audyty · Spotkania | 2026-08-30 | biegnie |
+| C | Finanse · Materiały · Audyty · Spotkania | 2026-08-30 | **wrócił, trzy twierdzenia przeliczone — zgadzają się, jedno ostrzejsze niż raport** |
 | D | Organizacja · Panel administratora · Ustawienia · Portal partnerski | 2026-08-30 | **wrócił, dwa twierdzenia przeliczone — zgadzają się; obalił jedną tezę briefu** |
 
 Wynik każdego toru wchodzi do rejestru **po przeliczeniu liczb przez nadzorcę**, nie
@@ -142,3 +149,38 @@ osobno, nie do wpisania jako fakt.
 **Otwarte po torach B i D:** nie znaleziono dokumentu-źródła dla „11 bramek, 12 statusów,
 26 kart" — tor B wyprowadził z kodu 4 bramki i 31 typów agregatu, co **nie jest tym samym**
 i wymaga wskazania kontraktu, z którego pochodzi liczba 11.
+
+
+---
+
+## Tor C — co przeliczył nadzorca
+
+**★ NAJWIĘKSZE ZNALEZISKO DNIA, przeliczone własnymi rękami.** W katalogu
+`src/components/Economics/panels/` leży **21 paneli** analizy finansowej. Sprawdziłem
+każdy osobno komendą `grep -rl "<NazwaPanelu" src/` z wykluczeniem samego pliku panelu:
+
+- `EvBasketFootballField` — renderowany w `src/components/Benefits/ValuationWorkspace.tsx`,
+- `InvestmentAppraisalPanel` — występuje **wyłącznie we własnym teście**,
+- **pozostałe 19 — zero użycia w JSX w całym `src/`.**
+
+Pod spodem stoi kompletny backend: `server/src/routes/v8/finance-valuation.routes.ts`,
+**19 tras**. Całość jest przy tym podwójnie zamknięta — nawet gdyby panele podłączyć,
+`ENABLE_V8_GLOBAL` ma w schemacie `default(false)` (`server/src/config/FeatureFlags.ts:31`).
+Jedyne miejsce, w którym te ekrany kiedykolwiek widać, to harness `dev-render`.
+
+To jest dokładnie ta kategoria, o której mówił właściciel: **zbudowane, opłacone,
+przetestowane i niepodłączone**. Podłączenie jest tańsze niż cokolwiek, co dziś budujemy.
+
+**Sprostowanie wobec raportu wykonawcy — na jego niekorzyść i naszą.** Tor C napisał
+„19 z 20 paneli". Plików jest 21, a nie 20, i przeliczenie zmienia obraz: jeden panel
+naprawdę żyje w aplikacji, drugi żyje tylko w teście. Substancja bez zmian, mianownik był zły.
+
+**Trzeci parametr dokumentu — potwierdzony.** Generator prozy stoi za `useLlm`,
+stanem Reacta o wartości początkowej `true` (`DocumentStudioIntakeForm.tsx:171`).
+To domyka wątek zamknięty tezą, że winna była flaga `ENABLE_DELIVERABLES_PREMIUM`:
+**żadna flaga środowiskowa nie odpowiada za pustkę w dokumentach.**
+
+**Obalenie opisu w warstwie źródłowej.** Spotkania są tam opisane jako zaślepka.
+Kodowo zaślepką nie są — jest realny router, serwisy, osiem tabel i testy na Postgresie.
+Zamknięte są dostępem beta dla zwykłych ról, co jest zupełnie innym problemem
+i inną naprawą.
