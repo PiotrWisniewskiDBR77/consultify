@@ -207,6 +207,41 @@ interface DecisionDetailViewProps {
   onSaved?: (data: any) => void;
 }
 
+export const mapDecisionServerComment = (comment: any): Comment => ({
+  id: String(comment.id),
+  content: String(comment.body || ''),
+  authorId: String(comment.authorId || ''),
+  authorName: String(comment.authorId || 'Unknown user'),
+  createdAt: String(comment.createdAt),
+  updatedAt: comment.updatedAt ? String(comment.updatedAt) : undefined,
+  likes: 0,
+  likedByMe: false,
+});
+
+type DecisionCommentApi = Pick<typeof Api, 'get' | 'post' | 'delete'>;
+
+export async function addDecisionCommentAndReload(
+  api: DecisionCommentApi,
+  decisionId: string,
+  content: string
+): Promise<Comment[]> {
+  const encodedId = encodeURIComponent(decisionId);
+  await api.post(`/decisions/${encodedId}/comments`, { body: content });
+  const detailResponse = await api.get(`/decisions/${encodedId}/detail`);
+  return (detailResponse.data.comments || []).map(mapDecisionServerComment);
+}
+
+export async function deleteDecisionCommentAndReload(
+  api: DecisionCommentApi,
+  decisionId: string,
+  commentId: string
+): Promise<Comment[]> {
+  const encodedId = encodeURIComponent(decisionId);
+  await api.delete(`/decisions/${encodedId}/comments/${encodeURIComponent(commentId)}`);
+  const detailResponse = await api.get(`/decisions/${encodedId}/detail`);
+  return (detailResponse.data.comments || []).map(mapDecisionServerComment);
+}
+
 export const aggregateDecisionImpact = (
   impact: Pick<ImpactValues, 'scope' | 'schedule' | 'cost' | 'quality'>
 ): 'low' | 'medium' | 'high' => {
@@ -1920,7 +1955,8 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     try {
       setLoading(true);
       setIsLocalHydrated(false);
-      const decision = await Api.getDecision(id);
+      const detailResponse = await Api.get(`/decisions/${encodeURIComponent(id)}/detail`);
+      const decision = detailResponse.data;
       setTitle(decision.title || '');
       setDescription(decision.description || '');
       const normalizedStatus = (decision.status?.toLowerCase() ||
@@ -1982,7 +2018,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const apiAttachments = decision.attachments || [];
       setAttachments(apiAttachments.length > 0 ? apiAttachments : isDemo ? DEMO_ATTACHMENTS : []);
       const apiComments = decision.comments || [];
-      setComments(apiComments.length > 0 ? apiComments : isDemo ? DEMO_COMMENTS : []);
+      setComments(
+        apiComments.length > 0
+          ? apiComments.map(mapDecisionServerComment)
+          : isDemo
+            ? DEMO_COMMENTS
+            : []
+      );
       const apiLinkedItems = decision.linkedItems || [];
       setLinkedItems(
         apiLinkedItems.length > 0 ? apiLinkedItems : isDemo ? getDemoLinkedItems(isPolish) : []
@@ -4000,7 +4042,7 @@ Use userId only from this list:
     setAttachments(attachments.filter((a) => a.id !== id));
   };
 
-  // Comment handlers (mock)
+  // Comment handlers
   const handleAddComment = async (
     content: string,
     parentId?: string,
@@ -4012,46 +4054,36 @@ Use userId only from this list:
       );
       return { ok: false as const, error: new Error('Decision content is locked') };
     }
-    const newComment: Comment = {
-      id: Math.random().toString(36).substr(2, 9),
-      content,
-      authorId: 'current-user',
-      authorName: 'Current User',
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      likedByMe: false,
-      parentId,
-    };
-    (newComment as Comment & { priority?: CommentPriorityLevel }).priority =
-      options?.priority || 'normal';
+    if (!decisionId) return { ok: false as const, error: new Error('Save the decision first') };
     if (parentId) {
-      setComments(
-        comments.map((c) =>
-          c.id === parentId ? { ...c, replies: [...(c.replies || []), newComment] } : c
-        )
-      );
-    } else {
-      setComments([...comments, newComment]);
+      return { ok: false as const, error: new Error('Decision comment replies are not supported') };
     }
-    addActivityLogEntry('comment', t('decisions.detail.activityLog.commentAdded', 'Comment added'));
-    return { ok: true as const };
+    try {
+      setComments(await addDecisionCommentAndReload(Api, decisionId, content));
+      addActivityLogEntry(
+        'comment',
+        t('decisions.detail.activityLog.commentAdded', 'Comment added')
+      );
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
   };
 
   const handleDeleteComment = async (id: string) => {
-    setComments(comments.filter((c) => c.id !== id));
-    return { ok: true as const };
+    if (!decisionId) return { ok: false as const, error: new Error('Save the decision first') };
+    try {
+      setComments(await deleteDecisionCommentAndReload(Api, decisionId, id));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
   };
 
-  const handleLikeComment = async (id: string) => {
-    setComments(
-      comments.map((c) =>
-        c.id === id
-          ? { ...c, likes: c.likedByMe ? c.likes - 1 : c.likes + 1, likedByMe: !c.likedByMe }
-          : c
-      )
-    );
-    return { ok: true as const };
-  };
+  const handleLikeComment = async (_id: string) => ({
+    ok: false as const,
+    error: new Error('Decision comment reactions are not supported by the server'),
+  });
 
   const filteredComments = useMemo(() => {
     const now = new Date();
