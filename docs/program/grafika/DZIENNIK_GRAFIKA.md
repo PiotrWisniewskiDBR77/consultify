@@ -1,0 +1,150 @@
+---
+doc_id: dziennik-grafika
+status: canonical
+truth_type: event-log
+established: 2026-08-30
+zasada_zrodlowa: 00_ZASADY_PRACY.md reguła nr 10 (dokumentuj kontekst zdarzenia)
+---
+
+# Dziennik toru Grafika — chronologia zdarzeń i ich kontekst
+
+**Po co ten plik.** Wynik zapisuje się sam — jest w kodzie i w commicie. Tu zapisujemy
+to, czego z wyniku odtworzyć się nie da: dlaczego tak zdecydowano, co się okazało
+nieprawdą, kto co zgłosił, i czym rzecz omal się nie skończyła.
+
+Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · co z tego wynika.
+
+---
+
+## 2026-08-30, sesja wieczorna (przejęcie toru po poprzedniku)
+
+### Z-8 · Właściciel przekazał dwie zasady pracy
+Zlecanie robotnikom z doborem modelu do trudności (Sonnet gdzie wzorzec, Opus gdzie
+osąd) oraz dokumentowanie **kontekstu zdarzenia**, nie tylko wyniku. Utrwalone jako
+reguły 9 i 10 w `00_ZASADY_PRACY.md`, dosłownymi cytatami. Ten plik powstał w wykonaniu
+reguły 10.
+
+### Z-7 · Robotnik omal nie zniszczył pracy innego robotnika — `git stash`
+**Co się stało:** robotnik naprawiający ekran predykcji schował zmiany (`git stash`),
+żeby zmierzyć stan testów sprzed własnej edycji. Stos stashu jest **wspólny dla całego
+repozytorium i wszystkich drzew roboczych** — zabrał więc plik `FilterableTable.tsx`
+innego robotnika, który w tym samym momencie na nim pisał. `stash pop` odmówił
+(konflikt), cudzy plik trzeba było odtwarzać ręcznie.
+
+**Dlaczego ważne:** skończyło się bez szkody **wyłącznie dlatego, że robotnik to zgłosił
+w sekcji „ZGŁASZAM"**. Gdyby przemilczał, strata wyszłaby dopiero u kogoś innego,
+prawdopodobnie po czystym pobraniu repozytorium. To dokładnie ta klasa błędu, która
+w tym projekcie raz już zepsuła harness (szerokie `git add -A`).
+
+**Co z tego wynika:** reguła nr 8 — zakaz `git stash` u robotników. Stan odniesienia
+mierzy się **przed pierwszą edycją albo wcale**; do porównania z HEAD służy
+`git show HEAD:<ścieżka>` do osobnego pliku, nigdy ruszanie drzewa roboczego.
+Weryfikacja po incydencie: stash pusty, plik 1647 linii, esbuild przechodzi, drugi
+robotnik ostrzeżony, żeby sam sprawdził swój diff.
+
+### Z-6 · Znaleziona książka właściciela — i sprostowanie mojej własnej rekomendacji
+**Co się stało:** właściciel wskazał, że w repozytorium leży jego książka opisująca
+metodykę DRD. Znaleziona: **„Digital Pathfinder", Piotr Wiśniewski PhD**, w `knowledge/DRD/`
+(nie w `docs/`, gdzie szukałby każdy). Lektura obaliła to, co **sam przed chwilą
+zarekomendowałem właścicielowi**: napisałem mu, że macierz ma dwie skale (5 i 7 poziomów).
+Książka opisuje **trzy** — 5, 6 i 7. Kod zna dwie.
+
+**Dlaczego ważne:** dwie osie (kompetencje/kultura, cyberbezpieczeństwo) mają w kodzie
+o jeden poziom za mało. Skutek nie jest kosmetyczny — najwyższy poziom dojrzałości
+jest w produkcie **nieosiągalny**, a luka do celu liczona wobec złego maksimum.
+Gdybym nie sprostował, zbudowalibyśmy macierz kłamiącą w dwóch osiach z siedmiu.
+
+**Trzy rzeczy, które książka rozstrzygnęła same z siebie:**
+1. „Rozjazd 34 kontra 39 obszarów", zgłaszany w `DRD_CANON.md` jako defekt kodu,
+   **defektem nie jest** — książka opisuje sześć osi (34 obszary), oś AI dopisano później.
+   Kod miał rację, dokument techniczny się mylił.
+2. Obszar 5A to **„Typ 1–6", nie „Poziom 1–6"** — autor przemianował skalę, bo żaden
+   styl przywództwa nie jest lepszy. Macierz nie może malować go gradientem dojrzałości.
+3. Nazwa osi 5 w kodzie („Kultura Transformacji") gubi kompetencje, które są połową
+   jej zakresu.
+
+**Co z tego wynika:** `DRD_KSIAZKA_KONTRA_KOD.md` + kolejność prac, w której poprawa
+skal wyprzedza jakąkolwiek robotę graficzną. Oraz reguła praktyczna: **materiały
+źródłowe właściciela leżą w `knowledge/`, nie w `docs/`** — `docs/` to piętro agentów.
+Dokument z nagłówkiem `Autor: Claude` nigdy nie jest źródłem.
+
+**Uzupełnienie od właściciela:** książka **nie jest ostatnią wersją** — Cyberbezpieczeństwo
+dołożył już w książce, a oś AI dopiero potem; wskazał, że gdzieś przekazał nowszą
+dokumentację obu. Poszukiwanie w toku. **Dopóki się nie zamknie, liczby z książki
+dla osi 6 i 7 są niepewne** i nie wolno na nich niczego budować.
+
+### Z-5 · Decyzja właściciela: macierz oceny to siedem osi
+Na pytanie, którą z **pięciu** znalezionych w kodzie implementacji macierzy robimy tą
+jedyną — odpowiedź: *„Tak, 7 osi."* Wybrany `EmbeddedMatrix` (zmienna liczba poziomów
+per oś). Cztery pozostałe (~1900 linii) idą do odłożonych; **kod zostaje na miejscu**
+zgodnie z regułą nr 5. Zapisane w `MAPA_UWAG_WLASCICIELA.md`, sekcja D-1.
+
+### Z-4 · Właściciel miał rację co do macierzy — istnieje w pięciu wersjach
+**Co się stało:** właściciel twierdził, że macierz odpowiedzi „w kodzie istnieje",
+choć przejrzał wszystkie karty i nigdzie jej nie znalazł. Pomiar potwierdził: istnieje
+w **pięciu niezależnych implementacjach**. Jedna żywa, cztery odcięte.
+
+**Dlaczego ważne:** to **piąty** przypadek tego samego wzorca w tym projekcie — rzecz
+zbudowana i pozbawiona wejścia. Poprzednik zanotował cztery takie w jeden dzień.
+Zasada „zakładaj, że rzecz istnieje, dopóki nie udowodnisz, że jej nie ma" wygrała
+piąty raz z rzędu.
+
+**Najgroźniejszy szczegół:** harness pokazuje macierz (`?screen=assessment-matryca`),
+której w aplikacji otworzyć się nie da — bo renderuje wariant martwy w produkcie.
+Stanowisko pomiarowe potrafi więc kłamać także **w drugą stronę**: pokazywać jako
+działające coś, co dla użytkownika nie istnieje. Do sześciu znanych sposobów kłamania
+harnessu dochodzi siódmy.
+
+**Drugi szczegół:** macierz znika z ekranu po zamrożeniu sesji — czyli dokładnie wtedy,
+gdy wg metodyki ma wejść do raportu i pokazać następne kroki.
+
+**Sprostowanie dokumentacji:** `PRZEKAZANIE_GRAFIKA.md:188` i `status.json` twierdzą,
+że ekran `assessment-matryca` nie jest zarejestrowany w harnessie. **Jest** — od 11:08
+tego samego dnia. Dokument przepisał nieaktualną notatkę sześć godzin po fakcie.
+Lekcja: **własna dokumentacja starzeje się w godzinach, nie w dniach.**
+
+### Z-3 · Dziewięć ekranów Finansów oceniano w pustym wariancie
+**Co się stało:** właściciel oznaczył 10 ekranów Finansów jako do poprawki, przy siedmiu
+nie zostawiając ani słowa. Przyczyna: każdy z nich wymaga parametru w adresie
+(`&scene=`, `&mode=`, `&step=`, `&state=`), udokumentowanego **wyłącznie w komentarzu
+nagłówkowym własnego pliku** — rejestr harnessu ich nie wymienia. Zrzuty zrobiono bez
+nich; właściciel dostał puste plansze i karty zajmujące 15% kadru.
+
+**Dlaczego ważne:** jego uwaga *„nic tu nie widać, nic z tego nie można wyciągnąć"*
+była **trafna wobec tego, co dostał**, i niesprawiedliwa wobec produktu. Po ponownych
+zrzutach z parametrami te same ekrany pokazują pełne tabele z danymi.
+
+**Co z tego wynika:** adresy z kompletem parametrów zapisane; realny defekt graficzny
+w tym klastrze był **jeden** (pasek kroków jako gołe słowa) i został naprawiony.
+
+### Z-2 · Siedem uwag „tabela za wąska" było już naprawione — właściciel o tym nie wiedział
+**Co się stało:** właściciel siedmiokrotnie zgłosił, że tabela nie jest na pełną
+szerokość (10:01–11:44). Poprzednik znalazł przyczynę — sztuczne `maxWidth: 1180`
+wpisane w harness, nie w produkt — i usunął ją o **14:15**. Ale **nikt nie zrobił
+nowych zrzutów i nikt nie zapalił właścicielowi zielonej karty**, więc dla niego
+sprawa wyglądała na otwartą przez resztę dnia.
+
+**Dlaczego ważne:** naprawa bez dowodu nie jest naprawą. Weryfikacja zrzutem
+potwierdziła: sejfy i raporty DRD czyste, wiersze w jednej linii. Przy okazji wyszły
+**dwa defekty, których nikt nie zgłaszał** — dwa ekrany Oceny w całości po angielsku
+i ucinana ostatnia kolumna w tabelach dwóch różnych modułów.
+
+**Co z tego wynika:** po każdej naprawie obowiązkowo nowy zrzut **i** `odbior-poprawka.mjs`.
+Oraz: ponowne oglądanie „załatwionych" ekranów opłaca się samo — znajduje defekty,
+których nie szukano.
+
+### Z-1 · Rozjazd oczekiwania właściciela z pracą — 2,5 godziny
+**Co się stało:** przy przejęciu sesji właściciel powiedział: *„byłem przekonany, że
+od dwóch godzin Twój poprzednik to naprawiał"*. Pomiar bazy: z 63 jego uwag ruszonych
+było **8**, nietkniętych **55**. Ostatnia jego decyzja — 11:50; przez następne 2,5 h
+pracowano nad prawym pasem, kartami N i dyżurami toru funkcji.
+
+**Dlaczego ważne:** praca była wartościowa i częściowo **też** wynikała z jego uwag
+(prawy pas w ideach i notatniku) — właściciel sam to sprostował i miał rację, moja
+pierwsza ocena była za ostra. Ale rozjazd między tym, czego oczekiwał, a tym, co się
+działo, trwał 2,5 godziny i nikt go nie zauważył.
+
+**Co z tego wynika:** `STAN_LISTY_POPRAWEK.md` jako trwały pomiar. Zasada: **lista
+właściciela jest torem numer jeden i nie ustępuje niczemu**; praca własna nadzorcy
+idzie równolegle robotnikami, nigdy zamiast. I: **licz commity oraz wpisy w bazie
+przed każdym meldunkiem** — meldunek „pracujemy nad tym" bez liczby jest bezwartościowy.
