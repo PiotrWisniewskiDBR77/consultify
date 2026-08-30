@@ -1,0 +1,16 @@
+NOWY — DYŻUR 178
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_178_OCENA_SOURCETYPE.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 178.
+
+Marker: d3d36cd5f5
+Zasoby wyłączne: baza 6078, runtime 5026 i 5027.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
