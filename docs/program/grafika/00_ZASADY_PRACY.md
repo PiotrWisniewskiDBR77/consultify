@@ -307,3 +307,41 @@ drugi raz*. Jeśli nie — dokumentacja jest niepełna, choćby wynik był opisa
 Bieżący nośnik kontekstu w tym torze: `DZIENNIK_GRAFIKA.md` (chronologia zdarzeń),
 `MAPA_UWAG_WLASCICIELA.md` (lista robocza), `DRD_KSIAZKA_KONTRA_KOD.md` (źródła metodyki),
 `STAN_LISTY_POPRAWEK.md` (pomiary), ten plik (zasady).
+
+## ★★ REGUŁA NR 11 — środowisko pracy: lokalnie, świadomie (2026-08-30, decyzja właściciela)
+
+Właściciel zapytał wprost, czy pracujemy na `demo.consultify.ai`, czy `staging.consultify.ai`.
+**Odpowiedź brzmi: na żadnym z nich.** Tor grafiki pracuje **lokalnie** — harness dev-render
+(port 3020) na danych mockowych, bez bazy, bez logowania. To wynika z reguły nr 3: właściciel
+nie może być pierwszym testerem, więc renderujemy bez jego konta.
+
+**Decyzja właściciela po tym wyjaśnieniu:**
+> „Dla szybkości pracujemy lokalnie i zabezpieczamy wszystko opisowo tutaj oraz wypychamy
+> na GitHub jak to teraz. Później przerzucimy wszystko na staging świadomie — szkoda czasu."
+
+### Co z tego wynika — trzy obowiązki
+
+1. **Lokalnie i szybko** — harness zostaje głównym stanowiskiem pracy. Nie wstrzymujemy roboty
+   na wdrożenia.
+2. **Zabezpieczamy opisowo** — skoro nie ma weryfikacji na żywym środowisku, **jedynym
+   zabezpieczeniem jest zapis**. Każdy pomiar, każdy defekt, każda decyzja idzie do pliku w repo
+   w tej samej godzinie (reguła nr 10). Dokumentacja przestaje być wygodą, a staje się
+   **substytutem weryfikacji** — i musi być tego świadoma.
+3. **Wypychamy na GitHub** — praca ma być poza jedną maszyną. Zdalne: `github-backup`
+   (prywatne repozytorium właściciela). **`origin/demo` pozostaje nietknięte.**
+
+### ★ Dług, który świadomie zaciągamy — nazwany, żeby nie zniknął
+
+**Harness pokazuje, jak komponent wygląda. NIE pokazuje, co widzi zalogowany użytkownik.**
+To dwie różne rzeczy i 30.08 pomyliliśmy je co najmniej dwa razy:
+- siedem uwag właściciela „tabela za wąska" okazało się defektem **harnessu**, nie produktu;
+- warsztat arkusza jest w harnessie wyłączony, ale na demo działa zmienna omijająca flagi
+  studia — **możliwe, że właściciel widzi u siebie inny ekran, niż ocenia na zrzutach**.
+
+Dlatego przy każdym ekranie zapalanym właścicielowi na zielono obowiązuje zapis, **czy
+i czym różni się stan w harnessie od stanu na żywym środowisku** — a jeśli tego nie wiemy,
+ma to być napisane wprost, nie przemilczane.
+
+**Przerzucenie na staging jest odłożone, nie odwołane.** Gdy nastąpi, pierwszą robotą jest
+porównanie harnessu ze stagingiem jeden do jednego na ekranach już odebranych — żeby zmierzyć,
+ile się rozjechało, zamiast zgadywać.
