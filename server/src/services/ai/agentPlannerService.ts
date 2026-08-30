@@ -119,6 +119,23 @@ export class AgentResultPersistenceError extends Error {
   }
 }
 
+/**
+ * FIX-180 / F4: both agent-plan timing knobs used to be read as
+ * `Math.max(x, Number(env || default))`, which turns ANY non-numeric value
+ * into `NaN` and lets it through: `setInterval(NaN)` degrades to a 1 ms timer
+ * (a lease UPDATE every millisecond for the whole step) and `duration < NaN`
+ * is always false (a "long step" warning on every single step). A typo in a
+ * Railway variable was enough to trigger either. Anything that is not a finite
+ * number at or above `minMs` now falls back to the documented default, so a
+ * broken value behaves exactly like an unset one.
+ */
+function readEnvMs(rawValue: string | undefined, defaultMs: number, minMs: number): number {
+  if (rawValue === undefined || String(rawValue).trim() === '') return defaultMs;
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed) || parsed < minMs) return defaultMs;
+  return parsed;
+}
+
 type PlanToolExecutor = (
   toolName: string,
   input: Record<string, unknown>,
@@ -127,13 +144,15 @@ type PlanToolExecutor = (
 
 class AgentPlannerService {
   private readonly executionLeaseSeconds = 300;
-  private readonly heartbeatIntervalMs = Math.max(
-    1,
-    Number(process.env.AGENT_PLAN_HEARTBEAT_INTERVAL_MS || 60_000)
+  private readonly heartbeatIntervalMs = readEnvMs(
+    process.env.AGENT_PLAN_HEARTBEAT_INTERVAL_MS,
+    60_000,
+    1
   );
-  private readonly longStepWarningThresholdMs = Math.max(
-    0,
-    Number(process.env.AGENT_PLAN_LONG_STEP_WARNING_MS || 120_000)
+  private readonly longStepWarningThresholdMs = readEnvMs(
+    process.env.AGENT_PLAN_LONG_STEP_WARNING_MS,
+    120_000,
+    0
   );
 
   private warnIfLongStep(
