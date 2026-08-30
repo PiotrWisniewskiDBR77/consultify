@@ -16,12 +16,20 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../src/i18n';
 
 import ToolsSwotSessionWorkspaceScreen from './screens/tools-swot-session-workspace';
+import { useAppStore } from '../src/store/useAppStore';
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.setAttribute('data-theme', theme);
+// Naprawa 2026-08-30 (odbiór „prehistoryczna karta"): ekran montuje teraz
+// REALNY `<AppProviders>` (patrz screens/tools-swot-session-workspace.tsx),
+// który zawiera `ThemeSync` — komponent czytający `useAppStore.theme` i
+// nadpisujący klasę `.dark` na <html> w `useLayoutEffect`. Bez tej linii
+// ThemeSync wygrywa wyścig z powyższym `classList.toggle` i `?theme=dark`
+// po cichu wraca do jasnego (ten sam wzorzec co `dev-render/main.tsx:1628`).
+useAppStore.setState({ theme });
 
 const el = document.getElementById('root');
 if (el) {
