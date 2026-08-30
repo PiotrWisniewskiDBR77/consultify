@@ -12,10 +12,14 @@ export interface OkrCheckInOccurrenceOption {
 
 interface OccurrenceRow {
   cadence_occurrence_id: string;
-  window_start: string;
-  window_end: string;
+  window_start: string | Date;
+  window_end: string | Date;
   used: boolean;
   is_current: boolean;
+}
+
+function toDateOnly(value: string | Date): string {
+  return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
 }
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -56,21 +60,24 @@ export async function listCheckInOccurrences(params: {
             AND kr.status <> 'cancelled'
        ), ranked AS (
          SELECT *,
-                CASE WHEN NOT used THEN
-                  ROW_NUMBER() OVER (PARTITION BY used ORDER BY window_end ASC, window_start ASC)
+                CASE WHEN NOT used AND window_end >= CURRENT_DATE THEN
+                  ROW_NUMBER() OVER (
+                    PARTITION BY (NOT used AND window_end >= CURRENT_DATE)
+                    ORDER BY window_end ASC, window_start ASC
+                  )
                 END AS pending_rank
            FROM occurrences
        )
        SELECT cadence_occurrence_id, window_start, window_end, used,
-              (NOT used AND pending_rank = 1) AS is_current
+              (NOT used AND window_end >= CURRENT_DATE AND pending_rank = 1) AS is_current
          FROM ranked
         ORDER BY window_start ASC, window_end ASC`,
       [organizationId, keyResultId]
     );
     return result.rows.map((row) => ({
       cadenceOccurrenceId: row.cadence_occurrence_id,
-      windowStart: row.window_start,
-      windowEnd: row.window_end,
+      windowStart: toDateOnly(row.window_start),
+      windowEnd: toDateOnly(row.window_end),
       used: row.used,
       isCurrent: row.is_current,
     }));
