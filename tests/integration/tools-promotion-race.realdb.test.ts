@@ -201,7 +201,8 @@ beforeAll(async () => {
   const configuredDatabase = decodeURIComponent(
     new URL(process.env.DATABASE_URL as string).pathname.replace(/^\//, '')
   );
-  await assertRealPostgresTestEnvironment({ expectedDatabase: configuredDatabase });
+  const proof = await assertRealPostgresTestEnvironment();
+  expect(proof.database).toBe(configuredDatabase);
 
   // `audit_log.organization_id` has a real FK to `organizations` — without
   // a matching row, every promotion's (self-swallowed, see `logAudit`'s own
