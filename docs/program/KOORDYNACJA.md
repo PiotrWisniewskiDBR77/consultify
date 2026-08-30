@@ -78,3 +78,30 @@ kandydata SWOT z zatwierdzonym wynikiem narzędzia. Ekran nie może obiecywać,
 | `src/components/Economics/**` · `dev-render/screens/**` | funkcje (dyżur 135, do zamknięcia) | 2026-08-30 |
 | `src/components/MyWork/shared/**` · `TaskDetailView` · `DecisionDetailView` | funkcje (dyżur 133) | 2026-08-30 |
 | `src/components/Initiatives/InitiativesHub.tsx` | funkcje (dyżur 134) | 2026-08-30 |
+
+### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: kanon dat napisany i nieużyty
+
+**Pomiar, nie hipoteza.** `src/utils/listDateFormat.ts` powstał 27.07 po przeglądzie
+128 zrzutów. Jego własny nagłówek nazywa przyczynę: *270 wywołań
+`toLocaleDateString()` bez argumentu* — taki zapis bierze format daty z przeglądarki,
+a nie z języka konta.
+
+**Stan na dziś (zmierzony `grep`, 30.08):**
+
+| | |
+| --- | --- |
+| Plików, które używają kanonu | **21** |
+| Plików, które go omijają | **198** |
+| Wywołań bez jawnego locale | **254** (było 270) |
+
+W miesiąc od napisania kanonu przeszło na niego **16 wywołań z 270**. Kanon istnieje,
+narzędzie działa, nikt go nie wpiął.
+
+**Czego to dotyczy w praktyce:** użytkownika, którego przeglądarka mówi innym językiem
+niż jego konto — polski konsultant na angielskim systemie zobaczy `8/13/2026` w polskim
+interfejsie. Największe skupiska: panel nadzorcy (17 plików), Ustawienia (14),
+Moja praca (11+7), Wyniki (9), Wywiad (6).
+
+**Czego NIE zrobiłem i dlaczego:** nie robię masowej podmiany 254 miejsc. `CLAUDE.md`
+ostrzega wprost, że masowa operacja tego typu raz już zniszczyła wydane instrukcje.
+To zadanie na osobny dyżur z listą plików i odbiorem, nie poprawka przy okazji.
