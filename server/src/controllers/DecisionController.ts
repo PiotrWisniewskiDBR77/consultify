@@ -1736,6 +1736,7 @@ export class DecisionController {
         title,
         description,
         delegationNote,
+        rationale,
       } = req.body;
 
       if (status && !isDecisionStatusInput(status)) {
@@ -1810,6 +1811,15 @@ export class DecisionController {
       if (description !== undefined) {
         updates.push('description = ?');
         params.push(description);
+      }
+      // MW-DEC-001 fix (2026-08-30): UpdateDecisionSchema now declares
+      // `rationale` (see decision.validators.ts) — persist it to the same
+      // column the finalize path (`decide`, below) writes, so draft-time
+      // autosave and final-decision rationale are the same real field
+      // instead of the draft silently going nowhere.
+      if (rationale !== undefined) {
+        updates.push('decision_rationale = ?');
+        params.push(rationale);
       }
 
       if (updates.length === 0) {

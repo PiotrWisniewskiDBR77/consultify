@@ -243,6 +243,140 @@ export async function deleteDecisionCommentAndReload(
   return (detailResponse.data.comments || []).map(mapDecisionServerComment);
 }
 
+// ── MW-DEC-001 wiring: alternatives ─────────────────────────────────────────
+// `decision_alternatives` rows (server/migrations/932_decision_workflow_
+// canonical.sql, decision.validators.ts CreateDecisionAlternativeSchema) only
+// carry title/description/benefits/drawbacks/costOrFeasibility/isRecommended
+// — narrower than the UI's `Alternative` (pros[]/cons[] arrays, plus
+// impactScore/riskLevel/confidence/estimatedCost/estimatedDuration fields
+// AlternativesSection.tsx declares on the type but never renders an editor
+// for — verified by grep). pros/cons round-trip losslessly as one-bullet-
+// per-line text in benefits/drawbacks; the never-edited fields are never
+// sent and never expected back.
+type DecisionAlternativeApi = Pick<typeof Api, 'post' | 'put' | 'delete'>;
+
+export const alternativeToServerInput = (
+  a: Pick<Alternative, 'title' | 'description' | 'pros' | 'cons' | 'isRecommended'>
+) => ({
+  title: (a.title || '').trim(),
+  description: a.description?.trim() || undefined,
+  benefits: (a.pros || []).map((p) => p.trim()).filter(Boolean).join('\n') || undefined,
+  drawbacks: (a.cons || []).map((c) => c.trim()).filter(Boolean).join('\n') || undefined,
+  isRecommended: Boolean(a.isRecommended),
+});
+
+export const mapDecisionServerAlternative = (dto: any): Alternative => ({
+  id: String(dto.id),
+  title: String(dto.title || ''),
+  description: String(dto.description || ''),
+  pros: String(dto.benefits || '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean),
+  cons: String(dto.drawbacks || '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean),
+  isRecommended: Boolean(dto.isRecommended),
+});
+
+export async function createDecisionAlternativeOnServer(
+  api: DecisionAlternativeApi,
+  decisionId: string,
+  input: ReturnType<typeof alternativeToServerInput>
+) {
+  const res = await api.post(`/decisions/${encodeURIComponent(decisionId)}/alternatives`, input);
+  return res.data;
+}
+
+export async function updateDecisionAlternativeOnServer(
+  api: DecisionAlternativeApi,
+  decisionId: string,
+  alternativeId: string,
+  patch: Partial<ReturnType<typeof alternativeToServerInput>>
+) {
+  const res = await api.put(
+    `/decisions/${encodeURIComponent(decisionId)}/alternatives/${encodeURIComponent(alternativeId)}`,
+    patch
+  );
+  return res.data;
+}
+
+export async function deleteDecisionAlternativeOnServer(
+  api: DecisionAlternativeApi,
+  decisionId: string,
+  alternativeId: string
+) {
+  await api.delete(
+    `/decisions/${encodeURIComponent(decisionId)}/alternatives/${encodeURIComponent(alternativeId)}`
+  );
+}
+
+// ── MW-DEC-001 wiring: risks ────────────────────────────────────────────────
+// `decision_risks` rows carry description/severity/likelihood/mitigation/
+// ownerId only — no `category` or `contingency` column exists (verified
+// against 932_decision_workflow_canonical.sql). Those two RiskItem fields
+// stay UI-only: editable on screen, but they reset to their defaults on the
+// next server reload (honest, documented limitation — see the coordination
+// report — rather than a silent migration this task does not add).
+// `probability`/`impact` are UI-lowercase; the server enums are UPPERCASE
+// (severity: LOW/MEDIUM/HIGH/CRITICAL, likelihood: LOW/MEDIUM/HIGH — no
+// CRITICAL tier for likelihood, see decisionCollaborationService.ts
+// normalizeLikelihood). A `critical` probability is sent as `HIGH` here
+// rather than being silently downgraded to `MEDIUM` by the server's own
+// unknown-value fallback.
+type DecisionRiskApi = Pick<typeof Api, 'post' | 'put' | 'delete'>;
+
+export const riskToServerInput = (
+  r: Pick<RiskItem, 'title' | 'probability' | 'impact' | 'mitigation'>
+) => ({
+  description: (r.title || '').trim(),
+  severity: String(r.impact || 'medium').toUpperCase(),
+  likelihood:
+    r.probability === 'critical' ? 'HIGH' : String(r.probability || 'medium').toUpperCase(),
+  mitigation: r.mitigation?.trim() || undefined,
+});
+
+export const mapDecisionServerRisk = (dto: any): RiskItem => ({
+  id: String(dto.id),
+  title: String(dto.description || ''),
+  probability: String(dto.likelihood || 'MEDIUM').toLowerCase() as RiskItem['probability'],
+  impact: String(dto.severity || 'MEDIUM').toLowerCase() as RiskItem['impact'],
+  category: 'business',
+  mitigation: String(dto.mitigation || ''),
+  contingency: '',
+});
+
+export async function createDecisionRiskOnServer(
+  api: DecisionRiskApi,
+  decisionId: string,
+  input: ReturnType<typeof riskToServerInput>
+) {
+  const res = await api.post(`/decisions/${encodeURIComponent(decisionId)}/risks`, input);
+  return res.data;
+}
+
+export async function updateDecisionRiskOnServer(
+  api: DecisionRiskApi,
+  decisionId: string,
+  riskId: string,
+  patch: Partial<ReturnType<typeof riskToServerInput>>
+) {
+  const res = await api.put(
+    `/decisions/${encodeURIComponent(decisionId)}/risks/${encodeURIComponent(riskId)}`,
+    patch
+  );
+  return res.data;
+}
+
+export async function deleteDecisionRiskOnServer(
+  api: DecisionRiskApi,
+  decisionId: string,
+  riskId: string
+) {
+  await api.delete(`/decisions/${encodeURIComponent(decisionId)}/risks/${encodeURIComponent(riskId)}`);
+}
+
 type DecisionObjectAttachmentApi = Pick<typeof Api, 'get' | 'postMultipart' | 'delete'>;
 
 const mapDecisionServerAttachment = (decisionId: string, attachment: any): Attachment => ({
@@ -1218,6 +1352,24 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     'overview' | 'resources' | 'risk' | 'options' | 'governance' | 'comments' | 'logs'
   >('overview');
   const [isLocalHydrated, setIsLocalHydrated] = useState(false);
+  // ── MW-DEC-001 wiring: quiet per-item sync to decision_alternatives /
+  // decision_risks. `alternatives`/`risks` React state stays the single
+  // source of truth for what's ON SCREEN (typing stays instant, item
+  // identity/focus never jumps) — a local item's `id` is NEVER replaced by
+  // the server id. These refs map local id -> server id (set once an item
+  // has been created on the server), the JSON of the last payload actually
+  // synced (to skip redundant PUTs), and the per-item debounce timer. See
+  // the effect below that watches `alternatives`/`risks` and drives all of
+  // this; individual handlers (addAlternative, updateRisk, ...) are
+  // untouched.
+  const altServerIdRef = useRef<Map<string, string>>(new Map());
+  const altLastSyncedRef = useRef<Map<string, string>>(new Map());
+  const altSyncTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const prevAlternativesRef = useRef<Alternative[]>([]);
+  const riskServerIdRef = useRef<Map<string, string>>(new Map());
+  const riskLastSyncedRef = useRef<Map<string, string>>(new Map());
+  const riskSyncTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const prevRisksRef = useRef<RiskItem[]>([]);
   const [lastPublishedSnapshot, setLastPublishedSnapshot] = useState('');
   const [lastDraftSavedAt, setLastDraftSavedAt] = useState<string | null>(null);
   const [editingStakeholderId, setEditingStakeholderId] = useState<string | null>(null);
@@ -1572,10 +1724,20 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       priority: priority.toLowerCase(),
       category,
       dueDate: dueDate || null,
+      // rationale IS accepted by UpdateDecisionSchema/updateDecision (server/
+      // src/validators/decision.validators.ts, DecisionController.ts) — real
+      // persistence, not a silently-stripped field.
       rationale,
       decisionOwnerId: deciderId || null,
       deciderId: deciderId || null,
-      alternatives,
+      // MW-DEC-001: `alternatives` is deliberately NOT sent here any more.
+      // UpdateDecisionSchema never declared it, so the sanitizing validation
+      // middleware silently stripped it before it reached the controller —
+      // every "save" of an alternative through this payload was a no-op.
+      // Alternatives now go through their own real routes (POST/PUT/DELETE
+      // /api/decisions/:id/alternatives, see the sync effect above); keeping
+      // the key here would just be pretending to send something that was
+      // never received.
       selectedAlternativeId: selectedAlternativeId || null,
       impact: aggregateDecisionImpact(impact),
     }),
@@ -1589,7 +1751,6 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       dueDate,
       rationale,
       deciderId,
-      alternatives,
       selectedAlternativeId,
       impact,
     ]
@@ -1996,6 +2157,13 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     setProjectName('');
     setContextDetails('');
     setAlternatives([]);
+    // New (not-yet-saved) decision: no server rows exist yet, so drop all
+    // sync bookkeeping from whatever decision was open before.
+    altServerIdRef.current = new Map();
+    altLastSyncedRef.current = new Map();
+    altSyncTimerRef.current.forEach((timer) => clearTimeout(timer));
+    altSyncTimerRef.current = new Map();
+    prevAlternativesRef.current = [];
     setSelectedAlternativeId('');
     setImpact({
       scope: 'medium',
@@ -2008,6 +2176,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     setComments([]);
     setLinkedItems([]);
     setRisks([]);
+    riskServerIdRef.current = new Map();
+    riskLastSyncedRef.current = new Map();
+    riskSyncTimerRef.current.forEach((timer) => clearTimeout(timer));
+    riskSyncTimerRef.current = new Map();
+    prevRisksRef.current = [];
     setReminders([]);
     setEscalation(null);
     setActivityLog([
@@ -2075,13 +2248,32 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       if (isFreshAndEmpty) {
         setReadMode(false);
       }
-      // Use API data; demo fallback only in demo sessions
-      const apiAlternatives = decision.alternatives || [];
+      // MW-DEC-001: read from the REAL, persisted dossier
+      // (`dossierAlternatives` — decision_alternatives rows), not the legacy
+      // `decision.alternatives` prose field (migration 902, read-only, no
+      // CRUD endpoint — see DecisionDetailDTO comment in Decision/types.ts).
       // Bez dosypywania zaszytych plusów/minusów: pusta lista argumentów jest
       // uczciwym stanem opcji, wymyślony argument decyzyjny nie jest.
-      setAlternatives(
-        apiAlternatives.length > 0 ? apiAlternatives : isDemo ? DEMO_ALTERNATIVES : []
+      const dossierAlternatives = Array.isArray(decision.dossierAlternatives)
+        ? decision.dossierAlternatives
+        : [];
+      const mappedAlternatives = dossierAlternatives.map(mapDecisionServerAlternative);
+      const nextAlternatives =
+        mappedAlternatives.length > 0 ? mappedAlternatives : isDemo ? DEMO_ALTERNATIVES : [];
+      setAlternatives(nextAlternatives);
+      // Seed the sync bookkeeping BEFORE the watcher effect below ever runs
+      // for this data, so items that already exist on the server are never
+      // mistaken for brand-new local drafts and re-POSTed as duplicates.
+      // Demo-fallback items are intentionally NOT seeded here — they have no
+      // server id yet, so editing one for real creates a genuine row instead
+      // of silently pretending demo content is already persisted.
+      altServerIdRef.current = new Map(mappedAlternatives.map((a) => [a.id, a.id]));
+      altLastSyncedRef.current = new Map(
+        mappedAlternatives.map((a) => [a.id, JSON.stringify(alternativeToServerInput(a))])
       );
+      altSyncTimerRef.current.forEach((timer) => clearTimeout(timer));
+      altSyncTimerRef.current = new Map();
+      prevAlternativesRef.current = nextAlternatives;
       setSelectedAlternativeId(decision.selectedAlternativeId || '');
       if (decision.impact) {
         setImpact(decision.impact);
@@ -2103,9 +2295,19 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       setSourceType(decision.sourceType || decision.source_type || null);
       setSourceId(decision.sourceId || decision.source_id || null);
 
-      // Risks — demo fallback
-      const apiRisks = decision.risks || [];
-      setRisks(apiRisks.length > 0 ? apiRisks : isDemo ? DEMO_RISKS : []);
+      // MW-DEC-001: read from the REAL, persisted dossier (`dossierRisks` —
+      // decision_risks rows), not the legacy `decision.risks` prose field.
+      const dossierRisks = Array.isArray(decision.dossierRisks) ? decision.dossierRisks : [];
+      const mappedRisks = dossierRisks.map(mapDecisionServerRisk);
+      const nextRisks = mappedRisks.length > 0 ? mappedRisks : isDemo ? DEMO_RISKS : [];
+      setRisks(nextRisks);
+      riskServerIdRef.current = new Map(mappedRisks.map((r) => [r.id, r.id]));
+      riskLastSyncedRef.current = new Map(
+        mappedRisks.map((r) => [r.id, JSON.stringify(riskToServerInput(r))])
+      );
+      riskSyncTimerRef.current.forEach((timer) => clearTimeout(timer));
+      riskSyncTimerRef.current = new Map();
+      prevRisksRef.current = nextRisks;
 
       // Reminders & escalation — demo fallback
       const apiReminders = decision.reminders || [];
@@ -2184,19 +2386,25 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       }
 
       // Hydrate local enhancements (for fields without backend persistence yet)
+      //
+      // MW-DEC-001: comments/alternatives/risks/rationale are now real,
+      // persisted, server-sourced data (loaded above from
+      // `dossierAlternatives`/`dossierRisks`/`comments`/`rationale` on the
+      // `/detail` aggregate) — the server is the source of truth for them,
+      // full stop. Reading them from this local cache here used to CLOBBER
+      // a fresh, correct server response with whatever stale copy happened
+      // to be sitting in this browser's storage (e.g. from a session before
+      // this fix, or from a different browser's abandoned draft) — the
+      // classic two-sources-of-truth bug. localStorage stays a transitional
+      // fallback for fields that genuinely have no backend endpoint yet.
       try {
         const raw = localStorage.getItem(`consultify-decision-enhancements:${id}`);
         if (raw) {
           const local = JSON.parse(raw);
-          if (Array.isArray(local.comments) && local.comments.length > 0)
-            setComments(local.comments);
           if (Array.isArray(local.attachments))
             setAttachments((current) => selectDecisionAttachments(current, local.attachments));
           if (Array.isArray(local.linkedItems) && local.linkedItems.length > 0)
             setLinkedItems(local.linkedItems);
-          if (Array.isArray(local.risks) && local.risks.length > 0) setRisks(local.risks);
-          if (Array.isArray(local.alternatives) && local.alternatives.length > 0)
-            setAlternatives(local.alternatives);
           if (Array.isArray(local.reminders) && local.reminders.length > 0)
             setReminders(
               local.reminders.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule))
@@ -2209,8 +2417,6 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
               )
             );
           }
-          if (typeof local.rationale === 'string' && local.rationale.trim())
-            setRationale(local.rationale);
           if (typeof local.description === 'string' && local.description.trim())
             setDescription(local.description);
           if (typeof local.contextDetails === 'string') setContextDetails(local.contextDetails);
@@ -2228,7 +2434,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }
   };
 
-  // Persist local enhancements for parts that do not have backend endpoints yet
+  // Persist local enhancements for parts that do not have backend endpoints
+  // yet. MW-DEC-001: comments/alternatives/risks/rationale are deliberately
+  // NOT written here any more — they are saved for real (see the dedicated
+  // sync effect + handleAddComment/handleDeleteComment below), so caching
+  // them here would just be a second, competing copy that could later
+  // clobber correct server data on load (see the read-side comment above).
   useEffect(() => {
     if (!isLocalHydrated || !decisionId) return;
     try {
@@ -2237,15 +2448,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         JSON.stringify({
           schemaVersion: 1,
           savedAt: new Date().toISOString(),
-          comments,
           attachments,
           linkedItems,
-          risks,
-          alternatives,
           reminders,
           escalation,
           escalationRules,
-          rationale,
           description,
           contextDetails,
           consequenceScenarios,
@@ -2257,15 +2464,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   }, [
     isLocalHydrated,
     decisionId,
-    comments,
     attachments,
     linkedItems,
-    risks,
-    alternatives,
     reminders,
     escalation,
     escalationRules,
-    rationale,
     description,
     contextDetails,
     consequenceScenarios,
@@ -2280,6 +2483,165 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }, 900);
     return () => clearTimeout(timer);
   }, [isLocalHydrated, hasPublishBaseline, isDirty, draftSnapshot, decisionId, decisionProjectId]);
+
+  // ── MW-DEC-001: quiet per-item sync of alternatives to the server ───────
+  // Diffs the `alternatives` array against its previous value on every
+  // render where it changed (add/edit/remove/AI-generate — every existing
+  // handler above, none of them touched) and, per changed item: DELETEs one
+  // that disappeared (if it had ever reached the server), or debounce-
+  // creates/updates one that's still present. `isDecisionStageLocked`
+  // already gates every mutating handler above (addAlternative etc. all
+  // early-return under it), so a finalized decision never reaches this
+  // effect with new local edits to send.
+  useEffect(() => {
+    if (!isLocalHydrated) return;
+    const prev = prevAlternativesRef.current;
+    const prevById = new Map(prev.map((a) => [a.id, a]));
+    const currentIds = new Set(alternatives.map((a) => a.id));
+
+    for (const before of prev) {
+      if (currentIds.has(before.id)) continue;
+      const timer = altSyncTimerRef.current.get(before.id);
+      if (timer) clearTimeout(timer);
+      altSyncTimerRef.current.delete(before.id);
+      const serverId = altServerIdRef.current.get(before.id);
+      altServerIdRef.current.delete(before.id);
+      altLastSyncedRef.current.delete(before.id);
+      if (decisionId && serverId) {
+        deleteDecisionAlternativeOnServer(Api, decisionId, serverId).catch((err) => {
+          console.error('[DecisionDetailView] Failed to delete alternative on server', err);
+          toast.error(
+            t(
+              'decisions.detail.toast.alternativeDeleteFailed',
+              'Could not delete this option on the server'
+            )
+          );
+        });
+      }
+    }
+
+    const syncDecisionId = decisionId; // narrow once — captured by the closures below
+    for (const item of alternatives) {
+      const before = prevById.get(item.id);
+      if (before && JSON.stringify(before) === JSON.stringify(item)) continue;
+      if (!syncDecisionId) continue; // decision not saved yet — nothing to sync to
+      const title = (item.title || '').trim();
+      const existingServerId = altServerIdRef.current.get(item.id);
+      const payload = alternativeToServerInput(item);
+      const payloadKey = JSON.stringify(payload);
+      if (altLastSyncedRef.current.get(item.id) === payloadKey) continue;
+      if (!existingServerId && !title) continue; // never create with an empty title
+
+      const existingTimer = altSyncTimerRef.current.get(item.id);
+      if (existingTimer) clearTimeout(existingTimer);
+      altSyncTimerRef.current.set(
+        item.id,
+        setTimeout(() => {
+          void (async () => {
+            try {
+              const serverId = altServerIdRef.current.get(item.id);
+              if (serverId) {
+                if (!title) return;
+                await updateDecisionAlternativeOnServer(Api, syncDecisionId, serverId, payload);
+              } else {
+                const created = await createDecisionAlternativeOnServer(
+                  Api,
+                  syncDecisionId,
+                  payload
+                );
+                altServerIdRef.current.set(item.id, String(created.id));
+              }
+              altLastSyncedRef.current.set(item.id, payloadKey);
+            } catch (err) {
+              console.error('[DecisionDetailView] Failed to sync alternative', err);
+              toast.error(
+                t(
+                  'decisions.detail.toast.alternativeSyncFailed',
+                  'Could not save this option to the server'
+                )
+              );
+            }
+          })();
+        }, 600)
+      );
+    }
+
+    prevAlternativesRef.current = alternatives;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alternatives, isLocalHydrated, decisionId]);
+
+  // ── MW-DEC-001: quiet per-item sync of risks to the server ──────────────
+  // Same pattern as the alternatives effect above.
+  useEffect(() => {
+    if (!isLocalHydrated) return;
+    const prev = prevRisksRef.current;
+    const prevById = new Map(prev.map((r) => [r.id, r]));
+    const currentIds = new Set(risks.map((r) => r.id));
+
+    for (const before of prev) {
+      if (currentIds.has(before.id)) continue;
+      const timer = riskSyncTimerRef.current.get(before.id);
+      if (timer) clearTimeout(timer);
+      riskSyncTimerRef.current.delete(before.id);
+      const serverId = riskServerIdRef.current.get(before.id);
+      riskServerIdRef.current.delete(before.id);
+      riskLastSyncedRef.current.delete(before.id);
+      if (decisionId && serverId) {
+        deleteDecisionRiskOnServer(Api, decisionId, serverId).catch((err) => {
+          console.error('[DecisionDetailView] Failed to delete risk on server', err);
+          toast.error(
+            t('decisions.detail.toast.riskDeleteFailed', 'Could not delete this risk on the server')
+          );
+        });
+      }
+    }
+
+    const syncDecisionIdForRisks = decisionId; // narrow once — captured by the closures below
+    for (const item of risks) {
+      const before = prevById.get(item.id);
+      if (before && JSON.stringify(before) === JSON.stringify(item)) continue;
+      if (!syncDecisionIdForRisks) continue;
+      const title = (item.title || '').trim();
+      const existingServerId = riskServerIdRef.current.get(item.id);
+      const payload = riskToServerInput(item);
+      const payloadKey = JSON.stringify(payload);
+      if (riskLastSyncedRef.current.get(item.id) === payloadKey) continue;
+      if (!existingServerId && !title) continue;
+
+      const existingTimer = riskSyncTimerRef.current.get(item.id);
+      if (existingTimer) clearTimeout(existingTimer);
+      riskSyncTimerRef.current.set(
+        item.id,
+        setTimeout(() => {
+          void (async () => {
+            try {
+              const serverId = riskServerIdRef.current.get(item.id);
+              if (serverId) {
+                if (!title) return;
+                await updateDecisionRiskOnServer(Api, syncDecisionIdForRisks, serverId, payload);
+              } else {
+                const created = await createDecisionRiskOnServer(
+                  Api,
+                  syncDecisionIdForRisks,
+                  payload
+                );
+                riskServerIdRef.current.set(item.id, String(created.id));
+              }
+              riskLastSyncedRef.current.set(item.id, payloadKey);
+            } catch (err) {
+              console.error('[DecisionDetailView] Failed to sync risk', err);
+              toast.error(
+                t('decisions.detail.toast.riskSyncFailed', 'Could not save this risk to the server')
+              );
+            }
+          })();
+        }, 600)
+      );
+    }
+
+    prevRisksRef.current = risks;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [risks, isLocalHydrated, decisionId]);
 
   const handleSave = async (silent = false) => {
     if (!title.trim()) {
@@ -5772,19 +6134,23 @@ Use userId only from this list:
                  (`rightPanelSections[0]`), pionowo i bez duplikatów. */
             />
 
-            {/* M02-005: this legacy view is now reachable ONLY via the
-                m05DecisionWorkspaceFlag kill-switch (default ON routes to the
-                real-backend DecisionWorkspace instead — see MyWorkHub.tsx).
-                Comments / alternatives / risks / rationale / notes edited
-                here persist to `localStorage['consultify-decision-enhancements:
-                <id>']` only (see loadDecision's "Hydrate local enhancements"
-                block above) — never to the server, never shared with
-                teammates, and gone if this browser's storage is cleared.
-                Nothing before this fix said so; a user could reasonably
-                believe a posted comment was saved for the team. Neutral
-                tokens only (CANON: crimson is reserved for critical
-                semantics) — this is an honest capability notice, not an
-                error. */}
+            {/* MW-DEC-001 (coordination note 2026-08-30): comments,
+                alternatives and risks on this screen now persist for real —
+                POST/PUT/DELETE against server/src/routes/pmo/decisions.routes.ts
+                (decision_comments / decision_alternatives / decision_risks),
+                read back from GET /:id/detail's `comments` /
+                `dossierAlternatives` / `dossierRisks`. The earlier notice here
+                said the OPPOSITE (local-browser-only) — that was true before
+                this fix and is not any more; leaving stale wording after the
+                behavior changed would be its own lie. What genuinely still
+                lives only in `localStorage['consultify-decision-enhancements:
+                <id>']` on this screen: reminders, escalation rules, linked
+                items, and the free-text context/consequence-scenario notes —
+                see the "Hydrate local enhancements" block in loadDecision
+                above (comments/alternatives/risks/rationale were removed from
+                both sides of that block by this fix). Neutral tokens only
+                (CANON: crimson is reserved for critical semantics) — this is
+                an honest capability notice, not an error. */}
             <div
               role="status"
               className="mb-3 flex items-start gap-2 rounded-md border border-c-border bg-c-surface-2 px-3 py-2.5 text-xs text-c-text-muted"
@@ -5793,7 +6159,7 @@ Use userId only from this list:
               <span>
                 {t(
                   'decisions.detail.legacyLocalOnlyNotice',
-                  'Legacy view: comments, alternatives, risks and notes on this screen are saved only in this browser, not on the server or shared with your team.'
+                  'Comments, alternatives and risks on this screen are saved on the server and shared with your team. Reminders, escalation rules, linked items and context notes are still saved only in this browser.'
                 )}
               </span>
             </div>
@@ -8946,7 +9312,7 @@ Use userId only from this list:
                           onLikeComment={handleLikeComment}
                           onGenerateAIComment={generateAIComment}
                           isGeneratingAI={isGeneratingAIComment}
-                          currentUserId="current-user"
+                          currentUserId={currentUser?.id}
                           expanded
                           onToggleExpand={() => {}}
                         />

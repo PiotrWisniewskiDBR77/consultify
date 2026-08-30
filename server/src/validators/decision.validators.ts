@@ -168,6 +168,16 @@ export const UpdateDecisionSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().max(5000).optional(),
   delegationNote: z.string().max(500).optional(),
+  // MW-DEC-001 fix (2026-08-30): DecisionDetailView.tsx's `publishPayload`
+  // has always sent `rationale` here (draft-time autosave, before a formal
+  // decide()), but this schema never declared it — the sanitizing
+  // validation middleware (validation.middleware.ts) silently stripped it
+  // before updateDecision ever saw it, so a typed-in rationale never
+  // actually saved until the decision was finalized via PUT
+  // /:id/decide (DecideSchema, which already accepted it). Declared here so
+  // the draft path is honest too; `updateDecision` below persists it to
+  // `decisions.decision_rationale` — the same column decide() writes.
+  rationale: z.string().max(2000).optional(),
 });
 
 export const RemindDecisionSchema = z.object({
