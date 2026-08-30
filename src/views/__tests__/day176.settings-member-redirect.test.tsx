@@ -47,7 +47,7 @@ describe('day176 Settings MEMBER redirect', () => {
   it('shows an explanatory error and redirects a MEMBER from a blocked section to Profile', async () => {
     render(
       <SettingsView
-        currentUser={{ role: 'MEMBER' } as User}
+        currentUser={{ role: 'MEMBER' } as unknown as User}
         onUpdateUser={vi.fn()}
         theme="light"
         toggleTheme={vi.fn()}
