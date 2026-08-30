@@ -120,6 +120,10 @@ import {
   OkrCheckInValidationError,
 } from '../../services/resultsVnext/okr/okrCheckInCommands.js';
 import { getCheckIn, listCheckIns } from '../../services/resultsVnext/okr/okrCheckInRepository.js';
+import {
+  generateCadenceOccurrencesAndSeedCheckInObligations,
+  seedExistingCheckInObligationsForSet,
+} from '../../services/resultsVnext/okr/okrCheckInScheduler.js';
 import { suggestNextCheckInValue } from '../../services/resultsVnext/okr/okrCheckInSuggestionService.js';
 import {
   acceptAlignment,
@@ -836,11 +840,29 @@ function mountTransitionRoute(
           reason: body.reason ?? null,
           access,
         });
+        let checkInSeeding: Awaited<
+          ReturnType<typeof generateCadenceOccurrencesAndSeedCheckInObligations>
+        > | null = null;
+        if (outcome.outcome === 'applied' && spec === OKR_CYCLE_ACTIVATE_SPEC) {
+          try {
+            checkInSeeding = await generateCadenceOccurrencesAndSeedCheckInObligations({
+              organizationId: auth.organizationId,
+              cycleId,
+            });
+          } catch (seedingError) {
+            logger.error('[resultsVnext/okr.routes] activateCycle check-in seeding failed', {
+              cycleId,
+              organizationId: auth.organizationId,
+              error: seedingError instanceof Error ? seedingError.message : String(seedingError),
+            });
+          }
+        }
         res.status(200).json({
           outcome: outcome.outcome,
           eventId: outcome.eventId,
           resultingVersion: outcome.resultingVersion,
           cycle: outcome.result,
+          ...(spec === OKR_CYCLE_ACTIVATE_SPEC ? { checkInSeeding } : {}),
         });
       } catch (err) {
         handleOkrRouteError(res, err, op);
@@ -1360,11 +1382,27 @@ function mountSetTransitionRoute(
           reason: body.reason ?? null,
           access,
         });
+        let checkInSeeding: Awaited<ReturnType<typeof seedExistingCheckInObligationsForSet>> | null = null;
+        if (outcome.outcome === 'applied' && spec === OKR_SET_ACTIVATE_SPEC) {
+          try {
+            checkInSeeding = await seedExistingCheckInObligationsForSet({
+              organizationId: auth.organizationId,
+              setId,
+            });
+          } catch (seedingError) {
+            logger.error('[resultsVnext/okr.routes] activateOkrSet check-in seeding failed', {
+              setId,
+              organizationId: auth.organizationId,
+              error: seedingError instanceof Error ? seedingError.message : String(seedingError),
+            });
+          }
+        }
         res.status(200).json({
           outcome: outcome.outcome,
           eventId: outcome.eventId,
           resultingVersion: outcome.resultingVersion,
           set: outcome.result,
+          ...(spec === OKR_SET_ACTIVATE_SPEC ? { checkInSeeding } : {}),
         });
       } catch (err) {
         handleOkrRouteError(res, err, op);
