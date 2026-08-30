@@ -367,6 +367,11 @@ const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identi
 const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
+// Pomiar mechaniki KPI/OKR/ROI (2026-08-30) — kanoniczne wejście "lista
+// inicjatyw" pod odkrywalną nazwą. Sam REALNY <InitiativesHub> już istniał w
+// harnessie (patrz StagingFixesInitiativesI18nScreen wyżej) — ten wpis go
+// tylko wystawia pod nazwą, którą właściciel faktycznie odnajdzie.
+const InicjatywyListaScreen = React.lazy(() => import('./screens/inicjatywy-lista'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
 const StagingFixesExecutionI18nScreen = React.lazy(
@@ -401,6 +406,8 @@ const ResultsVNextRoiFullToolScreen = React.lazy(
   () => import('./screens/results-vnext-roi-full-tool')
 );
 const RoiJednaKartaScreen = React.lazy(() => import('./screens/roi-jedna-karta'));
+const WskaznikJednaKartaScreen = React.lazy(() => import('./screens/wskaznik-jedna-karta'));
+const CelJednaKartaScreen = React.lazy(() => import('./screens/cel-jedna-karta'));
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
@@ -465,6 +472,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <InitiativesHub>: weryfikacja brakujących kluczy i18n (toast/hub/filters/materialize/kanban) i selektora poziomu inicjatywy w modalu "Nowa inicjatywa" (getInitiativeLevels(t) zamiast statycznej angielskiej stałej).',
     render: () => <StagingFixesInitiativesI18nScreen />,
+  },
+  'inicjatywy-lista': {
+    label:
+      'Pomiar KPI/OKR/ROI 2026-08-30 — LISTA INICJATYW: REALNY <InitiativesHub> (StandardModuleBar + StandardTable, kanon triady) pod odkrywalną nazwą — właściciel nigdy nie widział tego ekranu. Dane przykładowe (isDemoMode).',
+    render: () => <InicjatywyListaScreen />,
   },
   'capacity-advisor-a3': {
     label:
