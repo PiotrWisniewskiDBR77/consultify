@@ -145,7 +145,7 @@ export function enforceDocumentSchemaGrounding(
       }
       const translated = plCanonical[value.trim().toLowerCase()];
       if (translated) return { value: translated, changed: translated !== value };
-      if (obviousEnglish.test(value)) return { value: removed, changed: true };
+      if (obviousEnglish.test(value)) return { value, changed: true };
       return { value, changed: false };
     }
     if (Array.isArray(value)) {
@@ -178,25 +178,24 @@ export function enforceDocumentSchemaGrounding(
     };
   };
 
-  const guardedTitle = guardText(next.title);
-  if (guardedTitle.changed) next.title = removed;
-
   for (const section of next.sections) {
+    let localizedTitleChanged = false;
+    let localizedPurposeChanged = false;
     if (language === 'pl') {
       const localizedTitle = localizePolishValue(section.title);
       section.title = String(localizedTitle.value);
+      localizedTitleChanged = localizedTitle.changed;
       if (section.purpose) {
         const localizedPurpose = localizePolishValue(section.purpose);
         section.purpose = String(localizedPurpose.value);
+        localizedPurposeChanged = localizedPurpose.changed;
       }
     }
     const title = guardText(section.title);
-    if (title.changed) section.title = removed;
     let purposeChanged = false;
     if (section.purpose) {
       const purpose = guardText(section.purpose);
-      if (purpose.changed) section.purpose = removed;
-      purposeChanged = purpose.changed;
+      purposeChanged = purpose.changed || localizedPurposeChanged;
     }
     for (const block of section.blocks) {
       const guarded = enforceBlockGrounding(
@@ -207,7 +206,11 @@ export function enforceDocumentSchemaGrounding(
       );
       block.content = guarded.content;
       block.isAssumption =
-        block.isAssumption === true || guarded.changed || title.changed || purposeChanged;
+        block.isAssumption === true ||
+        guarded.changed ||
+        title.changed ||
+        localizedTitleChanged ||
+        purposeChanged;
       if (language === 'pl') {
         const localized = localizePolishValue(block.content);
         block.content = localized.value;
