@@ -2236,6 +2236,54 @@
    "opis": "Wzorcowe klocki, stany błędu, podglądy — nie moduł menu, ale odbieramy osobno.",
    "ekrany": [
     {
+     "id": "prawy-pas-jedna-formula-idea-teresa",
+     "nazwa": "PROTOTYP jednej formuly — idea, tryb Teresa",
+     "ocena": "B",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
+     "naprawione": [],
+     "wyjatki": [
+      "To PROTOTYP, nie wdrozenie — zero zmian w kodzie produkcyjnym. Ogladasz, zeby zdecydowac, czy tak ma wygladac cala struktura.",
+      "Pole pisania Teresy jest nieaktywne — to material do oceny wygladu, nie dzialajacy czat."
+     ]
+    },
+    {
+     "id": "prawy-pas-jedna-formula-idea-artefakt",
+     "nazwa": "PROTOTYP jednej formuly — idea, tryb Artefakt",
+     "ocena": "B",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
+     "naprawione": [],
+     "wyjatki": [
+      "To PROTOTYP, nie wdrozenie — zero zmian w kodzie produkcyjnym. Ogladasz, zeby zdecydowac, czy tak ma wygladac cala struktura.",
+      "Pole pisania Teresy jest nieaktywne — to material do oceny wygladu, nie dzialajacy czat."
+     ]
+    },
+    {
+     "id": "prawy-pas-jedna-formula-notatka-teresa",
+     "nazwa": "PROTOTYP jednej formuly — notatka, tryb Teresa",
+     "ocena": "B",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
+     "naprawione": [],
+     "wyjatki": [
+      "To PROTOTYP, nie wdrozenie — zero zmian w kodzie produkcyjnym. Ogladasz, zeby zdecydowac, czy tak ma wygladac cala struktura.",
+      "Pole pisania Teresy jest nieaktywne — to material do oceny wygladu, nie dzialajacy czat."
+     ]
+    },
+    {
+     "id": "prawy-pas-jedna-formula-notatka-artefakt",
+     "nazwa": "PROTOTYP jednej formuly — notatka, tryb Artefakt",
+     "ocena": "B",
+     "gdzie": "PROTOTYP DO DECYZJI — nie ma tego jeszcze w aplikacji",
+     "co": "Jedna formula prawego pasa: stala szyna ikon, przelaczanie miedzy Artefaktem (siedem sekcji) a Teresa (pelna wysokosc, wlasne pole pisania). Notatka i idea przechodza przez TE SAMA funkcje budujaca sekcje.",
+     "naprawione": [],
+     "wyjatki": [
+      "To PROTOTYP, nie wdrozenie — zero zmian w kodzie produkcyjnym. Ogladasz, zeby zdecydowac, czy tak ma wygladac cala struktura.",
+      "Pole pisania Teresy jest nieaktywne — to material do oceny wygladu, nie dzialajacy czat."
+     ]
+    },
+    {
      "id": "mw-007-calendar-narrow-viewport",
      "nazwa": "Kalendarz przy waskim ekranie",
      "ocena": "A",
