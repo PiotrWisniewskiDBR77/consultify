@@ -37,6 +37,15 @@ w tej jednej sprawie. Kolejno mówiłem właścicielowi: (1) macierz ma dwie ska
 nieprawda, ma trzy; (2) kod ma źle — nieprawda, kod ma dobrze w źródle prawdy i źle
 w jednym pliku; (3) błąd jest w jednym pliku — nieprawda, kopii jest pięć.
 
+**Domknięcie (późniejsze tego samego wieczoru):** po przemieceniu całego repozytorium
+kopii jest **osiem, nie pięć**. Doszły: `server/src/services/reportBuilderService.ts`
+(fallback ustawia `maxScore: 7` **na sztywno dla wszystkich siedmiu osi** — błąd działa
+w drugą stronę, zawyża zamiast zaniżać, i siedzi na ścieżce produkcyjnej generowania
+raportu) oraz osierocony `server/services/ai/aiContext.ts` (bez `/src/` — plik martwy
+od kwietnia, zero importerów, żywy bliźniak tego wzorca nie ma).
+Naprawione: cztery. Wstrzymane do decyzji: `aiAssessmentPartnerService`. Zgłoszone
+i nienaprawione: `reportBuilderService`. Martwe: `AxisReportSection`, `aiContext`.
+
 **Wzorzec do zapamiętania:** za każdym razem myliłem się **w tę samą stronę** —
 zawężałem zasięg defektu do tego, co akurat zmierzyłem. Pierwszy pomiar zawsze
 pokazuje dolną granicę problemu, nigdy górną. **Nie meldować zasięgu, dopóki nie
