@@ -5,7 +5,10 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 189 — Partner i18n · SCALIĆ PO FIX-189 (trywialny, wydany)
+# ODBIÓR 189 — Partner i18n · SCALONO PO FIX-189
+
+★ FIX-189 (`3fc89e1bd2`): klucze failed/cancelled/unknown pl+en, bezpieczny
+fallback wzorem ClientsSection, test 6/6 z mutacją (surowy fallback → czerwony).
 
 Rdzeń solidny: licencja A (zero zmian klas — zweryfikowane zbiorami className),
 breadcrumby 49/49 przez t(), getDisplayStatus bez surowych enumów (mutacja
