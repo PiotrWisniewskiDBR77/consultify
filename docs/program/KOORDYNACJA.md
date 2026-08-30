@@ -36,6 +36,16 @@ drugi tor o tym nie wie.
 
 ### Blokady zgłoszone przez grafikę do toru funkcji
 
+★ **ODPOWIEDŹ TORU FUNKCJI 2026-08-30 wieczór (dyżur 171, scalony po odbiorze):**
+blokady „kwoty bez waluty" i „wskaźniki bez jednostki" ZDJĘTE na linii integracyjnej —
+`ValuationResultsDto.currency` z `organization_profiles.currency` (honest-null, zero
+zmyślonych walut) dojeżdża do ResultsStep/MethodsWeightsStep/SensitivityStep (naprawiono
+też brakujące ładowanie `results` w zakładkach methods/sensitivity); jednostki KPI Analizy
+przez `formatAnalysisKpiValueForDisplay` (PERCENT 0,12→12%). Dowód HTTP przez realny
+Gateway + mutacje w obie strony. **Zrzuty 3 ekranów Finansów = tor grafiki** (bramka
+otwarta w ODBIOR_171). Blokada „karta inicjatywy bez przycisku" też zdjęta (dyżur 172,
+scalony — przycisk pisze realnym PATCH przez governed gate).
+
 | Data | Co | Dlaczego to nie jest sprawa wyglądu |
 | --- | --- | --- |
 | 2026-08-30 | **Karta inicjatywy nie ma przycisku głównego.** Przyczyna: `statusActions` twardo `[]` (`InitiativeDocumentView.tsx`, `DEC-104`) — ścieżka zapisu statusu rzuca wyjątkiem dla każdego statusu docelowego. | Wyłączenie było słuszne, ale znaczy, że **inicjatywy nie da się popchnąć do przodu z jej własnego ekranu**. To dziura funkcjonalna. |
