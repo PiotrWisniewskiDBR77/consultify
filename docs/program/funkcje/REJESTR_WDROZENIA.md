@@ -55,10 +55,10 @@ ograniczeniami · `C` nie działa albo dowód nie trzyma · `D` martwe / za flag
 | Audyty | Eksport raportu do DOCX | — | `ZA_FLAGA` | flaga domyślnie OFF | — | `D` | — |
 | Audyty | Kreator programu audytu (`AuditOrchestratorWizard`, 511 linii) | — | `ISTNIEJE_NIEAKTYWNE` | brak | własny komentarz w pliku: „owner flagged direction" | `D` | — |
 | Spotkania | Cały moduł — backend | `server/src/routes/meeting*` | `ZA_FLAGA` | `beta = 'closed'` dla zwykłych ról | **nie jest zaślepką**: 3077 linii serwisów, router 1348 linii, 8 tabel, testy na Postgresie — obala opis „zaślepka" w warstwie źródłowej | `D` | — |
-| Czat · Teresa | Strażnik poufności na drodze załączników (E1) | `ContextRetrievalService.ts:139` | `DO_ZBUDOWANIA` | brak | `DOWOD_2026-08-30_STRAZNIK_POUFNOSCI.md` | `C` | — |
-| Czat · Teresa | Strażnik poufności na drodze awaryjnej (E2) | `ai.routes.ts:4368` | `DO_ZBUDOWANIA` | brak | jw. | `C` | — |
-| Czat · Teresa | Strażnik poufności na drodze metadanych (E3) | `ai.routes.ts:4458` | `DO_ZBUDOWANIA` | brak | jw. | `C` | — |
-| Czat · Teresa | Wołacz strażnika w `aiContextBuilder` | `aiContextBuilder.ts:974` | `ISTNIEJE_NIEAKTYWNE` | brak | `catch` oznaczony `// fail-open`, `aiContextBuilder.ts:1008` — znosi strażnika przy błędzie | `C` | — |
+| Czat · Teresa | Strażnik poufności na drodze załączników (E1) | `ContextRetrievalService.ts:142` | `DZIALA` | brak | dyżur 132; mutacja powtórzona przez nadzorcę na realnym Postgresie | `B` | — |
+| Czat · Teresa | Strażnik poufności na drodze awaryjnej (E2) | `ai.routes.ts:4368` | `DZIALA` | brak | dyżur 132; bramkowane przez `governedAttachmentDocIds` | `B` | — |
+| Czat · Teresa | Strażnik poufności na drodze metadanych (E3) | `ai.routes.ts:4460` | `DZIALA` | brak | dyżur 132; nazwy plików filtrowane | `B` | — |
+| Czat · Teresa | Wołacz strażnika w `aiContextBuilder` | `aiContextBuilder.ts:974` | `DZIALA` | brak | dyżur 132 — `fail-open` zamieniony na `fail-closed`, mutacja potwierdzona | `B` | — |
 | Inicjatywy | Most `adoptions/accepted-classic` — przeniesienie rekordu między magazynami | `server/src/routes/pmo/initiativesExecutionRuntime.routes.ts:1732` | `ISTNIEJE_NIEAKTYWNE` | brak | trasa i domena kompletne (`adoptAcceptedClassicInitiative.ts`); **`grep` po `accepted-classic` w `src/` = 0 wołaczy** — przeliczone przez nadzorcę | `C` | — |
 | Inicjatywy | Trzynaście kolejek bramkowych w Mojej pracy | komponenty `*Queue` | `ODLOZONE` | brak | **test pilnuje, żeby nie były zamontowane**: `src/components/MyWork/__tests__/MyWorkHub.decisionsOwnerFeedback.test.ts:8-29`, 13 nazw imiennie | `D` | — |
 | Wyniki | Wspólny rejestr wskaźnika (handoff Inicjatywa→KPI) | `rvn_kpi_initiative_impacts` | `DZIALA` z ograniczeniem | brak | migracja `20260813_rvn_kpi_initiative_impacts.sql` **przyznaje wprost, że stary `initiative_kpis` NIE został scalony**; obok żyje ≥7 osobnych magazynów KPI | `B` | — |
@@ -66,6 +66,7 @@ ograniczeniami · `C` nie działa albo dowód nie trzyma · `D` martwe / za flag
 | Panel administratora | Sloty ustawień | `src/components/Admin/adminNavigation.ts` | `DZIALA` z ograniczeniem | `platform-operations` za literałem | **62 sloty** — przeliczone przez nadzorcę (`grep -c "c('"` = 62); 61 renderuje realny panel, 1 zablokowany stałą `CAN_ACCESS_PLATFORM_OPERATIONS=false` (`AdminSettingsModule.tsx:79`) | `B` | — |
 | Ustawienia | Sekcje niedostępne dla roli członka | `SettingsView.tsx:247,281-284` | `DZIALA` z ograniczeniem | brak | rola `MEMBER` → `USER` → pilot-restricted; dozwolone 4 sekcje, reszta **cicho** przekierowuje na profil (`pilotAccess.ts:15-20,90-92`) | `B` | — |
 | Portal partnerski | Cały moduł | `PartnerPortalView.tsx` | `DZIALA` | brak | 22 wołacze API, wejście przez `SidebarFooter.tsx:44-52`; **`getPartnerMenuItem` (`menuConfig.ts:280`) jest martwa — nigdy niewołana** | `B` | — |
+| Czat · Teresa | Teksty projektu w promptcie (`project_knowledge kind='text'`) | `AIPipeline` | `DO_ZBUDOWANIA` | brak | **ścieżka sąsiednia poza strażnikiem** — strażnik działa na `knowledge_docs`; zgłoszone samodzielnie przez wykonawcę 132 | `C` | — |
 | Czat · Teresa | Korpus wiedzy organizacji | `fetchOrgApprovedContext` | `ZA_FLAGA` | `ENABLE_ORG_KNOWLEDGE_RETRIEVAL` (OFF) — **zastrzeżenie: nie włączać przed osobnym dyżurem** | `ai.routes.ts:4077`; strażnik obecny `ContextRetrievalService.ts:333` | `D` | — |
 
 ---
@@ -92,7 +93,7 @@ z raportu wykonawcy (reguła nr 3 — raport wykonawcy nie jest dowodem).
 | 133 | Kontrakt mutacji w widżetach Mojej pracy — produkt przestaje kłamać, że zapisał | **wydany 2026-08-30**, marker `64d3de306c` | wdraża czerwony kontrakt z §A.2 raportu 130; zasoby 6016 / 4932–4933; **żywa ścieżka notatnika do odczytu** |
 | 134 | Most inicjatyw dostaje wołacza w interfejsie | **wydany 2026-08-30**, marker `64d3de306c` | faza 3 **krok (a) wyłącznie**; flaga `initiativeBridgeFlag` domyślnie OFF; zasoby 6017 / 4934–4935 |
 | 135 | Dziewiętnaście paneli wyceny podpiętych za flagą + harness do zrzutów | **wydany 2026-08-30**, marker `64d3de306c` | flaga `financeValuePanelsFlag` domyślnie OFF; zakaz projektowania wyglądu; zasoby 6018 / 4936–4937 |
-| 132 | Jeden strażnik poufności na trzech żywych wejściach do promptu | **wydany 2026-08-30**, marker `c05c4c3910` | klon `/private/tmp/cx-day132-straznik-poufnosci` gotowy; instrukcja w scratchu, bez `git` i bez sieci; zasoby 6015 / 4930 i 4931 |
+| 132 | Jeden strażnik poufności na trzech żywych wejściach do promptu | **SCALONY 2026-08-30**, merge `9e81bd473c`, ocena **`B`** | odbiór: `ODBIOR_132_STRAZNIK_POUFNOSCI.md`. Cztery mutacje powtórzone przez nadzorcę, `R1` na realnym Postgresie. Jedna regresja złapana i naprawiona (`b87b5af3b5`). **Liczby 220 zastanych porażek nie wolno cytować** — niezweryfikowana różnicowo |
 
 
 ---
