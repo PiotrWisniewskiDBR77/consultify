@@ -147,9 +147,12 @@ członka 2 z 10". Tor D przeliczył: **4 sekcje dozwolone**, 50 sekcji w typie o
 Żadna z tych par nie jest oczywiście prawdziwa — mianownik jest inny w obu. Do pomiaru
 osobno, nie do wpisania jako fakt.
 
-**Otwarte po torach B i D:** nie znaleziono dokumentu-źródła dla „11 bramek, 12 statusów,
-26 kart" — tor B wyprowadził z kodu 4 bramki i 31 typów agregatu, co **nie jest tym samym**
-i wymaga wskazania kontraktu, z którego pochodzi liczba 11.
+**Otwarte po torach B i D — ZAMKNIĘTE 30.08:** źródło liczby „11 bramek, 12 statusów,
+26 kart" istnieje: `docs/modules/initiatives-execution-canon/01_PROCESS_GOVERNANCE_AND_GATES.md`
+§8 (tabela liczy dokładnie 11 bramek; statusy w §7, karty w `03_UI_UX_AND_INTERACTION_SPEC.md:425`).
+Tor B go nie znalazł, ale plan cytował prawdę. **Nowe otwarcie w zamian:** ten kanon nosi
+`OD-02` i pozostaje `draft_for_owner_review` — stan docelowy fazy 3 sam czeka na odbiór
+właściciela. Wpisane też do planu funkcji (aneks 30.08).
 
 
 ---
