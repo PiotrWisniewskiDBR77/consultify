@@ -4,7 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { api, toastError } = vi.hoisted(() => ({
   api: {
-    getTasks: vi.fn(), createTask: vi.fn(), updateTask: vi.fn(), put: vi.fn(), get: vi.fn(),
+    getTasks: vi.fn(),
+    createTask: vi.fn(),
+    updateTask: vi.fn(),
+    put: vi.fn(),
+    get: vi.fn(),
   },
   toastError: vi.fn(),
 }));
@@ -21,7 +25,14 @@ vi.mock('@/store/useAppStore', () => ({
 vi.mock('@/components/TaskDetailModal', () => ({
   TaskDetailModal: ({ isOpen, onSave }: { isOpen: boolean; onSave: (task: any) => void }) =>
     isOpen
-      ? React.createElement('button', { onClick: () => onSave({ id: 'task-1', title: 'Task', status: 'todo', priority: 'medium' }) }, 'Save mocked task')
+      ? React.createElement(
+          'button',
+          {
+            onClick: () =>
+              onSave({ id: 'task-1', title: 'Task', status: 'todo', priority: 'medium' }),
+          },
+          'Save mocked task'
+        )
       : null,
 }));
 vi.mock('@/components/MyWork/DecisionDetailModal', () => ({ DecisionDetailModal: () => null }));
@@ -36,8 +47,12 @@ const task = { id: 'task-1', title: 'Task', status: 'todo', priority: 'medium', 
 
 class FakeDataTransfer {
   private store = new Map<string, string>();
-  setData(type: string, value: string) { this.store.set(type, value); }
-  getData(type: string) { return this.store.get(type) || ''; }
+  setData(type: string, value: string) {
+    this.store.set(type, value);
+  }
+  getData(type: string) {
+    return this.store.get(type) || '';
+  }
 }
 class FakeDragEvent extends Event {
   dataTransfer: FakeDataTransfer;
@@ -52,9 +67,15 @@ describe('day173 visible task mutation failures', () => {
     vi.clearAllMocks();
     api.getTasks.mockResolvedValue([task]);
     api.get.mockResolvedValue({});
-    api.createTask.mockRejectedValue(Object.assign(new Error('canonical writer required'), { status: 409 }));
-    api.updateTask.mockRejectedValue(Object.assign(new Error('canonical writer required'), { status: 409 }));
-    api.put.mockRejectedValue(Object.assign(new Error('canonical writer required'), { status: 409 }));
+    api.createTask.mockRejectedValue(
+      Object.assign(new Error('canonical writer required'), { status: 409 })
+    );
+    api.updateTask.mockRejectedValue(
+      Object.assign(new Error('canonical writer required'), { status: 409 })
+    );
+    api.put.mockRejectedValue(
+      Object.assign(new Error('canonical writer required'), { status: 409 })
+    );
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -76,13 +97,23 @@ describe('day173 visible task mutation failures', () => {
   });
 
   it('shows a translated error when InitiativeSidePanel update receives 409', async () => {
-    render(React.createElement(InitiativeSidePanel, {
-      initiative: {
-        id: 'initiative-1', name: 'Initiative', axis: 'processes', status: 'planning',
-        priority: 'medium', progress: 0, budget: 0, spent: 0,
-      }, isOpen: true,
-      onClose: vi.fn(), onUpdate: vi.fn(),
-    }));
+    render(
+      React.createElement(InitiativeSidePanel, {
+        initiative: {
+          id: 'initiative-1',
+          name: 'Initiative',
+          axis: 'processes',
+          status: 'planning',
+          priority: 'medium',
+          progress: 0,
+          budget: 0,
+          spent: 0,
+        },
+        isOpen: true,
+        onClose: vi.fn(),
+        onUpdate: vi.fn(),
+      })
+    );
     fireEvent.click(await screen.findByText('Tasks'));
     fireEvent.click(await screen.findByText('Task'));
     fireEvent.click(await screen.findByText('Save mocked task'));
@@ -93,8 +124,13 @@ describe('day173 visible task mutation failures', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'));
     const item: ScheduleItem = {
-      id: 'task:1', type: 'task', title: 'Calendar task', start: '2026-06-15', end: '2026-06-17',
-      sourceId: '1', sourceKind: 'task',
+      id: 'task:1',
+      type: 'task',
+      title: 'Calendar task',
+      start: '2026-06-15',
+      end: '2026-06-17',
+      sourceId: '1',
+      sourceKind: 'task',
     };
     render(React.createElement(InitiativeCalendar, { items: [item], onReschedule: vi.fn() }));
     const chip = document.querySelector('[title^="Calendar task"]') as HTMLElement;
