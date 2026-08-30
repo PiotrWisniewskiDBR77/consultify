@@ -10,7 +10,6 @@ import React, { useState } from 'react';
 interface MockProvider {
   id: string;
   name: string;
-  icon: string;
   connected: boolean;
   connection?: {
     externalEmail: string;
@@ -18,11 +17,17 @@ interface MockProvider {
   } | null;
 }
 
+// Odbiór grafiki 2026-08-30 (Piotr): "zmień to jabłuszko na jakieś normalne, a nie
+// takie jabłko" — surowe emoji (📅/📆/🍎) to dekoracja zakazana przez TRIADA_KANON
+// (patrz precedens: fix(settings) e5fe1d63ad, usunął emoji z AIBehaviorSettings +
+// CalendarSyncSettings toast). lucide-react nie ma logotypów Apple/Outlook — reszta
+// aplikacji (IntegrationSettings.tsx PROVIDER_ICON) już rozwiązuje to samo pytanie
+// jedną neutralną ikoną Calendar dla wszystkich dostawców kalendarza. Idziemy tym
+// samym śladem zamiast rysować nowe SVG.
 const PROVIDERS: MockProvider[] = [
   {
     id: 'google_calendar',
     name: 'Google Calendar',
-    icon: '📅',
     connected: true,
     connection: {
       externalEmail: 'piotr.wisniewski@dbr77.com',
@@ -32,14 +37,12 @@ const PROVIDERS: MockProvider[] = [
   {
     id: 'outlook_calendar',
     name: 'Outlook Calendar',
-    icon: '📆',
     connected: false,
     connection: null,
   },
   {
     id: 'apple_calendar',
     name: 'Apple Calendar (iCal)',
-    icon: '🍎',
     connected: false,
     connection: null,
   },
@@ -82,7 +85,7 @@ const CalendarSyncSettingsScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{cal.icon}</span>
+                <Calendar size={22} className="text-c-text-secondary flex-shrink-0" />
                 <div>
                   <span className="font-medium text-c-text">{cal.name}</span>
                   {cal.connected && cal.connection && (

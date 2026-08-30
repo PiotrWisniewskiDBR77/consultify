@@ -38,6 +38,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 
+import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import { StatusChip } from '@/components/ui/primitives';
 
 import type { OkrSetDto } from './okrApi';
@@ -87,10 +88,23 @@ export interface OkrReviewReflectionViewProps {
   onSetChanged: (set: OkrSetDto) => void;
 }
 
+// Odbiór grafiki 2026-08-30 (Piotr): "Grafika tego jest fatalna, po prostu
+// stara" — this file used to define its OWN small button system (`h-8`,
+// `text-xs`, a bordered `bg-c-text` fill for "primary") instead of the
+// shared canon the rest of Results vNext already uses (`MENU_1_PRIMARY_CTA`,
+// `docs/ui-standards/TRIADA_KANON.md`) — one visible symptom of "doesn't
+// nadążać za resztą aplikacji": every button here read slightly smaller and
+// slightly bordered next to a canon button placed beside it. `BTN_PRIMARY`
+// now IS the shared canon class (same `bg-navy-900`/dark `bg-[#F4F7FB]`
+// fill, `h-9`, `text-sm`, no border); `BTN_GHOST`/`BTN_DANGER` sized to
+// match it (`h-9`/`text-sm`) instead of the old cramped `h-8`/`text-xs`.
+// `BTN_DANGER`'s danger-token colors are unchanged — that one legitimately
+// marks the single hard-to-undo action ("Zamknij zestaw"), not a "same
+// button, wrong shade" case.
 const BTN_BASE =
-  'inline-flex h-8 items-center gap-2 rounded-lg border px-3 text-xs font-medium transition-colors ' +
+  'inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50';
-const BTN_PRIMARY = `${BTN_BASE} border-c-border-strong bg-c-text text-c-surface hover:opacity-90`;
+const BTN_PRIMARY = `${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`;
 const BTN_GHOST = `${BTN_BASE} border-c-border bg-transparent text-c-text hover:bg-c-surface-raised`;
 const BTN_DANGER = `${BTN_BASE} border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200`;
 

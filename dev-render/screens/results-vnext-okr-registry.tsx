@@ -77,10 +77,84 @@ import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+import { seedRealisticSession } from '../mocks/seedStore';
 import { ResultsOkrRegistryPage } from '../../src/components/ResultsVNext/ResultsOkrRegistryPage';
+import type { OkrCycleDto, OkrProgramDto } from '../../src/components/ResultsVNext/okr/okrAdminApi';
 import { OkrSetToolPage } from '../../src/components/ResultsVNext/okr/OkrSetToolPage';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
 import { ROUTES } from '../../src/routes/routeConfig';
+
+// Odbiór grafiki 2026-08-30 (Piotr) — "Nowy OKR" quick-create needs a
+// signed-in `currentUser`/`currentOrganization` (`OkrSetDraftFormModal`
+// defaults owner/company scope from them) — same seed every other "real
+// component" dev-render story uses (see `seedStore.ts` header).
+seedRealisticSession();
+
+// ── Mock Programs/Cycles — "Nowy OKR" quick-create's Program/Cycle pickers
+//    (`OkrSetDraftFormModal`). `MOCK_SETS` below already references
+//    `program-fy26`/`cycle-fy26-h2`, so the create form's dropdowns line up
+//    with the same ids the existing rows use.
+const MOCK_PROGRAMS: OkrProgramDto[] = [
+  {
+    programId: 'program-fy26',
+    organizationId: 'org-dbr77-demo',
+    name: 'FY26',
+    status: 'active',
+    cycleModel: 'semiannual',
+    annualDirectionEnabled: true,
+    objectiveMinRecommended: 2,
+    objectiveMaxRecommended: 5,
+    krMinRequired: 2,
+    krMaxRecommended: 5,
+    checkinFrequency: 'biweekly',
+    approvalRequired: true,
+    scoringModel: 'linear_0_1',
+    objectiveRollupModel: 'average_kr',
+    confidenceEnabled: true,
+    confidenceModel: 'qualitative_3',
+    objectiveConfidenceModel: 'qualitative_3',
+    visibilityDefault: 'organization',
+    committedVsAspirationalEnabled: false,
+    managerReviewRequired: true,
+    selfReviewRequired: true,
+    reflectionRequiredForClose: true,
+    recognitionEnabled: false,
+    activePolicyVersionId: 'policy-fy26-1',
+    rowVersion: 1,
+    createdBy: 'user-piotr-demo',
+    createdAt: '2026-01-05T09:00:00.000Z',
+    updatedBy: null,
+    updatedAt: '2026-01-05T09:00:00.000Z',
+  } as OkrProgramDto,
+];
+
+const MOCK_CYCLES: OkrCycleDto[] = [
+  {
+    cycleId: 'cycle-fy26-h2',
+    organizationId: 'org-dbr77-demo',
+    programId: 'program-fy26',
+    name: 'FY26 H2',
+    startDate: '2026-07-01',
+    endDate: '2026-12-31',
+    draftOpenAt: '2026-06-15T00:00:00.000Z',
+    submissionDueAt: '2026-07-05T00:00:00.000Z',
+    approvalDueAt: '2026-07-10T00:00:00.000Z',
+    activeStartAt: '2026-07-01T00:00:00.000Z',
+    midcycleReviewAt: '2026-09-15T00:00:00.000Z',
+    finalUpdateDueAt: '2026-12-20T00:00:00.000Z',
+    reviewOpenAt: '2026-12-15T00:00:00.000Z',
+    reflectionDueAt: '2026-12-28T00:00:00.000Z',
+    managerReviewDueAt: '2026-12-30T00:00:00.000Z',
+    closeAt: '2026-12-31T00:00:00.000Z',
+    status: 'active',
+    policyVersionId: 'policy-fy26-1',
+    rowVersion: 1,
+    createdBy: 'user-piotr-demo',
+    createdAt: '2026-06-01T09:00:00.000Z',
+    updatedBy: null,
+    updatedAt: '2026-06-01T09:00:00.000Z',
+  } as OkrCycleDto,
+];
 
 // ── Mock OKR Sets — one representative row per real status (all 10 from
 //    `OKR_SET_STATUSES`, including the two reserved/unreachable ones for
@@ -436,6 +510,54 @@ if (!g.__OKR_REGISTRY_FETCH__) {
       // narrowing), `/my` (owner-or-reviewer only), `/company` (scope_type
       // pinned) — mirrors the real three-tab distinction the Hub itself
       // documents in its own header.
+      // "Nowy OKR" quick-create (`OkrSetDraftFormModal` via `ResultsOkrHub`
+      // `openCreateForm`/`handleFormSubmit`) — Program/Cycle pickers +
+      // POST create, checked BEFORE the plain GET `/sets` branch below
+      // (same URL, different method).
+      if (url.match(/\/programs(\?|$)/)) return jsonResponse({ programs: MOCK_PROGRAMS });
+      if (url.match(/\/cycles(\?|$)/)) {
+        const programId = new URL(url, window.location.origin).searchParams.get('programId');
+        const cycles = programId ? MOCK_CYCLES.filter((c) => c.programId === programId) : MOCK_CYCLES;
+        return jsonResponse({ cycles });
+      }
+      if (init?.method === 'POST' && url.match(/\/sets(\?|$)/)) {
+        const payload = init.body ? JSON.parse(String(init.body)) : {};
+        const newSet: OkrSetDto = {
+          ...MOCK_SETS[0],
+          setId: `okr-set-created-${Date.now()}`,
+          programId: payload.programId,
+          cycleId: payload.cycleId,
+          scopeType: payload.scopeType,
+          scopeId: payload.scopeId,
+          ownerUserId: payload.ownerUserId,
+          reviewerUserId: null,
+          title: payload.title,
+          status: 'draft',
+          submittedBy: null,
+          submittedAt: null,
+          approvedBy: null,
+          approvedAt: null,
+          changesRequestedBy: null,
+          changesRequestedAt: null,
+          changesRequestedReason: null,
+          currentVersion: 1,
+          approvedVersion: null,
+          latestApprovedSnapshotId: null,
+          overallProgress: null,
+          overallConfidence: null,
+          attentionState: 'none',
+          lastCheckinAt: null,
+          nextCheckinDueAt: null,
+          carriedFromSetId: null,
+          rowVersion: 1,
+          createdBy: payload.ownerUserId,
+          createdAt: new Date().toISOString(),
+          updatedBy: null,
+          updatedAt: new Date().toISOString(),
+        };
+        MOCK_SETS.unshift(newSet);
+        return jsonResponse({ outcome: 'applied', set: newSet, created: true }, 201);
+      }
       if (url.match(/\/sets\/[^/?]+$/)) {
         const setId = url.split('/sets/')[1]?.split(/[?/]/)[0];
         const set = MOCK_SETS.find((s) => s.setId === setId);

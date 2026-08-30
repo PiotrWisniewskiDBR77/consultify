@@ -71,7 +71,7 @@
  * tab/chip/selection restore as `ResultsRoiHub.tsx` — see that file's header
  * for the full rationale (surface-scoped key, never per-record, D09).
  */
-import { Blocks, CalendarClock } from 'lucide-react';
+import { Blocks, CalendarClock, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -91,17 +91,21 @@ import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from '../types';
+import { listOkrCycles, listOkrPrograms, type OkrCycleDto, type OkrProgramDto } from './okrAdminApi';
 import {
+  createOkrSet,
   getOkrSet,
   listCompanyOkrSets,
   listMyOkrSets,
   listOkrSets,
+  newOkrSetIdempotencyKey,
   type OkrSetDto,
 } from './okrApi';
 import { OkrCheckInsView } from './OkrCheckInsView';
 import { OkrKeyResultsView } from './OkrKeyResultsView';
 import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
 import { OkrObjectivesView } from './OkrObjectivesView';
+import { OkrSetDraftFormModal, type OkrSetDraftFormValues } from './OkrSetDraftFormModal';
 import {
   OKR_SET_STATUS_BUCKET,
   OKR_SET_STATUS_BUCKET_LABEL,
@@ -172,6 +176,7 @@ export const ResultsOkrHub: React.FC = () => {
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
   const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const currentUser = useAppStore((s) => s.currentUser);
   const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!currentOrganization?.id) return;
@@ -230,6 +235,73 @@ export const ResultsOkrHub: React.FC = () => {
       .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setLoading(false));
   }, []);
+
+  // ==========================================
+  // Odbiór grafiki 2026-08-30 (Piotr) — "Nowy OKR" quick-create. See
+  // `OkrSetDraftFormModal.tsx` header for why `ownerUserId` is always the
+  // current user and why an empty Program list gets an honest empty state
+  // instead of a submit button that can never succeed.
+  // ==========================================
+  const [formOpen, setFormOpen] = useState(false);
+  const [formBusy, setFormBusy] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formIdempotencyKey, setFormIdempotencyKey] = useState('');
+  const [programs, setPrograms] = useState<OkrProgramDto[]>([]);
+  const [programsLoading, setProgramsLoading] = useState(false);
+  const [programsError, setProgramsError] = useState<string | null>(null);
+  const [cycles, setCycles] = useState<OkrCycleDto[]>([]);
+  const [cyclesLoading, setCyclesLoading] = useState(false);
+
+  const openCreateForm = useCallback(() => {
+    setFormError(null);
+    setFormIdempotencyKey(newOkrSetIdempotencyKey());
+    setCycles([]);
+    setFormOpen(true);
+    setProgramsLoading(true);
+    setProgramsError(null);
+    listOkrPrograms()
+      .then((rows) => setPrograms(rows))
+      .catch((err) => {
+        setPrograms([]);
+        setProgramsError(toUserFacingErrorMessage(err, isPolish));
+      })
+      .finally(() => setProgramsLoading(false));
+  }, [isPolish]);
+
+  const handleProgramChangeInForm = useCallback((programId: string) => {
+    setCycles([]);
+    if (!programId) return;
+    setCyclesLoading(true);
+    listOkrCycles(programId)
+      .then((rows) => setCycles(rows))
+      .catch(() => setCycles([]))
+      .finally(() => setCyclesLoading(false));
+  }, []);
+
+  const handleFormSubmit = useCallback(
+    (values: OkrSetDraftFormValues) => {
+      if (!currentUser?.id) {
+        setFormError(isPolish ? 'Brak zalogowanego użytkownika.' : 'No signed-in user.');
+        return;
+      }
+      setFormBusy(true);
+      setFormError(null);
+      createOkrSet({
+        ...values,
+        ownerUserId: currentUser.id,
+        idempotencyKey: formIdempotencyKey,
+      })
+        .then(({ set }) => {
+          setSets((prev) => [set, ...(prev ?? []).filter((s) => s.setId !== set.setId)]);
+          setSelectedSetId(set.setId);
+          setChip('all');
+          setFormOpen(false);
+        })
+        .catch((err) => setFormError(toUserFacingErrorMessage(err, isPolish)))
+        .finally(() => setFormBusy(false));
+    },
+    [currentUser?.id, formIdempotencyKey, isPolish]
+  );
 
   // RN-G5 — the FIRST run of this effect (mount, possibly with a restored
   // `tab`/`selectedSetId` from sessionStorage) must NOT wipe the restored
@@ -449,7 +521,32 @@ export const ResultsOkrHub: React.FC = () => {
   }
 
   return (
-    <ResultsVNextRegistryShell
+    <>
+      <OkrSetDraftFormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSubmit={handleFormSubmit}
+        isPolish={isPolish}
+        currentUserId={currentUser?.id ?? null}
+        currentOrganizationId={currentOrganization?.id ?? null}
+        programs={programs}
+        programsLoading={programsLoading}
+        programsError={programsError}
+        cycles={cycles}
+        cyclesLoading={cyclesLoading}
+        onProgramChange={handleProgramChangeInForm}
+        onOpenPrograms={() => {
+          setFormOpen(false);
+          navigate(`${ROUTES.RESULTS_OKR.PROGRAMS}${window.location.search}`);
+        }}
+        onOpenCycles={() => {
+          setFormOpen(false);
+          navigate(`${ROUTES.RESULTS_OKR.CYCLES}${window.location.search}`);
+        }}
+        busy={formBusy}
+        errorMessage={formError}
+      />
+      <ResultsVNextRegistryShell
       domain="okr"
       sampleData={shouldUseResultsVNextOwnerSampleData()}
       moduleBar={{
@@ -464,7 +561,23 @@ export const ResultsOkrHub: React.FC = () => {
         chips,
         activeChip: chip,
         onChipChange: (id) => setChip(id as 'all' | OkrSetStatusBucket),
-        primaryCtaContent: adminLinksCta,
+        // Odbiór grafiki 2026-08-30 (Piotr): "W prawym, głównym rogu powinien
+        // być przycisk »Nowe dodawanie OKR«, a teraz są jakieś inne
+        // niepotrzebne przyciski" — the corner now carries exactly ONE
+        // primary CTA (canon: `StandardModuleBar.primaryCta` doc comment,
+        // "JEDEN primary CTA"), matching `assessment-reports-panel`'s single
+        // dark "Nowy raport" button Piotr pointed to as the reference. The
+        // Programs/Cycles admin-nav pair (`adminLinksCta`) is secondary to
+        // that — moved down to `menu3Right` (Menu 3, below the CTA row)
+        // rather than removed, since they're still the only entry point to
+        // those two real, mounted admin routes.
+        primaryCta: {
+          label: isPolish ? 'Nowy OKR' : 'New OKR',
+          icon: Plus,
+          onClick: openCreateForm,
+          testId: 'okr-registry-create-cta',
+        },
+        menu3Right: adminLinksCta,
       }}
       table={{
         columns: buildOkrSetColumns(isPolish, resolveMemberName),
@@ -514,6 +627,7 @@ export const ResultsOkrHub: React.FC = () => {
       forbidden={forbidden}
       onForbiddenBack={() => setForbidden(null)}
     />
+    </>
   );
 };
 
