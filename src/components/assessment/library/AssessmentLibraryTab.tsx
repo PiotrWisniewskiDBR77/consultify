@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { PreviewPaneAside } from '@/components/shared/PreviewPane';
 import { StandardPreview, type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { FRAMEWORK_CONFIGS } from '@/services/frameworkRegistry';
@@ -411,7 +412,7 @@ export const AssessmentLibraryTab: React.FC = () => {
       />
       </div>
       {selectedId ? (
-        <aside className="w-[400px] shrink-0 bg-slate-50 p-3 dark:bg-navy-950">
+        <PreviewPaneAside>
           {(() => {
             const item = METHODOLOGY_CATALOG.find((row) => row.id === selectedId);
             if (!item) return null;
@@ -457,7 +458,7 @@ export const AssessmentLibraryTab: React.FC = () => {
               />
             );
           })()}
-        </aside>
+        </PreviewPaneAside>
       ) : null}
     </div>
   );

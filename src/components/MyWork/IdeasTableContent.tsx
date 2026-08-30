@@ -37,6 +37,7 @@ import {
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
+  PreviewWhatsNextCard,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
@@ -749,11 +750,17 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
           emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
         />
 
-        {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown */}
-        <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-            {isPolish ? 'Co dalej' : "What's next"}
-          </div>
+        <PreviewActionBar rows={actionRows} />
+
+        {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown.
+            KOLEJNOŚĆ (§7.3 pkt 4.4 + §7.0): ten blok stoi POZA numeracją sześciu
+            bloków TRIADY i renderuje się ZAWSZE NA KOŃCU, po bloku 6 (Akcje) —
+            tak jak robi to `StandardPreview` (`whatsNext` po `actionRows`).
+            Do 2026-08-30 stał tutaj PRZED paskiem akcji, więc podgląd Ideas miał
+            inną kolejność od podglądu Assessment i Interview, mimo tego samego
+            kanonu. Ramka i typografia też są równane do `StandardPreview`, żeby
+            ten sam blok nie miał dwóch wyglądów. */}
+        <PreviewWhatsNextCard isPolish={isPolish}>
           <ConvertToOutputMenu
             sourceType="idea"
             sourceId={idea.id}
@@ -761,9 +768,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
             onConvertComplete={() => onRefresh()}
             variant="inline"
           />
-        </div>
-
-        <PreviewActionBar rows={actionRows} />
+        </PreviewWhatsNextCard>
       </div>
     );
   };

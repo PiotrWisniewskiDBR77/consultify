@@ -46,6 +46,7 @@ import {
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
+  PreviewWhatsNextCard,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
@@ -1411,10 +1412,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           items={relationItems}
           emptyLabel={t('myWork.ideasList.emptyLabel', 'No linked documents')}
         />
-        <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-            {isPolish ? 'Co dalej' : "What's next"}
-          </div>
+        <PreviewActionBar rows={actionRows} />
+        {/* §7.3 pkt 4.4 — „Co dalej" ZAWSZE po bloku 6 (Akcje); ramka ze
+            wspólnego `PreviewWhatsNextCard`, ta sama co w `StandardPreview`.
+            Wcześniej: własny nagłówek + pozycja PRZED akcjami (druga kopia
+            tej samej pomyłki, obok `IdeasTableContent.tsx`). */}
+        <PreviewWhatsNextCard isPolish={isPolish}>
           <ConvertToOutputMenu
             sourceType="idea"
             sourceId={idea.id}
@@ -1422,8 +1425,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             onConvertComplete={() => fetchIdeas()}
             variant="inline"
           />
-        </div>
-        <PreviewActionBar rows={actionRows} />
+        </PreviewWhatsNextCard>
       </div>
     );
   };

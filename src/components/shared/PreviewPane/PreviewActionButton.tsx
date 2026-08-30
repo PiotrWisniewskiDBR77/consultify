@@ -4,11 +4,25 @@
  * Delegate/Remind/Escalate/Snooze z My Work Decisions preview).
  *
  * Pigułka h-9 rounded-full Z WIDOCZNĄ RAMKĄ: ikona + etykieta + opcjonalny
- * badge skrótu klawiszowego. DOKŁADNIE 4 warianty:
+ * badge skrótu klawiszowego. PIĘĆ wariantów — wariant wybiera SKUTEK akcji,
+ * nie ekran (`TABLE_AND_PREVIEW_CANON.md` §7.3b, tabela rozstrzygająca):
  *  - positive     → zielony tint + ramka (Approve / Complete)
  *  - destructive  → czerwony tint (Reject / Delete)
  *  - warning      → bursztynowy tint (Escalate)
+ *  - primary      → granatowo-biały kontrast, MAKS. JEDEN na podgląd (Konwertuj)
  *  - neutral      → ghost z ramką (cała reszta)
+ *
+ * `primary` dołożony 2026-08-30. Kanon §7.3b wymienia PIĘĆ dozwolonych
+ * wariantów i wprost przypisuje `primary` akcji „Konwertuj" — ale ten
+ * komponent znał tylko cztery, więc `StandardPreview` (jedyna fasada bloku 6)
+ * nie potrafił tego wyrazić. Ekrany, które chciały mieć „Konwertuj" zgodnie
+ * z kanonem, musiały ominąć fasadę i złożyć stopkę z `PreviewActionBar`
+ * (osiem schematów kolorów) — i wtedy dostawały inny nagłówek, inną kolejność
+ * bloków i inną szerokość. Brakujący wariant był realnym powodem omijania
+ * wspólnego komponentu, nie drobiazgiem kosmetycznym.
+ *
+ * Klasy `primary` są DOKŁADNIE tymi z `previewStyles.ts` (`COLOR_MAP.primary`),
+ * importowane, nie przepisane — żeby ta sama akcja nie miała dwóch odcieni.
  *
  * Moduł NIE może stylować tego przycisku (brak className w API) — jedyna
  * dozwolona zmienność to wariant, etykieta, ikona, skrót i disabled.
@@ -17,7 +31,9 @@
 import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
-export type PreviewActionVariant = 'positive' | 'destructive' | 'warning' | 'neutral';
+import { pillColorScheme } from './previewStyles';
+
+export type PreviewActionVariant = 'positive' | 'destructive' | 'warning' | 'primary' | 'neutral';
 
 export interface PreviewActionButtonProps {
   variant: PreviewActionVariant;
@@ -44,6 +60,9 @@ const VARIANTS: Record<PreviewActionVariant, string> = {
     'border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200 hover:bg-danger-100/70 dark:hover:bg-danger-500/15',
   warning:
     'border-amber-400/60 dark:border-amber-500/30 bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-200/70 dark:hover:bg-amber-500/15',
+  /* Ten sam literał co `COLOR_MAP.primary` w `previewStyles.ts` — pobrany stamtąd,
+     żeby „Konwertuj" nie miał dwóch odcieni w dwóch komponentach. */
+  primary: pillColorScheme('primary'),
   neutral:
     'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]',
 };

@@ -20,13 +20,17 @@
  * TableWithPreviewLayout.actionShortcuts.
  */
 
-import { ExternalLink, type LucideIcon, Pin, PinOff } from 'lucide-react';
+import { type LucideIcon, Pin, PinOff } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
   type DetailsAction,
   type MetaPill,
+  PREVIEW_HEADER_ICON_BUTTON,
+  PREVIEW_HEADER_ICON_BUTTON_ACTIVE,
+  PREVIEW_HEADER_ICON_SIZE,
+  PREVIEW_HEADER_OPEN_BUTTON,
   PreviewActionButton,
   type PreviewActionVariant,
   PreviewAIHintStrip,
@@ -419,20 +423,23 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
             <button
               type="button"
               onClick={onTogglePin}
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                pinned
-                  ? 'text-[var(--c-info)] bg-state-selected'
-                  : 'text-c-text-muted hover:bg-state-hover'
-              }`}
+              className={pinned ? PREVIEW_HEADER_ICON_BUTTON_ACTIVE : PREVIEW_HEADER_ICON_BUTTON}
               // R09-2a (2026-08-10, defekt P2a): było na sztywno po angielsku
               // niezależnie od języka konta — ten sam mechanizm co `common.retry`.
               title={
                 pinned
                   ? t('common.unpin', isPolish ? 'Odepnij' : 'Unpin')
-                  : t('common.pinForComparison', isPolish ? 'Przypnij do porównania' : 'Pin for comparison')
+                  : t(
+                      'common.pinForComparison',
+                      isPolish ? 'Przypnij do porównania' : 'Pin for comparison'
+                    )
               }
             >
-              {pinned ? <PinOff size={13} /> : <Pin size={13} />}
+              {pinned ? (
+                <PinOff size={PREVIEW_HEADER_ICON_SIZE} />
+              ) : (
+                <Pin size={PREVIEW_HEADER_ICON_SIZE} />
+              )}
             </button>
           ) : null}
           {headerExtra}
@@ -440,10 +447,11 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
             <button
               type="button"
               onClick={onOpenFull}
-              className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+              /* §7.3 pkt 1 — „Otwórz" BEZ ikony, sam tekst; klasy ze wspólnego
+                 `previewStyles.ts`, te same co w `TableWithPreviewLayout`. */
+              className={PREVIEW_HEADER_OPEN_BUTTON}
               title={openLabel ?? t('common.open', isPolish ? 'Otwórz' : 'Open')}
             >
-              <ExternalLink size={13} />
               {openLabel ?? t('common.open', isPolish ? 'Otwórz' : 'Open')}
             </button>
           ) : openDisabledReason ? (
@@ -452,9 +460,8 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               disabled
               aria-disabled="true"
               title={openDisabledReason}
-              className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-muted opacity-60 cursor-not-allowed"
+              className={PREVIEW_HEADER_OPEN_BUTTON}
             >
-              <ExternalLink size={13} />
               {t('common.open', isPolish ? 'Otwórz' : 'Open')}
             </button>
           ) : null}
@@ -522,7 +529,9 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
                   // notatka spychała to na wywołujących („owned by other lanes") —
                   // ale poprawka domyślnej wartości naprawia wszystkie naraz,
                   // a wywołujący ze swoją etykietą dalej ją nadpisują.
-                  propertyLabel={details.propertyLabel ?? t('standardPreview.property', 'Właściwość')}
+                  propertyLabel={
+                    details.propertyLabel ?? t('standardPreview.property', 'Właściwość')
+                  }
                   valueLabel={details.valueLabel ?? t('standardPreview.value', 'Wartość')}
                 />
               ) : null}

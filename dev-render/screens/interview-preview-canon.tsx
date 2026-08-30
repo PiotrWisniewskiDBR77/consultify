@@ -70,7 +70,13 @@ function SessionScreen() {
 
   return (
     <div className="h-screen w-screen bg-slate-50 p-4 dark:bg-navy-950">
-      <div className="mx-auto h-full max-w-[1100px]">
+      {/* Bez `max-w` — szerokość podglądu to `clamp(340px, 28%, 480px)` liczone
+          od obszaru roboczego. Harness zaciskał go wcześniej do `max-w-[1100px]`,
+          więc 28% wypadało poniżej dolnej granicy i panel renderował się na
+          sztywnych 340 px — czyli WĘŻSZY niż w produkcie (403 px przy 1440 px).
+          Właściciel oceniał szerokość na tym zrzucie i słusznie nie potrafił jej
+          ocenić: mierzył ograniczenie harnessu, nie komponent. */}
+      <div className="mx-auto h-full w-full">
         <TableWithPreviewLayout
           selectedId={item.id}
           selectedItem={previewOpen ? item : null}
@@ -88,9 +94,7 @@ function SessionScreen() {
               detailsExpanded={detailsExpanded}
               onToggleDetailsExpanded={() => setDetailsExpanded((v) => !v)}
               onCopyStats={() =>
-                copyToClipboard(
-                  `id: ${mockSession.id}\nstatus: completed\nanswered: 6/6`
-                )
+                copyToClipboard(`id: ${mockSession.id}\nstatus: completed\nanswered: 6/6`)
               }
               onCopyId={() => copyToClipboard(mockSession.id)}
             />
@@ -149,7 +153,13 @@ function InitiativeScreen() {
 
   return (
     <div className="h-screen w-screen bg-slate-50 p-4 dark:bg-navy-950">
-      <div className="mx-auto h-full max-w-[1100px]">
+      {/* Bez `max-w` — szerokość podglądu to `clamp(340px, 28%, 480px)` liczone
+          od obszaru roboczego. Harness zaciskał go wcześniej do `max-w-[1100px]`,
+          więc 28% wypadało poniżej dolnej granicy i panel renderował się na
+          sztywnych 340 px — czyli WĘŻSZY niż w produkcie (403 px przy 1440 px).
+          Właściciel oceniał szerokość na tym zrzucie i słusznie nie potrafił jej
+          ocenić: mierzył ograniczenie harnessu, nie komponent. */}
+      <div className="mx-auto h-full w-full">
         <TableWithPreviewLayout
           selectedId={item.id}
           selectedItem={item}

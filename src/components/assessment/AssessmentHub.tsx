@@ -36,6 +36,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PreviewPaneAside } from '@/components/shared/PreviewPane';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
@@ -2187,7 +2188,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           </div>
 
           {selectedRow ? (
-            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <PreviewPaneAside>
               <StandardPreview
                 title={selectedRow.name || 'Assessment'}
                 onClose={() => setSelectedAssessmentId(null)}
@@ -2247,7 +2248,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                     : undefined
                 }
               />
-            </aside>
+            </PreviewPaneAside>
           ) : null}
         </div>
       );
@@ -2328,7 +2329,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           </div>
 
           {selectedRow ? (
-            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <PreviewPaneAside>
               <StandardPreview
                 title={selectedRow.name || 'Report'}
                 onClose={() => setSelectedReportRowId(null)}
@@ -2370,7 +2371,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                   />
                 )}
               </StandardPreview>
-            </aside>
+            </PreviewPaneAside>
           ) : null}
         </div>
       );
@@ -2431,7 +2432,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           </div>
 
           {selectedRow ? (
-            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <PreviewPaneAside>
               <StandardPreview
                 title={selectedRow.name || 'Initiative'}
                 onClose={() => setSelectedInitiativeRowId(null)}
@@ -2464,7 +2465,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 relations={[]}
                 actions={previewActions}
               />
-            </aside>
+            </PreviewPaneAside>
           ) : null}
         </div>
       );

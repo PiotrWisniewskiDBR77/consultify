@@ -50,6 +50,7 @@ import {
 } from '@/method-core/api/methodCoreApi';
 import { formatListDate } from '@/utils/listDateFormat';
 
+import { PreviewPaneAside } from '../shared/PreviewPane';
 import { EmptyState } from '../shared/states';
 import { type MetaPill, StandardPreview } from '../standard/StandardPreview';
 import {
@@ -349,7 +350,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         </div>
 
         {showLineage && lineageSessionId ? (
-          <aside className="w-[400px] shrink-0 p-3 overflow-hidden">
+          // Ten sam slot co podgląd niżej — więc ta sama szerokość z komponentu,
+          // żeby przełączenie lineage↔podgląd nie przesuwało tabeli (§7.2).
+          <PreviewPaneAside className="!bg-transparent dark:!bg-transparent">
             <ArtifactLineagePanel
               sessionId={lineageSessionId}
               onClose={() => setLineageSessionId(null)}
@@ -366,9 +369,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                 onNavigate?.('initiatives');
               }}
             />
-          </aside>
+          </PreviewPaneAside>
         ) : selectedRow ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <PreviewPaneAside>
             <StandardPreview
               title={selectedRow.scope || t('assessment.outputs.table.untitled', 'Untitled output')}
               onClose={() => setSelectedOutputId(null)}
@@ -469,7 +472,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                   : undefined,
               }}
             />
-          </aside>
+          </PreviewPaneAside>
         ) : null}
       </div>
     </div>

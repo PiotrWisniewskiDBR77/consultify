@@ -300,15 +300,23 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
               )}
           </>
         ) : (
-          <div className="flex flex-col gap-1 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-white/10 p-1">
+          /* Wariant `inline` = pasek „Co dalej" w stopce podglądu (§7.3 pkt 4.4).
+             Kanon: ZWARTY pasek małych przycisków `h-8 rounded-full`, ikona+label.
+             Poprzednio: `rounded-md` + `flex items-center` BEZ zawijania — przy
+             kanonicznej szerokości podglądu (`clamp(340px, 28%, 480px)`, czyli
+             przy dolnej granicy ~316 px treści) trzeci przycisk („Prezentacja")
+             był ucinany krawędzią panelu. `flex-wrap` zdejmuje to na stałe,
+             niezależnie od liczby celów konwersji. Własna ramka zdjęta — blok
+             oprawia `PreviewWhatsNextCard`, podwójna ramka była dublem. */
+          <div className="flex flex-col gap-1">
             {createsSessionNote}
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               {TARGET_ITEMS.map(({ type, icon: Icon, labelKey, fallback }) => (
                 <button
                   key={type}
                   onClick={() => handleItemClick(type)}
                   title={t(labelKey, fallback)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-slate-100/60 dark:hover:bg-white/5 text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <Icon size={12} />
                   {t(labelKey, fallback)}
