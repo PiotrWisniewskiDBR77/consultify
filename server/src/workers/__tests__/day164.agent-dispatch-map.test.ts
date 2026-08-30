@@ -77,7 +77,17 @@ describe('Day 164 agent execution through production ApiGateway, real PostgreSQL
     expect(process.env.ENABLE_TEST_AUTH_BYPASS).toBe('false');
     expect(process.env.ENABLE_AI_TASKS_WORKER).toBe('true');
     expect(process.env.MOCK_REDIS).toBe('false');
-    expect(databaseUrl).toBe('postgresql://postgres:cx@127.0.0.1:6052/cx164');
+    // FIX-174 (ERRATA ODBIOR_174 pkt 4, Z31): this line was pinned to the
+    // exact dev-machine URL ('postgresql://postgres:cx@127.0.0.1:6052/cx164'
+    // — machine "164"), which fails this test — the only guard on this
+    // receipt-closing semantics — on every OTHER machine it is run from.
+    // `assertRealPostgresTestEnvironment()` above already proves, via a live
+    // `SELECT version()`/`current_database()` round trip, that this is a
+    // real, unmocked, non-forbidden PostgreSQL. Here we only pin the SHAPE
+    // (a local Postgres URL, not a mock/placeholder string), so the test
+    // passes against any local database on any machine.
+    expect(databaseUrl).toMatch(/^postgresql:\/\/[^/]+@(127\.0\.0\.1|localhost):\d+\/[^/]+$/);
+    expect(databaseUrl.toLowerCase()).not.toContain('mock');
 
     const headers = { Authorization: authorization, 'x-organization-id': organizationId };
     const created = await request(app)
