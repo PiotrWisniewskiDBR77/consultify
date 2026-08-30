@@ -456,3 +456,46 @@ obraz, nie działanie. Paczka łączona usuwa tę pułapkę u źródła.
 **Czego paczka NIE ukrywa:** ekran, w którym działa wygląd, a nie działa zapis,
 wchodzi do odbioru **z jawnym opisem, czego brakuje** — nie czeka w nieskończoność
 na drugą połowę. Lepsza karta z nazwanym brakiem niż cisza.
+
+### 2026-08-30 · POMIAR MECHANIKI: wskaźniki, cele i ROI — trzy różne stany dojrzałości
+
+Pytanie właściciela: *„czy tę mechanikę całą masz ogarniętą?"*. Zmierzone od końca
+do końca na czystej bazie lokalnej, realnymi wywołaniami, nie czytaniem kodu.
+
+**ROI — łańcuch przechodzi. Najdojrzalszy z trzech.**
+Silnik liczy naprawdę i **na serwerze**: z realnych linii kosztów i korzyści wyszło
+NPV 130 000 PLN, IRR 9,44%, zwrot 6,67 okresu, pełna seria dwunastu miesięcy.
+Wynik ma `inputHash` i `engineVersion` — jest audytowalny i powtarzalny. Pełny cykl
+ośmiu etapów działa, łącznie z zakazem samo-zatwierdzania i wymogiem wypełnienia
+punktu odniesienia przed przeglądem. `initiativeId` jest polem **wymaganym** —
+analiza nie może wisieć w próżni. Niedokończony jest ostatni krok: publikacja
+snapshotu „rzeczywiste" do porównania z prognozą.
+
+**WSKAŹNIK — łańcuch działa, ale ma blokadę na starcie.**
+Pomiar, trend liczony serwerowo (`IMPROVING`, delta −8) i **automatyczne utworzenie
+sprawy odchylenia** po przekroczeniu progu — wszystko potwierdzone mutacją.
+**Ale w świeżej organizacji nie da się założyć pierwszego wskaźnika:**
+`409 NO_ACTIVE_VISIBILITY_POLICY`. Sprawdzone przeze mnie: **żadna trasa serwera nie
+publikuje polityki widoczności dla domeny `kpi`** — jedyny taki endpoint
+(`/visibility-policy`) istnieje wyłącznie dla ROI (`roi.routes.ts:3172`).
+Cele dostają politykę automatycznie przy publikacji programu. **Wskaźniki nie
+dostają jej znikąd.**
+Drugie: kolumna `measurement_frequency_days` **istnieje w bazie**, jest chroniona
+triggerem i czytana do liczenia zaległości — ale **nie ma jej w żadnym schemacie
+zapisu**, więc zawsze zostanie pusta.
+
+**CEL — rollup działa, ale łańcuch urywa się na check-inie.**
+Postęp przelicza się **sam** z kluczowych rezultatów (`set_rollup(equal_average)`),
+nie trzeba go wpisywać ręcznie. Ale funkcja
+`generateCadenceOccurrencesAndSeedCheckInObligations`
+(`okrCheckInScheduler.ts:64`), która tworzy okna czasowe check-inów,
+**nie ma ANI JEDNEGO wywołania w uruchomionej aplikacji** — potwierdzone przeze
+mnie greppem; poza definicją są tylko komentarze projektowe. Bez okna check-in nie
+ma jak zapisać. **Zwykły użytkownik nie ma tej drogi.**
+Trzecie: wiązanie kluczowego rezultatu ze wskaźnikiem albo inicjatywą
+(`sourceReference`) jest **wyłącznie opisowe** — kod wprost mówi, że to
+„opaque string, never validated as a foreign key". Wyświetla się i nic nie napędza.
+
+**Wniosek dla planu:** to nie są trzy warianty tego samego. ROI jest gotowy do
+pokazania klientowi, wskaźnik ma jedną blokadę na wejściu, a cel ma dziurę
+w środku łańcucha. Trzy różne roboty, nie jedna.
