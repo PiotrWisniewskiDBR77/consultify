@@ -130,7 +130,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Consultify · plan dokończenia funkcji · 29 sierpnia 2026</p>
+    <p class="eyebrow">Consultify · plan dokończenia funkcji · 29 sierpnia 2026 · aneks pomiarowy 30 sierpnia</p>
     <h1>Łańcuch dostarczenia</h1>
     <p class="standfirst">Stanu docelowego nie trzeba wymyślać — jest napisany w kontraktach szesnastu modułów i jest bogatszy, niż zakładałem. Inicjatywa ma jedenaście nazwanych bramek i dwadzieścia sześć kart, wskaźnik ma rozstrzygniętą własność, dokument ma rubrykę odbioru z progami. <strong>Problem jest inny: przyjęty jest kierunek, nie szczegóły — a w kilku miejscach dwa obowiązujące dokumenty mówią co innego.</strong></p>
   </header>
@@ -236,7 +236,7 @@
       <div class="ph-body">
         <h4>Co mówi kontrakt, a czego nie ma</h4>
         <ul>
-          <li><span><b>Jedenaście nazwanych bramek</b> z właścicielem wniosku, władzą decyzyjną i terminem; <b>dwanaście statusów</b>; <b>dwadzieścia sześć kart</b> z modelem kompletności, jakości i świeżości. Kanon mówi wprost: automatyczne zatwierdzenie nie istnieje.</span></li>
+          <li><span><b>Jedenaście nazwanych bramek</b> z właścicielem wniosku, władzą decyzyjną i terminem; <b>dwanaście statusów</b>; <b>dwadzieścia sześć kart</b> z modelem kompletności, jakości i świeżości. Kanon mówi wprost: automatyczne zatwierdzenie nie istnieje. <b>Źródło zweryfikowane 30.08:</b> <code>docs/modules/initiatives-execution-canon/01_PROCESS_GOVERNANCE_AND_GATES.md</code> §8 — tabela liczy dokładnie jedenaście bramek. <b>Ale ten sam dokument nosi w sobie <code>OD-02</code>: pozostaje szkicem do odbioru właściciela</b> (<code>draft_for_owner_review</code>), więc najbogatszy stan docelowy produktu sam czeka na akcept — to jest pozycja fazy 0, którą trzeba domknąć, zanim faza 3 zacznie budować na jego liczbach SLA.</span></li>
           <li><span><b>Bramka analizy jest nieosiągalna</b> — blokad jest <b>co najmniej cztery i żadna nie jest jednoliniowa</b>. Najtwardsza: kolejka decyzji analitycznych nie jest nigdzie instancjonowana, a <b>test regresyjny pilnuje, żeby nie była zamontowana</b>. Przed pracą trzeba rozstrzygnąć, czy ten test jest kanonem, czy długiem. Kontrakt sam to potwierdza pośrednio: opisuje zakładkę analizy jako diagnostyczną <em>bez władzy decyzyjnej</em>, a żadna inna powierzchnia do złożenia wniosku nie istnieje.</span></li>
           <li><span><b>Most między dwoma magazynami napisany i nigdy niepodłączony</b> — zero wołaczy w interfejsie. Na żywej bazie: 34 inicjatywy w jednym, 170 w drugim, jeden wspólny rekord. <b>Żaden kontrakt nie wie, że drugi magazyn istnieje</b> — a kanon zabrania rejestrów-cieni.</span></li>
           <li><span><b>Siedem udokumentowanych rodzin źródeł inicjatywy</b>, z czego dwie oznaczone jako luka. Dokument śledzenia źródeł uznaje tylko dwie z siedmiu — i sam mówi, że musi zostać poszerzony, zanim ktokolwiek zacznie implementować.</span></li>
@@ -258,7 +258,7 @@
         <h4>Wiążąca kolejność, od której nie ma odstępstwa</h4>
         <ul>
           <li><span><b>Najpierw policz, potem ruszaj kod.</b> Zrobione: 26 177 fragmentów, sto procent bez znacznika organizacji; nawet pośrednia izolacja przez dokument nadrzędny zawodzi dla 70% z nich.</span></li>
-          <li><span><b>Potem napraw strażnika poufności</b> — odpytuje inną tabelę niż ta, w której leżą dokumenty, i przez to jest <b>fail-open</b>: zero wierszy w odpowiedzi oznacza „wszystko dozwolone", a wyjątek też przepuszcza wszystko. Ta naprawa jest bezpieczna i idzie pierwsza.</span></li>
+          <li><span><b>Strażnik poufności — ZAKTUALIZOWANE 30.08 po pomiarze na markerze.</b> Sam strażnik jest po dyżurze 131 naprawiony i fail-closed u źródła (<code>documentGovernance.ts:109</code>). Realny problem leży piętro wyżej: <b>strażnik ma w całym serwerze dwa wołacze</b> — jeden za flagą domyślnie wyłączoną, drugi otoczony <code>catch</code>-em z dosłownym komentarzem <code>// fail-open</code> — a <b>trzy żywe wejścia do promptu nie wołają go wcale</b>, w tym droga awaryjna włączająca się dokładnie wtedy, gdy droga ostrożna zawiodła. Dowód: <code>docs/program/funkcje/DOWOD_2026-08-30_STRAZNIK_POUFNOSCI.md</code>. <b>Dyżur 132 wydany 30.08</b> — jeden strażnik na wszystkich trzech wejściach plus zamiana fail-open na fail-closed, z testem różnicującym per wejście. Ta naprawa idzie pierwsza.</span></li>
           <li><span><b>Filtr wyszukiwania zamykamy DOPIERO po backfillu</b> — nie razem ze strażnikiem. Zamknięcie go przed uzupełnieniem znaczników wygasza całą wiedzę na demo. Pierwsza wersja tego planu miała tu złą kolejność mimo ostrzeżenia dwa zdania niżej.</span></li>
           <li><span><b>Backfill znaczników organizacji</b> — na tyle, na ile da się je odtworzyć z dokumentu nadrzędnego. Reszta idzie do kwarantanny, nie do kasowania.</span></li>
           <li><span><b>Na końcu podpięcie wyniku do rozmowy</b>, za flagą, po zielonym teście różnicującym. Podpięcie jest tanie i kuszące jako pierwszy krok — i właśnie dlatego jest ostatnie.</span></li>
@@ -311,6 +311,31 @@
   </section>
 
   <section>
+    <p class="rule-label">Strumień uruchomień · aneks 30.08</p>
+    <h2>Zbudowane-nieaktywne — praca, której siedem faz nie obejmowało</h2>
+    <div class="col">
+      <p class="lead">Cel tego toru brzmi: <em>uruchomić wszystko, co już jest zbudowane, a nie jest aktywne</em>. Pomiar szesnastu modułów z 30.08 (cztery równoległe tory, wyniki w <code>docs/program/funkcje/REJESTR_WDROZENIA.md</code>) pokazał, że siedem faz pokrywa z tej listy tylko most inicjatyw — reszta nie miała właściciela w planie. Ten strumień biegnie <b>równolegle do faz</b>, bo jest od nich tańszy: to podłączanie, nie budowa.</p>
+    </div>
+    <div class="scroller">
+      <table class="plain">
+        <thead><tr><th>Co leży gotowe</th><th>Co je blokuje</th><th>Warunek uruchomienia</th></tr></thead>
+        <tbody>
+          <tr><td><b>19 z 21 paneli wyceny finansowej</b> (Monte Carlo NPV, drzewo nośników, opcje realne, mostek odchyleń…) + <b>19 gotowych tras</b> backendu</td><td>zero użycia w JSX poza harnessem dev-render; dodatkowo <code>ENABLE_V8_GLOBAL</code> domyślnie <code>false</code></td><td>decyzja właściciela, które panele wchodzą do oferty (wiąże się z pytaniem o pięć narzędzi), potem podłączanie <b>po jednym</b> przez protokół siedmiu kroków toru grafiki</td></tr>
+          <tr><td><b>Wyniki narzędzi w agregacie Outputs/Insights</b> (migracja 946, pełny REST z historią rewizji)</td><td>flaga OFF — cofnięta 28.08 (DEC-158), bo tabeli <code>tool_outputs</code> nie było na bazie staging i całe Tools padało na 500</td><td><b>najpierw potwierdzenie tabeli na żywej bazie</b>, dopiero potem flip; bez tego powtórka krachu</td></tr>
+          <tr><td><b>Pulpit „Radar" w Mojej pracy</b> — gotowy komponent z pełnym renderem</td><td>literał <code>RADAR_ENABLED = false</code> wpisany na stałe — to nie jest flaga, nie da się włączyć żadnym ustawieniem</td><td>test pamięci/wydajności (powód wyłączenia wg komentarza w kodzie), potem zamiana literału na flagę i normalny cykl akceptu</td></tr>
+          <tr><td><b>Skrzynka „Do dopuszczenia" w Wywiadzie</b> (etap ④, zbudowana end-to-end)</td><td>flaga OFF decyzją D-04 — świadomie schowana przed dostawą</td><td>wyłącznie decyzja właściciela o pokazaniu; technicznie jedna zmienna</td></tr>
+          <tr><td><b>Nowy układ Organizacji — 11 ekranów odebranych na prototypach</b></td><td>flaga domyślnie OFF, bo krok (d) reguły 7 (odbiór wizualny realnego builda) nigdy nie wrócił do rejestru; nagłówek pliku flagi twierdzi „ON" i kłamie</td><td>domknięcie kroku (d) w torze grafiki — zrzuty realnego builda do akceptu — potem flip</td></tr>
+          <tr><td><b>Most między magazynami inicjatyw</b> (trasa + domena + testy realdb)</td><td>zero wołaczy w interfejsie — przeliczone 30.08</td><td>należy do fazy 3, krok (a) jej bramki — tu tylko dla kompletu listy</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col">
+      <p class="note"><strong>Reguła strumienia — bez wyjątku.</strong> Każde uruchomienie idzie osobno: potwierdź stan żywej bazy → włącz lokalnie i zmierz → zrzut → akcept właściciela → flip <b>jednego</b> ekranu. Zakaz masowego włączania jest starszy niż ten plan i kosztował krach lipcowy. Wpis do rejestru wdrożenia z oceną A/B <em>przed</em> pokazaniem właścicielowi — nigdy C.</p>
+      <p class="note"><strong>Czego ten strumień nie przesądza.</strong> Nie wiem, czy tabela <code>tool_outputs</code> istnieje dziś na bazie demo — pomiar 30.08 czytał kod, nie bazę. To jest pierwszy rozkaz pomiarowy strumienia, nie założenie.</p>
+    </div>
+  </section>
+
+  <section>
     <p class="rule-label">Szesnaście modułów</p>
     <h2>Gdzie każdy z nich jest</h2>
     <p class="lead">Kamień milowy nie jest „skończonym modułem" — jest dłuższym działającym łańcuchem. Kolumna „stan docelowy" mówi, czy jest co realizować; kolumna „odbiór" — czy ktokolwiek to przyjął.</p>
@@ -330,9 +355,9 @@
           <tr><td>Materiały</td><td>Rozproszony na cztery kontrakty podsystemów; kontrakt konsolidujący istnieje jako specyfikacja produktowa, ale nie jako kontrakt modułu</td><td>akcept kierunku, szczegóły otwarte; bramka stoi na potwierdzeniu zawężonego zakresu. <b>Pięć generatorów ma osobne bramki</b> — jedna z nich opisuje stan nieprawdziwy i poprawiam ją u źródła</td><td>M4</td></tr>
           <tr><td>Audyty</td><td>Kierunek zaakceptowany, produkt poza pierwszą falą — wolno wyłącznie porządkować</td><td>akcept kierunku z podpisem; <b>dwa panele eksperckie: 6,0 → 6,5 przy celu 9,5</b>, z werdyktem „nie da się przeczytać ani wyeksportować raportu z audytu" — czyli jedynej rzeczy, którą firma doradcza oddaje klientowi</td><td>M3</td></tr>
           <tr><td>Spotkania</td><td>Wizja zaakceptowana; warstwa źródłowa opisuje moduł jako zaślepkę i tak go „odbiera"</td><td>akcept kierunku (governance otwarte); wymaga odbioru runtime zamiast traktowania jak zaślepka</td><td>M2 → M4</td></tr>
-          <tr><td>Organizacja</td><td>Sześć modułów menu, kontrakt snapshotu dla całego produktu</td><td>akcept <b>warunkowy</b>: trzy warunki niespełnione, w tym realne zapisywanie pięciu ekranów stojących dziś na pamięci przeglądarki</td><td>M2</td></tr>
+          <tr><td>Organizacja</td><td>Sześć modułów menu, kontrakt snapshotu dla całego produktu</td><td>akcept <b>warunkowy</b>: trzy warunki niespełnione. <b>Sprostowanie 30.08:</b> warunek „realne zapisywanie pięciu ekranów na pamięci przeglądarki" oparty jest na fałszywej przesłance — ekranów jest dwanaście i <b>wszystkie mają zapis do bazy</b> (<code>useOrgContextSync</code> → <code>PUT /api/organization-context-store</code>, migracja 779). Warunek do przepisania. Realna dziura jest inna: nowy układ 11 ekranów stoi za flagą domyślnie wyłączoną, bo krok (d) reguły 7 — odbiór wizualny realnego builda — nigdy nie wrócił do rejestru</td><td>M2</td></tr>
           <tr><td>Panel administratora</td><td>Siedem domen; <b>62 sloty w kodzie, nie 55</b> — mianownik decyzji trzeba odświeżyć</td><td>brak. <b>Sprostowanie:</b> liczba „14 z 55 podłączonych" jest w naszym własnym katalogu defektów sklasyfikowana jako <b>kłamiący rejestr</b> — pomiar dał 61 z 62</td><td>poza kamieniami</td></tr>
-          <tr><td>Ustawienia</td><td>Osiem modułów, pięciopoziomowa reguła rozstrzygania wartości</td><td><b>jedyny <code>CLOSED_FINAL</code></b>; pomiar po zamknięciu: 12 z 20 zrzutów poprawnych — dla roli członka <b>2 z 10</b>, reszta cicho przekierowuje do profilu</td><td>poza kamieniami</td></tr>
+          <tr><td>Ustawienia</td><td>Osiem modułów, pięciopoziomowa reguła rozstrzygania wartości</td><td><b>jedyny <code>CLOSED_FINAL</code></b>; pomiar po zamknięciu: 12 z 20 zrzutów poprawnych — dla roli członka <b>2 z 10</b>, reszta cicho przekierowuje do profilu. <b>Pomiar sporny od 30.08:</b> niezależne przeliczenie w kodzie dało <b>4 sekcje dozwolone z 50 w typie</b> (<code>pilotAccess.ts</code>) — mianowniki obu par są różne i żadna nie jest potwierdzona; do zmierzenia od nowa, nie do cytowania</td><td>poza kamieniami</td></tr>
           <tr><td>Portal partnerski</td><td>Najsłabiej dospecyfikowany; ekonomia wyłączona decyzją</td><td>pakiet <b>zaakceptowany</b> z Twoim podpisem, UI odebrane 29.08, odbiór modułu wisi. <b>Sprostowanie sprostowania:</b> „izolacja 8/8" była fałszywa jako <em>dowód</em>, ale wyciek <b>jest zamknięty</b> — badana dziura była wstrzykniętym mutantem, nie defektem wysłanego kodu. Poza kamieniami z powodu wyłączonej ekonomii, nie bezpieczeństwa</td><td>poza kamieniami</td></tr>
         </tbody>
       </table>
@@ -372,7 +397,7 @@
       <p class="note"><strong>Nie ma wzorca „domknięte za flagą".</strong> Ustaliłeś go sam 25 sierpnia: wpis o domknięciu potrafi opisywać stan <em>za flagą wyłączoną</em>, którego użytkownik nigdy nie widzi. Dotyczy to Organizacji — odebrany komplet jedenastu ekranów leży za flagą, a na linii integracyjnej tej flagi w ogóle nie ma, więc runtime pokazuje stary układ. To unieważnia całą klasę akceptów, na które ten plan się powołuje.</p>
       <p class="note"><strong>Nie ma powiadomień.</strong> Zmierzone 25 sierpnia: wszystkie przełączniki powiadomień są atrapą, dziesiątki emisji idą poza systemem, nieudana płatność nie wysyła listu. Zero wzmianek w tym planie, mimo że to powierzchnia, którą klient zauważa natychmiast.</p>
       <p class="note"><strong>Nie ma naprawy wektora maskowania testów.</strong> Konfiguracja testów nadal ponawia nieudane przebiegi, więc każda suita bezpieczeństwa o kształcie „atak → odczyt bez zmian" może świecić na zielono przy żywej dziurze. Naprawa z 28 sierpnia była lokalna. <strong>To podważa dowody, a nie funkcje</strong> — i dlatego jest groźniejsze niż którakolwiek faza.</p>
-      <p class="note"><strong>Nie ma pięciu ekranów Organizacji stojących na pamięci przeglądarki</strong> — a to są miejsca utraty pracy i należą do fazy pierwszej. Wypadły, bo szukałem ich w kodzie, a one są wymienione w Twoim własnym warunku odbioru.</p>
+      <p class="note"><strong>„Pięć ekranów Organizacji na pamięci przeglądarki" — teza obalona 30.08, moja własna.</strong> Wpisałem ją tu jako brak planu i jako robotę fazy pierwszej. Pomiar czterech warstw pokazał: ekranów jest dwanaście, wszystkie mają cichy auto-zapis do bazy z realną tabelą i migracją. Liczba „pięć" pochodziła z komentarza w kodzie o pięciu ekranach, które kiedyś miały zapis <em>zduplikowany</em> — nie brakujący. Z fazy pierwszej ta pozycja wypada; do warunku odbioru Organizacji wraca jako wniosek o przepisanie warunku.</p>
       <p class="note"><strong>Ten dokument jest starszy niż repozytorium, w którym leży.</strong> Powstał na jednym stanie linii integracyjnej, po czym tej samej nocy weszło sześć commitów zmieniających piętnaście plików dokładnie w zakresie fazy zerowej. Zanim rozdasz zadania — sprawdź, co z fazy 0 jest już zrobione. Połowa jest.</p>
       <p class="note"><strong>Nie ma stanu runtime dla większości twierdzeń o modułach.</strong> Tabela wyżej opisuje, co mówią kontrakty i kto co odebrał — nie to, co działa. Te dwie prawdy są w tym produkcie osobne i mylenie ich kosztowało nas najwięcej.</p>
     </div>
