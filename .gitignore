@@ -324,3 +324,5 @@ dev-render/.vite-cache/
 benchmark/answers/
 benchmark/results/
 /odbior-uwagi/
+docs/program/grafika/odbior.sqlite
+docs/program/grafika/odbior.sqlite-*

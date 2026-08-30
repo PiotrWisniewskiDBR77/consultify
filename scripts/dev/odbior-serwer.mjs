@@ -11,6 +11,7 @@
  *   node scripts/dev/odbior-serwer.mjs            (port 3030)
  */
 import http from 'node:http';
+import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +21,7 @@ const PORT = Number(process.env.PORT_ODBIOR || 3030);
 const HARNESS = process.env.HARNESS || 'http://127.0.0.1:3020';
 const STATUS = path.join(ROOT, 'docs/program/grafika/status.json');
 const DECYZJE = path.join(ROOT, 'docs/program/grafika/ODBIOR_DECYZJE.json');
+const BAZA = path.join(ROOT, 'docs/program/grafika/odbior.sqlite');
 const EVID = path.join(ROOT, 'evidence/grafika');
 
 const esc = (s) =>
@@ -32,8 +34,15 @@ function indeksZrzutow() {
     const full = path.join(EVID, dir);
     if (!fs.statSync(full).isDirectory()) continue;
     for (const f of fs.readdirSync(full)) {
-      if (!f.endsWith('.png') || !f.includes('__')) continue;
-      const [id, faza, motywPng] = f.split('__');
+      if (!f.endsWith('.png')) continue;
+      // Nazwa kanoniczna: <ekran>__<FAZA>__<motyw>.png. Pliki spoza tego wzorca
+      // (ręczne zrzuty interakcji, np. `PO__kebab-wiersza.png`) POMIJAMY — wcześniej
+      // wywracały cały serwer na `undefined.replace`, czyli jeden plik z ręki
+      // zabijał odbiór dla właściciela. Cisza po stronie serwera jest tu gorsza
+      // niż brak zrzutu.
+      const czesci = f.split('__');
+      if (czesci.length < 3) continue;
+      const [id, faza, motywPng] = czesci;
       const motyw = motywPng.replace('.png', '');
       out[id] ??= {};
       out[id][motyw] ??= {};
@@ -43,14 +52,66 @@ function indeksZrzutow() {
   return out;
 }
 
+/**
+ * BAZA — dlaczego SQLite, a nie plik JSON.
+ *
+ * Pierwsza wersja trzymała decyzje w jednym pliku JSON nadpisywanym w całości.
+ * Serwer padł w trakcie pracy właściciela, dwie uwagi przepadły i NIKT tego nie
+ * zauważył. Plik nadpisywany hurtem nie ma historii: jeśli zapis się nie uda albo
+ * nadpisze go czyjś inny proces, poprzednia treść znika bez śladu.
+ *
+ * `node:sqlite` jest WBUDOWANY w Node 24 — zero zależności, a daje trzy rzeczy,
+ * których plik nie da: zapis atomowy (albo cały, albo żaden), osobną tabelę
+ * HISTORII (każde kliknięcie zostaje na zawsze, także zmiana zdania) i odczyt
+ * niezależny od tego, czy serwer żyje.
+ *
+ * JSON zostaje — ale jako EKSPORT do czytania i do gita, nie jako źródło prawdy.
+ */
+const db = new DatabaseSync(BAZA);
+db.exec(`
+  CREATE TABLE IF NOT EXISTS decyzje (
+    ekran   TEXT PRIMARY KEY,
+    decyzja TEXT,
+    uwaga   TEXT,
+    kiedy   TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS historia (
+    lp      INTEGER PRIMARY KEY AUTOINCREMENT,
+    ekran   TEXT NOT NULL,
+    decyzja TEXT,
+    uwaga   TEXT,
+    kiedy   TEXT NOT NULL
+  );
+`);
+
 const czytajDecyzje = () => {
-  try {
-    return JSON.parse(fs.readFileSync(DECYZJE, 'utf8'));
-  } catch {
-    return {};
+  const out = {};
+  for (const w of db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje').all()) {
+    out[w.ekran] = { decyzja: w.decyzja || undefined, uwaga: w.uwaga || undefined, kiedy: w.kiedy };
   }
+  return out;
 };
-const zapiszDecyzje = (d) => fs.writeFileSync(DECYZJE, JSON.stringify(d, null, 1), 'utf8');
+
+/** Zwraca zapisany wiersz — strona pokazuje właścicielowi TO, co naprawdę leży w bazie. */
+function zapiszDecyzje(ekran, zmiana) {
+  const teraz = new Date().toISOString();
+  const stary = db.prepare('SELECT decyzja, uwaga FROM decyzje WHERE ekran = ?').get(ekran) || {};
+  const decyzja = zmiana.decyzja !== undefined ? zmiana.decyzja : (stary.decyzja ?? null);
+  const uwaga = zmiana.uwaga !== undefined ? zmiana.uwaga : (stary.uwaga ?? null);
+  db.prepare(
+    `INSERT INTO decyzje (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)
+     ON CONFLICT(ekran) DO UPDATE SET decyzja = excluded.decyzja, uwaga = excluded.uwaga, kiedy = excluded.kiedy`
+  ).run(ekran, decyzja || null, uwaga || null, teraz);
+  db.prepare('INSERT INTO historia (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)').run(
+    ekran,
+    decyzja || null,
+    uwaga || null,
+    teraz
+  );
+  // Eksport do czytania i do gita — po KAŻDYM zapisie, żeby plik nigdy nie był starszy niż baza.
+  fs.writeFileSync(DECYZJE, JSON.stringify(czytajDecyzje(), null, 1), 'utf8');
+  return db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje WHERE ekran = ?').get(ekran);
+}
 
 function strona() {
   const status = JSON.parse(fs.readFileSync(STATUS, 'utf8'));
@@ -92,6 +153,7 @@ function strona() {
     <a class="zywo" href="${HARNESS}/?screen=${encodeURIComponent(e.id)}&lang=pl&theme=light" target="_blank">otwórz na żywo</a>
   </div>
   <input class="uw" data-id="${esc(e.id)}" placeholder="uwaga (opcjonalnie) — zapisuje się sama" value="${esc(d.uwaga || '')}">
+  <div class="zapis ${d.kiedy ? 'jest' : ''}">${d.kiedy ? `w bazie: ${esc(d.decyzja ? { ok: 'Akceptuję', poprawka: 'Do poprawki', nie: 'Odrzucam' }[d.decyzja] : 'bez decyzji')}${d.uwaga ? ', z uwagą' : ''} · ${esc(new Date(d.kiedy).toLocaleString('pl-PL'))}` : ''}</div>
 </article>`;
   };
 
@@ -124,6 +186,9 @@ body{margin:0;background:var(--tlo);color:var(--tekst);font:15px/1.55 -apple-sys
 .pasek h1{font-size:16px;margin:0;font-weight:650}
 .lic{font-variant-numeric:tabular-nums;color:var(--drugi);font-size:14px}
 .lic b{color:var(--tekst)}
+.stan{font-size:12.5px;padding:3px 10px;border-radius:999px;background:#f1f5f9;color:var(--drugi)}
+.stan.dobrze{background:#dcfce7;color:#14532d}
+.stan.zle{background:#fee2e2;color:#7f1d1d;font-weight:650}
 .filtry button{border:1px solid var(--kres);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
 .filtry button.on{background:var(--tekst);color:#fff;border-color:var(--tekst)}
 main{padding:20px;max-width:1500px;margin:0 auto}
@@ -155,6 +220,10 @@ main{padding:20px;max-width:1500px;margin:0 auto}
 .b.nie.on{background:var(--nie);color:#fff;border-color:var(--nie)}
 .b:focus-visible,.uw:focus-visible{outline:2px solid var(--nieb);outline-offset:1px}
 .zywo{font-size:12.5px;color:var(--nieb);margin-left:auto}
+.zapis{font-size:11.5px;margin-top:6px;min-height:15px;color:var(--drugi)}
+.zapis.jest{color:var(--ok)}
+.zapis.czeka{color:var(--drugi)}
+.zapis.blad{color:var(--nie);font-weight:700}
 .uw{width:100%;margin-top:8px;border:1px solid var(--kres);border-radius:8px;padding:6px 9px;font-size:13px;font-family:inherit}
 table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--kres);border-radius:10px;overflow:hidden}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--kres);vertical-align:top}
@@ -164,6 +233,7 @@ th{background:#f1f5f9;font-size:12px;text-transform:uppercase;letter-spacing:.04
 <div class="pasek">
   <h1>Odbiór grafiki</h1>
   <span class="lic" id="lic"></span>
+  <span class="stan" id="stan">gotowe</span>
   <span class="filtry">
     <button data-f="wszystkie" class="on">Wszystkie</button>
     <button data-f="nierozstrzygniete">Nierozstrzygnięte</button>
@@ -188,8 +258,44 @@ const licz = () => {
     '<b>' + n('ok') + '</b> zaakceptowanych · <b>' + n('poprawka') + '</b> do poprawki · <b>' + n('nie') +
     '</b> odrzuconych · <b>' + k.filter((x) => !x.dataset.stan).length + '</b> czeka z ' + k.length;
 };
-const wyslij = (id, dane) =>
-  fetch('/decyzja', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, ...dane }) });
+/**
+ * KAŻDY zapis musi być WIDOCZNY. Pierwsza wersja tej strony zapisywała po cichu —
+ * serwer padł, właściciel wpisał dwie uwagi, strona nie powiedziała ani słowa,
+ * a uwagi przepadły. Cisza nigdy nie oznacza „zapisane".
+ */
+const stan = document.getElementById('stan');
+const pokaz = (tekst, zle) => {
+  stan.textContent = tekst;
+  stan.className = zle ? 'stan zle' : 'stan dobrze';
+};
+const SLOWO = { ok: 'Akceptuję', poprawka: 'Do poprawki', nie: 'Odrzucam' };
+const wyslij = (id, dane) => {
+  const karta = document.getElementById('k-' + id);
+  const znacznik = karta && karta.querySelector('.zapis');
+  if (znacznik) { znacznik.textContent = 'zapisuję…'; znacznik.className = 'zapis czeka'; }
+  pokaz('zapisuję…', false);
+  return fetch('/decyzja', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ id, ...dane }),
+  })
+    .then(async (r) => {
+      const dane = await r.json().catch(() => ({}));
+      if (!r.ok || !dane.ok) throw new Error(dane.blad || 'serwer odpowiedział ' + r.status);
+      // Potwierdzenie opisuje TO, CO LEŻY W BAZIE — nie to, co wysłaliśmy.
+      const w = dane.wiersz || {};
+      const godzina = new Date(w.kiedy).toLocaleTimeString('pl-PL');
+      const opis = [w.decyzja ? SLOWO[w.decyzja] : 'bez decyzji', w.uwaga ? 'z uwagą' : null]
+        .filter(Boolean)
+        .join(', ');
+      if (znacznik) { znacznik.textContent = 'w bazie: ' + opis + ' · ' + godzina; znacznik.className = 'zapis jest'; }
+      pokaz('zapisane w bazie · ' + dane.wpisowWHistorii + ' wpisów w historii', false);
+    })
+    .catch((e) => {
+      if (znacznik) { znacznik.textContent = 'NIE ZAPISANO'; znacznik.className = 'zapis blad'; }
+      pokaz('NIE ZAPISANO — ' + e.message + '. Nie zamykaj strony, powiedz mi o tym.', true);
+    });
+};
 document.addEventListener('click', (ev) => {
   const b = ev.target.closest('.b');
   if (b) {
@@ -236,13 +342,16 @@ http
       req.on('end', () => {
         try {
           const { id, ...reszta } = JSON.parse(body);
-          const d = czytajDecyzje();
-          d[id] = { ...(d[id] || {}), ...reszta, kiedy: new Date().toISOString() };
-          if (d[id].decyzja === '') delete d[id].decyzja;
-          zapiszDecyzje(d);
-          res.writeHead(200, { 'content-type': 'application/json' }).end('{"ok":true}');
+          const wiersz = zapiszDecyzje(id, reszta);
+          const ile = db.prepare('SELECT COUNT(*) AS n FROM historia').get().n;
+          res
+            .writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+            .end(JSON.stringify({ ok: true, wiersz, wpisowWHistorii: ile }));
         } catch (e) {
-          res.writeHead(400).end(String(e));
+          console.error('BŁĄD zapisu:', e);
+          res
+            .writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+            .end(JSON.stringify({ ok: false, blad: String(e && e.message) }));
         }
       });
       return;
@@ -254,7 +363,15 @@ http
       res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'max-age=600' });
       return fs.createReadStream(p).pipe(res);
     }
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(strona());
+    try {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(strona());
+    } catch (e) {
+      // Żaden błąd pojedynczego żądania nie ma prawa położyć serwera odbioru.
+      console.error('BŁĄD renderu strony:', e);
+      res
+        .writeHead(500, { 'content-type': 'text/html; charset=utf-8' })
+        .end(`<h1>Serwer odbioru nie zbudował strony</h1><pre>${String(e && e.stack)}</pre>`);
+    }
   })
   .listen(PORT, '127.0.0.1', () => {
     console.log(`Odbiór grafiki → http://127.0.0.1:${PORT}/`);
