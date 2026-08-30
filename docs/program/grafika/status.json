@@ -2070,11 +2070,13 @@
     {
      "id": "gen-excel-templates-tab",
      "nazwa": "Szablony skoroszytow",
-     "ocena": "A",
-     "co": "Model P&L, budzet, DCF. Terminologia finansowa to uznane zapozyczenia branzowe.",
+     "ocena": "D",
+     "co": "Zdublowana prezentacja generatora — wlasciciel: \"Nie potrzebny w ogole ten arkusz. Z pozostaloscia w ogole pierwszych jakichs prob.\" (K8, MAPA_UWAG_WLASCICIELA.md).",
      "naprawione": [],
-     "wyjatki": [],
-     "gdzie": "Materiały → Biblioteka wzorców → zakładka szablonów Excela — modele P&L, budżet, DCF (terminologia finansowa to uznane zapożyczenia branżowe)."
+     "wyjatki": [
+      "Zdjete z odbioru 2026-08-30 (docs/program/grafika/ODLOZONE.md) — nie duplikuj wiecej"
+     ],
+     "gdzie": "BYLO: Materialy -> Biblioteka wzorcow -> \"Nowy szablon\" -> Arkusz -> zakladka huba \"Generator szablonow Excel\" (flaga ff_workbook_templates, domyslnie OFF — ten wpis nie byl wejsciem realnych uzytkownikow, tylko trybem podgladu do recenzji). Sam mechanizm (ExceleParametricTemplates, POST /api/workbook/templates/:id/build) zyje dalej i jest osiagalny inaczej: /excele (chat) -> zakladka Szablony, oraz przez \"Nowy szablon\" -> Arkusz -> TemplateBuilderFlow -> \"Zbuduj skoroszyt\" (ff_templateBuilder, domyslnie ON poza publiczna produkcja). Szczegoly i uzasadnienie: docs/program/grafika/ODLOZONE.md."
     },
     {
      "id": "materialy-draft-template-visibledraft-fix",
