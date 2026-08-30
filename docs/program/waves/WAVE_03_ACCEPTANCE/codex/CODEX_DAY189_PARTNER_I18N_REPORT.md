@@ -6,7 +6,7 @@ R1: `PARTIAL` — zautomatyzowany skan objął całe `src/views/partner/**` i `s
 
 R2: `PARTIAL` — usunięto defekt rozlany z odbioru 177: wszystkie breadcrumby 25 ekranów korzystają z `partner.sidebar.*`; statusy learning-path nie zwracają surowego enumu; usunięto angielskie etykiety w learning-path, earnings, referral-tools, resources i profilu. Pozostałe historyczne literały spoza czterech najgorszych ekranów są jawnie opisane niżej.
 
-R3: `NIE WYKONANO` na moment pierwszego commitu. Zrzuty wymagają osobnego uruchomienia kanonicznego runtime zgodnie z Z30.
+R3: `W TOKU` — pierwszy realny render learning-path potwierdził polskie etykiety i brak surowych enumów. Pierwszy render metrics ujawnił pozostawione angielskie etykiety KPI (`vs last quarter`, `this quarter`, `months`, `Good`, `average`, `responses`, cztery nazwy składowych wyniku). To był negatywny dowód R3; etykiety poprawiono przed końcowym zestawem zrzutów.
 
 ## §0.1 — marker i sanity (wynik dosłowny)
 
@@ -105,10 +105,10 @@ Lint zmienionych TS/TSX: 0 błędów, 99 zastanych ostrzeżeń. Pełny `tsc --no
 1. §0.1 mówi „WERYFIKACJA ... `cztery` komend”, ale lista zawiera T1–T5. Bezpieczniej wykonano wszystkie pięć.
 2. T2 grep zwrócił pusty wynik dla trzech enumów w `src/`; wartości potwierdzone są w dowodzie odbioru 177 i obsłużone po stronie frontu. Nie zmieniono `server/**`.
 3. Inwentarz AST wykazał 120 kluczy używanych przez `t()` z wpisem PL, lecz bez jawnego wpisu EN; UI EN korzysta z fallbacków podanych w wywołaniu. Nowe klucze day189 mają oba wpisy. Pełne uzupełnienie historycznych EN pozostaje poza pierwszym rdzeniem.
+4. R3 obalił założenie, że polskie klucze nagłówków metrics domykają ekran: wartości pomocnicze KPI i etykiety breakdownu były literalami angielskimi. Po pomiarze przeniesiono je do `partner.metrics.*` w PL/EN.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
 - Nie udowodniono jeszcze R3 zrzutami czterech ekranów.
 - Nie udowodniono kompletnej listy enumów z backendu: `server/**` pozostawało tylko do odczytu, a grep frontu nie zawierał definicji. Obsłużono osiem wartości udokumentowanych/obserwowanych oraz bezpieczny, niesurowy fallback `Nieznany status`.
 - Nie domknięto wszystkich historycznych, nieosiągalnych komponentów `src/components/Partner/**`; nie twierdzę „zero angielskiego w całym module”.
-

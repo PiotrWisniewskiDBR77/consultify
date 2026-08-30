@@ -804,28 +804,40 @@ const MetricsSection: React.FC = () => {
           label: t('partner.metrics.totalRevenue', 'Total Revenue'),
           value: formatEuro(metricsData.revenue.totalYTD || 0),
           change: `${metricsData.revenue.change > 0 ? '+' : ''}${metricsData.revenue.change}%`,
-          period: 'vs last quarter',
+          period: t('partner.metrics.vsLastQuarter', 'względem poprzedniego kwartału'),
           isPositive: metricsData.revenue.change >= 0,
         },
         {
           label: t('partner.metrics.clientRetention', 'Client Retention'),
           value: `${metricsData.clients.retention || 0}%`,
-          change: `+${metricsData.clients.newThisQuarter || 0} new`,
-          period: 'this quarter',
+          change: t('partner.metrics.newClients', '+{{count}} nowych', {
+            count: metricsData.clients.newThisQuarter || 0,
+          }),
+          period: t('partner.metrics.thisQuarter', 'w tym kwartale'),
           isPositive: true,
         },
         {
           label: t('partner.metrics.avgProjectDuration', 'Avg Project Duration'),
-          value: `${metricsData.clients.avgProjectDuration || 0} months`,
-          change: metricsData.clients.avgProjectDuration < 5 ? 'Good' : 'Slow',
-          period: 'average',
+          value: t('partner.metrics.months', '{{count}} mies.', {
+            count: metricsData.clients.avgProjectDuration || 0,
+          }),
+          change:
+            metricsData.clients.avgProjectDuration < 5
+              ? t('partner.metrics.good', 'Dobrze')
+              : t('partner.metrics.slow', 'Wolno'),
+          period: t('partner.metrics.average', 'średnio'),
           isPositive: metricsData.clients.avgProjectDuration < 5,
         },
         {
           label: t('partner.metrics.customerSatisfaction', 'Customer Satisfaction'),
           value: `${metricsData.satisfaction.score || 0}/5`,
-          change: `${metricsData.satisfaction.responses || 0} responses`,
-          period: metricsData.satisfaction.trend || 'stable',
+          change: t('partner.metrics.responses', '{{count}} odpowiedzi', {
+            count: metricsData.satisfaction.responses || 0,
+          }),
+          period:
+            metricsData.satisfaction.trend === 'governed runtime'
+              ? t('partner.metrics.governedRuntime', 'dane kontrolowane')
+              : metricsData.satisfaction.trend || t('partner.metrics.stable', 'stabilnie'),
           isPositive: metricsData.satisfaction.score >= 4,
         },
       ]
@@ -934,7 +946,10 @@ const MetricsSection: React.FC = () => {
             </div>
           </div>
           <p className="text-center text-sm text-c-text-secondary mt-4">
-            {metricsData?.performance?.ranking || 'Calculating...'}
+            {metricsData?.performance?.ranking === 'Governed runtime snapshot'
+              ? t('partner.metrics.governedRuntimeSnapshot', 'Migawka danych kontrolowanych')
+              : metricsData?.performance?.ranking ||
+                t('partner.metrics.calculating', 'Obliczanie…')}
           </p>
         </div>
 
@@ -946,22 +961,22 @@ const MetricsSection: React.FC = () => {
           <div className="space-y-4">
             {[
               {
-                label: 'Client Acquisition',
+                label: t('partner.metrics.clientAcquisition', 'Pozyskiwanie klientów'),
                 score: performanceBreakdown.clientAcquisition || 0,
                 color: 'bg-sky-500',
               },
               {
-                label: 'Project Delivery',
+                label: t('partner.metrics.projectDelivery', 'Realizacja projektów'),
                 score: performanceBreakdown.projectDelivery || 0,
                 color: 'bg-emerald-500',
               },
               {
-                label: 'Customer Satisfaction',
+                label: t('partner.metrics.customerSatisfaction', 'Zadowolenie klientów'),
                 score: performanceBreakdown.customerSatisfaction || 0,
                 color: 'bg-blue-500',
               },
               {
-                label: 'Certification Progress',
+                label: t('partner.metrics.certificationProgress', 'Postęp certyfikacji'),
                 score: performanceBreakdown.certificationProgress || 0,
                 color: 'bg-amber-500',
               },
