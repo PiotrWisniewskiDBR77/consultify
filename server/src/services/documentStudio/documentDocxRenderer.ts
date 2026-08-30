@@ -499,9 +499,12 @@ function headingLevelForSection(
   return HeadingLevel.HEADING_3;
 }
 
-function buildAssumptionMarker(font: string): TextRun {
+function buildAssumptionMarker(font: string, language: string): TextRun {
   return new TextRun({
-    text: '  [Assumption — needs source]',
+    text:
+      language.toLowerCase().startsWith('pl')
+        ? '  [Założenie — wymaga źródła]'
+        : '  [Assumption — needs source]',
     italics: true,
     color: DOCX_PALETTE.amberInk,
     size: 18,
@@ -532,30 +535,50 @@ function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
   });
 }
 
-function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
+function markdownRuns(text: string, font: string): TextRun[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  return parts.map((part) => {
+    const bold = /^\*\*[^*]+\*\*$/.test(part);
+    return new TextRun({ text: bold ? part.slice(2, -2) : part, bold, font });
+  });
+}
+
+function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
   const value = (block.content ?? {}) as BlockTextContent & {
     docxStyleId?: string;
     pageBreakBefore?: boolean;
   };
   const text = asString(value.text ?? '');
-  const children: TextRun[] = [
-    new TextRun({
-      text,
-      font: ctx.bodyFont,
-    }),
-  ];
-  if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont));
+  const lines = text.split(/\r?\n/);
+  const hasMarkdownList = lines.some((line) => /^\s*(?:- |\d+\. )/.test(line));
+  if (hasMarkdownList && !/^\s*\|.*\|\s*$/m.test(text)) {
+    return lines.filter((line) => line.trim()).map((line, index) => {
+      const numbered = /^\s*\d+\. /.test(line);
+      const bullet = /^\s*- /.test(line);
+      const clean = line.replace(/^\s*(?:- |\d+\. )/, '');
+      const children = markdownRuns(clean, ctx.bodyFont);
+      if (block.isAssumption && index === lines.filter((entry) => entry.trim()).length - 1) {
+        children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
+      }
+      return new Paragraph({
+        style: block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
+        numbering: bullet || numbered
+          ? { reference: numbered ? DOCX_NUMBERING_REFERENCE.DECIMAL : DOCX_NUMBERING_REFERENCE.BULLET, level: 0 }
+          : undefined,
+        children,
+      });
+    });
+  }
+  const children = markdownRuns(text, ctx.bodyFont);
+  if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
   if (block.sourceRef) children.push(...buildCitationRuns(ctx, block.sourceRef));
-  return new Paragraph({
-    style:
-      isDrdReportProfile(ctx.schema) && value.docxStyleId
-        ? value.docxStyleId
-        : block.isAssumption
-          ? DOCX_STYLE_IDS.ASSUMPTION_BODY
-          : DOCX_STYLE_IDS.BODY_TEXT,
+  return [new Paragraph({
+    style: isDrdReportProfile(ctx.schema) && value.docxStyleId
+      ? value.docxStyleId
+      : block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
     pageBreakBefore: value.pageBreakBefore === true ? true : undefined,
     children,
-  });
+  })];
 }
 
 function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
@@ -572,7 +595,7 @@ function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[]
     // real, editable list marker (`<w:numPr>`), not literal characters.
     const children: TextRun[] = [new TextRun({ text: itemText, font: ctx.bodyFont })];
     if (block.isAssumption && index === items.length - 1) {
-      children.push(buildAssumptionMarker(ctx.bodyFont));
+      children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
     }
     return new Paragraph({
       style: DOCX_STYLE_IDS.BODY_TEXT,
@@ -1149,7 +1172,7 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
     case 'heading':
       return [renderHeadingBlock(block, ctx)];
     case 'paragraph':
-      return [renderParagraphBlock(block, ctx)];
+      return renderParagraphBlock(block, ctx);
     case 'bullet_list':
     case 'numbered_list':
       return renderListBlocks(block, ctx);
@@ -1174,7 +1197,7 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
       // a dedicated renderer (citations are usually attached via
       // `block.sourceRef` on a body block, so a standalone `citation`
       // block degrades gracefully into a paragraph).
-      return [renderParagraphBlock(block, ctx)];
+      return renderParagraphBlock(block, ctx);
   }
 }
 
@@ -1242,9 +1265,15 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   const schema = ctx.schema;
   const isPolish = schema.language.toLowerCase().startsWith('pl');
   const documentTypeLabels: Record<string, string> = {
+    board_report: 'raport dla zarządu',
     steering_committee_report: 'raport komitetu sterującego',
   };
-  const densityLabels: Record<string, string> = { detailed: 'szczegółowy', concise: 'zwięzły' };
+  const densityLabels: Record<string, string> = {
+    concise: 'zwięzły',
+    standard: 'standardowy',
+    detailed: 'szczegółowy',
+    comprehensive: 'kompleksowy',
+  };
   const confidentialityLabels: Record<string, string> = {
     client_confidential: 'poufne dla klienta',
     confidential: 'poufne',

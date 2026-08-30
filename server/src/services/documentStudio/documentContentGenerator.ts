@@ -178,6 +178,7 @@ export function enforceDocumentSchemaGrounding(
     };
   };
 
+  const sectionMetadataSignals: string[] = [];
   for (const section of next.sections) {
     let localizedTitleChanged = false;
     let localizedPurposeChanged = false;
@@ -197,6 +198,9 @@ export function enforceDocumentSchemaGrounding(
       const purpose = guardText(section.purpose);
       purposeChanged = purpose.changed || localizedPurposeChanged;
     }
+    if (title.changed || localizedTitleChanged || purposeChanged) {
+      sectionMetadataSignals.push(section.title);
+    }
     for (const block of section.blocks) {
       const guarded = enforceBlockGrounding(
         block.content && typeof block.content === 'object'
@@ -207,10 +211,7 @@ export function enforceDocumentSchemaGrounding(
       block.content = guarded.content;
       block.isAssumption =
         block.isAssumption === true ||
-        guarded.changed ||
-        title.changed ||
-        localizedTitleChanged ||
-        purposeChanged;
+        guarded.changed;
       if (language === 'pl') {
         const localized = localizePolishValue(block.content);
         block.content = localized.value;
@@ -448,7 +449,24 @@ export function enforceDocumentSchemaGrounding(
     }
   }
 
-  next.evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);
+  const evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);
+  next.evidence = evidence;
+  sectionMetadataSignals.forEach((sectionTitle) => {
+    evidence.toVerify.push(
+      language === 'pl'
+        ? `Tytuł lub cel sekcji "${sectionTitle}" zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.`
+        : `The title or purpose of section "${sectionTitle}" contains an unsupported fragment and requires verification.`
+    );
+  });
+  const localizedDocumentTitle = language === 'pl' ? localizePolishValue(next.title) : null;
+  const documentTitleSignal = guardText(next.title).changed || localizedDocumentTitle?.changed === true;
+  if (documentTitleSignal) {
+    evidence.toVerify.push(
+      language === 'pl'
+        ? 'Tytuł dokumentu zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.'
+        : 'The document title contains an unsupported fragment and requires verification.'
+    );
+  }
   return next;
 }
 

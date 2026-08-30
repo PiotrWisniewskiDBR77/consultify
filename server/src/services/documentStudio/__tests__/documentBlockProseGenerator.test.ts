@@ -168,6 +168,29 @@ describe('generateBlockProse', () => {
     expect(result.sections[0].blocks[0].isAssumption).toBe(true);
   });
 
+  it('materializes multi-paragraph prose as separately grounded paragraph blocks', async () => {
+    generateChatResponseMock.mockResolvedValue({
+      content: JSON.stringify({
+        blocks: [
+          {
+            blockId: 'blk-para',
+            text: 'Annual benefit is EUR 2.2m.\n\nReach 85% by entering DACH.\n\nThe Board should approve the migration.',
+          },
+          { blockId: 'blk-list', items: ['Lower unit cost'] },
+        ],
+      }),
+    });
+
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    const paragraphs = result.sections[0].blocks.filter((block) => block.type === 'paragraph');
+    expect(paragraphs.map((block) => block.blockId)).toEqual([
+      'blk-para',
+      'blk-para-paragraph-2',
+      'blk-para-paragraph-3',
+    ]);
+    expect(paragraphs.map((block) => block.isAssumption)).toEqual([false, true, false]);
+  });
+
   it('N-9: a GFM table paragraph with a number outside the sources renders as a valid table, without an inline assumption marker', async () => {
     const tableText = [
       '| Metric | Value |',

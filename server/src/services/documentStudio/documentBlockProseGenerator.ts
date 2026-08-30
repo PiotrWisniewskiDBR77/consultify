@@ -14,10 +14,9 @@
  *     ANY failure path (AI freeze / `FEATURE_UNAVAILABLE`, empty
  *     response, invalid JSON, schema-violating response) it returns the
  *     deterministic schema UNCHANGED. No throw ever escapes.
- *   - It only REWRITES the text/items of existing prose blocks. It never
- *     adds, removes, or reorders blocks or sections, never changes block
- *     types, and never touches structured blocks (tables, charts, KPI
- *     strips, images, citations, footnotes).
+ *   - It rewrites the text/items of existing prose blocks. A multi-paragraph
+ *     response for a paragraph target is materialized as ordered paragraph
+ *     blocks so grounding remains granular. Structured blocks are untouched.
  *   - Generation is grounded: the prompt carries the document intake,
  *     audience, register, language and the available source-pack titles,
  *     and instructs the model to flag any claim that goes beyond the
@@ -29,6 +28,7 @@ import { enforceBlockGrounding } from './documentBlockContentGenerator.js';
 import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import {
   documentSourceRefEvidenceText,
+  type DocumentBlock,
   type DocumentIntake,
   type DocumentSchema,
   type DocumentSourceRef,
@@ -179,7 +179,7 @@ function buildSystemPrompt(schema: DocumentSchema): string {
     // Polish znacznika (naprawa 2026-07-22): w praktyce ten sam znacznik potrafił
     // powtórzyć się w kolejnych zdaniach akapitu przy tej samej wartości.
     'Within a single paragraph, mark the same or a closely related assumed value only once — write the following sentences in confident prose without repeating the marker, and do not mark a value that is derived directly from an assumption already marked earlier in the paragraph.',
-    'For "text" blocks return a single tight paragraph. For "items" blocks return 2-5 crisp bullet points.',
+    'For "text" blocks return 4-6 substantial paragraphs separated by a blank line; aim for 350-450 words per text block. Give each paragraph one clear job: context, diagnosis, implications, recommendation, or next step. For "items" blocks return 2-5 crisp bullet points.',
     // N-9: tabelaryczne sekcje muszą dostać tabelę, nie samą prozę. Renderer
     // oddaje "text" verbatim, więc tabela GFM w polu "text" trafia do edytora.
     'TABLES: When a section is inherently tabular — scenario comparisons with costs/ROI, risk maps/matrices, quarterly roadmaps or schedules, KPI summaries, vendor/option comparisons, milestones — the "text" field MUST contain a valid GFM Markdown table (a header row like "| Col | Col |", a separator row "|---|---|", then data rows), optionally preceded by one short framing sentence. Use literal newlines inside the JSON string (\\n). Never wrap the table in code fences. Use prose for non-tabular sections.',
@@ -385,14 +385,37 @@ export async function generateBlockProse(
     .filter(Boolean)
     .join(' — ');
   for (const section of next.sections) {
+    const materializedBlocks: DocumentBlock[] = [];
     for (const block of section.blocks) {
       const payload = generated.get(block.blockId);
-      if (!payload) continue;
+      if (!payload) {
+        materializedBlocks.push(block);
+        continue;
+      }
       const content = isRecord(block.content) ? { ...block.content } : {};
       if (payload.items) {
         content.items = payload.items;
       } else if (payload.text !== undefined) {
         content.text = payload.text;
+      }
+      const paragraphs =
+        block.type === 'paragraph' && typeof content.text === 'string'
+          ? content.text
+              .split(/\r?\n\s*\r?\n+/)
+              .map((paragraph) => paragraph.trim())
+              .filter(Boolean)
+          : [];
+      if (paragraphs.length > 1) {
+        paragraphs.forEach((paragraph, index) => {
+          const guarded = enforceBlockGrounding({ ...content, text: paragraph }, groundingSource);
+          materializedBlocks.push({
+            ...block,
+            blockId: index === 0 ? block.blockId : `${block.blockId}-paragraph-${index + 1}`,
+            content: guarded.content,
+            isAssumption: guarded.changed || sourceRefs.length === 0,
+          });
+        });
+        continue;
       }
       const guarded = enforceBlockGrounding(content, groundingSource);
       block.content = guarded.content;
@@ -415,7 +438,9 @@ export async function generateBlockProse(
       ) {
         block.isAssumption = false;
       }
+      materializedBlocks.push(block);
     }
+    section.blocks = materializedBlocks;
   }
   return next;
 }
