@@ -7,7 +7,7 @@
  * flaga `ff_canvasNewDocOptions`), zamontowany OTWARTY ze statycznym mockiem
  * (bez logowania/store/API — real component ciągnie Api.workCanvasListDrafts +
  * cały canvas draft store i nie zmontuje się tu). Celem story jest ODBIÓR
- * WYGLĄDU powłoki menu (3 sekcje + separator + badge REAL/PARTIAL + stany
+ * WYGLĄDU powłoki menu (3 sekcje + separator + badge Realne/Częściowe + stany
  * "Z canvasa": populated/empty/loading) w świetle i ciemnym, PRZED tym jak
  * Piotr zobaczy cokolwiek za flagą (CLAUDE.md #7).
  *
@@ -19,16 +19,36 @@ import React from 'react';
 
 type Capability = 'real' | 'partial';
 
-function CapabilityBadge({ status }: { status: Capability }): React.ReactElement {
+/**
+ * Etykiety 1:1 z `public/locales/{pl,en}/translation.json` →
+ * `canvas.panel.capability.*` (patrz `WorkCanvasDocumentPanel.tsx:665`,
+ * `capabilityLabel()`). Mock trzymał na sztywno angielskie „REAL"/„PARTIAL"
+ * niezależnie od `&lang=` — realny komponent od dawna ma klucze polskie
+ * („Realne"/„Częściowe"); naprawione 2026-08-30 przy przeglądzie nocnym.
+ */
+function CapabilityBadge({
+  status,
+  isPl,
+}: {
+  status: Capability;
+  isPl: boolean;
+}): React.ReactElement {
   const cls =
     status === 'real'
       ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
       : 'bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  const label = isPl
+    ? status === 'real'
+      ? 'Realne'
+      : 'Częściowe'
+    : status === 'real'
+      ? 'Real'
+      : 'Partial';
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${cls}`}
     >
-      {status === 'real' ? 'REAL' : 'PARTIAL'}
+      {label}
     </span>
   );
 }
@@ -125,7 +145,7 @@ function DropdownMenu({
           >
             <div className="flex items-center justify-between gap-2">
               <span className="font-semibold">{isPl ? template.label : template.labelEn}</span>
-              <CapabilityBadge status={template.capability} />
+              <CapabilityBadge status={template.capability} isPl={isPl} />
             </div>
             <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
               {isPl ? template.description : template.descriptionEn}

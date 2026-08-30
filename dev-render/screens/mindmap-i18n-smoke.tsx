@@ -13,7 +13,7 @@ const noop = () => undefined;
 
 const MindmapI18nSmokeScreen: React.FC = () => (
   <div className="min-h-screen bg-c-surface p-6 text-c-text">
-    <h1 className="mb-4 text-lg font-semibold">
+    <h1 className="mb-4 text-lg font-semibold" data-dev-render-chrome="">
       M06 Mind Map — modale po sweepie i18n (ideas.mindmap.*)
     </h1>
     <div className="relative flex flex-wrap gap-6">

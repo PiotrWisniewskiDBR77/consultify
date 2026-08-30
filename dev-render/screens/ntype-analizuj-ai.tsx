@@ -139,7 +139,7 @@ export default function NTypeAnalizujAiScreen(): React.ReactElement {
     <div className="h-full w-full bg-c-bg p-6">
       {/* Kolumna „karty" — zwężona, żeby panel po prawej nie zasłaniał treści. */}
       <div className="mr-[400px] flex flex-col gap-4">
-        <h1 className="text-sm font-semibold text-c-text">
+        <h1 className="text-sm font-semibold text-c-text" data-dev-render-chrome="">
           ETAP 3 n-Type — „Analizuj z AI": menu 2 + panel wyników
         </h1>
 
@@ -157,7 +157,7 @@ export default function NTypeAnalizujAiScreen(): React.ReactElement {
           }
         />
 
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-dev-render-chrome="">
           <p className="text-xs text-c-text-secondary">
             Panel po prawej pokazuje wynik dla AKTYWNEJ KARTY „Opis i zakres" (Zadanie). Kolejność
             szuflad jest wiążąca: Braki · Ryzyka · Sugestie · Proponowane zmiany.
