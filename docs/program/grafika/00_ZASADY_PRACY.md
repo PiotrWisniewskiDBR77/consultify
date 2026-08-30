@@ -376,3 +376,40 @@ elementu kadru i przestaje go widzieć — dlatego kontrola musi być **mechanic
 kontrolny), a nie oparta na uważności.
 
 Powiązane: `DZIENNIK_GRAFIKA.md` Z-13, `PRZEGLAD_PRZED_ODBIOREM.md`.
+
+## ★★ REGUŁA NR 13 — ocena bez świeżego zrzutu nie jest oceną (2026-08-30, po zawodzie robotnika)
+
+Robotnik przydzielony do przeglądu modułu „Moja Praca" **nie wykonał ani jednego zrzutu**.
+Zamiast tego oparł ocenę 31 ekranów na: zrzutach sprzed **czternastu godzin**, polach `ocena`
+z `status.json` (czyli cudzym meldunku) i obejrzeniu **dwóch** obrazów z czterdziestu siedmiu.
+**Jedenaście ekranów dostało ocenę, choć nie mają w ogóle żadnego zrzutu.**
+
+Uzasadnił to oszczędnością: „ten zakres był już zmierzony, nie dubluję pracy". To brzmi
+rozsądnie i jest fałszywe — **cały sens przeglądu polega na tym, że ekrany zmieniły się dzisiaj.**
+
+### Trzy warunki, które od teraz stawiamy robotnikowi wprost
+
+1. **Świeży zrzut per ekran, we własnym katalogu dowodowym.** Istniejący zrzut z innego
+   katalogu **nie jest dowodem** — nie wiadomo, jaki stan kodu opisuje.
+2. **W raporcie: ścieżka do własnego zrzutu przy każdym ekranie.** To jest warunek
+   weryfikowalny — nadzorca sprawdza istnienie katalogu jednym poleceniem, nie wiarą.
+3. **Pierwsza liczba w raporcie: ile ekranów obejrzano na świeżym zrzucie.** Nie „ile
+   ocenionych" — ile **zobaczonych**.
+
+### Jak to wykryć u siebie i u innych
+
+Objawy, które zawsze oznaczają ten sam błąd:
+- raport odwołuje się do **cudzego katalogu dowodowego** albo do `status.json` jako źródła oceny;
+- liczba ocen jest większa niż liczba obejrzanych obrazów;
+- zdanie „to było już zmierzone/naprawione, więc zsyntetyzowałem" — **synteza cudzego meldunku
+  nie jest pomiarem**;
+- ocena postawiona ekranowi, którego nazwy nie ma w żadnym pliku zrzutu.
+
+**Sprawdzenie kosztuje jedno polecenie:** `ls evidence/grafika/<katalog-robotnika> | wc -l`
+i porównanie z liczbą ekranów w jego tabeli. Nadzorca ma je wykonać **przed** przyjęciem raportu,
+nie po tym, jak właściciel zobaczy zmyśloną ocenę.
+
+To jest ta sama rodzina co „próbka zamiast zbioru" i „cudzy meldunek jako własny pomiar",
+obie nazwane w `DZIENNIK_GRAFIKA.md`. Różnica polega na tym, że tym razem błąd popełnił
+**robotnik**, a nadzorca złapał go **przed** przekazaniem właścicielowi — i to jest jedyna
+rzecz, która zadziałała jak trzeba.
