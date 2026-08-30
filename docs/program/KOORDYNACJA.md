@@ -357,3 +357,48 @@ właścicielowi kartę, którą właśnie zaakceptował**.
 **Właściwa naprawa:** podłączyć kartę, którą właściciel lubi, do backendu, który
 JUŻ ISTNIEJE od 1 sierpnia. Nie budujemy niczego nowego po stronie serwera —
 27 tras czeka nieużywanych.
+
+### 2026-08-30 · AGENT DZIAŁA — i ma jeden precyzyjny defekt, który go zatrzymuje
+
+**Odblokowane lokalnie za zgodą właściciela** (własna baza scratch + własny Redis na
+porcie 6390, bo 6379 zajęty przez inny projekt; wszystko posprzątane po pomiarze,
+demo nietknięte).
+
+**DOBRA WIADOMOŚĆ — agent naprawdę wykonuje pracę, nie tylko zmienia statusy:**
+
+| krok | narzędzie | wynik |
+| --- | --- | --- |
+| 0 | `get_initiative_status` | **completed**, 2 ms — realny odczyt z bazy |
+| 1 | `calculate_financial` | **completed**, 1 ms — realnie przeliczone: `roi: "35.0%"` z inwestycji 100 000 i korzyści 45 000 przez 36 mies. |
+| 2 | `create_task` | **awaiting_approval** — bramka zgody zadziałała poprawnie |
+
+`ai_agent_job_receipts`: jeden wiersz, `SUCCEEDED`, `attempt_count=1`. Worker startuje
+w procesie serwera pod flagą (`server/src/index.ts:2124`), nie trzeba osobnego procesu.
+
+**DEFEKT — plan po zatwierdzeniu kroku NIGDY nie wznawia wykonania.**
+Zweryfikowane przeze mnie w kodzie, nie przepisane:
+
+1. `agent-plan.routes.ts:184-185` — `dispatchKey: \`route:${planId}\``. Klucz zależy
+   **wyłącznie od identyfikatora planu**, więc jest **identyczny** przy pierwszym
+   uruchomieniu i przy wznowieniu po akcepcie.
+2. `agentTaskDispatchService.ts:82-84` — jeśli pokwitowanie dla tego klucza ma status
+   `SUCCEEDED`, funkcja zwraca `{ status: 'REPLAY' }` **bez wstawienia zadania do
+   kolejki**.
+3. `agent-plan.routes.ts:188` — `REPLAY` jest mapowane na odpowiedź **`'enqueued'`**.
+
+**Czyli API mówi „zakolejkowane", a w kolejce nie przybywa nic.** To ten sam kształt
+co „200 znaczy nic" z porannego pomiaru — odpowiedź poprawna, praca niewykonana.
+
+**Stan końcowy jest pułapką bez wyjścia:** krok zostaje trwale `pending`, plan trwale
+`awaiting_approval`. Obie drogi wyjścia przez API są zamknięte:
+`POST /:id/run` → `409 "Plan not runnable in status 'awaiting_approval'"`;
+`POST /:id/approve-step` ponownie → `409 "Step not awaiting approval"`.
+Mechanizm operatorski `redriveAgentTask` obsługuje tylko `FAILED`, nie `SUCCEEDED`.
+
+**Naprawa (propozycja):** klucz idempotencji musi rozróżniać uruchomienie od wznowienia —
+np. `route:${planId}:${currentStepIndex}` albo `:${approvalCount}`. Do tego `REPLAY`
+nie powinien być raportowany jako `enqueued`, bo to właśnie ta zamiana ukryła defekt.
+
+**Czego NIE zmierzono:** ścieżki z realnym wywołaniem modelu językowego — te trzy
+kroki to narzędzia deterministyczne (odczyt bazy, arytmetyka, zapis), więc do ściany
+z kluczem API nigdy nie doszło.
