@@ -5,7 +5,13 @@ truth_type: acceptance
 established: 2026-08-30
 ---
 
-# ODBIÓR 171 — kontrakty danych · SCALIĆ PO FIX-171 (drobny, wydany)
+# ODBIÓR 171 — kontrakty danych · SCALONO PO FIX-171
+
+★ FIX-171 wykonany (`7f2a2d37e0`): font-mono przywrócony, pin bazy zdjęty (test
+przenośny — 4/4 na obcej bazie), dowód HTTP waluty przez realny Gateway
+(z poprawnym prefiksem `/api/v8/finance-v2/...` — zlecenie FIX podało błędny;
+robotnik zweryfikował i poprawił). Mutacja waluty→null: 2 testy czerwone,
+przywrócenie → 4/4. Scalono do linii integracyjnej.
 
 Gałąź `codex/day171-kontrakty-danych-20260830` (2 commity nad `514c60b355`).
 Odbiór: własny kontener 6080, migracje idempotentne, **3 mutacje odtworzone
