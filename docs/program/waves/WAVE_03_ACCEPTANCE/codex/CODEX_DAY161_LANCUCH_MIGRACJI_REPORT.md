@@ -137,6 +137,15 @@ Applying migrations: 0
 DAY161_FRESH_MIGRATION_GATE=PASS
 ```
 
+Rewalidacja po wznowieniu dyżuru, 2026-08-30 14:42–14:43 CEST, ponownie
+uruchomiła gate od nowego pustego kontenera: `Applying migrations: 868`,
+`✅ Postgres migrations complete`, replay `Applying migrations: 0` i
+`DAY161_FRESH_MIGRATION_GATE=PASS`. Trap usunął `cx-day161-pg` razem z wolumenem.
+Log strict-run: `/private/tmp/cx-day161-lancuch-migracji-artefakty/day161-fresh-migration-gate.log`,
+SHA-256 `799dec0b20e5afad511816d9e1cabeac65c1895e773eeebcf68ef43c718f294c`;
+log replay: `/private/tmp/cx-day161-lancuch-migracji-artefakty/day161-fresh-migration-gate-replay.log`,
+SHA-256 `66dbb3f87ad9bb8fd650bbe9d26d4b9e3d3815c65e525c9b625c222b6df8bbc9`.
+
 Kontrola negatywna: po tymczasowym usunięciu istniejącego strażnika day159 z kopią w scratchu gate na nowej pustej bazie zwrócił:
 
 ```text
