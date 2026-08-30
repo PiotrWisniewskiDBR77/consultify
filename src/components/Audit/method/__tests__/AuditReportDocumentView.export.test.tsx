@@ -49,7 +49,7 @@ async function renderView() {
   await screen.findAllByText('Audit 41 report');
 }
 
-describe('AuditReportDocumentView DOCX export', () => {
+describe('AuditReportDocumentView DOCX/PDF export', () => {
   beforeEach(() => {
     vi.mocked(getReport).mockResolvedValue(report);
     vi.mocked(getProgram).mockResolvedValue(null);
@@ -71,23 +71,21 @@ describe('AuditReportDocumentView DOCX export', () => {
     vi.restoreAllMocks();
   });
 
-  it('flag OFF omits DOCX while preserving the planned PDF row', async () => {
+  it('flag OFF omits both DOCX and PDF export buttons', async () => {
     flag(false);
     await renderView();
     expect(screen.queryByRole('button', { name: 'Pobierz DOCX' })).toBeNull();
-    expect(screen.getByText('Eksport PDF')).toBeInTheDocument();
-    expect(screen.getByText('Planowane')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pobierz PDF' })).toBeNull();
   });
 
-  it('flag ON adds DOCX and still preserves the planned PDF row', async () => {
+  it('flag ON adds both DOCX and PDF export buttons', async () => {
     flag(true);
     await renderView();
     expect(screen.getByRole('button', { name: 'Pobierz DOCX' })).toBeInTheDocument();
-    expect(screen.getByText('Eksport PDF')).toBeInTheDocument();
-    expect(screen.getByText('Planowane')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pobierz PDF' })).toBeInTheDocument();
   });
 
-  it('requests the encoded report export endpoint', async () => {
+  it('requests the encoded report export endpoint (DOCX)', async () => {
     flag(true);
     vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['PKdocx']), { status: 200 }));
     await renderView();
@@ -99,7 +97,19 @@ describe('AuditReportDocumentView DOCX export', () => {
     );
   });
 
-  it('disables the control while the response is pending', async () => {
+  it('requests the encoded report export endpoint (PDF, FIX-187)', async () => {
+    flag(true);
+    vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['%PDF']), { status: 200 }));
+    await renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Pobierz PDF' }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith('/api/audits/reports/rep%2F41/export.pdf', {
+        headers: {},
+      })
+    );
+  });
+
+  it('disables the DOCX control while the response is pending', async () => {
     flag(true);
     vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
     await renderView();
@@ -108,7 +118,16 @@ describe('AuditReportDocumentView DOCX export', () => {
     expect(button).toBeDisabled();
   });
 
-  it('shows an inline backend error and never calls alert', async () => {
+  it('disables the PDF control while the response is pending (FIX-187)', async () => {
+    flag(true);
+    vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
+    await renderView();
+    const button = screen.getByRole('button', { name: 'Pobierz PDF' });
+    fireEvent.click(button);
+    expect(button).toBeDisabled();
+  });
+
+  it('shows an inline backend error and never calls alert (DOCX)', async () => {
     flag(true);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     vi.mocked(fetch).mockResolvedValue(
@@ -119,6 +138,21 @@ describe('AuditReportDocumentView DOCX export', () => {
     );
     await renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Pobierz DOCX' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('AUDIT_NOT_FOUND');
+    expect(alertSpy).not.toHaveBeenCalled();
+  });
+
+  it('shows an inline backend error and never calls alert (PDF, FIX-187)', async () => {
+    flag(true);
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ error: 'AUDIT_NOT_FOUND' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+    await renderView();
+    fireEvent.click(screen.getByRole('button', { name: 'Pobierz PDF' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('AUDIT_NOT_FOUND');
     expect(alertSpy).not.toHaveBeenCalled();
   });
