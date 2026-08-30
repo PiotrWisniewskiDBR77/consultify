@@ -271,3 +271,7 @@ Instrukcja odwołuje się do `§0.4a`, ale wydany plik nie zawiera takiej sekcji
 - Nie wykonano głębokiego runtime dla 21 pozostałych plików-pisarzy R3; zakres zamawiał realny E2E tylko dla `/api/tasks` i `/api/my-work/personal-tasks`. Ich klasyfikacja „zależy od wywołującego” pozostaje celowo niepodniesiona do osłoniętej/nieosłoniętej.
 - Nie uruchamiano UI ani `server/src/index.ts`; dyżur nie wymaga nowego wizualium.
 - Nie wykonano pomiaru na demo/staging/produkcji — celowo i zgodnie z Z28.
+
+## Sprzątanie zasobów
+
+Po utrwaleniu artefaktów wykonano `docker rm -fv cx-day160-pg`. Kontener i jego wolumen są usunięte; porty `6048`, `4988`, `4989` po sprzątaniu zwróciły `WOLNY`. Niemutowalne receipts i wszystkie pozostałe dane pomiarowe istniały wyłącznie w usuniętym wolumenie.
