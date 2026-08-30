@@ -5,7 +5,10 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 185 — GEN-2 strażnik · SCALIĆ PO FIX-185 · GEN-2 zostaje PARTIAL
+# ODBIÓR 185 — GEN-2 strażnik · SCALONO PO FIX-185 · GEN-2 zostaje PARTIAL
+
+★ FIX-185 wykonany (`2e8bf7fe11`): test prose na kontrakcie D-8, tabele GFM nigdy
+nie dostają znacznika (mutacja czerwona→zielona, 19/19 root-configiem). Scalono.
 
 Kod R1 (B+): liczby-założenia zachowywane i oznaczane, mutacja odbioru mocniejsza
 niż wykonawcy (6→3 czerwone→6), łańcuch do DOCX potwierdzony NIEZALEŻNYM renderem
