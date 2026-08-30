@@ -28,6 +28,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+
 import { ExceleView } from '@/components/AIChat/KimiWorkspace/ExceleView';
 import { Api } from '@/services/api';
 
@@ -186,11 +188,23 @@ const queryClient = new QueryClient({
 export default function ExceleEdytowalnaSiatkaScreen(): React.ReactElement {
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/excele?artifactId=${ID}`]}>
-        <div className="h-screen w-full overflow-hidden bg-c-bg">
-          <ExceleView />
-        </div>
-      </MemoryRouter>
+      {/*
+        GRAFIKA 2026-08-30: dołożony `FeatureFlagsProvider`.
+        POWÓD: pełny pasek narzędzi arkusza (`SpreadsheetArtifactStudio` — wstaw
+        wiersz/kolumnę, formatowanie, waluta, procent) ISTNIEJE w kodzie za dwiema
+        flagami domyślnie wyłączonymi. Bez tego providera włączenie flag wywalało
+        ekran (`useFeatureFlagsContext must be used within FeatureFlagsProvider`),
+        więc NIE DAŁO SIĘ zobaczyć tego paska na zrzucie — a reguła #7 mówi, że
+        właściciel nigdy nie jest pierwszym testerem wizualnym.
+        Włączenie: `?ff_artifactStudio=1&ff_spreadsheetStudioV2=1`.
+      */}
+      <FeatureFlagsProvider config={{ enableLocalOverrides: true }} showDevTools={false}>
+        <MemoryRouter initialEntries={[`/excele?artifactId=${ID}`]}>
+          <div className="h-screen w-full overflow-hidden bg-c-bg">
+            <ExceleView />
+          </div>
+        </MemoryRouter>
+      </FeatureFlagsProvider>
     </QueryClientProvider>
   );
 }
