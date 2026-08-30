@@ -28,10 +28,6 @@ interface PresentationArtifactCommandAvailability {
 }
 
 const editable = (selection: ArtifactSelectionContext): boolean => !selection.readOnly;
-const selectionIs =
-  (...kinds: ArtifactSelectionContext['kind'][]) =>
-  (selection: ArtifactSelectionContext): boolean =>
-    kinds.includes(selection.kind);
 const canEdit = ({ grants }: ArtifactPermissionContext): boolean => grants.has('artifact.edit');
 const mutableLifecycle = (lifecycle: { status: string; conflict?: boolean }): boolean =>
   !lifecycle.conflict && (lifecycle.status === 'draft' || lifecycle.status === 'in_review');
@@ -79,17 +75,34 @@ export function createPresentationArtifactCommandRegistry(
       labelKey: 'Nowy slajd',
       category: 'structure',
       priority: 'P0',
-      selectionPredicate: (selection) =>
-        editable(selection) && selectionIs('none', 'slide')(selection),
+      // Wstawia slajd ZA AKTYWNYM (`handleAddBlankCard(activeCardIndex + 1)`),
+      // więc zaznaczenie bloku nie ma z tym nic wspólnego — a warunek
+      // `kind === 'none' | 'slide'` chował przycisk po kliknięciu w tekst.
+      selectionPredicate: (selection) => editable(selection),
       execute: handlers.addSlide,
     }),
+    /*
+     * ★ NARZĘDZIA WSTAWIANIA NIE ZNIKAJĄ PO KLIKNIĘCIU W SLAJD (2026-08-30).
+     *
+     * Zmierzony stan zastany (Playwright, `?screen=deck-artifact`): pasek
+     * startował z „Nowy slajd · Pole tekstowe · Obraz · Motyw", a po
+     * JEDNYM kliknięciu w blok slajdu zostawało „Duplikuj obiekt · Usuń
+     * obiekt". Czyli pierwszy naturalny ruch użytkownika — kliknięcie w to,
+     * co chce zmienić — kasował z ekranu wszystkie narzędzia dodawania.
+     * To jest mechanika stojąca za uwagą właściciela „nie widzę nigdzie,
+     * gdzie mogę edytować".
+     *
+     * Wstawianie tekstu/obrazu jest operacją NA AKTYWNYM SLAJDZIE, nie na
+     * zaznaczeniu, więc jedynym uczciwym warunkiem jest `hasActiveSlide`.
+     * Motyw jest operacją na CAŁEJ prezentacji, więc nie ma warunku
+     * zaznaczenia w ogóle.
+     */
     command({
       commandId: 'ppt.insert.text',
       labelKey: 'Pole tekstowe',
       category: 'editing',
       priority: 'P0',
-      selectionPredicate: (selection) =>
-        editable(selection) && selection.kind === 'none' && availability.hasActiveSlide,
+      selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
       execute: handlers.insertText,
     }),
     command({
@@ -97,8 +110,7 @@ export function createPresentationArtifactCommandRegistry(
       labelKey: 'Obraz',
       category: 'editing',
       priority: 'P0',
-      selectionPredicate: (selection) =>
-        editable(selection) && selection.kind === 'none' && availability.hasActiveSlide,
+      selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
       execute: handlers.insertImage,
     }),
     command({
@@ -106,15 +118,23 @@ export function createPresentationArtifactCommandRegistry(
       labelKey: 'Motyw',
       category: 'editing',
       priority: 'P0',
-      selectionPredicate: (selection) => editable(selection) && selection.kind === 'none',
+      selectionPredicate: (selection) => editable(selection),
       execute: handlers.openTheme,
     }),
+    /*
+     * ★ Te trzy polecenia działają na AKTYWNYM slajdzie
+     * (`duplicateCard(activeCardIndex)` / `handleToggleCardLock(activeCard…)` /
+     * `deleteCard(activeCardIndex)`), a nie na zaznaczeniu — więc warunek
+     * `selection.kind === 'slide'` nie opisywał tego, co polecenie robi.
+     * Chował je za to dokładnie wtedy, gdy człowiek pracuje nad slajdem
+     * (zaznaczony blok ⇒ `kind === 'block'`). Uczciwy warunek to `hasActiveSlide`.
+     */
     command({
       commandId: 'ppt.slide.duplicate',
       labelKey: 'Duplikuj slajd',
       category: 'structure',
       priority: 'P0',
-      selectionPredicate: (selection) => editable(selection) && selection.kind === 'slide',
+      selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
       execute: handlers.duplicateSlide,
     }),
     command({
@@ -122,7 +142,7 @@ export function createPresentationArtifactCommandRegistry(
       labelKey: 'Zablokuj / odblokuj',
       category: 'structure',
       priority: 'P0',
-      selectionPredicate: (selection) => editable(selection) && selection.kind === 'slide',
+      selectionPredicate: (selection) => editable(selection) && availability.hasActiveSlide,
       execute: handlers.toggleSlideLock,
     }),
     command({
@@ -131,7 +151,7 @@ export function createPresentationArtifactCommandRegistry(
       category: 'structure',
       priority: 'P0',
       selectionPredicate: (selection) =>
-        editable(selection) && selection.kind === 'slide' && availability.canDeleteSlide,
+        editable(selection) && availability.hasActiveSlide && availability.canDeleteSlide,
       execute: handlers.deleteSlide,
     }),
     command({

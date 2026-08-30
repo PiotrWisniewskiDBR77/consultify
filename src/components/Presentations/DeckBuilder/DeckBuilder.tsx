@@ -69,8 +69,8 @@ import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
-import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { resolveBlankCardInsertionIndex } from './manualEditing';
+import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { presentationVersionApprovalId } from './presentationApproval';
 import { createPresentationArtifactCommandRegistry } from './presentationArtifactCommands';
 import { PresentationReviewPanel } from './PresentationReviewPanel';
@@ -395,7 +395,17 @@ export const DeckBuilder: React.FC = () => {
   const serverVersionRef = useRef<number>(1);
   const [serverVersion, setServerVersion] = useState(1);
 
-  const [teresaOpen, setTeresaOpen] = useState(true);
+  /*
+    ★ W TRYBIE WARSZTATU TERESA STARTUJE ZAMKNIĘTA (2026-08-30).
+    Powód jest przestrzenny, nie ideologiczny: powłoka artefaktu ma teraz
+    TRZY kolumny (sorter slajdów · płótno · panel artefaktu 300 px), a przy
+    1440 px arbitraż `resolveArtifactPanelArbitration` zwija LEWĄ szynę, gdy
+    Teresa jest zadokowana. Otwarta domyślnie Teresa zabierała 360 px I
+    kasowała sorter slajdów — czyli psuła układ, który właściciel pochwalił.
+    Poza warsztatem zachowanie zostaje 1:1 (Teresa otwarta), bo tam ma
+    własną, niekolidującą kolumnę.
+  */
+  const [teresaOpen, setTeresaOpen] = useState(!isArtifactStudioLaneEnabled('presentation'));
   const [showNotes, setShowNotes] = useState(false);
   const [presentMode, setPresentMode] = useState<'off' | 'fullscreen' | 'presenter'>('off');
   const [presentStartIndex, setPresentStartIndex] = useState(0);
@@ -474,7 +484,25 @@ export const DeckBuilder: React.FC = () => {
     lastSavedAt,
     restoreVersion,
     saveManualCheckpoint,
+    // ★ ZAMKNIĘCIE PĘTLI ZAPISU (2026-08-30). Te trzy funkcje istniały
+    // w `useVersionHistory` od 2026-08-01 z komentarzem „woła je JEDYNY pisarz,
+    // `useDeckAutosave`" — ale `useDeckAutosave` przestał być podpięty do
+    // DeckBuildera 2026-08-09 (commit 2d53892c76 usunął import) i od tamtej
+    // pory NIKT ich nie wołał. Skutek zmierzony w przeglądarce: po edycji
+    // slajdu wskaźnik zostaje na „Zapisywanie…" NA ZAWSZE, mimo że PUT
+    // /autosave wychodzi i wraca 200 — a niepowodzenie 500/403 wygląda
+    // dokładnie tak samo. Do czasu przywrócenia kanonicznego pisarza pętlę
+    // domyka pisarz wbudowany niżej.
+    noteSaveStarted,
+    notePersistedSave,
+    noteSaveFailed,
   } = useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
+  /**
+   * Ostatni błąd zapisu — jawny, widoczny komunikat zamiast ciszy.
+   * Powód: pisarz niżej łapał KAŻDY wyjątek pustym `catch {}` i nie sprawdzał
+   * `res.ok`, więc odrzucony zapis nie zostawiał na ekranie żadnego śladu.
+   */
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
     deck,
@@ -802,6 +830,7 @@ export const DeckBuilder: React.FC = () => {
     }
 
     autosaveTimerRef.current = setTimeout(async () => {
+      noteSaveStarted();
       try {
         const res = await fetch(`/api/presentations/decks/${deckForAutosave.deckId}/autosave`, {
           method: 'PUT',
@@ -843,7 +872,23 @@ export const DeckBuilder: React.FC = () => {
             /* keep whatever the 409 body told us */
           }
           setConflict({ serverVersion, pendingServer });
+          noteSaveFailed();
           toast.error(t('presentations.versionConflictDetected'));
+          return;
+        }
+        /*
+          ★ NIE-2xx TO PORAŻKA, NIE CISZA. Ta gałąź nie istniała: kod czytał
+          `res.json()` niezależnie od statusu i kończył bez śladu, więc 500
+          / 403 / 404 wyglądały na ekranie identycznie jak udany zapis.
+        */
+        if (!res.ok) {
+          noteSaveFailed();
+          setAutosaveError(
+            t(
+              'presentations.builder.autosaveFailed',
+              `Nie udało się zapisać prezentacji (błąd ${res.status}). Zmiany są widoczne na ekranie, ale NIE są zapisane na serwerze.`
+            )
+          );
           return;
         }
         const payload = await res.json().catch(() => ({}));
@@ -851,8 +896,18 @@ export const DeckBuilder: React.FC = () => {
           serverVersionRef.current = payload.version;
           setServerVersion(payload.version);
         }
+        setAutosaveError(null);
+        notePersistedSave(deckForAutosave.deck);
       } catch {
-        // Non-blocking; builder remains usable offline-ish.
+        // Sieć padła. Builder zostaje używalny, ale człowiek MUSI wiedzieć,
+        // że to, co widzi, nie jest zapisane.
+        noteSaveFailed();
+        setAutosaveError(
+          t(
+            'presentations.builder.autosaveOffline',
+            'Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane.'
+          )
+        );
       }
     }, 800);
 
@@ -1493,7 +1548,10 @@ export const DeckBuilder: React.FC = () => {
             run: t('presentations.builder.topBar.present', 'Present'),
             runOptions: t('presentations.builder.present.options', 'Presentation options'),
             runFromCurrent: t('presentations.builder.present.fromCurrent', 'From current slide'),
-            runFromStart: t('presentations.builder.present.fromBeginning', 'Present from beginning'),
+            runFromStart: t(
+              'presentations.builder.present.fromBeginning',
+              'Present from beginning'
+            ),
             presenter: t('presentations.builder.present.presenterView', 'Presenter view'),
           }}
           topBarHandlers={{
@@ -1572,6 +1630,19 @@ export const DeckBuilder: React.FC = () => {
               </div>
             ) : undefined
           }
+          /*
+            Metadane do sekcji „Właściwości" prawego panelu artefaktu (SPEC-A
+            §11.2). Wcześniej te liczby nie miały gdzie mieszkać: tryb warsztatu
+            wygasza prawą szynę, a górny pasek jest jednoliniowy.
+          */
+          artifactPanelMeta={{
+            slideCount: deck.cards.length,
+            confidentiality: deckConfidentiality,
+            status: (deck.status as string | undefined) ?? 'draft',
+            version: serverVersion ?? null,
+            colorSetId: deck.color_set_id ?? null,
+            lockedSlideCount: deck.cards.filter((c) => c.is_locked).length,
+          }}
           activeRightRailToolId={activeRailTool}
           onActiveRightRailToolChange={setActiveRailTool}
           rightRailState={{
@@ -1649,7 +1720,12 @@ export const DeckBuilder: React.FC = () => {
               registry={presentationArtifactCommands}
               context={presentationArtifactCommandContext}
               resolveLabel={(label) => label}
-              maxVisible={7}
+              // 9 miejsc: Cofnij · Ponów · Nowy slajd · Pole tekstowe · Obraz ·
+              // Motyw · Duplikuj slajd · Zablokuj · Usuń slajd. Domyślne 7
+              // wypychało operacje na slajdzie pod „Więcej", a to one są
+              // odpowiedzią na „nie widzę, gdzie mogę edytować". Pasek jest
+              // pełnej szerokości ekranu (siedzi nad kolumnami powłoki).
+              maxVisible={9}
               ariaLabel={t('presentations.builder.contextTools', 'Narzędzia prezentacji')}
             />
           }
@@ -1717,8 +1793,19 @@ export const DeckBuilder: React.FC = () => {
               />
             </ArtifactContextCommandSurface>
           }
+          /*
+            ★ TERESA ZOSTAJE DOSTĘPNA TAKŻE W TRYBIE WARSZTATU (2026-08-30).
+            Warunek brzmiał `!artifactStudioPresentationEnabled && teresaOpen`,
+            więc przy WŁĄCZONYM torze `presentation` czat Teresy nie renderował
+            się NIGDY — a `DeckBuilderMelsView` przekazuje ten sam węzeł do
+            `globalTeresaSlot` powłoki. Efekt: włączenie toru kasowało Teresę
+            z prezentacji, a przyciski „Zapytaj Teresę" (stopka, prawy panel,
+            pigułka Menu 2) stawały się martwe. Teraz decyduje wyłącznie
+            `teresaOpen`, czyli Teresa jest na żądanie — domyślnie zamknięta,
+            więc slajd nie traci szerokości, dopóki nikt jej nie otworzy.
+          */
           aiEntrySlot={
-            !artifactStudioPresentationEnabled && teresaOpen ? (
+            teresaOpen ? (
               <div className="w-[360px] min-w-[320px] max-w-[420px] h-full">
                 <UnifiedChatPanel
                   mode="split"
@@ -1734,7 +1821,26 @@ export const DeckBuilder: React.FC = () => {
             ) : null
           }
           bannerSlot={
-            pendingAgentEdit ? (
+            autosaveError ? (
+              /*
+                UCZCIWOŚĆ ZAPISU (2026-08-30). Slajd pokazuje optymistycznie
+                NOWĄ treść, więc odrzucony zapis znaczy, że człowiek widzi
+                zdanie, którego na serwerze nie ma. To gorsze niż brak zapisu:
+                to zapis pozorny. Do dziś nie zostawiał ŻADNEGO śladu na ekranie.
+              */
+              <div
+                role="alert"
+                data-testid="deck-autosave-error"
+                className="flex items-start gap-2 border-b border-c-danger/40 bg-c-danger/10 px-4 py-2.5 text-sm text-c-text"
+              >
+                <AlertTriangle
+                  size={16}
+                  className="mt-0.5 shrink-0 text-c-danger"
+                  aria-hidden="true"
+                />
+                <span className="flex-1">{autosaveError}</span>
+              </div>
+            ) : pendingAgentEdit ? (
               <div className="flex items-center gap-3 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2.5">
                 <span className="text-sm font-medium text-amber-800 dark:text-amber-200 flex-1">
                   {pendingAgentEdit.reply}
