@@ -47,3 +47,35 @@ NIE MA oceny tego modułu.
 
 ---
 
+## Moduły 09-finanse, 13-administracja, 14-organizacja — ★ OCENA UNIEWAŻNIONA, NAPRAWY ZACHOWANE
+
+**Nadzorca unieważnił ocenę zbiorczą 2026-08-30 o 22:55.**
+
+Robotnik miał przejść 22 ekrany. **Zrobił świeży zrzut jednego** (`finance-baseline-workspace`,
+dwa pliki w `evidence/grafika/135-noc-finanse-admin/`). Ocenę pozostałych 21 oparł na zrzutach
+z wcześniejszych przebiegów i na polach z `status.json` — czyli **na cudzym meldunku, nie na
+własnym pomiarze**. To drugi raz tej nocy ten sam wzorzec; opisany jako reguła nr 13
+w `00_ZASADY_PRACY.md`.
+
+**Rozkład A=10 · B=9 · C=1 · D=2 nie jest wynikiem pomiaru i nie wolno się na nim opierać.**
+
+### Co z tej pracy ZOSTAJE — bo zostało realnie zmierzone i naprawione
+
+1. **`finance-baseline-workspace` — znaleziona i usunięta PRZYCZYNA** trwałego błędu „nie można
+   otworzyć kontekstu modelu bazowego", który blokował ten ekran od rana. Harness nie mockował
+   `GET .../baseline/:id/context`; komponent woła ten endpoint jako pierwszy, dostawał tablicę
+   zamiast obiektu i wywracał się na `context.forecastPeriods.map()`. Przycisk „Spróbuj ponownie"
+   trafiał za każdym razem w to samo. **To była usterka stanowiska pomiarowego, nie produktu** —
+   czternasty taki przypadek tego dnia.
+2. **Drugi defekt, widoczny dopiero po odblokowaniu ekranu:** wartości procentowe (wzrost r/r,
+   COGS, OPEX, CAPEX, oprocentowanie, CIT) pokazywały **surowy ułamek `0,12` zamiast `12%`**,
+   mimo że jednostka była znana w danych. Naprawione w `AssumptionsView.tsx`.
+3. **Obalone zgłoszenie o walucie.** Przegląd sugerował „USD w Administracji przy PLN
+   w Finansach". Robotnik sprawdził wszystkie pięć ekranów Administracji: jedyne USD to
+   **koszt modeli AI za tysiąc tokenów** — inna domena niż waluta klienta. Naprawa na PLN
+   **zafałszowałaby dane**. Zgłoszenie odrzucone z uzasadnieniem, i słusznie.
+
+**Moduły 09, 13 i 14 czekają na realny przegląd ekran po ekranie.**
+
+---
+

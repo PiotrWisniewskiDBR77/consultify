@@ -1617,15 +1617,17 @@
         {
           "id": "finance-baseline-workspace",
           "nazwa": "Baza porownania",
-          "ocena": "C",
-          "co": "Trwaly stan bledu — harness nie ma atrapy jednego wywolania.",
+          "ocena": "B",
+          "co": "Zalozenia (grid 9 wierszy z bezpiecznym zakresem) i wyliczenia (31 linii kanonicznych P&L/BS/CF, scena fundinggap z ujemna kasa) — po naprawie harnessu tresc realna i zweryfikowana.",
           "naprawione": [
-            "Crimson na linku 'Sprobuj ponownie'"
+            "Crimson na linku 'Sprobuj ponownie'",
+            "PRZYCZYNA trwalego bledu znaleziona i naprawiona: harness nie mial atrapy GET .../baseline/:id/context (endpoint wolany PRZED assumptions/outputs/compute) — spadal na ogolny fallback zwracajacy tablice zamiast obiektu kontekstu, co ladowacz kontekstu lapal jako blad przy KAZDEJ probie ponowienia. Dodana wlasciwa atrapa w dev-render/screens/finance-baseline-workspace.tsx.",
+            "Wartosci PCT (wzrost r/r, COGS/OPEX/CAPEX %, oprocentowanie, CIT) w kolumnach 'Wart. historyczna' i 'Wartosc prognozy' pokazywaly surowy ulamek (0,12) zamiast procentu — mimo ze jednostka PCT byla znana w danych (inna klasa niz wyjatek w finance-analysis-workspace, tam brakuje metadanych). Naprawione w AssumptionsView.tsx (formatPctAwareValue) — teraz '12%' obok surowej wartosci edytowalnej."
           ],
           "wyjatki": [
-            "Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy."
+            "Ujemna gotowka w scenie fundinggap poprawnie czerwona (semantyka krytyczna — alarm, nie ozdoba)."
           ],
-          "gdzie": "Finanse → zakładka „Analiza\" → baza porównania (założenia + wyliczenia) — punkt odniesienia, do którego porównuje się dalsze analizy."
+          "gdzie": "Finanse → zakładka „Analiza\" → baza porównania (założenia + wyliczenia) — punkt odniesienia, do którego porównuje się dalsze analizy. Adres pełny: ?screen=finance-baseline-workspace&view=assumptions|wyliczenia&scene=default|fundinggap&status=DRAFT|APPROVED|IN_REVIEW (widoki i sceny patrz komentarz nagłówkowy pliku)."
         },
         {
           "id": "finance-value-panels",
