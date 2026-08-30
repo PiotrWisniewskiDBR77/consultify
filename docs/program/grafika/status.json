@@ -396,9 +396,11 @@
           "nazwa": "Projekty",
           "ocena": "A",
           "co": "Lista projektow ze statusami jako pigulki z kropka.",
-          "naprawione": [],
+          "naprawione": [
+            "★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects\" (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz\" faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects\". Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji."
+          ],
           "wyjatki": [],
-          "gdzie": "UWAGA — BRAK DROGI WEJŚCIA: moduł „Moja Praca\" dziś NIE MA zakładki „Projekty\" (sprawdzone klikiem w src/components/MyWork/MyWorkHub.tsx — zero wystąpień). Jedyne odnalezione wywołanie nawigacji na trasę /projects to źle podpięta akcja Command Palette „Otwórz kalendarz\" (src/components/MyWork/CommandPalette.tsx:327 — nazwa mówi o kalendarzu, onClick faktycznie robi navigate('/projects')) — to wygląda na pomyłkę, nie świadomą ścieżkę. Ekran (real <MyProjects/>, lista projektów ze statusami jako pigułki + sekcje interesariuszy/finansów/zespołu/zadań w podglądzie) jest dziś osiągalny wyłącznie wpisaniem adresu /projects wprost w przeglądarce. Naprawione 2026-08-30: breadcrumb „Moja Praca › Projekty\" na ekranie wyglądał jak link, ale nic nie robił po kliknięciu — pierwszy człon ma teraz onClick i wraca do /my-work (src/components/MyWork/MyProjects.tsx) — to jednak NIE tworzy drogi w dół do tego ekranu, bo Moja Praca nadal go nie linkuje."
+          "gdzie": "Moja praca → zakładka „Projekty\" w głównym menu huba (MyWorkHub.tsx, obok Zadań/Decyzji) — lista projektów ze statusami jako pigułki + sekcje interesariuszy/finansów/zespołu/zadań w podglądzie. Historia problemu (BRAK DROGI WEJŚCIA, pomyłkowa akcja Command Palette) opisana w poprzednich wpisach dziennika/rejestru z 30.08 rano — rozwiązana tego samego dnia wieczorem, patrz pole „naprawione\"."
         },
         {
           "id": "idea-table-tool-empty-filter",
