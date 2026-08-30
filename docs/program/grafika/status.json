@@ -1,0 +1,264 @@
+{
+  "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
+  "_zaktualizowano": "2026-08-30",
+  "moduly": [
+    {
+      "katalog": "00-karty-artefaktow",
+      "nazwa": "Karty artefaktow",
+      "opis": "Obiekty pracy otwierane z listy: decyzja, wniosek, zadanie, narzedzie, powiadomienie, wywiad.",
+      "ekrany": [
+        {
+          "id": "karta-decision",
+          "nazwa": "Karta decyzji",
+          "ocena": "A",
+          "co": "Pelna polszczyzna, przycisk glowny, szesc sekcji panelu, uczciwy baner o zapisie lokalnym.",
+          "naprawione": [
+            "Termin pokazywal surowe ISO zamiast daty po ludzku"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "karta-insight",
+          "nazwa": "Karta wniosku",
+          "ocena": "A",
+          "co": "Bez odchylen od kanonu.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "karta-task",
+          "nazwa": "Karta zadania",
+          "ocena": "A",
+          "co": "Bez odchylen. Czerwien na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "karta-tool",
+          "nazwa": "Karta narzedzia",
+          "ocena": "A",
+          "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "karta-notification",
+          "nazwa": "Karta powiadomienia",
+          "ocena": "A",
+          "co": "Bez odchylen.",
+          "naprawione": [],
+          "wyjatki": [
+            "Kolory ostrzezenia i informacji uzywaja surowych wartosci zamiast tokenow — dlug zastany, do zbiorczego sweepu"
+          ]
+        },
+        {
+          "id": "decision-record",
+          "nazwa": "Zapis decyzji",
+          "ocena": "B",
+          "co": "Ten sam komponent co karta decyzji, inne dane.",
+          "naprawione": [
+            "Angielskie tytuly powiazanych zadan na polskim ekranie"
+          ],
+          "wyjatki": [
+            "Nie otwieralem zwinietych sekcji Komentarze i Zrodla — moga tam byc jeszcze angielskie teksty"
+          ]
+        },
+        {
+          "id": "karta-interview",
+          "nazwa": "Karta wywiadu",
+          "ocena": "C",
+          "co": "Prawy panel ma trzy z szesciu kanonicznych sekcji.",
+          "naprawione": [],
+          "wyjatki": [
+            "Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy."
+          ]
+        }
+      ]
+    },
+    {
+      "katalog": "06-inicjatywy",
+      "nazwa": "Inicjatywy",
+      "opis": "Karta inicjatywy — najbogatszy artefakt w produkcie.",
+      "ekrany": [
+        {
+          "id": "karta-initiative",
+          "nazwa": "Karta inicjatywy",
+          "ocena": "B",
+          "co": "Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza.",
+          "naprawione": [
+            "Nagie zero przy Akcjach — dopisane zdanie, ze liczba opisuje widok, nie inicjatywe",
+            "Angielskie opisy cyklu zycia w sekcji Bramy — naprawione u zrodla, dziala teraz wszedzie"
+          ],
+          "wyjatki": [
+            "Zapisano bez daty i godziny",
+            "Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu",
+            "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna"
+          ]
+        }
+      ]
+    },
+    {
+      "katalog": "08-wyniki",
+      "nazwa": "Wyniki",
+      "opis": "Wskazniki, ROI i cele OKR. Modul, ktorego nigdy nie widziales — 14 z 16 ekranow bez zastrzezen.",
+      "ekrany": [
+        {
+          "id": "results-vnext-kpi-registry",
+          "nazwa": "Rejestr wskaznikow",
+          "ocena": "A",
+          "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-kpi-scorecards",
+          "nazwa": "Karty wynikow",
+          "ocena": "A",
+          "co": "Lista kart z panelem podgladu.",
+          "naprawione": [
+            "Angielskie naglowki podgladu"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-kpi-tool",
+          "nazwa": "Narzedzie wskaznika",
+          "ocena": "A",
+          "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.",
+          "naprawione": [
+            "Surowe statusy pomiaru zamiast etykiet"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-roi-registry",
+          "nazwa": "Rejestr ROI",
+          "ocena": "A",
+          "co": "Siedem spraw ROI z realnymi nazwiskami i statusami.",
+          "naprawione": [
+            "Angielskie naglowki podgladu"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-roi-full-tool",
+          "nazwa": "Pelne narzedzie ROI",
+          "ocena": "A",
+          "co": "Rejestr z kebabem prowadzacym do pelnego narzedzia.",
+          "naprawione": [],
+          "wyjatki": [
+            "Glebokie podwidoki (baseline, wykonanie, powiazania finansowe) nieprzejrzane"
+          ]
+        },
+        {
+          "id": "results-vnext-roi-model",
+          "nazwa": "Model ROI",
+          "ocena": "A",
+          "co": "Baza porownania i polityka kalkulacji.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-roi-pir-outcomes",
+          "nazwa": "Wyniki po wdrozeniu",
+          "ocena": "A",
+          "co": "Cztery sprawy z wynikiem przegladu powdrozeniowego.",
+          "naprawione": [
+            "Angielskie naglowki podgladu"
+          ],
+          "wyjatki": [
+            "Brak kebaba i filtrow — udokumentowany celowy, minimalny zakres widoku"
+          ]
+        },
+        {
+          "id": "results-vnext-okr-registry",
+          "nazwa": "Rejestr OKR",
+          "ocena": "A",
+          "co": "Dziewiec zestawow celow, tabela osmiu kolumn.",
+          "naprawione": [
+            "Pigulka ucinana w kolumnie UWAGA"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-okr-objectives",
+          "nazwa": "Cele",
+          "ocena": "A",
+          "co": "Piec celow z kluczowymi rezultatami.",
+          "naprawione": [
+            "Angielskie N/A zamiast N.D."
+          ],
+          "wyjatki": [
+            "Ten sam defekt wystepuje jeszcze w ok. 85 miejscach poza tym ekranem — osobne zadanie"
+          ]
+        },
+        {
+          "id": "results-vnext-okr-workspace",
+          "nazwa": "Warsztat zestawu OKR",
+          "ocena": "A",
+          "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-okr-admin",
+          "nazwa": "Programy OKR",
+          "ocena": "A",
+          "co": "Uczciwy stan: funkcja jeszcze nie wlaczona.",
+          "naprawione": [],
+          "wyjatki": [
+            "To prawdziwy stan flagi, nie defekt"
+          ]
+        },
+        {
+          "id": "results-vnext-attention",
+          "nazwa": "Uwaga",
+          "ocena": "A",
+          "co": "Siedem zakladek uwag z realnymi kodami wskaznikow.",
+          "naprawione": [],
+          "wyjatki": [
+            "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
+          ]
+        },
+        {
+          "id": "results-vnext-search-registry",
+          "nazwa": "Wyszukiwarka",
+          "ocena": "A",
+          "co": "Wyszukiwanie po wskaznikach, ROI i celach; uczciwy stan poczatkowy.",
+          "naprawione": [
+            "Surowe statusy i nazwy pol dopasowania"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "results-vnext-teresa-kpi-deviation",
+          "nazwa": "Sprawa odchylenia",
+          "ocena": "A",
+          "co": "Formularz sprawy z uczciwymi komunikatami o brakach.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "results-three-pairs",
+          "nazwa": "Trzy pary cel-wynik",
+          "ocena": "A",
+          "co": "Pary wskaznik/ROI/OKR z paskiem postepu i 'Brak danych' zamiast nagiego zera.",
+          "naprawione": [],
+          "wyjatki": [
+            "Ogladana tylko domyslna zakladka"
+          ]
+        },
+        {
+          "id": "results-vnext-registry-shell",
+          "nazwa": "Powloka rejestru",
+          "ocena": "D",
+          "co": "Ekran po angielsku.",
+          "naprawione": [],
+          "wyjatki": [
+            "Sprawdzone: to fixtura testujaca mechanike wspolnej powloki, nie ekran produktowy. Nie pokazuje sie wlascicielowi."
+          ]
+        }
+      ]
+    }
+  ]
+}
