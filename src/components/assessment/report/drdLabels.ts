@@ -18,6 +18,20 @@
  * `technologyExamples` / `misScoringTraps` — the QBank v2 coaching content
  * the licence notice names specifically.
  *
+ * ★★ ZGODA WŁAŚCICIELA METODYKI — POTWIERDZONA WPROST 2026-08-30 (wieczór).
+ * Nadzorca toru grafiki zapytał właściciela dosłownie, czy potwierdza zgodę na
+ * użycie opisów poziomów w raporcie WYCHODZĄCYM DO KLIENTA. Odpowiedź: TAK.
+ * Uzasadnienie właściciela: raport bez definicji poziomów jest szkieletem,
+ * a brak dobrego dokumentu z tego produktu jest jego najdłużej otwartym zarzutem.
+ *
+ * ZAKRES TEJ ZGODY — czytaj, zanim rozszerzysz plik dalej:
+ *   OBJĘTE:      nazwa osi · opis osi · nazwa obszaru · tytuł i opis poziomu.
+ *   NIEOBJĘTE:   warstwa coachingowa QBank v2 — `canonicalDefinition`,
+ *                `examples`, `technologyExamples`, `misScoringTraps`.
+ *                Na nią zgody NIE udzielono i nie wolno jej domniemywać.
+ * Rozszerzenie poza „OBJĘTE" wymaga NOWEGO, osobnego pytania do właściciela.
+ * Zapis decyzji: docs/program/grafika/KANON_Z_ODBIOROW.md.
+ *
  * ★ 2026-08-30 — ZAKRES ROZSZERZONY O OPIS OSI I OPIS POZIOMU, na wyraźne
  * polecenie właściciela metodyki (DBR77 / dr Piotr Wiśniewski, ten sam
  * podmiot, którego dotyczy nota licencyjna). Jego specyfikacja raportu

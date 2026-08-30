@@ -133,3 +133,11 @@ Stosowane tego dnia przy macierzy (treść komórek kłamie), planie inicjatyw
 (wiersz otwiera tabelę zamiast karty), doradcy mocy (brak przycisku raportu)
 i prezentacji (zapis nieudowodniony bez backendu). **Ocena B z nazwanym wyjątkiem
 jest uczciwa; ocena A z przemilczanym brakiem nie jest.**
+
+**Opisy poziomów metodyki mogą iść do raportu dla klienta** — zgoda właściciela
+metodyki (DBR77 / dr Piotr Wiśniewski) potwierdzona wprost 2026-08-30 wieczorem,
+na pytanie zadane dosłownie o dokument wychodzący na zewnątrz.
+**Objęte:** nazwa i opis osi, nazwa obszaru, tytuł i opis poziomu.
+**Nieobjęte i niedomniemywane:** warstwa coachingowa QBank v2 (definicje kanoniczne,
+przykłady, przykłady technologii, pułapki oceniania) — na nią zgody NIE udzielono.
+Zapis w nagłówku `src/components/assessment/report/drdLabels.ts`.
