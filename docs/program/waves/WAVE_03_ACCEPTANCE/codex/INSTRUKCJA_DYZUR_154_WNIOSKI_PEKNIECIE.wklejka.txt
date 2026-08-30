@@ -1,0 +1,49 @@
+NOWY — DYŻUR 154
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day154-wnioski-pekniecie-scratch/INSTRUKCJA_DYZUR_154.md
+
+Przeczytaj w CAŁOŚCI, potem wykonuj. Zacznij od „§0.1-BIS" — NADPISUJE §0.1.
+
+★ W §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Kontrola bazy: git merge-base --is-ancestor e4ff8e21ae HEAD
+  NIE równość SHA. Twój HEAD po własnych commitach BĘDZIE inny — to poprawne.
+
+Katalog pracy:  /private/tmp/cx-day154-wnioski-pekniecie
+Gałąź:          codex/day154-wnioski-pekniecie-20260830   (już założona)
+Marker:         e4ff8e21ae                           (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day154-wnioski-pekniecie-scratch
+Artefakty:      /private/tmp/cx-day154-wnioski-pekniecie-artefakty
+
+Zasoby wyłączne: baza 6040, kontener cx-day154-pg, runtime 4974 i 4975 (PARA).
+ZAJĘTE: 6012, 5433 oraz zasoby trzech pozostałych dyżurów wydawanych razem z tym.
+
+★ TEN DYŻUR ZMIENIA PRODUKT — jeden plik serwisu.
+
+★ ZNANY FAKT, potwierdzony przez nadzorcę — NIE zgłaszaj jako odkrycia:
+  ConclusionService pyta o kolumny i.project_id i i.reviewed_by, których
+  w tabeli interview_insights NIE MA, a błąd jest połykany przez
+  .catch(() => []). Endpoint zwraca 200 z pustą listą mimo istniejącego
+  findingu. Realny zamiennik prawdopodobnie idzie przez
+  interview_sessions.project_id po session_id — SPRAWDŹ TO SAM.
+
+★ NAPRAWA MA DWIE CZĘŚCI I OBIE SĄ OBOWIĄZKOWE:
+  1) zapytanie pyta o kolumny, które istnieją;
+  2) awaria PRZESTAJE wyglądać jak sukces — koniec cichego połykania.
+
+★ ZERO MIGRACJI. Jeżeli naprawa bez zmiany schematu jest niemożliwa — STOP z briefem.
+
+★ ROZSTRZYGNIĘTE Z GÓRY, nie zgłaszaj ponownie:
+  • Z34a kontra "nie pushujesz" → NIE PUSHUJESZ.
+  • Z24 odsyła do §0.4a, którego nie ma → odwołanie martwe, POMIŃ.
+  • server/vitest.config.ts PRZYPINA DB_TYPE='sqlite' i wygrywa z linią komend.
+    Test z asercją DB_TYPE='postgres' zostanie POMINIĘTY, a pominięty ≠ PASS.
+    Użyj configu POZA repo, bez tego przypięcia. Chronionego configu nie zmieniasz.
+
+★ NIE PUSHUJESZ. Commit per krok, potem zgłoszenie gotowości.
+
+Jeżeli cokolwiek w tej wklejce różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.
