@@ -499,3 +499,62 @@ Trzecie: wiązanie kluczowego rezultatu ze wskaźnikiem albo inicjatywą
 **Wniosek dla planu:** to nie są trzy warianty tego samego. ROI jest gotowy do
 pokazania klientowi, wskaźnik ma jedną blokadę na wejściu, a cel ma dziurę
 w środku łańcucha. Trzy różne roboty, nie jedna.
+
+---
+
+# ★★★ DWA DYŻURY PRIORYTETOWE DLA TORU FUNKCJI (zlecone przez właściciela 2026-08-30)
+
+Właściciel zatwierdził oba wprost. **Są ważniejsze niż cokolwiek graficznego** —
+bez nich wskaźniki i cele są ładne i nieużywalne.
+
+## DYŻUR A — wskaźnik: brak trasy publikującej politykę widoczności
+
+**Objaw, zmierzony mutacyjnie na czystej bazie:** w świeżej organizacji
+`POST /api/vnext/results/kpi` zwraca **`409 NO_ACTIVE_VISIBILITY_POLICY`**.
+Nie da się założyć **pierwszego** wskaźnika.
+
+**Przyczyna, potwierdzona przeze mnie greppem:** żadna trasa serwera nie publikuje
+polityki widoczności dla domeny `kpi`. Jedyny taki endpoint istnieje wyłącznie dla
+ROI: `server/src/routes/resultsVnext/roi.routes.ts:3172` (`POST /visibility-policy`).
+Cele dostają politykę automatycznie przy publikacji Programu. **Wskaźniki nie
+dostają jej znikąd.**
+
+**Do zrobienia:** dodać dla domeny `kpi` ścieżkę bootstrapującą — wzorem ROI
+(samoobsługowy endpoint) albo wzorem OKR (automat przy pierwszym użyciu).
+**Wybór wzorca należy do toru funkcji**, ale ma być jeden z tych dwóch, nie trzeci.
+
+**Bramka odbioru:** na CZYSTEJ bazie, w świeżej organizacji, przejść całą ścieżkę:
+załóż wskaźnik → wpisz pomiar → odśwież → pomiar wraca z serwera. Dowód z bazy,
+nie status HTTP.
+
+**Czego NIE zmierzono:** czy istniejące organizacje na demo mają tę politykę.
+Możliwe, że problem dotyczy tylko nowych — **to pierwsza rzecz do sprawdzenia**,
+bo rozstrzyga, czy to blokada dla klienta, czy tylko dla świeżej instalacji.
+
+## DYŻUR B — cel: nikt nie tworzy okien check-inu
+
+**Objaw:** `POST .../check-ins` wymaga `cadenceOccurrenceId`. Zwykły użytkownik
+nie ma jak go zdobyć. **Check-in jest niewykonalny drogą produkcyjną.**
+
+**Przyczyna, potwierdzona przeze mnie greppem:** funkcja
+`generateCadenceOccurrencesAndSeedCheckInObligations`
+(`server/src/services/resultsVnext/okr/okrCheckInScheduler.ts:64`) — która przekłada
+zadeklarowaną częstotliwość na realne okna czasowe — **nie ma ANI JEDNEGO
+wywołania** w uruchomionej aplikacji. Poza własną definicją istnieją tylko
+komentarze projektowe (`okrCycleScheduler.ts:279`). Robotnik musiał wywołać ją
+ręcznie osobnym skryptem, żeby w ogóle przetestować łańcuch.
+
+**Do zrobienia:** wpiąć generator w cykl życia zestawu celów — przy aktywacji cyklu
+albo cyklicznym zadaniem. **Uwaga:** `agentPlanSchedulerJob` i `wave8AgentScheduleJob`
+istnieją jako wzorce zadań cyklicznych; sprawdzić, czy któryś nie jest właściwym
+miejscem, zanim powstanie trzeci mechanizm harmonogramowania.
+
+**Bramka odbioru:** na czystej bazie przejść: program → cykl → zestaw → cel →
+kluczowy rezultat → **check-in bez ręcznego wywoływania czegokolwiek skryptem** →
+postęp przeliczony automatycznie. Dowód z bazy.
+
+## Trzecia rzecz, mniejsza, ale tej samej klasy
+Kolumna `measurement_frequency_days` (częstotliwość pomiaru wskaźnika) **istnieje
+w bazie**, jest chroniona triggerem i czytana do liczenia zaległości — ale **nie ma
+jej w żadnym schemacie zapisu** (`CreateKpiDraftSchema`, `EditKpiDraftSchema`).
+Zawsze zostanie pusta. Jedno pole do dopisania w dwóch schematach.
