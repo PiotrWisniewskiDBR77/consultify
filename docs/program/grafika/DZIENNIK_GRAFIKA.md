@@ -18,6 +18,57 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-08-30, sesja wieczorna (przejęcie toru po poprzedniku)
 
+### Z-13 · Przegląd przed odbiorem — 25 z 55 ekranów NIE przechodzi, a przyrząd kłamał na każdym zrzucie
+**Skąd się wziął:** właściciel zapytał: *„Możesz zrobić przejście po aplikacji sam, zanim mi ją
+oddasz do pracy? (…) potwierdzić, że są spójne z kanonem — a dopiero później dać mi całość?"*
+**Powinienem był zaproponować to sam.** Zapaliłem mu 60 ekranów pojedynczo i ani razu nie
+sprawdziłem ich razem.
+
+**Wynik: A — 3 · B — 21 · C — 25 · D — 6.** Dwadzieścia pięć ekranów nie nadawało się do pokazania.
+
+#### ★ Znalezisko nr 1 dotyczy MNIE: narzędzie zrzutowe kłamało na KAŻDYM zrzucie tego dnia
+`scripts/dev/grafika-zrzuty.mjs` chowało chrom harnessu przez `addStyleTag` z selektorami
+`[data-dev-render-chrome], .dev-render-chrome`. **Tych selektorów nie ma w `PanelUwag.tsx`** —
+reguła CSS była martwa od początku. Na każdym zrzucie siedziały pływające pastylki „← Lista"
+i „Uwagi" i **zasłaniały realną treść produktu**: nagłówek sekcji w podglądzie, rząd przycisków
+w pakiecie sprawozdań, ostatni wiersz tabeli w rejestrze OKR.
+
+Właściwy wyłącznik istniał od początku — `dev-render/main.tsx:1696` renderuje panel tylko gdy
+`params.get('uwagi') !== '0'`, a komentarz przy nim mówi **wprost**: *„na zrzucie do akceptu nie
+mogą się pojawić (zrzut czysty, CLAUDE.md §7c)"*. Narzędzie nigdy tego parametru nie podawało.
+
+**Najgorsze nie jest to, że narzędzie było zepsute — tylko że OGLĄDAŁEM te pastylki cały dzień
+i ich nie zauważyłem.** Widziałem je na kilkunastu zrzutach, które sam czytałem „własnymi oczami",
+i traktowałem jako część kadru. To **dwunasty sposób, w jaki kłamie stanowisko pomiarowe**,
+i pierwszy, w którym kłamstwo było widoczne gołym okiem, a i tak przeszło.
+
+**Reguła:** „obejrzałem własnymi oczami" nie wystarcza, jeśli nie wiadomo, **co na obrazie jest
+produktem, a co przyrządem**. Przed serią zrzutów trzeba raz sprawdzić, czy kadr zawiera wyłącznie
+produkt — i zapisać to jako warunek wstępny, nie jako intuicję.
+
+#### ★ Znalezisko nr 2: nasza własna naprawa zrobiła regresję w jądrze
+Commit `2fc5e3321f` („ostatnia kolumna przestaje być ucinana") dodał `break-words` do
+`FilterableTable.tsx`. Po zwężeniu kolumn łamanie **rozrywa wyrazy w połowie**: `ZAKTUALI ZOWANO`,
+`OPÓŹNIEN IE`, `engineerin g team`. Ten plik importują **228 innych**. Naprawialiśmy jeden defekt
+jądra i wprowadziliśmy drugi — w tym samym pliku, tego samego dnia.
+
+#### ★ Znalezisko nr 3: sześć zielonych kart na rzeczach, których nie ma
+Meldunek rozjeżdża się ze zrzutem: napisałem właścicielowi „pełny tytuł zamiast uciętego" — tytuł
+nadal ucięty; „wszystkie 9 kolumn w kadrze" — ekran sam pisze „2 more columns to the right";
+„kontrolka poufności w rzędzie metadanych" — kontrolki w kadrze nie ma wcale.
+**To jest najcięższy błąd w tym torze**: nie „nie zrobione", tylko „powiedziane, że zrobione".
+
+#### Czego uczy całość
+1. **Przegląd całości nie jest formalnością — jest jedyną rzeczą, która łapie regresje między
+   torami.** Ośmiu robotników sprawdziło swoje ekrany osobno; żaden nie mógł zobaczyć, że naprawa
+   sąsiada psuje jego wynik.
+2. **Zielona karta jest obietnicą wobec właściciela.** Zapalanie jej z raportu robotnika, bez
+   własnego zrzutu PO w tym samym stanie, jest przekazywaniem cudzej niepewności jako swojej
+   pewności.
+3. **Kanon realizowany „na pięć sposobów" jest tym samym, co brak kanonu.** Prawy panel: trzy
+   różne nazwy tej samej sekcji, brakująca szósta sekcja w trzech artefaktach — a dwa dzisiejsze
+   meldunki mówiły „zgodny z kanonem".
+
 ### Z-12 · Macierz ZNALEZIONA — właściciel przysłał zrzuty z żywego produktu
 **Co się stało:** po dwóch moich pudłach właściciel przysłał **zrzuty ekranu z działającej
 aplikacji**. To rozstrzygnęło sprawę w dziesięć minut, po godzinach mojego szukania.
