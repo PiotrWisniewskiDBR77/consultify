@@ -18241,6 +18241,32 @@
       "sent": "Zgłoszenie wysłane do przeglądu.",
       "failed": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
     },
+    "governedHandoff": {
+      "state": {
+        "pending": "Oczekuje na weryfikację",
+        "materializable": "Gotowe do utworzenia",
+        "working": "W toku",
+        "materialized": "Utworzono",
+        "rejected": "Odrzucono",
+        "failed": "Operacja nie powiodła się",
+        "approved": "Zatwierdzono"
+      },
+      "title": "Kontrolowana propozycja dokumentu",
+      "provenance": "Przypięto do tej wiadomości i jej zweryfikowanego na serwerze skrótu treści.",
+      "citations_one": "Zachowano {{count}} odwołanie do źródła.",
+      "citations_few": "Zachowano {{count}} odwołania do źródeł.",
+      "citations_many": "Zachowano {{count}} odwołań do źródeł.",
+      "citations_other": "Zachowano {{count}} odwołania do źródła.",
+      "noCitations": "Nie znaleziono odwołań do źródeł.",
+      "source": "Źródło",
+      "hash": "Skrót",
+      "version": "Wersja",
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "createDocument": "Utwórz dokument",
+      "created": "Dokument utworzony",
+      "rejected": "Propozycja odrzucona"
+    },
     "conversationLandmark": "Rozmowa"
   },
   "aiChat": {
