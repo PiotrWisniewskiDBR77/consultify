@@ -210,3 +210,29 @@ właściciel już przyjął — czego jawnie zakazał.
 
 Sidebar z góry na dół, w module funkcje od lewej do prawej, zgodnie z procesem
 pracy w module. Kolejność kanoniczna wg `src/components/navigation/Sidebar/menuConfig.ts`.
+
+## Reguła 8 — pusty ekran nie idzie do odbioru (właściciel, 2026-08-30)
+
+Słowa właściciela, dosłownie: *„Nie możemy wystawiać do akceptacji kart, które są
+puste, bez danych, bo wtedy nie umiem ocenić, jak to wygląda. (…) mogę tylko
+zgadywać."*
+
+**Dlaczego to jest groźniejsze, niż wygląda.** Pusty ekran przechodzi odbiór, bo
+nie ma czym się zepsuć: nie ma ucinanego tekstu, nie ma złej liczby, nie ma
+mieszanki językowej. Podpis pod pustym ekranem nie znaczy nic — a wygląda
+identycznie jak podpis pod ekranem sprawdzonym.
+
+**Dwie pustki, których nie wolno mylić:**
+- **zamierzona** — ekran, którego całym sensem JEST pusty stan albo błąd
+  („Nie znaleziono dokumentu", „Excel — stan pusty", modal wyboru). Zostaje jak
+  jest; w rejestrze piszemy wprost, że pustka jest jego treścią.
+- **chuda atrapa** — ekran, który w produkcie pokazuje dane, a w harnessie dostał
+  puste. Wypełniamy, zanim pokażemy.
+
+**Pomiar zamiast wrażenia:** `node scripts/dev/grafika-ile-danych.mjs` liczy, ile
+treści realnie się wyrenderowało na każdym ekranie z rejestru. Nie ocenia wyglądu —
+zawęża listę do obejrzenia okiem.
+
+**Stan domyślny zostaje prawdziwy.** Sekcji, które w produkcie zapełnia dopiero
+Teresa, NIE zakłamujemy. Dokładamy drugi, jawnie nazwany wariant `?dane=pelne`,
+żeby właściciel mógł ocenić wygląd karty wypełnionej — obok, a nie zamiast.

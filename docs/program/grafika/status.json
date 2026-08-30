@@ -1391,28 +1391,6 @@
      "wyjatki": []
     },
     {
-     "id": "plan-scenario-d1",
-     "nazwa": "Plan inicjatyw",
-     "ocena": "A",
-     "co": "Tabela planu.",
-     "naprawione": [
-      "Surowe UNKNOWN, KNOWN, CURRENT, NONE w dziewieciu kolumnach i w panelu podgladu"
-     ],
-     "wyjatki": [
-      "Kolumna Koszt opoznienia nadal sie ucina przy czternastu kolumnach"
-     ]
-    },
-    {
-     "id": "capacity-advisor-a3",
-     "nazwa": "Obciazenie zespolu",
-     "ocena": "A",
-     "co": "Tabela obciazenia z jednostkami.",
-     "naprawione": [
-      "Surowe UNKNOWN i KNOWN w siedmiu kolumnach"
-     ],
-     "wyjatki": []
-    },
-    {
      "id": "superadmin-platform-operations-day15",
      "nazwa": "Operacje platformowe",
      "ocena": "A",
@@ -1528,16 +1506,6 @@
      "wyjatki": []
     },
     {
-     "id": "public-booking-widget",
-     "nazwa": "Publiczna rezerwacja spotkania",
-     "ocena": "A",
-     "co": "Nadaje sie do pokazania klientowi zewnetrznemu: logo, wybor dnia poprawna polszczyzna, sloty godzinowe, zaznaczenie niebieska ramka. Zero zargonu.",
-     "naprawione": [],
-     "wyjatki": [
-      "Skrot 6 wol. zamiast 6 dostepnych terminow — kwestia tresci, nie grafiki"
-     ]
-    },
-    {
      "id": "unified-create-launcher",
      "nazwa": "Nowy — wybor rodzaju",
      "ocena": "A",
@@ -1565,16 +1533,6 @@
       "Ekran nie byl podlaczony do harnessu"
      ],
      "wyjatki": []
-    },
-    {
-     "id": "prompt-registry-tab",
-     "nazwa": "Rejestr promptow",
-     "ocena": "B",
-     "co": "Narzedzie inzynierskie w calosci po angielsku — konsekwentnie, nie mieszanka.",
-     "naprawione": [],
-     "wyjatki": [
-      "Nie znaleziono decyzji potwierdzajacej, ze angielski jest tu swiadomy — do potwierdzenia"
-     ]
     },
     {
      "id": "vault-scope-selector",
