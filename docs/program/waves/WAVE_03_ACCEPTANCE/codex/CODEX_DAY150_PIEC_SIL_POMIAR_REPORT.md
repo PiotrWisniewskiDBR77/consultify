@@ -70,3 +70,19 @@ Wniosek R1: granica nie leży na UI ani modelu stanu. Normalne wejście jest zam
 | Candidate → initiative | `swotCandidateHandoffService.ts` (331 linii), pinning `tool_output_id/version/content_hash` `:170-199,212-293` | ogólny `setInitiatives`, `marketForces.ts:592-603` | **Brak pliku** Porter handoff oraz brak lineage receipt. |
 
 Wynik inwentarza referencyjnego: 11 plików testowych odwołuje się do `buildSwotOutput`, `swotAcceptGate`, `swotCandidateHandoff` lub `EmptyToolOutputError`; dokładna lista: artefakt `swot-reference-tests.txt`.
+
+## R3 — koszt domknięcia
+
+To estymacja inżynierska, nie decyzja produktowa. Nie obejmuje zmiany `APPROVED_MVP_TOOL_TYPES`, pracy właściciela ani realnego dostawcy LLM.
+
+| Komponent | Miara odniesienia | Szacunek | Uzasadnienie |
+|---|---:|---:|---|
+| `buildPorterOutput` klient + shared runtime | SWOT 246 + 247 linii | 2–4 dni | Trzeba zdefiniować deterministyczne mapowanie 5 sił, sygnałów, implikacji i moves na evidence/tensions/conclusions, content hash i parity dwóch runtime'ów. Model Porterowy ma pięć drabin i wynik atrakcyjności, nie cztery proste ćwiartki. |
+| `porterAcceptGate` | SWOT gate 197 linii | 1–2 dni | Potrzebna osobna semantyka: ważność sygnału, poprawna siła, evidence/assumption i spójność drabiny; skopiowanie quadrants byłoby błędne. |
+| `porterCandidateHandoffService` | SWOT service 331 linii | 2–4 dni | Poza tworzeniem candidate obejmuje transakcję, idempotencję, tenant scope i przypięcie `tool_output_id/version/content_hash/sourceRevision`. |
+| Scope TLS-BVP-001 | jedna gałąź produkcyjna, lecz referencyjny realDB BVP jest obszerny | 1–2 dni | Sam warunek jest mały, ale bez działającego buildera blokowałby wszystkie promocje. Wymaga negatywu, pozytywnej kontroli, readbacku i regresji generic scope. |
+| Testy i integracja | 11 istniejących plików referencyjnych; sam Day150 ma 3 przypadki | 3–6 dni | Unit builder/gate, parity client/server, real Gateway+PG, immutability, idempotencja, tenant isolation, handoff lineage, renderer/report i regresja SWOT. |
+
+Suma arytmetyczna: **9–18 dni inżynierskich**. Realistyczny przedział kalendarzowy dla jednego wykonawcy po uwzględnieniu integracji i odbioru: **2–4 tygodnie**. Największa niepewność to kontrakt klasyfikacji Porterowych sygnałów i wniosków; bez decyzji właściciela można napisać kod, ale nie udowodnić poprawności biznesowej.
+
+T4 jest zatem potwierdzona co do rzędu wielkości: to nie jest poprawka jednego pliku. Jednocześnie wspólny renderer nie musi dostać osobnej gałęzi, jeżeli nowy builder dostarczy prawidłowy wspólny `ToolOutput`; koszt dotyczy głównie kontraktu danych, lineage i dowodów.
