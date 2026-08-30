@@ -135,6 +135,7 @@ describe.skipIf(!enabled)('Day 158 KPI crosswalk on real PostgreSQL', () => {
     expect(result).toEqual({ requested: 2, inserted: 1, rejected: 1 });
 
     const readback = await readInitiativeKpiCrosswalkCounts(organizationId);
+    process.stdout.write(`DAY158_R2_READBACK_SELECT ${JSON.stringify(readback)}\n`);
     expect(readback).toEqual({
       organizationId,
       sourceSystem: 'initiative_kpis',
@@ -175,6 +176,7 @@ describe.skipIf(!enabled)('Day 158 KPI crosswalk on real PostgreSQL', () => {
     );
 
     const result = await runInitiativeKpiShadowRead(organizationId);
+    process.stdout.write(`DAY158_R3_SHADOW_SELECT ${JSON.stringify(result)}\n`);
 
     expect(result.comparedPairs).toBe(1);
     expect(result.matchingPairs).toBe(0);
