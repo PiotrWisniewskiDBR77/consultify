@@ -94,10 +94,24 @@ i szersza, niż zakładałem**.
 
 ## Czego NIE zweryfikowałem
 
-- **Nie wykonałem realnego żądania HTTP.** `409` dla tworzenia zadania to wniosek
-  z czterech warstw statycznych + empiryczny `409` zmierzony w dyżurze 140 na
-  **tym samym routerze, za tym samym `router.use`**. To mocna poszlaka, nie pomiar.
-  **Runtime musi to potwierdzić — pierwsza pozycja następnej serii.**
+- **Nie wykonałem pełnego żądania HTTP przez żywy serwer.** Wykonałem natomiast
+  **empiryczny dowód na samej bramie**: `esbuild` na realnym pliku middleware,
+  wywołanie funkcji z prawdziwymi parami metoda/ścieżka.
+
+```text
+POST   /                    tworzenie zadania      -> 409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED
+PUT    /abc-123             edycja zadania         -> 409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED
+DELETE /abc-123             kasowanie zadania      -> 409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED
+POST   /abc-123/comments    komentarz (dyzur 140)  -> 409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED
+GET    /                    odczyt listy           -> PRZEPUSZCZONE
+DELETE /budget/entries/x1   wyjatek budzetowy      -> PRZEPUSZCZONE
+```
+
+  **Kontrola poprawności narzędzia:** wiersz komentarza odtwarza `409` zmierzony
+  w dyżurze 140 na żywym serwerze. Harness zgadza się ze znanym wynikiem prawdziwym,
+  więc pozostałe wiersze też są wiarygodne. Brakuje wyłącznie ostatniego ogniwa —
+  potwierdzenia, że żądanie frontu dociera do tego routera na żywym serwerze
+  (montaż udowodniony statycznie: `Gateway.ts:903`). **To pierwsza pozycja następnej serii.**
 - Nie sprawdziłem, czy któryś z siedmiu wołaczy frontu ma własną obsługę `409`,
   która zamienia błąd w komunikat zamiast w awarię.
 - `server/src/routes/pmo/index.ts` montuje `decisions` i `tasks` po raz drugi, ale
