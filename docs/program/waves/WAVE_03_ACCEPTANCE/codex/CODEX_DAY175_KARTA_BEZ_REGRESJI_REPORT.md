@@ -1,9 +1,13 @@
 # CODEX — DYŻUR 175 — KARTA BEZ REGRESJI
 
-Data: 2026-08-30  
-Marker: `d3d36cd5f5`  
-Gałąź: `codex/day175-karta-bez-regresji-20260830`  
-Worktree: `/private/tmp/cx-day175-karta-bez-regresji`  
+Data: 2026-08-30
+
+Marker: `d3d36cd5f5`
+
+Gałąź: `codex/day175-karta-bez-regresji-20260830`
+
+Worktree: `/private/tmp/cx-day175-karta-bez-regresji`
+
 Status: **R1/R2/R3 ZREALIZOWANE I ZWERYFIKOWANE W ZAKRESIE TESTÓW; BRAK ODBIORU W REALNEJ PRZEGLĄDARCE**
 
 ## 1. Stan wejściowy i baza
