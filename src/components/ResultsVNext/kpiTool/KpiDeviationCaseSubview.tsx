@@ -675,8 +675,8 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             className="mb-3 rounded-lg border border-c-warning/30 bg-c-warning/10 px-3 py-2 text-[11px] text-c-text-secondary"
           >
             {t(
-              'Brak endpointu odczytu listy działań korygujących (patrz kpiDeviationApi.ts) — poniższa lista zawiera WYŁĄCZNIE działania dodane w tej sesji przeglądarki, nie pełną historię z bazy.',
-              'No read endpoint exists for the corrective-action list (see kpiDeviationApi.ts) — the list below shows ONLY actions added in this browser session, not the full database history.'
+              'Ta lista pokazuje wyłącznie działania dodane w bieżącej sesji przeglądarki — po odświeżeniu strony wcześniej zapisane działania mogą tu nie być widoczne.',
+              'This list shows only actions added in the current browser session — after refreshing the page, previously saved actions may not appear here.'
             )}
           </div>
           {correctiveActions.length > 0 ? (
