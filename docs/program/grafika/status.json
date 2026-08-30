@@ -433,6 +433,190 @@
           ]
         }
       ]
+    },
+    {
+      "katalog": "02-moja-praca",
+      "nazwa": "Moja praca i pomysly",
+      "opis": "Najwiekszy modul produktu — tabele pomyslow, notatnik, sejf klienta.",
+      "ekrany": [
+        {
+          "id": "idea-table",
+          "nazwa": "Tabela pomyslow",
+          "ocena": "B",
+          "co": "Pelna tabela z podgladem, kebabem, sortowaniem i filtrami per kolumna.",
+          "naprawione": [
+            "Cztery literowki bez polskich znakow"
+          ],
+          "wyjatki": [
+            "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku."
+          ]
+        },
+        {
+          "id": "idea-table-tool-empty-filter",
+          "nazwa": "Pusty filtr",
+          "ocena": "A",
+          "co": "Dwa odrebne uczciwe stany: brak wynikow filtra i brak rekordow — wzorcowy przyklad.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "idea-table-tool-grouping",
+          "nazwa": "Grupowanie",
+          "ocena": "A",
+          "co": "Grupowanie z pusta komorka jako mysnik.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "idea-table-tool-kebab",
+          "nazwa": "Kebab wiersza",
+          "ocena": "A",
+          "co": "Realne menu; Usun poprawnie w czerwieni.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "idea-table-tool-sortfilter",
+          "nazwa": "Sortowanie i filtry",
+          "ocena": "A",
+          "co": "Sortowanie i filtr per kolumna.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "idea-table-tool-paste",
+          "nazwa": "Wklejanie",
+          "ocena": "A",
+          "co": "Wklejanie z pominieciem kolumny obliczanej.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "idea-table-record-templates",
+          "nazwa": "Szablony rekordu",
+          "ocena": "B",
+          "co": "Menedzer szablonow z uczciwym pustym stanem.",
+          "naprawione": [],
+          "wyjatki": [
+            "Podwojny komunikat bledu to artefakt trybu deweloperskiego, nie defekt"
+          ]
+        },
+        {
+          "id": "idea-templates-catalog",
+          "nazwa": "Katalog szablonow",
+          "ocena": "A",
+          "co": "Czterdziesci szablonow w siedmiu kategoriach.",
+          "naprawione": [
+            "Crimson na tagu narzedzia"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "ideas-preview-overlay",
+          "nazwa": "Podglad pomyslu",
+          "ocena": "A",
+          "co": "Overlay bez przeskoku ukladu.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "ideas-teresa-panel",
+          "nazwa": "Panel Teresy",
+          "ocena": "A",
+          "co": "Sugestie AI, zero crimsonu.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "idea-confidentiality-control",
+          "nazwa": "Poufnosc pomyslu",
+          "ocena": "A",
+          "co": "Selektor poufnosci w bursztynie, nie czerwieni.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "mywork-idea-inspector-lekki",
+          "nazwa": "Inspektor pomyslu",
+          "ocena": "A",
+          "co": "Sekcje z licznikami.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "mywork-idea-topbar",
+          "nazwa": "Pasek gorny",
+          "ocena": "B",
+          "co": "Scalenie menu w jedna linie.",
+          "naprawione": [],
+          "wyjatki": [
+            "Domyslny widok pokazuje blad ladowania — ograniczenie atrapy harnessu, nie defekt ekranu"
+          ]
+        },
+        {
+          "id": "mywork-notebook-rail-speca",
+          "nazwa": "Panel notatnika",
+          "ocena": "A",
+          "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "notatnik-centrum-mysli",
+          "nazwa": "Centrum mysli",
+          "ocena": "A",
+          "co": "Wspolpraca z Teresa, karty propozycji.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "notatnik-osierocone-graf",
+          "nazwa": "Graf notatek",
+          "ocena": "A",
+          "co": "Graf polaczen z soczewka osieroconych.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "vault-sejf-wnetrze",
+          "nazwa": "Wnetrze sejfu",
+          "ocena": "A",
+          "co": "Realna wspolna tabela, crimson tylko na bledzie.",
+          "naprawione": [],
+          "wyjatki": [
+            "Kolumna Kategoria po angielsku — dotyka trzech plikow, zgloszone osobno"
+          ]
+        },
+        {
+          "id": "vault-safes-table",
+          "nazwa": "Tabela sejfow",
+          "ocena": "A",
+          "co": "Lista sejfow na wspolnej tabeli.",
+          "naprawione": [
+            "Ekran w ogole sie nie renderowal",
+            "'1 blad(y)' — lamana polszczyzna"
+          ],
+          "wyjatki": []
+        },
+        {
+          "id": "vault-folder-block-proof",
+          "nazwa": "Blok sejfu w kreatorze",
+          "ocena": "A",
+          "co": "Kontekst sejfu w kreatorze przeplywu.",
+          "naprawione": [],
+          "wyjatki": []
+        },
+        {
+          "id": "idea-table-production",
+          "nazwa": "Tabela pomyslow (izolowana)",
+          "ocena": "D",
+          "co": "Harness porownawczy szerokosci, nie ekran produktu.",
+          "naprawione": [],
+          "wyjatki": [
+            "Narzedzie pomiarowe"
+          ]
+        }
+      ]
     }
   ]
 }
