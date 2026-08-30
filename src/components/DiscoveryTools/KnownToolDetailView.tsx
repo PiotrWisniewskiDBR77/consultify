@@ -2499,7 +2499,7 @@ export function KnownToolDetailView(props: {
                 type="button"
                 onClick={startSession}
                 disabled={starting || !tool || !tool.isActive}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/70 bg-white px-3 text-xs font-semibold text-navy-950 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-navy-950"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-navy-950 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-navy-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-navy-950 dark:hover:bg-slate-100"
               >
                 <ArrowRight size={13} />
                 {isPolish ? 'Rozpocznij sesję' : 'Start session'}

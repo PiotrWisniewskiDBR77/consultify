@@ -17603,6 +17603,10 @@
         "marketResearch": {
           "label": "Market Research",
           "desc": "Structured market analysis with data"
+        },
+        "chatSuggestionsEnabled": {
+          "label": "Suggestion chips",
+          "desc": "Show next-step suggestions under the conversation"
         }
       },
       "sources": {

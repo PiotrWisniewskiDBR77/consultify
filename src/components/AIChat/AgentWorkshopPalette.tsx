@@ -183,7 +183,18 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
     label: t(catalogGroupLabelKey(group), group.label),
     icon: GROUP_ICON[group.id],
     badge: group.entries.length,
-    defaultOpen: group.id === 'moduly' || group.id === 'kontrola' || query.trim().length > 0,
+    // D-104 (2026-08-30) — owner note on ?screen=agent-plan-canvas: "ikony w
+    // poszczególnych oknach powinny startować zwinięte, bo przerażają swoją
+    // ilością". Root cause: `moduly`/`kontrola` were force-opened here, so
+    // the palette landed on screen already showing all 11 `moduly` rows —
+    // each rendering the SAME icon (Boxes, one per `etap-modul` entry, see
+    // KIND_ICON above) — a wall of 11 identical glyphs before the user did
+    // anything. The icons themselves are fine (a shared category icon is the
+    // right call); the defect was showing all of them unprompted. Every
+    // group now starts collapsed like the rest of the accordion — the header
+    // badge (entry count) still tells you whether it's worth opening — and a
+    // search hit still force-opens its matching group(s), unchanged.
+    defaultOpen: query.trim().length > 0,
     children: (
       <div className="space-y-1.5">
         <p className="text-[10px] text-c-text-muted">

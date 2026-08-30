@@ -18795,6 +18795,10 @@
         "marketResearch": {
           "label": "Badanie rynku",
           "desc": "Strukturalna analiza rynkowa z danymi"
+        },
+        "chatSuggestionsEnabled": {
+          "label": "Chipy sugestii",
+          "desc": "Pokazuj podpowiedzi kolejnych kroków pod oknem rozmowy"
         }
       },
       "sources": {

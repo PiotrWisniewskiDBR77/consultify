@@ -47,6 +47,11 @@ export interface ChatSlice {
     ttsPitch: number; // Wysokość głosu (0.5-2.0)
     // Custom instructions (overrides default persona prompt for this session)
     customInstructions?: string;
+    // D-104 (2026-08-30) — owner note on ?screen=teresa-chipy-sugestii: keep
+    // the contextual "next step" chips under the composer (some users rely on
+    // them) but let them be hidden for people who find them noisy. Persisted
+    // like every other AI Mode toggle in this object (see ToolsMenu.tsx).
+    chatSuggestionsEnabled: boolean;
   };
 
   aiFreezeStatus: {
@@ -117,6 +122,9 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     ttsVoice: null,
     ttsRate: 1.0,
     ttsPitch: 1.0,
+    // Default ON — this only changes behaviour for users who explicitly turn
+    // it off (D-104: "wyrzucenie tego całkiem nie jest okej").
+    chatSuggestionsEnabled: true,
   },
 
   aiFreezeStatus: {

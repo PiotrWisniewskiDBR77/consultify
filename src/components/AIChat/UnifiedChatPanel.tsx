@@ -2714,6 +2714,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
 
   const chatSuggestions: ChatSuggestion[] = useMemo(() => {
+    // D-104 (2026-08-30) — owner's contextual on/off switch for the
+    // suggestion chips (?screen=teresa-chipy-sugestii). Toggle lives in
+    // ToolsMenu.tsx AI_MODES, persisted via aiConfig.chatSuggestionsEnabled
+    // (default true). Gated here so every consumer of `chatSuggestions`
+    // (including the badge-count logic) agrees on one source of truth.
+    if ((aiConfig as any)?.chatSuggestionsEnabled === false) return [];
     if (displayMessages.length < 2 || isStreaming) return [];
     const items: ChatSuggestion[] = [];
 
@@ -2790,7 +2796,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // heuristic went with them.
 
     return items;
-  }, [displayMessages.length, isStreaming, workspaceContext, t]);
+  }, [
+    displayMessages.length,
+    isStreaming,
+    workspaceContext,
+    t,
+    (aiConfig as any)?.chatSuggestionsEnabled,
+  ]);
 
   // `handleSuggestionClick` is declared below `handleSendMessage` to avoid a
   // temporal-dead-zone reference when a suggestion of type 'chat' forwards
