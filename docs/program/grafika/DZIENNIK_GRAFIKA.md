@@ -18,6 +18,40 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ## 2026-08-30, sesja wieczorna (przejęcie toru po poprzedniku)
 
+### Z-9 · Prawda o osiach DRD żyła w SZEŚCIU kopiach — trzecie sprostowanie tego samego dnia
+**Co się stało:** naprawa liczby poziomów osi w macierzy odsłoniła, że konfiguracja
+osi DRD jest w kodzie powielona **sześć razy**. Jedna kopia jest źródłem prawdy
+(`src/services/drdStructure.ts`, poprawna), pięć pozostałych to odklejone duplikaty:
+
+| miejsce | błąd | stan |
+| --- | --- | --- |
+| `src/components/Reports/EmbeddedMatrix.tsx` | kultura i cyber 5 zamiast 6 | **naprawione** — podłączone do źródła |
+| `src/components/Reports/RadarChart.tsx` | to samo, idzie do `fullMark` wykresu | w naprawie |
+| `src/components/Reports/ImportReportModal.tsx` | to samo, jako `max` pola formularza | w naprawie |
+| `server/src/services/reportImportService.ts` | to samo, po stronie serwera | w naprawie |
+| `server/src/services/aiAssessmentPartnerService.ts` | **inny kształt** — wymyślone opisy poziomów 6–7 dla osi mających 5 | wstrzymane, decyzja właściciela |
+| `src/components/Reports/AxisReportSection.tsx` | `maxLevel = 7` na sztywno dla wszystkich osi | podejrzenie martwego kodu, weryfikowane |
+
+**Dlaczego ważne:** to **trzecie sprostowanie moich własnych słów tego samego dnia**
+w tej jednej sprawie. Kolejno mówiłem właścicielowi: (1) macierz ma dwie skale —
+nieprawda, ma trzy; (2) kod ma źle — nieprawda, kod ma dobrze w źródle prawdy i źle
+w jednym pliku; (3) błąd jest w jednym pliku — nieprawda, kopii jest pięć.
+
+**Wzorzec do zapamiętania:** za każdym razem myliłem się **w tę samą stronę** —
+zawężałem zasięg defektu do tego, co akurat zmierzyłem. Pierwszy pomiar zawsze
+pokazuje dolną granicę problemu, nigdy górną. **Nie meldować zasięgu, dopóki nie
+przemieciono wszystkich miejsc, gdzie ta sama prawda może mieszkać** — a przy
+duplikacji danych domyślną odpowiedzią na „ile jest kopii" jest „więcej, niż widzisz".
+
+**Najgroźniejsza z pięciu:** `aiAssessmentPartnerService` nie ma złej liczby, tylko
+**wymyśloną treść** — opisy poziomów 6 i 7 dla osi, które kończą się na 5. Skutek nie
+jest wizualny: partner AI może zasugerować konsultantowi poziom dojrzałości, który
+w metodyce właściciela nie istnieje. To wykracza poza tor grafiki.
+
+**Co z tego wynika:** naprawą nie jest podmiana liczby, tylko usunięcie drugiej kopii
+prawdy. W tym repo defekt załatany per-wywołanie odrósł po ośmiu tygodniach w dwunastu
+plikach — dokładnie ten mechanizm.
+
 ### Z-8 · Właściciel przekazał dwie zasady pracy
 Zlecanie robotnikom z doborem modelu do trudności (Sonnet gdzie wzorzec, Opus gdzie
 osąd) oraz dokumentowanie **kontekstu zdarzenia**, nie tylko wyniku. Utrwalone jako
