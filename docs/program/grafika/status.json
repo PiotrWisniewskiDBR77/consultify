@@ -1585,6 +1585,174 @@
      ]
     }
    ]
+  },
+  {
+   "katalog": "11-arkusze-raporty",
+   "nazwa": "Arkusze, raporty i prezentacje",
+   "opis": "Excel i arkusze, gotowy raport, wniosek, kreatory szablonow, rejestr wspolny Materialow.",
+   "ekrany": [
+    {
+     "id": "report-artifact",
+     "nazwa": "Raport dla komitetu sterujacego",
+     "ocena": "A",
+     "co": "NAJLEPSZY ekran partii. Pelna polska tresc, waluty wszedzie, procenty sformatowane, czerwien tylko dla Zagrozone. Gotowy do pokazania klientowi.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-jeden-widok-recent",
+     "nazwa": "Excel — strona glowna",
+     "ocena": "A",
+     "co": "Wzorce arkuszy, czysto po polsku, oba motywy.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-jeden-widok-materialy",
+     "nazwa": "Excel — arkusze w Materialach",
+     "ocena": "A",
+     "co": "Tabela kanoniczna, polskie etykiety, szkic fioletowy — nie crimson.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-jeden-widok-pusty",
+     "nazwa": "Excel — stan pusty",
+     "ocena": "A",
+     "co": "Trzy karty wyboru: czysto, z AI, z szablonu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-prawy-panel-standard",
+     "nazwa": "Excel — prawy panel",
+     "ocena": "A",
+     "co": "Szyna ikon: Akcje, Powiazania, Zrodla, Rezultaty, Historia. Zgodnie z decyzja z 28.07.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-engine-reveal",
+     "nazwa": "Excel — silnik bez serwera",
+     "ocena": "A",
+     "co": "Stan startowy bez backendu, dokladnie jak zapowiada.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-reopen-verify",
+     "nazwa": "Excel — blad generowania",
+     "ocena": "A",
+     "co": "Czytelny komunikat bledu, czerwien uzyta poprawnie.",
+     "naprawione": [
+      "Powiadomienie ignorowalo motyw ciemny — biale okienko na czarnym tle, na WSZYSTKICH ekranach harnessu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "prezentacje-template-states",
+     "nazwa": "Prezentacje — trzy stany szablonu",
+     "ocena": "A",
+     "co": "Ladowanie, wzorzec bez rekordu, brak dostepu. Wszystkie po polsku.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "gen-word-content-hints",
+     "nazwa": "Kreator szablonow dokumentow",
+     "ocena": "A",
+     "co": "Formularz w calosci po polsku.",
+     "naprawione": [
+      "Kolumna TYP pokazywala surowy kod zamiast nazwy"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "gen-deck-content-hints",
+     "nazwa": "Kreator szablonow prezentacji",
+     "ocena": "A",
+     "co": "Analogicznie czysty.",
+     "naprawione": [
+      "Ten sam surowy kod typu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "gen-excel-templates-tab",
+     "nazwa": "Szablony skoroszytow",
+     "ocena": "A",
+     "co": "Model P&L, budzet, DCF. Terminologia finansowa to uznane zapozyczenia branzowe.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "excele-edytowalna-siatka",
+     "nazwa": "Excel — edytowalna siatka",
+     "ocena": "B",
+     "co": "Realny arkusz NPV/IRR z produkcyjnego szablonu.",
+     "naprawione": [],
+     "wyjatki": [
+      "Naglowek mowi Zadanie ukonczone i zaraz obok 0/8 krokow. Zielony ptaszek stoi obok zera. Dotyczy KAZDEGO ponownego otwarcia zapisanego pliku. To mechanika, zgloszone torowi funkcji"
+     ]
+    },
+    {
+     "id": "report-builder-library-template",
+     "nazwa": "Nowy raport z wzorca",
+     "ocena": "B",
+     "co": "Modal wyboru wzorca, tytul i opis po polsku.",
+     "naprawione": [],
+     "wyjatki": [
+      "Cztery napisy przybite po angielsku w realnym komponencie"
+     ]
+    },
+    {
+     "id": "materials-registry",
+     "nazwa": "Rejestr wspolny Materialow",
+     "ocena": "B",
+     "co": "Po naprawie w calosci po polsku.",
+     "naprawione": [
+      "Wejscie harnessu nie wymuszalo jezyka — tabela renderowala sie po angielsku i wygladala na defekt, ktorego w produkcie NIE MA",
+      "Surowe enumy widocznosci i przegladu"
+     ],
+     "wyjatki": [
+      "Kolumna ZRODLO nadal surowa — slownik otwarty, wymaga decyzji o pelnej liscie"
+     ]
+    },
+    {
+     "id": "insight-artifact",
+     "nazwa": "Wniosek z wywiadu",
+     "ocena": "C",
+     "co": "Powloka poprawna po polsku, ale TRESC wniosku w calosci po angielsku.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": [
+      "Streszczenie, kluczowe ustalenia, tematy i ryzyka to nie cytaty, tylko wygenerowana tresc — cala po angielsku",
+      "Zdublowany cytat z poczwornym cudzyslowem"
+     ]
+    },
+    {
+     "id": "report-builder-block-types",
+     "nazwa": "Rodzaje blokow raportu",
+     "ocena": "C",
+     "co": "Tabela administracyjna, kanon tabel zachowany.",
+     "naprawione": [],
+     "wyjatki": [
+      "Caly komponent bez ani jednego klucza tlumaczen — nie pojedynczy napis, tylko brak lokalizacji ekranu"
+     ]
+    },
+    {
+     "id": "report-builder-templates",
+     "nazwa": "Szablony raportow",
+     "ocena": "C",
+     "co": "Ta sama sytuacja co wyzej.",
+     "naprawione": [],
+     "wyjatki": [
+      "Brak lokalizacji calego komponentu",
+      "Kolumna SEKCJE pokazuje 0 bez wyjasnienia"
+     ]
+    }
+   ]
   }
  ]
 }
