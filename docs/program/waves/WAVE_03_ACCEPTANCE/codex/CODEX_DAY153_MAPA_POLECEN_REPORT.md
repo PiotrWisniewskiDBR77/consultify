@@ -148,7 +148,7 @@ server/src/routes/pmo/initiativesExecutionRuntime.routes.ts:1130: delegatedFrom:
 | task custom field | create `:166`; update `:218`; delete `:291` | nie istnieją | TAK `:67` | (a) ×3 |
 | task baseline/time/allocation | baseline snapshot `:323`; time entry `:959`; allocation `:1065` | nie istnieją | TAK `:67` | (a) ×3 |
 | task draft generation | generate section `:122` | nie utrwala; jest generowaniem draftu | TAK `:67` | (d) |
-| decision | create `decisions.routes.ts:94`; update/delegate/reschedule/reprioritize `:105`; delete `:117`; decide `:127`/alias `:138`; escalate `:149`; workflow `:174` | brak poleceń dla agregatu kontrolera legacy; `execution.decision.*` to inny agregat/ścieżki `execution-cases` | NIE; brak importu bramy w pliku | (b) ×7 |
+| decision | create `decisions.routes.ts:94`; update/delegate/reschedule/reprioritize `:105`; delete `:117`; decide `:127`/alias `:138`; escalate `:149`; workflow `:174` | brak poleceń dla agregatu kontrolera legacy; `execution.decision.*` to inny agregat/ścieżki `execution-cases` | NIE; brak importu bramy w pliku | (b) ×6 |
 | decision comment | create `:207`; update `:215`; delete `:223` | nie istnieją | NIE | (b) ×3 |
 | decision alternative | create `:234`; update `:241`; delete `:248` | nie istnieją | NIE | (b) ×3 |
 | decision risk | create `:258`; update `:265`; delete `:272` | nie istnieją | NIE | (b) ×3 |
