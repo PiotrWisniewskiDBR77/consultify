@@ -49,3 +49,13 @@ miało sposobu przekazania parametru adresu, więc po cichu mierzyło niewłaśc
 **Naprawione u źródła:** `grafika-zrzuty.mjs --parametry=ff_...=1`.
 **Reguła:** zanim ocenisz ekran, sprawdź, czy ma wariant za flagą. Jeśli ma — zrób
 zrzuty OBU i powiedz w raporcie, który z nich widzi dziś użytkownik.
+
+2026-08-30 | ★ **Do harnessu prowadzą DWIE drogi, nie jedna.**
+Wspólna to `?screen=X` (rejestr w `dev-render/main.tsx`). Ale **osiemnaście** ekranów
+ma własny plik `dev-render/X.html` z osobnym punktem wejścia i przez `?screen=`
+w ogóle ich nie widać — narzędzie odpowiada listą awaryjną, co wygląda **dokładnie
+tak samo** jak „ekran się nie renderuje". Dwa ekrany SIRI dostały przez to
+**fałszywą ocenę D**, a sześć ekranów Narzędzi opisałem jako „nigdy niepodłączone",
+choć były osiągalne — innymi drzwiami.
+**Naprawione u źródła:** `grafika-zrzuty.mjs --wejscie=html`.
+**Reguła:** zanim napiszesz „ekran nie istnieje", sprawdź `ls dev-render/*.html`.

@@ -49,6 +49,18 @@ const JEZYK = arg('jezyk', 'pl');
  * niewłaściwą rzecz — a to jest gorsze niż brak pomiaru.
  */
 const PARAMETRY = arg('parametry', '').replace(/^[?&]/, '');
+/**
+ * Dwie DROGI WEJŚCIA do harnessu — odkryte 2026-08-30 przy domykaniu pokrycia.
+ *
+ * `?screen=X` to droga wspólna (rejestr w `dev-render/main.tsx`). Ale OSIEMNAŚCIE
+ * ekranów ma WŁASNY plik `dev-render/X.html` z osobnym punktem wejścia i przez
+ * `?screen=` w ogóle ich nie widać — narzędzie odpowiadało listą awaryjną, a to
+ * wygląda dokładnie jak „ekran się nie renderuje". Dwa ekrany SIRI dostały przez
+ * to fałszywą ocenę D.
+ *
+ * `--wejscie=html` otwiera `${BASE}/X.html` zamiast `${BASE}/?screen=X`.
+ */
+const WEJSCIE = arg('wejscie', 'screen');
 
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
@@ -79,7 +91,10 @@ for (const ekran of EKRANY) {
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
     });
-    const url = `${BASE}/?screen=${ekran}&lang=${JEZYK}&theme=${motyw}${PARAMETRY ? `&${PARAMETRY}` : ''}`;
+    const url =
+      WEJSCIE === 'html'
+        ? `${BASE}/${ekran}.html?lang=${JEZYK}&theme=${motyw}${PARAMETRY ? `&${PARAMETRY}` : ''}`
+        : `${BASE}/?screen=${ekran}&lang=${JEZYK}&theme=${motyw}${PARAMETRY ? `&${PARAMETRY}` : ''}`;
     const plik = path.join(OUT, `${ekran}__${FAZA}__${motyw}.png`);
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });

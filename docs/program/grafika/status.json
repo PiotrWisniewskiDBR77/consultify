@@ -1018,21 +1018,24 @@
     {
      "id": "siri-workspace",
      "nazwa": "Warsztat SIRI",
-     "ocena": "D",
-     "co": "Nie wiem, jak wyglada — brak rejestracji w harnessie.",
+     "ocena": "B",
+     "co": "Wywiad SIRI. Pytanie wprost mowi, ze bank pytan nie ma pozycji dla tego wymiaru, bo tresc jest licencjonowana — uczciwosc wzorcowa. Szesc odpowiedzi lacznie z Nie wiem i Nie mam dowodu.",
      "naprawione": [],
      "wyjatki": [
-      "Zgloszone do naprawy narzedzia"
+      "Napis Help content unavailable po angielsku",
+      "Nazwy wymiarow po angielsku — to standardowa terminologia SIRI, nie defekt tlumaczenia",
+      "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
      ]
     },
     {
      "id": "siri-tier",
      "nazwa": "Poziomy SIRI",
-     "ocena": "D",
-     "co": "Nie wiem, jak wyglada — brak rejestracji w harnessie.",
+     "ocena": "C",
+     "co": "Macierz priorytetow SIRI — ekran diagnostyczny dla inzyniera, nie dla klienta.",
      "naprawione": [],
      "wyjatki": [
-      "Zgloszone do naprawy narzedzia"
+      "Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi",
+      "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
      ]
     }
    ]
@@ -1890,7 +1893,7 @@
      "ocena": "A",
      "co": "Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.",
      "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
      ],
      "wyjatki": [
       "Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING"
@@ -1902,7 +1905,7 @@
      "ocena": "A",
      "co": "Pelna powloka artefaktu: menu po lewej, panel po prawej. Tekst wprost mowi, czym narzedzie NIE jest i kiedy go NIE uzywac.",
      "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
      ],
      "wyjatki": [
       "Kategoria pokazuje surowe strategic zamiast polskiej nazwy"
@@ -1914,7 +1917,7 @@
      "ocena": "A",
      "co": "Tabela kanoniczna, statusy i daty po polsku.",
      "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
      ],
      "wyjatki": []
     },
@@ -1924,7 +1927,7 @@
      "ocena": "A",
      "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny.",
      "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
      ],
      "wyjatki": [
       "Pierwsza kolumna waska, tytuly lamia sie na trzy linie, metadane ucinane"
@@ -1936,8 +1939,8 @@
      "ocena": "A",
      "co": "Piec krokow, propozycja AI z uzasadnieniem, liczniki zaakceptowanych punktow.",
      "naprawione": [
-      "Ekran nie byl podlaczony do harnessu",
-      "CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po"
+      "CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po",
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
      ],
      "wyjatki": [
       "DRAFT, COPILOT AI i Find Signals po angielsku"
@@ -1975,7 +1978,7 @@
      "ocena": "C",
      "co": "Lista rezultatow sesji z wersjami.",
      "naprawione": [
-      "Ekran nie byl podlaczony do harnessu"
+      "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
      ],
      "wyjatki": [
       "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy"
