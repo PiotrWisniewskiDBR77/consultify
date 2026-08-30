@@ -12,6 +12,7 @@ import logger from '../../utils/Logger.js';
 import { projectCanonicalRunAfterExternalTransition } from '../v8/agentCanonicalRunService.js';
 import { revalidateCanonicalRunContextForWorker } from '../v8/agentContextGroundingService.js';
 import { executeWithAgentResourceReservation } from '../v8/agentResourceGovernanceService.js';
+import { estimateAgentToolCostUsd } from './toolCostEstimates.js';
 import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
 
 // Re-exported for backward compatibility with any existing import of
@@ -503,6 +504,15 @@ class AgentPlannerService {
     const failedSteps: PlanStep[] = [];
 
     for (let i = plan.currentStepIndex; i < plan.steps.length; i++) {
+      const current = (await dbGet(`SELECT status FROM ai_agent_plans WHERE id = ?`, [planId])) as
+        | { status?: PlanStatus }
+        | undefined;
+      if (current?.status === 'cancelled') {
+        await this.releaseCancelledExecutionLease(lease, i);
+        const cancelled = await this.getPlan(planId);
+        if (!cancelled) throw new Error(`Plan ${planId} disappeared after cancellation`);
+        return cancelled;
+      }
       const step = plan.steps[i];
 
       // Gate: pause only an un-approved side-effect step. `approveStep` sets the
@@ -1055,7 +1065,7 @@ class AgentPlannerService {
         agentId: 'agent-planner',
         toolName,
         idempotencyKey: `planner:${plan.canonicalRunId}:${execution?.operationKey || `${plan.id}:${toolName}`}`,
-        estimatedCostUsd: 0,
+        estimatedCostUsd: estimateAgentToolCostUsd(toolName),
         execute: () =>
           executeToolCall(toolName, input, {
             organizationId: payload.organizationId,
@@ -1113,7 +1123,7 @@ class AgentPlannerService {
        SET status = ?, result_summary = ?, error_message = ?, completed_at = datetime('now'),
            updated_at = datetime('now'), execution_owner_token = NULL,
            execution_lease_expires_at = NULL, execution_heartbeat_at = NULL
-       WHERE id = ? AND ${this.leasePredicate()}`,
+       WHERE id = ? AND status = 'executing' AND ${this.leasePredicate()}`,
       [status, resultSummary, errorMessage || null, planId]
     );
     await this.projectCanonicalPlanTransition(
@@ -1176,6 +1186,21 @@ class AgentPlannerService {
       lease.planId,
       null,
       `Agent plan paused at checkpoint with status ${status}.`
+    );
+  }
+
+  private async releaseCancelledExecutionLease(
+    lease: ExecutionLease,
+    currentStep: number
+  ): Promise<void> {
+    await this.guardedPlanRun(
+      lease,
+      `UPDATE ai_agent_plans
+       SET current_step_index = ?, updated_at = datetime('now'),
+           execution_owner_token = NULL, execution_lease_expires_at = NULL,
+           execution_heartbeat_at = NULL
+       WHERE id = ? AND status = 'cancelled' AND ${this.leasePredicate()}`,
+      [currentStep, lease.planId]
     );
   }
 

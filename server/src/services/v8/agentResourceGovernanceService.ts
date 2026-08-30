@@ -45,6 +45,10 @@ interface PolicyRow {
   lease_seconds: number;
 }
 
+const DEFAULT_POLICY_MAX_CONCURRENT_EXECUTIONS = 4;
+const DEFAULT_POLICY_MAX_ESTIMATED_COST_USD_PER_RUN = 0.25;
+const DEFAULT_POLICY_LEASE_SECONDS = 300;
+
 function requireNonBlank(value: string | null | undefined, reason: string): string {
   const normalized = String(value || '').trim();
   if (!normalized) throw new Error(reason);
@@ -192,13 +196,37 @@ export async function reserveAgentResource(input: {
       }
     }
 
-    const policyResult = await client.query<PolicyRow>(
+    let policyResult = await client.query<PolicyRow>(
       `SELECT policy_id, max_concurrent_executions, max_estimated_cost_usd_per_run, lease_seconds
        FROM v8_agent_resource_policies
        WHERE organization_id = ? AND project_id = ? AND enabled = 1
        FOR UPDATE`,
       [organizationId, projectId]
     );
+    if (!policyResult.rows[0]) {
+      await client.query(
+        `INSERT INTO v8_agent_resource_policies
+          (policy_id, organization_id, project_id, max_concurrent_executions,
+           max_estimated_cost_usd_per_run, lease_seconds)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT (organization_id, project_id) DO NOTHING`,
+        [
+          uuidv4(),
+          organizationId,
+          projectId,
+          DEFAULT_POLICY_MAX_CONCURRENT_EXECUTIONS,
+          DEFAULT_POLICY_MAX_ESTIMATED_COST_USD_PER_RUN,
+          DEFAULT_POLICY_LEASE_SECONDS,
+        ]
+      );
+      policyResult = await client.query<PolicyRow>(
+        `SELECT policy_id, max_concurrent_executions, max_estimated_cost_usd_per_run, lease_seconds
+         FROM v8_agent_resource_policies
+         WHERE organization_id = ? AND project_id = ? AND enabled = 1
+         FOR UPDATE`,
+        [organizationId, projectId]
+      );
+    }
     const policy = policyResult.rows[0];
     if (!policy) throw new Error('resource_policy_not_found');
 
