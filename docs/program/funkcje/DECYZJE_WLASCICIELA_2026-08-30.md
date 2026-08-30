@@ -98,8 +98,19 @@ podjąć największą decyzję zakresową w programie.
 
 ---
 
+## `DEC-2026-08-30-04` — trzy tematy wzorcowe DOSTARCZONE
+
+Właściciel dostarczył trzy tematy 30.08: transformacja cyfrowa firmy farmaceutycznej,
+koncepcja startupu „Native Speaker" z integracją FIZAP, plan transformacji DBR.
+Pełny zapis: `TEMATY_WZORCOWE_WLASCICIELA.md`.
+
+**Kryterium porównania w rubryce odbioru dokumentu przestaje być martwe.**
+
+Właściciel wskazał przy tym `market-forces` (Pięć sił Portera) jako **pojazd testowy**
+mechaniki raportów — w trybie warunkowym („może"). **To NIE jest jeszcze formalny
+wybór drugiego narzędzia oferty.**
+
 ## Pozostaje otwarte
 
-**Trzy do pięciu realnych tematów z praktyki właściciela na typ dokumentu.**
-Właściciel: „Dam ci, jak wrócę z biegania." Bez tego najostrzejsze kryterium rubryki
-odbioru dokumentu — porównanie ślepe z realnym dokumentem — pozostaje martwe.
+**Które DWA narzędzia z dziewięciu poziomu 2 dołączają do `dynamic-swot`.**
+Decyzja zapada po zobaczeniu, jak Pięć sił Portera zachowa się na realnym temacie.
