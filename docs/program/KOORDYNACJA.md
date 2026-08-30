@@ -210,3 +210,37 @@ UI bez zmiany kontraktu **nie jest możliwa** — nie ma czego wyświetlić.
 **Dlaczego to jest pilne:** to jest tabela, w którą właściciel wchodzi za każdym
 razem, gdy patrzy na okres rozliczeniowy. Kod zamiast nazwy czyni ją nieczytelną
 dla człowieka, który nie zna identyfikatorów na pamięć.
+
+### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: prawy panel dokumentów — połowa funkcjonalna
+
+**Pełna analiza:** `docs/program/grafika/ANALIZA_PRAWY_PANEL.md` (§1-7 + uzupełnienie
+o dokumentach). Tu tylko to, co należy do toru funkcji.
+
+**Zgłoszenie właściciela:** prawy panel w Wordzie, Excelu i PowerPoincie — *„to
+kiedyś było zgłaszane, ale ewidentnie gdzieś nam to przeleciało"*.
+
+**Dlaczego przeleciało — przyczyna, nie wymówka:** jedno pojęcie ma dwie–trzy nazwy.
+„Na czym oparto" to `evidence` (kanon, Deck) **albo** `sources` (Word, Excel).
+„Co się działo" to `history` (kanon, Excel) **albo** `activity` (Word, Prezentacje,
+Deck). Nie da się zauważyć, że dwie powierzchnie robią to samo, jeśli nazywają to
+inaczej — ani greppem, ani okiem.
+
+**Czego brakuje po stronie DANYCH (to jest praca toru funkcji, nie panelu):**
+
+1. **Pochodzenie dokumentu.** Dokument nie wie, z czego powstał: która ocena, które
+   wywiady, który model finansowy, jakie założenia przyjęła Teresa. Dopóki serwer
+   tego nie zwraca, sekcja „Źródła i założenia" **nie ma czego pokazać** — a to jest
+   sekcja odpowiadająca na pytanie „czy mogę to wysłać klientowi".
+2. **Rezultaty dokumentu.** Dokument nie wie, co z niego wyszło — zadania, decyzje,
+   kolejne materiały. Bez tego łańcuch „burza mózgów → zadania → czynności" nie ma
+   się gdzie pokazać.
+3. **Kontrola jakości poza Wordem.** Narzędzie `qa` (fabrykacje, liczby bez pokrycia,
+   puste sekcje) istnieje **wyłącznie** w Studiu Dokumentów. Excel i PowerPoint nie
+   mają odpowiednika — a wychodzą do klienta tak samo.
+
+**To ta sama klasa problemu co wskaźniki bez nazw:** poprawka po stronie wyglądu
+jest niemożliwa, bo nie ma czego wyświetlić. Kontrakt danych idzie pierwszy.
+
+**Kolejność uzgodniona z właścicielem:** najpierw jedno źródło kolejności sekcji
+(tor grafiki, zmiana mechaniczna), potem rozstrzygnięcie o miejscu Teresy, potem
+treść sekcji, na końcu siedem szyn poza kanonem — po jednej, każda z odbiorem.
