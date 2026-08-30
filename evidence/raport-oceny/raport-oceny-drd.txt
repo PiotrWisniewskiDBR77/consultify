@@ -1,0 +1,365 @@
+[Kicker] ● C O N S U L T I F Y
+[Kicker] OCENA DOJRZAŁOŚCI CYFROWEJ · DIGITAL PATHFINDER
+[DocStudioTitle] Raport z oceny dojrzałości cyfrowej
+[Subtitle] Metalpol Sp. z o.o.
+--- TABELA ---
+Klient | Metalpol Sp. z o.o.
+Profil działalności | Obróbka i przetwórstwo metali · komponenty dla motoryzacji
+Zatrudnienie | 214 osób
+Okres oceny | 30 sierpnia 2026
+Oceniający | Anna Kowalczyk
+Sponsor po stronie klienta | Do uzupełnienia — dane nie są zapisane w sesji oceny.
+Metodyka | Digital Pathfinder — metodyka oceny dojrzałości cyfrowej DRD
+Sygnatura sesji | DRD-2026-0830-MTL-93DE
+Data wydania | 30 sierpnia 2026
+--- /TABELA ---
+[Kicker] NAWIGACJA
+[Kicker] STRESZCZENIE
+[Heading1] Streszczenie zarządcze
+[Tresc] Ocena obejmuje 7 osi i 39 obszarów. Finding istnieje dla 23 obszarów. Stan udokumentowany dotyczy 14 obszarów, stan niepełny 3, a stan zadeklarowany 6. Luki mieszczą się od 1 do 3, a liczba luk krytycznych wynosi 3. Trzy pierwsze obszary po uporządkowaniu malejąco według luki to 4B Metodologia Przechowywania Danych z luką 3, 6A Strategia i zarządzanie ryzykiem z luką 3, 6E Plany awaryjne z luką 3. Ich poziomy obecne to 4B: 2, 6A: 2, 6E: 1, a docelowe 4B: 5, 6A: 5, 6E: 4. Zestawienie opiera się na zamrożonym Outputcie, poziomach, lukach i stanach dowodowych. Jest to obraz policzalny, ograniczony do danych obecnych w zaakceptowanym kontrakcie raportu. Nie korzysta z benchmarku branżowego i nie dodaje oceny jakościowej poza zamrożonymi etykietami priorytetu oraz wiarygodności.
+[Caption] 
+[Caption] Rysunek 1. Profil dojrzałości cyfrowej według siedmiu osi DRD.
+--- TABELA ---
+Oś | Obecny | Docelowy | Luki krytyczne
+Procesy Cyfrowe | 39% | 64% | 0
+Produkty Cyfrowe | 33% | 67% | 0
+Cyfrowe Modele Biznesowe | 27% | 60% | 0
+Zarządzanie Danymi | 39% | 71% | 1
+Kultura Transformacji | 50% | 78% | 0
+Cyberbezpieczeństwo | 33% | 78% | 2
+Dojrzałość AI | 27% | 67% | 0
+--- /TABELA ---
+[Caption] Tabela 1. Zestawienie siedmiu osi DRD.
+[Heading2] Luki krytyczne i rekomendacja główna
+[Tresc] Liczba obszarów z luką co najmniej 3 wynosi 3. Największa luka wynosi 3. 4B Metodologia Przechowywania Danych, luka 3, rekomendacja: „Zbudować katalog najważniejszych zbiorów z właścicielem, miejscem referencyjnym, retencją i regułą korekty.” 6A Strategia i zarządzanie ryzykiem, luka 3, rekomendacja: „Utworzyć rejestr krytycznych aktywów IT/OT z właścicielem, wpływem na produkcję i planem postępowania z ryzykiem.” 6E Plany awaryjne, luka 3, rekomendacja: „Przeprowadzić ćwiczenie odtworzenia jednej linii z mierzeniem czasu i listą zależności systemów oraz danych.” Dla tych obszarów zapisano poziomy obecne 4B: 2, 6A: 2, 6E: 1 i docelowe 4B: 5, 6A: 5, 6E: 4. Każdy cytat zachowuje treść zapisaną w findingu i jego identyfikator. Rekomendacje są cytowane z findingów bez parafrazy. Kolejność wynika wyłącznie z wielkości luki i identyfikatora obszaru; nie zawiera benchmarku ani prognozy.
+[Kicker] Rozdział 1 z 7 · oś 1 struktury DRD
+[Heading1] 1. Procesy Cyfrowe
+[Tresc] Oś 1, Procesy Cyfrowe, obejmuje 9 obszarów. Oceniono 4 z 9 obszarów, a liczba pominięć wynosi 1. Poziomy obecne mieszczą się od 2 do 4, natomiast poziomy docelowe od 3 do 6. Stan udokumentowany dotyczy 3 obszarów, stan niepełny 1, a stan zadeklarowany 0. Luki mieszczą się od 1 do 2. Największą lukę 2 mają: 1A Procesy Sprzedaży, 1E Procesy Logistyczne, 1F Procesy Produkcyjne. Zapisane poziomy obszarów to: 1A od 3 do 5, luka 2; 1E od 2 do 4, luka 2; 1F od 4 do 6, luka 2; 1G od 2 do 3, luka 1. Dane pochodzą z zamrożonego Outputu. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.
+[Heading2] Matryca poziomów dojrzałości
+--- TABELA ---
+Obszar | 1 | 2 | 3 | 4 | 5 | 6 | 7 | Luka | Priorytet
+Procesy Sprzedaży |  |  | 3 |  | 5 |  |  | 2 | Wysoki
+Procesy Marketingowe |  |  |  |  |  |  |  | — | —
+Technologia Procesowa i R&D |  |  |  |  |  |  |  | — | —
+Procesy Zakupowe |  |  |  |  |  |  |  | — | —
+Procesy Logistyczne |  | 2 |  | 4 |  |  |  | 2 | Wysoki
+Procesy Produkcyjne |  |  |  | 4 |  | 6 |  | 2 | Wysoki
+Procesy Jakości |  | 2 | 3 |  |  |  |  | 1 | Średni
+Zarządzanie Finansami |  |  |  |  |  |  |  | — | —
+Procesy HR |  |  |  |  |  |  |  | — | —
+--- /TABELA ---
+[Caption] Tabela 2. Tabela obejmuje 9 obszarów osi 1. Kolumny poziomów pokazują skalę od 1 do 7; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-08-30.
+[Heading2] Ocena obszarów
+[Heading3] 1A Procesy Sprzedaży
+[Sygnatura] Poziom obecny: 3 (Kontrola procesu) · Poziom docelowy: 5 (MES) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 3 — Kontrola procesu; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Oferty są rejestrowane w CRM, lecz kalkulacja wykonalności i terminu nadal wymaga uzgodnień z planistą poza systemem. Handlowiec nie widzi aktualnego obciążenia pras i gniazd obróbczych, dlatego termin dla klienta jest potwierdzany dopiero po ręcznym sprawdzeniu. Luka i sens poziomu docelowego: poziom docelowy 5 — MES; luka 2; priorytet Wysoki; Ryzykiem są obietnice terminów bez potwierdzonej przepustowości; szansą jest szybsza odpowiedź na zapytania motoryzacyjne; Zmiana bezpośrednio łączy popyt z ograniczeniami produkcji i ogranicza koszt późnych korekt. Najbliższy krok: Połączyć kwalifikację szansy w CRM z kontrolą zdolności produkcyjnej dla rodzin wyrobów i zapisywać potwierdzony termin jako część oferty. Warunek: Uzgodniony słownik rodzin wyrobów i właściciel danych o dostępnej zdolności. Oczekiwany rezultat: Oferta zawiera termin zweryfikowany na aktualnym planie, a wyjątki trafiają do jawnej akceptacji planisty. Hipoteza przyczyny: Hipoteza: CRM i planowanie produkcji mają różne słowniki wyrobów oraz klientów.
+[Heading3] 1B Procesy Marketingowe
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszar pominięty w ocenie — kod: poza zakresem zlecenia.
+[Heading3] 1C Technologia Procesowa i R&D
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 1C nie oceniono — brak danych źródłowych.
+[Heading3] 1D Procesy Zakupowe
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 1D nie oceniono — brak danych źródłowych.
+[Heading3] 1E Procesy Logistyczne
+[Sygnatura] Poziom obecny: 2 (Kontrola stanowiska) · Poziom docelowy: 4 (Automatyzacja) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Kontrola stanowiska; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Przyjęcia materiału, lokalizacja partii i wydania na produkcję są potwierdzane w kilku rejestrach. Identyfikacja partii działa, ale odtworzenie jej drogi przez magazyn wymaga zestawienia danych z etykiet, arkusza i systemu ERP. Luka i sens poziomu docelowego: poziom docelowy 4 — Automatyzacja; luka 2; priorytet Wysoki; Ryzykiem jest wydłużone wyszukiwanie materiału i niepełna traceability w reklamacji; Logistyka zasila każdą zmianę produkcyjną, więc błąd lokalizacji wpływa na cały plan. Najbliższy krok: Wprowadzić jeden skanowany identyfikator partii od przyjęcia do wydania oraz rejestrować lokalizację i status materiału w ERP. Warunek: Jednolita struktura etykiet, punkty skanowania i odpowiedzialność magazynu za korekty. Oczekiwany rezultat: Każda partia ma jedną bieżącą lokalizację i możliwą do odtworzenia historię ruchów. Hipoteza przyczyny: Hipoteza: proces etykietowania rozwijał się niezależnie od ewidencji magazynowej ERP.
+[Heading3] 1F Procesy Produkcyjne
+[Sygnatura] Poziom obecny: 4 (Automatyzacja) · Poziom docelowy: 6 (ERP) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 4 — Automatyzacja; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Zlecenia są planowane w ERP, a kluczowe stanowiska przekazują dane o wykonaniu, lecz harmonogram krótkoterminowy jest korygowany ręcznie. Operatorzy widzą priorytet zlecenia, ale przestoje i odchylenia cyklu nie wracają automatycznie do planu. Luka i sens poziomu docelowego: poziom docelowy 6 — ERP; luka 2; priorytet Wysoki; Szansą jest stabilniejszy plan zmianowy; ryzykiem pozostaje lokalna optymalizacja stanowisk kosztem terminu zlecenia; Istniejące ERP i MES dają bazę do domknięcia przepływu bez wymiany systemów. Najbliższy krok: Domknąć sprzężenie ERP–MES dla wykonania, przestojów i braków oraz wdrożyć codzienny przegląd wyjątków planu. Warunek: Uzgodnione kody przestojów, standard meldowania i właściciel reguł przeplanowania. Oczekiwany rezultat: Planista widzi odchylenia w tej samej zmianie i przeplanowuje wyłącznie nazwane wyjątki. Hipoteza przyczyny: Hipoteza: integracja została uruchomiona dla raportowania produkcji, bez odpowiedzialności za korektę harmonogramu.
+[Heading3] 1G Procesy Jakości
+[Sygnatura] Poziom obecny: 2 (Kontrola stanowiska) · Poziom docelowy: 3 (Kontrola procesu) · Luka: 1 · Priorytet: Średni · Dowody: niepełne
+[Tresc] Stan faktyczny: poziom obecny 2 — Kontrola stanowiska; liczba dowodów: 0. Ocena i wiarygodność: pewność niska, stan dowodów niepełne. Znaczenie dla przedsiębiorstwa: Kontrole jakości są wykonywane przy stanowiskach, lecz część wyników pozostaje w kartach papierowych. Dane o brakach są agregowane po zmianie, a powiązanie wady z parametrem procesu i partią materiału nie jest kompletne. Luka i sens poziomu docelowego: poziom docelowy 3 — Kontrola procesu; luka 1; priorytet Średni; Ryzykiem jest spóźniona reakcja na serię wad; ocena wymaga uzupełnienia dowodów z kart kontroli; Niepełny materiał dowodowy ogranicza pewność oceny, dlatego najpierw potrzebny jest kontrolowany pilotaż. Najbliższy krok: Wybrać jedną rodzinę wyrobów i zapisywać wyniki kontroli oraz kody wad cyfrowo wraz z partią i operacją. Warunek: Słownik wad, identyfikatory operacji i akceptacja jakości dla cyfrowego formularza. Oczekiwany rezultat: Inżynier jakości widzi trend wad dla partii i może zatrzymać serię przed kolejną operacją. Hipoteza przyczyny: Hipoteza: formularze jakości nie zostały powiązane z identyfikatorami zlecenia i partii.
+[Heading3] 1H Zarządzanie Finansami
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 1H nie oceniono — brak danych źródłowych.
+[Heading3] 1I Procesy HR
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 1I nie oceniono — brak danych źródłowych.
+[Heading2] Wnioski rozdziału
+[Tresc] Na osi 1 oceniono 4 z 9 obszarów. Największa luka wynosi 2, a liczba pominięć wynosi 1. 1A Procesy Sprzedaży: poziom obecny 3, poziom docelowy 5, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 1A: „Połączyć kwalifikację szansy w CRM z kontrolą zdolności produkcyjnej dla rodzin wyrobów i zapisywać potwierdzony termin jako część oferty.” Oczekiwany rezultat 1A: „Oferta zawiera termin zweryfikowany na aktualnym planie, a wyjątki trafiają do jawnej akceptacji planisty.” 1E Procesy Logistyczne: poziom obecny 2, poziom docelowy 4, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 1E: „Wprowadzić jeden skanowany identyfikator partii od przyjęcia do wydania oraz rejestrować lokalizację i status materiału w ERP.” Oczekiwany rezultat 1E: „Każda partia ma jedną bieżącą lokalizację i możliwą do odtworzenia historię ruchów.” 1F Procesy Produkcyjne: poziom obecny 4, poziom docelowy 6, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 1F: „Domknąć sprzężenie ERP–MES dla wykonania, przestojów i braków oraz wdrożyć codzienny przegląd wyjątków planu.” Oczekiwany rezultat 1F: „Planista widzi odchylenia w tej samej zmianie i przeplanowuje wyłącznie nazwane wyjątki.” Zapisane poziomy i luki wynoszą: 1A: 3 do 5, luka 2; 1E: 2 do 4, luka 2; 1F: 4 do 6, luka 2; 1G: 2 do 3, luka 1. Wnioski cytują rekomendacje z findingów i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.
+[Kicker] LINIA DECYZYJNA
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować działania na obszarze 1A o największej luce 2 na osi 1.
+Priorytet | Priorytet Wysoki wynika z największej luki 2 na osi 1.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 1A: Oferta zawiera termin zweryfikowany na aktualnym planie, a wyjątki trafiają do jawnej akceptacji planisty.
+--- /TABELA ---
+[Kicker] Rozdział 2 z 7 · oś 2 struktury DRD
+[Heading1] 2. Produkty Cyfrowe
+[Tresc] Oś 2, Produkty Cyfrowe, obejmuje 5 obszarów. Oceniono 3 z 5 obszarów, a liczba pominięć wynosi 0. Poziomy obecne mieszczą się od 1 do 2, natomiast poziomy docelowe od 3 do 4. Stan udokumentowany dotyczy 1 obszarów, stan niepełny 0, a stan zadeklarowany 2. Luki mieszczą się od 1 do 2. Największą lukę 2 mają: 2A Produkty Cyfrowe, 2D Dopasowanie Produktu do Oczekiwań Klienta. Zapisane poziomy obszarów to: 2A od 1 do 3, luka 2; 2D od 2 do 4, luka 2; 2E od 2 do 3, luka 1. Dane pochodzą z zamrożonego Outputu. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.
+[Heading2] Matryca poziomów dojrzałości
+--- TABELA ---
+Obszar | 1 | 2 | 3 | 4 | 5 | Luka | Priorytet
+Produkty Cyfrowe | 1 |  | 3 |  |  | 2 | Wysoki
+Produkty Społecznościowe |  |  |  |  |  | — | —
+Produkty ICT |  |  |  |  |  | — | —
+Dopasowanie Produktu do Oczekiwań Klienta |  | 2 |  | 4 |  | 2 | Wysoki
+Skalowalność Produktu |  | 2 | 3 |  |  | 1 | Średni
+--- /TABELA ---
+[Caption] Tabela 4. Tabela obejmuje 5 obszarów osi 2. Kolumny poziomów pokazują skalę od 1 do 5; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-08-30.
+[Heading2] Ocena obszarów
+[Heading3] 2A Produkty Cyfrowe
+[Sygnatura] Poziom obecny: 1 (Podstawowy) · Poziom docelowy: 3 (Zaawansowany) · Luka: 2 · Priorytet: Wysoki · Dowody: zadeklarowane
+[Tresc] Stan faktyczny: poziom obecny 1 — Podstawowy; liczba dowodów: 0. Ocena i wiarygodność: pewność średnia, stan dowodów zadeklarowane. Znaczenie dla przedsiębiorstwa: Klienci otrzymują dokumentację produktu drogą elektroniczną, lecz firma nie oferuje jeszcze funkcji cyfrowej będącej częścią sprzedawanego komponentu. Pomysły dotyczą portalu jakości i identyfikowalności, ale nie zostały potwierdzone z klientami. Luka i sens poziomu docelowego: poziom docelowy 3 — Zaawansowany; luka 2; priorytet Wysoki; Szansą jest wyróżnienie obsługi klienta; ryzykiem budowa portalu bez potwierdzonego zastosowania; Stan jest deklarowany, więc inwestycja powinna rozpocząć się od walidacji potrzeby, nie od developmentu. Najbliższy krok: Przeprowadzić wywiady z dwoma klientami o wartości portalu partii i dokumentacji oraz opisać minimalny zakres usługi. Warunek: Zgoda klientów na rozmowę i wskazanie właściciela biznesowego produktu cyfrowego. Oczekiwany rezultat: Powstaje potwierdzona lub odrzucona hipoteza usługi z listą potrzebnych danych. Hipoteza przyczyny: Hipoteza: cyfrowe dodatki są rozpatrywane technicznie, bez właściciela propozycji wartości.
+[Heading3] 2B Produkty Społecznościowe
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 2B nie oceniono — brak danych źródłowych.
+[Heading3] 2C Produkty ICT
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 2C nie oceniono — brak danych źródłowych.
+[Heading3] 2D Dopasowanie Produktu do Oczekiwań Klienta
+[Sygnatura] Poziom obecny: 2 (Średniozaawansowany) · Poziom docelowy: 4 (Interaktywny) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Średniozaawansowany; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Wymagania techniczne klienta są przenoszone do dokumentacji wyrobu, ale zmiany w specyfikacji nie mają jednego rejestru wpływu. Produkcja, jakość i sprzedaż potwierdzają zmianę w różnych kanałach, co utrudnia wskazanie obowiązującej wersji. Luka i sens poziomu docelowego: poziom docelowy 4 — Interaktywny; luka 2; priorytet Wysoki; Ryzykiem jest realizacja nieaktualnej wersji wymagania i kosztowna korekta po uruchomieniu partii; Wymagania klienta sterują jakością oraz zgodnością całego cyklu wyrobu. Najbliższy krok: Wprowadzić wspólny rejestr zmian wymagań klienta z oceną wpływu na wyrób, proces i plan kontroli. Warunek: Jedna numeracja wersji i role zatwierdzające wpływ zmiany. Oczekiwany rezultat: Każda zmiana ma status, właściciela i dowód wdrożenia we właściwych dokumentach procesu. Hipoteza przyczyny: Hipoteza: odpowiedzialność kończy się na przyjęciu wymagania, bez właściciela przejścia między działami.
+[Heading3] 2E Skalowalność Produktu
+[Sygnatura] Poziom obecny: 2 (Średniozaawansowany) · Poziom docelowy: 3 (Zaawansowany) · Luka: 1 · Priorytet: Średni · Dowody: zadeklarowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Średniozaawansowany; liczba dowodów: 0. Ocena i wiarygodność: pewność średnia, stan dowodów zadeklarowane. Znaczenie dla przedsiębiorstwa: Nowe warianty wyrobów są tworzone przez kopiowanie istniejących struktur i ręczną korektę parametrów. Podejście skraca start projektu, ale utrwala różnice w nazewnictwie i zwiększa liczbę wyjątków w technologii. Luka i sens poziomu docelowego: poziom docelowy 3 — Zaawansowany; luka 1; priorytet Średni; Szansą jest szybsze wdrażanie wariantów; ryzykiem dalszy wzrost wyjątków technologicznych; Ocena jest deklarowana; pilotaż ma najpierw potwierdzić rzeczywistą powtarzalność. Najbliższy krok: Zdefiniować moduły produktu i reguły wariantowania dla jednej rodziny komponentów przed kolejnym uruchomieniem. Warunek: Wybór rodziny pilotażowej i dostęp do aktualnych BOM oraz marszrut. Oczekiwany rezultat: Nowy wariant powstaje z zatwierdzonych modułów, a odstępstwa są jawnie rejestrowane. Hipoteza przyczyny: Hipoteza: brak właściciela architektury produktu utrzymuje projektowanie wariantów per zlecenie.
+[Heading2] Wnioski rozdziału
+[Tresc] Na osi 2 oceniono 3 z 5 obszarów. Największa luka wynosi 2, a liczba pominięć wynosi 0. 2A Produkty Cyfrowe: poziom obecny 1, poziom docelowy 3, luka 2, pewność średnia, liczba dowodów 0. Rekomendacja 2A: „Przeprowadzić wywiady z dwoma klientami o wartości portalu partii i dokumentacji oraz opisać minimalny zakres usługi.” Oczekiwany rezultat 2A: „Powstaje potwierdzona lub odrzucona hipoteza usługi z listą potrzebnych danych.” 2D Dopasowanie Produktu do Oczekiwań Klienta: poziom obecny 2, poziom docelowy 4, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 2D: „Wprowadzić wspólny rejestr zmian wymagań klienta z oceną wpływu na wyrób, proces i plan kontroli.” Oczekiwany rezultat 2D: „Każda zmiana ma status, właściciela i dowód wdrożenia we właściwych dokumentach procesu.” 2E Skalowalność Produktu: poziom obecny 2, poziom docelowy 3, luka 1, pewność średnia, liczba dowodów 0. Rekomendacja 2E: „Zdefiniować moduły produktu i reguły wariantowania dla jednej rodziny komponentów przed kolejnym uruchomieniem.” Oczekiwany rezultat 2E: „Nowy wariant powstaje z zatwierdzonych modułów, a odstępstwa są jawnie rejestrowane.” Zapisane poziomy i luki wynoszą: 2A: 1 do 3, luka 2; 2D: 2 do 4, luka 2; 2E: 2 do 3, luka 1. Wnioski cytują rekomendacje z findingów i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.
+[Kicker] LINIA DECYZYJNA
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować działania na obszarze 2A o największej luce 2 na osi 2.
+Priorytet | Priorytet Wysoki wynika z największej luki 2 na osi 2.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 2A: Powstaje potwierdzona lub odrzucona hipoteza usługi z listą potrzebnych danych.
+--- /TABELA ---
+[Kicker] Rozdział 3 z 7 · oś 3 struktury DRD
+[Heading1] 3. Cyfrowe Modele Biznesowe
+[Tresc] Oś 3, Cyfrowe Modele Biznesowe, obejmuje 5 obszarów. Oceniono 3 z 5 obszarów, a liczba pominięć wynosi 1. Poziomy obecne mieszczą się od 1 do 2, natomiast poziomy docelowe od 2 do 4. Stan udokumentowany dotyczy 1 obszarów, stan niepełny 1, a stan zadeklarowany 1. Luki mieszczą się od 1 do 2. Największą lukę 2 mają: 3A Modele E-commerce, 3E Modele Monetyzacji Danych. Zapisane poziomy obszarów to: 3A od 2 do 4, luka 2; 3C od 1 do 2, luka 1; 3E od 1 do 3, luka 2. Dane pochodzą z zamrożonego Outputu. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.
+[Heading2] Matryca poziomów dojrzałości
+--- TABELA ---
+Obszar | 1 | 2 | 3 | 4 | 5 | Luka | Priorytet
+Modele E-commerce |  | 2 |  | 4 |  | 2 | Wysoki
+Rozwiązania Platformowe |  |  |  |  |  | — | —
+Model As-a-Service | 1 | 2 |  |  |  | 1 | Średni
+Modele Współdzielenia Zasobów |  |  |  |  |  | — | —
+Modele Monetyzacji Danych | 1 |  | 3 |  |  | 2 | Wysoki
+--- /TABELA ---
+[Caption] Tabela 6. Tabela obejmuje 5 obszarów osi 3. Kolumny poziomów pokazują skalę od 1 do 5; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-08-30.
+[Heading2] Ocena obszarów
+[Heading3] 3A Modele E-commerce
+[Sygnatura] Poziom obecny: 2 (Intermediate) · Poziom docelowy: 4 (Advanced Personalization) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Intermediate; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Zapytania i zamówienia są obsługiwane cyfrowo, ale kanał klienta nie prowadzi samodzielnie od konfiguracji do potwierdzenia terminu. Dane z wiadomości są nadal przepisywane do ERP, co ogranicza skalę obsługi mniejszych zamówień. Luka i sens poziomu docelowego: poziom docelowy 4 — Advanced Personalization; luka 2; priorytet Wysoki; Szansą jest tańsza obsługa powtarzalnych zamówień; ryzykiem błędna obietnica bez danych o zdolności; Kanał powinien najpierw obsłużyć powtarzalny, kontrolowany zakres zamiast całego portfolio. Najbliższy krok: Uruchomić dla wybranych części portal zapytania z walidacją numeru detalu, ilości i oczekiwanego terminu. Warunek: Stabilny katalog detali i reguła potwierdzania terminu przez planowanie. Oczekiwany rezultat: Kompletne zapytanie trafia do ERP bez ponownego przepisywania i z jawnym statusem terminu. Hipoteza przyczyny: Hipoteza: rozwiązania cyfrowe wspierają komunikację, ale nie mają pełnego kontraktu transakcyjnego z ERP.
+[Heading3] 3B Rozwiązania Platformowe
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszar pominięty w ocenie — kod: poza modelem operacyjnym.
+[Heading3] 3C Model As-a-Service
+[Sygnatura] Poziom obecny: 1 (Basic) · Poziom docelowy: 2 (Intermediate) · Luka: 1 · Priorytet: Średni · Dowody: zadeklarowane
+[Tresc] Stan faktyczny: poziom obecny 1 — Basic; liczba dowodów: 0. Ocena i wiarygodność: pewność średnia, stan dowodów zadeklarowane. Znaczenie dla przedsiębiorstwa: Firma sprzedaje komponenty i usługi narzędziowe jako pojedyncze zlecenia. Nie ma potwierdzonego modelu abonamentowego; rozważane są cykliczne pakiety dokumentacji i monitoringu jakości. Luka i sens poziomu docelowego: poziom docelowy 2 — Intermediate; luka 1; priorytet Średni; Szansą jest powtarzalny przychód; ryzykiem abonament bez pokrycia kosztu danych i wsparcia; Przy deklarowanym stanie nie ma podstaw do budowy platformy przed walidacją ekonomiki. Najbliższy krok: Policzyć koszt obsługi cyklicznej i zweryfikować z jednym klientem gotowość do stałego pakietu raportowego. Warunek: Zakres usługi, koszt przygotowania danych i zgoda klienta pilotażowego. Oczekiwany rezultat: Firma ma decyzję go/no-go opartą na koszcie i informacji od klienta. Hipoteza przyczyny: Hipoteza: brak mierzonego kosztu obsługi uniemożliwia wycenę usługi cyklicznej.
+[Heading3] 3D Modele Współdzielenia Zasobów
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 3D nie oceniono — brak danych źródłowych.
+[Heading3] 3E Modele Monetyzacji Danych
+[Sygnatura] Poziom obecny: 1 (Basic) · Poziom docelowy: 3 (Advanced) · Luka: 2 · Priorytet: Wysoki · Dowody: niepełne
+[Tresc] Stan faktyczny: poziom obecny 1 — Basic; liczba dowodów: 0. Ocena i wiarygodność: pewność niska, stan dowodów niepełne. Znaczenie dla przedsiębiorstwa: Dane procesu i jakości służą głównie do realizacji kontraktów i analiz wewnętrznych. Nie potwierdzono, które zbiory mogą mieć odrębną wartość dla klienta ani jakie ograniczenia umowne dotyczą ich wykorzystania. Luka i sens poziomu docelowego: poziom docelowy 3 — Advanced; luka 2; priorytet Wysoki; Szansą jest usługa analityczna; ryzykiem naruszenie poufności lub sprzedaż danych o niskiej jakości; Niepełne dowody prawne i jakościowe wymagają kwalifikacji przed eksperymentem rynkowym. Najbliższy krok: Sklasyfikować zbiory danych dla jednej linii oraz sprawdzić prawa, jakość i możliwy przypadek użycia z klientem. Warunek: Przegląd umów, właściciel danych i karta jakości zbioru. Oczekiwany rezultat: Powstaje lista danych dopuszczonych, niedopuszczonych i wymagających uzupełnienia. Hipoteza przyczyny: Hipoteza: dane są traktowane jako produkt uboczny procesu, bez właściciela wartości i zgodności.
+[Heading2] Wnioski rozdziału
+[Tresc] Na osi 3 oceniono 3 z 5 obszarów. Największa luka wynosi 2, a liczba pominięć wynosi 1. 3A Modele E-commerce: poziom obecny 2, poziom docelowy 4, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 3A: „Uruchomić dla wybranych części portal zapytania z walidacją numeru detalu, ilości i oczekiwanego terminu.” Oczekiwany rezultat 3A: „Kompletne zapytanie trafia do ERP bez ponownego przepisywania i z jawnym statusem terminu.” 3E Modele Monetyzacji Danych: poziom obecny 1, poziom docelowy 3, luka 2, pewność niska, liczba dowodów 0. Rekomendacja 3E: „Sklasyfikować zbiory danych dla jednej linii oraz sprawdzić prawa, jakość i możliwy przypadek użycia z klientem.” Oczekiwany rezultat 3E: „Powstaje lista danych dopuszczonych, niedopuszczonych i wymagających uzupełnienia.” 3C Model As-a-Service: poziom obecny 1, poziom docelowy 2, luka 1, pewność średnia, liczba dowodów 0. Rekomendacja 3C: „Policzyć koszt obsługi cyklicznej i zweryfikować z jednym klientem gotowość do stałego pakietu raportowego.” Oczekiwany rezultat 3C: „Firma ma decyzję go/no-go opartą na koszcie i informacji od klienta.” Zapisane poziomy i luki wynoszą: 3A: 2 do 4, luka 2; 3C: 1 do 2, luka 1; 3E: 1 do 3, luka 2. Wnioski cytują rekomendacje z findingów i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.
+[Kicker] LINIA DECYZYJNA
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować działania na obszarze 3A o największej luce 2 na osi 3.
+Priorytet | Priorytet Wysoki wynika z największej luki 2 na osi 3.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 3A: Kompletne zapytanie trafia do ERP bez ponownego przepisywania i z jawnym statusem terminu.
+--- /TABELA ---
+[Kicker] Rozdział 4 z 7 · oś 4 struktury DRD
+[Heading1] 4. Zarządzanie Danymi
+[Tresc] Oś 4, Zarządzanie Danymi, obejmuje 5 obszarów. Oceniono 4 z 5 obszarów, a liczba pominięć wynosi 1. Poziomy obecne mieszczą się od 2 do 4, natomiast poziomy docelowe od 4 do 6. Stan udokumentowany dotyczy 3 obszarów, stan niepełny 1, a stan zadeklarowany 0. Luki mieszczą się od 2 do 3. Największą lukę 3 mają: 4B Metodologia Przechowywania Danych. Zapisane poziomy obszarów to: 4A od 4 do 6, luka 2; 4B od 2 do 5, luka 3; 4C od 3 do 5, luka 2; 4D od 2 do 4, luka 2. Dane pochodzą z zamrożonego Outputu. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.
+[Heading2] Matryca poziomów dojrzałości
+--- TABELA ---
+Obszar | 1 | 2 | 3 | 4 | 5 | 6 | 7 | Luka | Priorytet
+Zbieranie Danych |  |  |  | 4 |  | 6 |  | 2 | Wysoki
+Metodologia Przechowywania Danych |  | 2 |  |  | 5 |  |  | 3 | Krytyczny
+Komunikacja Danych |  |  | 3 |  | 5 |  |  | 2 | Wysoki
+Analiza Big Data |  | 2 |  | 4 |  |  |  | 2 | Wysoki
+Przetwarzanie Danych |  |  |  |  |  |  |  | — | —
+--- /TABELA ---
+[Caption] Tabela 8. Tabela obejmuje 5 obszarów osi 4. Kolumny poziomów pokazują skalę od 1 do 7; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-08-30.
+[Heading2] Ocena obszarów
+[Heading3] 4A Zbieranie Danych
+[Sygnatura] Poziom obecny: 4 (Data from Machines and Devices) · Poziom docelowy: 6 (Data from Physical Objects) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 4 — Data from Machines and Devices; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Maszyny i systemy zbierają istotne dane produkcyjne, lecz zakres oraz częstotliwość różnią się między liniami. Dane z kluczowych stanowisk są dostępne, ale nie wszystkie mają wspólny identyfikator zlecenia, operacji i partii. Luka i sens poziomu docelowego: poziom docelowy 6 — Data from Physical Objects; luka 2; priorytet Wysoki; Szansą jest analiza przyczyn odchyleń; ryzykiem porównywanie rekordów bez pewnej tożsamości procesu; Istniejące źródła dają szybki efekt po ujednoliceniu ich kontekstu. Najbliższy krok: Ustalić minimalny kontrakt danych maszyny i uzupełnić identyfikatory zlecenia, operacji oraz partii na linii pilotażowej. Warunek: Inwentarz źródeł OT, właściciele sygnałów i uzgodnione identyfikatory. Oczekiwany rezultat: Dane z linii można połączyć w historię zlecenia bez ręcznego dopasowywania czasu. Hipoteza przyczyny: Hipoteza: kolejne źródła uruchamiano projektowo bez wspólnego modelu zdarzeń produkcyjnych.
+[Heading3] 4B Metodologia Przechowywania Danych
+[Sygnatura] Poziom obecny: 2 (Graphic Symbols) · Poziom docelowy: 5 (Mobile Data Collection) · Luka: 3 · Priorytet: Krytyczny · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Graphic Symbols; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Dane operacyjne są rozproszone między ERP, MES, plikami i bazami stanowiskowymi. Kopie służą różnym raportom, a odpowiedzialność za retencję, korektę i wersję referencyjną nie jest jednoznaczna. Luka i sens poziomu docelowego: poziom docelowy 5 — Mobile Data Collection; luka 3; priorytet Krytyczny; Ryzykiem są sprzeczne wyniki analiz i brak możliwości odtworzenia wersji użytej w decyzji; Luka trzech poziomów blokuje wiarygodną analitykę oraz wykorzystanie danych w AI. Najbliższy krok: Zbudować katalog najważniejszych zbiorów z właścicielem, miejscem referencyjnym, retencją i regułą korekty. Warunek: Lista raportów krytycznych i wskazani właściciele biznesowi danych. Oczekiwany rezultat: Dla każdego krytycznego zbioru wiadomo, gdzie jest źródło i kto zatwierdza korektę. Hipoteza przyczyny: Hipoteza: przechowywanie rozwijało się wokół raportów działowych, nie wspólnego cyklu życia danych.
+[Heading3] 4C Komunikacja Danych
+[Sygnatura] Poziom obecny: 3 (Advanced Technological Solutions) · Poziom docelowy: 5 (Mobile Data Collection) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 3 — Advanced Technological Solutions; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Raporty produkcyjne i jakościowe są dystrybuowane cyfrowo, ale odbiorcy korzystają z odmiennych wersji oraz częstotliwości. Eskalacja odchylenia zależy od ręcznego przekazania informacji przez lidera zmiany. Luka i sens poziomu docelowego: poziom docelowy 5 — Mobile Data Collection; luka 2; priorytet Wysoki; Ryzykiem jest opóźniona reakcja; szansą ograniczenie raportów bez decyzji lub właściciela; Dane już istnieją, lecz ich wartość zależy od terminowego dotarcia do decydenta. Najbliższy krok: Zdefiniować wspólny zestaw zdarzeń i progów, które automatycznie kierują alert do nazwanej roli. Warunek: Progi operacyjne, role odbiorców i ścieżka potwierdzenia alertu. Oczekiwany rezultat: Odchylenie trafia do właściwej roli z terminem reakcji i statusem zamknięcia. Hipoteza przyczyny: Hipoteza: kanały raportowe nie mają uzgodnionego kontraktu odbiorcy i czasu reakcji.
+[Heading3] 4D Analiza Big Data
+[Sygnatura] Poziom obecny: 2 (Graphic Symbols) · Poziom docelowy: 4 (Data from Machines and Devices) · Luka: 2 · Priorytet: Wysoki · Dowody: niepełne
+[Tresc] Stan faktyczny: poziom obecny 2 — Graphic Symbols; liczba dowodów: 0. Ocena i wiarygodność: pewność niska, stan dowodów niepełne. Znaczenie dla przedsiębiorstwa: Analizy przyczynowe są wykonywane dla wybranych problemów jakościowych, lecz przygotowanie danych jest ręczne. Nie ma kompletnego dowodu, że modele i zapytania są powtarzalne między liniami. Luka i sens poziomu docelowego: poziom docelowy 4 — Data from Machines and Devices; luka 2; priorytet Wysoki; Szansą jest skrócenie analiz; ryzykiem decyzja na wyniku, którego nie można odtworzyć; Niepełne dowody wymagają najpierw potwierdzenia powtarzalności, nie rozbudowy narzędzi. Najbliższy krok: Odtworzyć jedną analizę jakościową z wersjonowanym zbiorem, zapytaniem i wynikiem oraz zmierzyć nakład przygotowania. Warunek: Właściciel przypadku, dostęp do danych źródłowych i kryterium poprawności. Oczekiwany rezultat: Druga osoba odtwarza wynik z tego samego pakietu danych bez ręcznych uzgodnień. Hipoteza przyczyny: Hipoteza: praca analityczna nie ma standardu publikacji i ponownego użycia.
+[Heading3] 4E Przetwarzanie Danych
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Pominięte pytania: 4E-L1 — odroczone do kolejnej rewizji; 4E-L2 — odroczone do kolejnej rewizji.
+[Heading2] Wnioski rozdziału
+[Tresc] Na osi 4 oceniono 4 z 5 obszarów. Największa luka wynosi 3, a liczba pominięć wynosi 1. 4B Metodologia Przechowywania Danych: poziom obecny 2, poziom docelowy 5, luka 3, pewność wysoka, liczba dowodów 1. Rekomendacja 4B: „Zbudować katalog najważniejszych zbiorów z właścicielem, miejscem referencyjnym, retencją i regułą korekty.” Oczekiwany rezultat 4B: „Dla każdego krytycznego zbioru wiadomo, gdzie jest źródło i kto zatwierdza korektę.” 4A Zbieranie Danych: poziom obecny 4, poziom docelowy 6, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 4A: „Ustalić minimalny kontrakt danych maszyny i uzupełnić identyfikatory zlecenia, operacji oraz partii na linii pilotażowej.” Oczekiwany rezultat 4A: „Dane z linii można połączyć w historię zlecenia bez ręcznego dopasowywania czasu.” 4C Komunikacja Danych: poziom obecny 3, poziom docelowy 5, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 4C: „Zdefiniować wspólny zestaw zdarzeń i progów, które automatycznie kierują alert do nazwanej roli.” Oczekiwany rezultat 4C: „Odchylenie trafia do właściwej roli z terminem reakcji i statusem zamknięcia.” Zapisane poziomy i luki wynoszą: 4A: 4 do 6, luka 2; 4B: 2 do 5, luka 3; 4C: 3 do 5, luka 2; 4D: 2 do 4, luka 2. Wnioski cytują rekomendacje z findingów i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.
+[Kicker] LINIA DECYZYJNA
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować działania na obszarze 4B o największej luce 3 na osi 4.
+Priorytet | Priorytet Krytyczny wynika z największej luki 3 na osi 4.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 4B: Dla każdego krytycznego zbioru wiadomo, gdzie jest źródło i kto zatwierdza korektę.
+--- /TABELA ---
+[Kicker] Rozdział 5 z 7 · oś 5 struktury DRD
+[Heading1] 5. Kultura Transformacji
+[Tresc] Oś 5, Kultura Transformacji, obejmuje 5 obszarów. Oceniono 3 z 5 obszarów, a liczba pominięć wynosi 1. Poziomy obecne mieszczą się od 2 do 4, natomiast poziomy docelowe od 4 do 5. Stan udokumentowany dotyczy 2 obszarów, stan niepełny 0, a stan zadeklarowany 1. Luki mieszczą się od 1 do 2. Największą lukę 2 mają: 5B Gotowość na zmianę, 5C Ciągły rozwój kompetencji. Zapisane poziomy obszarów to: 5A od 4 do 5, luka 1; 5B od 3 do 5, luka 2; 5C od 2 do 4, luka 2. Dane pochodzą z zamrożonego Outputu. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.
+[Heading2] Matryca poziomów dojrzałości
+--- TABELA ---
+Obszar | 1 | 2 | 3 | 4 | 5 | 6 | Luka | Priorytet
+Postawy przywódcze |  |  |  | 4 | 5 |  | 1 | Średni
+Gotowość na zmianę |  |  | 3 |  | 5 |  | 2 | Wysoki
+Ciągły rozwój kompetencji |  | 2 |  | 4 |  |  | 2 | Wysoki
+Kultura innowacji |  |  |  |  |  |  | — | —
+Dostępność zasobów |  |  |  |  |  |  | — | —
+--- /TABELA ---
+[Caption] Tabela 10. Tabela obejmuje 5 obszarów osi 5. Kolumny poziomów pokazują skalę od 1 do 6; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-08-30.
+[Heading2] Ocena obszarów
+[Heading3] 5A Postawy przywódcze
+[Sygnatura] Poziom obecny: 4 (Wspierający) · Poziom docelowy: 5 (Innowator) · Luka: 1 · Priorytet: Średni · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 4 — Wspierający; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Kadra kierownicza sponsoruje usprawnienia cyfrowe i uczestniczy w przeglądach, ale decyzje projektowe nie zawsze wskazują oczekiwany efekt biznesowy. Wsparcie jest widoczne, natomiast portfel zmian nie ma jednolitego rytmu priorytetyzacji. Luka i sens poziomu docelowego: poziom docelowy 5 — Innowator; luka 1; priorytet Średni; Szansą jest szybsze usuwanie blokad; ryzykiem utrzymywanie projektów bez potwierdzonego efektu; Dojrzała postawa liderów pozwala szybko wzmocnić dyscyplinę bez tworzenia nowej struktury. Najbliższy krok: Wprowadzić miesięczny przegląd inicjatyw z właścicielem, efektem, zależnościami i decyzją kontynuuj/zatrzymaj. Warunek: Jedna lista inicjatyw i wspólne kryteria decyzji zarządczej. Oczekiwany rezultat: Każda inicjatywa ma aktualną decyzję, właściciela i nazwany efekt do sprawdzenia. Hipoteza przyczyny: Hipoteza: sponsoring koncentruje się na starcie projektu, a nie na kolejnych decyzjach portfelowych.
+[Heading3] 5B Gotowość na zmianę
+[Sygnatura] Poziom obecny: 3 (Dyrektywny) · Poziom docelowy: 5 (Innowator) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 3 — Dyrektywny; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Pracownicy uczestniczą w zmianach i zgłaszają usprawnienia, lecz komunikacja wpływu na role jest nieregularna. Liderzy zmian rozwiązują opór lokalnie, bez wspólnego rejestru ryzyk adopcji. Luka i sens poziomu docelowego: poziom docelowy 5 — Innowator; luka 2; priorytet Wysoki; Ryzykiem jest techniczne wdrożenie bez trwałej zmiany pracy; szansą wykorzystanie aktywnych liderów zmianowych; Luka dwóch poziomów wpływa na skuteczność wszystkich inicjatyw technologicznych. Najbliższy krok: Dla każdej inicjatywy opisać grupy dotknięte zmianą, oczekiwane zachowania i właściciela wsparcia adopcji. Warunek: Mapa interesariuszy i mierzalne zachowania po wdrożeniu. Oczekiwany rezultat: Zespół wie, co zmienia się w jego pracy, a problemy adopcji mają właściciela. Hipoteza przyczyny: Hipoteza: zarządzanie zmianą jest traktowane jako komunikacja projektu, nie osobny strumień rezultatów.
+[Heading3] 5C Ciągły rozwój kompetencji
+[Sygnatura] Poziom obecny: 2 (Autokratyczny) · Poziom docelowy: 4 (Wspierający) · Luka: 2 · Priorytet: Wysoki · Dowody: zadeklarowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Autokratyczny; liczba dowodów: 0. Ocena i wiarygodność: pewność średnia, stan dowodów zadeklarowane. Znaczenie dla przedsiębiorstwa: Szkolenia odbywają się przy wdrożeniach systemów i maszyn, lecz nie ma wspólnej mapy kompetencji cyfrowych dla ról. Potrzeby rozwojowe są deklarowane przez kierowników i nie zawsze wynikają z obserwacji pracy. Luka i sens poziomu docelowego: poziom docelowy 4 — Wspierający; luka 2; priorytet Wysoki; Ryzykiem jest niewykorzystanie funkcji systemów; szansą skierowanie rozwoju na trzy role krytyczne; Stan deklarowany wymaga praktycznej weryfikacji przed szerokim programem szkoleniowym. Najbliższy krok: Zbudować mapę kompetencji dla planisty, lidera zmiany i inżyniera jakości oraz ocenić luki na realnych zadaniach. Warunek: Opis zadań docelowych i udział przełożonych w ocenie. Oczekiwany rezultat: Każda rola ma nazwane luki i plan ćwiczeń powiązany z zadaniami. Hipoteza przyczyny: Hipoteza: plan szkoleń jest powiązany z zakupami, nie z docelowym sposobem pracy.
+[Heading3] 5D Kultura innowacji
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Pominięte pytania: 5D-L1 — poza zakresem zlecenia; 5D-L2 — poza modelem operacyjnym.
+[Heading3] 5E Dostępność zasobów
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 5E nie oceniono — brak danych źródłowych.
+[Heading2] Wnioski rozdziału
+[Tresc] Na osi 5 oceniono 3 z 5 obszarów. Największa luka wynosi 2, a liczba pominięć wynosi 1. 5B Gotowość na zmianę: poziom obecny 3, poziom docelowy 5, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 5B: „Dla każdej inicjatywy opisać grupy dotknięte zmianą, oczekiwane zachowania i właściciela wsparcia adopcji.” Oczekiwany rezultat 5B: „Zespół wie, co zmienia się w jego pracy, a problemy adopcji mają właściciela.” 5C Ciągły rozwój kompetencji: poziom obecny 2, poziom docelowy 4, luka 2, pewność średnia, liczba dowodów 0. Rekomendacja 5C: „Zbudować mapę kompetencji dla planisty, lidera zmiany i inżyniera jakości oraz ocenić luki na realnych zadaniach.” Oczekiwany rezultat 5C: „Każda rola ma nazwane luki i plan ćwiczeń powiązany z zadaniami.” 5A Postawy przywódcze: poziom obecny 4, poziom docelowy 5, luka 1, pewność wysoka, liczba dowodów 1. Rekomendacja 5A: „Wprowadzić miesięczny przegląd inicjatyw z właścicielem, efektem, zależnościami i decyzją kontynuuj/zatrzymaj.” Oczekiwany rezultat 5A: „Każda inicjatywa ma aktualną decyzję, właściciela i nazwany efekt do sprawdzenia.” Zapisane poziomy i luki wynoszą: 5A: 4 do 5, luka 1; 5B: 3 do 5, luka 2; 5C: 2 do 4, luka 2. Wnioski cytują rekomendacje z findingów i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.
+[Kicker] LINIA DECYZYJNA
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować działania na obszarze 5B o największej luce 2 na osi 5.
+Priorytet | Priorytet Wysoki wynika z największej luki 2 na osi 5.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 5B: Zespół wie, co zmienia się w jego pracy, a problemy adopcji mają właściciela.
+--- /TABELA ---
+[Kicker] Rozdział 6 z 7 · oś 6 struktury DRD
+[Heading1] 6. Cyberbezpieczeństwo
+[Tresc] Oś 6, Cyberbezpieczeństwo, obejmuje 5 obszarów. Oceniono 3 z 5 obszarów, a liczba pominięć wynosi 1. Poziomy obecne mieszczą się od 1 do 3, natomiast poziomy docelowe od 4 do 5. Stan udokumentowany dotyczy 3 obszarów, stan niepełny 0, a stan zadeklarowany 0. Luki mieszczą się od 2 do 3. Największą lukę 3 mają: 6A Strategia i zarządzanie ryzykiem, 6E Plany awaryjne. Zapisane poziomy obszarów to: 6A od 2 do 5, luka 3; 6C od 3 do 5, luka 2; 6E od 1 do 4, luka 3. Dane pochodzą z zamrożonego Outputu. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.
+[Heading2] Matryca poziomów dojrzałości
+--- TABELA ---
+Obszar | 1 | 2 | 3 | 4 | 5 | 6 | Luka | Priorytet
+Strategia i zarządzanie ryzykiem |  | 2 |  |  | 5 |  | 3 | Krytyczny
+Ochrona sieci i systemów |  |  |  |  |  |  | — | —
+Ochrona danych |  |  | 3 |  | 5 |  | 2 | Wysoki
+Edukacja i jakość systemów |  |  |  |  |  |  | — | —
+Plany awaryjne | 1 |  |  | 4 |  |  | 3 | Krytyczny
+--- /TABELA ---
+[Caption] Tabela 12. Tabela obejmuje 5 obszarów osi 6. Kolumny poziomów pokazują skalę od 1 do 6; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-08-30.
+[Heading2] Ocena obszarów
+[Heading3] 6A Strategia i zarządzanie ryzykiem
+[Sygnatura] Poziom obecny: 2 (Analiza ryzyka) · Poziom docelowy: 5 (HR w strategii) · Luka: 3 · Priorytet: Krytyczny · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Analiza ryzyka; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Ryzyka IT są omawiane, lecz środowisko OT nie ma jednolitego rejestru aktywów, właścicieli i scenariuszy zagrożeń. Decyzje ochronne są podejmowane przy projektach lub incydentach, a nie według wspólnego priorytetu. Luka i sens poziomu docelowego: poziom docelowy 5 — HR w strategii; luka 3; priorytet Krytyczny; Ryzykiem jest zatrzymanie produkcji bez uzgodnionego priorytetu odtworzenia; Luka trzech poziomów dotyczy podstawowej zdolności zarządzania ryzykiem OT. Najbliższy krok: Utworzyć rejestr krytycznych aktywów IT/OT z właścicielem, wpływem na produkcję i planem postępowania z ryzykiem. Warunek: Inwentarz sieci i urządzeń, udział IT, automatyki oraz właścicieli procesów. Oczekiwany rezultat: Najważniejsze aktywa mają właściciela, ocenę wpływu i zatwierdzone działanie ograniczające. Hipoteza przyczyny: Hipoteza: odpowiedzialność IT i utrzymania ruchu nie łączy się w jednym procesie ryzyka.
+[Heading3] 6B Ochrona sieci i systemów
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszar pominięty w ocenie — kod: zastąpione innym rozwiązaniem.
+[Heading3] 6C Ochrona danych
+[Sygnatura] Poziom obecny: 3 (Plan działań) · Poziom docelowy: 5 (HR w strategii) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 3 — Plan działań; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Dostęp do systemów jest nadawany według ról, ale przegląd uprawnień i klasyfikacja danych nie obejmują wszystkich repozytoriów technicznych. Kopie dokumentacji trafiają do współdzielonych katalogów o różnych zasadach dostępu. Luka i sens poziomu docelowego: poziom docelowy 5 — HR w strategii; luka 2; priorytet Wysoki; Ryzykiem jest niekontrolowane ujawnienie dokumentacji klienta lub technologii; Istniejące mechanizmy dostępowe pozwalają skupić się na lukach w pokryciu i przeglądzie. Najbliższy krok: Sklasyfikować dane produkcyjne i techniczne oraz przeprowadzić przegląd dostępów do repozytoriów krytycznych. Warunek: Właściciele repozytoriów, klasy danych i lista aktywnych użytkowników. Oczekiwany rezultat: Dostęp do danych krytycznych wynika z roli i jest okresowo potwierdzany. Hipoteza przyczyny: Hipoteza: zasady ochrony są silniejsze w systemach centralnych niż w katalogach roboczych.
+[Heading3] 6D Edukacja i jakość systemów
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 6D nie oceniono — brak danych źródłowych.
+[Heading3] 6E Plany awaryjne
+[Sygnatura] Poziom obecny: 1 (Brak strategii) · Poziom docelowy: 4 (Polityki bezpieczeństwa) · Luka: 3 · Priorytet: Krytyczny · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 1 — Brak strategii; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Kopie zapasowe są wykonywane, lecz odtworzenie procesów produkcyjnych po awarii OT nie zostało potwierdzone pełnym ćwiczeniem. Zależności między ERP, MES, etykietami i instrukcjami stanowiskowymi nie mają wspólnej kolejności powrotu. Luka i sens poziomu docelowego: poziom docelowy 4 — Polityki bezpieczeństwa; luka 3; priorytet Krytyczny; Ryzykiem jest dłuższy niż zakładany przestój i brak danych do bezpiecznego wznowienia produkcji; Luka trzech poziomów i bezpośredni wpływ na ciągłość czynią ćwiczenie priorytetem. Najbliższy krok: Przeprowadzić ćwiczenie odtworzenia jednej linii z mierzeniem czasu i listą zależności systemów oraz danych. Warunek: Zatwierdzony scenariusz, kopie testowe i udział IT, utrzymania ruchu, jakości oraz produkcji. Oczekiwany rezultat: Firma zna rzeczywisty czas odtworzenia, kolejność działań i luki wymagające inwestycji. Hipoteza przyczyny: Hipoteza: plany ciągłości opisują systemy oddzielnie, bez scenariusza produkcyjnego end-to-end.
+[Heading2] Wnioski rozdziału
+[Tresc] Na osi 6 oceniono 3 z 5 obszarów. Największa luka wynosi 3, a liczba pominięć wynosi 1. 6A Strategia i zarządzanie ryzykiem: poziom obecny 2, poziom docelowy 5, luka 3, pewność wysoka, liczba dowodów 1. Rekomendacja 6A: „Utworzyć rejestr krytycznych aktywów IT/OT z właścicielem, wpływem na produkcję i planem postępowania z ryzykiem.” Oczekiwany rezultat 6A: „Najważniejsze aktywa mają właściciela, ocenę wpływu i zatwierdzone działanie ograniczające.” 6E Plany awaryjne: poziom obecny 1, poziom docelowy 4, luka 3, pewność wysoka, liczba dowodów 1. Rekomendacja 6E: „Przeprowadzić ćwiczenie odtworzenia jednej linii z mierzeniem czasu i listą zależności systemów oraz danych.” Oczekiwany rezultat 6E: „Firma zna rzeczywisty czas odtworzenia, kolejność działań i luki wymagające inwestycji.” 6C Ochrona danych: poziom obecny 3, poziom docelowy 5, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 6C: „Sklasyfikować dane produkcyjne i techniczne oraz przeprowadzić przegląd dostępów do repozytoriów krytycznych.” Oczekiwany rezultat 6C: „Dostęp do danych krytycznych wynika z roli i jest okresowo potwierdzany.” Zapisane poziomy i luki wynoszą: 6A: 2 do 5, luka 3; 6C: 3 do 5, luka 2; 6E: 1 do 4, luka 3. Wnioski cytują rekomendacje z findingów i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.
+[Kicker] LINIA DECYZYJNA
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować działania na obszarze 6A o największej luce 3 na osi 6.
+Priorytet | Priorytet Krytyczny wynika z największej luki 3 na osi 6.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 6A: Najważniejsze aktywa mają właściciela, ocenę wpływu i zatwierdzone działanie ograniczające.
+--- /TABELA ---
+[Kicker] Rozdział 7 z 7 · oś 7 struktury DRD
+[Heading1] 7. Dojrzałość AI
+[Tresc] Oś 7, Dojrzałość AI, obejmuje 5 obszarów. Oceniono 3 z 5 obszarów, a liczba pominięć wynosi 1. Poziomy obecne mieszczą się od 1 do 2, natomiast poziomy docelowe od 3 do 4. Stan udokumentowany dotyczy 1 obszarów, stan niepełny 0, a stan zadeklarowany 2. Luki mieszczą się od 2 do 2. Największą lukę 2 mają: 7A Dane i Fundamenty AI, 7B Procesy Wspierane przez AI, 7E Kompetencje i Kultura AI. Zapisane poziomy obszarów to: 7A od 2 do 4, luka 2; 7B od 1 do 3, luka 2; 7E od 1 do 3, luka 2. Dane pochodzą z zamrożonego Outputu. Każdy stan dowodowy zachowuje znaczenie zapisane w kontrakcie i nie jest wzmacniany. Zestawienie nie dodaje benchmarku ani oceny rynkowej; pokazuje wyłącznie poziomy, luki, stany dowodowe i pominięcia zapisane dla tej osi.
+[Heading2] Matryca poziomów dojrzałości
+--- TABELA ---
+Obszar | 1 | 2 | 3 | 4 | 5 | Luka | Priorytet
+Dane i Fundamenty AI |  | 2 |  | 4 |  | 2 | Wysoki
+Procesy Wspierane przez AI | 1 |  | 3 |  |  | 2 | Wysoki
+AI w Produktach i Usługach |  |  |  |  |  | — | —
+Governance, Bezpieczeństwo i Etyka |  |  |  |  |  | — | —
+Kompetencje i Kultura AI | 1 |  | 3 |  |  | 2 | Wysoki
+--- /TABELA ---
+[Caption] Tabela 14. Tabela obejmuje 5 obszarów osi 7. Kolumny poziomów pokazują skalę od 1 do 5; Luka jest różnicą między poziomem docelowym i obecnym, a Priorytet wynika z wielkości luki. Źródłem jest zamrożony Output z dnia 2026-08-30.
+[Heading2] Ocena obszarów
+[Heading3] 7A Dane i Fundamenty AI
+[Sygnatura] Poziom obecny: 2 (Structured Data in Silos) · Poziom docelowy: 4 (Fully AI-Ready Data Architecture) · Luka: 2 · Priorytet: Wysoki · Dowody: udokumentowane
+[Tresc] Stan faktyczny: poziom obecny 2 — Structured Data in Silos; liczba dowodów: 1. Ocena i wiarygodność: pewność wysoka, stan dowodów udokumentowane. Znaczenie dla przedsiębiorstwa: Dane potrzebne do analiz istnieją, ale ich jakość, właścicielstwo i historia zmian nie są zarządzane jako fundament rozwiązań AI. Łączenie danych z produkcji i jakości nadal wymaga ręcznej pracy ekspertów. Luka i sens poziomu docelowego: poziom docelowy 4 — Fully AI-Ready Data Architecture; luka 2; priorytet Wysoki; Ryzykiem są modele oparte na nieporównywalnych rekordach; szansą uporządkowanie danych wokół konkretnej decyzji; Bez fundamentu danych kolejne przypadki AI powielą ten sam koszt przygotowania. Najbliższy krok: Wybrać jeden przypadek AI i przygotować kartę danych z właścicielem, definicjami, jakością oraz ograniczeniami użycia. Warunek: Nazwany przypadek użycia, właściciel procesu i dostęp do historii danych. Oczekiwany rezultat: Zespół ma zweryfikowany zbiór treningowy lub świadomą decyzję, że danych brakuje. Hipoteza przyczyny: Hipoteza: inicjatywy AI są rozważane przed ustanowieniem produktu danych.
+[Heading3] 7B Procesy Wspierane przez AI
+[Sygnatura] Poziom obecny: 1 (Fragmented Data, No AI Readiness) · Poziom docelowy: 3 (Centralized Data & Initial AI Readiness) · Luka: 2 · Priorytet: Wysoki · Dowody: zadeklarowane
+[Tresc] Stan faktyczny: poziom obecny 1 — Fragmented Data, No AI Readiness; liczba dowodów: 0. Ocena i wiarygodność: pewność średnia, stan dowodów zadeklarowane. Znaczenie dla przedsiębiorstwa: Zespoły wskazują możliwości użycia AI w jakości i planowaniu, lecz nie ma wdrożonego procesu wspieranego przez model. Pomysły nie mają jeszcze miernika decyzji, właściciela ryzyka ani zasad nadzoru człowieka. Luka i sens poziomu docelowego: poziom docelowy 3 — Centralized Data & Initial AI Readiness; luka 2; priorytet Wysoki; Szansą jest ograniczenie ręcznej analizy; ryzykiem automatyzacja niejasnej lub niekontrolowanej decyzji; Stan deklarowany wymaga najpierw doprecyzowania procesu i dowodu wartości. Najbliższy krok: Wybrać jeden proces decyzyjny i opisać wejście, rekomendację modelu, decyzję człowieka oraz miarę skuteczności. Warunek: Właściciel procesu, miara bazowa i zasady eskalacji błędnej rekomendacji. Oczekiwany rezultat: Przypadek pilotażowy ma kontrakt odpowiedzialności i może zostać rzetelnie oceniony. Hipoteza przyczyny: Hipoteza: dyskusja o AI zaczyna się od technologii zamiast od decyzji operacyjnej.
+[Heading3] 7C AI w Produktach i Usługach
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Pominięte pytania: 7C-L1 — odroczone do kolejnej rewizji.
+[Heading3] 7D Governance, Bezpieczeństwo i Etyka
+[Sygnatura] Poziom obecny: — (—) · Poziom docelowy: — (—) · Luka: — · Priorytet: — · Dowody: nieocenione
+[Podpis] Obszaru 7D nie oceniono — brak danych źródłowych.
+[Heading3] 7E Kompetencje i Kultura AI
+[Sygnatura] Poziom obecny: 1 (Fragmented Data, No AI Readiness) · Poziom docelowy: 3 (Centralized Data & Initial AI Readiness) · Luka: 2 · Priorytet: Wysoki · Dowody: zadeklarowane
+[Tresc] Stan faktyczny: poziom obecny 1 — Fragmented Data, No AI Readiness; liczba dowodów: 0. Ocena i wiarygodność: pewność średnia, stan dowodów zadeklarowane. Znaczenie dla przedsiębiorstwa: W organizacji są osoby eksperymentujące z narzędziami AI, ale kompetencje, zasady bezpiecznego użycia i odpowiedzialność za wynik nie są ujednolicone. Wiedza pozostaje indywidualna i nie jest powiązana z rolami operacyjnymi. Luka i sens poziomu docelowego: poziom docelowy 3 — Centralized Data & Initial AI Readiness; luka 2; priorytet Wysoki; Ryzykiem jest ujawnienie danych lub przyjęcie błędnego wyniku; szansą szybkie zbudowanie świadomej praktyki; Kultura i kompetencje muszą rosnąć razem z pierwszymi kontrolowanymi przypadkami AI. Najbliższy krok: Ustalić zasady użycia AI i przeprowadzić warsztat na jednym zadaniu dla jakości, planowania oraz IT. Warunek: Zatwierdzone zasady danych, lista dopuszczonych narzędzi i właściciel szkolenia. Oczekiwany rezultat: Uczestnicy potrafią wykonać zadanie, zweryfikować wynik i wskazać przypadek wymagający eskalacji. Hipoteza przyczyny: Hipoteza: eksperymenty rozwijają się szybciej niż wspólne zasady i praktyka weryfikacji.
+[Heading2] Wnioski rozdziału
+[Tresc] Na osi 7 oceniono 3 z 5 obszarów. Największa luka wynosi 2, a liczba pominięć wynosi 1. 7A Dane i Fundamenty AI: poziom obecny 2, poziom docelowy 4, luka 2, pewność wysoka, liczba dowodów 1. Rekomendacja 7A: „Wybrać jeden przypadek AI i przygotować kartę danych z właścicielem, definicjami, jakością oraz ograniczeniami użycia.” Oczekiwany rezultat 7A: „Zespół ma zweryfikowany zbiór treningowy lub świadomą decyzję, że danych brakuje.” 7B Procesy Wspierane przez AI: poziom obecny 1, poziom docelowy 3, luka 2, pewność średnia, liczba dowodów 0. Rekomendacja 7B: „Wybrać jeden proces decyzyjny i opisać wejście, rekomendację modelu, decyzję człowieka oraz miarę skuteczności.” Oczekiwany rezultat 7B: „Przypadek pilotażowy ma kontrakt odpowiedzialności i może zostać rzetelnie oceniony.” 7E Kompetencje i Kultura AI: poziom obecny 1, poziom docelowy 3, luka 2, pewność średnia, liczba dowodów 0. Rekomendacja 7E: „Ustalić zasady użycia AI i przeprowadzić warsztat na jednym zadaniu dla jakości, planowania oraz IT.” Oczekiwany rezultat 7E: „Uczestnicy potrafią wykonać zadanie, zweryfikować wynik i wskazać przypadek wymagający eskalacji.” Zapisane poziomy i luki wynoszą: 7A: 2 do 4, luka 2; 7B: 1 do 3, luka 2; 7E: 1 do 3, luka 2. Wnioski cytują rekomendacje z findingów i zachowują ich identyfikatory; nie dodają porównania rynkowego ani własnej diagnozy.
+[Kicker] LINIA DECYZYJNA
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować działania na obszarze 7A o największej luce 2 na osi 7.
+Priorytet | Priorytet Wysoki wynika z największej luki 2 na osi 7.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 7A: Zespół ma zweryfikowany zbiór treningowy lub świadomą decyzję, że danych brakuje.
+--- /TABELA ---
+[Kicker] SYNTEZA
+[Heading1] 8. Wnioski końcowe
+[Tresc] W całym programie oceniono 23 z 39 obszarów w 7 osiach. Luki mieszczą się od 1 do 3, a liczba luk krytycznych wynosi 3. Stan udokumentowany dotyczy 14 obszarów, niepełny 3, a zadeklarowany 6. 4B Metodologia Przechowywania Danych: poziom obecny 2, docelowy 5, luka 3; rekomendacja: „Zbudować katalog najważniejszych zbiorów z właścicielem, miejscem referencyjnym, retencją i regułą korekty.”; oczekiwany rezultat: „Dla każdego krytycznego zbioru wiadomo, gdzie jest źródło i kto zatwierdza korektę.” 6A Strategia i zarządzanie ryzykiem: poziom obecny 2, docelowy 5, luka 3; rekomendacja: „Utworzyć rejestr krytycznych aktywów IT/OT z właścicielem, wpływem na produkcję i planem postępowania z ryzykiem.”; oczekiwany rezultat: „Najważniejsze aktywa mają właściciela, ocenę wpływu i zatwierdzone działanie ograniczające.” 6E Plany awaryjne: poziom obecny 1, docelowy 4, luka 3; rekomendacja: „Przeprowadzić ćwiczenie odtworzenia jednej linii z mierzeniem czasu i listą zależności systemów oraz danych.”; oczekiwany rezultat: „Firma zna rzeczywisty czas odtworzenia, kolejność działań i luki wymagające inwestycji.” 1A Procesy Sprzedaży: poziom obecny 3, docelowy 5, luka 2; rekomendacja: „Połączyć kwalifikację szansy w CRM z kontrolą zdolności produkcyjnej dla rodzin wyrobów i zapisywać potwierdzony termin jako część oferty.”; oczekiwany rezultat: „Oferta zawiera termin zweryfikowany na aktualnym planie, a wyjątki trafiają do jawnej akceptacji planisty.” 1E Procesy Logistyczne: poziom obecny 2, docelowy 4, luka 2; rekomendacja: „Wprowadzić jeden skanowany identyfikator partii od przyjęcia do wydania oraz rejestrować lokalizację i status materiału w ERP.”; oczekiwany rezultat: „Każda partia ma jedną bieżącą lokalizację i możliwą do odtworzenia historię ruchów.” Ograniczenia zamrożonego Outputu: „Ocena opiera się wyłącznie na wartościach zmierzonych podczas sesji oceniającej Metalpol; nie uwzględnia benchmarku rynkowego ani prognozy przyszłych poziomów.”. Synteza nie dodaje porównań rynkowych, horyzontu czasowego ani prognozy. Wszystkie liczby pochodzą z findingów albo z policzalnych mianowników kontraktu.
+[Heading2] Linia decyzyjna programu
+--- TABELA ---
+Pole | Treść
+Kierunek | Skoncentrować program na obszarze 4B oraz pozostałych lukach o wartości 3.
+Priorytet | Priorytet Krytyczny wynika z największej luki 3 w całym programie.
+Horyzont | Nie określono — brak źródła w danych.
+Warunek sukcesu | Warunek sukcesu dla 4B: Dla każdego krytycznego zbioru wiadomo, gdzie jest źródło i kto zatwierdza korektę.
+--- /TABELA ---
+[Kicker] ZAŁĄCZNIK
+[Heading1] Załącznik A. Rejestr luk
+--- TABELA ---
+Obszar | Oś | Priorytet | Luka | Poziom docelowy
+4B Metodologia Przechowywania Danych | Zarządzanie Danymi | Krytyczny | 3 | 5 — Mobile Data Collection
+6E Plany awaryjne | Cyberbezpieczeństwo | Krytyczny | 3 | 4 — Polityki bezpieczeństwa
+6A Strategia i zarządzanie ryzykiem | Cyberbezpieczeństwo | Krytyczny | 3 | 5 — HR w strategii
+1E Procesy Logistyczne | Procesy Cyfrowe | Wysoki | 2 | 4 — Automatyzacja
+1F Procesy Produkcyjne | Procesy Cyfrowe | Wysoki | 2 | 6 — ERP
+1A Procesy Sprzedaży | Procesy Cyfrowe | Wysoki | 2 | 5 — MES
+2D Dopasowanie Produktu do Oczekiwań Klienta | Produkty Cyfrowe | Wysoki | 2 | 4 — Interaktywny
+2A Produkty Cyfrowe | Produkty Cyfrowe | Wysoki | 2 | 3 — Zaawansowany
+3A Modele E-commerce | Cyfrowe Modele Biznesowe | Wysoki | 2 | 4 — Advanced Personalization
+3E Modele Monetyzacji Danych | Cyfrowe Modele Biznesowe | Wysoki | 2 | 3 — Advanced
+4D Analiza Big Data | Zarządzanie Danymi | Wysoki | 2 | 4 — Data from Machines and Devices
+4C Komunikacja Danych | Zarządzanie Danymi | Wysoki | 2 | 5 — Mobile Data Collection
+4A Zbieranie Danych | Zarządzanie Danymi | Wysoki | 2 | 6 — Data from Physical Objects
+5C Ciągły rozwój kompetencji | Kultura Transformacji | Wysoki | 2 | 4 — Wspierający
+5B Gotowość na zmianę | Kultura Transformacji | Wysoki | 2 | 5 — Innowator
+6C Ochrona danych | Cyberbezpieczeństwo | Wysoki | 2 | 5 — HR w strategii
+7A Dane i Fundamenty AI | Dojrzałość AI | Wysoki | 2 | 4 — Fully AI-Ready Data Architecture
+7E Kompetencje i Kultura AI | Dojrzałość AI | Wysoki | 2 | 3 — Centralized Data & Initial AI Readiness
+7B Procesy Wspierane przez AI | Dojrzałość AI | Wysoki | 2 | 3 — Centralized Data & Initial AI Readiness
+1G Procesy Jakości | Procesy Cyfrowe | Średni | 1 | 3 — Kontrola procesu
+2E Skalowalność Produktu | Produkty Cyfrowe | Średni | 1 | 3 — Zaawansowany
+3C Model As-a-Service | Cyfrowe Modele Biznesowe | Średni | 1 | 2 — Intermediate
+5A Postawy przywódcze | Kultura Transformacji | Średni | 1 | 5 — Innowator
+--- /TABELA ---
+[Caption] Tabela 17. Rejestr luk posortowany malejąco według wielkości luki.
+[Heading1] Źródła i identyfikowalność
+[AssumptionBody] Nie dołączono źródeł. Merytoryczne bloki treści oznaczono jako założenia i przed dystrybucją do klienta wymagają pakietu źródłowego.
