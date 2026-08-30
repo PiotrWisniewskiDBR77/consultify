@@ -16,6 +16,14 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { AreaMatrixTable } from '@/components/Reports/AreaMatrixTable';
+import type {
+  AreaAssessment,
+  MatrixAreaDef,
+  MatrixLevelDef,
+} from '@/components/Reports/AreaMatrixTable';
+
+import type { AxisMatrixModel } from '../groupLabels';
 import type { FindingHighlight, PresentationDeckModel } from './buildPresentationDeck';
 import { MissingNarrativeNote, PresentationSlideShell, StatChip } from './PresentationSlideShell';
 
@@ -166,6 +174,127 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
           ))}
         </div>
       )}
+    </PresentationSlideShell>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// 5b. MACIERZ obszary × poziomy — jeden slajd na oś
+//
+// ★ ODBIÓR WŁAŚCICIELA 2026-08-30: „Jeśli to ma być raport, to musi być opis,
+// muszą być na nim macierze, muszą być ich opisy. Teraz nie ma macierzy nawet."
+// Deck miał profil per oś — siedem słupków, jedna liczba na oś. Macierz jest
+// w metodyce NARZĘDZIEM: pokazuje każdy obszar osi na drabinie poziomów naraz,
+// z zaznaczonym stanem obecnym (●) i celem (○).
+//
+// Rysuje REALNY `AreaMatrixTable` (`src/components/Reports/`) — ten sam
+// komponent, którym macierz oglądano na ekranie `drd-macierz-obszary-poziomy`.
+// NIE dotyka `DRDAssessmentEditor.tsx` (macierz sesji, cudza praca w toku):
+// tamten komponent EDYTUJE ocenę, ten ją tylko pokazuje.
+//
+// ★ Podpisy wierszy. Nazwy poziomów w DRD są per OBSZAR, nie per oś —
+// zmierzone: osie 4–7 mają po cztery obszary z własną drabiną. Dlatego wiersze
+// dostają nazwę tylko wtedy, gdy cała oś dzieli jedną drabinę (osie 1 i 2);
+// inaczej podpisujemy je samym numerem poziomu. Wzięcie nazw z `areas[0]`
+// wypisałoby na osi 4 nazwy poziomów obszaru 4A dla obszarów 4B–4E.
+// ---------------------------------------------------------------------------
+
+/** Rampa poziomów skopiowana z `MATURITY_LEVELS` (od najniższego do
+ * najwyższego) i rozciągana na 5/6/7 poziomów, żeby najniższy był zawsze
+ * „zimny", a najwyższy „gorący" niezależnie od liczby wierszy osi. */
+const LEVEL_RAMP = ['#f43f5e', '#f59e0b', '#eab308', '#22c55e', '#3b82f6', '#6366f1', '#ec4899'];
+
+function levelColor(level: number, count: number): string {
+  if (count <= 1) return LEVEL_RAMP[0];
+  const idx = Math.round(((level - 1) / (count - 1)) * (LEVEL_RAMP.length - 1));
+  return LEVEL_RAMP[Math.min(LEVEL_RAMP.length - 1, Math.max(0, idx))];
+}
+
+export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string }> = ({
+  matrix,
+  locale,
+}) => {
+  const areas: MatrixAreaDef[] = matrix.areas.map((a) => ({
+    id: a.id,
+    name: `${a.id} · ${a.name}`,
+    namePl: `${a.id} · ${a.name}`,
+  }));
+
+  const levels: MatrixLevelDef[] = matrix.levels.map((l) => {
+    const label = l.title ?? `Poziom ${l.level}`;
+    return { level: l.level, name: label, namePl: label, color: levelColor(l.level, matrix.levelCount) };
+  });
+
+  // Wyłącznie obszary FAKTYCZNIE ocenione. Obszar bez pomiaru nie dostaje
+  // wpisu, więc macierz drukuje w jego kolumnie „-", a nie „0" — to jest
+  // różnica między „nie mierzyliśmy" a „zmierzyliśmy zero".
+  const assessments: AreaAssessment[] = matrix.areas
+    .filter((a) => a.currentLevel !== null || a.targetLevel !== null)
+    .map((a) => ({
+      areaId: a.id,
+      currentLevel: a.currentLevel ?? 0,
+      targetLevel: a.targetLevel ?? 0,
+    }));
+
+  return (
+    <PresentationSlideShell
+      kicker={`Macierz · oś ${matrix.axisNumber}`}
+      title={matrix.axisName}
+      lede={matrix.description ?? undefined}
+      footnote={
+        <span>
+          Oceniono {matrix.assessedCount} z {matrix.areas.length} obszarów tej osi · skala 1–
+          {matrix.levelCount} · ● stan obecny, ○ cel, „-" obszar nieobjęty oceną.
+          {matrix.hasSharedLadder
+            ? ''
+            : ' Obszary tej osi mają własne, różne nazwy poziomów — wiersze podpisano numerem poziomu.'}
+          {matrix.description && matrix.descriptionLanguage === 'en'
+            ? ' Opis osi w oryginale angielskim — polskiej wersji metodyka w pakiecie jeszcze nie ma.'
+            : ''}
+        </span>
+      }
+    >
+      {/* Zagęszczenie na slajd: `AreaMatrixTable` jest zbudowany pod stronę
+          raportu (własna biała karta, 24 px marginesu i paddingu, komórki
+          44 px). Na slajdzie 900 px wysokości urywało to wiersze podsumowań
+          i legendę. Nadpisujemy TYLKO geometrię i obudowę karty — kolory
+          i semantyka siatki zostają nietknięte. */}
+      <style>{`
+        .drd-matrix-slide .area-matrix-container {
+          margin: 0;
+          padding: 0;
+          background: transparent;
+          box-shadow: none;
+        }
+        .drd-matrix-slide .matrix-header { margin-bottom: 12px; }
+        .drd-matrix-slide .matrix-cell { height: 30px; }
+        .drd-matrix-slide .level-cell { padding: 6px 12px !important; }
+        .drd-matrix-slide .matrix-table th,
+        .drd-matrix-slide .matrix-table td { padding: 5px; }
+        .drd-matrix-slide .summary-row td { padding: 5px 6px !important; }
+        .drd-matrix-slide .area-header { padding: 6px 4px !important; }
+        /* Kolumna poziomów szersza niż domyślne 140 px: najdłuższa nazwa
+           poziomu w metodyce („Basic Data Registration") łamała się na dwie
+           linie i podwajała wysokość wiersza, przez co legenda wypadała poza
+           slajd. */
+        .drd-matrix-slide .level-header,
+        .drd-matrix-slide .level-cell { min-width: 178px; }
+        .drd-matrix-slide .level-cell .level-name { white-space: nowrap; }
+        .drd-matrix-slide .matrix-cell { height: 26px; }
+        .drd-matrix-slide .level-header { padding: 8px 12px !important; }
+        .drd-matrix-slide .matrix-legend { margin-top: 8px; padding-top: 8px; }
+      `}</style>
+      <div className="drd-matrix-slide max-h-full overflow-auto">
+        <AreaMatrixTable
+          axisId={matrix.axisId}
+          axisName={matrix.axisName}
+          areaAssessments={assessments}
+          areas={areas}
+          levels={levels}
+          language={locale.startsWith('pl') ? 'pl' : 'en'}
+          showAnimation={false}
+        />
+      </div>
     </PresentationSlideShell>
   );
 };
@@ -345,4 +474,13 @@ export const NextStepsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mod
   </PresentationSlideShell>
 );
 
+/** Liczba slajdów STAŁEGO szkieletu decku (tytuł → … → co dalej). Od
+ * 2026-08-30 deck ma dodatkowo po jednym slajdzie macierzy na każdą ocenioną
+ * oś, więc realną długość liczy `presentationSlideCount(model)` — ta stała
+ * pozostaje kontraktem szkieletu i jest używana jako baza. */
 export const PRESENTATION_SLIDE_COUNT = 9;
+
+/** Realna liczba slajdów dla konkretnego modelu: szkielet + macierze osi. */
+export function presentationSlideCount(model: PresentationDeckModel): number {
+  return PRESENTATION_SLIDE_COUNT + (model.axisMatrices?.length ?? 0);
+}

@@ -32,7 +32,7 @@ import {
   type ReportGroupResult,
 } from '@/method-core/outputs';
 
-import { groupNameOrId } from '../groupLabels';
+import { buildAxisMatrices, groupNameOrId, type AxisMatrixModel } from '../groupLabels';
 
 // ---------------------------------------------------------------------------
 // Presenter-supplied narrative framing — OPTIONAL, NEVER invented in here.
@@ -124,6 +124,14 @@ export interface PresentationDeckModel {
   readonly aggregationMappingVersion: string;
 
   readonly dimensionProfile: readonly DimensionProfileEntry[];
+
+  /**
+   * Macierze obszary × poziomy, po jednej na oś, w której cokolwiek
+   * zmierzono — odpowiedź na odbiór właściciela „nie ma macierzy nawet".
+   * Puste dla pakietu bez struktury osi; wtedy deck ma dokładnie tyle
+   * slajdów co przed 2026-08-30.
+   */
+  readonly axisMatrices: readonly AxisMatrixModel[];
 
   readonly strengths: readonly FindingHighlight[];
   readonly gapsAndRisks: readonly FindingHighlight[];
@@ -255,6 +263,16 @@ export function buildPresentationDeck(
     aggregationMappingVersion: output.aggregation.mappingVersion,
 
     dimensionProfile: dimensionProfileFrom(report.groupResults, output),
+
+    // Liczby kopiowane 1:1 z zamrożonego `current`/`target` per obszar —
+    // nie z `aggregation.byGroup`. To jest różnica między macierzą a siedmioma
+    // słupkami: średnia osi nie umie powiedzieć, KTÓRY obszar ją ciągnie.
+    axisMatrices: buildAxisMatrices(
+      output.methodology.methodPackId,
+      output.methodology.version,
+      output.current,
+      output.target
+    ),
 
     strengths,
     gapsAndRisks,

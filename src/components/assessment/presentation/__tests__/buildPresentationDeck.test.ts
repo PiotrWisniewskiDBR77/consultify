@@ -194,4 +194,77 @@ describe('buildPresentationDeck', () => {
     const model = buildPresentationDeck(output);
     expect(model.limitations).toEqual(['No evidence for axis 6.', 'Self-reported only.']);
   });
+
+  // ── Macierze obszary × poziomy (odbiór właściciela: „nie ma macierzy
+  //    nawet") ────────────────────────────────────────────────────────────
+  describe('axisMatrices', () => {
+    const drdOutput = (
+      current: Record<string, number | null>,
+      target: Record<string, number | null>
+    ) =>
+      makeOutput({
+        methodology: { methodPackId: 'drd', version: DRD_METHOD_PACK_VERSION },
+        current,
+        target,
+      });
+
+    it('daje jedną macierz na oś, w której cokolwiek zmierzono — i tylko taką', () => {
+      const model = buildPresentationDeck(drdOutput({ '1A': 4, '6C': 5 }, { '1A': 6, '6C': 6 }));
+      expect(model.axisMatrices.map((m) => m.axisNumber)).toEqual([1, 6]);
+    });
+
+    it('niesie WSZYSTKIE obszary osi, także nieocenione — z poziomem null, nie zerem', () => {
+      const model = buildPresentationDeck(drdOutput({ '1A': 4 }, { '1A': 6 }));
+      const os1 = model.axisMatrices[0];
+      expect(os1.areas).toHaveLength(9); // oś 1 ma 9 obszarów
+      expect(os1.areas.find((a) => a.id === '1A')?.currentLevel).toBe(4);
+      // Zero byłoby wynikiem. Brak pomiaru musi zostać brakiem.
+      expect(os1.areas.find((a) => a.id === '1D')?.currentLevel).toBeNull();
+      expect(os1.assessedCount).toBe(1);
+    });
+
+    it('obszar z samym celem nie liczy się jako oceniony', () => {
+      const model = buildPresentationDeck(drdOutput({ '1A': 4, '1C': null }, { '1A': 6, '1C': 3 }));
+      const os1 = model.axisMatrices[0];
+      expect(os1.areas.find((a) => a.id === '1C')?.targetLevel).toBe(3);
+      expect(os1.assessedCount).toBe(1);
+    });
+
+    it('podpisuje wiersze nazwami poziomów TYLKO gdy cała oś dzieli jedną drabinę', () => {
+      const model = buildPresentationDeck(drdOutput({ '1A': 4, '6C': 5 }, { '1A': 6, '6C': 6 }));
+      const [os1, os6] = model.axisMatrices;
+      // Oś 1: wszystkie 9 obszarów ma tę samą drabinę → nazwy poziomów są prawdziwe.
+      expect(os1.hasSharedLadder).toBe(true);
+      expect(os1.levels[0]).toEqual({ level: 7, title: 'AI Support' });
+      // Oś 6: cztery z pięciu obszarów mają WŁASNE nazwy poziomów, więc żadna
+      // nazwa nie jest prawdziwa dla całej osi → wiersz bez nazwy.
+      expect(os6.hasSharedLadder).toBe(false);
+      expect(os6.levels.every((l) => l.title === null)).toBe(true);
+    });
+
+    it('wiersze idą od najwyższego poziomu, a skala jest skalą TEJ osi', () => {
+      const model = buildPresentationDeck(drdOutput({ '2A': 3 }, { '2A': 5 }));
+      const os2 = model.axisMatrices[0];
+      expect(os2.levelCount).toBe(5); // oś 2 ma 5 poziomów, nie 7
+      expect(os2.levels.map((l) => l.level)).toEqual([5, 4, 3, 2, 1]);
+    });
+
+    it('obcy pakiet metodyczny nie dostaje macierzy — zero zgadywania struktury', () => {
+      const output = makeOutput({
+        methodology: { methodPackId: 'siri', version: '2.1.0' },
+        current: { '1A': 4 },
+        target: { '1A': 6 },
+      });
+      expect(buildPresentationDeck(output).axisMatrices).toEqual([]);
+    });
+
+    it('niezgodna PRZYPIĘTA wersja pakietu też nie dostaje macierzy', () => {
+      const output = makeOutput({
+        methodology: { methodPackId: 'drd', version: '0.0.0-nieistniejaca' },
+        current: { '1A': 4 },
+        target: { '1A': 6 },
+      });
+      expect(buildPresentationDeck(output).axisMatrices).toEqual([]);
+    });
+  });
 });

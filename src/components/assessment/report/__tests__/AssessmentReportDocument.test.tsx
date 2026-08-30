@@ -228,4 +228,65 @@ describe('AssessmentReportDocument', () => {
     expect(container.innerHTML).not.toMatch(new RegExp(`\\b${bannedAccentToken}\\b`));
     expect(container.innerHTML).not.toMatch(/\bbg-primary-|\btext-primary-|\bborder-primary-/);
   });
+
+  // ── Formuła właściciela 2026-08-30: wstęp → 7 osi (opis osi + opis
+  //    obszaru) → odpowiedzi i wnioski → podsumowanie ───────────────────────
+  it('układa dokument w cztery numerowane rozdziały formuły właściciela', () => {
+    render(<AssessmentReportDocument data={buildData()} />);
+    expect(screen.getByRole('heading', { name: /^1\. Jak prowadzono badanie$/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^2\. Siedem osi metodyki$/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^3\. Odpowiedzi i wstępna paleta wniosków$/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /^4\. Podsumowanie$/ })).toBeTruthy();
+  });
+
+  it('drukuje rozdział KAŻDEJ z siedmiu osi — także tych nieobjętych oceną', () => {
+    render(<AssessmentReportDocument data={buildData()} />);
+    for (const [nr, nazwa] of [
+      [1, 'Procesy Cyfrowe'],
+      [2, 'Produkty Cyfrowe'],
+      [3, 'Cyfrowe Modele Biznesowe'],
+      [4, 'Zarządzanie Danymi'],
+      [5, 'Kultura Transformacji'],
+      [6, 'Cyberbezpieczeństwo'],
+      [7, 'Dojrzałość AI'],
+    ] as const) {
+      expect(screen.getByRole('heading', { name: `${nr}. ${nazwa}` })).toBeTruthy();
+    }
+    // Oś bez ani jednego ocenionego obszaru zostaje w dokumencie i mówi to wprost.
+    expect(screen.getAllByText(/Żaden obszar tej osi nie został objęty tą oceną/).length).toBeGreaterThan(0);
+  });
+
+  it('podpina definicję poziomu Z TEGO obszaru — nie z pierwszego obszaru osi', () => {
+    // ★ Test MUSI użyć obszaru, który NIE jest `areas[0]` i ma własną
+    // drabinę — inaczej nie umie upaść. 6C („Ochrona danych") poziom 5 to
+    // „Monitoring i detekcja"; `areas[0]` tej osi to 6A, gdzie poziom 5 nazywa
+    // się „HR w strategii". Dokładnie ta podmiana wyszła w wydanym dokumencie
+    // DOCX (RAPORT_OCENY_STAN.md, Część I) — treść nieprawdziwa u klienta.
+    // Sprawdzone mutacyjnie: podmiana resolvera na `axis.areas[0]` wywraca ten
+    // test (na danych z 1A, czyli areas[0], NIE wywracała — false green).
+    render(
+      <AssessmentReportDocument
+        data={buildData({ current: { '6C': 5 }, target: { '6C': 6 }, gap: { '6C': 1 }, findings: [] })}
+      />
+    );
+    expect(screen.getByText(/Poziom obecny 5 — Monitoring i detekcja/)).toBeTruthy();
+    expect(screen.getByText(/Poziom docelowy 6 — Weryfikacja tożsamości/)).toBeTruthy();
+    expect(screen.queryByText(/HR w strategii/)).toBeNull();
+  });
+
+  it('nie udaje polskiej treści tam, gdzie metodyka jest po angielsku', () => {
+    const { container } = render(<AssessmentReportDocument data={buildData()} />);
+    // Opisy osi 1–4 i 7 są w korpusie po angielsku — dokument oznacza je
+    // znacznikiem EN zamiast podawać jako treść polską.
+    expect(container.querySelectorAll('[title*="oryginale angielskim"]').length).toBeGreaterThan(0);
+  });
+
+  it('nie zostawia jednostki bez osi poza dokumentem', () => {
+    render(
+      <AssessmentReportDocument
+        data={buildData({ current: { '1A': 4, ZZ9: 2 }, target: { '1A': 6, ZZ9: 3 }, gap: { '1A': 2, ZZ9: 1 } })}
+      />
+    );
+    expect(screen.getByRole('heading', { name: 'Jednostki poza strukturą osi' })).toBeTruthy();
+  });
 });
