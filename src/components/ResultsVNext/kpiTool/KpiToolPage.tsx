@@ -112,6 +112,12 @@ import {
 } from '../kpiApi';
 import { ResultsKpiMeasurementsPanel } from '../kpiMeasurements/ResultsKpiMeasurementsPanel';
 import {
+  KPI_DATA_QUALITY_STATUS_TONE,
+  KPI_PERFORMANCE_STATUS_TONE,
+  kpiDataQualityStatusLabel,
+  kpiPerformanceStatusLabel,
+} from '../kpiMeasurements/kpiMeasurementMappers';
+import {
   listDeviationCases,
   type DeviationCaseDto,
 } from './kpiDeviationApi';
@@ -600,8 +606,8 @@ export const KpiToolPage: React.FC = () => {
                     {formatDate(measurement.periodStart, isPolish)} – {formatDate(measurement.periodEnd, isPolish)}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <StatusChip label={measurement.performanceStatus} tone={measurement.performanceStatus === 'critical' ? 'danger' : measurement.performanceStatus === 'warning' ? 'warning' : measurement.performanceStatus === 'on_target' ? 'success' : 'neutral'} />
-                    <StatusChip label={measurement.dataQualityStatus} tone={measurement.dataQualityStatus === 'disputed' ? 'danger' : measurement.dataQualityStatus === 'verified' ? 'success' : 'neutral'} />
+                    <StatusChip label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)} tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]} />
+                    <StatusChip label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)} tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]} />
                   </div>
                   <p className="mt-2 text-[11px] text-c-text-muted">
                     {t(

@@ -1255,10 +1255,20 @@
         "distributeV": "Rozmieść w pionie",
         "alignmentHint": "Wyrównanie jest dostępne dla bloków pozycjonowanych swobodnie.",
         "align": {
-          "left": "Wyrównaj do lewej", "center": "Wyrównaj do środka", "right": "Wyrównaj do prawej", "top": "Wyrównaj do góry", "middle": "Wyrównaj w pionie", "bottom": "Wyrównaj do dołu"
+          "left": "Wyrównaj do lewej",
+          "center": "Wyrównaj do środka",
+          "right": "Wyrównaj do prawej",
+          "top": "Wyrównaj do góry",
+          "middle": "Wyrównaj w pionie",
+          "bottom": "Wyrównaj do dołu"
         },
         "position": {
-          "left": "lewo", "center": "środek", "right": "prawo", "top": "góra", "middle": "środek w pionie", "bottom": "dół"
+          "left": "lewo",
+          "center": "środek",
+          "right": "prawo",
+          "top": "góra",
+          "middle": "środek w pionie",
+          "bottom": "dół"
         }
       },
       "conflict": {
@@ -28634,17 +28644,86 @@
       "open": "Arkusz"
     },
     "rightPanel": {
-      "actions": "Akcje", "allFiles": "Wszystkie pliki", "ariaLabel": "Szczegóły arkusza", "checkpoint": "Utwórz punkt kontrolny", "comments": "Komentarze", "commentsEmpty": "Komentarze będą dostępne wkrótce", "download": "Pobierz XLSX", "exportCsv": "Eksportuj CSV", "fileName": "Plik", "format": "Format", "history": "Historia", "historyEmpty": "Historia pojawi się po wygenerowaniu", "historyFailed": "Generowanie nie powiodło się", "openWorkspace": "Otwórz w arkuszu", "properties": "Właściwości", "propertiesEmpty": "Właściwości pojawią się po wygenerowaniu arkusza", "quality": "Jakość", "relations": "Powiązania", "relationsEmpty": "Brak powiązanych obiektów", "revokeShare": "Cofnij udostępnienie", "share": "Udostępnij i skopiuj link", "sheets": "Arkusze", "sourceTable": "Tabela źródłowa", "versionHistory": "Historia wersji"
+      "actions": "Akcje",
+      "allFiles": "Wszystkie pliki",
+      "ariaLabel": "Szczegóły arkusza",
+      "checkpoint": "Utwórz punkt kontrolny",
+      "comments": "Komentarze",
+      "commentsEmpty": "Komentarze będą dostępne wkrótce",
+      "download": "Pobierz XLSX",
+      "exportCsv": "Eksportuj CSV",
+      "fileName": "Plik",
+      "format": "Format",
+      "history": "Historia",
+      "historyEmpty": "Historia pojawi się po wygenerowaniu",
+      "historyFailed": "Generowanie nie powiodło się",
+      "openWorkspace": "Otwórz w arkuszu",
+      "properties": "Właściwości",
+      "propertiesEmpty": "Właściwości pojawią się po wygenerowaniu arkusza",
+      "quality": "Jakość",
+      "relations": "Powiązania",
+      "relationsEmpty": "Brak powiązanych obiektów",
+      "revokeShare": "Cofnij udostępnienie",
+      "share": "Udostępnij i skopiuj link",
+      "sheets": "Arkusze",
+      "sourceTable": "Tabela źródłowa",
+      "versionHistory": "Historia wersji"
     },
     "rightRail": {
       "resize": "Zmień szerokość panelu",
-      "checkpoint": "Utwórz punkt kontrolny", "collapseLabel": "Zwiń lub rozwiń pasek narzędzi", "download": "Pobierz XLSX", "exportCsv": "Eksportuj CSV", "fileName": "Plik", "format": "Format", "history": "Historia i wydania", "historyEmpty": "Historia pojawi się po wygenerowaniu", "historyFailed": "Generowanie nie powiodło się", "historySubtitle": "Kroki generowania tego arkusza.", "historyTitle": "Historia i wydania", "quality": "Jakość", "revokeShare": "Cofnij udostępnienie", "selected": "Wybrane", "selectedSubtitle": "Nic nie jest zaznaczone — pokazano właściwości całego dokumentu.", "selectedTitle": "Wybrane", "share": "Udostępnij i skopiuj link", "sheets": "Arkusze", "sourceTable": "Tabela źródłowa", "sources": "Źródła i liczby", "sourcesEmpty": "Ten arkusz nie ma zapisanego źródła danych.", "sourcesSubtitle": "Pochodzenie danych w tym arkuszu.", "sourcesTitle": "Źródła i liczby", "structure": "Struktura", "structureDisabled": "Arkusz nie ma jeszcze żadnej karty do pokazania", "structureEmpty": "Arkusz nie ma jeszcze żadnej karty.", "structureRows": "{{count}} wierszy", "structureSubtitle": "Układ skoroszytu i arkuszy.", "structureTitle": "Struktura", "versionHistory": "Historia wersji"
+      "checkpoint": "Utwórz punkt kontrolny",
+      "collapseLabel": "Zwiń lub rozwiń pasek narzędzi",
+      "download": "Pobierz XLSX",
+      "exportCsv": "Eksportuj CSV",
+      "fileName": "Plik",
+      "format": "Format",
+      "history": "Historia i wydania",
+      "historyEmpty": "Historia pojawi się po wygenerowaniu",
+      "historyFailed": "Generowanie nie powiodło się",
+      "historySubtitle": "Kroki generowania tego arkusza.",
+      "historyTitle": "Historia i wydania",
+      "quality": "Jakość",
+      "revokeShare": "Cofnij udostępnienie",
+      "selected": "Wybrane",
+      "selectedSubtitle": "Nic nie jest zaznaczone — pokazano właściwości całego dokumentu.",
+      "selectedTitle": "Wybrane",
+      "share": "Udostępnij i skopiuj link",
+      "sheets": "Arkusze",
+      "sourceTable": "Tabela źródłowa",
+      "sources": "Źródła i liczby",
+      "sourcesEmpty": "Ten arkusz nie ma zapisanego źródła danych.",
+      "sourcesSubtitle": "Pochodzenie danych w tym arkuszu.",
+      "sourcesTitle": "Źródła i liczby",
+      "structure": "Struktura",
+      "structureDisabled": "Arkusz nie ma jeszcze żadnej karty do pokazania",
+      "structureEmpty": "Arkusz nie ma jeszcze żadnej karty.",
+      "structureRows": "{{count}} wierszy",
+      "structureSubtitle": "Układ skoroszytu i arkuszy.",
+      "structureTitle": "Struktura",
+      "versionHistory": "Historia wersji"
     },
     "shared": {
-      "badge": "Udostępniony skoroszyt — tylko do odczytu", "loading": "Ładowanie udostępnionego skoroszytu…", "selectSheet": "Wybierz arkusz", "unavailableBody": "Link do udostępnienia jest nieprawidłowy, cofnięty albo wygasł.", "unavailableTitle": "Skoroszyt jest niedostępny", "untitled": "Skoroszyt bez tytułu"
+      "badge": "Udostępniony skoroszyt — tylko do odczytu",
+      "loading": "Ładowanie udostępnionego skoroszytu…",
+      "selectSheet": "Wybierz arkusz",
+      "unavailableBody": "Link do udostępnienia jest nieprawidłowy, cofnięty albo wygasł.",
+      "unavailableTitle": "Skoroszyt jest niedostępny",
+      "untitled": "Skoroszyt bez tytułu"
     },
     "versionHistory": {
-      "confirmAction": "Przywróć", "confirmMessage": "Przywrócić wersję {{version}}? Bieżący stan zostanie zachowany w historii jako nowa wersja.", "conflict": "Skoroszyt zmienił się w międzyczasie. Bieżąca wersja: {{version}}. Odśwież i spróbuj ponownie.", "empty": "Brak zapisanej historii — edytuj komórkę, aby utworzyć pierwszą wersję.", "loadFailed": "Nie udało się wczytać historii wersji.", "loading": "Ładowanie…", "refresh": "Odśwież", "restore": "Przywróć", "restoreFailed": "Nie udało się przywrócić wersji", "restoring": "Przywracanie…", "sheets": "arkusze", "title": "Historia wersji", "version": "Wersja"
+      "confirmAction": "Przywróć",
+      "confirmMessage": "Przywrócić wersję {{version}}? Bieżący stan zostanie zachowany w historii jako nowa wersja.",
+      "conflict": "Skoroszyt zmienił się w międzyczasie. Bieżąca wersja: {{version}}. Odśwież i spróbuj ponownie.",
+      "empty": "Brak zapisanej historii — edytuj komórkę, aby utworzyć pierwszą wersję.",
+      "loadFailed": "Nie udało się wczytać historii wersji.",
+      "loading": "Ładowanie…",
+      "refresh": "Odśwież",
+      "restore": "Przywróć",
+      "restoreFailed": "Nie udało się przywrócić wersji",
+      "restoring": "Przywracanie…",
+      "sheets": "arkusze",
+      "title": "Historia wersji",
+      "version": "Wersja"
     }
   },
   "aiActions": {
@@ -41416,5 +41495,20 @@
     "findingsLoadFailedReason": "nie udało się pobrać ustaleń",
     "templatesPendingReason": "trwa pobieranie szablonów",
     "templatesLoadFailedReason": "nie udało się pobrać szablonów"
+  },
+  "initiativeStatusDescription": {
+    "draft": "Początkowy szkic, oczekuje na promocję",
+    "pending_review": "Oczekuje na przegląd PM/Lead",
+    "review": "W przeglądzie biznesowym",
+    "promoted": "Zaakceptowana do planowania",
+    "planning": "W trakcie planowania",
+    "approved": "Zatwierdzona, gotowa do zaplanowania",
+    "scheduled": "Zaplanowana w roadmapie",
+    "executing": "W trakcie realizacji",
+    "blocked": "Zablokowana, wymaga decyzji",
+    "done": "Realizacja zakończona",
+    "tracking": "Śledzenie korzyści w toku",
+    "cancelled": "Inicjatywa została anulowana",
+    "archived": "Zarchiwizowana do celów referencyjnych"
   }
 }

@@ -636,7 +636,11 @@ function IdentityBadge({
       <span className="tabular-nums">{version.label}</span>
       <span aria-hidden="true">·</span>
       <span>{STATUS_LABELS[status] ?? status}</span>
-      {version.hasUncommittedWorkingRevision && (
+      {/* Status DRAFT już czyta się jako „Wersja robocza" — dopisek „· robocza"
+          dubluje ten sam fakt (widoczne np. na finance-analysis-workspace jako
+          „v1 · Wersja robocza · robocza"). Pokazuj dopisek tylko gdy status
+          NIE jest DRAFT, a mimo to są niezapisane zmiany. */}
+      {version.hasUncommittedWorkingRevision && status !== 'DRAFT' && (
         <span className="text-c-text-muted">· robocza</span>
       )}
     </span>

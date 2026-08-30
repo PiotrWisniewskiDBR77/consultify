@@ -294,6 +294,11 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
       ),
     },
     details: {
+      // Bramka parytetu jezykowego (2026-08-30): StandardPreview domyslnie
+      // pokazuje angielskie naglowki "Property"/"Value" gdy wywolujacy ich
+      // nie poda — patrz komentarz w StandardPreview.tsx przy propertyLabel.
+      propertyLabel: t('Właściwość', 'Property'),
+      valueLabel: t('Wartość', 'Value'),
       properties: [
         {
           id: 'owner',
@@ -523,6 +528,8 @@ export function buildKpiScorecardItemPreview(
       ),
     },
     details: {
+      propertyLabel: t('Właściwość', 'Property'),
+      valueLabel: t('Wartość', 'Value'),
       properties: [
         { id: 'kpiId', label: 'KPI ID', value: row.kpiId, mono: true },
         { id: 'sortOrder', label: t('Kolejność', 'Sort order'), value: String(row.sortOrder) },
@@ -685,6 +692,8 @@ export function buildKpiScorecardSnapshotPreview(
       // Deliberately NO snapshotPayload contents here — see file header
       // (decision #6b non-leak finding: a bare listing's stored payload is
       // not re-filtered per-reader the way getPublishedSnapshot's is).
+      propertyLabel: t('Właściwość', 'Property'),
+      valueLabel: t('Wartość', 'Value'),
       properties: [
         { id: 'createdBy', label: t('Utworzono przez', 'Created by'), value: shortKpiScorecardId(row.createdBy) },
         { id: 'createdAt', label: t('Utworzono', 'Created'), value: formatKpiScorecardDate(row.createdAt, ctx.isPolish) },

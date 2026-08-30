@@ -365,6 +365,11 @@ export function buildRoiCasePreview(
     },
     details: {
       showWordCount: false,
+      // Bramka parytetu jezykowego (2026-08-30): StandardPreview domyslnie
+      // pokazuje angielskie naglowki "Property"/"Value" gdy wywolujacy ich
+      // nie poda — patrz komentarz w StandardPreview.tsx przy propertyLabel.
+      propertyLabel: isPolish ? 'Właściwość' : 'Property',
+      valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
         {
           id: 'owner',
@@ -495,6 +500,8 @@ export function buildRoiBenefitsRealizationPreview(
     },
     details: {
       showWordCount: false,
+      propertyLabel: isPolish ? 'Właściwość' : 'Property',
+      valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
         {
           id: 'initiative',

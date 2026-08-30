@@ -329,6 +329,29 @@ export function getLocalizedStatusLabel(
 }
 
 /**
+ * Kanoniczny PL/EN OPIS statusu — bliźniak `getLocalizedStatusLabel`.
+ *
+ * ★ 2026-08-30. Powód powstania: `STATUS_METADATA` w tym pliku niesie WYŁĄCZNIE
+ * angielskie `description`, podczas gdy druga, równoległa tablica
+ * (`INITIATIVE_STATUS_METADATA` w `src/types/initiative.ts`) ma komplet
+ * `descriptionPL`. Konsument, który brał `getStatusMeta(s).description`,
+ * dostawał angielski opis na polskim ekranie — zmierzone na karcie Inicjatywy,
+ * sekcja „Bramy": „Benefits tracking in progress" obok polskiego „Zarchiwizuj".
+ *
+ * Zamiast scalać dwie tablice (ryzyko dla wszystkich konsumentów naraz),
+ * opis przechodzi na klucze tłumaczeń — tak samo jak etykieta w CB-06/RB-035.
+ * Angielski `description` zostaje wartością zapasową, więc konsumenci
+ * anglojęzyczni nie zmieniają zachowania.
+ */
+export function getLocalizedStatusDescription(
+  status: InitiativeStatus,
+  t: (key: string, defaultValue: string) => string
+): string {
+  const fallback = STATUS_METADATA[status]?.description ?? '';
+  return t(`initiativeStatusDescription.${status.toLowerCase()}`, fallback);
+}
+
+/**
  * Get all statuses for a module
  */
 export function getStatusesForModule(moduleId: ModuleId): InitiativeStatus[] {

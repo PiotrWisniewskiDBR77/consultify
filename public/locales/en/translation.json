@@ -38982,5 +38982,20 @@
     "findingsLoadFailedReason": "findings could not be loaded",
     "templatesPendingReason": "templates are loading",
     "templatesLoadFailedReason": "templates could not be loaded"
+  },
+  "initiativeStatusDescription": {
+    "draft": "Initial draft, awaiting promotion",
+    "pending_review": "Awaiting PM/Lead review",
+    "review": "Under business review",
+    "promoted": "Accepted for planning",
+    "planning": "Being planned and scoped",
+    "approved": "Approved, ready for scheduling",
+    "scheduled": "Scheduled in roadmap",
+    "executing": "Currently being implemented",
+    "blocked": "Blocked, requires decision",
+    "done": "Delivery completed",
+    "tracking": "Benefits tracking in progress",
+    "cancelled": "Initiative was cancelled",
+    "archived": "Archived for reference"
   }
 }

@@ -955,8 +955,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   {statusBadge(selectedModel.status)}
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  {selectedModel.currency} · {selectedModel.granularity} ·{' '}
-                  {selectedModel.horizon_months} {t('finance.model.months', 'months')}
+                  {selectedModel.currency} ·{' '}
+                  {t(
+                    `finance.model.${selectedModel.granularity}`,
+                    selectedModel.granularity
+                  )}{' '}
+                  · {selectedModel.horizon_months}{' '}
+                  {t('finance.model.months', 'months')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1202,13 +1207,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        ['Revenue', baselineAssumptions.revenue, 'baseline.revenue'],
-                        ['COGS', baselineAssumptions.cogs, 'baseline.cogs'],
-                        ['OPEX', baselineAssumptions.opex, 'baseline.opex'],
-                        ['Depreciation', baselineAssumptions.depreciation, 'baseline.depreciation'],
-                        ['Interest', baselineAssumptions.interest, 'baseline.interest'],
-                        ['Tax', baselineAssumptions.tax, 'baseline.tax'],
-                        ['CAPEX', baselineAssumptions.capex, 'baseline.capex'],
+                        ['Przychody (REVENUE)', baselineAssumptions.revenue, 'baseline.revenue'],
+                        ['Koszt własny sprzedaży (COGS)', baselineAssumptions.cogs, 'baseline.cogs'],
+                        ['Koszty operacyjne (OPEX)', baselineAssumptions.opex, 'baseline.opex'],
+                        ['Amortyzacja', baselineAssumptions.depreciation, 'baseline.depreciation'],
+                        ['Koszty odsetkowe', baselineAssumptions.interest, 'baseline.interest'],
+                        ['Podatek dochodowy', baselineAssumptions.tax, 'baseline.tax'],
+                        ['Nakłady inwestycyjne (CAPEX)', baselineAssumptions.capex, 'baseline.capex'],
                       ].map(([label, value, driverKey]) => (
                         <div
                           key={String(label)}
