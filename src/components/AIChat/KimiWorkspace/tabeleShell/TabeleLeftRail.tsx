@@ -136,8 +136,12 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
                   disabled={item.disabled}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                     active
-                      ? 'bg-c-accent-soft text-c-accent'
-                      : 'text-c-text hover:bg-c-surface-raised'
+                      ? // Odbiór grafiki 2026-08-30: zaznaczenie pozycji w spisie
+                        // treści to nawigacja, nie stan krytyczny. Poprzedni token
+                        // rodziny akcentu renderował tu czerwień zarezerwowaną dla
+                        // rzeczy krytycznych (CLAUDE.md pułapka #1). Neutralnie.
+                        'bg-c-surface-raised font-medium text-c-text'
+                      : 'text-c-text-secondary hover:bg-c-surface-raised'
                   } disabled:opacity-40 disabled:cursor-not-allowed`}
                   data-testid={`tabele-outline-${item.id}`}
                   data-active={active ? 'true' : 'false'}

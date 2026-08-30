@@ -1590,6 +1590,7 @@ export const DeckBuilder: React.FC = () => {
             activity: t('presentations.builder.rightRail.activity', 'Activity'),
             relations: t('presentations.builder.rightRail.relations', 'Relations'),
             evidence: t('presentations.builder.rightRail.evidence', 'Sources & assumptions'),
+            artefakt: t('presentations.builder.rightRail.artefakt', 'Artefakt'),
           }}
           rightRailPanels={{
             blocks: (

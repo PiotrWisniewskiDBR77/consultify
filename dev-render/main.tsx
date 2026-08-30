@@ -134,6 +134,21 @@ const PrawyPasNotatnikSystemScreen = React.lazy(
 // na tym samym wzorcu — jeden plik ekranu, zarejestrowany 3× ze stałym
 // trybem startowym (Artefakt/Teresa/Sugestie).
 const PrawyPasIdeaSystemScreen = React.lazy(() => import('./screens/prawy-pas-idea-system'));
+// Trzeci krok (2026-08-30): Tabele, powierzchnia trudna — patrz komentarz
+// przy rejestracji SCREENS niżej.
+const PrawyPasTabeleSystemScreen = React.lazy(() => import('./screens/prawy-pas-tabele-system'));
+// Tor grafiki (2026-08-30/31, ANALIZA_PRAWY_PANEL.md §6 uzupełnienie
+// „dokumenty"): dwie kolejne powierzchnie TRUDNE — Prezentacje (generator,
+// dziś jeden płaski identyfikator `activity`) i Deck Builder (dziś sześć
+// płaskich identyfikatorów, bez rozróżnienia „o artefakcie"/„po artefakcie").
+// Montują REALNY `PrezentacjeMelsView`/`DeckBuilderMelsView` (adaptery
+// prezentacyjne, nie kopie) z minimalnymi, ale prawdziwymi propsami.
+const PrawyPasPrezentacjeSystemScreen = React.lazy(
+  () => import('./screens/prawy-pas-prezentacje-system')
+);
+const PrawyPasDeckBuilderSystemScreen = React.lazy(
+  () => import('./screens/prawy-pas-deck-builder-system')
+);
 // Odbiór grafiki (2026-08-30): pliki ekranów już istniały (napisane, gotowe,
 // bez zależności Api/fetch) ale nigdy nie zostały wpięte do rejestru SCREENS —
 // `?screen=calendar-sync-settings` / `?screen=notebook-quick-capture` renderowały
@@ -1074,6 +1089,61 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'PRAWY PAS (system) — Idea, tryb zależny od typu: SUGESTIE (IdeaAISuggestionsPanel, własna ikona szyny). Wymaga ?ff_artifact_right_rail=1',
     render: () => <PrawyPasIdeaSystemScreen tryb="sugestie" />,
+  },
+  // Trzeci krok rozwożenia (2026-08-30, ANALIZA_PRAWY_PANEL.md §7 krok 4):
+  // Tabele — powierzchnia TRUDNA (7 narzędzi „po artefakcie" bez ŻADNEJ
+  // sekcji „o artefakcie" — dodajemy ósmy, pierwszy tool `'artefakt'`,
+  // reszta 1:1). Wymaga TAKŻE `?ff_melsTabele=1` — `<TabeleView>` montuje
+  // `TabeleMelsView` (jedyny konsument `TabeleRightRail.tsx`) tylko za tą
+  // WCZEŚNIEJSZĄ, osobną flagą (domyślnie OFF, EPIC-T16); bez niej ten
+  // harness renderowałby legacy `KimiWorkspaceShell`, który nie ma right
+  // railu wcale (zła powierzchnia — patrz pułapka z arkuszem, CLAUDE.md).
+  'prawy-pas-tabele-off': {
+    label:
+      'PRAWY PAS (system) — Tabele, STAN DZISIEJSZY, szyna ZAMKNIĘTA (bez propa activeRightRailToolId — dokładnie jak w produkcji). Wymaga ?ff_melsTabele=1 — sumy kontrolne z tym wpisem PRZED zmianą dowodzą OFF-identyczności niezależnie od harness-owego propa sterującego.',
+    render: () => <PrawyPasTabeleSystemScreen tryb="closed" />,
+  },
+  'prawy-pas-tabele-search': {
+    label:
+      'PRAWY PAS (system) — Tabele, tryb SEARCH (pierwszy tool „po artefakcie", stan dzisiejszy z otwartym panelem). Wymaga ?ff_melsTabele=1',
+    render: () => <PrawyPasTabeleSystemScreen tryb="search" />,
+  },
+  'prawy-pas-tabele-artefakt': {
+    label:
+      'PRAWY PAS (system) — Tabele, tryb ARTEFAKT (akordeon kanonu: Właściwości/Powiązania/Komentarze — jedyne z realnymi danymi). Wymaga ?ff_melsTabele=1&ff_artifact_right_rail=1',
+    render: () => <PrawyPasTabeleSystemScreen tryb="artefakt" />,
+  },
+  // Czwarty/piąty krok rozwożenia (2026-08-31, tor grafiki, dwie „trudne"
+  // szyny): Prezentacje (generator) — dziś JEDEN identyfikator `activity`
+  // bez akordeonu. Baseline OFF renderuje się bez `?ff_artifact_right_rail`.
+  'prawy-pas-prezentacje-off': {
+    label:
+      'PRAWY PAS (system) — Prezentacje (generator), STAN DZISIEJSZY (ikona „Activity", bez akordeonu) — sumy kontrolne z tym wpisem PRZED zmianą dowodzą OFF-identyczności.',
+    render: () => <PrawyPasPrezentacjeSystemScreen />,
+  },
+  'prawy-pas-prezentacje-artefakt': {
+    label:
+      'PRAWY PAS (system) — Prezentacje (generator), tryb ARTEFAKT (akordeon kanonu, jedyna zastosowana sekcja: Historia). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasPrezentacjeSystemScreen />,
+  },
+  // Deck Builder — dziś SZEŚĆ płaskich identyfikatorów (blocks/media/
+  // evidence/relations/comments/activity) na jednej szynie. ON: Blocks
+  // (po artefakcie, osobna ikona) → Artefakt (Powiązania/Źródła/Komentarze/
+  // Historia scalone w akordeon).
+  'prawy-pas-deck-builder-off': {
+    label:
+      'PRAWY PAS (system) — Deck Builder, STAN DZISIEJSZY (5 płaskich ikon: Blocks/Comments/Activity/Relations/Evidence) — sumy kontrolne z tym wpisem PRZED zmianą dowodzą OFF-identyczności.',
+    render: () => <PrawyPasDeckBuilderSystemScreen />,
+  },
+  'prawy-pas-deck-builder-blocks': {
+    label:
+      'PRAWY PAS (system) — Deck Builder, tryb PO ARTEFAKCIE: BLOCKS (osobna ikona, żywa edycja). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasDeckBuilderSystemScreen tryb="blocks" />,
+  },
+  'prawy-pas-deck-builder-artefakt': {
+    label:
+      'PRAWY PAS (system) — Deck Builder, tryb ARTEFAKT (akordeon kanonu: Powiązania/Źródła i założenia/Komentarze/Historia, scalone z 4 dawnych płaskich ikon). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasDeckBuilderSystemScreen tryb="artefakt" />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',

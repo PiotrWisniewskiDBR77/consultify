@@ -26,6 +26,7 @@
 
 import { ChevronDown, Play } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
 
@@ -231,6 +232,8 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   onOpenShortcutHelp,
   persistRailState = true,
 }) => {
+  const { i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
   const [artifactLeftMode, setArtifactLeftMode] = useState<
     'structure' | 'comments' | 'sources' | 'review'
   >('structure');
@@ -382,6 +385,8 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         <DeckBuilderRightRailPanel
           activeToolId={activeToolId as DeckBuilderRightRailToolId | null}
           panels={rightRailPanels}
+          isPolish={isPolish}
+          state={rightRailState}
         />
       )}
       canvas={canvas}

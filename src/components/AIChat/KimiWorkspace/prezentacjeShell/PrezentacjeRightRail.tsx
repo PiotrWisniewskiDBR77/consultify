@@ -17,21 +17,50 @@
  *
  * Panel CONTENT wiring is deferred (S4, same as `TabeleMelsView` /
  * `DeckBuilderMelsView`) — callers may pass `rightRailPanels={{}}`.
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ * ★ ROZWOŻENIE (2026-08-30/31) — jedna z sześciu „trudnych" szyn
+ * ═══════════════════════════════════════════════════════════════════════
+ * `docs/program/grafika/ANALIZA_PRAWY_PANEL.md` §6/uzupełnienie „dokumenty":
+ * ten plik miał WŁASNĄ budowę poza kanonem, z JEDNYM identyfikatorem
+ * (`activity`) — dokładnie ten sam byt, który kanon i inne powierzchnie
+ * nazywają `history`. Słownik ujednolicony: `activity` ≡ `historia`.
+ *
+ * Za flagą `isArtifactRightRailEnabled()` (`src/utils/artifactRightRailFlag.ts`,
+ * domyślnie OFF — przy OFF ta gałąź nigdy się nie wykonuje, więc ta
+ * powierzchnia renderuje się DOKŁADNIE jak przed tą zmianą, co do piksela):
+ *  - Ikona szyny nie nazywa się już `activity`, tylko `artefakt` (kanoniczna
+ *    ikona `LayoutGrid`, jak w `ArtifactRightRail`/Notatniku/Ideach).
+ *  - Treść wcześniej pod `activity` renderuje się WEWNĄTRZ akordeonu
+ *    `ArtifactRightPanel`, w JEDYNEJ zastosowanej sekcji kanonu: „Historia"
+ *    (`history`). Pozostałe sześć sekcji kanonu (Akcje/Właściwości/
+ *    Powiązania/Źródła/Rezultaty/Komentarze) są dziś bez zastosowania na
+ *    tym ekranie (generator nie ma jeszcze tych danych — S4, jak w
+ *    dokumentacji powyżej) i są POMINIĘTE, nie renderowane jako puste
+ *    (kanon: „lepiej brak niż pusty akordeon udający funkcję").
+ *  - Brak własnej Teresy/trybów zależnych od typu tutaj — ekran generatora
+ *    ma swój przełącznik Teresy w Menu 2 (`topBarHandlers.onToggleAgent`),
+ *    osobny od tej szyny; ta praca (tor grafiki) go nie rusza.
  */
 
-import { Activity } from 'lucide-react';
+import { Activity, LayoutGrid } from 'lucide-react';
 import React from 'react';
 
+import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
-export type PrezentacjeRightRailToolId = 'activity';
+export type PrezentacjeRightRailToolId = 'activity' | 'artefakt';
 
 export interface PrezentacjeRightRailLabels {
   activity?: string;
+  /** Etykieta ikony „Artefakt" (za flagą — patrz nagłówek pliku). */
+  artefakt?: string;
 }
 
 const DEFAULT_LABELS: Required<PrezentacjeRightRailLabels> = {
   activity: 'Activity',
+  artefakt: 'Artefakt',
 };
 
 export interface PrezentacjeRightRailState {
@@ -53,6 +82,23 @@ export function buildPrezentacjeRightRailTools(args: {
       ? state.taskStepCount
       : undefined;
 
+  // Za flagą: JEDNA ikona „Artefakt" zamiast „Activity" — treść wędruje do
+  // sekcji „Historia" wewnątrz akordeonu (patrz `PrezentacjeRightRailPanel`
+  // niżej). Licznik zostaje na ikonie (rail-level badge = sygnał krytyczny
+  // wg kontraktu `ArtifactRightRail`, ale to jedyny sygnał tej powierzchni,
+  // więc zostaje 1:1 przeniesiony, nie porzucony).
+  if (isArtifactRightRailEnabled()) {
+    return [
+      {
+        id: 'artefakt',
+        label: L.artefakt,
+        icon: LayoutGrid,
+        ...(activityBadge !== undefined ? { badge: activityBadge } : {}),
+        ...(state.activityTone ? { dotTone: state.activityTone } : {}),
+      },
+    ];
+  }
+
   return [
     {
       id: 'activity',
@@ -72,18 +118,49 @@ interface PrezentacjeRightRailPanelProps {
   activeToolId: PrezentacjeRightRailToolId | string | null;
   panels: PrezentacjeRightRailPanelRenderers;
   fallback?: React.ReactNode;
+  /** PL/EN nagłówek sekcji kanonu (tylko ścieżka ON). Domyślnie EN. */
+  isPolish?: boolean;
 }
 
 const PANEL_KEY: Record<PrezentacjeRightRailToolId, keyof PrezentacjeRightRailPanelRenderers> = {
   activity: 'activity',
+  artefakt: 'activity',
 };
 
 export const PrezentacjeRightRailPanel: React.FC<PrezentacjeRightRailPanelProps> = ({
   activeToolId,
   panels,
   fallback,
+  isPolish = false,
 }) => {
   if (!activeToolId) return null;
+
+  if (isArtifactRightRailEnabled()) {
+    if (activeToolId !== 'artefakt') return <>{fallback ?? null}</>;
+    // Jedyna zastosowana sekcja kanonu na tym ekranie dziś: Historia
+    // (dawne `activity`). Pozostałe sześć — bez zastosowania, pominięte.
+    const sections: ArtifactRightPanelSection[] = [
+      {
+        id: 'history',
+        label: isPolish ? 'Historia' : 'History',
+        icon: Activity,
+        isEmpty: !panels.activity,
+        emptyLabel: isPolish
+          ? 'Ta prezentacja nie ma jeszcze historii.'
+          : 'This presentation has no history yet.',
+        children: panels.activity ?? null,
+      },
+    ];
+    return (
+      <ArtifactRightPanel
+        sections={sections}
+        width="100%"
+        className="border-l-0"
+        ariaLabel={isPolish ? 'Panel artefaktu' : 'Artifact panel'}
+      />
+    );
+  }
+
   const key = PANEL_KEY[activeToolId as PrezentacjeRightRailToolId];
   if (!key) return <>{fallback ?? null}</>;
   const node = panels[key];

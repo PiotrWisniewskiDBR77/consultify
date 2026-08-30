@@ -94,7 +94,8 @@ export const PrezentacjeMelsView: React.FC<PrezentacjeMelsViewProps> = ({
   onOpenShortcutHelp,
   persistRailState = true,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
   const slides: PrezentacjeSlide[] = preview?.deckSlides ?? [];
   const [activeSlideId, setActiveSlideId] = useState<string | null>(slides[0]?.slideId ?? null);
   const effectiveActiveSlideId = slides.some((s) => s.slideId === activeSlideId)
@@ -138,6 +139,7 @@ export const PrezentacjeMelsView: React.FC<PrezentacjeMelsViewProps> = ({
       buildPrezentacjeRightRailTools({
         labels: {
           activity: t('prezentacje.rightRail.activity', 'Activity'),
+          artefakt: t('prezentacje.rightRail.artefakt', 'Artefakt'),
         },
       }),
     [t]
@@ -194,6 +196,7 @@ export const PrezentacjeMelsView: React.FC<PrezentacjeMelsViewProps> = ({
         <PrezentacjeRightRailPanel
           activeToolId={activeToolId as PrezentacjeRightRailToolId | null}
           panels={rightRailPanels}
+          isPolish={isPolish}
         />
       )}
       canvas={canvas}

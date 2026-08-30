@@ -33,13 +33,16 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 import type { ArtifactPreview } from '../KimiWorkspaceShell';
 import TabelePreviewLayout from '../tabelePreview/TabelePreviewLayout';
 import { TabeleLeftRail, type TabeleOutlineItem, type TabeleSectionId } from './TabeleLeftRail';
 import {
   buildTabeleRightRailTools,
+  TabeleArtifactPanel,
   TabeleRightRailPanel,
+  type TabeleArtifactMeta,
   type TabeleRightRailPanelRenderers,
   type TabeleRightRailToolId,
 } from './TabeleRightRail';
@@ -88,6 +91,16 @@ export interface TabeleMelsViewProps {
 
   /** Persistence opt-out for tests. */
   persistRailState?: boolean;
+
+  /**
+   * Controlled override for the active right-rail tool. Pominięte (domyślnie
+   * wszędzie w produkcji — `TabeleView.tsx` go nie podaje) → `ExecutiveModuleShell`
+   * zostaje NIESTEROWANY jak dziś (klik ikony, własny stan wewnętrzny). Jedyny
+   * realny konsument: harness dev-render (`prawy-pas-tabele-system.tsx`) —
+   * `grafika-zrzuty.mjs` nie klika UI, więc zrzut trybu Artefakt potrzebuje
+   * deterministycznego wejścia bez interakcji.
+   */
+  activeRightRailToolId?: string | null;
 }
 
 const DEFAULT_OUTLINE_KEYS: TabeleSectionId[] = [
@@ -141,8 +154,9 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
   onOpenCommandPalette,
   onOpenShortcutHelp,
   persistRailState = true,
+  activeRightRailToolId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeSection, setActiveSection] = useState<TabeleSectionId>(initialActiveSection);
 
   const moduleLbl = moduleLabel ?? t('tabele.moduleLabel', 'Tabele');
@@ -182,6 +196,30 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
     return deriveOutlineFromPreview(preview);
   }, [leftRailItems, preview]);
 
+  const isPolish = !!i18n.language?.startsWith('pl');
+
+  // ★ Tryb Artefakt (docs/program/grafika/ANALIZA_PRAWY_PANEL.md, tor grafiki
+  // 2026-08-30) — metadane REALNE z `preview`/`confidentiality`/
+  // `governanceVerdict`, nie stub. Za flagą `ff_artifact_right_rail`
+  // (sprawdzaną wewnątrz `buildTabeleRightRailTools`/`TabeleArtifactPanel`,
+  // nie tutaj — ten widok nie decyduje o fladze, tylko dostarcza treść).
+  const artifactMeta = useMemo<TabeleArtifactMeta>(
+    () => ({
+      title: preview?.title,
+      confidentiality,
+      governanceVerdict,
+      recordCount: preview?.tableData?.rows?.length,
+      fieldCount: preview?.tabeleSchemaFields?.length,
+      relations: (preview?.tabeleRelations ?? []).map((rel) => ({
+        fieldName: rel.fieldName,
+        targetTableName: rel.targetTableName,
+        targetCount: rel.targetCount,
+      })),
+      isPolish,
+    }),
+    [preview, confidentiality, governanceVerdict, isPolish]
+  );
+
   const rightTools = useMemo(
     () =>
       buildTabeleRightRailTools({
@@ -199,8 +237,23 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
           share: t('tabele.rightRail.share', 'Share'),
           analytics: t('tabele.rightRail.analytics', 'Analytics'),
         },
+        artifact: artifactMeta,
+        artifactLabel: t('tabele.rightRail.artefakt', isPolish ? 'Artefakt' : 'Artifact'),
       }),
-    [qaFindingsCount, sourcePackCount, preview, t]
+    [qaFindingsCount, sourcePackCount, preview, t, artifactMeta, isPolish]
+  );
+
+  // Bramkowanie NA TREŚCI panelu, nie tylko na liście ikon szyny (`rightTools`
+  // wyżej) — gdyby ktoś ustawił `activeRightRailToolId="artefakt"` z zewnątrz
+  // przy fladze OFF (klucz nie istnieje w `tools`, ale `TabeleRightRailPanel`
+  // szuka po `activeToolId`, nie po obecności ikony), panel nie ma się mieć
+  // co pokazać — OFF musi być identyczne na KAŻDYM poziomie, nie tylko szyny.
+  const rightPanels = useMemo<TabeleRightRailPanelRenderers>(
+    () =>
+      isArtifactRightRailEnabled()
+        ? { ...rightRailPanels, artefakt: <TabeleArtifactPanel meta={artifactMeta} /> }
+        : rightRailPanels,
+    [rightRailPanels, artifactMeta]
   );
 
   const canvas = preview ? (
@@ -241,10 +294,11 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
         />
       }
       rightRailTools={rightTools}
+      activeRightRailToolId={activeRightRailToolId}
       renderRightRailPanel={(activeToolId) => (
         <TabeleRightRailPanel
           activeToolId={activeToolId as TabeleRightRailToolId | null}
-          panels={rightRailPanels}
+          panels={rightPanels}
         />
       )}
       canvas={canvas}
