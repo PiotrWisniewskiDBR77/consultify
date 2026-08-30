@@ -169,6 +169,38 @@ interface TaskDetailViewProps {
   onOpenDecision?: (decisionId: string) => void;
 }
 
+export const mapTaskServerComment = (comment: any): Comment => ({
+  id: String(comment.id),
+  content: String(comment.content || ''),
+  authorId: String(comment.userId || comment.user?.id || ''),
+  authorName:
+    [comment.user?.firstName, comment.user?.lastName].filter(Boolean).join(' ') ||
+    String(comment.userId || 'Unknown user'),
+  authorAvatar: comment.user?.avatarUrl || undefined,
+  createdAt: String(comment.createdAt),
+  updatedAt: comment.updatedAt ? String(comment.updatedAt) : undefined,
+  likes: 0,
+  likedByMe: false,
+});
+
+export async function addTaskCommentAndReload(
+  api: Pick<typeof Api, 'addTaskComment' | 'getTaskComments'>,
+  taskId: string,
+  content: string
+): Promise<Comment[]> {
+  await api.addTaskComment(taskId, content);
+  return (await api.getTaskComments(taskId)).map(mapTaskServerComment);
+}
+
+export async function deleteTaskCommentAndReload(
+  api: Pick<typeof Api, 'deleteTaskComment' | 'getTaskComments'>,
+  taskId: string,
+  commentId: string
+): Promise<Comment[]> {
+  await api.deleteTaskComment(taskId, commentId);
+  return (await api.getTaskComments(taskId)).map(mapTaskServerComment);
+}
+
 // VF1-1 (SPEC-A wzorzec): gate for visible token/shell fixes on the N-mode
 // canonical path — crimson (`primary-*`) leaks + shared empty/skeleton/error
 // states. Default OFF until Piotr accepts on screenshots (reguła #7).
@@ -1008,7 +1040,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setTags(task.tags || []);
       setChecklist(task.checklist || []);
       setAttachments(task.attachments || []);
-      setComments(task.comments || []);
+      const serverComments = await Api.getTaskComments(id);
+      setComments(serverComments.map(mapTaskServerComment));
       setLinkedItems(task.linkedItems || []);
       setSourceType(task.sourceType || task.source_type || null);
       setSourceId(task.sourceId || task.source_id || null);
@@ -1416,43 +1449,32 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // Comment handlers
   const handleAddComment = async (content: string, parentId?: string) => {
-    const newComment: Comment = {
-      id: Math.random().toString(36).substr(2, 9),
-      content,
-      authorId: 'current-user',
-      authorName: 'Current User',
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      likedByMe: false,
-      parentId,
-    };
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
     if (parentId) {
-      setComments(
-        comments.map((c) =>
-          c.id === parentId ? { ...c, replies: [...(c.replies || []), newComment] } : c
-        )
-      );
-    } else {
-      setComments([...comments, newComment]);
+      return { ok: false as const, error: new Error('Task comment replies are not supported') };
     }
-    return { ok: true as const };
+    try {
+      setComments(await addTaskCommentAndReload(Api, taskId, content));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
   };
 
   const handleDeleteComment = async (id: string) => {
-    setComments(comments.filter((c) => c.id !== id));
-    return { ok: true as const };
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
+    try {
+      setComments(await deleteTaskCommentAndReload(Api, taskId, id));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
   };
 
-  const handleLikeComment = async (id: string) => {
-    setComments(
-      comments.map((c) =>
-        c.id === id
-          ? { ...c, likes: c.likedByMe ? c.likes - 1 : c.likes + 1, likedByMe: !c.likedByMe }
-          : c
-      )
-    );
-    return { ok: true as const };
-  };
+  const handleLikeComment = async (_id: string) => ({
+    ok: false as const,
+    error: new Error('Task comment reactions are not supported by the server'),
+  });
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
