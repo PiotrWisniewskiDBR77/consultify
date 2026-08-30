@@ -434,3 +434,25 @@ Rejestr jest zakresowany na przestrzeń idei (mapa myśli, tablica, proces, tabe
 a karta decyzji nią nie jest. **Czy komendy kart N mają dostać własny rejestr,
 czy heurystyka ma je wyłączyć?** Baseline podniesiony świadomie, z notatką
 w commicie — nie po cichu.
+
+### 2026-08-30 · USTALENIE WŁAŚCICIELA: jedna wspólna paczka odbioru, dwa tory
+
+Właściciel: *„może zróbcie wszystko razem z funkcjami, a wtedy ja odbiorę większą paczkę"*.
+
+**Zmiana trybu.** Do tej pory tor grafiki zapalał karty pojedynczo, a tor funkcji
+pracował osobno. Od teraz **jedna paczka**: ekran wchodzi do odbioru dopiero, gdy
+gotowe są OBIE połowy — wygląd i to, co pod nim działa.
+
+**Dlaczego to jest lepsze, a nie tylko wygodniejsze:** dziś odbiór wielokrotnie
+dotyczył ekranu, który wyglądał dobrze i nie zapisywał danych. Właściciel podpisywał
+obraz, nie działanie. Paczka łączona usuwa tę pułapkę u źródła.
+
+**Zasada wejścia do paczki (obie muszą być spełnione):**
+1. **Wygląd** — zrzut w obu motywach, obejrzany przez nadzorcę, bez odchyleń od kanonu.
+2. **Działanie** — ścieżka zapis→odczyt zweryfikowana **mutacyjnie** (dodaj, wyczyść
+   pamięć przeglądarki, wróć, sprawdź, że wraca z serwera). „Endpoint zwrócił 200"
+   nie wystarcza — dziś dwa razy okazało się, że 200 nie znaczy nic.
+
+**Czego paczka NIE ukrywa:** ekran, w którym działa wygląd, a nie działa zapis,
+wchodzi do odbioru **z jawnym opisem, czego brakuje** — nie czeka w nieskończoność
+na drugą połowę. Lepsza karta z nazwanym brakiem niż cisza.
