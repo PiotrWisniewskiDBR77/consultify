@@ -123,3 +123,25 @@ jest prawdziwy.
 
 **Dlaczego to pilne.** To jedyna rzecz na sześciu ekranach arkusza, która na
 prawdziwym pokazie każe klientowi zapytać „to jest gotowe czy nie?".
+
+### 2026-08-30 · ZGŁOSZENIE TORU GRAFIKI → TOR FUNKCJI: procent czytany jako piksel
+
+**Mechanizm — potwierdzony czytaniem kodu, nie domysłem.**
+`src/components/shared/ModuleHub/FilterableTable.tsx:643` — `parsePx('26%')`
+usuwa wszystko poza cyframi i zwraca **26**. Kolumna dostaje `width: 26px`.
+Ratuje ją dopiero `minWidth` (200 px dla kolumny tytułu), więc kolumna renderuje
+się na **200 px zamiast zamierzonych 26% szerokości tabeli** (~360 px przy 1400 px).
+
+**Co widziałem na własne oczy:** jedna kolumna, na ekranie `fab-rail-kebab` —
+`width: '40%'` dawało ucięte „Ocena g...". Naprawione zmianą na `'360px'`.
+
+**Czego NIE widziałem:** sześciu plików `src/components/MyWork/*Queue.tsx`
+(`ScheduleDecisionQueue`, `DefinitionDecisionQueue`, `GateSignoffQueue`,
+`AnalysisDecisionQueue`, `PortfolioDecisionQueue`, `DefinitionRemediationQueue`).
+Mają **identyczny wzorzec** (`width: '26%'`…`'30%'` na kolumnie `title`), ale
+**żadnego z nich nie wyrenderowałem** — nie są zarejestrowane w harnessie.
+Twierdzenie „sześć plików ma widoczny defekt" jest **wnioskiem z kodu**, nie pomiarem.
+
+**Do zrobienia w torze funkcji:** albo naprawić `parsePx`, żeby procent liczył
+względem szerokości tabeli, albo zamienić procenty na piksele w tych sześciu
+plikach — po uprzednim **wyrenderowaniu co najmniej jednego z nich**.

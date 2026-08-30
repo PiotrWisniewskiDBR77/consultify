@@ -1753,6 +1753,131 @@
      ]
     }
    ]
+  },
+  {
+   "katalog": "14-kanon-stany",
+   "nazwa": "Elementy kanonu i stany bledu",
+   "opis": "Wzorcowe klocki, z ktorych zbudowana jest cala aplikacja, oraz komunikaty bledu.",
+   "ekrany": [
+    {
+     "id": "standard-module-bar-children",
+     "nazwa": "Pasek modulu — szesc wariantow",
+     "ocena": "A",
+     "co": "Szesc wariantow paska. Aktywny filtr neutralny granat, nie czerwien.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "preview-4-zakladki",
+     "nazwa": "Podglad — cztery zakladki",
+     "ocena": "A",
+     "co": "Cztery zakladki obok siebie. Jeden przycisk glowny na ekranie.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "prawy-panel-szyna-ikon",
+     "nazwa": "Prawy panel — szyna ikon",
+     "ocena": "A",
+     "co": "Realna szyna ikon, zawsze widoczna.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "standard-grid-card",
+     "nazwa": "Karta siatki — cztery warianty",
+     "ocena": "A",
+     "co": "Cztery warianty karty. Crimson tylko na Zablokowane i Krytyczne — poprawnie.",
+     "naprawione": [
+      "Ekran nie byl podlaczony do harnessu"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "fab-rail-kebab",
+     "nazwa": "Szyna narzedzi i menu trzech kropek",
+     "ocena": "A",
+     "co": "Tabela kanoniczna z realna szyna narzedzi.",
+     "naprawione": [
+      "Ucinana kolumna Nazwa — szerokosc podana w procentach byla czytana jako piksele",
+      "Crimson na ikonie pomocy"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "rn-g3-class-l-record-shell",
+     "nazwa": "Rekord wskaznika OEE",
+     "ocena": "A",
+     "co": "Karty metryk i panel wlasciwosci.",
+     "naprawione": [],
+     "wyjatki": [
+      "Pola Wlasciciel i Proces pokazuja surowe identyfikatory zamiast nazw — dane testowe"
+     ]
+    },
+    {
+     "id": "document-studio-resume-error",
+     "nazwa": "Blad — nie znaleziono dokumentu",
+     "ocena": "A",
+     "co": "Cytat: Nie znaleziono tego dokumentu. Mogl zostac usuniety albo odnosnik prowadzi do innego typu materialu. Plus przycisk Wroc do Materialow. Mowi co sie stalo i co zrobic. Zero kodu bledu.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "document-studio-template-resolve-error",
+     "nazwa": "Blad — nie znaleziono wzorca",
+     "ocena": "A",
+     "co": "Cytat: Nie znaleziono zrodla tego wzorca. Plus przycisk Wroc do biblioteki wzorcow. Krotszy niz sasiedni, ale ludzki i z jasna akcja.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "word-intake-uselm-default",
+     "nazwa": "Generuj bez szablonu",
+     "ocena": "A",
+     "co": "Formularz z AI wlaczonym domyslnie, zgodnie z decyzja DEC-317.",
+     "naprawione": [
+      "Ucinany tekst bez wielokropka w pieciu polach wyboru"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "mw-007-calendar-narrow-viewport",
+     "nazwa": "Kalendarz przy waskim ekranie",
+     "ocena": "A",
+     "co": "Realny kalendarz Mojej pracy.",
+     "naprawione": [
+      "CRIMSON w czterech miejscach: aktywna zakladka Miesiac, dzien dzisiejszy, link do integracji, aktywny filtr",
+      "Pasek narzedzi nie zawijal sie przy waskim ekranie — 100 px przewijania w bok"
+     ],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-legacy-archive",
+     "nazwa": "Archiwum wskaznikow",
+     "ocena": "A",
+     "co": "Tabela archiwum tylko do odczytu. Zero rekordow to stan faktyczny tabeli, nie licznik trybu widoku — regula nagiego zera nie ma tu zastosowania.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "results-vnext-teresa-okr-reflection",
+     "nazwa": "Refleksja nad celami",
+     "ocena": "A",
+     "co": "Formularz refleksji. Czerwony przycisk Zamknij zestaw to swiadomy wybor — zamkniecie cyklu jest nieodwracalne.",
+     "naprawione": [],
+     "wyjatki": []
+    },
+    {
+     "id": "standard-kanban-card",
+     "nazwa": "Karta kanban",
+     "ocena": "B",
+     "co": "Cztery kolumny, pasek pilnosci, stopka z nastepna brama.",
+     "naprawione": [],
+     "wyjatki": [
+      "Etykiety w danych testowych mieszaja polski z angielskim — realne ekrany te same wartosci tlumacza"
+     ]
+    }
+   ]
   }
  ]
 }
