@@ -69,10 +69,32 @@ zbudowania każdego narzędzia.**
 **To jest największe cięcie zakresu w całym programie** i jest **ostrzejsze**, niż
 zakładał plan. Plan mówił o wyborze pięciu z trzydziestu jeden.
 
-**★ Sprostowanie liczby.** Liczba „trzydzieści jeden narzędzi" powtarzana w planie
-**nie ma potwierdzonego źródła**. Nadzorca umie wskazać **dwadzieścia dwa** nazwane
-narzędzia w `src/config/transformationTools.ts`. Do czasu zmierzenia — **liczby 31
-nie wolno cytować**.
+**★★ SPROSTOWANIE SPROSTOWANIA — błąd nadzorcy, poprawiony w tej samej godzinie.**
+
+Napisałem wyżej, że liczba „trzydzieści jeden" nie ma źródła i że narzędzi jest
+dwadzieścia dwa. **Obie te tezy są fałszywe i sam je obaliłem pomiarem.**
+
+**Liczba 31 jest prawdziwa i ma źródło:**
+`src/components/DiscoveryTools/dedicatedToolTypes.ts` — stała `DEDICATED_TOOL_TYPES`
+zawiera **dokładnie 31 pozycji**, opisanych w komentarzu tego pliku jako typy sesji,
+które mają **realną implementację `ToolDocumentView`/`ToolCanvas`**. Przeliczone
+komendą, nie przepisane z dokumentu.
+
+**Lista dwudziestu dwóch, którą podałem właścicielowi, była LISTĄ MARTWĄ.**
+Pochodziła z `src/config/transformationTools.ts` — katalogu, którego **jedynym
+konsumentem w całej aplikacji** jest karta w `RecommendationPanel.tsx` bez obsługi
+kliknięcia: czysta etykieta z nazwą i kategorią. Zero ekranu, zero silnika, zero
+wyjścia. Nazwy takie jak „BCG Matrix", „5S Methodology" czy „Six Sigma DMAIC"
+**nie odpowiadają żadnemu działającemu narzędziu w produkcie**.
+
+**Jak do tego doszło.** Wziąłem pierwszy rejestr, który pasował nazwą, i nie
+sprawdziłem, czy ma konsumenta. To jest dokładnie dziewiąty kształt fałszywego
+„gotowe" z naszego własnego katalogu: **próbka zamiast zbioru**. Popełniłem go
+w miejscu najgorszym z możliwych — w liście, na podstawie której właściciel miał
+podjąć największą decyzję zakresową w programie.
+
+**Stan wiążący:** wybór trzech narzędzi następuje z listy **31 pozycji**
+`DEDICATED_TOOL_TYPES`, po dostarczeniu pomiaru kosztu dla każdej z nich.
 
 ---
 
