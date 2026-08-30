@@ -1,0 +1,48 @@
+NOWY — DYŻUR 149
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day149-brama-decyzji-scratch/INSTRUKCJA_DYZUR_149.md
+
+Przeczytaj w CAŁOŚCI, potem wykonuj. Zacznij od „§0.1-BIS" — NADPISUJE §0.1.
+
+★ W §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Kontrola bazy: git merge-base --is-ancestor 793fdd073f HEAD
+  NIE równość SHA. Twój HEAD po własnych commitach BĘDZIE inny — to poprawne.
+
+Katalog pracy:  /private/tmp/cx-day149-brama-decyzji
+Gałąź:          codex/day149-brama-decyzji-20260830   (już założona)
+Marker:         793fdd073f                              (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day149-brama-decyzji-scratch
+Artefakty:      /private/tmp/cx-day149-brama-decyzji-artefakty
+
+Zasoby wyłączne: baza 6035, kontener cx-day149-pg, runtime 4964 i 4965 (PARA).
+ZAJĘTE: 6012, 5433 oraz zasoby trzech pozostałych dyżurów wydawanych razem z tym.
+
+★ TEN DYŻUR ZMIENIA PRODUKT — ale tylko jeden plik tras.
+
+★ NIE ZAMYKASZ DECYZJI PRZED UŻYTKOWNIKIEM. Celem jest spójność kontroli, nie
+  odcięcie funkcji. Jeżeli objęcie bramą odetnie działającą dziś możliwość —
+  STOP z briefem. Bramy NIE zmieniasz.
+
+★ ZNANY FAKT — potwierdzony pomiarem dyżuru 146, NIE zgłaszaj jako odkrycia:
+  decisions.routes.ts NIE importuje bramy w ogóle; tasks.routes.ts montuje ją
+  globalnie (23 z 23 mutacji). Mutacje Decyzji przechodzą DZIŚ bez kontroli.
+
+★ PUŁAPKA: objęcie mutacji bramą BEZ istniejącego polecenia w kanonicznej
+  ścieżce zamieni działającą funkcję w 409 — dokładnie to blokuje dziś
+  komentarze Zadania i sekcję RAID. Najpierw sprawdź, czy polecenie istnieje.
+
+★ ROZSTRZYGNIĘTE Z GÓRY, nie zgłaszaj ponownie:
+  • Z34a kontra "nie pushujesz" → NIE PUSHUJESZ.
+  • Z24 odsyła do §0.4a, którego nie ma → odwołanie martwe, POMIŃ.
+  • server/vitest.config.ts PRZYPINA DB_TYPE='sqlite' i wygrywa z linią komend.
+    Test z asercją DB_TYPE='postgres' zostanie POMINIĘTY, a pominięty ≠ PASS.
+    Użyj configu POZA repo, bez tego przypięcia. Chronionego configu nie zmieniasz.
+
+★ NIE PUSHUJESZ. Commit per krok, potem zgłoszenie gotowości.
+
+Jeżeli cokolwiek w tej wklejce różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.
