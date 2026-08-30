@@ -28077,7 +28077,8 @@
     "aiHintSummarize": "Podsumuj audyt",
     "aiHintNextSteps": "Następne kroki",
     "noSuggestedPlan": "Brak sugerowanego planu",
-    "drdReportsLoadFailed": "Nie udało się wczytać raportów DRD"
+    "drdReportsLoadFailed": "Nie udało się wczytać raportów DRD",
+    "drdSourceAssessment": "Ocena"
   },
   "audits": {
     "method": {
@@ -32702,6 +32703,10 @@
       "recordDetails": "Szczegóły rekordu"
     },
     "mindmap": {
+      "branchNodeCount_one": "{{count}} węzeł",
+      "branchNodeCount_few": "{{count}} węzły",
+      "branchNodeCount_many": "{{count}} węzłów",
+      "branchNodeCount_other": "{{count}} węzłów",
       "addNodeTab": "Dodaj węzeł (Tab)",
       "aiExpand": "Rozwiń AI",
       "moreAi": "Więcej AI",
@@ -34339,6 +34344,9 @@
     },
     "aiNudgeStrip": {
       "go": "Działaj",
+      "apply": "Zastosuj",
+      "applying": "Stosowanie…",
+      "retry": "Ponów",
       "dismissNudge": "Odrzuć podpowiedź",
       "selectionReady": "Zaznaczono niepołączone elementy. Połącz je na tablicy; podpowiedź pozostanie widoczna do potwierdzenia wyniku."
     },

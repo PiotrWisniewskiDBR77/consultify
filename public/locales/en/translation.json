@@ -25874,7 +25874,8 @@
     "aiHintSummarize": "Summarize audit",
     "aiHintNextSteps": "Next steps",
     "noSuggestedPlan": "No suggested plan",
-    "drdReportsLoadFailed": "Could not load DRD reports"
+    "drdReportsLoadFailed": "Could not load DRD reports",
+    "drdSourceAssessment": "Assessment"
   },
   "audits": {
     "method": {
@@ -30260,6 +30261,8 @@
       "recordDetails": "Record details"
     },
     "mindmap": {
+      "branchNodeCount_one": "{{count}} node",
+      "branchNodeCount_other": "{{count}} nodes",
       "addNodeTab": "Add node (Tab)",
       "aiExpand": "AI Expand",
       "moreAi": "More AI",
@@ -31842,6 +31845,9 @@
     },
     "aiNudgeStrip": {
       "go": "Go",
+      "apply": "Apply",
+      "applying": "Applying…",
+      "retry": "Retry",
       "dismissNudge": "Dismiss nudge",
       "selectionReady": "Selected the unconnected elements. Connect them on the canvas; this suggestion will remain until you confirm the result."
     },
