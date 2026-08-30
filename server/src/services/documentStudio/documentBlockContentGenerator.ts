@@ -445,17 +445,17 @@ function unsupportedClaimInString(
   text: string,
   allowedNumbers: ReadonlySet<string>,
   sourceTextUpper: string
-): boolean {
+): 'number' | 'acronym' | null {
   const numericTokens: string[] = text.match(QUANT_TOKEN_RE) ?? [];
-  if (numericTokens.some((token) => !allowedNumbers.has(token.replace(',', '.')))) return true;
+  if (numericTokens.some((token) => !allowedNumbers.has(token.replace(',', '.')))) return 'number';
 
-  if (GROUNDING_ACRONYM_RULE === 'allowed') return false;
+  if (GROUNDING_ACRONYM_RULE === 'allowed') return null;
 
   // Catch obvious invented named market/entity claims such as "DACH". This is
   // deliberately conservative: normal business abbreviations stay allowed,
   // while a new all-caps name must occur in the brief/source text verbatim.
   const acronyms = text.match(/\b[A-ZĄĆĘŁŃÓŚŹŻ]{2,}\b/g) ?? [];
-  return acronyms.some((token) => {
+  const hasUnsupportedAcronym = acronyms.some((token) => {
     if (SAFE_BUSINESS_ACRONYMS.has(token)) return false;
     const index = sourceTextUpper.indexOf(token);
     if (index < 0) return true;
@@ -465,6 +465,7 @@ function unsupportedClaimInString(
     const before = sourceTextUpper.slice(Math.max(0, index - 60), index);
     return /\b(BEZ|ZAKAZ|NIE UŻYWAJ|NIE UZYWAJ|NIEDOZWOLON|WYKLUCZ)\b/.test(before);
   });
+  return hasUnsupportedAcronym ? 'acronym' : null;
 }
 
 /**
@@ -488,11 +489,16 @@ export function enforceBlockGrounding(
     if (typeof value === 'number') {
       if (allowedNumbers.has(String(value))) return value;
       changed = true;
-      return undefined;
+      return value;
     }
     if (typeof value === 'string') {
       if (key === 'bgColor' || key === 'color' || key === 'url') return value;
-      if (unsupportedClaimInString(value, allowedNumbers, sourceTextUpper)) {
+      const unsupportedClaim = unsupportedClaimInString(value, allowedNumbers, sourceTextUpper);
+      if (unsupportedClaim === 'number') {
+        changed = true;
+        return value;
+      }
+      if (unsupportedClaim === 'acronym') {
         changed = true;
         return groundingPlaceholder(language);
       }

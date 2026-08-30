@@ -399,16 +399,21 @@ export async function generateBlockProse(
       // The block is now grounded in (or explicitly flagged against) the
       // source pack, so it is no longer a bare structural assumption.
       block.isAssumption = guarded.changed || sourceRefs.length === 0;
-      // N-9: a paragraph carrying a GFM table must NOT get the inline
-      // "_[Assumption]_" suffix from the renderer — appended after the final
-      // "| … |" row it breaks the row's table membership in marked. Concrete
-      // table content is not a bare assumption, so clear the flag.
+      // N-9: a paragraph carrying a GFM table must NEVER get the inline
+      // "_[Assumption]_" suffix from the renderer (documentSchemaRenderer.ts
+      // appends it right after the final "| … |" row), because that breaks
+      // the row's table membership in marked and the table renders broken.
+      // This must hold unconditionally — including when guarded.changed is
+      // true (e.g. R1 introduces a number not present in the source pack) —
+      // since D-8 now PRESERVES unsupported-number sentences instead of
+      // replacing them, so `changed` no longer implies the text was blanked.
+      // Simpler than relocating the marker to a paragraph above the table:
+      // just never let a table block carry the assumption flag.
       if (
-        !guarded.changed &&
         typeof guarded.content.text === 'string' &&
         /^\s*\|.*\|\s*$/m.test(guarded.content.text)
       ) {
-        block.isAssumption = sourceRefs.length === 0;
+        block.isAssumption = false;
       }
     }
   }
