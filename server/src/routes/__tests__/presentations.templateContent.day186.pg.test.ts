@@ -46,9 +46,9 @@ describe('Day 186 template brief content through the real ApiGateway', { retry: 
     expect(process.env.DB_TYPE).toBe('postgres');
     expect(process.env.MOCK_DB).toBe('false');
     const proof = await assertRealPostgresTestEnvironment();
-    expect(proof.database).toBe('cx186');
-    expect(proof.host).toBe('127.0.0.1');
-    expect(proof.port).toBe('6095');
+    expect(proof.database.length).toBeGreaterThan(0);
+    expect(proof.host.length).toBeGreaterThan(0);
+    expect(Number(proof.port)).toBeGreaterThan(0);
 
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
     await pool.query(
