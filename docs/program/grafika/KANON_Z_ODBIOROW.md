@@ -95,3 +95,41 @@ pokazywałeś mi ekrany z tych dwóch narzędzi."*
 **Przyczyną był mój arkusz odbioru**, ułożony według torów roboczych zamiast według
 modułów menu. Po przebudowie na 16 modułów problem znika sam. **Żadna zmiana
 w produkcie nie jest potrzebna** — to była wada sposobu pokazywania, nie produktu.
+
+---
+
+## 2026-08-30 (wieczór) — reguły wywiedzione z rundy 20 ekranów
+
+**Sekcja mieszka w jednym miejscu w całej aplikacji** — ekran `deck-artifact`.
+Komentarze i Źródła przeniesione z lewej szyny prezentacji do prawego panelu,
+mimo że właściciel pochwalił poprzedni układ. Jego decyzja: *„zostawić — jedno
+miejsce na sekcję"*. Uzasadnienie właściciela przyjęte: prezentacja nie może być
+jedynym artefaktem, w którym komentarzy szuka się gdzie indziej niż w notatniku
+czy karcie. **Spójność między artefaktami wygrywa z lokalnym optimum pojedynczego
+ekranu — także wtedy, gdy ten ekran był już zaakceptowany.**
+
+**Macierz oceny to siedem osi** — decyzja z tego samego dnia. Skale poziomów
+7/5/5/7/6/6/5 biorą się z metodyki właściciela, nie z kodu; źródło prawdy
+`src/services/drdStructure.ts`. Zapis w `DRD_KSIAZKA_KONTRA_KOD.md`.
+
+**Komórka macierzy wypełnia się do wysokości osiągniętego poziomu (schodki),
+nie punktowo** — decyzja właściciela: *„poziom 4 znaczy, że niższe też są
+osiągnięte"*. Poziomy w metodyce DRD są kumulatywne. **Uwaga: kierunek macierzy
+został potem wstrzymany** — wzorcem jest ekran, który właściciel wskazał
+w SIRI/DRD, a nie prezentacja raportowa. Patrz `DZIENNIK_GRAFIKA.md` Z-10 i Z-12.
+
+**Partner AI zna wyłącznie poziomy z metodyki** — decyzja: usunąć opisy poziomów
+6 i 7 dla osi pięciopoziomowych. Powód nie jest kosmetyczny: AI mogło zasugerować
+konsultantowi u klienta poziom dojrzałości, który w metodyce nie istnieje.
+**Treść nieautorska w warstwie merytorycznej jest defektem, nie brakiem polerki.**
+
+**Ekranu nie zdejmuje się z drogi bez zbadania, co za nim stoi** — z czterech
+generatorów szablonów, które właściciel kazał zdjąć, **trzy okazały się jedynym
+żywym wejściem** do działającej mechaniki. Zdjęty został wyłącznie duplikat.
+Reguła: polecenie „zdejmij" wykonuje się **po** dowodzie, że nie ma za tym drogi.
+
+**Ekran wchodzi do odbioru z brakami wypisanymi PRZED spojrzeniem właściciela.**
+Stosowane tego dnia przy macierzy (treść komórek kłamie), planie inicjatyw
+(wiersz otwiera tabelę zamiast karty), doradcy mocy (brak przycisku raportu)
+i prezentacji (zapis nieudowodniony bez backendu). **Ocena B z nazwanym wyjątkiem
+jest uczciwa; ocena A z przemilczanym brakiem nie jest.**
