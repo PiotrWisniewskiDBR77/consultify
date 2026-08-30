@@ -711,6 +711,60 @@ ją wyłącznie w swojej sesji lokalnej.
 
 # 3. POZYCJE DYŻURU
 
+## R0 — ★★ PRZYCZYNA ŹRÓDŁOWA: pokwitowanie dostaje `SUCCEEDED` przy zerze pracy
+
+**Ta pozycja została dopisana po odbiorze dyżuru 164 i jest WAŻNIEJSZA od R2.**
+Bez niej naprawa klucza idempotencji leczy skutek, nie przyczynę.
+
+Bramka zgody w `server/src/services/ai/agentPlannerService.ts` **wraca NORMALNIE,
+nie wyjątkiem**:
+
+```ts
+step.status = 'awaiting_approval';
+plan.status = 'awaiting_approval';
+plan.currentStepIndex = i;
+return plan;
+```
+
+A `server/src/workers/aiWorker.ts:111` po każdym normalnym powrocie robi
+**bezwarunkowo**:
+
+```ts
+result = await agentPlannerService.executeBackgroundPlan(payload);
+await finishAgentTask(receiptId, workerId, true);   // ZAWSZE 'true'
+```
+
+**Skutek: pokwitowanie dostaje `SUCCEEDED`, mimo że nie wykonano ani jednego kroku.**
+Dopiero to sprawia, że klucz idempotencji z R2 trafia w „udany” przebieg, dostaje
+`REPLAY` i nic nie kolejkuje.
+
+### Co masz zrobić
+
+Zamknięcie zadania musi być **warunkowe** — zależne od tego, czy plan faktycznie
+dobiegł stanu końcowego, czy zatrzymał się na bramce zgody. Wyznacz warunek
+z `result.status` zwróconego przez `executeBackgroundPlan`.
+
+**Wymagania, które musisz zachować jednocześnie:**
+- plan zatrzymany na bramce zgody **nie może** dostać pokwitowania `SUCCEEDED`;
+- plan faktycznie ukończony **musi** je dostać, bez zmiany dotychczasowego zachowania;
+- porażka nadal ma iść ścieżką `catch` z `finishAgentTask(..., false, error)`;
+- ponowienia (`maxAttempts=3`, `aiQueue` `attempts:3`) **nie mogą** zacząć się
+  zapętlać na planie czekającym na zgodę — to byłaby regresja gorsza od defektu.
+
+**Odbiór tej pozycji:** dowód mutacyjny odtworzony przy odbiorze 164 pokazał, że
+warunkowe zamknięcie zmienia pokwitowanie z fałszywego `SUCCEEDED` na uczciwe.
+Twój test ma to utrwalić — po naprawie plan na bramce zgody **nie** ma pokwitowania
+`SUCCEEDED`, a po zatwierdzeniu i wznowieniu krok faktycznie się wykonuje.
+
+### Czego ta pozycja NIE obejmuje
+
+**Nie naprawiasz zatrzymywania planu w locie ani limitu kosztu.** `cancelPlan`
+(okolice `agentPlannerService.ts:827-834`) robi wyłącznie `UPDATE` statusów i nie
+dotyka zadania w kolejce; `estimatedCostUsd` jest stale `0`. **To są dwa osobne
+blokery, zapisane do rozstrzygnięcia właściciela — nie ruszasz ich w tym dyżurze.**
+
+---
+
 ## R1 — odtworzenie defektu przed naprawą
 
 Postaw lokalny Postgres i **prawdziwy Redis** (własny port — sprawdź, czy 6379 wolny, drugi tor
@@ -835,6 +889,7 @@ poza plikami z tabeli licencji).
 | Zapis | `server/src/routes/ai/agent-plan.routes.ts` (linie 184-188 + typ `tryDispatchBackgroundExecution` + trzy call site'y `:319`, `:448`, `:814`) |
 | Zapis | `server/src/services/ai/agentTaskDispatchService.ts` (gałąź `REPLAY`, linie 82-84) |
 | Zapis | `src/components/AIChat/AgentPlanPanel.tsx` — **wyłącznie odczyt pola `dispatch` w `handleRunSchema` (linia 369) i `handleApprove` (linia 419) + jeden komunikat stanu; ZAKAZ zmiany wyglądu, układu, kolorów i pozostałych tekstów** |
+| Zapis | `server/src/workers/aiWorker.ts` — **WYŁĄCZNIE warunkowe zamknięcie zadania w linii 111 (pozycja R0); ZAKAZ jakiejkolwiek innej zmiany w tym pliku i w całym katalogu `server/src/workers/`** |
 | Zapis | test `server/src/services/ai/__tests__/day165.agent-plan-resume.pg.redis.test.ts` |
 | Zapis | raport `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY165_AGENT_WZNOWIENIE_REPORT.md` |
 | Odczyt | `server/src/services/ai/agentPlannerService.ts` (`approveStep`, `executePlan`, `releaseLeaseAtCheckpoint`) — **nie zmieniasz** |
@@ -842,7 +897,7 @@ poza plikami z tabeli licencji).
 | Odczyt | `src/services/api/agentPlan.api.ts` (typy zwrotne `runAgentPlan`/`approveAgentPlanStep`) |
 | Odczyt | `docs/program/KOORDYNACJA.md` — sekcja „AGENT DZIAŁA — i ma jeden precyzyjny defekt, który go zatrzymuje” |
 
-**Nietykalne imiennie:** `server/src/workers/**`; `server/src/cron/Scheduler.ts`; pliki dyżuru
+**Nietykalne imiennie:** `server/src/workers/**` **z jednym wyjątkiem wymienionym w tabeli powyżej** (`aiWorker.ts`, wyłącznie linia zamknięcia zadania); `server/src/cron/Scheduler.ts`; pliki dyżuru
 163 (`src/components/.../TaskDetailView.tsx`, `server/src/.../task.validators.ts`,
 `server/src/routes/.../tasks.routes.ts`, `server/src/.../TaskController.ts`, migracja
 `20260830_day163_task_sections.sql`); wszystko pod `server/src/services/organizationContext/`;
