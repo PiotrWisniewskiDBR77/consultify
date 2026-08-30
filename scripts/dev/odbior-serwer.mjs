@@ -176,6 +176,11 @@ function strona() {
       : ''
   }</div>
   ${e.gdzie ? `<p class="gdzie">${esc(e.gdzie)}</p>` : ''}
+  ${
+    e.warianty?.length
+      ? `<p class="wariant">Ten sam komponent oglądasz też jako: ${e.warianty.map((x) => esc(x)).join(' · ')}</p>`
+      : ''
+  }
   <p class="co">${esc(e.co)}</p>
   ${e.naprawione?.length ? `<ul class="nap">${e.naprawione.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
   ${e.wyjatki?.length ? `<ul class="wyj">${e.wyjatki.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -248,6 +253,11 @@ main{padding:20px;max-width:1500px;margin:0 auto}
    Karta pokazywała obrazek i nazwę, ale nie ŚCIEŻKĘ w aplikacji — więc ocena
    szła w próżni. */
 .gdzie{margin:0 0 6px;font-size:12px;color:var(--nieb);background:#eff6ff;border-radius:6px;padding:4px 8px;display:inline-block}
+/* Odbiór 2026-08-30, słowa właściciela: „Trzeci raz dajesz mi tę kartę do
+   akceptacji". Kilka ekranów harnessu montuje TEN SAM komponent produkcyjny
+   w różnych stanach. Karta mówi teraz o tym wprost, żeby nie oceniał tego
+   samego kilka razy nie wiedząc o tym. */
+.wariant{margin:0 0 6px;font-size:11.5px;color:#78350f;background:#fef3c7;border-radius:6px;padding:4px 8px;display:inline-block}
 .co{margin:0 0 8px;font-size:13.5px;color:var(--drugi)}
 .nap,.wyj{margin:0 0 8px;padding-left:16px;font-size:12.5px}
 .nap li{color:var(--ok)}.wyj li{color:var(--pop)}
