@@ -33,6 +33,7 @@ Dysk: 16 GiB przed worktree, 11 GiB po worktree; oba >5 GiB. Porty `6090`, `5032
 3. Teza o automatycznym odblokowaniu pilota jest fałszywa. `isBetaClosed` zmienia tylko szczegół komunikatu; `PILOT_ALLOWED_ROUTE_PREFIXES` nie zawiera `/meetings`, a `RouterSync` przekierowuje USER/MEMBER do `/interview`.
 4. Pakiety wejściowe nie były zielone: przed seedem Gateway `6/7 PASS`; root `26 PASS / 11 FAIL / 34 pending`. Przyczyną jest bramka membership i brak członkostw dla testowych person.
 5. `MINUTES`/`DECISIONS`/`NOTE` używają jednego komponentu, ale ścieżka wybiera różne sekcje; treść nie jest identyczna.
+6. Kanoniczny `stop` jest niewykonalny po wymaganym commicie: walidacja wymaga aktualnego HEAD, lecz stan runtime jest przypięty do SHA/fingerprint ze startu; aktualny SHA daje `state candidate identity differs`. Zatrzymano dokładnie własne PGID z manifestu (`13996`, `14016`), potwierdzono wolne porty i usunięto `cx-day181-pg` przez `docker rm -fv`.
 
 ## Baza, fixture i Z30
 
