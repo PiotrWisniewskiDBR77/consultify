@@ -565,6 +565,14 @@ export interface ToolExecutionContext {
   sessionId?: string;
   conversationId?: string;
   contextSnapshotId?: string;
+  /**
+   * FIX-206 (pkt 2) — tryb prywatny rozmowy. Ścieżka czatu ustawia go w
+   * `pipelineRequest.context/options`; pętla narzędziowa MUSI go donieść aż
+   * tutaj, bo to on decyduje (przez chatPolicyGateway.resolveScope) czy
+   * retrieval widzi zakresy `org_shared`/`public_kb`, czy tylko prywatne
+   * dokumenty wołającego.
+   */
+  privateMode?: boolean;
 }
 
 /**
@@ -875,15 +883,21 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
 }
 
 async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<string> {
+  // FIX-206 (pkt 2): zakresy retrievalu wynikają z decyzji polityki, nie z
+  // domysłu wywołującego. `orgScopeAllowed=false` (tryb prywatny) MUSI realnie
+  // odciąć dokumenty organizacji — inaczej `privateMode` byłby tylko etykietą.
+  let orgScopeAllowed = true;
   try {
     const policyResult = await evaluateRetrievalPolicyDecision({
       consumerClass: 'agent',
       query: args.query,
       organizationId: ctx.organizationId || 'system',
       userId: ctx.userId || 'tool:kb_search',
+      privateMode: Boolean(ctx.privateMode),
     });
+    orgScopeAllowed = policyResult.decision.scopeResolution.allowedScopes.includes('org_shared');
     logger.info(
-      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}`
+      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}, scopes=[${policyResult.decision.scopeResolution.allowedScopes.join(',')}]`
     );
     if (!policyResult.decision.allowed) {
       return JSON.stringify({
@@ -1009,6 +1023,25 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       folderName = folder.name;
       effectiveVaultScope = folder.scope;
       effectiveProjectId = folder.scope === 'project' ? folder.project_id || null : null;
+    }
+
+    // FIX-206 (pkt 2) — egzekucja trybu prywatnego. Polityka (resolveScope)
+    // odcięła `org_shared`/`public_kb`, więc retrieval nie może dotknąć
+    // dokumentów organizacji ani projektów: albo zawężamy do prywatnego sejfu
+    // wołającego, albo — gdy user/klocek jawnie zażądał sejfu org/projektu —
+    // odmawiamy fail-closed (żaden dokument org nie może wejść w prywatną turę).
+    if (!orgScopeAllowed) {
+      if (effectiveVaultScope && effectiveVaultScope !== 'user') {
+        return JSON.stringify({
+          source: 'knowledge_base',
+          query: args.query,
+          privateMode: true,
+          results: [],
+          note: 'Tryb prywatny: sejf organizacji/projektu jest poza zakresem tej rozmowy',
+        });
+      }
+      effectiveVaultScope = 'user';
+      effectiveProjectId = null;
     }
 
     if (effectiveVaultScope) {

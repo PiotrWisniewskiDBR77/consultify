@@ -1,11 +1,9 @@
-import { CheckCircle2, Loader2, ShieldX, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, ShieldX, XCircle } from 'lucide-react';
 import React from 'react';
 
-export type ToolStep = {
-  toolName: string;
-  status: 'running' | 'completed' | 'failed' | 'blocked';
-  costUsd?: number;
-};
+import type { ToolStepEvent } from './toolSteps';
+
+export type ToolStep = Pick<ToolStepEvent, 'toolName' | 'status' | 'costUsd'>;
 
 export function ToolStepList({ steps }: { steps: ToolStep[] }): React.ReactElement {
   return (
@@ -20,7 +18,9 @@ export function ToolStepList({ steps }: { steps: ToolStep[] }): React.ReactEleme
                 ? CheckCircle2
                 : step.status === 'blocked'
                   ? ShieldX
-                  : XCircle;
+                  : step.status === 'timeout'
+                    ? Clock
+                    : XCircle;
           return (
             <li key={`${step.toolName}-${index}`} className="flex items-center gap-2 text-xs">
               <Icon

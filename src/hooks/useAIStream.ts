@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import {
+  applyToolStepEvent,
+  type ToolStepEvent,
+} from '@/components/AIChat/toolSteps';
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -382,6 +386,12 @@ export type UseAIStreamReturn = {
   teresaProposal: TeresaChatProposal | null;
   deepThinkingState: any | null;
   researchProgress: any | null;
+  /**
+   * FIX-206 (pkt 4): kroki narzedzi Teresy maja WLASNY slot. Doklejanie ich do
+   * `researchProgress` zapalalo panel „Deep Research" przy kazdej turze z
+   * narzedziem — fantom, bo zadne glebokie badanie nie bylo uruchomione.
+   */
+  toolSteps: ToolStepEvent[] | null;
   researchVisibility: any | null;
   agentAuditState: any | null;
   agentReviewProgressByAgentId: Record<string, any>;
@@ -417,13 +427,6 @@ type ResearchProgressEvent = {
   researchType?: string;
   /** Number of completed rounds */
   rounds?: number;
-};
-
-type ToolStepEvent = {
-  type: 'tool_step';
-  toolName: string;
-  status: 'running' | 'completed' | 'failed' | 'blocked';
-  costUsd?: number;
 };
 
 type ResearchVisibilityEvent = {
@@ -517,6 +520,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [streamCompletedSignal, setStreamCompletedSignal] = useState(false);
   const [deepThinkingState, setDeepThinkingState] = useState<DeepThinkingStateEvent | null>(null);
   const [researchProgress, setResearchProgress] = useState<ResearchProgressEvent | null>(null);
+  const [toolSteps, setToolSteps] = useState<ToolStepEvent[] | null>(null);
   const [researchVisibility, setResearchVisibility] = useState<ResearchVisibilityEvent | null>(
     null
   );
@@ -581,6 +585,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     setTeresaProposal(null);
     teresaProposalRef.current = null;
     setResearchProgress(null);
+    setToolSteps(null);
     setResearchVisibility(null);
     setAgentAuditState(null);
     setAgentReviewProgressByAgentId({});
@@ -1122,24 +1127,9 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         }
         if (evt.type === 'tool_step') {
           const e = evt as ToolStepEvent;
-          setResearchProgress((previous: any) => {
-            const steps = Array.isArray(previous?.toolSteps) ? previous.toolSteps : [];
-            if (e.status === 'running') {
-              return { ...(previous || {}), toolSteps: [...steps, e] };
-            }
-            const pendingIndex = steps
-              .map(
-                (step: ToolStepEvent) =>
-                  step.toolName === e.toolName && step.status === 'running'
-              )
-              .lastIndexOf(true);
-            if (pendingIndex < 0) {
-              return { ...(previous || {}), toolSteps: [...steps, e] };
-            }
-            const next = [...steps];
-            next[pendingIndex] = e;
-            return { ...(previous || {}), toolSteps: next };
-          });
+          // FIX-206 (pkt 4): wlasny stan, NIE `researchProgress` — inaczej sam
+          // fakt uzycia narzedzia otwieral panel Deep Research.
+          setToolSteps((previous) => applyToolStepEvent(previous, e));
           return;
         }
 
@@ -1540,6 +1530,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     teresaProposal,
     deepThinkingState,
     researchProgress,
+    toolSteps,
     researchVisibility,
     agentAuditState,
     agentReviewProgressByAgentId,

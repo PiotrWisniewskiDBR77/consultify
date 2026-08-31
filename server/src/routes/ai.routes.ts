@@ -4891,20 +4891,36 @@ router.post(
             enabled: true,
             context: {
               executeReadTool: async (toolName: string, args: Record<string, unknown>) => {
-                const estimatedCostUsd = estimateAgentToolCostUsd(toolName);
-                if (paidCostUsd + estimatedCostUsd > maxPaidCostUsd) {
-                  emitSSE({ type: 'tool_step', toolName, status: 'blocked', costUsd: paidCostUsd });
-                  return JSON.stringify({
-                    status: 'BLOCKED',
-                    error: 'Conversation tool cost limit reached',
-                  });
-                }
-                paidCostUsd += estimatedCostUsd;
-                emitSSE({ type: 'tool_step', toolName, status: 'running', costUsd: paidCostUsd });
-                logger.info(
-                  `[TeresaToolLoop] tool=${toolName} cumulativeCostUsd=${paidCostUsd.toFixed(4)}`
-                );
+                // FIX-206 (pkt 6): wycena kosztu MUSI byc wewnatrz try.
+                // `estimateAgentToolCostUsd` rzuca UnknownToolCostError dla
+                // narzedzia bez ceny — poza try ten wyjatek wychodzil z callbacku
+                // do dostawcy i wywracal CALA ture. Kontrakt: nieznana cena konczy
+                // JEDEN krok bledem, rozmowa zyje dalej.
+                let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
                 try {
+                  const estimatedCostUsd = estimateAgentToolCostUsd(toolName);
+                  if (paidCostUsd + estimatedCostUsd > maxPaidCostUsd) {
+                    emitSSE({
+                      type: 'tool_step',
+                      toolName,
+                      status: 'blocked',
+                      costUsd: paidCostUsd,
+                    });
+                    return JSON.stringify({
+                      status: 'BLOCKED',
+                      error: 'Conversation tool cost limit reached',
+                    });
+                  }
+                  paidCostUsd += estimatedCostUsd;
+                  emitSSE({ type: 'tool_step', toolName, status: 'running', costUsd: paidCostUsd });
+                  logger.info(
+                    `[TeresaToolLoop] tool=${toolName} cumulativeCostUsd=${paidCostUsd.toFixed(4)}`
+                  );
+                  // FIX-206 (pkt 5): wyscig z zegarem musi byc ROZPOZNAWALNY.
+                  // Wczesniej koperta TIMEOUT wracala tym samym torem co wynik i
+                  // panel dostawal `completed` — krok wygladal na udany, choc
+                  // narzedzie nie odpowiedzialo.
+                  const TIMED_OUT = Symbol('tool_timeout');
                   const result = await Promise.race([
                     executeToolCall(toolName, args, {
                       organizationId: String(req.organizationId || ''),
@@ -4915,33 +4931,42 @@ router.post(
                       // obrony; pierwsza to org-scope w samych zapytaniach).
                       projectId: verifiedLoopProjectId,
                       conversationId: conversationId || undefined,
+                      // FIX-206 (pkt 2): tryb prywatny rozmowy jedzie az do
+                      // executorow — to on odcina zakresy org_shared/public_kb
+                      // w chatPolicyGateway.
+                      privateMode: Boolean(privateMode),
                     }),
-                    new Promise<string>((resolve) =>
-                      setTimeout(
-                        () =>
-                          resolve(
-                            JSON.stringify({
-                              status: 'TIMEOUT',
-                              error: 'Tool did not answer in time',
-                            })
-                          ),
-                        timeoutMs
-                      )
-                    ),
+                    new Promise<typeof TIMED_OUT>((resolve) => {
+                      timeoutHandle = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
+                    }),
                   ]);
+                  if (result === TIMED_OUT) {
+                    emitSSE({
+                      type: 'tool_step',
+                      toolName,
+                      status: 'timeout',
+                      costUsd: paidCostUsd,
+                    });
+                    return JSON.stringify({
+                      status: 'TIMEOUT',
+                      error: 'Tool did not answer in time',
+                    });
+                  }
                   emitSSE({
                     type: 'tool_step',
                     toolName,
                     status: 'completed',
                     costUsd: paidCostUsd,
                   });
-                  return result;
+                  return result as string;
                 } catch (error) {
                   emitSSE({ type: 'tool_step', toolName, status: 'failed', costUsd: paidCostUsd });
                   return JSON.stringify({
                     status: 'ERROR',
                     error: String((error as Error)?.message || error),
                   });
+                } finally {
+                  if (timeoutHandle) clearTimeout(timeoutHandle);
                 }
               },
             },

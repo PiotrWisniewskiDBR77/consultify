@@ -60,6 +60,7 @@ import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { TeresaProposalCard } from './TeresaProposalCard';
 import { ToolStepList } from './ToolStepList';
+import { hasDeepResearchProgress } from './toolSteps';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
 
@@ -796,7 +797,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 </div>
               )}
 
-              {(msg as any).metadata?.researchProgress && (
+              {hasDeepResearchProgress((msg as any).metadata?.researchProgress) && (
                 <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
                   {((msg as any).metadata?.researchProgress?.error as string | undefined) && (
                     <div className="mb-2 text-[11px] text-amber-600 dark:text-amber-400">
@@ -815,9 +816,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 </div>
               )}
 
-              {Array.isArray((msg as any).metadata?.researchProgress?.toolSteps) && (
-                <ToolStepList steps={(msg as any).metadata.researchProgress.toolSteps} />
-              )}
+              {/* FIX-206 (pkt 4): kroki narzedzi maja WLASNY slot metadanych.
+                  Wczesniej jechaly w `researchProgress`, wiec kazda tura z
+                  narzedziem zapalala panel „Deep Research" powyzej. */}
+              {Array.isArray((msg as any).metadata?.toolSteps) &&
+                (msg as any).metadata.toolSteps.length > 0 && (
+                  <ToolStepList steps={(msg as any).metadata.toolSteps} />
+                )}
 
               {msg.role === 'ai' &&
                 (msg as any).metadata?.proposal &&
