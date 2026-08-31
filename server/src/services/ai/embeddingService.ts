@@ -14,6 +14,7 @@ import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { validateExternalServiceResponse } from '../../utils/typeGuards.js';
+import { buildKnowledgeDocAccessFilter as buildSharedKnowledgeDocAccessFilter } from './knowledgeDocAccessFilter.js';
 
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
 export const EMBEDDING_DIMENSIONS = 1536;
@@ -33,6 +34,7 @@ type EmbeddingSearchOptions = {
   userId?: string;
   minSimilarity?: number;
   sourceType?: string;
+  projectIds?: string[];
 };
 
 type EmbeddingRow = {
@@ -225,7 +227,7 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, organizationId, userId, minSimilarity = 0.5 } = options;
+    const { limit = 5, organizationId, userId, projectIds, minSimilarity = 0.5 } = options;
 
     // FIX-1 (dyżur 210): `e.*` alone never populated `EmbeddingRow.content` — the
     // real (Postgres-only, see Database.ts header) `ai_knowledge_embeddings`
@@ -244,7 +246,7 @@ export class EmbeddingService {
       params.push(organizationId);
     }
 
-    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, false, params.length + 1);
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, false, params.length + 1, projectIds);
     where.push(accessFilter.sql);
     params.push(...accessFilter.params);
     if (where.length > 0) sql += ` WHERE ${where.join(' AND ')}`;
@@ -281,7 +283,7 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId, userId } = options;
+    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId, userId, projectIds } = options;
     const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
     let sql = `
@@ -313,7 +315,7 @@ export class EmbeddingService {
       paramIndex++;
     }
 
-    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, true, paramIndex);
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, true, paramIndex, projectIds);
     sql += ` AND ${accessFilter.sql}`;
     params.push(...accessFilter.params);
     paramIndex += accessFilter.params.length;
@@ -342,61 +344,59 @@ export class EmbeddingService {
     embeddingAlias: string,
     userId: string | undefined,
     isPg: boolean,
-    firstParamIndex: number
+    firstParamIndex: number,
+    projectIds?: string[]
   ): Promise<{ sql: string; params: string[] }> {
-    let hasScope = false;
-    let hasOwner = false;
+    // FIX-213-2: the old shape returned inside each `try` branch, so the log
+    // below was only reachable when the `information_schema`/`PRAGMA` query
+    // itself threw — never for the actual scenario it exists for (the query
+    // succeeds, `scope` is just genuinely absent). Now `columns` is computed
+    // once, the warn check runs unconditionally against it, and there is a
+    // single `return` that delegates the fail-closed decision to the shared
+    // filter (which already treats a missing `scope`/`ai_visibility`/
+    // `sensitivity` column as fail-closed) — so the log and the SQL it
+    // describes can no longer disagree about which branch ran.
+    let columns = new Set<string>();
     try {
       if (isPg) {
         const result = await getDatabase().query<{ column_name: string }>(
           `SELECT column_name FROM information_schema.columns
-            WHERE table_name = 'knowledge_docs' AND column_name IN ('scope', 'owner_id')`
+            WHERE table_name = 'knowledge_docs' AND column_name IN ('scope', 'owner_id', 'project_id', 'ai_visibility', 'sensitivity')`
         );
-        const columns = new Set(result.rows.map((row) => row.column_name));
-        hasScope = columns.has('scope');
-        hasOwner = columns.has('owner_id');
+        columns = new Set(result.rows.map((row) => row.column_name));
       } else {
         const rows = await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
           fallback: false,
         });
-        const columns = new Set((rows || []).map((row) => String(row.name || '')));
-        hasScope = columns.has('scope');
-        hasOwner = columns.has('owner_id');
+        columns = new Set((rows || []).map((row) => String(row.name || '')));
       }
     } catch {
-      // Missing/unreadable provenance is resolved fail-closed below.
+      // Missing/unreadable provenance (e.g. table not created yet) resolves
+      // fail-closed below — `columns` stays empty, which the warn check and
+      // the shared filter both treat the same as "scope column missing".
     }
 
-    if (!hasScope) {
-      if (!missingScopeColumnWarned) {
-        missingScopeColumnWarned = true;
-        logger.error(
-          '[EmbeddingService] knowledge_docs.scope column is missing — the entire ' +
-            'knowledge base (not just private Vault docs) is being excluded from ' +
-            'embedding search fail-closed. This is expected only immediately after a ' +
-            'fresh migration, before KnowledgeService/ContextDocumentService run their ' +
-            'runtime ALTER TABLE. If this persists, retrieval is silently dark; run the ' +
-            'ALTER (or the equivalent migration) against knowledge_docs.'
-        );
-      }
-      return {
-        sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id)`,
-        params: [],
-      };
+    if (!columns.has('scope') && !missingScopeColumnWarned) {
+      missingScopeColumnWarned = true;
+      logger.error(
+        '[EmbeddingService] knowledge_docs.scope column is missing — the entire ' +
+          'knowledge base (not just private Vault docs) is being excluded from ' +
+          'embedding search fail-closed. This is expected only immediately after a ' +
+          'fresh migration, before KnowledgeService/ContextDocumentService run their ' +
+          'runtime ALTER TABLE. If this persists, retrieval is silently dark; run the ' +
+          'ALTER (or the equivalent migration) against knowledge_docs.'
+      );
     }
 
-    if (userId && hasOwner) {
-      const placeholder = isPg ? `$${firstParamIndex}` : '?';
-      return {
-        sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id AND d.scope = 'user' AND d.owner_id IS DISTINCT FROM ${placeholder})`,
-        params: [userId],
-      };
-    }
-
-    return {
-      sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id AND d.scope = 'user')`,
-      params: [],
-    };
+    return buildSharedKnowledgeDocAccessFilter({
+      columns,
+      dialect: isPg ? 'postgres' : 'question',
+      firstParamIndex,
+      documentAlias: 'd',
+      embeddingAlias,
+      userId,
+      projectIds,
+    });
   }
 
   /**

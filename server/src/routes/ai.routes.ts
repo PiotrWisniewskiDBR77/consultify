@@ -597,8 +597,8 @@ router.post(
 
       await client.query(
         `INSERT INTO knowledge_docs
-         (id, filename, filepath, status, organization_id, source_type, file_hash, version, created_at)
-         VALUES ($1, $2, $3, 'ready', $4, 'document_extraction', $5, 1, CURRENT_TIMESTAMP)`,
+         (id, filename, filepath, status, organization_id, source_type, file_hash, version, scope, created_at)
+         VALUES ($1, $2, $3, 'ready', $4, 'document_extraction', $5, 1, 'organization', CURRENT_TIMESTAMP)`,
         [docId, filename, '', orgId, fileHash]
       );
       for (const chunk of embedded) {
@@ -865,8 +865,8 @@ router.post(
     // not a separate try/catch-swallowed UPDATE that could leave the row
     // with an unresolved (NULL) owner.
     await dbRun(
-      `INSERT INTO knowledge_docs (id, filename, filepath, status, organization_id, category, created_at)
-       VALUES (?, ?, ?, 'indexed', ?, 'chat_url_attachment', CURRENT_TIMESTAMP)`,
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, organization_id, category, scope, created_at)
+       VALUES (?, ?, ?, 'indexed', ?, 'chat_url_attachment', 'organization', CURRENT_TIMESTAMP)`,
       [docId, filename, finalUrl || inputUrl, orgId],
       { fallback: true } as any
     );
