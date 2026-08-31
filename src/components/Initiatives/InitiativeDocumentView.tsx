@@ -5706,10 +5706,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           // `readMode` wchodzi tu jako pełnoprawny warunek — w Podglądzie select
           // NIE JEST renderowany (nie „disabled", tylko go nie ma).
           const canChangeStatus = stripStatusActions.length > 0 && !isMutating && !readMode;
-          // DEC-104: `stripStatusActions` is currently always empty (see the
-          // `statusActions` comment above) — no card-level status write path
-          // exists yet. Explain via title instead of leaving a silent,
-          // unexplained read-only pill.
+          // DEC-104 (corrected in duty 196, 2026-08-31; the original claim was
+          // disproved by acceptance 172): `stripStatusActions` is empty when
+          // `gateReadiness.availableTransitions` offers no executable transition
+          // for the current user/state, not because the card lacks a write path.
+          // The same `onChange` calls `handleStatusAction` (~3025), which calls
+          // `updateInitiativeStatusWriteTruth` (~3148) and the real
+          // `PATCH /initiatives/:id/status`. ODBIOR_172_EKRANY_NIEPRAWDA.md
+          // independently replayed DRAFT→PENDING_REVIEW: 200 with persistence;
+          // without the authorized role: 403 with zero writes. The title below
+          // explains the actual reason for an empty transition list.
           const noGateActionsTitle =
             stripStatusActions.length === 0
               ? t(
