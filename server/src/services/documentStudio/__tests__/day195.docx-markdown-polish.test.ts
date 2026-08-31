@@ -63,4 +63,34 @@ describe('Day 195 DOCX markdown and Polish labels', () => {
     expect(xml).toContain('kompleksowy');
     expect(xml).toContain('[Założenie — wymaga źródła]');
   });
+
+  // FIX-195 (3). The markdown-list branch used to hardcode BODY_TEXT and drop
+  // `pageBreakBefore`, so a DRD-profile block that happened to contain a "- "
+  // line silently lost both. Same block, same content, two shapes.
+  it('carries the DRD named style and pageBreakBefore into the markdown-list branch', async () => {
+    const drd = structuredClone(schema);
+    drd.formattingSchema.colorTemplateId = 'drd-report';
+    drd.sections[0].blocks = [
+      {
+        blockId: 'p-drd',
+        type: 'paragraph',
+        content: {
+          text: 'Wniosek otwiera stronę.\n- Pierwszy krok\n- Drugi krok',
+          docxStyleId: 'Lead',
+          pageBreakBefore: true,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+      },
+    ];
+    const zip = await JSZip.loadAsync(await renderDocumentSchemaToDocxBuffer(drd));
+    const xml = (await zip.file('word/document.xml')?.async('string')) ?? '';
+
+    // The named style survives the list branch...
+    expect(xml).toContain('<w:pStyle w:val="Lead"/>');
+    // ...and so does the page break, exactly once (only the first paragraph).
+    expect(xml.match(/<w:pageBreakBefore\/>/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
+    const listParagraphs = xml.split('<w:p>').filter((part) => part.includes('w:val="Lead"'));
+    expect(listParagraphs.length).toBe(3);
+    expect(listParagraphs.filter((part) => part.includes('<w:pageBreakBefore/>')).length).toBe(1);
+  });
 });

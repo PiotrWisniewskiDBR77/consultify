@@ -535,11 +535,32 @@ function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
   });
 }
 
-function markdownRuns(text: string, font: string): TextRun[] {
+/**
+ * Split `**bold**` spans out of a line into real Word runs.
+ *
+ * FIX-195 (3): `bold` MUST stay `undefined` for a plain span. Passing an
+ * explicit `false` makes the docx library emit `<w:b w:val="false"/>
+ * <w:bCs w:val="false"/>` into every run, which changes document.xml
+ * byte-for-byte for every legacy caller and broke the day-32 parity pin
+ * without changing a single pixel of the rendered document.
+ *
+ * `base` carries run properties the caller wants on every span (a callout's
+ * italics / colour), so a bold span inside a callout stays a callout run.
+ */
+function markdownRuns(
+  text: string,
+  font: string,
+  base: { italics?: boolean; bold?: boolean; color?: string; size?: number } = {}
+): TextRun[] {
   const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
   return parts.map((part) => {
     const bold = /^\*\*[^*]+\*\*$/.test(part);
-    return new TextRun({ text: bold ? part.slice(2, -2) : part, bold, font });
+    return new TextRun({
+      ...base,
+      text: bold ? part.slice(2, -2) : part,
+      bold: bold || base.bold || undefined,
+      font,
+    });
   });
 }
 
@@ -549,19 +570,34 @@ function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragra
     pageBreakBefore?: boolean;
   };
   const text = asString(value.text ?? '');
+  // FIX-195 (3): both paragraph shapes resolve the SAME style and page-break
+  // contract. The markdown-list branch used to hardcode BODY_TEXT and drop
+  // `pageBreakBefore`, so a DRD-profile block that happened to contain a "- "
+  // line silently lost its named style and its page break.
+  const paragraphStyle =
+    isDrdReportProfile(ctx.schema) && value.docxStyleId
+      ? value.docxStyleId
+      : block.isAssumption
+        ? DOCX_STYLE_IDS.ASSUMPTION_BODY
+        : DOCX_STYLE_IDS.BODY_TEXT;
+  const pageBreakBefore = value.pageBreakBefore === true ? true : undefined;
   const lines = text.split(/\r?\n/);
   const hasMarkdownList = lines.some((line) => /^\s*(?:- |\d+\. )/.test(line));
   if (hasMarkdownList && !/^\s*\|.*\|\s*$/m.test(text)) {
-    return lines.filter((line) => line.trim()).map((line, index) => {
+    const kept = lines.filter((line) => line.trim());
+    return kept.map((line, index) => {
       const numbered = /^\s*\d+\. /.test(line);
       const bullet = /^\s*- /.test(line);
       const clean = line.replace(/^\s*(?:- |\d+\. )/, '');
       const children = markdownRuns(clean, ctx.bodyFont);
-      if (block.isAssumption && index === lines.filter((entry) => entry.trim()).length - 1) {
+      if (block.isAssumption && index === kept.length - 1) {
         children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
       }
       return new Paragraph({
-        style: block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
+        style: paragraphStyle,
+        // Only the FIRST materialized paragraph may carry the block's page
+        // break; repeating it would push every list item onto its own page.
+        pageBreakBefore: index === 0 ? pageBreakBefore : undefined,
         numbering: bullet || numbered
           ? { reference: numbered ? DOCX_NUMBERING_REFERENCE.DECIMAL : DOCX_NUMBERING_REFERENCE.BULLET, level: 0 }
           : undefined,
@@ -572,13 +608,7 @@ function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragra
   const children = markdownRuns(text, ctx.bodyFont);
   if (block.isAssumption) children.push(buildAssumptionMarker(ctx.bodyFont, ctx.schema.language));
   if (block.sourceRef) children.push(...buildCitationRuns(ctx, block.sourceRef));
-  return [new Paragraph({
-    style: isDrdReportProfile(ctx.schema) && value.docxStyleId
-      ? value.docxStyleId
-      : block.isAssumption ? DOCX_STYLE_IDS.ASSUMPTION_BODY : DOCX_STYLE_IDS.BODY_TEXT,
-    pageBreakBefore: value.pageBreakBefore === true ? true : undefined,
-    children,
-  })];
+  return [new Paragraph({ style: paragraphStyle, pageBreakBefore, children })];
 }
 
 function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
