@@ -37,3 +37,7 @@ Pytanie o powierzchnię Audytów (hub vs warsztat) — zadane ponownie w rundzie
 | D-11 | Granulacja założeń vs próg gęstości QA | **próg liczy średnią SEKCJI** (nie bloku) — granulacja per akapit zostaje; wdrożenie w FIX-195 | 31.08 rano |
 | D-12 | Migracja E2: pomiar M3 przed decyzją | **TAK — read-only na stagingu** | wykonane 31.08: 14 domów / 67 inicjatyw z zadaniami / 467 zadań (265 osobistych); wynik w raporcie 197 |
 | D-13 | Migracja E2: uruchomienie | **TAK — pilot 1, potem partie po 10** | dyżur 204: miny (fingerprint, ON CONFLICT) + runner --write=1 + próba lokalna; PILOT na stagingu wykonuje NADZORCA (procedura promocji, zapis za zgodą D-13) → ogląd właściciela → partie; brama 409 zostaje do końca migracji |
+| D-14 | Architektura modułu 17 | **ZAAKCEPTOWANA** — startują 17-A..J | 31.08 |
+| D-15 | Akcje czatu (P5) | **WSZYSTKIE 4 dobudować** + zasada nadrzędna słowami właściciela: „Agent ma obejmować pracę ze WSZYSTKIMI narzędziami w naszej aplikacji i teraz ma nimi zarządzać" → widma NIE są usuwane hurtem: każde mapowane na narzędzie aplikacji albo świadomie gaszone z uzasadnieniem | 31.08 |
+| D-16 | GF-AGT-02 | **LOKALNIE, wcześniej** (kanoniczny runtime); powtórka na stagingu po K5 jako potwierdzenie | 31.08 |
+| D-17 | K3 pierwsza partia werdyktów | **Partner + Czat + Admin, DZIŚ WIECZOREM** — pakiety zrzutów przygotowuje nadzorca z torem grafiki | 31.08 |

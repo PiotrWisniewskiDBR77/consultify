@@ -62,6 +62,12 @@ scalony — przycisk pisze realnym PATCH przez governed gate).
 
 ### Blokady zgłoszone przez funkcje do toru grafiki
 
+★★ **PILNE 31.08 (D-17): DZIŚ WIECZOREM pierwsze posiedzenie werdyktowe właściciela
+— Partner + Czat + Admin.** Tor funkcji składa pakiety dowodowe (zrzuty z dyżurów
+177/189, 179/182/192, day111-118 + świeże braki); tor grafiki proszony o przegląd
+kanonu tych trzech modułów PRZED wieczorem i zgłoszenie tu blokerów. CLOSED_FINAL
+= SHA + hash zrzutów + tag final-XX.
+
 **2026-08-31 · dyżur 200 — komplet zrzutów dla rejestru 21 paneli finansów (dopełnienie dyżuru 135).**
 Dyżur 135 podpiął rejestr `FinanceValuePanelsSurface.tsx` do 21 paneli za flagą
 `ff.finance_value_panels` (domyślnie OFF), ale wydany wtedy harness obsługiwał tylko
