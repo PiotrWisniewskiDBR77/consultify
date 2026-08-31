@@ -4,6 +4,7 @@ import type {
   AggregateRelationClaim,
   AuditAppend,
   InitiativeCardSnapshot,
+  LegacyTaskCutoverLedgerEntry,
   MaterialCommandTransaction,
   MaterialCommandUnitOfWork,
   OutboxAppend,
@@ -336,6 +337,28 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       toVersion,
       mutation
     );
+  }
+
+  async appendLegacyTaskCutoverLedgerEntry(entry: LegacyTaskCutoverLedgerEntry): Promise<void> {
+    const result = await this.client.query(
+      `INSERT INTO legacy_task_cutover_ledger
+       (organization_id,legacy_task_id,batch_id,status,client_request_id,canonical_id,
+        case_version_before,case_version_after,actor_id,checksum,completed_at)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP)`,
+      [
+        entry.organizationId,
+        entry.legacyTaskId,
+        entry.batchId,
+        entry.status,
+        entry.clientRequestId,
+        entry.canonicalId,
+        entry.caseVersionBefore,
+        entry.caseVersionAfter,
+        entry.actorId,
+        entry.checksum,
+      ]
+    );
+    requireSingleRow(result, 'legacy task cutover ledger insert');
   }
 
   async appendAudit(entry: AuditAppend): Promise<void> {

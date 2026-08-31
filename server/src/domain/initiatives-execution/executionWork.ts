@@ -5,6 +5,8 @@ import {
   type MaterialCommandResult,
   type MaterialCommandTransaction,
   type MaterialCommandUnitOfWork,
+  type LegacyTaskCutoverLedgerEntry,
+  type PreparedMaterialChange,
   MaterialCommandValidationError,
 } from './materialCommand.js';
 interface Case {
@@ -121,66 +123,92 @@ export function deriveTaskStatus(
 ): ExecutionTask['status'] {
   return completed ? 'COMPLETED' : blockerDecisionIds.length ? 'BLOCKED' : 'OPEN';
 }
+type ExecutionTaskCreatePayload = Omit<
+  ExecutionTask,
+  'taskId' | 'status' | 'createdAt' | 'completedAt'
+> & { expectedCaseVersion: number };
+
+export async function prepareExecutionTaskCreation(
+  tx: MaterialCommandTransaction,
+  envelope: MaterialCommandEnvelope<ExecutionTaskCreatePayload>
+): Promise<PreparedMaterialChange<ExecutionTask, ExecutionTask>> {
+  const p = envelope.payload;
+  if (
+    !p.executionCaseId ||
+    !p.initiativeId ||
+    !p.title.trim() ||
+    !p.assigneeId ||
+    !p.ownerId ||
+    !Number.isFinite(Date.parse(p.dueAt)) ||
+    !Number.isFinite(Date.parse(p.slaAt))
+  )
+    throw new MaterialCommandValidationError('Task ownership and SLA are required');
+  const status = deriveTaskStatus(p.blockerDecisionIds);
+  await caseAndRollup(
+    tx,
+    envelope.organizationId,
+    p.executionCaseId,
+    p.initiativeId,
+    p.expectedCaseVersion,
+    { tasksTotal: 1, tasksBlocked: status === 'BLOCKED' ? 1 : 0 }
+  );
+  const task: ExecutionTask = {
+    taskId: envelope.aggregateId,
+    ...p,
+    status,
+    createdAt: new Date().toISOString(),
+    completedAt: null,
+  };
+  delete (task as any).expectedCaseVersion;
+  task.blastRadius = await recomputeTaskMilestones(tx, envelope.organizationId, task);
+  await tx.claimRelation({
+    organizationId: envelope.organizationId,
+    relationType: `EXECUTION_CASE_TASK:${task.taskId}`,
+    sourceType: 'execution_case',
+    sourceId: task.executionCaseId,
+    sourceVersion: p.expectedCaseVersion + 1,
+    targetType: 'execution_task',
+    targetId: task.taskId,
+    payload: { initiativeId: task.initiativeId, status },
+  });
+  return {
+    mutation: task,
+    response: task,
+    eventType: 'execution.task.created',
+    eventPayload: task,
+    auditPayload: task,
+  };
+}
+
 export async function createExecutionTask(
   uow: MaterialCommandUnitOfWork,
-  envelope: MaterialCommandEnvelope<
-    Omit<ExecutionTask, 'taskId' | 'status' | 'createdAt' | 'completedAt'> & {
-      expectedCaseVersion: number;
-    }
-  >
+  envelope: MaterialCommandEnvelope<ExecutionTaskCreatePayload>
 ): Promise<MaterialCommandResult<ExecutionTask>> {
   if (
     envelope.commandType !== 'execution.task.create' ||
     envelope.aggregateType !== 'execution_task'
   )
     throw new MaterialCommandValidationError('Invalid Task create');
-  return executeMaterialCommand(uow, envelope, async (tx) => {
-    const p = envelope.payload;
-    if (
-      !p.executionCaseId ||
-      !p.initiativeId ||
-      !p.title.trim() ||
-      !p.assigneeId ||
-      !p.ownerId ||
-      !Number.isFinite(Date.parse(p.dueAt)) ||
-      !Number.isFinite(Date.parse(p.slaAt))
-    )
-      throw new MaterialCommandValidationError('Task ownership and SLA are required');
-    const status = deriveTaskStatus(p.blockerDecisionIds);
-    await caseAndRollup(
-      tx,
-      envelope.organizationId,
-      p.executionCaseId,
-      p.initiativeId,
-      p.expectedCaseVersion,
-      { tasksTotal: 1, tasksBlocked: status === 'BLOCKED' ? 1 : 0 }
-    );
-    const task: ExecutionTask = {
-      taskId: envelope.aggregateId,
-      ...p,
-      status,
-      createdAt: new Date().toISOString(),
-      completedAt: null,
-    };
-    delete (task as any).expectedCaseVersion;
-    task.blastRadius = await recomputeTaskMilestones(tx, envelope.organizationId, task);
-    await tx.claimRelation({
-      organizationId: envelope.organizationId,
-      relationType: `EXECUTION_CASE_TASK:${task.taskId}`,
-      sourceType: 'execution_case',
-      sourceId: task.executionCaseId,
-      sourceVersion: p.expectedCaseVersion + 1,
-      targetType: 'execution_task',
-      targetId: task.taskId,
-      payload: { initiativeId: task.initiativeId, status },
+  return executeMaterialCommand(uow, envelope, prepareExecutionTaskCreation);
+}
+
+export async function createExecutionTaskForLegacyCutover(
+  uow: MaterialCommandUnitOfWork,
+  envelope: MaterialCommandEnvelope<ExecutionTaskCreatePayload>,
+  ledgerEntry: Omit<LegacyTaskCutoverLedgerEntry, 'caseVersionAfter'>
+): Promise<MaterialCommandResult<ExecutionTask>> {
+  if (
+    envelope.commandType !== 'execution.task.create' ||
+    envelope.aggregateType !== 'execution_task'
+  )
+    throw new MaterialCommandValidationError('Invalid Task create');
+  return executeMaterialCommand(uow, envelope, async (tx, commandEnvelope) => {
+    const change = await prepareExecutionTaskCreation(tx, commandEnvelope);
+    await tx.appendLegacyTaskCutoverLedgerEntry({
+      ...ledgerEntry,
+      caseVersionAfter: commandEnvelope.expectedVersion + 1,
     });
-    return {
-      mutation: task,
-      response: task,
-      eventType: 'execution.task.created',
-      eventPayload: task,
-      auditPayload: task,
-    };
+    return change;
   });
 }
 export async function updateExecutionTask(
