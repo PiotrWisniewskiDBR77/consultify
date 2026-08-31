@@ -368,10 +368,10 @@ const FilterDropdown: React.FC<{
 // mouse users can resize columns, keyboard users cannot reach the handle at
 // all. This is a LOCAL replacement scoped to `FilterableTable` (the canon
 // list shell every `StandardTable` consumer renders through), not an edit to
-// the shared `ColumnResizer` file — so the fix cannot regress the other four
+// the shared `ColumnResizer` file — so the fix cannot regress the other
 // direct consumers of that file (MyTasksListContent/InboxContent/
-// NotificationsContent/IdeasTableContent), which keep using the original,
-// unmodified `ColumnResizer`.
+// IdeasTableContent), which keep using the original, unmodified
+// `ColumnResizer`.
 //
 // Pattern: WAI-ARIA APG "Window Splitter" (role="separator", resizable):
 // https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/

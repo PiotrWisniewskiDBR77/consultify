@@ -1,7 +1,7 @@
 /**
  * QuickFilterBar - Inline filter chips for task filtering
  * Part of Unified MyWork Module
- * UNIFIED DESIGN: Same height/padding/font as NotificationsHub filters
+ * UNIFIED DESIGN: shared MyWork filter-chip sizing (height/padding/font)
  */
 
 import { AlertCircle, Calendar, CalendarDays, Flame, LayoutGrid } from 'lucide-react';
