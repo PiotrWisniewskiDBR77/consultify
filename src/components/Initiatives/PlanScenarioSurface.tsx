@@ -88,6 +88,26 @@ interface RegisterRow extends TableRow {
 interface Props extends CanonicalMenu3Contract {
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
   demoMode?: boolean;
+  /**
+   * Odbiór grafiki 141-plan-scenario (2026-08-31) — DEFEKT „Otwórz".
+   *
+   * Kanoniczny przycisk „Otwórz" w nagłówku `StandardPreview` obiecuje OBIEKT
+   * wiersza, czyli KARTĘ INICJATYWY. Był podpięty pod `showWorkspace`, co
+   * montowało warsztat planu POD tabelą (druga tabela pod pierwszą, strona
+   * rosła z 900 px do 2681 px) — przycisk nie prowadził tam, dokąd obiecywał.
+   *
+   * Wzorzec rodzica jest już w module: `PortfolioHealthView` dostaje
+   * `onOpenInitiative?: (id, title) => void`, a `InitiativesHub` wiąże je
+   * z `handleOpenInitiativeDocument` (InitiativesHub.tsx §renderContent).
+   * Ta powierzchnia idzie tą samą drogą.
+   *
+   * Gdy rodzic NIE poda handlera (np. harness dev-render, gdzie nie ma
+   * hosta karty), „Otwórz" renderuje się WYŁĄCZONY z powodem w tooltipie
+   * (kanon FIX-1 `StandardPreview.openDisabledReason`) — zamiast milczeć
+   * albo prowadzić w złe miejsce. Warsztat planu ma własną, uczciwie
+   * nazwaną akcję „Otwórz narzędzia planu".
+   */
+  onOpenInitiative?: (id: string, title: string) => void;
 }
 const formatDate = (value: string | null) => {
   if (!value) return 'UNKNOWN';
@@ -210,6 +230,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   activePreset,
   onCountsChange,
   demoMode = false,
+  onOpenInitiative,
 }) => {
   const { t } = useTranslation();
   const [rows, setRows] = useState<RegisterRow[]>([]);
@@ -550,6 +571,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const showWorkspace = () => {
     if (draft && selectedId) setWorkspaceOpen(true);
   };
+  /**
+   * „Otwórz" = KARTA INICJATYWY (obiekt wiersza), nie warsztat planu.
+   * Zwraca `undefined`, gdy rodzic nie potrafi otworzyć karty — wtedy
+   * `StandardPreview` renderuje wyłączony przycisk z powodem, a nie akcję
+   * prowadzącą w inne miejsce niż napis.
+   */
+  const openInitiativeCard = useCallback(
+    (id: string | null) => {
+      if (!onOpenInitiative || !id) return;
+      const row = planWindowRows.find((item) => item.id === id);
+      onOpenInitiative(id, row?.title ?? id);
+    },
+    [onOpenInitiative, planWindowRows]
+  );
+  const openCardDisabledReason = onOpenInitiative
+    ? undefined
+    : t('initiatives.planScenario.openCardUnavailable', {
+        defaultValue: 'Kartę inicjatywy otwiera moduł Inicjatywy — ten widok jest tylko planem.',
+      });
   const create = () => {
     const periods = createWeeklyPeriods(newStart, newWeekCount);
     if (
@@ -975,7 +1015,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         selectedId={selectedWindowId}
         selectedItem={visiblePlanWindows.find((row) => row.id === selectedWindowId) ?? null}
         onSelect={setSelectedWindowId}
-        onOpenFull={showWorkspace}
+        onOpenFull={onOpenInitiative ? (id) => openInitiativeCard(id) : undefined}
+        openDisabledReason={openCardDisabledReason}
         itemIds={visiblePlanWindows.map((row) => row.id)}
         getItemById={(id) => visiblePlanWindows.find((row) => row.id === id) ?? null}
         previewOpen={!workspaceOpen && Boolean(selectedWindowId)}
@@ -984,7 +1025,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             embedded
             title={row.title}
             onClose={() => setSelectedWindowId(null)}
-            onOpenFull={showWorkspace}
+            onOpenFull={onOpenInitiative ? () => openInitiativeCard(row.id) : undefined}
+            openDisabledReason={openCardDisabledReason}
             meta={{
               pills: [
                 { label: t(planBandKey[row.band] ?? row.band), tone: 'neutral' },
@@ -1129,7 +1171,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           data={visiblePlanWindows}
           selectedRowId={selectedWindowId}
           onRowClick={(row) => setSelectedWindowId(String(row.id))}
-          onRowDoubleClick={showWorkspace}
+          onRowDoubleClick={
+            onOpenInitiative ? (row) => openInitiativeCard(String(row.id)) : undefined
+          }
           rowMenu={(row) => ({
             primary: [
               {
@@ -1225,7 +1269,18 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             <StandardTable
               columns={[
                 { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true },
-                { id: 'band', label: t('initiatives.planScenario.columns.window'), sortable: true },
+                // Odbiór 141-plan-scenario (2026-08-31): ta tabela warsztatu jako
+                // JEDYNA w powierzchni renderowała surowe enumy backendu
+                // (NOW/NEXT/LATER/UNSCHEDULED, HIGH/MEDIUM/LOW, KNOWN/UNKNOWN/NONE).
+                // Tabela główna i podgląd tłumaczyły je od 2026-08-30 tymi samymi
+                // mapami — tu ich po prostu nie podpięto. Dane zostają angielskie,
+                // tłumaczona jest wyłącznie etykieta komórki.
+                {
+                  id: 'band',
+                  label: t('initiatives.planScenario.columns.window'),
+                  sortable: true,
+                  render: (row) => t(planBandKey[row.band] ?? row.band),
+                },
                 {
                   id: 'target',
                   label: t('initiatives.planScenario.workbench.proposedWindow'),
@@ -1235,14 +1290,26 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   id: 'dependency',
                   label: t('initiatives.planScenario.columns.dependencies'),
                   sortable: true,
+                  render: (row) => t(planReadinessStateKey[row.dependency] ?? row.dependency),
                 },
-                { id: 'capacity', label: t('initiatives.planScenario.columns.capacity'), sortable: true },
+                {
+                  id: 'capacity',
+                  label: t('initiatives.planScenario.columns.capacity'),
+                  sortable: true,
+                  render: (row) => t(planReadinessStateKey[row.capacity] ?? row.capacity),
+                },
                 {
                   id: 'confidence',
                   label: t('initiatives.planScenario.workbench.confidence'),
                   sortable: true,
+                  render: (row) => t(planConfidenceKey[row.confidence] ?? row.confidence),
                 },
-                { id: 'conflict', label: t('initiatives.planScenario.columns.conflict'), sortable: true },
+                {
+                  id: 'conflict',
+                  label: t('initiatives.planScenario.columns.conflict'),
+                  sortable: true,
+                  render: (row) => t(planConflictStateKey[row.conflict] ?? row.conflict),
+                },
               ]}
               data={visiblePlanWindows}
               persistKey="initiatives.plan-windows.v1"
@@ -1513,7 +1580,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                                   assignWindowToPeriod(window.initiativeId, periodIndex)
                                 }
                               >
-                                {active ? window.confidence : '—'}
+                                {active
+                                  ? t(planConfidenceKey[window.confidence] ?? window.confidence)
+                                  : '—'}
                               </button>
                             </td>
                           );
@@ -1643,10 +1712,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                               })
                             }
                           >
-                            <option>UNKNOWN</option>
-                            <option>LOW</option>
-                            <option>MEDIUM</option>
-                            <option>HIGH</option>
+                            {/* Wartość zapisywana zostaje angielska (kontrakt
+                                backendu), tłumaczy się wyłącznie etykieta opcji. */}
+                            {(['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH'] as const).map((level) => (
+                              <option key={level} value={level}>
+                                {t(planConfidenceKey[level] ?? level)}
+                              </option>
+                            ))}
                           </select>
                           <textarea
                             aria-label={t('initiatives.planScenario.workbench.rationaleAria', {
@@ -1695,7 +1767,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                         <div>
                           {window.constraintSnapshot.map((constraint) => (
                             <div key={constraint.constraintId} className="text-xs">
-                              {constraint.state}: {constraint.detail}
+                              {/* ta sama mapa co w kolumnach — bez niej w tej samej
+                                  sekcji zostawało gołe „UNKNOWN:" */}
+                              {t(planReadinessStateKey[constraint.state] ?? constraint.state)}:{' '}
+                              {constraint.detail}
                             </div>
                           ))}
                           <button

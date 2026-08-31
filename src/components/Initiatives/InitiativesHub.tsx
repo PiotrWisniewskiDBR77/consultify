@@ -1631,6 +1631,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           initiatives={planInitiatives}
           activePreset={canonicalMenu3Preset.plan}
           onCountsChange={handlePlanMenu3Counts}
+          /* Odbiór 141-plan-scenario (2026-08-31): „Otwórz" w podglądzie planu
+             prowadzi do KARTY INICJATYWY — ta sama droga co w PortfolioHealthView
+             niżej. Wcześniej otwierał warsztat planu pod tabelą. */
+          onOpenInitiative={(id, title) => {
+            const initiative = allInitiatives.find((item) => item.id === id);
+            handleOpenInitiativeDocument(
+              initiative ??
+                ({ id, name: title, status: InitiativeStatus.DRAFT } as PortfolioInitiative)
+            );
+          }}
         />
       );
     }
