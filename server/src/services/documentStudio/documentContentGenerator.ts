@@ -132,8 +132,17 @@ export function enforceDocumentSchemaGrounding(
     'offense strategy': 'Strategia ofensywna',
     'repair strategy': 'Strategia naprawcza',
   };
+  // FIX-195 (5): four of the day-190 tokens are POLISH WORDS, not English
+  // ones — `portfolio`, `total`, `plan`, `medium` (report 190, table "R1 —
+  // kompletna tabela tokenów 36 z 36", the four rows answering "tak" to "Czy
+  // jest słowem polskim?"). Day 190 made them non-destructive but they still
+  // set `changed`, so a fully grounded Polish paragraph — "Plan wdrożenia
+  // obejmuje trzy fale…" — came out amber. A Polish word is not evidence of
+  // English, so it must not raise the signal either. The other 32 tokens stay:
+  // per the same table `impact`, `owner` and `timing` are anglicisms, not
+  // Polish words, and remain a legitimate signal.
   const obviousEnglish =
-    /\b(the|and|for|with|without|required|information|portfolio|financial|constraints?|optimized|resource|allocation|executive|summary|decisions?|risks?|next|steps?|budget|overrun|severity|likelihood|impact|owner|mitigation|total|plan|realization|milestones?|completed|high|medium|low|scope|timing)\b/i;
+    /\b(the|and|for|with|without|required|information|financial|constraints?|optimized|resource|allocation|executive|summary|decisions?|risks?|next|steps?|budget|overrun|severity|likelihood|impact|owner|mitigation|realization|milestones?|completed|high|low|scope|timing)\b/i;
 
   const localizePolishValue = (
     value: unknown,
