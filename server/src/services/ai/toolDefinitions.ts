@@ -1139,11 +1139,13 @@ async function executeGetAssessment(args: any, ctx: ToolExecutionContext): Promi
     const { get: dbGet, all: dbAll } = await import('../../utils/DbPromise.js');
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'assessment', note: 'No active project' });
+    // FIX-206 (P0): jak wyzej — fail-closed bez kontekstu organizacji.
+    if (!ctx.organizationId) return JSON.stringify({ source: 'assessment', note: 'No organization context' });
 
     const assessment = (await dbGet(
       `SELECT id, name, framework, status, overall_score, target_score 
-       FROM maturity_assessments WHERE project_id = ? ORDER BY created_at DESC LIMIT 1`,
-      [projectId]
+       FROM maturity_assessments WHERE project_id = ? AND organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [projectId, ctx.organizationId]
     )) as any;
 
     if (!assessment) return JSON.stringify({ source: 'assessment', note: 'No assessment found' });
@@ -1249,20 +1251,24 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
     const { all: dbAll } = await import('../../utils/DbPromise.js');
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'initiatives', note: 'No active project' });
+    // FIX-206 (P0, ODBIOR_205_206.md): bez organizacji z kontekstu nie wolno czytac
+    // NICZEGO — audytor zmierzyl wyciek cross-org (org-A + cudzy projectId z ciala
+    // zadania -> nazwa/status/ROI inicjatywy org-B). Fail-closed.
+    if (!ctx.organizationId) return JSON.stringify({ source: 'initiatives', note: 'No organization context' });
 
     if (args.initiative_id) {
       const initiative = await dbAll(
         `SELECT id, name, status, priority, progress, cost_capex, cost_opex, expected_roi, start_date, end_date
-         FROM initiatives WHERE id = ? AND project_id = ?`,
-        [args.initiative_id, projectId]
+         FROM initiatives WHERE id = ? AND project_id = ? AND organization_id = ?`,
+        [args.initiative_id, projectId, ctx.organizationId]
       );
       return JSON.stringify({ source: 'initiatives', data: initiative });
     }
 
     const initiatives = await dbAll(
       `SELECT id, name, status, priority, progress, cost_capex, expected_roi
-       FROM initiatives WHERE project_id = ? ORDER BY priority DESC, created_at DESC LIMIT 20`,
-      [projectId]
+       FROM initiatives WHERE project_id = ? AND organization_id = ? ORDER BY priority DESC, created_at DESC LIMIT 20`,
+      [projectId, ctx.organizationId]
     );
 
     return JSON.stringify({

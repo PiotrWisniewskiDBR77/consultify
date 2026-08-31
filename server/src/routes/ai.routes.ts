@@ -4862,6 +4862,26 @@ router.post(
       if (featureFlags.ENABLE_TERESA_TOOL_LOOP && !aiModes?.deepResearch) {
         const { executeToolCall } = await import('../services/ai/toolDefinitions.js');
         const { estimateAgentToolCostUsd } = await import('../services/ai/toolCostEstimates.js');
+        // FIX-206 (P0, ODBIOR_205_206.md): `context.projectId` przychodzi z ciala
+        // zadania, a executory czytaja po nim dane — audytor zmierzyl wyciek
+        // cross-org. Projekt wchodzi do petli TYLKO po potwierdzeniu, ze nalezy
+        // do organizacji z tokenu; inaczej petla dziala bez projektu (fail-closed).
+        let verifiedLoopProjectId: string | undefined;
+        {
+          const claimedProjectId = String((context as any)?.projectId || '').trim();
+          if (claimedProjectId && req.organizationId) {
+            try {
+              const { get: dbGetProject } = await import('../utils/DbPromise.js');
+              const ownedProject = (await dbGetProject(
+                `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+                [claimedProjectId, String(req.organizationId)]
+              )) as { id?: string } | undefined;
+              verifiedLoopProjectId = ownedProject?.id ? claimedProjectId : undefined;
+            } catch {
+              verifiedLoopProjectId = undefined;
+            }
+          }
+        }
         let paidCostUsd = 0;
         const maxPaidCostUsd = 0.08;
         const timeoutMs = 12_000;
@@ -4889,7 +4909,11 @@ router.post(
                     executeToolCall(toolName, args, {
                       organizationId: String(req.organizationId || ''),
                       userId: String(req.userId || ''),
-                      projectId: (context as any)?.projectId,
+                      // FIX-206 (P0): projectId NIE moze pochodzic z ciala zadania —
+                      // executory czytaja po nim dane. Kontrakt: bierzemy go tylko
+                      // wtedy, gdy nalezy do organizacji z tokenu (druga warstwa
+                      // obrony; pierwsza to org-scope w samych zapytaniach).
+                      projectId: verifiedLoopProjectId,
                       conversationId: conversationId || undefined,
                     }),
                     new Promise<string>((resolve) =>
