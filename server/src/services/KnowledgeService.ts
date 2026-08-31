@@ -669,7 +669,12 @@ const KnowledgeService = {
   // and no `source_type='knowledge'` rows existed yet, so no leak had
   // manifested from Vault uploads specifically — the confirmed leak was via
   // IngestionPipeline.ingestText/interview answers, same underlying bug).
-  async processDocument(docId: string, text: string, organizationId?: string): Promise<number> {
+  async processDocument(
+    docId: string,
+    text: string,
+    organizationId?: string,
+    skipGlobalEmbeddingIndex: boolean = false
+  ): Promise<number> {
     await ensureKnowledgeSchema();
     const chunks = chunkText(text, { chunkSize: 1000, overlap: 200 });
 
@@ -709,7 +714,7 @@ const KnowledgeService = {
         { fallback: true } as any
       );
 
-      if (embedding && embedding.length > 0) {
+      if (!skipGlobalEmbeddingIndex && embedding && embedding.length > 0) {
         try {
           await embeddingService.storeChunk(
             {
