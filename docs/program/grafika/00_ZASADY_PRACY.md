@@ -428,3 +428,18 @@ Cztery incydenty jednego dnia, trzy różne mechanizmy:
 3. **Po commicie**: `git show --stat HEAD` — jeśli w commicie są pliki spoza twojej listy, natychmiast zgłoś (nie cofaj historii samodzielnie).
 
 Do plików ZBIORCZYCH (NOC_PRZEGLAD_MODULOW.md, DZIENNIK_GRAFIKA.md) wolno DOPISYWAĆ sekcję — nigdy zapisywać całego pliku z własnej pamięci (kasacja czterech raportów, patrz Z-15).
+
+## ★★ REGUŁA NR 15 — przed oddaniem do odbioru: bramka mechaniczna, nie uważność (2026-08-31)
+
+Żadna partia nie idzie do właściciela bez `node scripts/dev/odbior-kontrola.mjs` z wynikiem
+„CZYSTO". Bramka sprawdza dla każdej karty w odbiorze: czy istnieje zrzut w obu motywach, czy
+najnowszy nie jest sprzed naprawy, czy nie jest przestarzały i czy nie jest podejrzanie mały
+(biały ekran waży kilkanaście kilobajtów).
+
+**Powód:** 2026-08-31 strona odbioru pokazywała stare zrzuty na 120 z 229 kart, bo indeks
+wybierał plik po kolejności alfabetycznej katalogów. Nikt tego nie zauważył okiem przez cały
+dzień — wykrył to dopiero manifest zbudowany maszynowo.
+
+**Druga część reguły:** ocena ekranu po naprawie jest nieważna, dopóki ktoś nie obejrzy zrzutu
+ZROBIONEGO PO tej naprawie. Tego samego dnia osiem ekranów wróciło do niskiej oceny, bo raport
+mówił „naprawione", a obraz tego nie potwierdzał. Awans oceny wymaga obrazu, nie deklaracji.
