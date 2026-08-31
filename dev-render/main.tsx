@@ -98,6 +98,18 @@ const AdminCommandCenterPanelScreen = React.lazy(
 const AdminSsoSelfServiceCardScreen = React.lazy(
   () => import('./screens/admin-sso-self-service-card')
 );
+// admin-security (runda pełna) — 10 screens of the `security` admin domain
+// (adminNavigation.ts ADMIN_DOMAINS['security'].children), one dev-render
+// story file (screens/admin-security.tsx) mounting the REAL
+// <AdminSettingsModule>. One lazy wrapper around the named `AdminSecurityScreen`
+// export (accepts an `ekran` prop); each SCREENS entry below passes a
+// different `ekran` so all 10 nav slots reuse the same chunk.
+const AdminSecurityScreen = React.lazy(() =>
+  import('./screens/admin-security').then((m) => ({ default: m.AdminSecurityScreen }))
+);
+// admin-billing (runda pełna) — 9 ekranów domeny billing z adminNavigation.ts,
+// jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-billing.tsx.
+const AdminBillingScreen = React.lazy(() => import('./screens/admin-billing'));
 const SuperadminPlatformOperationsDay15Screen = React.lazy(
   () => import('./screens/superadmin-platform-operations-day15')
 );
@@ -373,6 +385,8 @@ const ExcelePrawyPanelStandardScreen = React.lazy(
   () => import('./screens/excele-prawy-panel-standard')
 );
 const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
+// aios (runda pełna) — 146-aios, Internal Tools / AI OS submenu (8 ekranów), 2026-08-31.
+const AiosScreen = React.lazy(() => import('./screens/aios'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -1035,6 +1049,49 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
     render: () => <AdminSsoSelfServiceCardScreen />,
   },
+  // admin-billing (runda pełna) — odbiór grafiki 146-admin-billing (2026-08-31),
+  // domena "Rozliczenia i plany" (adminNavigation.ts), 9 ekranów, mapowanie
+  // 1:1 z AdminSettingsModule.tsx case 'billing'. Dwie pary są aliasami tej
+  // samej zakładki w produkcie (usage-costs≡overview, billing-details≡budgets-alerts)
+  // — patrz nagłówek dev-render/screens/admin-billing.tsx.
+  'admin-billing-overview': {
+    label: 'Admin billing — Przegląd (AdminBillingFinOpsPanel screen=summary)',
+    render: () => <AdminBillingScreen adminScreen="overview" />,
+  },
+  'admin-billing-plan-limits': {
+    label: 'Admin billing — Plan i limity (AdminBillingFinOpsPanel screen=plan)',
+    render: () => <AdminBillingScreen adminScreen="plan-limits" />,
+  },
+  'admin-billing-usage-costs': {
+    label:
+      'Admin billing — Wykorzystanie i koszty (ALIAS Przeglądu, ta sama zakładka summary)',
+    render: () => <AdminBillingScreen adminScreen="usage-costs" />,
+  },
+  'admin-billing-payment-methods': {
+    label: 'Admin billing — Metody płatności (AdminBillingFinOpsPanel screen=payments)',
+    render: () => <AdminBillingScreen adminScreen="payment-methods" />,
+  },
+  'admin-billing-invoices': {
+    label: 'Admin billing — Faktury (AdminBillingFinOpsPanel screen=invoices)',
+    render: () => <AdminBillingScreen adminScreen="invoices" />,
+  },
+  'admin-billing-seats-licences': {
+    label: 'Admin billing — Miejsca i licencje (AdminSeatsLicencesPanel, StandardTable)',
+    render: () => <AdminBillingScreen adminScreen="seats-licences" />,
+  },
+  'admin-billing-billing-details': {
+    label:
+      'Admin billing — Dane rozliczeniowe (ALIAS Budżetów i alertów, ta sama zakładka controls)',
+    render: () => <AdminBillingScreen adminScreen="billing-details" />,
+  },
+  'admin-billing-budgets-alerts': {
+    label: 'Admin billing — Budżety i alerty (AdminBillingFinOpsPanel screen=controls)',
+    render: () => <AdminBillingScreen adminScreen="budgets-alerts" />,
+  },
+  'admin-billing-plan-history': {
+    label: 'Admin billing — Historia zmian planu (AdminPlanHistoryPanel, StandardTable)',
+    render: () => <AdminBillingScreen adminScreen="plan-history" />,
+  },
   'superadmin-platform-operations-day15': {
     label: 'Day 15 — REALNY <PlatformOperationsView>, katalogi fixture; &scene=ready|empty|error',
     render: () => <SuperadminPlatformOperationsDay15Screen />,
@@ -1676,6 +1733,41 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'excele-prawy-panel-standard': {
     label: 'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
     render: () => <ExcelePrawyPanelStandardScreen />,
+  },
+  // aios (runda pełna) — 146-aios, Internal Tools / AI OS (8 pozycji submenu),
+  // odbiór grafiki 2026-08-31. Realne komponenty z src/components/AIChat/,
+  // przełącznik `&screen=` w dev-render/screens/aios.tsx.
+  'aios-home': {
+    label: 'AI OS — Home (AIOSHub, harness odbioru 2026-08-31)',
+    render: () => <AiosScreen />,
+  },
+  'aios-actions': {
+    label: 'AI OS — AI Actions (ActionCenter, harness odbioru 2026-08-31) &screen=actions',
+    render: () => <AiosScreen />,
+  },
+  'aios-research': {
+    label: 'AI OS — Research Sessions (ResearchSessionsDock, harness odbioru 2026-08-31) &screen=research',
+    render: () => <AiosScreen />,
+  },
+  'aios-artifacts': {
+    label: 'AI OS — Artifacts (Wave5ArtifactRuntimePanel, harness odbioru 2026-08-31) &screen=artifacts',
+    render: () => <AiosScreen />,
+  },
+  'aios-memory': {
+    label: 'AI OS — Memory & Scope (Wave6ContextLearningPanel, harness odbioru 2026-08-31) &screen=memory',
+    render: () => <AiosScreen />,
+  },
+  'aios-connectors': {
+    label: 'AI OS — Connectors (Wave7ConnectorAdminPanel, harness odbioru 2026-08-31) &screen=connectors',
+    render: () => <AiosScreen />,
+  },
+  'aios-agents': {
+    label: 'AI OS — Agents (Wave8AgentCatalogPanel, harness odbioru 2026-08-31) &screen=agents',
+    render: () => <AiosScreen />,
+  },
+  'aios-outcomes': {
+    label: 'AI OS — KPI/ROI & AI Ops (Wave9OutcomeAIOpsPanel, harness odbioru 2026-08-31) &screen=outcomes',
+    render: () => <AiosScreen />,
   },
 };
 
