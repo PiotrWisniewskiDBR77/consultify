@@ -194,7 +194,7 @@ function buildAssumptionsSheet(
   currencyLabel: string
 ): Sheet {
   const columns: ColumnDef[] = [
-    { key: 'driver', header: 'Driver', type: 'text', width: 32 },
+    { key: 'driver', header: 'Założenie', type: 'text', width: 32 },
     { key: 'wartosc', header: 'Wartość', type: 'number' },
   ];
 
