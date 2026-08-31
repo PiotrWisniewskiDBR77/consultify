@@ -18,6 +18,20 @@
  * `technologyExamples` / `misScoringTraps` — the QBank v2 coaching content
  * the licence notice names specifically.
  *
+ * ★★★ 2026-08-31 — ZGODA POSZERZONA DO PEŁNEJ. Słowa właściciela metodyki:
+ *     „W 100% DRD jest moją licencją, możesz korzystać z niej dowolnie.
+ *      A wiodącym językiem i tak jest język angielski."
+ *
+ * Skutki, obowiązujące od tej daty:
+ *  1. Ograniczenie zakresu z 30.08 (opisy poziomów TAK, warstwa coachingowa QBank v2 NIE)
+ *     **przestaje obowiązywać** — wolno korzystać z całej metodyki, w tym `canonicalDefinition`,
+ *     `examples`, `technologyExamples`, `misScoringTraps`.
+ *  2. `usageRestriction: 'internal_only'` z `compileDrdPack.ts` jest wobec właściciela
+ *     bezprzedmiotowe — chroniło jego materiał przed wyciekiem, nie jego własny produkt.
+ *  3. **Angielskie nazwy i opisy poziomów NIE SĄ defektem.** Angielski jest językiem WIODĄCYM
+ *     metodyki; polski obowiązuje w INTERFEJSIE produktu (przyciski, nagłówki, komunikaty).
+ *     Granica i przykłady: docs/program/grafika/KANON_Z_ODBIOROW.md, wpis z 2026-08-31.
+ *
  * ★★ ZGODA WŁAŚCICIELA METODYKI — POTWIERDZONA WPROST 2026-08-30 (wieczór).
  * Nadzorca toru grafiki zapytał właściciela dosłownie, czy potwierdza zgodę na
  * użycie opisów poziomów w raporcie WYCHODZĄCYM DO KLIENTA. Odpowiedź: TAK.
