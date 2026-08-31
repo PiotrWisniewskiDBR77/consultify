@@ -32,11 +32,6 @@ interface DriverRow {
   weight: number;
 }
 
-const DEFAULT_DRIVERS: DriverRow[] = [
-  { id: 'revenue', label: 'Revenue', min: 800_000, mode: 1_000_000, max: 1_300_000, weight: 1 },
-  { id: 'cost', label: 'Cost', min: 600_000, mode: 700_000, max: 850_000, weight: -1 },
-];
-
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
   return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
@@ -63,7 +58,24 @@ export interface MonteCarloNpvPanelProps {
 
 export const MonteCarloNpvPanel: React.FC<MonteCarloNpvPanelProps> = ({ fetcher }) => {
   const { t } = useTranslation();
-  const [rows, setRows] = useState<DriverRow[]>(DEFAULT_DRIVERS);
+  const [rows, setRows] = useState<DriverRow[]>(() => [
+    {
+      id: 'revenue',
+      label: t('finance.m16.monteCarlo.seedRevenue', 'Revenue'),
+      min: 800_000,
+      mode: 1_000_000,
+      max: 1_300_000,
+      weight: 1,
+    },
+    {
+      id: 'cost',
+      label: t('finance.m16.monteCarlo.seedCost', 'Cost'),
+      min: 600_000,
+      mode: 700_000,
+      max: 850_000,
+      weight: -1,
+    },
+  ]);
   const [iterations, setIterations] = useState(2000);
   const [seed, setSeed] = useState(42);
   const [bins, setBins] = useState(20);
@@ -80,14 +92,14 @@ export const MonteCarloNpvPanel: React.FC<MonteCarloNpvPanelProps> = ({ fetcher 
       ...prev,
       {
         id: nextRowId(),
-        label: `Driver ${prev.length + 1}`,
+        label: t('finance.m16.monteCarlo.newDriver', 'Driver {{n}}', { n: prev.length + 1 }),
         min: 0,
         mode: 100,
         max: 200,
         weight: 1,
       },
     ]);
-  }, []);
+  }, [t]);
 
   const removeRow = useCallback((id: string) => {
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== id) : prev));
