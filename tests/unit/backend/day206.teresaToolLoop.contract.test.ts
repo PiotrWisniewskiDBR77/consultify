@@ -1,14 +1,19 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
+/**
+ * FIX-206 (pkt 3): trzy testy z tego pliku sprawdzały TEKST ŹRÓDŁOWY
+ * (`readFileSync` + `toContain`) — przechodziły także wtedy, gdy pętla w ogóle
+ * się nie wykonywała. Zostały zastąpione pomiarem ZACHOWANIA:
+ *   · tests/unit/backend/ai/day206.toolLoopBehaviour.test.ts  (pipeline: flaga ON/OFF,
+ *     realne wywołanie narzędzia i powrót wyniku — bramka dla dwóch mutacji),
+ *   · tests/integration/ai/day206.toolLoopRoute.test.ts       (trasa: privateMode,
+ *     timeout != completed, wycena kosztu, brak surowego wyniku w SSE).
+ * Tutaj zostaje to, co i tak było wykonywalnym kontraktem modułów.
+ */
 import { describe, expect, it } from 'vitest';
 
 import { loadFeatureFlags } from '../../../server/src/config/FeatureFlags';
 import { AI_TOOLS, getReadToolDefinitions } from '../../../server/src/services/ai/toolDefinitions';
 import { SIDE_EFFECT_TOOLS } from '../../../server/src/services/ai/sideEffectTools';
 import { estimateAgentToolCostUsd } from '../../../server/src/services/ai/toolCostEstimates';
-
-const source = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 
 describe('Day206 Teresa READ tool loop contract', () => {
   it('keeps ENABLE_TERESA_TOOL_LOOP default OFF', () => {
@@ -35,26 +40,6 @@ describe('Day206 Teresa READ tool loop contract', () => {
     );
   });
 
-  it('uses the governed READ dispatcher and gives it collision precedence', () => {
-    const llm = source('server/src/services/ai/llmService.ts');
-    expect(llm).toContain('executeReadTool(def.name');
-    expect(llm).toContain('READ intentionally wins collisions');
-    expect(llm).not.toContain(
-      'mcpServer.execute(def.name, args, params.context as any);\n            // READ'
-    );
-  });
 
-  it('emits only sanitized tool_step fields and enforces the paid-cost ceiling', () => {
-    const route = source('server/src/routes/ai.routes.ts');
-    expect(route).toContain("type: 'tool_step'");
-    expect(route).toContain('paidCostUsd + estimatedCostUsd > maxPaidCostUsd');
-    expect(route).not.toMatch(/type: 'tool_step'[^\n]*result/);
-  });
 
-  it('keeps the READ binding fully behind the OFF-by-default feature flag', () => {
-    const pipeline = source('server/src/services/ai/AIPipeline.ts');
-    const route = source('server/src/routes/ai.routes.ts');
-    expect(pipeline).toContain('featureFlags.ENABLE_TERESA_TOOL_LOOP &&');
-    expect(route).toContain('if (featureFlags.ENABLE_TERESA_TOOL_LOOP && !aiModes?.deepResearch)');
-  });
 });

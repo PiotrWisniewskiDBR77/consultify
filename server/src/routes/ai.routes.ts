@@ -4884,7 +4884,12 @@ router.post(
         }
         let paidCostUsd = 0;
         const maxPaidCostUsd = 0.08;
-        const timeoutMs = 12_000;
+        // Zegar kroku — konfigurowalny tak samo jak TERESA_TOOL_LOOP_MAX_ITERATIONS,
+        // zeby test mogl zmierzyc kopertę TIMEOUT bez 12-sekundowego czekania.
+        const timeoutMs = (() => {
+          const parsed = Number(process.env.TERESA_TOOL_LOOP_TIMEOUT_MS || 12_000);
+          return Number.isFinite(parsed) && parsed >= 10 && parsed <= 60_000 ? parsed : 12_000;
+        })();
         (pipelineRequest as any).options = {
           ...((pipelineRequest as any).options || {}),
           readTools: {
