@@ -809,7 +809,19 @@ function runLanguageQa(schema: DocumentSchema): DocumentQaCategoryReport {
     );
   };
 
+  // D-11 (owner decision, 2026-08-31): the density gate measures the SECTION,
+  // not the single block. Granular prose — the day-195 work splits one model
+  // answer into several paragraph blocks — made every block look thin against
+  // a per-block floor (comprehensive = 100 words), so a perfectly dense
+  // section of 4 × 50 words was reported as "average 52 words/block, well
+  // below the comprehensive floor" and blocked the export. A section's prose
+  // words are now summed and the sum is compared to the range. A schema with
+  // no sections keeps today's behaviour: the loop produces no samples and no
+  // findings, exactly as before.
+  let sectionsWithProse = 0;
   for (const section of schema.sections) {
+    let sectionWords = 0;
+    let sectionProseBlocks = 0;
     for (const block of section.blocks) {
       if (!isEditableBlock(block)) continue;
       const text = blockToText(block);
@@ -837,48 +849,61 @@ function runLanguageQa(schema: DocumentSchema): DocumentQaCategoryReport {
       if (!densityEligible) continue;
       editableBlockCount += 1;
       totalWords += words;
+      sectionProseBlocks += 1;
+      sectionWords += words;
+    }
 
-      // Per-block density check: paragraphs that are way under the floor are
-      // stubs; way over the ceiling are a hint that the density target was
-      // ignored for that block.
-      if (words > 0 && words < densityRange.min) {
-        findings.push(
-          makeFinding(
-            'low',
-            `Density: block has ${words} words; below the ${schema.density} target (≥ ${densityRange.min}).`,
-            'density_under',
-            { sectionId: section.sectionId, blockId: block.blockId }
-          )
-        );
-      } else if (words > densityRange.max) {
-        findings.push(
-          makeFinding(
-            'low',
-            `Density: block has ${words} words; above the ${schema.density} target (≤ ${densityRange.max}).`,
-            'density_over',
-            { sectionId: section.sectionId, blockId: block.blockId }
-          )
-        );
-      }
+    // Per-SECTION density FLOOR (D-11). The section is the unit a reader
+    // perceives: individual blocks are free to be short as long as the section
+    // they build up to is not. The CEILING keeps its old strictness — it is
+    // measured against the section's average per prose block, which is
+    // arithmetically the old per-block test in aggregate. D-11 settles the
+    // floor conflict (granularity vs "too thin"); it is not a licence to start
+    // reporting well-sized sections as overweight just because they are long.
+    if (sectionProseBlocks === 0 || sectionWords === 0) continue;
+    sectionsWithProse += 1;
+    if (sectionWords < densityRange.min) {
+      findings.push(
+        makeFinding(
+          'low',
+          `Density: section "${section.title}" has ${sectionWords} words across ${sectionProseBlocks} prose block(s); below the ${schema.density} target (≥ ${densityRange.min} per section).`,
+          'density_under',
+          { sectionId: section.sectionId }
+        )
+      );
+    } else if (sectionWords > densityRange.max * sectionProseBlocks) {
+      findings.push(
+        makeFinding(
+          'low',
+          `Density: section "${section.title}" averages ${Math.round(sectionWords / sectionProseBlocks)} words across ${sectionProseBlocks} prose block(s); above the ${schema.density} target (≤ ${densityRange.max}).`,
+          'density_over',
+          { sectionId: section.sectionId }
+        )
+      );
     }
   }
 
   // Document-level average density (medium severity if persistently off).
-  if (editableBlockCount >= 3) {
-    const avgWords = Math.round(totalWords / editableBlockCount);
-    if (avgWords < densityRange.min * 0.7) {
+  // D-11: the denominator is the SECTION, not the block — this is the finding
+  // that produced the "average 52 words/block" export block on a document
+  // whose sections were in fact well over the floor.
+  if (editableBlockCount >= 3 && sectionsWithProse > 0) {
+    const avgWordsPerSection = Math.round(totalWords / sectionsWithProse);
+    const avgWordsPerBlock = Math.round(totalWords / editableBlockCount);
+    if (avgWordsPerSection < densityRange.min * 0.7) {
       findings.push(
         makeFinding(
           'medium',
-          `Document density: average ${avgWords} words/block is well below the ${schema.density} floor (${densityRange.min}). The document feels too thin overall.`,
+          `Document density: average ${avgWordsPerSection} words/section is well below the ${schema.density} floor (${densityRange.min}). The document feels too thin overall.`,
           'document_density_under'
         )
       );
-    } else if (avgWords > densityRange.max * 1.3) {
+    } else if (avgWordsPerBlock > densityRange.max * 1.3) {
+      // Ceiling unchanged (per block) — see the note on the per-section check.
       findings.push(
         makeFinding(
           'medium',
-          `Document density: average ${avgWords} words/block exceeds the ${schema.density} ceiling (${densityRange.max}). The document is overweight.`,
+          `Document density: average ${avgWordsPerBlock} words/block exceeds the ${schema.density} ceiling (${densityRange.max}). The document is overweight.`,
           'document_density_over'
         )
       );
