@@ -27,6 +27,8 @@ import {
 import {
   BASELINE_RULE_LABELS,
   BASELINE_SCHEDULE_TYPE_LABELS,
+  CANONICAL_LINE_META,
+  type CanonicalLineCode,
   controlKindForUnit,
   driverLabel,
 } from './baselineLabels';
@@ -68,6 +70,11 @@ const SCHEDULE_FEEDS_LINES: Record<string, string[]> = {
   headcount: [],
   leases: [],
 };
+
+/** Etykieta linii kanonicznej dla kolumny „Podgląd wpływu" — surowy kod tylko jako fallback dla nieznanego kodu (nie powinien wystąpić, `SCHEDULE_FEEDS_LINES` wypełniamy wyłącznie z `CanonicalLineCode`). */
+function feedLineLabel(code: string): string {
+  return CANONICAL_LINE_META[code as CanonicalLineCode]?.labelPl ?? code;
+}
 
 function periodLabelOf(periodId: string, periodLabelById?: Record<string, string>): string {
   return periodLabelById?.[periodId] ?? periodId;
@@ -341,7 +348,7 @@ export function AssumptionsView({
               <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
                 Jakość
               </th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
+              <th className="px-3 py-2 text-left" style={{ minWidth: 200 }}>
                 Podgląd wpływu
               </th>
               <th className="px-3 py-2 text-center" style={{ minWidth: 90 }}>
@@ -543,7 +550,7 @@ export function AssumptionsView({
                     </select>
                   </td>
                   <td className="px-3 py-2 text-xs text-c-text-muted">
-                    {feeds.length > 0 ? `Zasila: ${feeds.join(', ')}` : '—'}
+                    {feeds.length > 0 ? `Zasila: ${feeds.map(feedLineLabel).join(', ')}` : '—'}
                   </td>
                   <td className="px-3 py-2 text-center">
                     <button
