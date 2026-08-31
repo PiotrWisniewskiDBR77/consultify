@@ -1,5 +1,6 @@
 import { Loader2, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { refineContent, RefineContext } from '../../../services/ai/gemini';
 
@@ -14,6 +15,7 @@ export const AITextArea: React.FC<AITextAreaProps> = ({
   aiContext = 'general',
   ...props
 }) => {
+  const { t } = useTranslation();
   const [isRefining, setIsRefining] = useState(false);
 
   const handleRefine = async () => {
@@ -67,7 +69,7 @@ export const AITextArea: React.FC<AITextAreaProps> = ({
           />
         )}
         <span className="text-[10px] font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-crimson-600 group-hover/btn:from-primary-700 group-hover/btn:to-crimson-700">
-          {isRefining ? 'Refining...' : 'AI'}
+          {isRefining ? t('contextBuilder.shared.refining', 'Refining...') : 'AI'}
         </span>
       </button>
     </div>
