@@ -120,6 +120,20 @@ const I = {
   kpiVisibilityPolicy: 'b0960000-0000-4000-8000-000000000001',
   roiVisibilityPolicy: 'b0960000-0000-4000-8000-000000000002',
   okrVisibilityPolicy: 'b0960000-0000-4000-8000-000000000003',
+  correctiveAction: 'b0970000-0000-4000-8000-000000000001',
+  initiativeImpact: 'b0970000-0000-4000-8000-000000000002',
+  scorecard: 'b0970000-0000-4000-8000-000000000003',
+  scorecardItem: 'b0970000-0000-4000-8000-000000000004',
+  assumption: 'b0970000-0000-4000-8000-000000000005',
+  costLine: 'b0970000-0000-4000-8000-000000000006',
+  benefitLine: 'b0970000-0000-4000-8000-000000000007',
+  benefitEvidence: 'b0970000-0000-4000-8000-000000000008',
+  scenario: 'b0970000-0000-4000-8000-000000000009',
+  calculationPolicy: 'b0970000-0000-4000-8000-000000000010',
+  forecast: 'b0970000-0000-4000-8000-000000000011',
+  variance: 'b0970000-0000-4000-8000-000000000012',
+  supportRequest: 'b0970000-0000-4000-8000-000000000013',
+  reflection: 'b0970000-0000-4000-8000-000000000014',
 };
 const emails = {
   owner: 'wave3.results.owner.20260821@local.test',
@@ -253,6 +267,26 @@ try {
     [I.deviation, I.org, I.kpi, I.m2, I.owner, I.admin, F]
   );
   await db.query(
+    `INSERT INTO rvn_kpi_corrective_actions(action_id,deviation_case_id,organization_id,title,description,owner_user_id,due_date,status,expected_effect,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,'Cotygodniowy przegląd terminowości dostaw','Wspólny przegląd wyjątków z właścicielem procesu',$4,'2026-09-15','active','Powrót terminowości powyżej 90%',1,$4,$5,$5)`,
+    [I.correctiveAction, I.deviation, I.org, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_kpi_initiative_impacts(impact_id,organization_id,kpi_id,initiative_id,definition_version_id_at_commitment,status,expected_contribution_value,expected_contribution_direction,target_completion_date,proposed_by,proposed_at,baseline_measurement_id,baseline_value_at_commitment,baseline_period_end,committed_by,committed_at,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,$4,$5,'committed',12,'increase','2026-09-30',$6,$7,$8,78,'2026-07-31',$6,$7,1,$6,$7,$7)`,
+    [I.initiativeImpact, I.org, I.kpi, I.initiative, I.kpiVersion, I.owner, F, I.m2]
+  );
+  await db.query(
+    `INSERT INTO rvn_kpi_scorecards(scorecard_id,organization_id,name,description,scope_type,scope_id,owner_user_id,review_frequency,lifecycle_status,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,'Karta realizacji operacyjnej','Miesięczny przegląd terminowości i jakości dostaw','organization',$2,$3,'monthly','active',1,$3,$4,$4)`,
+    [I.scorecard, I.org, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_kpi_scorecard_items(item_id,scorecard_id,kpi_id,organization_id,role,sort_order,display_config,added_by,added_at)
+     VALUES($1,$2,$3,$4,'primary',1,'{"emphasis":"primary"}',$5,$6)`,
+    [I.scorecardItem, I.scorecard, I.kpi, I.org, I.owner, F]
+  );
+  await db.query(
     `INSERT INTO rvn_roi_cases(case_id,organization_id,initiative_id,title,owner_user_id,status,currency,analysis_start,analysis_end,created_by,created_at,updated_at) VALUES($1,$2,$3,'ROI automatyzacji planowania',$4,'post_investment_review','PLN','2026-01-01','2026-12-31',$4,$5,$5)`,
     [I.roi, I.org, I.initiative, I.owner, F]
   );
@@ -265,6 +299,36 @@ try {
   await db.query(
     `INSERT INTO rvn_roi_baselines(baseline_id,case_id,organization_id,baseline_period_start,baseline_period_end,current_measured_value,current_measured_unit,current_measured_as_of,source,confidence,owner_user_id,frozen_at,frozen_by,created_by,created_at,updated_at) VALUES($1,$2,$3,'2025-01-01','2025-12-31',100000,'PLN','2025-12-31','approved baseline','high',$4,$5,$4,$4,$5,$5)`,
     [I.baseline, I.roi, I.org, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_roi_assumptions(assumption_id,case_id,organization_id,category,label,unit,base_value,downside_value,upside_value,confidence,evidence_ref,source,owner_user_id,sensitivity_rank,notes,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,'adoption','Tempo adopcji planowania','%',75,60,85,'medium','KPI DELIVERY_ON_TIME','Przegląd operacyjny',$4,1,'Najsilniejszy czynnik realizacji wartości',1,$4,$5,$5)`,
+    [I.assumption, I.roi, I.org, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_roi_cost_lines(cost_line_id,case_id,organization_id,category,label,description,amount,currency,timing_type,one_time_period_date,confidence,source,owner_user_id,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,'implementation','Konfiguracja i wdrożenie','Przygotowanie procesów oraz szkolenia',100000,'PLN','one_time','2026-01-31','high','Zatwierdzony budżet',$4,1,$4,$5,$5)`,
+    [I.costLine, I.roi, I.org, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_roi_benefit_lines(benefit_line_id,case_id,organization_id,category,label,description,is_financial,amount,currency,timing_type,one_time_period_date,confidence,source,owner_user_id,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,'operations','Ograniczenie kosztu opóźnień','Mniej przesunięć i interwencji operacyjnych',true,200000,'PLN','one_time','2026-12-31','medium','Plan korzyści',$4,1,$4,$5,$5)`,
+    [I.benefitLine, I.roi, I.org, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_roi_benefit_evidence_links(link_id,benefit_line_id,case_id,organization_id,kpi_id,pinned_kpi_definition_version_id,expected_unit,purpose,linked_by,linked_at,dispute_status,notes,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,$4,$5,$6,'%','primary_evidence',$7,$8,'none','Terminowość dostaw jest głównym dowodem realizacji korzyści',1,$7,$8,$8)`,
+    [I.benefitEvidence, I.benefitLine, I.roi, I.org, I.kpi, I.kpiVersion, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_roi_scenarios(scenario_id,case_id,organization_id,scenario_type,label,description,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,'downside','Wolniejsza adopcja','Korzyści narastają o kwartał później',1,$4,$5,$5)`,
+    [I.scenario, I.roi, I.org, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_roi_calculation_policy(policy_row_id,case_id,organization_id,discount_rate_pct,tax_treatment,inflation_rate_pct,rounding_policy,required_metrics,notes,confidence,owner_user_id,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,8,'pre_tax',3,'half_up_2dp',ARRAY['roi','npv','irr'],'Polityka zatwierdzona do przeglądu właścicielskiego','high',$4,1,$4,$5,$5)`,
+    [I.calculationPolicy, I.roi, I.org, I.owner, F]
   );
   const roiRunPayload = {
     runId: I.roiRun,
@@ -326,12 +390,22 @@ try {
     ]
   );
   await db.query(
+    `INSERT INTO rvn_roi_forecast_versions(forecast_version_id,case_id,organization_id,sequence_number,reason,published_by,published_at,compared_against_snapshot_id,engine_version,policy_version_stamp,input_overrides,input_snapshot,input_hash,status,total_costs,total_financial_benefits,simple_roi,npv,irr_pct,irr_status,payback_periods,discounted_payback_periods,benefit_cost_ratio,period_series,has_unresolved_double_counting,has_mixed_currency_failure,validation_findings,warnings,created_at)
+     VALUES($1,$2,$3,1,'Aktualizacja po pierwszym półroczu',$4,$5,$6,'results-owner-fixture-v1','results-owner-policy-v1','{}','{}',$7,'completed',100000,190000,0.9,76000,16,'computed',9,10,1.9,'[]',false,false,'[]','[]',$5)`,
+    [I.forecast, I.roi, I.org, I.owner, F, I.approvalSnap, crypto.createHash('sha256').update(`${FIXTURE_ID}:forecast`).digest('hex')]
+  );
+  await db.query(
     `INSERT INTO rvn_roi_actual_entries(actual_entry_id,case_id,organization_id,entry_type,period_start,period_end,amount,currency,data_quality_status,source,evidence_refs,notes,recorded_by,recorded_at,verified_by,verified_at) VALUES($1,$2,$3,'observation','2026-01-01','2026-06-30',125000,'PLN','verified','results_actual','[]','Realized benefit observation',$4,$5,$6,$5)`,
     [I.actual, I.roi, I.org, I.owner, F, I.admin]
   );
   await db.query(
     `INSERT INTO rvn_roi_actual_snapshots(actual_snapshot_id,case_id,organization_id,sequence_number,as_of_period_end,published_by,published_at,total_actual_costs,total_actual_financial_benefits,actual_simple_roi,periods_with_actual_count,periods_expected_count,coverage_pct,unverified_entry_count,disputed_entry_count,entry_ids_included,created_at) VALUES($1,$2,$3,1,'2026-06-30',$4,$5,70000,125000,0.7857,6,6,100,0,0,$6,$5)`,
     [I.actualSnap, I.roi, I.org, I.owner, F, JSON.stringify([I.actual])]
+  );
+  await db.query(
+    `INSERT INTO rvn_roi_variances(variance_id,case_id,organization_id,comparison_type,metric,reference_approval_snapshot_id,reference_forecast_version_id,reference_actual_snapshot_id,baseline_value,comparison_value,variance_amount,variance_pct,status,owner_user_id,row_version,created_by,created_at,updated_by,updated_at)
+     VALUES($1,$2,$3,'forecast_vs_actual','total_financial_benefits',$4,$5,$6,190000,125000,-65000,-34.21,'explained',$7,1,$7,$8,$7,$8)`,
+    [I.variance, I.roi, I.org, I.approvalSnap, I.forecast, I.actualSnap, I.owner, F]
   );
   await db.query(
     `UPDATE rvn_roi_cases
@@ -429,6 +503,16 @@ try {
     ]
   );
   await db.query(
+    `INSERT INTO okr_vnext_support_requests(request_id,organization_id,set_id,objective_id,key_result_id,kind,body,origin_checkin_id,status,assigned_to_user_id,row_version,created_by,created_at,updated_at)
+     VALUES($1,$2,$3,$4,$5,'support_request','Potrzebne wsparcie zakupów w skróceniu czasu dostaw',$6,'open',$7,1,$8,$9,$9)`,
+    [I.supportRequest, I.org, I.set, I.objective, I.kr, I.checkin, I.admin, I.owner, F]
+  );
+  await db.query(
+    `INSERT INTO okr_vnext_reflections(reflection_id,set_id,objective_id,organization_id,status,final_score,scoring_model_unsupported,scoring_policy_version_id,scored_by,scored_at,what_worked,what_did_not_work,why,learning,next_cycle_change,disposition,finalized_by,finalized_at,row_version,created_by,created_at,updated_by,updated_at)
+     VALUES($1,$2,$3,$4,'finalized',0.72,false,$5,$6,$7,'Cotygodniowe przeglądy odchyleń','Zbyt późna eskalacja dostawców','Brak wspólnego progu alarmowego','Jedna definicja KPI poprawia reakcję','Wprowadzić próg ostrzegawczy od początku cyklu','carry_forward',$6,$7,1,$8,$7,$8,$7)`,
+    [I.reflection, I.set, I.objective, I.org, I.policy, I.admin, F, I.owner]
+  );
+  await db.query(
     `INSERT INTO case_core(
        case_id,project_id,organization_id,case_profile,governance_tier,
        contracted_closure_type,created_by_actor_id,created_at,updated_at,case_name
@@ -510,8 +594,20 @@ try {
     `SELECT
        (SELECT count(*)::int FROM rvn_kpi_measurements WHERE kpi_id=$1) kpi_points,
        (SELECT count(*)::int FROM rvn_kpi_deviation_cases WHERE kpi_id=$1) deviations,
+       (SELECT count(*)::int FROM rvn_kpi_corrective_actions WHERE deviation_case_id=$11) corrective_actions,
+       (SELECT count(*)::int FROM rvn_kpi_initiative_impacts WHERE kpi_id=$1) initiative_impacts,
+       (SELECT count(*)::int FROM rvn_kpi_scorecards WHERE scorecard_id=$12) scorecards,
+       (SELECT count(*)::int FROM rvn_kpi_scorecard_items WHERE scorecard_id=$12 AND kpi_id=$1) scorecard_items,
        (SELECT count(*)::int FROM rvn_execution_signal_receipts WHERE receipt_id=$2) receipts,
        (SELECT count(*)::int FROM rvn_roi_actual_entries WHERE case_id=$3) actuals,
+       (SELECT count(*)::int FROM rvn_roi_assumptions WHERE case_id=$3) assumptions,
+       (SELECT count(*)::int FROM rvn_roi_cost_lines WHERE case_id=$3) cost_lines,
+       (SELECT count(*)::int FROM rvn_roi_benefit_lines WHERE case_id=$3) benefit_lines,
+       (SELECT count(*)::int FROM rvn_roi_benefit_evidence_links WHERE case_id=$3) benefit_evidence_links,
+       (SELECT count(*)::int FROM rvn_roi_scenarios WHERE case_id=$3) scenarios,
+       (SELECT count(*)::int FROM rvn_roi_calculation_policy WHERE case_id=$3) calculation_policies,
+       (SELECT count(*)::int FROM rvn_roi_forecast_versions WHERE case_id=$3) forecast_versions,
+       (SELECT count(*)::int FROM rvn_roi_variances WHERE case_id=$3) variances,
        (SELECT count(*)::int FROM rvn_roi_finance_reconciliations WHERE case_id=$3) reconciliations,
        (SELECT count(*)::int FROM rvn_roi_post_investment_reviews WHERE case_id=$3) pirs,
        (SELECT count(*)::int FROM rvn_roi_approval_snapshots
@@ -523,6 +619,8 @@ try {
        (SELECT count(*)::int FROM okr_vnext_key_results WHERE set_id=$4) key_results,
        (SELECT count(*)::int FROM okr_vnext_checkins WHERE set_id=$4) checkins,
        (SELECT count(*)::int FROM okr_vnext_reviews WHERE set_id=$4) reviews,
+       (SELECT count(*)::int FROM okr_vnext_support_requests WHERE set_id=$4) support_requests,
+       (SELECT count(*)::int FROM okr_vnext_reflections WHERE set_id=$4) reflections,
        (SELECT count(*)::int FROM rvn_platform_resource_visibility
          WHERE organization_id=$5 AND resource_id=ANY($6::text[])) visibility_rows,
        (SELECT count(*)::int FROM rvn_roi_visibility_governance
@@ -558,13 +656,27 @@ try {
       I.approvalSnap,
       I.actualSnap,
       I.roiRun,
+      I.deviation,
+      I.scorecard,
     ]
   );
   const expected = {
     kpi_points: 2,
     deviations: 1,
+    corrective_actions: 1,
+    initiative_impacts: 1,
+    scorecards: 1,
+    scorecard_items: 1,
     receipts: 1,
     actuals: 1,
+    assumptions: 1,
+    cost_lines: 1,
+    benefit_lines: 1,
+    benefit_evidence_links: 1,
+    scenarios: 1,
+    calculation_policies: 1,
+    forecast_versions: 1,
+    variances: 1,
     reconciliations: 1,
     pirs: 1,
     approval_snapshots: 1,
@@ -572,6 +684,8 @@ try {
     key_results: 1,
     checkins: 1,
     reviews: 1,
+    support_requests: 1,
+    reflections: 1,
     visibility_rows: 3,
     roi_governance: 1,
     execution_graph: 1,
