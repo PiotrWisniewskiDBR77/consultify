@@ -84,3 +84,21 @@ użyciem odśwież: `git -C /private/tmp/mref fetch github-backup -q && git -C /
 Uogólnienie: **ścieżka do pliku nie jest adresem prawdy** — prawdą jest gałąź.
 Ten sam plik pod tą samą ścieżką bywa w dwóch katalogach roboczych w dwóch
 różnych wersjach albo nie istnieje wcale.
+
+## ★★ REGUŁA NR 7 — zabezpieczenie musi mieć własną mutację
+
+Test scenariusza, który tylko przechodzi przez zabezpieczenie, nie dowodzi, że
+to zabezpieczenie jest nośne. Nazwa testu, obecność pliku i zielony happy path
+nie wystarczają do uznania zasięgu, bramy stanu, idempotencji ani uprawnienia za
+pokryte.
+
+Odbiór wymaga pary na dokładnie tym warunku: po jego kontrolowanym usunięciu
+test omijający jest czerwony, a po przywróceniu z kopii jest zielony; oba
+przebiegi biegną z `--retry=0`, pełnymi nazwami przypadków i pustym `git diff`
+po przywróceniu. Brak którejkolwiek strony oznacza `NIEUDOWODNIONE`, nie
+`VERIFIED`.
+
+To reguła z pomiaru, nie teoria: usunięcie filtra
+`server/src/services/ai/embeddingService.ts:341` pozostawiło wcześniejszy
+scenariusz dyżuru 210 zielony, dopóki FIX-210 nie dodał testu omijającego, który
+na tej samej mutacji czerwienieje.
