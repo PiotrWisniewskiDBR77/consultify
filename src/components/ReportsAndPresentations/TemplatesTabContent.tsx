@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { EmptyState } from '@/components/shared/states';
+import PresentationBriefModal from '@/components/shared/PresentationBriefModal';
 import {
   type MetaPill,
   StandardPreview,
@@ -94,6 +95,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const navigate = useNavigate();
   const openChat = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pendingBriefRow, setPendingBriefRow] = useState<TemplateItem | null>(null);
   const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
   // Triada standard (canon A4/#13): checkbox selection state for the table's
   // left-hand checkbox column. This tab is a leaf under ReportsAndPresentationsHub
@@ -159,6 +161,40 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         orphaned: row.orphaned,
       }),
     []
+  );
+
+  const handleUseTemplate = useCallback(
+    (row: TemplateItem) => {
+      const usePath = resolveUsePath(row);
+      if (!usePath) return;
+      if (row.type === 'presentation' && usePath.startsWith('/prezentacje?')) {
+        setPendingBriefRow(row);
+        return;
+      }
+      navigate(usePath);
+    },
+    [navigate, resolveUsePath]
+  );
+
+  const finishBrief = useCallback(
+    (brief?: string) => {
+      if (!pendingBriefRow) return;
+      const usePath = resolveUsePath(pendingBriefRow);
+      const trimmed = (brief || '').trim();
+      if (usePath) {
+        navigate(trimmed ? `${usePath}&templatePrompt=${encodeURIComponent(trimmed)}` : usePath);
+      }
+      setPendingBriefRow(null);
+    },
+    [navigate, pendingBriefRow, resolveUsePath]
+  );
+
+  const briefModal = (
+    <PresentationBriefModal
+      open={pendingBriefRow !== null}
+      onSubmit={(brief) => finishBrief(brief)}
+      onSkip={() => finishBrief()}
+    />
   );
 
   const columns: StandardTableColumn[] = useMemo(
@@ -403,7 +439,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                   'rap.templates.useBlocked',
                   'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
                 ),
-          onClick: usePath && !isDeprecated ? () => navigate(usePath) : undefined,
+          onClick: usePath && !isDeprecated ? () => handleUseTemplate(row) : undefined,
         };
       })(),
       {
@@ -497,10 +533,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 disabled:
                   !resolveUsePath(selectedItem) ||
                   String(selectedItem.status).toLowerCase() === 'deprecated',
-                onClick: () => {
-                  const usePath = resolveUsePath(selectedItem);
-                  if (usePath) navigate(usePath);
-                },
+                onClick: () => handleUseTemplate(selectedItem),
               },
               {
                 id: 'clone',
@@ -533,7 +566,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ],
           }
         : undefined,
-    [selectedItem, t, navigate, openChat, resolveUsePath]
+    [selectedItem, t, navigate, openChat, resolveUsePath, handleUseTemplate]
   );
 
   // Esc closes preview; single-key shortcut (O) active while preview open (kanon B.24/B.31).
@@ -675,24 +708,24 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     }));
 
     return (
-      <GridView
-        items={gridItems}
-        selectedItemId={selectedId}
-        onItemClick={(item) => setSelectedId(item.id)}
-        onItemAction={(actionId, item) => {
-          const tpl = filteredData.find((t) => t.id === item.id);
-          if (!tpl) return;
-          if (actionId === 'open') {
-            const usePath = resolveUsePath(tpl);
-            if (usePath) navigate(usePath);
-          }
-          if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
-          if (actionId === 'edit')
-            navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
-        }}
-        emptyMessage={t('rap.empty.templates', 'Brak wzorców')}
-        newItemLabel={t('rap.actions.newTemplate', 'Nowy wzorzec')}
-      />
+      <>
+        <GridView
+          items={gridItems}
+          selectedItemId={selectedId}
+          onItemClick={(item) => setSelectedId(item.id)}
+          onItemAction={(actionId, item) => {
+            const tpl = filteredData.find((t) => t.id === item.id);
+            if (!tpl) return;
+            if (actionId === 'open') handleUseTemplate(tpl);
+            if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
+            if (actionId === 'edit')
+              navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
+          }}
+          emptyMessage={t('rap.empty.templates', 'Brak wzorców')}
+          newItemLabel={t('rap.actions.newTemplate', 'Nowy wzorzec')}
+        />
+        {briefModal}
+      </>
     );
   }
 
@@ -715,8 +748,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       onRowClick={(row) => setSelectedId(String((row as unknown as TemplateItem).id))}
       onRowDoubleClick={(row) => {
         const item = row as unknown as TemplateItem;
-        const usePath = resolveUsePath(item);
-        if (usePath) navigate(usePath);
+        handleUseTemplate(item);
       }}
       rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
       defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
@@ -742,10 +774,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       onFilterChange={onFilterChange}
       scopeLabel={scopeLabel}
       resolveUsePath={resolveUsePath}
-      onUse={(item) => {
-        const usePath = resolveUsePath(item);
-        if (usePath) navigate(usePath);
-      }}
+      onUse={(item) => handleUseTemplate(item)}
       onPreview={(item) => setSelectedId(item.id)}
     />
   );
@@ -755,10 +784,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       <StandardPreview
         title={selectedItem.title}
         onClose={() => setSelectedId(null)}
-        onOpenFull={() => {
-          const usePath = resolveUsePath(selectedItem);
-          if (usePath) navigate(usePath);
-        }}
+        onOpenFull={() => handleUseTemplate(selectedItem)}
         openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
         meta={{
           pills: [
@@ -909,6 +935,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           </div>
           {previewAside}
         </div>
+        {briefModal}
       </div>
     );
   }
@@ -917,6 +944,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     <div className="h-full flex overflow-hidden">
       <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">{tableView}</div>
       {previewAside}
+      {briefModal}
     </div>
   );
 };

@@ -25555,7 +25555,13 @@
       },
       "startNew": "Start new",
       "emptyRecent": "No recent documents",
-      "emptySaved": "No saved documents"
+      "emptySaved": "No saved documents",
+      "briefModal": {
+        "title": "What should this presentation be about?",
+        "placeholder": "Describe the goal, audience, key facts, dates, and numbers.",
+        "next": "Next",
+        "skip": "Skip"
+      }
     },
     "preview": {
       "provenance": {
