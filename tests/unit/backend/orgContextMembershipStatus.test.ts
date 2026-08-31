@@ -163,11 +163,9 @@ describe('orgContext membership status casing (H2.13)', () => {
       expect(access.membershipId).toBe('membership-owner');
     });
 
-    it("allows a consultant whose link status is lowercase 'active'", async () => {
+    it('denies a consultant-link-only user — Consultant Mode removed (DEC-116)', async () => {
       const access = await resolveUserOrgAccess(CONSULTANT_USER_ID, ORG_ID);
-      expect(access.allowed).toBe(true);
-      expect(access.isConsultant).toBe(true);
-      expect(access.role).toBe('CONSULTANT');
+      expect(access.allowed).toBe(false);
     });
 
     it('still denies a user with no membership at all (negative / security)', async () => {

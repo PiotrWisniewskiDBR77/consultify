@@ -515,12 +515,19 @@ export class ApiGateway {
       'helpAnalyticsRoutes', // HelpAnalyticsDashboard.tsx (admin view)
     ]);
 
+    // DEC-116 (CONSULTANTS_DUAL_PRODUCER_AUDIT_2026-08-26): router=null means the
+    // stub router was deleted outright (wrong-shape SQL with no matching DDL in the
+    // repo). The name must stay in STUB_NAMES_WITH_LIVE_UI_ON_DEMO so the honest 501
+    // is mounted in EVERY environment (dev included) — live FE callers must get a
+    // structured 501, never a silent 404.
     const mountStub = (mountPath: string, router: any, name: string) => {
-      if (enableStubRoutes) {
+      if (router && enableStubRoutes) {
         app.use(mountPath, router);
       } else if (STUB_NAMES_WITH_LIVE_UI_ON_DEMO.has(name)) {
         logger.warn(
-          `[ApiGateway] Stub route disabled in production but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
+          router
+            ? `[ApiGateway] Stub route disabled in production but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
+            : `[ApiGateway] Stub route has no router (deleted) but has a live demo UI caller — mounting honest 501: ${mountPath} (${name})`
         );
         app.use(mountPath, (_req, res) => {
           res.status(501).json({
