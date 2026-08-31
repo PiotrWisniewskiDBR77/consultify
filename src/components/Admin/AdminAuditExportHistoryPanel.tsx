@@ -6,6 +6,8 @@ import {
   type AuditExportReceipt,
   getAuditExportHistory,
 } from '../../services/adminAuditExportHistoryApi';
+import { humanizeEnum } from '../../utils/enumLabels';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminAuditExportHistoryPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -31,6 +33,13 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
         {
           id: 'kind',
           label: t('admin.audit.export-history.columns.exportKind'),
+          render: (row) => (
+            <span title={String(row.kindRaw || '')}>
+              {t(`admin.audit.export-history.kinds.${row.kindRaw}`, {
+                defaultValue: humanizeEnum(String(row.kindRaw || '')),
+              })}
+            </span>
+          ),
         },
         {
           id: 'rows',
@@ -47,9 +56,10 @@ export const AdminAuditExportHistoryPanel: React.FC = () => {
       () =>
         data.map((r) => ({
           id: r.id,
-          time: new Date(r.created_at).toLocaleString(),
+          time: formatListDateTime(r.created_at),
           who: r.requested_by,
           kind: r.export_kind,
+          kindRaw: r.export_kind,
           rows: r.row_count ?? '—',
           format: r.output_format || '—',
         })),

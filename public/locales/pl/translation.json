@@ -19434,6 +19434,12 @@
           "succeeded": "Udane",
           "failed": "Nieudane"
         },
+        "types": {
+          "send_invite_email": "Wysyłka e-maila z zaproszeniem",
+          "sync_scim_group": "Synchronizacja grupy SCIM",
+          "export_audit_logs": "Eksport dziennika audytu",
+          "recalculate_seats": "Przeliczenie miejsc"
+        },
         "empty": {
           "title": "Brak zadań",
           "description": "Organizacja nie ma zadań administracyjnych w kolejce."
@@ -19586,6 +19592,12 @@
           "count": "Liczba",
           "amount": "Kwota"
         },
+        "types": {
+          "purchase": "Zakup",
+          "auto_add": "Dodano automatycznie",
+          "manual_adjustment": "Korekta ręczna",
+          "release": "Zwolnienie miejsca"
+        },
         "title": "Miejsca i licencje",
         "description": "Stan puli miejsc dla bieżącej organizacji.",
         "summary": {
@@ -19623,6 +19635,16 @@
           "toPlan": "Plan na",
           "reason": "Powód",
           "actor": "Wykonał"
+        },
+        "actions": {
+          "upgrade": "Podwyższenie planu",
+          "downgrade": "Obniżenie planu",
+          "renewal": "Odnowienie",
+          "cancellation": "Anulowanie",
+          "suspended": "Zawieszono",
+          "reactivated": "Reaktywowano",
+          "dunning_started": "Rozpoczęto windykację",
+          "dunning_exited": "Zakończono windykację"
         },
         "systemActor": "System",
         "title": "Historia zmian planu",
@@ -20171,7 +20193,9 @@
         },
         "values": {
           "unknown": "Nieznane",
-          "unknownLocation": "Nieznana"
+          "unknownLocation": "Nieznana",
+          "unknownDevice": "Nieznane urządzenie",
+          "automationAgent": "Agent automatyzacji"
         },
         "actions": {
           "revoke": "Unieważnij sesję"
@@ -20247,6 +20271,11 @@
         "status": {
           "resolved": "Rozwiązany",
           "open": "Otwarty"
+        },
+        "eventTypes": {
+          "impossible_travel": "Niemożliwa podróż",
+          "repeated_failed_login": "Powtarzające się nieudane logowania",
+          "new_device_login": "Logowanie z nowego urządzenia"
         },
         "metrics": {
           "unresolved": "Nierozwiązane: {{count}}",
@@ -21404,6 +21433,10 @@
           "lastError": "Ostatni błąd",
           "source": "Źródło"
         },
+        "sources": {
+          "llm_health_events": "Monitoring dostępności LLM",
+          "llm_observatory": "Obserwatorium LLM"
+        },
         "noIncidentsInWindow": "Brak incydentów w bieżącym oknie pomiarowym.",
         "empty": {
           "title": "Brak incydentów",
@@ -21477,6 +21510,10 @@
           "exportKind": "Eksport",
           "rows": "Wiersze",
           "format": "Format"
+        },
+        "kinds": {
+          "audit_logs_csv": "Dziennik audytu (CSV)",
+          "compliance_summary_pdf": "Podsumowanie zgodności (PDF)"
         },
         "empty": {
           "title": "Brak eksportów",
@@ -21772,6 +21809,12 @@
         "failing": "Awaria",
         "unknown": "Brak wyniku"
       },
+      "kind": {
+        "database": "Baza danych",
+        "internal_service": "Usługa wewnętrzna",
+        "queue": "Kolejka",
+        "external_provider": "Dostawca zewnętrzny"
+      },
       "empty": {
         "title": "Brak zadeklarowanych zależności",
         "description": "Mapa zależności nie zawiera pozycji."
@@ -21780,6 +21823,49 @@
         "title": "Probe’y bez zadeklarowanej zależności",
         "description": "Mapa jest ręczną, weryfikowalną deklaracją. Niewymienione zależności czekają na dowód w kodzie.",
         "none": "Wszystkie zarejestrowane probe’y mają deklarację."
+      }
+    },
+    "ownership": {
+      "title": "Własność organizacji",
+      "desc": "Zarządzaj właścicielem zespołu i zabezpieczeniami przekazania własności",
+      "errors": {
+        "loadTitle": "Informacje o właścicielu są niedostępne",
+        "loadFallback": "Nie udało się wczytać informacji o właścicielu.",
+        "adminsFallback": "Nie udało się wczytać listy administratorów.",
+        "pendingTransferTitle": "Stan oczekującego przekazania jest niedostępny",
+        "pendingTransferFallback": "Nie udało się wczytać stanu oczekującego przekazania własności.",
+        "genericLoad": "Nie udało się wczytać informacji o własności",
+        "noOrganization": "Nie wybrano organizacji"
+      },
+      "toasts": {
+        "selectAdmin": "Wybierz administratora, któremu chcesz przekazać własność",
+        "transferSent": "Wysłano prośbę o przekazanie własności. Nowy właściciel musi zaakceptować przekazanie.",
+        "transferFailed": "Nie udało się rozpocząć przekazania własności",
+        "transferCancelled": "Przekazanie anulowane",
+        "cancelFailed": "Nie udało się anulować przekazania",
+        "acceptedOwnership": "Jesteś teraz właścicielem organizacji!",
+        "acceptFailed": "Nie udało się zaakceptować przekazania"
+      },
+      "pendingBanner": {
+        "title": "Oczekujące przekazanie własności",
+        "description": "Zostałeś wybrany na nowego właściciela tej organizacji.",
+        "accept": "Zaakceptuj własność",
+        "decline": "Odrzuć"
+      },
+      "ownerCard": {
+        "badge": "WŁAŚCICIEL",
+        "since": "Właściciel od",
+        "initialSetup": "Konfiguracja początkowa",
+        "warning": "Właściciela organizacji nie można usunąć z listy zespołu. Aby usunąć tego użytkownika, najpierw przekaż własność."
+      },
+      "transferAction": "Przekaż własność",
+      "modal": {
+        "info": "Przekazanie własności przenosi zabezpieczenia dostępne tylko dla właściciela na wybranego administratora. Zachowasz uprawnienia administratora, ale przestaniesz być właścicielem zespołu.",
+        "selectLabel": "Wybierz nowego właściciela",
+        "selectPlaceholder": "Wybierz administratora...",
+        "reasonLabel": "Powód (opcjonalnie)",
+        "reasonPlaceholder": "Dlaczego przekazujesz własność?",
+        "cancel": "Anuluj"
       }
     },
     "incidentHistory": {
@@ -42164,6 +42250,9 @@
     "executing": "W trakcie",
     "promoted": "Wypromowane",
     "proposed": "Zaproponowane",
+    "queued": "W kolejce",
+    "running": "W trakcie",
+    "succeeded": "Udane",
     "processing": "Przetwarzanie",
     "uploaded": "Przesłano",
     "editing": "Edycja",
@@ -42184,6 +42273,7 @@
     "accepted": "Zaakceptowane",
     "completed": "Zakończone",
     "done": "Zakończone",
+    "resolved": "Rozwiązane",
     "published": "Opublikowane",
     "ready": "Gotowe",
     "active": "Aktywne",
@@ -42197,6 +42287,8 @@
     "blocked": "Zablokowane",
     "cancelled": "Anulowane",
     "overdue": "Zaległe",
+    "expired": "Wygasło",
+    "revoked": "Cofnięto",
     "unreadable": "Nieczytelny",
     "deleted": "Usunięty",
     "error": "Błąd",

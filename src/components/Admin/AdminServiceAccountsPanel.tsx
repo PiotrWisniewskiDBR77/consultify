@@ -9,6 +9,7 @@ import {
   revokeServiceAccount,
   type ServiceAccount,
 } from '../../services/adminServiceAccountsApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 const input =
@@ -108,7 +109,7 @@ export const AdminServiceAccountsPanel: React.FC = () => {
         label: t('admin.security.service-accounts.columns.lastUsedAt'),
         render: (row) =>
           row.last_used_at
-            ? new Date(String(row.last_used_at)).toLocaleString()
+            ? formatListDateTime(String(row.last_used_at))
             : t('admin.security.service-accounts.values.never'),
       },
       {
@@ -116,7 +117,7 @@ export const AdminServiceAccountsPanel: React.FC = () => {
         label: t('admin.security.service-accounts.columns.expiresAt'),
         render: (row) =>
           row.expires_at
-            ? new Date(String(row.expires_at)).toLocaleString()
+            ? formatListDateTime(String(row.expires_at))
             : t('admin.security.service-accounts.values.noExpiry'),
       },
     ],

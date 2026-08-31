@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
+import { formatListDate, formatListDateTime } from '../../../utils/listDateFormat';
 import { AuditLogViewer } from '../../AISettings';
 import { CustomComplianceTemplateEditor } from './CustomComplianceTemplateEditor';
 
@@ -530,7 +531,7 @@ export const AuditComplianceTab: React.FC = () => {
                         {event.userEmail || '-'}
                       </td>
                       <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-mono">
-                        {new Date(event.timestamp).toLocaleString()}
+                        {formatListDateTime(event.timestamp)}
                       </td>
                       <td className="px-6 py-4">
                         {event.resolved ? (
@@ -688,7 +689,7 @@ export const AuditComplianceTab: React.FC = () => {
                         </span>
                         <span className="text-xs text-slate-600 dark:text-slate-500">•</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {new Date(report.generatedAt).toLocaleDateString()}
+                          {formatListDate(report.generatedAt)}
                         </span>
                         {report.findings > 0 && (
                           <>
@@ -806,7 +807,7 @@ export const AuditComplianceTab: React.FC = () => {
                         'admin.aiControlCenter.auditCompliance.templates.updated',
                         'Updated {{date}}',
                         {
-                          date: new Date(template.updatedAt).toLocaleDateString(),
+                          date: formatListDate(template.updatedAt),
                         }
                       )}
                     </span>

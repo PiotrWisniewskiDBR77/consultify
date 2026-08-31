@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type AiIncident, getAiIncidents } from '../../services/adminAiIncidentsApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminAiIncidentsPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -44,11 +45,11 @@ export const AdminAiIncidentsPanel: React.FC = () => {
       () =>
         data.map((x, i) => ({
           id: `${x.source}-${x.start}-${i}`,
-          start: new Date(x.start).toLocaleString(),
+          start: formatListDateTime(x.start),
           duration: x.durationMs == null ? '—' : `${Math.round(x.durationMs / 60000)} min`,
           samples: x.samples ?? '—',
           error: x.lastError || '—',
-          source: x.source,
+          source: t(`admin.ai.ai-incidents.sources.${x.source}`, { defaultValue: x.source }),
         })),
       [data]
     );

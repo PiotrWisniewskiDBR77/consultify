@@ -3,6 +3,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getPlanHistory, type PlanHistoryEntry } from '../../services/adminBillingHistoryApi';
+import { humanizeEnum } from '../../utils/enumLabels';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminPlanHistoryPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -37,12 +39,16 @@ export const AdminPlanHistoryPanel: React.FC = () => {
         id: 'created_at',
         label: t('admin.billing.plan-history.columns.date'),
         sortable: true,
-        render: (row) => new Date(String(row.created_at)).toLocaleString(),
+        render: (row) => formatListDateTime(row.created_at),
       },
       {
         id: 'action',
         label: t('admin.billing.plan-history.columns.action'),
         sortable: true,
+        render: (row) =>
+          t(`admin.billing.plan-history.actions.${row.action}`, {
+            defaultValue: humanizeEnum(row.action),
+          }),
       },
       {
         id: 'from_plan',

@@ -18242,6 +18242,12 @@
           "succeeded": "Succeeded",
           "failed": "Failed"
         },
+        "types": {
+          "send_invite_email": "Send invite email",
+          "sync_scim_group": "Sync SCIM group",
+          "export_audit_logs": "Export audit logs",
+          "recalculate_seats": "Recalculate seats"
+        },
         "empty": {
           "title": "No jobs",
           "description": "This organization has no queued administrative jobs."
@@ -18394,6 +18400,12 @@
           "count": "Count",
           "amount": "Amount"
         },
+        "types": {
+          "purchase": "Purchase",
+          "auto_add": "Auto-added",
+          "manual_adjustment": "Manual adjustment",
+          "release": "Seat released"
+        },
         "title": "Seats and licences",
         "description": "Seat pool status for the current organization.",
         "summary": {
@@ -18431,6 +18443,16 @@
           "toPlan": "New plan",
           "reason": "Reason",
           "actor": "Performed by"
+        },
+        "actions": {
+          "upgrade": "Plan upgrade",
+          "downgrade": "Plan downgrade",
+          "renewal": "Renewal",
+          "cancellation": "Cancellation",
+          "suspended": "Suspended",
+          "reactivated": "Reactivated",
+          "dunning_started": "Dunning started",
+          "dunning_exited": "Dunning exited"
         },
         "systemActor": "System",
         "title": "Plan change history",
@@ -18979,7 +19001,9 @@
         },
         "values": {
           "unknown": "Unknown",
-          "unknownLocation": "Unknown"
+          "unknownLocation": "Unknown",
+          "unknownDevice": "Unknown device",
+          "automationAgent": "Automation agent"
         },
         "actions": {
           "revoke": "Revoke session"
@@ -19055,6 +19079,11 @@
         "status": {
           "resolved": "Resolved",
           "open": "Open"
+        },
+        "eventTypes": {
+          "impossible_travel": "Impossible travel",
+          "repeated_failed_login": "Repeated failed logins",
+          "new_device_login": "New device login"
         },
         "metrics": {
           "unresolved": "Unresolved: {{count}}",
@@ -20210,6 +20239,10 @@
           "lastError": "Last error",
           "source": "Source"
         },
+        "sources": {
+          "llm_health_events": "LLM availability monitoring",
+          "llm_observatory": "LLM observatory"
+        },
         "noIncidentsInWindow": "No incidents in the current measurement window.",
         "empty": {
           "title": "No incidents",
@@ -20283,6 +20316,10 @@
           "exportKind": "Export",
           "rows": "Rows",
           "format": "Format"
+        },
+        "kinds": {
+          "audit_logs_csv": "Audit log (CSV)",
+          "compliance_summary_pdf": "Compliance summary (PDF)"
         },
         "empty": {
           "title": "No exports",
@@ -20574,6 +20611,12 @@
         "failing": "Failing",
         "unknown": "No result"
       },
+      "kind": {
+        "database": "Database",
+        "internal_service": "Internal service",
+        "queue": "Queue",
+        "external_provider": "External provider"
+      },
       "empty": {
         "title": "No declared dependencies",
         "description": "The dependency map contains no entries."
@@ -20582,6 +20625,49 @@
         "title": "Probes without a declared dependency",
         "description": "The map is a manual, verifiable declaration. Unlisted dependencies remain pending until supported by code evidence.",
         "none": "Every registered probe has a declaration."
+      }
+    },
+    "ownership": {
+      "title": "Organization Ownership",
+      "desc": "Manage the team owner and ownership transfer safeguards",
+      "errors": {
+        "loadTitle": "Ownership information unavailable",
+        "loadFallback": "Ownership information failed to load.",
+        "adminsFallback": "Admin candidates failed to load.",
+        "pendingTransferTitle": "Pending ownership transfer status unavailable",
+        "pendingTransferFallback": "Pending ownership transfer status failed to load.",
+        "genericLoad": "Failed to load ownership information",
+        "noOrganization": "No organization selected"
+      },
+      "toasts": {
+        "selectAdmin": "Please select an admin to transfer ownership to",
+        "transferSent": "Ownership transfer request sent. The new owner must accept the transfer.",
+        "transferFailed": "Failed to initiate ownership transfer",
+        "transferCancelled": "Transfer cancelled",
+        "cancelFailed": "Failed to cancel transfer",
+        "acceptedOwnership": "You are now the organization owner!",
+        "acceptFailed": "Failed to accept transfer"
+      },
+      "pendingBanner": {
+        "title": "Ownership Transfer Pending",
+        "description": "You have been selected to become the new organization owner for this team.",
+        "accept": "Accept Ownership",
+        "decline": "Decline"
+      },
+      "ownerCard": {
+        "badge": "OWNER",
+        "since": "Owner since",
+        "initialSetup": "Initial Setup",
+        "warning": "The organization owner cannot be removed from the team list. To remove this user, transfer ownership first."
+      },
+      "transferAction": "Transfer Ownership",
+      "modal": {
+        "info": "Transferring ownership moves owner-only team safeguards to the selected admin. You will retain admin privileges but will no longer be the team owner.",
+        "selectLabel": "Select New Owner",
+        "selectPlaceholder": "Select an admin...",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Why are you transferring ownership?",
+        "cancel": "Cancel"
       }
     },
     "incidentHistory": {
@@ -39633,6 +39719,9 @@
     "executing": "Executing",
     "promoted": "Promoted",
     "proposed": "Proposed",
+    "queued": "Queued",
+    "running": "Running",
+    "succeeded": "Succeeded",
     "processing": "Processing",
     "uploaded": "Uploaded",
     "editing": "Editing",
@@ -39653,6 +39742,7 @@
     "accepted": "Accepted",
     "completed": "Completed",
     "done": "Done",
+    "resolved": "Resolved",
     "published": "Published",
     "ready": "Ready",
     "active": "Active",
@@ -39666,6 +39756,8 @@
     "blocked": "Blocked",
     "cancelled": "Cancelled",
     "overdue": "Overdue",
+    "expired": "Expired",
+    "revoked": "Revoked",
     "unreadable": "Unreadable",
     "deleted": "Deleted",
     "error": "Error",
