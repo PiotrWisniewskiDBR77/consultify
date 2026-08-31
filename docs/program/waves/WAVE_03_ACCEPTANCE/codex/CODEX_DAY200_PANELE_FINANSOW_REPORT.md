@@ -8,7 +8,7 @@ Gałąź: `codex/day200-panele-finansow-20260831`
 
 - **R1: ZROBIONE** — własny inwentarz 21/21 poniżej.
 - **R2: ZROBIONE w zakresie osiągalności UI** — istniejący rejestr rozszerzony z 5 do 21 paneli; jedna istniejąca flaga `ff.finance_value_panels`, domyślnie OFF; bez zmian wyglądu paneli i bez zmian backendu.
-- **R3: CZĘŚCIOWO / EVIDENCE_MISSING** — pakiet render/test jest zielony, ale wydany harness obsługuje tylko 7 z 21 paneli, a tabela licencji nie pozwala zmienić `dev-render/**`. Nie deklaruję 42 zrzutów ani dwóch testów realnego API jako wykonanych.
+- **R3: CZĘŚCIOWO / EVIDENCE_MISSING** — pakiet render/test jest zielony i wykonano 14 zrzutów (7 obsługiwanych ekranów × 2 motywy), ale wydany harness nie obejmuje pozostałych 14 paneli, a tabela licencji nie pozwala zmienić `dev-render/**`. Nie deklaruję 42 zrzutów ani dwóch testów realnego API jako wykonanych.
 
 ## Baza pracy i marker — wynik dosłowny
 
@@ -68,6 +68,8 @@ Diff pełnych nazw:
 
 Zniknięte nazwy: brak. Artefakty: `/private/tmp/cx-day200-panele-finansow-artefakty/przed.json`, `po.json`, `przed-nazwy.txt`, `po-nazwy.txt`, `nazwy.diff`.
 
+Manifest SHA-256 wszystkich 22 plików dowodowych: `/private/tmp/cx-day200-panele-finansow-artefakty/artefakty-sha256.txt`.
+
 Pułapki Z33: pakiet jest czysto jednostkowy (`RUN_DB_TESTS=0 MOCK_DB=true`), więc nie dowodzi `ApiGateway`, JWT ani Postgresa. Dowodzi jedynie 21 tabów i fail-closed flagi frontowej. `ENABLE_V8_GLOBAL`, auth bypass i strażnik beta nie leżą na ścieżce tego renderu; realne API pozostaje `EVIDENCE_MISSING`.
 
 ## RealPostgres i Z30
@@ -92,11 +94,15 @@ Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie z
 
 Wydany `dev-render/screens/finance-value-panels.tsx` obsługuje tylko: `value`, `driver`, `monte-carlo`, `real-options`, `frontier`, `sensitivity`, `scenarios` (7 paneli). `dev-render/**` nie znajduje się w tabeli licencji zapisu. Zgodnie z regułą „plik poza licencją = tylko odczyt” nie rozszerzono harnessu. Dostarczony czerwony kontrakt: R3 nie może otrzymać werdyktu PASS bez 42 plików PNG i dwóch realnych testów przez `ApiGateway`.
 
+Na istniejącym harnessie uruchomionym lokalnie na przydzielonym porcie `5072` wykonano 14 zrzutów: każdy z 7 obsługiwanych paneli w motywie jasnym i ciemnym. Kontrola wzrokowa próbek `value-light.png` i `scenarios-dark.png` potwierdziła realny render komponentów. Pełny manifest SHA-256: `/private/tmp/cx-day200-panele-finansow-artefakty/zrzuty-sha256.txt` (14 wierszy). Harness nie uruchamiał `server/src/index.ts` ani połączenia bazodanowego.
+
+KOORDYNACJA toru grafiki: materiał częściowy dla flagi `ff.finance_value_panels` leży w `/private/tmp/cx-day200-panele-finansow-artefakty/*.png`; **nie jest kompletem właścicielskim**, ponieważ obejmuje 7/21 paneli.
+
 Rekomendacja nadzorcy: wydać wąską licencję na dedykowany harness Day 200 poza produktem albo zaakceptować pełny runtime na portach 5072/5073 po dostarczeniu fixture organizacji i wskazaniu dwóch endpointów rzeczywiście konsumowanych przez dwa panele. Bez tej decyzji nie wolno fabrykować danych ani nazywać renderu 7/21 kompletem.
 
 ## TWIERDZENIA NIEZWERYFIKOWANE
 
-- 42 zrzuty (21 paneli × jasny/ciemny): **NIE WYKONANO / EVIDENCE_MISSING**.
+- 42 zrzuty (21 paneli × jasny/ciemny): **14/42 WYKONANO; komplet EVIDENCE_MISSING**.
 - Dwa zielone testy realnego API przez `ApiGateway`, podpisany JWT i Postgres: **NIE WYKONANO / EVIDENCE_MISSING**.
 - Panele osiągalne z rozszerzonego rejestru mają różny stan integracji danych. `ValuationVisualsPanel`, `EvBasketFootballField`, `DriverPlannerPanel` oraz `VarianceBridgePanel` bez props wejściowych renderują uczciwy stan pusty/ograniczony; nie podstawiono fikcyjnych fetcherów.
 - Spośród 19 endpointów `finance-valuation` nadal bez typed clienta pozostaje 10: `/value-at-risk`, `/value-at-risk/portfolio`, `/efficient-frontier/portfolio`, `/sensitivity/one-way`, `/sensitivity/break-even`, `/scenarios/compare` oraz cztery `/capital-decision/*`. Pomiar klienta wykazał 9 obsługiwanych endpointów, a nie opisane w instrukcji 5.
