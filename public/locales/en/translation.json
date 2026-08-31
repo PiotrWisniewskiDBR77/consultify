@@ -1,4 +1,126 @@
 {
+  "contextBuilder": {
+    "dynamicList": {
+      "actions": "Actions",
+      "selectPlaceholder": "Select...",
+      "addItem": "Add Item",
+      "empty": "No items yet. Add one!"
+    },
+    "shared": {
+      "refining": "Refining..."
+    }
+  },
+  "transformationScenarios": {
+    "banner": {
+      "title": "Recommended transformation scenario",
+      "subtitle": "Based on {count} declared challenges, the recommended direction is {name}."
+    },
+    "recommended": "Recommended",
+    "cancel": "Cancel",
+    "selected": "Selected",
+    "select": "Select scenario",
+    "metricLabels": {
+      "tempo": "Tempo",
+      "ambition": "Ambition",
+      "risk": "Risk"
+    },
+    "deepDive": {
+      "title": "Scenario details",
+      "subtitle": "Business implications of {name}",
+      "definition": "What this scenario means",
+      "aiReasoning": "Why this scenario fits",
+      "aiReasoningRisk": "Addresses key hidden risks related to **process fragmentation** and **compliance** found in your profile.",
+      "aiReasoningStrength": "Leverages your organizational strength in **engineering culture** to drive the change via the core team.",
+      "tradeoffs": "Trade-offs",
+      "gains": "Gains",
+      "sacrifices": "Sacrifices",
+      "impact": "Organizational impact"
+    },
+    "scenarios": {
+      "digital-foundation": {
+        "name": "Digital Foundation",
+        "narrative": "Foundations first, speed second.",
+        "description": "Build core digital capabilities and infrastructure",
+        "gains": [
+          "A stable data and process baseline for later initiatives",
+          "Lower technical risk on subsequent rollouts",
+          "Faster adoption of new tools in later phases"
+        ],
+        "sacrifices": [
+          "Slower initial business results",
+          "Requires investment discipline before results appear"
+        ]
+      },
+      "customer-experience": {
+        "name": "Customer Experience Revolution",
+        "narrative": "The customer at the center of every decision.",
+        "description": "Transform customer touchpoints and engagement",
+        "gains": [
+          "Higher customer satisfaction and loyalty",
+          "Faster response to market needs",
+          "New sales and service channels"
+        ],
+        "sacrifices": [
+          "Requires a culture shift, not just new tools",
+          "Higher upfront cost (research, prototypes, customer testing)"
+        ]
+      },
+      "operational-excellence": {
+        "name": "Operational Excellence",
+        "narrative": "The same work, less waste.",
+        "description": "Optimize processes and increase efficiency",
+        "gains": [
+          "Measurable reduction in operating costs",
+          "Shorter cycle time and fewer bottlenecks",
+          "Better quality through standardized processes"
+        ],
+        "sacrifices": [
+          "Long rollout horizon (12-24 months)",
+          "Resistance to standardization in operational teams"
+        ]
+      },
+      "ai-powered": {
+        "name": "AI-Powered Transformation",
+        "narrative": "AI as a lever, not an add-on.",
+        "description": "Leverage AI and automation across the organization",
+        "gains": [
+          "Automation of repetitive work at scale",
+          "Faster, more accurate data-driven decisions",
+          "Competitive edge in data-intensive areas"
+        ],
+        "sacrifices": [
+          "High demands on data quality and governance",
+          "The longest and most complex rollout horizon"
+        ]
+      },
+      "business-model-innovation": {
+        "name": "Business Model Innovation",
+        "narrative": "New value, not just new tools.",
+        "description": "Reinvent revenue streams and value proposition",
+        "gains": [
+          "New revenue streams independent of the current market",
+          "Greater resilience against industry disruption"
+        ],
+        "sacrifices": [
+          "The highest strategic risk of all scenarios",
+          "Requires board buy-in for experiments without a guaranteed payoff"
+        ]
+      },
+      "data-driven": {
+        "name": "Data-Driven Organization",
+        "narrative": "Decisions on data, not on gut feeling.",
+        "description": "Build analytics capabilities and data culture",
+        "gains": [
+          "Decisions based on data instead of intuition",
+          "One source of truth instead of scattered spreadsheets"
+        ],
+        "sacrifices": [
+          "Requires consolidating data spread across silos",
+          "Changing decision-making habits takes time"
+        ]
+      }
+    }
+  },
   "chatSignals": {
     "untitled": "Untitled signal",
     "severity": {
@@ -22687,6 +22809,410 @@
     }
   },
   "organization": {
+    "goals": {
+      "tabs": {
+        "intent": "Strategic Intent",
+        "metrics": "Success Metrics",
+        "scope": "Scope & Boundaries",
+        "nogo": "No-Go Zone",
+        "expectations": "Expectations"
+      },
+      "aiSuggestion": {
+        "title": "AI Suggested Addition",
+        "bodyPre": "I noticed you haven't included",
+        "bodyPost": ". This is a standard manufacturing KPI. Shall I add it?",
+        "addKpi": "Add KPI",
+        "dismiss": "Dismiss"
+      },
+      "intent": {
+        "primaryObjectiveLabel": "Primary Objective (North Star)",
+        "primaryObjectiveHint": "What is the single most important goal for this transformation?",
+        "primaryObjectivePlaceholder": "E.g. Become the market leader in customized manufacturing by reducing lead times by 50%...",
+        "secondaryObjectivesLabel": "Secondary Objectives",
+        "secondaryObjectivesPlaceholder": "E.g. Improve employee retention, Reduce carbon footprint...",
+        "topPrioritiesLabel": "Top Priorities (Select max 3)",
+        "priorities": {
+          "eff": "Efficiency / Cost Reduction",
+          "growth": "Growth / Sales Increase",
+          "inv": "Innovation / New Products",
+          "qual": "Quality / Compliance",
+          "speed": "Speed / Agility",
+          "cust": "Customer Experience"
+        }
+      },
+      "metrics": {
+        "title": "Success Metrics (KPIs)",
+        "description": "Define verifiable metrics to track success. Use 'Add Item' to define new KPIs.",
+        "columns": {
+          "name": "KPI Name",
+          "baseline": "Baseline",
+          "target": "Target",
+          "timeframe": "Timeframe"
+        },
+        "placeholders": {
+          "name": "e.g. OEE",
+          "baseline": "e.g. 60%",
+          "target": "e.g. 85%"
+        },
+        "timeframeOptions": {
+          "3m": "3 Months",
+          "6m": "6 Months",
+          "12m": "12 Months"
+        }
+      },
+      "scope": {
+        "inTitle": "In Scope (Included)",
+        "inDescription": "Areas, departments, or processes explicitly included.",
+        "outTitle": "Out of Scope (Excluded)",
+        "outDescription": "Areas explicitly excluded to prevent scope creep.",
+        "columns": {
+          "item": "Item / Area",
+          "notes": "Notes",
+          "reason": "Reason"
+        },
+        "placeholders": {
+          "inItem": "e.g. Plant A",
+          "inNotes": "e.g. Full audit",
+          "outItem": "e.g. Logistics",
+          "outReason": "e.g. Already optimized"
+        }
+      },
+      "nogo": {
+        "title": "No-Go Zone",
+        "description": "Areas or topics that are off-limits due to politics, regulations, or strategy.",
+        "columns": {
+          "area": "Sensitive Area",
+          "reason": "Reason/Constraint"
+        },
+        "placeholders": {
+          "area": "e.g. Headcount",
+          "reason": "e.g. Strict union agreement until 2026"
+        }
+      },
+      "expectations": {
+        "archetype": {
+          "title": "Transformation Archetype",
+          "hint": "How do you want to deliver value? Define the speed and depth of change.",
+          "options": {
+            "fast": {
+              "label": "Pilot & Scale (Agile)",
+              "desc": "Rapid prototyping, MVPs, quick feedback loops. Best for high uncertainty."
+            },
+            "deep": {
+              "label": "Core Transformation (Waterfall)",
+              "desc": "Deep structural change, phased rollout, risk averse. Best for legacy systems."
+            },
+            "targeted": {
+              "label": "Value-Led / Use Case",
+              "desc": "Focus on specific high-ROI pain points. Best for tight budgets."
+            }
+          }
+        },
+        "aiRole": {
+          "title": "Human-AI Collaboration",
+          "hint": "Define the level of autonomy you grant to the AI in this engagement.",
+          "options": {
+            "advisor": {
+              "label": "Strategic Advisor",
+              "desc": "AI challenges assumptions & provides benchmarks. You decide."
+            },
+            "partner": {
+              "label": "Collaborative Co-Pilot",
+              "desc": "AI drafts content & plans. You review & refine."
+            },
+            "agent": {
+              "label": "Autonomous Agent",
+              "desc": "AI executes defined workflows (e.g., data hygiene) with oversight."
+            }
+          }
+        },
+        "cadence": {
+          "title": "Steering & Governance",
+          "hint": "How will we track progress and ensure alignment?",
+          "options": {
+            "weekly": {
+              "label": "Weekly SteerCo",
+              "desc": "Tactical alignment on sprints & blockers."
+            },
+            "monthly": {
+              "label": "Monthly QBR",
+              "desc": "Strategic review of value delivered & roadmap."
+            },
+            "daily": {
+              "label": "Daily Standups",
+              "desc": "High-touch operational coordination."
+            },
+            "milestone": {
+              "label": "Milestone Based",
+              "desc": "Reviews triggered by key deliverables."
+            }
+          }
+        }
+      }
+    },
+    "challenges": {
+      "tabs": {
+        "challenges": "Declared Challenges",
+        "rootcause": "Root Cause Signals",
+        "blockers": "Objective Blockers",
+        "evidence": "Evidence"
+      },
+      "declared": {
+        "uploaderTitle": "Declared Challenges",
+        "suggestions": [
+          "Operational Reports",
+          "Audit Logs",
+          "Customer Complaints",
+          "Shift Handover Notes"
+        ],
+        "title": "Declared Challenges",
+        "description": "Official problems reported by the client (symptoms).",
+        "columns": {
+          "challenge": "Challenge / Symptom",
+          "area": "Functional Area",
+          "severity": "Severity",
+          "notes": "Notes / Context"
+        },
+        "placeholders": {
+          "challenge": "e.g. High Scrap Rate",
+          "area": "e.g. Quality",
+          "notes": "Additional details..."
+        },
+        "severityOptions": {
+          "Critical": "Critical",
+          "High": "High",
+          "Medium": "Medium",
+          "Low": "Low"
+        }
+      },
+      "rootcause": {
+        "uploaderTitle": "Root Cause Signals",
+        "suggestions": [
+          "Incident Reports",
+          "5 Whys Docs",
+          "PFMEA",
+          "Ishikawa Diagrams"
+        ],
+        "diagnosticLabel": "Diagnostic Questions:",
+        "diagnosticBody": "These answers help AI identify hidden root causes behind the declared challenges.",
+        "questions": [
+          {
+            "q": "Where do decisions get stuck?",
+            "h": "e.g. Middle management fear, Lack of data..."
+          },
+          {
+            "q": "Where is the strongest resistance to change?",
+            "h": "e.g. Shop floor, Specific department..."
+          },
+          {
+            "q": "What initiatives failed in the past and why?",
+            "h": "e.g. Lean impl failed due to no follow-up..."
+          },
+          {
+            "q": "Is there a gap between management view and reality?",
+            "h": "e.g. CEO thinks ERP works, users use Excel..."
+          }
+        ]
+      },
+      "blockers": {
+        "uploaderTitle": "Objective Blockers",
+        "suggestions": [
+          "Employee Surveys",
+          "Risk Register",
+          "Strategy Deck",
+          "Cultural Assessment"
+        ],
+        "suggestedTitle": "Suggested Obstacles",
+        "suggestedHint": "Tap to add common issues to your board.",
+        "createCustom": "Create Custom",
+        "activeTitle": "Active Blockers",
+        "emptyMessage": "No blockers identified yet. Add from suggestions or create a custom one.",
+        "removeTitle": "Remove Blocker",
+        "aiDetected": "AI Detected ({{confidence}})",
+        "titlePlaceholder": "Blocker Title",
+        "descPlaceholder": "Describe the obstacle and its impact...",
+        "newObstacleTitle": "New Obstacle",
+        "types": {
+          "Culture": "Culture",
+          "Process": "Process",
+          "Technology": "Technology",
+          "Strategy": "Strategy",
+          "People": "People"
+        },
+        "library": {
+          "c1": {
+            "title": "Fear of Failure",
+            "desc": "Employees hide mistakes instead of reporting them."
+          },
+          "c2": {
+            "title": "Meeting Overload",
+            "desc": "Productivity lost to excessive alignment meetings."
+          },
+          "c3": {
+            "title": "Change Fatigue",
+            "desc": "Teams are burnt out from too many initiatives."
+          },
+          "c4": {
+            "title": "Data Fragmentation",
+            "desc": "Key KPIs are manually aggregated in Excel."
+          }
+        }
+      },
+      "evidence": {
+        "uploaderTitle": "Evidence",
+        "suggestions": [
+          "Raw Data Exports",
+          "KPI Dashboards",
+          "System Logs",
+          "Financial Reports"
+        ],
+        "title": "Evidence & Data Points",
+        "description": "Hard facts, metrics, or logs that prove the existence of challenges.",
+        "columns": {
+          "metric": "Metric / Data Point",
+          "symptom": "Symptom / Observation",
+          "source": "Source System / Doc",
+          "link": "Link / Reference"
+        },
+        "placeholders": {
+          "metric": "e.g. Scrap Rate 12%",
+          "symptom": "e.g. Line stops every hour",
+          "source": "e.g. SAP Report",
+          "link": "e.g. Page 12"
+        }
+      }
+    },
+    "synthesis": {
+      "tabs": {
+        "risks": "Hidden Risks",
+        "strengths": "Strengths & Opportunities",
+        "scenarios": "Transformation Scenarios",
+        "summary": "Executive Report"
+      },
+      "risks": {
+        "bannerTitle": "Risk Assessment Logic",
+        "bannerPre": "Based on your",
+        "bannerChallenges": "{{count}} declared challenges",
+        "bannerAnd": "and",
+        "bannerConstraints": "{{count}} active constraints",
+        "bannerPost": "we have identified the following risks.",
+        "listTitle": "Hidden Risks & Threats",
+        "listDescription": "What could derail this transformation? (Generated from Constraints + Challenges)",
+        "aiSuggestedTitle": "AI Suggested Risk",
+        "columns": {
+          "risk": "Risk / Threat",
+          "why": "Why (Root Cause)",
+          "severity": "Severity",
+          "mitigation": "Mitigation Strategy"
+        },
+        "placeholders": {
+          "risk": "e.g. Middle Management Resistance",
+          "why": "e.g. Fear of redundancy",
+          "mitigation": "e.g. Change Mgmt Program"
+        },
+        "severityOptions": {
+          "Critical": "Critical",
+          "High": "High",
+          "Medium": "Medium",
+          "Low": "Low"
+        },
+        "modal": {
+          "aiInsight": "AI Insight",
+          "identifiedDuring": "Identified during synthesis phase",
+          "severityLevel": "Severity Level",
+          "priority": "Priority",
+          "sourceContext": "Source / Context",
+          "sourcePattern": "Pattern Recognition Engine",
+          "sourceUser": "User Constraints",
+          "rootCauseAnalysis": "Root Cause Analysis",
+          "recommendedMitigation": "Recommended Mitigation",
+          "aiSuggestedNotePre": "This risk was suggested because similar organizations in",
+          "aiSuggestedNotePost": "typically struggle with this compliance gap during digital transformations.",
+          "aiSuggestedIndustry": "Automotive",
+          "close": "Close",
+          "updateStrategy": "Update Risk Strategy"
+        }
+      },
+      "strengths": {
+        "bannerTitle": "Strategic Advantages",
+        "bannerBody": "Based on your Company Profile and Goals, we have identified these key strengths and market opportunities.",
+        "listTitle": "Strengths & Opportunities",
+        "listDescription": "What strengths can you leverage? (Generated from Profile & Opportunities)",
+        "aiSuggestedTitle": "AI Suggested Opportunity",
+        "columns": {
+          "enabler": "Strength / Opportunity",
+          "seen": "Evidence / Where Seen",
+          "leverage": "How to Leverage"
+        },
+        "placeholders": {
+          "enabler": "e.g. Strong Engineering Team",
+          "seen": "e.g. R&D Performance",
+          "leverage": "e.g. Use as Pilot Champions"
+        },
+        "modal": {
+          "aiOpportunity": "AI Opportunity",
+          "identifiedStrength": "Identified Strength / Opportunity",
+          "impactPotential": "Impact Potential",
+          "confidence": "Confidence",
+          "medium": "Medium"
+        }
+      },
+      "executiveBrief": {
+        "heading": "Executive Strategic Summary",
+        "subheading": "AI-synthesized strategic analysis based on your inputs",
+        "exportPdf": "Export PDF",
+        "exporting": "Exporting...",
+        "exportToast": "Use \"Save as PDF\" in the print dialog to export this summary.",
+        "print": "Print",
+        "share": "Share",
+        "companyNameFallback": "No organization name on file",
+        "industryFallback": "No industry on file",
+        "employeesUnit": "employees",
+        "revenueUnit": "revenue",
+        "currentMaturity": "Current Maturity",
+        "targetMaturity": "Target Maturity",
+        "maturityNoData": "No data",
+        "activeConstraints": "Active Constraints",
+        "strategicGoals": "Strategic Goals",
+        "riskProfile": "Risk Profile",
+        "highRisk": "High Risk",
+        "manageable": "Manageable",
+        "identified": "identified",
+        "criticalPriorityNote": "critical/high priority requiring immediate attention",
+        "topRisks": "Top Risks",
+        "opportunities": "Opportunities",
+        "strong": "Strong",
+        "developing": "Developing",
+        "keyEnablersNote": "Key enablers for transformation success",
+        "topStrengths": "Top Strengths",
+        "challenges": "Challenges",
+        "active": "Active",
+        "declared": "declared",
+        "operationalPainNote": "Operational pain points to address",
+        "topChallenges": "Top Challenges",
+        "selectedScenario": "Selected Transformation Scenario",
+        "timeline": "Timeline",
+        "investment": "Investment",
+        "riskLevel": "Risk Level",
+        "noScenarioTitle": "No Scenario Selected",
+        "noScenarioBody": "Go to \"Transformation Scenarios\" tab to select a strategic approach",
+        "goalsProgressTitle": "Strategic Goals & Success Metrics",
+        "strategicGoalsLabel": "Strategic Goals",
+        "noGoalsYet": "No strategic goals defined yet",
+        "successMetricsLabel": "Success Metrics (KPIs)",
+        "noMetricsYet": "No success metrics defined yet",
+        "aiRecommendationsTitle": "AI Strategic Recommendations",
+        "immediatePriority": "Immediate Priority",
+        "immediatePriorityRisk": "Address \"{{risk}}\" before initiating transformation to reduce execution risk.",
+        "immediatePriorityManageable": "Risk profile is manageable. Focus on quick wins to build momentum.",
+        "strategicLeverage": "Strategic Leverage",
+        "strategicLeverageWithData": "Capitalize on \"{{strength}}\" as a key differentiator in your transformation journey.",
+        "strategicLeverageEmpty": "Identify internal champions to drive the transformation forward.",
+        "nextStep": "Next Step",
+        "nextStepWithScenario": "Develop detailed implementation plan for \"{{scenario}}\" scenario.",
+        "nextStepEmpty": "Select a transformation scenario to proceed with detailed planning."
+      }
+    },
     "sidebar": {
       "title": "Organization",
       "subtitle": "Context & Administration",
@@ -22767,6 +23293,98 @@
       }
     },
     "governance": {
+      "sourceTypes": {
+        "organization_profile": "Organization profile",
+        "interview_context": "Interview context",
+        "interview_answer": "Interview answer",
+        "interview_evidence": "Interview evidence",
+        "interview": "Interview",
+        "organization_metadata": "Organization metadata",
+        "organization": "Organization",
+        "ai_context": "AI context",
+        "tool_session": "Tool session",
+        "my_work_idea": "My Work idea",
+        "chat_message": "Chat message",
+        "document_extraction": "Document extract",
+        "document": "Document",
+        "upload": "Uploaded file",
+        "manual": "Manual entry",
+        "organization_governed_snapshot": "Governed organization snapshot"
+      },
+      "reviewStates": {
+        "pending": "Awaiting review",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "visibilityScopes": {
+        "organization": "Whole organization",
+        "restricted": "Restricted visibility",
+        "private": "Private",
+        "project": "Project",
+        "review_shared": "Shared for review",
+        "demo": "Demo"
+      },
+      "claimPaths": {
+        "profile.companyName": "Company name",
+        "profile.description": "Company description",
+        "profile.industry": "Industry",
+        "profile.industryCode": "Industry code",
+        "profile.industrySubsector": "Industry subsector",
+        "profile.companySize": "Company size",
+        "profile.location": "Location",
+        "profile.employeeCount": "Employee count",
+        "profile.annualRevenue": "Annual revenue",
+        "profile.website": "Website",
+        "profile.defaultLanguage": "Default language",
+        "profile.defaultTimezone": "Default timezone",
+        "profile.currency": "Currency",
+        "profile.linkedinUrl": "LinkedIn",
+        "profile.twitterUrl": "X / Twitter",
+        "profile.customDomain": "Custom domain",
+        "profile.brandColor": "Brand color",
+        "profile.accentColor": "Accent color",
+        "profile.organizationType": "Organization type",
+        "profile.revenueModel": "Revenue model",
+        "profile.foundingYear": "Founding year",
+        "profile.communicationStyle": "Communication style",
+        "profile.industryJargonLevel": "Industry jargon level",
+        "strategic.goals": "Strategic goals",
+        "strategic.priorities": "Strategic priorities",
+        "strategic.mission": "Mission",
+        "strategic.vision": "Vision",
+        "strategic.competitivePosition": "Competitive position",
+        "strategic.growthStage": "Growth stage",
+        "strategic.riskAppetite": "Risk appetite",
+        "operations.keyMetrics": "Key metrics",
+        "operations.constraints": "Constraints",
+        "operations.gaps": "Gaps",
+        "operations.interviewAnswers": "Interview answers",
+        "operations.deliveryModel": "Delivery model",
+        "operations.productionArchetype": "Production archetype",
+        "operations.shiftPattern": "Shift pattern",
+        "operations.automationLevel": "Automation level",
+        "systems.stack": "Technology stack",
+        "systems.cloudAdoption": "Cloud adoption",
+        "systems.integrations": "Integrations",
+        "systems.coreSystems": "Core systems",
+        "stakeholders.people": "Stakeholders",
+        "notes.manualContext": "Manual note",
+        "metadata.custom": "Custom metadata",
+        "evidence.interview": "Interview evidence",
+        "evidence.documentExtraction": "Document evidence",
+        "signals.interviewInsights": "Interview insights",
+        "signals.interviewFindings": "Interview findings",
+        "tools.sessionOutput": "Tool session output",
+        "myWork.idea": "My Work idea",
+        "chat.explicitContext": "Chat context",
+        "integrations.signal": "Integration signal",
+        "finance.statements": "Financial statements",
+        "finance.models": "Financial models",
+        "finance.laneStatus": "Finance lane status",
+        "finance.versionStatus": "Version status"
+      },
+      "itemIdTooltip": "Record id: {{id}}"
+,
       "loadError": "Governed context could not be loaded. Your existing data was not changed.",
       "uploaded": "The document was ingested and its pending governed claim was loaded.",
       "uploadError": "The document could not be ingested. No governed claim was accepted.",
