@@ -192,8 +192,11 @@ const AIPolicyEngine = {
 
     // 2. Check project-level override if exists
     if (projectId) {
-      const project: any =
-        (await dbGet(`SELECT governance_settings FROM projects WHERE id = ?`, [projectId])) || {};
+      const project: any = await safeDbGet(
+        `SELECT governance_settings FROM projects WHERE id = ?`,
+        [projectId],
+        {}
+      );
 
       try {
         const settings = JSON.parse(project.governance_settings || '{}');

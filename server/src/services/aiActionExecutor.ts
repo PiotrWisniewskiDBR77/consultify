@@ -283,6 +283,56 @@ const AIActionExecutor = {
     }
   },
 
+  /** Day207: translate a chat WRITE tool call into the existing ai_actions lifecycle. */
+  requestChatToolProposal: async ({
+    toolName,
+    args,
+    userId,
+    organizationId,
+    projectId,
+    conversationId,
+  }: any) => {
+    const mapping: Record<string, string> = {
+      create_task: ACTION_TYPES.CREATE_DRAFT_TASK,
+      create_decision: ACTION_TYPES.CREATE_DRAFT_DECISION,
+    };
+    const actionType = mapping[String(toolName || '')];
+    if (!actionType) {
+      return { success: false, blocked: true, error: 'WRITE_TOOL_ACTION_MAPPING_MISSING' };
+    }
+    if (!projectId) {
+      return { success: false, blocked: true, error: 'PROJECT_CONTEXT_REQUIRED' };
+    }
+
+    const draftContent = args && typeof args === 'object' ? { ...args } : {};
+    const title = String(draftContent.title || draftContent.name || '').trim();
+    const result = await AIActionExecutor.requestAction(
+      actionType,
+      { toolName, riskLevel: 'LOW', _forceApproval: true },
+      userId,
+      organizationId,
+      projectId,
+      {
+        conversationId,
+        planSummary: title
+          ? `${toolName === 'create_task' ? 'Create task' : 'Create decision'}: ${title}`
+          : toolName === 'create_task'
+            ? 'Create task'
+            : 'Create decision',
+        stepCount: 1,
+        steps: [{ id: 'write', label: toolName }],
+        risk: 'low',
+      }
+    );
+    if (result.success && result.actionId) {
+      await dbRun(`UPDATE ai_actions SET draft_content = ? WHERE id = ?`, [
+        JSON.stringify(draftContent),
+        result.actionId,
+      ]);
+    }
+    return result;
+  },
+
   /**
    * Request an AI action.
    *
