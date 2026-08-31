@@ -154,3 +154,5 @@ Artefakty nazw: `przed-nazwy.txt`, `po-nazwy.txt`, `nazwy.diff`, `day199-r2*.jso
 ```
 
 Po każdym commicie wykonano push wyłącznie na `github-backup/codex/day199-karty-wynikow-20260831`. Zero pushu na `origin`, zero Railway, zero zdalnych baz.
+
+Sprzątanie: `docker rm -f -v cx-day199-pg` zwróciło `cx-day199-pg`; własny kontener i jego anonimowy wolumen usunięto. Końcowy `git status --short`: brak wyjścia przed dopisaniem tej noty.
