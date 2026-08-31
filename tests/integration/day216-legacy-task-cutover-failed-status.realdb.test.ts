@@ -95,4 +95,61 @@ describe('Day216 FAILED ledger continuation', { retry: 0 }, () => {
       { legacy_task_id: 'b-good-task', status: 'MIGRATED', reason_code: null },
     ]);
   });
+  // FIX-216-1 (blocking, pilot gate): before this fix, a FAILED row
+  // permanently parked the task — the selector's NOT EXISTS excluded it
+  // forever and migrateOneTask returned NOOP (the exact same outcome as
+  // "already safely migrated"), so the only way out was a destructive
+  // manual DELETE from the ledger. This proves the cycle end to end on a
+  // live DB: fail -> FAILED row -> fix the cause (create the missing
+  // execution_case) -> the SAME command actually MIGRATES the task instead
+  // of going silent -> the row ends as MIGRATED, not NOOP.
+  it('retries and migrates a FAILED task once its cause is fixed, instead of parking it forever', async () => {
+    await pool.query(
+      `INSERT INTO ie_aggregate_state(organization_id,aggregate_type,aggregate_id,version,payload_json)
+       VALUES($1,'execution_case','case-a-missing',3,$2::jsonb)`,
+      [
+        org,
+        JSON.stringify({
+          executionCaseId: 'case-a-missing',
+          initiativeId: 'a-missing',
+          state: 'ACTIVE',
+        }),
+      ]
+    );
+    const retry = await runLegacyTaskCutover(pool, {
+      ...parseRunnerOptions([
+        `--organization-id=${org}`,
+        '--confirm-batch',
+        '--batch-size=2',
+        '--max-tasks=2',
+        '--write',
+      ]),
+      batchId: 'day216-failed-retry-batch',
+    });
+    // Not NOOP, not silence (outcomes=[]) — an actual migration.
+    expect(retry.outcomes).toEqual(['MIGRATED']);
+    const ledger = await pool.query(
+      `SELECT legacy_task_id,status,reason_code,case_version_before,case_version_after
+         FROM legacy_task_cutover_ledger WHERE organization_id=$1 AND legacy_task_id='a-bad-task'`,
+      [org]
+    );
+    expect(ledger.rows).toEqual([
+      {
+        legacy_task_id: 'a-bad-task',
+        status: 'MIGRATED',
+        reason_code: null,
+        case_version_before: 3,
+        // FIX-216-2: the recorded "after" version is the CASE's version
+        // (before + 1), not the task's own expectedVersion+1 (which would
+        // always be 1 for a create).
+        case_version_after: 4,
+      },
+    ]);
+    const aggregate = await pool.query(
+      `SELECT count(*)::int n FROM ie_aggregate_state
+        WHERE organization_id=$1 AND aggregate_type='execution_task' AND aggregate_id='legacy-task:a-bad-task'`,
+      [org]
+    );
+    expect(aggregate.rows[0].n).toBe(1);
+  });
 });

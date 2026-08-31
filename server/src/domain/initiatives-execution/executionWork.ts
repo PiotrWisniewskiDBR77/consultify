@@ -204,9 +204,16 @@ export async function createExecutionTaskForLegacyCutover(
     throw new MaterialCommandValidationError('Invalid Task create');
   return executeMaterialCommand(uow, envelope, async (tx, commandEnvelope) => {
     const change = await prepareExecutionTaskCreation(tx, commandEnvelope);
+    // FIX-216-2: `commandEnvelope.expectedVersion` is the TASK aggregate's
+    // expected version (always 0 for a create — see migrateOneTask), not
+    // the execution CASE's version. The forensic field that cutover/rollback
+    // relies on is the case's version, which `ledgerEntry.caseVersionBefore`
+    // already carries (set by the caller from the case row read just before
+    // this transaction started). Measured on a live DB: the case advanced
+    // 7 -> 8 while the old code recorded case_version_after=1.
     await tx.appendLegacyTaskCutoverLedgerEntry({
       ...ledgerEntry,
-      caseVersionAfter: commandEnvelope.expectedVersion + 1,
+      caseVersionAfter: ledgerEntry.caseVersionBefore + 1,
     });
     return change;
   });

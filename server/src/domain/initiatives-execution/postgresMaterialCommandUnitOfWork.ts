@@ -340,11 +340,35 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
   }
 
   async appendLegacyTaskCutoverLedgerEntry(entry: LegacyTaskCutoverLedgerEntry): Promise<void> {
+    // FIX-216-1: a task that previously failed (see Guard B in
+    // legacy-task-cutover-runner.ts) leaves a `FAILED` row behind with the
+    // SAME primary key (organization_id, legacy_task_id) that a successful
+    // retry writes here. A plain INSERT would collide with that stale row
+    // and turn a successful migration into a crashed transaction — exactly
+    // the "FAILED permanently parks the task" regression. Upsert over it
+    // instead. The WHERE guard only allows overwriting a FAILED row (or a
+    // fresh insert); it must never silently clobber an already-MIGRATED row
+    // — Guard B is supposed to no-op before this is ever reached for one,
+    // so if that invariant is somehow violated this UPDATE affects 0 rows
+    // and `requireSingleRow` below fails loudly instead of corrupting data.
     const result = await this.client.query(
       `INSERT INTO legacy_task_cutover_ledger
        (organization_id,legacy_task_id,batch_id,status,client_request_id,canonical_id,
         case_version_before,case_version_after,actor_id,checksum,completed_at)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP)`,
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP)
+       ON CONFLICT (organization_id, legacy_task_id) DO UPDATE SET
+         batch_id = EXCLUDED.batch_id,
+         status = EXCLUDED.status,
+         reason_code = NULL,
+         client_request_id = EXCLUDED.client_request_id,
+         canonical_id = EXCLUDED.canonical_id,
+         case_version_before = EXCLUDED.case_version_before,
+         case_version_after = EXCLUDED.case_version_after,
+         actor_id = EXCLUDED.actor_id,
+         checksum = EXCLUDED.checksum,
+         completed_at = EXCLUDED.completed_at,
+         updated_at = CURRENT_TIMESTAMP
+       WHERE legacy_task_cutover_ledger.status = 'FAILED'`,
       [
         entry.organizationId,
         entry.legacyTaskId,

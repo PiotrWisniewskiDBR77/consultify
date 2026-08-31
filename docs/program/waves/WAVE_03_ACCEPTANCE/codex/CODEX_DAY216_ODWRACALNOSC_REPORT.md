@@ -6,6 +6,58 @@ Galaz: `codex/day216-odwracalnosc-20260831`
 Marker: `fe33ce8036`  
 Pierwszy commit i push: `acea44e55a` na `github-backup`.
 
+## FIX-216 (dyzur naprawczy po adwersaryjnym ODBIOR_216)
+
+Audyt `docs/program/funkcje/ODBIOR_216.md` (werdykt: SCALIC PO FIX, ocena B)
+znalazl jedna prawdziwa regresje odzyskiwalnosci i dwie mniejsze usterki.
+Naprawiono w tym samym dyzurze, bez nowej migracji:
+
+- **FIX-216-1 (BLOKUJACA):** `FAILED` trwale parkowal zadanie —
+  `migrateOneTask` zwracal `NOOP` (ta sama wartosc co "juz bezpiecznie
+  zmigrowane"), a selektor wykluczal zadanie na zawsze, bo wiersz `FAILED`
+  zapisuje ta sama checksume co udana migracja. Naprawiono: selektor
+  (`selectCandidateTasks`, obie klauzule `NOT EXISTS`) i Guard B
+  (`migrateOneTask`) sa teraz swiadome statusu — `FAILED` jest ponawialny,
+  nie NOOP. Wpis `MIGRATED` upsertuje sie przez
+  `ON CONFLICT (organization_id, legacy_task_id) DO UPDATE` w
+  `appendLegacyTaskCutoverLedgerEntry` (`postgresMaterialCommandUnitOfWork.ts`),
+  chroniony `WHERE status = 'FAILED'` zeby nigdy nie nadpisac wiersza juz
+  `MIGRATED`. Zmierzone na zywej bazie: fail -> `FAILED` -> naprawa przyczyny
+  -> TA SAMA komenda MIGRUJE (nie `NOOP`, nie cisza) -> wiersz `MIGRATED`; a
+  strazniki FIX-204 (Guard A/Guard B) nadal czerwienieja pod tymi samymi
+  mutacjami audytora.
+- **FIX-216-2 (WYSOKA):** `caseVersionAfter` w `executionWork.ts` zapisywal
+  wersje TASKA (`commandEnvelope.expectedVersion + 1`, zawsze `1` dla create),
+  nie wersje CASE'a — dokladnie pole, na ktorym opiera sie cofanie. Naprawiono
+  na `ledgerEntry.caseVersionBefore + 1`. Zmierzone na zywej bazie: case
+  7 -> 8, ledger zapisal `before=7, after=8` (mutacja z powrotem do
+  `expectedVersion + 1` reprodukuje bledny `after=1` i test czerwienieje).
+- **FIX-216-3 (SREDNIA):** `ON CONFLICT DO NOTHING` bez celu przy wpisie
+  `FAILED` (w `runLegacyTaskCutover`'s catch) cicho gubil wiersz przy KAZDEJ
+  kolizji unikalnosci. Wskazano jawny cel (`organization_id, legacy_task_id`)
+  z `DO UPDATE` dla legalnego przypadku "FAILED zawiodl ponownie", i dodano
+  logowanie (`console.warn`) dla kazdej pominietej/nieoczekiwanej kolizji
+  zamiast cichego polkniecia. Dolozono asercje w
+  `day216-legacy-task-cutover-atomicity.realdb.test.ts` sprawdzajaca
+  jawnie, ze wstrzykniety wiersz `collision` pozostaje niezmieniony i ze nie
+  powstaje fantomowy wiersz dla realnego zadania pod niezwiazana kolizja
+  `client_request_id`.
+- **FIX-216-4 (DOKUMENTACJA):** sekcja STOP ponizej poprawiona — prawdziwa
+  przeszkoda cofniecia to UNIQUE po `aggregate_version` na
+  `ie_audit_events`/`ie_outbox_events` (kazde cofniecie umozliwiajace
+  ponowienie musi skasowac slad audytowy), nie `rollup` (kosmetyczny,
+  przeliczalny, bezczynny — obalone przez audytora pomiarowo). Dopisano
+  uwage o oknie drenazu outboxu.
+- **FIX-216-5 (NISKA):** atrapa transakcji w
+  `tests/unit/initiatives-execution/materialCommand.test.ts` uzupelniona o
+  brakujace `createRaidItem`/`deleteRaidItem`/`appendLegacyTaskCutoverLedgerEntry`
+  (byla 21 z 25 wymaganych metod interfejsu).
+
+Nowy test: `day216-legacy-task-cutover-failed-status.realdb.test.ts` ma teraz
+drugi `it` ("retries and migrates a FAILED task once its cause is fixed")
+dowodzacy calego cyklu FIX-216-1 na zywej bazie, wliczajac poprawne
+`case_version_before`/`case_version_after`.
+
 ## Baza pracy i rozjazd
 
 Wynik markera, doslownie:
@@ -95,37 +147,67 @@ Po odtworzeniu pakiet R2 zielony.
 
 ## STOP — R3 sciezka cofniecia partii
 
-Rodzaj: **MERYTORYCZNY**.  
-Powod: ledger nie przechowuje poprzedniego `payload_json` agregatu
-`execution_case` ani informacji, czy `rollup` przed migracja istnial.  
-Licencja, ktora sprawdzilem: nowa migracja `20261723_*` jest dozwolona w tabeli
-licencji wylacznie dla wariantu statusu `ROLLED_BACK`, nie dla dodania snapshotu
-payloadu. Istniejace migracje `20261721` i `20261722` sa tylko do odczytu.  
-Dowod: prototyp migracja dwoch taskow -> cofniecie przywrocil wersje `1` i
-liczniki `0`, lecz logiczny diff pozostal czerwony, bo przed migracja payload
-nie mial pola `rollup`, a po cofnieciu mial:
+Rodzaj: **MERYTORYCZNY**.
 
-```diff
-+ "rollup": {
-+   "decisionsDecided": 0,
-+   "decisionsPending": 0,
-+   "tasksBlocked": 0,
-+   "tasksCompleted": 0,
-+   "tasksTotal": 0
-+ }
-```
+**FIX-216-4 (poprawka uzasadnienia, po audycie ODBIOR_216):** oryginalne
+uzasadnienie ponizej ("ledger nie przechowuje poprzedniego `payload_json`" /
+`rollup` jako blokada) bylo BLEDNE i audytor to obalil pomiarowo. `rollup` jest
+w calosci przeliczalny z danych, ktore ledger juz ma (`caseAndRollup` w
+`executionWork.ts` robi czysty przyrost `tasksTotal +1` /
+`tasksBlocked +status==='BLOCKED'`, a na sciezce cutoveru
+`blockerDecisionIds` jest zaszyte na sztywno na `[]`, wiec status jest zawsze
+`OPEN` i odwrotnosc to zawsze `tasksTotal -= 1`); `case_version_before` jest w
+rejestrze. Audytor napisal i zmierzyl na zywej bazie cofniecie adresowane
+WYLACZNIE kolumnami, ktore ledger juz przechowuje
+(`canonical_id`, `client_request_id`, `case_version_before`) — 6 z 7 tabel
+(`tasks`, `ie_aggregate_relations`, `ie_command_receipts`, `ie_audit_events`,
+`ie_outbox_events`, `legacy_task_cutover_ledger`) wracaja BAJTOWO identyczne;
+jedyna roznica w `ie_aggregate_state` to doklejony `rollup` samych zer +
+`refreshedAt` — semantycznie pusty, bo wszyscy trzej i jedyni czytelnicy tego
+pola (`executionWork.ts:96`, `executionWorkHardening.ts:54`,
+`operationalAllocation.ts:142`) robia `?? {zera}`. Ponowna migracja po takim
+cofnieciu daje kanon identyczny z pierwsza migracja. **Cofniecie
+wystarczajace istnieje i jest zmierzone — to NIE jest powod STOP-u.**
+
+Powod (poprawiony): **UNIQUE indeksy po `aggregate_version`** —
+`ie_audit_events UNIQUE (organization_id, aggregate_type, aggregate_id, aggregate_version)`
+i `ie_outbox_events UNIQUE (organization_id, aggregate_type, aggregate_id, aggregate_version, event_type)`.
+Kazde cofniecie, ktore ma pozwolic na PONOWNA migracje, musi odtworzyc
+`legacy-task:<id>` od wersji 1 — a to koliduje z audytowym/outboxowym
+zapisem tej samej wersji, ktory cofniecie (jesli ma zachowac slad append-only)
+NIE moze usunac bez zlamania append-only. Audytor zmierzyl to wprost: probe
+cofniecia zachowujacego `ie_audit_events`/`ie_outbox_events` -> ponowna
+migracja konczy sie `FAILED` na kolizji UNIQUE. **Kazde cofniecie
+umozliwiajace ponowienie MUSI skasowac wpis audytowy i zdarzenie outboxu** —
+nie ma wariantu „zachowaj slad i ponow". To jest decyzja polityki (co
+retencjonujemy), nie ograniczenie schematu (baza nie blokuje tego triggerem —
+mozna cofnac BEZ mozliwosci ponowienia, zachowujac pelny slad; nie mozna miec
+obu naraz).
+
+**Okno drenazu outboxu:** jesli konsument outboxu jest wlaczony
+(`ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER`) i zdazy dostarczyc zdarzenie w
+swoim cyklu (~30s), po cofnieciu zostaje wiersz w
+`ie_outbox_delivery_receipts`, ktorego cofniecie nie usuwa — kolejny
+konsument nie zobaczy ponownego zdarzenia jako nowego. Pilota nalezy
+uruchamiac z WYLACZONYM konsumentem outboxu, zeby to okno nie mialo szansy
+sie otworzyc.
 
 Co dostarczylem zamiast zmiany: realny czerwony kontrakt/diff i pomiar szesciu
 tabel. Pozorny rollback zostal usuniety przed commitem; nie dopisalem
 nieprawdziwego wyjatku do planu kanonicznego.  
-Co zrobilbym po decyzji X: addytywna kolumna/snapshot poprzedniego payloadu
-case zapisywana atomowo z ledgerem, nastepnie rollback z CAS i odtworzeniem
-snapshotu. Wymaga to jawnego rozszerzenia licencji migracyjnej i decyzji o
-retencji snapshotu.  
-Rekomendacja dla nadzorcy: rozszerzyc osobny dyzur o licencje na nowa migracje
-snapshotu; nie uruchamiac pilota wymagajacego destrukcyjnego odwrotu do czasu
-tej decyzji.  
-Stan: R3 nie zacommitowano. R1/R2 zacommitowano w `acea44e55a`.  
+Co zrobilbym po decyzji X: decyzja polityki retencji — czy pilot smie
+kasowac `ie_audit_events`/`ie_outbox_events` przy cofnieciu (traci sie
+append-only slad tego jednego zadania), czy zamiast tego cofniecie ma
+pozostac jednorazowe (bez ponowienia), zachowujac pelny slad. Zadna z opcji
+nie wymaga nowej migracji.  
+Rekomendacja dla nadzorcy: pilot jednego rekordu uruchamiac z wylaczonym
+`ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER` i gotowym skryptem cofniecia w
+ksztalcie zmierzonym przez audytora (kolumny juz w ledgerze); przed
+uruchomieniem podjac swiadoma decyzje, czy ten jeden pilotowy slad audytowy
+wolno skasowac w razie cofniecia.  
+Stan: R3 nie zacommitowano jako implementacja; uzasadnienie STOP-u
+poprawione w FIX-216. R1/R2 zacommitowano w `acea44e55a`, FIX-216-1..3 w
+osobnym commicie tego dyzuru naprawczego.  
 Czy kontynuowalem pozostale pozycje: TAK — R1/R2 i ich mutacje sa kompletne.
 
 ## Pomiar nazw testow

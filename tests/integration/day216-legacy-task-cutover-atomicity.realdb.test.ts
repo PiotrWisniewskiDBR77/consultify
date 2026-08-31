@@ -113,6 +113,25 @@ describe('Day216 atomic legacy task cutover', { retry: 0 }, () => {
       );
       expect(count.rows[0].n).toBe(0);
     }
+    // FIX-216-3: the runner's own FAILED-ledger write (in the outer catch)
+    // used to use `ON CONFLICT DO NOTHING` with no target, which silently
+    // absorbed ANY unique violation — including this fixture's deliberate
+    // client_request_id collision with the pre-seeded `collision` row. That
+    // made it impossible to tell, from this test alone, whether the FAILED
+    // write for the real task ever ran. Assert both sides explicitly now:
+    // the pre-seeded row is untouched by the (now explicitly-targeted)
+    // upsert, and no phantom ledger row was created for the real task under
+    // an unrelated constraint collision it can never legitimately win.
+    const collisionRow = await pool.query(
+      `SELECT status, batch_id FROM legacy_task_cutover_ledger WHERE organization_id=$1 AND legacy_task_id='collision'`,
+      [org]
+    );
+    expect(collisionRow.rows).toEqual([{ status: 'FAILED', batch_id: 'old' }]);
+    const taskLedgerRow = await pool.query(
+      `SELECT status FROM legacy_task_cutover_ledger WHERE organization_id=$1 AND legacy_task_id=$2`,
+      [org, task]
+    );
+    expect(taskLedgerRow.rows).toEqual([]);
     const aggregate = await pool.query(
       `SELECT count(*)::int n FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='execution_task'`,
       [org]
