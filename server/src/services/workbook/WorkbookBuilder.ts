@@ -691,8 +691,8 @@ function sanitizeNameFragment(label: string): string {
 // Layout (relative to the sheet's data area, appended BELOW existing rows so no
 // data row is shifted and every prior A1/formula reference stays valid):
 //
-//   [selectorLabel] [selector cell ▼ Base/Bull/Bear]
-//   [Driver]  [Active]                       [Base] [Bull] [Bear]
+//   [selectorLabel] [selector cell ▼ Bazowy/Optymistyczny/Pesymistyczny]
+//   [Założenie]  [Aktywna wartość]           [Bazowy] [Optymistyczny] [Pesym.]
 //   Revenue   =CHOOSE(MATCH($sel,{...},0),F,G,H)  0.05  0.08  0.02
 //   ...
 //
@@ -736,7 +736,7 @@ function emitScenarioSwitch(
   const selectorA1 = sw.selectorCell ?? a1(activeCol, selRow);
   const selParsed = parseA1(selectorA1) ?? { col: activeCol, row: selRow };
   const selLabelCell = ws.getCell(a1(labelCol, selParsed.row));
-  selLabelCell.value = sw.selectorLabel ?? 'Scenario';
+  selLabelCell.value = sw.selectorLabel ?? 'Scenariusz';
   selLabelCell.font = { ...(selLabelCell.font ?? {}), bold: true };
 
   const selCell = ws.getCell(selectorA1);
@@ -759,8 +759,8 @@ function emitScenarioSwitch(
 
   // 2) Header row for the driver block.
   const headRow = selParsed.row + 2;
-  ws.getCell(a1(labelCol, headRow)).value = 'Driver';
-  ws.getCell(a1(activeCol, headRow)).value = 'Active';
+  ws.getCell(a1(labelCol, headRow)).value = 'Założenie';
+  ws.getCell(a1(activeCol, headRow)).value = 'Aktywna wartość';
   sw.scenarios.forEach((name, i) => {
     ws.getCell(a1(scenCols[i], headRow)).value = name;
   });
