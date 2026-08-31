@@ -352,6 +352,41 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     const normalized = String(status || 'pending').toLowerCase();
     return t(`finance.statusValue.${normalized}`, 'Oczekuje');
   };
+  // NAPRAWIONE (sweep 148-finanse-parametry, rodzina „surowa wartość"):
+  // panel „Quality runs" renderował `run.stage`/`run.result_status` wprost
+  // (surowe kody backendu — `server/migrations/20260803_fin005_statement_ready_contract.sql`
+  // CHECK: stage IN upload/detect/extract/map/validate/repair/readiness/
+  // confirm/benchmark; result_status IN pass/warning/fail/info). Lokalne mapy
+  // — brak istniejącego słownika dla tych dwóch pól w tym pliku ani w
+  // `public/locales/*/translation.json` (`finance.statusValue.*` obejmuje
+  // inny zestaw wartości — pending/ready/recoverable/rejected/…).
+  const QUALITY_RUN_STAGE_LABEL_PL: Record<string, string> = {
+    upload: 'Wgrywanie',
+    detect: 'Rozpoznanie',
+    extract: 'Ekstrakcja danych',
+    map: 'Mapowanie',
+    validate: 'Walidacja',
+    repair: 'Naprawa',
+    readiness: 'Gotowość',
+    confirm: 'Potwierdzenie',
+    benchmark: 'Benchmark',
+  };
+  const QUALITY_RUN_RESULT_LABEL_PL: Record<string, string> = {
+    pass: 'OK',
+    warning: 'Ostrzeżenie',
+    fail: 'Błąd',
+    info: 'Informacja',
+  };
+  const qualityRunStageLabel = (stage: unknown) => {
+    const key = String(stage || '').toLowerCase();
+    return isPl ? (QUALITY_RUN_STAGE_LABEL_PL[key] ?? String(stage ?? '—')) : String(stage ?? '—');
+  };
+  const qualityRunResultLabel = (resultStatus: unknown) => {
+    const key = String(resultStatus || '').toLowerCase();
+    return isPl
+      ? (QUALITY_RUN_RESULT_LABEL_PL[key] ?? String(resultStatus ?? '—'))
+      : String(resultStatus ?? '—');
+  };
   const [detail, setDetail] = useState<StatementDetail | null>(null);
   const [ratios, setRatios] = useState<RatioResult | null>(null);
   const [canonicalLines, setCanonicalLines] = useState<FinancialStatementCanonicalLineOption[]>([]);
@@ -1139,7 +1174,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                     className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-navy-800/70 dark:text-slate-300"
                   >
                     <div className="font-medium text-slate-900 dark:text-white">
-                      {run.stage} • {run.result_status}
+                      {qualityRunStageLabel(run.stage)} • {qualityRunResultLabel(run.result_status)}
                     </div>
                     <div className="mt-1">{run.summary || run.strategy || '—'}</div>
                   </div>
