@@ -252,7 +252,7 @@ Koperta: `organizationId` z wiersza; `actorId` = dedykowane, istniejace konto sy
 
 Algorytm: (1) zamrozic lub przekierowac wszystkie writery poza brama; (2) snapshot denominatora; (3) rozstrzygnac brakujace pola i domy; (4) grupowac per `execution_case`; (5) w transakcji pobrac aktualna wersje case, wywolac jedno polecenie, odczytac receipt+task+case; (6) szeregowo kontynuowac per case, rownolegle tylko miedzy sprawami; (7) checkpoint po kazdym wierszu. Replay tego samego requestu musi zwrocic `REPLAYED`; inny fingerprint pod tym ID to konflikt i STOP pozycji.
 
-To nie powinna byc migracja DDL. Runner SQL nie moze wywolac domenowego command handlera. Potrzebny jest osobny, jednorazowy runner aplikacyjny po pelnych migracjach, z default OFF i jawnym confirmem; ewentualny DDL rejestru cutover musi byc datowany po `20260830_day175...`, przejsc naming validator i fresh gate. `tasks.risks` wolno czytac dopiero po migracji Day175; fazowy sorter uruchamia wszystkie `NNN_` przed `YYYYMMDD_`.
+To nie powinna byc migracja DDL. Runner SQL nie moze wywolac domenowego command handlera. Potrzebny jest osobny, jednorazowy runner aplikacyjny po pelnych migracjach, z default OFF i jawnym confirmem; DDL rejestru cutover ma klucz `20261721_`, czyli po zmierzonym maksimum fazy DATED `20261720_day131_teresa_knowledge_boundaries.sql`, oraz musi przejsc naming validator i fresh gate. `tasks.risks` wolno czytac dopiero po migracji Day175; fazowy sorter uruchamia wszystkie `NNN_` przed `YYYYMMDD_`.
 
 Rozliczenie: trwały `legacy_task_cutover_ledger` (org, legacy_task_id, batch_id, status, reason_code, client_request_id, canonical_id, case_version_before/after, timestamps, checksum), unikalny po org+legacy id. Kontrole:
 
@@ -303,3 +303,30 @@ Destrukcyjny rollback jest odrzucony. Usuniecie samego agregatu zostawia audit/o
 Fresh-DB: log `day161-fresh-migration-gate.log:6` = `Applying migrations: 870`, `day161-fresh-migration-gate.log:877` = `✅ Postgres migrations complete`. Replay: log `day161-fresh-migration-gate-replay.log` = `Applying migrations: 0` + `✅ Postgres migrations complete`. Napis `DAY161_FRESH_MIGRATION_GATE=PASS` nie wystepuje w zadnym z tych dwoch logow (zweryfikowane grepem) — usuniety jako niepodparty; oba logi lezaly w `/private/tmp/cx-day184-analiza-migracji-artefakty/`. Seed: 1 org, 1 user, 1 ACTIVE member, 1 project, 8 flags; sam seed tworzy 0 tasks/agregatow. Dwa wiersze legacy dodano jawnie jako syntetyczne, nie zastane: 2 total, 1 personal/no initiative/no due/no sla, 1 z initiative lecz bez active case. Migracji danych nie wykonano.
 
 Realny replay Day160 jest `NOT_PROVEN`: beforeAll asertuje twardo bazę `cx160`, a afterAll zapisuje do `/private/tmp/cx-day160...`; na bazie dyzuru wszystkie 3 testy zostaly skipped. Nie obchodzono tego straznika. Przed dyzurem wykonania trzeba naprawic test zgodnie z Z31 i ponowic realny ApiGateway/JWT/PG readback.
+
+## A8. Wykonanie — etap 1 (Day197)
+
+R1: M1 na fresh-DB + Case Workspace seed dał 0 aktywnych `execution_case` i 0
+inicjatyw legacy z zadaniami. M2 nie dostarczył denominatora: aktualny
+`db:seed:demo:contract` narusza `initiatives_status_check` wartością `completed`
+i kończy się przed utworzeniem zadań. M3 nie został uruchomiony, ponieważ Z28
+zabrania dostępu do demo/staging/produkcji; pozostawiono paczkę read-only dla
+nadzorcy lub właściciela. Etap 2 pozostaje zależny od realnego M3 oraz decyzji
+o koncie systemowym migracji.
+
+R2a: addytywny `legacy_task_cutover_ledger` powstał w migracji `20261721_`.
+Fresh gate zastosował 871 migracji, replay zastosował 0 i zakończył się
+`DAY161_FRESH_MIGRATION_GATE=PASS`. Walidator nazw utrzymał 92 zastane problemy
+(92 przed i 92 po); nowy plik nie zwiększył długu.
+
+R2b: **STOP MERYTORYCZNY**. Pięć poleceń opisanych w A4.0 nie tworzy
+przechodniego łańcucha: `initiative.register` zapisuje `REGISTERED_DRAFT`, a
+bezpośrednie `initiative.schedule.request` wymaga `APPROVED_BACKLOG`. Realny
+kontrakt PostgreSQL Day197 potwierdza ten błąd. Brakujące przejścia obejmują
+co najmniej proces prowadzący do decyzji portfelowej; nie wolno ich zastąpić
+surowym UPDATE ani seedem agregatu. Dlatego nie utworzono pilotażowego zadania,
+nie powstał runner zapisujący i D1-D4 pozostają `NOT_PROVEN`.
+
+R3: masowe przenoszenie nie zostało uruchomione, brama 409 pozostała bez zmian.
+Gotowość do etapu 2: ledger i fresh gate są gotowe; niegotowe są realny M3,
+pełny licencjonowany łańcuch lifecycle, konto systemowe oraz pilot D1-D4.
