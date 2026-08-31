@@ -5,7 +5,25 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 195 — dokument pokazywalny · NIE SCALAĆ (FIX-195/Opus wydany)
+# ODBIÓR 195 — dokument pokazywalny · SCALONO PO FIX-195 · ★ PLIK PRZESZEDŁ QA
+
+★ FIX-195 wykonany 7/7 (`9b16ddd359..bcafaf9cc1`, commit per poprawka, mutacje
+czerwone→zielone każda): parser tablicy · straż N-9 w podziale · 4 polskie
+homografy poza flagowaniem (wg tabeli 190: plan/total/portfolio/medium;
+impact/owner/timing zostają jako sygnał — zgodnie z tabelą, nie z listą FIX) ·
+parity 4/4 zielone (1 z gałęzi: bold=false w runach; 3 zastane: cy obrazka —
+sprostowanie diagnozy odbioru) · callout markdown · **D-11: podłoga gęstości
+per SEKCJA, sufit per blok (uzasadnione testem zastanym)** · probe jako skrypt
+tsx z realną mutacją granicy i uczciwym skip.
+
+## ★ PROBE REALNY: JEDNO wywołanie LLM → dokument PRZESZEDŁ bramkę QA bez
+override (DAY195_EXPORT 200, WARNINGS []). Plik: Streszczenie zarządcze +
+Rekomendacje z WŁAŚCICIELAMI (PMO/sponsor/CFO), TERMINAMI (30 dni, Q1 2026),
+oznaczonym założeniem (25%), sekcją źródeł, polską okładką, zero surowego
+Markdown. **Nadzorca przeczytał plik osobiście — pokazany właścicielowi.**
+Pozostało: DŁUGOŚĆ (303 słowa przy celu ~700; model dał 594 tokeny na
+maxTokens=2400) — czysty problem promptu → pozycja do rundy polerowania
+dokumentów (z trzecim kasownikiem tabel i etykietami okładki 2/24).
 
 Oceny: mechanizm **B** · realna ścieżka **D** · harness **D** · uczciwość **A−**.
 Mutacje F1/granulacji odtworzone w obie strony. Licencja: 1 formalne przekroczenie
