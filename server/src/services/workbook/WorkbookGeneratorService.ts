@@ -452,7 +452,7 @@ RULES:
 3. Do NOT write a leading "=" in any "formula" field (write "SUM(B2:B4)", never "=SUM(B2:B4)").
 4. A total/summary cell must be a formula summing exactly the data rows above it — no magic numbers, no gaps, no overshoot into headers or other totals.
 5. Keep the same title, sheet names, and column keys unless a defect explicitly requires changing them.
-6. DX-01 (no assumptions layer): add exactly ONE sheet named "Założenia" (Polish workbooks) or "Assumptions" (English) with "isAssumptions": true, move EVERY raw input onto it (columns: Driver, Value, Unit, Source, Range), and replace those constants elsewhere with cross-sheet references to it. Do not invent new numbers while doing this — move the ones already in the workbook, and label any that have no stated source as "(założenie)" / "(assumption)".
+6. DX-01 (no assumptions layer): add exactly ONE sheet named "Założenia" (Polish workbooks) or "Assumptions" (English) with "isAssumptions": true, move EVERY raw input onto it (columns: Założenie, Wartość, Jednostka, Źródło, Zakres for Polish workbooks; Driver, Value, Unit, Source, Range for English ones), and replace those constants elsewhere with cross-sheet references to it. Do not invent new numbers while doing this — move the ones already in the workbook, and label any that have no stated source as "(założenie)" / "(assumption)".
 7. DX-02 (circular reference): break the cycle by redesigning the chain, never by rewriting a result as a constant. A total must not sum its own cell; interest is computed on the OPENING balance of the period, not on a balance that already contains it.`;
 
 // ---------------------------------------------------------------------------
@@ -726,7 +726,11 @@ class WorkbookGeneratorService {
     }
     if (language && language.startsWith('pl')) {
       userPrompt +=
-        '\n\nUse Polish headers and labels where appropriate, but keep column keys in English.';
+        '\n\nThis workbook is for a Polish reader. Every string the reader sees must be Polish: ' +
+        'sheet names, column headers, row labels, the scenarioSwitch selectorLabel and its ' +
+        'scenario names (use Bazowy / Optymistyczny / Pesymistyczny, not Base / Bull / Bear). ' +
+        'The English strings in the examples above illustrate STRUCTURE only — do not copy ' +
+        'them as text. Column keys stay in English.';
     }
 
     // =====================================================================
