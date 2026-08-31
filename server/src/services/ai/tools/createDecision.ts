@@ -503,7 +503,9 @@ function looseJsonField(text: string, key: string): any[] | null {
 async function fillDecisionStructuralFields(
   decisionId: string,
   orgId: string,
-  language: 'pl' | 'en'
+  language: 'pl' | 'en',
+  title: string,
+  userId: string
 ): Promise<void> {
   try {
     const [{ default: decisionService }, queryHelpers, { getTableColumns }] = await Promise.all([
@@ -650,6 +652,34 @@ async function fillDecisionStructuralFields(
       );
     }
 
+    if (userId) {
+      try {
+        const { recordDecision } = await import('../decisionMemoryService.js');
+        await recordDecision({
+          organizationId: orgId,
+          userId,
+          // One chat decision has no Deep Thinking session. The stable decision id
+          // is therefore its synthetic memory-session identity.
+          sessionId: decisionId,
+          decisionSummary: title,
+          recommendationText: recommendation || null,
+          optionsConsidered: (alternatives || [])
+            .map((alternative: any) =>
+              String(alternative?.option ?? alternative?.title ?? '').trim()
+            )
+            .filter(Boolean),
+          confidenceScore: null,
+          tags: ['chat_created_decision'],
+        });
+      } catch (memErr) {
+        logger.warn(
+          `[create_decision] decisionMemoryService.recordDecision failed id=${decisionId}: ${
+            memErr instanceof Error ? memErr.message : String(memErr)
+          }`
+        );
+      }
+    }
+
     logger.info(
       `[create_decision] structural columns filled id=${decisionId} (` +
         [
@@ -747,7 +777,7 @@ export async function createDecision(
     // in the BACKGROUND — fire-and-forget so the chat stream returns immediately;
     // the decision row already exists and the AI-fill only enriches it. Fail-soft
     // (logs its own errors).
-    void fillDecisionStructuralFields(id, orgId, language);
+    void fillDecisionStructuralFields(id, orgId, language, title, userId);
 
     try {
       context.onDeliverable?.({

@@ -465,7 +465,10 @@ export const PrezentacjeView: React.FC = () => {
     setTemplateCreateErrorCode(null);
     void (async () => {
       try {
-        const res = await Api.post('/presentations/decks/from-template', { templateArtifactId });
+        const res = await Api.post('/presentations/decks/from-template', {
+          templateArtifactId,
+          brief: templatePrompt || undefined,
+        });
         const deckId = unwrapApiData<{ id?: string }>(res)?.id;
         if (!deckId) throw new Error('missing deckId in from-template response');
         setTemplateCreateState('idle');
@@ -480,7 +483,13 @@ export const PrezentacjeView: React.FC = () => {
         setTemplateCreateState('error');
       }
     })();
-  }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating, openInDeckBuilder]);
+  }, [
+    templateArtifactId,
+    templatePrompt,
+    pipeline.currentRun,
+    pipeline.isGenerating,
+    openInDeckBuilder,
+  ]);
 
   // Uczciwy komunikat po polsku per kod odrzucenia — patrz
   // DocumentStudioView.tsx `templateResolveMessage` (ten sam wzorzec).

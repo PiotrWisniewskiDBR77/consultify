@@ -70,3 +70,17 @@ nie w rozmowie — pliki są kanałem między agentami i między sesjami.
 - `../KOORDYNACJA.md` — styk z torem grafiki
 - `../plany/PLAN_FUNKCJE.html` — plan, siedem faz
 - `../system-pracy/02_SZKIELET_INSTRUKCJI.md` — szkielet instrukcji dyżuru, 41 bezpieczników
+
+## ★★ REGUŁA NR 6 — katalog referencyjny, nie `/private/tmp/m03`
+
+`/private/tmp/m03` jest **współdzielony z torem grafiki** i chodzi po własnej,
+starszej gałęzi lokalnej. 31.08 był **205 commitów za linią integracyjną** —
+robotnik wysłany tam po kartę odbioru zameldował, że pliku nie ma, i miał rację.
+
+**Katalog do czytania stanu programu: `/private/tmp/mref`** (odłączony worktree na
+tipie `codex/m03-admin-20260824`). Zlecając cokolwiek, podawaj TĘ ścieżkę. Przed
+użyciem odśwież: `git -C /private/tmp/mref fetch github-backup -q && git -C /private/tmp/mref reset --hard github-backup/codex/m03-admin-20260824`.
+
+Uogólnienie: **ścieżka do pliku nie jest adresem prawdy** — prawdą jest gałąź.
+Ten sam plik pod tą samą ścieżką bywa w dwóch katalogach roboczych w dwóch
+różnych wersjach albo nie istnieje wcale.

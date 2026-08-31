@@ -1095,7 +1095,19 @@ router.get(
     const [legacySummary, detail, payoutEligibility] = await Promise.all([
       PartnerCommissionService.getEarningsSummary(partnerOrgId),
       PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner'),
-      PartnerCommissionService.getPayoutEligibility(partnerOrgId),
+      PartnerCommissionService.getPayoutEligibility(partnerOrgId).catch((error: unknown) => {
+        if ((error as { code?: string } | null)?.code !== 'PARTNER_ACCRUAL_POLICY_BLOCKED_OWNER') {
+          throw error;
+        }
+        return {
+          eligible: false,
+          eligibleGross: null,
+          eligibleNet: null,
+          minimumThreshold: null,
+          currency: null,
+          reason: 'POLICY_NOT_APPROVED' as const,
+        };
+      }),
     ]);
     const earnings = {
       totalEarned: detail.balances.grossEarned,

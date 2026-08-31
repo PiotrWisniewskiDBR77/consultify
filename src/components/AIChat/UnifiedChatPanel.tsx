@@ -1601,6 +1601,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     memoryCandidate,
     teresaProposal,
     researchProgress,
+    toolSteps,
     researchVisibility,
     deepThinkingState,
     deepThinkingHint,
@@ -2631,6 +2632,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           metadata: {
             deepThinkingState,
             researchProgress,
+            // FIX-206 (pkt 4): wlasny slot kroków narzedzi — nie mieszamy ich z
+            // postepem Deep Research, bo panel badania otwieral sie bez badania.
+            toolSteps,
             researchVisibility,
             policyDecision,
             policyNotices,
@@ -2652,6 +2656,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     thinkingSteps,
     deepThinkingState,
     researchProgress,
+    toolSteps,
     researchVisibility,
     policyDecision,
     policyNotices,

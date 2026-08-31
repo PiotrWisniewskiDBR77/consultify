@@ -74,6 +74,70 @@ These are technical observations, not Piotr owner findings.
 | `MTG-PF-001` | The runtime smoke still required retired direct decision/follow-up API helpers and UI copy, contradicting the current governed proposal-only write contract.                                 | Initial smoke `3/5`; real-PG contracts remained green. Smoke now requires generate/list/decide governed-note APIs and the explicit human-approval boundary; replay `5/5`; commit `204293efff`. | `FIXED_VERIFIED` |
 | `MTG-PF-002` | The immutable-cleanup negative control inherited the invocation's permitted database prefix, so it could not prove rejection when the shared local database name itself matched that prefix. | Initial downstream run `32/33`; test now temporarily supplies a deliberately nonmatching prefix and restores the caller environment; replay `33/33`; commit `204293efff`.                      | `FIXED_VERIFIED` |
 
+| `MTG-PF-003` | G08 remains live: the approved object and preview expose raw user IDs, `Organizer null null`, and predominantly English UI copy. | Canonical local runtime `18661cc6a0`; ~~`admin-meetings-approved-{light,dark}.png` and~~ `admin-meetings-preview-light.png` (see errata below — the two `approved-{light,dark}` files do not show this). | `STILL_LIVE` — see errata |
+| `MTG-PF-004` | G09/G10 remain live: approved renders `Decisions 0` and an empty Decisions surface despite one materialization receipt in fixture readback. | ~~`admin-meetings-approved-{light,dark}.png`, `admin-meetings-decisions-{light,dark}.png`~~ (see errata below — none of these four files show this); readback `receiptCount=1` (API/JSON evidence, not a screenshot). | `STILL_LIVE` — see errata |
+| `MTG-PF-005` | Pending and rejected object routes remain on two `Loading` indicators, while the approved object renders. | `admin-meetings-pending-{light,dark}.png` and `admin-meetings-rejected-{light,dark}.png`; repeated cold navigation. | `NEW_FINDING` — confirmed accurate, see errata |
+| `MTG-PF-006` | A regular fixture MEMBER is redirected from `/meetings` to `/interview`; the pilot route allowlist omits `/meetings` independently of the open beta flag. | `member-meetings-redirect-interview-dark.png`; `RouterSync.tsx:316-325`; `pilotAccess.ts:20-31`. | `ACCESS_BLOCKED` → `FIXED_VERIFIED` by FIX-181 (2026-08-30): `/meetings` added to `PILOT_ALLOWED_ROUTE_PREFIXES` in `pilotAccess.ts`; regression test `src/components/__tests__/RouterSync.pilotMeetings.test.tsx` (mutation-proven). |
+| `MTG-PF-007` | Day194 could not choose spinner cause (a/b/c): Chromium rejects the exclusively assigned runtime port `5061` with `ERR_UNSAFE_PORT`, while canonical-server `curl /api/health` returned 200 and the harness's own `fetch` still timed out. | R2 adds a mutation-proven 20 s honest-error timeout (`red 0/1 → green 1/1`) and a real `ApiGateway` + signed JWT + real-PG proof: ADMIN GET returns `200` plus the fixture body for pending/rejected/approved (`3/3`). No browser PNG exists; no per-state visual or G08 verdict is claimed. See `CODEX_DAY194_OBIEKT_SPOTKANIA_REPORT.md`. | `PARTIAL / EVIDENCE_MISSING` — R2 verified; R1 cause and R3 screenshots remain open. |
+
+### Errata (FIX-181, 2026-08-30) — MTG-PF-003/004/005 evidence correction
+
+**Correction, not deletion — the rows above are kept verbatim; this section replaces only the evidence-citation claim, not the underlying finding.**
+
+`MTG-PF-003` and `MTG-PF-004`, as originally written, cite `admin-meetings-approved-{light,dark}.png`
+and `admin-meetings-decisions-{light,dark}.png` as if these screenshots showed the approved
+object's raw IDs / `Organizer null null` / `Decisions 0` content. They do not. All four of
+those files — and 8 more in the same day181 evidence set
+(`/private/tmp/cx-day181-spotkania-otwarcie-artefakty/`) — are frozen loading-spinner frames:
+the Meeting object page never finished loading when the screenshot was taken. **12 of the 21
+PNGs captured for day181 are spinners, not content**, opened and visually confirmed one by one:
+
+| PNG (spinner, no content) | Cited by |
+| --- | --- |
+| `admin-meetings-approved-dark.png` | MTG-PF-003, MTG-PF-004 |
+| `admin-meetings-approved-light.png` | MTG-PF-003, MTG-PF-004 |
+| `admin-meetings-decisions-dark.png` | MTG-PF-004 |
+| `admin-meetings-decisions-light.png` | MTG-PF-004 |
+| `admin-meetings-minutes-dark.png` | (uncited) |
+| `admin-meetings-minutes-light.png` | (uncited) |
+| `admin-meetings-note-dark.png` | (uncited) |
+| `admin-meetings-note-light.png` | (uncited) |
+| `admin-meetings-pending-dark.png` | MTG-PF-005 (correctly described as `Loading`) |
+| `admin-meetings-pending-light.png` | MTG-PF-005 (correctly described as `Loading`) |
+| `admin-meetings-rejected-dark.png` | MTG-PF-005 (correctly described as `Loading`) |
+| `admin-meetings-rejected-light.png` | MTG-PF-005 (correctly described as `Loading`) |
+
+The remaining 9 of 21 PNGs are genuine, dowodowe (evidentiary) content captures — verified by
+opening each file:
+
+| PNG (real content) | What it actually shows |
+| --- | --- |
+| `admin-meetings-calendar-full-dark.png` / `-light.png` | Meetings list, list-view chrome/menu open (not the calendar grid despite the filename) |
+| `admin-meetings-list-full-dark.png` / `-light.png` | Meetings list table, 3 rows, statuses `Completed` |
+| `admin-meetings-preview-light.png` | List row's right-hand preview panel — this is genuine evidence for the raw-ID claim in MTG-PF-003 (`Attendees: w3-mtg-owner-user-v1, w3-mtg-admin-user-v1, w3-mtg-member-user-…`) and for `Could not load the operator brief`, but does **not** show `Organizer null null` — that detail carries over unverified from the older Day101 evidence set (G08 row, exact SHA `8c7a853a6c`), not from any day181 PNG |
+| `admin-meetings-row-actions-light.png` | Row kebab menu: Open / Mark scheduled / Open preview / Edit / Delete |
+| `member-meetings-redirect-interview-dark.png` | Confirms the MTG-PF-006 redirect: MEMBER lands on the Interview inbox, not Meetings |
+| `owner-empty-meetings-list-dark.png` / `-light.png` | Empty-state Meetings list (different fixture org, `0` meetings) |
+
+**Corrected reading of MTG-PF-003**: the "raw user IDs" part is evidenced by
+`admin-meetings-preview-light.png` only (a list-row preview panel, not the object page). The
+"`Organizer null null`" part has no day181 PNG evidence at all — it is an unverified carryover
+from the Day101 evidence set and should be re-verified before being cited again as current.
+
+**Corrected reading of MTG-PF-004**: the "`Decisions 0` / empty Decisions surface" claim rests
+entirely on the Day105 API-level root-cause finding already recorded in gate `G09`
+(`GET /decision-records` returns `[]` while `meeting_notes.decisions_json` holds the approved
+decision) — that finding is unaffected by this errata. What is corrected is only the day181 PNG
+citation: none of the four cited screenshots depict that state; all four are spinners.
+
+**MTG-PF-005 is unaffected** — its own claim ("two `Loading` indicators") is what the spinner
+screenshots actually show, so no correction is needed there.
+
+This also explains why the approved-object page appeared to "work" while pending/rejected did
+not: `approved-{light,dark}` are two more never-finished loads, not a working control case —
+see Task 3 diagnosis (spinner root cause) in the FIX-181 report,
+`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_FIX181_REPORT.md`.
+
 ## Owner UI/UX/CX register
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |

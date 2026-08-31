@@ -1,0 +1,32 @@
+-- Day 209 FIX-209.2: `knowledge_chunks.created_at` real migration.
+--
+-- ODKRYCIE ODBIORU 209 (potwierdzone niezaleznie na swiezej bazie, kontener
+-- pgvector/pg16, pelny lancuch server/scripts/migrate.postgres.ts od zera):
+-- `server/migrations/000_z_core_baseline.sql:416-423` tworzy `knowledge_chunks`
+-- BEZ kolumny `created_at` (numerowana faza "000"). `266_knowledge_rag.sql`
+-- (tez numerowana faza, "266", wiec leci PO "000" w tej samej fazie w
+-- porzadku sortMigrationsDeterministically) ma `CREATE TABLE IF NOT EXISTS`
+-- z pelnym schematem wlacznie z `created_at` — ale to jest NO-OP, bo tabela
+-- juz istnieje z wczesniejszej migracji "000". Zadna z pozniejszych migracji
+-- DATED nie dodaje `created_at` do `knowledge_chunks` (w odroznieniu od
+-- `metadata`, ktore dostalo realny ALTER w
+-- `20260830_day159_chunk_org_backfill.sql:10` i ponownie w
+-- `20261120_fresh_db_schema_gap_closure.sql:2243` — obie sa juz no-op na
+-- swiezej bazie, `metadata` istnieje niezaleznie od tej migracji;
+-- ADD COLUMN IF NOT EXISTS ponizej dla `metadata` jest tylko defensywnym
+-- powtorzeniem tego samego wzorca, nie nowym ustaleniem).
+--
+-- Bez tej migracji `KnowledgeService.processDocument` (KnowledgeService.ts:704)
+-- zalezy od samo-naprawy runtime w `PostgresDatabase.ts:1832-1841`
+-- (`ensureKnowledgeChunkColumn('created_at', ...)`, wykonywanej leniwie przy
+-- pierwszym `getPool()` procesu aplikacji) — czyli od WYSCIGU kolejnosci
+-- startu procesu, a nie od trwalego kontraktu schematu. Ta migracja usuwa ten
+-- wyscig: po jej wykonaniu offline (migrate.postgres.ts) kolumna istnieje
+-- ZANIM jakikolwiek proces aplikacji wystartuje.
+--
+-- Idempotentna i addytywna: `IF NOT EXISTS` na obu instrukcjach, bezpieczna
+-- do wielokrotnego uruchomienia i no-op tam, gdzie kolumna juz istnieje
+-- (np. po tym, jak runtime self-heal juz zdazyl ja dodac).
+
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS metadata TEXT DEFAULT '{}';

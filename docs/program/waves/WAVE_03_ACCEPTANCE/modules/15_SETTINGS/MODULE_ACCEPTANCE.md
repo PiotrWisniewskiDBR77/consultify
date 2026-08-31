@@ -92,8 +92,8 @@ ID-control note: the intake source and the separate owner-direction record both 
 
 ## Owner verdict
 
-Decision: `OWNER_UI_DIRECTION_ACCEPTED / TECHNICAL_BROWSER_FINDINGS_OPEN`
-Accepted SHA: —
+Decision: ~~`OWNER_UI_DIRECTION_ACCEPTED / TECHNICAL_BROWSER_FINDINGS_OPEN`~~ → `CLOSED_FINAL` — patrz „CLOSED_FINAL — 2026-08-25” poniżej (Werdykt właściciela: DEC-2026-08-25-16; Final SHA `d5a1b6a99e`; tag `final-02-settings`). Ten wiersz niósł stan sprzed odbioru właściciela; poprawka dyżuru 196, 2026-08-31.
+Accepted SHA: ~~—~~ `d5a1b6a99e`
 Date: 2026-08-21
 Accepted-out/deferred: Destructive deletion and external OAuth activation remain OFF pending later policy/release authorization. MFA enrollment UI is deferred; backend capability is not represented as an owner-complete flow.
 Evidence manifest: —

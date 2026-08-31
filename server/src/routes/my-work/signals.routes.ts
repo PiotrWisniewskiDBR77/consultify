@@ -2,8 +2,10 @@ import type { Response } from 'express';
 import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
 import { readSignalFeed } from '../../services/signals/signalReadModel.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { requireTables, requireUser } from './_helpers.js';
 
@@ -173,6 +175,26 @@ router.post(
       'SELECT snoozed_until FROM my_work_signal_snoozes WHERE user_id = ? AND signal_key = ?',
       [identity.userId, req.params.key]
     );
+    try {
+      await organizationContextService.recordManualAIContext({
+        organizationId: identity.orgId,
+        userId: identity.userId,
+        contextId: `signal-snooze-${req.params.key}`,
+        payload: {
+          name: `Signal snoozed: ${req.params.key}`,
+          type: 'signal_snooze',
+          content: `Użytkownik odłożył sygnał ${req.params.key} do ${
+            row?.snoozed_until ?? 'nieznanego terminu'
+          } (preset: ${preset}).`,
+          priority: 0,
+        },
+      });
+    } catch (err: any) {
+      logger.error('[signals] snooze claim-write failed (non-fatal)', {
+        key: req.params.key,
+        err: err?.message,
+      });
+    }
     res.status(200).json({ snoozedUntil: row?.snoozed_until });
   })
 );
@@ -194,6 +216,26 @@ router.post(
       'SELECT dismissed_at FROM my_work_signal_dismissals WHERE user_id = ? AND signal_key = ?',
       [identity.userId, req.params.key]
     );
+    try {
+      await organizationContextService.recordManualAIContext({
+        organizationId: identity.orgId,
+        userId: identity.userId,
+        contextId: `signal-dismiss-${req.params.key}`,
+        payload: {
+          name: `Signal dismissed: ${req.params.key}`,
+          type: 'signal_dismiss',
+          content: `Użytkownik odrzucił sygnał ${req.params.key} jako nieistotny/rozwiązany (${
+            row?.dismissed_at ?? 'brak znacznika czasu'
+          }).`,
+          priority: 0,
+        },
+      });
+    } catch (err: any) {
+      logger.error('[signals] dismiss claim-write failed (non-fatal)', {
+        key: req.params.key,
+        err: err?.message,
+      });
+    }
     res.status(200).json({ dismissedAt: row?.dismissed_at });
   })
 );

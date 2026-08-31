@@ -10,9 +10,7 @@ import { enforceBlockGrounding } from '../documentBlockContentGenerator.js';
  * back to 'enforced' must turn the first test red.
  */
 const BRIEF = 'Plan poprawy terminowości wdrożeń. Odbiorcy: zarząd, dyrektor operacyjny.';
-const PLACEHOLDER = 'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).';
-
-describe('enforceBlockGrounding — rozluźniony próg (skróty dozwolone, liczby nadal pilnowane)', () => {
+describe('enforceBlockGrounding — skróty dozwolone, liczby zachowane i oznaczone', () => {
   it('przepuszcza zdanie ze skrótami spoza SAFE_BUSINESS_ACRONYMS (reguła B zniesiona)', () => {
     const sentence = 'Wdrożymy OTD i SLA w obszarze produkcji.';
     const result = enforceBlockGrounding({ text: sentence }, BRIEF);
@@ -31,23 +29,32 @@ describe('enforceBlockGrounding — rozluźniony próg (skróty dozwolone, liczb
     expect(result.changed).toBe(false);
   });
 
-  it('nadal kasuje zdanie z niepopartą liczbą (reguła A żyje)', () => {
+  it('zachowuje zdanie z niepopartą liczbą i oznacza blok jako założenie', () => {
+    const sentence = 'Terminowość wdrożeń spadła do 68% w ostatnim kwartale.';
     const result = enforceBlockGrounding(
-      { text: 'Terminowość wdrożeń spadła do 68% w ostatnim kwartale.' },
+      { text: sentence },
       BRIEF
     );
 
-    expect(result.content.text).toBe(PLACEHOLDER);
+    expect(result.content.text).toBe(sentence);
     expect(result.changed).toBe(true);
   });
 
-  it('nadal kasuje zdanie, które łączy dozwolony skrót z niepopartą liczbą', () => {
+  it('zachowuje zdanie łączące dozwolony skrót z niepopartą liczbą i oznacza blok', () => {
+    const sentence = 'Do końca 2026 osiągniemy poziom OTD na 90%.';
     const result = enforceBlockGrounding(
-      { text: 'Do końca 2026 osiągniemy poziom OTD na 90%.' },
+      { text: sentence },
       BRIEF
     );
 
-    expect(result.content.text).toBe(PLACEHOLDER);
+    expect(result.content.text).toBe(sentence);
+    expect(result.changed).toBe(true);
+  });
+
+  it('zachowuje surową wartość number i oznacza blok zamiast usuwać klucz', () => {
+    const result = enforceBlockGrounding({ value: 68 }, BRIEF);
+
+    expect(result.content.value).toBe(68);
     expect(result.changed).toBe(true);
   });
 

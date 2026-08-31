@@ -60,17 +60,17 @@ describe('shouldFallbackToLegacyFinance (src/services/api/v8/finance.ts)', () =>
   });
 });
 
-describe('beta gating — MODULE_MEETING (Meeting) is closed (src/utils/betaAccess.ts)', () => {
-  it('MODULE_MEETING is registered as a closed beta in the SSOT', () => {
-    expect(BETA_MENU_STATUS.MODULE_MEETING).toBe('closed');
-    expect(getBetaStatus('MODULE_MEETING')).toBe('closed');
-    expect(isBetaModule('MODULE_MEETING')).toBe(true);
-    expect(isBetaClosed('MODULE_MEETING')).toBe(true);
+describe('beta gating — MODULE_CASE_WORKSPACE is closed (src/utils/betaAccess.ts)', () => {
+  it('MODULE_CASE_WORKSPACE is registered as a closed beta in the SSOT', () => {
+    expect(BETA_MENU_STATUS.MODULE_CASE_WORKSPACE).toBe('closed');
+    expect(getBetaStatus('MODULE_CASE_WORKSPACE')).toBe('closed');
+    expect(isBetaModule('MODULE_CASE_WORKSPACE')).toBe(true);
+    expect(isBetaClosed('MODULE_CASE_WORKSPACE')).toBe(true);
   });
 
   it('trims whitespace around the module id when resolving status', () => {
-    expect(getBetaStatus('  MODULE_MEETING  ')).toBe('closed');
-    expect(isBetaClosed('  MODULE_MEETING  ')).toBe(true);
+    expect(getBetaStatus('  MODULE_CASE_WORKSPACE  ')).toBe('closed');
+    expect(isBetaClosed('  MODULE_CASE_WORKSPACE  ')).toBe(true);
   });
 
   it('unknown / empty ids are not beta and not closed', () => {
@@ -115,25 +115,25 @@ describe('beta gating — role exemption (admins/owners exempt while BETA_ADMINS
   });
 });
 
-describe('lockClosedBetaModules — decorates Meeting menu item with the locked plate', () => {
+describe('lockClosedBetaModules — decorates Case Workspace menu item with the locked plate', () => {
   const buildMenu = () => [
-    { id: 'MODULE_MEETING', label: 'Meeting' },
+    { id: 'MODULE_CASE_WORKSPACE', label: 'Case Workspace' },
     { id: 'MODULE_ECONOMICS', label: 'Finance' }, // GA / open beta — must stay untouched
     { id: 'MODULE_PRESENTATIONS', label: 'Documents' }, // open beta — must stay untouched
     {
       id: 'PARENT',
       label: 'Parent',
-      subItems: [{ id: 'MODULE_MEETING', label: 'Nested Meeting' }],
+      subItems: [{ id: 'MODULE_CASE_WORKSPACE', label: 'Nested Case Workspace' }],
     },
   ] as any;
 
-  it('locks MODULE_MEETING for a regular USER with BETA_LOCKED code + message', () => {
+  it('locks MODULE_CASE_WORKSPACE for a regular USER with BETA_LOCKED code + message', () => {
     const locked = lockClosedBetaModules(buildMenu(), 'USER', 'Access restricted');
 
-    const meeting = locked.find((m: any) => m.id === 'MODULE_MEETING');
-    expect(meeting.isLocked).toBe(true);
-    expect(meeting.lockedCode).toBe(BETA_LOCKED_CODE);
-    expect(meeting.lockedMessage).toBe('Access restricted');
+    const caseWorkspace = locked.find((m: any) => m.id === 'MODULE_CASE_WORKSPACE');
+    expect(caseWorkspace.isLocked).toBe(true);
+    expect(caseWorkspace.lockedCode).toBe(BETA_LOCKED_CODE);
+    expect(caseWorkspace.lockedMessage).toBe('Access restricted');
 
     // Finance is also closed in the current SSOT.
     const finance = locked.find((m: any) => m.id === 'MODULE_ECONOMICS');
@@ -155,6 +155,8 @@ describe('lockClosedBetaModules — decorates Meeting menu item with the locked 
 
     // admin path short-circuits to the same menu reference, nothing locked
     expect(result).toBe(menu);
-    expect(result.find((m: any) => m.id === 'MODULE_MEETING').isLocked).toBeUndefined();
+    expect(
+      result.find((m: any) => m.id === 'MODULE_CASE_WORKSPACE').isLocked
+    ).toBeUndefined();
   });
 });

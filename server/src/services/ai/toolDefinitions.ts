@@ -9,6 +9,7 @@
 
 import logger from '../../utils/Logger.js';
 import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
+import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
 
 // ==========================================
 // TOOL DEFINITIONS (OpenAI Function Calling format)
@@ -564,6 +565,14 @@ export interface ToolExecutionContext {
   sessionId?: string;
   conversationId?: string;
   contextSnapshotId?: string;
+  /**
+   * FIX-206 (pkt 2) — tryb prywatny rozmowy. Ścieżka czatu ustawia go w
+   * `pipelineRequest.context/options`; pętla narzędziowa MUSI go donieść aż
+   * tutaj, bo to on decyduje (przez chatPolicyGateway.resolveScope) czy
+   * retrieval widzi zakresy `org_shared`/`public_kb`, czy tylko prywatne
+   * dokumenty wołającego.
+   */
+  privateMode?: boolean;
 }
 
 /**
@@ -874,15 +883,21 @@ async function executeWebSearch(args: any, ctx: ToolExecutionContext): Promise<s
 }
 
 async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<string> {
+  // FIX-206 (pkt 2): zakresy retrievalu wynikają z decyzji polityki, nie z
+  // domysłu wywołującego. `orgScopeAllowed=false` (tryb prywatny) MUSI realnie
+  // odciąć dokumenty organizacji — inaczej `privateMode` byłby tylko etykietą.
+  let orgScopeAllowed = true;
   try {
     const policyResult = await evaluateRetrievalPolicyDecision({
       consumerClass: 'agent',
       query: args.query,
       organizationId: ctx.organizationId || 'system',
       userId: ctx.userId || 'tool:kb_search',
+      privateMode: Boolean(ctx.privateMode),
     });
+    orgScopeAllowed = policyResult.decision.scopeResolution.allowedScopes.includes('org_shared');
     logger.info(
-      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}`
+      `[executeKBSearch] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}, scopes=[${policyResult.decision.scopeResolution.allowedScopes.join(',')}]`
     );
     if (!policyResult.decision.allowed) {
       return JSON.stringify({
@@ -907,7 +922,12 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     const ragService = (ragMod.default || ragMod) as {
       hybridSearch?: (
         query: string,
-        opts?: { organizationId?: string; limit?: number; documentIds?: string[] }
+        opts?: {
+          organizationId?: string;
+          userId?: string;
+          limit?: number;
+          documentIds?: string[];
+        }
       ) => Promise<
         Array<{
           content?: string;
@@ -1010,6 +1030,25 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       effectiveProjectId = folder.scope === 'project' ? folder.project_id || null : null;
     }
 
+    // FIX-206 (pkt 2) — egzekucja trybu prywatnego. Polityka (resolveScope)
+    // odcięła `org_shared`/`public_kb`, więc retrieval nie może dotknąć
+    // dokumentów organizacji ani projektów: albo zawężamy do prywatnego sejfu
+    // wołającego, albo — gdy user/klocek jawnie zażądał sejfu org/projektu —
+    // odmawiamy fail-closed (żaden dokument org nie może wejść w prywatną turę).
+    if (!orgScopeAllowed) {
+      if (effectiveVaultScope && effectiveVaultScope !== 'user') {
+        return JSON.stringify({
+          source: 'knowledge_base',
+          query: args.query,
+          privateMode: true,
+          results: [],
+          note: 'Tryb prywatny: sejf organizacji/projektu jest poza zakresem tej rozmowy',
+        });
+      }
+      effectiveVaultScope = 'user';
+      effectiveProjectId = null;
+    }
+
     if (effectiveVaultScope) {
       const scopedDocs = await KnowledgeService.getDocuments(
         ctx.organizationId,
@@ -1050,8 +1089,18 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       }
     }
 
+    // FIX-2 (dyżur 210): `documentIds` above is already the caller's
+    // owner-filtered Vault allow-list (KnowledgeService.getDocuments —
+    // scope='user' requires owner_id === ctx.userId). But
+    // `ragService.appendKnowledgeDocAccessFilter` ALSO applies its own
+    // trailing `scope != 'user'` exclusion unconditionally when no `userId`
+    // is passed — so even a document already correctly allow-listed as the
+    // caller's own private doc was silently stripped a second time. Thread
+    // `ctx.userId` (the real, per-request identity — never fabricated) so
+    // that second filter's owner exception can fire.
     const results = await ragService.hybridSearch(args.query, {
       organizationId: ctx.organizationId,
+      userId: ctx.userId,
       limit: 5,
       documentIds,
     });
@@ -1138,11 +1187,13 @@ async function executeGetAssessment(args: any, ctx: ToolExecutionContext): Promi
     const { get: dbGet, all: dbAll } = await import('../../utils/DbPromise.js');
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'assessment', note: 'No active project' });
+    // FIX-206 (P0): jak wyzej — fail-closed bez kontekstu organizacji.
+    if (!ctx.organizationId) return JSON.stringify({ source: 'assessment', note: 'No organization context' });
 
     const assessment = (await dbGet(
       `SELECT id, name, framework, status, overall_score, target_score 
-       FROM maturity_assessments WHERE project_id = ? ORDER BY created_at DESC LIMIT 1`,
-      [projectId]
+       FROM maturity_assessments WHERE project_id = ? AND organization_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [projectId, ctx.organizationId]
     )) as any;
 
     if (!assessment) return JSON.stringify({ source: 'assessment', note: 'No assessment found' });
@@ -1248,20 +1299,24 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
     const { all: dbAll } = await import('../../utils/DbPromise.js');
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'initiatives', note: 'No active project' });
+    // FIX-206 (P0, ODBIOR_205_206.md): bez organizacji z kontekstu nie wolno czytac
+    // NICZEGO — audytor zmierzyl wyciek cross-org (org-A + cudzy projectId z ciala
+    // zadania -> nazwa/status/ROI inicjatywy org-B). Fail-closed.
+    if (!ctx.organizationId) return JSON.stringify({ source: 'initiatives', note: 'No organization context' });
 
     if (args.initiative_id) {
       const initiative = await dbAll(
         `SELECT id, name, status, priority, progress, cost_capex, cost_opex, expected_roi, start_date, end_date
-         FROM initiatives WHERE id = ? AND project_id = ?`,
-        [args.initiative_id, projectId]
+         FROM initiatives WHERE id = ? AND project_id = ? AND organization_id = ?`,
+        [args.initiative_id, projectId, ctx.organizationId]
       );
       return JSON.stringify({ source: 'initiatives', data: initiative });
     }
 
     const initiatives = await dbAll(
       `SELECT id, name, status, priority, progress, cost_capex, expected_roi
-       FROM initiatives WHERE project_id = ? ORDER BY priority DESC, created_at DESC LIMIT 20`,
-      [projectId]
+       FROM initiatives WHERE project_id = ? AND organization_id = ? ORDER BY priority DESC, created_at DESC LIMIT 20`,
+      [projectId, ctx.organizationId]
     );
 
     return JSON.stringify({
@@ -1366,4 +1421,17 @@ export function getAvailableTools(options?: {
   }
 
   return tools;
+}
+
+/** Day206: model-visible READ-only subset. WRITE tools remain proposals for 17-C. */
+export function getReadToolDefinitions(): Array<{
+  name: string;
+  description: string;
+  parameters: ToolDefinition['function']['parameters'];
+}> {
+  return AI_TOOLS.filter((tool) => !SIDE_EFFECT_TOOLS.has(tool.function.name)).map((tool) => ({
+    name: tool.function.name,
+    description: tool.function.description,
+    parameters: tool.function.parameters,
+  }));
 }

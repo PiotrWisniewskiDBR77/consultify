@@ -27,3 +27,17 @@ Pytanie o powierzchnię Audytów (hub vs warsztat) — zadane ponownie w rundzie
 | D-6 | Moja praca | **Kalendarz ON TERAZ; Radar po-MVP** | dyżur: włączenie flagi kalendarza + retest; Radar → backlog po-MVP (literał zostaje) |
 | D-7 | Realizacja: magazyn zadań | **MIGRACJA legacy→kanon W MVP** (najdroższa opcja — decyzja świadoma) | najpierw dyżur ANALIZY (inwentarz danych `tasks` vs `ie_aggregate_state`, plan migracji addytywnej, ryzyka), potem dyżur wykonania; brama 409 zostaje do końca migracji |
 | D-8 | Materiały: strażnik groundingu | **POLUZOWAĆ + rubryka** | dyżur GEN-2: liczby-założenia dopuszczone i oznaczone; jakość pilnowana rubryką 15/18 przy odbiorze pliku |
+
+## Runda 3 (31.08 noc)
+
+| # | Pytanie | Decyzja | Skutek |
+|---|---|---|---|
+| D-9 | Auto-polityka limitów agenta obejmuje też wave8/multiAgent/adapter (fail-open) | **ZAAKCEPTOWAĆ** | ostatni warunek K6 zamknięty — `ENABLE_AI_TASKS_WORKER=true` na STAGINGU przy deployu kandydata (K5); obserwacja licznika `[AgentResource] admission denied`; demo dopiero po akcepcie na stagingu |
+| D-10 | Źródło briefu prezentacji z szablonu | **OBA**: modal przy szablonie (dyżur 201, ta fala) + ścieżka przez Teresę (dyżur 203, następna) | 31.08 rano |
+| D-11 | Granulacja założeń vs próg gęstości QA | **próg liczy średnią SEKCJI** (nie bloku) — granulacja per akapit zostaje; wdrożenie w FIX-195 | 31.08 rano |
+| D-12 | Migracja E2: pomiar M3 przed decyzją | **TAK — read-only na stagingu** | wykonane 31.08: 14 domów / 67 inicjatyw z zadaniami / 467 zadań (265 osobistych); wynik w raporcie 197 |
+| D-13 | Migracja E2: uruchomienie | **TAK — pilot 1, potem partie po 10** | dyżur 204: miny (fingerprint, ON CONFLICT) + runner --write=1 + próba lokalna; PILOT na stagingu wykonuje NADZORCA (procedura promocji, zapis za zgodą D-13) → ogląd właściciela → partie; brama 409 zostaje do końca migracji |
+| D-14 | Architektura modułu 17 | **ZAAKCEPTOWANA** — startują 17-A..J | 31.08 |
+| D-15 | Akcje czatu (P5) | **WSZYSTKIE 4 dobudować** + zasada nadrzędna słowami właściciela: „Agent ma obejmować pracę ze WSZYSTKIMI narzędziami w naszej aplikacji i teraz ma nimi zarządzać" → widma NIE są usuwane hurtem: każde mapowane na narzędzie aplikacji albo świadomie gaszone z uzasadnieniem | 31.08 |
+| D-16 | GF-AGT-02 | **LOKALNIE, wcześniej** (kanoniczny runtime); powtórka na stagingu po K5 jako potwierdzenie | 31.08 |
+| D-17 | K3 pierwsza partia werdyktów | **Partner + Czat + Admin, DZIŚ WIECZOREM** — pakiety zrzutów przygotowuje nadzorca z torem grafiki | 31.08 |

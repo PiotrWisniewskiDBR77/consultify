@@ -451,6 +451,14 @@ export class AIPipeline {
         // Wyłączone przy reasoningu (jak deliverable). Wykonanie NIE jest
         // serwerowe — patrz `clientTools` w llmService.callStream.
         const ideaTools = (request.options as any)?.ideaTools;
+        const readTools = (request.options as any)?.readTools;
+        let readToolDefs:
+          | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
+          | undefined;
+        if (featureFlags.ENABLE_TERESA_TOOL_LOOP && !showReasoning && readTools?.enabled) {
+          const { getReadToolDefinitions } = await import('./toolDefinitions.js');
+          readToolDefs = getReadToolDefinitions();
+        }
         let ideaClientToolDefs:
           | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
           | undefined;
@@ -556,10 +564,11 @@ export class AIPipeline {
               // Z4 transport: dokładamy `clientTools` (akcje otwartej Idei) i
               // scalamy `onClientToolCall` do wspólnego kontekstu. Kontekst musi
               // nieść OBA callbacki: onDeliverable (mcp) i onClientToolCall (Idea).
-              ...(deliverableToolDefs || ideaClientToolDefs
+              ...(deliverableToolDefs || ideaClientToolDefs || readToolDefs
                 ? {
                     ...(deliverableToolDefs ? { tools: deliverableToolDefs } : {}),
                     ...(ideaClientToolDefs ? { clientTools: ideaClientToolDefs } : {}),
+                    ...(readToolDefs ? { readTools: readToolDefs } : {}),
                     context: {
                       ...((deliverableTools?.context as Record<string, unknown>) || {}),
                       ...(ideaTools?.context
@@ -567,8 +576,12 @@ export class AIPipeline {
                             onClientToolCall: (ideaTools.context as any)?.onClientToolCall,
                           }
                         : {}),
+                      ...(readTools?.context || {}),
                     },
-                    maxIterations: 4,
+                    maxIterations: (() => {
+                      const parsed = Number(process.env.TERESA_TOOL_LOOP_MAX_ITERATIONS || 4);
+                      return Number.isInteger(parsed) && parsed >= 1 && parsed <= 8 ? parsed : 4;
+                    })(),
                   }
                 : {}),
             });
@@ -1843,6 +1856,41 @@ export class AIPipeline {
       lines.push('', '### Ustalenia z wywiadów (zatwierdzone insighty):');
       for (const f of findings.slice(0, 8)) {
         lines.push(`- ${f}`);
+      }
+    }
+
+    // FIX-205 (dyżur 205, ODBIOR_205_206.md) — `org.notes.manualContext` jest
+    // resolwowane z `organization_context_claims` (ścieżka `notes.manualContext`)
+    // przez `OrganizationContextService.buildResolvedContext` i już dociera do
+    // `ctx.organization`, ale nigdy nie było czytane w tej sekcji: audytor
+    // zmierzył `{inResolved:true, inOrgLayer:true, inPrompt:FALSE}` — zapis-obok
+    // pięciu ekranów redesignu Organization (`organization-context-store.routes.ts`)
+    // i ręczny kontekst AI (`recordManualAIContext`) trafiały do claimów, ale
+    // Teresa nigdy tego nie cytowała. Wpisy mają dwa kształty: `{section, ...}`
+    // (zapis-obok store'u) albo `{name, type, content, priority}` (ręczny
+    // kontekst / legacy `ai_contexts`).
+    const noteEntries: Array<Record<string, unknown>> = Array.isArray(org?.notes?.manualContext)
+      ? (org.notes.manualContext as Array<Record<string, unknown>>)
+      : [];
+    if (noteEntries.length > 0) {
+      lines.push('', '### Notatki organizacji (zapisane bezpośrednio w kontekście):');
+      for (const entry of noteEntries.slice(0, 5)) {
+        const section = typeof entry.section === 'string' ? entry.section : '';
+        const label =
+          section ||
+          (typeof entry.name === 'string' && entry.name) ||
+          (typeof entry.type === 'string' && entry.type) ||
+          'Notatka';
+        const content =
+          typeof entry.content === 'string' && entry.content
+            ? entry.content
+            : Object.entries(entry)
+                .filter(([key]) => !['section', 'name', 'type', 'priority', 'id', 'createdAt'].includes(key))
+                .map(([key, value]) => `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`)
+                .join('; ');
+        if (content) {
+          lines.push(`- **${label}**: ${content.slice(0, 300)}`);
+        }
       }
     }
 

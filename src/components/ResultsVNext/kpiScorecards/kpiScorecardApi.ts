@@ -203,6 +203,17 @@ export async function listKpiScorecards(
 }
 
 // ==========================================
+// listScorecardsForKpi — GET /api/vnext/results/kpi/scorecards/for-kpi/:kpiId
+// ==========================================
+
+export async function listKpiScorecardsForKpi(kpiId: string): Promise<KpiScorecardDto[]> {
+  const resp = await Api.get(
+    `/vnext/results/kpi/scorecards/for-kpi/${encodeURIComponent(kpiId)}`
+  );
+  return (resp?.scorecards ?? []) as KpiScorecardDto[];
+}
+
+// ==========================================
 // getScorecard — GET /api/vnext/results/kpi/scorecards/:scorecardId
 // `null` on 404 (does-not-exist AND visibility-denied collapse to the same
 // code — see file header, same non-distinguishing shape as `kpiApi.ts`'s

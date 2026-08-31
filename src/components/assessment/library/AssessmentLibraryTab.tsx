@@ -467,8 +467,8 @@ export const AssessmentLibraryTab: React.FC = () => {
           icon: LibraryIcon,
           title: isPolish ? 'Brak dostępnych metodyk oceny' : 'No assessment frameworks available',
           description: isPolish
-            ? 'Nie udało się wczytać katalogu metodyk.'
-            : 'The methodology catalog could not be loaded.',
+            ? 'Katalog metodyk nie zawiera obecnie żadnych pozycji.'
+            : 'The methodology catalog currently has no entries.',
         }}
       />
       </div>

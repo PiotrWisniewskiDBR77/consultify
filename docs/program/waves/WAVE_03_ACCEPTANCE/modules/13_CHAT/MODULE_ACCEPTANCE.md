@@ -90,7 +90,7 @@ Evidence manifest: `OWNER_REVIEW_2026-08-22.md`; `docs/program/waves/WAVE_03_ACC
 
 | ID | Stan | Obserwacja | Adres w kodzie |
 |---|---|---|---|
-| `CHAT-OR-20260829-001` | `OPEN` | W języku polskim wiadomość źródłowa, karta propozycji, status oraz przyciski decyzji pozostają po angielsku. | `scripts/dev/seed-wave3-chat-owner-review.mjs:58`, `scripts/dev/seed-wave3-chat-owner-review.mjs:254` |
+| `CHAT-OR-20260829-001` | `CLOSED_DAY179 / OWNER_RETEST_PENDING` | Etykiety produktu karty propozycji są po polsku na realnym runtime; angielska wiadomość źródłowa i tytuł pozostają danymi fixture. Dowód: commit `90636358bf`, test PL 4/4, pełny pakiet AIChat 332/332 i zrzut day179. | `public/locales/pl/translation.json`, `src/components/AIChat/__tests__/GovernedChatHandoffCard.day179.i18n.test.tsx`, `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY179_CZAT_REPORT.md` |
 | `CHAT-OR-20260829-002` | `CLOSED_DAY127 / OWNER_RETEST_PENDING` | Pusty ekran rozmowy ma polskie etykiety kart, funkcji, panelu roboczego, głosu, dyktowania, wysyłki, regionu rozmowy i skrótu do pola wiadomości; potwierdzono w PL light/dark na SHA `8cd5b2059a`. | `src/components/AIChat/UnifiedChatPanel.tsx`, `src/components/AIChat/VoiceModeLegend.tsx`, `src/components/AIChat/EnhancedChatInput.tsx` |
 | `CHAT-OR-20260829-003` | `KNOWN_DECISION / NOT_A_DEFECT` | Feed sygnałów jest pusty, bo producent jest wyłączony. Nie twierdzimy, że jego włączenie napełni feed: reguły nie czytają treści czatu. | `src/components/AIChat/signalsFeed/ChatSignalsFeed.tsx:266` |
 | `CHAT-OR-20260829-004` | `EVIDENCE_MISSING` | Brak pełnego wariantu feedu sygnałów na realnych danych; fixture rozmowy świadomie nie tworzy zadań, inicjatyw, decyzji, KPI ani sygnałów budżetowych. | `scripts/dev/seed-wave3-chat-owner-review.mjs:58` |
@@ -102,3 +102,20 @@ Evidence manifest: `OWNER_REVIEW_2026-08-22.md`; `docs/program/waves/WAVE_03_ACC
 - Decyzję o producencie sygnałów odczytano z rejestru: treść czatu nie jest wejściem ośmiu reguł, a natychmiastową realną drogą do sygnału może być inicjatywa bez harmonogramu bazowego.
 - Nie wiadomo, czy właściciel zaakceptuje angielski język karty i kontrolek na polskim ekranie oraz aktualną gęstość pustego startu.
 - Pierwsze kadry opisane jako light były motywem systemowym dark; zostały zastąpione po jawnym wyborze `Jasny`.
+
+## Dyżur 182 — inwentarz deterministycznego producenta sygnałów
+
+| `ruleId` | Domena | Tabela(-e) i kolumny źródłowe | Warunek zapłonu z SQL | Próg wieku/czasu | R1 |
+|---|---|---|---|---|---|
+| `exec.task.overdue` | `EXECUTION` | `tasks.organization_id`, `tasks.due_date`, `tasks.status`, `tasks.assignee_id`, `tasks.project_id` | `organization_id = ? AND due_date IS NOT NULL AND due_date < ? AND lower(coalesce(status, '')) NOT IN ('done', 'completed', 'cancelled')` | `due_date < now`; severity `critical` od 7 dni | tak |
+| `exec.task.due_soon_not_started` | `EXECUTION` | `tasks.organization_id`, `tasks.due_date`, `tasks.status`, `tasks.assignee_id`, `tasks.project_id` | `due_date >= ? AND due_date <= ? AND lower(coalesce(status, '')) IN ('todo', 'blocked')` | od teraz do `now + 259200000 ms` (3 dni) | nie |
+| `exec.task.blocked_stale` | `EXECUTION` | `tasks.organization_id`, `tasks.status`, `tasks.updated_at`, `tasks.assignee_id`, `tasks.project_id` | `lower(coalesce(status, '')) = 'blocked' AND updated_at < ?` | `now - 432000000 ms` (5 dni) | nie |
+| `exec.initiative.no_baseline` | `EXECUTION` | `initiatives.organization_id`, `initiatives.status`, `initiatives.owner_execution_id`, `initiatives.project_id`; `initiative_schedule_baselines.organization_id`, `.initiative_id`, `.id` | `LEFT JOIN ... ON b.organization_id = i.organization_id AND b.initiative_id = i.id`; status nie jest `done/completed/cancelled/archived`; `b.id IS NULL` | brak | tak |
+| `dec.pending_stale` | `DECISION` | `decisions.organization_id`, `decisions.status`, `decisions.created_at`, `decisions.project_id` | `lower(coalesce(status, '')) = 'pending' AND created_at < ?` | `now - 432000000 ms` (5 dni); severity `critical` od 10 dni | nie |
+| `dec.blocking_dependents` | `DECISION` | `decisions.organization_id`, `decisions.status`, `decisions.project_id`; `decision_impacts.decision_id`, `.is_blocker`, `.impacted_type`, `.impacted_id` | `JOIN decision_impacts di ON di.decision_id = d.id AND di.is_blocker = TRUE`; decyzja ma `status = 'pending'` | brak | nie |
+| `res.kpi_threshold_breached` | `RESULTS` | `v8_kpi_signals.organization_id`, `.signal_id`, `.kpi_id`, `.severity`, `.created_at`, `.next_action_status`; `v8_kpi_definitions.organization_id`, `.kpi_id`, `.initiative_id`, `.current_value`, `.target_value` | join po `organization_id` i `kpi_id`; `d.initiative_id IS NOT NULL`; `lower(coalesce(s.next_action_status, 'pending')) IN ('pending', 'open')` | brak dodatkowego progu wieku | nie |
+| `fin.budget_overspend` | `FINANCE` | `budget_overspend_signals.organization_id`, `.initiative_id`, `.project_id`, `.severity`, `.planned_amount`, `.actual_amount`, `.created_at`, `.is_dismissed` | `initiative_id IS NOT NULL AND coalesce(is_dismissed, FALSE) = FALSE AND coalesce(actual_amount, 0) > coalesce(planned_amount, 0)` | brak dodatkowego progu wieku | nie |
+
+Ryzyko wyścigu: rejestracja `*/15 * * * *` jest bezwarunkowa, więc `CRON` i `ON_DEMAND` mogą nałożyć się dla tej samej organizacji; dyżur 182 tego nie naprawia. W lokalnym oknie R1 scheduler nie był uruchomiony, zatem do nakładki nie doszło.
+
+Znany, nienaprawiony trzeci stan pustki: `ChatSignalsFeed.tsx` renderuje `chatSignals.empty.good`, gdy `producerEnabled === true` i lista sygnałów jest pusta, również dla organizacji bez kwalifikujących danych źródłowych. To nie dowodzi dobrego stanu reguł; producent nie miał czego ocenić.

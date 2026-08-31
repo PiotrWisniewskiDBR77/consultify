@@ -119,15 +119,68 @@ export class AgentResultPersistenceError extends Error {
   }
 }
 
+/**
+ * FIX-180 / F4: both agent-plan timing knobs used to be read as
+ * `Math.max(x, Number(env || default))`, which turns ANY non-numeric value
+ * into `NaN` and lets it through: `setInterval(NaN)` degrades to a 1 ms timer
+ * (a lease UPDATE every millisecond for the whole step) and `duration < NaN`
+ * is always false (a "long step" warning on every single step). A typo in a
+ * Railway variable was enough to trigger either. Anything that is not a finite
+ * number at or above `minMs` now falls back to the documented default, so a
+ * broken value behaves exactly like an unset one.
+ */
+function readEnvMs(rawValue: string | undefined, defaultMs: number, minMs: number): number {
+  if (rawValue === undefined || String(rawValue).trim() === '') return defaultMs;
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed) || parsed < minMs) return defaultMs;
+  return parsed;
+}
+
 type PlanToolExecutor = (
   toolName: string,
   input: Record<string, unknown>,
-  execution?: { operationKey: string; ownerToken: string; fencingToken: number }
+  execution?: {
+    operationKey: string;
+    ownerToken: string;
+    fencingToken: number;
+    /**
+     * 1-based index of the retry attempt this call belongs to (FIX-180 / F2).
+     * Deterministic: attempt N of a given step is always attempt N, in this
+     * delivery and in any redelivery of the same job — which is exactly what
+     * lets it be part of an idempotency key.
+     */
+    attempt: number;
+  }
 ) => Promise<unknown>;
 
 class AgentPlannerService {
   private readonly executionLeaseSeconds = 300;
-  private readonly heartbeatIntervalMs = 60_000;
+  private readonly heartbeatIntervalMs = readEnvMs(
+    process.env.AGENT_PLAN_HEARTBEAT_INTERVAL_MS,
+    60_000,
+    1
+  );
+  private readonly longStepWarningThresholdMs = readEnvMs(
+    process.env.AGENT_PLAN_LONG_STEP_WARNING_MS,
+    120_000,
+    0
+  );
+
+  private warnIfLongStep(
+    planId: string,
+    stepIndex: number,
+    toolName: string,
+    durationMs: number
+  ): void {
+    if (durationMs < this.longStepWarningThresholdMs) return;
+    logger.warn('[AgentPlanner] long-running step completed', {
+      planId,
+      stepIndex,
+      toolName,
+      durationMs,
+      thresholdMs: this.longStepWarningThresholdMs,
+    });
+  }
 
   async executeGovernedEnqueue<T>(input: {
     planId: string;
@@ -590,8 +643,38 @@ class AgentPlannerService {
         } finally {
           clearInterval(heartbeat);
         }
-        if (heartbeatFailure) throw heartbeatFailure;
+        if (heartbeatFailure) {
+          if (heartbeatFailure instanceof AgentExecutionLeaseLostError) {
+            const current = (await dbGet(
+              `SELECT status FROM ai_agent_plans WHERE id = ?`,
+              [planId]
+            )) as { status?: PlanStatus } | undefined;
+            if (current?.status === 'cancelled') {
+              const released = await dbRun(
+                `UPDATE ai_agent_plans
+                    SET current_step_index = ?, updated_at = datetime('now'),
+                        execution_owner_token = NULL, execution_lease_expires_at = NULL,
+                        execution_heartbeat_at = NULL
+                  WHERE id = ? AND status = 'cancelled'
+                    AND execution_owner_token = ? AND execution_fencing_token = ?`,
+                [i, planId, lease.ownerToken, lease.fencingToken]
+              );
+              if (!released.changes) throw heartbeatFailure;
+              // FIX-180 / F3: the step whose tool was still in flight when the
+              // cancellation landed must not stay `running` forever (the canvas
+              // renders it as "W toku" for eternity). Close it terminally the
+              // same way `cancelPlan` closes the steps it can reach — `skipped`
+              // with a completion stamp — carrying the real elapsed time.
+              await this.closeInFlightStepsAfterCancellation(planId, Date.now() - startMs);
+              const cancelled = await this.getPlan(planId);
+              if (!cancelled) throw new Error(`Plan ${planId} disappeared after cancellation`);
+              return cancelled;
+            }
+          }
+          throw heartbeatFailure;
+        }
         const durationMs = Date.now() - startMs;
+        this.warnIfLongStep(planId, i, step.toolName, durationMs);
 
         step.result = result;
         step.status = 'completed';
@@ -625,6 +708,7 @@ class AgentPlannerService {
         )
           throw err;
         const durationMs = Date.now() - startMs;
+        this.warnIfLongStep(planId, i, step.toolName, durationMs);
         step.status = 'failed';
         step.errorMessage = err?.message || 'Unknown error';
         step.durationMs = durationMs;
@@ -1055,28 +1139,43 @@ class AgentPlannerService {
             WHERE c.execution_run_id = ? AND c.organization_id = ?`,
           [plan.canonicalRunId, payload.organizationId]
         )) as { project_id?: string | null } | null)
-      : null;
+      : { project_id: 'agent-plan-chat:v1' };
     if (plan.canonicalRunId && !resourceScope?.project_id) {
       throw new Error('planner_resource_project_scope_missing');
     }
 
     const executor: PlanToolExecutor = async (toolName, input, execution) => {
-      if (!plan.canonicalRunId) {
-        return executeToolCall(toolName, input, {
-          organizationId: payload.organizationId,
-          userId: payload.userId,
-          conversationId: plan.conversationId,
-          sessionId: execution?.operationKey,
-        });
-      }
+      const resourceRunId = plan.canonicalRunId || plan.id;
+      const operationKey = execution?.operationKey || `${plan.id}:${toolName}`;
+      // FIX-180 / F2: scope the key to the RETRY ATTEMPT.
+      //
+      // The key used to be per step, so `runToolWithRetry`'s attempts 2 and 3
+      // never reached the tool at all: the first failure left the reservation
+      // `released`, and every later attempt replayed that refusal — the step
+      // died with the internal code `resource_released_after_execution_failure`
+      // instead of the real reason, and the retry that exists to survive a
+      // transient tool fault did nothing. An attempt-scoped key gives each
+      // attempt a real admission decision and a real execution (the same shape
+      // the work-graph caller already uses: `...:attempt:N`).
+      //
+      // Redelivery dedup is preserved because the attempt index is
+      // deterministic, not a counter: a redelivered job replays attempt 1
+      // first, so a tool that already SUCCEEDED is found `settled` and is not
+      // executed twice. Attempt 1 also keeps the pre-FIX-180 key byte for byte,
+      // so reservations written before this change still match.
+      const attemptSuffix = (execution?.attempt ?? 1) > 1 ? `:attempt:${execution!.attempt}` : '';
       const resourceExecution = await executeWithAgentResourceReservation({
         organizationId: payload.organizationId,
         projectId: resourceScope!.project_id,
-        runId: plan.canonicalRunId,
+        runId: resourceRunId,
         userId: payload.userId,
         agentId: 'agent-planner',
         toolName,
-        idempotencyKey: `planner:${plan.canonicalRunId}:${execution?.operationKey || `${plan.id}:${toolName}`}`,
+        idempotencyKey: plan.canonicalRunId
+          ? `planner:${plan.canonicalRunId}:${operationKey}${attemptSuffix}`
+          : `planner-chat:${plan.id}:${operationKey}${attemptSuffix}`,
+        // FIX-180 / F1: a refusal must not outlive the peak that caused it.
+        recomputeDeniedAdmission: true,
         estimatedCostUsd: estimateAgentToolCostUsd(toolName),
         execute: () =>
           executeToolCall(toolName, input, {
@@ -1086,7 +1185,20 @@ class AgentPlannerService {
             sessionId: execution?.operationKey,
           }),
       });
-      if (!resourceExecution.allowed) throw new Error(resourceExecution.reason);
+      if (!resourceExecution.allowed) {
+        // FIX-180: the ONE greppable admission-denial counter for this path.
+        // Turning chat plans on in staging makes governance the new way a step
+        // can die, and a denial is invisible everywhere else (it only shows up
+        // as a step error message). Every denial — cost ceiling, concurrency
+        // ceiling, or a replayed prior refusal — passes through exactly here.
+        logger.warn('[AgentResource] admission denied', {
+          reason: resourceExecution.reason,
+          organizationId: payload.organizationId,
+          projectId: resourceScope!.project_id,
+          toolName,
+        });
+        throw new Error(resourceExecution.reason);
+      }
       return resourceExecution.result;
     };
 
@@ -1246,6 +1358,33 @@ class AgentPlannerService {
        WHERE id = ? AND status = 'cancelled' AND ${this.leasePredicate()}`,
       [currentStep, lease.planId]
     );
+    await this.closeInFlightStepsAfterCancellation(lease.planId, null);
+  }
+
+  /**
+   * FIX-180 / F3: `cancelPlan` can only skip steps that have not started yet
+   * (`pending`/`awaiting_approval`). A step whose tool was ALREADY running when
+   * the cancellation landed is invisible to it, and every cancellation branch
+   * of `executePlan` returns without touching that row — so it stays `running`
+   * (front `AgentPlanCanvas` shows "W toku") for the lifetime of the record.
+   * This closes it terminally with the same status `cancelPlan` uses, plus the
+   * completion stamp every other terminal step write carries. `durationMs` is
+   * the real elapsed time when the caller knows it (window b), and `null` where
+   * it does not (window a2 / the top-of-loop branch) — there the column keeps
+   * whatever it already had rather than gaining an invented number.
+   */
+  private async closeInFlightStepsAfterCancellation(
+    planId: string,
+    durationMs: number | null
+  ): Promise<void> {
+    const durationClause = durationMs === null ? '' : ', duration_ms = COALESCE(duration_ms, ?)';
+    const params: unknown[] = durationMs === null ? [planId] : [durationMs, planId];
+    await dbRun(
+      `UPDATE ai_agent_plan_steps
+          SET status = 'skipped', completed_at = datetime('now')${durationClause}
+        WHERE plan_id = ? AND status = 'running'`,
+      params
+    );
   }
 
   /**
@@ -1314,7 +1453,7 @@ class AgentPlannerService {
     let lastError: unknown;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await toolExecutor(toolName, input, execution);
+        return await toolExecutor(toolName, input, { ...execution, attempt });
       } catch (err) {
         lastError = err;
         if (attempt < maxAttempts) {
