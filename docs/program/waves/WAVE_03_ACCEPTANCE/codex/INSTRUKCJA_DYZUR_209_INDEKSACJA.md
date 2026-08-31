@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `e96e003abd`**
+> **SHA markera: `29f004c670`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day209-indeksacja
-MARKER=e96e003abd
+MARKER=29f004c670
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline e96e003abd..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only e96e003abd..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 29f004c670..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 29f004c670..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only e96e003abd..HEAD
+git -C "$WT" diff --name-only 29f004c670..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `osiem` komend, wszystkie obowiązkowe.**
@@ -907,7 +907,7 @@ plikami z tabeli powyżej, STOP i zgłoś w raporcie zamiast zgadywać.
   `LISTA_PORTOW_ZAJETYCH`) — nie znalazłem żadnego śladu FIX-198 w
   dostępnych mi plikach.
 - **Każdą cytowaną linię kodu/dokumentu sprawdzasz sam przed wklejeniem do
-  raportu.** Numery zweryfikowano wobec markera `e96e003abd`, ale repo jest
+  raportu.** Numery zweryfikowano wobec markera `29f004c670`, ale repo jest
   dzielone z dyżurami równoległymi — jeśli linia się przesunęła, zaufaj
   SWOJEMU pomiarowi.
 - **Sekcja "TWIERDZENIA NIEZWERYFIKOWANE" w raporcie jest obowiązkowa.**
