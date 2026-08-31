@@ -134,3 +134,9 @@ docs/program/waves/WAVE_03_ACCEPTANCE/modules/04_ASSESSMENT/MODULE_ACCEPTANCE.md
 ```
 
 Pierwszy commit/push R1: `32b925a5fc` (`github-backup/codex/day198-ocena-fixture-20260831`). Kolejne commity i push: patrz końcowy log gałęzi.
+
+## Sprzątanie
+
+Końcowy cold SQL przed sprzątaniem: `reports=1`, `assessment_initiatives=0`, `smtp_settings=0`. Zweryfikowany reset na dokładnym manifeście `fixture-manifest-green.json` zwrócił `dropped:true`, `catalogAbsent:true`. Następnie usunięto wyłącznie własny kontener i wolumen komendą `docker rm -fv cx-day198-pg`. Porty `6130`, `5070`, `5071` po sprzątaniu: brak listenerów.
+
+Końcowy commit testu i dokumentacji: `e6a833c29c`; push na `github-backup/codex/day198-ocena-fixture-20260831` zakończony powodzeniem.
