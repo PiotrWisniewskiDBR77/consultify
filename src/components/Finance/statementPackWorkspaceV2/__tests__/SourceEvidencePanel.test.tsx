@@ -223,7 +223,7 @@ describe('SourceEvidencePanel — mapping trail (chain proof, step 2)', () => {
         mappingRow={mappingRow}
       />
     );
-    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('MAPPED');
+    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('Zmapowane');
     expect(screen.getByTestId('source-evidence-mapping-source-row-ref')).toHaveTextContent('trial_balance.csv');
   });
 
@@ -246,10 +246,10 @@ describe('SourceEvidencePanel — mapping trail (chain proof, step 2)', () => {
     const { rerender } = render(
       <SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={baseCell} emptyLabel="—" mappingRow={mkRow('MAPPED')} />
     );
-    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('MAPPED');
+    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('Zmapowane');
     rerender(
       <SourceEvidencePanel rowLabel="Revenue" periodLabel="FY2025" cell={baseCell} emptyLabel="—" mappingRow={mkRow('DUPLICATE')} />
     );
-    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('DUPLICATE');
+    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('Duplikat');
   });
 });
