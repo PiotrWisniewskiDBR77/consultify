@@ -140,10 +140,10 @@ resolved or consciously accepted before G07.
 ## Owner verdict
 
 Decision: ~~`PENDING`~~ → `CLOSED_FINAL` — patrz „CLOSED_FINAL — 2026-08-25” poniżej (Werdykt właściciela: DEC-2026-08-24-11, DEC-2026-08-24-15; Final SHA `b5aa07a28f`; tag `final-01-organization`). Ten wiersz niósł stan sprzed odbioru właściciela; poprawka dyżuru 196, 2026-08-31.
-Accepted SHA: —
+Accepted SHA: ~~—~~ `b5aa07a28f`
 Date: —
 Accepted-out/deferred: —
-Evidence manifest: —
+Evidence manifest: ~~—~~ `evidence-m01-20260824/`
 
 ## CLOSED_FINAL — 2026-08-25
 

@@ -96,7 +96,6 @@ import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV3';
-import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterChip,
@@ -124,6 +123,7 @@ import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
+import { buildExecutionSourceRelations } from './executionSourceRelations';
 import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
 import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
@@ -5557,10 +5557,13 @@ Please return:
       // all chrome comes from the Standard* facades.
       const selectedRow = selectedSummaryInitiative;
       const previewModel = selectedRow ? mapToPreviewModel(selectedRow) : null;
-      const sourceLabel = previewModel?.sourceType
-        ? getSourceDisplayLabel(previewModel.sourceType)
-        : '';
-      const sourceFrameworkValue = String((selectedRow as any)?.sourceFramework || '').trim();
+      const sourceRelations = buildExecutionSourceRelations(
+        {
+          sourceType: previewModel?.sourceType,
+          sourceFramework: (selectedRow as any)?.sourceFramework,
+        },
+        t('common.source', 'Source')
+      );
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -5681,19 +5684,7 @@ Please return:
                     ],
                     onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
                   }}
-                  relations={
-                    sourceLabel
-                      ? [
-                          {
-                            label: `${t('common.source', 'Source')}: ${
-                              sourceFrameworkValue
-                                ? `${sourceLabel} · ${sourceFrameworkValue}`
-                                : sourceLabel
-                            }`,
-                          },
-                        ]
-                      : []
-                  }
+                  relations={sourceRelations}
                   actions={listPreviewActions}
                 />
               </aside>
