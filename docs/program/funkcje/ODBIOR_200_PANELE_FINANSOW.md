@@ -5,7 +5,7 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 200 — panele Finansów · RDZEŃ SCALONY · dowody → FIX-200
+# ODBIÓR 200 — panele Finansów · W CAŁOŚCI SCALONY (FIX-200 `c3aa91868d`: KOORDYNACJA wpisana, 42/42 zrzutów z lumą 14/14 par, 2 testy realnego API mutacyjnie — bonus: oczy złapały 2 błędy skali mock-danych IRR/pct przed finalizacją)
 
 R1 inwentarz + R2 osiągalność: **wykonane w całości** (21/21 paneli w rejestrze
 Surface za `isFinanceValuePanelsEnabled` OFF; mutacja flagi → test fail-closed
