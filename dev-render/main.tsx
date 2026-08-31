@@ -225,6 +225,7 @@ const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-
 //   () => import('./screens/execution-export-prezentacja')
 // );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
+const Day200FinancePanelsScreen = React.lazy(() => import('./screens/day200-finance-panels'));
 const FinanceHubScreen = React.lazy(() => import('./screens/finance-hub'));
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
@@ -1221,6 +1222,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Section B — M16 ValueOffice + DriverPlanner: real-data wiring, POPULATED vs EMPTY (&panel=value|driver &state=populated|empty)',
     render: () => <FinanceValuePanelsScreen />,
+  },
+  'day200-finance-panels': {
+    label:
+      'Dyżur 200 — pozostałych 14/21 paneli finansów (&panel=banking|cash-forecast|driver-tree|extended-ratios|headcount|investment-appraisal|rolling-forecast|valuation-visuals|value-attribution|value-capture|value-ledger|variance-bridge|variance-narration|ev-basket)',
+    render: () => <Day200FinancePanelsScreen />,
   },
   'finance-model-workspace': {
     label: 'Finance model workspace',

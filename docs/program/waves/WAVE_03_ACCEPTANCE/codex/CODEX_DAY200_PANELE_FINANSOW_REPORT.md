@@ -7,7 +7,7 @@ Gałąź: `codex/day200-panele-finansow-20260831`
 ## Wynik
 
 - **R1: ZROBIONE** — własny inwentarz 21/21 poniżej.
-- **R2: ZROBIONE w zakresie osiągalności UI** — istniejący rejestr rozszerzony z 5 do 21 paneli; jedna istniejąca flaga `ff.finance_value_panels`, domyślnie OFF; bez zmian wyglądu paneli i bez zmian backendu.
+- **R2: ZROBIONE w zakresie osiągalności; wrappery 10/19 → runda polerowania** — istniejący rejestr rozszerzony z 5 do 21 paneli; jedna istniejąca flaga `ff.finance_value_panels`, domyślnie OFF; bez zmian wyglądu paneli i bez zmian backendu. 10 z 19 endpointów `finance-valuation` nadal bez typed clienta (patrz sekcja TWIERDZENIA NIEZWERYFIKOWANE) — domknięcie tego zakresu to osobna runda polerowania, nie blokuje osiągalności UI.
 - **R3: CZĘŚCIOWO / EVIDENCE_MISSING** — pakiet render/test jest zielony i wykonano 14 zrzutów (7 obsługiwanych ekranów × 2 motywy), ale wydany harness nie obejmuje pozostałych 14 paneli, a tabela licencji nie pozwala zmienić `dev-render/**`. Nie deklaruję 42 zrzutów ani dwóch testów realnego API jako wykonanych.
 
 ## Baza pracy i marker — wynik dosłowny
@@ -26,7 +26,7 @@ Stan wołacza oznacza stan **przed** zmianą. `typed client` dotyczy wyłącznie
 | Plik | Props wejściowe z sygnatury TS | Endpoint `finance-valuation` | Typed client | Stan wołacza przed zmianą |
 |---|---|---|---|---|
 | `BankingValuePanel.tsx` | opcjonalny `fetcher { bank, status, portfolio }` | brak dopasowania; osobna usługa banking | NIE / nie dotyczy | zero importów komponentu |
-| `CashForecastPanel.tsx` | brak props komponentu | brak dopasowania; obliczenia lokalne | NIE / nie dotyczy | zero importów komponentu |
+| `CashForecastPanel.tsx` | brak props komponentu | **KOREKTA:** `POST /finance-planning/cash-forecast` — REALNY wołacz (poza `finance-valuation.routes.ts`, w `finance-planning.routes.ts`), wywoływany `onClick` (przycisk „Oblicz"/`cash-forecast-run`), NIE lokalne obliczenia | TAK `postCashForecast` (`src/services/api/v8/financePlanning.ts` — poza wąskim zakresem `financeValuationApi.ts` z przypisu na początku tabeli) | zero importów komponentu |
 | `DriverPlannerPanel.tsx` | `driverTree?`, `formatValue?` | brak dopasowania; obliczenia lokalne | NIE / nie dotyczy | zero importów komponentu |
 | `DriverTreePanel.tsx` | opcjonalny `fetcher { evaluate, chart }` | brak dopasowania | NIE / nie dotyczy | zero importów komponentu |
 | `EfficientFrontierPanel.tsx` | opcjonalny `fetcher` | `POST /efficient-frontier` | TAK `runEfficientFrontier` | importer za flagą OFF |
@@ -110,3 +110,46 @@ Rekomendacja nadzorcy: wydać wąską licencję na dedykowany harness Day 200 po
 ## Pliki produktu
 
 Dozwolone zmiany: `FinanceValuePanelsSurface.tsx`, test `day200.FinanceValuePanelsSurface.test.tsx`, ten raport. Lista końcowa jest mierzona przez `git diff --name-only 60581ed6b5..HEAD`.
+
+## DOPISEK — dyżur 200-b (FIX-200, wąska licencja na dedykowany harness)
+
+Nadzorca wydał licencję rozszerzoną: dedykowany harness `dev-render/screens/day200-finance-panels.tsx`
+(nowy plik, obok istniejącego `finance-value-panels.tsx` — TEN plik pozostał bajtowo
+nietknięty) plus 2 nowe testy realnego API. Zero zmian w panelach, `FinanceHub`, flagach.
+
+**R3 domknięte:**
+
+- **42/42 zrzuty** (21 paneli × jasny/ciemny): 14 z pierwotnego dyżuru 200 (`finance-value-panels.tsx`,
+  7 paneli) + 28 nowych z dedykowanego harnessu (pozostałych 14 paneli). Manifesty SHA-256:
+  `/private/tmp/cx-day200-panele-finansow-artefakty/artefakty-sha256.txt` (pierwotne 7) i
+  `zrzuty-day200-14paneli-sha256.txt` (nowe 14). Własny przegląd wzrokowy 8/28 nowych zrzutów
+  (oba motywy, różne archetypy: formularz+KPI, wykres słupkowy, heatmapa, football-field) —
+  zero crimson poza semantyką, zero NaN. Przy przeglądzie znaleziono i naprawiono w harnessie
+  (nie w produkcie) dwa błędy skali mock-danych: `InvestmentAppraisalPanel.irr/mirr` i
+  `VarianceNarrationPanel`/`VarianceBridgePanel` `pct`/`sharePct` oczekują liczby już w
+  procentach (0–100), nie ułamka (0–1) — pierwsza wersja renderowała „0.2%" zamiast „18.4%".
+- **Dwa zielone testy realnego API przez `ApiGateway`, podpisany JWT i Postgres: WYKONANE.**
+  `server/src/routes/v8/__tests__/day200.driver-tree-evaluate.pg.test.ts` (3 testy: 401 bez
+  tokenu, 200 z realnym wynikiem `POST /api/v8/finance-planning/driver-tree/evaluate` — kształt
+  i wartości dokładnie takie, jakie wysyła/konsumuje `DriverTreePanel.tsx`, 400 na cyklu) i
+  `day200.monte-carlo-npv.pg.test.ts` (3 testy: 404 `V8_DISABLED` gdy `ENABLE_V8_GLOBAL` OFF,
+  200 z deterministycznym realnym wynikiem `POST /api/v8/finance-valuation/monte-carlo-npv` —
+  kształt trójkątnych rozkładów dokładnie taki, jaki wysyła `MonteCarloNpvPanel.tsx`, 400 na
+  pustej mapie driverów). Oba testy montują TEN SAM stos co `Gateway.ts:1481-1482`
+  (`app.use('/api/v8', v8FeatureGate, v8Router)`) — realny `verifyToken`, realny `v8OrgGate`,
+  `ENABLE_V8_GLOBAL='true'` ustawiane w `beforeAll`, nie omijane. Postgres: kontener
+  `cx-fix200-pg` (`pgvector/pgvector:pg16`, wyłącznie `127.0.0.1:6141`), migracje
+  `DB_TYPE=postgres tsx server/scripts/migrate.postgres.ts` — 870 migracji, `Postgres migrations
+  complete`. 6/6 testów PASS; zero-residue po `afterAll` (sprawdzone bezpośrednio w bazie).
+  **Mutacja obu ścieżek potwierdzona czerwona**, potem odtworzona zielona: `driverTreeService.ts`
+  operator `'*'` tymczasowo zamieniony na dodawanie → test złapał (`AssertionError`, wartość
+  120000 vs zmutowana), zrewertowane (`diff` przeciw kopii zapasowej = brak różnic);
+  `finance-valuation.routes.ts` handler `/monte-carlo-npv` tymczasowo ignorował `iterations`
+  z żądania (twardy `100`) → test złapał (`expected length 2000, got 100`), zrewertowane.
+  Logi: `/private/tmp/cx-day200-panele-finansow-artefakty/mutacje/` (green-1, MUTATED-red ×2,
+  green-final), SHA-256 w `mutacje-sha256.txt`.
+
+**Endpointy zgodne z sekcją TWIERDZENIA NIEZWERYFIKOWANE** pozostają bez zmian — 10/19
+`finance-valuation` endpointów nadal bez typed clienta (nie w zakresie tego dyżuru).
+
+Sprzątnięcie: kontener `cx-fix200-pg` usunięty (`docker rm -f -v`) po zebraniu dowodów.
