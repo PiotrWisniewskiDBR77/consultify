@@ -234,3 +234,47 @@ Wymagania do zaprojektowania (tor funkcji, nie grafiki):
 
 **Różnica wobec DRD jest jedna i istotna:** DRD wolno wydać klientowi kiedykolwiek, SIRI dopiero
 po dopełnieniu obowiązku. To jedyne miejsce, w którym te dwie metodyki wymagają innego produktu.
+
+### ★★★ SPROSTOWANIE I DOPRECYZOWANIE — 2026-08-31, słowa właściciela
+
+> „Musimy mieć zbudowany inny system — system, w którym informujemy, że to jest licencjonowane
+> i na jakimś etapie pracy nie można zapisać efektów pracy po prostu. Aby móc zapisać efekty
+> pracy, trzeba mieć tę formułę opłaconą **dla nas**. Gdy będzie opłacona, będzie podpięta karta;
+> wówczas automatycznie się generujemy. My będziemy się oczywiście rozliczać. Jeśli nie, powstanie
+> dług, ale **nie powinno to już zatrzymywać pracy klienta**."
+
+**Mój poprzedni zapis był błędny co do kierunku bramki.** Napisałem, że blokadą jest zgłoszenie
+audytu licencjodawcy i opłata przez Consultify. **Nie tak.** Są to dwie NIEZALEŻNE relacje:
+
+| relacja | kto komu płaci | czy blokuje |
+| --- | --- | --- |
+| **klient → Consultify** | klient opłaca formułę licencjonowaną | **TAK — to jest bramka zapisu** |
+| **Consultify → licencjodawca** | rozliczenie okresowe | **NIE — nieopłacone tworzy DŁUG po naszej stronie, praca klienta idzie dalej** |
+
+### Jak ma działać system
+
+1. **Informujemy, że metoda jest licencjonowana** — jawnie, zanim klient zacznie, nie po fakcie.
+2. **Praca jest wolna** — ocenianie, klikanie macierzy, robocze wyniki: bez ograniczeń.
+3. **Bramka stoi na ZAPISIE EFEKTÓW** — na pewnym etapie nie da się zapisać rezultatu pracy,
+   dopóki formuła nie jest opłacona **na rzecz Consultify**.
+4. **Opłata = podpięta karta.** Po opłaceniu **generowanie odbywa się automatycznie** — bez
+   ręcznego odblokowywania, bez czekania na kogokolwiek.
+5. **Nasze rozliczenie z licencjodawcą jest osobne i NIGDY nie dotyka klienta.** Brak rozliczenia
+   z naszej strony tworzy **dług po stronie Consultify** — do windykacji między nami a licencjodawcą,
+   nie do zatrzymywania pracy klienta.
+
+### Dlaczego kierunek jest krytyczny
+
+Odwrotna implementacja — blokowanie klienta, bo **my** nie rozliczyliśmy się z licencjodawcą —
+byłaby **karaniem klienta za cudzy dług**. Klient, który zapłacił, ma dostać swój rezultat
+niezależnie od stanu naszych rozliczeń.
+
+### Zakres — to nie jest funkcja jednej metody
+
+System dotyczy **każdej metody licencjonowanej**, nie tylko SIRI. DRD jest własnością właściciela
+i bramce **nie podlega**. Mechanizm ma być wspólny: metoda deklaruje, czy jest licencjonowana
+i jaka jest jej formuła płatności; reszta dzieje się tak samo.
+
+**To jest zadanie dla toru funkcji i modelu rozliczeń — nie dla toru grafiki.** Tor grafiki
+odpowiada wyłącznie za to, żeby komunikat o licencji i o bramce zapisu był **uczciwy i zrozumiały**:
+mówił wprost, dlaczego zapis jest wstrzymany, czego brakuje i co odblokuje wynik.
