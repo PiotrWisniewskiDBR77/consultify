@@ -1,9 +1,9 @@
 # CODEX DAY 202 — Spotkania i18n
 
-Data: 2026-08-31  
-Gałąź: `codex/day202-spotkania-i18n-20260831`  
-Baza: `consultify_w3_meetings_owner_cx202`, kontener `cx-day202-pg`, port `6132`  
-Runtime: server `5074`, client `5075`  
+Data: 2026-08-31
+Gałąź: `codex/day202-spotkania-i18n-20260831`
+Baza: `consultify_w3_meetings_owner_cx202`, kontener `cx-day202-pg`, port `6132`
+Runtime: server `5074`, client `5075`
 Werdykt: **R1 ZROBIONE / R2 ZROBIONE / R3 ZROBIONE DLA i18n, z dwoma residualami poza licencją**.
 
 ## 0. Wejście, marker i rozjeście
@@ -168,7 +168,7 @@ Push wykonano bezpośrednio po commicie na `github-backup/codex/day202-spotkania
 
 ## 4. §0.4a — pomiar zasięgu nazwami
 
-Przed: `34` pełne nazwy, 14 suite raportowanych, wszystkie PASS.  
+Przed: `34` pełne nazwy, 14 suite raportowanych, wszystkie PASS.
 Po: `37` pełnych nazw, 16 suite raportowanych, wszystkie PASS.
 
 `diff przed-nazwy.txt po-nazwy.txt`:
