@@ -1,0 +1,2 @@
+ALTER TABLE knowledge_docs
+  ADD COLUMN IF NOT EXISTS scope TEXT DEFAULT 'user';
