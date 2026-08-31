@@ -249,9 +249,16 @@ case "$environment" in
     expected_db_fingerprint_var="STAGING_DB_HOST_FINGERPRINT"
     ;;
   demo)
-    expected_refs="refs/heads/demo"
+    # Since 2026-08-31 demo is a SHOWCASE, not a building site: it may only ever
+    # receive code that a staging deploy already proved, carried by the immutable
+    # tag `staging-deployed`. A branch ref (the old `refs/heads/demo`) is refused
+    # on purpose — a branch can move under the deploy, a tag SHA cannot.
+    expected_refs="refs/tags/staging-deployed"
     expected_environment="demo"
-    allowed_hosts="demo.consultify.ai stage.consultinity.ai"
+    # `stage.consultinity.ai` was the CROSSED domain from the pre-split layout
+    # (DEC-172). The domains are uncrossed now, so it is removed rather than
+    # left as a second legal target for demo.
+    allowed_hosts="demo.consultify.ai"
     expected_db_fingerprint_var="DEMO_DB_HOST_FINGERPRINT"
     ;;
   production)
