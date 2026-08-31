@@ -40,6 +40,35 @@ const INLINE_QUOTE_PATTERN = /[„“"]([^"„“”\n]{16,220})["”]/g;
 const BLOCK_QUOTE_PATTERN = /(^>\s?.+$)/gm;
 
 /**
+ * Para cudzysłowów OTACZAJĄCYCH cały fragment (z opcjonalną kropką/przecinkiem
+ * za zamykającym) — do zdjęcia z cytatu blokowego.
+ *
+ * DEFEKT, KTÓRY TO NAPRAWIA (M03, zrzut `insight-artifact`, 2026-08-31):
+ * ten sam cytat renderował się DWA RAZY, raz z poczwórnym cudzysłowem:
+ *
+ *     ""We have good projects, but not yet a good portfolio story.""
+ *     "We have good projects, but not yet a good portfolio story."
+ *
+ * Źródło w treści wniosku to markdownowy cytat blokowy, który NIESIE WŁASNE
+ * cudzysłowy: `> "We have good projects…"`. Ścieżka blokowa zdejmowała tylko
+ * `> ` i zwracała fragment RAZEM z cudzysłowami, a renderer (`"{quote}"` /
+ * `&ldquo;{quote}&rdquo;`) doklejał drugą parę — stąd cztery znaki. Ta sama
+ * linia trafiała RÓWNOLEGLE w `INLINE_QUOTE_PATTERN`, który cudzysłowy zdejmuje
+ * poprawnie, więc powstawały DWA różne łańcuchy i `uniqueNonEmpty` w
+ * `InsightViewer` nie miał ich jak zdeduplikować — cytat pojawiał się dwukrotnie.
+ *
+ * Zdjęcie pary u ŹRÓDŁA naprawia oba objawy naraz: cudzysłów robi się
+ * pojedynczy (dokłada go wyłącznie renderer, zgodnie z kontraktem niżej),
+ * a oba warianty stają się identyczne, więc deduplikacja je skleja w jeden.
+ *
+ * Klasa treści wyklucza WSZYSTKIE znaki cudzysłowu — dokładnie z tego powodu,
+ * co w `INLINE_QUOTE_PATTERN`. Dzięki temu linia z DWIEMA parami
+ * (`> "A" oraz "B"`) nie da dopasowania i zostaje nietknięta, zamiast zostać
+ * sklejona w jeden fragment `A" oraz "B`.
+ */
+const WRAPPING_QUOTE_PATTERN = /^[„“"]([^"„“”\n]*)["”][.,;:!?]?$/;
+
+/**
  * Zwraca treści cytatów w kolejności: najpierw cytaty blokowe (markdown `>`),
  * potem cytaty w linii — bez deduplikacji i bez przycinania listy. Zwracane
  * fragmenty NIE zawierają otaczających cudzysłowów, więc renderer może
@@ -48,11 +77,17 @@ const BLOCK_QUOTE_PATTERN = /(^>\s?.+$)/gm;
 export function extractQuotedFragments(content?: string): string[] {
   if (!content) return [];
 
-  const blockQuotes = Array.from(content.matchAll(BLOCK_QUOTE_PATTERN)).map((match) =>
-    String(match[1] || '')
+  const blockQuotes = Array.from(content.matchAll(BLOCK_QUOTE_PATTERN)).map((match) => {
+    const body = String(match[1] || '')
       .replace(/^>\s?/, '')
-      .trim()
-  );
+      .trim();
+    // Cytat blokowy bardzo często niesie WŁASNE cudzysłowy (`> "…"`). Renderer
+    // dokleja swoje, więc para z treści musi tu zniknąć — inaczej na ekranie
+    // stoi `""…""`. Zdejmujemy WYŁĄCZNIE parę otaczającą całość; cudzysłowy
+    // wewnątrz zdania zostają nietknięte.
+    const unwrapped = body.match(WRAPPING_QUOTE_PATTERN);
+    return unwrapped ? String(unwrapped[1]).trim() : body;
+  });
 
   const inlineQuotes = Array.from(content.matchAll(INLINE_QUOTE_PATTERN)).map((match) =>
     String(match[1] || '').trim()
