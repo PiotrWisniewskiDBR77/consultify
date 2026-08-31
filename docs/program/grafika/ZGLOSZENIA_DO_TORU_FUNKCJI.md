@@ -46,6 +46,21 @@ systemie, nie przez lekturę kodu):
 | 6 | P2 | potwierdzone mutacyjnie | Jądro `FilterableTable` — podłoga 112px w `columnFit` ściska kolumny przy przepełnieniu | jądro `FilterableTable` (228 importerów) + `ExecutionSummaryOneLook.tsx` (tabela „TOP ryzyka", wymuszone 980px) | otwarte — wymaga osobnego nadzorowanego dyżuru |
 | 7 | P2 | zastane, nienaprawione (wymaganie właściciela) | System bramki zapisu dla metod licencjonowanych (SIRI) | `KANON_Z_ODBIOROW.md` (wpis 31.08) | otwarte — tor grafiki odpowiada tylko za uczciwy komunikat |
 | 8 | P3 | zastane, nienaprawione | Excel: „Zadanie ukończone / 0-z-8" po ponownym otwarciu | ekran „excele-edytowalna-siatka" | otwarte — zgłoszone wcześniej torowi funkcji |
+| 9 | P1 | potwierdzone mutacyjnie | `AdminComplianceEvidencePanel` — puste kolumny Zdarzenie/Aktor/Ryzyko (camelCase vs snake_case) | `AdminComplianceEvidencePanel.tsx:81-110` vs `adminP32.routes.ts:2208-2296` | otwarte |
+| 10 | P2 | hipoteza z dowodem kodowym | `check-list-canon.sh` nie skanuje paneli Admina (detekcja ograniczona do `*Hub.tsx`/`*LightShell.tsx`) — dług cichy | `scripts/check-list-canon.sh` | otwarte — rozszerzenie bramki to osobny dyżur |
+| 11 | P2 | hipoteza z dowodem kodowym | Flaga `summaryOneLook`: komentarz „Default OFF do akceptu" vs logika ON wszędzie poza public-prod | `executionFeatureFlags.ts:41-48,115` | otwarte — wymaga weryfikacji, czy właściciel akceptował |
+| 12 | P2 | hipoteza z dowodem kodowym | `RolloutTab.tsx:987` — błąd sieci gasi zakładkę mimo istniejącej ścieżki degradacji (kod martwy w swoim scenariuszu) | `RolloutTab.tsx:987` | otwarte |
+| 13 | P2 | hipoteza z dowodem kodowym | `SOURCE_COLORS` kalendarza — crimson hexy jako kolory kategorii | `calendarTypes.ts:91-99` | otwarte |
+| 14 | P2 | potwierdzone mutacyjnie | `TaskDetailView`/`NModeHeader` — przycisk PRIMARY na surowych klasach navy zamiast tokenów `c-*` | `NModeHeader` (karta `karta-task`), zweryfikowane w DOM | otwarte |
+| 15 | P3 | hipoteza z dowodem kodowym | Martwy kod `NotificationsContent.tsx` (1426 linii) + `NotificationsHub.tsx` (1217) — zero importerów | `NotificationsContent.tsx`, `NotificationsHub.tsx` | otwarte |
+| 16 | P3 | potwierdzone mutacyjnie | `ExecutionResourcesSurface.tsx:68` — kapitalizacja `\b\w` łamie polskie diakrytyki („WóJcik") | `ExecutionResourcesSurface.tsx:68` | otwarte |
+| 17 | P3 | hipoteza z dowodem kodowym | `AdminIncidentHistoryPanel.tsx:76` — link do nieistniejącego `/admin/health/overview` | `AdminIncidentHistoryPanel.tsx:76` | otwarte |
+| 18 | P1 | potwierdzone mutacyjnie | `SettingsCard.tsx:74` + `SettingsToggle.tsx:56` (`src/components/AISettings/`) — `text-navy-900` bez `dark:` → treść znika w ciemnym motywie; komponenty WSPÓŁDZIELONE | `src/components/AISettings/SettingsCard.tsx:74`, `SettingsToggle.tsx:56` | otwarte — promień rażenia poza domeną AI |
+| 19 | P2 | hipoteza z dowodem kodowym | `c-accent-soft` (`src/index.css:70,295`) = crimson w rgba pod nazwą tokenu — nie łapie go grep `primary-*`; bramki kanonu ślepe na ten wektor | `src/index.css:70,295` | otwarte |
+| 20 | P2 | hipoteza z dowodem kodowym | Samowolne adnotacje `§27-exempt` na tabelach z akcjami — obejście kanonu | `ModelsProvidersTab.tsx:649` | otwarte — przegląd wszystkich wystąpień `§27-exempt` osobnym dyżurem |
+| 21 | P2 | hipoteza z dowodem kodowym | Podwójne/potrójne zagnieżdżenie nawigacji w domenie ai (`AdminAIControlCenterPanel` → `AIModule` TabLayout EN → `OrgAISettingsView` taby) — 4 zakładki osiągalne tylko wewnętrznym paskiem, bez slotu menu | `AdminAIControlCenterPanel` → `AIModule` → `OrgAISettingsView` | otwarte |
+| 22 | P1 | potwierdzone mutacyjnie | `CommandCenterAttentionQueue` — `highRiskCount` zawsze 0 (płaska vs zagnieżdżona odpowiedź) | `AdminCommandCenterPanel.tsx:106` vs `adminP32.routes.ts:2942-2950,2139-2164` | otwarte |
+| 23 | P2 | potwierdzone mutacyjnie | `CommandCenterDlpTab.tsx:244` — waga „Wysoka" dostaje ten sam kolor co „Krytyczna"; rozdzielić semantykę | `CommandCenterDlpTab.tsx:244` | otwarte |
 
 ---
 
@@ -187,3 +202,122 @@ arkusza licznik zadań resetuje się do „0-z-8" mimo że zadanie było
 oznaczone jako ukończone. Zgłoszony wcześniej torowi funkcji; ta pozycja
 tylko konsoliduje odnośnik w jednym rejestrze zamiast rozpraszać go po
 dziennikach sesji.
+
+### 9. [P1] `AdminComplianceEvidencePanel` — puste kolumny
+
+Rejestrowane jako REALNY BUG podczas pomiaru ekranu `admin-audit-compliance-evidence`
+(runda 2026-08-31): kolumny Zdarzenie/Aktor/Ryzyko renderują się puste na żywym
+ekranie. Przyczyna zlokalizowana w kodzie: frontend czyta pola `action`/`actor`/`risk`,
+backend zwraca `action_type`/`admin_id`/`risk_level` — rozjazd camelCase vs snake_case.
+Źródło: `AdminComplianceEvidencePanel.tsx:81-110` vs `adminP32.routes.ts:2208-2296`.
+
+### 10. [P2] `check-list-canon.sh` nie widzi paneli Admina
+
+Bramka pre-commit kanonu list skanuje tylko pliki `*Hub.tsx`/`*LightShell.tsx`.
+Panele Administracji (billing/team/security/audit/health/ai/command) nie pasują
+do tego wzorca nazw plików, więc mogą łamać kanon list (surowe `FilterableTable`
+zamiast `StandardTable`, brak kebab) i przejść bramkę bez ostrzeżenia. To luka
+w zasięgu bezpiecznika, nie w samej regule. Rozszerzenie wzorca detekcji o
+komponenty panelu Admina to osobny, nadzorowany dyżur — nie punktowa łatka.
+
+### 11. [P2] Sprzeczność flagi `summaryOneLook`
+
+Komentarz w kodzie mówi „Default OFF do akceptu Piotra", ale logika
+(`executionFeatureFlags.ts:41-48,115`) włącza flagę wszędzie poza public-prod —
+czyli ekran `execution-tab-summary` jest dziś widoczny szerzej, niż komentarz
+sugeruje. Ten sam kształt sprzeczności co DEC-317. Wymaga potwierdzenia z
+właścicielem, czy taki zakres widoczności był świadomie akceptowany, zanim
+ktokolwiek uzna flagę za „bezpiecznie OFF".
+
+### 12. [P2] `RolloutTab.tsx:987` — błąd sieci gasi całą zakładkę
+
+Zakładka „Rollout" ma zaimplementowaną ścieżkę degradacji, ale błąd sieci
+gasi całą zakładkę, zanim ta ścieżka zdąży zadziałać — czyli kod degradacji
+jest dziś martwy we własnym scenariuszu awaryjnym. Zmierzone przy pomiarze
+`execution-tab-rollout` (runda 2026-08-31), zawężone tylko do podwidoku KPI.
+
+### 13. [P2] `SOURCE_COLORS` kalendarza — crimson jako kolor kategorii
+
+`src/components/MyWork/Calendar/calendarTypes.ts:91-99` hardkoduje crimson
+hexy (`#A51C30`, `#D42B3D`) jako kolory KATEGORII wydarzeń w kalendarzu Mojej
+Pracy — dokładnie Pułapka nr 1 z `CLAUDE.md` (czerwień tylko semantyka
+krytyczna), tyle że w miejscu, gdzie crimson koduje zwykłą kategorię, nie
+stan krytyczny.
+
+### 14. [P2] `NModeHeader` karty zadania — CTA na surowych klasach
+
+Przycisk PRIMARY „Wyślij do przeglądu" w `NModeHeader` (używanym przez kartę
+`karta-task`) używa surowych `bg-navy-900` / `dark:bg-[#F4F7FB]` zamiast
+tokenów `c-*`. Zweryfikowane w DOM, nie tylko w kodzie. To odkrycie
+skorygowało dawny wpis rejestru „karta-task: A / Bez odchyleń" na B — patrz
+`status.json` i `DZIENNIK_GRAFIKA.md` Z-19.
+
+### 15. [P3] Martwy kod `NotificationsContent.tsx` + `NotificationsHub.tsx`
+
+`NotificationsContent.tsx` (1426 linii) i `NotificationsHub.tsx` (1217 linii)
+nie mają dziś żadnego importera w produkcie — kandydat do usunięcia, zgodnie
+z praktyką czyszczenia martwego kodu stosowaną gdzie indziej w repo.
+
+### 16. [P3] `ExecutionResourcesSurface.tsx:68` — kapitalizacja łamie diakrytyki
+
+Wyrażenie regularne oparte na `\b\w` do kapitalizacji nazwisk/etykiet psuje
+polskie znaki diakrytyczne — zaobserwowane na żywo jako „WóJcik" zamiast
+„Wójcik" na ekranie `execution-tab-resources` (runda 2026-08-31).
+
+### 17. [P3] `AdminIncidentHistoryPanel.tsx:76` — martwy link
+
+Link na ekranie Historia incydentów (`admin-health-incident-history`)
+prowadzi do `/admin/health/overview`, trasa która nie istnieje w produkcie.
+
+### 18. [P1] `SettingsCard`/`SettingsToggle` — tekst znika w ciemnym motywie
+
+`src/components/AISettings/SettingsCard.tsx:74` ma `text-navy-900` bez
+wariantu `dark:`, więc nagłówki kart są niewidoczne w ciemnym motywie.
+`SettingsToggle.tsx:56` ma ten sam problem dla WSZYSTKICH etykiet
+przełączników. Oba komponenty są WSPÓŁDZIELONE poza domeną AI (zaobserwowane
+przy pomiarze `admin-ai-ai-limits-budgets` i `admin-ai-data-privacy`), więc
+promień rażenia defektu jest szerszy niż panel Sterowania AI, w którym
+został znaleziony — wymaga sprawdzenia wszystkich konsumentów tych dwóch
+komponentów.
+
+### 19. [P2] `c-accent-soft` — crimson pod nazwą tokenu
+
+`src/index.css:70,295` definiuje `c-accent-soft` jako crimson w zapisie
+`rgba(...)` — czyli formalnie „token", ale realnie ten sam kolor, którego
+kanon zakazuje poza semantyką krytyczną. Grep po `primary-*` (standardowy
+sposób szukania naruszeń Pułapki nr 1) tego nie łapie, bo nazwa tokenu nie
+zawiera `primary`. Używany m.in. w stanie ON `SettingsToggle` — bramki
+kanonu są dziś ślepe na ten konkretny wektor obejścia.
+
+### 20. [P2] Samowolne adnotacje `§27-exempt`
+
+`ModelsProvidersTab.tsx:649` ma adnotację `§27-exempt` przy surowej tabeli
+`<table>` z akcjami — czyli ktoś oznaczył kod jako świadomie zwolniony z
+kanonu list, bez udokumentowanej decyzji właściciela w `KANON_Z_ODBIOROW.md`.
+Wymaga przeglądu wszystkich wystąpień `§27-exempt` w repo osobnym dyżurem —
+część może być zasadna, część może być cichym obejściem bramki.
+
+### 21. [P2] Potrójne zagnieżdżenie nawigacji w domenie ai
+
+`AdminAIControlCenterPanel` → `AIModule` (TabLayout po angielsku) →
+`OrgAISettingsView` (własne taby) — cztery zakładki (`llm-config`,
+`policy-governance`, `help-analytics`, `token-management`) osiągalne tylko
+przez wewnętrzny pasek nawigacji trzeciego poziomu, bez odpowiadającego im
+slotu w menu głównym. Użytkownik, który nie trafi na właściwy wewnętrzny
+pasek, nie wie, że te ekrany istnieją.
+
+### 22. [P1] `CommandCenterAttentionQueue` — `highRiskCount` zawsze 0
+
+Rejestrowane jako REALNY BUG przy pomiarze `admin-command-attention-queue`
+(runda 2026-08-31, dyżur 2): sygnał „Ryzyka wymagające przeglądu" pokazuje
+zawsze 0/info. `AdminCommandCenterPanel.tsx:106` czyta `risk?.highRiskCount`
+płasko, backend zwraca zagnieżdżone `summary.audit.highRiskCount` —
+`adminP32.routes.ts:2942-2950,2139-2164`. Ten sam kształt defektu co
+zgłoszenie #9 (rozjazd kształtu odpowiedzi między frontendem a backendem).
+
+### 23. [P2] `CommandCenterDlpTab.tsx:244` — kolizja koloru wagi
+
+Waga „Wysoka" i waga „Krytyczna" dostają ten sam kolor `text-c-danger` —
+dwa różne poziomy ryzyka są dziś nieodróżnialne kolorem na ekranie
+`admin-command-dlp`. Wymaga rozdzielenia semantyki kolorów (np. `c-warning`
+dla „Wysoka", `c-danger` zarezerwowane dla „Krytyczna").

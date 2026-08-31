@@ -278,3 +278,16 @@ i jaka jest jej formuła płatności; reszta dzieje się tak samo.
 **To jest zadanie dla toru funkcji i modelu rozliczeń — nie dla toru grafiki.** Tor grafiki
 odpowiada wyłącznie za to, żeby komunikat o licencji i o bramce zapisu był **uczciwy i zrozumiały**:
 mówił wprost, dlaczego zapis jest wstrzymany, czego brakuje i co odblokuje wynik.
+
+---
+
+### 2026-08-31 — Zakres pełnej rundy odbioru i wyjątek dla AI OS
+
+- **Decyzja właściciela 2026-08-31:** pełna runda odbioru obejmuje **WSZYSTKO** — 16 modułów +
+  narzędzia + kreatory + panel Administracji (7 domen) + Internal Tools/AI OS. Nic nie zostaje
+  poza rejestrem z powodu „to wewnętrzne" albo „to nie jest moduł menu".
+- **AI OS / Internal Tools to konsola wewnętrzna** (dostęp tylko `dbr77.com`) — kanon list
+  `StandardTable` jej **nie obowiązuje** w tej rundzie odbioru. Obowiązuje za to zakaz
+  dekoracyjnego crimson (Pułapka nr 1 dotyczy jej tak samo jak reszty produktu) i docelowo
+  polski interfejs (dziś część ekranów jest po angielsku — nazwane jako wyjątki, nie
+  zaakceptowane jako stan końcowy). Źródło: rejestracja modułu `17-aios`.
