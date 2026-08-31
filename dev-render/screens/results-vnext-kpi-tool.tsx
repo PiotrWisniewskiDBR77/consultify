@@ -98,6 +98,50 @@ const MEASUREMENT = {
   recordedAt: '2026-08-08T09:00:00Z',
 };
 
+// FIX-199 — section 7 (Karty wyników) and section 8 (Historia) had no stub
+// at all: any Api.get for either fell through to `realGet(url)`, which has
+// no backend to answer it in dev-render, so both sections rendered empty —
+// the exact gap odbiór 199 R3b flagged ("sekcje 7/8 nie na żadnym zrzucie").
+// Content below MIRRORS the real Wave 3 owner-review seed
+// (`server/scripts/seed-wave3-results-owner-review.ts`), verified live
+// against `consultify_w3_results_owner_fix199` (PG 6143) through the real
+// `ApiGateway`, not invented: the scorecard's name/description/scope/
+// reviewFrequency/lifecycleStatus are byte-identical to the seeded
+// `rvn_kpi_scorecards` row, and the history entry's `kind`/`summaryCode`
+// shape is byte-identical to the real event a live
+// `POST /:kpiId/measurements` call produced against that same seed
+// (`kind:'MEASUREMENT'`, `summaryCode:'KPI_MEASUREMENT_RECORDED'` —
+// `kpiHistoryRepository.ts` `kindFor`/`summaryCode` derivation, not a
+// guess).
+const SCORECARD = {
+  scorecardId: 'scorecard-1',
+  organizationId: 'org-dbr77-demo',
+  name: 'Karta realizacji operacyjnej',
+  description: 'Miesięczny przegląd terminowości i jakości dostaw',
+  scopeType: 'organization' as const,
+  scopeId: 'org-dbr77-demo',
+  ownerUserId: 'user-piotr-demo',
+  ownerName: null,
+  reviewFrequency: 'monthly' as const,
+  lifecycleStatus: 'active' as const,
+  rowVersion: 1,
+  createdBy: 'user-piotr-demo',
+  createdAt: '2026-08-21T08:00:00.000Z',
+  updatedAt: '2026-08-21T08:00:00.000Z',
+};
+
+const HISTORY_ENTRIES = [
+  {
+    entryId: 'evt-history-1',
+    occurredAt: MEASUREMENT.recordedAt,
+    kind: 'MEASUREMENT' as const,
+    summaryCode: 'KPI_MEASUREMENT_RECORDED',
+    actorUserId: MEASUREMENT.recordedBy,
+    sourceVersion: 1,
+    references: { measurementId: MEASUREMENT.measurementId },
+  },
+];
+
 const DEVIATION_CASE = {
   caseId: CASE_ID,
   organizationId: 'org-dbr77-demo',
@@ -187,6 +231,12 @@ Api.get = (async (url: string) => {
   }
   if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/initiative-impacts`)) {
     return { impacts: INITIATIVE_IMPACTS };
+  }
+  if (url.startsWith(`/vnext/results/kpi/scorecards/for-kpi/${KPI_ID}`)) {
+    return { scorecards: [SCORECARD] };
+  }
+  if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/history`)) {
+    return { entries: HISTORY_ENTRIES, nextCursor: null };
   }
   if (url.startsWith('/vnext/results/kpi/deviation-cases/')) {
     const caseId = url.split('/vnext/results/kpi/deviation-cases/')[1]?.split('?')[0];

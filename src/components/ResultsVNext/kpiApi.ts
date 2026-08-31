@@ -564,6 +564,37 @@ export async function listKpiMeasurements(
   return (resp?.measurements ?? []) as KpiMeasurementDto[];
 }
 
+export type KpiHistoryKind =
+  | 'LIFECYCLE'
+  | 'DEFINITION_VERSION'
+  | 'MEASUREMENT'
+  | 'MEASUREMENT_CORRECTION'
+  | 'VISIBILITY';
+
+export interface KpiHistoryEntryDto {
+  entryId: string;
+  occurredAt: string;
+  kind: KpiHistoryKind;
+  summaryCode: string;
+  actorUserId: string | null;
+  sourceVersion: number;
+  references: Record<string, string>;
+}
+
+export interface KpiHistoryPageDto {
+  entries: KpiHistoryEntryDto[];
+  nextCursor: string | null;
+}
+
+/** `GET /api/vnext/results/kpi/:kpiId/history` — immutable event lineage. */
+export async function getKpiHistory(kpiId: string): Promise<KpiHistoryPageDto> {
+  const resp = await Api.get(`/vnext/results/kpi/${encodeURIComponent(kpiId)}/history`);
+  return {
+    entries: (resp?.entries ?? []) as KpiHistoryEntryDto[],
+    nextCursor: (resp?.nextCursor ?? null) as string | null,
+  };
+}
+
 // ==========================================
 // RN-G2 §G #7 (2026-08-10) — measurement WRITE commands:
 // `POST .../measurements` (record) · `POST .../measurements/:id/corrections`
