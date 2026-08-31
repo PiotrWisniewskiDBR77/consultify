@@ -4284,6 +4284,11 @@ router.post(
           const chunks = await ragService.searchRelevantChunks(message, {
             limit: 5,
             organizationId: req.organizationId || undefined,
+            // FIX-2 (dyżur 210): thread the real requester so an owner-aware
+            // access filter (ragService.appendKnowledgeDocAccessFilter) can
+            // see their own private docs. Same identity resolution as
+            // sharedRetrieval.retrieveContext above.
+            userId: (req as any).user?.id || (req as any).userId || undefined,
             documentIds: governedAttachmentDocIds,
           });
 

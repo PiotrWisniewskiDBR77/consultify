@@ -20,6 +20,7 @@ type SearchParams = {
 
 type SearchContext = {
   organizationId?: string;
+  userId?: string;
 };
 
 type RagChunk = {
@@ -63,7 +64,7 @@ export async function searchKnowledgeBase(
       consumerClass: 'agent',
       query,
       organizationId: context.organizationId || 'system',
-      userId: 'tool:search_knowledge_base',
+      userId: context.userId || 'tool:search_knowledge_base',
     });
     logger.info(
       `[searchKnowledgeBase] Policy decision: id=${policyResult.decision.id}, allowed=${policyResult.decision.allowed}, outcome=${policyResult.decision.outcome}`
@@ -127,6 +128,7 @@ export async function searchKnowledgeBase(
     const results = await ragService.searchRelevantChunks(query, {
       limit: maxResults,
       organizationId: context.organizationId,
+      userId: context.userId,
       ...(documentIds && documentIds.length > 0 ? { documentIds } : {}),
     });
 
