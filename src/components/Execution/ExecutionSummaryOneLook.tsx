@@ -322,9 +322,22 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
         width: '150px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
+          const label = decisionKindLabel(row.kind);
+          // Defekt „ucinany tekst" (2026-08-31): karta jest wąska (grid
+          // lg:grid-cols-2), a `StandardTable` bez `minTableWidth="auto"`
+          // wymusza domyślne 980px — kolumna renderowała się SZERZEJ, ale
+          // fizycznie poza widocznym skrawkiem karty, więc „Przeterminowana"
+          // ucinało się bez wielokropka na krawędzi (nie w komórce). Naprawa
+          // właściwa jest niżej, przy wywołaniu `<StandardTable minTableWidth="auto">`
+          // — to tutaj to DRUGA linia obrony: gdy dopasowanie do kontenera
+          // i tak zwęzi tę kolumnę do podłogi (112px), pełny tekst dalej jest
+          // dostępny w `title`, a widoczny fragment kończy się wielokropkiem
+          // zamiast łamać się w połowie wyrazu — wzorem kolumny „Pozycja"
+          // wyżej (`truncate`), ale z jawnym `title`, bo TU skracanie realnie
+          // się zdarza (tam tylko teoretycznie).
           return (
-            <span className={`text-sm font-medium ${band.text}`}>
-              {decisionKindLabel(row.kind)}
+            <span className={`block truncate text-sm font-medium ${band.text}`} title={label}>
+              {label}
             </span>
           );
         },
@@ -561,6 +574,18 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                   'No decisions, overdue items or blockers require you.'
                 ),
               }}
+              // Defekt „ucinany tekst" (2026-08-31): ta karta żyje w wąskim
+              // `lg:grid-cols-2` (~500px na tabelę), a `FilterableTable`
+              // domyślnie wymusza `min-width: 980px` na elemencie `table`
+              // (`DEFAULT_MIN_TABLE_WIDTH`). Sama kolumna renderowała się na
+              // pełnej (a nawet proporcjonalnie POWIĘKSZONEJ) szerokości, ale
+              // fizycznie POZA widocznym skrawkiem karty — `overflow-x-auto`
+              // ucinał tekst na krawędzi bez wielokropka, nie w komórce.
+              // `minTableWidth="auto"` (prop istnieje dokładnie po to, patrz
+              // `FilterableTable.tsx`) zdejmuje ten sztywny floor i włącza
+              // realne dopasowanie kolumn do kontenera (`columnFit`) — tabela
+              // mieści się w karcie bez ukrytego przewijania.
+              minTableWidth="auto"
             />
           </section>
         </div>
