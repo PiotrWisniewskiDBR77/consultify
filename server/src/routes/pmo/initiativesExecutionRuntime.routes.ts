@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import databaseConfig from '../../config/DatabaseConfig.js';
 import { adoptAcceptedClassicInitiative } from '../../domain/initiatives-execution/adoptAcceptedClassicInitiative.js';
+import { adoptChatDraftInitiative } from '../../domain/initiatives-execution/adoptChatDraftInitiative.js';
 import {
   createAIAnalysisProposal,
   reviewAIAnalysisProposal,
@@ -178,6 +179,14 @@ const RegisterSchema = z.object({
 const AdoptAcceptedClassicSchema = z.object({
   candidateId: z.string().min(1).max(255),
   initiativeId: z.string().min(1).max(255),
+  expectedVersion: z.literal(0),
+  clientRequestId: z.string().min(1).max(255),
+  projectId: z.string().min(1).max(255),
+  visibility: z.enum(['PROJECT', 'ORGANIZATION_RESTRICTED']),
+  initiativeOwnerId: z.string().min(1).max(255),
+});
+const AdoptChatDraftSchema = z.object({
+  chatInitiativeId: z.string().min(1).max(255),
   expectedVersion: z.literal(0),
   clientRequestId: z.string().min(1).max(255),
   projectId: z.string().min(1).max(255),
@@ -1796,6 +1805,68 @@ export function createInitiativesExecutionRuntimeRouter(
         createIfMissing: true,
         payload: {
           candidateId: parsed.data.candidateId,
+          projectId: parsed.data.projectId,
+          initiativeOwnerId: parsed.data.initiativeOwnerId,
+          visibility: parsed.data.visibility,
+        },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+
+  router.post(
+    '/adoptions/chat-draft',
+    asyncHandler(async (req, res) => {
+      if (process.env.ENABLE_TERESA_ADOPT_CHAT_DRAFT !== 'true') {
+        res.status(404).json({ error: { code: 'FEATURE_DISABLED' } });
+        return;
+      }
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const parsed = AdoptChatDraftSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
+        return;
+      }
+      if (!(await deps.authorize(actor, parsed.data.projectId, 'initiative.create'))) {
+        res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
+        return;
+      }
+      if (
+        !(await deps.reader.isEligibleInitiativeOwner(
+          actor.organizationId,
+          parsed.data.projectId,
+          parsed.data.initiativeOwnerId
+        ))
+      ) {
+        res.status(422).json({ error: { code: 'INITIATIVE_OWNER_INELIGIBLE' } });
+        return;
+      }
+      const policy = await deps.resolvePolicy(
+        actor.organizationId,
+        parsed.data.projectId,
+        parsed.data.chatInitiativeId
+      );
+      const result = await adoptChatDraftInitiative(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'initiative',
+        aggregateId: parsed.data.chatInitiativeId,
+        expectedVersion: 0,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId:
+          String(
+            (req as RuntimeRequest).correlationId || req.header('X-Correlation-ID') || ''
+          ).trim() || `adopt-chat-draft-${parsed.data.clientRequestId}`,
+        policyId: policy.policyId,
+        policyVersion: policy.version,
+        commandType: 'initiative.adopt-chat-draft',
+        createIfMissing: true,
+        payload: {
+          chatInitiativeId: parsed.data.chatInitiativeId,
           projectId: parsed.data.projectId,
           initiativeOwnerId: parsed.data.initiativeOwnerId,
           visibility: parsed.data.visibility,
