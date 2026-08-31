@@ -14,6 +14,7 @@ import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { validateExternalServiceResponse } from '../../utils/typeGuards.js';
+import { buildKnowledgeDocAccessFilter as buildSharedKnowledgeDocAccessFilter } from './knowledgeDocAccessFilter.js';
 
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
 export const EMBEDDING_DIMENSIONS = 1536;
@@ -33,6 +34,7 @@ type EmbeddingSearchOptions = {
   userId?: string;
   minSimilarity?: number;
   sourceType?: string;
+  projectIds?: string[];
 };
 
 type EmbeddingRow = {
@@ -225,7 +227,7 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, organizationId, userId, minSimilarity = 0.5 } = options;
+    const { limit = 5, organizationId, userId, projectIds, minSimilarity = 0.5 } = options;
 
     // FIX-1 (dyżur 210): `e.*` alone never populated `EmbeddingRow.content` — the
     // real (Postgres-only, see Database.ts header) `ai_knowledge_embeddings`
@@ -244,7 +246,7 @@ export class EmbeddingService {
       params.push(organizationId);
     }
 
-    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, false, params.length + 1);
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, false, params.length + 1, projectIds);
     where.push(accessFilter.sql);
     params.push(...accessFilter.params);
     if (where.length > 0) sql += ` WHERE ${where.join(' AND ')}`;
@@ -281,7 +283,7 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId, userId } = options;
+    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId, userId, projectIds } = options;
     const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
     let sql = `
@@ -313,7 +315,7 @@ export class EmbeddingService {
       paramIndex++;
     }
 
-    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, true, paramIndex);
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, true, paramIndex, projectIds);
     sql += ` AND ${accessFilter.sql}`;
     params.push(...accessFilter.params);
     paramIndex += accessFilter.params.length;
@@ -342,7 +344,8 @@ export class EmbeddingService {
     embeddingAlias: string,
     userId: string | undefined,
     isPg: boolean,
-    firstParamIndex: number
+    firstParamIndex: number,
+    projectIds?: string[]
   ): Promise<{ sql: string; params: string[] }> {
     let hasScope = false;
     let hasOwner = false;
@@ -350,11 +353,12 @@ export class EmbeddingService {
       if (isPg) {
         const result = await getDatabase().query<{ column_name: string }>(
           `SELECT column_name FROM information_schema.columns
-            WHERE table_name = 'knowledge_docs' AND column_name IN ('scope', 'owner_id')`
+            WHERE table_name = 'knowledge_docs' AND column_name IN ('scope', 'owner_id', 'project_id', 'ai_visibility', 'sensitivity')`
         );
         const columns = new Set(result.rows.map((row) => row.column_name));
         hasScope = columns.has('scope');
         hasOwner = columns.has('owner_id');
+        return buildSharedKnowledgeDocAccessFilter({ columns, dialect: 'postgres', firstParamIndex, documentAlias: 'd', embeddingAlias, userId, projectIds });
       } else {
         const rows = await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
           fallback: false,
@@ -362,6 +366,7 @@ export class EmbeddingService {
         const columns = new Set((rows || []).map((row) => String(row.name || '')));
         hasScope = columns.has('scope');
         hasOwner = columns.has('owner_id');
+        return buildSharedKnowledgeDocAccessFilter({ columns, dialect: 'question', documentAlias: 'd', embeddingAlias, userId, projectIds });
       }
     } catch {
       // Missing/unreadable provenance is resolved fail-closed below.
@@ -385,18 +390,11 @@ export class EmbeddingService {
       };
     }
 
-    if (userId && hasOwner) {
-      const placeholder = isPg ? `$${firstParamIndex}` : '?';
-      return {
-        sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id AND d.scope = 'user' AND d.owner_id IS DISTINCT FROM ${placeholder})`,
-        params: [userId],
-      };
-    }
-
-    return {
-      sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id AND d.scope = 'user')`,
-      params: [],
-    };
+    return buildSharedKnowledgeDocAccessFilter({
+      columns: new Set([...(hasScope ? ['scope'] : []), ...(hasOwner ? ['owner_id'] : [])]),
+      dialect: isPg ? 'postgres' : 'question', firstParamIndex, documentAlias: 'd',
+      embeddingAlias, userId, projectIds,
+    });
   }
 
   /**
