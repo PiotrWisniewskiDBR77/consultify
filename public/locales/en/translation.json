@@ -26059,7 +26059,9 @@
     "generateDeck": "Generate Presentation",
     "generateTable": "Generate Table",
     "docReady": "Document ready — use Preview File or Download",
-    "showingRows": "Showing 25 of {{total}} rows",
+    "showingRows": "Showing first {{cap}} of {{total}} rows",
+    "showingAllRows": "Showing all {{total}} rows",
+    "showAllRows": "Show all",
     "excele": {
       "reopenNotFound": "This spreadsheet's content could not be found — the source data was deleted or has expired.",
       "reopenNotFoundToast": "Could not open the spreadsheet — content was not found.",
