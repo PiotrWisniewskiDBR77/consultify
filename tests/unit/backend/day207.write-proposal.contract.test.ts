@@ -49,6 +49,31 @@ vi.mock('../../../server/src/services/aiRunLedgerService.js', () => ({
 vi.mock('../../../server/src/services/initiative/createInitiativeService.js', () => ({
   createInitiative: vi.fn(),
 }));
+vi.mock('../../../server/src/services/personalTask/createPersonalTaskService.js', () => ({
+  createPersonalTask: vi.fn(async (input: any) => {
+    const id = `day207-task-${++state.next}`;
+    const ownerId = input.assigneeId || input.userId;
+    const created = {
+      id,
+      title: input.title,
+      description: input.description ?? null,
+      status: 'todo',
+      priority: input.priority || 'medium',
+      dueDate: input.dueDate ?? null,
+      tags: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      completedAt: null,
+      sourceType: input.sourceType ?? null,
+      sourceId: input.sourceId ?? null,
+      ownerId,
+      reporterId: input.userId,
+      idempotent: false,
+    };
+    state.tasks.push({ input, created });
+    return created;
+  }),
+}));
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: vi.fn(async (sql: string, params: any[] = []) => {
     const q = sql.replace(/\s+/g, ' ').trim();
@@ -152,23 +177,20 @@ describe('Day207 WRITE-as-proposal contract', () => {
     expect(state.events).toContain('proposal_pending_review');
   });
 
-  // FIX-207 pkt 1 (ODBIOR_207.md): before this fix, executing an approved
-  // create_task proposal wrote directly into legacy `tasks` (bypassing the
-  // canonical Runtime-v1 execution-work writer, which was never actually
-  // wired for this path). The fix retires that silent legacy write; the
-  // proposal now fails closed at execution time instead of landing quietly
-  // in a table the rest of the app treats as read-only-legacy. This test
-  // used to assert `state.tasks` had exactly one row after approve+execute —
-  // it now asserts the opposite: approval never mutates `tasks`, and
-  // execution fails with the canonical-writer-required error instead of
-  // silently succeeding into legacy.
-  it('never mutates legacy tasks even after approval — fails closed pending a canonical writer', async () => {
+  // FIX-207 pkt 1 (ODBIOR_207.md) + FIX-207b (decyzja właściciela 2026-08-31):
+  // pierwsza runda failowała jawnie tu (brak kanonicznego writera). Właściciel
+  // rozstrzygnął: ten sam obiekt biznesowy co ręczne zadanie w My Work ma iść
+  // TĄ SAMĄ drogą — `createPersonalTask()`. Ten test dowodzi, że mutacja
+  // faktycznie zachodzi wyłącznie PO zatwierdzeniu, przez wspólny writer, i że
+  // dociera do niego komplet pól (organizacja/autor/właściciel/projekt/
+  // prowieniencja) — nie samo "coś się zapisało".
+  it('mutates via the shared My Work writer only after approval, with full attribution', async () => {
     const { default: executor } = await import(
       '../../../server/src/services/aiActionExecutor.js'
     );
     const proposal = await executor.requestChatToolProposal({
       toolName: 'create_task',
-      args: { title: 'Execute once' },
+      args: { title: 'Execute once', assignee_id: 'assignee-9' },
       userId: 'user-1',
       organizationId: 'org-1',
       projectId: 'project-1',
@@ -176,15 +198,24 @@ describe('Day207 WRITE-as-proposal contract', () => {
     expect(state.tasks).toHaveLength(0);
     await executor.approveAction(proposal.actionId, 'reviewer-1');
     const execResult = await executor.executeAction(proposal.actionId, 'reviewer-1');
-    expect(execResult.success).toBe(false);
-    expect(execResult.error).toMatch(/canonical Runtime-v1 writer/);
-    expect(state.tasks).toHaveLength(0);
+    expect(execResult.success).toBe(true);
+    expect(state.tasks).toHaveLength(1);
+    const { input } = state.tasks[0];
+    expect(input).toMatchObject({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      title: 'Execute once',
+      assigneeId: 'assignee-9',
+      projectId: 'project-1',
+      sourceType: 'ai_chat_proposal',
+      sourceId: proposal.actionId,
+    });
     expect(state.events).toEqual(
       expect.arrayContaining([
         'proposal_pending_review',
         'proposal_approved',
         'execution_started',
-        'execution_failed',
+        'execution_succeeded',
       ])
     );
   });

@@ -11,7 +11,7 @@ import { all, get, run } from '../utils/DbPromise.js';
 let dbAll = all;
 let dbGet = get;
 let dbRun = run;
-import { EXECUTION_SPINE_LEGACY_READ_ONLY_CODE } from '../middleware/executionSpineLegacyReadOnly.middleware.js';
+import { normalizePermissionRole } from '../middleware/auth.middleware.js';
 import {
   mapDbActionStatusToV8Lifecycle,
   V8LifecycleState,
@@ -25,6 +25,9 @@ import {
   recordLegacyAuditSafely,
 } from './aiRunLedgerService.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { createPersonalTask } from './personalTask/createPersonalTaskService.js';
+import DecisionController from '../controllers/DecisionController.js';
+import PermissionService from './permissionService.js';
 
 // Enums and Constants
 export const ACTION_TYPES = {
@@ -37,18 +40,6 @@ export const ACTION_TYPES = {
   EXPLAIN_CONTEXT: 'EXPLAIN_CONTEXT',
   ANALYZE_RISKS: 'ANALYZE_RISKS',
 };
-
-/**
- * FIX-207 pkt 1 (ODBIOR_207.md): thrown instead of a direct legacy INSERT
- * when an approved chat write-proposal has no canonical Runtime-v1 writer to
- * land in. Carries the same `code` as `requireCanonicalExecutionWriter`
- * (server/src/middleware/executionSpineLegacyReadOnly.middleware.ts) so a
- * caller inspecting the failure sees one consistent contract, whether the
- * refusal happened at the HTTP boundary or inside the executor.
- */
-class CanonicalExecutionWriterRequiredError extends Error {
-  code = EXECUTION_SPINE_LEGACY_READ_ONLY_CODE;
-}
 
 export const ACTION_STATUS = {
   PENDING: 'PENDING',
@@ -186,6 +177,46 @@ function normalizeActionRow(action: any): any {
     approved_by: action.approved_by || action.approvedBy || null,
     executed_at: action.executed_at || action.executedAt || null,
   };
+}
+
+/**
+ * FIX-207b (decyzja właściciela 2026-08-31): invokes an Express `asyncHandler`
+ * controller function IN-PROCESS, without a real HTTP request. Used to call
+ * `DecisionController.createDecision` — the exact same code every My Work
+ * decision-creation surface calls via `POST /api/decisions`
+ * (src/services/api/pmo.api.ts:createDecision) — from the chat write-proposal
+ * executor, so there is ONE writer, not a duplicated copy of its
+ * transactional, atomicity-sensitive INSERT/auto-block/audit logic (that
+ * logic is deliberately NOT re-implemented here — see the "Codex review
+ * follow-up" comment on DecisionController.createDecision for why it is
+ * fragile to duplicate). `asyncHandler` catches thrown errors and forwards
+ * them to `next(err)` instead of rejecting the returned promise, so `next`
+ * here captures the error for the caller to inspect/rethrow.
+ */
+async function callExpressHandler(
+  handler: (req: any, res: any, next: any) => Promise<any>,
+  req: any
+): Promise<{ statusCode: number; body: any }> {
+  let statusCode = 200;
+  let body: any;
+  let capturedError: any = null;
+  const res = {
+    status(code: number) {
+      statusCode = code;
+      return res;
+    },
+    json(payload: any) {
+      body = payload;
+      return res;
+    },
+    headersSent: false,
+  };
+  const next = (err: any) => {
+    capturedError = err;
+  };
+  await handler(req, res, next);
+  if (capturedError) throw capturedError;
+  return { statusCode, body };
 }
 
 /**
@@ -1154,20 +1185,82 @@ const AIActionExecutor = {
     // konkretnej inicjatywy (wymaga: executionCaseId, initiativeId,
     // expectedCaseVersion, ownerId, assigneeId, dueAt i slaAt jako
     // ISO-datetime — WSZYSTKIE pola wymagane) — nie "zadanie w My Work",
-    // które tworzy narzędzie czatu `create_task`
-    // (server/src/services/ai/toolDefinitions.ts:482: wyłącznie title/
-    // description/priority/opcjonalny due_date/assignee_id, zero kontekstu
-    // inicjatywy). Nie ma dziś lekkiego kanonicznego writera dla zadania
-    // spoza inicjatywy, więc — zgodnie z zasadą "cisza gorsza niż porażka"
-    // — failujemy JAWNIE zamiast pisać po cichu do legacy `tasks`.
-    // Zdecydowanie nadzorcy wymagane przed ponownym włączeniem tej ścieżki.
-    throw new CanonicalExecutionWriterRequiredError(
-      'CREATE_DRAFT_TASK: no canonical Runtime-v1 writer available for a ' +
-        'standalone My Work task (execution.task.create requires an ' +
-        'existing executionCaseId/initiativeId that the chat create_task ' +
-        'tool does not collect). Legacy `tasks` INSERT retired for this ' +
-        'path — see aiActionExecutor.ts:_executeCreateTask.'
-    );
+    // które tworzy narzędzie czatu `create_task`.
+    //
+    // FIX-207b (decyzja właściciela 2026-08-31): skoro to ten sam obiekt
+    // biznesowy co ręcznie tworzone zadanie w My Work, zapis idzie TĄ SAMĄ
+    // drogą — `createPersonalTask()` (server/src/services/personalTask/
+    // createPersonalTaskService.ts), wyodrębnioną 1:1 z jedynego dotąd
+    // wołającego, `POST /api/my-work/personal-tasks`
+    // (server/src/routes/my-work.routes.ts). Jedno źródło prawdy dla
+    // INSERT INTO tasks zamiast dwóch kopii tej samej reguły.
+    // FIX-207b: the chat tool's declared JSON schema uses snake_case
+    // (`assignee_id`/`due_date` — services/ai/toolDefinitions.ts:482+), and
+    // draftContent is the tool-call args verbatim (requestChatToolProposal
+    // above does `{ ...args }`, no case conversion). Reading camelCase-only
+    // here silently dropped both fields on every real chat-created task
+    // before this fix — a pre-existing bug, not something FIX-207 introduced,
+    // but it directly undermines "complete owner/attribution fields" (pkt 2)
+    // so it is fixed here rather than left in place. Both cases accepted
+    // defensively in case a future caller passes camelCase directly.
+    const title = draftContent.title;
+    const description = draftContent.description;
+    const assigneeId = draftContent.assignee_id ?? draftContent.assigneeId ?? null;
+    const dueDate = draftContent.due_date ?? draftContent.dueDate ?? null;
+
+    const created = await createPersonalTask({
+      organizationId: action.organization_id,
+      userId: action.user_id,
+      title,
+      description,
+      dueDate,
+      assigneeId: assigneeId || null,
+      projectId: action.project_id ?? null,
+      // Prowieniencja: to zadanie powstało z zatwierdzonej propozycji czatu
+      // Teresy, nie z ręcznego formularza My Work — zapisujemy skąd, żeby
+      // zadanie nie było "sierotą" bez śladu pochodzenia (FIX-207b pkt 2).
+      sourceType: 'ai_chat_proposal',
+      sourceId: action.id,
+    });
+
+    // Post-creation notification (best-effort)
+    try {
+      const NotificationSvc = await getNotificationService();
+      if (NotificationSvc) {
+        // Notify the user who requested the task
+        await NotificationSvc.send({
+          userId: action.user_id,
+          organizationId: action.organization_id,
+          type: 'AI_ACTION_COMPLETED',
+          title: 'Task Created by AI',
+          body: `AI has created task "${created.title}" in your project.`,
+          entityType: 'task',
+          entityId: created.id,
+          actionUrl: `/tasks/${created.id}`,
+          priority: 'normal',
+          metadata: { projectId: action.project_id, source: 'ai_action' },
+        });
+        // If assignee is different from requester, notify them too
+        if (created.ownerId && created.ownerId !== action.user_id) {
+          await NotificationSvc.send({
+            userId: created.ownerId,
+            organizationId: action.organization_id,
+            type: 'TASK_ASSIGNED',
+            title: 'New Task Assigned to You',
+            body: `AI has assigned you a new task: "${created.title}".`,
+            entityType: 'task',
+            entityId: created.id,
+            actionUrl: `/tasks/${created.id}`,
+            priority: 'normal',
+            metadata: { projectId: action.project_id, source: 'ai_action' },
+          });
+        }
+      }
+    } catch (notifErr: any) {
+      logger.warn('[AIActionExecutor] Post-task notification failed:', notifErr?.message);
+    }
+
+    return { taskId: created.id, title: created.title, created: true };
   },
 
   _executeCreateInitiative: async (draftContent: any, action: any) => {
@@ -1224,22 +1317,91 @@ const AIActionExecutor = {
   },
 
   _executeCreateDecision: async (draftContent: any, action: any) => {
-    // FIX-207 pkt 1 (ODBIOR_207.md, audyt adwersaryjny) — ta sama diagnoza co
-    // `_executeCreateTask` powyżej. Kanoniczny writer `execution.decision.create`
-    // (server/src/routes/pmo/initiativesExecutionRuntime.routes.ts:4189+,
-    // `DecisionCreateSchema` linia 680) wymaga ISTNIEJĄCEGO executionCaseId +
-    // initiativeId, `options` jako min. 2 ustrukturyzowanych opcji
-    // {optionId,label} i `authorityId` — narzędzie czatu `create_decision`
-    // nie zbiera żadnego z tych pól. Failujemy jawnie zamiast pisać po cichu
-    // do legacy `decisions`.
-    throw new CanonicalExecutionWriterRequiredError(
-      'CREATE_DRAFT_DECISION: no canonical Runtime-v1 writer available for a ' +
-        'standalone decision (execution.decision.create requires an existing ' +
-        'executionCaseId/initiativeId, structured options and an authorityId ' +
-        'that the chat create_decision tool does not collect). Legacy ' +
-        '`decisions` INSERT retired for this path — see ' +
-        'aiActionExecutor.ts:_executeCreateDecision.'
+    // FIX-207 pkt 1 (ODBIOR_207.md, audyt adwersaryjny) — pierwsza runda
+    // failowała tu jawnie (Runtime-v1 `execution.decision.create` to inny
+    // obiekt domenowy, wymaga executionCaseId/initiativeId/authorityId/
+    // ustrukturyzowanych opcji, których narzędzie czatu `create_decision`
+    // nie zbiera — services/ai/toolDefinitions.ts:541: wyłącznie title/
+    // description).
+    //
+    // FIX-207b (decyzja właściciela 2026-08-31): to ten sam obiekt biznesowy
+    // co decyzja tworzona ręcznie w My Work (DecisionsPanel.tsx,
+    // DecisionWorkspace.tsx, NotebookContent.tsx, TaskDetailView.tsx —
+    // wszystkie wołają `Api.createDecision` -> `POST /api/decisions` ->
+    // `DecisionController.createDecision`, potwierdzone grepem po jedynym
+    // wołaczu `Api.createDecision`). W przeciwieństwie do `_executeCreateTask`
+    // NIE wyodrębniamy tej logiki do osobnego serwisu — `createDecision` jest
+    // transakcyjny (decisions + decision_history + decision_impacts + kaskada
+    // auto-block inicjatywy, jedna spięta `withPgTransaction`, twarde
+    // wymaganie atomowości udokumentowane inline jako "Codex review
+    // follow-up") i fizyczne przenoszenie 370 linii tej logiki w tym oknie
+    // byłoby ryzykowniejsze niż samo niewołanie kanonu. Zamiast tego wołamy
+    // `DecisionController.createDecision` BEZPOŚREDNIO, w procesie, przez
+    // `callExpressHandler` (patrz doc powyżej) — dosłownie ten sam kod, zero
+    // kopii, zero ryzyka rozjazdu zachowania.
+    const title = draftContent.title;
+    const description = draftContent.description;
+
+    // req.can('approve_changes') w DecisionController.createDecision jest
+    // sprawdzeniem sesji HTTP — replikujemy je identycznie: rola z bazy +
+    // ta sama normalizacja co auth.middleware.ts (normalizePermissionRole,
+    // eksportowana stąd na potrzeby tego wołania), żeby nie rozjechać się z
+    // regułami uprawnień reszty aplikacji.
+    const actorRow: any = await dbGet(`SELECT role FROM users WHERE id = ?`, [action.user_id]);
+    const normalizedRole = normalizePermissionRole(actorRow?.role);
+    const fakeReq = {
+      user: { id: action.user_id, organizationId: action.organization_id },
+      can(capability: string): boolean {
+        return PermissionService.can(
+          { role: normalizedRole } as any,
+          capability as any,
+          { organizationId: action.organization_id }
+        );
+      },
+      body: {
+        projectId: action.project_id,
+        title,
+        description,
+        // Prowieniencja: ta decyzja powstała z zatwierdzonej propozycji
+        // czatu Teresy, nie z ręcznego formularza My Work (FIX-207b pkt 2).
+        sourceType: 'ai_chat_proposal',
+        sourceId: action.id,
+      },
+    };
+
+    const { statusCode, body } = await callExpressHandler(
+      DecisionController.createDecision,
+      fakeReq
     );
+    if (statusCode >= 400) {
+      throw new Error(
+        `CREATE_DRAFT_DECISION: shared My Work decision writer refused ` +
+          `(HTTP ${statusCode}): ${body?.error || 'unknown error'}`
+      );
+    }
+
+    // Post-creation notification (best-effort)
+    try {
+      const NotificationSvc = await getNotificationService();
+      if (NotificationSvc) {
+        await NotificationSvc.send({
+          userId: action.user_id,
+          organizationId: action.organization_id,
+          type: 'AI_ACTION_COMPLETED',
+          title: 'Decision Created by AI',
+          body: `AI has created decision "${body.title}" for your review.`,
+          entityType: 'decision',
+          entityId: body.id,
+          actionUrl: `/decisions/${body.id}`,
+          priority: 'high',
+          metadata: { projectId: action.project_id, source: 'ai_action' },
+        });
+      }
+    } catch (notifErr: any) {
+      logger.warn('[AIActionExecutor] Post-decision notification failed:', notifErr?.message);
+    }
+
+    return { decisionId: body.id, title: body.title, created: true };
   },
 
   _executePrepareSummary: async (draftContent: any, action: any) => {
