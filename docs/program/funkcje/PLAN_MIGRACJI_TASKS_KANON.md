@@ -330,3 +330,28 @@ nie powstał runner zapisujący i D1-D4 pozostają `NOT_PROVEN`.
 R3: masowe przenoszenie nie zostało uruchomione, brama 409 pozostała bez zmian.
 Gotowość do etapu 2: ledger i fresh gate są gotowe; niegotowe są realny M3,
 pełny licencjonowany łańcuch lifecycle, konto systemowe oraz pilot D1-D4.
+
+## A9. Wykonanie — etap 2 (Day204)
+
+R1 rozstrzygnął fingerprint na rzecz osobnego, trwałego rejestru kroków:
+zmiana globalnego `materialCommandFingerprint` unieważnia zastany paragon i daje
+konflikt zamiast `REPLAYED`. Dodano addytywny
+`legacy_task_cutover_step_ledger`; globalnego fingerprinta nie zmieniono.
+Ponowienie `execution.task.create` po commicie z nowym `clientRequestId` uderza
+najpierw w CAS agregatu, przed `prepare()` i `claimRelation`; nie wykazano
+osiągalnej kolizji relacji, więc `claimRelation` pozostał bez zmian.
+
+R2 dostarczył runner z dry-run jako domyślnym trybem, dokładnym potwierdzeniem
+zapisu, limitem jednej inicjatywy bez `--confirm-batch`, sufitem 10 oraz ścisłym
+A3 i jawnymi fallbackami. Runner migruje zadanie wyłącznie do istniejącej
+aktywnej sprawy. Dla brakującego domu kończy się jawnie
+`CANONICAL_HOME_MISSING`; pełna budowa domu governance pozostaje
+`NOT_PROVEN`, a nie została zastąpiona surowym zapisem do `ie_*`.
+
+R3 na lokalnej miniaturze M3 rozliczył 8/8 zadań jako `SKIPPED` (6 z trzema
+inicjatywami i 2 personalne), `unmatched=0`; checksum ponowienia był identyczny.
+Ścisłe A3 daje 0 migrowalnych przy braku SLA. Pomiar pełnego `N` nie powstał,
+ponieważ żadne zadanie nie przeszło kwalifikacji; statyczna, niezaakceptowana
+podłoga z uwzględnieniem 16 publikacji i 16 niezależnych recenzji kart,
+signoffów oraz DRAFT→PUBLISH scenariuszy wynosi co najmniej 54 polecenia.
+Nie wolno przedstawiać 54 jako realnego pomiaru przechodniego łańcucha.
