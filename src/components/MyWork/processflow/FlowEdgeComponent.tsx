@@ -1,7 +1,7 @@
 // @ts-ignore — getSmoothStepPath is exported at runtime but types re-export may not resolve
 import { getSmoothStepPath } from '@reactflow/core';
 import React from 'react';
-import { EdgeProps, Position, useNodes } from 'reactflow';
+import { EdgeProps, Position, useStore } from 'reactflow';
 
 import {
   arrowMarkerAttrs,
@@ -89,8 +89,22 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   // on its own. Drop distance is derived from the actual node height (via
   // useNodes) so it clears the row regardless of node size, with a safe
   // fallback when dimensions aren't measured yet.
-  const nodesForRowDrop = useNodes();
-  const isHorizontalPosition = (pos: Position) => pos === Position.Left || pos === Position.Right;
+  // TS fix (post-403a64bc0c): the local reactflow type shim
+  // (src/types/vendor/reactflow.d.ts, kept repo-wide to dodge upstream
+  // `moduleResolution: bundler` resolution issues) does not declare
+  // `useNodes` at all, so importing it as a named export threw TS2614.
+  // Swap to `useStore` + the same selector reactflow's own `useNodes` uses
+  // internally (`state.getNodes()`), with the result cast to a concrete
+  // shape so the `.find()` calls below get proper contextual typing
+  // instead of falling back to implicit `any` params (TS7006).
+  const nodesForRowDrop = useStore((state: any) => state.getNodes()) as Array<{
+    id: string;
+    height?: number | null;
+  }>;
+  // `Position` is a runtime value (enum-like object), not a type, under the
+  // shim (`export const Position: any`) — `typeof Position` is the type of
+  // that value, which is what we actually want here (was TS2749).
+  const isHorizontalPosition = (pos: typeof Position) => pos === Position.Left || pos === Position.Right;
   const sameRow = Math.abs(sourceY - targetY) < 1;
   const handleDirX = sourcePosition === Position.Right ? 1 : sourcePosition === Position.Left ? -1 : 0;
   const actualDirX = targetX >= sourceX ? 1 : -1;
