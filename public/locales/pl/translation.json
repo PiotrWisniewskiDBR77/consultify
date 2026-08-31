@@ -27072,7 +27072,13 @@
       },
       "startNew": "Zacznij nowy",
       "emptyRecent": "Brak ostatnich dokumentów",
-      "emptySaved": "Brak zapisanych dokumentów"
+      "emptySaved": "Brak zapisanych dokumentów",
+      "briefModal": {
+        "title": "O czym ma być ta prezentacja?",
+        "placeholder": "Opisz cel, odbiorców, kluczowe fakty, daty i liczby.",
+        "next": "Dalej",
+        "skip": "Pomiń"
+      }
     },
     "preview": {
       "provenance": {
