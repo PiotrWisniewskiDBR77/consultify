@@ -291,3 +291,11 @@ mówił wprost, dlaczego zapis jest wstrzymany, czego brakuje i co odblokuje wyn
   dekoracyjnego crimson (Pułapka nr 1 dotyczy jej tak samo jak reszty produktu) i docelowo
   polski interfejs (dziś część ekranów jest po angielsku — nazwane jako wyjątki, nie
   zaakceptowane jako stan końcowy). Źródło: rejestracja modułu `17-aios`.
+
+---
+
+## 2026-08-31 — decyzja właściciela: dane demo NorthStar zostają po angielsku
+
+Na pytanie nadzorcy (rekomendacja: przetłumaczyć), właściciel odpowiedział: **„NorthStar — zostaje."**
+
+Dataset demo modułu Wywiad (`src/components/Interview/interviewDemoData.ts`, ~3600 linii, wnioski „NorthStar Digital Readiness") **pozostaje po angielsku**. Rozszerza to granicę językową z 31.08: obok metodyki także **treść danych demonstracyjnych** nie podlega tłumaczeniu. Zgłoszenie „treść wniosku/sesji demo po angielsku" NIE jest defektem — defektem pozostaje wyłącznie angielski INTERFEJS (przyciski, etykiety, komunikaty). Ekrany `insight-artifact` i pokrewne oceniamy z tym wyjątkiem nazwanym, nie obniżamy im oceny za język treści demo.
