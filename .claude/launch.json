@@ -539,6 +539,19 @@
         "--strictPort"
       ],
       "port": 3354
+    },
+    {
+      "name": "triada-153-crimson-naprawa",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4991",
+        "--strictPort"
+      ],
+      "port": 4991
     }
   ]
 }

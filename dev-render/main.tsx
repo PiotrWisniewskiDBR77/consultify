@@ -355,6 +355,9 @@ const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
 const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
 const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
 const KartaInterviewScreen = React.lazy(() => import('./screens/karta-interview'));
+const InterviewProgressbar153Screen = React.lazy(
+  () => import('./screens/interview-progressbar-153')
+);
 const InterviewPreviewCanonScreen = React.lazy(() => import('./screens/interview-preview-canon'));
 const InterviewCreatorShellScreen = React.lazy(() => import('./screens/interview-creator-shell'));
 const InterviewSessionsStatusScreen = React.lazy(
@@ -1008,6 +1011,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-interview': {
     label: 'KARTY N — Interview Session (harness odbioru 2026-07-21)',
     render: () => <KartaInterviewScreen />,
+  },
+  'interview-progressbar-153': {
+    label:
+      '153-crimson-naprawa — InterviewWorkspace dedicated_question_workspace (progress bar bg-c-accent -> bg-c-success)',
+    render: () => <InterviewProgressbar153Screen />,
   },
   'interview-preview-canon': {
     label:
