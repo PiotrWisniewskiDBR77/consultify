@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 import { EmbeddingService, embeddingService } from '../../ai/embeddingService.js';
@@ -39,7 +39,25 @@ describe.skipIf(!REAL_DB)('Day 209 R1 artifact knowledge index (real PostgreSQL)
     await assertRealPostgresTestEnvironment();
     expect(process.env.DB_TYPE).toBe('postgres');
     pool = new Pool({ connectionString: DATABASE_URL });
+  });
 
+  // ★ FIX-209 — było: `vi.spyOn(...).mockResolvedValue(...)` żył w
+  // `beforeAll` (raz na cały plik). Globalny harness (`tests/setup.ts`
+  // `beforeEach(() => vi.clearAllMocks())`) czyści tę implementację przed
+  // KAŻDYM testem od drugiego wzwyż w tym pliku — `mockClear()` w tej wersji
+  // Vitest usuwa też ciało ustawione przez `mockResolvedValue`, nie tylko
+  // historię wywołań. Efekt zmierzony: pierwszy test dotykający bazy widział
+  // mock, każdy kolejny w tym samym pliku odpalał PRAWDZIWY
+  // `generateEmbedding` (bez klucza API w testach → realny fetch trafiał w
+  // globalny mock `fetch` z `tests/setup.ts`, który zwraca `{data: []}` →
+  // `generateEmbedding` zwracał `[]` po cichu, BEZ rzucenia wyjątku →
+  // `KnowledgeService.processDocument` pomijał `storeChunk` przez strażnika
+  // `embedding.length > 0` → globalny indeks embeddingów zostawał pusty).
+  // Odtworzone niezależnym izolowanym testem sondującym Vitest. Naprawa:
+  // instalować spy od nowa w `beforeEach` TEGO pliku — rejestrowany PO
+  // globalnym `beforeEach` z setup.ts, więc odpala się PO `clearAllMocks()`
+  // i przeżywa do właściwego testu za każdym razem.
+  beforeEach(() => {
     // No provider call: deterministic vectors still exercise the real
     // pgvector INSERT and similarity SQL used by the default search path.
     vi.spyOn(EmbeddingService.prototype, 'generateEmbedding').mockResolvedValue(

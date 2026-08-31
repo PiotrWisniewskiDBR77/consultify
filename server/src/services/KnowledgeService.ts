@@ -727,8 +727,19 @@ const KnowledgeService = {
             },
             embedding
           );
-        } catch {
-          // ignore
+        } catch (storeChunkError: any) {
+          // ★ FIX-209.1 — było: `catch { /* ignore */ }`, czyli awaria zapisu
+          // do globalnego indeksu (ai_knowledge_embeddings) znikała bez śladu.
+          // Skutek zmierzony w odbiorze 209: nawet ścieżka POZYTYWNA (dokument
+          // organizacyjny ma trafić do wyszukiwania) bywała cicho pusta — nikt
+          // by się nie dowiedział. Tolerujemy błąd (nie wywracamy całej
+          // indeksacji dla jednego chunka), ale GŁOŚNO, z pełnym komunikatem,
+          // id dokumentu i indeksem chunka, żeby awaria była widoczna w logach
+          // produkcyjnych, nie tylko w teście.
+          logger.error(
+            `[KnowledgeService] processDocument: storeChunk (global embedding index) FAILED for doc=${docId} chunk=${i} — content will remain in scoped Vault chunks but will NOT be searchable via search_knowledge_base.`,
+            storeChunkError?.message || storeChunkError
+          );
         }
       }
 
