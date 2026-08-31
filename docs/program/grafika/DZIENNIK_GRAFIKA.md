@@ -16,6 +16,13 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-17 · Piąty incydent indeksu — krzyżowa zamiana treści commitów i amend przed instrukcją nadzorcy
+**Co się stało:** dwaj robotnicy (processflow i plan-scenario) trafili w to samo okno wyścigu: goły `git commit` robotnika processflow zatwierdził WYŁĄCZNIE pracę robotnika plan-scenario (który chwilę wcześniej, zgodnie z regułą 14, zdjął ze stage'a cudze pliki i zastagował swoje). Powstał commit z komunikatem „fix(processflow)…" niosący pracę plan-scenario. Robotnik processflow sam to wykrył i poprawił komunikat przez `git commit --amend` (nowy hash `0bf8c4dfd5`) — ZANIM dotarła do niego instrukcja nadzorcy „nie ruszaj historii". Amend zaszedł na HEAD, więc niczego nie osierocił.
+**Weryfikacja nadzorcy po fakcie:** wszystkie commity wszystkich robotników obecne w gałęzi, `0bf8c4dfd5` w linii HEAD, stary hash wisi poza gałęzią (nieszkodliwy), praca processflow zacommitowana poprawnie osobno (`403a64bc0c`, tylko 6 własnych plików). NIC nie zginęło w żadnym z pięciu incydentów dnia.
+**Co z tego wynika:** (1) reguła 14 działa, ale weszła w życie w połowie fali — robotnicy wystartowani przed nią mieli słabszą instrukcję; wniosek dla nadzorcy: po zaostrzeniu reguły dosłać ją robotnikom BĘDĄCYM W POLU, nie tylko nowym; (2) `--amend` na HEAD we współdzielonym katalogu jest znośny, ale decyzję o dotykaniu historii podejmuje nadzorca, nie robotnik — dopisane do praktyki; (3) dwie równoległe edycje w tym samym oknie czasowym najlepiej rozdzielać także PLIKAMI dowodowymi (osobne katalogi evidence per robotnik — to już działa).
+
+---
+
 ### Z-16 · Cztery incydenty wyścigu współdzielonego indeksu git w jednej fali robotników
 **Co się stało:** przy pięciu robotnikach commitujących równolegle w `/private/tmp/m03` wystąpiły cztery incydenty w kilka godzin: (1) robotnik InsightViewer zaciągnął `git add`-em cudze niecommitowane locales do commita `b4a7f5eb4e`; (2) robotnik dokumentacyjny — goły `git commit` objął cudze staged locales, wykrył po `git show --stat`, cofnął czysto (`reset --soft` + `restore --staged`) i zacommitował ponownie; (3) robotnik ReportBuilder gołym commitem `92fbf9c9d2` zmiótł 6 cudzych zastagowanych zrzutów PNG; (4) właściciel tych zrzutów zastał je w cudzym commicie o niepowiązanej treści. **Nic nie zginęło w żadnym z czterech** — ale wyłącznie dzięki temu, że robotnicy raportowali w sekcji ZGŁASZAM i weryfikowali `git show --stat` po commicie.
 **Dlaczego ważne:** to nie są cztery błędy czterech robotników, tylko jeden defekt procesu — wspólny indeks bez dyscypliny pathspec. Reguła „commituj tylko pliki wymienione z nazwy" NIE chroni: wymieniony plik może nieść cudzą treść, a goły commit zatwierdza cudzy stage.
