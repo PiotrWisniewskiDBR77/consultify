@@ -110,29 +110,47 @@ export const FinancialDriverTable: React.FC<FinancialDriverTableProps> = ({ case
             Podstawa: docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md (decyzja 07-13: IdeaTableTool/
             GridView = platforma-tabel, NIE migrowane na StandardTable) + rejestr kanonu tego
             programu (01_CANON_AND_DECISION_REGISTER.md, wiersz „Table"). */}
-        <table /* §27-exempt */ className="w-full border-collapse">
+        {/* 143-resztki (2026-08-31) — `table-fixed` + explicit `<th>` widths.
+            KATEGORIA ("Oszczędności") was getting clipped: with the default
+            auto layout, the widest content per column (here the "Jednostka"
+            HEADER LABEL, not the short "PLN" values) dictated column widths,
+            leaving Kategoria too little room, and the 696px container
+            (measured live) had ZERO slack — PRZED's 9 natural column widths
+            already summed to exactly 696px. `table-fixed` makes every column
+            obey the widths below instead of the widest cell winning; budget
+            (chevron 24 + label 108 + type 130 + category 120 + unit 55 +
+            total 60 + confidence 90 + evidence 70 + trash 24 = 681px) leaves
+            margin under 696px so nothing needs to shrink further. */}
+        <table /* §27-exempt */ className="w-full border-collapse table-fixed">
           <thead>
             <tr className="bg-c-surface-raised text-[11px] text-c-text-muted uppercase tracking-wide">
               <th className="w-6" />
-              <th className="text-left font-medium px-2 py-1.5">
+              {/* `break-words` on every header (VaultDocumentsView's own
+                  fix for the same shape of bug, 143-resztki point 1): an
+                  unbroken label word (e.g. "JEDNOSTKA") in a column too
+                  narrow to hold it on one line otherwise overflows into the
+                  next `<th>` under `table-fixed` instead of wrapping —
+                  `break-words` forces the wrap so headers stack onto 2 lines
+                  instead of visually colliding with their neighbor. */}
+              <th className="text-left font-medium px-2 py-1.5 w-[108px] break-words">
                 {t('ideas.financial.col.label', 'Driver')}
               </th>
-              <th className="text-left font-medium px-2 py-1.5">
+              <th className="text-left font-medium px-2 py-1.5 w-[130px] break-words">
                 {t('ideas.financial.col.type', 'Type')}
               </th>
-              <th className="text-left font-medium px-2 py-1.5">
+              <th className="text-left font-medium px-2 py-1.5 w-[120px] break-words">
                 {t('ideas.financial.col.category', 'Category')}
               </th>
-              <th className="text-left font-medium px-2 py-1.5">
+              <th className="text-left font-medium px-2 py-1.5 w-[55px] break-words">
                 {t('ideas.financial.col.unit', 'Unit')}
               </th>
-              <th className="text-right font-medium px-2 py-1.5">
+              <th className="text-right font-medium px-2 py-1.5 w-[60px] break-words">
                 {t('ideas.financial.col.total', 'Total')}
               </th>
-              <th className="text-left font-medium px-2 py-1.5">
+              <th className="text-left font-medium px-2 py-1.5 w-[90px] break-words">
                 {t('ideas.financial.col.confidence', 'Confidence')}
               </th>
-              <th className="text-left font-medium px-2 py-1.5">
+              <th className="text-left font-medium px-2 py-1.5 w-[70px] break-words">
                 {t('ideas.financial.col.evidence', 'Evidence')}
               </th>
               {!readOnly && <th className="w-8" />}
@@ -224,12 +242,17 @@ export const FinancialDriverTable: React.FC<FinancialDriverTableProps> = ({ case
                         />
                       </td>
                       <td className="px-2 py-1">
+                        {/* `w-16` (64px) dropped — under `table-fixed` the
+                            column itself (55px, see thead) already bounds
+                            this input; the old fixed input width no longer
+                            matters and would just overflow its now-narrower
+                            cell. */}
                         <input
                           type="text"
                           value={driver.unit}
                           readOnly={readOnly}
                           onChange={(e) => onUpdateDriver(driver.id, { unit: e.target.value })}
-                          className={`${cellCls} w-16`}
+                          className={cellCls}
                         />
                       </td>
                       <td className="px-2 py-1 text-right text-xs tabular-nums text-c-text">
