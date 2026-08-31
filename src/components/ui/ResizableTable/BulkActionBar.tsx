@@ -15,11 +15,13 @@
  *     etykiety, i to była jedna z dwóch niezgodnych implementacji Clear w repo;
  *   · lokalne menu „More" dla akcji powyżej czterech — trzeci równoległy popover
  *     w kodzie. Kanon zabrania chowania realnych akcji, a klaster zawija je
- *     bez clippingu. Jedyna żywa ścieżka (`createNotificationBulkActions`)
- *     deklaruje trzy akcje, więc overflow i tak nigdy się nie uruchamiał.
+ *     bez clippingu.
  *
- * Fabryki `create*BulkActions` są NIETKNIĘTE — to API biznesowe konsumentów
- * (`MyWork/NotificationsContent`, `MyWork/MyTasksListContent`).
+ * Fabryki `create*BulkActions` są NIETKNIĘTE — to API biznesowe konsumentów.
+ * Żywy konsument fabryk: `MyWork/MyTasksListContent` (`createTaskBulkActions`).
+ * Sam komponent `<BulkActionBar>` stracił ostatniego konsumenta JSX wraz
+ * z usunięciem martwego `MyWork/NotificationsContent` (2026-08-31); zostaje
+ * jako fasada dla fabryk i re-eksportu barrela `ResizableTable`.
  */
 
 import { AnimatePresence, motion } from 'framer-motion';

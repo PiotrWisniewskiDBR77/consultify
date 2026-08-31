@@ -6,8 +6,8 @@
 # wzrost w istniejącym) = commit zablokowany. Regeneruj (--update) TYLKO gdy dług
 # ŚWIADOMIE SPADŁ — nigdy żeby uciszyć nową regresję.
 #
-# WYGENEROWANO: 2026-08-13 (scripts/check-list-canon.sh --update)
-# RAZEM: 404 naruszeń w 131 plikach
+# WYGENEROWANO: 2026-08-31 (scripts/check-list-canon.sh --update)
+# RAZEM: 387 naruszeń w 124 plikach
 #
 # Posortowane po ścieżce (stabilny diff). Dług maleje = wiersze znikają / liczby spadają.
 2	src/components/AIAnalyticsDashboard.tsx
@@ -49,10 +49,6 @@
 2	src/components/Finance/FinancialStatementWorkspace.tsx
 2	src/components/FullReportDocument.tsx
 2	src/components/Import/UnifiedImportWizard.tsx
-2	src/components/Initiatives/Analysis/CompletenessAnalysis.tsx
-2	src/components/Initiatives/Analysis/FeasibilityAnalysis.tsx
-2	src/components/Initiatives/Analysis/LogicAnalysis.tsx
-2	src/components/Initiatives/Analysis/ResourcesAnalysis.tsx
 2	src/components/Initiatives/InitiativeDocumentView.tsx
 3	src/components/Initiatives/cards/CardBlockRenderer.tsx
 2	src/components/Initiatives/sections/DecisionsSection.tsx
@@ -68,8 +64,6 @@
 3	src/components/MyWork/IdeasTableContent.tsx
 2	src/components/MyWork/InboxContent.tsx
 4	src/components/MyWork/MyTasksListContent.tsx
-3	src/components/MyWork/NotificationsContent.tsx
-4	src/components/MyWork/NotificationsHub.tsx
 8	src/components/MyWork/TaskDetailView.tsx
 2	src/components/MyWork/mindmap/AIProposalDiffModal.tsx
 2	src/components/MyWork/shared/AlternativesSection.tsx
@@ -114,7 +108,6 @@
 2	src/components/SuperAdmin/billing/CreditNotesPanel.tsx
 5	src/components/SuperAdmin/billing/InvoicesPanel.tsx
 2	src/components/SuperAdmin/security/LoginAttemptsPanel.tsx
-2	src/components/assessment/RapidLeanWorkspace.tsx
 2	src/components/assessment/adma/ADMAAssessmentEditor.tsx
 2	src/components/assessment/modals/ReportTemplatePickerModal.tsx
 5	src/components/assessment/reports/templates/ADMAReportTemplate.tsx

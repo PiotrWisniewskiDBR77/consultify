@@ -1,7 +1,7 @@
 /**
  * PillNavigation - Modern pill-style tab navigation
  * Part of Unified MyWork Module
- * UNIFIED DESIGN: Same height/padding/font as NotificationsHub tabs
+ * UNIFIED DESIGN: shared MyWork tab sizing (height/padding/font)
  */
 
 import { CheckSquare, FolderKanban, Plus, Scale } from 'lucide-react';

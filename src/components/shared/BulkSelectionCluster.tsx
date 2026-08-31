@@ -11,7 +11,8 @@
  *
  *   · `ui/ResizableTable/BulkActionBar` — pływający pill na dole ekranu; Clear
  *     jako ikona X wewnątrz ramki licznika; akcje `px-3 py-1.5`; overflow „More";
- *     JEDEN żywy konsument (`MyWork/NotificationsContent`);
+ *     jego jedyny żywy konsument JSX (`MyWork/NotificationsContent`) został
+ *     usunięty jako martwy kod 2026-08-31 — zostały fabryki `create*BulkActions`;
  *   · `shared/ModuleHub/BulkActionBar` — pasek inline; Clear jako tekstowy link
  *     dosunięty `ml-auto` do prawej, BEZ ikony X; akcje `h-8 rounded-full`;
  *     ZERO konsumentów JSX.
