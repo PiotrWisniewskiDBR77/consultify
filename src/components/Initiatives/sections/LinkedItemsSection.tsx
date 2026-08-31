@@ -65,8 +65,10 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
           const saved = res?.item ?? res;
           setLinkedItems((prev) => [...prev, { ...item, id: String(saved?.id || item.id) }]);
           toast.success(t('initiatives.linkedItemsSection.itemLinked'));
-        } catch {
+          return { ok: true } as const;
+        } catch (error) {
           toast.error(t('initiatives.linkedItemsSection.linkError', 'Nie udało się dodać linku'));
+          return { ok: false, error } as const;
         }
       }}
       onRemove={async (id) => {
@@ -75,9 +77,11 @@ export const LinkedItemsSection: React.FC<InitiativeSectionProps> = ({
         try {
           await Api.delete(`/initiatives/${initiativeId}/linked-items/${id}`);
           toast.success(t('initiatives.linkedItemsSection.linkRemoved'));
-        } catch {
+          return { ok: true } as const;
+        } catch (error) {
           setLinkedItems(prevItems); // rollback on failure
           toast.error(t('initiatives.linkedItemsSection.linkError', 'Nie udało się usunąć linku'));
+          return { ok: false, error } as const;
         }
       }}
       searchItems={async (query) => {

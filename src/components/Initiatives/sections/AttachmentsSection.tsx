@@ -33,10 +33,12 @@ export const AttachmentsSection: React.FC<InitiativeSectionProps> = ({
         }));
         setAttachments((prev) => [...prev, ...newAttachments]);
         toast.success(t('initiatives.attachmentsSection.attachmentsAdded'));
+        return { ok: true } as const;
       }}
       onDelete={async (id) => {
         setAttachments((prev) => prev.filter((a) => a.id !== id));
         toast.success(t('initiatives.attachmentsSection.attachmentRemoved'));
+        return { ok: true } as const;
       }}
       expanded={expanded}
       onToggleExpand={onToggle}
