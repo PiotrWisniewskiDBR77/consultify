@@ -418,8 +418,17 @@ export function buildAttentionRowPreview(
 ): StandardPreviewProps {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   const titleField = ('title' in row ? row.title : undefined) as string | undefined;
+  // RN-G2 i18n/141 (2026-08-31) — prefer the row's own `kpiCode` (present on
+  // every KPI-source bucket, see `rebuildColumns`' `missingOwnership` case
+  // above) over the raw internal `shortId(row.id)` when no `title` field
+  // exists — same "honest business identifier over an opaque id" preference
+  // `ResultsKpiRegistryPage.tsx`'s own preview title now applies. Still
+  // falls back to `shortId(row.id)` for buckets with neither (e.g.
+  // `ownerLoad`/`processCoverage`, which are per-owner/per-process rollups,
+  // not per-KPI rows at all).
+  const kpiCodeField = ('kpiCode' in row ? row.kpiCode : undefined) as string | undefined;
   return {
-    title: titleField || `${ctx.bucketLabel} — ${shortId(row.id)}`,
+    title: titleField || kpiCodeField || `${ctx.bucketLabel} — ${shortId(row.id)}`,
     onClose: ctx.onClose,
     meta: {
       pills: [{ label: ctx.bucketLabel, tone: 'neutral' }],
