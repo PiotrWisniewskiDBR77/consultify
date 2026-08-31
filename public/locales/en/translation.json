@@ -26375,6 +26375,10 @@
     "emptyState": {
       "description": "Schedule your first meeting to start tracking agendas and follow-ups."
     },
+    "preview": {
+      "propertyLabel": "Property",
+      "valueLabel": "Value"
+    },
     "bulk": {
       "confirmDeleteTitle": "Delete selected meetings?",
       "confirmDeleteDesc": "You will permanently delete {{count}} meeting(s). This cannot be undone.",

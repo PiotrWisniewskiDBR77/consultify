@@ -28635,6 +28635,10 @@
     "emptyState": {
       "description": "Zaplanuj pierwsze spotkanie, aby śledzić agendę i follow-upy."
     },
+    "preview": {
+      "propertyLabel": "Właściwość",
+      "valueLabel": "Wartość"
+    },
     "bulk": {
       "confirmDeleteTitle": "Usunąć zaznaczone spotkania?",
       "confirmDeleteDesc": "Trwale usuniesz {{count}} spotkań. Tej operacji nie można cofnąć.",
