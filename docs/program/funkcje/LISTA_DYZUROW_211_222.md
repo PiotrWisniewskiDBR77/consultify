@@ -17,7 +17,25 @@ każdej podano, co właściciel z niej ma.
 FIX-209 odkrył, że globalny `beforeEach(vi.clearAllMocks())` w `tests/setup.ts:809-811`
 **kasuje implementacje** mocków ustawionych w `beforeAll`. Objaw jest podstępny:
 pierwszy test w pliku przechodzi, każdy następny cicho idzie prawdziwą ścieżką.
-**Zmierzony zasięg: 87 plików testowych ustawia implementację w `beforeAll`.**
+**★ KOREKTA NADZORCY (31.08, po pomiarze robotnika):** pierwotnie wpisałem tu
+„zmierzony zasięg: 87 plików". **Ta liczba była błędna** — pochodziła z mojego
+zgrubnego `awk`, bez sondy i bez walidacji na znanym przypadku, i podałem ją jako
+pomiar. Robotnik piszący instrukcję zbudował sondę z dopasowaniem klamer bloku,
+**zwalidował ją na potwierdzonym przypadku sprzed FIX-209**, i zmierzył na 5915
+plikach testowych:
+- **wąska definicja (realne ryzyko): 4 pliki, z czego 2 faktycznie zagrożone** —
+  `interviewDeliveryMountedAuth.pg.test.ts` (6 testów) i `tests/unit/backend/ragService.test.js`
+  (5 testów, z komentarzem powielającym tę samą fałszywą premisę co `tests/setup.ts:792`);
+- **luźne współwystępowanie (górna granica, bez wartości dowodowej): 130 plików.**
+
+Skala dyżuru spada z „przemiatanie 87 plików" do „potwierdź zasięg i napraw
+kilka". **Nie zmienia to jego kolejności** — pułapka jest realna, potwierdzona na
+żywym przypadku w 209, a bezpiecznik na przyszłość i tak trzeba postawić. Zmienia
+za to koszt: to jest dyżur mały, nie duży.
+
+Otwarte, czego nie dało się rozstrzygnąć bez sondy w Vitest: czy ten sam efekt
+dotyczy atrap tworzonych jako `vi.fn(implementacja)` zamiast `spyOn(...).mockX()`.
+Dwa kandydaty wskazane; instrukcja każe zmierzyć to PRZED inwentarzem.
 Zysk: przestajemy ufać zieleni, która nic nie znaczy. To jest warunek wstępny
 dla wszystkiego, co niżej.
 
