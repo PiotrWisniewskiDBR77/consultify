@@ -59,6 +59,7 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
   () => import('./screens/document-studio-save-as-template')
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
+const AngielskieResztkiI18nScreen = React.lazy(() => import('./screens/angielskie-resztki-i18n'));
 // (2026-08-13, T5) `./screens/tools-sesja-wyjscie.tsx` does not exist in this
 // worktree (dangling import — same class of defect as commit 8b379a0eb9
 // fixed elsewhere) and Vite's import-analysis plugin fails HARD on it at
@@ -533,6 +534,11 @@ const ToolsSwotInitiativeProposalScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'angielskie-resztki-i18n': {
+    label:
+      'I18N — REALNY <MonteCarloNpvPanel> (Driver -> Czynnik, ziarna Revenue/Cost -> Przychody/Koszty) + REALNY <EditableSpreadsheetGrid> z 250 wierszami (stopka rowCap: brakujące kimi.showingAllRows/showAllRows, showingRows kłamał "25"). &theme=light|dark &rows=<n>',
+    render: () => <AngielskieResztkiI18nScreen />,
+  },
   'calendar-sync-settings': {
     label:
       '#24b — UI „Połącz kalendarz" (Ustawienia → Calendar Sync). Mock providerów (Google połączony, Outlook/Apple do połączenia), zero Api/fetch.',
