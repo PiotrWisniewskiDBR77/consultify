@@ -15,8 +15,22 @@
  * (ten sam model, bez flagi edycji — tu weryfikujemy TYLKO prawy panel).
  *
  * URL: ?screen=excele-prawy-panel-standard&theme=light|dark&lang=pl
- *      &ff_excele_right_rail=1   ← WYMAGANE, żeby zobaczyć szynę zamiast
- *                                    starego accordionu (flaga domyślnie OFF)
+ *      &ff_excele_right_rail=1   ← historycznie WYMAGANE; DZIŚ już nie ma
+ *                                    znaczenia (patrz notatka niżej).
+ *
+ * ★ USTALENIE (grafika 2026-08-31, przy naprawie "przyrząd zasłania produkt"):
+ * ten opis i `&ff_excele_right_rail=1` są STALE — identyczna sytuacja jak
+ * w `excele-edytowalna-siatka.tsx` (przeczytaj notatkę tam po pełne
+ * wyjaśnienie). `ExceleRightRail`/`ExceleRightPanel` (to, co ta flaga
+ * przełącza) żyją WYŁĄCZNIE w starej ścieżce `KimiWorkspaceShell`. Ten sam
+ * plik od 2026-08-30 wymusza `ff.artifact_studio`+`ff.spreadsheet_studio_v2`
+ * — a tor `spreadsheet` ma od 2026-08-30 DOMYŚLNIE `true`
+ * (`src/utils/artifactStudioFlags.ts`), więc reopen istniejącego skoroszytu
+ * renderuje `SpreadsheetArtifactStudio` (WŁASNY `ArtifactRightPanel`,
+ * standard SPEC-A) — `ExceleRightRail` jest w tej ścieżce NIEOSIĄGALNY.
+ * Dlatego ten zrzut wychodzi bajt w bajt identyczny z
+ * `excele-edytowalna-siatka.tsx` (ten sam model WORKBOOK) — to jest ZGODNE
+ * ze stanem realnego produktu, nie błąd narzędzia zrzutowego.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
