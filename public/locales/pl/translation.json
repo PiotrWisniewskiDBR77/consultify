@@ -1057,6 +1057,10 @@
       "internal": "Wewnętrzny",
       "public": "Publiczny"
     },
+    "languages": {
+      "en": "Angielski",
+      "pl": "Polski"
+    },
     "outline": {
       "title": "Konspekt decka",
       "slides": "slajdów",
