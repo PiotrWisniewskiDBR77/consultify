@@ -725,7 +725,7 @@ const MyWorkSheetsDeepLinkRedirect: React.FC = () => {
  * (Harvard/wdrozenie-100/_INWENTARZ_GENERATORY_3_FORMATY_2026-07-27.md,
  * "DO SCALENIA" #1). `PresentationWizard` był osierocony z nawigacji (zero
  * linków w UI) i żył tylko z deep-linków tworzonych przez
- * artifactNavigation.ts / chatActionHandler.ts / useActionHandler.ts /
+ * artifactNavigation.ts / chatActionHandler.ts / useChatActions.ts /
  * server `artifacts.routes.ts` (openPath dla `presentation_template`) — te
  * cztery miejsca zostały przepięte na kanoniczne cele (Teresa /prezentacje
  * dla generacji, Architekt szablonów dla edycji/klonu). Ta trasa zostaje
