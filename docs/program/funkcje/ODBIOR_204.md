@@ -1,3 +1,34 @@
+# ★ SCALONE PO FIX-204 (`ab638ae4f8`, merge `751c35e5bb`) — 31.08.2026
+
+Cztery punkty blokujące zamknięte, zweryfikowane na lokalnym Postgresie:
+
+1. **Zakres organizacji fail-closed** — runner odmawia startu bez `--organization-id`,
+   przed połączeniem z bazą. Zadania osobiste i inicjatywowe są teraz w JEDNEJ
+   kwerendzie, pod tym samym filtrem organizacji, tym samym strażnikiem duplikatu
+   i tym samym limitem (nadzorca sprawdził kwerendę własnymi oczami). Dowód: zadanie
+   z drugiej organizacji nie pojawia się w planie ani razu.
+2. **`--max-tasks` domyślnie 1** — realny pilot jednego rekordu wg D-13. Fixture z
+   pięcioma kwalifikującymi się zadaniami ⇒ dokładnie 1 zmigrowany wiersz.
+3. **Idempotencja z BRAMKĄ MUTACYJNĄ** — mutacja strażnika A (`NOT EXISTS`) ⇒ czerwony;
+   mutacja strażnika B (checksum) ⇒ czerwony; każda psuje dokładnie JEDEN dedykowany
+   test. Przed FIX-em usunięcie OBU dawało 11/11 zielonych.
+4. **Bezpiecznik bazy odwrócony** — loopback jest normalną ścieżką, host zdalny wymaga
+   jawnej zgody `ALLOW_REMOTE_DB_TARGET`. Denylist produkcji bez zmian. Przedtem runner
+   ODMAWIAŁ bazy lokalnej i wypychał operatora na zdalną.
+
+**Świadomie NIEZROBIONE (punkt 5, atomowość ledgera):** wymaga rozszerzenia
+współdzielonego interfejsu transakcji, a wariant „PENDING przed / MIGRATED po"
+wpadałby we własnego strażnika checksumy i blokował ponowienie na stałe. Zostawione
+jawnie zamiast połowicznie — osobny dyżur.
+
+**Nadal otwarte z karty:** rollback nie istnieje (jest pełny ślad forensyczny:
+`canonical_id`, wersje przed/po, `batch_id`, checksum); ledger nigdy nie zapisuje
+`FAILED` — `throw` przerywa partię bez śladu.
+
+---
+
+## Pierwotna karta odbioru adwersaryjnego
+
 # ODBIÓR 204 — MIGRACJA LEGACY `tasks` → KANON, ETAP 2 (audyt adwersaryjny)
 
 Gałąź: `codex/day204-migracja-e2-20260831` @ `57364df97b`
