@@ -30,6 +30,7 @@ type EmbeddingChunk = {
 type EmbeddingSearchOptions = {
   limit?: number;
   organizationId?: string;
+  userId?: string;
   minSimilarity?: number;
   sourceType?: string;
 };
@@ -211,15 +212,21 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, organizationId, minSimilarity = 0.5 } = options;
+    const { limit = 5, organizationId, userId, minSimilarity = 0.5 } = options;
 
-    let sql = `SELECT * FROM ai_knowledge_embeddings`;
+    let sql = `SELECT e.* FROM ai_knowledge_embeddings e`;
     const params: Array<string | number> = [];
+    const where: string[] = [];
 
     if (organizationId) {
-      sql += ` WHERE organization_id = ?`;
+      where.push(`e.organization_id = ?`);
       params.push(organizationId);
     }
+
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, false, params.length + 1);
+    where.push(accessFilter.sql);
+    params.push(...accessFilter.params);
+    if (where.length > 0) sql += ` WHERE ${where.join(' AND ')}`;
 
     const rows = await DbPromise.all<EmbeddingRow>(sql, params, { fallback: false });
     if (!rows || rows.length === 0) {
@@ -253,7 +260,7 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId } = options;
+    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId, userId } = options;
     const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
     let sql = `
@@ -265,8 +272,8 @@ export class EmbeddingService {
                 metadata,
                 source_type,
                 1 - (embedding <=> $1::vector) as similarity
-            FROM ai_knowledge_embeddings
-            WHERE 1 - (embedding <=> $1::vector) > $2
+            FROM ai_knowledge_embeddings e
+            WHERE 1 - (e.embedding <=> $1::vector) > $2
         `;
     const params: Array<string | number> = [vectorLiteral, minSimilarity];
     let paramIndex = 3;
@@ -280,12 +287,17 @@ export class EmbeddingService {
     // Tenant-owned chunks must match the caller. Only explicitly classified
     // internal knowledge sources are global; missing ownership is fail-closed.
     if (organizationId) {
-      sql += ` AND (organization_id = $${paramIndex} OR (organization_id IS NULL AND source_type IN ('tool_pack', 'methodology', 'product_pill')))`;
+      sql += ` AND (e.organization_id = $${paramIndex} OR (e.organization_id IS NULL AND e.source_type IN ('tool_pack', 'methodology', 'product_pill')))`;
       params.push(organizationId);
       paramIndex++;
     }
 
-    sql += ` ORDER BY embedding <=> $1::vector LIMIT $${paramIndex}`;
+    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, true, paramIndex);
+    sql += ` AND ${accessFilter.sql}`;
+    params.push(...accessFilter.params);
+    paramIndex += accessFilter.params.length;
+
+    sql += ` ORDER BY e.embedding <=> $1::vector LIMIT $${paramIndex}`;
     params.push(limit);
 
     try {
@@ -303,6 +315,56 @@ export class EmbeddingService {
       logger.error('[EmbeddingService] PostgreSQL search error:', err.message);
       throw err;
     }
+  }
+
+  private async buildKnowledgeDocAccessFilter(
+    embeddingAlias: string,
+    userId: string | undefined,
+    isPg: boolean,
+    firstParamIndex: number
+  ): Promise<{ sql: string; params: string[] }> {
+    let hasScope = false;
+    let hasOwner = false;
+    try {
+      if (isPg) {
+        const result = await getDatabase().query<{ column_name: string }>(
+          `SELECT column_name FROM information_schema.columns
+            WHERE table_name = 'knowledge_docs' AND column_name IN ('scope', 'owner_id')`
+        );
+        const columns = new Set(result.rows.map((row) => row.column_name));
+        hasScope = columns.has('scope');
+        hasOwner = columns.has('owner_id');
+      } else {
+        const rows = await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
+          fallback: false,
+        });
+        const columns = new Set((rows || []).map((row) => String(row.name || '')));
+        hasScope = columns.has('scope');
+        hasOwner = columns.has('owner_id');
+      }
+    } catch {
+      // Missing/unreadable provenance is resolved fail-closed below.
+    }
+
+    if (!hasScope) {
+      return {
+        sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id)`,
+        params: [],
+      };
+    }
+
+    if (userId && hasOwner) {
+      const placeholder = isPg ? `$${firstParamIndex}` : '?';
+      return {
+        sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id AND d.scope = 'user' AND d.owner_id IS DISTINCT FROM ${placeholder})`,
+        params: [userId],
+      };
+    }
+
+    return {
+      sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id AND d.scope = 'user')`,
+      params: [],
+    };
   }
 
   /**

@@ -173,6 +173,7 @@ function parseChunkMetadata(raw: unknown): Record<string, unknown> {
 type SearchOptions = {
   limit?: number;
   organizationId?: string | null;
+  userId?: string | null;
   minSimilarity?: number;
   /**
    * Restrict search to specific documents (conversation-scoped RAG).
@@ -636,7 +637,7 @@ const RagService = {
     }>
   > => {
     await initDeps();
-    const { limit = 5, organizationId, minSimilarity = 0.5, documentIds } = options;
+    const { limit = 5, organizationId, userId, minSimilarity = 0.5, documentIds } = options;
 
     try {
       // Conversation-scoped RAG: if documentIds are provided, bypass embeddingService.search()
@@ -669,6 +670,7 @@ const RagService = {
       const results = await deps.embeddingService.search(query, {
         limit,
         organizationId: organizationId || undefined,
+        userId: userId || undefined,
         minSimilarity,
       });
 
