@@ -3403,7 +3403,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 </span>
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised">
                   <div
-                    className="h-full rounded-full bg-c-accent transition-[width] duration-300"
+                    className="h-full rounded-full bg-c-success transition-[width] duration-300"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
