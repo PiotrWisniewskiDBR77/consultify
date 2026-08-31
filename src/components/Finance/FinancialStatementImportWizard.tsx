@@ -1990,8 +1990,15 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   {t('finance.importWizard.readiness', 'Readiness')}
                 </dt>
                 <dd className="font-medium text-slate-800 dark:text-slate-200">
-                  {readiness?.readinessStatus ||
-                    t('finance.importWizard.reviewInProgress', 'Review in progress')}
+                  {/* NAPRAWIONE (sweep 148-finanse-parametry, rodzina „surowa
+                      wartość"): renderowało `readiness.readinessStatus` wprost
+                      (`pending`/`recoverable`/`ready`/`rejected`) — `statusLabel()`
+                      w tym samym pliku (linia wyżej, już użyta gdzie indziej,
+                      `finance.statusValue.*`) ma etykiety dla WSZYSTKICH
+                      czterech wartości tego pola. */}
+                  {readiness?.readinessStatus
+                    ? statusLabel(readiness.readinessStatus)
+                    : t('finance.importWizard.reviewInProgress', 'Review in progress')}
                 </dd>
               </div>
               {extractionDiagnostics?.warnings?.length ? (
