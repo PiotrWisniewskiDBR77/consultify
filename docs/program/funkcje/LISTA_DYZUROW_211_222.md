@@ -28,7 +28,29 @@ produkcie (zasięg, bramy zatwierdzenia, idempotencja, uprawnienia) + test
 **omijający** dla każdego, z obowiązkową czerwienią.
 Zysk: zabezpieczenia przestają być deklaracją.
 
-### 213 · Dług zasięgu z karty 210 (pozycje 5–9)
+### 213 · Dług zasięgu z karty 210 (pozycje 5–9) — ★ ZNALEZISKO PODNOSZĄCE PRIORYTET
+
+**Pomiar przy pisaniu instrukcji (31.08) wykrył dwie rzeczy, których karta 210 nie
+zawierała:**
+
+1. **Asymetria fail-closed / fail-open.** Przy braku kolumny `scope`
+   `embeddingService` (dziś `:341`) odcina treści prywatne, ale `ragService`
+   (`:315-322`, funkcja od `:231`) ma `if (hasScope)` **bez `else`** — czyli
+   przepuszcza wszystko. Dwie implementacje tej samej reguły zachowują się
+   przeciwnie w tym samym scenariuszu awaryjnym.
+2. **`scope='project'` NIE jest martwy.** Karta dopuszczała „udokumentuj jako
+   nieużywany". Pomiar to obala: `knowledge.routes.ts:915-934` ma żywą,
+   zamontowaną trasę `POST /api/knowledge/documents`, która produkuje
+   `scope='project'` z realną kontrolą członkostwa. A żaden filtr retrievalu
+   tej wartości nie obsługuje — **sejf projektowy jest widoczny dla całej
+   organizacji.**
+
+Dodatkowo: wartość domyślna kolumny pochodzi z **wyścigu dwóch niezależnych
+ALTER-ów przy starcie** (`KnowledgeService.ts:174` bez `DEFAULT` vs
+`ContextDocumentService.ts:2398` z `DEFAULT 'user'`) — czyli zachowanie zależy od
+kolejności startu procesu.
+
+
 Cztery insertery nie ustawiają zasięgu, a **domyślna wartość kolumny to
 „prywatne"** (`ai.routes.ts:599`, `:868`, `knowledgeIndexer.ts:868`,
 `insightSignalBridgeService.ts:203`) · `scope='project'` nieobsługiwany przez
