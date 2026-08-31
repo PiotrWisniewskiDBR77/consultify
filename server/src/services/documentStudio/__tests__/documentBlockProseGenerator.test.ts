@@ -321,4 +321,40 @@ describe('generateBlockProse', () => {
     expect(warnings.map((w) => w.code)).not.toContain('llm_prose_fallback');
   });
 
+  // FIX-195 (4). The granularity split branch (`paragraphs.length > 1`) was
+  // added without the N-9 table guard, so "framing paragraph \n\n GFM table"
+  // — the single most common long-form answer — put the inline assumption
+  // marker straight after the last "| … |" row and broke the table.
+  it('N-9 holds on the SPLIT branch: a framing paragraph followed by a GFM table with an outside number keeps the table unmarked', async () => {
+    const tableText = [
+      '| Metric | Value |',
+      '| --- | --- |',
+      '| Adoption | 42% |',
+    ].join('\n');
+    generateChatResponseMock.mockResolvedValue({
+      content: JSON.stringify({
+        blocks: [
+          {
+            blockId: 'blk-para',
+            text: `The adoption ramp is summarised below.\n\n${tableText}`,
+          },
+        ],
+      }),
+    });
+
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    const paragraphs = result.sections[0].blocks.filter((block) => block.type === 'paragraph');
+    expect(paragraphs).toHaveLength(2);
+    const tableBlock = paragraphs[1];
+    expect((tableBlock.content as { text: string }).text).toBe(tableText);
+    // 42 is outside the source pack (2.2, 1.08) → guarded.changed is true, but
+    // N-9 outranks it: a table block is never an assumption.
+    expect(tableBlock.isAssumption).toBe(false);
+
+    const markdown = renderSchemaToMarkdown(result);
+    const lastTableLine = markdown.split('\n').filter((line) => line.includes('Adoption'))[0];
+    expect(lastTableLine.trim().startsWith('|')).toBe(true);
+    expect(lastTableLine).not.toContain('[Assumption]');
+    expect(markdown).not.toContain('| Adoption | 42% | _[Assumption]_');
+  });
 });

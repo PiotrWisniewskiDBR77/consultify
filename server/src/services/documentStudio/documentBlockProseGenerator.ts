@@ -227,6 +227,17 @@ function buildUserPrompt(
   ].join('\n');
 }
 
+/**
+ * N-9 predicate: does this block payload carry a GFM table row? A paragraph
+ * that does must NEVER be flagged `isAssumption`, because
+ * `documentSchemaRenderer` appends the inline `_[Assumption]_` suffix straight
+ * after the final `| … |` row, which breaks the row's table membership in
+ * `marked` and renders the table as broken text.
+ */
+function carriesGfmTable(content: Record<string, unknown>): boolean {
+  return typeof content.text === 'string' && /^\s*\|.*\|\s*$/m.test(content.text);
+}
+
 function safeParseJson(raw: string): LlmBlockProseResponse | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -419,7 +430,15 @@ export async function generateBlockProse(
             ...block,
             blockId: index === 0 ? block.blockId : `${block.blockId}-paragraph-${index + 1}`,
             content: guarded.content,
-            isAssumption: guarded.changed || sourceRefs.length === 0,
+            // FIX-195 (4): N-9 must hold on THIS branch too. The split branch
+            // was added by the granularity work and dropped the table guard,
+            // so a model answer of "framing paragraph \n\n GFM table" put the
+            // inline "_[Assumption]_" suffix right after the final "| … |" row
+            // and broke the table. `carriesGfmTable` is evaluated per
+            // materialized paragraph, unconditionally — same rule as below.
+            isAssumption: carriesGfmTable(guarded.content)
+              ? false
+              : guarded.changed || sourceRefs.length === 0,
           });
         });
         continue;
@@ -439,10 +458,7 @@ export async function generateBlockProse(
       // replacing them, so `changed` no longer implies the text was blanked.
       // Simpler than relocating the marker to a paragraph above the table:
       // just never let a table block carry the assumption flag.
-      if (
-        typeof guarded.content.text === 'string' &&
-        /^\s*\|.*\|\s*$/m.test(guarded.content.text)
-      ) {
+      if (carriesGfmTable(guarded.content)) {
         block.isAssumption = false;
       }
       materializedBlocks.push(block);
