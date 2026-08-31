@@ -30,13 +30,18 @@ import KnowledgeService from '../../KnowledgeService.js';
 import RagService from '../../ragService.js';
 import { EmbeddingService } from '../embeddingService.js';
 
-const enabled =
-  process.env.RUN_DB_TESTS === '1' &&
-  process.env.MOCK_DB === 'false' &&
-  process.env.DB_TYPE === 'postgres' &&
-  /^postgres/.test(process.env.DATABASE_URL || '');
-
-describe.skipIf(!enabled)('Day 210 embedding scope contract on real PostgreSQL', () => {
+// FIX-3 (dyżur 210): NIE `describe.skipIf` — to zwierało `assertRealPostgresTestEnvironment`
+// (który sam sobie zakazuje SKIP-u, patrz jego nagłówek) przed jego pierwszym wywołaniem,
+// więc bez zmiennych środowiskowych cała suite cicho pokazywała "4 skipped", exit 0 — w CI
+// nieodróżnialne od PASS. `assertRealPostgresTestEnvironment()` w `beforeAll` poniżej jest
+// TERAZ jedynym strażnikiem: brak `RUN_DB_TESTS=1`/`MOCK_DB=false`/`DATABASE_URL` prawidłowego
+// realnego PostgreSQL rzuca `Error` z jego treścią, `beforeAll` pada, i vitest oznacza
+// WSZYSTKIE testy tego `describe` jako FAILED (nigdy skipped) — porażka jest głośna i ma
+// niezerowy exit code. `expect(process.env.DB_TYPE).toBe('postgres')` zaraz po nim jest drugą
+// linią obrony na wypadek środowiska, które ma DATABASE_URL wskazujący na realny Postgres, ale
+// literalnie inny `DB_TYPE` (dispatcher `EmbeddingService.search()` czyta `DB_TYPE`, nie samo
+// istnienie połączenia).
+describe('Day 210 embedding scope contract on real PostgreSQL', () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const organizationId = 'day210-org-x';
   const userA = 'day210-user-a';
