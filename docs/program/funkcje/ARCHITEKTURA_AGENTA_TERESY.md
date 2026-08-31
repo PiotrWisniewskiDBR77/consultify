@@ -158,3 +158,22 @@ inicjatywy. Realny `ApiGateway`, podpisany JWT i lokalny PostgreSQL potwierdził
 bez mutacji, pojedynczy paragon, kanoniczny readback i readiness ośmiu kart. Ograniczenie:
 równoległy replay tego samego `clientRequestId` nadal wpada w konflikt wspólnego silnika
 material commands; szczegóły i czerwony dowód są w raporcie Day214.
+
+**Korekta (FIX-214, odbiór adwersaryjny 31.08):** wiersz P4 w tabeli §3 (i pierwsze
+wydanie tego rozdziału) mogą sugerować, że naprawą miało być DOSŁOWNE wywołanie
+`registerInitiative→handoff→execution_case`. To było **strukturalnie niemożliwe** —
+`registerInitiative.ts` (`:80-95`) wymaga PRZED-ISTNIEJĄCEGO wiersza w
+`source_proposals` (czytanego przez `getSourceProposalForUpdate`) z dokładnym
+dopasowaniem treści do propozycji, a draft z czatu Teresy (`generateInitiative.ts`
+pisze bezpośrednio do `initiatives`, z pominięciem `source_proposals`) takiej
+propozycji nigdy nie ma i mieć nie może bez przebudowy generatora czatu (poza
+zakresem 17-D). Naiwne wywołanie `registerInitiative` na czatowym drafcie kończy
+się `MaterialCommandConflictError`. Zamiast tego most `initiative.adopt-chat-draft`
+naśladuje SPRAWDZONY wzorzec BEZPOŚREDNIEGO mostu `adoptAcceptedClassicInitiative`
+(most-siostra SWOT→runtime, `postgresMaterialCommandUnitOfWork.ts:90-206`) — obie
+metody wchodzą do kanonicznego `REGISTERED_DRAFT` z pominięciem dwuetapowego
+`submit-proposal→register`, przez ten sam silnik `executeMaterialCommand`. To NIE
+jest obejście ani dług — to jedyna strukturalnie możliwa droga przy dzisiejszym
+kształcie `registerInitiative`; kolejny czytelnik tego rozdziału nie powinien
+traktować wyboru `adoptAcceptedClassicInitiative` jako tymczasowego zamiennika
+czekającego na „prawdziwą” naprawę przez `registerInitiative`.
