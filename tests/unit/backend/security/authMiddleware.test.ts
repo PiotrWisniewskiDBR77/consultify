@@ -745,6 +745,135 @@ describe('verifyToken (L1)', () => {
     expect(req.organizationId).toBe('canonical-org-uuid');
   });
 
+  // Broni intencji 69fa874874 (usuniecie `!isDemoHeader` z bramki ratunkowej).
+  // Pozostale testy demo tego NIE bronia: blok "prefer user primary organization"
+  // (4c236bc205) naprawia je wczesniej i przykrywa mutacje. Tutaj uzytkownik NIE ma
+  // aktywnego czlonkostwa w swojej organizacji podstawowej, wiec tamten blok pudluje
+  // i jedynym ratunkiem jest bramka ratunkowa — z `!isDemoHeader` zostalby ze
+  // stalym aliasem w tokenie.
+  it('rescues a stale demo-header tenant when the primary organization membership is missing', async () => {
+    const dbGet = vi.fn().mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM organization_members om')) {
+        return { organization_id: 'rescued-org-uuid', role: 'OWNER' };
+      }
+      if (sql.includes('FROM users u')) return undefined;
+      return undefined;
+    });
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet,
+    });
+    const token = (jwt.default || (jwt as any)).sign(
+      { id: 'internal-owner', role: 'OWNER', organizationId: 'stale-org-alias' },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({
+      headers: { authorization: `Bearer ${token}` },
+      get: (name: string) => (name.toLowerCase() === 'x-demo-mode' ? 'true' : undefined),
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.organizationId).toBe('rescued-org-uuid');
+  });
+
+  it('resolves the primary profile organization on the staging host behind x-forwarded-host', async () => {
+    const dbGet = vi.fn().mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM users u')) {
+        return { organization_id: 'canonical-org-uuid', role: 'OWNER' };
+      }
+      if (sql.includes('WHERE user_id = ? AND organization_id = ?')) {
+        return { status: 'ACTIVE', role: 'OWNER', organization_id: params[1] };
+      }
+      return undefined;
+    });
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet,
+    });
+    const token = (jwt.default || (jwt as any)).sign(
+      { id: 'internal-owner', role: 'OWNER', organizationId: 'dbr77' },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({
+      headers: { authorization: `Bearer ${token}` },
+      get: (name: string) =>
+        name.toLowerCase() === 'x-forwarded-host'
+          ? 'staging.consultify.ai:443, internal-proxy'
+          : undefined,
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(req.organizationId).toBe('canonical-org-uuid');
+  });
+
+  it('leaves an unrelated host on the normal x-org-context path', async () => {
+    const dbGet = vi.fn().mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM users u')) {
+        return { organization_id: 'canonical-org-uuid', role: 'OWNER' };
+      }
+      if (sql.includes('WHERE user_id = ? AND organization_id = ?')) {
+        return { status: 'ACTIVE', role: 'MEMBER', organization_id: params[1] };
+      }
+      return undefined;
+    });
+    setDependencies({
+      jwt: jwt.default || jwt,
+      config: { JWT_SECRET: jwtSecret },
+      PermissionService: { can: () => true },
+      dbGet,
+    });
+    const token = (jwt.default || (jwt as any)).sign(
+      { id: 'internal-owner', role: 'OWNER', organizationId: 'dbr77' },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+    const req = mockReq({
+      headers: { authorization: `Bearer ${token}` },
+      get: (name: string) => {
+        const key = name.toLowerCase();
+        if (key === 'host') return 'app.consultify.ai';
+        if (key === 'x-org-context') return 'switched-org-uuid';
+        return undefined;
+      },
+    });
+    const res = mockRes();
+    const next = vi.fn();
+
+    await verifyToken(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    // Poza hostami kanonicznymi klient nadal steruje tenantem przez x-org-context.
+    expect(req.organizationId).toBe('switched-org-uuid');
+    expect(dbGet).not.toHaveBeenCalledWith(expect.stringContaining('FROM users u'), [
+      'internal-owner',
+    ]);
+  });
+
+  it('recognizes canonical tenant hosts generically (demo and staging, port and proxy list tolerated)', () => {
+    const { isCanonicalTenantHostname, normalizeRequestHost, CANONICAL_TENANT_HOSTS } =
+      __private__ as any;
+    expect(normalizeRequestHost('Demo.Consultify.AI:443, 10.0.0.1')).toBe('demo.consultify.ai');
+    expect(isCanonicalTenantHostname('demo.consultify.ai')).toBe(true);
+    expect(isCanonicalTenantHostname('STAGING.consultify.ai:8080')).toBe(true);
+    expect(isCanonicalTenantHostname('app.consultify.ai')).toBe(false);
+    expect(isCanonicalTenantHostname(undefined)).toBe(false);
+    expect(CANONICAL_TENANT_HOSTS.has('staging.consultify.ai')).toBe(true);
+  });
+
   it('rejects token issued before a revoke-all marker', async () => {
     const iatSec = Math.floor(Date.now() / 1000) - 10; // issued 10s ago
     const tokenIssuedAt = iatSec * 1000;
