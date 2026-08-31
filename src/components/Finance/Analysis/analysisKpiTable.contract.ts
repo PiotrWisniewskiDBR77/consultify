@@ -290,32 +290,64 @@ export function analysisKpiTablePersistKey(businessVersionId: string): string {
   return `${ANALYSIS_KPI_TABLE_PERSIST_KEY_PREFIX}.${businessVersionId}`;
 }
 
+/**
+ * Rodzina „ucinany nagłówek" (2026-08-31, `finance-analysis-workspace`,
+ * `evidence/grafika/148-finanse-parametry`) — ta sama przyczyna co
+ * `OutputsAggregateTabContent.tsx`/`TemplatesManager.tsx` tego dnia:
+ * `FilterableTable`'s `table-fixed` renderuje każdą kolumnę na jej
+ * deklarowanym `width`; BEZ `width` (stan sprzed naprawy) `columnFit` ściska
+ * WSZYSTKIE 11 kolumn do wspólnej podłogi (~120px przy 1440px/11 kolumn),
+ * poniżej naturalnej szerokości nagłówków „OGÓLNA INTERPRETACJA"/
+ * „INTERPRETACJA WYNIKU"/„PRZEZNACZENIE" — stąd ucięcie wielokropkiem.
+ *
+ * Szerokości poniżej zmierzone na żywym DOM-ie (`th` sklonowany z
+ * `white-space:nowrap`, więc pełny tekst nagłówka + jego padding/ikona
+ * sortu/filtra w jednej linii) w harnessu `finance-analysis-workspace`
+ * (`scene=draft-with-kpis`, 1440px, 6 wskaźników). Suma 11 kolumn + kolumna
+ * kebab (`ROW_ACTIONS_COLUMN_WIDTH=80px`, `FilterableTable.tsx`) mieści się w
+ * zmierzonym obszarze tabeli (~1406px) BEZ ściskania (scale===1).
+ *
+ * Pełny tekst wszystkich 11 nagłówków na raz (suma ≈1434px) NIE mieści się w
+ * budżecie (≈1326px na 11 kolumn) — dwa najdłuższe dostają krótszy synonim
+ * bez zmiany znaczenia (właściciel/CLAUDE.md „spróbuj pełny tekst najpierw"):
+ * „Ogólna interpretacja" → „Interpretacja" (ta sama zasada formuły co „Wzór",
+ * kolumna zostaje jednoznaczna obok „Interpretacja wyniku", która NIE jest
+ * skracana — mieści się w pełni po odchudzeniu tamtych dwóch) i „Benchmark
+ * branżowy" → „Benchmark" (branżowość wynika z kontekstu kolumny — wartość
+ * komórki to zawsze zakres branżowy). Kolumny okresów (`P-2025`/`P-2026`,
+ * DYNAMICZNE per businessVersion) dostają stały budżet 80px — z zapasem nad
+ * zmierzonym „Q4 2026" (≈84px to jedyny zmierzony przypadek szerszy niż
+ * `P-2025`/`FY2025`; 80px pokrywa realistyczne etykiety okresów tego kształtu
+ * bez traktowania ich jak tekstu wolnej długości).
+ */
 export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; label: string }[]): TableColumn[] {
   const periodColumns: TableColumn[] = periodLabels.map((p) => ({
     id: `period.${p.id}`,
     label: p.label,
     align: 'right',
     sortable: false,
+    width: '80px',
   }));
 
   return [
-    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left' },
-    { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true },
-    { id: 'formulaDisplay', label: 'Wzór', align: 'left' },
-    { id: 'interpretationGeneral', label: 'Ogólna interpretacja', align: 'left' },
+    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left', width: '114px' },
+    { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true, width: '118px' },
+    { id: 'formulaDisplay', label: 'Wzór', align: 'left', width: '69px' },
+    { id: 'interpretationGeneral', label: 'Interpretacja', align: 'left', width: '131px' },
     ...periodColumns,
     {
       id: 'yoyDelta',
       label: 'Zmiana r/r',
       align: 'right',
       sortable: true,
+      width: '121px',
       sortAccessor: (row: TableRow) => (row.yoyDelta as YoyDelta).percentDelta ?? Number.NEGATIVE_INFINITY,
       render: (row: TableRow) => formatYoyDeltaText(row.yoyDelta as YoyDelta),
     },
-    { id: 'benchmark', label: 'Benchmark branżowy', align: 'left', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
-    { id: 'interpretationSpecific', label: 'Interpretacja wyniku', align: 'left' },
-    { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true },
-    { id: 'downstreamUses', label: 'Przeznaczenie', align: 'left' },
+    { id: 'benchmark', label: 'Benchmark', align: 'left', width: '110px', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
+    { id: 'interpretationSpecific', label: 'Interpretacja wyniku', align: 'left', width: '184px' },
+    { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true, width: '176px' },
+    { id: 'downstreamUses', label: 'Przeznaczenie', align: 'left', width: '133px' },
   ];
 }
 
