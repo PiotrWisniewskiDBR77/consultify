@@ -24420,7 +24420,9 @@
         "strategicLeverageEmpty": "Zidentyfikuj wewnętrznych liderów zmiany, którzy pociągną transformację naprzód.",
         "nextStep": "Kolejny krok",
         "nextStepWithScenario": "Opracuj szczegółowy plan wdrożenia dla scenariusza „{{scenario}}”.",
-        "nextStepEmpty": "Wybierz scenariusz transformacji, aby przejść do szczegółowego planowania."
+        "nextStepEmpty": "Wybierz scenariusz transformacji, aby przejść do szczegółowego planowania.",
+        "employeesNoData": "Brak danych o zatrudnieniu",
+        "revenueNoData": "Brak danych o przychodzie"
       }
     },
     "sidebar": {
@@ -25062,7 +25064,16 @@
       "mentions": "Wzmianki",
       "traverse": "Przejdź graf",
       "provenance": "Proweniencja",
-      "sources": "Źródła"
+      "sources": "Źródła",
+      "entityTypes": {
+        "person": "Osoba",
+        "organization": "Organizacja",
+        "concept": "Pojęcie",
+        "technology": "Technologia",
+        "location": "Lokalizacja",
+        "process": "Proces",
+        "metric": "Miernik"
+      }
     }
   },
   "megatrends": {

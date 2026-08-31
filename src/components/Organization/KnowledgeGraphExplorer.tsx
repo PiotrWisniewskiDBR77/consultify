@@ -7,6 +7,7 @@
 import 'reactflow/dist/style.css';
 
 import dagre from 'dagre';
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   ChevronRight,
@@ -83,6 +84,22 @@ const ENTITY_COLORS: Record<string, string> = {
 
 function getEntityColor(type: string): string {
   return ENTITY_COLORS[type.toLowerCase()] || ENTITY_COLORS.default;
+}
+
+/**
+ * Etykieta typu encji DO WYŚWIETLENIA.
+ *
+ * Powód istnienia (odbiór grafiki Organizacji 2026-08-31): `entity_type` to
+ * angielski identyfikator z API (`person`, `process`, `organization`...) i był
+ * renderowany SUROWO — na polskim ekranie „Graf wiedzy" stały czipy
+ * „Process (18) · Person (9) · System (6) · Organization (1)". Reszta modułu
+ * została przetłumaczona, ten leak przeszedł, bo to nie jest literał w JSX
+ * tylko wartość danych. Klucz nieznanego typu wraca surowy — lepiej pokazać
+ * identyfikator niż pustkę.
+ */
+function entityTypeLabel(type: string, t: TFunction): string {
+  const key = type.toLowerCase();
+  return t(`organization.knowledgeGraph.entityTypes.${key}`, type);
 }
 
 function layoutGraph(
@@ -298,7 +315,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               }}
             >
               <div className="w-2 h-2 rounded-full" style={{ background: getEntityColor(type) }} />
-              {type} ({count})
+              {entityTypeLabel(type, t)} ({count})
             </div>
           ))}
         </div>
@@ -447,7 +464,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
                 {[
                   {
                     k: t('organization.knowledgeGraph.type', 'Type'),
-                    v: selectedEntity.entity_type,
+                    v: entityTypeLabel(selectedEntity.entity_type, t),
                   },
                   {
                     k: t('organization.knowledgeGraph.confidence', 'Confidence'),

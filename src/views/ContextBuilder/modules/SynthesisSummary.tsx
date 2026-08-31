@@ -132,13 +132,29 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
                   </span>
                 )}
               </h3>
+              {/*
+                Brak liczby albo kwoty NIE może renderować „— pracowników" /
+                „— przychodu" (odbiór grafiki 2026-08-31): myślnik z jednostką
+                czyta się jak urwane zdanie, a nie jak uczciwy brak danych.
+                Gdy wartości nie ma, pokazujemy pełny komunikat o braku.
+              */}
               <p className="text-white/70">
                 {companyProfile.industry ||
-                  t('organization.synthesis.executiveBrief.industryFallback', 'No industry on file')}{' '}
-                • {companyProfile.employeeCount || '—'}{' '}
-                {t('organization.synthesis.executiveBrief.employeesUnit', 'employees')} •{' '}
-                {companyProfile.revenue || '—'}{' '}
-                {t('organization.synthesis.executiveBrief.revenueUnit', 'revenue')}
+                  t(
+                    'organization.synthesis.executiveBrief.industryFallback',
+                    'No industry on file'
+                  )}{' '}
+                •{' '}
+                {companyProfile.employeeCount
+                  ? `${companyProfile.employeeCount} ${t('organization.synthesis.executiveBrief.employeesUnit', 'employees')}`
+                  : t(
+                      'organization.synthesis.executiveBrief.employeesNoData',
+                      'No headcount on file'
+                    )}{' '}
+                •{' '}
+                {companyProfile.revenue
+                  ? `${companyProfile.revenue} ${t('organization.synthesis.executiveBrief.revenueUnit', 'revenue')}`
+                  : t('organization.synthesis.executiveBrief.revenueNoData', 'No revenue on file')}
               </p>
             </div>
           </div>

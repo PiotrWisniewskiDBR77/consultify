@@ -23217,7 +23217,9 @@
         "strategicLeverageEmpty": "Identify internal champions to drive the transformation forward.",
         "nextStep": "Next Step",
         "nextStepWithScenario": "Develop detailed implementation plan for \"{{scenario}}\" scenario.",
-        "nextStepEmpty": "Select a transformation scenario to proceed with detailed planning."
+        "nextStepEmpty": "Select a transformation scenario to proceed with detailed planning.",
+        "employeesNoData": "No headcount on file",
+        "revenueNoData": "No revenue on file"
       }
     },
     "sidebar": {
@@ -23859,7 +23861,16 @@
       "mentions": "Mentions",
       "traverse": "Traverse",
       "provenance": "Provenance",
-      "sources": "Sources"
+      "sources": "Sources",
+      "entityTypes": {
+        "person": "Person",
+        "organization": "Organization",
+        "concept": "Concept",
+        "technology": "Technology",
+        "location": "Location",
+        "process": "Process",
+        "metric": "Metric"
+      }
     }
   },
   "megatrends": {
