@@ -31,6 +31,7 @@ import {
   financeValueDisplayReasonLabel,
   financeValueStatusLabel,
   formatFinanceValueForDisplay,
+  reconciliationBucketLabel,
 } from '@/services/api/financeV2.types';
 import type { ReconciliationDetailRowDto } from '@/services/api/financeV2.types';
 
@@ -163,9 +164,9 @@ export function SourceEvidencePanel(props: SourceEvidencePanelProps): React.Reac
           ) : (
             <dl className="space-y-1 rounded-lg bg-c-surface-raised p-2 text-[11px]" data-testid="source-evidence-mapping-row">
               <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-c-text-muted">Bucket</dt>
+                <dt className="text-c-text-muted">Kategoria mapowania</dt>
                 <dd className="font-mono text-c-text" data-testid="source-evidence-mapping-bucket">
-                  {mappingRow.bucket}
+                  {reconciliationBucketLabel(mappingRow.bucket)}
                 </dd>
               </div>
               <div className="flex items-baseline justify-between gap-2">
