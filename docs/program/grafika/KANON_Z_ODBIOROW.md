@@ -141,3 +141,57 @@ na pytanie zadane dosłownie o dokument wychodzący na zewnątrz.
 **Nieobjęte i niedomniemywane:** warstwa coachingowa QBank v2 (definicje kanoniczne,
 przykłady, przykłady technologii, pułapki oceniania) — na nią zgody NIE udzielono.
 Zapis w nagłówku `src/components/assessment/report/drdLabels.ts`.
+
+---
+
+## ★★ 2026-08-31 — DWIE DECYZJE WŁAŚCICIELA, KTÓRE UNIEWAŻNIAJĄ CZĘŚĆ WCZORAJSZYCH ZGŁOSZEŃ
+
+Właściciel, dosłownie:
+> „W 100% DRD jest moją licencją, możesz korzystać z niej dowolnie.
+> A wiodącym językiem i tak jest język angielski."
+
+### 1. Licencja DRD — bez ograniczeń
+
+Wczorajsza zgoda dotyczyła **wyłącznie opisów poziomów w raporcie dla klienta**, z jawnie
+wyłączoną warstwą coachingową QBank v2. **Ta decyzja ją poszerza: metodyka DRD jest w całości
+własnością właściciela i wolno z niej korzystać bez ograniczeń** — także z definicji kanonicznych,
+przykładów, przykładów technologii i pułapek oceniania.
+
+**Nota licencyjna `usageRestriction: 'internal_only'` w `compileDrdPack.ts` jest wobec właściciela
+bezprzedmiotowa.** Ograniczenie dotyczyło ochrony jego materiału przed wyciekiem — nie jego
+własnego produktu.
+
+### 2. ★ Wiodącym językiem metodyki jest ANGIELSKI — to NIE jest defekt
+
+**To unieważnia serię zgłoszeń z 30.08.** Wczoraj wielokrotnie raportowano jako defekt:
+- „43 angielskie etykiety poziomów w raporcie z oceny",
+- „176 opisów poziomów i 7 opisów osi po angielsku",
+- „macierz pokazuje AI Support / ERP / MES zamiast polskich nazw",
+- „połowa metodyki jest po angielsku — praca redakcyjna właściciela".
+
+**Żadne z tych nie jest defektem.** Książka „Digital Pathfinder" jest napisana po angielsku,
+kod wiernie ją przepisał, a właściciel potwierdza, że **angielski jest językiem wiodącym metodyki**.
+Osie 5 i 6, które mają polskie brzmienia, są wyjątkiem wpisanym ręcznie — nie wzorcem.
+
+### ★ GRANICA, KTÓRĄ TRZEBA TRZYMAĆ
+
+| warstwa | język | przykład |
+| --- | --- | --- |
+| **Metodyka DRD** — nazwy osi, obszarów, poziomów, opisy poziomów, technologie | **angielski, wiodący** | `Automation`, `MES`, `Basic Data Registration`, `AI-Native Business Offerings` |
+| **Interfejs produktu** — przyciski, nagłówki ekranów, komunikaty, etykiety kolumn, statusy | **polski** | „Nowy raport", „Zatwierdzony", „Szukaj raportów…", „Wymagane" |
+
+**Zgłoszenie „angielski tekst na ekranie" jest zasadne tylko wtedy, gdy dotyczy INTERFEJSU.**
+Angielski w treści metodyki należy zostawić i **nie zgłaszać go jako defektu**.
+
+Wątpliwy przypadek rozstrzygamy pytaniem: *czy to zdanie napisał właściciel jako autor metodyki,
+czy programista jako etykietę kontrolki?* Pierwsze zostaje po angielsku, drugie idzie na polski.
+
+### Co z tego wynika praktycznie
+
+- **Obszar 7E** (`DRD_OS7E_PROPOZYCJA.md`) — propozycja pięciu poziomów napisana wczoraj **może
+  wejść do produktu**; wersja angielska jest wersją wiodącą, polska pomocniczą.
+- **Raport z oceny** przestaje wymagać pracy redakcyjnej właściciela nad 176 opisami —
+  to była największa pozycja na liście blokerów i **znika**.
+- **Macierz DRD** — angielskie nazwy poziomów w komórkach nie są powodem do naprawy.
+  Nadal otwarte zostaje to, co realnie kłamie: **treść komórek** (23 z 63 fałszywych na osi 1,
+  filtr szesnastu skrótów) i **zmyślone etykiety wierszy** — patrz `MACIERZ_TRESC_KOMOREK.md`.
