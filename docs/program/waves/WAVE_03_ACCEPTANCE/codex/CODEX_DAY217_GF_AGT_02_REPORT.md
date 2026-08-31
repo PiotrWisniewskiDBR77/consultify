@@ -62,3 +62,65 @@ Ogniwo 6 (druga rozmowa cytuje znalezisko z pierwszej): nie działa — obie doz
 ## Pliki
 
 `server/scripts/day217-real-model-probe.ts`, `tests/integration/day217-gf-agt-02.realdb.test.ts`, ten raport, dopisek §12 i odsyłacz §6 w architekturze oraz dopisek statusu punktów 3–4. Żaden plik mechanizmu 205/206/207/209/210 nie został pozostawiony zmieniony.
+
+## Dopisek — kontynuacja FIX-217, R3 dokończone (31.08.2026, dyżur GF-AGT-02 fix)
+
+R3 (`server/scripts/day217-real-model-probe.ts`) doprowadzone do końca po FIX-217-3
+(fixture `onboarding_status='ORG_SETUP_COMPLETED'`). Po naprawie fixture pierwsza próba
+dała `403 ORG_MEMBERSHIP_REVOKED` na obu turach, `durationMs` 22/4ms, puste `events` —
+NIE od `accessPolicyService`, tylko od `requireActiveChatMembership`
+(`server/src/routes/ai.routes.ts:125-151`). Przyczyna zmierzona bezpośrednio (surowy
+`pg.Pool` widział wiersz membership, `DbPromise.get()` zwracał `null`):
+`server/src/database/Database.ts:79-85` — przy `NODE_ENV=test` bez `RUN_DB_TESTS=1`
+`getDatabaseInstance()` cicho przełącza się na atrapę bazy (ta sama pułapka opisana w
+`tests/integration/_helpers/assertRealPostgres.ts`). Standalone `tsx` skrypt (w
+odróżnieniu od testu vitest) nigdy nie ustawiał `RUN_DB_TESTS=1`/`MOCK_DB=false`.
+Naprawiona wyłącznie zmienna środowiskowa sondy; `requireActiveChatMembership` i
+`accessPolicyService` niezmienione.
+
+Skrypt przepisany na w pełni samodzielny: własna organizacja/user/membership/projekt/
+polityka (wzorzec testu `beforeAll`) + własny dokument bazy wiedzy z unikalnym
+znacznikiem (realny POST `/api/document-studio/generate`, `ENABLE_ARTIFACT_KNOWLEDGE_INDEX=true`).
+Zweryfikowany BEZ modelu (monkeypatch `AIPipeline.prototype.process` + realny
+`executeReadTool`): `200`/niepuste `events`/`toolSteps>0` dla ON, `toolSteps=0` dla OFF —
+PASS, artefakty `day217-preflight.log`, `day217-preflight2.log`.
+
+**Ostatni przebieg budżetu (2/2 zużyte, oba w tym dyżurze — pierwszy padł na 403 przed
+modelem, nie liczy się jako próba modelu, ale liczy się jako zużyty slot; drugi to
+poniższy):**
+
+- **(a) model sam decyduje o wywołaniu narzędzia — TAK.** ON: `status=200`,
+  `durationMs=5439`, `toolSteps=[{search_knowledge_base, running},{search_knowledge_base,
+  completed}]`, log serwera: `[ToolExecutor] Executing tool: search_knowledge_base
+  {"args":"{\"query\":\"Day217 R3 probe topic ZNACZNIK-DAY217-R3-445fc5d5\",
+  \"vault_scope\":\"project\",\"vault_project_id\":\"Day217 R3 project\"}"}` — realna
+  decyzja modelu, nie atrapa.
+- **(b) unikalny znacznik z bazy wiedzy w odpowiedzi — NIE.** Model podał
+  `vault_project_id:"Day217 R3 project"` (NAZWĘ projektu, nie jego UUID).
+  `executeKBSearch` (`toolDefinitions.ts:1090-1112`) z `vault_scope='project'` i
+  `explicitProjectId` ustawionym na coś, co nie jest realnym `project_id`, dostaje
+  `documentIds=[]` z `KnowledgeService.getDocuments` i **fail-closed** zwraca pustkę —
+  dokładnie zgodnie z projektem (żaden dokument nie wycieka do nieistniejącego/niewidocznego
+  zakresu). To NIE jest defekt bramki dostępu ani fixture — to model wybrał zły argument
+  narzędzia. Odpowiedź: „Nie znalazłem żadnych dokumentów zatytułowanych […]”,
+  `markerPresent:false`.
+- **(c) flaga rządzi zachowaniem — TAK.** OFF: `status=200`, `durationMs=2521`,
+  `toolSteps=[]` — ten sam prompt, bez ani jednego wywołania narzędzia. Różnica ON/OFF
+  jest realna i mierzona na żywym modelu (nie na mutacji kodu) — to jednocześnie dowód
+  FIX-217-5: przypisanie `(featureFlags as any).ENABLE_TERESA_TOOL_LOOP = enabled`
+  realnie dociera do trasy.
+
+**Werdykt R3: CZĘŚCIOWY.** (a) i (c) dowiedzione na żywym modelu. (b) nie — model
+zagrał, ale wybrał argument narzędzia, który fail-closed odciął go od właściwego
+dokumentu. Budżet (2/2) wyczerpany zgodnie z instrukcją; **trzeciego przebiegu NIE
+wykonano**. Surowe artefakty: `day217-real-model.json` (ostatni przebieg, nadpisuje
+poprzedni — poprzednie zachowane jako `day217-real-model-attempt1-403.json`), pełne logi
+`day217-real-model-probe-attempt2-final.log`.
+
+**Co zostało do zrobienia (dla następnego dyżuru, nie zrobione tutaj — zero budżetu
+modelu):** albo (i) tool-definicja `search_knowledge_base` powinna jaśniej wymuszać, że
+`vault_project_id` to UUID projektu, nie jego nazwa (np. walidacja formatu / przykład w
+opisie parametru), albo (ii) sonda powinna nie podawać modelowi nazwy projektu w
+kontekście w sposób, który zachęca go do zgadywania identyfikatora. Żadna z tych zmian
+nie została wykonana — wymagałaby nowego, osobno autoryzowanego budżetu prób modelu.
+Moduł 17 pozostaje NIEZAMKNIĘTY z tego powodu.
