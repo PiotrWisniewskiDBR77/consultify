@@ -146,6 +146,11 @@ async function main(): Promise<void> {
          FROM tasks
         WHERE initiative_id IS NOT NULL
           AND ($1::text IS NULL OR initiative_id=$1)
+          AND NOT EXISTS (
+            SELECT 1 FROM legacy_task_cutover_ledger ledger
+             WHERE ledger.organization_id=tasks.organization_id
+               AND ledger.legacy_task_id=tasks.id
+          )
         GROUP BY organization_id, initiative_id
         ORDER BY organization_id, initiative_id
         LIMIT $2`,
