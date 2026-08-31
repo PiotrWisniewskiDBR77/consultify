@@ -1573,7 +1573,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                                 aria-pressed={active}
                                 className={`min-h-12 w-full p-2 text-xs transition ${
                                   active
-                                    ? 'bg-c-accent text-white'
+                                    ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950'
                                     : 'bg-c-surface hover:bg-c-surface-raised'
                                 }`}
                                 onClick={() =>
