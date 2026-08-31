@@ -5,14 +5,22 @@ description: Bezpieczna promocja kodu na demo.consultify.ai (Railway) oraz migra
 
 # Consultify — bezpieczna promocja na demo + operacje na bazie
 
+## ⚠️ Zmiana doktryny (od 2026-08-31, decyzja D-4)
+Środowiska rozdzielone, każde z WŁASNĄ bazą: `staging.consultify.ai` = powierzchnia pracy i odbiorów
+Piotra; `demo.consultify.ai` = witryna, dostaje WYŁĄCZNIE promocję niezmiennego SHA z taga
+`staging-deployed` (workflow „Railway Deploy"). Baza gałęzi = `origin/develop` (nie `origin/Londyn`/
+`origin/demo`). Procedura „merge w worktree → `git push origin HEAD:demo`" poniżej jest ŚCIEŻKĄ
+AWARYJNĄ (tylko incydent) — patrz CLAUDE.md → ŚRODOWISKA.
+
 ## Kontekst (fakty)
-- `origin/demo` = gałąź, którą Railway serwis **`consultify`** (env `demo`) auto-deployuje na push. `demo = Londyn + N` commitów wizualnych/deploy.
+- **NIEAKTUALNE od 2026-08-31:** `origin/demo` już NIE auto-deployuje na push — Railway serwis
+  **`consultify`** (env `demo`) dostaje kod tylko przez promocję taga `staging-deployed`.
 - Railway CLI zwykle zalogowany jako Piotr (`railway whoami`), env=demo. App-serwis = **`consultify`** (jeden serwis, buduje frontend — ma zmienne `VITE_*`).
 - Baza demo/staging = **TROLLEY** (`trolley.proxy.rlwy.net`, WSPÓLNA z demo). PROD=centerbeam — **NIGDY** bez jawnej zgody.
 - Autoryzacja: promocję na demo robi nadzorca sesji głównej (CTO). Zmiany WIZUALNE wymagają akceptacji Piotra (zrzuty); zmiany silnika = tryb „deploy → Piotr klika live".
 
 ## Promocja kodu — procedura (nie odpuszczaj żadnego kroku)
-1. **Baza gałęzi:** świeża z `origin/Londyn` (NIGDY `feat/tp-forms-polish` ani `tp-*`/`deliverables-w1`). Praca w worktree isolation, commit-per-krok.
+1. **Baza gałęzi:** świeża z `origin/develop` (od 2026-08-31; NIGDY `feat/tp-forms-polish` ani `tp-*`/`deliverables-w1`). Praca w worktree isolation, commit-per-krok.
 2. **Pre-flight merge-tree (0 konfliktów):**
    ```
    git merge-tree $(git merge-base origin/demo <branch>) origin/demo <branch> | grep -E '^(<<<<<<<|CONFLICT|changed in both)'
@@ -27,7 +35,9 @@ description: Bezpieczna promocja kodu na demo.consultify.ai (Railway) oraz migra
    **NIGDY reset/force/rebase na demo.** Merge zachowuje commity demo.
 5. **TWARDA weryfikacja:** `git diff --stat <sha_demo_przed> HEAD` musi pokazać **DOKŁADNIE** oczekiwane pliki. Więcej = coś nie tak, STOP.
 6. **esbuild zmienionych plików** na finalnym drzewie: `npx esbuild <plik.tsx> --loader:.tsx=tsx --bundle=false --format=esm --outfile=/dev/null`.
-7. **Push:** `git push origin HEAD:demo` (z worktree). Railway złapie push → nowy build.
+7. **Push (ŚCIEŻKA AWARYJNA, tylko incydent):** `git push origin HEAD:demo` (z worktree). Ścieżka
+   docelowa = promocja taga `staging-deployed` przez workflow, nie ręczny push. Po użyciu ścieżki
+   awaryjnej obowiązkowo naprawić tag `staging-deployed`.
 8. **Monitor (z KATALOGU GŁÓWNEGO — worktree niezlinkowany z railway):** pętla `railway deployment list --service consultify` aż status ≠ BUILDING/DEPLOYING; potem health:
    ```
    curl -s -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 AppleWebKit/537.36" https://demo.consultify.ai/
