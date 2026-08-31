@@ -130,6 +130,8 @@ describe('generateBlockProse', () => {
     });
 
     const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    expect(generateChatResponseMock).toHaveBeenCalledTimes(1);
+    expect(generateChatResponseMock.mock.calls[0]?.[0]?.maxTokens).toBe(2400);
 
     const section = result.sections[0];
     expect((section.blocks[0].content as { text: string }).text).toBe(
@@ -166,6 +168,29 @@ describe('generateBlockProse', () => {
     // downstream review can flag it instead.
     expect((result.sections[0].blocks[0].content as { text: string }).text).toBe(sentence);
     expect(result.sections[0].blocks[0].isAssumption).toBe(true);
+  });
+
+  it('materializes multi-paragraph prose as separately grounded paragraph blocks', async () => {
+    generateChatResponseMock.mockResolvedValue({
+      content: JSON.stringify({
+        blocks: [
+          {
+            blockId: 'blk-para',
+            text: 'Annual benefit is EUR 2.2m.\n\nReach 85% by entering DACH.\n\nThe Board should approve the migration.',
+          },
+          { blockId: 'blk-list', items: ['Lower unit cost'] },
+        ],
+      }),
+    });
+
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    const paragraphs = result.sections[0].blocks.filter((block) => block.type === 'paragraph');
+    expect(paragraphs.map((block) => block.blockId)).toEqual([
+      'blk-para',
+      'blk-para-paragraph-2',
+      'blk-para-paragraph-3',
+    ]);
+    expect(paragraphs.map((block) => block.isAssumption)).toEqual([false, true, false]);
   });
 
   it('N-9: a GFM table paragraph with a number outside the sources renders as a valid table, without an inline assumption marker', async () => {
@@ -254,5 +279,82 @@ describe('generateBlockProse', () => {
     });
     const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
     expect((result.sections[0].blocks[0].content as { text: string }).text).toBe('Fenced prose.');
+  });
+
+  // FIX-195 (1). The day-195 acceptance measured the real provider answering
+  // the "fill these blocks" prompt with a BARE ARRAY on 3/3 runs; the old
+  // `isRecord` guard rejected all three and the document degraded silently to
+  // `llm_prose_fallback` (zero model prose). Both shapes must be accepted.
+  it.each([
+    [
+      'object shape {"blocks":[…]}',
+      JSON.stringify({
+        blocks: [
+          { blockId: 'blk-para', text: 'Object-shaped prose.' },
+          { blockId: 'blk-list', items: ['Object item'] },
+        ],
+      }),
+      'Object-shaped prose.',
+    ],
+    [
+      'bare array shape […]',
+      JSON.stringify([
+        { blockId: 'blk-para', text: 'Array-shaped prose.' },
+        { blockId: 'blk-list', items: ['Array item'] },
+      ]),
+      'Array-shaped prose.',
+    ],
+    [
+      'bare array inside a markdown fence',
+      '```json\n[{"blockId":"blk-para","text":"Fenced array prose."},{"blockId":"blk-list","items":["Fenced item"]}]\n```',
+      'Fenced array prose.',
+    ],
+  ])('accepts the %s returned by the model', async (_label, content, expected) => {
+    generateChatResponseMock.mockResolvedValue({ content });
+    const warnings: Array<{ code: string }> = [];
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, {
+      enable: true,
+      warnings: { record: (w: { code: string }) => warnings.push(w) },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    expect((result.sections[0].blocks[0].content as { text: string }).text).toBe(expected);
+    expect(warnings.map((w) => w.code)).not.toContain('llm_prose_fallback');
+  });
+
+  // FIX-195 (4). The granularity split branch (`paragraphs.length > 1`) was
+  // added without the N-9 table guard, so "framing paragraph \n\n GFM table"
+  // — the single most common long-form answer — put the inline assumption
+  // marker straight after the last "| … |" row and broke the table.
+  it('N-9 holds on the SPLIT branch: a framing paragraph followed by a GFM table with an outside number keeps the table unmarked', async () => {
+    const tableText = [
+      '| Metric | Value |',
+      '| --- | --- |',
+      '| Adoption | 42% |',
+    ].join('\n');
+    generateChatResponseMock.mockResolvedValue({
+      content: JSON.stringify({
+        blocks: [
+          {
+            blockId: 'blk-para',
+            text: `The adoption ramp is summarised below.\n\n${tableText}`,
+          },
+        ],
+      }),
+    });
+
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    const paragraphs = result.sections[0].blocks.filter((block) => block.type === 'paragraph');
+    expect(paragraphs).toHaveLength(2);
+    const tableBlock = paragraphs[1];
+    expect((tableBlock.content as { text: string }).text).toBe(tableText);
+    // 42 is outside the source pack (2.2, 1.08) → guarded.changed is true, but
+    // N-9 outranks it: a table block is never an assumption.
+    expect(tableBlock.isAssumption).toBe(false);
+
+    const markdown = renderSchemaToMarkdown(result);
+    const lastTableLine = markdown.split('\n').filter((line) => line.includes('Adoption'))[0];
+    expect(lastTableLine.trim().startsWith('|')).toBe(true);
+    expect(lastTableLine).not.toContain('[Assumption]');
+    expect(markdown).not.toContain('| Adoption | 42% | _[Assumption]_');
   });
 });

@@ -36,10 +36,14 @@ const schema = (language: 'pl' | 'en', title: string, paragraph: string) =>
   }) as any;
 
 describe('day190 obviousEnglish final grounding boundary', () => {
-  it('R1 preserves a Polish title, heading and sentence containing Plan and marks the signal', () => {
+  // FIX-195 (5) restores the fixture day 195 had weakened away (the paragraph
+  // was rewritten to drop the word "Plan", which silenced the very defect the
+  // test exists for) and asserts the NEW behaviour: `plan` is a Polish word
+  // (report 190, token table, row "plan | tak"), so a fully grounded Polish
+  // sentence containing it must stay AND must not be amber.
+  it('R1 keeps a grounded Polish title, heading and "Plan wdrożenia" sentence and raises NO signal for the Polish homograph', () => {
     const title = 'Plan działania';
-    const paragraph =
-      'Plan wdrożenia obejmuje trzy fale: pilotaż, skalowanie i utrwalenie.';
+    const paragraph = 'Plan wdrożenia obejmuje trzy fale: pilotaż, skalowanie i utrwalenie.';
     const result = enforceDocumentSchemaGrounding(
       schema('pl', title, paragraph),
       `${title}. ${paragraph}`
@@ -50,8 +54,50 @@ describe('day190 obviousEnglish final grounding boundary', () => {
     expect(result.sections[0].purpose).toBe(`Cel: ${title}`);
     expect(result.sections[0].blocks[0].content).toEqual({ text: title });
     expect(result.sections[0].blocks[1].content).toEqual({ text: paragraph });
-    expect(result.sections[0].blocks.every((block: any) => block.isAssumption === true)).toBe(true);
+    // Neither the heading (pinned to "Plan działania") nor the sentence is an
+    // assumption any more: nothing English is present.
+    expect(result.sections[0].blocks[0].isAssumption).toBe(false);
+    expect(result.sections[0].blocks[1].isAssumption).toBe(false);
+    expect(result.evidence.toVerify).not.toContain(
+      'Tytuł lub cel sekcji "Plan działania" zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.'
+    );
     expect(JSON.stringify(result)).not.toContain('Treść usunięta');
+  });
+
+  // The three remaining Polish homographs from the same table row group.
+  it.each([
+    ['portfolio', 'Portfolio inicjatyw obejmuje osiem projektów.'],
+    ['total', 'Total zamówień pozostaje bez zmian.'],
+    ['medium', 'Medium jest przekaźnikiem informacji.'],
+  ])('R1b keeps a grounded Polish sentence with the homograph %s unmarked', (_token, paragraph) => {
+    const title = 'Stan programu';
+    const result = enforceDocumentSchemaGrounding(
+      schema('pl', title, paragraph),
+      `${title}. ${paragraph}`
+    );
+    expect(result.sections[0].blocks[1].content).toEqual({ text: paragraph });
+    expect(result.sections[0].blocks[1].isAssumption).toBe(false);
+  });
+
+  it('R2 reports a flagged document title without mutating it and leaves a clean title unreported', () => {
+    const flagged = enforceDocumentSchemaGrounding(
+      schema('pl', 'Stan programu', 'Program przebiega zgodnie z ustaleniami.'),
+      'Stan programu. Program przebiega zgodnie z ustaleniami.'
+    );
+    flagged.title = 'Executive plan 2030';
+    const checked = enforceDocumentSchemaGrounding(flagged, 'Stan programu bez angielskiego tytułu.');
+    expect(checked.title).toBe('Executive plan 2030');
+    expect(checked.evidence.toVerify).toContain(
+      'Tytuł dokumentu zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.'
+    );
+
+    const clean = enforceDocumentSchemaGrounding(
+      schema('pl', 'Stan programu', 'Program przebiega zgodnie z ustaleniami.'),
+      'Dokument Stan programu. Program przebiega zgodnie z ustaleniami.'
+    );
+    expect(clean.evidence.toVerify).not.toContain(
+      'Tytuł dokumentu zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.'
+    );
   });
 
   it('R3a leaves an English document unchanged because localization is disjoint', () => {
