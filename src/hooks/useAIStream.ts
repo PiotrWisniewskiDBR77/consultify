@@ -1124,10 +1124,21 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           const e = evt as ToolStepEvent;
           setResearchProgress((previous: any) => {
             const steps = Array.isArray(previous?.toolSteps) ? previous.toolSteps : [];
-            const withoutCurrent = steps.filter(
-              (step: ToolStepEvent) => step.toolName !== e.toolName
-            );
-            return { ...(previous || {}), toolSteps: [...withoutCurrent, e] };
+            if (e.status === 'running') {
+              return { ...(previous || {}), toolSteps: [...steps, e] };
+            }
+            const pendingIndex = steps
+              .map(
+                (step: ToolStepEvent) =>
+                  step.toolName === e.toolName && step.status === 'running'
+              )
+              .lastIndexOf(true);
+            if (pendingIndex < 0) {
+              return { ...(previous || {}), toolSteps: [...steps, e] };
+            }
+            const next = [...steps];
+            next[pendingIndex] = e;
+            return { ...(previous || {}), toolSteps: next };
           });
           return;
         }
