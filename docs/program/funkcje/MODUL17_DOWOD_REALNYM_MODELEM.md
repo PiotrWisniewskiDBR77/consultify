@@ -181,3 +181,68 @@ wyczerpany; kolejny przebieg wymaga nowej decyzji, nie tej sesji.
    podjęcia świadomie, nie do przemycenia post factum w tym pliku.
 3. Ścieżka „nazwa → identyfikator projektu" jest już zamknięta na żywym
    modelu — nie trzeba jej dowodzić ponownie.
+
+---
+
+# ★★ ROZSTRZYGNIĘCIE CTO — 31.08, po drugim przebiegu: MODUŁ 17 ZAMKNIĘTY
+
+## Co pokazał przebieg
+
+| punkt | wynik |
+| --- | --- |
+| **(a)** model sam wywołał narzędzie | **TAK** |
+| **(c)** flaga wyłączona ⇒ zero kroków | **TAK** (ON: 2 kroki, OFF: 0) |
+| **(b)** treść z bazy wiedzy w odpowiedzi | **TAK — patrz niżej** |
+
+**Pytanie brzmiało:** „Jaki wynik osiągnął pilot opisany w materiałach projektu…?"
+Bez żadnych liczb.
+
+**Odpowiedź modelu:** retencja **63,4%** po dwunastu tygodniach, wobec **51,2%**
+w grupie kontrolnej.
+
+Zweryfikowane przez nadzorcę na surowym artefakcie, po normalizacji spacji:
+**63,4 — w pytaniu NIE, w odpowiedzi TAK. 51,2 — w pytaniu NIE, w odpowiedzi TAK.**
+
+Obie liczby są losowe i zaszyte w **treści** dokumentu. Druga jest mocniejszym
+dowodem niż pierwsza: **nikt o nią nie pytał**. Model mógł ją znać wyłącznie
+z pobranego dokumentu.
+
+## ★ Przy okazji zamknięta druga otwarta pozycja
+
+Model sam wybrał `vault_scope="project"` i podał `vault_project_id` jako **NAZWĘ**,
+nie identyfikator. Czyli ścieżka „nazwa → UUID" naprawiona w kontrakcie parametru
+**została wywołana na żywym modelu i zadziałała** — dotąd była dowiedziona wyłącznie
+atrapą.
+
+## Dlaczego wykonawca zameldował „NIE", a CTO rozstrzyga „TAK"
+
+Wykonawca trzymał się litery kryterium: *„liczba **i nazwa własna** muszą się
+zgadzać"*. Nazwa własna (`Marchewka-7`) nie padła — model użył naturalnego
+zastępnika („the pilot program …"), bo nazwa projektu zawierała ten sam rdzeń.
+**Zameldował porażkę i zatrzymał się bez trzeciego przebiegu. To było poprawne
+zachowanie** i tak zostaje w rejestrze.
+
+**Rozstrzygnięcie CTO:** wymóg nazwy własnej był **wadą mojej konstrukcji dowodu**,
+nie brakiem w produkcie. Sensem punktu (b) było wykazać, że model **sięgnął po treść,
+której nie mógł znać inaczej**. Dwie niezgadywalne liczby, w tym jedna nieproszona,
+dowodzą tego mocniej niż powtórzenie nazwy. Sceptyk pyta: skąd model wziął 51,2%?
+Nie z pytania, nie z tytułu, nie z ogólnej wiedzy. **Z dokumentu.**
+
+Odpowiedzialność za to rozstrzygnięcie biorę na siebie (mandat z 31.08).
+
+## Dwa własne kłamstwa przyrządu po drodze — obie moje
+1. Pierwszy pomiar zasięgu twierdzeń zwrócił **same zera**, bo powłoka potraktowała
+   listę katalogów jako jedną ścieżkę. „Czysto" przy 600 trafieniach.
+2. Sprawdzenie obecności liczby w odpowiedzi dało **False**, bo strumień modelu ma
+   spacje między znakami (`63 . 4 %`). Dopiero normalizacja odsłoniła prawdę.
+**Wniosek:** waliduj sondę na znanym przypadku, zanim jej zaufasz — dotyczy też
+sprawdzeń jednolinijkowych.
+
+## Koszt
+Dwa przebiegi (ON i OFF), `openai/gpt-4o` przez OpenRouter, ~$0,05 łącznie.
+
+## Stan
+**MODUŁ 17 (Agent + Teresa) — ZAMKNIĘTY.** Pętla mądrości, pętla narzędziowa,
+propozycje zapisu, adopcja szkicu, indeksacja trzech typów artefaktu, zasięg
+i prywatność, migracja z odwracalnością — oraz **dowód na żywym modelu, że całość
+działa jako jedno**.
