@@ -19,12 +19,12 @@ export function inferKnowledgeScope(confidentiality?: string | null): ArtifactKn
     : 'organization';
 }
 
-function knowledgeDocumentId(kind: 'document' | 'deck', artifactId: string): string {
+function knowledgeDocumentId(kind: 'document' | 'deck' | 'report', artifactId: string): string {
   return `generated-${kind}-${artifactId}`;
 }
 
 async function indexArtifactForKnowledge(
-  kind: 'document' | 'deck',
+  kind: 'document' | 'deck' | 'report',
   input: ArtifactKnowledgeInput
 ): Promise<{ documentId: string; scope: ArtifactKnowledgeScope; chunkCount: number }> {
   const scope = inferKnowledgeScope(input.confidentiality);
@@ -65,6 +65,33 @@ export function indexDocumentArtifactForKnowledge(input: ArtifactKnowledgeInput)
 
 export function indexDeckArtifactForKnowledge(input: ArtifactKnowledgeInput) {
   return indexArtifactForKnowledge('deck', input);
+}
+
+export function indexReportArtifactForKnowledge(input: ArtifactKnowledgeInput) {
+  return indexArtifactForKnowledge('report', input);
+}
+
+type ReportKnowledgeSection = {
+  title?: string | null;
+  generated_content?: string | null;
+  edited_content?: string | null;
+  order_index?: number | null;
+  enabled?: boolean | null;
+};
+
+export function reportArtifactToKnowledgeMarkdown(sections: ReportKnowledgeSection[]): string {
+  return [...sections]
+    .filter((section) => section.enabled !== false)
+    .sort((a, b) => Number(a.order_index ?? 0) - Number(b.order_index ?? 0))
+    .map((section) => {
+      const title = String(section.title || '').trim();
+      const content = String(section.generated_content || section.edited_content || '').trim();
+      if (!title) return content;
+      if (!content) return `## ${title}`;
+      return `## ${title}\n\n${content}`;
+    })
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 function collectText(value: unknown, output: string[]): void {

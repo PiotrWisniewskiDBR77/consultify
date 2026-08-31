@@ -7,12 +7,17 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { isArtifactKnowledgeIndexEnabled } from '../config/FeatureFlags.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
 import modelRouter from './ai/modelRouter.js';
 import { buildContextPack, saveContextPackSnapshot, type SourceRef } from './contextPackBuilder.js';
+import {
+  indexReportArtifactForKnowledge,
+  reportArtifactToKnowledgeMarkdown,
+} from './knowledge/artifactKnowledgeIndexer.js';
 import {
   generateNarrative,
   type NarrativeEngineInput,
@@ -1840,6 +1845,54 @@ Keep the outline concise (max 400 words). Focus on narrative flow and avoiding r
     totalTokens,
     sectionsGenerated: generatedSections.length,
   });
+
+  if (isArtifactKnowledgeIndexEnabled()) {
+    void (async () => {
+      const classification = await queryOne<{ confidentiality: string | null }>(
+        `SELECT confidentiality
+         FROM report_builder_reports
+         WHERE id = ? AND organization_id = ?`,
+        [reportId, organizationId]
+      );
+      const sections = await new Promise<
+        Array<{
+          section_key: string;
+          title: string;
+          generated_content: string | null;
+          edited_content: string | null;
+          order_index: number;
+        }>
+      >((resolve, reject) => {
+        db.all(
+          `SELECT section_key, title, generated_content, edited_content, order_index
+           FROM report_builder_sections
+           WHERE report_id = ? AND enabled = true
+           ORDER BY order_index ASC`,
+          [reportId],
+          (err: Error | null, rows: any[]) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+          }
+        );
+      });
+
+      await indexReportArtifactForKnowledge({
+        artifactId: reportId,
+        organizationId,
+        ownerId: reportData.report.createdBy,
+        projectId: reportData.report.projectId,
+        title: reportData.report.title,
+        contentMd: reportArtifactToKnowledgeMarkdown(sections),
+        confidentiality: classification?.confidentiality,
+      });
+    })().catch((error) => {
+      logger.warn('[ReportGeneration] Report knowledge indexing failed', {
+        reportId,
+        organizationId,
+        error,
+      });
+    });
+  }
 
   return { totalTokens, generatedSections };
 }
