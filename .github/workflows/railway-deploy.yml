@@ -105,6 +105,7 @@ jobs:
       - name: Deploy app to staging
         run: |
           DEPLOY_MESSAGE="staging app ${GITHUB_SHA}"
+          railway variables --set "APP_BUILD_SHA=${GITHUB_SHA}" --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --skip-deploys
           railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "$DEPLOY_MESSAGE"
           attempt=0
           while [ "$attempt" -lt 120 ]; do

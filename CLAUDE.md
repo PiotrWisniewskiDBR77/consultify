@@ -24,8 +24,9 @@ to osobnym modułem głównego menu.
    CTA/stany aktywne = neutralne; fokus = niebieski `c-focus` (hook `check-list-canon.sh` blokuje naruszenia).
 4. **Odbiór ekranu = lista czekowania część B, literalnie, ZA KAŻDYM RAZEM** (menu, tabela,
    pstryczek, kebab, preview, kanban, dark+light). Weryfikacja WZROKIEM (zrzuty), nigdy „testy przeszły".
-5. **Nic nie wchodzi na demo bez akceptacji właściciela na zrzutach.** `origin/demo` = święta baza;
-   push/deploy tylko nadzorca sesji głównej.
+5. **Nic nie wchodzi na demo bez akceptacji właściciela na zrzutach.** Demo = witryna zamrożona
+   między promocjami; powierzchnia odbiorów = staging (decyzja D-4 z 30.08.2026). Push/deploy
+   nadal tylko nadzorca sesji głównej.
 6. **ARTEFAKTY (ekrany-obiekty, nie listy): analogiczny standard = SPEC-A.** SSOT wyglądu:
    `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (§10.2/§11.2 powłoka, §13 per archetyp, §18.1 DoD).
    Powłoka wspólna (Menu 1 + prawy panel accordion `ArtifactRightPanel` + kebab + stany), archetyp
@@ -70,13 +71,22 @@ z `origin/demo`; isolation worktree; commit-per-krok; NIE push; zero sub-agentó
 zakaz pełnego tsc/vitest u robotników (esbuild per plik); NOWE pliki w `tests/` wymagają `git add -f`.
 Dane demo = twarz produktu: probe'y sprzątają po sobie, zero rekordów testowych.
 
+## ŚRODOWISKA (od 2026-08-31)
+Trzy instancje, każda z WŁASNĄ bazą Postgres: `staging.consultify.ai` (powierzchnia bieżącej pracy,
+testów i odbiorów właściciela — decyzja D-4 z 30.08.2026), `demo.consultify.ai` (witryna, dostaje
+wyłącznie stan zaakceptowany), `consultify.ai` (produkcja, nietykalna). Przepływ: gałęzie robocze →
+PR do `develop` → auto-deploy na staging (GitHub Actions po push na develop) → testy/odbiór →
+ręczna promocja na demo WYŁĄCZNIE niezmiennym SHA z taga `staging-deployed` (workflow „Railway
+Deploy"). Ręczny `railway up` = tylko incydentalnie; po nim obowiązkowo naprawić tag `staging-deployed`.
+
 ## ZŁOTE REGUŁY (dwie pułapki, które kosztowały tygodnie — nienaruszalne)
 1. **Weryfikuj REALNY runtime, nie docy/flagi.** Audyty starzeją się w ~3 dni i zawyżają. Zanim
    powiesz „działa/gotowe": `grep` realnego callera w `src/`/`server/src/` (URL/handler), sprawdź
    czy flaga ma implementację (bywają FANTOMY — `ENABLE_TERESA_NOTE_CREATE` = 0 kodu), a stan danych
    czytaj z ŻYWEJ bazy, nie z kodu. „Testy przeszły" ≠ „działa".
-2. **Baza gałęzi ZAWSZE `origin/demo`** (od 07-08: demo = target deployu, niesie ~130 commitów mechaniki,
-   których Londyn nie ma; Londyn dostaje forward-port per-SHA osobnym blokiem B7 — skill `consultify-petla`).
+2. **Baza gałęzi ZAWSZE `origin/develop`** (od 2026-08-31: rozdzielenie środowisk — praca płynie
+   `develop` → auto-deploy staging → odbiór/akcept Piotra → ręczna promocja na demo z taga
+   `staging-deployed`; `origin/demo` już NIE jest bazą gałęzi, tylko celem promocji).
    NIGDY `feat/tp-forms-polish`, NIGDY `tp-*`/`deliverables-w1`/`harvard-noc` (skażony re-skin nocy 3/4).
 
 ## FINISZ 8 NARZĘDZI (aktywny program)
