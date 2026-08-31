@@ -53,6 +53,61 @@ i jest stanem przedsesyjnym — potwierdzone na merge-base.
 
 ## Pierwotna karta odbioru adwersaryjnego
 
+# ★ SCALONE PO FIX-207 i FIX-207b (`ad677e1d2c`) — 31.08.2026
+
+**Decyzja właściciela (31.08):** zatwierdzone zadanie z czatu trafia tam, gdzie
+trafia zadanie tworzone ręcznie w My Work — **tym samym writerem**. Powód: to ten
+sam obiekt biznesowy, więc nie tworzymy nowego długu, tylko dokładamy do strumienia,
+który obejmie migracja 204.
+
+Decyzja została podjęta PO pomiarze wykonawcy, który obalił pierwotne polecenie
+nadzorcy („przepnij na kanon"): kanoniczny writer obsługuje **inny obiekt domenowy**
+— pozycję wykonawczą wewnątrz istniejącej inicjatywy, z siedmioma wymaganymi polami.
+Nadzorca potwierdził samodzielnie, że `my-work.routes.ts` pisze do `tasks` bez
+strażnika kanonu (dwa `INSERT INTO tasks`, zero `requireCanonicalExecutionWriter`).
+
+## Co domknięte
+
+1. **Jedno źródło prawdy dla zadania.** Logika zapisu wyodrębniona 1:1 do
+   `server/src/services/personalTask/createPersonalTaskService.ts`; wołają ją
+   **oba** miejsca — trasa `POST /api/my-work/personal-tasks` i
+   `aiActionExecutor._executeCreateTask`. Zweryfikowane przez nadzorcę: dwa
+   importy, jedna implementacja. To świadome unikanie wzorca „naprawa
+   per-wywołanie odrasta".
+2. **Decyzja — bez kopiowania kodu.** `DecisionController.createDecision` to
+   ~370-liniowa, celowo atomowa transakcja (cztery tabele + kaskada, jeden
+   `withPgTransaction`, z komentarzem opisującym trudno wywalczoną atomowość).
+   Wykonawca NIE przeniósł jej fizycznie — woła ten sam kod w procesie. Uzasadnienie
+   przyjęte: przenoszenie groziło odtworzeniem błędu, który tamten komentarz
+   opisuje jako naprawiony.
+3. **★ Defekt starszy niż 207, wykryty po drodze:** `_executeCreateTask` czytał
+   `assigneeId`/`dueDate` (camelCase), a narzędzie czatu deklaruje `assignee_id`/
+   `due_date` (snake_case). **Te pola NIGDY nie docierały do zadania z czatu** —
+   także przed dyżurem 207. Bez tej naprawy „komplet pól właściciela" byłby fikcją.
+4. **Prowieniencja.** Zadanie i decyzja z czatu niosą `source_type='ai_chat_proposal'`
+   i `source_id=<actionId>` — czego stary writer nie zapisywał w ogóle.
+5. **Przywrócony bezpiecznik** `safeDbGet` w `aiPolicyEngine.ts` (commit „wip"
+   zabezpieczony przez nadzorcę okazał się rewertem netto do zera — audytor to wykrył).
+
+## Bramki mutacyjne — obie czerwone
+
+- **Brama zatwierdzenia** (`aiActionExecutor.ts:867`): mutacja ⇒ 1/5 czerwony,
+  po przywróceniu 5/5. Przed FIX-em skasowanie bramy dawało **4/4 zielone**.
+- **Właścicielstwo zadania**: mutacja ignorująca żądanego właściciela ⇒ 2/4 czerwone
+  na realnym Postgresie i realnym HTTP (zadanie niewidoczne dla właściwej osoby),
+  dwa niepowiązane testy zostały zielone — dowód izolacji.
+
+**Widoczność potwierdzona end-to-end:** zatwierdzone zadanie z czatu pojawia się na
+liście `GET /api/my-work/personal-tasks` **uwierzytelnionej jako żądany właściciel**,
+czyli tą samą drogą, którą widzi je człowiek.
+
+**Regresja:** jeden czerwony test w `m02p04-tasks-idempotency` dotyczy INNEJ trasy
+i jest stanem przedsesyjnym — potwierdzone na merge-base.
+
+---
+
+## Pierwotna karta odbioru adwersaryjnego
+
 # ODBIÓR 207 — Propozycja zapisu (write-proposal) w czacie Teresy
 
 **Data audytu:** 2026-08-31
