@@ -22,11 +22,13 @@ const stableId = (prefix: string, value: string) =>
   `${prefix}-${createHash('sha256').update(value).digest('hex').slice(0, 32)}`;
 const nextRun = (value: string, cadence: Monitoring['cadence']) => {
   const d = new Date(value);
-  cadence === 'daily'
-    ? d.setUTCDate(d.getUTCDate() + 1)
-    : cadence === 'weekly'
-      ? d.setUTCDate(d.getUTCDate() + 7)
-      : d.setUTCMonth(d.getUTCMonth() + 1);
+  if (cadence === 'daily') {
+    d.setUTCDate(d.getUTCDate() + 1);
+  } else if (cadence === 'weekly') {
+    d.setUTCDate(d.getUTCDate() + 7);
+  } else {
+    d.setUTCMonth(d.getUTCMonth() + 1);
+  }
   return d.toISOString();
 };
 

@@ -50,6 +50,9 @@ class FakeMediaRecorder {
     public stream: { getTracks: () => Array<{ stop: () => void }> },
     public opts: unknown
   ) {
+    // Atrapa musi oddac swoja instancje na zewnatrz — test recznie odpala
+    // na niej ondataavailable/onstop. To jest cel tej atrapy, nie przypadek.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     lastRecorder = this;
   }
   start(_timesliceMs?: number): void {

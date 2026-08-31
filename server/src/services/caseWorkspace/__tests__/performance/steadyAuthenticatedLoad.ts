@@ -370,6 +370,11 @@ async function main(): Promise<void> {
       });
     } catch (error) {
       await pool.query('ROLLBACK').catch(() => undefined);
+      // ZNANY HAZARD (do osobnej naprawy): ten rzut wychodzi z bloku finally
+      // wyzej, wiec ZASLANIA oryginalny wyjatek z glownego biegu harnessu.
+      // Zostawiony bez zmiany semantyki celowo — zamiana na log ukrylaby
+      // awarie sprzatania, a harness nie byl uruchamiany w tej sesji.
+      // eslint-disable-next-line no-unsafe-finally
       throw error;
     } finally {
       await pool.end();

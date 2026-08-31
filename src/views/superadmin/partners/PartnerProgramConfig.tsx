@@ -83,7 +83,7 @@ interface PartnerApplicationItem {
   created_at?: string;
 }
 
-const useLegacyPartnerOperatorReview = () =>
+const isLegacyPartnerOperatorReviewEnabled = () =>
   String(import.meta.env.VITE_PARTNER_LEGACY_ROLLBACK_ENABLED || '').toLowerCase() === 'true';
 
 const operatorReviewKey = (operation: string, targetId: string) =>
@@ -226,7 +226,7 @@ export const PartnerProgramConfig: React.FC = () => {
   ) => {
     try {
       setSaving(true);
-      const useLegacy = useLegacyPartnerOperatorReview();
+      const useLegacy = isLegacyPartnerOperatorReviewEnabled();
       const response = useLegacy
         ? await Api.post(`/api/superadmin/partner-config/applications/${applicationId}/review`, {
             status,
@@ -278,7 +278,7 @@ export const PartnerProgramConfig: React.FC = () => {
   ) => {
     try {
       setSaving(true);
-      const useLegacy = useLegacyPartnerOperatorReview();
+      const useLegacy = isLegacyPartnerOperatorReviewEnabled();
       const response = useLegacy
         ? await Api.post(`/api/superadmin/partner-config/review-queue/${certificationId}`, {
             reviewState,

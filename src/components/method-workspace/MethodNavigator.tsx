@@ -94,7 +94,11 @@ const NodeRow: React.FC<{
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            isLeaf ? onSelect(node.unitId) : toggleExpanded();
+            if (isLeaf) {
+              onSelect(node.unitId);
+            } else {
+              toggleExpanded();
+            }
           }
         }}
       >
