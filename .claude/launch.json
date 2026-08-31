@@ -552,6 +552,19 @@
         "--strictPort"
       ],
       "port": 4991
+    },
+    {
+      "name": "fix214-adopt-draft-devrender",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "6353",
+        "--strictPort"
+      ],
+      "port": 6353
     }
   ]
 }

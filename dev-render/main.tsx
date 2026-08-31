@@ -418,6 +418,7 @@ const ExcelePrawyPanelStandardScreen = React.lazy(
 const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
 // aios (runda pełna) — 146-aios, Internal Tools / AI OS submenu (8 ekranów), 2026-08-31.
 const AiosScreen = React.lazy(() => import('./screens/aios'));
+const Day214TeresaAdoptCardScreen = React.lazy(() => import('./screens/day214-teresa-adopt-card'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -2199,6 +2200,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'org-summary': {
     label: 'Organizacja — Gotowość organizacji (REALNY <OrganizationView>, domyślnie OFF, readiness/summary)',
     render: () => <OrgLegacyScreen module="readiness" screen="summary" />,
+  },
+  'day214-teresa-adopt-card': {
+    label:
+      'FIX-214 pkt 4 — REALNY <GovernedInitiativeHandoffCard> (karta adopcji szkicu z czatu Teresy, za ENABLE_TERESA_ADOPT_CHAT_DRAFT, domyślnie OFF), 4 stany (idle/blocked/ready/adopted) napędzone realnymi kliknięciami przeciw przechwyconemu fetch — dane z fixture w harnessie, NIE z realnego przebiegu (patrz komentarz w pliku ekranu).',
+    render: () => <Day214TeresaAdoptCardScreen />,
   },
 };
 

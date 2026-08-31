@@ -52,6 +52,7 @@ import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { GovernedChatHandoffCard } from './GovernedChatHandoffCard';
+import { GovernedInitiativeHandoffCard } from './GovernedInitiativeHandoffCard';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ThinkingIndicator } from './Messages/InlineThinkingStream';
 import { ReasoningTrace } from './Messages/ReasoningTrace';
@@ -325,6 +326,12 @@ export interface MessageRendererProps {
   >;
   governedHandoffErrorById?: Record<string, string | undefined>;
   governedHandoffTargetById?: Record<string, string | undefined>;
+  initiativeHandoffByMessageId?: Record<
+    string,
+    { initiativeId: string; title?: string | null }
+  >;
+  onOpenInitiativeHandoff?: (initiativeId: string) => void;
+  onInitiativeHandoffAdopted?: (initiativeId: string) => void;
   onCreateGovernedDocument?: (msg: ChatMessage) => void;
   onApproveGovernedHandoff?: (proposalId: string) => void;
   onRejectGovernedHandoff?: (proposalId: string) => void;
@@ -458,6 +465,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   governedHandoffBusyById = {},
   governedHandoffErrorById = {},
   governedHandoffTargetById = {},
+  initiativeHandoffByMessageId = {},
+  onOpenInitiativeHandoff,
+  onInitiativeHandoffAdopted,
   onCreateGovernedDocument,
   onApproveGovernedHandoff,
   onRejectGovernedHandoff,
@@ -506,6 +516,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
   const governedHandoff = governedHandoffByMessageId[msg.id];
+  const initiativeHandoff =
+    initiativeHandoffByMessageId[msg.id] ||
+    ((msg as any)?.metadata?.initiativeHandoff as
+      | { initiativeId: string; title?: string | null }
+      | undefined);
   const [showCompactActions, setShowCompactActions] = useState(false);
   const [showSourcesDetails, setShowSourcesDetails] = useState(false);
 
@@ -1981,6 +1996,15 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           onApprove={() => onApproveGovernedHandoff?.(governedHandoff.proposalId)}
           onReject={() => onRejectGovernedHandoff?.(governedHandoff.proposalId)}
           onMaterialize={() => onMaterializeGovernedHandoff?.(governedHandoff.proposalId)}
+        />
+      ) : null}
+
+      {msg.role === 'ai' && initiativeHandoff ? (
+        <GovernedInitiativeHandoffCard
+          initiativeId={initiativeHandoff.initiativeId}
+          title={initiativeHandoff.title}
+          onOpenInitiative={(initiativeId) => onOpenInitiativeHandoff?.(initiativeId)}
+          onAdopted={(initiativeId) => onInitiativeHandoffAdopted?.(initiativeId)}
         />
       ) : null}
 
