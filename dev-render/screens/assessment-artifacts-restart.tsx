@@ -62,6 +62,10 @@ import React, { useEffect, useRef } from 'react';
 
 import { AssessmentHub } from '../../src/components/assessment/AssessmentHub';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+import {
+  DRD_METHOD_PACK_ID,
+  DRD_METHOD_PACK_VERSION,
+} from '../../src/method-core/methods/drd/compileDrdPack';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
 import { useAppStore } from '../../src/store/useAppStore';
@@ -71,6 +75,75 @@ import { seedRealisticSession } from '../mocks/seedStore';
 seedRealisticSession();
 installMethodCoreFakeServer();
 seedArtifactsCatalog();
+
+// `installMethodCoreFakeServer()` above patches `window.fetch` for every
+// `/api/method/**` path EXCEPT the plain session-LIST route
+// (`GET /api/method/sessions?...`, no `/:id` after it) — its router has no
+// case for that path shape, so it falls through to a 404. `AssessmentHub`'s
+// `loadAssessmentListCore()` (src/components/assessment/AssessmentHub.tsx)
+// calls exactly that route on EVERY mount, regardless of which tab is
+// active, via `listSessions()` (`@/method-core/api/methodCoreApi.ts`) — so
+// even this 'outputs'-tab screen hits the gap and shows the persistent
+// "Nie udało się wczytać sesji DRD z Rdzenia metody" banner. Since H2
+// (dev-render/vite.config.ts) made the harness return an honest 404 instead
+// of vite's old lying 200 text/html, that failure is no longer masked.
+// Patch AFTER `installMethodCoreFakeServer()` so this wraps its fetch (and
+// still delegates every other `/api/method/**` path — outputs/reports/
+// initiative-drafts/lineage — to the fake server underneath) rather than
+// being shadowed by it.
+{
+  const MOCK_METHOD_SESSIONS = [
+    {
+      id: 'sess-drd-restart-0001',
+      organizationId: 'org-dbr77-demo',
+      projectId: null,
+      module: 'assessment',
+      methodPackId: DRD_METHOD_PACK_ID,
+      methodPackVersion: DRD_METHOD_PACK_VERSION,
+      state: 'in_review',
+      domainStage: 'Oś 1 — Procesy Cyfrowe',
+      mode: 'guided_manual',
+      ownerUserId: 'user-piotr-demo',
+      createdAt: '2026-06-02T08:00:00.000Z',
+      updatedAt: '2026-07-10T11:20:00.000Z',
+      version: 5,
+      frozenSnapshotId: null,
+      revisionOfSessionId: null,
+      hasFrozenOutput: false,
+    },
+    {
+      id: 'sess-drd-restart-0002',
+      organizationId: 'org-dbr77-demo',
+      projectId: null,
+      module: 'assessment',
+      methodPackId: DRD_METHOD_PACK_ID,
+      methodPackVersion: DRD_METHOD_PACK_VERSION,
+      state: 'frozen',
+      domainStage: null,
+      mode: 'guided_manual',
+      ownerUserId: 'user-piotr-demo',
+      createdAt: '2026-04-01T08:00:00.000Z',
+      updatedAt: '2026-06-30T10:00:00.000Z',
+      version: 9,
+      frozenSnapshotId: 'output-restart-drd-0002',
+      revisionOfSessionId: null,
+      hasFrozenOutput: true,
+    },
+  ];
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const method = (init?.method || 'GET').toUpperCase();
+    if (method === 'GET' && /\/api\/method\/sessions(\?.*)?$/.test(url)) {
+      return new Response(
+        JSON.stringify({ sessions: MOCK_METHOD_SESSIONS, total: MOCK_METHOD_SESSIONS.length }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      );
+    }
+    return originalFetch(input, init);
+  }) as typeof window.fetch;
+}
 
 // Always land on the hub's 'outputs' tab like a real bookmarked link would
 // (AssessmentHub reads `?tab=` as its source of truth once
