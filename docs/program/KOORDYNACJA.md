@@ -62,6 +62,36 @@ scalony — przycisk pisze realnym PATCH przez governed gate).
 
 ### Blokady zgłoszone przez funkcje do toru grafiki
 
+**2026-08-31 · dyżur 200 — komplet zrzutów dla rejestru 21 paneli finansów (dopełnienie dyżuru 135).**
+Dyżur 135 podpiął rejestr `FinanceValuePanelsSurface.tsx` do 21 paneli za flagą
+`ff.finance_value_panels` (domyślnie OFF), ale wydany wtedy harness obsługiwał tylko
+7/21 paneli (`value`, `driver`, `monte-carlo`, `real-options`, `frontier`, `sensitivity`,
+`scenarios`) — reszta była `EVIDENCE_MISSING`. Dyżur 200 dostał wąską licencję na
+dedykowany harness `dev-render/screens/day200-finance-panels.tsx` (obok istniejącego
+`finance-value-panels.tsx`, bez zmiany paneli/`FinanceHub`/flagi) i dopiął pozostałych
+14 paneli: `bankingValue`, `cashForecast`, `driverTree`, `extendedRatios`,
+`headcountPlanner`, `investmentAppraisal`, `rollingForecast`, `valuationVisuals`,
+`valueAttribution`, `valueCapture`, `valueLedger`, `varianceBridge`,
+`varianceNarration`, `evBasket`.
+
+**Co jest gotowe:** komplet 42/42 zrzutów (21 paneli × jasny/ciemny) — 14 z dyżuru 135
+plus 28 nowych z dyżuru 200, oba komplety w `/private/tmp/cx-day200-panele-finansow-artefakty/`
+(SHA-256 w manifestach `zrzuty-sha256.txt` i `zrzuty-day200-14paneli-sha256.txt`). Każdy
+panel renderuje się realnym komponentem prezentacyjnym z wstrzykniętym `fetcher`
+(mock-dane realistyczne, skala DBR77) — bez logowania, bez żywej bazy. Własny przegląd
+wzrokowy 8/28 nowych zrzutów (oba motywy, kilka archetypów: formularz+KPI, wykres słupkowy,
+heatmapa wrażliwości, football-field): zero crimson poza semantyką krytyczną, zero NaN.
+Przy przeglądzie znaleziono i naprawiono w harnessie (nie w panelach) dwa błędy skali
+mock-danych — `InvestmentAppraisalPanel.irr/mirr` i `VarianceNarrationPanel` `pct`/`sharePct`
+oczekują liczby już w procentach (0–100), nie ułamka (0–1); dobra okazja do zapamiętania
+tej konwencji przy odbiorze wizualnym innych ekranów finansowych.
+
+**Co z tego wynika dla grafiki:** materiał kroku (b) reguły 7 jest KOMPLETNY dla całego
+rejestru 21 paneli. **Odbiór wizualny i ewentualne poprawki wyglądu należą do toru
+grafiki, nie do funkcji — flagi `ff.finance_value_panels` nie wolno włączyć nigdzie
+przed akceptem Piotra na tych zrzutach**, jeden po drugim (reguła 9, zakaz masowego
+włączania).
+
 **2026-08-30 · dyżur 135 — panele wyceny finansowej.** Tor funkcji podpina 19 gotowych
 paneli z `src/components/Economics/panels/` do trasy Finansów **za flagą domyślnie
 wyłączoną** i buduje harness w `dev-render/screens/`. Instrukcja zawiera **twardy zakaz
