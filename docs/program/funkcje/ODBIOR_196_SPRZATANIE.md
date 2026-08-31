@@ -5,7 +5,12 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 196 — sprzątanie zbiorcze · ODESŁANY (FIX-196 wydany), potem scalić
+# ODBIÓR 196 — sprzątanie zbiorcze · SCALONO PO FIX-196
+
+★ FIX-196 (`bae4298901`): pola werdyktu kart 01/15 wypełnione (SHA/manifest z
+CLOSED_FINAL; Settings bez manifestu — CLOSED_FINAL nie podaje ścieżki, uczciwie
+zostawione); grep-test zastąpiony realnym render-testem DOM 3 stanów przez
+StandardPreview (mutacja: surowy sourceType → 2/3 czerwone). 46/46 zielonych.
 
 R2 (komentarz DEC-104 prawdziwy — łańcuch PATCH zweryfikowany niezależnie) i R3
 (UsageMeters — kolizja z 176 to bajt-identyczna niezależna naprawa; merge czysty,
