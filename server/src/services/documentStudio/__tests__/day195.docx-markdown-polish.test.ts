@@ -93,4 +93,29 @@ describe('Day 195 DOCX markdown and Polish labels', () => {
     expect(listParagraphs.length).toBe(3);
     expect(listParagraphs.filter((part) => part.includes('<w:pageBreakBefore/>')).length).toBe(1);
   });
+
+  // FIX-195 (6). A callout carries the same `**…**` markup as a paragraph,
+  // because it comes from the same prose layer.
+  it('strips markdown bold markers from a callout instead of exporting raw asterisks', async () => {
+    const withCallout = structuredClone(schema);
+    withCallout.sections[0].blocks = [
+      {
+        blockId: 'c1',
+        type: 'callout',
+        content: {
+          text: '**Decyzja:** zatwierdzić pilotaż w tym kwartale.',
+          tone: 'info',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+      },
+    ];
+    const zip = await JSZip.loadAsync(await renderDocumentSchemaToDocxBuffer(withCallout));
+    const xml = (await zip.file('word/document.xml')?.async('string')) ?? '';
+
+    expect(xml).not.toContain('**');
+    expect(xml).toContain('Decyzja:');
+    expect(xml).toContain('zatwierdzić pilotaż w tym kwartale.');
+    // The callout keeps its own device: italics + accent colour on every run.
+    expect(xml).toContain('<w:i/>');
+  });
 });

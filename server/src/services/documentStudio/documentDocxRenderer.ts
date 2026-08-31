@@ -553,6 +553,10 @@ function markdownRuns(
   base: { italics?: boolean; bold?: boolean; color?: string; size?: number } = {}
 ): TextRun[] {
   const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  // An empty string must still produce ONE empty run: a Word paragraph with no
+  // run at all is a different (and different-looking) `<w:p>`, and callouts
+  // built from the legacy `{title, body}` shape carry no `text` at all.
+  if (parts.length === 0) parts.push('');
   return parts.map((part) => {
     const bold = /^\*\*[^*]+\*\*$/.test(part);
     return new TextRun({
@@ -681,7 +685,12 @@ function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph
     style: DOCX_STYLE_IDS.CALLOUT,
     shading: { type: 'clear', fill },
     border: { left: { color: accent, space: 12, style: 'single', size: 24 } },
-    children: [new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont })],
+    // FIX-195 (6): a callout is prose from the same LLM layer as a paragraph,
+    // so it arrives with the same `**…**` markup. Rendering it as one literal
+    // run put raw asterisks into the exported document. `markdownRuns` strips
+    // the markers; the callout's own run properties (italics, accent colour,
+    // bold-by-design) ride along as the base for every span.
+    children: markdownRuns(text, ctx.bodyFont, { italics: true, bold: true, color: accent }),
   });
 }
 
