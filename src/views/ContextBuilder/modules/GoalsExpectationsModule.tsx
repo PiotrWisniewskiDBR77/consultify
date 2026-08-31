@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import TeresaMark from '../../../components/shared/TeresaMark';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
@@ -17,6 +18,7 @@ import { AITextArea } from '../shared/AITextArea';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 export type GoalsTab = 'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations';
 export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ screen }) => {
+  const { t } = useTranslation();
   const [localActiveTab, setActiveTab] = useState<GoalsTab>('intent');
   const activeTab = screen ?? localActiveTab;
 
@@ -61,11 +63,130 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
 
   // TABS CONFIG
   const tabs = [
-    { id: 'intent', label: 'Strategic Intent', icon: Target },
-    { id: 'metrics', label: 'Success Metrics', icon: BarChart2 },
-    { id: 'scope', label: 'Scope & Boundaries', icon: Maximize },
-    { id: 'nogo', label: 'No-Go Zone', icon: Ban },
-    { id: 'expectations', label: 'Expectations', icon: Zap },
+    { id: 'intent', label: t('organization.goals.tabs.intent', 'Strategic Intent'), icon: Target },
+    {
+      id: 'metrics',
+      label: t('organization.goals.tabs.metrics', 'Success Metrics'),
+      icon: BarChart2,
+    },
+    {
+      id: 'scope',
+      label: t('organization.goals.tabs.scope', 'Scope & Boundaries'),
+      icon: Maximize,
+    },
+    { id: 'nogo', label: t('organization.goals.tabs.nogo', 'No-Go Zone'), icon: Ban },
+    {
+      id: 'expectations',
+      label: t('organization.goals.tabs.expectations', 'Expectations'),
+      icon: Zap,
+    },
+  ];
+
+  const priorityOptions = [
+    { id: 'eff', label: t('organization.goals.intent.priorities.eff', 'Efficiency / Cost Reduction') },
+    { id: 'growth', label: t('organization.goals.intent.priorities.growth', 'Growth / Sales Increase') },
+    { id: 'inv', label: t('organization.goals.intent.priorities.inv', 'Innovation / New Products') },
+    { id: 'qual', label: t('organization.goals.intent.priorities.qual', 'Quality / Compliance') },
+    { id: 'speed', label: t('organization.goals.intent.priorities.speed', 'Speed / Agility') },
+    { id: 'cust', label: t('organization.goals.intent.priorities.cust', 'Customer Experience') },
+  ];
+
+  const archetypeOptions = [
+    {
+      id: 'fast',
+      label: t('organization.goals.expectations.archetype.options.fast.label', 'Pilot & Scale (Agile)'),
+      desc: t(
+        'organization.goals.expectations.archetype.options.fast.desc',
+        'Rapid prototyping, MVPs, quick feedback loops. Best for high uncertainty.'
+      ),
+    },
+    {
+      id: 'deep',
+      label: t(
+        'organization.goals.expectations.archetype.options.deep.label',
+        'Core Transformation (Waterfall)'
+      ),
+      desc: t(
+        'organization.goals.expectations.archetype.options.deep.desc',
+        'Deep structural change, phased rollout, risk averse. Best for legacy systems.'
+      ),
+    },
+    {
+      id: 'targeted',
+      label: t(
+        'organization.goals.expectations.archetype.options.targeted.label',
+        'Value-Led / Use Case'
+      ),
+      desc: t(
+        'organization.goals.expectations.archetype.options.targeted.desc',
+        'Focus on specific high-ROI pain points. Best for tight budgets.'
+      ),
+    },
+  ];
+
+  const aiRoleOptions = [
+    {
+      id: 'advisor',
+      label: t('organization.goals.expectations.aiRole.options.advisor.label', 'Strategic Advisor'),
+      desc: t(
+        'organization.goals.expectations.aiRole.options.advisor.desc',
+        'AI challenges assumptions & provides benchmarks. You decide.'
+      ),
+    },
+    {
+      id: 'partner',
+      label: t(
+        'organization.goals.expectations.aiRole.options.partner.label',
+        'Collaborative Co-Pilot'
+      ),
+      desc: t(
+        'organization.goals.expectations.aiRole.options.partner.desc',
+        'AI drafts content & plans. You review & refine.'
+      ),
+    },
+    {
+      id: 'agent',
+      label: t('organization.goals.expectations.aiRole.options.agent.label', 'Autonomous Agent'),
+      desc: t(
+        'organization.goals.expectations.aiRole.options.agent.desc',
+        'AI executes defined workflows (e.g., data hygiene) with oversight.'
+      ),
+    },
+  ];
+
+  const cadenceOptions = [
+    {
+      id: 'weekly',
+      label: t('organization.goals.expectations.cadence.options.weekly.label', 'Weekly SteerCo'),
+      desc: t(
+        'organization.goals.expectations.cadence.options.weekly.desc',
+        'Tactical alignment on sprints & blockers.'
+      ),
+    },
+    {
+      id: 'monthly',
+      label: t('organization.goals.expectations.cadence.options.monthly.label', 'Monthly QBR'),
+      desc: t(
+        'organization.goals.expectations.cadence.options.monthly.desc',
+        'Strategic review of value delivered & roadmap.'
+      ),
+    },
+    {
+      id: 'daily',
+      label: t('organization.goals.expectations.cadence.options.daily.label', 'Daily Standups'),
+      desc: t(
+        'organization.goals.expectations.cadence.options.daily.desc',
+        'High-touch operational coordination.'
+      ),
+    },
+    {
+      id: 'milestone',
+      label: t('organization.goals.expectations.cadence.options.milestone.label', 'Milestone Based'),
+      desc: t(
+        'organization.goals.expectations.cadence.options.milestone.desc',
+        'Reviews triggered by key deliverables.'
+      ),
+    },
   ];
 
   return (
@@ -76,11 +197,15 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
           <Sparkles className="text-primary-600 mt-1" size={18} />
           <div className="flex-1">
             <h4 className="text-sm font-bold text-primary-900 dark:text-primary-300">
-              AI Suggested Addition
+              {t('organization.goals.aiSuggestion.title', 'AI Suggested Addition')}
             </h4>
             <p className="text-xs text-primary-800 dark:text-primary-200 mt-1">
-              I noticed you haven't included <strong>Safety Incident Rate (TRIR)</strong>. This is a
-              standard manufacturing KPI. Shall I add it?
+              {t('organization.goals.aiSuggestion.bodyPre', "I noticed you haven't included")}{' '}
+              <strong>Safety Incident Rate (TRIR)</strong>
+              {t(
+                'organization.goals.aiSuggestion.bodyPost',
+                '. This is a standard manufacturing KPI. Shall I add it?'
+              )}
             </p>
           </div>
           <div className="flex gap-2">
@@ -96,13 +221,13 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
               }}
               className="px-3 py-1 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs rounded hover:bg-navy-800"
             >
-              Add KPI
+              {t('organization.goals.aiSuggestion.addKpi', 'Add KPI')}
             </button>
             <button
               onClick={() => setAiSuggestions([])}
               className="px-3 py-1 bg-white dark:bg-navy-900 text-primary-600 border border-primary-200 text-xs rounded hover:bg-slate-50 dark:hover:bg-navy-800/20"
             >
-              Dismiss
+              {t('organization.goals.aiSuggestion.dismiss', 'Dismiss')}
             </button>
           </div>
         </div>
@@ -140,16 +265,22 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
           <div className="space-y-8 max-w-4xl">
             <div>
               <label className="block text-sm font-bold text-navy-900 dark:text-white mb-2">
-                Primary Objective (North Star)
+                {t('organization.goals.intent.primaryObjectiveLabel', 'Primary Objective (North Star)')}
               </label>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                What is the single most important goal for this transformation?
+                {t(
+                  'organization.goals.intent.primaryObjectiveHint',
+                  'What is the single most important goal for this transformation?'
+                )}
               </p>
               <AITextArea
                 value={goals.primaryObjective}
                 onChange={(e) => setGoals({ primaryObjective: e.target.value })}
                 rows={3}
-                placeholder="E.g. Become the market leader in customized manufacturing by reducing lead times by 50%..."
+                placeholder={t(
+                  'organization.goals.intent.primaryObjectivePlaceholder',
+                  'E.g. Become the market leader in customized manufacturing by reducing lead times by 50%...'
+                )}
                 onRefine={() => {}}
                 aiContext="objective"
               />
@@ -157,13 +288,16 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
 
             <div>
               <label className="block text-sm font-bold text-navy-900 dark:text-white mb-2">
-                Secondary Objectives
+                {t('organization.goals.intent.secondaryObjectivesLabel', 'Secondary Objectives')}
               </label>
               <AITextArea
                 value={goals.secondaryObjectives}
                 onChange={(e) => setGoals({ secondaryObjectives: e.target.value })}
                 rows={2}
-                placeholder="E.g. Improve employee retention, Reduce carbon footprint..."
+                placeholder={t(
+                  'organization.goals.intent.secondaryObjectivesPlaceholder',
+                  'E.g. Improve employee retention, Reduce carbon footprint...'
+                )}
                 onRefine={() => {}}
                 aiContext="objective"
               />
@@ -171,17 +305,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
 
             <div>
               <label className="block text-sm font-bold text-navy-900 dark:text-white mb-4">
-                Top Priorities (Select max 3)
+                {t('organization.goals.intent.topPrioritiesLabel', 'Top Priorities (Select max 3)')}
               </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { id: 'eff', label: 'Efficiency / Cost Reduction' },
-                  { id: 'growth', label: 'Growth / Sales Increase' },
-                  { id: 'inv', label: 'Innovation / New Products' },
-                  { id: 'qual', label: 'Quality / Compliance' },
-                  { id: 'speed', label: 'Speed / Agility' },
-                  { id: 'cust', label: 'Customer Experience' },
-                ].map((p) => (
+                {priorityOptions.map((p) => (
                   <label
                     key={p.id}
                     className="relative flex items-center gap-3 border border-slate-200 dark:border-navy-700 p-4 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5 transition-all group"
@@ -212,22 +339,43 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
         {activeTab === 'metrics' && (
           <div className="space-y-6">
             <DynamicList
-              title="Success Metrics (KPIs)"
-              description="Define verifiable metrics to track success. Use 'Add Item' to define new KPIs."
+              title={t('organization.goals.metrics.title', 'Success Metrics (KPIs)')}
+              description={t(
+                'organization.goals.metrics.description',
+                "Define verifiable metrics to track success. Use 'Add Item' to define new KPIs."
+              )}
               items={goals.kpis}
               columns={[
-                { key: 'name', label: 'KPI Name', width: 'w-1/3', placeholder: 'e.g. OEE' },
-                { key: 'baseline', label: 'Baseline', width: 'w-1/6', placeholder: 'e.g. 60%' },
-                { key: 'target', label: 'Target', width: 'w-1/6', placeholder: 'e.g. 85%' },
+                {
+                  key: 'name',
+                  label: t('organization.goals.metrics.columns.name', 'KPI Name'),
+                  width: 'w-1/3',
+                  placeholder: t('organization.goals.metrics.placeholders.name', 'e.g. OEE'),
+                },
+                {
+                  key: 'baseline',
+                  label: t('organization.goals.metrics.columns.baseline', 'Baseline'),
+                  width: 'w-1/6',
+                  placeholder: t('organization.goals.metrics.placeholders.baseline', 'e.g. 60%'),
+                },
+                {
+                  key: 'target',
+                  label: t('organization.goals.metrics.columns.target', 'Target'),
+                  width: 'w-1/6',
+                  placeholder: t('organization.goals.metrics.placeholders.target', 'e.g. 85%'),
+                },
                 {
                   key: 'timeframe',
-                  label: 'Timeframe',
+                  label: t('organization.goals.metrics.columns.timeframe', 'Timeframe'),
                   width: 'w-1/6',
                   type: 'select',
                   options: [
-                    { label: '3 Months', value: '3m' },
-                    { label: '6 Months', value: '6m' },
-                    { label: '12 Months', value: '12m' },
+                    { label: t('organization.goals.metrics.timeframeOptions.3m', '3 Months'), value: '3m' },
+                    { label: t('organization.goals.metrics.timeframeOptions.6m', '6 Months'), value: '6m' },
+                    {
+                      label: t('organization.goals.metrics.timeframeOptions.12m', '12 Months'),
+                      value: '12m',
+                    },
                   ],
                 },
               ]}
@@ -240,12 +388,25 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
         {activeTab === 'scope' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <DynamicList
-              title="In Scope (Included)"
-              description="Areas, departments, or processes explicitly included."
+              title={t('organization.goals.scope.inTitle', 'In Scope (Included)')}
+              description={t(
+                'organization.goals.scope.inDescription',
+                'Areas, departments, or processes explicitly included.'
+              )}
               items={goals.inScope}
               columns={[
-                { key: 'item', label: 'Item / Area', width: 'w-1/2', placeholder: 'e.g. Plant A' },
-                { key: 'notes', label: 'Notes', width: 'w-1/2', placeholder: 'e.g. Full audit' },
+                {
+                  key: 'item',
+                  label: t('organization.goals.scope.columns.item', 'Item / Area'),
+                  width: 'w-1/2',
+                  placeholder: t('organization.goals.scope.placeholders.inItem', 'e.g. Plant A'),
+                },
+                {
+                  key: 'notes',
+                  label: t('organization.goals.scope.columns.notes', 'Notes'),
+                  width: 'w-1/2',
+                  placeholder: t('organization.goals.scope.placeholders.inNotes', 'e.g. Full audit'),
+                },
               ]}
               {...inScopeHandlers}
             />
@@ -255,21 +416,27 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
                 <div className="h-full w-[1px] bg-slate-200 dark:bg-white/10"></div>
               </div>
               <DynamicList
-                title="Out of Scope (Excluded)"
-                description="Areas explicitly excluded to prevent scope creep."
+                title={t('organization.goals.scope.outTitle', 'Out of Scope (Excluded)')}
+                description={t(
+                  'organization.goals.scope.outDescription',
+                  'Areas explicitly excluded to prevent scope creep.'
+                )}
                 items={goals.outScope}
                 columns={[
                   {
                     key: 'item',
-                    label: 'Item / Area',
+                    label: t('organization.goals.scope.columns.item', 'Item / Area'),
                     width: 'w-1/2',
-                    placeholder: 'e.g. Logistics',
+                    placeholder: t('organization.goals.scope.placeholders.outItem', 'e.g. Logistics'),
                   },
                   {
                     key: 'notes',
-                    label: 'Reason',
+                    label: t('organization.goals.scope.columns.reason', 'Reason'),
                     width: 'w-1/2',
-                    placeholder: 'e.g. Already optimized',
+                    placeholder: t(
+                      'organization.goals.scope.placeholders.outReason',
+                      'e.g. Already optimized'
+                    ),
                   },
                 ]}
                 {...outScopeHandlers}
@@ -281,21 +448,27 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
         {/* TAB 4: NO-GO ZONE */}
         {activeTab === 'nogo' && (
           <DynamicList
-            title="No-Go Zone"
-            description="Areas or topics that are off-limits due to politics, regulations, or strategy."
+            title={t('organization.goals.nogo.title', 'No-Go Zone')}
+            description={t(
+              'organization.goals.nogo.description',
+              'Areas or topics that are off-limits due to politics, regulations, or strategy.'
+            )}
             items={goals.noGo}
             columns={[
               {
                 key: 'area',
-                label: 'Sensitive Area',
+                label: t('organization.goals.nogo.columns.area', 'Sensitive Area'),
                 width: 'w-1/3',
-                placeholder: 'e.g. Headcount',
+                placeholder: t('organization.goals.nogo.placeholders.area', 'e.g. Headcount'),
               },
               {
                 key: 'reason',
-                label: 'Reason/Constraint',
+                label: t('organization.goals.nogo.columns.reason', 'Reason/Constraint'),
                 width: 'w-2/3',
-                placeholder: 'e.g. Strict union agreement until 2026',
+                placeholder: t(
+                  'organization.goals.nogo.placeholders.reason',
+                  'e.g. Strict union agreement until 2026'
+                ),
               },
             ]}
             {...noGoHandlers}
@@ -309,30 +482,17 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
               <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <Rocket size={20} className="text-amber-500" />
-                Transformation Archetype
+                {t('organization.goals.expectations.archetype.title', 'Transformation Archetype')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
-                How do you want to deliver value? Define the speed and depth of change.
+                {t(
+                  'organization.goals.expectations.archetype.hint',
+                  'How do you want to deliver value? Define the speed and depth of change.'
+                )}
               </p>
 
               <div className="space-y-4">
-                {[
-                  {
-                    id: 'fast',
-                    label: 'Pilot & Scale (Agile)',
-                    desc: 'Rapid prototyping, MVPs, quick feedback loops. Best for high uncertainty.',
-                  },
-                  {
-                    id: 'deep',
-                    label: 'Core Transformation (Waterfall)',
-                    desc: 'Deep structural change, phased rollout, risk averse. Best for legacy systems.',
-                  },
-                  {
-                    id: 'targeted',
-                    label: 'value-Led / Use Case',
-                    desc: 'Focus on specific high-ROI pain points. Best for tight budgets.',
-                  },
-                ].map((style) => (
+                {archetypeOptions.map((style) => (
                   <label key={style.id} className="relative block cursor-pointer group">
                     <input
                       type="radio"
@@ -363,30 +523,17 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
               <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <TeresaMark size={20} className="text-primary-500" />
-                Human-AI Collaboration
+                {t('organization.goals.expectations.aiRole.title', 'Human-AI Collaboration')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
-                Define the level of autonomy you grant to the AI in this engagement.
+                {t(
+                  'organization.goals.expectations.aiRole.hint',
+                  'Define the level of autonomy you grant to the AI in this engagement.'
+                )}
               </p>
 
               <div className="space-y-4">
-                {[
-                  {
-                    id: 'advisor',
-                    label: 'Strategic Advisor',
-                    desc: 'AI challenges assumptions & provides benchmarks. You decide.',
-                  },
-                  {
-                    id: 'partner',
-                    label: 'Collaborative Co-Pilot',
-                    desc: 'AI drafts content & plans. You review & refine.',
-                  },
-                  {
-                    id: 'agent',
-                    label: 'Autonomous Agent',
-                    desc: 'AI executes defined workflows (e.g., data hygiene) with oversight.',
-                  },
-                ].map((role) => (
+                {aiRoleOptions.map((role) => (
                   <label key={role.id} className="relative block cursor-pointer group">
                     <input
                       type="radio"
@@ -417,35 +564,17 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
             <div className="bg-white dark:bg-navy-900 p-6 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
               <h3 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
                 <GanttChartSquare size={20} className="text-blue-500" />
-                Steering & Governance
+                {t('organization.goals.expectations.cadence.title', 'Steering & Governance')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
-                How will we track progress and ensure alignment?
+                {t(
+                  'organization.goals.expectations.cadence.hint',
+                  'How will we track progress and ensure alignment?'
+                )}
               </p>
 
               <div className="space-y-4">
-                {[
-                  {
-                    id: 'weekly',
-                    label: 'Weekly SteerCo',
-                    desc: 'Tactical alignment on sprints & blockers.',
-                  },
-                  {
-                    id: 'monthly',
-                    label: 'Monthly QBR',
-                    desc: 'Strategic review of value delivered & roadmap.',
-                  },
-                  {
-                    id: 'daily',
-                    label: 'Daily Standups',
-                    desc: 'High-touch operational coordination.',
-                  },
-                  {
-                    id: 'milestone',
-                    label: 'Milestone Based',
-                    desc: 'Reviews triggered by key deliverables.',
-                  },
-                ].map((cadence) => (
+                {cadenceOptions.map((cadence) => (
                   <label key={cadence.id} className="relative block cursor-pointer group">
                     <input
                       type="radio"
