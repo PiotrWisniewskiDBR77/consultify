@@ -599,8 +599,18 @@ function buildPreview(
       />
     ) : undefined;
 
+  // RN-G2 i18n/141 (2026-08-31) FIX: mirrors `buildColumns`' own name/code
+  // fallback (this file, name column render) — that already prefers
+  // `row.name` with `kpiCode` as its subtitle when present, but this
+  // preview's title used the bare `kpiCode` unconditionally regardless of
+  // whether a name existed. `row.name` comes from `GET /kpi`'s additive
+  // `dv.name AS current_definition_name` join (kpiRepository.ts's
+  // `listKpis`) — reachable here since `row` is the same `KpiDefinitionDto`
+  // the table renders, not a separate honest-missing case.
+  const previewTitle = row.name ?? row.kpiCode;
+
   return {
-    title: row.kpiCode,
+    title: previewTitle,
     onClose: ctx.onClose,
     // RN-G3 lane (2026-08-11) — StandardPreview's own "Open" header action
     // (StandardPreview.tsx L145 `onOpenFull`) now navigates to the real full
@@ -622,6 +632,10 @@ function buildPreview(
       propertyLabel: t('Właściwość', 'Property'),
       valueLabel: t('Wartość', 'Value'),
       properties: [
+        // RN-G2 i18n/141 — kept visible as its own row now that the title
+        // above may show `row.name` instead: without this, the code
+        // disappears from the preview entirely whenever a name exists.
+        { id: 'kpiCode', label: t('Kod KPI', 'KPI code'), value: row.kpiCode },
         {
           id: 'owner',
           label: t('Właściciel', 'Owner'),
