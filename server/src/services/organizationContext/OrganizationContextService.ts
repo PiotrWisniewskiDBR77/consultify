@@ -1762,6 +1762,56 @@ export class OrganizationContextService {
     });
   }
 
+  /**
+   * 17-I R1 (dyżur 205, §9 ARCHITEKTURA_AGENTA_TERESY.md) — zapis-obok dla
+   * pięciu ekranów redesignu Organization, które nadal piszą WYŁĄCZNIE do
+   * `organization_context_store` (M01 CLOSED_FINAL — ekran nietykalny, patrz
+   * `organization-context-store.routes.ts`). `goals`/`challenges`/`synthesis`
+   * to trzy kubełki dzielone przez pięć ekranów, nie pięć osobnych.
+   * `notes.manualContext` przyjmuje obiekty; strategiczne ścieżki string-only
+   * odfiltrowałyby ten payload w buildResolvedContext.
+   */
+  async recordOrganizationContextStoreSave(params: {
+    organizationId: string;
+    userId?: string | null;
+    goals?: Record<string, unknown>;
+    challenges?: Record<string, unknown>;
+    synthesis?: Record<string, unknown>;
+  }): Promise<void> {
+    const claims: ContextClaimInput[] = [];
+    const addSection = (
+      section: 'goals' | 'challenges' | 'synthesis',
+      value: unknown
+    ) => {
+      if (!value || typeof value !== 'object' || !Object.keys(value as object).length) return;
+      claims.push({
+        claimPath: 'notes.manualContext',
+        value: { section, ...(value as Record<string, unknown>) },
+        confidence: 1,
+      });
+    };
+    addSection('goals', params.goals);
+    addSection('challenges', params.challenges);
+    addSection('synthesis', params.synthesis);
+    if (!claims.length) return;
+
+    await this.recordContextSource({
+      organizationId: params.organizationId,
+      sourceType: 'organization_context_store',
+      sourceId: params.organizationId,
+      authorUserId: params.userId || null,
+      channel: 'admin',
+      sourceLabel: 'Organization context store saved (redesign screens)',
+      content: {
+        goals: params.goals ?? {},
+        challenges: params.challenges ?? {},
+        synthesis: params.synthesis ?? {},
+      },
+      isExplicit: true,
+      claims,
+    });
+  }
+
   async recordManualAIContext(params: {
     organizationId: string;
     userId?: string | null;
