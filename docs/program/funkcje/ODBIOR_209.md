@@ -1,3 +1,45 @@
+# ★ SCALONE PO FIX-209 (`bd8d16f6f9`) — 31.08.2026
+
+Trzy punkty zamknięte. **Diagnoza okazała się inna niż hipoteza odbioru** i to jest
+najważniejsza treść tej karty.
+
+1. **Zawodność indeksacji — przyczyna ZUPEŁNIE inna niż cichy `catch`.** Z catcha nie
+   dało się wyjąć żadnego błędu, bo `storeChunk` **nigdy nie był wołany**. Prawdziwa
+   przyczyna, dowiedziona izolowaną sondą: globalny `tests/setup.ts:809-811` woła
+   `beforeEach(vi.clearAllMocks())`, co w tej wersji Vitest **kasuje implementację**
+   ustawioną przez `vi.spyOn(...).mockResolvedValue(...)` w lokalnym `beforeAll` —
+   nie tylko historię wywołań. Skutek: pierwszy test w pliku widział mock, każdy
+   kolejny szedł prawdziwą ścieżką, trafiał w globalny mock `fetch` i **cicho
+   dostawał pustą odpowiedź**, po czym strażnik `embedding.length > 0` pomijał zapis.
+   Naprawa: mock przeniesiony do `beforeEach` + `catch` zamieniony na głośny
+   `logger.error` (na wypadek realnej awarii w przyszłości).
+   **BRAMKA: trzy kolejne przebiegi pełnego pliku, świeża baza — 6/6, 6/6, 6/6.**
+   Ochrona zasięgu po zmianach nadal realna (mutacja `inferKnowledgeScope` ⇒ 4/6 czerwonych).
+2. **Prawdziwa migracja zamiast samonaprawy przy starcie** —
+   `20260831_day209_knowledge_chunks_created_at.sql`. Nazwa dobrana tak, by wykonała
+   się po migracjach numerowanych. Zweryfikowane **od pustej bazy**: pełny łańcuch
+   od zera ⇒ `✅ Postgres migrations complete`, kolumna obecna, bez bootu aplikacji.
+   Żywa inspekcja potwierdziła, że brakowało wyłącznie `created_at` — dokładnie jak
+   w karcie odbioru.
+3. **Dowód HTTP end-to-end** — realny router, realny JWT, realny Postgres:
+   `POST /api/document-studio/generate` ⇒ wpis w `knowledge_docs` z poprawnym
+   właścicielem i zasięgiem, wpis w indeksie, treść wyszukiwalna przez realne
+   `search_knowledge_base`. Trzy przebiegi zielone.
+
+**Flaga `ENABLE_ARTIFACT_KNOWLEDGE_INDEX` nadal domyślnie WYŁĄCZONA** — włączana
+wyłącznie zmienną środowiskową na czas testu, nigdy w kodzie.
+
+**Poza zakresem:** R3 (indeksacja raportów) — osobny dyżur.
+
+**★ Odkrycie o zasięgu szerszym niż 209:** wzorzec `vi.clearAllMocks()` w globalnym
+`beforeEach` kasujący implementacje mocków może dotykać dowolnego pliku testowego,
+który instaluje mock w `beforeAll`. Do przemiatania osobnym dyżurem — objaw jest
+podstępny: pierwszy test w pliku przechodzi, reszta cicho idzie prawdziwą ścieżką.
+
+---
+
+## Pierwotna karta odbioru adwersaryjnego
+
 ---
 doc_id: funkcje-odbior-209
 status: evidence
