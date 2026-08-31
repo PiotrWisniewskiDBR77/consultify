@@ -42345,5 +42345,32 @@
   "standardPreview": {
     "property": "Właściwość",
     "value": "Wartość"
+  },
+  "toolOutputs": {
+    "title": "Wyniki",
+    "loadFailed": "Nie udało się wczytać wyników",
+    "reopenFailed": "Nie udało się ponownie otworzyć wyniku",
+    "backToOutputs": "Wróć do wyników",
+    "viewAsDocument": "Pokaż jako dokument",
+    "viewAsSlides": "Pokaż jako slajdy",
+    "empty": "Brak jeszcze promowanego wyniku dla tej sesji.",
+    "selected": "Wybrany wynik",
+    "reopening": "Otwieranie ponownie…",
+    "reopen": "Otwórz ponownie do korekty",
+    "reports": "Raporty i prezentacje",
+    "noReports": "Brak raportu lub prezentacji wygenerowanych z tego wyniku.",
+    "kindPresentation": "Prezentacja",
+    "kindReport": "Raport",
+    "initiativeProposals": "Propozycje inicjatyw",
+    "noProposals": "Z tego wyniku nie zaproponowano jeszcze żadnej inicjatywy.",
+    "slides": {
+      "fullscreen": "Pełny ekran (F)",
+      "exit": "Wyjdź z trybu slajdów (Esc)",
+      "deckEyebrow": "Prezentacja dla zarządu",
+      "reportEyebrow": "Raport",
+      "previous": "Poprzedni slajd",
+      "goToSlide": "Przejdź do slajdu {{n}}",
+      "next": "Następny slajd"
+    }
   }
 }

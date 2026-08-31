@@ -39810,5 +39810,32 @@
   "standardPreview": {
     "property": "Property",
     "value": "Value"
+  },
+  "toolOutputs": {
+    "title": "Outputs",
+    "loadFailed": "Failed to load outputs",
+    "reopenFailed": "Failed to reopen output",
+    "backToOutputs": "Back to outputs",
+    "viewAsDocument": "View as document",
+    "viewAsSlides": "View as slides",
+    "empty": "No promoted output yet for this session.",
+    "selected": "Selected output",
+    "reopening": "Reopening…",
+    "reopen": "Reopen for correction",
+    "reports": "Reports & presentations",
+    "noReports": "No report or presentation generated from this output yet.",
+    "kindPresentation": "Presentation",
+    "kindReport": "Report",
+    "initiativeProposals": "Initiative proposals",
+    "noProposals": "No initiative was proposed from this output yet.",
+    "slides": {
+      "fullscreen": "Fullscreen (F)",
+      "exit": "Exit slide mode (Esc)",
+      "deckEyebrow": "Executive presentation",
+      "reportEyebrow": "Report",
+      "previous": "Previous slide",
+      "goToSlide": "Go to slide {{n}}",
+      "next": "Next slide"
+    }
   }
 }
