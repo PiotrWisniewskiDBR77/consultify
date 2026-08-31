@@ -32,6 +32,8 @@
  * źródło prawdy zapisu.
  */
 
+import { financeValueStatusLabel } from '@/services/api/financeV2.types';
+
 // ---------------------------------------------------------------------------
 // Tryby scenariusza (server enum, transcribed verbatim — finance_prediction_scenarios.scenario_mode
 // CHECK, plik _01_tables.sql linie 48-51)
@@ -380,7 +382,11 @@ export function resolveDriverValue(
   return {
     kind: 'exception',
     reasonCode: 'MISSING_DRIVER_VALUE',
-    message: `Brak wartości dla ${o.driverCode} w okresie ${o.periodId} (status: ${o.valueStatus})`,
+    // NAPRAWIONE (sweep 148-finanse-parametry): `status: ${o.valueStatus}` renderowało
+    // surowy kod (MISSING/NA/NOT_APPLICABLE) wprost w treści komunikatu widocznego
+    // dla użytkownika — `financeValueStatusLabel` ma już krótką, ludzką etykietę PL
+    // dla dokładnie tego rozróżnienia (SourceEvidencePanel.tsx używa jej identycznie).
+    message: `Brak wartości dla ${o.driverCode} w okresie ${o.periodId} (${financeValueStatusLabel(o.valueStatus)})`,
     requiresExplicitAcceptance: true,
     proposedResolutions: ['UZUPEŁNIJ_RĘCZNIE', 'UŻYJ_WARTOŚCI_BASELINE', 'AKCEPTUJ_BRAK_I_KONTYNUUJ'],
   };
