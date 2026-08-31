@@ -34,6 +34,10 @@ export function buildKnowledgeDocAccessFilter({
   if (userId && columns.has('owner_id')) {
     scopeAllowed.push(`(${documentAlias}.scope = 'user' AND ${documentAlias}.owner_id = ${placeholder(userId)})`);
   }
+  if (projectIds.length > 0 && columns.has('project_id')) {
+    const allowedProjects = projectIds.map((id) => placeholder(id)).join(', ');
+    scopeAllowed.push(`(${documentAlias}.scope = 'project' AND ${documentAlias}.project_id IN (${allowedProjects}))`);
+  }
   const allowed = `(${scopeAllowed.join(' OR ')})`;
   if (!embeddingAlias) return { sql: `(${allowed})`, params };
   return {
