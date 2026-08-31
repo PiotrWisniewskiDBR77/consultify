@@ -113,6 +113,14 @@ const AdminTeamScreen = React.lazy(() => import('./screens/admin-team'));
 // plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-ai.tsx
 // (wzorzec 1:1 z admin-billing.tsx powyżej).
 const AdminAiScreen = React.lazy(() => import('./screens/admin-ai'));
+// ustawienia-organizacja (runda pełna) — 150-ustawienia-organizacja
+// (2026-08-31): 10 grup Ustawień (SettingsSidebar.tsx navGroups, ZWERYFIKOWANE
+// w kodzie — nie 9 jak sugerowała dokumentacja) + 20 brakujących ekranów
+// modułu Organizacja wariantu DOMYŚLNEGO (OrganizationSidebar.tsx,
+// ORGANIZATION_MODULES — flaga orgRedesignV1 OFF od 2026-08-29). Patrz
+// nagłówki dev-render/screens/ustawienia-grupy.tsx i org-legacy.tsx.
+const UstawieniaGrupyScreen = React.lazy(() => import('./screens/ustawienia-grupy'));
+const OrgLegacyScreen = React.lazy(() => import('./screens/org-legacy'));
 // admin-audit-health (runda pełna) — 7+7 ekranów domen audit i health
 // z adminNavigation.ts, dwa pliki z przełącznikiem `adminScreen`, patrz
 // dev-render/screens/admin-audit.tsx i admin-health.tsx (wzorzec 1:1
@@ -2037,6 +2045,141 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'aios-outcomes': {
     label: 'AI OS — KPI/ROI & AI Ops (Wave9OutcomeAIOpsPanel, harness odbioru 2026-08-31) &screen=outcomes',
     render: () => <AiosScreen />,
+  },
+  // ustawienia-organizacja (runda pełna) — odbiór grafiki 150-ustawienia-organizacja
+  // (2026-08-31). Ustawienia: REALNY <SettingsView>, 10 grup nawigacji
+  // (SettingsSidebar.tsx). Patrz nagłówek dev-render/screens/ustawienia-grupy.tsx.
+  'ustawienia-personalne': {
+    label: 'Ustawienia — PERSONAL (REALNY <SettingsView>, grupa my-settings → profile)',
+    render: () => <UstawieniaGrupyScreen grupa="personalne" />,
+  },
+  'ustawienia-workflow': {
+    label: 'Ustawienia — WORKFLOW (REALNY <SettingsView>, grupa work-preferences → dashboard)',
+    render: () => <UstawieniaGrupyScreen grupa="workflow" />,
+  },
+  'ustawienia-ai-automatyzacja': {
+    label:
+      'Ustawienia — MODULES: AI & AUTOMATION (REALNY <SettingsView>, grupa ai-automation-group → ai-behavior)',
+    render: () => <UstawieniaGrupyScreen grupa="ai-automatyzacja" />,
+  },
+  'ustawienia-powiadomienia': {
+    label:
+      'Ustawienia — MODULES: NOTIFICATIONS (REALNY <SettingsView>, grupa notifications → notifications-overview)',
+    render: () => <UstawieniaGrupyScreen grupa="powiadomienia" />,
+  },
+  'ustawienia-bezpieczenstwo': {
+    label: 'Ustawienia — SECURITY (REALNY <SettingsView>, grupa security → security-dashboard)',
+    render: () => <UstawieniaGrupyScreen grupa="bezpieczenstwo" />,
+  },
+  'ustawienia-integracje': {
+    label:
+      'Ustawienia — MODULES: INTEGRATIONS (REALNY <SettingsView>, grupa integrations → connected-apps, surowy fetch)',
+    render: () => <UstawieniaGrupyScreen grupa="integracje" />,
+  },
+  'ustawienia-dane-prywatnosc': {
+    label: 'Ustawienia — DATA & PRIVACY (REALNY <SettingsView>, grupa data-privacy → data-controls)',
+    render: () => <UstawieniaGrupyScreen grupa="dane-prywatnosc" />,
+  },
+  'ustawienia-billing': {
+    label:
+      'Ustawienia — BILLING (REALNY <SettingsView>, grupa billing → billing; renderContent() zwraca null — ZNALEZISKO, patrz nagłówek pliku)',
+    render: () => <UstawieniaGrupyScreen grupa="billing" />,
+  },
+  'ustawienia-wyglad': {
+    label: 'Ustawienia — APPEARANCE (REALNY <SettingsView>, grupa appearance → theme)',
+    render: () => <UstawieniaGrupyScreen grupa="wyglad" />,
+  },
+  'ustawienia-zaawansowane': {
+    label: 'Ustawienia — ADVANCED & HISTORY (REALNY <SettingsView>, grupa advanced → import-export)',
+    render: () => <UstawieniaGrupyScreen grupa="zaawansowane" />,
+  },
+  // Organizacja: REALNY <OrganizationView>, wariant DOMYŚLNY (flaga orgRedesignV1
+  // OFF), 20 ekranów brakujących w rejestrze. Patrz nagłówek
+  // dev-render/screens/org-legacy.tsx. `org-identity-operating` (profile/identity-scale)
+  // ma już wpis — pominięty tutaj (choć renderuje wariant ON, patrz ZGŁASZAM w raporcie).
+  'org-operating-model': {
+    label: 'Organizacja — Model działania (REALNY <OrganizationView>, domyślnie OFF, profile/operating-model)',
+    render: () => <OrgLegacyScreen module="profile" screen="operating-model" />,
+  },
+  'org-position-direction': {
+    label: 'Organizacja — Pozycja i kierunek (REALNY <OrganizationView>, domyślnie OFF, profile/position-direction)',
+    render: () => <OrgLegacyScreen module="profile" screen="position-direction" />,
+  },
+  'org-technology-culture-constraints': {
+    label:
+      'Organizacja — Technologia, kultura i ograniczenia (REALNY <OrganizationView>, domyślnie OFF, profile/technology-culture-constraints)',
+    render: () => <OrgLegacyScreen module="profile" screen="technology-culture-constraints" />,
+  },
+  'org-strategic-intent': {
+    label: 'Organizacja — Intencja strategiczna (REALNY <OrganizationView>, domyślnie OFF, goals/strategic-intent)',
+    render: () => <OrgLegacyScreen module="goals" screen="strategic-intent" />,
+  },
+  'org-success-metrics': {
+    label: 'Organizacja — Mierniki sukcesu (REALNY <OrganizationView>, domyślnie OFF, goals/success-metrics)',
+    render: () => <OrgLegacyScreen module="goals" screen="success-metrics" />,
+  },
+  'org-scope-boundaries': {
+    label: 'Organizacja — Zakres i granice (REALNY <OrganizationView>, domyślnie OFF, goals/scope-boundaries)',
+    render: () => <OrgLegacyScreen module="goals" screen="scope-boundaries" />,
+  },
+  'org-stakeholder-expectations': {
+    label:
+      'Organizacja — Oczekiwania interesariuszy (REALNY <OrganizationView>, domyślnie OFF, goals/stakeholder-expectations)',
+    render: () => <OrgLegacyScreen module="goals" screen="stakeholder-expectations" />,
+  },
+  'org-declared-challenges': {
+    label:
+      'Organizacja — Zadeklarowane wyzwania (REALNY <OrganizationView>, domyślnie OFF, challenges/declared-challenges)',
+    render: () => <OrgLegacyScreen module="challenges" screen="declared-challenges" />,
+  },
+  'org-root-causes': {
+    label: 'Organizacja — Przyczyny źródłowe (REALNY <OrganizationView>, domyślnie OFF, challenges/root-causes)',
+    render: () => <OrgLegacyScreen module="challenges" screen="root-causes" />,
+  },
+  'org-goal-blockers': {
+    label: 'Organizacja — Blockery celów (REALNY <OrganizationView>, domyślnie OFF, challenges/goal-blockers)',
+    render: () => <OrgLegacyScreen module="challenges" screen="goal-blockers" />,
+  },
+  'org-evidence': {
+    label: 'Organizacja — Dowody (REALNY <OrganizationView>, domyślnie OFF, challenges/evidence)',
+    render: () => <OrgLegacyScreen module="challenges" screen="evidence" />,
+  },
+  'org-risks-opportunities': {
+    label: 'Organizacja — Ryzyka i szanse (REALNY <OrganizationView>, domyślnie OFF, strategy/risks-opportunities)',
+    render: () => <OrgLegacyScreen module="strategy" screen="risks-opportunities" />,
+  },
+  'org-scenarios': {
+    label: 'Organizacja — Scenariusze (REALNY <OrganizationView>, domyślnie OFF, strategy/scenarios)',
+    render: () => <OrgLegacyScreen module="strategy" screen="scenarios" />,
+  },
+  'org-recommendation': {
+    label: 'Organizacja — Rekomendacja (REALNY <OrganizationView>, domyślnie OFF, strategy/recommendation)',
+    render: () => <OrgLegacyScreen module="strategy" screen="recommendation" />,
+  },
+  'org-executive-brief': {
+    label: 'Organizacja — Executive brief (REALNY <OrganizationView>, domyślnie OFF, strategy/executive-brief)',
+    render: () => <OrgLegacyScreen module="strategy" screen="executive-brief" />,
+  },
+  'org-files': {
+    label:
+      'Organizacja — Pliki (REALNY <OrganizationView>, domyślnie OFF, sources/files, statyczny komunikat NIEZWERYFIKOWANE)',
+    render: () => <OrgLegacyScreen module="sources" screen="files" />,
+  },
+  'org-claims-sources': {
+    label: 'Organizacja — Twierdzenia i źródła (REALNY <OrganizationView>, domyślnie OFF, sources/claims-sources)',
+    render: () => <OrgLegacyScreen module="sources" screen="claims-sources" />,
+  },
+  'org-source-conflicts': {
+    label: 'Organizacja — Konflikty źródeł (REALNY <OrganizationView>, domyślnie OFF, sources/source-conflicts)',
+    render: () => <OrgLegacyScreen module="sources" screen="source-conflicts" />,
+  },
+  'org-knowledge-graph': {
+    label: 'Organizacja — Graf wiedzy (REALNY <OrganizationView>, domyślnie OFF, sources/knowledge-graph)',
+    render: () => <OrgLegacyScreen module="sources" screen="knowledge-graph" />,
+  },
+  'org-summary': {
+    label: 'Organizacja — Gotowość organizacji (REALNY <OrganizationView>, domyślnie OFF, readiness/summary)',
+    render: () => <OrgLegacyScreen module="readiness" screen="summary" />,
   },
 };
 
