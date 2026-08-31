@@ -9,10 +9,36 @@ import {
 } from '@/components/standard';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import type { PortfolioInitiative } from '@/types';
-import { formatRelativeTime } from '@/utils/initiativeHelpers';
+import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { INITIATIVE_LIFECYCLE_LABELS } from './initiativeRegisterProjection';
+import {
+  INITIATIVE_GATE_NAME_LABELS,
+  INITIATIVE_GATE_READINESS_LABELS,
+  INITIATIVE_HEALTH_STATE_LABELS,
+  INITIATIVE_IMPACT_CONFIDENCE_LABELS,
+  INITIATIVE_LIFECYCLE_LABELS,
+} from './initiativeRegisterProjection';
+
+/**
+ * "Planowane okno" w danych demo/rejestrze jest jednym stringiem
+ * `"<ISO start> / <ISO end>"` (patrz `initiativesDemoData.ts`,
+ * `initiativeRegisterProjection.ts`). Kanon dat (`formatListDate`, SSOT
+ * `src/utils/listDateFormat.ts`) formatuje jedną wartość naraz — ta funkcja
+ * rozdziela parę i renderuje ją jako jedną linię „od — do" zamiast surowych
+ * znaczników ISO łamanych na kilka linii (defekt zgłoszony w audycie 2026-08-31).
+ */
+const formatPlannedWindow = (raw: unknown): string => {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  if (!value) return '—';
+  const [start, end] = value.split('/').map((part) => part.trim());
+  const startLabel = formatListDate(start, '');
+  const endLabel = formatListDate(end, '');
+  if (!startLabel && !endLabel) return '—';
+  if (!endLabel) return startLabel;
+  if (!startLabel) return endLabel;
+  return `${startLabel} — ${endLabel}`;
+};
 
 export const CANONICAL_INITIATIVE_REGISTER_COLUMN_IDS = [
   'name',
@@ -72,7 +98,7 @@ export const createCanonicalInitiativeRegisterColumns = (): TableColumn[] => [
   {
     id: 'name',
     label: 'Inicjatywa',
-    width: '300px',
+    width: '220px',
     render: (raw) => {
       const row = raw as CanonicalInitiativeRow;
       return (
@@ -87,7 +113,7 @@ export const createCanonicalInitiativeRegisterColumns = (): TableColumn[] => [
   },
   {
     id: 'status',
-    label: 'Lifecycle',
+    label: 'Cykl życia',
     width: '170px',
     filterable: true,
     filterOptions: Object.entries(INITIATIVE_LIFECYCLE_LABELS).map(([value, label]) => ({
@@ -109,31 +135,36 @@ export const createCanonicalInitiativeRegisterColumns = (): TableColumn[] => [
   },
   {
     id: 'gateName',
-    label: 'Następny gate',
-    width: '150px',
-    render: (raw) => (
-      <span className="text-xs text-c-text-secondary">
-        {String((raw as CanonicalInitiativeRow).gateName || '—')}
-      </span>
-    ),
+    label: 'Następna bramka',
+    width: '175px',
+    render: (raw) => {
+      const value = String((raw as CanonicalInitiativeRow).gateName || '');
+      const label = value ? INITIATIVE_GATE_NAME_LABELS[value] || value : '—';
+      return (
+        <span className="block truncate text-xs text-c-text-secondary" title={label}>
+          {label}
+        </span>
+      );
+    },
   },
   {
     id: 'gateReadiness',
-    label: 'Readiness',
+    label: 'Gotowość',
     width: '150px',
     render: (raw) => {
       const readiness = String((raw as CanonicalInitiativeRow).gateReadiness || 'UNKNOWN');
+      const label = INITIATIVE_GATE_READINESS_LABELS[readiness] || readiness.replaceAll('_', ' ');
       return (
-        <span className="text-xs font-medium text-c-text-secondary">
-          {readiness === 'NOT_EVALUATED' ? 'Nie oceniono' : readiness.replaceAll('_', ' ')}
+        <span className="block truncate text-xs font-medium text-c-text-secondary" title={label}>
+          {label}
         </span>
       );
     },
   },
   {
     id: 'owner',
-    label: 'Owner',
-    width: '170px',
+    label: 'Właściciel',
+    width: '150px',
     render: (raw) => {
       const row = raw as CanonicalInitiativeRow;
       const owner = row.ownerBusiness || row.ownerExecution;
@@ -144,7 +175,7 @@ export const createCanonicalInitiativeRegisterColumns = (): TableColumn[] => [
   {
     id: 'nextAction',
     label: 'Następne działanie',
-    width: '210px',
+    width: '160px',
     render: (raw) => (
       <span className="text-xs font-medium text-c-text">
         {String((raw as CanonicalInitiativeRow).nextAction || 'UNKNOWN')}
@@ -154,16 +185,17 @@ export const createCanonicalInitiativeRegisterColumns = (): TableColumn[] => [
   {
     id: 'expectedImpact',
     label: 'Oczekiwany efekt',
-    width: '230px',
+    width: '160px',
     render: (raw) => {
       const row = raw as CanonicalInitiativeRow;
+      const confidence = String(row.impactConfidence || 'UNKNOWN');
       return (
         <div className="min-w-0 text-xs">
           <span className="block truncate text-c-text-secondary">
             {String(row.expectedImpact || 'UNKNOWN')}
           </span>
           <span className="text-c-text-muted">
-            Confidence: {String(row.impactConfidence || 'UNKNOWN')}
+            Pewność: {INITIATIVE_IMPACT_CONFIDENCE_LABELS[confidence] || confidence}
           </span>
         </div>
       );
@@ -172,38 +204,49 @@ export const createCanonicalInitiativeRegisterColumns = (): TableColumn[] => [
   {
     id: 'plannedWindow',
     label: 'Planowane okno',
-    width: '150px',
-    render: (raw) => (
-      <span className="text-xs text-c-text-muted">
-        {String((raw as CanonicalInitiativeRow).plannedWindow || '—')}
-      </span>
-    ),
+    width: '215px',
+    render: (raw) => {
+      const label = formatPlannedWindow((raw as CanonicalInitiativeRow).plannedWindow);
+      return (
+        <span className="block truncate text-xs text-c-text-muted" title={label}>
+          {label}
+        </span>
+      );
+    },
   },
   {
     id: 'healthState',
-    label: 'Health',
+    label: 'Kondycja',
     width: '110px',
-    render: (raw) => (
-      <span className="text-xs text-c-text-muted">
-        {String((raw as CanonicalInitiativeRow).healthState || 'N/A')}
-      </span>
-    ),
+    render: (raw) => {
+      const value = String((raw as CanonicalInitiativeRow).healthState || 'N/A');
+      const label = INITIATIVE_HEALTH_STATE_LABELS[value] || value;
+      return (
+        <span className="block truncate text-xs text-c-text-muted" title={label}>
+          {label}
+        </span>
+      );
+    },
   },
   {
     id: 'updatedAt',
-    label: 'Updated',
-    width: '110px',
+    label: 'Aktualizacja',
+    width: '220px',
     align: 'right',
     sortable: true,
     sortAccessor: (raw) => {
       const value = (raw as CanonicalInitiativeRow).updatedAt;
       return value ? new Date(value).getTime() : 0;
     },
-    render: (raw) => (
-      <span className="text-xs tabular-nums text-c-text-muted">
-        {formatRelativeTime((raw as CanonicalInitiativeRow).updatedAt)}
-      </span>
-    ),
+    render: (raw) => {
+      const value = (raw as CanonicalInitiativeRow).updatedAt;
+      const relative = formatRelativeHint(value, new Date());
+      return (
+        <span className="text-xs tabular-nums text-c-text-muted" title={formatListDate(value, '')}>
+          {relative || '—'}
+        </span>
+      );
+    },
   },
 ];
 
@@ -238,7 +281,12 @@ export const CanonicalInitiativeRegister = ({
             label: INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] || 'UNKNOWN',
             tone: statusChipTone(initiative.status),
           },
-          { label: String(initiative.gateReadiness || 'UNKNOWN'), tone: 'neutral' },
+          {
+            label:
+              INITIATIVE_GATE_READINESS_LABELS[String(initiative.gateReadiness || 'UNKNOWN')] ||
+              String(initiative.gateReadiness || 'UNKNOWN'),
+            tone: 'neutral',
+          },
         ],
         trailing: (
           <span className="text-[11px] font-semibold text-c-text-secondary">
@@ -251,11 +299,19 @@ export const CanonicalInitiativeRegister = ({
         label: 'Kontekst inicjatywy',
         text: initiative.summary || initiative.description || 'No description.',
         properties: [
-          { id: 'gate', label: 'Następny gate', value: String(initiative.gateName || '—') },
+          {
+            id: 'gate',
+            label: 'Następna bramka',
+            value: initiative.gateName
+              ? INITIATIVE_GATE_NAME_LABELS[initiative.gateName] || initiative.gateName
+              : '—',
+          },
           {
             id: 'readiness',
-            label: 'Readiness',
-            value: String(initiative.gateReadiness || 'UNKNOWN'),
+            label: 'Gotowość',
+            value:
+              INITIATIVE_GATE_READINESS_LABELS[String(initiative.gateReadiness || 'UNKNOWN')] ||
+              String(initiative.gateReadiness || 'UNKNOWN'),
           },
           {
             id: 'owner',
@@ -273,7 +329,7 @@ export const CanonicalInitiativeRegister = ({
           {
             id: 'window',
             label: 'Planowane okno',
-            value: String(initiative.plannedWindow || '—'),
+            value: formatPlannedWindow(initiative.plannedWindow),
           },
           {
             id: 'freshness',

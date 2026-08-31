@@ -49,6 +49,57 @@ export const INITIATIVE_LIFECYCLE_LABELS: Record<string, string> = {
   ARCHIVED: 'Zarchiwizowana',
 };
 
+/**
+ * Etykiety PL dla nazw bramek zwracanych przez `nextStepForLifecycle`.
+ *
+ * Decyzja (weryfikacja przy naprawie i18n rejestru inicjatyw, 2026-08-31):
+ * "Definition/Analysis/Portfolio/Schedule/Handoff/Delivery/Effectiveness/
+ * Closure" to WŁASNA stała konfiguracyjna produktu (literały w `switch`
+ * poniżej), nie terminologia metodyki konsultingowej ani treść danych demo —
+ * `grep nextStepForLifecycle` pokazuje dokładnie dwóch konsumentów, oba w tym
+ * katalogu. To interfejs, więc tłumaczymy; wartość pola `gateName` w danych
+ * (`row.gateName`) zostaje angielska — mapa działa wyłącznie w warstwie
+ * wyświetlania (kanon: enumy przez mapy etykiet, dane zostają EN).
+ */
+export const INITIATIVE_GATE_NAME_LABELS: Record<string, string> = {
+  Definition: 'Definicja',
+  Analysis: 'Analiza',
+  Portfolio: 'Portfel',
+  Schedule: 'Harmonogram',
+  Handoff: 'Przekazanie',
+  Delivery: 'Realizacja',
+  Effectiveness: 'Efektywność',
+  Closure: 'Zamknięcie',
+};
+
+/** Etykiety PL dla `gateReadiness` (wartości danych zostają EN — kanon TRIADA). */
+export const INITIATIVE_GATE_READINESS_LABELS: Record<string, string> = {
+  READY: 'Gotowe',
+  PARTIAL: 'Częściowe',
+  NOT_READY: 'Niegotowe',
+  BLOCKED: 'Zablokowane',
+  NOT_EVALUATED: 'Nie oceniono',
+  UNKNOWN: 'Nieznane',
+};
+
+/** Etykiety PL dla `healthState` (wartości danych zostają EN — kanon TRIADA). */
+export const INITIATIVE_HEALTH_STATE_LABELS: Record<string, string> = {
+  ON_TRACK: 'Na torze',
+  WATCH: 'Obserwuj',
+  AT_RISK: 'Zagrożone',
+  CRITICAL: 'Krytyczne',
+  UNKNOWN: 'Nieznana',
+  'N/A': 'Nie dotyczy',
+};
+
+/** Etykiety PL dla `impactConfidence` ("Confidence: HIGH" → "Pewność: Wysoka"). */
+export const INITIATIVE_IMPACT_CONFIDENCE_LABELS: Record<string, string> = {
+  HIGH: 'Wysoka',
+  MEDIUM: 'Średnia',
+  LOW: 'Niska',
+  UNKNOWN: 'Nieznana',
+};
+
 export const nextStepForLifecycle = (lifecycle: string) => {
   switch (lifecycle) {
     case 'REGISTERED_DRAFT':
