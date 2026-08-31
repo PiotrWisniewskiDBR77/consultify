@@ -16,6 +16,13 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-15 · Cztery raporty nocne SKASOWANE nadpisaniem pliku — odzyskane z gita, status.json kłamał w 3 z 4 zakresów
+**Co się stało:** robotnik sekcji Materiałów zapisał `NOC_PRZEGLAD_MODULOW.md` w trybie nadpisania całego pliku zamiast dopisania sekcji (commit `591ca8cec2`, 583→188 linii). Zniknęły cztery wcześniej wcommitowane sekcje (`a0194ba7fb`, `60160b5f82`): czat/agent/spotkania, wywiad/ocena, narzędzia/audyty/kanon, inicjatywy/realizacja/wyniki. Nadzorca rano przekazał następcy „201 z 202 ekranów obejrzanych, wynik w tabeli" — w dobrej wierze, bo praca była wykonana, ale plik już jej nie zawierał.
+**Drugie dno:** `status.json` w trzech z czterech zakresów nigdy nie dostał ustaleń przeglądu. Trzy potwierdzone defekty C (`processflow-canvas`, `agent-plan-view`, `plan-scenario-d1`) figurowały w bazie jako A — strona odbioru pokazywałaby właścicielowi zielone karty na zepsutych ekranach. Jedyny zsynchronizowany zakres (04-narzedzia) zawdzięcza to commitowi z BŁĘDNĄ etykietą „Wywiad i Ocena".
+**Co z tego wynika:** (1) sekcje odtworzone dosłownie z `git show 9efbc003ea`, oznaczone dopiskiem; (2) status.json zsynchronizowany z odzyskanymi tabelami; (3) reguła dla robotników piszących do plików współdzielonych: DOPISUJESZ sekcję, nigdy nie zapisujesz całego pliku z własnej pamięci — a nadzorca po każdym raporcie sprawdza `git diff --stat` pliku zbiorczego: ubytek linii przy dopisywaniu = alarm.
+
+---
+
 ## 2026-08-30, sesja wieczorna (przejęcie toru po poprzedniku)
 
 ### Z-14 · Przegląd nocny — dwaj robotnicy z rzędu ocenili ekrany, których nie obejrzeli

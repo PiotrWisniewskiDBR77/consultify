@@ -28,8 +28,8 @@
         {
           "id": "processflow-canvas",
           "nazwa": "Diagram procesu",
-          "ocena": "A",
-          "co": "Start, decyzja, koniec, dwa tory.",
+          "ocena": "C",
+          "co": "Start, decyzja, koniec, dwa tory. Krawedz laczaca Start z Poprosz o uzupelnienie danych przechodzi przez etykiete wezla Klient sklada zgloszenie (wyglada jak przekreslenie, oba motywy) - realny defekt IdeaProcessFlowTool.tsx. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Tekst wylewal sie poza romb decyzyjny i nachodzil na etykiete Tak"
           ],
@@ -80,8 +80,8 @@
         {
           "id": "melscanvas-workspace",
           "nazwa": "Mala mapa mysli",
-          "ocena": "A",
-          "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie.",
+          "ocena": "B",
+          "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie. Pastylka trybu narzedzia pokazuje surowe SEL zamiast polskiej etykiety (CanvasLeftToolbar.tsx). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "warianty": [
@@ -97,8 +97,8 @@
         {
           "id": "mindmap-canvas",
           "nazwa": "Mapa mysli",
-          "ocena": "A",
-          "co": "Realna mapa mysli z paskiem podpowiedzi AI.",
+          "ocena": "B",
+          "co": "Realna mapa mysli z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku w prawym pasku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Angielski przycisk Apply"
           ],
@@ -125,8 +125,8 @@
         {
           "id": "chat-signals-feed",
           "nazwa": "Strumien sygnalow",
-          "ocena": "A",
-          "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny.",
+          "ocena": "B",
+          "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny. Defekt kolumny (za waska, tytuly lamia sie) juz opisany w wyjatkach - obniza ocene. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
           ],
@@ -138,8 +138,8 @@
         {
           "id": "whiteboard-canvas",
           "nazwa": "Tablica",
-          "ocena": "A",
-          "co": "Tablica z paskiem podpowiedzi AI.",
+          "ocena": "B",
+          "co": "Tablica z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Ten sam angielski Apply"
           ],
@@ -157,8 +157,8 @@
         {
           "id": "whiteboard-workshop",
           "nazwa": "Tablica — warsztat",
-          "ocena": "A",
-          "co": "Tablica oddalona, szesc elementow.",
+          "ocena": "B",
+          "co": "Tablica oddalona, szesc elementow. Ta sama pastylka SEL po angielsku, widoczne nawet przy 25% zoom. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Ten sam angielski Apply"
           ],
@@ -656,8 +656,8 @@
         {
           "id": "karta-interview",
           "nazwa": "Karta wywiadu",
-          "ocena": "C",
-          "co": "Prawy panel ma trzy z szesciu kanonicznych sekcji.",
+          "ocena": "A",
+          "co": "Prawy panel ma trzy z szesciu kanonicznych sekcji. Na swiezym zrzucie ekran ma wszystkie 6 sekcji prawego panelu (Akcje, Wlasciwosci, Powiazania, Zrodla i zalozenia, Komentarze, Historia) - naprawione przez kogos innego od poprzedniego wpisu. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy."
@@ -862,8 +862,8 @@
         {
           "id": "assessment-output-report",
           "nazwa": "Raport z oceny",
-          "ocena": "A",
-          "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi.",
+          "ocena": "B",
+          "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi. Sekcja Ograniczenia i zalozenia cytuje wprost zargon inzynierski (EventDerivedOutputBridge, vertical-slice demo, businessMeaning/recommendation, aggregation.byGroup) w tekscie pokazywanym klientowi - zrodlo drdSessionRuntime.ts, poza zakresem UI. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → raport z oceny — źródło wyniku widoczne, ograniczenia nazwane wprost, gotowy do pokazania klientowi."
@@ -913,8 +913,8 @@
         {
           "id": "drd-library-entry",
           "nazwa": "Biblioteka DRD",
-          "ocena": "B",
-          "co": "Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku.",
+          "ocena": "A",
+          "co": "Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku. Pasek wyjasniajacy flage dla inzyniera nie byl oznaczony jako chrom harnessu - naprawione (data-dev-render-chrome). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Sciezka i zakladki przybite po angielsku",
             "Ekran nie byl podlaczony do harnessu"
@@ -927,8 +927,8 @@
         {
           "id": "assessment-list",
           "nazwa": "Lista ocen",
-          "ocena": "B",
-          "co": "Tabela kanoniczna, statusy po polsku, kreska zamiast zera.",
+          "ocena": "A",
+          "co": "Tabela kanoniczna, statusy po polsku, kreska zamiast zera. Na swiezym zrzucie bez zastrzezen. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Kolumna Aktualizacja ucina naglowek i daty — szerokosc kolumn przy siedmiu kolumnach, defekt wspolnego silnika tabel, nie tego ekranu"
@@ -938,8 +938,8 @@
         {
           "id": "assessment-reports-panel",
           "nazwa": "Panel raportow",
-          "ocena": "B",
-          "co": "Mechanika czysta.",
+          "ocena": "A",
+          "co": "Mechanika czysta. Wyjatek 'obudowa ekranu po angielsku' juz nieaktualny - dzis ekran w 100% polski. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Obudowa ekranu po angielsku — inny komponent niz tabela raportow"
@@ -960,8 +960,8 @@
         {
           "id": "assessment-initiatives-table",
           "nazwa": "Tablica inicjatyw strategicznych",
-          "ocena": "B",
-          "co": "Tablica inicjatyw.",
+          "ocena": "A",
+          "co": "Tablica inicjatyw. Wyjatek 'obudowa po angielsku' juz nieaktualny - dzis w 100% polski (bledy konsoli fetch to brak backendu harnessu, nie defekt); styl pigulki priorytetu zgloszony osobno, nie obniza oceny (wzorzec ogolnoaplikacyjny). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Ucinane etykiety priorytetu — kolumna poszerzona"
           ],
@@ -989,8 +989,8 @@
         {
           "id": "assessment-initiatives-panel",
           "nazwa": "Panel inicjatyw",
-          "ocena": "C",
-          "co": "Proces statusow inicjatywy.",
+          "ocena": "A",
+          "co": "Proces statusow inicjatywy. Na swiezym zrzucie ekran w 100% polski, brak bledow konsoli - oba problemy z poprzedniego wpisu juz naprawione. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Caly ekran po angielsku",
@@ -1001,8 +1001,8 @@
         {
           "id": "assessment-manage-panel",
           "nazwa": "Panel zarzadzania ocena",
-          "ocena": "C",
-          "co": "Mechanika solidna: postep procesu, tabela etapow bramek.",
+          "ocena": "B",
+          "co": "Mechanika solidna: postep procesu, tabela etapow bramek. Domyslna zakladka Przeplyw jest dzis w 100% polska - wyrazna poprawa od poprzedniego wpisu; pozostale 4 zakladki (Zespol/Raporty/Inicjatywy/Dziennik) nie zostaly jeszcze zweryfikowane. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie"
@@ -1024,8 +1024,8 @@
         {
           "id": "assessment-matryca",
           "nazwa": "Matryca oceny",
-          "ocena": "D",
-          "co": "Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu.",
+          "ocena": "C",
+          "co": "Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu. NIEPRAWDA ze harness nie ma tego ekranu - renderuje sie poprawnie (DRDMatrixSession). Realny defekt: lewy panel osi jest po polsku, ale centrum ekranu (MaturityMatrix.tsx) jest w 100% po angielsku - wymaga przesiania przez decyzje 31.08 o angielskiej metodyce. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Zgloszone do naprawy narzedzia"
@@ -1066,9 +1066,9 @@
         {
           "id": "inicjatywy-lista",
           "nazwa": "Lista inicjatyw",
-          "ocena": "B",
+          "ocena": "C",
           "gdzie": "Inicjatywy → lista główna — jedenaście inicjatyw z cyklem życia, następną bramką, gotowością i właścicielem.",
-          "co": "Ekran istnial, ale byl schowany pod ekranem zrobionym do sprawdzania tlumaczen — dlatego nikt go nie widzial.",
+          "co": "Ekran istnial, ale byl schowany pod ekranem zrobionym do sprawdzania tlumaczen — dlatego nikt go nie widzial. Realny InitiativesHub pada na INITIATIVE_DATA_CONTRACT_ERROR - wyscig localStorage: shouldAllowDemoData() czyta debounce'owany (300ms) zapis do consultify-storage, pierwszy fetch startuje przed zapisem. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1077,8 +1077,8 @@
         {
           "id": "capacity-advisor-a3",
           "nazwa": "Obciazenie zespolu",
-          "ocena": "A",
-          "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy.",
+          "ocena": "B",
+          "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy. Kolumny Rola/Zespol, Rodzaj, Presja ucinaja tekst w polowie slowa - StandardTable/FilterableTable za waskie kolumny. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Inicjatywy → zakładka „Obciążenie\" — obciążenie zespołu, wszędzie z jednostką (FTE-tydzień, procenty, zakresy)."
@@ -1086,8 +1086,8 @@
         {
           "id": "plan-scenario-d1",
           "nazwa": "Plan inicjatyw",
-          "ocena": "A",
-          "co": "Daty po polsku, stany po polsku.",
+          "ocena": "C",
+          "co": "Daty po polsku, stany po polsku. Przycisk Otworz w prawym panelu InitiativesHub nie otwiera karty inicjatywy - otwiera Warsztat planu jako druga tabele wcisnieta pod pierwsza (layout lamie sie), a druga tabela pokazuje surowe angielskie enumy (NOW/NEXT/LATER, HIGH/MEDIUM/LOW) zamiast polskich etykiet gornej tabeli. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku."
@@ -1104,8 +1104,8 @@
         {
           "id": "karta-initiative",
           "nazwa": "Karta inicjatywy",
-          "ocena": "B",
-          "co": "Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza.",
+          "ocena": "A",
+          "co": "Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza. Wypelnij z AI faktycznie otwiera dzialajacy panel Konsultant AI z 6 akcjami i czatem z Teresa - nie martwy przycisk; tresc bogata, po polsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Nagie zero przy Akcjach — dopisane zdanie, ze liczba opisuje widok, nie inicjatywe",
             "Angielskie opisy cyklu zycia w sekcji Bramy — naprawione u zrodla, dziala teraz wszedzie"
@@ -1217,9 +1217,9 @@
         {
           "id": "cel-jedna-karta",
           "nazwa": "Cel (OKR) jako JEDNA karta N",
-          "ocena": "B",
+          "ocena": "A",
           "gdzie": "Wyniki → OKR → otwarcie celu (PROTOTYP) — Cel, Kluczowe rezultaty, Postęp, Powiązania, Refleksja.",
-          "co": "Naglowek mowi wprost: Zamkniety, 2 z 3 KR osiagniete. Drugi rezultat ma 70% i etykiete NIE OSIAGNIETY, z wyjasnieniem po ludzku dlaczego.",
+          "co": "Naglowek mowi wprost: Zamkniety, 2 z 3 KR osiagniete. Drugi rezultat ma 70% i etykiete NIE OSIAGNIETY, z wyjasnieniem po ludzku dlaczego. Prototyp jednej N-karty celu/OKR - 5 sekcji lewego menu, prawy panel 7 sekcji kanonu, tresc bogata i w 100% polska. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1228,9 +1228,9 @@
         {
           "id": "wskaznik-jedna-karta",
           "nazwa": "Wskaznik jako JEDNA karta N",
-          "ocena": "B",
+          "ocena": "A",
           "gdzie": "Wyniki → KPI → otwarcie wskaźnika (PROTOTYP) — Kontrakt, Pomiary, Odchylenia, Działania korygujące, Rodowód.",
-          "co": "Rodowod pokazuje, kiedy zmienil sie wzor i prog, i ze starych pomiarow NIE przeliczono wstecz. Ta sekcja broni wiarygodnosci liczby.",
+          "co": "Rodowod pokazuje, kiedy zmienil sie wzor i prog, i ze starych pomiarow NIE przeliczono wstecz. Ta sekcja broni wiarygodnosci liczby. Naglowek pokazuje prawdziwa nazwe (KPI - Czas przezbrojenia, linia pakowania L3), numer KPI-0087 to osobne pole referencyjne, nie zastepuje nazwy. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1239,9 +1239,9 @@
         {
           "id": "roi-jedna-karta",
           "nazwa": "ROI jako JEDNA karta N",
-          "ocena": "B",
+          "ocena": "A",
           "gdzie": "Wyniki → ROI → otwarcie analizy (PROTOTYP) — pięć sekcji jednej narracji: Założenia, Model, Wynik, Wyniki po wdrożeniu, Wnioski.",
-          "co": "Sekcja po wdrożeniu pokazuje UCZCIWIE, ze wyszlo gorzej niz prognoza: ROI 71% wobec 104%, rozjazd -166 000 zl wypisany kwartalnie.",
+          "co": "Sekcja po wdrożeniu pokazuje UCZCIWIE, ze wyszlo gorzej niz prognoza: ROI 71% wobec 104%, rozjazd -166 000 zl wypisany kwartalnie. Wszystkie 5 sekcji (zalozenia/model/wynik/wyniki-po-wdrozeniu/wnioski) maja pelna, spojna, dobrze uzrodlowiona tresc; kolor czerwony uzyty tylko semantycznie. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1272,8 +1272,8 @@
         {
           "id": "results-vnext-kpi-scorecards",
           "nazwa": "Karty wynikow",
-          "ocena": "A",
-          "co": "Lista kart z panelem podgladu.",
+          "ocena": "B",
+          "co": "Lista kart z panelem podgladu. Lista KPI pokazuje surowe, uciete kody (kpi-oee-..., kpi-defe...) bez zadnego wyjasnienia - defekt kontraktu danych KPI (brak pola nazwy), nie grafiki. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Angielskie naglowki podgladu"
           ],
@@ -1283,8 +1283,8 @@
         {
           "id": "results-vnext-roi-model",
           "nazwa": "Model ROI",
-          "ocena": "A",
-          "co": "Baza porownania i polityka kalkulacji.",
+          "ocena": "B",
+          "co": "Baza porownania i polityka kalkulacji. Kolumna PEWNOSC ucieta przez prawy panel (widoczne tylko PEW); wlasciwosc Ziarno analizy pokazuje surowe monthly zamiast etykiety, mimo ze etykieta pola jest po polsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Wyniki → ROI → wejście w sprawę ROI (POZIOM 3, pełne narzędzie) — baza porównania i polityka kalkulacji."
@@ -1292,8 +1292,8 @@
         {
           "id": "results-vnext-kpi-tool",
           "nazwa": "Narzedzie wskaznika",
-          "ocena": "A",
-          "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.",
+          "ocena": "C",
+          "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami. Naglowek H1 calego ekranu to surowy kod OEE-LINIA-PAKOWANIA bez nazwy i bez podpisu wyjasniajacego - najgorszy wariant defektu braku nazwy KPI w calym zakresie. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Surowe statusy pomiaru zamiast etykiet"
           ],
@@ -1358,8 +1358,8 @@
         {
           "id": "results-vnext-kpi-registry",
           "nazwa": "Rejestr wskaznikow",
-          "ocena": "A",
-          "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
+          "ocena": "B",
+          "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem. Wszystkie 5 wierszy rejestru KPI pokazuje surowy kod jako glowna etykiete (z uczciwym podpisem Kod KPI (brak nazwy)) - defekt kontraktu danych KPI, nie grafiki. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Wyniki → KPI → rejestr wskaźników (POZIOM 1) — pełna tabela ze statusami, filtrami i kebabem."
@@ -1387,8 +1387,8 @@
         {
           "id": "results-vnext-attention",
           "nazwa": "Uwaga",
-          "ocena": "A",
-          "co": "Siedem zakladek uwag z realnymi kodami wskaznikow.",
+          "ocena": "B",
+          "co": "Siedem zakladek uwag z realnymi kodami wskaznikow. Zakladka KPI, kubelek Brak wlasciciela pokazuje tabele z jedyna kolumna KOD KPI i surowymi wartosciami (DPMO-002, DWT-003) bez nazw i bez podpisu wyjasniajacego. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
@@ -1433,8 +1433,8 @@
         {
           "id": "results-zestawienia",
           "nazwa": "POZIOM 1 — Rejestr zestawien okresowych",
-          "ocena": "B",
-          "co": "Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety.",
+          "ocena": "A",
+          "co": "Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety. Poziom 1 rejestru zestawien okresowych w pelni po polsku, czytelny, zero kodow zamiast nazw. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Kolizja zapamietanych szerokosci kolumn z realnym rejestrem",
             "Siedem kolumn nie miescilo sie przy otwartym podgladzie — scalone i zwezone",
@@ -2437,8 +2437,8 @@
         {
           "id": "agent-plan-view",
           "nazwa": "Uruchom agenta",
-          "ocena": "A",
-          "co": "Lista czterech gotowych agentow w falach.",
+          "ocena": "C",
+          "co": "Lista czterech gotowych agentow w falach. Przed utworzeniem planu AgentPlanWorkspace renderuje WYLACZNIE ArtifactRightPanel jako cala zawartosc pelnoszerokiego warsztatu - lista Agenci zajmuje ok 1/4 szerokosci, reszta to pusta, niepodpisana przestrzen (oba motywy, flaga ff_agentPlan). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku"
           ],
