@@ -419,6 +419,13 @@ type ResearchProgressEvent = {
   rounds?: number;
 };
 
+type ToolStepEvent = {
+  type: 'tool_step';
+  toolName: string;
+  status: 'running' | 'completed' | 'failed' | 'blocked';
+  costUsd?: number;
+};
+
 type ResearchVisibilityEvent = {
   type: 'research_visibility';
   items: Array<{
@@ -1111,6 +1118,17 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'research_progress') {
           const e = evt as ResearchProgressEvent;
           setResearchProgress(e);
+          return;
+        }
+        if (evt.type === 'tool_step') {
+          const e = evt as ToolStepEvent;
+          setResearchProgress((previous: any) => {
+            const steps = Array.isArray(previous?.toolSteps) ? previous.toolSteps : [];
+            const withoutCurrent = steps.filter(
+              (step: ToolStepEvent) => step.toolName !== e.toolName
+            );
+            return { ...(previous || {}), toolSteps: [...withoutCurrent, e] };
+          });
           return;
         }
 

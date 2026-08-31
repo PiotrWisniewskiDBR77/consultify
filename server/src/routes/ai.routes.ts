@@ -4856,6 +4856,75 @@ router.post(
         );
       }
 
+
+      // Day206 / 17-B: READ-only tool loop. The executor stays on the existing
+      // governed path; no raw result is ever emitted through SSE.
+      if (featureFlags.ENABLE_TERESA_TOOL_LOOP && !aiModes?.deepResearch) {
+        const { executeToolCall } = await import('../services/ai/toolDefinitions.js');
+        const { estimateAgentToolCostUsd } = await import('../services/ai/toolCostEstimates.js');
+        let paidCostUsd = 0;
+        const maxPaidCostUsd = 0.08;
+        const timeoutMs = 12_000;
+        (pipelineRequest as any).options = {
+          ...((pipelineRequest as any).options || {}),
+          readTools: {
+            enabled: true,
+            context: {
+              executeReadTool: async (toolName: string, args: Record<string, unknown>) => {
+                const estimatedCostUsd = estimateAgentToolCostUsd(toolName);
+                if (paidCostUsd + estimatedCostUsd > maxPaidCostUsd) {
+                  emitSSE({ type: 'tool_step', toolName, status: 'blocked', costUsd: paidCostUsd });
+                  return JSON.stringify({
+                    status: 'BLOCKED',
+                    error: 'Conversation tool cost limit reached',
+                  });
+                }
+                paidCostUsd += estimatedCostUsd;
+                emitSSE({ type: 'tool_step', toolName, status: 'running', costUsd: paidCostUsd });
+                logger.info(
+                  `[TeresaToolLoop] tool=${toolName} cumulativeCostUsd=${paidCostUsd.toFixed(4)}`
+                );
+                try {
+                  const result = await Promise.race([
+                    executeToolCall(toolName, args, {
+                      organizationId: String(req.organizationId || ''),
+                      userId: String(req.userId || ''),
+                      projectId: (context as any)?.projectId,
+                      conversationId: conversationId || undefined,
+                    }),
+                    new Promise<string>((resolve) =>
+                      setTimeout(
+                        () =>
+                          resolve(
+                            JSON.stringify({
+                              status: 'TIMEOUT',
+                              error: 'Tool did not answer in time',
+                            })
+                          ),
+                        timeoutMs
+                      )
+                    ),
+                  ]);
+                  emitSSE({
+                    type: 'tool_step',
+                    toolName,
+                    status: 'completed',
+                    costUsd: paidCostUsd,
+                  });
+                  return result;
+                } catch (error) {
+                  emitSSE({ type: 'tool_step', toolName, status: 'failed', costUsd: paidCostUsd });
+                  return JSON.stringify({
+                    status: 'ERROR',
+                    error: String((error as Error)?.message || error),
+                  });
+                }
+              },
+            },
+          },
+        };
+      }
+
       const aiPipeline = await getAIPipeline();
       const response = await (aiPipeline as any).process(
         pipelineRequest,

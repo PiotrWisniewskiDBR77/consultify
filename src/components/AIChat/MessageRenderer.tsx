@@ -59,6 +59,7 @@ import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { TeresaProposalCard } from './TeresaProposalCard';
+import { ToolStepList } from './ToolStepList';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
 
@@ -812,6 +813,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     researchType={(msg as any).metadata?.researchProgress?.researchType}
                   />
                 </div>
+              )}
+
+              {Array.isArray((msg as any).metadata?.researchProgress?.toolSteps) && (
+                <ToolStepList steps={(msg as any).metadata.researchProgress.toolSteps} />
               )}
 
               {msg.role === 'ai' &&

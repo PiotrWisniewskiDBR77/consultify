@@ -9,6 +9,7 @@
 
 import logger from '../../utils/Logger.js';
 import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
+import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
 
 // ==========================================
 // TOOL DEFINITIONS (OpenAI Function Calling format)
@@ -1366,4 +1367,17 @@ export function getAvailableTools(options?: {
   }
 
   return tools;
+}
+
+/** Day206: model-visible READ-only subset. WRITE tools remain proposals for 17-C. */
+export function getReadToolDefinitions(): Array<{
+  name: string;
+  description: string;
+  parameters: ToolDefinition['function']['parameters'];
+}> {
+  return AI_TOOLS.filter((tool) => !SIDE_EFFECT_TOOLS.has(tool.function.name)).map((tool) => ({
+    name: tool.function.name,
+    description: tool.function.description,
+    parameters: tool.function.parameters,
+  }));
 }

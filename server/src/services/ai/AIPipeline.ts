@@ -451,6 +451,14 @@ export class AIPipeline {
         // Wyłączone przy reasoningu (jak deliverable). Wykonanie NIE jest
         // serwerowe — patrz `clientTools` w llmService.callStream.
         const ideaTools = (request.options as any)?.ideaTools;
+        const readTools = (request.options as any)?.readTools;
+        let readToolDefs:
+          | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
+          | undefined;
+        if (featureFlags.ENABLE_TERESA_TOOL_LOOP && !showReasoning && readTools?.enabled) {
+          const { getReadToolDefinitions } = await import('./toolDefinitions.js');
+          readToolDefs = getReadToolDefinitions();
+        }
         let ideaClientToolDefs:
           | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
           | undefined;
@@ -556,10 +564,11 @@ export class AIPipeline {
               // Z4 transport: dokładamy `clientTools` (akcje otwartej Idei) i
               // scalamy `onClientToolCall` do wspólnego kontekstu. Kontekst musi
               // nieść OBA callbacki: onDeliverable (mcp) i onClientToolCall (Idea).
-              ...(deliverableToolDefs || ideaClientToolDefs
+              ...(deliverableToolDefs || ideaClientToolDefs || readToolDefs
                 ? {
                     ...(deliverableToolDefs ? { tools: deliverableToolDefs } : {}),
                     ...(ideaClientToolDefs ? { clientTools: ideaClientToolDefs } : {}),
+                    ...(readToolDefs ? { readTools: readToolDefs } : {}),
                     context: {
                       ...((deliverableTools?.context as Record<string, unknown>) || {}),
                       ...(ideaTools?.context
@@ -567,8 +576,12 @@ export class AIPipeline {
                             onClientToolCall: (ideaTools.context as any)?.onClientToolCall,
                           }
                         : {}),
+                      ...(readTools?.context || {}),
                     },
-                    maxIterations: 4,
+                    maxIterations: (() => {
+                      const parsed = Number(process.env.TERESA_TOOL_LOOP_MAX_ITERATIONS || 4);
+                      return Number.isInteger(parsed) && parsed >= 1 && parsed <= 8 ? parsed : 4;
+                    })(),
                   }
                 : {}),
             });

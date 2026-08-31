@@ -32,6 +32,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
+  ENABLE_TERESA_TOOL_LOOP: z.boolean().default(false),
   ENABLE_TERESA_MINDMAP: z.boolean().default(true),
   // Krok C (rozdział flagi-długu): funkcja B (retrieval search_org_mindmaps)
   // wydzielona z ENABLE_TERESA_MINDMAP na WŁASNĄ flagę. Default OFF. Realne
@@ -145,6 +146,7 @@ export function loadFeatureFlags(): FeatureFlags {
     // locate notes, insights and initiatives the user references by topic.
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
+    ENABLE_TERESA_TOOL_LOOP: process.env.ENABLE_TERESA_TOOL_LOOP === 'true',
 
     // Teresa mind-map deliverable creation (ff_teresaMindmap / M06 Fala 2):
     // generate_deliverable(type:'mindmap') handler self-gate — mounts a real
