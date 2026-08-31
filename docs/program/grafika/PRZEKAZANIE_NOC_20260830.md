@@ -121,3 +121,28 @@ Pełna lista w `DZIENNIK_GRAFIKA.md`. Najgroźniejsze:
   błędu buduje zaufanie; przemilczenie je niszczy.
 - **Nie dotykać bazy demo ani staging.** Nie ruszać `origin/demo`.
 - Pisać **krótko, obrazkami**. Pytania **z rekomendowaną odpowiedzią**, pojedynczo.
+
+---
+
+# DOMKNIĘCIE SESJI — 2026-08-31, rano
+
+## Co zostało zrobione przez noc
+**Przegląd wszystkich 16 modułów domknięty: 201 z 202 ekranów obejrzanych na świeżych zrzutach.**
+Siedem zakresów, dwa unieważnione i powtórzone. Wyniki: `NOC_PRZEGLAD_MODULOW.md`, tabela
+ekran po ekranie ze ścieżką do dowodu przy każdym.
+
+## ★ Trzy decyzje właściciela z rana — zmieniają zakres pracy
+1. **DRD jest w 100% jego licencją, wolno korzystać dowolnie.** Nota `internal_only` bezprzedmiotowa.
+2. **Angielski jest językiem WIODĄCYM metodyki.** Unieważnia serię wczorajszych zgłoszeń
+   („43 angielskie etykiety", „176 opisów po angielsku"). **To nie były defekty.**
+   Polski obowiązuje w INTERFEJSIE. Granica: `KANON_Z_ODBIOROW.md`, wpis 31.08.
+3. **SIRI: bramka jest między KLIENTEM a Consultify**, nie między Consultify a licencjodawcą.
+   Nasz dług **nigdy** nie zatrzymuje pracy klienta. Pełny opis: `KANON_Z_ODBIOROW.md`.
+
+## Co zostaje otwarte
+- **W robocie:** naprawa treści komórek macierzy DRD (filtr 16 skrótów, zmyślone etykiety wierszy).
+  Instrukcja i bramka liczbowa: `MACIERZ_TRESC_KOMOREK.md`.
+- **Czeka na właściciela:** materiały SIRI (`knowledge/SIRI/` nie istnieje w repo).
+- **Arkusz:** wpisana wartość znika po Enter — defekt zastany, nie zapalać właścicielowi.
+- **System licencji** — tor funkcji, nie grafiki. Wymagania w `KANON_Z_ODBIOROW.md`.
+- **Push na `github-backup` odrzucany** — inna sesja wypchnęła; scalić po zakończeniu robotników.
