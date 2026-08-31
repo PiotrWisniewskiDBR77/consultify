@@ -385,7 +385,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'type',
         label: t(`${NS}.columns.type`, 'Type'),
-        width: '90px',
+        width: '110px',
         sortable: true,
         filterable: true,
         filterOptions: TYPE_FILTER_OPTIONS,
@@ -398,6 +398,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'name',
         label: t(`${NS}.columns.template`, 'Template'),
+        width: '190px',
         sortable: true,
         render: (row: TableRow) => (
           <div className="flex flex-col">
@@ -413,7 +414,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'sourceType',
         label: t(`${NS}.columns.module`, 'Module'),
-        width: '120px',
+        width: '130px',
         sortable: true,
         filterable: true,
         filterOptions: SOURCE_TYPE_FILTER_OPTIONS,
@@ -429,7 +430,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'audience',
         label: t(`${NS}.columns.audience`, 'Audience'),
-        width: '110px',
+        width: '145px',
         sortable: true,
         filterable: true,
         filterOptions: AUDIENCE_FILTER_OPTIONS,
@@ -441,7 +442,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'format',
         label: t(`${NS}.columns.format`, 'Format'),
-        width: '100px',
+        width: '130px',
         sortable: true,
         filterable: true,
         filterOptions: FORMAT_FILTER_OPTIONS,
@@ -454,7 +455,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'createdBy',
         label: t(`${NS}.columns.user`, 'User'),
-        width: '130px',
+        width: '120px',
         render: (row: TableRow) => (
           <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
             <User size={13} className="text-c-text-secondary" />
@@ -468,7 +469,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'sections',
         label: t(`${NS}.columns.sections`, 'Sections'),
-        width: '110px',
+        width: '90px',
         align: 'right',
         sortAccessor: (row: TableRow) =>
           (row.sections as TemplateSection[] | undefined)?.length ?? 0,
@@ -487,7 +488,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {
         id: 'updatedAt',
         label: t(`${NS}.columns.updated`, 'Updated'),
-        width: '100px',
+        width: '170px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.updatedAt || row.createdAt || ''),
         render: (row: TableRow) => (
