@@ -246,7 +246,7 @@ function buildColumns(): TableColumn[] {
     {
       id: 'name',
       label: 'Nazwa',
-      width: '320px',
+      width: '280px',
       render: (row: MockRow) => (
         <span className="text-sm font-medium text-c-text">{row.name}</span>
       ),
@@ -254,7 +254,7 @@ function buildColumns(): TableColumn[] {
     {
       id: 'status',
       label: 'Status',
-      width: '120px',
+      width: '150px',
       filterable: true,
       filterOptions: (Object.keys(STATUS_LABEL) as MockRow['status'][]).map((s) => ({
         value: s,
@@ -267,7 +267,7 @@ function buildColumns(): TableColumn[] {
     {
       id: 'owner',
       label: 'Właściciel',
-      width: '160px',
+      width: '130px',
       render: (row: MockRow) => (
         <span className="text-sm text-c-text-secondary">{row.owner}</span>
       ),
@@ -294,7 +294,7 @@ function buildColumns(): TableColumn[] {
     {
       id: 'updatedAt',
       label: 'Zaktualizowano',
-      width: '120px',
+      width: '175px',
       sortable: true,
       render: (row: MockRow) => (
         <span className="text-sm text-c-text-muted">{row.updatedAt}</span>
