@@ -17,7 +17,40 @@ każdej podano, co właściciel z niej ma.
 FIX-209 odkrył, że globalny `beforeEach(vi.clearAllMocks())` w `tests/setup.ts:809-811`
 **kasuje implementacje** mocków ustawionych w `beforeAll`. Objaw jest podstępny:
 pierwszy test w pliku przechodzi, każdy następny cicho idzie prawdziwą ścieżką.
-**Zmierzony zasięg: 87 plików testowych ustawia implementację w `beforeAll`.**
+**★ KOREKTA NADZORCY (31.08, po pomiarze robotnika):** pierwotnie wpisałem tu
+„zmierzony zasięg: 87 plików". **Ta liczba była błędna** — pochodziła z mojego
+zgrubnego `awk`, bez sondy i bez walidacji na znanym przypadku, i podałem ją jako
+pomiar. Robotnik piszący instrukcję zbudował sondę z dopasowaniem klamer bloku,
+**zwalidował ją na potwierdzonym przypadku sprzed FIX-209**, i zmierzył na 5915
+plikach testowych:
+- **wąska definicja (realne ryzyko): 4 pliki, z czego 2 faktycznie zagrożone** —
+  `interviewDeliveryMountedAuth.pg.test.ts` (6 testów) i `tests/unit/backend/ragService.test.js`
+  (5 testów, z komentarzem powielającym tę samą fałszywą premisę co `tests/setup.ts:792`);
+- **luźne współwystępowanie (górna granica, bez wartości dowodowej): 130 plików.**
+
+Skala dyżuru spada z „przemiatanie 87 plików" do „potwierdź zasięg i napraw
+kilka". **Nie zmienia to jego kolejności** — pułapka jest realna, potwierdzona na
+żywym przypadku w 209, a bezpiecznik na przyszłość i tak trzeba postawić. Zmienia
+za to koszt: to jest dyżur mały, nie duży.
+
+**★★ DRUGA KOREKTA (31.08, po odbiorze adwersaryjnym 211) — liczba końcowa: JEDEN.**
+Audytor zbudował własną sondę o innej logice niż wykonawca i zmierzył repozytorium
+ponownie. Wynik: **jedno potwierdzone naruszenie w całym repo**
+(`day205.decisionWisdom.pg.test.ts:34`). Liczby 87 (moja), 4 i 130 (z pisania
+instrukcji) — wszystkie bez wartości dowodowej.
+
+Powód, dla którego skala jest tak mała, został zmierzony sześcioma reprodukcjami
+przeciw prawdziwemu `tests/setup.ts`: **pułapka dotyczy WYŁĄCZNIE `vi.spyOn(...)`**.
+Goły `vi.fn()` przeżywa `clearAllMocks()` — także gdy `.mockResolvedValue()` woła
+się później i gdy atrapa jest przypisana wprost do właściwości obiektu. Trzy z
+czterech plików „naprawionych" przez dyżur nie miały żywego defektu (dowód
+przed/po: zero różnicy). Wykonawca przyznał to sam w raporcie.
+
+**Wniosek dla programu:** incydent w 209 był prawdziwy (tam był `spyOn`), ale
+**nie jest to skaza rozlana po testach**. Moje zdanie do właściciela „część naszej
+zieleni mogła nic nie znaczyć" było przesadzone i zostało sprostowane. Wartość
+dyżuru 211 leży w BEZPIECZNIKU, nie w naprawach: bezpiecznik zablokował prawdziwy
+`git commit` ze świeżym naruszeniem napisanym ręką audytora.
 Zysk: przestajemy ufać zieleni, która nic nie znaczy. To jest warunek wstępny
 dla wszystkiego, co niżej.
 Zmierzone ponownie 2026-08-31 komendą `node /private/tmp/cx-day211-atrapy-scratch/probe-clearallmocks-211.mjs`: 5 plików, z czego 4 w grupie (a) — nie 87.
@@ -36,7 +69,29 @@ produkcie (zasięg, bramy zatwierdzenia, idempotencja, uprawnienia) + test
 **omijający** dla każdego, z obowiązkową czerwienią.
 Zysk: zabezpieczenia przestają być deklaracją.
 
-### 213 · Dług zasięgu z karty 210 (pozycje 5–9)
+### 213 · Dług zasięgu z karty 210 (pozycje 5–9) — ★ ZNALEZISKO PODNOSZĄCE PRIORYTET
+
+**Pomiar przy pisaniu instrukcji (31.08) wykrył dwie rzeczy, których karta 210 nie
+zawierała:**
+
+1. **Asymetria fail-closed / fail-open.** Przy braku kolumny `scope`
+   `embeddingService` (dziś `:341`) odcina treści prywatne, ale `ragService`
+   (`:315-322`, funkcja od `:231`) ma `if (hasScope)` **bez `else`** — czyli
+   przepuszcza wszystko. Dwie implementacje tej samej reguły zachowują się
+   przeciwnie w tym samym scenariuszu awaryjnym.
+2. **`scope='project'` NIE jest martwy.** Karta dopuszczała „udokumentuj jako
+   nieużywany". Pomiar to obala: `knowledge.routes.ts:915-934` ma żywą,
+   zamontowaną trasę `POST /api/knowledge/documents`, która produkuje
+   `scope='project'` z realną kontrolą członkostwa. A żaden filtr retrievalu
+   tej wartości nie obsługuje — **sejf projektowy jest widoczny dla całej
+   organizacji.**
+
+Dodatkowo: wartość domyślna kolumny pochodzi z **wyścigu dwóch niezależnych
+ALTER-ów przy starcie** (`KnowledgeService.ts:174` bez `DEFAULT` vs
+`ContextDocumentService.ts:2398` z `DEFAULT 'user'`) — czyli zachowanie zależy od
+kolejności startu procesu.
+
+
 Cztery insertery nie ustawiają zasięgu, a **domyślna wartość kolumny to
 „prywatne"** (`ai.routes.ts:599`, `:868`, `knowledgeIndexer.ts:868`,
 `insightSignalBridgeService.ts:203`) · `scope='project'` nieobsługiwany przez

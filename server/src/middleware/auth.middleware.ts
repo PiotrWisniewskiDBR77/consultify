@@ -605,7 +605,12 @@ const mapRoleForAuthenticatedUser = (role?: string): UserRole => {
   }
 };
 
-const normalizePermissionRole = (role?: string): string => {
+// FIX-207b (decyzja właściciela 2026-08-31): exported so aiActionExecutor.ts
+// can build the identical req.can('approve_changes') check for the chat
+// create_decision write-proposal path (invokes DecisionController.createDecision
+// directly, in-process, as the single canonical writer — needs the SAME role
+// normalization this middleware uses, not a re-derived copy).
+export const normalizePermissionRole = (role?: string): string => {
   if (typeof role !== 'string') return 'VIEWER';
   const r = role.trim().toUpperCase();
   if (!r) return 'VIEWER';

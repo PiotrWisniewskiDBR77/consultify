@@ -28305,7 +28305,9 @@
       "unknown": "unknown"
     },
     "action": {
-      "reject": "Reject"
+      "approve": "Approve",
+      "reject": "Reject",
+      "inspect": "View run"
     }
   },
   "focusMode": {

@@ -192,8 +192,15 @@ const AIPolicyEngine = {
 
     // 2. Check project-level override if exists
     if (projectId) {
-      const project: any =
-        (await dbGet(`SELECT governance_settings FROM projects WHERE id = ?`, [projectId])) || {};
+      // FIX-207 pkt 3 (ODBIOR_207.md): restored after commit c637cc2bde
+      // reverted this to a bare dbGet, which throws (instead of falling
+      // back to {}) whenever `projects.governance_settings` is missing on a
+      // schema-drifted project/org.
+      const project: any = await safeDbGet(
+        `SELECT governance_settings FROM projects WHERE id = ?`,
+        [projectId],
+        {}
+      );
 
       try {
         const settings = JSON.parse(project.governance_settings || '{}');

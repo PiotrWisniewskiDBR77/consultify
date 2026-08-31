@@ -30638,7 +30638,9 @@
       "unknown": "nieznana"
     },
     "action": {
-      "reject": "Odrzuć"
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "inspect": "Zobacz przebieg"
     }
   },
   "focusMode": {

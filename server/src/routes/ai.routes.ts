@@ -4802,6 +4802,78 @@ router.post(
         );
       }
 
+      // Day207 / 17-C — the model may call the existing create_task/create_decision
+      // tools, but while the opt-in flag is ON their executor creates only an
+      // ai_actions proposal. The target mutation remains behind explicit approval.
+      try {
+        if (featureFlags.ENABLE_TERESA_TOOL_LOOP_WRITE && !aiModes?.deepResearch) {
+          (pipelineRequest as any).options = {
+            ...((pipelineRequest as any).options || {}),
+            writeProposalTools: {
+              context: {
+                onProposalToolCall: async (toolName: string, args: unknown) => {
+                  const { checkChatPermission } = await import(
+                    '../services/chatPermissionService.js'
+                  );
+                  const chatPermission = await checkChatPermission(
+                    String(req.userId || ''),
+                    String(req.organizationId || ''),
+                    'add_message'
+                  );
+                  if (!chatPermission.allowed) {
+                    return {
+                      status: 'PROPOSAL_REJECTED',
+                      tool: toolName,
+                      message: chatPermission.reason || 'Write permission denied; no change was made.',
+                    };
+                  }
+
+                  const executorModule = await import('../services/aiActionExecutor.js');
+                  const executor = (executorModule.default || executorModule) as any;
+                  const proposal = await executor.requestChatToolProposal({
+                    toolName,
+                    args,
+                    userId: req.userId,
+                    organizationId: req.organizationId,
+                    projectId,
+                    conversationId: conversationId || null,
+                  });
+                  if (!proposal?.success) {
+                    return {
+                      status: 'PROPOSAL_REJECTED',
+                      tool: toolName,
+                      message: proposal?.error || 'Write proposal denied; no change was made.',
+                    };
+                  }
+
+                  // Minimal same-turn envelope: no raw tool output or document content.
+                  emitSSE({
+                    type: 'execution_proposal',
+                    proposalId: proposal.actionId,
+                    actionType:
+                      toolName === 'create_task' ? 'CREATE_DRAFT_TASK' : 'CREATE_DRAFT_DECISION',
+                    lifecycleState: 'pending_review',
+                    toolName,
+                  });
+                  return {
+                    status: 'PENDING_APPROVAL',
+                    tool: toolName,
+                    proposalId: proposal.actionId,
+                    message: 'Proposal created and waiting for human approval; no change was made.',
+                  };
+                },
+              },
+            },
+          };
+        }
+      } catch (writeProposalWireErr) {
+        logger.warn(
+          `[AI Stream] write-proposal tool wiring skipped: ${String(
+            (writeProposalWireErr as Error)?.message || writeProposalWireErr
+          ).slice(0, 160)}`
+        );
+      }
+
       // Z4 transport (fala „Teresa steruje Ideą przez rejestr") — front dołącza
       // manifest akcji OTWARTEJ reprezentacji Idei w `context.ideaActionManifest`
       // (przepuszczalne pole `context`, więc bez zmian w walidatorze). Model widzi
