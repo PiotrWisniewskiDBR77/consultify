@@ -130,7 +130,15 @@ describe('Day207 WRITE proposal — ApiGateway/JWT/Postgres', NO_RETRY, () => {
     expect(afterProposal.rows[0].count).toBe(before.rows[0].count);
   });
 
-  it('real HTTP approval and execution mutate exactly once with ledger evidence', async () => {
+  // FIX-207 pkt 1 (ODBIOR_207.md): before this fix, real HTTP approve+execute
+  // wrote a real row into legacy `tasks` (proven by the audit's own run of
+  // this exact test). The fix retires that silent legacy INSERT — there is
+  // no canonical Runtime-v1 writer for a standalone My Work task today (see
+  // aiActionExecutor.ts:_executeCreateTask), so execution now fails closed
+  // and `tasks` stays untouched. This test asserts the new, honest contract:
+  // approval still succeeds, execution reports failure, and no legacy row
+  // is ever created — over real Postgres, real HTTP, real JWT.
+  it('real HTTP approval succeeds but execution fails closed — no canonical writer, no legacy row', async () => {
     const approve = await request(app)
       .patch(`/api/ai/actions/${actionId}/approve`)
       .set('Authorization', authorization)
@@ -143,7 +151,8 @@ describe('Day207 WRITE proposal — ApiGateway/JWT/Postgres', NO_RETRY, () => {
       .set('Authorization', authorization)
       .send({});
     expect(execute.status).toBe(200);
-    expect(execute.body).toMatchObject({ success: true, status: 'EXECUTED' });
+    expect(execute.body).toMatchObject({ success: false, status: 'FAILED' });
+    expect(execute.body.error).toMatch(/canonical Runtime-v1 writer/);
 
     const taskReadback = await pool.query(
       `SELECT id,title,status,source FROM tasks WHERE organization_id=$1 AND project_id=$2`,
@@ -157,15 +166,14 @@ describe('Day207 WRITE proposal — ApiGateway/JWT/Postgres', NO_RETRY, () => {
       `SELECT event_type,status FROM ai_run_events WHERE action_id=$1 ORDER BY created_at,id`,
       [actionId]
     );
-    expect(taskReadback.rows).toHaveLength(1);
-    expect(taskReadback.rows[0]).toMatchObject({ title: 'Day207 approved task', source: 'ai' });
-    expect(actionReadback.rows[0]).toMatchObject({ status: 'EXECUTED', approved_by: userId });
+    expect(taskReadback.rows).toHaveLength(0);
+    expect(actionReadback.rows[0]).toMatchObject({ status: 'FAILED', approved_by: userId });
     expect(ledgerReadback.rows.map((row) => row.event_type)).toEqual(
       expect.arrayContaining([
         'proposal_pending_review',
         'proposal_approved',
         'execution_started',
-        'execution_succeeded',
+        'execution_failed',
       ])
     );
     writeFileSync(
@@ -173,6 +181,7 @@ describe('Day207 WRITE proposal — ApiGateway/JWT/Postgres', NO_RETRY, () => {
       JSON.stringify(
         {
           coordinates: { database: '127.0.0.1:6147', gateway: 'in-process ApiGateway', jwt: true },
+          note: 'FIX-207 pkt 1: execution now fails closed — no canonical Runtime-v1 writer wired for a standalone My Work task; legacy `tasks` INSERT retired.',
           http: {
             approve: { method: 'PATCH', path: `/api/ai/actions/${actionId}/approve`, status: approve.status },
             execute: { method: 'POST', path: `/api/ai/actions/${actionId}/execute`, status: execute.status },

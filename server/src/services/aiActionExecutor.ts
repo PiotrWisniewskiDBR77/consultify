@@ -11,6 +11,7 @@ import { all, get, run } from '../utils/DbPromise.js';
 let dbAll = all;
 let dbGet = get;
 let dbRun = run;
+import { EXECUTION_SPINE_LEGACY_READ_ONLY_CODE } from '../middleware/executionSpineLegacyReadOnly.middleware.js';
 import {
   mapDbActionStatusToV8Lifecycle,
   V8LifecycleState,
@@ -36,6 +37,18 @@ export const ACTION_TYPES = {
   EXPLAIN_CONTEXT: 'EXPLAIN_CONTEXT',
   ANALYZE_RISKS: 'ANALYZE_RISKS',
 };
+
+/**
+ * FIX-207 pkt 1 (ODBIOR_207.md): thrown instead of a direct legacy INSERT
+ * when an approved chat write-proposal has no canonical Runtime-v1 writer to
+ * land in. Carries the same `code` as `requireCanonicalExecutionWriter`
+ * (server/src/middleware/executionSpineLegacyReadOnly.middleware.ts) so a
+ * caller inspecting the failure sees one consistent contract, whether the
+ * refusal happened at the HTTP boundary or inside the executor.
+ */
+class CanonicalExecutionWriterRequiredError extends Error {
+  code = EXECUTION_SPINE_LEGACY_READ_ONLY_CODE;
+}
 
 export const ACTION_STATUS = {
   PENDING: 'PENDING',
@@ -1130,66 +1143,31 @@ const AIActionExecutor = {
   // ==================== INTERNAL EXECUTORS ====================
 
   _executeCreateTask: async (draftContent: any, action: any) => {
-    const taskId = uuidv4();
-    const { title, description, assigneeId, dueDate } = draftContent;
-
-    // FIX (NOT-NULL sweep): tasks.organization_id is NOT NULL with no DB default
-    // (Postgres) — this AI-action executor omitted it entirely, which 500s with
-    // 23502. `action.organization_id` is the established convention elsewhere
-    // in this file.
-    await dbRun(
-      `INSERT INTO tasks (id, organization_id, project_id, title, description, assignee_id, due_date, status, created_by, source)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'TODO', ?, 'ai')`,
-      [
-        taskId,
-        action.organization_id,
-        action.project_id,
-        title,
-        description,
-        assigneeId,
-        dueDate,
-        action.user_id,
-      ]
+    // FIX-207 pkt 1 (ODBIOR_207.md, audyt adwersaryjny): ten writer robił
+    // bezpośredni `INSERT INTO tasks` (legacy, poza kanonem event-sourced),
+    // a trasa /api/ai/actions/:id/execute nigdy nie miała zamontowanego
+    // `requireCanonicalExecutionWriter`. Zbadany realnie kanoniczny writer
+    // (`execution.task.create`, server/src/routes/pmo/
+    // initiativesExecutionRuntime.routes.ts:4158, `TaskCreateSchema` tamże
+    // linia 650) okazał się writerem dla innego obiektu domenowego —
+    // "execution work item" wewnątrz ISTNIEJĄCEGO executionCaseId
+    // konkretnej inicjatywy (wymaga: executionCaseId, initiativeId,
+    // expectedCaseVersion, ownerId, assigneeId, dueAt i slaAt jako
+    // ISO-datetime — WSZYSTKIE pola wymagane) — nie "zadanie w My Work",
+    // które tworzy narzędzie czatu `create_task`
+    // (server/src/services/ai/toolDefinitions.ts:482: wyłącznie title/
+    // description/priority/opcjonalny due_date/assignee_id, zero kontekstu
+    // inicjatywy). Nie ma dziś lekkiego kanonicznego writera dla zadania
+    // spoza inicjatywy, więc — zgodnie z zasadą "cisza gorsza niż porażka"
+    // — failujemy JAWNIE zamiast pisać po cichu do legacy `tasks`.
+    // Zdecydowanie nadzorcy wymagane przed ponownym włączeniem tej ścieżki.
+    throw new CanonicalExecutionWriterRequiredError(
+      'CREATE_DRAFT_TASK: no canonical Runtime-v1 writer available for a ' +
+        'standalone My Work task (execution.task.create requires an ' +
+        'existing executionCaseId/initiativeId that the chat create_task ' +
+        'tool does not collect). Legacy `tasks` INSERT retired for this ' +
+        'path — see aiActionExecutor.ts:_executeCreateTask.'
     );
-
-    // Post-creation notification (best-effort)
-    try {
-      const NotificationSvc = await getNotificationService();
-      if (NotificationSvc) {
-        // Notify the user who requested the task
-        await NotificationSvc.send({
-          userId: action.user_id,
-          organizationId: action.organization_id,
-          type: 'AI_ACTION_COMPLETED',
-          title: 'Task Created by AI',
-          body: `AI has created task "${title}" in your project.`,
-          entityType: 'task',
-          entityId: taskId,
-          actionUrl: `/tasks/${taskId}`,
-          priority: 'normal',
-          metadata: { projectId: action.project_id, source: 'ai_action' },
-        });
-        // If assignee is different from requester, notify them too
-        if (assigneeId && assigneeId !== action.user_id) {
-          await NotificationSvc.send({
-            userId: assigneeId,
-            organizationId: action.organization_id,
-            type: 'TASK_ASSIGNED',
-            title: 'New Task Assigned to You',
-            body: `AI has assigned you a new task: "${title}".`,
-            entityType: 'task',
-            entityId: taskId,
-            actionUrl: `/tasks/${taskId}`,
-            priority: 'normal',
-            metadata: { projectId: action.project_id, source: 'ai_action' },
-          });
-        }
-      }
-    } catch (notifErr: any) {
-      logger.warn('[AIActionExecutor] Post-task notification failed:', notifErr?.message);
-    }
-
-    return { taskId, title, created: true };
   },
 
   _executeCreateInitiative: async (draftContent: any, action: any) => {
@@ -1246,49 +1224,22 @@ const AIActionExecutor = {
   },
 
   _executeCreateDecision: async (draftContent: any, action: any) => {
-    const decisionId = uuidv4();
-    const { title, description, type, options, criteria, deadline } = draftContent;
-
-    await dbRun(
-      `INSERT INTO decisions (id, organization_id, project_id, title, description, type, 
-       decision_maker_id, options, criteria, deadline, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      [
-        decisionId,
-        action.organization_id,
-        action.project_id,
-        title,
-        description || '',
-        type || 'OTHER',
-        action.user_id,
-        JSON.stringify(options || []),
-        criteria || null,
-        deadline || null,
-      ]
+    // FIX-207 pkt 1 (ODBIOR_207.md, audyt adwersaryjny) — ta sama diagnoza co
+    // `_executeCreateTask` powyżej. Kanoniczny writer `execution.decision.create`
+    // (server/src/routes/pmo/initiativesExecutionRuntime.routes.ts:4189+,
+    // `DecisionCreateSchema` linia 680) wymaga ISTNIEJĄCEGO executionCaseId +
+    // initiativeId, `options` jako min. 2 ustrukturyzowanych opcji
+    // {optionId,label} i `authorityId` — narzędzie czatu `create_decision`
+    // nie zbiera żadnego z tych pól. Failujemy jawnie zamiast pisać po cichu
+    // do legacy `decisions`.
+    throw new CanonicalExecutionWriterRequiredError(
+      'CREATE_DRAFT_DECISION: no canonical Runtime-v1 writer available for a ' +
+        'standalone decision (execution.decision.create requires an existing ' +
+        'executionCaseId/initiativeId, structured options and an authorityId ' +
+        'that the chat create_decision tool does not collect). Legacy ' +
+        '`decisions` INSERT retired for this path — see ' +
+        'aiActionExecutor.ts:_executeCreateDecision.'
     );
-
-    // Post-creation notification (best-effort)
-    try {
-      const NotificationSvc = await getNotificationService();
-      if (NotificationSvc) {
-        await NotificationSvc.send({
-          userId: action.user_id,
-          organizationId: action.organization_id,
-          type: 'AI_ACTION_COMPLETED',
-          title: 'Decision Created by AI',
-          body: `AI has created decision "${title}" for your review.`,
-          entityType: 'decision',
-          entityId: decisionId,
-          actionUrl: `/decisions/${decisionId}`,
-          priority: 'high',
-          metadata: { projectId: action.project_id, source: 'ai_action' },
-        });
-      }
-    } catch (notifErr: any) {
-      logger.warn('[AIActionExecutor] Post-decision notification failed:', notifErr?.message);
-    }
-
-    return { decisionId, title, created: true };
   },
 
   _executePrepareSummary: async (draftContent: any, action: any) => {
