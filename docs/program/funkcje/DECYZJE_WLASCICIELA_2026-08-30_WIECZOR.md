@@ -36,3 +36,4 @@ Pytanie o powierzchnię Audytów (hub vs warsztat) — zadane ponownie w rundzie
 | D-10 | Źródło briefu prezentacji z szablonu | **OBA**: modal przy szablonie (dyżur 201, ta fala) + ścieżka przez Teresę (dyżur 203, następna) | 31.08 rano |
 | D-11 | Granulacja założeń vs próg gęstości QA | **próg liczy średnią SEKCJI** (nie bloku) — granulacja per akapit zostaje; wdrożenie w FIX-195 | 31.08 rano |
 | D-12 | Migracja E2: pomiar M3 przed decyzją | **TAK — read-only na stagingu** | wykonane 31.08: 14 domów / 67 inicjatyw z zadaniami / 467 zadań (265 osobistych); wynik w raporcie 197 |
+| D-13 | Migracja E2: uruchomienie | **TAK — pilot 1, potem partie po 10** | dyżur 204: miny (fingerprint, ON CONFLICT) + runner --write=1 + próba lokalna; PILOT na stagingu wykonuje NADZORCA (procedura promocji, zapis za zgodą D-13) → ogląd właściciela → partie; brama 409 zostaje do końca migracji |
