@@ -16,6 +16,27 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-25 · Runda pełna: rejestr z 202 do 313 ekranów, 253 karty do odbioru
+**Co się stało:** właściciel polecił objąć rundą odbioru WSZYSTKO — nie tylko ekrany listowe, ale narzędzia, kreatory, powłoki, panel Administracji (7 domen) i konsolę wewnętrzną. Audyt pokrycia wykazał, że rejestr znał 202 ekrany, a produkt ma ich ponad 300. Dorejestrowano 111: siedem zakładek Realizacji (z ośmiu pokryta była jedna), skrzynkę i kalendarz Mojej Pracy (skrzynka jest ekranem STARTOWYM modułu i nie miała wiersza), pełny rekord Zadania (kod-wzorzec, nigdy nieodebrany wzrokiem), 62 ekrany Administracji, 8 ekranów konsoli wewnętrznej, 10 grup Ustawień i 21 ekranów Organizacji.
+**Dwie liczby z dokumentacji okazały się nieprawdziwe:** Ustawienia mają 10 grup, nie 9; Organizacja pokazuje dziś wariant starszy (flaga nowego jest domyślnie wyłączona od 29.08), więc odbieramy 21 ekranów, nie 11.
+**Co z tego wynika:** liczba przepisana z dokumentu nigdy nie jest pomiarem. Każda wielkość w rejestrze ma pochodzić z policzenia w kodzie, nie z cytatu.
+
+---
+
+### Z-24 · Dwanaście razy skłamał przyrząd, nie produkt
+**Co się stało:** w ciągu jednego dnia dwanaście razy zdarzyło się, że ekran wyglądał na zepsuty, a zepsute było narzędzie pomiarowe albo raport. Najgroźniejsze: (1) strona odbioru pokazywała STARE zrzuty na 120 z 229 kart, bo indeks wybierał plik po kolejności alfabetycznej katalogów, a „99-" sortuje się za „144-"; (2) osiem z szesnastu wejść harnessu nigdy nie ustawiało języka, więc ekrany wychodziły po angielsku, choć produkt jest polski; (3) zbiorczy przebieg zrzutów robił część ekranów bez wymaganych parametrów adresu, przez co naprawiony rano ekran Finansów pokazywał pustkę; (4) robotnik zameldował, że rejestr i bramka „nie istnieją w repozytorium" — bo szukał w innym katalogu niż wskazany.
+**Dlaczego ważne:** każde z tych kłamstw wyglądało jak defekt produktu i każde skończyłoby się naprawianiem czegoś, co działa. Wykryły je: własny przegląd nadzorcy przed właścicielem, mechaniczna bramka kart i porównanie raportu z obrazem.
+**Co z tego wynika:** przed oddaniem ekranów do odbioru obowiązuje `node scripts/dev/odbior-kontrola.mjs` — sprawdza brak zrzutu, fazę sprzed naprawy jako najnowszą, wiek pliku i podejrzanie mały rozmiar (biały ekran waży kilkanaście kilobajtów). Kontrola ma być mechaniczna, bo oko przywyka.
+
+---
+
+### Z-23 · Naprawa rodzinami: pierwszy pomiar zawsze pokazuje dolną granicę
+**Co się stało:** zgłoszenia z przeglądu wyglądały na listę osobnych drobiazgów — „tu surowy status", „tam angielski nagłówek". Za każdym razem, gdy robotnik przed naprawą przemiótł cały moduł tym samym wzorcem, zasięg okazywał się wielokrotnie większy: 3 zgłoszone surowe wartości w Finansach → 12 realnych; kilka amerykańskich dat w Administracji → 29 w 22 plikach; angielski nagłówek kolumny „Driver" w makiecie → siedem szablonów serwerowych generujących PRAWDZIWE arkusze, w tym jeden wpisujący go do pliku eksportowanego klientowi.
+**Drugie dno:** crimson, zarezerwowany dla stanu krytycznego, był dostępny pod czterema nazwami, a bezpiecznik znał jedną. Na próbce piętnastu miejsc piętnaście okazało się dekoracją. Po uszczelnieniu bramki i naprawie dług spadł o 252 naruszenia.
+**Co z tego wynika:** zgłoszenie punktowe jest hipotezą o zasięgu, nie pomiarem. Zlecenie naprawy ma zawsze zawierać polecenie przemiecenia obszaru tym samym wzorcem i podania realnej liczby — a bezpiecznik trzeba sprawdzać pytaniem „pod iloma nazwami istnieje rzecz, której pilnuje".
+
+---
+
 ### Z-22 · Zrzut bez wymaganych parametrów adresu pokazywał pustkę zamiast naprawionego ekranu
 **Co się stało:** pełny przebieg zrzutów modułów zrobił część ekranów w wariancie DOMYŚLNYM, mimo że instrukcja wymieniała pułapkę parametrów wprost. Skutek: `finance-analysis-workspace` pokazywał pustą „Nową analizę (bez wskaźników)" zamiast tabeli sześciu wskaźników — czyli dokładnie tego ekranu, który tego samego dnia naprawiono (jednostki „58 dni" zamiast „5800%", polski przecinek w zmianie r/r). Podobnie modal case'u finansowego bez `state=reopened` i kontrolka poufności bez przewinięcia.
 **Jak wykryte:** nadzorca, oglądając karty przed właścicielem, zobaczył pustkę tam, gdzie rano była naprawa. Ponowny przebieg z parametrami (katalogi 147/148) pokazał pełne tabele — dowód, że produkt jest sprawny, a kłamał pomiar.
