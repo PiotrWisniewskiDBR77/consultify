@@ -342,6 +342,9 @@ export class AIPipeline {
         let deliverableToolDefs:
           | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
           | undefined;
+        let writeProposalToolDefs:
+          | Array<{ name: string; description: string; parameters: Record<string, unknown> }>
+          | undefined;
         if (enableDeliverableTools) {
           try {
             const mcpModule = await import('./mcpServer.js');
@@ -436,6 +439,11 @@ export class AIPipeline {
               );
             }
 
+            if (featureFlags.ENABLE_TERESA_TOOL_LOOP_WRITE) {
+              const proposalNames = new Set(['create_task', 'create_decision']);
+              writeProposalToolDefs = defs.filter((d: { name: string }) => proposalNames.has(d.name));
+              defs = defs.filter((d: { name: string }) => !proposalNames.has(d.name));
+            }
             if (defs.length > 0) deliverableToolDefs = defs;
           } catch (e: any) {
             logger.warn(
@@ -564,11 +572,12 @@ export class AIPipeline {
               // Z4 transport: dokładamy `clientTools` (akcje otwartej Idei) i
               // scalamy `onClientToolCall` do wspólnego kontekstu. Kontekst musi
               // nieść OBA callbacki: onDeliverable (mcp) i onClientToolCall (Idea).
-              ...(deliverableToolDefs || ideaClientToolDefs || readToolDefs
+              ...(deliverableToolDefs || ideaClientToolDefs || readToolDefs || writeProposalToolDefs
                 ? {
                     ...(deliverableToolDefs ? { tools: deliverableToolDefs } : {}),
                     ...(ideaClientToolDefs ? { clientTools: ideaClientToolDefs } : {}),
                     ...(readToolDefs ? { readTools: readToolDefs } : {}),
+                    ...(writeProposalToolDefs ? { proposalTools: writeProposalToolDefs } : {}),
                     context: {
                       ...((deliverableTools?.context as Record<string, unknown>) || {}),
                       ...(ideaTools?.context
@@ -577,6 +586,12 @@ export class AIPipeline {
                           }
                         : {}),
                       ...(readTools?.context || {}),
+                      ...((request.options as any)?.writeProposalTools?.context
+                        ? {
+                            onProposalToolCall: (request.options as any).writeProposalTools.context
+                              .onProposalToolCall,
+                          }
+                        : {}),
                     },
                     maxIterations: (() => {
                       const parsed = Number(process.env.TERESA_TOOL_LOOP_MAX_ITERATIONS || 4);

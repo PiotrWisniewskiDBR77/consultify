@@ -346,6 +346,13 @@ type StreamOptions = {
    * opcjonalny: gdy go nie ma, zdarzenie jest ignorowane i czat działa jak dziś.
    */
   onIdeaAction?: (payload: { toolName: string; args?: Record<string, unknown> }) => void;
+  /** Day207: governed WRITE proposal created during the current stream turn. */
+  onExecutionProposal?: (payload: {
+    proposalId: string;
+    actionType: string;
+    lifecycleState: 'pending_review';
+    toolName?: string;
+  }) => void;
 };
 
 export type UseAIStreamReturn = {
@@ -967,6 +974,20 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
                 rawArgs && typeof rawArgs === 'object'
                   ? (rawArgs as Record<string, unknown>)
                   : undefined,
+            });
+          }
+          return;
+        }
+
+        if (evt.type === 'execution_proposal') {
+          const proposalId = String((evt as any).proposalId || '').trim();
+          const actionType = String((evt as any).actionType || '').trim();
+          if (proposalId && actionType) {
+            options.onExecutionProposal?.({
+              proposalId,
+              actionType,
+              lifecycleState: 'pending_review',
+              toolName: String((evt as any).toolName || '').trim() || undefined,
             });
           }
           return;

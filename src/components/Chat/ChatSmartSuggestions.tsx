@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { NavigateAction } from '@/services/chatNavigator';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import type { ChatActionPayload } from '@/types/domain/chatActions';
 
 /**
  * Chat V8 — `{ type: 'chat'; prompt: string }` is a light-weight "inject this
@@ -30,7 +31,7 @@ export interface ChatInjectAction {
   prompt: string;
 }
 
-export type ChatSuggestionAction = NavigateAction | ChatInjectAction;
+export type ChatSuggestionAction = NavigateAction | ChatInjectAction | ChatActionPayload;
 
 export interface ChatSuggestion {
   id: string;
@@ -84,10 +85,14 @@ export const ChatSmartSuggestions: React.FC<ChatSmartSuggestionsProps> = ({
         type: 'NAVIGATE',
         targetModule: suggestion.action.targetModule,
       });
-    } else {
+    } else if (suggestion.action.type === 'chat') {
       trackFunnelEvent('chat_suggestion_clicked', {
         type: 'chat',
         promptPreview: suggestion.action.prompt.slice(0, 80),
+      });
+    } else {
+      trackFunnelEvent('chat_suggestion_clicked', {
+        type: suggestion.action.type,
       });
     }
     try {
