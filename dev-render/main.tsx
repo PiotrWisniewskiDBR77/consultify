@@ -109,6 +109,16 @@ const AdminBillingScreen = React.lazy(() => import('./screens/admin-billing'));
 // jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-team.tsx
 // (wzorzec 1:1 z admin-billing.tsx powyżej).
 const AdminTeamScreen = React.lazy(() => import('./screens/admin-team'));
+// admin-ai (runda pełna) — 10 ekranów domeny ai z adminNavigation.ts, jeden
+// plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-ai.tsx
+// (wzorzec 1:1 z admin-billing.tsx powyżej).
+const AdminAiScreen = React.lazy(() => import('./screens/admin-ai'));
+// admin-audit-health (runda pełna) — 7+7 ekranów domen audit i health
+// z adminNavigation.ts, dwa pliki z przełącznikiem `adminScreen`, patrz
+// dev-render/screens/admin-audit.tsx i admin-health.tsx (wzorzec 1:1
+// z admin-billing.tsx powyżej).
+const AdminAuditScreen = React.lazy(() => import('./screens/admin-audit'));
+const AdminHealthScreen = React.lazy(() => import('./screens/admin-health'));
 const SuperadminPlatformOperationsDay15Screen = React.lazy(
   () => import('./screens/superadmin-platform-operations-day15')
 );
@@ -1171,6 +1181,119 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'admin-team-ownership': {
     label: 'Admin team — Własność (AdminMembersRolesPanel screen=ownership → OwnershipManagementView)',
     render: () => <AdminTeamScreen adminScreen="ownership" />,
+  },
+  // admin-ai (runda pełna) — odbiór grafiki 146-admin-ai (2026-08-31), domena
+  // "Sterowanie AI" (adminNavigation.ts), 10 ekranów, mapowanie 1:1 z
+  // AdminSettingsModule.tsx case 'ai' + AI_MODULE_TAB_BY_SCREEN. Pięć z nich
+  // (models-providers/ai-limits-budgets/data-privacy/ai-operations/ai-audit)
+  // dzielą tę samą powłokę AdminAIControlCenterPanel→AIModule z podwójnym
+  // wewnętrznym pill-tabs — patrz nagłówek dev-render/screens/admin-ai.tsx.
+  'admin-ai-policy-autonomy': {
+    label: 'Admin ai — Polityka i autonomia (AdminAIControlCenterPanel tab=settings → OrgAISettingsView, tab policy)',
+    render: () => <AdminAiScreen adminScreen="policy-autonomy" />,
+  },
+  'admin-ai-personas': {
+    label: 'Admin ai — Persony (PersonasPanel)',
+    render: () => <AdminAiScreen adminScreen="personas" />,
+  },
+  'admin-ai-models-providers': {
+    label: 'Admin ai — Modele i dostawcy (AIModule tab=models-providers → ModelsProvidersTab, RAW <table>)',
+    render: () => <AdminAiScreen adminScreen="models-providers" />,
+  },
+  'admin-ai-ai-limits-budgets': {
+    label: 'Admin ai — Limity i budżety (AIModule tab=access-limits → AccessLimitsTab, RAW <table>)',
+    render: () => <AdminAiScreen adminScreen="ai-limits-budgets" />,
+  },
+  'admin-ai-data-privacy': {
+    label: 'Admin ai — Dane i prywatność (AIModule tab=features-privacy → FeaturesPrivacyTab)',
+    render: () => <AdminAiScreen adminScreen="data-privacy" />,
+  },
+  'admin-ai-quality-evaluations': {
+    label: 'Admin ai — Ewaluacje jakości (AdminAiQualityPanel, StandardTable ×2)',
+    render: () => <AdminAiScreen adminScreen="quality-evaluations" />,
+  },
+  'admin-ai-ai-incidents': {
+    label: 'Admin ai — Incydenty AI (AdminAiIncidentsPanel, StandardTable)',
+    render: () => <AdminAiScreen adminScreen="ai-incidents" />,
+  },
+  'admin-ai-configuration-versions': {
+    label: 'Admin ai — Wersje konfiguracji (AdminConfigurationVersionsPanel, StandardTable, V8 prompt-os)',
+    render: () => <AdminAiScreen adminScreen="configuration-versions" />,
+  },
+  'admin-ai-ai-operations': {
+    label: 'Admin ai — Operacje AI (AIModule tab=ai-health → AIMissionControl)',
+    render: () => <AdminAiScreen adminScreen="ai-operations" />,
+  },
+  'admin-ai-ai-audit': {
+    label: 'Admin ai — Audyt AI (AIModule tab=audit-compliance → AuditComplianceTab, RAW <table>)',
+    render: () => <AdminAiScreen adminScreen="ai-audit" />,
+  },
+  // admin-audit-health (runda pełna) — odbiór grafiki 146-admin-audit-health
+  // (2026-08-31), domeny "Dziennik audytu" (audit) i "Stan systemu" (health)
+  // z adminNavigation.ts, mapowanie 1:1 z AdminSettingsModule.tsx case
+  // 'audit' / case 'health'. Trzy pary aliasów tej samej zakładki w
+  // produkcie (high-risk-changes≡events, retention-export≡events,
+  // diagnostics≡service-status) i osobny gate UNAUTHORIZED dla
+  // platform-operations (CAN_ACCESS_PLATFORM_OPERATIONS na sztywno false)
+  // — patrz nagłówki dev-render/screens/admin-audit.tsx i admin-health.tsx.
+  'admin-audit-events': {
+    label: 'Admin audit — Zdarzenia (AdminAuditLogPanel, FilterableTable)',
+    render: () => <AdminAuditScreen adminScreen="events" />,
+  },
+  'admin-audit-high-risk-changes': {
+    label: 'Admin audit — Zmiany wysokiego ryzyka (ALIAS Zdarzeń, ten sam AdminAuditLogPanel)',
+    render: () => <AdminAuditScreen adminScreen="high-risk-changes" />,
+  },
+  'admin-audit-compliance-evidence': {
+    label:
+      'Admin audit — Dowody zgodności (AdminComplianceEvidencePanel, StandardTable — kolumny Zdarzenie/Aktor/Ryzyko PUSTE, patrz nagłówek pliku)',
+    render: () => <AdminAuditScreen adminScreen="compliance-evidence" />,
+  },
+  'admin-audit-retention-export': {
+    label: 'Admin audit — Retencja i eksport (ALIAS Zdarzeń, ten sam AdminAuditLogPanel)',
+    render: () => <AdminAuditScreen adminScreen="retention-export" />,
+  },
+  'admin-audit-integrity': {
+    label: 'Admin audit — Integralność (AdminAuditIntegrityPanel, karty, bez tabeli)',
+    render: () => <AdminAuditScreen adminScreen="integrity" />,
+  },
+  'admin-audit-legal-hold': {
+    label: 'Admin audit — Legal hold (AdminLegalHoldPanel, karta statusu, bez tabeli)',
+    render: () => <AdminAuditScreen adminScreen="legal-hold" />,
+  },
+  'admin-audit-export-history': {
+    label: 'Admin audit — Historia eksportów (AdminAuditExportHistoryPanel, StandardTable)',
+    render: () => <AdminAuditScreen adminScreen="export-history" />,
+  },
+  'admin-health-service-status': {
+    label:
+      'Admin health — Stan usług (AdminHealthPanel canRunDiagnostics=false → statyczna karta UNKNOWN, patrz nagłówek pliku)',
+    render: () => <AdminHealthScreen adminScreen="service-status" />,
+  },
+  'admin-health-diagnostics': {
+    label: 'Admin health — Diagnostyka (ALIAS Stanu usług, ten sam AdminHealthPanel)',
+    render: () => <AdminHealthScreen adminScreen="diagnostics" />,
+  },
+  'admin-health-dependencies': {
+    label: 'Admin health — Zależności (AdminDependenciesPanel, karty <details>, bez tabeli)',
+    render: () => <AdminHealthScreen adminScreen="dependencies" />,
+  },
+  'admin-health-incident-history': {
+    label: 'Admin health — Historia incydentów (AdminIncidentHistoryPanel, karty, bez tabeli)',
+    render: () => <AdminHealthScreen adminScreen="incident-history" />,
+  },
+  'admin-health-queues-jobs': {
+    label: 'Admin health — Kolejki i zadania (AdminJobsPanel, StandardTable)',
+    render: () => <AdminHealthScreen adminScreen="queues-jobs" />,
+  },
+  'admin-health-sla-slo': {
+    label: 'Admin health — SLA / SLO (AdminSlaSloPanel, karty, bez tabeli)',
+    render: () => <AdminHealthScreen adminScreen="sla-slo" />,
+  },
+  'admin-health-platform-operations': {
+    label:
+      'Admin health — Operacje platformowe (gate UNAUTHORIZED, odfiltrowane z menu — brak dostępu z nawigacji)',
+    render: () => <AdminHealthScreen adminScreen="platform-operations" />,
   },
   'superadmin-platform-operations-day15': {
     label: 'Day 15 — REALNY <PlatformOperationsView>, katalogi fixture; &scene=ready|empty|error',
