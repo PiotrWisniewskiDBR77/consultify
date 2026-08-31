@@ -522,7 +522,13 @@ const g = window as unknown as { __KARTA_TASK_FETCH__?: boolean };
 // routerow podmienia window.fetch jeden po drugim; ostatni jest najbardziej
 // zewnetrzny i odpowiada WLASNYM fallbackiem zamiast oddac sterowanie dalej.
 // Skutek przed poprawka: karta-initiative dostawala koperte obcego ekranu.
-const __tenEkran = new URLSearchParams(window.location.search).get('screen') === 'karta-task';
+// `karta-task-pelna` (2026-08-31) re-eksportuje TEN SAM ekran pod innym id
+// (patrz karta-task-pelna.tsx) — bez wpisania obu id tutaj ta siatka
+// bezpieczeństwa NIE instalowałaby się pod `?screen=karta-task-pelna` i
+// wywołania poza jawnymi stubami Api.* trafiałyby w nieobecny backend.
+const __tenEkran = ['karta-task', 'karta-task-pelna'].includes(
+  new URLSearchParams(window.location.search).get('screen') || ''
+);
 if (__tenEkran && !g.__KARTA_TASK_FETCH__) {
   g.__KARTA_TASK_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
