@@ -12,15 +12,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  FOCUS_MODE_HIDDEN_REGIONS,
-  FOCUS_MODE_RETAINED_REGIONS,
   assertFocusModePreservation,
   createFocusModeSession,
   enterFocusMode,
   exitFocusMode,
+  FOCUS_MODE_HIDDEN_REGIONS,
+  FOCUS_MODE_RETAINED_REGIONS,
+  type FocusModeSession,
   regionVisibilityInFocusMode,
   resolveEscapeKey,
-  type FocusModeSession,
 } from '../focusMode.contract';
 
 interface DraftState {
@@ -33,7 +33,10 @@ describe('focusMode.contract — dowód „nie refetchuje” (handoff §11)', ()
     const workspaceState: DraftState = { unsavedChanges: false, draftValue: 'v1' };
     const session = createFocusModeSession(workspaceState, { activeViewId: 'assumptions' });
 
-    const result = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: 'fullscreen.toggle' });
+    const result = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: 'fullscreen.toggle',
+    });
 
     expect(result.session.workspaceState).toBe(workspaceState); // tożsamość referencji, nie głęboka równość
     expect(result.refetched).toBe(false);
@@ -42,11 +45,19 @@ describe('focusMode.contract — dowód „nie refetchuje” (handoff §11)', ()
 
   it('KONTROLA NEGATYWNA: niezapisana zmiana wprowadzona PRZED wejściem w focus mode przetrwa wyjście przez Esc', () => {
     // 1. Użytkownik wprowadza niezapisaną zmianę.
-    const workspaceState: DraftState = { unsavedChanges: true, draftValue: 'draft wpisany przez użytkownika' };
-    let session: FocusModeSession<DraftState> = createFocusModeSession(workspaceState, { activeViewId: 'outputs' });
+    const workspaceState: DraftState = {
+      unsavedChanges: true,
+      draftValue: 'draft wpisany przez użytkownika',
+    };
+    let session: FocusModeSession<DraftState> = createFocusModeSession(workspaceState, {
+      activeViewId: 'outputs',
+    });
 
     // 2. Włącza focus mode.
-    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: 'fullscreen.toggle' });
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: 'fullscreen.toggle',
+    });
     session = entered.session;
     expect(session.active).toBe(true);
 
@@ -63,14 +74,20 @@ describe('focusMode.contract — dowód „nie refetchuje” (handoff §11)', ()
   it('aktywna zakładka (activeViewId) przetrwa wejście i wyjście', () => {
     const workspaceState: DraftState = { unsavedChanges: false, draftValue: '' };
     const session = createFocusModeSession(workspaceState, { activeViewId: 'outputs' });
-    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: null });
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: null,
+    });
     const exited = exitFocusMode(entered.session, { trigger: 'toggle-control' });
     expect(entered.session.activeViewId).toBe('outputs');
     expect(exited.session.activeViewId).toBe('outputs');
   });
 
   it('assertFocusModePreservation WYKRYWA regresję: jeśli caller złamie kontrakt i podmieni workspaceState przy toggle, test to łapie', () => {
-    const before: FocusModeSession<DraftState> = createFocusModeSession({ unsavedChanges: true, draftValue: 'x' }, { activeViewId: 'a' });
+    const before: FocusModeSession<DraftState> = createFocusModeSession(
+      { unsavedChanges: true, draftValue: 'x' },
+      { activeViewId: 'a' }
+    );
     // Symulacja BŁĘDNEJ implementacji, która przebudowuje stan zamiast nieść referencję.
     const brokenAfter: FocusModeSession<DraftState> = {
       ...before,
@@ -87,7 +104,10 @@ describe('focusMode.contract — dowód „nie refetchuje” (handoff §11)', ()
   it('assertFocusModePreservation PRZECHODZI dla poprawnego toggle (referencja niesiona)', () => {
     const workspaceState: DraftState = { unsavedChanges: true, draftValue: 'x' };
     const before = createFocusModeSession(workspaceState, { activeViewId: 'a' });
-    const { session: after } = enterFocusMode(before, { trigger: 'toggle-control', restoreFocusToControlId: null });
+    const { session: after } = enterFocusMode(before, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: null,
+    });
     expect(assertFocusModePreservation(before, after)).toEqual({ ok: true });
   });
 
@@ -123,7 +143,13 @@ describe('focusMode.contract — regiony chrome (handoff §11)', () => {
 describe('focusMode.contract — precedencja Escape (modal > command-palette > popover > cell-editing > focus-mode)', () => {
   it('focus mode aktywny, nic więcej otwarte → focus-mode konsumuje Esc', () => {
     expect(
-      resolveEscapeKey({ modalOpen: false, commandPaletteOpen: false, popoverOpen: false, cellEditing: false, focusModeActive: true })
+      resolveEscapeKey({
+        modalOpen: false,
+        commandPaletteOpen: false,
+        popoverOpen: false,
+        cellEditing: false,
+        focusModeActive: true,
+      })
     ).toBe('focus-mode');
   });
 
@@ -141,13 +167,25 @@ describe('focusMode.contract — precedencja Escape (modal > command-palette > p
 
   it('popover otwarty → popover wygrywa nad focus mode', () => {
     expect(
-      resolveEscapeKey({ modalOpen: false, commandPaletteOpen: false, popoverOpen: true, cellEditing: false, focusModeActive: true })
+      resolveEscapeKey({
+        modalOpen: false,
+        commandPaletteOpen: false,
+        popoverOpen: true,
+        cellEditing: false,
+        focusModeActive: true,
+      })
     ).toBe('popover');
   });
 
   it('nic otwarte, focus mode nieaktywny → none', () => {
     expect(
-      resolveEscapeKey({ modalOpen: false, commandPaletteOpen: false, popoverOpen: false, cellEditing: false, focusModeActive: false })
+      resolveEscapeKey({
+        modalOpen: false,
+        commandPaletteOpen: false,
+        popoverOpen: false,
+        cellEditing: false,
+        focusModeActive: false,
+      })
     ).toBe('none');
   });
 });

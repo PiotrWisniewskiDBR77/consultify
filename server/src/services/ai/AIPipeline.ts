@@ -25,8 +25,8 @@ import type {
   TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
-import { filterDocumentsByVisibility } from './documentGovernance.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
+import { filterDocumentsByVisibility } from './documentGovernance.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
 import { isQaAiMode } from './qaAiRuntime.js';
@@ -441,7 +441,9 @@ export class AIPipeline {
 
             if (featureFlags.ENABLE_TERESA_TOOL_LOOP_WRITE) {
               const proposalNames = new Set(['create_task', 'create_decision']);
-              writeProposalToolDefs = defs.filter((d: { name: string }) => proposalNames.has(d.name));
+              writeProposalToolDefs = defs.filter((d: { name: string }) =>
+                proposalNames.has(d.name)
+              );
               defs = defs.filter((d: { name: string }) => !proposalNames.has(d.name));
             }
             if (defs.length > 0) deliverableToolDefs = defs;
@@ -1140,11 +1142,7 @@ export class AIPipeline {
                 [convIdForProject]
               )) as Array<{ title?: string; content?: string; doc_id?: string }>;
               const linkedDocIds = Array.from(
-                new Set(
-                  (kRows || [])
-                    .map((row) => String(row.doc_id || '').trim())
-                    .filter(Boolean)
-                )
+                new Set((kRows || []).map((row) => String(row.doc_id || '').trim()).filter(Boolean))
               );
               const access = await filterDocumentsByVisibility(
                 linkedDocIds,
@@ -1900,8 +1898,14 @@ export class AIPipeline {
           typeof entry.content === 'string' && entry.content
             ? entry.content
             : Object.entries(entry)
-                .filter(([key]) => !['section', 'name', 'type', 'priority', 'id', 'createdAt'].includes(key))
-                .map(([key, value]) => `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`)
+                .filter(
+                  ([key]) =>
+                    !['section', 'name', 'type', 'priority', 'id', 'createdAt'].includes(key)
+                )
+                .map(
+                  ([key, value]) =>
+                    `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`
+                )
                 .join('; ');
         if (content) {
           lines.push(`- **${label}**: ${content.slice(0, 300)}`);

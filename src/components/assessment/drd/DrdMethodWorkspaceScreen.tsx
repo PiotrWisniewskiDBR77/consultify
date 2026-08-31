@@ -17,17 +17,27 @@
 import { AlertTriangle, ArrowLeft, FileText, Lightbulb, Lock, RotateCcw } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
-import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
-import { StandardTable } from '@/components/standard/StandardTable';
+import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
+import {
+  type DrdSkipReasonCode,
+  formatSkipJustification,
+} from '@/components/method-workspace/skipReasonCodes';
 import type {
   InterviewFocusQuestion,
   MethodWorkspaceViewMode,
   ResolutionAction,
 } from '@/components/method-workspace/types';
 import { useMethodWorkspaceSave } from '@/components/method-workspace/useMethodWorkspaceSave';
-import { formatSkipJustification, type DrdSkipReasonCode } from '@/components/method-workspace/skipReasonCodes';
+import { StandardTable } from '@/components/standard/StandardTable';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import type { MethodReadiness } from '@/method-core/contracts';
+import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
+import {
+  createDrdDemoSession,
+  DrdSessionRuntime,
+  listDemoSessionIds,
+} from '@/method-core/methods/drd/drdSessionRuntime';
 import type {
   AssessmentOutput,
   DeliverableRecord,
@@ -36,6 +46,8 @@ import type {
 } from '@/method-core/outputs';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
 
+import { DrdHttpMethodWorkspaceScreen } from './DrdHttpMethodWorkspaceScreen';
+import { DrdSourceIndicator } from './DrdSourceIndicator';
 import {
   buildMatrixRowsForAxis,
   buildNavigatorNodes,
@@ -47,15 +59,6 @@ import {
   pack,
   questionAnswerState,
 } from './drdWorkspaceViewModel';
-import { DrdHttpMethodWorkspaceScreen } from './DrdHttpMethodWorkspaceScreen';
-import { DrdSourceIndicator } from './DrdSourceIndicator';
-import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
-import {
-  createDrdDemoSession,
-  DrdSessionRuntime,
-  listDemoSessionIds,
-} from '@/method-core/methods/drd/drdSessionRuntime';
-import type { MethodReadiness } from '@/method-core/contracts';
 
 const OWNER_ACTOR = 'demo-owner-piotr';
 const APPROVER_ACTOR = 'demo-approver-anna';
@@ -135,7 +138,12 @@ function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScree
     strength: 'E3',
     actorUserId: OWNER_ACTOR,
   });
-  runtime.recordTargetDecision({ unitId: area1A.id, level: 4, rationale: 'Cel ustalony z zarządem na ten rok.', actorUserId: OWNER_ACTOR });
+  runtime.recordTargetDecision({
+    unitId: area1A.id,
+    level: 4,
+    rationale: 'Cel ustalony z zarządem na ten rok.',
+    actorUserId: OWNER_ACTOR,
+  });
 
   if (seedTo === 'interview') return;
 
@@ -150,17 +158,48 @@ function seedSession(runtime: DrdSessionRuntime, seedTo: DrdMethodWorkspaceScree
     text: 'Zaawansowana praktyka zaobserwowana punktowo (poza kolejnością).',
     actorUserId: OWNER_ACTOR,
   });
-  runtime.recordEvidence({ unitId: area1B.id, level: 4, evidenceId: 'demo-ev-1b-l4', evidenceType: 'observation', strength: 'E1', actorUserId: OWNER_ACTOR });
+  runtime.recordEvidence({
+    unitId: area1B.id,
+    level: 4,
+    evidenceId: 'demo-ev-1b-l4',
+    evidenceType: 'observation',
+    strength: 'E1',
+    actorUserId: OWNER_ACTOR,
+  });
 
   if (seedTo === 'matrix') return;
 
-  if (seedTo === 'teresa' || seedTo === 'approval' || seedTo === 'frozen' || seedTo === 'reopened') {
+  if (
+    seedTo === 'teresa' ||
+    seedTo === 'approval' ||
+    seedTo === 'frozen' ||
+    seedTo === 'reopened'
+  ) {
     runtime.createTeresaPreview({
-      intent: { capabilityId: 'draft_score_proposal', sessionId: runtime.sessionId, unitId: area1A.id, level: 3, invokedBy: 'local_action', actorUserId: OWNER_ACTOR },
+      intent: {
+        capabilityId: 'draft_score_proposal',
+        sessionId: runtime.sessionId,
+        unitId: area1A.id,
+        level: 3,
+        invokedBy: 'local_action',
+        actorUserId: OWNER_ACTOR,
+      },
       statements: [
-        { kind: 'respondent_declaration', text: 'Proces w CRM istnieje i jest używany przez cały zespół handlowy.', sourceRefs: [] },
-        { kind: 'missing_evidence', text: 'Brak dowodu na regularny przegląd wskaźników procesu (poziom 3).', sourceRefs: [] },
-        { kind: 'proposal', text: 'Proponowany poziom: 3 (zdefiniowany, mierzony proces).', sourceRefs: [] },
+        {
+          kind: 'respondent_declaration',
+          text: 'Proces w CRM istnieje i jest używany przez cały zespół handlowy.',
+          sourceRefs: [],
+        },
+        {
+          kind: 'missing_evidence',
+          text: 'Brak dowodu na regularny przegląd wskaźników procesu (poziom 3).',
+          sourceRefs: [],
+        },
+        {
+          kind: 'proposal',
+          text: 'Proponowany poziom: 3 (zdefiniowany, mierzony proces).',
+          sourceRefs: [],
+        },
       ],
       proposedChanges: [{ target: 'score_proposal', targetId: area1A.id, before: 2, after: 3 }],
       quality: { verdict: 'needs_human_review', failedChecks: ['lists_missing_evidence'] },
@@ -210,7 +249,12 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
     if (demoSessionId && listDemoSessionIds(storage).includes(demoSessionId)) {
       return new DrdSessionRuntime(demoSessionId, storage);
     }
-    const created = createDrdDemoSession({ organizationId: 'org-demo', projectId: 'project-demo', ownerUserId: OWNER_ACTOR, storage });
+    const created = createDrdDemoSession({
+      organizationId: 'org-demo',
+      projectId: 'project-demo',
+      ownerUserId: OWNER_ACTOR,
+      storage,
+    });
     const result = seedSession(created, seedTo);
     return result ?? created;
   });
@@ -220,7 +264,9 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
   const [viewMode, setViewMode] = useState<MethodWorkspaceViewMode>(initialViewMode ?? 'interview');
   const [activeAxisId, setActiveAxisId] = useState<number>(DRD_STRUCTURE[0].id);
   const [activeUnitId, setActiveUnitId] = useState<string>(DRD_STRUCTURE[0].areas[0].id);
-  const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(null);
+  const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(
+    null
+  );
   const [lastRefusal, setLastRefusal] = useState<string | null>(null);
 
   // tick is read here purely to force this memo to recompute after a runtime mutation.
@@ -231,14 +277,18 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
   const pendingPreviewUnitLevels = useMemo(() => {
     const set = new Set<string>();
     for (const p of pendingPreviews) {
-      if (p.intent.unitId && typeof p.intent.level === 'number') set.add(`${p.intent.unitId}#${p.intent.level}`);
+      if (p.intent.unitId && typeof p.intent.level === 'number')
+        set.add(`${p.intent.unitId}#${p.intent.level}`);
     }
     return set;
   }, [pendingPreviews]);
 
   const navigatorNodes = useMemo(() => buildNavigatorNodes(events), [events]);
   const activeAxis = DRD_STRUCTURE.find((a) => a.id === activeAxisId) ?? DRD_STRUCTURE[0];
-  const matrixRows = useMemo(() => buildMatrixRowsForAxis(events, activeAxis, pendingPreviewUnitLevels), [events, activeAxis, pendingPreviewUnitLevels]);
+  const matrixRows = useMemo(
+    () => buildMatrixRowsForAxis(events, activeAxis, pendingPreviewUnitLevels),
+    [events, activeAxis, pendingPreviewUnitLevels]
+  );
   const matrixLevels = useMemo(() => {
     const first = activeAxis.areas[0];
     return first ? first.levels.map((l) => l.level).sort((a, b) => a - b) : [];
@@ -246,11 +296,19 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
 
   const activeArea = activeAxis.areas.find((a) => a.id === activeUnitId) ?? activeAxis.areas[0];
   const activeProgression = useMemo(
-    () => drdAdapter.resolveOpenLevels({ unitId: activeArea.id, confirmedLevels: confirmedLevelsFor(events, activeArea.id), evidenceByLevel: {} }),
+    () =>
+      drdAdapter.resolveOpenLevels({
+        unitId: activeArea.id,
+        confirmedLevels: confirmedLevelsFor(events, activeArea.id),
+        evidenceByLevel: {},
+      }),
     [events, activeArea.id]
   );
-  const focusLevel = activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
-  const focusQuestions = pack.questions.filter((q) => q.unitId === activeArea.id && q.level === focusLevel);
+  const focusLevel =
+    activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
+  const focusQuestions = pack.questions.filter(
+    (q) => q.unitId === activeArea.id && q.level === focusLevel
+  );
   const evidenceCountForUnit = evidenceEventsFor(events, activeArea.id).length;
   const evidenceStrengthForUnit = evidenceStrengthFor(events, activeArea.id);
 
@@ -285,30 +343,44 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
       if (confirmed.length > 0 && !hasEvidence) answeredUnitsMissingEvidence++;
     }
     const freezeBlockers: string[] = [];
-    if (answeredUnits === 0) freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
-    if (answeredUnitsMissingEvidence > 0) freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
-    if (pendingPreviews.length > 0) freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
+    if (answeredUnits === 0)
+      freezeBlockers.push('Brak potwierdzonych jednostek — wywiad nie został jeszcze rozpoczęty.');
+    if (answeredUnitsMissingEvidence > 0)
+      freezeBlockers.push(`${answeredUnitsMissingEvidence} odpowiedzianych jednostek bez dowodu`);
+    if (pendingPreviews.length > 0)
+      freezeBlockers.push(`${pendingPreviews.length} propozycji Teresy oczekuje decyzji`);
     return {
       answeredUnits,
       totalUnits,
       unitsMissingEvidence,
       openDiscrepancies: 0,
       pendingProposals: pendingPreviews.length,
-      freezeBlockers: session.state === 'frozen' || session.state === 'closed' ? [] : freezeBlockers,
+      freezeBlockers:
+        session.state === 'frozen' || session.state === 'closed' ? [] : freezeBlockers,
     };
   }, [events, pendingPreviews.length, session.state]);
 
-  const { state: saveState, lastSavedAt, errorMessage, markDirty, saveNow, acknowledgeFailure } = useMethodWorkspaceSave({
+  const {
+    state: saveState,
+    lastSavedAt,
+    errorMessage,
+    markDirty,
+    saveNow,
+    acknowledgeFailure,
+  } = useMethodWorkspaceSave({
     save: async () => ({ ok: true }),
     debounceMs: 800,
   });
 
   const [draftAnswerText, setDraftAnswerText] = useState<Record<string, string>>({});
 
-  const handleAnswerChange = useCallback((questionId: string, text: string) => {
-    setDraftAnswerText((prev) => ({ ...prev, [questionId]: text }));
-    markDirty();
-  }, [markDirty]);
+  const handleAnswerChange = useCallback(
+    (questionId: string, text: string) => {
+      setDraftAnswerText((prev) => ({ ...prev, [questionId]: text }));
+      markDirty();
+    },
+    [markDirty]
+  );
 
   const handleAnswerStateChange = useCallback(
     (questionId: string, state: InterviewFocusQuestion['answerState'], justification?: string) => {
@@ -360,16 +432,46 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
         },
         statements: [
           evidence.length > 0
-            ? { kind: 'confirmed_fact' as const, text: `Zebrano ${evidence.length} dowód/-ody dla tej jednostki.`, sourceRefs: evidence.map((e) => e.id) }
-            : { kind: 'missing_evidence' as const, text: 'Brak dowodu dla tej jednostki na tym poziomie.', sourceRefs: [] },
-          { kind: 'proposal' as const, text: `Proponowany poziom: ${focusLevel} na podstawie odpowiedzi respondenta.`, sourceRefs: [] },
+            ? {
+                kind: 'confirmed_fact' as const,
+                text: `Zebrano ${evidence.length} dowód/-ody dla tej jednostki.`,
+                sourceRefs: evidence.map((e) => e.id),
+              }
+            : {
+                kind: 'missing_evidence' as const,
+                text: 'Brak dowodu dla tej jednostki na tym poziomie.',
+                sourceRefs: [],
+              },
+          {
+            kind: 'proposal' as const,
+            text: `Proponowany poziom: ${focusLevel} na podstawie odpowiedzi respondenta.`,
+            sourceRefs: [],
+          },
         ],
-        proposedChanges: [{ target: 'score_proposal', targetId: activeArea.id, before: activeProgression.currentLevel, after: focusLevel }],
-        quality: { verdict: evidence.length > 0 ? 'valid' : 'needs_human_review', failedChecks: evidence.length > 0 ? [] : ['lists_supporting_evidence'] },
+        proposedChanges: [
+          {
+            target: 'score_proposal',
+            targetId: activeArea.id,
+            before: activeProgression.currentLevel,
+            after: focusLevel,
+          },
+        ],
+        quality: {
+          verdict: evidence.length > 0 ? 'valid' : 'needs_human_review',
+          failedChecks: evidence.length > 0 ? [] : ['lists_supporting_evidence'],
+        },
       });
       refresh();
     },
-    [runtime, events, activeArea.id, focusLevel, actorUserId, activeProgression.currentLevel, refresh]
+    [
+      runtime,
+      events,
+      activeArea.id,
+      focusLevel,
+      actorUserId,
+      activeProgression.currentLevel,
+      refresh,
+    ]
   );
 
   const handleUnitNav = useCallback(
@@ -404,7 +506,16 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
       handleUnitNav(1);
       refresh();
     },
-    [runtime, activeArea.id, focusLevel, focusQuestions, draftAnswerText, actorUserId, handleUnitNav, refresh]
+    [
+      runtime,
+      activeArea.id,
+      focusLevel,
+      focusQuestions,
+      draftAnswerText,
+      actorUserId,
+      handleUnitNav,
+      refresh,
+    ]
   );
 
   // Only `ask_teresa` has a real backend today (Teresa preview pipeline,
@@ -437,7 +548,16 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
       if (action === 'return_later') handleUnitNav(1);
       refresh();
     },
-    [runtime, activeArea.id, focusLevel, draftAnswerText, actorUserId, handleAskTeresa, handleUnitNav, refresh]
+    [
+      runtime,
+      activeArea.id,
+      focusLevel,
+      draftAnswerText,
+      actorUserId,
+      handleAskTeresa,
+      handleUnitNav,
+      refresh,
+    ]
   );
 
   const handleCommit = useCallback(
@@ -491,9 +611,17 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
   const teresaSixQuestions = {
     whereAreWe: `Sesja DRD, jednostka ${activeArea.namePL || activeArea.name}, poziom ${focusLevel}. ${readiness.answeredUnits}/${readiness.totalUnits} jednostek dotkniętych.`,
     whatMattersNow: focusQuestions[0]?.canonicalWording ?? 'Brak pytań na tym poziomie.',
-    why: activeAxis.namePL ? `Oś „${activeAxis.namePL}" wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy.` : '',
-    whatIsMissing: evidenceCountForUnit === 0 ? 'Brak dowodu dla tej jednostki.' : `${evidenceCountForUnit} dowód/-ody zebrane.`,
-    nextSafeAction: pendingPreviews.length > 0 ? 'Zdecyduj o oczekujących propozycjach Teresy.' : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
+    why: activeAxis.namePL
+      ? `Oś „${activeAxis.namePL}" wymaga potwierdzenia tej jednostki, by odblokować dalsze poziomy.`
+      : '',
+    whatIsMissing:
+      evidenceCountForUnit === 0
+        ? 'Brak dowodu dla tej jednostki.'
+        : `${evidenceCountForUnit} dowód/-ody zebrane.`,
+    nextSafeAction:
+      pendingPreviews.length > 0
+        ? 'Zdecyduj o oczekujących propozycjach Teresy.'
+        : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
   };
 
   if (session.state === 'frozen' || session.state === 'closed') {
@@ -541,7 +669,10 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
   return (
     <div className="flex h-full flex-col">
       {lastRefusal && (
-        <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
+        <div
+          role="alert"
+          className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger"
+        >
           <AlertTriangle size={12} />
           {lastRefusal}
         </div>
@@ -586,7 +717,11 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
             },
           }}
           interviewProps={{
-            breadcrumb: [activeAxis.namePL || activeAxis.name, activeArea.namePL || activeArea.name, `Poziom ${focusLevel}`],
+            breadcrumb: [
+              activeAxis.namePL || activeAxis.name,
+              activeArea.namePL || activeArea.name,
+              `Poziom ${focusLevel}`,
+            ],
             questions: interviewQuestions,
             questionIndex: focusLevel - 1,
             questionTotal: activeArea.levels.length,
@@ -631,18 +766,29 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
               <div className="text-xs text-c-text-secondary">
                 <p>
                   {selection.unitId} · poziom {selection.level} —{' '}
-                  {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: potwierdzone poza kolejnością, wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+                  {cell?.blocker
+                    ? 'BLOKER (pierwszy niespełniony poziom)'
+                    : cell?.reviewRequired
+                      ? 'above-gap: potwierdzone poza kolejnością, wymaga przeglądu'
+                      : cell?.achieved
+                        ? 'osiągnięty'
+                        : 'nieosiągnięty'}
                 </p>
               </div>
             ),
           }}
-          reportContent={(
+          reportContent={
             <div className="space-y-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">DRD report · axis {activeAxis.id}</p>
-                <h2 className="text-lg font-semibold text-c-text">{activeAxis.namePL || activeAxis.name}</h2>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  DRD report · axis {activeAxis.id}
+                </p>
+                <h2 className="text-lg font-semibold text-c-text">
+                  {activeAxis.namePL || activeAxis.name}
+                </h2>
                 <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
-                  Roboczy rozdział raportu korzysta z tego samego stanu odpowiedzi, dowodów i targetów co Interview i Matrix.
+                  Roboczy rozdział raportu korzysta z tego samego stanu odpowiedzi, dowodów i
+                  targetów co Interview i Matrix.
                 </p>
               </div>
               <div className="rounded-xl border border-c-border bg-c-surface p-4">
@@ -660,7 +806,13 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                     <div className="text-xs text-c-text-secondary">
                       <p>
                         {selection.unitId} · poziom {selection.level} —{' '}
-                        {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+                        {cell?.blocker
+                          ? 'BLOKER (pierwszy niespełniony poziom)'
+                          : cell?.reviewRequired
+                            ? 'above-gap: wymaga przeglądu'
+                            : cell?.achieved
+                              ? 'osiągnięty'
+                              : 'nieosiągnięty'}
                       </p>
                     </div>
                   )}
@@ -669,9 +821,14 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {activeAxis.areas.map((area) => (
-                  <article key={area.id} className="rounded-xl border border-c-border bg-c-surface p-4">
+                  <article
+                    key={area.id}
+                    className="rounded-xl border border-c-border bg-c-surface p-4"
+                  >
                     <p className="text-[11px] font-semibold text-c-text-muted">{area.id}</p>
-                    <h3 className="text-sm font-semibold text-c-text">{area.namePL || area.name}</h3>
+                    <h3 className="text-sm font-semibold text-c-text">
+                      {area.namePL || area.name}
+                    </h3>
                     <p className="mt-2 text-xs text-c-text-secondary">
                       {confirmedLevelsFor(events, area.id).length > 0
                         ? `Potwierdzone poziomy: ${confirmedLevelsFor(events, area.id).join(', ')}. Komentarz ekspercki pozostaje roboczy do zatwierdzenia.`
@@ -681,10 +838,10 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 ))}
               </div>
             </div>
-          )}
+          }
           documentSourceLabel="DEMO_LOCAL"
           documentSourceIndicator={<DrdSourceIndicator source="DEMO_LOCAL" />}
-          settingsContent={(
+          settingsContent={
             <label className="inline-flex items-center gap-2 font-medium text-c-text-secondary">
               Aktor testowy
               <select
@@ -697,8 +854,8 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 <option value={APPROVER_ACTOR}>Anna (approver)</option>
               </select>
             </label>
-          )}
-          governanceActions={(
+          }
+          governanceActions={
             <>
               <button
                 type="button"
@@ -719,7 +876,7 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                 Zamroź
               </button>
             </>
-          )}
+          }
         />
       </div>
     </div>
@@ -742,24 +899,54 @@ const FrozenOutputView: React.FC<{
   onGenerateInitiative: () => void;
   onReopen: () => void;
   onExit: () => void;
-}> = ({ session, outputRecord, reports, initiatives, actorUserId, setActorUserId, lastRefusal, onGenerateReport, onGenerateInitiative, onReopen, onExit }) => {
+}> = ({
+  session,
+  outputRecord,
+  reports,
+  initiatives,
+  actorUserId,
+  setActorUserId,
+  lastRefusal,
+  onGenerateReport,
+  onGenerateInitiative,
+  onReopen,
+  onExit,
+}) => {
   const output = outputRecord?.content ?? null;
   const currentReport = reports.find((r) => r.status === 'current')?.content ?? null;
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-c-bg p-6" data-testid="drd-frozen-output-view">
+    <div
+      className="flex h-full flex-col overflow-y-auto bg-c-bg p-6"
+      data-testid="drd-frozen-output-view"
+    >
       <div className="mb-4 flex items-center gap-3">
-        <button type="button" onClick={onExit} className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised">
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"
+        >
           <ArrowLeft size={13} /> Wyjdź
         </button>
         <h1 className="text-sm font-semibold text-c-text">
           Sesja {session.id.slice(0, 8)} — {session.state === 'closed' ? 'Zamknięta' : 'Zamrożona'}
-          {session.revisionOfSessionId && <span className="ml-2 text-[11px] font-normal text-c-text-muted">(rewizja sesji {session.revisionOfSessionId.slice(0, 8)})</span>}
+          {session.revisionOfSessionId && (
+            <span className="ml-2 text-[11px] font-normal text-c-text-muted">
+              (rewizja sesji {session.revisionOfSessionId.slice(0, 8)})
+            </span>
+          )}
         </h1>
-        <DrdSourceIndicator source="DEMO_LOCAL" title="Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)." />
+        <DrdSourceIndicator
+          source="DEMO_LOCAL"
+          title="Stary runtime — localStorage jest jedynym magazynem (flaga drdHttpSourceOfTruthV1 = OFF)."
+        />
         <span className="ml-auto flex items-center gap-2 text-[11px] text-c-text-secondary">
           Aktor:
-          <select value={actorUserId} onChange={(e) => setActorUserId(e.target.value)} className="rounded border border-c-border bg-c-surface px-1.5 py-0.5">
+          <select
+            value={actorUserId}
+            onChange={(e) => setActorUserId(e.target.value)}
+            className="rounded border border-c-border bg-c-surface px-1.5 py-0.5"
+          >
             <option value={OWNER_ACTOR}>Piotr (owner)</option>
             <option value={APPROVER_ACTOR}>Anna (approver)</option>
           </select>
@@ -767,23 +954,34 @@ const FrozenOutputView: React.FC<{
       </div>
 
       {lastRefusal && (
-        <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-xs text-c-danger">
+        <div
+          role="alert"
+          className="mb-4 flex items-center gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-xs text-c-danger"
+        >
           <AlertTriangle size={13} />
           {lastRefusal}
         </div>
       )}
 
       {/* Output */}
-      <section data-testid="output-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="output-panel"
+        className="mb-6 rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center gap-2">
           <Lock size={14} className="text-c-text-secondary" />
-          <h2 className="text-sm font-semibold text-c-text">AssessmentOutput (immutable, v{output?.version ?? '—'})</h2>
+          <h2 className="text-sm font-semibold text-c-text">
+            AssessmentOutput (immutable, v{output?.version ?? '—'})
+          </h2>
         </div>
         {!output ? (
           <p className="text-xs text-c-text-muted">Brak Outputu.</p>
         ) : (
           <div className="space-y-2 text-xs text-c-text-secondary">
-            <p>contentHash: <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code></p>
+            <p>
+              contentHash:{' '}
+              <code className="text-c-text-muted">{output.contentHash.slice(0, 16)}…</code>
+            </p>
             <p>scope: {output.scope}</p>
             <p>limitations: {output.limitations.join(' · ')}</p>
             <div className="rounded-lg border border-c-border-subtle">
@@ -803,7 +1001,9 @@ const FrozenOutputView: React.FC<{
               <div key={f.id} className="rounded-lg border border-c-border-subtle p-2">
                 <p className="text-c-text">{f.businessMeaning}</p>
                 <p className="text-c-text-muted">Rekomendacja: {f.recommendation}</p>
-                <p className="text-c-text-muted">Dowody: {f.supportingEvidence.map((e) => e.evidenceId).join(', ')}</p>
+                <p className="text-c-text-muted">
+                  Dowody: {f.supportingEvidence.map((e) => e.evidenceId).join(', ')}
+                </p>
               </div>
             ))}
           </div>
@@ -811,13 +1011,20 @@ const FrozenOutputView: React.FC<{
       </section>
 
       {/* Report */}
-      <section data-testid="report-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="report-panel"
+        className="mb-6 rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText size={14} className="text-c-text-secondary" />
             <h2 className="text-sm font-semibold text-c-text">Report Snapshot</h2>
           </div>
-          <button type="button" onClick={onGenerateReport} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised">
+          <button
+            type="button"
+            onClick={onGenerateReport}
+            className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised"
+          >
             Generuj raport z Outputu
           </button>
         </div>
@@ -829,19 +1036,31 @@ const FrozenOutputView: React.FC<{
             <p>Wynik ogólny: {currentReport.overallResult ?? '—'}</p>
             <p>Uczestnicy: {currentReport.participants.join(', ')}</p>
             <p>Rekomendacje: {currentReport.recommendations.join(' · ') || '—'}</p>
-            <p className="text-c-text-muted">Renderowane ze snapshotu Outputu v{currentReport.outputVersion} — zmiana sesji po freeze nie zmieni tego raportu.</p>
+            <p className="text-c-text-muted">
+              Renderowane ze snapshotu Outputu v{currentReport.outputVersion} — zmiana sesji po
+              freeze nie zmieni tego raportu.
+            </p>
           </div>
         )}
       </section>
 
       {/* Initiative Draft */}
-      <section data-testid="initiative-panel" className="mb-6 rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="initiative-panel"
+        className="mb-6 rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lightbulb size={14} className="text-c-text-secondary" />
-            <h2 className="text-sm font-semibold text-c-text">Initiative Proposal Draft (lokalny, NIE Registered Initiative)</h2>
+            <h2 className="text-sm font-semibold text-c-text">
+              Initiative Proposal Draft (lokalny, NIE Registered Initiative)
+            </h2>
           </div>
-          <button type="button" onClick={onGenerateInitiative} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised">
+          <button
+            type="button"
+            onClick={onGenerateInitiative}
+            className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised"
+          >
             Wygeneruj z findingów
           </button>
         </div>
@@ -851,24 +1070,36 @@ const FrozenOutputView: React.FC<{
           initiatives
             .filter((i) => i.status === 'current')
             .map((rec) => (
-              <div key={rec.content.id} className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs">
+              <div
+                key={rec.content.id}
+                className="mb-2 rounded-lg border border-c-border-subtle p-2 text-xs"
+              >
                 <p className="font-medium text-c-text">{rec.content.title}</p>
                 <p className="text-c-text-secondary">{rec.content.summary}</p>
-                <p className="text-c-text-muted">Findings: {rec.content.findingIds.join(', ')} · confidence: {rec.content.confidence}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.</p>
+                <p className="text-c-text-muted">
+                  Findings: {rec.content.findingIds.join(', ')} · confidence:{' '}
+                  {rec.content.confidence}
+                </p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-c-warning">
+                  Draft — decyzja „Register as Initiative" należy do człowieka, poza tym modułem.
+                </p>
               </div>
             ))
         )}
       </section>
 
       {/* Reopen */}
-      <section data-testid="reopen-panel" className="rounded-xl border border-c-border bg-c-surface p-4">
+      <section
+        data-testid="reopen-panel"
+        className="rounded-xl border border-c-border bg-c-surface p-4"
+      >
         <div className="mb-2 flex items-center gap-2">
           <RotateCcw size={14} className="text-c-text-secondary" />
           <h2 className="text-sm font-semibold text-c-text">Reopen — nowa rewizja</h2>
         </div>
         <p className="mb-2 text-xs text-c-text-muted">
-          frozen → active tworzy NOWĄ sesję (rewizję); ten Output pozostaje nietknięty i po ponownym freeze dostanie status „superseded".
+          frozen → active tworzy NOWĄ sesję (rewizję); ten Output pozostaje nietknięty i po ponownym
+          freeze dostanie status „superseded".
         </p>
         <button
           type="button"

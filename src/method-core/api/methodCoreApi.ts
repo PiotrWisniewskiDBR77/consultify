@@ -16,7 +16,6 @@
  * required loading/error/offline/recovery/409-conflict UI states.
  */
 
-import { fetchWithRetry, getHeaders } from '@/services/api/baseClient';
 import type {
   MethodActorKind,
   MethodEvent,
@@ -31,6 +30,7 @@ import type {
   TeresaQualityVerdict,
   TeresaStatement,
 } from '@/method-core/contracts';
+import { fetchWithRetry, getHeaders } from '@/services/api/baseClient';
 
 const BASE = '/api/method';
 
@@ -529,9 +529,7 @@ export interface MethodOutputSummary {
   readonly frozenAt: string;
 }
 
-export async function getOutput(
-  outputId: string
-): Promise<{
+export async function getOutput(outputId: string): Promise<{
   output: MethodOutputSummary;
   superseded: boolean;
   supersededByOutputId: string | null;

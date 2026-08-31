@@ -183,5 +183,4 @@ export const OrganizationApi = {
     );
     return json?.invitations || (json as unknown[]) || [];
   },
-
 };

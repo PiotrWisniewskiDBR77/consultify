@@ -14,7 +14,6 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '../src/i18n';
-
 import ToolsSwotLibraryDetailScreen from './screens/tools-swot-library-detail';
 
 const params = new URLSearchParams(window.location.search);
@@ -49,7 +48,9 @@ if (el) {
   // i18n (2026-08-31, Z-21): język ustawiamy PO 'initialized' i montujemy w .finally —
   // wzorzec z tools-outputs-insights-tab-main.tsx (naprawa 2026-08-27); changeLanguage
   // przed montażem rozstraja sekwencję czekania na init (biały ekran).
-  const start = () => { void i18n.changeLanguage(lang).finally(mount); };
+  const start = () => {
+    void i18n.changeLanguage(lang).finally(mount);
+  };
   if (i18n.isInitialized) {
     start();
   } else {

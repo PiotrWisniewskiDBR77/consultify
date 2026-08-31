@@ -43,10 +43,10 @@ async function db(): Promise<Client> {
 async function seedOrg(id: string): Promise<void> {
   const c = await db();
   try {
-    await c.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      id,
-      id,
-    ]);
+    await c.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [id, id]
+    );
   } finally {
     await c.end();
   }
@@ -64,7 +64,9 @@ async function seedAssessment(id: string, orgId: string): Promise<void> {
   }
 }
 
-async function activeBatchRows(assessmentId: string): Promise<Array<{ id: string; status: string }>> {
+async function activeBatchRows(
+  assessmentId: string
+): Promise<Array<{ id: string; status: string }>> {
   const c = await db();
   try {
     const r = await c.query(
@@ -81,9 +83,10 @@ async function activeBatchRows(assessmentId: string): Promise<Array<{ id: string
 async function allBatchRows(assessmentId: string): Promise<Array<{ id: string; status: string }>> {
   const c = await db();
   try {
-    const r = await c.query(`SELECT id, status FROM assessment_initiative_batches WHERE assessment_id = $1`, [
-      assessmentId,
-    ]);
+    const r = await c.query(
+      `SELECT id, status FROM assessment_initiative_batches WHERE assessment_id = $1`,
+      [assessmentId]
+    );
     return r.rows as Array<{ id: string; status: string }>;
   } finally {
     await c.end();
@@ -102,8 +105,12 @@ describeDb('ASM-BVP-001 (part 2) — assessment_initiative_batches uniqueness (r
   afterAll(async () => {
     const c = await db();
     try {
-      await c.query(`DELETE FROM assessment_initiative_links WHERE assessment_id LIKE $1`, [`${P}%`]);
-      await c.query(`DELETE FROM assessment_initiative_batches WHERE assessment_id LIKE $1`, [`${P}%`]);
+      await c.query(`DELETE FROM assessment_initiative_links WHERE assessment_id LIKE $1`, [
+        `${P}%`,
+      ]);
+      await c.query(`DELETE FROM assessment_initiative_batches WHERE assessment_id LIKE $1`, [
+        `${P}%`,
+      ]);
       await c.query(`DELETE FROM assessment_initiative_batch_dedup_reports WHERE 1=0`); // never touched by this file; no-op, documents intent
       await c.query(`DELETE FROM assessments WHERE id LIKE $1`, [`${P}%`]);
       await c.query(`DELETE FROM organizations WHERE id = $1 OR id = $2`, [ORG_A, ORG_B]);
@@ -192,7 +199,10 @@ describeDb('ASM-BVP-001 (part 2) — assessment_initiative_batches uniqueness (r
     expect(rejected).toEqual([]); // never an unhandled exception
 
     const fulfilled = results
-      .filter((r): r is PromiseFulfilledResult<{ batchId: string; created: boolean }> => r.status === 'fulfilled')
+      .filter(
+        (r): r is PromiseFulfilledResult<{ batchId: string; created: boolean }> =>
+          r.status === 'fulfilled'
+      )
       .map((r) => r.value);
     expect(fulfilled.length).toBe(N);
 

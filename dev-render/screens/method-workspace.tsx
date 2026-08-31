@@ -61,7 +61,8 @@ const READINESS: MethodReadiness = {
   unitsMissingEvidence: 3,
   openDiscrepancies: 2,
   pendingProposals: state === 'teresaRich' ? 2 : 1,
-  freezeBlockers: state === 'savefailed' ? ['3 obszary bez dowodu', '2 propozycje AI oczekują decyzji'] : [],
+  freezeBlockers:
+    state === 'savefailed' ? ['3 obszary bez dowodu', '2 propozycje AI oczekują decyzji'] : [],
 };
 
 const NAVIGATOR_NODES: MethodNavigatorNode[] = [
@@ -138,19 +139,28 @@ function makeQuestion(overrides: Partial<MethodQuestion> = {}): MethodQuestion {
     questionId: 'q-roadmap-01',
     unitId: 'unit-strategy-roadmap',
     level: 2,
-    canonicalWording: 'Czy organizacja ma udokumentowaną, zatwierdzoną mapę drogową transformacji cyfrowej?',
+    canonicalWording:
+      'Czy organizacja ma udokumentowaną, zatwierdzoną mapę drogową transformacji cyfrowej?',
     intent: 'Sprawdzenie, czy plan działań wykracza poza pojedyncze, niepowiązane inicjatywy.',
     plainLanguageExplanation:
       'Chodzi o realny, spisany dokument z priorytetami i horyzontem czasowym — nie o pojedyncze projekty prowadzone niezależnie od siebie.',
-    whyItMatters: 'Bez wspólnej mapy drogowej inicjatywy konkurują o te same zasoby i nie sumują się w wynik.',
+    whyItMatters:
+      'Bez wspólnej mapy drogowej inicjatywy konkurują o te same zasoby i nie sumują się w wynik.',
     glossaryRefs: ['roadmap', 'governance'],
-    positiveAnswerExample: 'Mamy zatwierdzoną przez zarząd mapę drogową na 3 lata, aktualizowaną co kwartał.',
-    partialAnswerExample: 'Mamy listę projektów w arkuszu, ale bez formalnej akceptacji ani wspólnych priorytetów.',
+    positiveAnswerExample:
+      'Mamy zatwierdzoną przez zarząd mapę drogową na 3 lata, aktualizowaną co kwartał.',
+    partialAnswerExample:
+      'Mamy listę projektów w arkuszu, ale bez formalnej akceptacji ani wspólnych priorytetów.',
     negativeAnswerExample: 'Każdy dział planuje swoje inicjatywy niezależnie.',
-    expectedEvidence: ['Dokument mapy drogowej', 'Protokół akceptacji zarządu', 'Harmonogram przeglądów'],
+    expectedEvidence: [
+      'Dokument mapy drogowej',
+      'Protokół akceptacji zarządu',
+      'Harmonogram przeglądów',
+    ],
     likelyRespondentRoles: ['cio', 'transformation_lead'],
     followUpQuestionIds: ['q-roadmap-02'],
-    commonMisunderstanding: 'Lista projektów IT w Jirze to nie to samo co zatwierdzona mapa drogowa transformacji.',
+    commonMisunderstanding:
+      'Lista projektów IT w Jirze to nie to samo co zatwierdzona mapa drogowa transformacji.',
     allowedTeresaCapabilities: ['explain_question_plainly', 'compare_adjacent_levels'],
     sourceRefs: ['method-pack://demo/roadmap/l2'],
     ...overrides,
@@ -172,7 +182,8 @@ const QUESTIONS: InterviewFocusQuestion[] = [
 
 const RESOLUTION_DATA = {
   questionId: 'q-roadmap-01',
-  whatIsUnknown: 'Czy istniejąca lista inicjatyw była kiedykolwiek formalnie zatwierdzona przez zarząd.',
+  whatIsUnknown:
+    'Czy istniejąca lista inicjatyw była kiedykolwiek formalnie zatwierdzona przez zarząd.',
   likelyOwnerLabel: 'Dyrektor ds. transformacji cyfrowej',
   resolvingArtifactHint: 'Protokół z posiedzenia zarządu lub komitetu sterującego',
   dueDate: null,
@@ -190,11 +201,25 @@ function makeTeresaPreview(id: string, overrides: Partial<TeresaPreview> = {}): 
       actorUserId: 'user-demo',
     },
     statements: [
-      { kind: 'respondent_declaration', text: 'Lista inicjatyw istnieje w arkuszu współdzielonym.', sourceRefs: [] },
-      { kind: 'missing_evidence', text: 'Brak dowodu formalnej akceptacji przez zarząd.', sourceRefs: [] },
-      { kind: 'proposal', text: 'Proponowany poziom: 2 (częściowo sformalizowane planowanie).', sourceRefs: [] },
+      {
+        kind: 'respondent_declaration',
+        text: 'Lista inicjatyw istnieje w arkuszu współdzielonym.',
+        sourceRefs: [],
+      },
+      {
+        kind: 'missing_evidence',
+        text: 'Brak dowodu formalnej akceptacji przez zarząd.',
+        sourceRefs: [],
+      },
+      {
+        kind: 'proposal',
+        text: 'Proponowany poziom: 2 (częściowo sformalizowane planowanie).',
+        sourceRefs: [],
+      },
     ],
-    proposedChanges: [{ target: 'score_proposal', targetId: 'unit-strategy-roadmap', before: 1, after: 2 }],
+    proposedChanges: [
+      { target: 'score_proposal', targetId: 'unit-strategy-roadmap', before: 1, after: 2 },
+    ],
     quality: { verdict: 'needs_human_review', failedChecks: ['lists_missing_evidence'] },
     createdAt: '2026-08-13T10:00:00.000Z',
     expiresAt: '2026-08-14T10:00:00.000Z',
@@ -215,16 +240,36 @@ const PROPOSAL_QUEUE: TeresaPreview[] =
             actorUserId: 'user-demo',
           },
           statements: [
-            { kind: 'confirmed_fact', text: 'Dane klientów są w dwóch niepołączonych systemach.', sourceRefs: [] },
-            { kind: 'interpretation', text: 'To prawdopodobnie źródło rozbieżności w raportach sprzedaży.', sourceRefs: [] },
+            {
+              kind: 'confirmed_fact',
+              text: 'Dane klientów są w dwóch niepołączonych systemach.',
+              sourceRefs: [],
+            },
+            {
+              kind: 'interpretation',
+              text: 'To prawdopodobnie źródło rozbieżności w raportach sprzedaży.',
+              sourceRefs: [],
+            },
           ],
-          proposedChanges: [{ target: 'finding', targetId: null, before: null, after: 'Fragmentacja danych klienta między CRM a ERP.' }],
+          proposedChanges: [
+            {
+              target: 'finding',
+              targetId: null,
+              before: null,
+              after: 'Fragmentacja danych klienta między CRM a ERP.',
+            },
+          ],
           quality: { verdict: 'valid', failedChecks: [] },
         }),
       ]
     : [makeTeresaPreview('preview-demo-1')];
 
-function buildMatrixRow(unitId: string, unitName: string, achievedTo: number, target: number): MatrixRow {
+function buildMatrixRow(
+  unitId: string,
+  unitName: string,
+  achievedTo: number,
+  target: number
+): MatrixRow {
   return {
     unitId,
     unitName,
@@ -234,8 +279,10 @@ function buildMatrixRow(unitId: string, unitName: string, achievedTo: number, ta
       achieved: level <= achievedTo,
       proposed: level === achievedTo + 1,
       target: level === target,
-      answerState: level <= achievedTo ? 'confirmed' : level === achievedTo + 1 ? 'partial' : 'unresolved',
-      evidenceState: level <= achievedTo ? 'complete' : level === achievedTo + 1 ? 'weak' : 'missing',
+      answerState:
+        level <= achievedTo ? 'confirmed' : level === achievedTo + 1 ? 'partial' : 'unresolved',
+      evidenceState:
+        level <= achievedTo ? 'complete' : level === achievedTo + 1 ? 'weak' : 'missing',
       aiProposalPending: level === achievedTo + 1 && unitId === 'unit-strategy-roadmap',
       reviewRequired: level === achievedTo + 1 && unitId === 'unit-data-quality',
       blocker: level === 3 && unitId === 'unit-data-quality',

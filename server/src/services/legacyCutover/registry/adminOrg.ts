@@ -50,7 +50,7 @@ export const ADMIN_ORG_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'protected',
       successor: '/api/organizations/:orgId/members',
       reason:
-        "POST /api/admin/people (adminP32.routes.ts:2251-2280) INSERTs INTO organization_members " +
+        'POST /api/admin/people (adminP32.routes.ts:2251-2280) INSERTs INTO organization_members ' +
         '(adminP32.routes.ts:457-460, inside createAdminPeopleMember) — the canonical membership table — ' +
         'but authorizes the write through its own getAdminActor()+capability check (adminP32.routes.ts:286-345, ' +
         "requires 'people:write') instead of organizationService.addMember. The canonical " +

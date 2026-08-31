@@ -116,7 +116,7 @@
  * inventory entry whose file no longer exists on disk also fails the run
  * by name, so the inventory cannot rot into fiction either.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -303,18 +303,22 @@ describe('ROI read surface inventory — ratchet gate (inventory only, NOT an au
     });
 
     it('CATCHES a double-quoted identifier form: FROM "public"."rvn_roi_cases"', () => {
-      const source = 'await client.query(`SELECT * FROM "public"."rvn_roi_cases" WHERE x = $1`, [x]);';
+      const source =
+        'await client.query(`SELECT * FROM "public"."rvn_roi_cases" WHERE x = $1`, [x]);';
       expect(isRoiReadSurface('positive-control-quoted-identifier.ts', source)).toBe(true);
     });
 
-    it('CATCHES a dynamically-concatenated query string (table name assembled from a variable, ' +
-      'so the literal text "FROM rvn_roi_" never appears)', () => {
-      const source =
-        "const table = 'rvn_roi_' + 'cases';\n" +
-        'await client.query(`SELECT * FROM ${table} WHERE x = $1`, [x]);';
-      expect(source.includes('FROM rvn_roi_')).toBe(false); // confirms this is a genuine evasion of rule (a) alone
-      expect(isRoiReadSurface('positive-control-dynamic-concat.ts', source)).toBe(true);
-    });
+    it(
+      'CATCHES a dynamically-concatenated query string (table name assembled from a variable, ' +
+        'so the literal text "FROM rvn_roi_" never appears)',
+      () => {
+        const source =
+          "const table = 'rvn_roi_' + 'cases';\n" +
+          'await client.query(`SELECT * FROM ${table} WHERE x = $1`, [x]);';
+        expect(source.includes('FROM rvn_roi_')).toBe(false); // confirms this is a genuine evasion of rule (a) alone
+        expect(isRoiReadSurface('positive-control-dynamic-concat.ts', source)).toBe(true);
+      }
+    );
 
     it('CATCHES a legacy-table read via the RoiLegacyArchive filename family (rule b), independent of table name', () => {
       const source = 'await client.query(`SELECT * FROM roi_assumptions WHERE x = $1`, [x]);';
@@ -322,14 +326,17 @@ describe('ROI read surface inventory — ratchet gate (inventory only, NOT an au
       expect(isRoiReadSurface('roiLegacyArchiveFixture.ts', source)).toBe(true);
     });
 
-    it('DOES NOT fire on a negative control: rvn_roi_ mentioned only in a comment, next to an ' +
-      'unrelated real query — proves this is not a bare substring match', () => {
-      const source =
-        '// This helper intentionally does NOT read rvn_roi_cases; see roiRepository.ts instead.\n' +
-        "export async function unrelatedHelper(db: { query: (s: string) => unknown }) {\n" +
-        "  return db.query('SELECT 1');\n" +
-        '}\n';
-      expect(isRoiReadSurface('negative-control-comment-only.ts', source)).toBe(false);
-    });
+    it(
+      'DOES NOT fire on a negative control: rvn_roi_ mentioned only in a comment, next to an ' +
+        'unrelated real query — proves this is not a bare substring match',
+      () => {
+        const source =
+          '// This helper intentionally does NOT read rvn_roi_cases; see roiRepository.ts instead.\n' +
+          'export async function unrelatedHelper(db: { query: (s: string) => unknown }) {\n' +
+          "  return db.query('SELECT 1');\n" +
+          '}\n';
+        expect(isRoiReadSurface('negative-control-comment-only.ts', source)).toBe(false);
+      }
+    );
   });
 });

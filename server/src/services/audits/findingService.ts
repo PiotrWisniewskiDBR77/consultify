@@ -14,15 +14,11 @@
  */
 
 import {
-  listActions as listCorrectiveActions,
-  type AuditCorrectiveActionListResult,
-} from './correctiveActionService.js';
-import {
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
@@ -30,6 +26,10 @@ import {
   toIso,
   toNum,
 } from './auditsDb.js';
+import {
+  type AuditCorrectiveActionListResult,
+  listActions as listCorrectiveActions,
+} from './correctiveActionService.js';
 import {
   assertCanAcceptResidualRisk,
   assertNotClosingOwnFinding,
@@ -189,7 +189,7 @@ function rowToManagementResponse(row: ManagementResponseRow): AuditManagementRes
 async function loadFindingRow(organizationId: string, id: string): Promise<FindingRow> {
   const row = await auditGet<FindingRow>(
     `SELECT * FROM audit_program_findings WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Ustalenie');
   return row;
@@ -212,13 +212,16 @@ interface ProgramPackInfo {
   findingTaxonomy: FindingTaxonomyEntry[];
 }
 
-async function loadProgramPack(organizationId: string, programId: string): Promise<ProgramPackInfo> {
+async function loadProgramPack(
+  organizationId: string,
+  programId: string
+): Promise<ProgramPackInfo> {
   const row = await auditGet<{ decision_rules: unknown; finding_taxonomy: unknown }>(
     `SELECT pk.decision_rules AS decision_rules, pk.finding_taxonomy AS finding_taxonomy
        FROM audit_programs prog
        JOIN audit_packs pk ON pk.id = prog.pack_id
       WHERE prog.organization_id = $1 AND prog.id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   if (!row) return { decisionRules: {}, findingTaxonomy: [] };
   return {
@@ -248,7 +251,7 @@ const NEVER_NONCONFORMING = new Set([
 export async function isNonconformingClassification(
   organizationId: string,
   programId: string,
-  classification: string,
+  classification: string
 ): Promise<boolean> {
   if (NEVER_NONCONFORMING.has(classification)) return false;
   const { findingTaxonomy } = await loadProgramPack(organizationId, programId);
@@ -264,7 +267,7 @@ export async function isNonconformingClassification(
 async function nextReferenceCode(organizationId: string, programId: string): Promise<string> {
   const row = await auditGet<{ c: number }>(
     `SELECT COUNT(*)::int AS c FROM audit_program_findings WHERE organization_id = $1 AND program_id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   const n = row ? Number(row.c) || 0 : 0;
   return `F-${n + 1}`;
@@ -298,7 +301,7 @@ export interface CreateFindingInput {
 export async function createFinding(
   organizationId: string,
   actor: AuditActor,
-  input: CreateFindingInput,
+  input: CreateFindingInput
 ): Promise<AuditFinding> {
   const act = scoped(actor, organizationId);
   const programId = String(input.programId || '');
@@ -319,24 +322,32 @@ export async function createFinding(
   const hasEvidence = objectiveEvidence.length > 0;
 
   // DRUGA TWARDA REGUŁA: brak dowodu → wyłącznie evidence_insufficient/observation.
-  if (!hasEvidence && classification !== 'evidence_insufficient' && classification !== 'observation') {
+  if (
+    !hasEvidence &&
+    classification !== 'evidence_insufficient' &&
+    classification !== 'observation'
+  ) {
     throw new AuditStateError(
       'Brak dowodu obiektywnego dopuszcza wyłącznie klasyfikację "evidence_insufficient" lub "observation" ' +
-        '— sam brak dowodu nie może automatycznie dawać klasyfikacji niezgodności',
+        '— sam brak dowodu nie może automatycznie dawać klasyfikacji niezgodności'
     );
   }
 
-  const isNonconforming = await isNonconformingClassification(organizationId, programId, classification);
+  const isNonconforming = await isNonconformingClassification(
+    organizationId,
+    programId,
+    classification
+  );
 
   // PIERWSZA TWARDA REGUŁA: niezgodność (i evidence_insufficient) wymaga kryterium.
   if ((isNonconforming || classification === 'evidence_insufficient') && !criterionId) {
     throw new AuditStateError(
-      'Ustalenie musi wskazywać wymaganie i dowód — brak wskazanego kryterium (criterionId)',
+      'Ustalenie musi wskazywać wymaganie i dowód — brak wskazanego kryterium (criterionId)'
     );
   }
   if (isNonconforming && classification !== 'evidence_insufficient' && !hasEvidence) {
     throw new AuditStateError(
-      'Ustalenie musi wskazywać wymaganie i dowód — brak dowodu obiektywnego (objectiveEvidence)',
+      'Ustalenie musi wskazywać wymaganie i dowód — brak dowodu obiektywnego (objectiveEvidence)'
     );
   }
 
@@ -374,7 +385,7 @@ export async function createFinding(
       input.aiProposed ? true : false,
       input.aiRationale ?? null,
       input.aiConfidence ?? null,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -414,7 +425,7 @@ export interface ListFindingsResult {
 
 export async function listFindings(
   organizationId: string,
-  filter: ListFindingsFilter,
+  filter: ListFindingsFilter
 ): Promise<ListFindingsResult> {
   const clauses = ['organization_id = $1', 'program_id = $2'];
   const params: unknown[] = [organizationId, filter.programId];
@@ -440,11 +451,11 @@ export async function listFindings(
 
   const rows = await auditAll<FindingRow>(
     `SELECT * FROM audit_program_findings WHERE ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
-    params,
+    params
   );
   const countRow = await auditGet<{ c: number }>(
     `SELECT COUNT(*)::int AS c FROM audit_program_findings WHERE ${where}`,
-    params,
+    params
   );
 
   return { items: rows.map(rowToFinding), total: countRow ? Number(countRow.c) : rows.length };
@@ -463,9 +474,11 @@ export async function getFinding(organizationId: string, id: string): Promise<Fi
       `SELECT * FROM audit_management_responses
         WHERE organization_id = $1 AND finding_id = $2
         ORDER BY responded_at ASC`,
-      [organizationId, id],
+      [organizationId, id]
     ),
-    listCorrectiveActions(organizationId, { findingId: id }) as Promise<AuditCorrectiveActionListResult>,
+    listCorrectiveActions(organizationId, {
+      findingId: id,
+    }) as Promise<AuditCorrectiveActionListResult>,
     listVerifications(organizationId, { findingId: id }),
   ]);
 
@@ -504,24 +517,29 @@ export async function updateFinding(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  patch: UpdateFindingInput,
+  patch: UpdateFindingInput
 ): Promise<AuditFinding> {
   const act = scoped(actor, organizationId);
   const row = await loadFindingRow(organizationId, id);
   await requireCapability(act, row.program_id, 'finding.update');
 
   const lockedForClassification = row.status === 'closed' || row.status === 'risk_accepted';
-  if (lockedForClassification && (patch.classification !== undefined || patch.severity !== undefined)) {
+  if (
+    lockedForClassification &&
+    (patch.classification !== undefined || patch.severity !== undefined)
+  ) {
     throw new AuditStateError(
-      `Nie można zmienić klasyfikacji ani istotności ustalenia w statusie „${row.status}"`,
+      `Nie można zmienić klasyfikacji ani istotności ustalenia w statusie „${row.status}"`
     );
   }
 
   const updates: Array<[string, unknown]> = [];
   if (patch.statement !== undefined) updates.push(['statement', String(patch.statement)]);
-  if (patch.requirementText !== undefined) updates.push(['requirement_text', patch.requirementText]);
+  if (patch.requirementText !== undefined)
+    updates.push(['requirement_text', patch.requirementText]);
   if (patch.conditionText !== undefined) updates.push(['condition_text', patch.conditionText]);
-  if (patch.sourceReference !== undefined) updates.push(['source_reference', patch.sourceReference]);
+  if (patch.sourceReference !== undefined)
+    updates.push(['source_reference', patch.sourceReference]);
   if (patch.gapText !== undefined) updates.push(['gap_text', patch.gapText]);
   if (patch.classification !== undefined) updates.push(['classification', patch.classification]);
   if (patch.severity !== undefined) updates.push(['severity', patch.severity]);
@@ -536,7 +554,8 @@ export async function updateFinding(
   }
   if (patch.ownerUserId !== undefined) updates.push(['owner_user_id', patch.ownerUserId]);
   if (patch.rootCause !== undefined) updates.push(['root_cause', patch.rootCause]);
-  if (patch.rootCauseMethod !== undefined) updates.push(['root_cause_method', patch.rootCauseMethod]);
+  if (patch.rootCauseMethod !== undefined)
+    updates.push(['root_cause_method', patch.rootCauseMethod]);
   if (patch.rootCauseConfirmed !== undefined) {
     updates.push(['root_cause_confirmed', !!patch.rootCauseConfirmed]);
   }
@@ -547,7 +566,7 @@ export async function updateFinding(
   const params = [organizationId, id, ...updates.map(([, v]) => v)];
   await auditRun(
     `UPDATE audit_program_findings SET ${setSql}, updated_at = NOW() WHERE organization_id = $1 AND id = $2`,
-    params,
+    params
   );
 
   await recordAuditEvent({
@@ -577,7 +596,7 @@ export async function reviewFinding(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: ReviewFindingInput,
+  input: ReviewFindingInput
 ): Promise<AuditFinding> {
   const act = scoped(actor, organizationId);
   const row = await loadFindingRow(organizationId, id);
@@ -591,7 +610,7 @@ export async function reviewFinding(
       `UPDATE audit_program_findings
           SET status = 'confirmed', reviewed_by = $3, reviewed_at = NOW(), review_note = $4, updated_at = NOW()
         WHERE organization_id = $1 AND id = $2`,
-      [organizationId, id, actor.userId, note || null],
+      [organizationId, id, actor.userId, note || null]
     );
     await recordAuditEvent({
       organizationId,
@@ -608,7 +627,7 @@ export async function reviewFinding(
       `UPDATE audit_program_findings
           SET status = 'draft', sent_back_at = NOW(), sent_back_by = $3, send_back_reason = $4, updated_at = NOW()
         WHERE organization_id = $1 AND id = $2`,
-      [organizationId, id, actor.userId, note],
+      [organizationId, id, actor.userId, note]
     );
     await recordAuditEvent({
       organizationId,
@@ -625,7 +644,7 @@ export async function reviewFinding(
       `UPDATE audit_program_findings
           SET status = 'rejected', reviewed_by = $3, reviewed_at = NOW(), review_note = $4, updated_at = NOW()
         WHERE organization_id = $1 AND id = $2`,
-      [organizationId, id, actor.userId, note],
+      [organizationId, id, actor.userId, note]
     );
     await recordAuditEvent({
       organizationId,
@@ -656,7 +675,7 @@ export async function submitManagementResponse(
   organizationId: string,
   actor: AuditActor,
   findingId: string,
-  input: SubmitManagementResponseInput,
+  input: SubmitManagementResponseInput
 ): Promise<AuditManagementResponse> {
   const act = scoped(actor, organizationId);
   const row = await loadFindingRow(organizationId, findingId);
@@ -665,12 +684,13 @@ export async function submitManagementResponse(
   if (row.status !== 'confirmed' && row.status !== 'response_pending') {
     throw new AuditStateError(
       `Odpowiedź właściciela obszaru jest możliwa tylko dla ustaleń w statusie „confirmed" lub ` +
-        `„response_pending" (obecny status: „${row.status}")`,
+        `„response_pending" (obecny status: „${row.status}")`
     );
   }
 
   const statement = String(input.statement || '').trim();
-  if (!statement) throw new AuditStateError('Odpowiedź właściciela obszaru wymaga treści (statement)');
+  if (!statement)
+    throw new AuditStateError('Odpowiedź właściciela obszaru wymaga treści (statement)');
 
   const position = input.position;
   if (!RESPONSE_POSITIONS.includes(position)) {
@@ -682,13 +702,13 @@ export async function submitManagementResponse(
     `INSERT INTO audit_management_responses
        (id, finding_id, program_id, organization_id, position, statement, responded_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-    [id, findingId, row.program_id, organizationId, position, statement, actor.userId],
+    [id, findingId, row.program_id, organizationId, position, statement, actor.userId]
   );
 
   const nextStatus = position === 'accept' ? 'remediation_in_progress' : 'response_pending';
   await auditRun(
     `UPDATE audit_program_findings SET status = $3, updated_at = NOW() WHERE organization_id = $1 AND id = $2`,
-    [organizationId, findingId, nextStatus],
+    [organizationId, findingId, nextStatus]
   );
 
   await recordAuditEvent({
@@ -704,7 +724,7 @@ export async function submitManagementResponse(
 
   const created = await auditGet<ManagementResponseRow>(
     `SELECT * FROM audit_management_responses WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   return rowToManagementResponse(created as ManagementResponseRow);
 }
@@ -718,12 +738,12 @@ export async function reviewManagementResponse(
   organizationId: string,
   actor: AuditActor,
   responseId: string,
-  input: ReviewManagementResponseInput,
+  input: ReviewManagementResponseInput
 ): Promise<AuditManagementResponse> {
   const act = scoped(actor, organizationId);
   const respRow = await auditGet<ManagementResponseRow>(
     `SELECT * FROM audit_management_responses WHERE organization_id = $1 AND id = $2`,
-    [organizationId, responseId],
+    [organizationId, responseId]
   );
   if (!respRow) throw new AuditNotFoundError('Odpowiedź właściciela obszaru');
   await requireCapability(act, respRow.program_id, 'finding.review');
@@ -733,7 +753,7 @@ export async function reviewManagementResponse(
     `UPDATE audit_management_responses
         SET status = $3, reviewed_by = $4, reviewed_at = NOW(), review_note = $5, updated_at = NOW()
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, responseId, status, actor.userId, input.note ?? null],
+    [organizationId, responseId, status, actor.userId, input.note ?? null]
   );
 
   await recordAuditEvent({
@@ -749,7 +769,7 @@ export async function reviewManagementResponse(
 
   const updated = await auditGet<ManagementResponseRow>(
     `SELECT * FROM audit_management_responses WHERE organization_id = $1 AND id = $2`,
-    [organizationId, responseId],
+    [organizationId, responseId]
   );
   return rowToManagementResponse(updated as ManagementResponseRow);
 }
@@ -766,7 +786,7 @@ export async function acceptResidualRisk(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: AcceptResidualRiskInput,
+  input: AcceptResidualRiskInput
 ): Promise<AuditFinding> {
   const act = scoped(actor, organizationId);
   const row = await loadFindingRow(organizationId, id);
@@ -782,14 +802,17 @@ export async function acceptResidualRisk(
   assertCanAcceptResidualRisk(access, decisionRules);
 
   const note = String(input?.note || '').trim();
-  if (!note) throw new AuditStateError('Akceptacja ryzyka rezydualnego wymaga notatki uzasadniającej decyzję');
+  if (!note)
+    throw new AuditStateError(
+      'Akceptacja ryzyka rezydualnego wymaga notatki uzasadniającej decyzję'
+    );
 
   await auditRun(
     `UPDATE audit_program_findings
         SET status = 'risk_accepted', residual_risk_accepted_by = $3, residual_risk_accepted_at = NOW(),
             residual_risk_note = $4, closure_decision = 'risk_accepted', updated_at = NOW()
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, actor.userId, note],
+    [organizationId, id, actor.userId, note]
   );
 
   await recordAuditEvent({
@@ -818,7 +841,7 @@ export async function closeFinding(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: CloseFindingInput,
+  input: CloseFindingInput
 ): Promise<AuditFinding> {
   const act = scoped(actor, organizationId);
   const row = await loadFindingRow(organizationId, id);
@@ -854,13 +877,13 @@ export async function closeFinding(
              AND v.verification_kind = 'effectiveness' AND v.result = 'effective'
         )
       ORDER BY a.created_at ASC`,
-    [organizationId, id],
+    [organizationId, id]
   );
 
   if (missingEffectiveness.length > 0) {
     const names = missingEffectiveness.map((m) => `„${m.title}" (${m.action_kind})`).join('; ');
     throw new AuditStateError(
-      `Nie można zamknąć ustalenia — brakuje weryfikacji skuteczności dla działań: ${names}`,
+      `Nie można zamknąć ustalenia — brakuje weryfikacji skuteczności dla działań: ${names}`
     );
   }
 
@@ -878,13 +901,13 @@ export async function closeFinding(
              AND v.result IN ('effective', 'partially_effective')
         )
       ORDER BY a.created_at ASC`,
-    [organizationId, id],
+    [organizationId, id]
   );
 
   if (missingImplementation.length > 0) {
     const names = missingImplementation.map((m) => `„${m.title}" (${m.action_kind})`).join('; ');
     throw new AuditStateError(
-      `Nie można zamknąć ustalenia — brakuje dowodu wdrożenia dla działań: ${names}`,
+      `Nie można zamknąć ustalenia — brakuje dowodu wdrożenia dla działań: ${names}`
     );
   }
 
@@ -894,7 +917,7 @@ export async function closeFinding(
   const closingNonconformity = await isNonconformingClassification(
     organizationId,
     String(row.program_id),
-    String(row.classification || ''),
+    String(row.classification || '')
   );
   if (closingNonconformity) {
     const systemic = await auditAll<{ id: string }>(
@@ -902,11 +925,11 @@ export async function closeFinding(
         WHERE a.organization_id = $1 AND a.finding_id = $2
           AND a.status NOT IN ('rejected', 'cancelled')
           AND a.action_kind IN ('corrective_action', 'preventive_action')`,
-      [organizationId, id],
+      [organizationId, id]
     );
     if (systemic.length === 0) {
       throw new AuditStateError(
-        'Nie można zamknąć niezgodności bez działania usuwającego przyczynę — sama korekcja skutku nie zamyka ustalenia',
+        'Nie można zamknąć niezgodności bez działania usuwającego przyczynę — sama korekcja skutku nie zamyka ustalenia'
       );
     }
   }
@@ -916,7 +939,7 @@ export async function closeFinding(
         SET status = 'closed', closed_by = $3, closed_at = NOW(), closure_decision = 'closed_verified',
             closure_note = $4, updated_at = NOW()
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, actor.userId, note],
+    [organizationId, id, actor.userId, note]
   );
 
   await recordAuditEvent({
@@ -946,14 +969,19 @@ export interface FindingStatistics {
 
 export async function getFindingStatistics(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<FindingStatistics> {
-  const rows = await auditAll<{ classification: string; severity: string | null; status: string; c: number }>(
+  const rows = await auditAll<{
+    classification: string;
+    severity: string | null;
+    status: string;
+    c: number;
+  }>(
     `SELECT classification, severity, status, COUNT(*)::int AS c
        FROM audit_program_findings
       WHERE organization_id = $1 AND program_id = $2
       GROUP BY classification, severity, status`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const byClassification: Record<string, number> = {};
@@ -1004,7 +1032,7 @@ function criterionArea(refCode: string | null, title: string, fallbackId: string
  */
 export async function detectSystemicFindings(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<SystemicFindingGroup[]> {
   const rows = await auditAll<{
     id: string;
@@ -1014,7 +1042,7 @@ export async function detectSystemicFindings(
     `SELECT id, root_cause, criterion_id
        FROM audit_program_findings
       WHERE organization_id = $1 AND program_id = $2 AND status = 'confirmed'`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const byRootCause = new Map<string, string[]>();
@@ -1026,14 +1054,16 @@ export async function detectSystemicFindings(
     byRootCause.set(key, list);
   }
 
-  const criterionIds = Array.from(new Set(rows.map((r) => r.criterion_id).filter((v): v is string => !!v)));
+  const criterionIds = Array.from(
+    new Set(rows.map((r) => r.criterion_id).filter((v): v is string => !!v))
+  );
   const byArea = new Map<string, string[]>();
   if (criterionIds.length > 0) {
     const placeholders = criterionIds.map((_, i) => `$${i + 3}`).join(', ');
     const criteriaRows = await auditAll<{ id: string; ref_code: string | null; title: string }>(
       `SELECT id, ref_code, title FROM audit_program_criteria
         WHERE organization_id = $1 AND program_id = $2 AND id IN (${placeholders})`,
-      [organizationId, programId, ...criterionIds],
+      [organizationId, programId, ...criterionIds]
     );
     const areaByCriterionId = new Map<string, string>();
     for (const c of criteriaRows) {

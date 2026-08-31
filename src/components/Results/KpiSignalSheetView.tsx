@@ -5,11 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import {
   getKpiCurrentDefinitionVersion,
+  type KpiDefinitionDto,
   listKpiMeasurements,
   listKpis,
   newKpiIdempotencyKey,
   recordKpiMeasurement,
-  type KpiDefinitionDto,
 } from '@/components/ResultsVNext/kpiApi';
 
 import type { KpiDrawerSection } from './kpiDomain';
@@ -336,7 +336,8 @@ export const KpiSignalSheetView: React.FC<KpiSignalSheetViewProps> = ({
                       ))}
                     </select>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      No identity is inferred from the archived KPI. Select the governed target explicitly.
+                      No identity is inferred from the archived KPI. Select the governed target
+                      explicitly.
                     </p>
                   </div>
                   <div>

@@ -51,7 +51,10 @@ export function NamedCollapsibleSection(props: NamedCollapsibleSectionProps): Re
   const triggerId = `named-collapsible-trigger-${id}`;
 
   return (
-    <div className="border-t border-c-border-subtle first:border-t-0" data-testid={`named-collapsible-${id}`}>
+    <div
+      className="border-t border-c-border-subtle first:border-t-0"
+      data-testid={`named-collapsible-${id}`}
+    >
       <button
         type="button"
         id={triggerId}
@@ -77,7 +80,12 @@ export function NamedCollapsibleSection(props: NamedCollapsibleSectionProps): Re
         <ChevronIcon open={open} />
       </button>
       {open && (
-        <div id={panelId} role="region" aria-labelledby={triggerId} data-testid={`named-collapsible-panel-${id}`}>
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={triggerId}
+          data-testid={`named-collapsible-panel-${id}`}
+        >
           {children}
         </div>
       )}
@@ -95,7 +103,13 @@ function ChevronIcon({ open }: { open: boolean }): React.ReactElement {
       aria-hidden="true"
       className={`shrink-0 text-c-text-muted transition-transform ${open ? 'rotate-180' : ''}`}
     >
-      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M4 6l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

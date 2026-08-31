@@ -34,6 +34,7 @@ import {
   ProposeMobilizationBlueprintSchema,
   ProposeOpportunitySynthesisSchema,
   ProposePortfolioDecisionSchema,
+  ResolvePortfolioDecisionSchema,
   ReviewDrdAssessmentProposalSchema,
   ReviewFinanceKpiPackSchema,
   ReviewInitialIdeasProposalSchema,
@@ -41,7 +42,6 @@ import {
   ReviewMobilizationBlueprintSchema,
   ReviewOpportunitySynthesisSchema,
   ReviewPortfolioDecisionSchema,
-  ResolvePortfolioDecisionSchema,
   ReviseTransformationCaseSchema,
 } from '../../types/transformationCase.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -1946,7 +1946,10 @@ router.post(
           // Zod v4 + strictNullChecks:false toolchain — same inference quirk as
           // `blockerReason` in transformationCaseService.ts. Normalize to the
           // service's `Blueprint.raci[].accountable: string | null` DTO shape.
-          raci: blueprint.raci.map((entry) => ({ ...entry, accountable: entry.accountable ?? null })),
+          raci: blueprint.raci.map((entry) => ({
+            ...entry,
+            accountable: entry.accountable ?? null,
+          })),
           // Same Zod v4 + strictNullChecks:false `.nullable()`-without-`.optional()`
           // inference quirk as `raci[].accountable` above — normalize to the
           // service's `Blueprint.agentLimits[].budgetLimit: number | null` DTO shape.

@@ -148,7 +148,6 @@
  */
 
 import { createHash, randomUUID } from 'crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -413,7 +412,10 @@ function requireGraph(value: CanonicalGraph | null | undefined, reason: string):
  * row, so a caught CaseWorkspaceAuthError here throws the identical error
  * to match.
  */
-async function requireCaseAccessOrPlanVersionNotFound(actorUserId: string, caseId: string): Promise<void> {
+async function requireCaseAccessOrPlanVersionNotFound(
+  actorUserId: string,
+  caseId: string
+): Promise<void> {
   try {
     await requireCaseAccess(actorUserId, caseId);
   } catch (err) {
@@ -572,7 +574,8 @@ const DEFERRED_EXTERNAL_BLOCKERS: readonly PlanValidationBlocker[] = [
   },
   {
     code: 'ACL_BEYOND_ORG_UNKNOWN',
-    detail: 'Access-control checks beyond org scope require the Capability Registry and are not evaluated here.',
+    detail:
+      'Access-control checks beyond org scope require the Capability Registry and are not evaluated here.',
     severity: 'DEFERRED_EXTERNAL',
   },
   {
@@ -641,7 +644,9 @@ export function computeValidationBlockers(graph: CanonicalGraph): PlanValidation
 
   // Forward adjacency (non-dangling edges only) for reachability + cycles.
   const adjacency = new Map<string, string[]>();
-  const validEdges = edges.filter((e) => nodeIds.has(e.sourceNodeId) && nodeIds.has(e.targetNodeId));
+  const validEdges = edges.filter(
+    (e) => nodeIds.has(e.sourceNodeId) && nodeIds.has(e.targetNodeId)
+  );
   for (const e of validEdges) {
     const list = adjacency.get(e.sourceNodeId) ?? [];
     list.push(e.targetNodeId);
@@ -683,7 +688,9 @@ export function computeValidationBlockers(graph: CanonicalGraph): PlanValidation
   // Cycle detection over SEQUENCE/CONDITIONAL edges (see open_question #5 —
   // no loopPolicy field exists yet to distinguish an intentional bounded
   // loop from a defect, so ANY cycle here is reported as blocking).
-  const controlEdges = validEdges.filter((e) => !e.edgeType || e.edgeType === 'SEQUENCE' || e.edgeType === 'CONDITIONAL');
+  const controlEdges = validEdges.filter(
+    (e) => !e.edgeType || e.edgeType === 'SEQUENCE' || e.edgeType === 'CONDITIONAL'
+  );
   const controlAdjacency = new Map<string, string[]>();
   for (const e of controlEdges) {
     const list = controlAdjacency.get(e.sourceNodeId) ?? [];
@@ -827,7 +834,10 @@ function graphPayloadRef(planVersionId: string, graphDigest: string): string {
   return `case_plan_versions:${planVersionId}#${graphDigest}`;
 }
 
-async function loadForUpdate(client: PgTransactionClient, planVersionId: string): Promise<CasePlanVersionRow> {
+async function loadForUpdate(
+  client: PgTransactionClient,
+  planVersionId: string
+): Promise<CasePlanVersionRow> {
   const result = await client.query<CasePlanVersionRow>(
     `SELECT * FROM case_plan_versions WHERE case_plan_version_id = ? FOR UPDATE`,
     [planVersionId]
@@ -912,7 +922,10 @@ export async function createPlanDraftOnClient(
   input: CreatePlanDraftOnClientInput
 ): Promise<CasePlanVersion> {
   const caseId = requireNonBlank(input.caseId, 'plan_case_id_required');
-  const createdByActorId = requireNonBlank(input.createdByActorId, 'plan_created_by_actor_required');
+  const createdByActorId = requireNonBlank(
+    input.createdByActorId,
+    'plan_created_by_actor_required'
+  );
   const semanticGraph = requireGraph(input.semanticGraph, 'plan_semantic_graph_invalid');
 
   await requireCaseAccess(createdByActorId, caseId);
@@ -926,10 +939,9 @@ export async function createPlanDraftOnClient(
     case_id: string;
     organization_id: string;
     project_id: string | null;
-  }>(
-    `SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ? FOR UPDATE`,
-    [caseId]
-  );
+  }>(`SELECT case_id, organization_id, project_id FROM case_core WHERE case_id = ? FOR UPDATE`, [
+    caseId,
+  ]);
   const caseRow = caseResult.rows[0];
   if (!caseRow) throw new Error('plan_case_not_found');
 
@@ -1576,7 +1588,10 @@ export async function diffPlanVersions(
   const id = requireNonBlank(caseId, 'plan_case_id_required');
   const actor = requireNonBlank(actorUserId, 'plan_actor_required');
   await requireCaseAccess(actor, id);
-  const target = await getPlanVersion(requireNonBlank(planVersionId, 'plan_version_id_required'), actor);
+  const target = await getPlanVersion(
+    requireNonBlank(planVersionId, 'plan_version_id_required'),
+    actor
+  );
   if (!target || target.caseId !== id) throw new Error('plan_version_not_found');
 
   const baselineId = options?.against ?? target.supersedesPlanVersionId;
@@ -1590,8 +1605,16 @@ export async function diffPlanVersions(
     casePlanVersionId: target.casePlanVersionId,
     baselinePlanVersionId: baseline.casePlanVersionId,
     digestsEqual: target.graphDigest === baseline.graphDigest,
-    nodes: diffCollection(baseline.semanticGraph.nodes ?? [], target.semanticGraph.nodes ?? [], 'nodeId'),
-    edges: diffCollection(baseline.semanticGraph.edges ?? [], target.semanticGraph.edges ?? [], 'edgeId'),
+    nodes: diffCollection(
+      baseline.semanticGraph.nodes ?? [],
+      target.semanticGraph.nodes ?? [],
+      'nodeId'
+    ),
+    edges: diffCollection(
+      baseline.semanticGraph.edges ?? [],
+      target.semanticGraph.edges ?? [],
+      'edgeId'
+    ),
     variables: diffCollection(
       baseline.semanticGraph.variables ?? [],
       target.semanticGraph.variables ?? [],

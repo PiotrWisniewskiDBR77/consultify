@@ -23,7 +23,11 @@ import {
   type PresentationDeckModel,
   type PresentationNarrativeInput,
 } from './buildPresentationDeck';
-import { extractUnknownReasonBreakdown, isPlausibleRawOutput, toAssessmentOutput } from './outputAdapter';
+import {
+  extractUnknownReasonBreakdown,
+  isPlausibleRawOutput,
+  toAssessmentOutput,
+} from './outputAdapter';
 import { PresentationDeck } from './PresentationDeck';
 import type { RawAssessmentOutputRecord } from './rawOutputTypes';
 
@@ -77,7 +81,9 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
   locale = 'pl',
   fetchOutput = defaultFetchOutput,
 }) => {
-  const [state, setState] = useState<ViewState>(() => (outputId ? { kind: 'loading' } : { kind: 'no-output' }));
+  const [state, setState] = useState<ViewState>(() =>
+    outputId ? { kind: 'loading' } : { kind: 'no-output' }
+  );
 
   const stableNarrative = useMemo<PresentationNarrativeInput>(() => narrative ?? {}, [narrative]);
 
@@ -132,8 +138,8 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-text-muted" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Brak zamrożonego Outputu do zaprezentowania. Ten ekran nie pokazuje przykładowych liczb — wskaż
-            konkretny Output.
+            Brak zamrożonego Outputu do zaprezentowania. Ten ekran nie pokazuje przykładowych liczb
+            — wskaż konkretny Output.
           </p>
         </StateScreen>
       );
@@ -149,8 +155,8 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-danger" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Nie znaleziono Outputu o podanym identyfikatorze — mógł zostać usunięty lub identyfikator jest
-            nieprawidłowy.
+            Nie znaleziono Outputu o podanym identyfikatorze — mógł zostać usunięty lub
+            identyfikator jest nieprawidłowy.
           </p>
         </StateScreen>
       );
@@ -168,8 +174,8 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-warning" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Brak połączenia z serwerem — nie udało się pobrać Outputu. Spróbuj ponownie po odzyskaniu
-            połączenia.
+            Brak połączenia z serwerem — nie udało się pobrać Outputu. Spróbuj ponownie po
+            odzyskaniu połączenia.
           </p>
         </StateScreen>
       );
@@ -178,8 +184,8 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         <StateScreen>
           <AlertTriangle size={28} className="text-c-danger" />
           <p className="max-w-md text-sm text-c-text-secondary">
-            Odpowiedź serwera nie ma oczekiwanego kształtu zamrożonego Outputu — prezentacja nie może
-            wyświetlić niezweryfikowanych danych.
+            Odpowiedź serwera nie ma oczekiwanego kształtu zamrożonego Outputu — prezentacja nie
+            może wyświetlić niezweryfikowanych danych.
           </p>
         </StateScreen>
       );

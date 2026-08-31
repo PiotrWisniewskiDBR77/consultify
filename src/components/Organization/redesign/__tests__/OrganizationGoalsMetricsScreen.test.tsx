@@ -12,10 +12,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { OrgContextSyncHandle } from '../useOrgContextStoreSection';
 import { useContextBuilderStore } from '../../../../store/useContextBuilderStore';
 import OrganizationGoalsMetricsScreen from '../OrganizationGoalsMetricsScreen';
 import OrganizationStatePanel from '../OrganizationStatePanel';
+import type { OrgContextSyncHandle } from '../useOrgContextStoreSection';
 
 vi.mock('../../../../store/useContextBuilderStore');
 
@@ -115,7 +115,10 @@ describe('OrganizationGoalsMetricsScreen', () => {
     fireEvent.click(screen.getByText('Dodaj miernik'));
     expect(updateGoalsList).toHaveBeenCalledWith(
       'kpis',
-      expect.arrayContaining([expect.objectContaining({ name: 'OEE' }), expect.objectContaining({ name: '' })])
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'OEE' }),
+        expect.objectContaining({ name: '' }),
+      ])
     );
   });
 
@@ -131,9 +134,7 @@ describe('OrganizationGoalsMetricsScreen', () => {
   it('gdy contextSync.isUnsynced=true, panel pokazuje napis o buforze lokalnym', () => {
     renderScreen(makeContextSync({ isUnsynced: true }));
 
-    expect(
-      screen.getByText(/Dane zapisywane są lokalnie \(bufor roboczy\)/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Dane zapisywane są lokalnie \(bufor roboczy\)/)).toBeInTheDocument();
   });
 
   it('gdy contextSync.isUnsynced=false (zapisane/potwierdzone), napis o buforze lokalnym znika', () => {

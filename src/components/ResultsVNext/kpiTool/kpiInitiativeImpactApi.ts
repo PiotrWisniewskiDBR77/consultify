@@ -39,6 +39,7 @@
  * impact link.
  */
 import { Api } from '@/services/api';
+
 import { isNotFoundError } from '../kpiApi';
 
 export const INITIATIVE_KPI_IMPACT_STATUSES = [

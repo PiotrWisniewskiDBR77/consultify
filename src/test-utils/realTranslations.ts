@@ -96,7 +96,8 @@ export function createRealT(lang: SupportedTestLocale) {
           : undefined;
     const fallback =
       typeof defaultOrOpts === 'string' ? defaultOrOpts : ((opts?.defaultValue as string) ?? key);
-    const resolved = resolveKey(resource, key) ?? resolvePlural(resource, key, lang, opts) ?? fallback;
+    const resolved =
+      resolveKey(resource, key) ?? resolvePlural(resource, key, lang, opts) ?? fallback;
     return interpolate(resolved, opts);
   };
 }

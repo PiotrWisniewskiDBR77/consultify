@@ -22,15 +22,21 @@ import { randomUUID } from 'node:crypto';
 
 import type { PoolClient } from 'pg';
 
-import { toNullableNumber } from '../kpi/kpiTypes.js';
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import { toNullableNumber } from '../kpi/kpiTypes.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
-import { ROI_CALCULATION_ENGINE_VERSION, runRoiCalculationEngine } from './engine/roiCalculationEngine.js';
+import {
+  ROI_CALCULATION_ENGINE_VERSION,
+  runRoiCalculationEngine,
+} from './engine/roiCalculationEngine.js';
 import type {
   RoiCalculationEngineInput,
   RoiEngineAssumption,
@@ -59,7 +65,11 @@ import type { RoiCaseRow } from './roiTypes.js';
 export class RoiCalculationRunValidationError extends Error {
   code: string;
   details?: Record<string, unknown>;
-  constructor(message: string, code = 'INVALID_CALCULATION_RUN_REQUEST', details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code = 'INVALID_CALCULATION_RUN_REQUEST',
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'RoiCalculationRunValidationError';
     this.code = code;
@@ -391,7 +401,11 @@ export async function createRoiCalculationRun(
       );
       const caseRow = caseResult.rows[0];
       if (!caseRow) {
-        throw new RoiCalculationRunValidationError(`ROI case ${caseId} not found`, 'CASE_NOT_FOUND', { caseId });
+        throw new RoiCalculationRunValidationError(
+          `ROI case ${caseId} not found`,
+          'CASE_NOT_FOUND',
+          { caseId }
+        );
       }
 
       assertCommandCapability({
@@ -409,7 +423,11 @@ export async function createRoiCalculationRun(
         );
       }
 
-      const { engineInput, policyRow, scenarioRow } = await buildEngineInputFromDb(client, caseRow, scenarioId);
+      const { engineInput, policyRow, scenarioRow } = await buildEngineInputFromDb(
+        client,
+        caseRow,
+        scenarioId
+      );
       const output = runRoiCalculationEngine(engineInput);
 
       const inputHash = computeStateHash(engineInput as unknown as Record<string, unknown>);
@@ -460,13 +478,18 @@ export async function createRoiCalculationRun(
       );
       const runRow = insertResult.rows[0];
       if (!runRow) {
-        throw new Error('[createRoiCalculationRun] insert into rvn_roi_calculation_runs returned no row');
+        throw new Error(
+          '[createRoiCalculationRun] insert into rvn_roi_calculation_runs returned no row'
+        );
       }
       return toRoiCalculationRun(runRow);
     },
     buildEvent: ({ result }) => {
       const afterState: Record<string, unknown> = { run: result };
-      const eventType = result.status === 'completed' ? 'roi.calculation_run_completed' : 'roi.calculation_run_failed';
+      const eventType =
+        result.status === 'completed'
+          ? 'roi.calculation_run_completed'
+          : 'roi.calculation_run_failed';
       return {
         schemaVersion: 1,
         eventType,

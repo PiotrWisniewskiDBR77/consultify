@@ -147,7 +147,11 @@ export const TRANSITIONS: readonly TransitionDefinition[] = [
 
 export type TransitionOutcome =
   | { ok: true; toStatus: BusinessVersionStatus; requiresReason: boolean }
-  | { ok: false; code: 'STATE_PRECONDITION_FAILED' | 'FORBIDDEN' | 'REASON_REQUIRED'; message: string };
+  | {
+      ok: false;
+      code: 'STATE_PRECONDITION_FAILED' | 'FORBIDDEN' | 'REASON_REQUIRED';
+      message: string;
+    };
 
 /**
  * WP-B02 §3.2 / §7.3 — validate a proposed (status, action, role) combination.
@@ -162,7 +166,9 @@ export function validateTransition(
   role: FinanceRole,
   opts: { reasonProvided?: boolean } = {}
 ): TransitionOutcome {
-  const candidates = TRANSITIONS.filter((t) => t.action === action && t.from.includes(currentStatus));
+  const candidates = TRANSITIONS.filter(
+    (t) => t.action === action && t.from.includes(currentStatus)
+  );
   if (candidates.length === 0) {
     return {
       ok: false,
@@ -287,7 +293,11 @@ export function checkSelfApproval(input: SelfApprovalCheckInput): SelfApprovalCh
     return { forbidden: true, code: 'SELF_APPROVAL_FORBIDDEN', conflictingRole: 'preparer' };
   }
 
-  if (input.riskTier === 'HIGH_RISK' && input.reviewStartedBy && input.reviewStartedBy === input.approverUserId) {
+  if (
+    input.riskTier === 'HIGH_RISK' &&
+    input.reviewStartedBy &&
+    input.reviewStartedBy === input.approverUserId
+  ) {
     return { forbidden: true, code: 'SELF_APPROVAL_FORBIDDEN', conflictingRole: 'reviewer' };
   }
 
@@ -316,7 +326,11 @@ export function resolveExpectedVersion(
   bodyExpectedVersion: number | undefined,
   opts: { required?: boolean } = {}
 ): VersionHintOutcome {
-  if (ifMatchVersion !== undefined && bodyExpectedVersion !== undefined && ifMatchVersion !== bodyExpectedVersion) {
+  if (
+    ifMatchVersion !== undefined &&
+    bodyExpectedVersion !== undefined &&
+    ifMatchVersion !== bodyExpectedVersion
+  ) {
     return {
       ok: false,
       code: 'AMBIGUOUS_VERSION_HINT',

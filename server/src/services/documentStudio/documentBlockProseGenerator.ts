@@ -27,11 +27,11 @@ import { generateChatResponse } from '../aiService.js';
 import { enforceBlockGrounding } from './documentBlockContentGenerator.js';
 import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import {
-  documentSourceRefEvidenceText,
   type DocumentBlock,
   type DocumentIntake,
   type DocumentSchema,
   type DocumentSourceRef,
+  documentSourceRefEvidenceText,
 } from './documentStudioTypes.js';
 
 /** Block types whose prose we enrich. Structured blocks are left alone. */

@@ -124,9 +124,17 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
                   questionEvaluations: [
                     {
                       questionId,
-                      rubric: ['concreteness', 'evidence', 'depth', 'measurability', 'coherence'].map(
-                        (criterion) => ({ criterion, score: 4, justification: 'late but real' })
-                      ),
+                      rubric: [
+                        'concreteness',
+                        'evidence',
+                        'depth',
+                        'measurability',
+                        'coherence',
+                      ].map((criterion) => ({
+                        criterion,
+                        score: 4,
+                        justification: 'late but real',
+                      })),
                       feedback: 'late response',
                       fixType: null,
                     },
@@ -159,9 +167,7 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
     const { getRequestMetrics } = await import('../../../middleware/metrics.middleware.js');
     const metricsBefore = getRequestMetrics().aiTimeouts;
     const startedAt = Date.now();
-    const res = await request(app).post(
-      `/api/interview/sessions/${sessionId}/evaluate-answers`
-    );
+    const res = await request(app).post(`/api/interview/sessions/${sessionId}/evaluate-answers`);
     const elapsedMs = Date.now() - startedAt;
 
     // Must return well before the (deliberately much longer) provider delay —
@@ -178,7 +184,9 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
     expect(res.body.recommendations).toEqual([]);
     expect(getRequestMetrics().aiTimeouts).toBe(metricsBefore + 1);
 
-    const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [questionId]);
+    const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [
+      questionId,
+    ]);
     expect(row.rows[0].answer_text).toBe("the user's already-persisted answer");
 
     const persisted = await pool.query(
@@ -229,7 +237,11 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
         [sessionId, orgId]
       );
       expect(audit.rows).toHaveLength(1);
-      expect(audit.rows[0]).toMatchObject({ result: 'failure', resource_id: sessionId, organization_id: orgId });
+      expect(audit.rows[0]).toMatchObject({
+        result: 'failure',
+        resource_id: sessionId,
+        organization_id: orgId,
+      });
       const metadata =
         typeof audit.rows[0].metadata === 'string'
           ? JSON.parse(audit.rows[0].metadata)

@@ -57,7 +57,8 @@ const AUDIT_PROGRAMS = [
     organizationId: 'org-dbr77-demo',
     name: 'Przegląd gotowości bezpieczeństwa informacji — Elkomtech',
     description: 'Wywiady przed przeglądem zarządczym, 4 obszary kontrolne.',
-    objective: 'Potwierdzić gotowość organizacji do wewnętrznego przeglądu bezpieczeństwa informacji w Q4 2026.',
+    objective:
+      'Potwierdzić gotowość organizacji do wewnętrznego przeglądu bezpieczeństwa informacji w Q4 2026.',
     status: 'active',
     preset: 'new-company',
     config: {

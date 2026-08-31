@@ -9,17 +9,20 @@
  */
 import fs from 'fs';
 import path from 'path';
-
 import { describe, expect, it } from 'vitest';
 
-import { BUILD_SHA_ENV_PRECEDENCE, BUILD_SHA_UNKNOWN, resolveBuildSha } from '../../../config/buildSha.js';
+import {
+  BUILD_SHA_ENV_PRECEDENCE,
+  BUILD_SHA_UNKNOWN,
+  resolveBuildSha,
+} from '../../../config/buildSha.js';
+import { assertExpectedTarget, assertNoForbiddenFlags } from '../gateContract.js';
 import {
   APPROVED_SQL_CHAIN_VARIANTS,
+  classifySqlChainChecksum,
   SCHEMA_ATTESTED_FILENAME,
   SCHEMA_ATTESTED_PAIR,
-  classifySqlChainChecksum,
 } from '../sqlChainChecksumPolicy.js';
-import { assertExpectedTarget, assertNoForbiddenFlags } from '../gateContract.js';
 
 const repoRoot = path.resolve(process.cwd());
 const readJson = (p: string) => JSON.parse(fs.readFileSync(path.resolve(repoRoot, p), 'utf-8'));
@@ -67,7 +70,9 @@ describe('release gate — forbidden flags', () => {
 
 describe('release gate — positive target assertion', () => {
   it('passes when the resolved host contains the expected fingerprint', () => {
-    expect(assertExpectedTarget('postgresql://u:p@127.0.0.1:5432/db', '127.0.0.1')).toBe('127.0.0.1');
+    expect(assertExpectedTarget('postgresql://u:p@127.0.0.1:5432/db', '127.0.0.1')).toBe(
+      '127.0.0.1'
+    );
   });
   it('fails closed when no expectation is declared', () => {
     expect(() => assertExpectedTarget('postgresql://u:p@127.0.0.1:5432/db', undefined)).toThrow(
@@ -75,9 +80,9 @@ describe('release gate — positive target assertion', () => {
     );
   });
   it('fails closed when the host does not match the declared intent', () => {
-    expect(() => assertExpectedTarget('postgresql://u:p@somewhere.example:5432/db', 'staging')).toThrow(
-      /Target mismatch/
-    );
+    expect(() =>
+      assertExpectedTarget('postgresql://u:p@somewhere.example:5432/db', 'staging')
+    ).toThrow(/Target mismatch/);
   });
 });
 
@@ -127,7 +132,9 @@ describe('checksum policy — the 25 approved pairs', () => {
   });
 
   it('rejects an unknown filename that drifted', () => {
-    expect(classifySqlChainChecksum('not_reviewed.sql', 'a'.repeat(64), 'b'.repeat(64))).toBe('DRIFT');
+    expect(classifySqlChainChecksum('not_reviewed.sql', 'a'.repeat(64), 'b'.repeat(64))).toBe(
+      'DRIFT'
+    );
   });
 });
 
@@ -144,13 +151,21 @@ describe('checksum policy — 730 requires schema attestation', () => {
 
   it('rejects 730 on a different stored checksum even if current matches', () => {
     expect(
-      classifySqlChainChecksum(SCHEMA_ATTESTED_FILENAME, 'e'.repeat(64), SCHEMA_ATTESTED_PAIR.current)
+      classifySqlChainChecksum(
+        SCHEMA_ATTESTED_FILENAME,
+        'e'.repeat(64),
+        SCHEMA_ATTESTED_PAIR.current
+      )
     ).toBe('DRIFT');
   });
 
   it('rejects 730 on a different current checksum even if stored matches', () => {
     expect(
-      classifySqlChainChecksum(SCHEMA_ATTESTED_FILENAME, SCHEMA_ATTESTED_PAIR.stored, 'e'.repeat(64))
+      classifySqlChainChecksum(
+        SCHEMA_ATTESTED_FILENAME,
+        SCHEMA_ATTESTED_PAIR.stored,
+        'e'.repeat(64)
+      )
     ).toBe('DRIFT');
   });
 });
@@ -167,12 +182,18 @@ describe('build sha resolver — one precedence for every consumer', () => {
 
   it('prefers APP_BUILD_SHA over every platform variable', () => {
     expect(
-      resolveBuildSha({ APP_BUILD_SHA: 'aaa', RAILWAY_GIT_COMMIT_SHA: 'bbb', GITHUB_SHA: 'ccc' } as any)
+      resolveBuildSha({
+        APP_BUILD_SHA: 'aaa',
+        RAILWAY_GIT_COMMIT_SHA: 'bbb',
+        GITHUB_SHA: 'ccc',
+      } as any)
     ).toBe('aaa');
   });
 
   it('falls through the precedence in order', () => {
-    expect(resolveBuildSha({ RAILWAY_GIT_COMMIT_SHA: 'bbb', GITHUB_SHA: 'ccc' } as any)).toBe('bbb');
+    expect(resolveBuildSha({ RAILWAY_GIT_COMMIT_SHA: 'bbb', GITHUB_SHA: 'ccc' } as any)).toBe(
+      'bbb'
+    );
     expect(resolveBuildSha({ GITHUB_SHA: 'ccc', GIT_SHA: 'ddd' } as any)).toBe('ccc');
     expect(resolveBuildSha({ GIT_SHA: 'ddd' } as any)).toBe('ddd');
   });
@@ -182,7 +203,9 @@ describe('build sha resolver — one precedence for every consumer', () => {
   });
 
   it('ignores whitespace-only values instead of reporting a blank sha', () => {
-    expect(resolveBuildSha({ APP_BUILD_SHA: '   ', RAILWAY_GIT_COMMIT_SHA: 'bbb' } as any)).toBe('bbb');
+    expect(resolveBuildSha({ APP_BUILD_SHA: '   ', RAILWAY_GIT_COMMIT_SHA: 'bbb' } as any)).toBe(
+      'bbb'
+    );
   });
 });
 

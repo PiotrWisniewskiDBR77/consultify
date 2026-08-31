@@ -1,11 +1,12 @@
 import crypto from 'node:crypto';
+
 import { withPgTransaction } from '../utils/queryHelpers.js';
+import type { OperationalAlertKind } from './operationalAlertService.js';
 import {
   durableOperationalAlertsEnabled,
   recordOperationalAlertSignal,
   type SignalOutcome,
 } from './operationalAlertSignalDeliveryService.js';
-import type { OperationalAlertKind } from './operationalAlertService.js';
 
 export interface AlertRepairIntentInput {
   organizationId: string;

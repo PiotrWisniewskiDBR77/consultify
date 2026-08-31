@@ -271,8 +271,12 @@ describe.skipIf(!REAL_PG)(
     describe('B/C. the F-1 state is real: table present, protection absent, overwrite silent', () => {
       it('recreates the catalog state left by the skipped ELSE branch (no triggers, no function)', async () => {
         for (const schema of await benefitTrackingInstances()) {
-          await raw.query(`DROP TRIGGER IF EXISTS ${UPDATE_TRIGGER} ON "${schema}".benefit_tracking`);
-          await raw.query(`DROP TRIGGER IF EXISTS ${DELETE_TRIGGER} ON "${schema}".benefit_tracking`);
+          await raw.query(
+            `DROP TRIGGER IF EXISTS ${UPDATE_TRIGGER} ON "${schema}".benefit_tracking`
+          );
+          await raw.query(
+            `DROP TRIGGER IF EXISTS ${DELETE_TRIGGER} ON "${schema}".benefit_tracking`
+          );
         }
         await raw.query(`DROP FUNCTION IF EXISTS public.${PROTECTION_FUNCTION}()`);
 
@@ -325,9 +329,10 @@ describe.skipIf(!REAL_PG)(
         await insertConfirmedRow(greenRowId, 4200);
 
         await expect(
-          raw.query(`UPDATE public.benefit_tracking SET actual_cost_savings = 9999999 WHERE id = $1`, [
-            greenRowId,
-          ])
+          raw.query(
+            `UPDATE public.benefit_tracking SET actual_cost_savings = 9999999 WHERE id = $1`,
+            [greenRowId]
+          )
         ).rejects.toThrow(APPEND_ONLY);
 
         const after = await readActuals(greenRowId);

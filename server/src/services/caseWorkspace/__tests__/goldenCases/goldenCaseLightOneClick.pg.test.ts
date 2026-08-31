@@ -97,7 +97,9 @@ suite('GOLDEN CASE D — LIGHT: work order -> one-click start -> result -> deliv
         caseProfile: 'LIGHT' as const,
       };
 
-      const proposed = await as('post', `${BASE}/case-intake/work-orders/propose`).send({ workOrder });
+      const proposed = await as('post', `${BASE}/case-intake/work-orders/propose`).send({
+        workOrder,
+      });
       expect(proposed.status).toBe(200); // 200, not 201: CW-CANON-01, nothing created.
       expect(proposed.body.data.caseCreated).toBe(false);
       expect(proposed.body.data.runCreated).toBe(false);
@@ -262,15 +264,17 @@ suite('GOLDEN CASE D — LIGHT: work order -> one-click start -> result -> deliv
       expect([...correlationIds]).toEqual([correlationId]);
 
       await control.query(`DELETE FROM case_workspace_artifact_links WHERE case_id = $1`, [caseId]);
-      await control.query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [caseId]);
+      await control.query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [
+        caseId,
+      ]);
       // lightOneClickService.createNodeRun writes case_workspace_node_runs,
       // a table ContractFixtures.teardown() does not know about (it predates
       // the LIGHT one-click packet) — its FK on run_id blocks teardown's own
       // case_workspace_run_bindings delete if left in place.
       await control.query(`DELETE FROM case_workspace_node_runs WHERE case_id = $1`, [caseId]);
-      await control.query(`DELETE FROM case_workspace_case_intake_confirmations WHERE case_id = $1`, [
-        caseId,
-      ]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_workspace_case_intake_confirmations WHERE case_id = $1`, [caseId])
+        .catch(() => undefined);
       void linkId;
     } finally {
       await fx.teardown();

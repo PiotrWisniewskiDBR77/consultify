@@ -63,19 +63,34 @@ import { CheckCircle2, ExternalLink, Lock, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { EmptyState, ErrorState } from '@/components/shared/states';
 import {
-  type StandardRowMenu,
   StandardPreview,
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { EmptyState, ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { NoteEntryModal } from '../NoteEntryModal';
+import {
+  acceptResidualRisk,
+  AUDIT_FINDING_STATUSES,
+  type AuditActionStatus,
+  type AuditActionSummary,
+  type AuditCriterionSummary,
+  type AuditEvidenceSummary,
+  type AuditFindingSummary,
+  type AuditProgramSummary,
+  closeFinding,
+  listAllActions,
+  listEvidence,
+  listFindings,
+  listProgramCriteria,
+  reviewFinding,
+} from '../auditsMethodApi';
 import {
   findingClassificationLabel,
   findingClassificationTone,
@@ -84,22 +99,7 @@ import {
   findingStatusLabel,
   findingStatusTone,
 } from '../auditStatusTones';
-import {
-  acceptResidualRisk,
-  AUDIT_FINDING_STATUSES,
-  closeFinding,
-  listAllActions,
-  listEvidence,
-  listFindings,
-  listProgramCriteria,
-  reviewFinding,
-  type AuditActionStatus,
-  type AuditActionSummary,
-  type AuditCriterionSummary,
-  type AuditEvidenceSummary,
-  type AuditFindingSummary,
-  type AuditProgramSummary,
-} from '../auditsMethodApi';
+import { NoteEntryModal } from '../NoteEntryModal';
 
 /** Rozmiar strony rejestru — dopasowany do domyślnego `limit` backendu (`context.ts parsePaging`). */
 const PAGE_SIZE = 50;
@@ -114,7 +114,12 @@ export interface AuditFindingsTabProps {
 const EMPTY_MAP = new Map<string, string>();
 
 /** Statusy działania korygującego, które NIE liczą się jako „otwarte" dla kolumny „Termin". */
-const ACTION_CLOSED_STATUSES = new Set<AuditActionStatus>(['implemented', 'verified', 'rejected', 'cancelled']);
+const ACTION_CLOSED_STATUSES = new Set<AuditActionStatus>([
+  'implemented',
+  'verified',
+  'rejected',
+  'cancelled',
+]);
 
 /** Statusy ustalenia, po których dalsze przejścia stanu z tego rejestru nie mają sensu. */
 const FINDING_TERMINAL_STATUSES = new Set(['closed', 'risk_accepted', 'rejected']);
@@ -152,7 +157,10 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   /** R3(c): kanoniczny modal zastępujący `window.prompt` dla notatek zamknięcia/akceptacji ryzyka. */
-  const [noteModal, setNoteModal] = useState<{ kind: 'accept-risk' | 'close'; findingId: string } | null>(null);
+  const [noteModal, setNoteModal] = useState<{
+    kind: 'accept-risk' | 'close';
+    findingId: string;
+  } | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -164,14 +172,24 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       setEvidence([]);
       return;
     }
-    Promise.all([listProgramCriteria(programId), listAllActions(programId), listEvidence(programId)])
+    Promise.all([
+      listProgramCriteria(programId),
+      listAllActions(programId),
+      listEvidence(programId),
+    ])
       .then(([criteriaResult, actionsResult, evidenceResult]) => {
         setCriteria(criteriaResult);
         setActions(actionsResult);
         setEvidence(evidenceResult);
       })
       .catch((e: any) =>
-        setError(permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się wczytać ustaleń' : 'Failed to load findings'))
+        setError(
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish ? 'Nie udało się wczytać ustaleń' : 'Failed to load findings'
+          )
+        )
       );
   }, [programId, isPolish]);
 
@@ -191,7 +209,13 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
         setTotal(result.total);
       })
       .catch((e: any) =>
-        setError(permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się wczytać ustaleń' : 'Failed to load findings'))
+        setError(
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish ? 'Nie udało się wczytać ustaleń' : 'Failed to load findings'
+          )
+        )
       )
       .finally(() => setLoading(false));
   }, [programId, page, isPolish]);
@@ -262,7 +286,10 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
     for (const f of items) {
       if (seen.has(f.classification)) continue;
       seen.add(f.classification);
-      options.push({ value: f.classification, label: findingClassificationLabel(f.classification, isPolish) });
+      options.push({
+        value: f.classification,
+        label: findingClassificationLabel(f.classification, isPolish),
+      });
     }
     return options;
   }, [items, isPolish]);
@@ -279,7 +306,15 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           load();
         }
       } catch (e: any) {
-        setTransitionError(permissionAwareMessage(e, isPolish, isPolish ? 'Nie udało się zmienić statusu ustalenia' : 'Failed to change the finding status'));
+        setTransitionError(
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish
+              ? 'Nie udało się zmienić statusu ustalenia'
+              : 'Failed to change the finding status'
+          )
+        );
       } finally {
         setTransitioning(null);
       }
@@ -293,7 +328,9 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       label: isPolish ? 'Numer ustalenia' : 'Finding no.',
       width: '120px',
       render: (row: AuditFindingSummary) => (
-        <span className="text-xs font-mono text-c-text-secondary">{row.referenceCode || row.id}</span>
+        <span className="text-xs font-mono text-c-text-secondary">
+          {row.referenceCode || row.id}
+        </span>
       ),
     },
     {
@@ -333,7 +370,8 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       width: '150px',
       render: (row: AuditFindingSummary) => (
         <span className="text-xs text-c-text-secondary">
-          {(row.ownerUserId && userNameById.get(row.ownerUserId)) || (isPolish ? 'Nieprzypisany' : 'Unassigned')}
+          {(row.ownerUserId && userNameById.get(row.ownerUserId)) ||
+            (isPolish ? 'Nieprzypisany' : 'Unassigned')}
         </span>
       ),
     },
@@ -362,7 +400,10 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
         label: findingStatusLabel(value, isPolish),
       })),
       render: (row: AuditFindingSummary) => (
-        <StatusChip label={findingStatusLabel(row.status, isPolish)} tone={findingStatusTone(row.status)} />
+        <StatusChip
+          label={findingStatusLabel(row.status, isPolish)}
+          tone={findingStatusTone(row.status)}
+        />
       ),
     },
     {
@@ -371,7 +412,9 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       width: '150px',
       sortable: true,
       render: (row: AuditFindingSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.updatedAt)}
+        </span>
       ),
     },
   ];
@@ -406,7 +449,12 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           label: isPolish ? 'Potwierdź' : 'Confirm',
           icon: CheckCircle2,
           onClick: canConfirm
-            ? () => void runTransition(row.id, () => reviewFinding(row.id, 'confirm'), `${row.id}:confirm`)
+            ? () =>
+                void runTransition(
+                  row.id,
+                  () => reviewFinding(row.id, 'confirm'),
+                  `${row.id}:confirm`
+                )
             : undefined,
           disabled: !canConfirm || transitioning === `${row.id}:confirm`,
           note: canConfirm
@@ -419,7 +467,9 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           id: 'accept-risk',
           label: isPolish ? 'Zaakceptuj ryzyko rezydualne' : 'Accept residual risk',
           icon: ShieldCheck,
-          onClick: canAcceptRisk ? () => setNoteModal({ kind: 'accept-risk', findingId: row.id }) : undefined,
+          onClick: canAcceptRisk
+            ? () => setNoteModal({ kind: 'accept-risk', findingId: row.id })
+            : undefined,
           disabled: !canAcceptRisk || transitioning === `${row.id}:accept-risk`,
           note: canAcceptRisk
             ? undefined
@@ -452,7 +502,9 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           : 'Findings are not archived — the lifecycle ends with closure or risk acceptance.',
       },
       destructive: {
-        note: isPolish ? 'Ustalenia są nieusuwalne — ślad audytu.' : 'Findings cannot be deleted — immutable audit trail.',
+        note: isPolish
+          ? 'Ustalenia są nieusuwalne — ślad audytu.'
+          : 'Findings cannot be deleted — immutable audit trail.',
       },
     };
   };
@@ -470,17 +522,30 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
         {
           id: 'owner',
           label: isPolish ? 'Właściciel' : 'Owner',
-          value: (selected.ownerUserId && userNameById.get(selected.ownerUserId)) || (isPolish ? 'Nieprzypisany' : 'Unassigned'),
+          value:
+            (selected.ownerUserId && userNameById.get(selected.ownerUserId)) ||
+            (isPolish ? 'Nieprzypisany' : 'Unassigned'),
         },
         {
           id: 'severity',
           label: isPolish ? 'Istotność' : 'Severity',
           value: (
-            <StatusChip label={findingSeverityLabel(selected.severity, isPolish)} tone={findingSeverityTone(selected.severity)} />
+            <StatusChip
+              label={findingSeverityLabel(selected.severity, isPolish)}
+              tone={findingSeverityTone(selected.severity)}
+            />
           ),
         },
-        { id: 'requirement', label: isPolish ? 'Wymaganie' : 'Requirement', value: selected.requirementText || '—' },
-        { id: 'condition', label: isPolish ? 'Stan faktyczny' : 'Condition', value: selected.conditionText || '—' },
+        {
+          id: 'requirement',
+          label: isPolish ? 'Wymaganie' : 'Requirement',
+          value: selected.requirementText || '—',
+        },
+        {
+          id: 'condition',
+          label: isPolish ? 'Stan faktyczny' : 'Condition',
+          value: selected.conditionText || '—',
+        },
         { id: 'gap', label: isPolish ? 'Luka' : 'Gap', value: selected.gapText || '—' },
         {
           id: 'objectiveEvidence',
@@ -496,8 +561,16 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
             ? selected.contradictingEvidence.map((id) => evidenceTitleById.get(id) || id).join('; ')
             : '—',
         },
-        { id: 'recommendation', label: isPolish ? 'Rekomendacja' : 'Recommendation', value: selected.recommendation || '—' },
-        { id: 'rootCause', label: isPolish ? 'Przyczyna źródłowa' : 'Root cause', value: selected.rootCause || '—' },
+        {
+          id: 'recommendation',
+          label: isPolish ? 'Rekomendacja' : 'Recommendation',
+          value: selected.recommendation || '—',
+        },
+        {
+          id: 'rootCause',
+          label: isPolish ? 'Przyczyna źródłowa' : 'Root cause',
+          value: selected.rootCause || '—',
+        },
         {
           id: 'openActions',
           label: isPolish ? 'Otwarte działania' : 'Open actions',
@@ -509,9 +582,23 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           label: isPolish ? 'Ryzyko rezydualne' : 'Residual risk',
           value: selected.residualRiskNote || selected.residualRisk || '—',
         },
-        { id: 'closureNote', label: isPolish ? 'Notatka zamknięcia' : 'Closure note', value: selected.closureNote || '—' },
-        { id: 'createdAt', label: isPolish ? 'Utworzono' : 'Created', value: formatListDate(selected.createdAt), mono: true },
-        { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', value: formatListDate(selected.updatedAt), mono: true },
+        {
+          id: 'closureNote',
+          label: isPolish ? 'Notatka zamknięcia' : 'Closure note',
+          value: selected.closureNote || '—',
+        },
+        {
+          id: 'createdAt',
+          label: isPolish ? 'Utworzono' : 'Created',
+          value: formatListDate(selected.createdAt),
+          mono: true,
+        },
+        {
+          id: 'updatedAt',
+          label: isPolish ? 'Zaktualizowano' : 'Updated',
+          value: formatListDate(selected.updatedAt),
+          mono: true,
+        },
       ]
     : undefined;
 
@@ -524,7 +611,10 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       setNoteModal(null);
       void runTransition(
         findingId,
-        () => (kind === 'accept-risk' ? acceptResidualRisk(findingId, note) : closeFinding(findingId, note)),
+        () =>
+          kind === 'accept-risk'
+            ? acceptResidualRisk(findingId, note)
+            : closeFinding(findingId, note),
         key
       );
     },
@@ -647,7 +737,10 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
           ) : null}
         </div>
         {selected ? (
-          <div className="w-[380px] shrink-0 border-l border-c-border-subtle" data-testid="audit-finding-preview">
+          <div
+            className="w-[380px] shrink-0 border-l border-c-border-subtle"
+            data-testid="audit-finding-preview"
+          >
             <StandardPreview
               title={`${selected.referenceCode || selected.id} — ${selected.statement}`}
               onClose={() => setSelectedId(null)}

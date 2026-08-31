@@ -15,12 +15,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InitiativeStatus, type PortfolioInitiative } from '../../../types';
-import { ACTIVE_HIDDEN_STATUSES, ACTIVE_STATUSES, ALL_STATUSES } from '../../../utils/initiativeHelpers';
+import {
+  ACTIVE_HIDDEN_STATUSES,
+  ACTIVE_STATUSES,
+  ALL_STATUSES,
+} from '../../../utils/initiativeHelpers';
 import {
   getColumnsForScope,
   groupInitiativesByColumn,
-  warnOnHomelessStatuses,
   type KanbanScope,
+  warnOnHomelessStatuses,
 } from '../PortfolioKanbanView';
 
 const EVERY_STATUS = Object.values(InitiativeStatus) as InitiativeStatus[];

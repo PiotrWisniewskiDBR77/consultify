@@ -39,16 +39,28 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import type { RelationItem, StandardModuleTab, TableRow } from '@/components/standard';
 
-import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
+import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { RoiCaseListItem } from './roiApi';
+import { RoiAssumptionFormModal } from './RoiAssumptionFormModal';
+import { RoiBaselineEditModal } from './RoiBaselineEditModal';
+import { RoiBenefitLineFormModal } from './RoiBenefitLineFormModal';
+import {
+  RoiCalculationRunTriggerModal,
+  RoiKpiEvidenceLinkFormModal,
+  RoiScenarioFormModal,
+  RoiScenarioOverrideFormModal,
+} from './RoiBuildCaseModals';
+import { RoiCalculationPolicyEditModal } from './RoiCalculationPolicyEditModal';
 import type { RoiCardModeProps } from './RoiCaseCardSections';
-import { isRoiCaseLocked, getRoiCaseLockInfo } from './roiRegistryMappers';
-import { roiEvidenceLinkPurposeLabel } from './roiCaseFullToolMappers';
 import {
   addRoiAssumption,
+  type AddRoiAssumptionInput,
   addRoiBenefitLine,
+  type AddRoiBenefitLineInput,
   addRoiCostLine,
+  type AddRoiCostLineInput,
   getRoiBaseline,
   getRoiCalculationPolicy,
   listRoiAssumptions,
@@ -56,24 +68,21 @@ import {
   listRoiCostLines,
   newRoiIdempotencyKey,
   putRoiBaseline,
+  type PutRoiBaselineInput,
   putRoiCalculationPolicy,
+  type PutRoiCalculationPolicyInput,
   removeRoiAssumption,
   removeRoiBenefitLine,
   removeRoiCostLine,
   RoiApiError,
-  updateRoiAssumption,
-  updateRoiBenefitLine,
-  updateRoiCostLine,
-  type AddRoiAssumptionInput,
-  type AddRoiBenefitLineInput,
-  type AddRoiCostLineInput,
-  type PutRoiBaselineInput,
-  type PutRoiCalculationPolicyInput,
   type RoiAssumption,
   type RoiBaseline,
   type RoiBenefitLine,
   type RoiCalculationPolicy,
   type RoiCostLine,
+  updateRoiAssumption,
+  updateRoiBenefitLine,
+  updateRoiCostLine,
 } from './roiCaseDetailApi';
 import {
   buildRoiAssumptionColumns,
@@ -88,15 +97,11 @@ import {
   buildRoiSettingsRows,
   type RoiSettingsRowVm,
 } from './roiCaseDetailPresenters';
-import { RoiBaselineEditModal } from './RoiBaselineEditModal';
-import { RoiCalculationPolicyEditModal } from './RoiCalculationPolicyEditModal';
-import { RoiAssumptionFormModal } from './RoiAssumptionFormModal';
-import { RoiCostLineFormModal } from './RoiCostLineFormModal';
-import { RoiBenefitLineFormModal } from './RoiBenefitLineFormModal';
-import { RoiRemoveLineItemDialog } from './RoiRemoveLineItemDialog';
 import {
   addRoiBenefitEvidenceLink,
+  type AddRoiBenefitEvidenceLinkInput,
   addRoiScenario,
+  type AddRoiScenarioInput,
   createRoiCalculationRun,
   listRoiBenefitEvidenceLinks,
   listRoiCalculationRuns,
@@ -104,16 +109,15 @@ import {
   removeRoiBenefitEvidenceLink,
   removeRoiScenario,
   removeRoiScenarioOverride,
-  setRoiScenarioOverride,
-  updateRoiScenario,
-  type AddRoiBenefitEvidenceLinkInput,
-  type AddRoiScenarioInput,
   type RoiBenefitEvidenceLink,
   type RoiCalculationRun,
   type RoiScenario,
   type RoiScenarioOverride,
+  setRoiScenarioOverride,
   type SetRoiScenarioOverrideInput,
+  updateRoiScenario,
 } from './roiCaseFullToolApi';
+import { roiEvidenceLinkPurposeLabel } from './roiCaseFullToolMappers';
 import {
   buildRoiCalculationRunColumns,
   buildRoiCalculationRunPreview,
@@ -123,16 +127,26 @@ import {
   buildRoiScenarioRowMenu,
   withRoiFullToolId,
 } from './roiCaseFullToolPresenters';
-import { RoiCalculationRunTriggerModal, RoiKpiEvidenceLinkFormModal, RoiScenarioFormModal, RoiScenarioOverrideFormModal } from './RoiBuildCaseModals';
 import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import { RoiCostLineFormModal } from './RoiCostLineFormModal';
+import { getRoiCaseLockInfo, isRoiCaseLocked } from './roiRegistryMappers';
+import { RoiRemoveLineItemDialog } from './RoiRemoveLineItemDialog';
 
-type ModelTab = 'settings' | 'assumptions' | 'cost-lines' | 'benefit-lines' | 'scenarios' | 'calculation-runs';
+type ModelTab =
+  | 'settings'
+  | 'assumptions'
+  | 'cost-lines'
+  | 'benefit-lines'
+  | 'scenarios'
+  | 'calculation-runs';
 
 /** `RUNNABLE_STATUSES` for calculation-run creation — verbatim from
  * `roiCalculationRunCommands.ts:349` — deliberately NOT
  * `NON_EDITABLE_STATUSES`, see file header. */
-const ROI_CALC_RUN_RUNNABLE_STATUSES: readonly RoiCaseListItem['status'][] = ['modeling', 'ready_for_review'];
+const ROI_CALC_RUN_RUNNABLE_STATUSES: readonly RoiCaseListItem['status'][] = [
+  'modeling',
+  'ready_for_review',
+];
 
 export interface RoiCaseModelWorkspaceProps {
   roiCase: RoiCaseListItem;
@@ -160,17 +174,29 @@ interface WriteState {
 }
 const IDLE_WRITE: WriteState = { busy: false, error: null, isConflict: false };
 
-export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({
+  roiCase,
+  isPolish,
+  onBack,
+  phase,
+  onPhaseChange,
+  cardMode,
+}) => {
   const [localTab, setLocalTab] = useState<ModelTab>('settings');
   const tab = (cardMode ? cardMode.activeTab : localTab) as ModelTab;
-  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as ModelTab));
+  const setTab = (id: string) =>
+    cardMode ? cardMode.onTabChange(id) : setLocalTab(id as ModelTab);
   const locked = isRoiCaseLocked(roiCase.status);
   const lock = getRoiCaseLockInfo(roiCase.status);
   const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : undefined;
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const chipsBar = cardMode
     ? {}
-    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
+    : {
+        chips: phaseChips,
+        activeChip: phase,
+        onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase),
+      };
 
   // ── Scenarios (+ overrides) ──────────────────────────────────────────────
   const [scenarios, setScenarios] = useState<RoiScenario[] | null>(null);
@@ -178,7 +204,10 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
   const [scenariosLoading, setScenariosLoading] = useState(false);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
   const [scenarioOverrides, setScenarioOverrides] = useState<RoiScenarioOverride[] | null>(null);
-  const [scenarioForm, setScenarioForm] = useState<{ mode: 'create' | 'edit'; scenario: RoiScenario | null } | null>(null);
+  const [scenarioForm, setScenarioForm] = useState<{
+    mode: 'create' | 'edit';
+    scenario: RoiScenario | null;
+  } | null>(null);
   const [scenarioWrite, setScenarioWrite] = useState<WriteState>(IDLE_WRITE);
   const [scenarioIdempotencyKey, setScenarioIdempotencyKey] = useState('');
   const [removeScenario, setRemoveScenarioTarget] = useState<RoiScenario | null>(null);
@@ -216,8 +245,12 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
   const [policy, setPolicy] = useState<RoiCalculationPolicy | null | undefined>(undefined);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(false);
-  const [selectedSettingsId, setSelectedSettingsId] = useState<'baseline' | 'calculation-policy' | null>(null);
-  const [editSettingsKind, setEditSettingsKind] = useState<'baseline' | 'calculation-policy' | null>(null);
+  const [selectedSettingsId, setSelectedSettingsId] = useState<
+    'baseline' | 'calculation-policy' | null
+  >(null);
+  const [editSettingsKind, setEditSettingsKind] = useState<
+    'baseline' | 'calculation-policy' | null
+  >(null);
   const [settingsWrite, setSettingsWrite] = useState<WriteState>(IDLE_WRITE);
   const [settingsIdempotencyKey, setSettingsIdempotencyKey] = useState('');
 
@@ -238,7 +271,10 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
   const [assumptionsError, setAssumptionsError] = useState<string | null>(null);
   const [assumptionsLoading, setAssumptionsLoading] = useState(false);
   const [selectedAssumptionId, setSelectedAssumptionId] = useState<string | null>(null);
-  const [assumptionForm, setAssumptionForm] = useState<{ mode: 'create' | 'edit'; assumption: RoiAssumption | null } | null>(null);
+  const [assumptionForm, setAssumptionForm] = useState<{
+    mode: 'create' | 'edit';
+    assumption: RoiAssumption | null;
+  } | null>(null);
   const [assumptionWrite, setAssumptionWrite] = useState<WriteState>(IDLE_WRITE);
   const [assumptionIdempotencyKey, setAssumptionIdempotencyKey] = useState('');
   const [removeAssumption, setRemoveAssumption] = useState<RoiAssumption | null>(null);
@@ -257,7 +293,10 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
   const [costLinesError, setCostLinesError] = useState<string | null>(null);
   const [costLinesLoading, setCostLinesLoading] = useState(false);
   const [selectedCostLineId, setSelectedCostLineId] = useState<string | null>(null);
-  const [costLineForm, setCostLineForm] = useState<{ mode: 'create' | 'edit'; costLine: RoiCostLine | null } | null>(null);
+  const [costLineForm, setCostLineForm] = useState<{
+    mode: 'create' | 'edit';
+    costLine: RoiCostLine | null;
+  } | null>(null);
   const [costLineWrite, setCostLineWrite] = useState<WriteState>(IDLE_WRITE);
   const [costLineIdempotencyKey, setCostLineIdempotencyKey] = useState('');
   const [removeCostLine, setRemoveCostLine] = useState<RoiCostLine | null>(null);
@@ -276,7 +315,10 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
   const [benefitLinesError, setBenefitLinesError] = useState<string | null>(null);
   const [benefitLinesLoading, setBenefitLinesLoading] = useState(false);
   const [selectedBenefitLineId, setSelectedBenefitLineId] = useState<string | null>(null);
-  const [benefitLineForm, setBenefitLineForm] = useState<{ mode: 'create' | 'edit'; benefitLine: RoiBenefitLine | null } | null>(null);
+  const [benefitLineForm, setBenefitLineForm] = useState<{
+    mode: 'create' | 'edit';
+    benefitLine: RoiBenefitLine | null;
+  } | null>(null);
   const [benefitLineWrite, setBenefitLineWrite] = useState<WriteState>(IDLE_WRITE);
   const [benefitLineIdempotencyKey, setBenefitLineIdempotencyKey] = useState('');
   const [removeBenefitLine, setRemoveBenefitLine] = useState<RoiBenefitLine | null>(null);
@@ -312,24 +354,38 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setEvidenceLinks(null);
     setEvidenceLinksError(null);
     listRoiBenefitEvidenceLinks(roiCase.caseId, selectedBenefitLineId)
-      .then((rows) => { if (!cancelled) setEvidenceLinks(rows); })
-      .catch((err) => { if (!cancelled) setEvidenceLinksError(toUserFacingErrorMessage(err, isPolish)); });
-    return () => { cancelled = true; };
+      .then((rows) => {
+        if (!cancelled) setEvidenceLinks(rows);
+      })
+      .catch((err) => {
+        if (!cancelled) setEvidenceLinksError(toUserFacingErrorMessage(err, isPolish));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [roiCase.caseId, selectedBenefitLineId]);
 
   const submitEvidenceLink = (values: AddRoiBenefitEvidenceLinkInput) => {
     if (!evidenceLinkForm) return;
     setEvidenceLinkWrite({ busy: true, error: null, isConflict: false });
-    addRoiBenefitEvidenceLink(roiCase.caseId, evidenceLinkForm.benefitLineId, { ...values, idempotencyKey: newRoiIdempotencyKey() })
+    addRoiBenefitEvidenceLink(roiCase.caseId, evidenceLinkForm.benefitLineId, {
+      ...values,
+      idempotencyKey: newRoiIdempotencyKey(),
+    })
       .then((res) => {
         setEvidenceLinks((prev) => [...(prev ?? []), res.link]);
         setEvidenceLinkForm(null);
       })
-      .catch((err) => setEvidenceLinkWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setEvidenceLinkWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setEvidenceLinkWrite((s) => ({ ...s, busy: false })));
   };
   const removeEvidenceLink = (benefitLine: RoiBenefitLine, link: RoiBenefitEvidenceLink) => {
-    removeRoiBenefitEvidenceLink(roiCase.caseId, benefitLine.benefitLineId, link.linkId, { expectedVersion: link.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
+    removeRoiBenefitEvidenceLink(roiCase.caseId, benefitLine.benefitLineId, link.linkId, {
+      expectedVersion: link.rowVersion,
+      idempotencyKey: newRoiIdempotencyKey(),
+    })
       .then(() => setEvidenceLinks((prev) => (prev ?? []).filter((l) => l.linkId !== link.linkId)))
       .catch(() => {
         /* Non-blocking, same rationale as `removeOverride` above — a failed
@@ -342,7 +398,8 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     if (tab === 'settings' && baseline === undefined && !settingsLoading) loadSettings();
     if (tab === 'assumptions' && assumptions === null && !assumptionsLoading) loadAssumptions();
     if (tab === 'cost-lines' && costLines === null && !costLinesLoading) loadCostLines();
-    if (tab === 'benefit-lines' && benefitLines === null && !benefitLinesLoading) loadBenefitLines();
+    if (tab === 'benefit-lines' && benefitLines === null && !benefitLinesLoading)
+      loadBenefitLines();
     if (tab === 'scenarios' && scenarios === null && !scenariosLoading) loadScenarios();
     if (tab === 'calculation-runs' && calcRuns === null && !calcRunsLoading) loadCalcRuns();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -352,7 +409,10 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
   // when a scenario is opened (same "no N+1 across the whole list" shape as
   // `ResultsRoiHub.tsx`'s calc-run preview fetch).
   useEffect(() => {
-    if (!selectedScenarioId) { setScenarioOverrides(null); return; }
+    if (!selectedScenarioId) {
+      setScenarioOverrides(null);
+      return;
+    }
     // Overrides have no dedicated GET-list wrapper in `roiCaseFullToolApi.ts`
     // by server design (no such route exists — only POST/DELETE on a
     // scenario's overrides; the scenario's own GET response does not embed
@@ -374,24 +434,36 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
   const submitBaseline = (values: Omit<PutRoiBaselineInput, 'expectedVersion'>) => {
     if (!baseline) return;
     setSettingsWrite({ busy: true, error: null, isConflict: false });
-    putRoiBaseline(roiCase.caseId, { ...values, expectedVersion: baseline.rowVersion, idempotencyKey: settingsIdempotencyKey })
+    putRoiBaseline(roiCase.caseId, {
+      ...values,
+      expectedVersion: baseline.rowVersion,
+      idempotencyKey: settingsIdempotencyKey,
+    })
       .then((res) => {
         setBaseline(res.baseline);
         setEditSettingsKind(null);
       })
-      .catch((err) => setSettingsWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setSettingsWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setSettingsWrite((s) => ({ ...s, busy: false })));
   };
 
   const submitPolicy = (values: Omit<PutRoiCalculationPolicyInput, 'expectedVersion'>) => {
     if (!policy) return;
     setSettingsWrite({ busy: true, error: null, isConflict: false });
-    putRoiCalculationPolicy(roiCase.caseId, { ...values, expectedVersion: policy.rowVersion, idempotencyKey: settingsIdempotencyKey })
+    putRoiCalculationPolicy(roiCase.caseId, {
+      ...values,
+      expectedVersion: policy.rowVersion,
+      idempotencyKey: settingsIdempotencyKey,
+    })
       .then((res) => {
         setPolicy(res.calculationPolicy);
         setEditSettingsKind(null);
       })
-      .catch((err) => setSettingsWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setSettingsWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setSettingsWrite((s) => ({ ...s, busy: false })));
   };
 
@@ -421,13 +493,17 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     call
       .then((res) => {
         setAssumptions((prev) => {
-          const without = (prev ?? []).filter((a) => a.assumptionId !== res.assumption.assumptionId);
+          const without = (prev ?? []).filter(
+            (a) => a.assumptionId !== res.assumption.assumptionId
+          );
           return [...without, res.assumption];
         });
         setSelectedAssumptionId(res.assumption.assumptionId);
         setAssumptionForm(null);
       })
-      .catch((err) => setAssumptionWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setAssumptionWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setAssumptionWrite((s) => ({ ...s, busy: false })));
   };
   const submitRemoveAssumption = (reason: string | null) => {
@@ -439,11 +515,15 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
       idempotencyKey: newRoiIdempotencyKey(),
     })
       .then(() => {
-        setAssumptions((prev) => (prev ?? []).filter((a) => a.assumptionId !== removeAssumption.assumptionId));
+        setAssumptions((prev) =>
+          (prev ?? []).filter((a) => a.assumptionId !== removeAssumption.assumptionId)
+        );
         if (selectedAssumptionId === removeAssumption.assumptionId) setSelectedAssumptionId(null);
         setRemoveAssumption(null);
       })
-      .catch((err) => setAssumptionWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setAssumptionWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setAssumptionWrite((s) => ({ ...s, busy: false })));
   };
 
@@ -479,7 +559,9 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
         setSelectedCostLineId(res.costLine.costLineId);
         setCostLineForm(null);
       })
-      .catch((err) => setCostLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setCostLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setCostLineWrite((s) => ({ ...s, busy: false })));
   };
   const submitRemoveCostLine = (reason: string | null) => {
@@ -491,11 +573,15 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
       idempotencyKey: newRoiIdempotencyKey(),
     })
       .then(() => {
-        setCostLines((prev) => (prev ?? []).filter((c) => c.costLineId !== removeCostLine.costLineId));
+        setCostLines((prev) =>
+          (prev ?? []).filter((c) => c.costLineId !== removeCostLine.costLineId)
+        );
         if (selectedCostLineId === removeCostLine.costLineId) setSelectedCostLineId(null);
         setRemoveCostLine(null);
       })
-      .catch((err) => setCostLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setCostLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setCostLineWrite((s) => ({ ...s, busy: false })));
   };
 
@@ -516,7 +602,10 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     setBenefitLineWrite({ busy: true, error: null, isConflict: false });
     const call =
       benefitLineForm.mode === 'create'
-        ? addRoiBenefitLine(roiCase.caseId, { ...values, idempotencyKey: benefitLineIdempotencyKey })
+        ? addRoiBenefitLine(roiCase.caseId, {
+            ...values,
+            idempotencyKey: benefitLineIdempotencyKey,
+          })
         : updateRoiBenefitLine(roiCase.caseId, benefitLineForm.benefitLine!.benefitLineId, {
             ...values,
             expectedVersion: benefitLineForm.benefitLine!.rowVersion,
@@ -525,13 +614,17 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
     call
       .then((res) => {
         setBenefitLines((prev) => {
-          const without = (prev ?? []).filter((b) => b.benefitLineId !== res.benefitLine.benefitLineId);
+          const without = (prev ?? []).filter(
+            (b) => b.benefitLineId !== res.benefitLine.benefitLineId
+          );
           return [...without, res.benefitLine];
         });
         setSelectedBenefitLineId(res.benefitLine.benefitLineId);
         setBenefitLineForm(null);
       })
-      .catch((err) => setBenefitLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setBenefitLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setBenefitLineWrite((s) => ({ ...s, busy: false })));
   };
   const submitRemoveBenefitLine = (reason: string | null) => {
@@ -543,11 +636,16 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
       idempotencyKey: newRoiIdempotencyKey(),
     })
       .then(() => {
-        setBenefitLines((prev) => (prev ?? []).filter((b) => b.benefitLineId !== removeBenefitLine.benefitLineId));
-        if (selectedBenefitLineId === removeBenefitLine.benefitLineId) setSelectedBenefitLineId(null);
+        setBenefitLines((prev) =>
+          (prev ?? []).filter((b) => b.benefitLineId !== removeBenefitLine.benefitLineId)
+        );
+        if (selectedBenefitLineId === removeBenefitLine.benefitLineId)
+          setSelectedBenefitLineId(null);
         setRemoveBenefitLine(null);
       })
-      .catch((err) => setBenefitLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setBenefitLineWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setBenefitLineWrite((s) => ({ ...s, busy: false })));
   };
 
@@ -584,40 +682,82 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
         setSelectedScenarioId(res.scenario.scenarioId);
         setScenarioForm(null);
       })
-      .catch((err) => setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setScenarioWrite((s) => ({ ...s, busy: false })));
   };
   const submitRemoveScenario = (reason: string | null) => {
     if (!removeScenario) return;
     setScenarioWrite({ busy: true, error: null, isConflict: false });
-    removeRoiScenario(roiCase.caseId, removeScenario.scenarioId, { expectedVersion: removeScenario.rowVersion, reason, idempotencyKey: newRoiIdempotencyKey() })
+    removeRoiScenario(roiCase.caseId, removeScenario.scenarioId, {
+      expectedVersion: removeScenario.rowVersion,
+      reason,
+      idempotencyKey: newRoiIdempotencyKey(),
+    })
       .then(() => {
-        setScenarios((prev) => (prev ?? []).filter((s) => s.scenarioId !== removeScenario.scenarioId));
+        setScenarios((prev) =>
+          (prev ?? []).filter((s) => s.scenarioId !== removeScenario.scenarioId)
+        );
         if (selectedScenarioId === removeScenario.scenarioId) setSelectedScenarioId(null);
         setRemoveScenarioTarget(null);
       })
-      .catch((err) => setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setScenarioWrite((s) => ({ ...s, busy: false })));
   };
-  const overrideTargetOptions = (): { targetType: 'assumption' | 'cost_line' | 'benefit_line'; targetId: string; label: string }[] => [
-    ...(assumptions ?? []).map((a) => ({ targetType: 'assumption' as const, targetId: a.assumptionId, label: `${isPolish ? 'Założenie' : 'Assumption'}: ${a.label}` })),
-    ...(costLines ?? []).map((c) => ({ targetType: 'cost_line' as const, targetId: c.costLineId, label: `${isPolish ? 'Koszt' : 'Cost'}: ${c.label}` })),
-    ...(benefitLines ?? []).map((b) => ({ targetType: 'benefit_line' as const, targetId: b.benefitLineId, label: `${isPolish ? 'Korzyść' : 'Benefit'}: ${b.label}` })),
+  const overrideTargetOptions = (): {
+    targetType: 'assumption' | 'cost_line' | 'benefit_line';
+    targetId: string;
+    label: string;
+  }[] => [
+    ...(assumptions ?? []).map((a) => ({
+      targetType: 'assumption' as const,
+      targetId: a.assumptionId,
+      label: `${isPolish ? 'Założenie' : 'Assumption'}: ${a.label}`,
+    })),
+    ...(costLines ?? []).map((c) => ({
+      targetType: 'cost_line' as const,
+      targetId: c.costLineId,
+      label: `${isPolish ? 'Koszt' : 'Cost'}: ${c.label}`,
+    })),
+    ...(benefitLines ?? []).map((b) => ({
+      targetType: 'benefit_line' as const,
+      targetId: b.benefitLineId,
+      label: `${isPolish ? 'Korzyść' : 'Benefit'}: ${b.label}`,
+    })),
   ];
   const submitOverride = (values: Omit<SetRoiScenarioOverrideInput, 'expectedVersion'>) => {
     if (!overrideForm) return;
     setScenarioWrite({ busy: true, error: null, isConflict: false });
-    setRoiScenarioOverride(roiCase.caseId, overrideForm.scenarioId, { ...values, expectedVersion: overrideForm.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
+    setRoiScenarioOverride(roiCase.caseId, overrideForm.scenarioId, {
+      ...values,
+      expectedVersion: overrideForm.rowVersion,
+      idempotencyKey: newRoiIdempotencyKey(),
+    })
       .then((res) => {
-        setScenarioOverrides((prev) => [...(prev ?? []).filter((o) => o.overrideId !== res.override.overrideId), res.override]);
+        setScenarioOverrides((prev) => [
+          ...(prev ?? []).filter((o) => o.overrideId !== res.override.overrideId),
+          res.override,
+        ]);
         setOverrideForm(null);
       })
-      .catch((err) => setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setScenarioWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setScenarioWrite((s) => ({ ...s, busy: false })));
   };
   const removeOverride = (scenario: RoiScenario, override: RoiScenarioOverride) => {
-    removeRoiScenarioOverride(roiCase.caseId, scenario.scenarioId, override.overrideId, { expectedVersion: scenario.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
-      .then(() => setScenarioOverrides((prev) => (prev ?? []).filter((o) => o.overrideId !== override.overrideId)))
+    removeRoiScenarioOverride(roiCase.caseId, scenario.scenarioId, override.overrideId, {
+      expectedVersion: scenario.rowVersion,
+      idempotencyKey: newRoiIdempotencyKey(),
+    })
+      .then(() =>
+        setScenarioOverrides((prev) =>
+          (prev ?? []).filter((o) => o.overrideId !== override.overrideId)
+        )
+      )
       .catch(() => {
         /* Non-blocking — a failed remove leaves the override visible; the
          * user can retry. Preview-level relation clicks intentionally don't
@@ -642,19 +782,21 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
         setSelectedCalcRunId(res.run.runId);
         setCalcRunTriggerOpen(false);
       })
-      .catch((err) => setCalcRunWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+      .catch((err) =>
+        setCalcRunWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+      )
       .finally(() => setCalcRunWrite((s) => ({ ...s, busy: false })));
   };
 
   const tabs: StandardModuleTab[] = cardMode
     ? cardMode.tabs
     : [
-      { id: 'settings', label: isPolish ? 'Baseline i polityka' : 'Baseline & policy' },
-      { id: 'assumptions', label: isPolish ? 'Założenia' : 'Assumptions' },
-      { id: 'cost-lines', label: isPolish ? 'Koszty' : 'Cost lines' },
-      { id: 'benefit-lines', label: isPolish ? 'Korzyści' : 'Benefit lines' },
-      { id: 'scenarios', label: isPolish ? 'Scenariusze' : 'Scenarios' },
-      { id: 'calculation-runs', label: isPolish ? 'Przebiegi kalkulacji' : 'Calculation runs' },
+        { id: 'settings', label: isPolish ? 'Baseline i polityka' : 'Baseline & policy' },
+        { id: 'assumptions', label: isPolish ? 'Założenia' : 'Assumptions' },
+        { id: 'cost-lines', label: isPolish ? 'Koszty' : 'Cost lines' },
+        { id: 'benefit-lines', label: isPolish ? 'Korzyści' : 'Benefit lines' },
+        { id: 'scenarios', label: isPolish ? 'Scenariusze' : 'Scenarios' },
+        { id: 'calculation-runs', label: isPolish ? 'Przebiegi kalkulacji' : 'Calculation runs' },
       ];
 
   const breadcrumbs = cardMode
@@ -687,7 +829,8 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
 
   if (tab === 'assumptions') {
     const rows: TableRow[] = (assumptions ?? []).map((a) => withId(a, 'assumptionId'));
-    const selected = (assumptions ?? []).find((a) => a.assumptionId === selectedAssumptionId) ?? null;
+    const selected =
+      (assumptions ?? []).find((a) => a.assumptionId === selectedAssumptionId) ?? null;
     return (
       <>
         <ResultsVNextRegistryShell
@@ -701,7 +844,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             viewModes: ['table'],
             viewMode: 'table',
             ...chipsBar,
-            primaryCta: addCta(isPolish ? 'Nowe założenie' : 'New assumption', openCreateAssumption, 'roi-model-assumption-create-cta'),
+            primaryCta: addCta(
+              isPolish ? 'Nowe założenie' : 'New assumption',
+              openCreateAssumption,
+              'roi-model-assumption-create-cta'
+            ),
           }}
           table={{
             columns: buildRoiAssumptionColumns(isPolish),
@@ -714,8 +861,14 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
               !assumptionsLoading && !assumptionsError && rows.length === 0
                 ? {
                     title: isPolish ? 'Brak założeń' : 'No assumptions yet',
-                    description: isPolish ? 'Ta sprawa nie ma jeszcze żadnych założeń.' : 'This case has no assumptions yet.',
-                    actionLabel: locked ? undefined : isPolish ? 'Nowe założenie' : 'New assumption',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze żadnych założeń.'
+                      : 'This case has no assumptions yet.',
+                    actionLabel: locked
+                      ? undefined
+                      : isPolish
+                        ? 'Nowe założenie'
+                        : 'New assumption',
                     onAction: locked ? undefined : openCreateAssumption,
                   }
                 : undefined,
@@ -724,7 +877,13 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             rowMenu: (row) => {
               const a = row as unknown as RoiAssumption;
               return {
-                primary: [{ id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => setSelectedAssumptionId(a.assumptionId) }],
+                primary: [
+                  {
+                    id: 'open',
+                    label: isPolish ? 'Otwórz' : 'Open',
+                    onClick: () => setSelectedAssumptionId(a.assumptionId),
+                  },
+                ],
                 universalHandlers: {
                   preview: () => setSelectedAssumptionId(a.assumptionId),
                   edit: locked ? undefined : () => openEditAssumption(a),
@@ -737,7 +896,13 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             },
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiAssumptionPreview(selected, roiCase.status, isPolish, () => setSelectedAssumptionId(null)) : null}
+          preview={
+            selected
+              ? buildRoiAssumptionPreview(selected, roiCase.status, isPolish, () =>
+                  setSelectedAssumptionId(null)
+                )
+              : null
+          }
         />
         <RoiAssumptionFormModal
           open={!!assumptionForm}
@@ -780,7 +945,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             viewModes: ['table'],
             viewMode: 'table',
             ...chipsBar,
-            primaryCta: addCta(isPolish ? 'Nowa pozycja kosztowa' : 'New cost line', openCreateCostLine, 'roi-model-cost-line-create-cta'),
+            primaryCta: addCta(
+              isPolish ? 'Nowa pozycja kosztowa' : 'New cost line',
+              openCreateCostLine,
+              'roi-model-cost-line-create-cta'
+            ),
           }}
           table={{
             columns: buildRoiCostLineColumns(isPolish),
@@ -793,8 +962,14 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
               !costLinesLoading && !costLinesError && rows.length === 0
                 ? {
                     title: isPolish ? 'Brak pozycji kosztowych' : 'No cost lines yet',
-                    description: isPolish ? 'Ta sprawa nie ma jeszcze żadnych kosztów.' : 'This case has no cost lines yet.',
-                    actionLabel: locked ? undefined : isPolish ? 'Nowa pozycja kosztowa' : 'New cost line',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze żadnych kosztów.'
+                      : 'This case has no cost lines yet.',
+                    actionLabel: locked
+                      ? undefined
+                      : isPolish
+                        ? 'Nowa pozycja kosztowa'
+                        : 'New cost line',
                     onAction: locked ? undefined : openCreateCostLine,
                   }
                 : undefined,
@@ -803,18 +978,32 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             rowMenu: (row) => {
               const c = row as unknown as RoiCostLine;
               return {
-                primary: [{ id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => setSelectedCostLineId(c.costLineId) }],
+                primary: [
+                  {
+                    id: 'open',
+                    label: isPolish ? 'Otwórz' : 'Open',
+                    onClick: () => setSelectedCostLineId(c.costLineId),
+                  },
+                ],
                 universalHandlers: {
                   preview: () => setSelectedCostLineId(c.costLineId),
                   edit: locked ? undefined : () => openEditCostLine(c),
                   editNote: locked ? lockReason : undefined,
                 },
-                destructive: locked ? { note: lockReason } : { onClick: () => setRemoveCostLine(c) },
+                destructive: locked
+                  ? { note: lockReason }
+                  : { onClick: () => setRemoveCostLine(c) },
               };
             },
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiCostLinePreview(selected, roiCase.status, isPolish, () => setSelectedCostLineId(null)) : null}
+          preview={
+            selected
+              ? buildRoiCostLinePreview(selected, roiCase.status, isPolish, () =>
+                  setSelectedCostLineId(null)
+                )
+              : null
+          }
         />
         <RoiCostLineFormModal
           open={!!costLineForm}
@@ -844,7 +1033,8 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
 
   if (tab === 'benefit-lines') {
     const rows: TableRow[] = (benefitLines ?? []).map((b) => withId(b, 'benefitLineId'));
-    const selected = (benefitLines ?? []).find((b) => b.benefitLineId === selectedBenefitLineId) ?? null;
+    const selected =
+      (benefitLines ?? []).find((b) => b.benefitLineId === selectedBenefitLineId) ?? null;
     return (
       <>
         <ResultsVNextRegistryShell
@@ -858,7 +1048,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             viewModes: ['table'],
             viewMode: 'table',
             ...chipsBar,
-            primaryCta: addCta(isPolish ? 'Nowa pozycja korzyści' : 'New benefit line', openCreateBenefitLine, 'roi-model-benefit-line-create-cta'),
+            primaryCta: addCta(
+              isPolish ? 'Nowa pozycja korzyści' : 'New benefit line',
+              openCreateBenefitLine,
+              'roi-model-benefit-line-create-cta'
+            ),
           }}
           table={{
             columns: buildRoiBenefitLineColumns(isPolish),
@@ -871,8 +1065,14 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
               !benefitLinesLoading && !benefitLinesError && rows.length === 0
                 ? {
                     title: isPolish ? 'Brak pozycji korzyści' : 'No benefit lines yet',
-                    description: isPolish ? 'Ta sprawa nie ma jeszcze żadnych korzyści.' : 'This case has no benefit lines yet.',
-                    actionLabel: locked ? undefined : isPolish ? 'Nowa pozycja korzyści' : 'New benefit line',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze żadnych korzyści.'
+                      : 'This case has no benefit lines yet.',
+                    actionLabel: locked
+                      ? undefined
+                      : isPolish
+                        ? 'Nowa pozycja korzyści'
+                        : 'New benefit line',
                     onAction: locked ? undefined : openCreateBenefitLine,
                   }
                 : undefined,
@@ -881,13 +1081,21 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             rowMenu: (row) => {
               const b = row as unknown as RoiBenefitLine;
               return {
-                primary: [{ id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => setSelectedBenefitLineId(b.benefitLineId) }],
+                primary: [
+                  {
+                    id: 'open',
+                    label: isPolish ? 'Otwórz' : 'Open',
+                    onClick: () => setSelectedBenefitLineId(b.benefitLineId),
+                  },
+                ],
                 universalHandlers: {
                   preview: () => setSelectedBenefitLineId(b.benefitLineId),
                   edit: locked ? undefined : () => openEditBenefitLine(b),
                   editNote: locked ? lockReason : undefined,
                 },
-                destructive: locked ? { note: lockReason } : { onClick: () => setRemoveBenefitLine(b) },
+                destructive: locked
+                  ? { note: lockReason }
+                  : { onClick: () => setRemoveBenefitLine(b) },
               };
             },
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
@@ -895,7 +1103,9 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
           preview={
             selected
               ? {
-                  ...buildRoiBenefitLinePreview(selected, roiCase.status, isPolish, () => setSelectedBenefitLineId(null)),
+                  ...buildRoiBenefitLinePreview(selected, roiCase.status, isPolish, () =>
+                    setSelectedBenefitLineId(null)
+                  ),
                   relations: (evidenceLinks ?? []).map(
                     (l): RelationItem => ({
                       id: l.linkId,
@@ -978,7 +1188,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             viewModes: ['table'],
             viewMode: 'table',
             ...chipsBar,
-            primaryCta: addCta(isPolish ? 'Nowy scenariusz' : 'New scenario', openCreateScenario, 'roi-model-scenario-create-cta'),
+            primaryCta: addCta(
+              isPolish ? 'Nowy scenariusz' : 'New scenario',
+              openCreateScenario,
+              'roi-model-scenario-create-cta'
+            ),
           }}
           table={{
             columns: buildRoiScenarioColumns(isPolish),
@@ -991,18 +1205,21 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
               !scenariosLoading && !scenariosError && rows.length === 0
                 ? {
                     title: isPolish ? 'Brak scenariuszy' : 'No scenarios yet',
-                    description: isPolish ? 'Ta sprawa nie ma jeszcze żadnych scenariuszy.' : 'This case has no scenarios yet.',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze żadnych scenariuszy.'
+                      : 'This case has no scenarios yet.',
                     actionLabel: locked ? undefined : isPolish ? 'Nowy scenariusz' : 'New scenario',
                     onAction: locked ? undefined : openCreateScenario,
                   }
                 : undefined,
             selectedRowId: selectedScenarioId,
             onRowClick: (row) => setSelectedScenarioId(String(row.scenarioId)),
-            rowMenu: (row) => buildRoiScenarioRowMenu(row as unknown as RoiScenario, roiCase.status, isPolish, {
-              onPreview: (r) => setSelectedScenarioId(r.scenarioId),
-              onEdit: locked ? undefined : (r) => openEditScenario(r),
-              onRemove: locked ? undefined : (r) => setRemoveScenarioTarget(r),
-            }),
+            rowMenu: (row) =>
+              buildRoiScenarioRowMenu(row as unknown as RoiScenario, roiCase.status, isPolish, {
+                onPreview: (r) => setSelectedScenarioId(r.scenarioId),
+                onEdit: locked ? undefined : (r) => openEditScenario(r),
+                onRemove: locked ? undefined : (r) => setRemoveScenarioTarget(r),
+              }),
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
           }}
           preview={
@@ -1090,17 +1307,30 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
               !calcRunsLoading && !calcRunsError && rows.length === 0
                 ? {
                     title: isPolish ? 'Brak przebiegów kalkulacji' : 'No calculation runs yet',
-                    description: isPolish ? 'Ta sprawa nie ma jeszcze żadnego przebiegu kalkulacji.' : 'This case has no calculation runs yet.',
-                    actionLabel: calcRunRunnable ? (isPolish ? 'Nowy przebieg' : 'New run') : undefined,
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze żadnego przebiegu kalkulacji.'
+                      : 'This case has no calculation runs yet.',
+                    actionLabel: calcRunRunnable
+                      ? isPolish
+                        ? 'Nowy przebieg'
+                        : 'New run'
+                      : undefined,
                     onAction: calcRunRunnable ? openTriggerCalcRun : undefined,
                   }
                 : undefined,
             selectedRowId: selectedCalcRunId,
             onRowClick: (row) => setSelectedCalcRunId(String(row.runId)),
-            rowMenu: (row) => buildRoiCalculationRunRowMenu(row as unknown as RoiCalculationRun, isPolish, (r) => setSelectedCalcRunId(r.runId)),
+            rowMenu: (row) =>
+              buildRoiCalculationRunRowMenu(row as unknown as RoiCalculationRun, isPolish, (r) =>
+                setSelectedCalcRunId(r.runId)
+              ),
             defaultSort: { columnId: 'completedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiCalculationRunPreview(selected, isPolish, () => setSelectedCalcRunId(null)) : null}
+          preview={
+            selected
+              ? buildRoiCalculationRunPreview(selected, isPolish, () => setSelectedCalcRunId(null))
+              : null
+          }
         />
         <RoiCalculationRunTriggerModal
           open={calcRunTriggerOpen}
@@ -1118,8 +1348,12 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
 
   // ── "settings" (default tab) — Baseline + Calculation policy 2-row table ─
   const settingsRows: TableRow[] =
-    baseline === undefined || policy === undefined ? [] : buildRoiSettingsRows(baseline, policy).map((r) => withId(r, 'id'));
-  const selectedSettings = settingsRows.find((r) => r.id === selectedSettingsId) as unknown as RoiSettingsRowVm | undefined;
+    baseline === undefined || policy === undefined
+      ? []
+      : buildRoiSettingsRows(baseline, policy).map((r) => withId(r, 'id'));
+  const selectedSettings = settingsRows.find((r) => r.id === selectedSettingsId) as unknown as
+    | RoiSettingsRowVm
+    | undefined;
 
   return (
     <>
@@ -1158,7 +1392,13 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
               onPreview: (r) => setSelectedSettingsId(r.id),
             }),
         }}
-        preview={selectedSettings ? buildRoiSettingsPreview(selectedSettings, roiCase.status, isPolish, () => setSelectedSettingsId(null)) : null}
+        preview={
+          selectedSettings
+            ? buildRoiSettingsPreview(selectedSettings, roiCase.status, isPolish, () =>
+                setSelectedSettingsId(null)
+              )
+            : null
+        }
       />
       <RoiBaselineEditModal
         open={editSettingsKind === 'baseline'}

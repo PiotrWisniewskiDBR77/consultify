@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import path from 'path';
 
-import { getStorage } from './storage/index.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { getStorage } from './storage/index.js';
 
 export type AttachmentObjectType = 'task' | 'decision';
 
@@ -52,7 +52,10 @@ const selectFields = `
   created_at as "createdAt"`;
 
 function safeFilename(name: string): string {
-  const normalized = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
+  const normalized = path
+    .basename(name)
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, 200);
   return normalized || 'attachment';
 }
 
@@ -173,7 +176,10 @@ export async function getObjectAttachment(input: {
   attachmentId: string;
   organizationId: string;
   userId: string;
-}): Promise<{ attachment: ObjectAttachment; object: Awaited<ReturnType<ReturnType<typeof getStorage>['getObject']>> }> {
+}): Promise<{
+  attachment: ObjectAttachment;
+  object: Awaited<ReturnType<ReturnType<typeof getStorage>['getObject']>>;
+}> {
   await requireObjectAccess(input);
   const attachment = await queryHelpers.queryOne<ObjectAttachment>(
     `SELECT ${selectFields}

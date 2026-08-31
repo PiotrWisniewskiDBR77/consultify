@@ -52,14 +52,22 @@ describe('confirmedLevelsFor — dont_know is never counted as a confirmed level
     // ANSWER_CONFIRMED event carried a dont_know payload, the level must not
     // silently read as "achieved" or "zero".
     const events: MethodEvent[] = [
-      makeEvent({ type: 'ANSWER_CONFIRMED', level: 1, payload: { questionId: 'q-1', answerState: 'dont_know' } }),
+      makeEvent({
+        type: 'ANSWER_CONFIRMED',
+        level: 1,
+        payload: { questionId: 'q-1', answerState: 'dont_know' },
+      }),
     ];
     expect(confirmedLevelsFor(events, UNIT)).toEqual([]);
   });
 
   it('a genuinely confirmed level (answerState confirmed) IS counted', () => {
     const events: MethodEvent[] = [
-      makeEvent({ type: 'ANSWER_CONFIRMED', level: 1, payload: { questionId: 'q-1', answerState: 'confirmed' } }),
+      makeEvent({
+        type: 'ANSWER_CONFIRMED',
+        level: 1,
+        payload: { questionId: 'q-1', answerState: 'confirmed' },
+      }),
     ];
     expect(confirmedLevelsFor(events, UNIT)).toEqual([1]);
   });
@@ -72,16 +80,32 @@ describe('evidenceStrengthFor — strength is its own axis, independent of evide
 
   it('returns the single recorded strength', () => {
     const events: MethodEvent[] = [
-      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 1, payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2' } }),
+      makeEvent({
+        type: 'EVIDENCE_ATTACHED',
+        level: 1,
+        payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E2' },
+      }),
     ];
     expect(evidenceStrengthFor(events, UNIT)).toBe('E2');
   });
 
   it('returns the STRONGEST of several recorded strengths, not the first or last', () => {
     const events: MethodEvent[] = [
-      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 1, payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E1' } }),
-      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 2, payload: { evidenceId: 'ev-2', evidenceType: 'system_record', strength: 'E3' } }),
-      makeEvent({ type: 'EVIDENCE_ATTACHED', level: 3, payload: { evidenceId: 'ev-3', evidenceType: 'observation', strength: 'E2' } }),
+      makeEvent({
+        type: 'EVIDENCE_ATTACHED',
+        level: 1,
+        payload: { evidenceId: 'ev-1', evidenceType: 'document', strength: 'E1' },
+      }),
+      makeEvent({
+        type: 'EVIDENCE_ATTACHED',
+        level: 2,
+        payload: { evidenceId: 'ev-2', evidenceType: 'system_record', strength: 'E3' },
+      }),
+      makeEvent({
+        type: 'EVIDENCE_ATTACHED',
+        level: 3,
+        payload: { evidenceId: 'ev-3', evidenceType: 'observation', strength: 'E2' },
+      }),
     ];
     expect(evidenceStrengthFor(events, UNIT)).toBe('E3');
   });
@@ -103,7 +127,11 @@ describe('buildMatrixRowsForAxis — cells beyond the blocker are shaped as "una
     // (workHasStarted=true), never as merely "unassessed".
     const secondLevel = AXIS.areas[0].levels[1]?.level ?? 2;
     const events: MethodEvent[] = [
-      makeEvent({ type: 'ANSWER_CONFIRMED', level: secondLevel, payload: { questionId: 'q-x', answerState: 'confirmed' } }),
+      makeEvent({
+        type: 'ANSWER_CONFIRMED',
+        level: secondLevel,
+        payload: { questionId: 'q-x', answerState: 'confirmed' },
+      }),
     ];
     const rows = buildMatrixRowsForAxis(events, AXIS, new Set());
     const row = rows.find((r) => r.unitId === UNIT)!;

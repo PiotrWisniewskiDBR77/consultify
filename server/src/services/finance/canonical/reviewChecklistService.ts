@@ -20,8 +20,17 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { financeStmtLinesCellRef, type CellRef, type FinanceConsolidationScope, type FinanceAccumulationBasis } from '../../../types/finance/CellRef.js';
-import { getBusinessVersion, listBusinessVersions, type BusinessVersionRow } from './artifactVersionService.js';
+import {
+  type CellRef,
+  type FinanceAccumulationBasis,
+  type FinanceConsolidationScope,
+  financeStmtLinesCellRef,
+} from '../../../types/finance/CellRef.js';
+import {
+  type BusinessVersionRow,
+  getBusinessVersion,
+  listBusinessVersions,
+} from './artifactVersionService.js';
 
 // ---------------------------------------------------------------------------
 // finance_review_checklists — add / check / require
@@ -51,9 +60,15 @@ export type AddChecklistItemResult =
   | { ok: true; item: FinanceReviewChecklistItemRow }
   | { ok: false; code: 'ITEM_TEXT_REQUIRED'; message: string };
 
-export async function addChecklistItem(params: AddChecklistItemParams): Promise<AddChecklistItemResult> {
+export async function addChecklistItem(
+  params: AddChecklistItemParams
+): Promise<AddChecklistItemResult> {
   if (!params.item || !params.item.trim()) {
-    return { ok: false, code: 'ITEM_TEXT_REQUIRED', message: 'Checklist item text must be non-empty' };
+    return {
+      ok: false,
+      code: 'ITEM_TEXT_REQUIRED',
+      message: 'Checklist item text must be non-empty',
+    };
   }
   const row = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<FinanceReviewChecklistItemRow>(
@@ -61,7 +76,14 @@ export async function addChecklistItem(params: AddChecklistItemParams): Promise<
          id, organization_id, business_version_id, item, required, created_by
        ) VALUES (?, ?, ?, ?, ?, ?)
        RETURNING *`,
-      [uuidv4(), params.organizationId, params.businessVersionId, params.item, params.required ?? true, params.createdBy]
+      [
+        uuidv4(),
+        params.organizationId,
+        params.businessVersionId,
+        params.item,
+        params.required ?? true,
+        params.createdBy,
+      ]
     )
   );
   if (!row) throw new Error('finance_review_checklists insert returned no row');
@@ -73,14 +95,19 @@ export type ChecklistItemMutationResult =
   | { ok: false; code: 'NOT_FOUND' | 'ALREADY_CHECKED' | 'NOT_CHECKED'; message: string };
 
 /** "sprawdz" — mark an item checked. */
-export async function checkItem(organizationId: string, itemId: string, checkedBy: string): Promise<ChecklistItemMutationResult> {
+export async function checkItem(
+  organizationId: string,
+  itemId: string,
+  checkedBy: string
+): Promise<ChecklistItemMutationResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     const current = await tx.queryOne<FinanceReviewChecklistItemRow>(
       `SELECT * FROM finance_review_checklists WHERE id = ? AND organization_id = ?`,
       [itemId, organizationId]
     );
     if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Checklist item not found' };
-    if (current.checked_at) return { ok: false, code: 'ALREADY_CHECKED', message: 'Checklist item is already checked' };
+    if (current.checked_at)
+      return { ok: false, code: 'ALREADY_CHECKED', message: 'Checklist item is already checked' };
 
     const updated = await tx.queryOne<FinanceReviewChecklistItemRow>(
       `UPDATE finance_review_checklists SET checked_by = ?, checked_at = now()
@@ -93,14 +120,18 @@ export async function checkItem(organizationId: string, itemId: string, checkedB
 }
 
 /** Symmetric undo of checkItem() — clears checked_by/checked_at. */
-export async function uncheckItem(organizationId: string, itemId: string): Promise<ChecklistItemMutationResult> {
+export async function uncheckItem(
+  organizationId: string,
+  itemId: string
+): Promise<ChecklistItemMutationResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     const current = await tx.queryOne<FinanceReviewChecklistItemRow>(
       `SELECT * FROM finance_review_checklists WHERE id = ? AND organization_id = ?`,
       [itemId, organizationId]
     );
     if (!current) return { ok: false, code: 'NOT_FOUND', message: 'Checklist item not found' };
-    if (!current.checked_at) return { ok: false, code: 'NOT_CHECKED', message: 'Checklist item is not checked' };
+    if (!current.checked_at)
+      return { ok: false, code: 'NOT_CHECKED', message: 'Checklist item is not checked' };
 
     const updated = await tx.queryOne<FinanceReviewChecklistItemRow>(
       `UPDATE finance_review_checklists SET checked_by = NULL, checked_at = NULL
@@ -128,7 +159,10 @@ export async function setChecklistItemRequired(
   return { ok: true, item: updated };
 }
 
-export async function listChecklistItems(organizationId: string, businessVersionId: string): Promise<FinanceReviewChecklistItemRow[]> {
+export async function listChecklistItems(
+  organizationId: string,
+  businessVersionId: string
+): Promise<FinanceReviewChecklistItemRow[]> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<FinanceReviewChecklistItemRow>(
       `SELECT * FROM finance_review_checklists WHERE organization_id = ? AND business_version_id = ? ORDER BY created_at ASC`,
@@ -138,7 +172,10 @@ export async function listChecklistItems(organizationId: string, businessVersion
 }
 
 /** True iff every `required=true` item on this business version is checked. Empty checklist -> true (nothing outstanding). */
-export async function allRequiredItemsChecked(organizationId: string, businessVersionId: string): Promise<boolean> {
+export async function allRequiredItemsChecked(
+  organizationId: string,
+  businessVersionId: string
+): Promise<boolean> {
   const row = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ outstanding: string }>(
       `SELECT COUNT(*) AS outstanding FROM finance_review_checklists
@@ -225,7 +262,12 @@ export async function getChangedCellsForStatementPack(
   }
 
   if (!previous) {
-    return { ok: true, hasPreviousApproved: false, previousBusinessVersionId: null, changedCells: null };
+    return {
+      ok: true,
+      hasPreviousApproved: false,
+      previousBusinessVersionId: null,
+      changedCells: null,
+    };
   }
 
   // NOTE on the join key: `finance_stmt_entities` rows are scoped ONE-PER-`business_version_id`
@@ -285,8 +327,12 @@ export async function getChangedCellsForStatementPack(
       periodId: row.period_id,
       accumulationBasis: row.accumulation_basis,
     }),
-    previous: row.prev_value_status ? { valueStatus: row.prev_value_status, valueDecimal: row.prev_value_decimal } : null,
-    current: row.cur_value_status ? { valueStatus: row.cur_value_status, valueDecimal: row.cur_value_decimal } : null,
+    previous: row.prev_value_status
+      ? { valueStatus: row.prev_value_status, valueDecimal: row.prev_value_decimal }
+      : null,
+    current: row.cur_value_status
+      ? { valueStatus: row.cur_value_status, valueDecimal: row.cur_value_decimal }
+      : null,
   }));
 
   return {

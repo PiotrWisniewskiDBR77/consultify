@@ -27,7 +27,11 @@
  * pomylił "kompletny kształt danych" z "istniejący endpoint zapisu".
  */
 
-import { recommendKpisForIndustry, type AnalysisIndustryCode, type AnalysisKpiCatalogEntryLike } from './analysisKpiCatalog';
+import {
+  type AnalysisIndustryCode,
+  type AnalysisKpiCatalogEntryLike,
+  recommendKpisForIndustry,
+} from './analysisKpiCatalog';
 
 // ---------------------------------------------------------------------------
 // Kroki — kolejność DOSŁOWNIE z brifu.
@@ -152,7 +156,10 @@ export function isStepComplete(step: AnalysisCreatorStepId, state: AnalysisCreat
  * poprzedzające są kompletne — dowód, że nie da się "przeskoczyć" np. od razu
  * do wyboru KPI bez wybranego źródła.
  */
-export function canNavigateToStep(target: AnalysisCreatorStepId, state: AnalysisCreatorState): boolean {
+export function canNavigateToStep(
+  target: AnalysisCreatorStepId,
+  state: AnalysisCreatorState
+): boolean {
   const targetIndex = ANALYSIS_CREATOR_STEPS.indexOf(target);
   for (let i = 0; i < targetIndex; i += 1) {
     if (!isStepComplete(ANALYSIS_CREATOR_STEPS[i], state)) return false;
@@ -186,8 +193,12 @@ export function togglePeriodSelected(
   periodId: string
 ): AnalysisCreatorState {
   const has = state.selectedPeriodIds.includes(periodId);
-  const nextIds = has ? state.selectedPeriodIds.filter((id) => id !== periodId) : [...state.selectedPeriodIds, periodId];
-  const chronoIndexByPeriodId = new Map(periodOptions.map((p) => [p.periodId, p.chronologicalIndex] as const));
+  const nextIds = has
+    ? state.selectedPeriodIds.filter((id) => id !== periodId)
+    : [...state.selectedPeriodIds, periodId];
+  const chronoIndexByPeriodId = new Map(
+    periodOptions.map((p) => [p.periodId, p.chronologicalIndex] as const)
+  );
   nextIds.sort((a, b) => (chronoIndexByPeriodId.get(a) ?? 0) - (chronoIndexByPeriodId.get(b) ?? 0));
   return { ...state, selectedPeriodIds: nextIds };
 }
@@ -199,11 +210,16 @@ export function togglePeriodSelected(
 // użytkownika w kroku 4, gdyby wrócił i zmienił zdanie).
 // ---------------------------------------------------------------------------
 
-export function toggleKpiSelected(state: AnalysisCreatorState, kpiCode: string): AnalysisCreatorState {
+export function toggleKpiSelected(
+  state: AnalysisCreatorState,
+  kpiCode: string
+): AnalysisCreatorState {
   const has = state.selectedKpiCodes.includes(kpiCode);
   return {
     ...state,
-    selectedKpiCodes: has ? state.selectedKpiCodes.filter((c) => c !== kpiCode) : [...state.selectedKpiCodes, kpiCode],
+    selectedKpiCodes: has
+      ? state.selectedKpiCodes.filter((c) => c !== kpiCode)
+      : [...state.selectedKpiCodes, kpiCode],
   };
 }
 
@@ -240,7 +256,11 @@ export interface AnalysisPreflightResult {
 
 export function runAnalysisPreflightCheck(params: {
   selectedKpiCodes: readonly string[];
-  catalog: readonly { kpiCode: string; kpiName: string; requiredCanonicalLineCodes: string[] | null }[];
+  catalog: readonly {
+    kpiCode: string;
+    kpiName: string;
+    requiredCanonicalLineCodes: string[] | null;
+  }[];
   availableLineCodes: readonly string[];
 }): AnalysisPreflightResult {
   const available = new Set(params.availableLineCodes);
@@ -282,7 +302,9 @@ export interface AnalysisCreatorDraftPayload {
  * preflight, (b) trzymania w pamięci do czasu, aż backend doda właściwy
  * endpoint zapisu.
  */
-export function buildAnalysisCreatorDraftPayload(state: AnalysisCreatorState): AnalysisCreatorDraftPayload | null {
+export function buildAnalysisCreatorDraftPayload(
+  state: AnalysisCreatorState
+): AnalysisCreatorDraftPayload | null {
   if (!state.sourceVersionId) return null;
   if (state.selectedPeriodIds.length === 0) return null;
   if (!state.industryCode) return null;

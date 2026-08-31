@@ -16,8 +16,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   isResultsVNextFlagEnabled,
-  resultsVNextHostAllowsDefaultOn,
   RESULTS_VNEXT_FLAG_KEYS,
+  resultsVNextHostAllowsDefaultOn,
 } from '../resultsVNextFeatureFlags';
 
 const ORIGINAL_LOCATION = window.location;

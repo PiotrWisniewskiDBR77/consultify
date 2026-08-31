@@ -60,11 +60,11 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { AdminBreakGlassPanel } from '../../src/components/Admin/AdminBreakGlassPanel';
 import { AdminDomainsPanel } from '../../src/components/Admin/AdminDomainsPanel';
+import { AdminSecurityAlertsPanel } from '../../src/components/Admin/AdminSecurityAlertsPanel';
 import {
   AdminSecurityIdentityPanel,
   type AdminSecurityIdentityTabId,
 } from '../../src/components/Admin/AdminSecurityIdentityPanel';
-import { AdminSecurityAlertsPanel } from '../../src/components/Admin/AdminSecurityAlertsPanel';
 import { AdminServiceAccountsPanel } from '../../src/components/Admin/AdminServiceAccountsPanel';
 import { AdminSessionsPanel } from '../../src/components/Admin/AdminSessionsPanel';
 import { seedRealisticSession } from '../mocks/seedStore';
@@ -517,13 +517,12 @@ class DebugBoundary extends React.Component<
   }
 }
 
-const SECURITY_TAB_BY_SCREEN: Partial<Record<AdminSecurityScreenId, AdminSecurityIdentityTabId>> =
-  {
-    sso: 'policy',
-    'scim-lifecycle': 'scim',
-    'api-access': 'api-access',
-    'risk-summary': 'risk',
-  };
+const SECURITY_TAB_BY_SCREEN: Partial<Record<AdminSecurityScreenId, AdminSecurityIdentityTabId>> = {
+  sso: 'policy',
+  'scim-lifecycle': 'scim',
+  'api-access': 'api-access',
+  'risk-summary': 'risk',
+};
 
 // Mapowanie 1:1 z AdminSettingsModule.tsx case 'security'.
 function renderSecurityScreen(adminScreen: AdminSecurityScreenId): React.ReactElement {

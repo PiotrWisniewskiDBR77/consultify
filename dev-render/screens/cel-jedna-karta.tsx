@@ -57,6 +57,12 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import {
+  NModeContentBlock,
+  type NModeSection,
+  NModeShell,
+} from '../../src/components/shared/NModeLayout';
+import { PreviewRelations } from '../../src/components/shared/PreviewPane/PreviewRelations';
 import { ArtifactPropertiesTable } from '../../src/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
@@ -64,12 +70,6 @@ import {
   type ArtifactRightPanelSection,
 } from '../../src/components/standard/ArtifactRightPanel';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-import { PreviewRelations } from '../../src/components/shared/PreviewPane/PreviewRelations';
-import {
-  NModeContentBlock,
-  NModeShell,
-  type NModeSection,
-} from '../../src/components/shared/NModeLayout';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
@@ -124,7 +124,10 @@ const StatTile: React.FC<{
 const KV: React.FC<{ rows: { label: string; value: string }[] }> = ({ rows }) => (
   <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
     {rows.map((r) => (
-      <div key={r.label} className="flex items-baseline justify-between gap-3 border-b border-c-border-subtle/60 pb-1.5">
+      <div
+        key={r.label}
+        className="flex items-baseline justify-between gap-3 border-b border-c-border-subtle/60 pb-1.5"
+      >
         <dt className="text-xs text-c-text-muted">{r.label}</dt>
         <dd className="text-right text-xs font-medium tabular-nums text-c-text">{r.value}</dd>
       </div>
@@ -184,10 +187,10 @@ const SimpleTable: React.FC<{
 );
 
 // Pasek postępu — wyłącznie tokeny c-*, brak crimsonu.
-const ProgressBar: React.FC<{ pct: number; tone?: 'neutral' | 'success' | 'warning' | 'danger' }> = ({
-  pct,
-  tone = 'neutral',
-}) => {
+const ProgressBar: React.FC<{
+  pct: number;
+  tone?: 'neutral' | 'success' | 'warning' | 'danger';
+}> = ({ pct, tone = 'neutral' }) => {
   const fillClass =
     tone === 'success'
       ? 'bg-c-success'
@@ -209,14 +212,19 @@ const CelContent: React.FC = () => (
   <div className="flex flex-col gap-4">
     <NModeContentBlock blockId="cel-oswiadczenie" scope={SCOPE} title="Co chcemy osiągnąć" readMode>
       <p className="text-xs leading-relaxed text-c-text-secondary">
-        Zwiększyć przepustowość linii pakowania L3 na tyle, żeby pokryć rosnący popyt bez
-        dodatkowej zmiany ani dodatkowego zatrudnienia — wyłącznie odzyskując czas maszyny
-        tracony dziś na przezbrojeniach. Linia pracuje na 91% obłożenia i traci zamówienia,
-        których dziś fizycznie nie da się obsłużyć przy obecnym czasie przezbrojeń.
+        Zwiększyć przepustowość linii pakowania L3 na tyle, żeby pokryć rosnący popyt bez dodatkowej
+        zmiany ani dodatkowego zatrudnienia — wyłącznie odzyskując czas maszyny tracony dziś na
+        przezbrojeniach. Linia pracuje na 91% obłożenia i traci zamówienia, których dziś fizycznie
+        nie da się obsłużyć przy obecnym czasie przezbrojeń.
       </p>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="cel-dlaczego" scope={SCOPE} title="Dlaczego to ważne teraz" readMode>
+    <NModeContentBlock
+      blockId="cel-dlaczego"
+      scope={SCOPE}
+      title="Dlaczego to ważne teraz"
+      readMode
+    >
       <Bullets
         items={[
           'Dział sprzedaży zgłasza popyt przekraczający dzisiejszą zdolność linii L3 o ok. 6% od Q2 2026.',
@@ -232,7 +240,10 @@ const CelContent: React.FC = () => (
           { label: 'Właściciel celu', value: 'Anna Kowalczyk (Dyrektor Operacyjna)' },
           { label: 'Okres', value: 'Q3 2026 – Q2 2027 (3 kwartały, cykl zamknięty)' },
           { label: 'Poziom', value: 'Operacyjny — Zakład NordFood, linia pakowania L3' },
-          { label: 'Powiązana inicjatywa', value: 'Skrócenie przezbrojeń (SMED), linia pakowania L3' },
+          {
+            label: 'Powiązana inicjatywa',
+            value: 'Skrócenie przezbrojeń (SMED), linia pakowania L3',
+          },
           { label: 'Status cyklu', value: 'Zamknięty — 30 czerwca 2027' },
         ]}
       />
@@ -243,21 +254,43 @@ const CelContent: React.FC = () => (
 // ── SEKCJA 2: KLUCZOWE REZULTATY ────────────────────────────────────────────
 const KluczoweRezultatyContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="kr-jak-liczymy" scope={SCOPE} title="Jak liczony jest postęp" readMode>
+    <NModeContentBlock
+      blockId="kr-jak-liczymy"
+      scope={SCOPE}
+      title="Jak liczony jest postęp"
+      readMode
+    >
       <p className="text-xs leading-relaxed text-c-text-secondary">
-        Postęp każdego kluczowego rezultatu = <strong className="text-c-text">(bieżąca − startowa) ÷ (docelowa − startowa)</strong>,
+        Postęp każdego kluczowego rezultatu ={' '}
+        <strong className="text-c-text">(bieżąca − startowa) ÷ (docelowa − startowa)</strong>,
         ograniczony do przedziału 0–100%. KR1 czyta bieżącą wartość automatycznie z pomiarów
-        wskaźnika „Czas przezbrojenia linii L3" (sekcja „Powiązania") — nie jest wpisywany
-        ręcznie.
+        wskaźnika „Czas przezbrojenia linii L3" (sekcja „Powiązania") — nie jest wpisywany ręcznie.
       </p>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="kr1" scope={SCOPE} title="KR1 — Skrócić czas przezbrojenia" readMode>
+    <NModeContentBlock
+      blockId="kr1"
+      scope={SCOPE}
+      title="KR1 — Skrócić czas przezbrojenia"
+      readMode
+    >
       <div className="flex flex-col gap-3">
         <div className="grid grid-cols-3 gap-3">
           <StatTile label="Start" value="47 min" sub="sierpień 2026" tone="neutral" icon={Gauge} />
-          <StatTile label="Cel" value="26 min" sub="rewidowany 5 marca 2027" tone="neutral" icon={Target} />
-          <StatTile label="Bieżąca" value="25 min" sub="maj 2027 (ostatni pomiar)" tone="success" icon={TrendingUp} />
+          <StatTile
+            label="Cel"
+            value="26 min"
+            sub="rewidowany 5 marca 2027"
+            tone="neutral"
+            icon={Target}
+          />
+          <StatTile
+            label="Bieżąca"
+            value="25 min"
+            sub="maj 2027 (ostatni pomiar)"
+            tone="success"
+            icon={TrendingUp}
+          />
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between text-[11px] text-c-text-muted">
@@ -267,40 +300,70 @@ const KluczoweRezultatyContent: React.FC = () => (
           <ProgressBar pct={100} tone="success" />
         </div>
         <p className="text-[11px] leading-relaxed text-c-text-muted">
-          Wartość czytana automatycznie z pomiarów wskaźnika „Czas przezbrojenia linii L3" —
-          bieżąca 25 min jest LEPSZA niż rewidowany cel 26 min, stąd postęp powyżej 100%.
+          Wartość czytana automatycznie z pomiarów wskaźnika „Czas przezbrojenia linii L3" — bieżąca
+          25 min jest LEPSZA niż rewidowany cel 26 min, stąd postęp powyżej 100%.
         </p>
       </div>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="kr2" scope={SCOPE} title="KR2 — Zwiększyć liczbę przezbrojeń dziennie" readMode>
+    <NModeContentBlock
+      blockId="kr2"
+      scope={SCOPE}
+      title="KR2 — Zwiększyć liczbę przezbrojeń dziennie"
+      readMode
+    >
       <div className="flex flex-col gap-3">
         <div className="grid grid-cols-3 gap-3">
-          <StatTile label="Start" value="4 / dzień" sub="sierpień 2026" tone="neutral" icon={Gauge} />
+          <StatTile
+            label="Start"
+            value="4 / dzień"
+            sub="sierpień 2026"
+            tone="neutral"
+            icon={Gauge}
+          />
           <StatTile label="Cel" value="6 / dzień" sub="bez zmiany" tone="neutral" icon={Target} />
-          <StatTile label="Bieżąca" value="5,4 / dzień" sub="czerwiec 2027 (koniec cyklu)" tone="warning" icon={TrendingUp} />
+          <StatTile
+            label="Bieżąca"
+            value="5,4 / dzień"
+            sub="czerwiec 2027 (koniec cyklu)"
+            tone="warning"
+            icon={TrendingUp}
+          />
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between text-[11px] text-c-text-muted">
             <span>Postęp</span>
-            <span className="font-semibold text-c-warning">70% — NIE osiągnięty na koniec cyklu</span>
+            <span className="font-semibold text-c-warning">
+              70% — NIE osiągnięty na koniec cyklu
+            </span>
           </div>
           <ProgressBar pct={70} tone="warning" />
         </div>
         <p className="text-[11px] leading-relaxed text-c-text-muted">
-          Skrócony czas przezbrojenia (KR1) nie przełożył się w pełni na dodatkowe partie —
-          zmiana nocna wciąż odrabia zaległość w certyfikacji, więc rzeczywista liczba
-          przezbrojeń rośnie wolniej niż pozwalałby na to sam czas. Rozwinięte w „Refleksji".
+          Skrócony czas przezbrojenia (KR1) nie przełożył się w pełni na dodatkowe partie — zmiana
+          nocna wciąż odrabia zaległość w certyfikacji, więc rzeczywista liczba przezbrojeń rośnie
+          wolniej niż pozwalałby na to sam czas. Rozwinięte w „Refleksji".
         </p>
       </div>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="kr3" scope={SCOPE} title="KR3 — Podnieść obłożenie linii L3" readMode>
+    <NModeContentBlock
+      blockId="kr3"
+      scope={SCOPE}
+      title="KR3 — Podnieść obłożenie linii L3"
+      readMode
+    >
       <div className="flex flex-col gap-3">
         <div className="grid grid-cols-3 gap-3">
           <StatTile label="Start" value="91%" sub="sierpień 2026" tone="neutral" icon={Gauge} />
           <StatTile label="Cel" value="97%" sub="bez zmiany" tone="neutral" icon={Target} />
-          <StatTile label="Bieżąca" value="94%" sub="czerwiec 2027 (koniec cyklu)" tone="success" icon={TrendingUp} />
+          <StatTile
+            label="Bieżąca"
+            value="94%"
+            sub="czerwiec 2027 (koniec cyklu)"
+            tone="success"
+            icon={TrendingUp}
+          />
         </div>
         <div>
           <div className="mb-1 flex items-center justify-between text-[11px] text-c-text-muted">
@@ -317,33 +380,69 @@ const KluczoweRezultatyContent: React.FC = () => (
 // ── SEKCJA 3: POSTĘP ──────────────────────────────────────────────────────
 const PostepContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="postep-kafle" scope={SCOPE} title="Stan cyklu na dzień zamknięcia (30 czerwca 2027)" readMode>
+    <NModeContentBlock
+      blockId="postep-kafle"
+      scope={SCOPE}
+      title="Stan cyklu na dzień zamknięcia (30 czerwca 2027)"
+      readMode
+    >
       <div className="grid grid-cols-3 gap-3">
-        <StatTile label="KR1 — czas przezbrojenia" value="105%" tone="success" icon={CheckCircle2} />
-        <StatTile label="KR2 — przezbrojeń dziennie" value="70%" tone="warning" icon={AlertTriangle} />
+        <StatTile
+          label="KR1 — czas przezbrojenia"
+          value="105%"
+          tone="success"
+          icon={CheckCircle2}
+        />
+        <StatTile
+          label="KR2 — przezbrojeń dziennie"
+          value="70%"
+          tone="warning"
+          icon={AlertTriangle}
+        />
         <StatTile label="KR3 — obłożenie linii" value="50%" tone="success" icon={TrendingUp} />
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-c-text-muted">
-        Średni postęp celu: <strong className="text-c-text">75%</strong>. Dwa z trzech
-        kluczowych rezultatów osiągnięte lub przekroczone; KR2 zamknięty poniżej targetu —
-        cel jako całość NIE uznajemy za w pełni zrealizowany.
+        Średni postęp celu: <strong className="text-c-text">75%</strong>. Dwa z trzech kluczowych
+        rezultatów osiągnięte lub przekroczone; KR2 zamknięty poniżej targetu — cel jako całość NIE
+        uznajemy za w pełni zrealizowany.
       </p>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="postep-historia" scope={SCOPE} title="Historia przez okres" readMode>
+    <NModeContentBlock
+      blockId="postep-historia"
+      scope={SCOPE}
+      title="Historia przez okres"
+      readMode
+    >
       <SimpleTable
-        head={['Kwartał', 'KR1 (czas przezbrojenia)', 'KR2 (przezbrojeń/dzień)', 'KR3 (obłożenie)', 'Komentarz']}
+        head={[
+          'Kwartał',
+          'KR1 (czas przezbrojenia)',
+          'KR2 (przezbrojeń/dzień)',
+          'KR3 (obłożenie)',
+          'Komentarz',
+        ]}
         rows={[
           ['Q3 2026', '44 min', '4,1', '91%', 'Start cyklu, program SMED w rozruchu.'],
           ['Q4 2026', '31 min', '4,6', '92%', 'Zmiana dzienna certyfikowana w pełni.'],
           [
             'Q1 2027',
-            <span key="q1" className="text-c-warning">31 min</span>,
+            <span key="q1" className="text-c-warning">
+              31 min
+            </span>,
             '4,9',
             '93%',
             'Luty: pogorszenie czasu przezbrojenia (zmiana nocna) — patrz karta wskaźnika.',
           ],
-          ['Q2 2027 (koniec cyklu)', '25 min', <span key="q2" className="text-c-warning">5,4</span>, '94%', 'Cykl zamknięty — KR2 poniżej targetu.'],
+          [
+            'Q2 2027 (koniec cyklu)',
+            '25 min',
+            <span key="q2" className="text-c-warning">
+              5,4
+            </span>,
+            '94%',
+            'Cykl zamknięty — KR2 poniżej targetu.',
+          ],
         ]}
       />
     </NModeContentBlock>
@@ -357,11 +456,11 @@ const PowiazaniaContent: React.FC = () => (
       <div className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2.5 text-xs text-c-text">
         <Rocket size={16} className="mt-0.5 shrink-0 text-c-text-muted" />
         <span>
-          <strong>Skrócenie przezbrojeń (SMED) — linia pakowania L3.</strong> Co robi to
-          wiązanie: postęp inicjatywy (kamienie milowe, budżet) jest widoczny z tej karty
-          celu przez sekcję Powiązania w prawym panelu; cel z kolei daje inicjatywie miarę
-          sukcesu biznesowego — inicjatywa może być „ukończona technicznie" i cel wciąż
-          niepełny, dokładnie jak dziś (KR2).
+          <strong>Skrócenie przezbrojeń (SMED) — linia pakowania L3.</strong> Co robi to wiązanie:
+          postęp inicjatywy (kamienie milowe, budżet) jest widoczny z tej karty celu przez sekcję
+          Powiązania w prawym panelu; cel z kolei daje inicjatywie miarę sukcesu biznesowego —
+          inicjatywa może być „ukończona technicznie" i cel wciąż niepełny, dokładnie jak dziś
+          (KR2).
         </span>
       </div>
     </NModeContentBlock>
@@ -370,12 +469,11 @@ const PowiazaniaContent: React.FC = () => (
       <div className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2.5 text-xs text-c-text">
         <Gauge size={16} className="mt-0.5 shrink-0 text-c-text-muted" />
         <span>
-          <strong>KPI: Czas przezbrojenia linii L3.</strong> Co robi to wiązanie: KR1 tej
-          karty NIE ma własnej, ręcznie wpisywanej wartości bieżącej — czyta ją automatycznie
-          z ostatniego pomiaru wskaźnika. Kiedy wskaźnik dostaje nowy pomiar (co miesiąc),
-          KR1 aktualizuje się bez żadnej akcji właściciela celu. To samo dotyczy progu: gdy
-          próg wskaźnika się zmienia (patrz „Rodowód" karty wskaźnika), cel KR1 zmienia się
-          razem z nim.
+          <strong>KPI: Czas przezbrojenia linii L3.</strong> Co robi to wiązanie: KR1 tej karty NIE
+          ma własnej, ręcznie wpisywanej wartości bieżącej — czyta ją automatycznie z ostatniego
+          pomiaru wskaźnika. Kiedy wskaźnik dostaje nowy pomiar (co miesiąc), KR1 aktualizuje się
+          bez żadnej akcji właściciela celu. To samo dotyczy progu: gdy próg wskaźnika się zmienia
+          (patrz „Rodowód" karty wskaźnika), cel KR1 zmienia się razem z nim.
         </span>
       </div>
     </NModeContentBlock>
@@ -385,10 +483,10 @@ const PowiazaniaContent: React.FC = () => (
         <BarChart3 size={16} className="mt-0.5 shrink-0 text-c-text-muted" />
         <span>
           <strong>ROI: Skrócenie przezbrojeń (SMED), linia pakowania L3.</strong> Co robi to
-          wiązanie: cel tłumaczy postęp operacyjny (minuty, sztuki) na wartość finansową w
-          analizie ROI. Rozjazd finansowy opisany w ROI (Q4 2026 – Q1 2027, −166 000 zł
-          względem prognozy) to ten sam okres, w którym KR2 tej karty zaczął odstawać od
-          targetu — dwa artefakty pokazują tę samą przyczynę z dwóch stron.
+          wiązanie: cel tłumaczy postęp operacyjny (minuty, sztuki) na wartość finansową w analizie
+          ROI. Rozjazd finansowy opisany w ROI (Q4 2026 – Q1 2027, −166 000 zł względem prognozy) to
+          ten sam okres, w którym KR2 tej karty zaczął odstawać od targetu — dwa artefakty pokazują
+          tę samą przyczynę z dwóch stron.
         </span>
       </div>
     </NModeContentBlock>
@@ -404,9 +502,8 @@ const RefleksjaContent: React.FC = () => (
     >
       <AlertTriangle size={16} className="mt-0.5 shrink-0 text-c-warning" />
       <span>
-        Cykl zamknięty 30 czerwca 2027 z jednym kluczowym rezultatem{' '}
-        <strong>nieosiągniętym</strong> (KR2, 70%). Nie chowamy tego — poniżej jest wprost
-        napisane, dlaczego.
+        Cykl zamknięty 30 czerwca 2027 z jednym kluczowym rezultatem <strong>nieosiągniętym</strong>{' '}
+        (KR2, 70%). Nie chowamy tego — poniżej jest wprost napisane, dlaczego.
       </span>
     </div>
 
@@ -420,21 +517,26 @@ const RefleksjaContent: React.FC = () => (
       />
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="refleksja-czego-nie" scope={SCOPE} title="Czego nie osiągnęliśmy i dlaczego" readMode>
+    <NModeContentBlock
+      blockId="refleksja-czego-nie"
+      scope={SCOPE}
+      title="Czego nie osiągnęliśmy i dlaczego"
+      readMode
+    >
       <div className="flex flex-col gap-3 text-xs text-c-text-secondary">
         <p>
-          KR2 (liczba przezbrojeń dziennie) zamknięty na <strong className="text-c-text">5,4 z 6</strong> —
-          70% celu. Skrócony czas przezbrojenia sam w sobie nie wystarczył: żeby zrobić
-          więcej przezbrojeń dziennie, potrzebna jest też PEŁNA certyfikacja SMED na
-          wszystkich trzech zmianach, a zmiana nocna domknęła certyfikację dopiero pod koniec
-          kwietnia 2027 — zbyt późno, żeby nadrobić różnicę do końca cyklu (30 czerwca).
+          KR2 (liczba przezbrojeń dziennie) zamknięty na{' '}
+          <strong className="text-c-text">5,4 z 6</strong> — 70% celu. Skrócony czas przezbrojenia
+          sam w sobie nie wystarczył: żeby zrobić więcej przezbrojeń dziennie, potrzebna jest też
+          PEŁNA certyfikacja SMED na wszystkich trzech zmianach, a zmiana nocna domknęła
+          certyfikację dopiero pod koniec kwietnia 2027 — zbyt późno, żeby nadrobić różnicę do końca
+          cyklu (30 czerwca).
         </p>
         <p>
-          Błąd planistyczny do zapamiętania: cel zakładał, że skrócenie czasu przezbrojenia
-          (KR1) automatycznie przełoży się na więcej przezbrojeń dziennie (KR2) w tym samym
-          tempie. W praktyce KR2 ma własne ograniczenie — harmonogram zmian i dostępność
-          certyfikowanych operatorów — które trzeba było modelować jako osobną zależność, nie
-          pochodną KR1.
+          Błąd planistyczny do zapamiętania: cel zakładał, że skrócenie czasu przezbrojenia (KR1)
+          automatycznie przełoży się na więcej przezbrojeń dziennie (KR2) w tym samym tempie. W
+          praktyce KR2 ma własne ograniczenie — harmonogram zmian i dostępność certyfikowanych
+          operatorów — które trzeba było modelować jako osobną zależność, nie pochodną KR1.
         </p>
       </div>
     </NModeContentBlock>
@@ -613,11 +715,7 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
       defaultOpen: false,
       badge: 1,
       children: (
-        <Bullets
-          items={[
-            'Podsumowanie cyklu (PDF) — zatwierdzone 30 czerwca 2027, wersja 1.0.',
-          ]}
-        />
+        <Bullets items={['Podsumowanie cyklu (PDF) — zatwierdzone 30 czerwca 2027, wersja 1.0.']} />
       ),
     },
     {
@@ -632,14 +730,12 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
             {
               author: 'Anna Kowalczyk',
               when: '28 czerwca 2027, 11:20',
-              text:
-                'KR2 na 70% to nie porażka programu — to sygnał, że planowaliśmy zależność KR1→KR2 zbyt prosto. Chcę to rozbicie w otwarciu nowego cyklu, nie tylko w refleksji.',
+              text: 'KR2 na 70% to nie porażka programu — to sygnał, że planowaliśmy zależność KR1→KR2 zbyt prosto. Chcę to rozbicie w otwarciu nowego cyklu, nie tylko w refleksji.',
             },
             {
               author: 'Marek Zieliński',
               when: '29 czerwca 2027, 09:05',
-              text:
-                'Zgoda. W nowym cyklu proponuję target KR2 rozbity per zmiana, z własną datą osiągnięcia zależną od certyfikacji — szczegóły przygotuję na przegląd 10 lipca.',
+              text: 'Zgoda. W nowym cyklu proponuję target KR2 rozbity per zmiana, z własną datą osiągnięcia zależną od certyfikacji — szczegóły przygotuję na przegląd 10 lipca.',
             },
           ].map((c) => (
             <div key={c.author + c.when} className="rounded-lg border border-c-border-subtle p-2.5">
@@ -663,8 +759,14 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
         <ul className="flex flex-col gap-2.5">
           {[
             { when: '20 sierpnia 2026', text: 'Cel utworzony i powiązany z inicjatywą SMED L3.' },
-            { when: '1 września 2026', text: 'Cykl Q3 2026 – Q2 2027 otwarty, baseline KR1–KR3 zamrożony.' },
-            { when: '5 marca 2027', text: 'Target KR1 zaktualizowany automatycznie po rewizji progu wskaźnika (22 → 26 min).' },
+            {
+              when: '1 września 2026',
+              text: 'Cykl Q3 2026 – Q2 2027 otwarty, baseline KR1–KR3 zamrożony.',
+            },
+            {
+              when: '5 marca 2027',
+              text: 'Target KR1 zaktualizowany automatycznie po rewizji progu wskaźnika (22 → 26 min).',
+            },
             { when: '30 czerwca 2027', text: 'Cykl zamknięty — KR1 i KR3 osiągnięte, KR2 na 70%.' },
             { when: '10 lipca 2027', text: 'Zaplanowany przegląd otwarcia nowego cyklu.' },
           ].map((h) => (

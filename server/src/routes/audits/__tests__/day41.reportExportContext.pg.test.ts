@@ -10,8 +10,8 @@
  * surowego 500 z `TypeError` (`document.sections.map` na `undefined`).
  */
 import express from 'express';
-import JSZip from 'jszip';
 import jwt from 'jsonwebtoken';
+import JSZip from 'jszip';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -69,10 +69,10 @@ beforeAll(async () => {
   const { apiGateway } = await import('../../../Gateway.js');
   apiGateway.initializeRoutes(app);
   await cleanup();
-  await auditRun(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = $2`, [
-    ORG,
-    ORG_NAME,
-  ]);
+  await auditRun(
+    `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET name = $2`,
+    [ORG, ORG_NAME]
+  );
   await auditRun(`INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING`, [USER]);
   await auditRun(
     `INSERT INTO organization_members (id, organization_id, user_id, role, status)

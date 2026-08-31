@@ -43,8 +43,12 @@ export type FinanceArtifactType = (typeof FinanceArtifactTypeValues)[number];
 // `server/src/services/*`, mirroring the rest of this directory's
 // convention). If either union ever drifts, one of the two assignments below
 // stops compiling.
-type _AssertArtifactTypeSuperset = FinanceArtifactType extends CanonicalFinanceArtifactType ? true : never;
-type _AssertArtifactTypeSubset = CanonicalFinanceArtifactType extends FinanceArtifactType ? true : never;
+type _AssertArtifactTypeSuperset = FinanceArtifactType extends CanonicalFinanceArtifactType
+  ? true
+  : never;
+type _AssertArtifactTypeSubset = CanonicalFinanceArtifactType extends FinanceArtifactType
+  ? true
+  : never;
 const _artifactTypeSyncCheckA: _AssertArtifactTypeSuperset = true;
 const _artifactTypeSyncCheckB: _AssertArtifactTypeSubset = true;
 void _artifactTypeSyncCheckA;
@@ -78,12 +82,24 @@ const artifactRefBase = z.object({
   naturalKey: z.string().min(1).nullable(),
 });
 
-export const statementPackArtifactRefSchema = artifactRefBase.extend({ artifactType: z.literal('STATEMENT_PACK') });
-export const historicalAnalysisArtifactRefSchema = artifactRefBase.extend({ artifactType: z.literal('HISTORICAL_ANALYSIS') });
-export const baselineModelArtifactRefSchema = artifactRefBase.extend({ artifactType: z.literal('BASELINE_MODEL') });
-export const predictionScenarioArtifactRefSchema = artifactRefBase.extend({ artifactType: z.literal('PREDICTION_SCENARIO') });
-export const valuationCaseArtifactRefSchema = artifactRefBase.extend({ artifactType: z.literal('VALUATION_CASE') });
-export const reportExportArtifactRefSchema = artifactRefBase.extend({ artifactType: z.literal('REPORT_EXPORT') });
+export const statementPackArtifactRefSchema = artifactRefBase.extend({
+  artifactType: z.literal('STATEMENT_PACK'),
+});
+export const historicalAnalysisArtifactRefSchema = artifactRefBase.extend({
+  artifactType: z.literal('HISTORICAL_ANALYSIS'),
+});
+export const baselineModelArtifactRefSchema = artifactRefBase.extend({
+  artifactType: z.literal('BASELINE_MODEL'),
+});
+export const predictionScenarioArtifactRefSchema = artifactRefBase.extend({
+  artifactType: z.literal('PREDICTION_SCENARIO'),
+});
+export const valuationCaseArtifactRefSchema = artifactRefBase.extend({
+  artifactType: z.literal('VALUATION_CASE'),
+});
+export const reportExportArtifactRefSchema = artifactRefBase.extend({
+  artifactType: z.literal('REPORT_EXPORT'),
+});
 
 export const ArtifactRefSchema = z.discriminatedUnion('artifactType', [
   statementPackArtifactRefSchema,
@@ -114,7 +130,9 @@ export function isArtifactRefOfType<T extends FinanceArtifactType>(
 }
 
 /** Stable cache key for React Query / grid state maps. Deliberately NOT the artifactId alone — a reopened Draft has a new businessVersionId while artifactId stays constant, and most Analyst Productivity state (selection, filters, unsaved ops) is scoped to one specific business version, not the artifact identity. */
-export function artifactRefKey(ref: Pick<ArtifactRef, 'artifactType' | 'businessVersionId'>): string {
+export function artifactRefKey(
+  ref: Pick<ArtifactRef, 'artifactType' | 'businessVersionId'>
+): string {
   return `${ref.artifactType}:${ref.businessVersionId}`;
 }
 

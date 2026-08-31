@@ -56,16 +56,18 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
 
   beforeAll(async () => {
     if (!REAL_DB) {
-      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.');
+      throw new Error(
+        'Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.'
+      );
     }
 
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: CONNECTION_STRING });
 
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      ORG,
-      'S7 Teresa guardrails test org',
-    ]);
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [ORG, 'S7 Teresa guardrails test org']
+    );
     await pool.query(
       `INSERT INTO users (id, organization_id, email, role) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
       [OWNER, ORG, `${OWNER}@example.test`, 'user']
@@ -159,7 +161,9 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('previewId is required');
 
-    const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [sessionId]);
+    const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [
+      sessionId,
+    ]);
     expect(events.rows.some((r) => r.type.startsWith('TERESA_PROPOSAL'))).toBe(false);
   });
 
@@ -171,7 +175,10 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
     const preview = await createPreview(sessionId, { ttlMs: -1000 });
     expect(preview.status).toBe(201);
 
-    const res = await commit(sessionId, { previewId: preview.body.preview.previewId, decision: 'accept' });
+    const res = await commit(sessionId, {
+      previewId: preview.body.preview.previewId,
+      decision: 'accept',
+    });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('preview_expired');
   });
@@ -184,10 +191,18 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
     const preview = await createPreview(sessionId);
     const previewId = preview.body.preview.previewId;
 
-    const first = await commit(sessionId, { previewId, decision: 'accept' }, `commit:first:${randomUUID()}`);
+    const first = await commit(
+      sessionId,
+      { previewId, decision: 'accept' },
+      `commit:first:${randomUUID()}`
+    );
     expect(first.status).toBe(200);
 
-    const second = await commit(sessionId, { previewId, decision: 'accept' }, `commit:second:${randomUUID()}`);
+    const second = await commit(
+      sessionId,
+      { previewId, decision: 'accept' },
+      `commit:second:${randomUUID()}`
+    );
     expect(second.status).toBe(409);
     expect(second.body.error).toBe('preview_already_consumed');
 
@@ -219,7 +234,9 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
           [sessionId]
         );
         expect(previews.rows).toHaveLength(0);
-        const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [sessionId]);
+        const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [
+          sessionId,
+        ]);
         expect(events.rows).toHaveLength(0);
       });
     }
@@ -235,7 +252,7 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
   // ---------------------------------------------------------------------------
   // 5. provenance: AI authorship stays visible after a human accepts
   // ---------------------------------------------------------------------------
-  it('5. after a human accepts, actorKind on the commit is human but Teresa\'s original AI authorship is still discoverable via the linked preview event', async () => {
+  it("5. after a human accepts, actorKind on the commit is human but Teresa's original AI authorship is still discoverable via the linked preview event", async () => {
     const sessionId = await createSession();
     const preview = await createPreview(sessionId);
     const previewId = preview.body.preview.previewId;
@@ -274,17 +291,22 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
   // ---------------------------------------------------------------------------
   it('6. accepting a draft_score_proposal preview does NOT transition the session or write anything beyond the event — "proponuje poziom ale go nie zatwierdza"', async () => {
     const sessionId = await createSession();
-    const before = await pool.query(`SELECT state, version, updated_at FROM method_sessions WHERE id = $1`, [
-      sessionId,
-    ]);
+    const before = await pool.query(
+      `SELECT state, version, updated_at FROM method_sessions WHERE id = $1`,
+      [sessionId]
+    );
 
     const preview = await createPreview(sessionId); // capabilityId: draft_score_proposal by default
-    const commitRes = await commit(sessionId, { previewId: preview.body.preview.previewId, decision: 'accept' });
+    const commitRes = await commit(sessionId, {
+      previewId: preview.body.preview.previewId,
+      decision: 'accept',
+    });
     expect(commitRes.status).toBe(200);
 
-    const after = await pool.query(`SELECT state, version, updated_at FROM method_sessions WHERE id = $1`, [
-      sessionId,
-    ]);
+    const after = await pool.query(
+      `SELECT state, version, updated_at FROM method_sessions WHERE id = $1`,
+      [sessionId]
+    );
     // The session row is completely untouched by a Teresa commit — no
     // approve/transition side effect snuck in.
     expect(after.rows[0]).toEqual(before.rows[0]);
@@ -293,7 +315,9 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
     // the ONLY effect of a commit is the TERESA_PROPOSAL_ACCEPTED event
     // itself; approving the level for real is a SEPARATE, explicit human
     // action this route never performs on Teresa's behalf.
-    const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [sessionId]);
+    const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [
+      sessionId,
+    ]);
     const types = events.rows.map((r) => r.type);
     expect(types).not.toContain('DECISION_APPROVED');
     expect(types.filter((t) => t === 'TERESA_PROPOSAL_ACCEPTED')).toHaveLength(1);
@@ -305,10 +329,15 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
   it('7. a "reject" decision records TERESA_PROPOSAL_REJECTED, not ACCEPTED', async () => {
     const sessionId = await createSession();
     const preview = await createPreview(sessionId);
-    const res = await commit(sessionId, { previewId: preview.body.preview.previewId, decision: 'reject' });
+    const res = await commit(sessionId, {
+      previewId: preview.body.preview.previewId,
+      decision: 'reject',
+    });
     expect(res.status).toBe(200);
 
-    const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [sessionId]);
+    const events = await pool.query(`SELECT type FROM method_events WHERE session_id = $1`, [
+      sessionId,
+    ]);
     const types = events.rows.map((r) => r.type);
     expect(types).toContain('TERESA_PROPOSAL_REJECTED');
     expect(types).not.toContain('TERESA_PROPOSAL_ACCEPTED');
@@ -327,7 +356,10 @@ describe.skipIf(!REAL_DB)('Teresa Intent -> Preview -> Commit — real PostgreSQ
     // 'frozen' for this specific refusal).
     await pool.query(`UPDATE method_sessions SET state = 'frozen' WHERE id = $1`, [sessionId]);
 
-    const res = await commit(sessionId, { previewId: preview.body.preview.previewId, decision: 'accept' });
+    const res = await commit(sessionId, {
+      previewId: preview.body.preview.previewId,
+      decision: 'accept',
+    });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('session_frozen');
   });

@@ -15,9 +15,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchIdeaBusinessCase, upsertIdeaBusinessCase } from '@/services/api/ideaBusinessCase.api';
 import {
   BUSINESS_CASE_SECTION_ORDER,
-  createEmptyIdeaBusinessCase,
   type BusinessCaseClaim,
   type BusinessCaseSourceRef,
+  createEmptyIdeaBusinessCase,
   type IdeaBusinessCase,
   type IdeaBusinessCaseSections,
 } from '@/types/ideaBusinessCase';
@@ -57,7 +57,9 @@ export interface UseIdeaBusinessCaseResult {
  * the per-card indicator.
  */
 const SECTION_FILLED_CHECK: {
-  [K in keyof IdeaBusinessCaseSections]: (content: IdeaBusinessCaseSections[K]['content']) => boolean;
+  [K in keyof IdeaBusinessCaseSections]: (
+    content: IdeaBusinessCaseSections[K]['content']
+  ) => boolean;
 } = {
   problemBaseline: (c) => !!c.problemStatement.trim(),
   strategicObjective: (c) => !!c.objective.trim(),
@@ -87,10 +89,7 @@ export function isSectionFilled<K extends keyof IdeaBusinessCaseSections>(
   }
 }
 
-export function useIdeaBusinessCase(
-  ideaId: string,
-  enabled: boolean
-): UseIdeaBusinessCaseResult {
+export function useIdeaBusinessCase(ideaId: string, enabled: boolean): UseIdeaBusinessCaseResult {
   const [businessCase, setBusinessCase] = useState<IdeaBusinessCase>(() =>
     createEmptyIdeaBusinessCase(ideaId, '')
   );

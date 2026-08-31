@@ -58,7 +58,9 @@ function textCol(id: string, label: string, width: string, mono = false): TableC
     label,
     width,
     render: (row: Record<string, unknown>) => (
-      <span className={`text-sm text-c-text${mono ? ' font-mono' : ''}`}>{String(row[id] ?? '—')}</span>
+      <span className={`text-sm text-c-text${mono ? ' font-mono' : ''}`}>
+        {String(row[id] ?? '—')}
+      </span>
     ),
   };
 }
@@ -119,7 +121,9 @@ function boolCol(id: string, label: string, width: string, isPolish: boolean): T
     label,
     width,
     render: (row: Record<string, unknown>) => (
-      <span className="text-sm text-c-text">{row[id] ? (isPolish ? 'Tak' : 'Yes') : isPolish ? 'Nie' : 'No'}</span>
+      <span className="text-sm text-c-text">
+        {row[id] ? (isPolish ? 'Tak' : 'Yes') : isPolish ? 'Nie' : 'No'}
+      </span>
     ),
   };
 }
@@ -158,24 +162,98 @@ export interface AttentionBucketDef {
 }
 
 export const KPI_ATTENTION_BUCKETS: readonly AttentionBucketDef[] = [
-  { id: 'missingOwnership', labelPl: 'Brak właściciela', labelEn: 'Missing ownership', columns: [], openKind: 'kpi', openIdField: 'kpiId' },
-  { id: 'overdueObligations', labelPl: 'Zaległe obowiązki', labelEn: 'Overdue obligations', columns: [], openKind: 'kpi', openIdField: 'kpiId' },
-  { id: 'repeatedDeviations', labelPl: 'Powtarzające się odchylenia', labelEn: 'Repeated deviations', columns: [], openKind: 'kpi', openIdField: 'kpiId' },
-  { id: 'ineffectiveCorrectiveActions', labelPl: 'Nieskuteczne działania korygujące', labelEn: 'Ineffective corrective actions', columns: [], openKind: 'kpi', openIdField: 'kpiId' },
+  {
+    id: 'missingOwnership',
+    labelPl: 'Brak właściciela',
+    labelEn: 'Missing ownership',
+    columns: [],
+    openKind: 'kpi',
+    openIdField: 'kpiId',
+  },
+  {
+    id: 'overdueObligations',
+    labelPl: 'Zaległe obowiązki',
+    labelEn: 'Overdue obligations',
+    columns: [],
+    openKind: 'kpi',
+    openIdField: 'kpiId',
+  },
+  {
+    id: 'repeatedDeviations',
+    labelPl: 'Powtarzające się odchylenia',
+    labelEn: 'Repeated deviations',
+    columns: [],
+    openKind: 'kpi',
+    openIdField: 'kpiId',
+  },
+  {
+    id: 'ineffectiveCorrectiveActions',
+    labelPl: 'Nieskuteczne działania korygujące',
+    labelEn: 'Ineffective corrective actions',
+    columns: [],
+    openKind: 'kpi',
+    openIdField: 'kpiId',
+  },
   { id: 'ownerLoad', labelPl: 'Obciążenie właścicieli', labelEn: 'Owner load', columns: [] },
   { id: 'processCoverage', labelPl: 'Pokrycie procesów', labelEn: 'Process coverage', columns: [] },
-  { id: 'performanceDistribution', labelPl: 'Rozkład wyników', labelEn: 'Performance distribution', columns: [] },
+  {
+    id: 'performanceDistribution',
+    labelPl: 'Rozkład wyników',
+    labelEn: 'Performance distribution',
+    columns: [],
+  },
 ];
 
 export const OKR_ATTENTION_BUCKETS: readonly AttentionBucketDef[] = [
-  { id: 'staleCheckins', labelPl: 'Nieaktualne check-iny', labelEn: 'Stale check-ins', columns: [], openKind: 'okrSet', openIdField: 'setId' },
-  { id: 'lowConfidenceObjectives', labelPl: 'Cele o niskiej pewności', labelEn: 'Low-confidence objectives', columns: [], openKind: 'okrSet', openIdField: 'setId' },
-  { id: 'openSupportRequests', labelPl: 'Otwarte prośby o wsparcie', labelEn: 'Open support requests', columns: [], openKind: 'okrSet', openIdField: 'setId' },
-  { id: 'openBlockers', labelPl: 'Otwarte blokady', labelEn: 'Open blockers', columns: [], openKind: 'okrSet', openIdField: 'setId' },
-  { id: 'escalatedSets', labelPl: 'Eskalowane zestawy', labelEn: 'Escalated sets', columns: [], openKind: 'okrSet', openIdField: 'setId' },
-  { id: 'teamHealthSets', labelPl: 'Zdrowie zespołu — zestawy', labelEn: 'Team health — sets', columns: [], openKind: 'okrSet', openIdField: 'setId' },
+  {
+    id: 'staleCheckins',
+    labelPl: 'Nieaktualne check-iny',
+    labelEn: 'Stale check-ins',
+    columns: [],
+    openKind: 'okrSet',
+    openIdField: 'setId',
+  },
+  {
+    id: 'lowConfidenceObjectives',
+    labelPl: 'Cele o niskiej pewności',
+    labelEn: 'Low-confidence objectives',
+    columns: [],
+    openKind: 'okrSet',
+    openIdField: 'setId',
+  },
+  {
+    id: 'openSupportRequests',
+    labelPl: 'Otwarte prośby o wsparcie',
+    labelEn: 'Open support requests',
+    columns: [],
+    openKind: 'okrSet',
+    openIdField: 'setId',
+  },
+  {
+    id: 'openBlockers',
+    labelPl: 'Otwarte blokady',
+    labelEn: 'Open blockers',
+    columns: [],
+    openKind: 'okrSet',
+    openIdField: 'setId',
+  },
+  {
+    id: 'escalatedSets',
+    labelPl: 'Eskalowane zestawy',
+    labelEn: 'Escalated sets',
+    columns: [],
+    openKind: 'okrSet',
+    openIdField: 'setId',
+  },
+  {
+    id: 'teamHealthSets',
+    labelPl: 'Zdrowie zespołu — zestawy',
+    labelEn: 'Team health — sets',
+    columns: [],
+    openKind: 'okrSet',
+    openIdField: 'setId',
+  },
 ];
-
 
 /** Bucket defs above declare only the language-INDEPENDENT fields
  * (`id`/`labelPl`/`labelEn`/`openKind`/`openIdField`) — `columns` is always
@@ -232,7 +310,12 @@ function rebuildColumns(
           shortIdCol('kpiId', 'KPI ID', '150px'),
           textCol('kpiCode', t('Kod KPI', 'KPI code'), '170px'),
           numberCol('caseCountLast180Days', t('Przypadki (180 dni)', 'Cases (180d)'), '160px'),
-          boolCol('anySelfReportedRecurrence', t('Zgłoszono nawrót', 'Self-reported recurrence'), '160px', isPolish),
+          boolCol(
+            'anySelfReportedRecurrence',
+            t('Zgłoszono nawrót', 'Self-reported recurrence'),
+            '160px',
+            isPolish
+          ),
         ];
       case 'ineffectiveCorrectiveActions':
         return [
@@ -245,7 +328,11 @@ function rebuildColumns(
         return [
           userCol('ownerUserId', t('Właściciel', 'Owner'), '200px', resolveMemberName),
           numberCol('activeKpiCount', t('Aktywne KPI', 'Active KPIs'), '140px'),
-          numberCol('openDeviationCaseCount', t('Otwarte odchylenia', 'Open deviation cases'), '170px'),
+          numberCol(
+            'openDeviationCaseCount',
+            t('Otwarte odchylenia', 'Open deviation cases'),
+            '170px'
+          ),
         ];
       case 'processCoverage':
         return [
@@ -322,18 +409,32 @@ export function extractKpiBucketRows(
   if (!dto) return [];
   switch (bucketId) {
     case 'missingOwnership':
-      return (dto.missingOwnership as KpiAttentionMissingOwnershipRow[]).map((r) => ({ ...r, id: r.kpiId }));
-    case 'overdueObligations':
-      return (dto.overdueObligations as KpiAttentionOverdueObligationRow[]).map((r) => ({ ...r, id: r.obligationId }));
-    case 'repeatedDeviations':
-      return (dto.repeatedDeviations as KpiAttentionRepeatedDeviationRow[]).map((r) => ({ ...r, id: r.kpiId }));
-    case 'ineffectiveCorrectiveActions':
-      return (dto.ineffectiveCorrectiveActions as KpiAttentionIneffectiveCorrectiveActionRow[]).map((r) => ({
+      return (dto.missingOwnership as KpiAttentionMissingOwnershipRow[]).map((r) => ({
         ...r,
-        id: r.caseId,
+        id: r.kpiId,
       }));
+    case 'overdueObligations':
+      return (dto.overdueObligations as KpiAttentionOverdueObligationRow[]).map((r) => ({
+        ...r,
+        id: r.obligationId,
+      }));
+    case 'repeatedDeviations':
+      return (dto.repeatedDeviations as KpiAttentionRepeatedDeviationRow[]).map((r) => ({
+        ...r,
+        id: r.kpiId,
+      }));
+    case 'ineffectiveCorrectiveActions':
+      return (dto.ineffectiveCorrectiveActions as KpiAttentionIneffectiveCorrectiveActionRow[]).map(
+        (r) => ({
+          ...r,
+          id: r.caseId,
+        })
+      );
     case 'ownerLoad':
-      return (dto.ownerLoad as KpiAttentionOwnerLoadRow[]).map((r) => ({ ...r, id: r.ownerUserId }));
+      return (dto.ownerLoad as KpiAttentionOwnerLoadRow[]).map((r) => ({
+        ...r,
+        id: r.ownerUserId,
+      }));
     case 'processCoverage':
       return (dto.processCoverage as KpiAttentionProcessCoverageRow[]).map((r, idx) => ({
         ...r,
@@ -354,26 +455,40 @@ export function extractOkrBucketRows(
   teamHealthDto: OrganizationOkrTeamHealthDto | null
 ): Array<Record<string, unknown> & { id: string }> {
   if (bucketId === 'teamHealthSets') {
-    return (teamHealthDto?.sets ?? ([] as OkrTeamHealthSetSummaryRow[])).map((r) => ({ ...r, id: r.setId }));
+    return (teamHealthDto?.sets ?? ([] as OkrTeamHealthSetSummaryRow[])).map((r) => ({
+      ...r,
+      id: r.setId,
+    }));
   }
   if (!attentionDto) return [];
   switch (bucketId) {
     case 'staleCheckins':
-      return (attentionDto.staleCheckins as OkrAttentionStaleCheckinSetRow[]).map((r) => ({ ...r, id: r.setId }));
-    case 'lowConfidenceObjectives':
-      return (attentionDto.lowConfidenceObjectives as OkrAttentionLowConfidenceObjectiveRow[]).map((r) => ({
+      return (attentionDto.staleCheckins as OkrAttentionStaleCheckinSetRow[]).map((r) => ({
         ...r,
-        id: r.keyResultId,
+        id: r.setId,
       }));
+    case 'lowConfidenceObjectives':
+      return (attentionDto.lowConfidenceObjectives as OkrAttentionLowConfidenceObjectiveRow[]).map(
+        (r) => ({
+          ...r,
+          id: r.keyResultId,
+        })
+      );
     case 'openSupportRequests':
       return (attentionDto.openSupportRequests as OkrAttentionOpenSupportRequestRow[]).map((r) => ({
         ...r,
         id: r.requestId,
       }));
     case 'openBlockers':
-      return (attentionDto.openBlockers as OkrAttentionOpenBlockerRow[]).map((r) => ({ ...r, id: r.checkInId }));
+      return (attentionDto.openBlockers as OkrAttentionOpenBlockerRow[]).map((r) => ({
+        ...r,
+        id: r.checkInId,
+      }));
     case 'escalatedSets':
-      return (attentionDto.escalatedSets as OkrAttentionEscalatedSetRow[]).map((r) => ({ ...r, id: r.setId }));
+      return (attentionDto.escalatedSets as OkrAttentionEscalatedSetRow[]).map((r) => ({
+        ...r,
+        id: r.setId,
+      }));
     default:
       return [];
   }
@@ -453,7 +568,10 @@ export function buildAttentionRowPreview(
               {
                 id: 'open-related',
                 variant: 'neutral',
-                label: ctx.openKind === 'kpi' ? t('Otwórz KPI', 'Open KPI') : t('Otwórz Set OKR', 'Open OKR Set'),
+                label:
+                  ctx.openKind === 'kpi'
+                    ? t('Otwórz KPI', 'Open KPI')
+                    : t('Otwórz Set OKR', 'Open OKR Set'),
                 onClick: () =>
                   ctx.openKind === 'kpi'
                     ? ctx.onOpenKpi(String(row[ctx.openIdField as string]))

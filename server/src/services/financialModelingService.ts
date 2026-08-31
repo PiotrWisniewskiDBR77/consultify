@@ -224,7 +224,10 @@ function sumAbsoluteCodes(map: Map<string, number>, codes: string[]): number {
 
 function latestPeriodRows<T extends { period_label?: string | null }>(rows: T[]): T[] {
   const ranked = rows
-    .map((row) => ({ row, year: Number(String(row.period_label || '').match(/(?:19|20)\d{2}/)?.[0] || 0) }))
+    .map((row) => ({
+      row,
+      year: Number(String(row.period_label || '').match(/(?:19|20)\d{2}/)?.[0] || 0),
+    }))
     .filter((entry) => entry.year > 0);
   if (ranked.length === 0) return rows;
   const latestYear = Math.max(...ranked.map((entry) => entry.year));
@@ -246,7 +249,8 @@ function parseJsonObject(value: unknown): Record<string, any> {
 
 function seedPeriodLabel(value: Record<string, any>): string | null {
   const evidence = parseJsonObject(value.evidenceJson ?? value.evidence_json);
-  const label = value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  const label =
+    value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
   return label == null || String(label).trim() === '' ? null : String(label);
 }
 
@@ -270,7 +274,11 @@ function mergeAssumptions(
 async function loadSeedValueRows(
   statementIds: string[]
 ): Promise<Array<{ line_code: string; value: number; period_label?: string | null }>> {
-  const rowsFromSnapshots: Array<{ line_code: string; value: number; period_label?: string | null }> = [];
+  const rowsFromSnapshots: Array<{
+    line_code: string;
+    value: number;
+    period_label?: string | null;
+  }> = [];
   let snapshotCoverage = 0;
 
   for (const statementId of statementIds) {
@@ -385,20 +393,25 @@ async function buildSeededAssumptionsFromStatement(
   const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
   const ebit = firstNonZero(valuesByCode, ['EBIT']);
   const directOpex = firstNonZero(valuesByCode, ['OPEX']);
-  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
-    'RND',
-    'SGA',
-    'SELLING_EXPENSES',
-    'GENERAL_ADMIN_EXPENSES',
-    'OTHER_OPEX',
-  ]);
+  const baselineOpex =
+    directOpex ||
+    Math.abs(grossProfit - ebit) ||
+    sumAbsoluteCodes(valuesByCode, [
+      'RND',
+      'SGA',
+      'SELLING_EXPENSES',
+      'GENERAL_ADMIN_EXPENSES',
+      'OTHER_OPEX',
+    ]);
   const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
-  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
-    'DEPRECIATION_PPE_CF',
-    'DEPRECIATION_ROU_CF',
-    'DEPRECIATION_INTANGIBLES_CF',
-    'DEPRECIATION_AMORTIZATION_CF',
-  ]);
+  const baselineDepreciation =
+    directDepreciation ||
+    sumAbsoluteCodes(valuesByCode, [
+      'DEPRECIATION_PPE_CF',
+      'DEPRECIATION_ROU_CF',
+      'DEPRECIATION_INTANGIBLES_CF',
+      'DEPRECIATION_AMORTIZATION_CF',
+    ]);
   const otherAssets = totalAssets - cash - ar - inventory - ppe;
   const openingBalanceResidual = totalAssets - totalLiabilities - equity;
   const otherLiabilities = totalAssets - equity - ap - debt;
@@ -512,20 +525,25 @@ async function buildSeededAssumptionsFromPack(
   const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
   const ebit = firstNonZero(valuesByCode, ['EBIT']);
   const directOpex = firstNonZero(valuesByCode, ['OPEX']);
-  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
-    'RND',
-    'SGA',
-    'SELLING_EXPENSES',
-    'GENERAL_ADMIN_EXPENSES',
-    'OTHER_OPEX',
-  ]);
+  const baselineOpex =
+    directOpex ||
+    Math.abs(grossProfit - ebit) ||
+    sumAbsoluteCodes(valuesByCode, [
+      'RND',
+      'SGA',
+      'SELLING_EXPENSES',
+      'GENERAL_ADMIN_EXPENSES',
+      'OTHER_OPEX',
+    ]);
   const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
-  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
-    'DEPRECIATION_PPE_CF',
-    'DEPRECIATION_ROU_CF',
-    'DEPRECIATION_INTANGIBLES_CF',
-    'DEPRECIATION_AMORTIZATION_CF',
-  ]);
+  const baselineDepreciation =
+    directDepreciation ||
+    sumAbsoluteCodes(valuesByCode, [
+      'DEPRECIATION_PPE_CF',
+      'DEPRECIATION_ROU_CF',
+      'DEPRECIATION_INTANGIBLES_CF',
+      'DEPRECIATION_AMORTIZATION_CF',
+    ]);
   const otherAssets = totalAssets - cash - ar - inventory - ppe;
   const openingBalanceResidual = totalAssets - totalLiabilities - equity;
   const otherLiabilities = totalAssets - equity - ap - debt;
@@ -881,18 +899,22 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     if (useZeroChangeBaseline) {
       const forecastYear = Math.floor(pi / 12) + 1;
       const annualRevenue = hasForecastDrivers
-        ? baselineRevenue * Math.pow(1 + Number(forecastDrivers.revenueGrowthPct) / 100, forecastYear)
+        ? baselineRevenue *
+          Math.pow(1 + Number(forecastDrivers.revenueGrowthPct) / 100, forecastYear)
         : baselineRevenue;
       totalRevenue = annualRevenue / 12;
       const grossMarginPct = Number(forecastDrivers.grossMarginPct);
       const opexPctRevenue = Number(forecastDrivers.opexPctRevenue);
       const depreciationPctRevenue = Number(forecastDrivers.depreciationPctRevenue);
       const capexPctRevenue = Number(forecastDrivers.capexPctRevenue);
-      totalCOGS = totalRevenue *
+      totalCOGS =
+        totalRevenue *
         (Number.isFinite(grossMarginPct) ? 1 - grossMarginPct / 100 : baselineRatios.cogs || 0);
-      totalOPEX = totalRevenue *
+      totalOPEX =
+        totalRevenue *
         (Number.isFinite(opexPctRevenue) ? opexPctRevenue / 100 : baselineRatios.opex || 0);
-      totalDepr = totalRevenue *
+      totalDepr =
+        totalRevenue *
         (Number.isFinite(depreciationPctRevenue)
           ? depreciationPctRevenue / 100
           : baselineRatios.depreciation || 0);
@@ -903,7 +925,8 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
       totalTax = hasForecastDrivers
         ? Math.max(0, preTaxIncome * numberOrZero(assumptions.taxRatePct ?? 0.21))
         : baselinePerPeriod * (baselineRatios.tax || 0);
-      totalCapex = totalRevenue *
+      totalCapex =
+        totalRevenue *
         (Number.isFinite(capexPctRevenue) ? capexPctRevenue / 100 : baselineRatios.capex || 0);
     }
 
@@ -1033,8 +1056,7 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     out.bs.CURRENT_LIABILITIES = runningAP;
     out.bs.LONG_TERM_DEBT = runningDebt;
     out.bs.OTHER_LIABILITIES = initialOtherLiabilities;
-    out.bs.TOTAL_LIABILITIES =
-      out.bs.CURRENT_LIABILITIES + runningDebt + out.bs.OTHER_LIABILITIES;
+    out.bs.TOTAL_LIABILITIES = out.bs.CURRENT_LIABILITIES + runningDebt + out.bs.OTHER_LIABILITIES;
     out.bs.EQUITY_CAPITAL = runningEquityCapital;
     out.bs.RETAINED_EARNINGS = runningRetainedEarnings;
     out.bs.TOTAL_EQUITY = runningEquityCapital + runningRetainedEarnings;
@@ -1113,7 +1135,9 @@ function round2(n: number): number {
 // ---------------------------------------------------------------------------
 
 /** Minimal shape both `PoolClient` and our own pinned-transaction wrapper satisfy. */
-type SqlClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }> };
+type SqlClient = {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }>;
+};
 
 /**
  * PERF (B2 phase 4): one set-based `INSERT ... SELECT FROM UNNEST(...)` for a
@@ -1205,7 +1229,17 @@ async function writeComputeResultRows(
   await insertRowsUnnest(
     client,
     'financial_model_outputs',
-    ['id', 'model_id', 'period_date', 'period_label', 'statement_type', 'line_code', 'line_name', 'value', 'scenario'],
+    [
+      'id',
+      'model_id',
+      'period_date',
+      'period_label',
+      'statement_type',
+      'line_code',
+      'line_name',
+      'value',
+      'scenario',
+    ],
     ['text', 'text', 'date', 'text', 'text', 'text', 'text', 'real', 'text'],
     outputRows
   );
@@ -1232,7 +1266,18 @@ async function writeComputeResultRows(
   await insertRowsUnnest(
     client,
     'financial_model_validations',
-    ['id', 'model_id', 'period_date', 'check_code', 'check_name', 'status', 'expected_value', 'actual_value', 'difference', 'message'],
+    [
+      'id',
+      'model_id',
+      'period_date',
+      'check_code',
+      'check_name',
+      'status',
+      'expected_value',
+      'actual_value',
+      'difference',
+      'message',
+    ],
     ['text', 'text', 'date', 'text', 'text', 'text', 'real', 'real', 'real', 'text'],
     validationRows
   );
@@ -1282,11 +1327,15 @@ export async function persistComputeResult(
       try {
         await client.query('ROLLBACK');
       } catch (rollbackError) {
-        logger.error('[financialModeling] persistComputeResult ROLLBACK failed after a prior error', {
-          modelId,
-          originalError: error instanceof Error ? error.message : String(error),
-          rollbackError: rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-        });
+        logger.error(
+          '[financialModeling] persistComputeResult ROLLBACK failed after a prior error',
+          {
+            modelId,
+            originalError: error instanceof Error ? error.message : String(error),
+            rollbackError:
+              rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+          }
+        );
       }
     }
     throw error;
@@ -1380,7 +1429,19 @@ async function shadowReconcileModel(
   await insertRowsUnnest(
     client,
     'financial_model_validations',
-    ['id', 'model_id', 'period_date', 'check_code', 'check_name', 'status', 'expected_value', 'actual_value', 'difference', 'message', 'details'],
+    [
+      'id',
+      'model_id',
+      'period_date',
+      'check_code',
+      'check_name',
+      'status',
+      'expected_value',
+      'actual_value',
+      'difference',
+      'message',
+      'details',
+    ],
     ['text', 'text', 'date', 'text', 'text', 'text', 'real', 'real', 'real', 'text', 'text'],
     rows
   );

@@ -51,9 +51,7 @@ describe('SWOTInputExplorationPhase — accepted-point removal requires confirma
 
     // Still present — the click only staged the deletion, did not perform it.
     expect(screen.getByText('Loyal enterprise customer base')).toBeInTheDocument();
-    expect(
-      (useToolStore.getState().currentSession!.inputData as any).signals
-    ).toHaveLength(1);
+    expect((useToolStore.getState().currentSession!.inputData as any).signals).toHaveLength(1);
 
     // A real confirm surface is up.
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -73,9 +71,7 @@ describe('SWOTInputExplorationPhase — accepted-point removal requires confirma
     // (or lack thereof, here) is synchronous.
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Loyal enterprise customer base')).toBeInTheDocument();
-    expect(
-      (useToolStore.getState().currentSession!.inputData as any).signals
-    ).toHaveLength(1);
+    expect((useToolStore.getState().currentSession!.inputData as any).signals).toHaveLength(1);
   });
 
   it('confirming Remove actually deletes the accepted signal from the store', async () => {
@@ -86,9 +82,7 @@ describe('SWOTInputExplorationPhase — accepted-point removal requires confirma
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
     await waitFor(() =>
-      expect(
-        (useToolStore.getState().currentSession!.inputData as any).signals
-      ).toHaveLength(0)
+      expect((useToolStore.getState().currentSession!.inputData as any).signals).toHaveLength(0)
     );
     expect(screen.queryByText('Loyal enterprise customer base')).not.toBeInTheDocument();
   });

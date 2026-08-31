@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
-import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
 import { withPgTransaction } from '../../../utils/queryHelpers.js';
+import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
 
 export type BudgetLineSource = 'baseline' | 'manual' | 'driver' | 'formula';
 

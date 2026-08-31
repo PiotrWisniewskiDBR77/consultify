@@ -1650,9 +1650,7 @@ export async function getPartnerEmployees(
          ${statusClause}
        ORDER BY COALESCE(sessions.last_active_at, u.last_login, pu.updated_at, pu.joined_at) DESC
        LIMIT ? OFFSET ?`,
-      statusFilter
-        ? [partnerOrgId, statusFilter, limit, offset]
-        : [partnerOrgId, limit, offset],
+      statusFilter ? [partnerOrgId, statusFilter, limit, offset] : [partnerOrgId, limit, offset],
       { fallback: false }
     );
 

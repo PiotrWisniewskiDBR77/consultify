@@ -283,14 +283,18 @@ const request = async (orgId: string, url = '/api/initiatives'): Promise<Capture
 };
 
 const guard = (name: string, fn: () => Promise<void>) =>
-  it(name, async () => {
-    if (!usable) {
-      // eslint-disable-next-line no-console
-      console.warn(`[DEC-91 pg] SKIPPED: ${skipReason}`);
-      return;
-    }
-    await fn();
-  }, 60_000);
+  it(
+    name,
+    async () => {
+      if (!usable) {
+        // eslint-disable-next-line no-console
+        console.warn(`[DEC-91 pg] SKIPPED: ${skipReason}`);
+        return;
+      }
+      await fn();
+    },
+    60_000
+  );
 
 describe('DEC-91 organization suspension against a real PostgreSQL', () => {
   guard('baseline: both tenants are active and both pass', async () => {
@@ -366,9 +370,9 @@ describe('DEC-91 organization suspension against a real PostgreSQL', () => {
     expect(userRow?.organization_id).toBe(SUSPENDED_ORG);
 
     // Feeding the server-derived org back into the guard refuses it.
-    await expect(
-      isOrganizationSuspended(userRow?.organization_id, pgDbGet as never)
-    ).resolves.toBe(true);
+    await expect(isOrganizationSuspended(userRow?.organization_id, pgDbGet as never)).resolves.toBe(
+      true
+    );
 
     // 2. `validateJoinOrg` membership probe — the row must actually be there,
     //    so that the suspension refusal preempts a join that would OTHERWISE

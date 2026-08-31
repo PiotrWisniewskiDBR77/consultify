@@ -41,8 +41,8 @@ import { z } from 'zod';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 import {
   BENEFITS_REALIZATION_DEFAULTS,
-  buildBenefitsRealizationSchema,
   type BenefitsRealizationParams,
+  buildBenefitsRealizationSchema,
 } from './benefitsRealization.js';
 import {
   BREAK_EVEN_DRIVER_DEFAULTS,
@@ -831,15 +831,79 @@ function buildProjectViabilityParams(): WorkbookTemplateParam[] {
 // ---------------------------------------------------------------------------
 
 const BENEFITS_REALIZATION_PARAMS: WorkbookTemplateParam[] = [
-  { name: 'programName', label: 'Nazwa programu', type: 'text', default: BENEFITS_REALIZATION_DEFAULTS.programName, group: 'Ogólne' },
-  { name: 'currencyCode', label: 'Waluta', type: 'enum', options: ['PLN', 'EUR', 'USD'], default: BENEFITS_REALIZATION_DEFAULTS.currencyCode, group: 'Ogólne' },
-  { name: 'investment', label: 'Nakład inwestycyjny', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.investment, min: 0, group: 'Wartość' },
-  { name: 'implementationCost', label: 'Koszt wdrożenia', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.implementationCost, min: 0, group: 'Wartość' },
-  { name: 'revenueBenefit', label: 'Korzyść przychodowa', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.revenueBenefit, min: 0, group: 'Wartość' },
-  { name: 'costBenefit', label: 'Redukcja kosztów', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.costBenefit, min: 0, group: 'Wartość' },
-  { name: 'workingCapitalBenefit', label: 'Kapitał obrotowy', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.workingCapitalBenefit, min: 0, group: 'Wartość' },
-  { name: 'confidencePct', label: 'Pewność estymacji', type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.confidencePct, min: 0, max: 1, group: 'Kontrola' },
-  { name: 'realizationPct', label: 'Realizacja planu YTD', type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.realizationPct, min: 0, max: 1, group: 'Kontrola' },
+  {
+    name: 'programName',
+    label: 'Nazwa programu',
+    type: 'text',
+    default: BENEFITS_REALIZATION_DEFAULTS.programName,
+    group: 'Ogólne',
+  },
+  {
+    name: 'currencyCode',
+    label: 'Waluta',
+    type: 'enum',
+    options: ['PLN', 'EUR', 'USD'],
+    default: BENEFITS_REALIZATION_DEFAULTS.currencyCode,
+    group: 'Ogólne',
+  },
+  {
+    name: 'investment',
+    label: 'Nakład inwestycyjny',
+    type: 'currency',
+    default: BENEFITS_REALIZATION_DEFAULTS.investment,
+    min: 0,
+    group: 'Wartość',
+  },
+  {
+    name: 'implementationCost',
+    label: 'Koszt wdrożenia',
+    type: 'currency',
+    default: BENEFITS_REALIZATION_DEFAULTS.implementationCost,
+    min: 0,
+    group: 'Wartość',
+  },
+  {
+    name: 'revenueBenefit',
+    label: 'Korzyść przychodowa',
+    type: 'currency',
+    default: BENEFITS_REALIZATION_DEFAULTS.revenueBenefit,
+    min: 0,
+    group: 'Wartość',
+  },
+  {
+    name: 'costBenefit',
+    label: 'Redukcja kosztów',
+    type: 'currency',
+    default: BENEFITS_REALIZATION_DEFAULTS.costBenefit,
+    min: 0,
+    group: 'Wartość',
+  },
+  {
+    name: 'workingCapitalBenefit',
+    label: 'Kapitał obrotowy',
+    type: 'currency',
+    default: BENEFITS_REALIZATION_DEFAULTS.workingCapitalBenefit,
+    min: 0,
+    group: 'Wartość',
+  },
+  {
+    name: 'confidencePct',
+    label: 'Pewność estymacji',
+    type: 'percent',
+    default: BENEFITS_REALIZATION_DEFAULTS.confidencePct,
+    min: 0,
+    max: 1,
+    group: 'Kontrola',
+  },
+  {
+    name: 'realizationPct',
+    label: 'Realizacja planu YTD',
+    type: 'percent',
+    default: BENEFITS_REALIZATION_DEFAULTS.realizationPct,
+    min: 0,
+    max: 1,
+    group: 'Kontrola',
+  },
 ];
 
 /** The registry map: `templateId → entry`. */
@@ -934,7 +998,8 @@ export const WORKBOOK_TEMPLATES: {
   benefitsRealization: {
     id: 'benefitsRealization',
     title: 'Benefits Realization — wartość programu',
-    description: 'Board-ready model korzyści: kontrolowane założenia i właściciele dowodów, plan risk-adjusted, realizacja YTD, luka, ROI oraz jednokartkowe Executive Summary.',
+    description:
+      'Board-ready model korzyści: kontrolowane założenia i właściciele dowodów, plan risk-adjusted, realizacja YTD, luka, ROI oraz jednokartkowe Executive Summary.',
     params: BENEFITS_REALIZATION_PARAMS,
     build: buildBenefitsRealizationSchema,
   },

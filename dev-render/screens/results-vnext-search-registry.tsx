@@ -29,9 +29,9 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import type { ResultsSearchHit } from '../../src/components/ResultsVNext/resultsSearchApi';
 import { ResultsSearchRegistry } from '../../src/components/ResultsVNext/ResultsSearchRegistry';
 import { Api } from '../../src/services/api';
-import type { ResultsSearchHit } from '../../src/components/ResultsVNext/resultsSearchApi';
 
 const harnessParams = new URLSearchParams(window.location.search);
 const registryState = harnessParams.get('state') || 'ready';

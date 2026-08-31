@@ -11,8 +11,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '../../../../services/api';
 import {
-  EMPTY_PROFILE,
   computeCompleteness,
+  EMPTY_PROFILE,
 } from '../../../../views/ContextBuilder/modules/organizationProfileTaxonomy';
 import OrganizationIdentityOperatingScreen from '../OrganizationIdentityOperatingScreen';
 import OrganizationStatePanel from '../OrganizationStatePanel';
@@ -109,16 +109,16 @@ describe('OrganizationIdentityOperatingScreen', () => {
     renderScreen();
 
     await waitFor(() =>
-      expect(screen.getByLabelText('Podbranża')).toHaveValue(
-        'Doradztwo strategiczne i operacyjne'
-      )
+      expect(screen.getByLabelText('Podbranża')).toHaveValue('Doradztwo strategiczne i operacyjne')
     );
     expect(screen.getByLabelText('Branża')).toHaveValue('Professional Services');
     expect(screen.getByLabelText('Liczba pracowników')).toHaveValue(120);
     expect(screen.getByLabelText('Rynki podstawowe')).toHaveValue('Polska, DACH');
 
     // Konflikty pochodzą z /organization-context i są mapowane po claimPath.
-    await waitFor(() => expect(screen.getByTestId('chip-conflicts')).toHaveTextContent('Konflikty:2'));
+    await waitFor(() =>
+      expect(screen.getByTestId('chip-conflicts')).toHaveTextContent('Konflikty:2')
+    );
     expect(screen.getByTestId('chip-all')).toHaveTextContent('Wszystkie:16');
   });
 

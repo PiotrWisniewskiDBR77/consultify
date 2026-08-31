@@ -3,12 +3,12 @@
  * Backend: server/src/routes/ideaBusinessCase.routes.ts.
  * Shape: src/types/ideaBusinessCase.ts.
  */
-import { apiGet, apiPut } from './baseClient';
-
 import type {
   IdeaBusinessCaseSections,
   UpsertIdeaBusinessCaseBody,
 } from '@/types/ideaBusinessCase';
+
+import { apiGet, apiPut } from './baseClient';
 
 export interface IdeaBusinessCaseApiResult {
   id: string;

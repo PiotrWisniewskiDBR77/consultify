@@ -37,14 +37,16 @@ import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { financeStmtLinesCellRef, type CellRef } from '../../../../types/finance/CellRef.js';
-import type { FinanceUnsavedOperationStackEntry } from '../../../../types/finance/WorkspaceState.js';
+import { type CellRef, financeStmtLinesCellRef } from '../../../../types/finance/CellRef.js';
 import type { Operation } from '../../../../types/finance/Operation.js';
+import type { FinanceUnsavedOperationStackEntry } from '../../../../types/finance/WorkspaceState.js';
 import { OperationStack } from '../operationStack.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -71,7 +73,10 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
     computePinning = await import('../computePinning.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'FinV3 AP-04 Test Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'FinV3 AP-04 Test Org',
+      ])
     );
   });
 
@@ -98,7 +103,12 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
     });
   }
 
-  function setOperation(target: CellRef, valueDecimal: string, actorId: string, sourceWorkingRevisionId: string | null): Operation {
+  function setOperation(
+    target: CellRef,
+    valueDecimal: string,
+    actorId: string,
+    sourceWorkingRevisionId: string | null
+  ): Operation {
     return {
       type: 'set',
       operationId: `op-${randomUUID()}`,
@@ -154,9 +164,10 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
 
       // the OLD row was demoted, not deleted
       const oldRow = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ is_current: boolean }>(`SELECT is_current FROM finance_working_revisions WHERE working_revision_id = ?`, [
-          initialWrId,
-        ])
+        tx.queryOne<{ is_current: boolean }>(
+          `SELECT is_current FROM finance_working_revisions WHERE working_revision_id = ?`,
+          [initialWrId]
+        )
       );
       expect(oldRow?.is_current).toBe(false);
 
@@ -223,13 +234,16 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
       expect(conflicted.state).toBe('CONFLICT');
       expect(conflicted.code).toBe('WORKING_REVISION_CONFLICT');
       if (!advanced.ok) throw new Error('unreachable');
-      expect(conflicted.currentWorkingRevisionId).toBe(advanced.workingRevision.working_revision_id);
+      expect(conflicted.currentWorkingRevisionId).toBe(
+        advanced.workingRevision.working_revision_id
+      );
 
       // the rejected write did not create a stray row
       const rowCount = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ count: string }>(`SELECT COUNT(*) as count FROM finance_working_revisions WHERE artifact_id = ?`, [
-          created.artifact.artifact_id,
-        ])
+        tx.queryOne<{ count: string }>(
+          `SELECT COUNT(*) as count FROM finance_working_revisions WHERE artifact_id = ?`,
+          [created.artifact.artifact_id]
+        )
       );
       expect(Number(rowCount?.count)).toBe(2); // T1 create + the ONE successful (userA) checkpoint
     });
@@ -294,7 +308,12 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
       });
       if (!explicitSave.ok) throw new Error('unreachable');
 
-      const op = setOperation(cell('CASH'), '500', userA, explicitSave.workingRevision.working_revision_id);
+      const op = setOperation(
+        cell('CASH'),
+        '500',
+        userA,
+        explicitSave.workingRevision.working_revision_id
+      );
       const autosave = await autosaveService.checkpointOperationStack({
         organizationId: orgId,
         artifactId: created.artifact.artifact_id,
@@ -310,9 +329,14 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
         artifactId: created.artifact.artifact_id,
       });
       expect(detection.ok).toBe(true);
-      if (!detection.ok || !detection.recoverable) throw new Error('unreachable, expected recoverable');
-      expect(detection.checkpoint.workingRevisionId).toBe(autosave.workingRevision.working_revision_id);
-      expect(detection.checkpoint.lastExplicitSaveWorkingRevisionId).toBe(explicitSave.workingRevision.working_revision_id);
+      if (!detection.ok || !detection.recoverable)
+        throw new Error('unreachable, expected recoverable');
+      expect(detection.checkpoint.workingRevisionId).toBe(
+        autosave.workingRevision.working_revision_id
+      );
+      expect(detection.checkpoint.lastExplicitSaveWorkingRevisionId).toBe(
+        explicitSave.workingRevision.working_revision_id
+      );
       expect(detection.checkpoint.payload?.unsavedOperationStack).toHaveLength(1);
 
       const reconstructed = crashRecoveryService.reconstructOperationStack(detection.checkpoint);
@@ -331,7 +355,11 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
         artifactId: created.artifact.artifact_id,
         actorId: userA,
         expectedWorkingRevisionId: created.workingRevision.working_revision_id,
-        unsavedOperationStack: [stackEntry(setOperation(cell('X'), '1', userA, created.workingRevision.working_revision_id))],
+        unsavedOperationStack: [
+          stackEntry(
+            setOperation(cell('X'), '1', userA, created.workingRevision.working_revision_id)
+          ),
+        ],
         source: 'AUTOSAVE',
       });
       if (!autosave.ok) throw new Error('unreachable');
@@ -372,7 +400,11 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
         artifactId: created.artifact.artifact_id,
         actorId: userA,
         expectedWorkingRevisionId: created.workingRevision.working_revision_id,
-        unsavedOperationStack: [stackEntry(setOperation(cell('Y'), '1', userA, created.workingRevision.working_revision_id))],
+        unsavedOperationStack: [
+          stackEntry(
+            setOperation(cell('Y'), '1', userA, created.workingRevision.working_revision_id)
+          ),
+        ],
         source: 'AUTOSAVE',
       });
       if (!autosave.ok) throw new Error('unreachable');
@@ -406,8 +438,17 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
       });
 
       const OP_COUNT = 500;
-      const bigStack: FinanceUnsavedOperationStackEntry[] = Array.from({ length: OP_COUNT }, (_, i) =>
-        stackEntry(setOperation(cell(`LINE_${i}`, `FY2025Q${(i % 4) + 1}`), String(i), userA, created.workingRevision.working_revision_id))
+      const bigStack: FinanceUnsavedOperationStackEntry[] = Array.from(
+        { length: OP_COUNT },
+        (_, i) =>
+          stackEntry(
+            setOperation(
+              cell(`LINE_${i}`, `FY2025Q${(i % 4) + 1}`),
+              String(i),
+              userA,
+              created.workingRevision.working_revision_id
+            )
+          )
       );
 
       const written = await autosaveService.checkpointOperationStack({
@@ -425,14 +466,19 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
         organizationId: orgId,
         artifactId: created.artifact.artifact_id,
       });
-      if (!detection.ok || !detection.recoverable) throw new Error('unreachable, expected recoverable');
-      const stack = crashRecoveryService.reconstructOperationStack(detection.checkpoint, { maxDepth: OP_COUNT });
+      if (!detection.ok || !detection.recoverable)
+        throw new Error('unreachable, expected recoverable');
+      const stack = crashRecoveryService.reconstructOperationStack(detection.checkpoint, {
+        maxDepth: OP_COUNT,
+      });
       const elapsedMs = Date.now() - startedAt;
 
       expect(stack.depth()).toBe(OP_COUNT);
       expect(elapsedMs).toBeLessThanOrEqual(5000);
       // eslint-disable-next-line no-console
-      console.log(`[AP-04 benchmark] crash-recovery read+reconstruct of ${OP_COUNT} operations: ${elapsedMs}ms`);
+      console.log(
+        `[AP-04 benchmark] crash-recovery read+reconstruct of ${OP_COUNT} operations: ${elapsedMs}ms`
+      );
     });
   });
 
@@ -525,7 +571,10 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
       if (!resolved.ok) throw new Error('unreachable');
       expect(resolved.operation.type).toBe('paste');
       if (resolved.operation.type !== 'paste') throw new Error('unreachable');
-      expect(resolved.operation.values[0]).toEqual({ status: 'PRESENT_NONZERO', valueDecimal: '111' });
+      expect(resolved.operation.values[0]).toEqual({
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '111',
+      });
     });
 
     it('buildResolvedOperation with MERGE_PER_CELL requires an explicit mergedValue', () => {
@@ -551,7 +600,11 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
           sourceWorkingRevisionId: null,
         }
       );
-      expect(missing).toEqual({ ok: false, code: 'MISSING_MERGED_VALUE', message: expect.any(String) });
+      expect(missing).toEqual({
+        ok: false,
+        code: 'MISSING_MERGED_VALUE',
+        message: expect.any(String),
+      });
     });
   });
 
@@ -583,7 +636,11 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
         artifactId: created.artifact.artifact_id,
         actorId: userA,
         expectedWorkingRevisionId: created.workingRevision.working_revision_id,
-        unsavedOperationStack: [stackEntry(setOperation(cell('REVENUE'), '10', userA, created.workingRevision.working_revision_id))],
+        unsavedOperationStack: [
+          stackEntry(
+            setOperation(cell('REVENUE'), '10', userA, created.workingRevision.working_revision_id)
+          ),
+        ],
         source: 'AUTOSAVE',
       });
       if (!firstCheckpoint.ok) throw new Error('unreachable');
@@ -599,8 +656,12 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
       });
       expect(firstEnqueue.ok).toBe(true);
       if (!firstEnqueue.ok) throw new Error('unreachable');
-      expect(firstEnqueue.pinnedContentSemanticHash).toBe(firstCheckpoint.workingRevision.content_semantic_hash);
-      expect(firstEnqueue.job.input_revision_hash).toBe(firstCheckpoint.workingRevision.content_semantic_hash);
+      expect(firstEnqueue.pinnedContentSemanticHash).toBe(
+        firstCheckpoint.workingRevision.content_semantic_hash
+      );
+      expect(firstEnqueue.job.input_revision_hash).toBe(
+        firstCheckpoint.workingRevision.content_semantic_hash
+      );
 
       // Someone edits again -> a NEW checkpoint -> a DIFFERENT content_semantic_hash.
       const secondCheckpoint = await autosaveService.checkpointOperationStack({
@@ -608,11 +669,22 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
         artifactId: created.artifact.artifact_id,
         actorId: userA,
         expectedWorkingRevisionId: firstCheckpoint.workingRevision.working_revision_id,
-        unsavedOperationStack: [stackEntry(setOperation(cell('REVENUE'), '20', userA, firstCheckpoint.workingRevision.working_revision_id))],
+        unsavedOperationStack: [
+          stackEntry(
+            setOperation(
+              cell('REVENUE'),
+              '20',
+              userA,
+              firstCheckpoint.workingRevision.working_revision_id
+            )
+          ),
+        ],
         source: 'AUTOSAVE',
       });
       if (!secondCheckpoint.ok) throw new Error('unreachable');
-      expect(secondCheckpoint.workingRevision.content_semantic_hash).not.toBe(firstCheckpoint.workingRevision.content_semantic_hash);
+      expect(secondCheckpoint.workingRevision.content_semantic_hash).not.toBe(
+        firstCheckpoint.workingRevision.content_semantic_hash
+      );
 
       const secondEnqueue = await computePinning.enqueueComputeForCurrentRevision({
         organizationId: orgId,
@@ -624,7 +696,9 @@ describe.skipIf(!REAL_PG)('AP-04 collaboration services — real PostgreSQL', ()
       });
       expect(secondEnqueue.ok).toBe(true);
       if (!secondEnqueue.ok) throw new Error('unreachable');
-      expect(secondEnqueue.pinnedContentSemanticHash).toBe(secondCheckpoint.workingRevision.content_semantic_hash);
+      expect(secondEnqueue.pinnedContentSemanticHash).toBe(
+        secondCheckpoint.workingRevision.content_semantic_hash
+      );
       // the OLD job's pinned hash is untouched — never silently swapped
       expect(firstEnqueue.job.input_revision_hash).not.toBe(secondEnqueue.job.input_revision_hash);
     });

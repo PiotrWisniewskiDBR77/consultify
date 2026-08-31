@@ -191,9 +191,7 @@ describe('settingsNotificationEngineSync', () => {
 
     it('never throws when the engine write fails', async () => {
       mockUpdatePreferences.mockRejectedValue(new Error('db down'));
-      await expect(
-        syncQuietHoursPreferences('user-1', { enabled: true })
-      ).resolves.toBeUndefined();
+      await expect(syncQuietHoursPreferences('user-1', { enabled: true })).resolves.toBeUndefined();
     });
   });
 });

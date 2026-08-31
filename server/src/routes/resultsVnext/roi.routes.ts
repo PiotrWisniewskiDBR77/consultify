@@ -26,13 +26,26 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
+import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
-import { validateBody, validateParams, validateQuery } from '../../middleware/validation.middleware.js';
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
+import {
+  AtomicWriteAggregateNotFoundError,
+  AtomicWriteConflictError,
+} from '../../services/resultsVnext/platform/atomicWrite.js';
+import {
+  type CommandAccessContext,
+  CommandCapabilityDeniedError,
+} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import {
   publishRoiGovernedVisibilityPolicy,
   resolveRoiGovernedVisibility,
@@ -41,25 +54,38 @@ import {
   RoiGovernedVisibilityPolicyMismatchError,
   RoiVisibilityGovernanceActorNotAuthorizedError,
 } from '../../services/resultsVnext/platform/visibilityResolver.js';
-import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import {
-  AtomicWriteAggregateNotFoundError,
-  AtomicWriteConflictError,
-} from '../../services/resultsVnext/platform/atomicWrite.js';
+  correctActualEntry,
+  disputeActualEntry,
+  recordActualEntry,
+  RoiActualEntryNotFoundError,
+  RoiActualEntryValidationError,
+  RoiActualSelfVerificationDeniedError,
+  verifyActualEntry,
+} from '../../services/resultsVnext/roi/roiActualEntryCommands.js';
 import {
-  CommandCapabilityDeniedError,
-  type CommandAccessContext,
-} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
+  getActualEntry,
+  listActualEntries,
+} from '../../services/resultsVnext/roi/roiActualEntryRepository.js';
+import { publishRoiActualSnapshot } from '../../services/resultsVnext/roi/roiActualSnapshotCommands.js';
+import {
+  getRoiActualSnapshot,
+  listRoiActualSnapshots,
+} from '../../services/resultsVnext/roi/roiActualSnapshotRepository.js';
+import {
+  getRoiApprovalSnapshot,
+  listRoiApprovalSnapshots,
+} from '../../services/resultsVnext/roi/roiApprovalSnapshotRepository.js';
+import {
+  addAssumption,
+  removeAssumption,
+  RoiAssumptionFrozenError,
+  updateAssumption,
+} from '../../services/resultsVnext/roi/roiAssumptionCommands.js';
 import {
   captureOrUpdateBaseline,
   RoiBaselineFrozenError,
 } from '../../services/resultsVnext/roi/roiBaselineCommands.js';
-import {
-  addAssumption,
-  removeAssumption,
-  updateAssumption,
-  RoiAssumptionFrozenError,
-} from '../../services/resultsVnext/roi/roiAssumptionCommands.js';
 import {
   addBenefitEvidenceLink,
   flagEvidenceLinkFreshnessCheck,
@@ -69,10 +95,15 @@ import {
 import {
   addBenefitLine,
   removeBenefitLine,
-  updateBenefitLine,
   RoiBenefitLineFrozenError,
   RoiBenefitLineValidationError,
+  updateBenefitLine,
 } from '../../services/resultsVnext/roi/roiBenefitLineCommands.js';
+import {
+  cancelRoiCase,
+  startRoiCaseBenefitsRealization,
+} from '../../services/resultsVnext/roi/roiBenefitsRealizationCommands.js';
+import { getRoiCaseBenefitsRealizationView } from '../../services/resultsVnext/roi/roiBenefitsRealizationRepository.js';
 import {
   captureOrUpdateCalculationPolicy,
   RoiCalculationPolicyFrozenError,
@@ -82,6 +113,14 @@ import {
   createRoiCalculationRun,
   RoiCalculationRunValidationError,
 } from '../../services/resultsVnext/roi/roiCalculationRunCommands.js';
+import {
+  approveRoiCase,
+  rejectRoiCase,
+  reopenApprovedRoiCaseForRevision,
+  requestChangesOnRoiCase,
+  RoiSelfApprovalDeniedError,
+  submitRoiCaseForApproval,
+} from '../../services/resultsVnext/roi/roiCaseApprovalCommands.js';
 import {
   archiveRoiCase,
   createRoiCase,
@@ -94,23 +133,12 @@ import {
   startModeling,
   updateRoiCaseDetails,
 } from '../../services/resultsVnext/roi/roiCaseCommands.js';
-import {
-  approveRoiCase,
-  rejectRoiCase,
-  reopenApprovedRoiCaseForRevision,
-  requestChangesOnRoiCase,
-  RoiSelfApprovalDeniedError,
-  submitRoiCaseForApproval,
-} from '../../services/resultsVnext/roi/roiCaseApprovalCommands.js';
-import {
-  getRoiApprovalSnapshot,
-  listRoiApprovalSnapshots,
-} from '../../services/resultsVnext/roi/roiApprovalSnapshotRepository.js';
+import { getRoiCaseCompareView } from '../../services/resultsVnext/roi/roiCompareRepository.js';
 import {
   addCostLine,
   removeCostLine,
-  updateCostLine,
   RoiCostLineFrozenError,
+  updateCostLine,
 } from '../../services/resultsVnext/roi/roiCostLineCommands.js';
 import {
   getAssumption,
@@ -127,67 +155,6 @@ import {
   listScenarioOverrides,
   listScenarios,
 } from '../../services/resultsVnext/roi/roiEconomicModelRepository.js';
-import { getRoiBaseline, getRoiCase, listRoiCases } from '../../services/resultsVnext/roi/roiRepository.js';
-import {
-  addScenario,
-  removeScenario,
-  removeScenarioOverride,
-  setScenarioOverride,
-  updateScenario,
-  RoiScenarioFrozenError,
-  RoiScenarioValidationError,
-} from '../../services/resultsVnext/roi/roiScenarioCommands.js';
-import { startRoiCaseTracking } from '../../services/resultsVnext/roi/roiTrackingCommands.js';
-import {
-  cancelRoiCase,
-  startRoiCaseBenefitsRealization,
-} from '../../services/resultsVnext/roi/roiBenefitsRealizationCommands.js';
-import { getRoiCaseBenefitsRealizationView } from '../../services/resultsVnext/roi/roiBenefitsRealizationRepository.js';
-import {
-  createRoiForecastVersion,
-  RoiForecastVersionValidationError,
-} from '../../services/resultsVnext/roi/roiForecastVersionCommands.js';
-import {
-  getRoiForecastVersion,
-  listRoiForecastVersions,
-} from '../../services/resultsVnext/roi/roiForecastVersionRepository.js';
-import { getRoiCaseCompareView } from '../../services/resultsVnext/roi/roiCompareRepository.js';
-import {
-  correctActualEntry,
-  disputeActualEntry,
-  recordActualEntry,
-  verifyActualEntry,
-  RoiActualEntryNotFoundError,
-  RoiActualEntryValidationError,
-  RoiActualSelfVerificationDeniedError,
-} from '../../services/resultsVnext/roi/roiActualEntryCommands.js';
-import { getActualEntry, listActualEntries } from '../../services/resultsVnext/roi/roiActualEntryRepository.js';
-import { publishRoiActualSnapshot } from '../../services/resultsVnext/roi/roiActualSnapshotCommands.js';
-import {
-  getRoiActualSnapshot,
-  listRoiActualSnapshots,
-} from '../../services/resultsVnext/roi/roiActualSnapshotRepository.js';
-import {
-  addVarianceCause,
-  recordVariance,
-  removeVarianceCause,
-  updateVarianceStatus,
-  RoiVarianceNotFoundError,
-  RoiVarianceValidationError,
-} from '../../services/resultsVnext/roi/roiVarianceCommands.js';
-import { getVariance, listVariances } from '../../services/resultsVnext/roi/roiVarianceRepository.js';
-import {
-  closeRoiCase,
-  markRoiCasePostInvestmentReviewDue,
-  recordRoiPirTeresaDraftDisposition,
-  scheduleRoiCasePostInvestmentReview,
-  startRoiCasePostInvestmentReview,
-  updateRoiPostInvestmentReviewDraft,
-  RoiPirNotFoundError,
-  RoiPirSelfCloseDeniedError,
-  RoiPirValidationError,
-} from '../../services/resultsVnext/roi/roiPirCommands.js';
-import { getRoiPostInvestmentReview, listRoiPostInvestmentReviews } from '../../services/resultsVnext/roi/roiPirRepository.js';
 import {
   createRoiFinanceLink,
   removeRoiFinanceLink,
@@ -196,17 +163,66 @@ import {
   listRoiFinanceLinks,
   listRoiFinanceReconciliations,
 } from '../../services/resultsVnext/roi/roiFinanceLinkRepository.js';
+import { listRoiFinanceProjections } from '../../services/resultsVnext/roi/roiFinanceProjectionRepository.js';
 import {
   openRoiFinanceReconciliation,
   recordFinanceOwnerGrantEvent,
-  updateRoiFinanceReconciliationStatus,
   RoiFinanceLinkNotFoundError,
   RoiFinanceReconciliationNotFoundError,
   RoiFinanceReconciliationValidationError,
+  updateRoiFinanceReconciliationStatus,
 } from '../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js';
-import { listRoiFinanceProjections } from '../../services/resultsVnext/roi/roiFinanceProjectionRepository.js';
+import {
+  createRoiForecastVersion,
+  RoiForecastVersionValidationError,
+} from '../../services/resultsVnext/roi/roiForecastVersionCommands.js';
+import {
+  getRoiForecastVersion,
+  listRoiForecastVersions,
+} from '../../services/resultsVnext/roi/roiForecastVersionRepository.js';
+import {
+  closeRoiCase,
+  markRoiCasePostInvestmentReviewDue,
+  recordRoiPirTeresaDraftDisposition,
+  RoiPirNotFoundError,
+  RoiPirSelfCloseDeniedError,
+  RoiPirValidationError,
+  scheduleRoiCasePostInvestmentReview,
+  startRoiCasePostInvestmentReview,
+  updateRoiPostInvestmentReviewDraft,
+} from '../../services/resultsVnext/roi/roiPirCommands.js';
+import {
+  getRoiPostInvestmentReview,
+  listRoiPostInvestmentReviews,
+} from '../../services/resultsVnext/roi/roiPirRepository.js';
+import {
+  getRoiBaseline,
+  getRoiCase,
+  listRoiCases,
+} from '../../services/resultsVnext/roi/roiRepository.js';
+import {
+  addScenario,
+  removeScenario,
+  removeScenarioOverride,
+  RoiScenarioFrozenError,
+  RoiScenarioValidationError,
+  setScenarioOverride,
+  updateScenario,
+} from '../../services/resultsVnext/roi/roiScenarioCommands.js';
+import { startRoiCaseTracking } from '../../services/resultsVnext/roi/roiTrackingCommands.js';
+import {
+  addVarianceCause,
+  recordVariance,
+  removeVarianceCause,
+  RoiVarianceNotFoundError,
+  RoiVarianceValidationError,
+  updateVarianceStatus,
+} from '../../services/resultsVnext/roi/roiVarianceCommands.js';
+import {
+  getVariance,
+  listVariances,
+} from '../../services/resultsVnext/roi/roiVarianceRepository.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
-import { getCorrelationId } from './correlationId.js';
 import logger from '../../utils/Logger.js';
 import {
   ArchiveRoiCaseSchema,
@@ -269,9 +285,9 @@ import {
   RecordActualEntrySchema,
   RecordVarianceSchema,
   RemoveVarianceCauseSchema,
-  RoiCaseCancellationSchema,
   RoiActualEntryParamsSchema,
   RoiActualSnapshotParamsSchema,
+  RoiCaseCancellationSchema,
   RoiForecastVersionParamsSchema,
   RoiVarianceCauseParamsSchema,
   RoiVarianceParamsSchema,
@@ -285,14 +301,17 @@ import {
   ScheduleRoiCasePostInvestmentReviewSchema,
   UpdateRoiPostInvestmentReviewDraftSchema,
 } from '../../validators/resultsVnextRoiPir.validators.js';
+import { getCorrelationId } from './correlationId.js';
 
 const router = Router();
 
-const FinanceOwnerGrantSchema = z.object({
-  userId: z.string().min(1).max(255),
-  action: z.enum(['granted', 'revoked']),
-  idempotencyKey: z.string().min(1).max(255),
-}).strict();
+const FinanceOwnerGrantSchema = z
+  .object({
+    userId: z.string().min(1).max(255),
+    action: z.enum(['granted', 'revoked']),
+    idempotencyKey: z.string().min(1).max(255),
+  })
+  .strict();
 
 // AMD-FLOW-ROI-VISIBILITY-002 — the policy identifier is never accepted
 // from the client: the route always publishes the one pinned canonical
@@ -301,9 +320,11 @@ const FinanceOwnerGrantSchema = z.object({
 // the service-level guard (publishRoiGovernedVisibilityPolicy's own
 // FAIL-BEFORE-MUTATION check) is exercised directly by
 // roiGovernedVisibility20.realdb.test.ts, not through this route.
-const PublishRoiVisibilityPolicySchema = z.object({
-  idempotencyKey: z.string().min(1).max(255).optional(),
-}).strict();
+const PublishRoiVisibilityPolicySchema = z
+  .object({
+    idempotencyKey: z.string().min(1).max(255).optional(),
+  })
+  .strict();
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
@@ -338,7 +359,10 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
  * scoped, same as the KPI domain). Only the 5 case-decision commands in
  * `roiCaseApprovalCommands.ts` are gated by this pakiet — see that file's
  * own RN-G5 comment for the exact scope. */
-async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+async function resolveAccess(
+  req: AuthenticatedRequest,
+  auth: RouteAuth
+): Promise<CommandAccessContext> {
   return resolveEffectiveAccess({
     userId: auth.userId,
     organizationId: auth.organizationId,
@@ -504,7 +528,10 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   // *NotFoundError above uses. RoiFinanceReconciliationValidationError is a
   // 409, matching every other typed precondition-failure error in this
   // router.
-  if (err instanceof RoiFinanceLinkNotFoundError || err instanceof RoiFinanceReconciliationNotFoundError) {
+  if (
+    err instanceof RoiFinanceLinkNotFoundError ||
+    err instanceof RoiFinanceReconciliationNotFoundError
+  ) {
     res.status(404).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
@@ -817,7 +844,11 @@ function mountTransitionRoute(path: string, op: string, runner: typeof startMode
 }
 
 mountTransitionRoute('/cases/:caseId/transitions/start-modeling', 'startModeling', startModeling);
-mountTransitionRoute('/cases/:caseId/transitions/ready-for-review', 'markReadyForReview', markReadyForReview);
+mountTransitionRoute(
+  '/cases/:caseId/transitions/ready-for-review',
+  'markReadyForReview',
+  markReadyForReview
+);
 
 // ==========================================
 // GET /api/vnext/results/roi/cases/:caseId/baseline — getRoiBaseline
@@ -919,7 +950,12 @@ async function requireExistingRoiCase(
   caseId: string,
   res: Response
 ): Promise<boolean> {
-  const existing = await getRoiCase({ userId: auth.userId, organizationId: auth.organizationId, caseId, includeArchived: true });
+  const existing = await getRoiCase({
+    userId: auth.userId,
+    organizationId: auth.organizationId,
+    caseId,
+    includeArchived: true,
+  });
   if (!existing) {
     res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
     return false;
@@ -937,7 +973,11 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const policy = await getCalculationPolicy({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      const policy = await getCalculationPolicy({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
       if (!policy) {
         res.status(404).json({ error: 'ROI calculation policy not found', code: 'NOT_FOUND' });
         return;
@@ -1025,7 +1065,12 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, assumptionId } = req.params as { caseId: string; assumptionId: string };
-      const assumption = await getAssumption({ userId: auth.userId, organizationId: auth.organizationId, caseId, assumptionId });
+      const assumption = await getAssumption({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        assumptionId,
+      });
       if (!assumption) {
         res.status(404).json({ error: 'ROI assumption not found', code: 'NOT_FOUND' });
         return;
@@ -1198,7 +1243,12 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, costLineId } = req.params as { caseId: string; costLineId: string };
-      const costLine = await getCostLine({ userId: auth.userId, organizationId: auth.organizationId, caseId, costLineId });
+      const costLine = await getCostLine({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        costLineId,
+      });
       if (!costLine) {
         res.status(404).json({ error: 'ROI cost line not found', code: 'NOT_FOUND' });
         return;
@@ -1373,7 +1423,12 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
-      const benefitLine = await getBenefitLine({ userId: auth.userId, organizationId: auth.organizationId, caseId, benefitLineId });
+      const benefitLine = await getBenefitLine({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        benefitLineId,
+      });
       if (!benefitLine) {
         res.status(404).json({ error: 'ROI benefit line not found', code: 'NOT_FOUND' });
         return;
@@ -1538,7 +1593,9 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
-      const query = req.query as unknown as import('zod').infer<typeof ListBenefitEvidenceLinksQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListBenefitEvidenceLinksQuerySchema
+      >;
       const links = await listBenefitEvidenceLinks({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -1601,7 +1658,11 @@ router.delete(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { caseId, linkId } = req.params as { caseId: string; benefitLineId: string; linkId: string };
+      const { caseId, linkId } = req.params as {
+        caseId: string;
+        benefitLineId: string;
+        linkId: string;
+      };
       const body = req.body as import('zod').infer<typeof RemoveBenefitEvidenceLinkSchema>;
       const access = await resolveAccess(req, auth);
       const outcome = await removeBenefitEvidenceLink({
@@ -1661,7 +1722,12 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
-      const scenario = await getScenario({ userId: auth.userId, organizationId: auth.organizationId, caseId, scenarioId });
+      const scenario = await getScenario({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        scenarioId,
+      });
       if (!scenario) {
         res.status(404).json({ error: 'ROI scenario not found', code: 'NOT_FOUND' });
         return;
@@ -1941,7 +2007,9 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const query = req.query as unknown as import('zod').infer<typeof ListCalculationRunsQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListCalculationRunsQuerySchema
+      >;
       const runs = await listCalculationRuns({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -1964,7 +2032,12 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, runId } = req.params as { caseId: string; runId: string };
-      const run = await getCalculationRun({ userId: auth.userId, organizationId: auth.organizationId, caseId, runId });
+      const run = await getCalculationRun({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        runId,
+      });
       if (!run) {
         res.status(404).json({ error: 'ROI calculation run not found', code: 'NOT_FOUND' });
         return;
@@ -2253,7 +2326,11 @@ router.get(
 // correlationId/causationId/reason), same as submitRoiCaseForApproval/
 // reopenRejectedRoiCase above.
 
-mountTransitionRoute('/cases/:caseId/transitions/start-tracking', 'startRoiCaseTracking', startRoiCaseTracking);
+mountTransitionRoute(
+  '/cases/:caseId/transitions/start-tracking',
+  'startRoiCaseTracking',
+  startRoiCaseTracking
+);
 
 // ---------- POST/GET .../forecast-versions[/:forecastVersionId] ----------
 
@@ -2301,7 +2378,11 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const forecastVersions = await listRoiForecastVersions({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      const forecastVersions = await listRoiForecastVersions({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
       res.status(200).json({ forecastVersions });
     } catch (err) {
       handleRoiRouteError(res, err, 'listRoiForecastVersions');
@@ -2316,7 +2397,10 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { caseId, forecastVersionId } = req.params as { caseId: string; forecastVersionId: string };
+      const { caseId, forecastVersionId } = req.params as {
+        caseId: string;
+        forecastVersionId: string;
+      };
       const forecastVersion = await getRoiForecastVersion({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -2344,7 +2428,11 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const compareView = await getRoiCaseCompareView({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      const compareView = await getRoiCaseCompareView({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
       if (!compareView) {
         res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
         return;
@@ -2367,7 +2455,9 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const query = req.query as unknown as import('zod').infer<typeof ListActualEntriesQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListActualEntriesQuerySchema
+      >;
       const entries = await listActualEntries({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -2433,7 +2523,12 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, entryId } = req.params as { caseId: string; entryId: string };
-      const entry = await getActualEntry({ userId: auth.userId, organizationId: auth.organizationId, caseId, actualEntryId: entryId });
+      const entry = await getActualEntry({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        actualEntryId: entryId,
+      });
       if (!entry) {
         res.status(404).json({ error: 'ROI actual entry not found', code: 'NOT_FOUND' });
         return;
@@ -2594,7 +2689,11 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const actualSnapshots = await listRoiActualSnapshots({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      const actualSnapshots = await listRoiActualSnapshots({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
       res.status(200).json({ actualSnapshots });
     } catch (err) {
       handleRoiRouteError(res, err, 'listRoiActualSnapshots');
@@ -2609,7 +2708,10 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { caseId, actualSnapshotId } = req.params as { caseId: string; actualSnapshotId: string };
+      const { caseId, actualSnapshotId } = req.params as {
+        caseId: string;
+        actualSnapshotId: string;
+      };
       const actualSnapshot = await getRoiActualSnapshot({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -2637,7 +2739,11 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const variances = await listVariances({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      const variances = await listVariances({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
       res.status(200).json({ variances });
     } catch (err) {
       handleRoiRouteError(res, err, 'listVariances');
@@ -2693,7 +2799,12 @@ router.get(
     if (!auth) return;
     try {
       const { caseId, varianceId } = req.params as { caseId: string; varianceId: string };
-      const variance = await getVariance({ userId: auth.userId, organizationId: auth.organizationId, caseId, varianceId });
+      const variance = await getVariance({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        varianceId,
+      });
       if (!variance) {
         res.status(404).json({ error: 'ROI variance not found', code: 'NOT_FOUND' });
         return;
@@ -2788,7 +2899,11 @@ router.delete(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { varianceId, causeId } = req.params as { caseId: string; varianceId: string; causeId: string };
+      const { varianceId, causeId } = req.params as {
+        caseId: string;
+        varianceId: string;
+        causeId: string;
+      };
       const body = req.body as import('zod').infer<typeof RemoveVarianceCauseSchema>;
       const access = await resolveAccess(req, auth);
       const outcome = await removeVarianceCause({
@@ -2886,7 +3001,11 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const view = await getRoiCaseBenefitsRealizationView({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      const view = await getRoiCaseBenefitsRealizationView({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
       if (!view) {
         res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
         return;
@@ -2914,7 +3033,9 @@ router.put(
     try {
       const { caseId } = req.params as { caseId: string };
       if (!(await requireExistingRoiCase(auth, caseId, res))) return;
-      const body = req.body as import('zod').infer<typeof ScheduleRoiCasePostInvestmentReviewSchema>;
+      const body = req.body as import('zod').infer<
+        typeof ScheduleRoiCasePostInvestmentReviewSchema
+      >;
       const access = await resolveAccess(req, auth);
       const outcome = await scheduleRoiCasePostInvestmentReview({
         caseId,
@@ -3234,7 +3355,11 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const financeLinks = await listRoiFinanceLinks({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      const financeLinks = await listRoiFinanceLinks({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
       res.status(200).json({ financeLinks });
     } catch (err) {
       handleRoiRouteError(res, err, 'listRoiFinanceLinks');
@@ -3391,8 +3516,13 @@ router.patch(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { caseId, reconciliationId } = req.params as { caseId: string; reconciliationId: string };
-      const body = req.body as import('zod').infer<typeof UpdateRoiFinanceReconciliationStatusSchema>;
+      const { caseId, reconciliationId } = req.params as {
+        caseId: string;
+        reconciliationId: string;
+      };
+      const body = req.body as import('zod').infer<
+        typeof UpdateRoiFinanceReconciliationStatusSchema
+      >;
       const access = await resolveAccess(req, auth);
       const outcome = await updateRoiFinanceReconciliationStatus({
         reconciliationId,
@@ -3452,7 +3582,11 @@ router.post(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { caseId, linkId } = req.params as { caseId: string; benefitLineId: string; linkId: string };
+      const { caseId, linkId } = req.params as {
+        caseId: string;
+        benefitLineId: string;
+        linkId: string;
+      };
       const body = req.body as import('zod').infer<typeof FreshnessCheckSchema>;
       const access = await resolveAccess(req, auth);
       const outcome = await flagEvidenceLinkFreshnessCheck({

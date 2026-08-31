@@ -39,10 +39,10 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
@@ -52,16 +52,15 @@ import {
   getActiveVisibilityPolicy,
   publishVisibilityPolicy,
 } from '../platform/visibilityResolver.js';
-
 import {
-  toKpiDefinition,
-  toKpiDefinitionVersion,
   type KpiDefinition,
   type KpiDefinitionRow,
   type KpiDefinitionVersion,
   type KpiDefinitionVersionRow,
   type KpiStatus,
   type KpiTargetGeometry,
+  toKpiDefinition,
+  toKpiDefinitionVersion,
 } from './kpiTypes.js';
 
 // ==========================================
@@ -176,7 +175,11 @@ export class KpiNoActiveVisibilityPolicyError extends Error {
 export class SelfApprovalDeniedError extends Error {
   code = 'SELF_APPROVAL_DENIED';
   details: Record<string, unknown>;
-  constructor(definitionVersionId: string, approverId: string, reasonField: 'submitted_by' | 'created_by') {
+  constructor(
+    definitionVersionId: string,
+    approverId: string,
+    reasonField: 'submitted_by' | 'created_by'
+  ) {
     super(
       `User ${approverId} may not approve definition version ${definitionVersionId}: matches its own ${reasonField}`
     );
@@ -410,7 +413,14 @@ export async function createKpiDraft(
            (organization_id, kpi_code, status, primary_process_id, response_policy_id, owner_user_id, created_by)
          VALUES ($1, $2, 'draft', $3, $4, $5, $6)
          RETURNING *`,
-        [organizationId, kpiCode, primaryProcessId, responsePolicyId, ownerUserId ?? createdBy, createdBy]
+        [
+          organizationId,
+          kpiCode,
+          primaryProcessId,
+          responsePolicyId,
+          ownerUserId ?? createdBy,
+          createdBy,
+        ]
       );
       const kpiRow = kpiInsert.rows[0];
       if (!kpiRow) {
@@ -473,12 +483,18 @@ export async function createKpiDraft(
       );
 
       return {
-        kpi: toKpiDefinition({ ...kpiRow, current_definition_version_id: versionRow.definition_version_id }),
+        kpi: toKpiDefinition({
+          ...kpiRow,
+          current_definition_version_id: versionRow.definition_version_id,
+        }),
         definitionVersion: toKpiDefinitionVersion(versionRow),
       };
     },
     buildEvent: ({ result }) => {
-      const afterState: Record<string, unknown> = { kpi: result.kpi, definitionVersion: result.definitionVersion };
+      const afterState: Record<string, unknown> = {
+        kpi: result.kpi,
+        definitionVersion: result.definitionVersion,
+      };
       return {
         schemaVersion: 1,
         eventType: 'kpi.definition_created',
@@ -501,7 +517,10 @@ export async function createKpiDraft(
         idempotencyKey,
         expectedVersion: null,
         resultingVersion: 1,
-        payload: { definitionVersionId: result.definitionVersion.definitionVersionId, versionNumber: 1 },
+        payload: {
+          definitionVersionId: result.definitionVersion.definitionVersionId,
+          versionNumber: 1,
+        },
       } satisfies AtomicEventInput;
     },
   });
@@ -593,7 +612,8 @@ export async function editDraft(
         warning_low: edits.warningLow !== undefined ? edits.warningLow : currentRow.warning_low,
         warning_high: edits.warningHigh !== undefined ? edits.warningHigh : currentRow.warning_high,
         critical_low: edits.criticalLow !== undefined ? edits.criticalLow : currentRow.critical_low,
-        critical_high: edits.criticalHigh !== undefined ? edits.criticalHigh : currentRow.critical_high,
+        critical_high:
+          edits.criticalHigh !== undefined ? edits.criticalHigh : currentRow.critical_high,
         binary_success_value:
           edits.binarySuccessValue !== undefined
             ? edits.binarySuccessValue
@@ -602,8 +622,11 @@ export async function editDraft(
         measurement_frequency_days:
           edits.measurementFrequencyDays !== undefined
             ? edits.measurementFrequencyDays
-            : (currentRow as KpiDefinitionVersionRow & { measurement_frequency_days: number | null })
-                .measurement_frequency_days,
+            : (
+                currentRow as KpiDefinitionVersionRow & {
+                  measurement_frequency_days: number | null;
+                }
+              ).measurement_frequency_days,
       };
 
       const updateResult = await client.query<KpiDefinitionVersionRow>(
@@ -882,7 +905,9 @@ export async function approveDefinitionVersion(
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
-        throw new Error(`[approveDefinitionVersion] update returned no row for ${definitionVersionId}`);
+        throw new Error(
+          `[approveDefinitionVersion] update returned no row for ${definitionVersionId}`
+        );
       }
 
       // The root aggregate's "current" pointer follows the latest APPROVED
@@ -999,7 +1024,9 @@ export async function rejectDefinitionVersion(
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
-        throw new Error(`[rejectDefinitionVersion] update returned no row for ${definitionVersionId}`);
+        throw new Error(
+          `[rejectDefinitionVersion] update returned no row for ${definitionVersionId}`
+        );
       }
 
       // Mirror of submitDefinition's forward transition: a rejection lifts
@@ -1262,7 +1289,9 @@ export async function reviseDefinition(
       );
       const newVersionRow = insertResult.rows[0];
       if (!newVersionRow) {
-        throw new Error('[reviseDefinition] insert into rvn_kpi_definition_versions returned no row');
+        throw new Error(
+          '[reviseDefinition] insert into rvn_kpi_definition_versions returned no row'
+        );
       }
 
       // Root aggregate: `createKpiDraft` sets `current_definition_version_id`
@@ -1304,7 +1333,10 @@ export async function reviseDefinition(
       // special-cased, so a reader of `rvn_platform_events` sees the same
       // "expected_version -> resulting_version = +1" shape across this
       // whole command family.
-      const afterState = { definitionVersion: result, previousDefinitionVersionId: currentRow.definition_version_id };
+      const afterState = {
+        definitionVersion: result,
+        previousDefinitionVersionId: currentRow.definition_version_id,
+      };
       return {
         schemaVersion: 1,
         eventType: 'kpi.definition_revised',
@@ -1487,7 +1519,9 @@ export interface KpiLifecycleInput {
   access: CommandAccessContext;
 }
 
-export function activateKpi(input: KpiLifecycleInput): Promise<AtomicCommandOutcome<KpiDefinition>> {
+export function activateKpi(
+  input: KpiLifecycleInput
+): Promise<AtomicCommandOutcome<KpiDefinition>> {
   return runKpiLifecycleTransition(
     {
       eventType: 'kpi.activated',

@@ -10,9 +10,9 @@ import { randomUUID } from 'node:crypto';
 
 import type { Response } from 'express';
 
+import { invalidatePlatformSuperAdminCache } from '../services/organizationSuspensionGuard.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { invalidatePlatformSuperAdminCache } from '../services/organizationSuspensionGuard.js';
 import { clearSchemaCache, getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type { UpdateUserRequest, UpdateUserRoleRequest } from '../validators/user.validators.js';

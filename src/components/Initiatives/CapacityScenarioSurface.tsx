@@ -987,7 +987,12 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               filterable: true,
               render: (row) => renderKnowledgeToken(row.supply),
             },
-            { id: 'gap', label: 'Luka', sortable: true, render: (row) => renderKnowledgeToken(row.gap) },
+            {
+              id: 'gap',
+              label: 'Luka',
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.gap),
+            },
             {
               id: 'saturation',
               label: 'Presja (zakres)',

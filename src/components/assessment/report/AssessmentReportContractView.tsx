@@ -2,6 +2,9 @@ import { Download, FileCheck, FileText, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
+import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
 import {
   ArtifactPropertiesTable,
@@ -12,23 +15,20 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
-import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
-import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 import {
-  getAssessmentReportContract,
-  isOfflineError,
-  MethodCoreApiError,
   type AssessmentReportArea,
   type AssessmentReportAreaComment,
   type AssessmentReportChapter,
   type AssessmentReportContract,
   type AssessmentReportEvidenceState,
   type AssessmentReportSkip,
+  getAssessmentReportContract,
+  isOfflineError,
+  MethodCoreApiError,
 } from '@/method-core/api/methodCoreApi';
-import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
-import { isAssessmentDocxEnabled } from '@/utils/assessmentDocxFlag';
 import { getHeaders } from '@/services/api/baseClient';
+import { isAssessmentDocxEnabled } from '@/utils/assessmentDocxFlag';
+import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
 
 import { SKIP_REASON_LABELS } from '../../method-workspace/skipReasonCodes';
 

@@ -87,11 +87,16 @@ import {
   getResultsDomainTabs,
   isResultsDomain,
 } from '../resultsDomainNavigation';
-import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
+import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from '../types';
-import { listOkrCycles, listOkrPrograms, type OkrCycleDto, type OkrProgramDto } from './okrAdminApi';
+import {
+  listOkrCycles,
+  listOkrPrograms,
+  type OkrCycleDto,
+  type OkrProgramDto,
+} from './okrAdminApi';
 import {
   createOkrSet,
   getOkrSet,
@@ -105,7 +110,6 @@ import { OkrCheckInsView } from './OkrCheckInsView';
 import { OkrKeyResultsView } from './OkrKeyResultsView';
 import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
 import { OkrObjectivesView } from './OkrObjectivesView';
-import { OkrSetDraftFormModal, type OkrSetDraftFormValues } from './OkrSetDraftFormModal';
 import {
   OKR_SET_STATUS_BUCKET,
   OKR_SET_STATUS_BUCKET_LABEL,
@@ -116,6 +120,7 @@ import {
   buildOkrSetPreview,
   buildOkrSetRowMenu,
 } from './okrRegistryPresenters';
+import { OkrSetDraftFormModal, type OkrSetDraftFormValues } from './OkrSetDraftFormModal';
 
 type OkrTab = 'org' | 'my' | 'company';
 const OKR_SETS_FETCH_LIMIT = 200;
@@ -547,86 +552,86 @@ export const ResultsOkrHub: React.FC = () => {
         errorMessage={formError}
       />
       <ResultsVNextRegistryShell
-      domain="okr"
-      sampleData={shouldUseResultsVNextOwnerSampleData()}
-      moduleBar={{
-        tabs: getResultsDomainTabs(),
-        activeTab: 'okr',
-        onTabChange: (id) => {
-          if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
-        },
-        showTabCounts: false,
-        viewModes: ['table'],
-        viewMode: 'table',
-        chips,
-        activeChip: chip,
-        onChipChange: (id) => setChip(id as 'all' | OkrSetStatusBucket),
-        // Odbiór grafiki 2026-08-30 (Piotr): "W prawym, głównym rogu powinien
-        // być przycisk »Nowe dodawanie OKR«, a teraz są jakieś inne
-        // niepotrzebne przyciski" — the corner now carries exactly ONE
-        // primary CTA (canon: `StandardModuleBar.primaryCta` doc comment,
-        // "JEDEN primary CTA"), matching `assessment-reports-panel`'s single
-        // dark "Nowy raport" button Piotr pointed to as the reference. The
-        // Programs/Cycles admin-nav pair (`adminLinksCta`) is secondary to
-        // that — moved down to `menu3Right` (Menu 3, below the CTA row)
-        // rather than removed, since they're still the only entry point to
-        // those two real, mounted admin routes.
-        primaryCta: {
-          label: isPolish ? 'Nowy OKR' : 'New OKR',
-          icon: Plus,
-          onClick: openCreateForm,
-          testId: 'okr-registry-create-cta',
-        },
-        menu3Right: adminLinksCta,
-      }}
-      table={{
-        columns: buildOkrSetColumns(isPolish, resolveMemberName),
-        data: rows,
-        persistKey: `results-vnext.okr-registry.${tab}`,
-        loading,
-        error,
-        onRetry: () => loadSets(tab),
-        empty:
-          !loading && !error && rows.length === 0
-            ? chip === 'all'
-              ? emptyOrgCopy
-              : {
-                  title: isPolish ? 'Brak wierszy dla tego filtra' : 'No rows for this filter',
-                  description: isPolish
-                    ? 'Żaden zestaw nie pasuje do tego filtra.'
-                    : 'No set matches this filter.',
-                }
-            : undefined,
-        selectedRowId: selectedSetId,
-        onRowClick: (row) => setSelectedSetId(String(row.setId)),
-        rowMenu: (row) =>
-          buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
-            onPreview: (r) => setSelectedSetId(r.setId),
-            onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
-            onOpenWorkspace: (r) =>
-              navigate(
-                `${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`
-              ),
-          }),
-        defaultSort: { columnId: 'updatedAt', direction: 'desc' },
-      }}
-      preview={
-        selectedSet
-          ? buildOkrSetPreview(selectedSet, {
-              isPolish,
-              resolveMemberName,
-              onClose: () => setSelectedSetId(null),
+        domain="okr"
+        sampleData={shouldUseResultsVNextOwnerSampleData()}
+        moduleBar={{
+          tabs: getResultsDomainTabs(),
+          activeTab: 'okr',
+          onTabChange: (id) => {
+            if (id === 'search' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+          },
+          showTabCounts: false,
+          viewModes: ['table'],
+          viewMode: 'table',
+          chips,
+          activeChip: chip,
+          onChipChange: (id) => setChip(id as 'all' | OkrSetStatusBucket),
+          // Odbiór grafiki 2026-08-30 (Piotr): "W prawym, głównym rogu powinien
+          // być przycisk »Nowe dodawanie OKR«, a teraz są jakieś inne
+          // niepotrzebne przyciski" — the corner now carries exactly ONE
+          // primary CTA (canon: `StandardModuleBar.primaryCta` doc comment,
+          // "JEDEN primary CTA"), matching `assessment-reports-panel`'s single
+          // dark "Nowy raport" button Piotr pointed to as the reference. The
+          // Programs/Cycles admin-nav pair (`adminLinksCta`) is secondary to
+          // that — moved down to `menu3Right` (Menu 3, below the CTA row)
+          // rather than removed, since they're still the only entry point to
+          // those two real, mounted admin routes.
+          primaryCta: {
+            label: isPolish ? 'Nowy OKR' : 'New OKR',
+            icon: Plus,
+            onClick: openCreateForm,
+            testId: 'okr-registry-create-cta',
+          },
+          menu3Right: adminLinksCta,
+        }}
+        table={{
+          columns: buildOkrSetColumns(isPolish, resolveMemberName),
+          data: rows,
+          persistKey: `results-vnext.okr-registry.${tab}`,
+          loading,
+          error,
+          onRetry: () => loadSets(tab),
+          empty:
+            !loading && !error && rows.length === 0
+              ? chip === 'all'
+                ? emptyOrgCopy
+                : {
+                    title: isPolish ? 'Brak wierszy dla tego filtra' : 'No rows for this filter',
+                    description: isPolish
+                      ? 'Żaden zestaw nie pasuje do tego filtra.'
+                      : 'No set matches this filter.',
+                  }
+              : undefined,
+          selectedRowId: selectedSetId,
+          onRowClick: (row) => setSelectedSetId(String(row.setId)),
+          rowMenu: (row) =>
+            buildOkrSetRowMenu(row as unknown as OkrSetDto, isPolish, {
+              onPreview: (r) => setSelectedSetId(r.setId),
               onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
               onOpenWorkspace: (r) =>
                 navigate(
                   `${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`
                 ),
-            })
-          : null
-      }
-      forbidden={forbidden}
-      onForbiddenBack={() => setForbidden(null)}
-    />
+            }),
+          defaultSort: { columnId: 'updatedAt', direction: 'desc' },
+        }}
+        preview={
+          selectedSet
+            ? buildOkrSetPreview(selectedSet, {
+                isPolish,
+                resolveMemberName,
+                onClose: () => setSelectedSetId(null),
+                onOpenObjectives: (r) => setDrill({ level: 'objectives', set: r }),
+                onOpenWorkspace: (r) =>
+                  navigate(
+                    `${ROUTES.RESULTS_OKR.SET.replace(':okrSetId', r.setId)}${window.location.search}`
+                  ),
+              })
+            : null
+        }
+        forbidden={forbidden}
+        onForbiddenBack={() => setForbidden(null)}
+      />
     </>
   );
 };

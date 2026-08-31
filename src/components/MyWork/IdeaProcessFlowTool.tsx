@@ -25,6 +25,7 @@ import {
   CheckCircle,
   Copy,
   Edit3,
+  GitBranch,
   GitMerge,
   Lightbulb,
   Loader2,
@@ -34,7 +35,6 @@ import {
   MoveRight,
   Palette,
   Plus,
-  GitBranch,
   Repeat,
   Tag,
   Trash2,
@@ -64,7 +64,6 @@ import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry'
 import type { LaneOpOutcome } from '@/actions/quickActionAck';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
-import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import {
   generateAIProposal,
   generateProcessSummary,
@@ -77,6 +76,7 @@ import {
   IDEA_BOTTOM_BAR_MINIMAP_LIFT,
   isIdeaBottomBarUnifiedEnabled,
 } from '@/utils/ideaBottomBarUnifiedFlag';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
@@ -110,6 +110,7 @@ import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
@@ -150,15 +151,15 @@ import {
 } from './processflow/LaneSystem';
 import { LaneSystemViewportLayer } from './processflow/LaneSystem';
 import {
-  appendComment,
-  type ProcessFlowNodeComment,
-  removeComment,
-} from './processflow/nodeComments';
-import {
   checkProcessFlowNodeCap,
   PROCESS_FLOW_NODE_LIMIT,
   PROCESS_FLOW_NODE_WARN_THRESHOLD,
 } from './processflow/nodeCap';
+import {
+  appendComment,
+  type ProcessFlowNodeComment,
+  removeComment,
+} from './processflow/nodeComments';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -194,7 +195,6 @@ import {
   useProcessFlowPersistence,
 } from './processflow/useProcessFlowPersistence';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
-import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';

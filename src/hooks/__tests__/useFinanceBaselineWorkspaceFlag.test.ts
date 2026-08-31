@@ -11,7 +11,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { FINANCE_BASELINE_WORKSPACE_FLAG_ID, useFinanceBaselineWorkspaceFlag } from '../useFinanceBaselineWorkspaceFlag';
+import {
+  FINANCE_BASELINE_WORKSPACE_FLAG_ID,
+  useFinanceBaselineWorkspaceFlag,
+} from '../useFinanceBaselineWorkspaceFlag';
 
 beforeEach(() => {
   window.localStorage.clear();

@@ -202,10 +202,7 @@ export async function upsertFinancialCase(
     );
     if (!runResult || Number(runResult.changes) < 1) {
       const current = await getFinancialCase(input.ideaId, input.organizationId);
-      throw new IdeaFinancialCaseVersionConflictError(
-        current ?? existing,
-        input.expectedVersion
-      );
+      throw new IdeaFinancialCaseVersionConflictError(current ?? existing, input.expectedVersion);
     }
     logger.info(
       `[IdeaFinancialCase] Updated financial case ${existing.id} (idea ${input.ideaId}) v${existing.version} -> v${nextVersion}`

@@ -3,7 +3,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
-import { FinanceSampleDataBanner } from '../FinanceSampleDataBanner';
+
 import {
   FINANCE_OWNER_SAMPLE_ANALYSES,
   FINANCE_OWNER_SAMPLE_MODELS,
@@ -11,6 +11,7 @@ import {
   FINANCE_OWNER_SAMPLE_VALUATIONS,
   isFinanceOwnerSampleDataEnabled,
 } from '../financeOwnerSampleData';
+import { FinanceSampleDataBanner } from '../FinanceSampleDataBanner';
 
 describe('Finance owner-review sample-data honesty', () => {
   afterEach(() => vi.unstubAllGlobals());

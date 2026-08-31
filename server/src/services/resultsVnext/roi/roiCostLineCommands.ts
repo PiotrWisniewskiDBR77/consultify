@@ -13,21 +13,25 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
-  toRoiCostLine,
   type RoiConfidenceLevel,
   type RoiCostLine,
   type RoiCostLineRow,
   type RoiRecurrenceCadence,
   type RoiTimingType,
+  toRoiCostLine,
 } from './roiEconomicModelTypes.js';
 
 // ==========================================
@@ -110,7 +114,9 @@ export interface AddCostLineInput {
   access: CommandAccessContext;
 }
 
-export async function addCostLine(input: AddCostLineInput): Promise<AtomicCommandOutcome<RoiCostLine>> {
+export async function addCostLine(
+  input: AddCostLineInput
+): Promise<AtomicCommandOutcome<RoiCostLine>> {
   const {
     caseId,
     organizationId,
@@ -249,7 +255,9 @@ export interface UpdateCostLineInput {
   access: CommandAccessContext;
 }
 
-export async function updateCostLine(input: UpdateCostLineInput): Promise<AtomicCommandOutcome<RoiCostLine>> {
+export async function updateCostLine(
+  input: UpdateCostLineInput
+): Promise<AtomicCommandOutcome<RoiCostLine>> {
   const {
     costLineId,
     caseId,
@@ -293,16 +301,25 @@ export async function updateCostLine(input: UpdateCostLineInput): Promise<Atomic
         currency: edits.currency ?? currentRow.currency,
         timing_type: edits.timingType ?? currentRow.timing_type,
         one_time_period_date:
-          edits.oneTimePeriodDate !== undefined ? edits.oneTimePeriodDate : currentRow.one_time_period_date,
+          edits.oneTimePeriodDate !== undefined
+            ? edits.oneTimePeriodDate
+            : currentRow.one_time_period_date,
         recurrence_start_date:
-          edits.recurrenceStartDate !== undefined ? edits.recurrenceStartDate : currentRow.recurrence_start_date,
+          edits.recurrenceStartDate !== undefined
+            ? edits.recurrenceStartDate
+            : currentRow.recurrence_start_date,
         recurrence_end_date:
-          edits.recurrenceEndDate !== undefined ? edits.recurrenceEndDate : currentRow.recurrence_end_date,
+          edits.recurrenceEndDate !== undefined
+            ? edits.recurrenceEndDate
+            : currentRow.recurrence_end_date,
         recurrence_cadence:
-          edits.recurrenceCadence !== undefined ? edits.recurrenceCadence : currentRow.recurrence_cadence,
+          edits.recurrenceCadence !== undefined
+            ? edits.recurrenceCadence
+            : currentRow.recurrence_cadence,
         confidence: edits.confidence !== undefined ? edits.confidence : currentRow.confidence,
         source: edits.source !== undefined ? edits.source : currentRow.source,
-        owner_user_id: edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
+        owner_user_id:
+          edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
       };
 
       const updateResult = await client.query<RoiCostLineRow>(
@@ -383,7 +400,9 @@ export interface RemoveCostLineInput {
   access: CommandAccessContext;
 }
 
-export async function removeCostLine(input: RemoveCostLineInput): Promise<AtomicCommandOutcome<RoiCostLine>> {
+export async function removeCostLine(
+  input: RemoveCostLineInput
+): Promise<AtomicCommandOutcome<RoiCostLine>> {
   const {
     costLineId,
     caseId,

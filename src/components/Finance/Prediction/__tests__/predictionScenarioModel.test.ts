@@ -23,30 +23,30 @@ import {
   computeScenarioComparison,
   computeScenarioComparisonCell,
   createEmptyScenarioDraft,
+  type CriticalDataException,
   detectClientSideOverlaps,
+  type DraftDriverOverride,
+  type DraftFinancingEvent,
+  type DraftImpact,
+  type DraftInitiative,
   driverMissingValueToWarningException,
   evaluateExceptionLedgerForCompute,
   impactChainEffectiveFraction,
   isAnalyticsMaterialityMisusedForBalanceCheck,
   isBaseModeStructurallyPassthrough,
   markAssumptionChanged,
+  type MaterialException,
   MathUndefinedError,
   reconcileStatementsAndSchedules,
   resolveDriverValue,
   resolveMaterialException,
   resolveResultFreshness,
+  type ScenarioDraft,
   scenarioModeToTrack,
   solveBreakEvenDriver,
   validateFinancingPeriodShape,
   validateToleranceHierarchy,
   verifyExactColdReopen,
-  type CriticalDataException,
-  type DraftDriverOverride,
-  type DraftFinancingEvent,
-  type DraftImpact,
-  type DraftInitiative,
-  type MaterialException,
-  type ScenarioDraft,
   type WarningException,
 } from '../predictionScenarioModel';
 
@@ -157,7 +157,10 @@ describe('Base == Baseline (OWN-FIN-020)', () => {
   });
 
   it('KONTROLA NEGATYWNA: STANDARD_BASE z choćby jednym driver override PRZESTAJE być passthrough', () => {
-    const draft: ScenarioDraft = { ...createEmptyScenarioDraft({ name: 'Base' }), driverOverrides: [makeDriverOverride()] };
+    const draft: ScenarioDraft = {
+      ...createEmptyScenarioDraft({ name: 'Base' }),
+      driverOverrides: [makeDriverOverride()],
+    };
     expect(isBaseModeStructurallyPassthrough(draft)).toBe(false);
   });
 
@@ -185,7 +188,11 @@ describe('Base == Baseline (OWN-FIN-020)', () => {
 
 describe('detectClientSideOverlaps — double counting', () => {
   it('dwie inicjatywy uderzające w TĘ SAMĄ linię/okres/podmiot są WYKRYTE (sourceCount=2), nie sumowane po cichu', () => {
-    const initiative2 = makeInitiative({ id: 'init-2', initiativeCode: 'AUTOMATION-COGS', defaultStartPeriodId: 'p-2026-03' });
+    const initiative2 = makeInitiative({
+      id: 'init-2',
+      initiativeCode: 'AUTOMATION-COGS',
+      defaultStartPeriodId: 'p-2026-03',
+    });
     const impact1 = makeImpact({ id: 'impact-1', initiativeId: 'init-1' });
     const impact2 = makeImpact({ id: 'impact-2', initiativeId: 'init-2', amountDecimal: -0.03 });
 
@@ -198,7 +205,12 @@ describe('detectClientSideOverlaps — double counting', () => {
 
     const findings = detectClientSideOverlaps(draft);
     expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({ entityId: 'entity-1', canonicalLineCode: 'COGS', periodId: 'p-2026-03', sourceCount: 2 });
+    expect(findings[0]).toMatchObject({
+      entityId: 'entity-1',
+      canonicalLineCode: 'COGS',
+      periodId: 'p-2026-03',
+      sourceCount: 2,
+    });
     expect(findings[0].sources.map((s) => s.sourceId).sort()).toEqual(['impact-1', 'impact-2']);
   });
 
@@ -212,12 +224,22 @@ describe('detectClientSideOverlaps — double counting', () => {
     const findings = detectClientSideOverlaps(draft);
     expect(findings).toHaveLength(1);
     expect(findings[0].sourceCount).toBe(2);
-    expect(findings[0].sources.map((s) => s.sourceType).sort()).toEqual(['DRIVER_OVERRIDE', 'INITIATIVE_IMPACT']);
+    expect(findings[0].sources.map((s) => s.sourceType).sort()).toEqual([
+      'DRIVER_OVERRIDE',
+      'INITIATIVE_IMPACT',
+    ]);
   });
 
   it('financing FACILITY_DRAWDOWN + driver override na LONG_TERM_DEBT w tym samym okresie jest wykryty', () => {
     const draft = {
-      driverOverrides: [makeDriverOverride({ id: 'ovr-debt', scheduleType: 'debt_maturity', canonicalLineCode: 'LONG_TERM_DEBT', driverCode: 'PRINCIPAL' })],
+      driverOverrides: [
+        makeDriverOverride({
+          id: 'ovr-debt',
+          scheduleType: 'debt_maturity',
+          canonicalLineCode: 'LONG_TERM_DEBT',
+          driverCode: 'PRINCIPAL',
+        }),
+      ],
       initiatives: [],
       impacts: [],
       financing: [makeFinancing()], // FACILITY_DRAWDOWN -> LONG_TERM_DEBT + INTEREST_EXPENSE
@@ -230,10 +252,17 @@ describe('detectClientSideOverlaps — double counting', () => {
 
   it('KONTROLA NEGATYWNA — brak nakładania: dwie inicjatywy w RÓŻNE linie NIE są flagowane', () => {
     const impact1 = makeImpact({ id: 'impact-1', statementLineCode: 'COGS' });
-    const impact2 = makeImpact({ id: 'impact-2', statementLineCode: 'OPEX', initiativeId: 'init-2' });
+    const impact2 = makeImpact({
+      id: 'impact-2',
+      statementLineCode: 'OPEX',
+      initiativeId: 'init-2',
+    });
     const draft = {
       driverOverrides: [],
-      initiatives: [makeInitiative(), makeInitiative({ id: 'init-2', initiativeCode: 'OPEX-INIT' })],
+      initiatives: [
+        makeInitiative(),
+        makeInitiative({ id: 'init-2', initiativeCode: 'OPEX-INIT' }),
+      ],
       impacts: [impact1, impact2],
       financing: [],
     };
@@ -242,7 +271,11 @@ describe('detectClientSideOverlaps — double counting', () => {
 
   it('KONTROLA NEGATYWNA — brak nakładania: ta sama linia, ale RÓŻNE okresy NIE są flagowane', () => {
     const impact1 = makeImpact({ id: 'impact-1', startPeriodId: 'p-2026-03' });
-    const impact2 = makeImpact({ id: 'impact-2', startPeriodId: 'p-2026-06', initiativeId: 'init-2' });
+    const impact2 = makeImpact({
+      id: 'impact-2',
+      startPeriodId: 'p-2026-06',
+      initiativeId: 'init-2',
+    });
     const draft = {
       driverOverrides: [],
       initiatives: [makeInitiative(), makeInitiative({ id: 'init-2', initiativeCode: 'LATER' })],
@@ -256,16 +289,40 @@ describe('detectClientSideOverlaps — double counting', () => {
     const impact1 = makeImpact({ id: 'impact-1' });
     const impact2 = makeImpact({ id: 'impact-2', initiativeId: 'init-2', amountDecimal: -0.03 });
     const initiative2 = makeInitiative({ id: 'init-2', initiativeCode: 'AUTOMATION-COGS' });
-    const draftA = { driverOverrides: [], initiatives: [makeInitiative(), initiative2], impacts: [impact1, impact2], financing: [] };
-    const draftB = { driverOverrides: [], initiatives: [initiative2, makeInitiative()], impacts: [impact2, impact1], financing: [] };
+    const draftA = {
+      driverOverrides: [],
+      initiatives: [makeInitiative(), initiative2],
+      impacts: [impact1, impact2],
+      financing: [],
+    };
+    const draftB = {
+      driverOverrides: [],
+      initiatives: [initiative2, makeInitiative()],
+      impacts: [impact2, impact1],
+      financing: [],
+    };
     expect(detectClientSideOverlaps(draftA)).toEqual(detectClientSideOverlaps(draftB));
   });
 
   it('impact bez rozwiązywalnego okresu (brak startPeriodId i brak default na inicjatywie) jest pomijany, nie crashuje', () => {
     const orphanInitiative = makeInitiative({ id: 'init-orphan', defaultStartPeriodId: null });
-    const impact1 = makeImpact({ id: 'impact-1', initiativeId: 'init-orphan', startPeriodId: null });
-    const impact2 = makeImpact({ id: 'impact-2', initiativeId: 'init-orphan', startPeriodId: null, amountDecimal: -0.02 });
-    const draft = { driverOverrides: [], initiatives: [orphanInitiative], impacts: [impact1, impact2], financing: [] };
+    const impact1 = makeImpact({
+      id: 'impact-1',
+      initiativeId: 'init-orphan',
+      startPeriodId: null,
+    });
+    const impact2 = makeImpact({
+      id: 'impact-2',
+      initiativeId: 'init-orphan',
+      startPeriodId: null,
+      amountDecimal: -0.02,
+    });
+    const draft = {
+      driverOverrides: [],
+      initiatives: [orphanInitiative],
+      impacts: [impact1, impact2],
+      financing: [],
+    };
     expect(detectClientSideOverlaps(draft)).toHaveLength(0);
   });
 });
@@ -294,12 +351,20 @@ describe('impactChainEffectiveFraction — ramp/duration/decay (port bit-identyc
 
 describe('validateFinancingPeriodShape', () => {
   it('zdarzenie punktowe (FACILITY_DRAWDOWN) wymaga periodId', () => {
-    expect(validateFinancingPeriodShape({ financingKind: 'FACILITY_DRAWDOWN', periodId: 'p-2026-03' })).toEqual({ ok: true });
-    expect(validateFinancingPeriodShape({ financingKind: 'FACILITY_DRAWDOWN', periodId: null }).ok).toBe(false);
+    expect(
+      validateFinancingPeriodShape({ financingKind: 'FACILITY_DRAWDOWN', periodId: 'p-2026-03' })
+    ).toEqual({ ok: true });
+    expect(
+      validateFinancingPeriodShape({ financingKind: 'FACILITY_DRAWDOWN', periodId: null }).ok
+    ).toBe(false);
   });
   it('polityka horyzont-szeroka (MIN_CASH_POLICY) wymaga periodId=null', () => {
-    expect(validateFinancingPeriodShape({ financingKind: 'MIN_CASH_POLICY', periodId: null })).toEqual({ ok: true });
-    expect(validateFinancingPeriodShape({ financingKind: 'MIN_CASH_POLICY', periodId: 'p-2026-03' }).ok).toBe(false);
+    expect(
+      validateFinancingPeriodShape({ financingKind: 'MIN_CASH_POLICY', periodId: null })
+    ).toEqual({ ok: true });
+    expect(
+      validateFinancingPeriodShape({ financingKind: 'MIN_CASH_POLICY', periodId: 'p-2026-03' }).ok
+    ).toBe(false);
   });
 });
 
@@ -334,7 +399,11 @@ describe('computeScenarioComparisonCell / computeScenarioComparison', () => {
 
 describe('computeLiquidityHeadroom', () => {
   it('liczy zapas płynności gdy polityka min cash jest zdefiniowana', () => {
-    expect(computeLiquidityHeadroom(500_000, 200_000)).toEqual({ cash: 500_000, minCashPolicy: 200_000, liquidityHeadroom: 300_000 });
+    expect(computeLiquidityHeadroom(500_000, 200_000)).toEqual({
+      cash: 500_000,
+      minCashPolicy: 200_000,
+      liquidityHeadroom: 300_000,
+    });
   });
   it('brak polityki min cash => liquidityHeadroom:null (exception, nie 0)', () => {
     expect(computeLiquidityHeadroom(500_000, null).liquidityHeadroom).toBeNull();
@@ -347,7 +416,12 @@ describe('computeLiquidityHeadroom', () => {
 
 describe('DEC-FIN-009 — brak danych => exception + akceptacja, NIE blokada', () => {
   it('MISSING driver value zwraca exception z opcjami rozstrzygnięcia, nie throw', () => {
-    const result = resolveDriverValue({ valueStatus: 'MISSING', valueDecimal: null, driverCode: 'DSO_DAYS', periodId: 'p-2026-03' });
+    const result = resolveDriverValue({
+      valueStatus: 'MISSING',
+      valueDecimal: null,
+      driverCode: 'DSO_DAYS',
+      periodId: 'p-2026-03',
+    });
     expect(result.kind).toBe('exception');
     if (result.kind === 'exception') {
       expect(result.requiresExplicitAcceptance).toBe(true);
@@ -355,17 +429,28 @@ describe('DEC-FIN-009 — brak danych => exception + akceptacja, NIE blokada', (
     }
   });
   it('PRESENT_NONZERO zwraca value, nie exception', () => {
-    const result = resolveDriverValue({ valueStatus: 'PRESENT_NONZERO', valueDecimal: 42, driverCode: 'DSO_DAYS', periodId: 'p1' });
+    const result = resolveDriverValue({
+      valueStatus: 'PRESENT_NONZERO',
+      valueDecimal: 42,
+      driverCode: 'DSO_DAYS',
+      periodId: 'p1',
+    });
     expect(result).toEqual({ kind: 'value', value: 42 });
   });
 });
 
 describe('DEC-FIN-009 — dzielenie przez zero => TWARDA ODMOWA', () => {
   it('computeCovenantHeadroom z EBITDA=0 RZUCA MathUndefinedError (nie Infinity, nie null cichy)', () => {
-    expect(() => computeCovenantHeadroom({ netDebt: 1_000_000, ebitda: 0, covenantMaxNetDebtToEbitda: 3.5 })).toThrow(MathUndefinedError);
+    expect(() =>
+      computeCovenantHeadroom({ netDebt: 1_000_000, ebitda: 0, covenantMaxNetDebtToEbitda: 3.5 })
+    ).toThrow(MathUndefinedError);
   });
   it('KONTROLA NEGATYWNA: EBITDA != 0 NIE rzuca, liczy normalnie', () => {
-    const result = computeCovenantHeadroom({ netDebt: 1_000_000, ebitda: 500_000, covenantMaxNetDebtToEbitda: 3.5 });
+    const result = computeCovenantHeadroom({
+      netDebt: 1_000_000,
+      ebitda: 500_000,
+      covenantMaxNetDebtToEbitda: 3.5,
+    });
     expect(result.netDebtToEbitda).toBe(2);
     expect(result.headroomRatio).toBe(1.5);
   });
@@ -396,7 +481,10 @@ describe('DEC-FIN-009 pełna wersja — poziom 2 (Warning: akceptacja Z UZASADNI
   };
 
   it('akceptacja BEZ uzasadnienia jest ODRZUCONA (ok:false), nie throw, nie cicha akceptacja', () => {
-    const result = acceptWarningException(baseEntry, { acceptedBy: 'analyst@firm.pl', justification: '   ' });
+    const result = acceptWarningException(baseEntry, {
+      acceptedBy: 'analyst@firm.pl',
+      justification: '   ',
+    });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.message).toMatch(/wymagane|nie jest opcjonalne/i);
   });
@@ -418,7 +506,10 @@ describe('DEC-FIN-009 pełna wersja — poziom 2 (Warning: akceptacja Z UZASADNI
   });
 
   it('KONTROLA NEGATYWNA: wpis poziomu Warning (zaakceptowany lub nie) NIGDY nie blokuje compute — tylko podnosi materialStatus do conditional', () => {
-    const acceptedResult = acceptWarningException(baseEntry, { acceptedBy: 'a@firm.pl', justification: 'ok, sprawdzone' });
+    const acceptedResult = acceptWarningException(baseEntry, {
+      acceptedBy: 'a@firm.pl',
+      justification: 'ok, sprawdzone',
+    });
     expect(acceptedResult.ok).toBe(true);
     const acceptedEntry = acceptedResult.ok ? acceptedResult.entry : baseEntry;
     const gateUnaccepted = evaluateExceptionLedgerForCompute([baseEntry]);
@@ -440,13 +531,21 @@ describe('DEC-FIN-009 pełna wersja — poziom 3 (Material: ocena wpływu + make
   };
 
   it('preparedBy === approvedBy jest ODRZUCONE (maker-checker wymaga dwóch różnych osób)', () => {
-    const result = resolveMaterialException(baseEntry, { preparedBy: 'jan@firm.pl', approvedBy: 'jan@firm.pl', impactAssessment: 'Wpływ +200k PLN na EBITDA' });
+    const result = resolveMaterialException(baseEntry, {
+      preparedBy: 'jan@firm.pl',
+      approvedBy: 'jan@firm.pl',
+      impactAssessment: 'Wpływ +200k PLN na EBITDA',
+    });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.message).toMatch(/maker-checker|różnymi osobami/i);
   });
 
   it('brak oceny wpływu jest ODRZUCONE', () => {
-    const result = resolveMaterialException(baseEntry, { preparedBy: 'jan@firm.pl', approvedBy: 'anna@firm.pl', impactAssessment: '' });
+    const result = resolveMaterialException(baseEntry, {
+      preparedBy: 'jan@firm.pl',
+      approvedBy: 'anna@firm.pl',
+      impactAssessment: '',
+    });
     expect(result.ok).toBe(false);
   });
 
@@ -491,7 +590,10 @@ describe('DEC-FIN-009 pełna wersja — poziom 4 (Critical data: compute/export 
   });
 
   it('★ CORE: materiał zbudowany przy tym rejestrze pokazuje jakość/wyjątki/autora — status provisional, nie zablokowany dokument', () => {
-    const provenance = buildMaterialProvenance({ ledger: [criticalEntry], author: 'system@finance-v3' });
+    const provenance = buildMaterialProvenance({
+      ledger: [criticalEntry],
+      author: 'system@finance-v3',
+    });
     expect(provenance.status).toBe('provisional');
     expect(provenance.qualitySummary).toMatch(/Provisional|Tymczasowy/i);
     expect(provenance.exceptions).toContain(criticalEntry);
@@ -499,7 +601,10 @@ describe('DEC-FIN-009 pełna wersja — poziom 4 (Critical data: compute/export 
   });
 
   it('KONTROLA NEGATYWNA: to samo dzieje się NIEZALEŻNIE od tego, czy ktoś potwierdził wyjątek (acknowledgement nie jest bramką)', () => {
-    const ackResult = acknowledgeCriticalDataException(criticalEntry, { acknowledgedBy: 'cfo@firm.pl', justification: 'Świadomie akceptujemy ryzyko na czas przeglądu.' });
+    const ackResult = acknowledgeCriticalDataException(criticalEntry, {
+      acknowledgedBy: 'cfo@firm.pl',
+      justification: 'Świadomie akceptujemy ryzyko na czas przeglądu.',
+    });
     expect(ackResult.ok).toBe(true);
     const acknowledgedEntry = ackResult.ok ? ackResult.entry : criticalEntry;
     const gateBefore = evaluateExceptionLedgerForCompute([criticalEntry]);
@@ -510,7 +615,10 @@ describe('DEC-FIN-009 pełna wersja — poziom 4 (Critical data: compute/export 
   });
 
   it('acknowledgeCriticalDataException BEZ uzasadnienia jest odrzucone jako operacja (audytowo), choć NIE wpływa na compute gate', () => {
-    const result = acknowledgeCriticalDataException(criticalEntry, { acknowledgedBy: 'cfo@firm.pl', justification: '' });
+    const result = acknowledgeCriticalDataException(criticalEntry, {
+      acknowledgedBy: 'cfo@firm.pl',
+      justification: '',
+    });
     expect(result.ok).toBe(false);
   });
 });
@@ -518,7 +626,14 @@ describe('DEC-FIN-009 pełna wersja — poziom 4 (Critical data: compute/export 
 describe('DEC-FIN-009 pełna wersja — poziom 5 (Security/tenant/matematyka niezdefiniowana => TWARDA BLOKADA)', () => {
   it('★ CORE: obecność WYŁĄCZNIE wpisu poziomu 5 daje allowed:false', () => {
     const gate = evaluateExceptionLedgerForCompute([
-      { id: 'exc-s-1', level: 'SECURITY_OR_UNDEFINED_MATH', reasonCode: 'CROSS_TENANT_REFERENCE', message: 'businessVersionId spoza organizacji', createdAt: '2026-08-10T09:00:00Z', blockingCategory: 'TENANT_BOUNDARY' },
+      {
+        id: 'exc-s-1',
+        level: 'SECURITY_OR_UNDEFINED_MATH',
+        reasonCode: 'CROSS_TENANT_REFERENCE',
+        message: 'businessVersionId spoza organizacji',
+        createdAt: '2026-08-10T09:00:00Z',
+        blockingCategory: 'TENANT_BOUNDARY',
+      },
     ]);
     expect(gate.allowed).toBe(false);
     expect(gate.blockedBy).toHaveLength(1);
@@ -548,10 +663,37 @@ describe('DEC-FIN-009 pełna wersja — poziom 5 (Security/tenant/matematyka nie
 
   it('KONTROLA NEGATYWNA: rejestr BEZ wpisu poziomu 5 (nawet z Info/Warning/Material/CriticalData) nigdy nie blokuje', () => {
     const gate = evaluateExceptionLedgerForCompute([
-      { id: 'i1', level: 'INFO', reasonCode: 'AUTO', message: 'auto note', createdAt: '2026-08-10T09:00:00Z' },
-      { id: 'w1', level: 'WARNING', reasonCode: 'X', message: 'x', createdAt: '2026-08-10T09:00:00Z', acceptance: null },
-      { id: 'm1', level: 'MATERIAL', reasonCode: 'Y', message: 'y', createdAt: '2026-08-10T09:00:00Z', resolution: null },
-      { id: 'c1', level: 'CRITICAL_DATA', reasonCode: 'Z', message: 'z', createdAt: '2026-08-10T09:00:00Z', acknowledgement: null },
+      {
+        id: 'i1',
+        level: 'INFO',
+        reasonCode: 'AUTO',
+        message: 'auto note',
+        createdAt: '2026-08-10T09:00:00Z',
+      },
+      {
+        id: 'w1',
+        level: 'WARNING',
+        reasonCode: 'X',
+        message: 'x',
+        createdAt: '2026-08-10T09:00:00Z',
+        acceptance: null,
+      },
+      {
+        id: 'm1',
+        level: 'MATERIAL',
+        reasonCode: 'Y',
+        message: 'y',
+        createdAt: '2026-08-10T09:00:00Z',
+        resolution: null,
+      },
+      {
+        id: 'c1',
+        level: 'CRITICAL_DATA',
+        reasonCode: 'Z',
+        message: 'z',
+        createdAt: '2026-08-10T09:00:00Z',
+        acknowledgement: null,
+      },
     ]);
     expect(gate.allowed).toBe(true);
   });
@@ -559,9 +701,18 @@ describe('DEC-FIN-009 pełna wersja — poziom 5 (Security/tenant/matematyka nie
 
 describe('driverMissingValueToWarningException — most między skrótem a pełnym rejestrem', () => {
   it('konwertuje exception z resolveDriverValue na poprawny wpis poziomu Warning', () => {
-    const resolution = resolveDriverValue({ valueStatus: 'MISSING', valueDecimal: null, driverCode: 'DSO_DAYS', periodId: 'p1' });
+    const resolution = resolveDriverValue({
+      valueStatus: 'MISSING',
+      valueDecimal: null,
+      driverCode: 'DSO_DAYS',
+      periodId: 'p1',
+    });
     if (resolution.kind !== 'exception') throw new Error('expected exception');
-    const entry = driverMissingValueToWarningException('exc-w-99', resolution, '2026-08-12T00:00:00Z');
+    const entry = driverMissingValueToWarningException(
+      'exc-w-99',
+      resolution,
+      '2026-08-12T00:00:00Z'
+    );
     expect(entry.level).toBe('WARNING');
     expect(entry.reasonCode).toBe('MISSING_DRIVER_VALUE');
     expect(entry.acceptance).toBeNull();
@@ -573,7 +724,11 @@ describe('driverMissingValueToWarningException — most między skrótem a pełn
 // ---------------------------------------------------------------------------
 
 describe('Progi tolerancji — trzy poziomy, nie mieszać', () => {
-  const validThresholds = { technicalEquationTolerance: 1, sourceToCanonicalTolerance: 0.01, analyticsMaterialityTolerance: 5000 };
+  const validThresholds = {
+    technicalEquationTolerance: 1,
+    sourceToCanonicalTolerance: 0.01,
+    analyticsMaterialityTolerance: 5000,
+  };
 
   it('poprawna hierarchia (source->canonical < technical < materiality) przechodzi walidację', () => {
     expect(validateToleranceHierarchy(validThresholds)).toEqual({ ok: true });
@@ -591,16 +746,25 @@ describe('Progi tolerancji — trzy poziomy, nie mieszać', () => {
 
   it('checkBalanceSheetTie używa WYŁĄCZNIE technicalEquationTolerance', () => {
     expect(checkBalanceSheetTie(1_000_000, 1_000_000.5, validThresholds)).toEqual({ tied: true });
-    expect(checkBalanceSheetTie(1_000_000, 1_000_003, validThresholds)).toEqual({ tied: false, diff: 3 });
+    expect(checkBalanceSheetTie(1_000_000, 1_000_003, validThresholds)).toEqual({
+      tied: false,
+      diff: 3,
+    });
   });
 
   it('★ CORE zakaz kanonu: max(1 jednostka źródłowa, 0.1%) (materiality) NIE MOŻE być użyty do dowodu równości bilansu — wykryte jako antywzorzec', () => {
-    const misused = isAnalyticsMaterialityMisusedForBalanceCheck(validThresholds.analyticsMaterialityTolerance, validThresholds);
+    const misused = isAnalyticsMaterialityMisusedForBalanceCheck(
+      validThresholds.analyticsMaterialityTolerance,
+      validThresholds
+    );
     expect(misused).toBe(true);
   });
 
   it('KONTROLA NEGATYWNA: użycie WŁAŚCIWEGO progu (technical) NIE jest flagowane jako antywzorzec', () => {
-    const ok = isAnalyticsMaterialityMisusedForBalanceCheck(validThresholds.technicalEquationTolerance, validThresholds);
+    const ok = isAnalyticsMaterialityMisusedForBalanceCheck(
+      validThresholds.technicalEquationTolerance,
+      validThresholds
+    );
     expect(ok).toBe(false);
   });
 });
@@ -616,12 +780,20 @@ describe('resolveResultFreshness / markAssumptionChanged', () => {
   });
 
   it('compute PO ostatniej zmianie założeń => CURRENT', () => {
-    const draft: ScenarioDraft = { ...createEmptyScenarioDraft({ name: 'x' }), lastAssumptionChangeAt: '2026-08-01T00:00:00Z', lastComputeAt: '2026-08-02T00:00:00Z' };
+    const draft: ScenarioDraft = {
+      ...createEmptyScenarioDraft({ name: 'x' }),
+      lastAssumptionChangeAt: '2026-08-01T00:00:00Z',
+      lastComputeAt: '2026-08-02T00:00:00Z',
+    };
     expect(resolveResultFreshness(draft)).toBe('CURRENT');
   });
 
   it('zmiana założeń PO ostatnim compute => STALE (wyniki NIE są kasowane — nadal istnieją w draft, tylko flaga się zmienia)', () => {
-    const computed: ScenarioDraft = { ...createEmptyScenarioDraft({ name: 'x' }), lastAssumptionChangeAt: '2026-08-01T00:00:00Z', lastComputeAt: '2026-08-02T00:00:00Z' };
+    const computed: ScenarioDraft = {
+      ...createEmptyScenarioDraft({ name: 'x' }),
+      lastAssumptionChangeAt: '2026-08-01T00:00:00Z',
+      lastComputeAt: '2026-08-02T00:00:00Z',
+    };
     const changed = markAssumptionChanged(computed, '2026-08-03T00:00:00Z');
     expect(resolveResultFreshness(changed)).toBe('STALE');
     // lastComputeAt (dowód "wyniki istnieją") jest zachowane, nie wyzerowane:
@@ -637,14 +809,31 @@ describe('financing respektuje FACILITY — limit kredytowy', () => {
   const limit = { entityId: 'entity-1', facilityLimitDecimal: 1_000_000 };
 
   it('drawdown w granicach limitu jest OK', () => {
-    const events = [{ id: 'f1', financingKind: 'FACILITY_DRAWDOWN' as const, payload: { amount: 600_000 }, periodId: 'p-2026-01' }];
+    const events = [
+      {
+        id: 'f1',
+        financingKind: 'FACILITY_DRAWDOWN' as const,
+        payload: { amount: 600_000 },
+        periodId: 'p-2026-01',
+      },
+    ];
     expect(checkFacilityCompliance(events, limit)).toEqual({ ok: true });
   });
 
   it('★ CORE: drawdown PRZEKRACZAJĄCY limit jest WYKRYTY jako naruszenie, nie cicho zaakceptowany', () => {
     const events = [
-      { id: 'f1', financingKind: 'FACILITY_DRAWDOWN' as const, payload: { amount: 600_000 }, periodId: 'p-2026-01' },
-      { id: 'f2', financingKind: 'FACILITY_DRAWDOWN' as const, payload: { amount: 500_000 }, periodId: 'p-2026-02' },
+      {
+        id: 'f1',
+        financingKind: 'FACILITY_DRAWDOWN' as const,
+        payload: { amount: 600_000 },
+        periodId: 'p-2026-01',
+      },
+      {
+        id: 'f2',
+        financingKind: 'FACILITY_DRAWDOWN' as const,
+        payload: { amount: 500_000 },
+        periodId: 'p-2026-02',
+      },
     ];
     const result = checkFacilityCompliance(events, limit);
     expect(result.ok).toBe(false);
@@ -657,8 +846,18 @@ describe('financing respektuje FACILITY — limit kredytowy', () => {
 
   it('KONTROLA NEGATYWNA: naruszenie W ŚRODKU horyzontu, "naprawione" późniejszą spłatą, jest NADAL wykryte (breach musi być sprawdzony po KAŻDYM zdarzeniu, nie tylko na końcu)', () => {
     const events = [
-      { id: 'f1', financingKind: 'FACILITY_DRAWDOWN' as const, payload: { amount: 1_200_000 }, periodId: 'p-2026-01' }, // natychmiastowe naruszenie
-      { id: 'f2', financingKind: 'DISCRETIONARY_REPAYMENT' as const, payload: { amount: 500_000 }, periodId: 'p-2026-02' }, // balance=700k, z powrotem w limicie
+      {
+        id: 'f1',
+        financingKind: 'FACILITY_DRAWDOWN' as const,
+        payload: { amount: 1_200_000 },
+        periodId: 'p-2026-01',
+      }, // natychmiastowe naruszenie
+      {
+        id: 'f2',
+        financingKind: 'DISCRETIONARY_REPAYMENT' as const,
+        payload: { amount: 500_000 },
+        periodId: 'p-2026-02',
+      }, // balance=700k, z powrotem w limicie
     ];
     const result = checkFacilityCompliance(events, limit);
     expect(result.ok).toBe(false);
@@ -671,8 +870,18 @@ describe('financing respektuje FACILITY — limit kredytowy', () => {
   it('repayment przed drawdown w TYM SAMYM okresie (mirror kolejności serwera) — kolejność zmienia wynik pośredni, nie końcowy', () => {
     const points = computeFacilityUtilization(
       [
-        { id: 'drawdown', financingKind: 'FACILITY_DRAWDOWN' as const, payload: { amount: 100 }, periodId: 'p1' },
-        { id: 'repay', financingKind: 'DISCRETIONARY_REPAYMENT' as const, payload: { amount: 50 }, periodId: 'p1' },
+        {
+          id: 'drawdown',
+          financingKind: 'FACILITY_DRAWDOWN' as const,
+          payload: { amount: 100 },
+          periodId: 'p1',
+        },
+        {
+          id: 'repay',
+          financingKind: 'DISCRETIONARY_REPAYMENT' as const,
+          payload: { amount: 50 },
+          periodId: 'p1',
+        },
       ],
       limit
     );
@@ -688,25 +897,61 @@ describe('statements/schedules RECONCILE', () => {
   const thresholds = { technicalEquationTolerance: 1 };
 
   it('gdy CF cash i harmonogram długu zgadzają się z BS w granicach progu technicznego => reconciled:true', () => {
-    const result = reconcileStatementsAndSchedules({ periodId: 'p1', cfClosingCash: 500_000.4, bsCash: 500_000, debtScheduleClosingBalance: 1_000_000, bsLongTermDebt: 1_000_000.3 }, thresholds);
+    const result = reconcileStatementsAndSchedules(
+      {
+        periodId: 'p1',
+        cfClosingCash: 500_000.4,
+        bsCash: 500_000,
+        debtScheduleClosingBalance: 1_000_000,
+        bsLongTermDebt: 1_000_000.3,
+      },
+      thresholds
+    );
     expect(result.reconciled).toBe(true);
   });
 
   it('★ CORE: rozjazd cash MIĘDZY sprawozdaniami jest WYKRYTY, nie zamieciony', () => {
-    const result = reconcileStatementsAndSchedules({ periodId: 'p1', cfClosingCash: 500_100, bsCash: 500_000, debtScheduleClosingBalance: 1_000_000, bsLongTermDebt: 1_000_000 }, thresholds);
+    const result = reconcileStatementsAndSchedules(
+      {
+        periodId: 'p1',
+        cfClosingCash: 500_100,
+        bsCash: 500_000,
+        debtScheduleClosingBalance: 1_000_000,
+        bsLongTermDebt: 1_000_000,
+      },
+      thresholds
+    );
     expect(result.cashTies).toBe(false);
     expect(result.reconciled).toBe(false);
     expect(result.cashDiff).toBe(100);
   });
 
   it('★ CORE: rozjazd harmonogramu długu wobec BS jest WYKRYTY niezależnie od cash', () => {
-    const result = reconcileStatementsAndSchedules({ periodId: 'p1', cfClosingCash: 500_000, bsCash: 500_000, debtScheduleClosingBalance: 1_000_500, bsLongTermDebt: 1_000_000 }, thresholds);
+    const result = reconcileStatementsAndSchedules(
+      {
+        periodId: 'p1',
+        cfClosingCash: 500_000,
+        bsCash: 500_000,
+        debtScheduleClosingBalance: 1_000_500,
+        bsLongTermDebt: 1_000_000,
+      },
+      thresholds
+    );
     expect(result.debtTies).toBe(false);
     expect(result.reconciled).toBe(false);
   });
 
   it('KONTROLA NEGATYWNA: różnica DOKŁADNIE na granicy progu jest jeszcze "tied" (<=, nie <)', () => {
-    const result = reconcileStatementsAndSchedules({ periodId: 'p1', cfClosingCash: 500_001, bsCash: 500_000, debtScheduleClosingBalance: 1_000_000, bsLongTermDebt: 1_000_000 }, thresholds);
+    const result = reconcileStatementsAndSchedules(
+      {
+        periodId: 'p1',
+        cfClosingCash: 500_001,
+        bsCash: 500_000,
+        debtScheduleClosingBalance: 1_000_000,
+        bsLongTermDebt: 1_000_000,
+      },
+      thresholds
+    );
     expect(result.cashTies).toBe(true);
   });
 });
@@ -715,7 +960,12 @@ describe('reverse stress / break-even — solveBreakEvenDriver', () => {
   it('znajduje driverValue, przy którym monotoniczna funkcja osiąga zadany próg (np. płynność = 0)', () => {
     // Symulowana "płynność" jako funkcja jednego drivera (np. DSO_DAYS): rośnie z driverValue.
     const liquidityFn = (dso: number) => 500_000 - dso * 8_000; // liniowa, monotoniczna malejąca
-    const result = solveBreakEvenDriver({ lowerBound: 0, upperBound: 200, targetValue: 0, evaluate: liquidityFn });
+    const result = solveBreakEvenDriver({
+      lowerBound: 0,
+      upperBound: 200,
+      targetValue: 0,
+      evaluate: liquidityFn,
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.driverValue).toBeCloseTo(62.5, 3);
@@ -725,7 +975,12 @@ describe('reverse stress / break-even — solveBreakEvenDriver', () => {
 
   it('★ CORE: to jest ODWROTNOŚĆ zwykłego compute — sprawdza, że rozwiązanie faktycznie odtwarza próg podstawiając je z powrotem do tej samej funkcji', () => {
     const covenantFn = (netDebtDelta: number) => (1_000_000 + netDebtDelta) / 500_000; // net debt / EBITDA rośnie z netDebtDelta
-    const result = solveBreakEvenDriver({ lowerBound: -900_000, upperBound: 2_000_000, targetValue: 3.5, evaluate: covenantFn });
+    const result = solveBreakEvenDriver({
+      lowerBound: -900_000,
+      upperBound: 2_000_000,
+      targetValue: 3.5,
+      evaluate: covenantFn,
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(covenantFn(result.driverValue)).toBeCloseTo(3.5, 4);
@@ -734,7 +989,12 @@ describe('reverse stress / break-even — solveBreakEvenDriver', () => {
 
   it('KONTROLA NEGATYWNA: próg poza zakresem (nie bracketed) zwraca ok:false, nie zgadnięty wynik', () => {
     const alwaysPositive = () => 100;
-    const result = solveBreakEvenDriver({ lowerBound: 0, upperBound: 10, targetValue: 0, evaluate: alwaysPositive });
+    const result = solveBreakEvenDriver({
+      lowerBound: 0,
+      upperBound: 10,
+      targetValue: 0,
+      evaluate: alwaysPositive,
+    });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('NOT_BRACKETED');
   });
@@ -743,7 +1003,11 @@ describe('reverse stress / break-even — solveBreakEvenDriver', () => {
 describe('EXACT COLD REOPEN — draft musi dawać identyczny odcisk po symulowanym zamknięciu/otwarciu', () => {
   it('draft z pełnym kompletem (overrides/initiatives/impacts/financing) przechodzi round-trip identycznie', () => {
     const draft: ScenarioDraft = {
-      ...createEmptyScenarioDraft({ name: 'Fundamental scenario', scenarioMode: 'FUNDAMENTAL_INITIATIVE', nowIso: '2026-08-12T00:00:00Z' }),
+      ...createEmptyScenarioDraft({
+        name: 'Fundamental scenario',
+        scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+        nowIso: '2026-08-12T00:00:00Z',
+      }),
       businessVersionId: 'bv-123',
       driverOverrides: [makeDriverOverride()],
       initiatives: [makeInitiative()],
@@ -757,8 +1021,14 @@ describe('EXACT COLD REOPEN — draft musi dawać identyczny odcisk po symulowan
   it('odcisk jest NIEZALEŻNY od kolejności wstawiania rekordów w tablicach (sortowanie po id)', () => {
     const impact1 = makeImpact({ id: 'impact-1' });
     const impact2 = makeImpact({ id: 'impact-2', amountDecimal: -0.02 });
-    const draftA: ScenarioDraft = { ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }), impacts: [impact1, impact2] };
-    const draftB: ScenarioDraft = { ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }), impacts: [impact2, impact1] };
+    const draftA: ScenarioDraft = {
+      ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }),
+      impacts: [impact1, impact2],
+    };
+    const draftB: ScenarioDraft = {
+      ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }),
+      impacts: [impact2, impact1],
+    };
     const fpA = verifyExactColdReopen(draftA);
     const fpB = verifyExactColdReopen(draftB);
     expect(fpA.ok && fpB.ok).toBe(true);
@@ -766,8 +1036,14 @@ describe('EXACT COLD REOPEN — draft musi dawać identyczny odcisk po symulowan
   });
 
   it('KONTROLA NEGATYWNA: draft z RÓŻNĄ wartością (nie tylko kolejnością) daje RÓŻNY odcisk — dowód, że fingerprint faktycznie mierzy treść, nie jest stałą', () => {
-    const draftA: ScenarioDraft = { ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }), driverOverrides: [makeDriverOverride({ valueDecimal: 0.5 })] };
-    const draftB: ScenarioDraft = { ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }), driverOverrides: [makeDriverOverride({ valueDecimal: 0.6 })] };
+    const draftA: ScenarioDraft = {
+      ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }),
+      driverOverrides: [makeDriverOverride({ valueDecimal: 0.5 })],
+    };
+    const draftB: ScenarioDraft = {
+      ...createEmptyScenarioDraft({ name: 'x', nowIso: '2026-08-12T00:00:00Z' }),
+      driverOverrides: [makeDriverOverride({ valueDecimal: 0.6 })],
+    };
     const fpA = verifyExactColdReopen(draftA);
     const fpB = verifyExactColdReopen(draftB);
     expect(fpA.ok && fpB.ok).toBe(true);

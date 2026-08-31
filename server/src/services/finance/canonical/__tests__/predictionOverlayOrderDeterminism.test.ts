@@ -23,9 +23,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   FINANCING_KIND_PROCESSING_RANK,
+  type FinancingKind,
   orderFinancingEventsForPeriod,
   sortByCreatedAtThenId,
-  type FinancingKind,
 } from '../predictionComputeService.js';
 
 // ---------------------------------------------------------------------------
@@ -44,7 +44,8 @@ import {
  * order-dependent.
  */
 const SYNTHETIC_IMPACT_DELTAS = [
-  12345.678912345, -8734.291823741, 45231.128374652, -19283.746192837, 7654.321987654, -3456.789123456, 28193.746281937,
+  12345.678912345, -8734.291823741, 45231.128374652, -19283.746192837, 7654.321987654,
+  -3456.789123456, 28193.746281937,
 ];
 /** `sum = 61950.048416554` under forward order; exhaustive search over all 5040 permutations of the
  *  7 values above found exactly 6 distinct float64 bit patterns among the results (verified with a
@@ -156,11 +157,15 @@ interface FakeFinancingEvent {
 /** Replicates ONLY the `facilityDebtBalance` floor-clamp recurrence from
  *  `runOverlayCompute`'s financing-overlay loop (`predictionComputeService.ts`) — the minimal
  *  extract needed to prove the policy decision changes the BUSINESS RESULT, not the whole engine. */
-function replayFacilityDebtBalance(events: readonly FakeFinancingEvent[], openingBalance: number): number {
+function replayFacilityDebtBalance(
+  events: readonly FakeFinancingEvent[],
+  openingBalance: number
+): number {
   let balance = openingBalance;
   for (const e of events) {
     if (e.financing_kind === 'FACILITY_DRAWDOWN') balance += e.amount;
-    else if (e.financing_kind === 'DISCRETIONARY_REPAYMENT') balance = Math.max(0, balance - e.amount);
+    else if (e.financing_kind === 'DISCRETIONARY_REPAYMENT')
+      balance = Math.max(0, balance - e.amount);
   }
   return balance;
 }
@@ -168,8 +173,18 @@ function replayFacilityDebtBalance(events: readonly FakeFinancingEvent[], openin
 describe('predictionComputeService — financing overlay processing-order policy (DEC-FIN-012)', () => {
   it('NEGATIVE CONTROL: applying a same-period drawdown before vs. after a repayment gives a DIFFERENT ending facility balance — proves this is a genuine business-result risk, not just float rounding', () => {
     const drawdownFirst: FakeFinancingEvent[] = [
-      { id: 'fin-drawdown', created_at: '2026-08-01T00:00:00.000Z', financing_kind: 'FACILITY_DRAWDOWN', amount: 100 },
-      { id: 'fin-repay', created_at: '2026-08-01T00:00:01.000Z', financing_kind: 'DISCRETIONARY_REPAYMENT', amount: 50 },
+      {
+        id: 'fin-drawdown',
+        created_at: '2026-08-01T00:00:00.000Z',
+        financing_kind: 'FACILITY_DRAWDOWN',
+        amount: 100,
+      },
+      {
+        id: 'fin-repay',
+        created_at: '2026-08-01T00:00:01.000Z',
+        financing_kind: 'DISCRETIONARY_REPAYMENT',
+        amount: 50,
+      },
     ];
     const repayFirst = [...drawdownFirst].reverse();
 
@@ -183,16 +198,32 @@ describe('predictionComputeService — financing overlay processing-order policy
 
   it('orderFinancingEventsForPeriod always applies DISCRETIONARY_REPAYMENT before FACILITY_DRAWDOWN, regardless of input order — this IS the DEC-FIN-012 policy', () => {
     const rawOrder: FakeFinancingEvent[] = [
-      { id: 'fin-drawdown', created_at: '2026-08-01T00:00:00.000Z', financing_kind: 'FACILITY_DRAWDOWN', amount: 100 },
-      { id: 'fin-repay', created_at: '2026-08-01T00:00:01.000Z', financing_kind: 'DISCRETIONARY_REPAYMENT', amount: 50 },
+      {
+        id: 'fin-drawdown',
+        created_at: '2026-08-01T00:00:00.000Z',
+        financing_kind: 'FACILITY_DRAWDOWN',
+        amount: 100,
+      },
+      {
+        id: 'fin-repay',
+        created_at: '2026-08-01T00:00:01.000Z',
+        financing_kind: 'DISCRETIONARY_REPAYMENT',
+        amount: 50,
+      },
     ];
     const ordered = orderFinancingEventsForPeriod(rawOrder);
-    expect(ordered.map((e) => e.financing_kind)).toEqual(['DISCRETIONARY_REPAYMENT', 'FACILITY_DRAWDOWN']);
+    expect(ordered.map((e) => e.financing_kind)).toEqual([
+      'DISCRETIONARY_REPAYMENT',
+      'FACILITY_DRAWDOWN',
+    ]);
     expect(replayFacilityDebtBalance(ordered, 0)).toBe(100); // matches "repayFirst" above — the policy this fix enforces
 
     const reversedRawOrder = [...rawOrder].reverse();
     const orderedFromReversed = orderFinancingEventsForPeriod(reversedRawOrder);
-    expect(orderedFromReversed.map((e) => e.financing_kind)).toEqual(['DISCRETIONARY_REPAYMENT', 'FACILITY_DRAWDOWN']);
+    expect(orderedFromReversed.map((e) => e.financing_kind)).toEqual([
+      'DISCRETIONARY_REPAYMENT',
+      'FACILITY_DRAWDOWN',
+    ]);
     expect(replayFacilityDebtBalance(orderedFromReversed, 0)).toBe(100);
   });
 
@@ -200,14 +231,31 @@ describe('predictionComputeService — financing overlay processing-order policy
     const kinds = Object.keys(FINANCING_KIND_PROCESSING_RANK) as FinancingKind[];
     const ranks = kinds.map((k) => FINANCING_KIND_PROCESSING_RANK[k]);
     expect(new Set(ranks).size).toBe(kinds.length); // no ties across kinds — every kind has its own rank
-    expect(FINANCING_KIND_PROCESSING_RANK.DISCRETIONARY_REPAYMENT).toBeLessThan(FINANCING_KIND_PROCESSING_RANK.FACILITY_DRAWDOWN);
+    expect(FINANCING_KIND_PROCESSING_RANK.DISCRETIONARY_REPAYMENT).toBeLessThan(
+      FINANCING_KIND_PROCESSING_RANK.FACILITY_DRAWDOWN
+    );
   });
 
   it('for commutative kinds (no floor clamp), processing order does not change the additive result — only the total order needs to be FIXED, not any particular order', () => {
     const events: FakeFinancingEvent[] = [
-      { id: 'fin-1', created_at: '2026-08-01T00:00:00.000Z', financing_kind: 'EQUITY_INJECTION', amount: 30 },
-      { id: 'fin-2', created_at: '2026-08-01T00:00:01.000Z', financing_kind: 'SHARE_BUYBACK', amount: 10 },
-      { id: 'fin-3', created_at: '2026-08-01T00:00:02.000Z', financing_kind: 'DIVIDEND_DECLARATION', amount: 5 },
+      {
+        id: 'fin-1',
+        created_at: '2026-08-01T00:00:00.000Z',
+        financing_kind: 'EQUITY_INJECTION',
+        amount: 30,
+      },
+      {
+        id: 'fin-2',
+        created_at: '2026-08-01T00:00:01.000Z',
+        financing_kind: 'SHARE_BUYBACK',
+        amount: 10,
+      },
+      {
+        id: 'fin-3',
+        created_at: '2026-08-01T00:00:02.000Z',
+        financing_kind: 'DIVIDEND_DECLARATION',
+        amount: 5,
+      },
     ];
     const sumAdjustment = (ordered: readonly FakeFinancingEvent[]): number => {
       let equityAdj = 0;

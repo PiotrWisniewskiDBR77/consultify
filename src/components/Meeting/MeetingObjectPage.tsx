@@ -84,14 +84,14 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { PreviewActionBar } from '@/components/shared/PreviewPane';
 import { EmptyState } from '@/components/shared/states';
-import { ErrorState, LoadingState } from '@/components/ui/primitives';
-import { StatusChip } from '@/components/ui/primitives/chips';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import type { KartaNKey } from '@/components/standard/registry';
 import {
   StandardArtifactShell,
   type StandardSekcjaDef,
 } from '@/components/standard/StandardArtifactShell';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { StatusChip } from '@/components/ui/primitives/chips';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -805,7 +805,10 @@ export const MeetingObjectPage: React.FC = () => {
             />
             <textarea
               className={`${decisionInputClass} min-h-16`}
-              placeholder={t('meeting.decisionRecords.rationalePlaceholder', 'Rationale (optional)')}
+              placeholder={t(
+                'meeting.decisionRecords.rationalePlaceholder',
+                'Rationale (optional)'
+              )}
               value={decisionRationale}
               onChange={(e) => setDecisionRationale(e.target.value)}
             />

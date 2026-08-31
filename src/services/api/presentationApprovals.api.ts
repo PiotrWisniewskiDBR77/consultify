@@ -15,7 +15,10 @@ export interface PresentationApprovalState {
   currentForVersion: boolean;
 }
 
-interface ApiEnvelope<T> { success: boolean; data: T }
+interface ApiEnvelope<T> {
+  success: boolean;
+  data: T;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetchWithRetry(`${API_URL}${path}`, {
@@ -34,12 +37,14 @@ export const PresentationApprovalsApi = {
     request<PresentationApprovalState>(`/presentations/decks/${deckId}/approval-state`),
   submit: (deckId: string, assignedToUserId: string) =>
     request(`/presentations/decks/${deckId}/approval/submit`, {
-      method: 'POST', body: JSON.stringify({ assignedToUserId }),
+      method: 'POST',
+      body: JSON.stringify({ assignedToUserId }),
     }),
   approve: (deckId: string) =>
     request(`/presentations/decks/${deckId}/approval/approve`, { method: 'POST' }),
   reject: (deckId: string, reason: string) =>
     request(`/presentations/decks/${deckId}/approval/reject`, {
-      method: 'POST', body: JSON.stringify({ reason }),
+      method: 'POST',
+      body: JSON.stringify({ reason }),
     }),
 };

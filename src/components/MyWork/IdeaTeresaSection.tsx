@@ -23,7 +23,14 @@
  * etykiet/promptów. Ten komponent (i jego OFF-owa ścieżka akordeonu) zostaje
  * bez zmian zachowania.
  */
-import { CheckCircle2, MessageSquarePlus, RefreshCw, Sparkles, Wand2, type LucideIcon } from 'lucide-react';
+import {
+  CheckCircle2,
+  type LucideIcon,
+  MessageSquarePlus,
+  RefreshCw,
+  Sparkles,
+  Wand2,
+} from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';

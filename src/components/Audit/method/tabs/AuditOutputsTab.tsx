@@ -14,26 +14,26 @@ import { FileText, Package, Wrench } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { ErrorState } from '@/components/shared/states';
 import {
-  type StandardRowMenu,
   StandardPreview,
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { ErrorState } from '@/components/shared/states';
-import { StatusChip } from '@/components/ui/primitives/chips';
 import { Button } from '@/components/ui/primitives/Button';
+import { StatusChip } from '@/components/ui/primitives/chips';
 import { Modal } from '@/components/ui/primitives/Modal';
 import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import {
-  generateReport,
-  listOutputs,
   type AuditOutputSummary,
   type AuditReportSummary,
+  generateReport,
+  listOutputs,
 } from '../auditsMethodApi';
 
 export interface AuditOutputsTabProps {

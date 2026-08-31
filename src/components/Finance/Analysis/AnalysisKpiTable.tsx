@@ -8,15 +8,15 @@
 import { BarChart3, FileOutput, ListChecks } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { StandardTable, type StandardRowMenu, type TableRow } from '../../standard';
+import type { AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
+import { type StandardRowMenu, StandardTable, type TableRow } from '../../standard';
 import {
+  type AnalysisKpiCatalogFormulaInfo,
   analysisKpiTablePersistKey,
   buildAnalysisKpiColumns,
   groupAnalysisKpiValuesByKpi,
   toAnalysisKpiTableRow,
-  type AnalysisKpiCatalogFormulaInfo,
 } from './analysisKpiTable.contract';
-import type { AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
 
 export interface AnalysisKpiTablePeriodColumn {
   id: string;
@@ -67,7 +67,11 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
   const columns = useMemo(() => buildAnalysisKpiColumns(periodColumns), [periodColumns]);
 
   const groups = useMemo(
-    () => groupAnalysisKpiValuesByKpi(kpiValues, periodColumns.map((p) => p.id)),
+    () =>
+      groupAnalysisKpiValuesByKpi(
+        kpiValues,
+        periodColumns.map((p) => p.id)
+      ),
     [kpiValues, periodColumns]
   );
 
@@ -89,7 +93,12 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
     const markedAsModelInput = Boolean(row.markedAsModelInput);
     return {
       primary: [
-        { id: 'open-detail', label: 'Otwórz kartę szczegółową', icon: BarChart3, onClick: () => onOpenDetail(String(row.id)) },
+        {
+          id: 'open-detail',
+          label: 'Otwórz kartę szczegółową',
+          icon: BarChart3,
+          onClick: () => onOpenDetail(String(row.id)),
+        },
       ],
       statusTransitions: [
         {
@@ -99,15 +108,21 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
           onClick: () => onToggleIncludedInReport(String(row.id), !included),
           // Approved jest niezmienne — kebab NIE może mutować zatwierdzonej wersji (brief, sekcja 4).
           disabled: isApproved,
-          note: isApproved ? 'Zatwierdzona wersja jest niezmienna — otwórz nową wersję, aby edytować raport' : undefined,
+          note: isApproved
+            ? 'Zatwierdzona wersja jest niezmienna — otwórz nową wersję, aby edytować raport'
+            : undefined,
         },
         {
           id: 'mark-model-input',
-          label: markedAsModelInput ? 'Oznaczone jako wejście do modelu' : 'Oznacz jako wejście do modelu',
+          label: markedAsModelInput
+            ? 'Oznaczone jako wejście do modelu'
+            : 'Oznacz jako wejście do modelu',
           icon: ListChecks,
           onClick: () => onMarkAsModelInput(String(row.id)),
           disabled: markedAsModelInput,
-          note: markedAsModelInput ? 'Wskazuje konkretny model — zobacz w karcie szczegółowej' : 'Wskaże docelowy artefakt (Model bazowy) do potwierdzenia',
+          note: markedAsModelInput
+            ? 'Wskazuje konkretny model — zobacz w karcie szczegółowej'
+            : 'Wskaże docelowy artefakt (Model bazowy) do potwierdzenia',
         },
       ],
       universalHandlers: {
@@ -129,7 +144,8 @@ export function AnalysisKpiTable(props: AnalysisKpiTableProps): React.ReactEleme
       persistKey={analysisKpiTablePersistKey(businessVersionId)}
       empty={{
         title: 'Brak skonfigurowanych wskaźników',
-        description: 'Ta analiza nie ma jeszcze żadnego wskaźnika KPI. Skonfiguruj wskaźniki, aby zobaczyć wyniki.',
+        description:
+          'Ta analiza nie ma jeszcze żadnego wskaźnika KPI. Skonfiguruj wskaźniki, aby zobaczyć wyniki.',
         actionLabel: 'Skonfiguruj wskaźniki',
         onAction: onConfigureKpis,
       }}

@@ -12,9 +12,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-
-import PDFDocument from 'pdfkit';
 import { PDFParse } from 'pdf-parse';
+import PDFDocument from 'pdfkit';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PDF_FONT, PDF_FONT_DIR, PDF_FONT_FROM_HELVETICA, registerPdfFonts } from '../pdfFonts.js';
@@ -45,7 +44,12 @@ async function extractText(buf: Buffer): Promise<string> {
 
 describe('pdfFonts — DEC-132/133 Polish diacritics fix', () => {
   it('vendors exactly the 4 expected Lato weights on disk', () => {
-    for (const file of ['Lato-Regular.ttf', 'Lato-Bold.ttf', 'Lato-Italic.ttf', 'Lato-BoldItalic.ttf']) {
+    for (const file of [
+      'Lato-Regular.ttf',
+      'Lato-Bold.ttf',
+      'Lato-Italic.ttf',
+      'Lato-BoldItalic.ttf',
+    ]) {
       const full = path.join(PDF_FONT_DIR, file);
       expect(fs.existsSync(full), `missing ${full}`).toBe(true);
       expect(fs.statSync(full).size).toBeGreaterThan(10_000);

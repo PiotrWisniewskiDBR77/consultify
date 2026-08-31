@@ -270,7 +270,10 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <FileUp size={16} className="text-c-info" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="import-external-map-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="import-external-map-modal-heading"
+            >
               {t('ideas.mindmap.importMindMap', 'Import Mind Map')}
             </h3>
           </div>

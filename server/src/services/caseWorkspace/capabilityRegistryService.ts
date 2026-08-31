@@ -117,17 +117,20 @@
  */
 
 import { createHash } from 'crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 
+import { type ApprovalClass, ApprovalClassValues } from '../../types/executionSpine.js';
 import {
   type PgTransactionClient,
   queryAll,
   queryOne,
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
-import { ApprovalClassValues, type ApprovalClass } from '../../types/executionSpine.js';
-import { CaseWorkspaceAuthError, requireOrgMember, requireOrgRole } from './caseWorkspaceAuthContext.js';
+import {
+  CaseWorkspaceAuthError,
+  requireOrgMember,
+  requireOrgRole,
+} from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 
 // ---------------------------------------------------------------------------
@@ -135,7 +138,13 @@ import { publishEvent, redact } from './eventOutboxService.js';
 // ---------------------------------------------------------------------------
 
 export type CapabilityProviderType = 'INTERNAL' | 'MCP' | 'HTTP_API' | 'CONNECTOR' | 'AGENT';
-export type CapabilityOperationClass = 'READ' | 'COMPUTE' | 'PROPOSE' | 'MUTATE' | 'PUBLISH' | 'NOTIFY';
+export type CapabilityOperationClass =
+  | 'READ'
+  | 'COMPUTE'
+  | 'PROPOSE'
+  | 'MUTATE'
+  | 'PUBLISH'
+  | 'NOTIFY';
 export type CapabilityEffectClass =
   | 'SAFE_ADDITIVE'
   | 'SAFE_UPDATE'
@@ -266,7 +275,13 @@ export interface RecordIdempotencyKeyCheckResult {
 // Constants
 // ---------------------------------------------------------------------------
 
-const PROVIDER_TYPES: readonly CapabilityProviderType[] = ['INTERNAL', 'MCP', 'HTTP_API', 'CONNECTOR', 'AGENT'];
+const PROVIDER_TYPES: readonly CapabilityProviderType[] = [
+  'INTERNAL',
+  'MCP',
+  'HTTP_API',
+  'CONNECTOR',
+  'AGENT',
+];
 const OPERATION_CLASSES: readonly CapabilityOperationClass[] = [
   'READ',
   'COMPUTE',
@@ -468,24 +483,58 @@ export async function registerCapability(
   const capabilityVersion = requireNonBlank(input.capabilityVersion, 'capability_version_required');
   const ownerModule = requireNonBlank(input.ownerModule, 'capability_owner_module_required');
   const operation = requireNonBlank(input.operation, 'capability_operation_required');
-  const owningCommandRef = requireNonBlank(input.owningCommandRef, 'capability_owning_command_ref_required');
-  const inputSchemaRef = requireNonBlank(input.inputSchemaRef, 'capability_input_schema_ref_required');
-  const outputSchemaRef = requireNonBlank(input.outputSchemaRef, 'capability_output_schema_ref_required');
-  const dataClassification = requireNonBlank(input.dataClassification, 'capability_data_classification_required');
-  const idempotencyStrategy = requireNonBlank(input.idempotencyStrategy, 'capability_idempotency_strategy_required');
+  const owningCommandRef = requireNonBlank(
+    input.owningCommandRef,
+    'capability_owning_command_ref_required'
+  );
+  const inputSchemaRef = requireNonBlank(
+    input.inputSchemaRef,
+    'capability_input_schema_ref_required'
+  );
+  const outputSchemaRef = requireNonBlank(
+    input.outputSchemaRef,
+    'capability_output_schema_ref_required'
+  );
+  const dataClassification = requireNonBlank(
+    input.dataClassification,
+    'capability_data_classification_required'
+  );
+  const idempotencyStrategy = requireNonBlank(
+    input.idempotencyStrategy,
+    'capability_idempotency_strategy_required'
+  );
   const reversibility = requireNonBlank(input.reversibility, 'capability_reversibility_required');
-  const createdByActorId = requireNonBlank(input.createdByActorId, 'capability_created_by_actor_required');
+  const createdByActorId = requireNonBlank(
+    input.createdByActorId,
+    'capability_created_by_actor_required'
+  );
 
-  const providerType = requireEnum(input.providerType, PROVIDER_TYPES, 'capability_provider_type_invalid');
-  const operationClass = requireEnum(input.operationClass, OPERATION_CLASSES, 'capability_operation_class_invalid');
-  const effectClass = requireEnum(input.effectClass, EFFECT_CLASSES, 'capability_effect_class_invalid');
+  const providerType = requireEnum(
+    input.providerType,
+    PROVIDER_TYPES,
+    'capability_provider_type_invalid'
+  );
+  const operationClass = requireEnum(
+    input.operationClass,
+    OPERATION_CLASSES,
+    'capability_operation_class_invalid'
+  );
+  const effectClass = requireEnum(
+    input.effectClass,
+    EFFECT_CLASSES,
+    'capability_effect_class_invalid'
+  );
   const approvalRecommendation = requireEnum(
     input.approvalRecommendation,
     ApprovalClassValues,
     'capability_approval_recommendation_invalid'
   );
   const health = requireEnum(input.health ?? 'UNKNOWN', HEALTH_VALUES, 'capability_health_invalid');
-  const lifecycle = requireEnum(input.lifecycle ?? 'UNAVAILABLE', LIFECYCLE_VALUES, 'capability_lifecycle_invalid');
+  const lifecycle = requireEnum(
+    input.lifecycle ?? 'UNAVAILABLE',
+    LIFECYCLE_VALUES,
+    'capability_lifecycle_invalid'
+  );
 
   return withPgTransaction(async (client) => {
     const existing = await client.query<{ capability_registry_id: string }>(
@@ -813,12 +862,21 @@ export async function recordIdempotencyKeyCheck(
   },
   organizationId: string
 ): Promise<RecordIdempotencyKeyCheckResult> {
-  const capabilityRegistryId = requireNonBlank(input.capabilityRegistryId, 'capability_registry_id_required');
-  const idempotencyKey = requireNonBlank(input.idempotencyKey, 'capability_idempotency_key_required');
+  const capabilityRegistryId = requireNonBlank(
+    input.capabilityRegistryId,
+    'capability_registry_id_required'
+  );
+  const idempotencyKey = requireNonBlank(
+    input.idempotencyKey,
+    'capability_idempotency_key_required'
+  );
   const actorId = requireNonBlank(input.actorId, 'capability_actor_required');
   const requestDigest = computeRequestDigest(input.requestPayload);
 
-  await requireOrgMember(actorId, requireNonBlank(organizationId, 'capability_organization_id_required'));
+  await requireOrgMember(
+    actorId,
+    requireNonBlank(organizationId, 'capability_organization_id_required')
+  );
 
   return withPgTransaction(async (client) => {
     const capabilityExists = await client.query<{ capability_registry_id: string }>(

@@ -175,7 +175,9 @@ export async function evaluateAdminIamQueueAlerts(params: {
     for (const kind of Object.keys(ADMIN_IAM_ALERT_THRESHOLDS) as AdminIamAlertKind[]) {
       // Disjoint from operationalAlertSignalDeliveryService.ts's `ops-eval:` namespace —
       // see file header. Held for the rest of this transaction (xact-scoped lock).
-      await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [`adm-iam-alert-eval:${organizationId}:${kind}`]);
+      await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [
+        `adm-iam-alert-eval:${organizationId}:${kind}`,
+      ]);
 
       const threshold = ADMIN_IAM_ALERT_THRESHOLDS[kind];
       const latestValue = await measure(tx, organizationId, kind, now);
@@ -194,7 +196,9 @@ export async function evaluateAdminIamQueueAlerts(params: {
         : transition === 'RECOVERED'
           ? 'RECOVERED'
           : (existing?.status ?? 'INACTIVE');
-      const version = transition ? Number(existing?.version ?? 0) + 1 : Number(existing?.version ?? 0);
+      const version = transition
+        ? Number(existing?.version ?? 0) + 1
+        : Number(existing?.version ?? 0);
       const correlationId = `adm-iam-alert-eval:${organizationId}:${kind}:${new Date(now).toISOString()}`;
 
       const state = await tx.query<{ status: AdminIamAlertStatus; version: number }>(
@@ -207,12 +211,24 @@ export async function evaluateAdminIamQueueAlerts(params: {
            latest_value=excluded.latest_value,threshold=excluded.threshold,correlation_id=excluded.correlation_id,evaluator_id=excluded.evaluator_id,version=excluded.version,updated_at=excluded.updated_at
          RETURNING status, version`,
         [
-          organizationId, kind, nextStatus,
-          transition, now,
-          transition, now,
-          latestValue, threshold, correlationId, evaluatorId, version, now,
-          transition, now,
-          transition, now, transition,
+          organizationId,
+          kind,
+          nextStatus,
+          transition,
+          now,
+          transition,
+          now,
+          latestValue,
+          threshold,
+          correlationId,
+          evaluatorId,
+          version,
+          now,
+          transition,
+          now,
+          transition,
+          now,
+          transition,
         ]
       );
 

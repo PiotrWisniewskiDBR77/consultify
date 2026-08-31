@@ -198,7 +198,9 @@ suite('Meetings day16 participants and safe invitation delivery (real PG)', () =
   // DROP+recreate) is used specifically so the exact schema/indexes/
   // constraints are preserved with certainty across the round-trip.
   it('FIX-9: surfaces a missing meeting_participants table as a thrown error, not an empty list', async () => {
-    await pool.query('ALTER TABLE meeting_participants RENAME TO meeting_participants_fix9_missing');
+    await pool.query(
+      'ALTER TABLE meeting_participants RENAME TO meeting_participants_fix9_missing'
+    );
     try {
       await expect(
         listMeetingParticipants({ organizationId: org, meetingId: meeting })

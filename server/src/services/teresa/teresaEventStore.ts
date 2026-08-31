@@ -63,7 +63,9 @@ export async function appendEvent(
   input: TeresaEventInput
 ): Promise<{ row: TeresaEventRow; created: boolean }> {
   if (!isMethodEventType(input.type)) {
-    throw new Error(`teresaEventStore.appendEvent: "${input.type}" is not a closed-set kernel event type`);
+    throw new Error(
+      `teresaEventStore.appendEvent: "${input.type}" is not a closed-set kernel event type`
+    );
   }
   const id = input.id ?? uuidv4();
   const insertResult = await client.query(

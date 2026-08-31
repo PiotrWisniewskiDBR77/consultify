@@ -1,11 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const url = process.env.DATABASE_URL ?? '';
-const real = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && url.startsWith('postgres');
+const real =
+  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && url.startsWith('postgres');
 
 describe.skipIf(!real)('20261038 Settings MFA legacy upgrade — real PostgreSQL', () => {
   let pool: import('pg').Pool;

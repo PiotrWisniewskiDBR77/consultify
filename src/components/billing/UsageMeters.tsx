@@ -173,7 +173,9 @@ export const UsageMeters: React.FC<UsageMetersProps> = ({ usage, compact = false
       {/* Period Info */}
       {usage.periodEnd && (
         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-          {t('billing.usage.resetsOn', 'Limit odnowi się {{date}}', { date: new Date(usage.periodEnd).toLocaleDateString('pl-PL') })}
+          {t('billing.usage.resetsOn', 'Limit odnowi się {{date}}', {
+            date: new Date(usage.periodEnd).toLocaleDateString('pl-PL'),
+          })}
         </p>
       )}
     </div>

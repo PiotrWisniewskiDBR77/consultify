@@ -26,7 +26,9 @@ describe('QuestionHelpDisclosure', () => {
       positiveAnswerExample: '',
     });
     render(<QuestionHelpDisclosure question={bareQuestion} help={null} onAskTeresa={vi.fn()} />);
-    expect(screen.getByTestId('question-help-unavailable')).toHaveTextContent('Help content unavailable');
+    expect(screen.getByTestId('question-help-unavailable')).toHaveTextContent(
+      'Help content unavailable'
+    );
     expect(screen.queryByTestId('question-help-disclosure')).not.toBeInTheDocument();
   });
 
@@ -39,7 +41,9 @@ describe('QuestionHelpDisclosure', () => {
 
   it('routes "Zapytaj Teresę" to the caller instead of duplicating the Teresa panel', () => {
     const onAskTeresa = vi.fn();
-    render(<QuestionHelpDisclosure question={makeQuestion()} help={null} onAskTeresa={onAskTeresa} />);
+    render(
+      <QuestionHelpDisclosure question={makeQuestion()} help={null} onAskTeresa={onAskTeresa} />
+    );
     fireEvent.click(screen.getByText('Zapytaj Teresę'));
     expect(onAskTeresa).toHaveBeenCalledWith('explain');
   });

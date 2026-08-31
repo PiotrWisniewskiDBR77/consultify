@@ -48,11 +48,14 @@
  */
 import React from 'react';
 
+import type {
+  OrganizationModule,
+  OrganizationScreen,
+} from '../../src/components/Organization/OrganizationSidebar';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
 import { useAppStore } from '../../src/store/useAppStore';
 import OrganizationView from '../../src/views/OrganizationView';
-import type { OrganizationModule, OrganizationScreen } from '../../src/components/Organization/OrganizationSidebar';
 
 const ORG_ID = 'org-atelier-toys-0001';
 const PIOTR_ID = 'usr-piotr';
@@ -206,7 +209,8 @@ if (!g.__ORG_LEGACY_FETCH__) {
         });
       }
       const body = init?.body ? JSON.parse(String(init.body)) : {};
-      if (Object.prototype.hasOwnProperty.call(body, 'goals')) orgContextStoreState.goals = body.goals;
+      if (Object.prototype.hasOwnProperty.call(body, 'goals'))
+        orgContextStoreState.goals = body.goals;
       if (Object.prototype.hasOwnProperty.call(body, 'challenges'))
         orgContextStoreState.challenges = body.challenges;
       if (Object.prototype.hasOwnProperty.call(body, 'synthesis'))
@@ -235,7 +239,9 @@ const originalGet = Api.get.bind(Api);
     return { versions: MOCK_VERSIONS };
   }
   if (path === '/organization-context') {
-    return { profile: { defaultLanguage: 'pl', defaultTimezone: 'Europe/Warsaw', currency: 'PLN' } };
+    return {
+      profile: { defaultLanguage: 'pl', defaultTimezone: 'Europe/Warsaw', currency: 'PLN' },
+    };
   }
   return (originalGet as any)(path, ...rest);
 };

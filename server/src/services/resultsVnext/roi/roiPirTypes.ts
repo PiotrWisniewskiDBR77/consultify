@@ -30,7 +30,11 @@ export const ROI_PIR_OUTCOMES = [
 ] as const;
 export type RoiPirOutcome = (typeof ROI_PIR_OUTCOMES)[number];
 
-export const ROI_PIR_TERESA_DRAFT_DISPOSITIONS = ['accepted', 'rejected', 'edited_then_accepted'] as const;
+export const ROI_PIR_TERESA_DRAFT_DISPOSITIONS = [
+  'accepted',
+  'rejected',
+  'edited_then_accepted',
+] as const;
 export type RoiPirTeresaDraftDisposition = (typeof ROI_PIR_TERESA_DRAFT_DISPOSITIONS)[number];
 
 // ==========================================
@@ -133,7 +137,9 @@ export interface RoiPostInvestmentReview {
   updatedAt: string;
 }
 
-export function toRoiPostInvestmentReview(row: RoiPostInvestmentReviewRow): RoiPostInvestmentReview {
+export function toRoiPostInvestmentReview(
+  row: RoiPostInvestmentReviewRow
+): RoiPostInvestmentReview {
   return {
     pirId: row.pir_id,
     caseId: row.case_id,

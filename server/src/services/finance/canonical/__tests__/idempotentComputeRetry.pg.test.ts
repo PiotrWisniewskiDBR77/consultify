@@ -102,38 +102,74 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
   /** A Baseline Model business version, computed ONCE, normally (no interception) — shared read-only source for the Prediction and Valuation fixtures below. */
   let sharedBaselineBvId: string;
 
-  const t = <T>(fn: (tx: any) => Promise<T>): Promise<T> => withPinnedPostgresTransaction(fn as never) as Promise<T>;
+  const t = <T>(fn: (tx: any) => Promise<T>): Promise<T> =>
+    withPinnedPostgresTransaction(fn as never) as Promise<T>;
 
-  async function insertPeriod(
-    opts: { type: 'MONTH' | 'FY'; fiscalYear: number; fiscalMonth: number | null; start: string; end: string; label: string }
-  ): Promise<string> {
+  async function insertPeriod(opts: {
+    type: 'MONTH' | 'FY';
+    fiscalYear: number;
+    fiscalMonth: number | null;
+    start: string;
+    end: string;
+    label: string;
+  }): Promise<string> {
     const periodId = `per-${randomUUID()}`;
     await t((tx) =>
       tx.queryRun(
         `INSERT INTO finance_stmt_periods (period_id, organization_id, fiscal_calendar_id, period_type, fiscal_year,
            fiscal_month, period_start, period_end, label, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [periodId, orgId, calendarId, opts.type, opts.fiscalYear, opts.fiscalMonth, opts.start, opts.end, opts.label, userId]
+        [
+          periodId,
+          orgId,
+          calendarId,
+          opts.type,
+          opts.fiscalYear,
+          opts.fiscalMonth,
+          opts.start,
+          opts.end,
+          opts.label,
+          userId,
+        ]
       )
     );
     return periodId;
   }
 
-  async function insertStmtLine(lineCode: string, periodId: string, value: number, statementType: 'P&L' | 'BS' | 'CF'): Promise<void> {
+  async function insertStmtLine(
+    lineCode: string,
+    periodId: string,
+    value: number,
+    statementType: 'P&L' | 'BS' | 'CF'
+  ): Promise<void> {
     await t((tx) =>
       tx.queryRun(
         `INSERT INTO finance_stmt_lines (id, organization_id, business_version_id, statement_type, canonical_line_id,
            entity_id, period_id, value_status, value_decimal, native_currency, presentation_currency, unit,
            accounting_policy, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', 'IFRS', ?)`,
-        [randomUUID(), orgId, stmtBvId, statementType, lineIdByCode.get(lineCode), entityId, periodId, value, userId]
+        [
+          randomUUID(),
+          orgId,
+          stmtBvId,
+          statementType,
+          lineIdByCode.get(lineCode),
+          entityId,
+          periodId,
+          value,
+          userId,
+        ]
       )
     );
   }
 
   /** A fresh BASELINE_MODEL business version, fully configured, ready to compute. */
   async function makeBaselineVersion(): Promise<string> {
-    const artifact = await av.createArtifact({ organizationId: orgId, artifactType: 'BASELINE_MODEL', createdBy: userId });
+    const artifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'BASELINE_MODEL',
+      createdBy: userId,
+    });
     const bvId = artifact.businessVersion.business_version_id;
 
     await t((tx) =>
@@ -160,7 +196,18 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
           `INSERT INTO finance_baseline_assumptions (id, organization_id, business_version_id, schedule_type, driver_code,
              entity_id, period_id, rule, value_status, value_decimal, unit, quality, created_by)
            VALUES (?, ?, ?, ?, ?, ?, ?, 'HISTORICAL_AVERAGE', 'PRESENT_NONZERO', ?, ?, 'ESTIMATED', ?)`,
-          [randomUUID(), orgId, bvId, scheduleType, driverCode, entityId, forecastPeriodIds[0], value, unit, userId]
+          [
+            randomUUID(),
+            orgId,
+            bvId,
+            scheduleType,
+            driverCode,
+            entityId,
+            forecastPeriodIds[0],
+            value,
+            unit,
+            userId,
+          ]
         )
       );
     await assumption('revenue_pvm', 'REVENUE_GROWTH_YOY', 0.05, 'PCT');
@@ -169,8 +216,18 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
     await assumption('wc_dso_dio_dpo', 'DSO_DAYS', (GOLDCO.ar / GOLDCO.revenue) * 365, 'DAYS');
     await assumption('wc_dso_dio_dpo', 'DIO_DAYS', (GOLDCO.inventory / GOLDCO.cogs) * 365, 'DAYS');
     await assumption('wc_dso_dio_dpo', 'DPO_DAYS', (GOLDCO.ap / GOLDCO.cogs) * 365, 'DAYS');
-    await assumption('capex_depreciation', 'CAPEX_PCT_OF_REVENUE', GOLDCO.capex / GOLDCO.revenue, 'PCT');
-    await assumption('capex_depreciation', 'USEFUL_LIFE_MONTHS', (12 * GOLDCO.fixedAssets) / GOLDCO.depreciation, 'MONTHS');
+    await assumption(
+      'capex_depreciation',
+      'CAPEX_PCT_OF_REVENUE',
+      GOLDCO.capex / GOLDCO.revenue,
+      'PCT'
+    );
+    await assumption(
+      'capex_depreciation',
+      'USEFUL_LIFE_MONTHS',
+      (12 * GOLDCO.fixedAssets) / GOLDCO.depreciation,
+      'MONTHS'
+    );
     await assumption('tax_nol', 'STATUTORY_TAX_RATE_PCT', 0.19, 'PCT');
 
     await t((tx) =>
@@ -200,7 +257,11 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
 
   /** A fresh HISTORICAL_ANALYSIS version, pre-seeded with one MISSING KPI value row. */
   async function makeAnalysisVersion(): Promise<string> {
-    const artifact = await av.createArtifact({ organizationId: orgId, artifactType: 'HISTORICAL_ANALYSIS', createdBy: userId });
+    const artifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: userId,
+    });
     const bvId = artifact.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
@@ -211,7 +272,9 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
       )
     );
     const catalogRow = await t((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM finance_analysis_kpi_catalog WHERE kpi_code = 'GROSS_MARGIN_PCT' AND status = 'ACTIVE' LIMIT 1`)
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM finance_analysis_kpi_catalog WHERE kpi_code = 'GROSS_MARGIN_PCT' AND status = 'ACTIVE' LIMIT 1`
+      )
     );
     if (!catalogRow) throw new Error('fixture: no ACTIVE GROSS_MARGIN_PCT catalog row');
     await t((tx) =>
@@ -226,7 +289,11 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
 
   /** A fresh VALUATION_CASE version sourced from `baselineBvId`, with complete WACC inputs. */
   async function makeValuationVersion(baselineBvId: string): Promise<string> {
-    const artifact = await av.createArtifact({ organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: userId });
+    const artifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'VALUATION_CASE',
+      createdBy: userId,
+    });
     const bvId = artifact.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
@@ -249,14 +316,28 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
   }
 
   /** A fresh PREDICTION_SCENARIO, preflighted, for the given `scenarioMode` ('STANDARD_BASE' or an overlay mode). */
-  async function makePredictionScenario(baselineBvId: string, scenarioMode: string): Promise<string> {
-    const artifact = await av.createArtifact({ organizationId: orgId, artifactType: 'PREDICTION_SCENARIO', createdBy: userId });
+  async function makePredictionScenario(
+    baselineBvId: string,
+    scenarioMode: string
+  ): Promise<string> {
+    const artifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'PREDICTION_SCENARIO',
+      createdBy: userId,
+    });
     const bvId = artifact.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
         `INSERT INTO finance_prediction_scenarios (id, organization_id, business_version_id, name, scenario_mode, created_by)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [randomUUID(), orgId, bvId, `idempotency fixture — ${scenarioMode} scenario`, scenarioMode, userId]
+        [
+          randomUUID(),
+          orgId,
+          bvId,
+          `idempotency fixture — ${scenarioMode} scenario`,
+          scenarioMode,
+          userId,
+        ]
       )
     );
     await t((tx) =>
@@ -280,11 +361,19 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
   /** Independent physical read — never a service return value. */
   async function readOutputs(jobId: string) {
     return t((tx) =>
-      tx.queryAll<{ id: string; content_semantic_hash: string }>(`SELECT id, content_semantic_hash FROM compute_job_outputs WHERE job_id = ?`, [jobId])
+      tx.queryAll<{ id: string; content_semantic_hash: string }>(
+        `SELECT id, content_semantic_hash FROM compute_job_outputs WHERE job_id = ?`,
+        [jobId]
+      )
     );
   }
   async function readJob(jobId: string) {
-    return t((tx) => tx.queryOne<{ id: string; status: string }>(`SELECT id, status FROM compute_jobs WHERE id = ?`, [jobId]));
+    return t((tx) =>
+      tx.queryOne<{ id: string; status: string }>(
+        `SELECT id, status FROM compute_jobs WHERE id = ?`,
+        [jobId]
+      )
+    );
   }
 
   beforeAll(async () => {
@@ -297,12 +386,25 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
     valuationSvc = await import('../valuationComputeService.js');
     computeJobService = await import('../computeJobService.js');
 
-    await t((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'Idempotency Retry Org (GoldCo-scale)']));
+    await t((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'Idempotency Retry Org (GoldCo-scale)',
+      ])
+    );
 
-    const lineRows = await t((tx) => tx.queryAll<{ id: string; line_code: string }>(`SELECT id, line_code FROM financial_statement_lines`));
+    const lineRows = await t((tx) =>
+      tx.queryAll<{ id: string; line_code: string }>(
+        `SELECT id, line_code FROM financial_statement_lines`
+      )
+    );
     lineIdByCode = new Map(lineRows.map((r) => [r.line_code, r.id]));
 
-    const stmt = await av.createArtifact({ organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: userId });
+    const stmt = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'STATEMENT_PACK',
+      createdBy: userId,
+    });
     stmtBvId = stmt.businessVersion.business_version_id;
     engineManifestId = stmt.businessVersion.engine_manifest_id;
 
@@ -325,7 +427,8 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
       )
     );
 
-    const monthEnd = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+    const monthEnd = (year: number, month: number) =>
+      new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
     const monthlyRevenue = GOLDCO.revenue / 12;
 
     const fy2025Months: string[] = [];
@@ -382,7 +485,10 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
       forecastPeriodIds,
       openingBalanceSheetPeriodId: openingPeriodId,
     });
-    if (!sharedRun.ok) throw new Error(`fixture: shared baseline compute failed: ${sharedRun.code} — ${sharedRun.message}`);
+    if (!sharedRun.ok)
+      throw new Error(
+        `fixture: shared baseline compute failed: ${sharedRun.code} — ${sharedRun.message}`
+      );
   }, 300_000);
 
   // =========================================================================
@@ -425,7 +531,12 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
   describe('kpiComputeService.computeAnalysisKpis()', () => {
     it('repeated call with byte-identical params: no error, same job id, exactly one compute_job_outputs row', async () => {
       const bvId = await makeAnalysisVersion();
-      const params = { organizationId: orgId, businessVersionId: bvId, requestedByUserId: userId, engineManifestId };
+      const params = {
+        organizationId: orgId,
+        businessVersionId: bvId,
+        requestedByUserId: userId,
+        engineManifestId,
+      };
 
       const first = await kpiSvc.computeAnalysisKpis(params);
       expect(first.ok).toBe(true);
@@ -464,12 +575,14 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
       const first = await predictionSvc.runPredictionCompute(params);
       expect(first.ok).toBe(true);
       if (!first.ok) throw new Error(`unreachable: ${first.code} — ${first.message}`);
-      if (first.mode !== 'STANDARD_BASE') throw new Error(`unreachable: expected STANDARD_BASE, got ${first.mode}`);
+      if (first.mode !== 'STANDARD_BASE')
+        throw new Error(`unreachable: expected STANDARD_BASE, got ${first.mode}`);
 
       const second = await predictionSvc.runPredictionCompute(params);
       expect(second.ok).toBe(true);
       if (!second.ok) throw new Error(`unreachable: ${second.code} — ${second.message}`);
-      if (second.mode !== 'STANDARD_BASE') throw new Error(`unreachable: expected STANDARD_BASE, got ${second.mode}`);
+      if (second.mode !== 'STANDARD_BASE')
+        throw new Error(`unreachable: expected STANDARD_BASE, got ${second.mode}`);
 
       expect(second.job.id).toBe(first.job.id);
 
@@ -502,12 +615,14 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
       const first = await predictionSvc.runPredictionCompute(params);
       expect(first.ok).toBe(true);
       if (!first.ok) throw new Error(`unreachable: ${first.code} — ${first.message}`);
-      if (first.mode !== 'COMPUTED') throw new Error(`unreachable: expected COMPUTED (overlay), got ${first.mode}`);
+      if (first.mode !== 'COMPUTED')
+        throw new Error(`unreachable: expected COMPUTED (overlay), got ${first.mode}`);
 
       const second = await predictionSvc.runPredictionCompute(params);
       expect(second.ok).toBe(true);
       if (!second.ok) throw new Error(`unreachable: ${second.code} — ${second.message}`);
-      if (second.mode !== 'COMPUTED') throw new Error(`unreachable: expected COMPUTED (overlay), got ${second.mode}`);
+      if (second.mode !== 'COMPUTED')
+        throw new Error(`unreachable: expected COMPUTED (overlay), got ${second.mode}`);
 
       expect(second.job.id).toBe(first.job.id);
 
@@ -577,16 +692,23 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
       // under the hood — at that instant the first job's row is genuinely `running` (claimed, not
       // yet committed). The second call must refuse (JOB_NOT_RUNNING), not silently wait or resume.
       let capturedRunningJobId: string | null = null;
-      let capturedSecondCallResult: Awaited<ReturnType<typeof baselineSvc.runBaselineCompute>> | null = null;
+      let capturedSecondCallResult: Awaited<
+        ReturnType<typeof baselineSvc.runBaselineCompute>
+      > | null = null;
       const original = computeJobService.completeJobSuccess;
-      const spy = vi.spyOn(computeJobService, 'completeJobSuccess').mockImplementationOnce(async (completeParams) => {
-        capturedRunningJobId = completeParams.jobId;
-        const runningJob = await readJob(completeParams.jobId);
-        if (runningJob?.status !== 'running') throw new Error(`fixture: expected job ${completeParams.jobId} to be 'running' at interception time, was '${runningJob?.status}'`);
-        capturedSecondCallResult = await baselineSvc.runBaselineCompute(params);
-        spy.mockRestore();
-        return original(completeParams);
-      });
+      const spy = vi
+        .spyOn(computeJobService, 'completeJobSuccess')
+        .mockImplementationOnce(async (completeParams) => {
+          capturedRunningJobId = completeParams.jobId;
+          const runningJob = await readJob(completeParams.jobId);
+          if (runningJob?.status !== 'running')
+            throw new Error(
+              `fixture: expected job ${completeParams.jobId} to be 'running' at interception time, was '${runningJob?.status}'`
+            );
+          capturedSecondCallResult = await baselineSvc.runBaselineCompute(params);
+          spy.mockRestore();
+          return original(completeParams);
+        });
 
       const first = await baselineSvc.runBaselineCompute(params);
       expect(first.ok).toBe(true);
@@ -596,7 +718,10 @@ describe.skipIf(!REAL_PG)('P1 fix — idempotent compute retry (real PostgreSQL)
       const second = capturedSecondCallResult!;
       expect(second).toBeTruthy();
       expect(second.ok).toBe(false);
-      if (second.ok) throw new Error('unreachable — the still-running duplicate was silently resumed as a success (regression)');
+      if (second.ok)
+        throw new Error(
+          'unreachable — the still-running duplicate was silently resumed as a success (regression)'
+        );
       expect(second.code).toBe('JOB_NOT_RUNNING');
 
       // Independent read: still exactly ONE compute_job_outputs row (the first call's own commit,

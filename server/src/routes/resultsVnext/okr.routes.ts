@@ -42,63 +42,69 @@ import {
 } from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
-  CommandCapabilityDeniedError,
-  type CommandAccessContext,
-} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
+  acceptAlignment,
+  OkrAlignmentCycleDetectedError,
+  OkrAlignmentCycleMismatchError,
+  OkrAlignmentNotOwnerError,
+  OkrAlignmentValidationError,
+  OkrAlignmentVisibilityDeniedError,
+  proposeAlignment,
+  rejectAlignment,
+  removeAlignment,
+} from '../../services/resultsVnext/okr/okrAlignmentCommands.js';
 import {
-  AtomicWriteAggregateNotFoundError,
-  AtomicWriteConflictError,
-} from '../../services/resultsVnext/platform/atomicWrite.js';
+  getAlignmentTreeUnderObjective,
+  listAlignmentsForObjective,
+} from '../../services/resultsVnext/okr/okrAlignmentRepository.js';
+import { listOrganizationOkrAttention } from '../../services/resultsVnext/okr/okrAttentionRepository.js';
+import { carryForwardOkrSet } from '../../services/resultsVnext/okr/okrCarryForwardCommands.js';
 import {
+  correctCheckIn,
+  OkrCheckInAlreadyExistsForOccurrenceError,
+  OkrCheckInNotFoundError,
+  OkrCheckInValidationError,
+  recordCheckIn,
+} from '../../services/resultsVnext/okr/okrCheckInCommands.js';
+import { listCheckInOccurrences } from '../../services/resultsVnext/okr/okrCheckInOccurrenceRepository.js';
+import { getCheckIn, listCheckIns } from '../../services/resultsVnext/okr/okrCheckInRepository.js';
+import {
+  generateCadenceOccurrencesAndSeedCheckInObligations,
+  seedExistingCheckInObligationsForSet,
+} from '../../services/resultsVnext/okr/okrCheckInScheduler.js';
+import { suggestNextCheckInValue } from '../../services/resultsVnext/okr/okrCheckInSuggestionService.js';
+import { getSetCheckInSummary } from '../../services/resultsVnext/okr/okrCheckInSummaryRepository.js';
+import {
+  createCycle,
   OKR_CYCLE_ACTIVATE_SPEC,
   OKR_CYCLE_CANCEL_SPEC,
   OKR_CYCLE_CLOSE_SPEC,
   OKR_CYCLE_OPEN_DRAFTING_SPEC,
   OKR_CYCLE_OPEN_REVIEW_SPEC,
-  createCycle,
-  runOkrCycleLifecycleTransition,
+  type OkrCycleLifecycleTransitionSpec,
   OkrCycleProgramNotActiveError,
   OkrCycleValidationError,
-  type OkrCycleLifecycleTransitionSpec,
+  runOkrCycleLifecycleTransition,
 } from '../../services/resultsVnext/okr/okrCycleCommands.js';
+import { OkrCycleHasOpenSetsError } from '../../services/resultsVnext/okr/okrCycleCommands.js';
 import {
-  createProgram,
-  editProgramDraft,
-  publishProgram,
-  OkrProgramValidationError,
-} from '../../services/resultsVnext/okr/okrProgramCommands.js';
+  acknowledgeDecisionResolution,
+  OkrDecisionNotYetResolvedError,
+  requestDecisionFromSupportRequest,
+} from '../../services/resultsVnext/okr/okrDecisionCommands.js';
 import {
-  getCycle,
-  getProgram,
-  listCycles,
-  listPrograms,
-} from '../../services/resultsVnext/okr/okrRepository.js';
-import {
-  OKR_SET_ACTIVATE_SPEC,
-  OKR_SET_CANCEL_SPEC,
-  OKR_SET_OPEN_REVIEW_SPEC,
-  approveOkrSet,
-  closeOkrSet,
-  createOkrSet,
-  narrowOkrSetVisibility,
-  requestChangesOnOkrSet,
-  runOkrSetLifecycleTransition,
-  submitOkrSetForApproval,
-  updateOkrSetDraft,
-  OkrSetNoActiveVisibilityPolicyError,
-  OkrSetNotReadyForSubmissionError,
-  OkrSetSelfApprovalDeniedError,
-  OkrSetValidationError,
-  OkrSetVisibilityWideningDeniedError,
-  type OkrSetLifecycleTransitionSpec,
-} from '../../services/resultsVnext/okr/okrSetCommands.js';
+  cancelKeyResult,
+  createKeyResult,
+  OkrKeyResultNotFoundError,
+  OkrKeyResultValidationError,
+  updateKeyResult,
+} from '../../services/resultsVnext/okr/okrKeyResultCommands.js';
 import {
   cancelObjective,
   createObjective,
-  updateObjective,
   OkrObjectiveNotFoundError,
   OkrObjectiveSetNotEditableError,
   OkrObjectiveValidationError,
+  updateObjective,
 } from '../../services/resultsVnext/okr/okrObjectiveCommands.js';
 import {
   getKeyResult,
@@ -106,68 +112,65 @@ import {
   listObjectivesForSet,
 } from '../../services/resultsVnext/okr/okrObjectiveRepository.js';
 import {
-  cancelKeyResult,
-  createKeyResult,
-  updateKeyResult,
-  OkrKeyResultNotFoundError,
-  OkrKeyResultValidationError,
-} from '../../services/resultsVnext/okr/okrKeyResultCommands.js';
-import {
-  correctCheckIn,
-  recordCheckIn,
-  OkrCheckInAlreadyExistsForOccurrenceError,
-  OkrCheckInNotFoundError,
-  OkrCheckInValidationError,
-} from '../../services/resultsVnext/okr/okrCheckInCommands.js';
-import { getCheckIn, listCheckIns } from '../../services/resultsVnext/okr/okrCheckInRepository.js';
-import {
-  generateCadenceOccurrencesAndSeedCheckInObligations,
-  seedExistingCheckInObligationsForSet,
-} from '../../services/resultsVnext/okr/okrCheckInScheduler.js';
-import { suggestNextCheckInValue } from '../../services/resultsVnext/okr/okrCheckInSuggestionService.js';
-import {
-  acceptAlignment,
-  proposeAlignment,
-  rejectAlignment,
-  removeAlignment,
-  OkrAlignmentCycleDetectedError,
-  OkrAlignmentCycleMismatchError,
-  OkrAlignmentNotOwnerError,
-  OkrAlignmentValidationError,
-  OkrAlignmentVisibilityDeniedError,
-} from '../../services/resultsVnext/okr/okrAlignmentCommands.js';
-import {
-  getAlignmentTreeUnderObjective,
-  listAlignmentsForObjective,
-} from '../../services/resultsVnext/okr/okrAlignmentRepository.js';
-import { recordOkrSetMaterialChange } from '../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js';
-import {
-  acknowledgeDecisionResolution,
-  requestDecisionFromSupportRequest,
-  OkrDecisionNotYetResolvedError,
-} from '../../services/resultsVnext/okr/okrDecisionCommands.js';
-import {
-  acknowledgeSupportRequest,
-  dismissSupportRequest,
-  postComment,
-  postRecognition,
-  raiseSupportRequest,
-  resolveSupportRequest,
-  OkrRecognitionDisabledError,
-  OkrSupportRequestValidationError,
-} from '../../services/resultsVnext/okr/okrSupportCommands.js';
-import {
-  getDecisionLinkForSupportRequest,
-  getSupportRequest,
-  listSupportRequestsForSet,
-} from '../../services/resultsVnext/okr/okrSupportRepository.js';
-import { listOrganizationOkrAttention } from '../../services/resultsVnext/okr/okrAttentionRepository.js';
-import { getSetCheckInSummary } from '../../services/resultsVnext/okr/okrCheckInSummaryRepository.js';
-import { listCheckInOccurrences } from '../../services/resultsVnext/okr/okrCheckInOccurrenceRepository.js';
-import {
   listMyOkrSets,
   listOrganizationOkrTeamHealth,
 } from '../../services/resultsVnext/okr/okrPerspectivesRepository.js';
+import {
+  createProgram,
+  editProgramDraft,
+  OkrProgramValidationError,
+  publishProgram,
+} from '../../services/resultsVnext/okr/okrProgramCommands.js';
+import {
+  finalScoreOkrSet,
+  getObjectiveReflection,
+  OkrReflectionNotFoundError,
+  OkrReflectionValidationError,
+  OkrSetReflectionRequiredError,
+  recordObjectiveReflection,
+  recordOkrReflectionTeresaDraftDisposition,
+} from '../../services/resultsVnext/okr/okrReflectionCommands.js';
+import { OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS } from '../../services/resultsVnext/okr/okrReflectionTypes.js';
+import {
+  getCycle,
+  getProgram,
+  listCycles,
+  listPrograms,
+} from '../../services/resultsVnext/okr/okrRepository.js';
+import {
+  approveOkrSetManagerReview,
+  listOkrSetReviews,
+  OkrManagerReviewSelfApprovalDeniedError,
+  OkrReviewNotFoundError,
+  OkrReviewValidationError,
+  OkrSetManagerReviewRequiredError,
+  OkrSetSelfReviewRequiredError,
+  recordOkrSetReviewComment,
+  requestChangesOnOkrSetManagerReview,
+  submitOkrSetForManagerReview,
+  submitOkrSetSelfReview,
+} from '../../services/resultsVnext/okr/okrReviewCommands.js';
+import {
+  approveOkrSet,
+  closeOkrSet,
+  createOkrSet,
+  narrowOkrSetVisibility,
+  OKR_SET_ACTIVATE_SPEC,
+  OKR_SET_CANCEL_SPEC,
+  OKR_SET_OPEN_REVIEW_SPEC,
+  type OkrSetLifecycleTransitionSpec,
+  OkrSetNoActiveVisibilityPolicyError,
+  OkrSetNotReadyForSubmissionError,
+  OkrSetSelfApprovalDeniedError,
+  OkrSetValidationError,
+  OkrSetVisibilityWideningDeniedError,
+  requestChangesOnOkrSet,
+  runOkrSetLifecycleTransition,
+  submitOkrSetForApproval,
+  updateOkrSetDraft,
+} from '../../services/resultsVnext/okr/okrSetCommands.js';
+import { getOkrSetHistory } from '../../services/resultsVnext/okr/okrSetHistoryRepository.js';
+import { recordOkrSetMaterialChange } from '../../services/resultsVnext/okr/okrSetMaterialChangeCommands.js';
 import {
   getOkrSet,
   getOkrSetApprovedSnapshot,
@@ -175,98 +178,95 @@ import {
   listOkrSets,
 } from '../../services/resultsVnext/okr/okrSetRepository.js';
 import {
-  finalScoreOkrSet,
-  recordObjectiveReflection,
-  getObjectiveReflection,
-  recordOkrReflectionTeresaDraftDisposition,
-  OkrReflectionNotFoundError,
-  OkrReflectionValidationError,
-  OkrSetReflectionRequiredError,
-} from '../../services/resultsVnext/okr/okrReflectionCommands.js';
-import { OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS } from '../../services/resultsVnext/okr/okrReflectionTypes.js';
+  acknowledgeSupportRequest,
+  dismissSupportRequest,
+  OkrRecognitionDisabledError,
+  OkrSupportRequestValidationError,
+  postComment,
+  postRecognition,
+  raiseSupportRequest,
+  resolveSupportRequest,
+} from '../../services/resultsVnext/okr/okrSupportCommands.js';
 import {
-  approveOkrSetManagerReview,
-  listOkrSetReviews,
-  recordOkrSetReviewComment,
-  requestChangesOnOkrSetManagerReview,
-  submitOkrSetForManagerReview,
-  submitOkrSetSelfReview,
-  OkrManagerReviewSelfApprovalDeniedError,
-  OkrReviewNotFoundError,
-  OkrReviewValidationError,
-  OkrSetManagerReviewRequiredError,
-  OkrSetSelfReviewRequiredError,
-} from '../../services/resultsVnext/okr/okrReviewCommands.js';
-import { carryForwardOkrSet } from '../../services/resultsVnext/okr/okrCarryForwardCommands.js';
-import { getOkrSetHistory } from '../../services/resultsVnext/okr/okrSetHistoryRepository.js';
-import { OkrCycleHasOpenSetsError } from '../../services/resultsVnext/okr/okrCycleCommands.js';
+  getDecisionLinkForSupportRequest,
+  getSupportRequest,
+  listSupportRequestsForSet,
+} from '../../services/resultsVnext/okr/okrSupportRepository.js';
+import {
+  AtomicWriteAggregateNotFoundError,
+  AtomicWriteConflictError,
+} from '../../services/resultsVnext/platform/atomicWrite.js';
+import {
+  type CommandAccessContext,
+  CommandCapabilityDeniedError,
+} from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
-import { getCorrelationId } from './correlationId.js';
 import logger from '../../utils/Logger.js';
 import {
+  AcceptOkrAlignmentSchema,
+  AcknowledgeOkrDecisionResolutionSchema,
+  AcknowledgeOkrSupportRequestSchema,
+  ApproveOkrSetManagerReviewSchema,
+  CarryForwardOkrSetSchema,
   CorrectOkrCheckInSchema,
   CreateOkrCycleSchema,
   CreateOkrKeyResultSchema,
   CreateOkrObjectiveSchema,
   CreateOkrProgramSchema,
   CreateOkrSetSchema,
+  DismissOkrSupportRequestSchema,
   EditOkrProgramDraftSchema,
+  GetOkrAlignmentTreeQuerySchema,
+  GetOkrSetHistoryQuerySchema,
   ListMyOkrSetsQuerySchema,
+  ListOkrAlignmentsForObjectiveQuerySchema,
   ListOkrCheckInsQuerySchema,
   ListOkrCompanySetsQuerySchema,
   ListOkrCyclesQuerySchema,
   ListOkrProgramsQuerySchema,
   ListOkrSetsQuerySchema,
+  ListOkrSupportRequestsQuerySchema,
   NarrowOkrSetVisibilitySchema,
+  OkrAlignmentIdParamsSchema,
   OkrCheckInIdParamsSchema,
   OkrCheckInIdWithCheckInParamsSchema,
   OkrCycleIdParamsSchema,
   OkrCycleTransitionSchema,
+  OkrDecisionLinkIdParamsSchema,
   OkrKeyResultIdParamsSchema,
   OkrKeyResultTransitionSchema,
   OkrObjectiveIdParamsSchema,
   OkrObjectiveTransitionSchema,
   OkrProgramIdParamsSchema,
-  OkrSetApprovalSnapshotIdParamsSchema,
-  OkrSetIdParamsSchema,
-  OkrSetTransitionSchema,
-  PublishOkrProgramSchema,
-  RecordOkrCheckInSchema,
-  RecordOkrSetMaterialChangeSchema,
-  RequestChangesOnOkrSetSchema,
-  UpdateOkrKeyResultSchema,
-  UpdateOkrObjectiveSchema,
-  UpdateOkrSetDraftSchema,
-  AcceptOkrAlignmentSchema,
-  GetOkrAlignmentTreeQuerySchema,
-  ListOkrAlignmentsForObjectiveQuerySchema,
-  OkrAlignmentIdParamsSchema,
-  ProposeOkrAlignmentSchema,
-  RejectOkrAlignmentSchema,
-  RemoveOkrAlignmentSchema,
-  ApproveOkrSetManagerReviewSchema,
-  CarryForwardOkrSetSchema,
-  GetOkrSetHistoryQuerySchema,
   OkrReviewTypeParamsSchema,
-  OkrSetReviewLifecycleTransitionSchema,
-  RecordOkrObjectiveReflectionSchema,
-  RecordOkrSetReviewCommentSchema,
-  RequestChangesOnOkrSetManagerReviewSchema,
-  SubmitOkrSetReviewSchema,
-  AcknowledgeOkrDecisionResolutionSchema,
-  AcknowledgeOkrSupportRequestSchema,
-  DismissOkrSupportRequestSchema,
-  ListOkrSupportRequestsQuerySchema,
-  OkrDecisionLinkIdParamsSchema,
+  OkrSetApprovalSnapshotIdParamsSchema,
   OkrSetIdOnlyParamsSchema,
+  OkrSetIdParamsSchema,
   OkrSetObjectiveIdParamsSchema,
+  OkrSetReviewLifecycleTransitionSchema,
+  OkrSetTransitionSchema,
   OkrSupportRequestIdParamsSchema,
   PostOkrCommentSchema,
   PostOkrRecognitionSchema,
+  ProposeOkrAlignmentSchema,
+  PublishOkrProgramSchema,
   RaiseOkrSupportRequestSchema,
+  RecordOkrCheckInSchema,
+  RecordOkrObjectiveReflectionSchema,
+  RecordOkrSetMaterialChangeSchema,
+  RecordOkrSetReviewCommentSchema,
+  RejectOkrAlignmentSchema,
+  RemoveOkrAlignmentSchema,
+  RequestChangesOnOkrSetManagerReviewSchema,
+  RequestChangesOnOkrSetSchema,
   RequestOkrDecisionSchema,
   ResolveOkrSupportRequestSchema,
+  SubmitOkrSetReviewSchema,
+  UpdateOkrKeyResultSchema,
+  UpdateOkrObjectiveSchema,
+  UpdateOkrSetDraftSchema,
 } from '../../validators/resultsVnextOkr.validators.js';
+import { getCorrelationId } from './correlationId.js';
 
 // ==========================================
 // RN-G6-SRV / Task 3 — route-local body schema for the new
@@ -1383,7 +1383,9 @@ function mountSetTransitionRoute(
           reason: body.reason ?? null,
           access,
         });
-        let checkInSeeding: Awaited<ReturnType<typeof seedExistingCheckInObligationsForSet>> | null = null;
+        let checkInSeeding: Awaited<
+          ReturnType<typeof seedExistingCheckInObligationsForSet>
+        > | null = null;
         if (outcome.outcome === 'applied' && spec === OKR_SET_ACTIVATE_SPEC) {
           try {
             checkInSeeding = await seedExistingCheckInObligationsForSet({
@@ -3525,14 +3527,12 @@ router.get(
         organizationId: auth.organizationId,
         setId: req.params.setId,
       });
-      res
-        .status(200)
-        .json({
-          setId: req.params.setId,
-          attention,
-          scopeCompleteness: 'PARTIAL_MANAGEMENT_CHAIN',
-          calculatedAt: new Date().toISOString(),
-        });
+      res.status(200).json({
+        setId: req.params.setId,
+        attention,
+        scopeCompleteness: 'PARTIAL_MANAGEMENT_CHAIN',
+        calculatedAt: new Date().toISOString(),
+      });
     } catch (err) {
       handleOkrRouteError(res, err, 'listSetOkrAttention');
     }

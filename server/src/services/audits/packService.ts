@@ -20,13 +20,12 @@
 import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../database/PostgresDatabase.js';
-
 import {
   auditAll,
-  auditGet,
-  auditRun,
   AuditDomainError,
+  auditGet,
   AuditNotFoundError,
+  auditRun,
   AuditStateError,
   newId,
   parseJson,
@@ -35,16 +34,15 @@ import {
   toIso,
   toNum,
 } from './auditsDb.js';
-import { assertPublishable, validatePack } from './packValidator.js';
 import type { PackValidationResult } from './packValidator.js';
-import { PACK_CLASSIFICATIONS, PUBLICATION_STATUSES } from './types.js';
+import { assertPublishable, validatePack } from './packValidator.js';
 import type {
-  AuditSourceType,
-  AuditVerificationState,
   AuditActor,
   AuditNormSource,
   AuditPack,
   AuditPackCriterion,
+  AuditSourceType,
+  AuditVerificationState,
   CriterionNodeKind,
   ExpectedEvidenceSpec,
   FindingTaxonomyEntry,
@@ -53,6 +51,7 @@ import type {
   PublicationStatus,
   SeverityRule,
 } from './types.js';
+import { PACK_CLASSIFICATIONS, PUBLICATION_STATUSES } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Mapowanie wierszy
@@ -141,8 +140,7 @@ function mapPackRow(row: PackRow): AuditPack {
     // zachowawczy: nic nie awansuje na normę, bo stara kolumna nie niosła
     // informacji o tym, czym dokument JEST — tylko o tym, czy mu ufano.
     sourceType: (row.source_type as AuditSourceType) ?? 'INTERNAL_PROCEDURE',
-    verificationStatus:
-      (row.verification_state as AuditVerificationState) ?? 'EVIDENCE_MISSING',
+    verificationStatus: (row.verification_state as AuditVerificationState) ?? 'EVIDENCE_MISSING',
     classification: row.classification as PackClassification,
     publicationStatus: row.publication_status as PublicationStatus,
     scope: row.scope,
@@ -256,7 +254,11 @@ export interface PackReadScope {
  * Denial is always AuditNotFoundError (404), never a permission error (403),
  * so the existence of a foreign draft is not disclosed.
  */
-function assertRowReadable(row: PackRow, readScope: PackReadScope | undefined, label: string): void {
+function assertRowReadable(
+  row: PackRow,
+  readScope: PackReadScope | undefined,
+  label: string
+): void {
   if (!readScope) return;
   if (row.publication_status === 'published') return;
   if (row.created_by === readScope.actorUserId) return;
@@ -274,7 +276,7 @@ export interface ListPacksParams {
 
 export async function listPacks(
   organizationId: string,
-  params: ListPacksParams = {},
+  params: ListPacksParams = {}
 ): Promise<{ items: AuditPack[]; total: number }> {
   assertValidStatus(params.status);
   assertValidClassification(params.classification);
@@ -283,7 +285,9 @@ export async function listPacks(
 
   if (isNonEmpty(params.search)) {
     values.push(`%${params.search.trim()}%`);
-    conditions.push(`(title ILIKE $${values.length} OR pack_key ILIKE $${values.length} OR summary ILIKE $${values.length})`);
+    conditions.push(
+      `(title ILIKE $${values.length} OR pack_key ILIKE $${values.length} OR summary ILIKE $${values.length})`
+    );
   }
   if (params.readScope) {
     values.push(params.readScope.actorUserId);
@@ -293,7 +297,9 @@ export async function listPacks(
       // for 'published'; anything else narrows to their own rows. A scoped
       // caller can therefore never widen their own visibility via ?status=.
       values.push(params.status);
-      conditions.push(`((publication_status = $${values.length} AND publication_status = 'published') OR ${ownRowClause})`);
+      conditions.push(
+        `((publication_status = $${values.length} AND publication_status = 'published') OR ${ownRowClause})`
+      );
     } else {
       conditions.push(`(publication_status = 'published' OR ${ownRowClause})`);
     }
@@ -312,13 +318,13 @@ export async function listPacks(
 
   const countRow = await auditGet<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM audit_packs WHERE ${where}`,
-    values,
+    values
   );
   const rows = await auditAll<PackRow>(
     `SELECT * FROM audit_packs WHERE ${where}
        ORDER BY pack_key ASC, version DESC
        LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
-    [...values, limit, offset],
+    [...values, limit, offset]
   );
 
   return { items: rows.map(mapPackRow), total: Number(countRow?.count ?? 0) };
@@ -327,7 +333,7 @@ export async function listPacks(
 async function getPackRow(organizationId: string, id: string): Promise<PackRow> {
   const row = await auditGet<PackRow>(
     `SELECT * FROM audit_packs WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
-    [id, organizationId],
+    [id, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Pakiet audytowy');
   return row;
@@ -336,7 +342,7 @@ async function getPackRow(organizationId: string, id: string): Promise<PackRow> 
 export async function getCriteriaFlat(packId: string): Promise<AuditPackCriterion[]> {
   const rows = await auditAll<CriterionRow>(
     `SELECT * FROM audit_pack_criteria WHERE pack_id = $1 ORDER BY ordinal ASC`,
-    [packId],
+    [packId]
   );
   return rows.map(mapCriterionRow);
 }
@@ -344,7 +350,7 @@ export async function getCriteriaFlat(packId: string): Promise<AuditPackCriterio
 export async function getPack(
   organizationId: string,
   id: string,
-  readScope?: PackReadScope,
+  readScope?: PackReadScope
 ): Promise<AuditPack & { criteria: PackCriterionNode[] }> {
   const row = await getPackRow(organizationId, id);
   // AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001: closes the direct-id path around
@@ -358,7 +364,7 @@ async function getSourceForPack(sourceId: string | null): Promise<AuditNormSourc
   if (!sourceId) return null;
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_norm_sources WHERE id = $1`,
-    [sourceId],
+    [sourceId]
   );
   if (!row) return null;
   return {
@@ -425,28 +431,40 @@ export interface CreatePackInput {
 }
 
 function assertValidClassification(value: string | undefined | null): void {
-  if (value !== undefined && value !== null && !PACK_CLASSIFICATIONS.includes(value as PackClassification)) {
+  if (
+    value !== undefined &&
+    value !== null &&
+    !PACK_CLASSIFICATIONS.includes(value as PackClassification)
+  ) {
     throw new AuditDomainError(
       `Nieznana klasyfikacja pakietu: „${value}". Dozwolone: ${PACK_CLASSIFICATIONS.join(', ')}`,
       400,
-      'AUDIT_PACK_CLASSIFICATION_INVALID',
+      'AUDIT_PACK_CLASSIFICATION_INVALID'
     );
   }
 }
 
 function assertValidStatus(value: string | undefined | null): void {
-  if (value !== undefined && value !== null && !PUBLICATION_STATUSES.includes(value as PublicationStatus)) {
+  if (
+    value !== undefined &&
+    value !== null &&
+    !PUBLICATION_STATUSES.includes(value as PublicationStatus)
+  ) {
     throw new AuditDomainError(
       `Nieznany status publikacji: „${value}". Dozwolone: ${PUBLICATION_STATUSES.join(', ')}`,
       400,
-      'AUDIT_PACK_STATUS_INVALID',
+      'AUDIT_PACK_STATUS_INVALID'
     );
   }
 }
 
 export async function createPack(actor: AuditActor, input: CreatePackInput): Promise<AuditPack> {
   if (!isNonEmpty(input.packKey)) {
-    throw new AuditDomainError('Pakiet musi mieć stabilny klucz (pack_key)', 400, 'AUDIT_PACK_KEY_MISSING');
+    throw new AuditDomainError(
+      'Pakiet musi mieć stabilny klucz (pack_key)',
+      400,
+      'AUDIT_PACK_KEY_MISSING'
+    );
   }
   if (!isNonEmpty(input.title)) {
     throw new AuditDomainError('Pakiet musi mieć tytuł', 400, 'AUDIT_PACK_TITLE_MISSING');
@@ -455,7 +473,7 @@ export async function createPack(actor: AuditActor, input: CreatePackInput): Pro
 
   const existing = await auditGet<{ id: string }>(
     `SELECT id FROM audit_packs WHERE (organization_id = $1 OR organization_id IS NULL) AND pack_key = $2 AND version = 1`,
-    [actor.organizationId, input.packKey.trim()],
+    [actor.organizationId, input.packKey.trim()]
   );
   if (existing) {
     throw new AuditStateError(`Pakiet o kluczu „${input.packKey.trim()}" (wersja 1) już istnieje`);
@@ -471,7 +489,7 @@ export async function createPack(actor: AuditActor, input: CreatePackInput): Pro
     const srcRow = await auditGet<{ source_type: string | null }>(
       `SELECT source_type FROM audit_norm_sources
         WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
-      [input.sourceId, actor.organizationId],
+      [input.sourceId, actor.organizationId]
     );
     inheritedSourceType = (srcRow?.source_type as AuditSourceType) ?? null;
   }
@@ -519,7 +537,7 @@ export async function createPack(actor: AuditActor, input: CreatePackInput): Pro
       input.sourceType ?? inheritedSourceType ?? 'INTERNAL_PROCEDURE',
       'UNVERIFIED',
       actor.userId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -540,12 +558,12 @@ export type UpdatePackInput = Partial<CreatePackInput>;
 export async function updatePack(
   actor: AuditActor,
   id: string,
-  input: UpdatePackInput,
+  input: UpdatePackInput
 ): Promise<AuditPack> {
   const existing = await getPackRow(actor.organizationId, id);
   if (existing.publication_status === 'published') {
     throw new AuditStateError(
-      'Opublikowanego pakietu nie można edytować w miejscu — utwórz nową wersję (createNewVersion)',
+      'Opublikowanego pakietu nie można edytować w miejscu — utwórz nową wersję (createNewVersion)'
     );
   }
   assertValidClassification(input.classification);
@@ -574,29 +592,47 @@ export async function updatePack(
       input.scope !== undefined ? input.scope : merged.scope,
       input.objectives !== undefined ? input.objectives : merged.objectives,
       input.auditType !== undefined ? input.auditType : merged.auditType,
-      JSON.stringify(input.requiredRoles !== undefined ? input.requiredRoles : merged.requiredRoles),
       JSON.stringify(
-        input.requiredCompetencies !== undefined ? input.requiredCompetencies : merged.requiredCompetencies,
+        input.requiredRoles !== undefined ? input.requiredRoles : merged.requiredRoles
+      ),
+      JSON.stringify(
+        input.requiredCompetencies !== undefined
+          ? input.requiredCompetencies
+          : merged.requiredCompetencies
       ),
       JSON.stringify(input.workflow !== undefined ? input.workflow : merged.workflow),
-      JSON.stringify(input.findingTaxonomy !== undefined ? input.findingTaxonomy : merged.findingTaxonomy),
-      JSON.stringify(input.severityRules !== undefined ? input.severityRules : merged.severityRules),
-      JSON.stringify(input.decisionRules !== undefined ? input.decisionRules : merged.decisionRules),
+      JSON.stringify(
+        input.findingTaxonomy !== undefined ? input.findingTaxonomy : merged.findingTaxonomy
+      ),
+      JSON.stringify(
+        input.severityRules !== undefined ? input.severityRules : merged.severityRules
+      ),
+      JSON.stringify(
+        input.decisionRules !== undefined ? input.decisionRules : merged.decisionRules
+      ),
       input.samplingGuidance !== undefined ? input.samplingGuidance : merged.samplingGuidance,
       JSON.stringify(input.outputSchema !== undefined ? input.outputSchema : merged.outputSchema),
       JSON.stringify(input.reportSchema !== undefined ? input.reportSchema : merged.reportSchema),
       JSON.stringify(
-        input.correctiveActionSchema !== undefined ? input.correctiveActionSchema : merged.correctiveActionSchema,
+        input.correctiveActionSchema !== undefined
+          ? input.correctiveActionSchema
+          : merged.correctiveActionSchema
       ),
-      JSON.stringify(input.verificationSchema !== undefined ? input.verificationSchema : merged.verificationSchema),
-      input.estimatedDurationDays !== undefined ? input.estimatedDurationDays : merged.estimatedDurationDays,
+      JSON.stringify(
+        input.verificationSchema !== undefined
+          ? input.verificationSchema
+          : merged.verificationSchema
+      ),
+      input.estimatedDurationDays !== undefined
+        ? input.estimatedDurationDays
+        : merged.estimatedDurationDays,
       input.recurrenceDefault !== undefined ? input.recurrenceDefault : merged.recurrenceDefault,
       input.effectiveFrom !== undefined ? input.effectiveFrom : merged.effectiveFrom,
       input.effectiveTo !== undefined ? input.effectiveTo : merged.effectiveTo,
       JSON.stringify(input.provenance !== undefined ? input.provenance : merged.provenance),
       id,
       actor.organizationId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -616,13 +652,13 @@ export async function deletePack(actor: AuditActor, id: string): Promise<void> {
   const existing = await getPackRow(actor.organizationId, id);
   if (existing.publication_status !== 'draft') {
     throw new AuditStateError(
-      `Można usunąć wyłącznie pakiet w statusie „draft" (obecny status: ${existing.publication_status})`,
+      `Można usunąć wyłącznie pakiet w statusie „draft" (obecny status: ${existing.publication_status})`
     );
   }
 
   await auditRun(
     `DELETE FROM audit_packs WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
-    [id, actor.organizationId],
+    [id, actor.organizationId]
   );
 
   await recordAuditEvent({
@@ -670,18 +706,22 @@ export interface ReplaceCriterionInput {
 export async function replaceCriteria(
   actor: AuditActor,
   packId: string,
-  criteria: ReplaceCriterionInput[],
+  criteria: ReplaceCriterionInput[]
 ): Promise<AuditPackCriterion[]> {
   const packRow = await getPackRow(actor.organizationId, packId);
   if (packRow.publication_status === 'published') {
     throw new AuditStateError(
-      'Kryteriów opublikowanego pakietu nie można podmienić — utwórz nową wersję (createNewVersion)',
+      'Kryteriów opublikowanego pakietu nie można podmienić — utwórz nową wersję (createNewVersion)'
     );
   }
 
   criteria.forEach((c, index) => {
     if (!isNonEmpty(c.title)) {
-      throw new AuditDomainError(`Kryterium #${index} nie ma tytułu`, 400, 'AUDIT_CRITERION_TITLE_MISSING');
+      throw new AuditDomainError(
+        `Kryterium #${index} nie ma tytułu`,
+        400,
+        'AUDIT_CRITERION_TITLE_MISSING'
+      );
     }
   });
 
@@ -706,7 +746,7 @@ export async function replaceCriteria(
           throw new AuditDomainError(
             `Kryterium „${c.title}" wskazuje rodzica spoza tej listy (${c.parentId})`,
             400,
-            'AUDIT_CRITERION_PARENT_MISSING',
+            'AUDIT_CRITERION_PARENT_MISSING'
           );
         }
       }
@@ -734,7 +774,7 @@ export async function replaceCriteria(
           c.mandatory ?? true,
           c.weight ?? null,
           c.suggestedOwnerRole ?? null,
-        ],
+        ]
       );
     }
 
@@ -770,7 +810,7 @@ export async function replaceCriteria(
 export async function validatePackById(
   organizationId: string,
   id: string,
-  readScope?: PackReadScope,
+  readScope?: PackReadScope
 ): Promise<PackValidationResult> {
   const row = await getPackRow(organizationId, id);
   // Validation echoes pack content (title, criteria coverage, source state) in
@@ -809,7 +849,7 @@ export async function publishPack(actor: AuditActor, id: string): Promise<AuditP
   await auditRun(
     `UPDATE audit_packs SET publication_status = 'published', published_by = $1, published_at = NOW(), updated_at = NOW()
      WHERE id = $2 AND (organization_id = $3 OR organization_id IS NULL)`,
-    [actor.userId, id, actor.organizationId],
+    [actor.userId, id, actor.organizationId]
   );
 
   await recordAuditEvent({
@@ -828,19 +868,19 @@ export async function publishPack(actor: AuditActor, id: string): Promise<AuditP
 export async function approveByExpert(
   actor: AuditActor,
   id: string,
-  note?: string | null,
+  note?: string | null
 ): Promise<AuditPack> {
   const row = await getPackRow(actor.organizationId, id);
   if (row.publication_status === 'published' || row.publication_status === 'deprecated') {
     throw new AuditStateError(
-      `Zatwierdzenie eksperckie dotyczy pakietu przed publikacją (obecny status: ${row.publication_status})`,
+      `Zatwierdzenie eksperckie dotyczy pakietu przed publikacją (obecny status: ${row.publication_status})`
     );
   }
 
   await auditRun(
     `UPDATE audit_packs SET expert_approved_by = $1, expert_approved_at = NOW(), expert_approval_note = $2, updated_at = NOW()
      WHERE id = $3 AND (organization_id = $4 OR organization_id IS NULL)`,
-    [actor.userId, note ?? null, id, actor.organizationId],
+    [actor.userId, note ?? null, id, actor.organizationId]
   );
 
   await recordAuditEvent({
@@ -865,7 +905,7 @@ export async function createNewVersion(actor: AuditActor, packKey: string): Prom
     `SELECT * FROM audit_packs
       WHERE (organization_id = $1 OR organization_id IS NULL) AND pack_key = $2
       ORDER BY version DESC LIMIT 1`,
-    [actor.organizationId, packKey],
+    [actor.organizationId, packKey]
   );
   if (!latestRow) {
     throw new AuditNotFoundError(`Pakiet o kluczu „${packKey}"`);
@@ -915,7 +955,7 @@ export async function createNewVersion(actor: AuditActor, packKey: string): Prom
       JSON.stringify(latest.provenance),
       latest.id,
       actor.userId,
-    ],
+    ]
   );
 
   const previousCriteria = await getCriteriaFlat(latest.id);
@@ -1005,15 +1045,15 @@ export async function comparePackVersions(
   packKey: string,
   versionA: number,
   versionB: number,
-  readScope?: PackReadScope,
+  readScope?: PackReadScope
 ): Promise<PackVersionComparison> {
   const rowA = await auditGet<PackRow>(
     `SELECT * FROM audit_packs WHERE (organization_id = $1 OR organization_id IS NULL) AND pack_key = $2 AND version = $3`,
-    [organizationId, packKey, versionA],
+    [organizationId, packKey, versionA]
   );
   const rowB = await auditGet<PackRow>(
     `SELECT * FROM audit_packs WHERE (organization_id = $1 OR organization_id IS NULL) AND pack_key = $2 AND version = $3`,
-    [organizationId, packKey, versionB],
+    [organizationId, packKey, versionB]
   );
   if (!rowA) throw new AuditNotFoundError(`Pakiet „${packKey}" w wersji ${versionA}`);
   if (!rowB) throw new AuditNotFoundError(`Pakiet „${packKey}" w wersji ${versionB}`);

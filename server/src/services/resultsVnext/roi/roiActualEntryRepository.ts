@@ -14,10 +14,16 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
-import { toRoiActualEntry, type RoiActualEntry, type RoiActualEntryRow } from './roiForecastActualTypes.js';
+import {
+  type RoiActualEntry,
+  type RoiActualEntryRow,
+  toRoiActualEntry,
+} from './roiForecastActualTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await acquirePgClient();
@@ -28,7 +34,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -45,8 +55,17 @@ export interface ListActualEntriesParams {
   offset?: number;
 }
 
-export async function listActualEntries(params: ListActualEntriesParams): Promise<RoiActualEntry[]> {
-  const { userId, organizationId, caseId, includeSuperseded = false, limit = 200, offset = 0 } = params;
+export async function listActualEntries(
+  params: ListActualEntriesParams
+): Promise<RoiActualEntry[]> {
+  const {
+    userId,
+    organizationId,
+    caseId,
+    includeSuperseded = false,
+    limit = 200,
+    offset = 0,
+  } = params;
 
   const currentOnlyClause = includeSuperseded
     ? ''
@@ -66,9 +85,15 @@ export async function listActualEntries(params: ListActualEntriesParams): Promis
      ORDER BY e.period_start DESC, e.recorded_at DESC
      LIMIT $${VISIBILITY_CTE_PARAM_COUNT + 2} OFFSET $${VISIBILITY_CTE_PARAM_COUNT + 3}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, limit, offset];
-  const rows = await withReadClient((client) => queryRows<RoiActualEntryRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiActualEntryRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiActualEntry);
 }
 
@@ -90,9 +115,15 @@ export async function getActualEntry(params: GetActualEntryParams): Promise<RoiA
        AND e.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND e.actual_entry_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, actualEntryId];
-  const rows = await withReadClient((client) => queryRows<RoiActualEntryRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiActualEntryRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiActualEntry(row) : null;
 }

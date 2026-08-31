@@ -51,7 +51,8 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 vi.mock('../../../services/resultsVnext/roi/roiCaseCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCaseCommands.js')>();
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCaseCommands.js')>();
   return {
     ...actual,
     reopenRejectedRoiCase: (...args: unknown[]) => mockReopenRejectedRoiCase(...args),
@@ -59,14 +60,18 @@ vi.mock('../../../services/resultsVnext/roi/roiCaseCommands.js', async (importOr
 });
 
 vi.mock('../../../services/resultsVnext/roi/roiCaseApprovalCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCaseApprovalCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiCaseApprovalCommands.js')
+    >();
   return {
     ...actual,
     submitRoiCaseForApproval: (...args: unknown[]) => mockSubmitRoiCaseForApproval(...args),
     approveRoiCase: (...args: unknown[]) => mockApproveRoiCase(...args),
     rejectRoiCase: (...args: unknown[]) => mockRejectRoiCase(...args),
     requestChangesOnRoiCase: (...args: unknown[]) => mockRequestChangesOnRoiCase(...args),
-    reopenApprovedRoiCaseForRevision: (...args: unknown[]) => mockReopenApprovedRoiCaseForRevision(...args),
+    reopenApprovedRoiCaseForRevision: (...args: unknown[]) =>
+      mockReopenApprovedRoiCaseForRevision(...args),
   };
 });
 
@@ -95,11 +100,12 @@ vi.mock('../../../services/effectiveAccessService.js', () => ({
     access.capabilities.includes('*') || access.capabilities.includes(capability),
 }));
 
-const { RoiSelfApprovalDeniedError } = await import('../../../services/resultsVnext/roi/roiCaseApprovalCommands.js');
-const { RoiCaseValidationError, RoiCaseNotReadyForReviewError } = await import(
-  '../../../services/resultsVnext/roi/roiCaseCommands.js'
-);
-const { AtomicWriteConflictError } = await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const { RoiSelfApprovalDeniedError } =
+  await import('../../../services/resultsVnext/roi/roiCaseApprovalCommands.js');
+const { RoiCaseValidationError, RoiCaseNotReadyForReviewError } =
+  await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
+const { AtomicWriteConflictError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
 const roiRoutes = (await import('../roi.routes.js')).default;
 
@@ -192,7 +198,9 @@ describe('POST .../transitions/submit-for-approval', () => {
 
   it('maps RoiCaseNotReadyForReviewError to 409 (AC-01)', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'ready_for_review' }));
-    mockSubmitRoiCaseForApproval.mockRejectedValue(new RoiCaseNotReadyForReviewError(CASE_ID, 'calculation_run_stale'));
+    mockSubmitRoiCaseForApproval.mockRejectedValue(
+      new RoiCaseNotReadyForReviewError(CASE_ID, 'calculation_run_stale')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/submit-for-approval`)
       .send({ expectedVersion: 1 });
@@ -222,7 +230,10 @@ describe('POST .../transitions/approve', () => {
       outcome: 'applied',
       eventId: 'evt-2',
       resultingVersion: 3,
-      result: { case: caseFixture({ status: 'approved', rowVersion: 3 }), snapshot: snapshotSummaryFixture() },
+      result: {
+        case: caseFixture({ status: 'approved', rowVersion: 3 }),
+        snapshot: snapshotSummaryFixture(),
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/approve`)
@@ -237,7 +248,9 @@ describe('POST .../transitions/approve', () => {
 
   it('maps RoiSelfApprovalDeniedError to 403, checked FIRST ahead of the generic 409 branches', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'submitted_for_approval' }));
-    mockApproveRoiCase.mockRejectedValue(new RoiSelfApprovalDeniedError(CASE_ID, 'user-approver', 'submitted_by'));
+    mockApproveRoiCase.mockRejectedValue(
+      new RoiSelfApprovalDeniedError(CASE_ID, 'user-approver', 'submitted_by')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/approve`)
       .send({ expectedVersion: 2 });
@@ -249,10 +262,14 @@ describe('POST .../transitions/approve', () => {
   it('maps STALE_VERSION to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'submitted_for_approval' }));
     mockApproveRoiCase.mockRejectedValue(
-      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
-        currentVersion: 3,
-        expectedVersion: 2,
-      })
+      new AtomicWriteConflictError(
+        'Aggregate was modified since it was last read',
+        'STALE_VERSION',
+        {
+          currentVersion: 3,
+          expectedVersion: 2,
+        }
+      )
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/approve`)
@@ -282,7 +299,12 @@ describe('POST .../transitions/reject', () => {
       outcome: 'applied',
       eventId: 'evt-3',
       resultingVersion: 3,
-      result: caseFixture({ status: 'rejected', rowVersion: 3, rejectedBy: 'user-approver', rejectionReason: 'Numbers do not add up' }),
+      result: caseFixture({
+        status: 'rejected',
+        rowVersion: 3,
+        rejectedBy: 'user-approver',
+        rejectionReason: 'Numbers do not add up',
+      }),
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/reject`)
@@ -290,7 +312,10 @@ describe('POST .../transitions/reject', () => {
     expect(response.status).toBe(200);
     expect(response.body.case.status).toBe('rejected');
     expect(mockRejectRoiCase).toHaveBeenCalledWith(
-      expect.objectContaining({ rejectedBy: 'user-approver', rejectionReason: 'Numbers do not add up' })
+      expect.objectContaining({
+        rejectedBy: 'user-approver',
+        rejectionReason: 'Numbers do not add up',
+      })
     );
   });
 
@@ -306,10 +331,14 @@ describe('POST .../transitions/reject', () => {
   it('maps RoiCaseValidationError (NOT_SUBMITTED_FOR_APPROVAL) to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'draft' }));
     mockRejectRoiCase.mockRejectedValue(
-      new RoiCaseValidationError('ROI case is "draft" — only submitted may be rejected', 'NOT_SUBMITTED_FOR_APPROVAL', {
-        caseId: CASE_ID,
-        status: 'draft',
-      })
+      new RoiCaseValidationError(
+        'ROI case is "draft" — only submitted may be rejected',
+        'NOT_SUBMITTED_FOR_APPROVAL',
+        {
+          caseId: CASE_ID,
+          status: 'draft',
+        }
+      )
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/reject`)
@@ -343,7 +372,10 @@ describe('POST .../transitions/request-changes', () => {
     expect(response.status).toBe(200);
     expect(response.body.case.status).toBe('changes_requested');
     expect(mockRequestChangesOnRoiCase).toHaveBeenCalledWith(
-      expect.objectContaining({ actorUserId: 'user-approver', changeRequestNotes: 'Please re-verify' })
+      expect.objectContaining({
+        actorUserId: 'user-approver',
+        changeRequestNotes: 'Please re-verify',
+      })
     );
   });
 
@@ -389,10 +421,14 @@ describe('POST .../transitions/reopen-for-revision', () => {
   it('maps RoiCaseValidationError (INVALID_ROI_CASE_STATUS_TRANSITION) to 409 when case is not approved', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'tracking' }));
     mockReopenApprovedRoiCaseForRevision.mockRejectedValue(
-      new RoiCaseValidationError('only approved may be reopened', 'INVALID_ROI_CASE_STATUS_TRANSITION', {
-        caseId: CASE_ID,
-        currentStatus: 'tracking',
-      })
+      new RoiCaseValidationError(
+        'only approved may be reopened',
+        'INVALID_ROI_CASE_STATUS_TRANSITION',
+        {
+          caseId: CASE_ID,
+          currentStatus: 'tracking',
+        }
+      )
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/reopen-for-revision`)
@@ -439,7 +475,9 @@ describe('POST .../transitions/reopen-after-rejection', () => {
 describe('GET .../approval-snapshots', () => {
   it('200s with a list of summaries', async () => {
     mockListRoiApprovalSnapshots.mockResolvedValue([snapshotSummaryFixture()]);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/approval-snapshots`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/approval-snapshots`
+    );
     expect(response.status).toBe(200);
     expect(response.body.snapshots).toHaveLength(1);
     expect(response.body.snapshots[0].snapshotId).toBe(SNAPSHOT_ID);
@@ -447,7 +485,9 @@ describe('GET .../approval-snapshots', () => {
 
   it('200s with an empty list when the reader can see nothing', async () => {
     mockListRoiApprovalSnapshots.mockResolvedValue([]);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/approval-snapshots`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/approval-snapshots`
+    );
     expect(response.status).toBe(200);
     expect(response.body.snapshots).toEqual([]);
   });
@@ -483,7 +523,9 @@ describe('GET .../approval-snapshots/:snapshotId', () => {
   });
 
   it('400s on a malformed snapshotId (Zod uuid validation)', async () => {
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/approval-snapshots/not-a-uuid`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/approval-snapshots/not-a-uuid`
+    );
     expect(response.status).toBe(400);
     expect(mockGetRoiApprovalSnapshot).not.toHaveBeenCalled();
   });

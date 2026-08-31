@@ -824,7 +824,7 @@ router.get(
       // fixed, isn't" shape already found elsewhere in this module (see the
       // `POST /api/ai/report` atrapa fixed under M01-010). Hydrating from
       // `ai_response_feedback` is what actually round-trips a real rating.
-      let feedbackByMessage: Record<string, { rating: string; created_at: string }> = {};
+      const feedbackByMessage: Record<string, { rating: string; created_at: string }> = {};
       const messageIdsForFeedback = (messages as any[]).map((m: any) => m.id);
       if (messageIdsForFeedback.length > 0) {
         try {
@@ -2799,10 +2799,9 @@ async function recordConversationBranch(input: {
   // Chain lineage: if the source conversation is itself a recorded branch,
   // point the new branch's parent_branch_id at that row so nested forks keep
   // a walkable ancestry instead of flattening to the root every time.
-  const parentBranchRow = (await dbGet(
-    `SELECT id FROM conversation_branches WHERE id = ?`,
-    [input.sourceConversationId]
-  )) as any;
+  const parentBranchRow = (await dbGet(`SELECT id FROM conversation_branches WHERE id = ?`, [
+    input.sourceConversationId,
+  ])) as any;
 
   const result = await dbRun(
     `INSERT INTO conversation_branches
@@ -3039,10 +3038,9 @@ router.get(
     )) as any;
     if (!owned) return res.status(404).json({ error: 'Conversation not found' });
 
-    const selfAsBranch = (await dbGet(
-      `SELECT * FROM conversation_branches WHERE id = ?`,
-      [conversationId]
-    )) as any;
+    const selfAsBranch = (await dbGet(`SELECT * FROM conversation_branches WHERE id = ?`, [
+      conversationId,
+    ])) as any;
 
     const children = (await dbAll(
       `SELECT b.*,

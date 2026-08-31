@@ -319,9 +319,7 @@ export const MyWorkNav: React.FC<MyWorkNavProps> = ({
                 className={`${isActive ? activeChipClassName : inactiveChipClassName} shrink-0`}
                 data-testid={`mywork-tab-${tab.id}`}
                 data-nav-group={tab.navGroup}
-                title={
-                  tab.isLocked ? lockedLabel : `${activeGroupEntry.label} · ${tab.label}`
-                }
+                title={tab.isLocked ? lockedLabel : `${activeGroupEntry.label} · ${tab.label}`}
               >
                 {tab.icon}
                 <span>{tab.label}</span>

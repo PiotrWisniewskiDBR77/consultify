@@ -197,9 +197,7 @@ export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
     defaultOpen: query.trim().length > 0,
     children: (
       <div className="space-y-1.5">
-        <p className="text-[10px] text-c-text-muted">
-          {t(catalogGroupHintKey(group), group.hint)}
-        </p>
+        <p className="text-[10px] text-c-text-muted">{t(catalogGroupHintKey(group), group.hint)}</p>
         {group.entries.map((entry) => (
           <PaletteItem key={entry.id} entry={entry} disabled={disabled} onAdd={onAdd} />
         ))}

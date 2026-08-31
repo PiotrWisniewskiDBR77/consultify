@@ -483,27 +483,35 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                       <span
                         className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDotClass}`}
                       />
-                      {allowLifecycleMutation ? <select
-                        value={initiative.status}
-                        onChange={(e) =>
-                          handleStatusChange(
-                            initiative.id,
-                            initiative.status,
-                            e.target.value as InitiativeStatus
-                          )
-                        }
-                        className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-c-text-secondary focus:outline-none"
-                      >
-                        {ALL_INITIATIVE_STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {getStatusLabel(s)}
-                          </option>
-                        ))}
-                      </select> : <span className="text-xs font-medium text-c-text-secondary">{getStatusLabel(initiative.status)}</span>}
-                      {allowLifecycleMutation && <ChevronDown
-                        size={12}
-                        className="absolute right-0 text-c-text-muted pointer-events-none"
-                      />}
+                      {allowLifecycleMutation ? (
+                        <select
+                          value={initiative.status}
+                          onChange={(e) =>
+                            handleStatusChange(
+                              initiative.id,
+                              initiative.status,
+                              e.target.value as InitiativeStatus
+                            )
+                          }
+                          className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-c-text-secondary focus:outline-none"
+                        >
+                          {ALL_INITIATIVE_STATUSES.map((s) => (
+                            <option key={s} value={s}>
+                              {getStatusLabel(s)}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="text-xs font-medium text-c-text-secondary">
+                          {getStatusLabel(initiative.status)}
+                        </span>
+                      )}
+                      {allowLifecycleMutation && (
+                        <ChevronDown
+                          size={12}
+                          className="absolute right-0 text-c-text-muted pointer-events-none"
+                        />
+                      )}
                     </div>
                   </td>
 

@@ -23,23 +23,27 @@ import type { StandardBreadcrumb } from '@/components/standard';
 import { tokenService } from '@/services/tokenService';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { OkrSetDto } from './okrApi';
+import { OkrCancelDialog } from './OkrCancelDialog';
 import {
   cancelObjective,
   createObjective,
+  type CreateOkrObjectiveInput,
   listObjectivesForSet,
   newOkrIdempotencyKey,
   OkrObjectiveApiError,
-  updateObjective,
-  type CreateOkrObjectiveInput,
   type OkrObjectiveWithKeyResultsDto,
+  updateObjective,
   type UpdateOkrObjectiveInput,
 } from './okrObjectiveApi';
-import { getOkrSetChildEditLock } from './okrObjectiveMappers';
-import { buildOkrObjectiveColumns, buildOkrObjectivePreview, buildOkrObjectiveRowMenu } from './okrObjectivePresenters';
-import { OkrCancelDialog } from './OkrCancelDialog';
 import { OkrObjectiveFormModal, type OkrObjectiveFormValues } from './OkrObjectiveFormModal';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import { getOkrSetChildEditLock } from './okrObjectiveMappers';
+import {
+  buildOkrObjectiveColumns,
+  buildOkrObjectivePreview,
+  buildOkrObjectiveRowMenu,
+} from './okrObjectivePresenters';
 
 function resolveCurrentUserIdFromToken(): string | null {
   try {
@@ -62,7 +66,12 @@ export interface OkrObjectivesViewProps {
   onOpenKeyResults: (objective: OkrObjectiveWithKeyResultsDto, set: OkrSetDto) => void;
 }
 
-export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPolish, breadcrumbs, onOpenKeyResults }) => {
+export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({
+  set,
+  isPolish,
+  breadcrumbs,
+  onOpenKeyResults,
+}) => {
   const [objectives, setObjectives] = useState<OkrObjectiveWithKeyResultsDto[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -225,12 +234,17 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
           selectedRowId: selectedObjectiveId,
           onRowClick: (row) => setSelectedObjectiveId(String(row.objectiveId)),
           rowMenu: (row) =>
-            buildOkrObjectiveRowMenu(row as unknown as OkrObjectiveWithKeyResultsDto, isPolish, set.status, {
-              onPreview: (r) => setSelectedObjectiveId(r.objectiveId),
-              onOpenKeyResults: (r) => onOpenKeyResults(r, set),
-              onEdit: openEdit,
-              onCancel: setCancelTarget,
-            }),
+            buildOkrObjectiveRowMenu(
+              row as unknown as OkrObjectiveWithKeyResultsDto,
+              isPolish,
+              set.status,
+              {
+                onPreview: (r) => setSelectedObjectiveId(r.objectiveId),
+                onOpenKeyResults: (r) => onOpenKeyResults(r, set),
+                onEdit: openEdit,
+                onCancel: setCancelTarget,
+              }
+            ),
           defaultSort: { columnId: 'updatedAt', direction: 'desc' },
         }}
         preview={

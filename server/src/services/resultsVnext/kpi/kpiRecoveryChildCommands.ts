@@ -3,16 +3,16 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
-  executeAtomicCreate,
-  AtomicWriteConflictError,
-  AtomicWriteAggregateNotFoundError,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  AtomicWriteAggregateNotFoundError,
+  AtomicWriteConflictError,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
-  CommandCapabilityDeniedError,
   type CommandAccessContext,
+  CommandCapabilityDeniedError,
 } from '../platform/commandCapabilityGuard.js';
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 
@@ -289,9 +289,14 @@ export async function createRecoveryAction(
   }
 ): Promise<AtomicCommandOutcome<RecoveryAction>> {
   const hash = requestHash({
-    op: 'create-action', actorUserId: input.actorUserId, cardId: input.cardId, actionType: input.actionType,
-    title: input.title, description: input.description ?? null,
-    ownerUserId: input.ownerUserId ?? null, dueDate: input.dueDate ?? null,
+    op: 'create-action',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    actionType: input.actionType,
+    title: input.title,
+    description: input.description ?? null,
+    ownerUserId: input.ownerUserId ?? null,
+    dueDate: input.dueDate ?? null,
   });
   const outcome = await executeAtomicCreate<CommandResult<RecoveryAction>>({
     organizationId: input.organizationId,
@@ -301,28 +306,56 @@ export async function createRecoveryAction(
     applyMutation: async (client) => {
       const authority = await loadCardAuthority(client, input.organizationId, input.cardId, true);
       authorize(input.access, input.actorUserId, CAPABILITIES.addAction, authority);
-      await assertActiveOrganizationMember(client, input.organizationId, input.actorUserId, 'actor');
+      await assertActiveOrganizationMember(
+        client,
+        input.organizationId,
+        input.actorUserId,
+        'actor'
+      );
       if (input.ownerUserId) {
-        await assertActiveOrganizationMember(client, input.organizationId, input.ownerUserId, 'assignee');
+        await assertActiveOrganizationMember(
+          client,
+          input.organizationId,
+          input.ownerUserId,
+          'assignee'
+        );
       }
       const inserted = await client.query<RecoveryActionRow>(
         `INSERT INTO rvn_kpi_recovery_actions
            (organization_id, recovery_card_id, action_type, title, description,
             owner_user_id, due_date, created_by)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-        [input.organizationId, input.cardId, input.actionType, input.title,
-          input.description ?? null, input.ownerUserId ?? null, input.dueDate ?? null,
-          input.actorUserId]
+        [
+          input.organizationId,
+          input.cardId,
+          input.actionType,
+          input.title,
+          input.description ?? null,
+          input.ownerUserId ?? null,
+          input.dueDate ?? null,
+          input.actorUserId,
+        ]
       );
-      return { data: actionDto(inserted.rows[0]!), requestHash: hash, deviationCaseId: authority.deviation_case_id };
+      return {
+        data: actionDto(inserted.rows[0]!),
+        requestHash: hash,
+        deviationCaseId: authority.deviation_case_id,
+      };
     },
-    buildEvent: ({ result }) => event({
-      eventType: 'kpi.recovery_action_created', aggregateType: 'deviation_case',
-      aggregateId: result.deviationCaseId, organizationId: input.organizationId,
-      actorUserId: input.actorUserId, actorEffectiveRole: input.actorEffectiveRole,
-      idempotencyKey: input.idempotencyKey, correlationId: input.correlationId,
-      expectedVersion: null, resultingVersion: 1, result,
-    }),
+    buildEvent: ({ result }) =>
+      event({
+        eventType: 'kpi.recovery_action_created',
+        aggregateType: 'deviation_case',
+        aggregateId: result.deviationCaseId,
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        actorEffectiveRole: input.actorEffectiveRole,
+        idempotencyKey: input.idempotencyKey,
+        correlationId: input.correlationId,
+        expectedVersion: null,
+        resultingVersion: 1,
+        result,
+      }),
   });
   return unwrap(outcome);
 }
@@ -336,12 +369,21 @@ export async function updateRecoveryAction(
     dueDate?: string | null;
   }
 ): Promise<AtomicCommandOutcome<RecoveryAction>> {
-  const hash = requestHash({ op: 'update-action', actorUserId: input.actorUserId, cardId: input.cardId, actionId: input.actionId,
-    expectedVersion: input.expectedVersion, status: input.status,
-    ownerUserId: input.ownerUserId, dueDate: input.dueDate });
+  const hash = requestHash({
+    op: 'update-action',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    actionId: input.actionId,
+    expectedVersion: input.expectedVersion,
+    status: input.status,
+    ownerUserId: input.ownerUserId,
+    dueDate: input.dueDate,
+  });
   const outcome = await executeAtomicCreate<CommandResult<RecoveryAction>>({
-    organizationId: input.organizationId, idempotencyKey: input.idempotencyKey,
-    preflight: (client) => preflightCardCommand(client, input, CAPABILITIES.mutateAction, input.actionId),
+    organizationId: input.organizationId,
+    idempotencyKey: input.idempotencyKey,
+    preflight: (client) =>
+      preflightCardCommand(client, input, CAPABILITIES.mutateAction, input.actionId),
     validateExistingResult: ensureFingerprint(hash),
     applyMutation: async (client) => {
       const authority = await loadCardAuthority(client, input.organizationId, input.cardId, true);
@@ -352,14 +394,31 @@ export async function updateRecoveryAction(
       );
       const row = current.rows[0];
       if (!row) throw new AtomicWriteAggregateNotFoundError('Recovery action not found');
-      authorize(input.access, input.actorUserId, CAPABILITIES.mutateAction, authority, row.owner_user_id);
-      await assertActiveOrganizationMember(client, input.organizationId, input.actorUserId, 'actor');
+      authorize(
+        input.access,
+        input.actorUserId,
+        CAPABILITIES.mutateAction,
+        authority,
+        row.owner_user_id
+      );
+      await assertActiveOrganizationMember(
+        client,
+        input.organizationId,
+        input.actorUserId,
+        'actor'
+      );
       if (input.ownerUserId) {
-        await assertActiveOrganizationMember(client, input.organizationId, input.ownerUserId, 'assignee');
+        await assertActiveOrganizationMember(
+          client,
+          input.organizationId,
+          input.ownerUserId,
+          'assignee'
+        );
       }
       if (row.row_version !== input.expectedVersion) {
         throw new AtomicWriteConflictError('Recovery action changed', 'STALE_VERSION', {
-          currentVersion: row.row_version, expectedVersion: input.expectedVersion,
+          currentVersion: row.row_version,
+          expectedVersion: input.expectedVersion,
         });
       }
       const updated = await client.query<RecoveryActionRow>(
@@ -369,18 +428,37 @@ export async function updateRecoveryAction(
            due_date=CASE WHEN $4 THEN $5::date ELSE due_date END,
            row_version=row_version+1, updated_at=now()
          WHERE action_id=$6 AND recovery_card_id=$7 AND organization_id=$8 RETURNING *`,
-        [input.status ?? null, input.ownerUserId !== undefined, input.ownerUserId ?? null,
-          input.dueDate !== undefined, input.dueDate ?? null, input.actionId,
-          input.cardId, input.organizationId]
+        [
+          input.status ?? null,
+          input.ownerUserId !== undefined,
+          input.ownerUserId ?? null,
+          input.dueDate !== undefined,
+          input.dueDate ?? null,
+          input.actionId,
+          input.cardId,
+          input.organizationId,
+        ]
       );
-      return { data: actionDto(updated.rows[0]!), requestHash: hash, deviationCaseId: authority.deviation_case_id };
+      return {
+        data: actionDto(updated.rows[0]!),
+        requestHash: hash,
+        deviationCaseId: authority.deviation_case_id,
+      };
     },
-    buildEvent: ({ result }) => event({ eventType: 'kpi.recovery_action_updated',
-      aggregateType: 'deviation_case', aggregateId: result.deviationCaseId,
-      organizationId: input.organizationId, actorUserId: input.actorUserId,
-      actorEffectiveRole: input.actorEffectiveRole, idempotencyKey: input.idempotencyKey,
-      correlationId: input.correlationId, expectedVersion: input.expectedVersion,
-      resultingVersion: result.data.rowVersion, result }),
+    buildEvent: ({ result }) =>
+      event({
+        eventType: 'kpi.recovery_action_updated',
+        aggregateType: 'deviation_case',
+        aggregateId: result.deviationCaseId,
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        actorEffectiveRole: input.actorEffectiveRole,
+        idempotencyKey: input.idempotencyKey,
+        correlationId: input.correlationId,
+        expectedVersion: input.expectedVersion,
+        resultingVersion: result.data.rowVersion,
+        result,
+      }),
   });
   return unwrap(outcome);
 }
@@ -394,11 +472,18 @@ export interface LinkRecoveryTaskResult {
 export async function linkRecoveryActionTask(
   input: CommandContext & { actionId: string; expectedVersion: number }
 ): Promise<AtomicCommandOutcome<LinkRecoveryTaskResult>> {
-  const hash = requestHash({ op: 'link-task', actorUserId: input.actorUserId, cardId: input.cardId,
-    actionId: input.actionId, expectedVersion: input.expectedVersion });
+  const hash = requestHash({
+    op: 'link-task',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    actionId: input.actionId,
+    expectedVersion: input.expectedVersion,
+  });
   const outcome = await executeAtomicCreate<CommandResult<LinkRecoveryTaskResult>>({
-    organizationId: input.organizationId, idempotencyKey: input.idempotencyKey,
-    preflight: (client) => preflightCardCommand(client, input, CAPABILITIES.mutateAction, input.actionId),
+    organizationId: input.organizationId,
+    idempotencyKey: input.idempotencyKey,
+    preflight: (client) =>
+      preflightCardCommand(client, input, CAPABILITIES.mutateAction, input.actionId),
     validateExistingResult: ensureFingerprint(hash),
     applyMutation: async (client) => {
       const authority = await loadCardAuthority(client, input.organizationId, input.cardId, true);
@@ -409,18 +494,38 @@ export async function linkRecoveryActionTask(
       );
       const row = current.rows[0];
       if (!row) throw new AtomicWriteAggregateNotFoundError('Recovery action not found');
-      authorize(input.access, input.actorUserId, CAPABILITIES.mutateAction, authority, row.owner_user_id);
+      authorize(
+        input.access,
+        input.actorUserId,
+        CAPABILITIES.mutateAction,
+        authority,
+        row.owner_user_id
+      );
       if (row.row_version !== input.expectedVersion) {
         throw new AtomicWriteConflictError('Recovery action changed', 'STALE_VERSION', {
-          currentVersion: row.row_version, expectedVersion: input.expectedVersion,
+          currentVersion: row.row_version,
+          expectedVersion: input.expectedVersion,
         });
       }
       if (row.linked_task_id) {
-        throw new AtomicWriteConflictError('Recovery action already has a task', 'TASK_ALREADY_LINKED');
+        throw new AtomicWriteConflictError(
+          'Recovery action already has a task',
+          'TASK_ALREADY_LINKED'
+        );
       }
-      await assertActiveOrganizationMember(client, input.organizationId, input.actorUserId, 'actor');
+      await assertActiveOrganizationMember(
+        client,
+        input.organizationId,
+        input.actorUserId,
+        'actor'
+      );
       if (row.owner_user_id) {
-        await assertActiveOrganizationMember(client, input.organizationId, row.owner_user_id, 'assignee');
+        await assertActiveOrganizationMember(
+          client,
+          input.organizationId,
+          row.owner_user_id,
+          'assignee'
+        );
       }
       const taskId = randomUUID();
       // Pinned-client adapter for TaskService.createTask's canonical core:
@@ -435,10 +540,17 @@ export async function linkRecoveryActionTask(
            (id, organization_id, title, description, status, priority, assignee_id,
             due_date, created_by, idempotency_key, source_type, source_id, created_at, updated_at)
          VALUES ($1,$2,$3,$4,'todo','medium',$5,$6,$7,$8,'kpi_recovery_action',$9,now(),now())`,
-        [taskId, input.organizationId, row.title,
+        [
+          taskId,
+          input.organizationId,
+          row.title,
           row.description ?? `KPI recovery action (${row.action_id})`,
-          row.owner_user_id, row.due_date, input.actorUserId,
-          `recovery-task:${input.idempotencyKey}`, row.action_id]
+          row.owner_user_id,
+          row.due_date,
+          input.actorUserId,
+          `recovery-task:${input.idempotencyKey}`,
+          row.action_id,
+        ]
       );
       const updated = await client.query<RecoveryActionRow>(
         `UPDATE rvn_kpi_recovery_actions
@@ -448,15 +560,26 @@ export async function linkRecoveryActionTask(
           WHERE action_id=$2 AND recovery_card_id=$3 AND organization_id=$4 RETURNING *`,
         [taskId, input.actionId, input.cardId, input.organizationId]
       );
-      return { data: { linked: true, linkedTaskId: taskId, action: actionDto(updated.rows[0]!) },
-        requestHash: hash, deviationCaseId: authority.deviation_case_id };
+      return {
+        data: { linked: true, linkedTaskId: taskId, action: actionDto(updated.rows[0]!) },
+        requestHash: hash,
+        deviationCaseId: authority.deviation_case_id,
+      };
     },
-    buildEvent: ({ result }) => event({ eventType: 'kpi.recovery_action_task_linked',
-      aggregateType: 'deviation_case', aggregateId: result.deviationCaseId,
-      organizationId: input.organizationId, actorUserId: input.actorUserId,
-      actorEffectiveRole: input.actorEffectiveRole, idempotencyKey: input.idempotencyKey,
-      correlationId: input.correlationId, expectedVersion: input.expectedVersion,
-      resultingVersion: result.data.action.rowVersion, result }),
+    buildEvent: ({ result }) =>
+      event({
+        eventType: 'kpi.recovery_action_task_linked',
+        aggregateType: 'deviation_case',
+        aggregateId: result.deviationCaseId,
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        actorEffectiveRole: input.actorEffectiveRole,
+        idempotencyKey: input.idempotencyKey,
+        correlationId: input.correlationId,
+        expectedVersion: input.expectedVersion,
+        resultingVersion: result.data.action.rowVersion,
+        result,
+      }),
   });
   return unwrap(outcome);
 }
@@ -464,49 +587,94 @@ export async function linkRecoveryActionTask(
 export async function createRecoveryCheckpoint(
   input: CommandContext & { checkpointDate: string; notes?: string | null }
 ): Promise<AtomicCommandOutcome<RecoveryCheckpoint>> {
-  const hash = requestHash({ op: 'create-checkpoint', actorUserId: input.actorUserId, cardId: input.cardId,
-    checkpointDate: input.checkpointDate, notes: input.notes ?? null });
+  const hash = requestHash({
+    op: 'create-checkpoint',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    checkpointDate: input.checkpointDate,
+    notes: input.notes ?? null,
+  });
   const outcome = await executeAtomicCreate<CommandResult<RecoveryCheckpoint>>({
-    organizationId: input.organizationId, idempotencyKey: input.idempotencyKey,
+    organizationId: input.organizationId,
+    idempotencyKey: input.idempotencyKey,
     preflight: (client) => preflightCardCommand(client, input, CAPABILITIES.checkpoint),
     validateExistingResult: ensureFingerprint(hash),
     applyMutation: async (client) => {
       const authority = await loadCardAuthority(client, input.organizationId, input.cardId, true);
       authorize(input.access, input.actorUserId, CAPABILITIES.checkpoint, authority);
-      await assertActiveOrganizationMember(client, input.organizationId, input.actorUserId, 'actor');
+      await assertActiveOrganizationMember(
+        client,
+        input.organizationId,
+        input.actorUserId,
+        'actor'
+      );
       const inserted = await client.query<RecoveryCheckpointRow>(
         `INSERT INTO rvn_kpi_recovery_checkpoints
            (organization_id,recovery_card_id,checkpoint_date,notes,created_by)
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [input.organizationId, input.cardId, input.checkpointDate,
-          input.notes ?? null, input.actorUserId]
+        [
+          input.organizationId,
+          input.cardId,
+          input.checkpointDate,
+          input.notes ?? null,
+          input.actorUserId,
+        ]
       );
-      return { data: checkpointDto(inserted.rows[0]!), requestHash: hash, deviationCaseId: authority.deviation_case_id };
+      return {
+        data: checkpointDto(inserted.rows[0]!),
+        requestHash: hash,
+        deviationCaseId: authority.deviation_case_id,
+      };
     },
-    buildEvent: ({ result }) => event({ eventType: 'kpi.recovery_checkpoint_created',
-      aggregateType: 'deviation_case', aggregateId: result.deviationCaseId,
-      organizationId: input.organizationId, actorUserId: input.actorUserId,
-      actorEffectiveRole: input.actorEffectiveRole, idempotencyKey: input.idempotencyKey,
-      correlationId: input.correlationId, expectedVersion: null, resultingVersion: 1, result }),
+    buildEvent: ({ result }) =>
+      event({
+        eventType: 'kpi.recovery_checkpoint_created',
+        aggregateType: 'deviation_case',
+        aggregateId: result.deviationCaseId,
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        actorEffectiveRole: input.actorEffectiveRole,
+        idempotencyKey: input.idempotencyKey,
+        correlationId: input.correlationId,
+        expectedVersion: null,
+        resultingVersion: 1,
+        result,
+      }),
   });
   return unwrap(outcome);
 }
 
 export async function resolveRecoveryCheckpoint(
-  input: CommandContext & { checkpointId: string; expectedVersion: number;
-    status: Exclude<RecoveryCheckpointStatus, 'PENDING'>; kpiTimeSeriesId?: string | null }
+  input: CommandContext & {
+    checkpointId: string;
+    expectedVersion: number;
+    status: Exclude<RecoveryCheckpointStatus, 'PENDING'>;
+    kpiTimeSeriesId?: string | null;
+  }
 ): Promise<AtomicCommandOutcome<RecoveryCheckpoint>> {
-  const hash = requestHash({ op: 'resolve-checkpoint', actorUserId: input.actorUserId, cardId: input.cardId,
-    checkpointId: input.checkpointId, expectedVersion: input.expectedVersion,
-    status: input.status, kpiTimeSeriesId: input.kpiTimeSeriesId ?? null });
+  const hash = requestHash({
+    op: 'resolve-checkpoint',
+    actorUserId: input.actorUserId,
+    cardId: input.cardId,
+    checkpointId: input.checkpointId,
+    expectedVersion: input.expectedVersion,
+    status: input.status,
+    kpiTimeSeriesId: input.kpiTimeSeriesId ?? null,
+  });
   const outcome = await executeAtomicCreate<CommandResult<RecoveryCheckpoint>>({
-    organizationId: input.organizationId, idempotencyKey: input.idempotencyKey,
+    organizationId: input.organizationId,
+    idempotencyKey: input.idempotencyKey,
     preflight: (client) => preflightCardCommand(client, input, CAPABILITIES.checkpoint),
     validateExistingResult: ensureFingerprint(hash),
     applyMutation: async (client) => {
       const authority = await loadCardAuthority(client, input.organizationId, input.cardId, true);
       authorize(input.access, input.actorUserId, CAPABILITIES.checkpoint, authority);
-      await assertActiveOrganizationMember(client, input.organizationId, input.actorUserId, 'actor');
+      await assertActiveOrganizationMember(
+        client,
+        input.organizationId,
+        input.actorUserId,
+        'actor'
+      );
       const current = await client.query<RecoveryCheckpointRow>(
         `SELECT * FROM rvn_kpi_recovery_checkpoints
           WHERE checkpoint_id=$1 AND recovery_card_id=$2 AND organization_id=$3 FOR UPDATE`,
@@ -516,14 +684,21 @@ export async function resolveRecoveryCheckpoint(
       if (!row) throw new AtomicWriteAggregateNotFoundError('Recovery checkpoint not found');
       if (row.row_version !== input.expectedVersion) {
         throw new AtomicWriteConflictError('Recovery checkpoint changed', 'STALE_VERSION', {
-          currentVersion: row.row_version, expectedVersion: input.expectedVersion,
+          currentVersion: row.row_version,
+          expectedVersion: input.expectedVersion,
         });
       }
       if (row.status !== 'PENDING') {
-        throw new AtomicWriteConflictError('Recovery checkpoint is already resolved', 'CHECKPOINT_TERMINAL');
+        throw new AtomicWriteConflictError(
+          'Recovery checkpoint is already resolved',
+          'CHECKPOINT_TERMINAL'
+        );
       }
       if (input.status === 'MET' && !input.kpiTimeSeriesId) {
-        throw new AtomicWriteConflictError('A MET checkpoint requires an exact measurement', 'MEASUREMENT_REQUIRED');
+        throw new AtomicWriteConflictError(
+          'A MET checkpoint requires an exact measurement',
+          'MEASUREMENT_REQUIRED'
+        );
       }
       if (input.kpiTimeSeriesId) {
         const measurement = await client.query(
@@ -532,23 +707,41 @@ export async function resolveRecoveryCheckpoint(
            WHERE ts.id=$1 AND c.id=$2 AND c.organization_id=$3`,
           [input.kpiTimeSeriesId, input.cardId, input.organizationId]
         );
-        if (!measurement.rows[0]) throw new AtomicWriteAggregateNotFoundError('KPI measurement not found');
+        if (!measurement.rows[0])
+          throw new AtomicWriteAggregateNotFoundError('KPI measurement not found');
       }
       const updated = await client.query<RecoveryCheckpointRow>(
         `UPDATE rvn_kpi_recovery_checkpoints SET status=$1, kpi_time_series_id=$2,
             row_version=row_version+1, resolved_at=now()
           WHERE checkpoint_id=$3 AND recovery_card_id=$4 AND organization_id=$5 RETURNING *`,
-        [input.status, input.kpiTimeSeriesId ?? null, input.checkpointId,
-          input.cardId, input.organizationId]
+        [
+          input.status,
+          input.kpiTimeSeriesId ?? null,
+          input.checkpointId,
+          input.cardId,
+          input.organizationId,
+        ]
       );
-      return { data: checkpointDto(updated.rows[0]!), requestHash: hash, deviationCaseId: authority.deviation_case_id };
+      return {
+        data: checkpointDto(updated.rows[0]!),
+        requestHash: hash,
+        deviationCaseId: authority.deviation_case_id,
+      };
     },
-    buildEvent: ({ result }) => event({ eventType: 'kpi.recovery_checkpoint_resolved',
-      aggregateType: 'deviation_case', aggregateId: result.deviationCaseId,
-      organizationId: input.organizationId, actorUserId: input.actorUserId,
-      actorEffectiveRole: input.actorEffectiveRole, idempotencyKey: input.idempotencyKey,
-      correlationId: input.correlationId, expectedVersion: input.expectedVersion,
-      resultingVersion: result.data.rowVersion, result }),
+    buildEvent: ({ result }) =>
+      event({
+        eventType: 'kpi.recovery_checkpoint_resolved',
+        aggregateType: 'deviation_case',
+        aggregateId: result.deviationCaseId,
+        organizationId: input.organizationId,
+        actorUserId: input.actorUserId,
+        actorEffectiveRole: input.actorEffectiveRole,
+        idempotencyKey: input.idempotencyKey,
+        correlationId: input.correlationId,
+        expectedVersion: input.expectedVersion,
+        resultingVersion: result.data.rowVersion,
+        result,
+      }),
   });
   return unwrap(outcome);
 }

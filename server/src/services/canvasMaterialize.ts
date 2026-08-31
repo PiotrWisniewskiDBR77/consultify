@@ -191,7 +191,10 @@ function isUniqueViolationOn(err: unknown, constraintName: string): boolean {
  * `server/migrations/944_canvas_idea_materialization_receipts.sql`, the
  * ONLY place these are created.
  */
-const REQUIRED_RECEIPT_INDEXES = [IDEA_RECEIPT_IDEMPOTENCY_INDEX, 'idx_canvas_idea_receipts_idea_id'];
+const REQUIRED_RECEIPT_INDEXES = [
+  IDEA_RECEIPT_IDEMPOTENCY_INDEX,
+  'idx_canvas_idea_receipts_idea_id',
+];
 
 /**
  * Asserts the receipt table and its two indexes already exist — it does
@@ -248,7 +251,9 @@ async function assertCanvasIdeaReceiptSchema(): Promise<void> {
         { fallback: false }
       );
       const presentIndexNames = new Set(indexRows.map((row) => row.indexname));
-      const missingIndexes = REQUIRED_RECEIPT_INDEXES.filter((name) => !presentIndexNames.has(name));
+      const missingIndexes = REQUIRED_RECEIPT_INDEXES.filter(
+        (name) => !presentIndexNames.has(name)
+      );
       if (missingIndexes.length > 0) {
         throw new Error(
           `canvas_idea_materialization_receipts is missing required index(es): ` +

@@ -23,8 +23,8 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { isTemplateLifecycleEnabled } from '@/utils/templateLifecycleFlag';
 import PresentationBriefModal from '@/components/shared/PresentationBriefModal';
+import { isTemplateLifecycleEnabled } from '@/utils/templateLifecycleFlag';
 
 import { ExceleParametricTemplates } from './ExceleParametricTemplates';
 import type { KimiLane } from './KimiWorkspaceShell';

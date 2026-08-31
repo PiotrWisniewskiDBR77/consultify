@@ -30,9 +30,9 @@
  * routing the human's own already-written analysis through the governed,
  * audited P08 pipeline — not authoring it.
  */
-import type { DeviationCaseDto } from './kpiDeviationApi';
 import type { TeresaEvidenceBreakdownValue } from '../teresa/TeresaEvidenceBreakdown';
 import type { TeresaHandoffContext } from '../teresa/teresaHandoffTypes';
+import type { DeviationCaseDto } from './kpiDeviationApi';
 
 export interface KpiRcaFormSnapshot {
   rootCauseSummary: string;
@@ -60,16 +60,14 @@ export function buildKpiRcaSuggestion(params: {
       : `Trigger measurement: ${kase.triggerMeasurementId.slice(0, 8)}.`,
     isPolish
       ? 'Treść poniżej to DOKŁADNIE to, co wpisałeś/aś w formularzu tego ekranu — Teresa niczego nie dopisała.'
-      : 'The text below is EXACTLY what you typed into this screen\'s own form — Teresa added nothing.',
+      : "The text below is EXACTLY what you typed into this screen's own form — Teresa added nothing.",
   ];
   const inference: string[] = [];
   const missing: string[] = [];
 
   if (kase.recurrenceFlag !== form.recurrenceFlag && form.recurrenceFlag) {
     inference.push(
-      isPolish
-        ? 'Oznaczono jako powtarzające się odchylenie.'
-        : 'Marked as a recurring deviation.'
+      isPolish ? 'Oznaczono jako powtarzające się odchylenie.' : 'Marked as a recurring deviation.'
     );
   }
   if (!form.rootCauseSummary.trim()) {
@@ -122,7 +120,11 @@ export function buildKpiRcaHandoffContext(params: {
       what_would_change_next_action: [],
     },
     evidence_pointers: suggestion.evidencePointers,
-    proposed_next_action: { target_module: 'kpi', handoff_intent: 'append', requires_approval: true },
+    proposed_next_action: {
+      target_module: 'kpi',
+      handoff_intent: 'append',
+      requires_approval: true,
+    },
     audit_stub: { actor: 'teresa', timestamp: new Date().toISOString() },
   };
 }
@@ -153,9 +155,9 @@ export function buildKpiRcaTargetPayload(params: {
 export function kpiRcaConsequencePreview(isPolish: boolean): string {
   return isPolish
     ? 'Po wykonaniu zapisane zostaną: podsumowanie przyczyny, kategoria przyczyny i flaga powtarzalności ' +
-      'na tej sprawie odchylenia — dokładnie to, co widzisz powyżej. Sprawa przejdzie do stanu „Wymaga planu". ' +
-      'Zatwierdzenie planu korygującego to ODDZIELNY krok i nadal wymaga innej osoby niż Ty (self-approval jest zablokowany).'
+        'na tej sprawie odchylenia — dokładnie to, co widzisz powyżej. Sprawa przejdzie do stanu „Wymaga planu". ' +
+        'Zatwierdzenie planu korygującego to ODDZIELNY krok i nadal wymaga innej osoby niż Ty (self-approval jest zablokowany).'
     : 'On execute, this deviation case will record: the root cause summary, category, and recurrence flag — ' +
-      'exactly what you see above. The case will move to "Plan required". Approving the corrective plan is a ' +
-      'SEPARATE step and still requires someone other than you (self-approval remains blocked).';
+        'exactly what you see above. The case will move to "Plan required". Approving the corrective plan is a ' +
+        'SEPARATE step and still requires someone other than you (self-approval remains blocked).';
 }

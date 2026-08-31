@@ -19,9 +19,7 @@ const VIEWPORT = { x: 0, y: 0, width: 1280, height: 800 };
 const NOTE_SIZE = { width: 180, height: 100 };
 
 function overlaps(a: WhiteboardRect, b: WhiteboardRect): boolean {
-  return (
-    a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
-  );
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 function containsFully(rect: WhiteboardRect, viewport: WhiteboardRect): boolean {
@@ -224,7 +222,12 @@ describe('resolveWhiteboardPlacement', () => {
 describe('rectOfWhiteboardNode', () => {
   it('prefers an explicit width/height over style, and style over the fallback default', () => {
     expect(
-      rectOfWhiteboardNode({ position: { x: 1, y: 2 }, width: 50, height: 60, style: { width: 999, height: 999 } })
+      rectOfWhiteboardNode({
+        position: { x: 1, y: 2 },
+        width: 50,
+        height: 60,
+        style: { width: 999, height: 999 },
+      })
     ).toEqual({ x: 1, y: 2, width: 50, height: 60 });
     expect(
       rectOfWhiteboardNode({ position: { x: 1, y: 2 }, style: { width: 70, height: 80 } })
@@ -238,7 +241,12 @@ describe('rectOfWhiteboardNode', () => {
 
   it('ignores a non-positive width/height and falls through to style/default', () => {
     expect(
-      rectOfWhiteboardNode({ position: { x: 0, y: 0 }, width: 0, height: -5, style: { width: 40, height: 30 } })
+      rectOfWhiteboardNode({
+        position: { x: 0, y: 0 },
+        width: 0,
+        height: -5,
+        style: { width: 40, height: 30 },
+      })
     ).toEqual({ x: 0, y: 0, width: 40, height: 30 });
   });
 });

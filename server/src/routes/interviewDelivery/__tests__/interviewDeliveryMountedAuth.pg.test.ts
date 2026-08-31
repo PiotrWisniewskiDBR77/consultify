@@ -15,7 +15,11 @@ const REAL_DB =
 
 const mockLlmCall = vi.fn();
 vi.mock('../../../services/ai/ingestionPipeline.js', () => ({
-  IngestionPipeline: class { async ingestText() { return { documentId: null }; } },
+  IngestionPipeline: class {
+    async ingestText() {
+      return { documentId: null };
+    }
+  },
 }));
 vi.mock('../../../services/ai/llmService.js', () => ({ llmService: { call: mockLlmCall } }));
 vi.mock('../../../services/notificationService.js', () => ({
@@ -48,11 +52,19 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
 
   beforeAll(async () => {
     pool = new Pool({ connectionString: DATABASE_URL });
-    for (const [organizationId, name] of [[orgA, 'Interview A'], [orgB, 'Interview B']]) {
-      await pool.query(`INSERT INTO organizations (id,name) VALUES ($1,$2)`, [organizationId, name]);
+    for (const [organizationId, name] of [
+      [orgA, 'Interview A'],
+      [orgB, 'Interview B'],
+    ]) {
+      await pool.query(`INSERT INTO organizations (id,name) VALUES ($1,$2)`, [
+        organizationId,
+        name,
+      ]);
     }
     for (const [userId, organizationId, status] of [
-      [ownerA, orgA, 'ACTIVE'], [ownerB, orgB, 'ACTIVE'], [staleA, orgA, 'INACTIVE'],
+      [ownerA, orgA, 'ACTIVE'],
+      [ownerB, orgB, 'ACTIVE'],
+      [staleA, orgA, 'INACTIVE'],
     ]) {
       await pool.query(
         `INSERT INTO users (id,organization_id,email,password,role,status) VALUES ($1,$2,$3,'unused','OWNER','active')`,
@@ -82,7 +94,11 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
 
     const { default: config } = await import('../../../config/Config.js');
     const sign = (userId: string, organizationId: string) =>
-      jwt.sign({ id: userId, organizationId, role: 'OWNER', email: `${userId}@example.test` }, config.JWT_SECRET, { expiresIn: '10m' });
+      jwt.sign(
+        { id: userId, organizationId, role: 'OWNER', email: `${userId}@example.test` },
+        config.JWT_SECRET,
+        { expiresIn: '10m' }
+      );
     tokenA = sign(ownerA, orgA);
     tokenB = sign(ownerB, orgB);
     staleToken = sign(staleA, orgA);
@@ -97,7 +113,8 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
   // implementations; keep the expensive PostgreSQL fixture in beforeAll.
   beforeEach(() => {
     mockLlmCall.mockResolvedValue({
-      object: { questionEvaluations: [], recommendations: [] }, usage: {},
+      object: { questionEvaluations: [], recommendations: [] },
+      usage: {},
     });
   });
 
@@ -106,7 +123,9 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
     await pool.query(`DELETE FROM interview_assignments WHERE id=$1`, [assignmentA]);
     await pool.query(`DELETE FROM interview_questions WHERE id=$1`, [questionA]);
     await pool.query(`DELETE FROM interview_sessions WHERE id=$1`, [sessionA]);
-    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[ownerA, ownerB, staleA]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     await pool.end();
@@ -118,7 +137,9 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
   });
 
   it('active owner updates with CAS and can evaluate through the mounted router', async () => {
-    const current = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [questionA]);
+    const current = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [
+      questionA,
+    ]);
     const expectedUpdatedAt = new Date(current.rows[0].updated_at).toISOString();
     const updated = await request(app)
       .patch(`/api/interview/questions/${questionA}`)
@@ -153,11 +174,16 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
   });
 
   it('foreign tenant cannot mutate the question', async () => {
-    const current = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [questionA]);
+    const current = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [
+      questionA,
+    ]);
     const response = await request(app)
       .patch(`/api/interview/questions/${questionA}`)
       .set(bearer(tokenB))
-      .send({ answerText: 'foreign', expectedUpdatedAt: new Date(current.rows[0].updated_at).toISOString() });
+      .send({
+        answerText: 'foreign',
+        expectedUpdatedAt: new Date(current.rows[0].updated_at).toISOString(),
+      });
     expect(response.status).toBe(404);
   });
 
@@ -179,11 +205,16 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
   });
 
   it('inactive membership cannot mutate even with a valid signed JWT', async () => {
-    const current = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [questionA]);
+    const current = await pool.query(`SELECT updated_at FROM interview_questions WHERE id=$1`, [
+      questionA,
+    ]);
     const response = await request(app)
       .patch(`/api/interview/questions/${questionA}`)
       .set(bearer(staleToken))
-      .send({ answerText: 'revoked', expectedUpdatedAt: new Date(current.rows[0].updated_at).toISOString() });
+      .send({
+        answerText: 'revoked',
+        expectedUpdatedAt: new Date(current.rows[0].updated_at).toISOString(),
+      });
     expect(response.status).toBe(403);
     expect(response.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
   });

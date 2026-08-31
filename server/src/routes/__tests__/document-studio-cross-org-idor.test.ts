@@ -505,18 +505,13 @@ describe('Templates — cross-org IDOR', () => {
   });
 
   describe('restore-as-draft', () => {
-    async function approveAsVictimAndGetAuditId(
-      app: Express,
-      templateId: string
-    ): Promise<string> {
+    async function approveAsVictimAndGetAuditId(app: Express, templateId: string): Promise<string> {
       asVictim();
       const approveRes = await request(app)
         .post(`/api/document-studio/templates/${templateId}/approve`)
         .send({});
       expect(approveRes.status).toBe(200);
-      const auditRes = await request(app).get(
-        `/api/document-studio/templates/${templateId}/audit`
-      );
+      const auditRes = await request(app).get(`/api/document-studio/templates/${templateId}/audit`);
       expect(auditRes.status).toBe(200);
       const approvedEntry = (
         auditRes.body.auditEntries as Array<{ auditId: string; action: string }>

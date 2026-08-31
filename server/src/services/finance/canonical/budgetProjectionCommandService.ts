@@ -1,16 +1,16 @@
 import { createHash } from 'node:crypto';
 
+import { withPgTransaction } from '../../../utils/queryHelpers.js';
 import {
+  type BudgetLine,
   computeProjections,
   computeSummaryMetrics,
   generateProjectionPeriods,
-  type BudgetLine,
   type ProjectionData,
   type ScenarioAdjustment,
   type SummaryMetrics,
 } from '../../budgetingService.js';
 import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
-import { withPgTransaction } from '../../../utils/queryHelpers.js';
 
 export interface ProjectBudgetScenarioParams {
   organizationId: string;

@@ -7,7 +7,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 interface DocumentToMapProps {
@@ -104,7 +103,10 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <FileText size={16} className="text-c-info" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="document-to-map-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="document-to-map-modal-heading"
+            >
               {t('ideas.mindmap.documentMap', 'Document → Map')}
             </h3>
           </div>

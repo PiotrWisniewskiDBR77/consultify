@@ -1,13 +1,14 @@
 import { createHash } from 'node:crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
-import { activateA06ForTenant } from './agentTenantSettingsService.js';
+import { withPgTransaction } from '../../utils/queryHelpers.js';
 import {
   registerGovernedProposal,
   reviewProposalScope,
   withProposalGovernanceClient,
 } from './agentProposalGovernanceService.js';
-import { withPgTransaction } from '../../utils/queryHelpers.js';
+import { activateA06ForTenant } from './agentTenantSettingsService.js';
 
 type Actor = { organizationId: string; actorUserId: string; actorRole: string };
 type Member = {

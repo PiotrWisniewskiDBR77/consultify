@@ -42,7 +42,11 @@ vi.mock('react-i18next', () => ({
 
 const { navigateMock, routerState } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
-  routerState: { pathname: '/meetings/meeting-1', meetingId: 'meeting-1', noteId: undefined as string | undefined },
+  routerState: {
+    pathname: '/meetings/meeting-1',
+    meetingId: 'meeting-1',
+    noteId: undefined as string | undefined,
+  },
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -165,7 +169,7 @@ describe('MeetingObjectPage', () => {
     expect(screen.queryByText('Loading')).toBeNull();
   });
 
-  it('Protokół section shows a governed note\'s decisions/actionItems honestly (string and object shapes)', async () => {
+  it("Protokół section shows a governed note's decisions/actionItems honestly (string and object shapes)", async () => {
     routerState.pathname = '/meetings/meeting-1/minutes';
     getMeetingMock.mockResolvedValue({ meeting });
     listNotesMock.mockResolvedValue({

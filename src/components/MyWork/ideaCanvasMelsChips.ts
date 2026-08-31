@@ -49,7 +49,7 @@ import {
   Workflow,
 } from 'lucide-react';
 
-import { getActionsForSurface, runIdeaAction, type IconName } from '@/actions/ideaActionRegistry';
+import { getActionsForSurface, type IconName, runIdeaAction } from '@/actions/ideaActionRegistry';
 import type {
   RightRailToolDescriptor,
   TopBarChipDescriptor,

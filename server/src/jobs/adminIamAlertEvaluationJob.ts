@@ -23,11 +23,13 @@ function batchSize(value: unknown): number {
   return Math.max(1, Math.min(1000, Math.trunc(parsed)));
 }
 
-export async function runAdminIamAlertEvaluationTick(input: {
-  evaluatorId?: string;
-  now?: string;
-  batchSize?: number;
-} = {}): Promise<AdminIamAlertEvaluationTickResult> {
+export async function runAdminIamAlertEvaluationTick(
+  input: {
+    evaluatorId?: string;
+    now?: string;
+    batchSize?: number;
+  } = {}
+): Promise<AdminIamAlertEvaluationTickResult> {
   const limit = batchSize(input.batchSize ?? process.env.ADMIN_IAM_ALERT_BATCH_SIZE);
   const evaluatorId = input.evaluatorId ?? 'scheduler:admin-iam-alerts';
   const now = input.now ?? new Date().toISOString();
@@ -47,14 +49,18 @@ export async function runAdminIamAlertEvaluationTick(input: {
        )
        SELECT organization_id FROM candidate_organizations
         WHERE organization_id > ? ORDER BY organization_id LIMIT ?`,
-      [now, ...ADMIN_IAM_KINDS, cursor, limit],
+      [now, ...ADMIN_IAM_KINDS, cursor, limit]
     );
     if (rows.length === 0) break;
     candidates += rows.length;
     for (const row of rows) {
       cursor = row.organization_id;
       try {
-        await evaluateAdminIamQueueAlerts({ organizationId: row.organization_id, evaluatorId, now });
+        await evaluateAdminIamQueueAlerts({
+          organizationId: row.organization_id,
+          evaluatorId,
+          now,
+        });
         evaluated += 1;
       } catch {
         // One malformed/broken tenant must not starve this page or later pages.

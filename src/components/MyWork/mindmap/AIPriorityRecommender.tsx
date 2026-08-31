@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 interface PriorityRecommendation {
@@ -148,7 +147,10 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <Target size={16} className="text-c-warning" />
-              <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="a-i-priority-recommender-modal-heading">
+              <h3
+                className="text-sm font-bold text-c-text dark:text-c-text"
+                id="a-i-priority-recommender-modal-heading"
+              >
                 {t('ideas.mindmap.aiPriorityRecommender', 'AI: Priority Recommender')}
               </h3>
             </div>

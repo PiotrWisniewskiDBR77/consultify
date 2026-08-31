@@ -194,12 +194,12 @@ import {
   withPgTransaction,
 } from '../../utils/queryHelpers.js';
 import {
-  AutonomyPolicyDeniedError,
-  evaluateAutonomy,
-  publishPolicyDeniedEvent,
   type ActionDescriptor,
   type AutonomyEvaluation,
+  AutonomyPolicyDeniedError,
+  evaluateAutonomy,
   type ExplicitControlEvidence,
+  publishPolicyDeniedEvent,
 } from './autonomyPolicyService.js';
 import type { CapabilityEffectClass } from './capabilityRegistryService.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';

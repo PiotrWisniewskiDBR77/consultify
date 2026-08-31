@@ -257,7 +257,9 @@ describe('meetingService', () => {
     const deleted = await deleteMeeting({ organizationId: ORG, meetingId: created.id });
     expect(deleted).toBe(true);
 
-    expect(await allAsync('SELECT * FROM meeting_notes WHERE meeting_id = ?', [created.id])).toHaveLength(0);
+    expect(
+      await allAsync('SELECT * FROM meeting_notes WHERE meeting_id = ?', [created.id])
+    ).toHaveLength(0);
     expect(
       await allAsync('SELECT * FROM artifact_handoff_proposals WHERE producer_record_id = ?', [
         created.id,
@@ -268,7 +270,7 @@ describe('meetingService', () => {
     ).toHaveLength(0);
   });
 
-  it('does not touch another meeting\'s notes/proposals when deleting one meeting', async () => {
+  it("does not touch another meeting's notes/proposals when deleting one meeting", async () => {
     const created = await makeMeeting({ title: 'Deleted meeting' });
     const kept = await makeMeeting({ title: 'Kept meeting' });
     const keptProposalId = 'proposal-kept';
@@ -288,7 +290,9 @@ describe('meetingService', () => {
     await deleteMeeting({ organizationId: ORG, meetingId: created.id });
 
     expect(await getMeeting({ organizationId: ORG, meetingId: kept.id })).not.toBeNull();
-    expect(await allAsync('SELECT * FROM meeting_notes WHERE meeting_id = ?', [kept.id])).toHaveLength(1);
+    expect(
+      await allAsync('SELECT * FROM meeting_notes WHERE meeting_id = ?', [kept.id])
+    ).toHaveLength(1);
     expect(
       await allAsync('SELECT * FROM artifact_handoff_proposals WHERE producer_record_id = ?', [
         kept.id,

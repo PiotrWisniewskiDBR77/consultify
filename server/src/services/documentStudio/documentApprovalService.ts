@@ -435,9 +435,7 @@ export function requestDocumentApproval(
   };
 
   registryStore.set(approvalKey(approval.organizationId, approval.approvalId), approval);
-  enqueuePersistence(approval.organizationId, approval.approvalId, () =>
-    persistApproval(approval)
-  );
+  enqueuePersistence(approval.organizationId, approval.approvalId, () => persistApproval(approval));
 
   recordMutation(approval, 'approval_requested', params.userId, {
     ...(approval.versionId ? { versionId: approval.versionId } : {}),

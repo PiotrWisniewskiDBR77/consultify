@@ -225,7 +225,8 @@ export async function classifyIntent(
   ];
 
   const governedMatch =
-    governedPatternsEn.some((p) => p.test(message)) || governedPatternsPl.some((p) => p.test(message));
+    governedPatternsEn.some((p) => p.test(message)) ||
+    governedPatternsPl.some((p) => p.test(message));
   const conversationalMatch =
     conversationalPatternsEn.some((p) => p.test(message)) ||
     conversationalPatternsPl.some((p) => p.test(message));

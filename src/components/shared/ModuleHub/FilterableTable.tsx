@@ -21,10 +21,10 @@ import { useTranslation } from 'react-i18next';
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 
+import { localeListy } from '../../../utils/listDateFormat';
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
 import { TableSettingsPopover } from './TableSettingsPopover';
-import { localeListy } from '../../../utils/listDateFormat';
 
 // Column definition
 export interface TableColumn {
@@ -837,10 +837,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         width,
         // Kolumna węższa niż podłoga zostaje na swojej szerokości — podłoga
         // nigdy nie ROZPYCHA, tylko ogranicza kurczenie.
-        floor: Math.min(
-          width,
-          isPrimary ? FIT_MIN_PRIMARY_COLUMN_WIDTH : FIT_MIN_COLUMN_WIDTH
-        ),
+        floor: Math.min(width, isPrimary ? FIT_MIN_PRIMARY_COLUMN_WIDTH : FIT_MIN_COLUMN_WIDTH),
       };
     });
     const widths: Record<string, number> = {};
@@ -1100,7 +1097,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   // nietknięty, więc resize i persistencja liczą dalej na
                   // zadeklarowanych wartościach.
                   const width =
-                    columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
+                    columnFit.widths[column.id] ??
+                    columnWidths[column.id] ??
+                    parsePx(column.width, 140);
                   const declaredMinWidth =
                     cfg?.minWidth ?? (column.id === 'title' || column.id === 'name' ? 200 : 90);
                   const declaredMaxWidth =
@@ -1494,94 +1493,94 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       const renderedIsPlainText =
                         typeof rendered === 'string' || typeof rendered === 'number';
                       return (
-                      <td
-                        key={column.id}
-                        // `break-words` — treść komórki musi łamać się DO
-                        // szerokości kolumny. Bez tego długie słowo wylewa się
-                        // poza komórkę i przy wąskiej kolumnie chowa się pod
-                        // przypiętą (`sticky right-0`) kolumną akcji — dokładnie
-                        // ten sam objaw „ucięcia w połowie znaku", tylko piętro
-                        // niżej. Świadomie NIE `overflow-hidden` ani
-                        // `overflow-x: clip`: komórki renderują popovery/menu,
-                        // które muszą móc wyjść poza obrys wiersza. To NIE jest
-                        // teoria — sprawdzone 2026-08-30:
-                        // `PMO/StatusTransitionDropdown.tsx:259` rysuje panel
-                        // `absolute z-overlay w-48` (192 px) BEZ portalu, prosto
-                        // w komórce `assessment/InitiativesTable.tsx:389`.
-                        // Przycięcie komórki obcięłoby go do szerokości kolumny.
-                        // Dlatego wielokropek zakłada się PIĘTRO NIŻEJ, na
-                        // warstwie tekstu (CELL_TEXT_CLAMP_CLASS), a `break-words`
-                        // zostaje tu jako ostatnia deska ratunku dla treści,
-                        // którą moduł renderuje jako własne ELEMENTY.
-                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''}`}
-                      >
-                        {column.type === 'select' && selection ? (
-                          <input
-                            type="checkbox"
-                            checked={selectedIdSet?.has(String(row.id)) ?? false}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              selection.onToggleRow(String(row.id));
-                            }}
-                            aria-label={selection.selectRowLabel ?? t('common.selectRow')}
-                            className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-info focus:ring-c-focus cursor-pointer"
-                          />
-                        ) : column.render ? (
-                          renderedIsPlainText ? (
-                            <span className={CELL_TEXT_CLAMP_CLASS} title={String(rendered)}>
-                              {rendered}
+                        <td
+                          key={column.id}
+                          // `break-words` — treść komórki musi łamać się DO
+                          // szerokości kolumny. Bez tego długie słowo wylewa się
+                          // poza komórkę i przy wąskiej kolumnie chowa się pod
+                          // przypiętą (`sticky right-0`) kolumną akcji — dokładnie
+                          // ten sam objaw „ucięcia w połowie znaku", tylko piętro
+                          // niżej. Świadomie NIE `overflow-hidden` ani
+                          // `overflow-x: clip`: komórki renderują popovery/menu,
+                          // które muszą móc wyjść poza obrys wiersza. To NIE jest
+                          // teoria — sprawdzone 2026-08-30:
+                          // `PMO/StatusTransitionDropdown.tsx:259` rysuje panel
+                          // `absolute z-overlay w-48` (192 px) BEZ portalu, prosto
+                          // w komórce `assessment/InitiativesTable.tsx:389`.
+                          // Przycięcie komórki obcięłoby go do szerokości kolumny.
+                          // Dlatego wielokropek zakłada się PIĘTRO NIŻEJ, na
+                          // warstwie tekstu (CELL_TEXT_CLAMP_CLASS), a `break-words`
+                          // zostaje tu jako ostatnia deska ratunku dla treści,
+                          // którą moduł renderuje jako własne ELEMENTY.
+                          className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''}`}
+                        >
+                          {column.type === 'select' && selection ? (
+                            <input
+                              type="checkbox"
+                              checked={selectedIdSet?.has(String(row.id)) ?? false}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                selection.onToggleRow(String(row.id));
+                              }}
+                              aria-label={selection.selectRowLabel ?? t('common.selectRow')}
+                              className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-info focus:ring-c-focus cursor-pointer"
+                            />
+                          ) : column.render ? (
+                            renderedIsPlainText ? (
+                              <span className={CELL_TEXT_CLAMP_CLASS} title={String(rendered)}>
+                                {rendered}
+                              </span>
+                            ) : (
+                              rendered
+                            )
+                          ) : column.id === 'status' ? (
+                            <EntityStatusChip status={row.status} />
+                          ) : column.id === 'progress' ? (
+                            <ProgressBar progress={row.progress} />
+                          ) : column.id === 'updatedAt' ? (
+                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                              {formatRelativeTime(row.updatedAt)}
                             </span>
+                          ) : isEmptyCell(row[column.id]) ? (
+                            <span className="text-sm text-slate-400">—</span>
                           ) : (
-                            rendered
-                          )
-                        ) : column.id === 'status' ? (
-                          <EntityStatusChip status={row.status} />
-                        ) : column.id === 'progress' ? (
-                          <ProgressBar progress={row.progress} />
-                        ) : column.id === 'updatedAt' ? (
-                          <span className="text-sm text-slate-500 dark:text-slate-400">
-                            {formatRelativeTime(row.updatedAt)}
-                          </span>
-                        ) : isEmptyCell(row[column.id]) ? (
-                          <span className="text-sm text-slate-400">—</span>
-                        ) : (
-                          <div className="min-w-0">
-                            <span
-                              className={[
-                                'text-sm text-slate-700 dark:text-slate-200',
-                                // `title`/`name` mają WŁASNY, ostrzejszy kanon:
-                                // jedna linia + wielokropek (`truncate`). Reszta
-                                // kolumn zawija na spacji i skraca dopiero wyraz
-                                // szerszy niż kolumna (patrz CELL_TEXT_CLAMP_CLASS).
-                                column.id === 'title' || column.id === 'name'
-                                  ? 'block truncate'
-                                  : CELL_TEXT_CLAMP_CLASS,
-                              ].join(' ')}
-                              title={
-                                typeof row[column.id] === 'string' ? row[column.id] : undefined
-                              }
-                            >
-                              {row[column.id]}
-                            </span>
-                          </div>
-                        )}
-                        {rowDescription?.show &&
-                        column.type !== 'select' &&
-                        column.id === firstDataColumnId
-                          ? (() => {
-                              const desc = rowDescription.render(row);
-                              return (
-                                <div
-                                  data-row-description-slot
-                                  className="mt-0.5 min-h-8 text-xs text-c-text-muted line-clamp-2"
-                                >
-                                  {desc ?? null}
-                                </div>
-                              );
-                            })()
-                          : null}
-                      </td>
+                            <div className="min-w-0">
+                              <span
+                                className={[
+                                  'text-sm text-slate-700 dark:text-slate-200',
+                                  // `title`/`name` mają WŁASNY, ostrzejszy kanon:
+                                  // jedna linia + wielokropek (`truncate`). Reszta
+                                  // kolumn zawija na spacji i skraca dopiero wyraz
+                                  // szerszy niż kolumna (patrz CELL_TEXT_CLAMP_CLASS).
+                                  column.id === 'title' || column.id === 'name'
+                                    ? 'block truncate'
+                                    : CELL_TEXT_CLAMP_CLASS,
+                                ].join(' ')}
+                                title={
+                                  typeof row[column.id] === 'string' ? row[column.id] : undefined
+                                }
+                              >
+                                {row[column.id]}
+                              </span>
+                            </div>
+                          )}
+                          {rowDescription?.show &&
+                          column.type !== 'select' &&
+                          column.id === firstDataColumnId
+                            ? (() => {
+                                const desc = rowDescription.render(row);
+                                return (
+                                  <div
+                                    data-row-description-slot
+                                    className="mt-0.5 min-h-8 text-xs text-c-text-muted line-clamp-2"
+                                  >
+                                    {desc ?? null}
+                                  </div>
+                                );
+                              })()
+                            : null}
+                        </td>
                       );
                     })}
                     {!hideRowActions ? (

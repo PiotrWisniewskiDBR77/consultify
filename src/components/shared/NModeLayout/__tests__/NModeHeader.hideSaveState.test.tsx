@@ -25,7 +25,9 @@ vi.mock('framer-motion', () => ({
       whileHover: _wh,
       whileTap: _wt,
       ...props
-    }: Record<string, unknown> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
+    }: Record<string, unknown> & { children?: React.ReactNode }) => (
+      <div {...props}>{children}</div>
+    ),
     button: ({
       children,
       whileHover: _wh,

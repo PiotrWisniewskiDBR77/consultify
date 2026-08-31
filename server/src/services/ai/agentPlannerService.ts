@@ -12,8 +12,8 @@ import logger from '../../utils/Logger.js';
 import { projectCanonicalRunAfterExternalTransition } from '../v8/agentCanonicalRunService.js';
 import { revalidateCanonicalRunContextForWorker } from '../v8/agentContextGroundingService.js';
 import { executeWithAgentResourceReservation } from '../v8/agentResourceGovernanceService.js';
-import { estimateAgentToolCostUsd } from './toolCostEstimates.js';
 import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
+import { estimateAgentToolCostUsd } from './toolCostEstimates.js';
 
 // Re-exported for backward compatibility with any existing import of
 // `SIDE_EFFECT_TOOLS` from this module — the canonical source is now
@@ -31,7 +31,12 @@ export type PlanStatus =
   | 'failed'
   | 'cancelled';
 export type StepStatus =
-  'pending' | 'awaiting_approval' | 'running' | 'completed' | 'failed' | 'skipped';
+  | 'pending'
+  | 'awaiting_approval'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'skipped';
 
 export interface PlanStep {
   id: string;
@@ -221,7 +226,8 @@ class AgentPlannerService {
     reason: string
   ): Promise<void> {
     const ownership = (await dbGet(`SELECT * FROM ai_agent_plans WHERE id = ?`, [planId])) as
-      { canonical_run_id?: string | null; organization_id?: string; user_id?: string } | undefined;
+      | { canonical_run_id?: string | null; organization_id?: string; user_id?: string }
+      | undefined;
     if (!ownership?.canonical_run_id) return;
     if (!ownership.organization_id) throw new Error('agent_plan_organization_missing');
     await projectCanonicalRunAfterExternalTransition({
@@ -241,7 +247,8 @@ class AgentPlannerService {
     externalId?: string;
   }): Promise<{ allowed: boolean; decision: string; reason: string }> {
     const plan = (await dbGet(`SELECT * FROM ai_agent_plans WHERE id = ?`, [input.planId])) as
-      any | undefined;
+      | any
+      | undefined;
     if (!plan || plan.organization_id !== input.organizationId || plan.user_id !== input.userId) {
       return { allowed: false, decision: 'blocked_scope', reason: 'Planner ownership mismatch' };
     }
@@ -645,10 +652,9 @@ class AgentPlannerService {
         }
         if (heartbeatFailure) {
           if (heartbeatFailure instanceof AgentExecutionLeaseLostError) {
-            const current = (await dbGet(
-              `SELECT status FROM ai_agent_plans WHERE id = ?`,
-              [planId]
-            )) as { status?: PlanStatus } | undefined;
+            const current = (await dbGet(`SELECT status FROM ai_agent_plans WHERE id = ?`, [
+              planId,
+            ])) as { status?: PlanStatus } | undefined;
             if (current?.status === 'cancelled') {
               const released = await dbRun(
                 `UPDATE ai_agent_plans
@@ -1272,9 +1278,9 @@ class AgentPlannerService {
       [status, resultSummary, errorMessage || null, planId, lease.ownerToken, lease.fencingToken]
     );
     if (!result.changes) {
-      const current = (await dbGet(`SELECT status FROM ai_agent_plans WHERE id = ?`, [
-        planId,
-      ])) as { status?: PlanStatus } | undefined;
+      const current = (await dbGet(`SELECT status FROM ai_agent_plans WHERE id = ?`, [planId])) as
+        | { status?: PlanStatus }
+        | undefined;
       if (current?.status === 'cancelled') {
         await this.releaseCancelledExecutionLease(lease, currentStep);
         return 'cancelled';

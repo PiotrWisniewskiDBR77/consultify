@@ -1,8 +1,8 @@
 import { validate as isUuid } from 'uuid';
 
 import { withPgTransaction } from '../../database/PostgresDatabase.js';
-import { TaskService } from '../TaskService.js';
 import { getMeetingNote } from '../meetingBoundary/meetingBoundaryService.js';
+import { TaskService } from '../TaskService.js';
 
 export class MeetingNoteTaskFunnelError extends Error {
   constructor(

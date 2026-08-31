@@ -25,10 +25,7 @@ import {
   RequestInfo,
   RESEND_COOLDOWN_MINUTES,
 } from './invitation/InvitationTypes.js';
-import {
-  isOrganizationSuspended,
-  ORG_SUSPENDED_CODE,
-} from './organizationSuspensionGuard.js';
+import { isOrganizationSuspended, ORG_SUSPENDED_CODE } from './organizationSuspensionGuard.js';
 import { mapToCanonicalProjectRole } from './projectRoleCanon.js';
 
 // Dynamic imports
@@ -539,7 +536,11 @@ export class InvitationServiceClass {
       throw new Error('Job title and work location are required to complete your first login.');
     }
 
-    if (acceptMeta && (acceptMeta as any).adminIamCommandId && invitation.invitation_type === INVITATION_TYPES.ORG) {
+    if (
+      acceptMeta &&
+      (acceptMeta as any).adminIamCommandId &&
+      invitation.invitation_type === INVITATION_TYPES.ORG
+    ) {
       const { acceptAdminIamInvitation } = await import('./adminIamCommandService.js');
       return acceptAdminIamInvitation({
         organizationId: invitation.organization_id,

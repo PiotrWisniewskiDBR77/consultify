@@ -28,7 +28,7 @@ export function requireRealPg(): void {
     throw new Error(
       'Ten plik testowy wymaga realnej Postgres: uruchom z ' +
         'NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... ' +
-        '(bez tego DbPromise cicho zamockuje bazę i testy "przejdą" nic nie sprawdzając)',
+        '(bez tego DbPromise cicho zamockuje bazę i testy "przejdą" nic nie sprawdzając)'
     );
   }
 }
@@ -47,8 +47,18 @@ export interface CreateFixtureOptions {
 }
 
 const DEFAULT_TAXONOMY = [
-  { key: 'nonconforming', label: 'Niezgodność', nonConforming: true, requiresCorrectiveAction: true },
-  { key: 'observation', label: 'Obserwacja', nonConforming: false, requiresCorrectiveAction: false },
+  {
+    key: 'nonconforming',
+    label: 'Niezgodność',
+    nonConforming: true,
+    requiresCorrectiveAction: true,
+  },
+  {
+    key: 'observation',
+    label: 'Obserwacja',
+    nonConforming: false,
+    requiresCorrectiveAction: false,
+  },
   {
     key: 'evidence_insufficient',
     label: 'Dowód niewystarczający',
@@ -76,26 +86,26 @@ export async function createFixture(opts: CreateFixtureOptions = {}): Promise<Te
       'Pakiet testowy U4',
       JSON.stringify(opts.decisionRules ?? {}),
       JSON.stringify(opts.findingTaxonomy ?? DEFAULT_TAXONOMY),
-    ],
+    ]
   );
 
   await auditRun(
     `INSERT INTO audit_programs (id, organization_id, name, status, created_by, pack_id, lifecycle_state)
      VALUES ($1,$2,'Program testowy U4','active','seed',$3,'fieldwork')`,
-    [programId, organizationId, packId],
+    [programId, organizationId, packId]
   );
 
   await auditRun(
     `INSERT INTO audit_program_criteria
        (id, program_id, organization_id, ordinal, ref_code, title, requirement_text)
      VALUES ($1,$2,$3,1,'A.1','Kryterium testowe','Wymaganie testowe U4')`,
-    [criterionId, programId, organizationId],
+    [criterionId, programId, organizationId]
   );
 
   await auditRun(
     `INSERT INTO audit_evidence (id, program_id, organization_id, criterion_id, evidence_kind, title)
      VALUES ($1,$2,$3,$4,'document','Dowód testowy U4')`,
-    [evidenceId, programId, organizationId, criterionId],
+    [evidenceId, programId, organizationId, criterionId]
   );
 
   return { organizationId, programId, packId, criterionId, evidenceId };
@@ -105,13 +115,13 @@ export async function addMember(
   organizationId: string,
   programId: string,
   userId: string,
-  role: AuditRole,
+  role: AuditRole
 ): Promise<void> {
   await auditRun(
     `INSERT INTO audit_program_members (id, program_id, organization_id, user_id, member_role)
      VALUES ($1,$2,$3,$4,$5)
      ON CONFLICT (program_id, user_id, member_role) DO NOTHING`,
-    [uid('mem'), programId, organizationId, userId, role],
+    [uid('mem'), programId, organizationId, userId, role]
   );
 }
 
@@ -124,21 +134,25 @@ export async function addEvidence(
   organizationId: string,
   programId: string,
   criterionId: string,
-  title = 'Dodatkowy dowód testowy',
+  title = 'Dodatkowy dowód testowy'
 ): Promise<string> {
   const evidenceId = uid('ev');
   await auditRun(
     `INSERT INTO audit_evidence (id, program_id, organization_id, criterion_id, evidence_kind, title)
      VALUES ($1,$2,$3,$4,'document',$5)`,
-    [evidenceId, programId, organizationId, criterionId, title],
+    [evidenceId, programId, organizationId, criterionId, title]
   );
   return evidenceId;
 }
 
 export async function cleanupFixture(organizationId: string): Promise<void> {
   await auditRun(`DELETE FROM audit_verifications WHERE organization_id = $1`, [organizationId]);
-  await auditRun(`DELETE FROM audit_corrective_actions WHERE organization_id = $1`, [organizationId]);
-  await auditRun(`DELETE FROM audit_management_responses WHERE organization_id = $1`, [organizationId]);
+  await auditRun(`DELETE FROM audit_corrective_actions WHERE organization_id = $1`, [
+    organizationId,
+  ]);
+  await auditRun(`DELETE FROM audit_management_responses WHERE organization_id = $1`, [
+    organizationId,
+  ]);
   await auditRun(`DELETE FROM audit_program_findings WHERE organization_id = $1`, [organizationId]);
   await auditRun(`DELETE FROM audit_evidence WHERE organization_id = $1`, [organizationId]);
   await auditRun(`DELETE FROM audit_program_criteria WHERE organization_id = $1`, [organizationId]);

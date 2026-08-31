@@ -43,10 +43,7 @@ import {
   LifecycleLockBadge,
   lockedRowMenuAction,
 } from '../../src/components/ResultsVNext/LifecycleLockBadge';
-import type {
-  HonestValue,
-  ResultsVNextDomain,
-} from '../../src/components/ResultsVNext/types';
+import type { HonestValue, ResultsVNextDomain } from '../../src/components/ResultsVNext/types';
 import type {
   StandardPreviewProps,
   StandardRowMenu,
@@ -163,7 +160,8 @@ const DOMAIN_VOCAB: Record<
         status: 'approved',
         locked: {
           label: 'Zatwierdzony',
-          reason: 'Sprawa zatwierdzona — baza odniesienia i założenia zamrożone (pobrano migawkę zatwierdzenia).',
+          reason:
+            'Sprawa zatwierdzona — baza odniesienia i założenia zamrożone (pobrano migawkę zatwierdzenia).',
         },
         metricLabel: 'NPV',
         metricValue: 140000,
@@ -214,7 +212,8 @@ const DOMAIN_VOCAB: Record<
         status: 'closed',
         locked: {
           label: 'Zamknięty',
-          reason: 'Cykl zamknięty — kontynuacja tego Key Result wymaga przeniesienia na kolejny cykl.',
+          reason:
+            'Cykl zamknięty — kontynuacja tego Key Result wymaga przeniesienia na kolejny cykl.',
         },
         metricLabel: 'Postęp',
         metricValue: 100,
@@ -247,9 +246,7 @@ function buildColumns(): TableColumn[] {
       id: 'name',
       label: 'Nazwa',
       width: '280px',
-      render: (row: MockRow) => (
-        <span className="text-sm font-medium text-c-text">{row.name}</span>
-      ),
+      render: (row: MockRow) => <span className="text-sm font-medium text-c-text">{row.name}</span>,
     },
     {
       id: 'status',
@@ -268,9 +265,7 @@ function buildColumns(): TableColumn[] {
       id: 'owner',
       label: 'Właściciel',
       width: '130px',
-      render: (row: MockRow) => (
-        <span className="text-sm text-c-text-secondary">{row.owner}</span>
-      ),
+      render: (row: MockRow) => <span className="text-sm text-c-text-secondary">{row.owner}</span>,
     },
     {
       id: 'metric',
@@ -296,9 +291,7 @@ function buildColumns(): TableColumn[] {
       label: 'Zaktualizowano',
       width: '175px',
       sortable: true,
-      render: (row: MockRow) => (
-        <span className="text-sm text-c-text-muted">{row.updatedAt}</span>
-      ),
+      render: (row: MockRow) => <span className="text-sm text-c-text-muted">{row.updatedAt}</span>,
     },
   ];
 }
@@ -358,7 +351,9 @@ function buildPreview(
         { label: STATUS_LABEL[row.status], tone: STATUS_TONE[row.status] },
         { label: domainTitle, tone: 'neutral' },
       ],
-      trailing: <span className="text-[11px] font-semibold text-c-text-secondary">{row.updatedAt}</span>,
+      trailing: (
+        <span className="text-[11px] font-semibold text-c-text-secondary">{row.updatedAt}</span>
+      ),
       recommendation: row.locked
         ? row.locked.reason
         : 'Rekomendacja AI: zgodnie z planem — brak działań wymaganych w tym cyklu.',
@@ -382,7 +377,17 @@ function buildPreview(
     },
     relations: [],
     actions: row.locked
-      ? { informational: [{ id: 'noop', variant: 'neutral', label: 'Zablokowane', onClick: () => {}, disabled: true }] }
+      ? {
+          informational: [
+            {
+              id: 'noop',
+              variant: 'neutral',
+              label: 'Zablokowane',
+              onClick: () => {},
+              disabled: true,
+            },
+          ],
+        }
       : {
           resolutions: [
             { id: 'approve', variant: 'positive', label: 'Zatwierdź', onClick: () => {} },
@@ -411,10 +416,14 @@ const ResultsVNextRegistryShellScreen: React.FC = () => {
 
   const table: ResultsVNextTableProps = {
     columns,
-    data: state === 'empty' ? [] : (vocab.rows as unknown as Array<Record<string, unknown> & { id: string }>),
+    data:
+      state === 'empty'
+        ? []
+        : (vocab.rows as unknown as Array<Record<string, unknown> & { id: string }>),
     persistKey: `results-vnext.${domain}-registry`,
     loading: state === 'loading',
-    error: state === 'error' ? 'Failed to load registry — the upstream service returned a 503.' : null,
+    error:
+      state === 'error' ? 'Failed to load registry — the upstream service returned a 503.' : null,
     onRetry: () => {},
     empty:
       state === 'empty'
@@ -448,7 +457,11 @@ const ResultsVNextRegistryShellScreen: React.FC = () => {
           primaryCta: { label: `Nowy ${domain.toUpperCase()}`, onClick: () => {} },
           chips: [
             { id: 'all', label: 'Wszystkie', count: vocab.rows.length },
-            { id: 'locked', label: 'Zablokowane', count: vocab.rows.filter((r) => r.locked).length },
+            {
+              id: 'locked',
+              label: 'Zablokowane',
+              count: vocab.rows.filter((r) => r.locked).length,
+            },
             {
               id: 'not_calculable',
               label: 'Nie do obliczenia',
@@ -458,7 +471,11 @@ const ResultsVNextRegistryShellScreen: React.FC = () => {
           activeChip: 'all',
           onChipChange: () => {},
         }}
-        table={state === 'ready' || state === 'loading' || state === 'empty' || state === 'error' ? table : table}
+        table={
+          state === 'ready' || state === 'loading' || state === 'empty' || state === 'error'
+            ? table
+            : table
+        }
         preview={
           state === 'ready' && selectedRow
             ? buildPreview(selectedRow, vocab.title, () => setSelectedId(null))

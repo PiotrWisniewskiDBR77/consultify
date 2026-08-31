@@ -60,7 +60,9 @@ describe.skipIf(!REAL_DB || !FLAG_ON)(
 
     beforeAll(async () => {
       if (!REAL_DB) {
-        throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.');
+        throw new Error(
+          'Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.'
+        );
       }
       if (!FLAG_ON) {
         throw new Error('Requires ENABLE_ARTIFACT_KNOWLEDGE_INDEX=true for this proof run.');
@@ -191,7 +193,8 @@ describe.skipIf(!REAL_DB || !FLAG_ON)(
       // 3. It is actually findable through the real search_knowledge_base
       //    tool surface, scoped to the SAME organization — the retrieval
       //    side of the "odżywia się pracą" promise, not just the write side.
-      const { searchKnowledgeBase } = await import('../../services/ai/tools/searchKnowledgeBase.js');
+      const { searchKnowledgeBase } =
+        await import('../../services/ai/tools/searchKnowledgeBase.js');
       const found = await searchKnowledgeBase(
         { query: secretMarker, maxResults: 20 },
         { organizationId: ORG }

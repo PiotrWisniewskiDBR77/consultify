@@ -81,7 +81,9 @@ const NodeRow: React.FC<{
     <li>
       <div
         className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs cursor-pointer transition-colors ${
-          active ? 'bg-c-surface-raised text-c-text font-semibold' : 'text-c-text-secondary hover:bg-c-surface-raised'
+          active
+            ? 'bg-c-surface-raised text-c-text font-semibold'
+            : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
         style={{ paddingLeft: `${8 + depth * 14}px` }}
         role="treeitem"
@@ -139,7 +141,12 @@ const NodeRow: React.FC<{
   );
 };
 
-export const MethodNavigator: React.FC<MethodNavigatorProps> = ({ nodes, activeUnitId, onSelect, className = '' }) => {
+export const MethodNavigator: React.FC<MethodNavigatorProps> = ({
+  nodes,
+  activeUnitId,
+  onSelect,
+  className = '',
+}) => {
   const tree = useMemo(() => buildTree(nodes), [nodes]);
   const activeRootId = useMemo(() => {
     const contains = (node: TreeNode): boolean =>

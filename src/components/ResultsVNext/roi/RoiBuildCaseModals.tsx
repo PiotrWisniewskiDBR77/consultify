@@ -17,15 +17,15 @@
 import { AlertTriangle, Link2, Play, Plus, Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import {
-  ROI_EVIDENCE_LINK_PURPOSES,
-  ROI_SCENARIO_TYPES,
   type AddRoiBenefitEvidenceLinkInput,
   type AddRoiScenarioInput,
   type CreateRoiCalculationRunInput,
+  ROI_EVIDENCE_LINK_PURPOSES,
+  ROI_SCENARIO_TYPES,
   type RoiEvidenceLinkPurpose,
   type RoiScenario,
   type RoiScenarioType,
@@ -41,18 +41,39 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
-function ErrorBanner({ message, isConflict, isPolish, testId }: { message: string | null; isConflict: boolean; isPolish: boolean; testId: string }) {
+function ErrorBanner({
+  message,
+  isConflict,
+  isPolish,
+  testId,
+}: {
+  message: string | null;
+  isConflict: boolean;
+  isPolish: boolean;
+  testId: string;
+}) {
   if (!message) return null;
   return (
-    <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text" data-testid={testId}>
+    <div
+      role="alert"
+      className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+      data-testid={testId}
+    >
       <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-      <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${message}` : `Write conflict: ${message}`) : message}</span>
+      <span>
+        {isConflict
+          ? isPolish
+            ? `Konflikt zapisu: ${message}`
+            : `Write conflict: ${message}`
+          : message}
+      </span>
     </div>
   );
 }
@@ -74,7 +95,15 @@ export interface RoiScenarioFormModalProps {
 }
 
 export const RoiScenarioFormModal: React.FC<RoiScenarioFormModalProps> = ({
-  open, mode, scenario = null, onClose, onSubmit, isPolish, busy = false, errorMessage = null, isConflict = false,
+  open,
+  mode,
+  scenario = null,
+  onClose,
+  onSubmit,
+  isPolish,
+  busy = false,
+  errorMessage = null,
+  isConflict = false,
 }) => {
   const [scenarioType, setScenarioType] = useState<RoiScenarioType>('custom');
   const [label, setLabel] = useState('');
@@ -95,44 +124,117 @@ export const RoiScenarioFormModal: React.FC<RoiScenarioFormModalProps> = ({
   const handleSubmit = () => {
     setTouched(true);
     if (!label.trim()) return;
-    onSubmit({ scenarioType, label: label.trim(), description: description.trim() || null, reason: null });
+    onSubmit({
+      scenarioType,
+      label: label.trim(),
+      description: description.trim() || null,
+      reason: null,
+    });
   };
 
   return (
     <Modal
       open={open}
       onClose={busy ? () => {} : onClose}
-      title={mode === 'create' ? (isPolish ? 'Nowy scenariusz' : 'New scenario') : (isPolish ? 'Edytuj scenariusz' : 'Edit scenario')}
+      title={
+        mode === 'create'
+          ? isPolish
+            ? 'Nowy scenariusz'
+            : 'New scenario'
+          : isPolish
+            ? 'Edytuj scenariusz'
+            : 'Edit scenario'
+      }
       size="md"
       preventOverlayClose={busy}
       preventEscapeClose={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>{isPolish ? 'Anuluj' : 'Cancel'}</button>
-          <button type="button" onClick={handleSubmit} disabled={busy} data-testid="roi-scenario-form-submit" className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}>
+          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>
+            {isPolish ? 'Anuluj' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={busy}
+            data-testid="roi-scenario-form-submit"
+            className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
             {mode === 'create' ? <Plus size={16} /> : <Save size={16} />}
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : mode === 'create' ? (isPolish ? 'Dodaj scenariusz' : 'Add scenario') : (isPolish ? 'Zapisz' : 'Save')}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : mode === 'create'
+                  ? isPolish
+                    ? 'Dodaj scenariusz'
+                    : 'Add scenario'
+                  : isPolish
+                    ? 'Zapisz'
+                    : 'Save'}
+            </span>
           </button>
         </>
       }
     >
       <div className="space-y-4">
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-scenario-type">{isPolish ? 'Typ scenariusza' : 'Scenario type'}</label>
-          <select id="roi-scenario-type" value={scenarioType} disabled={mode === 'edit'} onChange={(e) => setScenarioType(e.target.value as RoiScenarioType)} className={FIELD_CLASS} data-testid="roi-scenario-type">
-            {ROI_SCENARIO_TYPES.map((t) => (<option key={t} value={t}>{roiScenarioTypeLabel(t, isPolish)}</option>))}
+          <label className={LABEL_CLASS} htmlFor="roi-scenario-type">
+            {isPolish ? 'Typ scenariusza' : 'Scenario type'}
+          </label>
+          <select
+            id="roi-scenario-type"
+            value={scenarioType}
+            disabled={mode === 'edit'}
+            onChange={(e) => setScenarioType(e.target.value as RoiScenarioType)}
+            className={FIELD_CLASS}
+            data-testid="roi-scenario-type"
+          >
+            {ROI_SCENARIO_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {roiScenarioTypeLabel(t, isPolish)}
+              </option>
+            ))}
           </select>
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-scenario-label">{isPolish ? 'Nazwa' : 'Label'}</label>
-          <input id="roi-scenario-label" autoFocus value={label} onChange={(e) => setLabel(e.target.value)} className={FIELD_CLASS} data-testid="roi-scenario-label" aria-invalid={labelError || undefined} />
-          {labelError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Nazwa jest wymagana' : 'Label is required'}</p> : null}
+          <label className={LABEL_CLASS} htmlFor="roi-scenario-label">
+            {isPolish ? 'Nazwa' : 'Label'}
+          </label>
+          <input
+            id="roi-scenario-label"
+            autoFocus
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            className={FIELD_CLASS}
+            data-testid="roi-scenario-label"
+            aria-invalid={labelError || undefined}
+          />
+          {labelError ? (
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'Nazwa jest wymagana' : 'Label is required'}
+            </p>
+          ) : null}
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-scenario-description">{isPolish ? 'Opis' : 'Description'}</label>
-          <textarea id="roi-scenario-description" value={description} onChange={(e) => setDescription(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-scenario-description" />
+          <label className={LABEL_CLASS} htmlFor="roi-scenario-description">
+            {isPolish ? 'Opis' : 'Description'}
+          </label>
+          <textarea
+            id="roi-scenario-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-scenario-description"
+          />
         </div>
-        <ErrorBanner message={errorMessage} isConflict={isConflict} isPolish={isPolish} testId="roi-scenario-form-error" />
+        <ErrorBanner
+          message={errorMessage}
+          isConflict={isConflict}
+          isPolish={isPolish}
+          testId="roi-scenario-form-error"
+        />
       </div>
     </Modal>
   );
@@ -148,7 +250,11 @@ export interface RoiScenarioOverrideFormModalProps {
   /** Loaded case line-item options — targetId picker sources from what the
    * workspace already has in memory (assumptions/cost/benefit lines), not a
    * new fetch. */
-  targetOptions: { targetType: 'assumption' | 'cost_line' | 'benefit_line'; targetId: string; label: string }[];
+  targetOptions: {
+    targetType: 'assumption' | 'cost_line' | 'benefit_line';
+    targetId: string;
+    label: string;
+  }[];
   onClose: () => void;
   onSubmit: (values: Omit<SetRoiScenarioOverrideInput, 'expectedVersion'>) => void;
   isPolish: boolean;
@@ -158,7 +264,15 @@ export interface RoiScenarioOverrideFormModalProps {
 }
 
 export const RoiScenarioOverrideFormModal: React.FC<RoiScenarioOverrideFormModalProps> = ({
-  open, scenarioLabel, targetOptions, onClose, onSubmit, isPolish, busy = false, errorMessage = null, isConflict = false,
+  open,
+  scenarioLabel,
+  targetOptions,
+  onClose,
+  onSubmit,
+  isPolish,
+  busy = false,
+  errorMessage = null,
+  isConflict = false,
 }) => {
   const [targetId, setTargetId] = useState('');
   const [overrideValue, setOverrideValue] = useState('');
@@ -202,41 +316,110 @@ export const RoiScenarioOverrideFormModal: React.FC<RoiScenarioOverrideFormModal
       preventEscapeClose={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>{isPolish ? 'Anuluj' : 'Cancel'}</button>
-          <button type="button" onClick={handleSubmit} disabled={busy || targetOptions.length === 0} data-testid="roi-scenario-override-submit" className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}>
+          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>
+            {isPolish ? 'Anuluj' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={busy || targetOptions.length === 0}
+            data-testid="roi-scenario-override-submit"
+            className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
             <Plus size={16} />
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : (isPolish ? 'Dodaj nadpisanie' : 'Add override')}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Dodaj nadpisanie'
+                  : 'Add override'}
+            </span>
           </button>
         </>
       }
     >
       <div className="space-y-4">
         {targetOptions.length === 0 ? (
-          <p className="text-sm text-c-text-muted">{isPolish ? 'Brak założeń/kosztów/korzyści do nadpisania w tej sprawie.' : 'No assumptions/cost/benefit lines to override in this case.'}</p>
+          <p className="text-sm text-c-text-muted">
+            {isPolish
+              ? 'Brak założeń/kosztów/korzyści do nadpisania w tej sprawie.'
+              : 'No assumptions/cost/benefit lines to override in this case.'}
+          </p>
         ) : (
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-override-target">{isPolish ? 'Pozycja do nadpisania' : 'Target line item'}</label>
-            <select id="roi-override-target" value={targetId} onChange={(e) => setTargetId(e.target.value)} className={FIELD_CLASS} data-testid="roi-override-target" aria-invalid={targetError || undefined} aria-describedby={targetError ? 'roi-override-target-error' : undefined}>
-              {targetOptions.map((o) => (<option key={`${o.targetType}:${o.targetId}`} value={o.targetId}>{o.label}</option>))}
+            <label className={LABEL_CLASS} htmlFor="roi-override-target">
+              {isPolish ? 'Pozycja do nadpisania' : 'Target line item'}
+            </label>
+            <select
+              id="roi-override-target"
+              value={targetId}
+              onChange={(e) => setTargetId(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-override-target"
+              aria-invalid={targetError || undefined}
+              aria-describedby={targetError ? 'roi-override-target-error' : undefined}
+            >
+              {targetOptions.map((o) => (
+                <option key={`${o.targetType}:${o.targetId}`} value={o.targetId}>
+                  {o.label}
+                </option>
+              ))}
             </select>
-            {targetError ? <p id="roi-override-target-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wybierz pozycję do nadpisania' : 'Select a target line item'}</p> : null}
+            {targetError ? (
+              <p id="roi-override-target-error" className="mt-1 text-[11px] text-c-danger">
+                {isPolish ? 'Wybierz pozycję do nadpisania' : 'Select a target line item'}
+              </p>
+            ) : null}
           </div>
         )}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-override-value">{isPolish ? 'Nadpisana wartość' : 'Override value'}</label>
-            <input id="roi-override-value" type="number" value={overrideValue} onChange={(e) => setOverrideValue(e.target.value)} className={FIELD_CLASS} data-testid="roi-override-value" />
+            <label className={LABEL_CLASS} htmlFor="roi-override-value">
+              {isPolish ? 'Nadpisana wartość' : 'Override value'}
+            </label>
+            <input
+              id="roi-override-value"
+              type="number"
+              value={overrideValue}
+              onChange={(e) => setOverrideValue(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-override-value"
+            />
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-override-amount">{isPolish ? 'Nadpisana kwota' : 'Override amount'}</label>
-            <input id="roi-override-amount" type="number" value={overrideAmount} onChange={(e) => setOverrideAmount(e.target.value)} className={FIELD_CLASS} data-testid="roi-override-amount" />
+            <label className={LABEL_CLASS} htmlFor="roi-override-amount">
+              {isPolish ? 'Nadpisana kwota' : 'Override amount'}
+            </label>
+            <input
+              id="roi-override-amount"
+              type="number"
+              value={overrideAmount}
+              onChange={(e) => setOverrideAmount(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-override-amount"
+            />
           </div>
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-override-note">{isPolish ? 'Notatka' : 'Note'}</label>
-          <textarea id="roi-override-note" value={note} onChange={(e) => setNote(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-override-note" />
+          <label className={LABEL_CLASS} htmlFor="roi-override-note">
+            {isPolish ? 'Notatka' : 'Note'}
+          </label>
+          <textarea
+            id="roi-override-note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-override-note"
+          />
         </div>
-        <ErrorBanner message={errorMessage} isConflict={isConflict} isPolish={isPolish} testId="roi-scenario-override-error" />
+        <ErrorBanner
+          message={errorMessage}
+          isConflict={isConflict}
+          isPolish={isPolish}
+          testId="roi-scenario-override-error"
+        />
       </div>
     </Modal>
   );
@@ -258,7 +441,14 @@ export interface RoiCalculationRunTriggerModalProps {
 }
 
 export const RoiCalculationRunTriggerModal: React.FC<RoiCalculationRunTriggerModalProps> = ({
-  open, scenarios, onClose, onSubmit, isPolish, busy = false, errorMessage = null, isConflict = false,
+  open,
+  scenarios,
+  onClose,
+  onSubmit,
+  isPolish,
+  busy = false,
+  errorMessage = null,
+  isConflict = false,
 }) => {
   const [scenarioId, setScenarioId] = useState('');
   const [reason, setReason] = useState('');
@@ -279,27 +469,74 @@ export const RoiCalculationRunTriggerModal: React.FC<RoiCalculationRunTriggerMod
       preventEscapeClose={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>{isPolish ? 'Anuluj' : 'Cancel'}</button>
-          <button type="button" onClick={() => onSubmit({ scenarioId: scenarioId || null, reason: reason.trim() || null })} disabled={busy} data-testid="roi-calc-run-trigger-submit" className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}>
+          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>
+            {isPolish ? 'Anuluj' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onSubmit({ scenarioId: scenarioId || null, reason: reason.trim() || null })
+            }
+            disabled={busy}
+            data-testid="roi-calc-run-trigger-submit"
+            className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
             <Play size={16} />
-            <span>{busy ? (isPolish ? 'Uruchamianie…' : 'Running…') : (isPolish ? 'Uruchom kalkulację' : 'Run calculation')}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Uruchamianie…'
+                  : 'Running…'
+                : isPolish
+                  ? 'Uruchom kalkulację'
+                  : 'Run calculation'}
+            </span>
           </button>
         </>
       }
     >
       <div className="space-y-4">
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-calc-run-scenario">{isPolish ? 'Scenariusz (opcjonalnie — puste = bazowy)' : 'Scenario (optional — blank = baseline)'}</label>
-          <select id="roi-calc-run-scenario" value={scenarioId} onChange={(e) => setScenarioId(e.target.value)} className={FIELD_CLASS} data-testid="roi-calc-run-scenario">
-            <option value="">{isPolish ? 'Bazowy (bez scenariusza)' : 'Baseline (no scenario)'}</option>
-            {scenarios.map((s) => (<option key={s.scenarioId} value={s.scenarioId}>{s.label}</option>))}
+          <label className={LABEL_CLASS} htmlFor="roi-calc-run-scenario">
+            {isPolish
+              ? 'Scenariusz (opcjonalnie — puste = bazowy)'
+              : 'Scenario (optional — blank = baseline)'}
+          </label>
+          <select
+            id="roi-calc-run-scenario"
+            value={scenarioId}
+            onChange={(e) => setScenarioId(e.target.value)}
+            className={FIELD_CLASS}
+            data-testid="roi-calc-run-scenario"
+          >
+            <option value="">
+              {isPolish ? 'Bazowy (bez scenariusza)' : 'Baseline (no scenario)'}
+            </option>
+            {scenarios.map((s) => (
+              <option key={s.scenarioId} value={s.scenarioId}>
+                {s.label}
+              </option>
+            ))}
           </select>
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-calc-run-reason">{isPolish ? 'Notatka (opcjonalnie)' : 'Note (optional)'}</label>
-          <textarea id="roi-calc-run-reason" value={reason} onChange={(e) => setReason(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-calc-run-reason" />
+          <label className={LABEL_CLASS} htmlFor="roi-calc-run-reason">
+            {isPolish ? 'Notatka (opcjonalnie)' : 'Note (optional)'}
+          </label>
+          <textarea
+            id="roi-calc-run-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-calc-run-reason"
+          />
         </div>
-        <ErrorBanner message={errorMessage} isConflict={isConflict} isPolish={isPolish} testId="roi-calc-run-trigger-error" />
+        <ErrorBanner
+          message={errorMessage}
+          isConflict={isConflict}
+          isPolish={isPolish}
+          testId="roi-calc-run-trigger-error"
+        />
       </div>
     </Modal>
   );
@@ -323,7 +560,14 @@ export interface RoiKpiEvidenceLinkFormModalProps {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const RoiKpiEvidenceLinkFormModal: React.FC<RoiKpiEvidenceLinkFormModalProps> = ({
-  open, benefitLineLabel, onClose, onSubmit, isPolish, busy = false, errorMessage = null, isConflict = false,
+  open,
+  benefitLineLabel,
+  onClose,
+  onSubmit,
+  isPolish,
+  busy = false,
+  errorMessage = null,
+  isConflict = false,
 }) => {
   const [kpiId, setKpiId] = useState('');
   const [pinnedVersionId, setPinnedVersionId] = useState('');
@@ -363,16 +607,34 @@ export const RoiKpiEvidenceLinkFormModal: React.FC<RoiKpiEvidenceLinkFormModalPr
       open={open}
       onClose={busy ? () => {} : onClose}
       title={isPolish ? 'Nowy dowód KPI' : 'New KPI evidence link'}
-      description={isPolish ? `Pozycja korzyści: ${benefitLineLabel}` : `Benefit line: ${benefitLineLabel}`}
+      description={
+        isPolish ? `Pozycja korzyści: ${benefitLineLabel}` : `Benefit line: ${benefitLineLabel}`
+      }
       size="md"
       preventOverlayClose={busy}
       preventEscapeClose={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>{isPolish ? 'Anuluj' : 'Cancel'}</button>
-          <button type="button" onClick={handleSubmit} disabled={busy} data-testid="roi-kpi-evidence-link-submit" className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}>
+          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS}>
+            {isPolish ? 'Anuluj' : 'Cancel'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={busy}
+            data-testid="roi-kpi-evidence-link-submit"
+            className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
+          >
             <Link2 size={16} />
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : (isPolish ? 'Powiąż KPI' : 'Link KPI')}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Powiąż KPI'
+                  : 'Link KPI'}
+            </span>
           </button>
         </>
       }
@@ -384,32 +646,94 @@ export const RoiKpiEvidenceLinkFormModal: React.FC<RoiKpiEvidenceLinkFormModalPr
             : 'No KPI picker in this package (KPI domain is a separate track) — enter identifiers manually.'}
         </p>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-evidence-kpi-id">{isPolish ? 'ID KPI (UUID)' : 'KPI ID (UUID)'}</label>
-          <input id="roi-evidence-kpi-id" autoFocus value={kpiId} onChange={(e) => setKpiId(e.target.value)} className={FIELD_CLASS} data-testid="roi-evidence-kpi-id" aria-invalid={kpiIdError || undefined} />
-          {kpiIdError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagany prawidłowy UUID' : 'A valid UUID is required'}</p> : null}
+          <label className={LABEL_CLASS} htmlFor="roi-evidence-kpi-id">
+            {isPolish ? 'ID KPI (UUID)' : 'KPI ID (UUID)'}
+          </label>
+          <input
+            id="roi-evidence-kpi-id"
+            autoFocus
+            value={kpiId}
+            onChange={(e) => setKpiId(e.target.value)}
+            className={FIELD_CLASS}
+            data-testid="roi-evidence-kpi-id"
+            aria-invalid={kpiIdError || undefined}
+          />
+          {kpiIdError ? (
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'Wymagany prawidłowy UUID' : 'A valid UUID is required'}
+            </p>
+          ) : null}
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-evidence-version-id">{isPolish ? 'ID przypiętej wersji definicji KPI (UUID)' : 'Pinned KPI definition version ID (UUID)'}</label>
-          <input id="roi-evidence-version-id" value={pinnedVersionId} onChange={(e) => setPinnedVersionId(e.target.value)} className={FIELD_CLASS} data-testid="roi-evidence-version-id" aria-invalid={versionError || undefined} />
-          {versionError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagany prawidłowy UUID' : 'A valid UUID is required'}</p> : null}
+          <label className={LABEL_CLASS} htmlFor="roi-evidence-version-id">
+            {isPolish
+              ? 'ID przypiętej wersji definicji KPI (UUID)'
+              : 'Pinned KPI definition version ID (UUID)'}
+          </label>
+          <input
+            id="roi-evidence-version-id"
+            value={pinnedVersionId}
+            onChange={(e) => setPinnedVersionId(e.target.value)}
+            className={FIELD_CLASS}
+            data-testid="roi-evidence-version-id"
+            aria-invalid={versionError || undefined}
+          />
+          {versionError ? (
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'Wymagany prawidłowy UUID' : 'A valid UUID is required'}
+            </p>
+          ) : null}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-evidence-purpose">{isPolish ? 'Cel' : 'Purpose'}</label>
-            <select id="roi-evidence-purpose" value={purpose} onChange={(e) => setPurpose(e.target.value as RoiEvidenceLinkPurpose)} className={FIELD_CLASS} data-testid="roi-evidence-purpose">
-              {ROI_EVIDENCE_LINK_PURPOSES.map((p) => (<option key={p} value={p}>{roiEvidenceLinkPurposeLabel(p, isPolish)}</option>))}
+            <label className={LABEL_CLASS} htmlFor="roi-evidence-purpose">
+              {isPolish ? 'Cel' : 'Purpose'}
+            </label>
+            <select
+              id="roi-evidence-purpose"
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value as RoiEvidenceLinkPurpose)}
+              className={FIELD_CLASS}
+              data-testid="roi-evidence-purpose"
+            >
+              {ROI_EVIDENCE_LINK_PURPOSES.map((p) => (
+                <option key={p} value={p}>
+                  {roiEvidenceLinkPurposeLabel(p, isPolish)}
+                </option>
+              ))}
             </select>
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-evidence-unit">{isPolish ? 'Oczekiwana jednostka' : 'Expected unit'}</label>
-            <input id="roi-evidence-unit" value={expectedUnit} onChange={(e) => setExpectedUnit(e.target.value)} className={FIELD_CLASS} data-testid="roi-evidence-unit" />
+            <label className={LABEL_CLASS} htmlFor="roi-evidence-unit">
+              {isPolish ? 'Oczekiwana jednostka' : 'Expected unit'}
+            </label>
+            <input
+              id="roi-evidence-unit"
+              value={expectedUnit}
+              onChange={(e) => setExpectedUnit(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-evidence-unit"
+            />
           </div>
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-evidence-notes">{isPolish ? 'Notatki' : 'Notes'}</label>
-          <textarea id="roi-evidence-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-evidence-notes" />
+          <label className={LABEL_CLASS} htmlFor="roi-evidence-notes">
+            {isPolish ? 'Notatki' : 'Notes'}
+          </label>
+          <textarea
+            id="roi-evidence-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-evidence-notes"
+          />
         </div>
-        <ErrorBanner message={errorMessage} isConflict={isConflict} isPolish={isPolish} testId="roi-kpi-evidence-link-error" />
+        <ErrorBanner
+          message={errorMessage}
+          isConflict={isConflict}
+          isPolish={isPolish}
+          testId="roi-kpi-evidence-link-error"
+        />
       </div>
     </Modal>
   );

@@ -72,16 +72,16 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { attachV8Context } from '../../../../middleware/v8Auth.middleware.js';
-import chatRoutes from '../../../../routes/v8/chat.routes.js';
-import v10TeresaRoutes from '../../../../routes/v10/teresa.routes.js';
-import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
-import { correlationMiddleware } from '../../../../utils/RequestStore.js';
 import {
   CONNECTION_STRING,
   ContractFixtures,
   isContractDbReachable,
   warnSkipped,
 } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
+import chatRoutes from '../../../../routes/v8/chat.routes.js';
+import v10TeresaRoutes from '../../../../routes/v10/teresa.routes.js';
+import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
+import { correlationMiddleware } from '../../../../utils/RequestStore.js';
 
 // `verifyToken`'s bypass (auth.middleware.ts) only fires when this and
 // NODE_ENV=test are both set, and only when it runs BEFORE it sees a
@@ -162,287 +162,314 @@ function workOrderBody(projectId: string, overrides: Record<string, unknown> = {
   };
 }
 
-suite('Teresa production intake — /api/v10/teresa/case-intake, real router, real PostgreSQL (R4-P1)', () => {
-  let control: Pool;
-  let fixtures: ContractFixtures;
+suite(
+  'Teresa production intake — /api/v10/teresa/case-intake, real router, real PostgreSQL (R4-P1)',
+  () => {
+    let control: Pool;
+    let fixtures: ContractFixtures;
 
-  beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
-    fixtures = new ContractFixtures(control);
-  }, 60_000);
+    beforeAll(async () => {
+      control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+      fixtures = new ContractFixtures(control);
+    }, 60_000);
 
-  afterAll(async () => {
-    await fixtures?.teardown().catch(() => undefined);
-    await control?.end().catch(() => undefined);
-  }, 120_000);
+    afterAll(async () => {
+      await fixtures?.teardown().catch(() => undefined);
+      await control?.end().catch(() => undefined);
+    }, 120_000);
 
-  async function countCasesForOrg(orgId: string): Promise<number> {
-    const r = await control.query<{ n: number }>(
-      `SELECT count(*)::int AS n FROM case_core WHERE organization_id = $1`,
-      [orgId]
-    );
-    return Number(r.rows[0]?.n ?? 0);
-  }
+    async function countCasesForOrg(orgId: string): Promise<number> {
+      const r = await control.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM case_core WHERE organization_id = $1`,
+        [orgId]
+      );
+      return Number(r.rows[0]?.n ?? 0);
+    }
 
-  async function readCaseIds(orgId: string): Promise<string[]> {
-    const r = await control.query<{ case_id: string }>(
-      `SELECT case_id FROM case_core WHERE organization_id = $1 ORDER BY created_at ASC`,
-      [orgId]
-    );
-    return r.rows.map((row) => row.case_id);
-  }
+    async function readCaseIds(orgId: string): Promise<string[]> {
+      const r = await control.query<{ case_id: string }>(
+        `SELECT case_id FROM case_core WHERE organization_id = $1 ORDER BY created_at ASC`,
+        [orgId]
+      );
+      return r.rows.map((row) => row.case_id);
+    }
 
-  async function readOutbox(orgId: string, eventType?: string) {
-    const r = await control.query<{
-      event_id: string;
-      event_type: string;
-      case_id: string | null;
-      redacted_summary: Record<string, unknown>;
-    }>(
-      eventType
-        ? `SELECT event_id, event_type, case_id, redacted_summary
+    async function readOutbox(orgId: string, eventType?: string) {
+      const r = await control.query<{
+        event_id: string;
+        event_type: string;
+        case_id: string | null;
+        redacted_summary: Record<string, unknown>;
+      }>(
+        eventType
+          ? `SELECT event_id, event_type, case_id, redacted_summary
              FROM case_workspace_event_outbox
             WHERE organization_id = $1 AND event_type = $2
             ORDER BY created_at ASC, event_id ASC`
-        : `SELECT event_id, event_type, case_id, redacted_summary
+          : `SELECT event_id, event_type, case_id, redacted_summary
              FROM case_workspace_event_outbox
             WHERE organization_id = $1
             ORDER BY created_at ASC, event_id ASC`,
-      eventType ? [orgId, eventType] : [orgId]
-    );
-    return r.rows;
-  }
+        eventType ? [orgId, eventType] : [orgId]
+      );
+      return r.rows;
+    }
 
-  // =========================================================================
-  // 1. Propose ("summary") on the PRODUCTION router: zero Cases, one event
-  // =========================================================================
+    // =========================================================================
+    // 1. Propose ("summary") on the PRODUCTION router: zero Cases, one event
+    // =========================================================================
 
-  it('POST /api/v10/teresa/case-intake/conversations/:id/summary shows the work order and creates ZERO Cases (CW-CANON-01)', async () => {
-    const f = await fixtures.seedFixture('v10-propose');
-    const app = createApp({ organizationId: f.orgId, userId: f.memberUserId, userRole: 'MEMBER' });
-    const conversationId = `conv-${randomUUID()}`;
-    const body = workOrderBody(f.projectId);
+    it('POST /api/v10/teresa/case-intake/conversations/:id/summary shows the work order and creates ZERO Cases (CW-CANON-01)', async () => {
+      const f = await fixtures.seedFixture('v10-propose');
+      const app = createApp({
+        organizationId: f.orgId,
+        userId: f.memberUserId,
+        userRole: 'MEMBER',
+      });
+      const conversationId = `conv-${randomUUID()}`;
+      const body = workOrderBody(f.projectId);
 
-    const res = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
-      .send(body);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.caseCreated).toBe(false);
-    expect(res.body.data.runCreated).toBe(false);
-    expect(res.body.data.workOrder.goal).toBe(body.goal);
-    expect(res.body.data.workOrderDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
-    expect(res.body.meta.version).toBe('v10');
-
-    expect(await countCasesForOrg(f.orgId)).toBe(0);
-    const proposedEvents = await readOutbox(f.orgId, 'case.intake.work_order_proposed');
-    expect(proposedEvents).toHaveLength(1);
-    expect(proposedEvents[0].case_id).toBeNull();
-  }, 60_000);
-
-  it('GET /api/v10/teresa/case-intake/conversations/:id/work-order re-reads the SAME digest that was just shown', async () => {
-    const f = await fixtures.seedFixture('v10-current');
-    const app = createApp({ organizationId: f.orgId, userId: f.memberUserId, userRole: 'MEMBER' });
-    const conversationId = `conv-${randomUUID()}`;
-
-    const shown = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
-      .send(workOrderBody(f.projectId));
-
-    const current = await request(app).get(
-      `${TERESA_V10}/case-intake/conversations/${conversationId}/work-order`
-    );
-
-    expect(current.status).toBe(200);
-    expect(current.body.data.workOrderDigest).toBe(shown.body.data.workOrderDigest);
-    expect(current.body.data.caseCreated).toBe(false);
-  }, 60_000);
-
-  // =========================================================================
-  // 2. Confirm on the PRODUCTION router: exactly ONE Case; refresh/retry reuse
-  // =========================================================================
-
-  it('POST .../confirm creates EXACTLY ONE Case (201), and a refresh/retry with the SAME digest reuses it (200, same caseId, no duplicate)', async () => {
-    const f = await fixtures.seedFixture('v10-confirm');
-    const app = createApp({ organizationId: f.orgId, userId: f.memberUserId, userRole: 'MEMBER' });
-    const conversationId = `conv-${randomUUID()}`;
-
-    const shown = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
-      .send(workOrderBody(f.projectId));
-    const digest = shown.body.data.workOrderDigest as string;
-
-    const firstConfirm = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
-      .send({ confirmedDigest: digest });
-    expect(firstConfirm.status).toBe(201);
-    expect(firstConfirm.body.data.caseCreated).toBe(true);
-    const caseId = firstConfirm.body.data.caseId as string;
-    expect(typeof caseId).toBe('string');
-    expect(caseId.length).toBeGreaterThan(0);
-
-    // The click was lost / the page was refreshed / the request raced with
-    // itself — same digest, same idempotent confirmation.
-    const retryConfirm = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
-      .send({ confirmedDigest: digest });
-    expect(retryConfirm.status).toBe(200);
-    expect(retryConfirm.body.data.caseCreated).toBe(false);
-    expect(retryConfirm.body.data.caseId).toBe(caseId);
-
-    // The claim that matters, read out of band: ONE row, not two.
-    expect(await countCasesForOrg(f.orgId)).toBe(1);
-    expect(await readCaseIds(f.orgId)).toEqual([caseId]);
-
-    // Both directions of the conversation<->Case link resolve on the SAME router.
-    const forward = await request(app).get(
-      `${TERESA_V10}/case-intake/conversations/${conversationId}/case`
-    );
-    expect(forward.body.data.caseId).toBe(caseId);
-    const backward = await request(app).get(
-      `${TERESA_V10}/case-intake/cases/${caseId}/conversation`
-    );
-    expect(backward.body.data.conversationId).toBe(conversationId);
-  }, 60_000);
-
-  it('a redrafted work order stales the old digest: confirming it is refused (409) and creates nothing; confirming the NEW digest succeeds', async () => {
-    const f = await fixtures.seedFixture('v10-stale');
-    const app = createApp({ organizationId: f.orgId, userId: f.memberUserId, userRole: 'MEMBER' });
-    const conversationId = `conv-${randomUUID()}`;
-
-    const firstShown = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
-      .send(workOrderBody(f.projectId));
-    const staleDigest = firstShown.body.data.workOrderDigest as string;
-
-    // Teresa (or the human) redrafts before anyone clicked confirm.
-    const secondShown = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
-      .send(workOrderBody(f.projectId, { goal: 'Zmieniony cel po przeredagowaniu.' }));
-    const freshDigest = secondShown.body.data.workOrderDigest as string;
-    expect(freshDigest).not.toBe(staleDigest);
-
-    const staleConfirm = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
-      .send({ confirmedDigest: staleDigest });
-    expect(staleConfirm.status).toBe(409);
-    // `toCaseWorkspaceAppError` uppercases domain codes (errors.ts:159).
-    expect(staleConfirm.body.error.code).toBe('INTAKE_WORK_ORDER_DIGEST_STALE');
-    expect(await countCasesForOrg(f.orgId)).toBe(0);
-
-    const freshConfirm = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
-      .send({ confirmedDigest: freshDigest });
-    expect(freshConfirm.status).toBe(201);
-    expect(await countCasesForOrg(f.orgId)).toBe(1);
-  }, 60_000);
-
-  // =========================================================================
-  // 3. One intake, not two — the v10 Teresa surface and the v8 chat surface
-  //    read and write the SAME work order for the SAME conversation
-  // =========================================================================
-
-  it('a summary shown on the v10 Teresa router is visible on the v8 chat router, and confirming on EITHER surface yields the SAME single Case', async () => {
-    const f = await fixtures.seedFixture('v10-cross-surface');
-    const app = createApp({ organizationId: f.orgId, userId: f.memberUserId, userRole: 'MEMBER' });
-    const conversationId = `conv-${randomUUID()}`;
-    const body = workOrderBody(f.projectId);
-
-    // Teresa (v10, production) shows the summary.
-    const shown = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
-      .send(body);
-    const digest = shown.body.data.workOrderDigest as string;
-
-    // The chat surface (v8, production) sees the IDENTICAL current order.
-    const current = await request(app).get(
-      `${CHAT_V8}/conversations/${conversationId}/case-intake/work-order`
-    );
-    expect(current.body.data.workOrderDigest).toBe(digest);
-
-    // Confirming on the CHAT surface creates the Case…
-    const confirmedOnChat = await request(app)
-      .post(`${CHAT_V8}/conversations/${conversationId}/case-intake/confirm`)
-      .send({ confirmedDigest: digest });
-    expect(confirmedOnChat.status).toBe(201);
-    const caseId = confirmedOnChat.body.data.caseId as string;
-
-    // …and confirming AGAIN on the TERESA surface reuses it — never a second Case.
-    const confirmedOnTeresa = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
-      .send({ confirmedDigest: digest });
-    expect(confirmedOnTeresa.status).toBe(200);
-    expect(confirmedOnTeresa.body.data.caseId).toBe(caseId);
-
-    expect(await countCasesForOrg(f.orgId)).toBe(1);
-  }, 90_000);
-
-  // =========================================================================
-  // 4. Cross-tenant — refused on the production router, identically whether
-  //    or not the thing being probed exists
-  // =========================================================================
-
-  it('a foreign-tenant actor is refused on the v10 confirm route and learns nothing about existence', async () => {
-    const victim = await fixtures.seedFixture('v10-victim');
-    const attackerOrg = await fixtures.seedOrg('v10-attacker');
-    const attackerUser = await fixtures.seedUser(attackerOrg, 'v10-attacker');
-    await fixtures.seedMembership(attackerOrg, attackerUser, 'ADMIN');
-
-    const victimApp = createApp({
-      organizationId: victim.orgId,
-      userId: victim.memberUserId,
-      userRole: 'MEMBER',
-    });
-    const conversationId = `conv-${randomUUID()}`;
-    const shown = await request(victimApp)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
-      .send(workOrderBody(victim.projectId));
-    const digest = shown.body.data.workOrderDigest as string;
-
-    const attackerApp = createApp({
-      organizationId: attackerOrg,
-      userId: attackerUser,
-      userRole: 'ADMIN',
-    });
-    const realConv = await request(attackerApp)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
-      .send({ confirmedDigest: digest });
-    const fakeConv = await request(attackerApp)
-      .post(`${TERESA_V10}/case-intake/conversations/conv-${randomUUID()}/confirm`)
-      .send({ confirmedDigest: digest });
-
-    expect([realConv.status, fakeConv.status].every((s) => s >= 400 && s < 500)).toBe(true);
-    expect(realConv.status).toBe(fakeConv.status);
-    expect(realConv.body.error.code).toBe(fakeConv.body.error.code);
-
-    expect(await countCasesForOrg(victim.orgId)).toBe(0);
-    expect(await countCasesForOrg(attackerOrg)).toBe(0);
-  }, 90_000);
-
-  // =========================================================================
-  // 5. Validation — an incomplete summary never reaches the digest
-  // =========================================================================
-
-  it('a work order missing goal, scope or expected outcome is rejected with 400 on the v10 route and creates nothing', async () => {
-    const f = await fixtures.seedFixture('v10-validation');
-    const app = createApp({ organizationId: f.orgId, userId: f.memberUserId, userRole: 'MEMBER' });
-    const conversationId = `conv-${randomUUID()}`;
-
-    for (const missing of ['goal', 'scope', 'expectedOutcome'] as const) {
-      const body: Record<string, unknown> = workOrderBody(f.projectId);
-      delete body[missing];
       const res = await request(app)
         .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
         .send(body);
-      expect(res.status).toBe(400);
-    }
 
-    const badDigest = await request(app)
-      .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
-      .send({ confirmedDigest: 'not-a-digest' });
-    expect(badDigest.status).toBe(400);
+      expect(res.status).toBe(200);
+      expect(res.body.data.caseCreated).toBe(false);
+      expect(res.body.data.runCreated).toBe(false);
+      expect(res.body.data.workOrder.goal).toBe(body.goal);
+      expect(res.body.data.workOrderDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+      expect(res.body.meta.version).toBe('v10');
 
-    expect(await countCasesForOrg(f.orgId)).toBe(0);
-    expect(await readOutbox(f.orgId)).toHaveLength(0);
-  }, 60_000);
-});
+      expect(await countCasesForOrg(f.orgId)).toBe(0);
+      const proposedEvents = await readOutbox(f.orgId, 'case.intake.work_order_proposed');
+      expect(proposedEvents).toHaveLength(1);
+      expect(proposedEvents[0].case_id).toBeNull();
+    }, 60_000);
+
+    it('GET /api/v10/teresa/case-intake/conversations/:id/work-order re-reads the SAME digest that was just shown', async () => {
+      const f = await fixtures.seedFixture('v10-current');
+      const app = createApp({
+        organizationId: f.orgId,
+        userId: f.memberUserId,
+        userRole: 'MEMBER',
+      });
+      const conversationId = `conv-${randomUUID()}`;
+
+      const shown = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
+        .send(workOrderBody(f.projectId));
+
+      const current = await request(app).get(
+        `${TERESA_V10}/case-intake/conversations/${conversationId}/work-order`
+      );
+
+      expect(current.status).toBe(200);
+      expect(current.body.data.workOrderDigest).toBe(shown.body.data.workOrderDigest);
+      expect(current.body.data.caseCreated).toBe(false);
+    }, 60_000);
+
+    // =========================================================================
+    // 2. Confirm on the PRODUCTION router: exactly ONE Case; refresh/retry reuse
+    // =========================================================================
+
+    it('POST .../confirm creates EXACTLY ONE Case (201), and a refresh/retry with the SAME digest reuses it (200, same caseId, no duplicate)', async () => {
+      const f = await fixtures.seedFixture('v10-confirm');
+      const app = createApp({
+        organizationId: f.orgId,
+        userId: f.memberUserId,
+        userRole: 'MEMBER',
+      });
+      const conversationId = `conv-${randomUUID()}`;
+
+      const shown = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
+        .send(workOrderBody(f.projectId));
+      const digest = shown.body.data.workOrderDigest as string;
+
+      const firstConfirm = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
+        .send({ confirmedDigest: digest });
+      expect(firstConfirm.status).toBe(201);
+      expect(firstConfirm.body.data.caseCreated).toBe(true);
+      const caseId = firstConfirm.body.data.caseId as string;
+      expect(typeof caseId).toBe('string');
+      expect(caseId.length).toBeGreaterThan(0);
+
+      // The click was lost / the page was refreshed / the request raced with
+      // itself — same digest, same idempotent confirmation.
+      const retryConfirm = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
+        .send({ confirmedDigest: digest });
+      expect(retryConfirm.status).toBe(200);
+      expect(retryConfirm.body.data.caseCreated).toBe(false);
+      expect(retryConfirm.body.data.caseId).toBe(caseId);
+
+      // The claim that matters, read out of band: ONE row, not two.
+      expect(await countCasesForOrg(f.orgId)).toBe(1);
+      expect(await readCaseIds(f.orgId)).toEqual([caseId]);
+
+      // Both directions of the conversation<->Case link resolve on the SAME router.
+      const forward = await request(app).get(
+        `${TERESA_V10}/case-intake/conversations/${conversationId}/case`
+      );
+      expect(forward.body.data.caseId).toBe(caseId);
+      const backward = await request(app).get(
+        `${TERESA_V10}/case-intake/cases/${caseId}/conversation`
+      );
+      expect(backward.body.data.conversationId).toBe(conversationId);
+    }, 60_000);
+
+    it('a redrafted work order stales the old digest: confirming it is refused (409) and creates nothing; confirming the NEW digest succeeds', async () => {
+      const f = await fixtures.seedFixture('v10-stale');
+      const app = createApp({
+        organizationId: f.orgId,
+        userId: f.memberUserId,
+        userRole: 'MEMBER',
+      });
+      const conversationId = `conv-${randomUUID()}`;
+
+      const firstShown = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
+        .send(workOrderBody(f.projectId));
+      const staleDigest = firstShown.body.data.workOrderDigest as string;
+
+      // Teresa (or the human) redrafts before anyone clicked confirm.
+      const secondShown = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
+        .send(workOrderBody(f.projectId, { goal: 'Zmieniony cel po przeredagowaniu.' }));
+      const freshDigest = secondShown.body.data.workOrderDigest as string;
+      expect(freshDigest).not.toBe(staleDigest);
+
+      const staleConfirm = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
+        .send({ confirmedDigest: staleDigest });
+      expect(staleConfirm.status).toBe(409);
+      // `toCaseWorkspaceAppError` uppercases domain codes (errors.ts:159).
+      expect(staleConfirm.body.error.code).toBe('INTAKE_WORK_ORDER_DIGEST_STALE');
+      expect(await countCasesForOrg(f.orgId)).toBe(0);
+
+      const freshConfirm = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
+        .send({ confirmedDigest: freshDigest });
+      expect(freshConfirm.status).toBe(201);
+      expect(await countCasesForOrg(f.orgId)).toBe(1);
+    }, 60_000);
+
+    // =========================================================================
+    // 3. One intake, not two — the v10 Teresa surface and the v8 chat surface
+    //    read and write the SAME work order for the SAME conversation
+    // =========================================================================
+
+    it('a summary shown on the v10 Teresa router is visible on the v8 chat router, and confirming on EITHER surface yields the SAME single Case', async () => {
+      const f = await fixtures.seedFixture('v10-cross-surface');
+      const app = createApp({
+        organizationId: f.orgId,
+        userId: f.memberUserId,
+        userRole: 'MEMBER',
+      });
+      const conversationId = `conv-${randomUUID()}`;
+      const body = workOrderBody(f.projectId);
+
+      // Teresa (v10, production) shows the summary.
+      const shown = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
+        .send(body);
+      const digest = shown.body.data.workOrderDigest as string;
+
+      // The chat surface (v8, production) sees the IDENTICAL current order.
+      const current = await request(app).get(
+        `${CHAT_V8}/conversations/${conversationId}/case-intake/work-order`
+      );
+      expect(current.body.data.workOrderDigest).toBe(digest);
+
+      // Confirming on the CHAT surface creates the Case…
+      const confirmedOnChat = await request(app)
+        .post(`${CHAT_V8}/conversations/${conversationId}/case-intake/confirm`)
+        .send({ confirmedDigest: digest });
+      expect(confirmedOnChat.status).toBe(201);
+      const caseId = confirmedOnChat.body.data.caseId as string;
+
+      // …and confirming AGAIN on the TERESA surface reuses it — never a second Case.
+      const confirmedOnTeresa = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
+        .send({ confirmedDigest: digest });
+      expect(confirmedOnTeresa.status).toBe(200);
+      expect(confirmedOnTeresa.body.data.caseId).toBe(caseId);
+
+      expect(await countCasesForOrg(f.orgId)).toBe(1);
+    }, 90_000);
+
+    // =========================================================================
+    // 4. Cross-tenant — refused on the production router, identically whether
+    //    or not the thing being probed exists
+    // =========================================================================
+
+    it('a foreign-tenant actor is refused on the v10 confirm route and learns nothing about existence', async () => {
+      const victim = await fixtures.seedFixture('v10-victim');
+      const attackerOrg = await fixtures.seedOrg('v10-attacker');
+      const attackerUser = await fixtures.seedUser(attackerOrg, 'v10-attacker');
+      await fixtures.seedMembership(attackerOrg, attackerUser, 'ADMIN');
+
+      const victimApp = createApp({
+        organizationId: victim.orgId,
+        userId: victim.memberUserId,
+        userRole: 'MEMBER',
+      });
+      const conversationId = `conv-${randomUUID()}`;
+      const shown = await request(victimApp)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
+        .send(workOrderBody(victim.projectId));
+      const digest = shown.body.data.workOrderDigest as string;
+
+      const attackerApp = createApp({
+        organizationId: attackerOrg,
+        userId: attackerUser,
+        userRole: 'ADMIN',
+      });
+      const realConv = await request(attackerApp)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
+        .send({ confirmedDigest: digest });
+      const fakeConv = await request(attackerApp)
+        .post(`${TERESA_V10}/case-intake/conversations/conv-${randomUUID()}/confirm`)
+        .send({ confirmedDigest: digest });
+
+      expect([realConv.status, fakeConv.status].every((s) => s >= 400 && s < 500)).toBe(true);
+      expect(realConv.status).toBe(fakeConv.status);
+      expect(realConv.body.error.code).toBe(fakeConv.body.error.code);
+
+      expect(await countCasesForOrg(victim.orgId)).toBe(0);
+      expect(await countCasesForOrg(attackerOrg)).toBe(0);
+    }, 90_000);
+
+    // =========================================================================
+    // 5. Validation — an incomplete summary never reaches the digest
+    // =========================================================================
+
+    it('a work order missing goal, scope or expected outcome is rejected with 400 on the v10 route and creates nothing', async () => {
+      const f = await fixtures.seedFixture('v10-validation');
+      const app = createApp({
+        organizationId: f.orgId,
+        userId: f.memberUserId,
+        userRole: 'MEMBER',
+      });
+      const conversationId = `conv-${randomUUID()}`;
+
+      for (const missing of ['goal', 'scope', 'expectedOutcome'] as const) {
+        const body: Record<string, unknown> = workOrderBody(f.projectId);
+        delete body[missing];
+        const res = await request(app)
+          .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/summary`)
+          .send(body);
+        expect(res.status).toBe(400);
+      }
+
+      const badDigest = await request(app)
+        .post(`${TERESA_V10}/case-intake/conversations/${conversationId}/confirm`)
+        .send({ confirmedDigest: 'not-a-digest' });
+      expect(badDigest.status).toBe(400);
+
+      expect(await countCasesForOrg(f.orgId)).toBe(0);
+      expect(await readOutbox(f.orgId)).toHaveLength(0);
+    }, 60_000);
+  }
+);

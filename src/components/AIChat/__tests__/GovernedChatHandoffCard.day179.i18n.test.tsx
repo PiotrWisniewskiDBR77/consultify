@@ -4,8 +4,9 @@ import React from 'react';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import plTranslation from '../../../../public/locales/pl/translation.json';
 import type { GovernedChatHandoffProposal } from '@/services/api/v8/chat';
+
+import plTranslation from '../../../../public/locales/pl/translation.json';
 import { GovernedChatHandoffCard } from '../GovernedChatHandoffCard';
 
 vi.unmock('react-i18next');

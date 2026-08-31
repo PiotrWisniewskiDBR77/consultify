@@ -30,7 +30,11 @@ describe('FinanceErrorBoundary — izolacja błędu jednego dokumentu', () => {
     render(
       <div>
         <SafeSibling />
-        <FinanceErrorBoundary documentLabel="Wycena DBR77 FY2026" onRetry={vi.fn()} onBackToList={vi.fn()}>
+        <FinanceErrorBoundary
+          documentLabel="Wycena DBR77 FY2026"
+          onRetry={vi.fn()}
+          onBackToList={vi.fn()}
+        >
           <Boom />
         </FinanceErrorBoundary>
       </div>

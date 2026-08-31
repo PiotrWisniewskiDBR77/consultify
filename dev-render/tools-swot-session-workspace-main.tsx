@@ -14,9 +14,8 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '../src/i18n';
-
-import ToolsSwotSessionWorkspaceScreen from './screens/tools-swot-session-workspace';
 import { useAppStore } from '../src/store/useAppStore';
+import ToolsSwotSessionWorkspaceScreen from './screens/tools-swot-session-workspace';
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') === 'dark' ? 'dark' : 'light';

@@ -166,7 +166,11 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     return approved.businessVersion.version;
   }
 
-  async function createApprovedNode(orgId: string, type: FinanceArtifactType, key: string): Promise<Node> {
+  async function createApprovedNode(
+    orgId: string,
+    type: FinanceArtifactType,
+    key: string
+  ): Promise<Node> {
     const node = await createNode(orgId, type, key);
     const version = await approveDraft(orgId, node.bvId, node.version);
     return { ...node, version };
@@ -256,7 +260,9 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
   }
 
   async function countRows(sql: string, params: unknown[]): Promise<number> {
-    const row = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ n: string }>(sql, params));
+    const row = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ n: string }>(sql, params)
+    );
     return Number(row?.n ?? -1);
   }
 
@@ -284,8 +290,14 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
   async function computeFootprint(orgId: string, excludeArtifactIds: string[] = []) {
     const exclude = excludeArtifactIds.length > 0 ? excludeArtifactIds : ['__none__'];
     return {
-      computeJobs: await countRows(`SELECT count(*) AS n FROM compute_jobs WHERE organization_id = ?`, [orgId]),
-      computeJobOutputs: await countRows(`SELECT count(*) AS n FROM compute_job_outputs WHERE organization_id = ?`, [orgId]),
+      computeJobs: await countRows(
+        `SELECT count(*) AS n FROM compute_jobs WHERE organization_id = ?`,
+        [orgId]
+      ),
+      computeJobOutputs: await countRows(
+        `SELECT count(*) AS n FROM compute_job_outputs WHERE organization_id = ?`,
+        [orgId]
+      ),
       computeJobRuns: await countRows(
         `SELECT count(*) AS n FROM compute_job_runs r JOIN compute_jobs j ON j.id = r.job_id WHERE j.organization_id = ?`,
         [orgId]
@@ -358,13 +370,30 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     aModel = await createNode(orgA, 'BASELINE_MODEL', 'ap11-a-model');
     aScenario = await createNode(orgA, 'PREDICTION_SCENARIO', 'ap11-a-scenario');
 
-    await link(orgA, { node: aStatement, type: 'STATEMENT_PACK' }, { node: aAnalysis, type: 'HISTORICAL_ANALYSIS' }, 'STATEMENT_TO_ANALYSIS');
-    await link(orgA, { node: aAnalysis, type: 'HISTORICAL_ANALYSIS' }, { node: aModel, type: 'BASELINE_MODEL' }, 'ANALYSIS_TO_MODEL', {
-      hash: 'sha-ap11-a-analysis-to-model',
-    });
-    await link(orgA, { node: aModel, type: 'BASELINE_MODEL' }, { node: aScenario, type: 'PREDICTION_SCENARIO' }, 'MODEL_TO_SCENARIO', {
-      hash: 'sha-ap11-a-model-to-scenario',
-    });
+    await link(
+      orgA,
+      { node: aStatement, type: 'STATEMENT_PACK' },
+      { node: aAnalysis, type: 'HISTORICAL_ANALYSIS' },
+      'STATEMENT_TO_ANALYSIS'
+    );
+    await link(
+      orgA,
+      { node: aAnalysis, type: 'HISTORICAL_ANALYSIS' },
+      { node: aModel, type: 'BASELINE_MODEL' },
+      'ANALYSIS_TO_MODEL',
+      {
+        hash: 'sha-ap11-a-analysis-to-model',
+      }
+    );
+    await link(
+      orgA,
+      { node: aModel, type: 'BASELINE_MODEL' },
+      { node: aScenario, type: 'PREDICTION_SCENARIO' },
+      'MODEL_TO_SCENARIO',
+      {
+        hash: 'sha-ap11-a-model-to-scenario',
+      }
+    );
 
     // --- Org B -------------------------------------------------------------
     bStatement1 = await createApprovedNode(orgB, 'STATEMENT_PACK', 'ap11-b-statement-1');
@@ -372,16 +401,37 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     bAnalysis = await createApprovedNode(orgB, 'HISTORICAL_ANALYSIS', 'ap11-b-analysis');
     bModel = await createNode(orgB, 'BASELINE_MODEL', 'ap11-b-model');
 
-    await link(orgB, { node: bStatement1, type: 'STATEMENT_PACK' }, { node: bModel, type: 'BASELINE_MODEL' }, 'STATEMENT_TO_MODEL');
-    await link(orgB, { node: bStatement2, type: 'STATEMENT_PACK' }, { node: bModel, type: 'BASELINE_MODEL' }, 'STATEMENT_TO_MODEL');
-    await link(orgB, { node: bAnalysis, type: 'HISTORICAL_ANALYSIS' }, { node: bModel, type: 'BASELINE_MODEL' }, 'ANALYSIS_TO_MODEL', {
-      hash: 'sha-ap11-b-analysis-to-model',
-    });
+    await link(
+      orgB,
+      { node: bStatement1, type: 'STATEMENT_PACK' },
+      { node: bModel, type: 'BASELINE_MODEL' },
+      'STATEMENT_TO_MODEL'
+    );
+    await link(
+      orgB,
+      { node: bStatement2, type: 'STATEMENT_PACK' },
+      { node: bModel, type: 'BASELINE_MODEL' },
+      'STATEMENT_TO_MODEL'
+    );
+    await link(
+      orgB,
+      { node: bAnalysis, type: 'HISTORICAL_ANALYSIS' },
+      { node: bModel, type: 'BASELINE_MODEL' },
+      'ANALYSIS_TO_MODEL',
+      {
+        hash: 'sha-ap11-b-analysis-to-model',
+      }
+    );
 
     // --- Org C -------------------------------------------------------------
     cStatement = await createApprovedNode(orgC, 'STATEMENT_PACK', 'ap11-c-statement');
     cAnalysis = await createApprovedNode(orgC, 'HISTORICAL_ANALYSIS', 'ap11-c-analysis');
-    await link(orgC, { node: cStatement, type: 'STATEMENT_PACK' }, { node: cAnalysis, type: 'HISTORICAL_ANALYSIS' }, 'STATEMENT_TO_ANALYSIS');
+    await link(
+      orgC,
+      { node: cStatement, type: 'STATEMENT_PACK' },
+      { node: cAnalysis, type: 'HISTORICAL_ANALYSIS' },
+      'STATEMENT_TO_ANALYSIS'
+    );
 
     // --- Org D -------------------------------------------------------------
     const dStatement = await createNode(orgD, 'STATEMENT_PACK', 'ap11-d-statement');
@@ -391,16 +441,39 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     const dValuation = await createNode(orgD, 'VALUATION_CASE', 'ap11-d-valuation');
     dNodes = [dStatement, dAnalysis, dModel, dScenario, dValuation];
 
-    await link(orgD, { node: dStatement, type: 'STATEMENT_PACK' }, { node: dAnalysis, type: 'HISTORICAL_ANALYSIS' }, 'STATEMENT_TO_ANALYSIS');
-    await link(orgD, { node: dAnalysis, type: 'HISTORICAL_ANALYSIS' }, { node: dModel, type: 'BASELINE_MODEL' }, 'ANALYSIS_TO_MODEL', {
-      hash: 'sha-ap11-d-1',
-    });
-    await link(orgD, { node: dModel, type: 'BASELINE_MODEL' }, { node: dScenario, type: 'PREDICTION_SCENARIO' }, 'MODEL_TO_SCENARIO', {
-      hash: 'sha-ap11-d-2',
-    });
-    await link(orgD, { node: dScenario, type: 'PREDICTION_SCENARIO' }, { node: dValuation, type: 'VALUATION_CASE' }, 'SCENARIO_TO_VALUATION', {
-      hash: 'sha-ap11-d-3',
-    });
+    await link(
+      orgD,
+      { node: dStatement, type: 'STATEMENT_PACK' },
+      { node: dAnalysis, type: 'HISTORICAL_ANALYSIS' },
+      'STATEMENT_TO_ANALYSIS'
+    );
+    await link(
+      orgD,
+      { node: dAnalysis, type: 'HISTORICAL_ANALYSIS' },
+      { node: dModel, type: 'BASELINE_MODEL' },
+      'ANALYSIS_TO_MODEL',
+      {
+        hash: 'sha-ap11-d-1',
+      }
+    );
+    await link(
+      orgD,
+      { node: dModel, type: 'BASELINE_MODEL' },
+      { node: dScenario, type: 'PREDICTION_SCENARIO' },
+      'MODEL_TO_SCENARIO',
+      {
+        hash: 'sha-ap11-d-2',
+      }
+    );
+    await link(
+      orgD,
+      { node: dScenario, type: 'PREDICTION_SCENARIO' },
+      { node: dValuation, type: 'VALUATION_CASE' },
+      'SCENARIO_TO_VALUATION',
+      {
+        hash: 'sha-ap11-d-3',
+      }
+    );
 
     // --- Org E -------------------------------------------------------------
     // Both nodes APPROVED: the source because `invalidate` (T11) accepts no
@@ -408,7 +481,12 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     // the B01 immutability trigger is most likely to reject.
     eStatement = await createApprovedNode(orgE, 'STATEMENT_PACK', 'ap11-e-statement');
     eAnalysis = await createApprovedNode(orgE, 'HISTORICAL_ANALYSIS', 'ap11-e-analysis');
-    await link(orgE, { node: eStatement, type: 'STATEMENT_PACK' }, { node: eAnalysis, type: 'HISTORICAL_ANALYSIS' }, 'STATEMENT_TO_ANALYSIS');
+    await link(
+      orgE,
+      { node: eStatement, type: 'STATEMENT_PACK' },
+      { node: eAnalysis, type: 'HISTORICAL_ANALYSIS' },
+      'STATEMENT_TO_ANALYSIS'
+    );
   }, 180_000);
 
   afterAll(async () => {
@@ -422,7 +500,10 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     if (process.env.AP11_KEEP_LEDGER === '1') return;
     await withPinnedPostgresTransaction(async (tx) => {
       for (const org of [orgA, orgB, orgC, orgD, orgE]) {
-        await tx.queryRun(`DELETE FROM finance_lineage_freshness_events WHERE organization_id = ?`, [org]);
+        await tx.queryRun(
+          `DELETE FROM finance_lineage_freshness_events WHERE organization_id = ?`,
+          [org]
+        );
       }
     });
   });
@@ -450,7 +531,6 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
       if (!row) throw new Error('missing descendant row');
       orgADescendantsBefore.push(row);
     }
-
 
     const { approved } = await reopenAndApprove(orgA, aStatement);
     expect(approved.ok).toBe(true);
@@ -494,7 +574,9 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     expect(events).toHaveLength(3);
 
     const byTarget = new Map(events.map((e) => [e.target_version_id, e]));
-    expect([...byTarget.keys()].sort()).toEqual([aAnalysis.bvId, aModel.bvId, aScenario.bvId].sort());
+    expect([...byTarget.keys()].sort()).toEqual(
+      [aAnalysis.bvId, aModel.bvId, aScenario.bvId].sort()
+    );
 
     for (const e of events) {
       expect(e.previous_state).toBe('CURRENT');
@@ -538,8 +620,12 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     // The approved artifact itself legitimately gains a compute snapshot (that
     // is approve's step (b)); its DESCENDANTS must gain nothing at all.
     expect(after.snapshotsOfDescendants).toBe(orgAFootprintBefore.snapshotsOfDescendants);
-    expect(after.workingRevisionsOfDescendants).toBe(orgAFootprintBefore.workingRevisionsOfDescendants);
-    expect(after.businessVersionsOfDescendants).toBe(orgAFootprintBefore.businessVersionsOfDescendants);
+    expect(after.workingRevisionsOfDescendants).toBe(
+      orgAFootprintBefore.workingRevisionsOfDescendants
+    );
+    expect(after.businessVersionsOfDescendants).toBe(
+      orgAFootprintBefore.businessVersionsOfDescendants
+    );
 
     // Column-level proof that only the three freshness columns moved: the CAS
     // counter, the frozen snapshot pointer, the content hash and the working
@@ -561,7 +647,9 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
   // -------------------------------------------------------------------------
 
   it('replaying the same event changes nothing and does NOT refresh stale_since', async () => {
-    const before = await Promise.all([aAnalysis, aModel, aScenario].map((n) => readVersion(n.bvId)));
+    const before = await Promise.all(
+      [aAnalysis, aModel, aScenario].map((n) => readVersion(n.bvId))
+    );
     const ledgerBefore = await ledgerFor(orgA);
 
     const summary = await lineageFreshnessService.propagateStaleness({
@@ -904,6 +992,8 @@ describe.skipIf(!REAL_PG)('AP-11 pt 9 — lineage staleness propagation, real Po
     expect(reasonOverrides('SOURCE_INVALIDATED', 'SOURCE_INVALIDATED')).toBe(true);
     // No reason at all, and an opaque legacy string, both lose to a real one.
     expect(reasonOverrides('NEW_SOURCE_VERSION', null)).toBe(true);
-    expect(reasonOverrides('NEW_SOURCE_VERSION', 'GOLDCO_UPSTREAM_SOURCE_REFRESH_2026Q2')).toBe(true);
+    expect(reasonOverrides('NEW_SOURCE_VERSION', 'GOLDCO_UPSTREAM_SOURCE_REFRESH_2026Q2')).toBe(
+      true
+    );
   });
 });

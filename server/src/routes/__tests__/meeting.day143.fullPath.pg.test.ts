@@ -5,10 +5,10 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const organizationId = 'day143-meeting-org';
 const ownerId = 'day143-meeting-owner';
@@ -87,7 +87,11 @@ describe('Day 143 Meeting full path through real ApiGateway and PostgreSQL', () 
       `DAY143_DB id=${persisted?.id || 'MISSING'} organization_id=${persisted?.organization_id || 'MISSING'} title=${persisted?.title || 'MISSING'}`
     );
     expect(persisted).toEqual(
-      expect.objectContaining({ id: response.body.meeting.id, title, organization_id: organizationId })
+      expect.objectContaining({
+        id: response.body.meeting.id,
+        title,
+        organization_id: organizationId,
+      })
     );
   });
 });

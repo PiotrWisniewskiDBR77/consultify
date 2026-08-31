@@ -21,12 +21,11 @@
  */
 
 import {
-  METHOD_EVENT_TYPES,
-  METHOD_SESSION_STATES,
-  TERESA_CAPABILITIES,
-  canTransition,
   type AggregationInput,
   type AggregationResult,
+  canTransition,
+  METHOD_EVENT_TYPES,
+  METHOD_SESSION_STATES,
   type MethodActorKind,
   type MethodEventType,
   type MethodProcessRole,
@@ -35,6 +34,7 @@ import {
   type ProgressionResult,
   type ScoringInput,
   type ScoringResult,
+  TERESA_CAPABILITIES,
   type TeresaCapabilityId,
 } from '@/method-core/contracts';
 
@@ -99,21 +99,20 @@ export type ConformityStatus =
  * wracała audyt do `active`, oznaczałoby to, że zatwierdzone ustalenia znów
  * są edytowalne — a to podważa całą obronność.
  */
-export const LIFECYCLE_TO_KERNEL_STATE: Readonly<
-  Record<AuditLifecycleState, MethodSessionState>
-> = {
-  planning: 'draft',
-  preparation: 'prepared',
-  fieldwork: 'active',
-  evidence_review: 'active',
-  findings_review: 'in_review',
-  management_response: 'in_review',
-  approval: 'in_review',
-  remediation: 'frozen',
-  effectiveness_verification: 'frozen',
-  closure: 'frozen',
-  closed: 'closed',
-} as const;
+export const LIFECYCLE_TO_KERNEL_STATE: Readonly<Record<AuditLifecycleState, MethodSessionState>> =
+  {
+    planning: 'draft',
+    preparation: 'prepared',
+    fieldwork: 'active',
+    evidence_review: 'active',
+    findings_review: 'in_review',
+    management_response: 'in_review',
+    approval: 'in_review',
+    remediation: 'frozen',
+    effectiveness_verification: 'frozen',
+    closure: 'frozen',
+    closed: 'closed',
+  } as const;
 
 export function toKernelState(stage: AuditLifecycleState): MethodSessionState {
   return LIFECYCLE_TO_KERNEL_STATE[stage] ?? 'draft';
@@ -126,7 +125,7 @@ export function toKernelState(stage: AuditLifecycleState): MethodSessionState {
  */
 export function isKernelLegalTransition(
   from: AuditLifecycleState,
-  to: AuditLifecycleState,
+  to: AuditLifecycleState
 ): boolean {
   const kFrom = toKernelState(from);
   const kTo = toKernelState(to);
@@ -283,10 +282,7 @@ export const AUDIT_INTENT_TO_TERESA_CAPABILITY: Readonly<
   draft_auditor_note: null,
 } as const;
 
-export const TERESA_CAPABILITY_GAPS = [
-  'propose_corrective_options',
-  'draft_auditor_note',
-] as const;
+export const TERESA_CAPABILITY_GAPS = ['propose_corrective_options', 'draft_auditor_note'] as const;
 
 export function toTeresaCapability(auditIntent: string): TeresaCapabilityId | null {
   return AUDIT_INTENT_TO_TERESA_CAPABILITY[auditIntent] ?? null;
@@ -327,7 +323,7 @@ export function resolveOpenLevels(input: ProgressionInput): ProgressionResult {
  */
 export function computeScore(input: ScoringInput): ScoringResult {
   const conformity = String(
-    (input.answers as Record<string, unknown>)?.conformityStatus ?? 'not_tested',
+    (input.answers as Record<string, unknown>)?.conformityStatus ?? 'not_tested'
   ) as ConformityStatus;
 
   const verdict: ScoringResult['verdict'] =
@@ -339,8 +335,7 @@ export function computeScore(input: ScoringInput): ScoringResult {
           ? 'unknown'
           : 'scored';
 
-  const missingEvidence =
-    conformity === 'evidence_insufficient' ? [String(input.unitId)] : [];
+  const missingEvidence = conformity === 'evidence_insufficient' ? [String(input.unitId)] : [];
 
   return {
     // Audyt nie ma poziomów — null jest tu prawdą o metodzie, nie brakiem.

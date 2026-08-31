@@ -577,7 +577,9 @@ function createMockDatabase(): MockDatabase {
           .pop() || '',
       fallback:
         match[2] && match[3] != null
-          ? String(match[3]).trim().replace(/^['"]|['"]$/g, '')
+          ? String(match[3])
+              .trim()
+              .replace(/^['"]|['"]$/g, '')
           : undefined,
       alias: String(match[4] || ''),
     }));

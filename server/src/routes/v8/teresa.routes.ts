@@ -22,8 +22,6 @@ import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
-import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 import * as caseIntakeService from '../../services/caseWorkspace/caseIntakeService.js';
 import {
   type HandoffTargetModule,
@@ -44,6 +42,8 @@ import {
 import * as teresaService from '../../services/v8/teresaCopilotService.js';
 import * as teresaToolOperatorService from '../../services/v8/teresaToolOperatorService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { caseWorkspaceHandler } from '../caseWorkspace/_shared/handler.js';
+import { parseBody, parseParams } from '../caseWorkspace/_shared/validate.js';
 
 const router = Router();
 

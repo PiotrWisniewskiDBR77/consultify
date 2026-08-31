@@ -10,7 +10,10 @@ import { X } from 'lucide-react';
 import React from 'react';
 
 import type { AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
-import { financeValueDisplayReasonLabel, formatAnalysisKpiValueForDisplay } from '../../../services/api/financeV2.types';
+import {
+  financeValueDisplayReasonLabel,
+  formatAnalysisKpiValueForDisplay,
+} from '../../../services/api/financeV2.types';
 import { industryLabelForCode } from './analysisKpiCatalog';
 import type { AnalysisKpiCatalogFormulaInfo } from './analysisKpiTable.contract';
 import type { YoyDelta } from './analysisKpiTable.contract';
@@ -37,8 +40,16 @@ export interface AnalysisKpiDetailCardProps {
   onClose: () => void;
 }
 
-function SparklineChart({ points }: { points: AnalysisKpiPeriodSeriesPoint[] }): React.ReactElement {
-  const numeric = points.map((p) => (p.value.status === 'PRESENT_ZERO' || p.value.status === 'PRESENT_NONZERO' ? Number(p.value.valueDecimal) : null));
+function SparklineChart({
+  points,
+}: {
+  points: AnalysisKpiPeriodSeriesPoint[];
+}): React.ReactElement {
+  const numeric = points.map((p) =>
+    p.value.status === 'PRESENT_ZERO' || p.value.status === 'PRESENT_NONZERO'
+      ? Number(p.value.valueDecimal)
+      : null
+  );
   const present = numeric.filter((n): n is number => n !== null);
   if (present.length === 0) {
     return <p className="text-xs text-c-text-muted">Brak wystarczających danych do wykresu.</p>;
@@ -49,15 +60,28 @@ function SparklineChart({ points }: { points: AnalysisKpiPeriodSeriesPoint[] }):
   const width = 280;
   const height = 64;
   const stepX = points.length > 1 ? width / (points.length - 1) : 0;
-  const coords = numeric.map((n, i) => (n === null ? null : { x: i * stepX, y: height - ((n - min) / range) * height }));
+  const coords = numeric.map((n, i) =>
+    n === null ? null : { x: i * stepX, y: height - ((n - min) / range) * height }
+  );
   const pathParts: string[] = [];
   coords.forEach((c, i) => {
     if (!c) return;
     pathParts.push(`${pathParts.length === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`);
   });
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-16" role="img" aria-label="Wykres wartości w czasie">
-      <path d={pathParts.join(' ')} fill="none" stroke="currentColor" strokeWidth={2} className="text-c-text-secondary" />
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full h-16"
+      role="img"
+      aria-label="Wykres wartości w czasie"
+    >
+      <path
+        d={pathParts.join(' ')}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        className="text-c-text-secondary"
+      />
       {coords.map((c, i) =>
         c ? (
           <circle
@@ -74,7 +98,8 @@ function SparklineChart({ points }: { points: AnalysisKpiPeriodSeriesPoint[] }):
 }
 
 export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.ReactElement {
-  const { kpiValue, formulaInfo, yoyDelta, periodSeries, history, sourceLineageLabel, onClose } = props;
+  const { kpiValue, formulaInfo, yoyDelta, periodSeries, history, sourceLineageLabel, onClose } =
+    props;
   const display = formatAnalysisKpiValueForDisplay(kpiValue);
   const reason = financeValueDisplayReasonLabel(kpiValue.value.status);
 
@@ -102,7 +127,9 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
 
       <div className="flex-1 overflow-y-auto p-4 space-y-5 text-sm">
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Wartość bieżąca</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">
+            Wartość bieżąca
+          </p>
           <p
             className={`text-2xl font-semibold tabular-nums ${display.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'}`}
             data-testid="analysis-kpi-detail-value"
@@ -121,32 +148,45 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Wykres — okresy historyczne i prognozowane</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">
+            Wykres — okresy historyczne i prognozowane
+          </p>
           <SparklineChart points={periodSeries} />
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-c-text-muted">
             {periodSeries.map((p) => (
               <span key={p.periodLabel} className={p.isForecast ? 'italic' : ''}>
                 {p.periodLabel}
-                {p.isForecast ? ' (prognoza)' : ''}: {formatAnalysisKpiValueForDisplay({ value: p.value, unitType: kpiValue.unitType }).text}
+                {p.isForecast ? ' (prognoza)' : ''}:{' '}
+                {
+                  formatAnalysisKpiValueForDisplay({ value: p.value, unitType: kpiValue.unitType })
+                    .text
+                }
               </span>
             ))}
           </div>
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Formuła i składniki</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">
+            Formuła i składniki
+          </p>
           <p className="font-mono text-xs bg-c-surface-raised rounded-md px-2 py-1.5 text-c-text">
             {formulaInfo?.formulaDisplay ?? 'Brak zdefiniowanej formuły wyświetlanej.'}
           </p>
-          {formulaInfo ? <p className="text-xs text-c-text-muted mt-1">{formulaInfo.interpretationGeneral}</p> : null}
+          {formulaInfo ? (
+            <p className="text-xs text-c-text-muted mt-1">{formulaInfo.interpretationGeneral}</p>
+          ) : null}
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Benchmark branżowy</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">
+            Benchmark branżowy
+          </p>
           {kpiValue.benchmark ? (
             <p className="text-c-text">
-              {kpiValue.benchmark.rangeLow}–{kpiValue.benchmark.rangeHigh} ({industryLabelForCode(kpiValue.benchmark.industryCode)}) · źródło: {kpiValue.benchmark.source} ·{' '}
-              {kpiValue.benchmark.asOf}
+              {kpiValue.benchmark.rangeLow}–{kpiValue.benchmark.rangeHigh} (
+              {industryLabelForCode(kpiValue.benchmark.industryCode)}) · źródło:{' '}
+              {kpiValue.benchmark.source} · {kpiValue.benchmark.asOf}
             </p>
           ) : (
             <p className="text-c-text-muted">Benchmark niedostępny dla tego wskaźnika.</p>
@@ -154,23 +194,34 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Interpretacja tego wyniku</p>
-          <p className="text-c-text">{kpiValue.interpretationText ?? 'Brak zapisanej interpretacji dla tego wyniku.'}</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">
+            Interpretacja tego wyniku
+          </p>
+          <p className="text-c-text">
+            {kpiValue.interpretationText ?? 'Brak zapisanej interpretacji dla tego wyniku.'}
+          </p>
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Lineage — źródło danych</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">
+            Lineage — źródło danych
+          </p>
           <p className="text-c-text">{sourceLineageLabel}</p>
         </section>
 
         <section>
-          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Historia</p>
+          <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">
+            Historia
+          </p>
           {history.length === 0 ? (
             <p className="text-c-text-muted">Brak wcześniejszych wersji tego wskaźnika.</p>
           ) : (
             <ul className="space-y-1">
               {history.map((h) => (
-                <li key={h.versionLabel} className="flex items-center justify-between text-xs text-c-text-secondary">
+                <li
+                  key={h.versionLabel}
+                  className="flex items-center justify-between text-xs text-c-text-secondary"
+                >
                   <span>{h.versionLabel}</span>
                   <span className="tabular-nums">{h.valueDisplay}</span>
                   <span className="text-c-text-muted">{h.atIso}</span>

@@ -35,10 +35,10 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/playService.js';
 import { requireCaseAccessForActor, requireOrgMemberForActor } from './_shared/access.js';
-import { caseWorkspaceHandler } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
-import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 import type { CaseWorkspaceActor } from './_shared/handler.js';
+import { caseWorkspaceHandler } from './_shared/handler.js';
+import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
 const router = Router();
 
@@ -218,7 +218,10 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(definitionIdParams, req.params);
     await requireOwnOrgDefinition(actor, params.processDefinitionId);
-    const items = await svc.listProcessVersionsForDefinition(params.processDefinitionId, actor.actorUserId);
+    const items = await svc.listProcessVersionsForDefinition(
+      params.processDefinitionId,
+      actor.actorUserId
+    );
     res.status(200).json({ data: items });
   })
 );
@@ -248,11 +251,9 @@ router.put(
     const params = parseParams(versionIdParams, req.params);
     const body = parseBody(updateVersionBody, req.body);
     await requireOwnOrgVersion(actor, params.processVersionId);
-    const updated = await svc.updateProcessVersionDraft(
-      params.processVersionId,
-      body,
-      { actorUserId: actor.actorUserId }
-    );
+    const updated = await svc.updateProcessVersionDraft(params.processVersionId, body, {
+      actorUserId: actor.actorUserId,
+    });
     res.status(200).json({ data: updated });
   })
 );
@@ -316,7 +317,10 @@ router.post(
 );
 
 // POST /process-versions/:processVersionId/deprecate
-const deprecateBody = z.object({ reason: z.string().trim().min(1), expectedVersion: z.number().int() });
+const deprecateBody = z.object({
+  reason: z.string().trim().min(1),
+  expectedVersion: z.number().int(),
+});
 
 router.post(
   '/process-versions/:processVersionId/deprecate',

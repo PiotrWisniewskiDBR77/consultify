@@ -49,9 +49,8 @@ describe.skipIf(!enabled)('DAY180 denied-admission readmission — real PG', () 
   });
 
   it('re-judges a refusal once the peak has passed, but only when asked to', async () => {
-    const { reserveAgentResource, settleAgentResource } = await import(
-      '../agentResourceGovernanceService.js'
-    );
+    const { reserveAgentResource, settleAgentResource } =
+      await import('../agentResourceGovernanceService.js');
     const held: string[] = [];
     for (let i = 1; i <= 4; i++) {
       const decision = await reserveAgentResource({

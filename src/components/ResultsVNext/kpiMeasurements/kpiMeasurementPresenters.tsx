@@ -36,25 +36,25 @@
  */
 import React from 'react';
 
-import { HonestValueCell } from '../HonestValue';
-import { StatusChip } from '@/components/ui/primitives';
 import type {
   RelationItem,
   StandardPreviewProps,
   StandardRowMenu,
   TableColumn,
 } from '@/components/standard';
+import { StatusChip } from '@/components/ui/primitives';
 
+import { HonestValueCell } from '../HonestValue';
 import type { KpiMeasurementDto } from '../kpiApi';
 import {
   formatKpiActualValue,
   formatKpiMeasurementDate,
   formatKpiMeasurementDateTime,
   formatKpiMeasurementPeriod,
-  kpiDataQualityStatusLabel,
-  kpiPerformanceStatusLabel,
   KPI_DATA_QUALITY_STATUS_TONE,
   KPI_PERFORMANCE_STATUS_TONE,
+  kpiDataQualityStatusLabel,
+  kpiPerformanceStatusLabel,
   shortKpiMeasurementId,
 } from './kpiMeasurementMappers';
 
@@ -85,7 +85,9 @@ export function buildKpiMeasurementColumns(isPolish: boolean, showLineage: boole
           value={row.actualValue}
           align="right"
           format={(v) => (
-            <span className="tabular-nums font-medium text-c-text">{formatKpiActualValue(v, isPolish)}</span>
+            <span className="tabular-nums font-medium text-c-text">
+              {formatKpiActualValue(v, isPolish)}
+            </span>
           )}
         />
       ),
@@ -126,7 +128,9 @@ export function buildKpiMeasurementColumns(isPolish: boolean, showLineage: boole
       id: 'source',
       label: isPolish ? 'Źródło' : 'Source',
       width: '130px',
-      render: (row: KpiMeasurementDto) => <span className="text-sm text-c-text-secondary">{row.source}</span>,
+      render: (row: KpiMeasurementDto) => (
+        <span className="text-sm text-c-text-secondary">{row.source}</span>
+      ),
     },
   ];
 
@@ -136,7 +140,10 @@ export function buildKpiMeasurementColumns(isPolish: boolean, showLineage: boole
       label: isPolish ? 'Koryguje' : 'Corrects',
       width: '120px',
       render: (row: KpiMeasurementDto) => (
-        <span className="text-sm text-c-text-muted font-mono" title={row.correctionOfMeasurementId ?? undefined}>
+        <span
+          className="text-sm text-c-text-muted font-mono"
+          title={row.correctionOfMeasurementId ?? undefined}
+        >
           {shortKpiMeasurementId(row.correctionOfMeasurementId)}
         </span>
       ),
@@ -149,7 +156,9 @@ export function buildKpiMeasurementColumns(isPolish: boolean, showLineage: boole
     width: '160px',
     sortable: true,
     render: (row: KpiMeasurementDto) => (
-      <span className="text-sm text-c-text-muted">{formatKpiMeasurementDateTime(row.recordedAt, isPolish)}</span>
+      <span className="text-sm text-c-text-muted">
+        {formatKpiMeasurementDateTime(row.recordedAt, isPolish)}
+      </span>
     ),
   });
 
@@ -176,11 +185,26 @@ export function buildKpiMeasurementRowMenu(
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   return {
     primary: [
-      { id: 'preview', label: t('Podgląd', 'Preview'), onClick: () => ctx.onPreview(row), disabled: ctx.busy },
+      {
+        id: 'preview',
+        label: t('Podgląd', 'Preview'),
+        onClick: () => ctx.onPreview(row),
+        disabled: ctx.busy,
+      },
     ],
     statusTransitions: [
-      { id: 'verify', label: t('Zweryfikuj', 'Verify'), onClick: () => ctx.onVerify(row), disabled: ctx.busy },
-      { id: 'dispute', label: t('Zakwestionuj', 'Dispute'), onClick: () => ctx.onDispute(row), disabled: ctx.busy },
+      {
+        id: 'verify',
+        label: t('Zweryfikuj', 'Verify'),
+        onClick: () => ctx.onVerify(row),
+        disabled: ctx.busy,
+      },
+      {
+        id: 'dispute',
+        label: t('Zakwestionuj', 'Dispute'),
+        onClick: () => ctx.onDispute(row),
+        disabled: ctx.busy,
+      },
     ],
     universalHandlers: {
       preview: () => ctx.onPreview(row),
@@ -272,13 +296,19 @@ export function buildKpiMeasurementPreview(
               isPolish={ctx.isPolish}
               value={row.actualValue}
               format={(v) => (
-                <span className="tabular-nums font-medium text-c-text">{v.toLocaleString(lang)}</span>
+                <span className="tabular-nums font-medium text-c-text">
+                  {v.toLocaleString(lang)}
+                </span>
               )}
             />
           ),
         },
         { id: 'source', label: t('Źródło', 'Source'), value: row.source },
-        { id: 'recordedBy', label: t('Zarejestrował(a)', 'Recorded by'), value: shortKpiMeasurementId(row.recordedBy) },
+        {
+          id: 'recordedBy',
+          label: t('Zarejestrował(a)', 'Recorded by'),
+          value: shortKpiMeasurementId(row.recordedBy),
+        },
         {
           id: 'evidenceRefs',
           label: t('Dowody', 'Evidence'),
@@ -290,7 +320,11 @@ export function buildKpiMeasurementPreview(
           value: row.correctionReason ?? '—',
         },
         { id: 'notes', label: t('Notatki', 'Notes'), value: row.notes ?? '—' },
-        { id: 'definitionVersion', label: t('Wersja definicji', 'Definition version'), value: shortKpiMeasurementId(row.definitionVersionId) },
+        {
+          id: 'definitionVersion',
+          label: t('Wersja definicji', 'Definition version'),
+          value: shortKpiMeasurementId(row.definitionVersionId),
+        },
       ],
     },
     ai: {
@@ -329,8 +363,6 @@ export function buildKpiMeasurementPreview(
   };
 }
 
-export function withMeasurementId<T extends { measurementId: string }>(
-  row: T
-): T & { id: string } {
+export function withMeasurementId<T extends { measurementId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.measurementId };
 }

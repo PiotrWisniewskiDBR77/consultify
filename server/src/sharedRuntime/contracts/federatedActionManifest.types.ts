@@ -1,9 +1,5 @@
 /** GENERATED MIRROR of shared/contracts/federatedActionManifest.types.d.ts — run scripts/cleanup/sync-server-runtime-mirrors.mjs; do not edit directly. */
-export type FederatedEffect =
-  | 'READ'
-  | 'PROPOSAL'
-  | 'REVERSIBLE_MUTATION'
-  | 'DESTRUCTIVE_MUTATION';
+export type FederatedEffect = 'READ' | 'PROPOSAL' | 'REVERSIBLE_MUTATION' | 'DESTRUCTIVE_MUTATION';
 
 export type MvpDisposition = 'SUPPORTED' | 'APPROVED_OUT' | 'NOT_SUPPORTED_IN_MVP';
 

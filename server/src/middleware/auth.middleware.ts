@@ -5,14 +5,9 @@
  */
 
 import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import type { VerifyOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
-import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
-import { getTableColumns } from '../utils/dbSchema.js';
-import logger from '../utils/Logger.js';
 import {
   type ActiveDemoSession,
   DEMO_SESSION_EXPIRED_CODE,
@@ -28,6 +23,11 @@ import {
   isVerifiedPlatformSuperAdmin,
   resolveBlockingOrgStatus,
 } from '../services/organizationSuspensionGuard.js';
+import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
 import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 import { evaluateSessionIdlePolicy } from './sessionIdlePolicy.js';
 

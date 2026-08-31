@@ -35,82 +35,97 @@ import { assertRealPostgresTestEnvironment } from '../../../../../tests/integrat
 const NO_RETRY = { retry: 0 } as const;
 const SWEEP_COUNT = 20;
 
-describe('Day205 FIX pkt 2 — organization context store save supersedes instead of appending', NO_RETRY, () => {
-  const organizationId = randomUUID();
-  const userId = randomUUID();
-  let sql: Client;
+describe(
+  'Day205 FIX pkt 2 — organization context store save supersedes instead of appending',
+  NO_RETRY,
+  () => {
+    const organizationId = randomUUID();
+    const userId = randomUUID();
+    let sql: Client;
 
-  beforeAll(async () => {
-    expect(process.env.DB_TYPE).toBe('postgres');
-    await assertRealPostgresTestEnvironment();
-    sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
-    await sql.connect();
-    await sql.query(
-      `INSERT INTO organizations (id,name,plan,status) VALUES ($1,'Day205 FIX pkt2','enterprise','active')`,
-      [organizationId]
-    );
-  }, 60_000);
+    beforeAll(async () => {
+      expect(process.env.DB_TYPE).toBe('postgres');
+      await assertRealPostgresTestEnvironment();
+      sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
+      await sql.connect();
+      await sql.query(
+        `INSERT INTO organizations (id,name,plan,status) VALUES ($1,'Day205 FIX pkt2','enterprise','active')`,
+        [organizationId]
+      );
+    }, 60_000);
 
-  afterAll(async () => {
-    if (!sql) return;
-    await sql.query(`DELETE FROM organization_context_claims WHERE organization_id=$1`, [organizationId]);
-    await sql.query(`DELETE FROM organization_context_items WHERE organization_id=$1`, [organizationId]);
-    await sql.query(`DELETE FROM organization_context_snapshots WHERE organization_id=$1`, [organizationId]);
-    await sql.query(`DELETE FROM organizations WHERE id=$1`, [organizationId]);
-    await sql.end();
-  });
-
-  it(`writing the same section ${SWEEP_COUNT} times keeps active claim count bounded by section count and rebuilds nothing`, async () => {
-    const { default: organizationContextService } = await import('../OrganizationContextService.js');
-
-    for (let i = 1; i <= SWEEP_COUNT; i++) {
-      await organizationContextService.recordOrganizationContextStoreSave({
+    afterAll(async () => {
+      if (!sql) return;
+      await sql.query(`DELETE FROM organization_context_claims WHERE organization_id=$1`, [
         organizationId,
-        userId,
-        goals: { ambition: `Day205 FIX pkt2 sweep ${i}` },
-      });
-    }
+      ]);
+      await sql.query(`DELETE FROM organization_context_items WHERE organization_id=$1`, [
+        organizationId,
+      ]);
+      await sql.query(`DELETE FROM organization_context_snapshots WHERE organization_id=$1`, [
+        organizationId,
+      ]);
+      await sql.query(`DELETE FROM organizations WHERE id=$1`, [organizationId]);
+      await sql.end();
+    });
 
-    const activeClaims = await sql.query<{ id: string; value_json: unknown; supersedes_claim_id: string | null }>(
-      `SELECT id, value_json, supersedes_claim_id FROM organization_context_claims
+    it(`writing the same section ${SWEEP_COUNT} times keeps active claim count bounded by section count and rebuilds nothing`, async () => {
+      const { default: organizationContextService } =
+        await import('../OrganizationContextService.js');
+
+      for (let i = 1; i <= SWEEP_COUNT; i++) {
+        await organizationContextService.recordOrganizationContextStoreSave({
+          organizationId,
+          userId,
+          goals: { ambition: `Day205 FIX pkt2 sweep ${i}` },
+        });
+      }
+
+      const activeClaims = await sql.query<{
+        id: string;
+        value_json: unknown;
+        supersedes_claim_id: string | null;
+      }>(
+        `SELECT id, value_json, supersedes_claim_id FROM organization_context_claims
        WHERE organization_id=$1 AND claim_path='notes.manualContext' AND status='active'`,
-      [organizationId]
-    );
-    // Bounded by the number of distinct sections ever written in this test
-    // (only 'goals'), NOT by the number of PUTs (20). This is the load-bearing
-    // assertion: without supersede this would equal SWEEP_COUNT (20).
-    expect(activeClaims.rows.length).toBeLessThanOrEqual(3);
-    expect(activeClaims.rows.length).toBe(1);
-    const activeValue = activeClaims.rows[0]?.value_json as unknown;
-    const activeValueStr =
-      typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue);
-    expect(activeValueStr).toContain(`Day205 FIX pkt2 sweep ${SWEEP_COUNT}`);
+        [organizationId]
+      );
+      // Bounded by the number of distinct sections ever written in this test
+      // (only 'goals'), NOT by the number of PUTs (20). This is the load-bearing
+      // assertion: without supersede this would equal SWEEP_COUNT (20).
+      expect(activeClaims.rows.length).toBeLessThanOrEqual(3);
+      expect(activeClaims.rows.length).toBe(1);
+      const activeValue = activeClaims.rows[0]?.value_json as unknown;
+      const activeValueStr =
+        typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue);
+      expect(activeValueStr).toContain(`Day205 FIX pkt2 sweep ${SWEEP_COUNT}`);
 
-    // All prior writes were superseded, not deleted (audit trail preserved),
-    // and the surviving active claim points at the chain via supersedes_claim_id.
-    const allClaims = await sql.query<{ status: string }>(
-      `SELECT status FROM organization_context_claims
+      // All prior writes were superseded, not deleted (audit trail preserved),
+      // and the surviving active claim points at the chain via supersedes_claim_id.
+      const allClaims = await sql.query<{ status: string }>(
+        `SELECT status FROM organization_context_claims
        WHERE organization_id=$1 AND claim_path='notes.manualContext'`,
-      [organizationId]
-    );
-    expect(allClaims.rows.length).toBe(SWEEP_COUNT);
-    const superseded = allClaims.rows.filter((r) => r.status === 'superseded');
-    expect(superseded.length).toBe(SWEEP_COUNT - 1);
+        [organizationId]
+      );
+      expect(allClaims.rows.length).toBe(SWEEP_COUNT);
+      const superseded = allClaims.rows.filter((r) => r.status === 'superseded');
+      expect(superseded.length).toBe(SWEEP_COUNT - 1);
 
-    // buildResolvedContext (and therefore the FIX-205 pkt 1 prompt render)
-    // must see exactly one 'goals' entry, not 20 accumulated duplicates.
-    const resolved = await organizationContextService.buildResolvedContext(organizationId);
-    const goalsEntries = resolved.notes.manualContext.filter(
-      (entry) => (entry as Record<string, unknown>).section === 'goals'
-    );
-    expect(goalsEntries.length).toBe(1);
-    expect(JSON.stringify(goalsEntries)).toContain(`Day205 FIX pkt2 sweep ${SWEEP_COUNT}`);
+      // buildResolvedContext (and therefore the FIX-205 pkt 1 prompt render)
+      // must see exactly one 'goals' entry, not 20 accumulated duplicates.
+      const resolved = await organizationContextService.buildResolvedContext(organizationId);
+      const goalsEntries = resolved.notes.manualContext.filter(
+        (entry) => (entry as Record<string, unknown>).section === 'goals'
+      );
+      expect(goalsEntries.length).toBe(1);
+      expect(JSON.stringify(goalsEntries)).toContain(`Day205 FIX pkt2 sweep ${SWEEP_COUNT}`);
 
-    // rebuildSnapshot: false — 20 calls must not have written a snapshot row.
-    const snapshot = await sql.query(
-      `SELECT organization_id FROM organization_context_snapshots WHERE organization_id=$1`,
-      [organizationId]
-    );
-    expect(snapshot.rows.length).toBe(0);
-  });
-});
+      // rebuildSnapshot: false — 20 calls must not have written a snapshot row.
+      const snapshot = await sql.query(
+        `SELECT organization_id FROM organization_context_snapshots WHERE organization_id=$1`,
+        [organizationId]
+      );
+      expect(snapshot.rows.length).toBe(0);
+    });
+  }
+);

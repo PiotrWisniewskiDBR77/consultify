@@ -498,7 +498,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     [kpi, kpiId, openChatWithContext, formatOrgContext, t]
   );
 
-
   const handleUnlinkMapping = useCallback(
     async (mappingId: string) => {
       if (!mappingId) return;
@@ -1619,8 +1618,17 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
                     {t('results.drawer.recordTitleCanonical', 'Canonical measurement entry')}
                   </h3>
-                  <p className="mb-3 text-sm text-c-text-secondary">{t('results.drawer.legacyMeasurementArchive', 'This legacy KPI is read-only. Record governed measurements against the approved immutable definition in the KPI registry.')}</p>
-                  <button type="button" onClick={openCanonicalKpiRegistry} className="w-full h-9 rounded-full border border-c-border bg-c-surface text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors">
+                  <p className="mb-3 text-sm text-c-text-secondary">
+                    {t(
+                      'results.drawer.legacyMeasurementArchive',
+                      'This legacy KPI is read-only. Record governed measurements against the approved immutable definition in the KPI registry.'
+                    )}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openCanonicalKpiRegistry}
+                    className="w-full h-9 rounded-full border border-c-border bg-c-surface text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                  >
                     {t('results.actions.openCanonicalMeasurements', 'Open canonical measurements')}
                   </button>
                 </div>
@@ -1780,8 +1788,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         ? t('results.drawer.definitionTitle', 'Definition')
                         : t('results.drawer.targetsTitle', 'Targets')}
                     </div>
-                    <button type="button" onClick={openCanonicalKpiRegistry} className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors">
-                      <span className="inline-flex items-center gap-2"><Pencil size={14} />{t('results.actions.editGovernedDefinition', 'Edit governed definition')}</span>
+                    <button
+                      type="button"
+                      onClick={openCanonicalKpiRegistry}
+                      className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Pencil size={14} />
+                        {t('results.actions.editGovernedDefinition', 'Edit governed definition')}
+                      </span>
                     </button>
                   </div>
 
@@ -2079,7 +2094,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   )}
 
                   {normalizedSection === 'definition' && (
-                    <div id="kpi-drawer-canonical-management" className="rounded-lg border border-slate-200 dark:border-navy-700 p-4 scroll-mt-4">
+                    <div
+                      id="kpi-drawer-canonical-management"
+                      className="rounded-lg border border-slate-200 dark:border-navy-700 p-4 scroll-mt-4"
+                    >
                       <button
                         type="button"
                         onClick={openCanonicalKpiRegistry}
@@ -2216,7 +2234,11 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     )}
                   </div>
 
-                  <button type="button" onClick={openCanonicalKpiRegistry} className="w-full h-9 rounded-full border border-c-border bg-c-surface text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors">
+                  <button
+                    type="button"
+                    onClick={openCanonicalKpiRegistry}
+                    className="w-full h-9 rounded-full border border-c-border bg-c-surface text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                  >
                     {t('results.actions.manageImpactInRegistry', 'Manage impacts in KPI registry')}
                   </button>
                 </div>

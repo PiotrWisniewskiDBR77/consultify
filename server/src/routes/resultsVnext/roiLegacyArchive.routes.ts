@@ -30,16 +30,17 @@
  * `validateQuery` DO return a structured 400 on failure, matching every
  * sibling router in this directory.
  */
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
-import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { denyMutations } from '../../middleware/readOnlyGuard.middleware.js';
+import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { validateParams, validateQuery } from '../../middleware/validation.middleware.js';
+import { resultsVnextRoiLegacyArchiveHitsTotal } from '../../services/metricsService.js';
 import {
   getLegacyAnalysisFinancial,
   getLegacyBenefitsRegisterEntry,
@@ -58,7 +59,6 @@ import {
   listLegacyV8RoiRealizationEntries,
   type RoiLegacyOriginDomain,
 } from '../../services/resultsVnext/roi/roiLegacyArchiveRepository.js';
-import { resultsVnextRoiLegacyArchiveHitsTotal } from '../../services/metricsService.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -111,11 +111,11 @@ interface LegacyArchiveMeta {
 const LEGACY_LABELS: Record<string, { originDomain: RoiLegacyOriginDomain; label: string }> = {
   'analysis-financials': {
     originDomain: 'initiatives_module_live',
-    label: "Initiatives module `/roi` — live, external to Results vNext",
+    label: 'Initiatives module `/roi` — live, external to Results vNext',
   },
   'digitization-analyses': {
     originDomain: 'initiatives_module_live',
-    label: "Initiatives module `/roi` — live, external to Results vNext",
+    label: 'Initiatives module `/roi` — live, external to Results vNext',
   },
   'initiative-benefits': {
     originDomain: 'finance_benefits_live',
@@ -123,11 +123,11 @@ const LEGACY_LABELS: Record<string, { originDomain: RoiLegacyOriginDomain; label
   },
   'roi-assumptions': {
     originDomain: 'results_v8_live',
-    label: "Results V8 `/api/v8/results/roi` — live, external to Results vNext",
+    label: 'Results V8 `/api/v8/results/roi` — live, external to Results vNext',
   },
   'roi-realized-values': {
     originDomain: 'results_v8_live',
-    label: "Results V8 `/api/v8/results/roi` — live, external to Results vNext",
+    label: 'Results V8 `/api/v8/results/roi` — live, external to Results vNext',
   },
   'benefits-register': {
     originDomain: 'finance_benefits_live',
@@ -171,7 +171,9 @@ function handleLegacyRouteError(res: Response, err: unknown, op: string): void {
   logger.error(`[resultsVnext/roiLegacyArchive.routes] ${op} failed`, {
     error: err instanceof Error ? err.message : String(err),
   });
-  res.status(500).json({ error: 'Internal server error', code: 'ROI_LEGACY_ARCHIVE_INTERNAL_ERROR' });
+  res
+    .status(500)
+    .json({ error: 'Internal server error', code: 'ROI_LEGACY_ARCHIVE_INTERNAL_ERROR' });
 }
 
 // ==========================================
@@ -211,11 +213,22 @@ router.get(
       const query = req.query as unknown as import('zod').infer<typeof ListRoiLegacyQuerySchema>;
       const limit = query.limit ?? 50;
       const offset = query.offset ?? 0;
-      const { rows, total } = await listLegacyAnalysisFinancials(auth.organizationId, limit, offset);
+      const { rows, total } = await listLegacyAnalysisFinancials(
+        auth.organizationId,
+        limit,
+        offset
+      );
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'analysis_financials' });
       res.json({
         data: rows,
-        meta: legacyMeta('analysis-financials', 'analysis_financials', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'analysis-financials',
+          'analysis_financials',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyAnalysisFinancials');
@@ -230,16 +243,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof RoiLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof RoiLegacyIdParamsSchema
+      >;
       const row = await getLegacyAnalysisFinancial(auth.organizationId, legacyId);
       if (!row) {
-        res
-          .status(404)
-          .json({ data: null, meta: legacyMeta('analysis-financials', 'analysis_financials', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('analysis-financials', 'analysis_financials', auth.organizationId),
+        });
         return;
       }
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'analysis_financials' });
-      res.json({ data: row, meta: legacyMeta('analysis-financials', 'analysis_financials', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('analysis-financials', 'analysis_financials', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyAnalysisFinancial');
     }
@@ -260,11 +279,22 @@ router.get(
       const query = req.query as unknown as import('zod').infer<typeof ListRoiLegacyQuerySchema>;
       const limit = query.limit ?? 50;
       const offset = query.offset ?? 0;
-      const { rows, total } = await listLegacyDigitizationAnalyses(auth.organizationId, limit, offset);
+      const { rows, total } = await listLegacyDigitizationAnalyses(
+        auth.organizationId,
+        limit,
+        offset
+      );
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'digitization_analyses' });
       res.json({
         data: rows,
-        meta: legacyMeta('digitization-analyses', 'digitization_analyses', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'digitization-analyses',
+          'digitization_analyses',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyDigitizationAnalyses');
@@ -279,7 +309,9 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof RoiLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof RoiLegacyIdParamsSchema
+      >;
       const row = await getLegacyDigitizationAnalysis(auth.organizationId, legacyId);
       if (!row) {
         res.status(404).json({
@@ -313,11 +345,22 @@ router.get(
       const query = req.query as unknown as import('zod').infer<typeof ListRoiLegacyQuerySchema>;
       const limit = query.limit ?? 50;
       const offset = query.offset ?? 0;
-      const { rows, total } = await listLegacyInitiativeBenefits(auth.organizationId, limit, offset);
+      const { rows, total } = await listLegacyInitiativeBenefits(
+        auth.organizationId,
+        limit,
+        offset
+      );
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'initiative_benefits' });
       res.json({
         data: rows,
-        meta: legacyMeta('initiative-benefits', 'initiative_benefits', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'initiative-benefits',
+          'initiative_benefits',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyInitiativeBenefits');
@@ -332,16 +375,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof RoiLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof RoiLegacyIdParamsSchema
+      >;
       const row = await getLegacyInitiativeBenefit(auth.organizationId, legacyId);
       if (!row) {
-        res
-          .status(404)
-          .json({ data: null, meta: legacyMeta('initiative-benefits', 'initiative_benefits', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('initiative-benefits', 'initiative_benefits', auth.organizationId),
+        });
         return;
       }
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'initiative_benefits' });
-      res.json({ data: row, meta: legacyMeta('initiative-benefits', 'initiative_benefits', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('initiative-benefits', 'initiative_benefits', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyInitiativeBenefit');
     }
@@ -366,7 +415,14 @@ router.get(
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'roi_assumptions' });
       res.json({
         data: rows,
-        meta: legacyMeta('roi-assumptions', 'roi_assumptions', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'roi-assumptions',
+          'roi_assumptions',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyRoiAssumptions');
@@ -381,14 +437,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof RoiLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof RoiLegacyIdParamsSchema
+      >;
       const row = await getLegacyRoiAssumption(auth.organizationId, legacyId);
       if (!row) {
-        res.status(404).json({ data: null, meta: legacyMeta('roi-assumptions', 'roi_assumptions', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('roi-assumptions', 'roi_assumptions', auth.organizationId),
+        });
         return;
       }
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'roi_assumptions' });
-      res.json({ data: row, meta: legacyMeta('roi-assumptions', 'roi_assumptions', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('roi-assumptions', 'roi_assumptions', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyRoiAssumption');
     }
@@ -413,7 +477,14 @@ router.get(
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'roi_realized_values' });
       res.json({
         data: rows,
-        meta: legacyMeta('roi-realized-values', 'roi_realized_values', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'roi-realized-values',
+          'roi_realized_values',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyRoiRealizedValues');
@@ -428,16 +499,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof RoiLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof RoiLegacyIdParamsSchema
+      >;
       const row = await getLegacyRoiRealizedValue(auth.organizationId, legacyId);
       if (!row) {
-        res
-          .status(404)
-          .json({ data: null, meta: legacyMeta('roi-realized-values', 'roi_realized_values', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('roi-realized-values', 'roi_realized_values', auth.organizationId),
+        });
         return;
       }
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'roi_realized_values' });
-      res.json({ data: row, meta: legacyMeta('roi-realized-values', 'roi_realized_values', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('roi-realized-values', 'roi_realized_values', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyRoiRealizedValue');
     }
@@ -462,7 +539,14 @@ router.get(
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'benefits_register' });
       res.json({
         data: rows,
-        meta: legacyMeta('benefits-register', 'benefits_register', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'benefits-register',
+          'benefits_register',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'listLegacyBenefitsRegister');
@@ -477,16 +561,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof RoiLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof RoiLegacyIdParamsSchema
+      >;
       const row = await getLegacyBenefitsRegisterEntry(auth.organizationId, legacyId);
       if (!row) {
-        res
-          .status(404)
-          .json({ data: null, meta: legacyMeta('benefits-register', 'benefits_register', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('benefits-register', 'benefits_register', auth.organizationId),
+        });
         return;
       }
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'benefits_register' });
-      res.json({ data: row, meta: legacyMeta('benefits-register', 'benefits_register', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('benefits-register', 'benefits_register', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyBenefitsRegisterEntry');
     }
@@ -507,7 +597,11 @@ router.get(
       const query = req.query as unknown as import('zod').infer<typeof ListRoiLegacyQuerySchema>;
       const limit = query.limit ?? 50;
       const offset = query.offset ?? 0;
-      const { rows, total } = await listLegacyV8RoiRealizationEntries(auth.organizationId, limit, offset);
+      const { rows, total } = await listLegacyV8RoiRealizationEntries(
+        auth.organizationId,
+        limit,
+        offset
+      );
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'v8_roi_realization_entries' });
       res.json({
         data: rows,
@@ -533,19 +627,29 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof RoiLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof RoiLegacyIdParamsSchema
+      >;
       const row = await getLegacyV8RoiRealizationEntry(auth.organizationId, legacyId);
       if (!row) {
         res.status(404).json({
           data: null,
-          meta: legacyMeta('v8-roi-realization-entries', 'v8_roi_realization_entries', auth.organizationId),
+          meta: legacyMeta(
+            'v8-roi-realization-entries',
+            'v8_roi_realization_entries',
+            auth.organizationId
+          ),
         });
         return;
       }
       resultsVnextRoiLegacyArchiveHitsTotal.inc({ source_table: 'v8_roi_realization_entries' });
       res.json({
         data: row,
-        meta: legacyMeta('v8-roi-realization-entries', 'v8_roi_realization_entries', auth.organizationId),
+        meta: legacyMeta(
+          'v8-roi-realization-entries',
+          'v8_roi_realization_entries',
+          auth.organizationId
+        ),
       });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyV8RoiRealizationEntry');

@@ -661,7 +661,9 @@ function labelledList(sourceLines: string[], label: RegExp): string[] {
 }
 
 function compactSlideText(value: unknown, maxLength = 110): string {
-  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (text.length <= maxLength) return text;
   const clipped = text.slice(0, maxLength - 1);
   const boundary = clipped.lastIndexOf(' ');
@@ -751,11 +753,13 @@ function blocksForTemplateIntent(
             metrics: (evidenceLabels.length
               ? evidenceLabels
               : ['Investment', 'Run-rate benefit', 'Payback']
-            ).slice(0, 3).map((label) => ({
-              label,
-              value: compactSlideText(groundedValueForLabel(label, sourceLines), 38),
-              trend: 'stable',
-            })),
+            )
+              .slice(0, 3)
+              .map((label) => ({
+                label,
+                value: compactSlideText(groundedValueForLabel(label, sourceLines), 38),
+                trend: 'stable',
+              })),
           },
         },
       ];
@@ -825,15 +829,17 @@ function blocksForTemplateIntent(
             headers: ['Risk', 'Exposure', 'Mitigation', 'Owner'],
             rows:
               risks.length > 0
-                ? risks.slice(0, 3).map((risk, index) => [
-                    compactSlideText(risk, 48),
-                    'Open',
-                    compactSlideText(
-                      mitigations[index] || mitigations[0] || 'Mitigation required',
-                      58
-                    ),
-                    'Owner required',
-                  ])
+                ? risks
+                    .slice(0, 3)
+                    .map((risk, index) => [
+                      compactSlideText(risk, 48),
+                      'Open',
+                      compactSlideText(
+                        mitigations[index] || mitigations[0] || 'Mitigation required',
+                        58
+                      ),
+                      'Owner required',
+                    ])
                 : [
                     [
                       'Adoption',
@@ -868,8 +874,8 @@ function blocksForTemplateIntent(
             items: (briefLines.length
               ? briefLines
               : hints.length
-              ? hints
-              : ['Decision rights', 'Value ownership', 'Control cadence']
+                ? hints
+                : ['Decision rights', 'Value ownership', 'Control cadence']
             )
               .slice(0, 3)
               .map((line) => compactSlideText(line, 76)),
@@ -887,12 +893,12 @@ function blocksForTemplateIntent(
             items: (decisions.length
               ? decisions
               : hints.length
-              ? hints
-              : [
-                  'Confirm the decision and conditions',
-                  'Nominate accountable owners',
-                  'Launch the first control gate',
-                ]
+                ? hints
+                : [
+                    'Confirm the decision and conditions',
+                    'Nominate accountable owners',
+                    'Launch the first control gate',
+                  ]
             )
               .slice(0, 3)
               .map((line) => compactSlideText(line, 76)),
@@ -950,15 +956,35 @@ function briefLinesForOutlineItem(
       /market|opportunit/,
       ['market', 'beachhead', 'customer', 'segment', 'adoption', 'expansion', 'price', 'pricing'],
     ],
-    [/business model|gtm|go-to-market/, ['business model', 'pricing', 'subscription', 'revenue', 'gtm', 'channel']],
+    [
+      /business model|gtm|go-to-market/,
+      ['business model', 'pricing', 'subscription', 'revenue', 'gtm', 'channel'],
+    ],
     [/evidence|economic|risk/, ['evidence', 'measure', 'risk', 'owner', 'mitigation', 'cogs']],
-    [/competition|defensib/, ['defensibility', 'competition', 'proprietary', 'telemetry', 'distribution']],
+    [
+      /competition|defensib/,
+      ['defensibility', 'competition', 'proprietary', 'telemetry', 'distribution'],
+    ],
     [
       /financial|outlook/,
-      ['financial', 'scenario', 'revenue', 'cogs', 'margin', 'ebitda', 'cash', 'runway', 'headcount', 'opex'],
+      [
+        'financial',
+        'scenario',
+        'revenue',
+        'cogs',
+        'margin',
+        'ebitda',
+        'cash',
+        'runway',
+        'headcount',
+        'opex',
+      ],
     ],
     [/team|governance/, ['team', 'owner', 'governance', 'privacy', 'security', 'finance']],
-    [/funding|ask|milestone|next step/, ['ask', 'pilot', 'milestone', 'decision', 'funding', '90-day']],
+    [
+      /funding|ask|milestone|next step/,
+      ['ask', 'pilot', 'milestone', 'decision', 'funding', '90-day'],
+    ],
   ];
   const keywords = topicGroups.find(([matcher]) => matcher.test(topic))?.[1] || [];
   const matched = briefLines.filter((line) => {
@@ -1022,7 +1048,13 @@ export function mapOutlineBlueprintToDeckSlides(
     // titles and correctly trips the export encoding gate. Decode only the
     // small safe entity set at the template-to-artifact boundary.
     const title = decodeTemplateText(item.title || item.workingTitle || `Slide ${index + 1}`);
-    const slideBriefLines = briefLinesForOutlineItem(title, intent, briefLines, index, items.length);
+    const slideBriefLines = briefLinesForOutlineItem(
+      title,
+      intent,
+      briefLines,
+      index,
+      items.length
+    );
     const blocks = blocksForTemplateIntent(item, title, intent, slideBriefLines);
     return { type: intent, content: { title, intent, blocks } };
   });

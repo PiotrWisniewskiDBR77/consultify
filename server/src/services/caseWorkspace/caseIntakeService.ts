@@ -240,7 +240,7 @@ import { createHash } from 'node:crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { queryAll, withPgTransaction, type PgTransactionClient } from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, queryAll, withPgTransaction } from '../../utils/queryHelpers.js';
 import type {
   AutonomyPolicy,
   CaseProfile,
@@ -673,7 +673,11 @@ export function normalizeWorkOrder(input: WorkOrderDraftInput): CanonicalWorkOrd
     // LIGHT / LIGHTWEIGHT / ASK_MATERIAL_ACTIONS are caseCoreService.createCase's
     // own defaults — mirrored so a Case created through intake is
     // indistinguishable from one created through that command.
-    caseProfile: requireEnum(input.caseProfile ?? 'LIGHT', CASE_PROFILES, 'intake_case_profile_invalid'),
+    caseProfile: requireEnum(
+      input.caseProfile ?? 'LIGHT',
+      CASE_PROFILES,
+      'intake_case_profile_invalid'
+    ),
     governanceTier: requireEnum(
       input.governanceTier ?? 'LIGHTWEIGHT',
       GOVERNANCE_TIERS,
@@ -903,7 +907,10 @@ export async function confirmWorkOrder(input: {
   correlationId?: string | null;
 }): Promise<ConfirmWorkOrderResult> {
   const confirmedByActorId = requireNonBlank(input?.confirmedByActorId, 'intake_actor_required');
-  const confirmedDigest = requireNonBlank(input?.confirmedDigest, 'intake_confirmed_digest_required');
+  const confirmedDigest = requireNonBlank(
+    input?.confirmedDigest,
+    'intake_confirmed_digest_required'
+  );
   const workOrder = normalizeWorkOrder(input?.workOrder);
 
   await requireOrgMember(confirmedByActorId, workOrder.organizationId);
@@ -928,7 +935,8 @@ export async function confirmWorkOrder(input: {
     sourceConversationId: workOrder.sourceConversationId,
     confirmedByActorId,
   });
-  const confirmationIdempotencyKey = optionalId(input?.confirmationIdempotencyKey) ?? workOrderDigest;
+  const confirmationIdempotencyKey =
+    optionalId(input?.confirmationIdempotencyKey) ?? workOrderDigest;
   const intakeConfirmationKey = computeIntakeConfirmationKey({
     organizationId: workOrder.organizationId,
     actorOrConversationScope: confirmationScope,

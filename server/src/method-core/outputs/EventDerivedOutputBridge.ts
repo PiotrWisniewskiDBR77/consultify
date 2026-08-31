@@ -27,13 +27,17 @@
  * the "if (method === 'drd')" branch the kernel is built to avoid.
  */
 
+import type { MethodEvent } from '../contracts/index.js';
 import { genId, nowIso } from '../db.js';
 import { DEMO_BYPASS_NOTICE } from '../demoBypass.js';
 import type { MethodEventStore } from '../MethodEventStore.js';
 import type { MethodOutputBridge } from '../MethodSessionService.js';
-import type { EvidenceLocatorInput, FreezeOutputInput, OutputFindingInput } from './MethodOutputService.js';
+import type {
+  EvidenceLocatorInput,
+  FreezeOutputInput,
+  OutputFindingInput,
+} from './MethodOutputService.js';
 import type { MethodOutputService } from './MethodOutputService.js';
-import type { MethodEvent } from '../contracts/index.js';
 
 interface UnitAccumulator {
   unitId: string;
@@ -156,7 +160,9 @@ export function deriveFindingsFromEvents(events: readonly MethodEvent[]): {
       kpiProposal: null,
       confidence: 'medium',
       priorityRationale:
-        gap[u.unitId] !== null ? `Sortowanie wg wielkości luki (${gap[u.unitId]}).` : 'Brak wyliczonej luki.',
+        gap[u.unitId] !== null
+          ? `Sortowanie wg wielkości luki (${gap[u.unitId]}).`
+          : 'Brak wyliczonej luki.',
       sourceLocators: [...u.answerEventIds, ...u.evidence.map((e) => e.locator)],
     });
   }
@@ -269,7 +275,11 @@ export class EventDerivedOutputBridge implements MethodOutputBridge {
       actorUserId: null,
       methodPackVersion: input.methodPackVersion,
       idempotencyKey: `output-created:${output.id}`,
-      payload: { outputId: output.id, outputVersion: output.outputVersion, contentHash: output.contentHash },
+      payload: {
+        outputId: output.id,
+        outputVersion: output.outputVersion,
+        contentHash: output.contentHash,
+      },
     });
   }
 }

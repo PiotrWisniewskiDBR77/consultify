@@ -29,13 +29,13 @@
  */
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { cellRefKey, type CellRef } from '../../../types/finance/CellRef.js';
-import type { FinanceRole } from '../canonical/lifecycleService.js';
+import { type CellRef, cellRefKey } from '../../../types/finance/CellRef.js';
 import type { FinanceValueInput, Operation } from '../../../types/finance/Operation.js';
 import { operationTargets } from '../../../types/finance/Operation.js';
 import type { FinanceUnsavedOperationStackEntry } from '../../../types/finance/WorkspaceState.js';
-import { operationIntendedValues } from './operationStack.js';
+import type { FinanceRole } from '../canonical/lifecycleService.js';
 import type { CheckpointPayload, WorkingRevisionCheckpointRow } from './autosaveService.js';
+import { operationIntendedValues } from './operationStack.js';
 
 // ---------------------------------------------------------------------------
 // Detection
@@ -72,7 +72,12 @@ export type DetectConflictsResult =
 function parsePayload(raw: unknown): CheckpointPayload | null {
   if (raw === null || raw === undefined) return null;
   const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  if (typeof value !== 'object' || value === null || !Array.isArray((value as any).unsavedOperationStack)) return null;
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !Array.isArray((value as any).unsavedOperationStack)
+  )
+    return null;
   return value as CheckpointPayload;
 }
 
@@ -88,7 +93,12 @@ interface TheirsWrite {
 /** Latest-write-wins projection, per cell, across a set of committed stack entries — used for BOTH "mine" (my own pending ops) and "theirs" (their intervening checkpoints), same logic, so the two sides are compared on equal footing. */
 function latestWritePerCell(
   operations: readonly Operation[],
-  context: { workingRevisionId: string; revisionSeq: number; editedBy: string | null; editedAt: string }
+  context: {
+    workingRevisionId: string;
+    revisionSeq: number;
+    editedBy: string | null;
+    editedAt: string;
+  }
 ): Map<string, TheirsWrite> {
   const byKey = new Map<string, TheirsWrite>();
   for (const op of operations) {
@@ -116,17 +126,23 @@ export interface DetectConflictsParams {
   myUnsavedOperationStack: readonly FinanceUnsavedOperationStackEntry[];
 }
 
-export async function detectConflicts(params: DetectConflictsParams): Promise<DetectConflictsResult> {
+export async function detectConflicts(
+  params: DetectConflictsParams
+): Promise<DetectConflictsResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     const current = await tx.queryOne<WorkingRevisionCheckpointRow>(
       `SELECT * FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
       [params.artifactId, params.organizationId]
     );
-    if (!current) return { ok: false, code: 'NOT_FOUND', message: 'No working revision for this artifact' };
+    if (!current)
+      return { ok: false, code: 'NOT_FOUND', message: 'No working revision for this artifact' };
 
     const currentRevisionSeq = Number(current.revision_seq);
 
-    if (!params.baseWorkingRevisionId || current.working_revision_id === params.baseWorkingRevisionId) {
+    if (
+      !params.baseWorkingRevisionId ||
+      current.working_revision_id === params.baseWorkingRevisionId
+    ) {
       return {
         ok: true,
         result: {
@@ -193,7 +209,9 @@ export async function detectConflicts(params: DetectConflictsParams): Promise<De
         theirs: theirs.value,
         theirsEditedBy: theirs.editedBy,
         theirsEditedAt: theirs.editedAt,
-        resolutionOptions: bothResolvable ? ['MINE', 'THEIRS', 'MERGE_PER_CELL'] : ['MINE', 'THEIRS'],
+        resolutionOptions: bothResolvable
+          ? ['MINE', 'THEIRS', 'MERGE_PER_CELL']
+          : ['MINE', 'THEIRS'],
       });
     }
 
@@ -224,7 +242,11 @@ export interface ConflictResolutionChoice {
 
 export type BuildResolvedOperationResult =
   | { ok: true; operation: Operation }
-  | { ok: false; code: 'NO_CHOICES' | 'MISSING_MERGED_VALUE' | 'UNRESOLVABLE_CHOICE'; message: string };
+  | {
+      ok: false;
+      code: 'NO_CHOICES' | 'MISSING_MERGED_VALUE' | 'UNRESOLVABLE_CHOICE';
+      message: string;
+    };
 
 export interface ResolutionMintParams {
   operationId: string;
@@ -248,7 +270,8 @@ export function buildResolvedOperation(
   choices: readonly ConflictResolutionChoice[],
   mint: ResolutionMintParams
 ): BuildResolvedOperationResult {
-  if (choices.length === 0) return { ok: false, code: 'NO_CHOICES', message: 'No resolution choices supplied' };
+  if (choices.length === 0)
+    return { ok: false, code: 'NO_CHOICES', message: 'No resolution choices supplied' };
 
   const conflictByKey = new Map(conflicts.map((c) => [cellRefKey(c.cellRef), c]));
   const targets: CellRef[] = [];

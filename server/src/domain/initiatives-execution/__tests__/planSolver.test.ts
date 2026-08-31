@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import type { CapacityScenario } from '../capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from '../planScenario.js';
 import { solvePlanScenario } from '../planSolver.js';

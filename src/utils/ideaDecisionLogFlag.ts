@@ -22,8 +22,8 @@
  */
 
 import {
-  isDemoAcceptanceProfileEnabled,
   type DemoAcceptanceProfileSource,
+  isDemoAcceptanceProfileEnabled,
 } from './demoAcceptanceProfile';
 
 const LS_KEY = 'ff.idea_decision_log';

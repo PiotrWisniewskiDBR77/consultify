@@ -48,11 +48,11 @@ import {
   History,
   Lightbulb,
   Link2,
+  type LucideIcon,
   MessageSquare,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  type LucideIcon,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -123,10 +123,7 @@ export const ARTIFACT_PANEL_MANDATORY_SECTIONS: ArtifactPanelSectionId[] =
  * „sekcja pusta ma być widoczna i uczciwa, nie ukryta" — komunikat mówi, że
  * czegoś NIE MA, i nie udaje funkcji, której nie ma.
  */
-const CANONICAL_SECTION_EMPTY_LABELS: Record<
-  ArtifactPanelSectionId,
-  { pl: string; en: string }
-> = {
+const CANONICAL_SECTION_EMPTY_LABELS: Record<ArtifactPanelSectionId, { pl: string; en: string }> = {
   actions: { pl: 'Brak dostępnych akcji.', en: 'No actions available.' },
   properties: { pl: 'Brak właściwości.', en: 'No properties.' },
   relations: { pl: 'Brak powiązań.', en: 'No relations.' },
@@ -371,9 +368,7 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
     const ranked: Ranked[] = [];
     let lastRank = -1;
     declaredSections.forEach((section, seq) => {
-      const canonIndex = ARTIFACT_PANEL_SECTION_ORDER.indexOf(
-        section.id as ArtifactPanelSectionId
-      );
+      const canonIndex = ARTIFACT_PANEL_SECTION_ORDER.indexOf(section.id as ArtifactPanelSectionId);
       if (canonIndex >= 0) {
         lastRank = canonIndex;
         ranked.push({

@@ -29,7 +29,13 @@ export const OKR_KEY_RESULT_MEASUREMENT_TYPES_MVP_SUPPORTED = [
   'binary',
 ] as const;
 
-export const OKR_KEY_RESULT_DIRECTIONS = ['increase', 'decrease', 'reach', 'maintain_range', 'binary'] as const;
+export const OKR_KEY_RESULT_DIRECTIONS = [
+  'increase',
+  'decrease',
+  'reach',
+  'maintain_range',
+  'binary',
+] as const;
 export type OkrKeyResultDirection = (typeof OKR_KEY_RESULT_DIRECTIONS)[number];
 
 export const OKR_KEY_RESULT_STATUSES = [
@@ -43,7 +49,13 @@ export const OKR_KEY_RESULT_STATUSES = [
 ] as const;
 export type OkrKeyResultStatus = (typeof OKR_KEY_RESULT_STATUSES)[number];
 
-export const OKR_KEY_RESULT_SOURCE_TYPES = ['manual', 'import', 'connector', 'mcp', 'calculated'] as const;
+export const OKR_KEY_RESULT_SOURCE_TYPES = [
+  'manual',
+  'import',
+  'connector',
+  'mcp',
+  'calculated',
+] as const;
 export type OkrKeyResultSourceType = (typeof OKR_KEY_RESULT_SOURCE_TYPES)[number];
 
 export const OKR_KEY_RESULT_CONFIDENCE_VALUES = ['high', 'medium', 'low', 'numeric'] as const;

@@ -29,10 +29,10 @@
  *     --no-file-parallelism --maxWorkers=1 --maxConcurrency=1 --retry=0
  */
 
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -82,7 +82,7 @@ if (!REAL_PG) {
   // eslint-disable-next-line no-console
   console.warn(
     '[independenceScanCursor.realdb.test.ts SKIPPED — clean skip, not a failure] wymaga ' +
-      'NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...',
+      'NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://...'
   );
 } else if (!DESTRUCTIVE_FIXTURES_ENABLED) {
   // eslint-disable-next-line no-console
@@ -90,7 +90,7 @@ if (!REAL_PG) {
     '[independenceScanCursor.realdb.test.ts SKIPPED — clean skip, not a failure] this suite ' +
       'mutates a GLOBAL singleton and therefore refuses to run without an explicit disposable-database ' +
       'declaration: set AUD_INDEPENDENCE_ALLOW_FIXTURE_CLEANUP=1 and ' +
-      'AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX=<prefix of the throwaway database you created>.',
+      'AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX=<prefix of the throwaway database you created>.'
   );
 }
 
@@ -129,7 +129,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
     const db = String(row?.db ?? '');
     if (!db.startsWith(prefix)) {
       throw new Error(
-        `AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with declared disposable prefix '${prefix}' — refusing to delete anything.`,
+        `AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with declared disposable prefix '${prefix}' — refusing to delete anything.`
       );
     }
     return db;
@@ -167,7 +167,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
   async function countOwnPrograms(): Promise<number> {
     const row = await auditsDb.auditGet<{ n: string }>(
       `SELECT count(*)::text AS n FROM audit_programs WHERE id LIKE $1`,
-      [`${RUN_PREFIX}%`],
+      [`${RUN_PREFIX}%`]
     );
     return Number(row?.n ?? -1);
   }
@@ -203,7 +203,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       try {
         const unlocked = await client.query<{ unlocked: boolean }>(
           'SELECT pg_advisory_unlock($1) AS unlocked',
-          [SUITE_LOCK_KEY],
+          [SUITE_LOCK_KEY]
         );
         expect(unlocked.rows).toEqual([{ unlocked: true }]);
       } finally {
@@ -222,7 +222,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       ids.push(id);
       await auditsDb.auditRun(
         `INSERT INTO audit_programs (id, organization_id, name, created_by) VALUES ($1, $2, $3, $4)`,
-        [id, testOrgId, `Cursor test program ${i}`, `aud-cursor-seeder-${testOrgId}`],
+        [id, testOrgId, `Cursor test program ${i}`, `aud-cursor-seeder-${testOrgId}`]
       );
     }
     return ids;
@@ -236,7 +236,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       leased_until: string | null;
     }>(
       `SELECT last_program_id, cycles_completed, lease_fence, leased_until
-         FROM audit_independence_scan_cursor WHERE id = 'global'`,
+         FROM audit_independence_scan_cursor WHERE id = 'global'`
     );
   }
 
@@ -309,7 +309,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
     // Worker 1 stalls long enough for its lease to lapse (simulated exactly as
     // reality does it: nothing releases the lease, it simply expires).
     await auditsDb.auditRun(
-      `UPDATE audit_independence_scan_cursor SET leased_until = now() - interval '1 minute' WHERE id = 'global'`,
+      `UPDATE audit_independence_scan_cursor SET leased_until = now() - interval '1 minute' WHERE id = 'global'`
     );
 
     // Worker 2 takes over and legitimately records ITS batch.
@@ -336,7 +336,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
     const stale = await cursorMod.claimLease('stale-worker');
     expect(stale.claimed).toBe(true);
     await auditsDb.auditRun(
-      `UPDATE audit_independence_scan_cursor SET leased_until = now() - interval '1 minute' WHERE id = 'global'`,
+      `UPDATE audit_independence_scan_cursor SET leased_until = now() - interval '1 minute' WHERE id = 'global'`
     );
     const fresh = await cursorMod.claimLease('fresh-worker');
     expect(fresh.claimed).toBe(true);
@@ -418,7 +418,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       expect(before).toBe(3);
 
       await expect(cleanupOwnFixtures('definitely-not-this-database-')).rejects.toThrow(
-        /AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH/,
+        /AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH/
       );
 
       // The canary rows are untouched: the guard refused before deleting.
@@ -426,7 +426,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       for (const id of ids) {
         const row = await auditsDb.auditGet<{ id: string }>(
           `SELECT id FROM audit_programs WHERE id = $1`,
-          [id],
+          [id]
         );
         expect(row?.id).toBe(id);
       }
@@ -437,7 +437,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       expect(db.startsWith(DISPOSABLE_DB_PREFIX)).toBe(true);
       // A prefix that is merely a substring (not a prefix) is still rejected.
       await expect(assertDisposableDatabase(`x${db}`)).rejects.toThrow(
-        /AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH/,
+        /AUD_INDEPENDENCE_DISPOSABLE_DB_MISMATCH/
       );
     });
 
@@ -464,12 +464,12 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       expect(await countOwnPrograms()).toBe(4);
     });
 
-    it('cleanup removes exactly this run\'s rows and leaves a foreign-prefixed row untouched', async () => {
+    it("cleanup removes exactly this run's rows and leaves a foreign-prefixed row untouched", async () => {
       await seedPrograms(3);
       const foreignId = `aprog_not_this_run_${randomUUID()}`;
       await auditsDb.auditRun(
         `INSERT INTO audit_programs (id, organization_id, name, created_by) VALUES ($1, $2, $3, $4)`,
-        [foreignId, testOrgId, 'Row owned by nobody in this run', 'foreign-seeder'],
+        [foreignId, testOrgId, 'Row owned by nobody in this run', 'foreign-seeder']
       );
 
       try {
@@ -478,7 +478,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
         expect(await countOwnPrograms()).toBe(0); // residue assertion for our prefix
         const survivor = await auditsDb.auditGet<{ id: string }>(
           `SELECT id FROM audit_programs WHERE id = $1`,
-          [foreignId],
+          [foreignId]
         );
         expect(survivor?.id).toBe(foreignId); // scoped cleanup, not a global wipe
       } finally {
@@ -497,7 +497,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
   describe('9. migration 20261013 converges or fails closed on a pre-existing partial table', () => {
     const MIGRATION_PATH = path.resolve(
       path.dirname(fileURLToPath(import.meta.url)),
-      '../../../../migrations/20261013_audit_independence_scan_cursor.sql',
+      '../../../../migrations/20261013_audit_independence_scan_cursor.sql'
     );
 
     function migrationSql(): string {
@@ -531,7 +531,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       const cols = await auditsDb.auditAll<{ attname: string }>(
         `SELECT attname FROM pg_attribute
           WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped
-          ORDER BY attnum`,
+          ORDER BY attnum`
       );
       expect(cols.map((c) => c.attname)).toEqual([
         'id',
@@ -558,7 +558,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       await auditsDb.auditRun(
         `INSERT INTO audit_independence_scan_cursor (id, last_program_id, cycles_completed)
          VALUES ('global', $1, 7)`,
-        ['aprog_historical_position'],
+        ['aprog_historical_position']
       );
 
       await applyMigration();
@@ -569,7 +569,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
         lease_fence: string;
       }>(
         `SELECT last_program_id, cycles_completed, lease_fence
-           FROM audit_independence_scan_cursor WHERE id = 'global'`,
+           FROM audit_independence_scan_cursor WHERE id = 'global'`
       );
       // Historical progress survives; the new fence arrives at its default.
       expect(row?.last_program_id).toBe('aprog_historical_position');
@@ -595,7 +595,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
           CONSTRAINT audit_independence_scan_cursor_pkey PRIMARY KEY (last_program_id)
         )`);
       await auditsDb.auditRun(
-        `INSERT INTO audit_independence_scan_cursor (id, last_program_id) VALUES ('global', 'legacy-key')`,
+        `INSERT INTO audit_independence_scan_cursor (id, last_program_id) VALUES ('global', 'legacy-key')`
       );
 
       await expect(applyMigration()).rejects.toThrow(/AUD13_PK_MISMATCH/);
@@ -603,12 +603,12 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
       // Nothing was added: the refusal happened before any ALTER.
       const cols = await auditsDb.auditAll<{ attname: string }>(
         `SELECT attname FROM pg_attribute
-          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`,
+          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`
       );
       expect(cols.map((c) => c.attname).sort()).toEqual(['id', 'last_program_id']);
       // ...and the row is intact.
       const row = await auditsDb.auditGet<{ id: string }>(
-        `SELECT id FROM audit_independence_scan_cursor WHERE last_program_id = 'legacy-key'`,
+        `SELECT id FROM audit_independence_scan_cursor WHERE last_program_id = 'legacy-key'`
       );
       expect(row?.id).toBe('global');
     });
@@ -616,7 +616,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
     async function columnNames(): Promise<string[]> {
       const cols = await auditsDb.auditAll<{ attname: string }>(
         `SELECT attname FROM pg_attribute
-          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`,
+          WHERE attrelid = 'audit_independence_scan_cursor'::regclass AND attnum > 0 AND NOT attisdropped`
       );
       return cols.map((c) => c.attname).sort();
     }
@@ -689,11 +689,9 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
            LEFT JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
           WHERE a.attrelid = 'audit_independence_scan_cursor'::regclass
             AND a.attnum > 0 AND NOT a.attisdropped
-          ORDER BY a.attnum`,
+          ORDER BY a.attnum`
       );
-      expect(
-        shape.map((c) => `${c.attname}|${c.typ}|${c.notnull}|${c.def ?? '-'}`),
-      ).toEqual([
+      expect(shape.map((c) => `${c.attname}|${c.typ}|${c.notnull}|${c.def ?? '-'}`)).toEqual([
         "id|text|true|'global'::text",
         "last_program_id|text|true|''::text",
         'cycles_completed|bigint|true|0',
@@ -726,7 +724,7 @@ suite('independenceScanCursor — durable checkpoint + fenced lease (real Postgr
              JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord) ON TRUE
              JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
             WHERE c.conrelid = 'audit_independence_scan_cursor'::regclass AND c.contype = 'p'
-            ORDER BY k.ord`,
+            ORDER BY k.ord`
         );
         expect(pk.map((r) => r.attname)).toEqual(['id']);
       } finally {

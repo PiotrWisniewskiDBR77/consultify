@@ -98,7 +98,11 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
   const strengthHandlers = createHandler('strengths', strengths);
   // TABS CONFIG
   const tabs = [
-    { id: 'risks', label: t('organization.synthesis.tabs.risks', 'Hidden Risks'), icon: AlertTriangle },
+    {
+      id: 'risks',
+      label: t('organization.synthesis.tabs.risks', 'Hidden Risks'),
+      icon: AlertTriangle,
+    },
     {
       id: 'strengths',
       label: t('organization.synthesis.tabs.strengths', 'Strengths & Opportunities'),
@@ -109,10 +113,17 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
       label: t('organization.synthesis.tabs.scenarios', 'Transformation Scenarios'),
       icon: GitMerge,
     },
-    { id: 'summary', label: t('organization.synthesis.tabs.summary', 'Executive Report'), icon: FileText },
+    {
+      id: 'summary',
+      label: t('organization.synthesis.tabs.summary', 'Executive Report'),
+      icon: FileText,
+    },
   ];
   const severityOptions = [
-    { label: t('organization.synthesis.risks.severityOptions.Critical', 'Critical'), value: 'Critical' },
+    {
+      label: t('organization.synthesis.risks.severityOptions.Critical', 'Critical'),
+      value: 'Critical',
+    },
     { label: t('organization.synthesis.risks.severityOptions.High', 'High'), value: 'High' },
     { label: t('organization.synthesis.risks.severityOptions.Medium', 'Medium'), value: 'Medium' },
     { label: t('organization.synthesis.risks.severityOptions.Low', 'Low'), value: 'Low' },
@@ -157,17 +168,29 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                 <p className="opacity-90">
                   {t('organization.synthesis.risks.bannerPre', 'Based on your')}{' '}
                   <strong>
-                    {t('organization.synthesis.risks.bannerChallenges', '{{count}} declared challenges', {
-                      count: challenges.declaredChallenges.length,
-                    })}
+                    {t(
+                      'organization.synthesis.risks.bannerChallenges',
+                      '{{count}} declared challenges',
+                      {
+                        count: challenges.declaredChallenges.length,
+                      }
+                    )}
                   </strong>{' '}
                   {t('organization.synthesis.risks.bannerAnd', 'and')}{' '}
                   <strong>
-                    {t('organization.synthesis.risks.bannerConstraints', '{{count}} active constraints', {
-                      count: activeConstraintCount,
-                    })}
+                    {t(
+                      'organization.synthesis.risks.bannerConstraints',
+                      '{{count}} active constraints',
+                      {
+                        count: activeConstraintCount,
+                      }
+                    )}
                   </strong>
-                  , {t('organization.synthesis.risks.bannerPost', 'we have identified the following risks.')}
+                  ,{' '}
+                  {t(
+                    'organization.synthesis.risks.bannerPost',
+                    'we have identified the following risks.'
+                  )}
                 </p>
               </div>
             </div>
@@ -193,7 +216,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                       {(item.isAiSuggested as boolean) && (
                         <div
                           className="p-1 bg-primary-100 dark:bg-primary-900/30 rounded-md text-primary-600"
-                          title={t('organization.synthesis.risks.aiSuggestedTitle', 'AI Suggested Risk')}
+                          title={t(
+                            'organization.synthesis.risks.aiSuggestedTitle',
+                            'AI Suggested Risk'
+                          )}
                         >
                           <BrainCircuit size={14} />
                         </div>
@@ -245,7 +271,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                 },
                 {
                   key: 'mitigation',
-                  label: t('organization.synthesis.risks.columns.mitigation', 'Mitigation Strategy'),
+                  label: t(
+                    'organization.synthesis.risks.columns.mitigation',
+                    'Mitigation Strategy'
+                  ),
                   width: 'w-1/4',
                   placeholder: t(
                     'organization.synthesis.risks.placeholders.mitigation',
@@ -349,7 +378,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                       </div>
                       <div>
                         <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
-                          {t('organization.synthesis.risks.modal.sourceContext', 'Source / Context')}
+                          {t(
+                            'organization.synthesis.risks.modal.sourceContext',
+                            'Source / Context'
+                          )}
                         </label>
                         <div className="text-sm text-navy-900 dark:text-white font-medium">
                           {(selectedRisk.isAiSuggested as boolean)
@@ -357,7 +389,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                                 'organization.synthesis.risks.modal.sourcePattern',
                                 'Pattern Recognition Engine'
                               )
-                            : t('organization.synthesis.risks.modal.sourceUser', 'User Constraints')}
+                            : t(
+                                'organization.synthesis.risks.modal.sourceUser',
+                                'User Constraints'
+                              )}
                         </div>
                       </div>
                     </div>
@@ -417,7 +452,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                       {t('organization.synthesis.risks.modal.close', 'Close')}
                     </button>
                     <button className="px-4 py-2 bg-navy-900 dark:bg-primary-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-                      {t('organization.synthesis.risks.modal.updateStrategy', 'Update Risk Strategy')}
+                      {t(
+                        'organization.synthesis.risks.modal.updateStrategy',
+                        'Update Risk Strategy'
+                      )}
                     </button>
                   </div>
                 </div>
@@ -532,7 +570,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                           </h3>
                           {(selectedStrength.isAiSuggested as boolean) && (
                             <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-[10px] font-bold uppercase rounded-full tracking-wide">
-                              {t('organization.synthesis.strengths.modal.aiOpportunity', 'AI Opportunity')}
+                              {t(
+                                'organization.synthesis.strengths.modal.aiOpportunity',
+                                'AI Opportunity'
+                              )}
                             </span>
                           )}
                         </div>
@@ -568,7 +609,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
-                          {t('organization.synthesis.strengths.modal.impactPotential', 'Impact Potential')}
+                          {t(
+                            'organization.synthesis.strengths.modal.impactPotential',
+                            'Impact Potential'
+                          )}
                         </label>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                           {(selectedStrength.impact as string) ||
@@ -622,7 +666,10 @@ export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ 
                     : '',
                 revenue:
                   realOrgIdentity?.annual_revenue != null
-                    ? [realOrgIdentity.annual_revenue.toLocaleString('pl-PL'), realOrgIdentity.currency]
+                    ? [
+                        realOrgIdentity.annual_revenue.toLocaleString('pl-PL'),
+                        realOrgIdentity.currency,
+                      ]
                         .filter(Boolean)
                         .join(' ')
                     : '',

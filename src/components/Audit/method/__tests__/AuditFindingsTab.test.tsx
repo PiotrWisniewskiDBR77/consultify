@@ -31,20 +31,20 @@ vi.mock('../auditsMethodApi', async () => {
   };
 });
 
-import { AuditFindingsTab } from '../tabs/AuditFindingsTab';
 import {
+  type AuditActionSummary,
+  type AuditCriterionSummary,
+  type AuditEvidenceSummary,
+  type AuditFindingSummary,
+  type AuditProgramSummary,
   closeFinding,
   listAllActions,
   listEvidence,
   listFindings,
   listProgramCriteria,
   reviewFinding,
-  type AuditActionSummary,
-  type AuditCriterionSummary,
-  type AuditEvidenceSummary,
-  type AuditFindingSummary,
-  type AuditProgramSummary,
 } from '../auditsMethodApi';
+import { AuditFindingsTab } from '../tabs/AuditFindingsTab';
 
 const mockedListFindings = vi.mocked(listFindings);
 const mockedListProgramCriteria = vi.mocked(listProgramCriteria);
@@ -164,7 +164,9 @@ describe('AuditFindingsTab — findings/CAPA register (NAPRAWA 1)', () => {
     stubCommonReads();
     mockedListFindings.mockResolvedValue({ items: [draftFinding], total: 1 });
     render(<AuditFindingsTab isPolish={false} programs={[program]} />);
-    await waitFor(() => expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument()
+    );
 
     fireEvent.click(screen.getByText(/Missing periodic supplier assessment/));
     const preview = await screen.findByTestId('audit-finding-preview');
@@ -179,7 +181,9 @@ describe('AuditFindingsTab — findings/CAPA register (NAPRAWA 1)', () => {
     stubCommonReads();
     mockedListFindings.mockResolvedValue({ items: [draftFinding], total: 1 });
     render(<AuditFindingsTab isPolish={false} programs={[program]} />);
-    await waitFor(() => expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument()
+    );
 
     const menu = await openKebab();
     const confirmItem = within(menu).getByText('Confirm');
@@ -189,9 +193,15 @@ describe('AuditFindingsTab — findings/CAPA register (NAPRAWA 1)', () => {
   it('calls the real reviewFinding endpoint with decision=confirm and reflects the returned status', async () => {
     stubCommonReads();
     mockedListFindings.mockResolvedValue({ items: [draftFinding], total: 1 });
-    mockedReviewFinding.mockResolvedValue({ ...draftFinding, status: 'confirmed', reviewedBy: 'user-lead' });
+    mockedReviewFinding.mockResolvedValue({
+      ...draftFinding,
+      status: 'confirmed',
+      reviewedBy: 'user-lead',
+    });
     render(<AuditFindingsTab isPolish={false} programs={[program]} />);
-    await waitFor(() => expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument()
+    );
 
     const menu = await openKebab();
     fireEvent.click(within(menu).getByText('Confirm'));
@@ -205,7 +215,9 @@ describe('AuditFindingsTab — findings/CAPA register (NAPRAWA 1)', () => {
     const confirmedFinding: AuditFindingSummary = { ...draftFinding, status: 'confirmed' };
     mockedListFindings.mockResolvedValue({ items: [confirmedFinding], total: 1 });
     render(<AuditFindingsTab isPolish={false} programs={[program]} />);
-    await waitFor(() => expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Missing periodic supplier assessment/)).toBeInTheDocument()
+    );
 
     const menu1 = await openKebab();
     fireEvent.click(within(menu1).getByText('Close finding'));
@@ -216,21 +228,30 @@ describe('AuditFindingsTab — findings/CAPA register (NAPRAWA 1)', () => {
 
     // Cancel closes the modal without calling the API.
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-    await waitFor(() => expect(screen.queryByTestId('note-entry-modal-textarea')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('note-entry-modal-textarea')).not.toBeInTheDocument()
+    );
     expect(mockedCloseFinding).not.toHaveBeenCalled();
 
     mockedCloseFinding.mockResolvedValue({ ...confirmedFinding, status: 'closed' });
     const menu2 = await openKebab();
     fireEvent.click(within(menu2).getByText('Close finding'));
     const textarea = await screen.findByTestId('note-entry-modal-textarea');
-    fireEvent.change(textarea, { target: { value: 'Verified effective in the September re-test.' } });
+    fireEvent.change(textarea, {
+      target: { value: 'Verified effective in the September re-test.' },
+    });
     fireEvent.click(screen.getByTestId('note-entry-modal-submit'));
 
     await waitFor(() =>
-      expect(mockedCloseFinding).toHaveBeenCalledWith('find-1', 'Verified effective in the September re-test.')
+      expect(mockedCloseFinding).toHaveBeenCalledWith(
+        'find-1',
+        'Verified effective in the September re-test.'
+      )
     );
     // No `window.prompt` involved anywhere in this flow.
-    await waitFor(() => expect(screen.queryByTestId('note-entry-modal-textarea')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('note-entry-modal-textarea')).not.toBeInTheDocument()
+    );
   });
 
   it('R2(a): passes limit/offset to listFindings, shows the server total, and Next requests the second page', async () => {

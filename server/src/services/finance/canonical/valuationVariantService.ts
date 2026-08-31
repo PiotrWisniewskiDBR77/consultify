@@ -61,13 +61,22 @@ export async function createCase(params: {
 
 export async function listCases(organizationId: string): Promise<ValuationCaseRow[]> {
   return withPinnedPostgresTransaction((tx) =>
-    tx.queryAll<ValuationCaseRow>(`SELECT * FROM finance_valuation_cases WHERE organization_id = ? ORDER BY created_at DESC`, [organizationId])
+    tx.queryAll<ValuationCaseRow>(
+      `SELECT * FROM finance_valuation_cases WHERE organization_id = ? ORDER BY created_at DESC`,
+      [organizationId]
+    )
   );
 }
 
-export async function getCase(organizationId: string, caseId: string): Promise<ValuationCaseRow | null> {
+export async function getCase(
+  organizationId: string,
+  caseId: string
+): Promise<ValuationCaseRow | null> {
   return withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<ValuationCaseRow>(`SELECT * FROM finance_valuation_cases WHERE case_id = ? AND organization_id = ?`, [caseId, organizationId])
+    tx.queryOne<ValuationCaseRow>(
+      `SELECT * FROM finance_valuation_cases WHERE case_id = ? AND organization_id = ?`,
+      [caseId, organizationId]
+    )
   );
 }
 
@@ -89,9 +98,15 @@ export interface ValuationVariantWithStatusRow {
   version_no: number;
 }
 
-export type CreateVariantErrorCode = 'CASE_NOT_FOUND' | 'BUSINESS_VERSION_NOT_FOUND' | 'NOT_A_VALUATION_CASE' | 'ALREADY_A_VARIANT';
+export type CreateVariantErrorCode =
+  | 'CASE_NOT_FOUND'
+  | 'BUSINESS_VERSION_NOT_FOUND'
+  | 'NOT_A_VALUATION_CASE'
+  | 'ALREADY_A_VARIANT';
 
-export type CreateVariantResult = { ok: true; variant: ValuationVariantWithStatusRow } | { ok: false; code: CreateVariantErrorCode; message: string };
+export type CreateVariantResult =
+  | { ok: true; variant: ValuationVariantWithStatusRow }
+  | { ok: false; code: CreateVariantErrorCode; message: string };
 
 /**
  * `businessVersionId` MUST already exist (created via `POST /artifacts` with
@@ -116,7 +131,11 @@ export async function createVariant(params: {
       [params.caseId, params.organizationId]
     );
     if (!kase) {
-      return { ok: false, code: 'CASE_NOT_FOUND', message: `Case ${params.caseId} not found for organization ${params.organizationId}` } as const;
+      return {
+        ok: false,
+        code: 'CASE_NOT_FOUND',
+        message: `Case ${params.caseId} not found for organization ${params.organizationId}`,
+      } as const;
     }
 
     const bv = await tx.queryOne<{ business_version_id: string; artifact_type: string }>(
@@ -140,9 +159,16 @@ export async function createVariant(params: {
       } as const;
     }
 
-    const existing = await tx.queryOne<{ id: string }>(`SELECT id FROM finance_valuation_variants WHERE business_version_id = ?`, [params.businessVersionId]);
+    const existing = await tx.queryOne<{ id: string }>(
+      `SELECT id FROM finance_valuation_variants WHERE business_version_id = ?`,
+      [params.businessVersionId]
+    );
     if (existing) {
-      return { ok: false, code: 'ALREADY_A_VARIANT', message: `business_version ${params.businessVersionId} is already registered as a variant` } as const;
+      return {
+        ok: false,
+        code: 'ALREADY_A_VARIANT',
+        message: `business_version ${params.businessVersionId} is already registered as a variant`,
+      } as const;
     }
 
     const inserted = await tx.queryOne<{
@@ -157,7 +183,15 @@ export async function createVariant(params: {
     }>(
       `INSERT INTO finance_valuation_variants (id, organization_id, business_version_id, case_id, name, description, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`,
-      [uuidv4(), params.organizationId, params.businessVersionId, params.caseId, params.name, params.description ?? null, params.createdBy]
+      [
+        uuidv4(),
+        params.organizationId,
+        params.businessVersionId,
+        params.caseId,
+        params.name,
+        params.description ?? null,
+        params.createdBy,
+      ]
     );
     if (!inserted) throw new Error('createVariant: insert returned no row');
 
@@ -167,11 +201,22 @@ export async function createVariant(params: {
     );
     if (!bvFull) throw new Error('createVariant: business_version vanished mid-transaction');
 
-    return { ok: true, variant: { ...inserted, status: bvFull.status, freshness: bvFull.freshness, version_no: bvFull.version_no } } as const;
+    return {
+      ok: true,
+      variant: {
+        ...inserted,
+        status: bvFull.status,
+        freshness: bvFull.freshness,
+        version_no: bvFull.version_no,
+      },
+    } as const;
   });
 }
 
-export async function listVariants(organizationId: string, caseId: string): Promise<ValuationVariantWithStatusRow[]> {
+export async function listVariants(
+  organizationId: string,
+  caseId: string
+): Promise<ValuationVariantWithStatusRow[]> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<ValuationVariantWithStatusRow>(
       `SELECT v.*, bv.status, bv.freshness, bv.version_no
@@ -184,7 +229,10 @@ export async function listVariants(organizationId: string, caseId: string): Prom
   );
 }
 
-export async function getVariant(organizationId: string, businessVersionId: string): Promise<ValuationVariantWithStatusRow | null> {
+export async function getVariant(
+  organizationId: string,
+  businessVersionId: string
+): Promise<ValuationVariantWithStatusRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<ValuationVariantWithStatusRow>(
       `SELECT v.*, bv.status, bv.freshness, bv.version_no
@@ -196,7 +244,9 @@ export async function getVariant(organizationId: string, businessVersionId: stri
   );
 }
 
-export type RenameVariantResult = { ok: true; variant: ValuationVariantWithStatusRow } | { ok: false; code: 'NOT_FOUND'; message: string };
+export type RenameVariantResult =
+  | { ok: true; variant: ValuationVariantWithStatusRow }
+  | { ok: false; code: 'NOT_FOUND'; message: string };
 
 /**
  * `name`/`description` are each independently optional — `undefined` leaves the column untouched,
@@ -227,7 +277,13 @@ export async function renameVariant(params: {
 
   if (sets.length === 0) {
     const variant = await getVariant(params.organizationId, params.businessVersionId);
-    return variant ? { ok: true, variant } : { ok: false, code: 'NOT_FOUND', message: `Variant ${params.businessVersionId} not found for organization ${params.organizationId}` };
+    return variant
+      ? { ok: true, variant }
+      : {
+          ok: false,
+          code: 'NOT_FOUND',
+          message: `Variant ${params.businessVersionId} not found for organization ${params.organizationId}`,
+        };
   }
 
   vals.push(params.businessVersionId, params.organizationId);
@@ -238,7 +294,11 @@ export async function renameVariant(params: {
     )
   );
   if (!updated) {
-    return { ok: false, code: 'NOT_FOUND', message: `Variant ${params.businessVersionId} not found for organization ${params.organizationId}` };
+    return {
+      ok: false,
+      code: 'NOT_FOUND',
+      message: `Variant ${params.businessVersionId} not found for organization ${params.organizationId}`,
+    };
   }
   const variant = await getVariant(params.organizationId, params.businessVersionId);
   if (!variant) throw new Error('renameVariant: variant vanished after update');

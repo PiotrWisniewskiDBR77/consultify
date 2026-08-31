@@ -449,7 +449,7 @@ describe('M01-P07B — notebook handoff forwards the real acting userId', () => 
     ctl.notebook.read = vi.fn(async () => ({ artifactId: 'note-real-1', permissionOk: true }));
   });
 
-  it('passes executeProposal\'s userId through to createNote, not undefined/system', async () => {
+  it("passes executeProposal's userId through to createNote, not undefined/system", async () => {
     await runExecute('notebook');
 
     expect(notebookCreateCalls).toHaveLength(1);

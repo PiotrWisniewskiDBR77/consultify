@@ -273,7 +273,7 @@ describe('CanonicalStatementTableV2', () => {
   // unmapped line's raw source lineCode used to render VERBATIM as the
   // row's only label. Proves the humanized label now shows instead, while
   // the raw code stays reachable in the tooltip (nothing hidden).
-  it('humanizes an unmapped line\'s raw lineCode into a readable label, keeping the raw code in the tooltip', () => {
+  it("humanizes an unmapped line's raw lineCode into a readable label, keeping the raw code in the tooltip", () => {
     render(
       <CanonicalStatementTableV2
         lines={[
@@ -292,7 +292,9 @@ describe('CanonicalStatementTableV2', () => {
 
     expect(screen.getByText('Misc Unmapped 90 Acct')).toBeInTheDocument();
     expect(screen.queryByText('MISC_UNMAPPED_90_ACCT')).not.toBeInTheDocument();
-    expect(screen.getByTitle(/Misc Unmapped 90 Acct \(MISC_UNMAPPED_90_ACCT\)/)).toBeInTheDocument();
+    expect(
+      screen.getByTitle(/Misc Unmapped 90 Acct \(MISC_UNMAPPED_90_ACCT\)/)
+    ).toBeInTheDocument();
     expect(screen.getByText('nieprzypisana')).toBeInTheDocument();
   });
 

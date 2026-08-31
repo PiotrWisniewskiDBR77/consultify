@@ -65,12 +65,7 @@ export const ResultsVNextForbiddenState: React.FC<ResultsVNextForbiddenStateProp
   const { i18n, t } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const copy = REASON_COPY[forbidden.reason];
-  const description = [
-    isPolish ? copy.pl : copy.en,
-    forbidden.detail,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const description = [isPolish ? copy.pl : copy.en, forbidden.detail].filter(Boolean).join(' ');
 
   return (
     <div
@@ -81,9 +76,7 @@ export const ResultsVNextForbiddenState: React.FC<ResultsVNextForbiddenStateProp
       <EmptyState
         variant="forbidden"
         title={
-          isPolish
-            ? 'Nie masz dostępu do tego rekordu'
-            : "You don't have access to this record"
+          isPolish ? 'Nie masz dostępu do tego rekordu' : "You don't have access to this record"
         }
         description={description}
         primaryAction={

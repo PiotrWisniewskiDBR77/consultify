@@ -143,13 +143,13 @@ import {
   getResultsDomainTabs,
   isResultsDomain,
 } from './resultsDomainNavigation';
-import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import { ResultsSearchRegistry } from './ResultsSearchRegistry';
+import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
+import { shouldUseResultsVNextOwnerSampleData } from './resultsVNextOwnerSampleData';
 import {
   ResultsVNextRegistryShell,
   type ResultsVNextTableProps,
 } from './ResultsVNextRegistryShell';
-import { shouldUseResultsVNextOwnerSampleData } from './resultsVNextOwnerSampleData';
 import { toUserFacingErrorMessage } from './shared/errorMessage';
 import type { ResultsVNextForbiddenDetail } from './types';
 

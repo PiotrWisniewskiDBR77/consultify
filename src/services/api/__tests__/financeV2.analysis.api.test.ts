@@ -62,7 +62,9 @@ describe('financeV2.api — rozszerzenie Analysis (Pakiet E)', () => {
     mockedFetch.mockResolvedValueOnce(jsonResponse(200, { data: [], meta: {} }));
     await getAnalysisKpiCatalog({ tier: 'INDUSTRY', includeAllStatuses: true });
     const [url] = mockedFetch.mock.calls[0];
-    expect(String(url)).toContain('/api/v8/finance-v2/analysis/kpi-catalog?tier=INDUSTRY&includeAllStatuses=true');
+    expect(String(url)).toContain(
+      '/api/v8/finance-v2/analysis/kpi-catalog?tier=INDUSTRY&includeAllStatuses=true'
+    );
   });
 
   it('getAnalysisKpiCatalog() rozpakowuje {data} do tablicy wpisów katalogu, pole po polu', async () => {
@@ -90,7 +92,16 @@ describe('financeV2.api — rozszerzenie Analysis (Pakiet E)', () => {
 
   it('computeAnalysisKpis → POST /analysis/:businessVersionId/compute, attemptReadinessTransition domyślnie false', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { jobId: 'job-1', jobStatus: 'succeeded', resultsCount: 3, results: [], readiness: null }, meta: {} })
+      jsonResponse(200, {
+        data: {
+          jobId: 'job-1',
+          jobStatus: 'succeeded',
+          resultsCount: 3,
+          results: [],
+          readiness: null,
+        },
+        meta: {},
+      })
     );
     await computeAnalysisKpis({ businessVersionId: 'bv-analysis-1' });
     const [url, init] = mockedFetch.mock.calls[0];
@@ -100,16 +111,32 @@ describe('financeV2.api — rozszerzenie Analysis (Pakiet E)', () => {
 
   it('computeAnalysisKpis({attemptReadinessTransition:true, expectedVersion}) → dopisuje expectedVersion do body (serwer wymaga go tylko w tym przypadku, analysis.routes.ts:89-93)', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { jobId: 'job-2', jobStatus: 'succeeded', resultsCount: 5, results: [], readiness: { ok: true } }, meta: {} })
+      jsonResponse(200, {
+        data: {
+          jobId: 'job-2',
+          jobStatus: 'succeeded',
+          resultsCount: 5,
+          results: [],
+          readiness: { ok: true },
+        },
+        meta: {},
+      })
     );
-    await computeAnalysisKpis({ businessVersionId: 'bv-analysis-1', attemptReadinessTransition: true, expectedVersion: 2 });
+    await computeAnalysisKpis({
+      businessVersionId: 'bv-analysis-1',
+      attemptReadinessTransition: true,
+      expectedVersion: 2,
+    });
     const [, init] = mockedFetch.mock.calls[0];
     expect(JSON.parse(init.body)).toEqual({ attemptReadinessTransition: true, expectedVersion: 2 });
   });
 
   it('computeAnalysisKpis → błąd 404 NO_SOURCE_STATEMENT_PACK_EDGE (realny, potwierdzony gap — brak zapisu lineage edge w całym finance-v2, patrz PKG_E_ANALYSIS_report.md) mapuje się na komunikat Honest UI, nie generyczny', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(404, { error: 'No source Statement Pack lineage edge found', code: 'NO_SOURCE_STATEMENT_PACK_EDGE' })
+      jsonResponse(404, {
+        error: 'No source Statement Pack lineage edge found',
+        code: 'NO_SOURCE_STATEMENT_PACK_EDGE',
+      })
     );
     await expect(computeAnalysisKpis({ businessVersionId: 'bv-orphan' })).rejects.toMatchObject({
       status: 404,
@@ -123,7 +150,10 @@ describe('financeV2.api — rozszerzenie Analysis (Pakiet E)', () => {
       status: 404,
       data: { code: 'NO_SOURCE_STATEMENT_PACK_EDGE' },
     });
-    const genericErr = Object.assign(new Error('boom'), { status: 500, data: { code: 'SOME_UNKNOWN_CODE' } });
+    const genericErr = Object.assign(new Error('boom'), {
+      status: 500,
+      data: { code: 'SOME_UNKNOWN_CODE' },
+    });
     const described = describeFinanceV2Error(noSourceErr);
     const genericDescribed = describeFinanceV2Error(genericErr);
     expect(described.code).toBe('NO_SOURCE_STATEMENT_PACK_EDGE');
@@ -142,7 +172,14 @@ describe('financeV2.api — rozszerzenie Analysis (Pakiet E)', () => {
       unitType: 'PERCENT',
       entityId: 'ent-1',
       periodId: 'p-2026-q1',
-      value: { status: 'PRESENT_NONZERO', valueDecimal: '0.42', nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' },
+      value: {
+        status: 'PRESENT_NONZERO',
+        valueDecimal: '0.42',
+        nativeCurrency: 'PLN',
+        presentationCurrency: 'PLN',
+        unit: 'UNITS',
+        multiplier: '1',
+      },
       qualityFlag: null,
       deltaVsPriorPeriod: null,
       deltaPctVsPriorPeriod: null,

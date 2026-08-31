@@ -138,7 +138,11 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         caseId = created.body.data.caseId;
 
         expect(
-          (await asConsultant('post', `${BASE}/cases/${caseId}/status`).send({ targetStatus: 'ACTIVE' })).status
+          (
+            await asConsultant('post', `${BASE}/cases/${caseId}/status`).send({
+              targetStatus: 'ACTIVE',
+            })
+          ).status
         ).toBe(200);
 
         const draft = await asConsultant('post', `${BASE}/cases/${caseId}/plan-versions`).send({
@@ -147,11 +151,17 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         });
         expect(draft.status).toBe(201);
         const planVersionId: string = draft.body.data.casePlanVersionId;
-        const proposedPlan = await asConsultant('post', `${BASE}/plan-versions/${planVersionId}/propose`).send({
+        const proposedPlan = await asConsultant(
+          'post',
+          `${BASE}/plan-versions/${planVersionId}/propose`
+        ).send({
           expectedVersion: draft.body.data.version,
         });
         expect(proposedPlan.status).toBe(200);
-        const publishedPlan = await asConsultant('post', `${BASE}/plan-versions/${planVersionId}/publish`).send({
+        const publishedPlan = await asConsultant(
+          'post',
+          `${BASE}/plan-versions/${planVersionId}/publish`
+        ).send({
           expectedVersion: proposedPlan.body.data.version,
         });
         expect(publishedPlan.status).toBe(200);
@@ -187,7 +197,10 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         const nodeRunRejected = `noderun-rejected-${randomUUID()}`;
         const nodeRunSkipped = `noderun-skipped-${randomUUID()}`;
 
-        const acceptedRes = await asConsultant('post', `${BASE}/runs/${runId}/node-result-acceptances`).send({
+        const acceptedRes = await asConsultant(
+          'post',
+          `${BASE}/runs/${runId}/node-result-acceptances`
+        ).send({
           nodeRunId: nodeRunAccepted,
           nodeType: 'CAPABILITY',
           nodeCompletionState: 'COMPLETED',
@@ -197,7 +210,10 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         });
         expect(acceptedRes.status).toBe(201);
 
-        const partialRes = await asConsultant('post', `${BASE}/runs/${runId}/node-result-acceptances`).send({
+        const partialRes = await asConsultant(
+          'post',
+          `${BASE}/runs/${runId}/node-result-acceptances`
+        ).send({
           nodeRunId: nodeRunPartial,
           nodeType: 'HUMAN_TASK',
           nodeCompletionState: 'COMPLETED',
@@ -234,7 +250,10 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
           ].sort()
         );
 
-        const rejectedRes = await asConsultant('post', `${BASE}/runs/${runId}/node-result-acceptances`).send({
+        const rejectedRes = await asConsultant(
+          'post',
+          `${BASE}/runs/${runId}/node-result-acceptances`
+        ).send({
           nodeRunId: nodeRunRejected,
           nodeType: 'APPROVAL',
           nodeCompletionState: 'COMPLETED',
@@ -244,14 +263,19 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         });
         expect(rejectedRes.status).toBe(201);
 
-        const skippedRes = await asConsultant('post', `${BASE}/runs/${runId}/node-result-acceptances`).send({
+        const skippedRes = await asConsultant(
+          'post',
+          `${BASE}/runs/${runId}/node-result-acceptances`
+        ).send({
           nodeRunId: nodeRunSkipped,
           nodeType: 'HUMAN_TASK',
           nodeCompletionState: 'SKIPPED',
           resultAcceptance: 'NOT_APPLICABLE',
           skipAuthorizedByGraphCondition: true,
           skipConditionRef: 'edge:optional-review',
-          acceptanceInputSnapshot: { summary: 'step skipped — condition on the published graph allowed it' },
+          acceptanceInputSnapshot: {
+            summary: 'step skipped — condition on the published graph allowed it',
+          },
           occurredAt: new Date().toISOString(),
         });
         expect(skippedRes.status).toBe(201);
@@ -260,7 +284,10 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         // A. CASE-SCOPED LIST — the exact route the UI calls — carries all four,
         //    each with its EXPLICIT resultAcceptance, none dropped or coerced.
         // ======================================================================
-        const listRes = await asConsultant('get', `${BASE}/cases/${caseId}/node-result-acceptances`);
+        const listRes = await asConsultant(
+          'get',
+          `${BASE}/cases/${caseId}/node-result-acceptances`
+        );
         expect(listRes.status).toBe(200);
         const byNodeRun = new Map<string, any>(
           listRes.body.data.map((row: any) => [row.nodeRunId, row])
@@ -316,7 +343,10 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         expect(markedUnavailable.status).toBe(200);
         expect(markedUnavailable.body.data.linkStatus).toBe('UNAVAILABLE');
 
-        const linksAfterUnavailable = await asConsultant('get', `${BASE}/cases/${caseId}/artifact-links`);
+        const linksAfterUnavailable = await asConsultant(
+          'get',
+          `${BASE}/cases/${caseId}/artifact-links`
+        );
         const linkAfter = linksAfterUnavailable.body.data.find((l: any) => l.linkId === linkId);
         expect(linkAfter.linkStatus).toBe('UNAVAILABLE');
         // CW-RT-025: unlinking/marking unavailable never deletes the object —
@@ -337,7 +367,10 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
           graphDigest: publishedPlan.body.data.graphDigest,
         });
 
-        const foreignNodeResults = await asIntruder('get', `${BASE}/cases/${caseId}/node-result-acceptances`);
+        const foreignNodeResults = await asIntruder(
+          'get',
+          `${BASE}/cases/${caseId}/node-result-acceptances`
+        );
         expectDenied('foreign org GET node-result-acceptances', foreignNodeResults);
         const foreignRunBinding = await asIntruder('get', `${BASE}/run-bindings/${runId}`);
         expectDenied('foreign org GET run-binding', foreignRunBinding);
@@ -354,7 +387,10 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
         //    reloading the page) returns byte-identical acceptance values. The
         //    projection lives in Postgres, not in anything a page reload drops.
         // ======================================================================
-        const secondListRes = await asConsultant('get', `${BASE}/cases/${caseId}/node-result-acceptances`);
+        const secondListRes = await asConsultant(
+          'get',
+          `${BASE}/cases/${caseId}/node-result-acceptances`
+        );
         expect(secondListRes.status).toBe(200);
         const secondByNodeRun = new Map<string, any>(
           secondListRes.body.data.map((row: any) => [row.nodeRunId, row.resultAcceptance])
@@ -372,7 +408,9 @@ suite('INTEGRATION GATE — partial results, deliverable identity, safe return',
             .query(`DELETE FROM case_workspace_artifact_links WHERE case_id = $1`, [caseId])
             .catch(() => undefined);
           await control
-            .query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [caseId])
+            .query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [
+              caseId,
+            ])
             .catch(() => undefined);
           await control
             .query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [caseId])

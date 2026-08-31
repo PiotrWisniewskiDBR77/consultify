@@ -187,10 +187,10 @@ async function isDuplicate(dedupeKey: string | undefined, windowMs: number): Pro
         [nowIso, dedupeKey]
       );
       if (!updated || Number((updated as any).changes ?? 0) === 0) {
-        await dbRun(
-          `INSERT INTO slack_router_dedupe (dedupe_key, last_sent_at) VALUES (?, ?)`,
-          [dedupeKey, nowIso]
-        ).catch(() => {
+        await dbRun(`INSERT INTO slack_router_dedupe (dedupe_key, last_sent_at) VALUES (?, ?)`, [
+          dedupeKey,
+          nowIso,
+        ]).catch(() => {
           // Lost a race to a concurrent insert for the same key — both sides
           // agree "sent now", which is the correct outcome either way.
         });
@@ -373,9 +373,12 @@ async function postViaWebhook(
 export async function routeToSlack(rawEvent: RouteToSlackEvent): Promise<RouteToSlackResult> {
   try {
     if (isRouterDisabledForEnv()) {
-      logger.debug('[SlackRouter] Disabled for this environment (SLACK_DISABLED_<ENV>) — message dropped', {
-        channel: rawEvent.channel,
-      });
+      logger.debug(
+        '[SlackRouter] Disabled for this environment (SLACK_DISABLED_<ENV>) — message dropped',
+        {
+          channel: rawEvent.channel,
+        }
+      );
       return { ok: false, transport: 'none' };
     }
 

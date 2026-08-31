@@ -46,10 +46,10 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
   getRecord: vi.fn(async () => ({ data: {} })),
 }));
 
-import { RecordTemplateManager } from '../RecordTemplateManager';
-import { LinkedRecordPicker } from '../LinkedRecordPicker';
-import { FrameworkGenerator } from '../FrameworkGenerator';
 import { ExportToPresentation } from '../ExportToPresentation';
+import { FrameworkGenerator } from '../FrameworkGenerator';
+import { LinkedRecordPicker } from '../LinkedRecordPicker';
+import { RecordTemplateManager } from '../RecordTemplateManager';
 import { ViewConfigPanel, type ViewConfigState } from '../views/ViewConfigPanel';
 
 function Harness({
@@ -126,7 +126,9 @@ describe('RecordTemplateManager — dialog a11y contract (TemplateEditor)', () =
 
     const dialogs = await screen.findAllByRole('dialog');
     expect(dialogs.length).toBe(2);
-    const editor = dialogs.find((d) => d.getAttribute('aria-labelledby') === 'record-template-editor-title')!;
+    const editor = dialogs.find(
+      (d) => d.getAttribute('aria-labelledby') === 'record-template-editor-title'
+    )!;
     expect(editor).toBeTruthy();
     expect(editor).toHaveAccessibleName(/New Template/i);
 
@@ -176,12 +178,12 @@ describe('FrameworkGenerator — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
     render(
       <Harness>
-        {(open, onClose) => (
-          <FrameworkGenerator open={open} onClose={onClose} onApply={vi.fn()} />
-        )}
+        {(open, onClose) => <FrameworkGenerator open={open} onClose={onClose} onApply={vi.fn()} />}
       </Harness>
     );
-    const { trigger } = await openAndAssertDialog(/myWorkTable.frameworkGenerator.frameworkGenerator/i);
+    const { trigger } = await openAndAssertDialog(
+      /myWorkTable.frameworkGenerator.frameworkGenerator/i
+    );
     await assertEscapeClosesAndRestoresFocus(trigger);
   });
 });

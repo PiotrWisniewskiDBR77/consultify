@@ -18,7 +18,11 @@ describe('canonical initiative register scope', () => {
     // arrive without one (unvalidated DB read) — the assertion below
     // simulates that malformed-but-real case on purpose, it is not a
     // loophole in the production signature above.
-    { id: 'p1-none', projectId: 'project-1', priority: undefined as unknown as FixtureRow['priority'] },
+    {
+      id: 'p1-none',
+      projectId: 'project-1',
+      priority: undefined as unknown as FixtureRow['priority'],
+    },
   ];
 
   it('returns exactly the selected project and priority denominator', () => {

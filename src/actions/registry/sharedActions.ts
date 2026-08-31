@@ -7,8 +7,15 @@
  * `src/actions/ideaActionRegistry.ts` + `docs/standards/idea-workspace/02_REJESTR_AKCJI.md`.
  */
 
-import type { ActionDef } from './types';
+import { findIdeaTemplate } from '@/components/MyWork/IdeaTemplateGallery';
+import { Api } from '@/services/api';
+
 import {
+  dispatchMindmapPaneAction,
+  dispatchQuickAction,
+  runByTool,
+  runEdgeParamCallback,
+  runPanelUiOnlyCallback,
   RUNTIME_ADD_ELEMENT,
   RUNTIME_AUTO_LAYOUT,
   RUNTIME_CURSOR_SELECT,
@@ -16,15 +23,9 @@ import {
   RUNTIME_NODE_DUPLICATE,
   RUNTIME_REDO,
   RUNTIME_UNDO,
-  dispatchMindmapPaneAction,
-  dispatchQuickAction,
-  runByTool,
-  runEdgeParamCallback,
-  runPanelUiOnlyCallback,
   runToolbarBusAction,
 } from './runtimeHelpers';
-import { Api } from '@/services/api';
-import { findIdeaTemplate } from '@/components/MyWork/IdeaTemplateGallery';
+import type { ActionDef } from './types';
 
 export const SHARED_ACTIONS: ActionDef[] = [
   {

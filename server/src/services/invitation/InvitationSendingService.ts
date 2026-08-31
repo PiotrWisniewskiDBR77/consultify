@@ -81,7 +81,9 @@ export class InvitationSendingService {
     try {
       const sent = await this.emailSender({
         to: email,
-        subject: resent ? 'Your Consultify invitation (resent)' : 'You have been invited to Consultify',
+        subject: resent
+          ? 'Your Consultify invitation (resent)'
+          : 'You have been invited to Consultify',
         html: this.buildInviteHtml({
           heading: resent ? 'Your invitation to Consultify' : 'Join your team on Consultify',
           intro: resent
@@ -92,7 +94,9 @@ export class InvitationSendingService {
         }),
         requireDelivery: true,
       });
-      return sent ? { state: 'SENT', code: null } : { state: 'FAILED', code: 'EMAIL_PROVIDER_REJECTED' };
+      return sent
+        ? { state: 'SENT', code: null }
+        : { state: 'FAILED', code: 'EMAIL_PROVIDER_REJECTED' };
     } catch (error: any) {
       return { state: 'FAILED', code: String(error?.code || 'EMAIL_PROVIDER_ERROR').slice(0, 100) };
     }

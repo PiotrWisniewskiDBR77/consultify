@@ -8,11 +8,12 @@ import { Request, Response } from 'express';
 
 import type { IDatabase } from '../database/IDatabase.js';
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
-import mfaService from '../services/MFAService.js';
+import { assertQuickAccessRuntimeEnabled } from '../services/auth/quickAccessPinService.js';
 import {
   assertDemoPrincipalMayReceiveCredentials,
   DEMO_EXPIRED_USER_STATUS,
 } from '../services/demo/demoPrincipalGuard.js';
+import mfaService from '../services/MFAService.js';
 import {
   buildOrgSuspendedResponseBody,
   invalidatePlatformSuperAdminCache,
@@ -20,7 +21,6 @@ import {
 } from '../services/organizationSuspensionGuard.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { recordFailedLogin } from '../services/securityAlerts.js';
-import { assertQuickAccessRuntimeEnabled } from '../services/auth/quickAccessPinService.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
 import logger from '../utils/Logger.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
@@ -204,12 +204,12 @@ export const login = async (
       password: string;
     } | null>((resolve, reject) => {
       dependencies.db.get(
-          verifiedChallenge?.success
-            ? 'SELECT * FROM users WHERE id = ? AND organization_id = ?'
-            : 'SELECT * FROM users WHERE email = ?',
-          verifiedChallenge?.success
-            ? [verifiedChallenge.userId, verifiedChallenge.organizationId]
-            : [normalizedEmail],
+        verifiedChallenge?.success
+          ? 'SELECT * FROM users WHERE id = ? AND organization_id = ?'
+          : 'SELECT * FROM users WHERE email = ?',
+        verifiedChallenge?.success
+          ? [verifiedChallenge.userId, verifiedChallenge.organizationId]
+          : [normalizedEmail],
         (err: Error | null, row: unknown) => {
           if (err) {
             logger.error(`[Auth] DB Query Error: ${err.message}`);

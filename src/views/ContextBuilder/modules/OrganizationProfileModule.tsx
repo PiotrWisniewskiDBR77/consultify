@@ -35,37 +35,35 @@ import { SettingsHeaderActionPortal } from '../../../components/settings/Setting
 import TeresaMark from '../../../components/shared/TeresaMark';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
-
 import {
   AUTOMATION_LEVELS,
   CLOUD_LEVELS,
   COMMUNICATION_STYLES,
   COMPANY_SIZES,
   COMPETITIVE_POSITIONS,
+  computeCompleteness,
   CORE_SYSTEMS_OPTIONS,
   DELIVERY_MODELS,
   EMPTY_PROFILE,
   GROWTH_STAGES,
   INDUSTRIES,
   JARGON_LEVELS,
+  optionKey,
   ORG_TYPES,
+  type OrganizationType,
+  type OrgProfile,
   PRODUCTION_ARCHETYPES,
+  type ProfileArea,
   REGULATIONS,
   REVENUE_MODELS,
   RISK_APPETITES,
   SHIFT_PATTERNS,
-  optionKey,
   showCoreSystems,
   showDeliveryModel,
   showOperatingSection,
   showProductionSection,
   showRevenueModel,
-  computeCompleteness,
-  type OrganizationType,
-  type OrgProfile,
-  type ProfileArea,
 } from './organizationProfileTaxonomy';
-
 
 // ─── Cross-validation (Phase 3.1) ───
 

@@ -5,10 +5,10 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
 import { createModuleGate } from '../../middleware/betaGate.middleware.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const orgId = 'w3-mtg-owner-org-v1';
 

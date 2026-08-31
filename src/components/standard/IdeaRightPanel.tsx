@@ -89,10 +89,10 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import {
-  ArtifactRightRail,
   type ArtifactRailTeresaCommand,
   type ArtifactRailTeresaMode,
   type ArtifactRailTypeMode,
+  ArtifactRightRail,
 } from '@/components/standard/ArtifactRightRail';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
@@ -338,11 +338,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
 
   const railTeresaMode = useMemo<ArtifactRailTeresaMode>(
     () => ({
-      contextLabel: title
-        ? isPolish
-          ? `Idea „${title}"`
-          : `Idea "${title}"`
-        : undefined,
+      contextLabel: title ? (isPolish ? `Idea „${title}"` : `Idea "${title}"`) : undefined,
       commands: teresaCommands ?? [],
       // Idea nie ma dziś WŁASNEGO zapisanego wątku rozmowy per-artefakt — jest
       // wspólny dok czatu. Mówimy to wprost (jak notatnik) zamiast rysować

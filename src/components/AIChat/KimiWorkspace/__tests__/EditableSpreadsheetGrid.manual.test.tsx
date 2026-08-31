@@ -1,14 +1,16 @@
 /** @vitest-environment jsdom */
-import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { updateWorkbookCell, updateWorkbookSchema, importWorkbook, getWorkbook } = vi.hoisted(() => ({
-  updateWorkbookCell: vi.fn(),
-  updateWorkbookSchema: vi.fn(),
-  importWorkbook: vi.fn(),
-  getWorkbook: vi.fn(),
-}));
+const { updateWorkbookCell, updateWorkbookSchema, importWorkbook, getWorkbook } = vi.hoisted(
+  () => ({
+    updateWorkbookCell: vi.fn(),
+    updateWorkbookSchema: vi.fn(),
+    importWorkbook: vi.fn(),
+    getWorkbook: vi.fn(),
+  })
+);
 
 vi.mock('@/services/api', () => ({
   Api: { updateWorkbookCell, updateWorkbookSchema, importWorkbook, getWorkbook },
@@ -59,7 +61,11 @@ describe('EditableSpreadsheetGrid manual operations', () => {
       version: 2,
       schema: { title: 'Budget', sheets },
     });
-    importWorkbook.mockResolvedValue({ ok: true, version: 3, schema: { title: 'Imported', sheets } });
+    importWorkbook.mockResolvedValue({
+      ok: true,
+      version: 3,
+      schema: { title: 'Imported', sheets },
+    });
     getWorkbook.mockResolvedValue({ schema: { title: 'Budget', sheets } });
     localStorage.clear();
   });
@@ -381,7 +387,9 @@ describe('EditableSpreadsheetGrid manual operations', () => {
         ],
       },
     ];
-    render(<EditableSpreadsheetGrid workbookId="wb-chart" sheets={chartSheets} activeSheetIndex={0} />);
+    render(
+      <EditableSpreadsheetGrid workbookId="wb-chart" sheets={chartSheets} activeSheetIndex={0} />
+    );
     expect(screen.getByRole('img', { name: 'Plan by month' })).toBeInTheDocument();
     expect(screen.getByText('A2:B3')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Delete chart' }));
@@ -398,17 +406,35 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     render(<EditableSpreadsheetGrid workbookId="wb-p1" sheets={sheets} activeSheetIndex={0} />);
     fireEvent.click(screen.getByTestId('workbook-cell-0-plan'));
     fireEvent.click(screen.getByRole('button', { name: 'Hide selected row' }));
-    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'setRowHidden', rowIndex: 0, hidden: true })));
+    await waitFor(() =>
+      expect(updateWorkbookSchema).toHaveBeenCalledWith(
+        'wb-p1',
+        expect.objectContaining({ type: 'setRowHidden', rowIndex: 0, hidden: true })
+      )
+    );
 
     fireEvent.click(screen.getByTestId('workbook-cell-0-month'));
     fireEvent.click(screen.getByTestId('workbook-cell-1-plan'), { shiftKey: true });
     fireEvent.click(screen.getByRole('button', { name: 'Merge selected cells' }));
-    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'mergeCells', range: 'A2:B3' })));
+    await waitFor(() =>
+      expect(updateWorkbookSchema).toHaveBeenCalledWith(
+        'wb-p1',
+        expect.objectContaining({ type: 'mergeCells', range: 'A2:B3' })
+      )
+    );
 
     fireEvent.click(screen.getByTestId('workbook-cell-0-variance'));
     fireEvent.click(screen.getByTestId('workbook-cell-1-variance'), { shiftKey: true });
     fireEvent.click(screen.getByRole('button', { name: 'Highlight negative values' }));
-    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'addConditionalFormat', block: expect.objectContaining({ ref: 'D2:D3' }) })));
+    await waitFor(() =>
+      expect(updateWorkbookSchema).toHaveBeenCalledWith(
+        'wb-p1',
+        expect.objectContaining({
+          type: 'addConditionalFormat',
+          block: expect.objectContaining({ ref: 'D2:D3' }),
+        })
+      )
+    );
   });
 
   it('renders persisted merges and unmerges the full range from its anchor', async () => {
@@ -437,7 +463,9 @@ describe('EditableSpreadsheetGrid manual operations', () => {
 
   it('rebases once on a version conflict and retries the command', async () => {
     updateWorkbookSchema.mockRejectedValueOnce(new Error('409 VERSION_CONFLICT'));
-    render(<EditableSpreadsheetGrid workbookId="wb-conflict" sheets={sheets} activeSheetIndex={0} />);
+    render(
+      <EditableSpreadsheetGrid workbookId="wb-conflict" sheets={sheets} activeSheetIndex={0} />
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }));
     await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledTimes(2));
     expect(getWorkbook).toHaveBeenCalledWith('wb-conflict');
@@ -447,12 +475,18 @@ describe('EditableSpreadsheetGrid manual operations', () => {
   it('queues a schema edit offline and replays it after reconnecting', async () => {
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
     updateWorkbookSchema.mockRejectedValueOnce(new TypeError('Failed to fetch'));
-    render(<EditableSpreadsheetGrid workbookId="wb-offline" sheets={sheets} activeSheetIndex={0} />);
+    render(
+      <EditableSpreadsheetGrid workbookId="wb-offline" sheets={sheets} activeSheetIndex={0} />
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }));
     await waitFor(() => expect(screen.getByText(/Offline: edit queued/)).toBeInTheDocument());
-    expect(localStorage.getItem('consultify:workbook:wb-offline:pending-schema-commands')).toContain('addSheet');
+    expect(
+      localStorage.getItem('consultify:workbook:wb-offline:pending-schema-commands')
+    ).toContain('addSheet');
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
-    await act(async () => { window.dispatchEvent(new Event('online')); });
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+    });
     await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledTimes(2));
   });
 });

@@ -140,8 +140,7 @@ V8FinanceApi.getModels = (async () => ({
   count: 1,
 })) as typeof V8FinanceApi.getModels;
 V8FinanceApi.getModel = (async () => ({ model: MOCK_MODEL })) as typeof V8FinanceApi.getModel;
-V8FinanceApi.getModelOutputs = (async () =>
-  MOCK_OUTPUTS) as typeof V8FinanceApi.getModelOutputs;
+V8FinanceApi.getModelOutputs = (async () => MOCK_OUTPUTS) as typeof V8FinanceApi.getModelOutputs;
 V8FinanceApi.getModelValidations = (async () =>
   MOCK_VALIDATIONS) as typeof V8FinanceApi.getModelValidations;
 V8FinanceApi.getCaseScenarios = (async () => ({
@@ -169,10 +168,7 @@ export function FinanceModelWorkspaceScreen(): React.ReactElement {
   return (
     <AppProviders>
       <FeatureFlagsProvider showDevTools={false}>
-        <div
-          style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}
-          className="bg-c-bg"
-        >
+        <div style={{ height: '100vh', width: '100vw', overflow: 'hidden' }} className="bg-c-bg">
           <React.Suspense fallback={null}>
             <FinancialModelWorkspaceLazy
               key={`model-${MODEL_ID}-${MOCK_STATUS}-${MOCK_NAME}`}

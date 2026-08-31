@@ -16,9 +16,9 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
   return {
     ...actual,
     requireOrgMember: (...args: unknown[]) => mockRequireOrgMember(...args),
@@ -44,8 +44,8 @@ vi.mock('../../../services/caseWorkspace/migrationReadinessService.js', () => ({
   countQuarantinedByReasonCode: vi.fn(),
 }));
 
-import migrationReadinessRoutes from '../migrationReadiness.routes.js';
 import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import migrationReadinessRoutes from '../migrationReadiness.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -61,9 +61,24 @@ function createApp(): Express {
 describe('caseWorkspace migration-readiness (flags/legacy-quarantine) routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireOrgMember.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
-    mockRequireOrgRole.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireOrgMember.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
+    mockRequireOrgRole.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('rejects a register-flag-definition body missing description with 400', async () => {
@@ -97,7 +112,9 @@ describe('caseWorkspace migration-readiness (flags/legacy-quarantine) routes', (
       .put('/api/v8/case-workspace/flags/org-state/my.flag')
       .send({ enabled: true, organizationId: 'attacker-org' });
     expect(res.status).toBe(200);
-    expect(mockSetOrgFlagState).toHaveBeenCalledWith(expect.objectContaining({ organizationId: ORG }));
+    expect(mockSetOrgFlagState).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: ORG })
+    );
   });
 
   it('rejects a rolloutPercentage outside [0,100] with 400', async () => {
@@ -109,7 +126,10 @@ describe('caseWorkspace migration-readiness (flags/legacy-quarantine) routes', (
   });
 
   it('404s a quarantine record belonging to a different organization (enumeration-safe gap mitigation)', async () => {
-    mockGetQuarantinedLegacyRecord.mockResolvedValue({ quarantineId: 'cwlq-1', organizationId: 'other-org' });
+    mockGetQuarantinedLegacyRecord.mockResolvedValue({
+      quarantineId: 'cwlq-1',
+      organizationId: 'other-org',
+    });
     const res = await request(createApp()).get('/api/v8/case-workspace/legacy-quarantine/cwlq-1');
     expect(res.status).toBe(404);
   });
@@ -119,7 +139,9 @@ describe('caseWorkspace migration-readiness (flags/legacy-quarantine) routes', (
       { quarantineId: 'cwlq-1', organizationId: ORG },
       { quarantineId: 'cwlq-2', organizationId: 'other-org' },
     ]);
-    const res = await request(createApp()).get('/api/v8/case-workspace/legacy-quarantine/rehearsal-runs/run-1');
+    const res = await request(createApp()).get(
+      '/api/v8/case-workspace/legacy-quarantine/rehearsal-runs/run-1'
+    );
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([{ quarantineId: 'cwlq-1', organizationId: ORG }]);
     expect(mockRequireOrgRole).toHaveBeenCalledWith(USER, ORG, 'ADMIN');

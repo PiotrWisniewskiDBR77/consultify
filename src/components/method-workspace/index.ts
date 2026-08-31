@@ -5,40 +5,29 @@
  * (default OFF — see src/hooks/useFeatureFlags.tsx) until owner acceptance
  * on screenshots (CLAUDE.md #7).
  */
-export { AnswerStateControl } from './AnswerStateControl';
 export type { AnswerStateControlProps } from './AnswerStateControl';
-
-export { InterviewFocusPanel } from './InterviewFocusPanel';
+export { AnswerStateControl } from './AnswerStateControl';
 export type { InterviewFocusPanelProps } from './InterviewFocusPanel';
-
-export { LiveMatrix } from './LiveMatrix';
+export { InterviewFocusPanel } from './InterviewFocusPanel';
 export type { LiveMatrixProps } from './LiveMatrix';
-
-export { MethodNavigator } from './MethodNavigator';
+export { LiveMatrix } from './LiveMatrix';
 export type { MethodNavigatorProps } from './MethodNavigator';
-
-export { MethodWorkspaceShell } from './MethodWorkspaceShell';
+export { MethodNavigator } from './MethodNavigator';
 export type { MethodWorkspaceShellProps } from './MethodWorkspaceShell';
-
-export { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
+export { MethodWorkspaceShell } from './MethodWorkspaceShell';
 export type { QuestionHelpDisclosureProps } from './QuestionHelpDisclosure';
-
-export { ResolutionCard } from './ResolutionCard';
+export { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
 export type { ResolutionCardProps } from './ResolutionCard';
-
-export { SaveStateIndicator } from './SaveStateIndicator';
+export { ResolutionCard } from './ResolutionCard';
 export type { SaveStateIndicatorProps } from './SaveStateIndicator';
-
-export { TeresaPreviewPanel } from './TeresaPreviewPanel';
+export { SaveStateIndicator } from './SaveStateIndicator';
 export type { TeresaPreviewPanelProps } from './TeresaPreviewPanel';
-
-export { useMethodWorkspaceSave } from './useMethodWorkspaceSave';
+export { TeresaPreviewPanel } from './TeresaPreviewPanel';
+export * from './types';
 export type {
   UseMethodWorkspaceSaveOptions,
   UseMethodWorkspaceSaveReturn,
 } from './useMethodWorkspaceSave';
-
-export { VoiceAnswerChannel } from './VoiceAnswerChannel';
+export { useMethodWorkspaceSave } from './useMethodWorkspaceSave';
 export type { VoiceAnswerChannelProps } from './VoiceAnswerChannel';
-
-export * from './types';
+export { VoiceAnswerChannel } from './VoiceAnswerChannel';

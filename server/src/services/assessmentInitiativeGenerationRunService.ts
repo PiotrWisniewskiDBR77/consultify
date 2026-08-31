@@ -15,8 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import AssessmentInitiativeService from './assessmentInitiativeService.js';
 import { upsertActiveAssessmentInitiativeBatch } from './assessment/AssessmentWorkbenchService.js';
+import AssessmentInitiativeService from './assessmentInitiativeService.js';
 
 export type InitiativeGenerationRunMode = 'ASSESSMENT_REPORT' | 'REPORT_ONLY';
 export type InitiativeGenerationRunStatus =

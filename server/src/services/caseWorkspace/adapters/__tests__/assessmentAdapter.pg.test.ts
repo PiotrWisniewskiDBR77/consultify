@@ -79,18 +79,18 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import * as capabilityAdapterService from '../../capabilityAdapterService.js';
-import type { CapabilityExecutionEnvelope } from '../../capabilityAdapterService.js';
-import * as caseCoreService from '../../caseCoreService.js';
-import * as artifactLinkService from '../../artifactLinkService.js';
 import { ensureAssessmentSchema } from '../../../../controllers/AssessmentController.js';
+import * as artifactLinkService from '../../artifactLinkService.js';
+import type { CapabilityExecutionEnvelope } from '../../capabilityAdapterService.js';
+import * as capabilityAdapterService from '../../capabilityAdapterService.js';
+import * as caseCoreService from '../../caseCoreService.js';
 import {
   ASSESSMENT_CREATE_CAPABILITY_ID,
   ASSESSMENT_CREATE_CAPABILITY_VERSION,
+  type AssessmentAdapterDeps,
   assessmentCreateRegistrationInput,
   buildAssessmentCreateBinding,
   getAssessmentReadback,
-  type AssessmentAdapterDeps,
 } from '../assessmentAdapter.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
@@ -114,7 +114,10 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
         WHERE table_schema = 'public' AND table_name = 'case_workspace_artifact_links'
           AND column_name IN ('link_id', 'case_id', 'artifact_type', 'artifact_id')`
     );
-    if (Number(capabilities.rows[0]?.present ?? 0) !== 3 || Number(links.rows[0]?.present ?? 0) !== 4) {
+    if (
+      Number(capabilities.rows[0]?.present ?? 0) !== 3 ||
+      Number(links.rows[0]?.present ?? 0) !== 4
+    ) {
       return false;
     }
 
@@ -137,7 +140,10 @@ async function canReachWithSchema(connectionString: string): Promise<boolean> {
         WHERE table_schema = 'public' AND table_name = 'assessment_sessions'
           AND column_name IN ('id', 'assessment_id', 'user_id')`
     );
-    return Number(assessments.rows[0]?.present ?? 0) === 7 && Number(sessions.rows[0]?.present ?? 0) === 3;
+    return (
+      Number(assessments.rows[0]?.present ?? 0) === 7 &&
+      Number(sessions.rows[0]?.present ?? 0) === 3
+    );
   } catch {
     return false;
   } finally {
@@ -173,7 +179,12 @@ async function seedUser(control: Pool, orgId: string, label: string): Promise<st
   return userId;
 }
 
-async function seedMemberWithRole(control: Pool, orgId: string, userId: string, role: string): Promise<void> {
+async function seedMemberWithRole(
+  control: Pool,
+  orgId: string,
+  userId: string,
+  role: string
+): Promise<void> {
   await control.query(
     `INSERT INTO organization_members (id, organization_id, user_id, role, status)
        VALUES ($1, $2, $3, $4, 'ACTIVE')`,
@@ -185,7 +196,10 @@ async function seedFixture(control: Pool, label: string, actorRole = 'MEMBER'): 
   const suffix = randomUUID();
   const orgId = `cwtest-asm-org-${label}-${suffix}`;
   const projectId = `cwtest-asm-project-${label}-${suffix}`;
-  await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [orgId, `Assessment adapter org (${label})`]);
+  await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+    orgId,
+    `Assessment adapter org (${label})`,
+  ]);
   await control.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3)`, [
     projectId,
     orgId,
@@ -203,23 +217,36 @@ async function seedFixture(control: Pool, label: string, actorRole = 'MEMBER'): 
 }
 
 async function teardownFixture(control: Pool, fixture: Fixture): Promise<void> {
-  await control.query(`DELETE FROM assessment_sessions WHERE assessment_id IN (SELECT id FROM assessments WHERE organization_id = $1)`, [
-    fixture.orgId,
-  ]).catch(() => undefined);
-  await control.query(`DELETE FROM assessments WHERE organization_id = $1`, [fixture.orgId]).catch(() => undefined);
+  await control
+    .query(
+      `DELETE FROM assessment_sessions WHERE assessment_id IN (SELECT id FROM assessments WHERE organization_id = $1)`,
+      [fixture.orgId]
+    )
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM assessments WHERE organization_id = $1`, [fixture.orgId])
+    .catch(() => undefined);
   await control
     .query(`DELETE FROM case_workspace_artifact_links WHERE case_id = $1`, [fixture.caseId])
     .catch(() => undefined);
   await control
     .query(`DELETE FROM case_workspace_events WHERE case_id = $1`, [fixture.caseId])
     .catch(() => undefined);
-  await control.query(`DELETE FROM case_core WHERE case_id = $1`, [fixture.caseId]).catch(() => undefined);
+  await control
+    .query(`DELETE FROM case_core WHERE case_id = $1`, [fixture.caseId])
+    .catch(() => undefined);
   await control
     .query(`DELETE FROM organization_members WHERE organization_id = $1`, [fixture.orgId])
     .catch(() => undefined);
-  await control.query(`DELETE FROM projects WHERE organization_id = $1`, [fixture.orgId]).catch(() => undefined);
-  await control.query(`DELETE FROM users WHERE organization_id = $1`, [fixture.orgId]).catch(() => undefined);
-  await control.query(`DELETE FROM organizations WHERE id = $1`, [fixture.orgId]).catch(() => undefined);
+  await control
+    .query(`DELETE FROM projects WHERE organization_id = $1`, [fixture.orgId])
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM users WHERE organization_id = $1`, [fixture.orgId])
+    .catch(() => undefined);
+  await control
+    .query(`DELETE FROM organizations WHERE id = $1`, [fixture.orgId])
+    .catch(() => undefined);
 }
 
 // ---------------------------------------------------------------------------
@@ -298,416 +325,471 @@ function buildEnvelope(params: {
   };
 }
 
-suite('assessmentAdapter — Assessment create capability, dispatched end-to-end through executeCapability', () => {
-  let control: Pool;
-  let registrarOrgId: string;
+suite(
+  'assessmentAdapter — Assessment create capability, dispatched end-to-end through executeCapability',
+  () => {
+    let control: Pool;
+    let registrarOrgId: string;
 
-  beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
-    registrarOrgId = `cwtest-asm-registrar-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-      registrarOrgId,
-      'Assessment adapter registrar org',
-    ]);
-    const registrarActorId = await seedUser(control, registrarOrgId, 'registrar');
-    await seedMemberWithRole(control, registrarOrgId, registrarActorId, 'ADMIN');
-    // Private test id — NOT registerAssessmentCreateCapability, which
-    // hard-codes the platform-global ASSESSMENT_CREATE_CAPABILITY_ID.
-    // registerCapabilityWithAdapter is the same production registration
-    // primitive that helper calls internally; only the capabilityId field of
-    // the input is overridden.
-    await capabilityAdapterService.registerCapabilityWithAdapter(
-      { ...assessmentCreateRegistrationInput(registrarActorId), capabilityId: ASSESSMENT_TEST_CAPABILITY_ID },
-      buildAssessmentCreateBinding(),
-      registrarOrgId
-    );
-  }, 60_000);
+    beforeAll(async () => {
+      control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+      registrarOrgId = `cwtest-asm-registrar-${randomUUID()}`;
+      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+        registrarOrgId,
+        'Assessment adapter registrar org',
+      ]);
+      const registrarActorId = await seedUser(control, registrarOrgId, 'registrar');
+      await seedMemberWithRole(control, registrarOrgId, registrarActorId, 'ADMIN');
+      // Private test id — NOT registerAssessmentCreateCapability, which
+      // hard-codes the platform-global ASSESSMENT_CREATE_CAPABILITY_ID.
+      // registerCapabilityWithAdapter is the same production registration
+      // primitive that helper calls internally; only the capabilityId field of
+      // the input is overridden.
+      await capabilityAdapterService.registerCapabilityWithAdapter(
+        {
+          ...assessmentCreateRegistrationInput(registrarActorId),
+          capabilityId: ASSESSMENT_TEST_CAPABILITY_ID,
+        },
+        buildAssessmentCreateBinding(),
+        registrarOrgId
+      );
+    }, 60_000);
 
-  afterAll(async () => {
-    await control
-      .query(
-        `DELETE FROM case_workspace_capability_idempotency_keys
+    afterAll(async () => {
+      await control
+        .query(
+          `DELETE FROM case_workspace_capability_idempotency_keys
           WHERE capability_registry_id IN (
             SELECT capability_registry_id FROM case_workspace_capabilities WHERE capability_id = $1)`,
-        [ASSESSMENT_TEST_CAPABILITY_ID]
-      )
-      .catch(() => undefined);
-    await control
-      .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [ASSESSMENT_TEST_CAPABILITY_ID])
-      .catch(() => undefined);
-    await control
-      .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
-      .catch(() => undefined);
-    await control.query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId]).catch(() => undefined);
-    await control.query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId]).catch(() => undefined);
-    await control?.end().catch(() => undefined);
-  }, 60_000);
-
-  afterEach(() => {
-    // Reset to the real, production binding (rebound at THIS file's private
-    // test id — see the block above this describe) after any test that
-    // injected a custom one — never let a stubbed dependency leak into the
-    // next test.
-    resetAssessmentTestBinding();
-  });
-
-  async function assessmentCountForOrg(orgId: string): Promise<number> {
-    const result = await control.query(`SELECT count(*)::int AS n FROM assessments WHERE organization_id = $1`, [orgId]);
-    return Number(result.rows[0]?.n ?? 0);
-  }
-
-  function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
-    return {
-      caseId,
-      assessmentType: 'DRD',
-      name: 'Digital readiness — pilot plant assessment',
-      ...overrides,
-    };
-  }
-
-  // =========================================================================
-  // 1. Success
-  // =========================================================================
-  it('creates a real assessments row (+ session) and a real ACTIVE artifact link, readback agrees', async () => {
-    const fixture = await seedFixture(control, 'success');
-    try {
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({ orgId: fixture.orgId, actorId: fixture.actorId, payload: validPayload(fixture.caseId) })
-      );
-
-      expect(result.outcome).toBe('SUCCEEDED');
-      expect(result.errorCode).toBeNull();
-      const assessmentId = result.output.assessmentId as string;
-      expect(typeof assessmentId).toBe('string');
-      expect(result.resultRef).toBe(`assessment:${assessmentId}`);
-      expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
-      expect(result.output.status).toBe('DRAFT');
-      expect(result.output.backendStatus).toBe('DRAFT');
-      expect(result.output.projectId).toBe(fixture.projectId);
-
-      // Real row, read by the adapter's OWN read path — not this suite's SELECT.
-      const readback = await getAssessmentReadback(assessmentId, fixture.orgId);
-      expect(readback?.name).toBe('Digital readiness — pilot plant assessment');
-      expect(readback?.organization_id).toBe(fixture.orgId);
-      expect(readback?.assessment_type).toBe('DRD');
-      expect(readback?.status).toBe('DRAFT');
-
-      // A real assessment_sessions sibling row exists too (parity with the
-      // real POST /assessments route — see assessmentAdapter.ts's
-      // insertAssessment doc).
-      const sessionRow = await control.query(`SELECT id FROM assessment_sessions WHERE assessment_id = $1`, [
-        assessmentId,
-      ]);
-      expect(sessionRow.rows).toHaveLength(1);
-
-      const links = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'assessment', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(links).toHaveLength(1);
-      expect(links[0].artifactId).toBe(assessmentId);
-      expect(links[0].relation).toBe('OUTPUT');
-    } finally {
-      await teardownFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 2. Input denial
-  // =========================================================================
-  it('refuses invalid input, writing nothing', async () => {
-    const fixture = await seedFixture(control, 'input-denial');
-    try {
-      const blankName = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          payload: validPayload(fixture.caseId, { name: '' }),
-        })
-      );
-      expect(blankName.outcome).toBe('FAILED');
-      expect(blankName.errorCode).toBe('CAPABILITY_INPUT_INVALID');
-
-      const badType = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          payload: validPayload(fixture.caseId, { assessmentType: 'NOT_A_REAL_TYPE' }),
-        })
-      );
-      expect(badType.outcome).toBe('FAILED');
-      expect(badType.errorCode).toBe('CAPABILITY_INPUT_INVALID');
-
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
-    } finally {
-      await teardownFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 3. Role denial — Assessment-specific RBAC, not just Case access.
-  // =========================================================================
-  it('refuses an actor with real Case standing but a read-only org role (GUEST), writing nothing', async () => {
-    // NOTE: `organization_members.role` carries a DB CHECK constraint
-    // (`organization_members_role_check`) allowing ONLY
-    // OWNER/ADMIN/MEMBER/CONSULTANT/USER/GUEST — confirmed by querying
-    // `pg_constraint` against the real test database. Of
-    // routes/v8/assessment.routes.ts:152-160's ASSESSMENT_READ_ONLY_ORG_ROLES
-    // (VIEWER/GUEST/CLIENT/READONLY/OBSERVER/STAKEHOLDER), only 'GUEST' is
-    // actually a value this column can ever hold — the rest of that set can
-    // never be exercised against this schema. See this suite's final report
-    // for this finding; GUEST is the only real-world-reachable read-only
-    // role, so it is what this test proves the gate against.
-    const fixture = await seedFixture(control, 'role-denial', 'GUEST');
-    try {
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({ orgId: fixture.orgId, actorId: fixture.actorId, payload: validPayload(fixture.caseId) })
-      );
-      expect(result.outcome).toBe('FAILED');
-      expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
-    } finally {
-      await teardownFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 4. Retry
-  // =========================================================================
-  it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
-    const fixture = await seedFixture(control, 'retry');
-    try {
-      const key1 = `idem-${randomUUID()}`;
-      const first = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key1,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-      expect(first.outcome).toBe('SUCCEEDED');
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(1);
-
-      const replay = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key1,
-          payload: validPayload(fixture.caseId),
-        })
-      );
-      expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(1);
-
-      const key2 = `idem-${randomUUID()}`;
-      const rejected = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key2,
-          payload: validPayload(fixture.caseId, { name: '' }),
-        })
-      );
-      expect(rejected.outcome).toBe('FAILED');
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(1);
-
-      const key3 = `idem-${randomUUID()}`;
-      const second = await capabilityAdapterService.executeCapability(
-        buildEnvelope({
-          orgId: fixture.orgId,
-          actorId: fixture.actorId,
-          idempotencyKey: key3,
-          payload: validPayload(fixture.caseId, { name: 'A second, distinct assessment' }),
-        })
-      );
-      expect(second.outcome).toBe('SUCCEEDED');
-      expect(second.output.assessmentId).not.toBe(first.output.assessmentId);
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(2);
-    } finally {
-      await teardownFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 5. Partial failure
-  // =========================================================================
-  it('still creates the assessment when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
-    const fixture = await seedFixture(control, 'partial');
-    try {
-      resetAssessmentTestBinding({
-        linkArtifactToCase: async () => {
-          throw new Error('injected_link_failure');
-        },
-      });
-
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({ orgId: fixture.orgId, actorId: fixture.actorId, payload: validPayload(fixture.caseId) })
-      );
-
-      expect(result.outcome).toBe('SUCCEEDED');
-      const assessmentId = result.output.assessmentId as string;
-      const artifactLink = result.output.artifactLink as { linked: boolean; error: string | null };
-      expect(artifactLink.linked).toBe(false);
-      expect(artifactLink.error).toBeTruthy();
-      expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
-
-      const readback = await getAssessmentReadback(assessmentId, fixture.orgId);
-      expect(readback).not.toBeNull();
-      expect(readback?.organization_id).toBe(fixture.orgId);
-
-      const linksBefore = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'assessment', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(linksBefore).toHaveLength(0);
-
-      await artifactLinkService.linkArtifactToCase({
-        caseId: fixture.caseId,
-        artifactType: 'assessment',
-        artifactId: assessmentId,
-        relation: 'OUTPUT',
-        linkedByActorId: fixture.actorId,
-      });
-      const linksAfter = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'assessment', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(linksAfter).toHaveLength(1);
-      expect(linksAfter[0].artifactId).toBe(assessmentId);
-    } finally {
-      await teardownFixture(control, fixture);
-    }
-  }, 90_000);
-
-  // =========================================================================
-  // 6. Cross-tenant
-  // =========================================================================
-  it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
-    const fixture = await seedFixture(control, 'crosstenant');
-    const otherOrgId = `cwtest-asm-other-${randomUUID()}`;
-    try {
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-        otherOrgId,
-        'Assessment adapter other org',
-      ]);
-      // The actor genuinely belongs to the Case's real org AND to otherOrgId
-      // (with create-capable role there too), but the ENVELOPE claims
-      // otherOrgId for THIS Case.
-      await seedMemberWithRole(control, otherOrgId, fixture.actorId, 'MEMBER');
-
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({ orgId: otherOrgId, actorId: fixture.actorId, payload: validPayload(fixture.caseId) })
-      );
-
-      expect(result.outcome).toBe('FAILED');
-      expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
-      expect(await assessmentCountForOrg(otherOrgId)).toBe(0);
-
-      // And a genuine stranger — no membership anywhere near this Case's org.
-      const strangerOrgId = `cwtest-asm-stranger-${randomUUID()}`;
-      await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
-        strangerOrgId,
-        'Assessment adapter stranger org',
-      ]);
-      const strangerActorId = await seedUser(control, strangerOrgId, 'stranger');
-      await seedMemberWithRole(control, strangerOrgId, strangerActorId, 'MEMBER');
-      const strangerResult = await capabilityAdapterService.executeCapability(
-        buildEnvelope({ orgId: strangerOrgId, actorId: strangerActorId, payload: validPayload(fixture.caseId) })
-      );
-      expect(strangerResult.outcome).toBe('FAILED');
-      expect(['CAPABILITY_NOT_FOUND', 'CAPABILITY_UNAUTHORIZED']).toContain(strangerResult.errorCode);
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
-
-      await control
-        .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
+          [ASSESSMENT_TEST_CAPABILITY_ID]
+        )
         .catch(() => undefined);
-      await control.query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId]).catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId]).catch(() => undefined);
-    } finally {
       await control
-        .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
-          otherOrgId,
-          fixture.actorId,
+        .query(`DELETE FROM case_workspace_capabilities WHERE capability_id = $1`, [
+          ASSESSMENT_TEST_CAPABILITY_ID,
         ])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId]).catch(() => undefined);
-      await teardownFixture(control, fixture);
+      await control
+        .query(`DELETE FROM organization_members WHERE organization_id = $1`, [registrarOrgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM users WHERE organization_id = $1`, [registrarOrgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [registrarOrgId])
+        .catch(() => undefined);
+      await control?.end().catch(() => undefined);
+    }, 60_000);
+
+    afterEach(() => {
+      // Reset to the real, production binding (rebound at THIS file's private
+      // test id — see the block above this describe) after any test that
+      // injected a custom one — never let a stubbed dependency leak into the
+      // next test.
+      resetAssessmentTestBinding();
+    });
+
+    async function assessmentCountForOrg(orgId: string): Promise<number> {
+      const result = await control.query(
+        `SELECT count(*)::int AS n FROM assessments WHERE organization_id = $1`,
+        [orgId]
+      );
+      return Number(result.rows[0]?.n ?? 0);
     }
-  }, 90_000);
 
-  // =========================================================================
-  // 7. Stable deep link
-  // =========================================================================
-  it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
-    const fixture = await seedFixture(control, 'deeplink');
-    try {
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({ orgId: fixture.orgId, actorId: fixture.actorId, payload: validPayload(fixture.caseId) })
-      );
-      expect(result.outcome).toBe('SUCCEEDED');
-      const assessmentId = result.output.assessmentId as string;
-      expect(result.resultRef).toBe(`assessment:${assessmentId}`);
-
-      const readback1 = await getAssessmentReadback(assessmentId, fixture.orgId);
-      const readback2 = await getAssessmentReadback(assessmentId, fixture.orgId);
-      expect(readback1?.id).toBe(assessmentId);
-      expect(readback2?.id).toBe(assessmentId);
-      expect(readback1?.name).toBe(readback2?.name);
-
-      const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'assessment', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'assessment', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(linksRead1).toHaveLength(1);
-      expect(linksRead2).toHaveLength(1);
-      expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
-      expect(linksRead1[0].artifactId).toBe(assessmentId);
-    } finally {
-      await teardownFixture(control, fixture);
+    function validPayload(caseId: string, overrides: Record<string, unknown> = {}) {
+      return {
+        caseId,
+        assessmentType: 'DRD',
+        name: 'Digital readiness — pilot plant assessment',
+        ...overrides,
+      };
     }
-  }, 90_000);
 
-  // =========================================================================
-  // 8. Negative control — the adapter's re-read guard against a write that
-  //    lies about success (see assessmentAdapter.ts's header, "THE
-  //    'DbPromise SWALLOWS ERRORS' TRAP").
-  // =========================================================================
-  it('[negative control] surfaces a failure instead of a false success when the write silently persists nothing', async () => {
-    const fixture = await seedFixture(control, 'negctrl');
-    try {
-      resetAssessmentTestBinding({
-        // Mimics the exact observable shape of a DbPromise fallback-swallow:
-        // a plausible id is returned, but nothing was actually written.
-        createAssessment: async () => randomUUID(),
-      });
+    // =========================================================================
+    // 1. Success
+    // =========================================================================
+    it('creates a real assessments row (+ session) and a real ACTIVE artifact link, readback agrees', async () => {
+      const fixture = await seedFixture(control, 'success');
+      try {
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
 
-      const result = await capabilityAdapterService.executeCapability(
-        buildEnvelope({ orgId: fixture.orgId, actorId: fixture.actorId, payload: validPayload(fixture.caseId) })
-      );
+        expect(result.outcome).toBe('SUCCEEDED');
+        expect(result.errorCode).toBeNull();
+        const assessmentId = result.output.assessmentId as string;
+        expect(typeof assessmentId).toBe('string');
+        expect(result.resultRef).toBe(`assessment:${assessmentId}`);
+        expect((result.output.artifactLink as { linked: boolean }).linked).toBe(true);
+        expect(result.output.status).toBe('DRAFT');
+        expect(result.output.backendStatus).toBe('DRAFT');
+        expect(result.output.projectId).toBe(fixture.projectId);
 
-      expect(result.outcome).toBe('FAILED');
-      expect(result.errorCode).toBe('CAPABILITY_INTERNAL_ERROR');
-      expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
+        // Real row, read by the adapter's OWN read path — not this suite's SELECT.
+        const readback = await getAssessmentReadback(assessmentId, fixture.orgId);
+        expect(readback?.name).toBe('Digital readiness — pilot plant assessment');
+        expect(readback?.organization_id).toBe(fixture.orgId);
+        expect(readback?.assessment_type).toBe('DRD');
+        expect(readback?.status).toBe('DRAFT');
 
-      const links = await artifactLinkService.listArtifactLinksForCase(
-        fixture.caseId,
-        { artifactType: 'assessment', linkStatus: 'ACTIVE' },
-        fixture.actorId
-      );
-      expect(links).toHaveLength(0);
-    } finally {
-      await teardownFixture(control, fixture);
-    }
-  }, 90_000);
-});
+        // A real assessment_sessions sibling row exists too (parity with the
+        // real POST /assessments route — see assessmentAdapter.ts's
+        // insertAssessment doc).
+        const sessionRow = await control.query(
+          `SELECT id FROM assessment_sessions WHERE assessment_id = $1`,
+          [assessmentId]
+        );
+        expect(sessionRow.rows).toHaveLength(1);
+
+        const links = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'assessment', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(links).toHaveLength(1);
+        expect(links[0].artifactId).toBe(assessmentId);
+        expect(links[0].relation).toBe('OUTPUT');
+      } finally {
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 2. Input denial
+    // =========================================================================
+    it('refuses invalid input, writing nothing', async () => {
+      const fixture = await seedFixture(control, 'input-denial');
+      try {
+        const blankName = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId, { name: '' }),
+          })
+        );
+        expect(blankName.outcome).toBe('FAILED');
+        expect(blankName.errorCode).toBe('CAPABILITY_INPUT_INVALID');
+
+        const badType = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId, { assessmentType: 'NOT_A_REAL_TYPE' }),
+          })
+        );
+        expect(badType.outcome).toBe('FAILED');
+        expect(badType.errorCode).toBe('CAPABILITY_INPUT_INVALID');
+
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
+      } finally {
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 3. Role denial — Assessment-specific RBAC, not just Case access.
+    // =========================================================================
+    it('refuses an actor with real Case standing but a read-only org role (GUEST), writing nothing', async () => {
+      // NOTE: `organization_members.role` carries a DB CHECK constraint
+      // (`organization_members_role_check`) allowing ONLY
+      // OWNER/ADMIN/MEMBER/CONSULTANT/USER/GUEST — confirmed by querying
+      // `pg_constraint` against the real test database. Of
+      // routes/v8/assessment.routes.ts:152-160's ASSESSMENT_READ_ONLY_ORG_ROLES
+      // (VIEWER/GUEST/CLIENT/READONLY/OBSERVER/STAKEHOLDER), only 'GUEST' is
+      // actually a value this column can ever hold — the rest of that set can
+      // never be exercised against this schema. See this suite's final report
+      // for this finding; GUEST is the only real-world-reachable read-only
+      // role, so it is what this test proves the gate against.
+      const fixture = await seedFixture(control, 'role-denial', 'GUEST');
+      try {
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(result.outcome).toBe('FAILED');
+        expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
+      } finally {
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 4. Retry
+    // =========================================================================
+    it('suppresses a replayed idempotency key and still lets a fresh key recover after a rejected attempt', async () => {
+      const fixture = await seedFixture(control, 'retry');
+      try {
+        const key1 = `idem-${randomUUID()}`;
+        const first = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key1,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(first.outcome).toBe('SUCCEEDED');
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(1);
+
+        const replay = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key1,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(replay.outcome).toBe('DUPLICATE_SUPPRESSED');
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(1);
+
+        const key2 = `idem-${randomUUID()}`;
+        const rejected = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key2,
+            payload: validPayload(fixture.caseId, { name: '' }),
+          })
+        );
+        expect(rejected.outcome).toBe('FAILED');
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(1);
+
+        const key3 = `idem-${randomUUID()}`;
+        const second = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            idempotencyKey: key3,
+            payload: validPayload(fixture.caseId, { name: 'A second, distinct assessment' }),
+          })
+        );
+        expect(second.outcome).toBe('SUCCEEDED');
+        expect(second.output.assessmentId).not.toBe(first.output.assessmentId);
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(2);
+      } finally {
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 5. Partial failure
+    // =========================================================================
+    it('still creates the assessment when the artifact-link step fails, surfaces it, and stays re-linkable', async () => {
+      const fixture = await seedFixture(control, 'partial');
+      try {
+        resetAssessmentTestBinding({
+          linkArtifactToCase: async () => {
+            throw new Error('injected_link_failure');
+          },
+        });
+
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+
+        expect(result.outcome).toBe('SUCCEEDED');
+        const assessmentId = result.output.assessmentId as string;
+        const artifactLink = result.output.artifactLink as {
+          linked: boolean;
+          error: string | null;
+        };
+        expect(artifactLink.linked).toBe(false);
+        expect(artifactLink.error).toBeTruthy();
+        expect(JSON.stringify(artifactLink)).not.toContain('injected_link_failure');
+
+        const readback = await getAssessmentReadback(assessmentId, fixture.orgId);
+        expect(readback).not.toBeNull();
+        expect(readback?.organization_id).toBe(fixture.orgId);
+
+        const linksBefore = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'assessment', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(linksBefore).toHaveLength(0);
+
+        await artifactLinkService.linkArtifactToCase({
+          caseId: fixture.caseId,
+          artifactType: 'assessment',
+          artifactId: assessmentId,
+          relation: 'OUTPUT',
+          linkedByActorId: fixture.actorId,
+        });
+        const linksAfter = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'assessment', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(linksAfter).toHaveLength(1);
+        expect(linksAfter[0].artifactId).toBe(assessmentId);
+      } finally {
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 6. Cross-tenant
+    // =========================================================================
+    it('refuses when the envelope organizationId does not match the Case tenant, writing nothing', async () => {
+      const fixture = await seedFixture(control, 'crosstenant');
+      const otherOrgId = `cwtest-asm-other-${randomUUID()}`;
+      try {
+        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+          otherOrgId,
+          'Assessment adapter other org',
+        ]);
+        // The actor genuinely belongs to the Case's real org AND to otherOrgId
+        // (with create-capable role there too), but the ENVELOPE claims
+        // otherOrgId for THIS Case.
+        await seedMemberWithRole(control, otherOrgId, fixture.actorId, 'MEMBER');
+
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: otherOrgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+
+        expect(result.outcome).toBe('FAILED');
+        expect(result.errorCode).toBe('CAPABILITY_UNAUTHORIZED');
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
+        expect(await assessmentCountForOrg(otherOrgId)).toBe(0);
+
+        // And a genuine stranger — no membership anywhere near this Case's org.
+        const strangerOrgId = `cwtest-asm-stranger-${randomUUID()}`;
+        await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+          strangerOrgId,
+          'Assessment adapter stranger org',
+        ]);
+        const strangerActorId = await seedUser(control, strangerOrgId, 'stranger');
+        await seedMemberWithRole(control, strangerOrgId, strangerActorId, 'MEMBER');
+        const strangerResult = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: strangerOrgId,
+            actorId: strangerActorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(strangerResult.outcome).toBe('FAILED');
+        expect(['CAPABILITY_NOT_FOUND', 'CAPABILITY_UNAUTHORIZED']).toContain(
+          strangerResult.errorCode
+        );
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
+
+        await control
+          .query(`DELETE FROM organization_members WHERE organization_id = $1`, [strangerOrgId])
+          .catch(() => undefined);
+        await control
+          .query(`DELETE FROM users WHERE organization_id = $1`, [strangerOrgId])
+          .catch(() => undefined);
+        await control
+          .query(`DELETE FROM organizations WHERE id = $1`, [strangerOrgId])
+          .catch(() => undefined);
+      } finally {
+        await control
+          .query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
+            otherOrgId,
+            fixture.actorId,
+          ])
+          .catch(() => undefined);
+        await control
+          .query(`DELETE FROM organizations WHERE id = $1`, [otherOrgId])
+          .catch(() => undefined);
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 7. Stable deep link
+    // =========================================================================
+    it('produces a resultRef and an artifact link that both resolve to the SAME object on repeated reads', async () => {
+      const fixture = await seedFixture(control, 'deeplink');
+      try {
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+        expect(result.outcome).toBe('SUCCEEDED');
+        const assessmentId = result.output.assessmentId as string;
+        expect(result.resultRef).toBe(`assessment:${assessmentId}`);
+
+        const readback1 = await getAssessmentReadback(assessmentId, fixture.orgId);
+        const readback2 = await getAssessmentReadback(assessmentId, fixture.orgId);
+        expect(readback1?.id).toBe(assessmentId);
+        expect(readback2?.id).toBe(assessmentId);
+        expect(readback1?.name).toBe(readback2?.name);
+
+        const linksRead1 = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'assessment', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        const linksRead2 = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'assessment', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(linksRead1).toHaveLength(1);
+        expect(linksRead2).toHaveLength(1);
+        expect(linksRead1[0].linkId).toBe(linksRead2[0].linkId);
+        expect(linksRead1[0].artifactId).toBe(assessmentId);
+      } finally {
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+
+    // =========================================================================
+    // 8. Negative control — the adapter's re-read guard against a write that
+    //    lies about success (see assessmentAdapter.ts's header, "THE
+    //    'DbPromise SWALLOWS ERRORS' TRAP").
+    // =========================================================================
+    it('[negative control] surfaces a failure instead of a false success when the write silently persists nothing', async () => {
+      const fixture = await seedFixture(control, 'negctrl');
+      try {
+        resetAssessmentTestBinding({
+          // Mimics the exact observable shape of a DbPromise fallback-swallow:
+          // a plausible id is returned, but nothing was actually written.
+          createAssessment: async () => randomUUID(),
+        });
+
+        const result = await capabilityAdapterService.executeCapability(
+          buildEnvelope({
+            orgId: fixture.orgId,
+            actorId: fixture.actorId,
+            payload: validPayload(fixture.caseId),
+          })
+        );
+
+        expect(result.outcome).toBe('FAILED');
+        expect(result.errorCode).toBe('CAPABILITY_INTERNAL_ERROR');
+        expect(await assessmentCountForOrg(fixture.orgId)).toBe(0);
+
+        const links = await artifactLinkService.listArtifactLinksForCase(
+          fixture.caseId,
+          { artifactType: 'assessment', linkStatus: 'ACTIVE' },
+          fixture.actorId
+        );
+        expect(links).toHaveLength(0);
+      } finally {
+        await teardownFixture(control, fixture);
+      }
+    }, 90_000);
+  }
+);

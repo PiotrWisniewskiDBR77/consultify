@@ -31,7 +31,8 @@ export const capabilityMapperPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (CAPABILITY_MAPPER_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Klasyczna doktryna core-vs-commodity capability (Prahalad/Hamel core competence) — brak noty licencyjnej w repo',
+      source:
+        'Klasyczna doktryna core-vs-commodity capability (Prahalad/Hamel core competence) — brak noty licencyjnej w repo',
       verifiableInRepo: false,
       note: 'Koncepcja z domeny publicznej strategii; brak potwierdzonego źródła licencyjnego w repo (L10).',
     },
@@ -121,7 +122,8 @@ export const capabilityMapperPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każda zdolność ma currentMaturity i targetMaturity (1-5), importance (high/medium/low) i feasibility ze źródłem, nie zgadywanką (capabilityQuestionBank.ts).',
-      evidenceToAskFor: 'Skąd wiadomo, że dojrzałość obecna to akurat ta liczba — dane czy deklaracja.',
+      evidenceToAskFor:
+        'Skąd wiadomo, że dojrzałość obecna to akurat ta liczba — dane czy deklaracja.',
       completionCriterion: 'Co najmniej jedna zaakceptowana zdolność z pełną czwórką ocen.',
     },
     {
@@ -134,7 +136,8 @@ export const capabilityMapperPack: ToolPack = {
       whatGoodLooksLike:
         'Ranking luk policzony przez silnik (importance×gap×feasibility), sourcing dopasowany do ćwiartki core/commodity.',
       evidenceToAskFor: 'Czy sourcing "build" jest uzasadniony rdzennością zdolności, nie wygodą.',
-      completionCriterion: 'Macierz core/commodity zbudowana z zaakceptowanych zdolności (classifyCapabilityMatrix).',
+      completionCriterion:
+        'Macierz core/commodity zbudowana z zaakceptowanych zdolności (classifyCapabilityMatrix).',
     },
     {
       id: 'outputs',
@@ -146,7 +149,8 @@ export const capabilityMapperPack: ToolPack = {
       whatGoodLooksLike:
         'Każdy ruch ma rationale, trade-off i odrzucony wariant, sekwencja zamyka najpierw najpilniejszą lukę.',
       evidenceToAskFor: 'Co świadomie odkładamy, zamykając tę lukę najpierw.',
-      completionCriterion: 'Każdy ruch spełnia bramkę W2 i żaden nie buduje wewnętrznie zdolności towarowej.',
+      completionCriterion:
+        'Każdy ruch spełnia bramkę W2 i żaden nie buduje wewnętrznie zdolności towarowej.',
     },
   ],
 
@@ -159,7 +163,8 @@ export const capabilityMapperPack: ToolPack = {
         en: 'Which strategic priorities require new or strengthened capabilities?',
       },
       answerType: 'text',
-      challengeRule: 'Odrzuć odpowiedź bez nazwanego priorytetu strategicznego — sama lista domen to nie zakres.',
+      challengeRule:
+        'Odrzuć odpowiedź bez nazwanego priorytetu strategicznego — sama lista domen to nie zakres.',
     },
     {
       id: 'capability-input-evidence',
@@ -287,14 +292,17 @@ export const capabilityMapperPack: ToolPack = {
    */
   rights: {
     methodologyName: 'Zdolność kluczowa vs commodity (build/buy/partner)',
-    commonlyAttributedTo: 'C.K. Prahalad i Gary Hamel („The Core Competence of the Corporation"); build/buy/partner to praktyka generyczna',
-    sourceUsed: 'src/config/capabilitymapper/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    commonlyAttributedTo:
+      'C.K. Prahalad i Gary Hamel („The Core Competence of the Corporation"); build/buy/partner to praktyka generyczna',
+    sourceUsed:
+      'src/config/capabilitymapper/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
     trademarkNote: 'Brak znaku towarowego; terminologia zgenerycznieniała.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'ŚREDNIE — silnik nie cytuje Prahalada/Hamela wprost, powiązanie wywnioskowane z koncepcji.',
+    uncertainty:
+      'ŚREDNIE — silnik nie cytuje Prahalada/Hamela wprost, powiązanie wywnioskowane z koncepcji.',
   },
 };

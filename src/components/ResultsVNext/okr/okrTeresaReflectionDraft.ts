@@ -47,13 +47,10 @@
  * only authorized command that does, and the generation half still gets
  * the full audited P08 lifecycle.
  */
-import type { OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
-import type { OkrSetDto } from './okrApi';
-import type {
-  ResultsOkrHandoffContext,
-  TeresaHandoffContext,
-} from '../teresa/teresaHandoffTypes';
 import type { TeresaEvidenceBreakdownValue } from '../teresa/TeresaEvidenceBreakdown';
+import type { ResultsOkrHandoffContext, TeresaHandoffContext } from '../teresa/teresaHandoffTypes';
+import type { OkrSetDto } from './okrApi';
+import type { OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
 
 export interface OkrTeresaReflectionSuggestion {
   draftReflectionText: string;
@@ -100,7 +97,9 @@ export function buildOkrReflectionSuggestion(params: {
     );
   } else {
     missing.push(
-      isPolish ? 'Ten cel nie ma jeszcze żadnych Kluczowych Rezultatów.' : 'This objective has no Key Results yet.'
+      isPolish
+        ? 'Ten cel nie ma jeszcze żadnych Kluczowych Rezultatów.'
+        : 'This objective has no Key Results yet.'
     );
   }
   inference.push(
@@ -116,7 +115,7 @@ export function buildOkrReflectionSuggestion(params: {
       'Zmiana w kolejnym cyklu, a następnie kliknij „Zapisz refleksję" — dopiero to jest oficjalny zapis.'
     : `Teresa's draft for review — objective "${objective.title}" (set "${set.title}"). ` +
       'This text is ONLY a proposal: copy it in (the "Insert Teresa\'s draft into fields" button below), ' +
-      'edit it, fill in What worked / What didn\'t work / Why / Learning / Next-cycle change, then click ' +
+      "edit it, fill in What worked / What didn't work / Why / Learning / Next-cycle change, then click " +
       '"Save reflection" — only that click is the official record.';
 
   return {
@@ -162,7 +161,11 @@ export function buildOkrReflectionHandoffContext(params: {
       what_would_change_next_action: [],
     },
     evidence_pointers: suggestion.evidencePointers,
-    proposed_next_action: { target_module: 'okr', handoff_intent: 'append', requires_approval: true },
+    proposed_next_action: {
+      target_module: 'okr',
+      handoff_intent: 'append',
+      requires_approval: true,
+    },
     audit_stub: { actor: 'teresa', timestamp: new Date().toISOString() },
   };
 }
@@ -195,15 +198,15 @@ export function buildOkrReflectionTargetPayload(params: {
 export function okrReflectionTeresaConsequencePreview(isPolish: boolean): string {
   return isPolish
     ? 'Po wykonaniu zapisane zostaną WYŁĄCZNIE dwie kolumny szkicu refleksji: ' +
-      'teresa_draft_reflection_payload i teresa_draft_generated_at. Pola „Co zadziałało" / „Co nie zadziałało" / ' +
-      '„Dlaczego" / „Czego się nauczono" / „Zmiana w kolejnym cyklu" / „Dyspozycja" NIE zmienią się automatycznie ' +
-      '— serwer nie ma jeszcze osobnego punktu końcowego do zapisania decyzji o tym szkicu (potwierdzona luka), ' +
-      'więc jedyną drogą do oficjalnego zapisu pozostaje ręczne wstawienie treści i kliknięcie „Zapisz refleksję".'
+        'teresa_draft_reflection_payload i teresa_draft_generated_at. Pola „Co zadziałało" / „Co nie zadziałało" / ' +
+        '„Dlaczego" / „Czego się nauczono" / „Zmiana w kolejnym cyklu" / „Dyspozycja" NIE zmienią się automatycznie ' +
+        '— serwer nie ma jeszcze osobnego punktu końcowego do zapisania decyzji o tym szkicu (potwierdzona luka), ' +
+        'więc jedyną drogą do oficjalnego zapisu pozostaje ręczne wstawienie treści i kliknięcie „Zapisz refleksję".'
     : 'On execute, ONLY two columns of the reflection draft will be written: ' +
-      'teresa_draft_reflection_payload and teresa_draft_generated_at. The "What worked" / "What didn\'t work" / ' +
-      '"Why" / "Learning" / "Next-cycle change" / "Disposition" fields will NOT change automatically — the server ' +
-      'has no dedicated endpoint yet to record a decision on this draft (a confirmed gap), so the only path to an ' +
-      'official record remains manually inserting the text and clicking "Save reflection".';
+        'teresa_draft_reflection_payload and teresa_draft_generated_at. The "What worked" / "What didn\'t work" / ' +
+        '"Why" / "Learning" / "Next-cycle change" / "Disposition" fields will NOT change automatically — the server ' +
+        'has no dedicated endpoint yet to record a decision on this draft (a confirmed gap), so the only path to an ' +
+        'official record remains manually inserting the text and clicking "Save reflection".';
 }
 
 /** Extracts the CAS `row_version` Teresa's execute step actually wrote, from

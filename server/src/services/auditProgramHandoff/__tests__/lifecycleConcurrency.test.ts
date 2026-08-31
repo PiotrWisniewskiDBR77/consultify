@@ -3,7 +3,16 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { actorFor, addMember, cleanupOrg, insertOrganization, makeProgram, REAL_PG, requireRealPg, uid } from './helpers.js';
+import {
+  actorFor,
+  addMember,
+  cleanupOrg,
+  insertOrganization,
+  makeProgram,
+  REAL_PG,
+  requireRealPg,
+  uid,
+} from './helpers.js';
 
 const describeDb = REAL_PG ? describe : describe.skip;
 if (REAL_PG) requireRealPg();
@@ -39,7 +48,13 @@ describeDb('audit lifecycle optimistic concurrency (real PostgreSQL)', () => {
 
     const outcomes = await Promise.allSettled([
       programService.transitionLifecycle(orgA, actor, programId, 'evidence_review'),
-      programService.transitionLifecycle(orgA, actor, programId, 'preparation', 'controlled rollback'),
+      programService.transitionLifecycle(
+        orgA,
+        actor,
+        programId,
+        'preparation',
+        'controlled rollback'
+      ),
     ]);
 
     expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
@@ -62,7 +77,7 @@ describeDb('audit lifecycle optimistic concurrency (real PostgreSQL)', () => {
             AND e.event_type='program.lifecycle_transitioned'
           WHERE p.organization_id=$1 AND p.id=$2
           GROUP BY p.lifecycle_state`,
-        [orgA, programId],
+        [orgA, programId]
       );
       expect(cold.rows).toHaveLength(1);
       expect(['evidence_review', 'preparation']).toContain(cold.rows[0].lifecycle_state);
@@ -80,13 +95,13 @@ describeDb('audit lifecycle optimistic concurrency (real PostgreSQL)', () => {
         orgB,
         actorFor(orgB, adminB, 'admin'),
         programId,
-        'evidence_review',
-      ),
+        'evidence_review'
+      )
     ).rejects.toMatchObject({ code: 'AUDIT_FORBIDDEN', statusCode: 403 });
 
     const state = await pool.query(
       `SELECT lifecycle_state FROM audit_programs WHERE organization_id=$1 AND id=$2`,
-      [orgA, programId],
+      [orgA, programId]
     );
     expect(state.rows[0].lifecycle_state).toBe('fieldwork');
   });

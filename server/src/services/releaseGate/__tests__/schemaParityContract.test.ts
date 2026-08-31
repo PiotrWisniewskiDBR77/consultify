@@ -13,10 +13,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  POSTCONDITION_ATTESTATIONS,
   attestApiKeyStatusContract,
   attestCommunicationPlanKeyParity,
   attestSteeringBoardTimestamps,
+  POSTCONDITION_ATTESTATIONS,
 } from '../schemaAttestation.js';
 
 /** Returns rows per SQL fragment matched, so one double can serve several queries. */
@@ -48,18 +48,24 @@ describe('542 — steering-board timestamp parity', () => {
   ];
 
   it('PASSES on the canonical timestamptz shape', async () => {
-    const r = await attestSteeringBoardTimestamps(db([[/information_schema\.columns/, cols('timestamp with time zone')]]));
+    const r = await attestSteeringBoardTimestamps(
+      db([[/information_schema\.columns/, cols('timestamp with time zone')]])
+    );
     expect(r.attested).toBe(true);
     expect(r.checks.every((c) => c.ok)).toBe(true);
   });
 
   it('PASSES on timestamp without time zone (still a real timestamp type)', async () => {
-    const r = await attestSteeringBoardTimestamps(db([[/information_schema\.columns/, cols('timestamp without time zone')]]));
+    const r = await attestSteeringBoardTimestamps(
+      db([[/information_schema\.columns/, cols('timestamp without time zone')]])
+    );
     expect(r.attested).toBe(true);
   });
 
   it('FAILS CLOSED on the unconverged legacy TEXT shape and names the repair', async () => {
-    const r = await attestSteeringBoardTimestamps(db([[/information_schema\.columns/, cols('text')]]));
+    const r = await attestSteeringBoardTimestamps(
+      db([[/information_schema\.columns/, cols('text')]])
+    );
     expect(r.attested).toBe(false);
     expect(r.failureReason).toMatch(/20260813_repair_d_steering_board_timestamptz/);
     expect(r.checks.filter((c) => !c.ok)).toHaveLength(4);
@@ -87,12 +93,16 @@ describe('548 — api_keys status contract works for both integer and boolean', 
   ];
 
   it('PASSES on INTEGER (the shape on demo AND on a fresh install)', async () => {
-    const r = await attestApiKeyStatusContract(db([[/information_schema\.columns/, cols('integer')]]));
+    const r = await attestApiKeyStatusContract(
+      db([[/information_schema\.columns/, cols('integer')]])
+    );
     expect(r.attested).toBe(true);
   });
 
   it('PASSES on BOOLEAN', async () => {
-    const r = await attestApiKeyStatusContract(db([[/information_schema\.columns/, cols('boolean')]]));
+    const r = await attestApiKeyStatusContract(
+      db([[/information_schema\.columns/, cols('boolean')]])
+    );
     expect(r.attested).toBe(true);
   });
 
@@ -108,7 +118,9 @@ describe('548 — api_keys status contract works for both integer and boolean', 
   });
 
   it('FAILS CLOSED when status is missing', async () => {
-    const r = await attestApiKeyStatusContract(db([[/information_schema\.columns/, cols('integer', false)]]));
+    const r = await attestApiKeyStatusContract(
+      db([[/information_schema\.columns/, cols('integer', false)]])
+    );
     expect(r.attested).toBe(false);
   });
 
@@ -123,7 +135,9 @@ describe('573 — communication plan key parity (UUID or TEXT, but never mixed)'
     { table_name: 'communication_plans', column_name: 'id', data_type: planType },
     { table_name: 'communication_plan_items', column_name: 'plan_id', data_type: itemType },
   ];
-  const fkPresent: Array<[RegExp, any[]]> = [[/pg_constraint/, [{ conname: 'communication_plan_items_plan_id_fkey' }]]];
+  const fkPresent: Array<[RegExp, any[]]> = [
+    [/pg_constraint/, [{ conname: 'communication_plan_items_plan_id_fkey' }]],
+  ];
 
   it('PASSES on uuid/uuid — the demo shape', async () => {
     const r = await attestCommunicationPlanKeyParity(
@@ -148,14 +162,21 @@ describe('573 — communication plan key parity (UUID or TEXT, but never mixed)'
   });
 
   it('FAILS CLOSED when the FK is missing', async () => {
-    const r = await attestCommunicationPlanKeyParity(db([[/information_schema\.columns/, cols('uuid', 'uuid')]]));
+    const r = await attestCommunicationPlanKeyParity(
+      db([[/information_schema\.columns/, cols('uuid', 'uuid')]])
+    );
     expect(r.attested).toBe(false);
     expect(r.failureReason).toMatch(/no FK to communication_plans/);
   });
 
   it('FAILS CLOSED when only one side of the pair exists', async () => {
     const r = await attestCommunicationPlanKeyParity(
-      db([[/information_schema\.columns/, [{ table_name: 'communication_plans', column_name: 'id', data_type: 'uuid' }]]])
+      db([
+        [
+          /information_schema\.columns/,
+          [{ table_name: 'communication_plans', column_name: 'id', data_type: 'uuid' }],
+        ],
+      ])
     );
     expect(r.attested).toBe(false);
   });

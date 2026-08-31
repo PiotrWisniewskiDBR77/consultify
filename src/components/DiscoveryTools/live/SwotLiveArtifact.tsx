@@ -26,12 +26,12 @@
 import React from 'react';
 
 import {
-  deriveTensionCandidates,
   computeTensionCoverage,
-  isAcceptedSwotItem,
-  TENSION_TYPE_TO_POSTURE,
   type DerivedTensionCandidate,
+  deriveTensionCandidates,
+  isAcceptedSwotItem,
   type SwotTensionType,
+  TENSION_TYPE_TO_POSTURE,
 } from '@/config/swot/swotTensionEngine';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import type { SWOTItem } from '@/store/useToolStore';
@@ -224,12 +224,12 @@ function TensionRow({ tension, items }: { tension: SwotLiveTension; items: SWOTI
       data-testid={`swot-tension-${tension.id}`}
       data-conflict={tension.conflict}
       className={`flex items-start gap-3 rounded-lg border p-2.5 ${
-        tension.conflict
-          ? 'border-c-warning bg-c-surface'
-          : 'border-c-border-subtle bg-c-surface'
+        tension.conflict ? 'border-c-warning bg-c-surface' : 'border-c-border-subtle bg-c-surface'
       }`}
     >
-      <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${POSTURE_DOT[tension.posture] ?? 'bg-c-border-strong'}`} />
+      <span
+        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${POSTURE_DOT[tension.posture] ?? 'bg-c-border-strong'}`}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-c-text-muted">
@@ -371,7 +371,8 @@ export function SwotLiveArtifact({
           ))}
           {model.tensions.length === 0 && (
             <li className="text-[12px] text-c-text-muted">
-              Brak napięć — potrzebne co najmniej dwie zaakceptowane pozycje w sąsiednich ćwiartkach.
+              Brak napięć — potrzebne co najmniej dwie zaakceptowane pozycje w sąsiednich
+              ćwiartkach.
             </li>
           )}
         </ul>

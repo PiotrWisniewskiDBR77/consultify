@@ -54,9 +54,18 @@ const RoiScenarioOverrideTargetTypeEnum = z.enum(ROI_SCENARIO_OVERRIDE_TARGET_TY
 // ==========================================
 
 export const RoiCaseIdParamsSchema = z.object({ caseId: z.string().uuid() });
-export const RoiAssumptionParamsSchema = z.object({ caseId: z.string().uuid(), assumptionId: z.string().uuid() });
-export const RoiCostLineParamsSchema = z.object({ caseId: z.string().uuid(), costLineId: z.string().uuid() });
-export const RoiBenefitLineParamsSchema = z.object({ caseId: z.string().uuid(), benefitLineId: z.string().uuid() });
+export const RoiAssumptionParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  assumptionId: z.string().uuid(),
+});
+export const RoiCostLineParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  costLineId: z.string().uuid(),
+});
+export const RoiBenefitLineParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  benefitLineId: z.string().uuid(),
+});
 export const RoiBenefitEvidenceLinkParamsSchema = z.object({
   caseId: z.string().uuid(),
   benefitLineId: z.string().uuid(),
@@ -66,13 +75,19 @@ export const RoiBenefitEvidenceLinkListParamsSchema = z.object({
   caseId: z.string().uuid(),
   benefitLineId: z.string().uuid(),
 });
-export const RoiScenarioParamsSchema = z.object({ caseId: z.string().uuid(), scenarioId: z.string().uuid() });
+export const RoiScenarioParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  scenarioId: z.string().uuid(),
+});
 export const RoiScenarioOverrideParamsSchema = z.object({
   caseId: z.string().uuid(),
   scenarioId: z.string().uuid(),
   overrideId: z.string().uuid(),
 });
-export const RoiCalculationRunParamsSchema = z.object({ caseId: z.string().uuid(), runId: z.string().uuid() });
+export const RoiCalculationRunParamsSchema = z.object({
+  caseId: z.string().uuid(),
+  runId: z.string().uuid(),
+});
 
 export const IncludeDeletedQuerySchema = z.object({
   includeDeleted: z.coerce.boolean().optional(),

@@ -14,18 +14,24 @@
  */
 
 import {
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
   toIso,
 } from './auditsDb.js';
 import { assertIndependentVerifier, requireCapability } from './permissions.js';
-import type { AuditActor, AuditVerification, PackDecisionRules, VerificationKind, VerificationResult } from './types.js';
+import type {
+  AuditActor,
+  AuditVerification,
+  PackDecisionRules,
+  VerificationKind,
+  VerificationResult,
+} from './types.js';
 import { VERIFICATION_KINDS, VERIFICATION_RESULTS } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -68,7 +74,10 @@ function rowToVerification(row: VerificationRow): AuditVerification {
     evidenceId: row.evidence_id,
     result: row.result as VerificationResult | null,
     note: row.note,
-    independenceOk: row.independence_ok === null || row.independence_ok === undefined ? null : Boolean(row.independence_ok),
+    independenceOk:
+      row.independence_ok === null || row.independence_ok === undefined
+        ? null
+        : Boolean(row.independence_ok),
     independenceNote: row.independence_note,
     createdBy: row.created_by,
     createdAt: toIso(row.created_at) as string,
@@ -79,7 +88,7 @@ function rowToVerification(row: VerificationRow): AuditVerification {
 async function loadVerificationRow(organizationId: string, id: string): Promise<VerificationRow> {
   const row = await auditGet<VerificationRow>(
     `SELECT * FROM audit_verifications WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Weryfikacja');
   return row;
@@ -93,13 +102,16 @@ function scoped(actor: AuditActor, organizationId: string): AuditActor {
   return { ...actor, organizationId };
 }
 
-async function loadDecisionRules(organizationId: string, programId: string): Promise<PackDecisionRules> {
+async function loadDecisionRules(
+  organizationId: string,
+  programId: string
+): Promise<PackDecisionRules> {
   const row = await auditGet<{ decision_rules: unknown }>(
     `SELECT pk.decision_rules AS decision_rules
        FROM audit_programs prog
        JOIN audit_packs pk ON pk.id = prog.pack_id
       WHERE prog.organization_id = $1 AND prog.id = $2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   return parseJson<PackDecisionRules>(row?.decision_rules, {});
 }
@@ -119,12 +131,12 @@ export interface PlanVerificationInput {
 export async function planVerification(
   organizationId: string,
   actor: AuditActor,
-  input: PlanVerificationInput,
+  input: PlanVerificationInput
 ): Promise<AuditVerification> {
   const act = scoped(actor, organizationId);
   const findingRow = await auditGet<{ program_id: string }>(
     `SELECT program_id FROM audit_program_findings WHERE organization_id = $1 AND id = $2`,
-    [organizationId, input.findingId],
+    [organizationId, input.findingId]
   );
   if (!findingRow) throw new AuditNotFoundError('Ustalenie');
   await requireCapability(act, findingRow.program_id, 'verification.perform');
@@ -149,7 +161,7 @@ export async function planVerification(
       input.method ?? null,
       input.plannedDate ?? null,
       actor.userId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -180,7 +192,7 @@ export async function performVerification(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: PerformVerificationInput,
+  input: PerformVerificationInput
 ): Promise<AuditVerification> {
   const act = scoped(actor, organizationId);
   const row = await loadVerificationRow(organizationId, id);
@@ -188,14 +200,23 @@ export async function performVerification(
 
   if (row.corrective_action_id) {
     const decisionRules = await loadDecisionRules(organizationId, row.program_id);
-    await assertIndependentVerifier(organizationId, row.corrective_action_id, actor.userId, decisionRules);
+    await assertIndependentVerifier(
+      organizationId,
+      row.corrective_action_id,
+      actor.userId,
+      decisionRules
+    );
   }
 
   if (!VERIFICATION_RESULTS.includes(input.result)) {
     throw new AuditStateError(`Nieznany wynik weryfikacji: ${String(input.result)}`);
   }
 
-  if (row.verification_kind === 'effectiveness' && input.result === 'effective' && !input.evidenceId) {
+  if (
+    row.verification_kind === 'effectiveness' &&
+    input.result === 'effective' &&
+    !input.evidenceId
+  ) {
     throw new AuditStateError('Skuteczność musi opierać się na dowodzie — wskaż evidenceId');
   }
 
@@ -204,7 +225,7 @@ export async function performVerification(
         SET result = $3, note = $4, evidence_id = $5, performed_by = $6, performed_at = NOW(),
             independence_ok = TRUE, updated_at = NOW()
       WHERE organization_id = $1 AND id = $2`,
-    [organizationId, id, input.result, input.note ?? null, input.evidenceId ?? null, actor.userId],
+    [organizationId, id, input.result, input.note ?? null, input.evidenceId ?? null, actor.userId]
   );
 
   await recordAuditEvent({
@@ -234,7 +255,7 @@ export interface ListVerificationsFilter {
 
 export async function listVerifications(
   organizationId: string,
-  filter: ListVerificationsFilter,
+  filter: ListVerificationsFilter
 ): Promise<AuditVerification[]> {
   const clauses = ['organization_id = $1'];
   const params: unknown[] = [organizationId];
@@ -251,7 +272,7 @@ export async function listVerifications(
   const where = clauses.join(' AND ');
   const rows = await auditAll<VerificationRow>(
     `SELECT * FROM audit_verifications WHERE ${where} ORDER BY created_at ASC`,
-    params,
+    params
   );
   return rows.map(rowToVerification);
 }
@@ -277,7 +298,7 @@ export interface VerificationReadiness {
 
 export async function getVerificationReadiness(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<VerificationReadiness> {
   const implementedRows = await auditAll<{
     action_id: string;
@@ -293,15 +314,19 @@ export async function getVerificationReadiness(
            WHERE v.organization_id = $1 AND v.corrective_action_id = a.id
              AND v.verification_kind = 'effectiveness' AND v.result = 'effective'
         )`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
-  const overdueRows = await auditAll<{ verification_id: string; finding_id: string; planned_date: unknown }>(
+  const overdueRows = await auditAll<{
+    verification_id: string;
+    finding_id: string;
+    planned_date: unknown;
+  }>(
     `SELECT id AS verification_id, finding_id, planned_date
        FROM audit_verifications
       WHERE organization_id = $1 AND program_id = $2 AND performed_at IS NULL
         AND planned_date IS NOT NULL AND planned_date < CURRENT_DATE`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const readyRows = await auditAll<{ finding_id: string; reference_code: string | null }>(
@@ -319,7 +344,7 @@ export async function getVerificationReadiness(
                   AND v.verification_kind = 'effectiveness' AND v.result = 'effective'
              )
         )`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   return {
@@ -334,6 +359,9 @@ export async function getVerificationReadiness(
       findingId: r.finding_id,
       plannedDate: toIso(r.planned_date),
     })),
-    findingsReadyToClose: readyRows.map((r) => ({ findingId: r.finding_id, referenceCode: r.reference_code })),
+    findingsReadyToClose: readyRows.map((r) => ({
+      findingId: r.finding_id,
+      referenceCode: r.reference_code,
+    })),
   };
 }

@@ -31,10 +31,7 @@ describe('enforceBlockGrounding — skróty dozwolone, liczby zachowane i oznacz
 
   it('zachowuje zdanie z niepopartą liczbą i oznacza blok jako założenie', () => {
     const sentence = 'Terminowość wdrożeń spadła do 68% w ostatnim kwartale.';
-    const result = enforceBlockGrounding(
-      { text: sentence },
-      BRIEF
-    );
+    const result = enforceBlockGrounding({ text: sentence }, BRIEF);
 
     expect(result.content.text).toBe(sentence);
     expect(result.changed).toBe(true);
@@ -42,10 +39,7 @@ describe('enforceBlockGrounding — skróty dozwolone, liczby zachowane i oznacz
 
   it('zachowuje zdanie łączące dozwolony skrót z niepopartą liczbą i oznacza blok', () => {
     const sentence = 'Do końca 2026 osiągniemy poziom OTD na 90%.';
-    const result = enforceBlockGrounding(
-      { text: sentence },
-      BRIEF
-    );
+    const result = enforceBlockGrounding({ text: sentence }, BRIEF);
 
     expect(result.content.text).toBe(sentence);
     expect(result.changed).toBe(true);

@@ -35,26 +35,29 @@ describe('mounted SSO public authentication is fail-closed without cryptographic
     ['post', '/api/sso/saml/callback', 'SAML_SIGNATURE_VERIFICATION_UNAVAILABLE'],
     ['get', '/api/sso/oidc/authorize', 'OIDC_TOKEN_VERIFICATION_UNAVAILABLE'],
     ['post', '/api/sso/oidc/callback', 'OIDC_TOKEN_VERIFICATION_UNAVAILABLE'],
-  ] as const)('%s %s denies before state, user, session or token writes', async (method, path, code) => {
-    const call = request(mountedApp())[method](path);
-    const response =
-      method === 'post'
-        ? await call.send(
-            path.includes('/saml/')
-              ? { SAMLResponse: 'unsigned-assertion', RelayState: 'attacker-state' }
-              : { code: 'unverified-code', state: 'attacker-state' }
-          )
-        : await call.query({ domain: 'attacker.example', organizationId: 'foreign-org' });
+  ] as const)(
+    '%s %s denies before state, user, session or token writes',
+    async (method, path, code) => {
+      const call = request(mountedApp())[method](path);
+      const response =
+        method === 'post'
+          ? await call.send(
+              path.includes('/saml/')
+                ? { SAMLResponse: 'unsigned-assertion', RelayState: 'attacker-state' }
+                : { code: 'unverified-code', state: 'attacker-state' }
+            )
+          : await call.query({ domain: 'attacker.example', organizationId: 'foreign-org' });
 
-    expect(response.status).toBe(503);
-    expect(response.body).toMatchObject({ code });
-    expect(response.body.token).toBeUndefined();
-    expect(response.body.refreshToken).toBeUndefined();
-    expect(response.body.state).toBeUndefined();
-    expect(dbAll).not.toHaveBeenCalled();
-    expect(dbGet).not.toHaveBeenCalled();
-    expect(dbRun).not.toHaveBeenCalled();
-  });
+      expect(response.status).toBe(503);
+      expect(response.body).toMatchObject({ code });
+      expect(response.body.token).toBeUndefined();
+      expect(response.body.refreshToken).toBeUndefined();
+      expect(response.body.state).toBeUndefined();
+      expect(dbAll).not.toHaveBeenCalled();
+      expect(dbGet).not.toHaveBeenCalled();
+      expect(dbRun).not.toHaveBeenCalled();
+    }
+  );
 
   it('retains deterministic 400 responses for structurally missing callback inputs', async () => {
     const saml = await request(mountedApp()).post('/api/sso/saml/callback').send({});

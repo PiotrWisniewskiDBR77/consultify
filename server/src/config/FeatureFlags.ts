@@ -244,8 +244,7 @@ export function loadFeatureFlags(): FeatureFlags {
     // the Knowledge Vault after their owner write succeeds. Opt-in only: the
     // materialization hooks check this flag before importing or invoking the
     // indexer, so OFF is a true no-op rather than a failed indexing attempt.
-    ENABLE_ARTIFACT_KNOWLEDGE_INDEX:
-      process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
+    ENABLE_ARTIFACT_KNOWLEDGE_INDEX: process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
 
     // Z4 transport dla akcji otwartej Idei — default ON, jawne `false` jest
     // rollbackiem do lokalnych detektorów bez dwóch aktywnych executorów naraz.

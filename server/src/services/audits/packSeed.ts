@@ -21,9 +21,9 @@
  */
 
 import { auditGet, auditRun, newId, recordAuditEvent } from './auditsDb.js';
+import type { PackCriterionNode } from './packService.js';
 import { createPack, getPack, replaceCriteria } from './packService.js';
 import type { AuditActor, AuditPack, ExpectedEvidenceSpec, FindingTaxonomyEntry } from './types.js';
-import type { PackCriterionNode } from './packService.js';
 
 export const DEMO_PACK_KEY = 'internal-process-audit-demo';
 
@@ -102,14 +102,24 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
         title: 'Cel i zakres procesu są udokumentowane',
         requirementText:
           'Proces ma spisany cel oraz jasno określony zakres (co wchodzi, a co nie wchodzi w jego granice).',
-        auditQuestion: 'Czy istnieje aktualny opis celu i zakresu procesu, dostępny dla osób go wykonujących?',
+        auditQuestion:
+          'Czy istnieje aktualny opis celu i zakresu procesu, dostępny dla osób go wykonujących?',
         expectedEvidence: [
-          { kind: 'document', description: 'Karta procesu lub równoważny dokument opisowy', mandatory: true },
-          { kind: 'interview_answer', description: 'Potwierdzenie właściciela procesu w rozmowie', mandatory: false },
+          {
+            kind: 'document',
+            description: 'Karta procesu lub równoważny dokument opisowy',
+            mandatory: true,
+          },
+          {
+            kind: 'interview_answer',
+            description: 'Potwierdzenie właściciela procesu w rozmowie',
+            mandatory: false,
+          },
         ],
         auditProcedure:
           'Poproś o aktualny dokument opisujący proces. Sprawdź datę ostatniej aktualizacji i porównaj opisany zakres z tym, co faktycznie się dzieje w próbce zaobserwowanych przypadków.',
-        samplingGuidance: 'Jedna aktualna wersja dokumentu wystarcza; przy wątpliwościach poproś o historię zmian.',
+        samplingGuidance:
+          'Jedna aktualna wersja dokumentu wystarcza; przy wątpliwościach poproś o historię zmian.',
         sourceReference: 'Procedura demonstracyjna Consultify, pkt 2.1',
       },
       {
@@ -119,7 +129,11 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
           'Dla procesu wskazana jest jedna osoba odpowiedzialna za jego działanie i doskonalenie (właściciel procesu).',
         auditQuestion: 'Kto jest właścicielem tego procesu i skąd to wynika?',
         expectedEvidence: [
-          { kind: 'document', description: 'Zapis przypisania roli właściciela procesu', mandatory: true },
+          {
+            kind: 'document',
+            description: 'Zapis przypisania roli właściciela procesu',
+            mandatory: true,
+          },
         ],
         auditProcedure:
           'Zweryfikuj, czy przypisanie właściciela procesu istnieje w formie zapisu (nie tylko ustnie), i porównaj je z odpowiedzią osoby wskazanej jako właściciel.',
@@ -131,14 +145,24 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
         title: 'Mierniki skuteczności procesu są monitorowane',
         requirementText:
           'Proces ma zdefiniowany co najmniej jeden miernik skuteczności, który jest okresowo przeglądany.',
-        auditQuestion: 'Jaki miernik(i) skuteczności procesu jest używany i kiedy był ostatnio przeglądany?',
+        auditQuestion:
+          'Jaki miernik(i) skuteczności procesu jest używany i kiedy był ostatnio przeglądany?',
         expectedEvidence: [
-          { kind: 'document', description: 'Zestawienie/raport miernika za ostatni okres', mandatory: true },
-          { kind: 'system_export', description: 'Eksport danych źródłowych miernika', mandatory: false },
+          {
+            kind: 'document',
+            description: 'Zestawienie/raport miernika za ostatni okres',
+            mandatory: true,
+          },
+          {
+            kind: 'system_export',
+            description: 'Eksport danych źródłowych miernika',
+            mandatory: false,
+          },
         ],
         auditProcedure:
           'Poproś o dane miernika za ostatni pełny okres raportowy. Sprawdź, czy istnieje zapis przeglądu wyniku (kto, kiedy, jaki wniosek).',
-        samplingGuidance: 'Sprawdź ostatni pełny okres raportowy oraz jeden okres wcześniejszy dla porównania trendu.',
+        samplingGuidance:
+          'Sprawdź ostatni pełny okres raportowy oraz jeden okres wcześniejszy dla porównania trendu.',
         sourceReference: 'Procedura demonstracyjna Consultify, pkt 2.3',
       },
     ],
@@ -154,7 +178,11 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
           'Każda rola wymagana do wykonania procesu jest przypisana do zidentyfikowanej osoby lub zespołu.',
         auditQuestion: 'Jak można sprawdzić, kto pełni daną rolę w procesie w danym momencie?',
         expectedEvidence: [
-          { kind: 'document', description: 'Macierz ról/odpowiedzialności lub równoważny zapis', mandatory: true },
+          {
+            kind: 'document',
+            description: 'Macierz ról/odpowiedzialności lub równoważny zapis',
+            mandatory: true,
+          },
         ],
         auditProcedure:
           'Porównaj listę ról wymaganych opisem procesu z rzeczywistym przypisaniem osób. Wybierz próbkę ról i zweryfikuj zgodność z zapisem.',
@@ -168,7 +196,11 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
           'Dla każdej roli w procesie określono minimalne wymagane kompetencje (wiedzę, uprawnienia lub doświadczenie).',
         auditQuestion: 'Skąd wiadomo, jakie kompetencje są wymagane do pełnienia danej roli?',
         expectedEvidence: [
-          { kind: 'document', description: 'Opis wymaganych kompetencji dla roli', mandatory: true },
+          {
+            kind: 'document',
+            description: 'Opis wymaganych kompetencji dla roli',
+            mandatory: true,
+          },
         ],
         auditProcedure:
           'Zweryfikuj istnienie opisu wymaganych kompetencji i porównaj go z faktycznym profilem osoby pełniącej rolę w próbce.',
@@ -182,12 +214,21 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
           'Dla ról krytycznych dla ciągłości procesu istnieje wskazany zastępca lub udokumentowany plan zastępstwa.',
         auditQuestion: 'Co się dzieje z procesem, gdy osoba pełniąca kluczową rolę jest nieobecna?',
         expectedEvidence: [
-          { kind: 'document', description: 'Plan zastępstw lub zapis wyznaczenia zastępcy', mandatory: true },
-          { kind: 'interview_answer', description: 'Potwierdzenie w rozmowie z właścicielem procesu', mandatory: false },
+          {
+            kind: 'document',
+            description: 'Plan zastępstw lub zapis wyznaczenia zastępcy',
+            mandatory: true,
+          },
+          {
+            kind: 'interview_answer',
+            description: 'Potwierdzenie w rozmowie z właścicielem procesu',
+            mandatory: false,
+          },
         ],
         auditProcedure:
           'Zapytaj o rolę uznaną za krytyczną i poproś o dowód istnienia zastępstwa. W braku dokumentu sprawdź w rozmowie, czy zastępstwo faktycznie funkcjonowało w praktyce.',
-        samplingGuidance: 'Wybierz jedną rolę ocenioną jako najbardziej krytyczną dla ciągłości procesu.',
+        samplingGuidance:
+          'Wybierz jedną rolę ocenioną jako najbardziej krytyczną dla ciągłości procesu.',
         sourceReference: 'Procedura demonstracyjna Consultify, pkt 3.3',
       },
     ],
@@ -201,13 +242,19 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
         title: 'Dokumenty procesu mają widoczną wersję i datę aktualizacji',
         requirementText:
           'Dokumenty opisujące proces jednoznacznie wskazują swoją wersję oraz datę ostatniej aktualizacji.',
-        auditQuestion: 'Po czym poznać, że dokument, na którym pracuje zespół, jest aktualną wersją?',
+        auditQuestion:
+          'Po czym poznać, że dokument, na którym pracuje zespół, jest aktualną wersją?',
         expectedEvidence: [
-          { kind: 'document', description: 'Próbka dokumentów procesu z widoczną metryczką wersji', mandatory: true },
+          {
+            kind: 'document',
+            description: 'Próbka dokumentów procesu z widoczną metryczką wersji',
+            mandatory: true,
+          },
         ],
         auditProcedure:
           'Sprawdź próbkę dokumentów wykorzystywanych w procesie pod kątem obecności numeru wersji i daty. Porównaj z rejestrem dokumentów, jeśli istnieje.',
-        samplingGuidance: 'Sprawdź co najmniej 3 dokumenty wykorzystywane operacyjnie w ostatnim miesiącu.',
+        samplingGuidance:
+          'Sprawdź co najmniej 3 dokumenty wykorzystywane operacyjnie w ostatnim miesiącu.',
         sourceReference: 'Procedura demonstracyjna Consultify, pkt 4.1',
       },
       {
@@ -217,12 +264,21 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
           'Kluczowe kroki procesu pozostawiają zapis (np. formularz, wpis systemowy), który da się odtworzyć po fakcie.',
         auditQuestion: 'Jak odtworzyć przebieg konkretnego wykonania procesu sprzed miesiąca?',
         expectedEvidence: [
-          { kind: 'system_export', description: 'Eksport zapisu z systemu obsługującego proces', mandatory: true },
-          { kind: 'document', description: 'Formularz papierowy/elektroniczny, jeśli proces go używa', mandatory: false },
+          {
+            kind: 'system_export',
+            description: 'Eksport zapisu z systemu obsługującego proces',
+            mandatory: true,
+          },
+          {
+            kind: 'document',
+            description: 'Formularz papierowy/elektroniczny, jeśli proces go używa',
+            mandatory: false,
+          },
         ],
         auditProcedure:
           'Wybierz próbkę zakończonych wykonań procesu i poproś o odtworzenie ich przebiegu z zapisów. Oceń, czy zapis pozwala jednoznacznie zrekonstruować kto/co/kiedy.',
-        samplingGuidance: 'Wybierz próbkę min. 5 wykonań procesu z ostatnich 3 miesięcy, w tym jedno nietypowe.',
+        samplingGuidance:
+          'Wybierz próbkę min. 5 wykonań procesu z ostatnich 3 miesięcy, w tym jedno nietypowe.',
         sourceReference: 'Procedura demonstracyjna Consultify, pkt 4.2',
       },
       {
@@ -230,9 +286,14 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
         title: 'Zmiany w dokumentacji procesu przechodzą przez zatwierdzenie',
         requirementText:
           'Zmiana dokumentu opisującego proces jest zatwierdzana przez osobę do tego upoważnioną, zanim zacznie obowiązywać.',
-        auditQuestion: 'Kto zatwierdził ostatnią zmianę w dokumentacji tego procesu i jak to udokumentowano?',
+        auditQuestion:
+          'Kto zatwierdził ostatnią zmianę w dokumentacji tego procesu i jak to udokumentowano?',
         expectedEvidence: [
-          { kind: 'document', description: 'Historia zmian dokumentu z adnotacją zatwierdzającą', mandatory: true },
+          {
+            kind: 'document',
+            description: 'Historia zmian dokumentu z adnotacją zatwierdzającą',
+            mandatory: true,
+          },
         ],
         auditProcedure:
           'Poproś o historię zmian najważniejszego dokumentu procesu. Sprawdź, czy każda zmiana ma wskazaną osobę zatwierdzającą i datę wejścia w życie.',
@@ -246,7 +307,7 @@ const DEMO_DOMAINS: DemoDomainSeed[] = [
 async function findExistingPack(organizationId: string): Promise<{ id: string } | null> {
   const row = await auditGet<{ id: string }>(
     `SELECT id FROM audit_packs WHERE (organization_id = $1 OR organization_id IS NULL) AND pack_key = $2 LIMIT 1`,
-    [organizationId, DEMO_PACK_KEY],
+    [organizationId, DEMO_PACK_KEY]
   );
   return row ?? null;
 }
@@ -254,7 +315,7 @@ async function findExistingPack(organizationId: string): Promise<{ id: string } 
 async function ensureDemoSource(actor: AuditActor): Promise<string> {
   const existing = await auditGet<{ id: string }>(
     `SELECT id FROM audit_norm_sources WHERE (organization_id = $1 OR organization_id IS NULL) AND source_key = $2 LIMIT 1`,
-    [actor.organizationId, DEMO_SOURCE_KEY],
+    [actor.organizationId, DEMO_SOURCE_KEY]
   );
   if (existing) return existing.id;
 
@@ -272,7 +333,7 @@ async function ensureDemoSource(actor: AuditActor): Promise<string> {
       'Consultify',
       '1.0-demo',
       actor.userId,
-    ],
+    ]
   );
   return id;
 }
@@ -284,7 +345,7 @@ async function ensureDemoSource(actor: AuditActor): Promise<string> {
  */
 export async function seedDemoAuditPack(
   organizationId: string,
-  userId: string,
+  userId: string
 ): Promise<AuditPack & { criteria: PackCriterionNode[] }> {
   const actor: AuditActor = { organizationId, userId };
 
@@ -306,7 +367,8 @@ export async function seedDemoAuditPack(
     sourceVersion: '1.0-demo',
     classification: 'DEMONSTRATION',
     scope: 'Dowolny proces wewnętrzny wskazany przez zespół jako przedmiot demonstracji.',
-    objectives: 'Zademonstrować mechanikę audytu procesu na własnych, jawnie niekopiowanych kryteriach.',
+    objectives:
+      'Zademonstrować mechanikę audytu procesu na własnych, jawnie niekopiowanych kryteriach.',
     auditType: 'process',
     requiredRoles: ['lead_auditor', 'auditor', 'auditee'],
     requiredCompetencies: ['podstawy audytu procesowego'],

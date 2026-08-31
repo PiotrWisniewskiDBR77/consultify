@@ -118,10 +118,7 @@ export interface MigrationRunResult {
  * migration failure on a fresh DB must fail this profile run loudly, not be
  * recorded as `skipped` (see MEMORY.md's `db:migrate` `--safe` warning).
  */
-export function runMigrations(
-  repoRoot: string,
-  databaseUrl: string
-): Promise<MigrationRunResult> {
+export function runMigrations(repoRoot: string, databaseUrl: string): Promise<MigrationRunResult> {
   return new Promise((resolve) => {
     const start = performance.now();
     const child = spawn(
@@ -159,7 +156,9 @@ export function runMigrations(
 }
 
 /** Confirms the case_workspace_* schema this harness needs is actually present post-migration (never trust exit code alone). */
-export async function verifySchemaPresent(databaseUrl: string): Promise<{ ok: boolean; missing: string[] }> {
+export async function verifySchemaPresent(
+  databaseUrl: string
+): Promise<{ ok: boolean; missing: string[] }> {
   const pool = new Pool({ connectionString: databaseUrl, max: 2 });
   try {
     const requiredTables = [

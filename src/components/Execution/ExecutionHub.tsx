@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   Calendar,
@@ -48,7 +49,6 @@ import {
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
@@ -96,6 +96,7 @@ import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
 import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV3';
+import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterChip,
@@ -118,16 +119,10 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
-import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
-import { buildExecutionSourceRelations } from './executionSourceRelations';
-import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
-import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
-import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
-import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -139,11 +134,16 @@ import {
 } from './executionReports';
 import { ExecutionReportsSurface } from './ExecutionReportsSurface';
 import { ExecutionResourcesSurface } from './ExecutionResourcesSurface';
+import { buildExecutionSourceRelations } from './executionSourceRelations';
 import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
 import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
-import { ExecutionWorkSurface, type ExecutionWorkDocumentRef } from './ExecutionWorkSurface';
+import { type ExecutionWorkDocumentRef, ExecutionWorkSurface } from './ExecutionWorkSurface';
 import { ReportDocumentView } from './ReportDocumentView';
+import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
+import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
+import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
+import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import { RolloutTab } from './RolloutTab';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
@@ -1316,7 +1316,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           // entirely (the opposite of "show something, but be honest").
           const fallbackInitiatives = executionDemoData.initiatives
             .filter((initiative) => EXECUTION_STATUSES.includes(initiative.status))
-            .map((initiative) => ({ ...initiative, isDemoSample: true })) as unknown as FullInitiative[];
+            .map((initiative) => ({
+              ...initiative,
+              isDemoSample: true,
+            })) as unknown as FullInitiative[];
           setInitiatives(fallbackInitiatives);
           setDemoFallbackActive(true);
           return;
@@ -3222,11 +3225,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               {
                 sources: unavailableSignalSources
                   .map((source) =>
-                    t(`execution.signalsUnavailable.source.${source}`, {
-                      risk: 'risk signals',
-                      delay: 'delay signals',
-                      overspend: 'overspend signals',
-                    }[source])
+                    t(
+                      `execution.signalsUnavailable.source.${source}`,
+                      {
+                        risk: 'risk signals',
+                        delay: 'delay signals',
+                        overspend: 'overspend signals',
+                      }[source]
+                    )
                   )
                   .join(', '),
               }
@@ -4270,8 +4276,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <CalendarDays size={18} className="text-blue-500" />,
         highlights: [
-          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
           { label: t('execution.table.tasks'), value: totalTasks },
         ],
       },
@@ -4335,8 +4348,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <Shield size={18} className="text-emerald-500" />,
         highlights: [
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
         ],
       },
       {
@@ -4363,8 +4383,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <AlertTriangle size={18} className="text-danger-500" />,
         highlights: [
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: t('execution.highlights.dueSoon', 'Due soon'), value: actionCenter.dueSoonTasks.length },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
+          {
+            label: t('execution.highlights.dueSoon', 'Due soon'),
+            value: actionCenter.dueSoonTasks.length,
+          },
         ],
       },
       {
@@ -4443,7 +4470,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Freeze discretionary spend',
         ],
         icon: <TrendingUp size={18} className="text-green-500" />,
-        highlights: [{ label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives }],
+        highlights: [
+          { label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives },
+        ],
       },
       {
         id: 'decision-backlog',
@@ -4498,7 +4527,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Add buffers to critical chains',
         ],
         icon: <GripVertical size={18} className="text-c-text-muted" />,
-        highlights: [{ label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives }],
+        highlights: [
+          { label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives },
+        ],
       },
       {
         id: 'delivery-confidence',
@@ -4523,8 +4554,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <Sparkles size={18} className="text-blue-500" />,
         highlights: [
-          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
         ],
       },
       {
@@ -4548,7 +4586,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Approve budget changes',
         ],
         icon: <FileText size={18} className="text-indigo-500" />,
-        highlights: [{ label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' }],
+        highlights: [
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
+        ],
       },
     ];
 
@@ -4591,7 +4634,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
       followUpActions: [],
       icon: <Sparkles size={18} className="text-indigo-500" />,
-      highlights: [{ label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' }],
+      highlights: [
+        {
+          label: t('execution.table.progress'),
+          value: progressPct !== null ? `${progressPct}%` : '—',
+        },
+      ],
     }));
 
     return [...wizardEntries, ...base];

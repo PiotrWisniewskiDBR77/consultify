@@ -15,9 +15,9 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
   return { ...actual, requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args) };
 });
 
@@ -37,9 +37,9 @@ vi.mock('../../../services/caseWorkspace/casePlanVersionService.js', () => ({
   putViewState: vi.fn(),
 }));
 
-import casePlanVersionsRoutes from '../casePlanVersions.routes.js';
-import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
 import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
+import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import casePlanVersionsRoutes from '../casePlanVersions.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -55,8 +55,18 @@ function createApp(): Express {
 describe('caseWorkspace plan-version routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireCaseAccess.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireCaseAccess.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('rejects createPlanDraft missing semanticGraph with 400', async () => {
@@ -78,13 +88,18 @@ describe('caseWorkspace plan-version routes', () => {
 
   it('resolves the owning caseId via getPlanVersion before authorizing a by-id route, and 404s if missing', async () => {
     mockGetPlanVersion.mockResolvedValue(null);
-    const res = await request(createApp()).get('/api/v8/case-workspace/plan-versions/planv-missing');
+    const res = await request(createApp()).get(
+      '/api/v8/case-workspace/plan-versions/planv-missing'
+    );
     expect(res.status).toBe(404);
     expect(mockRequireCaseAccess).not.toHaveBeenCalled();
   });
 
   it('maps case_access_denied on a resolved plan version to 404', async () => {
-    mockGetPlanVersion.mockResolvedValue({ casePlanVersionId: 'planv-1', caseId: 'case-other-tenant' });
+    mockGetPlanVersion.mockResolvedValue({
+      casePlanVersionId: 'planv-1',
+      caseId: 'case-other-tenant',
+    });
     mockRequireCaseAccess.mockRejectedValue(
       new CaseWorkspaceAuthError('case_access_denied', 'Access to this case is denied.')
     );
@@ -113,7 +128,9 @@ describe('caseWorkspace plan-version routes', () => {
 
   it('maps a plan_status_transition_not_allowed:X->Y dynamic-detail error to 409 without leaking the dynamic detail as the code', async () => {
     mockGetPlanVersion.mockResolvedValue({ casePlanVersionId: 'planv-1', caseId: 'case-1' });
-    mockPublishPlanVersion.mockRejectedValue(new Error('plan_status_transition_not_allowed:DRAFT->PUBLISHED'));
+    mockPublishPlanVersion.mockRejectedValue(
+      new Error('plan_status_transition_not_allowed:DRAFT->PUBLISHED')
+    );
     const res = await request(createApp())
       .post('/api/v8/case-workspace/plan-versions/planv-1/publish')
       .send({ expectedVersion: 1 });

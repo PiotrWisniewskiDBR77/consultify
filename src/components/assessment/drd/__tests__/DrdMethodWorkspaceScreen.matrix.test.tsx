@@ -9,6 +9,7 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+
 import { DrdMethodWorkspaceScreen } from '../DrdMethodWorkspaceScreen';
 
 function makeMemoryStorage(): Storage {
@@ -56,11 +57,15 @@ describe('DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one'
     render(<DrdMethodWorkspaceScreen storage={storage} seedTo="matrix" initialViewMode="matrix" />);
 
     // Select level 2 of the first row (Procesy Sprzedaży / 1A).
-    const cells = screen.getAllByTestId('matrix-cell').filter((el) => el.getAttribute('data-unit-id') === '1A');
+    const cells = screen
+      .getAllByTestId('matrix-cell')
+      .filter((el) => el.getAttribute('data-unit-id') === '1A');
     const level2Cell = cells.find((el) => el.getAttribute('data-level') === '2')!;
     fireEvent.click(level2Cell);
 
-    expect(within(screen.getByTestId('matrix-side-sheet')).getAllByText(/poziom 2/i).length).toBeGreaterThan(0);
+    expect(
+      within(screen.getByTestId('matrix-side-sheet')).getAllByText(/poziom 2/i).length
+    ).toBeGreaterThan(0);
 
     // Switch to Interview view.
     fireEvent.click(screen.getByTestId('view-mode-interview'));
@@ -69,6 +74,8 @@ describe('DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one'
     // Back to Matrix — same selection, same side sheet content, no reset.
     fireEvent.click(screen.getByTestId('view-mode-matrix'));
     expect(screen.getByTestId('matrix-side-sheet')).toBeInTheDocument();
-    expect(within(screen.getByTestId('matrix-side-sheet')).getAllByText(/1A · poziom 2/).length).toBeGreaterThan(0);
+    expect(
+      within(screen.getByTestId('matrix-side-sheet')).getAllByText(/1A · poziom 2/).length
+    ).toBeGreaterThan(0);
   });
 });

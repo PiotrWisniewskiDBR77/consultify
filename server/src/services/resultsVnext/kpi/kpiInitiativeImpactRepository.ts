@@ -14,15 +14,14 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-
 import {
-  toInitiativeKpiImpact,
   type InitiativeKpiImpact,
   type InitiativeKpiImpactRow,
   type InitiativeKpiImpactStatus,
+  toInitiativeKpiImpact,
 } from './kpiInitiativeImpactTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -139,7 +138,11 @@ export async function listKpiImpactsForInitiative(
      LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
   `;
 
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: 'kpi' });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: 'kpi',
+  });
   const values = [...wrapped.values, ...trailingValues];
 
   const rows = await withReadClient((client) =>

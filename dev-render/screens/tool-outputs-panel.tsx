@@ -16,10 +16,10 @@
 import React from 'react';
 
 import ToolOutputsPanel from '@/components/DiscoveryTools/report/ToolOutputsPanel';
+import type { SWOTItem, SWOTMove, SWOTTension } from '@/store/useToolStore';
+import { buildSwotOutput } from '@/toolOutputs/buildSwotOutput';
 import { approve, reopen as reopenLifecycle, submitForReview } from '@/toolOutputs/outputLifecycle';
 import { renderToolReport } from '@/toolOutputs/renderReport';
-import { buildSwotOutput } from '@/toolOutputs/buildSwotOutput';
-import type { SWOTItem, SWOTMove, SWOTTension } from '@/store/useToolStore';
 import type { ToolOutput } from '@/toolOutputs/types';
 
 const SESSION_ID = 'sess-demo-1';
@@ -67,7 +67,10 @@ const MOVES: SWOTMove[] = [
     firstStep: 'Wybrać klienta pilotażowego',
     ownerRole: 'Dyrektor sprzedaży',
     tradeoff: { chosen: 'Pilot w DACH', deferred: 'Rozwój produktu', cost: 'Dług produktowy +1Q' },
-    rejectedAlternative: { option: 'Wejście przez partnera', reason: 'Utrata kontroli nad wdrożeniem' },
+    rejectedAlternative: {
+      option: 'Wejście przez partnera',
+      reason: 'Utrata kontroli nad wdrożeniem',
+    },
   },
 ] as SWOTMove[];
 
@@ -133,7 +136,13 @@ function installFetchStub() {
     const url = typeof input === 'string' ? input : input.toString();
     const method = (init?.method || 'GET').toUpperCase();
 
-    if (url.includes('/tool-outputs') && method === 'GET' && !url.includes('/reports') && !url.match(/\/tool-outputs\/[^/?]+$/) && !url.includes('/initiative-proposals')) {
+    if (
+      url.includes('/tool-outputs') &&
+      method === 'GET' &&
+      !url.includes('/reports') &&
+      !url.match(/\/tool-outputs\/[^/?]+$/) &&
+      !url.includes('/initiative-proposals')
+    ) {
       return json({ outputs: store.outputs.map(outputSummary) });
     }
     const reportsMatch = url.match(/\/tool-outputs\/([^/?]+)\/reports$/);
@@ -143,8 +152,20 @@ function installFetchStub() {
       if (!exists) return json({ error: 'not found' }, 404);
       return json({
         reports: [
-          { id: 'rep-1', kind: 'report', title: reportDoc.title, status: 'approved', createdAt: '2026-08-13T12:05:00Z' },
-          { id: 'deck-1', kind: 'presentation', title: presentationDoc.title, status: 'approved', createdAt: '2026-08-13T12:05:00Z' },
+          {
+            id: 'rep-1',
+            kind: 'report',
+            title: reportDoc.title,
+            status: 'approved',
+            createdAt: '2026-08-13T12:05:00Z',
+          },
+          {
+            id: 'deck-1',
+            kind: 'presentation',
+            title: presentationDoc.title,
+            status: 'approved',
+            createdAt: '2026-08-13T12:05:00Z',
+          },
         ],
       });
     }
@@ -174,7 +195,11 @@ function installFetchStub() {
       if (!current) return json({ error: 'not found or not approved' }, current ? 409 : 404);
       const newId = `out-${store.outputs.length + 1}`;
       const { superseded, revision } = reopenLifecycle(current, newId, new Date().toISOString());
-      const approvedRevision = approve(submitForReview(revision), 'piotr', new Date().toISOString());
+      const approvedRevision = approve(
+        submitForReview(revision),
+        'piotr',
+        new Date().toISOString()
+      );
       store.outputs = store.outputs.map((o) => (o.id === current.id ? superseded : o));
       store.outputs.push(approvedRevision);
       return json({
@@ -192,7 +217,14 @@ function installFetchStub() {
     if (detailMatch && method === 'GET') {
       const found = store.outputs.find((o) => o.id === detailMatch[1]);
       if (!found) return json({ error: 'not found' }, 404);
-      return json({ output: { ...outputSummary(found), items: found.items, tensions: found.tensions, conclusions: found.conclusions } });
+      return json({
+        output: {
+          ...outputSummary(found),
+          items: found.items,
+          tensions: found.tensions,
+          conclusions: found.conclusions,
+        },
+      });
     }
 
     return realFetch(input, init);

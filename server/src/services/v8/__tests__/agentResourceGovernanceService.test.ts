@@ -42,7 +42,11 @@ function reservation(status: 'reserved' | 'settled' | 'released' | 'denied', rea
   };
 }
 
-function admissionClient(input: { active?: number; cost?: number; insertedStatus?: 'reserved' | 'denied' }) {
+function admissionClient(input: {
+  active?: number;
+  cost?: number;
+  insertedStatus?: 'reserved' | 'denied';
+}) {
   const insertedStatus = input.insertedStatus || 'reserved';
   const reason =
     insertedStatus === 'reserved'
@@ -130,17 +134,27 @@ describe('agentResourceGovernanceService', () => {
   });
 
   it('fails closed when the same idempotency key changes estimated cost', async () => {
-    const query = vi.fn(async () => ({ rows: query.mock.calls.length === 1 ? [] : [reservation('settled', 'resource_settled')], rowCount: 1 }));
+    const query = vi.fn(async () => ({
+      rows: query.mock.calls.length === 1 ? [] : [reservation('settled', 'resource_settled')],
+      rowCount: 1,
+    }));
     transactionClients.push({ query });
     const { reserveAgentResource } = await import('../agentResourceGovernanceService.js');
-    await expect(reserveAgentResource({ ...base, estimatedCostUsd: 0.61 })).rejects.toThrow('resource_idempotency_cost_mismatch');
+    await expect(reserveAgentResource({ ...base, estimatedCostUsd: 0.61 })).rejects.toThrow(
+      'resource_idempotency_cost_mismatch'
+    );
   });
 
   it('fails closed on project drift for the same tenant/key', async () => {
-    const query = vi.fn(async () => ({ rows: query.mock.calls.length === 1 ? [] : [reservation('settled', 'resource_settled')], rowCount: 1 }));
+    const query = vi.fn(async () => ({
+      rows: query.mock.calls.length === 1 ? [] : [reservation('settled', 'resource_settled')],
+      rowCount: 1,
+    }));
     transactionClients.push({ query });
     const { reserveAgentResource } = await import('../agentResourceGovernanceService.js');
-    await expect(reserveAgentResource({ ...base, projectId: 'project-foreign' })).rejects.toThrow('resource_idempotency_scope_mismatch');
+    await expect(reserveAgentResource({ ...base, projectId: 'project-foreign' })).rejects.toThrow(
+      'resource_idempotency_scope_mismatch'
+    );
   });
 
   it('cannot replay a same-key reservation from a foreign tenant', async () => {
@@ -153,7 +167,9 @@ describe('agentResourceGovernanceService', () => {
     }));
     transactionClients.push({ query });
     const { reserveAgentResource } = await import('../agentResourceGovernanceService.js');
-    await expect(reserveAgentResource({ ...base, organizationId: 'org-foreign' })).rejects.toThrow('resource_policy_not_found');
+    await expect(reserveAgentResource({ ...base, organizationId: 'org-foreign' })).rejects.toThrow(
+      'resource_policy_not_found'
+    );
     expect(query.mock.calls[1]?.[1]).toEqual(['org-foreign', base.idempotencyKey]);
   });
 
@@ -196,7 +212,10 @@ describe('agentResourceGovernanceService', () => {
 
   it('does not duplicate a callback while the idempotent reservation is active', async () => {
     const query = vi.fn(async () => ({
-      rows: query.mock.calls.length === 1 ? [] : [reservation('reserved', 'resource_reservation_allowed')],
+      rows:
+        query.mock.calls.length === 1
+          ? []
+          : [reservation('reserved', 'resource_reservation_allowed')],
       rowCount: 1,
     }));
     transactionClients.push({ query });
@@ -227,7 +246,14 @@ describe('agentResourceGovernanceService', () => {
       [],
       [released],
       [{ status: 'failed', input_digest: 'digest-a' }],
-      [{ policy_id: 'policy-a09', max_concurrent_executions: 2, max_estimated_cost_usd_per_run: '1.000000', lease_seconds: 300 }],
+      [
+        {
+          policy_id: 'policy-a09',
+          max_concurrent_executions: 2,
+          max_estimated_cost_usd_per_run: '1.000000',
+          lease_seconds: 300,
+        },
+      ],
       [],
       [{ active_count: 0, reserved_cost: 0 }],
       [reclaimed],
@@ -242,16 +268,46 @@ describe('agentResourceGovernanceService', () => {
     const { reserveAgentResource } = await import('../agentResourceGovernanceService.js');
     const result = await reserveAgentResource({
       ...base,
-      releasedRetry: { adapterKey: 'interviews', invocationIdempotencyKey: 'materialize-1', inputDigest: 'digest-a' },
+      releasedRetry: {
+        adapterKey: 'interviews',
+        invocationIdempotencyKey: 'materialize-1',
+        inputDigest: 'digest-a',
+      },
     });
-    expect(result).toEqual(expect.objectContaining({ allowed: true, status: 'reserved', idempotentReplay: false, reservationId: released.reservation_id }));
-    expect(query.mock.calls.filter(([sql]) => String(sql).includes('INSERT INTO v8_agent_resource_reservations'))).toHaveLength(0);
+    expect(result).toEqual(
+      expect.objectContaining({
+        allowed: true,
+        status: 'reserved',
+        idempotentReplay: false,
+        reservationId: released.reservation_id,
+      })
+    );
+    expect(
+      query.mock.calls.filter(([sql]) =>
+        String(sql).includes('INSERT INTO v8_agent_resource_reservations')
+      )
+    ).toHaveLength(0);
   });
 
   it('fails closed when a released reclaim payload differs from the failed invocation', async () => {
-    const rows = [[], [reservation('released', 'resource_released_after_execution_failure')], [{ status: 'failed', input_digest: 'other-digest' }]];
-    transactionClients.push({ query: vi.fn(async () => ({ rows: rows.shift() || [], rowCount: 1 })) });
+    const rows = [
+      [],
+      [reservation('released', 'resource_released_after_execution_failure')],
+      [{ status: 'failed', input_digest: 'other-digest' }],
+    ];
+    transactionClients.push({
+      query: vi.fn(async () => ({ rows: rows.shift() || [], rowCount: 1 })),
+    });
     const { reserveAgentResource } = await import('../agentResourceGovernanceService.js');
-    await expect(reserveAgentResource({ ...base, releasedRetry: { adapterKey: 'interviews', invocationIdempotencyKey: 'materialize-1', inputDigest: 'digest-a' } })).rejects.toThrow('resource_reclaim_payload_conflict');
+    await expect(
+      reserveAgentResource({
+        ...base,
+        releasedRetry: {
+          adapterKey: 'interviews',
+          invocationIdempotencyKey: 'materialize-1',
+          inputDigest: 'digest-a',
+        },
+      })
+    ).rejects.toThrow('resource_reclaim_payload_conflict');
   });
 });

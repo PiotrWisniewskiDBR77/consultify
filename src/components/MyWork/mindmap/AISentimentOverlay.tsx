@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 export interface SentimentResult {
@@ -116,7 +115,10 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <SmilePlus size={16} className="text-c-success" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="a-i-sentiment-overlay-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="a-i-sentiment-overlay-modal-heading"
+            >
               {t('ideas.mindmap.aiSentimentAnalysis', 'AI: Sentiment Analysis')}
             </h3>
           </div>

@@ -48,9 +48,9 @@ export function hasDeepResearchProgress(progress: unknown): boolean {
   const p = progress as Record<string, unknown>;
   return Boolean(
     p.stage ||
-      p.topic ||
-      p.error ||
-      (Array.isArray(p.queries) && p.queries.length > 0) ||
-      (Array.isArray(p.sources) && p.sources.length > 0)
+    p.topic ||
+    p.error ||
+    (Array.isArray(p.queries) && p.queries.length > 0) ||
+    (Array.isArray(p.sources) && p.sources.length > 0)
   );
 }

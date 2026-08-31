@@ -33,7 +33,11 @@ export default defineConfig(({ mode }) => {
   // wdrożenie — usuń/wyczyść zmienną VITE_QUICK_ACCESS_MAP w Railway zamiast
   // tego.
   if (mode === 'production') {
-    const quickAccessMap = (env.VITE_QUICK_ACCESS_MAP ?? process.env.VITE_QUICK_ACCESS_MAP ?? '').trim();
+    const quickAccessMap = (
+      env.VITE_QUICK_ACCESS_MAP ??
+      process.env.VITE_QUICK_ACCESS_MAP ??
+      ''
+    ).trim();
     if (quickAccessMap.length > 0) {
       throw new Error(
         'VITE_QUICK_ACCESS_MAP is set for a production build. This variable carries a PIN -> ' +

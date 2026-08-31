@@ -32,8 +32,8 @@
 import { AlertTriangle, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import {
   KPI_SCORECARD_REVIEW_FREQUENCIES,
@@ -98,7 +98,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -188,7 +189,13 @@ export const CreateKpiScorecardModal: React.FC<CreateKpiScorecardModalProps> = (
           >
             <Plus size={16} />
             <span>
-              {busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Utwórz kartę wyników' : 'Create scorecard'}
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Utwórz kartę wyników'
+                  : 'Create scorecard'}
             </span>
           </button>
         </>
@@ -204,7 +211,9 @@ export const CreateKpiScorecardModal: React.FC<CreateKpiScorecardModalProps> = (
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={isPolish ? 'np. Karta wyników zespołu Sprzedaży' : 'e.g. Sales team scorecard'}
+            placeholder={
+              isPolish ? 'np. Karta wyników zespołu Sprzedaży' : 'e.g. Sales team scorecard'
+            }
             className={FIELD_CLASS}
             data-testid="kpi-scorecard-create-name"
             aria-invalid={nameError || undefined}
@@ -278,7 +287,9 @@ export const CreateKpiScorecardModal: React.FC<CreateKpiScorecardModalProps> = (
             id="kpi-scorecard-create-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder={isPolish ? 'Do czego służy ta karta wyników…' : 'What this scorecard is for…'}
+            placeholder={
+              isPolish ? 'Do czego służy ta karta wyników…' : 'What this scorecard is for…'
+            }
             className={TEXTAREA_CLASS}
             data-testid="kpi-scorecard-create-description"
           />
@@ -306,7 +317,11 @@ export const CreateKpiScorecardModal: React.FC<CreateKpiScorecardModalProps> = (
             id="kpi-scorecard-create-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder={isPolish ? 'Kontekst utworzenia karty wyników…' : 'Context for creating this scorecard…'}
+            placeholder={
+              isPolish
+                ? 'Kontekst utworzenia karty wyników…'
+                : 'Context for creating this scorecard…'
+            }
             className={TEXTAREA_CLASS}
             data-testid="kpi-scorecard-create-reason"
           />

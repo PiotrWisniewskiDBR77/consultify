@@ -49,76 +49,94 @@ function computeSafePixelRatio(widthPx: number, heightPx: number, requested: num
 export function useMapExportPdf() {
   const { t } = useTranslation();
 
-  const exportAsPdf = useCallback(async (title: string) => {
-    const canvasNotFoundMsg = t('ideas.mindmap.canvasNotFound', 'Mind map canvas not found. Please try again.');
-    const reactFlowEl = document.querySelector('.react-flow') as HTMLElement;
-    if (!reactFlowEl) {
-      toast.error(canvasNotFoundMsg, {
-        id: 'mm-export-err',
-        duration: 3000,
-      });
-      return;
-    }
-
-    const viewportEl = reactFlowEl.querySelector('.react-flow__viewport') as HTMLElement;
-    if (!viewportEl) {
-      toast.error(canvasNotFoundMsg, {
-        id: 'mm-export-err',
-        duration: 3000,
-      });
-      return;
-    }
-
-    const rect = viewportEl.getBoundingClientRect();
-    if (!rect.width || !rect.height) {
-      toast.error(t('ideas.mindmap.canvasEmptyNothingToExport', 'Mind map appears empty — nothing to export.'), {
-        id: 'mm-export-err',
-        duration: 3000,
-      });
-      return;
-    }
-
-    const toastId = 'mm-export-pdf';
-    toast.loading(t('ideas.mindmap.preparingPdfExport', 'Preparing PDF export…'), { id: toastId });
-
-    try {
-      const requestedPixelRatio = window.devicePixelRatio > 1 ? 2 : 1.5;
-      const pixelRatio = computeSafePixelRatio(rect.width, rect.height, requestedPixelRatio);
-
-      const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(viewportEl, {
-        backgroundColor: '#ffffff',
-        quality: 1,
-        pixelRatio,
-      });
-
-      if (!dataUrl || dataUrl === 'data:,') {
-        throw new Error('Rendered image was empty');
-      }
-
-      const mindMapLabel = t('mindmap.mindMap', 'Mind map');
-      const safeTitle = String(title || mindMapLabel).replace(/[<>"&]/g, '');
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        toast.error(t('ideas.mindmap.popupBlockedForPdf', 'Pop-up blocked. Please allow pop-ups to export the PDF.'), {
-          id: toastId,
-          duration: 4000,
+  const exportAsPdf = useCallback(
+    async (title: string) => {
+      const canvasNotFoundMsg = t(
+        'ideas.mindmap.canvasNotFound',
+        'Mind map canvas not found. Please try again.'
+      );
+      const reactFlowEl = document.querySelector('.react-flow') as HTMLElement;
+      if (!reactFlowEl) {
+        toast.error(canvasNotFoundMsg, {
+          id: 'mm-export-err',
+          duration: 3000,
         });
         return;
       }
 
-      // This message is rendered by an inline <script> inside the popup
-      // window's own document (not React), so it must be pre-translated and
-      // escaped for embedding in a single-quoted JS string literal.
-      const renderErrorMsg = t(
-        'ideas.mindmap.failedToRenderImageRetry',
-        'Failed to render the mind map image. Please close this tab and try again.'
-      )
-        .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'");
+      const viewportEl = reactFlowEl.querySelector('.react-flow__viewport') as HTMLElement;
+      if (!viewportEl) {
+        toast.error(canvasNotFoundMsg, {
+          id: 'mm-export-err',
+          duration: 3000,
+        });
+        return;
+      }
 
-      printWindow.document.write(
-        `<!DOCTYPE html>
+      const rect = viewportEl.getBoundingClientRect();
+      if (!rect.width || !rect.height) {
+        toast.error(
+          t(
+            'ideas.mindmap.canvasEmptyNothingToExport',
+            'Mind map appears empty — nothing to export.'
+          ),
+          {
+            id: 'mm-export-err',
+            duration: 3000,
+          }
+        );
+        return;
+      }
+
+      const toastId = 'mm-export-pdf';
+      toast.loading(t('ideas.mindmap.preparingPdfExport', 'Preparing PDF export…'), {
+        id: toastId,
+      });
+
+      try {
+        const requestedPixelRatio = window.devicePixelRatio > 1 ? 2 : 1.5;
+        const pixelRatio = computeSafePixelRatio(rect.width, rect.height, requestedPixelRatio);
+
+        const { toPng } = await import('html-to-image');
+        const dataUrl = await toPng(viewportEl, {
+          backgroundColor: '#ffffff',
+          quality: 1,
+          pixelRatio,
+        });
+
+        if (!dataUrl || dataUrl === 'data:,') {
+          throw new Error('Rendered image was empty');
+        }
+
+        const mindMapLabel = t('mindmap.mindMap', 'Mind map');
+        const safeTitle = String(title || mindMapLabel).replace(/[<>"&]/g, '');
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          toast.error(
+            t(
+              'ideas.mindmap.popupBlockedForPdf',
+              'Pop-up blocked. Please allow pop-ups to export the PDF.'
+            ),
+            {
+              id: toastId,
+              duration: 4000,
+            }
+          );
+          return;
+        }
+
+        // This message is rendered by an inline <script> inside the popup
+        // window's own document (not React), so it must be pre-translated and
+        // escaped for embedding in a single-quoted JS string literal.
+        const renderErrorMsg = t(
+          'ideas.mindmap.failedToRenderImageRetry',
+          'Failed to render the mind map image. Please close this tab and try again.'
+        )
+          .replace(/\\/g, '\\\\')
+          .replace(/'/g, "\\'");
+
+        printWindow.document.write(
+          `<!DOCTYPE html>
 <html>
 <head><title>${safeTitle} — ${mindMapLabel}</title>
 <style>
@@ -145,21 +163,29 @@ export function useMapExportPdf() {
   </script>
 </body>
 </html>`
-      );
-      printWindow.document.close();
+        );
+        printWindow.document.close();
 
-      toast.success(t('ideas.mindmap.pdfReadyPrintDialog', 'PDF ready — use the print dialog to save it.'), {
-        id: toastId,
-        duration: 2500,
-      });
-    } catch (err) {
-      console.error('PDF export failed:', err);
-      toast.error(t('ideas.mindmap.pdfExportFailedRetry', 'PDF export failed. Please try again.'), {
-        id: toastId,
-        duration: 3000,
-      });
-    }
-  }, [t]);
+        toast.success(
+          t('ideas.mindmap.pdfReadyPrintDialog', 'PDF ready — use the print dialog to save it.'),
+          {
+            id: toastId,
+            duration: 2500,
+          }
+        );
+      } catch (err) {
+        console.error('PDF export failed:', err);
+        toast.error(
+          t('ideas.mindmap.pdfExportFailedRetry', 'PDF export failed. Please try again.'),
+          {
+            id: toastId,
+            duration: 3000,
+          }
+        );
+      }
+    },
+    [t]
+  );
 
   return { exportAsPdf };
 }

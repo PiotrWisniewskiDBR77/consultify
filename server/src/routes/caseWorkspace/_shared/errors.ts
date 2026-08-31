@@ -23,8 +23,8 @@
 import { randomUUID } from 'crypto';
 
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
-import { AppError } from '../../../utils/ErrorHandler.js';
 import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
+import { AppError } from '../../../utils/ErrorHandler.js';
 
 /**
  * Exact-code overrides for domain errors whose correct HTTP status does not
@@ -95,7 +95,10 @@ const INSERT_FAILED_SUFFIX = '_insert_failed';
  * anything shaped like `snake_case_reason`), never to 200/2xx.
  */
 export function classifyDomainCode(rawMessage: string): { status: number; code: string } {
-  const code = String(rawMessage || '').split(':')[0].trim() || 'case_workspace_unknown_error';
+  const code =
+    String(rawMessage || '')
+      .split(':')[0]
+      .trim() || 'case_workspace_unknown_error';
 
   const override = EXACT_STATUS_OVERRIDES[code];
   if (override != null) return { status: override, code };
@@ -136,7 +139,8 @@ export function classifyDomainCode(rawMessage: string): { status: number; code: 
     code === 'not_org_member' ||
     code.endsWith('_forbidden') ||
     code.endsWith('_unauthorized')
-  ) return { status: 403, code };
+  )
+    return { status: 403, code };
   if (code.endsWith('_required') || code.endsWith('_invalid')) return { status: 400, code };
   if (code.includes('_mismatch')) return { status: 422, code };
 

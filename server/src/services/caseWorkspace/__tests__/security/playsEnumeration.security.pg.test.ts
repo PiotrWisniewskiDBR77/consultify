@@ -77,9 +77,9 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   CONNECTION_STRING,
   ContractFixtures,
-  REAL_DB_REQUESTED,
   createContractApp,
   minimalGraph,
+  REAL_DB_REQUESTED,
 } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
 
 /**
@@ -174,470 +174,503 @@ if (!REACHABLE) {
 
 const suite = REACHABLE ? describe.sequential : describe.skip;
 
-suite('play.routes.ts — cross-tenant Play existence oracle (CW-SEC-ENUM-PLAYS-01 / SEC-009)', () => {
-  let control: Pool;
+suite(
+  'play.routes.ts — cross-tenant Play existence oracle (CW-SEC-ENUM-PLAYS-01 / SEC-009)',
+  () => {
+    let control: Pool;
 
-  beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
-  }, 60_000);
+    beforeAll(async () => {
+      control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+    }, 60_000);
 
-  afterAll(async () => {
-    await control?.end().catch(() => undefined);
-  }, 60_000);
+    afterAll(async () => {
+      await control?.end().catch(() => undefined);
+    }, 60_000);
 
-  /**
-   * process_definitions has no ON DELETE CASCADE from organizations (it
-   * FK-references organizations(id) plainly — see
-   * server/migrations/20260809_case_workspace_plays.sql), so
-   * ContractFixtures.teardown()'s own `DELETE FROM organizations` would
-   * violate that FK unless every process_definitions row for the org is
-   * deleted first. process_versions DOES cascade from process_definitions,
-   * so deleting the definition is enough for both tables.
-   */
-  async function deleteDefinitions(definitionIds: string[]): Promise<void> {
-    for (const id of definitionIds) {
-      await control.query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [id]).catch(() => undefined);
+    /**
+     * process_definitions has no ON DELETE CASCADE from organizations (it
+     * FK-references organizations(id) plainly — see
+     * server/migrations/20260809_case_workspace_plays.sql), so
+     * ContractFixtures.teardown()'s own `DELETE FROM organizations` would
+     * violate that FK unless every process_definitions row for the org is
+     * deleted first. process_versions DOES cascade from process_definitions,
+     * so deleting the definition is enough for both tables.
+     */
+    async function deleteDefinitions(definitionIds: string[]): Promise<void> {
+      for (const id of definitionIds) {
+        await control
+          .query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [id])
+          .catch(() => undefined);
+      }
     }
-  }
 
-  interface RouteProbe {
-    name: string;
-    method: 'get' | 'post' | 'put';
-    path: (id: string) => string;
-    body?: Record<string, unknown>;
-  }
+    interface RouteProbe {
+      name: string;
+      method: 'get' | 'post' | 'put';
+      path: (id: string) => string;
+      body?: Record<string, unknown>;
+    }
 
-  const definitionRouteProbes: RouteProbe[] = [
-    { name: 'GET /process-definitions/:id', method: 'get', path: (id) => `${BASE}/process-definitions/${id}` },
-    {
-      name: 'GET /process-definitions/:id/publisher-check',
-      method: 'get',
-      path: (id) => `${BASE}/process-definitions/${id}/publisher-check`,
-    },
-    {
-      name: 'POST /process-definitions/:id/share',
-      method: 'post',
-      path: (id) => `${BASE}/process-definitions/${id}/share`,
-      body: { targetVisibility: 'TEAM', expectedVersion: 1 },
-    },
-    {
-      name: 'POST /process-definitions/:id/versions',
-      method: 'post',
-      path: (id) => `${BASE}/process-definitions/${id}/versions`,
-      body: { semanticGraph: minimalGraph() },
-    },
-    {
-      name: 'GET /process-definitions/:id/versions',
-      method: 'get',
-      path: (id) => `${BASE}/process-definitions/${id}/versions`,
-    },
-  ];
+    const definitionRouteProbes: RouteProbe[] = [
+      {
+        name: 'GET /process-definitions/:id',
+        method: 'get',
+        path: (id) => `${BASE}/process-definitions/${id}`,
+      },
+      {
+        name: 'GET /process-definitions/:id/publisher-check',
+        method: 'get',
+        path: (id) => `${BASE}/process-definitions/${id}/publisher-check`,
+      },
+      {
+        name: 'POST /process-definitions/:id/share',
+        method: 'post',
+        path: (id) => `${BASE}/process-definitions/${id}/share`,
+        body: { targetVisibility: 'TEAM', expectedVersion: 1 },
+      },
+      {
+        name: 'POST /process-definitions/:id/versions',
+        method: 'post',
+        path: (id) => `${BASE}/process-definitions/${id}/versions`,
+        body: { semanticGraph: minimalGraph() },
+      },
+      {
+        name: 'GET /process-definitions/:id/versions',
+        method: 'get',
+        path: (id) => `${BASE}/process-definitions/${id}/versions`,
+      },
+    ];
 
-  const versionRouteProbes: RouteProbe[] = [
-    { name: 'GET /process-versions/:id', method: 'get', path: (id) => `${BASE}/process-versions/${id}` },
-    {
-      name: 'PUT /process-versions/:id',
-      method: 'put',
-      path: (id) => `${BASE}/process-versions/${id}`,
-      body: { semanticGraph: minimalGraph(), expectedVersion: 1 },
-    },
-    {
-      name: 'POST /process-versions/:id/propose',
-      method: 'post',
-      path: (id) => `${BASE}/process-versions/${id}/propose`,
-      body: { expectedVersion: 1 },
-    },
-    {
-      name: 'POST /process-versions/:id/review',
-      method: 'post',
-      path: (id) => `${BASE}/process-versions/${id}/review`,
-      body: { decision: 'APPROVED', expectedVersion: 1 },
-    },
-    {
-      name: 'POST /process-versions/:id/publish',
-      method: 'post',
-      path: (id) => `${BASE}/process-versions/${id}/publish`,
-      body: { expectedVersion: 1 },
-    },
-    {
-      name: 'POST /process-versions/:id/deprecate',
-      method: 'post',
-      path: (id) => `${BASE}/process-versions/${id}/deprecate`,
-      body: { reason: 'attack probe', expectedVersion: 1 },
-    },
-    {
-      name: 'POST /process-versions/:id/archive',
-      method: 'post',
-      path: (id) => `${BASE}/process-versions/${id}/archive`,
-      body: { expectedVersion: 1 },
-    },
-  ];
+    const versionRouteProbes: RouteProbe[] = [
+      {
+        name: 'GET /process-versions/:id',
+        method: 'get',
+        path: (id) => `${BASE}/process-versions/${id}`,
+      },
+      {
+        name: 'PUT /process-versions/:id',
+        method: 'put',
+        path: (id) => `${BASE}/process-versions/${id}`,
+        body: { semanticGraph: minimalGraph(), expectedVersion: 1 },
+      },
+      {
+        name: 'POST /process-versions/:id/propose',
+        method: 'post',
+        path: (id) => `${BASE}/process-versions/${id}/propose`,
+        body: { expectedVersion: 1 },
+      },
+      {
+        name: 'POST /process-versions/:id/review',
+        method: 'post',
+        path: (id) => `${BASE}/process-versions/${id}/review`,
+        body: { decision: 'APPROVED', expectedVersion: 1 },
+      },
+      {
+        name: 'POST /process-versions/:id/publish',
+        method: 'post',
+        path: (id) => `${BASE}/process-versions/${id}/publish`,
+        body: { expectedVersion: 1 },
+      },
+      {
+        name: 'POST /process-versions/:id/deprecate',
+        method: 'post',
+        path: (id) => `${BASE}/process-versions/${id}/deprecate`,
+        body: { reason: 'attack probe', expectedVersion: 1 },
+      },
+      {
+        name: 'POST /process-versions/:id/archive',
+        method: 'post',
+        path: (id) => `${BASE}/process-versions/${id}/archive`,
+        body: { expectedVersion: 1 },
+      },
+    ];
 
-  async function send(app: ReturnType<typeof createContractApp>, probe: RouteProbe, id: string): Promise<Response> {
-    const req = request(app)[probe.method](probe.path(id));
-    return probe.body ? req.send(probe.body) : req.send();
-  }
+    async function send(
+      app: ReturnType<typeof createContractApp>,
+      probe: RouteProbe,
+      id: string
+    ): Promise<Response> {
+      const req = request(app)[probe.method](probe.path(id));
+      return probe.body ? req.send(probe.body) : req.send();
+    }
 
-  /**
-   * The core assertion: an id that does not exist anywhere, and a REAL id
-   * owned by a different tenant, must be indistinguishable at the HTTP
-   * layer — same status, same `error.code`, same `error.message`. Also
-   * asserts the shared outcome actually IS the enumeration-safe 404 (never
-   * silently 200, never the leaking 403) so a mistake that disabled the
-   * route's authorization entirely would still be caught.
-   */
-  async function expectIndistinguishable404(
-    app: ReturnType<typeof createContractApp>,
-    probe: RouteProbe,
-    realForeignId: string,
-    nonexistentId: string
-  ): Promise<void> {
-    const foreign = await send(app, probe, realForeignId);
-    const nonexistent = await send(app, probe, nonexistentId);
+    /**
+     * The core assertion: an id that does not exist anywhere, and a REAL id
+     * owned by a different tenant, must be indistinguishable at the HTTP
+     * layer — same status, same `error.code`, same `error.message`. Also
+     * asserts the shared outcome actually IS the enumeration-safe 404 (never
+     * silently 200, never the leaking 403) so a mistake that disabled the
+     * route's authorization entirely would still be caught.
+     */
+    async function expectIndistinguishable404(
+      app: ReturnType<typeof createContractApp>,
+      probe: RouteProbe,
+      realForeignId: string,
+      nonexistentId: string
+    ): Promise<void> {
+      const foreign = await send(app, probe, realForeignId);
+      const nonexistent = await send(app, probe, nonexistentId);
 
-    expect(nonexistent.status).toBe(404);
-    expect(foreign.status).toBe(nonexistent.status);
-    expect(foreign.body.error.code).toBe(nonexistent.body.error.code);
-    expect(foreign.body.error.message).toBe(nonexistent.body.error.message);
-    // The exact regression this suite exists to catch: a REAL cross-tenant
-    // id must never answer 403 (that would confirm the id exists).
-    expect(foreign.status).not.toBe(403);
-    expect(foreign.body.error.code).not.toBe('NOT_ORG_MEMBER');
-  }
+      expect(nonexistent.status).toBe(404);
+      expect(foreign.status).toBe(nonexistent.status);
+      expect(foreign.body.error.code).toBe(nonexistent.body.error.code);
+      expect(foreign.body.error.message).toBe(nonexistent.body.error.message);
+      // The exact regression this suite exists to catch: a REAL cross-tenant
+      // id must never answer 403 (that would confirm the id exists).
+      expect(foreign.status).not.toBe(403);
+      expect(foreign.body.error.code).not.toBe('NOT_ORG_MEMBER');
+    }
 
-  // ===========================================================================
-  // 1–12. Every by-id route, outsider vs owner-tenant, real vs nonexistent id
-  // ===========================================================================
-  it('every process-definitions/process-versions by-id route: a real cross-tenant id and a nonexistent id answer identically', async () => {
-    const fx = new ContractFixtures(control);
-    const definitionIds: string[] = [];
-    try {
-      const owner = await fx.seedFixture('plays-enum-owner');
-      const outsider = await fx.seedFixture('plays-enum-outsider');
+    // ===========================================================================
+    // 1–12. Every by-id route, outsider vs owner-tenant, real vs nonexistent id
+    // ===========================================================================
+    it('every process-definitions/process-versions by-id route: a real cross-tenant id and a nonexistent id answer identically', async () => {
+      const fx = new ContractFixtures(control);
+      const definitionIds: string[] = [];
+      try {
+        const owner = await fx.seedFixture('plays-enum-owner');
+        const outsider = await fx.seedFixture('plays-enum-outsider');
 
-      const ownerApp = createContractApp({
-        organizationId: owner.orgId,
-        userId: owner.memberUserId,
-        userRole: 'MEMBER',
-        isSuperAdmin: false,
-      });
-      const outsiderApp = createContractApp({
-        organizationId: outsider.orgId,
-        userId: outsider.memberUserId,
-        userRole: 'MEMBER',
-        isSuperAdmin: false,
-      });
+        const ownerApp = createContractApp({
+          organizationId: owner.orgId,
+          userId: owner.memberUserId,
+          userRole: 'MEMBER',
+          isSuperAdmin: false,
+        });
+        const outsiderApp = createContractApp({
+          organizationId: outsider.orgId,
+          userId: outsider.memberUserId,
+          userRole: 'MEMBER',
+          isSuperAdmin: false,
+        });
 
-      // A real Play, entirely owned by `owner` — DRAFT status throughout is
-      // fine: an outsider must be denied at the org-membership gate, before
-      // any state-machine logic ever runs, regardless of the object's state.
-      const definitionRes = await request(ownerApp)
-        .post(`${BASE}/process-definitions`)
-        .send({ name: `Enum probe play ${randomUUID()}` });
-      expect(definitionRes.status).toBe(201);
-      const definitionId = definitionRes.body.data.processDefinitionId as string;
-      definitionIds.push(definitionId);
+        // A real Play, entirely owned by `owner` — DRAFT status throughout is
+        // fine: an outsider must be denied at the org-membership gate, before
+        // any state-machine logic ever runs, regardless of the object's state.
+        const definitionRes = await request(ownerApp)
+          .post(`${BASE}/process-definitions`)
+          .send({ name: `Enum probe play ${randomUUID()}` });
+        expect(definitionRes.status).toBe(201);
+        const definitionId = definitionRes.body.data.processDefinitionId as string;
+        definitionIds.push(definitionId);
 
-      const versionRes = await request(ownerApp)
-        .post(`${BASE}/process-definitions/${definitionId}/versions`)
-        .send({ semanticGraph: minimalGraph() });
-      expect(versionRes.status).toBe(201);
-      const versionId = versionRes.body.data.processVersionId as string;
+        const versionRes = await request(ownerApp)
+          .post(`${BASE}/process-definitions/${definitionId}/versions`)
+          .send({ semanticGraph: minimalGraph() });
+        expect(versionRes.status).toBe(201);
+        const versionId = versionRes.body.data.processVersionId as string;
 
-      for (const probe of definitionRouteProbes) {
+        for (const probe of definitionRouteProbes) {
+          await expectIndistinguishable404(
+            outsiderApp,
+            probe,
+            definitionId,
+            `procdef-does-not-exist-${randomUUID()}`
+          );
+        }
+
+        for (const probe of versionRouteProbes) {
+          await expectIndistinguishable404(
+            outsiderApp,
+            probe,
+            versionId,
+            `procver-does-not-exist-${randomUUID()}`
+          );
+        }
+
+        // instantiate needs a body.caseId — supplied from the OUTSIDER's own
+        // org so the comparison isolates the processVersionId dimension:
+        // requireOwnOrgVersion must deny before requireCaseAccessForActor(caseId)
+        // is ever reached, so which caseId is supplied cannot affect the result.
+        const outsiderCase = await request(outsiderApp)
+          .post(`${BASE}/cases`)
+          .send({ projectId: outsider.projectId, contractedClosureType: 'DELIVERY_COMPLETED' });
+        expect(outsiderCase.status).toBe(201);
+        const outsiderCaseId = outsiderCase.body.data.caseId as string;
+
+        const instantiateProbe: RouteProbe = {
+          name: 'POST /process-versions/:id/instantiate',
+          method: 'post',
+          path: (id) => `${BASE}/process-versions/${id}/instantiate`,
+          body: { caseId: outsiderCaseId },
+        };
         await expectIndistinguishable404(
           outsiderApp,
-          probe,
-          definitionId,
-          `procdef-does-not-exist-${randomUUID()}`
+          instantiateProbe,
+          versionId,
+          `procver-does-not-exist-${randomUUID()}`
         );
+
+        // The tenant-scoped LIST is unaffected — confirms the leak (and the
+        // fix) are confined to by-id reads, not the list surface.
+        const list = await request(outsiderApp).get(`${BASE}/process-definitions`);
+        expect(list.status).toBe(200);
+        expect(
+          list.body.data.map((d: { processDefinitionId: string }) => d.processDefinitionId)
+        ).not.toContain(definitionId);
+      } finally {
+        await deleteDefinitions(definitionIds);
+        await fx.teardown();
       }
+    }, 60_000);
 
-      for (const probe of versionRouteProbes) {
-        await expectIndistinguishable404(outsiderApp, probe, versionId, `procver-does-not-exist-${randomUUID()}`);
-      }
-
-      // instantiate needs a body.caseId — supplied from the OUTSIDER's own
-      // org so the comparison isolates the processVersionId dimension:
-      // requireOwnOrgVersion must deny before requireCaseAccessForActor(caseId)
-      // is ever reached, so which caseId is supplied cannot affect the result.
-      const outsiderCase = await request(outsiderApp)
-        .post(`${BASE}/cases`)
-        .send({ projectId: outsider.projectId, contractedClosureType: 'DELIVERY_COMPLETED' });
-      expect(outsiderCase.status).toBe(201);
-      const outsiderCaseId = outsiderCase.body.data.caseId as string;
-
-      const instantiateProbe: RouteProbe = {
-        name: 'POST /process-versions/:id/instantiate',
-        method: 'post',
-        path: (id) => `${BASE}/process-versions/${id}/instantiate`,
-        body: { caseId: outsiderCaseId },
-      };
-      await expectIndistinguishable404(
-        outsiderApp,
-        instantiateProbe,
-        versionId,
-        `procver-does-not-exist-${randomUUID()}`
-      );
-
-      // The tenant-scoped LIST is unaffected — confirms the leak (and the
-      // fix) are confined to by-id reads, not the list surface.
-      const list = await request(outsiderApp).get(`${BASE}/process-definitions`);
-      expect(list.status).toBe(200);
-      expect(
-        list.body.data.map((d: { processDefinitionId: string }) => d.processDefinitionId)
-      ).not.toContain(definitionId);
-    } finally {
-      await deleteDefinitions(definitionIds);
-      await fx.teardown();
-    }
-  }, 60_000);
-
-  // ===========================================================================
-  // REVOKED MEMBERSHIP — a distinct scenario from "outsider with zero
-  // organization_members row at all" above: this actor WAS a member of the
-  // Play's own organization and has since been REVOKED.
-  // caseWorkspaceAuthContext.resolveActorMembership treats a non-ACTIVE row
-  // identically to no row at all (`if ((row.status ?? '').trim()...
-  // !== 'ACTIVE') return null;`), so requireOrgMember denies a REVOKED actor
-  // exactly the same way it denies a stranger — this proves
-  // getProcessDefinition/getProcessVersion's enumeration-safe collapse covers
-  // THAT path too, not only the "no row exists" path the main test above
-  // exercises.
-  // ===========================================================================
-  it('revoked membership: an actor whose organization_members row for the SAME org is REVOKED sees the identical enumeration-safe 404, not a distinguishable signal', async () => {
-    const fx = new ContractFixtures(control);
-    const definitionIds: string[] = [];
-    try {
-      const owner = await fx.seedFixture('plays-enum-revoked');
-      const revokedUserId = await fx.seedUser(owner.orgId, 'plays-enum-revoked-member');
-      await fx.seedMembership(owner.orgId, revokedUserId, 'MEMBER', 'REVOKED');
-
-      const ownerApp = createContractApp({
-        organizationId: owner.orgId,
-        userId: owner.memberUserId,
-        userRole: 'MEMBER',
-        isSuperAdmin: false,
-      });
-      const revokedApp = createContractApp({
-        organizationId: owner.orgId,
-        userId: revokedUserId,
-        userRole: 'MEMBER',
-        isSuperAdmin: false,
-      });
-
-      const definitionRes = await request(ownerApp)
-        .post(`${BASE}/process-definitions`)
-        .send({ name: `Enum probe play (revoked) ${randomUUID()}` });
-      expect(definitionRes.status).toBe(201);
-      const definitionId = definitionRes.body.data.processDefinitionId as string;
-      definitionIds.push(definitionId);
-
-      const versionRes = await request(ownerApp)
-        .post(`${BASE}/process-definitions/${definitionId}/versions`)
-        .send({ semanticGraph: minimalGraph() });
-      expect(versionRes.status).toBe(201);
-      const versionId = versionRes.body.data.processVersionId as string;
-
-      for (const probe of definitionRouteProbes) {
-        await expectIndistinguishable404(
-          revokedApp,
-          probe,
-          definitionId,
-          `procdef-does-not-exist-${randomUUID()}`
-        );
-      }
-      for (const probe of versionRouteProbes) {
-        await expectIndistinguishable404(revokedApp, probe, versionId, `procver-does-not-exist-${randomUUID()}`);
-      }
-    } finally {
-      await deleteDefinitions(definitionIds);
-      await fx.teardown();
-    }
-  }, 60_000);
-
-  // ===========================================================================
-  // ANTI-BLANKET-CATCH GUARD — the fix must catch ONLY CaseWorkspaceAuthError.
-  // A lazier fix (`catch { return null; }`, swallowing everything regardless
-  // of type) would ALSO close the enumeration oracle above, but would turn
-  // every genuinely broken read (a real SQL/driver failure, a bug) into a
-  // silent, misleading 404 "not found" — hiding real production incidents
-  // behind the exact same shape as a routine authorization denial. This test
-  // forces requireOrgMember (as called from inside getProcessDefinition) to
-  // throw a plain, non-CaseWorkspaceAuthError `Error` via the module mock
-  // above and asserts it is NOT swallowed: the response must be neither the
-  // enumeration-safe 404 nor a 403, but a distinctly different, propagated
-  // failure.
-  // ===========================================================================
-  it('anti-blanket-catch guard: a genuine non-authorization error out of requireOrgMember still propagates, is never reported as "not found"', async () => {
-    const fx = new ContractFixtures(control);
-    const definitionIds: string[] = [];
-    try {
-      const owner = await fx.seedFixture('plays-enum-propagate');
-      const ownerApp = createContractApp({
-        organizationId: owner.orgId,
-        userId: owner.memberUserId,
-        userRole: 'MEMBER',
-        isSuperAdmin: false,
-      });
-
-      const definitionRes = await request(ownerApp)
-        .post(`${BASE}/process-definitions`)
-        .send({ name: `Enum probe play (propagate) ${randomUUID()}` });
-      expect(definitionRes.status).toBe(201);
-      const definitionId = definitionRes.body.data.processDefinitionId as string;
-      definitionIds.push(definitionId);
-
-      // Baseline, unarmed: the route works normally for its own legitimate
-      // actor before we break anything.
-      const baseline = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
-      expect(baseline.status).toBe(200);
-
-      authBoom.armed = true;
+    // ===========================================================================
+    // REVOKED MEMBERSHIP — a distinct scenario from "outsider with zero
+    // organization_members row at all" above: this actor WAS a member of the
+    // Play's own organization and has since been REVOKED.
+    // caseWorkspaceAuthContext.resolveActorMembership treats a non-ACTIVE row
+    // identically to no row at all (`if ((row.status ?? '').trim()...
+    // !== 'ACTIVE') return null;`), so requireOrgMember denies a REVOKED actor
+    // exactly the same way it denies a stranger — this proves
+    // getProcessDefinition/getProcessVersion's enumeration-safe collapse covers
+    // THAT path too, not only the "no row exists" path the main test above
+    // exercises.
+    // ===========================================================================
+    it('revoked membership: an actor whose organization_members row for the SAME org is REVOKED sees the identical enumeration-safe 404, not a distinguishable signal', async () => {
+      const fx = new ContractFixtures(control);
+      const definitionIds: string[] = [];
       try {
-        const broken = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
-        // NOT the enumeration-safe collapse (404) and NOT a 403 — a forced
-        // technical failure must be visibly distinct from both authorization
-        // outcomes, never disguised as either.
-        expect(broken.status).not.toBe(404);
-        expect(broken.status).not.toBe(403);
-        expect(broken.body.error.code).toBe('CW_TEST_FORCED_NON_AUTH_FAILURE');
-        expect(broken.body.error.message).toBe('cw_test_forced_non_auth_failure');
+        const owner = await fx.seedFixture('plays-enum-revoked');
+        const revokedUserId = await fx.seedUser(owner.orgId, 'plays-enum-revoked-member');
+        await fx.seedMembership(owner.orgId, revokedUserId, 'MEMBER', 'REVOKED');
+
+        const ownerApp = createContractApp({
+          organizationId: owner.orgId,
+          userId: owner.memberUserId,
+          userRole: 'MEMBER',
+          isSuperAdmin: false,
+        });
+        const revokedApp = createContractApp({
+          organizationId: owner.orgId,
+          userId: revokedUserId,
+          userRole: 'MEMBER',
+          isSuperAdmin: false,
+        });
+
+        const definitionRes = await request(ownerApp)
+          .post(`${BASE}/process-definitions`)
+          .send({ name: `Enum probe play (revoked) ${randomUUID()}` });
+        expect(definitionRes.status).toBe(201);
+        const definitionId = definitionRes.body.data.processDefinitionId as string;
+        definitionIds.push(definitionId);
+
+        const versionRes = await request(ownerApp)
+          .post(`${BASE}/process-definitions/${definitionId}/versions`)
+          .send({ semanticGraph: minimalGraph() });
+        expect(versionRes.status).toBe(201);
+        const versionId = versionRes.body.data.processVersionId as string;
+
+        for (const probe of definitionRouteProbes) {
+          await expectIndistinguishable404(
+            revokedApp,
+            probe,
+            definitionId,
+            `procdef-does-not-exist-${randomUUID()}`
+          );
+        }
+        for (const probe of versionRouteProbes) {
+          await expectIndistinguishable404(
+            revokedApp,
+            probe,
+            versionId,
+            `procver-does-not-exist-${randomUUID()}`
+          );
+        }
+      } finally {
+        await deleteDefinitions(definitionIds);
+        await fx.teardown();
+      }
+    }, 60_000);
+
+    // ===========================================================================
+    // ANTI-BLANKET-CATCH GUARD — the fix must catch ONLY CaseWorkspaceAuthError.
+    // A lazier fix (`catch { return null; }`, swallowing everything regardless
+    // of type) would ALSO close the enumeration oracle above, but would turn
+    // every genuinely broken read (a real SQL/driver failure, a bug) into a
+    // silent, misleading 404 "not found" — hiding real production incidents
+    // behind the exact same shape as a routine authorization denial. This test
+    // forces requireOrgMember (as called from inside getProcessDefinition) to
+    // throw a plain, non-CaseWorkspaceAuthError `Error` via the module mock
+    // above and asserts it is NOT swallowed: the response must be neither the
+    // enumeration-safe 404 nor a 403, but a distinctly different, propagated
+    // failure.
+    // ===========================================================================
+    it('anti-blanket-catch guard: a genuine non-authorization error out of requireOrgMember still propagates, is never reported as "not found"', async () => {
+      const fx = new ContractFixtures(control);
+      const definitionIds: string[] = [];
+      try {
+        const owner = await fx.seedFixture('plays-enum-propagate');
+        const ownerApp = createContractApp({
+          organizationId: owner.orgId,
+          userId: owner.memberUserId,
+          userRole: 'MEMBER',
+          isSuperAdmin: false,
+        });
+
+        const definitionRes = await request(ownerApp)
+          .post(`${BASE}/process-definitions`)
+          .send({ name: `Enum probe play (propagate) ${randomUUID()}` });
+        expect(definitionRes.status).toBe(201);
+        const definitionId = definitionRes.body.data.processDefinitionId as string;
+        definitionIds.push(definitionId);
+
+        // Baseline, unarmed: the route works normally for its own legitimate
+        // actor before we break anything.
+        const baseline = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
+        expect(baseline.status).toBe(200);
+
+        authBoom.armed = true;
+        try {
+          const broken = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
+          // NOT the enumeration-safe collapse (404) and NOT a 403 — a forced
+          // technical failure must be visibly distinct from both authorization
+          // outcomes, never disguised as either.
+          expect(broken.status).not.toBe(404);
+          expect(broken.status).not.toBe(403);
+          expect(broken.body.error.code).toBe('CW_TEST_FORCED_NON_AUTH_FAILURE');
+          expect(broken.body.error.message).toBe('cw_test_forced_non_auth_failure');
+        } finally {
+          authBoom.armed = false;
+        }
+
+        // Disarmed again: same actor, same real id, back to normal — proves
+        // the mock's own pass-through, not a broken fixture, produced the
+        // baseline 200 above.
+        const recovered = await request(ownerApp).get(
+          `${BASE}/process-definitions/${definitionId}`
+        );
+        expect(recovered.status).toBe(200);
       } finally {
         authBoom.armed = false;
+        await deleteDefinitions(definitionIds);
+        await fx.teardown();
       }
+    }, 60_000);
 
-      // Disarmed again: same actor, same real id, back to normal — proves
-      // the mock's own pass-through, not a broken fixture, produced the
-      // baseline 200 above.
-      const recovered = await request(ownerApp).get(`${BASE}/process-definitions/${definitionId}`);
-      expect(recovered.status).toBe(200);
-    } finally {
-      authBoom.armed = false;
-      await deleteDefinitions(definitionIds);
-      await fx.teardown();
-    }
-  }, 60_000);
+    // ===========================================================================
+    // POSITIVE CONTROL — every route still fully works for its own tenant.
+    // A gate that denies everyone (including its rightful owner) would pass
+    // the enumeration-safety test above for the wrong reason.
+    // ===========================================================================
+    it('POSITIVE CONTROL: an actor still fully creates/reads/reviews/publishes/shares/instantiates/deprecates/archives their own real Play after the fix', async () => {
+      const fx = new ContractFixtures(control);
+      const definitionIds: string[] = [];
+      try {
+        const f = await fx.seedFixture('plays-enum-positive');
+        const memberApp = createContractApp({
+          organizationId: f.orgId,
+          userId: f.memberUserId,
+          userRole: 'MEMBER',
+          isSuperAdmin: false,
+        });
+        const adminApp = createContractApp({
+          organizationId: f.orgId,
+          userId: f.adminUserId,
+          userRole: 'ADMIN',
+          isSuperAdmin: false,
+        });
 
-  // ===========================================================================
-  // POSITIVE CONTROL — every route still fully works for its own tenant.
-  // A gate that denies everyone (including its rightful owner) would pass
-  // the enumeration-safety test above for the wrong reason.
-  // ===========================================================================
-  it('POSITIVE CONTROL: an actor still fully creates/reads/reviews/publishes/shares/instantiates/deprecates/archives their own real Play after the fix', async () => {
-    const fx = new ContractFixtures(control);
-    const definitionIds: string[] = [];
-    try {
-      const f = await fx.seedFixture('plays-enum-positive');
-      const memberApp = createContractApp({
-        organizationId: f.orgId,
-        userId: f.memberUserId,
-        userRole: 'MEMBER',
-        isSuperAdmin: false,
-      });
-      const adminApp = createContractApp({
-        organizationId: f.orgId,
-        userId: f.adminUserId,
-        userRole: 'ADMIN',
-        isSuperAdmin: false,
-      });
+        const definitionRes = await request(memberApp)
+          .post(`${BASE}/process-definitions`)
+          .send({ name: `Positive control play ${randomUUID()}` });
+        expect(definitionRes.status).toBe(201);
+        const definitionId = definitionRes.body.data.processDefinitionId as string;
+        definitionIds.push(definitionId);
 
-      const definitionRes = await request(memberApp)
-        .post(`${BASE}/process-definitions`)
-        .send({ name: `Positive control play ${randomUUID()}` });
-      expect(definitionRes.status).toBe(201);
-      const definitionId = definitionRes.body.data.processDefinitionId as string;
-      definitionIds.push(definitionId);
+        const getDefinition = await request(memberApp).get(
+          `${BASE}/process-definitions/${definitionId}`
+        );
+        expect(getDefinition.status).toBe(200);
 
-      const getDefinition = await request(memberApp).get(`${BASE}/process-definitions/${definitionId}`);
-      expect(getDefinition.status).toBe(200);
+        const publisherCheck = await request(memberApp).get(
+          `${BASE}/process-definitions/${definitionId}/publisher-check`
+        );
+        expect(publisherCheck.status).toBe(200);
+        expect(publisherCheck.body.data.authorized).toBe(false); // MEMBER, not OWNER/ADMIN
 
-      const publisherCheck = await request(memberApp).get(
-        `${BASE}/process-definitions/${definitionId}/publisher-check`
-      );
-      expect(publisherCheck.status).toBe(200);
-      expect(publisherCheck.body.data.authorized).toBe(false); // MEMBER, not OWNER/ADMIN
+        const versionRes = await request(memberApp)
+          .post(`${BASE}/process-definitions/${definitionId}/versions`)
+          .send({ semanticGraph: minimalGraph() });
+        expect(versionRes.status).toBe(201);
+        const versionId = versionRes.body.data.processVersionId as string;
 
-      const versionRes = await request(memberApp)
-        .post(`${BASE}/process-definitions/${definitionId}/versions`)
-        .send({ semanticGraph: minimalGraph() });
-      expect(versionRes.status).toBe(201);
-      const versionId = versionRes.body.data.processVersionId as string;
+        const listVersions = await request(memberApp).get(
+          `${BASE}/process-definitions/${definitionId}/versions`
+        );
+        expect(listVersions.status).toBe(200);
+        expect(
+          listVersions.body.data.map((v: { processVersionId: string }) => v.processVersionId)
+        ).toContain(versionId);
 
-      const listVersions = await request(memberApp).get(`${BASE}/process-definitions/${definitionId}/versions`);
-      expect(listVersions.status).toBe(200);
-      expect(listVersions.body.data.map((v: { processVersionId: string }) => v.processVersionId)).toContain(
-        versionId
-      );
+        const getVersion = await request(memberApp).get(`${BASE}/process-versions/${versionId}`);
+        expect(getVersion.status).toBe(200);
+        expect(getVersion.body.data.version).toBe(1);
 
-      const getVersion = await request(memberApp).get(`${BASE}/process-versions/${versionId}`);
-      expect(getVersion.status).toBe(200);
-      expect(getVersion.body.data.version).toBe(1);
+        const updated = await request(memberApp)
+          .put(`${BASE}/process-versions/${versionId}`)
+          .send({ semanticGraph: minimalGraph(), expectedVersion: 1 });
+        expect(updated.status).toBe(200);
+        expect(updated.body.data.version).toBe(2);
 
-      const updated = await request(memberApp)
-        .put(`${BASE}/process-versions/${versionId}`)
-        .send({ semanticGraph: minimalGraph(), expectedVersion: 1 });
-      expect(updated.status).toBe(200);
-      expect(updated.body.data.version).toBe(2);
+        const proposed = await request(memberApp)
+          .post(`${BASE}/process-versions/${versionId}/propose`)
+          .send({ expectedVersion: 2 });
+        expect(proposed.status).toBe(200);
+        expect(proposed.body.data.status).toBe('IN_REVIEW');
+        expect(proposed.body.data.version).toBe(3);
 
-      const proposed = await request(memberApp)
-        .post(`${BASE}/process-versions/${versionId}/propose`)
-        .send({ expectedVersion: 2 });
-      expect(proposed.status).toBe(200);
-      expect(proposed.body.data.status).toBe('IN_REVIEW');
-      expect(proposed.body.data.version).toBe(3);
+        const reviewed = await request(adminApp)
+          .post(`${BASE}/process-versions/${versionId}/review`)
+          .send({ decision: 'APPROVED', expectedVersion: 3 });
+        expect(reviewed.status).toBe(200);
+        expect(reviewed.body.data.reviewDecision).toBe('APPROVED');
+        expect(reviewed.body.data.version).toBe(4);
 
-      const reviewed = await request(adminApp)
-        .post(`${BASE}/process-versions/${versionId}/review`)
-        .send({ decision: 'APPROVED', expectedVersion: 3 });
-      expect(reviewed.status).toBe(200);
-      expect(reviewed.body.data.reviewDecision).toBe('APPROVED');
-      expect(reviewed.body.data.version).toBe(4);
+        const published = await request(memberApp)
+          .post(`${BASE}/process-versions/${versionId}/publish`)
+          .send({ expectedVersion: 4 });
+        expect(published.status).toBe(200);
+        expect(published.body.data.status).toBe('PUBLISHED');
+        expect(published.body.data.version).toBe(5);
 
-      const published = await request(memberApp)
-        .post(`${BASE}/process-versions/${versionId}/publish`)
-        .send({ expectedVersion: 4 });
-      expect(published.status).toBe(200);
-      expect(published.body.data.status).toBe('PUBLISHED');
-      expect(published.body.data.version).toBe(5);
+        const shared = await request(adminApp)
+          .post(`${BASE}/process-definitions/${definitionId}/share`)
+          .send({ targetVisibility: 'TEAM', expectedVersion: 1 });
+        expect(shared.status).toBe(200);
+        expect(shared.body.data.visibility).toBe('TEAM');
 
-      const shared = await request(adminApp)
-        .post(`${BASE}/process-definitions/${definitionId}/share`)
-        .send({ targetVisibility: 'TEAM', expectedVersion: 1 });
-      expect(shared.status).toBe(200);
-      expect(shared.body.data.visibility).toBe('TEAM');
+        const ownCase = await request(memberApp)
+          .post(`${BASE}/cases`)
+          .send({ projectId: f.projectId, contractedClosureType: 'DELIVERY_COMPLETED' });
+        expect(ownCase.status).toBe(201);
+        const caseId = ownCase.body.data.caseId as string;
 
-      const ownCase = await request(memberApp)
-        .post(`${BASE}/cases`)
-        .send({ projectId: f.projectId, contractedClosureType: 'DELIVERY_COMPLETED' });
-      expect(ownCase.status).toBe(201);
-      const caseId = ownCase.body.data.caseId as string;
+        const instantiated = await request(memberApp)
+          .post(`${BASE}/process-versions/${versionId}/instantiate`)
+          .send({ caseId });
+        expect(instantiated.status).toBe(201);
+        expect(instantiated.body.data.status).toBe('DRAFT');
+        expect(instantiated.body.data.sourceProcessVersionId).toBe(versionId);
 
-      const instantiated = await request(memberApp)
-        .post(`${BASE}/process-versions/${versionId}/instantiate`)
-        .send({ caseId });
-      expect(instantiated.status).toBe(201);
-      expect(instantiated.body.data.status).toBe('DRAFT');
-      expect(instantiated.body.data.sourceProcessVersionId).toBe(versionId);
+        const deprecated = await request(memberApp)
+          .post(`${BASE}/process-versions/${versionId}/deprecate`)
+          .send({ reason: 'positive control cleanup', expectedVersion: 5 });
+        expect(deprecated.status).toBe(200);
+        expect(deprecated.body.data.status).toBe('DEPRECATED');
+        expect(deprecated.body.data.version).toBe(6);
 
-      const deprecated = await request(memberApp)
-        .post(`${BASE}/process-versions/${versionId}/deprecate`)
-        .send({ reason: 'positive control cleanup', expectedVersion: 5 });
-      expect(deprecated.status).toBe(200);
-      expect(deprecated.body.data.status).toBe('DEPRECATED');
-      expect(deprecated.body.data.version).toBe(6);
-
-      const archived = await request(memberApp)
-        .post(`${BASE}/process-versions/${versionId}/archive`)
-        .send({ expectedVersion: 6 });
-      expect(archived.status).toBe(200);
-      expect(archived.body.data.status).toBe('ARCHIVED');
-    } finally {
-      await deleteDefinitions(definitionIds);
-      await fx.teardown();
-    }
-  }, 60_000);
-});
+        const archived = await request(memberApp)
+          .post(`${BASE}/process-versions/${versionId}/archive`)
+          .send({ expectedVersion: 6 });
+        expect(archived.status).toBe(200);
+        expect(archived.body.data.status).toBe('ARCHIVED');
+      } finally {
+        await deleteDefinitions(definitionIds);
+        await fx.teardown();
+      }
+    }, 60_000);
+  }
+);
 
 /**
  * ===========================================================================

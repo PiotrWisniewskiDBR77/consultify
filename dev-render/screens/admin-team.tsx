@@ -210,9 +210,21 @@ const TEAMS = [
     organizationId: ORG_ID,
     lead: { id: 'usr-anna', firstName: 'Anna', lastName: 'Kowalska' },
     members: [
-      { userId: PIOTR_ID, role: 'lead', user: { firstName: 'Piotr', lastName: 'Wiśniewski', email: 'piotr@atelier-toys.pl' } },
-      { userId: 'usr-anna', role: 'member', user: { firstName: 'Anna', lastName: 'Kowalska', email: 'anna@atelier-toys.pl' } },
-      { userId: 'usr-marek', role: 'member', user: { firstName: 'Marek', lastName: 'Zieliński', email: 'marek@atelier-toys.pl' } },
+      {
+        userId: PIOTR_ID,
+        role: 'lead',
+        user: { firstName: 'Piotr', lastName: 'Wiśniewski', email: 'piotr@atelier-toys.pl' },
+      },
+      {
+        userId: 'usr-anna',
+        role: 'member',
+        user: { firstName: 'Anna', lastName: 'Kowalska', email: 'anna@atelier-toys.pl' },
+      },
+      {
+        userId: 'usr-marek',
+        role: 'member',
+        user: { firstName: 'Marek', lastName: 'Zieliński', email: 'marek@atelier-toys.pl' },
+      },
     ],
     memberCount: 3,
     teamType: 'consulting',
@@ -226,8 +238,16 @@ const TEAMS = [
     organizationId: ORG_ID,
     lead: { id: 'usr-marek', firstName: 'Marek', lastName: 'Zieliński' },
     members: [
-      { userId: 'usr-marek', role: 'lead', user: { firstName: 'Marek', lastName: 'Zieliński', email: 'marek@atelier-toys.pl' } },
-      { userId: 'usr-ewa', role: 'member', user: { firstName: 'Ewa', lastName: 'Nowak', email: 'ewa@atelier-toys.pl' } },
+      {
+        userId: 'usr-marek',
+        role: 'lead',
+        user: { firstName: 'Marek', lastName: 'Zieliński', email: 'marek@atelier-toys.pl' },
+      },
+      {
+        userId: 'usr-ewa',
+        role: 'member',
+        user: { firstName: 'Ewa', lastName: 'Nowak', email: 'ewa@atelier-toys.pl' },
+      },
     ],
     memberCount: 2,
     teamType: 'finance',
@@ -288,16 +308,51 @@ const GUESTS = [
 // --- Access reviews (GET /admin/iam/policy, GET /admin/people) -------------
 const IAM_POLICY = { accessReviewsEnabled: true, accessReviewCadenceDays: 90 };
 const PEOPLE = [
-  { userId: PIOTR_ID, email: 'piotr@atelier-toys.pl', firstName: 'Piotr', lastName: 'Wiśniewski', role: 'OWNER', status: 'ACTIVE' },
-  { userId: 'usr-anna', email: 'anna@atelier-toys.pl', firstName: 'Anna', lastName: 'Kowalska', role: 'ADMIN', status: 'ACTIVE' },
-  { userId: 'usr-tomasz', email: 'tomasz@atelier-toys.pl', firstName: 'Tomasz', lastName: 'Wójcik', role: 'ADMIN', status: 'SUSPENDED' },
-  { userId: 'usr-marek', email: 'marek@atelier-toys.pl', firstName: 'Marek', lastName: 'Zieliński', role: 'MEMBER', status: 'ACTIVE' },
+  {
+    userId: PIOTR_ID,
+    email: 'piotr@atelier-toys.pl',
+    firstName: 'Piotr',
+    lastName: 'Wiśniewski',
+    role: 'OWNER',
+    status: 'ACTIVE',
+  },
+  {
+    userId: 'usr-anna',
+    email: 'anna@atelier-toys.pl',
+    firstName: 'Anna',
+    lastName: 'Kowalska',
+    role: 'ADMIN',
+    status: 'ACTIVE',
+  },
+  {
+    userId: 'usr-tomasz',
+    email: 'tomasz@atelier-toys.pl',
+    firstName: 'Tomasz',
+    lastName: 'Wójcik',
+    role: 'ADMIN',
+    status: 'SUSPENDED',
+  },
+  {
+    userId: 'usr-marek',
+    email: 'marek@atelier-toys.pl',
+    firstName: 'Marek',
+    lastName: 'Zieliński',
+    role: 'MEMBER',
+    status: 'ACTIVE',
+  },
 ];
 
 // --- Ownership (GET /organizations/:orgId/ownership|/admins|/ownership/pending-transfer) --
 const OWNERSHIP = { ownerUserId: PIOTR_ID, createdAt: '2025-01-15T09:00:00Z' };
-const OWNER_USER = { id: PIOTR_ID, firstName: 'Piotr', lastName: 'Wiśniewski', email: 'piotr@atelier-toys.pl' };
-const ORG_ADMINS = [{ id: 'usr-anna', firstName: 'Anna', lastName: 'Kowalska', email: 'anna@atelier-toys.pl' }];
+const OWNER_USER = {
+  id: PIOTR_ID,
+  firstName: 'Piotr',
+  lastName: 'Wiśniewski',
+  email: 'piotr@atelier-toys.pl',
+};
+const ORG_ADMINS = [
+  { id: 'usr-anna', firstName: 'Anna', lastName: 'Kowalska', email: 'anna@atelier-toys.pl' },
+];
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -338,7 +393,8 @@ if (!g.__ADMIN_TEAM_FETCH__) {
         return jsonResponse({ roles: ROLES });
       }
       // Teams
-      if (url.includes('/teams/') && url.includes('/members')) return jsonResponse({ success: true });
+      if (url.includes('/teams/') && url.includes('/members'))
+        return jsonResponse({ success: true });
       if (url.includes('/teams/')) {
         const id = url.split('/teams/')[1]?.split(/[/?]/)[0];
         const team = TEAMS.find((t) => t.id === id) || TEAMS[0];
@@ -351,11 +407,13 @@ if (!g.__ADMIN_TEAM_FETCH__) {
       if (url.includes('/admin/iam/policy')) return jsonResponse({ policy: IAM_POLICY });
       if (url.includes('/admin/people')) return jsonResponse({ members: PEOPLE });
       // Ownership (order matters — most specific substring first)
-      if (url.includes('/ownership/pending-transfer')) return jsonResponse({ pendingTransfer: null });
+      if (url.includes('/ownership/pending-transfer'))
+        return jsonResponse({ pendingTransfer: null });
       if (url.includes('/ownership/transfer')) return jsonResponse({ success: true });
       if (url.includes('/ownership/cancel-transfer')) return jsonResponse({ success: true });
       if (url.includes('/ownership/accept-transfer')) return jsonResponse({ success: true });
-      if (url.includes('/ownership')) return jsonResponse({ ownership: OWNERSHIP, owner: OWNER_USER });
+      if (url.includes('/ownership'))
+        return jsonResponse({ ownership: OWNERSHIP, owner: OWNER_USER });
       if (url.includes('/admins')) return jsonResponse(ORG_ADMINS);
     } catch {
       /* fall through to real fetch (np. i18n /locales/**) */
@@ -404,9 +462,7 @@ function renderTeamScreen(adminScreen: AdminTeamScreenId): React.ReactElement {
   if (adminScreen === 'guests-external') return <AdminGuestsPanel />;
   if (adminScreen === 'access-requests') return <AdminAccessRequestsPanel />;
   if (adminScreen === 'access-reviews') return <AdminAccessReviewsPanel />;
-  return (
-    <AdminMembersRolesPanel screen={adminScreen as 'members' | 'invitations' | 'ownership'} />
-  );
+  return <AdminMembersRolesPanel screen={adminScreen as 'members' | 'invitations' | 'ownership'} />;
 }
 
 export default function AdminTeamScreen(props: {

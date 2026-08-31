@@ -1,10 +1,10 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PresentationReviewPanel } from '../PresentationReviewPanel';
-import { PresentationApprovalsApi } from '../../../../services/api/presentationApprovals.api';
 import { OrganizationApi } from '../../../../services/api/organizations.api';
+import { PresentationApprovalsApi } from '../../../../services/api/presentationApprovals.api';
+import { PresentationReviewPanel } from '../PresentationReviewPanel';
 
 vi.mock('../../../../services/api/presentationApprovals.api', () => ({
   PresentationApprovalsApi: {
@@ -26,7 +26,10 @@ describe('PresentationReviewPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     approvals.getState.mockResolvedValue({
-      state: 'draft', assignment: null, versionId: 'deck-1@7', currentForVersion: true,
+      state: 'draft',
+      assignment: null,
+      versionId: 'deck-1@7',
+      currentForVersion: true,
     });
     organizations.getOrganizationMembers.mockResolvedValue([
       { userId: 'author', name: 'Autor', email: 'author@example.com', status: 'active' },
@@ -38,7 +41,15 @@ describe('PresentationReviewPanel', () => {
   });
 
   it('excludes the author and submits the current presentation version for review', async () => {
-    render(<PresentationReviewPanel deckId="deck-1" version={7} organizationId="org-1" currentUserId="author" qualityPanel={<div>Quality</div>} />);
+    render(
+      <PresentationReviewPanel
+        deckId="deck-1"
+        version={7}
+        organizationId="org-1"
+        currentUserId="author"
+        qualityPanel={<div>Quality</div>}
+      />
+    );
 
     fireEvent.click(screen.getByRole('tab', { name: 'Zatwierdzenie' }));
     await screen.findByRole('option', { name: 'Recenzent' });
@@ -58,14 +69,26 @@ describe('PresentationReviewPanel', () => {
       currentForVersion: true,
     });
 
-    render(<PresentationReviewPanel deckId="deck-1" version={7} organizationId="org-1" currentUserId="reviewer" qualityPanel={<div>Quality</div>} />);
+    render(
+      <PresentationReviewPanel
+        deckId="deck-1"
+        version={7}
+        organizationId="org-1"
+        currentUserId="reviewer"
+        qualityPanel={<div>Quality</div>}
+      />
+    );
     fireEvent.click(screen.getByRole('tab', { name: 'Zatwierdzenie' }));
 
     const requestChanges = await screen.findByRole('button', { name: 'Poproś o zmiany' });
     expect(requestChanges).toBeDisabled();
-    fireEvent.change(screen.getByPlaceholderText('Uzasadnienie wymaganych zmian'), { target: { value: 'Uzupełnij źródło.' } });
+    fireEvent.change(screen.getByPlaceholderText('Uzasadnienie wymaganych zmian'), {
+      target: { value: 'Uzupełnij źródło.' },
+    });
     fireEvent.click(requestChanges);
 
-    await waitFor(() => expect(approvals.reject).toHaveBeenCalledWith('deck-1', 'Uzupełnij źródło.'));
+    await waitFor(() =>
+      expect(approvals.reject).toHaveBeenCalledWith('deck-1', 'Uzupełnij źródło.')
+    );
   });
 });

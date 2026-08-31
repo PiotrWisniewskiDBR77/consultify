@@ -45,13 +45,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import {
-  transition,
   type BusinessVersionRow,
+  transition,
   type TransitionServiceResult,
 } from './artifactVersionService.js';
 import { canonicalPayloadHash } from './contentHash.js';
-import * as exceptionLedgerService from './exceptionLedgerService.js';
 import type { ExceptionSeverity, FinanceExceptionRow } from './exceptionLedgerService.js';
+import * as exceptionLedgerService from './exceptionLedgerService.js';
 import type { FinanceRole } from './lifecycleService.js';
 import type { MappedRowResult, ReconciliationBucket } from './statementMappingService.js';
 
@@ -111,7 +111,10 @@ export interface WaterfallTotals {
   coverage: CoverageMetrics;
 }
 
-export type WaterfallRow = Pick<MappedRowResult, 'bucket' | 'sourceAmount' | 'mappedAmount' | 'signConvention'> &
+export type WaterfallRow = Pick<
+  MappedRowResult,
+  'bucket' | 'sourceAmount' | 'mappedAmount' | 'signConvention'
+> &
   Partial<Pick<MappedRowResult, 'coverageLoss'>>;
 
 /** Below this absolute residual, treat as exactly balanced (floating-point dust, not a real discrepancy). */
@@ -217,7 +220,19 @@ export function computeWaterfall(rows: readonly WaterfallRow[]): WaterfallTotals
           : 0,
   };
 
-  return { sourceTotal, mappedTotal, excludedTotal, unmappedTotal, duplicateTotal, reclassNetTotal, eliminationNetTotal, canonicalTotal, residual, residualPct, coverage };
+  return {
+    sourceTotal,
+    mappedTotal,
+    excludedTotal,
+    unmappedTotal,
+    duplicateTotal,
+    reclassNetTotal,
+    eliminationNetTotal,
+    canonicalTotal,
+    residual,
+    residualPct,
+    coverage,
+  };
 }
 
 /** `finance_reconciliation_runs.status` CHECK values (WP-B05, already shipped). */
@@ -227,7 +242,10 @@ export type ReconciliationRunStatus = 'CLEAN' | 'WITHIN_TOLERANCE' | 'EXCEEDS_MA
 export type ReconciliationResultQuality = 'CLEAN' | 'CONDITIONAL' | 'PROVISIONAL';
 
 /** Residual-only status — the pre-RC-01 behaviour, kept as its own named function. */
-export function determineResidualStatus(totals: WaterfallTotals, materialityThresholdPct: number): ReconciliationRunStatus {
+export function determineResidualStatus(
+  totals: WaterfallTotals,
+  materialityThresholdPct: number
+): ReconciliationRunStatus {
   if (Math.abs(totals.residual) < RESIDUAL_ZERO_EPSILON) return 'CLEAN';
   if (totals.residualPct === null) return 'EXCEEDS_MATERIALITY'; // non-zero residual against a zero source total: undefined %, cannot be "within" anything
   return totals.residualPct <= materialityThresholdPct ? 'WITHIN_TOLERANCE' : 'EXCEEDS_MATERIALITY';
@@ -247,9 +265,13 @@ export function determineResidualStatus(totals: WaterfallTotals, materialityThre
  * coverage loss is carried by `determineResultQuality()` (CONDITIONAL / PROVISIONAL) and
  * by a `finance_exceptions` row, which are marks, not gates.
  */
-export function determineReconciliationStatus(totals: WaterfallTotals, materialityThresholdPct: number): ReconciliationRunStatus {
+export function determineReconciliationStatus(
+  totals: WaterfallTotals,
+  materialityThresholdPct: number
+): ReconciliationRunStatus {
   const residualStatus = determineResidualStatus(totals, materialityThresholdPct);
-  if (residualStatus === 'CLEAN' && totals.coverage.coverageLossRowCount > 0) return 'WITHIN_TOLERANCE';
+  if (residualStatus === 'CLEAN' && totals.coverage.coverageLossRowCount > 0)
+    return 'WITHIN_TOLERANCE';
   return residualStatus;
 }
 
@@ -269,10 +291,14 @@ export function determineResultQuality(
 ): ReconciliationResultQuality {
   const residualStatus = determineResidualStatus(totals, materialityThresholdPct);
   const coverageLoss = totals.coverage.coverageLossRowCount > 0;
-  const coverageSeverity = coverageLoss ? severityForResidual(totals.coverage.coverageLossSharePct, materialityThresholdPct) : null;
+  const coverageSeverity = coverageLoss
+    ? severityForResidual(totals.coverage.coverageLossSharePct, materialityThresholdPct)
+    : null;
 
-  if (residualStatus === 'EXCEEDS_MATERIALITY' || coverageSeverity === 'CRITICAL_DATA') return 'PROVISIONAL';
-  if (residualStatus === 'WITHIN_TOLERANCE' || coverageLoss || periodJumpCount > 0) return 'CONDITIONAL';
+  if (residualStatus === 'EXCEEDS_MATERIALITY' || coverageSeverity === 'CRITICAL_DATA')
+    return 'PROVISIONAL';
+  if (residualStatus === 'WITHIN_TOLERANCE' || coverageLoss || periodJumpCount > 0)
+    return 'CONDITIONAL';
   return 'CLEAN';
 }
 
@@ -283,7 +309,10 @@ export function determineResultQuality(
  * TENANT_BREACH/UNDEFINED_MATH (WP-B05), a different failure class than an
  * over-threshold reconciliation residual.
  */
-export function severityForResidual(residualPct: number | null, materialityThresholdPct: number): ExceptionSeverity {
+export function severityForResidual(
+  residualPct: number | null,
+  materialityThresholdPct: number
+): ExceptionSeverity {
   if (residualPct === null) return 'CRITICAL_DATA';
   const ratio = residualPct / materialityThresholdPct;
   if (ratio <= 2) return 'WARNING';
@@ -416,7 +445,9 @@ export function detectPeriodOverPeriodJumps(
 
   const findings: PeriodJumpFinding[] = [];
   for (const bucket of series.values()) {
-    const ordered = [...bucket].sort((a, b) => (a.periodEnd < b.periodEnd ? -1 : a.periodEnd > b.periodEnd ? 1 : 0));
+    const ordered = [...bucket].sort((a, b) =>
+      a.periodEnd < b.periodEnd ? -1 : a.periodEnd > b.periodEnd ? 1 : 0
+    );
     for (let i = 1; i < ordered.length; i++) {
       const prior = ordered[i - 1];
       const current = ordered[i];
@@ -568,8 +599,11 @@ export interface RunReconciliationResult {
   };
 }
 
-export async function runReconciliation(params: RunReconciliationParams): Promise<RunReconciliationResult> {
-  const materialityThresholdPct = params.materialityThresholdPct ?? PROVISIONAL_MATERIALITY_THRESHOLD_PCT;
+export async function runReconciliation(
+  params: RunReconciliationParams
+): Promise<RunReconciliationResult> {
+  const materialityThresholdPct =
+    params.materialityThresholdPct ?? PROVISIONAL_MATERIALITY_THRESHOLD_PCT;
   const totals = computeWaterfall(params.mappingResults);
   const status = determineReconciliationStatus(totals, materialityThresholdPct);
   const provisionalResultQuality = determineResultQuality(totals, materialityThresholdPct, 0);
@@ -628,7 +662,13 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
           params.organizationId,
           params.businessVersionId,
           runId,
-          JSON.stringify(row.raw.sourceRef ?? { lineItem: row.raw.lineItem, periodId: row.raw.periodId, entityCode: row.raw.entityCode }),
+          JSON.stringify(
+            row.raw.sourceRef ?? {
+              lineItem: row.raw.lineItem,
+              periodId: row.raw.periodId,
+              entityCode: row.raw.entityCode,
+            }
+          ),
           row.canonicalLineId,
           row.entityId,
           row.periodId,
@@ -738,7 +778,10 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
     exception = raised.exception;
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_reconciliation_runs SET linked_exception_id = ? WHERE id = ?`, [exception!.id, runId])
+      tx.queryRun(`UPDATE finance_reconciliation_runs SET linked_exception_id = ? WHERE id = ?`, [
+        exception!.id,
+        runId,
+      ])
     );
     finalRun = { ...run, linked_exception_id: exception.id };
   }
@@ -782,7 +825,10 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
     }
     coverageException = raised.exception;
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_reconciliation_runs SET coverage_exception_id = ? WHERE id = ?`, [coverageException!.id, runId])
+      tx.queryRun(`UPDATE finance_reconciliation_runs SET coverage_exception_id = ? WHERE id = ?`, [
+        coverageException!.id,
+        runId,
+      ])
     );
     finalRun = { ...finalRun, coverage_exception_id: coverageException.id };
   }
@@ -799,7 +845,10 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
     for (const jump of periodJumps) {
       const dedupKey = `period_jump::${params.businessVersionId}::${jump.entityId}::${jump.canonicalLineId}::${jump.priorPeriodId}::${jump.currentPeriodId}`;
       const alreadyOpen = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ id: string }>(`SELECT id FROM finance_exceptions WHERE dedup_key = ? LIMIT 1`, [dedupKey])
+        tx.queryOne<{ id: string }>(
+          `SELECT id FROM finance_exceptions WHERE dedup_key = ? LIMIT 1`,
+          [dedupKey]
+        )
       );
       if (alreadyOpen) continue;
       const raised = await exceptionLedgerService.raise({
@@ -839,7 +888,10 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
   const resultQuality = determineResultQuality(totals, materialityThresholdPct, periodJumps.length);
   if (resultQuality !== provisionalResultQuality) {
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_reconciliation_runs SET result_quality = ? WHERE id = ?`, [resultQuality, runId])
+      tx.queryRun(`UPDATE finance_reconciliation_runs SET result_quality = ? WHERE id = ?`, [
+        resultQuality,
+        runId,
+      ])
     );
   }
   finalRun = { ...finalRun, result_quality: resultQuality };
@@ -849,21 +901,30 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
   // pokazuje jakosc ... rozroznia clean/conditional/provisional"). Scoped to DRAFT so the B01
   // post-approval immutability trigger is never provoked.
   await withPinnedPostgresTransaction((tx) =>
-    tx.queryRun(`UPDATE finance_business_versions SET result_quality = ? WHERE business_version_id = ? AND status = 'DRAFT'`, [
-      resultQuality,
-      params.businessVersionId,
-    ])
+    tx.queryRun(
+      `UPDATE finance_business_versions SET result_quality = ? WHERE business_version_id = ? AND status = 'DRAFT'`,
+      [resultQuality, params.businessVersionId]
+    )
   );
 
   // --- Readiness gate + optional DRAFT -> READY_FOR_REVIEW transition (WP-D01 section 7 /
   //     WP-B02 T2, both already shipped — this function only calls them). ---
-  const readiness: RunReconciliationResult['readiness'] = { checked: false, ready: false, checks: [], transitionAttempted: false };
+  const readiness: RunReconciliationResult['readiness'] = {
+    checked: false,
+    ready: false,
+    checks: [],
+    transitionAttempted: false,
+  };
   if (params.attemptReadinessTransition) {
     const checks = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<ReadinessCheckRow>(`SELECT * FROM finance_stmt_readiness_check(?)`, [params.businessVersionId])
+      tx.queryAll<ReadinessCheckRow>(`SELECT * FROM finance_stmt_readiness_check(?)`, [
+        params.businessVersionId,
+      ])
     );
     const readyRow = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ ready: boolean }>(`SELECT finance_stmt_is_ready_for_review(?) AS ready`, [params.businessVersionId])
+      tx.queryOne<{ ready: boolean }>(`SELECT finance_stmt_is_ready_for_review(?) AS ready`, [
+        params.businessVersionId,
+      ])
     );
     readiness.checked = true;
     readiness.checks = checks;
@@ -871,7 +932,9 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
 
     if (readiness.ready) {
       if (!params.actorId || !params.role || params.expectedVersion === undefined) {
-        throw new Error('attemptReadinessTransition=true requires actorId, role, and expectedVersion');
+        throw new Error(
+          'attemptReadinessTransition=true requires actorId, role, and expectedVersion'
+        );
       }
       readiness.transitionAttempted = true;
       const transitionResult = await transition({
@@ -953,7 +1016,9 @@ export async function listReconciliationDetail(
  * MISSING/NA cells come back as `value: null` so the detector can skip them instead of reading
  * a NULL as zero (which would manufacture a 100% "collapse" out of a missing row).
  */
-async function loadBalanceSheetObservations(businessVersionId: string): Promise<PeriodObservation[]> {
+async function loadBalanceSheetObservations(
+  businessVersionId: string
+): Promise<PeriodObservation[]> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<{
       entity_id: string;
@@ -989,7 +1054,10 @@ async function loadBalanceSheetObservations(businessVersionId: string): Promise<
     accumulationBasis: r.accumulation_basis,
     periodId: r.period_id,
     periodLabel: r.period_label,
-    periodEnd: typeof r.period_end === 'string' ? r.period_end : new Date(r.period_end as unknown as string).toISOString(),
+    periodEnd:
+      typeof r.period_end === 'string'
+        ? r.period_end
+        : new Date(r.period_end as unknown as string).toISOString(),
     value: r.value_decimal === null ? null : Number(r.value_decimal),
   }));
 }

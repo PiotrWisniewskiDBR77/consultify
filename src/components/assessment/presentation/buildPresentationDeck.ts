@@ -25,14 +25,14 @@
  * `slides.tsx`'s `MissingNarrativeNote`.
  */
 import {
+  type AssessmentOutput,
   buildPresentationView,
   buildReportSnapshot,
-  type AssessmentOutput,
   type Finding,
   type ReportGroupResult,
 } from '@/method-core/outputs';
 
-import { buildAxisMatrices, groupNameOrId, type AxisMatrixModel } from '../groupLabels';
+import { type AxisMatrixModel, buildAxisMatrices, groupNameOrId } from '../groupLabels';
 
 // ---------------------------------------------------------------------------
 // Presenter-supplied narrative framing — OPTIONAL, NEVER invented in here.
@@ -179,7 +179,8 @@ function dimensionProfileFrom(
       currentLevel: g.aggregatedLevel,
     }))
     .sort((a, b) => {
-      if (a.currentLevel === null && b.currentLevel === null) return a.groupId.localeCompare(b.groupId);
+      if (a.currentLevel === null && b.currentLevel === null)
+        return a.groupId.localeCompare(b.groupId);
       if (a.currentLevel === null) return 1;
       if (b.currentLevel === null) return -1;
       return b.currentLevel - a.currentLevel;
@@ -243,7 +244,9 @@ export function buildPresentationDeck(
     .sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0));
 
   const names = unitNameLookup(output);
-  const unknownUnitIds = Object.keys(output.current).filter((unitId) => output.current[unitId] === null);
+  const unknownUnitIds = Object.keys(output.current).filter(
+    (unitId) => output.current[unitId] === null
+  );
   const unknownUnits: UnknownUnitEntry[] = [...unknownUnitIds]
     .sort((a, b) => a.localeCompare(b))
     .map((unitId) => ({ unitId, unitName: names.get(unitId) ?? null }));

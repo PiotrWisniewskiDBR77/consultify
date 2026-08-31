@@ -36,8 +36,8 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/migrationReadinessService.js';
 import { requireOrgMemberForActor, requireOrgRoleForActor } from './_shared/access.js';
-import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
+import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
 const router = Router();
@@ -70,9 +70,15 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(flagKeyParams, req.params);
     await requireOrgMemberForActor(actor);
-    const found = await svc.getFlagDefinition(params.flagKey, actor.actorUserId, actor.organizationId);
+    const found = await svc.getFlagDefinition(
+      params.flagKey,
+      actor.actorUserId,
+      actor.organizationId
+    );
     if (!found) {
-      res.status(404).json({ error: { code: 'FLAG_DEFINITION_NOT_FOUND', message: 'Flag definition not found.' } });
+      res.status(404).json({
+        error: { code: 'FLAG_DEFINITION_NOT_FOUND', message: 'Flag definition not found.' },
+      });
       return;
     }
     res.status(200).json({ data: found });
@@ -85,7 +91,11 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(flagKeyParams, req.params);
     await requireOrgMemberForActor(actor);
-    const items = await svc.listFlagChildren(params.flagKey, actor.actorUserId, actor.organizationId);
+    const items = await svc.listFlagChildren(
+      params.flagKey,
+      actor.actorUserId,
+      actor.organizationId
+    );
     res.status(200).json({ data: items });
   })
 );
@@ -96,7 +106,11 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(flagKeyParams, req.params);
     await requireOrgMemberForActor(actor);
-    const items = await svc.listFlagDescendants(params.flagKey, actor.actorUserId, actor.organizationId);
+    const items = await svc.listFlagDescendants(
+      params.flagKey,
+      actor.actorUserId,
+      actor.organizationId
+    );
     res.status(200).json({ data: items });
   })
 );
@@ -142,9 +156,15 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(flagKeyParams, req.params);
     await requireOrgMemberForActor(actor);
-    const found = await svc.getCurrentOrgFlagState(actor.organizationId, params.flagKey, actor.actorUserId);
+    const found = await svc.getCurrentOrgFlagState(
+      actor.organizationId,
+      params.flagKey,
+      actor.actorUserId
+    );
     if (!found) {
-      res.status(404).json({ error: { code: 'FEATURE_FLAG_STATE_NOT_FOUND', message: 'Flag state not found.' } });
+      res.status(404).json({
+        error: { code: 'FEATURE_FLAG_STATE_NOT_FOUND', message: 'Flag state not found.' },
+      });
       return;
     }
     res.status(200).json({ data: found });
@@ -231,7 +251,10 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(z.object({ rehearsalRunId: z.string().trim().min(1) }), req.params);
     const query = parseQuery(
-      z.object({ afterId: z.string().trim().min(1).optional(), limit: z.coerce.number().int().positive().max(1000).optional() }),
+      z.object({
+        afterId: z.string().trim().min(1).optional(),
+        limit: z.coerce.number().int().positive().max(1000).optional(),
+      }),
       req.query
     );
     // Stopgap ADMIN-role gate — see this file's top-of-file "known gap" note;
@@ -243,7 +266,9 @@ router.get(
       actor.actorUserId,
       actor.organizationId
     );
-    res.status(200).json({ data: items.filter((item) => item.organizationId === actor.organizationId) });
+    res
+      .status(200)
+      .json({ data: items.filter((item) => item.organizationId === actor.organizationId) });
   })
 );
 
@@ -282,7 +307,9 @@ router.get(
       actor.actorUserId,
       actor.organizationId
     );
-    res.status(200).json({ data: items.filter((item) => item.organizationId === actor.organizationId) });
+    res
+      .status(200)
+      .json({ data: items.filter((item) => item.organizationId === actor.organizationId) });
   })
 );
 

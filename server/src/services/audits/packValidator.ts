@@ -13,7 +13,6 @@
  * ekspert faktycznie zatwierdził mapowanie.
  */
 
-import { isNormativeSourceType } from './types.js';
 import type {
   AuditNormSource,
   AuditPack,
@@ -21,6 +20,7 @@ import type {
   FindingTaxonomyEntry,
   PackClassification,
 } from './types.js';
+import { isNormativeSourceType } from './types.js';
 import { FINDING_SEVERITIES, PACK_CLASSIFICATIONS } from './types.js';
 
 export interface ValidationIssue {
@@ -62,14 +62,14 @@ function isNonEmpty(value: unknown): boolean {
 // ---------------------------------------------------------------------------
 
 export function validateFindingTaxonomy(
-  taxonomy: FindingTaxonomyEntry[] | undefined,
+  taxonomy: FindingTaxonomyEntry[] | undefined
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const list = Array.isArray(taxonomy) ? taxonomy : [];
 
   if (list.length === 0) {
     issues.push(
-      err('TAXONOMY_EMPTY', 'Pakiet musi zdefiniować taksonomię ustaleń', 'findingTaxonomy'),
+      err('TAXONOMY_EMPTY', 'Pakiet musi zdefiniować taksonomię ustaleń', 'findingTaxonomy')
     );
     return issues;
   }
@@ -85,7 +85,7 @@ export function validateFindingTaxonomy(
     }
     if (seen.has(entry.key)) {
       issues.push(
-        err('TAXONOMY_KEY_DUPLICATE', `Zduplikowany klucz taksonomii: ${entry.key}`, path),
+        err('TAXONOMY_KEY_DUPLICATE', `Zduplikowany klucz taksonomii: ${entry.key}`, path)
       );
     }
     seen.add(entry.key);
@@ -98,8 +98,8 @@ export function validateFindingTaxonomy(
         err(
           'TAXONOMY_NONCONFORMING_MISSING',
           `Pozycja ${entry.key} musi jawnie deklarować, czy oznacza niezgodność`,
-          path,
-        ),
+          path
+        )
       );
     }
     if (entry.nonConforming) hasNonConforming = true;
@@ -109,20 +109,17 @@ export function validateFindingTaxonomy(
         warn(
           'TAXONOMY_NONCONFORMING_WITHOUT_ACTION',
           `Pozycja ${entry.key} oznacza niezgodność, ale nie wymaga działania korygującego — upewnij się, że to celowe`,
-          path,
-        ),
+          path
+        )
       );
     }
-    if (
-      entry.defaultSeverity &&
-      !FINDING_SEVERITIES.includes(entry.defaultSeverity)
-    ) {
+    if (entry.defaultSeverity && !FINDING_SEVERITIES.includes(entry.defaultSeverity)) {
       issues.push(
         err(
           'TAXONOMY_SEVERITY_INVALID',
           `Pozycja ${entry.key} ma nieznaną istotność: ${entry.defaultSeverity}`,
-          path,
-        ),
+          path
+        )
       );
     }
   });
@@ -132,8 +129,8 @@ export function validateFindingTaxonomy(
       err(
         'TAXONOMY_NO_NONCONFORMING',
         'Taksonomia musi zawierać co najmniej jedną pozycję oznaczającą niezgodność — inaczej audyt nie może stwierdzić braku spełnienia wymagania',
-        'findingTaxonomy',
-      ),
+        'findingTaxonomy'
+      )
     );
   }
 
@@ -146,7 +143,7 @@ export function validateFindingTaxonomy(
 
 function validateCriteria(
   criteria: Array<Partial<AuditPackCriterion>>,
-  strict: boolean,
+  strict: boolean
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
@@ -169,11 +166,7 @@ function validateCriteria(
 
     if (criterion.parentId && !ids.has(criterion.parentId)) {
       issues.push(
-        err(
-          'CRITERION_PARENT_MISSING',
-          `Kryterium ${label} wskazuje nieistniejącego rodzica`,
-          path,
-        ),
+        err('CRITERION_PARENT_MISSING', `Kryterium ${label} wskazuje nieistniejącego rodzica`, path)
       );
     }
 
@@ -190,13 +183,13 @@ function validateCriteria(
           err(
             'CRITERION_REQUIREMENT_MISSING',
             `Kryterium ${label} nie ma sformułowanego wymagania — bez niego nie da się orzec zgodności`,
-            path,
-          ),
+            path
+          )
         );
       }
       if (!isNonEmpty(criterion.auditQuestion)) {
         issues.push(
-          err('CRITERION_QUESTION_MISSING', `Kryterium ${label} nie ma pytania audytowego`, path),
+          err('CRITERION_QUESTION_MISSING', `Kryterium ${label} nie ma pytania audytowego`, path)
         );
       }
       if (!isNonEmpty(criterion.auditProcedure)) {
@@ -204,29 +197,27 @@ function validateCriteria(
           ? err(
               'CRITERION_PROCEDURE_MISSING',
               `Kryterium ${label} nie ma procedury testowej — audyt normatywny wymaga opisu, jak sprawdzić wymaganie`,
-              path,
+              path
             )
           : warn(
               'CRITERION_PROCEDURE_MISSING',
               `Kryterium ${label} nie ma procedury testowej`,
-              path,
+              path
             );
         issues.push(issue);
       }
-      const expected = Array.isArray(criterion.expectedEvidence)
-        ? criterion.expectedEvidence
-        : [];
+      const expected = Array.isArray(criterion.expectedEvidence) ? criterion.expectedEvidence : [];
       if (expected.length === 0) {
         const issue = strict
           ? err(
               'CRITERION_EVIDENCE_MISSING',
               `Kryterium ${label} nie określa oczekiwanego dowodu`,
-              path,
+              path
             )
           : warn(
               'CRITERION_EVIDENCE_MISSING',
               `Kryterium ${label} nie określa oczekiwanego dowodu`,
-              path,
+              path
             );
         issues.push(issue);
       }
@@ -235,8 +226,8 @@ function validateCriteria(
           err(
             'CRITERION_SOURCE_REF_MISSING',
             `Kryterium ${label} nie wskazuje miejsca w źródle — bez tego traceability do normy jest nieweryfikowalna`,
-            path,
-          ),
+            path
+          )
         );
       }
     }
@@ -245,7 +236,7 @@ function validateCriteria(
   for (const [code, count] of refCodes) {
     if (count > 1) {
       issues.push(
-        warn('CRITERION_REFCODE_DUPLICATE', `Kod ${code} występuje ${count} razy`, 'criteria'),
+        warn('CRITERION_REFCODE_DUPLICATE', `Kod ${code} występuje ${count} razy`, 'criteria')
       );
     }
   }
@@ -255,8 +246,8 @@ function validateCriteria(
       err(
         'CRITERIA_NO_TESTABLE',
         'Pakiet nie zawiera ani jednego kryterium/kontroli do sprawdzenia — sama hierarchia domen nie jest audytem',
-        'criteria',
-      ),
+        'criteria'
+      )
     );
   }
 
@@ -269,17 +260,13 @@ function validateCriteria(
 
 function validateSourceForNormative(
   pack: Partial<AuditPack>,
-  source: AuditNormSource | null | undefined,
+  source: AuditNormSource | null | undefined
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   if (!source) {
     issues.push(
-      err(
-        'SOURCE_MISSING',
-        'Pakiet normatywny musi wskazywać zarejestrowane źródło',
-        'sourceId',
-      ),
+      err('SOURCE_MISSING', 'Pakiet normatywny musi wskazywać zarejestrowane źródło', 'sourceId')
     );
     return issues;
   }
@@ -289,8 +276,8 @@ function validateSourceForNormative(
       err(
         'SOURCE_VERSION_MISSING',
         'Pakiet normatywny musi wskazywać wersję/edycję źródła (np. rok wydania normy)',
-        'sourceVersion',
-      ),
+        'sourceVersion'
+      )
     );
   }
 
@@ -299,8 +286,8 @@ function validateSourceForNormative(
       err(
         'SOURCE_RIGHTS_UNVERIFIED',
         'Prawa do źródła nie zostały potwierdzone — nie wolno publikować pakietu jako normatywnego',
-        'source.rightsStatus',
-      ),
+        'source.rightsStatus'
+      )
     );
   }
   if (source.rightsStatus === 'not_permitted') {
@@ -308,8 +295,8 @@ function validateSourceForNormative(
       err(
         'SOURCE_RIGHTS_DENIED',
         'Źródło jest oznaczone jako niedozwolone do wykorzystania',
-        'source.rightsStatus',
-      ),
+        'source.rightsStatus'
+      )
     );
   }
 
@@ -320,8 +307,8 @@ function validateSourceForNormative(
       err(
         'SOURCE_TYPE_NOT_NORMATIVE',
         `Źródło typu „${source.sourceType}" nie jest normą ani regulacją, więc pakiet nie może być przedstawiony jako audyt zgodności z normą. To nie jest kwestia jakości weryfikacji — to kwestia natury dokumentu.`,
-        'source.sourceType',
-      ),
+        'source.sourceType'
+      )
     );
   }
 
@@ -332,8 +319,8 @@ function validateSourceForNormative(
       err(
         'SOURCE_NOT_VERIFIED',
         `Weryfikacja źródła ma stan „${source.verificationStatus}", a audyt zgodności wymaga „VERIFIED"`,
-        'source.verificationStatus',
-      ),
+        'source.verificationStatus'
+      )
     );
   }
 
@@ -342,8 +329,8 @@ function validateSourceForNormative(
       err(
         'SOURCE_VERIFIER_MISSING',
         'Brak zapisu, kto i kiedy zweryfikował źródło',
-        'source.verifiedBy',
-      ),
+        'source.verifiedBy'
+      )
     );
   }
 
@@ -378,7 +365,11 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
   }
   if (pack.classification && !PACK_CLASSIFICATIONS.includes(pack.classification)) {
     issues.push(
-      err('PACK_CLASSIFICATION_INVALID', `Nieznana klasyfikacja: ${pack.classification}`, 'classification'),
+      err(
+        'PACK_CLASSIFICATION_INVALID',
+        `Nieznana klasyfikacja: ${pack.classification}`,
+        'classification'
+      )
     );
   }
 
@@ -389,12 +380,12 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
     }
     if (!isNonEmpty(pack.objectives)) {
       issues.push(
-        err('PACK_OBJECTIVES_MISSING', 'Publikowany pakiet musi określać cele audytu', 'objectives'),
+        err('PACK_OBJECTIVES_MISSING', 'Publikowany pakiet musi określać cele audytu', 'objectives')
       );
     }
     if (!Array.isArray(pack.requiredRoles) || pack.requiredRoles.length === 0) {
       issues.push(
-        err('PACK_ROLES_MISSING', 'Publikowany pakiet musi określać wymagane role', 'requiredRoles'),
+        err('PACK_ROLES_MISSING', 'Publikowany pakiet musi określać wymagane role', 'requiredRoles')
       );
     }
   }
@@ -409,8 +400,8 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
         err(
           'PACK_EXPERT_APPROVAL_MISSING',
           'Publikacja wymaga zatwierdzenia przez eksperta — pakiet nie może wejść do użycia bez przeglądu człowieka',
-          'expertApprovedBy',
-        ),
+          'expertApprovedBy'
+        )
       );
     }
   }
@@ -422,8 +413,8 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
       err(
         'PACK_SOURCE_TYPE_MISMATCH',
         `Pakiet deklaruje typ źródła „${pack.sourceType}", a wskazane źródło jest typu „${source.sourceType}"`,
-        'sourceType',
-      ),
+        'sourceType'
+      )
     );
   }
 
@@ -435,8 +426,8 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
       warn(
         'PACK_UNDERCLAIMS',
         'Pakiet oparty o zweryfikowane źródło jest oznaczony jako demonstracyjny',
-        'classification',
-      ),
+        'classification'
+      )
     );
   }
 
@@ -450,8 +441,8 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
       err(
         'PACK_TITLE_IMPLIES_NORMATIVE',
         'Tytuł sugeruje zgodność z normą, a pakiet nie jest zweryfikowany jako normatywny — zmień tytuł albo potwierdź źródło',
-        'title',
-      ),
+        'title'
+      )
     );
   }
 
@@ -469,11 +460,13 @@ export function validatePack(input: ValidatePackInput): PackValidationResult {
 function computeEligibleClassifications(
   pack: Partial<AuditPack>,
   source: AuditNormSource | null | undefined,
-  errors: ValidationIssue[],
+  errors: ValidationIssue[]
 ): PackClassification[] {
   const eligible: PackClassification[] = ['EVIDENCE_MISSING', 'DEMONSTRATION'];
 
-  const structuralOk = !errors.some((e) => e.code.startsWith('CRITERI') || e.code.startsWith('TAXONOMY'));
+  const structuralOk = !errors.some(
+    (e) => e.code.startsWith('CRITERI') || e.code.startsWith('TAXONOMY')
+  );
   if (structuralOk) eligible.push('INTERNAL_FRAMEWORK');
 
   const normativeOk =

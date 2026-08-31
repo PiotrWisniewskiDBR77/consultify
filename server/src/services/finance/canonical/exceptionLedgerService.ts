@@ -15,7 +15,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 
-export type ExceptionEventType = 'RAISED' | 'ACCEPTED' | 'WAIVED' | 'RESOLVED' | 'ESCALATED' | 'REOPENED' | 'EXPIRED';
+export type ExceptionEventType =
+  | 'RAISED'
+  | 'ACCEPTED'
+  | 'WAIVED'
+  | 'RESOLVED'
+  | 'ESCALATED'
+  | 'REOPENED'
+  | 'EXPIRED';
 export type ExceptionSeverity = 'INFO' | 'WARNING' | 'MATERIAL' | 'CRITICAL_DATA' | 'SECURITY';
 export type ExceptionBlockingCategory = 'TENANT_BREACH' | 'UNDEFINED_MATH';
 export type ExceptionCurrentState = 'OPEN' | 'ACCEPTED' | 'RESOLVED' | 'WAIVED';
@@ -72,17 +79,29 @@ export interface RaiseExceptionParams {
 
 export type RaiseExceptionResult =
   | { ok: true; exception: FinanceExceptionRow }
-  | { ok: false; code: 'BLOCKING_CATEGORY_REQUIRED' | 'BLOCKING_CATEGORY_FORBIDDEN'; message: string };
+  | {
+      ok: false;
+      code: 'BLOCKING_CATEGORY_REQUIRED' | 'BLOCKING_CATEGORY_FORBIDDEN';
+      message: string;
+    };
 
 /** RAISED — the first event of a new exception_group. `id` doubles as `exception_group_id`. */
 export async function raise(params: RaiseExceptionParams): Promise<RaiseExceptionResult> {
   // Mirror chk_finance_exceptions_blocking_category app-side for a typed error
   // instead of a raw 23514 constraint-violation surfacing to the caller.
   if (params.severity === 'SECURITY' && !params.blockingCategory) {
-    return { ok: false, code: 'BLOCKING_CATEGORY_REQUIRED', message: 'SECURITY severity requires blockingCategory' };
+    return {
+      ok: false,
+      code: 'BLOCKING_CATEGORY_REQUIRED',
+      message: 'SECURITY severity requires blockingCategory',
+    };
   }
   if (params.severity !== 'SECURITY' && params.blockingCategory) {
-    return { ok: false, code: 'BLOCKING_CATEGORY_FORBIDDEN', message: 'blockingCategory is only valid for SECURITY severity' };
+    return {
+      ok: false,
+      code: 'BLOCKING_CATEGORY_FORBIDDEN',
+      message: 'blockingCategory is only valid for SECURITY severity',
+    };
   }
 
   const id = uuidv4();
@@ -144,12 +163,17 @@ async function insertFollowOnEvent(
       `SELECT * FROM finance_exceptions_current WHERE organization_id = ? AND exception_group_id = ?`,
       [params.organizationId, params.exceptionGroupId]
     );
-    if (!current) return { ok: false, code: 'GROUP_NOT_FOUND', message: 'Exception group not found' };
+    if (!current)
+      return { ok: false, code: 'GROUP_NOT_FOUND', message: 'Exception group not found' };
     if (current.state !== 'OPEN') {
       return { ok: false, code: 'NOT_OPEN', message: `Exception is ${current.state}, not OPEN` };
     }
     if (eventType === 'WAIVED' && current.severity !== 'INFO' && !extra.expiry) {
-      return { ok: false, code: 'EXPIRY_REQUIRED', message: 'WAIVED above INFO severity requires an expiry' };
+      return {
+        ok: false,
+        code: 'EXPIRY_REQUIRED',
+        message: 'WAIVED above INFO severity requires an expiry',
+      };
     }
 
     const inserted = await tx.queryOne<FinanceExceptionRow>(
@@ -188,7 +212,10 @@ export async function accept(params: FollowOnEventParams): Promise<FollowOnEvent
 
 /** WAIVED — temporarily suppressed; `finance_exceptions_current`'s state reverts to OPEN once `expiry` passes. */
 export async function waive(params: FollowOnEventParams): Promise<FollowOnEventResult> {
-  return insertFollowOnEvent('WAIVED', params, { acceptedBy: params.actorId, expiry: params.expiry ?? null });
+  return insertFollowOnEvent('WAIVED', params, {
+    acceptedBy: params.actorId,
+    expiry: params.expiry ?? null,
+  });
 }
 
 /** RESOLVED — underlying cause fixed. */
@@ -196,7 +223,10 @@ export async function resolve(params: FollowOnEventParams): Promise<FollowOnEven
   return insertFollowOnEvent('RESOLVED', params, { acceptedBy: params.actorId });
 }
 
-export async function getCurrent(organizationId: string, exceptionGroupId: string): Promise<FinanceExceptionCurrentRow | null> {
+export async function getCurrent(
+  organizationId: string,
+  exceptionGroupId: string
+): Promise<FinanceExceptionCurrentRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<FinanceExceptionCurrentRow>(
       `SELECT * FROM finance_exceptions_current WHERE organization_id = ? AND exception_group_id = ?`,
@@ -205,7 +235,10 @@ export async function getCurrent(organizationId: string, exceptionGroupId: strin
   );
 }
 
-export async function listOpen(organizationId: string, artifactId?: string): Promise<FinanceExceptionCurrentRow[]> {
+export async function listOpen(
+  organizationId: string,
+  artifactId?: string
+): Promise<FinanceExceptionCurrentRow[]> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<FinanceExceptionCurrentRow>(
       artifactId

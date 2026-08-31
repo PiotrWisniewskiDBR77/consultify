@@ -14,8 +14,8 @@
 import { AlertTriangle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import type { OkrCheckInConfidence, OkrCheckInDto, OkrCheckInStatus } from './okrCheckInApi';
 
@@ -48,7 +48,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -89,18 +90,25 @@ export const OkrCheckInCorrectDialog: React.FC<OkrCheckInCorrectDialogProps> = (
   }, [open, original]);
 
   const reasonError = touched && !correctionReason.trim();
-  const confidenceNumericError = touched && changeConfidence && confidence === 'numeric' && confidenceNumericValue.trim() === '';
+  const confidenceNumericError =
+    touched && changeConfidence && confidence === 'numeric' && confidenceNumericValue.trim() === '';
   const submitDisabled = busy || !original;
 
   const handleSubmit = () => {
     setTouched(true);
     if (!correctionReason.trim()) return;
-    if (changeConfidence && confidence === 'numeric' && confidenceNumericValue.trim() === '') return;
+    if (changeConfidence && confidence === 'numeric' && confidenceNumericValue.trim() === '')
+      return;
     onSubmit({
       newValue: changeValue ? (newValue.trim() === '' ? null : Number(newValue)) : undefined,
       ownerDeclaredStatus: changeStatus ? ownerDeclaredStatus || null : undefined,
       confidence: changeConfidence ? confidence || null : undefined,
-      confidenceNumericValue: changeConfidence && confidence === 'numeric' ? Number(confidenceNumericValue) : changeConfidence ? null : undefined,
+      confidenceNumericValue:
+        changeConfidence && confidence === 'numeric'
+          ? Number(confidenceNumericValue)
+          : changeConfidence
+            ? null
+            : undefined,
       correctionReason: correctionReason.trim(),
     });
   };
@@ -133,7 +141,15 @@ export const OkrCheckInCorrectDialog: React.FC<OkrCheckInCorrectDialogProps> = (
             data-testid="okr-checkin-correct-submit"
             className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Zapisz korektę' : 'Save correction'}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Zapisz korektę'
+                  : 'Save correction'}
+            </span>
           </button>
         </>
       }
@@ -227,7 +243,11 @@ export const OkrCheckInCorrectDialog: React.FC<OkrCheckInCorrectDialogProps> = (
                   aria-invalid={confidenceNumericError || undefined}
                 />
                 {confidenceNumericError ? (
-                  <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagane, gdy pewność = „liczbowa"' : 'Required when confidence = "numeric"'}</p>
+                  <p className="mt-1 text-[11px] text-c-danger">
+                    {isPolish
+                      ? 'Wymagane, gdy pewność = „liczbowa"'
+                      : 'Required when confidence = "numeric"'}
+                  </p>
                 ) : null}
               </div>
             ) : null}
@@ -247,7 +267,11 @@ export const OkrCheckInCorrectDialog: React.FC<OkrCheckInCorrectDialogProps> = (
             data-testid="okr-correct-reason"
             aria-invalid={reasonError || undefined}
           />
-          {reasonError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Powód jest wymagany' : 'Reason is required'}</p> : null}
+          {reasonError ? (
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'Powód jest wymagany' : 'Reason is required'}
+            </p>
+          ) : null}
         </div>
 
         {errorMessage ? (
@@ -257,7 +281,13 @@ export const OkrCheckInCorrectDialog: React.FC<OkrCheckInCorrectDialogProps> = (
             data-testid="okr-checkin-correct-error"
           >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

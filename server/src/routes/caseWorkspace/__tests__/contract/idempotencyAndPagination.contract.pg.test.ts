@@ -16,11 +16,10 @@
 
 import { randomUUID } from 'node:crypto';
 
+import type { Express } from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
-import type { Express } from 'express';
 
 import {
   CONNECTION_STRING,
@@ -61,7 +60,9 @@ async function bindRun(
     .post(`${BASE}/plan-versions/${planId}/publish`)
     .send({ expectedVersion: proposed.body.data.version });
   const runId = await fx.seedExecutionRun(f.orgId, f.memberUserId, label);
-  const bound = await request(app).post(`${BASE}/run-bindings`).send({ runId, casePlanVersionId: planId });
+  const bound = await request(app)
+    .post(`${BASE}/run-bindings`)
+    .send({ runId, casePlanVersionId: planId });
   if (bound.status !== 201) {
     throw new Error(`bindRun fixture failed: ${bound.status} ${JSON.stringify(bound.body)}`);
   }
@@ -160,7 +161,10 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('WAIT_TARGET_REQUIRED');
 
-      const rows = await control.query(`SELECT wait_id FROM case_workspace_waits WHERE case_id = $1`, [caseId]);
+      const rows = await control.query(
+        `SELECT wait_id FROM case_workspace_waits WHERE case_id = $1`,
+        [caseId]
+      );
       expect(rows.rowCount).toBe(0);
     } finally {
       await fx.teardown();
@@ -203,7 +207,12 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
       // The compare-fallback fails CLOSED when the replay disagrees about type.
       const mismatched = await request(app)
         .post(`${BASE}/cases/${caseId}/waits`)
-        .send({ waitType: 'TIMER', correlationKey, runId, timeoutAt: new Date(Date.now() + 60_000).toISOString() });
+        .send({
+          waitType: 'TIMER',
+          correlationKey,
+          runId,
+          timeoutAt: new Date(Date.now() + 60_000).toISOString(),
+        });
       expect(mismatched.status).toBe(409);
       expect(mismatched.body.error.code).toBe('WAIT_CORRELATION_KEY_CONFLICT');
 
@@ -443,9 +452,10 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
         .post(`${BASE}/case-intake/work-orders/confirm`)
         .send({ workOrder, confirmedDigest: `sha256:${'0'.repeat(64)}` });
       expect(badDigest.status).toBe(422);
-      const stillNoCase = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [
-        f.projectId,
-      ]);
+      const stillNoCase = await control.query(
+        `SELECT case_id FROM case_core WHERE project_id = $1`,
+        [f.projectId]
+      );
       expect(stillNoCase.rowCount).toBe(0);
 
       const confirmed = await request(app)
@@ -466,7 +476,9 @@ suite('CONTRACT — idempotency, pagination and intake over real Postgres', () =
       expect(replay.body.data.reused).toBe(true);
       expect(replay.body.data.caseId).toBe(confirmed.body.data.caseId);
 
-      const rows = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [f.projectId]);
+      const rows = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [
+        f.projectId,
+      ]);
       expect(rows.rowCount).toBe(1);
 
       // case_workspace_history_events is append-only at the DATABASE level

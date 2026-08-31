@@ -1,5 +1,4 @@
 import fs from 'fs';
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -22,8 +21,8 @@ vi.mock('../../utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-import { voiceController } from '../voice.controller.js';
 import { voiceService } from '../../services/ai/VoiceService.js';
+import { voiceController } from '../voice.controller.js';
 
 function mockReqRes(filePath: string) {
   const req = {

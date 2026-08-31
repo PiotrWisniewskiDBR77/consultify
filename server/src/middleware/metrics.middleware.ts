@@ -124,20 +124,19 @@ function recordDurableAuthDenial(req: Request, requestId: string): Promise<unkno
   const pending = Promise.all([
     import('../services/operationalAlertSignalDeliveryService.js'),
     import('../services/operationalAlertRepairService.js'),
-  ])
-    .then(([{ durableOperationalAlertsEnabled }, { enqueueOperationalAlertRepairIntent }]) =>
-      durableOperationalAlertsEnabled()
-        ? enqueueOperationalAlertRepairIntent({
-            organizationId,
-            actorId,
-            correlationId,
-            sourceType: 'http_auth_denial',
-            sourceTerminalId: correlationId,
-            kind: 'REPEATED_AUTH_DENIALS',
-            outcome: 'DENIAL',
-          })
-        : undefined
-    );
+  ]).then(([{ durableOperationalAlertsEnabled }, { enqueueOperationalAlertRepairIntent }]) =>
+    durableOperationalAlertsEnabled()
+      ? enqueueOperationalAlertRepairIntent({
+          organizationId,
+          actorId,
+          correlationId,
+          sourceType: 'http_auth_denial',
+          sourceTerminalId: correlationId,
+          kind: 'REPEATED_AUTH_DENIALS',
+          outcome: 'DENIAL',
+        })
+      : undefined
+  );
   trackOperationalAuthIntentForShutdown(pending);
   return pending;
 }
@@ -155,7 +154,10 @@ async function awaitDurableAuthDenialBarrier(
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      pending.then(() => 'settled' as const, () => 'failed' as const),
+      pending.then(
+        () => 'settled' as const,
+        () => 'failed' as const
+      ),
       new Promise<'timed_out'>((resolve) => {
         timer = setTimeout(() => resolve('timed_out'), timeoutMs);
       }),
@@ -356,9 +358,7 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
 
       if (status >= 500) metrics.errors = addBoundedMetric(metrics.errors, 1);
       if (status === 401 || status === 403) {
-        operationalAlerts.recordAuthDenial(
-          requestId
-        );
+        operationalAlerts.recordAuthDenial(requestId);
       }
 
       for (const bucket of LATENCY_BUCKETS) {
@@ -395,15 +395,17 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
       // Do not put the denial on the wire until its durable intent transaction
       // has settled. A SIGKILL after the client observes the response can no
       // longer erase an accepted authenticated denial intent.
-      void awaitDurableAuthDenialBarrier(recordDurableAuthDenial(req, requestId)).then((outcome) => {
-        try {
-          // Never acknowledge a denial whose durable intent was not known to
-          // commit. Destroying the socket is bounded and fail-closed.
-          finishDurableAuthDenialResponse(outcome, res, this, originalEnd, args);
-        } finally {
-          recordCompletion();
+      void awaitDurableAuthDenialBarrier(recordDurableAuthDenial(req, requestId)).then(
+        (outcome) => {
+          try {
+            // Never acknowledge a denial whose durable intent was not known to
+            // commit. Destroying the socket is bounded and fail-closed.
+            finishDurableAuthDenialResponse(outcome, res, this, originalEnd, args);
+          } finally {
+            recordCompletion();
+          }
         }
-      });
+      );
       return this;
     }
     try {

@@ -203,12 +203,13 @@ export const ConversionPreviewDialog: React.FC<ConversionPreviewDialogProps> = (
               </span>
               <ul className="mt-1.5 space-y-1">
                 {data.mappedFields.map((f, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-1.5 text-xs text-c-text-secondary"
-                  >
+                  <li key={i} className="flex items-center gap-1.5 text-xs text-c-text-secondary">
                     <span>{isPolish ? f.sourcePl : f.sourceEn}</span>
-                    <ArrowRight size={11} className="text-c-text-muted shrink-0" aria-hidden="true" />
+                    <ArrowRight
+                      size={11}
+                      className="text-c-text-muted shrink-0"
+                      aria-hidden="true"
+                    />
                     <span className="text-c-text">{isPolish ? f.targetPl : f.targetEn}</span>
                   </li>
                 ))}
@@ -247,7 +248,11 @@ export const ConversionPreviewDialog: React.FC<ConversionPreviewDialogProps> = (
             <div className="rounded-token-md border border-c-warning/40 bg-c-warning/10 px-3 py-2 space-y-1">
               {data.warnings.map((w, i) => (
                 <div key={i} className="flex items-start gap-1.5 text-xs text-c-text">
-                  <AlertTriangle size={12} className="text-c-warning shrink-0 mt-0.5" aria-hidden="true" />
+                  <AlertTriangle
+                    size={12}
+                    className="text-c-warning shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
                   <span>{isPolish ? w.pl : w.en}</span>
                 </div>
               ))}

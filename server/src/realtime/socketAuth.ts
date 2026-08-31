@@ -95,7 +95,7 @@ async function resolveSocketOrganizationId(
  * The guard reads a `null` row as "not suspended", so a swallowed error would
  * silently open the gate.
  */
-const strictDbGet = <T,>(sql: string, params?: unknown[]): Promise<T | null> =>
+const strictDbGet = <T>(sql: string, params?: unknown[]): Promise<T | null> =>
   dbGet<T>(sql, params, { fallback: false });
 
 /**

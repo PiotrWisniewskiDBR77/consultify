@@ -1,36 +1,35 @@
 import fs from 'fs';
 import path from 'path';
-
 import { describe, expect, it } from 'vitest';
 
-import { TOOL_STEP_DEFINITIONS, type ToolType } from '@/store/useToolStore';
-import { TOOL_PACKS, getToolPack } from '../registry';
-import type { SignatureArchetype } from '../contract';
-
+import { A3_QUESTION_BANK } from '@/config/a3problemsolving/a3QuestionBank';
+import { AI_DISCOVERY_QUESTION_BANK } from '@/config/aidiscovery/aiDiscoveryQuestionBank';
+import { AMBITION_QUESTION_BANK } from '@/config/ambitiondecomposer/ambitionQuestionBank';
+import { ANSOFF_QUESTION_BANK } from '@/config/ansoff/ansoffQuestionBank';
+import { CAPABILITY_QUESTION_BANK } from '@/config/capabilitymapper/capabilityQuestionBank';
+import { DMS_QUESTION_BANK } from '@/config/dmsbuilder/dmsBuilderQuestionBank';
+import { FOCUS_OPTION_LADDER } from '@/config/focustradeoffs/focusQuestionBank';
+import { INVENTORY_QUESTION_BANK } from '@/config/inventoryautopilot/inventoryQuestionBank';
+import { NARRATIVE_PYRAMID_QUESTION_BANK } from '@/config/narrativeengine/pyramidQuestionBank';
+import { PAIN_QUESTION_BANK } from '@/config/painexplorer/painExplorerQuestionBank';
+import { PORTER_QUESTION_BANK } from '@/config/porter/porterQuestionBank';
+import { PORTFOLIO_QUESTION_BANK } from '@/config/portfolio/portfolioQuestionBank';
+import { AUTOMATION_QUESTION_BANK } from '@/config/processautomation/automationQuestionBank';
+import { RISK_ITEM_LADDER } from '@/config/riskuncertainty/riskQuestionBank';
+import { RPA_QUESTION_BANK } from '@/config/rpascanner/rpaQuestionBank';
+import { SMED_QUESTION_BANK } from '@/config/smedplanner/smedQuestionBank';
+import { SOP_QUESTION_BANK } from '@/config/sopbuilder/sopBuilderQuestionBank';
 // --- Real question-bank modules, one static import per engine-backed tool ---
 // Importing the REAL module (not re-declaring counts) is the whole point:
 // if a bank grows/shrinks and nobody updates the pack, this test must fail —
 // same doctrine as questionBankCoverage.test.ts (Dynamic SWOT), extended here
 // to the other 18 engine-backed tools (STREAM G4, 2026-08-13).
 import { DYNAMIC_SWOT_QUESTION_BANK } from '@/config/swot/dynamicSwotQuestionBank';
-import { PORTER_QUESTION_BANK } from '@/config/porter/porterQuestionBank';
-import { ANSOFF_QUESTION_BANK } from '@/config/ansoff/ansoffQuestionBank';
 import { VALUE_CHAIN_ACTIVITIES } from '@/config/valuechain/valueChainQuestionBank';
-import { PORTFOLIO_QUESTION_BANK } from '@/config/portfolio/portfolioQuestionBank';
-import { RISK_ITEM_LADDER } from '@/config/riskuncertainty/riskQuestionBank';
-import { CAPABILITY_QUESTION_BANK } from '@/config/capabilitymapper/capabilityQuestionBank';
-import { AMBITION_QUESTION_BANK } from '@/config/ambitiondecomposer/ambitionQuestionBank';
-import { FOCUS_OPTION_LADDER } from '@/config/focustradeoffs/focusQuestionBank';
-import { NARRATIVE_PYRAMID_QUESTION_BANK } from '@/config/narrativeengine/pyramidQuestionBank';
-import { A3_QUESTION_BANK } from '@/config/a3problemsolving/a3QuestionBank';
-import { SOP_QUESTION_BANK } from '@/config/sopbuilder/sopBuilderQuestionBank';
-import { SMED_QUESTION_BANK } from '@/config/smedplanner/smedQuestionBank';
-import { DMS_QUESTION_BANK } from '@/config/dmsbuilder/dmsBuilderQuestionBank';
-import { INVENTORY_QUESTION_BANK } from '@/config/inventoryautopilot/inventoryQuestionBank';
-import { RPA_QUESTION_BANK } from '@/config/rpascanner/rpaQuestionBank';
-import { AI_DISCOVERY_QUESTION_BANK } from '@/config/aidiscovery/aiDiscoveryQuestionBank';
-import { PAIN_QUESTION_BANK } from '@/config/painexplorer/painExplorerQuestionBank';
-import { AUTOMATION_QUESTION_BANK } from '@/config/processautomation/automationQuestionBank';
+import { TOOL_STEP_DEFINITIONS, type ToolType } from '@/store/useToolStore';
+
+import type { SignatureArchetype } from '../contract';
+import { getToolPack, TOOL_PACKS } from '../registry';
 
 /** Flattens a Record<string, Node[]> bank into a single node count. */
 const flat = (bank: Record<string, unknown[]>): number =>
@@ -153,9 +152,10 @@ describe('pokrycie wiązania z silnikiem — wszystkie 19 narzędzi z silnikiem'
       const pack = getToolPack(toolType)!;
       const phaseIds = new Set(pack.phases.map((p) => p.id));
       (pack.engine!.bankBackedPhaseIds || []).forEach((id) => {
-        expect(phaseIds.has(id), `${toolType}: bankBackedPhaseIds zawiera nieznaną fazę "${id}"`).toBe(
-          true
-        );
+        expect(
+          phaseIds.has(id),
+          `${toolType}: bankBackedPhaseIds zawiera nieznaną fazę "${id}"`
+        ).toBe(true);
       });
     });
   });

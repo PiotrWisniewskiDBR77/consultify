@@ -163,7 +163,14 @@ useAppStore.setState({
 const VALID_ROLES: AuditRole[] = ['auditee', 'auditor', 'lead_auditor', 'reviewer', 'action_owner'];
 const VALID_STAGES = ['fresh', 'evidence', 'tested', 'finding', 'remediation', 'closed'] as const;
 type Stage = (typeof VALID_STAGES)[number];
-const RANK: Record<Stage, number> = { fresh: 0, evidence: 1, tested: 2, finding: 3, remediation: 4, closed: 5 };
+const RANK: Record<Stage, number> = {
+  fresh: 0,
+  evidence: 1,
+  tested: 2,
+  finding: 3,
+  remediation: 4,
+  closed: 5,
+};
 
 const qp = new URLSearchParams(window.location.search);
 const ROLE: AuditRole = (VALID_ROLES as string[]).includes(qp.get('role') || '')
@@ -198,17 +205,20 @@ try {
 const EXPECTED_EVIDENCE = [
   {
     kind: 'document' as EvidenceKind,
-    description: 'Karty oceny okresowej dostawców klasy A za 2025 (17 dostawców, lista AVL aktualna)',
+    description:
+      'Karty oceny okresowej dostawców klasy A za 2025 (17 dostawców, lista AVL aktualna)',
     mandatory: true,
   },
   {
     kind: 'system_export' as EvidenceKind,
-    description: 'Eksport modułu SRM potwierdzający daty ostatniej kwalifikacji/oceny każdego dostawcy klasy A',
+    description:
+      'Eksport modułu SRM potwierdzający daty ostatniej kwalifikacji/oceny każdego dostawcy klasy A',
     mandatory: true,
   },
   {
     kind: 'document' as EvidenceKind,
-    description: 'Rejestr zamówień z Q1-Q3 2026 z odniesieniem do zatwierdzonej listy dostawców (AVL)',
+    description:
+      'Rejestr zamówień z Q1-Q3 2026 z odniesieniem do zatwierdzonej listy dostawców (AVL)',
     mandatory: true,
   },
   {
@@ -224,7 +234,13 @@ function buildCriterion(): WorkspaceCriterion {
   const concluded = RANKN >= RANK.finding;
 
   const workStatus =
-    RANKN >= RANK.finding ? 'concluded' : RANKN >= RANK.tested ? 'tested' : RANKN >= RANK.evidence ? 'evidence_received' : 'open';
+    RANKN >= RANK.finding
+      ? 'concluded'
+      : RANKN >= RANK.tested
+        ? 'tested'
+        : RANKN >= RANK.evidence
+          ? 'evidence_received'
+          : 'open';
 
   return {
     id: CRITERION_ID,
@@ -240,7 +256,8 @@ function buildCriterion(): WorkspaceCriterion {
     expectedEvidence: EXPECTED_EVIDENCE,
     auditProcedure:
       'Porównanie listy dostawców klasy A (AVL) z rejestrem kart oceny okresowej za 2025 oraz z rejestrem zamówień Q1-Q3 2026, na próbie dostawców klasy A.',
-    samplingGuidance: 'Wszyscy dostawcy klasy A (17), pełna próba — nie losowa (populacja niewielka, ryzyko wysokie).',
+    samplingGuidance:
+      'Wszyscy dostawcy klasy A (17), pełna próba — nie losowa (populacja niewielka, ryzyko wysokie).',
     applicable: true,
     notApplicableReason: null,
     assignedAuditorId: AUDITOR_ID,
@@ -253,7 +270,9 @@ function buildCriterion(): WorkspaceCriterion {
     procedurePerformed: tested
       ? 'Porównano listę 17 dostawców klasy A (AVL) z rejestrem kart oceny okresowej za 2025 oraz z rejestrem zamówień Q1-Q3 2026 w module SRM.'
       : null,
-    sampleDescription: tested ? '17 dostawców klasy A — pełna próba (populacja niewielka, ryzyko wysokie).' : null,
+    sampleDescription: tested
+      ? '17 dostawców klasy A — pełna próba (populacja niewielka, ryzyko wysokie).'
+      : null,
     testPerformed: tested
       ? 'Dla każdego z 17 dostawców klasy A zweryfikowano obecność karty oceny okresowej za 2025 oraz zgodność zamówień Q1-Q3 2026 z aktualną listą AVL.'
       : null,
@@ -262,12 +281,20 @@ function buildCriterion(): WorkspaceCriterion {
     auditorConclusion: concluded
       ? 'Kryterium spełnione częściowo. Mechanizm kwalifikacji i oceny dostawców istnieje i jest realnie stosowany przy wprowadzaniu nowych dostawców, ale nie jest utrzymywany w cyklu rocznym: dla 5 z 17 dostawców klasy A brak karty oceny okresowej za 2025, a w 3 przypadkach zamówienia złożono u dostawcy spoza AVL bez zapisu odstępstwa.'
       : null,
-    conformityStatus: concluded ? ('nonconforming' as ConformityStatus) : ('not_tested' as ConformityStatus),
+    conformityStatus: concluded
+      ? ('nonconforming' as ConformityStatus)
+      : ('not_tested' as ConformityStatus),
     concludedBy: concluded ? AUDITOR_ID : null,
     concludedAt: concluded ? '2026-08-21T11:47:00Z' : null,
     workStatus,
     createdAt: '2026-07-20T08:00:00Z',
-    updatedAt: concluded ? '2026-08-21T14:32:00Z' : tested ? '2026-08-20T16:05:00Z' : auditeeResponded ? '2026-08-05T09:40:00Z' : '2026-07-20T08:00:00Z',
+    updatedAt: concluded
+      ? '2026-08-21T14:32:00Z'
+      : tested
+        ? '2026-08-20T16:05:00Z'
+        : auditeeResponded
+          ? '2026-08-05T09:40:00Z'
+          : '2026-07-20T08:00:00Z',
   };
 }
 
@@ -291,7 +318,9 @@ function buildEvidence(): WorkspaceEvidence[] {
     reliability: reviewed ? 'reliable' : 'unknown',
     currencyStatus: reviewed ? 'current' : 'unknown',
     supportsConformity: reviewed ? true : null,
-    reviewNote: reviewed ? 'D-1 — potwierdza kwalifikację i ocenę dla 12 z 17 dostawców klasy A.' : null,
+    reviewNote: reviewed
+      ? 'D-1 — potwierdza kwalifikację i ocenę dla 12 z 17 dostawców klasy A.'
+      : null,
     accepted: reviewed ? true : null,
     acceptedBy: reviewed ? AUDITOR_ID : null,
     acceptedAt: reviewed ? '2026-08-20T09:00:00Z' : null,
@@ -306,7 +335,8 @@ function buildEvidence(): WorkspaceEvidence[] {
     requestId: null,
     evidenceKind: 'system_export',
     title: 'Eksport SRM — daty ostatniej oceny wszystkich dostawców klasy A',
-    description: 'Pełny eksport z modułu SRM, 17 dostawców klasy A, z datą ostatniej kwalifikacji/oceny.',
+    description:
+      'Pełny eksport z modułu SRM, 17 dostawców klasy A, z datą ostatniej kwalifikacji/oceny.',
     externalReference: null,
     contentSnapshot: null,
     providedBy: AUDITEE_ID,
@@ -343,7 +373,9 @@ function buildEvidence(): WorkspaceEvidence[] {
     reliability: reviewed ? 'questionable' : 'unknown',
     currencyStatus: reviewed ? 'unknown' : 'unknown',
     supportsConformity: null,
-    reviewNote: reviewed ? 'D-3 odrzucony — zrzut nie identyfikuje okresu, nie wchodzi do podstawy wniosku.' : null,
+    reviewNote: reviewed
+      ? 'D-3 odrzucony — zrzut nie identyfikuje okresu, nie wchodzi do podstawy wniosku.'
+      : null,
     accepted: reviewed ? false : null,
     acceptedBy: reviewed ? AUDITOR_ID : null,
     acceptedAt: reviewed ? '2026-08-20T16:05:00Z' : null,
@@ -354,10 +386,18 @@ function buildEvidence(): WorkspaceEvidence[] {
   return [accepted, contradicting, rejected];
 }
 
-function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string, WorkspaceFindingDetail> } {
+function buildFindings(): {
+  findings: WorkspaceFinding[];
+  details: Record<string, WorkspaceFindingDetail>;
+} {
   if (RANKN < RANK.finding) return { findings: [], details: {} };
 
-  const status = RANKN === RANK.finding ? 'confirmed' : RANKN === RANK.remediation ? 'remediation_in_progress' : 'closed';
+  const status =
+    RANKN === RANK.finding
+      ? 'confirmed'
+      : RANKN === RANK.remediation
+        ? 'remediation_in_progress'
+        : 'closed';
 
   const correction: WorkspaceCorrectiveAction = {
     id: 'act-korekcja-01',
@@ -377,7 +417,8 @@ function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string
     id: 'act-korygujace-01',
     findingId: 'find-ust-2026-014',
     actionKind: 'corrective_action' as ActionKind,
-    title: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A',
+    title:
+      'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A',
     description: null,
     ownerUserId: AUDITEE_ID,
     dueDate: '2026-09-15',
@@ -388,7 +429,8 @@ function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string
     createdBy: AUDITOR_ID,
   };
 
-  const correctiveActions: WorkspaceCorrectiveAction[] = RANKN >= RANK.remediation ? [correction, correctiveAction] : [];
+  const correctiveActions: WorkspaceCorrectiveAction[] =
+    RANKN >= RANK.remediation ? [correction, correctiveAction] : [];
 
   const verifications: WorkspaceVerification[] =
     RANKN >= RANK.closed
@@ -414,7 +456,8 @@ function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string
             id: 'resp-01',
             findingId: 'find-ust-2026-014',
             position: 'accept',
-            statement: 'Zgadzamy się z ustaleniem. Wdrożymy automatyczne przypomnienie w module SRM przed upływem terminu oceny.',
+            statement:
+              'Zgadzamy się z ustaleniem. Wdrożymy automatyczne przypomnienie w module SRM przed upływem terminu oceny.',
             respondedBy: AUDITEE_ID,
             respondedAt: '2026-08-22T15:00:00Z',
             status: 'submitted',
@@ -428,14 +471,20 @@ function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string
     criterionId: CRITERION_ID,
     referenceCode: 'UST-2026-014',
     statement: 'Brak oceny okresowej za 2025 dla 5 z 17 dostawców klasy A (2026-08-21)',
-    requirementText: 'Ocena okresowa dostawców krytycznych nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
+    requirementText:
+      'Ocena okresowa dostawców krytycznych nie rzadziej niż raz w roku (Procedura P-ZAK-02 rew. 4, pkt 8.4.1).',
     conditionText: 'Dla 5 z 17 dostawców klasy A brak jest karty oceny okresowej za 2025.',
-    gapText: 'Brak mechanizmu przypominającego o zbliżającym się terminie oceny okresowej w module SRM.',
-    objectiveEvidence: ['D-1 — Karty oceny okresowej 2025', 'D-2 — Eksport SRM (daty ostatniej oceny)'],
+    gapText:
+      'Brak mechanizmu przypominającego o zbliżającym się terminie oceny okresowej w module SRM.',
+    objectiveEvidence: [
+      'D-1 — Karty oceny okresowej 2025',
+      'D-2 — Eksport SRM (daty ostatniej oceny)',
+    ],
     contradictingEvidence: [],
     classification: 'nonconforming',
     severity: 'medium',
-    recommendation: 'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej.',
+    recommendation:
+      'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej.',
     rootCause:
       RANKN >= RANK.remediation
         ? 'Brak automatycznego przypomnienia w module SRM o zbliżającym się terminie oceny okresowej — proces zależy wyłącznie od ręcznego śledzenia przez zespół zakupów.'
@@ -455,9 +504,19 @@ function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string
         ? 'Działanie korygujące potwierdzone jako skuteczne w próbie kontrolnej z września 2026. Ustalenie zamknięte.'
         : null,
     createdAt: '2026-08-21T11:40:00Z',
-    updatedAt: RANKN >= RANK.closed ? '2026-10-05T09:30:00Z' : RANKN >= RANK.remediation ? '2026-09-01T14:00:00Z' : '2026-08-21T14:32:00Z',
+    updatedAt:
+      RANKN >= RANK.closed
+        ? '2026-10-05T09:30:00Z'
+        : RANKN >= RANK.remediation
+          ? '2026-09-01T14:00:00Z'
+          : '2026-08-21T14:32:00Z',
   };
-  const primaryDetail: WorkspaceFindingDetail = { ...primaryFinding, managementResponses, correctiveActions, verifications };
+  const primaryDetail: WorkspaceFindingDetail = {
+    ...primaryFinding,
+    managementResponses,
+    correctiveActions,
+    verifications,
+  };
 
   // Drugie ustalenie — szkic, nieprzypisane, ŻADNEGO działania — realistyczny
   // przykład wiersza „w toku" obok potwierdzonego (kanon DEC-88 pyt. 2:
@@ -467,9 +526,12 @@ function buildFindings(): { findings: WorkspaceFinding[]; details: Record<string
     programId: PROGRAM_ID,
     criterionId: CRITERION_ID,
     referenceCode: 'UST-2026-015',
-    statement: 'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa (3 przypadki)',
-    requirementText: 'Zamówienia są składane wyłącznie u dostawców z zatwierdzonej listy (AVL), chyba że odstępstwo jest udokumentowane.',
-    conditionText: 'W 3 przypadkach w Q1-Q3 2026 zamówienie złożono u dostawcy spoza AVL bez zapisu odstępstwa.',
+    statement:
+      'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa (3 przypadki)',
+    requirementText:
+      'Zamówienia są składane wyłącznie u dostawców z zatwierdzonej listy (AVL), chyba że odstępstwo jest udokumentowane.',
+    conditionText:
+      'W 3 przypadkach w Q1-Q3 2026 zamówienie złożono u dostawcy spoza AVL bez zapisu odstępstwa.',
     gapText: null,
     objectiveEvidence: ['D-2 — Eksport SRM'],
     contradictingEvidence: [],
@@ -514,7 +576,7 @@ const { findings: FINDINGS, details: FINDING_DETAILS } = buildFindings();
 let criterionStore: WorkspaceCriterion = { ...CRITERION };
 let evidenceStore: WorkspaceEvidence[] = [...EVIDENCE];
 let findingsStore: WorkspaceFinding[] = [...FINDINGS];
-let findingDetailStore: Record<string, WorkspaceFindingDetail> = { ...FINDING_DETAILS };
+const findingDetailStore: Record<string, WorkspaceFindingDetail> = { ...FINDING_DETAILS };
 const aiProposals: Record<string, WorkspaceAiProposal> = {};
 let aiCounter = 0;
 
@@ -523,7 +585,11 @@ let aiCounter = 0;
 // propozycja bez źródeł nigdy nie ma aktywnego „Zastosuj").
 // ---------------------------------------------------------------------------
 
-function makeAiProposal(targetType: AiTargetType, targetId: string | null, intent: string): WorkspaceAiProposal {
+function makeAiProposal(
+  targetType: AiTargetType,
+  targetId: string | null,
+  intent: string
+): WorkspaceAiProposal {
   const id = `ai-${++aiCounter}`;
   if (intent === 'explain_criterion') {
     return {
@@ -539,12 +605,14 @@ function makeAiProposal(targetType: AiTargetType, targetId: string | null, inten
         after:
           'Kryterium wymaga, aby każde zgłoszenie od klienta zostało wprowadzone do rejestru w systemie ticketowym w ciągu jednego dnia roboczego od wpłynięcia — liczy się data/godzina UTWORZENIA rekordu w systemie, nie data odczytania zgłoszenia przez pracownika.',
       },
-      rationale: 'Wyjaśnienie oparte wyłącznie na treści procedury źródłowej — nie zawiera interpretacji wykraczającej poza dokument.',
+      rationale:
+        'Wyjaśnienie oparte wyłącznie na treści procedury źródłowej — nie zawiera interpretacji wykraczającej poza dokument.',
       confidence: 0.86,
       sources: [
         {
           id: 'src-proc-31',
-          excerpt: 'Procedura obsługi zgłoszeń, pkt 3.1: „Zgłoszenie musi zostać zarejestrowane w systemie w ciągu 1 dnia roboczego od wpłynięcia."',
+          excerpt:
+            'Procedura obsługi zgłoszeń, pkt 3.1: „Zgłoszenie musi zostać zarejestrowane w systemie w ciągu 1 dnia roboczego od wpłynięcia."',
         },
       ],
       status: 'pending',
@@ -566,12 +634,14 @@ function makeAiProposal(targetType: AiTargetType, targetId: string | null, inten
         after:
           'Zgłoszenie #REF-2291 zostało zarejestrowane w systemie dopiero trzeciego dnia roboczego od wpłynięcia (wpłynęło 2026-08-03, zarejestrowano 2026-08-06), niezgodnie z pkt 3.1 procedury obsługi zgłoszeń (rejestracja w ciągu 1 dnia roboczego).',
       },
-      rationale: 'Zaproponowano na podstawie eksportu rejestru zgłoszeń (dowód D-114) — trzy z dwunastu próbkowanych zgłoszeń przekroczyły termin jednego dnia roboczego.',
+      rationale:
+        'Zaproponowano na podstawie eksportu rejestru zgłoszeń (dowód D-114) — trzy z dwunastu próbkowanych zgłoszeń przekroczyły termin jednego dnia roboczego.',
       confidence: 0.74,
       sources: [
         {
           id: 'evid-114',
-          excerpt: 'Eksport rejestru zgłoszeń — wiersz #REF-2291: wpłynięcie 2026-08-03 09:12, rejestracja 2026-08-06 14:03.',
+          excerpt:
+            'Eksport rejestru zgłoszeń — wiersz #REF-2291: wpłynięcie 2026-08-03 09:12, rejestracja 2026-08-06 14:03.',
         },
       ],
       status: 'pending',
@@ -658,7 +728,11 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
   if (criterionDetail) {
     if (STATE === 'loading') return new Promise(() => {}); // nigdy się nie rozwiąże
     if (STATE === 'error') httpError('Serwer audytów chwilowo niedostępny (503).', 503);
-    if (STATE === 'forbidden') httpError('Nie masz dostępu do tego kryterium — nie jesteś przypisany do tego programu audytowego.', 403);
+    if (STATE === 'forbidden')
+      httpError(
+        'Nie masz dostępu do tego kryterium — nie jesteś przypisany do tego programu audytowego.',
+        403
+      );
     return envelope(toCriterionDetail());
   }
 
@@ -692,7 +766,8 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
         plannedStart: '2026-07-15',
         plannedEnd: '2026-09-30',
         updatedAt: '2026-08-21T14:32:00Z',
-        objective: 'Ocena zgodności procesu zakupowego z wewnętrzną procedurą zakupową klienta (P-ZAK-02).',
+        objective:
+          'Ocena zgodności procesu zakupowego z wewnętrzną procedurą zakupową klienta (P-ZAK-02).',
         scopeText: 'Zakład Ostrów Wlkp. — proces Zakupy i zaopatrzenie.',
         projectId: null,
         members: [],
@@ -857,7 +932,8 @@ Api.post = (async (url: string, data: any) => {
       auditeeResponse: data?.text ?? criterionStore.auditeeResponse,
       auditeeRespondedBy: CURRENT_USER_ID,
       auditeeRespondedAt: new Date().toISOString(),
-      workStatus: criterionStore.workStatus === 'open' ? 'evidence_received' : criterionStore.workStatus,
+      workStatus:
+        criterionStore.workStatus === 'open' ? 'evidence_received' : criterionStore.workStatus,
     };
     return envelope(criterionStore);
   }
@@ -967,7 +1043,12 @@ Api.post = (async (url: string, data: any) => {
       updatedAt: new Date().toISOString(),
     };
     findingsStore = [created, ...findingsStore];
-    findingDetailStore[id] = { ...created, managementResponses: [], correctiveActions: [], verifications: [] };
+    findingDetailStore[id] = {
+      ...created,
+      managementResponses: [],
+      correctiveActions: [],
+      verifications: [],
+    };
     return envelope(created);
   }
 
@@ -975,9 +1056,17 @@ Api.post = (async (url: string, data: any) => {
   if (findingReview) {
     const id = decodeURIComponent(findingReview[1]);
     const decision = data?.decision;
-    const nextStatus = decision === 'confirm' ? 'confirmed' : decision === 'send_back' ? 'draft' : 'rejected';
-    findingsStore = findingsStore.map((f) => (f.id === id ? { ...f, status: nextStatus, reviewedBy: CURRENT_USER_ID } : f));
-    if (findingDetailStore[id]) findingDetailStore[id] = { ...findingDetailStore[id], status: nextStatus, reviewedBy: CURRENT_USER_ID };
+    const nextStatus =
+      decision === 'confirm' ? 'confirmed' : decision === 'send_back' ? 'draft' : 'rejected';
+    findingsStore = findingsStore.map((f) =>
+      f.id === id ? { ...f, status: nextStatus, reviewedBy: CURRENT_USER_ID } : f
+    );
+    if (findingDetailStore[id])
+      findingDetailStore[id] = {
+        ...findingDetailStore[id],
+        status: nextStatus,
+        reviewedBy: CURRENT_USER_ID,
+      };
     return envelope(findingsStore.find((f) => f.id === id));
   }
 
@@ -1006,17 +1095,38 @@ Api.post = (async (url: string, data: any) => {
   const acceptRisk = url.match(/^\/audits\/findings\/([^/]+)\/accept-risk$/);
   if (acceptRisk) {
     const id = decodeURIComponent(acceptRisk[1]);
-    findingsStore = findingsStore.map((f) => (f.id === id ? { ...f, status: 'risk_accepted', residualRiskNote: data?.note ?? null } : f));
-    if (findingDetailStore[id]) findingDetailStore[id] = { ...findingDetailStore[id], status: 'risk_accepted', residualRiskNote: data?.note ?? null };
+    findingsStore = findingsStore.map((f) =>
+      f.id === id ? { ...f, status: 'risk_accepted', residualRiskNote: data?.note ?? null } : f
+    );
+    if (findingDetailStore[id])
+      findingDetailStore[id] = {
+        ...findingDetailStore[id],
+        status: 'risk_accepted',
+        residualRiskNote: data?.note ?? null,
+      };
     return envelope(findingsStore.find((f) => f.id === id));
   }
 
   const closeFinding = url.match(/^\/audits\/findings\/([^/]+)\/close$/);
   if (closeFinding) {
     const id = decodeURIComponent(closeFinding[1]);
-    findingsStore = findingsStore.map((f) => (f.id === id ? { ...f, status: 'closed', closedAt: new Date().toISOString(), closureNote: data?.note ?? null } : f));
+    findingsStore = findingsStore.map((f) =>
+      f.id === id
+        ? {
+            ...f,
+            status: 'closed',
+            closedAt: new Date().toISOString(),
+            closureNote: data?.note ?? null,
+          }
+        : f
+    );
     if (findingDetailStore[id])
-      findingDetailStore[id] = { ...findingDetailStore[id], status: 'closed', closedAt: new Date().toISOString(), closureNote: data?.note ?? null };
+      findingDetailStore[id] = {
+        ...findingDetailStore[id],
+        status: 'closed',
+        closedAt: new Date().toISOString(),
+        closureNote: data?.note ?? null,
+      };
     return envelope(findingsStore.find((f) => f.id === id));
   }
 
@@ -1065,7 +1175,9 @@ Api.post = (async (url: string, data: any) => {
     for (const key of Object.keys(findingDetailStore)) {
       findingDetailStore[key] = {
         ...findingDetailStore[key],
-        correctiveActions: findingDetailStore[key].correctiveActions.map((a) => (a.id === id ? { ...a, status: 'rejected' } : a)),
+        correctiveActions: findingDetailStore[key].correctiveActions.map((a) =>
+          a.id === id ? { ...a, status: 'rejected' } : a
+        ),
       };
     }
     return envelope({});
@@ -1078,7 +1190,14 @@ Api.post = (async (url: string, data: any) => {
       findingDetailStore[key] = {
         ...findingDetailStore[key],
         correctiveActions: findingDetailStore[key].correctiveActions.map((a) =>
-          a.id === id ? { ...a, status: 'implemented', implementedAt: new Date().toISOString(), implementedBy: CURRENT_USER_ID } : a
+          a.id === id
+            ? {
+                ...a,
+                status: 'implemented',
+                implementedAt: new Date().toISOString(),
+                implementedBy: CURRENT_USER_ID,
+              }
+            : a
         ),
       };
     }
@@ -1114,7 +1233,14 @@ Api.post = (async (url: string, data: any) => {
       findingDetailStore[key] = {
         ...findingDetailStore[key],
         verifications: findingDetailStore[key].verifications.map((v) =>
-          v.id === id ? { ...v, result: data?.result ?? v.result, performedAt: new Date().toISOString(), performedBy: CURRENT_USER_ID } : v
+          v.id === id
+            ? {
+                ...v,
+                result: data?.result ?? v.result,
+                performedAt: new Date().toISOString(),
+                performedBy: CURRENT_USER_ID,
+              }
+            : v
         ),
       };
     }
@@ -1165,8 +1291,10 @@ Api.patch = (async (url: string, data: any) => {
   if (assign) {
     criterionStore = {
       ...criterionStore,
-      assignedAuditorId: data?.auditorId !== undefined ? data.auditorId : criterionStore.assignedAuditorId,
-      assignedAuditeeId: data?.auditeeId !== undefined ? data.auditeeId : criterionStore.assignedAuditeeId,
+      assignedAuditorId:
+        data?.auditorId !== undefined ? data.auditorId : criterionStore.assignedAuditorId,
+      assignedAuditeeId:
+        data?.auditeeId !== undefined ? data.auditeeId : criterionStore.assignedAuditeeId,
     };
     return envelope(criterionStore);
   }
@@ -1257,7 +1385,10 @@ function AudytyWarsztatKryteriumRoutes(): React.ReactElement {
   return (
     <>
       <Routes>
-        <Route path="/audit-programs/method/:programId/criteria/:criterionId" element={<CriterionWorkspaceGate />} />
+        <Route
+          path="/audit-programs/method/:programId/criteria/:criterionId"
+          element={<CriterionWorkspaceGate />}
+        />
       </Routes>
       <AutoInteractions />
     </>
@@ -1268,7 +1399,10 @@ export function AudytyWarsztatKryteriumScreen(): React.ReactElement {
   return (
     <AppProviders>
       <FeatureFlagsProvider config={{ enableLocalOverrides: true }} showDevTools={false}>
-        <div style={{ height: '100vh', overflow: 'auto' }} data-testid="audyty-warsztat-kryterium-dev-render">
+        <div
+          style={{ height: '100vh', overflow: 'auto' }}
+          data-testid="audyty-warsztat-kryterium-dev-render"
+        >
           <AudytyWarsztatKryteriumRoutes />
         </div>
       </FeatureFlagsProvider>

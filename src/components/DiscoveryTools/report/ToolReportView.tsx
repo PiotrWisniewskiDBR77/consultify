@@ -17,11 +17,7 @@
 
 import React from 'react';
 
-import type {
-  EvidenceKind,
-  ReportBlock,
-  ToolReportDocument,
-} from '@/toolOutputs/types';
+import type { EvidenceKind, ReportBlock, ToolReportDocument } from '@/toolOutputs/types';
 
 /** Etykiety typu dowodu — hipoteza NIGDY nie udaje faktu. */
 const EVIDENCE_LABEL: Record<EvidenceKind, { pl: string; tone: string }> = {
@@ -117,7 +113,9 @@ export function BlockView({ block }: { block: ReportBlock }) {
             </div>
             <div>
               <Eyebrow>Co to znaczy</Eyebrow>
-              <p className="mt-1 text-sm leading-relaxed text-c-text-secondary">{block.k2Meaning}</p>
+              <p className="mt-1 text-sm leading-relaxed text-c-text-secondary">
+                {block.k2Meaning}
+              </p>
             </div>
             <div>
               <Eyebrow>Co robić najpierw</Eyebrow>

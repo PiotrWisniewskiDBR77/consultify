@@ -144,7 +144,12 @@ export interface ResultsRoiHandoffContext {
 
 export type ResultsOkrAdvisorMode = 'reflection_synthesis';
 
-export type OkrReflectionSynthesisDispositionHint = 'complete' | 'carry_forward' | 'drop' | 'redefine' | null;
+export type OkrReflectionSynthesisDispositionHint =
+  | 'complete'
+  | 'carry_forward'
+  | 'drop'
+  | 'redefine'
+  | null;
 
 export interface OkrReflectionSynthesisPayload {
   set_id: string;

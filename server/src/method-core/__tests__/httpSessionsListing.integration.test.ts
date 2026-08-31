@@ -57,20 +57,22 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
 
   beforeAll(async () => {
     if (!REAL_DB) {
-      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.');
+      throw new Error(
+        'Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.'
+      );
     }
 
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: CONNECTION_STRING });
 
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      ORG,
-      'S7 sessions-list test org',
-    ]);
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      OTHER_ORG,
-      'S7 sessions-list test org (other tenant)',
-    ]);
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [ORG, 'S7 sessions-list test org']
+    );
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [OTHER_ORG, 'S7 sessions-list test org (other tenant)']
+    );
     for (const [id, org] of [
       [OWNER, ORG],
       [OWNER2, ORG],
@@ -125,7 +127,9 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[OWNER, OWNER2, APPROVER, OTHER_ORG_USER]]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [
+      [OWNER, OWNER2, APPROVER, OTHER_ORG_USER],
+    ]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[ORG, OTHER_ORG]]);
     await pool.end();
   });
@@ -153,7 +157,9 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
   }
 
   async function listSessions(token: string, query: Record<string, string | number> = {}) {
-    const qs = new URLSearchParams(Object.entries(query).map(([k, v]) => [k, String(v)])).toString();
+    const qs = new URLSearchParams(
+      Object.entries(query).map(([k, v]) => [k, String(v)])
+    ).toString();
     const res = await request(app)
       .get(`/api/method/sessions${qs ? `?${qs}` : ''}`)
       .set('Authorization', `Bearer ${token}`);
@@ -214,14 +220,20 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
 
     const draftRes = await listSessions(ownerToken, { state: 'draft', limit: 100 });
     expect(draftRes.status).toBe(200);
-    expect(draftRes.body.sessions.some((s: any) => s.id === draftSession.body.session.id)).toBe(true);
+    expect(draftRes.body.sessions.some((s: any) => s.id === draftSession.body.session.id)).toBe(
+      true
+    );
     expect(draftRes.body.sessions.some((s: any) => s.id === toPrepare.body.session.id)).toBe(false);
     for (const s of draftRes.body.sessions) expect(s.state).toBe('draft');
 
     const preparedRes = await listSessions(ownerToken, { state: 'prepared', limit: 100 });
     expect(preparedRes.status).toBe(200);
-    expect(preparedRes.body.sessions.some((s: any) => s.id === toPrepare.body.session.id)).toBe(true);
-    expect(preparedRes.body.sessions.some((s: any) => s.id === draftSession.body.session.id)).toBe(false);
+    expect(preparedRes.body.sessions.some((s: any) => s.id === toPrepare.body.session.id)).toBe(
+      true
+    );
+    expect(preparedRes.body.sessions.some((s: any) => s.id === draftSession.body.session.id)).toBe(
+      false
+    );
   });
 
   it('3b. an unknown state value is refused with 400, not silently ignored', async () => {
@@ -389,7 +401,11 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
-      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
+      .send({
+        type: 'EVIDENCE_ATTACHED',
+        unitId: '1A',
+        payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+      });
     const freeze = await request(app)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
@@ -430,7 +446,11 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
       .post(`/api/method/sessions/${sessionId}/events`)
       .set('Authorization', `Bearer ${ownerToken}`)
       .set('Idempotency-Key', `evidence:${randomUUID()}`)
-      .send({ type: 'EVIDENCE_ATTACHED', unitId: '1A', payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' } });
+      .send({
+        type: 'EVIDENCE_ATTACHED',
+        unitId: '1A',
+        payload: { evidenceId: `ev-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+      });
     await request(app)
       .post(`/api/method/sessions/${sessionId}/freeze`)
       .set('Authorization', `Bearer ${approverToken}`)
@@ -453,9 +473,7 @@ describe.skipIf(!REAL_DB)('GET /api/method/sessions — real PostgreSQL', () => 
     expect(original.revisionOfSessionId).toBeNull();
     expect(original.state).toBe('frozen');
 
-    const revision = listRes.body.sessions.find(
-      (s: any) => s.revisionOfSessionId === sessionId
-    );
+    const revision = listRes.body.sessions.find((s: any) => s.revisionOfSessionId === sessionId);
     expect(revision).toBeTruthy();
     expect(revision.id).not.toBe(sessionId);
     expect(revision.state).toBe('active');

@@ -19,10 +19,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-
 import { ExceleView } from '@/components/AIChat/KimiWorkspace/ExceleView';
 import { Api } from '@/services/api';
+
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 
 /**
  * ★ HARNESS NIE WYMUSZA FLAG (zmiana 2026-08-30).
@@ -197,8 +197,7 @@ type Arkusz = {
 };
 
 const stubWlaczony =
-  typeof window === 'undefined' ||
-  new URLSearchParams(window.location.search).get('stub') !== '0';
+  typeof window === 'undefined' || new URLSearchParams(window.location.search).get('stub') !== '0';
 
 if (stubWlaczony) {
   let wersja = 0;

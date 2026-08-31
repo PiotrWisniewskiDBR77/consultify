@@ -29,13 +29,19 @@ export const KPI_SCORECARD_STATUS_LABELS: Record<
   archived: { pl: 'Zarchiwizowana', en: 'Archived' },
 };
 
-export function kpiScorecardStatusLabel(status: KpiScorecardLifecycleStatus, isPolish: boolean): string {
+export function kpiScorecardStatusLabel(
+  status: KpiScorecardLifecycleStatus,
+  isPolish: boolean
+): string {
   return isPolish ? KPI_SCORECARD_STATUS_LABELS[status].pl : KPI_SCORECARD_STATUS_LABELS[status].en;
 }
 
 export type KpiScorecardStatusTone = 'neutral' | 'info' | 'warning' | 'success' | 'danger';
 
-export const KPI_SCORECARD_STATUS_TONE: Record<KpiScorecardLifecycleStatus, KpiScorecardStatusTone> = {
+export const KPI_SCORECARD_STATUS_TONE: Record<
+  KpiScorecardLifecycleStatus,
+  KpiScorecardStatusTone
+> = {
   draft: 'info',
   active: 'success',
   suspended: 'warning',
@@ -48,14 +54,15 @@ export const KPI_SCORECARD_STATUS_TONE: Record<KpiScorecardLifecycleStatus, KpiS
 // membership/config fields, not a status machine).
 // ==========================================
 
-export const KPI_SCORECARD_SCOPE_LABELS: Record<KpiScorecardScopeType, { pl: string; en: string }> = {
-  organization: { pl: 'Organizacja', en: 'Organization' },
-  business_unit: { pl: 'Jednostka biznesowa', en: 'Business unit' },
-  team: { pl: 'Zespół', en: 'Team' },
-  process: { pl: 'Proces', en: 'Process' },
-  individual: { pl: 'Indywidualna', en: 'Individual' },
-  custom: { pl: 'Niestandardowa', en: 'Custom' },
-};
+export const KPI_SCORECARD_SCOPE_LABELS: Record<KpiScorecardScopeType, { pl: string; en: string }> =
+  {
+    organization: { pl: 'Organizacja', en: 'Organization' },
+    business_unit: { pl: 'Jednostka biznesowa', en: 'Business unit' },
+    team: { pl: 'Zespół', en: 'Team' },
+    process: { pl: 'Proces', en: 'Process' },
+    individual: { pl: 'Indywidualna', en: 'Individual' },
+    custom: { pl: 'Niestandardowa', en: 'Custom' },
+  };
 
 export function kpiScorecardScopeLabel(scope: KpiScorecardScopeType, isPolish: boolean): string {
   return isPolish ? KPI_SCORECARD_SCOPE_LABELS[scope].pl : KPI_SCORECARD_SCOPE_LABELS[scope].en;
@@ -81,13 +88,18 @@ export function kpiScorecardReviewFrequencyLabel(
     : KPI_SCORECARD_REVIEW_FREQUENCY_LABELS[frequency].en;
 }
 
-export const KPI_SCORECARD_ITEM_ROLE_LABELS: Record<KpiScorecardItemRole, { pl: string; en: string }> = {
+export const KPI_SCORECARD_ITEM_ROLE_LABELS: Record<
+  KpiScorecardItemRole,
+  { pl: string; en: string }
+> = {
   primary: { pl: 'Podstawowa', en: 'Primary' },
   supporting: { pl: 'Pomocnicza', en: 'Supporting' },
 };
 
 export function kpiScorecardItemRoleLabel(role: KpiScorecardItemRole, isPolish: boolean): string {
-  return isPolish ? KPI_SCORECARD_ITEM_ROLE_LABELS[role].pl : KPI_SCORECARD_ITEM_ROLE_LABELS[role].en;
+  return isPolish
+    ? KPI_SCORECARD_ITEM_ROLE_LABELS[role].pl
+    : KPI_SCORECARD_ITEM_ROLE_LABELS[role].en;
 }
 
 export const KPI_SCORECARD_SNAPSHOT_STATUS_LABELS: Record<
@@ -108,7 +120,10 @@ export function kpiScorecardSnapshotStatusLabel(
     : KPI_SCORECARD_SNAPSHOT_STATUS_LABELS[status].en;
 }
 
-export const KPI_SCORECARD_SNAPSHOT_STATUS_TONE: Record<KpiScorecardSnapshotStatus, KpiScorecardStatusTone> = {
+export const KPI_SCORECARD_SNAPSHOT_STATUS_TONE: Record<
+  KpiScorecardSnapshotStatus,
+  KpiScorecardStatusTone
+> = {
   draft: 'info',
   published: 'success',
   superseded: 'neutral',
@@ -170,7 +185,10 @@ export function noMembersActivationReason(isPolish: boolean): string {
 // already established by `../ResultsKpiRegistryPage.tsx` / `../roi/roiRegistryMappers.ts`.
 // ==========================================
 
-export function formatKpiScorecardDate(value: string | null | undefined, isPolish: boolean): string {
+export function formatKpiScorecardDate(
+  value: string | null | undefined,
+  isPolish: boolean
+): string {
   if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';

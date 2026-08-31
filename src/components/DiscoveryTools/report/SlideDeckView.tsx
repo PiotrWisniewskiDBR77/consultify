@@ -221,7 +221,9 @@ export const SlideDeckView: React.FC<SlideDeckViewProps> = ({
                       ? t('toolOutputs.slides.deckEyebrow', 'Executive presentation')
                       : t('toolOutputs.slides.reportEyebrow', 'Report')}
                   </div>
-                  <h1 className="text-3xl font-semibold leading-tight text-c-text">{slide.title}</h1>
+                  <h1 className="text-3xl font-semibold leading-tight text-c-text">
+                    {slide.title}
+                  </h1>
                 </div>
               ) : (
                 <div className="flex h-full flex-col gap-5 overflow-auto">

@@ -63,10 +63,11 @@ function normalizeLower(value: unknown): string {
  * unset/blank env var cannot silently disable the guard.
  */
 export function getProductionDatabaseHostFingerprints(env: NodeJS.ProcessEnv): string[] {
-  const extra = normalize(env.PRODUCTION_DB_HOST_DENYLIST_EXTRA)
-    ?.split(',')
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean) ?? [];
+  const extra =
+    normalize(env.PRODUCTION_DB_HOST_DENYLIST_EXTRA)
+      ?.split(',')
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean) ?? [];
   return [...DEFAULT_PRODUCTION_DB_HOST_FINGERPRINTS, ...extra];
 }
 
@@ -88,7 +89,9 @@ export function isKnownProductionDatabaseHost(
  * connection-string handoffs, which is exactly how the incident happened.
  */
 export function isVerifiedProductionRuntime(env: NodeJS.ProcessEnv): boolean {
-  return isRunningInsideRailway(env) && normalizeLower(env.RAILWAY_ENVIRONMENT_NAME) === 'production';
+  return (
+    isRunningInsideRailway(env) && normalizeLower(env.RAILWAY_ENVIRONMENT_NAME) === 'production'
+  );
 }
 
 /**

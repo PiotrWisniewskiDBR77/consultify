@@ -5,8 +5,8 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { Router } from 'express';
 import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
 
 import { LLMController } from '../controllers/ai/LLMController.js';
 import { verifyAdmin } from '../middleware/admin.middleware.js';

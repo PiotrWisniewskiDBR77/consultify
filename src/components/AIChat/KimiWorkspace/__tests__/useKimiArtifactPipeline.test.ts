@@ -202,18 +202,8 @@ describe('useKimiArtifactPipeline — 3-lane regression (L2.4)', () => {
       'Initiative Budget',
       'Governed materialization target for Teresa workbook generation.'
     );
-    expect(mockTablePlatform.createField).toHaveBeenNthCalledWith(
-      1,
-      'table-1',
-      'Input',
-      'text'
-    );
-    expect(mockTablePlatform.createField).toHaveBeenNthCalledWith(
-      2,
-      'table-1',
-      'Value',
-      'number'
-    );
+    expect(mockTablePlatform.createField).toHaveBeenNthCalledWith(1, 'table-1', 'Input', 'text');
+    expect(mockTablePlatform.createField).toHaveBeenNthCalledWith(2, 'table-1', 'Value', 'number');
   });
 
   for (const lane of LANES) {

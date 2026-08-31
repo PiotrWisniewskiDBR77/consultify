@@ -26,7 +26,12 @@ import {
 } from '../../../services/finance/canonical/artifactVersionService.js';
 import type { LifecycleAction } from '../../../services/finance/canonical/lifecycleService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
-import { financeV2Meta, mapOrgRoleToFinanceRole, readExpectedVersion, sendError } from './_shared.js';
+import {
+  financeV2Meta,
+  mapOrgRoleToFinanceRole,
+  readExpectedVersion,
+  sendError,
+} from './_shared.js';
 
 const router = Router();
 
@@ -132,7 +137,12 @@ router.post(
 
     const expectedVersion = readExpectedVersion(req);
     if (expectedVersion === undefined || Number.isNaN(expectedVersion)) {
-      return sendError(res, 400, 'EXPECTED_VERSION_REQUIRED', 'expectedVersion (or X-Model-Version header) is required and must be a finite number');
+      return sendError(
+        res,
+        400,
+        'EXPECTED_VERSION_REQUIRED',
+        'expectedVersion (or X-Model-Version header) is required and must be a finite number'
+      );
     }
 
     const params: TransitionParams = {
@@ -148,10 +158,16 @@ router.post(
     const result = await transition(params);
 
     if (!result.ok) {
-      return sendError(res, httpStatusForTransitionError(result.code), result.code, result.message, {
-        ...(result.currentVersion !== undefined ? { currentVersion: result.currentVersion } : {}),
-        ...(result.currentStatus !== undefined ? { currentStatus: result.currentStatus } : {}),
-      });
+      return sendError(
+        res,
+        httpStatusForTransitionError(result.code),
+        result.code,
+        result.message,
+        {
+          ...(result.currentVersion !== undefined ? { currentVersion: result.currentVersion } : {}),
+          ...(result.currentStatus !== undefined ? { currentStatus: result.currentStatus } : {}),
+        }
+      );
     }
 
     return res.status(200).json({
@@ -183,7 +199,8 @@ router.post(
     });
 
     if (!result.ok) {
-      const status = result.code === 'NOT_FOUND' ? 404 : result.code === 'INVALID_STATUS' ? 409 : 422;
+      const status =
+        result.code === 'NOT_FOUND' ? 404 : result.code === 'INVALID_STATUS' ? 409 : 422;
       return sendError(res, status, result.code, result.message, {
         ...(result.currentStatus !== undefined ? { currentStatus: result.currentStatus } : {}),
       });

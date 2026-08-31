@@ -13,11 +13,12 @@
  * ostatni test w tym pliku upadnie i powie ci o tym wprost.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import type { MethodCompileResult } from '@/method-core/contracts';
+import { METHOD_PACK_READINESS } from '@/method-core/contracts';
 import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
 import { compileSiriPack } from '@/method-core/methods/siri/compileSiriPack';
-import { METHOD_PACK_READINESS } from '@/method-core/contracts';
-import type { MethodCompileResult } from '@/method-core/contracts';
 
 const COMPILERS: ReadonlyArray<{
   readonly method: string;

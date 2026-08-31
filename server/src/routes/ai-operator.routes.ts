@@ -22,13 +22,22 @@ function getAuth(req: AuthRequest, res: Response) {
 
 const MEETING_ADMIN_ROLES = new Set(['admin', 'owner', 'superadmin']);
 
-function canReadMeetingBrief(req: AuthRequest, meeting: NonNullable<Awaited<ReturnType<typeof getMeeting>>>): boolean {
+function canReadMeetingBrief(
+  req: AuthRequest,
+  meeting: NonNullable<Awaited<ReturnType<typeof getMeeting>>>
+): boolean {
   const userId = String(req.user?.id || '').trim();
-  const email = String(req.user?.email || '').trim().toLowerCase();
-  const role = String(req.userRole || req.user?.role || '').trim().toLowerCase();
+  const email = String(req.user?.email || '')
+    .trim()
+    .toLowerCase();
+  const role = String(req.userRole || req.user?.role || '')
+    .trim()
+    .toLowerCase();
   if (MEETING_ADMIN_ROLES.has(role) || meeting.createdBy === userId) return true;
   const identities = new Set([userId.toLowerCase(), email].filter(Boolean));
-  return meeting.attendees.some((attendee) => identities.has(String(attendee).trim().toLowerCase()));
+  return meeting.attendees.some((attendee) =>
+    identities.has(String(attendee).trim().toLowerCase())
+  );
 }
 
 router.get(

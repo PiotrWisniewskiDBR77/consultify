@@ -8,9 +8,9 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 describe('Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL', () => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -62,9 +62,7 @@ describe('Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQ
   it('measures the real break between an interview finding and conclusions', async () => {
     const auth = { Authorization: `Bearer ${token}` };
 
-    const load = await request(app)
-      .get(`/api/v8/assessment/${assessmentId}/workbench`)
-      .set(auth);
+    const load = await request(app).get(`/api/v8/assessment/${assessmentId}/workbench`).set(auth);
     console.log('DAY151_HTTP_ASSESSMENT_LOAD', load.status, JSON.stringify(load.body));
     expect(load.status).toBe(200);
 
@@ -77,31 +75,51 @@ describe('Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQ
       { id: randomUUID(), kind: 'interview_note', ref: 'interview:farma', availability: 'ok' },
     ];
     state.scoreProposal = {
-      id: randomUUID(), status: 'proposal', scoreValues: { readiness: 2 },
+      id: randomUUID(),
+      status: 'proposal',
+      scoreValues: { readiness: 2 },
       scoringRationale: 'Zweryfikowane dokumentem i wywiadem',
       evidencePointerIds: state.evidencePointers.map((entry: { id: string }) => entry.id),
-      assumptions: [], confidence: 0.8, proposedAt: new Date().toISOString(), proposedBy: userId,
+      assumptions: [],
+      confidence: 0.8,
+      proposedAt: new Date().toISOString(),
+      proposedBy: userId,
     };
-    state.scoreReview = { status: 'accepted', decidedAt: new Date().toISOString(), decidedBy: userId };
+    state.scoreReview = {
+      status: 'accepted',
+      decidedAt: new Date().toISOString(),
+      decidedBy: userId,
+    };
     state.interpretationProposal = {
-      id: randomUUID(), status: 'proposal',
+      id: randomUUID(),
+      status: 'proposal',
       summary: 'Rozproszone dane spowalniają decyzje jakościowe.',
       keyFindings: ['Brak wspólnego modelu danych'],
       limits: 'Pomiar obejmuje jeden proces jakościowy.',
       nextActions: ['Ujednolicić obieg danych jakościowych'],
       linksToScoreProposalId: state.scoreProposal.id,
-      proposedAt: new Date().toISOString(), proposedBy: userId,
+      proposedAt: new Date().toISOString(),
+      proposedBy: userId,
     };
-    state.interpretationReview = { status: 'accepted', decidedAt: new Date().toISOString(), decidedBy: userId };
-    await pool.query(`UPDATE assessments SET p28_workbench_v1=$1 WHERE id=$2 AND organization_id=$3`, [
-      JSON.stringify(state), assessmentId, organizationId,
-    ]);
+    state.interpretationReview = {
+      status: 'accepted',
+      decidedAt: new Date().toISOString(),
+      decidedBy: userId,
+    };
+    await pool.query(
+      `UPDATE assessments SET p28_workbench_v1=$1 WHERE id=$2 AND organization_id=$3`,
+      [JSON.stringify(state), assessmentId, organizationId]
+    );
 
     const promotion = await request(app)
       .post(`/api/v8/assessment/${assessmentId}/workbench/promotion`)
       .set(auth)
       .send({ targetKind: 'interview_insight', payloadSummary: 'Farma DRD handoff' });
-    console.log('DAY151_HTTP_ASSESSMENT_TO_INTERVIEW', promotion.status, JSON.stringify(promotion.body));
+    console.log(
+      'DAY151_HTTP_ASSESSMENT_TO_INTERVIEW',
+      promotion.status,
+      JSON.stringify(promotion.body)
+    );
     expect(promotion.status).toBe(200);
 
     const insight = await pool.query(
@@ -121,16 +139,28 @@ describe('Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQ
         confidence_level: 'high',
         limits: 'Jeden proces jakościowy i jeden zakład.',
         next_action: 'Uruchomić pilotaż wspólnego obiegu danych.',
-        evidence_pointers: [{
-          type: 'attachment', sourceRef: 'doc:farma', sourceFingerprint: 'day151-farma',
-          capturedExcerpt: 'Czas zwolnienia serii jest wydłużony przez ręczne uzgodnienia.',
-        }],
+        evidence_pointers: [
+          {
+            type: 'attachment',
+            sourceRef: 'doc:farma',
+            sourceFingerprint: 'day151-farma',
+            capturedExcerpt: 'Czas zwolnienia serii jest wydłużony przez ręczne uzgodnienia.',
+          },
+        ],
       });
-    console.log('DAY151_HTTP_INTERVIEW_FINDING', findingResponse.status, JSON.stringify(findingResponse.body));
+    console.log(
+      'DAY151_HTTP_INTERVIEW_FINDING',
+      findingResponse.status,
+      JSON.stringify(findingResponse.body)
+    );
     expect(findingResponse.status).toBe(201);
 
     const conclusionsResponse = await request(app).get('/api/conclusions').set(auth);
-    console.log('DAY151_HTTP_INTERVIEW_TO_CONCLUSIONS', conclusionsResponse.status, JSON.stringify(conclusionsResponse.body));
+    console.log(
+      'DAY151_HTTP_INTERVIEW_TO_CONCLUSIONS',
+      conclusionsResponse.status,
+      JSON.stringify(conclusionsResponse.body)
+    );
     expect(conclusionsResponse.status).toBe(200);
     const conclusion = conclusionsResponse.body.conclusions.find(
       (entry: { sourceModule: string }) => entry.sourceModule === 'interview'
@@ -161,7 +191,11 @@ describe('Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQ
         limits: 'Jeden proces jakościowy i jeden zakład.',
         recommendedNextAction: 'Uruchomić pilotaż.',
       });
-    console.log('DAY151_HTTP_CONCLUSION_CREATE', conclusionCreated.status, JSON.stringify(conclusionCreated.body));
+    console.log(
+      'DAY151_HTTP_CONCLUSION_CREATE',
+      conclusionCreated.status,
+      JSON.stringify(conclusionCreated.body)
+    );
     expect(conclusionCreated.status).toBe(201);
 
     const seededConclusion = await pool.query(
@@ -184,7 +218,11 @@ describe('Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQ
     const converted = await request(app)
       .post(`/api/artifact-conversions/${proposed.body.conversion.id}/convert`)
       .set(auth);
-    console.log('DAY151_HTTP_CONCLUSIONS_TO_INITIATIVE', converted.status, JSON.stringify(converted.body));
+    console.log(
+      'DAY151_HTTP_CONCLUSIONS_TO_INITIATIVE',
+      converted.status,
+      JSON.stringify(converted.body)
+    );
     expect(converted.status).toBe(200);
     const initiativeId = converted.body.initiative.id;
 
@@ -203,13 +241,14 @@ describe('Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQ
     expect(classic.rows).toHaveLength(1);
     expect(runtime.rows).toHaveLength(0);
 
-    const list = await request(app)
-      .get('/api/initiatives/runtime-v1/initiatives')
-      .set(auth);
+    const list = await request(app).get('/api/initiatives/runtime-v1/initiatives').set(auth);
     console.log('DAY151_HTTP_RUNTIME_LIST', list.status, JSON.stringify(list.body));
     expect(list.status).toBe(200);
-    expect(list.body.initiatives.some((entry: { id?: string; aggregateId?: string }) =>
-      entry.id === initiativeId || entry.aggregateId === initiativeId
-    )).toBe(false);
+    expect(
+      list.body.initiatives.some(
+        (entry: { id?: string; aggregateId?: string }) =>
+          entry.id === initiativeId || entry.aggregateId === initiativeId
+      )
+    ).toBe(false);
   }, 60000);
 });

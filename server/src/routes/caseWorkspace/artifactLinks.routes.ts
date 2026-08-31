@@ -22,10 +22,10 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/artifactLinkService.js';
 import { executeGovernedCaseAction, requireCaseAccessForActor } from './_shared/access.js';
-import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
-import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 import type { CaseWorkspaceActor } from './_shared/handler.js';
+import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
+import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
 const router = Router();
 
@@ -215,10 +215,16 @@ router.delete(
     const params = parseParams(linkIdParams, req.params);
     const body = parseBody(reasonOnlyBody, req.body);
     const updated = await executeGovernedCaseAction({
-      actor, actionId: 'case.artifact.unlink', targetId: params.linkId,
+      actor,
+      actionId: 'case.artifact.unlink',
+      targetId: params.linkId,
       operation: async () => {
         await requireCaseAccessForLink(actor, params.linkId);
-        return svc.unlinkArtifactFromCase(params.linkId, { actorUserId: actor.actorUserId }, body.reason ?? null);
+        return svc.unlinkArtifactFromCase(
+          params.linkId,
+          { actorUserId: actor.actorUserId },
+          body.reason ?? null
+        );
       },
     });
     res.status(200).json({ data: updated });

@@ -20,6 +20,35 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 import { ensureRunForAction, recordAIRunEvent } from '../aiRunLedgerService.js';
 import { resolveEffectiveAccess } from '../effectiveAccessService.js';
+// KPI-E006 — the only four KPI-domain functions imported anywhere in this
+// file (literal, grep-able proof for §D of KPI_E006_TERESA_DESIGN.md):
+//   grep -nE "from '\.\./resultsVnext/kpi/" server/src/services/v8/teresaCopilotService.ts
+import {
+  createKpiDraft,
+  editDraft as editKpiDraft,
+} from '../resultsVnext/kpi/kpiDefinitionCommands.js';
+import { submitRootCause } from '../resultsVnext/kpi/kpiDeviationCommands.js';
+import { getDeviationCase } from '../resultsVnext/kpi/kpiDeviationRepository.js';
+import { getKpi, listKpis } from '../resultsVnext/kpi/kpiRepository.js';
+import { listOrganizationOkrAttention } from '../resultsVnext/okr/okrAttentionRepository.js';
+import { recordCheckIn } from '../resultsVnext/okr/okrCheckInCommands.js';
+// OKR-E008 — the only six OKR-domain functions imported anywhere in this
+// file (literal, grep-able proof for tests/resultsVnext/teresa-okr-forbidden-verbs.test.ts):
+//   grep -nE "from '\.\./resultsVnext/okr/" server/src/services/v8/teresaCopilotService.ts
+import { createObjective } from '../resultsVnext/okr/okrObjectiveCommands.js';
+import {
+  getKeyResult,
+  getObjective,
+  listObjectivesForSet,
+} from '../resultsVnext/okr/okrObjectiveRepository.js';
+import { recordOkrReflectionTeresaDraft } from '../resultsVnext/okr/okrReflectionCommands.js';
+import { getOkrSet } from '../resultsVnext/okr/okrSetRepository.js';
+import { AtomicWriteConflictError } from '../resultsVnext/platform/atomicWrite.js';
+// ROI-E008 — the only two ROI-domain functions imported anywhere in this
+// file (literal, grep-able proof for A3 of ROI_E008_DESIGN.md):
+//   grep -nE "from '\.\./resultsVnext/roi/" server/src/services/v8/teresaCopilotService.ts
+import { recordRoiPirTeresaLessonsDraft } from '../resultsVnext/roi/roiPirCommands.js';
+import { getRoiPostInvestmentReview } from '../resultsVnext/roi/roiPirRepository.js';
 import {
   applyWorkbookCommand,
   undoWorkbookCommand,
@@ -30,28 +59,6 @@ import {
   buildProposalOperationContract,
   updateOperationContractLinks,
 } from './operationContractService.js';
-// KPI-E006 — the only four KPI-domain functions imported anywhere in this
-// file (literal, grep-able proof for §D of KPI_E006_TERESA_DESIGN.md):
-//   grep -nE "from '\.\./resultsVnext/kpi/" server/src/services/v8/teresaCopilotService.ts
-import { createKpiDraft, editDraft as editKpiDraft } from '../resultsVnext/kpi/kpiDefinitionCommands.js';
-import { submitRootCause } from '../resultsVnext/kpi/kpiDeviationCommands.js';
-import { getKpi, listKpis } from '../resultsVnext/kpi/kpiRepository.js';
-import { getDeviationCase } from '../resultsVnext/kpi/kpiDeviationRepository.js';
-import { AtomicWriteConflictError } from '../resultsVnext/platform/atomicWrite.js';
-// ROI-E008 — the only two ROI-domain functions imported anywhere in this
-// file (literal, grep-able proof for A3 of ROI_E008_DESIGN.md):
-//   grep -nE "from '\.\./resultsVnext/roi/" server/src/services/v8/teresaCopilotService.ts
-import { recordRoiPirTeresaLessonsDraft } from '../resultsVnext/roi/roiPirCommands.js';
-import { getRoiPostInvestmentReview } from '../resultsVnext/roi/roiPirRepository.js';
-// OKR-E008 — the only six OKR-domain functions imported anywhere in this
-// file (literal, grep-able proof for tests/resultsVnext/teresa-okr-forbidden-verbs.test.ts):
-//   grep -nE "from '\.\./resultsVnext/okr/" server/src/services/v8/teresaCopilotService.ts
-import { createObjective } from '../resultsVnext/okr/okrObjectiveCommands.js';
-import { getObjective, listObjectivesForSet, getKeyResult } from '../resultsVnext/okr/okrObjectiveRepository.js';
-import { recordCheckIn } from '../resultsVnext/okr/okrCheckInCommands.js';
-import { listOrganizationOkrAttention } from '../resultsVnext/okr/okrAttentionRepository.js';
-import { recordOkrReflectionTeresaDraft } from '../resultsVnext/okr/okrReflectionCommands.js';
-import { getOkrSet } from '../resultsVnext/okr/okrSetRepository.js';
 import {
   type ActionEnvelopeState,
   type HandoffTargetModule,
@@ -62,8 +69,8 @@ import {
   P08_HANDOFF_TARGET_MODULES,
   resolveVoiceAvailability,
   type ResultsKpiHandoffContext,
-  type ResultsRoiHandoffContext,
   type ResultsOkrHandoffContext,
+  type ResultsRoiHandoffContext,
   type TeresaHandoffContext,
   validateHandoffContext,
   validateTargetPayload,
@@ -2245,11 +2252,29 @@ async function performHandoff(params: {
         targetPayload
       );
     case 'kpi':
-      return handleResultsKpiHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+      return handleResultsKpiHandoff(
+        proposalId,
+        organizationId,
+        userId,
+        handoffContext,
+        targetPayload
+      );
     case 'roi':
-      return handleResultsRoiHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+      return handleResultsRoiHandoff(
+        proposalId,
+        organizationId,
+        userId,
+        handoffContext,
+        targetPayload
+      );
     case 'okr':
-      return handleResultsOkrHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+      return handleResultsOkrHandoff(
+        proposalId,
+        organizationId,
+        userId,
+        handoffContext,
+        targetPayload
+      );
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -2754,9 +2779,7 @@ async function handlePresentationsHandoff(
   }
   const expectedVersionRaw = presentationContext.version_id;
   const expectedVersion =
-    expectedVersionRaw == null || expectedVersionRaw === ''
-      ? null
-      : Number(expectedVersionRaw);
+    expectedVersionRaw == null || expectedVersionRaw === '' ? null : Number(expectedVersionRaw);
   const applied = await presentationMod.applyApprovedPresentationTeresaEdit({
     deckId,
     organizationId,
@@ -2864,7 +2887,10 @@ async function handleResultsKpiHandoff(
 ): Promise<Record<string, unknown>> {
   const kpiContext = payload.kpi_handoff_context as ResultsKpiHandoffContext | undefined;
   if (!kpiContext?.advisor_mode) {
-    throw new TeresaCopilotError('kpi_handoff_context.advisor_mode missing', 'P08_KPI_INVALID_PAYLOAD');
+    throw new TeresaCopilotError(
+      'kpi_handoff_context.advisor_mode missing',
+      'P08_KPI_INVALID_PAYLOAD'
+    );
   }
   switch (kpiContext.advisor_mode) {
     case 'draft_quality_review':
@@ -2875,7 +2901,10 @@ async function handleResultsKpiHandoff(
       return handleKpiReflectionRca(proposalId, organizationId, userId, context, kpiContext);
     default: {
       const _exhaustive: never = kpiContext.advisor_mode;
-      throw new TeresaCopilotError(`Unknown KPI advisor mode: ${String(_exhaustive)}`, 'P08_KPI_UNKNOWN_MODE');
+      throw new TeresaCopilotError(
+        `Unknown KPI advisor mode: ${String(_exhaustive)}`,
+        'P08_KPI_UNKNOWN_MODE'
+      );
     }
   }
 }
@@ -2889,7 +2918,8 @@ async function handleKpiDraftQualityReview(
   kpiContext: ResultsKpiHandoffContext
 ): Promise<Record<string, unknown>> {
   const draft = kpiContext.draft_quality_review;
-  if (!draft) throw new TeresaCopilotError('draft_quality_review payload missing', 'P08_KPI_INVALID_PAYLOAD');
+  if (!draft)
+    throw new TeresaCopilotError('draft_quality_review payload missing', 'P08_KPI_INVALID_PAYLOAD');
 
   const { resource_id: kpiId } = kpiContext.target_resource;
   const { proposed } = draft;
@@ -2897,7 +2927,10 @@ async function handleKpiDraftQualityReview(
   if (kpiId === null) {
     // CREATE path.
     if (kpiContext.expected_version !== null) {
-      throw new TeresaCopilotError('expected_version must be null on create path', 'P08_KPI_INVALID_PAYLOAD');
+      throw new TeresaCopilotError(
+        'expected_version must be null on create path',
+        'P08_KPI_INVALID_PAYLOAD'
+      );
     }
     // createKpiDraft() itself resolves the active visibility policy via
     // getActiveVisibilityPolicy() and fails closed if none exists.
@@ -2947,11 +2980,17 @@ async function handleKpiDraftQualityReview(
   // EDIT path (decision #2): target_resource.resource_id is a kpi_id.
   // Resolve current_definition_version_id via getKpi() FIRST (visibility-scoped read).
   if (kpiContext.expected_version === null) {
-    throw new TeresaCopilotError('expected_version required when resource_id is set', 'P08_KPI_INVALID_PAYLOAD');
+    throw new TeresaCopilotError(
+      'expected_version required when resource_id is set',
+      'P08_KPI_INVALID_PAYLOAD'
+    );
   }
   const currentKpi = await getKpi({ userId, organizationId, kpiId });
   if (!currentKpi) {
-    throw new TeresaCopilotError('KPI not found or not visible to approving user', 'P08_KPI_VISIBILITY_STALE');
+    throw new TeresaCopilotError(
+      'KPI not found or not visible to approving user',
+      'P08_KPI_VISIBILITY_STALE'
+    );
   }
   if (currentKpi.currentDefinitionVersionId === null) {
     // Decision #1 follow-through: EditDraftInput.definitionVersionId is a
@@ -3021,7 +3060,11 @@ async function handleKpiCheckInManagerBrief(
   kpiContext: ResultsKpiHandoffContext
 ): Promise<Record<string, unknown>> {
   const brief = kpiContext.check_in_manager_brief;
-  if (!brief) throw new TeresaCopilotError('check_in_manager_brief payload missing', 'P08_KPI_INVALID_PAYLOAD');
+  if (!brief)
+    throw new TeresaCopilotError(
+      'check_in_manager_brief payload missing',
+      'P08_KPI_INVALID_PAYLOAD'
+    );
 
   // Re-resolve visibility AT EXECUTION TIME, not trusting the payload built
   // minutes earlier in chat — this is what makes it an AUDITED read.
@@ -3029,7 +3072,10 @@ async function handleKpiCheckInManagerBrief(
   const stillVisibleIds = new Set(stillVisible.map((k) => k.kpiId));
   const leaked = brief.cited_kpi_ids.filter((id) => !stillVisibleIds.has(id));
   if (leaked.length > 0) {
-    throw new TeresaCopilotError(`Cited KPI(s) no longer visible: ${leaked.join(', ')}`, 'P08_KPI_VISIBILITY_STALE');
+    throw new TeresaCopilotError(
+      `Cited KPI(s) no longer visible: ${leaked.join(', ')}`,
+      'P08_KPI_VISIBILITY_STALE'
+    );
   }
   await recordTeresaKpiHandoffResult(proposalId, organizationId, `brief:${proposalId}`);
   return {
@@ -3052,9 +3098,13 @@ async function handleKpiReflectionRca(
   kpiContext: ResultsKpiHandoffContext
 ): Promise<Record<string, unknown>> {
   const rca = kpiContext.reflection_rca;
-  if (!rca) throw new TeresaCopilotError('reflection_rca payload missing', 'P08_KPI_INVALID_PAYLOAD');
+  if (!rca)
+    throw new TeresaCopilotError('reflection_rca payload missing', 'P08_KPI_INVALID_PAYLOAD');
   if (kpiContext.expected_version === null) {
-    throw new TeresaCopilotError('expected_version required (case already exists)', 'P08_KPI_INVALID_PAYLOAD');
+    throw new TeresaCopilotError(
+      'expected_version required (case already exists)',
+      'P08_KPI_INVALID_PAYLOAD'
+    );
   }
 
   // *** SELF-APPROVAL ENFORCEMENT — no special case for Teresa. ***
@@ -3131,7 +3181,10 @@ export async function buildRoiPirLessonsAdvisorContext(params: {
   const { userId, organizationId, caseId, pirId } = params;
   const pir = await getRoiPostInvestmentReview({ userId, organizationId, caseId, pirId });
   if (!pir || pir.status !== 'draft') return null;
-  return { reviewSnapshotPayload: pir.reviewSnapshotPayload, reviewSnapshotHash: pir.reviewSnapshotHash };
+  return {
+    reviewSnapshotPayload: pir.reviewSnapshotPayload,
+    reviewSnapshotHash: pir.reviewSnapshotHash,
+  };
 }
 
 /** Shared helper wrapping the `teresa_handoff_results` insert — same shape
@@ -3159,14 +3212,20 @@ async function handleResultsRoiHandoff(
 ): Promise<Record<string, unknown>> {
   const roiContext = payload.roi_handoff_context as ResultsRoiHandoffContext | undefined;
   if (!roiContext?.advisor_mode) {
-    throw new TeresaCopilotError('roi_handoff_context.advisor_mode missing', 'P08_ROI_INVALID_PAYLOAD');
+    throw new TeresaCopilotError(
+      'roi_handoff_context.advisor_mode missing',
+      'P08_ROI_INVALID_PAYLOAD'
+    );
   }
   switch (roiContext.advisor_mode) {
     case 'pir_lessons_draft':
       return handleRoiPirLessonsDraft(proposalId, organizationId, userId, context, roiContext);
     default: {
       const _exhaustive: never = roiContext.advisor_mode;
-      throw new TeresaCopilotError(`Unknown ROI advisor mode: ${String(_exhaustive)}`, 'P08_ROI_UNKNOWN_MODE');
+      throw new TeresaCopilotError(
+        `Unknown ROI advisor mode: ${String(_exhaustive)}`,
+        'P08_ROI_UNKNOWN_MODE'
+      );
     }
   }
 }
@@ -3181,7 +3240,8 @@ async function handleRoiPirLessonsDraft(
   roiContext: ResultsRoiHandoffContext
 ): Promise<Record<string, unknown>> {
   const draft = roiContext.pir_lessons_draft;
-  if (!draft) throw new TeresaCopilotError('pir_lessons_draft payload missing', 'P08_ROI_INVALID_PAYLOAD');
+  if (!draft)
+    throw new TeresaCopilotError('pir_lessons_draft payload missing', 'P08_ROI_INVALID_PAYLOAD');
   const { resource_id: pirId } = roiContext.target_resource;
 
   // RN-G5: recordRoiPirTeresaLessonsDraft now requires an `access` context
@@ -3248,13 +3308,22 @@ async function handleResultsOkrHandoff(
 ): Promise<Record<string, unknown>> {
   const okrContext = payload.okr_handoff_context as ResultsOkrHandoffContext | undefined;
   if (!okrContext?.advisor_mode) {
-    throw new TeresaCopilotError('okr_handoff_context.advisor_mode missing', 'P08_OKR_INVALID_PAYLOAD');
+    throw new TeresaCopilotError(
+      'okr_handoff_context.advisor_mode missing',
+      'P08_OKR_INVALID_PAYLOAD'
+    );
   }
   switch (okrContext.advisor_mode) {
     case 'objective_draft':
       return handleOkrObjectiveDraft(proposalId, organizationId, userId, context, okrContext);
     case 'objective_quality_review':
-      return handleOkrObjectiveQualityReview(proposalId, organizationId, userId, context, okrContext);
+      return handleOkrObjectiveQualityReview(
+        proposalId,
+        organizationId,
+        userId,
+        context,
+        okrContext
+      );
     case 'check_in_assist':
       return handleOkrCheckInAssist(proposalId, organizationId, userId, context, okrContext);
     case 'manager_brief':
@@ -3263,7 +3332,10 @@ async function handleResultsOkrHandoff(
       return handleOkrReflectionSynthesis(proposalId, organizationId, userId, context, okrContext);
     default: {
       const _exhaustive: never = okrContext.advisor_mode;
-      throw new TeresaCopilotError(`Unknown OKR advisor mode: ${String(_exhaustive)}`, 'P08_OKR_UNKNOWN_MODE');
+      throw new TeresaCopilotError(
+        `Unknown OKR advisor mode: ${String(_exhaustive)}`,
+        'P08_OKR_UNKNOWN_MODE'
+      );
     }
   }
 }
@@ -3281,15 +3353,22 @@ async function handleOkrObjectiveDraft(
   okrContext: ResultsOkrHandoffContext
 ): Promise<Record<string, unknown>> {
   const draft = okrContext.objective_draft;
-  if (!draft) throw new TeresaCopilotError('objective_draft payload missing', 'P08_OKR_INVALID_PAYLOAD');
+  if (!draft)
+    throw new TeresaCopilotError('objective_draft payload missing', 'P08_OKR_INVALID_PAYLOAD');
   if (okrContext.expected_version !== null) {
-    throw new TeresaCopilotError('expected_version must be null on objective_draft\'s create path', 'P08_OKR_INVALID_PAYLOAD');
+    throw new TeresaCopilotError(
+      "expected_version must be null on objective_draft's create path",
+      'P08_OKR_INVALID_PAYLOAD'
+    );
   }
   const { proposed } = draft;
 
   const set = await getOkrSet({ userId, organizationId, setId: proposed.setId });
   if (!set) {
-    throw new TeresaCopilotError('OKR Set not found or not visible to approving user', 'P08_OKR_VISIBILITY_STALE');
+    throw new TeresaCopilotError(
+      'OKR Set not found or not visible to approving user',
+      'P08_OKR_VISIBILITY_STALE'
+    );
   }
 
   // RN-G5: createObjective now requires an `access` context (gated on the
@@ -3341,11 +3420,22 @@ async function handleOkrObjectiveQualityReview(
   okrContext: ResultsOkrHandoffContext
 ): Promise<Record<string, unknown>> {
   const review = okrContext.objective_quality_review;
-  if (!review) throw new TeresaCopilotError('objective_quality_review payload missing', 'P08_OKR_INVALID_PAYLOAD');
+  if (!review)
+    throw new TeresaCopilotError(
+      'objective_quality_review payload missing',
+      'P08_OKR_INVALID_PAYLOAD'
+    );
 
-  const objective = await getObjective({ userId, organizationId, objectiveId: review.objective_id });
+  const objective = await getObjective({
+    userId,
+    organizationId,
+    objectiveId: review.objective_id,
+  });
   if (!objective) {
-    throw new TeresaCopilotError('OKR Objective not found or not visible to approving user', 'P08_OKR_VISIBILITY_STALE');
+    throw new TeresaCopilotError(
+      'OKR Objective not found or not visible to approving user',
+      'P08_OKR_VISIBILITY_STALE'
+    );
   }
   const siblings = await listObjectivesForSet({ userId, organizationId, setId: objective.setId });
   const visibleSiblingIds = new Set(siblings.map((o) => o.objectiveId));
@@ -3353,9 +3443,16 @@ async function handleOkrObjectiveQualityReview(
     (id) => !visibleSiblingIds.has(id)
   );
   if (leaked.length > 0) {
-    throw new TeresaCopilotError(`Cited candidate Objective(s) no longer visible: ${leaked.join(', ')}`, 'P08_OKR_VISIBILITY_STALE');
+    throw new TeresaCopilotError(
+      `Cited candidate Objective(s) no longer visible: ${leaked.join(', ')}`,
+      'P08_OKR_VISIBILITY_STALE'
+    );
   }
-  await recordTeresaOkrHandoffResult(proposalId, organizationId, `quality_review:${review.objective_id}`);
+  await recordTeresaOkrHandoffResult(
+    proposalId,
+    organizationId,
+    `quality_review:${review.objective_id}`
+  );
   return {
     handoff: 'okr',
     advisor_mode: 'objective_quality_review',
@@ -3380,15 +3477,22 @@ async function handleOkrCheckInAssist(
   okrContext: ResultsOkrHandoffContext
 ): Promise<Record<string, unknown>> {
   const assist = okrContext.check_in_assist;
-  if (!assist) throw new TeresaCopilotError('check_in_assist payload missing', 'P08_OKR_INVALID_PAYLOAD');
+  if (!assist)
+    throw new TeresaCopilotError('check_in_assist payload missing', 'P08_OKR_INVALID_PAYLOAD');
   const { resource_id: keyResultId } = okrContext.target_resource;
   if (!keyResultId) {
-    throw new TeresaCopilotError('target_resource.resource_id (key_result_id) required for check_in_assist', 'P08_OKR_INVALID_PAYLOAD');
+    throw new TeresaCopilotError(
+      'target_resource.resource_id (key_result_id) required for check_in_assist',
+      'P08_OKR_INVALID_PAYLOAD'
+    );
   }
 
   const existing = await getKeyResult({ userId, organizationId, keyResultId });
   if (!existing) {
-    throw new TeresaCopilotError('OKR KeyResult not found or not visible to approving user', 'P08_OKR_VISIBILITY_STALE');
+    throw new TeresaCopilotError(
+      'OKR KeyResult not found or not visible to approving user',
+      'P08_OKR_VISIBILITY_STALE'
+    );
   }
 
   // RN-G5: recordCheckIn now requires an `access` context — resolved for
@@ -3442,7 +3546,8 @@ async function handleOkrManagerBrief(
   okrContext: ResultsOkrHandoffContext
 ): Promise<Record<string, unknown>> {
   const brief = okrContext.manager_brief;
-  if (!brief) throw new TeresaCopilotError('manager_brief payload missing', 'P08_OKR_INVALID_PAYLOAD');
+  if (!brief)
+    throw new TeresaCopilotError('manager_brief payload missing', 'P08_OKR_INVALID_PAYLOAD');
 
   const attention = await listOrganizationOkrAttention({ managerId: userId, organizationId });
   const stillVisibleSetIds = new Set<string>([
@@ -3487,7 +3592,8 @@ async function handleOkrReflectionSynthesis(
   okrContext: ResultsOkrHandoffContext
 ): Promise<Record<string, unknown>> {
   const synthesis = okrContext.reflection_synthesis;
-  if (!synthesis) throw new TeresaCopilotError('reflection_synthesis payload missing', 'P08_OKR_INVALID_PAYLOAD');
+  if (!synthesis)
+    throw new TeresaCopilotError('reflection_synthesis payload missing', 'P08_OKR_INVALID_PAYLOAD');
   if (okrContext.expected_version === null) {
     throw new TeresaCopilotError(
       'expected_version required for reflection_synthesis (0 = no draft yet, >=1 = CAS existing draft)',

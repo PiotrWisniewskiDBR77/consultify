@@ -103,20 +103,22 @@ import {
   listEffectivenessVerifications,
 } from '../../services/resultsVnext/kpi/kpiDeviationRepository.js';
 import {
+  CORRECTIVE_ACTION_STATUSES,
+  type CorrectiveActionRow,
+} from '../../services/resultsVnext/kpi/kpiDeviationTypes.js';
+import {
   createRecoveryCard,
   getRecoveryCardByCase,
 } from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
-import { CORRECTIVE_ACTION_STATUSES, type CorrectiveActionRow } from '../../services/resultsVnext/kpi/kpiDeviationTypes.js';
 import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
 import {
-  CommandCapabilityDeniedError,
   type CommandAccessContext,
+  CommandCapabilityDeniedError,
 } from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
-import { getCorrelationId } from './correlationId.js';
 import logger from '../../utils/Logger.js';
 import {
   AddCorrectiveActionSchema,
@@ -131,6 +133,7 @@ import {
   SubmitRootCauseSchema,
   UpdateCorrectiveActionSchema,
 } from '../../validators/resultsVnextKpiDeviation.validators.js';
+import { getCorrelationId } from './correlationId.js';
 
 // ==========================================
 // RN-G6-SRV / B3 — route-local query schemas for the two new read
@@ -204,7 +207,10 @@ function requireAuth(req: AuthenticatedRequest, res: Response): RouteAuth | null
  * `'*'` apply; see RN_G5_AUTHZ_DESIGN.md for the known limitation this
  * implies for explicit per-member capability grants in this domain.
  */
-async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+async function resolveAccess(
+  req: AuthenticatedRequest,
+  auth: RouteAuth
+): Promise<CommandAccessContext> {
   return resolveEffectiveAccess({
     userId: auth.userId,
     organizationId: auth.organizationId,
@@ -236,7 +242,9 @@ function handleDeviationRouteError(res: Response, err: unknown, op: string): voi
   if (err instanceof CommandCapabilityDeniedError) {
     // RN-G5 fix: same rationale as kpi.routes.ts's identical branch —
     // `details.capability` is server-side-log-only, never wire.
-    logger.warn(`[resultsVnext/kpiDeviation.routes] ${op} denied`, { capability: err.details.capability });
+    logger.warn(`[resultsVnext/kpiDeviation.routes] ${op} denied`, {
+      capability: err.details.capability,
+    });
     res.status(403).json({ error: err.message, code: err.code });
     return;
   }
@@ -296,7 +304,9 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const query = req.query as unknown as import('zod').infer<typeof ListDeviationCasesQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListDeviationCasesQuerySchema
+      >;
       const cases = await listDeviationCases({
         userId: auth.userId,
         organizationId: auth.organizationId,
@@ -548,7 +558,9 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const query = req.query as unknown as import('zod').infer<typeof ListCorrectiveActionsQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListCorrectiveActionsQuerySchema
+      >;
       // No separate "case not found" 404 here, matching this file's own
       // `listDeviationCases`/`listScorecardItems`-style precedent: the
       // repository call is visibility-scoped by the same `resourceType:
@@ -803,7 +815,9 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
-      const query = req.query as unknown as import('zod').infer<typeof ListEffectivenessVerificationsQuerySchema>;
+      const query = req.query as unknown as import('zod').infer<
+        typeof ListEffectivenessVerificationsQuerySchema
+      >;
       // Same D06 posture as listCorrectiveActions above — visibility-scoped
       // by the repository, no separate case-existence check here.
       const verifications = await listEffectivenessVerifications({

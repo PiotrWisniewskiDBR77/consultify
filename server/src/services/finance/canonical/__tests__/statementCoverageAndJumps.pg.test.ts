@@ -40,7 +40,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -109,21 +111,31 @@ const RAW_MAP: Record<string, { st: 'BS' | 'P&L' | 'CF'; code: string }> = {
   'fsl-cf-net-change-cash': { st: 'CF', code: 'NET_CHANGE_CASH' },
 };
 
-function loadYearIndex(): Record<Year, Map<string, { value: number; label: string; statementType: 'BS' | 'P&L' | 'CF' }>> {
+function loadYearIndex(): Record<
+  Year,
+  Map<string, { value: number; label: string; statementType: 'BS' | 'P&L' | 'CF' }>
+> {
   if (!fs.existsSync(SOURCE_JSON)) {
     throw new Error(
       `Real-company evidence missing: ${SOURCE_JSON}. This suite must never silently skip — that is the false green it exists to prevent.`
     );
   }
   const source = JSON.parse(fs.readFileSync(SOURCE_JSON, 'utf8')) as { documents: SrcDoc[] };
-  const out = {} as Record<Year, Map<string, { value: number; label: string; statementType: 'BS' | 'P&L' | 'CF' }>>;
+  const out = {} as Record<
+    Year,
+    Map<string, { value: number; label: string; statementType: 'BS' | 'P&L' | 'CF' }>
+  >;
   for (const y of YEARS) {
     const doc = source.documents.find((d) => d.label === GROUP_DOC_BY_YEAR[y]);
     if (!doc) throw new Error(`source document not found: ${GROUP_DOC_BY_YEAR[y]}`);
-    const m = new Map<string, { value: number; label: string; statementType: 'BS' | 'P&L' | 'CF' }>();
+    const m = new Map<
+      string,
+      { value: number; label: string; statementType: 'BS' | 'P&L' | 'CF' }
+    >();
     for (const st of doc.statements) {
       for (const l of st.lines) {
-        if (!m.has(l.canonicalId)) m.set(l.canonicalId, { value: l.value, label: l.label, statementType: st.statementType });
+        if (!m.has(l.canonicalId))
+          m.set(l.canonicalId, { value: l.value, label: l.label, statementType: st.statementType });
       }
     }
     out[y] = m;
@@ -154,7 +166,13 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
         `INSERT INTO finance_stmt_entities (organization_id, business_version_id, entity_code, legal_name, role,
            consolidation_method, ownership_pct, functional_currency, created_by)
          VALUES (?, ?, ?, ?, 'GROUP_PARENT', 'FULL', 100, 'PLN', ?)`,
-        [orgId, a.businessVersion.business_version_id, entityCode, 'Apator SA (grupa kapitalowa)', preparerId]
+        [
+          orgId,
+          a.businessVersion.business_version_id,
+          entityCode,
+          'Apator SA (grupa kapitalowa)',
+          preparerId,
+        ]
       )
     );
     return a;
@@ -223,7 +241,10 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
     statementReconciliationService = await import('../statementReconciliationService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'Grupa Apator SA (RC-01/RC-05 regression)'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'Grupa Apator SA (RC-01/RC-05 regression)',
+      ])
     );
     const cal = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -239,7 +260,16 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
           `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year,
              period_start, period_end, label, previous_period_id, created_by)
            VALUES (?, ?, 'FY', ?, ?, ?, ?, ?, ?) RETURNING period_id`,
-          [orgId, cal!.fiscal_calendar_id, y, `${y}-01-01`, `${y}-12-31`, `FY${y}`, prev, preparerId]
+          [
+            orgId,
+            cal!.fiscal_calendar_id,
+            y,
+            `${y}-01-01`,
+            `${y}-12-31`,
+            `FY${y}`,
+            prev,
+            preparerId,
+          ]
         )
       );
       periodByYear[y] = row!.period_id;
@@ -308,15 +338,24 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
       expect(cov.sourceValueCoveragePct).not.toBeNull();
       expect(cov.sourceValueCoveragePct!).toBeGreaterThan(0);
       expect(cov.sourceValueCoveragePct!).toBeLessThan(1);
-      expect(cov.coverageLossSharePct).toBeGreaterThan(statementReconciliationService.PROVISIONAL_MATERIALITY_THRESHOLD_PCT);
+      expect(cov.coverageLossSharePct).toBeGreaterThan(
+        statementReconciliationService.PROVISIONAL_MATERIALITY_THRESHOLD_PCT
+      );
 
       // A real exception in the append-only ledger, with the coverage numbers as evidence.
       expect(result.coverageException).not.toBeNull();
-      expect(result.coverageException?.reason_code).toBe('RECONCILIATION_SOURCE_COVERAGE_INCOMPLETE');
+      expect(result.coverageException?.reason_code).toBe(
+        'RECONCILIATION_SOURCE_COVERAGE_INCOMPLETE'
+      );
       expect(result.coverageException?.severity).toBe('CRITICAL_DATA');
 
       const dbRun = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ status: string; result_quality: string | null; source_value_coverage_pct: string | null; coverage_exception_id: string | null }>(
+        tx.queryOne<{
+          status: string;
+          result_quality: string | null;
+          source_value_coverage_pct: string | null;
+          coverage_exception_id: string | null;
+        }>(
           `SELECT status, result_quality, source_value_coverage_pct, coverage_exception_id
              FROM finance_reconciliation_runs WHERE id = ?`,
           [result.run.id]
@@ -335,7 +374,10 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
       );
       expect(dbException?.severity).toBe('CRITICAL_DATA');
       expect(dbException?.state).toBe('OPEN');
-      const evidence = typeof dbException?.evidence === 'string' ? JSON.parse(dbException.evidence) : dbException?.evidence;
+      const evidence =
+        typeof dbException?.evidence === 'string'
+          ? JSON.parse(dbException.evidence)
+          : dbException?.evidence;
       expect(evidence.coverage.coverageLossRowCount).toBe(212);
       expect(evidence.coverage.mappedRowCount).toBe(68);
 
@@ -378,7 +420,9 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
       expect(result.run.status).not.toBe('CLEAN');
       expect(result.resultQuality).toBe('PROVISIONAL');
       expect(result.totals.coverage.coverageLossRowCount).toBe(212);
-      expect(result.coverageException?.reason_code).toBe('RECONCILIATION_SOURCE_COVERAGE_INCOMPLETE');
+      expect(result.coverageException?.reason_code).toBe(
+        'RECONCILIATION_SOURCE_COVERAGE_INCOMPLETE'
+      );
     });
 
     it('does not over-fire: a fully mapped pack plus a genuine analyst exclusion is still CLEAN', async () => {
@@ -387,7 +431,11 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
 
       const rules = [
         { sourceLabel: 'Total assets', statementType: 'BS' as const, lineCode: 'TOTAL_ASSETS' },
-        { sourceLabel: 'Total liabilities and equity', statementType: 'BS' as const, lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+        {
+          sourceLabel: 'Total liabilities and equity',
+          statementType: 'BS' as const,
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+        },
         {
           sourceLabel: 'One-time non-recurring gain',
           statementType: 'P&L' as const,
@@ -397,9 +445,30 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
         },
       ];
       const rawLines = [
-        { lineItem: 'Total assets', periodId: periodByYear[2024], entityCode: 'CLEANPACK', currency: 'PLN', value: 1_000_000, sourceRef: {} },
-        { lineItem: 'Total liabilities and equity', periodId: periodByYear[2024], entityCode: 'CLEANPACK', currency: 'PLN', value: 1_000_000, sourceRef: {} },
-        { lineItem: 'One-time non-recurring gain', periodId: periodByYear[2024], entityCode: 'CLEANPACK', currency: 'PLN', value: 75_000, sourceRef: {} },
+        {
+          lineItem: 'Total assets',
+          periodId: periodByYear[2024],
+          entityCode: 'CLEANPACK',
+          currency: 'PLN',
+          value: 1_000_000,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'Total liabilities and equity',
+          periodId: periodByYear[2024],
+          entityCode: 'CLEANPACK',
+          currency: 'PLN',
+          value: 1_000_000,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'One-time non-recurring gain',
+          periodId: periodByYear[2024],
+          entityCode: 'CLEANPACK',
+          currency: 'PLN',
+          value: 75_000,
+          sourceRef: {},
+        },
       ];
 
       const mapped = await statementMappingService.mapStatementLines({
@@ -451,16 +520,66 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
         { sourceLabel: 'AP 2024', statementType: 'BS' as const, lineCode: 'AP' },
         { sourceLabel: 'TA 2023', statementType: 'BS' as const, lineCode: 'TOTAL_ASSETS' },
         { sourceLabel: 'TA 2024', statementType: 'BS' as const, lineCode: 'TOTAL_ASSETS' },
-        { sourceLabel: 'TLE 2023', statementType: 'BS' as const, lineCode: 'TOTAL_LIABILITIES_EQUITY' },
-        { sourceLabel: 'TLE 2024', statementType: 'BS' as const, lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+        {
+          sourceLabel: 'TLE 2023',
+          statementType: 'BS' as const,
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+        },
+        {
+          sourceLabel: 'TLE 2024',
+          statementType: 'BS' as const,
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+        },
       ];
       const rawLines = [
-        { lineItem: 'AP 2023', periodId: periodByYear[2023], entityCode: 'JUMP', currency: 'PLN', value: ap2023, sourceRef: { canonicalId: 'fsl-bs-ap' } },
-        { lineItem: 'AP 2024', periodId: periodByYear[2024], entityCode: 'JUMP', currency: 'PLN', value: ap2024, sourceRef: { canonicalId: 'fsl-bs-ap' } },
-        { lineItem: 'TA 2023', periodId: periodByYear[2023], entityCode: 'JUMP', currency: 'PLN', value: ta2023, sourceRef: {} },
-        { lineItem: 'TA 2024', periodId: periodByYear[2024], entityCode: 'JUMP', currency: 'PLN', value: ta2024, sourceRef: {} },
-        { lineItem: 'TLE 2023', periodId: periodByYear[2023], entityCode: 'JUMP', currency: 'PLN', value: tle2023, sourceRef: {} },
-        { lineItem: 'TLE 2024', periodId: periodByYear[2024], entityCode: 'JUMP', currency: 'PLN', value: tle2024, sourceRef: {} },
+        {
+          lineItem: 'AP 2023',
+          periodId: periodByYear[2023],
+          entityCode: 'JUMP',
+          currency: 'PLN',
+          value: ap2023,
+          sourceRef: { canonicalId: 'fsl-bs-ap' },
+        },
+        {
+          lineItem: 'AP 2024',
+          periodId: periodByYear[2024],
+          entityCode: 'JUMP',
+          currency: 'PLN',
+          value: ap2024,
+          sourceRef: { canonicalId: 'fsl-bs-ap' },
+        },
+        {
+          lineItem: 'TA 2023',
+          periodId: periodByYear[2023],
+          entityCode: 'JUMP',
+          currency: 'PLN',
+          value: ta2023,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'TA 2024',
+          periodId: periodByYear[2024],
+          entityCode: 'JUMP',
+          currency: 'PLN',
+          value: ta2024,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'TLE 2023',
+          periodId: periodByYear[2023],
+          entityCode: 'JUMP',
+          currency: 'PLN',
+          value: tle2023,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'TLE 2024',
+          periodId: periodByYear[2024],
+          entityCode: 'JUMP',
+          currency: 'PLN',
+          value: tle2024,
+          sourceRef: {},
+        },
       ];
 
       const mapped = await statementMappingService.mapStatementLines({
@@ -500,7 +619,8 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
 
       // A real WARNING row in the append-only ledger.
       const apException = result.periodJumpExceptions.find((e) => {
-        const ref = typeof e.source_ref === 'string' ? JSON.parse(e.source_ref) : (e.source_ref as any);
+        const ref =
+          typeof e.source_ref === 'string' ? JSON.parse(e.source_ref) : (e.source_ref as any);
         return ref?.lineCode === 'AP';
       });
       expect(apException).toBeDefined();
@@ -525,7 +645,10 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
       expect(result.run.status).not.toBe('EXCEEDS_MATERIALITY');
 
       const readiness = await withPinnedPostgresTransaction((tx) =>
-        tx.queryAll<{ check_name: string; passed: boolean }>(`SELECT * FROM finance_stmt_readiness_check(?)`, [bvId])
+        tx.queryAll<{ check_name: string; passed: boolean }>(
+          `SELECT * FROM finance_stmt_readiness_check(?)`,
+          [bvId]
+        )
       );
       const byName = new Map(readiness.map((c) => [c.check_name, c.passed]));
       expect(byName.get('RECONCILIATION_RESIDUAL_WITHIN_TOLERANCE')).toBe(true);
@@ -540,16 +663,66 @@ describe.skipIf(!REAL_PG)('BUGFIX RC-01 / RC-05 — real Apator data, real Postg
         { sourceLabel: 'AP 2024', statementType: 'BS' as const, lineCode: 'AP' },
         { sourceLabel: 'TA 2023', statementType: 'BS' as const, lineCode: 'TOTAL_ASSETS' },
         { sourceLabel: 'TA 2024', statementType: 'BS' as const, lineCode: 'TOTAL_ASSETS' },
-        { sourceLabel: 'TLE 2023', statementType: 'BS' as const, lineCode: 'TOTAL_LIABILITIES_EQUITY' },
-        { sourceLabel: 'TLE 2024', statementType: 'BS' as const, lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+        {
+          sourceLabel: 'TLE 2023',
+          statementType: 'BS' as const,
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+        },
+        {
+          sourceLabel: 'TLE 2024',
+          statementType: 'BS' as const,
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+        },
       ];
       const rawLines = [
-        { lineItem: 'AP 2023', periodId: periodByYear[2023], entityCode: 'JUMP2', currency: 'PLN', value: 93_591, sourceRef: {} },
-        { lineItem: 'AP 2024', periodId: periodByYear[2024], entityCode: 'JUMP2', currency: 'PLN', value: 722, sourceRef: {} },
-        { lineItem: 'TA 2023', periodId: periodByYear[2023], entityCode: 'JUMP2', currency: 'PLN', value: IDX[2023].get('fsl-bs-total-assets')!.value, sourceRef: {} },
-        { lineItem: 'TA 2024', periodId: periodByYear[2024], entityCode: 'JUMP2', currency: 'PLN', value: IDX[2024].get('fsl-bs-total-assets')!.value, sourceRef: {} },
-        { lineItem: 'TLE 2023', periodId: periodByYear[2023], entityCode: 'JUMP2', currency: 'PLN', value: IDX[2023].get('fsl-bs-total-liabilities-equity')!.value, sourceRef: {} },
-        { lineItem: 'TLE 2024', periodId: periodByYear[2024], entityCode: 'JUMP2', currency: 'PLN', value: IDX[2024].get('fsl-bs-total-liabilities-equity')!.value, sourceRef: {} },
+        {
+          lineItem: 'AP 2023',
+          periodId: periodByYear[2023],
+          entityCode: 'JUMP2',
+          currency: 'PLN',
+          value: 93_591,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'AP 2024',
+          periodId: periodByYear[2024],
+          entityCode: 'JUMP2',
+          currency: 'PLN',
+          value: 722,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'TA 2023',
+          periodId: periodByYear[2023],
+          entityCode: 'JUMP2',
+          currency: 'PLN',
+          value: IDX[2023].get('fsl-bs-total-assets')!.value,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'TA 2024',
+          periodId: periodByYear[2024],
+          entityCode: 'JUMP2',
+          currency: 'PLN',
+          value: IDX[2024].get('fsl-bs-total-assets')!.value,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'TLE 2023',
+          periodId: periodByYear[2023],
+          entityCode: 'JUMP2',
+          currency: 'PLN',
+          value: IDX[2023].get('fsl-bs-total-liabilities-equity')!.value,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'TLE 2024',
+          periodId: periodByYear[2024],
+          entityCode: 'JUMP2',
+          currency: 'PLN',
+          value: IDX[2024].get('fsl-bs-total-liabilities-equity')!.value,
+          sourceRef: {},
+        },
       ];
       const mapped = await statementMappingService.mapStatementLines({
         organizationId: orgId,

@@ -1588,7 +1588,7 @@ export async function approveTemplateProvenance(params: {
 
     const lifecycleApproval =
       registry === 'presentation_templates'
-        ? ', lifecycle_state = \'approved\', approved_at = CURRENT_TIMESTAMP, approved_by = ?'
+        ? ", lifecycle_state = 'approved', approved_at = CURRENT_TIMESTAMP, approved_by = ?"
         : '';
     const updated = await client.query(
       `UPDATE ${registry}

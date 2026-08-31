@@ -497,7 +497,11 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
       // `updateSavedView`/`deleteSavedView` bezpośrednio, nietknięte tym
       // wpisem. Te trzy gałęzie istnieją, żeby ta sama, realna mutacja była
       // osiągalna też z czatu.
-      if (action === 'tbl_view_rename' || action === 'tbl_view_update' || action === 'tbl_view_delete') {
+      if (
+        action === 'tbl_view_rename' ||
+        action === 'tbl_view_update' ||
+        action === 'tbl_view_delete'
+      ) {
         const viewId = typeof detail?.viewId === 'string' ? detail.viewId : undefined;
         // Uczciwa reakcja zamiast cichego no-opu, gdy Teresa poda nieistniejące
         // (lub już usunięte) `viewId` — `updateSavedView`/`deleteSavedView`
@@ -523,7 +527,11 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
             filters,
             groupBy: groupBy ?? undefined,
             layout: viewLayout,
-            columns: columns.map((c) => ({ key: c.key, visible: c.visible !== false, width: c.width })),
+            columns: columns.map((c) => ({
+              key: c.key,
+              visible: c.visible !== false,
+              width: c.width,
+            })),
           });
           toast.success(i18n.t('ideas.table.viewUpdated', 'View updated'));
           return;
@@ -681,9 +689,7 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
         const rowId = typeof detail?.rowId === 'string' ? detail.rowId : undefined;
         const colKey = typeof detail?.colKey === 'string' ? detail.colKey : undefined;
         if (!rowId || !colKey) {
-          toast.error(
-            i18n.t('ideas.table.quickActions.cellTargetMissing', 'Missing cell target')
-          );
+          toast.error(i18n.t('ideas.table.quickActions.cellTargetMissing', 'Missing cell target'));
           return;
         }
         if (locked) {

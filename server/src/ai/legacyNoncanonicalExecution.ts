@@ -2,9 +2,15 @@ import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const EXPLICIT_CANONICAL_KEYS = new Set([
-  'canonicalrunid', 'canonicalrun', 'canonicalrunref', 'agentcanonicalrunid',
-  'transformationcaseid', 'transformationcase', 'transformationcaseref',
-  'executionrunid', 'canonicalexecutionrunid',
+  'canonicalrunid',
+  'canonicalrun',
+  'canonicalrunref',
+  'agentcanonicalrunid',
+  'transformationcaseid',
+  'transformationcase',
+  'transformationcaseref',
+  'executionrunid',
+  'canonicalexecutionrunid',
 ]);
 const RUN_KEYS = new Set(['runid', 'playbookid']);
 
@@ -12,7 +18,12 @@ function normalizeIdentityKey(key: string): string {
   return key.toLocaleLowerCase('en-US').replace(/[^a-z0-9]/g, '');
 }
 
-function valuesFor(input: unknown, keys: ReadonlySet<string>, depth = 0, seen = new WeakSet<object>()): string[] {
+function valuesFor(
+  input: unknown,
+  keys: ReadonlySet<string>,
+  depth = 0,
+  seen = new WeakSet<object>()
+): string[] {
   if (!input || typeof input !== 'object' || depth > 5 || seen.has(input)) return [];
   seen.add(input);
   if (Array.isArray(input)) {
@@ -29,7 +40,12 @@ function valuesFor(input: unknown, keys: ReadonlySet<string>, depth = 0, seen = 
 }
 
 export async function assertLegacyNoncanonicalExecution(input: {
-  entrypoint: 'playbook_executor' | 'action_execution_adapter' | 'async_job_service' | 'async_job_processor' | 'ai_playbook_executor';
+  entrypoint:
+    | 'playbook_executor'
+    | 'action_execution_adapter'
+    | 'async_job_service'
+    | 'async_job_processor'
+    | 'ai_playbook_executor';
   organizationId?: string | null;
   entityId?: string | null;
   payloads: unknown[];
@@ -37,10 +53,14 @@ export async function assertLegacyNoncanonicalExecution(input: {
   const explicit = input.payloads.flatMap((payload) => valuesFor(payload, EXPLICIT_CANONICAL_KEYS));
   if (explicit.length > 0) throw new Error('legacy_noncanonical_canonical_identity_forbidden');
 
-  const candidates = Array.from(new Set([
-    String(input.entityId ?? '').trim(),
-    ...input.payloads.flatMap((payload) => valuesFor(payload, RUN_KEYS)),
-  ].filter(Boolean)));
+  const candidates = Array.from(
+    new Set(
+      [
+        String(input.entityId ?? '').trim(),
+        ...input.payloads.flatMap((payload) => valuesFor(payload, RUN_KEYS)),
+      ].filter(Boolean)
+    )
+  );
   if (candidates.length > 0 && input.organizationId) {
     const placeholders = candidates.map(() => '?').join(',');
     try {
@@ -51,11 +71,17 @@ export async function assertLegacyNoncanonicalExecution(input: {
       );
       if (identity) throw new Error('legacy_noncanonical_canonical_identity_forbidden');
     } catch (error) {
-      if (error instanceof Error && error.message === 'legacy_noncanonical_canonical_identity_forbidden') throw error;
+      if (
+        error instanceof Error &&
+        error.message === 'legacy_noncanonical_canonical_identity_forbidden'
+      )
+        throw error;
       const code = String((error as { code?: unknown })?.code ?? '');
       const message = error instanceof Error ? error.message : String(error);
-      const identityStoreMissing = code === '42P01' || /no such table:\s*v8_agent_run_identities/i.test(message);
-      if (!identityStoreMissing) throw new Error('legacy_noncanonical_identity_check_failed', { cause: error });
+      const identityStoreMissing =
+        code === '42P01' || /no such table:\s*v8_agent_run_identities/i.test(message);
+      if (!identityStoreMissing)
+        throw new Error('legacy_noncanonical_identity_check_failed', { cause: error });
       // A deployment without the canonical identity table is, by definition, legacy-only.
     }
   }

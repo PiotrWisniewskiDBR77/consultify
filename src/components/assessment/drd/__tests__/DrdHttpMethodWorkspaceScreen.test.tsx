@@ -59,7 +59,8 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
 const { DrdMethodWorkspaceScreen } = await import('../DrdMethodWorkspaceScreen');
 const { DrdHttpMethodWorkspaceScreen } = await import('../DrdHttpMethodWorkspaceScreen');
 const { MethodCoreApiError } = await import('@/method-core/api/methodCoreApi');
-const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } = await import('@/method-core/methods/drd/compileDrdPack');
+const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } =
+  await import('@/method-core/methods/drd/compileDrdPack');
 
 function makeMemoryStorage(): Storage {
   const store = new Map<string, string>();
@@ -165,22 +166,29 @@ describe('requirement 7 — loading and error each have their own visible state'
     [401, 'auth_required'],
     [403, 'missing_permission'],
     [404, 'session_not_found'],
-  ])('keeps a canonical resume %s fail-closed with retry and no workspace', async (status, code) => {
-    hoisted.getSession.mockRejectedValue(new MethodCoreApiError(code, status, { error: code }));
-    render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
+  ])(
+    'keeps a canonical resume %s fail-closed with retry and no workspace',
+    async (status, code) => {
+      hoisted.getSession.mockRejectedValue(new MethodCoreApiError(code, status, { error: code }));
+      render(
+        <DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />
+      );
 
-    const errorView = await screen.findByTestId('drd-http-error-view');
-    expect(errorView).toHaveTextContent(code);
-    expect(screen.getByTestId('error-retry')).toBeEnabled();
-    expect(screen.queryByTestId('method-workspace-shell')).not.toBeInTheDocument();
-  });
+      const errorView = await screen.findByTestId('drd-http-error-view');
+      expect(errorView).toHaveTextContent(code);
+      expect(screen.getByTestId('error-retry')).toBeEnabled();
+      expect(screen.queryByTestId('method-workspace-shell')).not.toBeInTheDocument();
+    }
+  );
 });
 
 describe('canonical cold reopen identity and read-only contract', () => {
   it('renders exact session/method versions and disables writes without a write role', async () => {
     hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 7 }), roles: [] });
     hoisted.listEvents.mockResolvedValue([]);
-    render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
+    render(
+      <DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />
+    );
 
     expect(await screen.findByText(/DRD/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
@@ -192,7 +200,9 @@ describe('canonical cold reopen identity and read-only contract', () => {
     // present in the DOM (native <details> content isn't removed, only
     // visually collapsed), just under its new label.
     expect(within(settings).getByText(/ID sesji:\s*sess-http-1/)).toBeInTheDocument();
-    expect(within(settings).getByText(new RegExp(DRD_METHOD_PACK_VERSION.replaceAll('.', '\\.')))).toBeInTheDocument();
+    expect(
+      within(settings).getByText(new RegExp(DRD_METHOD_PACK_VERSION.replaceAll('.', '\\.')))
+    ).toBeInTheDocument();
     expect(within(settings).getByText('Wersja sesji v7')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Zapisz teraz' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Pracuję samodzielnie' })).not.toBeInTheDocument();
@@ -219,10 +229,16 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
 
   it('turns a real stale transition 409 into ConflictView without painting false success', async () => {
     const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'active', version: 3 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'active', version: 3 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
     hoisted.transition.mockRejectedValue(
-      new MethodCoreApiError('version conflict', 409, { error: 'version_conflict', currentVersion: 4 })
+      new MethodCoreApiError('version conflict', 409, {
+        error: 'version_conflict',
+        currentVersion: 4,
+      })
     );
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
@@ -236,8 +252,14 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
 
   it('forceState="conflict" renders the conflict view with the server version and an explicit reload action', async () => {
     const storage = makeMemoryStorage();
-    hoisted.createSession.mockResolvedValue({ session: makeSession({ version: 3 }), idempotentReplay: false });
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 9 }), roles: ['owner'] });
+    hoisted.createSession.mockResolvedValue({
+      session: makeSession({ version: 3 }),
+      idempotentReplay: false,
+    });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 9 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="conflict" />);
@@ -252,7 +274,9 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
     fireEvent.click(screen.getByTestId('conflict-load-server'));
 
     await waitFor(() => expect(hoisted.getSession).toHaveBeenCalled());
-    await waitFor(() => expect(screen.queryByTestId('drd-http-conflict-view')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('drd-http-conflict-view')).not.toBeInTheDocument()
+    );
   });
 });
 
@@ -272,7 +296,9 @@ describe('requirement 5 — recovery queue requires an explicit choice, never au
     fireEvent.click(screen.getByTestId('recovery-discard-pending'));
 
     await waitFor(() => expect(hoisted.getSession).toHaveBeenCalled());
-    await waitFor(() => expect(screen.queryByTestId('drd-http-recovery-view')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('drd-http-recovery-view')).not.toBeInTheDocument()
+    );
   });
 });
 
@@ -284,7 +310,10 @@ describe('Interview Focus advances with real progress — regression for the foc
 
     hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
     hoisted.transition.mockResolvedValue(makeSession({ state: 'active' }));
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'active' }), roles: ['owner', 'lead_assessor', 'assessor', 'approver'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'active' }),
+      roles: ['owner', 'lead_assessor', 'assessor', 'approver'],
+    });
     hoisted.appendEvent.mockImplementation((_sessionId: string, evt: Record<string, unknown>) => {
       evtSeq += 1;
       events.push({
@@ -308,13 +337,18 @@ describe('Interview Focus advances with real progress — regression for the foc
     // The fixture area (1A) has levels 1..7 — seedTo="interview" confirms 1
     // and 2, so the real blocker (first unconfirmed level) is 3. Before the
     // fix this screen ignored progression entirely and always showed level 1.
-    await waitFor(() => expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7'));
+    await waitFor(() =>
+      expect(screen.getByTestId('question-progress')).toHaveTextContent('Pytanie 3 z 7')
+    );
   });
 });
 
 describe('sanity — MethodCoreApiError is the real class (mock did not replace error semantics)', () => {
   it('constructs with status/body/isNetworkError intact', () => {
-    const err = new MethodCoreApiError('nope', 409, { error: 'version_conflict', currentVersion: 4 });
+    const err = new MethodCoreApiError('nope', 409, {
+      error: 'version_conflict',
+      currentVersion: 4,
+    });
     expect(err.status).toBe(409);
     expect(err.body.currentVersion).toBe(4);
     expect(err.isNetworkError).toBe(false);

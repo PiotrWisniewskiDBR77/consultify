@@ -95,145 +95,156 @@ function bearer(uid: string, organizationId: string) {
   };
 }
 
-describe.sequential('day200: MonteCarloNpvPanel — POST /monte-carlo-npv on the real Gateway V8 stack (real Postgres)', () => {
-  let pool: Pool;
-  let lockClient: PoolClient;
-  let app: express.Express;
-  const originalEnableV8Global = process.env.ENABLE_V8_GLOBAL;
+describe.sequential(
+  'day200: MonteCarloNpvPanel — POST /monte-carlo-npv on the real Gateway V8 stack (real Postgres)',
+  () => {
+    let pool: Pool;
+    let lockClient: PoolClient;
+    let app: express.Express;
+    const originalEnableV8Global = process.env.ENABLE_V8_GLOBAL;
 
-  beforeAll(async () => {
-    pool = new Pool({ connectionString: DATABASE_URL });
-    await assertRealDatabase(fromPgPool(pool));
+    beforeAll(async () => {
+      pool = new Pool({ connectionString: DATABASE_URL });
+      await assertRealDatabase(fromPgPool(pool));
 
-    lockClient = await pool.connect();
-    await lockClient.query(`SELECT pg_advisory_lock(hashtext($1))`, [SUITE_LOCK_NAME]);
+      lockClient = await pool.connect();
+      await lockClient.query(`SELECT pg_advisory_lock(hashtext($1))`, [SUITE_LOCK_NAME]);
 
-    const now = new Date().toISOString();
-    await pool.query(
-      `INSERT INTO organizations(id,name,plan,status,is_active,created_at) VALUES($1,$1,'enterprise','active',1,$2)`,
-      [org, now]
-    );
-    await pool.query(
-      `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,created_at)
+      const now = new Date().toISOString();
+      await pool.query(
+        `INSERT INTO organizations(id,name,plan,status,is_active,created_at) VALUES($1,$1,'enterprise','active',1,$2)`,
+        [org, now]
+      );
+      await pool.query(
+        `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,created_at)
        VALUES($1,$2,$3,'x','Piotr','Kontraktowy','ADMIN','active',$4)`,
-      [userId, org, `${userId}@test.invalid`, now]
-    );
-    await pool.query(
-      `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
+        [userId, org, `${userId}@test.invalid`, now]
+      );
+      await pool.query(
+        `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
        VALUES($1,$2,$3,'ADMIN','ACTIVE',$4)`,
-      [`${prefix}-membership`, org, userId, now]
-    );
+        [`${prefix}-membership`, org, userId, now]
+      );
 
-    // Real production mount from Gateway.ts:1481 — same two objects, same order.
-    process.env.ENABLE_V8_GLOBAL = 'true';
-    const { v8FeatureGate } = await import('../../../middleware/v8FeatureGate.middleware.js');
-    const v8Router = (await import('../index.js')).default;
-    app = express();
-    app.use(express.json());
-    app.use('/api/v8', v8FeatureGate, v8Router);
-  }, 120_000);
+      // Real production mount from Gateway.ts:1481 — same two objects, same order.
+      process.env.ENABLE_V8_GLOBAL = 'true';
+      const { v8FeatureGate } = await import('../../../middleware/v8FeatureGate.middleware.js');
+      const v8Router = (await import('../index.js')).default;
+      app = express();
+      app.use(express.json());
+      app.use('/api/v8', v8FeatureGate, v8Router);
+    }, 120_000);
 
-  afterAll(async () => {
-    if (originalEnableV8Global === undefined) delete process.env.ENABLE_V8_GLOBAL;
-    else process.env.ENABLE_V8_GLOBAL = originalEnableV8Global;
+    afterAll(async () => {
+      if (originalEnableV8Global === undefined) delete process.env.ENABLE_V8_GLOBAL;
+      else process.env.ENABLE_V8_GLOBAL = originalEnableV8Global;
 
-    if (!pool) return;
-    let cleanupClient: PoolClient | undefined;
-    try {
-      cleanupClient = await pool.connect();
-      await cleanupClient.query('BEGIN');
-      await cleanupClient.query(`DELETE FROM organization_members WHERE organization_id=$1`, [org]);
-      await cleanupClient.query(`DELETE FROM users WHERE organization_id=$1`, [org]);
-      await cleanupClient.query(`DELETE FROM organizations WHERE id=$1`, [org]);
-      const residue = await cleanupClient.query(
-        `SELECT
+      if (!pool) return;
+      let cleanupClient: PoolClient | undefined;
+      try {
+        cleanupClient = await pool.connect();
+        await cleanupClient.query('BEGIN');
+        await cleanupClient.query(`DELETE FROM organization_members WHERE organization_id=$1`, [
+          org,
+        ]);
+        await cleanupClient.query(`DELETE FROM users WHERE organization_id=$1`, [org]);
+        await cleanupClient.query(`DELETE FROM organizations WHERE id=$1`, [org]);
+        const residue = await cleanupClient.query(
+          `SELECT
            (SELECT count(*)::int FROM organizations WHERE id=$1) +
            (SELECT count(*)::int FROM users WHERE organization_id=$1) +
            (SELECT count(*)::int FROM organization_members WHERE organization_id=$1) AS n`,
-        [org]
-      );
-      expect(residue.rows[0].n, 'residue must be exactly zero BEFORE commit').toBe(0);
-      await cleanupClient.query('COMMIT');
-    } catch (error) {
-      if (cleanupClient) await cleanupClient.query('ROLLBACK');
-      throw error;
-    } finally {
-      cleanupClient?.release();
-      if (lockClient) {
-        await lockClient.query(`SELECT pg_advisory_unlock(hashtext($1))`, [SUITE_LOCK_NAME]);
-        lockClient.release();
+          [org]
+        );
+        expect(residue.rows[0].n, 'residue must be exactly zero BEFORE commit').toBe(0);
+        await cleanupClient.query('COMMIT');
+      } catch (error) {
+        if (cleanupClient) await cleanupClient.query('ROLLBACK');
+        throw error;
+      } finally {
+        cleanupClient?.release();
+        if (lockClient) {
+          await lockClient.query(`SELECT pg_advisory_unlock(hashtext($1))`, [SUITE_LOCK_NAME]);
+          lockClient.release();
+        }
+        await pool.end();
       }
-      await pool.end();
-    }
-  });
+    });
 
-  it('returns 404 V8_DISABLED when ENABLE_V8_GLOBAL is off (proves the gate is REAL, not bypassed)', async () => {
-    delete process.env.ENABLE_V8_GLOBAL;
-    try {
+    it('returns 404 V8_DISABLED when ENABLE_V8_GLOBAL is off (proves the gate is REAL, not bypassed)', async () => {
+      delete process.env.ENABLE_V8_GLOBAL;
+      try {
+        const res = await request(app)
+          .post('/api/v8/finance-valuation/monte-carlo-npv')
+          .set(bearer(userId, org))
+          .send({ drivers: {}, iterations: 1 });
+        expect(res.status).toBe(404);
+        expect(res.body?.code).toBe('V8_DISABLED');
+      } finally {
+        process.env.ENABLE_V8_GLOBAL = 'true';
+      }
+    });
+
+    it('returns 200 with the exact triangular-driver shape MonteCarloNpvPanel.tsx sends, deterministic and finite', async () => {
+      // Mirrors MonteCarloNpvPanel.tsx's `run()` request exactly: one row ->
+      // `{ kind: 'triangular', min, mode, max }` + a linear `weights` map, the
+      // same body shape `runMonteCarloNpv` posts when the user clicks "Run
+      // simulation". Seeded (seed=42) so the simulation is byte-reproducible.
+      const body = {
+        drivers: {
+          revenue: { kind: 'triangular', min: 800_000, mode: 1_200_000, max: 1_800_000 },
+          costs: { kind: 'triangular', min: 400_000, mode: 500_000, max: 650_000 },
+        },
+        weights: { revenue: 1, costs: -1 },
+        intercept: 0,
+        iterations: 2000,
+        seed: 42,
+        bins: 8,
+      };
+
       const res = await request(app)
         .post('/api/v8/finance-valuation/monte-carlo-npv')
         .set(bearer(userId, org))
-        .send({ drivers: {}, iterations: 1 });
-      expect(res.status).toBe(404);
-      expect(res.body?.code).toBe('V8_DISABLED');
-    } finally {
-      process.env.ENABLE_V8_GLOBAL = 'true';
-    }
-  });
+        .send(body);
 
-  it('returns 200 with the exact triangular-driver shape MonteCarloNpvPanel.tsx sends, deterministic and finite', async () => {
-    // Mirrors MonteCarloNpvPanel.tsx's `run()` request exactly: one row ->
-    // `{ kind: 'triangular', min, mode, max }` + a linear `weights` map, the
-    // same body shape `runMonteCarloNpv` posts when the user clicks "Run
-    // simulation". Seeded (seed=42) so the simulation is byte-reproducible.
-    const body = {
-      drivers: {
-        revenue: { kind: 'triangular', min: 800_000, mode: 1_200_000, max: 1_800_000 },
-        costs: { kind: 'triangular', min: 400_000, mode: 500_000, max: 650_000 },
-      },
-      weights: { revenue: 1, costs: -1 },
-      intercept: 0,
-      iterations: 2000,
-      seed: 42,
-      bins: 8,
-    };
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      // Exact contract MonteCarloNpvPanel.tsx consumes: `{ simulation: {
+      // samples, mean, p10, p50, p90, probPositive, valueAtRisk5 }, histogram:
+      // HistogramBin[] }`.
+      const { simulation, histogram } = res.body.data;
+      expect(Array.isArray(simulation.samples)).toBe(true);
+      expect(simulation.samples).toHaveLength(2000);
+      for (const key of ['mean', 'p10', 'p50', 'p90', 'probPositive', 'valueAtRisk5'] as const) {
+        expect(
+          Number.isFinite(simulation[key]),
+          `simulation.${key} must be a real finite number, got ${simulation[key]}`
+        ).toBe(true);
+      }
+      expect(simulation.probPositive).toBeGreaterThanOrEqual(0);
+      expect(simulation.probPositive).toBeLessThanOrEqual(1);
+      expect(Array.isArray(histogram)).toBe(true);
+      expect(histogram.length).toBeGreaterThan(0);
+      const totalBinned = histogram.reduce(
+        (sum: number, bin: { count: number }) => sum + bin.count,
+        0
+      );
+      expect(totalBinned).toBe(2000);
 
-    const res = await request(app)
-      .post('/api/v8/finance-valuation/monte-carlo-npv')
-      .set(bearer(userId, org))
-      .send(body);
+      // Determinism: same seed => same first sample, re-requested.
+      const res2 = await request(app)
+        .post('/api/v8/finance-valuation/monte-carlo-npv')
+        .set(bearer(userId, org))
+        .send(body);
+      expect(res2.body.data.simulation.samples[0]).toBe(simulation.samples[0]);
+      expect(res2.body.data.simulation.mean).toBe(simulation.mean);
+    });
 
-    expect(res.status, JSON.stringify(res.body)).toBe(200);
-    // Exact contract MonteCarloNpvPanel.tsx consumes: `{ simulation: {
-    // samples, mean, p10, p50, p90, probPositive, valueAtRisk5 }, histogram:
-    // HistogramBin[] }`.
-    const { simulation, histogram } = res.body.data;
-    expect(Array.isArray(simulation.samples)).toBe(true);
-    expect(simulation.samples).toHaveLength(2000);
-    for (const key of ['mean', 'p10', 'p50', 'p90', 'probPositive', 'valueAtRisk5'] as const) {
-      expect(Number.isFinite(simulation[key]), `simulation.${key} must be a real finite number, got ${simulation[key]}`).toBe(true);
-    }
-    expect(simulation.probPositive).toBeGreaterThanOrEqual(0);
-    expect(simulation.probPositive).toBeLessThanOrEqual(1);
-    expect(Array.isArray(histogram)).toBe(true);
-    expect(histogram.length).toBeGreaterThan(0);
-    const totalBinned = histogram.reduce((sum: number, bin: { count: number }) => sum + bin.count, 0);
-    expect(totalBinned).toBe(2000);
-
-    // Determinism: same seed => same first sample, re-requested.
-    const res2 = await request(app)
-      .post('/api/v8/finance-valuation/monte-carlo-npv')
-      .set(bearer(userId, org))
-      .send(body);
-    expect(res2.body.data.simulation.samples[0]).toBe(simulation.samples[0]);
-    expect(res2.body.data.simulation.mean).toBe(simulation.mean);
-  });
-
-  it('an empty drivers map returns 400, not a silent 200 (proves the REAL handler validates, not a mock)', async () => {
-    const res = await request(app)
-      .post('/api/v8/finance-valuation/monte-carlo-npv')
-      .set(bearer(userId, org))
-      .send({ drivers: {} });
-    expect(res.status, JSON.stringify(res.body)).toBe(400);
-  });
-});
+    it('an empty drivers map returns 400, not a silent 200 (proves the REAL handler validates, not a mock)', async () => {
+      const res = await request(app)
+        .post('/api/v8/finance-valuation/monte-carlo-npv')
+        .set(bearer(userId, org))
+        .send({ drivers: {} });
+      expect(res.status, JSON.stringify(res.body)).toBe(400);
+    });
+  }
+);

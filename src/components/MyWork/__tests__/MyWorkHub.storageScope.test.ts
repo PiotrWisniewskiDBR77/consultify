@@ -99,10 +99,7 @@ describe('MyWorkHub open-documents storage scoping (D1)', () => {
 
   it('cleans up the legacy unscoped key so it cannot keep leaking', () => {
     // Simulate leftover state from before the D1 fix.
-    window.sessionStorage.setItem(
-      LEGACY_MYWORK_OPEN_DOCUMENTS_KEY,
-      JSON.stringify(sampleState)
-    );
+    window.sessionStorage.setItem(LEGACY_MYWORK_OPEN_DOCUMENTS_KEY, JSON.stringify(sampleState));
 
     // Any call to readStoredMyWorkDocuments (as happens on every MyWorkHub
     // mount) should purge the legacy key, regardless of whether a scoped

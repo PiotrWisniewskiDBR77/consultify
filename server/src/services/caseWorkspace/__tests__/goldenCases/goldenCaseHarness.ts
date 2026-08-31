@@ -46,19 +46,19 @@
 import express, { type Express } from 'express';
 import { Pool } from 'pg';
 
+import type { ContractActor } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
 import caseWorkspaceRoutes from '../../../../routes/caseWorkspace/index.js';
 import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
 import { correlationMiddleware } from '../../../../utils/RequestStore.js';
-import type { ContractActor } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
 
 export {
   CONNECTION_STRING,
+  type ContractActor,
+  type Fixture,
   ContractFixtures as GoldenCaseFixtures,
   isContractDbReachable as isGoldenCaseDbReachable,
   minimalGraph,
   warnSkipped,
-  type ContractActor,
-  type Fixture,
 } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
 
 export const BASE = '/api/v8/case-workspace';
@@ -112,7 +112,10 @@ export interface OutboxRow {
  * rolled back, so only an out-of-band read proves the event actually committed
  * alongside the mutation.
  */
-export async function readOutboxForOrg(control: Pool, organizationId: string): Promise<OutboxRow[]> {
+export async function readOutboxForOrg(
+  control: Pool,
+  organizationId: string
+): Promise<OutboxRow[]> {
   const result = await control.query<OutboxRow>(
     `SELECT * FROM case_workspace_event_outbox
       WHERE organization_id = $1

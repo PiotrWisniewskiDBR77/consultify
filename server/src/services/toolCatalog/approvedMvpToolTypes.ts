@@ -22,5 +22,9 @@ export const APPROVED_MVP_TOOL_TYPES: ReadonlySet<string> = new Set<string>(['dy
 
 /** Convenience predicate — avoids call sites re-deriving Set membership. */
 export function isApprovedMvpToolType(toolType: string): boolean {
-  return APPROVED_MVP_TOOL_TYPES.has(String(toolType || '').trim().toLowerCase());
+  return APPROVED_MVP_TOOL_TYPES.has(
+    String(toolType || '')
+      .trim()
+      .toLowerCase()
+  );
 }

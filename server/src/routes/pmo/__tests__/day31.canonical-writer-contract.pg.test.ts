@@ -10,9 +10,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import config from '../../../config/Config.js';
 import { v8FeatureGate } from '../../../middleware/v8FeatureGate.middleware.js';
-import initiativesRoutes from '../initiatives.routes.js';
 import executionControlRoutes from '../../executionControl.routes.js';
 import v8Router from '../../v8/index.js';
+import initiativesRoutes from '../initiatives.routes.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const REAL_PG =

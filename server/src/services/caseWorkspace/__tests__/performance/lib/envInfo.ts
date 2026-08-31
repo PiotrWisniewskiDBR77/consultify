@@ -10,6 +10,7 @@
  */
 
 import os from 'node:os';
+
 import type { Pool } from 'pg';
 
 export interface RunnerEnvInfo {

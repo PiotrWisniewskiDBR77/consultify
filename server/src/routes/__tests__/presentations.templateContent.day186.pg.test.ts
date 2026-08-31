@@ -4,8 +4,8 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 
 import express from 'express';
-import JSZip from 'jszip';
 import jwt from 'jsonwebtoken';
+import JSZip from 'jszip';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

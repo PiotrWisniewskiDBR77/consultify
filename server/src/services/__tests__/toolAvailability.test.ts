@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  RUNTIME_ELIGIBLE_TOOL_TYPES,
   canStartToolSession,
   isLibraryVisible,
   isRuntimeActive,
+  RUNTIME_ELIGIBLE_TOOL_TYPES,
 } from '../toolAvailability.js';
 
 /** 12 narzędzi bez silnika — oznaczone „coming soon". */

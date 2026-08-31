@@ -45,6 +45,7 @@ vi.mock('../DrdHttpMethodWorkspaceScreen', () => ({
 }));
 
 import { shouldMountDrdMethodWorkspace } from '@/views/AssessmentSessionEditorView';
+
 import { DrdMethodWorkspaceScreen } from '../DrdMethodWorkspaceScreen';
 
 beforeEach(() => {

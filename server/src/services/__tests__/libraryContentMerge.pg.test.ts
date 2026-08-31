@@ -24,19 +24,48 @@ const describePg = PG_URL ? describe : describe.skip;
 
 /** 31 kanonicznych narzędzi (Gate T0, żywy rejestr `public.tools`). */
 const ALL_31 = [
-  'dynamic-swot', 'market-forces', 'growth-paths', 'value-chain', 'portfolio-priority',
-  'risk-uncertainty', 'capability-mapper', 'ambition-decomposer', 'focus-tradeoff',
-  'narrative-engine', 'a3-problem-solving', 'vsm-builder', 'sop-builder',
-  'constraint-control', 'decision-engine', 'control-tower', 'automation-pipeline',
-  'smed-planner', 'dms-builder', 'inventory-autopilot', 'robotics-feasibility',
-  'logistics-automation', 'rpa-scanner', 'ai-discovery', 'integration-diagnostic',
-  'digital-value-pool', 'legacy-analyzer', 'data-inventory', 'pain-to-solution',
-  'pain-explorer', 'process-automation',
+  'dynamic-swot',
+  'market-forces',
+  'growth-paths',
+  'value-chain',
+  'portfolio-priority',
+  'risk-uncertainty',
+  'capability-mapper',
+  'ambition-decomposer',
+  'focus-tradeoff',
+  'narrative-engine',
+  'a3-problem-solving',
+  'vsm-builder',
+  'sop-builder',
+  'constraint-control',
+  'decision-engine',
+  'control-tower',
+  'automation-pipeline',
+  'smed-planner',
+  'dms-builder',
+  'inventory-autopilot',
+  'robotics-feasibility',
+  'logistics-automation',
+  'rpa-scanner',
+  'ai-discovery',
+  'integration-diagnostic',
+  'digital-value-pool',
+  'legacy-analyzer',
+  'data-inventory',
+  'pain-to-solution',
+  'pain-explorer',
+  'process-automation',
 ];
 
 const RICH_FIELDS = [
-  'whatYouGet', 'whenToUse', 'inputs', 'steps',
-  'outputs', 'commonMistakes', 'example', 'nextSteps',
+  'whatYouGet',
+  'whenToUse',
+  'inputs',
+  'steps',
+  'outputs',
+  'commonMistakes',
+  'example',
+  'nextSteps',
 ];
 
 /** Treść, jaką realnie wnoszą migracje 559 i 562. */
@@ -214,7 +243,10 @@ describePg('L11 na jednorazowym PostgreSQL', () => {
       existing.rows[0].library_content_translations,
       seedContent('dynamic-swot')
     );
-    await client.query(`UPDATE tools_l11 SET library_content_translations = $1 WHERE name = 'dynamic-swot'`, [merged]);
+    await client.query(
+      `UPDATE tools_l11 SET library_content_translations = $1 WHERE name = 'dynamic-swot'`,
+      [merged]
+    );
 
     const c = await readContent('dynamic-swot');
     expect(c.pl.whenToUse).toBe('zostaje nietknięte');
@@ -233,8 +265,14 @@ describePg('L11 na jednorazowym PostgreSQL', () => {
         `SELECT library_content_translations FROM tools_l11 WHERE name = $1`,
         [t]
       );
-      const merged = mergeLibraryContentJson(row.rows[0].library_content_translations, seedContent(t));
-      await client.query(`UPDATE tools_l11 SET library_content_translations = $1 WHERE name = $2`, [merged, t]);
+      const merged = mergeLibraryContentJson(
+        row.rows[0].library_content_translations,
+        seedContent(t)
+      );
+      await client.query(`UPDATE tools_l11 SET library_content_translations = $1 WHERE name = $2`, [
+        merged,
+        t,
+      ]);
 
       const c = await readContent(t);
       // po scaleniu treść seeda jest obecna, nic nie rzuciło wyjątkiem
@@ -258,8 +296,14 @@ describePg('L11 na jednorazowym PostgreSQL', () => {
     const row = await client.query<{ library_content_translations: string }>(
       `SELECT library_content_translations FROM tools_l11 WHERE name = 'dynamic-swot'`
     );
-    const merged = mergeLibraryContentJson(row.rows[0].library_content_translations, seedContent('dynamic-swot'));
-    await client.query(`UPDATE tools_l11 SET library_content_translations = $1 WHERE name = 'dynamic-swot'`, [merged]);
+    const merged = mergeLibraryContentJson(
+      row.rows[0].library_content_translations,
+      seedContent('dynamic-swot')
+    );
+    await client.query(
+      `UPDATE tools_l11 SET library_content_translations = $1 WHERE name = 'dynamic-swot'`,
+      [merged]
+    );
 
     const c = await readContent('dynamic-swot');
     expect(c.pl.customField).toBe('nieznane-pole');

@@ -47,18 +47,18 @@
  */
 
 import * as DbPromise from '../utils/DbPromise.js';
-import { computeContentHash, genId, nowIso, runOrThrow } from './db.js';
-import type { MethodEventStore } from './MethodEventStore.js';
 import {
   canTransition,
-  TRANSITION_AUTHORITY,
   type MethodProcessRole,
   type MethodSaveState,
   type MethodSession,
   type MethodSessionState,
   type MethodTransitionRequest,
+  TRANSITION_AUTHORITY,
   type TransitionResult,
 } from './contracts/index.js';
+import { computeContentHash, genId, nowIso, runOrThrow } from './db.js';
+import type { MethodEventStore } from './MethodEventStore.js';
 
 interface MethodSessionRow {
   id: string;
@@ -174,7 +174,10 @@ export interface CreateSessionInput {
  * `transition()` only) — `createSession` is this service's own entry point
  * for the "pack draft -> canStartSession false -> start refused" rule.
  */
-export type CreateSessionRefusal = { readonly kind: 'pack_not_released'; readonly methodPackId: string };
+export type CreateSessionRefusal = {
+  readonly kind: 'pack_not_released';
+  readonly methodPackId: string;
+};
 export type CreateSessionResult =
   | { readonly ok: true; readonly session: MethodSession }
   | { readonly ok: false; readonly refusal: CreateSessionRefusal };
@@ -275,7 +278,10 @@ export class MethodSessionService {
       input.methodPackVersion
     );
     if (!readiness || !readiness.canStart) {
-      return { ok: false, refusal: { kind: 'pack_not_released', methodPackId: input.methodPackId } };
+      return {
+        ok: false,
+        refusal: { kind: 'pack_not_released', methodPackId: input.methodPackId },
+      };
     }
 
     const now = nowIso();
@@ -339,9 +345,7 @@ export class MethodSessionService {
       `SELECT * FROM method_sessions WHERE organization_id = ?`,
       [organizationId]
     );
-    return rows
-      .filter((row) => row.revision_of_session_id === rootSessionId)
-      .map(toMethodSession);
+    return rows.filter((row) => row.revision_of_session_id === rootSessionId).map(toMethodSession);
   }
 
   /**
@@ -352,7 +356,11 @@ export class MethodSessionService {
    * server/src/routes/method-core.routes.ts's list handlers).
    */
   async listSessionIdsByProject(organizationId: string, projectId: string): Promise<string[]> {
-    const rows = await DbPromise.all<{ id: string; organization_id: string; project_id: string | null }>(
+    const rows = await DbPromise.all<{
+      id: string;
+      organization_id: string;
+      project_id: string | null;
+    }>(
       `SELECT id, organization_id, project_id FROM method_sessions WHERE organization_id = ? AND project_id = ?`,
       [organizationId, projectId]
     );
@@ -406,10 +414,12 @@ export class MethodSessionService {
     // allow-list (see MethodEventStore's header comment on the same pattern,
     // and MethodOutputService.listForOrganization's identical backstop).
     let matching = rows.filter((row) => row.organization_id === filter.organizationId);
-    if (filter.methodPackId) matching = matching.filter((row) => row.method_pack_id === filter.methodPackId);
+    if (filter.methodPackId)
+      matching = matching.filter((row) => row.method_pack_id === filter.methodPackId);
     if (filter.state) matching = matching.filter((row) => row.state === filter.state);
     if (filter.projectId) matching = matching.filter((row) => row.project_id === filter.projectId);
-    if (filter.ownerUserId) matching = matching.filter((row) => row.owner_user_id === filter.ownerUserId);
+    if (filter.ownerUserId)
+      matching = matching.filter((row) => row.owner_user_id === filter.ownerUserId);
 
     matching.sort((a, b) => {
       const byTime = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -487,7 +497,11 @@ export class MethodSessionService {
     return { revoked };
   }
 
-  async getRoles(organizationId: string, sessionId: string, userId: string): Promise<MethodProcessRole[]> {
+  async getRoles(
+    organizationId: string,
+    sessionId: string,
+    userId: string
+  ): Promise<MethodProcessRole[]> {
     const rows = await DbPromise.all<MethodSessionRoleRow>(
       `SELECT * FROM method_session_roles WHERE organization_id = ? AND user_id = ?`,
       [organizationId, userId]
@@ -499,7 +513,10 @@ export class MethodSessionService {
 
   /** Every CURRENT role holder on `sessionId` (all users) — the roster
    * behind `GET /sessions/:id/roles`. */
-  async listRoles(organizationId: string, sessionId: string): Promise<MethodSessionRoleAssignment[]> {
+  async listRoles(
+    organizationId: string,
+    sessionId: string
+  ): Promise<MethodSessionRoleAssignment[]> {
     const rows = await DbPromise.all<MethodSessionRoleRow>(
       `SELECT * FROM method_session_roles WHERE organization_id = ? AND session_id = ?`,
       [organizationId, sessionId]
@@ -516,7 +533,10 @@ export class MethodSessionService {
    * next 'revoked' row for the same (user, role) gives "do kiedy" (still
    * active = no matching 'revoked' row yet). Never filtered or truncated —
    * this is the append-only history rule #5 exists to protect. */
-  async getRoleHistory(organizationId: string, sessionId: string): Promise<MethodSessionRoleEvent[]> {
+  async getRoleHistory(
+    organizationId: string,
+    sessionId: string
+  ): Promise<MethodSessionRoleEvent[]> {
     const rows = await DbPromise.all<MethodSessionRoleEventRow>(
       `SELECT * FROM method_session_role_events WHERE organization_id = ? AND session_id = ?`,
       [organizationId, sessionId]
@@ -569,7 +589,16 @@ export class MethodSessionService {
       `INSERT INTO method_approvals
          (id, organization_id, session_id, revision, decision, comment, actor_user_id, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [row.id, row.organization_id, row.session_id, row.revision, row.decision, row.comment, row.actor_user_id, row.created_at]
+      [
+        row.id,
+        row.organization_id,
+        row.session_id,
+        row.revision,
+        row.decision,
+        row.comment,
+        row.actor_user_id,
+        row.created_at,
+      ]
     );
     return {
       id: row.id,
@@ -619,10 +648,17 @@ export class MethodSessionService {
 
     const requiredRoles = TRANSITION_AUTHORITY[to];
     if (requiredRoles && requiredRoles.length > 0) {
-      const actorRoles = await this.getRoles(session.organization_id, session.id, request.actorUserId);
+      const actorRoles = await this.getRoles(
+        session.organization_id,
+        session.id,
+        request.actorUserId
+      );
       const authorized = requiredRoles.some((role: MethodProcessRole) => actorRoles.includes(role));
       if (!authorized) {
-        return { ok: false, refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] } };
+        return {
+          ok: false,
+          refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] },
+        };
       }
     }
 
@@ -741,7 +777,15 @@ export class MethodSessionService {
       `INSERT INTO method_snapshots
          (id, organization_id, session_id, method_pack_version, payload_json, content_hash, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [snapshotId, organizationId, sessionId, methodPackVersion, JSON.stringify(payload), contentHash, nowIso()]
+      [
+        snapshotId,
+        organizationId,
+        sessionId,
+        methodPackVersion,
+        JSON.stringify(payload),
+        contentHash,
+        nowIso(),
+      ]
     );
     await runOrThrow(`UPDATE method_sessions SET frozen_snapshot_id = ? WHERE id = ?`, [
       snapshotId,

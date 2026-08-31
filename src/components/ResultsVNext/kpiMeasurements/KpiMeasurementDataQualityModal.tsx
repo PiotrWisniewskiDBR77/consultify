@@ -18,8 +18,8 @@
 import { AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import type { KpiMeasurementDto } from '../kpiApi';
 import { formatKpiMeasurementPeriod } from './kpiMeasurementMappers';
@@ -48,7 +48,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -147,7 +148,11 @@ export const KpiMeasurementDataQualityModal: React.FC<KpiMeasurementDataQualityM
             <div>
               {isPolish ? 'Okres' : 'Period'}:{' '}
               <span className="font-medium text-c-text">
-                {formatKpiMeasurementPeriod(measurement.periodStart, measurement.periodEnd, isPolish)}
+                {formatKpiMeasurementPeriod(
+                  measurement.periodStart,
+                  measurement.periodEnd,
+                  isPolish
+                )}
               </span>
             </div>
             <div>

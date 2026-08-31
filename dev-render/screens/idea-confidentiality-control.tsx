@@ -23,8 +23,8 @@
  */
 import React, { useEffect, useState } from 'react';
 
-import { IdeaWorkspaceTools } from '../../src/components/MyWork/IdeaWorkspaceTools';
 import type { IdeaWorkspaceSelection } from '../../src/components/MyWork/ideaSelectionTypes';
+import { IdeaWorkspaceTools } from '../../src/components/MyWork/IdeaWorkspaceTools';
 import { useIdeaConfidentialityGate } from '../../src/components/MyWork/useIdeaConfidentialityGate';
 import { IdeaRightPanel } from '../../src/components/standard/IdeaRightPanel';
 import { Api } from '../../src/services/api';

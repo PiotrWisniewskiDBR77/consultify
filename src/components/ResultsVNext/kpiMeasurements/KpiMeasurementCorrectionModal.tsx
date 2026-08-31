@@ -19,8 +19,8 @@
 import { AlertTriangle, Pencil } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import type { KpiMeasurementDto } from '../kpiApi';
 import { formatKpiMeasurementPeriod } from './kpiMeasurementMappers';
@@ -50,7 +50,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -124,7 +125,9 @@ export const KpiMeasurementCorrectionModal: React.FC<KpiMeasurementCorrectionMod
             className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <Pencil size={16} />
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Koryguj' : 'Correct'}</span>
+            <span>
+              {busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Koryguj' : 'Correct'}
+            </span>
           </button>
         </>
       }
@@ -135,7 +138,11 @@ export const KpiMeasurementCorrectionModal: React.FC<KpiMeasurementCorrectionMod
             <div>
               {isPolish ? 'Okres' : 'Period'}:{' '}
               <span className="font-medium text-c-text">
-                {formatKpiMeasurementPeriod(measurement.periodStart, measurement.periodEnd, isPolish)}
+                {formatKpiMeasurementPeriod(
+                  measurement.periodStart,
+                  measurement.periodEnd,
+                  isPolish
+                )}
               </span>
             </div>
             <div>
@@ -175,7 +182,9 @@ export const KpiMeasurementCorrectionModal: React.FC<KpiMeasurementCorrectionMod
           />
           {actualValueInvalid ? (
             <p className="mt-1 text-[11px] text-c-danger">
-              {isPolish ? 'Podaj liczbę albo zaznacz „Brak wartości"' : 'Enter a number, or check "No value"'}
+              {isPolish
+                ? 'Podaj liczbę albo zaznacz „Brak wartości"'
+                : 'Enter a number, or check "No value"'}
             </p>
           ) : null}
         </div>
@@ -188,14 +197,21 @@ export const KpiMeasurementCorrectionModal: React.FC<KpiMeasurementCorrectionMod
             id="kpi-measurement-correction-reason"
             value={correctionReason}
             onChange={(e) => setCorrectionReason(e.target.value)}
-            placeholder={isPolish ? 'np. błędny odczyt licznika, poprawiono po audycie' : 'e.g. faulty meter reading, fixed after audit'}
+            placeholder={
+              isPolish
+                ? 'np. błędny odczyt licznika, poprawiono po audycie'
+                : 'e.g. faulty meter reading, fixed after audit'
+            }
             className={TEXTAREA_CLASS}
             data-testid="kpi-measurement-correction-reason"
             aria-invalid={reasonError || undefined}
             aria-describedby={reasonError ? 'kpi-measurement-correction-reason-error' : undefined}
           />
           {reasonError ? (
-            <p id="kpi-measurement-correction-reason-error" className="mt-1 text-[11px] text-c-danger">
+            <p
+              id="kpi-measurement-correction-reason-error"
+              className="mt-1 text-[11px] text-c-danger"
+            >
               {isPolish ? 'Powód korekty jest wymagany' : 'Correction reason is required'}
             </p>
           ) : null}

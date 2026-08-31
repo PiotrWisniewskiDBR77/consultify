@@ -24,13 +24,13 @@ import {
 } from '../middleware/superAdmin.middleware.js';
 import { superadminAuditMonitor } from '../middleware/superadminAuditMonitor.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
+import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import {
   getAllOrgPolicies,
   getOrgPolicy,
   requireNoLegalHold,
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
-import { invalidateOrganizationSuspensionCache } from '../services/organizationSuspensionGuard.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';

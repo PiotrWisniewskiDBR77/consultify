@@ -162,7 +162,7 @@ const verifyScimToken = asyncHandler(async (req: ScimRequest, res: Response, nex
   // `/api/superadmin/**`, which this router is not part of.
   // ---------------------------------------------------------------------------
   if (
-    await isOrganizationSuspended(req.scimOrgId, <T,>(sql: string, params?: unknown[]) =>
+    await isOrganizationSuspended(req.scimOrgId, <T>(sql: string, params?: unknown[]) =>
       dbGet<T>(sql, params, { fallback: false })
     )
   ) {
@@ -631,10 +631,10 @@ router.delete(
   asyncHandler(async (req: ScimRequest, res: Response) => {
     const orgId = req.scimOrgId as string;
     const id = String(req.params.id);
-    const user = await dbGet<any>('SELECT id, email FROM users WHERE id = ? AND organization_id = ?', [
-      id,
-      orgId,
-    ]);
+    const user = await dbGet<any>(
+      'SELECT id, email FROM users WHERE id = ? AND organization_id = ?',
+      [id, orgId]
+    );
     if (!user) {
       return res.status(404).json({
         schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],

@@ -203,7 +203,9 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                     role="gridcell"
                     className={`text-right font-mono tabular-nums ${fontWeight} text-c-text-muted`}
                   >
-                    {row.olderValue != null ? formatValue(row.olderValue, isPl ? 'pl-PL' : 'en-US') : '—'}
+                    {row.olderValue != null
+                      ? formatValue(row.olderValue, isPl ? 'pl-PL' : 'en-US')
+                      : '—'}
                   </div>
 
                   {/* Newer period (right, bolder) */}
@@ -211,7 +213,9 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                     role="gridcell"
                     className={`text-right font-mono tabular-nums ${fontWeight} ${textColor}`}
                   >
-                    {row.newerValue != null ? formatValue(row.newerValue, isPl ? 'pl-PL' : 'en-US') : '—'}
+                    {row.newerValue != null
+                      ? formatValue(row.newerValue, isPl ? 'pl-PL' : 'en-US')
+                      : '—'}
                   </div>
 
                   {/* Delta % */}
@@ -246,7 +250,9 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                   role="gridcell"
                   className={`text-right font-mono tabular-nums ${fontWeight} ${textColor}`}
                 >
-                  {row.olderValue != null ? formatValue(row.olderValue, isPl ? 'pl-PL' : 'en-US') : '—'}
+                  {row.olderValue != null
+                    ? formatValue(row.olderValue, isPl ? 'pl-PL' : 'en-US')
+                    : '—'}
                 </div>
               )}
             </button>

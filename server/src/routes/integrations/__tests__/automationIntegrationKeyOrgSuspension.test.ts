@@ -57,9 +57,8 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
 }));
 
 const automationRoutes = (await import('../automation.routes.js')).default;
-const { __testing__, buildOrgSuspendedResponseBody } = await import(
-  '../../../services/organizationSuspensionGuard.js'
-);
+const { __testing__, buildOrgSuspendedResponseBody } =
+  await import('../../../services/organizationSuspensionGuard.js');
 
 /** Every INSERT the action handler attempts, so a silent write cannot hide. */
 let inserts: string[] = [];

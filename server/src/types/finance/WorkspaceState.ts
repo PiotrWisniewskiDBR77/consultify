@@ -35,9 +35,9 @@
 
 import { z } from 'zod';
 
-import { ArtifactRefSchema, type ArtifactRef } from './ArtifactRef.js';
-import { CellRefSchema, type CellRef } from './CellRef.js';
-import { OperationSchema, type Operation } from './Operation.js';
+import { type ArtifactRef, ArtifactRefSchema } from './ArtifactRef.js';
+import { type CellRef, CellRefSchema } from './CellRef.js';
+import { type Operation, OperationSchema } from './Operation.js';
 
 // ---------------------------------------------------------------------------
 // Selection
@@ -88,7 +88,9 @@ export const FinanceUnsavedOperationStackEntrySchema = z.object({
   /** False until the batch containing this operation round-trips a successful `ApplyOperationsBatchResult` from the server. Crash recovery replays entries with `committed: false`; entries with `committed: true` are retained only until the next successful checkpoint prunes them (AP-04's own scope — this field just carries the fact). */
   committed: z.boolean(),
 });
-export type FinanceUnsavedOperationStackEntry = z.infer<typeof FinanceUnsavedOperationStackEntrySchema>;
+export type FinanceUnsavedOperationStackEntry = z.infer<
+  typeof FinanceUnsavedOperationStackEntrySchema
+>;
 
 // ---------------------------------------------------------------------------
 // FinanceWorkspaceState — the full per-artifact, per-user serialization unit.
@@ -148,12 +150,16 @@ export function createEmptyWorkspaceState(params: {
   };
 }
 
-export function hasUncommittedEdits(state: Pick<FinanceWorkspaceState, 'unsavedOperationStack'>): boolean {
+export function hasUncommittedEdits(
+  state: Pick<FinanceWorkspaceState, 'unsavedOperationStack'>
+): boolean {
   return state.unsavedOperationStack.some((entry) => !entry.committed);
 }
 
 /** Every `CellRef` any uncommitted operation in the stack targets — AP-04's crash-recovery replay entry point. */
-export function uncommittedTargets(state: Pick<FinanceWorkspaceState, 'unsavedOperationStack'>): CellRef[] {
+export function uncommittedTargets(
+  state: Pick<FinanceWorkspaceState, 'unsavedOperationStack'>
+): CellRef[] {
   const targets: CellRef[] = [];
   for (const entry of state.unsavedOperationStack) {
     if (entry.committed) continue;

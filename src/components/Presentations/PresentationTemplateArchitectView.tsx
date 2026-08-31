@@ -121,7 +121,11 @@ const GOAL_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   { value: 'align', labelKey: 'presentations.templates.goal.align', fallback: 'Align' },
 ];
 
-const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; labelKey: string; fallback: string }[] = [
+const THEME_OPTIONS: {
+  value: 'corporate' | 'minimal' | 'modern';
+  labelKey: string;
+  fallback: string;
+}[] = [
   { value: 'corporate', labelKey: 'presentations.themes.corporate', fallback: 'Corporate' },
   { value: 'minimal', labelKey: 'presentations.themes.minimal', fallback: 'Minimal' },
   { value: 'modern', labelKey: 'presentations.themes.modern', fallback: 'Modern' },
@@ -1667,7 +1671,9 @@ export const PresentationTemplateArchitectView: React.FC<
                 className={`mt-3 rounded-lg border p-3 text-xs ${validationIssues.length === 0 ? 'border-success-500/30 bg-success-500/10 text-success-700' : 'border-danger-500/30 bg-danger-500/10 text-danger-700'}`}
               >
                 {validationIssues.length === 0 ? (
-                  <p className="font-medium">Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.</p>
+                  <p className="font-medium">
+                    Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.
+                  </p>
                 ) : (
                   <>
                     <p className="font-medium">

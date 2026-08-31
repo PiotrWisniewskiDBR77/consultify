@@ -118,11 +118,10 @@ import {
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
 import {
-  CommandCapabilityDeniedError,
   type CommandAccessContext,
+  CommandCapabilityDeniedError,
 } from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
-import { getCorrelationId } from './correlationId.js';
 import logger from '../../utils/Logger.js';
 import {
   CommitInitiativeKpiImpactSchema,
@@ -136,6 +135,7 @@ import {
   RecordReviewedAttributionSchema,
   SupersedeInitiativeKpiImpactSchema,
 } from '../../validators/resultsVnextKpiPerspectives.validators.js';
+import { getCorrelationId } from './correlationId.js';
 
 // ==========================================
 // SHARED HELPERS (same shape as kpi.routes.ts / kpiDeviation.routes.ts /
@@ -183,7 +183,10 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  * No `projectId` — InitiativeKPIImpact is organization-scoped (design §C:
  * "Initiative (legacy module) does not participate in RVN ABAC").
  */
-async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+async function resolveAccess(
+  req: AuthenticatedRequest,
+  auth: RouteAuth
+): Promise<CommandAccessContext> {
   return resolveEffectiveAccess({
     userId: auth.userId,
     organizationId: auth.organizationId,
@@ -200,7 +203,9 @@ function handlePerspectivesRouteError(res: Response, err: unknown, op: string): 
   if (err instanceof CommandCapabilityDeniedError) {
     // RN-G5: same rationale as kpiDeviation.routes.ts's identical branch —
     // `details.capability` is server-side-log-only, never wire.
-    logger.warn(`[resultsVnext/kpiPerspectives.routes] ${op} denied`, { capability: err.details.capability });
+    logger.warn(`[resultsVnext/kpiPerspectives.routes] ${op} denied`, {
+      capability: err.details.capability,
+    });
     res.status(403).json({ error: err.message, code: err.code });
     return;
   }

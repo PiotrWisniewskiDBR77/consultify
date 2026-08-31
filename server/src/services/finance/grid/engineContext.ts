@@ -7,7 +7,10 @@
  * ADR: `docs/validation/finance-v3/generated/gate-d/AP-01_finance_data_grid_ADR.md`.
  */
 
-import type { BusinessVersionStatus, FinanceRole } from '../../../services/finance/canonical/lifecycleService.js';
+import type {
+  BusinessVersionStatus,
+  FinanceRole,
+} from '../../../services/finance/canonical/lifecycleService.js';
 import { isContentMutableStatus } from '../../../types/finance/Operation.js';
 
 /**
@@ -62,7 +65,11 @@ export interface EngineError {
   issues?: readonly { path: (string | number)[]; message: string }[];
 }
 
-export function engineError(code: EngineErrorCode, message: string, issues?: EngineError['issues']): EngineError {
+export function engineError(
+  code: EngineErrorCode,
+  message: string,
+  issues?: EngineError['issues']
+): EngineError {
   return { ok: false, code, message, ...(issues ? { issues } : {}) };
 }
 
@@ -71,7 +78,9 @@ function defaultId(): string {
   // standard Node global (available since Node 14.17 / this repo already
   // relies on it elsewhere, e.g. server auth handoff refs) and needs no
   // import beyond the runtime global.
-  return globalThis.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 }
 
 export function resolveNow(ctx: Pick<EngineMutationContext, 'now'>): () => string {
@@ -83,8 +92,13 @@ export function resolveIdGenerator(ctx: Pick<EngineMutationContext, 'generateId'
 }
 
 /** The one capability check every engine performs up front when `businessVersionStatus` is supplied (see `EngineMutationContext.businessVersionStatus` doc comment). */
-export function checkCapability(ctx: Pick<EngineMutationContext, 'businessVersionStatus'>): EngineError | null {
-  if (ctx.businessVersionStatus !== undefined && !isContentMutableStatus(ctx.businessVersionStatus)) {
+export function checkCapability(
+  ctx: Pick<EngineMutationContext, 'businessVersionStatus'>
+): EngineError | null {
+  if (
+    ctx.businessVersionStatus !== undefined &&
+    !isContentMutableStatus(ctx.businessVersionStatus)
+  ) {
     return engineError(
       'CAPABILITY_DENIED',
       `businessVersionStatus '${ctx.businessVersionStatus}' is not content-mutable (must be DRAFT or NEEDS_CHANGES).`

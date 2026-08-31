@@ -1,6 +1,6 @@
-import { aiInputHash } from '../../../domain/initiatives-execution/aiEvidenceGovernance.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { aiInputHash } from '../../../domain/initiatives-execution/aiEvidenceGovernance.js';
 import type { SignalQuery } from '../../../types/workSignals.js';
 
 // FIX-1 (day18 layer-1 acceptance): every test in this file used to inject
@@ -31,9 +31,9 @@ vi.mock('../../aiBudgetService.js', () => ({
 }));
 
 import {
-  runInterpretationForOrganization,
   type InterpretedProposal,
   type InterpreterInputSignal,
+  runInterpretationForOrganization,
   validateInterpretedProvenance,
 } from '../signalInterpreter.js';
 
@@ -294,7 +294,12 @@ describe('INTERPRETED signal layer — default production wiring (FIX-1)', () =>
               model: { provider: 'mock', model: 'budget-model', version: '1' },
               prompt: { promptId: 'signal-pattern', version: '1' },
               template: { templateId: 'signal-pattern', version: '1' },
-              action: { kind: 'OPEN_TASK', route: '/tasks/x', params: {}, permission: 'tasks.read' },
+              action: {
+                kind: 'OPEN_TASK',
+                route: '/tasks/x',
+                params: {},
+                permission: 'tasks.read',
+              },
             },
           ],
         }),

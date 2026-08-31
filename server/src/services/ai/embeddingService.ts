@@ -246,7 +246,13 @@ export class EmbeddingService {
       params.push(organizationId);
     }
 
-    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, false, params.length + 1, projectIds);
+    const accessFilter = await this.buildKnowledgeDocAccessFilter(
+      'e',
+      userId,
+      false,
+      params.length + 1,
+      projectIds
+    );
     where.push(accessFilter.sql);
     params.push(...accessFilter.params);
     if (where.length > 0) sql += ` WHERE ${where.join(' AND ')}`;
@@ -283,7 +289,14 @@ export class EmbeddingService {
     queryEmbedding: number[],
     options: EmbeddingSearchOptions
   ): Promise<EmbeddingRow[]> {
-    const { limit = 5, minSimilarity = 0.5, sourceType, organizationId, userId, projectIds } = options;
+    const {
+      limit = 5,
+      minSimilarity = 0.5,
+      sourceType,
+      organizationId,
+      userId,
+      projectIds,
+    } = options;
     const vectorLiteral = `[${queryEmbedding.join(',')}]`;
 
     let sql = `
@@ -315,7 +328,13 @@ export class EmbeddingService {
       paramIndex++;
     }
 
-    const accessFilter = await this.buildKnowledgeDocAccessFilter('e', userId, true, paramIndex, projectIds);
+    const accessFilter = await this.buildKnowledgeDocAccessFilter(
+      'e',
+      userId,
+      true,
+      paramIndex,
+      projectIds
+    );
     sql += ` AND ${accessFilter.sql}`;
     params.push(...accessFilter.params);
     paramIndex += accessFilter.params.length;
@@ -365,9 +384,13 @@ export class EmbeddingService {
         );
         columns = new Set(result.rows.map((row) => row.column_name));
       } else {
-        const rows = await DbPromise.all<{ name?: string }>(`PRAGMA table_info(knowledge_docs)`, [], {
-          fallback: false,
-        });
+        const rows = await DbPromise.all<{ name?: string }>(
+          `PRAGMA table_info(knowledge_docs)`,
+          [],
+          {
+            fallback: false,
+          }
+        );
         columns = new Set((rows || []).map((row) => String(row.name || '')));
       }
     } catch {

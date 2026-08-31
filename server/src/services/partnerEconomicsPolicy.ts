@@ -101,9 +101,7 @@ export function isPartnerEconomicsOperationAvailable(): boolean {
  * economic writer, before any SQL, transaction, advisory lock or client
  * acquisition, so a refusal can never leave residue.
  */
-export function assertPartnerEconomicsOperationAllowed(
-  operation: PartnerEconomicOperation
-): void {
+export function assertPartnerEconomicsOperationAllowed(operation: PartnerEconomicOperation): void {
   if (!isPartnerEconomicsOperationAvailable()) {
     throw new PartnerEconomicsPolicyDisabledError(operation);
   }
@@ -212,9 +210,7 @@ export function findPartnerEconomicWriter(
   const normalizedMethod = String(method || '').toUpperCase();
   const normalizedPath = String(path || '/').split('?')[0] || '/';
   return (
-    rules.find(
-      (rule) => rule.method === normalizedMethod && rule.path.test(normalizedPath)
-    ) || null
+    rules.find((rule) => rule.method === normalizedMethod && rule.path.test(normalizedPath)) || null
   );
 }
 
@@ -301,12 +297,7 @@ export function partnerEconomicsReceiptIdentity(parts: {
 }): { identity: string; replayable: boolean } {
   if (!parts.requestId) {
     return {
-      identity: sha256([
-        'no-request-id',
-        parts.organizationId,
-        parts.userId ?? null,
-        randomUUID(),
-      ]),
+      identity: sha256(['no-request-id', parts.organizationId, parts.userId ?? null, randomUUID()]),
       replayable: false,
     };
   }
@@ -463,10 +454,7 @@ export function partnerEconomicsPolicyBody(operation: PartnerEconomicOperation) 
  * writer. The insert is awaited inside try/catch; a failure is logged and the
  * 410 is still returned. Same contract as the legacy cutover kernel.
  */
-export function createPartnerEconomicsPolicyGuard(
-  rules: EconomicRouteRule[],
-  surface: string
-) {
+export function createPartnerEconomicsPolicyGuard(rules: EconomicRouteRule[], surface: string) {
   return async function partnerEconomicsPolicyGuard(
     req: Request,
     res: Response,

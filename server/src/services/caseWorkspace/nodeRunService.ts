@@ -501,10 +501,7 @@ function normalizeErrorCode(code: string | null | undefined): string | null {
   return /^[A-Z][A-Z0-9_]{1,63}$/.test(trimmed) ? trimmed : 'UNCLASSIFIED_ERROR';
 }
 
-async function loadForUpdate(
-  client: PgTransactionClient,
-  nodeRunId: string
-): Promise<NodeRunRow> {
+async function loadForUpdate(client: PgTransactionClient, nodeRunId: string): Promise<NodeRunRow> {
   const result = await client.query<NodeRunRow>(
     `SELECT * FROM ${NODE_RUN_TABLE} WHERE node_run_id = ? FOR UPDATE`,
     [nodeRunId]
@@ -549,10 +546,7 @@ export async function createNodeRun(
     input.nodeVersionRef,
     'node_run_node_version_ref_required'
   );
-  const idempotencyKey = requireNonBlank(
-    input.idempotencyKey,
-    'node_run_idempotency_key_required'
-  );
+  const idempotencyKey = requireNonBlank(input.idempotencyKey, 'node_run_idempotency_key_required');
   const maxAttempts = requirePositiveInt(input.maxAttempts, 1, 'node_run_max_attempts_invalid');
   const initialStatus = input.initialStatus ?? 'PENDING';
   if (initialStatus !== 'PENDING' && initialStatus !== 'READY') {
@@ -852,7 +846,11 @@ export async function heartbeatNodeRunLease(
   const id = requireNonBlank(nodeRunId, 'node_run_id_required');
   const owner = requireNonBlank(leaseOwner, 'node_run_lease_owner_required');
   if (typeof fencingToken !== 'number') throw new Error('node_run_fencing_token_required');
-  const leaseMsResolved = requirePositiveInt(leaseMs, DEFAULT_LEASE_MS, 'node_run_lease_ms_invalid');
+  const leaseMsResolved = requirePositiveInt(
+    leaseMs,
+    DEFAULT_LEASE_MS,
+    'node_run_lease_ms_invalid'
+  );
 
   return withPgTransaction(async (client) => {
     const now = new Date().toISOString();
@@ -900,9 +898,17 @@ export function startNodeRunLeaseHeartbeat(
   nodeRunId: string,
   leaseOwner: string,
   fencingToken: number,
-  options: { intervalMs?: number; leaseMs?: number; onLost?: (outcome: 'fenced' | 'not_found') => void } = {}
+  options: {
+    intervalMs?: number;
+    leaseMs?: number;
+    onLost?: (outcome: 'fenced' | 'not_found') => void;
+  } = {}
 ): () => void {
-  const leaseMs = requirePositiveInt(options.leaseMs, DEFAULT_LEASE_MS, 'node_run_lease_ms_invalid');
+  const leaseMs = requirePositiveInt(
+    options.leaseMs,
+    DEFAULT_LEASE_MS,
+    'node_run_lease_ms_invalid'
+  );
   // Default to a third of the lease: two consecutive heartbeats may be lost
   // before the lease actually lapses.
   const intervalMs = requirePositiveInt(
@@ -969,7 +975,9 @@ export function startNodeRunLeaseHeartbeat(
  */
 export async function reclaimExpiredNodeRunLease(
   nodeRunId: string,
-  reconcile: (nodeRun: NodeRun) => Promise<NodeRunReconciliationVerdict> | NodeRunReconciliationVerdict,
+  reconcile: (
+    nodeRun: NodeRun
+  ) => Promise<NodeRunReconciliationVerdict> | NodeRunReconciliationVerdict,
   params: { leaseOwner?: string; leaseMs?: number } = {}
 ): Promise<ReclaimExpiredNodeRunLeaseOutcome> {
   const id = requireNonBlank(nodeRunId, 'node_run_id_required');
@@ -1044,7 +1052,10 @@ export async function reclaimExpiredNodeRunLease(
       return { outcome: 'reclaimed' as const, nodeRun: mapRow(closedRow) };
     }).then((result) =>
       result.outcome === 'reclaimed'
-        ? ({ outcome: 'already_applied', nodeRun: result.nodeRun } as ReclaimExpiredNodeRunLeaseOutcome)
+        ? ({
+            outcome: 'already_applied',
+            nodeRun: result.nodeRun,
+          } as ReclaimExpiredNodeRunLeaseOutcome)
         : (result as ReclaimExpiredNodeRunLeaseOutcome)
     );
   }
@@ -1526,10 +1537,9 @@ export async function recordNodeRunCompensation(
 export async function getNodeRun(nodeRunId: string, actorUserId: string): Promise<NodeRun | null> {
   const id = requireNonBlank(nodeRunId, 'node_run_id_required');
   const actor = requireNonBlank(actorUserId, 'node_run_actor_required');
-  const row = await queryOne<NodeRunRow>(
-    `SELECT * FROM ${NODE_RUN_TABLE} WHERE node_run_id = ?`,
-    [id]
-  );
+  const row = await queryOne<NodeRunRow>(`SELECT * FROM ${NODE_RUN_TABLE} WHERE node_run_id = ?`, [
+    id,
+  ]);
   if (!row) return null;
   await requireCaseAccess(actor, row.case_id);
   return mapRow(row);

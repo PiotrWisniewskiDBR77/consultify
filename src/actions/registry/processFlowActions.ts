@@ -7,17 +7,9 @@
  * `src/actions/ideaActionRegistry.ts` + `docs/standards/idea-workspace/02_REJESTR_AKCJI.md`.
  */
 
-import type { ActionDef } from './types';
+import { Api } from '@/services/api';
+
 import {
-  RUNTIME_AI_PROCESS_ANALYSIS,
-  RUNTIME_PF_ADD_DECISION,
-  RUNTIME_PF_ADD_START,
-  RUNTIME_PF_ADD_VSM_PROCESS,
-  RUNTIME_PF_MODE_AUTOMATION,
-  RUNTIME_PF_MODE_CLASSIC,
-  RUNTIME_PF_MODE_VSM,
-  RUNTIME_PF_NODE_AI_REWRITE_STEP,
-  RUNTIME_PF_PROCESS_SUMMARY,
   runByTool,
   runEdgeParamCallback,
   runKeyboardOnlyCallback,
@@ -29,9 +21,18 @@ import {
   runProcessFlowNodeUiOnlyCallback,
   runProcessFlowPaneUiOnlyCallback,
   runProcessFlowToolbarUiOnlyCallback,
+  RUNTIME_AI_PROCESS_ANALYSIS,
+  RUNTIME_PF_ADD_DECISION,
+  RUNTIME_PF_ADD_START,
+  RUNTIME_PF_ADD_VSM_PROCESS,
+  RUNTIME_PF_MODE_AUTOMATION,
+  RUNTIME_PF_MODE_CLASSIC,
+  RUNTIME_PF_MODE_VSM,
+  RUNTIME_PF_NODE_AI_REWRITE_STEP,
+  RUNTIME_PF_PROCESS_SUMMARY,
   runToolbarBusAction,
 } from './runtimeHelpers';
-import { Api } from '@/services/api';
+import type { ActionDef } from './types';
 
 export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
   {
@@ -115,7 +116,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
         properties: {
           edgeId: {
             type: 'string',
-            description: 'Id połączenia (informacyjnie — realnie liczy się zaznaczenie na płótnie).',
+            description:
+              'Id połączenia (informacyjnie — realnie liczy się zaznaczenie na płótnie).',
           },
         },
         required: ['edgeId'],
@@ -295,7 +297,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
         properties: {
           edgeId: {
             type: 'string',
-            description: 'Id połączenia (informacyjnie — realnie liczy się zaznaczenie na płótnie).',
+            description:
+              'Id połączenia (informacyjnie — realnie liczy się zaznaczenie na płótnie).',
           },
         },
         required: ['edgeId'],
@@ -545,14 +548,15 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence: 'addNode() → pushUndo() w IdeaProcessFlowTool.tsx:1536 (ta sama funkcja co „Dodaj akcję").',
+      evidence:
+        'addNode() → pushUndo() w IdeaProcessFlowTool.tsx:1536 (ta sama funkcja co „Dodaj akcję").',
     },
     teresa: {
       description:
         'Dodaje nowy węzeł typu Decyzja (romb) do otwartego Przepływu. Klik człowieka z menu tła umieszcza węzeł DOKŁADNIE w miejscu prawego kliku — Teresa (bez współrzędnych ekranu) dostaje to samo `addNode(\'decision\')` BEZ pozycji, więc węzeł ląduje w domyślnym miejscu układu, nie precyzyjnie tam, gdzie „powinien" wg rozmowy. Ta sama, już istniejąca luka co Menu 3 „Dodaj element" (`idea.element.add`) — nie nowa.',
     },
     source:
-      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getCanvasContextActions „add-decision" (`onAddNode(\'decision\')`) + processflow/useProcessFlowQuickActions.ts pf_add_decision (odbiornik istniał już przed tą falą, bez wołającego z rejestru)',
+      "src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getCanvasContextActions „add-decision\" (`onAddNode('decision')`) + processflow/useProcessFlowQuickActions.ts pf_add_decision (odbiornik istniał już przed tą falą, bez wołającego z rejestru)",
   },
   {
     id: 'idea.view.pf_paste_at_point',
@@ -583,7 +587,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
     scope: 'lane_frame',
     tools: ['process_flow'],
     surfaces: ['inline'],
-    handler: (ctx) => runLaneParamCallback('idea.lane.pf_rename', ctx, { label: ctx.params?.label }),
+    handler: (ctx) =>
+      runLaneParamCallback('idea.lane.pf_rename', ctx, { label: ctx.params?.label }),
     mutates: true,
     requiresPreview: false,
     undo: {
@@ -602,7 +607,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
         required: ['laneId', 'label'],
       },
     },
-    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground onDoubleClick → onRename prop',
+    source:
+      'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground onDoubleClick → onRename prop',
   },
   {
     id: 'idea.lane.pf_move_up',
@@ -627,7 +633,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
         required: ['laneId'],
       },
     },
-    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Move up" → onMoveUp prop',
+    source:
+      'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Move up" → onMoveUp prop',
   },
   {
     id: 'idea.lane.pf_move_down',
@@ -652,7 +659,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
         required: ['laneId'],
       },
     },
-    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Move down" → onMoveDown prop',
+    source:
+      'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Move down" → onMoveDown prop',
   },
   {
     id: 'idea.lane.pf_color',
@@ -721,7 +729,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence: 'handleLaneDelete() → pushUndo() w useProcessFlowNodes.ts:294 (przed reasygnacją węzłów + usunięciem toru).',
+      evidence:
+        'handleLaneDelete() → pushUndo() w useProcessFlowNodes.ts:294 (przed reasygnacją węzłów + usunięciem toru).',
     },
     // Trwałe usunięcie toru z grafu (i przeniesienie/odpięcie jego węzłów —
     // patrz `handleLaneDelete` w `useProcessFlowNodes.ts`). Undo lokalny
@@ -736,7 +745,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
         required: ['laneId'],
       },
     },
-    source: 'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Delete lane" → onDelete prop',
+    source:
+      'src/components/MyWork/processflow/LaneSystem.tsx LaneBackground przycisk „Delete lane" → onDelete prop',
   },
   {
     id: 'idea.view.pf_mode_classic',
@@ -1019,7 +1029,8 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence: 'addNode() → pushUndo() w IdeaProcessFlowTool.tsx:1536 (ta sama funkcja co „Dodaj akcję"/„Dodaj decyzję").',
+      evidence:
+        'addNode() → pushUndo() w IdeaProcessFlowTool.tsx:1536 (ta sama funkcja co „Dodaj akcję"/„Dodaj decyzję").',
     },
     teresa: {
       description:
@@ -1029,13 +1040,14 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
         properties: {
           vsm: {
             type: 'boolean',
-            description: 'true, jeśli otwarty Przepływ jest w trybie VSM (dodaje węzeł Proces zamiast Start).',
+            description:
+              'true, jeśli otwarty Przepływ jest w trybie VSM (dodaje węzeł Proces zamiast Start).',
           },
         },
       },
     },
     source:
-      'src/components/MyWork/IdeaProcessFlowTool.tsx empty-state CTA "addStart" (~L3458, `addNode(flowMode === \'vsm\' ? \'vsm_process\' : \'start\')`) + processflow/useProcessFlowQuickActions.ts pf_add_start/pf_add_vsm_process (odbiorniki istniały już przed tą falą, bez wołającego z rejestru)',
+      "src/components/MyWork/IdeaProcessFlowTool.tsx empty-state CTA \"addStart\" (~L3458, `addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')`) + processflow/useProcessFlowQuickActions.ts pf_add_start/pf_add_vsm_process (odbiorniki istniały już przed tą falą, bez wołającego z rejestru)",
   },
   {
     // NOWY wpis (2026-08-10, reconciliacja skrótów) — Przepływu Ctrl/Cmd+S
@@ -1061,6 +1073,7 @@ export const PROCESS_FLOW_ACTIONS: ActionDef[] = [
       description:
         'Zapisuje bieżący stan Przepływu natychmiast (poza automatycznym zapisem w tle). Dziś dostępne WYŁĄCZNIE ze skrótu klawiszowego — Teresa tego jeszcze nie wywoła.',
     },
-    source: 'src/components/MyWork/IdeaProcessFlowTool.tsx:2352 (handleSave) + useCanvasKeyboard onSave (~L2463)',
+    source:
+      'src/components/MyWork/IdeaProcessFlowTool.tsx:2352 (handleSave) + useCanvasKeyboard onSave (~L2463)',
   },
 ];

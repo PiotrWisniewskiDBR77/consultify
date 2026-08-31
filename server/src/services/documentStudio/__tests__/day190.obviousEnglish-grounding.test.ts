@@ -85,7 +85,10 @@ describe('day190 obviousEnglish final grounding boundary', () => {
       'Stan programu. Program przebiega zgodnie z ustaleniami.'
     );
     flagged.title = 'Executive plan 2030';
-    const checked = enforceDocumentSchemaGrounding(flagged, 'Stan programu bez angielskiego tytułu.');
+    const checked = enforceDocumentSchemaGrounding(
+      flagged,
+      'Stan programu bez angielskiego tytułu.'
+    );
     expect(checked.title).toBe('Executive plan 2030');
     expect(checked.evidence.toVerify).toContain(
       'Tytuł dokumentu zawiera niepotwierdzony lub niepolski fragment — do weryfikacji.'

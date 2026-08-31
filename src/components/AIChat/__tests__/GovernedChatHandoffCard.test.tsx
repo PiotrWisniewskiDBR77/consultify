@@ -3,6 +3,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { GovernedChatHandoffProposal } from '@/services/api/v8/chat';
+
 import { GovernedChatHandoffCard } from '../GovernedChatHandoffCard';
 
 vi.mock('react-i18next', () => ({

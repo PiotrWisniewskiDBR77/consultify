@@ -184,10 +184,11 @@ describe('requireActiveMembership — strict Results membership wall', () => {
     // DbPromise.get defaults to fallback:true, which RESOLVES a failure instead
     // of rejecting — under that default a DB error would surface as "no row"
     // and, worse, could never reach the 503 branch above.
-    expect(dbGet).toHaveBeenCalledWith(expect.stringContaining('organization_members'), [
-      'user-1',
-      'org-1',
-    ], { fallback: false });
+    expect(dbGet).toHaveBeenCalledWith(
+      expect.stringContaining('organization_members'),
+      ['user-1', 'org-1'],
+      { fallback: false }
+    );
   });
 
   it('resolves tenant/actor ONLY from the signed actor context, never from body or query', async () => {

@@ -16,11 +16,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 
-import * as svc from '../../services/caseWorkspace/runBindingService.js';
 import * as planVersionSvc from '../../services/caseWorkspace/casePlanVersionService.js';
+import * as svc from '../../services/caseWorkspace/runBindingService.js';
 import { requireCaseAccessForActor } from './_shared/access.js';
-import { caseWorkspaceHandler } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
+import { caseWorkspaceHandler } from './_shared/handler.js';
 import { parseBody, parseParams } from './_shared/validate.js';
 
 const router = Router();
@@ -35,7 +35,10 @@ router.post(
   '/run-bindings',
   caseWorkspaceHandler(async (req, res, actor) => {
     const body = parseBody(bindRunBody, req.body);
-    const planVersion = await planVersionSvc.getPlanVersion(body.casePlanVersionId, actor.actorUserId);
+    const planVersion = await planVersionSvc.getPlanVersion(
+      body.casePlanVersionId,
+      actor.actorUserId
+    );
     if (!planVersion) {
       throw toCaseWorkspaceAppError(new Error('plan_version_not_found'), actor.correlationId);
     }
@@ -52,7 +55,9 @@ router.get(
     const params = parseParams(z.object({ runId: z.string().trim().min(1) }), req.params);
     const found = await svc.getRunBinding(params.runId, actor.actorUserId);
     if (!found) {
-      res.status(404).json({ error: { code: 'RUN_BINDING_NOT_FOUND', message: 'Run binding not found.' } });
+      res
+        .status(404)
+        .json({ error: { code: 'RUN_BINDING_NOT_FOUND', message: 'Run binding not found.' } });
       return;
     }
     await requireCaseAccessForActor(actor, found.caseId);
@@ -75,13 +80,22 @@ router.get(
 router.get(
   '/run-bindings/by-plan-version/:casePlanVersionId',
   caseWorkspaceHandler(async (req, res, actor) => {
-    const params = parseParams(z.object({ casePlanVersionId: z.string().trim().min(1) }), req.params);
-    const planVersion = await planVersionSvc.getPlanVersion(params.casePlanVersionId, actor.actorUserId);
+    const params = parseParams(
+      z.object({ casePlanVersionId: z.string().trim().min(1) }),
+      req.params
+    );
+    const planVersion = await planVersionSvc.getPlanVersion(
+      params.casePlanVersionId,
+      actor.actorUserId
+    );
     if (!planVersion) {
       throw toCaseWorkspaceAppError(new Error('plan_version_not_found'), actor.correlationId);
     }
     await requireCaseAccessForActor(actor, planVersion.caseId);
-    const items = await svc.listRunBindingsForPlanVersion(params.casePlanVersionId, actor.actorUserId);
+    const items = await svc.listRunBindingsForPlanVersion(
+      params.casePlanVersionId,
+      actor.actorUserId
+    );
     res.status(200).json({ data: items });
   })
 );

@@ -20,7 +20,11 @@
  * (`insufficient` i `contradicted` pozostają jak w §2.3.2.)
  */
 
-import type { P10ConfidenceLevel, P10EvidencePointer, P10EvidencePointerType } from './interviewInsightCanon.js';
+import type {
+  P10ConfidenceLevel,
+  P10EvidencePointer,
+  P10EvidencePointerType,
+} from './interviewInsightCanon.js';
 
 /**
  * „Strong artifact" = pointer niosący materiał źródłowy, który sam w sobie daje
@@ -77,9 +81,7 @@ export function evaluateConfidence(input: ConfidenceEvaluationInput): Confidence
   const active = (input.pointers || []).filter((p) => p && !p.isTombstone);
   const activePointerCount = active.length;
   const distinctSourceCount = new Set(active.map(segmentKey)).size;
-  const hasStrongArtifact = active.some((p) =>
-    P10_STRONG_ARTIFACT_POINTER_TYPES.includes(p.type)
-  );
+  const hasStrongArtifact = active.some((p) => P10_STRONG_ARTIFACT_POINTER_TYPES.includes(p.type));
   const contradicted = input.unresolvedMaterialContradiction === true;
 
   // Reguła `high` — liczy się rozrzut po źródłach, nie liczba pointerów.
@@ -148,8 +150,6 @@ export function evaluateConfidence(input: ConfidenceEvaluationInput): Confidence
  * Pokrycie źródłowe dla mostka sygnałów. `complete` WYŁĄCZNIE gdy spełniona jest
  * reguła `high` — nigdy na podstawie samej długości tablicy pointerów.
  */
-export function evaluateSourceCoverage(
-  input: ConfidenceEvaluationInput
-): 'complete' | 'partial' {
+export function evaluateSourceCoverage(input: ConfidenceEvaluationInput): 'complete' | 'partial' {
   return evaluateConfidence(input).meetsHighRule ? 'complete' : 'partial';
 }

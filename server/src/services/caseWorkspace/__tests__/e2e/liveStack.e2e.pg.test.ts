@@ -55,14 +55,14 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  BACKEND,
-  ControlDb,
-  SEED_USER,
   api,
   assertLocalDatabase,
   assertNoAuthBypass,
+  BACKEND,
+  ControlDb,
   login,
   probeLiveStack,
+  SEED_USER,
   uniqueSuffix,
   validGraph,
 } from './liveStackHarness.js';
@@ -136,8 +136,17 @@ beforeAll(async () => {
   await assertNoAuthBypass();
 
   db = new ControlDb();
-  await db.ensureLoginUser({ ...APPROVER, organizationId: SEED_USER.organizationId, role: 'OWNER' });
-  await db.ensureLoginUser({ ...OTHER_TENANT, userId: 'cw-stream-e-other-user', role: 'OWNER', projectId: OTHER_TENANT.projectId });
+  await db.ensureLoginUser({
+    ...APPROVER,
+    organizationId: SEED_USER.organizationId,
+    role: 'OWNER',
+  });
+  await db.ensureLoginUser({
+    ...OTHER_TENANT,
+    userId: 'cw-stream-e-other-user',
+    role: 'OWNER',
+    projectId: OTHER_TENANT.projectId,
+  });
   token = await login();
   approverToken = await login(APPROVER.email, APPROVER.password);
   otherToken = await login(OTHER_TENANT.email, OTHER_TENANT.password);
@@ -191,7 +200,9 @@ describe('1. Chat -> Case via the real chat surface', () => {
     expect(res.body.data.mode).toBe('informational');
     expect(res.body.data.caseCreated).toBe(false);
 
-    const cases = await db.rows(`SELECT case_id FROM case_core WHERE project_id = $1`, [PROJECT_ID]);
+    const cases = await db.rows(`SELECT case_id FROM case_core WHERE project_id = $1`, [
+      PROJECT_ID,
+    ]);
     expect(cases).toHaveLength(0);
   });
 
@@ -219,7 +230,9 @@ describe('1. Chat -> Case via the real chat surface', () => {
     state.workOrderDigest = res.body.data.workOrderDigest;
 
     // (b) the proposal exists but the Case does not
-    const cases = await db.rows(`SELECT case_id FROM case_core WHERE project_id = $1`, [PROJECT_ID]);
+    const cases = await db.rows(`SELECT case_id FROM case_core WHERE project_id = $1`, [
+      PROJECT_ID,
+    ]);
     expect(cases).toHaveLength(0);
 
     // (c) the only trace is the proposal event
@@ -327,10 +340,13 @@ describe('2. LIGHT one-click', () => {
     expect(confirm.status).toBe(201);
     state.lightCaseId = confirm.body.data.caseId;
 
-    const row = await db.one<{ case_profile: string; governance_tier: string; case_status: string }>(
-      `SELECT case_profile, governance_tier, case_status FROM case_core WHERE case_id = $1`,
-      [state.lightCaseId]
-    );
+    const row = await db.one<{
+      case_profile: string;
+      governance_tier: string;
+      case_status: string;
+    }>(`SELECT case_profile, governance_tier, case_status FROM case_core WHERE case_id = $1`, [
+      state.lightCaseId,
+    ]);
     expect(row!.case_profile).toBe('LIGHT');
     expect(row!.governance_tier).toBe('LIGHTWEIGHT');
 
@@ -384,12 +400,12 @@ describe('3. STANDARD plan -> publish -> start', () => {
   it('walks DRAFT -> IN_REVIEW -> PUBLISHED and then starts the Case', async () => {
     requireStack();
 
-    const draft = await api<{ data: { casePlanVersionId: string; status: string; version: number } }>(
-      token,
-      'POST',
-      `/case-workspace/cases/${state.caseId}/plan-versions`,
-      { semanticGraph: validGraph(`std-${SUFFIX}`), changeReason: 'Plan startowy' }
-    );
+    const draft = await api<{
+      data: { casePlanVersionId: string; status: string; version: number };
+    }>(token, 'POST', `/case-workspace/cases/${state.caseId}/plan-versions`, {
+      semanticGraph: validGraph(`std-${SUFFIX}`),
+      changeReason: 'Plan startowy',
+    });
     expect(draft.status).toBe(201);
     expect(draft.body.data.status).toBe('DRAFT');
     state.planVersionId = draft.body.data.casePlanVersionId;
@@ -470,9 +486,7 @@ describe('3. STANDARD plan -> publish -> start', () => {
     expect(res.status).toBe(200);
     expect(Object.keys(res.body.data).sort()).toEqual(['graphDigest', 'graphId', 'semanticGraph']);
     expect((res.body.data as { nodes?: unknown }).nodes).toBeUndefined();
-    expect(
-      ((res.body.data.semanticGraph as { nodes: unknown[] }).nodes ?? []).length
-    ).toBe(2);
+    expect(((res.body.data.semanticGraph as { nodes: unknown[] }).nodes ?? []).length).toBe(2);
   });
 });
 
@@ -643,9 +657,9 @@ describe('5. Wait, external delivery, and survival across a restart', () => {
     expect(stillActive!.satisfied_by_event_id).toBeNull();
 
     // (c) a refusal is not a fact — nothing was written to the outbox
-    expect(
-      (await db.outboxForAggregate(state.waitId!)).map((e) => e.event_type)
-    ).not.toContain('wait.satisfied');
+    expect((await db.outboxForAggregate(state.waitId!)).map((e) => e.event_type)).not.toContain(
+      'wait.satisfied'
+    );
 
     // ---- 2. THE LEGITIMATE PATH ------------------------------------------
     // An event that REALLY arrived. Seeded out of band because
@@ -749,12 +763,10 @@ describe('6. Pause, resume, cancel', () => {
     expect(cancelled.body.data.caseStatus).toBe('CANCELLED');
 
     // A cancelled Case must not be revivable.
-    const revive = await api(
-      token,
-      'POST',
-      `/case-workspace/cases/${state.lightCaseId}/status`,
-      { targetStatus: 'ACTIVE', reason: 'próba' }
-    );
+    const revive = await api(token, 'POST', `/case-workspace/cases/${state.lightCaseId}/status`, {
+      targetStatus: 'ACTIVE',
+      reason: 'próba',
+    });
     expect(revive.status).toBe(409);
 
     // (b)
@@ -1152,7 +1164,9 @@ describe('10. Refresh and reconnect', () => {
     expect(reconfirm.body.data.caseCreated).toBe(false);
     expect(reconfirm.body.data.caseId).toBe(state.caseId);
 
-    const cases = await db.rows(`SELECT case_id FROM case_core WHERE project_id = $1`, [PROJECT_ID]);
+    const cases = await db.rows(`SELECT case_id FROM case_core WHERE project_id = $1`, [
+      PROJECT_ID,
+    ]);
     expect(cases).toHaveLength(1);
   });
 });

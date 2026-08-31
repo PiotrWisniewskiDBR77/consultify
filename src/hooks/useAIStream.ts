@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  applyToolStepEvent,
-  type ToolStepEvent,
-} from '@/components/AIChat/toolSteps';
+import { applyToolStepEvent, type ToolStepEvent } from '@/components/AIChat/toolSteps';
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';

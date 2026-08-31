@@ -48,21 +48,28 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('../../../services/resultsVnext/roi/roiBenefitsRealizationCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import('../../../services/resultsVnext/roi/roiBenefitsRealizationCommands.js')
-  >();
-  return {
-    ...actual,
-    startRoiCaseBenefitsRealization: (...args: unknown[]) => mockStartRoiCaseBenefitsRealization(...args),
-    cancelRoiCase: (...args: unknown[]) => mockCancelRoiCase(...args),
-  };
-});
+vi.mock(
+  '../../../services/resultsVnext/roi/roiBenefitsRealizationCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/roi/roiBenefitsRealizationCommands.js')
+      >();
+    return {
+      ...actual,
+      startRoiCaseBenefitsRealization: (...args: unknown[]) =>
+        mockStartRoiCaseBenefitsRealization(...args),
+      cancelRoiCase: (...args: unknown[]) => mockCancelRoiCase(...args),
+    };
+  }
+);
 vi.mock('../../../services/resultsVnext/roi/roiBenefitsRealizationRepository.js', () => ({
-  getRoiCaseBenefitsRealizationView: (...args: unknown[]) => mockGetRoiCaseBenefitsRealizationView(...args),
+  getRoiCaseBenefitsRealizationView: (...args: unknown[]) =>
+    mockGetRoiCaseBenefitsRealizationView(...args),
 }));
 vi.mock('../../../services/resultsVnext/roi/roiOrgPerspectiveRepository.js', () => ({
-  listOrganizationRoiBenefitsRealization: (...args: unknown[]) => mockListOrganizationRoiBenefitsRealization(...args),
+  listOrganizationRoiBenefitsRealization: (...args: unknown[]) =>
+    mockListOrganizationRoiBenefitsRealization(...args),
 }));
 vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiCase: (...args: unknown[]) => mockGetRoiCase(...args),
@@ -70,8 +77,10 @@ vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiBaseline: vi.fn(),
 }));
 
-const { RoiCaseValidationError } = await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
-const { AtomicWriteConflictError } = await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const { RoiCaseValidationError } =
+  await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
+const { AtomicWriteConflictError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
 const roiRoutes = (await import('../roi.routes.js')).default;
 const roiPerspectivesRoutes = (await import('../roiPerspectives.routes.js')).default;
@@ -143,7 +152,9 @@ describe('POST .../transitions/start-benefits-realization', () => {
   it('maps RoiCaseValidationError to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'approved' }));
     mockStartRoiCaseBenefitsRealization.mockRejectedValue(
-      new RoiCaseValidationError('not tracking', 'INVALID_ROI_CASE_STATUS_TRANSITION', { caseId: CASE_ID })
+      new RoiCaseValidationError('not tracking', 'INVALID_ROI_CASE_STATUS_TRANSITION', {
+        caseId: CASE_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/start-benefits-realization`)
@@ -192,7 +203,11 @@ describe('POST .../transitions/cancel', () => {
     expect(response.status).toBe(200);
     expect(response.body.case.status).toBe('cancelled');
     expect(mockCancelRoiCase).toHaveBeenCalledWith(
-      expect.objectContaining({ caseId: CASE_ID, expectedVersion: 3, reason: 'Program deprioritized' })
+      expect.objectContaining({
+        caseId: CASE_ID,
+        expectedVersion: 3,
+        reason: 'Program deprioritized',
+      })
     );
   });
 
@@ -217,7 +232,9 @@ describe('POST .../transitions/cancel', () => {
   it('maps RoiCaseValidationError to 409 (guard scope — Decision D7)', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture({ status: 'approved' }));
     mockCancelRoiCase.mockRejectedValue(
-      new RoiCaseValidationError('not trackable', 'INVALID_ROI_CASE_STATUS_TRANSITION', { caseId: CASE_ID })
+      new RoiCaseValidationError('not trackable', 'INVALID_ROI_CASE_STATUS_TRANSITION', {
+        caseId: CASE_ID,
+      })
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/transitions/cancel`)
@@ -249,9 +266,14 @@ describe('GET .../benefits-realization', () => {
       actualFinancialBenefits: 3750,
       asOfActualSnapshotId: 'actual-snap-1',
     });
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`
+    );
     expect(response.status).toBe(200);
-    expect(response.body.benefitsRealization.benefitsRealizationPct).toEqual({ status: 'available', value: 75 });
+    expect(response.body.benefitsRealization.benefitsRealizationPct).toEqual({
+      status: 'available',
+      value: 75,
+    });
     expect(response.body.benefitsRealization.approvedFinancialBenefits).toBe(5000);
   });
 
@@ -263,14 +285,20 @@ describe('GET .../benefits-realization', () => {
       actualFinancialBenefits: null,
       asOfActualSnapshotId: null,
     });
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`
+    );
     expect(response.status).toBe(200);
-    expect(response.body.benefitsRealization.benefitsRealizationPct.reason).toBe('not_yet_approved');
+    expect(response.body.benefitsRealization.benefitsRealizationPct.reason).toBe(
+      'not_yet_approved'
+    );
   });
 
   it('404s when the case is not visible/does not exist', async () => {
     mockGetRoiCaseBenefitsRealizationView.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`
+    );
     expect(response.status).toBe(404);
   });
 
@@ -282,7 +310,9 @@ describe('GET .../benefits-realization', () => {
       actualFinancialBenefits: null,
       asOfActualSnapshotId: null,
     });
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/benefits-realization`
+    );
     expect(response.status).toBe(200);
   });
 });
@@ -323,7 +353,7 @@ describe('GET .../org/benefits-realization', () => {
     );
   });
 
-  it('does NOT fall through to roi.routes.ts\'s /cases/:caseId family — mount-order regression guard', async () => {
+  it("does NOT fall through to roi.routes.ts's /cases/:caseId family — mount-order regression guard", async () => {
     mockListOrganizationRoiBenefitsRealization.mockResolvedValue({
       cases: [],
       portfolioTotals: {
@@ -333,7 +363,9 @@ describe('GET .../org/benefits-realization', () => {
         caseCountTotal: 0,
       },
     });
-    const response = await request(createApp()).get('/api/vnext/results/roi/org/benefits-realization');
+    const response = await request(createApp()).get(
+      '/api/vnext/results/roi/org/benefits-realization'
+    );
     expect(response.status).toBe(200);
     // If this request had fallen through to roi.routes.ts's dynamic
     // /cases/:caseId family it would never reach here (that family requires

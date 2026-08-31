@@ -41,7 +41,9 @@ export async function resolveTablePlatformArtifactIdentity(
         `/artifacts/${encodeURIComponent(normalized)}/action-target`
       ).catch(() => null);
       const actionTarget = unwrapApiData(actionTargetRaw);
-      const originRuntime = String(actionTarget?.originRuntime || '').trim().toLowerCase();
+      const originRuntime = String(actionTarget?.originRuntime || '')
+        .trim()
+        .toLowerCase();
       const originRecordId = String(actionTarget?.originRecordId || '').trim();
       if (originRuntime !== 'sheet' || !originRecordId) return null;
       tableId = originRecordId;

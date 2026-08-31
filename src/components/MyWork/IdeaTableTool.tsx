@@ -77,17 +77,16 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { isIdeaDecisionLogEnabled } from '@/utils/ideaDecisionLogFlag';
 import { isIdeaFinancialCaseEnabled } from '@/utils/ideaFinancialCaseFlag';
+import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import {
   IDEA_MENU1_TOOL_SLOT_ID,
   isIdeaTableGuidedBarEnabled,
 } from '@/utils/ideaTableGuidedBarFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
-import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { getCanvasEdgeKindLabel } from './canvas/canvasEdgeKindVocabulary';
-import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
-
 import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import {
   EMPTY_SELECTION,
   IDEA_GRAPH_UPDATE_EVENT,
@@ -141,12 +140,6 @@ import {
 } from './table/csvUtils';
 import { DistributionManager } from './table/distribution/DistributionManager';
 import { DistributionBuilder } from './table/DistributionBuilder';
-import {
-  applyCsvImportCap,
-  applyRowAddCap,
-  computeRowRenderCap,
-  MAX_TABLE_ROWS,
-} from './table/tableRowLimits';
 import { computeHeatmapStyles, HeatmapControls } from './table/EmbeddedAnalytics';
 import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterBuilder } from './table/FilterBuilder';
@@ -154,13 +147,13 @@ import { FilterPanel } from './table/FilterPanel';
 import { FinancialCaseDialog } from './table/financial/FinancialCaseDialog';
 import type { FinancialCaseStatus } from './table/financial/financialTypes';
 import FormBuilder from './table/FormBuilder';
-import { IdeaDecisionLogPanel } from './table/IdeaDecisionLogPanel';
-import type { FinancialFreshnessResult } from './table/ideaDecisionGovernance';
 import { FormsIndex } from './table/forms/FormsIndex';
 import { batchEvaluateFormulas } from './table/FormulaEngineV2';
 import { FrameworkGenerator } from './table/FrameworkGenerator';
 import { GovernedModelsDashboard } from './table/governed/GovernedModelsDashboard';
 import { GridView } from './table/GridView';
+import type { FinancialFreshnessResult } from './table/ideaDecisionGovernance';
+import { IdeaDecisionLogPanel } from './table/IdeaDecisionLogPanel';
 import { IdeaPipeline } from './table/IdeaPipeline';
 import { IdeaScoringModel } from './table/IdeaScoringModel';
 import { BatchAIFillButton, InlineAIFill } from './table/InlineAIFill';
@@ -183,6 +176,12 @@ import { SyncManager } from './table/sync/SyncManager';
 import { TableBarOverflowMenu, type TableBarOverflowSection } from './table/TableBarOverflowMenu';
 // P15 Table Platform – extracted components
 import { TableDataProvider } from './table/TableDataProvider';
+import {
+  applyCsvImportCap,
+  applyRowAddCap,
+  computeRowRenderCap,
+  MAX_TABLE_ROWS,
+} from './table/tableRowLimits';
 import { TableStartEmptyState } from './table/TableStartEmptyState';
 import { TableTabStrip } from './table/TableTabStrip';
 import { TableToolbar as P15TableToolbar } from './table/TableToolbar';

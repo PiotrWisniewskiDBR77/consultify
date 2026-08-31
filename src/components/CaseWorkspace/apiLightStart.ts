@@ -68,11 +68,14 @@ export async function startLightOneClick(
 ): Promise<CaseCommandResult<LightOneClickData>> {
   const idempotencyKey = options?.idempotencyKey ?? newIdempotencyKey();
   try {
-    const res = await fetchWithRetry(`${V8_PREFIX}${BASE}/cases/${encodeURIComponent(caseId)}/light-start`, {
-      method: 'POST',
-      headers: { ...getHeaders(), 'Idempotency-Key': idempotencyKey },
-      body: JSON.stringify({}),
-    });
+    const res = await fetchWithRetry(
+      `${V8_PREFIX}${BASE}/cases/${encodeURIComponent(caseId)}/light-start`,
+      {
+        method: 'POST',
+        headers: { ...getHeaders(), 'Idempotency-Key': idempotencyKey },
+        body: JSON.stringify({}),
+      }
+    );
     const json = await handleResponse<{ data: LightOneClickData }>(
       res,
       `V8 POST ${BASE}/cases/${caseId}/light-start`

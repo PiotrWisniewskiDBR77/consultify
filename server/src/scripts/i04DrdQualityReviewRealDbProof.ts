@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 
 import { Pool } from 'pg';
 
-import { adaptQuery } from '../database/PostgresDatabase.js';
 import { DRD_STRUCTURE } from '../data/drdStructure.js';
+import { adaptQuery } from '../database/PostgresDatabase.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required');
@@ -12,10 +12,16 @@ process.env.NODE_ENV = 'test';
 const pool = new Pool({ connectionString: databaseUrl });
 const db = {
   all(sql: string, params: unknown[], cb: (error: Error | null, rows: unknown[]) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows), (error) => cb(error as Error, []));
+    void pool.query(adaptQuery(sql), params).then(
+      (result) => cb(null, result.rows),
+      (error) => cb(error as Error, [])
+    );
   },
   get(sql: string, params: unknown[], cb: (error: Error | null, row: unknown) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows[0] ?? null), (error) => cb(error as Error, null));
+    void pool.query(adaptQuery(sql), params).then(
+      (result) => cb(null, result.rows[0] ?? null),
+      (error) => cb(error as Error, null)
+    );
   },
   run(sql: string, params: unknown[], cb: (error: Error | null) => void) {
     void pool.query(adaptQuery(sql), params).then(

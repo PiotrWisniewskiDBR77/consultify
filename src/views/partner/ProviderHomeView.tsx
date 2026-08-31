@@ -86,7 +86,10 @@ const StatusBadge: React.FC<{ children: React.ReactNode; tone?: 'neutral' | 'lim
   </span>
 );
 
-const AudienceDetail: React.FC<{ audience: PartnerAudience; language?: string }> = ({ audience, language }) => (
+const AudienceDetail: React.FC<{ audience: PartnerAudience; language?: string }> = ({
+  audience,
+  language,
+}) => (
   <div
     className={cn(sectionCard, 'border-[var(--c-selection-border)]')}
     data-testid="partner-audience-detail"
@@ -103,7 +106,9 @@ const AudienceDetail: React.FC<{ audience: PartnerAudience; language?: string }>
     <p className="mt-4 max-w-3xl text-base leading-7 text-c-text">{audience.outcome}</p>
     <div className="mt-5 grid gap-4 lg:grid-cols-2">
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{partnerText('Use case', language)}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {partnerText('Use case', language)}
+        </p>
         <p className="mt-2 text-sm leading-6 text-c-text-secondary">{audience.useCase}</p>
       </div>
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
@@ -119,7 +124,9 @@ const AudienceDetail: React.FC<{ audience: PartnerAudience; language?: string }>
         </div>
       </div>
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{partnerText('You bring', language)}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {partnerText('You bring', language)}
+        </p>
         <p className="mt-2 text-sm leading-6 text-c-text-secondary">
           {audience.partnerContribution}
         </p>
@@ -143,16 +150,25 @@ const AudienceDetail: React.FC<{ audience: PartnerAudience; language?: string }>
   </div>
 );
 
-const ProgramHero: React.FC<{ onExplore: () => void; language?: string }> = ({ onExplore, language }) => (
+const ProgramHero: React.FC<{ onExplore: () => void; language?: string }> = ({
+  onExplore,
+  language,
+}) => (
   <section className="relative overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface px-6 py-8 md:px-10 md:py-10">
     <div className="pointer-events-none absolute inset-y-0 right-0 w-2/5 bg-[radial-gradient(circle_at_center,var(--c-selection),transparent_70%)] opacity-80" />
     <div className="relative max-w-4xl">
       <StatusBadge>{partnerText('Consultify Partner Program', language)}</StatusBadge>
       <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-c-text md:text-4xl">
-        {partnerText('Build the first joint client opportunity — with roles and boundaries clear from day one.', language)}
+        {partnerText(
+          'Build the first joint client opportunity — with roles and boundaries clear from day one.',
+          language
+        )}
       </h1>
       <p className="mt-4 max-w-3xl text-base leading-7 text-c-text-secondary md:text-lg">
-        {partnerText('Choose the partner path that matches your business, compare five cooperation models and see how a joint opportunity moves from qualification to an evidence-based expansion decision.', language)}
+        {partnerText(
+          'Choose the partner path that matches your business, compare five cooperation models and see how a joint opportunity moves from qualification to an evidence-based expansion decision.',
+          language
+        )}
       </p>
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <button
@@ -164,7 +180,10 @@ const ProgramHero: React.FC<{ onExplore: () => void; language?: string }> = ({ o
           <ArrowRight className="h-4 w-4" />
         </button>
         <p className="text-xs leading-5 text-c-text-muted">
-          {partnerText('Program fit and commercial terms are confirmed during qualification.', language)}
+          {partnerText(
+            'Program fit and commercial terms are confirmed during qualification.',
+            language
+          )}
         </p>
       </div>
     </div>
@@ -192,7 +211,10 @@ export const ValueCardsSection: React.FC = () => {
       <SectionHeading
         eyebrow={partnerText('Six partner paths', language)}
         title={partnerText('Start with the way you create value', language)}
-        description={partnerText('The program has one governance contract, but the first opportunity should reflect your client access, delivery model and responsibility boundary. Select a path to compare the intended fit.', language)}
+        description={partnerText(
+          'The program has one governance contract, but the first opportunity should reflect your client access, delivery model and responsibility boundary. Select a path to compare the intended fit.',
+          language
+        )}
       />
       <div
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
@@ -258,27 +280,38 @@ export const BetaSuccessStories: React.FC = () => {
   const { i18n } = useTranslation();
   const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
   return (
-  <section className="space-y-5" aria-labelledby="partner-proof-title">
-    <SectionHeading
-      eyebrow={partnerText('Evidence policy', language)}
-      title={partnerText('Proof must be traceable — illustrative stories are not customer evidence', language)}
-      description={partnerText('No company logo, quotation or outcome is shown here without an evidence owner and publication consent. The previously displayed fictional beta companies have been removed.', language)}
-    />
-    <div className={cn(sectionCard, 'flex items-start gap-4')}>
-      <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-c-text-secondary" />
-      <div>
-        <h3 id="partner-proof-title" className="text-base font-semibold text-c-text">
-          {partnerText('Current evidence status', language)}
-        </h3>
-        <p className="mt-2 text-sm leading-6 text-c-text-secondary">
-          {partnerText('There is no approved public partner testimonial in the current evidence register. Real cases will appear only after the source, evidence owner and consent to publish are recorded.', language)}
-        </p>
-        <div className="mt-3">
-          <StatusBadge tone="limited">{partnerText('No publishable reference yet', language)}</StatusBadge>
+    <section className="space-y-5" aria-labelledby="partner-proof-title">
+      <SectionHeading
+        eyebrow={partnerText('Evidence policy', language)}
+        title={partnerText(
+          'Proof must be traceable — illustrative stories are not customer evidence',
+          language
+        )}
+        description={partnerText(
+          'No company logo, quotation or outcome is shown here without an evidence owner and publication consent. The previously displayed fictional beta companies have been removed.',
+          language
+        )}
+      />
+      <div className={cn(sectionCard, 'flex items-start gap-4')}>
+        <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-c-text-secondary" />
+        <div>
+          <h3 id="partner-proof-title" className="text-base font-semibold text-c-text">
+            {partnerText('Current evidence status', language)}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-c-text-secondary">
+            {partnerText(
+              'There is no approved public partner testimonial in the current evidence register. Real cases will appear only after the source, evidence owner and consent to publish are recorded.',
+              language
+            )}
+          </p>
+          <div className="mt-3">
+            <StatusBadge tone="limited">
+              {partnerText('No publishable reference yet', language)}
+            </StatusBadge>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
   );
 };
 
@@ -286,72 +319,87 @@ export const CommissionCalculatorSection: React.FC = () => {
   const { i18n } = useTranslation();
   const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
   const models = COOPERATION_MODELS.map((item) => localizeModel(item, language));
-  return <section className="space-y-5" aria-labelledby="partner-models-title">
-    <SectionHeading
-      eyebrow={partnerText('Five cooperation models', language)}
-      title={partnerText('Choose a responsibility model before discussing economics', language)}
-      description={partnerText('These patterns explain who leads the relationship and delivery. Their availability and commercial terms are confirmed for the specific partner and opportunity.', language)}
-    />
-    <div className="grid gap-4 lg:grid-cols-2">
-      {models.map((model) => (
-        <article key={model.id} className={sectionCard}>
-          <div className="flex items-center gap-3">
-            <Handshake className="h-5 w-5 text-c-text-secondary" />
-            <h3
-              id={model.id === 'referral' ? 'partner-models-title' : undefined}
-              className="text-base font-semibold text-c-text"
-            >
-              {model.label}
-            </h3>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-c-text-secondary">{model.bestFor}</p>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div>
-              <dt className="font-medium text-c-text">{partnerText('Partner', language)}</dt>
-              <dd className="mt-1 text-c-text-secondary">{model.partnerContribution}</dd>
+  return (
+    <section className="space-y-5" aria-labelledby="partner-models-title">
+      <SectionHeading
+        eyebrow={partnerText('Five cooperation models', language)}
+        title={partnerText('Choose a responsibility model before discussing economics', language)}
+        description={partnerText(
+          'These patterns explain who leads the relationship and delivery. Their availability and commercial terms are confirmed for the specific partner and opportunity.',
+          language
+        )}
+      />
+      <div className="grid gap-4 lg:grid-cols-2">
+        {models.map((model) => (
+          <article key={model.id} className={sectionCard}>
+            <div className="flex items-center gap-3">
+              <Handshake className="h-5 w-5 text-c-text-secondary" />
+              <h3
+                id={model.id === 'referral' ? 'partner-models-title' : undefined}
+                className="text-base font-semibold text-c-text"
+              >
+                {model.label}
+              </h3>
             </div>
-            <div>
-              <dt className="font-medium text-c-text">Consultify</dt>
-              <dd className="mt-1 text-c-text-secondary">{model.consultifyContribution}</dd>
-            </div>
-          </dl>
-          <p className="mt-4 border-t border-c-border-subtle pt-4 text-xs leading-5 text-c-text-muted">
-            {model.boundary}
-          </p>
-        </article>
-      ))}
-    </div>
-  </section>;
+            <p className="mt-3 text-sm leading-6 text-c-text-secondary">{model.bestFor}</p>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div>
+                <dt className="font-medium text-c-text">{partnerText('Partner', language)}</dt>
+                <dd className="mt-1 text-c-text-secondary">{model.partnerContribution}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-c-text">Consultify</dt>
+                <dd className="mt-1 text-c-text-secondary">{model.consultifyContribution}</dd>
+              </div>
+            </dl>
+            <p className="mt-4 border-t border-c-border-subtle pt-4 text-xs leading-5 text-c-text-muted">
+              {model.boundary}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 };
 
 export const TierProgressionSection: React.FC = () => {
   const { i18n } = useTranslation();
   const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
-  return <section
-    id="commercial-framework"
-    className="space-y-5"
-    aria-labelledby="commercial-framework-title"
-  >
-    <SectionHeading
-      eyebrow={partnerText('Commercial framework', language)}
-      title={partnerText('One agreement, no provisional numbers', language)}
-      description={partnerText('The visible program does not publish draft tiers, commission rates, payout rules or support promises. The applicable schedule must come from one approved agreement.', language)}
-    />
-    <div className={cn(sectionCard, 'grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center')}>
-      <div>
-        <div className="flex items-center gap-3">
-          <CircleDollarSign className="h-5 w-5 text-c-text-secondary" />
-          <h3 id="commercial-framework-title" className="font-semibold text-c-text">
-            {partnerText('Commercial schedule: decision required', language)}
-          </h3>
+  return (
+    <section
+      id="commercial-framework"
+      className="space-y-5"
+      aria-labelledby="commercial-framework-title"
+    >
+      <SectionHeading
+        eyebrow={partnerText('Commercial framework', language)}
+        title={partnerText('One agreement, no provisional numbers', language)}
+        description={partnerText(
+          'The visible program does not publish draft tiers, commission rates, payout rules or support promises. The applicable schedule must come from one approved agreement.',
+          language
+        )}
+      />
+      <div className={cn(sectionCard, 'grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center')}>
+        <div>
+          <div className="flex items-center gap-3">
+            <CircleDollarSign className="h-5 w-5 text-c-text-secondary" />
+            <h3 id="commercial-framework-title" className="font-semibold text-c-text">
+              {partnerText('Commercial schedule: decision required', language)}
+            </h3>
+          </div>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-c-text-secondary">
+            {partnerText(
+              'Eligibility, tier, compensation, settlement timing and service levels are defined in the executed partner agreement. Values from draft configuration are not an offer and are not shown on this page.',
+              language
+            )}
+          </p>
         </div>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-c-text-secondary">
-          {partnerText('Eligibility, tier, compensation, settlement timing and service levels are defined in the executed partner agreement. Values from draft configuration are not an offer and are not shown on this page.', language)}
-        </p>
+        <StatusBadge tone="limited">
+          {partnerText('Economics unavailable in this workspace', language)}
+        </StatusBadge>
       </div>
-      <StatusBadge tone="limited">{partnerText('Economics unavailable in this workspace', language)}</StatusBadge>
-    </div>
-  </section>;
+    </section>
+  );
 };
 
 export const OnboardingChecklistSection: React.FC = () => {
@@ -395,7 +443,10 @@ export const OnboardingChecklistSection: React.FC = () => {
   const steps = useMemo(
     () => [
       { label: partnerText('Agreement reviewed', language), done: Boolean(status?.termsAccepted) },
-      { label: partnerText('Privacy terms reviewed', language), done: Boolean(status?.privacyAccepted) },
+      {
+        label: partnerText('Privacy terms reviewed', language),
+        done: Boolean(status?.privacyAccepted),
+      },
       { label: partnerText('Program path recorded', language), done: Boolean(status?.pricingTier) },
       { label: partnerText('Activation confirmed', language), done: Boolean(status?.completed) },
     ],
@@ -417,7 +468,10 @@ export const OnboardingChecklistSection: React.FC = () => {
       <SectionHeading
         eyebrow={partnerText('Your next action', language)}
         title={partnerText('Continue from your verified program state', language)}
-        description={partnerText('The primary action changes only after the current status is read. If status cannot be verified, the page does not infer that you are a prospect or an active partner.', language)}
+        description={partnerText(
+          'The primary action changes only after the current status is read. If status cannot be verified, the page does not infer that you are a prospect or an active partner.',
+          language
+        )}
       />
       <div className={sectionCard}>
         {state === 'loading' ? (
@@ -437,7 +491,10 @@ export const OnboardingChecklistSection: React.FC = () => {
                   {partnerText('Program status is not verified', language)}
                 </h3>
                 <p className="mt-1 text-sm text-c-text-secondary">
-                  {partnerText('We will not guess whether you should apply, continue onboarding or open the workspace.', language)}
+                  {partnerText(
+                    'We will not guess whether you should apply, continue onboarding or open the workspace.',
+                    language
+                  )}
                 </p>
               </div>
             </div>
@@ -454,7 +511,9 @@ export const OnboardingChecklistSection: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 id="partner-next-action-title" className="font-semibold text-c-text">
-                  {status?.completed ? partnerText('Partner workspace ready', language) : partnerText('Onboarding status', language)}
+                  {status?.completed
+                    ? partnerText('Partner workspace ready', language)
+                    : partnerText('Onboarding status', language)}
                 </h3>
                 <p className="mt-1 text-sm text-c-text-secondary">
                   {completed}/4 {partnerText('verified steps', language)}
@@ -622,7 +681,10 @@ export const FAQSection: React.FC = () => {
       <SectionHeading
         eyebrow={partnerText('Safeguards and FAQ', language)}
         title={partnerText('Make the boundaries explicit before the client conversation', language)}
-        description={partnerText('These answers describe the governance baseline. The executed agreement remains authoritative for a specific partnership.', language)}
+        description={partnerText(
+          'These answers describe the governance baseline. The executed agreement remains authoritative for a specific partnership.',
+          language
+        )}
       />
       <div className="overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
         {FAQ_ITEMS.map(([question, answer], index) => {
@@ -669,47 +731,57 @@ export const FooterResourcesSection: React.FC = () => {
   const { i18n } = useTranslation();
   const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
   const stages = FIRST_DEAL_STAGES.map((item) => localizeStage(item, language));
-  return <section className="space-y-5" aria-labelledby="first-deal-title">
-    <SectionHeading
-      eyebrow={partnerText('First joint deal', language)}
-      title={partnerText('Move through six stages with an owner, output and proof at each step', language)}
-      description={partnerText('This is a collaboration framework, not a promise of timing or outcome. Each stage must earn the decision to continue.', language)}
-    />
-    <ol className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-      {stages.map((stage, index) => (
-        <li key={stage.id} className={sectionCard}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--c-selection)] text-xs font-semibold text-c-text">
-                {index + 1}
-              </span>
-              <h3
-                id={index === 0 ? 'first-deal-title' : undefined}
-                className="font-semibold text-c-text"
-              >
-                {stage.label}
-              </h3>
+  return (
+    <section className="space-y-5" aria-labelledby="first-deal-title">
+      <SectionHeading
+        eyebrow={partnerText('First joint deal', language)}
+        title={partnerText(
+          'Move through six stages with an owner, output and proof at each step',
+          language
+        )}
+        description={partnerText(
+          'This is a collaboration framework, not a promise of timing or outcome. Each stage must earn the decision to continue.',
+          language
+        )}
+      />
+      <ol className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        {stages.map((stage, index) => (
+          <li key={stage.id} className={sectionCard}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--c-selection)] text-xs font-semibold text-c-text">
+                  {index + 1}
+                </span>
+                <h3
+                  id={index === 0 ? 'first-deal-title' : undefined}
+                  className="font-semibold text-c-text"
+                >
+                  {stage.label}
+                </h3>
+              </div>
+              <Route className="h-4 w-4 text-c-text-muted" />
             </div>
-            <Route className="h-4 w-4 text-c-text-muted" />
-          </div>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div>
-              <dt className="font-medium text-c-text">{partnerText('Owner', language)}</dt>
-              <dd className="mt-1 text-c-text-secondary">{stage.owner}</dd>
-            </div>
-            <div>
-              <dt className="font-medium text-c-text">{partnerText('Output', language)}</dt>
-              <dd className="mt-1 text-c-text-secondary">{stage.output}</dd>
-            </div>
-            <div>
-              <dt className="font-medium text-c-text">{partnerText('Proof to continue', language)}</dt>
-              <dd className="mt-1 text-c-text-secondary">{stage.proof}</dd>
-            </div>
-          </dl>
-        </li>
-      ))}
-    </ol>
-  </section>;
+            <dl className="mt-4 space-y-3 text-sm">
+              <div>
+                <dt className="font-medium text-c-text">{partnerText('Owner', language)}</dt>
+                <dd className="mt-1 text-c-text-secondary">{stage.owner}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-c-text">{partnerText('Output', language)}</dt>
+                <dd className="mt-1 text-c-text-secondary">{stage.output}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-c-text">
+                  {partnerText('Proof to continue', language)}
+                </dt>
+                <dd className="mt-1 text-c-text-secondary">{stage.proof}</dd>
+              </div>
+            </dl>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
 };
 
 export const ProviderHomeView: React.FC = () => {

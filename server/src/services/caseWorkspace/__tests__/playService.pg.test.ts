@@ -243,10 +243,10 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   /** A fresh, uniquely-named organization row. */
   async function seedOrg(label: string): Promise<string> {
     const orgId = `play-org-${label}-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      orgId,
-      `Play test org (${label})`,
-    ]);
+    await control.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgId, `Play test org (${label})`]
+    );
     return orgId;
   }
 
@@ -288,7 +288,11 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   }
 
   /** An organization_members row for an existing user, at the given role — a test-fixture-only direct insert. */
-  async function seedMember(orgId: string, userId: string, role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT'): Promise<void> {
+  async function seedMember(
+    orgId: string,
+    userId: string,
+    role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT'
+  ): Promise<void> {
     await control.query(
       `INSERT INTO organization_members (id, organization_id, user_id, role, status)
          VALUES ($1, $2, $3, $4, 'ACTIVE')`,
@@ -328,11 +332,15 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   }): Promise<void> {
     for (const processDefinitionId of opts.processDefinitionIds ?? []) {
       await control
-        .query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [processDefinitionId])
+        .query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [
+          processDefinitionId,
+        ])
         .catch(() => undefined);
     }
     for (const projectId of opts.projectIds ?? []) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of opts.userIds ?? []) {
@@ -345,7 +353,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       await control
         .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -384,7 +394,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
     return result.rows;
   }
 
-  async function readDefinitionRow(processDefinitionId: string): Promise<ProcessDefinitionDbRow | null> {
+  async function readDefinitionRow(
+    processDefinitionId: string
+  ): Promise<ProcessDefinitionDbRow | null> {
     const result = await control.query<ProcessDefinitionDbRow>(
       `SELECT * FROM process_definitions WHERE process_definition_id = $1`,
       [processDefinitionId]
@@ -450,7 +462,11 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       undefined,
       proposed.version
     );
-    return playService.publishProcessVersion(draft.processVersionId, { actorUserId: actorId }, reviewed.version);
+    return playService.publishProcessVersion(
+      draft.processVersionId,
+      { actorUserId: actorId },
+      reviewed.version
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -519,15 +535,20 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
 
       // Revoke ownerUserId's membership now that creation is done — (a)
       // below must still reject, proving ownership alone never suffices.
-      await control.query(`DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`, [
-        orgId,
-        ownerUserId,
-      ]);
+      await control.query(
+        `DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`,
+        [orgId, ownerUserId]
+      );
 
       // (a) ownerUserId (the definition's own owner/creator) has NO
       // organization_members row for this org anymore (revoked above).
       await expect(
-        playService.shareProcessDefinition(definition.processDefinitionId, 'ORGANIZATION', { actorUserId: ownerUserId }, definition.version)
+        playService.shareProcessDefinition(
+          definition.processDefinitionId,
+          'ORGANIZATION',
+          { actorUserId: ownerUserId },
+          definition.version
+        )
       ).rejects.toThrow(/process_definition_share_not_authorized/);
 
       const rowAfterA = await readDefinitionRow(definition.processDefinitionId);
@@ -538,7 +559,12 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       // (not OWNER/ADMIN).
       await seedMember(orgId, memberUserId, 'MEMBER');
       await expect(
-        playService.shareProcessDefinition(definition.processDefinitionId, 'ORGANIZATION', { actorUserId: memberUserId }, definition.version)
+        playService.shareProcessDefinition(
+          definition.processDefinitionId,
+          'ORGANIZATION',
+          { actorUserId: memberUserId },
+          definition.version
+        )
       ).rejects.toThrow(/process_definition_share_not_authorized/);
 
       const rowAfterB = await readDefinitionRow(definition.processDefinitionId);
@@ -635,7 +661,11 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(proposed.reviewDecision).toBeNull();
 
       await expect(
-        playService.publishProcessVersion(draft.processVersionId, { actorUserId: userId }, proposed.version)
+        playService.publishProcessVersion(
+          draft.processVersionId,
+          { actorUserId: userId },
+          proposed.version
+        )
       ).rejects.toThrow(/process_version_publish_requires_review/);
 
       const row = await readVersionRow(draft.processVersionId);
@@ -760,7 +790,12 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   // 6. instantiateProcessVersion — rejects DRAFT and IN_REVIEW versions.
   // -------------------------------------------------------------------------
   it('instantiateProcessVersion rejects a DRAFT process_version and an IN_REVIEW process_version, creating no case_plan_versions row for either attempt', async () => {
-    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-not-published');
+    const {
+      orgId,
+      projectId,
+      caseId,
+      actorId: caseActorId,
+    } = await seedOrgProjectCase('instantiate-not-published');
     const userId = await seedMemberedUser(orgId, 'instantiate-not-published');
     try {
       const definition = await playService.createProcessDefinition({
@@ -777,7 +812,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(draft.status).toBe('DRAFT');
 
       await expect(
-        playService.instantiateProcessVersion(draft.processVersionId, caseId, { actorUserId: userId })
+        playService.instantiateProcessVersion(draft.processVersionId, caseId, {
+          actorUserId: userId,
+        })
       ).rejects.toThrow(/process_version_not_publishable/);
 
       const rowsAfterDraftAttempt = await readCasePlanVersionRowsForCase(caseId);
@@ -791,7 +828,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(proposed.status).toBe('IN_REVIEW');
 
       await expect(
-        playService.instantiateProcessVersion(draft.processVersionId, caseId, { actorUserId: userId })
+        playService.instantiateProcessVersion(draft.processVersionId, caseId, {
+          actorUserId: userId,
+        })
       ).rejects.toThrow(/process_version_not_publishable/);
 
       const rowsAfterInReviewAttempt = await readCasePlanVersionRowsForCase(caseId);
@@ -822,11 +861,17 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
         ownerActorId: playUserId,
         createdByActorId: playUserId,
       });
-      const published = await createPublishedVersion(definition.processDefinitionId, playUserId, 'cross-tenant');
+      const published = await createPublishedVersion(
+        definition.processDefinitionId,
+        playUserId,
+        'cross-tenant'
+      );
       expect(published.status).toBe('PUBLISHED');
 
       await expect(
-        playService.instantiateProcessVersion(published.processVersionId, caseId, { actorUserId: playUserId })
+        playService.instantiateProcessVersion(published.processVersionId, caseId, {
+          actorUserId: playUserId,
+        })
       ).rejects.toThrow(/process_version_case_organization_mismatch/);
 
       const rows = await readCasePlanVersionRowsForCase(caseId);
@@ -842,7 +887,12 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   //    row, verified directly against Postgres.
   // -------------------------------------------------------------------------
   it('a successful instantiateProcessVersion (matching orgs, PUBLISHED version) creates a DRAFT case_plan_versions row whose source_process_version_id and semantic_graph match the ProcessVersion, verified by reading Postgres directly', async () => {
-    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-success');
+    const {
+      orgId,
+      projectId,
+      caseId,
+      actorId: caseActorId,
+    } = await seedOrgProjectCase('instantiate-success');
     const userId = await seedMemberedUser(orgId, 'instantiate-success');
     try {
       const definition = await playService.createProcessDefinition({
@@ -851,12 +901,20 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
         ownerActorId: userId,
         createdByActorId: userId,
       });
-      const published = await createPublishedVersion(definition.processDefinitionId, userId, 'instantiate-success');
+      const published = await createPublishedVersion(
+        definition.processDefinitionId,
+        userId,
+        'instantiate-success'
+      );
       expect(published.status).toBe('PUBLISHED');
 
-      const result = await playService.instantiateProcessVersion(published.processVersionId, caseId, {
-        actorUserId: userId,
-      });
+      const result = await playService.instantiateProcessVersion(
+        published.processVersionId,
+        caseId,
+        {
+          actorUserId: userId,
+        }
+      );
       expect(result.status).toBe('DRAFT');
       expect(result.sourceProcessVersionId).toBe(published.processVersionId);
 
@@ -975,7 +1033,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(createdEvent.delivered_at).toBeNull();
       // visibility is forced server-side; the event reports what was STORED.
       expect(createdEvent.redacted_summary.visibility).toBe('PRIVATE');
-      expect(createdEvent.payload_ref).toBe(`process_definitions:${definition.processDefinitionId}`);
+      expect(createdEvent.payload_ref).toBe(
+        `process_definitions:${definition.processDefinitionId}`
+      );
 
       const draft = await playService.createProcessVersionDraft({
         processDefinitionId: definition.processDefinitionId,
@@ -1218,7 +1278,12 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   // transaction. A row visible there is a row that really committed.
   // -------------------------------------------------------------------------
   it('instantiateProcessVersion publishes exactly two outbox rows — case.plan.draft_created and process.version.instantiated — sharing one correlation_id and naming the same new case_plan_version_id', async () => {
-    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-outbox');
+    const {
+      orgId,
+      projectId,
+      caseId,
+      actorId: caseActorId,
+    } = await seedOrgProjectCase('instantiate-outbox');
     const userId = await seedMemberedUser(orgId, 'instantiate-outbox');
     try {
       const definition = await playService.createProcessDefinition({
@@ -1227,7 +1292,11 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
         ownerActorId: userId,
         createdByActorId: userId,
       });
-      const published = await createPublishedVersion(definition.processDefinitionId, userId, 'instantiate-outbox');
+      const published = await createPublishedVersion(
+        definition.processDefinitionId,
+        userId,
+        'instantiate-outbox'
+      );
 
       // Everything the fixture itself already emitted (createCase, the five
       // Play lifecycle commands). Diffing against this set is what makes
@@ -1235,11 +1304,17 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       // whole test.
       const before = new Set((await readOutboxRowsForOrg(orgId)).map((row) => row.event_id));
 
-      const result = await playService.instantiateProcessVersion(published.processVersionId, caseId, {
-        actorUserId: userId,
-      });
+      const result = await playService.instantiateProcessVersion(
+        published.processVersionId,
+        caseId,
+        {
+          actorUserId: userId,
+        }
+      );
 
-      const emitted = (await readOutboxRowsForOrg(orgId)).filter((row) => !before.has(row.event_id));
+      const emitted = (await readOutboxRowsForOrg(orgId)).filter(
+        (row) => !before.has(row.event_id)
+      );
       expect(emitted.map((row) => row.event_type).sort()).toEqual([
         'case.plan.draft_created',
         'process.version.instantiated',
@@ -1247,7 +1322,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(emitted).toHaveLength(2);
 
       const draftCreated = emitted.find((row) => row.event_type === 'case.plan.draft_created')!;
-      const instantiated = emitted.find((row) => row.event_type === 'process.version.instantiated')!;
+      const instantiated = emitted.find(
+        (row) => row.event_type === 'process.version.instantiated'
+      )!;
 
       // One chain, not two unrelated facts.
       expect(String(instantiated.correlation_id ?? '').length).toBeGreaterThan(0);
@@ -1279,7 +1356,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       expect(instantiated.payload_ref).toBe(`process_versions:${published.processVersionId}`);
       expect(instantiated.redacted_summary.casePlanVersionId).toBe(result.casePlanVersionId);
       expect(instantiated.redacted_summary.casePlanVersionStatus).toBe('DRAFT');
-      expect(instantiated.redacted_summary.processDefinitionId).toBe(definition.processDefinitionId);
+      expect(instantiated.redacted_summary.processDefinitionId).toBe(
+        definition.processDefinitionId
+      );
       expect(instantiated.redacted_summary.versionNumber).toBe(published.versionNumber);
       expect(instantiated.redacted_summary.graphDigest).toBe(published.graphDigest);
 
@@ -1304,7 +1383,12 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
   }, 60_000);
 
   it('a failure raised after process.version.instantiated is published rolls back the plan draft AND case.plan.draft_created too — proving one transaction, not two', async () => {
-    const { orgId, projectId, caseId, actorId: caseActorId } = await seedOrgProjectCase('instantiate-rollback');
+    const {
+      orgId,
+      projectId,
+      caseId,
+      actorId: caseActorId,
+    } = await seedOrgProjectCase('instantiate-rollback');
     const userId = await seedMemberedUser(orgId, 'instantiate-rollback');
     try {
       const definition = await playService.createProcessDefinition({
@@ -1313,7 +1397,11 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
         ownerActorId: userId,
         createdByActorId: userId,
       });
-      const published = await createPublishedVersion(definition.processDefinitionId, userId, 'instantiate-rollback');
+      const published = await createPublishedVersion(
+        definition.processDefinitionId,
+        userId,
+        'instantiate-rollback'
+      );
 
       const before = new Set((await readOutboxRowsForOrg(orgId)).map((row) => row.event_id));
 
@@ -1333,7 +1421,9 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       }
 
       // Neither event survived...
-      const afterFailure = (await readOutboxRowsForOrg(orgId)).filter((row) => !before.has(row.event_id));
+      const afterFailure = (await readOutboxRowsForOrg(orgId)).filter(
+        (row) => !before.has(row.event_id)
+      );
       expect(afterFailure).toHaveLength(0);
       // ...and neither did the plan draft.
       expect(await readCasePlanVersionRowsForCase(caseId)).toHaveLength(0);
@@ -1341,10 +1431,16 @@ suite('playService — Play (reusable Process) against a real PostgreSQL (CW-P08
       // Negative control: disarmed, the identical call succeeds and leaves
       // exactly the two events and the one plan row. Without this, an
       // implementation that instantiates nothing at all would pass above.
-      const result = await playService.instantiateProcessVersion(published.processVersionId, caseId, {
-        actorUserId: userId,
-      });
-      const afterSuccess = (await readOutboxRowsForOrg(orgId)).filter((row) => !before.has(row.event_id));
+      const result = await playService.instantiateProcessVersion(
+        published.processVersionId,
+        caseId,
+        {
+          actorUserId: userId,
+        }
+      );
+      const afterSuccess = (await readOutboxRowsForOrg(orgId)).filter(
+        (row) => !before.has(row.event_id)
+      );
       expect(afterSuccess.map((row) => row.event_type).sort()).toEqual([
         'case.plan.draft_created',
         'process.version.instantiated',

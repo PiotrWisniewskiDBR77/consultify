@@ -2015,14 +2015,25 @@ function inferDrdAreaState(actual: number | null | undefined): DrdAreaState {
  * callers filter these out and the caller-facing functions below never crash
  * on an unknown id, they simply cannot score it.
  */
-export function normalizeDrdAreaV2(areaId: string, input: DrdAreaInputV2): DrdAreaNormResult | null {
+export function normalizeDrdAreaV2(
+  areaId: string,
+  input: DrdAreaInputV2
+): DrdAreaNormResult | null {
   const axis = getAxisForArea(areaId);
   if (!axis) return null;
   const lmax = axis.levelCount;
   const state: DrdAreaState = input.state ?? inferDrdAreaState(input.actual);
 
   if (state !== 'assessed') {
-    return { areaId, axisId: axis.id, lmax, state, scoreNorm: null, targetNorm: null, gapNorm: null };
+    return {
+      areaId,
+      axisId: axis.id,
+      lmax,
+      state,
+      scoreNorm: null,
+      targetNorm: null,
+      gapNorm: null,
+    };
   }
 
   const achieved = input.actual as number;
@@ -2065,10 +2076,16 @@ function aggregateDrdAreasV2(
   const withTarget = assessed.filter((r) => r.targetNorm !== null);
   const targetNorm =
     withTarget.length > 0
-      ? round(withTarget.reduce((sum, r) => sum + (r.targetNorm as number), 0) / withTarget.length, 4)
+      ? round(
+          withTarget.reduce((sum, r) => sum + (r.targetNorm as number), 0) / withTarget.length,
+          4
+        )
       : null;
 
-  const gapNorm = scoreNorm !== null && targetNorm !== null ? round(Math.max(0, targetNorm - scoreNorm), 4) : null;
+  const gapNorm =
+    scoreNorm !== null && targetNorm !== null
+      ? round(Math.max(0, targetNorm - scoreNorm), 4)
+      : null;
 
   const coverage = denominator.length > 0 ? assessed.length / denominator.length : 0;
 
@@ -2086,7 +2103,9 @@ function aggregateDrdAreasV2(
     denominatorCount: denominator.length,
     coverage: round(coverage, 4),
     coveragePercent: round(coverage * 100, 1),
-    excluded: normalized.filter((r) => r.state !== 'assessed').map((r) => ({ areaId: r.areaId, state: r.state })),
+    excluded: normalized
+      .filter((r) => r.state !== 'assessed')
+      .map((r) => ({ areaId: r.areaId, state: r.state })),
   };
 }
 

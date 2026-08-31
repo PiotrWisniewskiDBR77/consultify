@@ -70,7 +70,11 @@ const USER_B = `${PREFIX}user-b`;
 
 const pool = new Pool({ connectionString: requireLocalDatabaseUrl() });
 
-async function countFixtureRows(): Promise<{ proposals: number; receipts: number; exports: number }> {
+async function countFixtureRows(): Promise<{
+  proposals: number;
+  receipts: number;
+  exports: number;
+}> {
   const result = await pool.query(
     `SELECT
        (SELECT COUNT(*)::int FROM artifact_handoff_proposals WHERE organization_id LIKE $1) AS proposals,
@@ -112,9 +116,15 @@ beforeAll(async () => {
 afterAll(async () => {
   try {
     // Children (FK -> proposals) before parents.
-    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
-    await pool.query(`DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
-    await pool.query(`DELETE FROM artifact_export_receipts WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
+    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
+    await pool.query(`DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
+    await pool.query(`DELETE FROM artifact_export_receipts WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
 
     const remaining = await countFixtureRows();
     expect(remaining).toEqual({ proposals: 0, receipts: 0, exports: 0 });
@@ -178,7 +188,9 @@ describe('create -> approve -> materialize happy path', () => {
       outputPayload: { html: '<p>done</p>' },
     });
     expect(materialized.replayed).toBe(false);
-    expect(materialized.receipt.outputContentHash).toBe(canonicalSourceHash({ html: '<p>done</p>' }));
+    expect(materialized.receipt.outputContentHash).toBe(
+      canonicalSourceHash({ html: '<p>done</p>' })
+    );
 
     // Cold readback: fresh SELECTs against the real table, never trusting the
     // JS objects the service handed back.
@@ -324,8 +336,16 @@ describe('approveProposal / rejectProposal', () => {
     });
 
     const [a1, a2] = await Promise.all([
-      approveProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: USER_A }),
-      approveProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: USER_B }),
+      approveProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_A,
+      }),
+      approveProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_B,
+      }),
     ]);
 
     expect(a1.state).toBe('approved');
@@ -451,13 +471,25 @@ describe('approveProposal / rejectProposal', () => {
     });
 
     await expect(
-      approveProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: '' })
+      approveProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: '',
+      })
     ).rejects.toThrow(HandoffSpineError);
     await expect(
-      approveProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: 'system' })
+      approveProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: 'system',
+      })
     ).rejects.toThrow(/human actor/);
     await expect(
-      approveProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: 'SYSTEM' })
+      approveProposal({
+        organizationId: ORG_A,
+        proposalId: created.proposal.proposalId,
+        decidedBy: 'SYSTEM',
+      })
     ).rejects.toThrow(/human actor/);
 
     const row = await pool.query(
@@ -480,7 +512,11 @@ describe('materializeProposal', () => {
       payload: { y: 1 },
       createdBy: USER_A,
     });
-    await approveProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: USER_B });
+    await approveProposal({
+      organizationId: ORG_A,
+      proposalId: created.proposal.proposalId,
+      decidedBy: USER_B,
+    });
 
     const targetRecordId = `${PREFIX}doc-materialize-race`;
     const [m1, m2] = await Promise.all([
@@ -556,11 +592,19 @@ describe('tenant isolation', () => {
     });
 
     await expect(
-      approveProposal({ organizationId: ORG_B, proposalId: created.proposal.proposalId, decidedBy: USER_B })
+      approveProposal({
+        organizationId: ORG_B,
+        proposalId: created.proposal.proposalId,
+        decidedBy: USER_B,
+      })
     ).rejects.toThrow(/not found/);
 
     // Real approval, from the owning org.
-    await approveProposal({ organizationId: ORG_A, proposalId: created.proposal.proposalId, decidedBy: USER_A });
+    await approveProposal({
+      organizationId: ORG_A,
+      proposalId: created.proposal.proposalId,
+      decidedBy: USER_A,
+    });
 
     await expect(
       materializeProposal({
@@ -651,9 +695,10 @@ describe('export receipts', () => {
     // Defense-in-depth proof: the DB check constraint blocks 'succeeded'
     // without hash+size even if application validation were bypassed.
     await expect(
-      pool.query(`UPDATE artifact_export_receipts SET status = 'succeeded' WHERE export_receipt_id = $1`, [
-        recorded2.receipt.exportReceiptId,
-      ])
+      pool.query(
+        `UPDATE artifact_export_receipts SET status = 'succeeded' WHERE export_receipt_id = $1`,
+        [recorded2.receipt.exportReceiptId]
+      )
     ).rejects.toThrow(/artifact_export_receipts_success_check|violates check constraint/);
   });
 

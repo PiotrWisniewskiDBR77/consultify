@@ -10,8 +10,8 @@
  */
 import { BookOpen, ExternalLink, FileText, Lightbulb, StickyNote } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Handle, type NodeProps, Position } from 'reactflow';
 import { useTranslation } from 'react-i18next';
+import { Handle, type NodeProps, Position } from 'reactflow';
 
 import {
   MindMapNodeResizer,
@@ -184,13 +184,21 @@ const EvidenceCardNode: React.FC<NodeProps> = ({ id, data, selected }) => {
   const evidenceType: 'url' | 'artifact' | 'note' | 'document' = data?.evidenceType || 'note';
 
   const typeConfig = {
-    url: { icon: ExternalLink, color: 'cyan', label: t('myWork.knowledge.cardNodes.typeUrl', 'URL') },
+    url: {
+      icon: ExternalLink,
+      color: 'cyan',
+      label: t('myWork.knowledge.cardNodes.typeUrl', 'URL'),
+    },
     artifact: {
       icon: FileText,
       color: 'emerald',
       label: t('myWork.knowledge.cardNodes.typeArtifact', 'Artifact'),
     },
-    note: { icon: StickyNote, color: 'amber', label: t('myWork.knowledge.cardNodes.typeNote', 'Note') },
+    note: {
+      icon: StickyNote,
+      color: 'amber',
+      label: t('myWork.knowledge.cardNodes.typeNote', 'Note'),
+    },
     document: {
       icon: FileText,
       color: 'violet',

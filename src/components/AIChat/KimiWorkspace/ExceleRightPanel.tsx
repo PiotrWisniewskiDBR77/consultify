@@ -52,8 +52,8 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import {
-  ArtifactRightRail,
   type ArtifactRailTypeMode,
+  ArtifactRightRail,
 } from '@/components/standard/ArtifactRightRail';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 

@@ -117,10 +117,7 @@ function buildHashableContent(input: CreateAssessmentOutputInput): unknown {
 export function createAssessmentOutput(input: CreateAssessmentOutputInput): AssessmentOutput {
   const reasons = validate(input);
   if (reasons.length > 0) {
-    throw new OutputValidationError(
-      `AssessmentOutput rejected: ${reasons.join('; ')}`,
-      reasons
-    );
+    throw new OutputValidationError(`AssessmentOutput rejected: ${reasons.join('; ')}`, reasons);
   }
 
   const contentHash = computePortableContentHash(buildHashableContent(input));

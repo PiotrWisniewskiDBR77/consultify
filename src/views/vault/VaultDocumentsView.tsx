@@ -111,12 +111,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/utils/cn';
 
 import { Api } from '../../services/api';
-import { VaultDocumentPanel } from './VaultDocumentPanel';
 import {
   applyVaultBulkActionWithReceipts,
   deleteVaultDocumentsWithReceipts,
   type VaultBulkReceipt,
 } from './deleteVaultDocumentsWithReceipts';
+import { VaultDocumentPanel } from './VaultDocumentPanel';
 import {
   categoryLabel,
   DOCUMENT_CATEGORIES,
@@ -497,7 +497,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
         );
       }
       setBulkReceipts({
-        label: t('vault.docs.bulkReceiptsAiKnowledge', isPolish ? 'Dodawanie do wiedzy AI' : 'Add to AI knowledge'),
+        label: t(
+          'vault.docs.bulkReceiptsAiKnowledge',
+          isPolish ? 'Dodawanie do wiedzy AI' : 'Add to AI knowledge'
+        ),
         items: receipts,
       });
       if (applied.length > 0) await load();
@@ -1106,7 +1109,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
                 className={MENU_3_ACTION_NEUTRAL}
               >
                 <Sparkles size={12} />
-                {t('vault.docs.addToAiKnowledge', isPolish ? 'Dodaj do wiedzy AI' : 'Add to AI knowledge')}
+                {t(
+                  'vault.docs.addToAiKnowledge',
+                  isPolish ? 'Dodaj do wiedzy AI' : 'Add to AI knowledge'
+                )}
               </button>
               <button
                 type="button"
@@ -1130,9 +1136,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
               <span className="text-xs font-semibold text-c-text">{bulkReceipts.label}</span>
               <span className="text-[11px] text-c-text-muted">
                 {t('vault.docs.bulkReceiptsCount', {
-                  defaultValue: isPolish
-                    ? '{{count}} element(y)'
-                    : '{{count}} item(s)',
+                  defaultValue: isPolish ? '{{count}} element(y)' : '{{count}} item(s)',
                   count: bulkReceipts.items.length,
                 })}
               </span>
@@ -1154,15 +1158,17 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
                   {receipt.status === 'failed' ? (
                     <XCircle size={14} className="shrink-0 text-c-danger" aria-hidden="true" />
                   ) : (
-                    <CheckCircle2 size={14} className="shrink-0 text-c-success" aria-hidden="true" />
+                    <CheckCircle2
+                      size={14}
+                      className="shrink-0 text-c-success"
+                      aria-hidden="true"
+                    />
                   )}
                   <span className="min-w-0 flex-1 truncate text-c-text">
                     {nameById.get(receipt.id) || receipt.id}
                   </span>
                   <span
-                    className={
-                      receipt.status === 'failed' ? 'text-c-danger' : 'text-c-text-muted'
-                    }
+                    className={receipt.status === 'failed' ? 'text-c-danger' : 'text-c-text-muted'}
                   >
                     {receipt.status === 'failed'
                       ? receipt.reason ||

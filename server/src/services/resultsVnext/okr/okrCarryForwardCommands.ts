@@ -26,13 +26,14 @@
  * is the only event this call produces — no separate carry-forward event.
  */
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
-import { createOkrSet, OkrSetValidationError, type CreateOkrSetResult } from './okrSetCommands.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { OkrCycleValidationError } from './okrCycleCommands.js';
-import { toOkrSet, type OkrSet, type OkrSetRow } from './okrSetTypes.js';
 import type { OkrCycleRow } from './okrCycleTypes.js';
+import { createOkrSet, type CreateOkrSetResult, OkrSetValidationError } from './okrSetCommands.js';
+import { type OkrSet, type OkrSetRow, toOkrSet } from './okrSetTypes.js';
 
 // RN-G5 — command capability name (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
 export const OKR_CARRY_FORWARD_CAPABILITY = 'results.okr.set.carry_forward';
@@ -67,7 +68,9 @@ export interface CarryForwardOkrSetResult {
  * CAS'd mutation of either aggregate (the actual write lands entirely
  * inside `createOkrSet`'s own transaction).
  */
-export async function carryForwardOkrSet(input: CarryForwardOkrSetInput): Promise<CarryForwardOkrSetResult> {
+export async function carryForwardOkrSet(
+  input: CarryForwardOkrSetInput
+): Promise<CarryForwardOkrSetResult> {
   const {
     sourceSetId,
     targetCycleId,
@@ -91,7 +94,9 @@ export async function carryForwardOkrSet(input: CarryForwardOkrSetInput): Promis
     );
     sourceRow = sourceResult.rows[0];
     if (!sourceRow) {
-      throw new OkrSetValidationError(`OKR Set ${sourceSetId} not found`, 'SET_NOT_FOUND', { setId: sourceSetId });
+      throw new OkrSetValidationError(`OKR Set ${sourceSetId} not found`, 'SET_NOT_FOUND', {
+        setId: sourceSetId,
+      });
     }
     if (sourceRow.status !== 'closed') {
       throw new OkrSetValidationError(
@@ -107,7 +112,9 @@ export async function carryForwardOkrSet(input: CarryForwardOkrSetInput): Promis
     );
     targetCycleRow = cycleResult.rows[0];
     if (!targetCycleRow) {
-      throw new OkrCycleValidationError(`OKR Cycle ${targetCycleId} not found`, 'CYCLE_NOT_FOUND', { cycleId: targetCycleId });
+      throw new OkrCycleValidationError(`OKR Cycle ${targetCycleId} not found`, 'CYCLE_NOT_FOUND', {
+        cycleId: targetCycleId,
+      });
     }
     if (targetCycleRow.status !== 'planned' && targetCycleRow.status !== 'drafting') {
       throw new OkrCycleValidationError(

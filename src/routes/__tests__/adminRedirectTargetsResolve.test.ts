@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { ROUTES } from '../routeConfig';
 import { resolveAdminLocation } from '../../views/admin/AdminSettingsModule';
+import { ROUTES } from '../routeConfig';
 
 // DEC-2026-08-24-10 — strażnik anty-fantomowy (werdykt nadzorcy 2026-08-24):
 // każdy adres Admina używany jako cel przekierowania z Organization/Settings

@@ -96,7 +96,10 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         <span
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[10px] font-semibold text-c-danger"
           data-testid="source-ref-blocked"
-          title={t('myWorkTable.sourceReferenceCell.externalBlocked', 'External sources not allowed for this field')}
+          title={t(
+            'myWorkTable.sourceReferenceCell.externalBlocked',
+            'External sources not allowed for this field'
+          )}
         >
           <Link2Off size={10} className="flex-shrink-0" />
           <span>{t('myWorkTable.sourceReferenceCell.blocked', 'Blocked')}</span>
@@ -108,9 +111,13 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         <span
           className="inline-flex items-center gap-1 text-xs text-c-danger px-1"
           data-testid="source-ref-invalid"
-          title={t('myWorkTable.sourceReferenceCell.invalidLength', 'source_reference value invalid (length {{length}})', {
-            length: trimmed.length,
-          })}
+          title={t(
+            'myWorkTable.sourceReferenceCell.invalidLength',
+            'source_reference value invalid (length {{length}})',
+            {
+              length: trimmed.length,
+            }
+          )}
         >
           !
         </span>
@@ -162,7 +169,10 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[10px] font-semibold text-c-danger"
             data-testid="source-ref-blocked"
-            title={t('myWorkTable.sourceReferenceCell.externalBlocked', 'External sources not allowed for this field')}
+            title={t(
+              'myWorkTable.sourceReferenceCell.externalBlocked',
+              'External sources not allowed for this field'
+            )}
           >
             <Link2Off size={10} className="flex-shrink-0" />
             <span>{t('myWorkTable.sourceReferenceCell.blocked', 'Blocked')}</span>
@@ -191,7 +201,10 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
     <span
       className="inline-flex items-center gap-1 text-xs text-c-danger px-1"
       data-testid="source-ref-invalid"
-      title={t('myWorkTable.sourceReferenceCell.invalidShape', 'source_reference value has unrecognized shape')}
+      title={t(
+        'myWorkTable.sourceReferenceCell.invalidShape',
+        'source_reference value has unrecognized shape'
+      )}
     >
       !
     </span>

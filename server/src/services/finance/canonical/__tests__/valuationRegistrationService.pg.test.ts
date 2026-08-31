@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Client } from 'pg';
 import express from 'express';
+import { Client } from 'pg';
 import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const REAL_PG =
@@ -56,7 +56,8 @@ describe.skipIf(!REAL_PG)('valuationRegistrationService (real PostgreSQL)', () =
     );
     await client.query(
       `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
-       VALUES($1,$2,$3,'OWNER','ACTIVE',now())`,[randomUUID(),orgId,userId]
+       VALUES($1,$2,$3,'OWNER','ACTIVE',now())`,
+      [randomUUID(), orgId, userId]
     );
     await client.query(
       `INSERT INTO budgets(id,organization_id,title,status,period_start,period_end,currency)
@@ -70,9 +71,14 @@ describe.skipIf(!REAL_PG)('valuationRegistrationService (real PostgreSQL)', () =
     await client.query('BEGIN');
     try {
       await client.query(`SET LOCAL session_replication_role=replica`);
-      await client.query(`DELETE FROM finance_valuation_registration_command_receipts WHERE organization_id=$1`, [orgId]);
+      await client.query(
+        `DELETE FROM finance_valuation_registration_command_receipts WHERE organization_id=$1`,
+        [orgId]
+      );
       await client.query(`DELETE FROM artifact_lifecycle_events WHERE organization_id=$1`, [orgId]);
-      await client.query(`DELETE FROM finance_valuation_variants WHERE organization_id=$1`, [orgId]);
+      await client.query(`DELETE FROM finance_valuation_variants WHERE organization_id=$1`, [
+        orgId,
+      ]);
       await client.query(`DELETE FROM finance_valuation_cases WHERE organization_id=$1`, [orgId]);
       await client.query(`DELETE FROM finance_artifact_aliases WHERE organization_id=$1`, [orgId]);
       await client.query(`DELETE FROM finance_working_revisions WHERE organization_id=$1`, [orgId]);
@@ -201,18 +207,33 @@ describe.skipIf(!REAL_PG)('valuationRegistrationService (real PostgreSQL)', () =
   it('replays the same command once and rejects a changed payload for the key', async () => {
     const key = `replay-${randomUUID()}`;
     const first = await createRegisteredValuation({
-      organizationId: orgId,userId,title: 'Replay-safe valuation',sourceType: 'manual',idempotencyKey:key,
+      organizationId: orgId,
+      userId,
+      title: 'Replay-safe valuation',
+      sourceType: 'manual',
+      idempotencyKey: key,
     });
     const replay = await createRegisteredValuation({
-      organizationId: orgId,userId,title: 'Replay-safe valuation',sourceType: 'manual',idempotencyKey:key,
+      organizationId: orgId,
+      userId,
+      title: 'Replay-safe valuation',
+      sourceType: 'manual',
+      idempotencyKey: key,
     });
     expect(replay).toEqual({ ...first, replay: true });
-    await expect(createRegisteredValuation({
-      organizationId: orgId,userId,title: 'Changed valuation',sourceType: 'manual',idempotencyKey:key,
-    })).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION', status: 409 });
+    await expect(
+      createRegisteredValuation({
+        organizationId: orgId,
+        userId,
+        title: 'Changed valuation',
+        sourceType: 'manual',
+        idempotencyKey: key,
+      })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION', status: 409 });
     const receipt = await client.query(
       `SELECT count(*)::int count FROM finance_valuation_registration_command_receipts
-        WHERE organization_id=$1 AND idempotency_key=$2`,[orgId,key]
+        WHERE organization_id=$1 AND idempotency_key=$2`,
+      [orgId, key]
     );
     expect(receipt.rows[0].count).toBe(1);
   });
@@ -221,65 +242,130 @@ describe.skipIf(!REAL_PG)('valuationRegistrationService (real PostgreSQL)', () =
     const router = (await import('../../../../routes/v8/finance-v2/valuation.routes.js')).default;
     const app = express();
     app.use(express.json());
-    app.use((req:any,_res,next)=>{
-      req.user={id:userId,organizationId:orgId,email:`${userId}@test.local`};
-      req.v8Context={organizationId:orgId,userId,userRole:'ADMIN'};
+    app.use((req: any, _res, next) => {
+      req.user = { id: userId, organizationId: orgId, email: `${userId}@test.local` };
+      req.v8Context = { organizationId: orgId, userId, userRole: 'ADMIN' };
       next();
     });
-    app.use('/api/v8/finance-v2',router);
-    app.use((error:any,_req:any,res:any,_next:any)=>res.status(500).json({error:String(error?.message||error)}));
-    const key=`http-${randomUUID()}`;
-    const body={title:'Mounted registration',sourceType:'manual',currency:'EUR'};
-    const first=await request(app).post('/api/v8/finance-v2/valuation/registrations').set('Idempotency-Key',key).send(body);
+    app.use('/api/v8/finance-v2', router);
+    app.use((error: any, _req: any, res: any, _next: any) =>
+      res.status(500).json({ error: String(error?.message || error) })
+    );
+    const key = `http-${randomUUID()}`;
+    const body = { title: 'Mounted registration', sourceType: 'manual', currency: 'EUR' };
+    const first = await request(app)
+      .post('/api/v8/finance-v2/valuation/registrations')
+      .set('Idempotency-Key', key)
+      .send(body);
     expect(first.status).toBe(201);
-    expect(first.body.data).toMatchObject({replay:false});
-    const replay=await request(app).post('/api/v8/finance-v2/valuation/registrations').set('Idempotency-Key',key).send(body);
+    expect(first.body.data).toMatchObject({ replay: false });
+    const replay = await request(app)
+      .post('/api/v8/finance-v2/valuation/registrations')
+      .set('Idempotency-Key', key)
+      .send(body);
     expect(replay.status).toBe(200);
-    expect(replay.body.data).toMatchObject({id:first.body.data.id,replay:true});
-    const collision=await request(app).post('/api/v8/finance-v2/valuation/registrations').set('Idempotency-Key',key).send({...body,title:'Changed'});
+    expect(replay.body.data).toMatchObject({ id: first.body.data.id, replay: true });
+    const collision = await request(app)
+      .post('/api/v8/finance-v2/valuation/registrations')
+      .set('Idempotency-Key', key)
+      .send({ ...body, title: 'Changed' });
     expect(collision.status).toBe(409);
     expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_COLLISION');
-    const malformed=await request(app).post('/api/v8/finance-v2/valuation/registrations').set('Idempotency-Key',`invalid-${randomUUID()}`).send({...body,horizonYears:21,unknown:true});
+    const malformed = await request(app)
+      .post('/api/v8/finance-v2/valuation/registrations')
+      .set('Idempotency-Key', `invalid-${randomUUID()}`)
+      .send({ ...body, horizonYears: 21, unknown: true });
     expect(malformed.status).toBe(400);
     expect(malformed.body.code).toBe('INVALID_BODY');
-    const foreign=await request(app).post('/api/v8/finance-v2/valuation/registrations').set('Idempotency-Key',`foreign-http-${randomUUID()}`).send({title:'Foreign source',sourceType:'budget',sourceId:foreignBudgetId});
+    const foreign = await request(app)
+      .post('/api/v8/finance-v2/valuation/registrations')
+      .set('Idempotency-Key', `foreign-http-${randomUUID()}`)
+      .send({ title: 'Foreign source', sourceType: 'budget', sourceId: foreignBudgetId });
     expect(foreign.status).toBe(404);
-    expect(foreign.body).toMatchObject({code:'SOURCE_NOT_FOUND',error:'Valuation source not found'});
+    expect(foreign.body).toMatchObject({
+      code: 'SOURCE_NOT_FOUND',
+      error: 'Valuation source not found',
+    });
   });
 
   it('rechecks live Finance authority before a winning receipt replay', async () => {
-    const key=`authority-${randomUUID()}`;
-    const body={organizationId:orgId,userId,title:'Authority-bound registration',sourceType:'manual' as const,idempotencyKey:key};
-    const first=await createRegisteredValuation(body);
+    const key = `authority-${randomUUID()}`;
+    const body = {
+      organizationId: orgId,
+      userId,
+      title: 'Authority-bound registration',
+      sourceType: 'manual' as const,
+      idempotencyKey: key,
+    };
+    const first = await createRegisteredValuation(body);
     expect(first.replay).toBe(false);
-    await client.query(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,[orgId,userId]);
-    await expect(createRegisteredValuation(body)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED',status:403});
-    await client.query(`UPDATE organization_members SET status='ACTIVE',role='MEMBER' WHERE organization_id=$1 AND user_id=$2`,[orgId,userId]);
-    await expect(createRegisteredValuation(body)).rejects.toMatchObject({code:'FINANCE_EDIT_FORBIDDEN',status:403});
-    await client.query(`UPDATE organization_members SET role='OWNER' WHERE organization_id=$1 AND user_id=$2`,[orgId,userId]);
-    const replay=await createRegisteredValuation(body);
-    expect(replay).toEqual({...first,replay:true});
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(createRegisteredValuation(body)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE',role='MEMBER' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(createRegisteredValuation(body)).rejects.toMatchObject({
+      code: 'FINANCE_EDIT_FORBIDDEN',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET role='OWNER' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    const replay = await createRegisteredValuation(body);
+    expect(replay).toEqual({ ...first, replay: true });
   });
 
   it('converges concurrent same-key commands to one identity and an immutable receipt', async () => {
-    const key=`concurrent-${randomUUID()}`;
-    const before=await counts();
-    const command={organizationId:orgId,userId,title:'Concurrent registration',sourceType:'manual' as const,idempotencyKey:key};
-    const results=await Promise.all(Array.from({length:8},()=>createRegisteredValuation(command)));
-    expect(new Set(results.map(result=>result.id))).toEqual(new Set([results[0].id]));
-    expect(results.filter(result=>!result.replay)).toHaveLength(1);
-    expect(results.filter(result=>result.replay)).toHaveLength(7);
-    const after=await counts();
-    for(const field of ['legacy','artifacts','versions','revisions','cases','variants','aliases','receipts','lifecycle_events'] as const){
-      expect(Number(after[field])-Number(before[field]),field).toBe(1);
+    const key = `concurrent-${randomUUID()}`;
+    const before = await counts();
+    const command = {
+      organizationId: orgId,
+      userId,
+      title: 'Concurrent registration',
+      sourceType: 'manual' as const,
+      idempotencyKey: key,
+    };
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => createRegisteredValuation(command))
+    );
+    expect(new Set(results.map((result) => result.id))).toEqual(new Set([results[0].id]));
+    expect(results.filter((result) => !result.replay)).toHaveLength(1);
+    expect(results.filter((result) => result.replay)).toHaveLength(7);
+    const after = await counts();
+    for (const field of [
+      'legacy',
+      'artifacts',
+      'versions',
+      'revisions',
+      'cases',
+      'variants',
+      'aliases',
+      'receipts',
+      'lifecycle_events',
+    ] as const) {
+      expect(Number(after[field]) - Number(before[field]), field).toBe(1);
     }
-    await expect(client.query(
-      `UPDATE finance_valuation_registration_command_receipts SET request_hash=request_hash
-        WHERE organization_id=$1 AND idempotency_key=$2`,[orgId,key]
-    )).rejects.toThrow(/immutable/);
-    await expect(client.query(
-      `DELETE FROM finance_valuation_registration_command_receipts
-        WHERE organization_id=$1 AND idempotency_key=$2`,[orgId,key]
-    )).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(
+        `UPDATE finance_valuation_registration_command_receipts SET request_hash=request_hash
+        WHERE organization_id=$1 AND idempotency_key=$2`,
+        [orgId, key]
+      )
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(
+        `DELETE FROM finance_valuation_registration_command_receipts
+        WHERE organization_id=$1 AND idempotency_key=$2`,
+        [orgId, key]
+      )
+    ).rejects.toThrow(/immutable/);
   });
 });

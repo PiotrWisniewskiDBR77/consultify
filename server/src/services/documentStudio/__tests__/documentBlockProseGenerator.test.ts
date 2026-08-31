@@ -18,8 +18,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { DocumentIntake, DocumentSchema, DocumentSourceRef } from '../documentStudioTypes.js';
 import { renderSchemaToMarkdown } from '../documentSchemaRenderer.js';
+import type { DocumentIntake, DocumentSchema, DocumentSourceRef } from '../documentStudioTypes.js';
 
 const generateChatResponseMock = vi.fn();
 
@@ -194,11 +194,7 @@ describe('generateBlockProse', () => {
   });
 
   it('N-9: a GFM table paragraph with a number outside the sources renders as a valid table, without an inline assumption marker', async () => {
-    const tableText = [
-      '| Metric | Value |',
-      '| --- | --- |',
-      '| Adoption | 42% |',
-    ].join('\n');
+    const tableText = ['| Metric | Value |', '| --- | --- |', '| Adoption | 42% |'].join('\n');
     generateChatResponseMock.mockResolvedValue({
       content: JSON.stringify({
         blocks: [{ blockId: 'blk-para', text: tableText }],
@@ -217,9 +213,7 @@ describe('generateBlockProse', () => {
     expect((block.content as { text: string }).text).toBe(tableText);
 
     const markdown = renderSchemaToMarkdown(result);
-    const lastTableLine = markdown
-      .split('\n')
-      .filter((line) => line.includes('Adoption'))[0];
+    const lastTableLine = markdown.split('\n').filter((line) => line.includes('Adoption'))[0];
     expect(lastTableLine.trim().startsWith('|')).toBe(true);
     expect(lastTableLine).not.toContain('[Assumption]');
     expect(markdown).not.toContain('| Adoption | 42% | _[Assumption]_');
@@ -238,7 +232,9 @@ describe('generateBlockProse', () => {
     });
 
     const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
-    const prompt = String(generateChatResponseMock.mock.calls[0]?.[0]?.messages?.[0]?.content || '');
+    const prompt = String(
+      generateChatResponseMock.mock.calls[0]?.[0]?.messages?.[0]?.content || ''
+    );
 
     expect(prompt).toContain('Evidence: The CFO confirms annual benefit of EUR 2.2m');
     expect((result.sections[0].blocks[0].content as { text: string }).text).toBe(
@@ -326,11 +322,7 @@ describe('generateBlockProse', () => {
   // — the single most common long-form answer — put the inline assumption
   // marker straight after the last "| … |" row and broke the table.
   it('N-9 holds on the SPLIT branch: a framing paragraph followed by a GFM table with an outside number keeps the table unmarked', async () => {
-    const tableText = [
-      '| Metric | Value |',
-      '| --- | --- |',
-      '| Adoption | 42% |',
-    ].join('\n');
+    const tableText = ['| Metric | Value |', '| --- | --- |', '| Adoption | 42% |'].join('\n');
     generateChatResponseMock.mockResolvedValue({
       content: JSON.stringify({
         blocks: [

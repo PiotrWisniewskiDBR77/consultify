@@ -76,7 +76,8 @@ const BASE_OUTPUT = {
       rootCauseHypothesis: null,
       riskOrOpportunity:
         'Konkurenci z automatyzacją sprzedaży online skalują przy tych samych zasobach handlowych.',
-      recommendation: 'Wdrożyć podstawowy kanał e-commerce/marketplace w ciągu najbliższych 2 kwartałów.',
+      recommendation:
+        'Wdrożyć podstawowy kanał e-commerce/marketplace w ciągu najbliższych 2 kwartałów.',
       prerequisite: null,
       expectedOutcome: 'Sprzedaż online bez udziału handlowca dla podstawowego asortymentu.',
       confidence: 'medium',
@@ -93,10 +94,16 @@ const BASE_OUTPUT = {
       targetLevel: 6,
       gap: 0,
       supportingEvidence: [
-        { evidenceId: 'ev-1b-1', evidenceType: 'system_export', strength: 'E3', locator: 'vault://evidence/ev-1b-1' },
+        {
+          evidenceId: 'ev-1b-1',
+          evidenceType: 'system_export',
+          strength: 'E3',
+          locator: 'vault://evidence/ev-1b-1',
+        },
       ],
       contradictingEvidence: [],
-      businessMeaning: 'Marketing korzysta z ERP zintegrowanego z innymi obszarami organizacji — cel osiągnięty.',
+      businessMeaning:
+        'Marketing korzysta z ERP zintegrowanego z innymi obszarami organizacji — cel osiągnięty.',
       rootCauseHypothesis: null,
       riskOrOpportunity: null,
       recommendation: 'Utrzymać obecny poziom; sprawdzić integrację przy najbliższej migracji ERP.',
@@ -116,13 +123,19 @@ const BASE_OUTPUT = {
       targetLevel: 5,
       gap: 3,
       supportingEvidence: [
-        { evidenceId: 'ev-4c-1', evidenceType: 'interview', strength: 'E1', locator: 'vault://evidence/ev-4c-1' },
+        {
+          evidenceId: 'ev-4c-1',
+          evidenceType: 'interview',
+          strength: 'E1',
+          locator: 'vault://evidence/ev-4c-1',
+        },
       ],
       contradictingEvidence: [],
       businessMeaning:
         'Zarządzanie jakością danych opiera się na ręcznych przeglądach arkuszy, bez zautomatyzowanej walidacji.',
       rootCauseHypothesis: null,
-      riskOrOpportunity: 'Błędy w danych źródłowych propagują się do raportowania zarządczego bez wykrycia.',
+      riskOrOpportunity:
+        'Błędy w danych źródłowych propagują się do raportowania zarządczego bez wykrycia.',
       recommendation: 'Wdrożyć automatyczną walidację jakości danych w hurtowni przed końcem roku.',
       prerequisite: null,
       expectedOutcome: 'Zamknięcie luki na jednostce 4C.',
@@ -140,10 +153,16 @@ const BASE_OUTPUT = {
       targetLevel: 3,
       gap: 0,
       supportingEvidence: [
-        { evidenceId: 'ev-6b-1', evidenceType: 'policy_document', strength: 'E4', locator: 'vault://evidence/ev-6b-1' },
+        {
+          evidenceId: 'ev-6b-1',
+          evidenceType: 'policy_document',
+          strength: 'E4',
+          locator: 'vault://evidence/ev-6b-1',
+        },
       ],
       contradictingEvidence: [],
-      businessMeaning: 'Polityka bezpieczeństwa dostępu spełnia obecny cel — brak rekomendowanych działań.',
+      businessMeaning:
+        'Polityka bezpieczeństwa dostępu spełnia obecny cel — brak rekomendowanych działań.',
       rootCauseHypothesis: null,
       riskOrOpportunity: null,
       recommendation: 'Utrzymać obecny poziom; zaplanować przegląd polityki za 12 miesięcy.',
@@ -173,8 +192,7 @@ const HAPPY_OUTPUT = {
     byGroup: { 'axis-1': 5.0, 'axis-2': null, 'axis-4': 2.0, 'axis-6': 3.0, 'axis-7': 2.0 },
     byGroupNorm: { 'axis-1': 0.667, 'axis-2': null, 'axis-4': 0.25, 'axis-6': 0.4, 'axis-7': 0.25 },
     mappingVersion: 'drd-axis-mean-v1',
-    rule:
-      'drd-axis-mean-v1: arithmetic mean of non-null unit levels within the same axis, rounded to 1 decimal.',
+    rule: 'drd-axis-mean-v1: arithmetic mean of non-null unit levels within the same axis, rounded to 1 decimal.',
     excluded: { '2A': 'null_or_not_applicable_unit_level_excluded_not_imputed' },
   },
 };
@@ -187,8 +205,7 @@ const EDGE_OUTPUT = {
     byGroup: {},
     byGroupNorm: {},
     mappingVersion: 'event-derived-v1',
-    rule:
-      'EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — to zostaje po stronie klienta przed wyświetleniem.',
+    rule: 'EventDerivedOutputBridge nie liczy agregacji per-oś/pillar (metoda-specyficzna reguła) — to zostaje po stronie klienta przed wyświetleniem.',
     excluded: {},
   },
   limitations: [
@@ -226,7 +243,10 @@ const APPROVALS_HAPPY = [
 ];
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 function installFetchStub(variant: string): void {
@@ -238,10 +258,18 @@ function installFetchStub(variant: string): void {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     try {
       if (/\/api\/method\/outputs\/out-1$/.test(url)) {
-        return jsonResponse({ output: HAPPY_OUTPUT, superseded: false, supersededByOutputId: null });
+        return jsonResponse({
+          output: HAPPY_OUTPUT,
+          superseded: false,
+          supersededByOutputId: null,
+        });
       }
       if (/\/api\/method\/outputs\/out-3$/.test(url)) {
-        return jsonResponse({ output: EDGE_OUTPUT, superseded: true, supersededByOutputId: 'out-4' });
+        return jsonResponse({
+          output: EDGE_OUTPUT,
+          superseded: true,
+          supersededByOutputId: 'out-4',
+        });
       }
       if (/\/api\/method\/sessions\/sess-1$/.test(url)) {
         return jsonResponse({ session: SESSION, roles: [] });

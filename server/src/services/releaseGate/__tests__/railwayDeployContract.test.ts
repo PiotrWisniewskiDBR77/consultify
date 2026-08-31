@@ -23,7 +23,6 @@
  */
 import fs from 'fs';
 import path from 'path';
-
 import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = path.resolve(process.cwd());
@@ -66,7 +65,10 @@ describe('railway deploy contract — declared preDeployCommand stays real', () 
         const cfg = readJson(file);
         const cmd = cfg?.deploy?.preDeployCommand;
         expect(cmd, `${file}: deploy.preDeployCommand must be present`).toBeTruthy();
-        expect(commandText(cmd).trim().length, `${file}: deploy.preDeployCommand must not be empty`).toBeGreaterThan(0);
+        expect(
+          commandText(cmd).trim().length,
+          `${file}: deploy.preDeployCommand must not be empty`
+        ).toBeGreaterThan(0);
       });
 
       it('is never the no-op "true" (string or array-joined)', () => {
@@ -98,7 +100,9 @@ describe('railway deploy contract — declared preDeployCommand stays real', () 
   }
 
   it('both railway configs agree on the same preDeployCommand', () => {
-    const [a, b] = RAILWAY_CONFIG_FILES.map((f) => commandText(readJson(f)?.deploy?.preDeployCommand).trim());
+    const [a, b] = RAILWAY_CONFIG_FILES.map((f) =>
+      commandText(readJson(f)?.deploy?.preDeployCommand).trim()
+    );
     expect(a).toBe(b);
   });
 

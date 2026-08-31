@@ -49,11 +49,23 @@ export type AccumulationBasis = 'QUARTER_ONLY' | 'YTD' | 'LTM' | 'FULL_YEAR';
 export type SignConvention = 'NATURAL' | 'CONTRA';
 export type AccountingPolicy = 'IFRS' | 'LOCAL_GAAP' | 'US_GAAP';
 export type FinanceUnit = 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BILLIONS';
-export type FinanceValueStatus = 'PRESENT_ZERO' | 'PRESENT_NONZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE';
+export type FinanceValueStatus =
+  | 'PRESENT_ZERO'
+  | 'PRESENT_NONZERO'
+  | 'MISSING'
+  | 'NA'
+  | 'NOT_APPLICABLE';
 
 /** `finance_stmt_reconciliation.bucket` CHECK values (WP-D01 section 4.6). 'CANONICAL' is
  *  reserved for a future rollup-detail row shape this work package does not emit. */
-export type ReconciliationBucket = 'MAPPED' | 'EXCLUDED' | 'UNMAPPED' | 'DUPLICATE' | 'RECLASS' | 'ELIMINATION' | 'CANONICAL';
+export type ReconciliationBucket =
+  | 'MAPPED'
+  | 'EXCLUDED'
+  | 'UNMAPPED'
+  | 'DUPLICATE'
+  | 'RECLASS'
+  | 'ELIMINATION'
+  | 'CANONICAL';
 
 /** The mocked "already parsed" input shape this work package's brief specifies verbatim. */
 export interface RawStatementLine {
@@ -182,7 +194,13 @@ function valueStatusFor(value: number | null | undefined): FinanceValueStatus {
   return 'PRESENT_NONZERO';
 }
 
-function cellKey(entityId: string, canonicalLineId: string, periodId: string, accumulationBasis: string, consolidationScope: string): string {
+function cellKey(
+  entityId: string,
+  canonicalLineId: string,
+  periodId: string,
+  accumulationBasis: string,
+  consolidationScope: string
+): string {
   return [entityId, canonicalLineId, periodId, accumulationBasis, consolidationScope].join('::');
 }
 
@@ -194,7 +212,11 @@ function lineCodeKey(statementType: string, lineCode: string): string {
  * RC-01 classification: does this row's absence from the canonical model mean the
  * canonical model is INCOMPLETE (coverage loss) or that it is COMPLETE BY DECISION?
  */
-export function isCoverageLoss(bucket: ReconciliationBucket, reasonCode: string | null, excludeKind?: ExcludeKind): boolean {
+export function isCoverageLoss(
+  bucket: ReconciliationBucket,
+  reasonCode: string | null,
+  excludeKind?: ExcludeKind
+): boolean {
   if (bucket === 'UNMAPPED') return true;
   if (bucket !== 'EXCLUDED') return false;
   if (excludeKind === 'NO_CANONICAL_TARGET') return true;
@@ -235,7 +257,9 @@ function emptyResult(
 // mapStatementLines
 // ---------------------------------------------------------------------------
 
-export async function mapStatementLines(params: MapStatementLinesParams): Promise<MappedRowResult[]> {
+export async function mapStatementLines(
+  params: MapStatementLinesParams
+): Promise<MappedRowResult[]> {
   const accumulationBasis: AccumulationBasis = params.accumulationBasis ?? 'FULL_YEAR';
   const rulesByLabel = new Map<string, MappingRule>();
   for (const rule of params.rules) rulesByLabel.set(normalizeLabel(rule.sourceLabel), rule);
@@ -244,7 +268,8 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
     // --- Prefetch: entities referenced by raw rows AND by rule elimination counterparties. ---
     const entityCodes = new Set<string>(params.rawLines.map((l) => l.entityCode));
     for (const rule of params.rules) {
-      if (rule.eliminationCounterpartyEntityCode) entityCodes.add(rule.eliminationCounterpartyEntityCode);
+      if (rule.eliminationCounterpartyEntityCode)
+        entityCodes.add(rule.eliminationCounterpartyEntityCode);
     }
     const entityCodeList = Array.from(entityCodes);
     const entityRows = entityCodeList.length
@@ -258,14 +283,22 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
     // --- Prefetch: periods referenced by raw rows (existence check only). ---
     const periodIdList = Array.from(new Set(params.rawLines.map((l) => l.periodId)));
     const periodRows = periodIdList.length
-      ? await tx.queryAll<{ period_id: string }>(`SELECT period_id FROM finance_stmt_periods WHERE period_id = ANY(?)`, [periodIdList])
+      ? await tx.queryAll<{ period_id: string }>(
+          `SELECT period_id FROM finance_stmt_periods WHERE period_id = ANY(?)`,
+          [periodIdList]
+        )
       : [];
     const knownPeriods = new Set(periodRows.map((r) => r.period_id));
 
     // --- Prefetch: canonical taxonomy ids for every (statementType, lineCode) any rule references. ---
     // Org-specific rows win over global system rows for the same (statement_type, line_code) —
     // ORDER BY puts NULL organization_id first so the org-specific row (if any) overwrites it below.
-    const taxonomyRows = await tx.queryAll<{ id: string; line_code: string; statement_type: string; organization_id: string | null }>(
+    const taxonomyRows = await tx.queryAll<{
+      id: string;
+      line_code: string;
+      statement_type: string;
+      organization_id: string | null;
+    }>(
       `SELECT id, line_code, statement_type, organization_id FROM financial_statement_lines
         WHERE organization_id IS NULL OR organization_id = ?
         ORDER BY organization_id NULLS FIRST`,
@@ -286,7 +319,12 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
       const rule = rulesByLabel.get(normalizeLabel(raw.lineItem));
 
       if (!rule) {
-        results.push(emptyResult(rowIndex, raw, 'UNMAPPED', { entityId: entityByCode.get(raw.entityCode) ?? null, reasonCode: 'NO_MAPPING_RULE' }));
+        results.push(
+          emptyResult(rowIndex, raw, 'UNMAPPED', {
+            entityId: entityByCode.get(raw.entityCode) ?? null,
+            reasonCode: 'NO_MAPPING_RULE',
+          })
+        );
         continue;
       }
 
@@ -310,15 +348,32 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
 
       const entityId = entityByCode.get(raw.entityCode) ?? null;
       if (!entityId) {
-        results.push(emptyResult(rowIndex, raw, 'UNMAPPED', { canonicalLineId: ruleLineId, reasonCode: 'ENTITY_NOT_FOUND' }));
+        results.push(
+          emptyResult(rowIndex, raw, 'UNMAPPED', {
+            canonicalLineId: ruleLineId,
+            reasonCode: 'ENTITY_NOT_FOUND',
+          })
+        );
         continue;
       }
       if (!knownPeriods.has(raw.periodId)) {
-        results.push(emptyResult(rowIndex, raw, 'UNMAPPED', { canonicalLineId: ruleLineId, entityId, reasonCode: 'PERIOD_NOT_FOUND' }));
+        results.push(
+          emptyResult(rowIndex, raw, 'UNMAPPED', {
+            canonicalLineId: ruleLineId,
+            entityId,
+            reasonCode: 'PERIOD_NOT_FOUND',
+          })
+        );
         continue;
       }
       if (!ruleLineId) {
-        results.push(emptyResult(rowIndex, raw, 'UNMAPPED', { entityId, periodId: raw.periodId, reasonCode: 'CANONICAL_LINE_NOT_FOUND' }));
+        results.push(
+          emptyResult(rowIndex, raw, 'UNMAPPED', {
+            entityId,
+            periodId: raw.periodId,
+            reasonCode: 'CANONICAL_LINE_NOT_FOUND',
+          })
+        );
         continue;
       }
 
@@ -326,7 +381,10 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
       let targetLineId = ruleLineId;
       let reclassTargetLineId: string | null = null;
       if (isReclass) {
-        const targetKey = lineCodeKey(rule.reclassTargetStatementType ?? rule.statementType, rule.reclassTargetLineCode ?? '');
+        const targetKey = lineCodeKey(
+          rule.reclassTargetStatementType ?? rule.statementType,
+          rule.reclassTargetLineCode ?? ''
+        );
         const resolvedTarget = lineCodeIdMap.get(targetKey) ?? null;
         if (!resolvedTarget) {
           results.push(
@@ -348,7 +406,7 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
       let eliminationCounterpartyEntityId: string | null = null;
       if (isElimination) {
         eliminationCounterpartyEntityId = rule.eliminationCounterpartyEntityCode
-          ? entityByCode.get(rule.eliminationCounterpartyEntityCode) ?? null
+          ? (entityByCode.get(rule.eliminationCounterpartyEntityCode) ?? null)
           : null;
         if (!eliminationCounterpartyEntityId) {
           results.push(
@@ -364,7 +422,13 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
         }
       }
 
-      const key = cellKey(entityId, targetLineId, raw.periodId, accumulationBasis, consolidationScope);
+      const key = cellKey(
+        entityId,
+        targetLineId,
+        raw.periodId,
+        accumulationBasis,
+        consolidationScope
+      );
       const existingRowIndex = seenCells.get(key);
       if (existingRowIndex !== undefined) {
         // Same (entity, canonical_line, period, basis, scope) cell already claimed by an earlier
@@ -422,7 +486,11 @@ export async function mapStatementLines(params: MapStatementLinesParams): Promis
         ]
       );
 
-      const bucket: ReconciliationBucket = isReclass ? 'RECLASS' : isElimination ? 'ELIMINATION' : 'MAPPED';
+      const bucket: ReconciliationBucket = isReclass
+        ? 'RECLASS'
+        : isElimination
+          ? 'ELIMINATION'
+          : 'MAPPED';
       results.push({
         rowIndex,
         raw,

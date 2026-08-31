@@ -30,7 +30,10 @@ import type { KpiDataQualityStatus, KpiPerformanceStatus } from '../kpiApi';
 // header) — this module never evaluates target geometry itself.
 // ==========================================
 
-export const KPI_PERFORMANCE_STATUS_LABELS: Record<KpiPerformanceStatus, { pl: string; en: string }> = {
+export const KPI_PERFORMANCE_STATUS_LABELS: Record<
+  KpiPerformanceStatus,
+  { pl: string; en: string }
+> = {
   on_target: { pl: 'W celu', en: 'On target' },
   warning: { pl: 'Ostrzeżenie', en: 'Warning' },
   critical: { pl: 'Krytyczny', en: 'Critical' },
@@ -38,7 +41,9 @@ export const KPI_PERFORMANCE_STATUS_LABELS: Record<KpiPerformanceStatus, { pl: s
 };
 
 export function kpiPerformanceStatusLabel(status: KpiPerformanceStatus, isPolish: boolean): string {
-  return isPolish ? KPI_PERFORMANCE_STATUS_LABELS[status].pl : KPI_PERFORMANCE_STATUS_LABELS[status].en;
+  return isPolish
+    ? KPI_PERFORMANCE_STATUS_LABELS[status].pl
+    : KPI_PERFORMANCE_STATUS_LABELS[status].en;
 }
 
 export type KpiMeasurementStatusTone = 'neutral' | 'info' | 'warning' | 'success' | 'danger';
@@ -60,7 +65,10 @@ export const KPI_PERFORMANCE_STATUS_TONE: Record<KpiPerformanceStatus, KpiMeasur
 // from any action this package builds.
 // ==========================================
 
-export const KPI_DATA_QUALITY_STATUS_LABELS: Record<KpiDataQualityStatus, { pl: string; en: string }> = {
+export const KPI_DATA_QUALITY_STATUS_LABELS: Record<
+  KpiDataQualityStatus,
+  { pl: string; en: string }
+> = {
   unverified: { pl: 'Niezweryfikowany', en: 'Unverified' },
   verified: { pl: 'Zweryfikowany', en: 'Verified' },
   disputed: { pl: 'Zakwestionowany', en: 'Disputed' },
@@ -73,19 +81,23 @@ export function kpiDataQualityStatusLabel(status: KpiDataQualityStatus, isPolish
     : KPI_DATA_QUALITY_STATUS_LABELS[status].en;
 }
 
-export const KPI_DATA_QUALITY_STATUS_TONE: Record<KpiDataQualityStatus, KpiMeasurementStatusTone> = {
-  unverified: 'info',
-  verified: 'success',
-  disputed: 'danger',
-  estimated: 'warning',
-};
+export const KPI_DATA_QUALITY_STATUS_TONE: Record<KpiDataQualityStatus, KpiMeasurementStatusTone> =
+  {
+    unverified: 'info',
+    verified: 'success',
+    disputed: 'danger',
+    estimated: 'warning',
+  };
 
 // ==========================================
 // Formatters — locale follows `isPolish`, matching the repo-wide convention
 // (`../ResultsKpiRegistryPage.tsx` / `../kpiScorecards/kpiScorecardMappers.ts`).
 // ==========================================
 
-export function formatKpiMeasurementDate(value: string | null | undefined, isPolish: boolean): string {
+export function formatKpiMeasurementDate(
+  value: string | null | undefined,
+  isPolish: boolean
+): string {
   if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';
@@ -96,7 +108,10 @@ export function formatKpiMeasurementDate(value: string | null | undefined, isPol
   });
 }
 
-export function formatKpiMeasurementDateTime(value: string | null | undefined, isPolish: boolean): string {
+export function formatKpiMeasurementDateTime(
+  value: string | null | undefined,
+  isPolish: boolean
+): string {
   if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';

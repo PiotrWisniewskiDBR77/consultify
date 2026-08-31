@@ -88,7 +88,9 @@ export async function resolveOrCreateSystemPortfolioProject(
       [orgId]
     );
     if (resolved?.id) return resolved.id;
-    logger.warn('[initiativeProjectPolicyService] system portfolio insert produced no readable owner');
+    logger.warn(
+      '[initiativeProjectPolicyService] system portfolio insert produced no readable owner'
+    );
     return null;
   } catch (err) {
     // Unexpected database failure: re-select once in case another writer

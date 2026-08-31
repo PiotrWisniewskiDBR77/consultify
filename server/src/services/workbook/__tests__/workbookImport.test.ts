@@ -23,7 +23,13 @@ describe('workbookImport', () => {
     expect(result.sheets[0].columns[0]).toMatchObject({ header: 'Amount', width: 24 });
     expect(result.sheets[0].rows[0]).toMatchObject({
       height: 30,
-      cells: { c1: { value: 20, comment: 'Reviewed', style: { bold: true, italic: true, bgColor: 'FFF2CC' } } },
+      cells: {
+        c1: {
+          value: 20,
+          comment: 'Reviewed',
+          style: { bold: true, italic: true, bgColor: 'FFF2CC' },
+        },
+      },
     });
     expect(result.sheets[0].rows[1].cells.c1).toMatchObject({ formula: 'A2*2', value: 40 });
   });
@@ -31,6 +37,9 @@ describe('workbookImport', () => {
   it('parses CSV with the first row as headers', async () => {
     const result = await importWorkbookBuffer(Buffer.from('Name,Value\nAlpha,42\n'), 'data.csv');
     expect(result.sheets[0].columns.map((column) => column.header)).toEqual(['Name', 'Value']);
-    expect(result.sheets[0].rows[0].cells).toMatchObject({ c1: { value: 'Alpha' }, c2: { value: 42 } });
+    expect(result.sheets[0].rows[0].cells).toMatchObject({
+      c1: { value: 'Alpha' },
+      c2: { value: 42 },
+    });
   });
 });

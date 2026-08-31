@@ -41,10 +41,6 @@ import {
   resolveGateRequiredRoles,
   resolveInitiativeCapabilityContext,
 } from './initiativeCapabilityMatrix.js';
-import {
-  assertCurrentApprovedInitiativeLifecycleGateDecision,
-  type InitiativeLifecycleGateDomain,
-} from './initiativeLifecycleGateDecisionService.js';
 import { isInitiativeGateAiEnabled } from './initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from './initiativeGateReadinessService.js';
 import {
@@ -52,6 +48,10 @@ import {
   hasInitiativeStatusSchemaDrift,
   normalizeInitiativeDbStatusForRead,
 } from './initiativeLifecycleCanon.js';
+import {
+  assertCurrentApprovedInitiativeLifecycleGateDecision,
+  type InitiativeLifecycleGateDomain,
+} from './initiativeLifecycleGateDecisionService.js';
 import { recordHandoff as recordStageHandoff } from './stageHandoffService.js';
 
 // ==========================================
@@ -313,7 +313,8 @@ interface GateBlockedNotify {
  * is a human-readable version used for the audit-trail `actorName`.
  */
 export type InitiativeTransitionActor =
-  { kind: 'user' } | { kind: 'system'; systemActorId: string; systemActorLabel: string };
+  | { kind: 'user' }
+  | { kind: 'system'; systemActorId: string; systemActorLabel: string };
 
 interface ExecuteInitiativeTransitionParams {
   orgId: string;
@@ -1590,178 +1591,178 @@ export async function executeInitiativeTransition(
   // ---- Non-critical side effects (best-effort, deliberately OUTSIDE the transaction —
   // the row lock is already released by the time we get here) ----
   const runPostCommitEffects = async (): Promise<void> => {
+    // Uspójnienie F2.2–2.5/2.7 — record the stage-boundary handoff (event + lineage)
+    // on every successful status transition. Fail-safe (never throws/blocks).
+    void recordStageHandoff(orgId, id, currentStatus, nextStatus, actorId);
 
-  // Uspójnienie F2.2–2.5/2.7 — record the stage-boundary handoff (event + lineage)
-  // on every successful status transition. Fail-safe (never throws/blocks).
-  void recordStageHandoff(orgId, id, currentStatus, nextStatus, actorId);
+    // EXE-09 — best-effort IMMEDIATE delivery attempt for the receipt row
+    // already committed atomically inside the transaction above. Unlike the
+    // old `fireClosureHandoff` (fire-and-forget with nothing durable behind
+    // it), a failure or a process crash right here loses nothing: the
+    // receipt already exists in PENDING state and
+    // `runReconciliationSweep`/its cron (server/src/index.ts) will pick it up
+    // and retry independently of whether this call ever ran. Still
+    // non-blocking by design — callers must not wait on downstream delivery
+    // to get a response to the status change itself.
+    if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+      triggerImmediateDeliveryBestEffort(correlationId);
+    }
 
-  // EXE-09 — best-effort IMMEDIATE delivery attempt for the receipt row
-  // already committed atomically inside the transaction above. Unlike the
-  // old `fireClosureHandoff` (fire-and-forget with nothing durable behind
-  // it), a failure or a process crash right here loses nothing: the
-  // receipt already exists in PENDING state and
-  // `runReconciliationSweep`/its cron (server/src/index.ts) will pick it up
-  // and retry independently of whether this call ever ran. Still
-  // non-blocking by design — callers must not wait on downstream delivery
-  // to get a response to the status change itself.
-  if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
-    triggerImmediateDeliveryBestEffort(correlationId);
-  }
-
-  // Emit notifications (best-effort)
-  try {
-    const recipients = await getInitiativeNotificationRecipients(orgId, id);
-    const isModuleChange =
-      (currentStatus === 'PENDING_REVIEW' && nextStatus === 'REVIEW') ||
-      (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
-      (currentStatus === 'DONE' && nextStatus === 'TRACKING');
-
-    // 1. General status change notification to all stakeholders.
-    // M13/R4: this is the SINGLE canonical status-change notification.
-    // A → BLOCKED transition is escalated to CRITICAL and carries the
-    // blocker reason (replaces the removed dedicated R4 emitter).
-    const statusSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
-      nextStatus === 'BLOCKED' ? 'CRITICAL' : nextStatus === 'CANCELLED' ? 'WARNING' : 'INFO';
-    const statusTitle = isModuleChange
-      ? 'Initiative moved to new module'
-      : nextStatus === 'BLOCKED'
-        ? 'Initiative blocked'
-        : 'Initiative status changed';
-    await Promise.allSettled(
-      recipients
-        .filter((uid) => uid && uid !== actorId)
-        .map((userId) =>
-          notificationService.send({
-            userId,
-            organizationId: orgId,
-            type: isModuleChange ? 'initiative.module_changed' : 'initiative.status_changed',
-            title: statusTitle,
-            body: `${initiativeName}: ${currentStatus} → ${nextStatus}${reason ? ` (${reason})` : ''}`,
-            entityType: 'initiative',
-            entityId: id,
-            actionUrl: '/initiatives',
-            actorId,
-            actorName,
-            severity: statusSeverity,
-            priority: nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
-            metadata: { from: currentStatus, to: nextStatus, reason, gate },
-          })
-        )
-    );
-
-    // 2. Gate-specific notification: notify users who hold the gate role for the NEXT gate
-    // This tells the approver "this initiative is now waiting for your decision"
+    // Emit notifications (best-effort)
     try {
-      const nextTransitions = VALID_TRANSITIONS[nextStatus as keyof typeof VALID_TRANSITIONS] || [];
-      const nextGates = nextTransitions
-        .map((to: string) => getGateForTransition(nextStatus as any, to as any))
-        .filter(Boolean)
-        .filter((g: any) => g !== 'CANCEL'); // Don't notify for cancel gate
+      const recipients = await getInitiativeNotificationRecipients(orgId, id);
+      const isModuleChange =
+        (currentStatus === 'PENDING_REVIEW' && nextStatus === 'REVIEW') ||
+        (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
+        (currentStatus === 'DONE' && nextStatus === 'TRACKING');
 
-      if (nextGates.length > 0) {
-        // Get gate role assignments for this initiative
-        let gateRoleUsers: Array<{ gateRole: string; userId: string }> = [];
-        try {
-          const rows = await queryHelpers.queryAll(
-            `SELECT gate_role as "gateRole", user_id as "userId"
-             FROM initiative_gate_roles WHERE initiative_id = ?`,
-            [id]
-          );
-          gateRoleUsers = rows as any[];
-        } catch {
-          // Table may not exist yet
-        }
-
-        // Add auto-derived roles
-        const ini = await queryHelpers.queryOne(
-          `SELECT owner_business_id, owner_execution_id, sponsor_id FROM initiatives WHERE id = ?`,
-          [id]
-        );
-        if (ini) {
-          const iniAny = ini as any;
-          if (iniAny.owner_business_id) {
-            gateRoleUsers.push({
-              gateRole: 'INITIATIVE_OWNER',
-              userId: iniAny.owner_business_id,
-            });
-            gateRoleUsers.push({
-              gateRole: 'BUSINESS_OWNER',
-              userId: iniAny.owner_business_id,
-            });
-          }
-          if (iniAny.owner_execution_id) {
-            gateRoleUsers.push({
-              gateRole: 'INITIATIVE_OWNER',
-              userId: iniAny.owner_execution_id,
-            });
-          }
-          if (iniAny.sponsor_id) {
-            gateRoleUsers.push({ gateRole: 'PROJECT_SPONSOR', userId: iniAny.sponsor_id });
-          }
-        }
-
-        // Find users who need to approve the next gate
-        const nextGateApprovers = new Set<string>();
-        for (const nextGate of nextGates) {
-          const requiredRoles = GATE_PERMISSIONS[nextGate as keyof typeof GATE_PERMISSIONS] || [];
-          for (const roleUser of gateRoleUsers) {
-            if (requiredRoles.includes(roleUser.gateRole as any) && roleUser.userId !== actorId) {
-              nextGateApprovers.add(roleUser.userId);
-            }
-          }
-        }
-
-        // Send targeted "gate ready for your action" notifications
-        const nextGateLabel = nextGates[0] || 'NEXT_GATE';
-        await Promise.allSettled(
-          Array.from(nextGateApprovers).map((userId) =>
+      // 1. General status change notification to all stakeholders.
+      // M13/R4: this is the SINGLE canonical status-change notification.
+      // A → BLOCKED transition is escalated to CRITICAL and carries the
+      // blocker reason (replaces the removed dedicated R4 emitter).
+      const statusSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
+        nextStatus === 'BLOCKED' ? 'CRITICAL' : nextStatus === 'CANCELLED' ? 'WARNING' : 'INFO';
+      const statusTitle = isModuleChange
+        ? 'Initiative moved to new module'
+        : nextStatus === 'BLOCKED'
+          ? 'Initiative blocked'
+          : 'Initiative status changed';
+      await Promise.allSettled(
+        recipients
+          .filter((uid) => uid && uid !== actorId)
+          .map((userId) =>
             notificationService.send({
               userId,
               organizationId: orgId,
-              type: 'initiative.gate_action_required',
-              title: 'Gate action required',
-              body: `${initiativeName} is now in ${nextStatus} and requires your gate decision (${nextGateLabel})`,
+              type: isModuleChange ? 'initiative.module_changed' : 'initiative.status_changed',
+              title: statusTitle,
+              body: `${initiativeName}: ${currentStatus} → ${nextStatus}${reason ? ` (${reason})` : ''}`,
               entityType: 'initiative',
               entityId: id,
               actionUrl: '/initiatives',
               actorId,
               actorName,
-              priority: 'high',
-              isActionable: true,
-              metadata: {
-                from: currentStatus,
-                to: nextStatus,
-                nextGate: nextGateLabel,
-                previousGate: gate,
-              },
+              severity: statusSeverity,
+              priority: nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
+              metadata: { from: currentStatus, to: nextStatus, reason, gate },
             })
           )
-        );
+      );
+
+      // 2. Gate-specific notification: notify users who hold the gate role for the NEXT gate
+      // This tells the approver "this initiative is now waiting for your decision"
+      try {
+        const nextTransitions =
+          VALID_TRANSITIONS[nextStatus as keyof typeof VALID_TRANSITIONS] || [];
+        const nextGates = nextTransitions
+          .map((to: string) => getGateForTransition(nextStatus as any, to as any))
+          .filter(Boolean)
+          .filter((g: any) => g !== 'CANCEL'); // Don't notify for cancel gate
+
+        if (nextGates.length > 0) {
+          // Get gate role assignments for this initiative
+          let gateRoleUsers: Array<{ gateRole: string; userId: string }> = [];
+          try {
+            const rows = await queryHelpers.queryAll(
+              `SELECT gate_role as "gateRole", user_id as "userId"
+             FROM initiative_gate_roles WHERE initiative_id = ?`,
+              [id]
+            );
+            gateRoleUsers = rows as any[];
+          } catch {
+            // Table may not exist yet
+          }
+
+          // Add auto-derived roles
+          const ini = await queryHelpers.queryOne(
+            `SELECT owner_business_id, owner_execution_id, sponsor_id FROM initiatives WHERE id = ?`,
+            [id]
+          );
+          if (ini) {
+            const iniAny = ini as any;
+            if (iniAny.owner_business_id) {
+              gateRoleUsers.push({
+                gateRole: 'INITIATIVE_OWNER',
+                userId: iniAny.owner_business_id,
+              });
+              gateRoleUsers.push({
+                gateRole: 'BUSINESS_OWNER',
+                userId: iniAny.owner_business_id,
+              });
+            }
+            if (iniAny.owner_execution_id) {
+              gateRoleUsers.push({
+                gateRole: 'INITIATIVE_OWNER',
+                userId: iniAny.owner_execution_id,
+              });
+            }
+            if (iniAny.sponsor_id) {
+              gateRoleUsers.push({ gateRole: 'PROJECT_SPONSOR', userId: iniAny.sponsor_id });
+            }
+          }
+
+          // Find users who need to approve the next gate
+          const nextGateApprovers = new Set<string>();
+          for (const nextGate of nextGates) {
+            const requiredRoles = GATE_PERMISSIONS[nextGate as keyof typeof GATE_PERMISSIONS] || [];
+            for (const roleUser of gateRoleUsers) {
+              if (requiredRoles.includes(roleUser.gateRole as any) && roleUser.userId !== actorId) {
+                nextGateApprovers.add(roleUser.userId);
+              }
+            }
+          }
+
+          // Send targeted "gate ready for your action" notifications
+          const nextGateLabel = nextGates[0] || 'NEXT_GATE';
+          await Promise.allSettled(
+            Array.from(nextGateApprovers).map((userId) =>
+              notificationService.send({
+                userId,
+                organizationId: orgId,
+                type: 'initiative.gate_action_required',
+                title: 'Gate action required',
+                body: `${initiativeName} is now in ${nextStatus} and requires your gate decision (${nextGateLabel})`,
+                entityType: 'initiative',
+                entityId: id,
+                actionUrl: '/initiatives',
+                actorId,
+                actorName,
+                priority: 'high',
+                isActionable: true,
+                metadata: {
+                  from: currentStatus,
+                  to: nextStatus,
+                  nextGate: nextGateLabel,
+                  previousGate: gate,
+                },
+              })
+            )
+          );
+        }
+      } catch {
+        // best-effort — gate notifications are nice-to-have
       }
     } catch {
-      // best-effort — gate notifications are nice-to-have
+      // best-effort
     }
-  } catch {
-    // best-effort
-  }
 
-  try {
-    await auditEventsService.log({
-      actorId,
-      actorType: isSystemActor ? 'SYSTEM' : 'USER',
-      action: 'initiative.status_changed',
-      resourceType: 'initiative',
-      resourceId: id,
-      before: { status: currentStatus },
-      after: { status: nextStatus },
-      metadata: { gate: gate || null, reason: reason || null, correlationId },
-      organizationId: orgId,
-      ip: requestIp || undefined,
-      userAgent: requestUserAgent || undefined,
-    });
-  } catch {
-    /* best-effort audit */
-  }
+    try {
+      await auditEventsService.log({
+        actorId,
+        actorType: isSystemActor ? 'SYSTEM' : 'USER',
+        action: 'initiative.status_changed',
+        resourceType: 'initiative',
+        resourceId: id,
+        before: { status: currentStatus },
+        after: { status: nextStatus },
+        metadata: { gate: gate || null, reason: reason || null, correlationId },
+        organizationId: orgId,
+        ip: requestIp || undefined,
+        userAgent: requestUserAgent || undefined,
+      });
+    } catch {
+      /* best-effort audit */
+    }
   };
 
   if (params.deferPostCommitEffect) params.deferPostCommitEffect(runPostCommitEffects);

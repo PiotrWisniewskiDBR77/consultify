@@ -36,8 +36,8 @@ import {
   advanceAndRelease,
   claimLease,
   fetchNextBatch,
-  releaseLeaseWithoutAdvancing,
   type ProgramRef,
+  releaseLeaseWithoutAdvancing,
 } from '../services/audits/independenceScanCursor.js';
 import logger from '../utils/Logger.js';
 
@@ -56,7 +56,7 @@ export interface IndependenceScanTickResult {
 }
 
 async function scanBatch(
-  batch: ProgramRef[],
+  batch: ProgramRef[]
 ): Promise<{ withViolations: number; totalViolations: number; errors: number }> {
   let withViolations = 0;
   let totalViolations = 0;
@@ -95,7 +95,7 @@ async function scanBatch(
  * when another worker holds the lease.
  */
 export async function runTick(
-  batchSize: number = DEFAULT_BATCH_SIZE,
+  batchSize: number = DEFAULT_BATCH_SIZE
 ): Promise<IndependenceScanTickResult> {
   const runnerId = `${process.pid}-${randomUUID()}`;
   const lease = await claimLease(runnerId);
@@ -126,7 +126,7 @@ export async function runTick(
       // the current owner is authoritative. Re-scanning is harmless (read-only).
       logger.warn(
         '[AuditIndependenceDetectorJob] Lease was superseded mid-tick — progress discarded, not recorded',
-        { runnerId, fence: lease.fence, scanned: batch.length },
+        { runnerId, fence: lease.fence, scanned: batch.length }
       );
     }
 

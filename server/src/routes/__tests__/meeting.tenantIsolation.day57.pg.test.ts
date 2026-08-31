@@ -5,9 +5,9 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const meetingId = 'w3-mtg-pending-meeting-v1';
 const ownerId = 'w3-mtg-owner-user-v1';

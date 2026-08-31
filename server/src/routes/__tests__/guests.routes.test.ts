@@ -1,6 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import routes from '../admin/guests.routes.js';
 const get = vi.fn(),
   all = vi.fn(),

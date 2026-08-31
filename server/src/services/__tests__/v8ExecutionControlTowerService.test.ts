@@ -29,43 +29,45 @@ describe('v8ExecutionControlTowerService', () => {
     // `(db, sql, params?, options?)`, while the control-tower service calls the
     // `(sql, params?)` form. Narrow to the overload actually exercised so the
     // stub's first parameter really is the SQL string.
-    vi.mocked(dbAll as (sql: string, params?: unknown[]) => Promise<unknown[]>).mockImplementation(async (sql: string) => {
-      if (
-        sql.includes('FROM initiatives') &&
-        !sql.includes('JOIN initiatives i ON i.id = t.initiative_id')
-      ) {
-        return [
-          {
-            id: 'i1',
-            name: 'Init One',
-            status: 'EXECUTING',
-            project_id: 'p1',
-            planned_end_date: '2020-01-15',
-            sla_deadline: null,
-            updated_at: '2026-03-20T10:00:00.000Z',
-            blocked_reason: null,
-            blocked_at: null,
-          },
-        ];
+    vi.mocked(dbAll as (sql: string, params?: unknown[]) => Promise<unknown[]>).mockImplementation(
+      async (sql: string) => {
+        if (
+          sql.includes('FROM initiatives') &&
+          !sql.includes('JOIN initiatives i ON i.id = t.initiative_id')
+        ) {
+          return [
+            {
+              id: 'i1',
+              name: 'Init One',
+              status: 'EXECUTING',
+              project_id: 'p1',
+              planned_end_date: '2020-01-15',
+              sla_deadline: null,
+              updated_at: '2026-03-20T10:00:00.000Z',
+              blocked_reason: null,
+              blocked_at: null,
+            },
+          ];
+        }
+        if (sql.includes('FROM tasks t') && sql.includes('JOIN initiatives i')) {
+          return [
+            {
+              id: 't1',
+              title: 'Task One',
+              status: 'IN_PROGRESS',
+              initiative_id: 'i1',
+              project_id: 'p1',
+              due_date: '2020-02-01',
+              assignee_id: 'u-over',
+              estimated_hours: 8,
+              updated_at: '2026-03-20T10:00:00.000Z',
+              blocked_reason: null,
+            },
+          ];
+        }
+        return [];
       }
-      if (sql.includes('FROM tasks t') && sql.includes('JOIN initiatives i')) {
-        return [
-          {
-            id: 't1',
-            title: 'Task One',
-            status: 'IN_PROGRESS',
-            initiative_id: 'i1',
-            project_id: 'p1',
-            due_date: '2020-02-01',
-            assignee_id: 'u-over',
-            estimated_hours: 8,
-            updated_at: '2026-03-20T10:00:00.000Z',
-            blocked_reason: null,
-          },
-        ];
-      }
-      return [];
-    });
+    );
   });
 
   it('classifies past-due initiatives and tasks into late queue with tower contract id', async () => {

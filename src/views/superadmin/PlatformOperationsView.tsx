@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { ConfirmDialog } from '../../components/MyWork/shared/ConfirmDialog';
 import {
   getPlatformOperationTargets,
-  type PlatformTargetCatalog,
   type PlatformTarget,
+  type PlatformTargetCatalog,
   runPlatformOperation,
 } from '../../services/superadminPlatformOperationsApi';
 

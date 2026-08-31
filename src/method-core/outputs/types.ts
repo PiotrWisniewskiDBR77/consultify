@@ -21,8 +21,8 @@
  *  - 10_ASSESSMENT_REVIEW.md §14 Findings, §15 Raport, "Granica przekazania do Initiatives"
  */
 
-import type { AggregationResult, PrioritisationResult } from '../contracts/methodPack';
 import type { EvidenceStrength } from '../contracts/events';
+import type { AggregationResult, PrioritisationResult } from '../contracts/methodPack';
 
 // ---------------------------------------------------------------------------
 // Evidence reference — shared shape used by Findings, Report and Presentation

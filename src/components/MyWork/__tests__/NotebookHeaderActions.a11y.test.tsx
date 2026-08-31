@@ -87,9 +87,7 @@ describe('NotebookHeaderActions — accessible contract (EN)', () => {
   it('renders no search-all-notebooks button when onSearchAllNotebooks is not provided', async () => {
     await mountWithLang('en', { onNewPage: vi.fn() });
 
-    expect(
-      screen.queryByRole('button', { name: 'Search all notebooks' })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Search all notebooks' })).not.toBeInTheDocument();
   });
 
   it('names the search-all-notebooks button, it is focusable, and invokes the callback', async () => {

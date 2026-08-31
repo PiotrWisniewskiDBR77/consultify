@@ -12,10 +12,18 @@ import { cleanup, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { SaveStateIndicator } from '../SaveStateIndicator';
 import type { MethodSaveState } from '@/method-core/contracts';
 
-const ALL_STATES: MethodSaveState[] = ['CLEAN', 'SAVED', 'DIRTY', 'SAVING', 'SAVE_FAILED', 'OFFLINE_PENDING'];
+import { SaveStateIndicator } from '../SaveStateIndicator';
+
+const ALL_STATES: MethodSaveState[] = [
+  'CLEAN',
+  'SAVED',
+  'DIRTY',
+  'SAVING',
+  'SAVE_FAILED',
+  'OFFLINE_PENDING',
+];
 
 describe('SaveStateIndicator — save state is always visible', () => {
   it.each(ALL_STATES)('renders a non-empty, visible indicator for %s', (state) => {

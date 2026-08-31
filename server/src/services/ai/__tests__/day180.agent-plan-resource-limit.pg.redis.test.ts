@@ -52,9 +52,8 @@ describe.skipIf(!enabled)('DAY180 noncanonical plan resource limit — real PG +
 
   it('denies a route-shaped plan without canonicalRunId before its write tool executes', async () => {
     const { agentPlannerService } = await import('../agentPlannerService.js');
-    const { tryDispatchBackgroundExecution } = await import(
-      '../../../routes/ai/agent-plan.routes.js'
-    );
+    const { tryDispatchBackgroundExecution } =
+      await import('../../../routes/ai/agent-plan.routes.js');
     const { default: queue } = await import('../../../queues/aiQueue.js');
     const { initWorker } = await import('../../../workers/aiWorker.js');
     const taskTitle = `day180-denied-task-${tag}`;
@@ -104,15 +103,16 @@ describe.skipIf(!enabled)('DAY180 noncanonical plan resource limit — real PG +
       ).rows[0];
       await (await queue.getJob(receipt.bull_job_id))!.waitUntilFinished(queueEvents, 30_000);
       const planRow = (
-        await pool.query(`SELECT canonical_run_id,status FROM ai_agent_plans WHERE id=$1`, [plan.id])
+        await pool.query(`SELECT canonical_run_id,status FROM ai_agent_plans WHERE id=$1`, [
+          plan.id,
+        ])
       ).rows[0];
       expect(planRow.canonical_run_id).toBeNull();
       expect(planRow.status).toBe('completed_with_errors');
       const step = (
-        await pool.query(
-          `SELECT status,error_message FROM ai_agent_plan_steps WHERE plan_id=$1`,
-          [plan.id]
-        )
+        await pool.query(`SELECT status,error_message FROM ai_agent_plan_steps WHERE plan_id=$1`, [
+          plan.id,
+        ])
       ).rows[0];
       expect(step.status).toBe('failed');
       expect(step.error_message).toContain('resource_estimated_cost_limit_exceeded');
@@ -132,7 +132,10 @@ describe.skipIf(!enabled)('DAY180 noncanonical plan resource limit — real PG +
       });
       expect(denied.idempotency_key).toContain(`planner-chat:${plan.id}:`);
       expect(
-        Number((await pool.query(`SELECT COUNT(*) AS count FROM tasks WHERE title=$1`, [taskTitle])).rows[0].count)
+        Number(
+          (await pool.query(`SELECT COUNT(*) AS count FROM tasks WHERE title=$1`, [taskTitle]))
+            .rows[0].count
+        )
       ).toBe(0);
       // FIX-180: the denial counter — the one observable signal that governance
       // (not the tool) killed the step. Staging watches this line.
@@ -164,9 +167,8 @@ describe.skipIf(!enabled)('DAY180 noncanonical plan resource limit — real PG +
    */
   it('runs a chat plan to completion through the reservation under the default policy', async () => {
     const { agentPlannerService } = await import('../agentPlannerService.js');
-    const { tryDispatchBackgroundExecution } = await import(
-      '../../../routes/ai/agent-plan.routes.js'
-    );
+    const { tryDispatchBackgroundExecution } =
+      await import('../../../routes/ai/agent-plan.routes.js');
     const { default: queue } = await import('../../../queues/aiQueue.js');
     const { initWorker } = await import('../../../workers/aiWorker.js');
     const { default: logger } = await import('../../../utils/Logger.js');
@@ -198,7 +200,11 @@ describe.skipIf(!enabled)('DAY180 noncanonical plan resource limit — real PG +
     const worker = initWorker();
     try {
       expect(
-        await tryDispatchBackgroundExecution({ planId: plan.id, organizationId: happyOrganizationId, userId: happyUserId })
+        await tryDispatchBackgroundExecution({
+          planId: plan.id,
+          organizationId: happyOrganizationId,
+          userId: happyUserId,
+        })
       ).toBe('enqueued');
       const receipt = (
         await pool.query(
@@ -208,7 +214,8 @@ describe.skipIf(!enabled)('DAY180 noncanonical plan resource limit — real PG +
       ).rows[0];
       await (await queue.getJob(receipt.bull_job_id))!.waitUntilFinished(queueEvents, 30_000);
       expect(
-        (await pool.query(`SELECT status FROM ai_agent_plans WHERE id=$1`, [plan.id])).rows[0].status
+        (await pool.query(`SELECT status FROM ai_agent_plans WHERE id=$1`, [plan.id])).rows[0]
+          .status
       ).toBe('completed');
       const step = (
         await pool.query(
@@ -246,9 +253,7 @@ describe.skipIf(!enabled)('DAY180 noncanonical plan resource limit — real PG +
         ).rows[0]
       ).toMatchObject({ max_concurrent_executions: 4 });
       expect(
-        warning.mock.calls.filter(
-          ([message]) => message === '[AgentResource] admission denied'
-        )
+        warning.mock.calls.filter(([message]) => message === '[AgentResource] admission denied')
       ).toHaveLength(0);
     } finally {
       warning.mockRestore();

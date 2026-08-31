@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+
 import { Pool } from 'pg';
+
 import { adaptQuery } from '../database/PostgresDatabase.js';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -8,10 +10,16 @@ if (!databaseUrl) throw new Error('DATABASE_URL is required');
 const pool = new Pool({ connectionString: databaseUrl });
 const db = {
   all(sql: string, params: unknown[], cb: (error: Error | null, rows: unknown[]) => void) {
-    void pool.query(adaptQuery(sql), params).then((r) => cb(null, r.rows), (error) => cb(error as Error, []));
+    void pool.query(adaptQuery(sql), params).then(
+      (r) => cb(null, r.rows),
+      (error) => cb(error as Error, [])
+    );
   },
   get(sql: string, params: unknown[], cb: (error: Error | null, row: unknown) => void) {
-    void pool.query(adaptQuery(sql), params).then((r) => cb(null, r.rows[0] ?? null), (error) => cb(error as Error, null));
+    void pool.query(adaptQuery(sql), params).then(
+      (r) => cb(null, r.rows[0] ?? null),
+      (error) => cb(error as Error, null)
+    );
   },
   run(sql: string, params: unknown[], cb: (error: Error | null) => void) {
     void pool.query(adaptQuery(sql), params).then(

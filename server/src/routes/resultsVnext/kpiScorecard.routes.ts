@@ -98,15 +98,14 @@ import {
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
 import {
-  CommandCapabilityDeniedError,
   type CommandAccessContext,
+  CommandCapabilityDeniedError,
 } from '../../services/resultsVnext/platform/commandCapabilityGuard.js';
 import {
   VISIBILITY_CTE_PARAM_COUNT,
   wrapWithVisibilityScope,
 } from '../../services/resultsVnext/platform/visibilityScopedQuery.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
-import { getCorrelationId } from './correlationId.js';
 import logger from '../../utils/Logger.js';
 import {
   AddScorecardItemSchema,
@@ -123,6 +122,7 @@ import {
   ScorecardSnapshotIdParamsSchema,
   ScorecardStatusQuerySchema,
 } from '../../validators/resultsVnextKpiScorecard.validators.js';
+import { getCorrelationId } from './correlationId.js';
 
 // RN-G6-SRV / B3 — route-local param schema for the new reverse `kpi ->
 // scorecards` lookup below. Declared here rather than added to
@@ -190,7 +190,10 @@ function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
  * project association), so only the org-level baseline plus OWNER/ADMIN/
  * SUPERADMIN's `'*'` apply.
  */
-async function resolveAccess(req: AuthenticatedRequest, auth: RouteAuth): Promise<CommandAccessContext> {
+async function resolveAccess(
+  req: AuthenticatedRequest,
+  auth: RouteAuth
+): Promise<CommandAccessContext> {
   return resolveEffectiveAccess({
     userId: auth.userId,
     organizationId: auth.organizationId,
@@ -208,7 +211,9 @@ function handleScorecardRouteError(res: Response, err: unknown, op: string): voi
   if (err instanceof CommandCapabilityDeniedError) {
     // RN-G5: same rationale as kpiDeviation.routes.ts's identical branch —
     // `details.capability` is server-side-log-only, never wire.
-    logger.warn(`[resultsVnext/kpiScorecard.routes] ${op} denied`, { capability: err.details.capability });
+    logger.warn(`[resultsVnext/kpiScorecard.routes] ${op} denied`, {
+      capability: err.details.capability,
+    });
     res.status(403).json({ error: err.message, code: err.code });
     return;
   }
@@ -306,7 +311,10 @@ async function listVisibleScorecardsForKpi(
   );
   const client = await acquirePgClient();
   try {
-    const kpiVisibleResult = await client.query(kpiVisibility.sql, [...kpiVisibility.values, kpiId]);
+    const kpiVisibleResult = await client.query(kpiVisibility.sql, [
+      ...kpiVisibility.values,
+      kpiId,
+    ]);
     if (kpiVisibleResult.rows.length === 0) return [];
 
     const wrapped = await wrapWithVisibilityScope(

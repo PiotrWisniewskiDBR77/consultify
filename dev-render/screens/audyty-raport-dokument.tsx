@@ -70,7 +70,13 @@ try {
 }
 
 const qp = new URLSearchParams(window.location.search);
-const VALID_STATUSES: AuditReportStatus[] = ['draft', 'in_review', 'approved', 'published', 'superseded'];
+const VALID_STATUSES: AuditReportStatus[] = [
+  'draft',
+  'in_review',
+  'approved',
+  'published',
+  'superseded',
+];
 const STATUS: AuditReportStatus = (VALID_STATUSES as string[]).includes(qp.get('status') || '')
   ? (qp.get('status') as AuditReportStatus)
   : 'approved';
@@ -103,7 +109,8 @@ const FULL_PAYLOAD: AuditReportDocument = {
       title: 'Zakres i cele',
       kind: 'keyValue',
       content: {
-        scopeText: 'Zakład Ostrów Wlkp. — proces Zakupy i zaopatrzenie, kwalifikacja i nadzór nad dostawcami krytycznymi.',
+        scopeText:
+          'Zakład Ostrów Wlkp. — proces Zakupy i zaopatrzenie, kwalifikacja i nadzór nad dostawcami krytycznymi.',
         scopeJson: null,
         objectives: 'Ocena zgodności procesu zakupowego z procedurą P-ZAK-02.',
       },
@@ -125,7 +132,8 @@ const FULL_PAYLOAD: AuditReportDocument = {
       id: 'overall_conclusion',
       title: 'Wniosek ogólny',
       kind: 'text',
-      content: 'Audyt zidentyfikował 3 ustalenia: 1 o istotności wysokiej, 1 o istotności średniej, 1 o istotności niskiej.',
+      content:
+        'Audyt zidentyfikował 3 ustalenia: 1 o istotności wysokiej, 1 o istotności średniej, 1 o istotności niskiej.',
     },
     {
       id: 'findings_by_severity',
@@ -145,7 +153,8 @@ const FULL_PAYLOAD: AuditReportDocument = {
               objectiveEvidence: ['evid-d1', 'evid-d2'],
               contradictingEvidence: [],
               status: 'remediation_in_progress',
-              rootCause: 'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny okresowej.',
+              rootCause:
+                'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny okresowej.',
               rootCauseConfirmed: true,
               residualRisk: null,
               ownerUserId: AUDITEE_ID,
@@ -158,14 +167,16 @@ const FULL_PAYLOAD: AuditReportDocument = {
             {
               id: 'find-ust-2026-016',
               referenceCode: 'UST-2026-016',
-              statement: 'Brak zapisu kwalifikacji wstępnej dla nowego dostawcy przed złożeniem pierwszego zamówienia.',
+              statement:
+                'Brak zapisu kwalifikacji wstępnej dla nowego dostawcy przed złożeniem pierwszego zamówienia.',
               criterionId: 'crit-metalpol-zak-8-4-1',
               classification: 'nonconforming',
               severity: 'medium',
               objectiveEvidence: ['evid-d1'],
               contradictingEvidence: [],
               status: 'closed',
-              rootCause: 'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny/kwalifikacji.',
+              rootCause:
+                'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny/kwalifikacji.',
               rootCauseConfirmed: true,
               residualRisk: 'Niskie — działanie korygujące zweryfikowane jako skuteczne.',
               ownerUserId: AUDITEE_ID,
@@ -178,7 +189,8 @@ const FULL_PAYLOAD: AuditReportDocument = {
             {
               id: 'find-ust-2026-015',
               referenceCode: 'UST-2026-015',
-              statement: 'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa.',
+              statement:
+                'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa.',
               criterionId: 'crit-metalpol-zak-8-4-2',
               classification: 'observation',
               severity: 'low',
@@ -212,7 +224,8 @@ const FULL_PAYLOAD: AuditReportDocument = {
               objectiveEvidence: ['evid-d1', 'evid-d2'],
               contradictingEvidence: [],
               status: 'remediation_in_progress',
-              rootCause: 'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny okresowej.',
+              rootCause:
+                'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny okresowej.',
               rootCauseConfirmed: true,
               residualRisk: null,
               ownerUserId: AUDITEE_ID,
@@ -220,14 +233,16 @@ const FULL_PAYLOAD: AuditReportDocument = {
             {
               id: 'find-ust-2026-016',
               referenceCode: 'UST-2026-016',
-              statement: 'Brak zapisu kwalifikacji wstępnej dla nowego dostawcy przed złożeniem pierwszego zamówienia.',
+              statement:
+                'Brak zapisu kwalifikacji wstępnej dla nowego dostawcy przed złożeniem pierwszego zamówienia.',
               criterionId: 'crit-metalpol-zak-8-4-1',
               classification: 'nonconforming',
               severity: 'medium',
               objectiveEvidence: ['evid-d1'],
               contradictingEvidence: [],
               status: 'closed',
-              rootCause: 'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny/kwalifikacji.',
+              rootCause:
+                'Brak mechanizmu przypominającego w module SRM o zbliżającym się terminie oceny/kwalifikacji.',
               rootCauseConfirmed: true,
               residualRisk: 'Niskie — działanie korygujące zweryfikowane jako skuteczne.',
               ownerUserId: AUDITEE_ID,
@@ -240,7 +255,8 @@ const FULL_PAYLOAD: AuditReportDocument = {
             {
               id: 'find-ust-2026-015',
               referenceCode: 'UST-2026-015',
-              statement: 'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa.',
+              statement:
+                'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa.',
               criterionId: 'crit-metalpol-zak-8-4-2',
               classification: 'observation',
               severity: 'low',
@@ -309,7 +325,8 @@ const FULL_PAYLOAD: AuditReportDocument = {
           id: 'act-korygujace-02',
           findingId: 'find-ust-2026-016',
           actionKind: 'corrective_action',
-          title: 'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
+          title:
+            'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
           ownerUserId: AUDITEE_ID,
           dueDate: '2026-09-01',
           status: 'verified',
@@ -349,8 +366,20 @@ const FULL_PAYLOAD: AuditReportDocument = {
       kind: 'group',
       content: {
         team: [
-          { id: 'team-1', userId: 'user-piotr-demo', role: 'lead_auditor', independenceDeclared: true, assignedAt: '2026-07-15T00:00:00Z' },
-          { id: 'team-2', userId: AUDITOR_ID, role: 'auditor', independenceDeclared: true, assignedAt: '2026-07-15T00:00:00Z' },
+          {
+            id: 'team-1',
+            userId: 'user-piotr-demo',
+            role: 'lead_auditor',
+            independenceDeclared: true,
+            assignedAt: '2026-07-15T00:00:00Z',
+          },
+          {
+            id: 'team-2',
+            userId: AUDITOR_ID,
+            role: 'auditor',
+            independenceDeclared: true,
+            assignedAt: '2026-07-15T00:00:00Z',
+          },
         ],
         evidenceRegister: [
           {
@@ -399,11 +428,14 @@ const FULL_PAYLOAD: AuditReportDocument = {
           ],
           testPerformed: 'Próba 17 dostawców klasy A — porównanie kart oceny z eksportem SRM.',
           testResult: 'partial',
-          auditorConclusion: 'Kryterium spełnione częściowo — mechanizm istnieje, ale nie jest utrzymywany w cyklu rocznym.',
+          auditorConclusion:
+            'Kryterium spełnione częściowo — mechanizm istnieje, ale nie jest utrzymywany w cyklu rocznym.',
           findingId: 'find-ust-2026-014',
           findingStatement: 'Brak oceny okresowej za 2025 dla 5 z 17 dostawców klasy A.',
           actionIds: ['act-korygujace-01'],
-          actionTitles: ['Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A'],
+          actionTitles: [
+            'Wdrożyć automatyczne przypomnienie w module SRM 30 dni przed upływem terminu oceny okresowej dostawcy klasy A',
+          ],
           verificationIds: ['ver-02'],
           verificationResults: [null],
         },
@@ -414,13 +446,18 @@ const FULL_PAYLOAD: AuditReportDocument = {
           criterionTitle: 'Kwalifikacja i ocena okresowa dostawców krytycznych',
           evidenceIds: ['evid-d1'],
           evidenceTitles: ['Karty oceny okresowej dostawców klasy A — 2025 (12 z 17)'],
-          testPerformed: 'Próba 5 zamówień nowych dostawców — sprawdzenie zapisu kwalifikacji wstępnej.',
+          testPerformed:
+            'Próba 5 zamówień nowych dostawców — sprawdzenie zapisu kwalifikacji wstępnej.',
           testResult: 'fail',
-          auditorConclusion: 'Kryterium niespełnione dla jednego nowego dostawcy — brak zapisu kwalifikacji przed pierwszym zamówieniem.',
+          auditorConclusion:
+            'Kryterium niespełnione dla jednego nowego dostawcy — brak zapisu kwalifikacji przed pierwszym zamówieniem.',
           findingId: 'find-ust-2026-016',
-          findingStatement: 'Brak zapisu kwalifikacji wstępnej dla nowego dostawcy przed złożeniem pierwszego zamówienia.',
+          findingStatement:
+            'Brak zapisu kwalifikacji wstępnej dla nowego dostawcy przed złożeniem pierwszego zamówienia.',
           actionIds: ['act-korygujace-02'],
-          actionTitles: ['Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej'],
+          actionTitles: [
+            'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
+          ],
           verificationIds: ['ver-01'],
           verificationResults: ['effective'],
         },
@@ -433,9 +470,11 @@ const FULL_PAYLOAD: AuditReportDocument = {
           evidenceTitles: [],
           testPerformed: 'Przegląd rejestru zamówień Q3 2026 pod kątem zgodności z listą AVL.',
           testResult: 'fail',
-          auditorConclusion: 'Obserwacja — brak formalnego zapisu odstępstwa dla zamówień poza AVL, praktyka nieudokumentowana.',
+          auditorConclusion:
+            'Obserwacja — brak formalnego zapisu odstępstwa dla zamówień poza AVL, praktyka nieudokumentowana.',
           findingId: 'find-ust-2026-015',
-          findingStatement: 'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa.',
+          findingStatement:
+            'Zamówienia złożone u dostawcy spoza zatwierdzonej listy (AVL) bez zapisu odstępstwa.',
           actionIds: [],
           actionTitles: [],
           verificationIds: [],
@@ -616,7 +655,8 @@ const DOCUMENT: AuditReportDocument = {
           id: 'act-korygujace-02',
           findingId: 'find-ust-2026-016',
           actionKind: 'corrective_action',
-          title: 'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
+          title:
+            'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
           ownerUserId: AUDITEE_ID,
           dueDate: '2026-09-01',
           status: 'verified',
@@ -632,7 +672,8 @@ const DOCUMENT: AuditReportDocument = {
           id: 'act-korygujace-02',
           findingId: 'find-ust-2026-016',
           actionKind: 'corrective_action',
-          title: 'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
+          title:
+            'Zablokować możliwość złożenia zamówienia w module SRM bez zapisanej kwalifikacji wstępnej',
           ownerUserId: AUDITEE_ID,
           dueDate: '2026-09-01',
           status: 'verified',
@@ -710,7 +751,10 @@ export function AudytyRaportDokumentScreen(): React.ReactElement {
   return (
     <AppProviders>
       <FeatureFlagsProvider config={{ enableLocalOverrides: true }} showDevTools={false}>
-        <div style={{ height: '100vh', overflow: 'auto' }} data-testid="audyty-raport-dokument-dev-render">
+        <div
+          style={{ height: '100vh', overflow: 'auto' }}
+          data-testid="audyty-raport-dokument-dev-render"
+        >
           <AuditReportDocumentView reportId={REPORT_ID} />
         </div>
       </FeatureFlagsProvider>

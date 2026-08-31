@@ -265,7 +265,9 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       );
     }
     if (row.project_id !== input.projectId) {
-      throw new MaterialCommandValidationError('Initiative project_id does not match adoption project');
+      throw new MaterialCommandValidationError(
+        'Initiative project_id does not match adoption project'
+      );
     }
     const ownerId = row.owner_execution_id || row.owner_business_id;
     if (!ownerId) {

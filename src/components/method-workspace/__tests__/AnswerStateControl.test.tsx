@@ -75,10 +75,15 @@ describe('AnswerStateControl', () => {
     const confirmBtn = screen.getByText('Potwierdź „Nie dotyczy"');
     expect(confirmBtn).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText(/Uzasadnij/i), { target: { value: 'Proces nie istnieje w tej organizacji.' } });
+    fireEvent.change(screen.getByLabelText(/Uzasadnij/i), {
+      target: { value: 'Proces nie istnieje w tej organizacji.' },
+    });
     expect(confirmBtn).toBeEnabled();
     fireEvent.click(confirmBtn);
-    expect(onChange).toHaveBeenCalledWith('not_applicable', 'Proces nie istnieje w tej organizacji.');
+    expect(onChange).toHaveBeenCalledWith(
+      'not_applicable',
+      'Proces nie istnieje w tej organizacji.'
+    );
   });
 
   it('"Nie wiem" is styled as info/neutral, never as a negative/danger tone — an honest "don\'t know" is not a mistake', () => {

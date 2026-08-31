@@ -58,20 +58,20 @@ import {
   verifyKpiMeasurement,
 } from '../kpiApi';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import { KpiMeasurementCorrectionModal } from './KpiMeasurementCorrectionModal';
 import {
   KpiMeasurementDataQualityModal,
   type KpiMeasurementDataQualityMode,
 } from './KpiMeasurementDataQualityModal';
-import { KpiMeasurementRecordModal } from './KpiMeasurementRecordModal';
 import { kpiDataQualityStatusLabel } from './kpiMeasurementMappers';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   buildKpiMeasurementColumns,
   buildKpiMeasurementPreview,
   buildKpiMeasurementRowMenu,
   withMeasurementId,
 } from './kpiMeasurementPresenters';
+import { KpiMeasurementRecordModal } from './KpiMeasurementRecordModal';
 
 type MeasurementTab = 'current' | 'history';
 
@@ -105,9 +105,10 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
   const [correctionTarget, setCorrectionTarget] = useState<KpiMeasurementDto | null>(null);
   const [correctionError, setCorrectionError] = useState<string | null>(null);
 
-  const [dqTarget, setDqTarget] = useState<{ mode: KpiMeasurementDataQualityMode; measurement: KpiMeasurementDto } | null>(
-    null
-  );
+  const [dqTarget, setDqTarget] = useState<{
+    mode: KpiMeasurementDataQualityMode;
+    measurement: KpiMeasurementDto;
+  } | null>(null);
   const [dqError, setDqError] = useState<string | null>(null);
 
   const fetchRows = useCallback(async () => {
@@ -166,7 +167,14 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
   }, []);
 
   const runRecord = useCallback(
-    async (values: { periodStart: string; periodEnd: string; actualValue: number | null; source: string; notes: string | null; reason: string | null }) => {
+    async (values: {
+      periodStart: string;
+      periodEnd: string;
+      actualValue: number | null;
+      source: string;
+      notes: string | null;
+      reason: string | null;
+    }) => {
       setBusy(true);
       setRecordError(null);
       try {
@@ -189,7 +197,11 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
       setBusy(true);
       setCorrectionError(null);
       try {
-        const { measurement } = await correctKpiMeasurement(kpi.kpiId, correctionTarget.measurementId, values);
+        const { measurement } = await correctKpiMeasurement(
+          kpi.kpiId,
+          correctionTarget.measurementId,
+          values
+        );
         setCorrectionTarget(null);
         await fetchRows();
         setSelectedId(measurement.measurementId);
@@ -210,7 +222,9 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
       try {
         const { measurement } =
           dqTarget.mode === 'verify'
-            ? await verifyKpiMeasurement(kpi.kpiId, dqTarget.measurement.measurementId, { notes: values.text || null })
+            ? await verifyKpiMeasurement(kpi.kpiId, dqTarget.measurement.measurementId, {
+                notes: values.text || null,
+              })
             : await disputeKpiMeasurement(kpi.kpiId, dqTarget.measurement.measurementId, {
                 disputeReason: values.text,
               });
@@ -270,14 +284,18 @@ export const ResultsKpiMeasurementsPanel: React.FC<ResultsKpiMeasurementsPanelPr
           columns: buildKpiMeasurementColumns(isPolish, tab === 'history'),
           data: tableRows,
           persistKey:
-            tab === 'history' ? 'results-vnext.kpi-measurements.history' : 'results-vnext.kpi-measurements.current',
+            tab === 'history'
+              ? 'results-vnext.kpi-measurements.history'
+              : 'results-vnext.kpi-measurements.current',
           loading,
           error,
           onRetry: () => void fetchRows(),
           empty:
             !loading && !error && rows.length === 0
               ? {
-                  title: isPolish ? 'Brak zarejestrowanych pomiarów' : 'No measurements recorded yet',
+                  title: isPolish
+                    ? 'Brak zarejestrowanych pomiarów'
+                    : 'No measurements recorded yet',
                   description: isPolish
                     ? 'Zarejestruj pierwszy pomiar dla tego KPI, aby zacząć śledzić historię.'
                     : 'Record the first measurement for this KPI to start tracking history.',

@@ -23,7 +23,11 @@ interface ContextOwnerRow {
 function parseRefs(raw: unknown): Array<{ artifactId: string; module: string }> {
   let value = raw;
   if (typeof raw === 'string') {
-    try { value = JSON.parse(raw); } catch { return []; }
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      return [];
+    }
   }
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
@@ -45,18 +49,24 @@ export async function retrieveAndRevalidateTransformationContext(input: {
   policy: GroundingPolicy;
   client: PgTransactionClient;
 }) {
-  const owner = (await input.client.query<ContextOwnerRow>(
-    `SELECT c.execution_run_id, c.context_snapshot_id, c.project_id, c.mandate,
+  const owner = (
+    await input.client.query<ContextOwnerRow>(
+      `SELECT c.execution_run_id, c.context_snapshot_id, c.project_id, c.mandate,
             s.initiator_user_id, s.source_context_refs
        FROM transformation_cases c
        JOIN v8_context_snapshots s ON s.snapshot_id = c.context_snapshot_id
         AND s.organization_id = c.organization_id
       WHERE c.transformation_case_id = ? AND c.organization_id = ?`,
-    [input.transformationCaseId, input.organizationId]
-  )).rows[0];
+      [input.transformationCaseId, input.organizationId]
+    )
+  ).rows[0];
 
   if (!owner?.project_id) {
-    return revalidateTransformationContext({ ...input, candidates: [], retrievalFailureReason: 'agent_context_project_required' });
+    return revalidateTransformationContext({
+      ...input,
+      candidates: [],
+      retrievalFailureReason: 'agent_context_project_required',
+    });
   }
   const refs = parseRefs(owner.source_context_refs);
   if (refs.length === 0) return revalidateTransformationContext({ ...input, candidates: [] });
@@ -79,12 +89,21 @@ export async function retrieveAndRevalidateTransformationContext(input: {
       throw new Error('agent_context_source_inaccessible_or_not_ready');
     }
   } catch (error) {
-    return revalidateTransformationContext({ ...input, candidates: [], retrievalFailureReason: error instanceof Error ? error.message : 'retrieval_failed' });
+    return revalidateTransformationContext({
+      ...input,
+      candidates: [],
+      retrievalFailureReason: error instanceof Error ? error.message : 'retrieval_failed',
+    });
   }
   const documents = new Map(retrieval.documents.map((document) => [document.id, document]));
   const modules = new Map(refs.map((ref) => [ref.artifactId, ref.module]));
   const candidates: GroundingCandidate[] = retrieval.chunks.map((chunk) => ({
-    sourceRef: JSON.stringify({ documentId: chunk.documentId, chunkId: chunk.chunkId, chunkIndex: chunk.chunkIndex, nativeSourceLocator: chunk.nativeSourceLocator }),
+    sourceRef: JSON.stringify({
+      documentId: chunk.documentId,
+      chunkId: chunk.chunkId,
+      chunkIndex: chunk.chunkIndex,
+      nativeSourceLocator: chunk.nativeSourceLocator,
+    }),
     artifactId: chunk.documentId,
     module: modules.get(chunk.documentId) ?? 'Knowledge',
     projectId: documents.get(chunk.documentId)?.projectId ?? null,

@@ -502,10 +502,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               </span>
               {report.sourceType && (
                 <span className="text-xs text-slate-600 dark:text-slate-500">
-                  {t(
-                    `assessment.reportsTable.sourceType.${report.sourceType}`,
-                    report.sourceType
-                  )}
+                  {t(`assessment.reportsTable.sourceType.${report.sourceType}`, report.sourceType)}
                 </span>
               )}
             </div>

@@ -20,7 +20,14 @@ import type {
   InterviewFocusQuestion,
   MethodWorkspaceViewMode,
 } from '../../src/components/method-workspace/types';
-import type { EvidenceStrength, MethodReadiness, MethodSaveState, MethodSession, TeresaPreview } from '../../src/method-core/contracts';
+import type {
+  EvidenceStrength,
+  MethodReadiness,
+  MethodSaveState,
+  MethodSession,
+  TeresaPreview,
+} from '../../src/method-core/contracts';
+import { SIRI_METHOD_PACK_VERSION } from '../../src/method-core/methods/siri/compileSiriPack';
 import {
   buildSiriGenericQuestion,
   buildSiriMatrixRows,
@@ -32,11 +39,10 @@ import {
   proposeSiriBand,
   SIRI_BAND_SCALE,
   SIRI_EVIDENCE_ITEM_TYPES,
-  siriEvidenceMissingCount,
   type SiriEvidenceItemType,
+  siriEvidenceMissingCount,
   type SiriUnitAssessmentState,
 } from '../../src/method-core/methods/siri/siriWorkspaceView';
-import { SIRI_METHOD_PACK_VERSION } from '../../src/method-core/methods/siri/compileSiriPack';
 import { SIRI_PRIORITISATION_AREAS } from '../../src/services/siriStructure';
 
 const params = new URLSearchParams(window.location.search);
@@ -119,7 +125,9 @@ interface BandSideSheetProps {
 const BandSideSheet: React.FC<BandSideSheetProps> = ({ unitId, level, state, onConfirmed }) => {
   const [rationale, setRationale] = useState('');
   const [evidenceType, setEvidenceType] = useState<SiriEvidenceItemType>('factory_observation');
-  const [message, setMessage] = useState<{ tone: 'warning' | 'success'; text: string } | null>(null);
+  const [message, setMessage] = useState<{ tone: 'warning' | 'success'; text: string } | null>(
+    null
+  );
 
   const leapfrog = checkSiriLeapfrog(state, level);
 
@@ -146,7 +154,9 @@ const BandSideSheet: React.FC<BandSideSheetProps> = ({ unitId, level, state, onC
       )}
 
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span style={{ color: 'var(--c-text-secondary)', fontWeight: 600 }}>Uzasadnienie (rationale) — wymagane</span>
+        <span style={{ color: 'var(--c-text-secondary)', fontWeight: 600 }}>
+          Uzasadnienie (rationale) — wymagane
+        </span>
         <textarea
           data-testid="siri-band-rationale"
           value={rationale}
@@ -169,7 +179,13 @@ const BandSideSheet: React.FC<BandSideSheetProps> = ({ unitId, level, state, onC
           data-testid="siri-evidence-type"
           value={evidenceType}
           onChange={(e) => setEvidenceType(e.target.value as SiriEvidenceItemType)}
-          style={{ border: '1px solid var(--c-border)', borderRadius: 8, padding: 6, background: 'var(--c-surface)', color: 'var(--c-text)' }}
+          style={{
+            border: '1px solid var(--c-border)',
+            borderRadius: 8,
+            padding: 6,
+            background: 'var(--c-surface)',
+            color: 'var(--c-text)',
+          }}
         >
           {SIRI_EVIDENCE_ITEM_TYPES.map((t) => (
             <option key={t} value={t}>
@@ -179,7 +195,8 @@ const BandSideSheet: React.FC<BandSideSheetProps> = ({ unitId, level, state, onC
         </select>
         {isSiriFactoryObservation({ type: evidenceType }) && (
           <span style={{ color: 'var(--c-text-muted)' }}>
-            Osobny typ Evidence Item (ASSESSMENT_KB_SIRI.md §5) — nie jest zlewany z notatką tekstową.
+            Osobny typ Evidence Item (ASSESSMENT_KB_SIRI.md §5) — nie jest zlewany z notatką
+            tekstową.
           </span>
         )}
       </label>
@@ -192,11 +209,20 @@ const BandSideSheet: React.FC<BandSideSheetProps> = ({ unitId, level, state, onC
             const result = proposeSiriBand({ state, level, rationale });
             setMessage(
               result.ok
-                ? { tone: 'success', text: `Assessor PROPONUJE Band ${level} — czeka na decyzję uczestnika/approvera.` }
+                ? {
+                    tone: 'success',
+                    text: `Assessor PROPONUJE Band ${level} — czeka na decyzję uczestnika/approvera.`,
+                  }
                 : { tone: 'warning', text: result.message }
             );
           }}
-          style={{ border: '1px solid var(--c-border)', borderRadius: 8, padding: '6px 10px', background: 'var(--c-surface-raised)', color: 'var(--c-text)' }}
+          style={{
+            border: '1px solid var(--c-border)',
+            borderRadius: 8,
+            padding: '6px 10px',
+            background: 'var(--c-surface-raised)',
+            color: 'var(--c-text)',
+          }}
         >
           Assessor: zaproponuj Band
         </button>
@@ -218,18 +244,27 @@ const BandSideSheet: React.FC<BandSideSheetProps> = ({ unitId, level, state, onC
               setMessage({ tone: 'warning', text: result.message });
             }
           }}
-          style={{ border: '1px solid var(--c-border)', borderRadius: 8, padding: '6px 10px', background: 'var(--c-surface-raised)', color: 'var(--c-text)' }}
+          style={{
+            border: '1px solid var(--c-border)',
+            borderRadius: 8,
+            padding: '6px 10px',
+            background: 'var(--c-surface-raised)',
+            color: 'var(--c-text)',
+          }}
         >
           Uczestnik: potwierdź Band
         </button>
       </div>
 
       <p style={{ color: 'var(--c-text-muted)' }}>
-        Teresa może wyłącznie zaproponować (panel po prawej) — nie ma tu przycisku „Teresa zatwierdza".
+        Teresa może wyłącznie zaproponować (panel po prawej) — nie ma tu przycisku „Teresa
+        zatwierdza".
       </p>
 
       {message && (
-        <p style={{ color: message.tone === 'warning' ? 'var(--c-warning)' : 'var(--c-success)' }}>{message.text}</p>
+        <p style={{ color: message.tone === 'warning' ? 'var(--c-warning)' : 'var(--c-success)' }}>
+          {message.text}
+        </p>
       )}
     </div>
   );
@@ -237,7 +272,9 @@ const BandSideSheet: React.FC<BandSideSheetProps> = ({ unitId, level, state, onC
 
 function Screen(): React.ReactElement {
   const [mode, setMode] = useState<'guided_manual' | 'teresa_led'>('guided_manual');
-  const [states, setStates] = useState<Map<string, SiriUnitAssessmentState>>(() => buildDemoStates());
+  const [states, setStates] = useState<Map<string, SiriUnitAssessmentState>>(() =>
+    buildDemoStates()
+  );
   const [activeUnitId, setActiveUnitId] = useState<string>('vertical_integration');
   const [matrixSelection, setMatrixSelection] = useState<{ unitId: string; level: number } | null>(
     caseParam === 'leapfrog' ? { unitId: 'vertical_integration', level: 4 } : null
@@ -247,7 +284,9 @@ function Screen(): React.ReactElement {
   const matrixRows = useMemo(() => buildSiriMatrixRows(states), [states]);
   const evidenceMissing = useMemo(() => siriEvidenceMissingCount(), []);
 
-  const answeredUnits = Array.from(states.values()).filter((s) => s.confirmedLevels.length > 0).length;
+  const answeredUnits = Array.from(states.values()).filter(
+    (s) => s.confirmedLevels.length > 0
+  ).length;
 
   const readiness: MethodReadiness = {
     answeredUnits,
@@ -257,7 +296,9 @@ function Screen(): React.ReactElement {
     pendingProposals: 1,
     freezeBlockers:
       answeredUnits < SIRI_PRIORITISATION_AREAS.length
-        ? [`${SIRI_PRIORITISATION_AREAS.length - answeredUnits}/${SIRI_PRIORITISATION_AREAS.length} wymiarów bez potwierdzonego Bandu`]
+        ? [
+            `${SIRI_PRIORITISATION_AREAS.length - answeredUnits}/${SIRI_PRIORITISATION_AREAS.length} wymiarów bez potwierdzonego Bandu`,
+          ]
         : [],
   };
 
@@ -282,8 +323,16 @@ function Screen(): React.ReactElement {
       actorUserId: 'user-demo',
     },
     statements: [
-      { kind: 'missing_evidence', text: 'SIRI QBank v1 nie ma pytania dedykowanego temu wymiarowi (0/16).', sourceRefs: [] },
-      { kind: 'proposal', text: 'Propozycja Band 2 — wymaga potwierdzenia przez uczestnika/approvera.', sourceRefs: [] },
+      {
+        kind: 'missing_evidence',
+        text: 'SIRI QBank v1 nie ma pytania dedykowanego temu wymiarowi (0/16).',
+        sourceRefs: [],
+      },
+      {
+        kind: 'proposal',
+        text: 'Propozycja Band 2 — wymaga potwierdzenia przez uczestnika/approvera.',
+        sourceRefs: [],
+      },
     ],
     proposedChanges: [{ target: 'score_proposal', targetId: activeUnitId, before: null, after: 2 }],
     quality: { verdict: 'needs_human_review', failedChecks: ['lists_missing_evidence'] },
@@ -304,10 +353,21 @@ function Screen(): React.ReactElement {
       <div
         data-testid="siri-evidence-missing-summary"
         data-dev-render-chrome="true"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, fontSize: 11, padding: '2px 8px', color: 'var(--c-text-muted)', background: 'var(--c-bg)' }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 5,
+          fontSize: 11,
+          padding: '2px 8px',
+          color: 'var(--c-text-muted)',
+          background: 'var(--c-bg)',
+        }}
       >
-        SIRI pack: {evidenceMissing.levelsMarkedEvidenceMissing}/{evidenceMissing.levelsTotal} band descriptors EVIDENCE_MISSING ·{' '}
-        {evidenceMissing.dimensionsWithDedicatedQuestions}/{evidenceMissing.dimensionsTotal} wymiarów z dedykowanymi pytaniami.
+        SIRI pack: {evidenceMissing.levelsMarkedEvidenceMissing}/{evidenceMissing.levelsTotal} band
+        descriptors EVIDENCE_MISSING · {evidenceMissing.dimensionsWithDedicatedQuestions}/
+        {evidenceMissing.dimensionsTotal} wymiarów z dedykowanymi pytaniami.
       </div>
       <div style={{ height: '100%', paddingTop: 18 }}>
         <MethodWorkspaceShell
@@ -367,8 +427,10 @@ function Screen(): React.ReactElement {
               whereAreWe: `${answeredUnits}/${SIRI_PRIORITISATION_AREAS.length} z 16 wymiarów ma potwierdzony Band.`,
               whatMattersNow: 'Uzupełnienie evidence dla wymiarów bez potwierdzonego Bandu.',
               why: 'Bez potwierdzenia freeze pozostaje zablokowany (readiness.freezeBlockers).',
-              whatIsMissing: 'Rationale + evidence dla otwartych Bandów; SIRI QBank v1 nie ma gotowych pytań (0/16).',
-              nextSafeAction: 'Poproś o factory observation lub dokument procesu dla bieżącego wymiaru.',
+              whatIsMissing:
+                'Rationale + evidence dla otwartych Bandów; SIRI QBank v1 nie ma gotowych pytań (0/16).',
+              nextSafeAction:
+                'Poproś o factory observation lub dokument procesu dla bieżącego wymiaru.',
             },
             proposalQueue: [teresaPreview],
             onCommit: () => {},
@@ -391,8 +453,13 @@ function Screen(): React.ReactElement {
                   setStates((prev) => {
                     const next = new Map(prev);
                     const current = next.get(unitId) ?? emptySiriUnitState(unitId);
-                    const confirmedLevels = Array.from(new Set([...current.confirmedLevels, level])).sort((a, b) => a - b);
-                    const evidenceByLevel: Record<number, EvidenceStrength> = { ...current.evidenceByLevel, [level]: 'E2' };
+                    const confirmedLevels = Array.from(
+                      new Set([...current.confirmedLevels, level])
+                    ).sort((a, b) => a - b);
+                    const evidenceByLevel: Record<number, EvidenceStrength> = {
+                      ...current.evidenceByLevel,
+                      [level]: 'E2',
+                    };
                     next.set(unitId, { ...current, confirmedLevels, evidenceByLevel });
                     return next;
                   });

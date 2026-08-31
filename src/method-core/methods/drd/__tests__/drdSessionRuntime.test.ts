@@ -14,11 +14,9 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import {
-  createDrdDemoSession,
-  DrdSessionRuntime,
-} from '../drdSessionRuntime';
 import * as initiativeDraftModule from '@/method-core/outputs/initiativeDraft';
+
+import { createDrdDemoSession, DrdSessionRuntime } from '../drdSessionRuntime';
 
 function makeMemoryStorage(): Storage {
   const store = new Map<string, string>();
@@ -68,7 +66,12 @@ function driveToInReviewWithEvidence(storage: Storage) {
     strength: 'E2',
     actorUserId: 'owner-1',
   });
-  runtime.recordTargetDecision({ unitId: '1A', level: 4, rationale: 'Cel roczny.', actorUserId: 'owner-1' });
+  runtime.recordTargetDecision({
+    unitId: '1A',
+    level: 4,
+    rationale: 'Cel roczny.',
+    actorUserId: 'owner-1',
+  });
   runtime.transition('in_review', 'owner-1');
   return runtime;
 }
@@ -151,14 +154,31 @@ describe('DrdSessionRuntime — Teresa Intent -> Preview -> Commit (requirement 
     const storage = makeMemoryStorage();
     const runtime = makeStartedSession(storage);
     const preview = runtime.createTeresaPreview({
-      intent: { capabilityId: 'draft_score_proposal', sessionId: runtime.sessionId, unitId: '1A', level: 2, invokedBy: 'local_action', actorUserId: 'owner-1' },
+      intent: {
+        capabilityId: 'draft_score_proposal',
+        sessionId: runtime.sessionId,
+        unitId: '1A',
+        level: 2,
+        invokedBy: 'local_action',
+        actorUserId: 'owner-1',
+      },
       statements: [{ kind: 'proposal', text: 'Proponowany poziom 2.', sourceRefs: [] }],
       proposedChanges: [{ target: 'score_proposal', targetId: '1A', before: null, after: 2 }],
       quality: { verdict: 'valid', failedChecks: [] },
     });
-    const first = runtime.commitTeresaPreview({ previewId: preview.previewId, decision: 'accept', actorUserId: 'owner-1', idempotencyKey: 'c1' });
+    const first = runtime.commitTeresaPreview({
+      previewId: preview.previewId,
+      decision: 'accept',
+      actorUserId: 'owner-1',
+      idempotencyKey: 'c1',
+    });
     expect(first.ok).toBe(true);
-    const second = runtime.commitTeresaPreview({ previewId: preview.previewId, decision: 'accept', actorUserId: 'owner-1', idempotencyKey: 'c2' });
+    const second = runtime.commitTeresaPreview({
+      previewId: preview.previewId,
+      decision: 'accept',
+      actorUserId: 'owner-1',
+      idempotencyKey: 'c2',
+    });
     expect(second.ok).toBe(false);
     if (!second.ok) expect(second.refusal).toEqual({ kind: 'preview_already_consumed' });
   });
@@ -167,14 +187,30 @@ describe('DrdSessionRuntime — Teresa Intent -> Preview -> Commit (requirement 
     const storage = makeMemoryStorage();
     const runtime = makeStartedSession(storage);
     const preview = runtime.createTeresaPreview({
-      intent: { capabilityId: 'draft_score_proposal', sessionId: runtime.sessionId, unitId: '1A', level: 2, invokedBy: 'local_action', actorUserId: 'owner-1' },
+      intent: {
+        capabilityId: 'draft_score_proposal',
+        sessionId: runtime.sessionId,
+        unitId: '1A',
+        level: 2,
+        invokedBy: 'local_action',
+        actorUserId: 'owner-1',
+      },
       statements: [],
       proposedChanges: [],
       quality: { verdict: 'invalid', failedChecks: ['no_unsupported_claim'] },
     });
-    const result = runtime.commitTeresaPreview({ previewId: preview.previewId, decision: 'accept', actorUserId: 'owner-1', idempotencyKey: 'c1' });
+    const result = runtime.commitTeresaPreview({
+      previewId: preview.previewId,
+      decision: 'accept',
+      actorUserId: 'owner-1',
+      idempotencyKey: 'c1',
+    });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.refusal).toEqual({ kind: 'quality_invalid', failedChecks: ['no_unsupported_claim'] });
+    if (!result.ok)
+      expect(result.refusal).toEqual({
+        kind: 'quality_invalid',
+        failedChecks: ['no_unsupported_claim'],
+      });
   });
 });
 
@@ -184,7 +220,8 @@ describe('DrdSessionRuntime — freeze authority + Output bridge (requirements 4
     const runtime = driveToInReviewWithEvidence(storage);
     const result = runtime.transition('frozen', 'owner-1'); // owner has no `approver` role
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.refusal).toEqual({ kind: 'missing_permission', requiredRole: 'approver' });
+    if (!result.ok)
+      expect(result.refusal).toEqual({ kind: 'missing_permission', requiredRole: 'approver' });
     expect(runtime.getSession().state).toBe('in_review');
     expect(runtime.currentOutputRecord()).toBeNull();
   });
@@ -258,8 +295,22 @@ describe('DrdSessionRuntime — reopen produces a new revision (requirement 7)',
 
     // Re-freezing the REVISION supersedes the ORIGINAL output's wrapper
     // status only — content stays byte-identical.
-    revision.recordAnswer({ unitId: '1A', level: 1, questionId: '1A-L1-Q1', answerState: 'confirmed', text: 'Rewizja.', actorUserId: 'owner-1' });
-    revision.recordEvidence({ unitId: '1A', level: 1, evidenceId: 'ev-rev-1', evidenceType: 'document', strength: 'E2', actorUserId: 'owner-1' });
+    revision.recordAnswer({
+      unitId: '1A',
+      level: 1,
+      questionId: '1A-L1-Q1',
+      answerState: 'confirmed',
+      text: 'Rewizja.',
+      actorUserId: 'owner-1',
+    });
+    revision.recordEvidence({
+      unitId: '1A',
+      level: 1,
+      evidenceId: 'ev-rev-1',
+      evidenceType: 'document',
+      strength: 'E2',
+      actorUserId: 'owner-1',
+    });
     const toReview = revision.transition('in_review', 'owner-1');
     expect(toReview.ok, JSON.stringify(toReview)).toBe(true);
     revision.assignRole('approver-1', 'approver');
@@ -285,8 +336,22 @@ describe('DrdSessionRuntime — reopen produces a new revision (requirement 7)',
     // session) — so supersession-within-one-lineage is exercised via the
     // revision's re-freeze, asserted from the REVISION's own storage below.
     const revision = runtime.reopen('owner-1');
-    revision.recordAnswer({ unitId: '1A', level: 1, questionId: '1A-L1-Q1', answerState: 'confirmed', text: 'x', actorUserId: 'owner-1' });
-    revision.recordEvidence({ unitId: '1A', level: 1, evidenceId: 'ev-rev-2', evidenceType: 'document', strength: 'E2', actorUserId: 'owner-1' });
+    revision.recordAnswer({
+      unitId: '1A',
+      level: 1,
+      questionId: '1A-L1-Q1',
+      answerState: 'confirmed',
+      text: 'x',
+      actorUserId: 'owner-1',
+    });
+    revision.recordEvidence({
+      unitId: '1A',
+      level: 1,
+      evidenceId: 'ev-rev-2',
+      evidenceType: 'document',
+      strength: 'E2',
+      actorUserId: 'owner-1',
+    });
     const toReview = revision.transition('in_review', 'owner-1');
     expect(toReview.ok, JSON.stringify(toReview)).toBe(true);
     revision.assignRole('approver-1', 'approver');

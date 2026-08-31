@@ -21,8 +21,8 @@
 import React from 'react';
 
 import { ResultsRoiPirOutcomesPage } from '../../src/components/ResultsVNext/roi/ResultsRoiPirOutcomesPage';
-import { API_URL } from '../../src/services/api';
 import type { RoiOrgPirOutcomeCaseRow } from '../../src/components/ResultsVNext/roi/roiApi';
+import { API_URL } from '../../src/services/api';
 
 const params = new URLSearchParams(window.location.search);
 const stateParam = params.get('state') || 'ready';
@@ -76,7 +76,10 @@ const MOCK_CASES: RoiOrgPirOutcomeCaseRow[] = [
 ];
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 function errorResponse(message: string, status: number, code?: string): Response {
   return jsonResponse({ error: message, code }, status);
@@ -87,18 +90,34 @@ if (!g.__RVN_ROI_PIR_OUTCOMES_FETCH__) {
   g.__RVN_ROI_PIR_OUTCOMES_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const rawUrl =
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (rawUrl.includes('/locales/')) return realFetch(input as RequestInfo, init);
     if (!rawUrl.includes(`${API_URL}/vnext/results/roi/org/pir-outcomes`)) {
       return realFetch(input as RequestInfo, init);
     }
-    if (stateParam === 'loading') return new Promise(() => { /* never resolves */ });
+    if (stateParam === 'loading')
+      return new Promise(() => {
+        /* never resolves */
+      });
     if (stateParam === 'error') {
-      return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_PERSPECTIVES_INTERNAL_ERROR');
+      return errorResponse(
+        'Upstream ROI service returned a 503.',
+        503,
+        'ROI_PERSPECTIVES_INTERNAL_ERROR'
+      );
     }
     if (stateParam === 'empty') {
       return jsonResponse({
-        outcomes: { cases: [], portfolioTotals: { closedCaseCount: 0, fullyRealizedCount: 0, partiallyRealizedCount: 0, notRealizedCount: 0 } },
+        outcomes: {
+          cases: [],
+          portfolioTotals: {
+            closedCaseCount: 0,
+            fullyRealizedCount: 0,
+            partiallyRealizedCount: 0,
+            notRealizedCount: 0,
+          },
+        },
       });
     }
     return jsonResponse({
@@ -106,9 +125,13 @@ if (!g.__RVN_ROI_PIR_OUTCOMES_FETCH__) {
         cases: MOCK_CASES,
         portfolioTotals: {
           closedCaseCount: MOCK_CASES.filter((c) => c.status === 'closed').length,
-          fullyRealizedCount: MOCK_CASES.filter((c) => c.pirOutcome === 'benefits_fully_realized').length,
-          partiallyRealizedCount: MOCK_CASES.filter((c) => c.pirOutcome === 'benefits_partially_realized').length,
-          notRealizedCount: MOCK_CASES.filter((c) => c.pirOutcome === 'benefits_not_realized').length,
+          fullyRealizedCount: MOCK_CASES.filter((c) => c.pirOutcome === 'benefits_fully_realized')
+            .length,
+          partiallyRealizedCount: MOCK_CASES.filter(
+            (c) => c.pirOutcome === 'benefits_partially_realized'
+          ).length,
+          notRealizedCount: MOCK_CASES.filter((c) => c.pirOutcome === 'benefits_not_realized')
+            .length,
         },
       },
     });

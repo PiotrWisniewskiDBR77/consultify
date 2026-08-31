@@ -22,10 +22,11 @@
  * additional, optional path for links nobody manually acknowledges.
  */
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-
 import type { CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
-import { acknowledgeDecisionResolution, OkrDecisionNotYetResolvedError } from './okrDecisionCommands.js';
+import {
+  acknowledgeDecisionResolution,
+  OkrDecisionNotYetResolvedError,
+} from './okrDecisionCommands.js';
 import { OkrSupportRequestValidationError } from './okrSupportCommands.js';
 
 export const OKR_DECISION_RESOLUTION_SCANNER_ACTOR = 'system:okr_decision_resolution_scanner';

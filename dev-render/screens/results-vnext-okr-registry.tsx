@@ -74,15 +74,15 @@
  *                                  server-side, D06/D07).
  */
 import React from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-import { seedRealisticSession } from '../mocks/seedStore';
-import { ResultsOkrRegistryPage } from '../../src/components/ResultsVNext/ResultsOkrRegistryPage';
 import type { OkrCycleDto, OkrProgramDto } from '../../src/components/ResultsVNext/okr/okrAdminApi';
-import { OkrSetToolPage } from '../../src/components/ResultsVNext/okr/OkrSetToolPage';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
+import { OkrSetToolPage } from '../../src/components/ResultsVNext/okr/OkrSetToolPage';
+import { ResultsOkrRegistryPage } from '../../src/components/ResultsVNext/ResultsOkrRegistryPage';
 import { ROUTES } from '../../src/routes/routeConfig';
+import { seedRealisticSession } from '../mocks/seedStore';
 
 // Odbiór grafiki 2026-08-30 (Piotr) — "Nowy OKR" quick-create needs a
 // signed-in `currentUser`/`currentOrganization` (`OkrSetDraftFormModal`
@@ -214,7 +214,8 @@ const MOCK_SETS: OkrSetDto[] = [
     approvedAt: null,
     changesRequestedBy: 'user-piotr-wisniewski',
     changesRequestedAt: '2026-08-04T14:00:00Z',
-    changesRequestedReason: 'Key Result 2 nie ma zdefiniowanej geometrii docelowej — uzupełnij przed ponownym złożeniem.',
+    changesRequestedReason:
+      'Key Result 2 nie ma zdefiniowanej geometrii docelowej — uzupełnij przed ponownym złożeniem.',
     currentVersion: 2,
     approvedVersion: null,
     latestApprovedSnapshotId: null,
@@ -492,7 +493,10 @@ try {
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 const g = window as unknown as { __OKR_REGISTRY_FETCH__?: boolean };
@@ -504,7 +508,8 @@ if (!g.__OKR_REGISTRY_FETCH__) {
     try {
       if (!url.includes('/api/vnext/results/okr/')) return realFetch(input as RequestInfo, init);
       if (state === 'loading') return new Promise<Response>(() => {}); // never resolves
-      if (state === 'error') return jsonResponse({ error: 'Service unavailable', code: 'OKR_UNAVAILABLE' }, 503);
+      if (state === 'error')
+        return jsonResponse({ error: 'Service unavailable', code: 'OKR_UNAVAILABLE' }, 503);
       const rows = state === 'empty' ? [] : MOCK_SETS;
       // Three genuinely distinct real routes — org (`/sets`, no scope
       // narrowing), `/my` (owner-or-reviewer only), `/company` (scope_type
@@ -517,7 +522,9 @@ if (!g.__OKR_REGISTRY_FETCH__) {
       if (url.match(/\/programs(\?|$)/)) return jsonResponse({ programs: MOCK_PROGRAMS });
       if (url.match(/\/cycles(\?|$)/)) {
         const programId = new URL(url, window.location.origin).searchParams.get('programId');
-        const cycles = programId ? MOCK_CYCLES.filter((c) => c.programId === programId) : MOCK_CYCLES;
+        const cycles = programId
+          ? MOCK_CYCLES.filter((c) => c.programId === programId)
+          : MOCK_CYCLES;
         return jsonResponse({ cycles });
       }
       if (init?.method === 'POST' && url.match(/\/sets(\?|$)/)) {
@@ -561,11 +568,20 @@ if (!g.__OKR_REGISTRY_FETCH__) {
       if (url.match(/\/sets\/[^/?]+$/)) {
         const setId = url.split('/sets/')[1]?.split(/[?/]/)[0];
         const set = MOCK_SETS.find((s) => s.setId === setId);
-        return set ? jsonResponse({ set }) : jsonResponse({ error: 'not found', code: 'NOT_FOUND' }, 404);
+        return set
+          ? jsonResponse({ set })
+          : jsonResponse({ error: 'not found', code: 'NOT_FOUND' }, 404);
       }
       if (url.match(/\/sets(\?|$)/)) return jsonResponse({ sets: rows });
-      if (url.match(/\/my(\?|$)/)) return jsonResponse({ sets: rows.filter((s) => s.ownerUserId === 'user-anna-kowalska' || s.reviewerUserId === 'user-anna-kowalska') });
-      if (url.match(/\/company(\?|$)/)) return jsonResponse({ sets: rows.filter((s) => s.scopeType === 'company') });
+      if (url.match(/\/my(\?|$)/))
+        return jsonResponse({
+          sets: rows.filter(
+            (s) =>
+              s.ownerUserId === 'user-anna-kowalska' || s.reviewerUserId === 'user-anna-kowalska'
+          ),
+        });
+      if (url.match(/\/company(\?|$)/))
+        return jsonResponse({ sets: rows.filter((s) => s.scopeType === 'company') });
     } catch {
       /* fall through to real fetch */
     }
@@ -583,7 +599,10 @@ if (!g.__OKR_REGISTRY_FETCH__) {
 // only to prove the two new registry buttons `navigate()` to the EXACT
 // right path, not to re-render those pages' own mock plumbing a second
 // time.
-const initialPath = view === 'set' ? ROUTES.RESULTS_OKR.SET.replace(':okrSetId', setIdParam) : ROUTES.RESULTS_OKR.ROOT;
+const initialPath =
+  view === 'set'
+    ? ROUTES.RESULTS_OKR.SET.replace(':okrSetId', setIdParam)
+    : ROUTES.RESULTS_OKR.ROOT;
 
 const ResultsVNextOkrRegistryScreen: React.FC = () => {
   useTranslation();
@@ -600,11 +619,21 @@ const ResultsVNextOkrRegistryScreen: React.FC = () => {
           <Route path={ROUTES.RESULTS_OKR.SET} element={<OkrSetToolPage />} />
           <Route
             path={ROUTES.RESULTS_OKR.PROGRAMS}
-            element={<div data-testid="dev-render-okr-programs-marker" className="p-6 text-c-text">Programy OKR (dev-render marker — realna strona: OkrProgramsPage, harness results-vnext-okr-admin.tsx)</div>}
+            element={
+              <div data-testid="dev-render-okr-programs-marker" className="p-6 text-c-text">
+                Programy OKR (dev-render marker — realna strona: OkrProgramsPage, harness
+                results-vnext-okr-admin.tsx)
+              </div>
+            }
           />
           <Route
             path={ROUTES.RESULTS_OKR.CYCLES}
-            element={<div data-testid="dev-render-okr-cycles-marker" className="p-6 text-c-text">Cykle OKR (dev-render marker — realna strona: OkrCyclesPage, harness results-vnext-okr-admin.tsx)</div>}
+            element={
+              <div data-testid="dev-render-okr-cycles-marker" className="p-6 text-c-text">
+                Cykle OKR (dev-render marker — realna strona: OkrCyclesPage, harness
+                results-vnext-okr-admin.tsx)
+              </div>
+            }
           />
         </Routes>
       </MemoryRouter>

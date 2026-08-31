@@ -130,10 +130,10 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
 
   async function seedOrg(label: string): Promise<string> {
     const orgId = `sece2e-org-${label}-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      orgId,
-      `Stream E test org (${label})`,
-    ]);
+    await control.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgId, `Stream E test org (${label})`]
+    );
     return orgId;
   }
 
@@ -172,7 +172,10 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
   }
 
   async function setMemberStatus(membershipId: string, status: string): Promise<void> {
-    await control.query(`UPDATE organization_members SET status = $1 WHERE id = $2`, [status, membershipId]);
+    await control.query(`UPDATE organization_members SET status = $1 WHERE id = $2`, [
+      status,
+      membershipId,
+    ]);
   }
 
   /**
@@ -195,7 +198,9 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
     return userId;
   }
 
-  async function seedOrgProjectCase(label: string): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  async function seedOrgProjectCase(
+    label: string
+  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
     const orgId = await seedOrg(label);
     const projectId = await seedProject(orgId, label);
     const creatorUserId = await seedActiveActor(orgId, `${label}-creator`, 'OWNER');
@@ -213,9 +218,15 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
     return result.rows[0] ?? null;
   }
 
-  async function teardown(opts: { orgIds?: string[]; projectIds?: string[]; userIds?: string[] }): Promise<void> {
+  async function teardown(opts: {
+    orgIds?: string[];
+    projectIds?: string[];
+    userIds?: string[];
+  }): Promise<void> {
     for (const projectId of opts.projectIds ?? []) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of opts.userIds ?? []) {
@@ -227,8 +238,12 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
       // via seedActiveActor()/seedUser() for this org (including fixture
       // "creator" actors not individually tracked in userIds above) is
       // swept here by organization_id rather than needing per-test tracking.
-      await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -238,8 +253,11 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
   // =========================================================================
   describe('(A) target contract: requireCaseAccess in front of caseCoreService fails closed (SEC-009, CW-DOD-D6)', () => {
     it('IDOR: an actor active in org X is denied requireCaseAccess for a real caseId belonging to org Y, with the SAME public shape as a nonexistent caseId', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } =
-        await seedOrgProjectCase('idor-victim');
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('idor-victim');
       const attackerOrgId = await seedOrg('idor-attacker');
       const attackerUserId = await seedUser(attackerOrgId, 'idor-attacker');
       await seedMember(attackerOrgId, attackerUserId, 'ADMIN', 'ACTIVE');
@@ -305,8 +323,11 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
     }, 30_000);
 
     it('information leakage: forbidden-but-real vs nonexistent caseId produce byte-for-byte identical error code AND message (SEC-009)', async () => {
-      const { caseId: realForbiddenCaseId, orgId: victimOrgId, projectId: victimProjectId } =
-        await seedOrgProjectCase('leak-real-forbidden');
+      const {
+        caseId: realForbiddenCaseId,
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+      } = await seedOrgProjectCase('leak-real-forbidden');
       const attackerOrgId = await seedOrg('leak-attacker');
       const attackerUserId = await seedUser(attackerOrgId, 'leak-attacker');
       await seedMember(attackerOrgId, attackerUserId, 'OWNER', 'ACTIVE');
@@ -319,7 +340,10 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
             await requireCaseAccess(attackerUserId, caseId);
             throw new Error(`expected requireCaseAccess to throw for caseId=${caseId}`);
           } catch (err) {
-            errors.push({ code: (err as Error & { code?: string }).code, message: (err as Error).message });
+            errors.push({
+              code: (err as Error & { code?: string }).code,
+              message: (err as Error).message,
+            });
           }
         }
         expect(errors[0].code).toBe(errors[1].code);
@@ -354,8 +378,11 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
   // =========================================================================
   describe('(B) gap CLOSED by Stream A (formerly known gap P1): caseCoreService now self-enforces tenant/membership', () => {
     it('GAP CLOSED: transitionStatus now REJECTS a caseId belonging to a DIFFERENT organization than the calling actor (was: succeeded silently)', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } =
-        await seedOrgProjectCase('gap-transition');
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('gap-transition');
       const attackerOrgId = await seedOrg('gap-transition-attacker');
       const attackerUserId = await seedUser(attackerOrgId, 'gap-transition-attacker');
       await seedMember(attackerOrgId, attackerUserId, 'MEMBER', 'ACTIVE');
@@ -411,8 +438,18 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
       const actorBId = await seedActiveActor(orgId, 'occ-actor-b');
       try {
         const [a, b] = await Promise.all([
-          caseCoreService.updateGovernanceTier(caseId, 'STANDARD', { actorUserId: actorAId }, 'concurrent A'),
-          caseCoreService.updateGovernanceTier(caseId, 'CONTROLLED', { actorUserId: actorBId }, 'concurrent B'),
+          caseCoreService.updateGovernanceTier(
+            caseId,
+            'STANDARD',
+            { actorUserId: actorAId },
+            'concurrent A'
+          ),
+          caseCoreService.updateGovernanceTier(
+            caseId,
+            'CONTROLLED',
+            { actorUserId: actorBId },
+            'concurrent B'
+          ),
         ]);
         // Both calls must succeed (SELECT ... FOR UPDATE serializes them —
         // neither should throw case_version_conflict for a plain race).
@@ -536,7 +573,9 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
           [projectId]
         );
         expect(result.rows).toHaveLength(2);
-        expect(result.rows.map((r) => r.case_id).sort()).toEqual([first.caseId, second.caseId].sort());
+        expect(result.rows.map((r) => r.case_id).sort()).toEqual(
+          [first.caseId, second.caseId].sort()
+        );
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });
       }
@@ -576,7 +615,9 @@ suite('caseCoreService — adversarial security (Stream E, CW-P01/E1)', () => {
         expect(rejected).toHaveLength(0);
         expect(fulfilled).toHaveLength(2);
 
-        const result = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [projectId]);
+        const result = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [
+          projectId,
+        ]);
         expect(result.rows).toHaveLength(2);
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });

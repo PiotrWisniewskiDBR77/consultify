@@ -161,7 +161,16 @@ export function useMethodWorkspaceSave(
     };
   }, [clearTimer]);
 
-  return { state, lastSavedAt, errorMessage, markDirty, saveNow, retry, acknowledgeFailure, attemptLeave };
+  return {
+    state,
+    lastSavedAt,
+    errorMessage,
+    markDirty,
+    saveNow,
+    retry,
+    acknowledgeFailure,
+    attemptLeave,
+  };
 }
 
 export default useMethodWorkspaceSave;

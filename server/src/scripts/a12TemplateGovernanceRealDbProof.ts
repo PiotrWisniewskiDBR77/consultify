@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+
 import { Pool } from 'pg';
+
 import { adaptQuery } from '../database/PostgresDatabase.js';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -119,7 +121,9 @@ async function main(): Promise<void> {
     action: 'publish',
     reason: 'QA approved',
   });
-  await pool.query(`INSERT INTO v8_context_snapshots(snapshot_id,snapshot_version,captured_at,workspace_id,organization_id,execution_run_id,artifact_refs,effective_scope_ref,resolved_role_ref,initiator_user_id,consumer_class,privacy_mode,source_context_refs,drift_events) VALUES ('snapshot-a12',1,NOW(),'org-a12','org-a12','run-a12','[]','case-a12','transformation_agent','owner-a12','execution',0,'[]','[]');INSERT INTO v8_execution_runs(run_id,organization_id,context_snapshot_id,initiator_user_id,state,plan_version,goal,metadata) VALUES ('run-a12','org-a12','snapshot-a12','owner-a12','drafting',1,'Template regression','{}');INSERT INTO transformation_cases(transformation_case_id,organization_id,context_snapshot_id,execution_run_id,initiated_by_user_id,mandate,status,lifecycle_stage,lineage_id,idempotency_key,version) VALUES ('case-a12','org-a12','snapshot-a12','run-a12','owner-a12','Template regression','plan_proposed','mandate','lineage-a12','case-a12',1);INSERT INTO v8_agent_run_identities(canonical_run_id,organization_id,transformation_case_id,lineage_id) VALUES ('run-a12','org-a12','case-a12','lineage-a12')`);
+  await pool.query(
+    `INSERT INTO v8_context_snapshots(snapshot_id,snapshot_version,captured_at,workspace_id,organization_id,execution_run_id,artifact_refs,effective_scope_ref,resolved_role_ref,initiator_user_id,consumer_class,privacy_mode,source_context_refs,drift_events) VALUES ('snapshot-a12',1,NOW(),'org-a12','org-a12','run-a12','[]','case-a12','transformation_agent','owner-a12','execution',0,'[]','[]');INSERT INTO v8_execution_runs(run_id,organization_id,context_snapshot_id,initiator_user_id,state,plan_version,goal,metadata) VALUES ('run-a12','org-a12','snapshot-a12','owner-a12','drafting',1,'Template regression','{}');INSERT INTO transformation_cases(transformation_case_id,organization_id,context_snapshot_id,execution_run_id,initiated_by_user_id,mandate,status,lifecycle_stage,lineage_id,idempotency_key,version) VALUES ('case-a12','org-a12','snapshot-a12','run-a12','owner-a12','Template regression','plan_proposed','mandate','lineage-a12','case-a12',1);INSERT INTO v8_agent_run_identities(canonical_run_id,organization_id,transformation_case_id,lineage_id) VALUES ('run-a12','org-a12','case-a12','lineage-a12')`
+  );
   const instantiated = await templates.instantiateAgentProcessTemplate({
     templateId: created.templateId,
     organizationId: 'org-a12',

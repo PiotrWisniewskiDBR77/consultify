@@ -34,13 +34,7 @@ describe('PresentMode', () => {
 
   it('shows notes, next slide, and timer only in presenter view', () => {
     render(
-      <PresentMode
-        cards={cards}
-        title="Deck"
-        initialIndex={1}
-        presenterView
-        onExit={vi.fn()}
-      />
+      <PresentMode cards={cards} title="Deck" initialIndex={1} presenterView onExit={vi.fn()} />
     );
     expect(screen.getByTestId('presenter-view')).toBeInTheDocument();
     expect(screen.getByText('Private notes')).toBeInTheDocument();

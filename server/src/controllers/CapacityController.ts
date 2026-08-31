@@ -7,13 +7,13 @@
 
 import type { Response } from 'express';
 
-import type { AuthenticatedRequest } from '../types/index.js';
 import {
   CAPACITY_POLICY,
   capacityHoursForAllocation,
   isOverloaded,
   utilizationPercent,
 } from '../services/capacityPolicy.js';
+import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -43,9 +43,7 @@ export class CapacityController {
         )) || [];
       if (allocRows.length > 0) {
         totalCapacity = allocRows.reduce(
-          (sum, r) =>
-            sum +
-            capacityHoursForAllocation(r.allocation_percent),
+          (sum, r) => sum + capacityHoursForAllocation(r.allocation_percent),
           0
         );
       }

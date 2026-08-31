@@ -66,28 +66,6 @@ import { randomUUID } from 'node:crypto';
 
 import type { PoolClient } from 'pg';
 
-import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import {
-  AtomicWriteAggregateNotFoundError,
-  AtomicWriteConflictError,
-  executeAtomicCommand,
-  executeAtomicCreate,
-  type AtomicCommandOutcome,
-  type AtomicEventInput,
-} from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
-import { OkrSupportRequestValidationError } from './okrSupportCommands.js';
-import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
-import {
-  toOkrDecisionLink,
-  toOkrSupportRequest,
-  type OkrDecisionLink,
-  type OkrDecisionLinkRow,
-  type OkrSupportRequest,
-  type OkrSupportRequestRow,
-} from './okrSupportTypes.js';
-
 // decisionOutcomeService.ts is the SINGLE source of truth for "what counts
 // as a terminal Decision outcome" (MW-DEC-001) — imported, never
 // re-literalled, per design §16 Open Question #3's own instruction ("cross-
@@ -95,6 +73,29 @@ import {
 // before implementation, do not assume this design doc's literal string
 // list is exhaustive").
 import { isTerminalDecisionOutcome } from '../../decisionOutcomeService.js';
+import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  AtomicWriteAggregateNotFoundError,
+  AtomicWriteConflictError,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
+import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
+import { OkrSupportRequestValidationError } from './okrSupportCommands.js';
+import {
+  type OkrDecisionLink,
+  type OkrDecisionLinkRow,
+  type OkrSupportRequest,
+  type OkrSupportRequestRow,
+  toOkrDecisionLink,
+  toOkrSupportRequest,
+} from './okrSupportTypes.js';
 
 // ==========================================
 // ERRORS
@@ -104,7 +105,9 @@ export class OkrDecisionNotYetResolvedError extends Error {
   code = 'DECISION_NOT_YET_RESOLVED';
   details: Record<string, unknown>;
   constructor(linkId: string, decisionId: string, currentStatus: string | null) {
-    super(`Decision ${decisionId} (link ${linkId}) has not reached a terminal outcome yet (status=${currentStatus ?? 'unknown'})`);
+    super(
+      `Decision ${decisionId} (link ${linkId}) has not reached a terminal outcome yet (status=${currentStatus ?? 'unknown'})`
+    );
     this.name = 'OkrDecisionNotYetResolvedError';
     this.details = { linkId, decisionId, currentStatus };
   }
@@ -185,10 +188,16 @@ export async function requestDecisionFromSupportRequest(
   } = input;
 
   if (!requestedDecision || !requestedDecision.trim()) {
-    throw new OkrSupportRequestValidationError('requestedDecision is required', 'REQUESTED_DECISION_REQUIRED');
+    throw new OkrSupportRequestValidationError(
+      'requestedDecision is required',
+      'REQUESTED_DECISION_REQUIRED'
+    );
   }
   if (!impactOfDelay || !impactOfDelay.trim()) {
-    throw new OkrSupportRequestValidationError('impactOfDelay is required', 'IMPACT_OF_DELAY_REQUIRED');
+    throw new OkrSupportRequestValidationError(
+      'impactOfDelay is required',
+      'IMPACT_OF_DELAY_REQUIRED'
+    );
   }
 
   return executeAtomicCreate<RequestDecisionFromSupportRequestResult>({
@@ -210,7 +219,10 @@ export async function requestDecisionFromSupportRequest(
         responsibleUserIds: [srRow.created_by, srRow.assigned_to_user_id],
       });
 
-      if (srRow.kind !== 'support_request' || !OKR_DECISION_LINK_ELIGIBLE_STATUSES.includes(srRow.status ?? '')) {
+      if (
+        srRow.kind !== 'support_request' ||
+        !OKR_DECISION_LINK_ELIGIBLE_STATUSES.includes(srRow.status ?? '')
+      ) {
         throw new OkrSupportRequestValidationError(
           `Support request ${requestId} cannot request a Decision from its current state (kind=${srRow.kind}, status=${srRow.status})`,
           'INVALID_TRANSITION',
@@ -225,10 +237,14 @@ export async function requestDecisionFromSupportRequest(
         );
       }
       if (srRow.row_version !== expectedVersion) {
-        throw new AtomicWriteConflictError('Support request was modified since it was last read', 'STALE_VERSION', {
-          currentVersion: srRow.row_version,
-          expectedVersion,
-        });
+        throw new AtomicWriteConflictError(
+          'Support request was modified since it was last read',
+          'STALE_VERSION',
+          {
+            currentVersion: srRow.row_version,
+            expectedVersion,
+          }
+        );
       }
 
       const decisionId = randomUUID();
@@ -245,7 +261,17 @@ export async function requestDecisionFromSupportRequest(
            (id, organization_id, title, description, type, decision_maker_id, deadline, status,
             created_by, source_type, source_id)
          VALUES ($1, $2, $3, $4, 'GENERAL', $5, $6, 'pending', $7, $8, $9)`,
-        [decisionId, organizationId, title, impactOfDelay, srRow.assigned_to_user_id, desiredDate, requestedBy, OKR_DECISION_SOURCE_TYPE, requestId]
+        [
+          decisionId,
+          organizationId,
+          title,
+          impactOfDelay,
+          srRow.assigned_to_user_id,
+          desiredDate,
+          requestedBy,
+          OKR_DECISION_SOURCE_TYPE,
+          requestId,
+        ]
       );
 
       const linkResult = await client.query<OkrDecisionLinkRow>(
@@ -268,7 +294,8 @@ export async function requestDecisionFromSupportRequest(
         ]
       );
       const linkRow = linkResult.rows[0];
-      if (!linkRow) throw new Error('[requestDecisionFromSupportRequest] decision-link insert returned no row');
+      if (!linkRow)
+        throw new Error('[requestDecisionFromSupportRequest] decision-link insert returned no row');
       const decisionLink = toOkrDecisionLink(linkRow);
 
       const updatedSrResult = await client.query<OkrSupportRequestRow>(
@@ -279,13 +306,19 @@ export async function requestDecisionFromSupportRequest(
         [decisionLink.linkId, requestId]
       );
       const updatedSrRow = updatedSrResult.rows[0];
-      if (!updatedSrRow) throw new Error(`[requestDecisionFromSupportRequest] support-request update returned no row for ${requestId}`);
+      if (!updatedSrRow)
+        throw new Error(
+          `[requestDecisionFromSupportRequest] support-request update returned no row for ${requestId}`
+        );
       const supportRequest = toOkrSupportRequest(updatedSrRow);
 
       return { supportRequest, decisionLink };
     },
     buildEvent: ({ result }) => {
-      const afterState = { supportRequest: result.supportRequest, decisionLink: result.decisionLink };
+      const afterState = {
+        supportRequest: result.supportRequest,
+        decisionLink: result.decisionLink,
+      };
       return {
         schemaVersion: 1,
         eventType: 'okr_support.decision_requested',
@@ -308,7 +341,11 @@ export async function requestDecisionFromSupportRequest(
         idempotencyKey,
         expectedVersion: null,
         resultingVersion: result.decisionLink.rowVersion,
-        payload: { requestId, linkId: result.decisionLink.linkId, decisionId: result.decisionLink.decisionId },
+        payload: {
+          requestId,
+          linkId: result.decisionLink.linkId,
+          decisionId: result.decisionLink.decisionId,
+        },
       } satisfies AtomicEventInput;
     },
   });
@@ -389,10 +426,10 @@ export async function acknowledgeDecisionResolution(
         status: string | null;
         decision_rationale: string | null;
         decided_at: string | null;
-      }>(`SELECT status, decision_rationale, decided_at FROM decisions WHERE id = $1 AND organization_id = $2`, [
-        currentRow.decision_id,
-        organizationId,
-      ]);
+      }>(
+        `SELECT status, decision_rationale, decided_at FROM decisions WHERE id = $1 AND organization_id = $2`,
+        [currentRow.decision_id, organizationId]
+      );
       const decisionRow = decisionResult.rows[0];
       if (!decisionRow) {
         throw new OkrSupportRequestValidationError(
@@ -402,7 +439,11 @@ export async function acknowledgeDecisionResolution(
         );
       }
       if (!isTerminalDecisionOutcome(decisionRow.status)) {
-        throw new OkrDecisionNotYetResolvedError(linkId, currentRow.decision_id, decisionRow.status);
+        throw new OkrDecisionNotYetResolvedError(
+          linkId,
+          currentRow.decision_id,
+          decisionRow.status
+        );
       }
 
       beforeState = { decisionLink: toOkrDecisionLink(currentRow) };
@@ -416,7 +457,8 @@ export async function acknowledgeDecisionResolution(
         [actorUserId, nextVersion, linkId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[acknowledgeDecisionResolution] update returned no row for ${linkId}`);
+      if (!updatedRow)
+        throw new Error(`[acknowledgeDecisionResolution] update returned no row for ${linkId}`);
 
       return {
         decisionLink: toOkrDecisionLink(updatedRow),
@@ -460,7 +502,11 @@ export async function acknowledgeDecisionResolution(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { linkId, decisionId: result.decisionLink.decisionId, decisionStatus: result.decisionStatus },
+        payload: {
+          linkId,
+          decisionId: result.decisionLink.decisionId,
+          decisionStatus: result.decisionStatus,
+        },
       } satisfies AtomicEventInput;
     },
   });

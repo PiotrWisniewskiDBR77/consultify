@@ -32,6 +32,7 @@ import {
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
 import { resolvePublicDemoPrincipal } from '../services/demo/demoPrincipalGuard.js';
+import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import {
   isTemplateResolveError,
   resolvePresentationTemplateForCreation,
@@ -98,7 +99,6 @@ import {
   completePresentationExport,
   failPresentationExport,
 } from '../services/presentationExport/presentationExportReceiptService.js';
-import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';

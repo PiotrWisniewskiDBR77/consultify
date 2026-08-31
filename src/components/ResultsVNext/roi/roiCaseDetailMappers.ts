@@ -43,14 +43,22 @@ export function roiConfidenceLabel(value: RoiConfidenceLevel | null, isPolish: b
 // Baseline
 // ==========================================
 
-export const ROI_BASELINE_PROJECTION_METHOD_LABELS: Record<RoiBaselineProjectionMethod, { pl: string; en: string }> = {
+export const ROI_BASELINE_PROJECTION_METHOD_LABELS: Record<
+  RoiBaselineProjectionMethod,
+  { pl: string; en: string }
+> = {
   flat: { pl: 'Płaska (bez wzrostu)', en: 'Flat (no growth)' },
   growth_rate: { pl: 'Stopa wzrostu', en: 'Growth rate' },
   custom: { pl: 'Niestandardowa', en: 'Custom' },
 };
 
-export function roiBaselineProjectionMethodLabel(value: RoiBaselineProjectionMethod, isPolish: boolean): string {
-  return isPolish ? ROI_BASELINE_PROJECTION_METHOD_LABELS[value].pl : ROI_BASELINE_PROJECTION_METHOD_LABELS[value].en;
+export function roiBaselineProjectionMethodLabel(
+  value: RoiBaselineProjectionMethod,
+  isPolish: boolean
+): string {
+  return isPolish
+    ? ROI_BASELINE_PROJECTION_METHOD_LABELS[value].pl
+    : ROI_BASELINE_PROJECTION_METHOD_LABELS[value].en;
 }
 
 // ==========================================
@@ -70,7 +78,10 @@ export function roiTaxTreatmentLabel(value: RoiTaxTreatment | null, isPolish: bo
 
 export const ROI_ROUNDING_POLICY_LABELS: Record<RoiRoundingPolicy, { pl: string; en: string }> = {
   half_up_2dp: { pl: 'W górę, 2 miejsca po przecinku', en: 'Half up, 2 decimals' },
-  half_even_2dp: { pl: 'Bankierskie, 2 miejsca po przecinku', en: "Half even (banker's), 2 decimals" },
+  half_even_2dp: {
+    pl: 'Bankierskie, 2 miejsca po przecinku',
+    en: "Half even (banker's), 2 decimals",
+  },
   none: { pl: 'Bez zaokrąglania', en: 'No rounding' },
 };
 
@@ -91,15 +102,23 @@ export function roiTimingTypeLabel(value: RoiTimingType, isPolish: boolean): str
   return isPolish ? ROI_TIMING_TYPE_LABELS[value].pl : ROI_TIMING_TYPE_LABELS[value].en;
 }
 
-export const ROI_RECURRENCE_CADENCE_LABELS: Record<RoiRecurrenceCadence, { pl: string; en: string }> = {
+export const ROI_RECURRENCE_CADENCE_LABELS: Record<
+  RoiRecurrenceCadence,
+  { pl: string; en: string }
+> = {
   monthly: { pl: 'Miesięcznie', en: 'Monthly' },
   quarterly: { pl: 'Kwartalnie', en: 'Quarterly' },
   annual: { pl: 'Rocznie', en: 'Annually' },
 };
 
-export function roiRecurrenceCadenceLabel(value: RoiRecurrenceCadence | null, isPolish: boolean): string {
+export function roiRecurrenceCadenceLabel(
+  value: RoiRecurrenceCadence | null,
+  isPolish: boolean
+): string {
   if (!value) return '—';
-  return isPolish ? ROI_RECURRENCE_CADENCE_LABELS[value].pl : ROI_RECURRENCE_CADENCE_LABELS[value].en;
+  return isPolish
+    ? ROI_RECURRENCE_CADENCE_LABELS[value].pl
+    : ROI_RECURRENCE_CADENCE_LABELS[value].en;
 }
 
 /** One-line honest summary of a line item's timing shape — used in table

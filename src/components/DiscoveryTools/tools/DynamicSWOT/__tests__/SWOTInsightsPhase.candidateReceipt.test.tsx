@@ -50,7 +50,9 @@ describe('SWOT mounted Candidate handoff receipt', () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it('cold-reopens the exact frozen receipt and does not offer a duplicate write', async () => {
-    const get = vi.spyOn(Api, 'getSwotCandidateReceipts').mockResolvedValue({ receipts: [receipt] });
+    const get = vi
+      .spyOn(Api, 'getSwotCandidateReceipts')
+      .mockResolvedValue({ receipts: [receipt] });
     const post = vi.spyOn(Api, 'handoffSwotCandidate');
     render(<SWOTInsightsPhase session={session} isPolish={false} />);
 

@@ -1,8 +1,8 @@
 import crypto, { randomUUID } from 'node:crypto';
 
 import {
-  withPinnedPostgresTransaction,
   type PinnedTransactionClient,
+  withPinnedPostgresTransaction,
 } from '../../../database/PostgresDatabase.js';
 import { assertFinanceEditor } from './valuationLegacySuccessorService.js';
 
@@ -156,7 +156,7 @@ async function readDraftTx(
     entityIds = sourceEntities.map((row: any) => String(row.entity_id));
   }
   let firstForecastStart = orderedPeriods[0]?.period_start ?? null;
-  let opening = context?.statement_version_id
+  const opening = context?.statement_version_id
     ? await tx.queryOne<any>(
         `SELECT p.period_id,p.period_end,p.fiscal_calendar_id
            FROM finance_stmt_lines l

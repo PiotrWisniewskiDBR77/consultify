@@ -6,10 +6,21 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { financeStmtLinesCellRef, type CellRef } from '../../../../types/finance/CellRef.js';
+import { type CellRef, financeStmtLinesCellRef } from '../../../../types/finance/CellRef.js';
 import type { FinanceValue } from '../../../../types/finance/financeValueSemantics.js';
-import type { Operation, OpBulkSet, OpClear, OpPaste, OpReset, OpSet } from '../../../../types/finance/Operation.js';
-import { DEFAULT_MAX_UNDO_DEPTH, OperationStack, operationIntendedValues } from '../operationStack.js';
+import type {
+  OpBulkSet,
+  OpClear,
+  Operation,
+  OpPaste,
+  OpReset,
+  OpSet,
+} from '../../../../types/finance/Operation.js';
+import {
+  DEFAULT_MAX_UNDO_DEPTH,
+  operationIntendedValues,
+  OperationStack,
+} from '../operationStack.js';
 
 // ---------------------------------------------------------------------------
 // Test fixtures
@@ -60,7 +71,12 @@ function common(overrides: Partial<Operation> = {}) {
 }
 
 function setOp(target: CellRef, v: string): OpSet {
-  return { ...common(), type: 'set', target, value: { status: 'PRESENT_NONZERO', valueDecimal: v } };
+  return {
+    ...common(),
+    type: 'set',
+    target,
+    value: { status: 'PRESENT_NONZERO', valueDecimal: v },
+  };
 }
 
 function pasteOp(targets: CellRef[], values: string[]): OpPaste {
@@ -73,7 +89,12 @@ function pasteOp(targets: CellRef[], values: string[]): OpPaste {
 }
 
 function bulkSetOp(targets: CellRef[], v: string): OpBulkSet {
-  return { ...common(), type: 'bulk_set', target: targets, value: { status: 'PRESENT_NONZERO', valueDecimal: v } };
+  return {
+    ...common(),
+    type: 'bulk_set',
+    target: targets,
+    value: { status: 'PRESENT_NONZERO', valueDecimal: v },
+  };
 }
 
 function clearOp(targets: CellRef[]): OpClear {
@@ -117,9 +138,12 @@ describe('OperationStack — basic push/undo/redo', () => {
     expect(result.inverseOperation.type).toBe('paste');
     if (result.inverseOperation.type !== 'paste') throw new Error('unreachable');
     expect(result.inverseOperation.target).toEqual([c]);
-    expect(result.inverseOperation.values.map((v) => ({ status: v.status, valueDecimal: v.valueDecimal }))).toEqual([
-      { status: 'PRESENT_NONZERO', valueDecimal: '50' },
-    ]);
+    expect(
+      result.inverseOperation.values.map((v) => ({
+        status: v.status,
+        valueDecimal: v.valueDecimal,
+      }))
+    ).toEqual([{ status: 'PRESENT_NONZERO', valueDecimal: '50' }]);
     // fresh identity, not reused from the original operation
     expect(result.inverseOperation.operationId).toBe('inverse-op');
     expect(result.inverseOperation.sourceWorkingRevisionId).toBe('wr-1');
@@ -189,7 +213,12 @@ describe('OperationStack — atomic bulk/paste undo (task: "cofa CALY Operation 
     if (result.inverseOperation.type !== 'paste') throw new Error('unreachable');
     // all three cells restored in the SAME operation
     expect(result.inverseOperation.target).toEqual(targets);
-    expect(result.inverseOperation.values.map((v) => ({ status: v.status, valueDecimal: v.valueDecimal }))).toEqual([
+    expect(
+      result.inverseOperation.values.map((v) => ({
+        status: v.status,
+        valueDecimal: v.valueDecimal,
+      }))
+    ).toEqual([
       { status: 'PRESENT_NONZERO', valueDecimal: '1' },
       { status: 'MISSING', valueDecimal: null },
       { status: 'PRESENT_NONZERO', valueDecimal: '3' },
@@ -227,7 +256,12 @@ describe('OperationStack — atomic bulk/paste undo (task: "cofa CALY Operation 
     if (!result.ok) throw new Error('unreachable');
     if (result.inverseOperation.type !== 'paste') throw new Error('unreachable');
     expect(result.inverseOperation.target).toHaveLength(3);
-    expect(result.inverseOperation.values.map((v) => ({ status: v.status, valueDecimal: v.valueDecimal }))).toEqual([
+    expect(
+      result.inverseOperation.values.map((v) => ({
+        status: v.status,
+        valueDecimal: v.valueDecimal,
+      }))
+    ).toEqual([
       { status: 'PRESENT_NONZERO', valueDecimal: '1' },
       { status: 'PRESENT_NONZERO', valueDecimal: '2' },
       { status: 'MISSING', valueDecimal: null },
@@ -236,7 +270,9 @@ describe('OperationStack — atomic bulk/paste undo (task: "cofa CALY Operation 
 
   it('rejects a push whose priorValues length does not match the operation target count', () => {
     const stack = new OperationStack();
-    expect(() => stack.push(pasteOp([cell('A'), cell('B')], ['1', '2']), [value('0')])).toThrow(/priorValues.length/);
+    expect(() => stack.push(pasteOp([cell('A'), cell('B')], ['1', '2']), [value('0')])).toThrow(
+      /priorValues.length/
+    );
   });
 });
 
@@ -266,7 +302,9 @@ describe('OperationStack — depth, min 50, configurable', () => {
     const first = stack.undo(mint);
     if (!first.ok) throw new Error('unreachable');
     if (first.inverseOperation.type !== 'paste') throw new Error('unreachable');
-    expect((first.inverseOperation.target[0] as CellRef).rowKey).toMatchObject({ canonicalLineId: 'L4' });
+    expect((first.inverseOperation.target[0] as CellRef).rowKey).toMatchObject({
+      canonicalLineId: 'L4',
+    });
   });
 
   it('rejects a non-positive-integer maxDepth', () => {
@@ -311,7 +349,9 @@ describe('OperationStack.fromEntries / toArray — serialization round-trip', ()
 
 describe('operationIntendedValues', () => {
   it('set -> [value]', () => {
-    expect(operationIntendedValues(setOp(cell('A'), '5'))).toEqual([{ status: 'PRESENT_NONZERO', valueDecimal: '5' }]);
+    expect(operationIntendedValues(setOp(cell('A'), '5'))).toEqual([
+      { status: 'PRESENT_NONZERO', valueDecimal: '5' },
+    ]);
   });
 
   it('bulk_set -> the same value repeated per target', () => {

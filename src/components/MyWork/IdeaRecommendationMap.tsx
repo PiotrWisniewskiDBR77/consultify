@@ -68,7 +68,6 @@ import {
 
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
-import { isCanvasKeyboardScope, resolveMindMapGrammarAction } from './canvas/mindmapKeyboardScope';
 import {
   canvasObjectSurfaceStyle,
   canvasObjectTextStyle,
@@ -78,6 +77,7 @@ import {
 import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getIdeaCanvasCursorClass, getIdeaCanvasCursorProps } from './canvas/ideaCanvasCursorMode';
+import { isCanvasKeyboardScope, resolveMindMapGrammarAction } from './canvas/mindmapKeyboardScope';
 import { ObjectEditBar, type ObjectEditBarGroup } from './canvas/ObjectEditBar';
 import {
   buildStyleGroups,
@@ -88,6 +88,7 @@ import { ArrowDirectionPopover, type CanvasArrowDirection } from './canvas/Objec
 import { useCanvasSnapping } from './canvas/useCanvasSnapping';
 import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import {
   IDEA_STAGE_COLORS,
   IDEA_STAGE_LABELS,
@@ -119,7 +120,6 @@ import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
 import { type AlignMode, computeAlignDistribute } from './mindmap/alignDistribute';
 import { AssignPersonModal } from './mindmap/AssignPersonModal';
 import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
-import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { BatchConvertModal } from './mindmap/BatchConvertModal';
 import { BranchComparison } from './mindmap/BranchComparison';
 import { BranchSummaryPanel } from './mindmap/BranchSummaryPanel';

@@ -195,7 +195,8 @@ function buildSchedule(input: IdeaFinancialCaseInput, scenarioName: ScenarioName
       };
     }
     const factorResult = currencyFactor(inv.currency, caseCurrency);
-    if (!factorResult.ok) return { ok: false, reason: `investment "${inv.id}": ${factorResult.reason}` };
+    if (!factorResult.ok)
+      return { ok: false, reason: `investment "${inv.id}": ${factorResult.reason}` };
     const withContingency = inv.amount * (1 + (inv.contingencyPct ?? 0) / 100);
     const scenarioMult = mult.get(inv.id) ?? 1;
     investmentCost[inv.periodIndex] += withContingency * scenarioMult * factorResult.factor;
@@ -205,7 +206,8 @@ function buildSchedule(input: IdeaFinancialCaseInput, scenarioName: ScenarioName
   const recurringCost = new Array(length).fill(0);
   for (const rc of input.recurringCosts) {
     const factorResult = currencyFactor(rc.currency, caseCurrency);
-    if (!factorResult.ok) return { ok: false, reason: `recurring cost "${rc.id}": ${factorResult.reason}` };
+    if (!factorResult.ok)
+      return { ok: false, reason: `recurring cost "${rc.id}": ${factorResult.reason}` };
     const scenarioMult = mult.get(rc.id) ?? 1;
     const end = rc.endPeriodIndex ?? horizon;
     for (let p = Math.max(0, rc.startPeriodIndex); p <= Math.min(horizon, end); p++) {
@@ -258,7 +260,10 @@ function buildSchedule(input: IdeaFinancialCaseInput, scenarioName: ScenarioName
       };
     }
     if (b.amountPerPeriod === undefined) {
-      return { ok: false, reason: `benefit "${b.id}" (type "${b.type}") is missing amountPerPeriod` };
+      return {
+        ok: false,
+        reason: `benefit "${b.id}" (type "${b.type}") is missing amountPerPeriod`,
+      };
     }
     const factorResult = currencyFactor(b.currency, caseCurrency);
     if (!factorResult.ok) return { ok: false, reason: `benefit "${b.id}": ${factorResult.reason}` };
@@ -308,7 +313,11 @@ function buildSchedule(input: IdeaFinancialCaseInput, scenarioName: ScenarioName
   };
 }
 
-function buildMeta(input: IdeaFinancialCaseInput, scenarioName: ScenarioName, driverIds: string[]): CalculationMeta {
+function buildMeta(
+  input: IdeaFinancialCaseInput,
+  scenarioName: ScenarioName,
+  driverIds: string[]
+): CalculationMeta {
   return {
     formulaVersion: FORMULA_VERSION,
     currency: input.currency.code,
@@ -324,7 +333,11 @@ function emptyMeta(input: IdeaFinancialCaseInput, scenarioName: ScenarioName): C
   return buildMeta(input, scenarioName, []);
 }
 
-function invalidResult<T>(input: IdeaFinancialCaseInput, scenarioName: ScenarioName, reason: string): CalcResult<T> {
+function invalidResult<T>(
+  input: IdeaFinancialCaseInput,
+  scenarioName: ScenarioName,
+  reason: string
+): CalcResult<T> {
   return { status: 'invalid', reason, meta: emptyMeta(input, scenarioName) };
 }
 
@@ -332,7 +345,11 @@ function invalidResult<T>(input: IdeaFinancialCaseInput, scenarioName: ScenarioN
  * violating-a-constraint, which is `invalidResult`). Both surface a `reason`
  * string; the status distinguishes "nothing to compute from" from "the
  * computation was rejected". */
-function missingResult<T>(input: IdeaFinancialCaseInput, scenarioName: ScenarioName, reason: string): CalcResult<T> {
+function missingResult<T>(
+  input: IdeaFinancialCaseInput,
+  scenarioName: ScenarioName,
+  reason: string
+): CalcResult<T> {
   return { status: 'missing', reason, meta: emptyMeta(input, scenarioName) };
 }
 
@@ -413,7 +430,10 @@ export function computeAnnualBenefit(
   const built = buildSchedule(input, scenarioName);
   if (!built.ok) return scheduleFailureResult(input, scenarioName, built.reason);
   const { schedule } = built;
-  const yr = representativeYearRange(schedule.periods.length - 1, input.periodConvention.periodsPerYear);
+  const yr = representativeYearRange(
+    schedule.periods.length - 1,
+    input.periodConvention.periodsPerYear
+  );
   if (!yr.ok) return invalidResult(input, scenarioName, yr.reason);
   const [start, end] = yr.range;
 
@@ -461,9 +481,12 @@ export function computeImplementationCost(
   if (!built.ok) return scheduleFailureResult(input, scenarioName, built.reason);
   const total = built.schedule.investmentCost.reduce((a, b) => a + b, 0);
   const byDriver = input.investments.map((inv) => {
-    const mult = scenarioMultiplierMap(input.scenarios.find((s) => s.name === scenarioName)).get(inv.id) ?? 1;
+    const mult =
+      scenarioMultiplierMap(input.scenarios.find((s) => s.name === scenarioName)).get(inv.id) ?? 1;
     const factor = currencyFactor(inv.currency, input.currency);
-    const amount = factor.ok ? inv.amount * (1 + (inv.contingencyPct ?? 0) / 100) * mult * factor.factor : NaN;
+    const amount = factor.ok
+      ? inv.amount * (1 + (inv.contingencyPct ?? 0) / 100) * mult * factor.factor
+      : NaN;
     return { id: inv.id, label: inv.label, amount };
   });
   return {
@@ -599,7 +622,11 @@ export function computeSimpleROI(
   const totalCashBenefit = schedule.cashBenefit.reduce((a, b) => a + b, 0);
   const totalCost = schedule.costTotal.reduce((a, b) => a + b, 0);
   if (totalCost === 0) {
-    return invalidResult(input, scenarioName, 'ROI denominator (total cost) is zero — ROI is undefined');
+    return invalidResult(
+      input,
+      scenarioName,
+      'ROI denominator (total cost) is zero — ROI is undefined'
+    );
   }
   const numerator = totalCashBenefit - totalCost;
   return {
@@ -642,10 +669,16 @@ function presentValue(cashflows: number[], periodRate: number): number {
   return pv;
 }
 
-export function computeNPV(input: IdeaFinancialCaseInput, scenarioName: ScenarioName): CalcResult<NpvResult> {
+export function computeNPV(
+  input: IdeaFinancialCaseInput,
+  scenarioName: ScenarioName
+): CalcResult<NpvResult> {
   const built = buildSchedule(input, scenarioName);
   if (!built.ok) return scheduleFailureResult(input, scenarioName, built.reason);
-  const periodRate = periodRateFromAnnual(input.discountRatePct, input.periodConvention.periodsPerYear);
+  const periodRate = periodRateFromAnnual(
+    input.discountRatePct,
+    input.periodConvention.periodsPerYear
+  );
   const npv = presentValue(built.schedule.netCashFlow, periodRate);
   return {
     status: 'ok',
@@ -698,7 +731,10 @@ function bisectIrr(cashflows: number[]): number | null {
   return (lo + hi) / 2;
 }
 
-export function computeIRR(input: IdeaFinancialCaseInput, scenarioName: ScenarioName): CalcResult<IrrOutcome> {
+export function computeIRR(
+  input: IdeaFinancialCaseInput,
+  scenarioName: ScenarioName
+): CalcResult<IrrOutcome> {
   const built = buildSchedule(input, scenarioName);
   if (!built.ok) return scheduleFailureResult(input, scenarioName, built.reason);
   const { netCashFlow } = built.schedule;
@@ -718,7 +754,10 @@ export function computeIRR(input: IdeaFinancialCaseInput, scenarioName: Scenario
   } else {
     const periodRate = bisectIrr(netCashFlow);
     if (periodRate === null) {
-      outcome = { applicable: false, reason: 'no root found for IRR within the search bracket [-99.99%, 1000%]' };
+      outcome = {
+        applicable: false,
+        reason: 'no root found for IRR within the search bracket [-99.99%, 1000%]',
+      };
     } else {
       const periodsPerYear = input.periodConvention.periodsPerYear;
       const annual = Math.pow(1 + periodRate, periodsPerYear) - 1;
@@ -749,15 +788,26 @@ export function computeBenefitCostRatio(
 ): CalcResult<BcrResult> {
   const built = buildSchedule(input, scenarioName);
   if (!built.ok) return scheduleFailureResult(input, scenarioName, built.reason);
-  const periodRate = periodRateFromAnnual(input.discountRatePct, input.periodConvention.periodsPerYear);
+  const periodRate = periodRateFromAnnual(
+    input.discountRatePct,
+    input.periodConvention.periodsPerYear
+  );
   const pvBenefits = presentValue(built.schedule.cashBenefit, periodRate);
   const pvCosts = presentValue(built.schedule.costTotal, periodRate);
   if (pvCosts === 0) {
-    return invalidResult(input, scenarioName, 'present value of costs is zero — benefit-cost ratio is undefined');
+    return invalidResult(
+      input,
+      scenarioName,
+      'present value of costs is zero — benefit-cost ratio is undefined'
+    );
   }
   return {
     status: 'ok',
-    value: { presentValueBenefits: pvBenefits, presentValueCosts: pvCosts, bcr: pvBenefits / pvCosts },
+    value: {
+      presentValueBenefits: pvBenefits,
+      presentValueCosts: pvCosts,
+      bcr: pvBenefits / pvCosts,
+    },
     meta: buildMeta(input, scenarioName, built.schedule.driverIds),
   };
 }
@@ -797,10 +847,13 @@ function withDriverDelta(
     return { ...input, discountRatePct: input.discountRatePct * (1 + deltaPct / 100) };
   }
   const scenario = input.scenarios.find((s) => s.name === scenarioName);
-  const baseMultiplier = scenario?.driverOverrides.find((o) => o.driverId === req.driverId)?.multiplier ?? 1;
+  const baseMultiplier =
+    scenario?.driverOverrides.find((o) => o.driverId === req.driverId)?.multiplier ?? 1;
   const newMultiplier = baseMultiplier * (1 + deltaPct / 100);
   const otherScenarios = input.scenarios.filter((s) => s.name !== scenarioName);
-  const otherOverrides = (scenario?.driverOverrides ?? []).filter((o) => o.driverId !== req.driverId);
+  const otherOverrides = (scenario?.driverOverrides ?? []).filter(
+    (o) => o.driverId !== req.driverId
+  );
   const bumpedScenario: ScenarioInput = {
     name: scenarioName,
     driverOverrides: [...otherOverrides, { driverId: req.driverId, multiplier: newMultiplier }],
@@ -824,7 +877,12 @@ export function computeSensitivity(
       const bumpedInput = withDriverDelta(input, scenarioName, req, deltaPct);
       const bumpedNpv = computeNPV(bumpedInput, scenarioName);
       if (bumpedNpv.status !== 'ok') {
-        return propagateFailure(input, scenarioName, bumpedNpv, `sensitivity on "${req.driverId}": `);
+        return propagateFailure(
+          input,
+          scenarioName,
+          bumpedNpv,
+          `sensitivity on "${req.driverId}": `
+        );
       }
       points.push({
         driverId: req.driverId,
@@ -902,7 +960,11 @@ export function computeConfidenceAdjustedNPV(
   if (unadjusted.status !== 'ok') return propagateFailure(input, scenarioName, unadjusted);
 
   const drivers = benefitConfidenceList(input);
-  const perDriverWeight = drivers.map((d) => ({ driverId: d.id, level: d.level, weight: weights[d.level] }));
+  const perDriverWeight = drivers.map((d) => ({
+    driverId: d.id,
+    level: d.level,
+    weight: weights[d.level],
+  }));
 
   // Confidence-weight each benefit driver's contribution by scaling its
   // scenario multiplier with its confidence weight, then re-run NPV on that

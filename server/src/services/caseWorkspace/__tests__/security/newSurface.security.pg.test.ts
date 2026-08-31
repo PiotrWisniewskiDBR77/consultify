@@ -31,12 +31,12 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import * as autonomyPolicyService from '../../autonomyPolicyService.js';
 import * as caseCoreService from '../../caseCoreService.js';
 import * as caseIntakeService from '../../caseIntakeService.js';
-import * as autonomyPolicyService from '../../autonomyPolicyService.js';
+import * as eventInboxService from '../../eventInboxService.js';
 import * as proposalApprovalService from '../../proposalApprovalService.js';
 import * as waitSubscriptionService from '../../waitSubscriptionService.js';
-import * as eventInboxService from '../../eventInboxService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -273,9 +273,10 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
     expect(err).toBeInstanceOf(Error);
     expect((err as Error).message).toMatch(/not an active member/i);
 
-    const cases = await control.query(`SELECT count(*)::int AS n FROM case_core WHERE project_id=$1`, [
-      secondProject,
-    ]);
+    const cases = await control.query(
+      `SELECT count(*)::int AS n FROM case_core WHERE project_id=$1`,
+      [secondProject]
+    );
     expect(cases.rows[0].n).toBe(0);
   }, 60_000);
 
@@ -317,9 +318,10 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
       .catch((e: Error) => e);
     expect((neverShownErr as Error).message).toBe('intake_work_order_not_proposed');
 
-    const cases = await control.query(`SELECT count(*)::int AS n FROM case_core WHERE project_id=$1`, [
-      projectA,
-    ]);
+    const cases = await control.query(
+      `SELECT count(*)::int AS n FROM case_core WHERE project_id=$1`,
+      [projectA]
+    );
     expect(cases.rows[0].n).toBe(0);
   }, 60_000);
 
@@ -410,9 +412,10 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
       [t.orgId, JSON.stringify({ caseWorkspaceMaxAutonomyPolicy: 'ASK_EACH_ACTION' })]
     );
     // Case asks for the most permissive level.
-    await control.query(`UPDATE case_core SET autonomy_policy='EXECUTE_APPROVED_PLAN' WHERE case_id=$1`, [
-      t.caseId,
-    ]);
+    await control.query(
+      `UPDATE case_core SET autonomy_policy='EXECUTE_APPROVED_PLAN' WHERE case_id=$1`,
+      [t.caseId]
+    );
 
     const stored = await autonomyPolicyService.readOrganizationAutonomyCeiling(t.orgId);
     expect(stored).toBe('ASK_EACH_ACTION');
@@ -421,9 +424,14 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
     expect(honest.organizationCeilingSource).toBe('ORG_POLICY_ROW');
     expect(honest.effectiveAutonomy).toBe('ASK_EACH_ACTION'); // ceiling wins — correct
 
-    const attempted = await autonomyPolicyService.resolveEffectiveAutonomy(t.orgId, t.caseId, 'A2', {
-      organizationCeiling: 'EXECUTE_APPROVED_PLAN',
-    });
+    const attempted = await autonomyPolicyService.resolveEffectiveAutonomy(
+      t.orgId,
+      t.caseId,
+      'A2',
+      {
+        organizationCeiling: 'EXECUTE_APPROVED_PLAN',
+      }
+    );
 
     // The stored ASK_EACH_ACTION ceiling survives the caller's looser claim.
     expect(attempted.organizationCeilingSource).toBe('ORG_POLICY_ROW');
@@ -455,7 +463,11 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
 
     // ...and with NO caller-supplied value the same permissive stored ceiling
     // does open that path — proving the closure above came from the cap.
-    const permissive = await autonomyPolicyService.resolveEffectiveAutonomy(t.orgId, t.caseId, 'A2');
+    const permissive = await autonomyPolicyService.resolveEffectiveAutonomy(
+      t.orgId,
+      t.caseId,
+      'A2'
+    );
     expect(permissive.organizationCeilingSource).toBe('ORG_POLICY_ROW');
     expect(permissive.effectiveAutonomy).toBe('EXECUTE_APPROVED_PLAN');
     expect(permissive.requirement?.planPolicyPathOpen).toBe(true);
@@ -818,7 +830,7 @@ suite('NEW SURFACE — adversarial security (intake / autonomy / inbox)', () => 
   // WHICH wait an ambiguous key denotes was never established, and an
   // unestablished fact is neither yes nor no: nothing is satisfied.
   // ===================================================================
-  it('FIXED/inbox: a callback with no caseId is ambiguous and satisfies NO case\'s wait', async () => {
+  it("FIXED/inbox: a callback with no caseId is ambiguous and satisfies NO case's wait", async () => {
     const t = await seedTenant('inb2-a');
     const projectB = await seedProject(t.orgId, 'inb2-b');
     const caseB = await caseCoreService.createCase({

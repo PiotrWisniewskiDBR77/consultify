@@ -11,7 +11,6 @@ import { Router } from 'express';
 import { AuditDomainError } from '../../services/audits/auditsDb.js';
 import * as auditTrailService from '../../services/audits/auditTrailService.js';
 import { requireCapability } from '../../services/audits/permissions.js';
-
 import { assertActor, auditActor, parsePaging, route } from './context.js';
 
 const router = Router();
@@ -45,7 +44,7 @@ router.get(
       offset,
     });
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -57,12 +56,20 @@ router.get(
     const entityType = String(query.entityType || '');
     const entityId = String(query.entityId || '');
     if (!entityType || !entityId) {
-      res.status(400).json({ success: false, error: 'entityType i entityId są wymagane', code: 'AUDIT_MISSING_ENTITY' });
+      res.status(400).json({
+        success: false,
+        error: 'entityType i entityId są wymagane',
+        code: 'AUDIT_MISSING_ENTITY',
+      });
       return;
     }
-    const data = await auditTrailService.getEntityHistory(actor.organizationId, entityType, entityId);
+    const data = await auditTrailService.getEntityHistory(
+      actor.organizationId,
+      entityType,
+      entityId
+    );
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -75,7 +82,7 @@ router.get(
     await requireCapability(actor, programId, 'program.read');
     const data = await auditTrailService.getProgramTimeline(actor.organizationId, programId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -88,7 +95,7 @@ router.get(
     await requireCapability(actor, programId, 'program.read');
     const data = await auditTrailService.exportTrail(actor.organizationId, programId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -101,7 +108,7 @@ router.get(
     await requireCapability(actor, programId, 'program.read');
     const data = await auditTrailService.getIndependenceReport(actor.organizationId, programId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 export default router;

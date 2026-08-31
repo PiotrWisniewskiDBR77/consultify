@@ -22,8 +22,9 @@ vi.mock('../auditsMethodApi', async () => {
 });
 
 import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
+
+import { type AuditReportSummary, listReports } from '../auditsMethodApi';
 import { AuditReportsTab } from '../tabs/AuditReportsTab';
-import { listReports, type AuditReportSummary } from '../auditsMethodApi';
 
 const mockedListReports = vi.mocked(listReports);
 

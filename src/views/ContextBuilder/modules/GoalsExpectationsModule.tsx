@@ -83,9 +83,18 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
   ];
 
   const priorityOptions = [
-    { id: 'eff', label: t('organization.goals.intent.priorities.eff', 'Efficiency / Cost Reduction') },
-    { id: 'growth', label: t('organization.goals.intent.priorities.growth', 'Growth / Sales Increase') },
-    { id: 'inv', label: t('organization.goals.intent.priorities.inv', 'Innovation / New Products') },
+    {
+      id: 'eff',
+      label: t('organization.goals.intent.priorities.eff', 'Efficiency / Cost Reduction'),
+    },
+    {
+      id: 'growth',
+      label: t('organization.goals.intent.priorities.growth', 'Growth / Sales Increase'),
+    },
+    {
+      id: 'inv',
+      label: t('organization.goals.intent.priorities.inv', 'Innovation / New Products'),
+    },
     { id: 'qual', label: t('organization.goals.intent.priorities.qual', 'Quality / Compliance') },
     { id: 'speed', label: t('organization.goals.intent.priorities.speed', 'Speed / Agility') },
     { id: 'cust', label: t('organization.goals.intent.priorities.cust', 'Customer Experience') },
@@ -94,7 +103,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
   const archetypeOptions = [
     {
       id: 'fast',
-      label: t('organization.goals.expectations.archetype.options.fast.label', 'Pilot & Scale (Agile)'),
+      label: t(
+        'organization.goals.expectations.archetype.options.fast.label',
+        'Pilot & Scale (Agile)'
+      ),
       desc: t(
         'organization.goals.expectations.archetype.options.fast.desc',
         'Rapid prototyping, MVPs, quick feedback loops. Best for high uncertainty.'
@@ -181,7 +193,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
     },
     {
       id: 'milestone',
-      label: t('organization.goals.expectations.cadence.options.milestone.label', 'Milestone Based'),
+      label: t(
+        'organization.goals.expectations.cadence.options.milestone.label',
+        'Milestone Based'
+      ),
       desc: t(
         'organization.goals.expectations.cadence.options.milestone.desc',
         'Reviews triggered by key deliverables.'
@@ -265,7 +280,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
           <div className="space-y-8 max-w-4xl">
             <div>
               <label className="block text-sm font-bold text-navy-900 dark:text-white mb-2">
-                {t('organization.goals.intent.primaryObjectiveLabel', 'Primary Objective (North Star)')}
+                {t(
+                  'organization.goals.intent.primaryObjectiveLabel',
+                  'Primary Objective (North Star)'
+                )}
               </label>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                 {t(
@@ -370,8 +388,14 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
                   width: 'w-1/6',
                   type: 'select',
                   options: [
-                    { label: t('organization.goals.metrics.timeframeOptions.3m', '3 Months'), value: '3m' },
-                    { label: t('organization.goals.metrics.timeframeOptions.6m', '6 Months'), value: '6m' },
+                    {
+                      label: t('organization.goals.metrics.timeframeOptions.3m', '3 Months'),
+                      value: '3m',
+                    },
+                    {
+                      label: t('organization.goals.metrics.timeframeOptions.6m', '6 Months'),
+                      value: '6m',
+                    },
                     {
                       label: t('organization.goals.metrics.timeframeOptions.12m', '12 Months'),
                       value: '12m',
@@ -405,7 +429,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
                   key: 'notes',
                   label: t('organization.goals.scope.columns.notes', 'Notes'),
                   width: 'w-1/2',
-                  placeholder: t('organization.goals.scope.placeholders.inNotes', 'e.g. Full audit'),
+                  placeholder: t(
+                    'organization.goals.scope.placeholders.inNotes',
+                    'e.g. Full audit'
+                  ),
                 },
               ]}
               {...inScopeHandlers}
@@ -427,7 +454,10 @@ export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ scree
                     key: 'item',
                     label: t('organization.goals.scope.columns.item', 'Item / Area'),
                     width: 'w-1/2',
-                    placeholder: t('organization.goals.scope.placeholders.outItem', 'e.g. Logistics'),
+                    placeholder: t(
+                      'organization.goals.scope.placeholders.outItem',
+                      'e.g. Logistics'
+                    ),
                   },
                   {
                     key: 'notes',

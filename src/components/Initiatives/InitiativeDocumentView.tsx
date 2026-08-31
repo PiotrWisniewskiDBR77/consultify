@@ -69,8 +69,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { dedupeInitiativeUsersById } from './initiativeUsers';
-
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
@@ -189,6 +187,7 @@ import {
   isShowcaseInitiativeId,
 } from './initiativesDemoData';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
+import { dedupeInitiativeUsersById } from './initiativeUsers';
 import {
   DEFAULT_SECTION_ORDER,
   DEFAULT_VISIBLE_SECTIONS,

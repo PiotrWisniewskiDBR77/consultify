@@ -85,13 +85,11 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
 });
 
 const { DrdHttpMethodWorkspaceScreen } = await import('../DrdHttpMethodWorkspaceScreen');
-const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } = await import(
-  '@/method-core/methods/drd/compileDrdPack'
-);
+const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } =
+  await import('@/method-core/methods/drd/compileDrdPack');
 const { DRD_STRUCTURE } = await import('@/services/drdStructure');
-const { SKIP_REASON_OPTIONS, formatSkipJustification } = await import(
-  '@/components/method-workspace/skipReasonCodes'
-);
+const { SKIP_REASON_OPTIONS, formatSkipJustification } =
+  await import('@/components/method-workspace/skipReasonCodes');
 
 const AREA_1A_ID = DRD_STRUCTURE[0].areas[0].id;
 const SKIP_URL_RE = /\/api\/method\/sessions\/sess-http-1\/assessment-skip-reasons$/;
@@ -268,9 +266,7 @@ describe('(c) a 200 response is a success — no error banner (never asserts ===
     // The workspace still advances on success.
     await waitFor(() => expect(breadcrumbText()).not.toEqual(before));
 
-    expect(
-      screen.queryByText(/assessment\.reportView\.skipWriteError/)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/assessment\.reportView\.skipWriteError/)).not.toBeInTheDocument();
   });
 });
 
@@ -300,9 +296,7 @@ describe('(d) network error then retry succeeds — same Idempotency-Key, record
     // regardless of how many times the skip-reasons POST itself retries.
     expect(hoisted.appendEvent).toHaveBeenCalledTimes(1);
 
-    expect(
-      screen.queryByText(/assessment\.reportView\.skipWriteError/)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/assessment\.reportView\.skipWriteError/)).not.toBeInTheDocument();
   });
 });
 

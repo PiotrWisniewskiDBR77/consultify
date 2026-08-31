@@ -29,8 +29,9 @@
  * the first's transaction commits or rolls back, then see the first's
  * committed state. No separate advisory lock or mutex is introduced.
  */
-import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'node:crypto';
+
+import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';

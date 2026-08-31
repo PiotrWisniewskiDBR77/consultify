@@ -65,20 +65,38 @@ vi.mock('../../../services/resultsVnext/roi/roiTrackingCommands.js', () => ({
   startRoiCaseTracking: (...args: unknown[]) => mockStartRoiCaseTracking(...args),
 }));
 
-vi.mock('../../../services/resultsVnext/roi/roiForecastVersionCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiForecastVersionCommands.js')>();
-  return { ...actual, createRoiForecastVersion: (...args: unknown[]) => mockCreateRoiForecastVersion(...args) };
-});
+vi.mock(
+  '../../../services/resultsVnext/roi/roiForecastVersionCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/roi/roiForecastVersionCommands.js')
+      >();
+    return {
+      ...actual,
+      createRoiForecastVersion: (...args: unknown[]) => mockCreateRoiForecastVersion(...args),
+    };
+  }
+);
 vi.mock('../../../services/resultsVnext/roi/roiForecastVersionRepository.js', () => ({
   listRoiForecastVersions: (...args: unknown[]) => mockListRoiForecastVersions(...args),
   getRoiForecastVersion: (...args: unknown[]) => mockGetRoiForecastVersion(...args),
 }));
 vi.mock('../../../services/resultsVnext/roi/roiCompareRepository.js', () => ({
   getRoiCaseCompareView: (...args: unknown[]) => mockGetRoiCaseCompareView(...args),
-  ROI_COMPARE_METRICS: ['npv', 'simpleRoi', 'totalCosts', 'totalFinancialBenefits', 'paybackPeriods'],
+  ROI_COMPARE_METRICS: [
+    'npv',
+    'simpleRoi',
+    'totalCosts',
+    'totalFinancialBenefits',
+    'paybackPeriods',
+  ],
 }));
 vi.mock('../../../services/resultsVnext/roi/roiActualEntryCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiActualEntryCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiActualEntryCommands.js')
+    >();
   return {
     ...actual,
     recordActualEntry: (...args: unknown[]) => mockRecordActualEntry(...args),
@@ -99,7 +117,10 @@ vi.mock('../../../services/resultsVnext/roi/roiActualSnapshotRepository.js', () 
   getRoiActualSnapshot: (...args: unknown[]) => mockGetRoiActualSnapshot(...args),
 }));
 vi.mock('../../../services/resultsVnext/roi/roiVarianceCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiVarianceCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiVarianceCommands.js')
+    >();
   return {
     ...actual,
     recordVariance: (...args: unknown[]) => mockRecordVariance(...args),
@@ -119,14 +140,17 @@ vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiBaseline: vi.fn(),
 }));
 
-const { RoiActualEntryNotFoundError, RoiActualEntryValidationError, RoiActualSelfVerificationDeniedError } = await import(
-  '../../../services/resultsVnext/roi/roiActualEntryCommands.js'
-);
-const { RoiForecastVersionValidationError } = await import('../../../services/resultsVnext/roi/roiForecastVersionCommands.js');
-const { RoiVarianceNotFoundError, RoiVarianceValidationError } = await import(
-  '../../../services/resultsVnext/roi/roiVarianceCommands.js'
-);
-const { AtomicWriteConflictError } = await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const {
+  RoiActualEntryNotFoundError,
+  RoiActualEntryValidationError,
+  RoiActualSelfVerificationDeniedError,
+} = await import('../../../services/resultsVnext/roi/roiActualEntryCommands.js');
+const { RoiForecastVersionValidationError } =
+  await import('../../../services/resultsVnext/roi/roiForecastVersionCommands.js');
+const { RoiVarianceNotFoundError, RoiVarianceValidationError } =
+  await import('../../../services/resultsVnext/roi/roiVarianceCommands.js');
+const { AtomicWriteConflictError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
 const roiRoutes = (await import('../roi.routes.js')).default;
 
@@ -205,7 +229,12 @@ describe('POST .../forecast-versions', () => {
       outcome: 'applied',
       eventId: 'evt-2',
       resultingVersion: 4,
-      result: { forecastVersionId: FORECAST_VERSION_ID, sequenceNumber: 1, status: 'completed', totalCosts: 1000 },
+      result: {
+        forecastVersionId: FORECAST_VERSION_ID,
+        sequenceNumber: 1,
+        status: 'completed',
+        totalCosts: 1000,
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/forecast-versions`)
@@ -238,8 +267,12 @@ describe('POST .../forecast-versions', () => {
 
 describe('GET .../forecast-versions', () => {
   it('200s with a list', async () => {
-    mockListRoiForecastVersions.mockResolvedValue([{ forecastVersionId: FORECAST_VERSION_ID, sequenceNumber: 1 }]);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/forecast-versions`);
+    mockListRoiForecastVersions.mockResolvedValue([
+      { forecastVersionId: FORECAST_VERSION_ID, sequenceNumber: 1 },
+    ]);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/forecast-versions`
+    );
     expect(response.status).toBe(200);
     expect(response.body.forecastVersions).toHaveLength(1);
   });
@@ -263,9 +296,18 @@ describe('GET .../compare', () => {
   it('200s with the 3-slot compare view', async () => {
     mockGetRoiCaseCompareView.mockResolvedValue({
       caseId: CASE_ID,
-      metrics: [{ metric: 'npv', approved: { status: 'available', value: 100 }, forecast: { status: 'not_yet_available', reason: 'no_forecast_published' }, actual: { status: 'not_yet_available', reason: 'no_actual_recorded' } }],
+      metrics: [
+        {
+          metric: 'npv',
+          approved: { status: 'available', value: 100 },
+          forecast: { status: 'not_yet_available', reason: 'no_forecast_published' },
+          actual: { status: 'not_yet_available', reason: 'no_actual_recorded' },
+        },
+      ],
     });
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/compare`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/compare`
+    );
     expect(response.status).toBe(200);
     expect(response.body.compare.metrics[0].approved.status).toBe('available');
     expect(response.body.compare.metrics[0].forecast.reason).toBe('no_forecast_published');
@@ -273,7 +315,9 @@ describe('GET .../compare', () => {
 
   it('404s when the case is not visible/does not exist', async () => {
     mockGetRoiCaseCompareView.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/compare`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/compare`
+    );
     expect(response.status).toBe(404);
   });
 });
@@ -293,17 +337,29 @@ describe('POST .../actuals', () => {
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/actuals`)
-      .send({ entryType: 'observation', periodStart: '2026-01-01', periodEnd: '2026-01-31', source: 'manual' });
+      .send({
+        entryType: 'observation',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-01-31',
+        source: 'manual',
+      });
     expect(response.status).toBe(201);
     expect(response.body.actualEntry.actualEntryId).toBe(ENTRY_ID);
   });
 
   it('maps RoiActualEntryValidationError to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture());
-    mockRecordActualEntry.mockRejectedValue(new RoiActualEntryValidationError('bad line ref', 'INVALID_LINE_REFERENCE'));
+    mockRecordActualEntry.mockRejectedValue(
+      new RoiActualEntryValidationError('bad line ref', 'INVALID_LINE_REFERENCE')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/actuals`)
-      .send({ entryType: 'cost', periodStart: '2026-01-01', periodEnd: '2026-01-31', source: 'manual' });
+      .send({
+        entryType: 'cost',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-01-31',
+        source: 'manual',
+      });
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('INVALID_LINE_REFERENCE');
   });
@@ -312,7 +368,9 @@ describe('POST .../actuals', () => {
 describe('GET .../actuals', () => {
   it('200s with a list', async () => {
     mockListActualEntries.mockResolvedValue([{ actualEntryId: ENTRY_ID }]);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/actuals`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/actuals`
+    );
     expect(response.status).toBe(200);
     expect(response.body.entries).toHaveLength(1);
   });
@@ -321,7 +379,9 @@ describe('GET .../actuals', () => {
 describe('GET .../actuals/:entryId', () => {
   it('404s when not found', async () => {
     mockGetActualEntry.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/actuals/${ENTRY_ID}`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/actuals/${ENTRY_ID}`
+    );
     expect(response.status).toBe(404);
   });
 });
@@ -336,7 +396,10 @@ describe('POST .../actuals/:entryId/corrections', () => {
       outcome: 'applied',
       eventId: 'evt-4',
       resultingVersion: 1,
-      result: { original: { actualEntryId: ENTRY_ID }, superseding: { actualEntryId: 'new-entry', amount: 1000 } },
+      result: {
+        original: { actualEntryId: ENTRY_ID },
+        superseding: { actualEntryId: 'new-entry', amount: 1000 },
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/actuals/${ENTRY_ID}/corrections`)
@@ -361,7 +424,10 @@ describe('POST .../actuals/:entryId/verify — Decision D10', () => {
       outcome: 'applied',
       eventId: 'evt-5',
       resultingVersion: 1,
-      result: { original: { actualEntryId: ENTRY_ID }, superseding: { actualEntryId: 'verified-entry', dataQualityStatus: 'verified' } },
+      result: {
+        original: { actualEntryId: ENTRY_ID },
+        superseding: { actualEntryId: 'verified-entry', dataQualityStatus: 'verified' },
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/actuals/${ENTRY_ID}/verify`)
@@ -388,7 +454,10 @@ describe('POST .../actuals/:entryId/dispute', () => {
       outcome: 'applied',
       eventId: 'evt-6',
       resultingVersion: 1,
-      result: { original: { actualEntryId: ENTRY_ID }, superseding: { actualEntryId: 'disputed-entry', dataQualityStatus: 'disputed' } },
+      result: {
+        original: { actualEntryId: ENTRY_ID },
+        superseding: { actualEntryId: 'disputed-entry', dataQualityStatus: 'disputed' },
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/actuals/${ENTRY_ID}/dispute`)
@@ -440,7 +509,13 @@ describe('POST .../variances', () => {
       outcome: 'applied',
       eventId: 'evt-8',
       resultingVersion: 1,
-      result: { varianceId: VARIANCE_ID, baselineValue: 1000, comparisonValue: 1500, varianceAmount: 500, variancePct: 50 },
+      result: {
+        varianceId: VARIANCE_ID,
+        baselineValue: 1000,
+        comparisonValue: 1500,
+        varianceAmount: 500,
+        variancePct: 50,
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/variances`)
@@ -456,7 +531,9 @@ describe('POST .../variances', () => {
 
   it('maps RoiVarianceValidationError to 409', async () => {
     mockGetRoiCase.mockResolvedValue(caseFixture());
-    mockRecordVariance.mockRejectedValue(new RoiVarianceValidationError('missing reference', 'MISSING_REFERENCE'));
+    mockRecordVariance.mockRejectedValue(
+      new RoiVarianceValidationError('missing reference', 'MISSING_REFERENCE')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/variances`)
       .send({ comparisonType: 'approved_vs_forecast', metric: 'totalCosts' });
@@ -468,13 +545,15 @@ describe('POST .../variances', () => {
 describe('GET .../variances/:varianceId', () => {
   it('maps RoiVarianceNotFoundError-shaped 404 via a null repository result', async () => {
     mockGetVariance.mockResolvedValue(null);
-    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/variances/${VARIANCE_ID}`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/variances/${VARIANCE_ID}`
+    );
     expect(response.status).toBe(404);
   });
 });
 
 describe('PATCH .../variances/:varianceId', () => {
-  it('200s on success (CAS on the variance\'s own row_version)', async () => {
+  it("200s on success (CAS on the variance's own row_version)", async () => {
     mockUpdateVarianceStatus.mockResolvedValue({
       outcome: 'applied',
       eventId: 'evt-9',

@@ -62,7 +62,8 @@
  * list pretending to be "no actions yet").
  */
 import { Api } from '@/services/api';
-import { isNotFoundError, type HttpError } from '../kpiApi';
+
+import { type HttpError, isNotFoundError } from '../kpiApi';
 
 export const DEVIATION_CASE_STATUSES = [
   'open',

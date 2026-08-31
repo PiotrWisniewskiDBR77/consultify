@@ -33,7 +33,10 @@ export default defineConfig({
     navigationTimeout: 60_000,
   },
   projects: [
-    { name: 'owner-desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 960 } } },
+    {
+      name: 'owner-desktop',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 960 } },
+    },
     { name: 'owner-mobile', use: { ...devices['iPhone 13'] } },
   ],
 });

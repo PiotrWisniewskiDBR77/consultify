@@ -87,10 +87,10 @@ describe('correctiveActionService', () => {
     });
 
     await expect(approveAction(fx.organizationId, leadAuditor, correction.id)).rejects.toThrow(
-      /korekcja usuwa SKUTEK/,
+      /korekcja usuwa SKUTEK/
     );
     await expect(approveAction(fx.organizationId, leadAuditor, containment.id)).rejects.toThrow(
-      /co najmniej.*corrective_action/,
+      /co najmniej.*corrective_action/
     );
   });
 
@@ -137,9 +137,14 @@ describe('correctiveActionService', () => {
       title: 'Propozycja do odrzucenia',
     });
     await expect(rejectAction(fx.organizationId, leadAuditor, action.id, '')).rejects.toThrow(
-      /wymaga podania powodu/,
+      /wymaga podania powodu/
     );
-    const rejected = await rejectAction(fx.organizationId, leadAuditor, action.id, 'Nieadekwatne do przyczyny');
+    const rejected = await rejectAction(
+      fx.organizationId,
+      leadAuditor,
+      action.id,
+      'Nieadekwatne do przyczyny'
+    );
     expect(rejected.status).toBe('rejected');
     expect(rejected.rejectedReason).toBe('Nieadekwatne do przyczyny');
   });
@@ -150,7 +155,7 @@ describe('correctiveActionService', () => {
       title: 'Wdrożyć procedurę',
     });
     await expect(
-      reportImplementation(fx.organizationId, auditee, action.id, { note: 'Za wcześnie' }),
+      reportImplementation(fx.organizationId, auditee, action.id, { note: 'Za wcześnie' })
     ).rejects.toThrow(/zatwierdzonego lub w toku/);
 
     await approveAction(fx.organizationId, leadAuditor, action.id);
@@ -171,7 +176,12 @@ describe('correctiveActionService', () => {
     const linkedTask = await linkToTask(fx.organizationId, auditee, action.id, 'task_external_123');
     expect(linkedTask.taskId).toBe('task_external_123');
 
-    const linkedInitiative = await linkToInitiative(fx.organizationId, auditee, action.id, 'init_external_456');
+    const linkedInitiative = await linkToInitiative(
+      fx.organizationId,
+      auditee,
+      action.id,
+      'init_external_456'
+    );
     expect(linkedInitiative.initiativeId).toBe('init_external_456');
   });
 
@@ -233,7 +243,7 @@ describe('correctiveActionService', () => {
       // Próba zatwierdzenia cudzego działania w kontekście organizacji A nie
       // znajduje wiersza (brak przecieku między dzierżawcami).
       await expect(approveAction(fx.organizationId, leadAuditor, otherAction.id)).rejects.toThrow(
-        /nie został znaleziony/,
+        /nie został znaleziony/
       );
     } finally {
       await cleanupFixture(other.organizationId);

@@ -1,5 +1,5 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AssessmentLibraryTab } from '../library/AssessmentLibraryTab';
@@ -27,8 +27,14 @@ describe('AssessmentLibraryTab day178 empty-state render contract', () => {
   it('describes an empty static catalog without claiming a load failure', () => {
     render(React.createElement(AssessmentLibraryTab));
 
-    expect(screen.getByRole('heading', { name: 'Brak dostępnych metodyk oceny' })).toBeInTheDocument();
-    expect(screen.getByText('Katalog metodyk nie zawiera obecnie żadnych pozycji.')).toBeInTheDocument();
-    expect(screen.queryByText('The methodology catalog could not be loaded.')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Brak dostępnych metodyk oceny' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Katalog metodyk nie zawiera obecnie żadnych pozycji.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('The methodology catalog could not be loaded.')
+    ).not.toBeInTheDocument();
   });
 });

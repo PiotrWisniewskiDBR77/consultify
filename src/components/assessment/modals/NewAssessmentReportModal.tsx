@@ -1,7 +1,7 @@
 import { FileText, Loader2, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -230,7 +230,9 @@ export function NewAssessmentReportModal(props: {
                   onClose();
                 } catch (e: any) {
                   toast.error(
-                    e?.error || e?.message || t(`${NS}.toast.createFailed`, 'Failed to create report'),
+                    e?.error ||
+                      e?.message ||
+                      t(`${NS}.toast.createFailed`, 'Failed to create report'),
                     { id: toastId }
                   );
                 } finally {

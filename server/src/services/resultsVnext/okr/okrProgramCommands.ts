@@ -23,18 +23,18 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { publishVisibilityPolicy } from '../platform/visibilityResolver.js';
-
 import {
   buildProgramPolicySnapshot,
-  toOkrProgram,
-  toOkrProgramPolicyVersion,
   type OkrCheckinFrequency,
   type OkrConfidenceModel,
   type OkrCycleModel,
@@ -46,6 +46,8 @@ import {
   type OkrProgramRow,
   type OkrScoringModel,
   type OkrVisibilityDefault,
+  toOkrProgram,
+  toOkrProgramPolicyVersion,
 } from './okrProgramTypes.js';
 
 // ==========================================
@@ -351,7 +353,8 @@ export async function editProgramDraft(
       const merged = {
         name: name ?? currentRow.name,
         cycleModel: policyOverrides.cycleModel ?? currentRow.cycle_model,
-        annualDirectionEnabled: policyOverrides.annualDirectionEnabled ?? currentRow.annual_direction_enabled,
+        annualDirectionEnabled:
+          policyOverrides.annualDirectionEnabled ?? currentRow.annual_direction_enabled,
         objectiveMinRecommended:
           policyOverrides.objectiveMinRecommended !== undefined
             ? policyOverrides.objectiveMinRecommended
@@ -368,15 +371,18 @@ export async function editProgramDraft(
         checkinFrequency: policyOverrides.checkinFrequency ?? currentRow.checkin_frequency,
         approvalRequired: policyOverrides.approvalRequired ?? currentRow.approval_required,
         scoringModel: policyOverrides.scoringModel ?? currentRow.scoring_model,
-        objectiveRollupModel: policyOverrides.objectiveRollupModel ?? currentRow.objective_rollup_model,
+        objectiveRollupModel:
+          policyOverrides.objectiveRollupModel ?? currentRow.objective_rollup_model,
         confidenceEnabled: policyOverrides.confidenceEnabled ?? currentRow.confidence_enabled,
         confidenceModel: policyOverrides.confidenceModel ?? currentRow.confidence_model,
         objectiveConfidenceModel:
           policyOverrides.objectiveConfidenceModel ?? currentRow.objective_confidence_model,
         visibilityDefault: policyOverrides.visibilityDefault ?? currentRow.visibility_default,
         committedVsAspirationalEnabled:
-          policyOverrides.committedVsAspirationalEnabled ?? currentRow.committed_vs_aspirational_enabled,
-        managerReviewRequired: policyOverrides.managerReviewRequired ?? currentRow.manager_review_required,
+          policyOverrides.committedVsAspirationalEnabled ??
+          currentRow.committed_vs_aspirational_enabled,
+        managerReviewRequired:
+          policyOverrides.managerReviewRequired ?? currentRow.manager_review_required,
         selfReviewRequired: policyOverrides.selfReviewRequired ?? currentRow.self_review_required,
         reflectionRequiredForClose:
           policyOverrides.reflectionRequiredForClose ?? currentRow.reflection_required_for_close,
@@ -550,7 +556,9 @@ export async function publishProgram(
       );
       const policyVersionRow = policyVersionInsert.rows[0];
       if (!policyVersionRow) {
-        throw new Error('[publishProgram] insert into okr_vnext_program_policy_versions returned no row');
+        throw new Error(
+          '[publishProgram] insert into okr_vnext_program_policy_versions returned no row'
+        );
       }
 
       // Step 3: pin active_policy_version_id; draft -> active, active stays active.

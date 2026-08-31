@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
 import { aiInputHash } from '../../domain/initiatives-execution/aiEvidenceGovernance.js';
-import aiBudgetService from '../aiBudgetService.js';
+import type { SignalQuery } from '../../types/workSignals.js';
 import { llmConfigService } from '../ai/llmConfigService.js';
 import { llmService } from '../ai/llmService.js';
-import type { SignalQuery } from '../../types/workSignals.js';
+import aiBudgetService from '../aiBudgetService.js';
 
 export interface InterpreterInputSignal {
   signalId: string;

@@ -28,4 +28,3 @@ describe('Chat history organization visibility consent', () => {
     expect(source).toContain("t('aiChat.visibilityConsentRecorded'");
   });
 });
-

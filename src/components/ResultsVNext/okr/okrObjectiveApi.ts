@@ -67,10 +67,22 @@ export type OkrObjectiveStatus = (typeof OKR_OBJECTIVE_STATUSES)[number];
 export const OKR_OBJECTIVE_CONFIDENCE_VALUES = ['high', 'medium', 'low', 'numeric'] as const;
 export type OkrObjectiveConfidence = (typeof OKR_OBJECTIVE_CONFIDENCE_VALUES)[number];
 
-export const OKR_KEY_RESULT_MEASUREMENT_TYPES_MVP_SUPPORTED = ['numeric', 'percentage', 'currency', 'binary'] as const;
-export type OkrKeyResultMeasurementType = (typeof OKR_KEY_RESULT_MEASUREMENT_TYPES_MVP_SUPPORTED)[number];
+export const OKR_KEY_RESULT_MEASUREMENT_TYPES_MVP_SUPPORTED = [
+  'numeric',
+  'percentage',
+  'currency',
+  'binary',
+] as const;
+export type OkrKeyResultMeasurementType =
+  (typeof OKR_KEY_RESULT_MEASUREMENT_TYPES_MVP_SUPPORTED)[number];
 
-export const OKR_KEY_RESULT_DIRECTIONS = ['increase', 'decrease', 'reach', 'maintain_range', 'binary'] as const;
+export const OKR_KEY_RESULT_DIRECTIONS = [
+  'increase',
+  'decrease',
+  'reach',
+  'maintain_range',
+  'binary',
+] as const;
 export type OkrKeyResultDirection = (typeof OKR_KEY_RESULT_DIRECTIONS)[number];
 
 export const OKR_KEY_RESULT_STATUSES = [
@@ -84,7 +96,13 @@ export const OKR_KEY_RESULT_STATUSES = [
 ] as const;
 export type OkrKeyResultStatus = (typeof OKR_KEY_RESULT_STATUSES)[number];
 
-export const OKR_KEY_RESULT_SOURCE_TYPES = ['manual', 'import', 'connector', 'mcp', 'calculated'] as const;
+export const OKR_KEY_RESULT_SOURCE_TYPES = [
+  'manual',
+  'import',
+  'connector',
+  'mcp',
+  'calculated',
+] as const;
 export type OkrKeyResultSourceType = (typeof OKR_KEY_RESULT_SOURCE_TYPES)[number];
 
 export const OKR_KEY_RESULT_CONFIDENCE_VALUES = ['high', 'medium', 'low', 'numeric'] as const;
@@ -225,7 +243,11 @@ async function getJson<T>(path: string): Promise<T> {
     } catch {
       // non-JSON error body — fall through with generic message
     }
-    throw new OkrObjectiveApiError(body.error || `Request failed (${res.status})`, res.status, body.code);
+    throw new OkrObjectiveApiError(
+      body.error || `Request failed (${res.status})`,
+      res.status,
+      body.code
+    );
   }
   return res.json() as Promise<T>;
 }
@@ -246,7 +268,11 @@ async function mutateJson<T>(method: 'POST' | 'PATCH', path: string, body: unkno
     // non-JSON body — fall through with a generic message/empty details
   }
   if (!res.ok) {
-    const { error, code, ...details } = parsed as { error?: string; code?: string; [k: string]: unknown };
+    const { error, code, ...details } = parsed as {
+      error?: string;
+      code?: string;
+      [k: string]: unknown;
+    };
     throw new OkrObjectiveApiError(
       (typeof error === 'string' && error) || `Request failed (${res.status})`,
       res.status,
@@ -268,7 +294,9 @@ export function newOkrIdempotencyKey(): string {
 // (`okr.routes.ts` L1407-1421)
 // ==========================================
 
-export async function listObjectivesForSet(setId: string): Promise<OkrObjectiveWithKeyResultsDto[]> {
+export async function listObjectivesForSet(
+  setId: string
+): Promise<OkrObjectiveWithKeyResultsDto[]> {
   const { objectives } = await getJson<{ objectives: OkrObjectiveWithKeyResultsDto[] }>(
     `/vnext/results/okr/sets/${encodeURIComponent(setId)}/objectives`
   );
@@ -282,7 +310,9 @@ export async function listObjectivesForSet(setId: string): Promise<OkrObjectiveW
 // header — no separate KR-list endpoint exists).
 // ==========================================
 
-export async function getObjectiveWithKeyResults(objectiveId: string): Promise<OkrObjectiveWithKeyResultsDto | null> {
+export async function getObjectiveWithKeyResults(
+  objectiveId: string
+): Promise<OkrObjectiveWithKeyResultsDto | null> {
   try {
     const { objective } = await getJson<{ objective: OkrObjectiveWithKeyResultsDto }>(
       `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}`
@@ -315,7 +345,10 @@ export interface CreateOkrObjectiveResponse {
   objective: OkrObjectiveDto;
 }
 
-export async function createObjective(setId: string, input: CreateOkrObjectiveInput): Promise<CreateOkrObjectiveResponse> {
+export async function createObjective(
+  setId: string,
+  input: CreateOkrObjectiveInput
+): Promise<CreateOkrObjectiveResponse> {
   return mutateJson<CreateOkrObjectiveResponse>(
     'POST',
     `/vnext/results/okr/sets/${encodeURIComponent(setId)}/objectives`,
@@ -355,7 +388,10 @@ export interface UpdateOkrObjectiveResponse {
   objective: OkrObjectiveDto;
 }
 
-export async function updateObjective(objectiveId: string, input: UpdateOkrObjectiveInput): Promise<UpdateOkrObjectiveResponse> {
+export async function updateObjective(
+  objectiveId: string,
+  input: UpdateOkrObjectiveInput
+): Promise<UpdateOkrObjectiveResponse> {
   return mutateJson<UpdateOkrObjectiveResponse>(
     'PATCH',
     `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}`,
@@ -379,7 +415,10 @@ export interface CancelOkrObjectiveResponse {
   objective: OkrObjectiveDto;
 }
 
-export async function cancelObjective(objectiveId: string, input: OkrTransitionInput): Promise<CancelOkrObjectiveResponse> {
+export async function cancelObjective(
+  objectiveId: string,
+  input: OkrTransitionInput
+): Promise<CancelOkrObjectiveResponse> {
   return mutateJson<CancelOkrObjectiveResponse>(
     'POST',
     `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/cancel`,
@@ -423,7 +462,10 @@ export interface CreateOkrKeyResultResponse {
   keyResult: OkrKeyResultDto;
 }
 
-export async function createKeyResult(objectiveId: string, input: CreateOkrKeyResultInput): Promise<CreateOkrKeyResultResponse> {
+export async function createKeyResult(
+  objectiveId: string,
+  input: CreateOkrKeyResultInput
+): Promise<CreateOkrKeyResultResponse> {
   return mutateJson<CreateOkrKeyResultResponse>(
     'POST',
     `/vnext/results/okr/objectives/${encodeURIComponent(objectiveId)}/key-results`,
@@ -469,7 +511,10 @@ export interface UpdateOkrKeyResultResponse {
   keyResult: OkrKeyResultDto;
 }
 
-export async function updateKeyResult(keyResultId: string, input: UpdateOkrKeyResultInput): Promise<UpdateOkrKeyResultResponse> {
+export async function updateKeyResult(
+  keyResultId: string,
+  input: UpdateOkrKeyResultInput
+): Promise<UpdateOkrKeyResultResponse> {
   return mutateJson<UpdateOkrKeyResultResponse>(
     'PATCH',
     `/vnext/results/okr/key-results/${encodeURIComponent(keyResultId)}`,
@@ -487,7 +532,10 @@ export interface CancelOkrKeyResultResponse {
   keyResult: OkrKeyResultDto;
 }
 
-export async function cancelKeyResult(keyResultId: string, input: OkrTransitionInput): Promise<CancelOkrKeyResultResponse> {
+export async function cancelKeyResult(
+  keyResultId: string,
+  input: OkrTransitionInput
+): Promise<CancelOkrKeyResultResponse> {
   return mutateJson<CancelOkrKeyResultResponse>(
     'POST',
     `/vnext/results/okr/key-results/${encodeURIComponent(keyResultId)}/cancel`,

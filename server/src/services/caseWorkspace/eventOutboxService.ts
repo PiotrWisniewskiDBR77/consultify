@@ -153,7 +153,8 @@ const RETRY_BACKOFF_MAX_EXPONENT = 20;
  * an ETA for an operator dashboard has one source of truth for it.
  */
 export function computeRetryBackoffMs(attemptNumber: number): number {
-  const attempt = Number.isFinite(attemptNumber) && attemptNumber > 0 ? Math.floor(attemptNumber) : 1;
+  const attempt =
+    Number.isFinite(attemptNumber) && attemptNumber > 0 ? Math.floor(attemptNumber) : 1;
   const exponent = Math.min(attempt - 1, RETRY_BACKOFF_MAX_EXPONENT);
   const delayMs = RETRY_BACKOFF_BASE_MS * Math.pow(2, exponent);
   return Math.min(RETRY_BACKOFF_MAX_MS, delayMs);
@@ -183,10 +184,7 @@ const DEFAULT_DISPATCH_BATCH_SIZE = 50;
  * publishEvent accepts either — it never creates a connection of its own.
  */
 export interface EventOutboxTransactionClient {
-  query<T = any>(
-    sql: string,
-    params?: any[]
-  ): Promise<{ rows: T[]; rowCount: number | null }>;
+  query<T = any>(sql: string, params?: any[]): Promise<{ rows: T[]; rowCount: number | null }>;
 }
 
 /** §6 DomainEvent envelope, as accepted from a producing service. */
@@ -699,7 +697,9 @@ export async function replayEventsForAggregate(
   const id = requireNonBlank(aggregateId, 'event_outbox_aggregate_id_required');
   const organizationId = optionalTrimmed(options.organizationId);
   const limit =
-    Number.isInteger(options.limit) && (options.limit as number) > 0 ? (options.limit as number) : null;
+    Number.isInteger(options.limit) && (options.limit as number) > 0
+      ? (options.limit as number)
+      : null;
 
   const rows = await queryAll<OutboxEventRow>(
     `SELECT ${SELECT_COLUMNS}
@@ -735,7 +735,9 @@ export async function listDeadLetterEvents(
 ): Promise<OutboxEventRecord[]> {
   const organizationId = optionalTrimmed(options.organizationId);
   const limit =
-    Number.isInteger(options.limit) && (options.limit as number) > 0 ? (options.limit as number) : 100;
+    Number.isInteger(options.limit) && (options.limit as number) > 0
+      ? (options.limit as number)
+      : 100;
   const rows = await queryAll<OutboxEventRow>(
     `SELECT ${SELECT_COLUMNS}
        FROM ${OUTBOX_TABLE}

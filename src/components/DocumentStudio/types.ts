@@ -196,7 +196,12 @@ export interface DocumentGenerationWarning {
 // relaxes structural guardrails but keeps absolute safety caps and
 // tags the audit trail with `authority: 'user_explicit_rebuild'`.
 export type DocumentEditorScope =
-  'local' | 'section' | 'global' | 'methodology' | 'source' | 'transformative';
+  | 'local'
+  | 'section'
+  | 'global'
+  | 'methodology'
+  | 'source'
+  | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**
@@ -208,7 +213,13 @@ export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'exe
  * change list, and falls back to the aggregate `diff` when absent.
  */
 export type DocumentEditType =
-  'rewrite' | 'replace' | 'restructure' | 'annotate' | 'expand' | 'condense' | 'reformat';
+  | 'rewrite'
+  | 'replace'
+  | 'restructure'
+  | 'annotate'
+  | 'expand'
+  | 'condense'
+  | 'reformat';
 
 export interface DocumentEditTargetedChange {
   targetSectionId: string;
@@ -659,7 +670,11 @@ export interface DocumentVariantSummary {
 }
 
 export type DocumentApprovalStatus =
-  'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled';
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'changes_requested'
+  | 'cancelled';
 export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';
 export type DocumentApprovalQuorumPolicy = 'unanimous' | 'majority' | 'single_approval';
 

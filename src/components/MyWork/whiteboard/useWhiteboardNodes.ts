@@ -447,7 +447,8 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
       .map((n) => rectOfWhiteboardNode(n));
 
     const sortedUnits = [...units].sort(
-      (a, b) => a.rect.y - b.rect.y || a.rect.x - b.rect.x || a.memberIds[0].localeCompare(b.memberIds[0])
+      (a, b) =>
+        a.rect.y - b.rect.y || a.rect.x - b.rect.x || a.memberIds[0].localeCompare(b.memberIds[0])
     );
     const anchor = {
       x: Math.min(...sortedUnits.map((u) => u.rect.x)),
@@ -595,7 +596,11 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
       setNodes((prev: Node[]) =>
         prev.map((n) => {
           if (n.id !== nodeId) return n;
-          const { parentNode: _pn, parentId: _pid, ...rest } = n as Node & {
+          const {
+            parentNode: _pn,
+            parentId: _pid,
+            ...rest
+          } = n as Node & {
             parentNode?: string;
             parentId?: string;
           };
@@ -660,7 +665,11 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
             ? {
                 ...n,
                 data: { ...n.data, width: newWidth, height: newHeight },
-                style: { ...(n.style as Record<string, unknown>), width: newWidth, height: newHeight },
+                style: {
+                  ...(n.style as Record<string, unknown>),
+                  width: newWidth,
+                  height: newHeight,
+                },
               }
             : n
         )
@@ -697,7 +706,11 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
               const absolutePosition = hasNativeParent
                 ? { x: n.position.x + frame.position.x, y: n.position.y + frame.position.y }
                 : n.position;
-              const { parentNode: _pn, parentId: _pid, ...rest } = n as Node & {
+              const {
+                parentNode: _pn,
+                parentId: _pid,
+                ...rest
+              } = n as Node & {
                 parentNode?: string;
                 parentId?: string;
               };
@@ -759,7 +772,10 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
       const hasNativeParent = Boolean((node as { parentNode?: string }).parentNode);
       const absolutePosition =
         currentFrameId && currentFrame && hasNativeParent
-          ? { x: node.position.x + currentFrame.position.x, y: node.position.y + currentFrame.position.y }
+          ? {
+              x: node.position.x + currentFrame.position.x,
+              y: node.position.y + currentFrame.position.y,
+            }
           : node.position;
 
       const nodeRect = rectOfWhiteboardNode({ ...node, position: absolutePosition });
@@ -799,7 +815,9 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
         };
         setNodes((prev: Node[]) => {
           const next = prev.map((n) =>
-            n.id === nodeId ? { ...n, parentNode: frameId, parentId: frameId, position: relative } : n
+            n.id === nodeId
+              ? { ...n, parentNode: frameId, parentId: frameId, position: relative }
+              : n
           );
           // ReactFlow requires a parent node to precede its children.
           const frameIdx = next.findIndex((n) => n.id === frameId);
@@ -815,7 +833,11 @@ export function useWhiteboardNodes(opts: UseWhiteboardNodesOpts) {
         setNodes((prev: Node[]) =>
           prev.map((n) => {
             if (n.id !== nodeId) return n;
-            const { parentNode: _pn, parentId: _pid, ...rest } = n as Node & {
+            const {
+              parentNode: _pn,
+              parentId: _pid,
+              ...rest
+            } = n as Node & {
               parentNode?: string;
               parentId?: string;
             };

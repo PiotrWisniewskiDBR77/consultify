@@ -1090,7 +1090,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                               {o.leverName || o.leverId}
                             </span>
                             <span className="tabular-nums text-[11px] text-c-text-secondary">
-                              {typeof o.metric === 'number' ? o.metric.toLocaleString('pl-PL') : '—'}
+                              {typeof o.metric === 'number'
+                                ? o.metric.toLocaleString('pl-PL')
+                                : '—'}
                               {typeof o.deltaVsStatusQuo === 'number' &&
                                 o.deltaVsStatusQuo !== 0 && (
                                   <span

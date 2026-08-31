@@ -259,13 +259,13 @@ export const ExecutionControlSurface = ({
       }>;
       const interventionItems =
         (b.items ?? []).length > 0
-          ? b.items ?? []
+          ? (b.items ?? [])
           : executionLocalReviewEnabled
             ? executionReviewInterventions
             : [];
       const signalItems =
         (s.items ?? []).length > 0
-          ? s.items ?? []
+          ? (s.items ?? [])
           : executionLocalReviewEnabled
             ? executionReviewSignals
             : [];

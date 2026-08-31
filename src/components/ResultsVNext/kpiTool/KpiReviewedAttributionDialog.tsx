@@ -15,8 +15,8 @@
 import { AlertTriangle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 export interface KpiReviewedAttributionDialogProps {
   open: boolean;
@@ -32,7 +32,8 @@ const FIELD_CLASS =
   'placeholder:text-c-text-muted transition-colors ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -81,7 +82,13 @@ export const KpiReviewedAttributionDialog: React.FC<KpiReviewedAttributionDialog
       preventEscapeClose={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS} data-testid="kpi-reviewed-attribution-back">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className={GHOST_BUTTON_CLASS}
+            data-testid="kpi-reviewed-attribution-back"
+          >
             {isPolish ? 'Wstecz' : 'Back'}
           </button>
           <button
@@ -91,7 +98,9 @@ export const KpiReviewedAttributionDialog: React.FC<KpiReviewedAttributionDialog
             data-testid="kpi-reviewed-attribution-submit"
             className={PRIMARY_BUTTON_CLASS}
           >
-            <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Zapisz' : 'Save'}</span>
+            <span>
+              {busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : isPolish ? 'Zapisz' : 'Save'}
+            </span>
           </button>
         </>
       }
@@ -99,7 +108,9 @@ export const KpiReviewedAttributionDialog: React.FC<KpiReviewedAttributionDialog
       <div className="space-y-3">
         <div>
           <label className={LABEL_CLASS} htmlFor="kpi-reviewed-attribution-value">
-            {isPolish ? 'Zweryfikowana wartość atrybucji (wymagane)' : 'Reviewed attribution value (required)'}
+            {isPolish
+              ? 'Zweryfikowana wartość atrybucji (wymagane)'
+              : 'Reviewed attribution value (required)'}
           </label>
           <input
             id="kpi-reviewed-attribution-value"
@@ -114,8 +125,18 @@ export const KpiReviewedAttributionDialog: React.FC<KpiReviewedAttributionDialog
             aria-describedby={fieldError ? 'kpi-reviewed-attribution-value-error' : undefined}
           />
           {fieldError ? (
-            <p id="kpi-reviewed-attribution-value-error" className="mt-1 text-[11px] text-c-danger" data-testid="kpi-reviewed-attribution-value-error">
-              {isEmpty ? (isPolish ? 'To pole jest wymagane' : 'This field is required') : isPolish ? 'Podaj poprawną liczbę' : 'Enter a valid number'}
+            <p
+              id="kpi-reviewed-attribution-value-error"
+              className="mt-1 text-[11px] text-c-danger"
+              data-testid="kpi-reviewed-attribution-value-error"
+            >
+              {isEmpty
+                ? isPolish
+                  ? 'To pole jest wymagane'
+                  : 'This field is required'
+                : isPolish
+                  ? 'Podaj poprawną liczbę'
+                  : 'Enter a valid number'}
             </p>
           ) : null}
         </div>

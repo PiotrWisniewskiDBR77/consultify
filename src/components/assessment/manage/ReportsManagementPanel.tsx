@@ -624,9 +624,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
           ? {
               onClick: () => {
                 if (
-                  !confirm(
-                    t('assessment.reportsManagePanel.confirmDelete', { name: report.name })
-                  )
+                  !confirm(t('assessment.reportsManagePanel.confirmDelete', { name: report.name }))
                 )
                   return;
                 void (async () => {

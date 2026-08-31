@@ -125,8 +125,9 @@ vi.mock('../../../store/useAppStore', () => ({
   useAppStore: () => appStoreState,
 }));
 
-import { InitiativesHub, readV8InitiativeId } from '../InitiativesHub';
 import { resetInitiativeBridgeFlagCache } from '@/utils/initiativeBridgeFlag';
+
+import { InitiativesHub, readV8InitiativeId } from '../InitiativesHub';
 
 const renderHub = () =>
   render(
@@ -173,10 +174,13 @@ describe('InitiativesHub smoke', () => {
     const prompt = vi.spyOn(window, 'prompt');
     prompt.mockReturnValueOnce('classic-initiative-1').mockReturnValueOnce('candidate-1');
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ status: 'APPLIED' }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ status: 'APPLIED' }), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     renderHub();

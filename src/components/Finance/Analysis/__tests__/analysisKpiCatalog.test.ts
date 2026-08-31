@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ANALYSIS_INDUSTRY_PRESETS,
+  type AnalysisKpiCatalogEntryLike,
   recommendKpisForIndustry,
   validateCustomFormula,
-  type AnalysisKpiCatalogEntryLike,
 } from '../analysisKpiCatalog';
 
 const CATALOG: AnalysisKpiCatalogEntryLike[] = [
@@ -26,12 +26,24 @@ describe('ANALYSIS_INDUSTRY_PRESETS', () => {
 describe('recommendKpisForIndustry', () => {
   it('GENERAL ⇒ tylko uniwersalne, dostępne w katalogu', () => {
     const result = recommendKpisForIndustry(CATALOG, 'GENERAL');
-    expect(result).toEqual(['REVENUE_GROWTH_YOY', 'GROSS_MARGIN_PCT', 'EBITDA_MARGIN_PCT', 'NET_MARGIN_PCT']);
+    expect(result).toEqual([
+      'REVENUE_GROWTH_YOY',
+      'GROSS_MARGIN_PCT',
+      'EBITDA_MARGIN_PCT',
+      'NET_MARGIN_PCT',
+    ]);
   });
 
   it('SAAS ⇒ uniwersalne + branżowe SAaS, w tej kolejności', () => {
     const result = recommendKpisForIndustry(CATALOG, 'SAAS');
-    expect(result).toEqual(['REVENUE_GROWTH_YOY', 'GROSS_MARGIN_PCT', 'EBITDA_MARGIN_PCT', 'NET_MARGIN_PCT', 'NET_REVENUE_RETENTION', 'RULE_OF_40']);
+    expect(result).toEqual([
+      'REVENUE_GROWTH_YOY',
+      'GROSS_MARGIN_PCT',
+      'EBITDA_MARGIN_PCT',
+      'NET_MARGIN_PCT',
+      'NET_REVENUE_RETENTION',
+      'RULE_OF_40',
+    ]);
   });
 
   it('KONTROLA NEGATYWNA: KPI status!=ACTIVE (DRAFT) NIGDY nie trafia do rekomendacji, nawet jeśli jest na liście preferencji branży', () => {
@@ -72,7 +84,13 @@ describe('validateCustomFormula — piaskownica bez eval', () => {
   });
 
   it('KONTROLA NEGATYWNA (bezpieczeństwo): próba wstrzyknięcia kodu (średnik, backticki, wywołanie funkcji JS) ⇒ odrzucona jako UNKNOWN_TOKEN, formuła NIGDY nie trafia do eval/Function', () => {
-    const attempts = ['REVENUE; alert(1)', 'REVENUE`+alert(1)`', 'require("fs")', 'REVENUE // COGS', 'REVENUE==COGS'];
+    const attempts = [
+      'REVENUE; alert(1)',
+      'REVENUE`+alert(1)`',
+      'require("fs")',
+      'REVENUE // COGS',
+      'REVENUE==COGS',
+    ];
     for (const attempt of attempts) {
       const result = validateCustomFormula(attempt, LINE_CODES);
       expect(result.ok).toBe(false);

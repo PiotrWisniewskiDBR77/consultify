@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Api from '@/services/api';
+
 import { duplicateCalendarEventFourWeeks } from '../duplicateCalendarEvent';
 
 vi.mock('@/services/api', () => ({ default: { createMyWorkCalendarEvent: vi.fn() } }));

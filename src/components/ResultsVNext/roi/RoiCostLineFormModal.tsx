@@ -16,12 +16,26 @@
 import { AlertTriangle, Plus, Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
-import type { AddRoiCostLineInput, RoiConfidenceLevel, RoiCostLine, RoiRecurrenceCadence, RoiTimingType } from './roiCaseDetailApi';
-import { ROI_CONFIDENCE_LEVELS, ROI_RECURRENCE_CADENCES, ROI_TIMING_TYPES } from './roiCaseDetailApi';
-import { roiConfidenceLabel, roiRecurrenceCadenceLabel, roiTimingTypeLabel } from './roiCaseDetailMappers';
+import type {
+  AddRoiCostLineInput,
+  RoiConfidenceLevel,
+  RoiCostLine,
+  RoiRecurrenceCadence,
+  RoiTimingType,
+} from './roiCaseDetailApi';
+import {
+  ROI_CONFIDENCE_LEVELS,
+  ROI_RECURRENCE_CADENCES,
+  ROI_TIMING_TYPES,
+} from './roiCaseDetailApi';
+import {
+  roiConfidenceLabel,
+  roiRecurrenceCadenceLabel,
+  roiTimingTypeLabel,
+} from './roiCaseDetailMappers';
 
 const CURRENCIES = ['PLN', 'EUR', 'USD', 'GBP', 'CZK', 'CHF'];
 
@@ -49,7 +63,8 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
@@ -128,7 +143,14 @@ export const RoiCostLineFormModal: React.FC<RoiCostLineFormModalProps> = ({
     });
   };
 
-  const title = mode === 'create' ? (isPolish ? 'Nowa pozycja kosztowa' : 'New cost line') : (isPolish ? 'Edytuj pozycję kosztową' : 'Edit cost line');
+  const title =
+    mode === 'create'
+      ? isPolish
+        ? 'Nowa pozycja kosztowa'
+        : 'New cost line'
+      : isPolish
+        ? 'Edytuj pozycję kosztową'
+        : 'Edit cost line';
 
   return (
     <Modal
@@ -172,97 +194,247 @@ export const RoiCostLineFormModal: React.FC<RoiCostLineFormModalProps> = ({
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-category">{isPolish ? 'Kategoria' : 'Category'}</label>
-            <input id="roi-cost-category" value={category} onChange={(e) => setCategory(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-category" aria-invalid={categoryError || undefined} />
-            {categoryError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Kategoria jest wymagana' : 'Category is required'}</p> : null}
+            <label className={LABEL_CLASS} htmlFor="roi-cost-category">
+              {isPolish ? 'Kategoria' : 'Category'}
+            </label>
+            <input
+              id="roi-cost-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-category"
+              aria-invalid={categoryError || undefined}
+            />
+            {categoryError ? (
+              <p className="mt-1 text-[11px] text-c-danger">
+                {isPolish ? 'Kategoria jest wymagana' : 'Category is required'}
+              </p>
+            ) : null}
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-label">{isPolish ? 'Nazwa pozycji' : 'Cost line label'}</label>
-            <input id="roi-cost-label" autoFocus value={label} onChange={(e) => setLabel(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-label" aria-invalid={labelError || undefined} />
-            {labelError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Nazwa jest wymagana' : 'Label is required'}</p> : null}
+            <label className={LABEL_CLASS} htmlFor="roi-cost-label">
+              {isPolish ? 'Nazwa pozycji' : 'Cost line label'}
+            </label>
+            <input
+              id="roi-cost-label"
+              autoFocus
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-label"
+              aria-invalid={labelError || undefined}
+            />
+            {labelError ? (
+              <p className="mt-1 text-[11px] text-c-danger">
+                {isPolish ? 'Nazwa jest wymagana' : 'Label is required'}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-amount">{isPolish ? 'Kwota' : 'Amount'}</label>
-            <input id="roi-cost-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-amount" aria-invalid={amountError || undefined} />
-            {amountError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Kwota jest wymagana' : 'Amount is required'}</p> : null}
+            <label className={LABEL_CLASS} htmlFor="roi-cost-amount">
+              {isPolish ? 'Kwota' : 'Amount'}
+            </label>
+            <input
+              id="roi-cost-amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-amount"
+              aria-invalid={amountError || undefined}
+            />
+            {amountError ? (
+              <p className="mt-1 text-[11px] text-c-danger">
+                {isPolish ? 'Kwota jest wymagana' : 'Amount is required'}
+              </p>
+            ) : null}
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-currency">{isPolish ? 'Waluta' : 'Currency'}</label>
-            <select id="roi-cost-currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-currency">
+            <label className={LABEL_CLASS} htmlFor="roi-cost-currency">
+              {isPolish ? 'Waluta' : 'Currency'}
+            </label>
+            <select
+              id="roi-cost-currency"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-currency"
+            >
               {CURRENCIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-timing-type">{isPolish ? 'Typ harmonogramu' : 'Timing type'}</label>
-            <select id="roi-cost-timing-type" value={timingType} onChange={(e) => setTimingType(e.target.value as RoiTimingType)} className={FIELD_CLASS} data-testid="roi-cost-timing-type">
+            <label className={LABEL_CLASS} htmlFor="roi-cost-timing-type">
+              {isPolish ? 'Typ harmonogramu' : 'Timing type'}
+            </label>
+            <select
+              id="roi-cost-timing-type"
+              value={timingType}
+              onChange={(e) => setTimingType(e.target.value as RoiTimingType)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-timing-type"
+            >
               {ROI_TIMING_TYPES.map((t) => (
-                <option key={t} value={t}>{roiTimingTypeLabel(t, isPolish)}</option>
+                <option key={t} value={t}>
+                  {roiTimingTypeLabel(t, isPolish)}
+                </option>
               ))}
             </select>
           </div>
         </div>
         {timingType === 'one_time' ? (
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-one-time-date">{isPolish ? 'Data' : 'Date'}</label>
-            <input id="roi-cost-one-time-date" type="date" value={oneTimeDate} onChange={(e) => setOneTimeDate(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-one-time-date" />
+            <label className={LABEL_CLASS} htmlFor="roi-cost-one-time-date">
+              {isPolish ? 'Data' : 'Date'}
+            </label>
+            <input
+              id="roi-cost-one-time-date"
+              type="date"
+              value={oneTimeDate}
+              onChange={(e) => setOneTimeDate(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-one-time-date"
+            />
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className={LABEL_CLASS} htmlFor="roi-cost-recurrence-start">{isPolish ? 'Początek' : 'Start'}</label>
-              <input id="roi-cost-recurrence-start" type="date" value={recurrenceStart} onChange={(e) => setRecurrenceStart(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-recurrence-start" />
+              <label className={LABEL_CLASS} htmlFor="roi-cost-recurrence-start">
+                {isPolish ? 'Początek' : 'Start'}
+              </label>
+              <input
+                id="roi-cost-recurrence-start"
+                type="date"
+                value={recurrenceStart}
+                onChange={(e) => setRecurrenceStart(e.target.value)}
+                className={FIELD_CLASS}
+                data-testid="roi-cost-recurrence-start"
+              />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="roi-cost-recurrence-end">{isPolish ? 'Koniec' : 'End'}</label>
-              <input id="roi-cost-recurrence-end" type="date" value={recurrenceEnd} onChange={(e) => setRecurrenceEnd(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-recurrence-end" />
+              <label className={LABEL_CLASS} htmlFor="roi-cost-recurrence-end">
+                {isPolish ? 'Koniec' : 'End'}
+              </label>
+              <input
+                id="roi-cost-recurrence-end"
+                type="date"
+                value={recurrenceEnd}
+                onChange={(e) => setRecurrenceEnd(e.target.value)}
+                className={FIELD_CLASS}
+                data-testid="roi-cost-recurrence-end"
+              />
             </div>
             <div>
-              <label className={LABEL_CLASS} htmlFor="roi-cost-cadence">{isPolish ? 'Cykl' : 'Cadence'}</label>
-              <select id="roi-cost-cadence" value={recurrenceCadence} onChange={(e) => setRecurrenceCadence(e.target.value as RoiRecurrenceCadence | '')} className={FIELD_CLASS} data-testid="roi-cost-cadence">
+              <label className={LABEL_CLASS} htmlFor="roi-cost-cadence">
+                {isPolish ? 'Cykl' : 'Cadence'}
+              </label>
+              <select
+                id="roi-cost-cadence"
+                value={recurrenceCadence}
+                onChange={(e) => setRecurrenceCadence(e.target.value as RoiRecurrenceCadence | '')}
+                className={FIELD_CLASS}
+                data-testid="roi-cost-cadence"
+              >
                 <option value="">—</option>
                 {ROI_RECURRENCE_CADENCES.map((c) => (
-                  <option key={c} value={c}>{roiRecurrenceCadenceLabel(c, isPolish)}</option>
+                  <option key={c} value={c}>
+                    {roiRecurrenceCadenceLabel(c, isPolish)}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
         )}
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-cost-description">{isPolish ? 'Opis' : 'Description'}</label>
-          <textarea id="roi-cost-description" value={description} onChange={(e) => setDescription(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-cost-description" />
+          <label className={LABEL_CLASS} htmlFor="roi-cost-description">
+            {isPolish ? 'Opis' : 'Description'}
+          </label>
+          <textarea
+            id="roi-cost-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-cost-description"
+          />
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-confidence">{isPolish ? 'Pewność' : 'Confidence'}</label>
-            <select id="roi-cost-confidence" value={confidence} onChange={(e) => setConfidence(e.target.value as RoiConfidenceLevel | '')} className={FIELD_CLASS} data-testid="roi-cost-confidence">
+            <label className={LABEL_CLASS} htmlFor="roi-cost-confidence">
+              {isPolish ? 'Pewność' : 'Confidence'}
+            </label>
+            <select
+              id="roi-cost-confidence"
+              value={confidence}
+              onChange={(e) => setConfidence(e.target.value as RoiConfidenceLevel | '')}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-confidence"
+            >
               <option value="">—</option>
               {ROI_CONFIDENCE_LEVELS.map((c) => (
-                <option key={c} value={c}>{roiConfidenceLabel(c, isPolish)}</option>
+                <option key={c} value={c}>
+                  {roiConfidenceLabel(c, isPolish)}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-source">{isPolish ? 'Źródło' : 'Source'}</label>
-            <input id="roi-cost-source" value={source} onChange={(e) => setSource(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-source" />
+            <label className={LABEL_CLASS} htmlFor="roi-cost-source">
+              {isPolish ? 'Źródło' : 'Source'}
+            </label>
+            <input
+              id="roi-cost-source"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-source"
+            />
           </div>
           <div>
-            <label className={LABEL_CLASS} htmlFor="roi-cost-owner">{isPolish ? 'Właściciel' : 'Owner'}</label>
-            <input id="roi-cost-owner" value={ownerUserId} onChange={(e) => setOwnerUserId(e.target.value)} className={FIELD_CLASS} data-testid="roi-cost-owner" />
+            <label className={LABEL_CLASS} htmlFor="roi-cost-owner">
+              {isPolish ? 'Właściciel' : 'Owner'}
+            </label>
+            <input
+              id="roi-cost-owner"
+              value={ownerUserId}
+              onChange={(e) => setOwnerUserId(e.target.value)}
+              className={FIELD_CLASS}
+              data-testid="roi-cost-owner"
+            />
           </div>
         </div>
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-cost-reason">{isPolish ? 'Notatka do audytu (opcjonalnie)' : 'Audit note (optional)'}</label>
-          <textarea id="roi-cost-reason" value={reason} onChange={(e) => setReason(e.target.value)} className={TEXTAREA_CLASS} data-testid="roi-cost-reason" />
+          <label className={LABEL_CLASS} htmlFor="roi-cost-reason">
+            {isPolish ? 'Notatka do audytu (opcjonalnie)' : 'Audit note (optional)'}
+          </label>
+          <textarea
+            id="roi-cost-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className={TEXTAREA_CLASS}
+            data-testid="roi-cost-reason"
+          />
         </div>
 
         {errorMessage ? (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text" data-testid="roi-cost-line-error">
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+            data-testid="roi-cost-line-error"
+          >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

@@ -42,16 +42,29 @@ describe('validateEdgeRank — WP-B03 §4 cycle rule', () => {
   });
 
   it('VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT is exempt from the rank rule even same-rank (WP-B06 §4.5)', () => {
-    const result = validateEdgeRank('BASELINE_MODEL', 'BASELINE_MODEL', 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT');
+    const result = validateEdgeRank(
+      'BASELINE_MODEL',
+      'BASELINE_MODEL',
+      'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT'
+    );
     expect(result).toEqual({ ok: true });
   });
 
   it('ANALYSIS_TO_MODEL requires an assumption_snapshot_hash (WP-B03 §3.3)', () => {
-    const withoutHash = validateEdgeRank('HISTORICAL_ANALYSIS', 'BASELINE_MODEL', 'ANALYSIS_TO_MODEL');
+    const withoutHash = validateEdgeRank(
+      'HISTORICAL_ANALYSIS',
+      'BASELINE_MODEL',
+      'ANALYSIS_TO_MODEL'
+    );
     expect(withoutHash.ok).toBe(false);
     if (!withoutHash.ok) expect(withoutHash.code).toBe('ASSUMPTION_SNAPSHOT_HASH_REQUIRED');
 
-    const withHash = validateEdgeRank('HISTORICAL_ANALYSIS', 'BASELINE_MODEL', 'ANALYSIS_TO_MODEL', 'sha256:abc');
+    const withHash = validateEdgeRank(
+      'HISTORICAL_ANALYSIS',
+      'BASELINE_MODEL',
+      'ANALYSIS_TO_MODEL',
+      'sha256:abc'
+    );
     expect(withHash).toEqual({ ok: true });
   });
 

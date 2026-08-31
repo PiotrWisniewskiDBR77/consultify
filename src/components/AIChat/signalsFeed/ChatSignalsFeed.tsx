@@ -3,13 +3,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import {
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 
 import { ChatSignalsFeedPreview } from './ChatSignalsFeedPreview';
 import { resolveDestination } from './signalDestination';

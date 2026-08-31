@@ -6,13 +6,10 @@
  * src/method-core/contracts/index.ts on the frontend side.
  */
 
-export { MethodEventStore, methodEventStore } from './MethodEventStore.js';
 export type { AppendEventInput } from './MethodEventStore.js';
-
-export { MethodPackRegistry, methodPackRegistry } from './MethodPackRegistry.js';
+export { MethodEventStore, methodEventStore } from './MethodEventStore.js';
 export type { MethodPackRecord, RegisterMethodPackInput } from './MethodPackRegistry.js';
-
-export { MethodSessionService } from './MethodSessionService.js';
+export { MethodPackRegistry, methodPackRegistry } from './MethodPackRegistry.js';
 export type {
   CreateSessionInput,
   CreateSessionRefusal,
@@ -20,6 +17,6 @@ export type {
   MethodOutputBridge,
   PackReadinessLookup,
 } from './MethodSessionService.js';
-
-export { TeresaProposalService, teresaProposalService } from './TeresaProposalService.js';
+export { MethodSessionService } from './MethodSessionService.js';
 export type { CreatePreviewInput } from './TeresaProposalService.js';
+export { TeresaProposalService, teresaProposalService } from './TeresaProposalService.js';

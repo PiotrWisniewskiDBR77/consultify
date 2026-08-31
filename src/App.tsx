@@ -3,6 +3,7 @@ import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
+import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
 import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
@@ -11,7 +12,6 @@ import { reconcileDemoAuthProfile } from '@/services/demoSessionAdoption';
 import { syncLanguageFromAccount } from '@/services/languagePreference';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
 import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
-import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
 import { seedReviewModeFlags } from '@/utils/reviewModeSeed';
 import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 

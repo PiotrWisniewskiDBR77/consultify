@@ -39,20 +39,20 @@
  */
 
 import {
+  auditAll,
   AuditDomainError,
+  auditGet,
   AuditNotFoundError,
   AuditPermissionError,
-  AuditStateError,
-  auditAll,
-  auditGet,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
   toIso,
   toNum,
 } from './auditsDb.js';
-import { assertAiMayCommit, requireCapability, type AuditCapability } from './permissions.js';
+import { assertAiMayCommit, type AuditCapability, requireCapability } from './permissions.js';
 import type { AiProposalStatus, AiTargetType, AuditActor, AuditAiProposal } from './types.js';
 
 // ---------------------------------------------------------------------------
@@ -149,7 +149,11 @@ function hasAnyProviderKey(): boolean {
  * proste funkcje synchroniczne wywoływane z każdego generatora).
  */
 function isQaForcedMockMode(): boolean {
-  const values = [process.env.QA_AI_MODE, process.env.AI_PROVIDER_MODE, process.env.CONSULTIFY_MOCK_AI]
+  const values = [
+    process.env.QA_AI_MODE,
+    process.env.AI_PROVIDER_MODE,
+    process.env.CONSULTIFY_MOCK_AI,
+  ]
     .filter(Boolean)
     .map((v) => String(v).trim().toLowerCase());
   return values.some((v) => ['1', 'true', 'yes', 'mock', 'qa', 'test'].includes(v));
@@ -238,7 +242,7 @@ export function extractNumericTokens(text: string): string[] {
  */
 export function assertGroundedInSources(
   text: string,
-  sourceTexts: Array<string | null | undefined>,
+  sourceTexts: Array<string | null | undefined>
 ): void {
   const allowed = new Set(extractNumericTokens(sourceTexts.filter(Boolean).join('\n')));
   const found = extractNumericTokens(text);
@@ -247,7 +251,7 @@ export function assertGroundedInSources(
     throw new AuditDomainError(
       `Propozycja Teresy zawiera fakty liczbowe spoza danych wejściowych: ${invented.join(', ')}`,
       422,
-      'AUDIT_AI_HALLUCINATION',
+      'AUDIT_AI_HALLUCINATION'
     );
   }
 }
@@ -289,7 +293,7 @@ export function assertHasSources(sources: Array<Record<string, unknown>> | null 
     throw new AuditDomainError(
       'Propozycja Teresy musi nieść co najmniej jedno źródło (dowód, kryterium, ustalenie)',
       422,
-      'AUDIT_AI_NO_SOURCES',
+      'AUDIT_AI_NO_SOURCES'
     );
   }
 }
@@ -308,17 +312,17 @@ function requireId(value: string | null | undefined, what: string): string {
 async function buildExplainCriterionProposal(
   organizationId: string,
   programId: string,
-  criterionId: string,
+  criterionId: string
 ): Promise<GeneratedProposal> {
   const criterion = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_criteria WHERE organization_id=$1 AND program_id=$2 AND id=$3`,
-    [organizationId, programId, criterionId],
+    [organizationId, programId, criterionId]
   );
   if (!criterion) throw new AuditNotFoundError('Kryterium');
 
   const expectedEvidence = parseJson<Array<Record<string, unknown>>>(
     criterion.expected_evidence,
-    [],
+    []
   );
   const title = String(criterion.title || '');
   const refCode = (criterion.ref_code as string | null) ?? null;
@@ -371,29 +375,27 @@ async function buildExplainCriterionProposal(
     proposal,
     preview,
     rationale: applyMockAnnotation(
-      `Wyjaśnienie zbudowane z treści wymagania i ${expectedEvidence.length} zdefiniowanych oczekiwanych dowodów kryterium ${refCode || criterionId}.`,
+      `Wyjaśnienie zbudowane z treści wymagania i ${expectedEvidence.length} zdefiniowanych oczekiwanych dowodów kryterium ${refCode || criterionId}.`
     ),
     confidence: applyMockConfidence(requirementText ? 0.6 : 0.35),
-    sources: [
-      { type: 'criterion', id: criterionId, refCode, excerpt: title.slice(0, 240) },
-    ],
+    sources: [{ type: 'criterion', id: criterionId, refCode, excerpt: title.slice(0, 240) }],
   };
 }
 
 async function buildEvidenceRequestProposal(
   organizationId: string,
   programId: string,
-  criterionId: string,
+  criterionId: string
 ): Promise<GeneratedProposal> {
   const criterion = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_criteria WHERE organization_id=$1 AND program_id=$2 AND id=$3`,
-    [organizationId, programId, criterionId],
+    [organizationId, programId, criterionId]
   );
   if (!criterion) throw new AuditNotFoundError('Kryterium');
 
   const expectedEvidence = parseJson<Array<Record<string, unknown>>>(
     criterion.expected_evidence,
-    [],
+    []
   );
   const title = String(criterion.title || '');
   const requirementText = (criterion.requirement_text as string | null) ?? null;
@@ -409,7 +411,9 @@ async function buildEvidenceRequestProposal(
       descriptionLines.push(`- ${description}${kind}`);
     }
   } else if (requirementText) {
-    descriptionLines.push(`Prosimy o dowód potwierdzający spełnienie wymagania: ${requirementText}`);
+    descriptionLines.push(
+      `Prosimy o dowód potwierdzający spełnienie wymagania: ${requirementText}`
+    );
   } else {
     descriptionLines.push('Prosimy o dowód potwierdzający spełnienie tego kryterium.');
   }
@@ -432,9 +436,13 @@ async function buildEvidenceRequestProposal(
 
   return {
     proposal,
-    preview: { field: 'evidence_request', before: null, after: { title: requestTitle, description } },
+    preview: {
+      field: 'evidence_request',
+      before: null,
+      after: { title: requestTitle, description },
+    },
     rationale: applyMockAnnotation(
-      `Treść zbudowana z pytania audytowego i oczekiwanego dowodu zdefiniowanego dla kryterium ${(criterion.ref_code as string) || criterionId}.`,
+      `Treść zbudowana z pytania audytowego i oczekiwanego dowodu zdefiniowanego dla kryterium ${(criterion.ref_code as string) || criterionId}.`
     ),
     confidence: applyMockConfidence(0.7),
     sources: [
@@ -452,11 +460,11 @@ async function buildFindingTextProposal(
   organizationId: string,
   programId: string,
   targetId: string,
-  context: Record<string, unknown>,
+  context: Record<string, unknown>
 ): Promise<GeneratedProposal> {
   const existingFinding = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_findings WHERE organization_id=$1 AND id=$2`,
-    [organizationId, targetId],
+    [organizationId, targetId]
   );
 
   const criterionId = existingFinding
@@ -465,34 +473,36 @@ async function buildFindingTextProposal(
   if (!criterionId) {
     throw new AuditDomainError(
       'Brak kryterium źródłowego dla ustalenia — podaj context.criterionId',
-      400,
+      400
     );
   }
   if (existingFinding && existingFinding.status !== 'draft') {
     throw new AuditStateError(
-      `Ustalenie jest w statusie „${String(existingFinding.status)}" — Teresa może redagować wyłącznie ustalenia w statusie draft`,
+      `Ustalenie jest w statusie „${String(existingFinding.status)}" — Teresa może redagować wyłącznie ustalenia w statusie draft`
     );
   }
 
   const criterion = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_criteria WHERE organization_id=$1 AND program_id=$2 AND id=$3`,
-    [organizationId, programId, criterionId],
+    [organizationId, programId, criterionId]
   );
   if (!criterion) throw new AuditNotFoundError('Kryterium');
   if (!criterion.test_result) {
     throw new AuditStateError(
-      'Nie można zredagować ustalenia — kryterium nie ma jeszcze wykonanego testu (test_result)',
+      'Nie można zredagować ustalenia — kryterium nie ma jeszcze wykonanego testu (test_result)'
     );
   }
 
   const evidenceRows = await auditAll<Record<string, unknown>>(
     `SELECT id, title FROM audit_evidence WHERE organization_id=$1 AND criterion_id=$2 ORDER BY captured_at ASC`,
-    [organizationId, criterionId],
+    [organizationId, criterionId]
   );
 
   const requirementText = String(criterion.requirement_text || criterion.title || '');
   const conditionText = String(
-    criterion.auditor_conclusion || criterion.auditor_note || `Wynik testu: ${criterion.test_result}`,
+    criterion.auditor_conclusion ||
+      criterion.auditor_note ||
+      `Wynik testu: ${criterion.test_result}`
   );
   const conformityStatus = (criterion.conformity_status as string | null) ?? null;
   const gapText =
@@ -545,8 +555,14 @@ async function buildFindingTextProposal(
     before: (existingFinding?.statement as string | null) ?? null,
     after: statement,
     additionalFields: {
-      requirementText: { before: (existingFinding?.requirement_text as string | null) ?? null, after: requirementText },
-      conditionText: { before: (existingFinding?.condition_text as string | null) ?? null, after: conditionText },
+      requirementText: {
+        before: (existingFinding?.requirement_text as string | null) ?? null,
+        after: requirementText,
+      },
+      conditionText: {
+        before: (existingFinding?.condition_text as string | null) ?? null,
+        after: conditionText,
+      },
       gapText: { before: (existingFinding?.gap_text as string | null) ?? null, after: gapText },
       objectiveEvidence: {
         before: existingFinding ? parseJson(existingFinding.objective_evidence, []) : [],
@@ -559,7 +575,7 @@ async function buildFindingTextProposal(
     proposal,
     preview,
     rationale: applyMockAnnotation(
-      `Zredagowano na podstawie kryterium ${(criterion.ref_code as string) || criterionId}, wyniku testu (${criterion.test_result}) i ${evidenceRows.length} powiązanych dowodów.`,
+      `Zredagowano na podstawie kryterium ${(criterion.ref_code as string) || criterionId}, wyniku testu (${criterion.test_result}) i ${evidenceRows.length} powiązanych dowodów.`
     ),
     confidence: applyMockConfidence(evidenceRows.length > 0 ? 0.62 : 0.4),
     sources: [
@@ -569,7 +585,11 @@ async function buildFindingTextProposal(
         refCode: (criterion.ref_code as string | null) ?? null,
         excerpt: requirementText.slice(0, 240),
       },
-      ...evidenceRows.map((e) => ({ type: 'evidence', id: String(e.id), excerpt: String(e.title) })),
+      ...evidenceRows.map((e) => ({
+        type: 'evidence',
+        id: String(e.id),
+        excerpt: String(e.title),
+      })),
     ],
   };
 }
@@ -577,11 +597,11 @@ async function buildFindingTextProposal(
 async function buildCorrectiveOptionsProposal(
   organizationId: string,
   programId: string,
-  findingId: string,
+  findingId: string
 ): Promise<GeneratedProposal> {
   const finding = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_program_findings WHERE organization_id=$1 AND program_id=$2 AND id=$3`,
-    [organizationId, programId, findingId],
+    [organizationId, programId, findingId]
   );
   if (!finding) throw new AuditNotFoundError('Ustalenie');
 
@@ -627,14 +647,14 @@ async function buildCorrectiveOptionsProposal(
   // wariantów), nie na całym JSON — `findingId` jest identyfikatorem.
   assertGroundedInSources(
     options.map((o) => `${o.title}\n${o.description}`).join('\n'),
-    sourceFacts,
+    sourceFacts
   );
 
   return {
     proposal,
     preview: { field: 'corrective_action_options', before: null, after: options },
     rationale: applyMockAnnotation(
-      `${options.length} warianty zbudowane z pól ustalenia (gap_text${rootCause ? ', root_cause' : ''}${severity ? ', severity' : ''}).`,
+      `${options.length} warianty zbudowane z pól ustalenia (gap_text${rootCause ? ', root_cause' : ''}${severity ? ', severity' : ''}).`
     ),
     confidence: applyMockConfidence(rootCause ? 0.65 : 0.45),
     sources: [{ type: 'finding', id: findingId, refCode, excerpt: gap.slice(0, 240) }],
@@ -645,7 +665,7 @@ async function buildReportSectionProposal(
   organizationId: string,
   programId: string,
   reportId: string,
-  context: Record<string, unknown>,
+  context: Record<string, unknown>
 ): Promise<GeneratedProposal> {
   const sectionKey = String(context.sectionKey || '').trim();
   if (!sectionKey) {
@@ -654,7 +674,7 @@ async function buildReportSectionProposal(
 
   const report = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_reports WHERE organization_id=$1 AND program_id=$2 AND id=$3`,
-    [organizationId, programId, reportId],
+    [organizationId, programId, reportId]
   );
   if (!report) throw new AuditNotFoundError('Raport');
 
@@ -666,7 +686,7 @@ async function buildReportSectionProposal(
         WHERE organization_id=$1 AND program_id=$2
           AND status IN ('confirmed','remediation_in_progress','verification_pending','closed','risk_accepted')
         ORDER BY created_at ASC`,
-      [organizationId, programId],
+      [organizationId, programId]
     );
   }
 
@@ -681,7 +701,7 @@ async function buildReportSectionProposal(
               String(f.statement || ''),
               String(f.reference_code || ''),
               String(f.severity || ''),
-              String(f.classification || ''),
+              String(f.classification || '')
             );
             return `- ${refCode}${String(f.statement)} (istotność: ${f.severity || 'nieokreślona'}, status: ${f.status})`;
           })
@@ -719,7 +739,7 @@ async function buildReportSectionProposal(
     proposal,
     preview,
     rationale: applyMockAnnotation(
-      `Treść sekcji „${sectionKey}" zbudowana z ${findingsSummary.length} potwierdzonych ustaleń programu.`,
+      `Treść sekcji „${sectionKey}" zbudowana z ${findingsSummary.length} potwierdzonych ustaleń programu.`
     ),
     confidence: applyMockConfidence(sectionKey === 'findings_summary' ? 0.6 : 0.25),
     sources: findingsSummary.length
@@ -743,11 +763,11 @@ async function buildReportSectionProposal(
  */
 export async function detectEvidenceGaps(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<GeneratedProposal> {
   const program = await auditGet<Record<string, unknown>>(
     `SELECT id, planned_start, planned_end FROM audit_programs WHERE organization_id=$1 AND id=$2`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   if (!program) throw new AuditNotFoundError('Program audytowy');
 
@@ -757,7 +777,7 @@ export async function detectEvidenceGaps(
       WHERE c.organization_id=$1 AND c.program_id=$2 AND c.applicable = TRUE
         AND NOT EXISTS (SELECT 1 FROM audit_evidence e WHERE e.criterion_id = c.id)
       ORDER BY c.ordinal ASC`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const outdatedEvidence = program.planned_start
@@ -766,7 +786,7 @@ export async function detectEvidenceGaps(
            FROM audit_evidence e
           WHERE e.organization_id=$1 AND e.program_id=$2
             AND e.period_to IS NOT NULL AND e.period_to < $3`,
-        [organizationId, programId, program.planned_start],
+        [organizationId, programId, program.planned_start]
       )
     : [];
 
@@ -777,13 +797,13 @@ export async function detectEvidenceGaps(
         AND criterion_id IS NOT NULL AND supports_conformity IS NOT NULL
       GROUP BY criterion_id
      HAVING COUNT(DISTINCT supports_conformity) > 1`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   const contradictingEvidence: Array<Record<string, unknown>> = [];
   for (const row of contradictingCriteria) {
     const items = await auditAll<Record<string, unknown>>(
       `SELECT id, title, supports_conformity FROM audit_evidence WHERE organization_id=$1 AND criterion_id=$2`,
-      [organizationId, String(row.criterion_id)],
+      [organizationId, String(row.criterion_id)]
     );
     contradictingEvidence.push({ criterionId: String(row.criterion_id), evidence: items });
   }
@@ -796,7 +816,11 @@ export async function detectEvidenceGaps(
       refCode: (c.ref_code as string | null) ?? null,
       excerpt: String(c.title || ''),
     })),
-    ...outdatedEvidence.map((e) => ({ type: 'evidence', id: String(e.id), excerpt: String(e.title || '') })),
+    ...outdatedEvidence.map((e) => ({
+      type: 'evidence',
+      id: String(e.id),
+      excerpt: String(e.title || ''),
+    })),
     ...contradictingEvidence.map((c) => ({
       type: 'criterion',
       id: String(c.criterionId),
@@ -820,40 +844,40 @@ async function buildProposalForIntent(
   programId: string,
   intent: AiIntent,
   targetId: string | null | undefined,
-  context: Record<string, unknown>,
+  context: Record<string, unknown>
 ): Promise<GeneratedProposal> {
   switch (intent) {
     case 'explain_criterion':
       return buildExplainCriterionProposal(
         organizationId,
         programId,
-        requireId(targetId, 'targetId (criterionId)'),
+        requireId(targetId, 'targetId (criterionId)')
       );
     case 'draft_evidence_request':
       return buildEvidenceRequestProposal(
         organizationId,
         programId,
-        requireId(targetId, 'targetId (criterionId)'),
+        requireId(targetId, 'targetId (criterionId)')
       );
     case 'draft_finding':
       return buildFindingTextProposal(
         organizationId,
         programId,
         requireId(targetId, 'targetId (criterionId lub findingId)'),
-        context,
+        context
       );
     case 'propose_corrective_options':
       return buildCorrectiveOptionsProposal(
         organizationId,
         programId,
-        requireId(targetId, 'targetId (findingId)'),
+        requireId(targetId, 'targetId (findingId)')
       );
     case 'draft_report_section':
       return buildReportSectionProposal(
         organizationId,
         programId,
         requireId(targetId, 'targetId (reportId)'),
-        context,
+        context
       );
     default:
       throw new AuditDomainError(`Nieobsłużony zamiar Teresy: ${String(intent)}`, 400);
@@ -867,7 +891,7 @@ async function buildProposalForIntent(
 export async function createIntent(
   organizationId: string,
   actor: AuditActor,
-  input: CreateIntentInput,
+  input: CreateIntentInput
 ): Promise<AuditAiProposal> {
   const programId = requireId(input.programId, 'programId');
   if (!isKnownIntent(input.intent)) {
@@ -878,7 +902,7 @@ export async function createIntent(
   if (input.targetType !== expectedTargetType) {
     throw new AuditDomainError(
       `Zamiar „${intent}" dotyczy typu „${expectedTargetType}", otrzymano „${String(input.targetType)}"`,
-      400,
+      400
     );
   }
 
@@ -886,7 +910,7 @@ export async function createIntent(
     actor,
     programId,
     'ai.propose',
-    'Tworzenie propozycji Teresy wymaga uprawnienia ai.propose w tym programie',
+    'Tworzenie propozycji Teresy wymaga uprawnienia ai.propose w tym programie'
   );
 
   const built = await buildProposalForIntent(
@@ -894,7 +918,7 @@ export async function createIntent(
     programId,
     intent,
     input.targetId ?? null,
-    input.context ?? {},
+    input.context ?? {}
   );
 
   assertHasSources(built.sources);
@@ -918,7 +942,7 @@ export async function createIntent(
       built.confidence ?? null,
       JSON.stringify(built.sources),
       actor.userId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -934,7 +958,7 @@ export async function createIntent(
 
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   return mapProposalRow(row!);
 }
@@ -945,7 +969,7 @@ export async function createIntent(
  */
 export async function getPreview(
   organizationId: string,
-  id: string,
+  id: string
 ): Promise<{
   id: string;
   targetType: string;
@@ -960,7 +984,7 @@ export async function getPreview(
 }> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Propozycja Teresy');
   return {
@@ -981,16 +1005,16 @@ export async function decide(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: DecideInput,
+  input: DecideInput
 ): Promise<AuditAiProposal> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Propozycja Teresy');
   if (row.status !== 'pending') {
     throw new AuditStateError(
-      `Propozycja jest już w stanie „${String(row.status)}" — decyzję można podjąć tylko raz`,
+      `Propozycja jest już w stanie „${String(row.status)}" — decyzję można podjąć tylko raz`
     );
   }
   const programId = String(row.program_id);
@@ -998,10 +1022,11 @@ export async function decide(
     actor,
     programId,
     'ai.propose',
-    'Decyzję o propozycji Teresy może podjąć tylko członek zespołu audytowego z dostępem do Teresy w tym programie',
+    'Decyzję o propozycji Teresy może podjąć tylko członek zespołu audytowego z dostępem do Teresy w tym programie'
   );
 
-  const decision = input.decision === 'accept' ? 'accepted' : input.decision === 'reject' ? 'rejected' : null;
+  const decision =
+    input.decision === 'accept' ? 'accepted' : input.decision === 'reject' ? 'rejected' : null;
   if (!decision) {
     throw new AuditDomainError('decision musi być "accept" lub "reject"', 400);
   }
@@ -1010,7 +1035,7 @@ export async function decide(
     `UPDATE audit_ai_proposals
         SET status=$1, decided_by=$2, decided_at=NOW(), decision_note=$3
       WHERE organization_id=$4 AND id=$5`,
-    [decision, actor.userId, input.note ?? null, organizationId, id],
+    [decision, actor.userId, input.note ?? null, organizationId, id]
   );
 
   await recordAuditEvent({
@@ -1026,7 +1051,7 @@ export async function decide(
 
   const updated = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   return mapProposalRow(updated!);
 }
@@ -1038,21 +1063,23 @@ export async function decide(
 async function commitExplainCriterion(
   organizationId: string,
   row: Record<string, unknown>,
-  proposal: Record<string, unknown>,
+  proposal: Record<string, unknown>
 ): Promise<void> {
   const criterionId = String(row.target_id || '');
   if (!criterionId) throw new AuditDomainError('Brak targetId kryterium', 400);
   const explanation = String(proposal.explanation || '');
   const current = await auditGet<Record<string, unknown>>(
     `SELECT auditor_note FROM audit_program_criteria WHERE organization_id=$1 AND id=$2`,
-    [organizationId, criterionId],
+    [organizationId, criterionId]
   );
   if (!current) throw new AuditNotFoundError('Kryterium');
   const existingNote = (current.auditor_note as string | null) ?? null;
-  const merged = existingNote ? `${existingNote}\n\n[Teresa] ${explanation}` : `[Teresa] ${explanation}`;
+  const merged = existingNote
+    ? `${existingNote}\n\n[Teresa] ${explanation}`
+    : `[Teresa] ${explanation}`;
   await auditRun(
     `UPDATE audit_program_criteria SET auditor_note=$1, updated_at=NOW() WHERE organization_id=$2 AND id=$3`,
-    [merged, organizationId, criterionId],
+    [merged, organizationId, criterionId]
   );
 }
 
@@ -1060,7 +1087,7 @@ async function commitEvidenceRequest(
   organizationId: string,
   programId: string,
   proposal: Record<string, unknown>,
-  actor: AuditActor,
+  actor: AuditActor
 ): Promise<void> {
   const criterionId = String(proposal.criterionId || '');
   const title = String(proposal.title || '').trim();
@@ -1081,13 +1108,13 @@ async function commitEvidenceRequest(
       (proposal.description as string | null) ?? null,
       (proposal.expectedEvidenceKind as string | null) ?? null,
       actor.userId,
-    ],
+    ]
   );
   await auditRun(
     `UPDATE audit_program_criteria
         SET work_status='evidence_requested', updated_at=NOW()
       WHERE organization_id=$1 AND id=$2 AND work_status='open'`,
-    [organizationId, criterionId],
+    [organizationId, criterionId]
   );
 }
 
@@ -1096,21 +1123,25 @@ async function commitFindingText(
   programId: string,
   row: Record<string, unknown>,
   proposal: Record<string, unknown>,
-  actor: AuditActor,
+  actor: AuditActor
 ): Promise<void> {
   const criterionId = String(proposal.criterionId || '');
-  const objectiveEvidence = Array.isArray(proposal.objectiveEvidence) ? proposal.objectiveEvidence : [];
+  const objectiveEvidence = Array.isArray(proposal.objectiveEvidence)
+    ? proposal.objectiveEvidence
+    : [];
   const findingId = (proposal.findingId as string | null) ?? null;
   const rationale = (row.rationale as string | null) ?? null;
 
   if (findingId) {
     const existing = await auditGet<Record<string, unknown>>(
       `SELECT status FROM audit_program_findings WHERE organization_id=$1 AND id=$2`,
-      [organizationId, findingId],
+      [organizationId, findingId]
     );
     if (!existing) throw new AuditNotFoundError('Ustalenie');
     if (existing.status !== 'draft') {
-      throw new AuditStateError('Ustalenie nie jest już w statusie draft — treści nie można nadpisać automatycznie');
+      throw new AuditStateError(
+        'Ustalenie nie jest już w statusie draft — treści nie można nadpisać automatycznie'
+      );
     }
     await auditRun(
       `UPDATE audit_program_findings
@@ -1126,7 +1157,7 @@ async function commitFindingText(
         rationale,
         organizationId,
         findingId,
-      ],
+      ]
     );
   } else {
     const id = newId('apf');
@@ -1147,7 +1178,7 @@ async function commitFindingText(
         JSON.stringify(objectiveEvidence),
         actor.userId,
         rationale,
-      ],
+      ]
     );
   }
 }
@@ -1156,7 +1187,7 @@ async function commitCorrectiveOptions(
   organizationId: string,
   programId: string,
   proposal: Record<string, unknown>,
-  actor: AuditActor,
+  actor: AuditActor
 ): Promise<void> {
   const findingId = String(proposal.findingId || '');
   if (!findingId) throw new AuditDomainError('Propozycja nie ma findingId', 400);
@@ -1168,7 +1199,16 @@ async function commitCorrectiveOptions(
       `INSERT INTO audit_corrective_actions
          (id, finding_id, program_id, organization_id, action_kind, title, description, status, created_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7,'proposed',$8)`,
-      [id, findingId, programId, organizationId, opt.actionKind, opt.title, opt.description, actor.userId],
+      [
+        id,
+        findingId,
+        programId,
+        organizationId,
+        opt.actionKind,
+        opt.title,
+        opt.description,
+        actor.userId,
+      ]
     );
   }
 }
@@ -1176,7 +1216,7 @@ async function commitCorrectiveOptions(
 async function commitReportSection(
   organizationId: string,
   programId: string,
-  proposal: Record<string, unknown>,
+  proposal: Record<string, unknown>
 ): Promise<void> {
   const reportId = String(proposal.reportId || '');
   const sectionKey = String(proposal.sectionKey || '');
@@ -1185,11 +1225,13 @@ async function commitReportSection(
   }
   const report = await auditGet<Record<string, unknown>>(
     `SELECT payload, status FROM audit_reports WHERE organization_id=$1 AND program_id=$2 AND id=$3`,
-    [organizationId, programId, reportId],
+    [organizationId, programId, reportId]
   );
   if (!report) throw new AuditNotFoundError('Raport');
   if (report.status !== 'draft') {
-    throw new AuditStateError('Sekcję raportu może zredagować Teresa tylko wtedy, gdy raport jest w statusie draft');
+    throw new AuditStateError(
+      'Sekcję raportu może zredagować Teresa tylko wtedy, gdy raport jest w statusie draft'
+    );
   }
   const payload = parseJson<Record<string, unknown>>(report.payload, {});
   const sections = { ...((payload.sections as Record<string, unknown>) || {}) };
@@ -1201,7 +1243,7 @@ async function commitReportSection(
   const nextPayload = { ...payload, sections };
   await auditRun(
     `UPDATE audit_reports SET payload=$1, updated_at=NOW() WHERE organization_id=$2 AND id=$3`,
-    [JSON.stringify(nextPayload), organizationId, reportId],
+    [JSON.stringify(nextPayload), organizationId, reportId]
   );
 }
 
@@ -1218,16 +1260,16 @@ async function commitReportSection(
 export async function commit(
   organizationId: string,
   actor: AuditActor,
-  id: string,
+  id: string
 ): Promise<AuditAiProposal> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Propozycja Teresy');
   if (row.status !== 'accepted') {
     throw new AuditStateError(
-      'Propozycję można wykonać (commit) dopiero po jej zaakceptowaniu przez człowieka (decide)',
+      'Propozycję można wykonać (commit) dopiero po jej zaakceptowaniu przez człowieka (decide)'
     );
   }
   if (row.committed_at) {
@@ -1245,7 +1287,7 @@ export async function commit(
     actor,
     programId,
     'ai.commit',
-    'Wykonywanie (commit) propozycji Teresy wymaga uprawnienia ai.commit w tym programie',
+    'Wykonywanie (commit) propozycji Teresy wymaga uprawnienia ai.commit w tym programie'
   );
 
   // Granica bezwarunkowa — patrz komentarz modułu i permissions.ts.
@@ -1276,7 +1318,7 @@ export async function commit(
 
   await auditRun(
     `UPDATE audit_ai_proposals SET committed_at=NOW() WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
 
   await recordAuditEvent({
@@ -1293,7 +1335,7 @@ export async function commit(
 
   const updated = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   return mapProposalRow(updated!);
 }
@@ -1306,7 +1348,7 @@ export async function commit(
 export async function settle(organizationId: string, id: string): Promise<AuditAiProposal> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Propozycja Teresy');
 
@@ -1315,7 +1357,7 @@ export async function settle(organizationId: string, id: string): Promise<AuditA
         SET status='superseded'
       WHERE organization_id=$1 AND target_type=$2 AND target_id=$3
         AND id != $4 AND status='pending'`,
-    [organizationId, row.target_type, row.target_id, id],
+    [organizationId, row.target_type, row.target_id, id]
   );
 
   await recordAuditEvent({
@@ -1330,7 +1372,7 @@ export async function settle(organizationId: string, id: string): Promise<AuditA
 
   const updated = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   return mapProposalRow(updated!);
 }
@@ -1350,7 +1392,7 @@ export interface ListProposalsFilters {
 
 export async function listProposals(
   organizationId: string,
-  filters: ListProposalsFilters,
+  filters: ListProposalsFilters
 ): Promise<AuditAiProposal[]> {
   const clauses = ['organization_id = $1'];
   const params: unknown[] = [organizationId];
@@ -1372,7 +1414,7 @@ export async function listProposals(
       WHERE ${clauses.join(' AND ')}
       ORDER BY created_at DESC
       LIMIT $${params.length - 1} OFFSET $${params.length}`,
-    params,
+    params
   );
   return rows.map(mapProposalRow);
 }
@@ -1380,11 +1422,11 @@ export async function listProposals(
 export async function getProposal(organizationId: string, id: string): Promise<AuditAiProposal> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_ai_proposals WHERE organization_id=$1 AND id=$2`,
-    [organizationId, id],
+    [organizationId, id]
   );
   if (!row) throw new AuditNotFoundError('Propozycja Teresy');
   return mapProposalRow(row);
 }
 
 // Re-eksport dla czytelności wywołań w trasach/testach.
-export { AuditPermissionError, AuditStateError, AuditDomainError, AuditNotFoundError };
+export { AuditDomainError, AuditNotFoundError, AuditPermissionError, AuditStateError };

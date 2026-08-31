@@ -227,10 +227,11 @@ async function preCleanAndSeed(): Promise<void> {
     ORG_ID_OTHER,
     'CLAUDE_B fixture org (other tenant)',
   ]);
-  await control.query(
-    `INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3)`,
-    [PROJECT_ID, ORG_ID, 'CLAUDE_B fixture project']
-  );
+  await control.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3)`, [
+    PROJECT_ID,
+    ORG_ID,
+    'CLAUDE_B fixture project',
+  ]);
   await control.query(`INSERT INTO users (id, organization_id, email) VALUES ($1, $2, $3)`, [
     OWNER_USER_ID,
     ORG_ID,
@@ -297,7 +298,9 @@ async function teardownRows(pool: Pool): Promise<void> {
       [OWNER_USER_ID, OTHER_USER_ID, STALE_USER_ID],
     ])
     .catch(() => undefined);
-  await pool.query(`DELETE FROM notifications WHERE id = $1`, [NOTIFICATION_ID]).catch(() => undefined);
+  await pool
+    .query(`DELETE FROM notifications WHERE id = $1`, [NOTIFICATION_ID])
+    .catch(() => undefined);
   await pool.query(`DELETE FROM decisions WHERE id = $1`, [DECISION_ID]).catch(() => undefined);
   await pool.query(`DELETE FROM tasks WHERE id = $1`, [TASK_ID]).catch(() => undefined);
   await pool
@@ -318,14 +321,26 @@ async function teardownRows(pool: Pool): Promise<void> {
 
 async function countResidualRows(pool: Pool): Promise<number> {
   const queries: Array<[string, unknown[]]> = [
-    [`SELECT count(*)::int AS n FROM canonical_inbox_items WHERE organization_id = ANY($1::text[])`, [[ORG_ID, ORG_ID_OTHER]]],
+    [
+      `SELECT count(*)::int AS n FROM canonical_inbox_items WHERE organization_id = ANY($1::text[])`,
+      [[ORG_ID, ORG_ID_OTHER]],
+    ],
     [`SELECT count(*)::int AS n FROM notifications WHERE id = $1`, [NOTIFICATION_ID]],
     [`SELECT count(*)::int AS n FROM decisions WHERE id = $1`, [DECISION_ID]],
     [`SELECT count(*)::int AS n FROM tasks WHERE id = $1`, [TASK_ID]],
-    [`SELECT count(*)::int AS n FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_ID, ORG_ID_OTHER]]],
+    [
+      `SELECT count(*)::int AS n FROM organization_members WHERE organization_id = ANY($1::text[])`,
+      [[ORG_ID, ORG_ID_OTHER]],
+    ],
     [`SELECT count(*)::int AS n FROM projects WHERE id = $1`, [PROJECT_ID]],
-    [`SELECT count(*)::int AS n FROM users WHERE id = ANY($1::text[])`, [[OWNER_USER_ID, OTHER_USER_ID, STALE_USER_ID]]],
-    [`SELECT count(*)::int AS n FROM organizations WHERE id = ANY($1::text[])`, [[ORG_ID, ORG_ID_OTHER]]],
+    [
+      `SELECT count(*)::int AS n FROM users WHERE id = ANY($1::text[])`,
+      [[OWNER_USER_ID, OTHER_USER_ID, STALE_USER_ID]],
+    ],
+    [
+      `SELECT count(*)::int AS n FROM organizations WHERE id = ANY($1::text[])`,
+      [[ORG_ID, ORG_ID_OTHER]],
+    ],
   ];
   let total = 0;
   for (const [sql, params] of queries) {
@@ -342,9 +357,7 @@ beforeAll(async () => {
     }
     const reachable = await isDbReachableWithTables();
     if (!reachable) {
-      abort(
-        `DATABASE_URL unreachable or required tables missing (${REQUIRED_TABLES.join(', ')})`
-      );
+      abort(`DATABASE_URL unreachable or required tables missing (${REQUIRED_TABLES.join(', ')})`);
     }
     evidence.connectionTarget = CONNECTION_STRING.replace(/:[^:@/]*@/, ':***@');
     await preCleanAndSeed();
@@ -456,13 +469,14 @@ describe('MYW-REALDB-FIXTURE-AUTH-001 — governed My Work fixture over real Pos
       status: 'pending',
     });
 
-    ownerItemIdTask = (
-      await freshRead<{ id: string }>(
-        `SELECT id FROM canonical_inbox_items
+    ownerItemIdTask =
+      (
+        await freshRead<{ id: string }>(
+          `SELECT id FROM canonical_inbox_items
           WHERE organization_id = $1 AND user_id = $2 AND source_entity_type = 'task'`,
-        [ORG_ID, OWNER_USER_ID]
-      )
-    )[0]?.id ?? null;
+          [ORG_ID, OWNER_USER_ID]
+        )
+      )[0]?.id ?? null;
     expect(ownerItemIdTask).not.toBeNull();
   });
 
@@ -506,7 +520,9 @@ describe('MYW-REALDB-FIXTURE-AUTH-001 — governed My Work fixture over real Pos
       .get('/api/my-work/inbox/canonical')
       .set('Authorization', `Bearer ${otherToken}`);
     evidence.mountedOtherTenantStatus = other.status;
-    evidence.mountedOtherTenantRows = Array.isArray(other.body?.items) ? other.body.items.length : null;
+    evidence.mountedOtherTenantRows = Array.isArray(other.body?.items)
+      ? other.body.items.length
+      : null;
     expect(other.status).toBe(200);
     expect(other.body.items).toHaveLength(0);
 
@@ -521,15 +537,23 @@ describe('MYW-REALDB-FIXTURE-AUTH-001 — governed My Work fixture over real Pos
 
   it('cross-tenant triageItem() mutation attempt is rejected by ownership scope and leaves the row unchanged', async (ctx) => {
     if (!requireReady(ctx)) return;
-    expect(ownerItemIdTask, 'previous test must have recorded the owner task item id').not.toBeNull();
+    expect(
+      ownerItemIdTask,
+      'previous test must have recorded the owner task item id'
+    ).not.toBeNull();
 
     // The OTHER actor (different org) tries to resolve the OWNER's item,
     // through the REAL triageItem(), exactly as inboxService.ts:361-375
     // documents: "a non-owner ... resolve to null".
-    const crossTenantResult = await inboxService.triageItem(ownerItemIdTask as string, 'done', undefined, {
-      userId: OTHER_USER_ID,
-      organizationId: ORG_ID_OTHER,
-    });
+    const crossTenantResult = await inboxService.triageItem(
+      ownerItemIdTask as string,
+      'done',
+      undefined,
+      {
+        userId: OTHER_USER_ID,
+        organizationId: ORG_ID_OTHER,
+      }
+    );
     evidence.crossTenantTriageResult = crossTenantResult;
     expect(crossTenantResult).toBeNull();
 
@@ -544,10 +568,15 @@ describe('MYW-REALDB-FIXTURE-AUTH-001 — governed My Work fixture over real Pos
 
     // Positive control: the REAL owner, same function, succeeds — proving the
     // scope check discriminates rather than always failing.
-    const ownerResult = await inboxService.triageItem(ownerItemIdTask as string, 'done', undefined, {
-      userId: OWNER_USER_ID,
-      organizationId: ORG_ID,
-    });
+    const ownerResult = await inboxService.triageItem(
+      ownerItemIdTask as string,
+      'done',
+      undefined,
+      {
+        userId: OWNER_USER_ID,
+        organizationId: ORG_ID,
+      }
+    );
     evidence.ownerTriageByOwnerResult = ownerResult?.status ?? null;
     expect(ownerResult?.status).toBe('resolved');
 

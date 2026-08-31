@@ -15,6 +15,13 @@ import {
   deriveVariantLabel,
 } from '../financeModelLabels';
 import {
+  FINANCE_OWNER_SAMPLE_ANALYSES,
+  FINANCE_OWNER_SAMPLE_MODELS,
+  FINANCE_OWNER_SAMPLE_STATEMENTS,
+  FINANCE_OWNER_SAMPLE_VALUATIONS,
+  isFinanceOwnerSampleDataEnabled,
+} from '../financeOwnerSampleData';
+import {
   deriveStatementReadinessStatus,
   type FinanceKind,
   type FinanceModelRow,
@@ -26,13 +33,6 @@ import {
   normalizeStatus,
   type PredictionType,
 } from '../financeTypes';
-import {
-  FINANCE_OWNER_SAMPLE_ANALYSES,
-  FINANCE_OWNER_SAMPLE_MODELS,
-  FINANCE_OWNER_SAMPLE_STATEMENTS,
-  FINANCE_OWNER_SAMPLE_VALUATIONS,
-  isFinanceOwnerSampleDataEnabled,
-} from '../financeOwnerSampleData';
 
 // Dead demo data arrays removed — D1 cleanup
 

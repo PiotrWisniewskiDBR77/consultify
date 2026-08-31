@@ -11,8 +11,7 @@ import { Router } from 'express';
 import * as criterionService from '../../services/audits/criterionService.js';
 import * as programService from '../../services/audits/programService.js';
 import type { AuditLifecycleState } from '../../services/audits/types.js';
-
-import { auditActor, assertActor, parsePaging, route } from './context.js';
+import { assertActor, auditActor, parsePaging, route } from './context.js';
 
 const router = Router();
 
@@ -48,13 +47,11 @@ router.get(
     assertActor(actor);
     const detail = await programService.getProgram(actor.organizationId, req.params.id);
     if (!detail) {
-      res
-        .status(404)
-        .json({
-          success: false,
-          error: 'Program audytowy nie został znaleziony',
-          code: 'AUDIT_NOT_FOUND',
-        });
+      res.status(404).json({
+        success: false,
+        error: 'Program audytowy nie został znaleziony',
+        code: 'AUDIT_NOT_FOUND',
+      });
       return;
     }
     res.json({ success: true, data: detail });
@@ -113,13 +110,11 @@ router.get(
     assertActor(actor);
     const status = await programService.getLifecycleStatus(actor.organizationId, req.params.id);
     if (!status) {
-      res
-        .status(404)
-        .json({
-          success: false,
-          error: 'Program audytowy nie został znaleziony',
-          code: 'AUDIT_NOT_FOUND',
-        });
+      res.status(404).json({
+        success: false,
+        error: 'Program audytowy nie został znaleziony',
+        code: 'AUDIT_NOT_FOUND',
+      });
       return;
     }
     res.json({ success: true, data: status });

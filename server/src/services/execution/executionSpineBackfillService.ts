@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 
-import { withPgTransaction, type PgTransactionClient } from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 
 type LegacyLink = {
   link_id: string;
@@ -48,7 +48,9 @@ const sha256 = (value: unknown): string =>
   createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
 const requiredSha = (value: string): string => {
-  const normalized = String(value || '').trim().toLowerCase();
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
   if (!/^[0-9a-f]{40}$/.test(normalized)) throw new Error('execution_backfill_source_sha_invalid');
   return normalized;
 };
@@ -94,19 +96,19 @@ async function buildPlan(
   tx: PgTransactionClient,
   organizationId: string,
   sourceSha: string,
-  lockRows: boolean,
+  lockRows: boolean
 ): Promise<ExecutionSpineBackfillPlan> {
-    const legacy = await tx.query<LegacyLink>(
-      `SELECT link_id,organization_id,initiative_id,case_id,project_id,status,version
+  const legacy = await tx.query<LegacyLink>(
+    `SELECT link_id,organization_id,initiative_id,case_id,project_id,status,version
          FROM execution_case_links
         WHERE organization_id=? AND source_kind='LEGACY_CASE_CORE'
         ORDER BY link_id${lockRows ? ' FOR SHARE' : ''}`,
-      [organizationId],
-    );
-    const dispositions: ExecutionSpineDisposition[] = [];
-    for (const link of legacy.rows) {
-      const candidates = await tx.query<AliasCandidate>(
-        `SELECT ?::uuid AS legacy_execution_link_id,
+    [organizationId]
+  );
+  const dispositions: ExecutionSpineDisposition[] = [];
+  for (const link of legacy.rows) {
+    const candidates = await tx.query<AliasCandidate>(
+      `SELECT ?::uuid AS legacy_execution_link_id,
                 ?::text AS legacy_initiative_id,
                 ?::text AS legacy_case_id,
                 a.execution_link_id AS canonical_execution_link_id,
@@ -119,28 +121,35 @@ async function buildPlan(
           WHERE a.organization_id=?
             AND (a.legacy_initiative_id=? OR a.legacy_case_id=?)
           ORDER BY a.execution_link_id${lockRows ? ' FOR SHARE OF a' : ''}`,
-        [link.link_id, link.initiative_id, link.case_id, organizationId, link.initiative_id, link.case_id],
-      );
-      dispositions.push(dispositionFor(link, candidates.rows));
-    }
-    const canonical = dispositions.map((row) => ({
-      legacyExecutionLinkId: row.legacyExecutionLinkId,
-      legacyInitiativeId: row.legacyInitiativeId,
-      legacyCaseId: row.legacyCaseId,
-      projectId: row.projectId,
-      sourceDigest: row.sourceDigest,
-      outcome: row.outcome,
-      canonicalExecutionLinkId: row.canonicalExecutionLinkId ?? null,
-      reasonCode: row.reasonCode ?? null,
-    }));
-    return {
-      organizationId,
-      sourceSha,
-      checksum: sha256(canonical),
-      mappedCount: dispositions.filter((row) => row.outcome === 'MAPPED').length,
-      quarantinedCount: dispositions.filter((row) => row.outcome === 'QUARANTINED').length,
-      dispositions,
-    };
+      [
+        link.link_id,
+        link.initiative_id,
+        link.case_id,
+        organizationId,
+        link.initiative_id,
+        link.case_id,
+      ]
+    );
+    dispositions.push(dispositionFor(link, candidates.rows));
+  }
+  const canonical = dispositions.map((row) => ({
+    legacyExecutionLinkId: row.legacyExecutionLinkId,
+    legacyInitiativeId: row.legacyInitiativeId,
+    legacyCaseId: row.legacyCaseId,
+    projectId: row.projectId,
+    sourceDigest: row.sourceDigest,
+    outcome: row.outcome,
+    canonicalExecutionLinkId: row.canonicalExecutionLinkId ?? null,
+    reasonCode: row.reasonCode ?? null,
+  }));
+  return {
+    organizationId,
+    sourceSha,
+    checksum: sha256(canonical),
+    mappedCount: dispositions.filter((row) => row.outcome === 'MAPPED').length,
+    quarantinedCount: dispositions.filter((row) => row.outcome === 'QUARANTINED').length,
+    dispositions,
+  };
 }
 
 export async function planExecutionSpineBackfill(input: {
@@ -161,7 +170,9 @@ export async function applyExecutionSpineBackfill(input: {
 }): Promise<{ runId: string; replay: boolean; plan: ExecutionSpineBackfillPlan }> {
   const actorId = String(input.actorId || '').trim();
   if (!actorId) throw new Error('execution_backfill_actor_required');
-  const expectedPlanChecksum = String(input.expectedPlanChecksum || '').trim().toLowerCase();
+  const expectedPlanChecksum = String(input.expectedPlanChecksum || '')
+    .trim()
+    .toLowerCase();
   if (!/^[0-9a-f]{64}$/.test(expectedPlanChecksum)) {
     throw new Error('execution_backfill_checksum_invalid');
   }
@@ -173,11 +184,12 @@ export async function applyExecutionSpineBackfill(input: {
       `execution-spine-backfill:${plan.organizationId}`,
     ]);
     const currentPlan = await buildPlan(tx, plan.organizationId, plan.sourceSha, true);
-    if (currentPlan.checksum !== expectedPlanChecksum) throw new Error('execution_backfill_plan_changed');
+    if (currentPlan.checksum !== expectedPlanChecksum)
+      throw new Error('execution_backfill_plan_changed');
     const replay = await tx.query<{ run_id: string }>(
       `SELECT run_id FROM execution_spine_backfill_runs
         WHERE organization_id=? AND source_sha=? AND plan_checksum=?`,
-      [plan.organizationId, plan.sourceSha, plan.checksum],
+      [plan.organizationId, plan.sourceSha, plan.checksum]
     );
     if (replay.rows[0]) return { runId: replay.rows[0].run_id, replay: true, plan };
 
@@ -195,7 +207,7 @@ export async function applyExecutionSpineBackfill(input: {
         currentPlan.quarantinedCount,
         currentPlan.dispositions.length,
         actorId,
-      ],
+      ]
     );
     for (const row of currentPlan.dispositions) {
       if (row.outcome === 'MAPPED') {
@@ -212,7 +224,7 @@ export async function applyExecutionSpineBackfill(input: {
             row.legacyCaseId,
             row.canonicalExecutionLinkId,
             row.sourceDigest,
-          ],
+          ]
         );
       } else {
         await tx.query(
@@ -229,7 +241,7 @@ export async function applyExecutionSpineBackfill(input: {
             row.reasonCode,
             row.sourceDigest,
             JSON.stringify({ projectId: row.projectId }),
-          ],
+          ]
         );
       }
     }

@@ -50,7 +50,10 @@ export const processAutomationPack: ToolPack = {
     { source: 'src/config/processautomation/automationEngine.ts', verifiableInRepo: true },
     { source: 'src/config/processautomation/deepeningLadder.ts', verifiableInRepo: true },
     { source: 'src/config/processautomation/automationQuestionBank.ts', verifiableInRepo: true },
-    { source: 'src/config/processautomation/automationInsightStaircase.ts', verifiableInRepo: true },
+    {
+      source: 'src/config/processautomation/automationInsightStaircase.ts',
+      verifiableInRepo: true,
+    },
     { source: 'src/config/processautomation/conclusionPrompts.ts', verifiableInRepo: true },
     { source: 'src/config/processautomation/index.ts', verifiableInRepo: true },
     { source: 'src/store/useToolStore.ts (PROCESS_AUTOMATION_STEPS)', verifiableInRepo: true },
@@ -119,7 +122,8 @@ export const processAutomationPack: ToolPack = {
         pl: 'Zidentyfikować proces i zdefiniować cel automatyzacji.',
         en: 'Identify the process and define the automation goal.',
       },
-      whatGoodLooksLike: 'Nazwany proces, właściciel i jasny cel (skrócenie czasu cyklu, redukcja błędu, oba).',
+      whatGoodLooksLike:
+        'Nazwany proces, właściciel i jasny cel (skrócenie czasu cyklu, redukcja błędu, oba).',
       evidenceToAskFor: 'Który proces i dlaczego teraz — co go wyróżnia spośród innych kandydatów.',
       completionCriterion: 'Cel automatyzacji zaakceptowany przez właściciela procesu.',
     },
@@ -130,8 +134,10 @@ export const processAutomationPack: ToolPack = {
         pl: 'Zebrać kluczowe kroki i handoffy.',
         en: 'Capture the key steps and handoffs.',
       },
-      whatGoodLooksLike: 'Proces zmapowany od początku do końca — każdy krok nazwany, uporządkowany, z „kto co robi".',
-      evidenceToAskFor: 'Czy trzy różne osoby narysowałyby ten sam diagram (automationQuestionBank.ts: pa-surface).',
+      whatGoodLooksLike:
+        'Proces zmapowany od początku do końca — każdy krok nazwany, uporządkowany, z „kto co robi".',
+      evidenceToAskFor:
+        'Czy trzy różne osoby narysowałyby ten sam diagram (automationQuestionBank.ts: pa-surface).',
       completionCriterion: 'Mapa zaakceptowana, pętla wymuszona pa-map-force nie blokuje dalej.',
     },
     {
@@ -141,9 +147,12 @@ export const processAutomationPack: ToolPack = {
         pl: 'Zebrać baseline: wolumen, czas, błędy i ograniczenia.',
         en: 'Baseline volume, time, errors, and constraints.',
       },
-      whatGoodLooksLike: 'volumePerWeek i baselineMinutesPerCycle podane liczbowo, nie oszacowane "na oko".',
-      evidenceToAskFor: 'Runs/tydzień × minuty/cykl × wskaźnik błędu — dane, nie zgadywanie payback.',
-      completionCriterion: 'Baseline jest quantified (automationEngine.ts: computeBaseline — quantified=true gdy volumePerWeek>0 i baselineMinutesPerCycle>0).',
+      whatGoodLooksLike:
+        'volumePerWeek i baselineMinutesPerCycle podane liczbowo, nie oszacowane "na oko".',
+      evidenceToAskFor:
+        'Runs/tydzień × minuty/cykl × wskaźnik błędu — dane, nie zgadywanie payback.',
+      completionCriterion:
+        'Baseline jest quantified (automationEngine.ts: computeBaseline — quantified=true gdy volumePerWeek>0 i baselineMinutesPerCycle>0).',
     },
     {
       id: 'redesign',
@@ -152,9 +161,12 @@ export const processAutomationPack: ToolPack = {
         pl: 'Zdefiniować nowy flow i kandydatów automatyzacji.',
         en: 'Define the redesigned flow and automation candidates.',
       },
-      whatGoodLooksLike: 'Jest uzgodniona jedna ścieżka procesu, zanim pojawi się jakikolwiek kandydat "automate".',
-      evidenceToAskFor: 'Czy proces ma jedną uzgodnioną ścieżkę, czy nadal wariantuje między zespołami.',
-      completionCriterion: 'Kandydat "automate" ma co najmniej jeden odpowiadający kandydat "standardize" (automationInsightStaircase.ts: gap automate-before-standardize = brak).',
+      whatGoodLooksLike:
+        'Jest uzgodniona jedna ścieżka procesu, zanim pojawi się jakikolwiek kandydat "automate".',
+      evidenceToAskFor:
+        'Czy proces ma jedną uzgodnioną ścieżkę, czy nadal wariantuje między zespołami.',
+      completionCriterion:
+        'Kandydat "automate" ma co najmniej jeden odpowiadający kandydat "standardize" (automationInsightStaircase.ts: gap automate-before-standardize = brak).',
     },
     {
       id: 're-estimation',
@@ -163,9 +175,12 @@ export const processAutomationPack: ToolPack = {
         pl: 'Oszacować target czasy i błędy po redesignie.',
         en: 'Estimate target cycle times and error rates after redesign.',
       },
-      whatGoodLooksLike: 'targetMinutesPerCycle i errorRateTargetPct podane liczbowo z uzasadnieniem, nie życzeniowo.',
-      evidenceToAskFor: 'Na czym oparty jest cel czasu/błędu — pilot, benchmark wewnętrzny, czy życzenie.',
-      completionCriterion: 'Cel błędu nie jest podany bez baseline błędu (automationInsightStaircase.ts: gap error-target-without-baseline = brak).',
+      whatGoodLooksLike:
+        'targetMinutesPerCycle i errorRateTargetPct podane liczbowo z uzasadnieniem, nie życzeniowo.',
+      evidenceToAskFor:
+        'Na czym oparty jest cel czasu/błędu — pilot, benchmark wewnętrzny, czy życzenie.',
+      completionCriterion:
+        'Cel błędu nie jest podany bez baseline błędu (automationInsightStaircase.ts: gap error-target-without-baseline = brak).',
     },
     {
       id: 'economics',
@@ -174,9 +189,12 @@ export const processAutomationPack: ToolPack = {
         pl: 'Policzyć oszczędności, payback i założenia ROI.',
         en: 'Calculate savings, payback, and ROI assumptions.',
       },
-      whatGoodLooksLike: 'annualSavedHours i errorPointsRemoved policzone z baseline, nie zadeklarowane jako liczba z powietrza.',
-      evidenceToAskFor: 'Skąd wzięła się liczba godzin oszczędności — z policzonego baseline, czy z zaokrąglenia w górę.',
-      completionCriterion: 'annualSavedHours i errorPointsRemoved policzone przez silnik (automationEngine.ts: computeBaseline).',
+      whatGoodLooksLike:
+        'annualSavedHours i errorPointsRemoved policzone z baseline, nie zadeklarowane jako liczba z powietrza.',
+      evidenceToAskFor:
+        'Skąd wzięła się liczba godzin oszczędności — z policzonego baseline, czy z zaokrąglenia w górę.',
+      completionCriterion:
+        'annualSavedHours i errorPointsRemoved policzone przez silnik (automationEngine.ts: computeBaseline).',
     },
     {
       id: 'initiatives',
@@ -185,9 +203,12 @@ export const processAutomationPack: ToolPack = {
         pl: 'Przełożyć redesign na zestaw inicjatyw gotowych do realizacji.',
         en: 'Translate the redesign into an execution-ready initiative set.',
       },
-      whatGoodLooksLike: 'Każdy ruch ma rationale, trade-off i odrzucony wariant; faza sustain jest odroczona z jawnym warunkiem, nie pominięta.',
-      evidenceToAskFor: 'Co świadomie odraczacie (np. monitoring/utrzymanie) i pod jakim warunkiem wraca.',
-      completionCriterion: 'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
+      whatGoodLooksLike:
+        'Każdy ruch ma rationale, trade-off i odrzucony wariant; faza sustain jest odroczona z jawnym warunkiem, nie pominięta.',
+      evidenceToAskFor:
+        'Co świadomie odraczacie (np. monitoring/utrzymanie) i pod jakim warunkiem wraca.',
+      completionCriterion:
+        'Sekwencja ruchów spełnia bramkę W2 (buildW2MoveSequence + validateW2Move: valid=true dla każdego ruchu).',
     },
     {
       id: 'report',
@@ -196,9 +217,12 @@ export const processAutomationPack: ToolPack = {
         pl: 'Wyeksportować i udostępnić wyniki.',
         en: 'Export and share outcomes.',
       },
-      whatGoodLooksLike: 'Raport pokazuje bazę + redesign + ekonomikę + sekwencję ruchów jako spójną narrację, nie oddzielne sekcje.',
-      evidenceToAskFor: 'Czy odbiorca raportu widzi zarówno liczby, jak i decyzję, którą te liczby uzasadniają.',
-      completionCriterion: 'Eksport wygenerowany z tego samego Artifact co sesja (bez ręcznego przepisywania liczb).',
+      whatGoodLooksLike:
+        'Raport pokazuje bazę + redesign + ekonomikę + sekwencję ruchów jako spójną narrację, nie oddzielne sekcje.',
+      evidenceToAskFor:
+        'Czy odbiorca raportu widzi zarówno liczby, jak i decyzję, którą te liczby uzasadniają.',
+      completionCriterion:
+        'Eksport wygenerowany z tego samego Artifact co sesja (bez ręcznego przepisywania liczb).',
     },
   ],
 
@@ -213,7 +237,10 @@ export const processAutomationPack: ToolPack = {
       answerType: 'text',
       challengeRule:
         'Odrzuć odpowiedź bez nazwanego procesu ("chcemy usprawnić operacje" = za ogólne) — wymagaj konkretnego procesu i mierzalnego celu.',
-      followUpProbes: ['Kto zgłosił ten proces jako kandydata?', 'Co się stanie, jeśli redesign się nie uda?'],
+      followUpProbes: [
+        'Kto zgłosił ten proces jako kandydata?',
+        'Co się stanie, jeśli redesign się nie uda?',
+      ],
     },
     {
       id: 'pa-mapping-consistency',
@@ -350,13 +377,15 @@ export const processAutomationPack: ToolPack = {
   rights: {
     methodologyName: 'Lean redesign procesu i automatyzacja (map/standardize/automate/sustain)',
     commonlyAttributedTo: 'Dyscyplina Lean/BPR (generyczna, bez jednego właściciela)',
-    sourceUsed: 'src/config/processautomation/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    sourceUsed:
+      'src/config/processautomation/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
     trademarkNote: '„Lean" użyte opisowo; brak powiązania z konkretną jednostką certyfikującą.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'Repo nazywa to „dyscypliną Lean", ale nie cytuje żadnego zewnętrznego dokumentu Lean.',
+    uncertainty:
+      'Repo nazywa to „dyscypliną Lean", ale nie cytuje żadnego zewnętrznego dokumentu Lean.',
   },
 };

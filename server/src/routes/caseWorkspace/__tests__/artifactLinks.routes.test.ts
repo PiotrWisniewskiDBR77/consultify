@@ -8,10 +8,13 @@ const mockRequireOrgRole = vi.fn();
 const mockLinkArtifactToCase = vi.fn();
 const mockGetArtifactLink = vi.fn();
 const mockUnlinkArtifactFromCase = vi.fn();
-const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) => input.operation());
+const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) =>
+  input.operation()
+);
 
 vi.mock('../../../services/executionActionRegistryService.js', () => ({
-  executeGovernedExecutionAction: (...args: unknown[]) => mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
+  executeGovernedExecutionAction: (...args: unknown[]) =>
+    mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
 }));
 const mockListArtifactLinksForCase = vi.fn();
 
@@ -41,9 +44,9 @@ vi.mock('../../../services/caseWorkspace/artifactLinkService.js', () => ({
   computeArtifactLinkSetDigest: vi.fn(),
 }));
 
-import artifactLinksRoutes from '../artifactLinks.routes.js';
-import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
 import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
+import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import artifactLinksRoutes from '../artifactLinks.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';

@@ -13,7 +13,11 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { auditAll, auditGet, AuditPermissionError } from '../../audits/auditsDb.js';
+import { listCriteria } from '../../audits/criterionService.js';
+import { submitEvidence } from '../../audits/evidenceService.js';
+import { getProgram } from '../../audits/programService.js';
 import {
+  cleanupFixture,
   EXPECTED_LEAF_CRITERIA,
   FIXTURE_ACTOR_OUTSIDER_ID,
   FIXTURE_ACTOR_VIEWER_ID,
@@ -22,18 +26,14 @@ import {
   FIXTURE_ORG_ID,
   FIXTURE_PACK_KEY,
   FIXTURE_SOURCE_KEY,
-  FORBIDDEN_STANDARD_PATTERNS,
-  cleanupFixture,
   fixtureActorFor,
+  FORBIDDEN_STANDARD_PATTERNS,
   generateFixture,
+  type GenerateFixtureResult,
   measureCounts,
   requireCapability,
   resolveProgramAccess,
-  type GenerateFixtureResult,
 } from '../fixtureGenerator.js';
-import { submitEvidence } from '../../audits/evidenceService.js';
-import { listCriteria } from '../../audits/criterionService.js';
-import { getProgram } from '../../audits/programService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG =
@@ -50,7 +50,7 @@ if (!REAL_PG) {
   // eslint-disable-next-line no-console
   console.warn(
     '[fixtureGenerator.pg.test.ts SKIPPED — clean skip, not a failure] wymaga NODE_ENV=test DB_TYPE=postgres ' +
-      'CI=true RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... (patrz komentarz na górze pliku)',
+      'CI=true RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... (patrz komentarz na górze pliku)'
   );
 }
 
@@ -71,7 +71,12 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
     await cleanupFixture();
     result = await generateFixture();
     // eslint-disable-next-line no-console
-    console.log('[AUD-MVP-DATA-001] Generation wall-clock ms:', result.wallClockMs, 'reused:', result.reused);
+    console.log(
+      '[AUD-MVP-DATA-001] Generation wall-clock ms:',
+      result.wallClockMs,
+      'reused:',
+      result.reused
+    );
   }, 180_000);
 
   afterAll(async () => {
@@ -108,7 +113,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
     for (const [table, col] of tables) {
       const row = await auditGet<{ c: string }>(
         `SELECT COUNT(*)::text AS c FROM ${table} WHERE organization_id = $1 AND ${col} NOT LIKE $2`,
-        [FIXTURE_ORG_ID, `${FIXTURE_ID_PREFIX}%`],
+        [FIXTURE_ORG_ID, `${FIXTURE_ID_PREFIX}%`]
       );
       expect(Number(row?.c ?? -1)).toBe(0);
     }
@@ -119,7 +124,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
       `SELECT COUNT(*)::text AS c FROM audit_evidence e
         LEFT JOIN audit_program_criteria c ON c.id = e.criterion_id AND c.organization_id = e.organization_id
        WHERE e.organization_id = $1 AND (e.criterion_id IS NULL OR c.id IS NULL)`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
     expect(Number(orphanEvidence?.c ?? -1)).toBe(0);
 
@@ -127,7 +132,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
       `SELECT COUNT(*)::text AS c FROM audit_program_findings f
         LEFT JOIN audit_program_criteria c ON c.id = f.criterion_id AND c.organization_id = f.organization_id
        WHERE f.organization_id = $1 AND (f.criterion_id IS NULL OR c.id IS NULL)`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
     expect(Number(orphanFindings?.c ?? -1)).toBe(0);
 
@@ -135,7 +140,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
       `SELECT COUNT(*)::text AS c FROM audit_corrective_actions a
         LEFT JOIN audit_program_findings f ON f.id = a.finding_id AND f.organization_id = a.organization_id
        WHERE a.organization_id = $1 AND (a.finding_id IS NULL OR f.id IS NULL)`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
     expect(Number(orphanActions?.c ?? -1)).toBe(0);
 
@@ -148,7 +153,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
          LEFT JOIN audit_program_findings f
                ON f.id = ref.finding_id AND f.organization_id = p.organization_id
         WHERE p.organization_id = $1 AND f.id IS NULL`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
     expect(Number(orphanCandidateRefs?.c ?? -1)).toBe(0);
 
@@ -156,33 +161,60 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
     const emptySource = await auditGet<{ c: string }>(
       `SELECT COUNT(*)::text AS c FROM audit_initiative_proposals
         WHERE organization_id = $1 AND jsonb_array_length(source_finding_ids::jsonb) = 0`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
     expect(Number(emptySource?.c ?? -1)).toBe(0);
   });
 
   it('CONTENT: żadna wygenerowana treść nie nazywa/parafrazuje zewnętrznej normy', async () => {
-    const rows = await auditAll<{ title: string | null; requirement_text: string | null; audit_question: string | null; audit_procedure: string | null; source_reference: string | null }>(
+    const rows = await auditAll<{
+      title: string | null;
+      requirement_text: string | null;
+      audit_question: string | null;
+      audit_procedure: string | null;
+      source_reference: string | null;
+    }>(
       `SELECT title, requirement_text, audit_question, audit_procedure, source_reference
          FROM audit_program_criteria WHERE organization_id = $1`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
-    const findingRows = await auditAll<{ statement: string | null; requirement_text: string | null; gap_text: string | null; recommendation: string | null }>(
+    const findingRows = await auditAll<{
+      statement: string | null;
+      requirement_text: string | null;
+      gap_text: string | null;
+      recommendation: string | null;
+    }>(
       `SELECT statement, requirement_text, gap_text, recommendation FROM audit_program_findings WHERE organization_id = $1`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
-    const evidenceRows = await auditAll<{ title: string | null; description: string | null; content_snapshot: string | null }>(
+    const evidenceRows = await auditAll<{
+      title: string | null;
+      description: string | null;
+      content_snapshot: string | null;
+    }>(
       `SELECT title, description, content_snapshot FROM audit_evidence WHERE organization_id = $1`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
-    const packRow = await auditGet<{ title: string; summary: string | null; purpose: string | null }>(
-      `SELECT title, summary, purpose FROM audit_packs WHERE pack_key = $1`,
-      [FIXTURE_PACK_KEY],
-    );
+    const packRow = await auditGet<{
+      title: string;
+      summary: string | null;
+      purpose: string | null;
+    }>(`SELECT title, summary, purpose FROM audit_packs WHERE pack_key = $1`, [FIXTURE_PACK_KEY]);
 
     const allText = [
-      ...rows.flatMap((r) => [r.title, r.requirement_text, r.audit_question, r.audit_procedure, r.source_reference]),
-      ...findingRows.flatMap((r) => [r.statement, r.requirement_text, r.gap_text, r.recommendation]),
+      ...rows.flatMap((r) => [
+        r.title,
+        r.requirement_text,
+        r.audit_question,
+        r.audit_procedure,
+        r.source_reference,
+      ]),
+      ...findingRows.flatMap((r) => [
+        r.statement,
+        r.requirement_text,
+        r.gap_text,
+        r.recommendation,
+      ]),
       ...evidenceRows.flatMap((r) => [r.title, r.description, r.content_snapshot]),
       packRow?.title,
       packRow?.summary,
@@ -216,9 +248,9 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
     const outsider = fixtureActorFor(FIXTURE_ACTOR_OUTSIDER_ID);
     const access = await resolveProgramAccess(outsider, result.identity.programId);
     expect(access.capabilities.has('program.read')).toBe(false);
-    await expect(requireCapability(outsider, result.identity.programId, 'program.read')).rejects.toBeInstanceOf(
-      AuditPermissionError,
-    );
+    await expect(
+      requireCapability(outsider, result.identity.programId, 'program.read')
+    ).rejects.toBeInstanceOf(AuditPermissionError);
   });
 
   it('ROLE NEGATIVE (zapis): rola viewer nie może złożyć dowodu (evidence.submit)', async () => {
@@ -229,7 +261,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
 
     const anyCriterion = await auditGet<{ id: string }>(
       `SELECT id FROM audit_program_criteria WHERE organization_id = $1 AND node_kind = 'criterion' LIMIT 1`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
     expect(anyCriterion).not.toBeNull();
 
@@ -239,7 +271,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
         criterionId: anyCriterion!.id,
         kind: 'document',
         title: 'Próba zapisu przez rolę viewer — MUSI zostać odrzucona',
-      }),
+      })
     ).rejects.toBeInstanceOf(AuditPermissionError);
 
     // Kontrola negatywna nie zostawia śladu: liczba dowodów się nie zmienia.
@@ -277,7 +309,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
       '[AUD-MVP-DATA-001] PERFORMANCE listCriteria ms:',
       JSON.stringify(criteriaTimings),
       'getProgram ms:',
-      JSON.stringify(programTimings),
+      JSON.stringify(programTimings)
     );
 
     // Nie zgadujemy progu (właścicielskie progi to propozycje, nie bramki) —
@@ -298,7 +330,7 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
            (SELECT COUNT(*) FROM audit_corrective_actions WHERE organization_id = $1) AS actions,
            (SELECT COUNT(*) FROM audit_initiative_proposals WHERE organization_id = $1) AS proposals,
            (SELECT id FROM audit_programs WHERE organization_id = $1 LIMIT 1) AS program_id`,
-        [FIXTURE_ORG_ID],
+        [FIXTURE_ORG_ID]
       );
       const row = r.rows[0];
       expect(Number(row.criteria)).toBe(result.counts.criteria);
@@ -334,18 +366,20 @@ suite('auditProgramFixtures — fixture skali Audits (Postgres realny — AUD-MV
       initiativeProposals: 0,
     });
 
-    const packRow = await auditGet<{ id: string }>(`SELECT id FROM audit_packs WHERE pack_key = $1`, [
-      FIXTURE_PACK_KEY,
-    ]);
+    const packRow = await auditGet<{ id: string }>(
+      `SELECT id FROM audit_packs WHERE pack_key = $1`,
+      [FIXTURE_PACK_KEY]
+    );
     expect(packRow).toBeNull();
-    const sourceRow = await auditGet<{ id: string }>(`SELECT id FROM audit_norm_sources WHERE source_key = $1`, [
-      FIXTURE_SOURCE_KEY,
-    ]);
+    const sourceRow = await auditGet<{ id: string }>(
+      `SELECT id FROM audit_norm_sources WHERE source_key = $1`,
+      [FIXTURE_SOURCE_KEY]
+    );
     expect(sourceRow).toBeNull();
 
     const membersRow = await auditGet<{ c: string }>(
       `SELECT COUNT(*)::text AS c FROM audit_program_members WHERE organization_id = $1`,
-      [FIXTURE_ORG_ID],
+      [FIXTURE_ORG_ID]
     );
     expect(Number(membersRow?.c ?? -1)).toBe(0);
 

@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { run as dbRun } from '../../utils/DbPromise.js';
+import { buildMeetingInvitationIcs } from '../../utils/ics/icsBuilder.js';
+import logger from '../../utils/Logger.js';
 import { send as sendEmail } from '../emailService.js';
 import { getMeeting } from '../meetingService.js';
-import { run as dbRun } from '../../utils/DbPromise.js';
-import logger from '../../utils/Logger.js';
-import { buildMeetingInvitationIcs } from '../../utils/ics/icsBuilder.js';
 import {
   listMeetingParticipants,
   MeetingParticipant,

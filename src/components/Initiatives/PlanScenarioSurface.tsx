@@ -857,8 +857,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     return (
       <div role="alert" className="m-4 flex items-center justify-between text-c-danger">
         <span>
-          <AlertTriangle size={16} className="inline" />{' '}
-          {t('initiatives.planScenario.unavailable')}
+          <AlertTriangle size={16} className="inline" /> {t('initiatives.planScenario.unavailable')}
         </span>
         <button type="button" className="btn-secondary" onClick={() => void loadRegister()}>
           {t('initiatives.planScenario.retry')}
@@ -866,13 +865,14 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       </div>
     );
   return (
-    <section aria-label={t('initiatives.planScenario.sectionAria')} className="flex h-full min-h-0 flex-col">
+    <section
+      aria-label={t('initiatives.planScenario.sectionAria')}
+      className="flex h-full min-h-0 flex-col"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-c-border p-3">
         <div>
           <h2 className="font-semibold">{t('initiatives.planScenario.heading')}</h2>
-          <p className="text-sm text-c-text-muted">
-            {t('initiatives.planScenario.subheading')}
-          </p>
+          <p className="text-sm text-c-text-muted">{t('initiatives.planScenario.subheading')}</p>
         </div>
         <button type="button" className="btn-primary" onClick={() => setShowCreate(true)}>
           <Plus size={15} /> {t('initiatives.planScenario.newPlan')}
@@ -1031,7 +1031,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               pills: [
                 { label: t(planBandKey[row.band] ?? row.band), tone: 'neutral' },
                 { label: t(planConfidenceKey[row.confidence] ?? row.confidence), tone: 'neutral' },
-                { label: t(planStatusKey[row.published as PlanScenario['status']] ?? row.published), tone: 'neutral' },
+                {
+                  label: t(planStatusKey[row.published as PlanScenario['status']] ?? row.published),
+                  tone: 'neutral',
+                },
               ],
               trailing: <span>{row.target}</span>,
             }}
@@ -1099,7 +1102,12 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       >
         <StandardTable
           columns={[
-            { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true, width: '240px' },
+            {
+              id: 'title',
+              label: t('initiatives.planScenario.columns.initiative'),
+              sortable: true,
+              width: '240px',
+            },
             {
               id: 'backlogState',
               label: t('initiatives.planScenario.columns.backlogState'),
@@ -1107,7 +1115,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               filterable: true,
               render: (row) => t(planBacklogStateKey[row.backlogState] ?? row.backlogState),
             },
-            { id: 'earliest', label: t('initiatives.planScenario.columns.earliest'), sortable: true },
+            {
+              id: 'earliest',
+              label: t('initiatives.planScenario.columns.earliest'),
+              sortable: true,
+            },
             {
               id: 'target',
               label: t('initiatives.planScenario.columns.proposedTarget'),
@@ -1268,7 +1280,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           <div className="mb-4">
             <StandardTable
               columns={[
-                { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true },
+                {
+                  id: 'title',
+                  label: t('initiatives.planScenario.columns.initiative'),
+                  sortable: true,
+                },
                 // Odbiór 141-plan-scenario (2026-08-31): ta tabela warsztatu jako
                 // JEDYNA w powierzchni renderowała surowe enumy backendu
                 // (NOW/NEXT/LATER/UNSCHEDULED, HIGH/MEDIUM/LOW, KNOWN/UNKNOWN/NONE).
@@ -1354,7 +1370,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 />
               </label>
             </div>
-            <div className="space-y-2" aria-label={t('initiatives.planScenario.workbench.periodsAria')}>
+            <div
+              className="space-y-2"
+              aria-label={t('initiatives.planScenario.workbench.periodsAria')}
+            >
               {draft.periods.map((period, index) => (
                 <div
                   key={`${period.periodId}-${index}`}
@@ -1467,7 +1486,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{initiative.name}</span>
                       <span className="block text-xs text-c-text-muted">
-                        {initiative.lifecycle || t('initiatives.planScenario.workbench.statusUnknown')}
+                        {initiative.lifecycle ||
+                          t('initiatives.planScenario.workbench.statusUnknown')}
                       </span>
                     </span>
                   </label>
@@ -1651,9 +1671,12 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                           {initiatives.find((item) => item.id === window.initiativeId)?.name ??
                             window.initiativeId}
                           <input
-                            aria-label={t('initiatives.planScenario.workbench.initiativeVersionAria', {
-                              id: window.initiativeId,
-                            })}
+                            aria-label={t(
+                              'initiatives.planScenario.workbench.initiativeVersionAria',
+                              {
+                                id: window.initiativeId,
+                              }
+                            )}
                             className="mt-1 block w-20 bg-c-surface p-1"
                             type="number"
                             min={1}
@@ -1783,7 +1806,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                                   {
                                     constraintId: crypto.randomUUID(),
                                     state: 'UNKNOWN',
-                                    detail: t('initiatives.planScenario.workbench.defaultConstraintDetail'),
+                                    detail: t(
+                                      'initiatives.planScenario.workbench.defaultConstraintDetail'
+                                    ),
                                   },
                                 ],
                               })
@@ -1799,14 +1824,18 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               />
             </div>
             <aside className="space-y-3">
-              <h4 className="font-medium">{t('initiatives.planScenario.aside.assumptionsAndChanges')}</h4>
+              <h4 className="font-medium">
+                {t('initiatives.planScenario.aside.assumptionsAndChanges')}
+              </h4>
               {analysisProposal && (
                 <section
                   aria-label={t('initiatives.planScenario.aside.analysisProposalAria')}
                   className="rounded-md border border-c-border p-3 text-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="font-medium">{t('initiatives.planScenario.aside.analysisProposalTitle')}</h4>
+                    <h4 className="font-medium">
+                      {t('initiatives.planScenario.aside.analysisProposalTitle')}
+                    </h4>
                     <span>{analysisProposal.status}</span>
                   </div>
                   <p className="mt-2 text-c-text-muted">
@@ -1873,7 +1902,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 />
               </label>
               <section aria-label={t('initiatives.planScenario.aside.diffAria')}>
-                <h4 className="font-medium">{t('initiatives.planScenario.aside.compareVersions')}</h4>
+                <h4 className="font-medium">
+                  {t('initiatives.planScenario.aside.compareVersions')}
+                </h4>
                 {history.length < 2 ? (
                   <p className="mt-1 text-xs text-c-text-muted">
                     {t('initiatives.planScenario.aside.compareUnavailable')}

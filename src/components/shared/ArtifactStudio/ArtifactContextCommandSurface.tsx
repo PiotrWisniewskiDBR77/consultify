@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import type {
-  ArtifactCommand,
-  ArtifactCommandContext,
-  ArtifactCommandRegistry,
-} from './commands';
+import type { ArtifactCommand, ArtifactCommandContext, ArtifactCommandRegistry } from './commands';
 import { useArtifactCommands } from './commands';
 
 export interface ArtifactContextCommandSurfaceProps {
@@ -61,7 +57,9 @@ export const ArtifactContextCommandSurface: React.FC<ArtifactContextCommandSurfa
       if (!menuRef.current?.contains(event.target as Node)) close(false);
     };
     document.addEventListener('mousedown', onPointerDown);
-    requestAnimationFrame(() => menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
+    requestAnimationFrame(() =>
+      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+    );
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [position]);
 
@@ -105,7 +103,9 @@ export const ArtifactContextCommandSurface: React.FC<ArtifactContextCommandSurfa
           className="fixed z-modal min-w-56 max-w-72 rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-xl"
           style={{ left: position.x, top: position.y }}
           onKeyDown={(event) => {
-            const items = [...(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
+            const items = [
+              ...(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []),
+            ];
             const current = items.indexOf(document.activeElement as HTMLElement);
             if (event.key === 'Escape') {
               event.preventDefault();

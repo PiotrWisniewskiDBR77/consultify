@@ -45,7 +45,9 @@ function Section({
         : 'text-c-warning';
   return (
     <div className="space-y-1">
-      <div className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${toneClass}`}>
+      <div
+        className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${toneClass}`}
+      >
         <Icon size={12} />
         <span>{label}</span>
       </div>
@@ -90,10 +92,14 @@ export const TeresaEvidenceBreakdown: React.FC<TeresaEvidenceBreakdownProps> = (
         items={value.missing_evidence}
         tone="missing"
       />
-      {value.facts.length === 0 && value.inference.length === 0 && value.missing_evidence.length === 0 ? (
+      {value.facts.length === 0 &&
+      value.inference.length === 0 &&
+      value.missing_evidence.length === 0 ? (
         <div className="flex items-center gap-1.5 text-[12px] text-c-text-muted">
           <HelpCircle size={12} />
-          <span>{isPolish ? 'Teresa nie przywołała żadnych dowodów.' : 'Teresa cited no evidence.'}</span>
+          <span>
+            {isPolish ? 'Teresa nie przywołała żadnych dowodów.' : 'Teresa cited no evidence.'}
+          </span>
         </div>
       ) : null}
       <div className="border-t border-c-border pt-2">

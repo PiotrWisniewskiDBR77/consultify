@@ -12,10 +12,10 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { CHAT_HEADER_SELECTOR_CLASS } from '@/components/AIChat/chatHeaderControlStyles';
 import { useV8CreateHandoff, useV8Handoffs, useV8Snapshots } from '@/hooks/useV8Chat';
 import { useV8Gate } from '@/hooks/useV8Gate';
 import { useV8ConversationRetrievalTraces } from '@/hooks/useV8Retrieval';
-import { CHAT_HEADER_SELECTOR_CLASS } from '@/components/AIChat/chatHeaderControlStyles';
 
 interface V8ContextIndicatorProps {
   conversationId: string | null;

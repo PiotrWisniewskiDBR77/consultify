@@ -64,7 +64,9 @@ export interface KeyResultProgressCalcResult {
  * `{progress: null, reason: 'not_calculable: <cause>', outOfRangeDistance: null}`
  * — never a fabricated `0` (OKR-F-009-AC-01's literal requirement).
  */
-export function calculateKeyResultProgress(input: KeyResultProgressInput): KeyResultProgressCalcResult {
+export function calculateKeyResultProgress(
+  input: KeyResultProgressInput
+): KeyResultProgressCalcResult {
   const { direction, baselineValue, targetValue, currentValue, rangeMin, rangeMax } = input;
 
   switch (direction) {
@@ -72,14 +74,16 @@ export function calculateKeyResultProgress(input: KeyResultProgressInput): KeyRe
       if (currentValue === null || baselineValue === null || targetValue === null) {
         return {
           progress: null,
-          reason: 'not_calculable: increase geometry requires current_value, baseline_value, and target_value — at least one is missing',
+          reason:
+            'not_calculable: increase geometry requires current_value, baseline_value, and target_value — at least one is missing',
           outOfRangeDistance: null,
         };
       }
       if (targetValue === baselineValue) {
         return {
           progress: null,
-          reason: 'not_calculable: increase geometry has target_value equal to baseline_value (division by zero)',
+          reason:
+            'not_calculable: increase geometry has target_value equal to baseline_value (division by zero)',
           outOfRangeDistance: null,
         };
       }
@@ -94,14 +98,16 @@ export function calculateKeyResultProgress(input: KeyResultProgressInput): KeyRe
       if (currentValue === null || baselineValue === null || targetValue === null) {
         return {
           progress: null,
-          reason: 'not_calculable: decrease geometry requires current_value, baseline_value, and target_value — at least one is missing',
+          reason:
+            'not_calculable: decrease geometry requires current_value, baseline_value, and target_value — at least one is missing',
           outOfRangeDistance: null,
         };
       }
       if (baselineValue === targetValue) {
         return {
           progress: null,
-          reason: 'not_calculable: decrease geometry has baseline_value equal to target_value (division by zero)',
+          reason:
+            'not_calculable: decrease geometry has baseline_value equal to target_value (division by zero)',
           outOfRangeDistance: null,
         };
       }
@@ -119,14 +125,16 @@ export function calculateKeyResultProgress(input: KeyResultProgressInput): KeyRe
       if (currentValue === null || targetValue === null) {
         return {
           progress: null,
-          reason: 'not_calculable: reach geometry requires current_value and target_value — at least one is missing',
+          reason:
+            'not_calculable: reach geometry requires current_value and target_value — at least one is missing',
           outOfRangeDistance: null,
         };
       }
       if (targetValue === 0) {
         return {
           progress: null,
-          reason: 'not_calculable: reach geometry has target_value equal to zero (division by zero)',
+          reason:
+            'not_calculable: reach geometry has target_value equal to zero (division by zero)',
           outOfRangeDistance: null,
         };
       }
@@ -141,14 +149,16 @@ export function calculateKeyResultProgress(input: KeyResultProgressInput): KeyRe
       if (currentValue === null || rangeMin === null || rangeMax === null) {
         return {
           progress: null,
-          reason: 'not_calculable: maintain_range geometry requires current_value, range_min, and range_max — at least one is missing',
+          reason:
+            'not_calculable: maintain_range geometry requires current_value, range_min, and range_max — at least one is missing',
           outOfRangeDistance: null,
         };
       }
       if (rangeMin > rangeMax) {
         return {
           progress: null,
-          reason: 'not_calculable: maintain_range geometry has range_min greater than range_max (invalid range)',
+          reason:
+            'not_calculable: maintain_range geometry has range_min greater than range_max (invalid range)',
           outOfRangeDistance: null,
         };
       }
@@ -159,10 +169,12 @@ export function calculateKeyResultProgress(input: KeyResultProgressInput): KeyRe
           outOfRangeDistance: 0,
         };
       }
-      const outOfRangeDistance = currentValue < rangeMin ? rangeMin - currentValue : currentValue - rangeMax;
+      const outOfRangeDistance =
+        currentValue < rangeMin ? rangeMin - currentValue : currentValue - rangeMax;
       return {
         progress: 0,
-        reason: '§-IO ruling: maintain_range out-of-range = 0.0 (magnitude recorded separately in outOfRangeDistance, never folded into progress)',
+        reason:
+          '§-IO ruling: maintain_range out-of-range = 0.0 (magnitude recorded separately in outOfRangeDistance, never folded into progress)',
         outOfRangeDistance,
       };
     }
@@ -176,10 +188,18 @@ export function calculateKeyResultProgress(input: KeyResultProgressInput): KeyRe
         };
       }
       if (currentValue === 1) {
-        return { progress: 1, reason: '§-IO ruling: binary achieved = 1.0', outOfRangeDistance: null };
+        return {
+          progress: 1,
+          reason: '§-IO ruling: binary achieved = 1.0',
+          outOfRangeDistance: null,
+        };
       }
       if (currentValue === 0) {
-        return { progress: 0, reason: '§-IO ruling: binary not achieved = 0.0', outOfRangeDistance: null };
+        return {
+          progress: 0,
+          reason: '§-IO ruling: binary not achieved = 0.0',
+          outOfRangeDistance: null,
+        };
       }
       return {
         progress: null,
@@ -233,7 +253,8 @@ export function calculateObjectiveProgressRollup(input: ObjectiveRollupInput): P
   if (rollupModel === 'none') {
     return {
       progress: null,
-      reason: 'rollup_model_none: objective_rollup_model is "none" — Objective progress is intentionally not rolled up',
+      reason:
+        'rollup_model_none: objective_rollup_model is "none" — Objective progress is intentionally not rolled up',
     };
   }
   if (rollupModel === 'manual') {
@@ -273,7 +294,10 @@ export function calculateObjectiveProgressRollup(input: ObjectiveRollupInput): P
       reason: 'not_calculable: weighted_average total weight across calculable key results is zero',
     };
   }
-  const weightedSum = calculable.reduce((acc, kr) => acc + (kr.progress as number) * (kr.weight ?? 1), 0);
+  const weightedSum = calculable.reduce(
+    (acc, kr) => acc + (kr.progress as number) * (kr.weight ?? 1),
+    0
+  );
   return {
     progress: weightedSum / totalWeight,
     reason: `weighted_average over ${calculable.length} calculable key result(s) (of ${keyResultProgresses.length} total); a null weight is treated as 1`,
@@ -294,7 +318,10 @@ export interface ObjectiveConfidenceRollupKeyResultInput {
 export interface ObjectiveConfidenceRollupInput {
   keyResultConfidences: ObjectiveConfidenceRollupKeyResultInput[];
   confidenceModel: 'lowest_kr' | 'owner_selected' | 'custom';
-  ownerSelectedValue?: { confidence: OkrConfidenceValue; confidenceNumericValue: number | null } | null;
+  ownerSelectedValue?: {
+    confidence: OkrConfidenceValue;
+    confidenceNumericValue: number | null;
+  } | null;
 }
 
 export interface ObjectiveConfidenceRollupResult {
@@ -303,7 +330,11 @@ export interface ObjectiveConfidenceRollupResult {
   reason: string;
 }
 
-const CATEGORICAL_CONFIDENCE_RANK: Record<'low' | 'medium' | 'high', number> = { low: 0, medium: 1, high: 2 };
+const CATEGORICAL_CONFIDENCE_RANK: Record<'low' | 'medium' | 'high', number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
 
 /**
  * `'lowest_kr'` orders `high > medium > low` (categorical) or takes the
@@ -326,7 +357,8 @@ export function calculateObjectiveConfidenceRollup(
       return {
         confidence: null,
         confidenceNumericValue: null,
-        reason: 'not_calculable: objective_confidence_model is "owner_selected" but the Objective Owner has not set a value yet',
+        reason:
+          'not_calculable: objective_confidence_model is "owner_selected" but the Objective Owner has not set a value yet',
       };
     }
     return {
@@ -340,7 +372,8 @@ export function calculateObjectiveConfidenceRollup(
     return {
       confidence: null,
       confidenceNumericValue: null,
-      reason: 'not_calculable: objective_confidence_model "custom" is not implemented in OKR-E003 (D-E3-10) — reject this at the command layer before reaching the engine',
+      reason:
+        'not_calculable: objective_confidence_model "custom" is not implemented in OKR-E003 (D-E3-10) — reject this at the command layer before reaching the engine',
     };
   }
 
@@ -366,12 +399,15 @@ export function calculateObjectiveConfidenceRollup(
   }
 
   if (hasNumeric) {
-    const numericValues = withValue.map((kr) => kr.confidenceNumericValue).filter((v): v is number => v !== null);
+    const numericValues = withValue
+      .map((kr) => kr.confidenceNumericValue)
+      .filter((v): v is number => v !== null);
     if (numericValues.length === 0) {
       return {
         confidence: null,
         confidenceNumericValue: null,
-        reason: 'not_calculable: confidence model is numeric but no key result has a confidenceNumericValue populated',
+        reason:
+          'not_calculable: confidence model is numeric but no key result has a confidenceNumericValue populated',
       };
     }
     const worst = Math.min(...numericValues);
@@ -383,11 +419,13 @@ export function calculateObjectiveConfidenceRollup(
   }
 
   const worstRank = Math.min(
-    ...withValue.map((kr) => CATEGORICAL_CONFIDENCE_RANK[kr.confidence as 'low' | 'medium' | 'high'])
+    ...withValue.map(
+      (kr) => CATEGORICAL_CONFIDENCE_RANK[kr.confidence as 'low' | 'medium' | 'high']
+    )
   );
-  const worstLabel = (Object.keys(CATEGORICAL_CONFIDENCE_RANK) as Array<'low' | 'medium' | 'high'>).find(
-    (label) => CATEGORICAL_CONFIDENCE_RANK[label] === worstRank
-  ) as 'low' | 'medium' | 'high';
+  const worstLabel = (
+    Object.keys(CATEGORICAL_CONFIDENCE_RANK) as Array<'low' | 'medium' | 'high'>
+  ).find((label) => CATEGORICAL_CONFIDENCE_RANK[label] === worstRank) as 'low' | 'medium' | 'high';
   return {
     confidence: worstLabel,
     confidenceNumericValue: null,

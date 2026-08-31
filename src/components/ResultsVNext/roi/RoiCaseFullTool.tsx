@@ -44,12 +44,20 @@
  * Prawy panel pokazuje TYLKO to, co ROI API naprawdę zwraca; sekcje bez
  * źródła danych (Komentarze, Historia) są jawnie puste, a nie zmyślone.
  */
-import { ExternalLink, FileText, History as HistoryIcon, Link2, MessageSquare, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  ExternalLink,
+  FileText,
+  History as HistoryIcon,
+  Link2,
+  MessageSquare,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
-import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeSection } from '@/components/shared/NModeLayout';
+import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
@@ -58,24 +66,24 @@ import {
 } from '@/components/standard/ArtifactRightPanel';
 
 import type { RoiCaseListItem } from './roiApi';
-import { RoiCaseModelWorkspace } from './RoiCaseModelWorkspace';
-import { RoiCaseDecisionWorkspace } from './RoiCaseDecisionWorkspace';
-import { RoiCaseRealizeValueWorkspace } from './RoiCaseRealizeValueWorkspace';
-import { RoiCaseLearnWorkspace } from './RoiCaseLearnWorkspace';
-import { RoiPirOutcomesTab } from './RoiPirOutcomesTab';
 import {
-  ROI_CARD_SECTIONS,
-  ROI_PHASE_ENTRY_SECTION,
   buildRoiCardSectionTabs,
   getRoiCardSection,
+  ROI_CARD_SECTIONS,
+  ROI_PHASE_ENTRY_SECTION,
   type RoiCardSectionDef,
 } from './RoiCaseCardSections';
+import { RoiCaseDecisionWorkspace } from './RoiCaseDecisionWorkspace';
+import { RoiCaseLearnWorkspace } from './RoiCaseLearnWorkspace';
+import { RoiCaseModelWorkspace } from './RoiCaseModelWorkspace';
 import type { RoiCasePhase } from './RoiCasePhaseNav';
+import { RoiCaseRealizeValueWorkspace } from './RoiCaseRealizeValueWorkspace';
+import { RoiPirOutcomesTab } from './RoiPirOutcomesTab';
 import {
-  ROI_STATUS_TONE,
   formatRoiDate,
   getRoiCaseLockInfo,
   humanizeActionType,
+  ROI_STATUS_TONE,
   roiStatusLabel,
 } from './roiRegistryMappers';
 
@@ -106,7 +114,12 @@ const STATUS_TONE_TO_HEADER: Record<
   danger: 'rejected',
 };
 
-export const RoiCaseFullTool: React.FC<RoiCaseFullToolProps> = ({ roiCase, isPolish, onBack, initialPhase = 'build' }) => {
+export const RoiCaseFullTool: React.FC<RoiCaseFullToolProps> = ({
+  roiCase,
+  isPolish,
+  onBack,
+  initialPhase = 'build',
+}) => {
   const [activeSection, setActiveSection] = useState<string>(ROI_PHASE_ENTRY_SECTION[initialPhase]);
   /** Aktywny podwidok per sekcja — przełączenie sekcji nie gubi zakładki,
    * na której użytkownik był poprzednio (ta sama zasada co w warsztatach,
@@ -140,7 +153,9 @@ export const RoiCaseFullTool: React.FC<RoiCaseFullToolProps> = ({ roiCase, isPol
       case 'learn':
         return <RoiCaseLearnWorkspace {...shared} phase="learn" />;
       case 'pir-outcome':
-        return <RoiPirOutcomesTab isPolish={isPolish} onlyCaseId={roiCase.caseId} cardMode={cardMode} />;
+        return (
+          <RoiPirOutcomesTab isPolish={isPolish} onlyCaseId={roiCase.caseId} cardMode={cardMode} />
+        );
       default:
         return <RoiCaseModelWorkspace {...shared} phase="build" />;
     }
@@ -221,7 +236,10 @@ const SECTION_ICON: Record<string, React.FC<{ size?: number; className?: string 
  * reszta jest jawnie pusta, bo ROI API nie ma dziś ani komentarzy, ani dziennika
  * zdarzeń sprawy (sprawdzone w `roiApi.ts` — zero takich endpointów).
  */
-function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): ArtifactRightPanelSection[] {
+function buildRoiCardRightPanel(
+  roiCase: RoiCaseListItem,
+  isPolish: boolean
+): ArtifactRightPanelSection[] {
   const lock = getRoiCaseLockInfo(roiCase.status);
   const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : null;
 
@@ -235,7 +253,9 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
         <div className="flex flex-col gap-2 text-xs leading-relaxed text-c-text-secondary">
           {lockReason ? (
             <p data-testid="roi-card-lock-note">
-              <span className="font-medium text-c-text">{isPolish ? 'Sprawa zablokowana do edycji.' : 'Case locked for editing.'}</span>{' '}
+              <span className="font-medium text-c-text">
+                {isPolish ? 'Sprawa zablokowana do edycji.' : 'Case locked for editing.'}
+              </span>{' '}
               {lockReason}
             </p>
           ) : (
@@ -262,11 +282,20 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
           propertyLabel={isPolish ? 'Właściwość' : 'Property'}
           valueLabel={isPolish ? 'Wartość' : 'Value'}
           rows={[
-            { id: 'caseId', label: isPolish ? 'Numer sprawy' : 'Case id', value: roiCase.caseId, mono: true },
+            {
+              id: 'caseId',
+              label: isPolish ? 'Numer sprawy' : 'Case id',
+              value: roiCase.caseId,
+              mono: true,
+            },
             { id: 'status', label: 'Status', value: roiStatusLabel(roiCase.status, isPolish) },
             { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: roiCase.ownerUserId },
             { id: 'currency', label: isPolish ? 'Waluta' : 'Currency', value: roiCase.currency },
-            { id: 'granularity', label: isPolish ? 'Ziarno analizy' : 'Granularity', value: roiCase.granularity },
+            {
+              id: 'granularity',
+              label: isPolish ? 'Ziarno analizy' : 'Granularity',
+              value: roiCase.granularity,
+            },
             {
               id: 'window',
               label: isPolish ? 'Okres analizy' : 'Analysis window',
@@ -286,8 +315,18 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
                   ? 'Brak'
                   : 'None',
             },
-            { id: 'nextReview', label: isPolish ? 'Następny przegląd' : 'Next review', value: formatRoiDate(roiCase.nextReviewAt, isPolish), mono: true },
-            { id: 'updatedAt', label: isPolish ? 'Ostatnia aktualizacja' : 'Last updated', value: formatRoiDate(roiCase.updatedAt, isPolish), mono: true },
+            {
+              id: 'nextReview',
+              label: isPolish ? 'Następny przegląd' : 'Next review',
+              value: formatRoiDate(roiCase.nextReviewAt, isPolish),
+              mono: true,
+            },
+            {
+              id: 'updatedAt',
+              label: isPolish ? 'Ostatnia aktualizacja' : 'Last updated',
+              value: formatRoiDate(roiCase.updatedAt, isPolish),
+              mono: true,
+            },
           ]}
         />
       ),
@@ -303,7 +342,10 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
       children: roiCase.initiativeId ? (
         <ul className="flex flex-col gap-1.5 text-xs text-c-text-secondary">
           <li>
-            <span className="font-medium text-c-text">{isPolish ? 'Inicjatywa' : 'Initiative'}</span> — {roiCase.initiativeId}
+            <span className="font-medium text-c-text">
+              {isPolish ? 'Inicjatywa' : 'Initiative'}
+            </span>{' '}
+            — {roiCase.initiativeId}
           </li>
         </ul>
       ) : null,
@@ -336,7 +378,9 @@ function buildRoiCardRightPanel(roiCase: RoiCaseListItem, isPolish: boolean): Ar
       icon: HistoryIcon,
       defaultOpen: false,
       isEmpty: true,
-      emptyLabel: isPolish ? 'ROI nie ma dziś dziennika zdarzeń sprawy' : 'ROI has no case activity log yet',
+      emptyLabel: isPolish
+        ? 'ROI nie ma dziś dziennika zdarzeń sprawy'
+        : 'ROI has no case activity log yet',
       children: null,
     },
   ];

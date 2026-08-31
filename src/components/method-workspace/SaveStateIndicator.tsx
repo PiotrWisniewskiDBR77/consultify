@@ -50,7 +50,11 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
   switch (state) {
     case 'CLEAN':
       icon = <Check size={13} />;
-      label = compact ? 'Zapisano' : lastSavedAt ? `Zapisano ${formatTime(lastSavedAt)}` : 'Zapisano';
+      label = compact
+        ? 'Zapisano'
+        : lastSavedAt
+          ? `Zapisano ${formatTime(lastSavedAt)}`
+          : 'Zapisano';
       tone = 'text-c-text-muted';
       break;
     case 'SAVED':
@@ -84,7 +88,11 @@ export const SaveStateIndicator: React.FC<SaveStateIndicatorProps> = ({
   }
 
   return (
-    <div className={`${base} ${tone} ${className}`} data-testid="save-state-indicator" data-state={state}>
+    <div
+      className={`${base} ${tone} ${className}`}
+      data-testid="save-state-indicator"
+      data-state={state}
+    >
       {icon}
       <span>{label}</span>
       {!compact && state === 'DIRTY' && onSaveNow && (

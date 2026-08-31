@@ -87,7 +87,12 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
     statementMappingService = await import('../statementMappingService.js');
     statementReconciliationService = await import('../statementReconciliationService.js');
 
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'FinV3 D02 Test Org']));
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'FinV3 D02 Test Org',
+      ])
+    );
 
     // Calendar/periods are organization-scoped (not business-version-scoped), so one fixture
     // pair is reused across every business version this file creates.
@@ -128,19 +133,65 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
 
       const rules: import('../statementMappingService.js').MappingRule[] = [
         { sourceLabel: 'Total assets', statementType: 'BS', lineCode: 'TOTAL_ASSETS' },
-        { sourceLabel: 'Total liabilities and equity', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+        {
+          sourceLabel: 'Total liabilities and equity',
+          statementType: 'BS',
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+        },
         { sourceLabel: 'Cash and cash equivalents', statementType: 'BS', lineCode: 'CASH' },
         { sourceLabel: 'Net income', statementType: 'P&L', lineCode: 'NET_INCOME' },
         { sourceLabel: 'Retained earnings', statementType: 'BS', lineCode: 'RETAINED_EARNINGS' },
         { sourceLabel: 'Dividends declared', statementType: 'BS', lineCode: 'DIVIDENDS_DECLARED' },
       ];
       const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-        { lineItem: 'Total assets', periodId, entityCode: 'PARENT', currency: 'PLN', value: 1_000_000, sourceRef: { page: 3, row: 1 } },
-        { lineItem: 'Total liabilities and equity', periodId, entityCode: 'PARENT', currency: 'PLN', value: 1_000_000, sourceRef: { page: 3, row: 20 } },
-        { lineItem: 'Cash and cash equivalents', periodId, entityCode: 'PARENT', currency: 'PLN', value: 200_000, sourceRef: { page: 3, row: 2 } },
-        { lineItem: 'Net income', periodId, entityCode: 'PARENT', currency: 'PLN', value: 150_000, sourceRef: { page: 2, row: 12 } },
-        { lineItem: 'Retained earnings', periodId, entityCode: 'PARENT', currency: 'PLN', value: 300_000, sourceRef: { page: 3, row: 15 } },
-        { lineItem: 'Dividends declared', periodId, entityCode: 'PARENT', currency: 'PLN', value: 0, sourceRef: { page: 3, row: 16 } },
+        {
+          lineItem: 'Total assets',
+          periodId,
+          entityCode: 'PARENT',
+          currency: 'PLN',
+          value: 1_000_000,
+          sourceRef: { page: 3, row: 1 },
+        },
+        {
+          lineItem: 'Total liabilities and equity',
+          periodId,
+          entityCode: 'PARENT',
+          currency: 'PLN',
+          value: 1_000_000,
+          sourceRef: { page: 3, row: 20 },
+        },
+        {
+          lineItem: 'Cash and cash equivalents',
+          periodId,
+          entityCode: 'PARENT',
+          currency: 'PLN',
+          value: 200_000,
+          sourceRef: { page: 3, row: 2 },
+        },
+        {
+          lineItem: 'Net income',
+          periodId,
+          entityCode: 'PARENT',
+          currency: 'PLN',
+          value: 150_000,
+          sourceRef: { page: 2, row: 12 },
+        },
+        {
+          lineItem: 'Retained earnings',
+          periodId,
+          entityCode: 'PARENT',
+          currency: 'PLN',
+          value: 300_000,
+          sourceRef: { page: 3, row: 15 },
+        },
+        {
+          lineItem: 'Dividends declared',
+          periodId,
+          entityCode: 'PARENT',
+          currency: 'PLN',
+          value: 0,
+          sourceRef: { page: 3, row: 16 },
+        },
       ];
 
       const mapped = await statementMappingService.mapStatementLines({
@@ -185,7 +236,10 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
 
       // Confirm directly against the DB — not just the service's own return value.
       const bvRow = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ status: string }>(`SELECT status FROM finance_business_versions WHERE business_version_id = ?`, [bvId])
+        tx.queryOne<{ status: string }>(
+          `SELECT status FROM finance_business_versions WHERE business_version_id = ?`,
+          [bvId]
+        )
       );
       expect(bvRow?.status).toBe('READY_FOR_REVIEW');
     });
@@ -208,8 +262,22 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
         { sourceLabel: 'EBIT (reported)', statementType: 'P&L', lineCode: 'EBIT' },
       ];
       const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-        { lineItem: 'Operating profit', periodId, entityCode: 'CDP', currency: 'PLN', value: 500_000, sourceRef: { source: 'Statement', page: 2 } },
-        { lineItem: 'EBIT (reported)', periodId, entityCode: 'CDP', currency: 'PLN', value: 620_000, sourceRef: { source: 'Analysis', page: 7 } },
+        {
+          lineItem: 'Operating profit',
+          periodId,
+          entityCode: 'CDP',
+          currency: 'PLN',
+          value: 500_000,
+          sourceRef: { source: 'Statement', page: 2 },
+        },
+        {
+          lineItem: 'EBIT (reported)',
+          periodId,
+          entityCode: 'CDP',
+          currency: 'PLN',
+          value: 620_000,
+          sourceRef: { source: 'Analysis', page: 7 },
+        },
       ];
 
       const mapped = await statementMappingService.mapStatementLines({
@@ -274,7 +342,10 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
 
       // The business version must still be DRAFT — no silent progression.
       const bvRow = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ status: string }>(`SELECT status FROM finance_business_versions WHERE business_version_id = ?`, [bvId])
+        tx.queryOne<{ status: string }>(
+          `SELECT status FROM finance_business_versions WHERE business_version_id = ?`,
+          [bvId]
+        )
       );
       expect(bvRow?.status).toBe('DRAFT');
     });
@@ -286,9 +357,18 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
       const bvId = created.businessVersion.business_version_id;
       await makeEntity(bvId, 'MISS');
 
-      const rules: import('../statementMappingService.js').MappingRule[] = [{ sourceLabel: 'Inventory', statementType: 'BS', lineCode: 'INVENTORY' }];
+      const rules: import('../statementMappingService.js').MappingRule[] = [
+        { sourceLabel: 'Inventory', statementType: 'BS', lineCode: 'INVENTORY' },
+      ];
       const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-        { lineItem: 'Inventory', periodId, entityCode: 'MISS', currency: 'PLN', value: null, sourceRef: { note: 'source page illegible' } },
+        {
+          lineItem: 'Inventory',
+          periodId,
+          entityCode: 'MISS',
+          currency: 'PLN',
+          value: null,
+          sourceRef: { note: 'source page illegible' },
+        },
       ];
 
       const mapped = await statementMappingService.mapStatementLines({
@@ -335,7 +415,9 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
 
       const byName = new Map(result.readiness.checks.map((c) => [c.check_name, c]));
       expect(byName.get('MAPPING_COMPLETE_NO_MISSING')?.passed).toBe(false);
-      expect(byName.get('MAPPING_COMPLETE_NO_MISSING')?.detail).toContain('1 cell(s) with value_status=MISSING');
+      expect(byName.get('MAPPING_COMPLETE_NO_MISSING')?.detail).toContain(
+        '1 cell(s) with value_status=MISSING'
+      );
       // Every OTHER check passes — this is a targeted, single-axis block, not a blanket failure.
       expect(byName.get('RECONCILIATION_RESIDUAL_WITHIN_TOLERANCE')?.passed).toBe(true);
       expect(result.readiness.ready).toBe(false);
@@ -351,7 +433,11 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
 
       const rules: import('../statementMappingService.js').MappingRule[] = [
         { sourceLabel: 'Total assets', statementType: 'BS', lineCode: 'TOTAL_ASSETS' },
-        { sourceLabel: 'Total liabilities and equity', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+        {
+          sourceLabel: 'Total liabilities and equity',
+          statementType: 'BS',
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+        },
         {
           sourceLabel: 'One-time non-recurring gain',
           statementType: 'P&L',
@@ -361,9 +447,30 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
         },
       ];
       const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-        { lineItem: 'Total assets', periodId, entityCode: 'EXCL', currency: 'PLN', value: 1_000_000, sourceRef: {} },
-        { lineItem: 'Total liabilities and equity', periodId, entityCode: 'EXCL', currency: 'PLN', value: 1_000_000, sourceRef: {} },
-        { lineItem: 'One-time non-recurring gain', periodId, entityCode: 'EXCL', currency: 'PLN', value: 75_000, sourceRef: {} },
+        {
+          lineItem: 'Total assets',
+          periodId,
+          entityCode: 'EXCL',
+          currency: 'PLN',
+          value: 1_000_000,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'Total liabilities and equity',
+          periodId,
+          entityCode: 'EXCL',
+          currency: 'PLN',
+          value: 1_000_000,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'One-time non-recurring gain',
+          periodId,
+          entityCode: 'EXCL',
+          currency: 'PLN',
+          value: 75_000,
+          sourceRef: {},
+        },
       ];
 
       const mapped = await statementMappingService.mapStatementLines({
@@ -424,12 +531,36 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
       const bvId = pack.businessVersion.business_version_id;
       await makeEntity(bvId, `PROBE-${scope}`);
       const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-        { lineItem: 'Total assets', periodId, entityCode: `PROBE-${scope}`, currency: 'PLN', value: 100_000_000, sourceRef: {} },
-        { lineItem: 'Total liabilities and equity', periodId, entityCode: `PROBE-${scope}`, currency: 'PLN', value: 100_000_000 - UNBALANCED_DELTA, sourceRef: {} },
+        {
+          lineItem: 'Total assets',
+          periodId,
+          entityCode: `PROBE-${scope}`,
+          currency: 'PLN',
+          value: 100_000_000,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'Total liabilities and equity',
+          periodId,
+          entityCode: `PROBE-${scope}`,
+          currency: 'PLN',
+          value: 100_000_000 - UNBALANCED_DELTA,
+          sourceRef: {},
+        },
       ];
       const rules: import('../statementMappingService.js').MappingRule[] = [
-        { sourceLabel: 'Total assets', statementType: 'BS', lineCode: 'TOTAL_ASSETS', consolidationScope: scope },
-        { sourceLabel: 'Total liabilities and equity', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY', consolidationScope: scope },
+        {
+          sourceLabel: 'Total assets',
+          statementType: 'BS',
+          lineCode: 'TOTAL_ASSETS',
+          consolidationScope: scope,
+        },
+        {
+          sourceLabel: 'Total liabilities and equity',
+          statementType: 'BS',
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+          consolidationScope: scope,
+        },
       ];
       return statementMappingService.mapStatementLines({
         organizationId: orgId,
@@ -455,12 +586,36 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
       const bvId = pack.businessVersion.business_version_id;
       await makeEntity(bvId, 'PROBE-BALANCED');
       const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-        { lineItem: 'Total assets', periodId, entityCode: 'PROBE-BALANCED', currency: 'PLN', value: 500_000, sourceRef: {} },
-        { lineItem: 'Total liabilities and equity', periodId, entityCode: 'PROBE-BALANCED', currency: 'PLN', value: 500_000, sourceRef: {} },
+        {
+          lineItem: 'Total assets',
+          periodId,
+          entityCode: 'PROBE-BALANCED',
+          currency: 'PLN',
+          value: 500_000,
+          sourceRef: {},
+        },
+        {
+          lineItem: 'Total liabilities and equity',
+          periodId,
+          entityCode: 'PROBE-BALANCED',
+          currency: 'PLN',
+          value: 500_000,
+          sourceRef: {},
+        },
       ];
       const rules: import('../statementMappingService.js').MappingRule[] = [
-        { sourceLabel: 'Total assets', statementType: 'BS', lineCode: 'TOTAL_ASSETS', consolidationScope: 'STANDALONE' },
-        { sourceLabel: 'Total liabilities and equity', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY', consolidationScope: 'STANDALONE' },
+        {
+          sourceLabel: 'Total assets',
+          statementType: 'BS',
+          lineCode: 'TOTAL_ASSETS',
+          consolidationScope: 'STANDALONE',
+        },
+        {
+          sourceLabel: 'Total liabilities and equity',
+          statementType: 'BS',
+          lineCode: 'TOTAL_LIABILITIES_EQUITY',
+          consolidationScope: 'STANDALONE',
+        },
       ];
       const mapped = await statementMappingService.mapStatementLines({
         organizationId: orgId,
@@ -497,10 +652,12 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
       closingFy2023: -72_699,
     } as const;
     /** −29 215 + 8 504 − 14 612 = −35 323 vs reported −72 699 -> 37 376 thousand PLN unexplained. */
-    const APATOR_RE_GAP =
-      Math.abs(
-        APATOR_RE.openingFy2023 + APATOR_RE.netIncomeFy2023 - APATOR_RE.dividendsFy2023 - APATOR_RE.closingFy2023
-      );
+    const APATOR_RE_GAP = Math.abs(
+      APATOR_RE.openingFy2023 +
+        APATOR_RE.netIncomeFy2023 -
+        APATOR_RE.dividendsFy2023 -
+        APATOR_RE.closingFy2023
+    );
 
     let thousandsCalendarId = '';
     let fy2022Id = '';
@@ -526,8 +683,14 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
             `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, previous_period_id, created_by)
              VALUES (?, ?, 'FY', ?, ?, ?, ?, ?, ?) RETURNING period_id`,
             [
-              orgId, thousandsCalendarId, fiscalYear,
-              `${fiscalYear}-01-01`, `${fiscalYear}-12-31`, `FY${fiscalYear}`, previous, preparerId,
+              orgId,
+              thousandsCalendarId,
+              fiscalYear,
+              `${fiscalYear}-01-01`,
+              `${fiscalYear}-12-31`,
+              `FY${fiscalYear}`,
+              previous,
+              preparerId,
             ]
           )
         );
@@ -551,15 +714,30 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
         const entityCode = `APATOR-BS-${imbalanceThousands}`;
         await makeEntity(bvId, entityCode);
         const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-          { lineItem: 'AKTYWA RAZEM', periodId: fy2024Id, entityCode, currency: 'PLN', value: APATOR_TOTAL_ASSETS_FY2024, sourceRef: {} },
           {
-            lineItem: 'PASYWA RAZEM', periodId: fy2024Id, entityCode, currency: 'PLN',
-            value: APATOR_TOTAL_ASSETS_FY2024 - imbalanceThousands, sourceRef: {},
+            lineItem: 'AKTYWA RAZEM',
+            periodId: fy2024Id,
+            entityCode,
+            currency: 'PLN',
+            value: APATOR_TOTAL_ASSETS_FY2024,
+            sourceRef: {},
+          },
+          {
+            lineItem: 'PASYWA RAZEM',
+            periodId: fy2024Id,
+            entityCode,
+            currency: 'PLN',
+            value: APATOR_TOTAL_ASSETS_FY2024 - imbalanceThousands,
+            sourceRef: {},
           },
         ];
         const rules: import('../statementMappingService.js').MappingRule[] = [
           { sourceLabel: 'AKTYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_ASSETS' },
-          { sourceLabel: 'PASYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+          {
+            sourceLabel: 'PASYWA RAZEM',
+            statementType: 'BS',
+            lineCode: 'TOTAL_LIABILITIES_EQUITY',
+          },
         ];
         return statementMappingService.mapStatementLines({
           organizationId: orgId,
@@ -610,20 +788,71 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
         await makeEntity(bvId, entityCode);
 
         const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-          { lineItem: 'Niepodzielony wynik finansowy 2022', periodId: fy2022Id, entityCode, currency: 'PLN', value: APATOR_RE.openingFy2023, sourceRef: {} },
-          { lineItem: 'Niepodzielony wynik finansowy 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: APATOR_RE.closingFy2023, sourceRef: {} },
-          { lineItem: 'Zysk netto 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: APATOR_RE.netIncomeFy2023, sourceRef: {} },
-          { lineItem: 'Wyplacona dywidenda 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: APATOR_RE.dividendsFy2023, sourceRef: {} },
+          {
+            lineItem: 'Niepodzielony wynik finansowy 2022',
+            periodId: fy2022Id,
+            entityCode,
+            currency: 'PLN',
+            value: APATOR_RE.openingFy2023,
+            sourceRef: {},
+          },
+          {
+            lineItem: 'Niepodzielony wynik finansowy 2023',
+            periodId: fy2023Id,
+            entityCode,
+            currency: 'PLN',
+            value: APATOR_RE.closingFy2023,
+            sourceRef: {},
+          },
+          {
+            lineItem: 'Zysk netto 2023',
+            periodId: fy2023Id,
+            entityCode,
+            currency: 'PLN',
+            value: APATOR_RE.netIncomeFy2023,
+            sourceRef: {},
+          },
+          {
+            lineItem: 'Wyplacona dywidenda 2023',
+            periodId: fy2023Id,
+            entityCode,
+            currency: 'PLN',
+            value: APATOR_RE.dividendsFy2023,
+            sourceRef: {},
+          },
         ];
         const rules: import('../statementMappingService.js').MappingRule[] = [
-          { sourceLabel: 'Niepodzielony wynik finansowy 2022', statementType: 'BS', lineCode: 'RETAINED_EARNINGS' },
-          { sourceLabel: 'Niepodzielony wynik finansowy 2023', statementType: 'BS', lineCode: 'RETAINED_EARNINGS' },
+          {
+            sourceLabel: 'Niepodzielony wynik finansowy 2022',
+            statementType: 'BS',
+            lineCode: 'RETAINED_EARNINGS',
+          },
+          {
+            sourceLabel: 'Niepodzielony wynik finansowy 2023',
+            statementType: 'BS',
+            lineCode: 'RETAINED_EARNINGS',
+          },
           { sourceLabel: 'Zysk netto 2023', statementType: 'P&L', lineCode: 'NET_INCOME' },
-          { sourceLabel: 'Wyplacona dywidenda 2023', statementType: 'BS', lineCode: 'DIVIDENDS_DECLARED' },
+          {
+            sourceLabel: 'Wyplacona dywidenda 2023',
+            statementType: 'BS',
+            lineCode: 'DIVIDENDS_DECLARED',
+          },
         ];
         if (otherEquityMovements !== null) {
-          rawLines.push({ lineItem: 'Pozostale zmiany kapitalu 2023', periodId: fy2023Id, entityCode, currency: 'PLN', value: otherEquityMovements, sourceRef: {} });
-          rules.push({ sourceLabel: 'Pozostale zmiany kapitalu 2023', statementType: 'BS', lineCode: 'OTHER_EQUITY_MOVEMENTS' });
+          rawLines.push({
+            lineItem: 'Pozostale zmiany kapitalu 2023',
+            periodId: fy2023Id,
+            entityCode,
+            currency: 'PLN',
+            value: otherEquityMovements,
+            sourceRef: {},
+          });
+          rules.push({
+            sourceLabel: 'Pozostale zmiany kapitalu 2023',
+            statementType: 'BS',
+            lineCode: 'OTHER_EQUITY_MOVEMENTS',
+          });
         }
 
         const mapped = await statementMappingService.mapStatementLines({
@@ -645,7 +874,10 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
 
         // The rows really are in the table after COMMIT — not just returned by the service.
         const persisted = await withPinnedPostgresTransaction((tx) =>
-          tx.queryOne<{ n: string }>(`SELECT COUNT(*)::text AS n FROM finance_stmt_lines WHERE business_version_id = ?`, [bvId])
+          tx.queryOne<{ n: string }>(
+            `SELECT COUNT(*)::text AS n FROM finance_stmt_lines WHERE business_version_id = ?`,
+            [bvId]
+          )
         );
         expect(Number(persisted?.n)).toBe(4);
       });
@@ -655,8 +887,15 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
 
         const exc = await withPinnedPostgresTransaction((tx) =>
           tx.queryOne<{
-            event_type: string; severity: string; reason_code: string; state: string;
-            expected: string; observed: string; delta: string; unit: string; evidence: Record<string, unknown>;
+            event_type: string;
+            severity: string;
+            reason_code: string;
+            state: string;
+            expected: string;
+            observed: string;
+            delta: string;
+            unit: string;
+            evidence: Record<string, unknown>;
           }>(
             `SELECT event_type, severity, reason_code, state, expected, observed, delta, unit, evidence
                FROM finance_exceptions_current WHERE business_version_id = ?`,
@@ -682,7 +921,10 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
       it('exactly ONE exception is logged for the cell, not one per row of the batch', async () => {
         const { bvId } = await apatorRollForwardImport(null);
         const row = await withPinnedPostgresTransaction((tx) =>
-          tx.queryOne<{ n: string }>(`SELECT COUNT(*)::text AS n FROM finance_exceptions WHERE business_version_id = ?`, [bvId])
+          tx.queryOne<{ n: string }>(
+            `SELECT COUNT(*)::text AS n FROM finance_exceptions WHERE business_version_id = ?`,
+            [bvId]
+          )
         );
         expect(Number(row?.n)).toBe(1);
       });
@@ -705,7 +947,10 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
         expect(mapped.every((r) => r.bucket === 'MAPPED')).toBe(true);
 
         const row = await withPinnedPostgresTransaction((tx) =>
-          tx.queryOne<{ n: string }>(`SELECT COUNT(*)::text AS n FROM finance_exceptions WHERE business_version_id = ?`, [bvId])
+          tx.queryOne<{ n: string }>(
+            `SELECT COUNT(*)::text AS n FROM finance_exceptions WHERE business_version_id = ?`,
+            [bvId]
+          )
         );
         expect(Number(row?.n)).toBe(0);
 
@@ -723,17 +968,40 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
         const bvId = pack.businessVersion.business_version_id;
         await makeEntity(bvId, 'APATOR-IDENTITY-GUARD');
         const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
-          { lineItem: 'AKTYWA RAZEM', periodId: fy2024Id, entityCode: 'APATOR-IDENTITY-GUARD', currency: 'PLN', value: APATOR_TOTAL_ASSETS_FY2024, sourceRef: {} },
-          { lineItem: 'PASYWA RAZEM', periodId: fy2024Id, entityCode: 'APATOR-IDENTITY-GUARD', currency: 'PLN', value: APATOR_TOTAL_ASSETS_FY2024 - 10_000, sourceRef: {} },
+          {
+            lineItem: 'AKTYWA RAZEM',
+            periodId: fy2024Id,
+            entityCode: 'APATOR-IDENTITY-GUARD',
+            currency: 'PLN',
+            value: APATOR_TOTAL_ASSETS_FY2024,
+            sourceRef: {},
+          },
+          {
+            lineItem: 'PASYWA RAZEM',
+            periodId: fy2024Id,
+            entityCode: 'APATOR-IDENTITY-GUARD',
+            currency: 'PLN',
+            value: APATOR_TOTAL_ASSETS_FY2024 - 10_000,
+            sourceRef: {},
+          },
         ];
         const rules: import('../statementMappingService.js').MappingRule[] = [
           { sourceLabel: 'AKTYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_ASSETS' },
-          { sourceLabel: 'PASYWA RAZEM', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+          {
+            sourceLabel: 'PASYWA RAZEM',
+            statementType: 'BS',
+            lineCode: 'TOTAL_LIABILITIES_EQUITY',
+          },
         ];
         await expect(
           statementMappingService.mapStatementLines({
-            organizationId: orgId, businessVersionId: bvId, unit: 'THOUSANDS',
-            presentationCurrency: 'PLN', createdBy: preparerId, rawLines, rules,
+            organizationId: orgId,
+            businessVersionId: bvId,
+            unit: 'THOUSANDS',
+            presentationCurrency: 'PLN',
+            createdBy: preparerId,
+            rawLines,
+            rules,
           })
         ).rejects.toThrow(/balance check failed/);
       });

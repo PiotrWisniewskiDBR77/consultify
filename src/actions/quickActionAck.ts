@@ -165,10 +165,7 @@ function newAckId(): string {
  * operacji, przekazując `ackId` z detalu zdarzenia wejściowego. Bez `ackId`
  * nie robi NIC — wywołujący sprzed tej fali mają ścieżkę nietkniętą.
  */
-export function emitQuickActionAck(
-  ackId: string | undefined,
-  outcome: QuickActionOutcome
-): void {
+export function emitQuickActionAck(ackId: string | undefined, outcome: QuickActionOutcome): void {
   if (!ackId || typeof window === 'undefined') return;
   window.dispatchEvent(
     new CustomEvent(QUICK_ACTION_ACK_EVENT, {

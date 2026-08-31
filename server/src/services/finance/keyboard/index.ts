@@ -7,8 +7,8 @@
  * keyboard-shortcut hook is expected to implement against these exports.
  */
 
-export * from './commandTypes.js';
 export * from './CommandAvailability.js';
+export * from './CommandPaletteIndex.js';
+export * from './commandTypes.js';
 export * from './FocusRestoreContract.js';
 export * from './KeyboardCommandRegistry.js';
-export * from './CommandPaletteIndex.js';

@@ -32,7 +32,10 @@ const TONE: Record<DrdSourceKind, string> = {
   DEMO_LOCAL: 'border-c-border text-c-text-muted',
 };
 
-export const DrdSourceIndicator: React.FC<{ source: DrdSourceKind; title?: string }> = ({ source, title }) => (
+export const DrdSourceIndicator: React.FC<{ source: DrdSourceKind; title?: string }> = ({
+  source,
+  title,
+}) => (
   <span
     data-testid="drd-source-indicator"
     data-source={source}

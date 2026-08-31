@@ -85,7 +85,11 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
         label: isPl ? def.label.pl : def.label.en,
         icon: Icon ? <Icon size={14} /> : undefined,
         disabled,
-        disabledReason: disabled ? (isLocked ? lockedReason : (disabledReason ?? lockedReason)) : undefined,
+        disabledReason: disabled
+          ? isLocked
+            ? lockedReason
+            : (disabledReason ?? lockedReason)
+          : undefined,
         danger: def.destructive,
         // „Usuń połączenie" było jedyną pozycją z separatorem NAD sobą w
         // oryginalnej tablicy (`dividerBefore: true`) — zachowane po id.

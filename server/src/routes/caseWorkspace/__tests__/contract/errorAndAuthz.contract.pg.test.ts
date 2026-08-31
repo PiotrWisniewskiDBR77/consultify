@@ -73,7 +73,9 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
       expect(paths).toContain('contractedClosureType');
 
       // Nothing was written.
-      const rows = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [f.projectId]);
+      const rows = await control.query(`SELECT case_id FROM case_core WHERE project_id = $1`, [
+        f.projectId,
+      ]);
       expect(rows.rowCount).toBe(0);
     } finally {
       await fx.teardown();
@@ -107,7 +109,9 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
         isSuperAdmin: false,
       });
       const crossTenant = await request(attackerApp).get(`${BASE}/cases/${realCaseId}`);
-      const nonExistent = await request(attackerApp).get(`${BASE}/cases/case-does-not-exist-${randomUUID()}`);
+      const nonExistent = await request(attackerApp).get(
+        `${BASE}/cases/case-does-not-exist-${randomUUID()}`
+      );
 
       expect(crossTenant.status).toBe(404);
       expect(nonExistent.status).toBe(404);
@@ -148,7 +152,10 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
         .send({ targetStatus: 'CANCELLED', reason: 'hostile' });
       expect(attempt.status).toBe(404);
 
-      const row = await control.query(`SELECT case_status, version FROM case_core WHERE case_id = $1`, [caseId]);
+      const row = await control.query(
+        `SELECT case_status, version FROM case_core WHERE case_id = $1`,
+        [caseId]
+      );
       expect(row.rows[0].case_status).toBe('DRAFT');
       expect(Number(row.rows[0].version)).toBe(1);
     } finally {
@@ -312,7 +319,9 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
         .send({ projectId: f.projectId, contractedClosureType: 'DELIVERY_COMPLETED' });
       const caseId = created.body.data.caseId;
 
-      const res = await request(app).post(`${BASE}/cases/${caseId}/waits`).send({ waitType: 'HUMAN' });
+      const res = await request(app)
+        .post(`${BASE}/cases/${caseId}/waits`)
+        .send({ waitType: 'HUMAN' });
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
     } finally {
@@ -411,7 +420,9 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
         isSuperAdmin: false,
       });
 
-      const realDefinition = await request(outsiderApp).get(`${BASE}/process-definitions/${definitionId}`);
+      const realDefinition = await request(outsiderApp).get(
+        `${BASE}/process-definitions/${definitionId}`
+      );
       const fakeDefinition = await request(outsiderApp).get(
         `${BASE}/process-definitions/procdef-does-not-exist-${randomUUID()}`
       );
@@ -444,8 +455,12 @@ suite('CONTRACT — error envelope and authorization over real Postgres', () => 
         list.body.data.map((d: { processDefinitionId: string }) => d.processDefinitionId)
       ).not.toContain(definitionId);
 
-      await control.query(`DELETE FROM process_versions WHERE process_version_id = $1`, [versionId]);
-      await control.query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [definitionId]);
+      await control.query(`DELETE FROM process_versions WHERE process_version_id = $1`, [
+        versionId,
+      ]);
+      await control.query(`DELETE FROM process_definitions WHERE process_definition_id = $1`, [
+        definitionId,
+      ]);
     } finally {
       await fx.teardown();
     }

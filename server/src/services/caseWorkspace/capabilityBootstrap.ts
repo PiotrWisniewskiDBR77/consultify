@@ -94,12 +94,12 @@
  */
 
 import logger from '../../utils/Logger.js';
+import { registerBuiltinCapabilityAdapters } from './adapters/index.js';
 import {
   CaseWorkspaceAuthError,
-  requireOrgRole,
   type OrgMembership,
+  requireOrgRole,
 } from './caseWorkspaceAuthContext.js';
-import { registerBuiltinCapabilityAdapters } from './adapters/index.js';
 
 /** Actor identifier env var — see OD-CW-BOOTSTRAP-20260812 clause 4. */
 export const CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID_ENV_VAR =
@@ -213,7 +213,9 @@ export async function bootstrapCaseWorkspaceCapabilities(
   } catch (error) {
     if (error instanceof CaseWorkspaceAuthError) {
       const status: CapabilityBootstrapStatus =
-        error.code === 'insufficient_org_role' ? 'REFUSED_INSUFFICIENT_ROLE' : 'REFUSED_NOT_ORG_MEMBER';
+        error.code === 'insufficient_org_role'
+          ? 'REFUSED_INSUFFICIENT_ROLE'
+          : 'REFUSED_NOT_ORG_MEMBER';
       logger.warn(
         `[CaseWorkspace capability bootstrap] refused: ${error.code}. The configured service ` +
           'principal is not an active ADMIN of the configured organization. Zero capabilities registered.'

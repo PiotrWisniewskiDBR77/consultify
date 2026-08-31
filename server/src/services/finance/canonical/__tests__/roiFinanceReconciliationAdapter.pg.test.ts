@@ -163,7 +163,9 @@ describe.skipIf(!REAL_PG)(
       await raw.connect();
       const database = await raw.query<{ current_database: string }>('SELECT current_database()');
       if (!database.rows[0]?.current_database.startsWith('consultify_results_')) {
-        throw new Error('ROI/Finance reconciliation requires an owned consultify_results_* disposable database');
+        throw new Error(
+          'ROI/Finance reconciliation requires an owned consultify_results_* disposable database'
+        );
       }
 
       // --- schema prerequisite (see header) ---
@@ -306,7 +308,10 @@ describe.skipIf(!REAL_PG)(
     beforeEach(async () => {
       if (!raw || !orgId) return;
       await raw.query(`SET session_replication_role = replica`);
-      await raw.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [orgId]);
+      await raw.query(
+        `DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`,
+        [orgId]
+      );
       await raw.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [
         orgId,
       ]);
@@ -379,7 +384,15 @@ describe.skipIf(!REAL_PG)(
         `INSERT INTO finance_compute_snapshots
           (compute_snapshot_id,artifact_id,organization_id,working_revision_id,engine_manifest_id,as_of,content_semantic_hash,created_by)
          VALUES($1,$2,$3,$4,$5,now(),$6,$7)`,
-        [computeSnapshotId, artifactId, orgId, workingRevisionId, engine.rows[0].engine_manifest_id, contentHash, userId]
+        [
+          computeSnapshotId,
+          artifactId,
+          orgId,
+          workingRevisionId,
+          engine.rows[0].engine_manifest_id,
+          contentHash,
+          userId,
+        ]
       );
       await raw.query(
         `UPDATE finance_business_versions SET source_working_revision_id=$1,compute_snapshot_id=$2,
@@ -405,11 +418,17 @@ describe.skipIf(!REAL_PG)(
          VALUES($1,$2,$3,$4,'2026-06-30',$5,$6,1,1,100,0,0,'[]'::jsonb)`,
         [actualSnapshotId, caseId, orgId, nextSequence.rows[0]!.n, userId, roiValue]
       );
-      return { resultsActualSnapshotId: actualSnapshotId, resultsActualMetric: 'totalFinancialBenefits' as const };
+      return {
+        resultsActualSnapshotId: actualSnapshotId,
+        resultsActualMetric: 'totalFinancialBenefits' as const,
+      };
     }
 
     async function detectGoverned(
-      params: Omit<Parameters<typeof adapter.detectAndReconcile>[0], 'resultsActualSnapshotId' | 'resultsActualMetric'>
+      params: Omit<
+        Parameters<typeof adapter.detectAndReconcile>[0],
+        'resultsActualSnapshotId' | 'resultsActualMetric'
+      >
     ) {
       if (!adapter.assessMateriality(params.roiValue, params.financeValue).material) {
         return adapter.detectAndReconcile({
@@ -443,7 +462,9 @@ describe.skipIf(!REAL_PG)(
         expect(result.material).toBe(true);
         expect(result.reconciliationOpened).toBe(true);
         expect(result.divergencePercent).toBeCloseTo(20, 6);
-        expect(result.thresholdPercent).toBe(adapter.FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT);
+        expect(result.thresholdPercent).toBe(
+          adapter.FINANCE_RECONCILIATION_MATERIALITY_THRESHOLD_PCT
+        );
         expect(result.reconciliationId).toBeTruthy();
 
         // Read back OUT OF BAND: the seam stores jawne skalary, not a jsonb blob.
@@ -656,11 +677,17 @@ describe.skipIf(!REAL_PG)(
       it('respects CAS: a stale expectedVersion is rejected, the row is untouched', async () => {
         const id = await openOne();
         await expect(
-          adapter.resolveReconciliationDecision(id, `resolver-${userId}`, 'stale attempt', 'resolved', {
-            organizationId: orgId,
-            expectedVersion: 99,
-            access: { capabilities: ['*'], platformRole: null },
-          })
+          adapter.resolveReconciliationDecision(
+            id,
+            `resolver-${userId}`,
+            'stale attempt',
+            'resolved',
+            {
+              organizationId: orgId,
+              expectedVersion: 99,
+              access: { capabilities: ['*'], platformRole: null },
+            }
+          )
         ).rejects.toMatchObject({ code: 'STALE_VERSION' });
 
         const row = await readReconciliation(id);
@@ -717,7 +744,9 @@ describe.skipIf(!REAL_PG)(
         expect(res.body.actualBenefitsWriteRejected).toBe(true);
         expect(res.body.storedActualBenefits).toBe(900);
         expect(res.body.requestedActualBenefits).toBe(1500);
-        expect(res.body.canonicalSuccessor).toContain(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations`);
+        expect(res.body.canonicalSuccessor).toContain(
+          `/api/vnext/results/roi/cases/${caseId}/finance-reconciliations`
+        );
 
         // The whole point: the recorded actual survived.
         expect(await readStoredActual(initiativeWithCase, trackingPeriod)).toBe(900);

@@ -12,32 +12,33 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  canTransition,
   METHOD_EVENT_TYPES,
   METHOD_PROCESS_ROLES,
   METHOD_SESSION_STATES,
   TERESA_CAPABILITIES,
-  canTransition,
 } from '@/method-core/contracts';
-import {
-  AUDIT_EVENT_TO_KERNEL_EVENT,
-  AUDIT_INTENT_TO_TERESA_CAPABILITY,
-  AUDIT_ROLE_TO_KERNEL_ROLE,
-  KERNEL_EVENT_GAPS,
-  LIFECYCLE_TO_KERNEL_STATE,
-  TERESA_CAPABILITY_GAPS,
-  aggregate,
-  computeScore,
-  isKernelLegalTransition,
-  resolveOpenLevels,
-  toKernelEvent,
-  toKernelRole,
-  toKernelState,
-  type AuditLifecycleState,
-} from '../auditsKernelAdapter';
+
 import {
   AUDIT_TO_KERNEL_EVENT,
   KERNEL_EVENT_TYPES,
 } from '../../../../server/src/services/audits/kernelEventMap';
+import {
+  aggregate,
+  AUDIT_EVENT_TO_KERNEL_EVENT,
+  AUDIT_INTENT_TO_TERESA_CAPABILITY,
+  AUDIT_ROLE_TO_KERNEL_ROLE,
+  type AuditLifecycleState,
+  computeScore,
+  isKernelLegalTransition,
+  KERNEL_EVENT_GAPS,
+  LIFECYCLE_TO_KERNEL_STATE,
+  resolveOpenLevels,
+  TERESA_CAPABILITY_GAPS,
+  toKernelEvent,
+  toKernelRole,
+  toKernelState,
+} from '../auditsKernelAdapter';
 
 describe('adapter ↔ kontrakt: zgodność powierzchni', () => {
   it('serwerowa lista zdarzeń jest identyczna z kontraktem', () => {
@@ -52,7 +53,7 @@ describe('adapter ↔ kontrakt: zgodność powierzchni', () => {
     for (const [auditEvent, kernelEvent] of Object.entries(AUDIT_EVENT_TO_KERNEL_EVENT)) {
       expect(
         (METHOD_EVENT_TYPES as readonly string[]).includes(kernelEvent),
-        `${auditEvent} → ${kernelEvent} nie istnieje w kontrakcie`,
+        `${auditEvent} → ${kernelEvent} nie istnieje w kontrakcie`
       ).toBe(true);
     }
   });
@@ -117,7 +118,7 @@ describe('adapter ↔ kontrakt: role', () => {
     for (const [auditRole, kernelRole] of Object.entries(AUDIT_ROLE_TO_KERNEL_ROLE)) {
       expect(
         (METHOD_PROCESS_ROLES as readonly string[]).includes(kernelRole),
-        `${auditRole} → ${kernelRole} nie istnieje w kontrakcie`,
+        `${auditRole} → ${kernelRole} nie istnieje w kontrakcie`
       ).toBe(true);
     }
   });
@@ -134,7 +135,7 @@ describe('adapter ↔ kontrakt: Teresa', () => {
       if (capability === null) continue;
       expect(
         (TERESA_CAPABILITIES as readonly string[]).includes(capability),
-        `${intent} → ${capability} nie istnieje w kontrakcie`,
+        `${intent} → ${capability} nie istnieje w kontrakcie`
       ).toBe(true);
     }
   });

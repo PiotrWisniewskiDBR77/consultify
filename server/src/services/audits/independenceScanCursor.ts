@@ -62,8 +62,8 @@ export async function ensureCursorRow(): Promise<void> {
     client.query(
       `INSERT INTO audit_independence_scan_cursor (id, last_program_id, cycles_completed, lease_fence)
        VALUES ('global', '', 0, 0)
-       ON CONFLICT (id) DO NOTHING`,
-    ),
+       ON CONFLICT (id) DO NOTHING`
+    )
   );
 }
 
@@ -88,7 +88,7 @@ export async function claimLease(runnerId: string): Promise<ClaimedLease> {
         WHERE id = 'global'
           AND (leased_until IS NULL OR leased_until < now())
       RETURNING last_program_id, cycles_completed, lease_fence`,
-      [runnerId, String(LEASE_DURATION_MS)],
+      [runnerId, String(LEASE_DURATION_MS)]
     );
     const row = result.rows[0];
     if (!row) return { claimed: false, fence: 0, lastProgramId: '', cyclesCompleted: 0 };
@@ -109,7 +109,7 @@ export async function fetchNextBatch(afterId: string, batchSize: number): Promis
         WHERE id > $1
         ORDER BY id ASC
         LIMIT $2`,
-      [afterId, batchSize],
+      [afterId, batchSize]
     );
     return result.rows.map((r) => ({ id: r.id, organizationId: r.organization_id }));
   });
@@ -129,7 +129,7 @@ export async function fetchNextBatch(afterId: string, batchSize: number): Promis
 export async function advanceAndRelease(
   fence: number,
   batch: ProgramRef[],
-  requestedBatchSize: number,
+  requestedBatchSize: number
 ): Promise<boolean> {
   const reachedEnd = batch.length < requestedBatchSize;
   const nextCursor = reachedEnd ? '' : batch[batch.length - 1]!.id;
@@ -143,7 +143,7 @@ export async function advanceAndRelease(
               updated_at = now()
         WHERE id = 'global'
           AND lease_fence = $3`,
-      [nextCursor, reachedEnd ? 1 : 0, fence],
+      [nextCursor, reachedEnd ? 1 : 0, fence]
     );
     return (result.rowCount ?? 0) > 0;
   });
@@ -161,7 +161,7 @@ export async function releaseLeaseWithoutAdvancing(fence: number): Promise<boole
           SET leased_by = NULL, leased_until = NULL
         WHERE id = 'global'
           AND lease_fence = $1`,
-      [fence],
+      [fence]
     );
     return (result.rowCount ?? 0) > 0;
   });

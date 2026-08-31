@@ -10,24 +10,24 @@ import { requireActiveAuditsMembership } from '../middleware/auditsStrictMembers
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { getSettingsActorRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
-import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
 import { updateIntegrationStatus } from '../services/integrationHubService.js';
 import * as oauthEngine from '../services/integrationOAuthEngine.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
+import {
+  syncChannelCategoryPreferences,
+  syncEmailOnlyCategoryPreferences,
+  syncQuietHoursPreferences,
+} from '../services/settingsNotificationEngineSync.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
 } from '../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../services/v8/pmSyncInventoryService.js';
 import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
-import {
-  syncChannelCategoryPreferences,
-  syncEmailOnlyCategoryPreferences,
-  syncQuietHoursPreferences,
-} from '../services/settingsNotificationEngineSync.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';

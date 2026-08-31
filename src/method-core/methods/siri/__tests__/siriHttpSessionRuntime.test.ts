@@ -99,7 +99,13 @@ describe('SiriHttpSessionRuntime — same kernel, same endpoints as DRD', () => 
     const storage = makeMemoryStorage();
 
     await SiriHttpSessionRuntime.create(
-      { module: 'assessment', methodPackId: 'siri', methodPackVersion: '0.1.0-draft', mode: 'guided_manual', projectId: null },
+      {
+        module: 'assessment',
+        methodPackId: 'siri',
+        methodPackVersion: '0.1.0-draft',
+        mode: 'guided_manual',
+        projectId: null,
+      },
       storage
     );
 
@@ -112,9 +118,15 @@ describe('SiriHttpSessionRuntime — same kernel, same endpoints as DRD', () => 
 describe('an OLDER cached revision never survives refresh() (parity with DRD requirement 6)', () => {
   it('server v5 replaces a locally-cached v2 once refresh() resolves', async () => {
     const storage = makeMemoryStorage();
-    storage.setItem('method-core:http-cache:sess-siri-1', JSON.stringify(makeSession({ version: 2 })));
+    storage.setItem(
+      'method-core:http-cache:sess-siri-1',
+      JSON.stringify(makeSession({ version: 2 }))
+    );
 
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 5 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 5 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     const runtime = new SiriHttpSessionRuntime('sess-siri-1', storage);
@@ -131,7 +143,10 @@ describe('an OLDER cached revision never survives refresh() (parity with DRD req
 describe('frozen Output only ever comes from a server response (parity with DRD requirement 8)', () => {
   it('a frozen session with NO cached output pointer never fabricates Output content', async () => {
     const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'frozen' }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     const runtime = new SiriHttpSessionRuntime('sess-siri-1', storage);
@@ -163,7 +178,11 @@ describe('frozen Output only ever comes from a server response (parity with DRD 
       contentHash: 'abc123',
       frozenAt: '2026-08-13T00:00:00.000Z',
     };
-    hoisted.freeze.mockResolvedValue({ session: makeSession({ state: 'frozen', version: 2 }), output: serverOutput, selfHealed: false });
+    hoisted.freeze.mockResolvedValue({
+      session: makeSession({ state: 'frozen', version: 2 }),
+      output: serverOutput,
+      selfHealed: false,
+    });
 
     const runtime = new SiriHttpSessionRuntime('sess-siri-1', storage);
     await runtime.refresh();
@@ -172,7 +191,9 @@ describe('frozen Output only ever comes from a server response (parity with DRD 
     expect(res.output.id).toBe('out-siri-1');
     expect(runtime.getState().output).toEqual(serverOutput);
     expect(storage.getItem('method-core:http-cache:sess-siri-1:output-id')).toBe('out-siri-1');
-    expect(storage.getItem('method-core:http-cache:sess-siri-1:output-id')).not.toContain('contentHash');
+    expect(storage.getItem('method-core:http-cache:sess-siri-1:output-id')).not.toContain(
+      'contentHash'
+    );
   });
 });
 
@@ -186,7 +207,13 @@ describe('offline write queue and reconnect reconciliation (parity with DRD requ
     const runtime = new SiriHttpSessionRuntime('sess-siri-1', storage);
     await runtime.refresh();
 
-    await runtime.recordAnswer({ unitId: 'vertical_integration', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' });
+    await runtime.recordAnswer({
+      unitId: 'vertical_integration',
+      level: 1,
+      questionId: 'q1',
+      answerState: 'confirmed',
+      text: 'x',
+    });
 
     expect(runtime.getState().status).toBe('recovery');
     expect(runtime.getState().pendingWriteCount).toBe(1);
@@ -204,7 +231,13 @@ describe('offline write queue and reconnect reconciliation (parity with DRD requ
 
     const runtime = new SiriHttpSessionRuntime('sess-siri-1', storage);
     await runtime.refresh();
-    await runtime.recordAnswer({ unitId: 'vertical_integration', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' });
+    await runtime.recordAnswer({
+      unitId: 'vertical_integration',
+      level: 1,
+      questionId: 'q1',
+      answerState: 'confirmed',
+      text: 'x',
+    });
     expect(runtime.getState().status).toBe('recovery');
 
     hoisted.appendEvent.mockClear();
@@ -223,9 +256,17 @@ describe('offline write queue and reconnect reconciliation (parity with DRD requ
 describe('409 conflict — never silently overwritten', () => {
   it('a version_conflict on transition() flips status to conflict with the server version, and the caller must refresh() explicitly', async () => {
     const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 3 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 3 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
-    hoisted.transition.mockRejectedValue(new MethodCoreApiError('version_conflict', 409, { error: 'version_conflict', currentVersion: 7 }));
+    hoisted.transition.mockRejectedValue(
+      new MethodCoreApiError('version_conflict', 409, {
+        error: 'version_conflict',
+        currentVersion: 7,
+      })
+    );
 
     const runtime = new SiriHttpSessionRuntime('sess-siri-1', storage);
     await runtime.refresh();
@@ -235,7 +276,10 @@ describe('409 conflict — never silently overwritten', () => {
     expect(runtime.getState().serverVersion).toBe(7);
     expect(runtime.getState().session?.version).toBe(3);
 
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 7 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 7 }),
+      roles: ['owner'],
+    });
     await runtime.refresh();
     expect(runtime.getState().status).toBe('ready');
     expect(runtime.getState().session?.version).toBe(7);

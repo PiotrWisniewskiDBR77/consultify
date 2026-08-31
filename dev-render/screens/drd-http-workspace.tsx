@@ -32,10 +32,13 @@
  */
 import React from 'react';
 
-import { DrdHttpMethodWorkspaceScreen } from '../../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
 import type { DrdHttpDebugForcedState } from '../../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
+import { DrdHttpMethodWorkspaceScreen } from '../../src/components/assessment/drd/DrdHttpMethodWorkspaceScreen';
 import type { MethodWorkspaceViewMode } from '../../src/components/method-workspace/types';
-import { forceNextSessionCreateError, installMethodCoreFakeServer } from '../mocks/methodCoreFakeServer';
+import {
+  forceNextSessionCreateError,
+  installMethodCoreFakeServer,
+} from '../mocks/methodCoreFakeServer';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();

@@ -7,6 +7,7 @@
  *      predecessor — both remain in the store.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createKernelTestDb, type KernelTestDbHandle } from './kernelTestDb.js';
 
 let testDb: KernelTestDbHandle;
@@ -27,7 +28,9 @@ describe('MethodEventStore', () => {
     testDb.reset();
   });
 
-  function baseEvent(overrides: Partial<Parameters<InstanceType<typeof MethodEventStore>['append']>[0]> = {}) {
+  function baseEvent(
+    overrides: Partial<Parameters<InstanceType<typeof MethodEventStore>['append']>[0]> = {}
+  ) {
     return {
       organizationId,
       sessionId,
@@ -72,7 +75,10 @@ describe('MethodEventStore', () => {
   it('a correcting event with `supersedes` does not delete its predecessor', async () => {
     const store = new MethodEventStore();
     const original = await store.append(
-      baseEvent({ type: 'DECISION_APPROVED', payload: { decisionId: 'd1', subject: 'current_level', rationale: 'first pass' } })
+      baseEvent({
+        type: 'DECISION_APPROVED',
+        payload: { decisionId: 'd1', subject: 'current_level', rationale: 'first pass' },
+      })
     );
     const correction = await store.append(
       baseEvent({

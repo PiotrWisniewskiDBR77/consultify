@@ -9,10 +9,19 @@
  * `okrKeyResultTypes.ts`/`okrObjectiveTypes.ts`/`okrSetTypes.ts`.
  */
 
-export const OKR_SUPPORT_REQUEST_KIND_VALUES = ['comment', 'recognition', 'support_request'] as const;
+export const OKR_SUPPORT_REQUEST_KIND_VALUES = [
+  'comment',
+  'recognition',
+  'support_request',
+] as const;
 export type OkrSupportRequestKind = (typeof OKR_SUPPORT_REQUEST_KIND_VALUES)[number];
 
-export const OKR_SUPPORT_REQUEST_STATUS_VALUES = ['open', 'acknowledged', 'resolved', 'dismissed'] as const;
+export const OKR_SUPPORT_REQUEST_STATUS_VALUES = [
+  'open',
+  'acknowledged',
+  'resolved',
+  'dismissed',
+] as const;
 export type OkrSupportRequestStatus = (typeof OKR_SUPPORT_REQUEST_STATUS_VALUES)[number];
 
 export const OKR_RECOGNITION_VISIBILITY_VALUES = ['team', 'organization'] as const;

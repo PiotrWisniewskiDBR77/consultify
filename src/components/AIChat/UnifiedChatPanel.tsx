@@ -2282,7 +2282,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               }));
             });
           }
-          toast.success(t('myWork.initiatives.createdFromChatToast', 'Initiative created from chat'));
+          toast.success(
+            t('myWork.initiatives.createdFromChatToast', 'Initiative created from chat')
+          );
           return;
         }
         try {

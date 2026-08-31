@@ -19,11 +19,12 @@ vi.mock('../v2/CriterionWorkspaceV2', () => ({
   CriterionWorkspaceV2: () => <div data-testid="v2-marker">V2</div>,
 }));
 
-import { CriterionWorkspaceGate } from '../CriterionWorkspaceGate';
 import {
   CRITERION_WORKSPACE_V2_FLAG_KEYS,
   resetCriterionWorkspaceV2FlagCache,
 } from '@/utils/criterionWorkspaceV2Flag';
+
+import { CriterionWorkspaceGate } from '../CriterionWorkspaceGate';
 
 const ORIGINAL_LOCATION = window.location;
 

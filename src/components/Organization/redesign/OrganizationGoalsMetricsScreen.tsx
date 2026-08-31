@@ -39,10 +39,7 @@ import {
   OrgTextField,
 } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import {
-  type OrgContextSyncHandle,
-  useOrgContextStoreSection,
-} from './useOrgContextStoreSection';
+import { type OrgContextSyncHandle, useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type GoalsMetricsSection = 'intent' | 'metrics';
 
@@ -93,14 +90,24 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
       onAdd: () =>
         updateGoalsList('kpis', [
           ...goals.kpis,
-          { id: Math.random().toString(36).slice(2, 11), name: '', baseline: '', target: '', timeframe: '' },
+          {
+            id: Math.random().toString(36).slice(2, 11),
+            name: '',
+            baseline: '',
+            target: '',
+            timeframe: '',
+          },
         ]),
       onUpdate: (id: string, key: string, value: string) =>
         updateGoalsList(
           'kpis',
           goals.kpis.map((item) => (item.id === id ? { ...item, [key]: value } : item))
         ),
-      onRemove: (id: string) => updateGoalsList('kpis', goals.kpis.filter((item) => item.id !== id)),
+      onRemove: (id: string) =>
+        updateGoalsList(
+          'kpis',
+          goals.kpis.filter((item) => item.id !== id)
+        ),
     }),
     [goals.kpis, updateGoalsList]
   );
@@ -157,7 +164,9 @@ export const OrganizationGoalsMetricsScreen: React.FC<{
 
   const content = (
     <>
-      {(showField('primaryObjective') || showField('secondaryObjectives') || showField('topPriorities')) && (
+      {(showField('primaryObjective') ||
+        showField('secondaryObjectives') ||
+        showField('topPriorities')) && (
         <OrgSectionCard id="intent" title="Intencja strategiczna" icon={Goal}>
           <OrgFieldGrid className="mb-4">
             <OrgFieldColumn>

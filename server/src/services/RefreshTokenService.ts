@@ -203,9 +203,7 @@ class RefreshTokenService {
    * "not suspended" — see the guard's header).
    */
   private async _isOrganizationSuspended(organizationId: unknown): Promise<boolean> {
-    return await isOrganizationSuspended(organizationId, (sql, params) =>
-      this.dbGet(sql, params)
-    );
+    return await isOrganizationSuspended(organizationId, (sql, params) => this.dbGet(sql, params));
   }
 
   /**
@@ -458,9 +456,7 @@ class RefreshTokenService {
     // the demo session rather than via `user_status`, because retirement is lazy:
     // a refresh arriving after the TTU but before the first authenticated request
     // would otherwise still see `active` and rotate a fresh 7-day family.
-    const demoCredentialCheck = await assertDemoPrincipalMayReceiveCredentials(
-      storedToken.user_id
-    );
+    const demoCredentialCheck = await assertDemoPrincipalMayReceiveCredentials(storedToken.user_id);
     if (!demoCredentialCheck.allowed) {
       logger.info('[RefreshToken] Refresh refused: demo session ended');
       return null;

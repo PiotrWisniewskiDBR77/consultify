@@ -16,7 +16,11 @@
  */
 import React from 'react';
 
-import { financeValueDisplayReasonLabel, formatFinanceValueForDisplay, type FinanceValueStatus } from '@/services/api/financeV2.types';
+import {
+  financeValueDisplayReasonLabel,
+  type FinanceValueStatus,
+  formatFinanceValueForDisplay,
+} from '@/services/api/financeV2.types';
 
 export interface ValuationValueCellProps {
   status: FinanceValueStatus;
@@ -31,7 +35,10 @@ export interface ValuationValueCellProps {
 export function ValuationValueCell(props: ValuationValueCellProps): React.ReactElement {
   const { status, valueDecimal, unitSuffix, formatNumber, className } = props;
   const valueDecimalStr = valueDecimal === null ? null : String(valueDecimal);
-  const display = formatFinanceValueForDisplay({ status, valueDecimal: valueDecimalStr }, formatNumber);
+  const display = formatFinanceValueForDisplay(
+    { status, valueDecimal: valueDecimalStr },
+    formatNumber
+  );
   const reason = financeValueDisplayReasonLabel(status);
 
   if (display.isMissingLikeGlyph) {

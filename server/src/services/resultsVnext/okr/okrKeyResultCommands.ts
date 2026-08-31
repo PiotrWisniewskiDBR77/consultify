@@ -17,22 +17,16 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
 import {
-  assertSetEditableForUpdate,
-  recomputeObjectiveRollup,
-  resolveOkrCyclePinnedPolicySnapshot,
-  OkrObjectiveNotFoundError,
-} from './okrObjectiveCommands.js';
-import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import {
-  toOkrKeyResult,
   type OkrKeyResult,
   type OkrKeyResultConfidence,
   type OkrKeyResultDirection,
@@ -40,7 +34,15 @@ import {
   type OkrKeyResultRow,
   type OkrKeyResultSourceType,
   type OkrKeyResultStatus,
+  toOkrKeyResult,
 } from './okrKeyResultTypes.js';
+import {
+  assertSetEditableForUpdate,
+  OkrObjectiveNotFoundError,
+  recomputeObjectiveRollup,
+  resolveOkrCyclePinnedPolicySnapshot,
+} from './okrObjectiveCommands.js';
+import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import { calculateKeyResultProgress } from './okrProgressEngine.js';
 
 // ==========================================
@@ -110,7 +112,10 @@ function assertCrossFieldValidity(fields: {
       {}
     );
   }
-  if (fields.direction === 'maintain_range' && (fields.rangeMin === null || fields.rangeMax === null)) {
+  if (
+    fields.direction === 'maintain_range' &&
+    (fields.rangeMin === null || fields.rangeMax === null)
+  ) {
     throw new OkrKeyResultValidationError(
       'range_min and range_max are both required when direction="maintain_range"',
       'RANGE_REQUIRED',
@@ -153,7 +158,9 @@ export interface CreateKeyResultInput {
   access: CommandAccessContext;
 }
 
-export async function createKeyResult(input: CreateKeyResultInput): Promise<AtomicCommandOutcome<OkrKeyResult>> {
+export async function createKeyResult(
+  input: CreateKeyResultInput
+): Promise<AtomicCommandOutcome<OkrKeyResult>> {
   const {
     objectiveId,
     organizationId,
@@ -189,7 +196,11 @@ export async function createKeyResult(input: CreateKeyResultInput): Promise<Atom
   return executeAtomicCreate<OkrKeyResult>({
     organizationId,
     applyMutation: async (client) => {
-      const objectiveResult = await client.query<{ objective_id: string; set_id: string; owner_user_id: string }>(
+      const objectiveResult = await client.query<{
+        objective_id: string;
+        set_id: string;
+        owner_user_id: string;
+      }>(
         `SELECT objective_id, set_id, owner_user_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2 FOR UPDATE`,
         [objectiveId, organizationId]
       );
@@ -209,7 +220,12 @@ export async function createKeyResult(input: CreateKeyResultInput): Promise<Atom
         responsibleUserIds: [objectiveRow.owner_user_id],
       });
 
-      await assertSetEditableForUpdate(client, objectiveRow.set_id, organizationId, 'createKeyResult');
+      await assertSetEditableForUpdate(
+        client,
+        objectiveRow.set_id,
+        organizationId,
+        'createKeyResult'
+      );
       assertMeasurementTypeImplemented(measurementType);
       assertCrossFieldValidity({ measurementType, currency, direction, rangeMin, rangeMax });
 
@@ -369,7 +385,9 @@ export interface UpdateKeyResultInput {
   access: CommandAccessContext;
 }
 
-export async function updateKeyResult(input: UpdateKeyResultInput): Promise<AtomicCommandOutcome<OkrKeyResult>> {
+export async function updateKeyResult(
+  input: UpdateKeyResultInput
+): Promise<AtomicCommandOutcome<OkrKeyResult>> {
   const {
     keyResultId,
     organizationId,
@@ -418,7 +436,12 @@ export async function updateKeyResult(input: UpdateKeyResultInput): Promise<Atom
         responsibleUserIds: [currentRow.owner_user_id],
       });
 
-      await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'updateKeyResult');
+      await assertSetEditableForUpdate(
+        client,
+        currentRow.set_id,
+        organizationId,
+        'updateKeyResult'
+      );
 
       const mergedMeasurementType = measurementType ?? currentRow.measurement_type;
       if (measurementType !== undefined) {
@@ -431,13 +454,43 @@ export async function updateKeyResult(input: UpdateKeyResultInput): Promise<Atom
         measurementType: mergedMeasurementType,
         unit: unit !== undefined ? unit : currentRow.unit,
         currency: currency !== undefined ? currency : currentRow.currency,
-        baselineValue: baselineValue !== undefined ? baselineValue : currentRow.baseline_value === null ? null : Number(currentRow.baseline_value),
-        targetValue: targetValue !== undefined ? targetValue : currentRow.target_value === null ? null : Number(currentRow.target_value),
-        startValue: startValue !== undefined ? startValue : currentRow.start_value === null ? null : Number(currentRow.start_value),
-        currentValue: currentValue !== undefined ? currentValue : currentRow.current_value === null ? null : Number(currentRow.current_value),
+        baselineValue:
+          baselineValue !== undefined
+            ? baselineValue
+            : currentRow.baseline_value === null
+              ? null
+              : Number(currentRow.baseline_value),
+        targetValue:
+          targetValue !== undefined
+            ? targetValue
+            : currentRow.target_value === null
+              ? null
+              : Number(currentRow.target_value),
+        startValue:
+          startValue !== undefined
+            ? startValue
+            : currentRow.start_value === null
+              ? null
+              : Number(currentRow.start_value),
+        currentValue:
+          currentValue !== undefined
+            ? currentValue
+            : currentRow.current_value === null
+              ? null
+              : Number(currentRow.current_value),
         direction: direction ?? currentRow.direction,
-        rangeMin: rangeMin !== undefined ? rangeMin : currentRow.range_min === null ? null : Number(currentRow.range_min),
-        rangeMax: rangeMax !== undefined ? rangeMax : currentRow.range_max === null ? null : Number(currentRow.range_max),
+        rangeMin:
+          rangeMin !== undefined
+            ? rangeMin
+            : currentRow.range_min === null
+              ? null
+              : Number(currentRow.range_min),
+        rangeMax:
+          rangeMax !== undefined
+            ? rangeMax
+            : currentRow.range_max === null
+              ? null
+              : Number(currentRow.range_max),
         confidence: confidence !== undefined ? confidence : currentRow.confidence,
         confidenceNumericValue:
           confidenceNumericValue !== undefined
@@ -447,8 +500,14 @@ export async function updateKeyResult(input: UpdateKeyResultInput): Promise<Atom
               : Number(currentRow.confidence_numeric_value),
         status: status ?? currentRow.status,
         sourceType: sourceType ?? currentRow.source_type,
-        sourceReference: sourceReference !== undefined ? sourceReference : currentRow.source_reference,
-        weight: weight !== undefined ? weight : currentRow.weight === null ? null : Number(currentRow.weight),
+        sourceReference:
+          sourceReference !== undefined ? sourceReference : currentRow.source_reference,
+        weight:
+          weight !== undefined
+            ? weight
+            : currentRow.weight === null
+              ? null
+              : Number(currentRow.weight),
       };
 
       assertCrossFieldValidity({
@@ -521,7 +580,8 @@ export async function updateKeyResult(input: UpdateKeyResultInput): Promise<Atom
         ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[updateKeyResult] update returned no row for ${keyResultId}`);
+      if (!updatedRow)
+        throw new Error(`[updateKeyResult] update returned no row for ${keyResultId}`);
       const keyResult = toOkrKeyResult(updatedRow);
 
       await recomputeObjectiveRollup(client, {
@@ -595,7 +655,9 @@ export interface CancelKeyResultInput {
   access: CommandAccessContext;
 }
 
-export async function cancelKeyResult(input: CancelKeyResultInput): Promise<AtomicCommandOutcome<OkrKeyResult>> {
+export async function cancelKeyResult(
+  input: CancelKeyResultInput
+): Promise<AtomicCommandOutcome<OkrKeyResult>> {
   const {
     keyResultId,
     organizationId,
@@ -625,7 +687,12 @@ export async function cancelKeyResult(input: CancelKeyResultInput): Promise<Atom
         responsibleUserIds: [currentRow.owner_user_id],
       });
 
-      await assertSetEditableForUpdate(client, currentRow.set_id, organizationId, 'cancelKeyResult');
+      await assertSetEditableForUpdate(
+        client,
+        currentRow.set_id,
+        organizationId,
+        'cancelKeyResult'
+      );
       if (!OKR_KEY_RESULT_CANCEL_FROM_STATUSES.includes(currentRow.status)) {
         throw new OkrKeyResultValidationError(
           `KeyResult ${keyResultId} is "${currentRow.status}" — cannot cancel from there`,
@@ -643,7 +710,8 @@ export async function cancelKeyResult(input: CancelKeyResultInput): Promise<Atom
         [nextVersion, actorUserId, keyResultId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[cancelKeyResult] update returned no row for ${keyResultId}`);
+      if (!updatedRow)
+        throw new Error(`[cancelKeyResult] update returned no row for ${keyResultId}`);
       const keyResult = toOkrKeyResult(updatedRow);
 
       // §9.3/§10.7: a cancelled KR is excluded from the Objective rollup's

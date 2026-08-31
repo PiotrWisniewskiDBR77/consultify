@@ -304,7 +304,6 @@ export function IdeaViewSwitcher({
         data-compact-viewport={String(compactViewport)}
         className="flex items-center gap-0.5"
       >
-
         {przyciski}
         {/* Separator po naszej stronie, nie po stronie gniazda — puste gniazdo
             nie zostawia wtedy sierocej kreski przy samym „−". */}

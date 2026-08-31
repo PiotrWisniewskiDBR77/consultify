@@ -1,5 +1,4 @@
-const { reserveAgentResource } =
-  await import('../services/v8/agentResourceGovernanceService.js');
+const { reserveAgentResource } = await import('../services/v8/agentResourceGovernanceService.js');
 
 const result = await reserveAgentResource({
   organizationId: 'org-a09',

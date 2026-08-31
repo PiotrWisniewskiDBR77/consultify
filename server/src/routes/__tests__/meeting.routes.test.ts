@@ -105,7 +105,7 @@ describe('meeting routes', () => {
     expect(res.status).toBe(404);
   });
 
-  it('GET /:id returns 404 (not 200/leak) for a different organization\'s meeting id', async () => {
+  it("GET /:id returns 404 (not 200/leak) for a different organization's meeting id", async () => {
     // getMeeting's own `WHERE organization_id = ?` excludes rows outside the
     // caller's org — mockGet returning null here simulates exactly that,
     // regardless of what id was requested.
@@ -131,7 +131,11 @@ describe('meeting routes', () => {
   });
 
   it('GET /:id succeeds for a non-admin attendee of the meeting', async () => {
-    mockGet.mockResolvedValue({ ...sampleMeeting, createdBy: 'someone-else', attendees: ['user-1'] });
+    mockGet.mockResolvedValue({
+      ...sampleMeeting,
+      createdBy: 'someone-else',
+      attendees: ['user-1'],
+    });
     const res = await request(createApp())
       .get('/api/meeting/meeting-1')
       .set('x-test-role', 'team_member');
@@ -161,13 +165,11 @@ describe('meeting routes', () => {
   // caller inject arbitrary extra ICS lines into every invite for that
   // meeting. POST and PUT now validate against a strict whitelist grammar.
   it('POST / rejects a recurrenceRule containing a line break (ICS injection)', async () => {
-    const res = await request(createApp())
-      .post('/api/meeting')
-      .send({
-        title: 'Kickoff',
-        startAt: '2026-07-01T10:00:00.000Z',
-        recurrenceRule: 'FREQ=WEEKLY\r\nATTENDEE;CN=Attacker:mailto:attacker@evil.example',
-      });
+    const res = await request(createApp()).post('/api/meeting').send({
+      title: 'Kickoff',
+      startAt: '2026-07-01T10:00:00.000Z',
+      recurrenceRule: 'FREQ=WEEKLY\r\nATTENDEE;CN=Attacker:mailto:attacker@evil.example',
+    });
     expect(res.status).toBe(400);
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -206,11 +208,13 @@ describe('meeting routes', () => {
   });
 
   it('POST / rejects embedded decisions instead of silently dropping them', async () => {
-    const res = await request(createApp()).post('/api/meeting').send({
-      title: 'Kickoff',
-      startAt: '2026-07-01T10:00:00.000Z',
-      decisions: ['Ship'],
-    });
+    const res = await request(createApp())
+      .post('/api/meeting')
+      .send({
+        title: 'Kickoff',
+        startAt: '2026-07-01T10:00:00.000Z',
+        decisions: ['Ship'],
+      });
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
     expect(mockCreate).not.toHaveBeenCalled();

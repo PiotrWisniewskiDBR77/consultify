@@ -132,7 +132,9 @@ async function main() {
     duplicateRejected = String((error as { code?: string }).code || '');
   }
   if (duplicateRejected !== '23505')
-    throw new Error(`U02 clean path did not enforce report version uniqueness: ${duplicateRejected}`);
+    throw new Error(
+      `U02 clean path did not enforce report version uniqueness: ${duplicateRejected}`
+    );
 
   // ── B) legacy duplicates ────────────────────────────────────────────────
   await resetSchema();
@@ -156,7 +158,11 @@ async function main() {
     await pool.query(MIGRATION);
   } catch (error) {
     const e = error as { message?: string; hint?: string; code?: string };
-    failure = { message: String(e.message || ''), hint: String(e.hint || ''), code: String(e.code || '') };
+    failure = {
+      message: String(e.message || ''),
+      hint: String(e.hint || ''),
+      code: String(e.code || ''),
+    };
   }
 
   const afterFingerprint = await versionRowFingerprint();
@@ -172,10 +178,18 @@ async function main() {
   if (!/report_id=rep-9 version_number=1 rows=2/.test(failure.message))
     throw new Error(`U02 duplicate diagnostic did not name the affected rows: ${failure.message}`);
   if (!/re-run this migration/.test(failure.hint))
-    throw new Error(`U02 duplicate diagnostic lacks a reconciliation hint: ${JSON.stringify(failure)}`);
+    throw new Error(
+      `U02 duplicate diagnostic lacks a reconciliation hint: ${JSON.stringify(failure)}`
+    );
   if (duplicateIndexes.length !== 0)
-    throw new Error(`U02 duplicate path created an index anyway: ${JSON.stringify(duplicateIndexes)}`);
-  if (beforeFingerprint !== afterFingerprint || rowCounts.report_versions !== 3 || rowCounts.deck_versions !== 2)
+    throw new Error(
+      `U02 duplicate path created an index anyway: ${JSON.stringify(duplicateIndexes)}`
+    );
+  if (
+    beforeFingerprint !== afterFingerprint ||
+    rowCounts.report_versions !== 3 ||
+    rowCounts.deck_versions !== 2
+  )
     throw new Error(
       `U02 duplicate path mutated version history: ${JSON.stringify({ beforeFingerprint, afterFingerprint, rowCounts })}`
     );

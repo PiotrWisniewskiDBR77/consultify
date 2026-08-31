@@ -32,25 +32,28 @@
  * feed into.
  */
 
-import { CellRefSchema } from '../../../types/finance/CellRef.js';
 import type { CellRef } from '../../../types/finance/CellRef.js';
+import { CellRefSchema } from '../../../types/finance/CellRef.js';
+import type {
+  ApplyOperationsBatchRequest,
+  FinanceValueInput,
+} from '../../../types/finance/Operation.js';
 import { FinanceValueInputSchema } from '../../../types/finance/Operation.js';
-import type { ApplyOperationsBatchRequest, FinanceValueInput } from '../../../types/finance/Operation.js';
 import {
-  type EngineError,
-  type EngineMutationContext,
   checkCapability,
+  type EngineError,
   engineError,
+  type EngineMutationContext,
   resolveIdGenerator,
   resolveNow,
 } from './engineContext.js';
 import {
-  MAX_CELLS_PER_OPERATION,
   chunkArray,
-  isRectInBounds,
   type GridAddressResolver,
   type GridCoordinate,
   type GridRect,
+  isRectInBounds,
+  MAX_CELLS_PER_OPERATION,
 } from './gridCoordinates.js';
 
 /**
@@ -95,11 +98,19 @@ export interface PasteEngineSuccess {
 
 export type PasteEngineResult = PasteEngineSuccess | EngineError;
 
-function targetRectForSource(anchor: GridCoordinate, source: BuildPasteOperationsParams['source']): GridRect | null {
+function targetRectForSource(
+  anchor: GridCoordinate,
+  source: BuildPasteOperationsParams['source']
+): GridRect | null {
   const height = source.length;
   const width = height > 0 ? source[0]!.length : 0;
   if (height === 0 || width === 0) return null;
-  return { top: anchor.row, left: anchor.col, bottom: anchor.row + height - 1, right: anchor.col + width - 1 };
+  return {
+    top: anchor.row,
+    left: anchor.col,
+    bottom: anchor.row + height - 1,
+    right: anchor.col + width - 1,
+  };
 }
 
 export function buildPasteOperations(params: BuildPasteOperationsParams): PasteEngineResult {
@@ -116,7 +127,10 @@ export function buildPasteOperations(params: BuildPasteOperationsParams): PasteE
   const rect = targetRectForSource(params.anchor, params.source);
   if (!rect) return engineError('EMPTY_INPUT', 'Paste source block is empty.');
   if (!isRectInBounds(rect, params.resolver)) {
-    return engineError('OUT_OF_BOUNDS', `Paste target rect ${JSON.stringify(rect)} exceeds grid bounds (${params.resolver.rowCount}x${params.resolver.colCount}).`);
+    return engineError(
+      'OUT_OF_BOUNDS',
+      `Paste target rect ${JSON.stringify(rect)} exceeds grid bounds (${params.resolver.rowCount}x${params.resolver.colCount}).`
+    );
   }
 
   const cellRefs: CellRef[] = [];
@@ -130,7 +144,10 @@ export function buildPasteOperations(params: BuildPasteOperationsParams): PasteE
       const parsedValue = FinanceValueInputSchema.safeParse(sourceCell.value);
       if (!parsedValue.success) {
         for (const issue of parsedValue.error.issues) {
-          issues.push({ path: [`source[${r}][${c}]`, ...issue.path.map(String)], message: issue.message });
+          issues.push({
+            path: [`source[${r}][${c}]`, ...issue.path.map(String)],
+            message: issue.message,
+          });
         }
         continue;
       }
@@ -138,7 +155,10 @@ export function buildPasteOperations(params: BuildPasteOperationsParams): PasteE
       const ref = params.resolver.cellRefAt(coord);
       const parsedRef = CellRefSchema.safeParse(ref);
       if (!parsedRef.success) {
-        issues.push({ path: [`source[${r}][${c}]`, 'resolvedCellRef'], message: 'resolver.cellRefAt returned an invalid CellRef' });
+        issues.push({
+          path: [`source[${r}][${c}]`, 'resolvedCellRef'],
+          message: 'resolver.cellRefAt returned an invalid CellRef',
+        });
         continue;
       }
       cellRefs.push(parsedRef.data);
@@ -147,7 +167,11 @@ export function buildPasteOperations(params: BuildPasteOperationsParams): PasteE
   }
 
   if (issues.length > 0) {
-    return engineError('VALIDATION_FAILED', `${issues.length} source cell(s) failed FinanceValueInput validation.`, issues);
+    return engineError(
+      'VALIDATION_FAILED',
+      `${issues.length} source cell(s) failed FinanceValueInput validation.`,
+      issues
+    );
   }
 
   const now = resolveNow(params);

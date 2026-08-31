@@ -12,6 +12,7 @@
  * behaviour (snapshot only, no Output — never silently created either).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { KernelTestDbHandle } from '../../__tests__/kernelTestDb.js';
 import type { MethodEvent } from '../../contracts/index.js';
 
@@ -26,9 +27,8 @@ vi.mock('../../../utils/DbPromise.js', async () => {
 const { MethodEventStore } = await import('../../MethodEventStore.js');
 const { MethodSessionService } = await import('../../MethodSessionService.js');
 const { MethodOutputService } = await import('../MethodOutputService.js');
-const { EventDerivedOutputBridge, deriveFindingsFromEvents } = await import(
-  '../EventDerivedOutputBridge.js'
-);
+const { EventDerivedOutputBridge, deriveFindingsFromEvents } =
+  await import('../EventDerivedOutputBridge.js');
 import type { PackReadinessLookup } from '../../MethodSessionService.js';
 
 const organizationId = 'org-1';
@@ -104,7 +104,11 @@ describe('deriveFindingsFromEvents (pure)', () => {
 describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)', () => {
   let events: InstanceType<typeof MethodEventStore>;
   let outputs: InstanceType<typeof MethodOutputService>;
-  const packs: PackReadinessLookup = { async getReadiness() { return { canStart: true }; } };
+  const packs: PackReadinessLookup = {
+    async getReadiness() {
+      return { canStart: true };
+    },
+  };
 
   beforeEach(() => {
     testDb.reset();
@@ -156,7 +160,8 @@ describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)'
       actorUserId: 'owner-1',
       idempotencyKey: `${session.id}-prep`,
     });
-    if (!toPrepared.ok) throw new Error('setup: draft->prepared failed: ' + JSON.stringify(toPrepared));
+    if (!toPrepared.ok)
+      throw new Error('setup: draft->prepared failed: ' + JSON.stringify(toPrepared));
 
     const toActive = await service.transition({
       sessionId: session.id,
@@ -165,7 +170,8 @@ describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)'
       actorUserId: 'owner-1',
       idempotencyKey: `${session.id}-active`,
     });
-    if (!toActive.ok) throw new Error('setup: prepared->active failed: ' + JSON.stringify(toActive));
+    if (!toActive.ok)
+      throw new Error('setup: prepared->active failed: ' + JSON.stringify(toActive));
 
     const toReview = await service.transition({
       sessionId: session.id,
@@ -174,7 +180,8 @@ describe('EventDerivedOutputBridge (wired into MethodSessionService.transition)'
       actorUserId: 'owner-1',
       idempotencyKey: `${session.id}-review`,
     });
-    if (!toReview.ok) throw new Error('setup: active->in_review failed: ' + JSON.stringify(toReview));
+    if (!toReview.ok)
+      throw new Error('setup: active->in_review failed: ' + JSON.stringify(toReview));
     return session;
   }
 

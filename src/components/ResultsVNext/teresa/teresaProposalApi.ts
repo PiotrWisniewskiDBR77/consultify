@@ -106,7 +106,9 @@ export async function createTeresaProposal(
 }
 
 /** POST /proposal/:id/approve (L204-225). */
-export async function approveTeresaProposal(proposalId: string): Promise<TeresaChatProposalEnvelope> {
+export async function approveTeresaProposal(
+  proposalId: string
+): Promise<TeresaChatProposalEnvelope> {
   const body = await requestJson(
     `/proposal/${encodeURIComponent(proposalId)}/approve`,
     { method: 'POST' },
@@ -172,7 +174,9 @@ export async function executeTeresaProposal(proposalId: string): Promise<TeresaE
 }
 
 /** GET /proposal/:id (L319-329). */
-export async function getTeresaProposal(proposalId: string): Promise<TeresaChatProposalEnvelope | null> {
+export async function getTeresaProposal(
+  proposalId: string
+): Promise<TeresaChatProposalEnvelope | null> {
   const url = `${BASE_PATH}/proposal/${encodeURIComponent(proposalId)}`;
   const res = await fetch(url, { headers: getHeaders() });
   if (res.status === 404) return null;
@@ -199,4 +203,9 @@ export async function getTeresaAuditTrail(proposalId: string): Promise<TeresaAud
   return (body.data as TeresaAuditEntry[]) || [];
 }
 
-export type { TeresaActionEnvelopeState, TeresaAuditEntry, TeresaChatProposalEnvelope, TeresaHandoffExecutionResult };
+export type {
+  TeresaActionEnvelopeState,
+  TeresaAuditEntry,
+  TeresaChatProposalEnvelope,
+  TeresaHandoffExecutionResult,
+};

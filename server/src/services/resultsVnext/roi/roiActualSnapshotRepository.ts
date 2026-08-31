@@ -6,10 +6,16 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
-import { toRoiActualSnapshot, type RoiActualSnapshot, type RoiActualSnapshotRow } from './roiForecastActualTypes.js';
+import {
+  type RoiActualSnapshot,
+  type RoiActualSnapshotRow,
+  toRoiActualSnapshot,
+} from './roiForecastActualTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await acquirePgClient();
@@ -20,7 +26,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -31,7 +41,9 @@ export interface ListRoiActualSnapshotsParams {
   caseId: string;
 }
 
-export async function listRoiActualSnapshots(params: ListRoiActualSnapshotsParams): Promise<RoiActualSnapshot[]> {
+export async function listRoiActualSnapshots(
+  params: ListRoiActualSnapshotsParams
+): Promise<RoiActualSnapshot[]> {
   const { userId, organizationId, caseId } = params;
   const baseQuerySql = `
     SELECT s.*
@@ -42,9 +54,15 @@ export async function listRoiActualSnapshots(params: ListRoiActualSnapshotsParam
        AND s.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY s.sequence_number DESC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId];
-  const rows = await withReadClient((client) => queryRows<RoiActualSnapshotRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiActualSnapshotRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiActualSnapshot);
 }
 
@@ -55,7 +73,9 @@ export interface GetRoiActualSnapshotParams {
   actualSnapshotId: string;
 }
 
-export async function getRoiActualSnapshot(params: GetRoiActualSnapshotParams): Promise<RoiActualSnapshot | null> {
+export async function getRoiActualSnapshot(
+  params: GetRoiActualSnapshotParams
+): Promise<RoiActualSnapshot | null> {
   const { userId, organizationId, caseId, actualSnapshotId } = params;
   const baseQuerySql = `
     SELECT s.*
@@ -66,9 +86,15 @@ export async function getRoiActualSnapshot(params: GetRoiActualSnapshotParams): 
        AND s.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND s.actual_snapshot_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, actualSnapshotId];
-  const rows = await withReadClient((client) => queryRows<RoiActualSnapshotRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiActualSnapshotRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiActualSnapshot(row) : null;
 }

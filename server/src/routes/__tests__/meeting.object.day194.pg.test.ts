@@ -5,9 +5,9 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const organizationId = 'w3-mtg-owner-org-v1';
 const adminId = 'w3-mtg-admin-user-v1';
@@ -40,17 +40,20 @@ describe('Day 194 meeting object GET through real ApiGateway and PostgreSQL', ()
     );
   });
 
-  it.each(meetingCases)('returns 200 plus the %s fixture body', async (_state, meetingId, title) => {
-    const response = await request(app)
-      .get(`/api/meeting/${meetingId}`)
-      .set('Authorization', `Bearer ${adminToken}`);
+  it.each(meetingCases)(
+    'returns 200 plus the %s fixture body',
+    async (_state, meetingId, title) => {
+      const response = await request(app)
+        .get(`/api/meeting/${meetingId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
 
-    console.info(
-      `DAY194_HTTP meeting=${meetingId} status=${response.status} bytes=${Buffer.byteLength(response.text, 'utf8')}`
-    );
-    expect(response.status).toBe(200);
-    expect(response.body.meeting).toEqual(
-      expect.objectContaining({ id: meetingId, title, organizationId })
-    );
-  });
+      console.info(
+        `DAY194_HTTP meeting=${meetingId} status=${response.status} bytes=${Buffer.byteLength(response.text, 'utf8')}`
+      );
+      expect(response.status).toBe(200);
+      expect(response.body.meeting).toEqual(
+        expect.objectContaining({ id: meetingId, title, organizationId })
+      );
+    }
+  );
 });

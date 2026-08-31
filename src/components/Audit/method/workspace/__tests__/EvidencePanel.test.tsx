@@ -17,8 +17,8 @@ vi.mock('../workspaceApi', async () => {
 });
 
 import { EvidencePanel } from '../EvidencePanel';
-import * as workspaceApi from '../workspaceApi';
 import type { WorkspaceCapability, WorkspaceEvidence } from '../workspaceApi';
+import * as workspaceApi from '../workspaceApi';
 
 const mockedListEvidence = vi.mocked(workspaceApi.listEvidence);
 const mockedSubmitEvidence = vi.mocked(workspaceApi.submitEvidence);
@@ -87,7 +87,11 @@ describe('EvidencePanel', () => {
 
     await waitFor(() =>
       expect(mockedSubmitEvidence).toHaveBeenCalledWith(
-        expect.objectContaining({ programId: 'prog-1', criterionId: 'crit-1', title: 'New evidence' })
+        expect.objectContaining({
+          programId: 'prog-1',
+          criterionId: 'crit-1',
+          title: 'New evidence',
+        })
       )
     );
   });
@@ -104,7 +108,9 @@ describe('EvidencePanel', () => {
     const item = evidenceItem();
     mockedListEvidence.mockResolvedValueOnce([item]);
     mockedReviewEvidence.mockResolvedValue({ ...item, supportsConformity: false, accepted: true });
-    mockedListEvidence.mockResolvedValueOnce([{ ...item, supportsConformity: false, accepted: true }]);
+    mockedListEvidence.mockResolvedValueOnce([
+      { ...item, supportsConformity: false, accepted: true },
+    ]);
     renderPanel(['evidence.review']);
 
     await waitFor(() => expect(screen.getByText('Access policy v3')).toBeInTheDocument());
@@ -114,14 +120,19 @@ describe('EvidencePanel', () => {
     fireEvent.click(within(reviewForm).getByRole('button', { name: /dowód przeczący/i }));
 
     await waitFor(() =>
-      expect(mockedReviewEvidence).toHaveBeenCalledWith('ev-1', expect.objectContaining({ supportsConformity: false, accepted: true }))
+      expect(mockedReviewEvidence).toHaveBeenCalledWith(
+        'ev-1',
+        expect.objectContaining({ supportsConformity: false, accepted: true })
+      )
     );
 
     // After the reload, the table shows the contradicting-evidence chip — the
     // fact is never hidden. (The review form's own button carries the same
     // label, so assert on the StatusChip specifically via role="status".)
     await waitFor(() => {
-      const chips = screen.getAllByRole('status').filter((el) => el.textContent === 'Dowód przeczący');
+      const chips = screen
+        .getAllByRole('status')
+        .filter((el) => el.textContent === 'Dowód przeczący');
       expect(chips.length).toBeGreaterThan(0);
     });
   });

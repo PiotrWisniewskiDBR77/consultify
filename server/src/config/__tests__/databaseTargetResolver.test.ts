@@ -168,9 +168,9 @@ describe('WP-A04 production database guard', () => {
     });
 
     it('throws when DATABASE_PUBLIC_URL fallback resolves to the production host', () => {
-      expect(() =>
-        resolveReachableDatabaseUrl({ publicDatabaseUrl: PROD_URL, env: {} })
-      ).toThrow(/WP-A04/);
+      expect(() => resolveReachableDatabaseUrl({ publicDatabaseUrl: PROD_URL, env: {} })).toThrow(
+        /WP-A04/
+      );
     });
   });
 });

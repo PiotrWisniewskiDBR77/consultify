@@ -124,9 +124,9 @@ describe('Finance detail identity gate', () => {
     };
 
     it('is "none" when no canonical query is present', () => {
-      expect(resolveCanonicalFinanceQueryOutcome(new URLSearchParams('tab=models'), allOff)).toEqual(
-        { kind: 'none' }
-      );
+      expect(
+        resolveCanonicalFinanceQueryOutcome(new URLSearchParams('tab=models'), allOff)
+      ).toEqual({ kind: 'none' });
     });
 
     it('is "clear-stale" for a complete, recognized identity whose flag is OFF', () => {
@@ -149,7 +149,10 @@ describe('Finance detail identity gate', () => {
     });
 
     it.each([
-      ['canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=a', 'incomplete (missing version)'],
+      [
+        'canonicalArtifactType=BASELINE_MODEL&canonicalArtifactId=a',
+        'incomplete (missing version)',
+      ],
       [
         'canonicalArtifactType=ALIEN&canonicalArtifactId=a&canonicalBusinessVersionId=v',
         'unrecognized type',

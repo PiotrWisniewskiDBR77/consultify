@@ -23,11 +23,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { StandardModuleTab, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { RoiCaseListItem, RoiCaseStatus } from './roiApi';
 import type { RoiCardModeProps } from './RoiCaseCardSections';
-import type { RoiCostLine, RoiBenefitLine } from './roiCaseDetailApi';
+import type { RoiBenefitLine, RoiCostLine } from './roiCaseDetailApi';
 import { listRoiBenefitLines, listRoiCostLines } from './roiCaseDetailApi';
 import {
+  addRoiVarianceCause,
   correctRoiActualEntry,
   createRoiForecastVersion,
   disputeRoiActualEntry,
@@ -37,22 +39,21 @@ import {
   listRoiApprovalSnapshots,
   listRoiForecastVersions,
   listRoiVariances,
-  addRoiVarianceCause,
   newRoiIdempotencyKey,
   publishRoiActualSnapshot,
   recordRoiActualEntry,
   recordRoiVariance,
   removeRoiVarianceCause,
-  RoiApiError,
-  updateRoiVarianceStatus,
-  verifyRoiActualEntry,
   type RoiActualEntry,
   type RoiActualSnapshot,
+  RoiApiError,
   type RoiApprovalSnapshot,
   type RoiCaseBenefitsRealizationView,
   type RoiForecastVersion,
   type RoiVariance,
   type RoiVarianceCause,
+  updateRoiVarianceStatus,
+  verifyRoiActualEntry,
 } from './roiCaseFullToolApi';
 import {
   buildRoiActualEntryColumns,
@@ -73,7 +74,9 @@ import {
   buildRoiVarianceRowMenu,
   withRoiFullToolId,
 } from './roiCaseFullToolPresenters';
+import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
 import {
+  type RoiActualEntryActionKind,
   RoiActualEntryActionModal,
   RoiActualEntryFormModal,
   RoiActualSnapshotPublishModal,
@@ -81,16 +84,27 @@ import {
   RoiVarianceCauseFormModal,
   RoiVarianceFormModal,
   RoiVarianceStatusModal,
-  type RoiActualEntryActionKind,
 } from './RoiRealizeValueModals';
-import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
-type RealizeTab = 'forecast-versions' | 'actuals' | 'actual-snapshots' | 'variances' | 'benefits-realization';
+type RealizeTab =
+  | 'forecast-versions'
+  | 'actuals'
+  | 'actual-snapshots'
+  | 'variances'
+  | 'benefits-realization';
 
-const ROI_TRACKING_ACTIVE_STATUSES: readonly RoiCaseStatus[] = ['tracking', 'benefits_realization', 'post_investment_review_due', 'post_investment_review'];
+const ROI_TRACKING_ACTIVE_STATUSES: readonly RoiCaseStatus[] = [
+  'tracking',
+  'benefits_realization',
+  'post_investment_review_due',
+  'post_investment_review',
+];
 
-interface WriteState { busy: boolean; error: string | null; isConflict: boolean; }
+interface WriteState {
+  busy: boolean;
+  error: string | null;
+  isConflict: boolean;
+}
 const IDLE_WRITE: WriteState = { busy: false, error: null, isConflict: false };
 
 export interface RoiCaseRealizeValueWorkspaceProps {
@@ -105,10 +119,18 @@ export interface RoiCaseRealizeValueWorkspaceProps {
   cardMode?: RoiCardModeProps;
 }
 
-export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspaceProps> = ({
+  roiCase,
+  isPolish,
+  onBack,
+  phase,
+  onPhaseChange,
+  cardMode,
+}) => {
   const [localTab, setLocalTab] = useState<RealizeTab>('forecast-versions');
   const tab = (cardMode ? cardMode.activeTab : localTab) as RealizeTab;
-  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as RealizeTab));
+  const setTab = (id: string) =>
+    cardMode ? cardMode.onTabChange(id) : setLocalTab(id as RealizeTab);
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
   const messageOf = (err: unknown) => toUserFacingErrorMessage(err, isPolish);
@@ -127,8 +149,12 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
   const [fvIdempotencyKey, setFvIdempotencyKey] = useState('');
 
   const loadForecastVersions = useCallback(() => {
-    setFvLoading(true); setFvError(null);
-    listRoiForecastVersions(roiCase.caseId).then(setForecastVersions).catch((e) => setFvError(messageOf(e))).finally(() => setFvLoading(false));
+    setFvLoading(true);
+    setFvError(null);
+    listRoiForecastVersions(roiCase.caseId)
+      .then(setForecastVersions)
+      .catch((e) => setFvError(messageOf(e)))
+      .finally(() => setFvLoading(false));
   }, [roiCase.caseId]);
 
   // ── Actuals ────────────────────────────────────────────────────────────
@@ -137,20 +163,31 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
   const [aeLoading, setAeLoading] = useState(false);
   const [selectedAeId, setSelectedAeId] = useState<string | null>(null);
   const [aeFormOpen, setAeFormOpen] = useState(false);
-  const [aeAction, setAeAction] = useState<{ entry: RoiActualEntry; kind: RoiActualEntryActionKind } | null>(null);
+  const [aeAction, setAeAction] = useState<{
+    entry: RoiActualEntry;
+    kind: RoiActualEntryActionKind;
+  } | null>(null);
   const [aeWrite, setAeWrite] = useState<WriteState>(IDLE_WRITE);
   const [aeIdempotencyKey, setAeIdempotencyKey] = useState('');
   const [costLines, setCostLines] = useState<RoiCostLine[]>([]);
   const [benefitLines, setBenefitLines] = useState<RoiBenefitLine[]>([]);
 
   const loadActualEntries = useCallback(() => {
-    setAeLoading(true); setAeError(null);
-    listRoiActualEntries(roiCase.caseId).then(setActualEntries).catch((e) => setAeError(messageOf(e))).finally(() => setAeLoading(false));
+    setAeLoading(true);
+    setAeError(null);
+    listRoiActualEntries(roiCase.caseId)
+      .then(setActualEntries)
+      .catch((e) => setAeError(messageOf(e)))
+      .finally(() => setAeLoading(false));
     // Cost/benefit lines are needed for the record-actual form's line
     // picker — best-effort, non-blocking (a failure here doesn't error the
     // whole tab, it just leaves the picker empty).
-    listRoiCostLines(roiCase.caseId).then(setCostLines).catch(() => undefined);
-    listRoiBenefitLines(roiCase.caseId).then(setBenefitLines).catch(() => undefined);
+    listRoiCostLines(roiCase.caseId)
+      .then(setCostLines)
+      .catch(() => undefined);
+    listRoiBenefitLines(roiCase.caseId)
+      .then(setBenefitLines)
+      .catch(() => undefined);
   }, [roiCase.caseId]);
 
   // ── Actual snapshots ───────────────────────────────────────────────────
@@ -163,8 +200,12 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
   const [asIdempotencyKey, setAsIdempotencyKey] = useState('');
 
   const loadActualSnapshots = useCallback(() => {
-    setAsLoading(true); setAsError(null);
-    listRoiActualSnapshots(roiCase.caseId).then(setActualSnapshots).catch((e) => setAsError(messageOf(e))).finally(() => setAsLoading(false));
+    setAsLoading(true);
+    setAsError(null);
+    listRoiActualSnapshots(roiCase.caseId)
+      .then(setActualSnapshots)
+      .catch((e) => setAsError(messageOf(e)))
+      .finally(() => setAsLoading(false));
   }, [roiCase.caseId]);
 
   // ── Variances ──────────────────────────────────────────────────────────
@@ -180,8 +221,12 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
   const [varIdempotencyKey, setVarIdempotencyKey] = useState('');
 
   const loadVariances = useCallback(() => {
-    setVarLoading(true); setVarError(null);
-    listRoiVariances(roiCase.caseId).then(setVariances).catch((e) => setVarError(messageOf(e))).finally(() => setVarLoading(false));
+    setVarLoading(true);
+    setVarError(null);
+    listRoiVariances(roiCase.caseId)
+      .then(setVariances)
+      .catch((e) => setVarError(messageOf(e)))
+      .finally(() => setVarLoading(false));
   }, [roiCase.caseId]);
 
   // RN-G6-C2: the "Record variance" form's approval-snapshot picker was
@@ -199,66 +244,101 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
     if (tab !== 'variances') return;
     let cancelled = false;
     listRoiApprovalSnapshots(roiCase.caseId)
-      .then((rows) => { if (!cancelled) setApprovalSnapshots(rows); })
+      .then((rows) => {
+        if (!cancelled) setApprovalSnapshots(rows);
+      })
       .catch(() => {
         /* Non-blocking — a fetch failure here just leaves the picker
          * empty (same honest-gap behavior as before this fix, for THIS
          * one sub-resource only), it never blocks the rest of the tab. */
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [tab, roiCase.caseId]);
 
   // ── Benefits realization (single-row view) ────────────────────────────
-  const [benefitsRealization, setBenefitsRealization] = useState<RoiCaseBenefitsRealizationView | null | undefined>(undefined);
+  const [benefitsRealization, setBenefitsRealization] = useState<
+    RoiCaseBenefitsRealizationView | null | undefined
+  >(undefined);
   const [brError, setBrError] = useState<string | null>(null);
   const [brLoading, setBrLoading] = useState(false);
   const [brSelected, setBrSelected] = useState(false);
 
   const loadBenefitsRealization = useCallback(() => {
-    setBrLoading(true); setBrError(null);
-    getRoiCaseBenefitsRealization(roiCase.caseId).then(setBenefitsRealization).catch((e) => setBrError(messageOf(e))).finally(() => setBrLoading(false));
+    setBrLoading(true);
+    setBrError(null);
+    getRoiCaseBenefitsRealization(roiCase.caseId)
+      .then(setBenefitsRealization)
+      .catch((e) => setBrError(messageOf(e)))
+      .finally(() => setBrLoading(false));
   }, [roiCase.caseId]);
 
   useEffect(() => {
-    if (tab === 'forecast-versions' && forecastVersions === null && !fvLoading) loadForecastVersions();
+    if (tab === 'forecast-versions' && forecastVersions === null && !fvLoading)
+      loadForecastVersions();
     if (tab === 'actuals' && actualEntries === null && !aeLoading) loadActualEntries();
     if (tab === 'actual-snapshots' && actualSnapshots === null && !asLoading) loadActualSnapshots();
     if (tab === 'variances' && variances === null && !varLoading) loadVariances();
-    if (tab === 'benefits-realization' && benefitsRealization === undefined && !brLoading) loadBenefitsRealization();
+    if (tab === 'benefits-realization' && benefitsRealization === undefined && !brLoading)
+      loadBenefitsRealization();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   const breadcrumbs = cardMode
     ? undefined
-    : [{ label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack }, { label: roiCase.title }];
+    : [
+        { label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack },
+        { label: roiCase.title },
+      ];
   const tabs: StandardModuleTab[] = cardMode
     ? cardMode.tabs
     : [
-      { id: 'forecast-versions', label: isPolish ? 'Prognoza' : 'Forecast' },
-      { id: 'actuals', label: isPolish ? 'Wykonania' : 'Actuals' },
-      { id: 'actual-snapshots', label: isPolish ? 'Migawki wykonania' : 'Actual snapshots' },
-      { id: 'variances', label: isPolish ? 'Wariancje' : 'Variances' },
-      { id: 'benefits-realization', label: isPolish ? 'Realizacja korzyści' : 'Benefits realization' },
+        { id: 'forecast-versions', label: isPolish ? 'Prognoza' : 'Forecast' },
+        { id: 'actuals', label: isPolish ? 'Wykonania' : 'Actuals' },
+        { id: 'actual-snapshots', label: isPolish ? 'Migawki wykonania' : 'Actual snapshots' },
+        { id: 'variances', label: isPolish ? 'Wariancje' : 'Variances' },
+        {
+          id: 'benefits-realization',
+          label: isPolish ? 'Realizacja korzyści' : 'Benefits realization',
+        },
       ];
   const chipsBar = cardMode
     ? {}
-    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
+    : {
+        chips: phaseChips,
+        activeChip: phase,
+        onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase),
+      };
 
   // ── Forecast versions tab ──────────────────────────────────────────────
   if (tab === 'forecast-versions') {
-    const rows: TableRow[] = (forecastVersions ?? []).map((f) => withRoiFullToolId(f, 'forecastVersionId'));
-    const selected = (forecastVersions ?? []).find((f) => f.forecastVersionId === selectedFvId) ?? null;
+    const rows: TableRow[] = (forecastVersions ?? []).map((f) =>
+      withRoiFullToolId(f, 'forecastVersionId')
+    );
+    const selected =
+      (forecastVersions ?? []).find((f) => f.forecastVersionId === selectedFvId) ?? null;
     return (
       <>
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-            showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: setTab,
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Opublikuj prognozę' : 'Publish forecast',
               icon: Plus,
-              onClick: () => { setFvWrite(IDLE_WRITE); setFvIdempotencyKey(newRoiIdempotencyKey()); setFvCreateOpen(true); },
+              onClick: () => {
+                setFvWrite(IDLE_WRITE);
+                setFvIdempotencyKey(newRoiIdempotencyKey());
+                setFvCreateOpen(true);
+              },
               testId: 'roi-realize-forecast-create-cta',
               locked: !trackable,
               lockedReason: !trackable ? trackableLockReason : undefined,
@@ -266,26 +346,58 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           }}
           table={{
             columns: buildRoiForecastVersionColumns(isPolish),
-            data: rows, persistKey: 'results-vnext.roi-realize.forecast-versions',
-            loading: fvLoading, error: fvError, onRetry: loadForecastVersions,
-            empty: !fvLoading && !fvError && rows.length === 0 ? { title: isPolish ? 'Brak wersji prognozy' : 'No forecast versions yet', description: isPolish ? 'Ta sprawa nie ma jeszcze opublikowanej prognozy.' : 'This case has no published forecast yet.' } : undefined,
-            selectedRowId: selectedFvId, onRowClick: (row) => setSelectedFvId(String(row.forecastVersionId)),
-            rowMenu: (row) => buildRoiForecastVersionRowMenu(row as unknown as RoiForecastVersion, isPolish, (r) => setSelectedFvId(r.forecastVersionId)),
+            data: rows,
+            persistKey: 'results-vnext.roi-realize.forecast-versions',
+            loading: fvLoading,
+            error: fvError,
+            onRetry: loadForecastVersions,
+            empty:
+              !fvLoading && !fvError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak wersji prognozy' : 'No forecast versions yet',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze opublikowanej prognozy.'
+                      : 'This case has no published forecast yet.',
+                  }
+                : undefined,
+            selectedRowId: selectedFvId,
+            onRowClick: (row) => setSelectedFvId(String(row.forecastVersionId)),
+            rowMenu: (row) =>
+              buildRoiForecastVersionRowMenu(row as unknown as RoiForecastVersion, isPolish, (r) =>
+                setSelectedFvId(r.forecastVersionId)
+              ),
             defaultSort: { columnId: 'publishedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiForecastVersionPreview(selected, isPolish, () => setSelectedFvId(null)) : null}
+          preview={
+            selected
+              ? buildRoiForecastVersionPreview(selected, isPolish, () => setSelectedFvId(null))
+              : null
+          }
         />
         <RoiForecastVersionCreateModal
           open={fvCreateOpen}
           onClose={() => (fvWrite.busy ? undefined : setFvCreateOpen(false))}
           onSubmit={(values) => {
             setFvWrite({ busy: true, error: null, isConflict: false });
-            createRoiForecastVersion(roiCase.caseId, { ...values, expectedVersion: roiCase.rowVersion, idempotencyKey: fvIdempotencyKey })
-              .then((res) => { setForecastVersions((prev) => [res.forecastVersion, ...(prev ?? [])]); setSelectedFvId(res.forecastVersion.forecastVersionId); setFvCreateOpen(false); })
-              .catch((err) => setFvWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            createRoiForecastVersion(roiCase.caseId, {
+              ...values,
+              expectedVersion: roiCase.rowVersion,
+              idempotencyKey: fvIdempotencyKey,
+            })
+              .then((res) => {
+                setForecastVersions((prev) => [res.forecastVersion, ...(prev ?? [])]);
+                setSelectedFvId(res.forecastVersion.forecastVersionId);
+                setFvCreateOpen(false);
+              })
+              .catch((err) =>
+                setFvWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setFvWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={fvWrite.busy} errorMessage={fvWrite.error} isConflict={fvWrite.isConflict}
+          isPolish={isPolish}
+          busy={fvWrite.busy}
+          errorMessage={fvWrite.error}
+          isConflict={fvWrite.isConflict}
         />
       </>
     );
@@ -293,22 +405,36 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
 
   // ── Actuals tab ─────────────────────────────────────────────────────────
   if (tab === 'actuals') {
-    const rows: TableRow[] = (actualEntries ?? []).map((a) => withRoiFullToolId(a, 'actualEntryId'));
+    const rows: TableRow[] = (actualEntries ?? []).map((a) =>
+      withRoiFullToolId(a, 'actualEntryId')
+    );
     const selected = (actualEntries ?? []).find((a) => a.actualEntryId === selectedAeId) ?? null;
     const openAction = (entry: RoiActualEntry, kind: RoiActualEntryActionKind) => {
-      setAeWrite(IDLE_WRITE); setAeIdempotencyKey(newRoiIdempotencyKey()); setAeAction({ entry, kind });
+      setAeWrite(IDLE_WRITE);
+      setAeIdempotencyKey(newRoiIdempotencyKey());
+      setAeAction({ entry, kind });
     };
     return (
       <>
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-            showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: setTab,
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Zarejestruj wykonanie' : 'Record actual',
               icon: Plus,
-              onClick: () => { setAeWrite(IDLE_WRITE); setAeIdempotencyKey(newRoiIdempotencyKey()); setAeFormOpen(true); },
+              onClick: () => {
+                setAeWrite(IDLE_WRITE);
+                setAeIdempotencyKey(newRoiIdempotencyKey());
+                setAeFormOpen(true);
+              },
               testId: 'roi-realize-actual-create-cta',
               locked: !trackable,
               lockedReason: !trackable ? trackableLockReason : undefined,
@@ -316,19 +442,36 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           }}
           table={{
             columns: buildRoiActualEntryColumns(isPolish),
-            data: rows, persistKey: 'results-vnext.roi-realize.actuals',
-            loading: aeLoading, error: aeError, onRetry: loadActualEntries,
-            empty: !aeLoading && !aeError && rows.length === 0 ? { title: isPolish ? 'Brak wpisów wykonania' : 'No actual entries yet', description: isPolish ? 'Ta sprawa nie ma jeszcze zarejestrowanych wykonań.' : 'This case has no recorded actuals yet.' } : undefined,
-            selectedRowId: selectedAeId, onRowClick: (row) => setSelectedAeId(String(row.actualEntryId)),
-            rowMenu: (row) => buildRoiActualEntryRowMenu(row as unknown as RoiActualEntry, isPolish, {
-              onPreview: (r) => setSelectedAeId(r.actualEntryId),
-              onCorrect: (r) => openAction(r, 'correction'),
-              onVerify: (r) => openAction(r, 'verify'),
-              onDispute: (r) => openAction(r, 'dispute'),
-            }),
+            data: rows,
+            persistKey: 'results-vnext.roi-realize.actuals',
+            loading: aeLoading,
+            error: aeError,
+            onRetry: loadActualEntries,
+            empty:
+              !aeLoading && !aeError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak wpisów wykonania' : 'No actual entries yet',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze zarejestrowanych wykonań.'
+                      : 'This case has no recorded actuals yet.',
+                  }
+                : undefined,
+            selectedRowId: selectedAeId,
+            onRowClick: (row) => setSelectedAeId(String(row.actualEntryId)),
+            rowMenu: (row) =>
+              buildRoiActualEntryRowMenu(row as unknown as RoiActualEntry, isPolish, {
+                onPreview: (r) => setSelectedAeId(r.actualEntryId),
+                onCorrect: (r) => openAction(r, 'correction'),
+                onVerify: (r) => openAction(r, 'verify'),
+                onDispute: (r) => openAction(r, 'dispute'),
+              }),
             defaultSort: { columnId: 'recordedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiActualEntryPreview(selected, isPolish, () => setSelectedAeId(null)) : null}
+          preview={
+            selected
+              ? buildRoiActualEntryPreview(selected, isPolish, () => setSelectedAeId(null))
+              : null
+          }
         />
         <RoiActualEntryFormModal
           open={aeFormOpen}
@@ -339,11 +482,20 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           onSubmit={(values) => {
             setAeWrite({ busy: true, error: null, isConflict: false });
             recordRoiActualEntry(roiCase.caseId, { ...values, idempotencyKey: aeIdempotencyKey })
-              .then((res) => { setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]); setSelectedAeId(res.actualEntry.actualEntryId); setAeFormOpen(false); })
-              .catch((err) => setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+              .then((res) => {
+                setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]);
+                setSelectedAeId(res.actualEntry.actualEntryId);
+                setAeFormOpen(false);
+              })
+              .catch((err) =>
+                setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setAeWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={aeWrite.busy} errorMessage={aeWrite.error} isConflict={aeWrite.isConflict}
+          isPolish={isPolish}
+          busy={aeWrite.busy}
+          errorMessage={aeWrite.error}
+          isConflict={aeWrite.isConflict}
         />
         <RoiActualEntryActionModal
           open={!!aeAction}
@@ -353,28 +505,55 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           onSubmitCorrection={(values) => {
             if (!aeAction) return;
             setAeWrite({ busy: true, error: null, isConflict: false });
-            correctRoiActualEntry(roiCase.caseId, aeAction.entry.actualEntryId, { ...values, idempotencyKey: aeIdempotencyKey })
-              .then((res) => { setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]); setAeAction(null); })
-              .catch((err) => setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            correctRoiActualEntry(roiCase.caseId, aeAction.entry.actualEntryId, {
+              ...values,
+              idempotencyKey: aeIdempotencyKey,
+            })
+              .then((res) => {
+                setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]);
+                setAeAction(null);
+              })
+              .catch((err) =>
+                setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setAeWrite((s) => ({ ...s, busy: false })));
           }}
           onSubmitVerify={(notes) => {
             if (!aeAction) return;
             setAeWrite({ busy: true, error: null, isConflict: false });
-            verifyRoiActualEntry(roiCase.caseId, aeAction.entry.actualEntryId, { notes, idempotencyKey: aeIdempotencyKey })
-              .then((res) => { setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]); setAeAction(null); })
-              .catch((err) => setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            verifyRoiActualEntry(roiCase.caseId, aeAction.entry.actualEntryId, {
+              notes,
+              idempotencyKey: aeIdempotencyKey,
+            })
+              .then((res) => {
+                setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]);
+                setAeAction(null);
+              })
+              .catch((err) =>
+                setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setAeWrite((s) => ({ ...s, busy: false })));
           }}
           onSubmitDispute={(disputeReason) => {
             if (!aeAction) return;
             setAeWrite({ busy: true, error: null, isConflict: false });
-            disputeRoiActualEntry(roiCase.caseId, aeAction.entry.actualEntryId, { disputeReason, idempotencyKey: aeIdempotencyKey })
-              .then((res) => { setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]); setAeAction(null); })
-              .catch((err) => setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            disputeRoiActualEntry(roiCase.caseId, aeAction.entry.actualEntryId, {
+              disputeReason,
+              idempotencyKey: aeIdempotencyKey,
+            })
+              .then((res) => {
+                setActualEntries((prev) => [res.actualEntry, ...(prev ?? [])]);
+                setAeAction(null);
+              })
+              .catch((err) =>
+                setAeWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setAeWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={aeWrite.busy} errorMessage={aeWrite.error} isConflict={aeWrite.isConflict}
+          isPolish={isPolish}
+          busy={aeWrite.busy}
+          errorMessage={aeWrite.error}
+          isConflict={aeWrite.isConflict}
         />
       </>
     );
@@ -382,19 +561,32 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
 
   // ── Actual snapshots tab ────────────────────────────────────────────────
   if (tab === 'actual-snapshots') {
-    const rows: TableRow[] = (actualSnapshots ?? []).map((s) => withRoiFullToolId(s, 'actualSnapshotId'));
-    const selected = (actualSnapshots ?? []).find((s) => s.actualSnapshotId === selectedAsId) ?? null;
+    const rows: TableRow[] = (actualSnapshots ?? []).map((s) =>
+      withRoiFullToolId(s, 'actualSnapshotId')
+    );
+    const selected =
+      (actualSnapshots ?? []).find((s) => s.actualSnapshotId === selectedAsId) ?? null;
     return (
       <>
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-            showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: setTab,
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Opublikuj migawkę' : 'Publish snapshot',
               icon: Camera,
-              onClick: () => { setAsWrite(IDLE_WRITE); setAsIdempotencyKey(newRoiIdempotencyKey()); setAsPublishOpen(true); },
+              onClick: () => {
+                setAsWrite(IDLE_WRITE);
+                setAsIdempotencyKey(newRoiIdempotencyKey());
+                setAsPublishOpen(true);
+              },
               testId: 'roi-realize-actual-snapshot-create-cta',
               locked: !trackable,
               lockedReason: !trackable ? trackableLockReason : undefined,
@@ -402,26 +594,58 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           }}
           table={{
             columns: buildRoiActualSnapshotColumns(isPolish),
-            data: rows, persistKey: 'results-vnext.roi-realize.actual-snapshots',
-            loading: asLoading, error: asError, onRetry: loadActualSnapshots,
-            empty: !asLoading && !asError && rows.length === 0 ? { title: isPolish ? 'Brak migawek wykonania' : 'No actual snapshots yet', description: isPolish ? 'Ta sprawa nie ma jeszcze opublikowanej migawki wykonania.' : 'This case has no published actual snapshot yet.' } : undefined,
-            selectedRowId: selectedAsId, onRowClick: (row) => setSelectedAsId(String(row.actualSnapshotId)),
-            rowMenu: (row) => buildRoiActualSnapshotRowMenu(row as unknown as RoiActualSnapshot, isPolish, (r) => setSelectedAsId(r.actualSnapshotId)),
+            data: rows,
+            persistKey: 'results-vnext.roi-realize.actual-snapshots',
+            loading: asLoading,
+            error: asError,
+            onRetry: loadActualSnapshots,
+            empty:
+              !asLoading && !asError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak migawek wykonania' : 'No actual snapshots yet',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze opublikowanej migawki wykonania.'
+                      : 'This case has no published actual snapshot yet.',
+                  }
+                : undefined,
+            selectedRowId: selectedAsId,
+            onRowClick: (row) => setSelectedAsId(String(row.actualSnapshotId)),
+            rowMenu: (row) =>
+              buildRoiActualSnapshotRowMenu(row as unknown as RoiActualSnapshot, isPolish, (r) =>
+                setSelectedAsId(r.actualSnapshotId)
+              ),
             defaultSort: { columnId: 'publishedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiActualSnapshotPreview(selected, isPolish, () => setSelectedAsId(null)) : null}
+          preview={
+            selected
+              ? buildRoiActualSnapshotPreview(selected, isPolish, () => setSelectedAsId(null))
+              : null
+          }
         />
         <RoiActualSnapshotPublishModal
           open={asPublishOpen}
           onClose={() => (asWrite.busy ? undefined : setAsPublishOpen(false))}
           onSubmit={(values) => {
             setAsWrite({ busy: true, error: null, isConflict: false });
-            publishRoiActualSnapshot(roiCase.caseId, { ...values, expectedVersion: roiCase.rowVersion, idempotencyKey: asIdempotencyKey })
-              .then((res) => { setActualSnapshots((prev) => [res.actualSnapshot, ...(prev ?? [])]); setSelectedAsId(res.actualSnapshot.actualSnapshotId); setAsPublishOpen(false); })
-              .catch((err) => setAsWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            publishRoiActualSnapshot(roiCase.caseId, {
+              ...values,
+              expectedVersion: roiCase.rowVersion,
+              idempotencyKey: asIdempotencyKey,
+            })
+              .then((res) => {
+                setActualSnapshots((prev) => [res.actualSnapshot, ...(prev ?? [])]);
+                setSelectedAsId(res.actualSnapshot.actualSnapshotId);
+                setAsPublishOpen(false);
+              })
+              .catch((err) =>
+                setAsWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setAsWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={asWrite.busy} errorMessage={asWrite.error} isConflict={asWrite.isConflict}
+          isPolish={isPolish}
+          busy={asWrite.busy}
+          errorMessage={asWrite.error}
+          isConflict={asWrite.isConflict}
         />
       </>
     );
@@ -436,38 +660,81 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-            showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: setTab,
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Zarejestruj wariancję' : 'Record variance',
               icon: Plus,
-              onClick: () => { setVarWrite(IDLE_WRITE); setVarIdempotencyKey(newRoiIdempotencyKey()); setVarFormOpen(true); },
+              onClick: () => {
+                setVarWrite(IDLE_WRITE);
+                setVarIdempotencyKey(newRoiIdempotencyKey());
+                setVarFormOpen(true);
+              },
               testId: 'roi-realize-variance-create-cta',
             },
           }}
           table={{
             columns: buildRoiVarianceColumns(isPolish),
-            data: rows, persistKey: 'results-vnext.roi-realize.variances',
-            loading: varLoading, error: varError, onRetry: loadVariances,
-            empty: !varLoading && !varError && rows.length === 0 ? { title: isPolish ? 'Brak wariancji' : 'No variances yet', description: isPolish ? 'Ta sprawa nie ma jeszcze zarejestrowanych wariancji.' : 'This case has no recorded variances yet.' } : undefined,
-            selectedRowId: selectedVarId, onRowClick: (row) => setSelectedVarId(String(row.varianceId)),
-            rowMenu: (row) => buildRoiVarianceRowMenu(row as unknown as RoiVariance, isPolish, {
-              onPreview: (r) => setSelectedVarId(r.varianceId),
-              onEditStatus: (r) => { setVarWrite(IDLE_WRITE); setVarStatusTarget(r); },
-              onAddCause: (r) => { setVarWrite(IDLE_WRITE); setVarCauseTarget(r); },
-            }),
+            data: rows,
+            persistKey: 'results-vnext.roi-realize.variances',
+            loading: varLoading,
+            error: varError,
+            onRetry: loadVariances,
+            empty:
+              !varLoading && !varError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak wariancji' : 'No variances yet',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze zarejestrowanych wariancji.'
+                      : 'This case has no recorded variances yet.',
+                  }
+                : undefined,
+            selectedRowId: selectedVarId,
+            onRowClick: (row) => setSelectedVarId(String(row.varianceId)),
+            rowMenu: (row) =>
+              buildRoiVarianceRowMenu(row as unknown as RoiVariance, isPolish, {
+                onPreview: (r) => setSelectedVarId(r.varianceId),
+                onEditStatus: (r) => {
+                  setVarWrite(IDLE_WRITE);
+                  setVarStatusTarget(r);
+                },
+                onAddCause: (r) => {
+                  setVarWrite(IDLE_WRITE);
+                  setVarCauseTarget(r);
+                },
+              }),
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
           }}
           preview={
             selected
-              ? buildRoiVariancePreview(selected, varianceCauses[selected.varianceId] ?? null, isPolish, {
-                  onClose: () => setSelectedVarId(null),
-                  onRemoveCause: (c) => {
-                    removeRoiVarianceCause(roiCase.caseId, selected.varianceId, c.causeId, { idempotencyKey: newRoiIdempotencyKey() })
-                      .then(() => setVarianceCauses((prev) => ({ ...prev, [selected.varianceId]: (prev[selected.varianceId] ?? []).filter((x) => x.causeId !== c.causeId) })))
-                      .catch(() => undefined);
-                  },
-                })
+              ? buildRoiVariancePreview(
+                  selected,
+                  varianceCauses[selected.varianceId] ?? null,
+                  isPolish,
+                  {
+                    onClose: () => setSelectedVarId(null),
+                    onRemoveCause: (c) => {
+                      removeRoiVarianceCause(roiCase.caseId, selected.varianceId, c.causeId, {
+                        idempotencyKey: newRoiIdempotencyKey(),
+                      })
+                        .then(() =>
+                          setVarianceCauses((prev) => ({
+                            ...prev,
+                            [selected.varianceId]: (prev[selected.varianceId] ?? []).filter(
+                              (x) => x.causeId !== c.causeId
+                            ),
+                          }))
+                        )
+                        .catch(() => undefined);
+                    },
+                  }
+                )
               : null
           }
         />
@@ -480,11 +747,20 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           onSubmit={(values) => {
             setVarWrite({ busy: true, error: null, isConflict: false });
             recordRoiVariance(roiCase.caseId, { ...values, idempotencyKey: varIdempotencyKey })
-              .then((res) => { setVariances((prev) => [res.variance, ...(prev ?? [])]); setSelectedVarId(res.variance.varianceId); setVarFormOpen(false); })
-              .catch((err) => setVarWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+              .then((res) => {
+                setVariances((prev) => [res.variance, ...(prev ?? [])]);
+                setSelectedVarId(res.variance.varianceId);
+                setVarFormOpen(false);
+              })
+              .catch((err) =>
+                setVarWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setVarWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={varWrite.busy} errorMessage={varWrite.error} isConflict={varWrite.isConflict}
+          isPolish={isPolish}
+          busy={varWrite.busy}
+          errorMessage={varWrite.error}
+          isConflict={varWrite.isConflict}
         />
         <RoiVarianceStatusModal
           open={!!varStatusTarget}
@@ -494,12 +770,28 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           onSubmit={(values) => {
             if (!varStatusTarget) return;
             setVarWrite({ busy: true, error: null, isConflict: false });
-            updateRoiVarianceStatus(roiCase.caseId, varStatusTarget.varianceId, { ...values, expectedVersion: varStatusTarget.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
-              .then((res) => { setVariances((prev) => (prev ?? []).map((v) => (v.varianceId === res.variance.varianceId ? res.variance : v))); setVarStatusTarget(null); })
-              .catch((err) => setVarWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            updateRoiVarianceStatus(roiCase.caseId, varStatusTarget.varianceId, {
+              ...values,
+              expectedVersion: varStatusTarget.rowVersion,
+              idempotencyKey: newRoiIdempotencyKey(),
+            })
+              .then((res) => {
+                setVariances((prev) =>
+                  (prev ?? []).map((v) =>
+                    v.varianceId === res.variance.varianceId ? res.variance : v
+                  )
+                );
+                setVarStatusTarget(null);
+              })
+              .catch((err) =>
+                setVarWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setVarWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={varWrite.busy} errorMessage={varWrite.error} isConflict={varWrite.isConflict}
+          isPolish={isPolish}
+          busy={varWrite.busy}
+          errorMessage={varWrite.error}
+          isConflict={varWrite.isConflict}
         />
         <RoiVarianceCauseFormModal
           open={!!varCauseTarget}
@@ -508,39 +800,71 @@ export const RoiCaseRealizeValueWorkspace: React.FC<RoiCaseRealizeValueWorkspace
           onSubmit={(values) => {
             if (!varCauseTarget) return;
             setVarWrite({ busy: true, error: null, isConflict: false });
-            addRoiVarianceCause(roiCase.caseId, varCauseTarget.varianceId, { ...values, idempotencyKey: newRoiIdempotencyKey() })
+            addRoiVarianceCause(roiCase.caseId, varCauseTarget.varianceId, {
+              ...values,
+              idempotencyKey: newRoiIdempotencyKey(),
+            })
               .then((res) => {
-                setVarianceCauses((prev) => ({ ...prev, [varCauseTarget.varianceId]: [...(prev[varCauseTarget.varianceId] ?? []), res.varianceCause] }));
+                setVarianceCauses((prev) => ({
+                  ...prev,
+                  [varCauseTarget.varianceId]: [
+                    ...(prev[varCauseTarget.varianceId] ?? []),
+                    res.varianceCause,
+                  ],
+                }));
                 setVarCauseTarget(null);
               })
-              .catch((err) => setVarWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+              .catch((err) =>
+                setVarWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setVarWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={varWrite.busy} errorMessage={varWrite.error} isConflict={varWrite.isConflict}
+          isPolish={isPolish}
+          busy={varWrite.busy}
+          errorMessage={varWrite.error}
+          isConflict={varWrite.isConflict}
         />
       </>
     );
   }
 
   // ── Benefits realization tab (single-row view) ─────────────────────────
-  const brRows: TableRow[] = benefitsRealization === undefined ? [] : buildRoiCaseViewsRows(null, benefitsRealization).filter((r) => r.id === 'benefits-realization').map((r) => withRoiFullToolId(r, 'id'));
+  const brRows: TableRow[] =
+    benefitsRealization === undefined
+      ? []
+      : buildRoiCaseViewsRows(null, benefitsRealization)
+          .filter((r) => r.id === 'benefits-realization')
+          .map((r) => withRoiFullToolId(r, 'id'));
   const brSelectedRow = brSelected ? (brRows[0] as any) : null;
   return (
     <ResultsVNextRegistryShell
       domain="roi"
       moduleBar={{
-        breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-        showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
+        breadcrumbs,
+        tabs,
+        activeTab: tab,
+        onTabChange: setTab,
+        showTabCounts: false,
+        viewModes: ['table'],
+        viewMode: 'table',
+        ...chipsBar,
       }}
       table={{
         columns: buildRoiCaseViewsColumns(isPolish),
-        data: brRows, persistKey: 'results-vnext.roi-realize.benefits-realization',
-        loading: brLoading, error: brError, onRetry: loadBenefitsRealization,
+        data: brRows,
+        persistKey: 'results-vnext.roi-realize.benefits-realization',
+        loading: brLoading,
+        error: brError,
+        onRetry: loadBenefitsRealization,
         selectedRowId: brSelected ? 'benefits-realization' : null,
         onRowClick: () => setBrSelected(true),
         rowMenu: (row) => buildRoiCaseViewsRowMenu(row as any, isPolish, () => setBrSelected(true)),
       }}
-      preview={brSelectedRow ? buildRoiCaseViewsPreview(brSelectedRow, isPolish, () => setBrSelected(false)) : null}
+      preview={
+        brSelectedRow
+          ? buildRoiCaseViewsPreview(brSelectedRow, isPolish, () => setBrSelected(false))
+          : null
+      }
     />
   );
 };

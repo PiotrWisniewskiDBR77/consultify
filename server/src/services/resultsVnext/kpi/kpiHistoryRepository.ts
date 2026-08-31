@@ -3,8 +3,8 @@ import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
 
 export type KpiHistoryKind =

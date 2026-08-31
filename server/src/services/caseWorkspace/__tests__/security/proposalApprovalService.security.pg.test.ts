@@ -39,11 +39,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as caseCoreService from '../../caseCoreService.js';
 import { requireCaseAccess } from '../../caseWorkspaceAuthContext.js';
-import * as proposalApprovalService from '../../proposalApprovalService.js';
 import type {
   CreateActionProposalInput,
   RecordApprovalDecisionInput,
 } from '../../proposalApprovalService.js';
+import * as proposalApprovalService from '../../proposalApprovalService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -112,10 +112,10 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
 
   async function seedOrg(label: string): Promise<string> {
     const orgId = `secpa-org-${label}-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      orgId,
-      `Stream E proposal test org (${label})`,
-    ]);
+    await control.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgId, `Stream E proposal test org (${label})`]
+    );
     return orgId;
   }
 
@@ -160,7 +160,9 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
     return userId;
   }
 
-  async function seedOrgProjectCase(label: string): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  async function seedOrgProjectCase(
+    label: string
+  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
     const orgId = await seedOrg(label);
     const projectId = `secpa-project-${label}-${randomUUID()}`;
     await control.query(
@@ -178,7 +180,11 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
   }
 
   /** Copied verbatim from __tests__/proposalApprovalService.pg.test.ts's own seedV8Run(). */
-  async function seedV8Run(params: { runId: string; organizationId: string; goal?: string }): Promise<void> {
+  async function seedV8Run(params: {
+    runId: string;
+    organizationId: string;
+    goal?: string;
+  }): Promise<void> {
     await control.query(
       `INSERT INTO v8_execution_runs (run_id, organization_id, context_snapshot_id, initiator_user_id, goal)
        VALUES ($1, $2, $3, $4, $5)
@@ -247,18 +253,29 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
   }
 
   /** Teardown order matters: proposals (and their cascaded decisions) before v8_execution_runs before case_core/projects before organizations. */
-  async function teardown(params: { runIds: string[]; orgIds: string[]; projectIds: string[]; userIds?: string[] }): Promise<void> {
+  async function teardown(params: {
+    runIds: string[];
+    orgIds: string[];
+    projectIds: string[];
+    userIds?: string[];
+  }): Promise<void> {
     if (params.runIds.length > 0) {
       await control
-        .query(`DELETE FROM case_workspace_action_proposals WHERE run_id = ANY($1)`, [params.runIds])
+        .query(`DELETE FROM case_workspace_action_proposals WHERE run_id = ANY($1)`, [
+          params.runIds,
+        ])
         .catch(() => undefined);
-      await control.query(`DELETE FROM v8_execution_runs WHERE run_id = ANY($1)`, [params.runIds]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM v8_execution_runs WHERE run_id = ANY($1)`, [params.runIds])
+        .catch(() => undefined);
     }
     for (const userId of params.userIds ?? []) {
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const projectId of params.projectIds) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const orgId of params.orgIds) {
@@ -266,8 +283,12 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
       // organizations); users does not carry that FK, so any actor seeded
       // via seedActiveActor()/seedUser() for this org is swept here by
       // organization_id rather than needing per-test tracking.
-      await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -276,8 +297,11 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
   // =========================================================================
   describe('(A) target contract: requireCaseAccess in front of proposalApprovalService fails closed', () => {
     it('IDOR: an actor with no standing in the victim org is denied requireCaseAccess before createActionProposal would even run', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } =
-        await seedOrgProjectCase('idor-victim');
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('idor-victim');
       const runId = `run-idor-${randomUUID()}`;
       await seedV8Run({ runId, organizationId: victimOrgId });
       const attackerOrgId = await seedOrg('idor-attacker');
@@ -291,7 +315,12 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
         // A route composing requireCaseAccess correctly never reaches
         // createActionProposal at all for this actor/case pair.
       } finally {
-        await teardown({ runIds: [runId], orgIds: [victimOrgId, attackerOrgId], projectIds: [victimProjectId], userIds: [attackerUserId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [victimOrgId, attackerOrgId],
+          projectIds: [victimProjectId],
+          userIds: [attackerUserId],
+        });
       }
     }, 30_000);
 
@@ -304,12 +333,19 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
 
       try {
         await expect(requireCaseAccess(approverUserId, caseId)).resolves.toBeTruthy();
-        await control.query(`UPDATE organization_members SET status = 'REVOKED' WHERE id = $1`, [membershipId]);
+        await control.query(`UPDATE organization_members SET status = 'REVOKED' WHERE id = $1`, [
+          membershipId,
+        ]);
         await expect(requireCaseAccess(approverUserId, caseId)).rejects.toMatchObject({
           code: 'case_access_denied',
         });
       } finally {
-        await teardown({ runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [approverUserId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [orgId],
+          projectIds: [projectId],
+          userIds: [approverUserId],
+        });
       }
     }, 30_000);
   });
@@ -331,8 +367,11 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
   // =========================================================================
   describe('(B) gap CLOSED by Stream A (formerly known gap P1): proposalApprovalService now self-enforces tenant/membership', () => {
     it('GAP CLOSED: createActionProposal now REJECTS a caseId the calling actor has no standing in (was: succeeded silently)', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } =
-        await seedOrgProjectCase('gap-create');
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('gap-create');
       const runId = `run-gap-create-${randomUUID()}`;
       await seedV8Run({ runId, organizationId: victimOrgId });
       const attackerOrgId = await seedOrg('gap-create-attacker');
@@ -347,18 +386,31 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
         // over the target caseId before it ever touches the row.
         await expect(
           proposalApprovalService.createActionProposal(
-            minimalProposalInput({ caseId: victimCaseId, runId, tag: 'gap-create', createdByActorId: attackerUserId })
+            minimalProposalInput({
+              caseId: victimCaseId,
+              runId,
+              tag: 'gap-create',
+              createdByActorId: attackerUserId,
+            })
           )
         ).rejects.toMatchObject({ code: 'case_access_denied' });
 
-        const rows = await control.query(`SELECT action_proposal_id FROM case_workspace_action_proposals WHERE case_id = $1`, [victimCaseId]);
+        const rows = await control.query(
+          `SELECT action_proposal_id FROM case_workspace_action_proposals WHERE case_id = $1`,
+          [victimCaseId]
+        );
         expect(rows.rows).toHaveLength(0); // no proposal was ever planted
       } finally {
-        await teardown({ runIds: [runId], orgIds: [victimOrgId, attackerOrgId], projectIds: [victimProjectId], userIds: [attackerUserId] });
+        await teardown({
+          runIds: [runId],
+          orgIds: [victimOrgId, attackerOrgId],
+          projectIds: [victimProjectId],
+          userIds: [attackerUserId],
+        });
       }
     }, 30_000);
 
-    it('GAP CLOSED: recordApprovalDecision (APPROVE) now REJECTS a decidedByActorId with no organization_members row at all (was: GOV-022\'s self-approval check alone let it through)', async () => {
+    it("GAP CLOSED: recordApprovalDecision (APPROVE) now REJECTS a decidedByActorId with no organization_members row at all (was: GOV-022's self-approval check alone let it through)", async () => {
       const { orgId, projectId, caseId } = await seedOrgProjectCase('gap-decide');
       const runId = `run-gap-decide-${randomUUID()}`;
       await seedV8Run({ runId, organizationId: orgId });
@@ -491,9 +543,10 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
         const rejected = outcomes.filter((o) => o.status === 'rejected');
         expect(fulfilled).toHaveLength(1);
         expect(rejected).toHaveLength(1);
-        expect((rejected[0] as PromiseRejectedResult).reason?.message ?? String((rejected[0] as PromiseRejectedResult).reason)).toMatch(
-          /proposal_status_transition_not_allowed:(APPROVED|REJECTED)->decision/
-        );
+        expect(
+          (rejected[0] as PromiseRejectedResult).reason?.message ??
+            String((rejected[0] as PromiseRejectedResult).reason)
+        ).toMatch(/proposal_status_transition_not_allowed:(APPROVED|REJECTED)->decision/);
 
         // Final DB state reflects exactly ONE terminal decision, not both.
         const row = await readProposalRow(created.actionProposalId);
@@ -513,7 +566,12 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
       const runId = `run-malformed-1-${randomUUID()}`;
       await seedV8Run({ runId, organizationId: orgId });
       try {
-        const input = minimalProposalInput({ caseId, runId, tag: 'malformed-1', payloadDigest: '' });
+        const input = minimalProposalInput({
+          caseId,
+          runId,
+          tag: 'malformed-1',
+          payloadDigest: '',
+        });
         await expect(proposalApprovalService.createActionProposal(input)).rejects.toThrow(
           'proposal_payload_digest_required'
         );
@@ -540,7 +598,11 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
     }, 30_000);
 
     it('createActionProposal rejects a run belonging to a DIFFERENT organization than the case (cross-tenant, different resource type) — an existing internal protection, verified not just trusted', async () => {
-      const { orgId: caseOrgId, projectId, caseId } = await seedOrgProjectCase('cross-resource-run');
+      const {
+        orgId: caseOrgId,
+        projectId,
+        caseId,
+      } = await seedOrgProjectCase('cross-resource-run');
       const otherOrgId = await seedOrg('cross-resource-run-other');
       const foreignRunId = `run-foreign-${randomUUID()}`;
       await seedV8Run({ runId: foreignRunId, organizationId: otherOrgId });
@@ -553,14 +615,26 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
       // probe as "an existing internal protection".
       const actorId = await seedActiveActor(caseOrgId, 'cross-resource-run-actor');
       try {
-        const input = minimalProposalInput({ caseId, runId: foreignRunId, tag: 'cross-resource-run', createdByActorId: actorId });
+        const input = minimalProposalInput({
+          caseId,
+          runId: foreignRunId,
+          tag: 'cross-resource-run',
+          createdByActorId: actorId,
+        });
         await expect(proposalApprovalService.createActionProposal(input)).rejects.toThrow(
           'run_case_organization_mismatch'
         );
-        const rows = await control.query(`SELECT * FROM case_workspace_action_proposals WHERE case_id = $1`, [caseId]);
+        const rows = await control.query(
+          `SELECT * FROM case_workspace_action_proposals WHERE case_id = $1`,
+          [caseId]
+        );
         expect(rows.rows).toHaveLength(0);
       } finally {
-        await teardown({ runIds: [foreignRunId], orgIds: [caseOrgId, otherOrgId], projectIds: [projectId] });
+        await teardown({
+          runIds: [foreignRunId],
+          orgIds: [caseOrgId, otherOrgId],
+          projectIds: [projectId],
+        });
       }
     }, 30_000);
   });
@@ -578,7 +652,13 @@ suite('proposalApprovalService — adversarial security (Stream E, CW-P05/E6)', 
       const actorId = await seedActiveActor(orgId, 'dup-concurrent-actor');
       try {
         const idempotencyKey = `idem-dup-concurrent-${randomUUID()}`;
-        const input = minimalProposalInput({ caseId, runId, tag: 'dup-concurrent', idempotencyKey, createdByActorId: actorId });
+        const input = minimalProposalInput({
+          caseId,
+          runId,
+          tag: 'dup-concurrent',
+          idempotencyKey,
+          createdByActorId: actorId,
+        });
 
         const [a, b] = await Promise.all([
           proposalApprovalService.createActionProposal(input),

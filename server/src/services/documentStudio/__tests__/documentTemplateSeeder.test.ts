@@ -17,8 +17,8 @@
  * live Postgres backing store.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 interface PersistedRecord {
   template: Record<string, unknown>;
@@ -29,7 +29,9 @@ const persistTemplateMock = vi.fn(async (template: unknown, options?: { isSystem
   const stored: PersistedRecord = { template: template as Record<string, unknown>, options };
   persistTemplateMock.records.push(stored);
   return { ok: true };
-}) as unknown as Mock<(template: unknown, options?: { isSystem?: boolean }) => Promise<{ ok: boolean }>> & {
+}) as unknown as Mock<
+  (template: unknown, options?: { isSystem?: boolean }) => Promise<{ ok: boolean }>
+> & {
   records: PersistedRecord[];
 };
 persistTemplateMock.records = [];

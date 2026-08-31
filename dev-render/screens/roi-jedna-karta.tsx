@@ -73,6 +73,12 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import {
+  NModeContentBlock,
+  type NModeSection,
+  NModeShell,
+} from '../../src/components/shared/NModeLayout';
+import { PreviewRelations } from '../../src/components/shared/PreviewPane/PreviewRelations';
 import { ArtifactPropertiesTable } from '../../src/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
@@ -80,12 +86,6 @@ import {
   type ArtifactRightPanelSection,
 } from '../../src/components/standard/ArtifactRightPanel';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-import { PreviewRelations } from '../../src/components/shared/PreviewPane/PreviewRelations';
-import {
-  NModeContentBlock,
-  NModeShell,
-  type NModeSection,
-} from '../../src/components/shared/NModeLayout';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
@@ -144,7 +144,10 @@ const StatTile: React.FC<{
 const KV: React.FC<{ rows: { label: string; value: string }[] }> = ({ rows }) => (
   <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
     {rows.map((r) => (
-      <div key={r.label} className="flex items-baseline justify-between gap-3 border-b border-c-border-subtle/60 pb-1.5">
+      <div
+        key={r.label}
+        className="flex items-baseline justify-between gap-3 border-b border-c-border-subtle/60 pb-1.5"
+      >
         <dt className="text-xs text-c-text-muted">{r.label}</dt>
         <dd className="text-right text-xs font-medium tabular-nums text-c-text">{r.value}</dd>
       </div>
@@ -206,7 +209,12 @@ const SimpleTable: React.FC<{
 // ── SEKCJA 1: ZAŁOŻENIA ─────────────────────────────────────────────────────
 const ZalozeniaContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="zalozenia-parametry" scope={SCOPE} title="Parametry przypadku biznesowego" readMode>
+    <NModeContentBlock
+      blockId="zalozenia-parametry"
+      scope={SCOPE}
+      title="Parametry przypadku biznesowego"
+      readMode
+    >
       <KV
         rows={[
           { label: 'Inwestycja początkowa', value: pln(480000) },
@@ -219,7 +227,12 @@ const ZalozeniaContent: React.FC = () => (
       />
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="zalozenia-sklad-inwestycji" scope={SCOPE} title="Na co idzie 480 000 zł" readMode>
+    <NModeContentBlock
+      blockId="zalozenia-sklad-inwestycji"
+      scope={SCOPE}
+      title="Na co idzie 480 000 zł"
+      readMode
+    >
       <SimpleTable
         head={['Pozycja', 'Kwota']}
         rows={[
@@ -248,7 +261,12 @@ const ZalozeniaContent: React.FC = () => (
 // ── SEKCJA 2: MODEL ──────────────────────────────────────────────────────────
 const ModelContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="model-jak-liczymy" scope={SCOPE} title="Jak liczymy oszczędność" readMode>
+    <NModeContentBlock
+      blockId="model-jak-liczymy"
+      scope={SCOPE}
+      title="Jak liczymy oszczędność"
+      readMode
+    >
       <div className="flex flex-col gap-3 text-xs text-c-text-secondary">
         <p>
           Model liczy wartość odzyskanego czasu maszyny na linii L3. Dziś przezbrojenie trwa
@@ -269,27 +287,41 @@ const ModelContent: React.FC = () => (
           ]}
         />
         <p>
-          Odzyskany czas przekłada się na dodatkową produkcję (linia L3 pracuje dziś na{' '}
-          {proc(91)} obłożenia — jest popyt, który dziś tracimy na przezbrojeniach), nie na
-          redukcję etatów. Korzyść liczona jest jako marża na dodatkowych partiach, nie jako
-          oszczędność na pensjach.
+          Odzyskany czas przekłada się na dodatkową produkcję (linia L3 pracuje dziś na {proc(91)}{' '}
+          obłożenia — jest popyt, który dziś tracimy na przezbrojeniach), nie na redukcję etatów.
+          Korzyść liczona jest jako marża na dodatkowych partiach, nie jako oszczędność na pensjach.
         </p>
       </div>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="model-przeplywy" scope={SCOPE} title="Przepływy w czasie (skrót)" readMode>
+    <NModeContentBlock
+      blockId="model-przeplywy"
+      scope={SCOPE}
+      title="Przepływy w czasie (skrót)"
+      readMode
+    >
       <SimpleTable
         head={['Okres', 'Nakład', 'Korzyść brutto', 'Przepływ netto']}
         rows={[
           ['Q3 2026 (inwestycja)', pln(480000), '—', `−${pln(480000)}`],
           ['Q4 2026 (rozruch, 60% targetu)', '—', pln(180000), `+${pln(180000)}`],
           ['Q1 2027 (pełen rozruch)', '—', pln(299000), `+${pln(299000)}`],
-          ['Q2 2027 – Q2 2028 (stabilna praca, 5 kw.)', '—', `5 × ${pln(299000)}`, `+${pln(1495000)}`],
+          [
+            'Q2 2027 – Q2 2028 (stabilna praca, 5 kw.)',
+            '—',
+            `5 × ${pln(299000)}`,
+            `+${pln(1495000)}`,
+          ],
         ]}
       />
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="model-wrazliwosc" scope={SCOPE} title="Wrażliwość — co zmienia wynik" readMode>
+    <NModeContentBlock
+      blockId="model-wrazliwosc"
+      scope={SCOPE}
+      title="Wrażliwość — co zmienia wynik"
+      readMode
+    >
       <div className="flex flex-col gap-3">
         <SimpleTable
           head={['Scenariusz docelowego czasu przezbrojenia', 'NPV (24 mies.)']}
@@ -300,9 +332,9 @@ const ModelContent: React.FC = () => (
           ]}
         />
         <p className="text-[11px] leading-relaxed text-c-text-muted">
-          Największe ryzyko modelu: adopcja metody SMED przez wszystkie 3 zmiany, nie tylko
-          zmianę dzienną. Model NIE zakłada redukcji etatów ani zmiany cen sprzedaży —
-          wyłącznie odzyskany czas maszyny.
+          Największe ryzyko modelu: adopcja metody SMED przez wszystkie 3 zmiany, nie tylko zmianę
+          dzienną. Model NIE zakłada redukcji etatów ani zmiany cen sprzedaży — wyłącznie odzyskany
+          czas maszyny.
         </p>
       </div>
     </NModeContentBlock>
@@ -312,16 +344,44 @@ const ModelContent: React.FC = () => (
 // ── SEKCJA 3: WYNIK (prognoza) ───────────────────────────────────────────────
 const WynikContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="wynik-kafle" scope={SCOPE} title="Wynik prognozy (na dzień zatwierdzenia case'u, 28 sierpnia 2026)" readMode>
+    <NModeContentBlock
+      blockId="wynik-kafle"
+      scope={SCOPE}
+      title="Wynik prognozy (na dzień zatwierdzenia case'u, 28 sierpnia 2026)"
+      readMode
+    >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="ROI (24 mies.)" value={proc(168)} sub="zysk / nakład" tone="success" icon={TrendingUp} />
-        <StatTile label="NPV" value={pln(620000)} sub="przy stopie 10%" tone="success" icon={Calculator} />
-        <StatTile label="IRR" value={proc(62)} sub="wewnętrzna stopa zwrotu" tone="success" icon={Percent} />
+        <StatTile
+          label="ROI (24 mies.)"
+          value={proc(168)}
+          sub="zysk / nakład"
+          tone="success"
+          icon={TrendingUp}
+        />
+        <StatTile
+          label="NPV"
+          value={pln(620000)}
+          sub="przy stopie 10%"
+          tone="success"
+          icon={Calculator}
+        />
+        <StatTile
+          label="IRR"
+          value={proc(62)}
+          sub="wewnętrzna stopa zwrotu"
+          tone="success"
+          icon={Percent}
+        />
         <StatTile label="Payback" value="9 mies." sub="zwrot nakładu" tone="success" icon={Clock} />
       </div>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="wynik-narastajaco" scope={SCOPE} title="Przepływ narastająco" readMode>
+    <NModeContentBlock
+      blockId="wynik-narastajaco"
+      scope={SCOPE}
+      title="Przepływ narastająco"
+      readMode
+    >
       <SimpleTable
         head={['Okres', 'Przepływ narastająco']}
         rows={[
@@ -334,8 +394,8 @@ const WynikContent: React.FC = () => (
         ]}
       />
       <p className="mt-3 text-[11px] leading-relaxed text-c-text-muted">
-        Próg rentowności (przepływ = 0) wypada między Q4 2026 a Q1 2027 — stąd payback ≈ 9
-        miesięcy od startu inwestycji.
+        Próg rentowności (przepływ = 0) wypada między Q4 2026 a Q1 2027 — stąd payback ≈ 9 miesięcy
+        od startu inwestycji.
       </p>
     </NModeContentBlock>
   </div>
@@ -356,7 +416,12 @@ const WynikiPoWdrozeniuContent: React.FC = () => (
       </span>
     </div>
 
-    <NModeContentBlock blockId="wpw-kafle" scope={SCOPE} title="Prognoza vs rzeczywistość — stan na dziś" readMode>
+    <NModeContentBlock
+      blockId="wpw-kafle"
+      scope={SCOPE}
+      title="Prognoza vs rzeczywistość — stan na dziś"
+      readMode
+    >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="ROI do dziś"
@@ -372,7 +437,13 @@ const WynikiPoWdrozeniuContent: React.FC = () => (
           tone="warning"
           icon={Calculator}
         />
-        <StatTile label="IRR (przeliczone)" value={proc(34)} sub="prognoza: 62%" tone="warning" icon={Percent} />
+        <StatTile
+          label="IRR (przeliczone)"
+          value={proc(34)}
+          sub="prognoza: 62%"
+          tone="warning"
+          icon={Percent}
+        />
         <StatTile
           label="Payback (rewizja)"
           value="~14 mies."
@@ -383,7 +454,12 @@ const WynikiPoWdrozeniuContent: React.FC = () => (
       </div>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="wpw-czas-przezbrojenia" scope={SCOPE} title="Czas przezbrojenia — cel vs zmierzone" readMode>
+    <NModeContentBlock
+      blockId="wpw-czas-przezbrojenia"
+      scope={SCOPE}
+      title="Czas przezbrojenia — cel vs zmierzone"
+      readMode
+    >
       <SimpleTable
         head={['Zmiana', 'Cel (model)', 'Zmierzone (styczeń–luty 2027)', 'Certyfikacja SMED']}
         rows={[
@@ -395,13 +471,39 @@ const WynikiPoWdrozeniuContent: React.FC = () => (
       />
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="wpw-korzysc" scope={SCOPE} title="Korzyść zrealizowana vs prognozowana" readMode>
+    <NModeContentBlock
+      blockId="wpw-korzysc"
+      scope={SCOPE}
+      title="Korzyść zrealizowana vs prognozowana"
+      readMode
+    >
       <SimpleTable
         head={['Okres', 'Korzyść prognozowana', 'Korzyść zrealizowana', 'Rozjazd']}
         rows={[
-          ['Q4 2026', pln(180000), pln(112000), <span key="q4" className="text-c-danger">−{pln(68000)}</span>],
-          ['Q1 2027', pln(299000), pln(201000), <span key="q1" className="text-c-danger">−{pln(98000)}</span>],
-          ['Razem do dziś', pln(479000), pln(313000), <span key="tot" className="text-c-danger">−{pln(166000)}</span>],
+          [
+            'Q4 2026',
+            pln(180000),
+            pln(112000),
+            <span key="q4" className="text-c-danger">
+              −{pln(68000)}
+            </span>,
+          ],
+          [
+            'Q1 2027',
+            pln(299000),
+            pln(201000),
+            <span key="q1" className="text-c-danger">
+              −{pln(98000)}
+            </span>,
+          ],
+          [
+            'Razem do dziś',
+            pln(479000),
+            pln(313000),
+            <span key="tot" className="text-c-danger">
+              −{pln(166000)}
+            </span>,
+          ],
         ]}
       />
     </NModeContentBlock>
@@ -411,20 +513,25 @@ const WynikiPoWdrozeniuContent: React.FC = () => (
 // ── SEKCJA 5: WNIOSKI I REKOMENDACJA ─────────────────────────────────────────
 const WnioskiContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="wnioski-przyczyna" scope={SCOPE} title="Przyczyna rozjazdu" readMode>
+    <NModeContentBlock
+      blockId="wnioski-przyczyna"
+      scope={SCOPE}
+      title="Przyczyna rozjazdu"
+      readMode
+    >
       <div className="flex flex-col gap-3 text-xs text-c-text-secondary">
         <p>
           Rozjazd nie leży w modelu, tylko w adopcji. Zmiana nocna (III) ma dziś tylko{' '}
-          <strong className="text-c-text">1 z 8 operatorów</strong> certyfikowanych w metodzie
-          SMED — reszta pracuje starym sposobem (41 min zamiast 22 min). Zmiana popołudniowa
-          (II) jest w połowie drogi. Ponieważ obie zmiany razem odpowiadają za{' '}
-          <strong className="text-c-text">2/3</strong> wolumenu przezbrojeń, średnia ważona
-          linii ciągnie w dół cały wynik finansowy.
+          <strong className="text-c-text">1 z 8 operatorów</strong> certyfikowanych w metodzie SMED
+          — reszta pracuje starym sposobem (41 min zamiast 22 min). Zmiana popołudniowa (II) jest w
+          połowie drogi. Ponieważ obie zmiany razem odpowiadają za{' '}
+          <strong className="text-c-text">2/3</strong> wolumenu przezbrojeń, średnia ważona linii
+          ciągnie w dół cały wynik finansowy.
         </p>
         <p>
-          Harmonogram szkoleń zakładał, że trener przejdzie przez wszystkie zmiany w ciągu 8
-          tygodni od kickoffu — w praktyce trener miał dostęp do zmiany nocnej dopiero w
-          tygodniu 14. przez konflikt z przeglądem UDT linii L3.
+          Harmonogram szkoleń zakładał, że trener przejdzie przez wszystkie zmiany w ciągu 8 tygodni
+          od kickoffu — w praktyce trener miał dostęp do zmiany nocnej dopiero w tygodniu 14. przez
+          konflikt z przeglądem UDT linii L3.
         </p>
       </div>
     </NModeContentBlock>
@@ -435,8 +542,8 @@ const WnioskiContent: React.FC = () => (
           <Target size={16} className="mt-0.5 shrink-0 text-c-info" />
           <span>
             <strong>Decyzja proponowana:</strong> kontynuować inwestycję, ale zrewidować target
-            czasu przezbrojenia do realistycznych 26 minut (nie 22) i przesunąć pełną
-            rentowność case'u na Q3 2027.
+            czasu przezbrojenia do realistycznych 26 minut (nie 22) i przesunąć pełną rentowność
+            case'u na Q3 2027.
           </span>
         </div>
         <Bullets
@@ -637,14 +744,12 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
             {
               author: 'Anna Kowalczyk',
               when: '3 marca 2027, 09:14',
-              text:
-                'Rozjazd na zmianie nocnej mnie nie dziwi — wiedzieliśmy o kolizji z przeglądem UDT. Proszę o plan naprawczy do końca tygodnia, nie o rewizję targetu w dół bez próby domknięcia coachingu.',
+              text: 'Rozjazd na zmianie nocnej mnie nie dziwi — wiedzieliśmy o kolizji z przeglądem UDT. Proszę o plan naprawczy do końca tygodnia, nie o rewizję targetu w dół bez próby domknięcia coachingu.',
             },
             {
               author: 'Marek Zieliński',
               when: '5 marca 2027, 16:40',
-              text:
-                'Plan naprawczy w sekcji „Wnioski i rekomendacja" — 4 sesje coachingu dla zmiany III do końca kwietnia. Target 26 min to scenariusz, jeśli coaching się nie uda w 100%; jeśli się uda, wracamy do 22 min i koryguję ponownie.',
+              text: 'Plan naprawczy w sekcji „Wnioski i rekomendacja" — 4 sesje coachingu dla zmiany III do końca kwietnia. Target 26 min to scenariusz, jeśli coaching się nie uda w 100%; jeśli się uda, wracamy do 22 min i koryguję ponownie.',
             },
           ].map((c) => (
             <div key={c.author + c.when} className="rounded-lg border border-c-border-subtle p-2.5">
@@ -667,14 +772,23 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
       children: (
         <ul className="flex flex-col gap-2.5">
           {[
-            { when: '12 sierpnia 2026', text: 'Case ROI utworzony — powiązany z inicjatywą SMED L3.' },
-            { when: '28 sierpnia 2026', text: 'Business case zatwierdzony (Sponsor: Anna Kowalczyk).' },
+            {
+              when: '12 sierpnia 2026',
+              text: 'Case ROI utworzony — powiązany z inicjatywą SMED L3.',
+            },
+            {
+              when: '28 sierpnia 2026',
+              text: 'Business case zatwierdzony (Sponsor: Anna Kowalczyk).',
+            },
             { when: '1 września 2026', text: 'Baseline zamrożony, inwestycja uruchomiona.' },
             {
               when: '15 marca 2027',
               text: 'Pierwsza migawka rzeczywistych wyników wprowadzona — rozjazd z prognozą wykryty.',
             },
-            { when: '5 marca 2027', text: 'Rekomendacja rewizji targetu (26 min) i plan coachingu zmiany III.' },
+            {
+              when: '5 marca 2027',
+              text: 'Rekomendacja rewizji targetu (26 min) i plan coachingu zmiany III.',
+            },
           ].map((h) => (
             <li key={h.when} className="flex items-start gap-2 text-xs text-c-text-secondary">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-c-text-muted" />

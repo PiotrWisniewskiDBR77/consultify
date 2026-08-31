@@ -29,14 +29,14 @@
 import { ArrowRight, FileText, Lightbulb, Tag } from 'lucide-react';
 import React from 'react';
 
-import type { ArtifactRailTeresaCommand } from '@/components/standard/ArtifactRightRail';
-import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
 import { IdeaAISuggestionsPanel } from '@/components/MyWork/IdeaAISuggestionsPanel';
 import {
   IDEA_TERESA_COMMANDS,
   IdeaTeresaSection,
   seedIdeaTeresaPrompt,
 } from '@/components/MyWork/IdeaTeresaSection';
+import type { ArtifactRailTeresaCommand } from '@/components/standard/ArtifactRightRail';
+import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
 import { Api } from '@/services/api';
 
 type ApiShape = Record<string, unknown>;

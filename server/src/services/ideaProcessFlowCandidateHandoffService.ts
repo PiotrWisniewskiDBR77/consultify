@@ -86,7 +86,9 @@ function stable(value: any): any {
   );
 }
 
-function processFlowIdentityProjection(projection: Record<string, unknown>): Record<string, unknown> {
+function processFlowIdentityProjection(
+  projection: Record<string, unknown>
+): Record<string, unknown> {
   const identity = structuredClone(projection) as any;
   if (identity?.processFlow?.viewState && typeof identity.processFlow.viewState === 'object') {
     delete identity.processFlow.viewState.viewport;

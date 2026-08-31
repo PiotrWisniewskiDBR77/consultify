@@ -67,10 +67,7 @@ import { publishEvent, redact } from './eventOutboxService.js';
 
 export type CaseProfile = 'LIGHT' | 'STANDARD' | 'TRANSFORMATION' | 'MONITORING';
 export type GovernanceTier = 'LIGHTWEIGHT' | 'STANDARD' | 'CONTROLLED';
-export type AutonomyPolicy =
-  | 'ASK_EACH_ACTION'
-  | 'ASK_MATERIAL_ACTIONS'
-  | 'EXECUTE_APPROVED_PLAN';
+export type AutonomyPolicy = 'ASK_EACH_ACTION' | 'ASK_MATERIAL_ACTIONS' | 'EXECUTE_APPROVED_PLAN';
 export type CaseStatus = 'DRAFT' | 'ACTIVE' | 'BLOCKED' | 'CLOSED' | 'FAILED' | 'CANCELLED';
 export type ClosureType =
   | 'DELIVERY_COMPLETED'
@@ -362,7 +359,10 @@ export async function createCase(input: {
   const organizationId = requireNonBlank(input.organizationId, 'case_organization_id_required');
   const explicitCaseName = String(input.caseName ?? '').trim();
   if (explicitCaseName) requireCaseName(explicitCaseName);
-  const createdByActorId = requireNonBlank(input.createdByActorId, 'case_created_by_actor_required');
+  const createdByActorId = requireNonBlank(
+    input.createdByActorId,
+    'case_created_by_actor_required'
+  );
   const caseProfile = requireEnum(
     input.caseProfile ?? 'LIGHT',
     CASE_PROFILES,
@@ -405,7 +405,11 @@ export async function createCase(input: {
     // identically to one minted by the backfill.
     const caseName =
       explicitCaseName ||
-      `Zlecenie ${caseId.replace(/^case-/, '').replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+      `Zlecenie ${caseId
+        .replace(/^case-/, '')
+        .replace(/-/g, '')
+        .slice(0, 8)
+        .toUpperCase()}`;
     const now = new Date().toISOString();
     const initialHistory: GovernanceTierHistoryEntry[] = [
       {
@@ -601,7 +605,11 @@ export async function transitionStatus(
 ): Promise<CaseCore> {
   const id = requireNonBlank(caseId, 'case_id_required');
   const actorUserId = requireNonBlank(actor?.actorUserId, 'case_actor_required');
-  requireEnum(targetStatus, ['DRAFT', 'ACTIVE', 'BLOCKED', 'CLOSED', 'FAILED', 'CANCELLED'], 'case_status_invalid');
+  requireEnum(
+    targetStatus,
+    ['DRAFT', 'ACTIVE', 'BLOCKED', 'CLOSED', 'FAILED', 'CANCELLED'],
+    'case_status_invalid'
+  );
 
   await requireCaseAccess(actorUserId, id);
 
@@ -609,9 +617,7 @@ export async function transitionStatus(
     const row = await loadForUpdate(client, id);
     const allowed = ALLOWED_STATUS_TRANSITIONS[row.case_status] ?? [];
     if (!allowed.includes(targetStatus)) {
-      throw new Error(
-        `case_status_transition_not_allowed:${row.case_status}->${targetStatus}`
-      );
+      throw new Error(`case_status_transition_not_allowed:${row.case_status}->${targetStatus}`);
     }
     if (targetStatus === 'CLOSED' && !row.closure_type) {
       throw new Error('case_closure_not_recorded');
@@ -787,7 +793,10 @@ export async function updateAutonomyPolicy(
   });
 }
 
-const AXIS_COLUMN: Record<ClosureAxis, 'delivery_status' | 'decision_status' | 'implementation_status' | 'outcome_status'> = {
+const AXIS_COLUMN: Record<
+  ClosureAxis,
+  'delivery_status' | 'decision_status' | 'implementation_status' | 'outcome_status'
+> = {
   delivery: 'delivery_status',
   decision: 'decision_status',
   implementation: 'implementation_status',
@@ -815,7 +824,9 @@ export async function updateClosureAxisStatus(
   const column = AXIS_COLUMN[axis];
   if (!column) throw new Error('case_closure_axis_invalid');
   const allowedValues: readonly string[] =
-    axis === 'outcome' ? ['NOT_APPLICABLE', 'PENDING', 'VALIDATED'] : ['NOT_APPLICABLE', 'PENDING', 'COMPLETED'];
+    axis === 'outcome'
+      ? ['NOT_APPLICABLE', 'PENDING', 'VALIDATED']
+      : ['NOT_APPLICABLE', 'PENDING', 'COMPLETED'];
   if (!allowedValues.includes(status)) throw new Error('case_closure_axis_status_invalid');
 
   await requireCaseAccess(actorUserId, id);
@@ -960,7 +971,12 @@ export async function cancelCase(
   actor: CaseActor,
   reason: string
 ): Promise<CaseCore> {
-  return transitionStatus(caseId, 'CANCELLED', actor, requireNonBlank(reason, 'case_cancel_reason_required'));
+  return transitionStatus(
+    caseId,
+    'CANCELLED',
+    actor,
+    requireNonBlank(reason, 'case_cancel_reason_required')
+  );
 }
 
 /**
@@ -972,7 +988,9 @@ export async function cancelCase(
  */
 export async function listCasesForOrganization(
   organizationId: string,
-  filters: { caseStatus?: CaseStatus; caseProfile?: CaseProfile; governanceTier?: GovernanceTier } | undefined,
+  filters:
+    | { caseStatus?: CaseStatus; caseProfile?: CaseProfile; governanceTier?: GovernanceTier }
+    | undefined,
   actorUserId: string
 ): Promise<CaseCore[]> {
   const orgId = requireNonBlank(organizationId, 'case_organization_id_required');
@@ -982,7 +1000,13 @@ export async function listCasesForOrganization(
 
   if (filters?.caseStatus) {
     conditions.push('case_status = ?');
-    params.push(requireEnum(filters.caseStatus, ['DRAFT', 'ACTIVE', 'BLOCKED', 'CLOSED', 'FAILED', 'CANCELLED'], 'case_status_invalid'));
+    params.push(
+      requireEnum(
+        filters.caseStatus,
+        ['DRAFT', 'ACTIVE', 'BLOCKED', 'CLOSED', 'FAILED', 'CANCELLED'],
+        'case_status_invalid'
+      )
+    );
   }
   if (filters?.caseProfile) {
     conditions.push('case_profile = ?');
@@ -990,7 +1014,9 @@ export async function listCasesForOrganization(
   }
   if (filters?.governanceTier) {
     conditions.push('governance_tier = ?');
-    params.push(requireEnum(filters.governanceTier, GOVERNANCE_TIERS, 'case_governance_tier_invalid'));
+    params.push(
+      requireEnum(filters.governanceTier, GOVERNANCE_TIERS, 'case_governance_tier_invalid')
+    );
   }
 
   const rows = await queryAll<CaseCoreRow>(

@@ -37,12 +37,12 @@ describe.skipIf(!REAL_PG)('EXE-MVP-SPINE-001 explicit legacy identity dispositio
     await client.query(`INSERT INTO organizations(id,name) VALUES($1,$1)`, [org]);
     await client.query(
       `INSERT INTO users(id,organization_id,email,role,status) VALUES($1,$2,$3,'OWNER','active')`,
-      [actor, org, `${actor}@example.test`],
+      [actor, org, `${actor}@example.test`]
     );
     await client.query(
       `INSERT INTO organization_members(id,organization_id,user_id,role,status)
        VALUES($1,$2,$3,'OWNER','ACTIVE')`,
-      [`membership-${actor}`, org, actor],
+      [`membership-${actor}`, org, actor]
     );
     await client.query(`INSERT INTO projects(id,organization_id,name) VALUES($1,$2,$1)`, [
       project,
@@ -51,12 +51,12 @@ describe.skipIf(!REAL_PG)('EXE-MVP-SPINE-001 explicit legacy identity dispositio
     await client.query(
       `INSERT INTO initiatives(id,organization_id,project_id,name,status)
        VALUES($1,$3,$4,$1,'EXECUTING'),($2,$3,$4,$2,'EXECUTING')`,
-      [legacyInitiativeMapped, legacyInitiativeQuarantined, org, project],
+      [legacyInitiativeMapped, legacyInitiativeQuarantined, org, project]
     );
     await client.query(
       `INSERT INTO case_core(case_id,organization_id,project_id,contracted_closure_type,created_by_actor_id,case_name)
        VALUES($1,$3,$4,'OUTCOME_VALIDATED',$5,$1),($2,$3,$4,'OUTCOME_VALIDATED',$5,$2)`,
-      [legacyCaseMapped, legacyCaseQuarantined, org, project, actor],
+      [legacyCaseMapped, legacyCaseQuarantined, org, project, actor]
     );
     await client.query(
       `INSERT INTO execution_case_links
@@ -74,20 +74,28 @@ describe.skipIf(!REAL_PG)('EXE-MVP-SPINE-001 explicit legacy identity dispositio
         legacyInitiativeQuarantined,
         legacyCaseQuarantined,
         `quarantine-${tag}`,
-      ],
+      ]
     );
     await client.query(
       `INSERT INTO execution_case_links
         (link_id,organization_id,initiative_id,case_id,project_id,intake_idempotency_key,created_by,
          source_kind,runtime_initiative_id,runtime_execution_case_id,source_version,source_project_id)
        VALUES($1,$2,NULL,NULL,NULL,$3,$4,'RUNTIME_V1',$5,$6,1,$7)`,
-      [runtimeLink, org, `runtime-${tag}`, actor, `runtime-initiative-${tag}`, `runtime-case-${tag}`, project],
+      [
+        runtimeLink,
+        org,
+        `runtime-${tag}`,
+        actor,
+        `runtime-initiative-${tag}`,
+        `runtime-case-${tag}`,
+        project,
+      ]
     );
     await client.query(
       `INSERT INTO execution_identity_aliases
         (organization_id,execution_link_id,legacy_initiative_id,legacy_case_id,created_by)
        VALUES($1,$2,$3,$4,$5)`,
-      [org, runtimeLink, legacyInitiativeMapped, legacyCaseMapped, actor],
+      [org, runtimeLink, legacyInitiativeMapped, legacyCaseMapped, actor]
     );
   });
 
@@ -124,16 +132,18 @@ describe.skipIf(!REAL_PG)('EXE-MVP-SPINE-001 explicit legacy identity dispositio
   it('plans with zero writes, then atomically records exactly one mapping and one quarantine', async () => {
     const plan = await planExecutionSpineBackfill({ organizationId: org, sourceSha });
     expect(plan).toMatchObject({ mappedCount: 1, quarantinedCount: 1 });
-    expect(plan.dispositions).toEqual(expect.arrayContaining([
-      expect.objectContaining({ outcome: 'MAPPED', canonicalExecutionLinkId: runtimeLink }),
-      expect.objectContaining({ outcome: 'QUARANTINED', reasonCode: 'NO_RUNTIME_V1_IDENTITY' }),
-    ]));
+    expect(plan.dispositions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ outcome: 'MAPPED', canonicalExecutionLinkId: runtimeLink }),
+        expect.objectContaining({ outcome: 'QUARANTINED', reasonCode: 'NO_RUNTIME_V1_IDENTITY' }),
+      ])
+    );
     const before = await client.query(
       `SELECT
         (SELECT count(*)::int FROM execution_spine_backfill_runs WHERE organization_id=$1) AS runs,
         (SELECT count(*)::int FROM execution_spine_backfill_receipts WHERE organization_id=$1) AS receipts,
         (SELECT count(*)::int FROM execution_spine_identity_quarantine WHERE organization_id=$1) AS quarantines`,
-      [org],
+      [org]
     );
     expect(before.rows[0]).toEqual({ runs: 0, receipts: 0, quarantines: 0 });
 
@@ -149,7 +159,7 @@ describe.skipIf(!REAL_PG)('EXE-MVP-SPINE-001 explicit legacy identity dispositio
         (SELECT count(*)::int FROM execution_spine_backfill_runs WHERE organization_id=$1) AS runs,
         (SELECT count(*)::int FROM execution_spine_backfill_receipts WHERE organization_id=$1) AS receipts,
         (SELECT count(*)::int FROM execution_spine_identity_quarantine WHERE organization_id=$1) AS quarantines`,
-      [org],
+      [org]
     );
     expect(after.rows[0]).toEqual({ runs: 1, receipts: 1, quarantines: 1 });
 
@@ -170,16 +180,18 @@ describe.skipIf(!REAL_PG)('EXE-MVP-SPINE-001 explicit legacy identity dispositio
         sourceSha,
         expectedPlanChecksum: 'b'.repeat(64),
         actorId: actor,
-      }),
+      })
     ).rejects.toThrow('execution_backfill_plan_changed');
     await expect(
       client.query(
         `UPDATE execution_spine_backfill_runs SET mapped_count=mapped_count+1 WHERE organization_id=$1`,
-        [org],
-      ),
+        [org]
+      )
     ).rejects.toThrow(/immutable/);
     await expect(
-      client.query(`DELETE FROM execution_spine_identity_quarantine WHERE organization_id=$1`, [org]),
+      client.query(`DELETE FROM execution_spine_identity_quarantine WHERE organization_id=$1`, [
+        org,
+      ])
     ).rejects.toThrow(/immutable/);
     expect(plan.checksum).toMatch(/^[0-9a-f]{64}$/);
   });

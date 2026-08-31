@@ -21,8 +21,8 @@
 
 import { randomUUID } from 'node:crypto';
 
-import logger from '../../utils/Logger.js';
 import { isArtifactKnowledgeIndexEnabled } from '../../config/FeatureFlags.js';
+import logger from '../../utils/Logger.js';
 import { getCurrentPgTransactionClient } from '../../utils/queryHelpers.js';
 import { safePersistEvidenceContract } from '../evidence/evidenceContractBridge.js';
 import { indexDocumentArtifactForKnowledge } from '../knowledge/artifactKnowledgeIndexer.js';
@@ -146,6 +146,7 @@ import {
 import {
   createCheckpointSnapshotWithCas,
   createDocumentVersionSnapshot as createDocumentVersionSnapshotInternal,
+  type DocumentVersionLineageEntry,
   ensureDocumentVersionSnapshotsHydrated,
   getDocumentVersionLineage as getDocumentVersionLineageInternal,
   getDocumentVersionSnapshot,
@@ -154,7 +155,6 @@ import {
   listDocumentVersionSnapshots,
   maybeAutoCaptureDocumentVersionSnapshot,
   registerDocumentVersionSnapshotAuditPump,
-  type DocumentVersionLineageEntry,
 } from './documentVersionSnapshotService.js';
 
 /**
@@ -439,7 +439,9 @@ export function mergeBusinessCaseOutlineRequirements(
 ): DocumentOutline {
   if (intake.documentType !== 'business_case') return outline;
   const canonical = planDocumentOutline(intake);
-  const byKind = new Map(outline.sections.map((section) => [businessCaseSectionKind(section.title), section]));
+  const byKind = new Map(
+    outline.sections.map((section) => [businessCaseSectionKind(section.title), section])
+  );
   const used = new Set<string>();
   const required = canonical.sections.map((section) => {
     const kind = businessCaseSectionKind(section.title);
@@ -853,11 +855,7 @@ export function replaceTemplatePlaceholdersWithEvidence(
       blocks = [mk('paragraph', { text: `${recommendationLead}${allEvidence}` }, source)];
     } else {
       blocks = [
-        mk(
-          'paragraph',
-          { text: 'No additional evidence was supplied for this section.' },
-          null
-        ),
+        mk('paragraph', { text: 'No additional evidence was supplied for this section.' }, null),
       ];
     }
 
@@ -1179,13 +1177,14 @@ export async function materializeDocumentArtifact(
   // one unit. A failed evidence write must fail materialization rather than
   // report a document whose governed evidence was silently lost.
   if (finalSchema.evidence) {
-    const persistEvidence = () => safePersistEvidenceContract(finalSchema.evidence!, {
-      organizationId: params.organizationId,
-      artifactType: 'document',
-      artifactId,
-      service: 'documentContentGenerator',
-      createdBy: params.userId,
-    });
+    const persistEvidence = () =>
+      safePersistEvidenceContract(finalSchema.evidence!, {
+        organizationId: params.organizationId,
+        artifactType: 'document',
+        artifactId,
+        service: 'documentContentGenerator',
+        createdBy: params.userId,
+      });
     if (getCurrentPgTransactionClient()) {
       const evidencePersisted = await persistEvidence();
       if (!evidencePersisted) {
@@ -1270,10 +1269,7 @@ export async function materializeDocumentArtifact(
       contentMd: markdown,
       confidentiality: finalSchema.confidentiality,
     }).catch((err: any) =>
-      logger.warn(
-        '[artifactKnowledgeIndex] document hook failed (ignored):',
-        err?.message || err
-      )
+      logger.warn('[artifactKnowledgeIndex] document hook failed (ignored):', err?.message || err)
     );
   }
 
@@ -3170,8 +3166,13 @@ export class DocumentCheckpointVersionConflictError extends Error {
   readonly code = 'checkpoint_conflict' as const;
   readonly yourVersion: string | null;
   readonly serverVersion: { versionId: string; versionNumber: number } | null;
-  constructor(yourVersion: string | null, serverVersion: { versionId: string; versionNumber: number } | null) {
-    super('Another checkpoint or an out-of-date view raced this one; retry against the current latest.');
+  constructor(
+    yourVersion: string | null,
+    serverVersion: { versionId: string; versionNumber: number } | null
+  ) {
+    super(
+      'Another checkpoint or an out-of-date view raced this one; retry against the current latest.'
+    );
     this.name = 'DocumentCheckpointVersionConflictError';
     this.yourVersion = yourVersion;
     this.serverVersion = serverVersion;
@@ -3271,7 +3272,9 @@ export class DocumentRollbackVersionConflictError extends Error {
   readonly yourVersion: string;
   readonly serverVersion: string;
   constructor(yourVersion: string, serverVersion: string) {
-    super('The document changed since this rollback was requested; retry against the current version.');
+    super(
+      'The document changed since this rollback was requested; retry against the current version.'
+    );
     this.name = 'DocumentRollbackVersionConflictError';
     this.yourVersion = yourVersion;
     this.serverVersion = serverVersion;
@@ -3408,7 +3411,10 @@ export async function rollbackDocumentToVersion(
   );
   if (casResult.conflict) {
     const winner = await daoLoadSchemaOverlay(params.artifactId, params.organizationId);
-    throw new DocumentRollbackVersionConflictError(casToken, winner?.updatedAt ?? liveSchema.updatedAt);
+    throw new DocumentRollbackVersionConflictError(
+      casToken,
+      winner?.updatedAt ?? liveSchema.updatedAt
+    );
   }
   if (!casResult.ok) {
     throw new Error('rollback_persistence_failed');

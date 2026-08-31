@@ -55,10 +55,6 @@
  * it never renders `snapshot_payload`; that's `kpiScorecardPresenters.tsx`'s
  * concern, unmodified here.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 import {
   Activity,
   AlertTriangle,
@@ -73,69 +69,77 @@ import {
   Settings2,
   ShieldAlert,
 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
-import type { NModeHeaderConfig, NModeHeaderPrimaryAction, NModeSection } from '@/components/shared/NModeLayout/types';
-import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
-import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { StatusChip } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
-import { ROUTES } from '@/routes/routeConfig';
+import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import type {
+  NModeHeaderConfig,
+  NModeHeaderPrimaryAction,
+  NModeSection,
+} from '@/components/shared/NModeLayout/types';
 import { EmptyState } from '@/components/shared/states';
+import {
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
+import { StatusChip } from '@/components/ui/primitives';
+import { ROUTES } from '@/routes/routeConfig';
 import { OrganizationApi } from '@/services/api/organizations.api';
 import { useAppStore } from '@/store/useAppStore';
 
 import { HonestValueCell } from '../HonestValue';
-import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
-import type { ResultsVNextForbiddenDetail } from '../types';
-import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import {
   activateKpi,
   archiveKpi,
   getKpi,
   getKpiCurrentDefinitionVersion,
   getKpiHistory,
-  listKpiMeasurements,
-  suspendKpi,
   type KpiDefinitionDto,
   type KpiDefinitionVersionDto,
   type KpiHistoryEntryDto,
   type KpiMeasurementDto,
   type KpiStatus,
+  listKpiMeasurements,
+  suspendKpi,
 } from '../kpiApi';
-import {
-  listKpiScorecardsForKpi,
-  type KpiScorecardDto,
-} from '../kpiScorecards/kpiScorecardApi';
-import { ResultsKpiMeasurementsPanel } from '../kpiMeasurements/ResultsKpiMeasurementsPanel';
 import {
   KPI_DATA_QUALITY_STATUS_TONE,
   KPI_PERFORMANCE_STATUS_TONE,
   kpiDataQualityStatusLabel,
   kpiPerformanceStatusLabel,
 } from '../kpiMeasurements/kpiMeasurementMappers';
-import {
-  listDeviationCases,
-  type DeviationCaseDto,
-} from './kpiDeviationApi';
+import { ResultsKpiMeasurementsPanel } from '../kpiMeasurements/ResultsKpiMeasurementsPanel';
+import { type KpiScorecardDto, listKpiScorecardsForKpi } from '../kpiScorecards/kpiScorecardApi';
+import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
+import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import type { ResultsVNextForbiddenDetail } from '../types';
+import { type DeviationCaseDto, listDeviationCases } from './kpiDeviationApi';
 import {
   commitInitiativeKpiImpact,
+  type InitiativeKpiImpactDto,
   listInitiativeImpactsForKpi,
   proposeInitiativeKpiImpact,
   recordReviewedAttribution,
-  type InitiativeKpiImpactDto,
 } from './kpiInitiativeImpactApi';
 import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import {
   DEVIATION_CASE_STATUS_TONE,
   DEVIATION_SEVERITY_TONE,
-  INITIATIVE_KPI_IMPACT_STATUS_TONE,
-  KPI_APPROVAL_STATUS_TONE,
   deviationCaseStatusLabel,
   deviationSeverityLabel,
   escalatedOverlayLabel,
+  INITIATIVE_KPI_IMPACT_STATUS_TONE,
   initiativeKpiImpactStatusLabel,
+  KPI_APPROVAL_STATUS_TONE,
   kpiApprovalStatusLabel,
   kpiTargetGeometryLabel,
 } from './kpiToolMappers';
@@ -168,7 +172,8 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
@@ -184,7 +189,11 @@ function formatDate(iso: string | null | undefined, isPolish: boolean): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 function honestNumber(value: number | null, isPolish: boolean): React.ReactNode {
@@ -200,30 +209,105 @@ function targetGeometryRows(v: KpiDefinitionVersionDto, isPolish: boolean): Arti
   switch (v.targetGeometry) {
     case 'threshold_min':
       return [
-        { id: 'targetValue', label: isPolish ? 'Próg (min.)' : 'Threshold (min)', value: honestNumber(v.targetValue, isPolish), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow, isPolish), mono: true },
-        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow, isPolish), mono: true },
+        {
+          id: 'targetValue',
+          label: isPolish ? 'Próg (min.)' : 'Threshold (min)',
+          value: honestNumber(v.targetValue, isPolish),
+          mono: true,
+        },
+        {
+          id: 'warningLow',
+          label: isPolish ? 'Ostrzeżenie od' : 'Warning from',
+          value: honestNumber(v.warningLow, isPolish),
+          mono: true,
+        },
+        {
+          id: 'criticalLow',
+          label: isPolish ? 'Krytyczne od' : 'Critical from',
+          value: honestNumber(v.criticalLow, isPolish),
+          mono: true,
+        },
       ];
     case 'threshold_max':
       return [
-        { id: 'targetValue', label: isPolish ? 'Próg (maks.)' : 'Threshold (max)', value: honestNumber(v.targetValue, isPolish), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning up to', value: honestNumber(v.warningHigh, isPolish), mono: true },
-        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical up to', value: honestNumber(v.criticalHigh, isPolish), mono: true },
+        {
+          id: 'targetValue',
+          label: isPolish ? 'Próg (maks.)' : 'Threshold (max)',
+          value: honestNumber(v.targetValue, isPolish),
+          mono: true,
+        },
+        {
+          id: 'warningHigh',
+          label: isPolish ? 'Ostrzeżenie do' : 'Warning up to',
+          value: honestNumber(v.warningHigh, isPolish),
+          mono: true,
+        },
+        {
+          id: 'criticalHigh',
+          label: isPolish ? 'Krytyczne do' : 'Critical up to',
+          value: honestNumber(v.criticalHigh, isPolish),
+          mono: true,
+        },
       ];
     case 'range':
       return [
-        { id: 'targetMin', label: isPolish ? 'Cel od' : 'Target from', value: honestNumber(v.targetMin, isPolish), mono: true },
-        { id: 'targetMax', label: isPolish ? 'Cel do' : 'Target to', value: honestNumber(v.targetMax, isPolish), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow, isPolish), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning to', value: honestNumber(v.warningHigh, isPolish), mono: true },
+        {
+          id: 'targetMin',
+          label: isPolish ? 'Cel od' : 'Target from',
+          value: honestNumber(v.targetMin, isPolish),
+          mono: true,
+        },
+        {
+          id: 'targetMax',
+          label: isPolish ? 'Cel do' : 'Target to',
+          value: honestNumber(v.targetMax, isPolish),
+          mono: true,
+        },
+        {
+          id: 'warningLow',
+          label: isPolish ? 'Ostrzeżenie od' : 'Warning from',
+          value: honestNumber(v.warningLow, isPolish),
+          mono: true,
+        },
+        {
+          id: 'warningHigh',
+          label: isPolish ? 'Ostrzeżenie do' : 'Warning to',
+          value: honestNumber(v.warningHigh, isPolish),
+          mono: true,
+        },
       ];
     case 'exact':
       return [
-        { id: 'targetValue', label: isPolish ? 'Wartość dokładna' : 'Exact value', value: honestNumber(v.targetValue, isPolish), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Tolerancja od' : 'Tolerance from', value: honestNumber(v.warningLow, isPolish), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Tolerancja do' : 'Tolerance to', value: honestNumber(v.warningHigh, isPolish), mono: true },
-        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow, isPolish), mono: true },
-        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical to', value: honestNumber(v.criticalHigh, isPolish), mono: true },
+        {
+          id: 'targetValue',
+          label: isPolish ? 'Wartość dokładna' : 'Exact value',
+          value: honestNumber(v.targetValue, isPolish),
+          mono: true,
+        },
+        {
+          id: 'warningLow',
+          label: isPolish ? 'Tolerancja od' : 'Tolerance from',
+          value: honestNumber(v.warningLow, isPolish),
+          mono: true,
+        },
+        {
+          id: 'warningHigh',
+          label: isPolish ? 'Tolerancja do' : 'Tolerance to',
+          value: honestNumber(v.warningHigh, isPolish),
+          mono: true,
+        },
+        {
+          id: 'criticalLow',
+          label: isPolish ? 'Krytyczne od' : 'Critical from',
+          value: honestNumber(v.criticalLow, isPolish),
+          mono: true,
+        },
+        {
+          id: 'criticalHigh',
+          label: isPolish ? 'Krytyczne do' : 'Critical to',
+          value: honestNumber(v.criticalHigh, isPolish),
+          mono: true,
+        },
       ];
     case 'binary':
       return [
@@ -235,7 +319,9 @@ function targetGeometryRows(v: KpiDefinitionVersionDto, isPolish: boolean): Arti
         },
       ];
     case 'custom':
-      return [{ id: 'formulaText', label: isPolish ? 'Formuła' : 'Formula', value: v.formulaText ?? '—' }];
+      return [
+        { id: 'formulaText', label: isPolish ? 'Formuła' : 'Formula', value: v.formulaText ?? '—' },
+      ];
     default:
       return [];
   }
@@ -310,9 +396,13 @@ export const KpiToolPage: React.FC = () => {
   // `null` here means "fetch completed, nothing visible/found" (D06-generic
   // 404, same discipline `ResultsKpiRegistryPage.tsx`'s own effect uses for
   // this same call) — never conflated with `'loading'`.
-  const [definitionVersion, setDefinitionVersion] = useState<KpiDefinitionVersionDto | null | 'loading'>('loading');
+  const [definitionVersion, setDefinitionVersion] = useState<
+    KpiDefinitionVersionDto | null | 'loading'
+  >('loading');
   const [deviationCases, setDeviationCases] = useState<DeviationCaseDto[] | 'loading'>('loading');
-  const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>('loading');
+  const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>(
+    'loading'
+  );
   const [scorecards, setScorecards] = useState<KpiScorecardDto[] | 'loading'>('loading');
   const [scorecardsError, setScorecardsError] = useState<string | null>(null);
   const [historyEntries, setHistoryEntries] = useState<KpiHistoryEntryDto[] | 'loading'>('loading');
@@ -453,7 +543,8 @@ export const KpiToolPage: React.FC = () => {
       if (!kpi) return;
       setPending(action);
       try {
-        const runner = action === 'activate' ? activateKpi : action === 'suspend' ? suspendKpi : archiveKpi;
+        const runner =
+          action === 'activate' ? activateKpi : action === 'suspend' ? suspendKpi : archiveKpi;
         await runner({ kpiId: kpi.kpiId, expectedVersion: kpi.rowVersion });
         await loadKpi();
       } catch (err) {
@@ -466,13 +557,19 @@ export const KpiToolPage: React.FC = () => {
   );
 
   const openCasesCount = useMemo(
-    () => (Array.isArray(deviationCases) ? deviationCases.filter((c) => c.status !== 'closed').length : 0),
+    () =>
+      Array.isArray(deviationCases)
+        ? deviationCases.filter((c) => c.status !== 'closed').length
+        : 0,
     [deviationCases]
   );
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-kpi-tool-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-kpi-tool-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}
@@ -488,12 +585,20 @@ export const KpiToolPage: React.FC = () => {
   }
 
   if (forbidden) {
-    return <ResultsVNextForbiddenState forbidden={forbidden} onBack={() => navigate(ROUTES.RESULTS_KPI.ROOT)} />;
+    return (
+      <ResultsVNextForbiddenState
+        forbidden={forbidden}
+        onBack={() => navigate(ROUTES.RESULTS_KPI.ROOT)}
+      />
+    );
   }
 
   if (loading || (!kpi && !loadError)) {
     return (
-      <div className="h-full flex items-center justify-center" data-testid="results-vnext-kpi-tool-loading">
+      <div
+        className="h-full flex items-center justify-center"
+        data-testid="results-vnext-kpi-tool-loading"
+      >
         <div className="text-sm text-c-text-muted">{t('Ładowanie KPI…', 'Loading KPI…')}</div>
       </div>
     );
@@ -501,7 +606,10 @@ export const KpiToolPage: React.FC = () => {
 
   if (loadError || !kpi) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-kpi-tool-error">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-kpi-tool-error"
+      >
         <EmptyState
           variant="error"
           icon={AlertTriangle}
@@ -519,7 +627,10 @@ export const KpiToolPage: React.FC = () => {
     'Aktywacja wymaga zatwierdzonej wersji definicji KPI (sprawdzane przez serwer — brak GET dla wersji, żeby zweryfikować to po stronie klienta).',
     'Activation requires an approved KPI definition version (server-enforced — no GET exists for the version to verify this client-side).'
   );
-  const archivedReason = t('KPI zarchiwizowane — stan końcowy, tylko odczyt.', 'KPI archived — terminal state, read-only.');
+  const archivedReason = t(
+    'KPI zarchiwizowane — stan końcowy, tylko odczyt.',
+    'KPI archived — terminal state, read-only.'
+  );
 
   // NModeHeaderPrimaryAction.label/title are BILINGUAL objects
   // ({ pl, en }), never a pre-resolved string — a real, visually-caught bug
@@ -528,9 +639,17 @@ export const KpiToolPage: React.FC = () => {
   // which NModeHeader then reads as `label.pl`/`label.en` (both undefined).
   let primaryAction: NModeHeaderPrimaryAction | undefined;
   if (kpi.status === 'suspended') {
-    primaryAction = { label: { pl: 'Aktywuj', en: 'Activate' }, onClick: () => void runLifecycleAction('activate'), disabled: isBusy };
+    primaryAction = {
+      label: { pl: 'Aktywuj', en: 'Activate' },
+      onClick: () => void runLifecycleAction('activate'),
+      disabled: isBusy,
+    };
   } else if (kpi.status === 'active') {
-    primaryAction = { label: { pl: 'Zawieś', en: 'Suspend' }, onClick: () => void runLifecycleAction('suspend'), disabled: isBusy };
+    primaryAction = {
+      label: { pl: 'Zawieś', en: 'Suspend' },
+      onClick: () => void runLifecycleAction('suspend'),
+      disabled: isBusy,
+    };
   } else if (kpi.status === 'draft' || kpi.status === 'pending_approval') {
     primaryAction = {
       label: { pl: 'Aktywuj', en: 'Activate' },
@@ -593,7 +712,8 @@ export const KpiToolPage: React.FC = () => {
   // `GET /kpi/:kpiId/version` join, already fetched into `definitionVersion`
   // below for the Contract section) — showing a name here would be invented.
   const definitionVersionDisplay =
-    definitionVersion && definitionVersion !== 'loading' &&
+    definitionVersion &&
+    definitionVersion !== 'loading' &&
     definitionVersion.definitionVersionId === kpi.currentDefinitionVersionId
       ? `${definitionVersion.name} (v${definitionVersion.versionNumber})`
       : shortId(kpi.currentDefinitionVersionId);
@@ -601,11 +721,28 @@ export const KpiToolPage: React.FC = () => {
   const propertyRows: ArtifactPropertyRow[] = [
     { id: 'owner', label: t('Właściciel', 'Owner'), value: resolveMemberName(kpi.ownerUserId) },
     { id: 'process', label: t('Proces', 'Process'), value: shortId(kpi.primaryProcessId) },
-    { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: shortId(kpi.responsePolicyId) },
-    { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
+    {
+      id: 'responsePolicy',
+      label: t('Polityka odpowiedzi', 'Response policy'),
+      value: shortId(kpi.responsePolicyId),
+    },
+    {
+      id: 'definitionVersion',
+      label: t('Bieżąca wersja definicji', 'Current definition version'),
+      value: definitionVersionDisplay,
+    },
     { id: 'created', label: t('Utworzono', 'Created'), value: formatDate(kpi.createdAt, isPolish) },
-    { id: 'updated', label: t('Zaktualizowano', 'Updated'), value: formatDate(kpi.updatedAt, isPolish) },
-    { id: 'rowVersion', label: t('Wersja (CAS)', 'Version (CAS)'), value: String(kpi.rowVersion), mono: true },
+    {
+      id: 'updated',
+      label: t('Zaktualizowano', 'Updated'),
+      value: formatDate(kpi.updatedAt, isPolish),
+    },
+    {
+      id: 'rowVersion',
+      label: t('Wersja (CAS)', 'Version (CAS)'),
+      value: String(kpi.rowVersion),
+      mono: true,
+    },
   ];
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
@@ -617,11 +754,21 @@ export const KpiToolPage: React.FC = () => {
       children: (
         <div className="flex flex-col gap-2">
           {kpi.status === 'active' ? (
-            <button type="button" disabled={isBusy} className={GHOST_BUTTON_CLASS} onClick={() => void runLifecycleAction('suspend')}>
+            <button
+              type="button"
+              disabled={isBusy}
+              className={GHOST_BUTTON_CLASS}
+              onClick={() => void runLifecycleAction('suspend')}
+            >
               {t('Zawieś', 'Suspend')}
             </button>
           ) : kpi.status === 'suspended' ? (
-            <button type="button" disabled={isBusy} className={GHOST_BUTTON_CLASS} onClick={() => void runLifecycleAction('activate')}>
+            <button
+              type="button"
+              disabled={isBusy}
+              className={GHOST_BUTTON_CLASS}
+              onClick={() => void runLifecycleAction('activate')}
+            >
               {t('Aktywuj', 'Activate')}
             </button>
           ) : (
@@ -638,7 +785,11 @@ export const KpiToolPage: React.FC = () => {
       icon: ListChecks,
       defaultOpen: true,
       children: (
-        <ArtifactPropertiesTable rows={propertyRows} propertyLabel={t('Właściwość', 'Property')} valueLabel={t('Wartość', 'Value')} />
+        <ArtifactPropertiesTable
+          rows={propertyRows}
+          propertyLabel={t('Właściwość', 'Property')}
+          valueLabel={t('Wartość', 'Value')}
+        />
       ),
     },
     {
@@ -646,19 +797,35 @@ export const KpiToolPage: React.FC = () => {
       label: t('Powiązania', 'Relations'),
       icon: Link2,
       defaultOpen: false,
-      isEmpty: openCasesCount === 0 && (!Array.isArray(initiativeImpacts) || initiativeImpacts.length === 0),
+      isEmpty:
+        openCasesCount === 0 &&
+        (!Array.isArray(initiativeImpacts) || initiativeImpacts.length === 0),
       emptyLabel: t('Brak powiązań', 'No relations'),
       badge: openCasesCount,
       children: (
         <div className="space-y-1.5">
           {openCasesCount > 0 ? (
-            <button type="button" className="text-xs text-c-info underline" onClick={() => setActiveSection('deviations')}>
-              {t(`${openCasesCount} otwarta(-e) sprawa(-y) odchylenia`, `${openCasesCount} open deviation case(s)`)}
+            <button
+              type="button"
+              className="text-xs text-c-info underline"
+              onClick={() => setActiveSection('deviations')}
+            >
+              {t(
+                `${openCasesCount} otwarta(-e) sprawa(-y) odchylenia`,
+                `${openCasesCount} open deviation case(s)`
+              )}
             </button>
           ) : null}
           {Array.isArray(initiativeImpacts) && initiativeImpacts.length > 0 ? (
-            <button type="button" className="text-xs text-c-info underline block" onClick={() => setActiveSection('initiatives')}>
-              {t(`${initiativeImpacts.length} powiązana(-e) inicjatywa(-y)`, `${initiativeImpacts.length} linked initiative(s)`)}
+            <button
+              type="button"
+              className="text-xs text-c-info underline block"
+              onClick={() => setActiveSection('initiatives')}
+            >
+              {t(
+                `${initiativeImpacts.length} powiązana(-e) inicjatywa(-y)`,
+                `${initiativeImpacts.length} linked initiative(s)`
+              )}
             </button>
           ) : null}
         </div>
@@ -687,17 +854,28 @@ export const KpiToolPage: React.FC = () => {
               <HonestValueCell
                 isPolish={isPolish}
                 value={measurement ? measurement.actualValue : null}
-                format={(v) => <span className="text-2xl font-semibold tabular-nums text-c-text">{v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}</span>}
+                format={(v) => (
+                  <span className="text-2xl font-semibold tabular-nums text-c-text">
+                    {v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}
+                  </span>
+                )}
               />
               {measurement ? (
                 <div className="text-xs text-c-text-muted">
                   <div>
                     {t('Okres: ', 'Period: ')}
-                    {formatDate(measurement.periodStart, isPolish)} – {formatDate(measurement.periodEnd, isPolish)}
+                    {formatDate(measurement.periodStart, isPolish)} –{' '}
+                    {formatDate(measurement.periodEnd, isPolish)}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <StatusChip label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)} tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]} />
-                    <StatusChip label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)} tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]} />
+                    <StatusChip
+                      label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)}
+                      tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]}
+                    />
+                    <StatusChip
+                      label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)}
+                      tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]}
+                    />
                   </div>
                   <p className="mt-2 text-[11px] text-c-text-muted">
                     {t(
@@ -707,12 +885,18 @@ export const KpiToolPage: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <span className="text-xs text-c-text-muted">{t('Brak zarejestrowanych pomiarów.', 'No measurements recorded yet.')}</span>
+                <span className="text-xs text-c-text-muted">
+                  {t('Brak zarejestrowanych pomiarów.', 'No measurements recorded yet.')}
+                </span>
               )}
             </div>
           )}
         </div>
-        <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setActiveSection('measurements')}>
+        <button
+          type="button"
+          className={GHOST_BUTTON_CLASS}
+          onClick={() => setActiveSection('measurements')}
+        >
           {t('Otwórz pełną historię pomiarów', 'Open full measurement history')}
         </button>
       </div>
@@ -748,7 +932,11 @@ export const KpiToolPage: React.FC = () => {
           <ArtifactPropertiesTable
             rows={[
               { id: 'name', label: t('Nazwa', 'Name'), value: definitionVersion.name },
-              { id: 'description', label: t('Opis', 'Description'), value: definitionVersion.description ?? '—' },
+              {
+                id: 'description',
+                label: t('Opis', 'Description'),
+                value: definitionVersion.description ?? '—',
+              },
               { id: 'unit', label: t('Jednostka', 'Unit'), value: definitionVersion.unit ?? '—' },
               {
                 id: 'targetGeometry',
@@ -780,8 +968,17 @@ export const KpiToolPage: React.FC = () => {
         <ArtifactPropertiesTable
           rows={[
             { id: 'kpiCode', label: t('Kod KPI', 'KPI code'), value: kpi.kpiCode },
-            { id: 'status', label: t('Cykl życia', 'Lifecycle'), value: statusLabel(kpi.status, isPolish) },
-            { id: 'definitionVersion', label: t('ID bieżącej wersji', 'Current version id'), value: shortId(kpi.currentDefinitionVersionId), mono: true },
+            {
+              id: 'status',
+              label: t('Cykl życia', 'Lifecycle'),
+              value: statusLabel(kpi.status, isPolish),
+            },
+            {
+              id: 'definitionVersion',
+              label: t('ID bieżącej wersji', 'Current version id'),
+              value: shortId(kpi.currentDefinitionVersionId),
+              mono: true,
+            },
           ]}
           propertyLabel={t('Właściwość', 'Property')}
           valueLabel={t('Wartość', 'Value')}
@@ -799,7 +996,11 @@ export const KpiToolPage: React.FC = () => {
     alwaysShow: true,
     component: (
       <div className="h-[70vh] rounded-xl border border-c-border-subtle overflow-hidden">
-        <ResultsKpiMeasurementsPanel kpi={kpi} isPolish={isPolish} onBack={() => setActiveSection('performance')} />
+        <ResultsKpiMeasurementsPanel
+          kpi={kpi}
+          isPolish={isPolish}
+          onBack={() => setActiveSection('performance')}
+        />
       </div>
     ),
   };
@@ -826,7 +1027,10 @@ export const KpiToolPage: React.FC = () => {
             variant="new"
             icon={ShieldAlert}
             title={t('Brak spraw odchyleń', 'No deviation cases')}
-            description={t('Ten KPI nie miał jeszcze krytycznego/ostrzegawczego pomiaru.', 'This KPI has not had a critical/warning measurement yet.')}
+            description={t(
+              'Ten KPI nie miał jeszcze krytycznego/ostrzegawczego pomiaru.',
+              'This KPI has not had a critical/warning measurement yet.'
+            )}
             compact
           />
         ) : (
@@ -836,14 +1040,26 @@ export const KpiToolPage: React.FC = () => {
                 <button
                   type="button"
                   className="w-full text-left rounded-xl border border-c-border-subtle p-3 hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  onClick={() => navigate(`${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpi.kpiId)}/deviation-cases/${c.caseId}`)}
+                  onClick={() =>
+                    navigate(
+                      `${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpi.kpiId)}/deviation-cases/${c.caseId}`
+                    )
+                  }
                   data-testid={`kpi-deviation-case-row-${c.caseId}`}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-medium text-c-text">{shortId(c.caseId)}</span>
-                    <StatusChip label={deviationCaseStatusLabel(c.status, isPolish)} tone={DEVIATION_CASE_STATUS_TONE[c.status]} />
-                    <StatusChip label={deviationSeverityLabel(c.severity, isPolish)} tone={DEVIATION_SEVERITY_TONE[c.severity]} />
-                    {c.escalated ? <StatusChip label={escalatedOverlayLabel(isPolish)} tone="danger" /> : null}
+                    <StatusChip
+                      label={deviationCaseStatusLabel(c.status, isPolish)}
+                      tone={DEVIATION_CASE_STATUS_TONE[c.status]}
+                    />
+                    <StatusChip
+                      label={deviationSeverityLabel(c.severity, isPolish)}
+                      tone={DEVIATION_SEVERITY_TONE[c.severity]}
+                    />
+                    {c.escalated ? (
+                      <StatusChip label={escalatedOverlayLabel(isPolish)} tone="danger" />
+                    ) : null}
                   </div>
                   <p className="mt-1 text-[11px] text-c-text-muted">
                     {t('Wykryto ', 'Detected ')}
@@ -873,7 +1089,8 @@ export const KpiToolPage: React.FC = () => {
             'No aggregate GET exists for corrective actions across this KPI\'s cases (kpiDeviationRepository.listCorrectiveActions exists but no route exposes it — see kpiDeviation.routes.ts "DESIGN NOTE"). Actions live INSIDE each deviation case — open a case below.'
           )}
         </GapNotice>
-        {Array.isArray(deviationCases) && deviationCases.filter((c) => c.status !== 'closed').length > 0 ? (
+        {Array.isArray(deviationCases) &&
+        deviationCases.filter((c) => c.status !== 'closed').length > 0 ? (
           <ul className="space-y-1.5">
             {deviationCases
               .filter((c) => c.status !== 'closed')
@@ -882,7 +1099,11 @@ export const KpiToolPage: React.FC = () => {
                   <button
                     type="button"
                     className="text-xs text-c-info underline"
-                    onClick={() => navigate(`${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpi.kpiId)}/deviation-cases/${c.caseId}`)}
+                    onClick={() =>
+                      navigate(
+                        `${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpi.kpiId)}/deviation-cases/${c.caseId}`
+                      )
+                    }
                   >
                     {t('Otwórz sprawę ', 'Open case ')}
                     {shortId(c.caseId)} ({deviationCaseStatusLabel(c.status, isPolish)})
@@ -891,7 +1112,12 @@ export const KpiToolPage: React.FC = () => {
               ))}
           </ul>
         ) : (
-          <p className="text-xs text-c-text-muted">{t('Brak otwartych spraw z działaniami do pokazania.', 'No open cases with actions to show.')}</p>
+          <p className="text-xs text-c-text-muted">
+            {t(
+              'Brak otwartych spraw z działaniami do pokazania.',
+              'No open cases with actions to show.'
+            )}
+          </p>
         )}
       </div>
     ),
@@ -913,7 +1139,10 @@ export const KpiToolPage: React.FC = () => {
             variant="new"
             icon={GitBranch}
             title={t('Brak powiązanych inicjatyw', 'No linked initiatives')}
-            description={t('Żadna inicjatywa nie zaproponowała jeszcze wpływu na ten KPI.', 'No initiative has proposed an impact on this KPI yet.')}
+            description={t(
+              'Żadna inicjatywa nie zaproponowała jeszcze wpływu na ten KPI.',
+              'No initiative has proposed an impact on this KPI yet.'
+            )}
             compact
           />
         ) : (
@@ -921,12 +1150,18 @@ export const KpiToolPage: React.FC = () => {
             {initiativeImpacts.map((imp) => (
               <li key={imp.impactId} className="rounded-xl border border-c-border-subtle p-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-xs font-medium text-c-text">{shortId(imp.initiativeId)}</span>
-                  <StatusChip label={initiativeKpiImpactStatusLabel(imp.status, isPolish)} tone={INITIATIVE_KPI_IMPACT_STATUS_TONE[imp.status]} />
+                  <span className="text-xs font-medium text-c-text">
+                    {shortId(imp.initiativeId)}
+                  </span>
+                  <StatusChip
+                    label={initiativeKpiImpactStatusLabel(imp.status, isPolish)}
+                    tone={INITIATIVE_KPI_IMPACT_STATUS_TONE[imp.status]}
+                  />
                 </div>
                 <p className="mt-1 text-[11px] text-c-text-muted">
                   {t('Oczekiwany wpływ: ', 'Expected contribution: ')}
-                  {imp.expectedContributionValue ?? '—'} ({imp.expectedContributionDirection ?? '—'})
+                  {imp.expectedContributionValue ?? '—'} ({imp.expectedContributionDirection ?? '—'}
+                  )
                 </p>
                 {imp.baselineValueAtCommitment !== null ? (
                   <p className="text-[11px] text-c-text-muted">
@@ -950,7 +1185,12 @@ export const KpiToolPage: React.FC = () => {
                         setImpactBusy(true);
                         commitInitiativeKpiImpact(imp.impactId, { expectedVersion: imp.rowVersion })
                           .then(() => {
-                            toast.success(t('Wpływ zatwierdzony (baseline zamrożony)', 'Impact committed (baseline frozen)'));
+                            toast.success(
+                              t(
+                                'Wpływ zatwierdzony (baseline zamrożony)',
+                                'Impact committed (baseline frozen)'
+                              )
+                            );
                             loadInitiativeImpacts();
                           })
                           .catch((err) => toast.error(toUserFacingErrorMessage(err, isPolish)))
@@ -960,7 +1200,8 @@ export const KpiToolPage: React.FC = () => {
                       {t('Zatwierdź (commit)', 'Commit')}
                     </button>
                   ) : null}
-                  {(imp.status === 'committed' || imp.status === 'superseded') && !imp.reviewedAttributionValue ? (
+                  {(imp.status === 'committed' || imp.status === 'superseded') &&
+                  !imp.reviewedAttributionValue ? (
                     <button
                       type="button"
                       disabled={impactBusy}
@@ -981,7 +1222,9 @@ export const KpiToolPage: React.FC = () => {
         )}
 
         <div className="rounded-xl border border-c-border-subtle p-4 space-y-2">
-          <p className={LABEL_CLASS}>{t('Zaproponuj wpływ inicjatywy', 'Propose an initiative impact')}</p>
+          <p className={LABEL_CLASS}>
+            {t('Zaproponuj wpływ inicjatywy', 'Propose an initiative impact')}
+          </p>
           <input
             value={proposeInitiativeId}
             onChange={(e) => setProposeInitiativeId(e.target.value)}
@@ -996,7 +1239,11 @@ export const KpiToolPage: React.FC = () => {
               placeholder={t('Oczekiwana wartość (opcjonalnie)', 'Expected value (optional)')}
               className={FIELD_CLASS}
             />
-            <select value={proposeDirection} onChange={(e) => setProposeDirection(e.target.value as 'increase' | 'decrease')} className={FIELD_CLASS}>
+            <select
+              value={proposeDirection}
+              onChange={(e) => setProposeDirection(e.target.value as 'increase' | 'decrease')}
+              className={FIELD_CLASS}
+            >
               <option value="increase">{t('Wzrost', 'Increase')}</option>
               <option value="decrease">{t('Spadek', 'Decrease')}</option>
             </select>
@@ -1011,7 +1258,9 @@ export const KpiToolPage: React.FC = () => {
               proposeInitiativeKpiImpact({
                 kpiId: kpi.kpiId,
                 initiativeId: proposeInitiativeId.trim(),
-                expectedContributionValue: proposeContributionValue ? Number(proposeContributionValue) : null,
+                expectedContributionValue: proposeContributionValue
+                  ? Number(proposeContributionValue)
+                  : null,
                 expectedContributionDirection: proposeDirection,
               })
                 .then(() => {
@@ -1038,27 +1287,46 @@ export const KpiToolPage: React.FC = () => {
     label: { pl: 'Karty wyników i konteksty', en: 'Scorecards and contexts' },
     hasData: Array.isArray(scorecards) && scorecards.length > 0,
     alwaysShow: true,
-    component: (
+    component:
       scorecards === 'loading' ? (
         <p className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</p>
       ) : scorecardsError ? (
-        <EmptyState variant="error" icon={AlertTriangle} title={t('Nie udało się wczytać kart wyników', 'Could not load scorecards')} description={scorecardsError} compact />
+        <EmptyState
+          variant="error"
+          icon={AlertTriangle}
+          title={t('Nie udało się wczytać kart wyników', 'Could not load scorecards')}
+          description={scorecardsError}
+          compact
+        />
       ) : scorecards.length === 0 ? (
-        <EmptyState variant="new" icon={LayoutGrid} title={t('Brak kart wyników', 'No scorecards')} description={t('Ten KPI nie należy jeszcze do żadnej widocznej karty wyników.', 'This KPI does not belong to any visible scorecard yet.')} compact />
+        <EmptyState
+          variant="new"
+          icon={LayoutGrid}
+          title={t('Brak kart wyników', 'No scorecards')}
+          description={t(
+            'Ten KPI nie należy jeszcze do żadnej widocznej karty wyników.',
+            'This KPI does not belong to any visible scorecard yet.'
+          )}
+          compact
+        />
       ) : (
         <ul className="space-y-2" data-testid="kpi-tool-scorecards-list">
           {scorecards.map((scorecard) => (
-            <li key={scorecard.scorecardId} className="rounded-xl border border-c-border-subtle p-3">
+            <li
+              key={scorecard.scorecardId}
+              className="rounded-xl border border-c-border-subtle p-3"
+            >
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-sm font-medium text-c-text">{scorecard.name}</span>
                 <StatusChip label={scorecard.lifecycleStatus} tone="neutral" />
               </div>
-              <p className="mt-1 text-[11px] text-c-text-muted">{scorecard.description ?? t('Brak opisu', 'No description')}</p>
+              <p className="mt-1 text-[11px] text-c-text-muted">
+                {scorecard.description ?? t('Brak opisu', 'No description')}
+              </p>
             </li>
           ))}
         </ul>
-      )
-    ),
+      ),
   };
 
   // ── Section 8: History / Lineage ──
@@ -1068,13 +1336,28 @@ export const KpiToolPage: React.FC = () => {
     label: { pl: 'Historia / rodowód', en: 'History / lineage' },
     hasData: Array.isArray(historyEntries) && historyEntries.length > 0,
     alwaysShow: true,
-    component: (
+    component:
       historyEntries === 'loading' ? (
         <p className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</p>
       ) : historyError ? (
-        <EmptyState variant="error" icon={AlertTriangle} title={t('Nie udało się wczytać historii KPI', 'Could not load KPI history')} description={historyError} compact />
+        <EmptyState
+          variant="error"
+          icon={AlertTriangle}
+          title={t('Nie udało się wczytać historii KPI', 'Could not load KPI history')}
+          description={historyError}
+          compact
+        />
       ) : historyEntries.length === 0 ? (
-        <EmptyState variant="new" icon={FileText} title={t('Brak historii KPI', 'No KPI history')} description={t('Dla tego KPI nie zapisano jeszcze zdarzeń domenowych.', 'No domain events have been recorded for this KPI yet.')} compact />
+        <EmptyState
+          variant="new"
+          icon={FileText}
+          title={t('Brak historii KPI', 'No KPI history')}
+          description={t(
+            'Dla tego KPI nie zapisano jeszcze zdarzeń domenowych.',
+            'No domain events have been recorded for this KPI yet.'
+          )}
+          compact
+        />
       ) : (
         <ul className="space-y-2" data-testid="kpi-tool-history-list">
           {historyEntries.map((entry) => (
@@ -1084,13 +1367,13 @@ export const KpiToolPage: React.FC = () => {
                 <StatusChip label={entry.kind} tone="neutral" />
               </div>
               <p className="mt-1 text-[11px] text-c-text-muted">
-                {formatDate(entry.occurredAt, isPolish)} · {t('wersja', 'version')} {entry.sourceVersion}
+                {formatDate(entry.occurredAt, isPolish)} · {t('wersja', 'version')}{' '}
+                {entry.sourceVersion}
               </p>
             </li>
           ))}
         </ul>
-      )
-    ),
+      ),
   };
 
   const sections: NModeSection[] = [
@@ -1114,7 +1397,12 @@ export const KpiToolPage: React.FC = () => {
         presentationMode="n"
         onPresentationModeChange={() => {}}
         showModeSwitcher={false}
-        rightPanel={<ArtifactRightPanel sections={rightPanelSections} ariaLabel={t('Panel KPI', 'KPI panel')} />}
+        rightPanel={
+          <ArtifactRightPanel
+            sections={rightPanelSections}
+            ariaLabel={t('Panel KPI', 'KPI panel')}
+          />
+        }
       />
       <KpiReviewedAttributionDialog
         open={!!attributionTarget}

@@ -35,8 +35,8 @@ import {
   type IconName,
   runIdeaAction,
 } from '@/actions/ideaActionRegistry';
-import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 
 interface WhiteboardEdgeContextMenuProps {
   x: number;
@@ -101,7 +101,11 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
         label: isPl ? def.label.pl : def.label.en,
         icon: Icon ? <Icon size={14} /> : undefined,
         disabled,
-        disabledReason: disabled ? (isLocked ? lockedReason : (disabledReason ?? undefined)) : undefined,
+        disabledReason: disabled
+          ? isLocked
+            ? lockedReason
+            : (disabledReason ?? undefined)
+          : undefined,
         // `destructive` w rejestrze = jedyna dziś krawędziowa akcja
         // nieodwracalna w sensie danych ("Usuń połączenie") — 1:1 z dawnym
         // hardkodowanym `danger: true`.

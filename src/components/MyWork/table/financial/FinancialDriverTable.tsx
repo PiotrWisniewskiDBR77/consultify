@@ -55,7 +55,14 @@ const selectCls =
   'bg-c-surface border border-c-border rounded-md text-xs text-c-text px-1.5 py-0.5 ' +
   'focus:outline-none focus:ring-2 focus:ring-c-focus';
 
-export const FinancialDriverTable: React.FC<FinancialDriverTableProps> = ({ caseMeta, drivers, onAddDriver, onUpdateDriver, onRemoveDriver, readOnly = false }) => {
+export const FinancialDriverTable: React.FC<FinancialDriverTableProps> = ({
+  caseMeta,
+  drivers,
+  onAddDriver,
+  onUpdateDriver,
+  onRemoveDriver,
+  readOnly = false,
+}) => {
   const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 

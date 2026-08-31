@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+import { describe, expect, it } from 'vitest';
 
 import { ROUTES } from '../routeConfig';
 
@@ -25,18 +26,17 @@ describe('Admin/SuperAdmin route role guards (DEC-2026-08-24-10)', () => {
   function blockForRoute(pathExpr: string, label: string): string {
     const routeMarker = `path={\`${'$'}{${pathExpr}}/*\`}`;
     const start = source.indexOf(routeMarker);
-    expect(start, `expected to find the ${label} route (${routeMarker}) in AppRoutes.tsx`).toBeGreaterThan(
-      -1
-    );
+    expect(
+      start,
+      `expected to find the ${label} route (${routeMarker}) in AppRoutes.tsx`
+    ).toBeGreaterThan(-1);
     // Slice up to the next sibling <Route (or end of file) so the block
     // captures exactly this one route element — independent of exact line
     // numbers, which drift as unrelated routes are added/removed elsewhere.
     // `<Route\s` (not just `<Route`) avoids false-matching `<RouteErrorBoundary>`.
     const nextRouteMatch = /<Route\s/.exec(source.slice(start + routeMarker.length));
     const end =
-      nextRouteMatch === null
-        ? source.length
-        : start + routeMarker.length + nextRouteMatch.index;
+      nextRouteMatch === null ? source.length : start + routeMarker.length + nextRouteMatch.index;
     return source.slice(start, end);
   }
 

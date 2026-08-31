@@ -44,10 +44,7 @@ import type { PassGateRequest } from '../validators/stageGate.validators.js';
 // which project IDs exist in other tenants either. The role/capability check
 // stays, but runs AFTER this ownership check, as defense-in-depth — not as a
 // replacement for it.
-async function resolveOwnedProject(
-  projectId: string,
-  organizationId: string
-): Promise<boolean> {
+async function resolveOwnedProject(projectId: string, organizationId: string): Promise<boolean> {
   const row = await queryHelpers.queryOne<{ id: string }>(
     `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
     [projectId, organizationId]

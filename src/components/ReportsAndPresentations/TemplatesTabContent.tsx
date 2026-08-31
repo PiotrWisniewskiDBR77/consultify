@@ -34,8 +34,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { EmptyState } from '@/components/shared/states';
 import PresentationBriefModal from '@/components/shared/PresentationBriefModal';
+import { EmptyState } from '@/components/shared/states';
 import {
   type MetaPill,
   StandardPreview,
@@ -283,10 +283,26 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '160px',
         filterable: true,
         filterOptions: [
-          { value: 'R1', label: isPolish ? TEMPLATE_CATEGORY_META.R1.labelPl : TEMPLATE_CATEGORY_META.R1.label, color: 'bg-blue-400' },
-          { value: 'R2', label: isPolish ? TEMPLATE_CATEGORY_META.R2.labelPl : TEMPLATE_CATEGORY_META.R2.label, color: 'bg-blue-400' },
-          { value: 'R3', label: isPolish ? TEMPLATE_CATEGORY_META.R3.labelPl : TEMPLATE_CATEGORY_META.R3.label, color: 'bg-emerald-400' },
-          { value: 'R4', label: isPolish ? TEMPLATE_CATEGORY_META.R4.labelPl : TEMPLATE_CATEGORY_META.R4.label, color: 'bg-amber-400' },
+          {
+            value: 'R1',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R1.labelPl : TEMPLATE_CATEGORY_META.R1.label,
+            color: 'bg-blue-400',
+          },
+          {
+            value: 'R2',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R2.labelPl : TEMPLATE_CATEGORY_META.R2.label,
+            color: 'bg-blue-400',
+          },
+          {
+            value: 'R3',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R3.labelPl : TEMPLATE_CATEGORY_META.R3.label,
+            color: 'bg-emerald-400',
+          },
+          {
+            value: 'R4',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R4.labelPl : TEMPLATE_CATEGORY_META.R4.label,
+            color: 'bg-amber-400',
+          },
           {
             value: 'executive_update',
             label: isPolish

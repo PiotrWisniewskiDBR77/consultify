@@ -14,32 +14,40 @@
  * (comment/recognition/support_request) since they share one physical table
  * (`okr_vnext_support_requests`, `okrSupportTypes.ts`).
  */
-import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, ExternalLink } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import type { StandardBreadcrumb, StandardCounterChip, StandardPreviewProps, TableColumn, TableRow } from '@/components/standard';
+import type {
+  StandardBreadcrumb,
+  StandardCounterChip,
+  StandardPreviewProps,
+  TableColumn,
+  TableRow,
+} from '@/components/standard';
 import { Modal } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import { OkrActionDialog, type OkrActionDialogField } from './OkrActionDialog';
 import type { OkrSetDto } from './okrApi';
 import { listObjectivesForSet, type OkrObjectiveWithKeyResultsDto } from './okrObjectiveApi';
-import { OkrActionDialog, type OkrActionDialogField } from './OkrActionDialog';
+import { formatOkrDate } from './okrRegistryMappers';
 import {
   acknowledgeSupportRequest,
   dismissSupportRequest,
   getDecisionLinkForSupportRequest,
   listSupportRequestsForSet,
   newOkrWorkspaceIdempotencyKey,
+  type OkrDecisionLinkWithLiveStatus,
+  type OkrSupportRequestDto,
+  type OkrSupportRequestKind,
   OkrWorkspaceApiError,
   postOkrComment,
   postOkrRecognition,
   raiseOkrSupportRequest,
   requestDecisionFromSupportRequest,
   resolveSupportRequest,
-  type OkrDecisionLinkWithLiveStatus,
-  type OkrSupportRequestDto,
-  type OkrSupportRequestKind,
 } from './okrWorkspaceApi';
 import {
   OKR_SUPPORT_STATUS_TONE,
@@ -48,8 +56,6 @@ import {
   okrSupportStatusLabel,
   shortWorkspaceId,
 } from './okrWorkspaceMappers';
-import { formatOkrDate } from './okrRegistryMappers';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 export interface OkrSupportViewProps {
   set: OkrSetDto;
@@ -74,12 +80,32 @@ type ComposeKind = OkrSupportRequestKind;
 type SupportActionKind = 'resolve' | 'request-decision' | 'dismiss';
 
 const SUPPORT_ACTION_FIELDS: Record<SupportActionKind, OkrActionDialogField[]> = {
-  resolve: [{ id: 'resolutionNote', label: { pl: 'Notatka rozwiązania', en: 'Resolution note' }, required: true }],
-  'request-decision': [
-    { id: 'requestedDecision', label: { pl: 'Jaka decyzja jest potrzebna?', en: 'What decision is needed?' }, required: true },
-    { id: 'impactOfDelay', label: { pl: 'Jaki jest wpływ opóźnienia?', en: 'What is the impact of delay?' }, required: true },
+  resolve: [
+    {
+      id: 'resolutionNote',
+      label: { pl: 'Notatka rozwiązania', en: 'Resolution note' },
+      required: true,
+    },
   ],
-  dismiss: [{ id: 'dismissedReason', label: { pl: 'Powód odrzucenia', en: 'Dismissal reason' }, required: true }],
+  'request-decision': [
+    {
+      id: 'requestedDecision',
+      label: { pl: 'Jaka decyzja jest potrzebna?', en: 'What decision is needed?' },
+      required: true,
+    },
+    {
+      id: 'impactOfDelay',
+      label: { pl: 'Jaki jest wpływ opóźnienia?', en: 'What is the impact of delay?' },
+      required: true,
+    },
+  ],
+  dismiss: [
+    {
+      id: 'dismissedReason',
+      label: { pl: 'Powód odrzucenia', en: 'Dismissal reason' },
+      required: true,
+    },
+  ],
 };
 
 const SUPPORT_ACTION_TITLE: Record<SupportActionKind, { pl: string; en: string }> = {
@@ -118,7 +144,10 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
       .finally(() => setLoading(false));
   }, [set.setId]);
 
-  const [actionTarget, setActionTarget] = useState<{ kind: SupportActionKind; row: OkrSupportRequestDto } | null>(null);
+  const [actionTarget, setActionTarget] = useState<{
+    kind: SupportActionKind;
+    row: OkrSupportRequestDto;
+  } | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionConflict, setActionConflict] = useState(false);
@@ -133,7 +162,11 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
       const idempotencyKey = newOkrWorkspaceIdempotencyKey();
       const req =
         kind === 'resolve'
-          ? resolveSupportRequest(row.requestId, { expectedVersion: row.rowVersion, resolutionNote: values.resolutionNote, idempotencyKey })
+          ? resolveSupportRequest(row.requestId, {
+              expectedVersion: row.rowVersion,
+              resolutionNote: values.resolutionNote,
+              idempotencyKey,
+            })
           : kind === 'request-decision'
             ? requestDecisionFromSupportRequest(row.requestId, {
                 expectedVersion: row.rowVersion,
@@ -141,7 +174,11 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                 impactOfDelay: values.impactOfDelay,
                 idempotencyKey,
               })
-            : dismissSupportRequest(row.requestId, { expectedVersion: row.rowVersion, dismissedReason: values.dismissedReason, idempotencyKey });
+            : dismissSupportRequest(row.requestId, {
+                expectedVersion: row.rowVersion,
+                dismissedReason: values.dismissedReason,
+                idempotencyKey,
+              });
       req
         .then(() => {
           setActionTarget(null);
@@ -156,7 +193,6 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [actionTarget, load]
   );
-
 
   useEffect(() => {
     load();
@@ -189,17 +225,27 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
       .catch((err) => setError(toUserFacingErrorMessage(err, isPolish)));
   };
 
-  const bucketCounts = { all: items?.length ?? 0, comment: 0, recognition: 0, support_request: 0 } as Record<
-    'all' | OkrSupportRequestKind,
-    number
-  >;
+  const bucketCounts = {
+    all: items?.length ?? 0,
+    comment: 0,
+    recognition: 0,
+    support_request: 0,
+  } as Record<'all' | OkrSupportRequestKind, number>;
   for (const item of items ?? []) bucketCounts[item.kind] += 1;
 
   const chips: StandardCounterChip[] = [
     { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: bucketCounts.all },
     { id: 'comment', label: isPolish ? 'Komentarze' : 'Comments', count: bucketCounts.comment },
-    { id: 'recognition', label: isPolish ? 'Uznania' : 'Recognition', count: bucketCounts.recognition },
-    { id: 'support_request', label: isPolish ? 'Prośby o wsparcie' : 'Support requests', count: bucketCounts.support_request },
+    {
+      id: 'recognition',
+      label: isPolish ? 'Uznania' : 'Recognition',
+      count: bucketCounts.recognition,
+    },
+    {
+      id: 'support_request',
+      label: isPolish ? 'Prośby o wsparcie' : 'Support requests',
+      count: bucketCounts.support_request,
+    },
   ];
 
   const filtered = (items ?? []).filter((i) => chip === 'all' || i.kind === chip);
@@ -211,23 +257,33 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
       id: 'kind',
       label: isPolish ? 'Typ' : 'Kind',
       width: '150px',
-      render: (row: OkrSupportRequestDto) => <span className="text-sm text-c-text">{okrSupportKindLabel(row.kind, isPolish)}</span>,
+      render: (row: OkrSupportRequestDto) => (
+        <span className="text-sm text-c-text">{okrSupportKindLabel(row.kind, isPolish)}</span>
+      ),
     },
     {
       id: 'body',
       label: isPolish ? 'Treść' : 'Body',
       width: '320px',
-      render: (row: OkrSupportRequestDto) => <span className="text-sm text-c-text-secondary line-clamp-2">{row.body}</span>,
+      render: (row: OkrSupportRequestDto) => (
+        <span className="text-sm text-c-text-secondary line-clamp-2">{row.body}</span>
+      ),
     },
     {
       id: 'status',
       label: 'Status',
       width: '160px',
       filterable: true,
-      filterOptions: (['open', 'acknowledged', 'resolved', 'dismissed'] as const).map((s) => ({ value: s, label: okrSupportStatusLabel(s, isPolish) })),
+      filterOptions: (['open', 'acknowledged', 'resolved', 'dismissed'] as const).map((s) => ({
+        value: s,
+        label: okrSupportStatusLabel(s, isPolish),
+      })),
       render: (row: OkrSupportRequestDto) =>
         row.status ? (
-          <StatusChip label={okrSupportStatusLabel(row.status, isPolish)} tone={OKR_SUPPORT_STATUS_TONE[row.status]} />
+          <StatusChip
+            label={okrSupportStatusLabel(row.status, isPolish)}
+            tone={OKR_SUPPORT_STATUS_TONE[row.status]}
+          />
         ) : (
           <span className="text-c-text-muted">—</span>
         ),
@@ -236,13 +292,21 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
       id: 'assignedTo',
       label: isPolish ? 'Przypisano do' : 'Assigned to',
       width: '150px',
-      render: (row: OkrSupportRequestDto) => <span className="font-mono text-sm text-c-text-secondary">{shortWorkspaceId(row.assignedToUserId)}</span>,
+      render: (row: OkrSupportRequestDto) => (
+        <span className="font-mono text-sm text-c-text-secondary">
+          {shortWorkspaceId(row.assignedToUserId)}
+        </span>
+      ),
     },
     {
       id: 'createdAt',
       label: isPolish ? 'Utworzono' : 'Created',
       width: '150px',
-      render: (row: OkrSupportRequestDto) => <span className="text-sm text-c-text-secondary">{formatOkrDate(row.createdAt, isPolish)}</span>,
+      render: (row: OkrSupportRequestDto) => (
+        <span className="text-sm text-c-text-secondary">
+          {formatOkrDate(row.createdAt, isPolish)}
+        </span>
+      ),
     },
   ];
 
@@ -253,7 +317,9 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
         meta: {
           pills: [
             { label: okrSupportKindLabel(selected.kind, isPolish) },
-            ...(selected.status ? [{ label: okrSupportStatusLabel(selected.status, isPolish) }] : []),
+            ...(selected.status
+              ? [{ label: okrSupportStatusLabel(selected.status, isPolish) }]
+              : []),
           ],
         },
         details: {
@@ -261,15 +327,31 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
           valueLabel: isPolish ? 'Wartość' : 'Value',
           properties: [
             { id: 'body', label: isPolish ? 'Treść' : 'Body', value: selected.body },
-            { id: 'assignedTo', label: isPolish ? 'Przypisano do' : 'Assigned to', value: shortWorkspaceId(selected.assignedToUserId) },
+            {
+              id: 'assignedTo',
+              label: isPolish ? 'Przypisano do' : 'Assigned to',
+              value: shortWorkspaceId(selected.assignedToUserId),
+            },
             selected.resolutionNote
-              ? { id: 'resolutionNote', label: isPolish ? 'Notatka rozwiązania' : 'Resolution note', value: selected.resolutionNote }
+              ? {
+                  id: 'resolutionNote',
+                  label: isPolish ? 'Notatka rozwiązania' : 'Resolution note',
+                  value: selected.resolutionNote,
+                }
               : null,
             selected.dismissedReason
-              ? { id: 'dismissedReason', label: isPolish ? 'Powód odrzucenia' : 'Dismissed reason', value: selected.dismissedReason }
+              ? {
+                  id: 'dismissedReason',
+                  label: isPolish ? 'Powód odrzucenia' : 'Dismissed reason',
+                  value: selected.dismissedReason,
+                }
               : null,
             selected.recognitionVisibility
-              ? { id: 'visibility', label: isPolish ? 'Widoczność' : 'Visibility', value: okrRecognitionVisibilityLabel(selected.recognitionVisibility, isPolish) }
+              ? {
+                  id: 'visibility',
+                  label: isPolish ? 'Widoczność' : 'Visibility',
+                  value: okrRecognitionVisibilityLabel(selected.recognitionVisibility, isPolish),
+                }
               : null,
           ].filter((r): r is NonNullable<typeof r> => r !== null),
         },
@@ -277,7 +359,9 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
           ? [
               {
                 id: decisionLink.linkId,
-                label: isPolish ? `Decyzja: ${decisionLink.requestedDecision}` : `Decision: ${decisionLink.requestedDecision}`,
+                label: isPolish
+                  ? `Decyzja: ${decisionLink.requestedDecision}`
+                  : `Decision: ${decisionLink.requestedDecision}`,
                 value: decisionLink.decisionStatus ?? undefined,
                 icon: ExternalLink,
               },
@@ -292,7 +376,10 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                   label: isPolish ? 'Przyjmij do wiadomości' : 'Acknowledge',
                   onClick: () =>
                     respond(() =>
-                      acknowledgeSupportRequest(selected.requestId, { expectedVersion: selected.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })
+                      acknowledgeSupportRequest(selected.requestId, {
+                        expectedVersion: selected.rowVersion,
+                        idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+                      })
                     ),
                 }
               : null,
@@ -344,7 +431,13 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
             const isOpen = r.status === 'open';
             const isAck = r.status === 'acknowledged';
             return {
-              primary: [{ id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => setSelectedId(r.requestId) }],
+              primary: [
+                {
+                  id: 'open',
+                  label: isPolish ? 'Otwórz' : 'Open',
+                  onClick: () => setSelectedId(r.requestId),
+                },
+              ],
               universalHandlers: { preview: () => setSelectedId(r.requestId) },
               statusTransitions:
                 isOpen || isAck
@@ -354,7 +447,12 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                             id: 'ack',
                             label: isPolish ? 'Przyjmij do wiadomości' : 'Acknowledge',
                             onClick: () =>
-                              respond(() => acknowledgeSupportRequest(r.requestId, { expectedVersion: r.rowVersion, idempotencyKey: newOkrWorkspaceIdempotencyKey() })),
+                              respond(() =>
+                                acknowledgeSupportRequest(r.requestId, {
+                                  expectedVersion: r.rowVersion,
+                                  idempotencyKey: newOkrWorkspaceIdempotencyKey(),
+                                })
+                              ),
                           }
                         : undefined,
                       {
@@ -387,7 +485,10 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                         setActionTarget({ kind: 'dismiss', row: r });
                       },
                     }
-                  : { label: isPolish ? 'Odrzuć' : 'Dismiss', note: isPolish ? 'Wpis już zamknięty.' : 'Entry already closed.' },
+                  : {
+                      label: isPolish ? 'Odrzuć' : 'Dismiss',
+                      note: isPolish ? 'Wpis już zamknięty.' : 'Entry already closed.',
+                    },
             };
           },
         }}
@@ -413,14 +514,22 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
             </button>
             <button
               type="button"
-              disabled={busy || !composeBody.trim() || !composeObjectiveId || (composeKind === 'support_request' && !composeAssignee.trim())}
+              disabled={
+                busy ||
+                !composeBody.trim() ||
+                !composeObjectiveId ||
+                (composeKind === 'support_request' && !composeAssignee.trim())
+              }
               onClick={() => {
                 setBusy(true);
                 setFormError(null);
                 const idempotencyKey = newOkrWorkspaceIdempotencyKey();
                 const req =
                   composeKind === 'comment'
-                    ? postOkrComment(set.setId, composeObjectiveId, { body: composeBody.trim(), idempotencyKey })
+                    ? postOkrComment(set.setId, composeObjectiveId, {
+                        body: composeBody.trim(),
+                        idempotencyKey,
+                      })
                     : composeKind === 'recognition'
                       ? postOkrRecognition(set.setId, composeObjectiveId, {
                           body: composeBody.trim(),
@@ -456,7 +565,9 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                 type="button"
                 onClick={() => setComposeKind(k)}
                 className={`h-8 rounded-full border px-3 text-xs font-medium ${
-                  composeKind === k ? 'border-c-border-strong bg-c-text text-c-surface' : 'border-c-border bg-transparent text-c-text'
+                  composeKind === k
+                    ? 'border-c-border-strong bg-c-text text-c-surface'
+                    : 'border-c-border bg-transparent text-c-text'
                 }`}
                 data-testid={`okr-support-kind-${k}`}
               >
@@ -465,7 +576,10 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
             ))}
           </div>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-support-objective">
+            <label
+              className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+              htmlFor="okr-support-objective"
+            >
               {isPolish ? 'Cel' : 'Objective'}
             </label>
             <select
@@ -482,7 +596,10 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
             </select>
           </div>
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-support-body">
+            <label
+              className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+              htmlFor="okr-support-body"
+            >
               {isPolish ? 'Treść' : 'Body'}
             </label>
             <textarea
@@ -495,7 +612,10 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
           </div>
           {composeKind === 'recognition' ? (
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-support-visibility">
+              <label
+                className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+                htmlFor="okr-support-visibility"
+              >
                 {isPolish ? 'Widoczność' : 'Visibility'}
               </label>
               <select
@@ -505,13 +625,18 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
                 className="w-full h-9 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <option value="team">{okrRecognitionVisibilityLabel('team', isPolish)}</option>
-                <option value="organization">{okrRecognitionVisibilityLabel('organization', isPolish)}</option>
+                <option value="organization">
+                  {okrRecognitionVisibilityLabel('organization', isPolish)}
+                </option>
               </select>
             </div>
           ) : null}
           {composeKind === 'support_request' ? (
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-support-assignee">
+              <label
+                className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5"
+                htmlFor="okr-support-assignee"
+              >
                 {isPolish ? 'Przypisz do (identyfikator użytkownika)' : 'Assign to (user id)'}
               </label>
               <input
@@ -524,7 +649,10 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
             </div>
           ) : null}
           {formError ? (
-            <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text">
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+            >
               <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
               <span>{formError}</span>
             </div>
@@ -534,13 +662,31 @@ export const OkrSupportView: React.FC<OkrSupportViewProps> = ({ set, isPolish, b
 
       <OkrActionDialog
         open={!!actionTarget}
-        title={actionTarget ? (isPolish ? SUPPORT_ACTION_TITLE[actionTarget.kind].pl : SUPPORT_ACTION_TITLE[actionTarget.kind].en) : ''}
-        description={actionTarget ? (isPolish ? `Wpis: ${actionTarget.row.body.slice(0, 80)}` : `Entry: ${actionTarget.row.body.slice(0, 80)}`) : undefined}
+        title={
+          actionTarget
+            ? isPolish
+              ? SUPPORT_ACTION_TITLE[actionTarget.kind].pl
+              : SUPPORT_ACTION_TITLE[actionTarget.kind].en
+            : ''
+        }
+        description={
+          actionTarget
+            ? isPolish
+              ? `Wpis: ${actionTarget.row.body.slice(0, 80)}`
+              : `Entry: ${actionTarget.row.body.slice(0, 80)}`
+            : undefined
+        }
         fields={actionTarget ? SUPPORT_ACTION_FIELDS[actionTarget.kind] : []}
         isPolish={isPolish}
         onClose={() => (actionBusy ? undefined : setActionTarget(null))}
         onSubmit={submitAction}
-        submitLabel={actionTarget ? (isPolish ? SUPPORT_ACTION_TITLE[actionTarget.kind].pl : SUPPORT_ACTION_TITLE[actionTarget.kind].en) : ''}
+        submitLabel={
+          actionTarget
+            ? isPolish
+              ? SUPPORT_ACTION_TITLE[actionTarget.kind].pl
+              : SUPPORT_ACTION_TITLE[actionTarget.kind].en
+            : ''
+        }
         busy={actionBusy}
         errorMessage={actionError}
         isConflict={actionConflict}

@@ -43,8 +43,8 @@ import {
 import { ROUTES } from '@/routes/routeConfig';
 
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
-import type { ResultsVNextDomain, ResultsVNextForbiddenDetail } from './types';
 import { ResultsVNextForbiddenState } from './ResultsVNextForbiddenState';
+import type { ResultsVNextDomain, ResultsVNextForbiddenDetail } from './types';
 
 /** `persistKey` is REQUIRED here — RN-G2 must not silently fall back to an
  * unnamespaced key. See RN_G2_UI_SCOPE.md §H "collision trap": legacy

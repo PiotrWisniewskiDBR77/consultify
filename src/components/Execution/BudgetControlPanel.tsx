@@ -12,9 +12,9 @@ import {
   ChevronUp,
   DollarSign,
   Plus,
+  Trash2,
   TrendingDown,
   TrendingUp,
-  Trash2,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';

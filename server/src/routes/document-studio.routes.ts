@@ -172,13 +172,7 @@ import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
-import {
-  beginMaterialExport,
-  completeMaterialExport,
-  failMaterialExport,
-  type BegunMaterialExport,
-} from '../services/materialExport/materialExportReceiptService.js';
-import { getWave5Artifact } from '../services/wave5ArtifactRuntimeService.js';
+import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
 import { getDocumentAccessHistory } from '../services/documentStudio/documentAccessHistoryService.js';
 import {
   cancelApproval,
@@ -413,6 +407,12 @@ import {
   startClaimHeartbeat,
 } from '../services/lineage/operationClaimService.js';
 import {
+  beginMaterialExport,
+  type BegunMaterialExport,
+  completeMaterialExport,
+  failMaterialExport,
+} from '../services/materialExport/materialExportReceiptService.js';
+import {
   isTemplateResolveError,
   resolveDocumentTemplateForCreation,
   type TemplateResolveErrorCode,
@@ -420,8 +420,8 @@ import {
 import { removeTemplateArtifactByOrigin } from '../services/v8/artifactRegistryService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
+import { getWave5Artifact } from '../services/wave5ArtifactRuntimeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
 import logger from '../utils/Logger.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
@@ -2627,7 +2627,8 @@ router.post(
             parseAudienceLanguageStyle(body.languageStyleOverride) === null
               ? undefined
               : (parseAudienceLanguageStyle(body.languageStyleOverride) as
-                  DocumentLanguageStyle | undefined),
+                  | DocumentLanguageStyle
+                  | undefined),
           sectionFilters: parseAudienceTagFilter(body.sectionFilters),
           blockFilters: parseAudienceTagFilter(body.blockFilters),
           executiveSummaryPolicy: parseAudienceExecutiveSummaryPolicy(body.executiveSummaryPolicy),
@@ -3299,8 +3300,8 @@ router.get(
       res.status(404).json({ error: 'document_not_found' });
       return;
     }
-    const approvals = listDocumentApprovals(organizationId, { artifactId, status }).map((approval) =>
-      withApprovalCurrentness(approval, schema.updatedAt)
+    const approvals = listDocumentApprovals(organizationId, { artifactId, status }).map(
+      (approval) => withApprovalCurrentness(approval, schema.updatedAt)
     );
     res.json({ approvals });
   })

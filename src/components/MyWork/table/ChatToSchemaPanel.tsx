@@ -24,7 +24,6 @@ import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry'
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import { EMPTY_SELECTION } from '../ideaSelectionTypes';
-
 import {
   type ExecutionOperation,
   ExecutionProgress,

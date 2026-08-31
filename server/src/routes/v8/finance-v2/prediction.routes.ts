@@ -26,13 +26,13 @@ import {
   savePredictionAuthoring,
 } from '../../../services/finance/canonical/predictionAuthoringService.js';
 import {
-  runPreflight,
-  type RunPreflightParams,
-} from '../../../services/finance/canonical/predictionPreflightService.js';
-import {
   runPredictionCompute,
   type RunPredictionComputeParams,
 } from '../../../services/finance/canonical/predictionComputeService.js';
+import {
+  runPreflight,
+  type RunPreflightParams,
+} from '../../../services/finance/canonical/predictionPreflightService.js';
 import {
   requireActiveMembership,
   requireFinanceEditorMembership,

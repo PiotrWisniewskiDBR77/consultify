@@ -51,23 +51,24 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
-import { VISIBILITY_CTE_PARAM_COUNT, wrapWithVisibilityScope } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
+import { type OkrAlignment, type OkrAlignmentRow, toOkrAlignment } from './okrAlignmentTypes.js';
+import { OkrObjectiveNotFoundError } from './okrObjectiveCommands.js';
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
-import { OkrObjectiveNotFoundError } from './okrObjectiveCommands.js';
-import {
-  toOkrAlignment,
-  type OkrAlignment,
-  type OkrAlignmentRow,
-} from './okrAlignmentTypes.js';
 
 // ==========================================
 // SHARED CONSTANTS
@@ -146,7 +147,9 @@ export class OkrAlignmentCycleMismatchError extends Error {
   code = 'CYCLE_MISMATCH';
   details: Record<string, unknown>;
   constructor(sourceCycleId: string, targetCycleId: string) {
-    super(`Objective alignment rejected: source Cycle ${sourceCycleId} does not match target Cycle ${targetCycleId}`);
+    super(
+      `Objective alignment rejected: source Cycle ${sourceCycleId} does not match target Cycle ${targetCycleId}`
+    );
     this.name = 'OkrAlignmentCycleMismatchError';
     this.details = { sourceCycleId, targetCycleId };
   }
@@ -194,7 +197,9 @@ export class OkrAlignmentVisibilityDeniedError extends Error {
   code = 'VISIBILITY_DENIED';
   details: Record<string, unknown>;
   constructor(objectiveId: string, setId: string) {
-    super(`Objective ${objectiveId} (Set ${setId}) is not visible to the caller — alignment rejected`);
+    super(
+      `Objective ${objectiveId} (Set ${setId}) is not visible to the caller — alignment rejected`
+    );
     this.name = 'OkrAlignmentVisibilityDeniedError';
     this.details = { objectiveId, setId };
   }
@@ -239,7 +244,12 @@ async function loadObjectiveContextForAlignment(
   );
   const row = result.rows[0];
   if (!row) return undefined;
-  return { objectiveId: row.objective_id, setId: row.set_id, cycleId: row.cycle_id, ownerUserId: row.owner_user_id };
+  return {
+    objectiveId: row.objective_id,
+    setId: row.set_id,
+    cycleId: row.cycle_id,
+    ownerUserId: row.owner_user_id,
+  };
 }
 
 /**
@@ -388,14 +398,19 @@ export async function proposeAlignment(
     access,
   } = input;
 
-  async function loadResult(client: PoolClient, alignmentId: string): Promise<ProposeAlignmentResult> {
+  async function loadResult(
+    client: PoolClient,
+    alignmentId: string
+  ): Promise<ProposeAlignmentResult> {
     const result = await client.query<OkrAlignmentRow>(
       `SELECT * FROM okr_vnext_alignments WHERE alignment_id = $1 AND organization_id = $2`,
       [alignmentId, organizationId]
     );
     const row = result.rows[0];
     if (!row) {
-      throw new Error(`[proposeAlignment] winning alignment ${alignmentId} could not be re-read after SAVEPOINT rollback`);
+      throw new Error(
+        `[proposeAlignment] winning alignment ${alignmentId} could not be re-read after SAVEPOINT rollback`
+      );
     }
     return { alignment: toOkrAlignment(row), created: false };
   }
@@ -411,9 +426,17 @@ export async function proposeAlignment(
         );
       }
 
-      const source = await loadObjectiveContextForAlignment(client, sourceObjectiveId, organizationId);
+      const source = await loadObjectiveContextForAlignment(
+        client,
+        sourceObjectiveId,
+        organizationId
+      );
       if (!source) throw new OkrObjectiveNotFoundError(sourceObjectiveId);
-      const target = await loadObjectiveContextForAlignment(client, targetObjectiveId, organizationId);
+      const target = await loadObjectiveContextForAlignment(
+        client,
+        targetObjectiveId,
+        organizationId
+      );
       if (!target) throw new OkrObjectiveNotFoundError(targetObjectiveId);
 
       // RN-G5: coarse gate first (generic denial for a total stranger),
@@ -449,7 +472,11 @@ export async function proposeAlignment(
 
       // OKR-F-016: reject at CREATE time if this edge would close a cycle
       // in the accepted-edge graph.
-      await assertNoAlignmentCycle(client, { organizationId, sourceObjectiveId, targetObjectiveId });
+      await assertNoAlignmentCycle(client, {
+        organizationId,
+        sourceObjectiveId,
+        targetObjectiveId,
+      });
 
       // D3-shaped dedupe: cheap pre-check SELECT (non-racing path).
       const existingResult = await client.query<{ alignment_id: string }>(
@@ -474,10 +501,19 @@ export async function proposeAlignment(
               source_cycle_id, target_cycle_id, proposed_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING *`,
-          [organizationId, sourceObjectiveId, targetObjectiveId, rationale, source.cycleId, target.cycleId, proposedBy]
+          [
+            organizationId,
+            sourceObjectiveId,
+            targetObjectiveId,
+            rationale,
+            source.cycleId,
+            target.cycleId,
+            proposedBy,
+          ]
         );
         const inserted = insertResult.rows[0];
-        if (!inserted) throw new Error('[proposeAlignment] insert into okr_vnext_alignments returned no row');
+        if (!inserted)
+          throw new Error('[proposeAlignment] insert into okr_vnext_alignments returned no row');
         alignmentRow = inserted;
         await client.query('RELEASE SAVEPOINT okr_alignment_propose');
       } catch (err: unknown) {
@@ -576,7 +612,9 @@ export interface AcceptAlignmentInput {
  * ★ Contains NO write to `okr_vnext_objectives` — only `okr_vnext_alignments`
  * itself is updated (status/responded_by/responded_at/row_version).
  */
-export async function acceptAlignment(input: AcceptAlignmentInput): Promise<AtomicCommandOutcome<OkrAlignment>> {
+export async function acceptAlignment(
+  input: AcceptAlignmentInput
+): Promise<AtomicCommandOutcome<OkrAlignment>> {
   const {
     alignmentId,
     organizationId,
@@ -607,7 +645,11 @@ export async function acceptAlignment(input: AcceptAlignmentInput): Promise<Atom
         );
       }
 
-      const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
+      const target = await loadObjectiveContextForAlignment(
+        client,
+        currentRow.target_objective_id,
+        organizationId
+      );
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
 
       assertCommandCapability({
@@ -625,7 +667,11 @@ export async function acceptAlignment(input: AcceptAlignmentInput): Promise<Atom
         );
       }
 
-      const source = await loadObjectiveContextForAlignment(client, currentRow.source_objective_id, organizationId);
+      const source = await loadObjectiveContextForAlignment(
+        client,
+        currentRow.source_objective_id,
+        organizationId
+      );
       if (!source) throw new OkrObjectiveNotFoundError(currentRow.source_objective_id);
 
       // Design §E: re-confirm the source is still visible to the responder
@@ -655,7 +701,8 @@ export async function acceptAlignment(input: AcceptAlignmentInput): Promise<Atom
         [actorUserId, nextVersion, alignmentId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[acceptAlignment] update returned no row for ${alignmentId}`);
+      if (!updatedRow)
+        throw new Error(`[acceptAlignment] update returned no row for ${alignmentId}`);
       return toOkrAlignment(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -706,7 +753,9 @@ export interface RejectAlignmentInput {
 }
 
 /** ★ Contains NO write to `okr_vnext_objectives`. */
-export async function rejectAlignment(input: RejectAlignmentInput): Promise<AtomicCommandOutcome<OkrAlignment>> {
+export async function rejectAlignment(
+  input: RejectAlignmentInput
+): Promise<AtomicCommandOutcome<OkrAlignment>> {
   const {
     alignmentId,
     organizationId,
@@ -737,7 +786,11 @@ export async function rejectAlignment(input: RejectAlignmentInput): Promise<Atom
         );
       }
 
-      const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
+      const target = await loadObjectiveContextForAlignment(
+        client,
+        currentRow.target_objective_id,
+        organizationId
+      );
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
 
       assertCommandCapability({
@@ -766,7 +819,8 @@ export async function rejectAlignment(input: RejectAlignmentInput): Promise<Atom
         [actorUserId, responseReason, nextVersion, alignmentId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[rejectAlignment] update returned no row for ${alignmentId}`);
+      if (!updatedRow)
+        throw new Error(`[rejectAlignment] update returned no row for ${alignmentId}`);
       return toOkrAlignment(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -828,7 +882,9 @@ const OKR_ALIGNMENT_REMOVABLE_FROM_STATUSES: readonly string[] = ['proposed', 'a
  *
  * ★ Contains NO write to `okr_vnext_objectives`.
  */
-export async function removeAlignment(input: RemoveAlignmentInput): Promise<AtomicCommandOutcome<OkrAlignment>> {
+export async function removeAlignment(
+  input: RemoveAlignmentInput
+): Promise<AtomicCommandOutcome<OkrAlignment>> {
   const {
     alignmentId,
     organizationId,
@@ -859,9 +915,17 @@ export async function removeAlignment(input: RemoveAlignmentInput): Promise<Atom
         );
       }
 
-      const source = await loadObjectiveContextForAlignment(client, currentRow.source_objective_id, organizationId);
+      const source = await loadObjectiveContextForAlignment(
+        client,
+        currentRow.source_objective_id,
+        organizationId
+      );
       if (!source) throw new OkrObjectiveNotFoundError(currentRow.source_objective_id);
-      const target = await loadObjectiveContextForAlignment(client, currentRow.target_objective_id, organizationId);
+      const target = await loadObjectiveContextForAlignment(
+        client,
+        currentRow.target_objective_id,
+        organizationId
+      );
       if (!target) throw new OkrObjectiveNotFoundError(currentRow.target_objective_id);
 
       assertCommandCapability({
@@ -875,7 +939,11 @@ export async function removeAlignment(input: RemoveAlignmentInput): Promise<Atom
         throw new OkrAlignmentNotOwnerError(
           `User ${actorUserId} may not remove alignment ${alignmentId}: not the source or target Objective's Owner`,
           'NOT_OWNER',
-          { alignmentId, sourceOwnerUserId: source.ownerUserId, targetOwnerUserId: target.ownerUserId }
+          {
+            alignmentId,
+            sourceOwnerUserId: source.ownerUserId,
+            targetOwnerUserId: target.ownerUserId,
+          }
         );
       }
 
@@ -890,7 +958,8 @@ export async function removeAlignment(input: RemoveAlignmentInput): Promise<Atom
         [actorUserId, nextVersion, alignmentId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[removeAlignment] update returned no row for ${alignmentId}`);
+      if (!updatedRow)
+        throw new Error(`[removeAlignment] update returned no row for ${alignmentId}`);
       return toOkrAlignment(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {

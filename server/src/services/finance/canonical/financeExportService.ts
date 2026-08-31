@@ -24,24 +24,24 @@
  * claims "zero rows" instead of failing loud.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import ExcelJS from 'exceljs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { financeStmtLinesCellRef, cellRefKey } from '../../../types/finance/CellRef.js';
-import type { FinanceArtifactType } from './lifecycleService.js';
-import type { FormulaNode } from './formulaAstEvaluator.js';
+import { cellRefKey, financeStmtLinesCellRef } from '../../../types/finance/CellRef.js';
 import {
   FINANCE_EXCEL_MANIFEST_SOURCE,
   FINANCE_EXCEL_MANIFEST_VERSION,
   FINANCE_EXCEL_SHEET_NAMES,
   FINANCE_EXCEL_VALUE_COLUMNS,
+  type FinanceExcelManifest,
   financeExcelRowToCells,
+  type FinanceExcelValueRow,
   formatBooleanCell,
   renderFormulaNode,
-  type FinanceExcelManifest,
-  type FinanceExcelValueRow,
 } from './financeExcelShared.js';
+import type { FormulaNode } from './formulaAstEvaluator.js';
+import type { FinanceArtifactType } from './lifecycleService.js';
 
 // ---------------------------------------------------------------------------
 // Row shapes read straight off the DB (raw, snake_case) before projection.
@@ -130,7 +130,12 @@ export function toFinanceExcelValueRow(
 }
 
 async function buildManifestAndRows(params: ExportFinanceStatementPackParams): Promise<
-  | { ok: true; manifest: FinanceExcelManifest; rows: FinanceExcelValueRow[]; kpiRows: KpiCatalogRawRow[] }
+  | {
+      ok: true;
+      manifest: FinanceExcelManifest;
+      rows: FinanceExcelValueRow[];
+      kpiRows: KpiCatalogRawRow[];
+    }
   | { ok: false; code: ExportFinanceStatementPackErrorCode; message: string }
 > {
   return withPinnedPostgresTransaction(async (tx) => {
@@ -157,7 +162,12 @@ async function buildManifestAndRows(params: ExportFinanceStatementPackParams): P
         WHERE business_version_id = ? AND organization_id = ? AND artifact_id = ?`,
       [params.businessVersionId, params.organizationId, params.artifactId]
     );
-    if (!businessVersion) return { ok: false, code: 'NOT_FOUND', message: 'Business version not found for this artifact' };
+    if (!businessVersion)
+      return {
+        ok: false,
+        code: 'NOT_FOUND',
+        message: 'Business version not found for this artifact',
+      };
 
     const workingRevision = await tx.queryOne<{ working_revision_id: string }>(
       `SELECT working_revision_id FROM finance_working_revisions
@@ -192,7 +202,9 @@ async function buildManifestAndRows(params: ExportFinanceStatementPackParams): P
       [params.organizationId]
     );
 
-    const rows = rawRows.map((raw) => toFinanceExcelValueRow(raw, params.organizationId, params.businessVersionId));
+    const rows = rawRows.map((raw) =>
+      toFinanceExcelValueRow(raw, params.organizationId, params.businessVersionId)
+    );
 
     // Default unit/currency for the manifest: the mode across exported rows
     // (task requirement "manifest version/unit/source" — a single
@@ -202,7 +214,10 @@ async function buildManifestAndRows(params: ExportFinanceStatementPackParams): P
     const currencyCounts = new Map<string, number>();
     for (const row of rows) {
       unitCounts.set(row.unit, (unitCounts.get(row.unit) ?? 0) + 1);
-      currencyCounts.set(row.presentationCurrency, (currencyCounts.get(row.presentationCurrency) ?? 0) + 1);
+      currencyCounts.set(
+        row.presentationCurrency,
+        (currencyCounts.get(row.presentationCurrency) ?? 0) + 1
+      );
     }
     const mostCommon = <T extends string>(counts: Map<string, number>, fallback: T): T =>
       ([...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] as T) ?? fallback;
@@ -241,7 +256,11 @@ function addManifestSheet(workbook: ExcelJS.Workbook, manifest: FinanceExcelMani
   sheet.getRow(1).font = { bold: true };
 }
 
-function addValuesSheet(workbook: ExcelJS.Workbook, sheetName: string, rows: FinanceExcelValueRow[]): void {
+function addValuesSheet(
+  workbook: ExcelJS.Workbook,
+  sheetName: string,
+  rows: FinanceExcelValueRow[]
+): void {
   const sheet = workbook.addWorksheet(sheetName);
   sheet.columns = FINANCE_EXCEL_VALUE_COLUMNS.map((header) => ({ header, key: header, width: 18 }));
   sheet.getRow(1).font = { bold: true };

@@ -71,9 +71,14 @@ export function getNotebookUploadSourceSummary(
     return {
       label: tr(isPolish, 'label3', 'Email'),
       title: sender
-        ? tr(isPolish, 'forwardedEmailFrom', 'Note created from a forwarded email from {{sender}}', {
-            sender,
-          })
+        ? tr(
+            isPolish,
+            'forwardedEmailFrom',
+            'Note created from a forwarded email from {{sender}}',
+            {
+              sender,
+            }
+          )
         : tr(isPolish, 'label4', 'Note created from a forwarded email'),
     };
   }

@@ -35,14 +35,14 @@ import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { ORG_L1, OrgRecordList, OrgSectionCard, OrgTextField } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import {
-  type OrgContextSyncHandle,
-  useOrgContextStoreSection,
-} from './useOrgContextStoreSection';
+import { type OrgContextSyncHandle, useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type RootCausesBlockersSection = 'rootcause' | 'blockers';
 
-export const ROOT_CAUSES_BLOCKERS_SECTIONS: Array<{ id: RootCausesBlockersSection; label: string }> = [
+export const ROOT_CAUSES_BLOCKERS_SECTIONS: Array<{
+  id: RootCausesBlockersSection;
+  label: string;
+}> = [
   { id: 'rootcause', label: 'Przyczyny źródłowe' },
   { id: 'blockers', label: 'Blockery' },
 ];
@@ -50,7 +50,10 @@ export const ROOT_CAUSES_BLOCKERS_SECTIONS: Array<{ id: RootCausesBlockersSectio
 const ROOT_CAUSE_QUESTIONS = [
   { q: 'Gdzie utykają decyzje?', h: 'np. Obawa kadry średniego szczebla, brak danych…' },
   { q: 'Gdzie jest najsilniejszy opór wobec zmian?', h: 'np. Hala produkcyjna, konkretny dział…' },
-  { q: 'Jakie inicjatywy zawiodły w przeszłości i dlaczego?', h: 'np. Wdrożenie Lean bez kontynuacji…' },
+  {
+    q: 'Jakie inicjatywy zawiodły w przeszłości i dlaczego?',
+    h: 'np. Wdrożenie Lean bez kontynuacji…',
+  },
   {
     q: 'Czy jest rozbieżność między widokiem zarządu a rzeczywistością?',
     h: 'np. CEO myśli, że ERP działa, użytkownicy używają Excela…',
@@ -142,7 +145,9 @@ export const OrganizationRootCausesBlockersScreen: React.FC<{
           ),
         }),
       onRemove: (id: string) =>
-        setChallenges({ activeBlockers: challenges.activeBlockers.filter((blocker) => blocker.id !== id) }),
+        setChallenges({
+          activeBlockers: challenges.activeBlockers.filter((blocker) => blocker.id !== id),
+        }),
     }),
     [challenges.activeBlockers, setChallenges]
   );
@@ -167,8 +172,10 @@ export const OrganizationRootCausesBlockersScreen: React.FC<{
   );
 
   const answeredCount = useMemo(
-    () => ROOT_CAUSE_QUESTIONS.filter((_, index) => (challenges.rootCauseAnswers[index] || '').trim().length > 0)
-      .length,
+    () =>
+      ROOT_CAUSE_QUESTIONS.filter(
+        (_, index) => (challenges.rootCauseAnswers[index] || '').trim().length > 0
+      ).length,
     [challenges.rootCauseAnswers]
   );
 
@@ -297,9 +304,16 @@ export const OrganizationRootCausesBlockersScreen: React.FC<{
             columns={[
               { key: 'title', label: 'Nazwa blockera', placeholder: 'np. Lęk przed porażką' },
               { key: 'type', label: 'Typ', type: 'select', options: BLOCKER_TYPE_OPTIONS },
-              { key: 'desc', label: 'Opis i wpływ', type: 'textarea', placeholder: 'Opisz przeszkodę i jej wpływ…' },
+              {
+                key: 'desc',
+                label: 'Opis i wpływ',
+                type: 'textarea',
+                placeholder: 'Opisz przeszkodę i jej wpływ…',
+              },
             ]}
-            items={challenges.activeBlockers as unknown as Array<Record<string, string> & { id: string }>}
+            items={
+              challenges.activeBlockers as unknown as Array<Record<string, string> & { id: string }>
+            }
             onAdd={blockerHandlers.onAdd}
             onUpdate={blockerHandlers.onUpdate}
             onRemove={blockerHandlers.onRemove}

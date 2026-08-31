@@ -56,6 +56,7 @@ export function paginateSortedArray<T extends Record<string, unknown>>(
   const hasMore = working.length > opts.limit;
   const page = hasMore ? working.slice(0, opts.limit) : working;
   const last = page[page.length - 1];
-  const nextCursor = hasMore && last ? `${String(last[opts.sortField])}::${String(last[opts.idField])}` : null;
+  const nextCursor =
+    hasMore && last ? `${String(last[opts.sortField])}::${String(last[opts.idField])}` : null;
   return { items: page, nextCursor };
 }

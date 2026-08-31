@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 
+import { AuditStateError } from '../../services/audits/auditsDb.js';
 import {
   approveAction,
   getAction,
@@ -18,16 +19,14 @@ import {
   reportImplementation,
   updateAction,
 } from '../../services/audits/correctiveActionService.js';
+import type { VerificationKind } from '../../services/audits/types.js';
 import {
   getVerificationReadiness,
   listVerifications,
   performVerification,
   planVerification,
 } from '../../services/audits/verificationService.js';
-
-import { AuditStateError } from '../../services/audits/auditsDb.js';
-import type { VerificationKind } from '../../services/audits/types.js';
-import { auditActor, assertActor, parsePaging, route } from './context.js';
+import { assertActor, auditActor, parsePaging, route } from './context.js';
 
 const router = Router();
 
@@ -49,7 +48,7 @@ router.get(
     const programId = requireProgramId(req.query as Record<string, unknown>);
     const data = await getVerificationReadiness(actor.organizationId, programId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -65,7 +64,7 @@ router.get(
       kind: query.kind ? (String(query.kind) as VerificationKind) : undefined,
     });
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -75,7 +74,7 @@ router.post(
     assertActor(actor);
     const data = await planVerification(actor.organizationId, actor, req.body || {});
     res.status(201).json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -83,9 +82,14 @@ router.post(
   route('POST /actions/verifications/:id/perform', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const data = await performVerification(actor.organizationId, actor, req.params.id, req.body || {});
+    const data = await performVerification(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      req.body || {}
+    );
     res.json({ success: true, data });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -108,7 +112,7 @@ router.get(
       offset,
     });
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -118,7 +122,7 @@ router.get(
     assertActor(actor);
     const data = await getAction(actor.organizationId, req.params.id);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -134,7 +138,7 @@ router.post(
     const { findingId: _omit, ...rest } = body;
     const data = await proposeAction(actor.organizationId, actor, findingId, rest as never);
     res.status(201).json({ success: true, data });
-  }),
+  })
 );
 
 router.patch(
@@ -144,7 +148,7 @@ router.patch(
     assertActor(actor);
     const data = await updateAction(actor.organizationId, actor, req.params.id, req.body || {});
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -154,7 +158,7 @@ router.post(
     assertActor(actor);
     const data = await approveAction(actor.organizationId, actor, req.params.id);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -165,7 +169,7 @@ router.post(
     const reason = String((req.body || {}).reason || '');
     const data = await rejectAction(actor.organizationId, actor, req.params.id, reason);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -173,9 +177,14 @@ router.post(
   route('POST /actions/:id/implementation', async (req, res) => {
     const actor = auditActor(req);
     assertActor(actor);
-    const data = await reportImplementation(actor.organizationId, actor, req.params.id, req.body || {});
+    const data = await reportImplementation(
+      actor.organizationId,
+      actor,
+      req.params.id,
+      req.body || {}
+    );
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -186,7 +195,7 @@ router.post(
     const taskId = String((req.body || {}).taskId || '');
     const data = await linkToTask(actor.organizationId, actor, req.params.id, taskId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -197,7 +206,7 @@ router.post(
     const initiativeId = String((req.body || {}).initiativeId || '');
     const data = await linkToInitiative(actor.organizationId, actor, req.params.id, initiativeId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 export default router;

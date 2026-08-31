@@ -1,5 +1,5 @@
-import { evaluatePerformanceStatus } from './targetGeometryEvaluator.js';
 import type { KpiDefinitionVersion, KpiMeasurement } from './kpiTypes.js';
+import { evaluatePerformanceStatus } from './targetGeometryEvaluator.js';
 
 export type KpiTrendDirection = 'IMPROVING' | 'WORSENING' | 'FLAT';
 

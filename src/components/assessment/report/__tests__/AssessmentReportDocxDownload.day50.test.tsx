@@ -3,8 +3,8 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as api from '@/method-core/api/methodCoreApi';
-import { resetAssessmentReportViewFlagCache } from '@/utils/assessmentReportViewFlag';
 import { ASSESSMENT_DOCX_FLAG_KEYS } from '@/utils/assessmentDocxFlag';
+import { resetAssessmentReportViewFlagCache } from '@/utils/assessmentReportViewFlag';
 
 import {
   AssessmentReportContractView,

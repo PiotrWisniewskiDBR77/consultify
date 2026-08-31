@@ -37,9 +37,8 @@ describe.skipIf(!enabled)('DAY180 long-step cancellation — real PG + Redis', (
 
   it('closes window (b) on the first attempt and clears the lease after heartbeat observes cancellation', async () => {
     const { agentPlannerService } = await import('../agentPlannerService.js');
-    const { tryDispatchBackgroundExecution } = await import(
-      '../../../routes/ai/agent-plan.routes.js'
-    );
+    const { tryDispatchBackgroundExecution } =
+      await import('../../../routes/ai/agent-plan.routes.js');
     const { default: queue } = await import('../../../queues/aiQueue.js');
     const { claimAgentTask, finishAgentTask } = await import('../agentTaskDispatchService.js');
     const plan = await agentPlannerService.createPlan({
@@ -59,18 +58,21 @@ describe.skipIf(!enabled)('DAY180 long-step cancellation — real PG + Redis', (
     let heartbeatFailures = 0;
     let heartbeatObservedCancelled = 0;
     const originalRenew = agentPlannerService.renewExecutionLease.bind(agentPlannerService);
-    const heartbeat = vi.spyOn(agentPlannerService, 'renewExecutionLease').mockImplementation(async (lease) => {
-      heartbeatAttempts += 1;
-      const status = (await pool.query(`SELECT status FROM ai_agent_plans WHERE id=$1`, [plan.id]))
-        .rows[0]?.status;
-      if (status === 'cancelled') heartbeatObservedCancelled += 1;
-      try {
-        await originalRenew(lease);
-      } catch (error) {
-        heartbeatFailures += 1;
-        throw error;
-      }
-    });
+    const heartbeat = vi
+      .spyOn(agentPlannerService, 'renewExecutionLease')
+      .mockImplementation(async (lease) => {
+        heartbeatAttempts += 1;
+        const status = (
+          await pool.query(`SELECT status FROM ai_agent_plans WHERE id=$1`, [plan.id])
+        ).rows[0]?.status;
+        if (status === 'cancelled') heartbeatObservedCancelled += 1;
+        try {
+          await originalRenew(lease);
+        } catch (error) {
+          heartbeatFailures += 1;
+          throw error;
+        }
+      });
     try {
       expect(
         await tryDispatchBackgroundExecution({ planId: plan.id, organizationId, userId })
@@ -148,9 +150,15 @@ describe.skipIf(!enabled)('DAY180 long-step cancellation — real PG + Redis', (
       ]);
     } finally {
       heartbeat.mockRestore();
-      await (await queue.getJob((await pool.query(
-        `SELECT bull_job_id FROM ai_agent_job_receipts WHERE plan_id=$1`, [plan.id]
-      )).rows[0]?.bull_job_id))?.remove();
+      await (
+        await queue.getJob(
+          (
+            await pool.query(`SELECT bull_job_id FROM ai_agent_job_receipts WHERE plan_id=$1`, [
+              plan.id,
+            ])
+          ).rows[0]?.bull_job_id
+        )
+      )?.remove();
     }
   }, 60_000);
 
@@ -191,8 +199,16 @@ describe.skipIf(!enabled)('DAY180 long-step cancellation — real PG + Redis', (
       expect(longStepWarnings).toHaveLength(2);
       expect(longStepWarnings.map(([, meta]) => meta)).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ planId: slowSuccess.id, stepIndex: 0, durationMs: expect.any(Number) }),
-          expect.objectContaining({ planId: slowFailure.id, stepIndex: 0, durationMs: expect.any(Number) }),
+          expect.objectContaining({
+            planId: slowSuccess.id,
+            stepIndex: 0,
+            durationMs: expect.any(Number),
+          }),
+          expect.objectContaining({
+            planId: slowFailure.id,
+            stepIndex: 0,
+            durationMs: expect.any(Number),
+          }),
         ])
       );
       expect(longStepWarnings.some(([, meta]: any[]) => meta.planId === fast.id)).toBe(false);

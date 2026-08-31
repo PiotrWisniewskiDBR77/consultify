@@ -94,15 +94,22 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
   let A: SeededOrg;
   let B: SeededOrg;
 
-  const t = <T>(fn: (tx: any) => Promise<T>): Promise<T> => withPinnedPostgresTransaction(fn as never) as Promise<T>;
+  const t = <T>(fn: (tx: any) => Promise<T>): Promise<T> =>
+    withPinnedPostgresTransaction(fn as never) as Promise<T>;
 
   async function seedOrg(tag: 'A' | 'B', marker: number): Promise<SeededOrg> {
     const orgId = `org-w9c-${tag}-${randomUUID()}`;
     const userId = `user-w9c-${tag}-${randomUUID()}`;
-    await t((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, `W9C Org ${tag}`]));
+    await t((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, `W9C Org ${tag}`])
+    );
 
     // --- STATEMENT family ---------------------------------------------------
-    const stmt = await av.createArtifact({ organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: userId });
+    const stmt = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'STATEMENT_PACK',
+      createdBy: userId,
+    });
     const stmtBvId = stmt.businessVersion.business_version_id;
     const calendarId = `cal-${randomUUID()}`;
     await t((tx) =>
@@ -131,7 +138,9 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       )
     );
     const revenueLine = await t((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = 'REVENUE' LIMIT 1`)
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM financial_statement_lines WHERE line_code = 'REVENUE' LIMIT 1`
+      )
     );
     await t((tx) =>
       tx.queryRun(
@@ -144,7 +153,11 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
     );
 
     // --- ANALYSIS family ----------------------------------------------------
-    const analysis = await av.createArtifact({ organizationId: orgId, artifactType: 'HISTORICAL_ANALYSIS', createdBy: userId });
+    const analysis = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: userId,
+    });
     const anaBvId = analysis.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
@@ -155,7 +168,9 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       )
     );
     const catalogRow = await t((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM finance_analysis_kpi_catalog WHERE kpi_code = 'GROSS_MARGIN_PCT' LIMIT 1`)
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM finance_analysis_kpi_catalog WHERE kpi_code = 'GROSS_MARGIN_PCT' LIMIT 1`
+      )
     );
     await t((tx) =>
       tx.queryRun(
@@ -167,7 +182,11 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
     );
 
     // --- BASELINE family ----------------------------------------------------
-    const baselineArtifact = await av.createArtifact({ organizationId: orgId, artifactType: 'BASELINE_MODEL', createdBy: userId });
+    const baselineArtifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'BASELINE_MODEL',
+      createdBy: userId,
+    });
     const baselineBvId = baselineArtifact.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
@@ -203,14 +222,22 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
           baselineBvId,
           entityId,
           periodId,
-          JSON.stringify({ principal_opening: marker, contractual_rate: 0.05, amortization_schedule: Array(12).fill(1) }),
+          JSON.stringify({
+            principal_opening: marker,
+            contractual_rate: 0.05,
+            amortization_schedule: Array(12).fill(1),
+          }),
           userId,
         ]
       )
     );
 
     // --- VALUATION family ---------------------------------------------------
-    const valuation = await av.createArtifact({ organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: userId });
+    const valuation = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'VALUATION_CASE',
+      createdBy: userId,
+    });
     const valuationBvId = valuation.businessVersion.business_version_id;
     const methodResult = await valc.findOrCreateMethod({
       organizationId: orgId,
@@ -229,7 +256,11 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
     );
 
     // --- PREDICTION family --------------------------------------------------
-    const prediction = await av.createArtifact({ organizationId: orgId, artifactType: 'PREDICTION_SCENARIO', createdBy: userId });
+    const prediction = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'PREDICTION_SCENARIO',
+      createdBy: userId,
+    });
     const predictionBvId = prediction.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
@@ -448,7 +479,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(Number(bValue!.value_decimal)).toBe(B.marker);
     });
 
-    it('FIXED W9-C-1 + NEW-2: baselineComputeService.loadContext() refuses ANOTHER ORG\'s statement cells and model (was: DEFECT — returned B\'s data)', async () => {
+    it("FIXED W9-C-1 + NEW-2: baselineComputeService.loadContext() refuses ANOTHER ORG's statement cells and model (was: DEFECT — returned B's data)", async () => {
       // BEFORE the W9-C-1 fix this asserted `loaded.ok === true` and that org
       // A, calling with org B's baseline businessVersionId, received B's
       // model/assumptions/schedules (identified by B's marker) — a full
@@ -485,14 +516,15 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       // Independent physical read: B's own baseline model row is untouched —
       // this was a read-only attempt, and it never even reached B's data.
       const bModel = await t((tx) =>
-        tx.queryOne<{ organization_id: string }>(`SELECT organization_id FROM finance_baseline_models WHERE business_version_id = ?`, [
-          B.baselineBvId,
-        ])
+        tx.queryOne<{ organization_id: string }>(
+          `SELECT organization_id FROM finance_baseline_models WHERE business_version_id = ?`,
+          [B.baselineBvId]
+        )
       );
       expect(bModel!.organization_id).toBe(B.orgId);
     });
 
-    it('the same call from B\'s OWN context returns the same data — proving the leak is not an artefact of a broken fixture', async () => {
+    it("the same call from B's OWN context returns the same data — proving the leak is not an artefact of a broken fixture", async () => {
       const loaded = await baseline.loadContext({
         organizationId: B.orgId,
         businessVersionId: B.baselineBvId,
@@ -587,7 +619,9 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       // in `uq_finance_bv_id_org`. Org A cannot write an output row against
       // B's business version. Raw 23503, not a typed service error.
       const revenueLine = await t((tx) =>
-        tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = 'REVENUE' LIMIT 1`)
+        tx.queryOne<{ id: string }>(
+          `SELECT id FROM financial_statement_lines WHERE line_code = 'REVENUE' LIMIT 1`
+        )
       );
       await expect(
         t((tx) =>
@@ -596,7 +630,15 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
                id, organization_id, business_version_id, statement_type, canonical_line_id, entity_id, period_id,
                value_status, value_decimal, native_currency, presentation_currency, unit, value_kind, created_by)
              VALUES (?, ?, ?, 'P&L', ?, ?, ?, 'PRESENT_NONZERO', 1, 'PLN', 'PLN', 'UNITS', 'FORECAST', ?)`,
-            [randomUUID(), A.orgId, B.baselineBvId, revenueLine!.id, B.entityId, B.periodId, A.userId]
+            [
+              randomUUID(),
+              A.orgId,
+              B.baselineBvId,
+              revenueLine!.id,
+              B.entityId,
+              B.periodId,
+              A.userId,
+            ]
           )
         )
       ).rejects.toThrow(/foreign key constraint|violates/i);
@@ -617,7 +659,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(rows).toHaveLength(0);
     });
 
-    it('FIXED W9-C-2: runPreflight(orgA, bvB) refuses TYPED, never reaches B\'s scenario data (was: DEFECT — raw FK error after reading B)', async () => {
+    it("FIXED W9-C-2: runPreflight(orgA, bvB) refuses TYPED, never reaches B's scenario data (was: DEFECT — raw FK error after reading B)", async () => {
       // BEFORE the fix this asserted the call THREW a raw Postgres foreign-key
       // error (`fk_finance_prediction_preflight_runs_bv_org`) — proof the
       // service had already read B's scenario/assumption data and only the
@@ -638,17 +680,19 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
 
       // Nothing was persisted under either org.
       const runs = await t((tx) =>
-        tx.queryAll<{ id: string }>(`SELECT id FROM finance_prediction_preflight_runs WHERE business_version_id = ?`, [
-          B.predictionBvId,
-        ])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM finance_prediction_preflight_runs WHERE business_version_id = ?`,
+          [B.predictionBvId]
+        )
       );
       expect(runs).toHaveLength(0);
 
       // Independent physical read: B's scenario row is untouched.
       const bScenario = await t((tx) =>
-        tx.queryOne<{ organization_id: string }>(`SELECT organization_id FROM finance_prediction_scenarios WHERE business_version_id = ?`, [
-          B.predictionBvId,
-        ])
+        tx.queryOne<{ organization_id: string }>(
+          `SELECT organization_id FROM finance_prediction_scenarios WHERE business_version_id = ?`,
+          [B.predictionBvId]
+        )
       );
       expect(bScenario!.organization_id).toBe(B.orgId);
     });
@@ -670,7 +714,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(await advisor.listAdvisorOutputs(A.orgId, B.valuationBvId)).toEqual([]);
     });
 
-    it('FIXED W9-C-3: findOrCreateMethod(orgA, bvB) refuses TYPED (was: DEFECT — returned B\'s method row)', async () => {
+    it("FIXED W9-C-3: findOrCreateMethod(orgA, bvB) refuses TYPED (was: DEFECT — returned B's method row)", async () => {
       // BEFORE the fix this asserted `method.id === B.methodId` — org A got
       // org B's method row back (organization_id included), which was then
       // the vector into W9-C-4. `findOrCreateMethod()` now verifies the
@@ -701,7 +745,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(methodsForBv[0].organization_id).toBe(B.orgId);
     });
 
-    it('FIXED W9-C-4: writeSensitivityGrid() refuses to touch org B\'s grid (was: DEFECT — destroyed and replaced B\'s 25 cells)', async () => {
+    it("FIXED W9-C-4: writeSensitivityGrid() refuses to touch org B's grid (was: DEFECT — destroyed and replaced B's 25 cells)", async () => {
       // BEFORE the fix this proved org A could upsert against B's methodId
       // and DELETE+replace B's 25 cells with its own — the single worst
       // finding in the matrix, a cross-tenant DESTRUCTIVE write with no audit
@@ -876,7 +920,9 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
           )
         );
 
-      await expect(insert({ ...a!, artifact_id: b!.artifact_id }, 'artifact')).rejects.toMatchObject({
+      await expect(
+        insert({ ...a!, artifact_id: b!.artifact_id }, 'artifact')
+      ).rejects.toMatchObject({
         code: '23503',
       });
       await expect(
@@ -940,9 +986,10 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
 
       // B's exception is still exactly one RAISED event, still OPEN.
       const bEvents = await t((tx) =>
-        tx.queryAll<{ event_type: string }>(`SELECT event_type FROM finance_exceptions WHERE exception_group_id = ?`, [
-          B.exceptionGroupId,
-        ])
+        tx.queryAll<{ event_type: string }>(
+          `SELECT event_type FROM finance_exceptions WHERE exception_group_id = ?`,
+          [B.exceptionGroupId]
+        )
       );
       expect(bEvents.map((e) => e.event_type)).toEqual(['RAISED']);
     });
@@ -954,7 +1001,10 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
   describe('family 8 — compute_jobs / compute_job_runs / compute_job_outputs', () => {
     it('query level: A-scoped SELECT cannot see B jobs', async () => {
       const rows = await t((tx) =>
-        tx.queryAll<{ id: string }>(`SELECT id FROM compute_jobs WHERE organization_id = ? AND id = ?`, [A.orgId, B.jobId])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM compute_jobs WHERE organization_id = ? AND id = ?`,
+          [A.orgId, B.jobId]
+        )
       );
       expect(rows).toHaveLength(0);
     });
@@ -984,16 +1034,23 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       // BEFORE the fix `cancelJob(B.jobId, reason)` succeeded from org A's
       // context — cross-tenant CANCELLATION, a mutation, not just a read.
       // Signature is now `cancelJob(organizationId, jobId, reason)`.
-      const cancelled = await jobsSvc.cancelJob(A.orgId, B.jobId, 'cancelled by an actor from another tenant');
+      const cancelled = await jobsSvc.cancelJob(
+        A.orgId,
+        B.jobId,
+        'cancelled by an actor from another tenant'
+      );
       expect(cancelled).toBeNull();
 
       // Independent physical read: B's job is completely untouched — still
       // `queued`, no cancel_reason, no cancel_requested_at.
       const after = await t((tx) =>
-        tx.queryOne<{ status: string; cancel_reason: string | null; cancel_requested_at: string | null }>(
-          `SELECT status, cancel_reason, cancel_requested_at FROM compute_jobs WHERE id = ?`,
-          [B.jobId]
-        )
+        tx.queryOne<{
+          status: string;
+          cancel_reason: string | null;
+          cancel_requested_at: string | null;
+        }>(`SELECT status, cancel_reason, cancel_requested_at FROM compute_jobs WHERE id = ?`, [
+          B.jobId,
+        ])
       );
       expect(after!.status).toBe('queued');
       expect(after!.cancel_reason).toBeNull();
@@ -1005,7 +1062,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(ownCancel!.status).toBe('cancelled');
     });
 
-    it('the output table IS guarded: A cannot commit an output against B\'s artifact', async () => {
+    it("the output table IS guarded: A cannot commit an output against B's artifact", async () => {
       // `fk_compute_job_outputs_artifact_org` is the composite (artifact_id,
       // organization_id) FK — the one guard the jobs family does have.
       await expect(
@@ -1014,7 +1071,14 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
             `INSERT INTO compute_job_outputs (id, job_id, organization_id, output_artifact_id,
                output_working_revision_id, committed_by_attempt_number, content_semantic_hash)
              VALUES (?, ?, ?, ?, (SELECT working_revision_id FROM finance_working_revisions WHERE artifact_id = ? LIMIT 1), 1, ?)`,
-            [randomUUID(), B.jobId, A.orgId, B.baselineArtifactId, B.baselineArtifactId, `cross-${randomUUID()}`]
+            [
+              randomUUID(),
+              B.jobId,
+              A.orgId,
+              B.baselineArtifactId,
+              B.baselineArtifactId,
+              `cross-${randomUUID()}`,
+            ]
           )
         )
       ).rejects.toThrow(/foreign key constraint|violates/i);
@@ -1043,7 +1107,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
   // through W9-C-7) remain the ONLY enforcement that matters for real
   // traffic today.
   // =========================================================================
-  it('cross-cutting: row-level-security policies exist on exactly the W2 pilot\'s three tables, nowhere else in finance*/compute*', async () => {
+  it("cross-cutting: row-level-security policies exist on exactly the W2 pilot's three tables, nowhere else in finance*/compute*", async () => {
     const PILOT_TABLES = [
       'compute_jobs',
       'finance_valuation_sensitivity_grids',

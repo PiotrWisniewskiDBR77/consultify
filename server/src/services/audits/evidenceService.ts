@@ -20,10 +20,10 @@
 import { createHash } from 'crypto';
 
 import {
-  AuditDomainError,
-  AuditNotFoundError,
   auditAll,
+  AuditDomainError,
   auditGet,
+  AuditNotFoundError,
   auditRun,
   newId,
   parseJson,
@@ -113,11 +113,11 @@ function mapEvidenceRow(row: Record<string, unknown>): AuditEvidence {
 
 async function loadRequestOrThrow(
   organizationId: string,
-  id: string,
+  id: string
 ): Promise<AuditEvidenceRequest> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_evidence_requests WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Żądanie dowodu');
   return mapRequestRow(row);
@@ -126,7 +126,7 @@ async function loadRequestOrThrow(
 async function loadEvidenceOrThrow(organizationId: string, id: string): Promise<AuditEvidence> {
   const row = await auditGet<Record<string, unknown>>(
     `SELECT * FROM audit_evidence WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
   if (!row) throw new AuditNotFoundError('Dowód audytowy');
   return mapEvidenceRow(row);
@@ -149,11 +149,15 @@ export interface CreateRequestInput {
 export async function createRequest(
   organizationId: string,
   actor: AuditActor,
-  input: CreateRequestInput,
+  input: CreateRequestInput
 ): Promise<AuditEvidenceRequest> {
   await requireCapability(actor, input.programId, 'evidence_request.create');
   if (!isNonEmpty(input.title)) {
-    throw new AuditDomainError('Tytuł żądania dowodu jest wymagany', 400, 'AUDIT_EVIDENCE_REQUEST_TITLE_REQUIRED');
+    throw new AuditDomainError(
+      'Tytuł żądania dowodu jest wymagany',
+      400,
+      'AUDIT_EVIDENCE_REQUEST_TITLE_REQUIRED'
+    );
   }
 
   const id = newId('aereq');
@@ -173,7 +177,7 @@ export async function createRequest(
       input.requestedFromUserId ?? null,
       actor.userId,
       input.dueDate ?? null,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -198,7 +202,7 @@ export interface ListRequestsOptions {
 
 export async function listRequests(
   organizationId: string,
-  options: ListRequestsOptions = {},
+  options: ListRequestsOptions = {}
 ): Promise<AuditEvidenceRequest[]> {
   const where: string[] = ['organization_id = $1'];
   const params: unknown[] = [organizationId];
@@ -222,7 +226,7 @@ export async function listRequests(
 
   const rows = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_evidence_requests WHERE ${where.join(' AND ')} ORDER BY requested_at DESC`,
-    params,
+    params
   );
   return rows.map(mapRequestRow);
 }
@@ -231,7 +235,7 @@ export async function updateRequestStatus(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  status: EvidenceRequestStatus,
+  status: EvidenceRequestStatus
 ): Promise<AuditEvidenceRequest> {
   const request = await loadRequestOrThrow(organizationId, id);
   await requireCapability(actor, request.programId, 'evidence_request.create');
@@ -240,7 +244,7 @@ export async function updateRequestStatus(
     `UPDATE audit_evidence_requests
         SET status = $1, fulfilled_at = ${status === 'fulfilled' ? 'NOW()' : 'fulfilled_at'}, updated_at = NOW()
       WHERE id = $2 AND organization_id = $3`,
-    [status, id, organizationId],
+    [status, id, organizationId]
   );
 
   await recordAuditEvent({
@@ -260,7 +264,7 @@ export async function updateRequestStatus(
 export async function cancelRequest(
   organizationId: string,
   actor: AuditActor,
-  id: string,
+  id: string
 ): Promise<AuditEvidenceRequest> {
   const request = await loadRequestOrThrow(organizationId, id);
   await requireCapability(actor, request.programId, 'evidence_request.create');
@@ -269,7 +273,7 @@ export async function cancelRequest(
     `UPDATE audit_evidence_requests
         SET status = 'cancelled', cancelled_at = NOW(), updated_at = NOW()
       WHERE id = $1 AND organization_id = $2`,
-    [id, organizationId],
+    [id, organizationId]
   );
 
   await recordAuditEvent({
@@ -291,7 +295,7 @@ export async function markOverdueRequests(organizationId: string): Promise<numbe
     `SELECT id, title, program_id FROM audit_evidence_requests
       WHERE organization_id = $1 AND status IN ('open','responded')
         AND due_date IS NOT NULL AND due_date < CURRENT_DATE`,
-    [organizationId],
+    [organizationId]
   );
   if (rows.length === 0) return 0;
 
@@ -300,7 +304,7 @@ export async function markOverdueRequests(organizationId: string): Promise<numbe
         SET status = 'overdue', updated_at = NOW()
       WHERE organization_id = $1 AND status IN ('open','responded')
         AND due_date IS NOT NULL AND due_date < CURRENT_DATE`,
-    [organizationId],
+    [organizationId]
   );
 
   for (const r of rows) {
@@ -355,7 +359,7 @@ export interface SubmitEvidenceInput {
 export async function submitEvidence(
   organizationId: string,
   actor: AuditActor,
-  input: SubmitEvidenceInput,
+  input: SubmitEvidenceInput
 ): Promise<AuditEvidence> {
   await requireCapability(actor, input.programId, 'evidence.submit');
   if (!isNonEmpty(input.title)) {
@@ -391,7 +395,7 @@ export async function submitEvidence(
       actor.userId,
       input.periodFrom ?? null,
       input.periodTo ?? null,
-    ],
+    ]
   );
 
   if (isNonEmpty(input.requestId)) {
@@ -399,7 +403,7 @@ export async function submitEvidence(
       `UPDATE audit_evidence_requests
           SET status = 'responded', updated_at = NOW()
         WHERE id = $1 AND organization_id = $2 AND status IN ('open', 'overdue')`,
-      [input.requestId, organizationId],
+      [input.requestId, organizationId]
     );
   }
 
@@ -432,7 +436,7 @@ export async function reviewEvidence(
   organizationId: string,
   actor: AuditActor,
   id: string,
-  input: ReviewEvidenceInput,
+  input: ReviewEvidenceInput
 ): Promise<AuditEvidence> {
   const evidence = await loadEvidenceOrThrow(organizationId, id);
   await requireCapability(actor, evidence.programId, 'evidence.review');
@@ -454,7 +458,7 @@ export async function reviewEvidence(
       actor.userId,
       id,
       organizationId,
-    ],
+    ]
   );
 
   await recordAuditEvent({
@@ -465,7 +469,10 @@ export async function reviewEvidence(
     eventType: 'evidence.reviewed',
     actorId: actor.userId,
     summary: `Zrecenzowano dowód „${evidence.title}" — accepted=${input.accepted ?? 'null'}, supportsConformity=${input.supportsConformity ?? 'null'}`,
-    payload: { accepted: input.accepted ?? null, supportsConformity: input.supportsConformity ?? null },
+    payload: {
+      accepted: input.accepted ?? null,
+      supportsConformity: input.supportsConformity ?? null,
+    },
   });
 
   return loadEvidenceOrThrow(organizationId, id);
@@ -480,7 +487,7 @@ export interface ListEvidenceOptions {
 
 export async function listEvidence(
   organizationId: string,
-  options: ListEvidenceOptions = {},
+  options: ListEvidenceOptions = {}
 ): Promise<AuditEvidence[]> {
   const where: string[] = ['organization_id = $1'];
   const params: unknown[] = [organizationId];
@@ -504,7 +511,7 @@ export async function listEvidence(
 
   const rows = await auditAll<Record<string, unknown>>(
     `SELECT * FROM audit_evidence WHERE ${where.join(' AND ')} ORDER BY created_at DESC`,
-    params,
+    params
   );
   return rows.map(mapEvidenceRow);
 }
@@ -530,20 +537,20 @@ export interface EvidenceGap {
  */
 export async function getEvidenceGaps(
   organizationId: string,
-  programId: string,
+  programId: string
 ): Promise<EvidenceGap[]> {
   const criteria = await auditAll<Record<string, unknown>>(
     `SELECT id, ref_code, title, expected_evidence FROM audit_program_criteria
       WHERE organization_id = $1 AND program_id = $2 AND applicable = true
       ORDER BY ordinal ASC`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
   if (criteria.length === 0) return [];
 
   const evidenceRows = await auditAll<{ criterion_id: string; evidence_kind: string }>(
     `SELECT criterion_id, evidence_kind FROM audit_evidence
       WHERE organization_id = $1 AND program_id = $2 AND criterion_id IS NOT NULL`,
-    [organizationId, programId],
+    [organizationId, programId]
   );
 
   const providedByCriterion = new Map<string, Set<string>>();
@@ -576,8 +583,8 @@ export async function getEvidenceGaps(
         expected
           .filter((e) => e.mandatory !== false)
           .map((e) => e.kind)
-          .filter((kind) => !provided.has(kind)),
-      ),
+          .filter((kind) => !provided.has(kind))
+      )
     );
     if (missing.length > 0) {
       gaps.push({

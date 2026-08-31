@@ -15,9 +15,9 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { upsertActiveAssessmentInitiativeBatch } from '../services/assessment/AssessmentWorkbenchService.js';
 import AssessmentEvidenceService from '../services/AssessmentEvidenceService.js';
 import AssessmentInitiativeService from '../services/assessmentInitiativeService.js';
-import { upsertActiveAssessmentInitiativeBatch } from '../services/assessment/AssessmentWorkbenchService.js';
 import { getAssessmentRoles } from '../services/assessmentPermissionService.js';
 import NotificationService from '../services/notificationService.js';
 import { hasPermission } from '../services/permissionService.js';

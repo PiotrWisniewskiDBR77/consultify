@@ -112,7 +112,10 @@ const MODULE_TAG_TRANSLATIONS: Record<string, { key: string; fallback: string }>
   Vault: { key: 'agentPlan.canvas.moduleTag.vault', fallback: 'Sejf' },
 };
 
-function moduleTagLabel(raw: string | undefined, t: (key: string, fallback: string) => string): string | undefined {
+function moduleTagLabel(
+  raw: string | undefined,
+  t: (key: string, fallback: string) => string
+): string | undefined {
   if (!raw) return raw;
   const entry = MODULE_TAG_TRANSLATIONS[raw];
   return entry ? t(entry.key, entry.fallback) : raw;

@@ -118,7 +118,7 @@ describe('deriveAssessmentSaveIndicator — the eight-state mapping table', () =
     ).toBe('RECOVERY_DRAFT');
   });
 
-  it('CONFLICT: local revision older than the server\'s (409 version_conflict) — never silently overwritten', () => {
+  it("CONFLICT: local revision older than the server's (409 version_conflict) — never silently overwritten", () => {
     expect(
       deriveAssessmentSaveIndicator({
         runtimeStatus: 'conflict',
@@ -205,7 +205,11 @@ describe('useAssessmentSaveIndicator — RECONNECTING -> RECOVERED transient tim
 
   it('shows RECONNECTING while isReconciling is true, then RECOVERED once it flips back with a clean landing', () => {
     const { result, rerender } = renderHook(
-      (props: { isReconciling: boolean; runtimeStatus: 'ready' | 'recovery'; pendingWriteCount: number }) =>
+      (props: {
+        isReconciling: boolean;
+        runtimeStatus: 'ready' | 'recovery';
+        pendingWriteCount: number;
+      }) =>
         useAssessmentSaveIndicator({
           runtimeStatus: props.runtimeStatus,
           saveState: 'CLEAN',
@@ -233,7 +237,11 @@ describe('useAssessmentSaveIndicator — RECONNECTING -> RECOVERED transient tim
 
   it('does NOT show RECOVERED when the reconciliation attempt lands back in conflict — CONFLICT must win instead', () => {
     const { result, rerender } = renderHook(
-      (props: { isReconciling: boolean; runtimeStatus: 'ready' | 'recovery' | 'conflict'; pendingWriteCount: number }) =>
+      (props: {
+        isReconciling: boolean;
+        runtimeStatus: 'ready' | 'recovery' | 'conflict';
+        pendingWriteCount: number;
+      }) =>
         useAssessmentSaveIndicator({
           runtimeStatus: props.runtimeStatus,
           saveState: 'SAVE_FAILED',
@@ -279,7 +287,11 @@ describe('useAssessmentSaveIndicator — RECONNECTING -> RECOVERED transient tim
 
   it('respects a custom recoveredDisplayMs window', () => {
     const { result, rerender } = renderHook(
-      (props: { isReconciling: boolean; runtimeStatus: 'ready' | 'offline'; pendingWriteCount: number }) =>
+      (props: {
+        isReconciling: boolean;
+        runtimeStatus: 'ready' | 'offline';
+        pendingWriteCount: number;
+      }) =>
         useAssessmentSaveIndicator({
           runtimeStatus: props.runtimeStatus,
           saveState: 'CLEAN',

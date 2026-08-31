@@ -64,7 +64,11 @@ function isCellEngaged(cell: MatrixCellState): boolean {
  * the top of the confirmed ramp; `target` is whichever level carries the
  * `target` flag; `gap` is only ever shown when both are known.
  */
-function rowSummary(row: MatrixRow): { current: number | null; target: number | null; gap: number | null } {
+function rowSummary(row: MatrixRow): {
+  current: number | null;
+  target: number | null;
+  gap: number | null;
+} {
   const achievedLevels = row.levels.filter((c) => c.achieved).map((c) => c.level);
   const current = achievedLevels.length > 0 ? Math.max(...achievedLevels) : null;
   const targetLevel = row.levels.find((c) => c.target)?.level ?? null;
@@ -130,13 +134,21 @@ const Cell: React.FC<{
     >
       <span className={cell.achieved ? 'text-c-text' : 'text-c-text-muted'}>{cell.level}</span>
       {cell.aiProposalPending && (
-        <Sparkles size={9} className="absolute -top-1 -right-1 text-teal-500 dark:text-teal-400" aria-hidden="true" />
+        <Sparkles
+          size={9}
+          className="absolute -top-1 -right-1 text-teal-500 dark:text-teal-400"
+          aria-hidden="true"
+        />
       )}
       {cell.reviewRequired && !cell.aiProposalPending && (
         <Eye size={9} className="absolute -top-1 -right-1 text-c-info" aria-hidden="true" />
       )}
       {cell.blocker && (
-        <AlertTriangle size={9} className="absolute -bottom-1 -right-1 text-c-danger" aria-hidden="true" />
+        <AlertTriangle
+          size={9}
+          className="absolute -bottom-1 -right-1 text-c-danger"
+          aria-hidden="true"
+        />
       )}
     </button>
   );
@@ -156,9 +168,9 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
   const maxLevel = levels.length > 0 ? Math.max(...levels) : 1;
   const selectedCell =
     selection != null
-      ? rows
+      ? (rows
           .find((r) => r.unitId === selection.unitId)
-          ?.levels.find((c) => c.level === selection.level) ?? null
+          ?.levels.find((c) => c.level === selection.level) ?? null)
       : null;
 
   // Esc closes the side sheet — the most local layer open on this screen.
@@ -188,10 +200,12 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
               <AlertTriangle size={9} className="text-c-danger" /> Blocker
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm border border-dashed border-c-warning" /> Evidence luka
+              <span className="inline-block h-2 w-2 rounded-sm border border-dashed border-c-warning" />{' '}
+              Evidence luka
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-sm border border-c-border-subtle" /> Nieoceniony
+              <span className="inline-block h-2 w-2 rounded-sm border border-c-border-subtle" />{' '}
+              Nieoceniony
             </span>
           </div>
         )}
@@ -234,7 +248,9 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                         unitName={row.unitName}
                         methodName={methodName}
                         maxLevel={maxLevel}
-                        selected={selection?.unitId === row.unitId && selection?.level === cell.level}
+                        selected={
+                          selection?.unitId === row.unitId && selection?.level === cell.level
+                        }
                         onSelect={() => onSelect({ unitId: row.unitId, level: cell.level })}
                       />
                     </td>
@@ -254,7 +270,11 @@ export const LiveMatrix: React.FC<LiveMatrixProps> = ({
                     </span>
                     <span
                       title="Luka (target − current)"
-                      className={summary.gap !== null && summary.gap > 0 ? 'font-medium text-c-text' : 'text-c-text-muted'}
+                      className={
+                        summary.gap !== null && summary.gap > 0
+                          ? 'font-medium text-c-text'
+                          : 'text-c-text-muted'
+                      }
                     >
                       Δ {summary.gap ?? '—'}
                     </span>

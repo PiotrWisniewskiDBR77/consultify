@@ -17,8 +17,8 @@ import {
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
-import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ResultsOwnerReviewEntry } from '@/components/Results/ResultsOwnerReviewEntry';
+import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { LoadingState } from '@/components/shared/states/LoadingState';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';

@@ -287,12 +287,19 @@ Object.assign(Api, {
   get: async (path: string) => {
     if (path === '/settings/preferences/dashboard') return { preferences: DASHBOARD_PREFS };
     if (path === '/settings/recovery')
-      return { recoveryEmail: 'piotr.prywatnie@gmail.com', recoveryPhone: '+48 601 200 300', backupCodesCount: 8 };
+      return {
+        recoveryEmail: 'piotr.prywatnie@gmail.com',
+        recoveryPhone: '+48 601 200 300',
+        backupCodesCount: 8,
+      };
     if (path === '/api/mfa/status') return { isEnabled: true, method: 'totp' };
     if (path === '/organization-context')
-      return { profile: { defaultLanguage: 'pl', defaultTimezone: 'Europe/Warsaw', currency: 'PLN' } };
+      return {
+        profile: { defaultLanguage: 'pl', defaultTimezone: 'Europe/Warsaw', currency: 'PLN' },
+      };
     if (path.endsWith('/email')) return { enabled: true, taskUpdates: false, projectAlerts: true };
-    if (path.endsWith('/digest')) return { frequency: 'weekly', content: 'summary', format: 'html' };
+    if (path.endsWith('/digest'))
+      return { frequency: 'weekly', content: 'summary', format: 'html' };
     return {};
   },
   put: async () => ({ success: true }),

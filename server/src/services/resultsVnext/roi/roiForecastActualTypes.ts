@@ -29,10 +29,20 @@ export type RoiForecastIrrStatus = (typeof ROI_FORECAST_IRR_STATUSES)[number];
 export const ROI_ACTUAL_ENTRY_TYPES = ['cost', 'benefit', 'observation'] as const;
 export type RoiActualEntryType = (typeof ROI_ACTUAL_ENTRY_TYPES)[number];
 
-export const ROI_ACTUAL_ENTRY_DATA_QUALITY_STATUSES = ['unverified', 'verified', 'disputed', 'estimated'] as const;
-export type RoiActualEntryDataQualityStatus = (typeof ROI_ACTUAL_ENTRY_DATA_QUALITY_STATUSES)[number];
+export const ROI_ACTUAL_ENTRY_DATA_QUALITY_STATUSES = [
+  'unverified',
+  'verified',
+  'disputed',
+  'estimated',
+] as const;
+export type RoiActualEntryDataQualityStatus =
+  (typeof ROI_ACTUAL_ENTRY_DATA_QUALITY_STATUSES)[number];
 
-export const ROI_VARIANCE_COMPARISON_TYPES = ['approved_vs_forecast', 'approved_vs_actual', 'forecast_vs_actual'] as const;
+export const ROI_VARIANCE_COMPARISON_TYPES = [
+  'approved_vs_forecast',
+  'approved_vs_actual',
+  'forecast_vs_actual',
+] as const;
 export type RoiVarianceComparisonType = (typeof ROI_VARIANCE_COMPARISON_TYPES)[number];
 
 export const ROI_VARIANCE_STATUSES = ['open', 'explained', 'action_planned', 'resolved'] as const;

@@ -371,7 +371,10 @@ export async function getLegacyV8RoiRealizationEntry(
 // (design §B1)
 // ==========================================
 
-export type RoiLegacyOriginDomain = 'initiatives_module_live' | 'results_v8_live' | 'finance_benefits_live';
+export type RoiLegacyOriginDomain =
+  | 'initiatives_module_live'
+  | 'results_v8_live'
+  | 'finance_benefits_live';
 
 export interface RoiLegacyArchiveIndexRow {
   sourceTable: string;
@@ -380,7 +383,9 @@ export interface RoiLegacyArchiveIndexRow {
   count: number;
 }
 
-export async function getRoiLegacyArchiveIndex(organizationId: string): Promise<RoiLegacyArchiveIndexRow[]> {
+export async function getRoiLegacyArchiveIndex(
+  organizationId: string
+): Promise<RoiLegacyArchiveIndexRow[]> {
   return withReadClient(async (client) => {
     const results: RoiLegacyArchiveIndexRow[] = [];
 
@@ -392,7 +397,7 @@ export async function getRoiLegacyArchiveIndex(organizationId: string): Promise<
     results.push({
       sourceTable: 'analysis_financials',
       originDomain: 'initiatives_module_live',
-      label: "Initiatives module `/roi` — live, external to Results vNext",
+      label: 'Initiatives module `/roi` — live, external to Results vNext',
       count: analysisFinancialsCount[0]?.total ?? 0,
     });
 
@@ -404,7 +409,7 @@ export async function getRoiLegacyArchiveIndex(organizationId: string): Promise<
     results.push({
       sourceTable: 'digitization_analyses',
       originDomain: 'initiatives_module_live',
-      label: "Initiatives module `/roi` — live, external to Results vNext",
+      label: 'Initiatives module `/roi` — live, external to Results vNext',
       count: digitizationAnalysesCount[0]?.total ?? 0,
     });
 
@@ -428,7 +433,7 @@ export async function getRoiLegacyArchiveIndex(organizationId: string): Promise<
     results.push({
       sourceTable: 'roi_assumptions',
       originDomain: 'results_v8_live',
-      label: "Results V8 `/api/v8/results/roi` — live, external to Results vNext",
+      label: 'Results V8 `/api/v8/results/roi` — live, external to Results vNext',
       count: roiAssumptionsCount[0]?.total ?? 0,
     });
 
@@ -440,7 +445,7 @@ export async function getRoiLegacyArchiveIndex(organizationId: string): Promise<
     results.push({
       sourceTable: 'roi_realized_values',
       originDomain: 'results_v8_live',
-      label: "Results V8 `/api/v8/results/roi` — live, external to Results vNext",
+      label: 'Results V8 `/api/v8/results/roi` — live, external to Results vNext',
       count: roiRealizedValuesCount[0]?.total ?? 0,
     });
 

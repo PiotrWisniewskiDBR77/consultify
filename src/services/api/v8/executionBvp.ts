@@ -40,16 +40,34 @@ const key = (): string => crypto.randomUUID();
 
 export const ExecutionBvpApi = {
   read: (linkId: string) =>
-    v8Get<ExecutionDeliverySnapshot>(`/case-workspace/execution-bvp/links/${encodeURIComponent(linkId)}`),
+    v8Get<ExecutionDeliverySnapshot>(
+      `/case-workspace/execution-bvp/links/${encodeURIComponent(linkId)}`
+    ),
   link: (initiativeId: string, caseId: string) =>
     v8Post<ExecutionDeliveryLink>(
       '/case-workspace/execution-bvp/links',
       { initiativeId, caseId },
       { extraHeaders: { 'Idempotency-Key': key() } }
     ),
-  recordSpine: (linkId: string, input: { workRef: string; resourceRef: string; controlRef: string; reportRef: string; expectedVersion: number }) =>
-    v8Post<ExecutionDeliveryLink>(`/case-workspace/execution-bvp/links/${encodeURIComponent(linkId)}/spine`, input),
-  submitEvidence: (linkId: string, input: { artifactLinkId: string; contentDigest: string }, idempotencyKey = key()) =>
+  recordSpine: (
+    linkId: string,
+    input: {
+      workRef: string;
+      resourceRef: string;
+      controlRef: string;
+      reportRef: string;
+      expectedVersion: number;
+    }
+  ) =>
+    v8Post<ExecutionDeliveryLink>(
+      `/case-workspace/execution-bvp/links/${encodeURIComponent(linkId)}/spine`,
+      input
+    ),
+  submitEvidence: (
+    linkId: string,
+    input: { artifactLinkId: string; contentDigest: string },
+    idempotencyKey = key()
+  ) =>
     v8Post<ExecutionDeliveryEvidence>(
       `/case-workspace/execution-bvp/links/${encodeURIComponent(linkId)}/evidence`,
       input,

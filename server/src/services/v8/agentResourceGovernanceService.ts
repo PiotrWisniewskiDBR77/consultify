@@ -55,7 +55,10 @@ function requireNonBlank(value: string | null | undefined, reason: string): stri
   return normalized;
 }
 
-function mapDecision(row: ReservationRow, idempotentReplay: boolean): AgentResourceReservationDecision {
+function mapDecision(
+  row: ReservationRow,
+  idempotentReplay: boolean
+): AgentResourceReservationDecision {
   return {
     allowed: row.status === 'reserved' || row.status === 'settled',
     reason: row.decision_reason,
@@ -157,10 +160,7 @@ export async function reserveAgentResource(input: {
   const organizationId = requireNonBlank(input.organizationId, 'resource_organization_required');
   const projectId = requireNonBlank(input.projectId, 'resource_project_required');
   const runId = requireNonBlank(input.runId, 'resource_run_required');
-  const idempotencyKey = requireNonBlank(
-    input.idempotencyKey,
-    'resource_idempotency_key_required'
-  );
+  const idempotencyKey = requireNonBlank(input.idempotencyKey, 'resource_idempotency_key_required');
   const estimatedCostUsd = Number(input.estimatedCostUsd);
   if (!Number.isFinite(estimatedCostUsd) || estimatedCostUsd < 0) {
     throw new Error('resource_estimated_cost_required');
@@ -296,9 +296,7 @@ export async function reserveAgentResource(input: {
       86400
     );
     const leaseExpiresAt =
-      status === 'reserved'
-        ? new Date(Date.parse(now) + leaseSeconds * 1000).toISOString()
-        : null;
+      status === 'reserved' ? new Date(Date.parse(now) + leaseSeconds * 1000).toISOString() : null;
     if (prior) {
       // Two ways to land here, and they differ in what the prior row means:
       // `released` = the tool ran and failed (reclaim, gated on the failed

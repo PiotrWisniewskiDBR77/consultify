@@ -7,6 +7,7 @@
  * readiness pack must not be startable.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createKernelTestDb, type KernelTestDbHandle } from './kernelTestDb.js';
 
 let testDb: KernelTestDbHandle;
@@ -42,8 +43,20 @@ describe('MethodPackRegistry', () => {
   });
 
   it('distinguishes versions of the same pack', async () => {
-    await registry.register({ organizationId, packId: 'drd', version: '1.0.0', name: 'DRD', readiness: 'released' });
-    await registry.register({ organizationId, packId: 'drd', version: '2.0.0', name: 'DRD', readiness: 'draft' });
+    await registry.register({
+      organizationId,
+      packId: 'drd',
+      version: '1.0.0',
+      name: 'DRD',
+      readiness: 'released',
+    });
+    await registry.register({
+      organizationId,
+      packId: 'drd',
+      version: '2.0.0',
+      name: 'DRD',
+      readiness: 'draft',
+    });
 
     expect((await registry.getPack(organizationId, 'drd', '1.0.0'))?.readiness).toBe('released');
     expect((await registry.getPack(organizationId, 'drd', '2.0.0'))?.readiness).toBe('draft');
@@ -52,13 +65,25 @@ describe('MethodPackRegistry', () => {
   it('canStartSession is true only for released/pilot', () => {
     expect(registry.canStartSession('released')).toBe(true);
     expect(registry.canStartSession('pilot')).toBe(true);
-    for (const readiness of ['draft', 'methodology_review', 'content_approved', 'runtime_validated', 'deprecated'] as const) {
+    for (const readiness of [
+      'draft',
+      'methodology_review',
+      'content_approved',
+      'runtime_validated',
+      'deprecated',
+    ] as const) {
       expect(registry.canStartSession(readiness)).toBe(false);
     }
   });
 
   it('getReadiness reflects canStartSession for a draft pack (requirement 9)', async () => {
-    await registry.register({ organizationId, packId: 'siri', version: '0.1.0', name: 'SIRI', readiness: 'draft' });
+    await registry.register({
+      organizationId,
+      packId: 'siri',
+      version: '0.1.0',
+      name: 'SIRI',
+      readiness: 'draft',
+    });
     const readiness = await registry.getReadiness(organizationId, 'siri', '0.1.0');
     expect(readiness).toEqual({ canStart: false });
   });

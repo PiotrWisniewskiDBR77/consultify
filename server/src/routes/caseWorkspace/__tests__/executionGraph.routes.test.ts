@@ -14,9 +14,9 @@ vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
 }));
 
 vi.mock('../../../services/caseWorkspace/caseWorkspaceAuthContext.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')>(
-    '../../../services/caseWorkspace/caseWorkspaceAuthContext.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/caseWorkspace/caseWorkspaceAuthContext.js')
+  >('../../../services/caseWorkspace/caseWorkspaceAuthContext.js');
   return { ...actual, requireCaseAccess: (...args: unknown[]) => mockRequireCaseAccess(...args) };
 });
 
@@ -35,8 +35,8 @@ vi.mock('../../../services/caseWorkspace/executionGraphService.js', () => ({
   listNodeResultAcceptancesForCase: vi.fn(),
 }));
 
-import executionGraphRoutes from '../executionGraph.routes.js';
 import { errorHandlerMiddleware } from '../../../utils/ErrorHandler.js';
+import executionGraphRoutes from '../executionGraph.routes.js';
 
 const ORG = 'org-1';
 const USER = 'user-1';
@@ -52,14 +52,29 @@ function createApp(): Express {
 describe('caseWorkspace execution-graph routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetV8Context.mockReturnValue({ organizationId: ORG, userId: USER, userRole: 'ADMIN', isSuperAdmin: false });
-    mockRequireCaseAccess.mockResolvedValue({ membershipId: 'm1', organizationId: ORG, userId: USER, role: 'ADMIN' });
+    mockGetV8Context.mockReturnValue({
+      organizationId: ORG,
+      userId: USER,
+      userRole: 'ADMIN',
+      isSuperAdmin: false,
+    });
+    mockRequireCaseAccess.mockResolvedValue({
+      membershipId: 'm1',
+      organizationId: ORG,
+      userId: USER,
+      role: 'ADMIN',
+    });
   });
 
   it('rejects a record-gateway-evaluation body missing outcomeStatus with 400', async () => {
     const res = await request(createApp())
       .post('/api/v8/case-workspace/runs/run-1/gateway-evaluations')
-      .send({ nodeRunId: 'node-1', gatewayNodeType: 'DECISION_GATEWAY', evaluationInputSnapshot: {}, evaluatedAt: '2026-01-01T00:00:00.000Z' });
+      .send({
+        nodeRunId: 'node-1',
+        gatewayNodeType: 'DECISION_GATEWAY',
+        evaluationInputSnapshot: {},
+        evaluatedAt: '2026-01-01T00:00:00.000Z',
+      });
     expect(res.status).toBe(400);
     expect(mockRecordGatewayEvaluation).not.toHaveBeenCalled();
   });
@@ -81,7 +96,9 @@ describe('caseWorkspace execution-graph routes', () => {
 
   it('maps gateway_evaluation_determinism_conflict to 409', async () => {
     mockGetRunBinding.mockResolvedValue({ runId: 'run-1', caseId: 'case-1' });
-    mockRecordGatewayEvaluation.mockRejectedValue(new Error('gateway_evaluation_determinism_conflict'));
+    mockRecordGatewayEvaluation.mockRejectedValue(
+      new Error('gateway_evaluation_determinism_conflict')
+    );
     const res = await request(createApp())
       .post('/api/v8/case-workspace/runs/run-1/gateway-evaluations')
       .send({
@@ -103,7 +120,9 @@ describe('caseWorkspace execution-graph routes', () => {
 
   it('checks case access before listing gateway evaluations for a case', async () => {
     mockListGatewayEvaluationsForCase.mockResolvedValue([]);
-    const res = await request(createApp()).get('/api/v8/case-workspace/cases/case-1/gateway-evaluations');
+    const res = await request(createApp()).get(
+      '/api/v8/case-workspace/cases/case-1/gateway-evaluations'
+    );
     expect(res.status).toBe(200);
     expect(mockRequireCaseAccess).toHaveBeenCalledWith(USER, 'case-1');
   });

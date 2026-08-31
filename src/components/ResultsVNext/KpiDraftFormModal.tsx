@@ -26,8 +26,8 @@
 import { AlertTriangle, Plus, Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import { KPI_TARGET_GEOMETRIES, type KpiTargetGeometry } from './kpiApi';
 
@@ -92,12 +92,21 @@ export interface KpiDraftFormModalProps {
 }
 
 const GEOMETRY_LABEL: Record<KpiTargetGeometry, { pl: string; en: string }> = {
-  threshold_min: { pl: 'Próg minimalny (im więcej, tym lepiej)', en: 'Minimum threshold (higher is better)' },
-  threshold_max: { pl: 'Próg maksymalny (im mniej, tym lepiej)', en: 'Maximum threshold (lower is better)' },
+  threshold_min: {
+    pl: 'Próg minimalny (im więcej, tym lepiej)',
+    en: 'Minimum threshold (higher is better)',
+  },
+  threshold_max: {
+    pl: 'Próg maksymalny (im mniej, tym lepiej)',
+    en: 'Maximum threshold (lower is better)',
+  },
   range: { pl: 'Przedział', en: 'Range' },
   exact: { pl: 'Wartość dokładna', en: 'Exact value' },
   binary: { pl: 'Zero-jedynkowy (spełniony/niespełniony)', en: 'Binary (met/not met)' },
-  custom: { pl: 'Niestandardowy (formuła, bez oceny automatycznej)', en: 'Custom (formula, no automatic evaluation)' },
+  custom: {
+    pl: 'Niestandardowy (formuła, bez oceny automatycznej)',
+    en: 'Custom (formula, no automatic evaluation)',
+  },
 };
 
 const FIELD_CLASS =
@@ -110,7 +119,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -212,7 +222,13 @@ export const KpiDraftFormModal: React.FC<KpiDraftFormModalProps> = ({
   };
 
   const title =
-    mode === 'create' ? (isPolish ? 'Nowy KPI' : 'New KPI') : isPolish ? 'Edytuj szkic KPI' : 'Edit KPI draft';
+    mode === 'create'
+      ? isPolish
+        ? 'Nowy KPI'
+        : 'New KPI'
+      : isPolish
+        ? 'Edytuj szkic KPI'
+        : 'Edit KPI draft';
   const description2 =
     mode === 'create'
       ? isPolish
@@ -383,33 +399,123 @@ export const KpiDraftFormModal: React.FC<KpiDraftFormModalProps> = ({
             `targetGeometryEvaluator.ts` reads for this geometry. */}
         {targetGeometry === 'threshold_min' ? (
           <div className="grid grid-cols-3 gap-3">
-            {numberField('kpi-draft-target-value', isPolish ? 'Próg (min.)' : 'Threshold (min)', targetValue, setTargetValue, 'kpi-draft-target-value')}
-            {numberField('kpi-draft-warning-low', isPolish ? 'Ostrzeżenie od' : 'Warning from', warningLow, setWarningLow, 'kpi-draft-warning-low')}
-            {numberField('kpi-draft-critical-low', isPolish ? 'Krytyczne od' : 'Critical from', criticalLow, setCriticalLow, 'kpi-draft-critical-low')}
+            {numberField(
+              'kpi-draft-target-value',
+              isPolish ? 'Próg (min.)' : 'Threshold (min)',
+              targetValue,
+              setTargetValue,
+              'kpi-draft-target-value'
+            )}
+            {numberField(
+              'kpi-draft-warning-low',
+              isPolish ? 'Ostrzeżenie od' : 'Warning from',
+              warningLow,
+              setWarningLow,
+              'kpi-draft-warning-low'
+            )}
+            {numberField(
+              'kpi-draft-critical-low',
+              isPolish ? 'Krytyczne od' : 'Critical from',
+              criticalLow,
+              setCriticalLow,
+              'kpi-draft-critical-low'
+            )}
           </div>
         ) : null}
         {targetGeometry === 'threshold_max' ? (
           <div className="grid grid-cols-3 gap-3">
-            {numberField('kpi-draft-target-value', isPolish ? 'Próg (maks.)' : 'Threshold (max)', targetValue, setTargetValue, 'kpi-draft-target-value')}
-            {numberField('kpi-draft-warning-high', isPolish ? 'Ostrzeżenie do' : 'Warning up to', warningHigh, setWarningHigh, 'kpi-draft-warning-high')}
-            {numberField('kpi-draft-critical-high', isPolish ? 'Krytyczne do' : 'Critical up to', criticalHigh, setCriticalHigh, 'kpi-draft-critical-high')}
+            {numberField(
+              'kpi-draft-target-value',
+              isPolish ? 'Próg (maks.)' : 'Threshold (max)',
+              targetValue,
+              setTargetValue,
+              'kpi-draft-target-value'
+            )}
+            {numberField(
+              'kpi-draft-warning-high',
+              isPolish ? 'Ostrzeżenie do' : 'Warning up to',
+              warningHigh,
+              setWarningHigh,
+              'kpi-draft-warning-high'
+            )}
+            {numberField(
+              'kpi-draft-critical-high',
+              isPolish ? 'Krytyczne do' : 'Critical up to',
+              criticalHigh,
+              setCriticalHigh,
+              'kpi-draft-critical-high'
+            )}
           </div>
         ) : null}
         {targetGeometry === 'range' ? (
           <div className="grid grid-cols-2 gap-3">
-            {numberField('kpi-draft-target-min', isPolish ? 'Cel od' : 'Target from', targetMin, setTargetMin, 'kpi-draft-target-min')}
-            {numberField('kpi-draft-target-max', isPolish ? 'Cel do' : 'Target to', targetMax, setTargetMax, 'kpi-draft-target-max')}
-            {numberField('kpi-draft-warning-low', isPolish ? 'Ostrzeżenie od' : 'Warning from', warningLow, setWarningLow, 'kpi-draft-warning-low')}
-            {numberField('kpi-draft-warning-high', isPolish ? 'Ostrzeżenie do' : 'Warning to', warningHigh, setWarningHigh, 'kpi-draft-warning-high')}
+            {numberField(
+              'kpi-draft-target-min',
+              isPolish ? 'Cel od' : 'Target from',
+              targetMin,
+              setTargetMin,
+              'kpi-draft-target-min'
+            )}
+            {numberField(
+              'kpi-draft-target-max',
+              isPolish ? 'Cel do' : 'Target to',
+              targetMax,
+              setTargetMax,
+              'kpi-draft-target-max'
+            )}
+            {numberField(
+              'kpi-draft-warning-low',
+              isPolish ? 'Ostrzeżenie od' : 'Warning from',
+              warningLow,
+              setWarningLow,
+              'kpi-draft-warning-low'
+            )}
+            {numberField(
+              'kpi-draft-warning-high',
+              isPolish ? 'Ostrzeżenie do' : 'Warning to',
+              warningHigh,
+              setWarningHigh,
+              'kpi-draft-warning-high'
+            )}
           </div>
         ) : null}
         {targetGeometry === 'exact' ? (
           <div className="grid grid-cols-2 gap-3">
-            {numberField('kpi-draft-target-value', isPolish ? 'Wartość dokładna' : 'Exact value', targetValue, setTargetValue, 'kpi-draft-target-value')}
-            {numberField('kpi-draft-warning-low', isPolish ? 'Tolerancja od' : 'Tolerance from', warningLow, setWarningLow, 'kpi-draft-warning-low')}
-            {numberField('kpi-draft-warning-high', isPolish ? 'Tolerancja do' : 'Tolerance to', warningHigh, setWarningHigh, 'kpi-draft-warning-high')}
-            {numberField('kpi-draft-critical-low', isPolish ? 'Krytyczne od' : 'Critical from', criticalLow, setCriticalLow, 'kpi-draft-critical-low')}
-            {numberField('kpi-draft-critical-high', isPolish ? 'Krytyczne do' : 'Critical to', criticalHigh, setCriticalHigh, 'kpi-draft-critical-high')}
+            {numberField(
+              'kpi-draft-target-value',
+              isPolish ? 'Wartość dokładna' : 'Exact value',
+              targetValue,
+              setTargetValue,
+              'kpi-draft-target-value'
+            )}
+            {numberField(
+              'kpi-draft-warning-low',
+              isPolish ? 'Tolerancja od' : 'Tolerance from',
+              warningLow,
+              setWarningLow,
+              'kpi-draft-warning-low'
+            )}
+            {numberField(
+              'kpi-draft-warning-high',
+              isPolish ? 'Tolerancja do' : 'Tolerance to',
+              warningHigh,
+              setWarningHigh,
+              'kpi-draft-warning-high'
+            )}
+            {numberField(
+              'kpi-draft-critical-low',
+              isPolish ? 'Krytyczne od' : 'Critical from',
+              criticalLow,
+              setCriticalLow,
+              'kpi-draft-critical-low'
+            )}
+            {numberField(
+              'kpi-draft-critical-high',
+              isPolish ? 'Krytyczne do' : 'Critical to',
+              criticalHigh,
+              setCriticalHigh,
+              'kpi-draft-critical-high'
+            )}
           </div>
         ) : null}
         {targetGeometry === 'binary' ? (
@@ -426,7 +532,9 @@ export const KpiDraftFormModal: React.FC<KpiDraftFormModalProps> = ({
         {targetGeometry === 'custom' ? (
           <div>
             <label className={LABEL_CLASS} htmlFor="kpi-draft-formula">
-              {isPolish ? 'Formuła (opis, bez oceny automatycznej)' : 'Formula (description, no automatic evaluation)'}
+              {isPolish
+                ? 'Formuła (opis, bez oceny automatycznej)'
+                : 'Formula (description, no automatic evaluation)'}
             </label>
             <textarea
               id="kpi-draft-formula"
@@ -476,7 +584,9 @@ export const KpiDraftFormModal: React.FC<KpiDraftFormModalProps> = ({
           ) : (
             <p className="text-sm text-c-text-secondary">
               {initialValues?.ownerUserId ? (
-                <span className="font-mono text-c-text-muted text-[12px]">{initialValues.ownerUserId}</span>
+                <span className="font-mono text-c-text-muted text-[12px]">
+                  {initialValues.ownerUserId}
+                </span>
               ) : (
                 '—'
               )}{' '}

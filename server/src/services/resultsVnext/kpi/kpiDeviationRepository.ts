@@ -27,14 +27,10 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-
 import {
-  toCorrectiveAction,
-  toDeviationCase,
-  toEffectivenessVerification,
   type CorrectiveAction,
   type CorrectiveActionRow,
   type CorrectiveActionStatus,
@@ -43,6 +39,9 @@ import {
   type DeviationCaseStatus,
   type EffectivenessVerification,
   type EffectivenessVerificationRow,
+  toCorrectiveAction,
+  toDeviationCase,
+  toEffectivenessVerification,
 } from './kpiDeviationTypes.js';
 
 /** Same pinned-client-per-call shape as `kpiRepository.ts`'s
@@ -77,7 +76,9 @@ export interface GetDeviationCaseParams {
   caseId: string;
 }
 
-export async function getDeviationCase(params: GetDeviationCaseParams): Promise<DeviationCase | null> {
+export async function getDeviationCase(
+  params: GetDeviationCaseParams
+): Promise<DeviationCase | null> {
   const { userId, organizationId, caseId } = params;
 
   const baseQuerySql = `
@@ -89,10 +90,16 @@ export async function getDeviationCase(params: GetDeviationCaseParams): Promise<
        AND dc.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
 
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: 'kpi' });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: 'kpi',
+  });
   const values = [...wrapped.values, caseId];
 
-  const rows = await withReadClient((client) => queryRows<DeviationCaseRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<DeviationCaseRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toDeviationCase(row) : null;
 }
@@ -112,8 +119,19 @@ export interface ListDeviationCasesParams {
   offset?: number;
 }
 
-export async function listDeviationCases(params: ListDeviationCasesParams): Promise<DeviationCase[]> {
-  const { userId, organizationId, kpiId, status, ownerUserId, escalatedOnly, limit = 100, offset = 0 } = params;
+export async function listDeviationCases(
+  params: ListDeviationCasesParams
+): Promise<DeviationCase[]> {
+  const {
+    userId,
+    organizationId,
+    kpiId,
+    status,
+    ownerUserId,
+    escalatedOnly,
+    limit = 100,
+    offset = 0,
+  } = params;
 
   const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi' });
   const values: unknown[] = [...cte.values];
@@ -170,7 +188,9 @@ export interface ListCorrectiveActionsParams {
   offset?: number;
 }
 
-export async function listCorrectiveActions(params: ListCorrectiveActionsParams): Promise<CorrectiveAction[]> {
+export async function listCorrectiveActions(
+  params: ListCorrectiveActionsParams
+): Promise<CorrectiveAction[]> {
   const { userId, organizationId, deviationCaseId, status, limit = 100, offset = 0 } = params;
 
   const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi' });

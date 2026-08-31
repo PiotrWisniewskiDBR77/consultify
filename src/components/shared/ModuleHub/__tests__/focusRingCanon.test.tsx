@@ -19,8 +19,8 @@
  * którym przeglądarka podstawia swój własny.
  */
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
@@ -39,7 +39,7 @@ describe('kanon fokusa we wspólnej tabeli listowej', () => {
       focusRings,
       `W FilterableTable jest ${buttons} przycisków, a deklaracji focus-visible:ring-c-focus ` +
         `jest ${focusRings}. Przycisk bez tej klasy dostaje domyślny outline przeglądarki ` +
-        '(zmierzony bursztyn rgb(229,151,0)) i łamie kanon na każdym ekranie listowym.',
+        '(zmierzony bursztyn rgb(229,151,0)) i łamie kanon na każdym ekranie listowym.'
     ).toBeGreaterThanOrEqual(buttons);
   });
 

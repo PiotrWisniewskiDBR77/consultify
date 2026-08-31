@@ -148,13 +148,9 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
             data-testid="governed-chat-handoff-provenance"
           >
             <dt>{t('chat.governedHandoff.source', 'Source')}</dt>
-            <dd className="break-all font-mono">
-              {proposal.producerRecordId}
-            </dd>
+            <dd className="break-all font-mono">{proposal.producerRecordId}</dd>
             <dt>{t('chat.governedHandoff.hash', 'Hash')}</dt>
-            <dd className="break-all font-mono">
-              {proposal.sourceContentHash}
-            </dd>
+            <dd className="break-all font-mono">{proposal.sourceContentHash}</dd>
             <dt>{t('chat.governedHandoff.version', 'Version')}</dt>
             <dd className="font-mono">{proposal.sourceVersion}</dd>
           </dl>

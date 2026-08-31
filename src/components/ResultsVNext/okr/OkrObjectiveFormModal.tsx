@@ -24,8 +24,8 @@
 import { AlertTriangle, Plus, Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import type { OkrObjectiveAmbitionType, OkrObjectiveDto } from './okrObjectiveApi';
 
@@ -70,7 +70,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -109,7 +110,8 @@ export const OkrObjectiveFormModal: React.FC<OkrObjectiveFormModalProps> = ({
 
   const titleError = touched && !title.trim();
   const ownerMissing = mode === 'create' && !currentUserId;
-  const ownerUserId = mode === 'edit' ? (initial?.ownerUserId ?? currentUserId ?? '') : currentUserId ?? '';
+  const ownerUserId =
+    mode === 'edit' ? (initial?.ownerUserId ?? currentUserId ?? '') : (currentUserId ?? '');
 
   // Same fix as `RoiCaseCreateModal.tsx`: submit stays clickable with an
   // empty title so the "Nazwa jest wymagana" hint is reachable at all.
@@ -134,7 +136,15 @@ export const OkrObjectiveFormModal: React.FC<OkrObjectiveFormModalProps> = ({
     <Modal
       open={open}
       onClose={busy ? () => {} : onClose}
-      title={isEdit ? (isPolish ? 'Edytuj cel' : 'Edit objective') : isPolish ? 'Nowy cel (Objective)' : 'New objective'}
+      title={
+        isEdit
+          ? isPolish
+            ? 'Edytuj cel'
+            : 'Edit objective'
+          : isPolish
+            ? 'Nowy cel (Objective)'
+            : 'New objective'
+      }
       description={
         isEdit
           ? isPolish
@@ -185,7 +195,10 @@ export const OkrObjectiveFormModal: React.FC<OkrObjectiveFormModalProps> = ({
             className="flex items-start gap-2 rounded-lg border border-amber-400/50 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-[12px] text-c-text"
             data-testid="okr-objective-form-blocked"
           >
-            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
+            <AlertTriangle
+              size={14}
+              className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300"
+            />
             <span>{blockedReason}</span>
           </div>
         ) : null}
@@ -198,7 +211,11 @@ export const OkrObjectiveFormModal: React.FC<OkrObjectiveFormModalProps> = ({
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={isPolish ? 'np. Zbudować cyfrową dojrzałość operacji' : 'e.g. Build digital maturity of operations'}
+            placeholder={
+              isPolish
+                ? 'np. Zbudować cyfrową dojrzałość operacji'
+                : 'e.g. Build digital maturity of operations'
+            }
             className={FIELD_CLASS}
             data-testid="okr-objective-title"
             aria-invalid={titleError || undefined}
@@ -295,7 +312,13 @@ export const OkrObjectiveFormModal: React.FC<OkrObjectiveFormModalProps> = ({
             data-testid="okr-objective-form-error"
           >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

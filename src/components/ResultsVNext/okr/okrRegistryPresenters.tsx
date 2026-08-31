@@ -8,8 +8,8 @@
  * `dev-render/screens/results-vnext-okr-registry.tsx` QA harness (mock data)
  * — one implementation, not two that can silently drift.
  */
-import React from 'react';
 import { Lock } from 'lucide-react';
+import React from 'react';
 
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives';

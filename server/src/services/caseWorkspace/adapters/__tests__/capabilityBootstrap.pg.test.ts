@@ -39,32 +39,7 @@ import { randomUUID } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import * as capabilityAdapterService from '../../capabilityAdapterService.js';
-import type { InternalCommandBinding } from '../../capabilityAdapterService.js';
-import * as capabilityRegistryService from '../../capabilityRegistryService.js';
 import { getDecision } from '../../../decisionService.js';
-import {
-  bootstrapCaseWorkspaceCapabilities,
-  CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID_ENV_VAR,
-  CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID_ENV_VAR,
-  loadCapabilityBootstrapConfig,
-  type CapabilityBootstrapEnv,
-} from '../../capabilityBootstrap.js';
-import { DECISION_CREATE_CAPABILITY_ID, DECISION_CREATE_CAPABILITY_VERSION } from '../decisionAdapter.js';
-import { INITIATIVE_CREATE_CAPABILITY_ID, INITIATIVE_CREATE_CAPABILITY_VERSION } from '../initiativeAdapter.js';
-import { KPI_CREATE_CAPABILITY_ID, KPI_CREATE_CAPABILITY_VERSION } from '../kpiAdapter.js';
-import { FINANCE_MODEL_CREATE_CAPABILITY_ID, FINANCE_MODEL_CREATE_CAPABILITY_VERSION } from '../financeAdapter.js';
-import { ASSESSMENT_CREATE_CAPABILITY_ID, ASSESSMENT_CREATE_CAPABILITY_VERSION } from '../assessmentAdapter.js';
-import {
-  RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
-  RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
-} from '../resultsAdapter.js';
-import {
-  DOCUMENT_CREATE_CAPABILITY_ID,
-  DOCUMENT_CREATE_CAPABILITY_VERSION,
-  PRESENTATION_CREATE_CAPABILITY_ID,
-  PRESENTATION_CREATE_CAPABILITY_VERSION,
-} from '../documentsAdapter.js';
 import {
   buildEnvelope,
   seedCaseFixture,
@@ -72,6 +47,43 @@ import {
   seedUser,
   teardownCaseFixture,
 } from '../../__tests__/adapters/_fixtures.js';
+import type { InternalCommandBinding } from '../../capabilityAdapterService.js';
+import * as capabilityAdapterService from '../../capabilityAdapterService.js';
+import {
+  bootstrapCaseWorkspaceCapabilities,
+  type CapabilityBootstrapEnv,
+  CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID_ENV_VAR,
+  CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID_ENV_VAR,
+  loadCapabilityBootstrapConfig,
+} from '../../capabilityBootstrap.js';
+import * as capabilityRegistryService from '../../capabilityRegistryService.js';
+import {
+  ASSESSMENT_CREATE_CAPABILITY_ID,
+  ASSESSMENT_CREATE_CAPABILITY_VERSION,
+} from '../assessmentAdapter.js';
+import {
+  DECISION_CREATE_CAPABILITY_ID,
+  DECISION_CREATE_CAPABILITY_VERSION,
+} from '../decisionAdapter.js';
+import {
+  DOCUMENT_CREATE_CAPABILITY_ID,
+  DOCUMENT_CREATE_CAPABILITY_VERSION,
+  PRESENTATION_CREATE_CAPABILITY_ID,
+  PRESENTATION_CREATE_CAPABILITY_VERSION,
+} from '../documentsAdapter.js';
+import {
+  FINANCE_MODEL_CREATE_CAPABILITY_ID,
+  FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
+} from '../financeAdapter.js';
+import {
+  INITIATIVE_CREATE_CAPABILITY_ID,
+  INITIATIVE_CREATE_CAPABILITY_VERSION,
+} from '../initiativeAdapter.js';
+import { KPI_CREATE_CAPABILITY_ID, KPI_CREATE_CAPABILITY_VERSION } from '../kpiAdapter.js';
+import {
+  RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
+  RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
+} from '../resultsAdapter.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -122,18 +134,42 @@ const suite = REACHABLE ? describe.sequential : describe.skip;
 // `registerBuiltinCapabilityAdapters` produce (documentsAdapter's single
 // combined call registers TWO rows: document + presentation).
 const BUILTIN_CAPABILITIES: ReadonlyArray<{ id: string; version: string; label: string }> = [
-  { id: DECISION_CREATE_CAPABILITY_ID, version: DECISION_CREATE_CAPABILITY_VERSION, label: 'decision' },
-  { id: INITIATIVE_CREATE_CAPABILITY_ID, version: INITIATIVE_CREATE_CAPABILITY_VERSION, label: 'initiative' },
+  {
+    id: DECISION_CREATE_CAPABILITY_ID,
+    version: DECISION_CREATE_CAPABILITY_VERSION,
+    label: 'decision',
+  },
+  {
+    id: INITIATIVE_CREATE_CAPABILITY_ID,
+    version: INITIATIVE_CREATE_CAPABILITY_VERSION,
+    label: 'initiative',
+  },
   { id: KPI_CREATE_CAPABILITY_ID, version: KPI_CREATE_CAPABILITY_VERSION, label: 'kpi' },
-  { id: FINANCE_MODEL_CREATE_CAPABILITY_ID, version: FINANCE_MODEL_CREATE_CAPABILITY_VERSION, label: 'finance' },
-  { id: ASSESSMENT_CREATE_CAPABILITY_ID, version: ASSESSMENT_CREATE_CAPABILITY_VERSION, label: 'assessment' },
+  {
+    id: FINANCE_MODEL_CREATE_CAPABILITY_ID,
+    version: FINANCE_MODEL_CREATE_CAPABILITY_VERSION,
+    label: 'finance',
+  },
+  {
+    id: ASSESSMENT_CREATE_CAPABILITY_ID,
+    version: ASSESSMENT_CREATE_CAPABILITY_VERSION,
+    label: 'assessment',
+  },
   {
     id: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
     version: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,
     label: 'results',
   },
-  { id: DOCUMENT_CREATE_CAPABILITY_ID, version: DOCUMENT_CREATE_CAPABILITY_VERSION, label: 'document' },
-  { id: PRESENTATION_CREATE_CAPABILITY_ID, version: PRESENTATION_CREATE_CAPABILITY_VERSION, label: 'presentation' },
+  {
+    id: DOCUMENT_CREATE_CAPABILITY_ID,
+    version: DOCUMENT_CREATE_CAPABILITY_VERSION,
+    label: 'document',
+  },
+  {
+    id: PRESENTATION_CREATE_CAPABILITY_ID,
+    version: PRESENTATION_CREATE_CAPABILITY_VERSION,
+    label: 'presentation',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -249,9 +285,15 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
   }
 
   async function deleteOrg(orgId: string): Promise<void> {
-    await control.query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-    await control.query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-    await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+      .catch(() => undefined);
     await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
   }
 
@@ -277,7 +319,12 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
       // describe for why an id-swap isn't the applicable fix here.
       const lockClient = await acquireBuiltinCapabilityCrossFileLock();
       const registrarOrgId = await seedOrg('registrar');
-      const registrarActorId = await seedMemberedUser(control, registrarOrgId, 'registrar', 'ADMIN');
+      const registrarActorId = await seedMemberedUser(
+        control,
+        registrarOrgId,
+        'registrar',
+        'ADMIN'
+      );
       const fixture = await seedCaseFixture(control, 'e1-loader-happy');
       const env: CapabilityBootstrapEnv = {
         [CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID_ENV_VAR]: registrarActorId,
@@ -379,7 +426,10 @@ suite('capabilityBootstrap — safe config loader for OD-CW-BOOTSTRAP-20260812',
         // Requirement 2: zero duplicate rows.
         for (const cap of BUILTIN_CAPABILITIES) {
           // eslint-disable-next-line no-await-in-loop
-          expect(await builtinCapabilityRowCount(cap.id, cap.version), `${cap.label} after boot 2`).toBe(1);
+          expect(
+            await builtinCapabilityRowCount(cap.id, cap.version),
+            `${cap.label} after boot 2`
+          ).toBe(1);
         }
 
         // Requirement 2: still reachable, dispatching through the binding

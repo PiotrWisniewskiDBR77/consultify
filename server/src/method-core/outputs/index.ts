@@ -6,37 +6,31 @@
  * `method_initiative_drafts` persistence (server/migrations/20260813_method_outputs.sql).
  */
 
+export { deriveFindingsFromEvents, EventDerivedOutputBridge } from './EventDerivedOutputBridge.js';
 export {
-  MethodOutputService,
-  methodOutputService,
-  OutputValidationError,
-  validateFreezeInput,
+  type CreateInitiativeDraftInput,
+  type DraftSupersedenceStatus,
+  InitiativeDraftValidationError,
+  type MethodInitiativeDraftRecord,
+  MethodInitiativeDraftService,
+  methodInitiativeDraftService,
+} from './MethodInitiativeDraftService.js';
+export {
   type EvidenceLocatorInput,
   type FreezeOutputInput,
   type MethodFindingRecord,
   type MethodOutputRecord,
+  MethodOutputService,
+  methodOutputService,
   type OutputFindingInput,
+  OutputValidationError,
+  validateFreezeInput,
 } from './MethodOutputService.js';
-
 export {
-  MethodReportSnapshotService,
-  methodReportSnapshotService,
   type CreateReportSnapshotInput,
   type MethodArtefactKind,
   type MethodReportSnapshotRecord,
+  MethodReportSnapshotService,
+  methodReportSnapshotService,
   type ReportSupersedenceStatus,
 } from './MethodReportSnapshotService.js';
-
-export {
-  InitiativeDraftValidationError,
-  MethodInitiativeDraftService,
-  methodInitiativeDraftService,
-  type CreateInitiativeDraftInput,
-  type DraftSupersedenceStatus,
-  type MethodInitiativeDraftRecord,
-} from './MethodInitiativeDraftService.js';
-
-export {
-  EventDerivedOutputBridge,
-  deriveFindingsFromEvents,
-} from './EventDerivedOutputBridge.js';

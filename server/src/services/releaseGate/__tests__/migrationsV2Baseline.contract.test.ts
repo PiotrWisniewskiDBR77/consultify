@@ -44,15 +44,11 @@
  */
 import fs from 'fs';
 import path from 'path';
-
 import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = path.resolve(process.cwd());
 
-const BASELINE_FILE = path.resolve(
-  REPO_ROOT,
-  'server/migrations-v2/001_baseline_20260413.sql'
-);
+const BASELINE_FILE = path.resolve(REPO_ROOT, 'server/migrations-v2/001_baseline_20260413.sql');
 
 const RAILWAY_CONFIG_FILES = ['railway.json', 'railway.api.json', 'railway.frontend.json'] as const;
 
@@ -179,13 +175,13 @@ describe('migrations-v2 baseline — must stay LEGACY_REFERENCE_ONLY', () => {
 
   it('Dockerfile.api final stage does not COPY migrations-v2 into the image', () => {
     const dockerfile = fs.readFileSync(path.resolve(REPO_ROOT, 'Dockerfile.api'), 'utf-8');
-    const copyLines = dockerfile
-      .split('\n')
-      .filter((line) => /^\s*COPY\b/.test(line));
+    const copyLines = dockerfile.split('\n').filter((line) => /^\s*COPY\b/.test(line));
     const offenders = copyLines.filter((line) => /migrations-v2/.test(line));
     expect(offenders).toEqual([]);
     // Positive check: the runtime migrations COPY line that DOES exist must point at the plain
     // `/app/migrations` (built from server/migrations), confirming the intended source survives.
-    expect(dockerfile).toMatch(/COPY --from=backend-builder[^\n]*\/app\/migrations\s+\/app\/server\/migrations/);
+    expect(dockerfile).toMatch(
+      /COPY --from=backend-builder[^\n]*\/app\/migrations\s+\/app\/server\/migrations/
+    );
   });
 });

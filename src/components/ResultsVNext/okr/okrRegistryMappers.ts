@@ -6,7 +6,12 @@
  * SAME lock/label logic instead of two versions silently drifting.
  */
 import type { HonestValue } from '../types';
-import type { OkrSetAttentionState, OkrSetConfidence, OkrSetScopeType, OkrSetStatus } from './okrApi';
+import type {
+  OkrSetAttentionState,
+  OkrSetConfidence,
+  OkrSetScopeType,
+  OkrSetStatus,
+} from './okrApi';
 
 // ==========================================
 // Status labels (PL/EN) — literal 10-state machine,
@@ -79,7 +84,9 @@ export const OKR_SET_CONFIDENCE_LABELS: Record<OkrSetConfidence, { pl: string; e
 };
 
 export function okrSetConfidenceLabel(confidence: OkrSetConfidence, isPolish: boolean): string {
-  return isPolish ? OKR_SET_CONFIDENCE_LABELS[confidence].pl : OKR_SET_CONFIDENCE_LABELS[confidence].en;
+  return isPolish
+    ? OKR_SET_CONFIDENCE_LABELS[confidence].pl
+    : OKR_SET_CONFIDENCE_LABELS[confidence].en;
 }
 
 export type OkrSetConfidenceTone = 'neutral' | 'success' | 'warning' | 'danger';

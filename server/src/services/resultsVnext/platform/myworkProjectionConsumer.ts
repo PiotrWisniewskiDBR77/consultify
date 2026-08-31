@@ -53,9 +53,8 @@
 import type { PoolClient } from 'pg';
 
 import logger from '../../../utils/Logger.js';
-
-import type { RvnOutboxRow } from './outboxDrain.js';
 import type { RvnPlatformEventRow } from './consumerRegistry.js';
+import type { RvnOutboxRow } from './outboxDrain.js';
 
 // ==========================================
 // IO-A: canonical-state vocabulary SSOT
@@ -228,7 +227,10 @@ async function advanceCheckpoint(
 // thin, so each type re-queries its own domain table for assignee/owner).
 // ==========================================
 
-async function handleKpiDeviationOpened(client: PoolClient, event: RvnPlatformEventRow): Promise<void> {
+async function handleKpiDeviationOpened(
+  client: PoolClient,
+  event: RvnPlatformEventRow
+): Promise<void> {
   const oblig = await client.query<{ assignee_user_id: string }>(
     `SELECT assignee_user_id FROM rvn_platform_obligations
       WHERE organization_id = $1 AND reference_type = 'deviation_case' AND reference_id = $2::uuid
@@ -258,12 +260,19 @@ async function handleKpiDeviationOpened(client: PoolClient, event: RvnPlatformEv
   } else {
     logger.warn(
       '[resultsVnext/platform/myworkProjectionConsumer] kpi.deviation_opened: no open obligation found — canonical state written, notification skipped',
-      { eventId: event.event_id, aggregateId: event.aggregate_id, organizationId: event.organization_id }
+      {
+        eventId: event.event_id,
+        aggregateId: event.aggregate_id,
+        organizationId: event.organization_id,
+      }
     );
   }
 }
 
-async function handleKpiDeviationClosed(client: PoolClient, event: RvnPlatformEventRow): Promise<void> {
+async function handleKpiDeviationClosed(
+  client: PoolClient,
+  event: RvnPlatformEventRow
+): Promise<void> {
   await upsertCanonicalObjectState(client, {
     objectId: event.aggregate_id,
     objectType: event.aggregate_type,
@@ -281,7 +290,10 @@ async function handleKpiDeviationClosed(client: PoolClient, event: RvnPlatformEv
   });
 }
 
-async function handleRoiCaseApproved(client: PoolClient, event: RvnPlatformEventRow): Promise<void> {
+async function handleRoiCaseApproved(
+  client: PoolClient,
+  event: RvnPlatformEventRow
+): Promise<void> {
   const roiCase = await client.query<{ owner_user_id: string }>(
     `SELECT owner_user_id FROM rvn_roi_cases WHERE organization_id = $1 AND case_id = $2::uuid`,
     [event.organization_id, event.aggregate_id]
@@ -309,7 +321,11 @@ async function handleRoiCaseApproved(client: PoolClient, event: RvnPlatformEvent
   } else {
     logger.warn(
       '[resultsVnext/platform/myworkProjectionConsumer] roi.case_approved: rvn_roi_cases row not found — canonical state written, notification skipped',
-      { eventId: event.event_id, aggregateId: event.aggregate_id, organizationId: event.organization_id }
+      {
+        eventId: event.event_id,
+        aggregateId: event.aggregate_id,
+        organizationId: event.organization_id,
+      }
     );
   }
 }
@@ -350,7 +366,12 @@ async function handleOkrSupportDecisionRequested(
   } else {
     logger.warn(
       '[resultsVnext/platform/myworkProjectionConsumer] okr_support.decision_requested: assignee not resolved — canonical state written, notification skipped',
-      { eventId: event.event_id, aggregateId: event.aggregate_id, organizationId: event.organization_id, requestId }
+      {
+        eventId: event.event_id,
+        aggregateId: event.aggregate_id,
+        organizationId: event.organization_id,
+        requestId,
+      }
     );
   }
 }
@@ -406,5 +427,8 @@ export async function dispatchMyWorkProjection(
 
   // Design §5 "courtesy" advance — not the idempotency guard (the INSERT
   // above already is), just a watermark for a future replay/rebuild tool.
-  await advanceCheckpoint(client, { organizationId: event.organization_id, sequence: event.sequence });
+  await advanceCheckpoint(client, {
+    organizationId: event.organization_id,
+    sequence: event.sequence,
+  });
 }

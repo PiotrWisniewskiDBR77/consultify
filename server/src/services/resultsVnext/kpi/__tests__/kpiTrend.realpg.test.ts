@@ -142,7 +142,10 @@ describe('Day 14 K.1 — KPI trend read model (real Postgres)', () => {
     }
     reachable = true;
 
-    await client.query(`INSERT INTO organizations(id, name) VALUES ($1, $1), ($2, $2)`, [ORG_A, ORG_B]);
+    await client.query(`INSERT INTO organizations(id, name) VALUES ($1, $1), ($2, $2)`, [
+      ORG_A,
+      ORG_B,
+    ]);
     await client.query(
       `INSERT INTO users(id, organization_id, email) VALUES ($1, $2, $3), ($4, $5, $6)`,
       [ACTOR_A, ORG_A, `${ACTOR_A}@k1-trend.local`, ACTOR_B, ORG_B, `${ACTOR_B}@k1-trend.local`]
@@ -153,7 +156,8 @@ describe('Day 14 K.1 — KPI trend read model (real Postgres)', () => {
     const commands: CommandsModule = await import('../kpiDefinitionCommands.js');
     createKpiDraft = commands.createKpiDraft;
 
-    const measurementCommands: MeasurementCommandsModule = await import('../kpiMeasurementCommands.js');
+    const measurementCommands: MeasurementCommandsModule =
+      await import('../kpiMeasurementCommands.js');
     recordMeasurement = measurementCommands.recordMeasurement;
 
     const repository: RepositoryModule = await import('../kpiRepository.js');
@@ -188,18 +192,23 @@ describe('Day 14 K.1 — KPI trend read model (real Postgres)', () => {
         [org]
       );
       await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [org]);
-      await client.query(
-        `DELETE FROM rvn_kpi_measurements WHERE organization_id = $1`,
-        [org]
-      );
+      await client.query(`DELETE FROM rvn_kpi_measurements WHERE organization_id = $1`, [org]);
       await client.query(
         `UPDATE rvn_kpi_definitions SET current_definition_version_id = NULL WHERE organization_id = $1`,
         [org]
       );
-      await client.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = $1`, [org]);
-      await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [org]);
+      await client.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = $1`, [
+        org,
+      ]);
+      await client.query(
+        `DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`,
+        [org]
+      );
       await client.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = $1`, [org]);
-      await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [org]);
+      await client.query(
+        `DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`,
+        [org]
+      );
       await client.query(`DELETE FROM users WHERE organization_id = $1`, [org]);
       await client.query(`DELETE FROM organizations WHERE id = $1`, [org]);
     }

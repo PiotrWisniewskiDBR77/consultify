@@ -31,7 +31,11 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { type ActionContext, getActionsForSurface, runIdeaAction } from '@/actions/ideaActionRegistry';
+import {
+  type ActionContext,
+  getActionsForSurface,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
 import { useFullscreenPortalTarget } from '@/hooks/useFullscreenPortalTarget';
 
 import {

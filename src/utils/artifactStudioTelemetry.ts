@@ -1,9 +1,9 @@
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import {
-  getArtifactStudioRolloutDecision,
   type ArtifactStudioFlagSource,
   type ArtifactStudioLane,
+  getArtifactStudioRolloutDecision,
 } from './artifactStudioFlags';
 
 /**

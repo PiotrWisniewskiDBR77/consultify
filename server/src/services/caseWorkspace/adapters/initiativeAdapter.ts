@@ -20,18 +20,26 @@
  * mismatched org even if a future caller forgot to check first.
  */
 
+import type {
+  CreateInitiativeData,
+  Initiative,
+} from '../../initiative/InitiativeDefinitionService.js';
+import initiativeService from '../../initiativeService.js';
+import * as artifactLinkService from '../artifactLinkService.js';
 import {
+  type CapabilityExecutionEnvelope,
   CapabilityHandlerError,
+  type InternalCommandBinding,
   registerCapabilityBinding,
   registerCapabilityWithAdapter,
-  type CapabilityExecutionEnvelope,
-  type InternalCommandBinding,
 } from '../capabilityAdapterService.js';
 import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import initiativeService from '../../initiativeService.js';
-import type { CreateInitiativeData, Initiative } from '../../initiative/InitiativeDefinitionService.js';
-import { attachArtifactLink, requireNonBlankInput, resolveCaseContext, resultRefFor } from './_shared.js';
+import {
+  attachArtifactLink,
+  requireNonBlankInput,
+  resolveCaseContext,
+  resultRefFor,
+} from './_shared.js';
 
 export const INITIATIVE_CREATE_CAPABILITY_ID = 'case-workspace.initiative.create';
 export const INITIATIVE_CREATE_CAPABILITY_VERSION = '1.0.0';
@@ -49,8 +57,12 @@ function readOptionalNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
-export function buildInitiativeCreateBinding(deps: InitiativeAdapterDeps = {}): InternalCommandBinding {
-  const create = deps.createInitiative ?? ((data: CreateInitiativeData) => initiativeService.createInitiative(data));
+export function buildInitiativeCreateBinding(
+  deps: InitiativeAdapterDeps = {}
+): InternalCommandBinding {
+  const create =
+    deps.createInitiative ??
+    ((data: CreateInitiativeData) => initiativeService.createInitiative(data));
 
   return {
     kind: 'INTERNAL',
@@ -87,7 +99,9 @@ export function buildInitiativeCreateBinding(deps: InitiativeAdapterDeps = {}): 
       } catch (error) {
         throw new CapabilityHandlerError(
           'CAPABILITY_INPUT_INVALID',
-          error instanceof Error ? error.name || 'initiative_create_rejected' : 'initiative_create_rejected'
+          error instanceof Error
+            ? error.name || 'initiative_create_rejected'
+            : 'initiative_create_rejected'
         );
       }
 
@@ -127,7 +141,9 @@ export function registerInitiativeCreateAdapterBinding(deps: InitiativeAdapterDe
   );
 }
 
-export function initiativeCreateRegistrationInput(createdByActorId: string): RegisterCapabilityInput {
+export function initiativeCreateRegistrationInput(
+  createdByActorId: string
+): RegisterCapabilityInput {
   return {
     capabilityId: INITIATIVE_CREATE_CAPABILITY_ID,
     capabilityVersion: INITIATIVE_CREATE_CAPABILITY_VERSION,
@@ -162,6 +178,9 @@ export async function registerInitiativeCreateCapability(params: {
   );
 }
 
-export async function getInitiativeReadback(id: string, organizationId: string): Promise<Initiative | null> {
+export async function getInitiativeReadback(
+  id: string,
+  organizationId: string
+): Promise<Initiative | null> {
   return initiativeService.getInitiativeById(id, organizationId);
 }

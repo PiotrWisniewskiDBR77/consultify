@@ -25,9 +25,7 @@ process.env.MOCK_DB = 'false';
 // Bypass the gate, keep every query real against the same RealPG database.
 vi.mock('../../middleware/superAdmin.middleware.js', () => ({
   verifySuperAdmin: (_req: unknown, _res: unknown, next: () => void) => next(),
-  requireSuperAdminCapability:
-    () => (_req: unknown, _res: unknown, next: () => void) =>
-      next(),
+  requireSuperAdminCapability: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
   apiAuthRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
@@ -566,9 +564,7 @@ describe.skipIf(!enabled)('Day 22 high-risk Admin semantic audit on RealPG', () 
 
     describe('service-account revoke', () => {
       it('(a) 401 without a token', async () => {
-        const response = await request(app).delete(
-          `/api/admin/service-accounts/${randomUUID()}`
-        );
+        const response = await request(app).delete(`/api/admin/service-accounts/${randomUUID()}`);
         expect(response.status).toBe(401);
       });
 

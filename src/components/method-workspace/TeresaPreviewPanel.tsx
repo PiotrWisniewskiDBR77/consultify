@@ -13,7 +13,11 @@
 import { AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
 import React from 'react';
 
-import type { TeresaCommitRequest, TeresaPreview, TeresaStatementKind } from '@/method-core/contracts';
+import type {
+  TeresaCommitRequest,
+  TeresaPreview,
+  TeresaStatementKind,
+} from '@/method-core/contracts';
 
 import type { TeresaSixQuestions } from './types';
 
@@ -48,11 +52,11 @@ function renderDiffValue(value: unknown): string {
   }
 }
 
-const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommitRequest) => void; readOnly?: boolean }> = ({
-  preview,
-  onCommit,
-  readOnly = false,
-}) => {
+const ProposalCard: React.FC<{
+  preview: TeresaPreview;
+  onCommit: (r: TeresaCommitRequest) => void;
+  readOnly?: boolean;
+}> = ({ preview, onCommit, readOnly = false }) => {
   const isExpired = new Date(preview.expiresAt).getTime() < Date.now();
   const decide = (decision: TeresaCommitRequest['decision']) => {
     onCommit({
@@ -92,7 +96,9 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
 
       {preview.proposedChanges.length > 0 && (
         <div className="space-y-1.5 rounded-md border border-c-border-subtle bg-c-surface p-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">Podgląd zmiany</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+            Podgląd zmiany
+          </p>
           {preview.proposedChanges.map((change, i) => (
             <div key={i} className="grid grid-cols-2 gap-2 text-xs">
               <div className="rounded bg-c-surface-raised px-2 py-1 text-c-text-muted line-through decoration-c-danger/50">
@@ -110,7 +116,9 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
       {preview.quality.verdict !== 'valid' && (
         <p className="text-xs text-c-warning flex items-center gap-1">
           <AlertTriangle size={12} />
-          {preview.quality.verdict === 'invalid' ? 'Nie przeszła kontroli jakości' : 'Wymaga przeglądu człowieka'}
+          {preview.quality.verdict === 'invalid'
+            ? 'Nie przeszła kontroli jakości'
+            : 'Wymaga przeglądu człowieka'}
         </p>
       )}
 
@@ -213,7 +221,12 @@ export const TeresaPreviewPanel: React.FC<TeresaPreviewPanelProps> = ({
         ) : (
           <div className="space-y-2">
             {proposalQueue.map((preview) => (
-              <ProposalCard key={preview.previewId} preview={preview} onCommit={onCommit} readOnly={readOnly} />
+              <ProposalCard
+                key={preview.previewId}
+                preview={preview}
+                onCommit={onCommit}
+                readOnly={readOnly}
+              />
             ))}
           </div>
         )}

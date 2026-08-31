@@ -103,7 +103,9 @@ describe('ShareViewDialog — dialog a11y contract', () => {
 describe('KeyboardShortcutsPanel — dialog a11y contract', () => {
   it('has role=dialog, aria-modal, and an accessible name; Escape closes and restores focus', async () => {
     render(
-      <Harness>{(open, onClose) => <KeyboardShortcutsPanel open={open} onClose={onClose} />}</Harness>
+      <Harness>
+        {(open, onClose) => <KeyboardShortcutsPanel open={open} onClose={onClose} />}
+      </Harness>
     );
     const { trigger } = await openAndAssertDialog(/Keyboard Shortcuts/i);
     await assertEscapeClosesAndRestoresFocus(trigger);

@@ -25,9 +25,6 @@ import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
-import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
-import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
-import { FINANCE_MODELING_CUTOVER } from '../services/legacyCutover/registry.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
   getFinanceTraceId,
@@ -52,6 +49,9 @@ import {
   updateEvent,
   updateModel,
 } from '../services/financialModelingService.js';
+import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
+import { FINANCE_MODELING_CUTOVER } from '../services/legacyCutover/registry.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import { run as dbRun } from '../utils/DbPromise.js';

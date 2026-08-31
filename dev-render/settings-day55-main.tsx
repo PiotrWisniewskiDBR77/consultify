@@ -5,15 +5,15 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 
-import { EmailDigestSettings } from '../src/components/settings/EmailDigestSettings';
 import { AIBehaviorSettings } from '../src/components/settings/AIBehaviorSettings';
 import { CalendarSyncSettings } from '../src/components/settings/CalendarSyncSettings';
 import { DataControlsSettings } from '../src/components/settings/DataControlsSettings';
+import { EmailDigestSettings } from '../src/components/settings/EmailDigestSettings';
 import { NotificationSettings } from '../src/components/settings/NotificationSettings';
 import { ProfileSettings } from '../src/components/settings/ProfileSettings';
 import { RegionalSettings } from '../src/components/settings/RegionalSettings';
-import { ThemeSettings } from '../src/components/settings/ThemeSettings';
 import { AuthenticationAccessPage } from '../src/components/settings/security/AuthenticationAccessPage';
+import { ThemeSettings } from '../src/components/settings/ThemeSettings';
 import i18n from '../src/i18n';
 import { Api } from '../src/services/api';
 import { SettingsApi } from '../src/services/api/settings.api';
@@ -59,19 +59,44 @@ const currentUser = {
 
 Object.assign(Api, {
   getAIInstructions: async () => ({
-    preferences: { systemPrompt: '', responseStyle: 'balanced', includeContext: true, maxContextLength: 4000 },
+    preferences: {
+      systemPrompt: '',
+      responseStyle: 'balanced',
+      includeContext: true,
+      maxContextLength: 4000,
+    },
   }),
   getAIPersonality: async () => ({
     preferences: { tone: 'professional', formality: 'balanced', verbosity: 'concise' },
   }),
   getGdprConsents: async () => ({
-    consents: { analytics: true, personalization: true, marketing: false, thirdPartySharing: false, aiTraining: false },
+    consents: {
+      analytics: true,
+      personalization: true,
+      marketing: false,
+      thirdPartySharing: false,
+      aiTraining: false,
+    },
   }),
   getGdprRetention: async () => ({ retention: { period: '365', autoDelete: false } }),
   getGdprDeletionStatus: async () => ({ request: null, latestRequest: null }),
-  getGdprExportStatus: async () => ({ request: { id: 'settings-day55-demo-export', status: 'pending' } }),
+  getGdprExportStatus: async () => ({
+    request: { id: 'settings-day55-demo-export', status: 'pending' },
+  }),
   getCalendars: async () => [
-    { id: 'google', name: 'Google Calendar', icon: '📅', connected: true, connection: { externalEmail: 'owner@local.test', calendarName: 'Kalendarz główny', lastSyncAt: new Date().toISOString(), syncTasks: true, syncMeetings: true } },
+    {
+      id: 'google',
+      name: 'Google Calendar',
+      icon: '📅',
+      connected: true,
+      connection: {
+        externalEmail: 'owner@local.test',
+        calendarName: 'Kalendarz główny',
+        lastSyncAt: new Date().toISOString(),
+        syncTasks: true,
+        syncMeetings: true,
+      },
+    },
     { id: 'outlook', name: 'Outlook Calendar', icon: '📆', connected: false, connection: null },
   ],
   getCalendarSettings: async () => ({ syncTasks: true, syncMeetings: true }),
@@ -164,9 +189,5 @@ if (el) {
         </main>
       </BrowserRouter>
     );
-  createRoot(el).render(
-    <React.StrictMode>
-      {content}
-    </React.StrictMode>
-  );
+  createRoot(el).render(<React.StrictMode>{content}</React.StrictMode>);
 }

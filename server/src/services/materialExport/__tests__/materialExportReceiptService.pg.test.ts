@@ -74,7 +74,9 @@ describe.skipIf(!REAL_PG)('MAT-MVP-EXPORT-001 DOC/XLSX receipts (real PG)', () =
       createdBy: USER_A,
       requestKey: 'download-click-1',
     };
-    const attempts = await Promise.all(Array.from({ length: 12 }, () => beginMaterialExport(input)));
+    const attempts = await Promise.all(
+      Array.from({ length: 12 }, () => beginMaterialExport(input))
+    );
     expect(new Set(attempts.map((attempt) => attempt.receipt.exportReceiptId)).size).toBe(1);
     expect(attempts.filter((attempt) => attempt.replayed).length).toBe(11);
 

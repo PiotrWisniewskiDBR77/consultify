@@ -56,11 +56,11 @@ export const growthPathsPack: ToolPack = {
     },
     whyItMatters: {
       pl: 'Silnik liczy dopasowanie każdej ćwiartki (atrakcyjność × wykonalność, 1-9) z ocenionych opcji i wykrywa nierówno rozłożone ryzyko — np. zakład wyłącznie na dywersyfikację bez bazy.',
-      en: 'The engine computes each quadrant\'s fit (attractiveness × feasibility, 1-9) from scored options and detects lopsided risk — e.g. betting only on diversification with no base.',
+      en: "The engine computes each quadrant's fit (attractiveness × feasibility, 1-9) from scored options and detects lopsided risk — e.g. betting only on diversification with no base.",
     },
     inputsRequired: {
       pl: 'Ambicja wzrostu i horyzont, sygnały o obecnych klientach/produktach, dowody popytu na nowe rynki/produkty oraz osoba znająca realne zdolności zespołu.',
-      en: 'A growth ambition and horizon, signals about current customers/products, demand evidence for new markets/products, and someone who knows the team\'s real capabilities.',
+      en: "A growth ambition and horizon, signals about current customers/products, demand evidence for new markets/products, and someone who knows the team's real capabilities.",
     },
     roles: {
       pl: 'Właściciel decyzji wzrostu (zarząd/growth lead), lider produktu lub sprzedaży jako źródło dowodu, analityk rynkowy.',
@@ -109,9 +109,11 @@ export const growthPathsPack: ToolPack = {
         pl: 'Zebrać sygnały wzrostu z wywiadów, kontekstu organizacji i rynku.',
         en: 'Capture growth signals from interviews, organization context, and market evidence.',
       },
-      whatGoodLooksLike: 'Sygnały przypisane do konkretnej ćwiartki Ansoffa, nie ogólne „jest potencjał".',
+      whatGoodLooksLike:
+        'Sygnały przypisane do konkretnej ćwiartki Ansoffa, nie ogólne „jest potencjał".',
       evidenceToAskFor: 'Źródło każdego sygnału popytu/zdolności.',
-      completionCriterion: 'Wystarczające sygnały, by rozpocząć ładder pytań dla co najmniej jednej ćwiartki.',
+      completionCriterion:
+        'Wystarczające sygnały, by rozpocząć ładder pytań dla co najmniej jednej ćwiartki.',
     },
     {
       id: 'options',
@@ -122,7 +124,8 @@ export const growthPathsPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każda opcja ma impact/effort/riskLevel i — jeśli dotyczy dywersyfikacji — przejście bramki capability-gate (istniejąca zdolność lub nazwana luka do zbudowania/kupienia).',
-      evidenceToAskFor: 'Odpowiedzi na drabinę L1-L4 (roszczenie wzrostu → wymuszony dowód → kwantyfikacja → sekwencja i zdolność).',
+      evidenceToAskFor:
+        'Odpowiedzi na drabinę L1-L4 (roszczenie wzrostu → wymuszony dowód → kwantyfikacja → sekwencja i zdolność).',
       completionCriterion: 'Co najmniej jedna zaakceptowana opcja w co najmniej jednej ćwiartce.',
     },
     {
@@ -132,9 +135,11 @@ export const growthPathsPack: ToolPack = {
         pl: 'Porównać opcje, pokazać trade-offy i wybrać rekomendowane ruchy wzrostu.',
         en: 'Compare options, expose trade-offs, and select recommended growth moves.',
       },
-      whatGoodLooksLike: 'Ranking ćwiartek z jawną przyczyną (score, ryzyko), luki pokrycia nazwane wprost.',
+      whatGoodLooksLike:
+        'Ranking ćwiartek z jawną przyczyną (score, ryzyko), luki pokrycia nazwane wprost.',
       evidenceToAskFor: 'Które ćwiartki mają dowód, które są zakładem bez bazy.',
-      completionCriterion: 'Ranking policzony przez silnik z zaakceptowanych opcji; luki pokrycia wykryte.',
+      completionCriterion:
+        'Ranking policzony przez silnik z zaakceptowanych opcji; luki pokrycia wykryte.',
     },
     {
       id: 'outputs',
@@ -143,9 +148,11 @@ export const growthPathsPack: ToolPack = {
         pl: 'Przygotować final source summary oraz dalsze inicjatywy wzrostowe.',
         en: 'Prepare the final source summary and downstream growth initiatives.',
       },
-      whatGoodLooksLike: 'Każdy ruch ma rationale, trade-off i odrzucony wariant, nie jest życzeniem.',
+      whatGoodLooksLike:
+        'Każdy ruch ma rationale, trade-off i odrzucony wariant, nie jest życzeniem.',
       evidenceToAskFor: 'Co świadomie NIE robimy wybierając dany ruch i dlaczego.',
-      completionCriterion: 'Każdy ruch przechodzi validateW2Move (rationale, trade-off, odrzucony wariant — żadne pole nie jest puste ani zbyt cienkie).',
+      completionCriterion:
+        'Każdy ruch przechodzi validateW2Move (rationale, trade-off, odrzucony wariant — żadne pole nie jest puste ani zbyt cienkie).',
     },
   ],
 
@@ -282,10 +289,12 @@ export const growthPathsPack: ToolPack = {
     sourceUsed: 'src/config/ansoff/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
-    trademarkNote: 'Nie znaleziono znaku towarowego; tekst artykułu z 1957 objęty prawem autorskim, nie reprodukowany.',
+    trademarkNote:
+      'Nie znaleziono znaku towarowego; tekst artykułu z 1957 objęty prawem autorskim, nie reprodukowany.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'ŚREDNIE — szeroko używana bez atrybucji w praktyce doradczej, brak formalnego potwierdzenia w repo.',
+    uncertainty:
+      'ŚREDNIE — szeroko używana bez atrybucji w praktyce doradczej, brak formalnego potwierdzenia w repo.',
   },
 };

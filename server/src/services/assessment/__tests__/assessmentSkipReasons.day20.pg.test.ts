@@ -73,7 +73,13 @@ describe.skipIf(!REAL_DB)('Assessment day 20 skip reasons — real router and Po
     await pool.query(
       `INSERT INTO method_snapshots (id, organization_id, session_id, method_pack_version, payload_json, content_hash)
        VALUES ($1,$2,$3,'v1',$4,$5)`,
-      [`snapshot-${suffix}`, org, session, JSON.stringify({ source: 'test' }), `hash-snapshot-${suffix}`]
+      [
+        `snapshot-${suffix}`,
+        org,
+        session,
+        JSON.stringify({ source: 'test' }),
+        `hash-snapshot-${suffix}`,
+      ]
     );
     await pool.query(
       `INSERT INTO method_outputs

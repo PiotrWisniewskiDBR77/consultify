@@ -14,10 +14,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  clampStatementConfidence,
   detectContainedStatementTypes,
   detectStatementType,
   extractFinancialLines,
-  clampStatementConfidence,
   locateStatementSections,
   resolveDuplicateSuggestedMappings,
   validateStatement,
@@ -42,13 +42,18 @@ describe('financialStatementService — contract tests', () => {
       'Koszt własny sprzedaży 15,34 (1 900) (1 700)',
       'Zysk operacyjny 17,34 1 333 1 280',
       'Zysk netto 20,34 900 850',
-      ...Array.from({ length: 20 }, (_, index) => `Pozycja operacyjna ${index} ${100 + index} ${90 + index}`),
+      ...Array.from(
+        { length: 20 },
+        (_, index) => `Pozycja operacyjna ${index} ${100 + index} ${90 + index}`
+      ),
     ].join('\n');
     const result = extractFinancialLines(text, 'P&L', {
       selectedPeriodLabel: '2025',
       comparisonPeriodLabel: '2024',
     });
-    expect(result.lines.find((line) => line.originalLabel.startsWith('Przychody'))?.value).toBe(3233);
+    expect(result.lines.find((line) => line.originalLabel.startsWith('Przychody'))?.value).toBe(
+      3233
+    );
     expect(result.lines.map((line) => line.value)).not.toEqual(
       expect.arrayContaining([10.13, 15.34, 17.34, 20.34])
     );
@@ -74,13 +79,18 @@ describe('financialStatementService — contract tests', () => {
       'Skonsolidowane sprawozdanie z sytuacji finansowej',
       'Nota \t31.12.2025 \t31.12.2024',
       'Akcje własne \t23,24 \t(22 424) \t-',
-      ...Array.from({ length: 20 }, (_, index) => `Pozycja bilansowa ${index} \t${100 + index} \t${90 + index}`),
+      ...Array.from(
+        { length: 20 },
+        (_, index) => `Pozycja bilansowa ${index} \t${100 + index} \t${90 + index}`
+      ),
     ].join('\n');
     const result = extractFinancialLines(text, 'BS', {
       selectedPeriodLabel: '2025',
       comparisonPeriodLabel: '2024',
     });
-    const treasuryShares = result.lines.find((line) => line.originalLabel.startsWith('Akcje własne'));
+    const treasuryShares = result.lines.find((line) =>
+      line.originalLabel.startsWith('Akcje własne')
+    );
     expect(treasuryShares?.value).toBe(-22424);
     expect(treasuryShares?.numericTokens).toEqual(
       expect.arrayContaining([expect.objectContaining({ raw: '23,24', tokenType: 'note_ref' })])
@@ -92,8 +102,10 @@ describe('financialStatementService — contract tests', () => {
       'pieniężnych',
       '01.01.2025 – 31.12.2025  01.01.2024 – 31.12.2024',
       'DZIAŁALNOŚĆ OPERACYJNA',
-      ...Array.from({ length: 16 }, (_, index) =>
-        `Korekta przepływów operacyjnych ${index + 1} ${100_000 + index} ${90_000 + index}`
+      ...Array.from(
+        { length: 16 },
+        (_, index) =>
+          `Korekta przepływów operacyjnych ${index + 1} ${100_000 + index} ${90_000 + index}`
       ),
       'Przepływy pieniężne netto z działalności operacyjnej 590 880 521 297',
       'Przepływy pieniężne netto z działalności inwestycyjnej (474 582) (470 547)',

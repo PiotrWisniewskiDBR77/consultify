@@ -33,7 +33,7 @@ if (!REAL_PG) {
   // eslint-disable-next-line no-console
   console.warn(
     '[programService.test.ts SKIPPED — clean skip, not a failure] wymaga NODE_ENV=test DB_TYPE=postgres ' +
-      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... (patrz komentarz na górze pliku)',
+      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... (patrz komentarz na górze pliku)'
   );
 }
 
@@ -43,7 +43,11 @@ suite('programService (Postgres realny — U3)', () => {
 
   const orgA = `u3-prog-org-a-${randomUUID()}`;
   const orgB = `u3-prog-org-b-${randomUUID()}`;
-  const adminActor = { userId: `u3-admin-${randomUUID()}`, organizationId: orgA, platformRole: 'admin' as const };
+  const adminActor = {
+    userId: `u3-admin-${randomUUID()}`,
+    organizationId: orgA,
+    platformRole: 'admin' as const,
+  };
 
   let packId: string;
   let rootCriterionId: string;
@@ -67,10 +71,15 @@ suite('programService (Postgres realny — U3)', () => {
         `u3-prog-pack-key-${packId}`,
         'Pakiet testowy U3 — programService',
         JSON.stringify([
-          { key: 'nonconforming', label: 'Niezgodność', nonConforming: true, requiresCorrectiveAction: true },
+          {
+            key: 'nonconforming',
+            label: 'Niezgodność',
+            nonConforming: true,
+            requiresCorrectiveAction: true,
+          },
         ]),
         JSON.stringify(['lead_auditor', 'auditor', 'auditee']),
-      ],
+      ]
     );
 
     rootCriterionId = `u3progpkc_${randomUUID()}`;
@@ -80,7 +89,7 @@ suite('programService (Postgres realny — U3)', () => {
          (id, pack_id, parent_id, ordinal, ref_code, node_kind, title, requirement_text,
           audit_question, expected_evidence, mandatory)
        VALUES ($1,$2,NULL,1,'A','domain','Domena A', NULL, NULL, '[]'::jsonb, true)`,
-      [rootCriterionId, packId],
+      [rootCriterionId, packId]
     );
     await auditsDb.auditRun(
       `INSERT INTO audit_pack_criteria
@@ -93,15 +102,24 @@ suite('programService (Postgres realny — U3)', () => {
         rootCriterionId,
         ORIGINAL_REQUIREMENT_TEXT,
         JSON.stringify([{ kind: 'document', description: 'polityka', mandatory: true }]),
-      ],
+      ]
     );
   });
 
   afterAll(async () => {
     if (!auditsDb) return;
-    await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
-    await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
-    await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id IN ($1,$2)`, [orgA, orgB]);
+    await auditsDb.auditRun(`DELETE FROM audit_program_members WHERE organization_id IN ($1,$2)`, [
+      orgA,
+      orgB,
+    ]);
+    await auditsDb.auditRun(`DELETE FROM audit_program_criteria WHERE organization_id IN ($1,$2)`, [
+      orgA,
+      orgB,
+    ]);
+    await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id IN ($1,$2)`, [
+      orgA,
+      orgB,
+    ]);
     await auditsDb.auditRun(`DELETE FROM audit_pack_criteria WHERE pack_id = $1`, [packId]);
     await auditsDb.auditRun(`DELETE FROM audit_packs WHERE id = $1`, [packId]);
   });
@@ -117,13 +135,13 @@ suite('programService (Postgres realny — U3)', () => {
     expect(detail.program.lifecycleState).toBe('planning');
     expect(detail.program.criteriaSnapshotAt).toBeTruthy();
     expect(detail.stats.criteriaTotal).toBe(2);
-    expect(detail.members.some((m) => m.userId === adminActor.userId && m.memberRole === 'program_owner')).toBe(
-      true,
-    );
+    expect(
+      detail.members.some((m) => m.userId === adminActor.userId && m.memberRole === 'program_owner')
+    ).toBe(true);
 
     const criteria = await auditsDb.auditAll<Record<string, unknown>>(
       `SELECT * FROM audit_program_criteria WHERE program_id = $1 ORDER BY ordinal ASC`,
-      [detail.program.id],
+      [detail.program.id]
     );
     expect(criteria).toHaveLength(2);
 
@@ -138,7 +156,7 @@ suite('programService (Postgres realny — U3)', () => {
     expect(child!.requirement_text).toBe(ORIGINAL_REQUIREMENT_TEXT);
   });
 
-  it("E.2 — zmiana pakietu PO utworzeniu programu NIE zmienia kryteriów programu (immutability snapshotu)", async () => {
+  it('E.2 — zmiana pakietu PO utworzeniu programu NIE zmienia kryteriów programu (immutability snapshotu)', async () => {
     const detail = await programService.createProgramFromPack(orgA, adminActor, {
       packId,
       name: 'Program testowy E.2',
@@ -152,17 +170,17 @@ suite('programService (Postgres realny — U3)', () => {
     try {
       const criteria = await auditsDb.auditAll<Record<string, unknown>>(
         `SELECT * FROM audit_program_criteria WHERE program_id = $1 AND pack_criterion_id = $2`,
-        [detail.program.id, childCriterionId],
+        [detail.program.id, childCriterionId]
       );
       expect(criteria).toHaveLength(1);
       expect(criteria[0].requirement_text).toBe(ORIGINAL_REQUIREMENT_TEXT);
       expect(criteria[0].requirement_text).not.toBe('ZMIENIONE W PAKIECIE PO UTWORZENIU PROGRAMU');
     } finally {
       // Przywróć oryginał — inne testy w tym pliku tworzą kolejne programy z tego samego pakietu.
-      await auditsDb.auditRun(`UPDATE audit_pack_criteria SET requirement_text = $1 WHERE id = $2`, [
-        ORIGINAL_REQUIREMENT_TEXT,
-        childCriterionId,
-      ]);
+      await auditsDb.auditRun(
+        `UPDATE audit_pack_criteria SET requirement_text = $1 WHERE id = $2`,
+        [ORIGINAL_REQUIREMENT_TEXT, childCriterionId]
+      );
     }
   });
 
@@ -181,9 +199,13 @@ suite('programService (Postgres realny — U3)', () => {
       platformRole: 'admin' as const,
     };
     await expect(
-      programService.updateProgram(orgB, orgBAdmin, detail.program.id, { name: 'HACKED FROM ORG B' }),
+      programService.updateProgram(orgB, orgBAdmin, detail.program.id, {
+        name: 'HACKED FROM ORG B',
+      })
     ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
-    await expect(programService.deleteProgram(orgB, orgBAdmin, detail.program.id)).rejects.toMatchObject({
+    await expect(
+      programService.deleteProgram(orgB, orgBAdmin, detail.program.id)
+    ).rejects.toMatchObject({
       code: 'AUDIT_NOT_FOUND',
     });
 

@@ -18,8 +18,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
 import { invalidatePlatformSuperAdminCache } from '../services/organizationSuspensionGuard.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { withPgTransaction } from '../utils/queryHelpers.js';
@@ -80,14 +80,22 @@ router.post(
           await tx.query(
             `INSERT INTO users (id,email,first_name,last_name,role,status,organization_id,created_at)
              VALUES (?,?,?,?,?,?,?,?)`,
-            [userId,user.email.toLowerCase(),user.firstName || null,user.lastName || null,
-             role,'active',orgId,now]
+            [
+              userId,
+              user.email.toLowerCase(),
+              user.firstName || null,
+              user.lastName || null,
+              role,
+              'active',
+              orgId,
+              now,
+            ]
           );
           await tx.query(
             `INSERT INTO organization_members
              (id,organization_id,user_id,role,status,created_at)
              VALUES (?,?,?,?,?,?)`,
-            [uuidv4(),orgId,userId,membershipRole,'ACTIVE',now]
+            [uuidv4(), orgId, userId, membershipRole, 'ACTIVE', now]
           );
         });
 

@@ -5,8 +5,8 @@
  * the identical code renders both the live `OkrObjectivesView.tsx` and the
  * dev-render QA harness.
  */
-import React from 'react';
 import { Lock } from 'lucide-react';
+import React from 'react';
 
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives';
@@ -32,7 +32,10 @@ import {
 // Table columns
 // ==========================================
 
-export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: string): TableColumn[] {
+export function buildOkrObjectiveColumns(
+  isPolish: boolean,
+  parentSetStatus: string
+): TableColumn[] {
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   return [
     {
@@ -40,23 +43,37 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       label: isPolish ? 'Cel (Objective)' : 'Objective',
       width: '280px',
       sortable: true,
-      render: (row: OkrObjectiveWithKeyResultsDto) => <span className="text-sm font-medium text-c-text">{row.title}</span>,
+      render: (row: OkrObjectiveWithKeyResultsDto) => (
+        <span className="text-sm font-medium text-c-text">{row.title}</span>
+      ),
     },
     {
       id: 'status',
       label: 'Status',
       width: '190px',
       filterable: true,
-      filterOptions: (Object.keys(OKR_OBJECTIVE_STATUS_TONE) as OkrObjectiveWithKeyResultsDto['status'][]).map((s) => ({
+      filterOptions: (
+        Object.keys(OKR_OBJECTIVE_STATUS_TONE) as OkrObjectiveWithKeyResultsDto['status'][]
+      ).map((s) => ({
         value: s,
         label: okrObjectiveStatusLabel(s, isPolish),
       })),
       render: (row: OkrObjectiveWithKeyResultsDto) => (
         <div className="flex flex-wrap items-center gap-1.5">
-          <StatusChip label={okrObjectiveStatusLabel(row.status, isPolish)} tone={OKR_OBJECTIVE_STATUS_TONE[row.status]} />
+          <StatusChip
+            label={okrObjectiveStatusLabel(row.status, isPolish)}
+            tone={OKR_OBJECTIVE_STATUS_TONE[row.status]}
+          />
           {childLock ? (
-            <span className="inline-flex shrink-0" title={isPolish ? childLock.reason.pl : childLock.reason.en}>
-              <Lock size={13} className="shrink-0 text-c-text-muted" aria-label={isPolish ? childLock.label.pl : childLock.label.en} />
+            <span
+              className="inline-flex shrink-0"
+              title={isPolish ? childLock.reason.pl : childLock.reason.en}
+            >
+              <Lock
+                size={13}
+                className="shrink-0 text-c-text-muted"
+                aria-label={isPolish ? childLock.label.pl : childLock.label.en}
+              />
             </span>
           ) : null}
         </div>
@@ -67,7 +84,9 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       label: isPolish ? 'Ambicja' : 'Ambition',
       width: '140px',
       render: (row: OkrObjectiveWithKeyResultsDto) => (
-        <span className="text-sm text-c-text-secondary">{okrObjectiveAmbitionLabel(row.ambitionType, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">
+          {okrObjectiveAmbitionLabel(row.ambitionType, isPolish)}
+        </span>
       ),
     },
     {
@@ -75,7 +94,10 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
       render: (row: OkrObjectiveWithKeyResultsDto) => (
-        <span className="block truncate text-sm text-c-text-secondary font-mono" title={row.ownerUserId}>
+        <span
+          className="block truncate text-sm text-c-text-secondary font-mono"
+          title={row.ownerUserId}
+        >
           {shortOkrId(row.ownerUserId)}
         </span>
       ),
@@ -91,7 +113,11 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
           value={parseOkrObjectiveProgress(row.progress, row.progressCalcReason)}
           align="right"
           notCalculableReason={row.progressCalcReason ?? undefined}
-          format={(v) => <span className="tabular-nums text-sm text-c-text">{formatOkrProgressPercent(v, isPolish)}</span>}
+          format={(v) => (
+            <span className="tabular-nums text-sm text-c-text">
+              {formatOkrProgressPercent(v, isPolish)}
+            </span>
+          )}
         />
       ),
     },
@@ -104,7 +130,9 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
           isPolish={isPolish}
           value={parseOkrObjectiveConfidence(row.confidence, row.confidenceCalcReason)}
           notCalculableReason={row.confidenceCalcReason ?? undefined}
-          format={(v) => <StatusChip label={okrObjectiveConfidenceLabel(v, isPolish)} tone="neutral" />}
+          format={(v) => (
+            <StatusChip label={okrObjectiveConfidenceLabel(v, isPolish)} tone="neutral" />
+          )}
         />
       ),
     },
@@ -123,7 +151,9 @@ export function buildOkrObjectiveColumns(isPolish: boolean, parentSetStatus: str
       width: '130px',
       sortable: true,
       render: (row: OkrObjectiveWithKeyResultsDto) => (
-        <span className="text-sm text-c-text-muted tabular-nums">{formatOkrDate(row.updatedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted tabular-nums">
+          {formatOkrDate(row.updatedAt, isPolish)}
+        </span>
       ),
     },
   ];
@@ -147,7 +177,11 @@ export function buildOkrObjectiveRowMenu(
   handlers: OkrObjectiveRowMenuHandlers
 ): StandardRowMenu {
   const childLock = getOkrSetChildEditLock(parentSetStatus);
-  const childLockReason = childLock ? (isPolish ? childLock.reason.pl : childLock.reason.en) : undefined;
+  const childLockReason = childLock
+    ? isPolish
+      ? childLock.reason.pl
+      : childLock.reason.en
+    : undefined;
   const cancelEligible = canCancelObjectiveStatus(row.status);
   const cancelBlockedReason = childLock
     ? childLockReason
@@ -173,7 +207,10 @@ export function buildOkrObjectiveRowMenu(
     },
     destructive: cancelBlockedReason
       ? { label: isPolish ? 'Anuluj cel' : 'Cancel objective', note: cancelBlockedReason }
-      : { label: isPolish ? 'Anuluj cel' : 'Cancel objective', onClick: () => handlers.onCancel(row) },
+      : {
+          label: isPolish ? 'Anuluj cel' : 'Cancel objective',
+          onClick: () => handlers.onCancel(row),
+        },
   };
 }
 
@@ -190,7 +227,10 @@ export interface OkrObjectivePreviewDeps {
   onCancel: (row: OkrObjectiveWithKeyResultsDto) => void;
 }
 
-export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, deps: OkrObjectivePreviewDeps): StandardPreviewProps {
+export function buildOkrObjectivePreview(
+  row: OkrObjectiveWithKeyResultsDto,
+  deps: OkrObjectivePreviewDeps
+): StandardPreviewProps {
   const { isPolish, parentSetStatus, onClose, onOpenKeyResults, onEdit, onCancel } = deps;
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   const progress = parseOkrObjectiveProgress(row.progress, row.progressCalcReason);
@@ -201,11 +241,17 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
     title: row.title,
     onClose,
     headerExtra: childLock ? (
-      <LifecycleLockBadge label={isPolish ? childLock.label.pl : childLock.label.en} reason={isPolish ? childLock.reason.pl : childLock.reason.en} />
+      <LifecycleLockBadge
+        label={isPolish ? childLock.label.pl : childLock.label.en}
+        reason={isPolish ? childLock.reason.pl : childLock.reason.en}
+      />
     ) : undefined,
     meta: {
       pills: [
-        { label: okrObjectiveStatusLabel(row.status, isPolish), tone: OKR_OBJECTIVE_STATUS_TONE[row.status] },
+        {
+          label: okrObjectiveStatusLabel(row.status, isPolish),
+          tone: OKR_OBJECTIVE_STATUS_TONE[row.status],
+        },
         { label: okrObjectiveAmbitionLabel(row.ambitionType, isPolish), tone: 'neutral' },
       ],
       recommendation: childLock
@@ -221,9 +267,22 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
       propertyLabel: isPolish ? 'Właściwość' : 'Property',
       valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
-        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: row.ownerUserId, mono: true },
-        { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
-        { id: 'rationale', label: isPolish ? 'Uzasadnienie' : 'Rationale', value: row.rationale ?? '—' },
+        {
+          id: 'owner',
+          label: isPolish ? 'Właściciel' : 'Owner',
+          value: row.ownerUserId,
+          mono: true,
+        },
+        {
+          id: 'description',
+          label: isPolish ? 'Opis' : 'Description',
+          value: row.description ?? '—',
+        },
+        {
+          id: 'rationale',
+          label: isPolish ? 'Uzasadnienie' : 'Rationale',
+          value: row.rationale ?? '—',
+        },
         {
           id: 'progress',
           label: isPolish ? 'Postęp' : 'Progress',
@@ -253,9 +312,21 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
           label: isPolish ? 'Liczba Kluczowych Rezultatów' : 'Key Results count',
           value: String(row.keyResults.length),
         },
-        { id: 'approvedAt', label: isPolish ? 'Zaakceptowano' : 'Approved at', value: formatOkrDate(row.approvedAt, isPolish) },
-        { id: 'createdAt', label: isPolish ? 'Utworzono' : 'Created', value: formatOkrDate(row.createdAt, isPolish) },
-        { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', value: formatOkrDate(row.updatedAt, isPolish) },
+        {
+          id: 'approvedAt',
+          label: isPolish ? 'Zaakceptowano' : 'Approved at',
+          value: formatOkrDate(row.approvedAt, isPolish),
+        },
+        {
+          id: 'createdAt',
+          label: isPolish ? 'Utworzono' : 'Created',
+          value: formatOkrDate(row.createdAt, isPolish),
+        },
+        {
+          id: 'updatedAt',
+          label: isPolish ? 'Zaktualizowano' : 'Updated',
+          value: formatOkrDate(row.updatedAt, isPolish),
+        },
       ],
     },
     ai: { hints: [], disabled: true, disabledTooltip: isPolish ? 'Wkrótce' : 'Coming soon' },
@@ -269,8 +340,19 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
           onClick: () => onOpenKeyResults(row),
         },
         childLock
-          ? { id: 'edit', variant: 'neutral', label: isPolish ? 'Edytuj' : 'Edit', onClick: () => {}, disabled: true }
-          : { id: 'edit', variant: 'neutral', label: isPolish ? 'Edytuj' : 'Edit', onClick: () => onEdit(row) },
+          ? {
+              id: 'edit',
+              variant: 'neutral',
+              label: isPolish ? 'Edytuj' : 'Edit',
+              onClick: () => {},
+              disabled: true,
+            }
+          : {
+              id: 'edit',
+              variant: 'neutral',
+              label: isPolish ? 'Edytuj' : 'Edit',
+              onClick: () => onEdit(row),
+            },
         {
           id: 'cancel',
           variant: 'destructive',

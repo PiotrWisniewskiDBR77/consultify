@@ -33,6 +33,7 @@ import {
   proposeMobilizationBlueprint,
   proposeOpportunitySynthesis,
   proposePortfolioDecision,
+  resolvePortfolioDecision,
   reviewDrdAssessmentProposal,
   reviewFinanceKpiPack,
   reviewInitialIdeasProposal,
@@ -40,7 +41,6 @@ import {
   reviewMobilizationBlueprint,
   reviewOpportunitySynthesis,
   reviewPortfolioDecision,
-  resolvePortfolioDecision,
 } from '../services/v8/transformationCaseService.js';
 import { executeGovernedInitiativeTransition } from '../services/v8/transformationInitiativeTransitionAdapterService.js';
 

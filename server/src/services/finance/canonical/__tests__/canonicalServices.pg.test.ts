@@ -73,7 +73,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
     exceptionLedgerService = await import('../exceptionLedgerService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'FinV3 C02 Test Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'FinV3 C02 Test Org',
+      ])
     );
   });
 
@@ -118,7 +121,7 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         artifactType: 'HISTORICAL_ANALYSIS', // LOW risk tier -> no SoD gate, simpler happy path
         createdBy: preparerId,
       });
-      let bvId = created.businessVersion.business_version_id;
+      const bvId = created.businessVersion.business_version_id;
       let version = created.businessVersion.version;
 
       const submitted = await artifactVersionService.transition({
@@ -161,7 +164,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       expect(blockedByFreshness.code).toBe('APPROVAL_BLOCKED');
 
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        )
       );
 
       const approved = await artifactVersionService.approveVersion({
@@ -245,7 +251,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       version = started.businessVersion.version;
 
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        )
       );
 
       const result = await artifactVersionService.approveVersion({
@@ -297,7 +306,14 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
              organization_id, business_version_id, compute_snapshot_id, output_kind, title, narrative,
              evidence_ref, ai_provider, ai_model, ai_prompt_version, ai_no_training_commitment, ai_evidence_digest, created_by
            ) VALUES (?, ?, ?, 'FACT', 'IF-19 regression', 'Pre-approval Advisor write', ?, 'MANUAL_PROGRAMMATIC', 'test', 'v1', true, ?, ?)`,
-          [orgId, bvId, snap.computeSnapshotId, JSON.stringify({ source: 'test' }), 'sha256:if19-regression', preparerId]
+          [
+            orgId,
+            bvId,
+            snap.computeSnapshotId,
+            JSON.stringify({ source: 'test' }),
+            'sha256:if19-regression',
+            preparerId,
+          ]
         )
       );
 
@@ -320,12 +336,20 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       });
       const bvId = created.businessVersion.business_version_id;
 
-      const first = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: preparerId });
+      const first = await artifactVersionService.createComputeSnapshot({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: preparerId,
+      });
       expect(first.ok).toBe(true);
       if (!first.ok) throw new Error('unreachable');
       expect(first.reused).toBe(false);
 
-      const second = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: preparerId });
+      const second = await artifactVersionService.createComputeSnapshot({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: preparerId,
+      });
       expect(second.ok).toBe(true);
       if (!second.ok) throw new Error('unreachable');
       expect(second.reused).toBe(true);
@@ -338,22 +362,51 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         artifactType: 'HISTORICAL_ANALYSIS',
         createdBy: preparerId,
       });
-      let bvId = created.businessVersion.business_version_id;
+      const bvId = created.businessVersion.business_version_id;
       let version = created.businessVersion.version;
 
-      const submitted = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'submit_for_review', actorId: preparerId, role: 'preparer', expectedVersion: version });
+      const submitted = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        action: 'submit_for_review',
+        actorId: preparerId,
+        role: 'preparer',
+        expectedVersion: version,
+      });
       if (!submitted.ok) throw new Error('unreachable');
       version = submitted.businessVersion.version;
-      const started = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'start_review', actorId: approverId, role: 'approver', expectedVersion: version });
+      const started = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        action: 'start_review',
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: version,
+      });
       if (!started.ok) throw new Error('unreachable');
       version = started.businessVersion.version;
-      await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId]));
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        )
+      );
 
-      const approved = await artifactVersionService.approveVersion({ organizationId: orgId, businessVersionId: bvId, actorId: approverId, role: 'approver', expectedVersion: version });
+      const approved = await artifactVersionService.approveVersion({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: version,
+      });
       expect(approved.ok).toBe(true);
       if (!approved.ok) throw new Error('unreachable');
 
-      const rejected = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: approverId });
+      const rejected = await artifactVersionService.createComputeSnapshot({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: approverId,
+      });
       expect(rejected.ok).toBe(false);
       if (rejected.ok) throw new Error('unreachable');
       expect(rejected.code).toBe('INVALID_STATUS');
@@ -366,23 +419,52 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         artifactType: 'HISTORICAL_ANALYSIS',
         createdBy: preparerId,
       });
-      let bvId = created.businessVersion.business_version_id;
+      const bvId = created.businessVersion.business_version_id;
       let version = created.businessVersion.version;
 
       // Pre-approval snapshot, exactly like a future AdvisorGenerationService would create.
-      const preSnap = await artifactVersionService.createComputeSnapshot({ organizationId: orgId, businessVersionId: bvId, actorId: preparerId });
+      const preSnap = await artifactVersionService.createComputeSnapshot({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: preparerId,
+      });
       expect(preSnap.ok).toBe(true);
       if (!preSnap.ok) throw new Error('unreachable');
 
-      const submitted = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'submit_for_review', actorId: preparerId, role: 'preparer', expectedVersion: version });
+      const submitted = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        action: 'submit_for_review',
+        actorId: preparerId,
+        role: 'preparer',
+        expectedVersion: version,
+      });
       if (!submitted.ok) throw new Error('unreachable');
       version = submitted.businessVersion.version;
-      const started = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'start_review', actorId: approverId, role: 'approver', expectedVersion: version });
+      const started = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        action: 'start_review',
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: version,
+      });
       if (!started.ok) throw new Error('unreachable');
       version = started.businessVersion.version;
-      await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId]));
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        )
+      );
 
-      const approved = await artifactVersionService.approveVersion({ organizationId: orgId, businessVersionId: bvId, actorId: approverId, role: 'approver', expectedVersion: version });
+      const approved = await artifactVersionService.approveVersion({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: version,
+      });
       expect(approved.ok).toBe(true);
       if (!approved.ok) throw new Error('unreachable');
       // The load-bearing assertion: approval did NOT mint a second snapshot for the same working
@@ -404,19 +486,44 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         artifactType: 'STATEMENT_PACK',
         createdBy: preparerId,
       });
-      let bvId = created.businessVersion.business_version_id;
+      const bvId = created.businessVersion.business_version_id;
       let version = created.businessVersion.version;
 
-      const submitted = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'submit_for_review', actorId: preparerId, role: 'preparer', expectedVersion: version });
+      const submitted = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        action: 'submit_for_review',
+        actorId: preparerId,
+        role: 'preparer',
+        expectedVersion: version,
+      });
       if (!submitted.ok) throw new Error('unreachable');
       version = submitted.businessVersion.version;
-      const started = await artifactVersionService.transition({ organizationId: orgId, businessVersionId: bvId, action: 'start_review', actorId: approverId, role: 'approver', expectedVersion: version });
+      const started = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        action: 'start_review',
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: version,
+      });
       if (!started.ok) throw new Error('unreachable');
       version = started.businessVersion.version;
-      await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId]));
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        )
+      );
 
       // No createComputeSnapshot() call at all — this is today's STATEMENT_PACK path, unchanged.
-      const approved = await artifactVersionService.approveVersion({ organizationId: orgId, businessVersionId: bvId, actorId: approverId, role: 'approver', expectedVersion: version });
+      const approved = await artifactVersionService.approveVersion({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: version,
+      });
       expect(approved.ok).toBe(true);
       if (!approved.ok) throw new Error('unreachable');
       expect(approved.computeSnapshotId).toBeTruthy();
@@ -453,7 +560,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       if (!t2.ok) throw new Error('unreachable');
       version = t2.businessVersion.version;
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        )
       );
       const approved = await artifactVersionService.approveVersion({
         organizationId: orgId,
@@ -490,7 +600,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       // WP-B02 §6.1 documents (financialModelingService.ts mutating
       // Approved in place). status must still be APPROVED (T9 only fires
       // when the CHILD itself is later approved, not on reopen).
-      const vNAfter = await artifactVersionService.getBusinessVersion(orgId, vN.business_version_id);
+      const vNAfter = await artifactVersionService.getBusinessVersion(
+        orgId,
+        vN.business_version_id
+      );
       expect(vNAfter).toEqual(vN);
     });
 
@@ -573,7 +686,9 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       expect(replay.ok).toBe(true);
       if (!replay.ok) throw new Error('unreachable');
       expect(replay.idempotentReplay).toBe(true);
-      expect(replay.businessVersion.business_version_id).toBe(first.businessVersion.business_version_id);
+      expect(replay.businessVersion.business_version_id).toBe(
+        first.businessVersion.business_version_id
+      );
     });
 
     // BUG-GOLDCO-03 regression (docs/validation/finance-v3/generated/gate-d/
@@ -622,7 +737,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       childVersion = started.businessVersion.version;
 
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [childBvId])
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [childBvId]
+        )
       );
 
       // Before the fix, this threw a raw 23505 unique-violation instead of
@@ -639,7 +757,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       if (!approved.ok) throw new Error('unreachable');
       expect(approved.businessVersion.status).toBe('APPROVED');
 
-      const parentAfter = await artifactVersionService.getBusinessVersion(orgId, vN.business_version_id);
+      const parentAfter = await artifactVersionService.getBusinessVersion(
+        orgId,
+        vN.business_version_id
+      );
       expect(parentAfter?.status).toBe('SUPERSEDED');
       expect(parentAfter?.superseded_by_version_id).toBe(childBvId);
       expect(parentAfter?.superseded_at).toBeTruthy();
@@ -666,11 +787,16 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       expect(restated.ok).toBe(true);
       if (!restated.ok) throw new Error('unreachable');
       expect(restated.businessVersion.version_kind).toBe('RESTATED');
-      expect(restated.businessVersion.restatement_reason).toBe('Inventory valuation error found in Q1 close');
+      expect(restated.businessVersion.restatement_reason).toBe(
+        'Inventory valuation error found in Q1 close'
+      );
       expect(restated.businessVersion.restatement_class).toBe('ERROR_CORRECTION');
 
       // Read back from the DB directly, not just the service's own return value.
-      const dbRow = await artifactVersionService.getBusinessVersion(orgId, restated.businessVersion.business_version_id);
+      const dbRow = await artifactVersionService.getBusinessVersion(
+        orgId,
+        restated.businessVersion.business_version_id
+      );
       expect(dbRow?.version_kind).toBe('RESTATED');
       expect(dbRow?.restatement_reason).toBe('Inventory valuation error found in Q1 close');
       expect(dbRow?.restatement_class).toBe('ERROR_CORRECTION');
@@ -736,11 +862,21 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       });
       expect(inserted.ok).toBe(true);
 
-      const descendants = await lineageService.getDescendants(orgId, stmt.businessVersion.business_version_id);
-      expect(descendants.some((e) => e.target_version_id === model.businessVersion.business_version_id)).toBe(true);
+      const descendants = await lineageService.getDescendants(
+        orgId,
+        stmt.businessVersion.business_version_id
+      );
+      expect(
+        descendants.some((e) => e.target_version_id === model.businessVersion.business_version_id)
+      ).toBe(true);
 
-      const ancestors = await lineageService.getAncestors(orgId, model.businessVersion.business_version_id);
-      expect(ancestors.some((e) => e.source_version_id === stmt.businessVersion.business_version_id)).toBe(true);
+      const ancestors = await lineageService.getAncestors(
+        orgId,
+        model.businessVersion.business_version_id
+      );
+      expect(
+        ancestors.some((e) => e.source_version_id === stmt.businessVersion.business_version_id)
+      ).toBe(true);
     });
 
     it('the DB trigger rejects a backward edge even if a caller bypassed the app-level pre-check', async () => {
@@ -881,7 +1017,11 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         idempotencyKey: `complete-${randomUUID()}`,
         requestedByUserId: preparerId,
       });
-      const [claimed] = await computeJobService.claim({ workerId: 'worker-complete', jobTypes: [jobType], limit: 1 });
+      const [claimed] = await computeJobService.claim({
+        workerId: 'worker-complete',
+        jobTypes: [jobType],
+        limit: 1,
+      });
       expect(claimed.id).toBe(enqueued.job.id);
 
       const foreignJob = await computeJobService.completeJobSuccess({
@@ -925,9 +1065,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         expect.objectContaining({ ok: false, code: 'STALE_PUBLICATION' })
       );
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_working_revisions SET is_current=false WHERE working_revision_id=?`, [
-          artifact.workingRevision.working_revision_id,
-        ])
+        tx.queryRun(
+          `UPDATE finance_working_revisions SET is_current=false WHERE working_revision_id=?`,
+          [artifact.workingRevision.working_revision_id]
+        )
       );
       const nonCurrentOutput = await computeJobService.completeJobSuccess({
         jobId: claimed.id,
@@ -942,9 +1083,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         expect.objectContaining({ ok: false, code: 'STALE_PUBLICATION' })
       );
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_working_revisions SET is_current=true WHERE working_revision_id=?`, [
-          artifact.workingRevision.working_revision_id,
-        ])
+        tx.queryRun(
+          `UPDATE finance_working_revisions SET is_current=true WHERE working_revision_id=?`,
+          [artifact.workingRevision.working_revision_id]
+        )
       );
 
       const completionParams = {
@@ -1016,7 +1158,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
           `SELECT freshness FROM finance_business_versions WHERE business_version_id=?`,
           [artifact.businessVersion.business_version_id]
         ),
-        revision: await tx.queryOne<{ content_semantic_hash: string; compute_run_id: string | null }>(
+        revision: await tx.queryOne<{
+          content_semantic_hash: string;
+          compute_run_id: string | null;
+        }>(
           `SELECT content_semantic_hash,compute_run_id FROM finance_working_revisions WHERE working_revision_id=?`,
           [artifact.workingRevision.working_revision_id]
         ),
@@ -1059,18 +1204,17 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
         requestedByUserId: preparerId,
       });
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE compute_jobs SET created_at=created_at+interval '1 second' WHERE id=?`, [
-          newer.job.id,
-        ])
+        tx.queryRun(
+          `UPDATE compute_jobs SET created_at=created_at+interval '1 second' WHERE id=?`,
+          [newer.job.id]
+        )
       );
       const claimed = await computeJobService.claim({
         workerId: 'publication-order-worker',
         jobTypes: [jobType],
         limit: 2,
       });
-      expect(new Set(claimed.map((job) => job.id))).toEqual(
-        new Set([older.job.id, newer.job.id])
-      );
+      expect(new Set(claimed.map((job) => job.id))).toEqual(new Set([older.job.id, newer.job.id]));
       const newerResult = await computeJobService.completeJobSuccess({
         jobId: newer.job.id,
         organizationId: orgId,
@@ -1124,7 +1268,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       expect(raised.ok).toBe(true);
       if (!raised.ok) throw new Error('unreachable');
 
-      const openState = await exceptionLedgerService.getCurrent(orgId, raised.exception.exception_group_id);
+      const openState = await exceptionLedgerService.getCurrent(
+        orgId,
+        raised.exception.exception_group_id
+      );
       expect(openState?.state).toBe('OPEN');
 
       const accepted = await exceptionLedgerService.accept({
@@ -1135,7 +1282,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       });
       expect(accepted.ok).toBe(true);
 
-      const acceptedState = await exceptionLedgerService.getCurrent(orgId, raised.exception.exception_group_id);
+      const acceptedState = await exceptionLedgerService.getCurrent(
+        orgId,
+        raised.exception.exception_group_id
+      );
       expect(acceptedState?.state).toBe('ACCEPTED');
     });
 
@@ -1212,7 +1362,10 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       if (!t2.ok) throw new Error('unreachable');
       version = t2.businessVersion.version;
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+        tx.queryRun(
+          `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+          [bvId]
+        )
       );
 
       const raised = await exceptionLedgerService.raise({

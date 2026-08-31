@@ -8,11 +8,11 @@
  * exports.
  */
 
-export * from './gridCoordinates.js';
-export * from './engineContext.js';
-export * from './GridSelectionModel.js';
-export * from './PasteEngine.js';
-export * from './FillEngine.js';
 export * from './BulkOpsEngine.js';
+export * from './engineContext.js';
+export * from './FillEngine.js';
 export * from './FindReplaceEngine.js';
+export * from './gridCoordinates.js';
+export * from './GridSelectionModel.js';
 export * from './GridViewState.js';
+export * from './PasteEngine.js';

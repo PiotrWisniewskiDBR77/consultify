@@ -15,7 +15,6 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import i18n from '../src/i18n';
-
 import ToolsSwotInitiativeProposalScreen from './screens/tools-swot-initiative-proposal';
 
 const params = new URLSearchParams(window.location.search);

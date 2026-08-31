@@ -21,8 +21,13 @@ vi.mock('../workspaceApi', async () => {
 });
 
 import { RemediationPanel } from '../RemediationPanel';
+import type {
+  WorkspaceCapability,
+  WorkspaceCorrectiveAction,
+  WorkspaceFindingDetail,
+  WorkspaceVerification,
+} from '../workspaceApi';
 import * as workspaceApi from '../workspaceApi';
-import type { WorkspaceCapability, WorkspaceCorrectiveAction, WorkspaceFindingDetail, WorkspaceVerification } from '../workspaceApi';
 
 const mockedPerformVerification = vi.mocked(workspaceApi.performVerification);
 
@@ -134,21 +139,28 @@ describe('RemediationPanel', () => {
   it('does not let the action owner confirm the effectiveness of their own action', () => {
     // action().ownerUserId === 'user-owner' and implementedBy === 'user-owner'
     renderPanel(['verification.perform'], 'user-owner');
-    expect(screen.queryByRole('button', { name: /potwierdź skuteczność/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /potwierdź skuteczność/i })
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText(/nie możesz sam potwierdzić skuteczności własnego działania/i)
     ).toBeInTheDocument();
   });
 
   it('lets an independent verifier confirm effectiveness', async () => {
-    mockedPerformVerification.mockResolvedValue(verification({ performedAt: '2026-08-11T00:00:00Z', result: 'effective' }));
+    mockedPerformVerification.mockResolvedValue(
+      verification({ performedAt: '2026-08-11T00:00:00Z', result: 'effective' })
+    );
     renderPanel(['verification.perform'], 'user-independent');
 
     const confirmButton = await screen.findByRole('button', { name: /potwierdź skuteczność/i });
     fireEvent.click(confirmButton);
 
     await waitFor(() =>
-      expect(mockedPerformVerification).toHaveBeenCalledWith('verification-1', expect.objectContaining({ result: 'effective' }))
+      expect(mockedPerformVerification).toHaveBeenCalledWith(
+        'verification-1',
+        expect.objectContaining({ result: 'effective' })
+      )
     );
   });
 
@@ -161,7 +173,9 @@ describe('RemediationPanel', () => {
   });
 
   it('with a nameForUser resolver (V2 passes its existing member-name lookup), shows the resolved name instead of the raw UUID', () => {
-    const nameForUser = vi.fn((userId: string | null | undefined) => (userId === 'user-owner' ? 'Marek Zieliński' : null));
+    const nameForUser = vi.fn((userId: string | null | undefined) =>
+      userId === 'user-owner' ? 'Marek Zieliński' : null
+    );
     renderPanel(['verification.perform'], 'user-reviewer', finding(), nameForUser);
     const ownerLink = screen.getByTestId('chain-link-wlasciciel-termin');
     expect(ownerLink.textContent).toContain('Marek Zieliński');

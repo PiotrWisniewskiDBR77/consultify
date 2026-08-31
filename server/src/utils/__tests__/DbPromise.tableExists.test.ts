@@ -23,8 +23,8 @@ vi.mock('../queryHelpers.js', () => ({
   recordQueryPerformance: vi.fn(),
 }));
 
-import { tableExists } from '../DbPromise.js';
 import { clearFlagCache, getV8Flags } from '../../services/v8/featureFlagService.js';
+import { tableExists } from '../DbPromise.js';
 
 describe('DbPromise.tableExists', () => {
   beforeEach(() => {

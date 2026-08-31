@@ -25,28 +25,27 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
+import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
-
-import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 import {
-  toOkrSetApprovedSnapshot,
-  toOkrSetApprovedSnapshotSummary,
   type OkrSetApprovedSnapshot,
   type OkrSetApprovedSnapshotRow,
   type OkrSetApprovedSnapshotSummary,
+  toOkrSetApprovedSnapshot,
+  toOkrSetApprovedSnapshotSummary,
 } from './okrSetApprovedSnapshotTypes.js';
+import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 import {
-  toOkrSet,
   type OkrSet,
   type OkrSetAttentionState,
   type OkrSetRow,
   type OkrSetScopeType,
   type OkrSetStatus,
+  toOkrSet,
 } from './okrSetTypes.js';
 
 /** Same pinned-client-per-call shape as `okrRepository.ts`'s

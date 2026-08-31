@@ -171,8 +171,10 @@ export async function duplicateInitiative(
       if (column === 'status') return 'DRAFT';
       if (column === 'project_id') return projectId;
       if (column === 'created_at' || column === 'updated_at') return now;
-      if (column === 'created_by') return String(options.actor?.id || original.created_by || 'system');
-      if (column === 'updated_by') return String(options.actor?.id || original.updated_by || 'system');
+      if (column === 'created_by')
+        return String(options.actor?.id || original.created_by || 'system');
+      if (column === 'updated_by')
+        return String(options.actor?.id || original.updated_by || 'system');
       return original[column] ?? null;
     });
     await queryHelpers.queryRun(
@@ -190,7 +192,14 @@ export async function duplicateInitiative(
         resourceType: 'initiative',
         resourceId: id,
         organizationId: orgId,
-        after: { id, title, projectId, status: 'DRAFT', sourceType: 'duplicate', sourceId: originalId },
+        after: {
+          id,
+          title,
+          projectId,
+          status: 'DRAFT',
+          sourceType: 'duplicate',
+          sourceId: originalId,
+        },
         ip: options.actor.ip || undefined,
         userAgent: options.actor.userAgent || undefined,
       });

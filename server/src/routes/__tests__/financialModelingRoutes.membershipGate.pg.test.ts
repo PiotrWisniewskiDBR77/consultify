@@ -59,6 +59,7 @@
  * assertions were not loosened to get there.
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool, type PoolClient } from 'pg';
@@ -241,7 +242,9 @@ describe.skipIf(!enabled)(
           await cleanupClient.query('BEGIN');
           // financial_model_events/outputs/validations all FK ON DELETE CASCADE
           // from financial_models(id) — deleting the models cascades the rest.
-          await cleanupClient.query(`DELETE FROM financial_models WHERE id LIKE $1`, [`${prefix}%`]);
+          await cleanupClient.query(`DELETE FROM financial_models WHERE id LIKE $1`, [
+            `${prefix}%`,
+          ]);
           await cleanupClient.query(`DELETE FROM organization_members WHERE id LIKE $1`, [
             `${prefix}%`,
           ]);

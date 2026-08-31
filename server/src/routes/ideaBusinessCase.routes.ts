@@ -44,9 +44,10 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
+import { getDatabase } from '../database/Database.js';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { validateOrgMembership, verifyToken } from '../middleware/auth.middleware.js';
-import { requireTables, requireUser } from './my-work/_helpers.js';
+import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
 import ideaBusinessCaseService, {
   IdeaBusinessCaseForeignOrgError,
 } from '../services/ideaBusinessCaseService.js';
@@ -56,13 +57,12 @@ import {
   IDEA_ARTIFACT_TARGET_KINDS,
   IdeaHandoffError,
   materializeIdeaArtifact,
-  proposeIdeaArtifact,
   proposeGovernedIdeaArtifact,
+  proposeIdeaArtifact,
 } from '../services/ideaHandoff/ideaHandoffService.js';
 import { GovernedSnapshotBindingError } from '../services/organizationContext/governedSnapshotConsumerBindingService.js';
-import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
-import { getDatabase } from '../database/Database.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { requireTables, requireUser } from './my-work/_helpers.js';
 
 const router = Router();
 
@@ -215,9 +215,7 @@ function respondToHandoffError(res: Response, error: unknown): boolean {
       INVALID_STATE_TRANSITION: 409,
       NOT_APPROVED: 409,
     };
-    res
-      .status(statusByCode[error.code] ?? 500)
-      .json({ error: error.message, code: error.code });
+    res.status(statusByCode[error.code] ?? 500).json({ error: error.message, code: error.code });
     return true;
   }
   return false;
@@ -284,7 +282,9 @@ router.post(
     const ideaId = String(req.params.ideaId || '').trim();
     const parsed = ProposeGovernedArtifactBodySchema.safeParse(req.body);
     if (!ideaId || !parsed.success) {
-      res.status(400).json({ error: 'Governed snapshot ref is required', code: 'SNAPSHOT_REF_REQUIRED' });
+      res
+        .status(400)
+        .json({ error: 'Governed snapshot ref is required', code: 'SNAPSHOT_REF_REQUIRED' });
       return;
     }
     try {
@@ -327,9 +327,7 @@ router.get(
       return res.status(400).json({ error: 'Missing ideaId or proposalId' });
     }
 
-    if (
-      !(await requireTables(res, ['artifact_handoff_proposals', 'artifact_handoff_receipts']))
-    )
+    if (!(await requireTables(res, ['artifact_handoff_proposals', 'artifact_handoff_receipts'])))
       return;
 
     try {
@@ -407,9 +405,7 @@ router.post(
       return res.status(400).json({ error: 'Missing ideaId or proposalId' });
     }
 
-    if (
-      !(await requireTables(res, ['artifact_handoff_proposals', 'artifact_handoff_receipts']))
-    )
+    if (!(await requireTables(res, ['artifact_handoff_proposals', 'artifact_handoff_receipts'])))
       return;
 
     try {

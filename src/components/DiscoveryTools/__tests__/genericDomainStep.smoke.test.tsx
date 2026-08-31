@@ -5,8 +5,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createRealT } from '@/test-utils/realTranslations';
 import type { ToolSession } from '@/store/useToolStore';
+import { createRealT } from '@/test-utils/realTranslations';
 
 // GenericDomainStep's own strings (Teresa hint, empty state, placeholders) go
 // through real t() calls with no defaultValue (see GenericDomainStep.tsx), so

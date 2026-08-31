@@ -14,6 +14,7 @@
  * `session_id`/`output_id` predicates.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { KernelTestDbHandle } from '../../__tests__/kernelTestDb.js';
 
 let testDb: KernelTestDbHandle;
@@ -107,9 +108,7 @@ describe('MethodOutputService.freezeOutput', () => {
         supersededByOutputId: null,
       });
 
-      const second = await service.freezeOutput(
-        makeFreezeInput({ revisionOfOutputId: first.id })
-      );
+      const second = await service.freezeOutput(makeFreezeInput({ revisionOfOutputId: first.id }));
 
       expect(await service.isSuperseded(organizationId, first.id)).toEqual({
         superseded: true,

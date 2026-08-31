@@ -80,6 +80,10 @@ export function buildLinearGraph(
     edges,
     variables: [],
     limits: { maxNodes: nodeCount, maxEdges: edgeCount },
-    metadata: { generator: 'cwperf-graphBuilder', requestedNodeCount: nodeCount, requestedEdgeCount: edgeCount },
+    metadata: {
+      generator: 'cwperf-graphBuilder',
+      requestedNodeCount: nodeCount,
+      requestedEdgeCount: edgeCount,
+    },
   };
 }

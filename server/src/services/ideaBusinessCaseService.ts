@@ -136,9 +136,7 @@ export async function upsertBusinessCase(
         input.organizationId,
       ]
     );
-    logger.info(
-      `[IdeaBusinessCase] Updated business case ${existing.id} (idea ${input.ideaId})`
-    );
+    logger.info(`[IdeaBusinessCase] Updated business case ${existing.id} (idea ${input.ideaId})`);
     const updated = await getBusinessCase(input.ideaId, input.organizationId);
     return updated as IdeaBusinessCaseRow;
   }

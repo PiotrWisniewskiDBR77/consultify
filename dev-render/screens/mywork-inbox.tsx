@@ -43,7 +43,10 @@ import { useNavigate } from 'react-router-dom';
 import { MyWorkHub } from '../../src/components/MyWork/MyWorkHub';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
-import type { V8CanonicalInboxItem, V8CanonicalInboxStats } from '../../src/services/api/v8/my-work';
+import type {
+  V8CanonicalInboxItem,
+  V8CanonicalInboxStats,
+} from '../../src/services/api/v8/my-work';
 import { V8MyWorkApi } from '../../src/services/api/v8/my-work';
 import { seedRealisticSession } from '../mocks/seedStore';
 
@@ -74,7 +77,8 @@ const ALL_ITEMS: V8CanonicalInboxItem[] = [
     sourceEntityType: 'task',
     sourceEntityId: 'task-dbr77-demo-1',
     title: 'Przygotować mapę procesu raportowania AS-IS dla warsztatu z zarządem',
-    description: 'Wsad liczbowy do warsztatu 29.07 — bez mapy nie da się obronić szacunku oszczędności.',
+    description:
+      'Wsad liczbowy do warsztatu 29.07 — bez mapy nie da się obronić szacunku oszczędności.',
     priority: 'high',
     section: 'assigned_tasks',
     status: 'pending',
@@ -92,7 +96,8 @@ const ALL_ITEMS: V8CanonicalInboxItem[] = [
     sourceEntityType: 'decision',
     sourceEntityId: 'decision-dbr77-demo-1',
     title: 'Wybór podejścia do automatycznego generowania raportów DRD',
-    description: 'Marek czeka na Twoją rekomendację przed warsztatem — decyzja blokuje dalszy zakres.',
+    description:
+      'Marek czeka na Twoją rekomendację przed warsztatem — decyzja blokuje dalszy zakres.',
     priority: 'critical',
     section: 'decisions_required',
     status: 'pending',

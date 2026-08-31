@@ -54,9 +54,7 @@ describe.skipIf(!enabled)('DAY180 malformed agent-plan timing envs — real PG',
         organizationId,
         userId,
         title: 'Day 180 malformed timing envs',
-        steps: [
-          { toolName: 'generate_report_section', toolInput: {}, requiresApproval: false },
-        ],
+        steps: [{ toolName: 'generate_report_section', toolInput: {}, requiresApproval: false }],
       });
       const executed = await agentPlannerService.executePlan(plan.id, async () => {
         await new Promise((resolve) => setTimeout(resolve, 150));

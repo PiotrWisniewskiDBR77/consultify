@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
 // `TFunction` is exported by `i18next`, not by `react-i18next` — importing it from the
 // latter compiles under esbuild (which strips types without checking them) and fails
 // under `tsc` with TS2305.
 import type { TFunction } from 'i18next';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { offlineQueue } from './OfflineQueue';

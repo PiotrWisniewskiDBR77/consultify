@@ -354,20 +354,15 @@ describe('AdminSettingsModule section routing', () => {
     // enterprise-compliance screens — a second, contradicting navigation
     // model layered inside the vertical AdminSettingsSidebar. Each screen
     // now has its own vertical nav slot instead.
-    it.each([
-      'agent-trace',
-      'audit',
-      'dlp',
-      'residency',
-      'retention',
-      'ai-policy',
-      'benchmark',
-    ])('unlocks the full experience and wires the %s screen directly', (commandScreen) => {
-      renderAt(`/admin/command/${commandScreen}`);
-      const panel = screen.getByTestId('panel-command');
-      expect(panel).toHaveAttribute('data-aggregation-only', 'false');
-      expect(panel).toHaveAttribute('data-screen', commandScreen);
-    });
+    it.each(['agent-trace', 'audit', 'dlp', 'residency', 'retention', 'ai-policy', 'benchmark'])(
+      'unlocks the full experience and wires the %s screen directly',
+      (commandScreen) => {
+        renderAt(`/admin/command/${commandScreen}`);
+        const panel = screen.getByTestId('panel-command');
+        expect(panel).toHaveAttribute('data-aggregation-only', 'false');
+        expect(panel).toHaveAttribute('data-screen', commandScreen);
+      }
+    );
 
     it('wires Attention Queue and Cost & Capacity', () => {
       const attention = renderAt('/admin/command/attention-queue');

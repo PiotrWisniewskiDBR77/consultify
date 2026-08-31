@@ -98,7 +98,12 @@ export type ReportStatus = 'draft' | 'ready' | 'exported' | 'archived';
 
 export type PresentationSourceType = 'tool' | 'assessment' | 'finance' | 'upload';
 export type PresentationStatus =
-  'draft' | 'generated' | 'editing' | 'ready' | 'shared' | 'archived';
+  | 'draft'
+  | 'generated'
+  | 'editing'
+  | 'ready'
+  | 'shared'
+  | 'archived';
 
 export interface ArtifactSourceRef {
   artifact_id: string;

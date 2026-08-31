@@ -1,7 +1,7 @@
-import { canonicalPayloadHash } from './contentHash.js';
 import { withPgTransaction } from '../../../utils/queryHelpers.js';
-import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
 import { evaluateStatementReadiness, validateStatement } from '../../financialStatementService.js';
+import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import { confirmAndRegisterStatementPack } from './statementPackRegistrationService.js';
 import { StatementGovernanceError } from './statementSourceReceiptService.js';
 
@@ -122,8 +122,7 @@ export async function confirmGovernedStatement(input: ConfirmGovernedStatementIn
         !decision ||
         (value.isNonFinancial
           ? decision.action !== 'EXCLUDE' || decision.canonical_line_id !== null
-          : decision.action !== 'ACCEPT' ||
-            decision.canonical_line_id !== value.canonicalLineId) ||
+          : decision.action !== 'ACCEPT' || decision.canonical_line_id !== value.canonicalLineId) ||
         decision.source_receipt_id !== input.sourceReceiptId ||
         Number(decision.statement_values_version) !== input.expectedValuesVersion
       )

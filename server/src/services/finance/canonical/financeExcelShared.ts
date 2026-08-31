@@ -25,20 +25,20 @@
  */
 
 import {
-  FinanceAccumulationBasisValues,
-  FinanceConsolidationScopeValues,
   type FinanceAccumulationBasis,
+  FinanceAccumulationBasisValues,
   type FinanceConsolidationScope,
+  FinanceConsolidationScopeValues,
 } from '../../../types/finance/CellRef.js';
 import {
-  FinanceUnitValues,
-  FinanceValueStatusValues,
   type FinanceUnit,
+  FinanceUnitValues,
   type FinanceValueStatus,
+  FinanceValueStatusValues,
 } from '../../../types/finance/financeValueSemantics.js';
+import type { FormulaNode } from './formulaAstEvaluator.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
 import type { BusinessVersionStatus } from './lifecycleService.js';
-import type { FormulaNode } from './formulaAstEvaluator.js';
 
 // ---------------------------------------------------------------------------
 // Manifest
@@ -98,21 +98,32 @@ export interface FinanceExcelManifestCheck {
 
 /** Structural compatibility check between a re-imported manifest and the live target — NOT a byte-equality check (e.g. `rowCount`/`asOf` are expected to differ once the file has been edited offline). */
 export function checkManifestCompatibility(
-  manifest: Pick<FinanceExcelManifest, 'source' | 'manifestVersion' | 'organizationId' | 'artifactId'>,
+  manifest: Pick<
+    FinanceExcelManifest,
+    'source' | 'manifestVersion' | 'organizationId' | 'artifactId'
+  >,
   target: { organizationId: string; artifactId: string }
 ): FinanceExcelManifestCheck {
   const issues: string[] = [];
   if (manifest.source !== FINANCE_EXCEL_MANIFEST_SOURCE) {
-    issues.push(`Manifest source '${manifest.source}' is not a recognized Finance v3 export (expected '${FINANCE_EXCEL_MANIFEST_SOURCE}')`);
+    issues.push(
+      `Manifest source '${manifest.source}' is not a recognized Finance v3 export (expected '${FINANCE_EXCEL_MANIFEST_SOURCE}')`
+    );
   }
   if (manifest.manifestVersion !== FINANCE_EXCEL_MANIFEST_VERSION) {
-    issues.push(`Manifest version ${manifest.manifestVersion} is not supported (expected ${FINANCE_EXCEL_MANIFEST_VERSION})`);
+    issues.push(
+      `Manifest version ${manifest.manifestVersion} is not supported (expected ${FINANCE_EXCEL_MANIFEST_VERSION})`
+    );
   }
   if (manifest.organizationId !== target.organizationId) {
-    issues.push(`Manifest organizationId '${manifest.organizationId}' does not match target organizationId '${target.organizationId}'`);
+    issues.push(
+      `Manifest organizationId '${manifest.organizationId}' does not match target organizationId '${target.organizationId}'`
+    );
   }
   if (manifest.artifactId !== target.artifactId) {
-    issues.push(`Manifest artifactId '${manifest.artifactId}' does not match target artifactId '${target.artifactId}'`);
+    issues.push(
+      `Manifest artifactId '${manifest.artifactId}' does not match target artifactId '${target.artifactId}'`
+    );
   }
   return { ok: issues.length === 0, issues };
 }
@@ -185,7 +196,9 @@ export interface FinanceExcelValueRow {
   cellKey: string;
 }
 
-export function financeExcelRowToCells(row: FinanceExcelValueRow): Record<FinanceExcelValueColumn, string | number | boolean | null> {
+export function financeExcelRowToCells(
+  row: FinanceExcelValueRow
+): Record<FinanceExcelValueColumn, string | number | boolean | null> {
   return {
     'Statement Type': row.statementType,
     'Line Code': row.lineCode,
@@ -233,7 +246,10 @@ export function parseValueCells(statusRaw: unknown, valueRaw: unknown): ParseVal
   const valueText = cellText(valueRaw);
 
   if (statusText && !(FinanceValueStatusValues as readonly string[]).includes(statusText)) {
-    return { ok: false, message: `Unknown Value Status '${statusText}' (expected one of ${FinanceValueStatusValues.join(', ')})` };
+    return {
+      ok: false,
+      message: `Unknown Value Status '${statusText}' (expected one of ${FinanceValueStatusValues.join(', ')})`,
+    };
   }
 
   if (!statusText && !valueText) {
@@ -241,7 +257,11 @@ export function parseValueCells(statusRaw: unknown, valueRaw: unknown): ParseVal
   }
 
   if (statusText === 'MISSING' || statusText === 'NA' || statusText === 'NOT_APPLICABLE') {
-    if (valueText) return { ok: false, message: `Value Status '${statusText}' requires an empty Value cell, got '${valueText}'` };
+    if (valueText)
+      return {
+        ok: false,
+        message: `Value Status '${statusText}' requires an empty Value cell, got '${valueText}'`,
+      };
     return { ok: true, status: statusText, valueDecimal: null };
   }
 
@@ -288,10 +308,15 @@ const OPERATOR_SYMBOL: Record<string, string> = {
   ratio: '/',
 };
 
-function renderCellRefOperand(cellRef: Extract<FormulaNode, { kind: 'cell_ref' }>['cellRef']): string {
-  const entityScope = cellRef.entityScope === 'ANALYSIS_DEFAULT' ? null : cellRef.entityScope.entityCode;
+function renderCellRefOperand(
+  cellRef: Extract<FormulaNode, { kind: 'cell_ref' }>['cellRef']
+): string {
+  const entityScope =
+    cellRef.entityScope === 'ANALYSIS_DEFAULT' ? null : cellRef.entityScope.entityCode;
   const parts = [cellRef.canonicalLineCode];
-  const qualifiers = [cellRef.consolidationScope, entityScope, cellRef.periodOffset].filter(Boolean);
+  const qualifiers = [cellRef.consolidationScope, entityScope, cellRef.periodOffset].filter(
+    Boolean
+  );
   return qualifiers.length ? `${parts[0]}[${qualifiers.join(',')}]` : parts[0]!;
 }
 
@@ -315,5 +340,15 @@ export function renderFormulaNode(node: FormulaNode, depth = 0): string {
 // Re-export enum value lists callers of this module commonly need alongside
 // the schema above, so financeImportService.ts does not need a second import
 // line into ../../../types/finance/* for these.
-export { FinanceAccumulationBasisValues, FinanceConsolidationScopeValues, FinanceUnitValues, FinanceValueStatusValues };
-export type { FinanceAccumulationBasis, FinanceConsolidationScope, FinanceUnit, FinanceValueStatus };
+export {
+  FinanceAccumulationBasisValues,
+  FinanceConsolidationScopeValues,
+  FinanceUnitValues,
+  FinanceValueStatusValues,
+};
+export type {
+  FinanceAccumulationBasis,
+  FinanceConsolidationScope,
+  FinanceUnit,
+  FinanceValueStatus,
+};

@@ -36,7 +36,9 @@ describe('PresentationDeck', () => {
       // eslint-disable-next-line no-await-in-loop -- sequential UI interaction
       await user.click(next);
     }
-    expect(screen.getByTestId('slide-counter').textContent).toBe(`${PRESENTATION_SLIDE_COUNT} / ${PRESENTATION_SLIDE_COUNT}`);
+    expect(screen.getByTestId('slide-counter').textContent).toBe(
+      `${PRESENTATION_SLIDE_COUNT} / ${PRESENTATION_SLIDE_COUNT}`
+    );
     expect(next).toBeDisabled();
   });
 
@@ -65,13 +67,17 @@ describe('PresentationDeck', () => {
     const user = userEvent.setup();
     renderDeck(3);
     await user.keyboard('{End}');
-    expect(screen.getByTestId('slide-counter').textContent).toBe(`${PRESENTATION_SLIDE_COUNT} / ${PRESENTATION_SLIDE_COUNT}`);
+    expect(screen.getByTestId('slide-counter').textContent).toBe(
+      `${PRESENTATION_SLIDE_COUNT} / ${PRESENTATION_SLIDE_COUNT}`
+    );
     await user.keyboard('{Home}');
     expect(screen.getByTestId('slide-counter').textContent).toBe(`1 / ${PRESENTATION_SLIDE_COUNT}`);
   });
 
   it('clamps an out-of-range initialSlide into [0, N-1]', () => {
     renderDeck(999);
-    expect(screen.getByTestId('slide-counter').textContent).toBe(`${PRESENTATION_SLIDE_COUNT} / ${PRESENTATION_SLIDE_COUNT}`);
+    expect(screen.getByTestId('slide-counter').textContent).toBe(
+      `${PRESENTATION_SLIDE_COUNT} / ${PRESENTATION_SLIDE_COUNT}`
+    );
   });
 });

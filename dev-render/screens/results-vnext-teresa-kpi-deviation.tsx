@@ -91,7 +91,12 @@ let mutableCase = {
 };
 
 function bump(update: Partial<typeof mutableCase>) {
-  mutableCase = { ...mutableCase, ...update, rowVersion: mutableCase.rowVersion + 1, updatedAt: new Date().toISOString() };
+  mutableCase = {
+    ...mutableCase,
+    ...update,
+    rowVersion: mutableCase.rowVersion + 1,
+    updatedAt: new Date().toISOString(),
+  };
   return mutableCase;
 }
 
@@ -100,7 +105,8 @@ const realPost = Api.post.bind(Api);
 const realPut = Api.put.bind(Api);
 
 Api.get = (async (url: string) => {
-  if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/measurements`)) return { measurements: [MEASUREMENT] };
+  if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/measurements`))
+    return { measurements: [MEASUREMENT] };
   if (url.startsWith('/vnext/results/kpi/deviation-cases/')) {
     const caseId = url.split('/vnext/results/kpi/deviation-cases/')[1]?.split('?')[0];
     if (caseId !== CASE_ID) {
@@ -114,7 +120,13 @@ Api.get = (async (url: string) => {
 }) as typeof Api.get;
 
 Api.post = (async (url: string, data: any) => {
-  if (url.endsWith('/acknowledge')) return { outcome: 'applied', eventId: 'evt-1', resultingVersion: mutableCase.rowVersion + 1, case: bump({ status: 'analysis_required' }) };
+  if (url.endsWith('/acknowledge'))
+    return {
+      outcome: 'applied',
+      eventId: 'evt-1',
+      resultingVersion: mutableCase.rowVersion + 1,
+      case: bump({ status: 'analysis_required' }),
+    };
   return realPost(url, data);
 }) as typeof Api.post;
 
@@ -142,21 +154,53 @@ Api.put = (async (url: string, data: any) => {
 // only the `execute()` KPI branch differs (calls the case's root-cause
 // write instead of ROI's PIR draft write).
 // ==========================================================================
-type TeresaEnvelopeState = 'proposal' | 'pending_approval' | 'approved' | 'executing' | 'completed' | 'undone' | 'rejected';
+type TeresaEnvelopeState =
+  | 'proposal'
+  | 'pending_approval'
+  | 'approved'
+  | 'executing'
+  | 'completed'
+  | 'undone'
+  | 'rejected';
 interface TeresaMockProposal {
   id: string;
   state: TeresaEnvelopeState;
   targetModule: string;
   targetPayload: any;
   handoffContext: any;
-  auditTrail: Array<{ id: string; proposal_id: string; action: string; actor: string; timestamp: string; from_state: TeresaEnvelopeState | null; to_state: TeresaEnvelopeState; detail: any }>;
+  auditTrail: Array<{
+    id: string;
+    proposal_id: string;
+    action: string;
+    actor: string;
+    timestamp: string;
+    from_state: TeresaEnvelopeState | null;
+    to_state: TeresaEnvelopeState;
+    detail: any;
+  }>;
 }
 const teresaProposals = new Map<string, TeresaMockProposal>();
 let teresaSeq = 0;
 let teresaDenyConsumed = false;
 
-function teresaAuditEntry(p: TeresaMockProposal, action: string, actor: string, from: TeresaEnvelopeState | null, to: TeresaEnvelopeState, detail: any) {
-  const entry = { id: `taudit-${(teresaSeq += 1)}`, proposal_id: p.id, action, actor, timestamp: new Date().toISOString(), from_state: from, to_state: to, detail };
+function teresaAuditEntry(
+  p: TeresaMockProposal,
+  action: string,
+  actor: string,
+  from: TeresaEnvelopeState | null,
+  to: TeresaEnvelopeState,
+  detail: any
+) {
+  const entry = {
+    id: `taudit-${(teresaSeq += 1)}`,
+    proposal_id: p.id,
+    action,
+    actor,
+    timestamp: new Date().toISOString(),
+    from_state: from,
+    to_state: to,
+    detail,
+  };
   p.auditTrail.push(entry);
   return entry;
 }
@@ -181,7 +225,14 @@ function teresaEnvelope(p: TeresaMockProposal) {
     title: intent.length > 72 ? `${intent.slice(0, 71)}…` : intent,
     summary: p.handoffContext?.proposed_next_action?.handoff_intent || intent,
     state: p.state,
-    approvalState: p.state === 'approved' ? 'approved' : p.state === 'completed' || p.state === 'undone' ? 'completed' : p.state === 'rejected' ? 'rejected' : 'awaiting_review',
+    approvalState:
+      p.state === 'approved'
+        ? 'approved'
+        : p.state === 'completed' || p.state === 'undone'
+          ? 'completed'
+          : p.state === 'rejected'
+            ? 'rejected'
+            : 'awaiting_review',
     allowedActions: teresaAllowedActions(p.state),
     targetModule: p.targetModule,
     targetLabel: p.targetModule.toUpperCase(),
@@ -194,13 +245,20 @@ function teresaEnvelope(p: TeresaMockProposal) {
 }
 
 function jsonResponse(body: any, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 function errorResponse(message: string, status: number, code?: string): Response {
   return jsonResponse({ error: message, code }, status);
 }
 
-async function handleTeresaProposalRoute(sub: string, method: string, body: any): Promise<Response | null> {
+async function handleTeresaProposalRoute(
+  sub: string,
+  method: string,
+  body: any
+): Promise<Response | null> {
   const segs = sub.split('/').filter(Boolean);
 
   if (teresaDown && sub === '/proposal' && method === 'POST') {
@@ -209,8 +267,17 @@ async function handleTeresaProposalRoute(sub: string, method: string, body: any)
 
   if (segs[0] === 'proposal' && segs.length === 1 && method === 'POST') {
     const id = `tprop-kpi-${(teresaSeq += 1)}`;
-    const p: TeresaMockProposal = { id, state: 'proposal', targetModule: body.targetModule, targetPayload: body.targetPayload, handoffContext: body.handoffContext, auditTrail: [] };
-    teresaAuditEntry(p, 'proposal_created', 'teresa', null, 'proposal', { target_module: body.targetModule });
+    const p: TeresaMockProposal = {
+      id,
+      state: 'proposal',
+      targetModule: body.targetModule,
+      targetPayload: body.targetPayload,
+      handoffContext: body.handoffContext,
+      auditTrail: [],
+    };
+    teresaAuditEntry(p, 'proposal_created', 'teresa', null, 'proposal', {
+      target_module: body.targetModule,
+    });
     teresaProposals.set(id, p);
     return jsonResponse({ data: teresaEnvelope(p), meta: { action: 'proposal_created' } }, 201);
   }
@@ -235,24 +302,55 @@ async function handleTeresaProposalRoute(sub: string, method: string, body: any)
     if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
     const from = p.state;
     p.state = 'rejected';
-    teresaAuditEntry(p, 'rejected', `user:${USER_ID}`, from, 'rejected', body?.reason ? { reason: body.reason } : null);
+    teresaAuditEntry(
+      p,
+      'rejected',
+      `user:${USER_ID}`,
+      from,
+      'rejected',
+      body?.reason ? { reason: body.reason } : null
+    );
     return jsonResponse({ data: teresaEnvelope(p), meta: { action: 'rejected' } });
   }
 
   if (segs[0] === 'proposal' && segs.length === 3 && segs[2] === 'execute' && method === 'POST') {
     const p = teresaProposals.get(segs[1]);
     if (!p) return errorResponse('Proposal not found', 404, 'P08_PROPOSAL_NOT_FOUND');
-    if (p.state !== 'approved') return errorResponse(`Cannot execute proposal in state: ${p.state}`, 400, 'P08_INVALID_STATE_TRANSITION');
+    if (p.state !== 'approved')
+      return errorResponse(
+        `Cannot execute proposal in state: ${p.state}`,
+        400,
+        'P08_INVALID_STATE_TRANSITION'
+      );
     teresaAuditEntry(p, 'execution_started', `user:${USER_ID}`, 'approved', 'executing', null);
 
     if (teresaDeny && !teresaDenyConsumed) {
       teresaDenyConsumed = true;
-      const error = 'Sprawa została w międzyczasie zmieniona przez inną osobę (expected_version mismatch) — regenerowanie unieważniłoby jej decyzję.';
-      const execution = { success: false, proposal_id: p.id, target_module: 'kpi', state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error, degraded: 'tool_unavailable' };
+      const error =
+        'Sprawa została w międzyczasie zmieniona przez inną osobę (expected_version mismatch) — regenerowanie unieważniłoby jej decyzję.';
+      const execution = {
+        success: false,
+        proposal_id: p.id,
+        target_module: 'kpi',
+        state: 'rejected' as TeresaEnvelopeState,
+        audit_entry_id: '',
+        error,
+        degraded: 'tool_unavailable',
+      };
       p.state = 'rejected';
-      const auditEntry = teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error });
+      const auditEntry = teresaAuditEntry(
+        p,
+        'execution_failed',
+        'teresa:system',
+        'executing',
+        'rejected',
+        { error }
+      );
       execution.audit_entry_id = auditEntry.id;
-      return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+      return jsonResponse(
+        { data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } },
+        500
+      );
     }
 
     if (p.targetModule === 'kpi') {
@@ -266,18 +364,53 @@ async function handleTeresaProposalRoute(sub: string, method: string, body: any)
           recurrenceFlag: !!rca.recurrence_flag,
         });
         p.state = 'completed';
-        const auditEntry = teresaAuditEntry(p, 'execution_completed', 'kpi_service', 'executing', 'completed', {
-          handoff_result: { handoff: 'kpi', advisor_mode: 'reflection_rca', case_id: CASE_ID, real_entity: true },
+        const auditEntry = teresaAuditEntry(
+          p,
+          'execution_completed',
+          'kpi_service',
+          'executing',
+          'completed',
+          {
+            handoff_result: {
+              handoff: 'kpi',
+              advisor_mode: 'reflection_rca',
+              case_id: CASE_ID,
+              real_entity: true,
+            },
+          }
+        );
+        const execution = {
+          success: true,
+          proposal_id: p.id,
+          target_module: 'kpi',
+          state: 'completed' as TeresaEnvelopeState,
+          audit_entry_id: auditEntry.id,
+          handoff_result: { case_id: CASE_ID, case_status: mutableCase.status, real_entity: true },
+        };
+        return jsonResponse({
+          data: { execution, proposal: teresaEnvelope(p) },
+          meta: { action: 'executed' },
         });
-        const execution = { success: true, proposal_id: p.id, target_module: 'kpi', state: 'completed' as TeresaEnvelopeState, audit_entry_id: auditEntry.id, handoff_result: { case_id: CASE_ID, case_status: mutableCase.status, real_entity: true } };
-        return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } });
       }
     }
 
-    const execution = { success: false, proposal_id: p.id, target_module: p.targetModule, state: 'rejected' as TeresaEnvelopeState, audit_entry_id: '', error: `dev-render mock: unhandled KPI advisor payload`, degraded: 'tool_unavailable' };
+    const execution = {
+      success: false,
+      proposal_id: p.id,
+      target_module: p.targetModule,
+      state: 'rejected' as TeresaEnvelopeState,
+      audit_entry_id: '',
+      error: `dev-render mock: unhandled KPI advisor payload`,
+      degraded: 'tool_unavailable',
+    };
     p.state = 'rejected';
-    teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', { error: execution.error });
-    return jsonResponse({ data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } }, 500);
+    teresaAuditEntry(p, 'execution_failed', 'teresa:system', 'executing', 'rejected', {
+      error: execution.error,
+    });
+    return jsonResponse(
+      { data: { execution, proposal: teresaEnvelope(p) }, meta: { action: 'executed' } },
+      500
+    );
   }
 
   if (segs[0] === 'audit' && segs.length === 2 && method === 'GET') {
@@ -294,7 +427,8 @@ if (!g.__RVN_TERESA_KPI_DEVIATION_FETCH__) {
   g.__RVN_TERESA_KPI_DEVIATION_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const rawUrl =
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (rawUrl.includes('/locales/')) return realFetch(input as RequestInfo, init);
     const teresaMatch = rawUrl.match(/\/v8\/teresa(\/.*)?$/);
     if (teresaMatch) {
@@ -308,7 +442,10 @@ if (!g.__RVN_TERESA_KPI_DEVIATION_FETCH__) {
   };
 }
 
-const initialPath = ROUTES.RESULTS_KPI.DEVIATION_CASE.replace(':kpiId', KPI_ID).replace(':caseId', CASE_ID);
+const initialPath = ROUTES.RESULTS_KPI.DEVIATION_CASE.replace(':kpiId', KPI_ID).replace(
+  ':caseId',
+  CASE_ID
+);
 
 export default function ResultsVNextTeresaKpiDeviationScreen() {
   return (

@@ -10,7 +10,9 @@ const { vector } = vi.hoisted(() => ({
 vi.mock('../embeddingService.js', async (importOriginal) => {
   const actual = await importOriginal<any>();
   class DeterministicEmbeddingService extends actual.EmbeddingService {
-    async generateEmbedding(): Promise<number[]> { return vector; }
+    async generateEmbedding(): Promise<number[]> {
+      return vector;
+    }
   }
   return { ...actual, EmbeddingService: DeterministicEmbeddingService };
 });
@@ -45,7 +47,10 @@ describe('Day 213 unified knowledge document access filter on real PostgreSQL', 
         search: (query: string, options: any) => embeddings.search(query, options),
       } as any,
     });
-    await pool.query('INSERT INTO organizations (id, name) VALUES ($1, $2)', [organizationId, 'Day 213 access']);
+    await pool.query('INSERT INTO organizations (id, name) VALUES ($1, $2)', [
+      organizationId,
+      'Day 213 access',
+    ]);
     await pool.query(
       `INSERT INTO knowledge_docs
          (id, filename, filepath, status, organization_id, scope, project_id, ai_visibility, sensitivity)
@@ -77,7 +82,9 @@ describe('Day 213 unified knowledge document access filter on real PostgreSQL', 
 
   afterAll(async () => {
     const ids = [projectDocId, blockedDocId, confidentialDocId];
-    await pool.query('DELETE FROM ai_knowledge_embeddings WHERE document_id = ANY($1::text[])', [ids]);
+    await pool.query('DELETE FROM ai_knowledge_embeddings WHERE document_id = ANY($1::text[])', [
+      ids,
+    ]);
     await pool.query('DELETE FROM knowledge_chunks WHERE doc_id = ANY($1::text[])', [ids]);
     await pool.query('DELETE FROM knowledge_docs WHERE id = ANY($1::text[])', [ids]);
     await pool.query('DELETE FROM organizations WHERE id = $1', [organizationId]);
@@ -90,15 +97,33 @@ describe('Day 213 unified knowledge document access filter on real PostgreSQL', 
   });
 
   it('embedding dispatcher includes only a project present in the allowed-project list', async () => {
-    const denied = await embeddings.search(projectMarker, { organizationId, projectIds: [otherProjectId], limit: 10 });
-    const allowed = await embeddings.search(projectMarker, { organizationId, projectIds: [projectId], limit: 10 });
+    const denied = await embeddings.search(projectMarker, {
+      organizationId,
+      projectIds: [otherProjectId],
+      limit: 10,
+    });
+    const allowed = await embeddings.search(projectMarker, {
+      organizationId,
+      projectIds: [projectId],
+      limit: 10,
+    });
     expect(denied.map((row) => row.content).join('\n')).not.toContain(projectMarker);
     expect(allowed.map((row) => row.content).join('\n')).toContain(projectMarker);
   });
 
   it('rag hybrid path enforces the same project allow-list', async () => {
-    const denied = await RagService.searchRelevantChunks(projectMarker, { organizationId, documentIds: [projectDocId], projectIds: [otherProjectId], limit: 10 });
-    const allowed = await RagService.searchRelevantChunks(projectMarker, { organizationId, documentIds: [projectDocId], projectIds: [projectId], limit: 10 });
+    const denied = await RagService.searchRelevantChunks(projectMarker, {
+      organizationId,
+      documentIds: [projectDocId],
+      projectIds: [otherProjectId],
+      limit: 10,
+    });
+    const allowed = await RagService.searchRelevantChunks(projectMarker, {
+      organizationId,
+      documentIds: [projectDocId],
+      projectIds: [projectId],
+      limit: 10,
+    });
     expect(denied.map((row) => row.content).join('\n')).not.toContain(projectMarker);
     expect(allowed.map((row) => row.content).join('\n')).toContain(projectMarker);
   });
@@ -108,9 +133,12 @@ describe('Day 213 unified knowledge document access filter on real PostgreSQL', 
     ['confidential sensitivity', confidentialMarker, confidentialDocId],
   ])('embedding and rag paths both exclude %s', async (_label, marker, docId) => {
     const embeddingRows = await embeddings.search(marker, { organizationId, limit: 10 });
-    const ragRows = await RagService.searchRelevantChunks(marker, { organizationId, documentIds: [docId], limit: 10 });
+    const ragRows = await RagService.searchRelevantChunks(marker, {
+      organizationId,
+      documentIds: [docId],
+      limit: 10,
+    });
     expect(embeddingRows.map((row) => row.content).join('\n')).not.toContain(marker);
     expect(ragRows.map((row) => row.content).join('\n')).not.toContain(marker);
   });
-
 });

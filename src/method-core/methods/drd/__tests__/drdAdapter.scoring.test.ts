@@ -103,9 +103,18 @@ describe('drdAdapter.computeScore — deterministic, zero LLM', () => {
     const result = drdAdapter.computeScore({
       unitId: '1A',
       answers: {
-        [L1Q(1)]: { state: 'not_applicable', justification: 'Nie dotyczy — brak działu sprzedaży.' },
-        [L1Q(2)]: { state: 'not_applicable', justification: 'Nie dotyczy — brak działu sprzedaży.' },
-        [L1Q(3)]: { state: 'not_applicable', justification: 'Nie dotyczy — brak działu sprzedaży.' },
+        [L1Q(1)]: {
+          state: 'not_applicable',
+          justification: 'Nie dotyczy — brak działu sprzedaży.',
+        },
+        [L1Q(2)]: {
+          state: 'not_applicable',
+          justification: 'Nie dotyczy — brak działu sprzedaży.',
+        },
+        [L1Q(3)]: {
+          state: 'not_applicable',
+          justification: 'Nie dotyczy — brak działu sprzedaży.',
+        },
       },
       evidence: {},
     });

@@ -72,7 +72,9 @@ describe('Day 210 embedding scope contract on real PostgreSQL', () => {
     // Fresh migrations at marker 15c7a68b9d omit this column even though the
     // production writer names it. Keep the Day 210 fixture executable without
     // changing the out-of-scope baseline migration.
-    await pool.query(`ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now()`);
+    await pool.query(
+      `ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now()`
+    );
 
     await pool.query(
       `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
@@ -151,8 +153,14 @@ describe('Day 210 embedding scope contract on real PostgreSQL', () => {
     );
     expect(counts.rows).toHaveLength(2);
     for (const row of counts.rows) {
-      expect(Number(row.knowledge_chunks), `${row.id} missing knowledge_chunks row`).toBeGreaterThan(0);
-      expect(Number(row.embeddings), `${row.id} missing ai_knowledge_embeddings row`).toBeGreaterThan(0);
+      expect(
+        Number(row.knowledge_chunks),
+        `${row.id} missing knowledge_chunks row`
+      ).toBeGreaterThan(0);
+      expect(
+        Number(row.embeddings),
+        `${row.id} missing ai_knowledge_embeddings row`
+      ).toBeGreaterThan(0);
     }
   });
 

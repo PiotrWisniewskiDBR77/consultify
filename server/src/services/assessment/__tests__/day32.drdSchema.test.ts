@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 
 import { renderDocumentSchemaToDocxBuffer } from '../../documentStudio/documentDocxRenderer.js';
 import {
+  type AssessmentReportContract,
   buildAssessmentDrdReportSchema,
   CONTRACT_V1_MISSING_SLOT_LIMITS,
-  type AssessmentReportContract,
 } from '../assessmentDrdReportSchemaService.js';
 
 function contract(): AssessmentReportContract {
@@ -327,7 +327,8 @@ describe('DRD cover — regression guards for the W1–W4 fixes', () => {
     // 3 generic-placeholder cells + 1 Horyzont cell per table.
     const genericOccurrences = allText(schema).split(expected).length - 1;
     expect(genericOccurrences).toBe(24);
-    const horizonOccurrences = allText(schema).split('Nie określono — brak źródła w danych.').length - 1;
+    const horizonOccurrences =
+      allText(schema).split('Nie określono — brak źródła w danych.').length - 1;
     expect(horizonOccurrences).toBe(8);
     for (const section of schema.sections) {
       const decision = section.blocks.find((block) => block.blockId.endsWith('-decision'));

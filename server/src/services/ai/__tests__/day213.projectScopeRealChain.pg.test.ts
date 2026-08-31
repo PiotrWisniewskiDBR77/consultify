@@ -94,7 +94,9 @@ describe('Day 213 real-chain proof: project-scoped Vault doc visibility through 
     await pool.query(`DELETE FROM knowledge_docs WHERE id = $1`, [projectDocId]);
     await pool.query(`DELETE FROM project_members WHERE project_id = $1`, [projectId]);
     await pool.query(`DELETE FROM projects WHERE id = $1`, [projectId]);
-    await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[memberUserId, outsiderUserId]]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
+      [memberUserId, outsiderUserId],
+    ]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [organizationId]);
     await pool.end();
   });

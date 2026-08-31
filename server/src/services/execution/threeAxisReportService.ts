@@ -37,7 +37,6 @@
 
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { computeCanonicalExecutionHealth } from './canonicalExecutionHealthService.js';
 import {
   attachSource as attachEvidenceSource,
   type EvidenceEnvelope,
@@ -47,6 +46,7 @@ import { deriveInitiativeEvm, derivePortfolioEvm, type EvmResult } from '../evmS
 import { getActualCostByInitiative } from '../executionBudgetService.js';
 import ReportContract, { type ReportScope } from '../report/reportContract.js';
 import ReportBuilderService from '../reportBuilderService.js';
+import { computeCanonicalExecutionHealth } from './canonicalExecutionHealthService.js';
 
 /* ────────────────────────────────────────────────────────────────────────────
    Typy

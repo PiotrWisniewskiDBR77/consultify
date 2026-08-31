@@ -96,12 +96,20 @@ describe('Day 164 agent execution through production ApiGateway, real PostgreSQL
       .send({
         title: 'Day 164 local execution proof',
         draft: true,
-        steps: [{
-          toolName: 'generate_report_section',
-          toolInput: { section_title: 'Day 164', section_type: 'analysis', format: 'bullet_points' },
-        }],
+        steps: [
+          {
+            toolName: 'generate_report_section',
+            toolInput: {
+              section_title: 'Day 164',
+              section_type: 'analysis',
+              format: 'bullet_points',
+            },
+          },
+        ],
       });
-    console.info(`DAY164_CREATE_HTTP status=${created.status} body=${JSON.stringify(created.body)}`);
+    console.info(
+      `DAY164_CREATE_HTTP status=${created.status} body=${JSON.stringify(created.body)}`
+    );
     expect(created.status).toBe(201);
     expect(created.body.dispatch).toBe('deferred');
     const planId = String(created.body.plan.id);
@@ -154,7 +162,11 @@ describe('Day 164 agent execution through production ApiGateway, real PostgreSQL
     console.info(`DAY164_STEPS ${JSON.stringify(stepRows)}`);
 
     expect(receiptRows).toHaveLength(1);
-    expect(planRows[0]).toMatchObject({ status: 'awaiting_approval', total_steps: 1, completed_steps: 0 });
+    expect(planRows[0]).toMatchObject({
+      status: 'awaiting_approval',
+      total_steps: 1,
+      completed_steps: 0,
+    });
     expect(stepRows[0]).toMatchObject({
       tool_name: 'generate_report_section',
       status: 'awaiting_approval',

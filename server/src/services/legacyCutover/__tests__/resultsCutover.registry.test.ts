@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { RESULTS_CUTOVER, RESULTS_LEGACY_CUTOVER_DENOMINATOR } from '../registry/results.js';
@@ -33,13 +34,25 @@ describe('Results legacy cutover registry', () => {
       'RESULTS-W49',
     ]);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toEqual([
-      'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
+      'RESULTS-W05',
+      'RESULTS-W06',
+      'RESULTS-W18',
+      'RESULTS-W23',
+      'RESULTS-W34',
     ]);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unmappedDoors).toEqual([
-      'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
+      'RESULTS-W05',
+      'RESULTS-W06',
+      'RESULTS-W18',
+      'RESULTS-W23',
+      'RESULTS-W34',
     ]);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.canonicalCurrentDoors).toEqual([
-      'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
+      'RESULTS-W05',
+      'RESULTS-W06',
+      'RESULTS-W18',
+      'RESULTS-W23',
+      'RESULTS-W34',
     ]);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.canonicalCurrentOwners).toEqual({
       'RESULTS-W05': 'results.routes:promote-closure-benefit',
@@ -73,7 +86,9 @@ describe('Results legacy cutover registry', () => {
     expect(sheet).toContain('getKpiCurrentDefinitionVersion');
     expect(sheet).toContain('definitionVersionId: definition.definitionVersionId');
     expect(sheet).toContain('idempotencyKey: draft.idempotencyKey');
-    expect(sheet).toContain('readback.some((row) => row.measurementId === measurement.measurementId)');
+    expect(sheet).toContain(
+      'readback.some((row) => row.measurementId === measurement.measurementId)'
+    );
     expect(sheet).not.toContain('createKpiTimeSeriesValue');
     expect(sheet).not.toContain('/benefits/kpis/');
   });
@@ -88,7 +103,9 @@ describe('Results legacy cutover registry', () => {
   });
 
   it('retires W01 and keeps the guarded W23 resolve usable', () => {
-    expect(RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W01')?.state).toBe('disabled');
+    expect(RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W01')?.state).toBe(
+      'disabled'
+    );
     const resolve = RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W23');
     expect(resolve?.state).toBe('observed');
     expect(resolve?.successor).toBeNull();

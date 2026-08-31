@@ -151,11 +151,17 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       });
       expect(draft.status).toBe(201);
       const planVersionId: string = draft.body.data.casePlanVersionId;
-      const proposedPlan = await memberACall('post', `${BASE}/plan-versions/${planVersionId}/propose`).send({
+      const proposedPlan = await memberACall(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/propose`
+      ).send({
         expectedVersion: draft.body.data.version,
       });
       expect(proposedPlan.status).toBe(200);
-      const publishedPlan = await ownerACall('post', `${BASE}/plan-versions/${planVersionId}/publish`).send({
+      const publishedPlan = await ownerACall(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/publish`
+      ).send({
         expectedVersion: proposedPlan.body.data.version,
       });
       expect(publishedPlan.status).toBe(200);
@@ -168,7 +174,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       expect(binding.status).toBe(201);
 
       const nodeRunId = `noderun-${randomUUID()}`;
-      const acceptance = await memberACall('post', `${BASE}/runs/${runId}/node-result-acceptances`).send({
+      const acceptance = await memberACall(
+        'post',
+        `${BASE}/runs/${runId}/node-result-acceptances`
+      ).send({
         nodeRunId,
         nodeType: 'CAPABILITY',
         nodeCompletionState: 'COMPLETED',
@@ -201,7 +210,12 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
 
       const waitRes = await memberACall('post', `${BASE}/cases/${caseId}/waits`)
         .set('Idempotency-Key', `tenancy-wait-${randomUUID()}`)
-        .send({ runId, actionProposalId, waitType: 'DOMAIN_EVENT', expectedEventType: 'approval.approved' });
+        .send({
+          runId,
+          actionProposalId,
+          waitType: 'DOMAIN_EVENT',
+          expectedEventType: 'approval.approved',
+        });
       expect(waitRes.status).toBe(201);
       const waitId: string = waitRes.body.data.waitId;
 
@@ -216,7 +230,8 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
 
       // -- SNAPSHOT tenant A before the sweep ---------------------------------
       const snapshot = async () => ({
-        caseRow: (await control.query(`SELECT * FROM case_core WHERE case_id = $1`, [caseId])).rows[0],
+        caseRow: (await control.query(`SELECT * FROM case_core WHERE case_id = $1`, [caseId]))
+          .rows[0],
         planRows: (
           await control.query(
             `SELECT * FROM case_plan_versions WHERE case_id = $1 ORDER BY case_plan_version_id`,
@@ -236,9 +251,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
           )
         ).rows,
         waitRows: (
-          await control.query(`SELECT * FROM case_workspace_waits WHERE case_id = $1 ORDER BY wait_id`, [
-            caseId,
-          ])
+          await control.query(
+            `SELECT * FROM case_workspace_waits WHERE case_id = $1 ORDER BY wait_id`,
+            [caseId]
+          )
         ).rows,
         linkRows: (
           await control.query(
@@ -247,7 +263,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
           )
         ).rows,
         measurementRows: (
-          await control.query(`SELECT * FROM case_workspace_value_measurements WHERE case_id = $1`, [caseId])
+          await control.query(
+            `SELECT * FROM case_workspace_value_measurements WHERE case_id = $1`,
+            [caseId]
+          )
         ).rows,
         outbox: await readOutboxForOrg(control, orgA),
       });
@@ -258,17 +277,32 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       const attempts: Array<[string, Promise<any>]> = [
         // reads
         ['GET /cases/:id', asIntruder('get', `${BASE}/cases/${caseId}`)],
-        ['GET /cases/by-project/:projectId', asIntruder('get', `${BASE}/cases/by-project/${projectA}`)],
-        ['GET /cases/:id/plan-versions', asIntruder('get', `${BASE}/cases/${caseId}/plan-versions`)],
+        [
+          'GET /cases/by-project/:projectId',
+          asIntruder('get', `${BASE}/cases/by-project/${projectA}`),
+        ],
+        [
+          'GET /cases/:id/plan-versions',
+          asIntruder('get', `${BASE}/cases/${caseId}/plan-versions`),
+        ],
         ['GET /plan-versions/:id', asIntruder('get', `${BASE}/plan-versions/${planVersionId}`)],
-        ['GET /plan-versions/:id/graph', asIntruder('get', `${BASE}/plan-versions/${planVersionId}/graph`)],
+        [
+          'GET /plan-versions/:id/graph',
+          asIntruder('get', `${BASE}/plan-versions/${planVersionId}/graph`),
+        ],
         ['GET /run-bindings/:runId', asIntruder('get', `${BASE}/run-bindings/${runId}`)],
         ['GET /cases/:id/proposals', asIntruder('get', `${BASE}/cases/${caseId}/proposals`)],
         ['GET /proposals/:id', asIntruder('get', `${BASE}/proposals/${actionProposalId}`)],
         ['GET /waits/:id', asIntruder('get', `${BASE}/waits/${waitId}`)],
         ['GET /cases/:id/waits', asIntruder('get', `${BASE}/cases/${caseId}/waits`)],
-        ['GET /cases/:id/artifact-links', asIntruder('get', `${BASE}/cases/${caseId}/artifact-links`)],
-        ['GET /cases/:id/history-events', asIntruder('get', `${BASE}/cases/${caseId}/history-events`)],
+        [
+          'GET /cases/:id/artifact-links',
+          asIntruder('get', `${BASE}/cases/${caseId}/artifact-links`),
+        ],
+        [
+          'GET /cases/:id/history-events',
+          asIntruder('get', `${BASE}/cases/${caseId}/history-events`),
+        ],
         [
           'GET /cases/:id/value-measurements',
           asIntruder('get', `${BASE}/cases/${caseId}/value-measurements`),
@@ -458,7 +492,9 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
         ],
       ];
 
-      const results = await Promise.all(attempts.map(async ([label, p]) => [label, await p] as const));
+      const results = await Promise.all(
+        attempts.map(async ([label, p]) => [label, await p] as const)
+      );
       for (const [label, res] of results) expectDenied(`cross-tenant ${label}`, res);
 
       // Not one of them may have been a 5xx (a crash is not a control).
@@ -510,9 +546,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       }
       if (actionProposalId) {
         await control
-          .query(`DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`, [
-            actionProposalId,
-          ])
+          .query(
+            `DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`,
+            [actionProposalId]
+          )
           .catch(() => undefined);
       }
       await fx.teardown();
@@ -556,9 +593,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       expect(created.status).toBe(201);
       caseId = created.body.data.caseId;
 
-      expect((await asDoomed('post', `${BASE}/cases/${caseId}/status`).send({ targetStatus: 'ACTIVE' })).status).toBe(
-        200
-      );
+      expect(
+        (await asDoomed('post', `${BASE}/cases/${caseId}/status`).send({ targetStatus: 'ACTIVE' }))
+          .status
+      ).toBe(200);
 
       const draft = await asDoomed('post', `${BASE}/cases/${caseId}/plan-versions`).send({
         semanticGraph: minimalGraph(),
@@ -566,18 +604,29 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       });
       expect(draft.status).toBe(201);
       const planVersionId: string = draft.body.data.casePlanVersionId;
-      const proposedPlan = await asDoomed('post', `${BASE}/plan-versions/${planVersionId}/propose`).send({
+      const proposedPlan = await asDoomed(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/propose`
+      ).send({
         expectedVersion: draft.body.data.version,
       });
       expect(proposedPlan.status).toBe(200);
-      const publishedPlan = await asColleague('post', `${BASE}/plan-versions/${planVersionId}/publish`).send({
+      const publishedPlan = await asColleague(
+        'post',
+        `${BASE}/plan-versions/${planVersionId}/publish`
+      ).send({
         expectedVersion: proposedPlan.body.data.version,
       });
       expect(publishedPlan.status).toBe(200);
 
       const runId = await fx.seedExecutionRun(orgId, doomed, 'revoke-mid');
       expect(
-        (await asDoomed('post', `${BASE}/run-bindings`).send({ runId, casePlanVersionId: planVersionId })).status
+        (
+          await asDoomed('post', `${BASE}/run-bindings`).send({
+            runId,
+            casePlanVersionId: planVersionId,
+          })
+        ).status
       ).toBe(201);
 
       const nodeRunId = `noderun-${randomUUID()}`;
@@ -609,7 +658,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
         });
       expect(proposal.status).toBe(201);
       actionProposalId = proposal.body.data.actionProposalId;
-      const submitted = await asDoomed('post', `${BASE}/proposals/${actionProposalId}/submit-for-review`).send({
+      const submitted = await asDoomed(
+        'post',
+        `${BASE}/proposals/${actionProposalId}/submit-for-review`
+      ).send({
         expectedVersion: proposal.body.data.version,
       });
       expect(submitted.status).toBe(200);
@@ -641,7 +693,9 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       expect(revoked.rowCount).toBe(1);
 
       const outboxBefore = await readOutboxForOrg(control, orgId);
-      const caseBefore = (await control.query(`SELECT * FROM case_core WHERE case_id = $1`, [caseId])).rows[0];
+      const caseBefore = (
+        await control.query(`SELECT * FROM case_core WHERE case_id = $1`, [caseId])
+      ).rows[0];
       const proposalBefore = (
         await control.query(
           `SELECT * FROM case_workspace_action_proposals WHERE action_proposal_id = $1`,
@@ -704,7 +758,9 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
         ],
         [
           'POST /cases/:id/closure',
-          asDoomed('post', `${BASE}/cases/${caseId}/closure`).send({ closureType: 'DELIVERY_COMPLETED' }),
+          asDoomed('post', `${BASE}/cases/${caseId}/closure`).send({
+            closureType: 'DELIVERY_COMPLETED',
+          }),
         ],
         [
           'POST /cases/:id/status CLOSED',
@@ -728,7 +784,9 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       expect({ crashedInsteadOfDenied: crashed }).toEqual({ crashedInsteadOfDenied: [] });
 
       // Nothing moved, and no event was written for the refused commands.
-      const caseAfter = (await control.query(`SELECT * FROM case_core WHERE case_id = $1`, [caseId])).rows[0];
+      const caseAfter = (
+        await control.query(`SELECT * FROM case_core WHERE case_id = $1`, [caseId])
+      ).rows[0];
       expect(caseAfter).toEqual(caseBefore);
       const proposalAfter = (
         await control.query(
@@ -780,9 +838,10 @@ suite('INTEGRATION GATE — cross-tenant and revoked membership across the whole
       }
       if (actionProposalId) {
         await control
-          .query(`DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`, [
-            actionProposalId,
-          ])
+          .query(
+            `DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`,
+            [actionProposalId]
+          )
           .catch(() => undefined);
       }
       await fx.teardown();

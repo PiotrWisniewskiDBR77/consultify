@@ -56,7 +56,11 @@ export async function attestPartnerUsersUuidVariant(
     );
     if (col.rows.length === 0) {
       record('partner_users.partner_org_id exists', 'present', 'absent');
-      return { attested: false, checks, failureReason: 'partner_users.partner_org_id does not exist' };
+      return {
+        attested: false,
+        checks,
+        failureReason: 'partner_users.partner_org_id does not exist',
+      };
     }
     record('partner_users.partner_org_id exists', 'present', 'present');
     if (!record('partner_users.partner_org_id type', 'uuid', String(col.rows[0].data_type))) {
@@ -87,7 +91,11 @@ export async function attestPartnerUsersUuidVariant(
 
     if (fk.rows.length === 0) {
       record('FK on partner_org_id', 'present', 'absent');
-      return { attested: false, checks, failureReason: 'no foreign key on partner_users.partner_org_id' };
+      return {
+        attested: false,
+        checks,
+        failureReason: 'no foreign key on partner_users.partner_org_id',
+      };
     }
     // 7. no conflicting second FK on the same column
     if (!record('FK count on partner_org_id', '1', String(fk.rows.length))) {
@@ -106,12 +114,26 @@ export async function attestPartnerUsersUuidVariant(
       return { attested: false, checks, failureReason: 'FK points at the wrong table' };
     }
     // confdeltype 'c' == ON DELETE CASCADE
-    if (!record('FK on delete', 'CASCADE', row.on_delete === 'c' ? 'CASCADE' : String(row.on_delete))) {
+    if (
+      !record('FK on delete', 'CASCADE', row.on_delete === 'c' ? 'CASCADE' : String(row.on_delete))
+    ) {
       return { attested: false, checks, failureReason: 'FK is not ON DELETE CASCADE' };
     }
     const def = String(row.def);
-    if (!record('FK target column', 'partner_organizations(id)', /REFERENCES\s+partner_organizations\s*\(\s*id\s*\)/i.test(def) ? 'partner_organizations(id)' : def)) {
-      return { attested: false, checks, failureReason: 'FK does not reference partner_organizations(id)' };
+    if (
+      !record(
+        'FK target column',
+        'partner_organizations(id)',
+        /REFERENCES\s+partner_organizations\s*\(\s*id\s*\)/i.test(def)
+          ? 'partner_organizations(id)'
+          : def
+      )
+    ) {
+      return {
+        attested: false,
+        checks,
+        failureReason: 'FK does not reference partner_organizations(id)',
+      };
     }
 
     return { attested: true, checks };
@@ -157,7 +179,12 @@ export async function attestSteeringBoardTimestamps(
           AND column_name IN ('created_at','updated_at')`
     );
     if (r.rows.length === 0) {
-      checks.push({ name: 'steering board tables present', expected: 'present', actual: 'absent', ok: true });
+      checks.push({
+        name: 'steering board tables present',
+        expected: 'present',
+        actual: 'absent',
+        ok: true,
+      });
       return { attested: true, checks }; // environment simply lacks the feature tables
     }
     let ok = true;
@@ -181,8 +208,17 @@ export async function attestSteeringBoardTimestamps(
             'steering-board timestamps are still TEXT — run 20260813_repair_d_steering_board_timestamptz.sql',
         };
   } catch (error: any) {
-    checks.push({ name: 'attestation query executed', expected: 'success', actual: String(error?.message || error), ok: false });
-    return { attested: false, checks, failureReason: `attestation query failed: ${error?.message || error}` };
+    checks.push({
+      name: 'attestation query executed',
+      expected: 'success',
+      actual: String(error?.message || error),
+      ok: false,
+    });
+    return {
+      attested: false,
+      checks,
+      failureReason: `attestation query failed: ${error?.message || error}`,
+    };
   }
 }
 
@@ -205,7 +241,12 @@ export async function attestApiKeyStatusContract(
     const status = r.rows.find((x: any) => x.column_name === 'status');
 
     const statusOk = Boolean(status);
-    checks.push({ name: 'api_keys.status present', expected: 'present', actual: statusOk ? 'present' : 'absent', ok: statusOk });
+    checks.push({
+      name: 'api_keys.status present',
+      expected: 'present',
+      actual: statusOk ? 'present' : 'absent',
+      ok: statusOk,
+    });
 
     if (!isActive) {
       // No is_active at all — nothing to derive from, and status exists. Acceptable.
@@ -215,7 +256,12 @@ export async function attestApiKeyStatusContract(
     }
     const t = String(isActive.data_type);
     const typeOk = SUPPORTED.includes(t);
-    checks.push({ name: 'api_keys.is_active type', expected: SUPPORTED.join('|'), actual: t, ok: typeOk });
+    checks.push({
+      name: 'api_keys.is_active type',
+      expected: SUPPORTED.join('|'),
+      actual: t,
+      ok: typeOk,
+    });
 
     return typeOk && statusOk
       ? { attested: true, checks }
@@ -227,8 +273,17 @@ export async function attestApiKeyStatusContract(
             : `api_keys.is_active type ${t} is not supported by the status contract`,
         };
   } catch (error: any) {
-    checks.push({ name: 'attestation query executed', expected: 'success', actual: String(error?.message || error), ok: false });
-    return { attested: false, checks, failureReason: `attestation query failed: ${error?.message || error}` };
+    checks.push({
+      name: 'attestation query executed',
+      expected: 'success',
+      actual: String(error?.message || error),
+      ok: false,
+    });
+    return {
+      attested: false,
+      checks,
+      failureReason: `attestation query failed: ${error?.message || error}`,
+    };
   }
 }
 
@@ -257,7 +312,12 @@ export async function attestCommunicationPlanKeyParity(
     const planId = cols.rows.find((x: any) => x.table_name === 'communication_plans');
     const itemFk = cols.rows.find((x: any) => x.table_name === 'communication_plan_items');
     if (!planId && !itemFk) {
-      checks.push({ name: 'communication plan tables present', expected: 'present', actual: 'absent', ok: true });
+      checks.push({
+        name: 'communication plan tables present',
+        expected: 'present',
+        actual: 'absent',
+        ok: true,
+      });
       return { attested: true, checks };
     }
     if (!planId || !itemFk) {
@@ -267,12 +327,21 @@ export async function attestCommunicationPlanKeyParity(
         actual: planId ? 'plans only' : 'items only',
         ok: false,
       });
-      return { attested: false, checks, failureReason: 'only one side of the communication plan pair exists' };
+      return {
+        attested: false,
+        checks,
+        failureReason: 'only one side of the communication plan pair exists',
+      };
     }
     const a = String(planId.data_type);
     const b = String(itemFk.data_type);
     const match = a === b;
-    checks.push({ name: 'communication_plans.id vs communication_plan_items.plan_id', expected: 'identical types', actual: `${a} vs ${b}`, ok: match });
+    checks.push({
+      name: 'communication_plans.id vs communication_plan_items.plan_id',
+      expected: 'identical types',
+      actual: `${a} vs ${b}`,
+      ok: match,
+    });
 
     const fk = await db.query(
       `SELECT con.conname FROM pg_constraint con
@@ -283,7 +352,12 @@ export async function attestCommunicationPlanKeyParity(
           AND rel.relname='communication_plan_items' AND tgt.relname='communication_plans'`
     );
     const fkOk = fk.rows.length >= 1;
-    checks.push({ name: 'FK items -> plans', expected: 'present', actual: fkOk ? 'present' : 'absent', ok: fkOk });
+    checks.push({
+      name: 'FK items -> plans',
+      expected: 'present',
+      actual: fkOk ? 'present' : 'absent',
+      ok: fkOk,
+    });
 
     return match && fkOk
       ? { attested: true, checks }
@@ -295,8 +369,17 @@ export async function attestCommunicationPlanKeyParity(
             : `key type mismatch: communication_plans.id is ${a} but communication_plan_items.plan_id is ${b}`,
         };
   } catch (error: any) {
-    checks.push({ name: 'attestation query executed', expected: 'success', actual: String(error?.message || error), ok: false });
-    return { attested: false, checks, failureReason: `attestation query failed: ${error?.message || error}` };
+    checks.push({
+      name: 'attestation query executed',
+      expected: 'success',
+      actual: String(error?.message || error),
+      ok: false,
+    });
+    return {
+      attested: false,
+      checks,
+      failureReason: `attestation query failed: ${error?.message || error}`,
+    };
   }
 }
 

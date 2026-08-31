@@ -81,9 +81,8 @@ vi.mock('jsonwebtoken', () => ({
 
 const { socketAuthMiddleware, validateJoinOrg } = await import('../socketAuth.js');
 const { __testing__ } = await import('../../services/organizationSuspensionGuard.js');
-const { sweepRealtimeConnections, trackRealtimeConnection, __resetRealtimeTracking } = await import(
-  '../demoRealtimeGuard.js'
-);
+const { sweepRealtimeConnections, trackRealtimeConnection, __resetRealtimeTracking } =
+  await import('../demoRealtimeGuard.js');
 
 const ORIGINAL_SECRET = process.env.JWT_SECRET;
 
@@ -146,9 +145,8 @@ describe('DEC-91 organization suspension on realtime sockets', () => {
     });
 
     it('names the reason with the same body the HTTP paths return', async () => {
-      const { buildOrgSuspendedResponseBody } = await import(
-        '../../services/organizationSuspensionGuard.js'
-      );
+      const { buildOrgSuspendedResponseBody } =
+        await import('../../services/organizationSuspensionGuard.js');
       const result = await connect({ id: 'user-1', organizationId: 'org-suspended' });
 
       expect(result.error?.data).toEqual(buildOrgSuspendedResponseBody());

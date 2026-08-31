@@ -110,7 +110,10 @@ suite('GOLDEN CASE C — a durable wait expires; timer state never becomes appro
       });
 
       const runId = await fx.seedExecutionRun(orgId, consultantId, 'golden-c');
-      const binding = await as('post', `${BASE}/run-bindings`).send({ runId, casePlanVersionId: planVersionId });
+      const binding = await as('post', `${BASE}/run-bindings`).send({
+        runId,
+        casePlanVersionId: planVersionId,
+      });
       expect(binding.status).toBe(201);
 
       // -- The wait -----------------------------------------------------------

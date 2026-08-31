@@ -8,7 +8,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 
 describe('DiscoveryToolsHub network bootstrap', () => {
   it('uses the explicit legacy assessment read without probing feature-gated V8', () => {
-    const hub = readFileSync(path.join(root, 'src/components/Discovery/DiscoveryToolsHub.tsx'), 'utf8');
+    const hub = readFileSync(
+      path.join(root, 'src/components/Discovery/DiscoveryToolsHub.tsx'),
+      'utf8'
+    );
     const api = readFileSync(path.join(root, 'src/services/api.ts'), 'utf8');
 
     expect(hub).toContain('Api.listAssessmentsLegacy({');

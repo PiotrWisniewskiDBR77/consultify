@@ -107,7 +107,8 @@ interface Stats {
 
 function stats(samples: number[]): Stats {
   const sorted = [...samples].sort((a, b) => a - b);
-  const nearestRank = (p: number) => sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)];
+  const nearestRank = (p: number) =>
+    sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)];
   const p50 = nearestRank(50);
   const min = sorted[0];
   const max = sorted[sorted.length - 1];
@@ -184,11 +185,19 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
   let annualPeriodIds: string[];
   let lineIdByCode: Map<string, string>;
 
-  const t = <T>(fn: (tx: any) => Promise<T>): Promise<T> => withPinnedPostgresTransaction(fn as never) as Promise<T>;
+  const t = <T>(fn: (tx: any) => Promise<T>): Promise<T> =>
+    withPinnedPostgresTransaction(fn as never) as Promise<T>;
 
   async function insertPeriod(
     calendarId: string,
-    opts: { type: 'MONTH' | 'FY'; fiscalYear: number; fiscalMonth: number | null; start: string; end: string; label: string }
+    opts: {
+      type: 'MONTH' | 'FY';
+      fiscalYear: number;
+      fiscalMonth: number | null;
+      start: string;
+      end: string;
+      label: string;
+    }
   ): Promise<string> {
     const periodId = `per-${randomUUID()}`;
     await t((tx) =>
@@ -196,27 +205,57 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
         `INSERT INTO finance_stmt_periods (period_id, organization_id, fiscal_calendar_id, period_type, fiscal_year,
            fiscal_month, period_start, period_end, label, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [periodId, orgId, calendarId, opts.type, opts.fiscalYear, opts.fiscalMonth, opts.start, opts.end, opts.label, userId]
+        [
+          periodId,
+          orgId,
+          calendarId,
+          opts.type,
+          opts.fiscalYear,
+          opts.fiscalMonth,
+          opts.start,
+          opts.end,
+          opts.label,
+          userId,
+        ]
       )
     );
     return periodId;
   }
 
-  async function insertStmtLine(lineCode: string, periodId: string, value: number, statementType: 'P&L' | 'BS' | 'CF'): Promise<void> {
+  async function insertStmtLine(
+    lineCode: string,
+    periodId: string,
+    value: number,
+    statementType: 'P&L' | 'BS' | 'CF'
+  ): Promise<void> {
     await t((tx) =>
       tx.queryRun(
         `INSERT INTO finance_stmt_lines (id, organization_id, business_version_id, statement_type, canonical_line_id,
            entity_id, period_id, value_status, value_decimal, native_currency, presentation_currency, unit,
            accounting_policy, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', 'IFRS', ?)`,
-        [randomUUID(), orgId, stmtBvId, statementType, lineIdByCode.get(lineCode), entityId, periodId, value, userId]
+        [
+          randomUUID(),
+          orgId,
+          stmtBvId,
+          statementType,
+          lineIdByCode.get(lineCode),
+          entityId,
+          periodId,
+          value,
+          userId,
+        ]
       )
     );
   }
 
   /** A fresh BASELINE_MODEL business version, fully configured, ready to compute. Not timed. */
   async function makeBaselineVersion(): Promise<string> {
-    const artifact = await av.createArtifact({ organizationId: orgId, artifactType: 'BASELINE_MODEL', createdBy: userId });
+    const artifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'BASELINE_MODEL',
+      createdBy: userId,
+    });
     const bvId = artifact.businessVersion.business_version_id;
 
     await t((tx) =>
@@ -233,7 +272,13 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
            horizon_rationale_note, circularity_max_iterations, circularity_tolerance_currency,
            interest_income_on_cash_modeled, mandatory_contractual_cash_sweep_modeled, created_by)
          VALUES (?, ?, ?, 12, 'DEBT_MATURITY', ?, 50, 1, false, true, ?)`,
-        [randomUUID(), orgId, bvId, 'GoldCo FY2026 explicit monthly horizon (matches the facility amortization cadence)', userId]
+        [
+          randomUUID(),
+          orgId,
+          bvId,
+          'GoldCo FY2026 explicit monthly horizon (matches the facility amortization cadence)',
+          userId,
+        ]
       )
     );
 
@@ -243,7 +288,18 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
           `INSERT INTO finance_baseline_assumptions (id, organization_id, business_version_id, schedule_type, driver_code,
              entity_id, period_id, rule, value_status, value_decimal, unit, quality, created_by)
            VALUES (?, ?, ?, ?, ?, ?, ?, 'HISTORICAL_AVERAGE', 'PRESENT_NONZERO', ?, ?, 'ESTIMATED', ?)`,
-          [randomUUID(), orgId, bvId, scheduleType, driverCode, entityId, forecastPeriodIds[0], value, unit, userId]
+          [
+            randomUUID(),
+            orgId,
+            bvId,
+            scheduleType,
+            driverCode,
+            entityId,
+            forecastPeriodIds[0],
+            value,
+            unit,
+            userId,
+          ]
         )
       );
     await assumption('revenue_pvm', 'REVENUE_GROWTH_YOY', 0.05, 'PCT');
@@ -252,8 +308,18 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
     await assumption('wc_dso_dio_dpo', 'DSO_DAYS', (GOLDCO.ar / GOLDCO.revenue) * 365, 'DAYS');
     await assumption('wc_dso_dio_dpo', 'DIO_DAYS', (GOLDCO.inventory / GOLDCO.cogs) * 365, 'DAYS');
     await assumption('wc_dso_dio_dpo', 'DPO_DAYS', (GOLDCO.ap / GOLDCO.cogs) * 365, 'DAYS');
-    await assumption('capex_depreciation', 'CAPEX_PCT_OF_REVENUE', GOLDCO.capex / GOLDCO.revenue, 'PCT');
-    await assumption('capex_depreciation', 'USEFUL_LIFE_MONTHS', (12 * GOLDCO.fixedAssets) / GOLDCO.depreciation, 'MONTHS');
+    await assumption(
+      'capex_depreciation',
+      'CAPEX_PCT_OF_REVENUE',
+      GOLDCO.capex / GOLDCO.revenue,
+      'PCT'
+    );
+    await assumption(
+      'capex_depreciation',
+      'USEFUL_LIFE_MONTHS',
+      (12 * GOLDCO.fixedAssets) / GOLDCO.depreciation,
+      'MONTHS'
+    );
     await assumption('tax_nol', 'STATUTORY_TAX_RATE_PCT', 0.19, 'PCT');
 
     await t((tx) =>
@@ -289,7 +355,11 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
    * "evaluate these 18 rows". Not timed.
    */
   async function makeAnalysisVersion(): Promise<{ bvId: string; seededRows: number }> {
-    const artifact = await av.createArtifact({ organizationId: orgId, artifactType: 'HISTORICAL_ANALYSIS', createdBy: userId });
+    const artifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      createdBy: userId,
+    });
     const bvId = artifact.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
@@ -300,7 +370,9 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
       )
     );
     const catalog = await t((tx) =>
-      tx.queryAll<{ id: string }>(`SELECT id FROM finance_analysis_kpi_catalog WHERE status = 'ACTIVE' ORDER BY kpi_code`)
+      tx.queryAll<{ id: string }>(
+        `SELECT id FROM finance_analysis_kpi_catalog WHERE status = 'ACTIVE' ORDER BY kpi_code`
+      )
     );
     for (const kpiRow of catalog) {
       await t((tx) =>
@@ -316,7 +388,11 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
 
   /** A fresh VALUATION_CASE version sourced from `baselineBvId`, with complete WACC inputs. Not timed. */
   async function makeValuationVersion(baselineBvId: string): Promise<string> {
-    const artifact = await av.createArtifact({ organizationId: orgId, artifactType: 'VALUATION_CASE', createdBy: userId });
+    const artifact = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'VALUATION_CASE',
+      createdBy: userId,
+    });
     const bvId = artifact.businessVersion.business_version_id;
     await t((tx) =>
       tx.queryRun(
@@ -346,15 +422,26 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
     valuationSvc = await import('../valuationComputeService.js');
     sensSvc = await import('../valuationSensitivityService.js');
 
-    await t((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'W9 Perf Org (GoldCo-scale)']));
+    await t((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'W9 Perf Org (GoldCo-scale)',
+      ])
+    );
 
     const lineRows = await t((tx) =>
-      tx.queryAll<{ id: string; line_code: string }>(`SELECT id, line_code FROM financial_statement_lines`)
+      tx.queryAll<{ id: string; line_code: string }>(
+        `SELECT id, line_code FROM financial_statement_lines`
+      )
     );
     lineIdByCode = new Map(lineRows.map((r) => [r.line_code, r.id]));
 
     // --- statement pack: FY2025 monthly actuals + Dec-2025 opening balance sheet
-    const stmt = await av.createArtifact({ organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: userId });
+    const stmt = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'STATEMENT_PACK',
+      createdBy: userId,
+    });
     stmtBvId = stmt.businessVersion.business_version_id;
     engineManifestId = stmt.businessVersion.engine_manifest_id;
 
@@ -377,7 +464,8 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
       )
     );
 
-    const monthEnd = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+    const monthEnd = (year: number, month: number) =>
+      new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
     const monthlyRevenue = GOLDCO.revenue / 12;
 
     // FY2025 actual months — the PRIOR_YEAR_SAME_PERIOD revenue history the engine needs.
@@ -429,290 +517,322 @@ describe.skipIf(!REAL_PG)('W9-D — compute performance baseline (real PostgreSQ
 
     // FY2027/FY2028 annual periods — projection years 2 and 3 for the valuation.
     annualPeriodIds = [
-      await insertPeriod(calendarId, { type: 'FY', fiscalYear: 2027, fiscalMonth: null, start: '2027-01-01', end: '2027-12-31', label: 'FY2027' }),
-      await insertPeriod(calendarId, { type: 'FY', fiscalYear: 2028, fiscalMonth: null, start: '2028-01-01', end: '2028-12-31', label: 'FY2028' }),
+      await insertPeriod(calendarId, {
+        type: 'FY',
+        fiscalYear: 2027,
+        fiscalMonth: null,
+        start: '2027-01-01',
+        end: '2027-12-31',
+        label: 'FY2027',
+      }),
+      await insertPeriod(calendarId, {
+        type: 'FY',
+        fiscalYear: 2028,
+        fiscalMonth: null,
+        start: '2028-01-01',
+        end: '2028-12-31',
+        label: 'FY2028',
+      }),
     ];
   }, 300_000);
 
   // =========================================================================
   // D1 — full Baseline compute (monthly, GoldCo 12-month horizon)
   // =========================================================================
-  it(
-    'D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)',
-    async () => {
-      const samples: number[] = [];
-      let lastPeriodsComputed = 0;
-      let lastRowsWritten = 0;
+  it('D1 — Baseline compute (monthly, 12-month GoldCo horizon, real circularity solver)', async () => {
+    const samples: number[] = [];
+    let lastPeriodsComputed = 0;
+    let lastRowsWritten = 0;
 
-      for (let i = 0; i < REPS + 1; i++) {
-        const bvId = await makeBaselineVersion();
+    for (let i = 0; i < REPS + 1; i++) {
+      const bvId = await makeBaselineVersion();
 
-        const started = performance.now();
-        await maybeInjectDelay('D1');
-        const result = await baselineSvc.runBaselineCompute({
-          organizationId: orgId,
-          businessVersionId: bvId,
-          requestedByUserId: userId,
-          engineManifestId,
-          entityId,
-          forecastPeriodIds,
-          openingBalanceSheetPeriodId: openingPeriodId,
-        });
-        const elapsed = performance.now() - started;
-
-        if (!result.ok) throw new Error(`runBaselineCompute failed: ${result.code} — ${result.message}`);
-        expect(result.periodsComputed).toBe(12);
-        lastPeriodsComputed = result.periodsComputed;
-
-        // Physical proof this iteration really did the work (30 canonical lines x 12 periods).
-        const written = await t((tx) =>
-          tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_baseline_outputs WHERE business_version_id = ?`, [bvId])
-        );
-        lastRowsWritten = Number(written!.n);
-        expect(lastRowsWritten).toBe(372); // 31 canonical lines x 12 periods
-
-        if (i > 0) samples.push(elapsed); // i === 0 is the discarded warm-up
-      }
-
-      const s = stats(samples);
-      report(`D1 Baseline compute — 12 monthly periods, ${lastRowsWritten} output rows/run, ${lastPeriodsComputed} periods`, s);
-
-      // Declared CI regression ceiling (NOT a production SLO — see
-      // perfSloThresholds.ts and the W2 FC-11 report for derivation).
-      const T = PERF_REGRESSION_THRESHOLDS.D1_BASELINE;
-      expect(
-        s.p95Ms,
-        `D1 Baseline p95=${s.p95Ms}ms exceeds regression ceiling ${T.ceilingMs}ms ` +
-          `(= ${T.observedMaxP95Ms}ms observed-max-p95 × ${T.multiplier}). Basis: ${T.basis}.`
-      ).toBeLessThan(T.ceilingMs);
-    },
-    600_000
-  );
-
-  // =========================================================================
-  // D2 — Analysis KPI compute (18-KPI P0 catalog)
-  // =========================================================================
-  it(
-    'D2 — Analysis KPI compute (full 18-indicator P0 catalog)',
-    async () => {
-      const catalogSize = await t((tx) =>
-        tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_analysis_kpi_catalog WHERE status = 'ACTIVE'`)
-      );
-      expect(Number(catalogSize!.n)).toBe(18); // the brief's "18 wskaźników", verified not assumed
-
-      const samples: number[] = [];
-      let lastComputed = 0;
-
-      for (let i = 0; i < REPS + 1; i++) {
-        const { bvId, seededRows } = await makeAnalysisVersion();
-        expect(seededRows).toBe(18); // physical pre-state: 18 rows waiting to be evaluated
-
-        const started = performance.now();
-        await maybeInjectDelay('D2');
-        const result = await kpiSvc.computeAnalysisKpis({
-          organizationId: orgId,
-          businessVersionId: bvId,
-          requestedByUserId: userId,
-          engineManifestId,
-        });
-        const elapsed = performance.now() - started;
-
-        if (!result.ok) throw new Error(`computeAnalysisKpis failed: ${result.code} — ${result.message}`);
-        lastComputed = result.results.length;
-        expect(lastComputed).toBe(18); // every seeded KPI row was evaluated
-
-        if (i > 0) samples.push(elapsed);
-      }
-
-      const s = stats(samples);
-      report(`D2 Analysis KPI compute — ${lastComputed} of 18 catalog KPIs evaluated per run`, s);
-
-      const T = PERF_REGRESSION_THRESHOLDS.D2_KPI;
-      expect(
-        s.p95Ms,
-        `D2 KPI compute p95=${s.p95Ms}ms exceeds regression ceiling ${T.ceilingMs}ms ` +
-          `(= ${T.observedMaxP95Ms}ms observed-max-p95 × ${T.multiplier}). Basis: ${T.basis}.`
-      ).toBeLessThan(T.ceilingMs);
-    },
-    600_000
-  );
-
-  // =========================================================================
-  // D3 — Valuation compute + 5x5 sensitivity grid
-  // =========================================================================
-  it(
-    'D3 — Valuation DCF/FCFF compute plus a 5x5 sensitivity grid (25 cells)',
-    async () => {
-      // One shared Baseline supplies the projection-year cash flows. FY2027/FY2028
-      // are the same "simple continuation" convention the GoldCo full-DAG fixture uses.
-      const baselineBvId = await makeBaselineVersion();
-      const baselineRun = await baselineSvc.runBaselineCompute({
+      const started = performance.now();
+      await maybeInjectDelay('D1');
+      const result = await baselineSvc.runBaselineCompute({
         organizationId: orgId,
-        businessVersionId: baselineBvId,
+        businessVersionId: bvId,
         requestedByUserId: userId,
         engineManifestId,
         entityId,
         forecastPeriodIds,
         openingBalanceSheetPeriodId: openingPeriodId,
       });
-      if (!baselineRun.ok) throw new Error(`valuation fixture baseline failed: ${baselineRun.code}`);
+      const elapsed = performance.now() - started;
 
-      const annualSum = async (lineCode: string) => {
-        const rows = await t((tx) =>
-          tx.queryAll<{ value_decimal: string }>(
-            `SELECT value_decimal FROM finance_baseline_outputs
+      if (!result.ok)
+        throw new Error(`runBaselineCompute failed: ${result.code} — ${result.message}`);
+      expect(result.periodsComputed).toBe(12);
+      lastPeriodsComputed = result.periodsComputed;
+
+      // Physical proof this iteration really did the work (30 canonical lines x 12 periods).
+      const written = await t((tx) =>
+        tx.queryOne<{ n: string }>(
+          `SELECT count(*)::text AS n FROM finance_baseline_outputs WHERE business_version_id = ?`,
+          [bvId]
+        )
+      );
+      lastRowsWritten = Number(written!.n);
+      expect(lastRowsWritten).toBe(372); // 31 canonical lines x 12 periods
+
+      if (i > 0) samples.push(elapsed); // i === 0 is the discarded warm-up
+    }
+
+    const s = stats(samples);
+    report(
+      `D1 Baseline compute — 12 monthly periods, ${lastRowsWritten} output rows/run, ${lastPeriodsComputed} periods`,
+      s
+    );
+
+    // Declared CI regression ceiling (NOT a production SLO — see
+    // perfSloThresholds.ts and the W2 FC-11 report for derivation).
+    const T = PERF_REGRESSION_THRESHOLDS.D1_BASELINE;
+    expect(
+      s.p95Ms,
+      `D1 Baseline p95=${s.p95Ms}ms exceeds regression ceiling ${T.ceilingMs}ms ` +
+        `(= ${T.observedMaxP95Ms}ms observed-max-p95 × ${T.multiplier}). Basis: ${T.basis}.`
+    ).toBeLessThan(T.ceilingMs);
+  }, 600_000);
+
+  // =========================================================================
+  // D2 — Analysis KPI compute (18-KPI P0 catalog)
+  // =========================================================================
+  it('D2 — Analysis KPI compute (full 18-indicator P0 catalog)', async () => {
+    const catalogSize = await t((tx) =>
+      tx.queryOne<{ n: string }>(
+        `SELECT count(*)::text AS n FROM finance_analysis_kpi_catalog WHERE status = 'ACTIVE'`
+      )
+    );
+    expect(Number(catalogSize!.n)).toBe(18); // the brief's "18 wskaźników", verified not assumed
+
+    const samples: number[] = [];
+    let lastComputed = 0;
+
+    for (let i = 0; i < REPS + 1; i++) {
+      const { bvId, seededRows } = await makeAnalysisVersion();
+      expect(seededRows).toBe(18); // physical pre-state: 18 rows waiting to be evaluated
+
+      const started = performance.now();
+      await maybeInjectDelay('D2');
+      const result = await kpiSvc.computeAnalysisKpis({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        requestedByUserId: userId,
+        engineManifestId,
+      });
+      const elapsed = performance.now() - started;
+
+      if (!result.ok)
+        throw new Error(`computeAnalysisKpis failed: ${result.code} — ${result.message}`);
+      lastComputed = result.results.length;
+      expect(lastComputed).toBe(18); // every seeded KPI row was evaluated
+
+      if (i > 0) samples.push(elapsed);
+    }
+
+    const s = stats(samples);
+    report(`D2 Analysis KPI compute — ${lastComputed} of 18 catalog KPIs evaluated per run`, s);
+
+    const T = PERF_REGRESSION_THRESHOLDS.D2_KPI;
+    expect(
+      s.p95Ms,
+      `D2 KPI compute p95=${s.p95Ms}ms exceeds regression ceiling ${T.ceilingMs}ms ` +
+        `(= ${T.observedMaxP95Ms}ms observed-max-p95 × ${T.multiplier}). Basis: ${T.basis}.`
+    ).toBeLessThan(T.ceilingMs);
+  }, 600_000);
+
+  // =========================================================================
+  // D3 — Valuation compute + 5x5 sensitivity grid
+  // =========================================================================
+  it('D3 — Valuation DCF/FCFF compute plus a 5x5 sensitivity grid (25 cells)', async () => {
+    // One shared Baseline supplies the projection-year cash flows. FY2027/FY2028
+    // are the same "simple continuation" convention the GoldCo full-DAG fixture uses.
+    const baselineBvId = await makeBaselineVersion();
+    const baselineRun = await baselineSvc.runBaselineCompute({
+      organizationId: orgId,
+      businessVersionId: baselineBvId,
+      requestedByUserId: userId,
+      engineManifestId,
+      entityId,
+      forecastPeriodIds,
+      openingBalanceSheetPeriodId: openingPeriodId,
+    });
+    if (!baselineRun.ok) throw new Error(`valuation fixture baseline failed: ${baselineRun.code}`);
+
+    const annualSum = async (lineCode: string) => {
+      const rows = await t((tx) =>
+        tx.queryAll<{ value_decimal: string }>(
+          `SELECT value_decimal FROM finance_baseline_outputs
               WHERE business_version_id = ? AND canonical_line_id = ? AND entity_id = ? AND period_id = ANY(?)`,
-            [baselineBvId, lineIdByCode.get(lineCode), entityId, forecastPeriodIds]
-          )
-        );
-        return rows.reduce((sum, r) => sum + Number(r.value_decimal), 0);
-      };
-      const closingFy2026 = async (lineCode: string) => {
-        const row = await t((tx) =>
-          tx.queryOne<{ value_decimal: string }>(
-            `SELECT value_decimal FROM finance_baseline_outputs
+          [baselineBvId, lineIdByCode.get(lineCode), entityId, forecastPeriodIds]
+        )
+      );
+      return rows.reduce((sum, r) => sum + Number(r.value_decimal), 0);
+    };
+    const closingFy2026 = async (lineCode: string) => {
+      const row = await t((tx) =>
+        tx.queryOne<{ value_decimal: string }>(
+          `SELECT value_decimal FROM finance_baseline_outputs
               WHERE business_version_id = ? AND canonical_line_id = ? AND entity_id = ? AND period_id = ?`,
-            [baselineBvId, lineIdByCode.get(lineCode), entityId, forecastPeriodIds[11]]
-          )
-        );
-        return Number(row!.value_decimal);
-      };
+          [baselineBvId, lineIdByCode.get(lineCode), entityId, forecastPeriodIds[11]]
+        )
+      );
+      return Number(row!.value_decimal);
+    };
 
-      const fy2026 = {
-        EBIT: await annualSum('EBIT'),
-        DEPRECIATION: await annualSum('DEPRECIATION'),
-        CAPEX: await annualSum('CAPEX'),
-        WORKING_CAPITAL: await closingFy2026('WORKING_CAPITAL'),
-      };
+    const fy2026 = {
+      EBIT: await annualSum('EBIT'),
+      DEPRECIATION: await annualSum('DEPRECIATION'),
+      CAPEX: await annualSum('CAPEX'),
+      WORKING_CAPITAL: await closingFy2026('WORKING_CAPITAL'),
+    };
 
-      let previous = fy2026;
-      for (const [index, periodId] of annualPeriodIds.entries()) {
-        const grown = {
-          EBIT: previous.EBIT * 1.03,
-          DEPRECIATION: previous.DEPRECIATION * 1.03,
-          CAPEX: previous.CAPEX * 1.03,
-          WORKING_CAPITAL: previous.WORKING_CAPITAL * 1.03,
-        };
-        for (const [code, value] of Object.entries(grown)) {
-          const statementType = code === 'CAPEX' ? 'CF' : code === 'WORKING_CAPITAL' ? 'BS' : 'P&L';
-          await t((tx) =>
-            tx.queryRun(
-              `INSERT INTO finance_baseline_outputs (id, organization_id, business_version_id, statement_type,
+    let previous = fy2026;
+    for (const [index, periodId] of annualPeriodIds.entries()) {
+      const grown = {
+        EBIT: previous.EBIT * 1.03,
+        DEPRECIATION: previous.DEPRECIATION * 1.03,
+        CAPEX: previous.CAPEX * 1.03,
+        WORKING_CAPITAL: previous.WORKING_CAPITAL * 1.03,
+      };
+      for (const [code, value] of Object.entries(grown)) {
+        const statementType = code === 'CAPEX' ? 'CF' : code === 'WORKING_CAPITAL' ? 'BS' : 'P&L';
+        await t((tx) =>
+          tx.queryRun(
+            `INSERT INTO finance_baseline_outputs (id, organization_id, business_version_id, statement_type,
                  canonical_line_id, entity_id, period_id, consolidation_scope, value_status, value_decimal,
                  native_currency, presentation_currency, unit, multiplier, value_kind, created_by)
                VALUES (?, ?, ?, ?, ?, ?, ?, 'CONSOLIDATED', 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', 1, 'FORECAST', ?)`,
-              [randomUUID(), orgId, baselineBvId, statementType, lineIdByCode.get(code), entityId, periodId, value, userId]
-            )
-          );
-        }
-        previous = grown;
-        void index;
-      }
-
-      const projectionYears = [
-        { fiscalYear: 2026, periodIds: forecastPeriodIds },
-        { fiscalYear: 2027, periodIds: [annualPeriodIds[0]] },
-        { fiscalYear: 2028, periodIds: [annualPeriodIds[1]] },
-      ];
-
-      const dcfSamples: number[] = [];
-      const gridSamples: number[] = [];
-      let lastEv = 0;
-
-      for (let i = 0; i < REPS + 1; i++) {
-        const valuationBvId = await makeValuationVersion(baselineBvId);
-
-        const dcfStarted = performance.now();
-        await maybeInjectDelay('D3A');
-        const dcf = await valuationSvc.runDcfFcffValuation({
-          organizationId: orgId,
-          valuationBusinessVersionId: valuationBvId,
-          entityId,
-          requestedByUserId: userId,
-          engineManifestId,
-          projectionYears,
-          openingWorkingCapital: GOLDCO.ar + GOLDCO.inventory - GOLDCO.ap,
-          terminal: { gPct: 2 },
-        });
-        const dcfElapsed = performance.now() - dcfStarted;
-        if (!dcf.ok) throw new Error(`runDcfFcffValuation failed: ${dcf.code} — ${dcf.message}`);
-        lastEv = dcf.enterpriseValue;
-
-        // 5x5 WACC x terminal-g grid, built and persisted (25 cells).
-        const baseWaccPct = dcf.wacc.waccPct;
-        const baseGPct = 2;
-        const grid = sensSvc.buildWaccByTerminalGGrid({
-          axes: {
-            wacc: [baseWaccPct - 1, baseWaccPct - 0.5, baseWaccPct, baseWaccPct + 0.5, baseWaccPct + 1],
-            terminalG: [baseGPct - 1, baseGPct - 0.5, baseGPct, baseGPct + 0.5, baseGPct + 1],
-          },
-          years: dcf.fcffYears.map((y) => ({ fiscalYear: y.fiscalYear, fcff: y.fcff! })),
-          fcffTerminalYear: dcf.fcffYears[dcf.fcffYears.length - 1].fcff!,
-          baseWaccPct,
-          baseGPct,
-        });
-        if (!grid.ok) throw new Error(`buildWaccByTerminalGGrid failed: ${grid.code}`);
-        expect(grid.cells).toHaveLength(25);
-
-        const gridStarted = performance.now();
-        await maybeInjectDelay('D3B');
-        const written = await sensSvc.writeSensitivityGrid({
-          organizationId: orgId,
-          methodId: dcf.methodId,
-          gridLabel: 'W9D_WACC_X_TERMINAL_G',
-          rowAxisVariable: 'WACC',
-          columnAxisVariable: 'TERMINAL_G',
-          cells: grid.cells,
-          createdBy: userId,
-        });
-        const gridElapsed = performance.now() - gridStarted;
-
-        const persisted = await t((tx) =>
-          tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_valuation_sensitivity_cells WHERE grid_id = ?`, [
-            written.gridId,
-          ])
+            [
+              randomUUID(),
+              orgId,
+              baselineBvId,
+              statementType,
+              lineIdByCode.get(code),
+              entityId,
+              periodId,
+              value,
+              userId,
+            ]
+          )
         );
-        expect(Number(persisted!.n)).toBe(25); // physical proof, not the return value
-
-        if (i > 0) {
-          dcfSamples.push(dcfElapsed);
-          gridSamples.push(gridElapsed);
-        }
       }
+      previous = grown;
+      void index;
+    }
 
-      const dcfStats = stats(dcfSamples);
-      const gridStats = stats(gridSamples);
-      const combined = stats(dcfSamples.map((v, idx) => v + gridSamples[idx]));
+    const projectionYears = [
+      { fiscalYear: 2026, periodIds: forecastPeriodIds },
+      { fiscalYear: 2027, periodIds: [annualPeriodIds[0]] },
+      { fiscalYear: 2028, periodIds: [annualPeriodIds[1]] },
+    ];
 
-      report(`D3a Valuation DCF/FCFF compute — 3 projection years, EV=${Math.round(lastEv)}`, dcfStats);
-      report('D3b Sensitivity grid persist — 5x5 = 25 cells', gridStats);
-      report('D3  Valuation compute WITH the 5x5 sensitivity grid (D3a + D3b)', combined);
+    const dcfSamples: number[] = [];
+    const gridSamples: number[] = [];
+    let lastEv = 0;
 
-      // Individual sub-path ceilings, so a regression localized to just the
-      // DCF solve or just the grid persist is not diluted by summing them.
-      const dcfT = PERF_REGRESSION_THRESHOLDS.D3A_VALUATION_DCF;
-      expect(
-        dcfStats.p95Ms,
-        `D3a Valuation DCF p95=${dcfStats.p95Ms}ms exceeds regression ceiling ${dcfT.ceilingMs}ms ` +
-          `(= ${dcfT.observedMaxP95Ms}ms observed-max-p95 × ${dcfT.multiplier}). Basis: ${dcfT.basis}.`
-      ).toBeLessThan(dcfT.ceilingMs);
+    for (let i = 0; i < REPS + 1; i++) {
+      const valuationBvId = await makeValuationVersion(baselineBvId);
 
-      const gridT = PERF_REGRESSION_THRESHOLDS.D3B_SENSITIVITY_GRID;
-      expect(
-        gridStats.p95Ms,
-        `D3b Sensitivity grid p95=${gridStats.p95Ms}ms exceeds regression ceiling ${gridT.ceilingMs}ms ` +
-          `(= ${gridT.observedMaxP95Ms}ms observed-max-p95 × ${gridT.multiplier}). Basis: ${gridT.basis}.`
-      ).toBeLessThan(gridT.ceilingMs);
+      const dcfStarted = performance.now();
+      await maybeInjectDelay('D3A');
+      const dcf = await valuationSvc.runDcfFcffValuation({
+        organizationId: orgId,
+        valuationBusinessVersionId: valuationBvId,
+        entityId,
+        requestedByUserId: userId,
+        engineManifestId,
+        projectionYears,
+        openingWorkingCapital: GOLDCO.ar + GOLDCO.inventory - GOLDCO.ap,
+        terminal: { gPct: 2 },
+      });
+      const dcfElapsed = performance.now() - dcfStarted;
+      if (!dcf.ok) throw new Error(`runDcfFcffValuation failed: ${dcf.code} — ${dcf.message}`);
+      lastEv = dcf.enterpriseValue;
 
-      const combinedT = PERF_REGRESSION_THRESHOLDS.D3_VALUATION_WITH_GRID;
-      expect(
-        combined.p95Ms,
-        `D3 Valuation+grid p95=${combined.p95Ms}ms exceeds regression ceiling ${combinedT.ceilingMs}ms ` +
-          `(= ${combinedT.observedMaxP95Ms}ms observed-max-p95 × ${combinedT.multiplier}). Basis: ${combinedT.basis}.`
-      ).toBeLessThan(combinedT.ceilingMs);
-    },
-    900_000
-  );
+      // 5x5 WACC x terminal-g grid, built and persisted (25 cells).
+      const baseWaccPct = dcf.wacc.waccPct;
+      const baseGPct = 2;
+      const grid = sensSvc.buildWaccByTerminalGGrid({
+        axes: {
+          wacc: [
+            baseWaccPct - 1,
+            baseWaccPct - 0.5,
+            baseWaccPct,
+            baseWaccPct + 0.5,
+            baseWaccPct + 1,
+          ],
+          terminalG: [baseGPct - 1, baseGPct - 0.5, baseGPct, baseGPct + 0.5, baseGPct + 1],
+        },
+        years: dcf.fcffYears.map((y) => ({ fiscalYear: y.fiscalYear, fcff: y.fcff! })),
+        fcffTerminalYear: dcf.fcffYears[dcf.fcffYears.length - 1].fcff!,
+        baseWaccPct,
+        baseGPct,
+      });
+      if (!grid.ok) throw new Error(`buildWaccByTerminalGGrid failed: ${grid.code}`);
+      expect(grid.cells).toHaveLength(25);
+
+      const gridStarted = performance.now();
+      await maybeInjectDelay('D3B');
+      const written = await sensSvc.writeSensitivityGrid({
+        organizationId: orgId,
+        methodId: dcf.methodId,
+        gridLabel: 'W9D_WACC_X_TERMINAL_G',
+        rowAxisVariable: 'WACC',
+        columnAxisVariable: 'TERMINAL_G',
+        cells: grid.cells,
+        createdBy: userId,
+      });
+      const gridElapsed = performance.now() - gridStarted;
+
+      const persisted = await t((tx) =>
+        tx.queryOne<{ n: string }>(
+          `SELECT count(*)::text AS n FROM finance_valuation_sensitivity_cells WHERE grid_id = ?`,
+          [written.gridId]
+        )
+      );
+      expect(Number(persisted!.n)).toBe(25); // physical proof, not the return value
+
+      if (i > 0) {
+        dcfSamples.push(dcfElapsed);
+        gridSamples.push(gridElapsed);
+      }
+    }
+
+    const dcfStats = stats(dcfSamples);
+    const gridStats = stats(gridSamples);
+    const combined = stats(dcfSamples.map((v, idx) => v + gridSamples[idx]));
+
+    report(
+      `D3a Valuation DCF/FCFF compute — 3 projection years, EV=${Math.round(lastEv)}`,
+      dcfStats
+    );
+    report('D3b Sensitivity grid persist — 5x5 = 25 cells', gridStats);
+    report('D3  Valuation compute WITH the 5x5 sensitivity grid (D3a + D3b)', combined);
+
+    // Individual sub-path ceilings, so a regression localized to just the
+    // DCF solve or just the grid persist is not diluted by summing them.
+    const dcfT = PERF_REGRESSION_THRESHOLDS.D3A_VALUATION_DCF;
+    expect(
+      dcfStats.p95Ms,
+      `D3a Valuation DCF p95=${dcfStats.p95Ms}ms exceeds regression ceiling ${dcfT.ceilingMs}ms ` +
+        `(= ${dcfT.observedMaxP95Ms}ms observed-max-p95 × ${dcfT.multiplier}). Basis: ${dcfT.basis}.`
+    ).toBeLessThan(dcfT.ceilingMs);
+
+    const gridT = PERF_REGRESSION_THRESHOLDS.D3B_SENSITIVITY_GRID;
+    expect(
+      gridStats.p95Ms,
+      `D3b Sensitivity grid p95=${gridStats.p95Ms}ms exceeds regression ceiling ${gridT.ceilingMs}ms ` +
+        `(= ${gridT.observedMaxP95Ms}ms observed-max-p95 × ${gridT.multiplier}). Basis: ${gridT.basis}.`
+    ).toBeLessThan(gridT.ceilingMs);
+
+    const combinedT = PERF_REGRESSION_THRESHOLDS.D3_VALUATION_WITH_GRID;
+    expect(
+      combined.p95Ms,
+      `D3 Valuation+grid p95=${combined.p95Ms}ms exceeds regression ceiling ${combinedT.ceilingMs}ms ` +
+        `(= ${combinedT.observedMaxP95Ms}ms observed-max-p95 × ${combinedT.multiplier}). Basis: ${combinedT.basis}.`
+    ).toBeLessThan(combinedT.ceilingMs);
+  }, 900_000);
 
   // =========================================================================
   // W2 FC-11 — inverted: three sub-claims that used to pin "nothing is

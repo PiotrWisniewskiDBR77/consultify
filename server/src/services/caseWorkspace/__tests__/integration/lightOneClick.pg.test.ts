@@ -39,11 +39,11 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { ContractActor } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
 import caseWorkspaceRoutes from '../../../../routes/caseWorkspace/index.js';
 import lightStartRoutes from '../../../../routes/caseWorkspace/lightStart.routes.js';
 import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
 import { correlationMiddleware } from '../../../../utils/RequestStore.js';
-import type { ContractActor } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
 
 const BASE = '/api/v8/case-workspace';
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
@@ -54,12 +54,23 @@ const REAL_DB_REQUESTED =
 
 async function isReachable(): Promise<boolean> {
   if (!REAL_DB_REQUESTED) return false;
-  const probe = new Pool({ connectionString: CONNECTION_STRING, max: 1, connectionTimeoutMillis: 4000 });
+  const probe = new Pool({
+    connectionString: CONNECTION_STRING,
+    max: 1,
+    connectionTimeoutMillis: 4000,
+  });
   try {
     const result = await probe.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
-      [['case_core', 'case_plan_versions', 'case_workspace_run_bindings', 'case_workspace_node_runs']]
+      [
+        [
+          'case_core',
+          'case_plan_versions',
+          'case_workspace_run_bindings',
+          'case_workspace_node_runs',
+        ],
+      ]
     );
     return result.rowCount === 4;
   } catch {
@@ -127,12 +138,17 @@ suite('LIGHT one-click over HTTP (CW-T-C)', () => {
     await control?.end().catch(() => undefined);
   }, 60_000);
 
-  async function seedFixture(label: string): Promise<{ orgId: string; projectId: string; userId: string }> {
+  async function seedFixture(
+    label: string
+  ): Promise<{ orgId: string; projectId: string; userId: string }> {
     const suffix = randomUUID();
     const orgId = suffix;
     const projectId = `light1c-http-project-${label}-${suffix}`;
     const userId = randomUUID();
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [orgId, `LIGHT 1-click HTTP org (${label})`]);
+    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+      orgId,
+      `LIGHT 1-click HTTP org (${label})`,
+    ]);
     await control.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1, $2, $3)`, [
       projectId,
       orgId,
@@ -151,26 +167,49 @@ suite('LIGHT one-click over HTTP (CW-T-C)', () => {
     return { orgId, projectId, userId };
   }
 
-  async function teardown(caseId: string, orgId: string, projectId: string, userId: string): Promise<void> {
-    await control.query(`DELETE FROM case_workspace_node_run_attempts WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_workspace_node_runs WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_workspace_run_bindings WHERE case_id = $1`, [caseId]).catch(() => undefined);
+  async function teardown(
+    caseId: string,
+    orgId: string,
+    projectId: string,
+    userId: string
+  ): Promise<void> {
+    await control
+      .query(`DELETE FROM case_workspace_node_run_attempts WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_workspace_node_runs WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_workspace_run_bindings WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
     const runs = await control
-      .query<{ run_id: string; context_snapshot_id: string }>(
-        `SELECT run_id, context_snapshot_id FROM v8_execution_runs WHERE metadata::text LIKE $1`,
-        [`%${caseId}%`]
-      )
+      .query<{
+        run_id: string;
+        context_snapshot_id: string;
+      }>(`SELECT run_id, context_snapshot_id FROM v8_execution_runs WHERE metadata::text LIKE $1`, [
+        `%${caseId}%`,
+      ])
       .catch(() => ({ rows: [] as { run_id: string; context_snapshot_id: string }[] }));
     for (const run of runs.rows) {
-      await control.query(`DELETE FROM v8_execution_runs WHERE run_id = $1`, [run.run_id]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM v8_execution_runs WHERE run_id = $1`, [run.run_id])
+        .catch(() => undefined);
       await control
         .query(`DELETE FROM v8_context_snapshots WHERE snapshot_id = $1`, [run.context_snapshot_id])
         .catch(() => undefined);
     }
-    await control.query(`DELETE FROM case_plan_versions WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_workspace_event_outbox WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM case_core WHERE case_id = $1`, [caseId]).catch(() => undefined);
-    await control.query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId]).catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_plan_versions WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_workspace_event_outbox WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM case_core WHERE case_id = $1`, [caseId])
+      .catch(() => undefined);
+    await control
+      .query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId])
+      .catch(() => undefined);
     await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
@@ -180,7 +219,12 @@ suite('LIGHT one-click over HTTP (CW-T-C)', () => {
     const { orgId, projectId, userId } = await seedFixture('unmounted');
     let caseId = '';
     try {
-      const actor: ContractActor = { organizationId: orgId, userId, userRole: 'MEMBER', isSuperAdmin: false };
+      const actor: ContractActor = {
+        organizationId: orgId,
+        userId,
+        userRole: 'MEMBER',
+        isSuperAdmin: false,
+      };
       const aggregatorOnly = createAppAggregatorOnly(actor);
 
       const created = await request(aggregatorOnly).post(`${BASE}/cases`).send({
@@ -192,7 +236,9 @@ suite('LIGHT one-click over HTTP (CW-T-C)', () => {
       expect(created.status).toBe(201);
       caseId = created.body.data.caseId;
 
-      const res = await request(aggregatorOnly).post(`${BASE}/cases/${caseId}/light-start`).send({});
+      const res = await request(aggregatorOnly)
+        .post(`${BASE}/cases/${caseId}/light-start`)
+        .send({});
       // Was 404 by construction while the packet awaited fan-in; the
       // coordinator has since mounted lightStartRoutes in
       // routes/caseWorkspace/index.ts, so the aggregator now reaches it.
@@ -208,7 +254,12 @@ suite('LIGHT one-click over HTTP (CW-T-C)', () => {
     const { orgId, projectId, userId } = await seedFixture('http-happy');
     let caseId = '';
     try {
-      const actor: ContractActor = { organizationId: orgId, userId, userRole: 'MEMBER', isSuperAdmin: false };
+      const actor: ContractActor = {
+        organizationId: orgId,
+        userId,
+        userRole: 'MEMBER',
+        isSuperAdmin: false,
+      };
       const app = createAppWithLightStart(actor);
       const correlationId = `light1c-http-${randomUUID()}`;
       const asActor = (method: 'post' | 'get', url: string) =>
@@ -292,7 +343,12 @@ suite('LIGHT one-click over HTTP (CW-T-C)', () => {
     const { orgId, projectId, userId } = await seedFixture('http-standard');
     let caseId = '';
     try {
-      const actor: ContractActor = { organizationId: orgId, userId, userRole: 'MEMBER', isSuperAdmin: false };
+      const actor: ContractActor = {
+        organizationId: orgId,
+        userId,
+        userRole: 'MEMBER',
+        isSuperAdmin: false,
+      };
       const app = createAppWithLightStart(actor);
 
       const created = await request(app).post(`${BASE}/cases`).send({

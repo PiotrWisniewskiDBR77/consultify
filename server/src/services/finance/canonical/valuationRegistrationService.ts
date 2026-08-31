@@ -1,10 +1,11 @@
-import { withPgTransaction } from '../../../utils/queryHelpers.js';
 import { randomUUID } from 'node:crypto';
-import { createValuation, type ValuationSourceType } from '../../valuationService.js';
+
+import { withPgTransaction } from '../../../utils/queryHelpers.js';
+import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
 import { setValuationDepth, type ValuationDepth } from '../../valuationDepthProfileService.js';
+import { createValuation, type ValuationSourceType } from '../../valuationService.js';
 import { createArtifact } from './artifactVersionService.js';
 import { canonicalPayloadHash } from './contentHash.js';
-import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
 
 export interface CreateRegisteredValuationParams {
   organizationId: string;
@@ -31,7 +32,11 @@ export interface CreateRegisteredValuationResult {
 }
 
 export class ValuationRegistrationError extends Error {
-  constructor(public readonly code: string, public readonly status: number, message: string) {
+  constructor(
+    public readonly code: string,
+    public readonly status: number,
+    message: string
+  ) {
     super(message);
   }
 }
@@ -46,7 +51,11 @@ export async function createRegisteredValuation(
 ): Promise<CreateRegisteredValuationResult> {
   const idempotencyKey = params.idempotencyKey.trim();
   if (!idempotencyKey) {
-    throw new ValuationRegistrationError('IDEMPOTENCY_KEY_REQUIRED', 400, 'Idempotency-Key is required');
+    throw new ValuationRegistrationError(
+      'IDEMPOTENCY_KEY_REQUIRED',
+      400,
+      'Idempotency-Key is required'
+    );
   }
   const command = {
     title: params.title.trim(),
@@ -61,26 +70,38 @@ export async function createRegisteredValuation(
   };
   const requestHash = canonicalPayloadHash(command);
   return withPgTransaction(async (tx) => {
-    const membership = (await tx.query<{status:string;role:string}>(
-      `SELECT status,role FROM organization_members
+    const membership = (
+      await tx.query<{ status: string; role: string }>(
+        `SELECT status,role FROM organization_members
         WHERE organization_id=? AND user_id=? FOR UPDATE`,
-      [params.organizationId,params.userId]
-    )).rows[0];
+        [params.organizationId, params.userId]
+      )
+    ).rows[0];
     if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
-      throw new ValuationRegistrationError('ORG_MEMBERSHIP_REVOKED',403,'Active organization membership is required');
+      throw new ValuationRegistrationError(
+        'ORG_MEMBERSHIP_REVOKED',
+        403,
+        'Active organization membership is required'
+      );
     }
     if (!hasFinanceEditRole(membership.role)) {
-      throw new ValuationRegistrationError('FINANCE_EDIT_FORBIDDEN',403,'Finance editor role is required');
+      throw new ValuationRegistrationError(
+        'FINANCE_EDIT_FORBIDDEN',
+        403,
+        'Finance editor role is required'
+      );
     }
     await tx.query(`SELECT pg_advisory_xact_lock(hashtextextended(?, 0))`, [
       `${params.organizationId}:${idempotencyKey}:VALUATION_REGISTRATION`,
     ]);
-    const receipt = (await tx.query<any>(
-      `SELECT request_hash,response_json
+    const receipt = (
+      await tx.query<any>(
+        `SELECT request_hash,response_json
          FROM finance_valuation_registration_command_receipts
         WHERE organization_id=? AND idempotency_key=?`,
-      [params.organizationId, idempotencyKey]
-    )).rows[0];
+        [params.organizationId, idempotencyKey]
+      )
+    ).rows[0];
     if (receipt) {
       if (receipt.request_hash !== requestHash) {
         throw new ValuationRegistrationError(
@@ -89,7 +110,10 @@ export async function createRegisteredValuation(
           'Idempotency key is already bound to another valuation registration'
         );
       }
-      return { ...(receipt.response_json as Omit<CreateRegisteredValuationResult, 'replay'>), replay: true };
+      return {
+        ...(receipt.response_json as Omit<CreateRegisteredValuationResult, 'replay'>),
+        replay: true,
+      };
     }
     const legacy = await createValuation(
       params.organizationId,
@@ -166,8 +190,17 @@ export async function createRegisteredValuation(
        (organization_id,idempotency_key,request_hash,legacy_valuation_id,artifact_id,
         business_version_id,working_revision_id,response_json,created_by)
        VALUES (?,?,?,?,?,?,?,?,?)`,
-      [params.organizationId,idempotencyKey,requestHash,response.id,response.artifactId,
-       response.businessVersionId,response.workingRevisionId,JSON.stringify(response),params.userId]
+      [
+        params.organizationId,
+        idempotencyKey,
+        requestHash,
+        response.id,
+        response.artifactId,
+        response.businessVersionId,
+        response.workingRevisionId,
+        JSON.stringify(response),
+        params.userId,
+      ]
     );
     return { ...response, replay: false };
   });

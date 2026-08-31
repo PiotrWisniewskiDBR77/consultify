@@ -1,14 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 
-const { getMock, runMock, authorizeMock, reserveMock, settleMock, releaseMock } = vi.hoisted(() => ({
-  getMock: vi.fn(),
-  runMock: vi.fn(),
-  authorizeMock: vi.fn(),
-  reserveMock: vi.fn(),
-  settleMock: vi.fn(),
-  releaseMock: vi.fn(),
-}));
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { getMock, runMock, authorizeMock, reserveMock, settleMock, releaseMock } = vi.hoisted(
+  () => ({
+    getMock: vi.fn(),
+    runMock: vi.fn(),
+    authorizeMock: vi.fn(),
+    reserveMock: vi.fn(),
+    settleMock: vi.fn(),
+    releaseMock: vi.fn(),
+  })
+);
 vi.mock('../../../utils/DbPromise.js', () => ({ get: getMock, run: runMock, all: vi.fn() }));
 vi.mock('../agentToolExecutionGovernanceService.js', () => ({
   authorizeAgentToolExecution: authorizeMock,
@@ -216,15 +219,13 @@ describe('agentAdapterOrchestratorService', () => {
     const adapter = {
       key: 'ideas.create',
       compensationPolicy: 'manual_repair' as const,
-      execute: vi
-        .fn()
-        .mockResolvedValue({
-          artifactType: 'my_idea',
-          artifactId: 'idea-1',
-          module: 'Ideas',
-          operation: 'create',
-          data: {},
-        }),
+      execute: vi.fn().mockResolvedValue({
+        artifactType: 'my_idea',
+        artifactId: 'idea-1',
+        module: 'Ideas',
+        operation: 'create',
+        data: {},
+      }),
       readback: vi.fn().mockResolvedValue({ id: 'idea-1' }),
     };
     const result = await dispatchAgentAdapter({ ...base, adapter });

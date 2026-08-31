@@ -45,7 +45,11 @@ function currentFullscreenElement(): Element | null {
   return d.fullscreenElement ?? d.webkitFullscreenElement ?? null;
 }
 
-export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, locale = 'pl', initialSlide = 0 }) => {
+export const PresentationDeck: React.FC<PresentationDeckProps> = ({
+  model,
+  locale = 'pl',
+  initialSlide = 0,
+}) => {
   /**
    * ★ Lista slajdów jest DYNAMICZNA od 2026-08-30. Wcześniej deck miał
    * sztywne 9 pozycji w `switch`; macierze osi (odbiór właściciela: „nie ma
@@ -166,7 +170,10 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
         </button>
 
         <div className="flex items-center gap-4">
-          <span className="text-xs font-semibold tabular-nums text-c-text-muted" data-testid="slide-counter">
+          <span
+            className="text-xs font-semibold tabular-nums text-c-text-muted"
+            data-testid="slide-counter"
+          >
             {slide + 1} / {slideCount}
           </span>
           <button

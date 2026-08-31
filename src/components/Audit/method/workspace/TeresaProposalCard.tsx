@@ -70,9 +70,15 @@ interface PreviewFieldRow {
 function extractPreviewRows(preview: Record<string, unknown>): PreviewFieldRow[] {
   const rows: PreviewFieldRow[] = [];
   if ('before' in preview || 'after' in preview) {
-    rows.push({ key: String(preview.field ?? 'value'), before: preview.before, after: preview.after });
+    rows.push({
+      key: String(preview.field ?? 'value'),
+      before: preview.before,
+      after: preview.after,
+    });
   }
-  const additional = preview.additionalFields as Record<string, { before: unknown; after: unknown }> | undefined;
+  const additional = preview.additionalFields as
+    | Record<string, { before: unknown; after: unknown }>
+    | undefined;
   if (additional && typeof additional === 'object') {
     for (const [key, val] of Object.entries(additional)) {
       rows.push({ key, before: val?.before, after: val?.after });
@@ -103,10 +109,7 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
   const [proposal, setProposal] = useState<WorkspaceAiProposal | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const t = useCallback(
-    (pl: string, en: string) => (isPolish ? pl : en),
-    [isPolish]
-  );
+  const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
 
   const handleAsk = useCallback(async () => {
     setPhase('asking');
@@ -122,7 +125,11 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
       setProposal(created);
       setPhase('pending');
     } catch (e: unknown) {
-      setErrorMessage(e instanceof Error ? e.message : t('Nie udało się uzyskać propozycji Teresy', 'Could not get a proposal from Teresa'));
+      setErrorMessage(
+        e instanceof Error
+          ? e.message
+          : t('Nie udało się uzyskać propozycji Teresy', 'Could not get a proposal from Teresa')
+      );
       setPhase('error');
     }
   }, [programId, targetType, targetId, intent, context, t]);
@@ -137,7 +144,11 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
         setProposal(decided);
         setPhase('pending');
       } catch (e: unknown) {
-        setErrorMessage(e instanceof Error ? e.message : t('Nie udało się zapisać decyzji', 'Could not save the decision'));
+        setErrorMessage(
+          e instanceof Error
+            ? e.message
+            : t('Nie udało się zapisać decyzji', 'Could not save the decision')
+        );
         setPhase('error');
       }
     },
@@ -154,7 +165,11 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
       setPhase('pending');
       onCommitted?.();
     } catch (e: unknown) {
-      setErrorMessage(e instanceof Error ? e.message : t('Nie udało się wykonać propozycji', 'Could not apply the proposal'));
+      setErrorMessage(
+        e instanceof Error
+          ? e.message
+          : t('Nie udało się wykonać propozycji', 'Could not apply the proposal')
+      );
       setPhase('error');
     }
   }, [proposal, onCommitted, t]);
@@ -199,7 +214,11 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
       )}
 
       {phase === 'asking' && (
-        <div className="flex items-center gap-2 text-xs text-c-text-muted" role="status" aria-live="polite">
+        <div
+          className="flex items-center gap-2 text-xs text-c-text-muted"
+          role="status"
+          aria-live="polite"
+        >
           <Loader2 size={14} className="animate-spin" aria-hidden />
           {t('Teresa przygotowuje propozycję…', 'Teresa is preparing a proposal…')}
         </div>
@@ -226,7 +245,11 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
             </p>
             <div className="space-y-2">
               {extractPreviewRows(proposal.preview).map((row) => (
-                <div key={row.key} data-testid={`teresa-preview-row-${row.key}`} className="text-xs">
+                <div
+                  key={row.key}
+                  data-testid={`teresa-preview-row-${row.key}`}
+                  className="text-xs"
+                >
                   <div className="font-medium text-c-text">{row.key}</div>
                   <div className="mt-0.5 grid grid-cols-2 gap-2">
                     <div className="rounded-token-sm bg-c-danger/5 p-1.5 text-c-text-muted line-through decoration-c-text-muted/40">
@@ -249,7 +272,8 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
           )}
 
           <p className="text-xs text-c-text-muted">
-            {t('Pewność', 'Confidence')}: {proposal.confidence !== null ? `${Math.round(proposal.confidence * 100)}%` : '—'}
+            {t('Pewność', 'Confidence')}:{' '}
+            {proposal.confidence !== null ? `${Math.round(proposal.confidence * 100)}%` : '—'}
           </p>
 
           <div data-testid="teresa-sources" className="text-xs text-c-text-muted">
@@ -257,12 +281,21 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
             {hasSources ? (
               <ul className="mt-1 list-disc pl-4">
                 {proposal.sources.map((s, i) => (
-                  <li key={i}>{String((s as Record<string, unknown>).excerpt ?? (s as Record<string, unknown>).id ?? '—')}</li>
+                  <li key={i}>
+                    {String(
+                      (s as Record<string, unknown>).excerpt ??
+                        (s as Record<string, unknown>).id ??
+                        '—'
+                    )}
+                  </li>
                 ))}
               </ul>
             ) : (
               <span className="text-c-danger">
-                {t('Brak źródeł — propozycja nie może zostać zastosowana.', 'No sources — the proposal cannot be applied.')}
+                {t(
+                  'Brak źródeł — propozycja nie może zostać zastosowana.',
+                  'No sources — the proposal cannot be applied.'
+                )}
               </span>
             )}
           </div>
@@ -315,13 +348,13 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
           )}
 
           {proposal.status === 'rejected' && (
-            <p className="text-xs text-c-text-muted">{t('Propozycja odrzucona.', 'Proposal rejected.')}</p>
+            <p className="text-xs text-c-text-muted">
+              {t('Propozycja odrzucona.', 'Proposal rejected.')}
+            </p>
           )}
 
           {proposal.committedAt && (
-            <p className="text-xs font-medium text-c-success">
-              {t('Zastosowano.', 'Applied.')}
-            </p>
+            <p className="text-xs font-medium text-c-success">{t('Zastosowano.', 'Applied.')}</p>
           )}
 
           <button

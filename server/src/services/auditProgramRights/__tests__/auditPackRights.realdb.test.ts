@@ -87,7 +87,7 @@ if (!REAL_PG) {
   console.warn(
     '[auditPackRights.realdb.test.ts SKIPPED — clean skip, not a failure] wymaga ' +
       'NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://... ' +
-      '(patrz komentarz na górze pliku)',
+      '(patrz komentarz na górze pliku)'
   );
 } else if (!DESTRUCTIVE_FIXTURES_ENABLED) {
   // eslint-disable-next-line no-console
@@ -95,7 +95,7 @@ if (!REAL_PG) {
     '[auditPackRights.realdb.test.ts SKIPPED — clean skip, not a failure] this suite deletes ' +
       'fixture rows and therefore requires an explicit disposable-database declaration: set ' +
       'AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP=1 and ' +
-      'AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX=<prefix of the throwaway database you created>.',
+      'AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX=<prefix of the throwaway database you created>.'
   );
 }
 
@@ -116,7 +116,11 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
   // `adminActor` for pack authoring to mirror what the route requires in
   // production, and `memberActor` for read + program creation to prove the
   // capability model really is that open for those two actions.
-  const adminActor = { organizationId: orgA, userId: `aud-rights-admin-${randomUUID()}`, platformRole: 'admin' as const };
+  const adminActor = {
+    organizationId: orgA,
+    userId: `aud-rights-admin-${randomUUID()}`,
+    platformRole: 'admin' as const,
+  };
   const memberActor = { organizationId: orgA, userId: `aud-rights-member-${randomUUID()}` };
   const actorB = { organizationId: orgB, userId: `aud-rights-b-${randomUUID()}` };
 
@@ -148,7 +152,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
     const db = String(row?.db ?? '');
     if (!db.startsWith(prefix)) {
       throw new Error(
-        `AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with declared disposable prefix '${prefix}' — refusing to delete anything.`,
+        `AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH: current_database()='${db}' does not start with declared disposable prefix '${prefix}' — refusing to delete anything.`
       );
     }
     return db;
@@ -172,34 +176,36 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       for (const row of (
         await client.query<{ id: string }>(
           `SELECT id FROM audit_packs WHERE organization_id = ANY($1)`,
-          [cleanupOrgIds],
+          [cleanupOrgIds]
         )
-      ).rows) cleanupPackIds.add(row.id);
+      ).rows)
+        cleanupPackIds.add(row.id);
       for (const row of (
         await client.query<{ id: string }>(
           `SELECT id FROM audit_programs WHERE organization_id = ANY($1)`,
-          [cleanupOrgIds],
+          [cleanupOrgIds]
         )
-      ).rows) cleanupProgramIds.add(row.id);
+      ).rows)
+        cleanupProgramIds.add(row.id);
       const trigger = await client.query<{ tgname: string; tgenabled: string }>(
         `SELECT tgname,tgenabled FROM pg_trigger
           WHERE tgrelid='audit_domain_events'::regclass
-            AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`,
+            AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`
       );
       expect(trigger.rows).toEqual([
         { tgname: 'trg_audit_domain_events_append_only', tgenabled: 'O' },
       ]);
       await client.query(
-        `ALTER TABLE audit_domain_events DISABLE TRIGGER trg_audit_domain_events_append_only`,
+        `ALTER TABLE audit_domain_events DISABLE TRIGGER trg_audit_domain_events_append_only`
       );
       appendOnlyTriggerDisabled = true;
       await client.query(
         `DELETE FROM audit_domain_events
           WHERE (organization_id = ANY($1) OR actor_id = ANY($2))`,
-        [cleanupOrgIds, cleanupActorIds],
+        [cleanupOrgIds, cleanupActorIds]
       );
       await client.query(
-        `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`,
+        `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`
       );
       appendOnlyTriggerDisabled = false;
       expect(
@@ -207,9 +213,9 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
           await client.query<{ tgenabled: string }>(
             `SELECT tgenabled FROM pg_trigger
               WHERE tgrelid='audit_domain_events'::regclass
-                AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`,
+                AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`
           )
-        ).rows,
+        ).rows
       ).toEqual([{ tgenabled: 'O' }]);
       // Children before parents, bounded by ids captured from this run's exact organizations.
       await client.query(`DELETE FROM audit_program_criteria WHERE program_id = ANY($1)`, [
@@ -228,7 +234,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       if (appendOnlyTriggerDisabled) {
         await client
           .query(
-            `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`,
+            `ALTER TABLE audit_domain_events ENABLE TRIGGER trg_audit_domain_events_append_only`
           )
           .catch(() => {});
         appendOnlyTriggerDisabled = false;
@@ -239,9 +245,9 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
           await client.query<{ tgenabled: string }>(
             `SELECT tgenabled FROM pg_trigger
               WHERE tgrelid='audit_domain_events'::regclass
-                AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`,
+                AND tgname='trg_audit_domain_events_append_only' AND NOT tgisinternal`
           )
-        ).rows,
+        ).rows
       ).toEqual([{ tgenabled: 'O' }]);
       throw err; // surfaced, never swallowed
     } finally {
@@ -264,7 +270,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
          (SELECT count(*) FROM users WHERE id = ANY($2)) +
          (SELECT count(*) FROM organizations WHERE id = ANY($1))
        )::text AS n`,
-      [cleanupOrgIds, cleanupActorIds, [...cleanupPackIds], [...cleanupProgramIds]],
+      [cleanupOrgIds, cleanupActorIds, [...cleanupPackIds], [...cleanupProgramIds]]
     );
     return Number(row?.n ?? -1);
   }
@@ -274,7 +280,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       `SELECT * FROM audit_domain_events
         WHERE (organization_id = ANY($1) OR actor_id = ANY($2))
         ORDER BY occurred_at,id`,
-      [cleanupOrgIds, cleanupActorIds],
+      [cleanupOrgIds, cleanupActorIds]
     );
   }
 
@@ -288,11 +294,11 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
     it('a disposable-DB prefix MISMATCH aborts before deleting anything', async () => {
       const pack = await createDraftPack({ packKey: `aud-rights-cleanup-canary-${randomUUID()}` });
       await expect(cleanupOwnFixtures('definitely-not-this-database-')).rejects.toThrow(
-        /AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH/,
+        /AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH/
       );
       const survivor = await auditsDb.auditGet<{ id: string }>(
         `SELECT id FROM audit_packs WHERE id = $1`,
-        [pack.id],
+        [pack.id]
       );
       expect(survivor?.id).toBe(pack.id); // canary intact — no partial cleanup
     });
@@ -301,7 +307,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       const db = await assertDisposableDatabase();
       expect(db.startsWith(DISPOSABLE_DB_PREFIX)).toBe(true);
       await expect(assertDisposableDatabase(`x${db}`)).rejects.toThrow(
-        /AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH/,
+        /AUD_PACK_RIGHTS_DISPOSABLE_DB_MISMATCH/
       );
     });
 
@@ -314,7 +320,12 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
 
   const validTaxonomy = [
     { key: 'conforming', label: 'Zgodne', nonConforming: false, requiresCorrectiveAction: false },
-    { key: 'nonconforming', label: 'Niezgodne', nonConforming: true, requiresCorrectiveAction: true },
+    {
+      key: 'nonconforming',
+      label: 'Niezgodne',
+      nonConforming: true,
+      requiresCorrectiveAction: true,
+    },
   ];
 
   const validLeafCriterion = {
@@ -325,7 +336,9 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
     auditQuestion: 'Czy wymaganie jest spełnione?',
   };
 
-  async function createDraftPack(overrides: Partial<Parameters<typeof packService.createPack>[1]> = {}) {
+  async function createDraftPack(
+    overrides: Partial<Parameters<typeof packService.createPack>[1]> = {}
+  ) {
     return packService.createPack(adminActor, {
       packKey: `aud-rights-pk-${randomUUID()}`,
       title: 'Wewnętrzny pakiet testowy rights',
@@ -376,12 +389,12 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         code: 'AUDIT_PACK_NOT_PUBLISHABLE',
       });
       await expect(packService.publishPack(adminActor, pack.id)).rejects.toThrow(
-        /PACK_TITLE_IMPLIES_NORMATIVE/,
+        /PACK_TITLE_IMPLIES_NORMATIVE/
       );
 
       const row = await auditsDb.auditGet<{ publication_status: string }>(
         `SELECT publication_status FROM audit_packs WHERE id = $1`,
-        [pack.id],
+        [pack.id]
       );
       expect(row?.publication_status).toBe('draft');
     });
@@ -441,12 +454,12 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         programService.createProgramFromPack(orgA, memberActor, {
           packId: pack.id,
           name: 'Program z niepublikowanego pakietu',
-        }),
+        })
       ).rejects.toMatchObject({ code: 'AUDIT_INVALID_STATE' });
 
       const countRow = await auditsDb.auditGet<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM audit_programs WHERE pack_id = $1`,
-        [pack.id],
+        [pack.id]
       );
       expect(Number(countRow?.count ?? -1)).toBe(0);
     });
@@ -476,7 +489,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
 
       const row = await auditsDb.auditGet<{ id: string; pack_id: string }>(
         `SELECT id, pack_id FROM audit_programs WHERE id = $1`,
-        [detail.program.id],
+        [detail.program.id]
       );
       expect(row?.pack_id).toBe(demo.id);
     });
@@ -501,7 +514,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       expect(listedAsStranger.items.some((p) => p.id === draft.id)).toBe(false);
 
       await expect(
-        packService.getPack(orgA, draft.id, { actorUserId: memberActor.userId }),
+        packService.getPack(orgA, draft.id, { actorUserId: memberActor.userId })
       ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
 
       // An unscoped call (admin/internal caller, e.g. packSeed.ts) stays unrestricted.
@@ -540,7 +553,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       });
       expect(listedAsAuthor.items.some((p) => p.id === ownDraft.id)).toBe(true);
       expect(
-        (await packService.getPack(orgA, ownDraft.id, { actorUserId: memberActor.userId })).id,
+        (await packService.getPack(orgA, ownDraft.id, { actorUserId: memberActor.userId })).id
       ).toBe(ownDraft.id);
 
       const otherMember = `aud-rights-other-${randomUUID()}`;
@@ -549,7 +562,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       });
       expect(listedAsOther.items.some((p) => p.id === ownDraft.id)).toBe(false);
       await expect(
-        packService.getPack(orgA, ownDraft.id, { actorUserId: otherMember }),
+        packService.getPack(orgA, ownDraft.id, { actorUserId: otherMember })
       ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
     });
 
@@ -561,11 +574,19 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         title: 'Pakiet roboczy (trasa) — cudzy draft',
       });
 
-      function appAs(actor: { organizationId: string; userId: string; platformRole?: string }): Express {
+      function appAs(actor: {
+        organizationId: string;
+        userId: string;
+        platformRole?: string;
+      }): Express {
         const app = express();
         app.use(express.json());
         app.use((req: Request, _res: Response, next: NextFunction) => {
-          (req as any).user = { id: actor.userId, organizationId: actor.organizationId, role: actor.platformRole };
+          (req as any).user = {
+            id: actor.userId,
+            organizationId: actor.organizationId,
+            role: actor.platformRole,
+          };
           (req as any).organizationId = actor.organizationId;
           (req as any).userId = actor.userId;
           next();
@@ -586,7 +607,9 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       const adminApp = appAs(adminActor);
       const adminListRes = await request(adminApp).get('/');
       expect(adminListRes.status).toBe(200);
-      expect(adminListRes.body.data.some((p: { id: string }) => p.id === foreignDraft.id)).toBe(true);
+      expect(adminListRes.body.data.some((p: { id: string }) => p.id === foreignDraft.id)).toBe(
+        true
+      );
 
       const adminGetRes = await request(adminApp).get(`/${foreignDraft.id}`);
       expect(adminGetRes.status).toBe(200);
@@ -601,7 +624,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       });
       const before = await auditsDb.auditGet<Record<string, unknown>>(
         `SELECT * FROM audit_packs WHERE id = $1`,
-        [draft.id],
+        [draft.id]
       );
       const eventsBefore = await ownDomainEventSnapshot();
 
@@ -619,7 +642,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
 
       const after = await auditsDb.auditGet<Record<string, unknown>>(
         `SELECT * FROM audit_packs WHERE id = $1`,
-        [draft.id],
+        [draft.id]
       );
       expect(after).toEqual(before);
       expect(await ownDomainEventSnapshot()).toEqual(eventsBefore);
@@ -647,13 +670,19 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       await expect(
         packService.comparePackVersions(orgA, packKey, v1.version, v2.version, {
           actorUserId: stranger,
-        }),
+        })
       ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
 
       // The author diffs their own drafts.
-      const asAuthor = await packService.comparePackVersions(orgA, packKey, v1.version, v2.version, {
-        actorUserId: memberActor.userId,
-      });
+      const asAuthor = await packService.comparePackVersions(
+        orgA,
+        packKey,
+        v1.version,
+        v2.version,
+        {
+          actorUserId: memberActor.userId,
+        }
+      );
       expect(asAuthor).toBeTruthy();
 
       // Admin path (unscoped, per existing policy) still works.
@@ -670,7 +699,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
 
       const stranger = `aud-rights-validate-stranger-${randomUUID()}`;
       await expect(
-        packService.validatePackById(orgA, draft.id, { actorUserId: stranger }),
+        packService.validatePackById(orgA, draft.id, { actorUserId: stranger })
       ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
 
       // The author of this one is adminActor (createDraftPack uses it).
@@ -707,7 +736,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
 
       const beforeRows = await auditsDb.auditAll<Record<string, unknown>>(
         `SELECT * FROM audit_packs WHERE pack_key = $1 ORDER BY version`,
-        [packKey],
+        [packKey]
       );
       const eventsBefore = await ownDomainEventSnapshot();
 
@@ -731,7 +760,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
 
       const afterRows = await auditsDb.auditAll<Record<string, unknown>>(
         `SELECT * FROM audit_packs WHERE pack_key = $1 ORDER BY version`,
-        [packKey],
+        [packKey]
       );
       expect(afterRows).toEqual(beforeRows);
       expect(await ownDomainEventSnapshot()).toEqual(eventsBefore);
@@ -751,7 +780,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
         code: 'AUDIT_NOT_FOUND',
       });
       await expect(
-        packService.comparePackVersions(orgB, packKey, 1, 2, scopeB),
+        packService.comparePackVersions(orgB, packKey, 1, 2, scopeB)
       ).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
       // Even an unscoped (admin-shaped) call from org B is refused by tenant scoping.
       await expect(packService.comparePackVersions(orgB, packKey, 1, 2)).rejects.toMatchObject({
@@ -773,7 +802,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       try {
         const res = await pool.query<{ publication_status: string; created_by: string }>(
           `SELECT publication_status, created_by FROM audit_packs WHERE id = $1`,
-          [draft.id],
+          [draft.id]
         );
         expect(res.rows).toHaveLength(1);
         expect(res.rows[0]!.publication_status).toBe('draft');
@@ -790,7 +819,9 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
   describe('6. tenant isolation', () => {
     it('org B cannot read org A pack (AuditNotFoundError)', async () => {
       const pack = await createDraftPack({ packKey: `aud-rights-tenant-read-${randomUUID()}` });
-      await expect(packService.getPack(orgB, pack.id)).rejects.toMatchObject({ code: 'AUDIT_NOT_FOUND' });
+      await expect(packService.getPack(orgB, pack.id)).rejects.toMatchObject({
+        code: 'AUDIT_NOT_FOUND',
+      });
     });
 
     it('org B cannot publish org A pack (AuditNotFoundError, not silently applied to A)', async () => {
@@ -804,7 +835,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
 
       const row = await auditsDb.auditGet<{ publication_status: string }>(
         `SELECT publication_status FROM audit_packs WHERE id = $1`,
-        [pack.id],
+        [pack.id]
       );
       expect(row?.publication_status).toBe('draft');
     });
@@ -829,7 +860,7 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       try {
         const result = await freshPool.query(
           `SELECT publication_status, classification FROM audit_packs WHERE pack_key = $1`,
-          [pack.packKey],
+          [pack.packKey]
         );
         expect(result.rows.length).toBe(1);
         expect(result.rows[0].publication_status).toBe('published');

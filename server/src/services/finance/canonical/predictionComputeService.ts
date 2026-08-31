@@ -41,6 +41,18 @@
 import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import { solvePeriod } from './baselineCircularitySolver.js';
+import {
+  CANONICAL_CODES,
+  type CanonicalCode,
+  daysInPeriod,
+  loadContext,
+  type LoadedContext,
+  requireAssumption,
+  runBaselineCompute,
+  type RunBaselineComputeParams,
+  STATEMENT_TYPE_OF,
+} from './baselineComputeService.js';
 import {
   computeCapexDepreciation,
   computeCogsOpex,
@@ -49,22 +61,10 @@ import {
   computeWcDsoDioDpo,
   lookupScheduledAmortization,
 } from './baselineScheduleEngine.js';
-import { solvePeriod } from './baselineCircularitySolver.js';
-import { canonicalPayloadHash } from './contentHash.js';
-import {
-  loadContext,
-  requireAssumption,
-  runBaselineCompute,
-  daysInPeriod,
-  CANONICAL_CODES,
-  STATEMENT_TYPE_OF,
-  type CanonicalCode,
-  type LoadedContext,
-  type RunBaselineComputeParams,
-} from './baselineComputeService.js';
-import { impactChainEffectiveFraction } from './predictionPreflightService.js';
-import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
+import * as computeJobService from './computeJobService.js';
+import { canonicalPayloadHash } from './contentHash.js';
+import { impactChainEffectiveFraction } from './predictionPreflightService.js';
 
 // ---------------------------------------------------------------------------
 // Row shapes
@@ -73,7 +73,12 @@ import type { ComputeJobRow } from './computeJobService.js';
 interface ScenarioRow {
   business_version_id: string;
   organization_id: string;
-  scenario_mode: 'STANDARD_BASE' | 'STANDARD_UPSIDE' | 'STANDARD_DOWNSIDE' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE';
+  scenario_mode:
+    | 'STANDARD_BASE'
+    | 'STANDARD_UPSIDE'
+    | 'STANDARD_DOWNSIDE'
+    | 'DRIVER_OVERRIDE'
+    | 'FUNDAMENTAL_INITIATIVE';
 }
 
 interface DriverOverrideRow {
@@ -139,7 +144,9 @@ interface FinancingRow {
  * function, rather than a query-string change that can only be proven against a live database.
  * `id` is the tiebreaker for the (rare, same-millisecond) case of two rows sharing `created_at`.
  */
-export function sortByCreatedAtThenId<T extends { id: string; created_at: string }>(rows: readonly T[]): T[] {
+export function sortByCreatedAtThenId<T extends { id: string; created_at: string }>(
+  rows: readonly T[]
+): T[] {
   return [...rows].sort((a, b) => {
     if (a.created_at !== b.created_at) return a.created_at < b.created_at ? -1 : 1;
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
@@ -174,8 +181,14 @@ export const FINANCING_KIND_PROCESSING_RANK: Record<FinancingKind, number> = {
  * same-rank events, so the WHOLE array — not just the priority groups — ends up in one fixed total
  * order).
  */
-export function orderFinancingEventsForPeriod<T extends { financing_kind: FinancingKind }>(rows: readonly T[]): T[] {
-  return [...rows].sort((a, b) => FINANCING_KIND_PROCESSING_RANK[a.financing_kind] - FINANCING_KIND_PROCESSING_RANK[b.financing_kind]);
+export function orderFinancingEventsForPeriod<T extends { financing_kind: FinancingKind }>(
+  rows: readonly T[]
+): T[] {
+  return [...rows].sort(
+    (a, b) =>
+      FINANCING_KIND_PROCESSING_RANK[a.financing_kind] -
+      FINANCING_KIND_PROCESSING_RANK[b.financing_kind]
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -202,8 +215,20 @@ export interface PredictionPeriodResult {
 }
 
 export type RunPredictionComputeResult =
-  | { ok: true; mode: 'STANDARD_BASE'; job: ComputeJobRow; baselineJob: ComputeJobRow | null; passthroughRowCount: number }
-  | { ok: true; mode: 'COMPUTED'; job: ComputeJobRow; periodsComputed: number; periods: PredictionPeriodResult[] }
+  | {
+      ok: true;
+      mode: 'STANDARD_BASE';
+      job: ComputeJobRow;
+      baselineJob: ComputeJobRow | null;
+      passthroughRowCount: number;
+    }
+  | {
+      ok: true;
+      mode: 'COMPUTED';
+      job: ComputeJobRow;
+      periodsComputed: number;
+      periods: PredictionPeriodResult[];
+    }
   | {
       ok: false;
       code:
@@ -227,13 +252,21 @@ export type RunPredictionComputeResult =
  * Stage 2 (ADR sections 6.2/6.3). Guards on `finance_prediction_can_start_compute()` FIRST —
  * building assumptions is never blocked by this gate (DEC-FIN-004), but COMPUTE is.
  */
-export async function runPredictionCompute(params: RunPredictionComputeParams): Promise<RunPredictionComputeResult> {
+export async function runPredictionCompute(
+  params: RunPredictionComputeParams
+): Promise<RunPredictionComputeResult> {
   const canStart = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ can_start: boolean }>(`SELECT finance_prediction_can_start_compute(?) AS can_start`, [params.businessVersionId])
+    tx.queryOne<{ can_start: boolean }>(
+      `SELECT finance_prediction_can_start_compute(?) AS can_start`,
+      [params.businessVersionId]
+    )
   );
   if (!canStart?.can_start) {
     const readiness = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ check_name: string; passed: boolean; detail: string }>(`SELECT * FROM finance_prediction_readiness_check(?)`, [params.businessVersionId])
+      tx.queryAll<{ check_name: string; passed: boolean; detail: string }>(
+        `SELECT * FROM finance_prediction_readiness_check(?)`,
+        [params.businessVersionId]
+      )
     );
     return {
       ok: false,
@@ -244,19 +277,30 @@ export async function runPredictionCompute(params: RunPredictionComputeParams): 
   }
 
   const scenario = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<ScenarioRow>(`SELECT business_version_id, organization_id, scenario_mode FROM finance_prediction_scenarios WHERE business_version_id = ?`, [
-      params.businessVersionId,
-    ])
+    tx.queryOne<ScenarioRow>(
+      `SELECT business_version_id, organization_id, scenario_mode FROM finance_prediction_scenarios WHERE business_version_id = ?`,
+      [params.businessVersionId]
+    )
   );
-  if (!scenario) return { ok: false, code: 'NO_SCENARIO_ROW', message: `No finance_prediction_scenarios row for ${params.businessVersionId}` };
+  if (!scenario)
+    return {
+      ok: false,
+      code: 'NO_SCENARIO_ROW',
+      message: `No finance_prediction_scenarios row for ${params.businessVersionId}`,
+    };
 
   const baselineModelVersionId = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ source_version_id: string }>(`SELECT source_version_id FROM finance_lineage_edges WHERE edge_type = 'MODEL_TO_SCENARIO' AND target_version_id = ?`, [
-      params.businessVersionId,
-    ])
+    tx.queryOne<{ source_version_id: string }>(
+      `SELECT source_version_id FROM finance_lineage_edges WHERE edge_type = 'MODEL_TO_SCENARIO' AND target_version_id = ?`,
+      [params.businessVersionId]
+    )
   );
   if (!baselineModelVersionId) {
-    return { ok: false, code: 'NO_BASELINE_LINEAGE_EDGE', message: `No MODEL_TO_SCENARIO lineage edge targets business_version_id ${params.businessVersionId}` };
+    return {
+      ok: false,
+      code: 'NO_BASELINE_LINEAGE_EDGE',
+      message: `No MODEL_TO_SCENARIO lineage edge targets business_version_id ${params.businessVersionId}`,
+    };
   }
 
   if (scenario.scenario_mode === 'STANDARD_BASE') {
@@ -269,7 +313,10 @@ export async function runPredictionCompute(params: RunPredictionComputeParams): 
 // STANDARD_BASE — zero-modification passthrough (ADR section 8, "Base = Baseline")
 // ---------------------------------------------------------------------------
 
-async function runStandardBase(params: RunPredictionComputeParams, baselineModelVersionId: string): Promise<RunPredictionComputeResult> {
+async function runStandardBase(
+  params: RunPredictionComputeParams,
+  baselineModelVersionId: string
+): Promise<RunPredictionComputeResult> {
   // Idempotency check: `runBaselineCompute()` (WP-D06, untouched) is idempotent at the
   // `compute_jobs` row level (same idempotencyKey => same job row returned) but NOT at the
   // `finance_baseline_solver_diagnostics`/`finance_baseline_outputs` row level — a second call with
@@ -280,7 +327,10 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
   // requirement — this check makes repeated STANDARD_BASE compute calls (e.g. a user re-opening
   // Models/Results) safe, without needing to change `baselineComputeService.ts` itself.
   const existingBaselineOutputCount = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_baseline_outputs WHERE business_version_id = ?`, [baselineModelVersionId])
+    tx.queryOne<{ n: string }>(
+      `SELECT count(*)::text AS n FROM finance_baseline_outputs WHERE business_version_id = ?`,
+      [baselineModelVersionId]
+    )
   );
   let baselineJob: ComputeJobRow | null = null;
   let baselineContentHashSource: unknown;
@@ -305,18 +355,31 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     };
     const baselineResult = await runBaselineCompute(baselineParams); // <-- literal, unmodified call
     if (!baselineResult.ok) {
-      return { ok: false, code: 'BASELINE_COMPUTE_FAILED', message: `${baselineResult.code}: ${baselineResult.message}` };
+      return {
+        ok: false,
+        code: 'BASELINE_COMPUTE_FAILED',
+        message: `${baselineResult.code}: ${baselineResult.message}`,
+      };
     }
     baselineJob = baselineResult.job;
-    baselineContentHashSource = { passthroughOf: baselineResult.job.id, monthlyResults: baselineResult.monthlyResults };
+    baselineContentHashSource = {
+      passthroughOf: baselineResult.job.id,
+      monthlyResults: baselineResult.monthlyResults,
+    };
   }
 
   const contentSemanticHash = canonicalPayloadHash(baselineContentHashSource);
 
   const baselineModelArtifact = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ artifact_id: string }>(`SELECT artifact_id FROM finance_business_versions WHERE business_version_id = ?`, [baselineModelVersionId])
+    tx.queryOne<{ artifact_id: string }>(
+      `SELECT artifact_id FROM finance_business_versions WHERE business_version_id = ?`,
+      [baselineModelVersionId]
+    )
   );
-  if (!baselineModelArtifact) throw new Error(`predictionComputeService: no finance_business_versions row for Baseline Model ${baselineModelVersionId}`);
+  if (!baselineModelArtifact)
+    throw new Error(
+      `predictionComputeService: no finance_business_versions row for Baseline Model ${baselineModelVersionId}`
+    );
 
   const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
@@ -352,9 +415,10 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     // or the already-computed one — deterministic either way). Never mint a second
     // compute_jobs/compute_job_outputs row for the same idempotency key.
     const passthroughRows = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ n: string }>(`SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`, [
-        params.businessVersionId,
-      ])
+      tx.queryAll<{ n: string }>(
+        `SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`,
+        [params.businessVersionId]
+      )
     );
     return {
       ok: true,
@@ -367,12 +431,15 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
   const runningJob = claimResult.job;
 
   const scenarioWorkingRevision = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ artifact_id: string; source_working_revision_id: string | null }>(`SELECT artifact_id,source_working_revision_id FROM finance_business_versions WHERE business_version_id = ?`, [
-      params.businessVersionId,
-    ])
+    tx.queryOne<{ artifact_id: string; source_working_revision_id: string | null }>(
+      `SELECT artifact_id,source_working_revision_id FROM finance_business_versions WHERE business_version_id = ?`,
+      [params.businessVersionId]
+    )
   );
   if (!scenarioWorkingRevision?.source_working_revision_id) {
-    throw new Error(`predictionComputeService: finance_business_versions.source_working_revision_id is not set for ${params.businessVersionId}`);
+    throw new Error(
+      `predictionComputeService: finance_business_versions.source_working_revision_id is not set for ${params.businessVersionId}`
+    );
   }
 
   const completed = await computeJobService.completeJobSuccess({
@@ -396,13 +463,24 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
       message: `runStandardBase: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
     };
   }
-  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
+  const finalJob = completed.ok
+    ? completed.job
+    : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
 
   const passthroughRows = await withPinnedPostgresTransaction((tx) =>
-    tx.queryAll<{ n: string }>(`SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`, [params.businessVersionId])
+    tx.queryAll<{ n: string }>(
+      `SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`,
+      [params.businessVersionId]
+    )
   );
 
-  return { ok: true, mode: 'STANDARD_BASE', job: finalJob, baselineJob, passthroughRowCount: Number(passthroughRows[0]?.n ?? '0') };
+  return {
+    ok: true,
+    mode: 'STANDARD_BASE',
+    job: finalJob,
+    baselineJob,
+    passthroughRowCount: Number(passthroughRows[0]?.n ?? '0'),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -424,13 +502,22 @@ async function runOverlayCompute(
     forecastPeriodIds: params.forecastPeriodIds,
     openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
   });
-  if (!loaded.ok) return { ok: false, code: 'BASELINE_COMPUTE_FAILED', message: `${loaded.code}: ${loaded.message}` };
+  if (!loaded.ok)
+    return {
+      ok: false,
+      code: 'BASELINE_COMPUTE_FAILED',
+      message: `${loaded.code}: ${loaded.message}`,
+    };
   const ctx = loaded.ctx;
 
   const debtSchedules = ctx.schedulesByType.get('debt_maturity') ?? [];
   const debtSchedule = debtSchedules[0];
   if (!debtSchedule) {
-    return { ok: false, code: 'MISSING_DEBT_MATURITY_SCHEDULE', message: `No debt_maturity finance_baseline_schedules row for entity ${params.entityId}` };
+    return {
+      ok: false,
+      code: 'MISSING_DEBT_MATURITY_SCHEDULE',
+      message: `No debt_maturity finance_baseline_schedules row for entity ${params.entityId}`,
+    };
   }
   const debtPayload = debtSchedule.payload as {
     principal_opening: number;
@@ -458,48 +545,54 @@ async function runOverlayCompute(
   const baselineValueByCellKey = new Map<string, number>(); // `${lineCode}::${periodId}` -> value
   for (const r of baselineOutputRows) {
     const code = lineCodeById.get(r.canonical_line_id);
-    if (code && r.value_decimal !== null) baselineValueByCellKey.set(`${code}::${r.period_id}`, Number(r.value_decimal));
+    if (code && r.value_decimal !== null)
+      baselineValueByCellKey.set(`${code}::${r.period_id}`, Number(r.value_decimal));
   }
 
-  const [driverOverrideRows, impactChainRowsRaw, initiativeRows, financingRowsRaw, lineIdRows] = await Promise.all([
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<DriverOverrideRow>(
-        `SELECT schedule_type, driver_code, entity_id, period_id, value_decimal FROM finance_prediction_driver_overrides WHERE business_version_id = ? AND entity_id = ?`,
-        [params.businessVersionId, params.entityId]
-      )
-    ),
-    withPinnedPostgresTransaction((tx) =>
-      // PKG-A determinism fix (`docs/validation/finance-v3/generated/gate-e/PKG_A_DETERMINISM_report.md`):
-      // no `ORDER BY` — see `sortByCreatedAtThenId`'s doc comment above for why. This array feeds
-      // `impactDeltaFor()`'s `total +=` accumulation below (float addition is not associative), so it
-      // is re-sorted right after `Promise.all` resolves, before any consumer sees it.
-      tx.queryAll<ImpactChainRow>(
-        `SELECT id, initiative_id, statement_line_id, entity_id, amount_kind, amount_decimal, sign, start_period_id, ramp_months, duration_months, decay_pct_per_period, created_at::text AS created_at
+  const [driverOverrideRows, impactChainRowsRaw, initiativeRows, financingRowsRaw, lineIdRows] =
+    await Promise.all([
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<DriverOverrideRow>(
+          `SELECT schedule_type, driver_code, entity_id, period_id, value_decimal FROM finance_prediction_driver_overrides WHERE business_version_id = ? AND entity_id = ?`,
+          [params.businessVersionId, params.entityId]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        // PKG-A determinism fix (`docs/validation/finance-v3/generated/gate-e/PKG_A_DETERMINISM_report.md`):
+        // no `ORDER BY` — see `sortByCreatedAtThenId`'s doc comment above for why. This array feeds
+        // `impactDeltaFor()`'s `total +=` accumulation below (float addition is not associative), so it
+        // is re-sorted right after `Promise.all` resolves, before any consumer sees it.
+        tx.queryAll<ImpactChainRow>(
+          `SELECT id, initiative_id, statement_line_id, entity_id, amount_kind, amount_decimal, sign, start_period_id, ramp_months, duration_months, decay_pct_per_period, created_at::text AS created_at
            FROM finance_prediction_impact_chain WHERE business_version_id = ? AND entity_id = ?`,
-        [params.businessVersionId, params.entityId]
-      )
-    ),
-    withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<InitiativeDefaultsRow>(
-        `SELECT id, default_start_period_id, default_ramp_months, default_duration_months FROM finance_prediction_initiatives WHERE business_version_id = ?`,
-        [params.businessVersionId]
-      )
-    ),
-    withPinnedPostgresTransaction((tx) =>
-      // PKG-A determinism fix: no `ORDER BY` — re-sorted right after `Promise.all` resolves (see
-      // `sortByCreatedAtThenId`). Establishes a canonical base order for `financingRows`, making the
-      // `financingRows.find(kind === 'FACILITY_DRAWDOWN')` rate lookup below deterministic (picks the
-      // canonically EARLIEST facility row instead of "whatever Postgres returns first"). The
-      // period-scoped drawdown/repayment PROCESSING order (which needs a business policy, not just
-      // chronology) is applied separately below via `orderFinancingEventsForPeriod`.
-      tx.queryAll<FinancingRow>(
-        `SELECT id, financing_kind, entity_id, period_id, payload, created_at::text AS created_at
+          [params.businessVersionId, params.entityId]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<InitiativeDefaultsRow>(
+          `SELECT id, default_start_period_id, default_ramp_months, default_duration_months FROM finance_prediction_initiatives WHERE business_version_id = ?`,
+          [params.businessVersionId]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        // PKG-A determinism fix: no `ORDER BY` — re-sorted right after `Promise.all` resolves (see
+        // `sortByCreatedAtThenId`). Establishes a canonical base order for `financingRows`, making the
+        // `financingRows.find(kind === 'FACILITY_DRAWDOWN')` rate lookup below deterministic (picks the
+        // canonically EARLIEST facility row instead of "whatever Postgres returns first"). The
+        // period-scoped drawdown/repayment PROCESSING order (which needs a business policy, not just
+        // chronology) is applied separately below via `orderFinancingEventsForPeriod`.
+        tx.queryAll<FinancingRow>(
+          `SELECT id, financing_kind, entity_id, period_id, payload, created_at::text AS created_at
            FROM finance_prediction_financing WHERE business_version_id = ? AND entity_id = ?`,
-        [params.businessVersionId, params.entityId]
-      )
-    ),
-    withPinnedPostgresTransaction((tx) => tx.queryAll<{ id: string; line_code: string }>(`SELECT id, line_code FROM financial_statement_lines`)),
-  ]);
+          [params.businessVersionId, params.entityId]
+        )
+      ),
+      withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ id: string; line_code: string }>(
+          `SELECT id, line_code FROM financial_statement_lines`
+        )
+      ),
+    ]);
   const impactChainRows = sortByCreatedAtThenId(impactChainRowsRaw);
   const financingRows = sortByCreatedAtThenId(financingRowsRaw);
   const lineIdByCode2 = new Map<string, string>();
@@ -509,10 +602,15 @@ async function runOverlayCompute(
 
   const driverOverrideMap = new Map<string, number>(); // `${scheduleType}::${driverCode}::${periodId}` -> value
   for (const r of driverOverrideRows) {
-    if (r.value_decimal !== null) driverOverrideMap.set(`${r.schedule_type}::${r.driver_code}::${r.period_id}`, Number(r.value_decimal));
+    if (r.value_decimal !== null)
+      driverOverrideMap.set(
+        `${r.schedule_type}::${r.driver_code}::${r.period_id}`,
+        Number(r.value_decimal)
+      );
   }
   const resolveDriver = (scheduleType: string, driverCode: string, periodId: string): number =>
-    driverOverrideMap.get(`${scheduleType}::${driverCode}::${periodId}`) ?? requireAssumption(ctx, scheduleType, driverCode);
+    driverOverrideMap.get(`${scheduleType}::${driverCode}::${periodId}`) ??
+    requireAssumption(ctx, scheduleType, driverCode);
 
   const initiativeById = new Map(initiativeRows.map((r) => [r.id, r]));
   const impactsByLineCode = new Map<string, ImpactChainRow[]>();
@@ -525,7 +623,12 @@ async function runOverlayCompute(
   }
 
   /** Additive currency delta for `lineCode` at forecast-array index `i`, from every impact_chain row targeting it (ADR section 4.4 amount_kind/sign, ramp/duration/decay via predictionPreflightService's shared fraction function). `preImpactBase` is the value BEFORE impacts (needed for PERCENT_OF_BASE/PERCENT_DELTA). */
-  const impactDeltaFor = (lineCode: string, i: number, forecastPeriodIds: readonly string[], preImpactBase: number): number => {
+  const impactDeltaFor = (
+    lineCode: string,
+    i: number,
+    forecastPeriodIds: readonly string[],
+    preImpactBase: number
+  ): number => {
     const rows = impactsByLineCode.get(lineCode);
     if (!rows || rows.length === 0) return 0;
     let total = 0;
@@ -537,8 +640,16 @@ async function runOverlayCompute(
       const monthsSinceStart = startIndex >= 0 ? i - startIndex : i; // not found in this horizon => treat as already-started (pre-horizon initiative), same simplification documented in the report
       const rampMonths = row.ramp_months ?? initiative?.default_ramp_months ?? null;
       const durationMonths = row.duration_months ?? initiative?.default_duration_months ?? null;
-      const decay = row.decay_pct_per_period === null || row.decay_pct_per_period === undefined ? null : Number(row.decay_pct_per_period);
-      const fraction = impactChainEffectiveFraction(monthsSinceStart, rampMonths, durationMonths, decay);
+      const decay =
+        row.decay_pct_per_period === null || row.decay_pct_per_period === undefined
+          ? null
+          : Number(row.decay_pct_per_period);
+      const fraction = impactChainEffectiveFraction(
+        monthsSinceStart,
+        rampMonths,
+        durationMonths,
+        decay
+      );
       if (fraction === 0) continue;
       const signMultiplier = row.sign === 'NEGATIVE' ? -1 : 1;
       const amount = Number(row.amount_decimal);
@@ -555,12 +666,20 @@ async function runOverlayCompute(
     )
   );
   if (!scenarioArtifactEarly) {
-    throw new Error(`predictionComputeService: no finance_business_versions row for Prediction Scenario ${params.businessVersionId}`);
+    throw new Error(
+      `predictionComputeService: no finance_business_versions row for Prediction Scenario ${params.businessVersionId}`
+    );
   }
 
   // --- job bookkeeping (job_type='PREDICTION_COMPUTE', ADR section 6.3, documented precedent) ---
   const inputRevisionHash = createHash('sha256')
-    .update(JSON.stringify({ businessVersionId: params.businessVersionId, entityId: params.entityId, forecastPeriodIds: params.forecastPeriodIds }))
+    .update(
+      JSON.stringify({
+        businessVersionId: params.businessVersionId,
+        entityId: params.entityId,
+        forecastPeriodIds: params.forecastPeriodIds,
+      })
+    )
     .digest('hex');
   const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
@@ -597,9 +716,10 @@ async function runOverlayCompute(
     // figures for a duplicate call are read back from `finance_prediction_outputs`, exactly as
     // `runStandardBase()` above documents for its own idempotent-replay branch.
     const priorPeriods = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ n: string }>(`SELECT count(DISTINCT period_id)::text AS n FROM finance_prediction_outputs WHERE business_version_id = ?`, [
-        params.businessVersionId,
-      ])
+      tx.queryOne<{ n: string }>(
+        `SELECT count(DISTINCT period_id)::text AS n FROM finance_prediction_outputs WHERE business_version_id = ?`,
+        [params.businessVersionId]
+      )
     );
     return {
       ok: true,
@@ -631,7 +751,9 @@ async function runOverlayCompute(
   let cumulativeFacilityCashOverlay = 0;
   let cumulativeFacilityRetainedEarningsAdj = 0;
 
-  const cashInterestRateAnnual = ctx.model.interest_income_on_cash_modeled ? requireAssumption(ctx, 'debt_maturity', 'CASH_INTEREST_RATE_ANNUAL_PCT') : 0;
+  const cashInterestRateAnnual = ctx.model.interest_income_on_cash_modeled
+    ? requireAssumption(ctx, 'debt_maturity', 'CASH_INTEREST_RATE_ANNUAL_PCT')
+    : 0;
   const statutoryTaxRate = requireAssumption(ctx, 'tax_nol', 'STATUTORY_TAX_RATE_PCT');
 
   const periods: PredictionPeriodResult[] = [];
@@ -640,15 +762,24 @@ async function runOverlayCompute(
     for (let i = 0; i < params.forecastPeriodIds.length; i++) {
       const periodId = params.forecastPeriodIds[i];
       const period = ctx.periodByCode.get(periodId);
-      if (!period || period.fiscal_month === null) throw new Error(`predictionComputeService: period ${periodId} not found or not a MONTH period`);
+      if (!period || period.fiscal_month === null)
+        throw new Error(
+          `predictionComputeService: period ${periodId} not found or not a MONTH period`
+        );
 
       const priorYearKey = `${period.fiscal_year - 1}-${period.fiscal_month}`;
       const priorYearRevenue = ctx.revenueHistoryByFiscalYearMonth.get(priorYearKey);
-      if (priorYearRevenue === undefined) throw new Error(`predictionComputeService: no PRIOR_YEAR_SAME_PERIOD REVENUE actual for ${priorYearKey}`);
+      if (priorYearRevenue === undefined)
+        throw new Error(
+          `predictionComputeService: no PRIOR_YEAR_SAME_PERIOD REVENUE actual for ${priorYearKey}`
+        );
 
       // --- schedule engine, driver-override-aware (same functions baselineComputeService.ts uses) ---
       const revenueGrowth = resolveDriver('revenue_pvm', 'REVENUE_GROWTH_YOY', periodId);
-      const baseRevenue = computeRevenuePvm({ priorYearSameMonthRevenue: priorYearRevenue, annualGrowthRate: revenueGrowth });
+      const baseRevenue = computeRevenuePvm({
+        priorYearSameMonthRevenue: priorYearRevenue,
+        annualGrowthRate: revenueGrowth,
+      });
       const revenueImpact = impactDeltaFor('REVENUE', i, params.forecastPeriodIds, baseRevenue);
       const revenue = baseRevenue + revenueImpact;
 
@@ -664,7 +795,11 @@ async function runOverlayCompute(
 
       const capexPct = resolveDriver('capex_depreciation', 'CAPEX_PCT_OF_REVENUE', periodId);
       const usefulLife = resolveDriver('capex_depreciation', 'USEFUL_LIFE_MONTHS', periodId);
-      const { capex: baseCapex, depreciation, closingFixedAssets: baseClosingFixedAssets } = computeCapexDepreciation({
+      const {
+        capex: baseCapex,
+        depreciation,
+        closingFixedAssets: baseClosingFixedAssets,
+      } = computeCapexDepreciation({
         revenue,
         priorFixedAssets,
         capexPctOfRevenue: capexPct,
@@ -679,10 +814,20 @@ async function runOverlayCompute(
       const dso = resolveDriver('wc_dso_dio_dpo', 'DSO_DAYS', periodId);
       const dio = resolveDriver('wc_dso_dio_dpo', 'DIO_DAYS', periodId);
       const dpo = resolveDriver('wc_dso_dio_dpo', 'DPO_DAYS', periodId);
-      const { ar, inventory, ap } = computeWcDsoDioDpo({ revenue, cogs, daysInPeriod: days, dsoDays: dso, dioDays: dio, dpoDays: dpo });
+      const { ar, inventory, ap } = computeWcDsoDioDpo({
+        revenue,
+        cogs,
+        daysInPeriod: days,
+        dsoDays: dso,
+        dioDays: dio,
+        dpoDays: dpo,
+      });
       const deltaWorkingCapital = ar - priorAr + (inventory - priorInventory) - (ap - priorAp);
 
-      const scheduledAmortization = lookupScheduledAmortization({ scheduledPrincipalByMonth: debtPayload.amortization_schedule }, i);
+      const scheduledAmortization = lookupScheduledAmortization(
+        { scheduledPrincipalByMonth: debtPayload.amortization_schedule },
+        i
+      );
       const solved = solvePeriod({
         priorCash,
         priorDebt,
@@ -727,7 +872,9 @@ async function runOverlayCompute(
       // commutative (pure addition, no floor) and ranked after for a stable TOTAL order only, so the
       // per-period sum is bit-reproducible; ties broken by `financingRows`'s own `sortByCreatedAtThenId`
       // order (a stable sort preserves that ordering within each rank — never re-derived here).
-      const financingThisPeriod = orderFinancingEventsForPeriod(financingRows.filter((f) => f.period_id === periodId));
+      const financingThisPeriod = orderFinancingEventsForPeriod(
+        financingRows.filter((f) => f.period_id === periodId)
+      );
       const facilityDebtOpening = facilityDebtBalance;
       let facilityCff = 0;
       let dividendThisPeriod = 0;
@@ -761,7 +908,8 @@ async function runOverlayCompute(
       // Baseline facility's genuinely circular averaged-balance treatment inside solvePeriod()).
       const facilityRow = financingRows.find((f) => f.financing_kind === 'FACILITY_DRAWDOWN');
       const facilityRateAnnual = Number(facilityRow?.payload.rate ?? 0);
-      const facilityInterestExpense = facilityDebtOpening > 0 ? (facilityRateAnnual / 12) * facilityDebtOpening : 0;
+      const facilityInterestExpense =
+        facilityDebtOpening > 0 ? (facilityRateAnnual / 12) * facilityDebtOpening : 0;
       const facilityNetIncomeAdj = -facilityInterestExpense * (1 - statutoryTaxRate); // tax-shielded, mirrors baselineComputeService.ts's own NI derivation
 
       const finalInterestExpense = solved.interestExpense + facilityInterestExpense;
@@ -772,7 +920,11 @@ async function runOverlayCompute(
       cumulativeFacilityCashOverlay += cashOverlayThisPeriod;
       const carriedCash = solved.cash + cumulativeFacilityCashOverlay;
 
-      const { closingRetainedEarnings: baseClosingRE } = computeEquityRe({ priorRetainedEarnings, netIncome: solved.netIncome, dividendsDeclared: 0 });
+      const { closingRetainedEarnings: baseClosingRE } = computeEquityRe({
+        priorRetainedEarnings,
+        netIncome: solved.netIncome,
+        dividendsDeclared: 0,
+      });
       cumulativeFacilityRetainedEarningsAdj += facilityNetIncomeAdj - dividendThisPeriod;
       const closingRetainedEarnings = baseClosingRE + cumulativeFacilityRetainedEarningsAdj;
 
@@ -793,12 +945,36 @@ async function runOverlayCompute(
       }
 
       const values: Partial<Record<CanonicalCode, number>> = {
-        REVENUE: revenue, COGS: cogs, GROSS_MARGIN: grossMargin, OPEX: opex, EBITDA: ebitda, DEPRECIATION: depreciation, EBIT: ebit,
-        INTEREST_EXPENSE: finalInterestExpense, TAX_EXPENSE: solved.taxExpense, NET_INCOME: finalNetIncome,
-        CASH: carriedCash, AR: ar, INVENTORY: inventory, CURRENT_ASSETS: currentAssets, FIXED_ASSETS: closingFixedAssets, TOTAL_ASSETS: totalAssets,
-        AP: ap, CURRENT_LIABILITIES: currentLiabilities, LONG_TERM_DEBT: finalDebt, TOTAL_LIABILITIES: totalLiabilities,
-        EQUITY: equity, TOTAL_LIABILITIES_EQUITY: totalLiabilitiesEquity, RETAINED_EARNINGS: closingRetainedEarnings, WORKING_CAPITAL: workingCapital,
-        CFO: solved.cfo, CFI: solved.cfi, CFF: solved.cff + facilityCff, NET_CHANGE_CASH: solved.netChangeCash + cashOverlayThisPeriod, CAPEX: capex, FCF: fcf,
+        REVENUE: revenue,
+        COGS: cogs,
+        GROSS_MARGIN: grossMargin,
+        OPEX: opex,
+        EBITDA: ebitda,
+        DEPRECIATION: depreciation,
+        EBIT: ebit,
+        INTEREST_EXPENSE: finalInterestExpense,
+        TAX_EXPENSE: solved.taxExpense,
+        NET_INCOME: finalNetIncome,
+        CASH: carriedCash,
+        AR: ar,
+        INVENTORY: inventory,
+        CURRENT_ASSETS: currentAssets,
+        FIXED_ASSETS: closingFixedAssets,
+        TOTAL_ASSETS: totalAssets,
+        AP: ap,
+        CURRENT_LIABILITIES: currentLiabilities,
+        LONG_TERM_DEBT: finalDebt,
+        TOTAL_LIABILITIES: totalLiabilities,
+        EQUITY: equity,
+        TOTAL_LIABILITIES_EQUITY: totalLiabilitiesEquity,
+        RETAINED_EARNINGS: closingRetainedEarnings,
+        WORKING_CAPITAL: workingCapital,
+        CFO: solved.cfo,
+        CFI: solved.cfi,
+        CFF: solved.cff + facilityCff,
+        NET_CHANGE_CASH: solved.netChangeCash + cashOverlayThisPeriod,
+        CAPEX: capex,
+        FCF: fcf,
       };
 
       const variance: Partial<Record<CanonicalCode, number>> = {};
@@ -813,8 +989,18 @@ async function runOverlayCompute(
         const lineId = ctx.lineIdByCode.get(code) ?? lineIdByCode2.get(code);
         if (!lineId) throw new Error(`predictionComputeService: canonical line ${code} not found`);
         const isDividends = code === 'DIVIDENDS_DECLARED';
-        const value = isDividends ? (dividendThisPeriod > 0 ? dividendThisPeriod : null) : values[code]!;
-        const valueStatus = isDividends ? (dividendThisPeriod > 0 ? 'PRESENT_NONZERO' : 'NA') : value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO';
+        const value = isDividends
+          ? dividendThisPeriod > 0
+            ? dividendThisPeriod
+            : null
+          : values[code]!;
+        const valueStatus = isDividends
+          ? dividendThisPeriod > 0
+            ? 'PRESENT_NONZERO'
+            : 'NA'
+          : value === 0
+            ? 'PRESENT_ZERO'
+            : 'PRESENT_NONZERO';
 
         await tx.queryRun(
           `INSERT INTO finance_prediction_outputs (
@@ -822,8 +1008,19 @@ async function runOverlayCompute(
              value_status, value_decimal, native_currency, presentation_currency, unit, multiplier, variance_vs_baseline_decimal, created_by
            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'CONSOLIDATED', ?, ?, ?, ?, 'UNITS', 1, ?, ?)`,
           [
-            uuidv4(), params.organizationId, params.businessVersionId, isDividends ? 'BS' : STATEMENT_TYPE_OF[code], lineId, params.entityId, periodId,
-            valueStatus, value, 'PLN', 'PLN', variance[code] ?? null, params.requestedByUserId,
+            uuidv4(),
+            params.organizationId,
+            params.businessVersionId,
+            isDividends ? 'BS' : STATEMENT_TYPE_OF[code],
+            lineId,
+            params.entityId,
+            periodId,
+            valueStatus,
+            value,
+            'PLN',
+            'PLN',
+            variance[code] ?? null,
+            params.requestedByUserId,
           ]
         );
       }
@@ -841,7 +1038,9 @@ async function runOverlayCompute(
   });
 
   if (!scenarioArtifactEarly.source_working_revision_id) {
-    throw new Error(`predictionComputeService: finance_business_versions.source_working_revision_id is not set for the Prediction Scenario ${params.businessVersionId}`);
+    throw new Error(
+      `predictionComputeService: finance_business_versions.source_working_revision_id is not set for the Prediction Scenario ${params.businessVersionId}`
+    );
   }
   const contentSemanticHash = canonicalPayloadHash(periods);
   const completed = await computeJobService.completeJobSuccess({
@@ -865,7 +1064,9 @@ async function runOverlayCompute(
       message: `runOverlayCompute: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
     };
   }
-  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
+  const finalJob = completed.ok
+    ? completed.job
+    : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
 
   return { ok: true, mode: 'COMPUTED', job: finalJob, periodsComputed: periods.length, periods };
 }

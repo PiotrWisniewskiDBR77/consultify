@@ -33,17 +33,15 @@ import {
   OrgSectionCard,
 } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import {
-  type OrgContextSyncHandle,
-  useOrgContextStoreSection,
-} from './useOrgContextStoreSection';
+import { type OrgContextSyncHandle, useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type ScopeCollaborationSection = 'scope' | 'collaboration';
 
-export const SCOPE_COLLABORATION_SECTIONS: Array<{ id: ScopeCollaborationSection; label: string }> = [
-  { id: 'scope', label: 'Zakres' },
-  { id: 'collaboration', label: 'Tryb współpracy' },
-];
+export const SCOPE_COLLABORATION_SECTIONS: Array<{ id: ScopeCollaborationSection; label: string }> =
+  [
+    { id: 'scope', label: 'Zakres' },
+    { id: 'collaboration', label: 'Tryb współpracy' },
+  ];
 
 const ARCHETYPE_OPTIONS = [
   { value: 'fast', label: 'Pilotaż i skalowanie (zwinnie)' },
@@ -95,7 +93,11 @@ export const OrganizationScopeCollaborationScreen: React.FC<{
         listName,
         items.map((entry) => (entry.id === id ? { ...entry, [key]: value } : entry))
       ),
-    onRemove: (id: string) => updateGoalsList(listName, items.filter((entry) => entry.id !== id)),
+    onRemove: (id: string) =>
+      updateGoalsList(
+        listName,
+        items.filter((entry) => entry.id !== id)
+      ),
   });
   const inScopeHandlers = listHandlers('inScope', goals.inScope);
   const outScopeHandlers = listHandlers('outScope', goals.outScope);
@@ -167,7 +169,9 @@ export const OrganizationScopeCollaborationScreen: React.FC<{
                       { key: 'item', label: 'Obszar', placeholder: 'np. Zakład A' },
                       { key: 'notes', label: 'Notatka', placeholder: 'np. Pełny audyt' },
                     ]}
-                    items={goals.inScope as unknown as Array<Record<string, string> & { id: string }>}
+                    items={
+                      goals.inScope as unknown as Array<Record<string, string> & { id: string }>
+                    }
                     onAdd={inScopeHandlers.onAdd}
                     onUpdate={inScopeHandlers.onUpdate}
                     onRemove={inScopeHandlers.onRemove}
@@ -187,7 +191,9 @@ export const OrganizationScopeCollaborationScreen: React.FC<{
                       { key: 'item', label: 'Obszar', placeholder: 'np. Logistyka' },
                       { key: 'notes', label: 'Powód', placeholder: 'np. Już zoptymalizowane' },
                     ]}
-                    items={goals.outScope as unknown as Array<Record<string, string> & { id: string }>}
+                    items={
+                      goals.outScope as unknown as Array<Record<string, string> & { id: string }>
+                    }
                     onAdd={outScopeHandlers.onAdd}
                     onUpdate={outScopeHandlers.onUpdate}
                     onRemove={outScopeHandlers.onRemove}
@@ -200,7 +206,9 @@ export const OrganizationScopeCollaborationScreen: React.FC<{
         </OrgSectionCard>
       )}
 
-      {(showField('transformationArchetype') || showField('aiRole') || showField('steeringCadence')) && (
+      {(showField('transformationArchetype') ||
+        showField('aiRole') ||
+        showField('steeringCadence')) && (
         <OrgSectionCard id="collaboration" title="Tryb współpracy" icon={Handshake}>
           <div className="space-y-4">
             {showField('transformationArchetype') && (

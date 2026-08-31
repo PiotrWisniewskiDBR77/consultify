@@ -847,7 +847,9 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
         <p className="mt-1 text-sm text-c-text-secondary">{t('commandCenter.description')}</p>
       </div>
 
-      {activeScreen === 'overview' && <CommandCenterOverviewTab onSectionChange={onSectionChange} />}
+      {activeScreen === 'overview' && (
+        <CommandCenterOverviewTab onSectionChange={onSectionChange} />
+      )}
       {activeScreen === 'agent-trace' && <CommandCenterAgentTraceTab />}
       {activeScreen === 'audit' && <CommandCenterAuditTab />}
       {activeScreen === 'dlp' && <CommandCenterDlpTab />}

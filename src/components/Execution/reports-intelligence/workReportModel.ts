@@ -185,9 +185,7 @@ export function buildWorkReportModel(
           // every applicable completeness check (per-record AND), not the
           // fraction of individual field-checks passed across the whole
           // population.
-          value: kpiItems.length
-            ? Math.round((completeItems.length / kpiItems.length) * 100)
-            : 0,
+          value: kpiItems.length ? Math.round((completeItems.length / kpiItems.length) * 100) : 0,
           numerator: completeItems.length,
           denominator: kpiItems.length,
         },

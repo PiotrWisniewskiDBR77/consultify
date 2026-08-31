@@ -23,10 +23,10 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/casePlanVersionService.js';
 import { requireCaseAccessForActor } from './_shared/access.js';
-import { caseWorkspaceHandler } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
-import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 import type { CaseWorkspaceActor } from './_shared/handler.js';
+import { caseWorkspaceHandler } from './_shared/handler.js';
+import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
 const router = Router();
 
@@ -121,7 +121,12 @@ router.get(
     const params = parseParams(caseIdParams.merge(planVersionIdParams), req.params);
     const query = parseQuery(z.object({ against: z.string().trim().min(1).optional() }), req.query);
     await requireCaseAccessForActor(actor, params.caseId);
-    const diff = await svc.diffPlanVersions(params.caseId, params.planVersionId, query, actor.actorUserId);
+    const diff = await svc.diffPlanVersions(
+      params.caseId,
+      params.planVersionId,
+      query,
+      actor.actorUserId
+    );
     res.status(200).json({ data: diff });
   })
 );
@@ -148,11 +153,9 @@ router.put(
     const params = parseParams(planVersionIdParams, req.params);
     const body = parseBody(updatePlanDraftBody, req.body);
     await requireCaseAccessForPlanVersion(actor, params.planVersionId);
-    const updated = await svc.updatePlanDraft(
-      params.planVersionId,
-      body,
-      { actorUserId: actor.actorUserId }
-    );
+    const updated = await svc.updatePlanDraft(params.planVersionId, body, {
+      actorUserId: actor.actorUserId,
+    });
     res.status(200).json({ data: updated });
   })
 );
@@ -176,7 +179,9 @@ router.get(
     await requireCaseAccessForPlanVersion(actor, params.planVersionId);
     const graph = await svc.getGraph(params.planVersionId, actor.actorUserId);
     if (!graph) {
-      res.status(404).json({ error: { code: 'PLAN_VERSION_NOT_FOUND', message: 'Plan version not found.' } });
+      res
+        .status(404)
+        .json({ error: { code: 'PLAN_VERSION_NOT_FOUND', message: 'Plan version not found.' } });
       return;
     }
     res.status(200).json({ data: graph });
@@ -271,7 +276,9 @@ router.get(
     await requireCaseAccessForPlanVersion(actor, params.planVersionId);
     const state = await svc.getViewState(params.planVersionId, params.viewType, actor.actorUserId);
     if (!state) {
-      res.status(404).json({ error: { code: 'PLAN_VIEW_STATE_NOT_FOUND', message: 'View state not found.' } });
+      res
+        .status(404)
+        .json({ error: { code: 'PLAN_VIEW_STATE_NOT_FOUND', message: 'View state not found.' } });
       return;
     }
     res.status(200).json({ data: state });

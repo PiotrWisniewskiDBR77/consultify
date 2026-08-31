@@ -1,7 +1,7 @@
-import { canonicalPayloadHash } from './contentHash.js';
 import { withPgTransaction } from '../../../utils/queryHelpers.js';
-import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
 import { evaluateStatementReadiness, validateStatement } from '../../financialStatementService.js';
+import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import { StatementGovernanceError } from './statementSourceReceiptService.js';
 
 export interface RecordManualMappingDecisionInput {

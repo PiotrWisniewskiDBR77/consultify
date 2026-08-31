@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 interface InterviewInsight {
@@ -134,7 +133,10 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <MessageSquare size={16} className="text-c-text-secondary" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="interview-to-map-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="interview-to-map-modal-heading"
+            >
               {t('ideas.mindmap.interviewsMap', 'Interviews → Map')}
             </h3>
           </div>

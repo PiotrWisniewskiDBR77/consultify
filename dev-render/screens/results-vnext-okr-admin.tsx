@@ -8,14 +8,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { OkrProgramsPage } from '../../src/components/ResultsVNext/okr/OkrProgramsPage';
 import { OkrCyclesPage } from '../../src/components/ResultsVNext/okr/OkrCyclesPage';
+import { OkrProgramsPage } from '../../src/components/ResultsVNext/okr/OkrProgramsPage';
 
 const params = new URLSearchParams(window.location.search);
 const page = (params.get('page') as 'programs' | 'cycles') || 'programs';
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 const MOCK_PROGRAM = {
@@ -49,7 +52,14 @@ const MOCK_PROGRAM = {
   updatedBy: 'user-anna-kowalska',
   updatedAt: '2026-06-01T09:00:00Z',
 };
-const MOCK_PROGRAM_DRAFT = { ...MOCK_PROGRAM, programId: 'program-fy27-draft', name: 'Program OKR FY27 (szkic)', status: 'draft' as const, rowVersion: 1, activePolicyVersionId: null };
+const MOCK_PROGRAM_DRAFT = {
+  ...MOCK_PROGRAM,
+  programId: 'program-fy27-draft',
+  name: 'Program OKR FY27 (szkic)',
+  status: 'draft' as const,
+  rowVersion: 1,
+  activePolicyVersionId: null,
+};
 
 const MOCK_CYCLE_ACTIVE = {
   cycleId: 'cycle-fy26-h2',
@@ -76,7 +86,13 @@ const MOCK_CYCLE_ACTIVE = {
   updatedBy: 'user-anna-kowalska',
   updatedAt: '2026-07-01T09:00:00Z',
 };
-const MOCK_CYCLE_PLANNED = { ...MOCK_CYCLE_ACTIVE, cycleId: 'cycle-fy27-h1', name: 'FY27 H1', status: 'planned' as const, rowVersion: 1 };
+const MOCK_CYCLE_PLANNED = {
+  ...MOCK_CYCLE_ACTIVE,
+  cycleId: 'cycle-fy27-h1',
+  name: 'FY27 H1',
+  status: 'planned' as const,
+  rowVersion: 1,
+};
 
 const g = window as unknown as { __OKR_ADMIN_FETCH__?: boolean };
 if (!g.__OKR_ADMIN_FETCH__) {
@@ -87,14 +103,26 @@ if (!g.__OKR_ADMIN_FETCH__) {
     const method = (init?.method || 'GET').toUpperCase();
     try {
       if (!url.includes('/api/vnext/results/okr/')) return realFetch(input as RequestInfo, init);
-      if (url.match(/\/programs$/) && method === 'GET') return jsonResponse({ programs: [MOCK_PROGRAM, MOCK_PROGRAM_DRAFT] });
-      if (url.match(/\/programs$/) && method === 'POST') return jsonResponse({ outcome: 'applied', program: MOCK_PROGRAM_DRAFT }, 201);
-      if (url.match(/\/programs\/[^/]+\/draft$/) && method === 'PATCH') return jsonResponse({ outcome: 'applied', program: MOCK_PROGRAM_DRAFT });
+      if (url.match(/\/programs$/) && method === 'GET')
+        return jsonResponse({ programs: [MOCK_PROGRAM, MOCK_PROGRAM_DRAFT] });
+      if (url.match(/\/programs$/) && method === 'POST')
+        return jsonResponse({ outcome: 'applied', program: MOCK_PROGRAM_DRAFT }, 201);
+      if (url.match(/\/programs\/[^/]+\/draft$/) && method === 'PATCH')
+        return jsonResponse({ outcome: 'applied', program: MOCK_PROGRAM_DRAFT });
       if (url.match(/\/programs\/[^/]+\/publish$/) && method === 'POST')
-        return jsonResponse({ outcome: 'applied', program: { ...MOCK_PROGRAM_DRAFT, status: 'active' }, policyVersion: { policyVersionId: 'policy-v3', versionNumber: 3 } });
-      if (url.match(/\/cycles$/) && method === 'GET') return jsonResponse({ cycles: [MOCK_CYCLE_ACTIVE, MOCK_CYCLE_PLANNED] });
-      if (url.match(/\/cycles$/) && method === 'POST') return jsonResponse({ outcome: 'applied', cycle: MOCK_CYCLE_PLANNED }, 201);
-      if (url.match(/\/cycles\/[^/]+\/(open-drafting|activate|open-review|close|cancel)$/) && method === 'POST')
+        return jsonResponse({
+          outcome: 'applied',
+          program: { ...MOCK_PROGRAM_DRAFT, status: 'active' },
+          policyVersion: { policyVersionId: 'policy-v3', versionNumber: 3 },
+        });
+      if (url.match(/\/cycles$/) && method === 'GET')
+        return jsonResponse({ cycles: [MOCK_CYCLE_ACTIVE, MOCK_CYCLE_PLANNED] });
+      if (url.match(/\/cycles$/) && method === 'POST')
+        return jsonResponse({ outcome: 'applied', cycle: MOCK_CYCLE_PLANNED }, 201);
+      if (
+        url.match(/\/cycles\/[^/]+\/(open-drafting|activate|open-review|close|cancel)$/) &&
+        method === 'POST'
+      )
         return jsonResponse({ outcome: 'applied', cycle: MOCK_CYCLE_PLANNED });
     } catch {
       /* fall through */
@@ -105,7 +133,11 @@ if (!g.__OKR_ADMIN_FETCH__) {
 
 const ResultsVNextOkrAdminScreen: React.FC = () => {
   useTranslation();
-  return <div className="h-screen bg-c-bg text-c-text">{page === 'cycles' ? <OkrCyclesPage /> : <OkrProgramsPage />}</div>;
+  return (
+    <div className="h-screen bg-c-bg text-c-text">
+      {page === 'cycles' ? <OkrCyclesPage /> : <OkrProgramsPage />}
+    </div>
+  );
 };
 
 export default ResultsVNextOkrAdminScreen;

@@ -104,7 +104,10 @@ function recordAuditInMemory(entry: SourcePackAuditEntry): void {
  * The lifecycle contract itself is untouched: the same validations, the same
  * transitions, the same idempotence, the same error identifiers.
  */
-async function commitTransition(next: SourcePack, audit: SourcePackAuditEntry): Promise<SourcePack> {
+async function commitTransition(
+  next: SourcePack,
+  audit: SourcePackAuditEntry
+): Promise<SourcePack> {
   const result = await persistSourcePackWithAudit(next, audit);
   if (!result.ok) {
     throw new Error('source_pack_persist_failed');
@@ -371,9 +374,7 @@ export interface MarkSourcePackReadyParams {
  * Promote a `draft` pack to `ready`. Rejects empty packs and archived
  * packs. Idempotent on already-ready packs (returns the pack unchanged).
  */
-export async function markSourcePackReady(
-  params: MarkSourcePackReadyParams
-): Promise<SourcePack> {
+export async function markSourcePackReady(params: MarkSourcePackReadyParams): Promise<SourcePack> {
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
   const pack = getSourcePack(params.packId, params.organizationId);

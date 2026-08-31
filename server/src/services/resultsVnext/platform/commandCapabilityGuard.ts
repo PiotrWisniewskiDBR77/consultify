@@ -131,7 +131,8 @@ export function evaluateCommandAccess(params: EvaluateCommandAccessParams): Comm
 
   if (
     responsibleUserIds?.some(
-      (candidateId) => typeof candidateId === 'string' && candidateId.length > 0 && candidateId === actorUserId
+      (candidateId) =>
+        typeof candidateId === 'string' && candidateId.length > 0 && candidateId === actorUserId
     )
   ) {
     return 'ALLOW';

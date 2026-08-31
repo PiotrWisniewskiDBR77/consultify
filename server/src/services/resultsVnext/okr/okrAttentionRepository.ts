@@ -37,7 +37,6 @@ import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { buildVisibilityScopedCte } from '../platform/visibilityScopedQuery.js';
-
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {

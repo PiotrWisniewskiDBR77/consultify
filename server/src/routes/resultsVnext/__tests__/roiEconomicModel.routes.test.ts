@@ -81,7 +81,8 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 vi.mock('../../../services/resultsVnext/roi/roiCaseCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCaseCommands.js')>();
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCaseCommands.js')>();
   return {
     ...actual,
     createRoiCase: (...args: unknown[]) => mockCreateRoiCase(...args),
@@ -92,8 +93,14 @@ vi.mock('../../../services/resultsVnext/roi/roiCaseCommands.js', async (importOr
   };
 });
 vi.mock('../../../services/resultsVnext/roi/roiBaselineCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiBaselineCommands.js')>();
-  return { ...actual, captureOrUpdateBaseline: (...args: unknown[]) => mockCaptureOrUpdateBaseline(...args) };
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiBaselineCommands.js')
+    >();
+  return {
+    ...actual,
+    captureOrUpdateBaseline: (...args: unknown[]) => mockCaptureOrUpdateBaseline(...args),
+  };
 });
 vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiCase: (...args: unknown[]) => mockGetRoiCase(...args),
@@ -101,12 +108,25 @@ vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiBaseline: (...args: unknown[]) => mockGetRoiBaseline(...args),
 }));
 
-vi.mock('../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js')>();
-  return { ...actual, captureOrUpdateCalculationPolicy: (...args: unknown[]) => mockCaptureOrUpdateCalculationPolicy(...args) };
-});
+vi.mock(
+  '../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js')
+      >();
+    return {
+      ...actual,
+      captureOrUpdateCalculationPolicy: (...args: unknown[]) =>
+        mockCaptureOrUpdateCalculationPolicy(...args),
+    };
+  }
+);
 vi.mock('../../../services/resultsVnext/roi/roiAssumptionCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiAssumptionCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiAssumptionCommands.js')
+    >();
   return {
     ...actual,
     addAssumption: (...args: unknown[]) => mockAddAssumption(...args),
@@ -115,7 +135,10 @@ vi.mock('../../../services/resultsVnext/roi/roiAssumptionCommands.js', async (im
   };
 });
 vi.mock('../../../services/resultsVnext/roi/roiCostLineCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCostLineCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiCostLineCommands.js')
+    >();
   return {
     ...actual,
     addCostLine: (...args: unknown[]) => mockAddCostLine(...args),
@@ -124,7 +147,10 @@ vi.mock('../../../services/resultsVnext/roi/roiCostLineCommands.js', async (impo
   };
 });
 vi.mock('../../../services/resultsVnext/roi/roiBenefitLineCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiBenefitLineCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiBenefitLineCommands.js')
+    >();
   return {
     ...actual,
     addBenefitLine: (...args: unknown[]) => mockAddBenefitLine(...args),
@@ -132,16 +158,25 @@ vi.mock('../../../services/resultsVnext/roi/roiBenefitLineCommands.js', async (i
     removeBenefitLine: (...args: unknown[]) => mockRemoveBenefitLine(...args),
   };
 });
-vi.mock('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js')>();
-  return {
-    ...actual,
-    addBenefitEvidenceLink: (...args: unknown[]) => mockAddBenefitEvidenceLink(...args),
-    removeBenefitEvidenceLink: (...args: unknown[]) => mockRemoveBenefitEvidenceLink(...args),
-  };
-});
+vi.mock(
+  '../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js')
+      >();
+    return {
+      ...actual,
+      addBenefitEvidenceLink: (...args: unknown[]) => mockAddBenefitEvidenceLink(...args),
+      removeBenefitEvidenceLink: (...args: unknown[]) => mockRemoveBenefitEvidenceLink(...args),
+    };
+  }
+);
 vi.mock('../../../services/resultsVnext/roi/roiScenarioCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiScenarioCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/roi/roiScenarioCommands.js')
+    >();
   return {
     ...actual,
     addScenario: (...args: unknown[]) => mockAddScenario(...args),
@@ -151,10 +186,19 @@ vi.mock('../../../services/resultsVnext/roi/roiScenarioCommands.js', async (impo
     removeScenarioOverride: (...args: unknown[]) => mockRemoveScenarioOverride(...args),
   };
 });
-vi.mock('../../../services/resultsVnext/roi/roiCalculationRunCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/roi/roiCalculationRunCommands.js')>();
-  return { ...actual, createRoiCalculationRun: (...args: unknown[]) => mockCreateRoiCalculationRun(...args) };
-});
+vi.mock(
+  '../../../services/resultsVnext/roi/roiCalculationRunCommands.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../services/resultsVnext/roi/roiCalculationRunCommands.js')
+      >();
+    return {
+      ...actual,
+      createRoiCalculationRun: (...args: unknown[]) => mockCreateRoiCalculationRun(...args),
+    };
+  }
+);
 vi.mock('../../../services/resultsVnext/roi/roiEconomicModelRepository.js', () => ({
   getCalculationPolicy: (...args: unknown[]) => mockGetCalculationPolicy(...args),
   getAssumption: (...args: unknown[]) => mockGetAssumption(...args),
@@ -170,10 +214,14 @@ vi.mock('../../../services/resultsVnext/roi/roiEconomicModelRepository.js', () =
   getCalculationRun: (...args: unknown[]) => mockGetCalculationRun(...args),
 }));
 
-const { RoiEconomicModelNotEditableError } = await import('../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js');
-const { RoiBenefitLineValidationError } = await import('../../../services/resultsVnext/roi/roiBenefitLineCommands.js');
-const { RoiScenarioValidationError } = await import('../../../services/resultsVnext/roi/roiScenarioCommands.js');
-const { RoiCalculationRunValidationError } = await import('../../../services/resultsVnext/roi/roiCalculationRunCommands.js');
+const { RoiEconomicModelNotEditableError } =
+  await import('../../../services/resultsVnext/roi/roiCalculationPolicyCommands.js');
+const { RoiBenefitLineValidationError } =
+  await import('../../../services/resultsVnext/roi/roiBenefitLineCommands.js');
+const { RoiScenarioValidationError } =
+  await import('../../../services/resultsVnext/roi/roiScenarioCommands.js');
+const { RoiCalculationRunValidationError } =
+  await import('../../../services/resultsVnext/roi/roiCalculationRunCommands.js');
 
 const roiRoutes = (await import('../roi.routes.js')).default;
 
@@ -204,12 +252,16 @@ beforeEach(() => {
 describe('GET/PUT /cases/:caseId/calculation-policy', () => {
   it('GET returns the policy, 404s when repository returns null', async () => {
     mockGetCalculationPolicy.mockResolvedValueOnce({ policyRowId: 'p-1', caseId: CASE_ID });
-    const ok = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-policy`);
+    const ok = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/calculation-policy`
+    );
     expect(ok.status).toBe(200);
     expect(ok.body.calculationPolicy.policyRowId).toBe('p-1');
 
     mockGetCalculationPolicy.mockResolvedValueOnce(null);
-    const notFound = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-policy`);
+    const notFound = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/calculation-policy`
+    );
     expect(notFound.status).toBe(404);
   });
 
@@ -237,7 +289,9 @@ describe('GET/PUT /cases/:caseId/calculation-policy', () => {
 
   it('maps RoiEconomicModelNotEditableError to 409', async () => {
     mockGetRoiCase.mockResolvedValueOnce(caseFixture());
-    mockCaptureOrUpdateCalculationPolicy.mockRejectedValueOnce(new RoiEconomicModelNotEditableError(CASE_ID, 'approved'));
+    mockCaptureOrUpdateCalculationPolicy.mockRejectedValueOnce(
+      new RoiEconomicModelNotEditableError(CASE_ID, 'approved')
+    );
     const response = await request(createApp())
       .put(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-policy`)
       .send({ expectedVersion: 1 });
@@ -249,18 +303,24 @@ describe('GET/PUT /cases/:caseId/calculation-policy', () => {
 describe('assumptions: GET (list+single)/POST/PATCH/DELETE', () => {
   it('lists and fetches a single assumption', async () => {
     mockListAssumptions.mockResolvedValueOnce([{ assumptionId: ASSUMPTION_ID }]);
-    const list = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/assumptions`);
+    const list = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/assumptions`
+    );
     expect(list.status).toBe(200);
     expect(list.body.assumptions).toHaveLength(1);
 
     mockGetAssumption.mockResolvedValueOnce({ assumptionId: ASSUMPTION_ID, label: 'Adoption' });
-    const single = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/assumptions/${ASSUMPTION_ID}`);
+    const single = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/assumptions/${ASSUMPTION_ID}`
+    );
     expect(single.status).toBe(200);
     expect(single.body.assumption.label).toBe('Adoption');
   });
 
   it('POST 400s on missing required fields, 201s on success', async () => {
-    const badRequest = await request(createApp()).post(`/api/vnext/results/roi/cases/${CASE_ID}/assumptions`).send({});
+    const badRequest = await request(createApp())
+      .post(`/api/vnext/results/roi/cases/${CASE_ID}/assumptions`)
+      .send({});
     expect(badRequest.status).toBe(400);
     expect(mockAddAssumption).not.toHaveBeenCalled();
 
@@ -316,10 +376,20 @@ describe('cost-lines: POST', () => {
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/cost-lines`)
-      .send({ category: 'implementation', label: 'Setup', amount: 1000, currency: 'USD', timingType: 'one_time' });
+      .send({
+        category: 'implementation',
+        label: 'Setup',
+        amount: 1000,
+        currency: 'USD',
+        timingType: 'one_time',
+      });
     expect(response.status).toBe(201);
     expect(mockAddCostLine).toHaveBeenCalledTimes(1);
-    expect(mockAddCostLine.mock.calls[0][0]).toMatchObject({ caseId: CASE_ID, amount: 1000, currency: 'USD' });
+    expect(mockAddCostLine.mock.calls[0][0]).toMatchObject({
+      caseId: CASE_ID,
+      amount: 1000,
+      currency: 'USD',
+    });
   });
 });
 
@@ -334,18 +404,33 @@ describe('benefit-lines: POST + financial/non-financial validation error mapping
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines`)
-      .send({ category: 'revenue', label: 'New revenue', amount: 2000, currency: 'USD', timingType: 'one_time', isFinancial: true });
+      .send({
+        category: 'revenue',
+        label: 'New revenue',
+        amount: 2000,
+        currency: 'USD',
+        timingType: 'one_time',
+        isFinancial: true,
+      });
     expect(response.status).toBe(201);
   });
 
   it('maps RoiBenefitLineValidationError (isFinancial/amount mismatch) to 409', async () => {
     mockGetRoiCase.mockResolvedValueOnce(caseFixture());
     mockAddBenefitLine.mockRejectedValueOnce(
-      new RoiBenefitLineValidationError('A financial benefit line requires both amount and currency', 'FINANCIAL_BENEFIT_MISSING_AMOUNT')
+      new RoiBenefitLineValidationError(
+        'A financial benefit line requires both amount and currency',
+        'FINANCIAL_BENEFIT_MISSING_AMOUNT'
+      )
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines`)
-      .send({ category: 'revenue', label: 'New revenue', timingType: 'one_time', isFinancial: true });
+      .send({
+        category: 'revenue',
+        label: 'New revenue',
+        timingType: 'one_time',
+        isFinancial: true,
+      });
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('FINANCIAL_BENEFIT_MISSING_AMOUNT');
   });
@@ -360,7 +445,11 @@ describe('benefit-lines/:benefitLineId/kpi-evidence-links: GET/POST/DELETE', () 
     expect(list.status).toBe(200);
     expect(list.body.links).toHaveLength(1);
     expect(mockListBenefitEvidenceLinks).toHaveBeenCalledWith(
-      expect.objectContaining({ caseId: CASE_ID, benefitLineId: BENEFIT_LINE_ID, hydrateKpiDetails: true })
+      expect.objectContaining({
+        caseId: CASE_ID,
+        benefitLineId: BENEFIT_LINE_ID,
+        hydrateKpiDetails: true,
+      })
     );
 
     mockGetRoiCase.mockResolvedValueOnce(caseFixture());
@@ -371,7 +460,9 @@ describe('benefit-lines/:benefitLineId/kpi-evidence-links: GET/POST/DELETE', () 
       result: { linkId: LINK_ID },
     });
     const created = await request(createApp())
-      .post(`/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links`)
+      .post(
+        `/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links`
+      )
       .send({
         kpiId: '11111111-2222-4333-8444-555555555555',
         pinnedKpiDefinitionVersionId: '11111111-2222-4333-8444-555555555556',
@@ -386,7 +477,9 @@ describe('benefit-lines/:benefitLineId/kpi-evidence-links: GET/POST/DELETE', () 
       result: { linkId: LINK_ID },
     });
     const removed = await request(createApp())
-      .delete(`/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}`)
+      .delete(
+        `/api/vnext/results/roi/cases/${CASE_ID}/benefit-lines/${BENEFIT_LINE_ID}/kpi-evidence-links/${LINK_ID}`
+      )
       .send({ expectedVersion: 1 });
     expect(removed.status).toBe(200);
     expect(removed.body.linkId).toBe(LINK_ID);
@@ -415,7 +508,12 @@ describe('scenarios + overrides', () => {
     });
     const setOverride = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/scenarios/${SCENARIO_ID}/overrides`)
-      .send({ expectedVersion: 1, targetType: 'cost_line', targetId: COST_LINE_ID, overrideAmount: 500 });
+      .send({
+        expectedVersion: 1,
+        targetType: 'cost_line',
+        targetId: COST_LINE_ID,
+        overrideAmount: 500,
+      });
     expect(setOverride.status).toBe(200);
     expect(setOverride.body.override.overrideId).toBe(OVERRIDE_ID);
 
@@ -426,18 +524,28 @@ describe('scenarios + overrides', () => {
       result: { overrideId: OVERRIDE_ID },
     });
     const removeOverride = await request(createApp())
-      .delete(`/api/vnext/results/roi/cases/${CASE_ID}/scenarios/${SCENARIO_ID}/overrides/${OVERRIDE_ID}`)
+      .delete(
+        `/api/vnext/results/roi/cases/${CASE_ID}/scenarios/${SCENARIO_ID}/overrides/${OVERRIDE_ID}`
+      )
       .send({ expectedVersion: 2 });
     expect(removeOverride.status).toBe(200);
   });
 
   it('maps RoiScenarioValidationError (override on a non-custom scenario) to 409', async () => {
     mockSetScenarioOverride.mockRejectedValueOnce(
-      new RoiScenarioValidationError('Scenario is "downside" — overrides may only be set on "custom" scenarios', 'SCENARIO_NOT_CUSTOM')
+      new RoiScenarioValidationError(
+        'Scenario is "downside" — overrides may only be set on "custom" scenarios',
+        'SCENARIO_NOT_CUSTOM'
+      )
     );
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/scenarios/${SCENARIO_ID}/overrides`)
-      .send({ expectedVersion: 1, targetType: 'cost_line', targetId: COST_LINE_ID, overrideAmount: 500 });
+      .send({
+        expectedVersion: 1,
+        targetType: 'cost_line',
+        targetId: COST_LINE_ID,
+        overrideAmount: 500,
+      });
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('SCENARIO_NOT_CUSTOM');
   });
@@ -452,31 +560,44 @@ describe('calculation-runs: POST/GET', () => {
       resultingVersion: 1,
       result: { runId: RUN_ID, status: 'completed', npv: 1234 },
     });
-    const created = await request(createApp()).post(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs`).send({});
+    const created = await request(createApp())
+      .post(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs`)
+      .send({});
     expect(created.status).toBe(201);
     expect(created.body.run.runId).toBe(RUN_ID);
 
     mockListCalculationRuns.mockResolvedValueOnce([{ runId: RUN_ID }]);
-    const list = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs`);
+    const list = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs`
+    );
     expect(list.status).toBe(200);
     expect(list.body.runs).toHaveLength(1);
 
     mockGetCalculationRun.mockResolvedValueOnce({ runId: RUN_ID, status: 'completed' });
-    const single = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs/${RUN_ID}`);
+    const single = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs/${RUN_ID}`
+    );
     expect(single.status).toBe(200);
     expect(single.body.run.runId).toBe(RUN_ID);
 
     mockGetCalculationRun.mockResolvedValueOnce(null);
-    const missing = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs/${RUN_ID}`);
+    const missing = await request(createApp()).get(
+      `/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs/${RUN_ID}`
+    );
     expect(missing.status).toBe(404);
   });
 
   it('maps RoiCalculationRunValidationError (case not runnable) to 409', async () => {
     mockGetRoiCase.mockResolvedValueOnce(caseFixture());
     mockCreateRoiCalculationRun.mockRejectedValueOnce(
-      new RoiCalculationRunValidationError('ROI case is "approved" — a calculation run may only be created while modeling/ready_for_review', 'CASE_NOT_RUNNABLE')
+      new RoiCalculationRunValidationError(
+        'ROI case is "approved" — a calculation run may only be created while modeling/ready_for_review',
+        'CASE_NOT_RUNNABLE'
+      )
     );
-    const response = await request(createApp()).post(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs`).send({});
+    const response = await request(createApp())
+      .post(`/api/vnext/results/roi/cases/${CASE_ID}/calculation-runs`)
+      .send({});
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('CASE_NOT_RUNNABLE');
   });

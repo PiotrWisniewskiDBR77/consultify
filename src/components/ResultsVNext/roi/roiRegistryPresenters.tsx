@@ -11,8 +11,8 @@
  * the P0 shell, which this package's own harness screen mirrors for ROI
  * specifically).
  */
-import React from 'react';
 import { Lock } from 'lucide-react';
+import React from 'react';
 
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives';

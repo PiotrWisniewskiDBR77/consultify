@@ -50,7 +50,10 @@ import {
   markExportUnavailable,
   recordExportReceipt,
 } from '../artifactHandoff/handoffSpineService.js';
-import { MATERIAL_EXPORT_POLICY_VERSION, requireApprovedExportEngine } from '../materialExport/materialExportPolicyService.js';
+import {
+  MATERIAL_EXPORT_POLICY_VERSION,
+  requireApprovedExportEngine,
+} from '../materialExport/materialExportPolicyService.js';
 
 export type PresentationExportFormat = 'pptx' | 'pdf' | 'png';
 

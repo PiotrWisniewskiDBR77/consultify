@@ -18,21 +18,26 @@
  */
 
 import {
-  CapabilityHandlerError,
-  registerCapabilityBinding,
-  registerCapabilityWithAdapter,
-  type CapabilityExecutionEnvelope,
-  type InternalCommandBinding,
-} from '../capabilityAdapterService.js';
-import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import {
   createDefinition,
-  getCurrentDefinition,
   type CreateKpiDefinitionInput,
+  getCurrentDefinition,
   type KpiDefinitionRecord,
 } from '../../results/kpiDefinitionService.js';
-import { attachArtifactLink, requireNonBlankInput, resolveCaseContext, resultRefFor } from './_shared.js';
+import * as artifactLinkService from '../artifactLinkService.js';
+import {
+  type CapabilityExecutionEnvelope,
+  CapabilityHandlerError,
+  type InternalCommandBinding,
+  registerCapabilityBinding,
+  registerCapabilityWithAdapter,
+} from '../capabilityAdapterService.js';
+import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
+import {
+  attachArtifactLink,
+  requireNonBlankInput,
+  resolveCaseContext,
+  resultRefFor,
+} from './_shared.js';
 
 export const KPI_CREATE_CAPABILITY_ID = 'case-workspace.kpi.create';
 export const KPI_CREATE_CAPABILITY_VERSION = '1.0.0';
@@ -118,7 +123,11 @@ export function buildKpiCreateBinding(deps: KpiAdapterDeps = {}): InternalComman
 }
 
 export function registerKpiCreateAdapterBinding(deps: KpiAdapterDeps = {}): void {
-  registerCapabilityBinding(KPI_CREATE_CAPABILITY_ID, KPI_CREATE_CAPABILITY_VERSION, buildKpiCreateBinding(deps));
+  registerCapabilityBinding(
+    KPI_CREATE_CAPABILITY_ID,
+    KPI_CREATE_CAPABILITY_VERSION,
+    buildKpiCreateBinding(deps)
+  );
 }
 
 export function kpiCreateRegistrationInput(createdByActorId: string): RegisterCapabilityInput {
@@ -156,6 +165,9 @@ export async function registerKpiCreateCapability(params: {
   );
 }
 
-export async function getKpiReadback(id: string, organizationId: string): Promise<KpiDefinitionRecord | null> {
+export async function getKpiReadback(
+  id: string,
+  organizationId: string
+): Promise<KpiDefinitionRecord | null> {
   return getCurrentDefinition(id, organizationId);
 }

@@ -1,6 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
 
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

@@ -26,15 +26,23 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
-import { toRoiFinanceLink, type RoiFinanceLink, type RoiFinanceLinkRow } from './roiFinanceSeamTypes.js';
+import {
+  type RoiFinanceLink,
+  type RoiFinanceLinkRow,
+  toRoiFinanceLink,
+} from './roiFinanceSeamTypes.js';
 
 // ==========================================
 // SHARED GUARD (same shape every other economic-model-adjacent commands

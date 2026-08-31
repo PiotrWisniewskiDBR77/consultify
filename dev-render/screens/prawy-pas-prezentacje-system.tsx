@@ -32,16 +32,34 @@ const PREVIEW: ArtifactPreview & { type: 'deck' } = {
   deckStatus: 'draft',
   deckSlides: [
     { slideId: 's1', intent: 'title', title: 'Ekspansja DE — plan wejścia' },
-    { slideId: 's2', intent: 'context', title: 'Sytuacja rynkowa', bulletPoints: ['Popyt', 'Konkurencja'] },
-    { slideId: 's3', intent: 'recommendation', title: 'Rekomendacja', bulletPoints: ['Pilotaż DACH'] },
+    {
+      slideId: 's2',
+      intent: 'context',
+      title: 'Sytuacja rynkowa',
+      bulletPoints: ['Popyt', 'Konkurencja'],
+    },
+    {
+      slideId: 's3',
+      intent: 'recommendation',
+      title: 'Rekomendacja',
+      bulletPoints: ['Pilotaż DACH'],
+    },
   ],
 };
 
 // ── Mock treści sekcji „Historia" (dawne `activity`) ───────────────────────
 function ActivityMock({ isPl }: { isPl: boolean }): React.ReactElement {
   const rows = [
-    { who: 'Teresa', what: isPl ? 'Wygenerowała 8 slajdów ze wskazówek' : 'Generated 8 slides from hints', when: '10:42' },
-    { who: 'Teresa', what: isPl ? 'Dodała rekomendację na slajdzie 3' : 'Added recommendation to slide 3', when: '10:44' },
+    {
+      who: 'Teresa',
+      what: isPl ? 'Wygenerowała 8 slajdów ze wskazówek' : 'Generated 8 slides from hints',
+      when: '10:42',
+    },
+    {
+      who: 'Teresa',
+      what: isPl ? 'Dodała rekomendację na slajdzie 3' : 'Added recommendation to slide 3',
+      when: '10:44',
+    },
   ];
   return (
     <ul className="flex flex-col gap-2.5" data-testid="prezentacje-activity-mock">
@@ -80,9 +98,7 @@ export default function PrawyPasPrezentacjeSystemScreen({
   useEffect(() => {
     if (!isArtifactRightRailEnabled()) return;
     const id = window.setTimeout(() => {
-      const btn = document.querySelector<HTMLButtonElement>(
-        '[data-mels-tool="artefakt"]'
-      );
+      const btn = document.querySelector<HTMLButtonElement>('[data-mels-tool="artefakt"]');
       btn?.click();
     }, 50);
     return () => window.clearTimeout(id);

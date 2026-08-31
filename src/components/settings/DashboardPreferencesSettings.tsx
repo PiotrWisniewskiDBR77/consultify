@@ -301,7 +301,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                     <div className="flex items-center gap-3">
                       <Icon
                         size={20}
-                        className={isEnabled ? 'text-navy-900 dark:text-white' : 'text-c-text-secondary'}
+                        className={
+                          isEnabled ? 'text-navy-900 dark:text-white' : 'text-c-text-secondary'
+                        }
                       />
                       <span className="font-medium text-c-text-secondary">{option.label}</span>
                     </div>

@@ -209,11 +209,7 @@ router.get(
 router.post(
   '/:id/submit',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await managementReportsService.submitForApproval(
-      req.params.id,
-      req.userId,
-      req.organizationId
-    );
+    await managementReportsService.submitForApproval(req.params.id, req.userId, req.organizationId);
     return res.json({ success: true });
   })
 );
@@ -335,10 +331,7 @@ router.post(
 router.get(
   '/:id/comments',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const comments = await managementReportsService.getComments(
-      req.params.id,
-      req.organizationId
-    );
+    const comments = await managementReportsService.getComments(req.params.id, req.organizationId);
     return res.json({ success: true, comments });
   })
 );

@@ -14,12 +14,12 @@
 import { createHash } from 'crypto';
 
 import {
-  AuditDomainError,
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
+  AuditDomainError,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
@@ -101,48 +101,56 @@ async function buildOutputPayload(
   programId: string,
   program: Row,
   actor: AuditActor,
-  generatedAt: string,
+  generatedAt: string
 ): Promise<AuditOutputPayload> {
-  const [packRow, teamRows, evidenceRows, criteriaRows, findingRows, responseRows, actionRows, verificationRows] =
-    await Promise.all([
-      program.pack_id
-        ? auditGet<Row>(
-            `SELECT ap.*, ans.title AS source_title
+  const [
+    packRow,
+    teamRows,
+    evidenceRows,
+    criteriaRows,
+    findingRows,
+    responseRows,
+    actionRows,
+    verificationRows,
+  ] = await Promise.all([
+    program.pack_id
+      ? auditGet<Row>(
+          `SELECT ap.*, ans.title AS source_title
                FROM audit_packs ap
                LEFT JOIN audit_norm_sources ans ON ans.id = ap.source_id
               WHERE ap.id = $1`,
-            [program.pack_id],
-          )
-        : Promise.resolve(null),
-      auditAll<Row>(
-        `SELECT * FROM audit_program_members WHERE organization_id=$1 AND program_id=$2 AND removed_at IS NULL`,
-        [orgId, programId],
-      ),
-      auditAll<Row>(`SELECT * FROM audit_evidence WHERE organization_id=$1 AND program_id=$2`, [
-        orgId,
-        programId,
-      ]),
-      auditAll<Row>(`SELECT * FROM audit_program_criteria WHERE organization_id=$1 AND program_id=$2`, [
-        orgId,
-        programId,
-      ]),
-      auditAll<Row>(`SELECT * FROM audit_program_findings WHERE organization_id=$1 AND program_id=$2`, [
-        orgId,
-        programId,
-      ]),
-      auditAll<Row>(`SELECT * FROM audit_management_responses WHERE organization_id=$1 AND program_id=$2`, [
-        orgId,
-        programId,
-      ]),
-      auditAll<Row>(`SELECT * FROM audit_corrective_actions WHERE organization_id=$1 AND program_id=$2`, [
-        orgId,
-        programId,
-      ]),
-      auditAll<Row>(`SELECT * FROM audit_verifications WHERE organization_id=$1 AND program_id=$2`, [
-        orgId,
-        programId,
-      ]),
-    ]);
+          [program.pack_id]
+        )
+      : Promise.resolve(null),
+    auditAll<Row>(
+      `SELECT * FROM audit_program_members WHERE organization_id=$1 AND program_id=$2 AND removed_at IS NULL`,
+      [orgId, programId]
+    ),
+    auditAll<Row>(`SELECT * FROM audit_evidence WHERE organization_id=$1 AND program_id=$2`, [
+      orgId,
+      programId,
+    ]),
+    auditAll<Row>(
+      `SELECT * FROM audit_program_criteria WHERE organization_id=$1 AND program_id=$2`,
+      [orgId, programId]
+    ),
+    auditAll<Row>(
+      `SELECT * FROM audit_program_findings WHERE organization_id=$1 AND program_id=$2`,
+      [orgId, programId]
+    ),
+    auditAll<Row>(
+      `SELECT * FROM audit_management_responses WHERE organization_id=$1 AND program_id=$2`,
+      [orgId, programId]
+    ),
+    auditAll<Row>(
+      `SELECT * FROM audit_corrective_actions WHERE organization_id=$1 AND program_id=$2`,
+      [orgId, programId]
+    ),
+    auditAll<Row>(`SELECT * FROM audit_verifications WHERE organization_id=$1 AND program_id=$2`, [
+      orgId,
+      programId,
+    ]),
+  ]);
 
   const team: OutputTeamMember[] = teamRows.map((r) => ({
     id: String(r.id),
@@ -163,9 +171,10 @@ async function buildOutputPayload(
     sourceSystem: (r.source_system as string) ?? null,
     sufficiency: (r.sufficiency as string) ?? null,
     reliability: (r.reliability as string) ?? null,
-    supportsConformity: r.supports_conformity === null || r.supports_conformity === undefined
-      ? null
-      : toBool(r.supports_conformity),
+    supportsConformity:
+      r.supports_conformity === null || r.supports_conformity === undefined
+        ? null
+        : toBool(r.supports_conformity),
   }));
 
   const criteriaWork: OutputCriterionWork[] = criteriaRows.map((r) => ({
@@ -224,7 +233,9 @@ async function buildOutputPayload(
     id: String(r.id),
     correctiveActionId: (r.corrective_action_id as string) ?? null,
     findingId: String(r.finding_id),
-    verificationKind: String(r.verification_kind) as OutputVerificationPlanEntry['verificationKind'],
+    verificationKind: String(
+      r.verification_kind
+    ) as OutputVerificationPlanEntry['verificationKind'],
     method: (r.method as string) ?? null,
     plannedDate: r.planned_date ? toIso(r.planned_date) : null,
     performedAt: toIso(r.performed_at),
@@ -324,12 +335,16 @@ function buildSystemicConclusions(findings: OutputFinding[]): OutputSystemicConc
 function buildApprovalTrail(
   findingRows: Row[],
   actionRows: Row[],
-  verificationRows: Row[],
+  verificationRows: Row[]
 ): OutputApprovalTrailEntry[] {
   const trail: OutputApprovalTrailEntry[] = [];
   for (const r of findingRows) {
     if (r.reviewed_by && r.reviewed_at) {
-      trail.push({ who: String(r.reviewed_by), when: toIso(r.reviewed_at), what: `Przegląd ustalenia ${r.id}` });
+      trail.push({
+        who: String(r.reviewed_by),
+        when: toIso(r.reviewed_at),
+        what: `Przegląd ustalenia ${r.id}`,
+      });
     }
     if (r.closed_by && r.closed_at) {
       trail.push({
@@ -348,7 +363,11 @@ function buildApprovalTrail(
   }
   for (const r of actionRows) {
     if (r.approved_by && r.approved_at) {
-      trail.push({ who: String(r.approved_by), when: toIso(r.approved_at), what: `Zatwierdzenie działania ${r.id}` });
+      trail.push({
+        who: String(r.approved_by),
+        when: toIso(r.approved_at),
+        what: `Zatwierdzenie działania ${r.id}`,
+      });
     }
     if (r.implemented_by && r.implemented_at) {
       trail.push({
@@ -411,26 +430,26 @@ export async function finalizeOutput(
   orgId: string,
   actor: AuditActor,
   programId: string,
-  input: FinalizeOutputInput = {},
+  input: FinalizeOutputInput = {}
 ): Promise<AuditOutput> {
   await requireCapability(actor, programId, 'output.finalize');
 
-  const program = await auditGet<Row>(`SELECT * FROM audit_programs WHERE organization_id=$1 AND id=$2`, [
-    orgId,
-    programId,
-  ]);
+  const program = await auditGet<Row>(
+    `SELECT * FROM audit_programs WHERE organization_id=$1 AND id=$2`,
+    [orgId, programId]
+  );
   if (!program) throw new AuditNotFoundError('Program audytowy');
 
   // TWARDA REGUŁA 1: żadne ustalenie nie może być w draft/in_review.
   const blocking = await auditAll<{ id: string }>(
     `SELECT id FROM audit_program_findings
       WHERE organization_id=$1 AND program_id=$2 AND status IN ('draft','in_review')`,
-    [orgId, programId],
+    [orgId, programId]
   );
   if (blocking.length > 0) {
     throw new AuditStateError(
       `Nie można sfinalizować Outputu — ${blocking.length} ustaleń jest w statusie draft/in_review ` +
-        `(m.in. ${blocking[0].id}); dokończ przegląd ustaleń przed finalizacją`,
+        `(m.in. ${blocking[0].id}); dokończ przegląd ustaleń przed finalizacją`
     );
   }
 
@@ -464,13 +483,13 @@ export async function finalizeOutput(
         program.pack_version != null ? toNum(program.pack_version) : null,
         actor.userId,
         JSON.stringify({ builtAt: generatedAt, builtBy: actor.userId }),
-      ],
+      ]
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (/uq_audit_outputs_program_version|duplicate key/i.test(message)) {
       throw new AuditStateError(
-        'Wykryto równoległą finalizację Outputu dla tego programu (kolizja wersji) — spróbuj ponownie',
+        'Wykryto równoległą finalizację Outputu dla tego programu (kolizja wersji) — spróbuj ponownie'
       );
     }
     throw error;
@@ -489,14 +508,18 @@ export async function finalizeOutput(
 
   const created = await getOutput(orgId, id);
   if (!created) {
-    throw new AuditDomainError('Output nie został poprawnie zapisany', 500, 'AUDIT_OUTPUT_WRITE_FAILED');
+    throw new AuditDomainError(
+      'Output nie został poprawnie zapisany',
+      500,
+      'AUDIT_OUTPUT_WRITE_FAILED'
+    );
   }
   return created;
 }
 
 export async function listOutputs(
   orgId: string,
-  filters: { programId?: string } = {},
+  filters: { programId?: string } = {}
 ): Promise<AuditOutput[]> {
   const params: unknown[] = [orgId];
   let sql = `SELECT * FROM audit_outputs WHERE organization_id = $1`;
@@ -509,10 +532,10 @@ export async function listOutputs(
 }
 
 export async function getOutput(orgId: string, id: string): Promise<AuditOutput | null> {
-  const row = await auditGet<Row>(`SELECT * FROM audit_outputs WHERE organization_id=$1 AND id=$2`, [
-    orgId,
-    id,
-  ]);
+  const row = await auditGet<Row>(
+    `SELECT * FROM audit_outputs WHERE organization_id=$1 AND id=$2`,
+    [orgId, id]
+  );
   return row ? mapOutputRow(row) : null;
 }
 
@@ -524,7 +547,7 @@ export async function supersedeOutput(
   orgId: string,
   actor: AuditActor,
   id: string,
-  newOutputId: string,
+  newOutputId: string
 ): Promise<AuditOutput> {
   const output = await getOutput(orgId, id);
   if (!output) throw new AuditNotFoundError('Output');
@@ -539,11 +562,10 @@ export async function supersedeOutput(
     throw new AuditStateError('Output zastępujący musi należeć do tego samego programu audytowego');
   }
 
-  await auditRun(`UPDATE audit_outputs SET superseded_by=$1, superseded_at=NOW() WHERE organization_id=$2 AND id=$3`, [
-    newOutputId,
-    orgId,
-    id,
-  ]);
+  await auditRun(
+    `UPDATE audit_outputs SET superseded_by=$1, superseded_at=NOW() WHERE organization_id=$2 AND id=$3`,
+    [newOutputId, orgId, id]
+  );
 
   await recordAuditEvent({
     organizationId: orgId,
@@ -570,7 +592,11 @@ export interface OutputDiffResult {
 }
 
 /** Porównuje dwie wersje Outputu — do zestawiania cykli audytowych. */
-export async function diffOutputs(orgId: string, aId: string, bId: string): Promise<OutputDiffResult> {
+export async function diffOutputs(
+  orgId: string,
+  aId: string,
+  bId: string
+): Promise<OutputDiffResult> {
   const [a, b] = await Promise.all([getOutput(orgId, aId), getOutput(orgId, bId)]);
   if (!a) throw new AuditNotFoundError('Output A');
   if (!b) throw new AuditNotFoundError('Output B');
@@ -600,7 +626,11 @@ export async function diffOutputs(orgId: string, aId: string, bId: string): Prom
   for (const [id, before] of aCMap) {
     const after = bCMap.get(id);
     if (after && before.conformityStatus !== after.conformityStatus) {
-      conformityChanges.push({ criterionId: id, before: before.conformityStatus, after: after.conformityStatus });
+      conformityChanges.push({
+        criterionId: id,
+        before: before.conformityStatus,
+        after: after.conformityStatus,
+      });
     }
   }
   for (const [id, after] of bCMap) {
@@ -609,5 +639,12 @@ export async function diffOutputs(orgId: string, aId: string, bId: string): Prom
     }
   }
 
-  return { outputA: aId, outputB: bId, addedFindings, removedFindings, changedFindings, conformityChanges };
+  return {
+    outputA: aId,
+    outputB: bId,
+    addedFindings,
+    removedFindings,
+    changedFindings,
+    conformityChanges,
+  };
 }

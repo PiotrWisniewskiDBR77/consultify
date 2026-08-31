@@ -197,9 +197,7 @@ describe.skipIf(!REAL_DB)('Super Admin MFA methods — real PostgreSQL', () => {
     );
 
     const res = await asSuperAdmin(
-      request(app)
-        .post(`/api/superadmin/users/${userId}/mfa/totp/verify`)
-        .send({ token: '000000' })
+      request(app).post(`/api/superadmin/users/${userId}/mfa/totp/verify`).send({ token: '000000' })
     );
 
     // The point is that the QUERY resolved and the handler reached a verdict.

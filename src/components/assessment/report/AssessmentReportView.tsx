@@ -42,8 +42,13 @@ type LoadState =
   | { kind: 'not-found' }
   | { kind: 'loaded'; data: AssessmentReportData };
 
-export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({ outputId, className }) => {
-  const [state, setState] = useState<LoadState>(outputId ? { kind: 'loading' } : { kind: 'not-frozen' });
+export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({
+  outputId,
+  className,
+}) => {
+  const [state, setState] = useState<LoadState>(
+    outputId ? { kind: 'loading' } : { kind: 'not-frozen' }
+  );
   const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
@@ -101,9 +106,16 @@ export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({ outp
           compact
         />
       ) : state.kind === 'loading' ? (
-        <div className="mx-auto flex max-w-[880px] flex-col gap-4" aria-busy="true" aria-live="polite">
+        <div
+          className="mx-auto flex max-w-[880px] flex-col gap-4"
+          aria-busy="true"
+          aria-live="polite"
+        >
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl border border-c-border-subtle bg-c-surface-raised" />
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-2xl border border-c-border-subtle bg-c-surface-raised"
+            />
           ))}
         </div>
       ) : state.kind === 'not-found' ? (

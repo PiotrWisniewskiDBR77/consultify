@@ -28,17 +28,15 @@ import { ContextDocUploader } from '../../../views/ContextBuilder/shared/Context
 import type { StandardCounterChip, StandardModuleTab } from '../../standard/StandardModuleBar';
 import { OrgRecordList, OrgSectionCard } from './OrganizationCardPrimitives';
 import type { OrganizationStatePanelProps } from './OrganizationStatePanel';
-import {
-  type OrgContextSyncHandle,
-  useOrgContextStoreSection,
-} from './useOrgContextStoreSection';
+import { type OrgContextSyncHandle, useOrgContextStoreSection } from './useOrgContextStoreSection';
 
 export type ChallengesEvidenceSection = 'challenges' | 'evidence';
 
-export const CHALLENGES_EVIDENCE_SECTIONS: Array<{ id: ChallengesEvidenceSection; label: string }> = [
-  { id: 'challenges', label: 'Zadeklarowane wyzwania' },
-  { id: 'evidence', label: 'Dowody' },
-];
+export const CHALLENGES_EVIDENCE_SECTIONS: Array<{ id: ChallengesEvidenceSection; label: string }> =
+  [
+    { id: 'challenges', label: 'Zadeklarowane wyzwania' },
+    { id: 'evidence', label: 'Dowody' },
+  ];
 
 const SEVERITY_OPTIONS = [
   { value: 'Critical', label: 'Krytyczna' },
@@ -74,12 +72,20 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
       onAdd: () =>
         updateChallengesList('declaredChallenges', [
           ...challenges.declaredChallenges,
-          { id: Math.random().toString(36).slice(2, 11), challenge: '', area: '', severity: '', notes: '' },
+          {
+            id: Math.random().toString(36).slice(2, 11),
+            challenge: '',
+            area: '',
+            severity: '',
+            notes: '',
+          },
         ]),
       onUpdate: (id: string, key: string, value: string) =>
         updateChallengesList(
           'declaredChallenges',
-          challenges.declaredChallenges.map((item) => (item.id === id ? { ...item, [key]: value } : item))
+          challenges.declaredChallenges.map((item) =>
+            item.id === id ? { ...item, [key]: value } : item
+          )
         ),
       onRemove: (id: string) =>
         updateChallengesList(
@@ -95,7 +101,13 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
       onAdd: () =>
         updateChallengesList('evidence', [
           ...challenges.evidence,
-          { id: Math.random().toString(36).slice(2, 11), metric: '', symptom: '', source: '', link: '' },
+          {
+            id: Math.random().toString(36).slice(2, 11),
+            metric: '',
+            symptom: '',
+            source: '',
+            link: '',
+          },
         ]),
       onUpdate: (id: string, key: string, value: string) =>
         updateChallengesList(
@@ -103,7 +115,10 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
           challenges.evidence.map((item) => (item.id === id ? { ...item, [key]: value } : item))
         ),
       onRemove: (id: string) =>
-        updateChallengesList('evidence', challenges.evidence.filter((item) => item.id !== id)),
+        updateChallengesList(
+          'evidence',
+          challenges.evidence.filter((item) => item.id !== id)
+        ),
     }),
     [challenges.evidence, updateChallengesList]
   );
@@ -167,13 +182,19 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
         >
           <OrgRecordList
             columns={[
-              { key: 'challenge', label: 'Wyzwanie / objaw', placeholder: 'np. Wysoki wskaźnik braków' },
+              {
+                key: 'challenge',
+                label: 'Wyzwanie / objaw',
+                placeholder: 'np. Wysoki wskaźnik braków',
+              },
               { key: 'area', label: 'Obszar', placeholder: 'np. Jakość' },
               { key: 'severity', label: 'Waga', type: 'select', options: SEVERITY_OPTIONS },
               { key: 'notes', label: 'Notatka', placeholder: 'Dodatkowy kontekst…' },
             ]}
             items={
-              challenges.declaredChallenges as unknown as Array<Record<string, string> & { id: string }>
+              challenges.declaredChallenges as unknown as Array<
+                Record<string, string> & { id: string }
+              >
             }
             onAdd={challengeHandlers.onAdd}
             onUpdate={challengeHandlers.onUpdate}
@@ -204,7 +225,11 @@ export const OrganizationChallengesEvidenceScreen: React.FC<{
           <OrgRecordList
             columns={[
               { key: 'metric', label: 'Metryka / dana', placeholder: 'np. Braki 12%' },
-              { key: 'symptom', label: 'Objaw / obserwacja', placeholder: 'np. Przestój co godzinę' },
+              {
+                key: 'symptom',
+                label: 'Objaw / obserwacja',
+                placeholder: 'np. Przestój co godzinę',
+              },
               { key: 'source', label: 'System / dokument źródłowy', placeholder: 'np. Raport SAP' },
               { key: 'link', label: 'Link / odniesienie', placeholder: 'np. Strona 12' },
             ]}

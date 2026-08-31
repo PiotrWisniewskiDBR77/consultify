@@ -1,20 +1,18 @@
 import type { Response } from 'express';
 
-import type { AuthenticatedRequest } from '../types/index.js';
 import { commandInvitation, listAdminInvitations } from '../services/adminIamCommandService.js';
 import {
   changeOrganizationMemberRoleAtomicallyViaIam,
   removeOrganizationMemberAtomicallyViaIam,
 } from '../services/orgPeopleIamService.js';
+import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const fail = (res: Response, error: any) =>
-  res
-    .status(Number(error?.status || 400))
-    .json({
-      code: error?.code || 'ADMIN_IAM_COMMAND_FAILED',
-      error: String(error?.message || error),
-    });
+  res.status(Number(error?.status || 400)).json({
+    code: error?.code || 'ADMIN_IAM_COMMAND_FAILED',
+    error: String(error?.message || error),
+  });
 
 export class AdminIamController {
   static list = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

@@ -93,12 +93,17 @@ import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { ResultsRoiRegistryPage } from '../../src/components/ResultsVNext/ResultsRoiRegistryPage';
+import type {
+  RoiCalculationRunSummary,
+  RoiCaseListItem,
+  RoiCaseStatus,
+  RoiOrgBenefitsRealizationRow,
+} from '../../src/components/ResultsVNext/roi/roiApi';
 import { RoiCaseToolPage } from '../../src/components/ResultsVNext/roi/RoiCaseToolPage';
 import { ROUTES } from '../../src/routes/routeConfig';
 import { API_URL } from '../../src/services/api';
 import { OrganizationApi } from '../../src/services/api/organizations.api';
 import { useAppStore } from '../../src/store/useAppStore';
-import type { RoiCaseListItem, RoiCaseStatus, RoiCalculationRunSummary, RoiOrgBenefitsRealizationRow } from '../../src/components/ResultsVNext/roi/roiApi';
 
 // night-fixes-a P0 #6 (2026-08-26, NIGHT_SWEEP_A_REPORT_20260826.md): the
 // Owner column now resolves via `OrganizationApi.getOrganizationMembers(
@@ -106,16 +111,36 @@ import type { RoiCaseListItem, RoiCaseStatus, RoiCalculationRunSummary, RoiOrgBe
 // resolution instead of a silent "fetch fails, falls back to raw id".
 useAppStore.setState({ currentOrganization: { id: 'org-demo', name: 'Firma Demo Sp. z o.o.' } });
 OrganizationApi.getOrganizationMembers = (async () => [
-  { userId: 'user-anna-kowalska', email: 'anna.kowalska@firma-demo.pl', name: 'Anna Kowalska', role: 'member', status: 'active' },
-  { userId: 'user-tomasz-nowak', email: 'tomasz.nowak@firma-demo.pl', name: 'Tomasz Nowak', role: 'member', status: 'active' },
-  { userId: 'user-piotr-wisniewski', email: 'piotr@firma-demo.pl', name: 'Piotr Wiśniewski', role: 'owner', status: 'active' },
+  {
+    userId: 'user-anna-kowalska',
+    email: 'anna.kowalska@firma-demo.pl',
+    name: 'Anna Kowalska',
+    role: 'member',
+    status: 'active',
+  },
+  {
+    userId: 'user-tomasz-nowak',
+    email: 'tomasz.nowak@firma-demo.pl',
+    name: 'Tomasz Nowak',
+    role: 'member',
+    status: 'active',
+  },
+  {
+    userId: 'user-piotr-wisniewski',
+    email: 'piotr@firma-demo.pl',
+    name: 'Piotr Wiśniewski',
+    role: 'owner',
+    status: 'active',
+  },
 ]) as typeof OrganizationApi.getOrganizationMembers;
 
 const harnessParams = new URLSearchParams(window.location.search);
 const registryState = harnessParams.get('state') || 'ready';
 const calcState = harnessParams.get('calc') || 'ready';
-const createResultParam = (harnessParams.get('createResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
-const transitionResultParam = (harnessParams.get('transitionResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
+const createResultParam =
+  (harnessParams.get('createResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
+const transitionResultParam =
+  (harnessParams.get('transitionResult') as 'success' | 'error' | 'conflict' | null) ?? 'success';
 const flagOff = harnessParams.get('ff') === 'off';
 const view = harnessParams.get('view') === 'case' ? 'case' : 'hub';
 const caseIdParam = harnessParams.get('caseId') || 'roi-case-1';
@@ -157,65 +182,154 @@ const nextId = (prefix: string) => `${prefix}-${(seq += 1)}`;
 
 const cases: RoiCaseListItem[] = [
   {
-    caseId: 'roi-case-1', organizationId: 'org-1', initiativeId: 'init-101',
-    title: 'Automatyzacja linii pakowania', ownerUserId: 'user-anna-kowalska',
-    status: 'modeling', currency: 'PLN', granularity: 'monthly',
-    analysisStart: '2026-01-01', analysisEnd: '2026-12-31',
-    nextActionType: 'complete_economic_model', nextActionDueAt: '2026-08-20', nextReviewAt: null,
-    submittedAt: null, approvedAt: null, rejectedAt: null, rejectionReason: null,
-    changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
-    rowVersion: 3, createdAt: '2026-07-01T09:00:00Z', updatedAt: '2026-08-07T10:00:00Z',
+    caseId: 'roi-case-1',
+    organizationId: 'org-1',
+    initiativeId: 'init-101',
+    title: 'Automatyzacja linii pakowania',
+    ownerUserId: 'user-anna-kowalska',
+    status: 'modeling',
+    currency: 'PLN',
+    granularity: 'monthly',
+    analysisStart: '2026-01-01',
+    analysisEnd: '2026-12-31',
+    nextActionType: 'complete_economic_model',
+    nextActionDueAt: '2026-08-20',
+    nextReviewAt: null,
+    submittedAt: null,
+    approvedAt: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    archivedAt: null,
+    rowVersion: 3,
+    createdAt: '2026-07-01T09:00:00Z',
+    updatedAt: '2026-08-07T10:00:00Z',
   },
   {
-    caseId: 'roi-case-2', organizationId: 'org-1', initiativeId: 'init-102',
-    title: 'Migracja legacy MES', ownerUserId: 'user-tomasz-nowak',
-    status: 'submitted_for_approval', currency: 'PLN', granularity: 'monthly',
-    analysisStart: '2026-02-01', analysisEnd: '2027-01-31',
-    nextActionType: 'review_decision', nextActionDueAt: '2026-08-15', nextReviewAt: null,
-    submittedAt: '2026-08-02T12:00:00Z', approvedAt: null, rejectedAt: null, rejectionReason: null,
-    changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
-    rowVersion: 5, createdAt: '2026-06-15T09:00:00Z', updatedAt: '2026-08-02T12:00:00Z',
+    caseId: 'roi-case-2',
+    organizationId: 'org-1',
+    initiativeId: 'init-102',
+    title: 'Migracja legacy MES',
+    ownerUserId: 'user-tomasz-nowak',
+    status: 'submitted_for_approval',
+    currency: 'PLN',
+    granularity: 'monthly',
+    analysisStart: '2026-02-01',
+    analysisEnd: '2027-01-31',
+    nextActionType: 'review_decision',
+    nextActionDueAt: '2026-08-15',
+    nextReviewAt: null,
+    submittedAt: '2026-08-02T12:00:00Z',
+    approvedAt: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    archivedAt: null,
+    rowVersion: 5,
+    createdAt: '2026-06-15T09:00:00Z',
+    updatedAt: '2026-08-02T12:00:00Z',
   },
   {
-    caseId: 'roi-case-3', organizationId: 'org-1', initiativeId: 'init-103',
-    title: 'Program szkoleń Lean (zero cost basis)', ownerUserId: 'user-piotr-wisniewski',
-    status: 'approved', currency: 'PLN', granularity: 'annual',
-    analysisStart: '2026-01-01', analysisEnd: '2028-12-31',
-    nextActionType: 'start_tracking', nextActionDueAt: null, nextReviewAt: null,
-    submittedAt: '2026-07-10T09:00:00Z', approvedAt: '2026-07-20T09:00:00Z', rejectedAt: null, rejectionReason: null,
-    changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
-    rowVersion: 8, createdAt: '2026-05-01T09:00:00Z', updatedAt: '2026-07-20T09:00:00Z',
+    caseId: 'roi-case-3',
+    organizationId: 'org-1',
+    initiativeId: 'init-103',
+    title: 'Program szkoleń Lean (zero cost basis)',
+    ownerUserId: 'user-piotr-wisniewski',
+    status: 'approved',
+    currency: 'PLN',
+    granularity: 'annual',
+    analysisStart: '2026-01-01',
+    analysisEnd: '2028-12-31',
+    nextActionType: 'start_tracking',
+    nextActionDueAt: null,
+    nextReviewAt: null,
+    submittedAt: '2026-07-10T09:00:00Z',
+    approvedAt: '2026-07-20T09:00:00Z',
+    rejectedAt: null,
+    rejectionReason: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    archivedAt: null,
+    rowVersion: 8,
+    createdAt: '2026-05-01T09:00:00Z',
+    updatedAt: '2026-07-20T09:00:00Z',
   },
   {
-    caseId: 'roi-case-4', organizationId: 'org-1', initiativeId: 'init-104',
-    title: 'Rollup finansowy — jedno źródło', ownerUserId: 'user-anna-kowalska',
-    status: 'tracking', currency: 'PLN', granularity: 'monthly',
-    analysisStart: '2025-09-01', analysisEnd: '2026-08-31',
-    nextActionType: 'record_actual', nextActionDueAt: '2026-08-31', nextReviewAt: '2026-09-01',
-    submittedAt: '2025-08-01T09:00:00Z', approvedAt: '2025-08-15T09:00:00Z', rejectedAt: null, rejectionReason: null,
-    changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
-    rowVersion: 22, createdAt: '2025-07-01T09:00:00Z', updatedAt: '2026-08-05T09:00:00Z',
+    caseId: 'roi-case-4',
+    organizationId: 'org-1',
+    initiativeId: 'init-104',
+    title: 'Rollup finansowy — jedno źródło',
+    ownerUserId: 'user-anna-kowalska',
+    status: 'tracking',
+    currency: 'PLN',
+    granularity: 'monthly',
+    analysisStart: '2025-09-01',
+    analysisEnd: '2026-08-31',
+    nextActionType: 'record_actual',
+    nextActionDueAt: '2026-08-31',
+    nextReviewAt: '2026-09-01',
+    submittedAt: '2025-08-01T09:00:00Z',
+    approvedAt: '2025-08-15T09:00:00Z',
+    rejectedAt: null,
+    rejectionReason: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    archivedAt: null,
+    rowVersion: 22,
+    createdAt: '2025-07-01T09:00:00Z',
+    updatedAt: '2026-08-05T09:00:00Z',
   },
   {
-    caseId: 'roi-case-5', organizationId: 'org-1', initiativeId: 'init-105',
-    title: 'Wdrożenie robotyzacji magazynu (odrzucone)', ownerUserId: 'user-tomasz-nowak',
-    status: 'rejected', currency: 'PLN', granularity: 'monthly',
-    analysisStart: '2026-01-01', analysisEnd: '2026-12-31',
-    nextActionType: null, nextActionDueAt: null, nextReviewAt: null,
-    submittedAt: '2026-06-01T09:00:00Z', approvedAt: null, rejectedAt: '2026-06-10T09:00:00Z',
+    caseId: 'roi-case-5',
+    organizationId: 'org-1',
+    initiativeId: 'init-105',
+    title: 'Wdrożenie robotyzacji magazynu (odrzucone)',
+    ownerUserId: 'user-tomasz-nowak',
+    status: 'rejected',
+    currency: 'PLN',
+    granularity: 'monthly',
+    analysisStart: '2026-01-01',
+    analysisEnd: '2026-12-31',
+    nextActionType: null,
+    nextActionDueAt: null,
+    nextReviewAt: null,
+    submittedAt: '2026-06-01T09:00:00Z',
+    approvedAt: null,
+    rejectedAt: '2026-06-10T09:00:00Z',
     rejectionReason: 'Założenia bazowe niespójne z audytem finansowym Q2.',
-    changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
-    rowVersion: 6, createdAt: '2026-05-10T09:00:00Z', updatedAt: '2026-06-10T09:00:00Z',
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    archivedAt: null,
+    rowVersion: 6,
+    createdAt: '2026-05-10T09:00:00Z',
+    updatedAt: '2026-06-10T09:00:00Z',
   },
   {
-    caseId: 'roi-case-6', organizationId: 'org-1', initiativeId: 'init-106',
-    title: 'Cyfryzacja obiegu dokumentów (szkic)', ownerUserId: 'user-piotr-wisniewski',
-    status: 'draft', currency: 'EUR', granularity: 'monthly',
-    analysisStart: null, analysisEnd: null,
-    nextActionType: 'set_baseline', nextActionDueAt: null, nextReviewAt: null,
-    submittedAt: null, approvedAt: null, rejectedAt: null, rejectionReason: null,
-    changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
-    rowVersion: 1, createdAt: '2026-08-01T09:00:00Z', updatedAt: '2026-08-01T09:00:00Z',
+    caseId: 'roi-case-6',
+    organizationId: 'org-1',
+    initiativeId: 'init-106',
+    title: 'Cyfryzacja obiegu dokumentów (szkic)',
+    ownerUserId: 'user-piotr-wisniewski',
+    status: 'draft',
+    currency: 'EUR',
+    granularity: 'monthly',
+    analysisStart: null,
+    analysisEnd: null,
+    nextActionType: 'set_baseline',
+    nextActionDueAt: null,
+    nextReviewAt: null,
+    submittedAt: null,
+    approvedAt: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
+    archivedAt: null,
+    rowVersion: 1,
+    createdAt: '2026-08-01T09:00:00Z',
+    updatedAt: '2026-08-01T09:00:00Z',
   },
   // RN-G5 (2026-08-12) — ARCHIVED case, reachable ONLY via a direct id (the
   // registry's default `listRoiCases` excludes archived rows server-side;
@@ -224,15 +338,29 @@ const cases: RoiCaseListItem[] = [
   // `RoiCaseToolPage`/`RoiCaseFullTool` render an honest, read-only view for
   // a terminal+archived record instead of a blank/broken screen.
   {
-    caseId: 'roi-case-9', organizationId: 'org-1', initiativeId: 'init-109',
-    title: 'Program pilotażowy IoT (zarchiwizowany)', ownerUserId: 'user-tomasz-nowak',
-    status: 'cancelled', currency: 'PLN', granularity: 'monthly',
-    analysisStart: '2025-01-01', analysisEnd: '2025-12-31',
-    nextActionType: null, nextActionDueAt: null, nextReviewAt: null,
-    submittedAt: '2025-02-01T09:00:00Z', approvedAt: null, rejectedAt: null, rejectionReason: null,
-    changesRequestedAt: null, changesRequestedReason: null,
+    caseId: 'roi-case-9',
+    organizationId: 'org-1',
+    initiativeId: 'init-109',
+    title: 'Program pilotażowy IoT (zarchiwizowany)',
+    ownerUserId: 'user-tomasz-nowak',
+    status: 'cancelled',
+    currency: 'PLN',
+    granularity: 'monthly',
+    analysisStart: '2025-01-01',
+    analysisEnd: '2025-12-31',
+    nextActionType: null,
+    nextActionDueAt: null,
+    nextReviewAt: null,
+    submittedAt: '2025-02-01T09:00:00Z',
+    approvedAt: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    changesRequestedAt: null,
+    changesRequestedReason: null,
     archivedAt: '2025-12-15T09:00:00Z',
-    rowVersion: 4, createdAt: '2025-01-05T09:00:00Z', updatedAt: '2025-12-15T09:00:00Z',
+    rowVersion: 4,
+    createdAt: '2025-01-05T09:00:00Z',
+    updatedAt: '2025-12-15T09:00:00Z',
   },
 ];
 
@@ -244,31 +372,89 @@ const cases: RoiCaseListItem[] = [
 const MOCK_RUNS: Record<string, RoiCalculationRunSummary | null> = {
   'roi-case-1': null,
   'roi-case-2': {
-    runId: 'run-2', caseId: 'roi-case-2', status: 'completed', scenarioId: null,
-    totalCosts: 420000, totalFinancialBenefits: 980000, simpleRoi: 133.3, npv: 512000,
-    irrPct: 34.2, irrStatus: 'computed', paybackPeriods: 14, discountedPaybackPeriods: 16,
-    benefitCostRatio: 2.33, warnings: [], completedAt: '2026-08-02T11:00:00Z', createdAt: '2026-08-02T11:00:00Z',
+    runId: 'run-2',
+    caseId: 'roi-case-2',
+    status: 'completed',
+    scenarioId: null,
+    totalCosts: 420000,
+    totalFinancialBenefits: 980000,
+    simpleRoi: 133.3,
+    npv: 512000,
+    irrPct: 34.2,
+    irrStatus: 'computed',
+    paybackPeriods: 14,
+    discountedPaybackPeriods: 16,
+    benefitCostRatio: 2.33,
+    warnings: [],
+    completedAt: '2026-08-02T11:00:00Z',
+    createdAt: '2026-08-02T11:00:00Z',
   },
   'roi-case-3': {
-    runId: 'run-3', caseId: 'roi-case-3', status: 'completed', scenarioId: null,
-    totalCosts: 0, totalFinancialBenefits: 210000, simpleRoi: null, npv: 198000,
-    irrPct: null, irrStatus: 'no_sign_change', paybackPeriods: 0, discountedPaybackPeriods: 0,
-    benefitCostRatio: null, warnings: ['Zero-cost basis — cost line total is 0'],
-    completedAt: '2026-07-19T11:00:00Z', createdAt: '2026-07-19T11:00:00Z',
+    runId: 'run-3',
+    caseId: 'roi-case-3',
+    status: 'completed',
+    scenarioId: null,
+    totalCosts: 0,
+    totalFinancialBenefits: 210000,
+    simpleRoi: null,
+    npv: 198000,
+    irrPct: null,
+    irrStatus: 'no_sign_change',
+    paybackPeriods: 0,
+    discountedPaybackPeriods: 0,
+    benefitCostRatio: null,
+    warnings: ['Zero-cost basis — cost line total is 0'],
+    completedAt: '2026-07-19T11:00:00Z',
+    createdAt: '2026-07-19T11:00:00Z',
   },
   'roi-case-4': {
-    runId: 'run-4', caseId: 'roi-case-4', status: 'failed', scenarioId: null,
-    totalCosts: null, totalFinancialBenefits: null, simpleRoi: null, npv: null,
-    irrPct: null, irrStatus: 'not_applicable', paybackPeriods: null, discountedPaybackPeriods: null,
-    benefitCostRatio: null, warnings: ['Mixed-currency benefit lines could not be resolved'],
-    completedAt: '2026-08-04T09:00:00Z', createdAt: '2026-08-04T09:00:00Z',
+    runId: 'run-4',
+    caseId: 'roi-case-4',
+    status: 'failed',
+    scenarioId: null,
+    totalCosts: null,
+    totalFinancialBenefits: null,
+    simpleRoi: null,
+    npv: null,
+    irrPct: null,
+    irrStatus: 'not_applicable',
+    paybackPeriods: null,
+    discountedPaybackPeriods: null,
+    benefitCostRatio: null,
+    warnings: ['Mixed-currency benefit lines could not be resolved'],
+    completedAt: '2026-08-04T09:00:00Z',
+    createdAt: '2026-08-04T09:00:00Z',
   },
 };
 
 const benefitsRows: RoiOrgBenefitsRealizationRow[] = [
-  { caseId: 'roi-case-4', initiativeId: 'init-104', title: 'Rollup finansowy — jedno źródło', status: 'tracking', approvedFinancialBenefits: 140000, actualFinancialBenefits: 98000, benefitsRealizationPct: 70 },
-  { caseId: 'roi-case-7', initiativeId: 'init-107', title: 'Optymalizacja logistyki dostaw', status: 'benefits_realization', approvedFinancialBenefits: 260000, actualFinancialBenefits: null, benefitsRealizationPct: null },
-  { caseId: 'roi-case-8', initiativeId: 'init-108', title: 'Konsolidacja centrów danych (zero denominator)', status: 'tracking', approvedFinancialBenefits: 0, actualFinancialBenefits: 12000, benefitsRealizationPct: null },
+  {
+    caseId: 'roi-case-4',
+    initiativeId: 'init-104',
+    title: 'Rollup finansowy — jedno źródło',
+    status: 'tracking',
+    approvedFinancialBenefits: 140000,
+    actualFinancialBenefits: 98000,
+    benefitsRealizationPct: 70,
+  },
+  {
+    caseId: 'roi-case-7',
+    initiativeId: 'init-107',
+    title: 'Optymalizacja logistyki dostaw',
+    status: 'benefits_realization',
+    approvedFinancialBenefits: 260000,
+    actualFinancialBenefits: null,
+    benefitsRealizationPct: null,
+  },
+  {
+    caseId: 'roi-case-8',
+    initiativeId: 'init-108',
+    title: 'Konsolidacja centrów danych (zero denominator)',
+    status: 'tracking',
+    approvedFinancialBenefits: 0,
+    actualFinancialBenefits: 12000,
+    benefitsRealizationPct: null,
+  },
 ];
 
 // Mock initiatives — deliberately overlap with `cases[*].initiativeId`
@@ -287,7 +473,10 @@ const MOCK_INITIATIVES = [
 ];
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 function errorResponse(message: string, status: number, code?: string): Response {
   return jsonResponse({ error: message, code }, status);
@@ -308,7 +497,8 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
   g.__RVN_ROI_REGISTRY_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const rawUrl =
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (rawUrl.includes('/locales/')) return realFetch(input as RequestInfo, init);
 
     // ---- InitiativeApi.getInitiatives (quick-create's picker) ----
@@ -325,15 +515,34 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
     const seg = path.split('/').filter(Boolean);
 
     if (path === '/org/benefits-realization') {
-      if (registryState === 'error') return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
-      if (registryState === 'empty') return jsonResponse({ attention: { cases: [], portfolioTotals: { totalApprovedFinancialBenefits: 0, totalActualFinancialBenefits: 0, caseCountWithActual: 0, caseCountTotal: 0 } } });
+      if (registryState === 'error')
+        return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
+      if (registryState === 'empty')
+        return jsonResponse({
+          attention: {
+            cases: [],
+            portfolioTotals: {
+              totalApprovedFinancialBenefits: 0,
+              totalActualFinancialBenefits: 0,
+              caseCountWithActual: 0,
+              caseCountTotal: 0,
+            },
+          },
+        });
       return jsonResponse({
         attention: {
           cases: benefitsRows,
           portfolioTotals: {
-            totalApprovedFinancialBenefits: benefitsRows.reduce((s, r) => s + (r.approvedFinancialBenefits ?? 0), 0),
-            totalActualFinancialBenefits: benefitsRows.reduce((s, r) => s + (r.actualFinancialBenefits ?? 0), 0),
-            caseCountWithActual: benefitsRows.filter((r) => r.actualFinancialBenefits !== null).length,
+            totalApprovedFinancialBenefits: benefitsRows.reduce(
+              (s, r) => s + (r.approvedFinancialBenefits ?? 0),
+              0
+            ),
+            totalActualFinancialBenefits: benefitsRows.reduce(
+              (s, r) => s + (r.actualFinancialBenefits ?? 0),
+              0
+            ),
+            caseCountWithActual: benefitsRows.filter((r) => r.actualFinancialBenefits !== null)
+              .length,
             caseCountTotal: benefitsRows.length,
           },
         },
@@ -341,22 +550,48 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
     }
 
     if (path === '/cases' && method === 'GET') {
-      if (registryState === 'loading') return new Promise(() => { /* never resolves */ });
-      if (registryState === 'error') return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
+      if (registryState === 'loading')
+        return new Promise(() => {
+          /* never resolves */
+        });
+      if (registryState === 'error')
+        return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
       if (registryState === 'empty') return jsonResponse({ cases: [] });
       return jsonResponse({ cases });
     }
     if (path === '/cases' && method === 'POST') {
-      if (createResultParam === 'error') return errorResponse('Nazwa sprawy jest wymagana.', 400, 'VALIDATION_ERROR');
-      if (createResultParam === 'conflict') return errorResponse('Sprawa została zmieniona przez kogoś innego w międzyczasie.', 409, 'STALE_VERSION');
+      if (createResultParam === 'error')
+        return errorResponse('Nazwa sprawy jest wymagana.', 400, 'VALIDATION_ERROR');
+      if (createResultParam === 'conflict')
+        return errorResponse(
+          'Sprawa została zmieniona przez kogoś innego w międzyczasie.',
+          409,
+          'STALE_VERSION'
+        );
       const created: RoiCaseListItem = {
-        caseId: nextId('roi-case'), organizationId: 'org-1', initiativeId: body.initiativeId,
-        title: body.title, ownerUserId: body.ownerUserId, status: 'draft',
-        currency: body.currency, granularity: 'monthly', analysisStart: null, analysisEnd: null,
-        nextActionType: 'set_baseline', nextActionDueAt: null, nextReviewAt: null,
-        submittedAt: null, approvedAt: null, rejectedAt: null, rejectionReason: null,
-        changesRequestedAt: null, changesRequestedReason: null, archivedAt: null,
-        rowVersion: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        caseId: nextId('roi-case'),
+        organizationId: 'org-1',
+        initiativeId: body.initiativeId,
+        title: body.title,
+        ownerUserId: body.ownerUserId,
+        status: 'draft',
+        currency: body.currency,
+        granularity: 'monthly',
+        analysisStart: null,
+        analysisEnd: null,
+        nextActionType: 'set_baseline',
+        nextActionDueAt: null,
+        nextReviewAt: null,
+        submittedAt: null,
+        approvedAt: null,
+        rejectedAt: null,
+        rejectionReason: null,
+        changesRequestedAt: null,
+        changesRequestedReason: null,
+        archivedAt: null,
+        rowVersion: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       cases.unshift(created);
       return jsonResponse({ outcome: 'applied', created: true, case: created }, 201);
@@ -368,14 +603,21 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
       const action = seg[3] ?? '';
       const target = cases.find((c) => c.caseId === caseId);
       if (!target) return errorResponse('ROI case not found', 404, 'NOT_FOUND');
-      if (transitionResultParam === 'error') return errorResponse('Powód jest wymagany dla tego przejścia.', 400, 'VALIDATION_ERROR');
-      if (transitionResultParam === 'conflict') return errorResponse('Sprawa została zmieniona przez kogoś innego w międzyczasie.', 409, 'STALE_VERSION', );
+      if (transitionResultParam === 'error')
+        return errorResponse('Powód jest wymagany dla tego przejścia.', 400, 'VALIDATION_ERROR');
+      if (transitionResultParam === 'conflict')
+        return errorResponse(
+          'Sprawa została zmieniona przez kogoś innego w międzyczasie.',
+          409,
+          'STALE_VERSION'
+        );
       const next = STATUS_AFTER[action];
       if (next) target.status = next;
       target.rowVersion += 1;
       target.updatedAt = new Date().toISOString();
       if (action === 'reject') target.rejectionReason = body.rejectionReason ?? null;
-      if (action === 'request-changes') target.changesRequestedReason = body.changeRequestNotes ?? null;
+      if (action === 'request-changes')
+        target.changesRequestedReason = body.changeRequestNotes ?? null;
       return jsonResponse({ outcome: 'applied', case: target });
     }
 
@@ -386,20 +628,33 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
       // INDISTINGUISHABLE 404s (matches the real `getRoiCase` server route —
       // organization-scoped query, no row for either case, D06/D07) — this
       // mock does not special-case a "cross-org" id differently, on purpose.
-      if (registryState === 'loading') return new Promise(() => { /* never resolves */ });
-      if (registryState === 'error') return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
+      if (registryState === 'loading')
+        return new Promise(() => {
+          /* never resolves */
+        });
+      if (registryState === 'error')
+        return errorResponse('Upstream ROI service returned a 503.', 503, 'ROI_INTERNAL_ERROR');
       const found = cases.find((c) => c.caseId === seg[1]);
-      return found ? jsonResponse({ case: found }) : errorResponse('ROI case not found', 404, 'NOT_FOUND');
+      return found
+        ? jsonResponse({ case: found })
+        : errorResponse('ROI case not found', 404, 'NOT_FOUND');
     }
 
     if (seg[2] === 'calculation-runs' && method === 'GET') {
       const caseId = seg[1];
-      if (calcState === 'loading') return new Promise(() => { /* never resolves */ });
+      if (calcState === 'loading')
+        return new Promise(() => {
+          /* never resolves */
+        });
       const run = MOCK_RUNS[caseId] ?? null;
       return jsonResponse({ runs: run ? [run] : [] });
     }
 
-    return errorResponse(`dev-render ROI registry mock: unmatched ${method} ${path}`, 404, 'MOCK_UNMATCHED');
+    return errorResponse(
+      `dev-render ROI registry mock: unmatched ${method} ${path}`,
+      404,
+      'MOCK_UNMATCHED'
+    );
   };
 }
 
@@ -414,7 +669,9 @@ if (!g.__RVN_ROI_REGISTRY_FETCH__) {
 // at that path, so swapping it for a marker would break that chain when
 // `view=hub` (the default).
 const initialPath =
-  view === 'case' ? ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', caseIdParam) : ROUTES.RESULTS_ROI.ROOT;
+  view === 'case'
+    ? ROUTES.RESULTS_ROI.CASE.replace(':roiCaseId', caseIdParam)
+    : ROUTES.RESULTS_ROI.ROOT;
 
 const ResultsVNextRoiRegistryScreen: React.FC = () => (
   <div className="h-screen bg-c-bg text-c-text">

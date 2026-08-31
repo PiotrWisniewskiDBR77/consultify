@@ -326,10 +326,7 @@ export interface MessageRendererProps {
   >;
   governedHandoffErrorById?: Record<string, string | undefined>;
   governedHandoffTargetById?: Record<string, string | undefined>;
-  initiativeHandoffByMessageId?: Record<
-    string,
-    { initiativeId: string; title?: string | null }
-  >;
+  initiativeHandoffByMessageId?: Record<string, { initiativeId: string; title?: string | null }>;
   onOpenInitiativeHandoff?: (initiativeId: string) => void;
   onInitiativeHandoffAdopted?: (initiativeId: string) => void;
   onCreateGovernedDocument?: (msg: ChatMessage) => void;

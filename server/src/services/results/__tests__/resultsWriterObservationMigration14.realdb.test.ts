@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

@@ -125,30 +125,64 @@ if (!flagOff) {
 
 const MOCK_SCORECARDS: Record<string, any> = {
   'sc-1': {
-    scorecardId: 'sc-1', organizationId: 'org-dbr77-demo', name: 'Karta wyników — Produkcja (szkic)',
-    description: 'Szkic karty wyników linii produkcyjnej, jeszcze bez pozycji.', scopeType: 'process',
-    scopeId: 'proc-produkcja-1', ownerUserId: 'user-piotr-demo', reviewFrequency: 'monthly',
-    lifecycleStatus: 'draft', rowVersion: 1, createdBy: 'user-piotr-demo',
-    createdAt: '2026-08-01T08:00:00Z', updatedAt: '2026-08-01T08:00:00Z',
+    scorecardId: 'sc-1',
+    organizationId: 'org-dbr77-demo',
+    name: 'Karta wyników — Produkcja (szkic)',
+    description: 'Szkic karty wyników linii produkcyjnej, jeszcze bez pozycji.',
+    scopeType: 'process',
+    scopeId: 'proc-produkcja-1',
+    ownerUserId: 'user-piotr-demo',
+    reviewFrequency: 'monthly',
+    lifecycleStatus: 'draft',
+    rowVersion: 1,
+    createdBy: 'user-piotr-demo',
+    createdAt: '2026-08-01T08:00:00Z',
+    updatedAt: '2026-08-01T08:00:00Z',
   },
   'sc-2': {
-    scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', name: 'Karta wyników — Jakość Q3',
-    description: 'Kwartalny przegląd jakości dla linii pakowania.', scopeType: 'business_unit',
-    scopeId: 'bu-jakosc', ownerUserId: 'user-anna', reviewFrequency: 'quarterly',
-    lifecycleStatus: 'active', rowVersion: 6, createdBy: 'user-anna',
-    createdAt: '2026-05-01T08:00:00Z', updatedAt: '2026-08-09T09:30:00Z',
+    scorecardId: 'sc-2',
+    organizationId: 'org-dbr77-demo',
+    name: 'Karta wyników — Jakość Q3',
+    description: 'Kwartalny przegląd jakości dla linii pakowania.',
+    scopeType: 'business_unit',
+    scopeId: 'bu-jakosc',
+    ownerUserId: 'user-anna',
+    reviewFrequency: 'quarterly',
+    lifecycleStatus: 'active',
+    rowVersion: 6,
+    createdBy: 'user-anna',
+    createdAt: '2026-05-01T08:00:00Z',
+    updatedAt: '2026-08-09T09:30:00Z',
   },
   'sc-3': {
-    scorecardId: 'sc-3', organizationId: 'org-dbr77-demo', name: 'Karta wyników — HR Redukcja Kosztów',
-    description: null, scopeType: 'team', scopeId: 'team-hr', ownerUserId: 'user-marek',
-    reviewFrequency: 'monthly', lifecycleStatus: 'suspended', rowVersion: 4, createdBy: 'user-marek',
-    createdAt: '2026-04-12T08:00:00Z', updatedAt: '2026-07-20T09:30:00Z',
+    scorecardId: 'sc-3',
+    organizationId: 'org-dbr77-demo',
+    name: 'Karta wyników — HR Redukcja Kosztów',
+    description: null,
+    scopeType: 'team',
+    scopeId: 'team-hr',
+    ownerUserId: 'user-marek',
+    reviewFrequency: 'monthly',
+    lifecycleStatus: 'suspended',
+    rowVersion: 4,
+    createdBy: 'user-marek',
+    createdAt: '2026-04-12T08:00:00Z',
+    updatedAt: '2026-07-20T09:30:00Z',
   },
   'sc-4': {
-    scorecardId: 'sc-4', organizationId: 'org-dbr77-demo', name: 'Karta wyników — Zamknięcie miesiąca (archiwalna)',
-    description: 'Zastąpiona nowym procesem zamknięcia.', scopeType: 'organization', scopeId: null,
-    ownerUserId: 'user-piotr-demo', reviewFrequency: 'monthly', lifecycleStatus: 'archived',
-    rowVersion: 11, createdBy: 'user-piotr-demo', createdAt: '2026-01-10T08:00:00Z', updatedAt: '2026-06-30T08:00:00Z',
+    scorecardId: 'sc-4',
+    organizationId: 'org-dbr77-demo',
+    name: 'Karta wyników — Zamknięcie miesiąca (archiwalna)',
+    description: 'Zastąpiona nowym procesem zamknięcia.',
+    scopeType: 'organization',
+    scopeId: null,
+    ownerUserId: 'user-piotr-demo',
+    reviewFrequency: 'monthly',
+    lifecycleStatus: 'archived',
+    rowVersion: 11,
+    createdBy: 'user-piotr-demo',
+    createdAt: '2026-01-10T08:00:00Z',
+    updatedAt: '2026-06-30T08:00:00Z',
   },
 };
 
@@ -168,15 +202,70 @@ const MOCK_SCORECARDS: Record<string, any> = {
 const MOCK_ITEMS: Record<string, any[]> = {
   'sc-1': [],
   'sc-2': [
-    { itemId: 'item-1', scorecardId: 'sc-2', kpiId: 'kpi-oee-linia-pakowania-001', kpiName: 'OEE linii pakowania', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-anna', addedAt: '2026-05-02T08:00:00Z' },
-    { itemId: 'item-2', scorecardId: 'sc-2', kpiId: 'kpi-defekty-na-milion-002', kpiName: 'Defekty na milion (DPMO)', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 2, displayConfig: null, addedBy: 'user-anna', addedAt: '2026-05-02T08:05:00Z' },
-    { itemId: 'item-3', scorecardId: 'sc-2', kpiId: 'kpi-czas-przestoju-003', kpiName: 'Czas przestoju linii', organizationId: 'org-dbr77-demo', role: 'supporting', sortOrder: 3, displayConfig: null, addedBy: 'user-piotr-demo', addedAt: '2026-06-10T11:00:00Z' },
+    {
+      itemId: 'item-1',
+      scorecardId: 'sc-2',
+      kpiId: 'kpi-oee-linia-pakowania-001',
+      kpiName: 'OEE linii pakowania',
+      organizationId: 'org-dbr77-demo',
+      role: 'primary',
+      sortOrder: 1,
+      displayConfig: null,
+      addedBy: 'user-anna',
+      addedAt: '2026-05-02T08:00:00Z',
+    },
+    {
+      itemId: 'item-2',
+      scorecardId: 'sc-2',
+      kpiId: 'kpi-defekty-na-milion-002',
+      kpiName: 'Defekty na milion (DPMO)',
+      organizationId: 'org-dbr77-demo',
+      role: 'primary',
+      sortOrder: 2,
+      displayConfig: null,
+      addedBy: 'user-anna',
+      addedAt: '2026-05-02T08:05:00Z',
+    },
+    {
+      itemId: 'item-3',
+      scorecardId: 'sc-2',
+      kpiId: 'kpi-czas-przestoju-003',
+      kpiName: 'Czas przestoju linii',
+      organizationId: 'org-dbr77-demo',
+      role: 'supporting',
+      sortOrder: 3,
+      displayConfig: null,
+      addedBy: 'user-piotr-demo',
+      addedAt: '2026-06-10T11:00:00Z',
+    },
   ],
   'sc-3': [
-    { itemId: 'item-4', scorecardId: 'sc-3', kpiId: 'kpi-koszt-pracy-004', kpiName: 'Redukcja kosztów pracy', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-marek', addedAt: '2026-04-12T09:00:00Z' },
+    {
+      itemId: 'item-4',
+      scorecardId: 'sc-3',
+      kpiId: 'kpi-koszt-pracy-004',
+      kpiName: 'Redukcja kosztów pracy',
+      organizationId: 'org-dbr77-demo',
+      role: 'primary',
+      sortOrder: 1,
+      displayConfig: null,
+      addedBy: 'user-marek',
+      addedAt: '2026-04-12T09:00:00Z',
+    },
   ],
   'sc-4': [
-    { itemId: 'item-5', scorecardId: 'sc-4', kpiId: 'kpi-cykl-zamkniecia-005', kpiName: 'Cykl zamknięcia miesiąca', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-piotr-demo', addedAt: '2026-01-10T09:00:00Z' },
+    {
+      itemId: 'item-5',
+      scorecardId: 'sc-4',
+      kpiId: 'kpi-cykl-zamkniecia-005',
+      kpiName: 'Cykl zamknięcia miesiąca',
+      organizationId: 'org-dbr77-demo',
+      role: 'primary',
+      sortOrder: 1,
+      displayConfig: null,
+      addedBy: 'user-piotr-demo',
+      addedAt: '2026-01-10T09:00:00Z',
+    },
   ],
 };
 
@@ -194,12 +283,49 @@ const MOCK_ITEMS: Record<string, any[]> = {
 // consequence; the byte-identical `content_hash` proof itself is the
 // realdb suite's job (`tests/resultsVnext/kpi/kpiScorecardListSnapshotsNonLeak
 // .realdb.test.ts`), not this harness's.
-function buildSc2SnapshotPayload(actualValues: { open: number; defects: number; downtime: number }) {
+function buildSc2SnapshotPayload(actualValues: {
+  open: number;
+  defects: number;
+  downtime: number;
+}) {
   return {
     items: [
-      { kpiId: 'kpi-oee-linia-pakowania-001', definitionVersionId: 'defver-oee', itemRole: 'primary', measurementId: 'meas-oee', actualValue: actualValues.open, unit: '%', performanceStatus: 'on_target', dataQualityStatus: 'verified', periodStart: '2026-08-01T00:00:00Z', periodEnd: '2026-08-07T23:59:59Z' },
-      { kpiId: 'kpi-defekty-na-milion-002', definitionVersionId: 'defver-defekty', itemRole: 'primary', measurementId: 'meas-defekty', actualValue: actualValues.defects, unit: 'ppm', performanceStatus: 'warning', dataQualityStatus: 'verified', periodStart: '2026-08-01T00:00:00Z', periodEnd: '2026-08-07T23:59:59Z' },
-      { kpiId: RESTRICTED_KPI_ID, definitionVersionId: 'defver-przestoj', itemRole: 'supporting', measurementId: 'meas-przestoj', actualValue: actualValues.downtime, unit: 'h', performanceStatus: 'neutral', dataQualityStatus: 'unverified', periodStart: '2026-08-01T00:00:00Z', periodEnd: '2026-08-07T23:59:59Z' },
+      {
+        kpiId: 'kpi-oee-linia-pakowania-001',
+        definitionVersionId: 'defver-oee',
+        itemRole: 'primary',
+        measurementId: 'meas-oee',
+        actualValue: actualValues.open,
+        unit: '%',
+        performanceStatus: 'on_target',
+        dataQualityStatus: 'verified',
+        periodStart: '2026-08-01T00:00:00Z',
+        periodEnd: '2026-08-07T23:59:59Z',
+      },
+      {
+        kpiId: 'kpi-defekty-na-milion-002',
+        definitionVersionId: 'defver-defekty',
+        itemRole: 'primary',
+        measurementId: 'meas-defekty',
+        actualValue: actualValues.defects,
+        unit: 'ppm',
+        performanceStatus: 'warning',
+        dataQualityStatus: 'verified',
+        periodStart: '2026-08-01T00:00:00Z',
+        periodEnd: '2026-08-07T23:59:59Z',
+      },
+      {
+        kpiId: RESTRICTED_KPI_ID,
+        definitionVersionId: 'defver-przestoj',
+        itemRole: 'supporting',
+        measurementId: 'meas-przestoj',
+        actualValue: actualValues.downtime,
+        unit: 'h',
+        performanceStatus: 'neutral',
+        dataQualityStatus: 'unverified',
+        periodStart: '2026-08-01T00:00:00Z',
+        periodEnd: '2026-08-07T23:59:59Z',
+      },
     ],
     statusCounts: { safe: 1, warning: 1, critical: 0, missing: 1 },
   };
@@ -208,9 +334,60 @@ function buildSc2SnapshotPayload(actualValues: { open: number; defects: number; 
 const MOCK_SNAPSHOTS: Record<string, any[]> = {
   'sc-1': [],
   'sc-2': [
-    { snapshotId: 'snap-1', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-07-01T00:00:00Z', reviewPeriodEnd: '2026-07-31T23:59:59Z', snapshotPayload: buildSc2SnapshotPayload({ open: 91.2, defects: 340, downtime: 4.5 }), status: 'superseded', contentHash: 'hash-abc123def456', publishedBy: 'user-anna', publishedAt: '2026-08-01T10:00:00Z', supersededBySnapshotId: 'snap-2', supersededAt: '2026-08-05T10:00:00Z', rowVersion: 3, createdBy: 'user-anna', createdAt: '2026-07-31T18:00:00Z', updatedAt: '2026-08-05T10:00:00Z' },
-    { snapshotId: 'snap-2', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-08-01T00:00:00Z', reviewPeriodEnd: '2026-08-07T23:59:59Z', snapshotPayload: buildSc2SnapshotPayload({ open: 93.4, defects: 298, downtime: 3.1 }), status: 'published', contentHash: 'hash-fed654cba321', publishedBy: 'user-anna', publishedAt: '2026-08-08T09:00:00Z', supersededBySnapshotId: null, supersededAt: null, rowVersion: 2, createdBy: 'user-anna', createdAt: '2026-08-07T18:00:00Z', updatedAt: '2026-08-08T09:00:00Z' },
-    { snapshotId: 'snap-3', scorecardId: 'sc-2', organizationId: 'org-dbr77-demo', reviewPeriodStart: '2026-08-08T00:00:00Z', reviewPeriodEnd: '2026-08-14T23:59:59Z', snapshotPayload: null, status: 'draft', contentHash: null, publishedBy: null, publishedAt: null, supersededBySnapshotId: null, supersededAt: null, rowVersion: 1, createdBy: 'user-piotr-demo', createdAt: '2026-08-09T09:00:00Z', updatedAt: '2026-08-09T09:00:00Z' },
+    {
+      snapshotId: 'snap-1',
+      scorecardId: 'sc-2',
+      organizationId: 'org-dbr77-demo',
+      reviewPeriodStart: '2026-07-01T00:00:00Z',
+      reviewPeriodEnd: '2026-07-31T23:59:59Z',
+      snapshotPayload: buildSc2SnapshotPayload({ open: 91.2, defects: 340, downtime: 4.5 }),
+      status: 'superseded',
+      contentHash: 'hash-abc123def456',
+      publishedBy: 'user-anna',
+      publishedAt: '2026-08-01T10:00:00Z',
+      supersededBySnapshotId: 'snap-2',
+      supersededAt: '2026-08-05T10:00:00Z',
+      rowVersion: 3,
+      createdBy: 'user-anna',
+      createdAt: '2026-07-31T18:00:00Z',
+      updatedAt: '2026-08-05T10:00:00Z',
+    },
+    {
+      snapshotId: 'snap-2',
+      scorecardId: 'sc-2',
+      organizationId: 'org-dbr77-demo',
+      reviewPeriodStart: '2026-08-01T00:00:00Z',
+      reviewPeriodEnd: '2026-08-07T23:59:59Z',
+      snapshotPayload: buildSc2SnapshotPayload({ open: 93.4, defects: 298, downtime: 3.1 }),
+      status: 'published',
+      contentHash: 'hash-fed654cba321',
+      publishedBy: 'user-anna',
+      publishedAt: '2026-08-08T09:00:00Z',
+      supersededBySnapshotId: null,
+      supersededAt: null,
+      rowVersion: 2,
+      createdBy: 'user-anna',
+      createdAt: '2026-08-07T18:00:00Z',
+      updatedAt: '2026-08-08T09:00:00Z',
+    },
+    {
+      snapshotId: 'snap-3',
+      scorecardId: 'sc-2',
+      organizationId: 'org-dbr77-demo',
+      reviewPeriodStart: '2026-08-08T00:00:00Z',
+      reviewPeriodEnd: '2026-08-14T23:59:59Z',
+      snapshotPayload: null,
+      status: 'draft',
+      contentHash: null,
+      publishedBy: null,
+      publishedAt: null,
+      supersededBySnapshotId: null,
+      supersededAt: null,
+      rowVersion: 1,
+      createdBy: 'user-piotr-demo',
+      createdAt: '2026-08-09T09:00:00Z',
+      updatedAt: '2026-08-09T09:00:00Z',
+    },
   ],
   'sc-3': [],
   'sc-4': [],
@@ -233,7 +410,9 @@ if (readerAccessRevoked) {
   MOCK_DISTRIBUTION['sc-2'] = { safe: 1, warning: 1, critical: 0, missing: 0, totalVisible: 2 };
   MOCK_SNAPSHOTS['sc-2'] = (MOCK_SNAPSHOTS['sc-2'] ?? []).map((snap) => {
     if (!snap.snapshotPayload) return snap;
-    const filteredItems = snap.snapshotPayload.items.filter((i: any) => i.kpiId !== RESTRICTED_KPI_ID);
+    const filteredItems = snap.snapshotPayload.items.filter(
+      (i: any) => i.kpiId !== RESTRICTED_KPI_ID
+    );
     const statusCounts = { safe: 0, warning: 0, critical: 0, missing: 0 };
     for (const item of filteredItems) {
       if (item.performanceStatus === 'on_target') statusCounts.safe += 1;
@@ -268,9 +447,19 @@ Api.get = (async (url: string) => {
       return { scorecard: record };
     }
     if (rest.startsWith('/items')) return { items: MOCK_ITEMS[scorecardId] ?? [] };
-    if (rest.startsWith('/status')) return { distribution: MOCK_DISTRIBUTION[scorecardId] ?? { safe: 0, warning: 0, critical: 0, missing: 0, totalVisible: 0 } };
+    if (rest.startsWith('/status'))
+      return {
+        distribution: MOCK_DISTRIBUTION[scorecardId] ?? {
+          safe: 0,
+          warning: 0,
+          critical: 0,
+          missing: 0,
+          totalVisible: 0,
+        },
+      };
     if (rest.startsWith('/review-snapshots/published')) {
-      const published = (MOCK_SNAPSHOTS[scorecardId] ?? []).find((s) => s.status === 'published') ?? null;
+      const published =
+        (MOCK_SNAPSHOTS[scorecardId] ?? []).find((s) => s.status === 'published') ?? null;
       if (!published) {
         const err: any = new Error('No published review snapshot');
         err.status = 404;
@@ -278,36 +467,51 @@ Api.get = (async (url: string) => {
       }
       return { snapshot: published };
     }
-    if (rest.startsWith('/review-snapshots')) return { snapshots: MOCK_SNAPSHOTS[scorecardId] ?? [] };
+    if (rest.startsWith('/review-snapshots'))
+      return { snapshots: MOCK_SNAPSHOTS[scorecardId] ?? [] };
   }
-  if (url.startsWith('/vnext/results/kpi/scorecards')) return { scorecards: Object.values(MOCK_SCORECARDS) };
+  if (url.startsWith('/vnext/results/kpi/scorecards'))
+    return { scorecards: Object.values(MOCK_SCORECARDS) };
   return realGet(url);
 }) as typeof Api.get;
 
 function checkExpectedVersion(record: any, data: any): void {
-  if (record && typeof data?.expectedVersion === 'number' && data.expectedVersion !== record.rowVersion) {
+  if (
+    record &&
+    typeof data?.expectedVersion === 'number' &&
+    data.expectedVersion !== record.rowVersion
+  ) {
     const err: any = new Error(
       `Scorecard was changed by someone else in the meantime (expected v${data.expectedVersion}, currently v${record.rowVersion}).`
     );
     err.status = 409;
-    err.data = { code: 'STALE_VERSION', currentVersion: record.rowVersion, expectedVersion: data.expectedVersion };
+    err.data = {
+      code: 'STALE_VERSION',
+      currentVersion: record.rowVersion,
+      expectedVersion: data.expectedVersion,
+    };
     throw err;
   }
 }
 
 Api.post = (async (url: string, data: any) => {
-  const lifecycleMatch = url.match(/^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/(activate|suspend|archive)$/);
+  const lifecycleMatch = url.match(
+    /^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/(activate|suspend|archive)$/
+  );
   if (lifecycleMatch) {
     const [, scorecardId, action] = lifecycleMatch;
     const record = MOCK_SCORECARDS[scorecardId];
     if (record) {
       if (action === 'activate' && (MOCK_ITEMS[scorecardId] ?? []).length === 0) {
-        const err: any = new Error('Scorecard has no members — add at least one KPI before activating.');
+        const err: any = new Error(
+          'Scorecard has no members — add at least one KPI before activating.'
+        );
         err.status = 409;
         err.data = { code: 'NO_MEMBERS' };
         throw err;
       }
-      record.lifecycleStatus = action === 'activate' ? 'active' : action === 'suspend' ? 'suspended' : 'archived';
+      record.lifecycleStatus =
+        action === 'activate' ? 'active' : action === 'suspend' ? 'suspended' : 'archived';
       record.rowVersion += 1;
       record.updatedAt = new Date().toISOString();
     }
@@ -338,11 +542,19 @@ Api.post = (async (url: string, data: any) => {
       record.rowVersion += 1;
       record.updatedAt = new Date().toISOString();
     }
-    return { outcome: 'applied', eventId: `evt-${itemSeq}`, resultingVersion: record?.rowVersion, scorecard: record, item };
+    return {
+      outcome: 'applied',
+      eventId: `evt-${itemSeq}`,
+      resultingVersion: record?.rowVersion,
+      scorecard: record,
+      item,
+    };
   }
 
   // RN-G5 §G #8 — POST .../review-snapshots (createReviewSnapshot)
-  const createSnapshotMatch = url.match(/^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/review-snapshots$/);
+  const createSnapshotMatch = url.match(
+    /^\/vnext\/results\/kpi\/scorecards\/([^/]+)\/review-snapshots$/
+  );
   if (createSnapshotMatch) {
     const [, scorecardId] = createSnapshotMatch;
     const record = MOCK_SCORECARDS[scorecardId];
@@ -370,7 +582,12 @@ Api.post = (async (url: string, data: any) => {
       record.rowVersion += 1;
       record.updatedAt = new Date().toISOString();
     }
-    return { outcome: 'applied', eventId: `evt-snap-${snapshotSeq}`, resultingVersion: record?.rowVersion, snapshot };
+    return {
+      outcome: 'applied',
+      eventId: `evt-snap-${snapshotSeq}`,
+      resultingVersion: record?.rowVersion,
+      snapshot,
+    };
   }
 
   // RN-G5 §G #8 — POST .../review-snapshots/:snapshotId/publish (publishReviewSnapshot)
@@ -421,13 +638,23 @@ Api.post = (async (url: string, data: any) => {
         periodStart: snapshot.reviewPeriodStart,
         periodEnd: snapshot.reviewPeriodEnd,
       })),
-      statusCounts: { safe: (MOCK_ITEMS[scorecardId] ?? []).length, warning: 0, critical: 0, missing: 0 },
+      statusCounts: {
+        safe: (MOCK_ITEMS[scorecardId] ?? []).length,
+        warning: 0,
+        critical: 0,
+        missing: 0,
+      },
     };
     if (record) {
       record.rowVersion += 1;
       record.updatedAt = new Date().toISOString();
     }
-    return { outcome: 'applied', eventId: `evt-pub-${snapshotId}`, resultingVersion: record?.rowVersion, snapshot };
+    return {
+      outcome: 'applied',
+      eventId: `evt-pub-${snapshotId}`,
+      resultingVersion: record?.rowVersion,
+      snapshot,
+    };
   }
 
   return realPost(url, data);
@@ -452,7 +679,13 @@ Api.patch = (async (url: string, data: any) => {
       record.rowVersion += 1;
       record.updatedAt = new Date().toISOString();
     }
-    return { outcome: 'applied', eventId: `evt-reorder-${scorecardId}`, resultingVersion: record?.rowVersion, scorecard: record, items };
+    return {
+      outcome: 'applied',
+      eventId: `evt-reorder-${scorecardId}`,
+      resultingVersion: record?.rowVersion,
+      scorecard: record,
+      items,
+    };
   }
   return realPatch(url, data);
 }) as typeof Api.patch;
@@ -514,7 +747,10 @@ const ResultsVNextKpiScorecardsScreen: React.FC = () => (
   <div className="h-screen bg-c-bg text-c-text">
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
-        <Route path="/results/kpi/scorecards/:scorecardId" element={<ResultsKpiScorecardDetailPage />} />
+        <Route
+          path="/results/kpi/scorecards/:scorecardId"
+          element={<ResultsKpiScorecardDetailPage />}
+        />
       </Routes>
     </MemoryRouter>
   </div>

@@ -24,17 +24,31 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import { canonicalPayloadHash } from '../contentHash.js';
-import { hashPayloadFor, type ComputedKpiResult } from '../kpiComputeService.js';
+import { type ComputedKpiResult, hashPayloadFor } from '../kpiComputeService.js';
 
 function makeResults(): ComputedKpiResult[] {
   // 18 rows, deliberately NOT already sorted by (kpiCode, entityId, periodId) — mirrors a
   // real no-ORDER-BY SQL return where physical row order has no relationship to the value
   // sort key.
   const codes = [
-    'GROSS_MARGIN_PCT', 'EBITDA_MARGIN_PCT', 'NET_MARGIN_PCT', 'ROE_PCT', 'ROA_PCT',
-    'CURRENT_RATIO', 'QUICK_RATIO', 'DEBT_TO_EQUITY', 'INTEREST_COVERAGE', 'DSO_DAYS',
-    'DIO_DAYS', 'DPO_DAYS', 'CASH_CONVERSION_CYCLE_DAYS', 'ASSET_TURNOVER', 'REVENUE_GROWTH_YOY_PCT',
-    'EBITDA_GROWTH_YOY_PCT', 'CAPEX_TO_REVENUE_PCT', 'FCF_MARGIN_PCT',
+    'GROSS_MARGIN_PCT',
+    'EBITDA_MARGIN_PCT',
+    'NET_MARGIN_PCT',
+    'ROE_PCT',
+    'ROA_PCT',
+    'CURRENT_RATIO',
+    'QUICK_RATIO',
+    'DEBT_TO_EQUITY',
+    'INTEREST_COVERAGE',
+    'DSO_DAYS',
+    'DIO_DAYS',
+    'DPO_DAYS',
+    'CASH_CONVERSION_CYCLE_DAYS',
+    'ASSET_TURNOVER',
+    'REVENUE_GROWTH_YOY_PCT',
+    'EBITDA_GROWTH_YOY_PCT',
+    'CAPEX_TO_REVENUE_PCT',
+    'FCF_MARGIN_PCT',
   ];
   return codes.map((kpiCode, idx) => ({
     kpiValueId: `kv-${idx}`,
@@ -94,7 +108,9 @@ describe('kpiComputeService.hashPayloadFor — order-independent content_semanti
 
   it('hashPayloadFor DOES change the hash when a value genuinely changes (not a false-positive-proof no-op)', () => {
     const a = makeResults();
-    const changed = a.map((r) => (r.kpiCode === 'ROE_PCT' ? { ...r, value: (r.value ?? 0) + 1 } : r));
+    const changed = a.map((r) =>
+      r.kpiCode === 'ROE_PCT' ? { ...r, value: (r.value ?? 0) + 1 } : r
+    );
 
     const hashA = canonicalPayloadHash(hashPayloadFor(a));
     const hashChanged = canonicalPayloadHash(hashPayloadFor(changed));

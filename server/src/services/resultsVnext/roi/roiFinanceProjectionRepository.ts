@@ -12,11 +12,16 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 
-export type RoiFinanceProjectionSourceKind = 'approval_snapshot' | 'forecast_version' | 'actual_snapshot';
+export type RoiFinanceProjectionSourceKind =
+  | 'approval_snapshot'
+  | 'forecast_version'
+  | 'actual_snapshot';
 
 export interface RoiFinanceProjectionRow {
   finance_link_id: string;
@@ -83,7 +88,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -107,8 +116,14 @@ export async function listRoiFinanceProjections(
        AND p.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY p.projected_at, p.finance_link_id
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId];
-  const rows = await withReadClient((client) => queryRows<RoiFinanceProjectionRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiFinanceProjectionRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiFinanceProjection);
 }

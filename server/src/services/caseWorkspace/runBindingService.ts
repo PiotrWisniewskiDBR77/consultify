@@ -78,11 +78,7 @@
  *      audit-trail completeness.
  */
 
-import {
-  queryAll,
-  queryOne,
-  withPgTransaction,
-} from '../../utils/queryHelpers.js';
+import { queryAll, queryOne, withPgTransaction } from '../../utils/queryHelpers.js';
 import { CaseWorkspaceAuthError, requireCaseAccess } from './caseWorkspaceAuthContext.js';
 import { publishEvent, redact } from './eventOutboxService.js';
 

@@ -1,3 +1,4 @@
+import { createAssessmentOutput, type CreateAssessmentOutputInput } from '../assessmentOutput';
 import type {
   AssessmentOutput,
   EvidenceCompleteness,
@@ -5,7 +6,6 @@ import type {
   Finding,
   OutputLineage,
 } from '../types';
-import { createAssessmentOutput, type CreateAssessmentOutputInput } from '../assessmentOutput';
 
 export function makeEvidence(overrides: Partial<EvidenceLocator> = {}): EvidenceLocator {
   return {

@@ -14,12 +14,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { TrustStatePreviewSection } from '@/components/ReportsAndPresentations/TrustStatePreviewSection';
-import { useTrustState } from '@/components/ReportsAndPresentations/useTrustState';
 import {
   CHAT_HEADER_CONTROL_ACTIVE_CLASS,
   CHAT_HEADER_ICON_CONTROL_CLASS,
 } from '@/components/AIChat/chatHeaderControlStyles';
+import { TrustStatePreviewSection } from '@/components/ReportsAndPresentations/TrustStatePreviewSection';
+import { useTrustState } from '@/components/ReportsAndPresentations/useTrustState';
 import type {
   ArtifactFamily,
   ArtifactPlanOutputType,
@@ -138,10 +138,7 @@ function deriveEffectiveRunStatus(
 function formatPlanLabel(plan: ArtifactRunPlan | null, t: Translate): string {
   if (!plan) return '';
   const option = OUTPUT_OPTIONS.find((item) => item.outputType === plan.outputType);
-  const outputLabel = t(
-    `v8.artifactRun.option.${plan.outputType}`,
-    option?.label ?? 'Materiał'
-  );
+  const outputLabel = t(`v8.artifactRun.option.${plan.outputType}`, option?.label ?? 'Materiał');
   const scopeLabel = t(
     `v8.artifactRun.visibility.${plan.visibilityScope}`,
     'Dostęp zgodny z uprawnieniami'
@@ -625,7 +622,10 @@ export function V8ArtifactRunControl({
               )}
               {currentRun.failureReason && (
                 <div className="mt-1 text-[11px] text-danger-600 dark:text-danger-300">
-                  {t('v8.artifactRun.runFailed', 'Nie udało się utworzyć materiału. Spróbuj ponownie.')}
+                  {t(
+                    'v8.artifactRun.runFailed',
+                    'Nie udało się utworzyć materiału. Spróbuj ponownie.'
+                  )}
                 </div>
               )}
               {currentRun.failurePackage && (
@@ -663,17 +663,23 @@ export function V8ArtifactRunControl({
                         >
                           <div className="min-w-0 flex-1">
                             <div className="truncate font-medium">
-                              {t(
-                                `v8.artifactRun.preflightCheck.${check.id}`,
-                                'Kontrola materiału'
-                              )}
+                              {t(`v8.artifactRun.preflightCheck.${check.id}`, 'Kontrola materiału')}
                             </div>
                             <div className="mt-0.5 text-amber-800/80 dark:text-amber-200/80">
                               {check.status === 'passed'
-                                ? t('v8.artifactRun.preflightCheckPassed', 'Kontrola zakończona pomyślnie')
+                                ? t(
+                                    'v8.artifactRun.preflightCheckPassed',
+                                    'Kontrola zakończona pomyślnie'
+                                  )
                                 : check.status === 'pending'
-                                  ? t('v8.artifactRun.preflightCheckPending', 'Kontrola oczekuje na wykonanie')
-                                  : t('v8.artifactRun.preflightCheckFailed', 'Kontrola wymaga poprawy')}
+                                  ? t(
+                                      'v8.artifactRun.preflightCheckPending',
+                                      'Kontrola oczekuje na wykonanie'
+                                    )
+                                  : t(
+                                      'v8.artifactRun.preflightCheckFailed',
+                                      'Kontrola wymaga poprawy'
+                                    )}
                             </div>
                           </div>
                           <div className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">

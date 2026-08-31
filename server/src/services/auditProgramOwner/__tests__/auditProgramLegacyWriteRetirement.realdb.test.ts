@@ -50,11 +50,11 @@
  *      pre-retirement legacy write (and is cleaned up / flipped back),
  *      demonstrating the rollback story is real for the whole write surface.
  */
-import { mintToken, pgClient, requireLocalDbUrl } from '../../../../../tests/acceptance/harness.js';
-
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
+import { mintToken, pgClient, requireLocalDbUrl } from '../../../../../tests/acceptance/harness.js';
 
 requireLocalDbUrl();
 
@@ -248,9 +248,7 @@ describe('AUD-MVP-OWNER-001 — legacy audit_programs write retirement (real Pos
   });
 
   it('DELETE /api/audit/programs/:id — default: 410, row still exists', async () => {
-    const res = await request(app)
-      .delete(`/api/audit/programs/${LEGACY_PROGRAM_ID}`)
-      .set(authA());
+    const res = await request(app).delete(`/api/audit/programs/${LEGACY_PROGRAM_ID}`).set(authA());
     expect(res.status).toBe(410);
     expect(res.body.code).toBe('AUDIT_PROGRAM_LEGACY_WRITE_DISABLED');
     const row = await fetchProgramRow(LEGACY_PROGRAM_ID);
@@ -277,9 +275,7 @@ describe('AUD-MVP-OWNER-001 — legacy audit_programs write retirement (real Pos
 
   // ── #2 POSITIVE control: reads keep working ─────────────────────────────────
   it('GET /api/audit/programs/:id — still returns the pre-existing legacy program', async () => {
-    const res = await request(app)
-      .get(`/api/audit/programs/${LEGACY_PROGRAM_ID}`)
-      .set(authA());
+    const res = await request(app).get(`/api/audit/programs/${LEGACY_PROGRAM_ID}`).set(authA());
     expect(res.status).toBe(200);
     expect(res.body.program.id).toBe(LEGACY_PROGRAM_ID);
     expect(res.body.program.name).toBe('CLAUDE-A legacy fixture program');
@@ -339,9 +335,7 @@ describe('AUD-MVP-OWNER-001 — legacy audit_programs write retirement (real Pos
 
   // ── #4 Tenant negative ───────────────────────────────────────────────────────
   it('GET /api/audit/programs/:id — org B gets 404 for org A program (no cross-tenant leak)', async () => {
-    const res = await request(app)
-      .get(`/api/audit/programs/${LEGACY_PROGRAM_ID}`)
-      .set(authB());
+    const res = await request(app).get(`/api/audit/programs/${LEGACY_PROGRAM_ID}`).set(authB());
     expect(res.status).toBe(404);
     expect(JSON.stringify(res.body)).not.toContain('legacy fixture program');
   });
@@ -407,9 +401,7 @@ describe('AUD-MVP-OWNER-001 — legacy audit_programs write retirement (real Pos
     expect(afterCreate).toBe(before + 1);
     const createdId = createRes.body.program.id as string;
 
-    const deleteRes = await request(app)
-      .delete(`/api/audit/programs/${createdId}`)
-      .set(authA());
+    const deleteRes = await request(app).delete(`/api/audit/programs/${createdId}`).set(authA());
     expect(deleteRes.status).toBe(200);
     expect(deleteRes.body.success).toBe(true);
     const afterDelete = await countProgramsForOrg(orgAId);

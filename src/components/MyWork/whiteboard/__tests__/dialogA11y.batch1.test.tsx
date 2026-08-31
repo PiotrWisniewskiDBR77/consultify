@@ -13,8 +13,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { WhiteboardNodeCommentThread } from '../nodes/WhiteboardNodeCommentThread';
 import type { WhiteboardNodeComment } from '../nodes/whiteboardNodeComments';
+import { WhiteboardNodeCommentThread } from '../nodes/WhiteboardNodeCommentThread';
 
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
@@ -25,11 +25,7 @@ beforeAll(() => {
   });
 });
 
-function Harness({
-  comments = [],
-}: {
-  comments?: WhiteboardNodeComment[];
-}) {
+function Harness({ comments = [] }: { comments?: WhiteboardNodeComment[] }) {
   const [open, setOpen] = React.useState(false);
   return (
     <div>

@@ -7,7 +7,10 @@ import { buildSpreadsheetReplacements, findSpreadsheetMatches } from '../spreads
 const sheets: FormulaSheet[] = [
   {
     name: 'KPI',
-    columns: [{ key: 'metric', header: 'Metric' }, { key: 'value', header: 'Value' }],
+    columns: [
+      { key: 'metric', header: 'Metric' },
+      { key: 'value', header: 'Value' },
+    ],
     rows: [
       { cells: { metric: { value: 'Conversion rate' }, value: { formula: 'Data!B2*100' } } },
       { cells: { metric: { value: 'conversion baseline' }, value: { value: 18.4 } } },
@@ -15,7 +18,10 @@ const sheets: FormulaSheet[] = [
   },
   {
     name: 'Data',
-    columns: [{ key: 'label', header: 'Label' }, { key: 'raw', header: 'Raw' }],
+    columns: [
+      { key: 'label', header: 'Label' },
+      { key: 'raw', header: 'Raw' },
+    ],
     rows: [{ cells: { label: { value: 'Conversion source' }, raw: { value: 0.184 } } }],
   },
 ];
@@ -27,22 +33,30 @@ describe('spreadsheetFindReplace', () => {
       activeSheetIndex: 0,
       searchIn: 'values',
     });
-    expect(matches.map(({ sheetIndex, rowIndex, colIndex }) => [sheetIndex, rowIndex, colIndex])).toEqual([
-      [0, 0, 0], [0, 1, 0], [1, 0, 0],
+    expect(
+      matches.map(({ sheetIndex, rowIndex, colIndex }) => [sheetIndex, rowIndex, colIndex])
+    ).toEqual([
+      [0, 0, 0],
+      [0, 1, 0],
+      [1, 0, 0],
     ]);
   });
 
   it('can restrict search to the active sheet and exact whole-cell matches', () => {
-    expect(findSpreadsheetMatches(sheets, 'conversion baseline', {
-      scope: 'sheet',
-      activeSheetIndex: 0,
-      wholeCell: true,
-    })).toHaveLength(1);
-    expect(findSpreadsheetMatches(sheets, 'Conversion source', {
-      scope: 'sheet',
-      activeSheetIndex: 0,
-      wholeCell: true,
-    })).toHaveLength(0);
+    expect(
+      findSpreadsheetMatches(sheets, 'conversion baseline', {
+        scope: 'sheet',
+        activeSheetIndex: 0,
+        wholeCell: true,
+      })
+    ).toHaveLength(1);
+    expect(
+      findSpreadsheetMatches(sheets, 'Conversion source', {
+        scope: 'sheet',
+        activeSheetIndex: 0,
+        wholeCell: true,
+      })
+    ).toHaveLength(0);
   });
 
   it('searches and replaces raw formulas without treating their result as text', () => {
@@ -58,11 +72,13 @@ describe('spreadsheetFindReplace', () => {
   });
 
   it('builds one replacement payload per matching cell', () => {
-    expect(buildSpreadsheetReplacements(sheets, 'conversion', 'activation', {
-      scope: 'workbook',
-      activeSheetIndex: 0,
-      searchIn: 'values',
-    })).toEqual([
+    expect(
+      buildSpreadsheetReplacements(sheets, 'conversion', 'activation', {
+        scope: 'workbook',
+        activeSheetIndex: 0,
+        searchIn: 'values',
+      })
+    ).toEqual([
       { sheetIndex: 0, rowIndex: 0, columnKey: 'metric', value: 'activation rate' },
       { sheetIndex: 0, rowIndex: 1, columnKey: 'metric', value: 'activation baseline' },
       { sheetIndex: 1, rowIndex: 0, columnKey: 'label', value: 'activation source' },

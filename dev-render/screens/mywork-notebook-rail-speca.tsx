@@ -23,9 +23,7 @@ const installMocks = () => {
   api.getInitiatives = async () => [
     { id: 'init-1', title: 'Standard klucza klienta (MDM)', status: 'in_progress' },
   ];
-  api.getTasks = async () => [
-    { id: 'task-1', title: 'Zdefiniować standard MDM', status: 'todo' },
-  ];
+  api.getTasks = async () => [{ id: 'task-1', title: 'Zdefiniować standard MDM', status: 'todo' }];
   api.getDecisions = async () => [];
   api.getNotebookPages = async () => [];
   api.getBacklinks = async () => [];
@@ -40,7 +38,8 @@ const ACTIVE_PAGE: NotebookPage = {
   visibility: 'project',
   tags: ['warsztat', 'migracja'],
   contentJson: null,
-  contentText: 'Warsztat zamknął pytanie, czy migrację da się zrobić bez wcześniejszego uporządkowania klucza klienta…',
+  contentText:
+    'Warsztat zamknął pytanie, czy migrację da się zrobić bez wcześniejszego uporządkowania klucza klienta…',
   maturity: 'growing',
   icon: null,
   summary: 'Warsztat 3 — migracja danych, ustalenia i otwarte wątpliwości.',

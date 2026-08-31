@@ -6,8 +6,7 @@ import type { AuthRequest } from './auth.middleware.js';
 
 const ALLOWED_RESULTS_ROLES = new Set(['OWNER', 'ADMIN']);
 
-const normalize = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+const normalize = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 /**
  * DEC-RES-VISIBILITY-001 internal-beta envelope.
@@ -48,15 +47,15 @@ export function createResultsInternalBetaVisibilityMiddleware(
     try {
       client = await dependencies.acquireClient();
       const membership = await client.query<{ role: string }>(
-      `SELECT role
+        `SELECT role
          FROM organization_members
         WHERE organization_id = $1
           AND user_id = $2
           AND upper(status) = 'ACTIVE'
         ORDER BY created_at DESC NULLS LAST, id DESC
         LIMIT 1`,
-      [organizationId, userId]
-    );
+        [organizationId, userId]
+      );
       const role = normalize(membership.rows[0]?.role).toUpperCase();
       if (!ALLOWED_RESULTS_ROLES.has(role)) {
         res.status(403).json({
@@ -77,5 +76,4 @@ export function createResultsInternalBetaVisibilityMiddleware(
   };
 }
 
-export const requireResultsInternalBetaVisibility =
-  createResultsInternalBetaVisibilityMiddleware();
+export const requireResultsInternalBetaVisibility = createResultsInternalBetaVisibilityMiddleware();

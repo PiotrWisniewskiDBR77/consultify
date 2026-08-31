@@ -216,7 +216,7 @@ export const MATERIALS_PRESENTATIONS_CUTOVER: LegacyCutoverDomainConfig = {
       legacyTable: 'presentation_export_records',
       legacyIdFromPath: deckIdFromPath,
       reason:
-        'NOT in the MATERIALS.json inventory or in presentationExportReceiptService.ts\'s header (which ' +
+        "NOT in the MATERIALS.json inventory or in presentationExportReceiptService.ts's header (which " +
         'claims only "THREE export paths" for this table) — found by reading the router directly. ' +
         'POST /decks/:deckId/export/html (:3445) writes recordPresentationExportRecord() on the ' +
         'quality-blocked (:3511) and completed (:3547) paths but never calls beginPresentationExport / ' +
@@ -239,7 +239,7 @@ export const MATERIALS_PRESENTATIONS_CUTOVER: LegacyCutoverDomainConfig = {
         'exists at deliverableTemplateService.ts:997 (reached via POST /api/deliverables/templates, a ' +
         'different router) using a different column set and a best-effort registerArtifactOrigin try/catch ' +
         '(deliverableTemplateService.ts:751-891) that this writer does not share — the two are unsynchronized, ' +
-        'confirming the inventory\'s split-brain claim. That second writer is out of scope for this file (it ' +
+        "confirming the inventory's split-brain claim. That second writer is out of scope for this file (it " +
         'is not in presentations.routes.ts) and is reported, not registered, per the brief.',
     },
     {

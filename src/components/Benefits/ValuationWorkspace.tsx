@@ -12,12 +12,12 @@ import { EmptyState, LoadingState } from '@/components/shared/states';
 import { API_URL, getHeaders } from '@/services/api';
 import {
   approveCanonicalValuation,
-  confirmCanonicalLegacyValuationComputeReadback,
   computeCanonicalLegacyValuation,
+  confirmCanonicalLegacyValuationComputeReadback,
   createRegisteredValuation,
-  generateCanonicalValuationAdvisor,
-  generateCanonicalLegacyNegotiationPack,
   exportCanonicalLegacyValuationPptx,
+  generateCanonicalLegacyNegotiationPack,
+  generateCanonicalValuationAdvisor,
   getCanonicalValuationInputs,
   getCanonicalValuationResults,
   saveCanonicalValuationAssumptions,
@@ -230,31 +230,61 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     }
   }, []);
 
-  const fetchValuation = useCallback(async (id: string) => {
-    try {
-      const [res,canonical]=await Promise.all([fetch(`${API_URL}/economics/valuations/${id}`, { headers: getHeaders() }),getCanonicalValuationInputs(id)]);
-      if (!res.ok) throw new Error(t('valuation.load.failed','Valuation archive read failed'));
-      const d = (await res.json()) as any;
-      const v = d?.valuation || null;
-      if (!v || typeof v !== 'object') throw new Error(t('valuation.load.invalid','Valuation archive response is invalid'));
-      const canonicalResults:any=await getCanonicalValuationResults(canonical.businessVersionId);
-      const dcfMethod=canonicalResults?.methods?.find((method:any)=>method.methodType==='DCF_FCFF');
-      const bridge=canonicalResults?.bridge?.header;
-      const terminal=canonicalResults?.terminal?.find((row:any)=>row.is_primary)??canonicalResults?.terminal?.[0];
-      const dcf=dcfMethod?{enterpriseValue:Number(dcfMethod.result?.valueDecimal),equityValue:bridge?.equity_value_decimal===null?null:Number(bridge?.equity_value_decimal),terminalValue:terminal?.terminal_value_decimal===null?null:Number(terminal?.terminal_value_decimal)}:null;
-      setSelected({...v,results:{dcf}});
-      setAssumptions({ ...DEFAULT_ASSUMPTIONS, ...(canonical.assumptions??{}) } as AssumptionsState);
-      const persistedPeers = canonical.peers;
-      setMultiples({
-        ...DEFAULT_MULTIPLES,
-        ...(Array.isArray(persistedPeers) ? persistedPeers[0] : persistedPeers),
-      });
-      return {businessVersionId:canonical.businessVersionId,dcf};
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('valuation.inputs.failed','Canonical valuation inputs unavailable'));
-      return undefined;
-    }
-  }, [t]);
+  const fetchValuation = useCallback(
+    async (id: string) => {
+      try {
+        const [res, canonical] = await Promise.all([
+          fetch(`${API_URL}/economics/valuations/${id}`, { headers: getHeaders() }),
+          getCanonicalValuationInputs(id),
+        ]);
+        if (!res.ok) throw new Error(t('valuation.load.failed', 'Valuation archive read failed'));
+        const d = (await res.json()) as any;
+        const v = d?.valuation || null;
+        if (!v || typeof v !== 'object')
+          throw new Error(t('valuation.load.invalid', 'Valuation archive response is invalid'));
+        const canonicalResults: any = await getCanonicalValuationResults(
+          canonical.businessVersionId
+        );
+        const dcfMethod = canonicalResults?.methods?.find(
+          (method: any) => method.methodType === 'DCF_FCFF'
+        );
+        const bridge = canonicalResults?.bridge?.header;
+        const terminal =
+          canonicalResults?.terminal?.find((row: any) => row.is_primary) ??
+          canonicalResults?.terminal?.[0];
+        const dcf = dcfMethod
+          ? {
+              enterpriseValue: Number(dcfMethod.result?.valueDecimal),
+              equityValue:
+                bridge?.equity_value_decimal === null ? null : Number(bridge?.equity_value_decimal),
+              terminalValue:
+                terminal?.terminal_value_decimal === null
+                  ? null
+                  : Number(terminal?.terminal_value_decimal),
+            }
+          : null;
+        setSelected({ ...v, results: { dcf } });
+        setAssumptions({
+          ...DEFAULT_ASSUMPTIONS,
+          ...(canonical.assumptions ?? {}),
+        } as AssumptionsState);
+        const persistedPeers = canonical.peers;
+        setMultiples({
+          ...DEFAULT_MULTIPLES,
+          ...(Array.isArray(persistedPeers) ? persistedPeers[0] : persistedPeers),
+        });
+        return { businessVersionId: canonical.businessVersionId, dcf };
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t('valuation.inputs.failed', 'Canonical valuation inputs unavailable')
+        );
+        return undefined;
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     void fetchSources();
@@ -389,12 +419,19 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     }
     setBusy(true);
     try {
-      await saveCanonicalValuationAssumptions(selectedId, assumptions as unknown as Record<string,unknown>);
+      await saveCanonicalValuationAssumptions(
+        selectedId,
+        assumptions as unknown as Record<string, unknown>
+      );
       trackFunnelEvent('valuation_assumption_updated', { valuationId: selectedId });
       toast.success(t('valuation.assumptions.saved', 'Assumptions saved'));
       await fetchValuation(selectedId);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('valuation.assumptions.failed', 'Failed to save assumptions'));
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('valuation.assumptions.failed', 'Failed to save assumptions')
+      );
     } finally {
       setBusy(false);
     }
@@ -404,21 +441,48 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     if (!selectedId) return;
     setBusy(true);
     try {
-      await saveCanonicalValuationPeers(selectedId, multiples as unknown as Record<string,unknown>);
+      await saveCanonicalValuationPeers(
+        selectedId,
+        multiples as unknown as Record<string, unknown>
+      );
       toast.success(t('valuation.comps.saved', 'Comps saved'));
       await fetchValuation(selectedId);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('valuation.comps.failed', 'Failed to save comps'));
+      toast.error(
+        error instanceof Error ? error.message : t('valuation.comps.failed', 'Failed to save comps')
+      );
     } finally {
       setBusy(false);
     }
-  }, [fetchValuation,multiples, selectedId, t]);
+  }, [fetchValuation, multiples, selectedId, t]);
 
   const handleCompute = useCallback(async () => {
     if (!selectedId) return;
     setBusy(true);
-    try{const computed=await computeCanonicalLegacyValuation(selectedId);const cold=await fetchValuation(selectedId);if(!cold?.dcf||cold.businessVersionId!==computed.businessVersionId||Number(cold.dcf.enterpriseValue)!==Number(computed.enterpriseValue)||Number(cold.dcf.equityValue)!==Number(computed.equityValue))throw new Error(t('valuation.compute.readbackMismatch','Canonical valuation result readback mismatch'));confirmCanonicalLegacyValuationComputeReadback(selectedId);toast.success(t('valuation.compute.ok','Valuation computed'));setActiveStep('results');onValuationChanged?.();}catch(error){toast.error(error instanceof Error?error.message:t('valuation.compute.failed','Compute failed'));}finally{setBusy(false);}
-  }, [fetchValuation,onValuationChanged,selectedId,t]);
+    try {
+      const computed = await computeCanonicalLegacyValuation(selectedId);
+      const cold = await fetchValuation(selectedId);
+      if (
+        !cold?.dcf ||
+        cold.businessVersionId !== computed.businessVersionId ||
+        Number(cold.dcf.enterpriseValue) !== Number(computed.enterpriseValue) ||
+        Number(cold.dcf.equityValue) !== Number(computed.equityValue)
+      )
+        throw new Error(
+          t('valuation.compute.readbackMismatch', 'Canonical valuation result readback mismatch')
+        );
+      confirmCanonicalLegacyValuationComputeReadback(selectedId);
+      toast.success(t('valuation.compute.ok', 'Valuation computed'));
+      setActiveStep('results');
+      onValuationChanged?.();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('valuation.compute.failed', 'Compute failed')
+      );
+    } finally {
+      setBusy(false);
+    }
+  }, [fetchValuation, onValuationChanged, selectedId, t]);
 
   const handleApprove = useCallback(async () => {
     if (!selectedId) return;
@@ -817,8 +881,12 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             }
                             className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                           >
-                            <option value="gordon">{t('valuation.assumptions.gordonGrowth', 'Wzrost Gordona')}</option>
-                            <option value="exit_multiple">{t('valuation.assumptions.exitMultiple', 'Mnożnik wyjścia')}</option>
+                            <option value="gordon">
+                              {t('valuation.assumptions.gordonGrowth', 'Wzrost Gordona')}
+                            </option>
+                            <option value="exit_multiple">
+                              {t('valuation.assumptions.exitMultiple', 'Mnożnik wyjścia')}
+                            </option>
                           </select>
                         </div>
                         {assumptions.terminalMethod === 'gordon' ? (
@@ -915,15 +983,60 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                               >
                                 <option value="EV/EBITDA">EV/EBITDA</option>
-                                <option value="EV/EBIT" disabled>EV/EBIT — {t('valuation.assumptions.sourceDataRequired', 'wymagane dane źródłowe')}</option>
-                                <option value="EV/Revenue" disabled>EV/Revenue — {t('valuation.assumptions.sourceDataRequired', 'wymagane dane źródłowe')}</option>
+                                <option value="EV/EBIT" disabled>
+                                  EV/EBIT —{' '}
+                                  {t(
+                                    'valuation.assumptions.sourceDataRequired',
+                                    'wymagane dane źródłowe'
+                                  )}
+                                </option>
+                                <option value="EV/Revenue" disabled>
+                                  EV/Revenue —{' '}
+                                  {t(
+                                    'valuation.assumptions.sourceDataRequired',
+                                    'wymagane dane źródłowe'
+                                  )}
+                                </option>
                               </select>
                             </div>
                           </div>
                         )}
                         <div className="grid grid-cols-2 gap-3">
-                          <div><label className="text-xs text-c-text-muted">{t('valuation.assumptions.cashTax','Cash tax rate (%)')}</label><input type="number" value={assumptions.cashTaxRatePct??''} onChange={(e)=>setAssumptions(p=>({...p,cashTaxRatePct:e.target.value===''?undefined:safeNumber(e.target.value,0)}))} className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong bg-white dark:bg-c-surface text-sm" /></div>
-                          <div><label className="text-xs text-c-text-muted">{t('valuation.assumptions.asOf','Valuation date')}</label><input type="date" value={assumptions.valuationAsOfDate??''} onChange={(e)=>setAssumptions(p=>({...p,valuationAsOfDate:e.target.value||undefined}))} className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong bg-white dark:bg-c-surface text-sm" /></div>
+                          <div>
+                            <label className="text-xs text-c-text-muted">
+                              {t('valuation.assumptions.cashTax', 'Cash tax rate (%)')}
+                            </label>
+                            <input
+                              type="number"
+                              value={assumptions.cashTaxRatePct ?? ''}
+                              onChange={(e) =>
+                                setAssumptions((p) => ({
+                                  ...p,
+                                  cashTaxRatePct:
+                                    e.target.value === ''
+                                      ? undefined
+                                      : safeNumber(e.target.value, 0),
+                                }))
+                              }
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong bg-white dark:bg-c-surface text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-c-text-muted">
+                              {t('valuation.assumptions.asOf', 'Valuation date')}
+                            </label>
+                            <input
+                              type="date"
+                              value={assumptions.valuationAsOfDate ?? ''}
+                              onChange={(e) =>
+                                setAssumptions((p) => ({
+                                  ...p,
+                                  valuationAsOfDate: e.target.value || undefined,
+                                }))
+                              }
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong bg-white dark:bg-c-surface text-sm"
+                            />
+                          </div>
                         </div>
                         <button
                           disabled={busy}
@@ -1078,29 +1191,32 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.results.comps', 'Comparable range (if set)')}
                         </div>
-                        {(Array.isArray(computed?.comps)
-                          ? computed.comps.some(
-                              (item: any) =>
-                                item?.impliedEnterpriseValue || item?.impliedEquityValue
-                            )
-                          : computed?.comps?.impliedEnterpriseValue) ? (
+                        {(
+                          Array.isArray(computed?.comps)
+                            ? computed.comps.some(
+                                (item: any) =>
+                                  item?.impliedEnterpriseValue || item?.impliedEquityValue
+                              )
+                            : computed?.comps?.impliedEnterpriseValue
+                        ) ? (
                           <div className="space-y-2 text-sm">
-                            {(Array.isArray(computed.comps) ? computed.comps : [computed.comps]).map(
-                              (item: any) => {
-                                const range =
-                                  item?.impliedEnterpriseValue || item?.impliedEquityValue;
-                                if (!range) return null;
-                                return (
-                                  <div key={item.metric} className="flex justify-between gap-3">
-                                    <span className="text-c-text-muted">{item.metric}</span>
-                                    <span className="font-mono text-c-text dark:text-white text-right">
-                                      {fmtValue(range.min)} / {fmtValue(range.median)} /{' '}
-                                      {fmtValue(range.max)}
-                                    </span>
-                                  </div>
-                                );
-                              }
-                            )}
+                            {(Array.isArray(computed.comps)
+                              ? computed.comps
+                              : [computed.comps]
+                            ).map((item: any) => {
+                              const range =
+                                item?.impliedEnterpriseValue || item?.impliedEquityValue;
+                              if (!range) return null;
+                              return (
+                                <div key={item.metric} className="flex justify-between gap-3">
+                                  <span className="text-c-text-muted">{item.metric}</span>
+                                  <span className="font-mono text-c-text dark:text-white text-right">
+                                    {fmtValue(range.min)} / {fmtValue(range.median)} /{' '}
+                                    {fmtValue(range.max)}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         ) : (
                           <div className="text-sm text-c-text-muted dark:text-c-text-muted">
@@ -1111,7 +1227,10 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       {computed?.dcfMethods && (
                         <div className="lg:col-span-2 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                           <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
-                            {t('valuation.results.terminalCrossCheck', 'Terminal value cross-check')}
+                            {t(
+                              'valuation.results.terminalCrossCheck',
+                              'Terminal value cross-check'
+                            )}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                             {[

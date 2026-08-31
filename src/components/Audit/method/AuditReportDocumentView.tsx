@@ -103,22 +103,40 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
+import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
-import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
-import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
-import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
-import { formatListDate } from '@/utils/listDateFormat';
 import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { auditRoleLabel } from './auditRoleLabels';
+import {
+  approveReport,
+  type AuditCriterionSummary,
+  type AuditEvidenceSummary,
+  type AuditReportDocument,
+  type AuditReportDocumentSection,
+  type AuditReportStatus,
+  type AuditReportSummary,
+  getProgram,
+  getReport,
+  getReportPresentation,
+  listEvidence,
+  listProgramCriteria,
+  publishReport,
+} from './auditsMethodApi';
 import {
   actionKindLabel,
   actionStatusLabel,
@@ -130,21 +148,6 @@ import {
   findingStatusLabel,
   reportStatusLabel,
 } from './auditStatusTones';
-import {
-  approveReport,
-  getProgram,
-  getReport,
-  getReportPresentation,
-  listEvidence,
-  listProgramCriteria,
-  publishReport,
-  type AuditCriterionSummary,
-  type AuditEvidenceSummary,
-  type AuditReportDocument,
-  type AuditReportDocumentSection,
-  type AuditReportStatus,
-  type AuditReportSummary,
-} from './auditsMethodApi';
 
 export interface AuditReportDocumentViewProps {
   reportId?: string;
@@ -179,7 +182,10 @@ const VERIFICATION_KIND_LABEL: Record<string, { pl: string; en: string }> = {
   effectiveness: { pl: 'Weryfikacja skuteczności', en: 'Effectiveness verification' },
 };
 
-const VERIFICATION_RESULT_LABEL: Record<string, { pl: string; en: string; tone: 'success' | 'warning' | 'danger' | 'neutral' }> = {
+const VERIFICATION_RESULT_LABEL: Record<
+  string,
+  { pl: string; en: string; tone: 'success' | 'warning' | 'danger' | 'neutral' }
+> = {
   effective: { pl: 'Skuteczne', en: 'Effective', tone: 'success' },
   partially_effective: { pl: 'Częściowo skuteczne', en: 'Partially effective', tone: 'warning' },
   not_effective: { pl: 'Nieskuteczne', en: 'Not effective', tone: 'danger' },
@@ -199,7 +205,9 @@ const RELIABILITY_LABEL: Record<string, { pl: string; en: string }> = {
 };
 
 /** Mirror NModeHeaderConfig's tone union (distinct from `StatusTone` — no `info`/`danger`/`success`, only draft/review/approved/rejected/neutral). */
-function headerStatusTone(status: AuditReportStatus): 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' {
+function headerStatusTone(
+  status: AuditReportStatus
+): 'draft' | 'review' | 'approved' | 'rejected' | 'neutral' {
   if (status === 'draft') return 'draft';
   if (status === 'in_review') return 'review';
   if (status === 'approved' || status === 'published') return 'approved';
@@ -319,13 +327,28 @@ interface ScopeContent {
 /** Identifiers explicitly handled below — every other id falls back to the generic-by-kind renderer. */
 const KNOWN_SECTION_IDS = new Set([
   // audit_report (renderAuditReport, reportRenderer.ts:428)
-  'executive_summary', 'scope', 'methodology', 'limitations', 'overall_conclusion',
-  'findings_by_severity', 'findings_by_area', 'objective_evidence_references',
-  'systemic_conclusions', 'corrective_action_plan', 'verification_plan',
-  'appendices', 'traceability_matrix',
+  'executive_summary',
+  'scope',
+  'methodology',
+  'limitations',
+  'overall_conclusion',
+  'findings_by_severity',
+  'findings_by_area',
+  'objective_evidence_references',
+  'systemic_conclusions',
+  'corrective_action_plan',
+  'verification_plan',
+  'appendices',
+  'traceability_matrix',
   // presentation (renderPresentationView, reportRenderer.ts:688)
-  'conclusion', 'systemic_themes', 'findings_distribution', 'critical_findings',
-  'critical_evidence', 'remediation_priorities', 'timeline', 'accountabilities',
+  'conclusion',
+  'systemic_themes',
+  'findings_distribution',
+  'critical_findings',
+  'critical_evidence',
+  'remediation_priorities',
+  'timeline',
+  'accountabilities',
 ]);
 
 /**
@@ -346,17 +369,26 @@ function SimpleTable({
 }): React.ReactElement {
   return (
     <div className="overflow-x-auto rounded-lg border border-c-border-subtle">
-      <table className="w-full text-sm"> {/* §27-exempt */}
-        <thead> {/* §27-exempt */}
+      <table className="w-full text-sm">
+        {' '}
+        {/* §27-exempt */}
+        <thead>
+          {' '}
+          {/* §27-exempt */}
           <tr className="border-b border-c-border-subtle bg-c-surface-raised">
             {head.map((h) => (
-              <th key={h} className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+              <th
+                key={h}
+                className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-c-text-muted"
+              >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody> {/* §27-exempt */}
+        <tbody>
+          {' '}
+          {/* §27-exempt */}
           {rows.map((cells, i) => (
             <tr key={i} className="border-b border-c-border-subtle last:border-b-0">
               {cells.map((c, j) => (
@@ -400,9 +432,17 @@ function formatGenericPrimitive(value: unknown): React.ReactNode {
 }
 
 function renderGenericKeyValue(content: unknown): React.ReactNode {
-  const entries = content && typeof content === 'object' ? Object.entries(content as Record<string, unknown>) : [];
+  const entries =
+    content && typeof content === 'object'
+      ? Object.entries(content as Record<string, unknown>)
+      : [];
   if (!entries.length) return <p className="text-sm text-c-text-muted">—</p>;
-  return <SimpleTable head={['Pole', 'Wartość']} rows={entries.map(([k, v]) => [humanizeKey(k), formatGenericPrimitive(v)])} />;
+  return (
+    <SimpleTable
+      head={['Pole', 'Wartość']}
+      rows={entries.map(([k, v]) => [humanizeKey(k), formatGenericPrimitive(v)])}
+    />
+  );
 }
 
 function renderGenericList(content: unknown): React.ReactNode {
@@ -421,7 +461,10 @@ function renderGenericList(content: unknown): React.ReactNode {
   return (
     <div className="flex flex-col gap-2">
       {(content as Record<string, unknown>[]).map((item, i) => (
-        <div key={i} className="rounded-lg border border-c-border-subtle p-3 text-xs text-c-text-secondary">
+        <div
+          key={i}
+          className="rounded-lg border border-c-border-subtle p-3 text-xs text-c-text-secondary"
+        >
           {Object.entries(item)
             .filter(([k]) => k !== 'id')
             .map(([k, v]) => (
@@ -468,7 +511,9 @@ function renderGenericGroup(content: unknown): React.ReactNode {
       <div className="flex flex-col gap-4">
         {Object.entries(content as Record<string, unknown>).map(([k, v]) => (
           <div key={k}>
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">{humanizeKey(k)}</div>
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              {humanizeKey(k)}
+            </div>
             {Array.isArray(v) ? renderGenericList(v) : renderGenericKeyValue(v)}
           </div>
         ))}
@@ -479,14 +524,19 @@ function renderGenericGroup(content: unknown): React.ReactNode {
 }
 
 function renderGenericTable(content: unknown): React.ReactNode {
-  if (!Array.isArray(content) || content.length === 0) return <p className="text-sm text-c-text-muted">Brak pozycji.</p>;
+  if (!Array.isArray(content) || content.length === 0)
+    return <p className="text-sm text-c-text-muted">Brak pozycji.</p>;
   const keys = Array.from(
-    new Set(content.flatMap((row) => (row && typeof row === 'object' ? Object.keys(row as object) : [])))
+    new Set(
+      content.flatMap((row) => (row && typeof row === 'object' ? Object.keys(row as object) : []))
+    )
   );
   return (
     <SimpleTable
       head={keys.map(humanizeKey)}
-      rows={content.map((row) => keys.map((k) => formatGenericPrimitive((row as Record<string, unknown> | null)?.[k])))}
+      rows={content.map((row) =>
+        keys.map((k) => formatGenericPrimitive((row as Record<string, unknown> | null)?.[k]))
+      )}
     />
   );
 }
@@ -494,7 +544,9 @@ function renderGenericTable(content: unknown): React.ReactNode {
 function renderGenericByKind(s: AuditReportDocumentSection): React.ReactNode {
   switch (s.kind) {
     case 'text':
-      return <p className="text-sm leading-relaxed text-c-text">{formatGenericPrimitive(s.content)}</p>;
+      return (
+        <p className="text-sm leading-relaxed text-c-text">{formatGenericPrimitive(s.content)}</p>
+      );
     case 'keyValue':
       return renderGenericKeyValue(s.content);
     case 'list':
@@ -509,7 +561,9 @@ function renderGenericByKind(s: AuditReportDocumentSection): React.ReactNode {
 }
 
 /** Recursively walks a document's sections looking for finding-shaped objects — no extra API call needed, the document already carries them. */
-function collectFindingLabels(sections: AuditReportDocumentSection[] | undefined): Map<string, { referenceCode: string | null; statement: string }> {
+function collectFindingLabels(
+  sections: AuditReportDocumentSection[] | undefined
+): Map<string, { referenceCode: string | null; statement: string }> {
   const map = new Map<string, { referenceCode: string | null; statement: string }>();
   const visit = (node: unknown): void => {
     if (Array.isArray(node)) {
@@ -518,8 +572,15 @@ function collectFindingLabels(sections: AuditReportDocumentSection[] | undefined
     }
     if (node && typeof node === 'object') {
       const obj = node as Record<string, unknown>;
-      if (typeof obj.id === 'string' && typeof obj.statement === 'string' && typeof obj.classification === 'string') {
-        map.set(obj.id, { referenceCode: (obj.referenceCode as string) ?? null, statement: obj.statement as string });
+      if (
+        typeof obj.id === 'string' &&
+        typeof obj.statement === 'string' &&
+        typeof obj.classification === 'string'
+      ) {
+        map.set(obj.id, {
+          referenceCode: (obj.referenceCode as string) ?? null,
+          statement: obj.statement as string,
+        });
       }
       if (Array.isArray(obj.items)) visit(obj.items);
     }
@@ -550,7 +611,9 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
 
   /** R1: DRUGI, jawnie nazwany tryb — domyślnie OFF, ładowany leniwie na żądanie (patrz `switchToPresentation`). */
   const [viewMode, setViewMode] = useState<'full' | 'presentation'>('full');
-  const [presentationDocument, setPresentationDocument] = useState<AuditReportDocument | null>(null);
+  const [presentationDocument, setPresentationDocument] = useState<AuditReportDocument | null>(
+    null
+  );
   const [presentationLoading, setPresentationLoading] = useState(false);
   const [presentationError, setPresentationError] = useState<string | null>(null);
 
@@ -562,12 +625,17 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     setExportError(null);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/audits/reports/${encodeURIComponent(reportId)}/export.docx`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const response = await fetch(
+        `/api/audits/reports/${encodeURIComponent(reportId)}/export.docx`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || (isPolish ? 'Nie udało się pobrać DOCX.' : 'Could not download DOCX.'));
+        throw new Error(
+          payload.error || (isPolish ? 'Nie udało się pobrać DOCX.' : 'Could not download DOCX.')
+        );
       }
       const blobUrl = URL.createObjectURL(await response.blob());
       const link = document.createElement('a');
@@ -602,12 +670,17 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     setExportError(null);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/audits/reports/${encodeURIComponent(reportId)}/export.pdf`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const response = await fetch(
+        `/api/audits/reports/${encodeURIComponent(reportId)}/export.pdf`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || (isPolish ? 'Nie udało się pobrać PDF.' : 'Could not download PDF.'));
+        throw new Error(
+          payload.error || (isPolish ? 'Nie udało się pobrać PDF.' : 'Could not download PDF.')
+        );
       }
       const blobUrl = URL.createObjectURL(await response.blob());
       const link = document.createElement('a');
@@ -632,7 +705,9 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
 
   const load = useCallback(() => {
     if (!reportId) {
-      setError(isPolish ? 'Brak identyfikatora raportu w adresie.' : 'Missing report id in the URL.');
+      setError(
+        isPolish ? 'Brak identyfikatora raportu w adresie.' : 'Missing report id in the URL.'
+      );
       setLoading(false);
       return;
     }
@@ -643,7 +718,8 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     setPresentationError(null);
     getReport(reportId)
       .then(async (reportResult) => {
-        if (!reportResult) throw new Error(isPolish ? 'Raport nie został znaleziony.' : 'Report not found.');
+        if (!reportResult)
+          throw new Error(isPolish ? 'Raport nie został znaleziony.' : 'Report not found.');
         const payload = reportResult.payload as unknown as AuditReportDocument | undefined;
         if (!payload || !Array.isArray(payload.sections)) {
           throw new Error(
@@ -665,7 +741,8 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         setCriteria(criteriaResult);
         setEvidence(evidenceResult);
         const map = new Map<string, string>();
-        for (const u of users || []) map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
+        for (const u of users || [])
+          map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
         setUserNameById(map);
       })
       .catch((e: any) => {
@@ -674,7 +751,8 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             ? isPolish
               ? 'Brak uprawnień do tego raportu w tej organizacji.'
               : 'You do not have permission to view this report.'
-            : e?.message || (isPolish ? 'Nie udało się wczytać raportu' : 'Failed to load the report');
+            : e?.message ||
+              (isPolish ? 'Nie udało się wczytać raportu' : 'Failed to load the report');
         setError(message);
       })
       .finally(() => setLoading(false));
@@ -701,7 +779,10 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
       })
       .catch((e: any) =>
         setPresentationError(
-          e?.message || (isPolish ? 'Nie udało się wczytać widoku dla zarządu' : 'Failed to load the executive view')
+          e?.message ||
+            (isPolish
+              ? 'Nie udało się wczytać widoku dla zarządu'
+              : 'Failed to load the executive view')
         )
       )
       .finally(() => setPresentationLoading(false));
@@ -733,7 +814,10 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   }, [evidence]);
 
   /** R1: resolves `findingId` references (corrective actions, verification plan, evidence references) to a real label — built from the document itself, no extra request. */
-  const findingLabelById = useMemo(() => collectFindingLabels(activeDocument?.sections), [activeDocument]);
+  const findingLabelById = useMemo(
+    () => collectFindingLabels(activeDocument?.sections),
+    [activeDocument]
+  );
   const findingLabel = useCallback(
     (id: string | null): string => {
       if (!id) return '—';
@@ -750,12 +834,16 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
       setTransitioning(action);
       setTransitionError(null);
       try {
-        const updated = action === 'approve' ? await approveReport(report.id) : await publishReport(report.id);
+        const updated =
+          action === 'approve' ? await approveReport(report.id) : await publishReport(report.id);
         if (updated) setReport(updated);
         else load();
       } catch (e: any) {
         setTransitionError(
-          e?.message || (isPolish ? 'Nie udało się zmienić statusu raportu' : 'Failed to change the report status')
+          e?.message ||
+            (isPolish
+              ? 'Nie udało się zmienić statusu raportu'
+              : 'Failed to change the report status')
         );
       } finally {
         setTransitioning(null);
@@ -764,7 +852,8 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     [report, isPolish, load]
   );
 
-  const section = (id: string): AuditReportDocumentSection | undefined => activeDocument?.sections.find((s) => s.id === id);
+  const section = (id: string): AuditReportDocumentSection | undefined =>
+    activeDocument?.sections.find((s) => s.id === id);
 
   // -----------------------------------------------------------------------
   // Named, ID-resolved renderers — the 21 identifiers `KNOWN_SECTION_IDS`
@@ -776,25 +865,38 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
       <div key={f.id} className="rounded-lg border border-c-border-subtle p-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-mono text-c-text-muted">{f.referenceCode || f.id}</span>
-          <StatusChip label={findingClassificationLabel(f.classification, isPolish)} tone={findingClassificationTone(f.classification)} />
+          <StatusChip
+            label={findingClassificationLabel(f.classification, isPolish)}
+            tone={findingClassificationTone(f.classification)}
+          />
           {f.severity ? (
-            <StatusChip label={findingSeverityLabel(f.severity as any, isPolish)} tone={findingSeverityTone(f.severity as any)} />
+            <StatusChip
+              label={findingSeverityLabel(f.severity as any, isPolish)}
+              tone={findingSeverityTone(f.severity as any)}
+            />
           ) : null}
         </div>
         <p className="mt-1 text-sm text-c-text">{f.statement}</p>
         <dl className="mt-2 grid grid-cols-1 gap-1 text-[11px] text-c-text-muted sm:grid-cols-3">
           <div>
             <dt className="inline font-medium">{isPolish ? 'Kryterium: ' : 'Criterion: '}</dt>
-            <dd className="inline">{(f.criterionId && criterionTitleById.get(f.criterionId)) || '—'}</dd>
+            <dd className="inline">
+              {(f.criterionId && criterionTitleById.get(f.criterionId)) || '—'}
+            </dd>
           </div>
           <div>
             <dt className="inline font-medium">{isPolish ? 'Właściciel: ' : 'Owner: '}</dt>
-            <dd className="inline">{(f.ownerUserId && userNameById.get(f.ownerUserId)) || (isPolish ? 'Nieprzypisany' : 'Unassigned')}</dd>
+            <dd className="inline">
+              {(f.ownerUserId && userNameById.get(f.ownerUserId)) ||
+                (isPolish ? 'Nieprzypisany' : 'Unassigned')}
+            </dd>
           </div>
           <div>
             <dt className="inline font-medium">{isPolish ? 'Dowody: ' : 'Evidence: '}</dt>
             <dd className="inline">
-              {f.objectiveEvidence.length ? f.objectiveEvidence.map((id) => evidenceTitleById.get(id) || id).join('; ') : '—'}
+              {f.objectiveEvidence.length
+                ? f.objectiveEvidence.map((id) => evidenceTitleById.get(id) || id).join('; ')
+                : '—'}
             </dd>
           </div>
           {f.status ? (
@@ -805,15 +907,20 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
           ) : null}
           {f.rootCause ? (
             <div className="sm:col-span-2">
-              <dt className="inline font-medium">{isPolish ? 'Przyczyna źródłowa: ' : 'Root cause: '}</dt>
+              <dt className="inline font-medium">
+                {isPolish ? 'Przyczyna źródłowa: ' : 'Root cause: '}
+              </dt>
               <dd className="inline">
-                {f.rootCause} {f.rootCauseConfirmed ? (isPolish ? '(potwierdzona)' : '(confirmed)') : ''}
+                {f.rootCause}{' '}
+                {f.rootCauseConfirmed ? (isPolish ? '(potwierdzona)' : '(confirmed)') : ''}
               </dd>
             </div>
           ) : null}
           {f.residualRisk ? (
             <div className="sm:col-span-3">
-              <dt className="inline font-medium">{isPolish ? 'Ryzyko rezydualne: ' : 'Residual risk: '}</dt>
+              <dt className="inline font-medium">
+                {isPolish ? 'Ryzyko rezydualne: ' : 'Residual risk: '}
+              </dt>
               <dd className="inline">{f.residualRisk}</dd>
             </div>
           ) : null}
@@ -826,14 +933,18 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const renderFindingGroups = useCallback(
     (entries: GroupEntry<FindingLike>[], headerFor: (key: string) => string): React.ReactNode => {
       if (!entries.length) {
-        return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak ustaleń.' : 'No findings.'}</p>;
+        return (
+          <p className="text-sm text-c-text-muted">{isPolish ? 'Brak ustaleń.' : 'No findings.'}</p>
+        );
       }
       return (
         <div className="flex flex-col gap-4">
           {entries.map((g) => (
             <div key={g.key}>
               <div className="mb-2 flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{headerFor(g.key)}</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {headerFor(g.key)}
+                </span>
                 <span className="text-[11px] text-c-text-muted">· {g.items.length}</span>
               </div>
               <div className="flex flex-col gap-2">{g.items.map((f) => renderFindingCard(f))}</div>
@@ -848,14 +959,27 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const renderEvidenceList = useCallback(
     (items: EvidenceLike[]): React.ReactNode => {
       if (!items.length) {
-        return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak dowodów przeczących zgodności.' : 'No evidence contradicting conformity.'}</p>;
+        return (
+          <p className="text-sm text-c-text-muted">
+            {isPolish
+              ? 'Brak dowodów przeczących zgodności.'
+              : 'No evidence contradicting conformity.'}
+          </p>
+        );
       }
       return (
         <SimpleTable
-          head={[isPolish ? 'Dowód' : 'Evidence', isPolish ? 'Rodzaj' : 'Kind', isPolish ? 'Kryterium' : 'Criterion']}
+          head={[
+            isPolish ? 'Dowód' : 'Evidence',
+            isPolish ? 'Rodzaj' : 'Kind',
+            isPolish ? 'Kryterium' : 'Criterion',
+          ]}
           rows={items.map((e) => [
             e.title,
-            (EVIDENCE_KIND_LABEL[e.evidenceKind] && (isPolish ? EVIDENCE_KIND_LABEL[e.evidenceKind].pl : EVIDENCE_KIND_LABEL[e.evidenceKind].en)) ||
+            (EVIDENCE_KIND_LABEL[e.evidenceKind] &&
+              (isPolish
+                ? EVIDENCE_KIND_LABEL[e.evidenceKind].pl
+                : EVIDENCE_KIND_LABEL[e.evidenceKind].en)) ||
               e.evidenceKind,
             (e.criterionId && criterionTitleById.get(e.criterionId)) || '—',
           ])}
@@ -868,7 +992,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const renderActionsTable = useCallback(
     (items: ActionLike[]): React.ReactNode => {
       if (!items.length) {
-        return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak działań do pokazania.' : 'No actions to show.'}</p>;
+        return (
+          <p className="text-sm text-c-text-muted">
+            {isPolish ? 'Brak działań do pokazania.' : 'No actions to show.'}
+          </p>
+        );
       }
       const showFindingColumn = findingLabelById.size > 0;
       return (
@@ -885,11 +1013,16 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             a.title,
             actionKindLabel(a.actionKind as any, isPolish),
             ...(showFindingColumn ? [findingLabel(a.findingId)] : []),
-            (a.ownerUserId && userNameById.get(a.ownerUserId)) || (isPolish ? 'Nieprzypisany' : 'Unassigned'),
+            (a.ownerUserId && userNameById.get(a.ownerUserId)) ||
+              (isPolish ? 'Nieprzypisany' : 'Unassigned'),
             <span key="due" className="tabular-nums">
               {a.dueDate ? formatListDate(a.dueDate) : '—'}
             </span>,
-            <StatusChip key="status" label={actionStatusLabel(a.status as any, isPolish)} tone={actionStatusTone(a.status as any)} />,
+            <StatusChip
+              key="status"
+              label={actionStatusLabel(a.status as any, isPolish)}
+              tone={actionStatusTone(a.status as any)}
+            />,
           ])}
         />
       );
@@ -900,7 +1033,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const renderVerificationTable = useCallback(
     (items: VerificationPlanEntry[]): React.ReactNode => {
       if (!items.length) {
-        return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak zaplanowanych weryfikacji.' : 'No verifications planned.'}</p>;
+        return (
+          <p className="text-sm text-c-text-muted">
+            {isPolish ? 'Brak zaplanowanych weryfikacji.' : 'No verifications planned.'}
+          </p>
+        );
       }
       return (
         <SimpleTable
@@ -914,7 +1051,10 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
           ]}
           rows={items.map((v) => [
             findingLabel(v.findingId),
-            (VERIFICATION_KIND_LABEL[v.verificationKind] && (isPolish ? VERIFICATION_KIND_LABEL[v.verificationKind].pl : VERIFICATION_KIND_LABEL[v.verificationKind].en)) ||
+            (VERIFICATION_KIND_LABEL[v.verificationKind] &&
+              (isPolish
+                ? VERIFICATION_KIND_LABEL[v.verificationKind].pl
+                : VERIFICATION_KIND_LABEL[v.verificationKind].en)) ||
               v.verificationKind,
             v.method || '—',
             <span key="planned" className="tabular-nums">
@@ -926,7 +1066,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             v.result ? (
               <StatusChip
                 key="result"
-                label={isPolish ? VERIFICATION_RESULT_LABEL[v.result]?.pl ?? v.result : VERIFICATION_RESULT_LABEL[v.result]?.en ?? v.result}
+                label={
+                  isPolish
+                    ? (VERIFICATION_RESULT_LABEL[v.result]?.pl ?? v.result)
+                    : (VERIFICATION_RESULT_LABEL[v.result]?.en ?? v.result)
+                }
                 tone={VERIFICATION_RESULT_LABEL[v.result]?.tone ?? 'neutral'}
               />
             ) : (
@@ -956,11 +1100,15 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
           return (
             <div className="flex flex-col gap-3 text-sm">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{isPolish ? 'Zakres' : 'Scope'}</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {isPolish ? 'Zakres' : 'Scope'}
+                </div>
                 <p className="mt-1 text-c-text">{c.scopeText || '—'}</p>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{isPolish ? 'Cele' : 'Objectives'}</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {isPolish ? 'Cele' : 'Objectives'}
+                </div>
                 <p className="mt-1 text-c-text">{c.objectives || '—'}</p>
               </div>
               {c.scopeJson && Object.keys(c.scopeJson).length > 0 ? (
@@ -976,7 +1124,12 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         }
         case 'limitations': {
           const items = s.content as string[];
-          if (!items.length) return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak ograniczeń.' : 'No limitations.'}</p>;
+          if (!items.length)
+            return (
+              <p className="text-sm text-c-text-muted">
+                {isPolish ? 'Brak ograniczeń.' : 'No limitations.'}
+              </p>
+            );
           return (
             <ul className="list-disc space-y-1 pl-5 text-sm text-c-text">
               {items.map((item, i) => (
@@ -988,7 +1141,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         case 'findings_by_severity': {
           const entries = s.content as GroupEntry<FindingLike>[];
           return renderFindingGroups(entries, (key) =>
-            key === 'unclassified' ? (isPolish ? 'Nieokreślona' : 'Unspecified') : findingSeverityLabel(key as any, isPolish)
+            key === 'unclassified'
+              ? isPolish
+                ? 'Nieokreślona'
+                : 'Unspecified'
+              : findingSeverityLabel(key as any, isPolish)
           );
         }
         case 'findings_by_area': {
@@ -997,11 +1154,19 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         }
         case 'objective_evidence_references': {
           const rows = s.content as EvidenceReferenceRow[];
-          if (!rows.length) return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak odniesień do dowodów.' : 'No evidence references.'}</p>;
+          if (!rows.length)
+            return (
+              <p className="text-sm text-c-text-muted">
+                {isPolish ? 'Brak odniesień do dowodów.' : 'No evidence references.'}
+              </p>
+            );
           return (
             <SimpleTable
               head={[isPolish ? 'Ustalenie' : 'Finding', isPolish ? 'Dowody' : 'Evidence']}
-              rows={rows.map((r) => [findingLabel(r.findingId), r.evidenceTitles.length ? r.evidenceTitles.join('; ') : '—'])}
+              rows={rows.map((r) => [
+                findingLabel(r.findingId),
+                r.evidenceTitles.length ? r.evidenceTitles.join('; ') : '—',
+              ])}
             />
           );
         }
@@ -1009,7 +1174,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         case 'systemic_themes': {
           const items = s.content as SystemicConclusion[];
           if (!items.length) {
-            return <p className="text-sm text-c-text-muted">{isPolish ? 'Nie wykryto tematów systemowych.' : 'No systemic themes detected.'}</p>;
+            return (
+              <p className="text-sm text-c-text-muted">
+                {isPolish ? 'Nie wykryto tematów systemowych.' : 'No systemic themes detected.'}
+              </p>
+            );
           }
           return (
             <div className="flex flex-col gap-3">
@@ -1042,25 +1211,36 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
           return (
             <div className="flex flex-col gap-4">
               <div>
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">{isPolish ? 'Zespół audytowy' : 'Audit team'}</div>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {isPolish ? 'Zespół audytowy' : 'Audit team'}
+                </div>
                 {c.team.length ? (
                   <SimpleTable
-                    head={[isPolish ? 'Osoba' : 'Person', isPolish ? 'Rola' : 'Role', isPolish ? 'Niezależność zadeklarowana' : 'Independence declared', isPolish ? 'Przypisano' : 'Assigned']}
+                    head={[
+                      isPolish ? 'Osoba' : 'Person',
+                      isPolish ? 'Rola' : 'Role',
+                      isPolish ? 'Niezależność zadeklarowana' : 'Independence declared',
+                      isPolish ? 'Przypisano' : 'Assigned',
+                    ]}
                     rows={c.team.map((m) => [
                       userNameById.get(m.userId) || m.userId,
                       auditRoleLabel(m.role, isPolish),
-                      m.independenceDeclared ? (isPolish ? 'Tak' : 'Yes') : (isPolish ? 'Nie' : 'No'),
+                      m.independenceDeclared ? (isPolish ? 'Tak' : 'Yes') : isPolish ? 'Nie' : 'No',
                       <span key="assigned" className="tabular-nums">
                         {m.assignedAt ? formatListDate(m.assignedAt) : '—'}
                       </span>,
                     ])}
                   />
                 ) : (
-                  <p className="text-sm text-c-text-muted">{isPolish ? 'Brak przypisanego zespołu.' : 'No team assigned.'}</p>
+                  <p className="text-sm text-c-text-muted">
+                    {isPolish ? 'Brak przypisanego zespołu.' : 'No team assigned.'}
+                  </p>
                 )}
               </div>
               <div>
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">{isPolish ? 'Rejestr dowodów' : 'Evidence register'}</div>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                  {isPolish ? 'Rejestr dowodów' : 'Evidence register'}
+                </div>
                 {c.evidenceRegister.length ? (
                   <SimpleTable
                     head={[
@@ -1072,15 +1252,30 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
                     ]}
                     rows={c.evidenceRegister.map((e) => [
                       e.title,
-                      (EVIDENCE_KIND_LABEL[e.evidenceKind] && (isPolish ? EVIDENCE_KIND_LABEL[e.evidenceKind].pl : EVIDENCE_KIND_LABEL[e.evidenceKind].en)) ||
+                      (EVIDENCE_KIND_LABEL[e.evidenceKind] &&
+                        (isPolish
+                          ? EVIDENCE_KIND_LABEL[e.evidenceKind].pl
+                          : EVIDENCE_KIND_LABEL[e.evidenceKind].en)) ||
                         e.evidenceKind,
                       (e.criterionId && criterionTitleById.get(e.criterionId)) || '—',
-                      (e.sufficiency && (isPolish ? SUFFICIENCY_LABEL[e.sufficiency]?.pl : SUFFICIENCY_LABEL[e.sufficiency]?.en)) || e.sufficiency || '—',
-                      (e.reliability && (isPolish ? RELIABILITY_LABEL[e.reliability]?.pl : RELIABILITY_LABEL[e.reliability]?.en)) || e.reliability || '—',
+                      (e.sufficiency &&
+                        (isPolish
+                          ? SUFFICIENCY_LABEL[e.sufficiency]?.pl
+                          : SUFFICIENCY_LABEL[e.sufficiency]?.en)) ||
+                        e.sufficiency ||
+                        '—',
+                      (e.reliability &&
+                        (isPolish
+                          ? RELIABILITY_LABEL[e.reliability]?.pl
+                          : RELIABILITY_LABEL[e.reliability]?.en)) ||
+                        e.reliability ||
+                        '—',
                     ])}
                   />
                 ) : (
-                  <p className="text-sm text-c-text-muted">{isPolish ? 'Rejestr dowodów jest pusty.' : 'The evidence register is empty.'}</p>
+                  <p className="text-sm text-c-text-muted">
+                    {isPolish ? 'Rejestr dowodów jest pusty.' : 'The evidence register is empty.'}
+                  </p>
                 )}
               </div>
             </div>
@@ -1088,7 +1283,12 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         }
         case 'traceability_matrix': {
           const rows = s.content as TraceabilityRow[];
-          if (!rows.length) return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak wierszy macierzy.' : 'No matrix rows.'}</p>;
+          if (!rows.length)
+            return (
+              <p className="text-sm text-c-text-muted">
+                {isPolish ? 'Brak wierszy macierzy.' : 'No matrix rows.'}
+              </p>
+            );
           return (
             <SimpleTable
               head={[
@@ -1101,15 +1301,30 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
                 isPolish ? 'Weryfikacje' : 'Verifications',
               ]}
               rows={rows.map((r) => [
-                r.criterionRef || r.criterionTitle ? `${r.criterionRef ? `${r.criterionRef} — ` : ''}${r.criterionTitle || ''}` : '—',
+                r.criterionRef || r.criterionTitle
+                  ? `${r.criterionRef ? `${r.criterionRef} — ` : ''}${r.criterionTitle || ''}`
+                  : '—',
                 r.evidenceTitles.length ? r.evidenceTitles.join('; ') : '—',
-                (r.testResult && (isPolish ? TEST_RESULT_LABEL[r.testResult]?.pl : TEST_RESULT_LABEL[r.testResult]?.en)) || r.testResult || '—',
+                (r.testResult &&
+                  (isPolish
+                    ? TEST_RESULT_LABEL[r.testResult]?.pl
+                    : TEST_RESULT_LABEL[r.testResult]?.en)) ||
+                  r.testResult ||
+                  '—',
                 r.auditorConclusion || '—',
                 r.findingStatement,
                 r.actionTitles.length ? r.actionTitles.join('; ') : '—',
                 r.verificationResults.length
                   ? r.verificationResults
-                      .map((res) => (res ? (isPolish ? VERIFICATION_RESULT_LABEL[res]?.pl : VERIFICATION_RESULT_LABEL[res]?.en) ?? res : isPolish ? 'W toku' : 'Pending'))
+                      .map((res) =>
+                        res
+                          ? ((isPolish
+                              ? VERIFICATION_RESULT_LABEL[res]?.pl
+                              : VERIFICATION_RESULT_LABEL[res]?.en) ?? res)
+                          : isPolish
+                            ? 'W toku'
+                            : 'Pending'
+                      )
                       .join('; ')
                   : '—',
               ])}
@@ -1123,7 +1338,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             <SimpleTable
               head={[isPolish ? 'Istotność' : 'Severity', isPolish ? 'Liczba' : 'Count']}
               rows={rows.map((r) => [
-                <StatusChip key="sev" label={findingSeverityLabel(r.severity as any, isPolish)} tone={findingSeverityTone(r.severity as any)} />,
+                <StatusChip
+                  key="sev"
+                  label={findingSeverityLabel(r.severity as any, isPolish)}
+                  tone={findingSeverityTone(r.severity as any)}
+                />,
                 <span key="count" className="tabular-nums">
                   {r.count}
                 </span>,
@@ -1133,18 +1352,36 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         }
         case 'critical_findings': {
           const items = s.content as FindingLike[];
-          if (!items.length) return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak ustaleń krytycznych.' : 'No critical findings.'}</p>;
-          return <div className="flex flex-col gap-3">{items.map((f) => renderFindingCard(f))}</div>;
+          if (!items.length)
+            return (
+              <p className="text-sm text-c-text-muted">
+                {isPolish ? 'Brak ustaleń krytycznych.' : 'No critical findings.'}
+              </p>
+            );
+          return (
+            <div className="flex flex-col gap-3">{items.map((f) => renderFindingCard(f))}</div>
+          );
         }
         case 'critical_evidence': {
           return renderEvidenceList(s.content as EvidenceLike[]);
         }
         case 'accountabilities': {
           const items = s.content as Accountability[];
-          if (!items.length) return <p className="text-sm text-c-text-muted">{isPolish ? 'Brak przypisanych odpowiedzialności.' : 'No assigned accountabilities.'}</p>;
+          if (!items.length)
+            return (
+              <p className="text-sm text-c-text-muted">
+                {isPolish
+                  ? 'Brak przypisanych odpowiedzialności.'
+                  : 'No assigned accountabilities.'}
+              </p>
+            );
           return (
             <SimpleTable
-              head={[isPolish ? 'Właściciel' : 'Owner', isPolish ? 'Ustalenia' : 'Findings', isPolish ? 'Działania' : 'Actions']}
+              head={[
+                isPolish ? 'Właściciel' : 'Owner',
+                isPolish ? 'Ustalenia' : 'Findings',
+                isPolish ? 'Działania' : 'Actions',
+              ]}
               rows={items.map((a) => [
                 userNameById.get(a.ownerUserId) || (isPolish ? 'Nieprzypisany' : 'Unassigned'),
                 <span key="f" className="tabular-nums">
@@ -1216,7 +1453,10 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-6">
-        <LoadingState template="panel" label={isPolish ? 'Wczytywanie raportu…' : 'Loading report…'} />
+        <LoadingState
+          template="panel"
+          label={isPolish ? 'Wczytywanie raportu…' : 'Loading report…'}
+        />
       </div>
     );
   }
@@ -1296,27 +1536,75 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   };
 
   const propertyRows: ArtifactPropertyRow[] = [
-    { id: 'program', label: isPolish ? 'Program' : 'Program', value: programName || report.programName || '—' },
+    {
+      id: 'program',
+      label: isPolish ? 'Program' : 'Program',
+      value: programName || report.programName || '—',
+    },
     {
       id: 'reportKind',
       // R1: mówi prawdę PER TRYB — treść aktywnie wyświetlanego dokumentu, nie report.reportKind.
       label: isPolish ? 'Rodzaj' : 'Kind',
       value:
-        (REPORT_KIND_LABEL[activeReportKind] && (isPolish ? REPORT_KIND_LABEL[activeReportKind].pl : REPORT_KIND_LABEL[activeReportKind].en)) ||
+        (REPORT_KIND_LABEL[activeReportKind] &&
+          (isPolish
+            ? REPORT_KIND_LABEL[activeReportKind].pl
+            : REPORT_KIND_LABEL[activeReportKind].en)) ||
         activeReportKind,
     },
-    { id: 'version', label: isPolish ? 'Wersja' : 'Version', value: String(report.version), mono: true },
+    {
+      id: 'version',
+      label: isPolish ? 'Wersja' : 'Version',
+      value: String(report.version),
+      mono: true,
+    },
     {
       id: 'status',
       label: isPolish ? 'Status' : 'Status',
-      value: <StatusChip label={reportStatusLabel(report.status, isPolish)} tone={headerStatusTone(report.status) === 'approved' ? 'success' : headerStatusTone(report.status) === 'review' ? 'warning' : headerStatusTone(report.status) === 'rejected' ? 'danger' : 'neutral'} />,
+      value: (
+        <StatusChip
+          label={reportStatusLabel(report.status, isPolish)}
+          tone={
+            headerStatusTone(report.status) === 'approved'
+              ? 'success'
+              : headerStatusTone(report.status) === 'review'
+                ? 'warning'
+                : headerStatusTone(report.status) === 'rejected'
+                  ? 'danger'
+                  : 'neutral'
+          }
+        />
+      ),
     },
-    { id: 'language', label: isPolish ? 'Język' : 'Language', value: report.language?.toUpperCase() || '—' },
+    {
+      id: 'language',
+      label: isPolish ? 'Język' : 'Language',
+      value: report.language?.toUpperCase() || '—',
+    },
     { id: 'audience', label: isPolish ? 'Odbiorca' : 'Audience', value: report.audience || '—' },
-    { id: 'confidentiality', label: isPolish ? 'Poufność' : 'Confidentiality', value: report.confidentiality || '—' },
-    { id: 'approvedAt', label: isPolish ? 'Data zatwierdzenia' : 'Approved at', value: formatListDate(report.approvedAt), mono: true },
-    { id: 'publishedAt', label: isPolish ? 'Data publikacji' : 'Published at', value: formatListDate(report.publishedAt), mono: true },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', value: formatListDate(report.updatedAt), mono: true },
+    {
+      id: 'confidentiality',
+      label: isPolish ? 'Poufność' : 'Confidentiality',
+      value: report.confidentiality || '—',
+    },
+    {
+      id: 'approvedAt',
+      label: isPolish ? 'Data zatwierdzenia' : 'Approved at',
+      value: formatListDate(report.approvedAt),
+      mono: true,
+    },
+    {
+      id: 'publishedAt',
+      label: isPolish ? 'Data publikacji' : 'Published at',
+      value: formatListDate(report.publishedAt),
+      mono: true,
+    },
+    {
+      id: 'updatedAt',
+      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      value: formatListDate(report.updatedAt),
+      mono: true,
+    },
   ];
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
@@ -1332,7 +1620,10 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             </div>
           ) : null}
           {exportError ? (
-            <div className="rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+            <div
+              className="rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger"
+              role="alert"
+            >
               {exportError}
             </div>
           ) : null}
@@ -1375,7 +1666,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
               onClick={() => void downloadDocx()}
               className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              {exportingDocx ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {exportingDocx ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Download size={14} />
+              )}
               {isPolish ? 'Pobierz DOCX' : 'Download DOCX'}
             </button>
           ) : null}
@@ -1386,7 +1681,11 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
               onClick={() => void downloadPdf()}
               className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
-              {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {exportingPdf ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Download size={14} />
+              )}
               {isPolish ? 'Pobierz PDF' : 'Download PDF'}
             </button>
           ) : null}
@@ -1420,10 +1719,17 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         {sections.length === 0 ? (
           <div className="p-6">
             {viewMode === 'presentation' && presentationLoading ? (
-              <LoadingState template="panel" label={isPolish ? 'Wczytywanie widoku dla zarządu…' : 'Loading the executive view…'} />
+              <LoadingState
+                template="panel"
+                label={isPolish ? 'Wczytywanie widoku dla zarządu…' : 'Loading the executive view…'}
+              />
             ) : viewMode === 'presentation' && presentationError ? (
               <ErrorState
-                title={isPolish ? 'Nie udało się wczytać widoku dla zarządu' : 'Could not load the executive view'}
+                title={
+                  isPolish
+                    ? 'Nie udało się wczytać widoku dla zarządu'
+                    : 'Could not load the executive view'
+                }
                 description={presentationError}
                 onRetry={switchToPresentation}
               />

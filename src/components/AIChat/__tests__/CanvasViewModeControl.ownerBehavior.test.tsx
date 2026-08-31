@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 
 import {
-  CanvasViewModeControl,
   type CanvasViewMode,
+  CanvasViewModeControl,
 } from '@/components/AIChat/CanvasViewModeControl';
 
 function Harness() {

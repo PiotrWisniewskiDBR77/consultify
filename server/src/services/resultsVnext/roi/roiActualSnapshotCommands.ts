@@ -39,21 +39,28 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
-import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
-import { toDateOnlyString } from './roiCalculationRunCommands.js';
 // Reuses roiActualEntryCommands.ts's own validation error class for this
 // command's status guard, rather than introducing a 7th error class beyond
 // the 6 the design doc's §6 explicitly enumerates for handleRoiRouteError —
 // both represent the identical "case not in a trackable status" family of
 // failure.
 import { RoiActualEntryValidationError } from './roiActualEntryCommands.js';
-import { toRoiActualSnapshot, type RoiActualSnapshot, type RoiActualSnapshotRow } from './roiForecastActualTypes.js';
+import { toDateOnlyString } from './roiCalculationRunCommands.js';
+import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
+import {
+  type RoiActualSnapshot,
+  type RoiActualSnapshotRow,
+  toRoiActualSnapshot,
+} from './roiForecastActualTypes.js';
 import type { RoiCaseGranularity, RoiCaseRow } from './roiTypes.js';
 
 // ==========================================
@@ -88,11 +95,15 @@ function parseIsoDateLocal(dateStr: string): { year: number; month: number } {
   return { year: Number(match[1]), month: Number(match[2]) };
 }
 
-function countPeriodsInclusive(startStr: string, endStr: string, granularity: RoiCaseGranularity): number {
+function countPeriodsInclusive(
+  startStr: string,
+  endStr: string,
+  granularity: RoiCaseGranularity
+): number {
   const s = parseIsoDateLocal(startStr);
   const e = parseIsoDateLocal(endStr);
   if (granularity === 'monthly') {
-    return Math.max(1, (e.year * 12 + e.month) - (s.year * 12 + s.month) + 1);
+    return Math.max(1, e.year * 12 + e.month - (s.year * 12 + s.month) + 1);
   }
   return Math.max(1, e.year - s.year + 1);
 }
@@ -212,17 +223,24 @@ export async function publishRoiActualSnapshot(
         }
       }
 
-      const actualSimpleRoi = totalActualCosts > 0 ? (totalActualFinancialBenefits - totalActualCosts) / totalActualCosts : null;
+      const actualSimpleRoi =
+        totalActualCosts > 0
+          ? (totalActualFinancialBenefits - totalActualCosts) / totalActualCosts
+          : null;
 
       const analysisStart = toDateOnlyString(currentRow.analysis_start);
       const analysisEnd = toDateOnlyString(currentRow.analysis_end);
       let periodsExpectedCount = 0;
       if (analysisStart && analysisEnd) {
         const cappedEnd = minDateString(analysisEnd, asOfPeriodEnd);
-        periodsExpectedCount = cappedEnd >= analysisStart ? countPeriodsInclusive(analysisStart, cappedEnd, currentRow.granularity) : 0;
+        periodsExpectedCount =
+          cappedEnd >= analysisStart
+            ? countPeriodsInclusive(analysisStart, cappedEnd, currentRow.granularity)
+            : 0;
       }
       const periodsWithActualCount = periodKeys.size;
-      const coveragePct = periodsExpectedCount > 0 ? (periodsWithActualCount / periodsExpectedCount) * 100 : null;
+      const coveragePct =
+        periodsExpectedCount > 0 ? (periodsWithActualCount / periodsExpectedCount) * 100 : null;
 
       const sequenceResult = await client.query<{ next_sequence: string }>(
         `SELECT COALESCE(MAX(sequence_number), 0) + 1 AS next_sequence
@@ -258,7 +276,9 @@ export async function publishRoiActualSnapshot(
       );
       const snapshotRow = insertResult.rows[0];
       if (!snapshotRow) {
-        throw new Error('[publishRoiActualSnapshot] insert into rvn_roi_actual_snapshots returned no row');
+        throw new Error(
+          '[publishRoiActualSnapshot] insert into rvn_roi_actual_snapshots returned no row'
+        );
       }
 
       await client.query(
@@ -293,7 +313,11 @@ export async function publishRoiActualSnapshot(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { caseId, actualSnapshotId: result.actualSnapshotId, sequenceNumber: result.sequenceNumber },
+        payload: {
+          caseId,
+          actualSnapshotId: result.actualSnapshotId,
+          sequenceNumber: result.sequenceNumber,
+        },
       } satisfies AtomicEventInput;
     },
   });

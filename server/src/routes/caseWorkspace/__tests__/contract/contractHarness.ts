@@ -61,8 +61,8 @@ import { randomUUID } from 'node:crypto';
 import express, { type Express } from 'express';
 import { Pool } from 'pg';
 
-import caseWorkspaceRoutes from '../../index.js';
 import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
+import caseWorkspaceRoutes from '../../index.js';
 
 export const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 
@@ -95,7 +95,11 @@ const REQUIRED_TABLES = [
  */
 export async function isContractDbReachable(): Promise<boolean> {
   if (!REAL_DB_REQUESTED) return false;
-  const probe = new Pool({ connectionString: CONNECTION_STRING, max: 1, connectionTimeoutMillis: 4000 });
+  const probe = new Pool({
+    connectionString: CONNECTION_STRING,
+    max: 1,
+    connectionTimeoutMillis: 4000,
+  });
   try {
     const result = await probe.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
@@ -222,7 +226,13 @@ export class ContractFixtures {
     await this.control.query(
       `INSERT INTO v8_execution_runs (run_id, organization_id, context_snapshot_id, initiator_user_id, state, plan_version, goal)
          VALUES ($1, $2, $3, $4, 'drafting', 1, $5)`,
-      [runId, orgId, `cw-contract-ctx-${randomUUID()}`, initiatorUserId, `CW contract run (${label})`]
+      [
+        runId,
+        orgId,
+        `cw-contract-ctx-${randomUUID()}`,
+        initiatorUserId,
+        `CW contract run (${label})`,
+      ]
     );
     this.runIds.add(runId);
     return runId;
@@ -251,7 +261,9 @@ export class ContractFixtures {
       await this.control
         .query(`DELETE FROM case_workspace_run_bindings WHERE run_id = $1`, [runId])
         .catch(() => undefined);
-      await this.control.query(`DELETE FROM v8_execution_runs WHERE run_id = $1`, [runId]).catch(() => undefined);
+      await this.control
+        .query(`DELETE FROM v8_execution_runs WHERE run_id = $1`, [runId])
+        .catch(() => undefined);
     }
     for (const projectId of this.projectIds) {
       await this.control
@@ -280,8 +292,12 @@ export class ContractFixtures {
           [projectId]
         )
         .catch(() => undefined);
-      await this.control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
-      await this.control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
+      await this.control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
+      await this.control
+        .query(`DELETE FROM projects WHERE id = $1`, [projectId])
+        .catch(() => undefined);
     }
     for (const userId of this.userIds) {
       await this.control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
@@ -290,7 +306,9 @@ export class ContractFixtures {
       await this.control
         .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
         .catch(() => undefined);
-      await this.control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await this.control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
     this.runIds.clear();
     this.projectIds.clear();

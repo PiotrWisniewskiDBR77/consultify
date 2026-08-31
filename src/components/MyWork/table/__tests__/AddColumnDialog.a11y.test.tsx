@@ -56,9 +56,7 @@ describe('AddColumnDialog — a11y dialog contract', () => {
     render(
       <Trigger>
         {(open, close) =>
-          open && (
-            <AddColumnDialog open onClose={close} onAdd={vi.fn()} existingKeys={[]} />
-          )
+          open && <AddColumnDialog open onClose={close} onAdd={vi.fn()} existingKeys={[]} />
         }
       </Trigger>
     );

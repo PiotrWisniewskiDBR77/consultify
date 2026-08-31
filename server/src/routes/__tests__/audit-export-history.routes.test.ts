@@ -1,10 +1,11 @@
 import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import routes from '../admin/audit-export-history.routes.js';
 const get = vi.fn(),
   all = vi.fn();
-let user: any = { id: 'u1', organizationId: 'org1', role: 'admin' };
+const user: any = { id: 'u1', organizationId: 'org1', role: 'admin' };
 vi.mock('../../utils/DbPromise.js', () => ({
   get: (...a: any[]) => get(...a),
   all: (...a: any[]) => all(...a),

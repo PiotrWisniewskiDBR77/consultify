@@ -192,7 +192,14 @@ export const PlanView: React.FC<PlanViewProps> = ({
    * właśnie zapisaną tutaj).
    */
   const [local, setLocal] = useState<PlanWorkingState | null>(() =>
-    planVersion ? { planVersion, graph: graphFor(planVersion, graph), draftGraph: graphFor(planVersion, graph), dirty: false } : null
+    planVersion
+      ? {
+          planVersion,
+          graph: graphFor(planVersion, graph),
+          draftGraph: graphFor(planVersion, graph),
+          dirty: false,
+        }
+      : null
   );
   const [editMode, setEditMode] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
@@ -271,14 +278,22 @@ export const PlanView: React.FC<PlanViewProps> = ({
     setSaveBusy(false);
     if (!result.ok) {
       setNotice({
-        tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+        tone:
+          result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+            ? 'warning'
+            : 'critical',
         text: result.failure.message,
         refresh: result.failure.refreshSuggested,
       });
       return;
     }
     const savedGraph = graphFor(result.value, null);
-    setLocal({ planVersion: result.value, graph: savedGraph, draftGraph: savedGraph, dirty: false });
+    setLocal({
+      planVersion: result.value,
+      graph: savedGraph,
+      draftGraph: savedGraph,
+      dirty: false,
+    });
     setNotice({
       tone: 'success',
       text:

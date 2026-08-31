@@ -21,14 +21,20 @@ import {
   determineResultQuality,
   PERIOD_JUMP_MATERIALITY_ANCHOR_PCT,
   PERIOD_JUMP_RELATIVE_THRESHOLD_PCT,
+  type PeriodObservation,
   PROVISIONAL_MATERIALITY_THRESHOLD_PCT,
   severityForResidual,
-  type PeriodObservation,
   type WaterfallRow,
 } from '../statementReconciliationService.js';
 
 function row(overrides: Partial<WaterfallRow>): WaterfallRow {
-  return { bucket: 'MAPPED', sourceAmount: 0, mappedAmount: null, signConvention: 'NATURAL', ...overrides };
+  return {
+    bucket: 'MAPPED',
+    sourceAmount: 0,
+    mappedAmount: null,
+    signConvention: 'NATURAL',
+    ...overrides,
+  };
 }
 
 describe('computeWaterfall', () => {
@@ -72,7 +78,9 @@ describe('computeWaterfall', () => {
   });
 
   it('RECLASS rows contribute their full value to canonicalTotal (relocated, not destroyed)', () => {
-    const totals = computeWaterfall([row({ bucket: 'RECLASS', sourceAmount: 75_000, mappedAmount: 75_000 })]);
+    const totals = computeWaterfall([
+      row({ bucket: 'RECLASS', sourceAmount: 75_000, mappedAmount: 75_000 }),
+    ]);
     expect(totals.reclassNetTotal).toBe(75_000);
     expect(totals.canonicalTotal).toBe(75_000);
     expect(totals.residual).toBe(0);
@@ -80,8 +88,18 @@ describe('computeWaterfall', () => {
 
   it('a balanced ELIMINATION pair (NATURAL debit + CONTRA credit) nets to zero contribution', () => {
     const totals = computeWaterfall([
-      row({ bucket: 'ELIMINATION', sourceAmount: 500_000, mappedAmount: 500_000, signConvention: 'NATURAL' }),
-      row({ bucket: 'ELIMINATION', sourceAmount: -500_000, mappedAmount: 500_000, signConvention: 'CONTRA' }),
+      row({
+        bucket: 'ELIMINATION',
+        sourceAmount: 500_000,
+        mappedAmount: 500_000,
+        signConvention: 'NATURAL',
+      }),
+      row({
+        bucket: 'ELIMINATION',
+        sourceAmount: -500_000,
+        mappedAmount: 500_000,
+        signConvention: 'CONTRA',
+      }),
     ]);
     expect(totals.eliminationNetTotal).toBe(0);
     expect(totals.canonicalTotal).toBe(0);
@@ -89,8 +107,18 @@ describe('computeWaterfall', () => {
 
   it('an unbalanced ELIMINATION pair leaves a nonzero net that surfaces as residual', () => {
     const totals = computeWaterfall([
-      row({ bucket: 'ELIMINATION', sourceAmount: 700_000, mappedAmount: 700_000, signConvention: 'NATURAL' }),
-      row({ bucket: 'ELIMINATION', sourceAmount: -500_000, mappedAmount: 500_000, signConvention: 'CONTRA' }),
+      row({
+        bucket: 'ELIMINATION',
+        sourceAmount: 700_000,
+        mappedAmount: 700_000,
+        signConvention: 'NATURAL',
+      }),
+      row({
+        bucket: 'ELIMINATION',
+        sourceAmount: -500_000,
+        mappedAmount: 500_000,
+        signConvention: 'CONTRA',
+      }),
     ]);
     expect(totals.eliminationNetTotal).toBe(200_000);
     // sourceTotal(200,000) == canonicalTotal(200,000) here -> residual is 0 at THIS layer. The
@@ -101,7 +129,9 @@ describe('computeWaterfall', () => {
   });
 
   it('a MISSING value (mappedAmount null) contributes zero, not a fabricated 0 masquerading as PRESENT_ZERO', () => {
-    const totals = computeWaterfall([row({ bucket: 'MAPPED', sourceAmount: 0, mappedAmount: null })]);
+    const totals = computeWaterfall([
+      row({ bucket: 'MAPPED', sourceAmount: 0, mappedAmount: null }),
+    ]);
     expect(totals.canonicalTotal).toBe(0);
     expect(totals.residual).toBe(0);
   });
@@ -119,8 +149,12 @@ describe('computeWaterfall', () => {
 
 describe('determineReconciliationStatus', () => {
   it('CLEAN when residual is exactly zero', () => {
-    const totals = computeWaterfall([row({ bucket: 'MAPPED', sourceAmount: 100, mappedAmount: 100 })]);
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('CLEAN');
+    const totals = computeWaterfall([
+      row({ bucket: 'MAPPED', sourceAmount: 100, mappedAmount: 100 }),
+    ]);
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'CLEAN'
+    );
   });
 
   it('WITHIN_TOLERANCE when residual is nonzero but under the materiality threshold', () => {
@@ -128,7 +162,9 @@ describe('determineReconciliationStatus', () => {
       row({ bucket: 'MAPPED', sourceAmount: 980_000, mappedAmount: 980_000 }),
       row({ bucket: 'DUPLICATE', sourceAmount: 10_000 }), // 10,000 / 990,000 ≈ 1.01% < 5%
     ]);
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('WITHIN_TOLERANCE');
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'WITHIN_TOLERANCE'
+    );
   });
 
   it('EXCEEDS_MATERIALITY when residual exceeds the threshold — the CD Projekt regression shape', () => {
@@ -140,7 +176,9 @@ describe('determineReconciliationStatus', () => {
       row({ bucket: 'MAPPED', sourceAmount: 500_000, mappedAmount: 500_000 }), // e.g. "Operating profit" -> EBIT
       row({ bucket: 'DUPLICATE', sourceAmount: 620_000 }), // e.g. "EBIT (reported)" -> same EBIT cell, different value
     ]);
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('EXCEEDS_MATERIALITY');
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'EXCEEDS_MATERIALITY'
+    );
     expect(totals.residual).toBe(620_000);
   });
 
@@ -149,7 +187,9 @@ describe('determineReconciliationStatus', () => {
       row({ bucket: 'MAPPED', sourceAmount: 100, mappedAmount: 100 }),
       row({ bucket: 'DUPLICATE', sourceAmount: -100 }),
     ]);
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('EXCEEDS_MATERIALITY');
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'EXCEEDS_MATERIALITY'
+    );
   });
 });
 
@@ -228,31 +268,49 @@ describe('determineReconciliationStatus / determineResultQuality with coverage l
   /** The real Apator PASS A proportion: 212 of 280 line-values with no P0 canonical target. */
   const apatorShape = () =>
     computeWaterfall([
-      ...Array.from({ length: 68 }, () => row({ bucket: 'MAPPED', sourceAmount: 1_000, mappedAmount: 1_000 })),
-      ...Array.from({ length: 212 }, () => row({ bucket: 'EXCLUDED', sourceAmount: 1_000, coverageLoss: true })),
+      ...Array.from({ length: 68 }, () =>
+        row({ bucket: 'MAPPED', sourceAmount: 1_000, mappedAmount: 1_000 })
+      ),
+      ...Array.from({ length: 212 }, () =>
+        row({ bucket: 'EXCLUDED', sourceAmount: 1_000, coverageLoss: true })
+      ),
     ]);
 
   it('THE BUG: residual is exactly 0 yet three quarters of the source never arrived — this must not read CLEAN', () => {
     const totals = apatorShape();
     expect(totals.residual).toBe(0);
     expect(determineResidualStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('CLEAN'); // the old answer
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).not.toBe('CLEAN');
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('WITHIN_TOLERANCE');
-    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('PROVISIONAL');
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).not.toBe(
+      'CLEAN'
+    );
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'WITHIN_TOLERANCE'
+    );
+    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'PROVISIONAL'
+    );
   });
 
   it('coverage loss never escalates to EXCEEDS_MATERIALITY on its own — DEC-FIN-009 marks, it does not block the readiness gate', () => {
     const totals = apatorShape();
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).not.toBe('EXCEEDS_MATERIALITY');
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).not.toBe(
+      'EXCEEDS_MATERIALITY'
+    );
   });
 
   it('a single immaterial lost row still forbids CLEAN, but only reaches CONDITIONAL', () => {
     const totals = computeWaterfall([
-      ...Array.from({ length: 99 }, () => row({ bucket: 'MAPPED', sourceAmount: 10_000, mappedAmount: 10_000 })),
+      ...Array.from({ length: 99 }, () =>
+        row({ bucket: 'MAPPED', sourceAmount: 10_000, mappedAmount: 10_000 })
+      ),
       row({ bucket: 'UNMAPPED', sourceAmount: 1 }), // ~0.0001% of source value
     ]);
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('WITHIN_TOLERANCE');
-    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('CONDITIONAL');
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'WITHIN_TOLERANCE'
+    );
+    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'CONDITIONAL'
+    );
   });
 
   it('perfect coverage and zero residual is still CLEAN on both axes (no over-firing)', () => {
@@ -260,7 +318,9 @@ describe('determineReconciliationStatus / determineResultQuality with coverage l
       row({ bucket: 'MAPPED', sourceAmount: 1_000, mappedAmount: 1_000 }),
       row({ bucket: 'EXCLUDED', sourceAmount: 50 }),
     ]);
-    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('CLEAN');
+    expect(determineReconciliationStatus(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'CLEAN'
+    );
     expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('CLEAN');
   });
 
@@ -269,13 +329,19 @@ describe('determineReconciliationStatus / determineResultQuality with coverage l
       row({ bucket: 'MAPPED', sourceAmount: 500_000, mappedAmount: 500_000 }),
       row({ bucket: 'DUPLICATE', sourceAmount: 620_000 }),
     ]);
-    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe('PROVISIONAL');
+    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT)).toBe(
+      'PROVISIONAL'
+    );
   });
 
   it('a period-jump warning alone marks the pack CONDITIONAL, never PROVISIONAL', () => {
-    const totals = computeWaterfall([row({ bucket: 'MAPPED', sourceAmount: 1_000, mappedAmount: 1_000 })]);
+    const totals = computeWaterfall([
+      row({ bucket: 'MAPPED', sourceAmount: 1_000, mappedAmount: 1_000 }),
+    ]);
     expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT, 0)).toBe('CLEAN');
-    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT, 3)).toBe('CONDITIONAL');
+    expect(determineResultQuality(totals, PROVISIONAL_MATERIALITY_THRESHOLD_PCT, 3)).toBe(
+      'CONDITIONAL'
+    );
   });
 });
 
@@ -302,8 +368,22 @@ describe('detectPeriodOverPeriodJumps (RC-05)', () => {
 
   /** Total assets carry the materiality anchor; they are also the "normal" control series. */
   const apatorTotalAssets = [
-    obs({ canonicalLineId: 'fsl-bs-total-assets', lineCode: 'TOTAL_ASSETS', periodId: 'p2023', periodLabel: 'FY2023', periodEnd: '2023-12-31', value: 1_408_419 }),
-    obs({ canonicalLineId: 'fsl-bs-total-assets', lineCode: 'TOTAL_ASSETS', periodId: 'p2024', periodLabel: 'FY2024', periodEnd: '2024-12-31', value: 1_337_264 }),
+    obs({
+      canonicalLineId: 'fsl-bs-total-assets',
+      lineCode: 'TOTAL_ASSETS',
+      periodId: 'p2023',
+      periodLabel: 'FY2023',
+      periodEnd: '2023-12-31',
+      value: 1_408_419,
+    }),
+    obs({
+      canonicalLineId: 'fsl-bs-total-assets',
+      lineCode: 'TOTAL_ASSETS',
+      periodId: 'p2024',
+      periodLabel: 'FY2024',
+      periodEnd: '2024-12-31',
+      value: 1_337_264,
+    }),
   ];
 
   it('THE BUG: Apator trade payables 93 591 -> 722 (-99.2%) is reported, with both periods and the % change', () => {
@@ -344,8 +424,22 @@ describe('detectPeriodOverPeriodJumps (RC-05)', () => {
   it('an immaterial line may swing freely — 3 -> 300 (+9 900%) on a 1.4bn pack is noise, not a finding', () => {
     const findings = detectPeriodOverPeriodJumps([
       ...apatorTotalAssets,
-      obs({ canonicalLineId: 'tiny', lineCode: 'TINY', periodId: 'p2023', periodLabel: 'FY2023', periodEnd: '2023-12-31', value: 3 }),
-      obs({ canonicalLineId: 'tiny', lineCode: 'TINY', periodId: 'p2024', periodLabel: 'FY2024', periodEnd: '2024-12-31', value: 300 }),
+      obs({
+        canonicalLineId: 'tiny',
+        lineCode: 'TINY',
+        periodId: 'p2023',
+        periodLabel: 'FY2023',
+        periodEnd: '2023-12-31',
+        value: 3,
+      }),
+      obs({
+        canonicalLineId: 'tiny',
+        lineCode: 'TINY',
+        periodId: 'p2024',
+        periodLabel: 'FY2024',
+        periodEnd: '2024-12-31',
+        value: 300,
+      }),
     ]);
     expect(findings).toHaveLength(0);
   });
@@ -382,8 +476,20 @@ describe('detectPeriodOverPeriodJumps (RC-05)', () => {
   it('series are keyed per entity/line/scope/basis — two entities never bleed into one another', () => {
     const findings = detectPeriodOverPeriodJumps([
       ...apatorTotalAssets,
-      obs({ entityId: 'e1', periodId: 'p2023', periodLabel: 'FY2023', periodEnd: '2023-12-31', value: 93_591 }),
-      obs({ entityId: 'e2', periodId: 'p2024', periodLabel: 'FY2024', periodEnd: '2024-12-31', value: 722 }),
+      obs({
+        entityId: 'e1',
+        periodId: 'p2023',
+        periodLabel: 'FY2023',
+        periodEnd: '2023-12-31',
+        value: 93_591,
+      }),
+      obs({
+        entityId: 'e2',
+        periodId: 'p2024',
+        periodLabel: 'FY2024',
+        periodEnd: '2024-12-31',
+        value: 722,
+      }),
     ]);
     expect(findings.filter((f) => f.lineCode === 'AP')).toHaveLength(0);
   });
@@ -399,7 +505,9 @@ describe('detectPeriodOverPeriodJumps (RC-05)', () => {
       obs({ periodId: 'p2023', periodLabel: 'FY2023', periodEnd: '2023-12-31', value: 93_591 }),
       ...apatorTotalAssets,
     ]);
-    expect(backwards.filter((f) => f.lineCode === 'AP')).toEqual(forwards.filter((f) => f.lineCode === 'AP'));
+    expect(backwards.filter((f) => f.lineCode === 'AP')).toEqual(
+      forwards.filter((f) => f.lineCode === 'AP')
+    );
   });
 
   it('thresholds are the documented ones and are overridable per call', () => {
@@ -412,7 +520,11 @@ describe('detectPeriodOverPeriodJumps (RC-05)', () => {
       obs({ periodId: 'p2024', periodLabel: 'FY2024', periodEnd: '2024-12-31', value: 60_000 }), // -40%
     ];
     expect(detectPeriodOverPeriodJumps(series).filter((f) => f.lineCode === 'AP')).toHaveLength(0);
-    expect(detectPeriodOverPeriodJumps(series, { relativeThresholdPct: 0.3 }).filter((f) => f.lineCode === 'AP')).toHaveLength(1);
+    expect(
+      detectPeriodOverPeriodJumps(series, { relativeThresholdPct: 0.3 }).filter(
+        (f) => f.lineCode === 'AP'
+      )
+    ).toHaveLength(1);
   });
 
   it('is unit-agnostic: the same statement filed in UNITS instead of THOUSANDS yields the same findings', () => {
@@ -422,8 +534,22 @@ describe('detectPeriodOverPeriodJumps (RC-05)', () => {
       obs({ periodId: 'p2024', periodLabel: 'FY2024', periodEnd: '2024-12-31', value: 722 }),
     ]);
     const units = detectPeriodOverPeriodJumps([
-      obs({ canonicalLineId: 'fsl-bs-total-assets', lineCode: 'TOTAL_ASSETS', periodId: 'p2023', periodLabel: 'FY2023', periodEnd: '2023-12-31', value: 1_408_419_000 }),
-      obs({ canonicalLineId: 'fsl-bs-total-assets', lineCode: 'TOTAL_ASSETS', periodId: 'p2024', periodLabel: 'FY2024', periodEnd: '2024-12-31', value: 1_337_264_000 }),
+      obs({
+        canonicalLineId: 'fsl-bs-total-assets',
+        lineCode: 'TOTAL_ASSETS',
+        periodId: 'p2023',
+        periodLabel: 'FY2023',
+        periodEnd: '2023-12-31',
+        value: 1_408_419_000,
+      }),
+      obs({
+        canonicalLineId: 'fsl-bs-total-assets',
+        lineCode: 'TOTAL_ASSETS',
+        periodId: 'p2024',
+        periodLabel: 'FY2024',
+        periodEnd: '2024-12-31',
+        value: 1_337_264_000,
+      }),
       obs({ periodId: 'p2023', periodLabel: 'FY2023', periodEnd: '2023-12-31', value: 93_591_000 }),
       obs({ periodId: 'p2024', periodLabel: 'FY2024', periodEnd: '2024-12-31', value: 722_000 }),
     ]);

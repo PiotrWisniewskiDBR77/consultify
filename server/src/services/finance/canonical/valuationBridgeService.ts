@@ -50,10 +50,15 @@ export interface BridgeComponentInput {
 
 export type BridgeErrorCode = 'AS_OF_MISMATCH' | 'NEGATIVE_AMOUNT';
 
-export type AssertAsOfResult = { ok: true } | { ok: false; code: 'AS_OF_MISMATCH'; message: string };
+export type AssertAsOfResult =
+  | { ok: true }
+  | { ok: false; code: 'AS_OF_MISMATCH'; message: string };
 
 /** Mirrors `finance_bridge_check_as_of_alignment()` (WP-D09b migration file 2, section 4). */
-export function assertAsOfAlignment(headerAsOfDate: string, components: readonly Pick<BridgeComponentInput, 'asOfDate' | 'componentKind'>[]): AssertAsOfResult {
+export function assertAsOfAlignment(
+  headerAsOfDate: string,
+  components: readonly Pick<BridgeComponentInput, 'asOfDate' | 'componentKind'>[]
+): AssertAsOfResult {
   for (const c of components) {
     if (c.asOfDate !== headerAsOfDate) {
       return {
@@ -69,7 +74,11 @@ export function assertAsOfAlignment(headerAsOfDate: string, components: readonly
 export interface ComputeEquityValueResult {
   ok: true;
   equityValueDecimal: number;
-  breakdown: { componentKind: BridgeComponentKind; sign: BridgeComponentSign; signedAmount: number }[];
+  breakdown: {
+    componentKind: BridgeComponentKind;
+    sign: BridgeComponentSign;
+    signedAmount: number;
+  }[];
 }
 
 export type ComputeEquityValueError = { ok: false; code: BridgeErrorCode; message: string };
@@ -88,7 +97,11 @@ export function computeEquityValue(
 ): ComputeEquityValueResult | ComputeEquityValueError {
   for (const c of components) {
     if (c.amountDecimal < 0) {
-      return { ok: false, code: 'NEGATIVE_AMOUNT', message: `component ${c.componentKind} has a negative amountDecimal (${c.amountDecimal}) — magnitude must be non-negative, direction comes from sign` };
+      return {
+        ok: false,
+        code: 'NEGATIVE_AMOUNT',
+        message: `component ${c.componentKind} has a negative amountDecimal (${c.amountDecimal}) — magnitude must be non-negative, direction comes from sign`,
+      };
     }
   }
   const breakdown = components.map((c) => ({
@@ -96,7 +109,8 @@ export function computeEquityValue(
     sign: c.sign,
     signedAmount: c.sign === 'SUBTRACT_FROM_EV' ? -c.amountDecimal : c.amountDecimal,
   }));
-  const equityValueDecimal = enterpriseValue + breakdown.reduce((sum, b) => sum + b.signedAmount, 0);
+  const equityValueDecimal =
+    enterpriseValue + breakdown.reduce((sum, b) => sum + b.signedAmount, 0);
   return { ok: true, equityValueDecimal, breakdown };
 }
 
@@ -118,12 +132,14 @@ export interface WriteBridgeParams {
 
 export type WriteBridgeResult = { ok: true; bridgeId: string } | ComputeEquityValueError;
 
-export async function writeBridge(params: WriteBridgeParams & {tx?:any}): Promise<WriteBridgeResult> {
+export async function writeBridge(
+  params: WriteBridgeParams & { tx?: any }
+): Promise<WriteBridgeResult> {
   const alignment = assertAsOfAlignment(params.asOfDate, params.components);
   if (!alignment.ok) return alignment;
 
   const bridgeId = uuidv4();
-  const write=async (tx:any) => {
+  const write = async (tx: any) => {
     await tx.queryRun(
       `INSERT INTO finance_valuation_ev_equity_bridge (
          id, organization_id, business_version_id, as_of_date, enterprise_value_decimal, equity_value_decimal, created_by,
@@ -135,28 +151,56 @@ export async function writeBridge(params: WriteBridgeParams & {tx?:any}): Promis
          source_working_revision_id = EXCLUDED.source_working_revision_id,
          source_working_revision_version = EXCLUDED.source_working_revision_version, updated_at = now()
        RETURNING id`,
-      [bridgeId, params.organizationId, params.businessVersionId, params.asOfDate, params.enterpriseValueDecimal, params.equityValueDecimal, params.createdBy, params.sourceWorkingRevisionId ?? null, params.sourceWorkingRevisionVersion ?? null]
+      [
+        bridgeId,
+        params.organizationId,
+        params.businessVersionId,
+        params.asOfDate,
+        params.enterpriseValueDecimal,
+        params.equityValueDecimal,
+        params.createdBy,
+        params.sourceWorkingRevisionId ?? null,
+        params.sourceWorkingRevisionVersion ?? null,
+      ]
     );
     const headerId = (
-      await tx.queryOne(`SELECT id FROM finance_valuation_ev_equity_bridge WHERE business_version_id = ?`, [params.businessVersionId])
+      await tx.queryOne(
+        `SELECT id FROM finance_valuation_ev_equity_bridge WHERE business_version_id = ?`,
+        [params.businessVersionId]
+      )
     )?.id;
     if (!headerId) throw new Error('writeBridge: header row not found after upsert');
 
     // Additive-only replace: delete this bridge's own components (never another bridge's — scoped
     // by bridge_id) then re-insert the full, freshly-validated set in the SAME transaction, so a
     // recompute never leaves a stale component alongside a new one at the same sequence_order.
-    await tx.queryRun(`DELETE FROM finance_valuation_ev_equity_bridge_components WHERE bridge_id = ?`, [headerId]);
+    await tx.queryRun(
+      `DELETE FROM finance_valuation_ev_equity_bridge_components WHERE bridge_id = ?`,
+      [headerId]
+    );
     for (const c of params.components) {
       await tx.queryRun(
         `INSERT INTO finance_valuation_ev_equity_bridge_components (
            id, organization_id, bridge_id, sequence_order, component_kind, sign, amount_decimal, as_of_date, rationale, created_by
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [uuidv4(), params.organizationId, headerId, c.sequenceOrder, c.componentKind, c.sign, c.amountDecimal, c.asOfDate, c.rationale ?? null, params.createdBy]
+        [
+          uuidv4(),
+          params.organizationId,
+          headerId,
+          c.sequenceOrder,
+          c.componentKind,
+          c.sign,
+          c.amountDecimal,
+          c.asOfDate,
+          c.rationale ?? null,
+          params.createdBy,
+        ]
       );
     }
     return headerId;
   };
-  if(params.tx)await write(params.tx);else await withPinnedPostgresTransaction(write);
+  if (params.tx) await write(params.tx);
+  else await withPinnedPostgresTransaction(write);
 
   return { ok: true, bridgeId };
 }

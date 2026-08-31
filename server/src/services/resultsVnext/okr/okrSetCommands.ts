@@ -35,15 +35,17 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
-
 import {
   buildObjectivesSnapshotFragment,
   hasSufficientKeyResultCoverage,
@@ -55,15 +57,15 @@ import type {
   OkrSetApprovedSnapshotRow,
 } from './okrSetApprovedSnapshotTypes.js';
 import {
-  toOkrSetApprovedSnapshotSummary,
   type OkrSetApprovedSnapshotSummary,
+  toOkrSetApprovedSnapshotSummary,
 } from './okrSetApprovedSnapshotTypes.js';
 import {
-  toOkrSet,
   type OkrSet,
   type OkrSetRow,
   type OkrSetScopeType,
   type OkrSetStatus,
+  toOkrSet,
 } from './okrSetTypes.js';
 
 // ==========================================
@@ -249,7 +251,9 @@ async function loadOkrSetResult(
 ): Promise<CreateOkrSetResult> {
   const row = await loadOkrSetRow(client, setId, organizationId);
   if (!row) {
-    throw new Error(`[createOkrSet] winning set ${setId} could not be re-read after SAVEPOINT rollback`);
+    throw new Error(
+      `[createOkrSet] winning set ${setId} could not be re-read after SAVEPOINT rollback`
+    );
   }
   return { set: toOkrSet(row), created: false };
 }
@@ -293,9 +297,13 @@ export async function createOkrSet(
   // it, so the contract is visible at the call site" — validated for EVERY
   // scopeType, not just 'company'.
   if (!scopeId || !scopeId.trim()) {
-    throw new OkrSetValidationError('scopeId is required (and must be explicit for scope_type=\'company\')', 'SCOPE_ID_REQUIRED', {
-      scopeType,
-    });
+    throw new OkrSetValidationError(
+      "scopeId is required (and must be explicit for scope_type='company')",
+      'SCOPE_ID_REQUIRED',
+      {
+        scopeType,
+      }
+    );
   }
 
   // Captured inside applyMutation, read by buildEvent — same closure
@@ -371,7 +379,18 @@ export async function createOkrSet(
               owner_user_id, reviewer_user_id, title, carried_from_set_id, created_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            RETURNING *`,
-          [organizationId, programId, cycleId, scopeType, scopeId, ownerUserId, reviewerUserId, title, carriedFromSetId, createdBy]
+          [
+            organizationId,
+            programId,
+            cycleId,
+            scopeType,
+            scopeId,
+            ownerUserId,
+            reviewerUserId,
+            title,
+            carriedFromSetId,
+            createdBy,
+          ]
         );
         const inserted = insertResult.rows[0];
         if (!inserted) {
@@ -631,8 +650,14 @@ export const VISIBILITY_NARROWNESS_RANK: Record<string, number> = {
  * `ceilingMode` ranks `Infinity` (nothing can be narrow enough, also
  * fail-closed) — this function must never treat an unknown mode string as
  * automatically acceptable. */
-export function isVisibilityModeNarrowerOrEqual(candidateMode: string, ceilingMode: string): boolean {
-  return (VISIBILITY_NARROWNESS_RANK[candidateMode] ?? -1) >= (VISIBILITY_NARROWNESS_RANK[ceilingMode] ?? Infinity);
+export function isVisibilityModeNarrowerOrEqual(
+  candidateMode: string,
+  ceilingMode: string
+): boolean {
+  return (
+    (VISIBILITY_NARROWNESS_RANK[candidateMode] ?? -1) >=
+    (VISIBILITY_NARROWNESS_RANK[ceilingMode] ?? Infinity)
+  );
 }
 
 /** D19: deliberately wider than `OKR_SET_DRAFT_EDITABLE_STATUSES` — a
@@ -802,7 +827,10 @@ export async function narrowOkrSetVisibility(
  * layer its ≥2-KR-per-Objective check on top, e.g.:
  *   isOkrSetReadyForSubmissionEligible(s) && hasSufficientKeyResultCoverage(s)
  * — do not replace this function's body when E003 lands; wrap it. */
-export function isOkrSetReadyForSubmissionEligible(setRow: OkrSetRow): { eligible: boolean; reason?: string } {
+export function isOkrSetReadyForSubmissionEligible(setRow: OkrSetRow): {
+  eligible: boolean;
+  reason?: string;
+} {
   if (!setRow.reviewer_user_id) {
     return { eligible: false, reason: 'reviewer_not_assigned' };
   }
@@ -879,9 +907,18 @@ export async function submitOkrSetForApproval(
       // above is provably untouched — this is the ONLY new call, not a
       // replacement.
       const { snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, setId, organizationId);
-      const krCoverage = await hasSufficientKeyResultCoverage(client, setId, organizationId, snapshot.krMinRequired);
+      const krCoverage = await hasSufficientKeyResultCoverage(
+        client,
+        setId,
+        organizationId,
+        snapshot.krMinRequired
+      );
       if (!krCoverage.eligible) {
-        throw new OkrSetNotReadyForSubmissionError(setId, krCoverage.reason ?? 'unspecified', krCoverage.details);
+        throw new OkrSetNotReadyForSubmissionError(
+          setId,
+          krCoverage.reason ?? 'unspecified',
+          krCoverage.details
+        );
       }
 
       beforeState = { set: toOkrSet(currentRow) };
@@ -959,7 +996,11 @@ export async function buildOkrSetApprovalSnapshotPayload(
   client: PoolClient,
   setRow: OkrSetRow
 ): Promise<OkrSetApprovalSnapshotPayload> {
-  const objectives = await buildObjectivesSnapshotFragment(client, setRow.set_id, setRow.organization_id);
+  const objectives = await buildObjectivesSnapshotFragment(
+    client,
+    setRow.set_id,
+    setRow.organization_id
+  );
   return { set: toOkrSet(setRow), objectives };
 }
 
@@ -1059,7 +1100,9 @@ export async function approveOkrSet(
       );
       const snapshotRow = snapshotInsert.rows[0];
       if (!snapshotRow) {
-        throw new Error(`[approveOkrSet] insert into okr_vnext_approved_snapshots returned no row for ${setId}`);
+        throw new Error(
+          `[approveOkrSet] insert into okr_vnext_approved_snapshots returned no row for ${setId}`
+        );
       }
 
       beforeState = { set: toOkrSet(currentRow) };
@@ -1105,7 +1148,11 @@ export async function approveOkrSet(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { setId, snapshotId: result.snapshot.snapshotId, sequenceNumber: result.snapshot.sequenceNumber },
+        payload: {
+          setId,
+          snapshotId: result.snapshot.snapshotId,
+          sequenceNumber: result.snapshot.sequenceNumber,
+        },
       } satisfies AtomicEventInput;
     },
   });
@@ -1440,7 +1487,9 @@ interface CloseGateReflectionRow {
  * never at module-evaluation time, so by the time any of these commands
  * actually runs the whole module graph has already finished loading.
  */
-export async function closeOkrSet(input: CloseOkrSetInput): Promise<AtomicCommandOutcome<{ set: OkrSet }>> {
+export async function closeOkrSet(
+  input: CloseOkrSetInput
+): Promise<AtomicCommandOutcome<{ set: OkrSet }>> {
   const {
     setId,
     organizationId,
@@ -1458,7 +1507,8 @@ export async function closeOkrSet(input: CloseOkrSetInput): Promise<AtomicComman
   // note above visibly true at the exact call sites that rely on it — a
   // normal top-level import would work identically under ESM's live-
   // binding semantics, this is a readability choice, not a requirement.
-  const { OkrSetManagerReviewRequiredError, OkrSetSelfReviewRequiredError } = await import('./okrReviewCommands.js');
+  const { OkrSetManagerReviewRequiredError, OkrSetSelfReviewRequiredError } =
+    await import('./okrReviewCommands.js');
   const { OkrSetReflectionRequiredError } = await import('./okrReflectionCommands.js');
 
   let beforeState: Record<string, unknown> | null = null;
@@ -1532,11 +1582,15 @@ export async function closeOkrSet(input: CloseOkrSetInput): Promise<AtomicComman
              FROM okr_vnext_reflections WHERE set_id = $1 AND organization_id = $2`,
           [setId, organizationId]
         );
-        const reflectionByObjective = new Map(reflectionsResult.rows.map((r) => [r.objective_id, r]));
+        const reflectionByObjective = new Map(
+          reflectionsResult.rows.map((r) => [r.objective_id, r])
+        );
         const missingObjectiveIds: string[] = [];
         for (const objectiveRow of objectivesResult.rows) {
           const reflection = reflectionByObjective.get(objectiveRow.objective_id);
-          const scoreComplete = !!reflection && (reflection.final_score !== null || reflection.scoring_model_unsupported);
+          const scoreComplete =
+            !!reflection &&
+            (reflection.final_score !== null || reflection.scoring_model_unsupported);
           const narrativeComplete =
             !!reflection &&
             reflection.what_worked !== null &&

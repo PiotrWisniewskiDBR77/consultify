@@ -360,7 +360,10 @@ const VALUE_MEASUREMENT_CONFIDENCES: readonly ValueMeasurementConfidence[] = [
 const STATUSES_REQUIRING_ACTUAL: readonly ValueMeasurementStatus[] = ['CONFIRMED', 'NOT_ACHIEVED'];
 
 // Statuses that require actual_value to be absent.
-const STATUSES_FORBIDDING_ACTUAL: readonly ValueMeasurementStatus[] = ['UNMEASURED', 'EVIDENCE_MISSING'];
+const STATUSES_FORBIDDING_ACTUAL: readonly ValueMeasurementStatus[] = [
+  'UNMEASURED',
+  'EVIDENCE_MISSING',
+];
 
 // How many trailing consecutive CONFIRMED measurements are needed for
 // computeMetricValueOutcomeState() to read SUSTAINED rather than
@@ -371,7 +374,9 @@ const DEFAULT_MIN_CONSECUTIVE_CONFIRMED = 2;
 // canon's three timeline projections. Unrecognized event_type values fall
 // back to ['AUDIT'] in classifyHistoryEventProjections() below, since every
 // event is at minimum an audit fact.
-const HISTORY_EVENT_PROJECTIONS: Partial<Record<KnownHistoryEventType, readonly HistoryEventProjection[]>> = {
+const HISTORY_EVENT_PROJECTIONS: Partial<
+  Record<KnownHistoryEventType, readonly HistoryEventProjection[]>
+> = {
   CASE_STATUS_CHANGED: ['BUSINESS', 'AUDIT'],
   GOVERNANCE_TIER_CHANGED: ['AUDIT'],
   CLOSURE_AXIS_CHANGED: ['BUSINESS', 'AUDIT'],
@@ -494,7 +499,10 @@ async function insertHistoryEvent(
   client: PgTransactionClient,
   input: AppendCaseHistoryEventInput
 ): Promise<CaseHistoryEvent> {
-  const organizationId = requireNonBlank(input.organizationId, 'history_event_organization_id_required');
+  const organizationId = requireNonBlank(
+    input.organizationId,
+    'history_event_organization_id_required'
+  );
   const caseId = requireNonBlank(input.caseId, 'history_event_case_id_required');
   const eventType = requireNonBlank(input.eventType, 'history_event_type_required');
   const actorId = requireNonBlank(input.actorId, 'history_event_actor_id_required');
@@ -807,10 +815,7 @@ export async function recordValueMeasurement(
     VALUE_MEASUREMENT_STATUSES,
     'value_measurement_status_invalid'
   );
-  const measurementDate = requireNonBlank(
-    input.measurementDate,
-    'value_measurement_date_required'
-  );
+  const measurementDate = requireNonBlank(input.measurementDate, 'value_measurement_date_required');
   const confidence = requireEnum(
     input.confidence,
     VALUE_MEASUREMENT_CONFIDENCES,
@@ -893,7 +898,7 @@ export async function recordValueMeasurement(
       ]
     );
 
-    let measurementRow = inserted.rows[0];
+    const measurementRow = inserted.rows[0];
     if (!measurementRow) {
       // 0 rows only happens when dedupeKey is set and already claimed by a
       // prior insert (NULL dedupe_key values never collide). Idempotent
@@ -1012,7 +1017,9 @@ export async function listValueMeasurementsForCase(
   }
   if (filters?.status) {
     conditions.push('measurement_status = ?');
-    params.push(requireEnum(filters.status, VALUE_MEASUREMENT_STATUSES, 'value_measurement_status_invalid'));
+    params.push(
+      requireEnum(filters.status, VALUE_MEASUREMENT_STATUSES, 'value_measurement_status_invalid')
+    );
   }
   const rows = await queryAll<CaseWorkspaceValueMeasurementRow>(
     `SELECT * FROM case_workspace_value_measurements

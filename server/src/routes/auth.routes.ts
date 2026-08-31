@@ -20,6 +20,13 @@ import {
   quickAccessPinRateLimiter,
 } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
+import auditEventsService from '../services/AuditEventsService.js';
+import {
+  isQuickAccessEndpointEnabled,
+  QUICK_ACCESS_DISABLED_CODE,
+  QUICK_ACCESS_INVALID_PIN_CODE,
+  resolveQuickAccessAccountEmail,
+} from '../services/auth/quickAccessPinService.js';
 import {
   assertDemoPrincipalMayReceiveCredentials,
   DEMO_SESSION_EXPIRED_CODE,
@@ -28,13 +35,6 @@ import {
   DEMO_SIGNUP_ROLE,
   provisionPublicDemoAccount,
 } from '../services/demo/demoSignupProvisioning.js';
-import auditEventsService from '../services/AuditEventsService.js';
-import {
-  isQuickAccessEndpointEnabled,
-  QUICK_ACCESS_DISABLED_CODE,
-  QUICK_ACCESS_INVALID_PIN_CODE,
-  resolveQuickAccessAccountEmail,
-} from '../services/auth/quickAccessPinService.js';
 import legalService from '../services/legalService.js';
 import mfaService from '../services/MFAService.js';
 import {
@@ -43,14 +43,14 @@ import {
   isGenericOrganizationName,
 } from '../services/organizationIdentityService.js';
 import {
-  isPartnerEconomicsOperationAvailable,
-  PARTNER_ECONOMICS_POLICY_DECISION,
-} from '../services/partnerEconomicsPolicy.js';
-import {
   buildOrgSuspendedResponseBody,
   invalidatePlatformSuperAdminCache,
   isOrganizationSuspended,
 } from '../services/organizationSuspensionGuard.js';
+import {
+  isPartnerEconomicsOperationAvailable,
+  PARTNER_ECONOMICS_POLICY_DECISION,
+} from '../services/partnerEconomicsPolicy.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import slackService from '../services/slackService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';

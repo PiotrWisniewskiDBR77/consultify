@@ -12,12 +12,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { databaseConfig } from '../config/DatabaseConfig.js';
-import logger from '../utils/Logger.js';
+import { MIGRATION_PATTERN } from '../services/tablePlatform/migrationIdentity.js';
 import {
   compareMigrationFilenames,
   reconcileTablePlatformLedgerFromCanonical,
 } from '../services/tablePlatform/migrationRunner.js';
-import { MIGRATION_PATTERN } from '../services/tablePlatform/migrationIdentity.js';
+import logger from '../utils/Logger.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';
 
 const __filename_esm = fileURLToPath(import.meta.url);

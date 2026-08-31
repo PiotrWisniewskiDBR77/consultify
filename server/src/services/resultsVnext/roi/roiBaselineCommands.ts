@@ -10,23 +10,26 @@ import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
 import {
-  executeAtomicCommand,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  executeAtomicCommand,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
-import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE, RoiCaseValidationError } from './roiCaseCommands.js';
 import {
-  toRoiBaseline,
+  NON_EDITABLE_STATUSES,
+  ROI_EVENT_SOURCE,
+  RoiCaseValidationError,
+} from './roiCaseCommands.js';
+import {
   type RoiBaseline,
   type RoiBaselineConfidence,
   type RoiBaselineProjectionMethod,
   type RoiBaselineRow,
   type RoiCaseStatus,
+  toRoiBaseline,
 } from './roiTypes.js';
 
 const POLICY_VERSION_NOT_TRACKED = '';
@@ -184,27 +187,42 @@ export async function captureOrUpdateBaseline(
 
       const merged = {
         baseline_period_start:
-          edits.baselinePeriodStart !== undefined ? edits.baselinePeriodStart : currentRow.baseline_period_start,
+          edits.baselinePeriodStart !== undefined
+            ? edits.baselinePeriodStart
+            : currentRow.baseline_period_start,
         baseline_period_end:
-          edits.baselinePeriodEnd !== undefined ? edits.baselinePeriodEnd : currentRow.baseline_period_end,
+          edits.baselinePeriodEnd !== undefined
+            ? edits.baselinePeriodEnd
+            : currentRow.baseline_period_end,
         current_measured_value:
-          edits.currentMeasuredValue !== undefined ? edits.currentMeasuredValue : currentRow.current_measured_value,
+          edits.currentMeasuredValue !== undefined
+            ? edits.currentMeasuredValue
+            : currentRow.current_measured_value,
         current_measured_unit:
-          edits.currentMeasuredUnit !== undefined ? edits.currentMeasuredUnit : currentRow.current_measured_unit,
+          edits.currentMeasuredUnit !== undefined
+            ? edits.currentMeasuredUnit
+            : currentRow.current_measured_unit,
         current_measured_as_of:
-          edits.currentMeasuredAsOf !== undefined ? edits.currentMeasuredAsOf : currentRow.current_measured_as_of,
+          edits.currentMeasuredAsOf !== undefined
+            ? edits.currentMeasuredAsOf
+            : currentRow.current_measured_as_of,
         bau_projection_method: edits.bauProjectionMethod ?? currentRow.bau_projection_method,
         bau_growth_rate_pct:
-          edits.bauGrowthRatePct !== undefined ? edits.bauGrowthRatePct : currentRow.bau_growth_rate_pct,
+          edits.bauGrowthRatePct !== undefined
+            ? edits.bauGrowthRatePct
+            : currentRow.bau_growth_rate_pct,
         bau_reference_value:
-          edits.bauReferenceValue !== undefined ? edits.bauReferenceValue : currentRow.bau_reference_value,
+          edits.bauReferenceValue !== undefined
+            ? edits.bauReferenceValue
+            : currentRow.bau_reference_value,
         intervention_comparison_notes:
           edits.interventionComparisonNotes !== undefined
             ? edits.interventionComparisonNotes
             : currentRow.intervention_comparison_notes,
         source: edits.source !== undefined ? edits.source : currentRow.source,
         confidence: edits.confidence !== undefined ? edits.confidence : currentRow.confidence,
-        owner_user_id: edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
+        owner_user_id:
+          edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
       };
 
       const updateResult = await client.query<RoiBaselineRow>(

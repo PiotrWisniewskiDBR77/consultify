@@ -5,12 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { Api } from '../../services/api';
-import { formatListDateTime } from '../../utils/listDateFormat';
 import {
   getAiPolicy,
   getDataResidency,
   getRetentionSchedules,
 } from '../../services/enterpriseComplianceApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 const button =
   'inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)] disabled:opacity-50';

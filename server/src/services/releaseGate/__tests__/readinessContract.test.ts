@@ -18,8 +18,15 @@ import {
   type ReadinessDeps,
   type SqlMigrationStatus,
 } from '../../../startup/databaseReadiness.js';
-import { createMigrationsHealthHandler, createReadyHandler } from '../../../startup/readinessRoutes.js';
-import { evaluateSqlChain, isSqlChainAcceptable, type SqlChainEvaluation } from '../sqlChainEvaluator.js';
+import {
+  createMigrationsHealthHandler,
+  createReadyHandler,
+} from '../../../startup/readinessRoutes.js';
+import {
+  evaluateSqlChain,
+  isSqlChainAcceptable,
+  type SqlChainEvaluation,
+} from '../sqlChainEvaluator.js';
 
 const okSql = (over: Partial<SqlChainEvaluation> = {}): SqlChainEvaluation => ({
   state: 'ok',
@@ -38,7 +45,15 @@ const okSql = (over: Partial<SqlChainEvaluation> = {}): SqlChainEvaluation => ({
 const baseDeps = (over: Partial<ReadinessDeps> = {}): ReadinessDeps => ({
   initializeSchema: async () => ({ success: true, message: 'ok' }),
   runMigrations: async () =>
-    ({ applied: 0, skipped: 3, failed: null, failedFile: null, total: 3, checksumMismatches: [], acceptedHistoricalChecksumVariants: [] }) as any,
+    ({
+      applied: 0,
+      skipped: 3,
+      failed: null,
+      failedFile: null,
+      total: 3,
+      checksumMismatches: [],
+      acceptedHistoricalChecksumVariants: [],
+    }) as any,
   seedTemplates: async () => {},
   isProduction: false,
   migrationsDisabled: false,
@@ -79,7 +94,10 @@ describe('readiness — PASS path', () => {
     expect(outcome.ready).toBe(true);
     expect(outcome.sqlMigrations.state).toBe('ok');
 
-    const ready = callHandler(createReadyHandler(() => stateFrom(outcome)), null);
+    const ready = callHandler(
+      createReadyHandler(() => stateFrom(outcome)),
+      null
+    );
     expect(ready.status).toBe(200);
     expect(ready.body.status).toBe('ready');
     // required response fields
@@ -114,7 +132,10 @@ describe('readiness — every SQL-chain fault must yield 503', () => {
     ['failed SQL migration', { state: 'failed', failed: ['x.sql'], detail: '1 failed' }],
     ['skipped migration', { state: 'skipped', skipped: ['x.sql'], detail: '1 skipped' }],
     ['pending migration', { state: 'pending', pending: ['x.sql'], detail: '1 pending' }],
-    ['unexplained drift', { state: 'unexplained_drift', unexplainedDrift: ['x.sql'], detail: 'drift' }],
+    [
+      'unexplained drift',
+      { state: 'unexplained_drift', unexplainedDrift: ['x.sql'], detail: 'drift' },
+    ],
     ['missing SQL ledger', { state: 'ledger_missing', ledgerPresent: false, detail: 'no ledger' }],
     ['evaluator error', { state: 'error', detail: 'boom' }],
   ];
@@ -125,7 +146,10 @@ describe('readiness — every SQL-chain fault must yield 503', () => {
         baseDeps({ evaluateSqlChain: async () => okSql(over) })
       );
       expect(outcome.ready, name).toBe(false);
-      const ready = callHandler(createReadyHandler(() => stateFrom(outcome)), null);
+      const ready = callHandler(
+        createReadyHandler(() => stateFrom(outcome)),
+        null
+      );
       expect(ready.status, name).toBe(503);
       expect(ready.body.status).toBe('not_ready');
     });
@@ -141,7 +165,12 @@ describe('readiness — every SQL-chain fault must yield 503', () => {
     );
     expect(outcome.ready).toBe(false);
     expect(outcome.sqlMigrations.state).toBe('error');
-    expect(callHandler(createReadyHandler(() => stateFrom(outcome)), null).status).toBe(503);
+    expect(
+      callHandler(
+        createReadyHandler(() => stateFrom(outcome)),
+        null
+      ).status
+    ).toBe(503);
   });
 
   it('a MISSING evaluator fails closed — absence of proof is not proof', async () => {
@@ -157,28 +186,61 @@ describe('readiness — Table Platform faults still yield 503', () => {
   it('TP migration failed -> 503', async () => {
     const outcome = await establishDatabaseReadiness(
       baseDeps({
-        runMigrations: async () => ({ applied: 0, skipped: 0, failed: 'boom', failedFile: 'x.sql', total: 1, checksumMismatches: [], acceptedHistoricalChecksumVariants: [] }) as any,
+        runMigrations: async () =>
+          ({
+            applied: 0,
+            skipped: 0,
+            failed: 'boom',
+            failedFile: 'x.sql',
+            total: 1,
+            checksumMismatches: [],
+            acceptedHistoricalChecksumVariants: [],
+          }) as any,
       })
     );
     expect(outcome.ready).toBe(false);
-    expect(callHandler(createReadyHandler(() => stateFrom(outcome)), null).status).toBe(503);
+    expect(
+      callHandler(
+        createReadyHandler(() => stateFrom(outcome)),
+        null
+      ).status
+    ).toBe(503);
   });
 
   it('disabled_by_operator -> 503, never an open door', async () => {
     const outcome = await establishDatabaseReadiness(baseDeps({ migrationsDisabled: true }));
     expect(outcome.ready).toBe(false);
     expect(outcome.migrations.state).toBe('disabled_by_operator');
-    expect(callHandler(createReadyHandler(() => stateFrom(outcome)), null).status).toBe(503);
+    expect(
+      callHandler(
+        createReadyHandler(() => stateFrom(outcome)),
+        null
+      ).status
+    ).toBe(503);
   });
 
   it('TP checksum drift -> 503', async () => {
     const outcome = await establishDatabaseReadiness(
       baseDeps({
-        runMigrations: async () => ({ applied: 0, skipped: 0, failed: null, failedFile: null, total: 1, checksumMismatches: ['x.sql'], acceptedHistoricalChecksumVariants: [] }) as any,
+        runMigrations: async () =>
+          ({
+            applied: 0,
+            skipped: 0,
+            failed: null,
+            failedFile: null,
+            total: 1,
+            checksumMismatches: ['x.sql'],
+            acceptedHistoricalChecksumVariants: [],
+          }) as any,
       })
     );
     expect(outcome.ready).toBe(false);
-    expect(callHandler(createReadyHandler(() => stateFrom(outcome)), null).status).toBe(503);
+    expect(
+      callHandler(
+        createReadyHandler(() => stateFrom(outcome)),
+        null
+      ).status
+    ).toBe(503);
   });
 });
 
@@ -187,15 +249,24 @@ describe('/api/health/migrations requires BOTH ledgers', () => {
     const outcome = await establishDatabaseReadiness(baseDeps());
     const state = stateFrom(outcome);
     // Force the SQL half unhealthy while TP stays ok.
-    const broken = { ...state, sqlMigrations: { ...state.sqlMigrations, state: 'pending' as const } };
-    const health = callHandler(createMigrationsHealthHandler(() => broken as any), null);
+    const broken = {
+      ...state,
+      sqlMigrations: { ...state.sqlMigrations, state: 'pending' as const },
+    };
+    const health = callHandler(
+      createMigrationsHealthHandler(() => broken as any),
+      null
+    );
     expect(health.status).toBe(503);
     expect(health.body.status).toBe('degraded');
   });
 
   it('is 200 only when both are ok', async () => {
     const outcome = await establishDatabaseReadiness(baseDeps());
-    const health = callHandler(createMigrationsHealthHandler(() => stateFrom(outcome) as any), null);
+    const health = callHandler(
+      createMigrationsHealthHandler(() => stateFrom(outcome) as any),
+      null
+    );
     expect(health.status).toBe(200);
     expect(health.body.sqlMigrations.state).toBe('ok');
     expect(health.body).toHaveProperty('buildSha');

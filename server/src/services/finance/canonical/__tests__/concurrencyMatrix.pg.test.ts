@@ -65,7 +65,10 @@ describe.skipIf(!REAL_PG)('W9-A — concurrency matrix, exactly one winner (real
     computeJobService = await import('../computeJobService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'W9 Concurrency Matrix Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'W9 Concurrency Matrix Org',
+      ])
     );
   });
 
@@ -80,7 +83,12 @@ describe.skipIf(!REAL_PG)('W9-A — concurrency matrix, exactly one winner (real
   }
 
   /** DRAFT -> READY_FOR_REVIEW -> IN_REVIEW, through the real services. Leaves the row approvable. */
-  async function makeInReviewVersion(): Promise<{ artifactId: string; bvId: string; version: number; workingRevisionId: string }> {
+  async function makeInReviewVersion(): Promise<{
+    artifactId: string;
+    bvId: string;
+    version: number;
+    workingRevisionId: string;
+  }> {
     const created = await svc.createArtifact({
       organizationId: orgId,
       artifactType: 'HISTORICAL_ANALYSIS', // LOW risk tier — keeps the SoD gate out of the way
@@ -113,7 +121,10 @@ describe.skipIf(!REAL_PG)('W9-A — concurrency matrix, exactly one winner (real
 
     // freshness defaults to NEVER_COMPUTED on create; approve requires CURRENT.
     const freshened = await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+        [bvId]
+      )
     );
     expect(freshened.changes).toBe(1); // physical pre-state proof
 
@@ -128,7 +139,11 @@ describe.skipIf(!REAL_PG)('W9-A — concurrency matrix, exactly one winner (real
     };
   }
 
-  async function makeApprovedVersion(): Promise<{ artifactId: string; bvId: string; version: number }> {
+  async function makeApprovedVersion(): Promise<{
+    artifactId: string;
+    bvId: string;
+    version: number;
+  }> {
     const { artifactId, bvId, version } = await makeInReviewVersion();
     const approved = await svc.approveVersion({
       organizationId: orgId,
@@ -243,7 +258,11 @@ describe.skipIf(!REAL_PG)('W9-A — concurrency matrix, exactly one winner (real
       // is the "impossible state" this scenario is hunting).
       if (post!.status === 'APPROVED') {
         const row = await withPinnedPostgresTransaction((tx) =>
-          tx.queryOne<{ compute_snapshot_id: string | null; approved_by: string | null; approved_at: string | null }>(
+          tx.queryOne<{
+            compute_snapshot_id: string | null;
+            approved_by: string | null;
+            approved_at: string | null;
+          }>(
             `SELECT compute_snapshot_id, approved_by, approved_at FROM finance_business_versions WHERE business_version_id = ?`,
             [bvId]
           )
@@ -420,9 +439,10 @@ describe.skipIf(!REAL_PG)('W9-A — concurrency matrix, exactly one winner (real
 
       // The physically persisted job row must carry that same pin.
       const jobRow = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ input_revision_hash: string }>(`SELECT input_revision_hash FROM compute_jobs WHERE id = ?`, [
-          enqueueResult.job.id,
-        ])
+        tx.queryOne<{ input_revision_hash: string }>(
+          `SELECT input_revision_hash FROM compute_jobs WHERE id = ?`,
+          [enqueueResult.job.id]
+        )
       );
       expect(jobRow?.input_revision_hash).toBe(enqueueResult.pinnedContentSemanticHash);
 

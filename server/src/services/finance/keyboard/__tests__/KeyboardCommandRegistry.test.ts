@@ -14,21 +14,37 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { financeStmtLinesCellRef, type CellRef } from '../../../../types/finance/CellRef.js';
+import { type CellRef, financeStmtLinesCellRef } from '../../../../types/finance/CellRef.js';
 import type { FinanceValue } from '../../../../types/finance/financeValueSemantics.js';
-import { GridSelectionModel } from '../../grid/GridSelectionModel.js';
-import { buildPasteOperations, type PasteSourceCell } from '../../grid/PasteEngine.js';
+import {
+  createEmptyWorkspaceState,
+  type FinanceWorkspaceState,
+} from '../../../../types/finance/WorkspaceState.js';
+import { OperationStack } from '../../collaboration/operationStack.js';
 import { byDecimalEquals, findCells, type GridCellSnapshot } from '../../grid/FindReplaceEngine.js';
 import type { GridAddressResolver, GridCoordinate } from '../../grid/gridCoordinates.js';
-import { OperationStack } from '../../collaboration/operationStack.js';
-import { createEmptyWorkspaceState, type FinanceWorkspaceState } from '../../../../types/finance/WorkspaceState.js';
+import { GridSelectionModel } from '../../grid/GridSelectionModel.js';
+import { buildPasteOperations, type PasteSourceCell } from '../../grid/PasteEngine.js';
 import {
   createFocusModeSession,
   enterFocusMode,
   exitFocusMode,
-  resolveEscapeKey,
   type FocusModeTrigger,
+  resolveEscapeKey,
 } from '../../workspace/focusModeContract.js';
+import { AVAILABILITY_ALWAYS, type CommandEvaluationContext } from '../CommandAvailability.js';
+import { CommandPaletteIndex } from '../CommandPaletteIndex.js';
+import {
+  activationSurfaces,
+  AP_OWNERS,
+  comboHasGuardModifier,
+  comboMatchesEvent,
+  COMMAND_CONTEXTS,
+  COMMAND_SCOPES,
+  describeCombo,
+  type KeyboardCommand,
+  type KeyboardEventLike,
+} from '../commandTypes.js';
 import {
   applyFocusRestoreToSelection,
   captureFocusSnapshot,
@@ -38,31 +54,18 @@ import {
   resolveFocusRestorePatch,
 } from '../FocusRestoreContract.js';
 import {
-  AP_OWNERS,
-  COMMAND_CONTEXTS,
-  COMMAND_SCOPES,
-  activationSurfaces,
-  comboHasGuardModifier,
-  comboMatchesEvent,
-  describeCombo,
-  type KeyboardCommand,
-  type KeyboardEventLike,
-} from '../commandTypes.js';
-import { AVAILABILITY_ALWAYS, type CommandEvaluationContext } from '../CommandAvailability.js';
-import {
-  FINANCE_KEYBOARD_COMMANDS,
-  KeyboardCommandRegistry,
-  MAX_UNCONFIRMED_BARE_KEY_TARGETS,
   assertDestructiveCommandsAreGuarded,
   assertNoComboCollisions,
   commandActivations,
-  findComboCollisions,
-  findDestructiveGuardViolations,
-  requiresConfirmationBeforeExecuting,
   type CommandDispatchContext,
   type CommandDispatchResult,
+  FINANCE_KEYBOARD_COMMANDS,
+  findComboCollisions,
+  findDestructiveGuardViolations,
+  KeyboardCommandRegistry,
+  MAX_UNCONFIRMED_BARE_KEY_TARGETS,
+  requiresConfirmationBeforeExecuting,
 } from '../KeyboardCommandRegistry.js';
-import { CommandPaletteIndex } from '../CommandPaletteIndex.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures — a tiny 4x3 grid resolver, mirroring the shape (not the scale)
@@ -85,14 +88,24 @@ function cellRefAt(coord: GridCoordinate): CellRef {
 }
 
 function coordinateOf(ref: CellRef): GridCoordinate | null {
-  if (ref.rowKey.tableName !== 'finance_stmt_lines' || ref.columnKey.tableName !== 'finance_stmt_lines') return null;
+  if (
+    ref.rowKey.tableName !== 'finance_stmt_lines' ||
+    ref.columnKey.tableName !== 'finance_stmt_lines'
+  )
+    return null;
   const row = Number(ref.rowKey.entityId.replace('entity-', ''));
   const col = Number(ref.columnKey.periodId.replace('period-', ''));
-  if (!Number.isFinite(row) || !Number.isFinite(col) || row >= ROW_COUNT || col >= COL_COUNT) return null;
+  if (!Number.isFinite(row) || !Number.isFinite(col) || row >= ROW_COUNT || col >= COL_COUNT)
+    return null;
   return { row, col };
 }
 
-const resolver: GridAddressResolver = { rowCount: ROW_COUNT, colCount: COL_COUNT, cellRefAt, coordinateOf };
+const resolver: GridAddressResolver = {
+  rowCount: ROW_COUNT,
+  colCount: COL_COUNT,
+  cellRefAt,
+  coordinateOf,
+};
 
 function presentValue(decimal: string): FinanceValue {
   return {
@@ -146,7 +159,12 @@ function baseDispatchContext(): CommandDispatchContext {
 }
 
 function baseEvaluationContext(): CommandEvaluationContext {
-  const { context: _context, platform: _platform, selectedCellCount: _count, ...rest } = baseDispatchContext();
+  const {
+    context: _context,
+    platform: _platform,
+    selectedCellCount: _count,
+    ...rest
+  } = baseDispatchContext();
   return rest;
 }
 
@@ -230,7 +248,9 @@ describe('AP-03 KeyboardCommandRegistry — registry shape', () => {
     ];
     const collisions = findComboCollisions(colliding);
     expect(collisions.length).toBe(1);
-    expect(collisions[0]!.commandIds).toEqual(expect.arrayContaining(['grid.copy', 'grid.copy.duplicate']));
+    expect(collisions[0]!.commandIds).toEqual(
+      expect.arrayContaining(['grid.copy', 'grid.copy.duplicate'])
+    );
     expect(() => assertNoComboCollisions(colliding)).toThrow(/combo collision/);
     expect(() => new KeyboardCommandRegistry(colliding)).toThrow(/combo collision/);
   });
@@ -300,9 +320,21 @@ describe('AP-03 KeyboardCommandRegistry — registry shape', () => {
     const compute = registry.findById('finance.compute')!;
     const compare = registry.findById('finance.compare')!;
     const comment = registry.findById('finance.comment')!;
-    expect(compute.engineBinding).toMatchObject({ kind: 'function', engine: 'AP-04', functionName: 'enqueueComputeForCurrentRevision' });
-    expect(compare.engineBinding).toMatchObject({ kind: 'function', engine: 'AP-05', functionName: 'compareValues' });
-    expect(comment.engineBinding).toMatchObject({ kind: 'function', engine: 'AP-06', functionName: 'createComment' });
+    expect(compute.engineBinding).toMatchObject({
+      kind: 'function',
+      engine: 'AP-04',
+      functionName: 'enqueueComputeForCurrentRevision',
+    });
+    expect(compare.engineBinding).toMatchObject({
+      kind: 'function',
+      engine: 'AP-05',
+      functionName: 'compareValues',
+    });
+    expect(comment.engineBinding).toMatchObject({
+      kind: 'function',
+      engine: 'AP-06',
+      functionName: 'createComment',
+    });
   });
 
   it('cross-platform combo resolution: Mod+C matches Ctrl+C on windows and Cmd+C on mac, and does not cross-match', () => {
@@ -318,18 +350,38 @@ describe('AP-03 KeyboardCommandRegistry — registry shape', () => {
 
   it('resolves the three finance-specific shortcuts on both platforms', () => {
     const registry = new KeyboardCommandRegistry();
-    expect(registry.resolve(event({ key: 'Enter', ctrlKey: true }), 'grid-focused', 'windows')?.id).toBe('finance.compute');
-    expect(registry.resolve(event({ key: 'Enter', metaKey: true }), 'grid-focused', 'mac')?.id).toBe('finance.compute');
-    expect(registry.resolve(event({ key: 'd', ctrlKey: true }), 'grid-focused', 'windows')?.id).toBe('finance.compare');
-    expect(registry.resolve(event({ key: 'd', metaKey: true }), 'grid-focused', 'mac')?.id).toBe('finance.compare');
-    expect(registry.resolve(event({ key: 'm', ctrlKey: true }), 'grid-focused', 'windows')?.id).toBe('finance.comment');
-    expect(registry.resolve(event({ key: 'm', metaKey: true }), 'grid-focused', 'mac')?.id).toBe('finance.comment');
+    expect(
+      registry.resolve(event({ key: 'Enter', ctrlKey: true }), 'grid-focused', 'windows')?.id
+    ).toBe('finance.compute');
+    expect(
+      registry.resolve(event({ key: 'Enter', metaKey: true }), 'grid-focused', 'mac')?.id
+    ).toBe('finance.compute');
+    expect(
+      registry.resolve(event({ key: 'd', ctrlKey: true }), 'grid-focused', 'windows')?.id
+    ).toBe('finance.compare');
+    expect(registry.resolve(event({ key: 'd', metaKey: true }), 'grid-focused', 'mac')?.id).toBe(
+      'finance.compare'
+    );
+    expect(
+      registry.resolve(event({ key: 'm', ctrlKey: true }), 'grid-focused', 'windows')?.id
+    ).toBe('finance.comment');
+    expect(registry.resolve(event({ key: 'm', metaKey: true }), 'grid-focused', 'mac')?.id).toBe(
+      'finance.comment'
+    );
   });
 
   it('resolves undo/redo distinctly (Mod+Z vs Mod+Shift+Z)', () => {
     const registry = new KeyboardCommandRegistry();
-    expect(registry.resolve(event({ key: 'z', ctrlKey: true }), 'grid-focused', 'windows')?.id).toBe('grid.undo');
-    expect(registry.resolve(event({ key: 'z', ctrlKey: true, shiftKey: true }), 'grid-focused', 'windows')?.id).toBe('grid.redo');
+    expect(
+      registry.resolve(event({ key: 'z', ctrlKey: true }), 'grid-focused', 'windows')?.id
+    ).toBe('grid.undo');
+    expect(
+      registry.resolve(
+        event({ key: 'z', ctrlKey: true, shiftKey: true }),
+        'grid-focused',
+        'windows'
+      )?.id
+    ).toBe('grid.redo');
   });
 
   it("'global' Save resolves in both grid-focused and cell-editing contexts", () => {
@@ -357,7 +409,9 @@ describe('AP-03 KeyboardCommandRegistry — registry shape', () => {
   it('comboMatchesEvent is the single source of truth resolve() also uses (no drift)', () => {
     const copy = FINANCE_KEYBOARD_COMMANDS.find((c) => c.id === 'grid.copy')!;
     expect(comboMatchesEvent(copy.combo, event({ key: 'c', ctrlKey: true }), 'windows')).toBe(true);
-    expect(comboMatchesEvent(copy.combo, event({ key: 'c', ctrlKey: true, shiftKey: true }), 'windows')).toBe(false);
+    expect(
+      comboMatchesEvent(copy.combo, event({ key: 'c', ctrlKey: true, shiftKey: true }), 'windows')
+    ).toBe(false);
   });
 });
 
@@ -430,7 +484,9 @@ describe('AP-03 destructive command guards', () => {
     const preFix = { ...clear, requiresConfirmation: false, confirmAboveTargetCount: null };
     const preFixViolations = findDestructiveGuardViolations([preFix]);
     expect(preFixViolations.map((v) => v.code)).toContain('DESTRUCTIVE_WITHOUT_CONFIRMATION');
-    expect(() => new KeyboardCommandRegistry([preFix])).toThrow(/destructive-command guard violation/);
+    expect(() => new KeyboardCommandRegistry([preFix])).toThrow(
+      /destructive-command guard violation/
+    );
 
     // (b) a threshold so high it is not a guard.
     const looseThreshold = { ...clear, confirmAboveTargetCount: 500 };
@@ -446,9 +502,9 @@ describe('AP-03 destructive command guards', () => {
 
     // (d) half-declared policy on a non-destructive command.
     const copy = FINANCE_KEYBOARD_COMMANDS.find((c) => c.id === 'grid.copy')!;
-    expect(findDestructiveGuardViolations([{ ...copy, requiresConfirmation: true }]).map((v) => v.code)).toContain(
-      'GUARD_ON_NON_DESTRUCTIVE_COMMAND'
-    );
+    expect(
+      findDestructiveGuardViolations([{ ...copy, requiresConfirmation: true }]).map((v) => v.code)
+    ).toContain('GUARD_ON_NON_DESTRUCTIVE_COMMAND');
   });
 
   it('a modifier IS accepted as a guard, but Shift alone is NOT (shift is the range-extension key on this very grid)', () => {
@@ -461,13 +517,23 @@ describe('AP-03 destructive command guards', () => {
     // Shift+Delete with a loose threshold stays a violation...
     expect(
       findDestructiveGuardViolations([
-        { ...clear, id: 'x.shiftDelete', combo: { key: 'Delete', shift: true }, confirmAboveTargetCount: 500 },
+        {
+          ...clear,
+          id: 'x.shiftDelete',
+          combo: { key: 'Delete', shift: true },
+          confirmAboveTargetCount: 500,
+        },
       ]).map((v) => v.code)
     ).toContain('DESTRUCTIVE_BARE_KEY_THRESHOLD_TOO_HIGH');
     // ...while a real modifier chord may carry a larger threshold.
     expect(
       findDestructiveGuardViolations([
-        { ...clear, id: 'x.modDelete', combo: { key: 'Delete', mod: true }, confirmAboveTargetCount: 500 },
+        {
+          ...clear,
+          id: 'x.modDelete',
+          combo: { key: 'Delete', mod: true },
+          confirmAboveTargetCount: 500,
+        },
       ])
     ).toEqual([]);
   });
@@ -511,10 +577,12 @@ describe('AP-03 command scope', () => {
     };
     const collisions = findComboCollisions([...FINANCE_KEYBOARD_COMMANDS, workspaceImpostor]);
     expect(collisions.length).toBeGreaterThan(0);
-    expect(collisions[0]!.commandIds).toEqual(expect.arrayContaining(['grid.copy', 'workspace.impostor']));
-    expect(() => new KeyboardCommandRegistry([...FINANCE_KEYBOARD_COMMANDS, workspaceImpostor])).toThrow(
-      /combo collision/
+    expect(collisions[0]!.commandIds).toEqual(
+      expect.arrayContaining(['grid.copy', 'workspace.impostor'])
     );
+    expect(
+      () => new KeyboardCommandRegistry([...FINANCE_KEYBOARD_COMMANDS, workspaceImpostor])
+    ).toThrow(/combo collision/);
   });
 
   it('genuinely DISJOINT activations may share a combo (Escape: cancel-edit while editing vs exit-focus-mode while not)', () => {
@@ -526,7 +594,9 @@ describe('AP-03 command scope', () => {
     expect(cancel.scope).toBe('grid');
     expect(exitFocus.scope).toBe('workspace');
     // Disjoint because their MODE contexts do not overlap...
-    const shared = commandActivations(cancel).filter((a) => commandActivations(exitFocus).includes(a));
+    const shared = commandActivations(cancel).filter((a) =>
+      commandActivations(exitFocus).includes(a)
+    );
     expect(shared).toEqual([]);
     // ...and so the shipped registry stays collision-free.
     expect(findComboCollisions(FINANCE_KEYBOARD_COMMANDS)).toEqual([]);
@@ -540,9 +610,9 @@ describe('AP-03 command scope', () => {
     const shadow = { ...save, id: 'grid.saveShadow', context: 'grid-focused' as const };
     const registry = new KeyboardCommandRegistry();
     expect(registry.forContext('grid-focused').filter((c) => c.combo.key === 's').length).toBe(1);
-    expect(findComboCollisions([...FINANCE_KEYBOARD_COMMANDS, shadow]).map((c) => c.commandIds)).toContainEqual(
-      expect.arrayContaining(['grid.save', 'grid.saveShadow'])
-    );
+    expect(
+      findComboCollisions([...FINANCE_KEYBOARD_COMMANDS, shadow]).map((c) => c.commandIds)
+    ).toContainEqual(expect.arrayContaining(['grid.save', 'grid.saveShadow']));
   });
 });
 
@@ -578,7 +648,9 @@ describe('AP-03 canExecute and unavailability reasons', () => {
     if (blocked.canExecute) throw new Error('unreachable');
     expect(blocked.reason).toBe('ROLE');
     expect(blocked.message.pl).toContain('Podgląd');
-    expect(registry.canExecute(copy, { ...baseEvaluationContext(), role: 'viewer' })).toEqual({ canExecute: true });
+    expect(registry.canExecute(copy, { ...baseEvaluationContext(), role: 'viewer' })).toEqual({
+      canExecute: true,
+    });
   });
 
   it('blocks by ARTIFACT_TYPE — the axis a single global registry needs and a per-module bar does not', () => {
@@ -586,7 +658,10 @@ describe('AP-03 canExecute and unavailability reasons', () => {
       ...paste,
       availability: { ...paste.availability, artifactTypes: ['STATEMENT_PACK'] as const },
     };
-    const result = registry.canExecute(onlyStatements, { ...baseEvaluationContext(), artifactType: 'VALUATION_CASE' });
+    const result = registry.canExecute(onlyStatements, {
+      ...baseEvaluationContext(),
+      artifactType: 'VALUATION_CASE',
+    });
     expect(result.canExecute).toBe(false);
     if (result.canExecute) throw new Error('unreachable');
     expect(result.reason).toBe('ARTIFACT_TYPE');
@@ -629,7 +704,10 @@ describe('AP-03 canExecute and unavailability reasons', () => {
 
     // Fail-closed inherited from AP-09: an unsatisfied/absent gate blocks.
     expect(
-      registry.canExecute(gated, { ...baseEvaluationContext(), gates: { 'statements.mappingComplete': true } })
+      registry.canExecute(gated, {
+        ...baseEvaluationContext(),
+        gates: { 'statements.mappingComplete': true },
+      })
     ).toEqual({ canExecute: true });
   });
 
@@ -657,7 +735,10 @@ describe('AP-03 canExecute and unavailability reasons', () => {
 
   it('the same evaluator answers the palette and the keypress (no second permission model)', () => {
     const ctx = { ...baseDispatchContext(), status: 'APPROVED' as const };
-    const viaDispatch = new KeyboardCommandRegistry().dispatch(event({ key: 'v', ctrlKey: true }), ctx);
+    const viaDispatch = new KeyboardCommandRegistry().dispatch(
+      event({ key: 'v', ctrlKey: true }),
+      ctx
+    );
     const viaQuery = registry.canExecute(paste, ctx);
     if (viaDispatch.status !== 'blocked' || viaQuery.canExecute) throw new Error('unreachable');
     expect(viaDispatch.reason).toBe(viaQuery.reason);
@@ -701,15 +782,23 @@ describe('AP-03 workspace-level commands', () => {
       functionName: 'enterFocusMode',
     });
     // And it really resolves from a keypress, on both platforms.
-    expect(registry.resolve(event({ key: 'f', ctrlKey: true, shiftKey: true }), 'grid-focused', 'windows')?.id).toBe(
-      'workspace.toggleFocusMode'
-    );
-    expect(registry.resolve(event({ key: 'f', metaKey: true, shiftKey: true }), 'cell-editing', 'mac')?.id).toBe(
-      'workspace.toggleFocusMode'
-    );
+    expect(
+      registry.resolve(
+        event({ key: 'f', ctrlKey: true, shiftKey: true }),
+        'grid-focused',
+        'windows'
+      )?.id
+    ).toBe('workspace.toggleFocusMode');
+    expect(
+      registry.resolve(event({ key: 'f', metaKey: true, shiftKey: true }), 'cell-editing', 'mac')
+        ?.id
+    ).toBe('workspace.toggleFocusMode');
     // The trigger the resolver passes is a real member of AP-09's union.
     const session = createFocusModeSession(workspaceStateFixture());
-    const entered = enterFocusMode(session, { trigger: 'keyboard-shortcut', restoreFocusToControlId: 'bar.fullscreen' });
+    const entered = enterFocusMode(session, {
+      trigger: 'keyboard-shortcut',
+      restoreFocusToControlId: 'bar.fullscreen',
+    });
     expect(entered.session.active).toBe(true);
     expect(entered.refetched).toBe(false);
   });
@@ -717,26 +806,58 @@ describe('AP-03 workspace-level commands', () => {
   it('PHANTOM CLOSED: FocusRestoreContract declared commandPaletteInvoke, and now a command opens the palette', () => {
     const palette = registry.findById('workspace.commandPalette')!;
     expect(palette.focusRestoreReason).toBe('commandPaletteInvoke');
-    expect(registry.resolve(event({ key: 'k', ctrlKey: true }), 'grid-focused', 'windows')?.id).toBe(
-      'workspace.commandPalette'
-    );
+    expect(
+      registry.resolve(event({ key: 'k', ctrlKey: true }), 'grid-focused', 'windows')?.id
+    ).toBe('workspace.commandPalette');
   });
 
   it('Escape is deferred to AP-09s precedence table, not seized', () => {
     // While a cell editor is open, Escape belongs to the grid...
-    expect(registry.resolve(event({ key: 'Escape' }), 'cell-editing', 'windows')?.id).toBe('grid.cancelEdit');
+    expect(registry.resolve(event({ key: 'Escape' }), 'cell-editing', 'windows')?.id).toBe(
+      'grid.cancelEdit'
+    );
     // ...and outside it, to focus mode.
-    expect(registry.resolve(event({ key: 'Escape' }), 'grid-focused', 'windows')?.id).toBe('workspace.exitFocusMode');
+    expect(registry.resolve(event({ key: 'Escape' }), 'grid-focused', 'windows')?.id).toBe(
+      'workspace.exitFocusMode'
+    );
     // AP-09 remains the arbiter when several consumers are open at once.
-    expect(resolveEscapeKey({ modalOpen: false, commandPaletteOpen: true, popoverOpen: false, cellEditing: true, focusModeActive: true })).toBe('command-palette');
-    expect(resolveEscapeKey({ modalOpen: false, commandPaletteOpen: false, popoverOpen: false, cellEditing: true, focusModeActive: true })).toBe('cell-editing');
-    expect(resolveEscapeKey({ modalOpen: false, commandPaletteOpen: false, popoverOpen: false, cellEditing: false, focusModeActive: true })).toBe('focus-mode');
+    expect(
+      resolveEscapeKey({
+        modalOpen: false,
+        commandPaletteOpen: true,
+        popoverOpen: false,
+        cellEditing: true,
+        focusModeActive: true,
+      })
+    ).toBe('command-palette');
+    expect(
+      resolveEscapeKey({
+        modalOpen: false,
+        commandPaletteOpen: false,
+        popoverOpen: false,
+        cellEditing: true,
+        focusModeActive: true,
+      })
+    ).toBe('cell-editing');
+    expect(
+      resolveEscapeKey({
+        modalOpen: false,
+        commandPaletteOpen: false,
+        popoverOpen: false,
+        cellEditing: false,
+        focusModeActive: true,
+      })
+    ).toBe('focus-mode');
   });
 
   it('workspace commands reuse the WorkspaceBar bridge convention (ids an adapter can point keyboardCommandId at)', () => {
     // moduleAdapters already sets keyboardCommandId: 'finance.compute' on the
     // primary CTA; every id it could point at must exist in this registry.
-    for (const id of ['finance.compute', 'workspace.toggleRelatedPanel', 'workspace.lifecycleMenu']) {
+    for (const id of [
+      'finance.compute',
+      'workspace.toggleRelatedPanel',
+      'workspace.lifecycleMenu',
+    ]) {
       expect(registry.findById(id)).toBeDefined();
     }
     expect(registry.findById('workspace.toggleRelatedPanel')!.engineBinding).toMatchObject({
@@ -748,7 +869,10 @@ describe('AP-03 workspace-level commands', () => {
   it('no workspace command fires a lifecycle transition directly (that would bypass AP-09s destructive/confirmation flags)', () => {
     const lifecycle = registry.findById('workspace.lifecycleMenu')!;
     expect(lifecycle.destructive).toBe(false);
-    expect(lifecycle.engineBinding).toMatchObject({ kind: 'inline-contract', contractType: 'WorkspaceBarLifecycleControl' });
+    expect(lifecycle.engineBinding).toMatchObject({
+      kind: 'inline-contract',
+      contractType: 'WorkspaceBarLifecycleControl',
+    });
     // Nothing in the registry binds a LifecycleAction name.
     const bound = JSON.stringify(FINANCE_KEYBOARD_COMMANDS);
     for (const action of ['approve', 'invalidate', 'archive', 'reopen']) {
@@ -758,11 +882,21 @@ describe('AP-03 workspace-level commands', () => {
 
   it('workspace commands are subject to the same availability model as grid commands', () => {
     const focusMode = registry.findById('workspace.toggleFocusMode')!;
-    const onMobile = registry.canExecute(focusMode, { ...baseEvaluationContext(), viewportWidthPx: 375 });
+    const onMobile = registry.canExecute(focusMode, {
+      ...baseEvaluationContext(),
+      viewportWidthPx: 375,
+    });
     expect(onMobile.canExecute).toBe(false); // AP-09: mobile has no focus mode.
     const lifecycle = registry.findById('workspace.lifecycleMenu')!;
-    expect(registry.canExecute(lifecycle, { ...baseEvaluationContext(), role: 'viewer' }).canExecute).toBe(false);
-    expect(registry.canExecute(registry.findById('workspace.back')!, { ...baseEvaluationContext(), role: 'viewer' })).toEqual({ canExecute: true });
+    expect(
+      registry.canExecute(lifecycle, { ...baseEvaluationContext(), role: 'viewer' }).canExecute
+    ).toBe(false);
+    expect(
+      registry.canExecute(registry.findById('workspace.back')!, {
+        ...baseEvaluationContext(),
+        role: 'viewer',
+      })
+    ).toEqual({ canExecute: true });
   });
 });
 
@@ -793,7 +927,9 @@ describe('AP-03 CommandPaletteIndex', () => {
     const index = new CommandPaletteIndex(FINANCE_KEYBOARD_COMMANDS);
     const editingResults = index.searchInContext('', 'cell-editing');
     const ids = editingResults.map((e) => e.command.id);
-    expect(ids).toEqual(expect.arrayContaining(['grid.confirmEdit', 'grid.cancelEdit', 'grid.save']));
+    expect(ids).toEqual(
+      expect.arrayContaining(['grid.confirmEdit', 'grid.cancelEdit', 'grid.save'])
+    );
     expect(ids).not.toContain('grid.copy'); // grid-focused only, not reachable while editing
   });
 
@@ -814,12 +950,30 @@ describe('AP-03 FocusRestoreContract', () => {
   const cellB = cellRefAt({ row: 1, col: 1 });
 
   it('captures a snapshot of the current active cell and reason', () => {
-    const snap = captureFocusSnapshot({ activeCell: cellA, reason: 'undo', now: () => '2026-08-10T00:00:00.000Z' });
-    expect(snap).toEqual({ activeCell: cellA, reason: 'undo', capturedAt: '2026-08-10T00:00:00.000Z' });
+    const snap = captureFocusSnapshot({
+      activeCell: cellA,
+      reason: 'undo',
+      now: () => '2026-08-10T00:00:00.000Z',
+    });
+    expect(snap).toEqual({
+      activeCell: cellA,
+      reason: 'undo',
+      capturedAt: '2026-08-10T00:00:00.000Z',
+    });
   });
 
   it('resolves the focus target for an Operation to its first target cell', () => {
-    const setOp = { type: 'set' as const, operationId: 'op-1', idempotencyKey: 'idem-1', actorId: 'u', actorRole: 'preparer' as const, clientTimestamp: 't', sourceWorkingRevisionId: null, target: cellB, value: { status: 'PRESENT_NONZERO' as const, valueDecimal: '5' } };
+    const setOp = {
+      type: 'set' as const,
+      operationId: 'op-1',
+      idempotencyKey: 'idem-1',
+      actorId: 'u',
+      actorRole: 'preparer' as const,
+      clientTimestamp: 't',
+      sourceWorkingRevisionId: null,
+      target: cellB,
+      value: { status: 'PRESENT_NONZERO' as const, valueDecimal: '5' },
+    };
     expect(focusTargetForOperation(setOp)).toEqual(cellB);
   });
 
@@ -827,19 +981,39 @@ describe('AP-03 FocusRestoreContract', () => {
     for (const reason of ['undo', 'redo', 'paste', 'bulkOp'] as const) {
       expect(resolveFocusRestorePatch(reason, cellA).collapseSelection).toBe(true);
     }
-    for (const reason of ['findNavigate', 'editConfirm', 'editCancel', 'commandPaletteInvoke'] as const) {
+    for (const reason of [
+      'findNavigate',
+      'editConfirm',
+      'editCancel',
+      'commandPaletteInvoke',
+    ] as const) {
       expect(resolveFocusRestorePatch(reason, cellA).collapseSelection).toBe(false);
     }
   });
 
   it('applyFocusRestoreToSelection integrates with AP-00 FinanceGridSelectionState shape', () => {
-    const existingSelection = { activeCell: cellA, ranges: [{ topLeft: cellA, bottomRight: cellB }] };
+    const existingSelection = {
+      activeCell: cellA,
+      ranges: [{ topLeft: cellA, bottomRight: cellB }],
+    };
 
-    const collapsed = applyFocusRestoreToSelection(existingSelection, resolveFocusRestorePatch('undo', cellB));
-    expect(collapsed).toEqual({ activeCell: cellB, ranges: [{ topLeft: cellB, bottomRight: cellB }] });
+    const collapsed = applyFocusRestoreToSelection(
+      existingSelection,
+      resolveFocusRestorePatch('undo', cellB)
+    );
+    expect(collapsed).toEqual({
+      activeCell: cellB,
+      ranges: [{ topLeft: cellB, bottomRight: cellB }],
+    });
 
-    const preserved = applyFocusRestoreToSelection(existingSelection, resolveFocusRestorePatch('editCancel', cellA));
-    expect(preserved).toEqual({ activeCell: cellA, ranges: [{ topLeft: cellA, bottomRight: cellB }] });
+    const preserved = applyFocusRestoreToSelection(
+      existingSelection,
+      resolveFocusRestorePatch('editCancel', cellA)
+    );
+    expect(preserved).toEqual({
+      activeCell: cellA,
+      ranges: [{ topLeft: cellA, bottomRight: cellB }],
+    });
   });
 
   it('real integration: undo an OperationStack entry, then resolve+apply focus restore from its inverse Operation', () => {
@@ -858,7 +1032,14 @@ describe('AP-03 FocusRestoreContract', () => {
     };
     stack.push(setOp, [priorValue]);
 
-    const undoResult = stack.undo({ operationId: 'op-undo', idempotencyKey: 'idem-undo', actorId: 'u', actorRole: 'preparer', clientTimestamp: 't1', sourceWorkingRevisionId: 'wr-1' });
+    const undoResult = stack.undo({
+      operationId: 'op-undo',
+      idempotencyKey: 'idem-undo',
+      actorId: 'u',
+      actorRole: 'preparer',
+      clientTimestamp: 't1',
+      sourceWorkingRevisionId: 'wr-1',
+    });
     expect(undoResult.ok).toBe(true);
     if (!undoResult.ok) throw new Error('unreachable');
 
@@ -867,7 +1048,10 @@ describe('AP-03 FocusRestoreContract', () => {
 
     const patch = resolveFocusRestorePatch('undo', target);
     const nextSelection = applyFocusRestoreToSelection({ activeCell: null, ranges: [] }, patch);
-    expect(nextSelection).toEqual({ activeCell: cellB, ranges: [{ topLeft: cellB, bottomRight: cellB }] });
+    expect(nextSelection).toEqual({
+      activeCell: cellB,
+      ranges: [{ topLeft: cellB, bottomRight: cellB }],
+    });
   });
 });
 
@@ -891,10 +1075,17 @@ describe('AP-03 <-> AP-09 focus model agreement', () => {
     const session = createFocusModeSession(state);
 
     // AP-03's view of "where focus is", taken before the toggle.
-    const snapshot = focusSnapshotFromFocusModeSession(session, 'focusModeExit', () => '2026-08-10T00:00:00.000Z');
+    const snapshot = focusSnapshotFromFocusModeSession(
+      session,
+      'focusModeExit',
+      () => '2026-08-10T00:00:00.000Z'
+    );
     expect(snapshot.activeCell).toEqual(cellB);
 
-    const entered = enterFocusMode(session, { trigger: 'keyboard-shortcut', restoreFocusToControlId: 'bar.fullscreen' });
+    const entered = enterFocusMode(session, {
+      trigger: 'keyboard-shortcut',
+      restoreFocusToControlId: 'bar.fullscreen',
+    });
     const exited = exitFocusMode(entered.session, { trigger: 'escape-key' });
 
     // AP-09's view, produced independently by its own effect machinery.
@@ -906,7 +1097,10 @@ describe('AP-03 <-> AP-09 focus model agreement', () => {
   it('exiting focus mode never collapses the selection — AP-09 promises the toggle preserves it, and AP-03 must not undo that from its side', () => {
     const state = workspaceStateFixture(cellA);
     const exited = exitFocusMode(
-      enterFocusMode(createFocusModeSession(state), { trigger: 'toggle-control', restoreFocusToControlId: 'bar.fullscreen' }).session,
+      enterFocusMode(createFocusModeSession(state), {
+        trigger: 'toggle-control',
+        restoreFocusToControlId: 'bar.fullscreen',
+      }).session,
       { trigger: 'escape-key' }
     );
     const patch = focusRestorePatchFromFocusModeEffects(exited.effects)!;
@@ -943,7 +1137,6 @@ describe('AP-03 <-> AP-09 focus model agreement', () => {
     expect(focusRestorePatchFromFocusModeEffects(exited.effects)).toBeNull();
   });
 });
-
 
 // ---------------------------------------------------------------------------
 // 4. Core workflow driven ENTIRELY through the registry's single entry point.
@@ -1006,7 +1199,10 @@ class KeyboardOnlySession {
     },
     'grid.navigateDown': () => {
       const active = this.selection.activeCell ?? { row: 0, col: 0 };
-      this.selection.selectSingle({ row: Math.min(active.row + 1, ROW_COUNT - 1), col: active.col });
+      this.selection.selectSingle({
+        row: Math.min(active.row + 1, ROW_COUNT - 1),
+        col: active.col,
+      });
     },
     'grid.paste': (command) => {
       const result = buildPasteOperations({
@@ -1018,7 +1214,10 @@ class KeyboardOnlySession {
       });
       if (!result.ok) throw new Error('paste failed');
       const op = result.batches[0]!.operations[0]!;
-      this.stack.push(op, op.type === 'set' ? [null] : (op as { target: CellRef[] }).target.map(() => null));
+      this.stack.push(
+        op,
+        op.type === 'set' ? [null] : (op as { target: CellRef[] }).target.map(() => null)
+      );
       if (op.type === 'paste') {
         op.target.forEach((target, i) => {
           const v = op.values[i]!;
@@ -1079,7 +1278,10 @@ class KeyboardOnlySession {
   }
 
   private storeKey(ref: CellRef): string {
-    if (ref.rowKey.tableName !== 'finance_stmt_lines' || ref.columnKey.tableName !== 'finance_stmt_lines') {
+    if (
+      ref.rowKey.tableName !== 'finance_stmt_lines' ||
+      ref.columnKey.tableName !== 'finance_stmt_lines'
+    ) {
       throw new Error('KeyboardOnlySession fixture only models finance_stmt_lines cells.');
     }
     return `${ref.rowKey.entityId}|${ref.columnKey.periodId}`;
@@ -1098,7 +1300,10 @@ class KeyboardOnlySession {
   }
 
   /** The ONLY way to make anything happen in this harness. */
-  press(partial: Partial<KeyboardEventLike> & { key: string }, overrides: Partial<CommandDispatchContext> = {}): CommandDispatchResult {
+  press(
+    partial: Partial<KeyboardEventLike> & { key: string },
+    overrides: Partial<CommandDispatchContext> = {}
+  ): CommandDispatchResult {
     const result = this.registry.dispatch(event(partial), {
       ...baseDispatchContext(),
       selectedCellCount: Math.max(this.selection.selectedCellCount(), 1),
@@ -1112,7 +1317,9 @@ class KeyboardOnlySession {
     if (result.status === 'execute') {
       const executor = this.executors[result.command.id];
       if (!executor) {
-        throw new Error(`No executor registered for dispatched command "${result.command.id}" — the key did nothing.`);
+        throw new Error(
+          `No executor registered for dispatched command "${result.command.id}" — the key did nothing.`
+        );
       }
       executor(result.command);
     }
@@ -1169,7 +1376,9 @@ describe('AP-03 core workflow through the single entry point (<=90s budget)', ()
 
     const elapsedMs = performance.now() - t0;
     // eslint-disable-next-line no-console
-    console.log(`[perf] AP-03 keyboard-driven core workflow (7 keystrokes through dispatch): ${elapsedMs.toFixed(2)} ms`);
+    console.log(
+      `[perf] AP-03 keyboard-driven core workflow (7 keystrokes through dispatch): ${elapsedMs.toFixed(2)} ms`
+    );
     expect(elapsedMs).toBeLessThan(90_000);
   });
 
@@ -1183,7 +1392,9 @@ describe('AP-03 core workflow through the single entry point (<=90s budget)', ()
     // Find exists...
     expect(registry.findById('grid.find')).toBeDefined();
     // ...Replace does not, under any id or any plausible combo.
-    expect(FINANCE_KEYBOARD_COMMANDS.some((c) => /replace/i.test(c.id) || /replace/i.test(c.label))).toBe(false);
+    expect(
+      FINANCE_KEYBOARD_COMMANDS.some((c) => /replace/i.test(c.id) || /replace/i.test(c.label))
+    ).toBe(false);
     for (const combo of [
       { key: 'h', ctrlKey: true },
       { key: 'r', ctrlKey: true },
@@ -1195,7 +1406,11 @@ describe('AP-03 core workflow through the single entry point (<=90s budget)', ()
     // The engine is there and works — the BINDING is what is missing, which is
     // why "keyboard-only core workflow" cannot be reported as satisfied.
     const snapshots: GridCellSnapshot[] = [
-      { coordinate: { row: 0, col: 1 }, ref: cellRefAt({ row: 0, col: 1 }), value: presentValue('200') },
+      {
+        coordinate: { row: 0, col: 1 },
+        ref: cellRefAt({ row: 0, col: 1 }),
+        value: presentValue('200'),
+      },
     ];
     expect(findCells(snapshots, byDecimalEquals('200')).length).toBe(1);
   });

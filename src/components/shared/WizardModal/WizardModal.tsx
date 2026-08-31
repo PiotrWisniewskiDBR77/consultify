@@ -34,14 +34,15 @@
  * rule is disabled at file scope.
  */
 /* eslint-disable no-restricted-syntax */
+import './creatorShell.css';
+
 import { ChevronDown, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { WizardModalProps } from './types';
 import { CREATOR_SHELL_GEOMETRY } from './geometry';
+import type { WizardModalProps } from './types';
 import { WizardStepper } from './WizardStepper';
-import './creatorShell.css';
 
 /** Default accent: the app primary token (matches the existing wizards). */
 const DEFAULT_ACCENT = 'rgb(var(--color-primary-600, 79 70 229))';

@@ -10,6 +10,7 @@ import AsyncJobService from './asyncJobService.js';
 import SignalEngine from './signalEngine.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
+
 import { assertLegacyNoncanonicalExecution } from './legacyNoncanonicalExecution.js';
 
 /**
@@ -46,7 +47,12 @@ const AIPlaybookExecutor = {
     if (!run) {
       return { success: false, error: `Run ${runId} not found` };
     }
-    await assertLegacyNoncanonicalExecution({ entrypoint: 'ai_playbook_executor', organizationId: run.organizationId, entityId: runId, payloads: [run] });
+    await assertLegacyNoncanonicalExecution({
+      entrypoint: 'ai_playbook_executor',
+      organizationId: run.organizationId,
+      entityId: runId,
+      payloads: [run],
+    });
 
     if (run.status === 'COMPLETED' || run.status === 'FAILED' || run.status === 'CANCELLED') {
       return { success: false, error: `Run ${runId} is already ${run.status} ` };

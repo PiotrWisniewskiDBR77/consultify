@@ -6,8 +6,9 @@
  * z ciała żądania — użytkownik organizacji A dostawał nazwę, status i ROI
  * inicjatywy organizacji B. Ten test pilnuje, żeby to nie wróciło.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { randomUUID } from 'node:crypto';
+
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 process.env.DB_TYPE = 'postgres';
 
@@ -23,8 +24,14 @@ describe.skipIf(!enabled)('FIX-206 P0 — izolacja organizacji w narzędziach p�
   beforeAll(async () => {
     const { run: dbRun } = await import('../../../utils/DbPromise.js');
     run = dbRun;
-    for (const [id, name] of [[orgA, 'Org A'], [orgB, 'Org B']] as const) {
-      await run(`INSERT INTO organizations (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING`, [id, name]);
+    for (const [id, name] of [
+      [orgA, 'Org A'],
+      [orgB, 'Org B'],
+    ] as const) {
+      await run(`INSERT INTO organizations (id, name) VALUES (?, ?) ON CONFLICT (id) DO NOTHING`, [
+        id,
+        name,
+      ]);
     }
     await run(
       `INSERT INTO projects (id, name, organization_id) VALUES (?, ?, ?) ON CONFLICT (id) DO NOTHING`,

@@ -1,14 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isResultsVNextFlagEnabled } from '@/components/ResultsVNext/resultsVNextFeatureFlags';
+
+import { isDemoAcceptanceProfileEnabled } from '../demoAcceptanceProfile';
 import { isIdeaBusinessCaseEnabled } from '../ideaBusinessCaseSchemaFlag';
 import { isIdeaDecisionLogEnabled } from '../ideaDecisionLogFlag';
-import { isIdeaFinancialCaseEnabled } from '../ideaFinancialCaseFlag';
 import {
   isIdeaDetailsInPanelEnabled,
   resetIdeaDetailsInPanelFlagCache,
 } from '../ideaDetailsInPanelFlag';
-import { isDemoAcceptanceProfileEnabled } from '../demoAcceptanceProfile';
+import { isIdeaFinancialCaseEnabled } from '../ideaFinancialCaseFlag';
 
 describe('DEMO_ACCEPTANCE profile', () => {
   beforeEach(() => {

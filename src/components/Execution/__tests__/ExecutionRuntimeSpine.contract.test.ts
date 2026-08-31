@@ -30,7 +30,7 @@ describe('Execution mounted initiative truth spine', () => {
   it('does not mount the rejected Execution Case register in the primary list', () => {
     const hub = read('src/components/Execution/ExecutionHub.tsx');
 
-    expect(hub).not.toContain("import { ExecutionRealizationsSurface }");
+    expect(hub).not.toContain('import { ExecutionRealizationsSurface }');
     expect(hub).not.toContain('<ExecutionRealizationsSurface');
   });
 
@@ -46,11 +46,7 @@ describe('Execution mounted initiative truth spine', () => {
     const hub = read('src/components/Execution/ExecutionHub.tsx');
 
     expect(routes).toContain('path={`${ROUTES.EXECUTION}/:executionCaseId`}');
-    expect(hub).toContain(
-      "if (openId && (mode === 'doc' || mode === 'initiative')) {"
-    );
-    expect(hub).toContain(
-      'executionCaseId may remain in the URL as correlation metadata'
-    );
+    expect(hub).toContain("if (openId && (mode === 'doc' || mode === 'initiative')) {");
+    expect(hub).toContain('executionCaseId may remain in the URL as correlation metadata');
   });
 });

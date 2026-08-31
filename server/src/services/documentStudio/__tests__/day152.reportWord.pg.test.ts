@@ -1,15 +1,16 @@
 /** @vitest-environment node */
 
-import express from 'express';
 import { writeFile } from 'node:fs/promises';
+
+import express from 'express';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../../config/Config.js';
 import { ApiGateway } from '../../../Gateway.js';
 import { get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
-import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const ORGANIZATION_ID = 'day152-pharma-org';
 const USER_ID = 'day152-pharma-owner';

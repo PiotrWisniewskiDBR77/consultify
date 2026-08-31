@@ -15,8 +15,8 @@ const InitiativeController = InitiativeControllerRaw as any;
 import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
 import { validateOrgMembership, verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
-import { requireCanonicalInitiativeExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { requireInitiativeCapability } from '../../middleware/effectiveCapability.middleware.js';
+import { requireCanonicalInitiativeExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -32,14 +32,14 @@ import {
 } from '../../services/initiative/initiativeGovernanceGuard.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
 import {
-  InitiativeProfileError,
-  updateInitiativeProfile,
-} from '../../services/initiative/initiativeProfileService.js';
-import {
   INITIATIVE_LIFECYCLE_GATE_DOMAINS,
   InitiativeLifecycleGateDecisionError,
   recordInitiativeLifecycleGateDecision,
 } from '../../services/initiative/initiativeLifecycleGateDecisionService.js';
+import {
+  InitiativeProfileError,
+  updateInitiativeProfile,
+} from '../../services/initiative/initiativeProfileService.js';
 import {
   createWizardSession,
   evaluateShortlistGateForSession,
@@ -56,12 +56,12 @@ import { resolveInitiativeProjectId } from '../../services/initiativeProjectPoli
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
+import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
+import { getProgramRollup } from '../../services/pmo/programRollupService.js';
 import {
   executeApprovedEarlyInitiativeTransition,
   proposeEarlyInitiativeTransition,
 } from '../../services/v8/transformationInitiativeTransitionAdapterService.js';
-import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
-import { getProgramRollup } from '../../services/pmo/programRollupService.js';
 import {
   getCapacityTimeline,
   getInitiativeCapacity,
@@ -76,8 +76,8 @@ import {
   UpdateInitiativeStatusSchema,
   UpdateInitiativeTemplateSchema,
 } from '../../validators/initiative.validators.js';
-import initiativesExecutionRuntimeRouter from './initiativesExecutionRuntime.routes.js';
 import initiativesCapacityAdvisorRouter from './initiativesCapacityAdvisor.routes.js';
+import initiativesExecutionRuntimeRouter from './initiativesExecutionRuntime.routes.js';
 
 const router = Router();
 
@@ -3819,7 +3819,12 @@ router.post(
       return res.status(201).json({ proposal });
     } catch (error) {
       const code = error instanceof Error ? error.message : 'initiative_lifecycle_proposal_failed';
-      const status = code === 'initiative_lifecycle_self_review_denied' ? 409 : code.includes('authority') ? 403 : 409;
+      const status =
+        code === 'initiative_lifecycle_self_review_denied'
+          ? 409
+          : code.includes('authority')
+            ? 403
+            : 409;
       return res.status(status).json({ code });
     }
   }

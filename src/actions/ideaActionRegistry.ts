@@ -57,13 +57,12 @@ export * from './registry/types';
 // wprowadza ich nazw do zasięgu TEGO pliku — stąd jawny `import type` poniżej.
 // (`ActionResult` zgubił się przy podziale QG-01 i wywalał `tsc`: TS2304 w
 // sygnaturze `runIdeaAction`.)
-import type { ActionDef, ActionContext, ActionResult, Surface, Tool } from './registry/types';
-
 import { MINDMAP_ACTIONS } from './registry/mindmapActions';
-import { WHITEBOARD_ACTIONS } from './registry/whiteboardActions';
 import { PROCESS_FLOW_ACTIONS } from './registry/processFlowActions';
-import { TABLE_ACTIONS } from './registry/tableActions';
 import { SHARED_ACTIONS } from './registry/sharedActions';
+import { TABLE_ACTIONS } from './registry/tableActions';
+import type { ActionContext, ActionDef, ActionResult, Surface, Tool } from './registry/types';
+import { WHITEBOARD_ACTIONS } from './registry/whiteboardActions';
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
 // `getActionsForSurface` PRESERWUJE kolejność `IDEA_ACTIONS` (dokumentacja
@@ -310,9 +309,7 @@ const ORIGINAL_ORDER: readonly string[] = Object.freeze([
   'table.sync.run_now',
   'table.sync.delete',
 ]);
-const ORDER_INDEX: ReadonlyMap<string, number> = new Map(
-  ORIGINAL_ORDER.map((id, i) => [id, i])
-);
+const ORDER_INDEX: ReadonlyMap<string, number> = new Map(ORIGINAL_ORDER.map((id, i) => [id, i]));
 // Akcja, której NIE MA w `ORIGINAL_ORDER` (czyli dopisana po podziale), ląduje
 // na KOŃCU, nie na początku. Pierwotny wariant `?? 0` wrzucał taką akcję na
 // pozycję zerową — nowa pozycja cicho przeskakiwałaby na szczyt Menu 3 i menu

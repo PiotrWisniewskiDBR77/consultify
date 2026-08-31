@@ -42,30 +42,33 @@
  * routers) at `/api/method`.
  */
 
-import { Router, type Request, type Response } from 'express';
+import { type Request, type Response, Router } from 'express';
 
-import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { getAxisForArea } from '../data/drdStructure.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-
 import {
   isMethodEventType,
   METHOD_EVENT_TYPES,
   METHOD_PROCESS_ROLES,
   METHOD_SESSION_STATES,
-  TERESA_CAPABILITIES,
-  TRANSITION_AUTHORITY,
   type MethodActorKind,
   type MethodEventType,
   type MethodProcessRole,
   type MethodSession,
   type MethodSessionState,
+  TERESA_CAPABILITIES,
   type TeresaCapabilityId,
   type TeresaCommitRequest,
   type TeresaProposedChange,
   type TeresaQualityVerdict,
   type TeresaStatement,
+  TRANSITION_AUTHORITY,
 } from '../method-core/contracts/index.js';
+import { computeContentHash, genId, nowIso } from '../method-core/db.js';
+import {
+  DEMO_BYPASS_NOTICE,
+  type DemoBypassEnv,
+  isDemoBypassAllowed,
+} from '../method-core/demoBypass.js';
 import { methodEventStore } from '../method-core/MethodEventStore.js';
 import {
   DRD_METHOD_PACK_ID,
@@ -76,28 +79,24 @@ import {
   MethodSessionService,
   type PackReadinessLookup,
 } from '../method-core/MethodSessionService.js';
-import { teresaProposalService } from '../method-core/TeresaProposalService.js';
-import {
-  DEMO_BYPASS_NOTICE,
-  isDemoBypassAllowed,
-  type DemoBypassEnv,
-} from '../method-core/demoBypass.js';
-import type { MethodArtefactKind } from '../method-core/outputs/MethodReportSnapshotService.js';
 import {
   EventDerivedOutputBridge,
   methodInitiativeDraftService,
   methodOutputService,
   methodReportSnapshotService,
 } from '../method-core/outputs/index.js';
-import { computeContentHash, genId, nowIso } from '../method-core/db.js';
-import * as DbPromise from '../utils/DbPromise.js';
+import type { MethodArtefactKind } from '../method-core/outputs/MethodReportSnapshotService.js';
+import { teresaProposalService } from '../method-core/TeresaProposalService.js';
+import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { buildAssessmentDrdReportSchema } from '../services/assessment/assessmentDrdReportSchemaService.js';
+import { assessmentReportContractService } from '../services/assessment/assessmentReportContractService.js';
 import {
   AssessmentSkipReasonError,
   assessmentSkipReasonService,
 } from '../services/assessment/assessmentSkipReasonService.js';
-import { assessmentReportContractService } from '../services/assessment/assessmentReportContractService.js';
-import { buildAssessmentDrdReportSchema } from '../services/assessment/assessmentDrdReportSchemaService.js';
 import { renderDocumentSchemaToDocxBuffer } from '../services/documentStudio/documentDocxRenderer.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import * as DbPromise from '../utils/DbPromise.js';
 
 // ---------------------------------------------------------------------------
 // Wiring — one bridge, one session service instance, matching how the rest
@@ -569,7 +568,10 @@ router.get(
         .replace(/[^\p{L}\p{N}._-]+/gu, '_')
         .replace(/^_+|_+$/g, '')
         .slice(0, 80);
-      const date = new Date(reportContract.generatedAt).toISOString().slice(0, 10).replaceAll('-', '');
+      const date = new Date(reportContract.generatedAt)
+        .toISOString()
+        .slice(0, 10)
+        .replaceAll('-', '');
       const filename = `Raport_DRD_${safeLabel || reportContract.sessionId}_${date}.docx`;
       const asciiFilename = filename
         .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
@@ -579,8 +581,7 @@ router.get(
       res
         .status(200)
         .set({
-          'Content-Type':
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
           'Content-Length': String(buffer.length),
         })

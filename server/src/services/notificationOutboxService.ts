@@ -2,17 +2,37 @@ import crypto from 'crypto';
 
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { durableOperationalAlertsEnabled } from './operationalAlertSignalDeliveryService.js';
 import { enqueueOperationalAlertRepairIntent } from './operationalAlertRepairService.js';
+import { durableOperationalAlertsEnabled } from './operationalAlertSignalDeliveryService.js';
 
 type OutboxStatus = 'PENDING' | 'SENT' | 'FAILED';
 let missedDurableAlertSignals = 0;
-async function recordNotificationAlert(row: OutboxRow, outcome: 'SUCCESS' | 'FAILURE'): Promise<void> {
+async function recordNotificationAlert(
+  row: OutboxRow,
+  outcome: 'SUCCESS' | 'FAILURE'
+): Promise<void> {
   if (!durableOperationalAlertsEnabled()) return;
-  try { await enqueueOperationalAlertRepairIntent({ organizationId: row.organization_id, actorId: 'system:notification-outbox', correlationId: row.id, sourceType: 'notification_outbox', sourceTerminalId: row.id, kind: 'WRITE_FAILURE_RATE', outcome }); }
-  catch (error) { missedDurableAlertSignals++; logger.warn('[NotificationOutbox] primary status committed; repair-intent enqueue missed; terminal-source reconstruction remains available', { id: row.id, outcome, error: error instanceof Error ? error.message : String(error) }); }
+  try {
+    await enqueueOperationalAlertRepairIntent({
+      organizationId: row.organization_id,
+      actorId: 'system:notification-outbox',
+      correlationId: row.id,
+      sourceType: 'notification_outbox',
+      sourceTerminalId: row.id,
+      kind: 'WRITE_FAILURE_RATE',
+      outcome,
+    });
+  } catch (error) {
+    missedDurableAlertSignals++;
+    logger.warn(
+      '[NotificationOutbox] primary status committed; repair-intent enqueue missed; terminal-source reconstruction remains available',
+      { id: row.id, outcome, error: error instanceof Error ? error.message : String(error) }
+    );
+  }
 }
-export function getMissedNotificationDurableAlertSignals(): number { return missedDurableAlertSignals; }
+export function getMissedNotificationDurableAlertSignals(): number {
+  return missedDurableAlertSignals;
+}
 
 interface OutboxRow {
   id: string;

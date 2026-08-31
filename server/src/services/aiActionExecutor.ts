@@ -11,6 +11,7 @@ import { all, get, run } from '../utils/DbPromise.js';
 let dbAll = all;
 let dbGet = get;
 let dbRun = run;
+import DecisionController from '../controllers/DecisionController.js';
 import { normalizePermissionRole } from '../middleware/auth.middleware.js';
 import {
   mapDbActionStatusToV8Lifecycle,
@@ -25,9 +26,8 @@ import {
   recordLegacyAuditSafely,
 } from './aiRunLedgerService.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
-import { createPersonalTask } from './personalTask/createPersonalTaskService.js';
-import DecisionController from '../controllers/DecisionController.js';
 import PermissionService from './permissionService.js';
+import { createPersonalTask } from './personalTask/createPersonalTaskService.js';
 
 // Enums and Constants
 export const ACTION_TYPES = {
@@ -1352,11 +1352,9 @@ const AIActionExecutor = {
     const fakeReq = {
       user: { id: action.user_id, organizationId: action.organization_id },
       can(capability: string): boolean {
-        return PermissionService.can(
-          { role: normalizedRole } as any,
-          capability as any,
-          { organizationId: action.organization_id }
-        );
+        return PermissionService.can({ role: normalizedRole } as any, capability as any, {
+          organizationId: action.organization_id,
+        });
       },
       body: {
         projectId: action.project_id,

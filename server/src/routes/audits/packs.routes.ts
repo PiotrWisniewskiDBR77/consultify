@@ -12,7 +12,6 @@
 import { Router } from 'express';
 
 import { AuditPermissionError } from '../../services/audits/auditsDb.js';
-import { isPlatformAdmin } from '../../services/audits/permissions.js';
 import { DEMO_PACK_KEY, seedDemoAuditPack } from '../../services/audits/packSeed.js';
 import {
   approveByExpert,
@@ -27,15 +26,17 @@ import {
   updatePack,
   validatePackById,
 } from '../../services/audits/packService.js';
+import { isPlatformAdmin } from '../../services/audits/permissions.js';
 import type { AuditActor } from '../../services/audits/types.js';
-
 import { assertActor, auditActor, parsePaging, route } from './context.js';
 
 const router = Router();
 
 function requireAdmin(actor: AuditActor): void {
   if (!isPlatformAdmin(actor)) {
-    throw new AuditPermissionError('Zarządzanie biblioteką pakietów audytowych wymaga uprawnień administratora platformy');
+    throw new AuditPermissionError(
+      'Zarządzanie biblioteką pakietów audytowych wymaga uprawnień administratora platformy'
+    );
   }
 }
 
@@ -49,7 +50,9 @@ router.get(
       search: typeof req.query.search === 'string' ? req.query.search : undefined,
       status: typeof req.query.status === 'string' ? (req.query.status as never) : undefined,
       classification:
-        typeof req.query.classification === 'string' ? (req.query.classification as never) : undefined,
+        typeof req.query.classification === 'string'
+          ? (req.query.classification as never)
+          : undefined,
       limit,
       offset,
       // AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001: fail-closed default — a
@@ -59,7 +62,7 @@ router.get(
       readScope: isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
     });
     res.json({ success: true, data: result.items, total: result.total });
-  }),
+  })
 );
 
 // Musi być przed `/:id`, żeby `packKey` w ścieżce nie trafiał do handlera po id.
@@ -86,10 +89,10 @@ router.get(
       req.params.packKey,
       versionA,
       versionB,
-      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
+      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId }
     );
     res.json({ success: true, data: result });
-  }),
+  })
 );
 
 router.post(
@@ -99,7 +102,7 @@ router.post(
     assertActor(actor);
     const pack = await seedDemoAuditPack(actor.organizationId, actor.userId);
     res.json({ success: true, data: pack, packKey: DEMO_PACK_KEY });
-  }),
+  })
 );
 
 router.get(
@@ -113,10 +116,10 @@ router.get(
     const pack = await getPack(
       actor.organizationId,
       req.params.id,
-      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
+      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId }
     );
     res.json({ success: true, data: pack });
-  }),
+  })
 );
 
 router.post(
@@ -127,7 +130,7 @@ router.post(
     requireAdmin(actor);
     const pack = await createPack(actor, req.body ?? {});
     res.status(201).json({ success: true, data: pack });
-  }),
+  })
 );
 
 router.patch(
@@ -138,7 +141,7 @@ router.patch(
     requireAdmin(actor);
     const pack = await updatePack(actor, req.params.id, req.body ?? {});
     res.json({ success: true, data: pack });
-  }),
+  })
 );
 
 router.delete(
@@ -149,7 +152,7 @@ router.delete(
     requireAdmin(actor);
     await deletePack(actor, req.params.id);
     res.json({ success: true, data: { id: req.params.id } });
-  }),
+  })
 );
 
 router.put(
@@ -169,7 +172,7 @@ router.put(
     }
     const result = await replaceCriteria(actor, req.params.id, criteria);
     res.json({ success: true, data: result });
-  }),
+  })
 );
 
 router.post(
@@ -182,10 +185,10 @@ router.post(
     const result = await validatePackById(
       actor.organizationId,
       req.params.id,
-      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId },
+      isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId }
     );
     res.json({ success: true, data: result });
-  }),
+  })
 );
 
 router.post(
@@ -196,7 +199,7 @@ router.post(
     requireAdmin(actor);
     const pack = await approveByExpert(actor, req.params.id, req.body?.note ?? null);
     res.json({ success: true, data: pack });
-  }),
+  })
 );
 
 router.post(
@@ -207,7 +210,7 @@ router.post(
     requireAdmin(actor);
     const pack = await publishPack(actor, req.params.id);
     res.json({ success: true, data: pack });
-  }),
+  })
 );
 
 router.post(
@@ -221,7 +224,7 @@ router.post(
     const current = await getPack(actor.organizationId, req.params.id);
     const pack = await createNewVersion(actor, current.packKey);
     res.status(201).json({ success: true, data: pack });
-  }),
+  })
 );
 
 export default router;

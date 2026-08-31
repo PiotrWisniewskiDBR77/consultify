@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  EVIDENCE_MISSING,
-  evidenceMissingPack,
-  type Bilingual,
-  type ToolPack,
-} from '../contract';
+import { type Bilingual, EVIDENCE_MISSING, evidenceMissingPack, type ToolPack } from '../contract';
 import type { RuntimeReadinessManifest } from '../runtimeReadiness';
 import { validateAll, validateToolPack } from '../validator';
 
@@ -261,10 +256,7 @@ describe('bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji', () => {
   }
 
   it('ODRZUCA RUNTIME_ACTIVE bez manifestu (dawna dziura)', () => {
-    const r = validateToolPack(
-      completePack({ runtimeStatus: 'RUNTIME_ACTIVE' }),
-      SHA
-    );
+    const r = validateToolPack(completePack({ runtimeStatus: 'RUNTIME_ACTIVE' }), SHA);
     expect(r.publishableAsActive).toBe(false);
     expect(r.issues.some((i) => i.field === 'runtimeReadiness')).toBe(true);
   });
@@ -282,7 +274,10 @@ describe('bramka RUNTIME_ACTIVE — wymaga dowodów, nie deklaracji', () => {
 
   it('ODRZUCA dowody z innego SHA (zestarzały manifest)', () => {
     const r = validateToolPack(
-      completePack({ runtimeStatus: 'RUNTIME_ACTIVE', runtimeReadiness: passingManifest('stary999') }),
+      completePack({
+        runtimeStatus: 'RUNTIME_ACTIVE',
+        runtimeReadiness: passingManifest('stary999'),
+      }),
       SHA
     );
     expect(r.publishableAsActive).toBe(false);

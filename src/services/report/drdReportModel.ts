@@ -24,19 +24,20 @@
  *   canon lands, extend `buildDimensions()` with the grounded mapping.
  */
 
+import { isDrdScoringV2Enabled } from '@/utils/drdScoringV2Flag';
+
 import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles';
 import DRD_STRUCTURE, {
   calculateAxisScore,
   calculateAxisScoreV2,
   calculateOverallScore,
   calculateOverallScoreV2,
-  type DRDArea,
   type DrdAggregateResultV2,
+  type DRDArea,
   type DrdCalculationVersion,
   getTotalAreaCount,
 } from '../drdStructure';
 import { buildDRDVisualizationData } from '../drdVizAdapter';
-import { isDrdScoringV2Enabled } from '@/utils/drdScoringV2Flag';
 import {
   type ConclusionOutput,
   deterministicNarrator,

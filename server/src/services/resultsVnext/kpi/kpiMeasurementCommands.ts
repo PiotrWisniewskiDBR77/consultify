@@ -48,19 +48,18 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
-  AtomicWriteConflictError,
-  executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
+  AtomicWriteConflictError,
+  executeAtomicCreate,
 } from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import { openOrEscalateDeviationCase } from './kpiDeviationCommands.js';
-import { toKpiMeasurement, type KpiMeasurement, type KpiMeasurementRow } from './kpiTypes.js';
+import { type KpiMeasurement, type KpiMeasurementRow, toKpiMeasurement } from './kpiTypes.js';
 import { evaluatePerformanceStatus } from './targetGeometryEvaluator.js';
 
 // ==========================================
@@ -563,7 +562,11 @@ export async function correctMeasurement(
       // file header. A correction can produce a NEW performance_status fact
       // (unlike verify/dispute), so it re-runs the same deviation-loop
       // trigger recordMeasurement does, against the SUPERSEDING row.
-      const ownerUserId = await resolveDeviationCaseOwner(client, result.superseding.kpiId, recordedBy);
+      const ownerUserId = await resolveDeviationCaseOwner(
+        client,
+        result.superseding.kpiId,
+        recordedBy
+      );
       await openOrEscalateDeviationCase(client, {
         organizationId,
         kpiId: result.superseding.kpiId,

@@ -101,7 +101,9 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
 
   beforeAll(async () => {
     if (!REAL_DB) {
-      throw new Error('Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.');
+      throw new Error(
+        'Requires NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false and a real postgres DATABASE_URL.'
+      );
     }
 
     // The demo bypass operator gate (server/src/method-core/demoBypass.ts)
@@ -116,10 +118,10 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
     const { assertRealDatabase, fromPgPool } = await import('../../testing/assertRealDatabase.js');
     await assertRealDatabase(fromPgPool(pool));
 
-    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      ORG,
-      'T4 SIRI kernel-parity test org',
-    ]);
+    await pool.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [ORG, 'T4 SIRI kernel-parity test org']
+    );
     for (const id of [OWNER, APPROVER]) {
       await pool.query(
         `INSERT INTO users (id, organization_id, email, role) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
@@ -210,7 +212,9 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
     for (const to of ['prepared', 'active', 'in_review']) {
       const res = await transitionTo(sessionId, to, ownerToken);
       if (res.status !== 200) {
-        throw new Error(`driveToInReview: transition to ${to} failed: ${res.status} ${JSON.stringify(res.body)}`);
+        throw new Error(
+          `driveToInReview: transition to ${to} failed: ${res.status} ${JSON.stringify(res.body)}`
+        );
       }
     }
   }
@@ -230,10 +234,16 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
         .send({
           type: 'EVIDENCE_ATTACHED',
           unitId,
-          payload: { evidenceId: `ev-${unitId}-${randomUUID()}`, evidenceType: 'document', strength: 'E2' },
+          payload: {
+            evidenceId: `ev-${unitId}-${randomUUID()}`,
+            evidenceType: 'document',
+            strength: 'E2',
+          },
         });
       if (evidence.status !== 201) {
-        throw new Error(`EVIDENCE_ATTACHED(${unitId}) failed: ${evidence.status} ${JSON.stringify(evidence.body)}`);
+        throw new Error(
+          `EVIDENCE_ATTACHED(${unitId}) failed: ${evidence.status} ${JSON.stringify(evidence.body)}`
+        );
       }
       const answer = await request(app)
         .post(`/api/method/sessions/${sessionId}/events`)
@@ -246,7 +256,9 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
           payload: { questionId: `q-${unitId}`, answerState: 'confirmed' },
         });
       if (answer.status !== 201) {
-        throw new Error(`ANSWER_CONFIRMED(${unitId}) failed: ${answer.status} ${JSON.stringify(answer.body)}`);
+        throw new Error(
+          `ANSWER_CONFIRMED(${unitId}) failed: ${answer.status} ${JSON.stringify(answer.body)}`
+        );
       }
     }
   }
@@ -256,7 +268,9 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
   async function createFrozenSiriSessionWithOutput(): Promise<{ sessionId: string; output: any }> {
     const createRes = await createSiriSession();
     if (createRes.status !== 201) {
-      throw new Error(`createSiriSession failed: ${createRes.status} ${JSON.stringify(createRes.body)}`);
+      throw new Error(
+        `createSiriSession failed: ${createRes.status} ${JSON.stringify(createRes.body)}`
+      );
     }
     const sessionId = createRes.body.session.id;
     await driveToInReview(sessionId);
@@ -277,7 +291,9 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
   // 1. Library — GET /packs shows SIRI at its HONEST readiness
   // =========================================================================
   it('1. Library: GET /packs lists the SIRI pack with its honest "draft" readiness — never inflated', async () => {
-    const res = await request(app).get('/api/method/packs').set('Authorization', `Bearer ${ownerToken}`);
+    const res = await request(app)
+      .get('/api/method/packs')
+      .set('Authorization', `Bearer ${ownerToken}`);
     expect(res.status).toBe(200);
     const siriPack = res.body.packs.find((p: any) => p.packId === SIRI_METHOD_PACK_ID);
     expect(siriPack).toBeDefined();
@@ -410,7 +426,8 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
   //    supersedes the old Output; the whole lineage is discoverable
   // =========================================================================
   it('8. restart/reopen: frozen -> active creates a new SIRI session revision; re-freezing produces a linked, superseding Output', async () => {
-    const { sessionId: originalSessionId, output: originalOutput } = await createFrozenSiriSessionWithOutput();
+    const { sessionId: originalSessionId, output: originalOutput } =
+      await createFrozenSiriSessionWithOutput();
 
     const reopen = await transitionTo(originalSessionId, 'active', ownerToken);
     expect(reopen.status).toBe(200);
@@ -433,7 +450,11 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
       .send({
         type: 'EVIDENCE_ATTACHED',
         unitId: 'vertical_integration',
-        payload: { evidenceId: `ev-corrected-${randomUUID()}`, evidenceType: 'document', strength: 'E3' },
+        payload: {
+          evidenceId: `ev-corrected-${randomUUID()}`,
+          evidenceType: 'document',
+          strength: 'E3',
+        },
       });
     await request(app)
       .post(`/api/method/sessions/${revisionSessionId}/events`)
@@ -494,26 +515,37 @@ describe.skipIf(!REAL_DB)('T4 — SIRI travels the same kernel path as DRD (real
     await createFrozenSiriSessionWithOutput();
 
     const { methodPackRegistry } = await import('../MethodPackRegistry.js');
-    const pack = await methodPackRegistry.getPack(ORG, SIRI_METHOD_PACK_ID, SIRI_METHOD_PACK_VERSION);
+    const pack = await methodPackRegistry.getPack(
+      ORG,
+      SIRI_METHOD_PACK_ID,
+      SIRI_METHOD_PACK_VERSION
+    );
     expect(pack?.readiness).toBe('draft');
 
     // `/api/method/packs` zwraca rejestr współdzielony przez cały przebieg
     // suity, a inne pliki testowe rejestrują w nim własne pakiety. Szukamy
     // więc konkretnego wpisu i wymagamy, żeby ISTNIAŁ — brak wpisu to inny
     // defekt niż podniesiona gotowość i nie wolno ich mylić w jednej asercji.
-    const libraryAfter = await request(app).get('/api/method/packs').set('Authorization', `Bearer ${ownerToken}`);
-    const siriPackAfter = libraryAfter.body.packs.find((p: any) => p.packId === SIRI_METHOD_PACK_ID);
+    const libraryAfter = await request(app)
+      .get('/api/method/packs')
+      .set('Authorization', `Bearer ${ownerToken}`);
+    const siriPackAfter = libraryAfter.body.packs.find(
+      (p: any) => p.packId === SIRI_METHOD_PACK_ID
+    );
     expect(
       siriPackAfter,
-      'pakiet SIRI zniknął z rejestru w trakcie przebiegu — to nie jest problem gotowości, tylko izolacji testów',
+      'pakiet SIRI zniknął z rejestru w trakcie przebiegu — to nie jest problem gotowości, tylko izolacji testów'
     ).toBeDefined();
     expect(siriPackAfter.readiness).toBe('draft');
   });
 
   it('10. production always refuses SIRI session start via demo bypass — no HTTP path bypasses this', async () => {
     const { isDemoBypassAllowed } = await import('../demoBypass.js');
-    expect(isDemoBypassAllowed({ NODE_ENV: 'production', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' }, true)).toBe(
-      false
-    );
+    expect(
+      isDemoBypassAllowed(
+        { NODE_ENV: 'production', METHOD_CORE_DEMO_BYPASS_PACK_READINESS: 'true' },
+        true
+      )
+    ).toBe(false);
   });
 });

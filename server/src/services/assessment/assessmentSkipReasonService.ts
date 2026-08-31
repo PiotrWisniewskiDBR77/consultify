@@ -1,6 +1,6 @@
+import { getAreaById, getAxisForArea } from '../../data/drdStructure.js';
 import { genId } from '../../method-core/db.js';
 import * as DbPromise from '../../utils/DbPromise.js';
-import { getAreaById, getAxisForArea } from '../../data/drdStructure.js';
 
 export const ASSESSMENT_SKIP_REASON_CODES = [
   'poza_modelem_operacyjnym',

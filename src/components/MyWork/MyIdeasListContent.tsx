@@ -1138,28 +1138,29 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     [convertIdea, fetchIdeas, i18n.language, intentKey, isPolish]
   );
 
-  const proposeArtifact = useCallback(async (
-    target: 'document' | 'presentation' | 'workbook'
-  ) => {
-    if (!convertIdea?.id) return;
-    try {
-      setConverting(true);
-      const result = await Api.proposeIdeaArtifact(
-        convertIdea.id,
-        target,
-        intentKey(convertIdea.id, target)
-      );
-      setArtifactApproval({
-        ideaId: convertIdea.id,
-        proposalId: result.proposal.proposalId,
-        target,
-      });
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to create artifact proposal');
-    } finally {
-      setConverting(false);
-    }
-  }, [convertIdea, intentKey]);
+  const proposeArtifact = useCallback(
+    async (target: 'document' | 'presentation' | 'workbook') => {
+      if (!convertIdea?.id) return;
+      try {
+        setConverting(true);
+        const result = await Api.proposeIdeaArtifact(
+          convertIdea.id,
+          target,
+          intentKey(convertIdea.id, target)
+        );
+        setArtifactApproval({
+          ideaId: convertIdea.id,
+          proposalId: result.proposal.proposalId,
+          target,
+        });
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to create artifact proposal');
+      } finally {
+        setConverting(false);
+      }
+    },
+    [convertIdea, intentKey]
+  );
 
   const approveAndMaterializeArtifact = useCallback(async () => {
     if (!artifactApproval) return;
@@ -1172,11 +1173,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       );
       const targetId = result.receipt.targetRecordId;
       conversionIntentKeys.current.delete(`${artifactApproval.ideaId}:${artifactApproval.target}`);
-      const href = artifactApproval.target === 'document'
-        ? `/document-studio/${targetId}`
-        : artifactApproval.target === 'presentation'
-          ? `/presentations/builder/${targetId}`
-          : `/excele?artifactId=${encodeURIComponent(targetId)}`;
+      const href =
+        artifactApproval.target === 'document'
+          ? `/document-studio/${targetId}`
+          : artifactApproval.target === 'presentation'
+            ? `/presentations/builder/${targetId}`
+            : `/excele?artifactId=${encodeURIComponent(targetId)}`;
       setArtifactApproval(null);
       setConvertIdea(null);
       window.location.assign(href);
@@ -1725,14 +1727,21 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-c-border-subtle">
-            {([
+            {[
               { target: 'document' as const, icon: FileText, label: 'Document' },
               { target: 'presentation' as const, icon: Presentation, label: 'Presentation' },
               { target: 'workbook' as const, icon: Table2, label: 'Workbook' },
-            ]).map(({ target, icon: Icon, label }) => (
-              <button key={target} onClick={() => proposeArtifact(target)} disabled={converting || Boolean(artifactApproval)}
-                className="text-left p-3 rounded-xl border border-c-border-subtle disabled:opacity-60">
-                <div className="flex items-center gap-2 text-sm font-semibold"><Icon size={16} />{label}</div>
+            ].map(({ target, icon: Icon, label }) => (
+              <button
+                key={target}
+                onClick={() => proposeArtifact(target)}
+                disabled={converting || Boolean(artifactApproval)}
+                className="text-left p-3 rounded-xl border border-c-border-subtle disabled:opacity-60"
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Icon size={16} />
+                  {label}
+                </div>
                 <div className="mt-1 text-[11px] text-c-text-muted">Create governed proposal</div>
               </button>
             ))}
@@ -1740,10 +1749,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           {artifactApproval && (
             <div className="rounded-xl border border-c-border-subtle p-3 space-y-2">
               <div className="text-xs text-c-text-secondary">
-                Review complete. Approval will create the real {artifactApproval.target} and an immutable receipt.
+                Review complete. Approval will create the real {artifactApproval.target} and an
+                immutable receipt.
               </div>
-              <button onClick={approveAndMaterializeArtifact} disabled={converting}
-                className="px-3 py-2 rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold disabled:opacity-60">
+              <button
+                onClick={approveAndMaterializeArtifact}
+                disabled={converting}
+                className="px-3 py-2 rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold disabled:opacity-60"
+              >
                 Approve and create
               </button>
             </div>
@@ -1935,7 +1948,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
-          {folderCreateDialogNode}
+        {folderCreateDialogNode}
         {tagModal}
         {confirmDialog}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
@@ -2011,7 +2024,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
-          {folderCreateDialogNode}
+        {folderCreateDialogNode}
         {tagModal}
         {confirmDialog}
         <div className="flex flex-col flex-1 min-h-0">
@@ -2149,7 +2162,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
         {convertModal}
-          {folderCreateDialogNode}
+        {folderCreateDialogNode}
         {tagModal}
         {confirmDialog}
         <div className="p-4">{renderEmpty()}</div>
@@ -2160,7 +2173,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   return (
     <div className="w-full h-full overflow-y-auto bg-c-bg">
       {convertModal}
-          {folderCreateDialogNode}
+      {folderCreateDialogNode}
       {tagModal}
       {confirmDialog}
       <div className="p-4 space-y-4">

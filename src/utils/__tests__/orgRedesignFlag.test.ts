@@ -13,7 +13,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ORG_REDESIGN_V1_FLAG_KEYS, isOrgRedesignV1Enabled } from '../orgRedesignFlag';
+import { isOrgRedesignV1Enabled, ORG_REDESIGN_V1_FLAG_KEYS } from '../orgRedesignFlag';
 
 const ORIGINAL_LOCATION = window.location;
 

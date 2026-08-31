@@ -22,7 +22,14 @@
  * 2026-08-30 ekran mówi to CZYTELNIKOWI wprost, na górze panelu, i prowadzi
  * do macierzy linkiem — zamiast zostawiać właściciela z tym pytaniem.
  */
-import { AlertTriangle, CheckCircle2, Grid3x3, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Grid3x3,
+  Loader2,
+  RotateCcw,
+  ShieldCheck,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { TableColumn, TableRow } from '@/components/standard/StandardTable';
@@ -223,15 +230,18 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           Przegląd jakości oceny
         </h3>
         <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
-          Ten ekran sprawdza <strong className="font-semibold text-navy-900 dark:text-white">jakość</strong>{' '}
-          gotowej oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje.
+          Ten ekran sprawdza{' '}
+          <strong className="font-semibold text-navy-900 dark:text-white">jakość</strong> gotowej
+          oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje.
           Można tu dołożyć dowód i podjąć decyzję — ale nie ustawia się tu żadnego poziomu.
         </p>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          <strong className="font-semibold text-navy-900 dark:text-white">To nie jest macierz oceny</strong>{' '}
-          i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się
-          poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do
-          średniej per oś.
+          <strong className="font-semibold text-navy-900 dark:text-white">
+            To nie jest macierz oceny
+          </strong>{' '}
+          i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia
+          się poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku,
+          zwiniętym do średniej per oś.
         </p>
         <a
           href={`/assessment/drd/${assessmentId}`}

@@ -16,8 +16,11 @@
  */
 
 import type { PrioritisationResult } from '@/method-core/contracts';
+import type {
+  SiriPmCalculationVersion,
+  SiriPmPlanningHorizon,
+} from '@/services/siriPrioritisation';
 import { SIRI_PRIORITISATION_AREAS, type SIRIBuildingBlock } from '@/services/siriStructure';
-import type { SiriPmCalculationVersion, SiriPmPlanningHorizon } from '@/services/siriPrioritisation';
 import { isSiriPmV2Enabled } from '@/utils/siriPmV2Flag';
 
 import { SIRI_PM_PLANNING_HORIZON_WEIGHTS, siriAdapter } from './siriAdapter';

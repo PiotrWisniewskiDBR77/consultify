@@ -134,11 +134,6 @@ import {
 import { WhiteboardNodeCommentThread } from './whiteboard/nodes/WhiteboardNodeCommentThread';
 import { STICKY_COLORS, STICKY_SIZES, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { usePortalSlot } from './whiteboard/usePortalSlot';
-import {
-  DEFAULT_WHITEBOARD_NODE_SIZE,
-  resolveWhiteboardPlacement,
-  type WhiteboardRect,
-} from './whiteboard/whiteboardPlacement';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import {
@@ -171,6 +166,11 @@ import {
   getWhiteboardModeCopy,
   getWhiteboardShortcuts,
 } from './whiteboard/whiteboardInteractionGrammar';
+import {
+  DEFAULT_WHITEBOARD_NODE_SIZE,
+  resolveWhiteboardPlacement,
+  type WhiteboardRect,
+} from './whiteboard/whiteboardPlacement';
 import {
   applyProposalNodeMoves,
   applyProposalNodeUpdates,

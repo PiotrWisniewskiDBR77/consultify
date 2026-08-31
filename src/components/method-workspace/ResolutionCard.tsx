@@ -50,7 +50,9 @@ export const ResolutionCard: React.FC<ResolutionCardProps> = ({
       <div className="flex items-start gap-2">
         <HelpCircle size={16} className="mt-0.5 shrink-0 text-c-info" />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-c-text">To nie jest błąd — to jest luka wiedzy</p>
+          <p className="text-sm font-semibold text-c-text">
+            To nie jest błąd — to jest luka wiedzy
+          </p>
           <p className="text-xs text-c-text-secondary mt-0.5">
             „Nie wiem" nie ustawia poziomu i nie liczy się jako zero. Ustalmy, czego brakuje.
           </p>

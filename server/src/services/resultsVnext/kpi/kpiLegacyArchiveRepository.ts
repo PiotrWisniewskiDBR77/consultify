@@ -286,7 +286,9 @@ export interface LegacyArchiveIndexRow {
   count: number;
 }
 
-export async function getLegacyArchiveIndex(organizationId: string): Promise<LegacyArchiveIndexRow[]> {
+export async function getLegacyArchiveIndex(
+  organizationId: string
+): Promise<LegacyArchiveIndexRow[]> {
   return withReadClient(async (client) => {
     const results: LegacyArchiveIndexRow[] = [];
 

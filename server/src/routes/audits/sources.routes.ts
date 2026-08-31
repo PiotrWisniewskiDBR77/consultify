@@ -11,7 +11,7 @@
 
 import { Router } from 'express';
 
-import { isPlatformAdmin } from '../../services/audits/permissions.js';
+import { AuditPermissionError } from '../../services/audits/auditsDb.js';
 import {
   createSource,
   deleteSource,
@@ -20,9 +20,8 @@ import {
   updateSource,
   verifySource,
 } from '../../services/audits/normSourceService.js';
-import { AuditPermissionError } from '../../services/audits/auditsDb.js';
+import { isPlatformAdmin } from '../../services/audits/permissions.js';
 import type { AuditActor } from '../../services/audits/types.js';
-
 import { assertActor, auditActor, parsePaging, route } from './context.js';
 
 const router = Router();
@@ -30,7 +29,7 @@ const router = Router();
 function requireAdmin(actor: AuditActor): void {
   if (!isPlatformAdmin(actor)) {
     throw new AuditPermissionError(
-      'Zarządzanie rejestrem źródeł normatywnych wymaga uprawnień administratora platformy',
+      'Zarządzanie rejestrem źródeł normatywnych wymaga uprawnień administratora platformy'
     );
   }
 }
@@ -50,7 +49,7 @@ router.get(
       offset,
     });
     res.json({ success: true, data: result.items, total: result.total });
-  }),
+  })
 );
 
 router.get(
@@ -60,7 +59,7 @@ router.get(
     assertActor(actor);
     const source = await getSource(actor.organizationId, req.params.id);
     res.json({ success: true, data: source });
-  }),
+  })
 );
 
 router.post(
@@ -71,7 +70,7 @@ router.post(
     requireAdmin(actor);
     const source = await createSource(actor, req.body ?? {});
     res.status(201).json({ success: true, data: source });
-  }),
+  })
 );
 
 router.patch(
@@ -82,7 +81,7 @@ router.patch(
     requireAdmin(actor);
     const source = await updateSource(actor, req.params.id, req.body ?? {});
     res.json({ success: true, data: source });
-  }),
+  })
 );
 
 router.post(
@@ -93,7 +92,7 @@ router.post(
     requireAdmin(actor);
     const source = await verifySource(actor, req.params.id, req.body ?? {});
     res.json({ success: true, data: source });
-  }),
+  })
 );
 
 router.delete(
@@ -104,7 +103,7 @@ router.delete(
     requireAdmin(actor);
     await deleteSource(actor, req.params.id);
     res.json({ success: true, data: { id: req.params.id } });
-  }),
+  })
 );
 
 export default router;

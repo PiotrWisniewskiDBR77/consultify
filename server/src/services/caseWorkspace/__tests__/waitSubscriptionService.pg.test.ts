@@ -475,7 +475,9 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const orgId of params.orgIds) {
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -536,7 +538,13 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(rows.rows).toHaveLength(1);
       expect(rows.rows[0]?.wait_id).toBe(first.waitId);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
     }
   }, 30_000);
 
@@ -603,7 +611,13 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
         rowAfterFirstClaim?.claim_lease_expires_at
       );
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
     }
   }, 30_000);
 
@@ -665,7 +679,13 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(rowAfterReclaim?.claim_owner_token).toBe(reclaim.ownerToken);
       expect(Number(rowAfterReclaim?.claim_fencing_token)).toBe(2);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
     }
   }, 30_000);
 
@@ -746,7 +766,13 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(rowAfterRejectedAttempts?.satisfied_by_event_id).toBe('evt-resolve-terminal');
       expect(Number(rowAfterRejectedAttempts?.version)).toBe(2);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
     }
   }, 30_000);
 
@@ -815,7 +841,13 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       // touched the other, and vice versa.
       expect(expiredRow?.wait_id).not.toBe(cancelledRow?.wait_id);
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
     }
   }, 30_000);
 
@@ -882,7 +914,13 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       expect(dueForThisCase[0]?.waitType).toBe('TIMER');
       expect(dueForThisCase[0]?.status).toBe('ACTIVE');
     } finally {
-      await teardown({ waitIds, runIds: [runId], orgIds: [orgId], projectIds: [projectId], userIds: [actorId] });
+      await teardown({
+        waitIds,
+        runIds: [runId],
+        orgIds: [orgId],
+        projectIds: [projectId],
+        userIds: [actorId],
+      });
     }
   }, 30_000);
 
@@ -891,13 +929,18 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   //    organization_members row for the Case's org is rejected, creating no
   //    wait row.
   // -------------------------------------------------------------------------
-  it('createWait rejects an actor with no organization_members row for the Case\'s org, creating no wait row', async () => {
+  it("createWait rejects an actor with no organization_members row for the Case's org, creating no wait row", async () => {
     const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-create');
     const noMembershipActor = await seedUser(orgId, 'auth-create-outsider');
     const runId = `run-t7-${randomUUID()}`;
     try {
       await seedV8Run({ runId, organizationId: orgId });
-      const actionProposalId = await seedActionProposal({ caseId, runId, actorId, tag: 'auth-create' });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'auth-create',
+      });
 
       await expect(
         waitSubscriptionService.createWait(
@@ -939,7 +982,12 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
     const waitIds: string[] = [];
     try {
       await seedV8Run({ runId, organizationId: orgId });
-      const actionProposalId = await seedActionProposal({ caseId, runId, actorId, tag: 'auth-read-null' });
+      const actionProposalId = await seedActionProposal({
+        caseId,
+        runId,
+        actorId,
+        tag: 'auth-read-null',
+      });
       const wait = await waitSubscriptionService.createWait(
         {
           caseId,
@@ -951,7 +999,10 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       );
       waitIds.push(wait.waitId);
 
-      const missing = await waitSubscriptionService.getWait(`cwwait-${randomUUID()}`, noMembershipActor);
+      const missing = await waitSubscriptionService.getWait(
+        `cwwait-${randomUUID()}`,
+        noMembershipActor
+      );
       const denied = await waitSubscriptionService.getWait(wait.waitId, noMembershipActor);
       expect(missing).toBeNull();
       expect(denied).toBeNull();
@@ -986,7 +1037,8 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
   //    primitives that have no human in their signature.
   // -------------------------------------------------------------------------
   it('emits exactly one correctly-identified outbox event per mutating command across register -> claim -> renew -> satisfy, with system actors on the scheduler paths', async () => {
-    const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('outbox-timer-lifecycle');
+    const { orgId, projectId, caseId, actorId } =
+      await seedOrgProjectCase('outbox-timer-lifecycle');
     const runId = `run-t9-${randomUUID()}`;
     const waitIds: string[] = [];
     try {
@@ -1414,9 +1466,7 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
     );
   }
 
-  async function seedClaimedTimerWait(
-    label: string
-  ): Promise<{
+  async function seedClaimedTimerWait(label: string): Promise<{
     orgId: string;
     projectId: string;
     caseId: string;
@@ -1625,10 +1675,9 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
         );
         while (last.outcome === 'lease_active' && Date.now() < deadline) {
           await expireClaimLease(fixture.waitId);
-          last = await waitSubscriptionService.reclaimExpiredTimerWaitClaim(
-            fixture.waitId,
-            () => ({ alreadyApplied: false })
-          );
+          last = await waitSubscriptionService.reclaimExpiredTimerWaitClaim(fixture.waitId, () => ({
+            alreadyApplied: false,
+          }));
         }
         return last;
       })();
@@ -1875,7 +1924,11 @@ suite('waitSubscriptionService — Wait Subscription against a real PostgreSQL (
       ).rejects.toThrow('wait_satisfying_event_ref_invalid');
 
       // (b) THE DATABASE: nothing moved.
-      const row = await control.query<{ status: string; version: number; satisfied_by_event_id: string | null }>(
+      const row = await control.query<{
+        status: string;
+        version: number;
+        satisfied_by_event_id: string | null;
+      }>(
         `SELECT status, version, satisfied_by_event_id FROM case_workspace_waits WHERE wait_id = $1`,
         [waitId]
       );

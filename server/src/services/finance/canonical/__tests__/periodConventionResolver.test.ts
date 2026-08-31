@@ -4,14 +4,44 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { annualizationFactor, daysInPeriod, resolvePeriodOffset, type PeriodMeta } from '../periodConventionResolver.js';
+import {
+  annualizationFactor,
+  daysInPeriod,
+  type PeriodMeta,
+  resolvePeriodOffset,
+} from '../periodConventionResolver.js';
 
 function fy(year: number, id: string, prev: string | null, start: string, end: string): PeriodMeta {
-  return { periodId: id, periodType: 'FY', fiscalYear: year, fiscalQuarter: null, fiscalMonth: null, periodStart: start, periodEnd: end, previousPeriodId: prev };
+  return {
+    periodId: id,
+    periodType: 'FY',
+    fiscalYear: year,
+    fiscalQuarter: null,
+    fiscalMonth: null,
+    periodStart: start,
+    periodEnd: end,
+    previousPeriodId: prev,
+  };
 }
 
-function q(year: number, quarter: number, id: string, prev: string | null, start: string, end: string): PeriodMeta {
-  return { periodId: id, periodType: 'Q', fiscalYear: year, fiscalQuarter: quarter, fiscalMonth: null, periodStart: start, periodEnd: end, previousPeriodId: prev };
+function q(
+  year: number,
+  quarter: number,
+  id: string,
+  prev: string | null,
+  start: string,
+  end: string
+): PeriodMeta {
+  return {
+    periodId: id,
+    periodType: 'Q',
+    fiscalYear: year,
+    fiscalQuarter: quarter,
+    fiscalMonth: null,
+    periodStart: start,
+    periodEnd: end,
+    previousPeriodId: prev,
+  };
 }
 
 describe('daysInPeriod — never hardcoded 365', () => {
@@ -34,12 +64,24 @@ describe('annualizationFactor', () => {
   });
 
   it('MONTH period fiscal_month=8: 12/8', () => {
-    const period: PeriodMeta = { periodId: 'm8', periodType: 'MONTH', fiscalYear: 2025, fiscalQuarter: null, fiscalMonth: 8, periodStart: '2025-01-01', periodEnd: '2025-08-31', previousPeriodId: null };
+    const period: PeriodMeta = {
+      periodId: 'm8',
+      periodType: 'MONTH',
+      fiscalYear: 2025,
+      fiscalQuarter: null,
+      fiscalMonth: 8,
+      periodStart: '2025-01-01',
+      periodEnd: '2025-08-31',
+      previousPeriodId: null,
+    };
     expect(annualizationFactor(period)).toBeCloseTo(1.5, 9);
   });
 
   it('Q period fiscal_quarter=3: 4/3', () => {
-    expect(annualizationFactor(q(2025, 3, 'q3', null, '2025-01-01', '2025-09-30'))).toBeCloseTo(4 / 3, 9);
+    expect(annualizationFactor(q(2025, 3, 'q3', null, '2025-01-01', '2025-09-30'))).toBeCloseTo(
+      4 / 3,
+      9
+    );
   });
 });
 
@@ -51,11 +93,19 @@ describe('resolvePeriodOffset — CURRENT / PRIOR_PERIOD', () => {
   const lookup = (id: string) => graph.get(id);
 
   it('CURRENT: single period, unchanged', () => {
-    expect(resolvePeriodOffset('CURRENT', 'fy2025', lookup)).toEqual({ ok: true, periodIds: ['fy2025'], combine: 'SINGLE' });
+    expect(resolvePeriodOffset('CURRENT', 'fy2025', lookup)).toEqual({
+      ok: true,
+      periodIds: ['fy2025'],
+      combine: 'SINGLE',
+    });
   });
 
   it('PRIOR_PERIOD: walks previous_period_id once', () => {
-    expect(resolvePeriodOffset('PRIOR_PERIOD', 'fy2025', lookup)).toEqual({ ok: true, periodIds: ['fy2024'], combine: 'SINGLE' });
+    expect(resolvePeriodOffset('PRIOR_PERIOD', 'fy2025', lookup)).toEqual({
+      ok: true,
+      periodIds: ['fy2024'],
+      combine: 'SINGLE',
+    });
   });
 
   it('PRIOR_PERIOD on the first period on record: INSUFFICIENT_HISTORY, no silent fallback', () => {
@@ -118,7 +168,11 @@ describe('resolvePeriodOffset — LTM_SUM_4Q / LTM_LATEST_Q_CLOSE', () => {
   });
 
   it('LTM_LATEST_Q_CLOSE: SINGLE [current], no summing (a balance sheet does not sum across periods)', () => {
-    expect(resolvePeriodOffset('LTM_LATEST_Q_CLOSE', 'q4', lookup)).toEqual({ ok: true, periodIds: ['q4'], combine: 'SINGLE' });
+    expect(resolvePeriodOffset('LTM_LATEST_Q_CLOSE', 'q4', lookup)).toEqual({
+      ok: true,
+      periodIds: ['q4'],
+      combine: 'SINGLE',
+    });
   });
 });
 

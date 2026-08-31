@@ -7,8 +7,8 @@ import { Request, Response, Router } from 'express';
 import { verifyToken } from '../middleware/auth.middleware.js';
 const isAuthenticated = verifyToken; // alias for compatibility
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
-import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
+import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 

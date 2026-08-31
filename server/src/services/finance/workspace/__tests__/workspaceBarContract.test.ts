@@ -8,51 +8,41 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { financeStmtLinesCellRef } from '../../../../types/finance/CellRef.js';
 import { createEmptyWorkspaceState } from '../../../../types/finance/WorkspaceState.js';
+// AP-03, imported READ-ONLY: the bridge is joined by string id inside the
+// contract, but a test may look at both sides at once — that is the only way
+// to prove the two layers actually agree instead of asserting it in prose.
+import { COMMAND_CONTEXTS } from '../../keyboard/commandTypes.js';
 import {
-  DEFAULT_WORKSPACE_BAR_METRICS,
-  DEFAULT_WORKSPACE_CHROME_DECLARATION,
-  DOCUMENT_IDENTITY_ELEMENTS,
-  DOCUMENT_IDENTITY_REGION,
-  FORBIDDEN_NORMAL_MODE_REGIONS,
-  WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS,
-  WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
-  WORKSPACE_BAR_NAME_MAX_CHARS,
-  canRenameArtifact,
-  countDirectRightControls,
-  estimateWorkspaceBarLayout,
-  mergeFreshnessIntoPrimaryLabel,
-  resolveControlState,
-  validateDocumentIdentity,
-  validateWorkspaceBarConfig,
-  validateWorkspaceName,
-  type WorkspaceBarConfig,
-  type WorkspaceBarExtraControl,
-} from '../workspaceBarContract.js';
+  applyFocusRestoreToSelection,
+  captureFocusSnapshot,
+  FOCUS_RESTORE_REASONS,
+  type FocusRestoreReason,
+  type FocusSnapshot,
+  resolveFocusRestorePatch,
+} from '../../keyboard/FocusRestoreContract.js';
+import { FINANCE_KEYBOARD_COMMANDS } from '../../keyboard/KeyboardCommandRegistry.js';
 import {
-  FINANCE_MODULE_ADAPTERS,
-  FINANCE_MODULE_ADAPTER_LIST,
-} from '../moduleAdapters.js';
-import {
-  ESCAPE_KEY,
-  ESCAPE_PRECEDENCE,
-  FINANCE_CHROME_REGIONS,
-  FINANCE_COMMAND_CONTEXT_IDS,
-  FINANCE_FOCUS_MODE_COMMAND_IDS,
-  FOCUS_MODEL_BRIDGE_SURFACE,
-  FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK,
-  FOCUS_MODE_MUST_NOT_COLLAPSE_SELECTION,
-  FOCUS_MODE_HIDDEN_REGIONS,
-  FOCUS_MODE_PRESERVED_STATE_KEYS,
-  FOCUS_MODE_PRESERVED_STATE_SOURCE,
-  FOCUS_MODE_RETAINED_REGIONS,
   assertFocusModelsAgree,
   assertFocusModePreservation,
   assertFocusModeRegionPartition,
   classifyViewport,
   createFocusModeSession,
   enterFocusMode,
+  ESCAPE_KEY,
+  ESCAPE_PRECEDENCE,
   exitFocusMode,
+  FINANCE_CHROME_REGIONS,
+  FINANCE_COMMAND_CONTEXT_IDS,
+  FINANCE_FOCUS_MODE_COMMAND_IDS,
+  FOCUS_MODE_FOCUS_RESTORE_REASON_FALLBACK,
+  FOCUS_MODE_HIDDEN_REGIONS,
+  FOCUS_MODE_MUST_NOT_COLLAPSE_SELECTION,
+  FOCUS_MODE_PRESERVED_STATE_KEYS,
+  FOCUS_MODE_PRESERVED_STATE_SOURCE,
+  FOCUS_MODE_RETAINED_REGIONS,
+  FOCUS_MODEL_BRIDGE_SURFACE,
   focusModeActiveViewId,
   focusModeFocusSnapshot,
   focusRestoreReasonForExit,
@@ -65,26 +55,33 @@ import {
   verifyEscapeRegistryCoverage,
   viewportCapability,
 } from '../focusModeContract.js';
-// AP-03, imported READ-ONLY: the bridge is joined by string id inside the
-// contract, but a test may look at both sides at once — that is the only way
-// to prove the two layers actually agree instead of asserting it in prose.
-import { COMMAND_CONTEXTS } from '../../keyboard/commandTypes.js';
-import { FINANCE_KEYBOARD_COMMANDS } from '../../keyboard/KeyboardCommandRegistry.js';
+import { FINANCE_MODULE_ADAPTER_LIST, FINANCE_MODULE_ADAPTERS } from '../moduleAdapters.js';
 import {
-  FOCUS_RESTORE_REASONS,
-  applyFocusRestoreToSelection,
-  captureFocusSnapshot,
-  resolveFocusRestorePatch,
-  type FocusRestoreReason,
-  type FocusSnapshot,
-} from '../../keyboard/FocusRestoreContract.js';
-import { financeStmtLinesCellRef } from '../../../../types/finance/CellRef.js';
+  canRenameArtifact,
+  countDirectRightControls,
+  DEFAULT_WORKSPACE_BAR_METRICS,
+  DEFAULT_WORKSPACE_CHROME_DECLARATION,
+  DOCUMENT_IDENTITY_ELEMENTS,
+  DOCUMENT_IDENTITY_REGION,
+  estimateWorkspaceBarLayout,
+  FORBIDDEN_NORMAL_MODE_REGIONS,
+  mergeFreshnessIntoPrimaryLabel,
+  resolveControlState,
+  validateDocumentIdentity,
+  validateWorkspaceBarConfig,
+  validateWorkspaceName,
+  WORKSPACE_BAR_MAX_DIRECT_RIGHT_CONTROLS,
+  WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
+  WORKSPACE_BAR_NAME_MAX_CHARS,
+  type WorkspaceBarConfig,
+  type WorkspaceBarExtraControl,
+} from '../workspaceBarContract.js';
 import {
-  ORG,
   allGatesSatisfied,
   artifactRef,
   configFor,
   evaluationContext,
+  ORG,
 } from './workspaceTestFixtures.js';
 
 // ===========================================================================
@@ -114,7 +111,9 @@ describe('AP-09 workspaceBarContract — the five-control budget', () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error('unreachable');
     expect(result.errors.map((e) => e.code)).toContain('TOO_MANY_DIRECT_RIGHT_CONTROLS');
-    expect(result.errors.find((e) => e.code === 'TOO_MANY_DIRECT_RIGHT_CONTROLS')?.message).toContain('got 6');
+    expect(
+      result.errors.find((e) => e.code === 'TOO_MANY_DIRECT_RIGHT_CONTROLS')?.message
+    ).toContain('got 6');
   });
 
   it('counts a menu as ONE control regardless of how many items it holds', () => {
@@ -205,7 +204,9 @@ describe('AP-09 workspaceBarContract — one document identity OUTSIDE focus mod
     // Two distinct faults: the region exists at all, and it carries the title.
     expect(codes).toContain('COMPETING_MODULE_HEADER');
     expect(codes).toContain('DUPLICATE_DOCUMENT_IDENTITY');
-    expect(result.errors.find((e) => e.code === 'DUPLICATE_DOCUMENT_IDENTITY')?.message).toContain('name, status');
+    expect(result.errors.find((e) => e.code === 'DUPLICATE_DOCUMENT_IDENTITY')?.message).toContain(
+      'name, status'
+    );
   });
 
   it('REJECTS a status strip and a self-contradicting declaration', () => {
@@ -275,7 +276,12 @@ describe('AP-09 workspaceBarContract — freshness merged into the primary CTA',
   });
 
   it('names every non-current freshness state without relying on colour', () => {
-    for (const freshness of ['NEVER_COMPUTED', 'STALE_SOURCE', 'STALE_ASSUMPTIONS', 'COMPUTE_FAILED'] as const) {
+    for (const freshness of [
+      'NEVER_COMPUTED',
+      'STALE_SOURCE',
+      'STALE_ASSUMPTIONS',
+      'COMPUTE_FAILED',
+    ] as const) {
       const merged = mergeFreshnessIntoPrimaryLabel({ key: 'k', pl: 'Przelicz' }, freshness);
       expect(merged.prefix).not.toBeNull();
       expect(merged.pl).toContain(' · Przelicz');
@@ -297,7 +303,10 @@ describe('AP-09 workspaceBarContract — controlled rename (OWN-FIN-011)', () =>
   });
 
   it('validates and normalises the name', () => {
-    expect(validateWorkspaceName('  Apator   FY2024 ')).toEqual({ ok: true, normalized: 'Apator FY2024' });
+    expect(validateWorkspaceName('  Apator   FY2024 ')).toEqual({
+      ok: true,
+      normalized: 'Apator FY2024',
+    });
     expect(validateWorkspaceName('   ')).toMatchObject({ ok: false, code: 'NAME_EMPTY' });
     expect(validateWorkspaceName('a'.repeat(WORKSPACE_BAR_NAME_MAX_CHARS + 1))).toMatchObject({
       ok: false,
@@ -310,7 +319,10 @@ describe('AP-09 workspaceBarContract — controlled rename (OWN-FIN-011)', () =>
   });
 
   it('propagates the rename verdict into the built config', () => {
-    const approved = configFor(FINANCE_MODULE_ADAPTERS.analysis, { status: 'APPROVED', role: 'approver' });
+    const approved = configFor(FINANCE_MODULE_ADAPTERS.analysis, {
+      status: 'APPROVED',
+      role: 'approver',
+    });
     expect(approved.identity.name.editable).toBe(false);
     expect(approved.identity.name.editableBlockedReason).toBe('STATUS_IMMUTABLE');
   });
@@ -319,10 +331,19 @@ describe('AP-09 workspaceBarContract — controlled rename (OWN-FIN-011)', () =>
 describe('AP-09 workspaceBarContract — enablement is a whitelist (fail closed)', () => {
   it('withholds a control whose named gate is absent from the context', () => {
     const state = resolveControlState(
-      { statuses: 'any', roles: 'any', freshness: 'any', requiresGates: ['analysis.hasConfiguredKpis'] },
+      {
+        statuses: 'any',
+        roles: 'any',
+        freshness: 'any',
+        requiresGates: ['analysis.hasConfiguredKpis'],
+      },
       evaluationContext({ gates: {} })
     );
-    expect(state).toEqual({ available: false, reason: 'GATE', detail: 'analysis.hasConfiguredKpis' });
+    expect(state).toEqual({
+      available: false,
+      reason: 'GATE',
+      detail: 'analysis.hasConfiguredKpis',
+    });
   });
 
   it('never offers Approve on an empty Draft (OWN-FIN-012)', () => {
@@ -381,8 +402,10 @@ describe('AP-09 workspaceBarContract — 1280 px layout budget', () => {
     // than discovered on a screenshot.
     const fullNameFits = FINANCE_MODULE_ADAPTER_LIST.filter(
       (adapter) =>
-        estimateWorkspaceBarLayout(configFor(adapter), { viewportPx: 1280, freshness: 'STALE_SOURCE' })
-          .fitsWithoutTruncation
+        estimateWorkspaceBarLayout(configFor(adapter), {
+          viewportPx: 1280,
+          freshness: 'STALE_SOURCE',
+        }).fitsWithoutTruncation
     ).map((adapter) => adapter.moduleId);
     expect(fullNameFits).toEqual(['statements', 'valuation']);
   });
@@ -417,7 +440,9 @@ describe('AP-09 workspaceBarContract — 1280 px layout budget', () => {
 
   it('degrades as the viewport narrows and recovers at 1920', () => {
     const config = configFor(FINANCE_MODULE_ADAPTERS.prediction, { freshness: 'STALE_SOURCE' });
-    expect(estimateWorkspaceBarLayout(config, { viewportPx: 1920 }).fitsWithoutTruncation).toBe(true);
+    expect(estimateWorkspaceBarLayout(config, { viewportPx: 1920 }).fitsWithoutTruncation).toBe(
+      true
+    );
     expect(estimateWorkspaceBarLayout(config, { viewportPx: 1280 }).fits).toBe(true);
     expect(estimateWorkspaceBarLayout(config, { viewportPx: 900 }).fits).toBe(false);
   });
@@ -428,7 +453,12 @@ describe('AP-09 workspaceBarContract — 1280 px layout budget', () => {
 
 describe('AP-09 focusModeContract — what stays and what goes', () => {
   it('retains Menu 1, the Workspace Bar, view navigation and the workspace', () => {
-    expect([...FOCUS_MODE_RETAINED_REGIONS]).toEqual(['menu1', 'workspaceBar', 'viewNavigation', 'workspace']);
+    expect([...FOCUS_MODE_RETAINED_REGIONS]).toEqual([
+      'menu1',
+      'workspaceBar',
+      'viewNavigation',
+      'workspace',
+    ]);
     for (const region of FOCUS_MODE_RETAINED_REGIONS) {
       expect(regionVisibilityInFocusMode(region)).toBe('retained');
     }
@@ -497,10 +527,15 @@ describe('AP-09 focusModeContract — state is preserved and nothing refetches',
 
   it('emits only visibility/focus/announce effects — never a data effect', () => {
     const session = createFocusModeSession(baseState);
-    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: 'btn' });
-    expect(entered.effects.every((e) => ['hide-region', 'show-region', 'move-focus', 'announce'].includes(e.kind))).toBe(
-      true
-    );
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: 'btn',
+    });
+    expect(
+      entered.effects.every((e) =>
+        ['hide-region', 'show-region', 'move-focus', 'announce'].includes(e.kind)
+      )
+    ).toBe(true);
     expect(entered.effects.filter((e) => e.kind === 'hide-region')).toHaveLength(
       FOCUS_MODE_HIDDEN_REGIONS.length
     );
@@ -514,7 +549,10 @@ describe('AP-09 focusModeContract — state is preserved and nothing refetches',
     });
     const exited = exitFocusMode(entered.session, { trigger: 'escape-key' });
     const moveFocus = exited.effects.find((e) => e.kind === 'move-focus');
-    expect(moveFocus).toMatchObject({ kind: 'move-focus', controlId: 'finance.analysis.fullscreen' });
+    expect(moveFocus).toMatchObject({
+      kind: 'move-focus',
+      controlId: 'finance.analysis.fullscreen',
+    });
   });
 
   it('keeps the open view across enter AND exit (OWN-FIN-004 "stan zakładki")', () => {
@@ -537,13 +575,18 @@ describe('AP-09 focusModeContract — state is preserved and nothing refetches',
     expect(assertFocusModePreservation(entered.session, exited.session)).toEqual({ ok: true });
 
     // And the bar renders that view, rather than re-deriving the adapter default.
-    expect(focusModeActiveViewId(exited.session, config.viewNavigation.views[0].id)).toBe(openView.id);
+    expect(focusModeActiveViewId(exited.session, config.viewNavigation.views[0].id)).toBe(
+      openView.id
+    );
     expect(openView.id).not.toBe(config.viewNavigation.views[0].id);
   });
 
   it('DETECTS a toggle that silently reset the open view (negative control)', () => {
     const session = createFocusModeSession(baseState, { activeViewId: 'sensitivity' });
-    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: null });
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: null,
+    });
     // Simulate the bug this key exists to catch: focus mode re-mounts the
     // workspace and the view navigation falls back to view #1.
     const drifted = { ...entered.session, activeViewId: 'source' };
@@ -556,7 +599,10 @@ describe('AP-09 focusModeContract — state is preserved and nothing refetches',
 
   it('DETECTS a toggle that rebuilt WorkspaceState instead of carrying it (negative control)', () => {
     const session = createFocusModeSession(baseState, { activeViewId: 'source' });
-    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: null });
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: null,
+    });
     // Structurally identical, different object — i.e. something refetched.
     const rebuilt = { ...entered.session, workspaceState: { ...baseState } };
     const check = assertFocusModePreservation(session, rebuilt);
@@ -574,10 +620,14 @@ describe('AP-09 focusModeContract — state is preserved and nothing refetches',
   it('is a no-op when already in the requested state', () => {
     const session = createFocusModeSession(baseState);
     expect(exitFocusMode(session, { trigger: 'escape-key' }).noop).toBe(true);
-    const entered = enterFocusMode(session, { trigger: 'toggle-control', restoreFocusToControlId: null });
-    expect(enterFocusMode(entered.session, { trigger: 'toggle-control', restoreFocusToControlId: null }).noop).toBe(
-      true
-    );
+    const entered = enterFocusMode(session, {
+      trigger: 'toggle-control',
+      restoreFocusToControlId: null,
+    });
+    expect(
+      enterFocusMode(entered.session, { trigger: 'toggle-control', restoreFocusToControlId: null })
+        .noop
+    ).toBe(true);
   });
 });
 
@@ -595,16 +645,23 @@ describe('AP-09 focusModeContract — Escape precedence', () => {
   });
 
   it('lets cell editing, popovers, the palette and modals win first', () => {
-    expect(resolveEscapeKey({ ...ctx, focusModeActive: true, cellEditing: true })).toBe('cell-editing');
-    expect(resolveEscapeKey({ ...ctx, focusModeActive: true, cellEditing: true, popoverOpen: true })).toBe(
-      'popover'
+    expect(resolveEscapeKey({ ...ctx, focusModeActive: true, cellEditing: true })).toBe(
+      'cell-editing'
     );
     expect(
-      resolveEscapeKey({ ...ctx, focusModeActive: true, popoverOpen: true, commandPaletteOpen: true })
+      resolveEscapeKey({ ...ctx, focusModeActive: true, cellEditing: true, popoverOpen: true })
+    ).toBe('popover');
+    expect(
+      resolveEscapeKey({
+        ...ctx,
+        focusModeActive: true,
+        popoverOpen: true,
+        commandPaletteOpen: true,
+      })
     ).toBe('command-palette');
-    expect(resolveEscapeKey({ ...ctx, focusModeActive: true, modalOpen: true, commandPaletteOpen: true })).toBe(
-      'modal'
-    );
+    expect(
+      resolveEscapeKey({ ...ctx, focusModeActive: true, modalOpen: true, commandPaletteOpen: true })
+    ).toBe('modal');
   });
 
   it('consumes nothing when no consumer is active', () => {
@@ -629,7 +686,9 @@ describe('AP-09 focusModeContract — the Escape bridge to AP-03', () => {
       expect(resolution.keyboardCommandId).toBeNull();
       expect(resolution.keyboardCommandContext).toBeNull();
       expect(resolution.dispatchViaKeyboardRegistry).toBe(false);
-      expect(shouldKeyboardRegistryHandleEscape({ ...ctx, focusModeActive: true, [overlay]: true })).toBe(false);
+      expect(
+        shouldKeyboardRegistryHandleEscape({ ...ctx, focusModeActive: true, [overlay]: true })
+      ).toBe(false);
     }
   });
 
@@ -647,7 +706,11 @@ describe('AP-09 focusModeContract — the Escape bridge to AP-03', () => {
     expect(focus.dispatchViaKeyboardRegistry).toBe(true);
 
     const nobody = resolveEscapeCommand(ctx);
-    expect(nobody).toMatchObject({ consumer: 'none', owner: 'none', dispatchViaKeyboardRegistry: false });
+    expect(nobody).toMatchObject({
+      consumer: 'none',
+      owner: 'none',
+      dispatchViaKeyboardRegistry: false,
+    });
   });
 
   it('mirrors AP-03 command contexts as DATA that has not drifted from the real union', () => {
@@ -693,7 +756,10 @@ describe('AP-09 focusModeContract — the Escape bridge to AP-03', () => {
 
   it('DETECTS a registry that is missing a promised Escape command (negative control)', () => {
     const complete = [
-      { commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.cancelCellEdit, context: 'cell-editing' as const },
+      {
+        commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.cancelCellEdit,
+        context: 'cell-editing' as const,
+      },
       { commandId: FINANCE_FOCUS_MODE_COMMAND_IDS.exit, context: 'grid-focused' as const },
     ];
     expect(verifyEscapeRegistryCoverage(complete)).toEqual({ ok: true });
@@ -789,9 +855,9 @@ describe('AP-09 focusModeContract — the focus-model bridge to AP-03', () => {
       capturedAt: '2026-08-10T00:00:00.000Z',
     });
     // ...and AP-03's own capture of the same session agrees with it.
-    expect(captureFocusSnapshot({ activeCell: session.focusedCell, reason: snapshot.reason }).activeCell).toBe(
-      cell
-    );
+    expect(
+      captureFocusSnapshot({ activeCell: session.focusedCell, reason: snapshot.reason }).activeCell
+    ).toBe(cell);
   });
 
   it('agrees with AP-03 about WHICH cell had focus, and detects a disagreement', () => {
@@ -823,7 +889,10 @@ describe('AP-09 focusModeContract — the focus-model bridge to AP-03', () => {
       ok: false,
       reason: 'NULLNESS_MISMATCH',
     });
-    expect(assertFocusModelsAgree({ focusedCell: null }, { activeCell: null })).toEqual({ ok: true, cell: null });
+    expect(assertFocusModelsAgree({ focusedCell: null }, { activeCell: null })).toEqual({
+      ok: true,
+      cell: null,
+    });
   });
 
   it('restores focus WITHOUT collapsing the selection focus mode promised to keep', () => {
@@ -837,7 +906,11 @@ describe('AP-09 focusModeContract — the focus-model bridge to AP-03', () => {
     const target = focusRestoreTargetOnExit(entered);
     expect(target).toEqual({ controlId: 'finance.statements.fullscreen', cell });
     // The move-focus effect and the restore target are the same statement.
-    expect(exited.effects).toContainEqual({ kind: 'move-focus', controlId: target.controlId, cell: target.cell });
+    expect(exited.effects).toContainEqual({
+      kind: 'move-focus',
+      controlId: target.controlId,
+      cell: target.cell,
+    });
 
     // Whatever reason id this tree's AP-03 supports, the patch must not
     // collapse — otherwise exiting focus mode would destroy the multi-cell
@@ -855,8 +928,12 @@ describe('AP-09 focusModeContract — the focus-model bridge to AP-03', () => {
   });
 
   it('prefers focusModeExit once AP-03 knows it, and falls back honestly until then', () => {
-    expect(focusRestoreReasonForExit(['undo', 'commandPaletteInvoke', 'focusModeExit'])).toBe('focusModeExit');
-    expect(focusRestoreReasonForExit(['undo', 'commandPaletteInvoke'])).toBe('commandPaletteInvoke');
+    expect(focusRestoreReasonForExit(['undo', 'commandPaletteInvoke', 'focusModeExit'])).toBe(
+      'focusModeExit'
+    );
+    expect(focusRestoreReasonForExit(['undo', 'commandPaletteInvoke'])).toBe(
+      'commandPaletteInvoke'
+    );
     // Against the REAL list in this tree — either answer is legitimate, but it
     // must be one AP-03 can actually consume.
     expect(FOCUS_RESTORE_REASONS).toContain(focusRestoreReasonForExit(FOCUS_RESTORE_REASONS));

@@ -341,7 +341,9 @@ async function resolveDocumentStudioTemplate(
   }
   if (row.provenance_status !== 'approved') {
     throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
-      canonicalTemplateId, originRuntime: 'document_template', provenanceStatus: row.provenance_status ?? 'unknown',
+      canonicalTemplateId,
+      originRuntime: 'document_template',
+      provenanceStatus: row.provenance_status ?? 'unknown',
     });
   }
 
@@ -420,7 +422,9 @@ async function resolveLegacyReportTemplate(
   }
   if (row.provenance_status !== 'approved') {
     throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
-      canonicalTemplateId, originRuntime: 'report_template', provenanceStatus: row.provenance_status ?? 'unknown',
+      canonicalTemplateId,
+      originRuntime: 'report_template',
+      provenanceStatus: row.provenance_status ?? 'unknown',
     });
   }
 
@@ -517,7 +521,9 @@ export async function resolvePresentationTemplateForCreation(
   }
   if (row.provenance_status !== 'approved') {
     throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
-      canonicalTemplateId, originRuntime: 'presentation_template', provenanceStatus: row.provenance_status ?? 'unknown',
+      canonicalTemplateId,
+      originRuntime: 'presentation_template',
+      provenanceStatus: row.provenance_status ?? 'unknown',
     });
   }
 

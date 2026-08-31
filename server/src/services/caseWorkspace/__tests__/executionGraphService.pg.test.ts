@@ -81,8 +81,8 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as caseCoreService from '../caseCoreService.js';
-import * as casePlanVersionService from '../casePlanVersionService.js';
 import type { CanonicalGraph, CasePlanVersion } from '../casePlanVersionService.js';
+import * as casePlanVersionService from '../casePlanVersionService.js';
 import * as executionGraphService from '../executionGraphService.js';
 import * as runBindingService from '../runBindingService.js';
 
@@ -515,7 +515,9 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
         .catch(() => undefined);
     }
     for (const projectId of params.projectIds) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of params.userIds ?? []) {
@@ -528,7 +530,9 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
       await control
         .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -675,7 +679,12 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
       const rows = await readGatewayEvaluationRows(nodeRunId);
       expect(rows).toHaveLength(0);
     } finally {
-      await teardown({ runIds, orgIds: [fixture.orgId], projectIds: [fixture.projectId], userIds: [fixture.actorId] });
+      await teardown({
+        runIds,
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
     }
   }, 30_000);
 
@@ -727,7 +736,12 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
       const rows = await readGatewayEvaluationRows(nodeRunId);
       expect(rows).toHaveLength(0);
     } finally {
-      await teardown({ runIds, orgIds: [fixture.orgId], projectIds: [fixture.projectId], userIds: [fixture.actorId] });
+      await teardown({
+        runIds,
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
     }
   }, 30_000);
 
@@ -775,7 +789,12 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
       expect(rows[0].join_required_count).toBe(2);
       expect(rows[0].join_branch_total_count).toBe(3);
     } finally {
-      await teardown({ runIds, orgIds: [fixture.orgId], projectIds: [fixture.projectId], userIds: [fixture.actorId] });
+      await teardown({
+        runIds,
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
     }
   }, 30_000);
 
@@ -872,7 +891,12 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
       const finalCreatedRows = await readNodeResultAcceptanceRows(nodeRunId);
       expect(finalCreatedRows).toHaveLength(1);
     } finally {
-      await teardown({ runIds, orgIds: [fixture.orgId], projectIds: [fixture.projectId], userIds: [fixture.actorId] });
+      await teardown({
+        runIds,
+        orgIds: [fixture.orgId],
+        projectIds: [fixture.projectId],
+        userIds: [fixture.actorId],
+      });
     }
   }, 30_000);
 
@@ -1013,7 +1037,7 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
   //    recordNodeResultAcceptance (create class): an actor with no
   //    membership is rejected, creating no row.
   // -------------------------------------------------------------------------
-  it('recordGatewayEvaluation and recordNodeResultAcceptance both reject an actor with no organization_members row for the Case\'s org', async () => {
+  it("recordGatewayEvaluation and recordNodeResultAcceptance both reject an actor with no organization_members row for the Case's org", async () => {
     const fixture = await seedCaseWithBoundRun('auth-create');
     const runIds = [fixture.runId];
     const noMembershipActor = await seedUser(fixture.orgId, 'auth-create-outsider');
@@ -1093,7 +1117,10 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
         `node-nonexistent-${randomUUID()}`,
         noMembershipActor
       );
-      const gwDenied = await executionGraphService.getGatewayEvaluation(gatewayNodeRunId, noMembershipActor);
+      const gwDenied = await executionGraphService.getGatewayEvaluation(
+        gatewayNodeRunId,
+        noMembershipActor
+      );
       expect(gwMissing).toBeNull();
       expect(gwDenied).toBeNull();
 
@@ -1108,7 +1135,10 @@ suite('executionGraphService — Execution Graph against a real PostgreSQL (CW-P
       expect(accMissing).toBeNull();
       expect(accDenied).toBeNull();
 
-      const gwAllowed = await executionGraphService.getGatewayEvaluation(gatewayNodeRunId, fixture.actorId);
+      const gwAllowed = await executionGraphService.getGatewayEvaluation(
+        gatewayNodeRunId,
+        fixture.actorId
+      );
       expect(gwAllowed?.nodeRunId).toBe(gatewayNodeRunId);
     } finally {
       await teardown({

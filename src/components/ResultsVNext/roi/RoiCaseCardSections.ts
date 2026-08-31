@@ -54,12 +54,7 @@ import type { StandardModuleTab } from '@/components/standard';
 import type { RoiCasePhase } from './RoiCasePhaseNav';
 
 /** Pięć sekcji karty — kolejność narracji zatwierdzona przez właściciela. */
-export type RoiCardSectionId =
-  | 'zalozenia'
-  | 'model'
-  | 'wynik'
-  | 'wyniki-po-wdrozeniu'
-  | 'wnioski';
+export type RoiCardSectionId = 'zalozenia' | 'model' | 'wynik' | 'wyniki-po-wdrozeniu' | 'wnioski';
 
 /**
  * Podwidok = jedna zakładka wewnątrz sekcji. `phase` mówi, KTÓRY warsztat
@@ -84,7 +79,11 @@ export const ROI_CARD_SECTIONS: RoiCardSectionDef[] = [
     id: 'zalozenia',
     label: { pl: 'Założenia', en: 'Assumptions' },
     subviews: [
-      { id: 'settings', phase: 'build', label: { pl: 'Baseline i polityka', en: 'Baseline & policy' } },
+      {
+        id: 'settings',
+        phase: 'build',
+        label: { pl: 'Baseline i polityka', en: 'Baseline & policy' },
+      },
       { id: 'assumptions', phase: 'build', label: { pl: 'Założenia', en: 'Assumptions' } },
     ],
   },
@@ -101,8 +100,16 @@ export const ROI_CARD_SECTIONS: RoiCardSectionDef[] = [
     id: 'wynik',
     label: { pl: 'Wynik', en: 'Result' },
     subviews: [
-      { id: 'calculation-runs', phase: 'build', label: { pl: 'Przebiegi kalkulacji', en: 'Calculation runs' } },
-      { id: 'approval-snapshots', phase: 'decision', label: { pl: 'Migawki zatwierdzenia', en: 'Approval snapshots' } },
+      {
+        id: 'calculation-runs',
+        phase: 'build',
+        label: { pl: 'Przebiegi kalkulacji', en: 'Calculation runs' },
+      },
+      {
+        id: 'approval-snapshots',
+        phase: 'decision',
+        label: { pl: 'Migawki zatwierdzenia', en: 'Approval snapshots' },
+      },
       { id: 'compare', phase: 'decision', label: { pl: 'Porównanie', en: 'Compare' } },
     ],
   },
@@ -112,9 +119,17 @@ export const ROI_CARD_SECTIONS: RoiCardSectionDef[] = [
     subviews: [
       { id: 'forecast-versions', phase: 'realize', label: { pl: 'Prognoza', en: 'Forecast' } },
       { id: 'actuals', phase: 'realize', label: { pl: 'Wykonania', en: 'Actuals' } },
-      { id: 'actual-snapshots', phase: 'realize', label: { pl: 'Migawki wykonania', en: 'Actual snapshots' } },
+      {
+        id: 'actual-snapshots',
+        phase: 'realize',
+        label: { pl: 'Migawki wykonania', en: 'Actual snapshots' },
+      },
       { id: 'variances', phase: 'realize', label: { pl: 'Wariancje', en: 'Variances' } },
-      { id: 'benefits-realization', phase: 'realize', label: { pl: 'Realizacja korzyści', en: 'Benefits realization' } },
+      {
+        id: 'benefits-realization',
+        phase: 'realize',
+        label: { pl: 'Realizacja korzyści', en: 'Benefits realization' },
+      },
     ],
   },
   {
@@ -123,8 +138,16 @@ export const ROI_CARD_SECTIONS: RoiCardSectionDef[] = [
     subviews: [
       { id: 'pir', phase: 'learn', label: { pl: 'PIR', en: 'PIR' } },
       { id: 'pir-outcome', phase: 'pir-outcome', label: { pl: 'Wynik PIR', en: 'PIR outcome' } },
-      { id: 'finance-links', phase: 'learn', label: { pl: 'Powiązania Finance', en: 'Finance links' } },
-      { id: 'finance-reconciliations', phase: 'learn', label: { pl: 'Rekoncyliacje', en: 'Reconciliations' } },
+      {
+        id: 'finance-links',
+        phase: 'learn',
+        label: { pl: 'Powiązania Finance', en: 'Finance links' },
+      },
+      {
+        id: 'finance-reconciliations',
+        phase: 'learn',
+        label: { pl: 'Rekoncyliacje', en: 'Reconciliations' },
+      },
     ],
   },
 ];
@@ -139,7 +162,10 @@ export function getRoiCardSection(sectionId: string): RoiCardSectionDef | undefi
 }
 
 /** Rząd zakładek Menu 2 dla sekcji — w języku interfejsu. */
-export function buildRoiCardSectionTabs(section: RoiCardSectionDef, isPolish: boolean): StandardModuleTab[] {
+export function buildRoiCardSectionTabs(
+  section: RoiCardSectionDef,
+  isPolish: boolean
+): StandardModuleTab[] {
   return section.subviews.map((v) => ({ id: v.id, label: isPolish ? v.label.pl : v.label.en }));
 }
 

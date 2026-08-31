@@ -66,7 +66,9 @@ export function buildChainLinks({
   const testDone = !!criterion.testResult;
   const concluded = criterion.conformityStatus !== 'not_tested';
   const findingsCount = findings?.length ?? 0;
-  const hasConfirmedFinding = (findings ?? []).some((f) => f.status === 'confirmed' || f.status !== 'draft');
+  const hasConfirmedFinding = (findings ?? []).some(
+    (f) => f.status === 'confirmed' || f.status !== 'draft'
+  );
   const remediationReachable = !!selectedFindingId;
   const remediationDone = selectedFindingDetail?.status === 'closed';
 
@@ -83,32 +85,43 @@ export function buildChainLinks({
       id: 'procedura-audytora',
       label: t('Procedura audytora', "Auditor's procedure"),
       state: !criterion.applicable ? 'inactive' : criterion.procedurePerformed ? 'done' : 'current',
-      reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
+      reason: !criterion.applicable
+        ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".')
+        : undefined,
     },
     {
       id: 'proba',
       label: t('Próba', 'Sample'),
       state: !criterion.applicable ? 'inactive' : criterion.sampleDescription ? 'done' : 'current',
-      reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
+      reason: !criterion.applicable
+        ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".')
+        : undefined,
     },
     {
       id: 'wykonany-test',
       label: t('Wykonany test', 'Test performed'),
       state: !criterion.applicable ? 'inactive' : criterion.testPerformed ? 'done' : 'current',
-      reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
+      reason: !criterion.applicable
+        ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".')
+        : undefined,
     },
     {
       id: 'wynik-testu',
       label: t('Wynik testu', 'Test result'),
       state: !criterion.applicable ? 'inactive' : testDone ? 'done' : 'current',
-      reason: !criterion.applicable ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".') : undefined,
+      reason: !criterion.applicable
+        ? t('Kryterium oznaczone jako „nie dotyczy".', 'Criterion marked "not applicable".')
+        : undefined,
     },
     {
       id: 'wniosek-audytora',
       label: t('Wniosek audytora', "Auditor's conclusion"),
       state: !testDone ? 'inactive' : concluded ? 'done' : 'current',
       reason: !testDone
-        ? t('Wymaga wcześniej wykonanej procedury testowej (wynik testu).', 'Requires a recorded test result first.')
+        ? t(
+            'Wymaga wcześniej wykonanej procedury testowej (wynik testu).',
+            'Requires a recorded test result first.'
+          )
         : undefined,
     },
     {
@@ -116,7 +129,10 @@ export function buildChainLinks({
       label: t('Status zgodności', 'Conformity status'),
       state: !testDone ? 'inactive' : concluded ? 'done' : 'current',
       reason: !testDone
-        ? t('Wymaga wcześniej wykonanej procedury testowej (wynik testu).', 'Requires a recorded test result first.')
+        ? t(
+            'Wymaga wcześniej wykonanej procedury testowej (wynik testu).',
+            'Requires a recorded test result first.'
+          )
         : undefined,
     },
     {
@@ -128,7 +144,9 @@ export function buildChainLinks({
       id: 'odpowiedz-wlasciciela',
       label: t('Odpowiedź właściciela', 'Management response'),
       state: !hasConfirmedFinding ? 'inactive' : 'current',
-      reason: !hasConfirmedFinding ? t('Wymaga potwierdzonego ustalenia.', 'Requires a confirmed finding.') : undefined,
+      reason: !hasConfirmedFinding
+        ? t('Wymaga potwierdzonego ustalenia.', 'Requires a confirmed finding.')
+        : undefined,
     },
   ];
 
@@ -138,7 +156,10 @@ export function buildChainLinks({
       label: isPolish ? REMEDIATION_LABELS_PL[id] : REMEDIATION_LABELS_EN[id],
       state: !remediationReachable ? 'inactive' : remediationDone ? 'done' : 'current',
       reason: !remediationReachable
-        ? t('Wybierz ustalenie powyżej, aby zobaczyć ten krok naprawczy.', 'Select a finding above to see this remediation step.')
+        ? t(
+            'Wybierz ustalenie powyżej, aby zobaczyć ten krok naprawczy.',
+            'Select a finding above to see this remediation step.'
+          )
         : undefined,
     });
   }
@@ -220,7 +241,11 @@ export function groupLinksIntoPhases(links: ChainLink[]): AuditChainPhaseRuntime
     const doneCount = phaseLinks.filter((l) => l.state === 'done').length;
     const anyCurrent = phaseLinks.some((l) => l.state === 'current');
     const state: PhaseRuntimeState =
-      phaseLinks.length > 0 && doneCount === phaseLinks.length ? 'done' : anyCurrent ? 'current' : 'locked';
+      phaseLinks.length > 0 && doneCount === phaseLinks.length
+        ? 'done'
+        : anyCurrent
+          ? 'current'
+          : 'locked';
     return { ...def, links: phaseLinks, doneCount, totalCount: phaseLinks.length, state };
   });
 }

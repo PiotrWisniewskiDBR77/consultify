@@ -77,9 +77,7 @@ const AssessmentPresentationViewScreen = React.lazy(
 // typu). Jeden plik/komponent, zarejestrowany 5×: interaktywny (przełącznik
 // klikany przez Piotra) + 4 warianty ze stałym stanem startowym potrzebne dla
 // deterministycznych zrzutów skryptowych (grafika-zrzuty.mjs nie klika UI).
-const PrawyPasJednaFormulaScreen = React.lazy(
-  () => import('./screens/prawy-pas-jedna-formula')
-);
+const PrawyPasJednaFormulaScreen = React.lazy(() => import('./screens/prawy-pas-jedna-formula'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -252,11 +250,17 @@ const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-fie
 // z domyślnym eksportem i NIGDY nie było zarejestrowanych — harness na każdy
 // z nich odpowiadał listą awaryjną „Unknown ?screen=…". Nikt ich nie widział.
 const ToolsSwotLiveScreen = React.lazy(() => import('./screens/tools-swot-live'));
-const ToolsSwotLibraryDetailScreen = React.lazy(() => import('./screens/tools-swot-library-detail'));
-const ToolsSwotSessionWorkspaceScreen = React.lazy(() => import('./screens/tools-swot-session-workspace'));
+const ToolsSwotLibraryDetailScreen = React.lazy(
+  () => import('./screens/tools-swot-library-detail')
+);
+const ToolsSwotSessionWorkspaceScreen = React.lazy(
+  () => import('./screens/tools-swot-session-workspace')
+);
 const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
 const ToolOutputsPanelScreen = React.lazy(() => import('./screens/tool-outputs-panel'));
-const ToolsOutputsInsightsTabScreen = React.lazy(() => import('./screens/tools-outputs-insights-tab'));
+const ToolsOutputsInsightsTabScreen = React.lazy(
+  () => import('./screens/tools-outputs-insights-tab')
+);
 const ChatSignalsFeedScreen = React.lazy(() => import('./screens/chat-signals-feed'));
 const ExecSummaryOnelookScreen = React.lazy(() => import('./screens/exec-summary-onelook'));
 // const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
@@ -862,7 +866,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     ),
   },
   'prawy-pas-jedna-formula-notatka-teresa': {
-    label: 'GRAFIKA — jw., wariant do zrzutu: Notatka · tryb Teresa (pełna wysokość, własne pole pisania).',
+    label:
+      'GRAFIKA — jw., wariant do zrzutu: Notatka · tryb Teresa (pełna wysokość, własne pole pisania).',
     render: () => (
       <PrawyPasJednaFormulaScreen
         initialObjectType="notatka"
@@ -883,7 +888,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     ),
   },
   'prawy-pas-jedna-formula-idea-teresa': {
-    label: 'GRAFIKA — jw., wariant do zrzutu: Idea · tryb Teresa (pełna wysokość, własne pole pisania).',
+    label:
+      'GRAFIKA — jw., wariant do zrzutu: Idea · tryb Teresa (pełna wysokość, własne pole pisania).',
     render: () => (
       <PrawyPasJednaFormulaScreen
         initialObjectType="idea"
@@ -897,11 +903,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'SIDEBAR — potwierdzenie braku osobnej pozycji "Excel" po feat/materials-menu-canon-5-tabs.',
     render: () => <MenuCanonSidebarCheckScreen />,
   },
-//  'initiatives-portfolio-analysis': {
-//    label:
-//      'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
-//    render: () => <InitiativesPortfolioAnalysisScreen />,
-//  },
+  //  'initiatives-portfolio-analysis': {
+  //    label:
+  //      'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
+  //    render: () => <InitiativesPortfolioAnalysisScreen />,
+  //  },
   'ntype-analizuj-ai': {
     label:
       'n-Type ETAP 3 — „Analizuj z AI": menu 2 + panel wyników (Braki · Ryzyka · Sugestie · Zmiany)',
@@ -1109,7 +1115,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminSecurityScreen adminScreen="sessions" />,
   },
   'admin-security-api-access': {
-    label: 'Admin security — Dostęp API (AdminSecurityIdentityPanel tab=api-access, ApiKeysManagementView)',
+    label:
+      'Admin security — Dostęp API (AdminSecurityIdentityPanel tab=api-access, ApiKeysManagementView)',
     render: () => <AdminSecurityScreen adminScreen="api-access" />,
   },
   'admin-security-domains': {
@@ -1146,8 +1153,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminBillingScreen adminScreen="plan-limits" />,
   },
   'admin-billing-usage-costs': {
-    label:
-      'Admin billing — Wykorzystanie i koszty (ALIAS Przeglądu, ta sama zakładka summary)',
+    label: 'Admin billing — Wykorzystanie i koszty (ALIAS Przeglądu, ta sama zakładka summary)',
     render: () => <AdminBillingScreen adminScreen="usage-costs" />,
   },
   'admin-billing-payment-methods': {
@@ -1200,7 +1206,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminTeamScreen adminScreen="guests-external" />,
   },
   'admin-team-access-requests': {
-    label: 'Admin team — Wnioski o dostęp (AdminAccessRequestsPanel — STATYCZNY placeholder, brak API)',
+    label:
+      'Admin team — Wnioski o dostęp (AdminAccessRequestsPanel — STATYCZNY placeholder, brak API)',
     render: () => <AdminTeamScreen adminScreen="access-requests" />,
   },
   'admin-team-access-reviews': {
@@ -1208,7 +1215,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminTeamScreen adminScreen="access-reviews" />,
   },
   'admin-team-ownership': {
-    label: 'Admin team — Własność (AdminMembersRolesPanel screen=ownership → OwnershipManagementView)',
+    label:
+      'Admin team — Własność (AdminMembersRolesPanel screen=ownership → OwnershipManagementView)',
     render: () => <AdminTeamScreen adminScreen="ownership" />,
   },
   // admin-ai (runda pełna) — odbiór grafiki 146-admin-ai (2026-08-31), domena
@@ -1218,7 +1226,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   // dzielą tę samą powłokę AdminAIControlCenterPanel→AIModule z podwójnym
   // wewnętrznym pill-tabs — patrz nagłówek dev-render/screens/admin-ai.tsx.
   'admin-ai-policy-autonomy': {
-    label: 'Admin ai — Polityka i autonomia (AdminAIControlCenterPanel tab=settings → OrgAISettingsView, tab policy)',
+    label:
+      'Admin ai — Polityka i autonomia (AdminAIControlCenterPanel tab=settings → OrgAISettingsView, tab policy)',
     render: () => <AdminAiScreen adminScreen="policy-autonomy" />,
   },
   'admin-ai-personas': {
@@ -1226,11 +1235,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminAiScreen adminScreen="personas" />,
   },
   'admin-ai-models-providers': {
-    label: 'Admin ai — Modele i dostawcy (AIModule tab=models-providers → ModelsProvidersTab, tabela HTML surowa, bez StandardTable)',
+    label:
+      'Admin ai — Modele i dostawcy (AIModule tab=models-providers → ModelsProvidersTab, tabela HTML surowa, bez StandardTable)',
     render: () => <AdminAiScreen adminScreen="models-providers" />,
   },
   'admin-ai-ai-limits-budgets': {
-    label: 'Admin ai — Limity i budżety (AIModule tab=access-limits → AccessLimitsTab, tabela HTML surowa, bez StandardTable)',
+    label:
+      'Admin ai — Limity i budżety (AIModule tab=access-limits → AccessLimitsTab, tabela HTML surowa, bez StandardTable)',
     render: () => <AdminAiScreen adminScreen="ai-limits-budgets" />,
   },
   'admin-ai-data-privacy': {
@@ -1246,7 +1257,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminAiScreen adminScreen="ai-incidents" />,
   },
   'admin-ai-configuration-versions': {
-    label: 'Admin ai — Wersje konfiguracji (AdminConfigurationVersionsPanel, StandardTable, V8 prompt-os)',
+    label:
+      'Admin ai — Wersje konfiguracji (AdminConfigurationVersionsPanel, StandardTable, V8 prompt-os)',
     render: () => <AdminAiScreen adminScreen="configuration-versions" />,
   },
   'admin-ai-ai-operations': {
@@ -1254,7 +1266,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminAiScreen adminScreen="ai-operations" />,
   },
   'admin-ai-ai-audit': {
-    label: 'Admin ai — Audyt AI (AIModule tab=audit-compliance → AuditComplianceTab, tabela HTML surowa, bez StandardTable)',
+    label:
+      'Admin ai — Audyt AI (AIModule tab=audit-compliance → AuditComplianceTab, tabela HTML surowa, bez StandardTable)',
     render: () => <AdminAiScreen adminScreen="ai-audit" />,
   },
   // admin-audit-health (runda pełna) — odbiór grafiki 146-admin-audit-health
@@ -1656,11 +1669,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Finance export import panel',
     render: () => <FinanceExportImportPanelScreen />,
   },
-//  'execution-change-signals': {
-//    label:
-//      'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
-//    render: () => <ExecutionChangeSignalsScreen />,
-//  },
+  //  'execution-change-signals': {
+  //    label:
+  //      'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
+  //    render: () => <ExecutionChangeSignalsScreen />,
+  //  },
   'execution-report-day11': {
     label: 'Execution Day 11 — reports intelligence and governed generator',
     render: () => <ExecutionReportDay11Screen />,
@@ -1671,11 +1684,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   // dev-render/screens/execution-tab.tsx (demo-fallback/local-review, zero
   // ręcznego mockowania fetch — realne ścieżki degradacji produktu w DEV).
   'execution-tab-list': {
-    label: 'Realizacja → zakładka "Realizacje" (Portfolio), REALNY <ExecutionHub initialTab="list">',
+    label:
+      'Realizacja → zakładka "Realizacje" (Portfolio), REALNY <ExecutionHub initialTab="list">',
     render: () => <ExecutionTabScreen tab="list" />,
   },
   'execution-tab-work': {
-    label: 'Realizacja → zakładka "Praca", REALNY <ExecutionHub initialTab="work"> (ExecutionWorkSurface)',
+    label:
+      'Realizacja → zakładka "Praca", REALNY <ExecutionHub initialTab="work"> (ExecutionWorkSurface)',
     render: () => <ExecutionTabScreen tab="work" />,
   },
   'execution-tab-resources': {
@@ -1703,11 +1718,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'Realizacja → zakładka "People & Change" (chromeless, osiągana z Action Center), REALNY <ExecutionHub initialTab="people_change"> (ExecutionManagementView)',
     render: () => <ExecutionTabScreen tab="people_change" />,
   },
-//  'execution-export-prezentacja': {
-//    label:
-//      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
-//    render: () => <ExecutionExportPrezentacjaScreen />,
-//  },
+  //  'execution-export-prezentacja': {
+  //    label:
+  //      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
+  //    render: () => <ExecutionExportPrezentacjaScreen />,
+  //  },
   'tools-swot-live': {
     label: 'Narzędzia → Dynamic SWOT: sesja na żywo',
     render: () => <ToolsSwotLiveScreen />,
@@ -2048,19 +2063,23 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AiosScreen />,
   },
   'aios-research': {
-    label: 'AI OS — Research Sessions (ResearchSessionsDock, harness odbioru 2026-08-31) &screen=research',
+    label:
+      'AI OS — Research Sessions (ResearchSessionsDock, harness odbioru 2026-08-31) &screen=research',
     render: () => <AiosScreen />,
   },
   'aios-artifacts': {
-    label: 'AI OS — Artifacts (Wave5ArtifactRuntimePanel, harness odbioru 2026-08-31) &screen=artifacts',
+    label:
+      'AI OS — Artifacts (Wave5ArtifactRuntimePanel, harness odbioru 2026-08-31) &screen=artifacts',
     render: () => <AiosScreen />,
   },
   'aios-memory': {
-    label: 'AI OS — Memory & Scope (Wave6ContextLearningPanel, harness odbioru 2026-08-31) &screen=memory',
+    label:
+      'AI OS — Memory & Scope (Wave6ContextLearningPanel, harness odbioru 2026-08-31) &screen=memory',
     render: () => <AiosScreen />,
   },
   'aios-connectors': {
-    label: 'AI OS — Connectors (Wave7ConnectorAdminPanel, harness odbioru 2026-08-31) &screen=connectors',
+    label:
+      'AI OS — Connectors (Wave7ConnectorAdminPanel, harness odbioru 2026-08-31) &screen=connectors',
     render: () => <AiosScreen />,
   },
   'aios-agents': {
@@ -2068,7 +2087,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AiosScreen />,
   },
   'aios-outcomes': {
-    label: 'AI OS — KPI/ROI & AI Ops (Wave9OutcomeAIOpsPanel, harness odbioru 2026-08-31) &screen=outcomes',
+    label:
+      'AI OS — KPI/ROI & AI Ops (Wave9OutcomeAIOpsPanel, harness odbioru 2026-08-31) &screen=outcomes',
     render: () => <AiosScreen />,
   },
   // ustawienia-organizacja (runda pełna) — odbiór grafiki 150-ustawienia-organizacja
@@ -2102,7 +2122,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <UstawieniaGrupyScreen grupa="integracje" />,
   },
   'ustawienia-dane-prywatnosc': {
-    label: 'Ustawienia — DATA & PRIVACY (REALNY <SettingsView>, grupa data-privacy → data-controls)',
+    label:
+      'Ustawienia — DATA & PRIVACY (REALNY <SettingsView>, grupa data-privacy → data-controls)',
     render: () => <UstawieniaGrupyScreen grupa="dane-prywatnosc" />,
   },
   'ustawienia-billing': {
@@ -2115,7 +2136,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <UstawieniaGrupyScreen grupa="wyglad" />,
   },
   'ustawienia-zaawansowane': {
-    label: 'Ustawienia — ADVANCED & HISTORY (REALNY <SettingsView>, grupa advanced → import-export)',
+    label:
+      'Ustawienia — ADVANCED & HISTORY (REALNY <SettingsView>, grupa advanced → import-export)',
     render: () => <UstawieniaGrupyScreen grupa="zaawansowane" />,
   },
   // Organizacja: REALNY <OrganizationView>, wariant DOMYŚLNY (flaga orgRedesignV1
@@ -2123,11 +2145,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   // dev-render/screens/org-legacy.tsx. `org-identity-operating` (profile/identity-scale)
   // ma już wpis — pominięty tutaj (choć renderuje wariant ON, patrz ZGŁASZAM w raporcie).
   'org-operating-model': {
-    label: 'Organizacja — Model działania (REALNY <OrganizationView>, domyślnie OFF, profile/operating-model)',
+    label:
+      'Organizacja — Model działania (REALNY <OrganizationView>, domyślnie OFF, profile/operating-model)',
     render: () => <OrgLegacyScreen module="profile" screen="operating-model" />,
   },
   'org-position-direction': {
-    label: 'Organizacja — Pozycja i kierunek (REALNY <OrganizationView>, domyślnie OFF, profile/position-direction)',
+    label:
+      'Organizacja — Pozycja i kierunek (REALNY <OrganizationView>, domyślnie OFF, profile/position-direction)',
     render: () => <OrgLegacyScreen module="profile" screen="position-direction" />,
   },
   'org-technology-culture-constraints': {
@@ -2136,15 +2160,18 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <OrgLegacyScreen module="profile" screen="technology-culture-constraints" />,
   },
   'org-strategic-intent': {
-    label: 'Organizacja — Intencja strategiczna (REALNY <OrganizationView>, domyślnie OFF, goals/strategic-intent)',
+    label:
+      'Organizacja — Intencja strategiczna (REALNY <OrganizationView>, domyślnie OFF, goals/strategic-intent)',
     render: () => <OrgLegacyScreen module="goals" screen="strategic-intent" />,
   },
   'org-success-metrics': {
-    label: 'Organizacja — Mierniki sukcesu (REALNY <OrganizationView>, domyślnie OFF, goals/success-metrics)',
+    label:
+      'Organizacja — Mierniki sukcesu (REALNY <OrganizationView>, domyślnie OFF, goals/success-metrics)',
     render: () => <OrgLegacyScreen module="goals" screen="success-metrics" />,
   },
   'org-scope-boundaries': {
-    label: 'Organizacja — Zakres i granice (REALNY <OrganizationView>, domyślnie OFF, goals/scope-boundaries)',
+    label:
+      'Organizacja — Zakres i granice (REALNY <OrganizationView>, domyślnie OFF, goals/scope-boundaries)',
     render: () => <OrgLegacyScreen module="goals" screen="scope-boundaries" />,
   },
   'org-stakeholder-expectations': {
@@ -2158,11 +2185,13 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <OrgLegacyScreen module="challenges" screen="declared-challenges" />,
   },
   'org-root-causes': {
-    label: 'Organizacja — Przyczyny źródłowe (REALNY <OrganizationView>, domyślnie OFF, challenges/root-causes)',
+    label:
+      'Organizacja — Przyczyny źródłowe (REALNY <OrganizationView>, domyślnie OFF, challenges/root-causes)',
     render: () => <OrgLegacyScreen module="challenges" screen="root-causes" />,
   },
   'org-goal-blockers': {
-    label: 'Organizacja — Blockery celów (REALNY <OrganizationView>, domyślnie OFF, challenges/goal-blockers)',
+    label:
+      'Organizacja — Blockery celów (REALNY <OrganizationView>, domyślnie OFF, challenges/goal-blockers)',
     render: () => <OrgLegacyScreen module="challenges" screen="goal-blockers" />,
   },
   'org-evidence': {
@@ -2170,19 +2199,23 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <OrgLegacyScreen module="challenges" screen="evidence" />,
   },
   'org-risks-opportunities': {
-    label: 'Organizacja — Ryzyka i szanse (REALNY <OrganizationView>, domyślnie OFF, strategy/risks-opportunities)',
+    label:
+      'Organizacja — Ryzyka i szanse (REALNY <OrganizationView>, domyślnie OFF, strategy/risks-opportunities)',
     render: () => <OrgLegacyScreen module="strategy" screen="risks-opportunities" />,
   },
   'org-scenarios': {
-    label: 'Organizacja — Scenariusze (REALNY <OrganizationView>, domyślnie OFF, strategy/scenarios)',
+    label:
+      'Organizacja — Scenariusze (REALNY <OrganizationView>, domyślnie OFF, strategy/scenarios)',
     render: () => <OrgLegacyScreen module="strategy" screen="scenarios" />,
   },
   'org-recommendation': {
-    label: 'Organizacja — Rekomendacja (REALNY <OrganizationView>, domyślnie OFF, strategy/recommendation)',
+    label:
+      'Organizacja — Rekomendacja (REALNY <OrganizationView>, domyślnie OFF, strategy/recommendation)',
     render: () => <OrgLegacyScreen module="strategy" screen="recommendation" />,
   },
   'org-executive-brief': {
-    label: 'Organizacja — Executive brief (REALNY <OrganizationView>, domyślnie OFF, strategy/executive-brief)',
+    label:
+      'Organizacja — Executive brief (REALNY <OrganizationView>, domyślnie OFF, strategy/executive-brief)',
     render: () => <OrgLegacyScreen module="strategy" screen="executive-brief" />,
   },
   'org-files': {
@@ -2191,19 +2224,23 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <OrgLegacyScreen module="sources" screen="files" />,
   },
   'org-claims-sources': {
-    label: 'Organizacja — Twierdzenia i źródła (REALNY <OrganizationView>, domyślnie OFF, sources/claims-sources)',
+    label:
+      'Organizacja — Twierdzenia i źródła (REALNY <OrganizationView>, domyślnie OFF, sources/claims-sources)',
     render: () => <OrgLegacyScreen module="sources" screen="claims-sources" />,
   },
   'org-source-conflicts': {
-    label: 'Organizacja — Konflikty źródeł (REALNY <OrganizationView>, domyślnie OFF, sources/source-conflicts)',
+    label:
+      'Organizacja — Konflikty źródeł (REALNY <OrganizationView>, domyślnie OFF, sources/source-conflicts)',
     render: () => <OrgLegacyScreen module="sources" screen="source-conflicts" />,
   },
   'org-knowledge-graph': {
-    label: 'Organizacja — Graf wiedzy (REALNY <OrganizationView>, domyślnie OFF, sources/knowledge-graph)',
+    label:
+      'Organizacja — Graf wiedzy (REALNY <OrganizationView>, domyślnie OFF, sources/knowledge-graph)',
     render: () => <OrgLegacyScreen module="sources" screen="knowledge-graph" />,
   },
   'org-summary': {
-    label: 'Organizacja — Gotowość organizacji (REALNY <OrganizationView>, domyślnie OFF, readiness/summary)',
+    label:
+      'Organizacja — Gotowość organizacji (REALNY <OrganizationView>, domyślnie OFF, readiness/summary)',
     render: () => <OrgLegacyScreen module="readiness" screen="summary" />,
   },
   'day214-teresa-adopt-card': {

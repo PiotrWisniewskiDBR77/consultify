@@ -283,7 +283,10 @@ export const CitationList: React.FC<CitationListProps> = ({
                       actually navigate; a fragment toggle gets a chevron instead. */}
                   {hasFragment ? (
                     isFragmentOpen ? (
-                      <ChevronUp size={12} className="shrink-0 text-slate-600 dark:text-slate-500" />
+                      <ChevronUp
+                        size={12}
+                        className="shrink-0 text-slate-600 dark:text-slate-500"
+                      />
                     ) : (
                       <ChevronDown
                         size={12}

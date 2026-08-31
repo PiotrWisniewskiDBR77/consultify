@@ -12,12 +12,12 @@
  * `computeStateHash` (fixed key order).
  */
 import type {
+  RoiAssumption,
   RoiBenefitEvidenceLink,
   RoiBenefitLine,
   RoiCalculationPolicy,
   RoiCalculationRun,
   RoiCostLine,
-  RoiAssumption,
   RoiScenario,
   RoiScenarioOverride,
 } from './roiEconomicModelTypes.js';
@@ -94,7 +94,9 @@ export function toRoiApprovalSnapshot(row: RoiApprovalSnapshotRow): RoiApprovalS
   };
 }
 
-export function toRoiApprovalSnapshotSummary(row: RoiApprovalSnapshotRow): RoiApprovalSnapshotSummary {
+export function toRoiApprovalSnapshotSummary(
+  row: RoiApprovalSnapshotRow
+): RoiApprovalSnapshotSummary {
   return {
     snapshotId: row.snapshot_id,
     caseId: row.case_id,

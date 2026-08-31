@@ -52,11 +52,11 @@ import React, { useMemo } from 'react';
 import { StandardTable, type TableColumn, type TableRow } from '../../standard/StandardTable';
 import { StatusChip } from '../../ui/primitives/chips';
 import {
+  type DrdSourceLanguage,
   listDrdAxisNarratives,
   resolveDrdAxisName,
   resolveDrdLevelNarrative,
   resolveDrdUnitLabel,
-  type DrdSourceLanguage,
 } from './drdLabels';
 import { describeMaturityPosition } from './maturityBands';
 import type { AssessmentReportData, ReportFinding } from './types';
@@ -79,9 +79,11 @@ function formatDateTime(iso: string | null | undefined): string {
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('pl-PL', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-      new Date(iso)
-    );
+    return new Intl.DateTimeFormat('pl-PL', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(iso));
   } catch {
     return iso;
   }
@@ -107,7 +109,9 @@ const SectionCard: React.FC<{
       {Icon ? <Icon size={16} className="shrink-0 text-c-text-muted" aria-hidden="true" /> : null}
       <div>
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">{eyebrow}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+            {eyebrow}
+          </p>
         ) : null}
         {/* h3, nie h2 — od 2026-08-30 karty leżą WEWNĄTRZ numerowanych
             rozdziałów (`<Chapter>`), które niosą h2. */}
@@ -132,7 +136,9 @@ const Chapter: React.FC<{
 }> = ({ number, title, lede, icon: Icon, id, children }) => (
   <section id={id} aria-labelledby={`${id}-heading`} className="flex flex-col gap-3">
     <div className="flex items-start gap-3 border-b border-c-border-subtle pb-3">
-      {Icon ? <Icon size={18} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" /> : null}
+      {Icon ? (
+        <Icon size={18} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
+      ) : null}
       <div className="min-w-0">
         <h2 id={`${id}-heading`} className="text-base font-semibold text-c-text">
           {number}. {title}
@@ -152,11 +158,11 @@ const Chapter: React.FC<{
  * (zmierzone — patrz nagłówek `drdLabels.ts`). Wymyślanie tłumaczenia
  * w komponencie byłoby wymyślaniem treści metodyki.
  */
-const MethodologyProse: React.FC<{ text: string; language: DrdSourceLanguage; className?: string }> = ({
-  text,
-  language,
-  className,
-}) => (
+const MethodologyProse: React.FC<{
+  text: string;
+  language: DrdSourceLanguage;
+  className?: string;
+}> = ({ text, language, className }) => (
   <p className={`text-xs leading-relaxed text-c-text-secondary ${className ?? ''}`}>
     {language === 'en' ? (
       <span
@@ -177,7 +183,9 @@ const Property: React.FC<{ label: string; value: React.ReactNode; mono?: boolean
 }) => (
   <div className="min-w-0">
     <dt className="text-[11px] font-medium uppercase tracking-wide text-c-text-muted">{label}</dt>
-    <dd className={`mt-0.5 truncate text-sm text-c-text ${mono ? 'font-mono text-[12px]' : ''}`}>{value}</dd>
+    <dd className={`mt-0.5 truncate text-sm text-c-text ${mono ? 'font-mono text-[12px]' : ''}`}>
+      {value}
+    </dd>
   </div>
 );
 
@@ -240,7 +248,17 @@ const AreaBlock: React.FC<{
   gap: number | null;
   levelCount: number;
   hasFinding: boolean;
-}> = ({ unitId, unitName, methodPackId, methodPackVersion, current, target, gap, levelCount, hasFinding }) => {
+}> = ({
+  unitId,
+  unitName,
+  methodPackId,
+  methodPackVersion,
+  current,
+  target,
+  gap,
+  levelCount,
+  hasFinding,
+}) => {
   const currentLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, current);
   const targetLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, target);
   return (
@@ -311,8 +329,8 @@ const AreaBlock: React.FC<{
 
       {!hasFinding ? (
         <p className="mt-2 text-[11px] font-medium text-c-warning">
-          Brak przyjętego dowodu dla tego obszaru — liczby powyżej pochodzą z zapisu sesji, ale nie są
-          poparte zaakceptowanym materiałem dowodowym.
+          Brak przyjętego dowodu dla tego obszaru — liczby powyżej pochodzą z zapisu sesji, ale nie
+          są poparte zaakceptowanym materiałem dowodowym.
         </p>
       ) : null}
     </div>
@@ -345,7 +363,11 @@ const AxisSection: React.FC<{
       title={`${axis.axisNumber}. ${axis.axisName}`}
     >
       {axis.description ? (
-        <MethodologyProse text={axis.description} language={axis.descriptionLanguage} className="mb-3" />
+        <MethodologyProse
+          text={axis.description}
+          language={axis.descriptionLanguage}
+          className="mb-3"
+        />
       ) : null}
 
       <p className="mb-3 text-[11px] text-c-text-muted">
@@ -357,8 +379,9 @@ const AxisSection: React.FC<{
 
       {assessed.length === 0 ? (
         <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
-          Żaden obszar tej osi nie został objęty tą oceną. Oś zostaje w dokumencie, żeby było widać, czego
-          badanie nie dotknęło — pominięcie rozdziału zmieniłoby zakres oceny w oczach czytelnika.
+          Żaden obszar tej osi nie został objęty tą oceną. Oś zostaje w dokumencie, żeby było widać,
+          czego badanie nie dotknęło — pominięcie rozdziału zmieniłoby zakres oceny w oczach
+          czytelnika.
         </p>
       ) : (
         <div className="space-y-2.5">
@@ -414,7 +437,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   const latestApproval = useMemo(() => {
     const approved = approvals.filter((a) => a.decision === 'approved');
     if (approved.length === 0) return null;
-    return [...approved].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    return [...approved].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
   }, [approvals]);
 
   // Every unit the Output touched — union of current/target/gap keys, NOT
@@ -443,7 +468,13 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         const current = output.current?.[unitId] ?? null;
         const target = output.target?.[unitId] ?? null;
         const gap = output.gap?.[unitId] ?? null;
-        const band = label ? describeMaturityPosition(current, Math.min(...label.levelScale), Math.max(...label.levelScale)) : null;
+        const band = label
+          ? describeMaturityPosition(
+              current,
+              Math.min(...label.levelScale),
+              Math.max(...label.levelScale)
+            )
+          : null;
         return {
           id: unitId,
           unitId,
@@ -458,7 +489,15 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           scaleMax: label ? Math.max(...label.levelScale) : null,
         } as TableRow;
       }),
-    [unitIds, findingByUnit, output.methodPackId, output.methodPackVersion, output.current, output.target, output.gap]
+    [
+      unitIds,
+      findingByUnit,
+      output.methodPackId,
+      output.methodPackVersion,
+      output.current,
+      output.target,
+      output.gap,
+    ]
   );
 
   const dimensionColumns: TableColumn[] = useMemo(
@@ -470,7 +509,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         render: (row) => (
           <div className="min-w-0">
             <div className="truncate text-sm font-medium text-c-text">{row.unitName as string}</div>
-            <div className="truncate text-[11px] font-mono text-c-text-muted">{row.unitId as string}</div>
+            <div className="truncate text-[11px] font-mono text-c-text-muted">
+              {row.unitId as string}
+            </div>
           </div>
         ),
       },
@@ -508,16 +549,26 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         sortable: true,
         render: (row) => {
           const gap = row.gap as number | null;
-          if (gap === null || gap === undefined) return <span className="text-c-text-muted">—</span>;
+          if (gap === null || gap === undefined)
+            return <span className="text-c-text-muted">—</span>;
           const tone = gap > 0 ? 'text-c-danger' : 'text-c-success';
-          return <span className={`text-xs font-semibold tabular-nums ${tone}`}>{gap > 0 ? `+${gap}` : gap}</span>;
+          return (
+            <span className={`text-xs font-semibold tabular-nums ${tone}`}>
+              {gap > 0 ? `+${gap}` : gap}
+            </span>
+          );
         },
       },
       {
         id: 'bandLabel',
         label: 'Pozycja na skali',
         width: '140px',
-        render: (row) => (row.bandLabel ? <span className="text-xs text-c-text-secondary">{row.bandLabel as string}</span> : <span className="text-c-text-muted">—</span>),
+        render: (row) =>
+          row.bandLabel ? (
+            <span className="text-xs text-c-text-secondary">{row.bandLabel as string}</span>
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          ),
       },
       {
         id: 'hasFinding',
@@ -539,7 +590,10 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
     [output.findings]
   );
   const gaps = useMemo(
-    () => [...(output.findings ?? [])].filter((f) => f.gap !== null && f.gap > 0).sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0)),
+    () =>
+      [...(output.findings ?? [])]
+        .filter((f) => f.gap !== null && f.gap > 0)
+        .sort((a, b) => (b.gap ?? 0) - (a.gap ?? 0)),
     [output.findings]
   );
 
@@ -554,7 +608,15 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   );
 
   const evidenceRows = useMemo(() => {
-    const rows: { id: string; unitId: string; unitName: string; evidenceId: string; evidenceType: string; strength: string; locator: string }[] = [];
+    const rows: {
+      id: string;
+      unitId: string;
+      unitName: string;
+      evidenceId: string;
+      evidenceType: string;
+      strength: string;
+      locator: string;
+    }[] = [];
     for (const f of output.findings ?? []) {
       for (const ev of f.supportingEvidence ?? []) {
         rows.push({
@@ -576,7 +638,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   const evidenceCompleteness = output.evidenceCompleteness ?? null;
 
   const lifecycleTone = superseded ? 'neutral' : 'success';
-  const lifecycleLabel = superseded ? 'Zamrożony — zastąpiony nowszą rewizją' : 'Zamrożony (niezmienny)';
+  const lifecycleLabel = superseded
+    ? 'Zamrożony — zastąpiony nowszą rewizją'
+    : 'Zamrożony (niezmienny)';
 
   // ── Formuła właściciela, punkt 2: „siedem osi" ────────────────────────────
   // Rozdziały osi powstają z metodyki (wszystkie 7, także te NIEobjęte tą
@@ -604,10 +668,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   /** Jednostki, których metodyka nie umiała przypisać do osi (obcy pakiet,
    * niezgodna wersja, nieznany identyfikator) — nie wolno ich zgubić między
    * rozdziałami, więc dostają własny, jawnie nazwany blok. */
-  const unitsOutsideAxes = useMemo(
-    () => unitIdsByAxis.get('axis-nieznana') ?? [],
-    [unitIdsByAxis]
-  );
+  const unitsOutsideAxes = useMemo(() => unitIdsByAxis.get('axis-nieznana') ?? [], [unitIdsByAxis]);
 
   const axesCoveredCount = useMemo(
     () => axisNarratives.filter((a) => (unitIdsByAxis.get(a.axisId) ?? []).length > 0).length,
@@ -641,8 +702,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <div className="flex items-start gap-2 rounded-xl border border-c-warning/40 bg-c-warning/10 px-4 py-3 text-xs text-c-warning">
           <ShieldAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           <p>
-            Ten Output pochodzi z sesji utworzonej przez tryb demo (ominięcie bramki gotowości pakietu). To
-            NIE jest wynik produkcyjny — nie może być przedstawiony jako zatwierdzony wynik pilota/produkcji.
+            Ten Output pochodzi z sesji utworzonej przez tryb demo (ominięcie bramki gotowości
+            pakietu). To NIE jest wynik produkcyjny — nie może być przedstawiony jako zatwierdzony
+            wynik pilota/produkcji.
           </p>
         </div>
       ) : null}
@@ -666,7 +728,11 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         </div>
 
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-          <Property label="Projekt" value={session?.projectId ?? 'Brak przypisanego projektu'} mono={!!session?.projectId} />
+          <Property
+            label="Projekt"
+            value={session?.projectId ?? 'Brak przypisanego projektu'}
+            mono={!!session?.projectId}
+          />
           <Property label="Sesja" value={output.sessionId} mono />
           <Property label="Wersja Outputu" value={`v${output.outputVersion}`} />
           <Property label="Data zamrożenia" value={formatDateTime(output.frozenAt)} />
@@ -680,7 +746,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
                   {formatDate(latestApproval.createdAt)}
                 </span>
               ) : (
-                <span className="italic text-c-text-muted">Brak zarejestrowanego zatwierdzenia</span>
+                <span className="italic text-c-text-muted">
+                  Brak zarejestrowanego zatwierdzenia
+                </span>
               )
             }
           />
@@ -689,10 +757,15 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
 
         {superseded ? (
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
-            <FileWarning size={14} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
+            <FileWarning
+              size={14}
+              className="mt-0.5 shrink-0 text-c-text-muted"
+              aria-hidden="true"
+            />
             <span>
-              Ten Output został zastąpiony nowszą rewizją{supersededByOutputId ? ` (${supersededByOutputId})` : ''}.
-              Poniższa treść pozostaje niezmiennym zapisem TEJ rewizji — nie jest aktualizowana.
+              Ten Output został zastąpiony nowszą rewizją
+              {supersededByOutputId ? ` (${supersededByOutputId})` : ''}. Poniższa treść pozostaje
+              niezmiennym zapisem TEJ rewizji — nie jest aktualizowana.
             </span>
           </div>
         ) : null}
@@ -714,12 +787,15 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <SectionCard id="wstep-przebieg" title="Przebieg oceny">
           <div className="space-y-2 text-xs leading-relaxed text-c-text-secondary">
             <p>
-              Ocenę przeprowadzono metodyką <strong className="text-c-text">{output.methodPackId.toUpperCase()}</strong>{' '}
-              w wersji pakietu <span className="font-mono text-[11px]">{output.methodPackVersion}</span>
+              Ocenę przeprowadzono metodyką{' '}
+              <strong className="text-c-text">{output.methodPackId.toUpperCase()}</strong> w wersji
+              pakietu <span className="font-mono text-[11px]">{output.methodPackVersion}</span>
               {axisNarratives.length > 0 ? (
                 <>
-                  {' '}— {axisNarratives.length} osi transformacji, łącznie {totalMethodAreas} obszarów
-                  analitycznych, każda oś na własnej skali dojrzałości ({levelScaleSummary} poziomów).
+                  {' '}
+                  — {axisNarratives.length} osi transformacji, łącznie {totalMethodAreas} obszarów
+                  analitycznych, każda oś na własnej skali dojrzałości ({levelScaleSummary}{' '}
+                  poziomów).
                 </>
               ) : (
                 '.'
@@ -731,35 +807,44 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               {totalMethodAreas > 0 ? <> z {totalMethodAreas}</> : null} obszarów
               {axisNarratives.length > 0 ? (
                 <>
-                  {' '}w <strong className="text-c-text">{axesCoveredCount}</strong> z {axisNarratives.length} osi
+                  {' '}
+                  w <strong className="text-c-text">{axesCoveredCount}</strong> z{' '}
+                  {axisNarratives.length} osi
                 </>
               ) : null}
-              . Dla {output.findings?.length ?? 0} z nich organizacja dostarczyła dowód, który został przyjęty;
-              dla {unitsWithoutFinding.length} dowodu nie przyjęto — te obszary są w rozdziale 3 wymienione
-              z nazwy i nie są liczone jako zero.
+              . Dla {output.findings?.length ?? 0} z nich organizacja dostarczyła dowód, który
+              został przyjęty; dla {unitsWithoutFinding.length} dowodu nie przyjęto — te obszary są
+              w rozdziale 3 wymienione z nazwy i nie są liczone jako zero.
               {evidenceCompleteness
                 ? ` Kompletność dowodowa tej oceny wynosi ${Math.round((evidenceCompleteness.completenessRatio ?? 0) * 100)}%.`
                 : ''}
             </p>
             <p>
               Wynik zamrożono {formatDateTime(output.frozenAt)}
-              {session?.createdAt ? <>, sesję otwarto {formatDate(session.createdAt)}</> : null}.{' '}
+              {session?.createdAt ? (
+                <>, sesję otwarto {formatDate(session.createdAt)}</>
+              ) : null}.{' '}
               {latestApproval ? (
                 <>
-                  Zatwierdzenie zarejestrowano{' '}
-                  {formatDate(latestApproval.createdAt)} (rewizja {latestApproval.revision})
+                  Zatwierdzenie zarejestrowano {formatDate(latestApproval.createdAt)} (rewizja{' '}
+                  {latestApproval.revision})
                   {latestApproval.comment ? <> — „{latestApproval.comment}"</> : null}.
                 </>
               ) : (
                 <>
-                  Dla tej rewizji <strong className="text-c-text">nie zarejestrowano zatwierdzenia</strong> —
+                  Dla tej rewizji{' '}
+                  <strong className="text-c-text">nie zarejestrowano zatwierdzenia</strong> —
                   dokument jest odczytem zamrożonego wyniku, nie wynikiem zatwierdzonym.
                 </>
               )}
             </p>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-            <Property label="Właściciel sesji" value={session?.ownerUserId ?? '—'} mono={!!session?.ownerUserId} />
+            <Property
+              label="Właściciel sesji"
+              value={session?.ownerUserId ?? '—'}
+              mono={!!session?.ownerUserId}
+            />
             <Property label="Otwarcie sesji" value={formatDate(session?.createdAt)} />
             <Property label="Zamrożenie wyniku" value={formatDate(output.frozenAt)} />
             <Property label="Rewizja sesji" value={session ? `v${session.version}` : '—'} />
@@ -785,59 +870,68 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       <Chapter
         id="osie"
         number={2}
-        title={axisNarratives.length === 7 ? 'Siedem osi metodyki' : `Osie metodyki (${axisNarratives.length})`}
+        title={
+          axisNarratives.length === 7
+            ? 'Siedem osi metodyki'
+            : `Osie metodyki (${axisNarratives.length})`
+        }
         icon={BookOpen}
         lede="Dla każdej osi: czym oś jest, a następnie każdy jej obszar analityczny — z definicją poziomu obecnego i docelowego."
       >
-      <SectionCard id="overall" title="Wynik ogólny" icon={CheckCircle2}>
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SummaryStat label="Ocenionych jednostek" value={unitIds.length} />
-          <SummaryStat label="Z potwierdzonym dowodem" value={output.findings?.length ?? 0} />
-          <SummaryStat label="Bez przyjętego dowodu" value={unitsWithoutFinding.length} />
-          <SummaryStat label="Jednostek z luką" value={gaps.length} />
-        </div>
-        {aggregationEntries.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              Wynik per wymiar (oś)
-            </p>
-            {aggregationEntries.map(([axisId, value]) => {
-              const targetsInAxis = Object.entries(output.gap ?? {});
-              void targetsInAxis;
-              // FIX-ATOM #8: resolve the raw `axis-N` group key to its
-              // Polish axis name (same dictionary the "Jednostka oceny"
-              // table below already uses) — never a bare code, known or
-              // not (honest fallback to the raw id only when the pack
-              // version genuinely doesn't match, same contract as
-              // resolveDrdUnitLabel elsewhere in this file).
-              const axisName =
-                resolveDrdAxisName(output.methodPackId, output.methodPackVersion, axisId) ?? axisId;
-              return (
-                <div key={axisId} className="flex items-center justify-between gap-3 rounded-lg border border-c-border-subtle px-3 py-2">
-                  <span className="text-xs font-medium text-c-text">{axisName}</span>
-                  <span className="text-xs tabular-nums text-c-text-secondary">
-                    {value === null ? '—' : value}
-                  </span>
-                </div>
-              );
-            })}
+        <SectionCard id="overall" title="Wynik ogólny" icon={CheckCircle2}>
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <SummaryStat label="Ocenionych jednostek" value={unitIds.length} />
+            <SummaryStat label="Z potwierdzonym dowodem" value={output.findings?.length ?? 0} />
+            <SummaryStat label="Bez przyjętego dowodu" value={unitsWithoutFinding.length} />
+            <SummaryStat label="Jednostek z luką" value={gaps.length} />
           </div>
-        ) : (
-          <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
-            Ten Output nie zawiera zagregowanego wyniku per wymiar (oś) — kernel liczy tę agregację poza
-            momentem zamrożenia (patrz „Ograniczenia i założenia" powyżej). Poniżej pełny wynik per
-            jednostka, z których taka agregacja by się składała.
-          </p>
-        )}
-      </SectionCard>
+          {aggregationEntries.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                Wynik per wymiar (oś)
+              </p>
+              {aggregationEntries.map(([axisId, value]) => {
+                const targetsInAxis = Object.entries(output.gap ?? {});
+                void targetsInAxis;
+                // FIX-ATOM #8: resolve the raw `axis-N` group key to its
+                // Polish axis name (same dictionary the "Jednostka oceny"
+                // table below already uses) — never a bare code, known or
+                // not (honest fallback to the raw id only when the pack
+                // version genuinely doesn't match, same contract as
+                // resolveDrdUnitLabel elsewhere in this file).
+                const axisName =
+                  resolveDrdAxisName(output.methodPackId, output.methodPackVersion, axisId) ??
+                  axisId;
+                return (
+                  <div
+                    key={axisId}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-c-border-subtle px-3 py-2"
+                  >
+                    <span className="text-xs font-medium text-c-text">{axisName}</span>
+                    <span className="text-xs tabular-nums text-c-text-secondary">
+                      {value === null ? '—' : value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
+              Ten Output nie zawiera zagregowanego wyniku per wymiar (oś) — kernel liczy tę
+              agregację poza momentem zamrożenia (patrz „Ograniczenia i założenia" powyżej). Poniżej
+              pełny wynik per jednostka, z których taka agregacja by się składała.
+            </p>
+          )}
+        </SectionCard>
 
         {/* ── Rozdziały osi: opis osi → obszary z definicją poziomów ────── */}
         {axisNarratives.length === 0 ? (
           <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
-            Opisy osi i poziomów są dostępne wyłącznie dla pakietu DRD w wersji zgodnej z wersją przypiętą
-            w tym Outpucie ({output.methodPackId} {output.methodPackVersion}). Ten Output przypina wersję,
-            której skompilowany pakiet nie zna — dokument pokazuje więc same liczby, bez definicji metodyki,
-            zamiast opisywać poziomy z innej wersji metodyki niż ta, którą oceniano.
+            Opisy osi i poziomów są dostępne wyłącznie dla pakietu DRD w wersji zgodnej z wersją
+            przypiętą w tym Outpucie ({output.methodPackId} {output.methodPackVersion}). Ten Output
+            przypina wersję, której skompilowany pakiet nie zna — dokument pokazuje więc same
+            liczby, bez definicji metodyki, zamiast opisywać poziomy z innej wersji metodyki niż ta,
+            którą oceniano.
           </p>
         ) : (
           axisNarratives.map((axis) => (
@@ -854,8 +948,8 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         {unitsOutsideAxes.length > 0 ? (
           <SectionCard id="axis-unmapped" title="Jednostki poza strukturą osi" icon={AlertTriangle}>
             <p className="mb-2 text-xs text-c-text-secondary">
-              Tych jednostek nie da się przypisać do żadnej osi metodyki przypiętej w tym Outpucie. Są
-              wymienione, żeby nie wypadły z dokumentu między rozdziałami.
+              Tych jednostek nie da się przypisać do żadnej osi metodyki przypiętej w tym Outpucie.
+              Są wymienione, żeby nie wypadły z dokumentu między rozdziałami.
             </p>
             <ul className="flex flex-wrap gap-1.5">
               {unitsOutsideAxes.map((unitId) => (
@@ -873,8 +967,17 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         {/* Zestawienie zbiorcze — jedna tabela na wszystkie jednostki, żeby
             czytelnik miał obraz całości bez przewijania siedmiu rozdziałów.
             Kanon: StandardTable, nigdy własna tabela. */}
-        <SectionCard id="dimensions" title="Zestawienie zbiorcze wszystkich jednostek" icon={CheckCircle2}>
-          <StandardTable columns={dimensionColumns} data={dimensionRows} minTableWidth="auto" persistKey="assessment.report.dimensions" />
+        <SectionCard
+          id="dimensions"
+          title="Zestawienie zbiorcze wszystkich jednostek"
+          icon={CheckCircle2}
+        >
+          <StandardTable
+            columns={dimensionColumns}
+            data={dimensionRows}
+            minTableWidth="auto"
+            persistKey="assessment.report.dimensions"
+          />
         </SectionCard>
       </Chapter>
 
@@ -895,127 +998,167 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         <div className="flex items-start gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-xs text-c-text-secondary">
           <FileWarning size={14} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
           <p>
-            Zamrożony Output przenosi <strong className="text-c-text">przyjęty poziom i dowody</strong>, a nie
-            dosłowną treść odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co
-            dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski wyprowadzone
-            z przyjętych poziomów.
+            Zamrożony Output przenosi{' '}
+            <strong className="text-c-text">przyjęty poziom i dowody</strong>, a nie dosłowną treść
+            odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co
+            dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski
+            wyprowadzone z przyjętych poziomów.
           </p>
         </div>
 
-      <SectionCard id="strengths-gaps" title="Mocne strony i luki" icon={Lightbulb}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-success">
-              Mocne strony ({strengths.length})
-            </p>
-            <ul className="space-y-2">
-              {strengths.length === 0 ? (
-                <li className="text-xs italic text-c-text-muted">Brak jednostek bez luki w tym Outpucie.</li>
-              ) : (
-                strengths.map((f) => (
-                  <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2">
-                    <p className="text-xs font-medium text-c-text">
-                      {f.unitName} <span className="font-mono text-c-text-muted">({f.unitId})</span>
-                    </p>
-                    <p className="mt-0.5 text-xs text-c-text-secondary">{f.businessMeaning}</p>
+        <SectionCard id="strengths-gaps" title="Mocne strony i luki" icon={Lightbulb}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-success">
+                Mocne strony ({strengths.length})
+              </p>
+              <ul className="space-y-2">
+                {strengths.length === 0 ? (
+                  <li className="text-xs italic text-c-text-muted">
+                    Brak jednostek bez luki w tym Outpucie.
                   </li>
-                ))
-              )}
-            </ul>
-          </div>
-          <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-danger">
-              Luki ({gaps.length})
-            </p>
-            <ul className="space-y-2">
-              {gaps.length === 0 ? (
-                <li className="text-xs italic text-c-text-muted">Brak zidentyfikowanych luk w tym Outpucie.</li>
-              ) : (
-                gaps.map((f) => (
-                  <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2">
-                    <p className="text-xs font-medium text-c-text">
-                      {f.unitName} <span className="font-mono text-c-text-muted">({f.unitId})</span>
-                      <span className="ml-2 text-c-danger">luka {f.gap}</span>
-                    </p>
-                    <p className="mt-0.5 text-xs text-c-text-secondary">{f.riskOrOpportunity ?? f.businessMeaning}</p>
+                ) : (
+                  strengths.map((f) => (
+                    <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2">
+                      <p className="text-xs font-medium text-c-text">
+                        {f.unitName}{' '}
+                        <span className="font-mono text-c-text-muted">({f.unitId})</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-c-text-secondary">{f.businessMeaning}</p>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-danger">
+                Luki ({gaps.length})
+              </p>
+              <ul className="space-y-2">
+                {gaps.length === 0 ? (
+                  <li className="text-xs italic text-c-text-muted">
+                    Brak zidentyfikowanych luk w tym Outpucie.
                   </li>
-                ))
-              )}
-            </ul>
+                ) : (
+                  gaps.map((f) => (
+                    <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2">
+                      <p className="text-xs font-medium text-c-text">
+                        {f.unitName}{' '}
+                        <span className="font-mono text-c-text-muted">({f.unitId})</span>
+                        <span className="ml-2 text-c-danger">luka {f.gap}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-c-text-secondary">
+                        {f.riskOrOpportunity ?? f.businessMeaning}
+                      </p>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
           </div>
-        </div>
-      </SectionCard>
+        </SectionCard>
 
-      {/* ── 5. Odpowiedzi „nie wiem" / brak dowodu ───────────────────────── */}
-      <SectionCard id="unknowns" title="Brak wiedzy w organizacji („nie wiem” / brak dowodu)" icon={HelpCircle}>
-        <p className="mb-3 text-xs text-c-text-secondary">
-          To nie jest „zero punktów" — to osobna, diagnostyczna kategoria: organizacja nie potrafiła w
-          momencie oceny dostarczyć wystarczającego dowodu dla poniższych jednostek. Zamrożony Output nie
-          rozróżnia dziś „odpowiedziano nie wiem" od „nikt jeszcze nie odpowiedział" na poziomie pojedynczej
-          jednostki (patrz „Ograniczenia i założenia") — poniższa lista pokazuje jednostki BEZ przyjętego
-          dowodu, czyli obie te sytuacje razem, uczciwie nierozróżnione.
-        </p>
-        {evidenceCompleteness ? (
-          <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <SummaryStat label="Jednostek łącznie" value={evidenceCompleteness.totalUnits} />
-            <SummaryStat label="Z przyjętym dowodem" value={evidenceCompleteness.unitsWithAcceptedEvidence} />
-            <SummaryStat label="Bez przyjętego dowodu" value={evidenceCompleteness.unitsMissingEvidence} />
-            <SummaryStat
-              label="Kompletność dowodowa"
-              value={`${Math.round((evidenceCompleteness.completenessRatio ?? 0) * 100)}%`}
+        {/* ── 5. Odpowiedzi „nie wiem" / brak dowodu ───────────────────────── */}
+        <SectionCard
+          id="unknowns"
+          title="Brak wiedzy w organizacji („nie wiem” / brak dowodu)"
+          icon={HelpCircle}
+        >
+          <p className="mb-3 text-xs text-c-text-secondary">
+            To nie jest „zero punktów" — to osobna, diagnostyczna kategoria: organizacja nie
+            potrafiła w momencie oceny dostarczyć wystarczającego dowodu dla poniższych jednostek.
+            Zamrożony Output nie rozróżnia dziś „odpowiedziano nie wiem" od „nikt jeszcze nie
+            odpowiedział" na poziomie pojedynczej jednostki (patrz „Ograniczenia i założenia") —
+            poniższa lista pokazuje jednostki BEZ przyjętego dowodu, czyli obie te sytuacje razem,
+            uczciwie nierozróżnione.
+          </p>
+          {evidenceCompleteness ? (
+            <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <SummaryStat label="Jednostek łącznie" value={evidenceCompleteness.totalUnits} />
+              <SummaryStat
+                label="Z przyjętym dowodem"
+                value={evidenceCompleteness.unitsWithAcceptedEvidence}
+              />
+              <SummaryStat
+                label="Bez przyjętego dowodu"
+                value={evidenceCompleteness.unitsMissingEvidence}
+              />
+              <SummaryStat
+                label="Kompletność dowodowa"
+                value={`${Math.round((evidenceCompleteness.completenessRatio ?? 0) * 100)}%`}
+              />
+            </div>
+          ) : null}
+          {unitsWithoutFinding.length === 0 ? (
+            <p className="text-xs italic text-c-text-muted">
+              Każda oceniana jednostka ma przyjęty dowód.
+            </p>
+          ) : (
+            <ul className="flex flex-wrap gap-1.5">
+              {unitsWithoutFinding.map((unitId) => {
+                const label = resolveDrdUnitLabel(
+                  output.methodPackId,
+                  output.methodPackVersion,
+                  unitId
+                );
+                return (
+                  <li
+                    key={unitId}
+                    className="rounded-full border border-c-warning/40 bg-c-warning/10 px-2.5 py-1 text-[11px] font-medium text-c-warning"
+                    title={unitId}
+                  >
+                    {label?.unitName ?? unitId}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </SectionCard>
+
+        {/* ── 6. Dowody ───────────────────────────────────────────────────── */}
+        <SectionCard id="evidence" title="Dowody" icon={FileWarning}>
+          {evidenceRows.length === 0 ? (
+            <p className="text-xs italic text-c-text-muted">
+              Ten Output nie ma zarejestrowanych dowodów.
+            </p>
+          ) : (
+            <StandardTable
+              columns={[
+                {
+                  id: 'unitName',
+                  label: 'Kryterium',
+                  render: (row) => (
+                    <span className="text-xs text-c-text">
+                      {row.unitName as string}{' '}
+                      <span className="font-mono text-c-text-muted">({row.unitId as string})</span>
+                    </span>
+                  ),
+                },
+                { id: 'evidenceType', label: 'Typ dowodu', width: '140px' },
+                {
+                  id: 'strength',
+                  label: 'Siła',
+                  width: '90px',
+                  render: (row) => (
+                    <span className="font-mono text-xs">{row.strength as string}</span>
+                  ),
+                },
+                {
+                  id: 'locator',
+                  label: 'Lokalizacja / odniesienie',
+                  render: (row) => (
+                    <span className="truncate font-mono text-[11px] text-c-text-muted">
+                      {row.locator as string}
+                    </span>
+                  ),
+                },
+              ]}
+              data={evidenceRows}
+              minTableWidth="auto"
+              persistKey="assessment.report.evidence"
             />
-          </div>
-        ) : null}
-        {unitsWithoutFinding.length === 0 ? (
-          <p className="text-xs italic text-c-text-muted">Każda oceniana jednostka ma przyjęty dowód.</p>
-        ) : (
-          <ul className="flex flex-wrap gap-1.5">
-            {unitsWithoutFinding.map((unitId) => {
-              const label = resolveDrdUnitLabel(output.methodPackId, output.methodPackVersion, unitId);
-              return (
-                <li
-                  key={unitId}
-                  className="rounded-full border border-c-warning/40 bg-c-warning/10 px-2.5 py-1 text-[11px] font-medium text-c-warning"
-                  title={unitId}
-                >
-                  {label?.unitName ?? unitId}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </SectionCard>
-
-      {/* ── 6. Dowody ───────────────────────────────────────────────────── */}
-      <SectionCard id="evidence" title="Dowody" icon={FileWarning}>
-        {evidenceRows.length === 0 ? (
-          <p className="text-xs italic text-c-text-muted">Ten Output nie ma zarejestrowanych dowodów.</p>
-        ) : (
-          <StandardTable
-            columns={[
-              { id: 'unitName', label: 'Kryterium', render: (row) => (
-                <span className="text-xs text-c-text">
-                  {row.unitName as string} <span className="font-mono text-c-text-muted">({row.unitId as string})</span>
-                </span>
-              ) },
-              { id: 'evidenceType', label: 'Typ dowodu', width: '140px' },
-              {
-                id: 'strength',
-                label: 'Siła',
-                width: '90px',
-                render: (row) => <span className="font-mono text-xs">{row.strength as string}</span>,
-              },
-              { id: 'locator', label: 'Lokalizacja / odniesienie', render: (row) => (
-                <span className="truncate font-mono text-[11px] text-c-text-muted">{row.locator as string}</span>
-              ) },
-            ]}
-            data={evidenceRows}
-            minTableWidth="auto"
-            persistKey="assessment.report.evidence"
-          />
-        )}
-      </SectionCard>
-
+          )}
+        </SectionCard>
       </Chapter>
 
       {/* ══ 4. PODSUMOWANIE ═══════════════════════════════════════════════ */}
@@ -1031,17 +1174,21 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             <p>
               Ocena objęła {unitIds.length}
               {totalMethodAreas > 0 ? <> z {totalMethodAreas}</> : null} obszarów
-              {axisNarratives.length > 0 ? <> w {axesCoveredCount} z {axisNarratives.length} osi</> : null}.
-              W {strengths.length} obszarach organizacja jest na poziomie docelowym lub powyżej;
-              w {gaps.length} pozostaje luka
-              {largestGap
-                ? (
-                    <>
-                      , największa na obszarze <strong className="text-c-text">{largestGap.unitName}</strong>{' '}
-                      ({largestGap.gap} {largestGap.gap === 1 ? 'poziom' : 'poziomy'})
-                    </>
-                  )
-                : null}
+              {axisNarratives.length > 0 ? (
+                <>
+                  {' '}
+                  w {axesCoveredCount} z {axisNarratives.length} osi
+                </>
+              ) : null}
+              . W {strengths.length} obszarach organizacja jest na poziomie docelowym lub powyżej; w{' '}
+              {gaps.length} pozostaje luka
+              {largestGap ? (
+                <>
+                  , największa na obszarze{' '}
+                  <strong className="text-c-text">{largestGap.unitName}</strong> ({largestGap.gap}{' '}
+                  {largestGap.gap === 1 ? 'poziom' : 'poziomy'})
+                </>
+              ) : null}
               .
             </p>
             <p>
@@ -1050,52 +1197,61 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
                 : `Dla ${unitsWithoutFinding.length} obszarów nie przyjęto dowodu. To nie są zera: to obszary, o których ta ocena nie rozstrzyga, i pierwsza pozycja do domknięcia w kolejnej rundzie.`}
             </p>
             <p>
-              Kolejność działań poniżej wynika wyłącznie z wielkości luki między poziomem obecnym
-              a docelowym — nie z osobnego modelu priorytetyzacji.
+              Kolejność działań poniżej wynika wyłącznie z wielkości luki między poziomem obecnym a
+              docelowym — nie z osobnego modelu priorytetyzacji.
             </p>
           </div>
         </SectionCard>
 
-      <SectionCard id="recommendations" title="Rekomendacje priorytetowe" icon={Lightbulb}>
-        {recommendations.length === 0 ? (
-          <p className="text-xs italic text-c-text-muted">Brak rekomendacji w tym Outpucie.</p>
-        ) : (
-          <ol className="space-y-3">
-            {recommendations.map((f, idx) => (
-              <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold text-c-text">
-                    {idx + 1}. {f.unitName} <span className="font-mono text-c-text-muted">({f.unitId})</span>
-                  </p>
-                  {/* „luka 0" wydrukowana tonem ostrzegawczym była sygnałem
+        <SectionCard id="recommendations" title="Rekomendacje priorytetowe" icon={Lightbulb}>
+          {recommendations.length === 0 ? (
+            <p className="text-xs italic text-c-text-muted">Brak rekomendacji w tym Outpucie.</p>
+          ) : (
+            <ol className="space-y-3">
+              {recommendations.map((f, idx) => (
+                <li key={f.id} className="rounded-lg border border-c-border-subtle px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-c-text">
+                      {idx + 1}. {f.unitName}{' '}
+                      <span className="font-mono text-c-text-muted">({f.unitId})</span>
+                    </p>
+                    {/* „luka 0" wydrukowana tonem ostrzegawczym była sygnałem
                       wprost odwrotnym do prawdy — obszar bez luki dostawał
                       w podsumowaniu ten sam czerwony znacznik co obszar
                       z luką 3. Ton krytyczny należy się WYŁĄCZNIE luce > 0. */}
-                  {f.gap !== null && f.gap > 0 ? (
-                    <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-danger">luka {f.gap}</span>
-                  ) : f.gap === 0 ? (
-                    <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-success">bez luki</span>
+                    {f.gap !== null && f.gap > 0 ? (
+                      <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-danger">
+                        luka {f.gap}
+                      </span>
+                    ) : f.gap === 0 ? (
+                      <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-success">
+                        bez luki
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 text-xs text-c-text-secondary">{f.recommendation}</p>
+                  {f.priorityRationale ? (
+                    <p className="mt-1 text-[11px] italic text-c-text-muted">
+                      Uzasadnienie priorytetu: {f.priorityRationale}
+                    </p>
                   ) : null}
-                </div>
-                <p className="mt-1 text-xs text-c-text-secondary">{f.recommendation}</p>
-                {f.priorityRationale ? (
-                  <p className="mt-1 text-[11px] italic text-c-text-muted">Uzasadnienie priorytetu: {f.priorityRationale}</p>
-                ) : null}
-                {f.expectedOutcome ? (
-                  <p className="mt-1 text-[11px] text-c-text-muted">Oczekiwany efekt: {f.expectedOutcome}</p>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        )}
-      </SectionCard>
+                  {f.expectedOutcome ? (
+                    <p className="mt-1 text-[11px] text-c-text-muted">
+                      Oczekiwany efekt: {f.expectedOutcome}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          )}
+        </SectionCard>
       </Chapter>
 
       {/* ── Stopka ──────────────────────────────────────────────────────── */}
       <footer className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-5 text-[11px] text-c-text-muted">
         <p className="mb-2 font-semibold text-c-text-secondary">
-          Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana przy
-          wyświetlaniu — pokazuje dokładnie to, co zostało zatwierdzone w momencie zamrożenia.
+          Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana
+          przy wyświetlaniu — pokazuje dokładnie to, co zostało zatwierdzone w momencie zamrożenia.
         </p>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
           <Property label="Identyfikator Outputu" value={output.id} mono />

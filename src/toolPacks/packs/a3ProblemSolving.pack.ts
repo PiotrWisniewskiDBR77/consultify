@@ -47,7 +47,8 @@ export const a3ProblemSolvingPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (A3_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Toyota Production System / Shigeo Shingo — geneza metody A3 (8-Step Practical Problem Solving)',
+      source:
+        'Toyota Production System / Shigeo Shingo — geneza metody A3 (8-Step Practical Problem Solving)',
       verifiableInRepo: false,
       note: 'Rodowód metody spoza repo (TPS/Toyota, spopularyzowany przez Johna Shooka). Brak w repo pliku źródłowego z licencją/atrybucją — nie zgadujemy statusu prawnego.',
     },
@@ -84,7 +85,7 @@ export const a3ProblemSolvingPack: ToolPack = {
     },
     outcome: {
       pl: 'Potwierdzona przyczyna źródłowa (lub jawnie nazwany brak potwierdzenia), sekwencja przeciwśrodków powstrzymaj→usuń→ustandaryzuj z trade-offem każdego ruchu, kandydaci na inicjatywy.',
-      en: 'A confirmed root cause (or an explicitly named lack of confirmation), a contain→eliminate→standardize countermeasure sequence with each move\'s trade-off, and initiative candidates.',
+      en: "A confirmed root cause (or an explicitly named lack of confirmation), a contain→eliminate→standardize countermeasure sequence with each move's trade-off, and initiative candidates.",
     },
     estimatedEffort: '2-4h sesji roboczej + czas na weryfikację dowodów między sesjami',
     // Metoda z rodowodem TPS/Shingo; brak noty licencyjnej lub atrybucji w repo.
@@ -169,7 +170,8 @@ export const a3ProblemSolvingPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Werdykt answer-first wskazujący, którą przyczynę usunąć najpierw i dlaczego; sekwencja W2 zmapowana na 3-5 inicjatyw zachowujących kolejność (order = priorytet).',
-      evidenceToAskFor: 'Czy werdykt wynika z ocenionej gotowości A3 (assessA3) i sekwencji ruchów, nie z domysłu.',
+      evidenceToAskFor:
+        'Czy werdykt wynika z ocenionej gotowości A3 (assessA3) i sekwencji ruchów, nie z domysłu.',
       completionCriterion:
         'A3 jest sygnowalne: staircaseComplete=true (problem, root-cause, countermeasures niepuste) i każdy ruch przeszedł bramkę W2.',
     },
@@ -318,7 +320,8 @@ export const a3ProblemSolvingPack: ToolPack = {
   rights: {
     methodologyName: 'A3 Problem Solving (8-krokowe praktyczne rozwiązywanie problemów)',
     commonlyAttributedTo: 'Toyota Production System; spopularyzowane przez Johna Shooka',
-    sourceUsed: 'src/config/a3problemsolving/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    sourceUsed:
+      'src/config/a3problemsolving/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
     trademarkNote: '„A3" i nazwa metody używane opisowo; brak brandingu/logo Toyoty.',

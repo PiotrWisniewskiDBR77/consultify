@@ -24,6 +24,10 @@
  *     the intake context.
  */
 
+// `TFunction` is exported by `i18next`, not by `react-i18next` — importing it from the
+// latter compiles under esbuild (which strips types without checking them) and fails
+// under `tsc` with TS2305.
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   Check,
@@ -36,10 +40,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-// `TFunction` is exported by `i18next`, not by `react-i18next` — importing it from the
-// latter compiles under esbuild (which strips types without checking them) and fails
-// under `tsc` with TS2305.
-import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
@@ -114,7 +114,10 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
       setContext(ctx);
       setAllowListDraft(ctx.fieldAllowList ?? []);
     } catch (e) {
-      setError((e as Error)?.message ?? t('ideas.table.intakeJwt.failedToLoad', 'Failed to load intake context'));
+      setError(
+        (e as Error)?.message ??
+          t('ideas.table.intakeJwt.failedToLoad', 'Failed to load intake context')
+      );
     } finally {
       setLoading(false);
     }
@@ -225,9 +228,13 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
             toast.success(t('ideas.table.intakeJwt.allowListSaved', 'Allow-list saved'));
           } catch (e) {
             toast.error(
-              t('ideas.table.intakeJwt.failedToSaveAllowList', 'Failed to save allow-list: {{message}}', {
-                message: (e as Error)?.message ?? t('ideas.table.intakeJwt.unknown', 'unknown'),
-              })
+              t(
+                'ideas.table.intakeJwt.failedToSaveAllowList',
+                'Failed to save allow-list: {{message}}',
+                {
+                  message: (e as Error)?.message ?? t('ideas.table.intakeJwt.unknown', 'unknown'),
+                }
+              )
             );
           } finally {
             setSavingAllowList(false);
@@ -295,11 +302,15 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                   {t('ideas.table.intakeJwt.summary', 'Summary')}
                 </h3>
                 <dl className="grid grid-cols-3 gap-y-1 text-xs">
-                  <dt className="text-c-text-muted">{t('ideas.table.intakeJwt.targetTable', 'Target table')}</dt>
+                  <dt className="text-c-text-muted">
+                    {t('ideas.table.intakeJwt.targetTable', 'Target table')}
+                  </dt>
                   <dd className="col-span-2 truncate text-c-text" data-testid="intake-target-table">
                     {context.targetTableId}
                   </dd>
-                  <dt className="text-c-text-muted">{t('ideas.table.intakeJwt.allowList', 'Allow-list')}</dt>
+                  <dt className="text-c-text-muted">
+                    {t('ideas.table.intakeJwt.allowList', 'Allow-list')}
+                  </dt>
                   <dd className="col-span-2 text-c-text" data-testid="intake-allow-list-summary">
                     {context.fieldAllowList && context.fieldAllowList.length > 0
                       ? t('ideas.table.intakeJwt.fieldCount', {
@@ -307,13 +318,17 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                         })
                       : t('ideas.table.intakeJwt.allConfiguredFields', 'All configured fields')}
                   </dd>
-                  <dt className="text-c-text-muted">{t('ideas.table.intakeJwt.hardExpiry', 'Hard expiry')}</dt>
+                  <dt className="text-c-text-muted">
+                    {t('ideas.table.intakeJwt.hardExpiry', 'Hard expiry')}
+                  </dt>
                   <dd className="col-span-2 text-c-text" data-testid="intake-hard-expiry">
                     {context.publicLinkExpiresAt
                       ? new Date(context.publicLinkExpiresAt).toLocaleString()
                       : t('ideas.table.intakeJwt.none', 'None')}
                   </dd>
-                  <dt className="text-c-text-muted">{t('ideas.table.intakeJwt.status', 'Status')}</dt>
+                  <dt className="text-c-text-muted">
+                    {t('ideas.table.intakeJwt.status', 'Status')}
+                  </dt>
                   <dd className="col-span-2 text-c-text">
                     {context.isPublished
                       ? t('ideas.table.intakeJwt.published', 'Published')
@@ -324,7 +339,10 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
 
               <section
                 className="rounded-md border border-c-border-subtle p-3 border-c-border-subtle"
-                aria-label={t('ideas.table.intakeJwt.allowListEditorAriaLabel', 'Allow-list editor')}
+                aria-label={t(
+                  'ideas.table.intakeJwt.allowListEditorAriaLabel',
+                  'Allow-list editor'
+                )}
               >
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -344,7 +362,10 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                       onClick={handleClearAllowList}
                       className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised"
                       data-testid="intake-allow-list-clear"
-                      aria-label={t('ideas.table.intakeJwt.clearAllowList', 'Clear allow-list (use form fields)')}
+                      aria-label={t(
+                        'ideas.table.intakeJwt.clearAllowList',
+                        'Clear allow-list (use form fields)'
+                      )}
                     >
                       <Trash2 className="h-3 w-3" /> {t('ideas.table.intakeJwt.clear', 'Clear')}
                     </button>
@@ -362,7 +383,10 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                 >
                   {configuredFields.length === 0 ? (
                     <li className="text-[11px] text-c-text-muted">
-                      {t('ideas.table.intakeJwt.noConfiguredFields', 'The form has no configured fields yet.')}
+                      {t(
+                        'ideas.table.intakeJwt.noConfiguredFields',
+                        'The form has no configured fields yet.'
+                      )}
                     </li>
                   ) : (
                     configuredFields.map((f) => {
@@ -412,7 +436,10 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                 </h3>
                 <label className="block">
                   <span className="text-[11px] text-c-text-muted">
-                    {t('ideas.table.intakeJwt.recipientSubject', 'Recipient subject (email or label)')}
+                    {t(
+                      'ideas.table.intakeJwt.recipientSubject',
+                      'Recipient subject (email or label)'
+                    )}
                   </span>
                   <input
                     type="text"
@@ -422,7 +449,10 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                     placeholder="recipient@partner.com"
                     className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text border-c-border-subtle bg-c-surface-raised text-c-text"
                     data-testid="intake-issue-subject"
-                    aria-label={t('ideas.table.intakeJwt.recipientSubjectAriaLabel', 'Recipient subject')}
+                    aria-label={t(
+                      'ideas.table.intakeJwt.recipientSubjectAriaLabel',
+                      'Recipient subject'
+                    )}
                   />
                 </label>
                 <label className="mt-2 block">

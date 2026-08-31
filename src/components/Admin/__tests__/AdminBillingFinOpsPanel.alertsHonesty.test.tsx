@@ -68,7 +68,11 @@ describe('M15-H02 (UI) — progi budżetowe nie są fabrykowane', () => {
   });
 
   it('pokazuje stan niedostępności zamiast domyślnych progów', async () => {
-    primeApi({ available: false, unavailableReason: 'BILLING_ALERTS_STORAGE_UNAVAILABLE', alerts: [] });
+    primeApi({
+      available: false,
+      unavailableReason: 'BILLING_ALERTS_STORAGE_UNAVAILABLE',
+      alerts: [],
+    });
 
     await openControlsTab();
 
@@ -81,7 +85,11 @@ describe('M15-H02 (UI) — progi budżetowe nie są fabrykowane', () => {
   });
 
   it('blokuje zapis, gdy magazyn progów jest niedostępny', async () => {
-    primeApi({ available: false, unavailableReason: 'BILLING_ALERTS_STORAGE_UNAVAILABLE', alerts: [] });
+    primeApi({
+      available: false,
+      unavailableReason: 'BILLING_ALERTS_STORAGE_UNAVAILABLE',
+      alerts: [],
+    });
 
     await openControlsTab();
 

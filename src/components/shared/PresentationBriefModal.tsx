@@ -32,10 +32,7 @@ export const PresentationBriefModal: React.FC<PresentationBriefModalProps> = ({
 
   if (!open) return null;
 
-  const title = t(
-    'kimi.artifactHome.briefModal.title',
-    'What should this presentation be about?'
-  );
+  const title = t('kimi.artifactHome.briefModal.title', 'What should this presentation be about?');
 
   return (
     <div

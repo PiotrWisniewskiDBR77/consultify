@@ -1,20 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildSiriUnits,
-  compileSiriPack,
-  SIRI_QBANK_V1_COVERAGE,
-} from '../compileSiriPack';
-import {
-  SIRI_PM_ENGINE_VERIFICATION,
-  SIRI_PM_PLANNING_HORIZON_WEIGHTS,
-  siriAdapter,
-} from '../siriAdapter';
+
 import {
   SIRI_BUILDING_BLOCKS,
   SIRI_DIMENSIONS,
   SIRI_PRIORITISATION_AREAS,
 } from '@/services/siriStructure';
+
 import type { AggregationInput, PrioritisationInput, ScoringInput } from '../../../contracts';
+import { buildSiriUnits, compileSiriPack, SIRI_QBANK_V1_COVERAGE } from '../compileSiriPack';
+import {
+  SIRI_PM_ENGINE_VERIFICATION,
+  SIRI_PM_PLANNING_HORIZON_WEIGHTS,
+  siriAdapter,
+} from '../siriAdapter';
 
 describe('SIRI Method Pack — 16 Dimensions as source of truth', () => {
   // -------------------------------------------------------------------
@@ -121,7 +119,10 @@ describe('SIRI Method Pack — 16 Dimensions as source of truth', () => {
     unitLevels.vertical_integration = null;
     unitLevels.shop_floor_automation = null;
 
-    const input: AggregationInput = { unitLevels, mappingVersion: 'siri-16to8-unweighted-mean-v1-PENDING-OWNER-APPROVAL' };
+    const input: AggregationInput = {
+      unitLevels,
+      mappingVersion: 'siri-16to8-unweighted-mean-v1-PENDING-OWNER-APPROVAL',
+    };
     const result = siriAdapter.aggregate(input);
 
     expect(typeof result.mappingVersion).toBe('string');
@@ -188,7 +189,9 @@ describe('SIRI Method Pack — 16 Dimensions as source of truth', () => {
 
     expect(focusIds.length).toBeGreaterThanOrEqual(3); // >= 1 per block, plus the Step-8b bonus
 
-    const buildingBlockByAreaId = new Map(SIRI_PRIORITISATION_AREAS.map((a) => [a.id, a.buildingBlock]));
+    const buildingBlockByAreaId = new Map(
+      SIRI_PRIORITISATION_AREAS.map((a) => [a.id, a.buildingBlock])
+    );
     const focusBlocks = new Set(focusIds.map((id) => buildingBlockByAreaId.get(id)));
     expect(focusBlocks.has('PROCESS')).toBe(true);
     expect(focusBlocks.has('TECHNOLOGY')).toBe(true);

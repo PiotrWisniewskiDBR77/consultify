@@ -36,7 +36,8 @@ export const sopBuilderPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (SOP_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Standard Operating Procedure — ogólna dyscyplina zarządzania jakością/operacjami (ISO 9001, Lean standard work), bez jednego autora',
+      source:
+        'Standard Operating Procedure — ogólna dyscyplina zarządzania jakością/operacjami (ISO 9001, Lean standard work), bez jednego autora',
       verifiableInRepo: false,
       note: 'SOP jako format nie ma pojedynczego właściciela metodycznego; w repo brak pliku źródłowego z konkretną atrybucją — nie zgadujemy.',
     },
@@ -65,7 +66,7 @@ export const sopBuilderPack: ToolPack = {
     },
     inputsRequired: {
       pl: 'Krytyczne operacje w zakresie, dostęp do osoby wykonującej pracę na co dzień oraz gotowość zespołu do przełożenia intencji na liczbę progu.',
-      en: 'The critical operations in scope, access to someone who does the work daily, and the team\'s readiness to turn intent into a threshold number.',
+      en: "The critical operations in scope, access to someone who does the work daily, and the team's readiness to turn intent into a threshold number.",
     },
     roles: {
       pl: 'Lider procesu/kierownik operacyjny jako właściciel standardu, operator wykonujący pracę jako źródło realizmu, audytor lub QA jako weryfikator checklisty.',
@@ -102,9 +103,11 @@ export const sopBuilderPack: ToolPack = {
         pl: 'Zdefiniować zakres i krytyczne operacje objęte standardem.',
         en: 'Define the scope and the critical operations the standard covers.',
       },
-      whatGoodLooksLike: 'Zakres ograniczony do operacji, które faktycznie powtarzają się i mają wpływ na wynik.',
+      whatGoodLooksLike:
+        'Zakres ograniczony do operacji, które faktycznie powtarzają się i mają wpływ na wynik.',
       evidenceToAskFor: 'Które operacje są krytyczne i dlaczego rozjazd ich wykonania szkodzi.',
-      completionCriterion: 'Zakres i lista krytycznych operacji zaakceptowane przez właściciela procesu.',
+      completionCriterion:
+        'Zakres i lista krytycznych operacji zaakceptowane przez właściciela procesu.',
     },
     {
       id: 'standards',
@@ -115,8 +118,10 @@ export const sopBuilderPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każdy standard ma próg (threshold/target) lub czas trwania — dwóch operatorów czytających go dochodzi do tego samego werdyktu.',
-      evidenceToAskFor: 'Czy standard jest granicą pass/fail, czy opisem intencji („rób to dobrze").',
-      completionCriterion: 'Co najmniej jeden standard z mierzalnym progiem (isMeasurable, moveValidator.ts).',
+      evidenceToAskFor:
+        'Czy standard jest granicą pass/fail, czy opisem intencji („rób to dobrze").',
+      completionCriterion:
+        'Co najmniej jeden standard z mierzalnym progiem (isMeasurable, moveValidator.ts).',
     },
     {
       id: 'checklists',
@@ -127,8 +132,10 @@ export const sopBuilderPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Liczba pozycji checklisty ≥ liczba standardów (brak coverage-gap); każda pozycja realnie testuje odpowiadający standard, nie poleganie na pamięci operatora.',
-      evidenceToAskFor: 'Który standard testuje ta pozycja checklisty i jak wygląda jej weryfikacja.',
-      completionCriterion: 'Brak luki pokrycia (coverageGap=false w assessSop) między standardami a checklistami.',
+      evidenceToAskFor:
+        'Który standard testuje ta pozycja checklisty i jak wygląda jej weryfikacja.',
+      completionCriterion:
+        'Brak luki pokrycia (coverageGap=false w assessSop) między standardami a checklistami.',
     },
     {
       id: 'summary',
@@ -167,7 +174,9 @@ export const sopBuilderPack: ToolPack = {
       answerType: 'text',
       challengeRule:
         'Standard bez mierzalnego progu (threshold/target/duration) to opis intencji, nie standard — sopBuilderQuestionBank.ts wymusza pomiar w pętli "sop-measure-force", dopóki nie powstanie liczba.',
-      followUpProbes: ['Czy dwóch różnych operatorów mogłoby przeczytać ten standard i dojść do różnych werdyktów?'],
+      followUpProbes: [
+        'Czy dwóch różnych operatorów mogłoby przeczytać ten standard i dojść do różnych werdyktów?',
+      ],
     },
     {
       id: 'sop-checklist-coverage',
@@ -270,7 +279,8 @@ export const sopBuilderPack: ToolPack = {
    */
   rights: {
     methodologyName: 'Standardowa procedura operacyjna (SOP)',
-    commonlyAttributedTo: 'Brak jednego autora — praktyka jakości/operacji (linia ISO 9001 / standard work)',
+    commonlyAttributedTo:
+      'Brak jednego autora — praktyka jakości/operacji (linia ISO 9001 / standard work)',
     sourceUsed: 'src/config/sopbuilder/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',

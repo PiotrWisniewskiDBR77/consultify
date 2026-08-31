@@ -144,7 +144,10 @@ export default function DocumentStudioAiTeresaScreen(): React.ReactElement {
       <AppProviders>
         <FeatureFlagsProvider showDevTools={false}>
           <div className="h-screen w-full bg-c-bg flex flex-col">
-            <div className="border-b border-c-border px-6 py-3 shrink-0" data-dev-render-chrome="true">
+            <div
+              className="border-b border-c-border px-6 py-3 shrink-0"
+              data-dev-render-chrome="true"
+            >
               <div className="text-sm font-semibold text-c-text">
                 Document Studio — "Z AI" bez formularza, Teresa z boku (FAZA B1)
               </div>

@@ -66,16 +66,16 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { attachV8Context } from '../../../../middleware/v8Auth.middleware.js';
-import chatRoutes from '../../../../routes/v8/chat.routes.js';
-import teresaRoutes from '../../../../routes/v8/teresa.routes.js';
-import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
-import { correlationMiddleware } from '../../../../utils/RequestStore.js';
 import {
   CONNECTION_STRING,
   ContractFixtures,
   isContractDbReachable,
   warnSkipped,
 } from '../../../../routes/caseWorkspace/__tests__/contract/contractHarness.js';
+import chatRoutes from '../../../../routes/v8/chat.routes.js';
+import teresaRoutes from '../../../../routes/v8/teresa.routes.js';
+import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
+import { correlationMiddleware } from '../../../../utils/RequestStore.js';
 
 const CHAT = '/api/v8/chat';
 const TERESA = '/api/v8/teresa';
@@ -271,9 +271,7 @@ suite('chat/Teresa -> Case, over the real chat route, on a real PostgreSQL (E8 /
     expect(await readOutbox(f.orgId)).toHaveLength(0);
 
     // …and the conversation has no Case to return to.
-    const link = await request(app).get(
-      `${CHAT}/conversations/${conversationId}/case-intake/case`
-    );
+    const link = await request(app).get(`${CHAT}/conversations/${conversationId}/case-intake/case`);
     expect(link.status).toBe(200);
     expect(link.body.data).toBeNull();
   }, 60_000);
@@ -480,9 +478,7 @@ suite('chat/Teresa -> Case, over the real chat route, on a real PostgreSQL (E8 /
 
     // And what got created is summary B — the one that was current — not A.
     const events = await readOutbox(f.orgId);
-    const confirmedEvent = events.find(
-      (e) => e.event_type === 'case.intake.work_order_confirmed'
-    );
+    const confirmedEvent = events.find((e) => e.event_type === 'case.intake.work_order_confirmed');
     expect(confirmedEvent?.redacted_summary.goal).toBe(redrafted.goal);
   }, 60_000);
 

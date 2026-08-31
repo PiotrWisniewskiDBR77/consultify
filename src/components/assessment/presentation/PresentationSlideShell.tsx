@@ -29,7 +29,9 @@ export const PresentationSlideShell: React.FC<PresentationSlideShellProps> = ({
       <div className="flex-shrink-0">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-c-text-muted">{kicker}</p>
         <h1 className="mt-3 text-3xl font-bold leading-tight text-c-text sm:text-4xl">{title}</h1>
-        {lede ? <p className="mt-3 max-w-3xl text-base text-c-text-secondary sm:text-lg">{lede}</p> : null}
+        {lede ? (
+          <p className="mt-3 max-w-3xl text-base text-c-text-secondary sm:text-lg">{lede}</p>
+        ) : null}
       </div>
       <div className="mt-8 flex min-h-0 flex-1 flex-col justify-center">{children}</div>
       {footnote ? (
@@ -50,17 +52,13 @@ export const MissingNarrativeNote: React.FC<{ label: string }> = ({ label }) => 
   </p>
 );
 
-export const StatChip: React.FC<{ label: string; value: string; tone?: 'neutral' | 'danger' | 'success' }> = ({
-  label,
-  value,
-  tone = 'neutral',
-}) => {
+export const StatChip: React.FC<{
+  label: string;
+  value: string;
+  tone?: 'neutral' | 'danger' | 'success';
+}> = ({ label, value, tone = 'neutral' }) => {
   const toneClass =
-    tone === 'danger'
-      ? 'text-c-danger'
-      : tone === 'success'
-        ? 'text-c-success'
-        : 'text-c-text';
+    tone === 'danger' ? 'text-c-danger' : tone === 'success' ? 'text-c-success' : 'text-c-text';
   return (
     <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">{label}</p>

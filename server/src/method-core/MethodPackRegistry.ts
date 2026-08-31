@@ -9,9 +9,9 @@
  */
 
 import * as DbPromise from '../utils/DbPromise.js';
-import { genId, nowIso, runOrThrow, parseJson } from './db.js';
-import { canStartSession as isReadinessStartable } from './contracts/index.js';
 import type { MethodPackReadiness } from './contracts/index.js';
+import { canStartSession as isReadinessStartable } from './contracts/index.js';
+import { genId, nowIso, parseJson, runOrThrow } from './db.js';
 
 interface MethodPackRow {
   id: string;
@@ -233,7 +233,11 @@ export const DRD_REGISTRATION_READINESS: MethodPackReadiness = 'pilot';
  * intended until each of those methods gets its own governed bootstrap.
  */
 export async function ensureDrdPackRegistered(organizationId: string): Promise<MethodPackRecord> {
-  const existing = await methodPackRegistry.getPack(organizationId, DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION);
+  const existing = await methodPackRegistry.getPack(
+    organizationId,
+    DRD_METHOD_PACK_ID,
+    DRD_METHOD_PACK_VERSION
+  );
   if (existing) return existing;
 
   const id = genId();
@@ -265,14 +269,20 @@ export async function ensureDrdPackRegistered(organizationId: string): Promise<M
     { fallback: false }
   );
   if (!insert.success) {
-    throw new Error(`method-core: ensureDrdPackRegistered insert failed: ${insert.error ?? 'unknown error'}`);
+    throw new Error(
+      `method-core: ensureDrdPackRegistered insert failed: ${insert.error ?? 'unknown error'}`
+    );
   }
 
   // Whether THIS call won the race or lost it to a concurrent ensure-call,
   // the row now exists — read it back rather than trust `insert` alone (a
   // lost race reports success too, since ON CONFLICT DO NOTHING is not an
   // error).
-  const record = await methodPackRegistry.getPack(organizationId, DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION);
+  const record = await methodPackRegistry.getPack(
+    organizationId,
+    DRD_METHOD_PACK_ID,
+    DRD_METHOD_PACK_VERSION
+  );
   if (!record) {
     throw new Error(
       `method-core: ensureDrdPackRegistered failed to produce a method_packs row for org ${organizationId}`

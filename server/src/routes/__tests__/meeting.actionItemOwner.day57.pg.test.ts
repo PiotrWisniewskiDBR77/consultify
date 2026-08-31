@@ -6,11 +6,11 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
 import { meetingIntelligenceService } from '../../services/ai/meetingIntelligenceService.js';
 import { errorHandlerMiddleware } from '../../utils/ErrorHandler.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const orgId = 'w3-mtg-owner-org-v1';
 const foreignOrgId = 'w3-mtg-foreign-org-v1';

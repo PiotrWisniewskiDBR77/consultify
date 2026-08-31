@@ -12,7 +12,11 @@
  * driverów spoza tej listy dostaje bezpieczny fallback wg `unit` zwracanego
  * przez API, nie zgadywaną nazwę).
  */
-import type { BaselineAssumptionRule, BaselineScheduleType, BaselineStatementType } from '@/services/api/financeV2.types';
+import type {
+  BaselineAssumptionRule,
+  BaselineScheduleType,
+  BaselineStatementType,
+} from '@/services/api/financeV2.types';
 
 // ---------------------------------------------------------------------------
 // Linie kanoniczne — 31 kodów, ich sprawozdanie i sposób agregacji przy
@@ -20,30 +24,105 @@ import type { BaselineAssumptionRule, BaselineScheduleType, BaselineStatementTyp
 // ---------------------------------------------------------------------------
 
 export type CanonicalLineCode =
-  | 'REVENUE' | 'COGS' | 'GROSS_MARGIN' | 'OPEX' | 'EBITDA' | 'DEPRECIATION' | 'EBIT'
-  | 'INTEREST_EXPENSE' | 'TAX_EXPENSE' | 'NET_INCOME'
-  | 'CASH' | 'AR' | 'INVENTORY' | 'CURRENT_ASSETS' | 'FIXED_ASSETS' | 'TOTAL_ASSETS'
-  | 'AP' | 'CURRENT_LIABILITIES' | 'LONG_TERM_DEBT' | 'TOTAL_LIABILITIES'
-  | 'EQUITY' | 'TOTAL_LIABILITIES_EQUITY' | 'RETAINED_EARNINGS' | 'DIVIDENDS_DECLARED' | 'WORKING_CAPITAL'
-  | 'CFO' | 'CFI' | 'CFF' | 'NET_CHANGE_CASH' | 'CAPEX' | 'FCF';
+  | 'REVENUE'
+  | 'COGS'
+  | 'GROSS_MARGIN'
+  | 'OPEX'
+  | 'EBITDA'
+  | 'DEPRECIATION'
+  | 'EBIT'
+  | 'INTEREST_EXPENSE'
+  | 'TAX_EXPENSE'
+  | 'NET_INCOME'
+  | 'CASH'
+  | 'AR'
+  | 'INVENTORY'
+  | 'CURRENT_ASSETS'
+  | 'FIXED_ASSETS'
+  | 'TOTAL_ASSETS'
+  | 'AP'
+  | 'CURRENT_LIABILITIES'
+  | 'LONG_TERM_DEBT'
+  | 'TOTAL_LIABILITIES'
+  | 'EQUITY'
+  | 'TOTAL_LIABILITIES_EQUITY'
+  | 'RETAINED_EARNINGS'
+  | 'DIVIDENDS_DECLARED'
+  | 'WORKING_CAPITAL'
+  | 'CFO'
+  | 'CFI'
+  | 'CFF'
+  | 'NET_CHANGE_CASH'
+  | 'CAPEX'
+  | 'FCF';
 
 /** Kolejność renderowania w obrębie jednej grupy (P&L/BS/CF) — ta sama co silnik. */
 export const CANONICAL_LINE_ORDER: readonly CanonicalLineCode[] = [
-  'REVENUE', 'COGS', 'GROSS_MARGIN', 'OPEX', 'EBITDA', 'DEPRECIATION', 'EBIT',
-  'INTEREST_EXPENSE', 'TAX_EXPENSE', 'NET_INCOME',
-  'CASH', 'AR', 'INVENTORY', 'CURRENT_ASSETS', 'FIXED_ASSETS', 'TOTAL_ASSETS',
-  'AP', 'CURRENT_LIABILITIES', 'LONG_TERM_DEBT', 'TOTAL_LIABILITIES',
-  'EQUITY', 'TOTAL_LIABILITIES_EQUITY', 'RETAINED_EARNINGS', 'DIVIDENDS_DECLARED', 'WORKING_CAPITAL',
-  'CFO', 'CFI', 'CFF', 'NET_CHANGE_CASH', 'CAPEX', 'FCF',
+  'REVENUE',
+  'COGS',
+  'GROSS_MARGIN',
+  'OPEX',
+  'EBITDA',
+  'DEPRECIATION',
+  'EBIT',
+  'INTEREST_EXPENSE',
+  'TAX_EXPENSE',
+  'NET_INCOME',
+  'CASH',
+  'AR',
+  'INVENTORY',
+  'CURRENT_ASSETS',
+  'FIXED_ASSETS',
+  'TOTAL_ASSETS',
+  'AP',
+  'CURRENT_LIABILITIES',
+  'LONG_TERM_DEBT',
+  'TOTAL_LIABILITIES',
+  'EQUITY',
+  'TOTAL_LIABILITIES_EQUITY',
+  'RETAINED_EARNINGS',
+  'DIVIDENDS_DECLARED',
+  'WORKING_CAPITAL',
+  'CFO',
+  'CFI',
+  'CFF',
+  'NET_CHANGE_CASH',
+  'CAPEX',
+  'FCF',
 ];
 
 export const STATEMENT_TYPE_OF_LINE: Record<CanonicalLineCode, BaselineStatementType> = {
-  REVENUE: 'P&L', COGS: 'P&L', GROSS_MARGIN: 'P&L', OPEX: 'P&L', EBITDA: 'P&L', DEPRECIATION: 'P&L',
-  EBIT: 'P&L', INTEREST_EXPENSE: 'P&L', TAX_EXPENSE: 'P&L', NET_INCOME: 'P&L',
-  CASH: 'BS', AR: 'BS', INVENTORY: 'BS', CURRENT_ASSETS: 'BS', FIXED_ASSETS: 'BS', TOTAL_ASSETS: 'BS',
-  AP: 'BS', CURRENT_LIABILITIES: 'BS', LONG_TERM_DEBT: 'BS', TOTAL_LIABILITIES: 'BS',
-  EQUITY: 'BS', TOTAL_LIABILITIES_EQUITY: 'BS', RETAINED_EARNINGS: 'BS', DIVIDENDS_DECLARED: 'BS', WORKING_CAPITAL: 'BS',
-  CFO: 'CF', CFI: 'CF', CFF: 'CF', NET_CHANGE_CASH: 'CF', CAPEX: 'CF', FCF: 'CF',
+  REVENUE: 'P&L',
+  COGS: 'P&L',
+  GROSS_MARGIN: 'P&L',
+  OPEX: 'P&L',
+  EBITDA: 'P&L',
+  DEPRECIATION: 'P&L',
+  EBIT: 'P&L',
+  INTEREST_EXPENSE: 'P&L',
+  TAX_EXPENSE: 'P&L',
+  NET_INCOME: 'P&L',
+  CASH: 'BS',
+  AR: 'BS',
+  INVENTORY: 'BS',
+  CURRENT_ASSETS: 'BS',
+  FIXED_ASSETS: 'BS',
+  TOTAL_ASSETS: 'BS',
+  AP: 'BS',
+  CURRENT_LIABILITIES: 'BS',
+  LONG_TERM_DEBT: 'BS',
+  TOTAL_LIABILITIES: 'BS',
+  EQUITY: 'BS',
+  TOTAL_LIABILITIES_EQUITY: 'BS',
+  RETAINED_EARNINGS: 'BS',
+  DIVIDENDS_DECLARED: 'BS',
+  WORKING_CAPITAL: 'BS',
+  CFO: 'CF',
+  CFI: 'CF',
+  CFF: 'CF',
+  NET_CHANGE_CASH: 'CF',
+  CAPEX: 'CF',
+  FCF: 'CF',
 };
 
 /**
@@ -54,7 +133,10 @@ export const STATEMENT_TYPE_OF_LINE: Record<CanonicalLineCode, BaselineStatement
  * miesiąca okresu (stan na koniec), nigdy sumę — sumowanie salda bilansowego
  * dałoby fizycznie bezsensowną liczbę.
  */
-export const CANONICAL_LINE_META: Record<CanonicalLineCode, { labelPl: string; aggregation: 'flow-sum' | 'stock-end' }> = {
+export const CANONICAL_LINE_META: Record<
+  CanonicalLineCode,
+  { labelPl: string; aggregation: 'flow-sum' | 'stock-end' }
+> = {
   REVENUE: { labelPl: 'Przychody (REVENUE)', aggregation: 'flow-sum' },
   COGS: { labelPl: 'Koszt własny sprzedaży (COGS)', aggregation: 'flow-sum' },
   GROSS_MARGIN: { labelPl: 'Marża brutto', aggregation: 'flow-sum' },
@@ -114,7 +196,12 @@ export const BASELINE_RULE_LABELS: Record<BaselineAssumptionRule, string> = {
 };
 
 /** Kontrolka domyślna wg jednostki — gdy driver nie ma wpisu w DRIVER_META. */
-export type AssumptionControlKind = 'percent-stepper' | 'amount-precise' | 'days-field' | 'months-field' | 'plain-number';
+export type AssumptionControlKind =
+  | 'percent-stepper'
+  | 'amount-precise'
+  | 'days-field'
+  | 'months-field'
+  | 'plain-number';
 
 export function controlKindForUnit(unit: string): AssumptionControlKind {
   switch (unit) {
@@ -148,7 +235,10 @@ export const DRIVER_META: Record<string, DriverMeta> = {
   CAPEX_PCT_OF_REVENUE: { labelPl: 'CAPEX jako % przychodów', defaultSafeRangePct: [0.01, 0.15] },
   USEFUL_LIFE_MONTHS: { labelPl: 'Okres użytkowania (m-ce)' },
   STATUTORY_TAX_RATE_PCT: { labelPl: 'Stawka podatku CIT', defaultSafeRangePct: [0, 0.35] },
-  CASH_INTEREST_RATE_ANNUAL_PCT: { labelPl: 'Oprocentowanie gotówki (roczne)', defaultSafeRangePct: [0, 0.1] },
+  CASH_INTEREST_RATE_ANNUAL_PCT: {
+    labelPl: 'Oprocentowanie gotówki (roczne)',
+    defaultSafeRangePct: [0, 0.1],
+  },
 };
 
 export function driverLabel(driverCode: string): string {

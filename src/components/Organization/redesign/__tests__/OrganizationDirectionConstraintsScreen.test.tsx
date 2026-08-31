@@ -10,8 +10,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '../../../../services/api';
 import {
-  EMPTY_PROFILE,
   computeCompleteness,
+  EMPTY_PROFILE,
 } from '../../../../views/ContextBuilder/modules/organizationProfileTaxonomy';
 import OrganizationDirectionConstraintsScreen from '../OrganizationDirectionConstraintsScreen';
 import OrganizationStatePanel from '../OrganizationStatePanel';

@@ -23,27 +23,23 @@
  */
 import fs from 'fs';
 import path from 'path';
-
 import { describe, expect, it } from 'vitest';
 
+import {
+  CANDIDATE_SHA,
+  ENGINE_BACKED_TOOL_TYPES,
+  TOOL_READINESS_MANIFESTS,
+} from '../readiness/manifests';
+import { getToolPack, TOOL_PACKS } from '../registry';
 import {
   evaluateRuntimeReadiness,
   MANDATORY_GATES,
   MPQ_CLIENT_FACING_MIN,
   type RuntimeReadinessManifest,
 } from '../runtimeReadiness';
-import { getToolPack, TOOL_PACKS } from '../registry';
 import { validateToolPack } from '../validator';
-import {
-  CANDIDATE_SHA,
-  ENGINE_BACKED_TOOL_TYPES,
-  TOOL_READINESS_MANIFESTS,
-} from '../readiness/manifests';
 
-const READINESS_DIR = path.resolve(
-  process.cwd(),
-  'docs/program/METHOD_TOOLS_2026-08-13/readiness'
-);
+const READINESS_DIR = path.resolve(process.cwd(), 'docs/program/METHOD_TOOLS_2026-08-13/readiness');
 
 describe('Runtime Readiness Manifests — 19 narzędzi z silnikiem, per-narzędzie (STREAM H3)', () => {
   it('candidate SHA tego streamu to dokładnie 91b562ea66 (kanoniczna wartość z zadania)', () => {
@@ -177,9 +173,10 @@ describe('Runtime Readiness Manifests — 19 narzędzi z silnikiem, per-narzędz
     it('każde z 16 kryteriów rozszerzonych ma status i niepusty dowód (nie placeholder)', () => {
       Object.entries(record.criteria).forEach(([field, criterion]) => {
         expect(['PASS', 'FAIL', 'NOT_VERIFIED']).toContain(criterion.status);
-        expect(criterion.evidence.length, `${toolType}.${field}: dowód za krótki/pusty`).toBeGreaterThan(
-          20
-        );
+        expect(
+          criterion.evidence.length,
+          `${toolType}.${field}: dowód za krótki/pusty`
+        ).toBeGreaterThan(20);
       });
     });
   });
@@ -188,7 +185,9 @@ describe('Runtime Readiness Manifests — 19 narzędzi z silnikiem, per-narzędz
     const activeCount = TOOL_PACKS.filter((p) => p.runtimeStatus === 'RUNTIME_ACTIVE').length;
     expect(activeCount).toBe(0);
     const publishableCount = ENGINE_BACKED_TOOL_TYPES.filter(
-      (t) => evaluateRuntimeReadiness(TOOL_READINESS_MANIFESTS[t].runtimeReadiness, CANDIDATE_SHA).publishable
+      (t) =>
+        evaluateRuntimeReadiness(TOOL_READINESS_MANIFESTS[t].runtimeReadiness, CANDIDATE_SHA)
+          .publishable
     ).length;
     expect(publishableCount).toBe(0);
   });

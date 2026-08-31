@@ -62,7 +62,12 @@ function baseInput(overrides: Partial<IdeaFinancialCaseInput> = {}): IdeaFinanci
     investments: [],
     recurringCosts: [],
     benefits: [],
-    timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 11 },
+    timing: {
+      startDate: '2026-01-01',
+      implementationRampPeriods: 0,
+      benefitRampPeriods: 0,
+      usefulHorizonPeriods: 11,
+    },
     scenarios: [{ name: 'base', driverOverrides: [] }],
     ...overrides,
   };
@@ -173,7 +178,12 @@ describe('ideaFinance/engine — cumulative cash flow and payback (fixture A)', 
     const input = baseInput({
       investments: [investment],
       benefits: [revenue],
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 3 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 3,
+      },
     });
     const result = computeCumulativeCashFlowAndPayback(input, 'base');
     expect(result.status).toBe('ok');
@@ -274,7 +284,12 @@ describe('ideaFinance/engine — recurring cost with annual escalation', () => {
     };
     const input = baseInput({
       recurringCosts: [recurring],
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 23 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 23,
+      },
     });
     const result = computeRecurringCost(input, 'base');
     expect(result.status).toBe('ok');
@@ -346,7 +361,12 @@ describe('ideaFinance/engine — gross/net annual benefit and conflation guard',
     const input = baseInput({
       benefits: [revenue, capacity, risk, qualitative],
       recurringCosts: [recurring],
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 23 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 23,
+      },
     });
     const result = computeAnnualBenefit(input, 'base');
     expect(result.status).toBe('ok');
@@ -363,7 +383,12 @@ describe('ideaFinance/engine — gross/net annual benefit and conflation guard',
 
   it('is invalid when the horizon is shorter than one full year', () => {
     const input = baseInput({
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 5 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 5,
+      },
     });
     const result = computeAnnualBenefit(input, 'base');
     expect(result.status).toBe('invalid');
@@ -409,7 +434,12 @@ function fixtureB(): IdeaFinancialCaseInput {
     benefits: [revenue],
     discountRatePct: 10,
     periodConvention: { unit: 'year', periodsPerYear: 1, anchorDate: '2026-01-01' },
-    timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 2 },
+    timing: {
+      startDate: '2026-01-01',
+      implementationRampPeriods: 0,
+      benefitRampPeriods: 0,
+      usefulHorizonPeriods: 2,
+    },
   });
 }
 
@@ -492,7 +522,12 @@ describe('ideaFinance/engine — IRR', () => {
       investments: [investment],
       benefits: [revenue],
       periodConvention: { unit: 'year', periodsPerYear: 1, anchorDate: '2026-01-01' },
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 1 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 1,
+      },
     });
     const result = computeIRR(input, 'base');
     expect(result.status).toBe('ok');
@@ -515,7 +550,12 @@ describe('ideaFinance/engine — IRR', () => {
     };
     const input = baseInput({
       investments: [investment],
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 0 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 0,
+      },
     });
     const result = computeIRR(input, 'base');
     expect(result.status).toBe('ok');
@@ -571,10 +611,16 @@ describe('ideaFinance/engine — IRR', () => {
       investments: [investment1, investment2],
       benefits: [benefit1, benefit2],
       periodConvention: { unit: 'year', periodsPerYear: 1, anchorDate: '2026-01-01' },
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 3 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 3,
+      },
     });
-    const netCashFlow = (__buildScheduleForTests(input, 'base') as { ok: true; schedule: { netCashFlow: number[] } })
-      .schedule.netCashFlow;
+    const netCashFlow = (
+      __buildScheduleForTests(input, 'base') as { ok: true; schedule: { netCashFlow: number[] } }
+    ).schedule.netCashFlow;
     expect(netCashFlow).toEqual([-100, 300, -250, 300]);
 
     const result = computeIRR(input, 'base');
@@ -629,7 +675,8 @@ describe('ideaFinance/engine — scenario comparison (drivers differ, not copied
     expect(base.npv.status).toBe('ok');
     expect(upside.npv.status).toBe('ok');
     expect(downside.npv.status).toBe('ok');
-    if (base.npv.status !== 'ok' || upside.npv.status !== 'ok' || downside.npv.status !== 'ok') return;
+    if (base.npv.status !== 'ok' || upside.npv.status !== 'ok' || downside.npv.status !== 'ok')
+      return;
 
     // Upside raises NPV via the benefit driver only.
     const expectedUpsideNpv = -1000 + (600 * 1.2) / 1.1 + (600 * 1.2) / 1.21;
@@ -683,7 +730,12 @@ describe('ideaFinance/engine — confidence-adjusted value (separate output)', (
       benefits: [benefit],
       discountRatePct: 0,
       periodConvention: { unit: 'year', periodsPerYear: 1, anchorDate: '2026-01-01' },
-      timing: { startDate: '2026-01-01', implementationRampPeriods: 0, benefitRampPeriods: 0, usefulHorizonPeriods: 1 },
+      timing: {
+        startDate: '2026-01-01',
+        implementationRampPeriods: 0,
+        benefitRampPeriods: 0,
+        usefulHorizonPeriods: 1,
+      },
     });
 
     const npvResult = computeNPV(input, 'base');
@@ -696,7 +748,9 @@ describe('ideaFinance/engine — confidence-adjusted value (separate output)', (
     expect(confResult.value.unadjustedNpv).toBeCloseTo(100, 8);
     expect(confResult.value.confidenceAdjustedNpv).toBeCloseTo(0, 8);
     expect(confResult.value.label).toMatch(/separate from headline NPV/);
-    expect(confResult.value.perDriverWeight).toEqual([{ driverId: 'ben', level: 'low', weight: 0.5 }]);
+    expect(confResult.value.perDriverWeight).toEqual([
+      { driverId: 'ben', level: 'low', weight: 0.5 },
+    ]);
     // Headline NPV is untouched by the confidence adjustment (never silently blended).
     expect(npvResult.value.npv).toBe(100);
   });
@@ -731,7 +785,11 @@ describe('ideaFinance/engine — invalid/missing input paths', () => {
       label: 'ben',
       type: 'revenue',
       amountPerPeriod: 100,
-      currency: { code: 'EUR', scale: 'unit', fx: { toCaseCurrency: 4.3, source: 'NBP', date: '2026-08-01' } },
+      currency: {
+        code: 'EUR',
+        scale: 'unit',
+        fx: { toCaseCurrency: 4.3, source: 'NBP', date: '2026-08-01' },
+      },
       startPeriodIndex: 0,
       endPeriodIndex: 0,
       confidence: CONF_HIGH,
@@ -820,7 +878,9 @@ describe('ideaFinance/engine — invalid/missing input paths', () => {
   });
 
   it('rejects periodConvention.periodsPerYear that does not match the unit', () => {
-    const input = baseInput({ periodConvention: { unit: 'month', periodsPerYear: 4, anchorDate: '2026-01-01' } });
+    const input = baseInput({
+      periodConvention: { unit: 'month', periodsPerYear: 4, anchorDate: '2026-01-01' },
+    });
     const result = computeNetCashFlowPerPeriod(input, 'base');
     expect(result.status).toBe('invalid');
     if (result.status !== 'invalid') return;

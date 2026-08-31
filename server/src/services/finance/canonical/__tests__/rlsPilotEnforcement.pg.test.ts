@@ -136,10 +136,16 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
     const userA = `user-w2rls-A-${randomUUID()}`;
     userB = `user-w2rls-B-${randomUUID()}`;
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgA, 'W2 RLS Pilot Org A'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgA,
+        'W2 RLS Pilot Org A',
+      ])
     );
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgB, 'W2 RLS Pilot Org B'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgB,
+        'W2 RLS Pilot Org B',
+      ])
     );
     // userA is only referenced to keep the seed symmetric with tenantMatrix's
     // pattern; no row in this file is created under userA.
@@ -207,7 +213,9 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
       await superuserPool
         .query(`REVOKE ALL ON ${PILOT_TABLES.join(', ')} FROM "${TEST_ROLE}"`)
         .catch(() => {});
-      await superuserPool.query(`REVOKE USAGE ON SCHEMA public FROM "${TEST_ROLE}"`).catch(() => {});
+      await superuserPool
+        .query(`REVOKE USAGE ON SCHEMA public FROM "${TEST_ROLE}"`)
+        .catch(() => {});
       await superuserPool.query(`DROP ROLE IF EXISTS "${TEST_ROLE}"`).catch(() => {});
       await superuserPool.end();
     }
@@ -276,15 +284,16 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
     expect(check.rows[0].cancel_requested_at).toBeNull();
   });
 
-  it('STATE 1 (WITH policy): cross-tenant SELECT/DELETE on finance_valuation_sensitivity_grids/_cells see/affect zero rows; all 25 of B\'s cells survive', async () => {
+  it("STATE 1 (WITH policy): cross-tenant SELECT/DELETE on finance_valuation_sensitivity_grids/_cells see/affect zero rows; all 25 of B's cells survive", async () => {
     const client = await lowPrivPool.connect();
     try {
       await client.query('BEGIN');
       await client.query(`SELECT set_config('app.organization_id', $1, true)`, [orgA]);
 
-      const readGrid = await client.query(`SELECT id FROM finance_valuation_sensitivity_grids WHERE id = $1`, [
-        gridB,
-      ]);
+      const readGrid = await client.query(
+        `SELECT id FROM finance_valuation_sensitivity_grids WHERE id = $1`,
+        [gridB]
+      );
       expect(readGrid.rows).toHaveLength(0);
 
       const readCells = await client.query(
@@ -293,9 +302,10 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
       );
       expect(readCells.rows).toHaveLength(0);
 
-      const delCells = await client.query(`DELETE FROM finance_valuation_sensitivity_cells WHERE grid_id = $1`, [
-        gridB,
-      ]);
+      const delCells = await client.query(
+        `DELETE FROM finance_valuation_sensitivity_cells WHERE grid_id = $1`,
+        [gridB]
+      );
       expect(delCells.rowCount).toBe(0);
 
       await client.query('ROLLBACK');
@@ -315,7 +325,10 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
     try {
       await client.query('BEGIN');
       await client.query(`SELECT set_config('app.organization_id', $1, true)`, [orgB]);
-      const read = await client.query(`SELECT id, organization_id FROM compute_jobs WHERE id = $1`, [jobB]);
+      const read = await client.query(
+        `SELECT id, organization_id FROM compute_jobs WHERE id = $1`,
+        [jobB]
+      );
       expect(read.rows).toHaveLength(1);
       expect(read.rows[0].organization_id).toBe(orgB);
       await client.query('ROLLBACK');
@@ -332,7 +345,10 @@ describe.skipIf(!REAL_PG)('W2 RLS pilot — three-state negative control (real P
         await client.query('BEGIN');
         await client.query(`SELECT set_config('app.organization_id', $1, true)`, [orgA]);
 
-        const read = await client.query(`SELECT id, organization_id FROM compute_jobs WHERE id = $1`, [jobB]);
+        const read = await client.query(
+          `SELECT id, organization_id FROM compute_jobs WHERE id = $1`,
+          [jobB]
+        );
         expect(read.rows).toHaveLength(1);
         expect(read.rows[0].organization_id).toBe(orgB);
 

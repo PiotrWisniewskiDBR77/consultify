@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+import { describe, expect, it } from 'vitest';
 
 import { ROUTES } from '../routeConfig';
 
@@ -93,6 +94,8 @@ describe('SUPERADMIN redirect handoff for legacy Settings/Organization routes (T
     expect(protectedRouteSource).toContain(
       `if (requiredRole === 'ADMIN' && normalizeAppRole(currentUser?.role ?? '') === 'SUPERADMIN') {`
     );
-    expect(protectedRouteSource).toContain('return <Navigate to={ROUTES.SUPERADMIN.ROOT} replace />;');
+    expect(protectedRouteSource).toContain(
+      'return <Navigate to={ROUTES.SUPERADMIN.ROOT} replace />;'
+    );
   });
 });

@@ -1,24 +1,14 @@
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import bcrypt from 'bcryptjs';
 
 import { inputSanitizationMiddleware } from '../../middleware/inputSanitization.middleware.js';
 import financeRoutes from '../../routes/v8/finance.routes.js';
-import PDFParserService from '../pdfParserService.js';
-import {
-  createStatement,
-  loadStatementSourceText,
-  locateStatementSections,
-} from '../financialStatementService.js';
-import { getStatementDetail } from '../financialStatementReadService.js';
-import { recomputeStatementPack, syncStatementToPack } from '../financialStatementPackService.js';
-import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
 import {
   approveVersion,
   createArtifact,
@@ -26,15 +16,24 @@ import {
   reopenVersion,
   transition,
 } from '../finance/canonical/artifactVersionService.js';
-import { computeAnalysisKpis } from '../finance/canonical/kpiComputeService.js';
-import { insertEdge } from '../finance/canonical/lineageService.js';
-import { mapStatementLines } from '../finance/canonical/statementMappingService.js';
-import { runReconciliation } from '../finance/canonical/statementReconciliationService.js';
 import { runBaselineCompute } from '../finance/canonical/baselineComputeService.js';
 import { configureBaselineWorkspaceContext } from '../finance/canonical/baselineContextService.js';
+import { computeAnalysisKpis } from '../finance/canonical/kpiComputeService.js';
+import { insertEdge } from '../finance/canonical/lineageService.js';
 import { runPredictionCompute } from '../finance/canonical/predictionComputeService.js';
 import { runPreflight } from '../finance/canonical/predictionPreflightService.js';
+import { mapStatementLines } from '../finance/canonical/statementMappingService.js';
+import { runReconciliation } from '../finance/canonical/statementReconciliationService.js';
 import { runDcfFcffValuation } from '../finance/canonical/valuationComputeService.js';
+import { recomputeStatementPack, syncStatementToPack } from '../financialStatementPackService.js';
+import { getStatementDetail } from '../financialStatementReadService.js';
+import {
+  createStatement,
+  loadStatementSourceText,
+  locateStatementSections,
+} from '../financialStatementService.js';
+import PDFParserService from '../pdfParserService.js';
+import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const PDF_PATH = process.env.FINANCE_STATEMENT_ACCEPTANCE_PDF || '';

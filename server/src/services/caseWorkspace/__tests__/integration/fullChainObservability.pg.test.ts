@@ -168,7 +168,10 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         expect(updatedDraft.status).toBe(200);
         record('PUT /plan-versions/:id', 'case.plan.draft_updated');
 
-        const viewState = await asConsultant('put', `${BASE}/plan-versions/${planV1}/view-state/SIMPLE`).send({
+        const viewState = await asConsultant(
+          'put',
+          `${BASE}/plan-versions/${planV1}/view-state/SIMPLE`
+        ).send({
           viewState: { collapsed: ['end'] },
         });
         expect(viewState.status).toBe(200);
@@ -178,7 +181,10 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         expect(validation.status).toBe(200);
         expect(validation.body.data.valid).toBe(true);
 
-        const proposed1 = await asConsultant('post', `${BASE}/plan-versions/${planV1}/propose`).send({
+        const proposed1 = await asConsultant(
+          'post',
+          `${BASE}/plan-versions/${planV1}/propose`
+        ).send({
           expectedVersion: updatedDraft.body.data.version,
         });
         expect(proposed1.status).toBe(200);
@@ -202,7 +208,10 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         const planV2: string = draft2.body.data.casePlanVersionId;
         record('POST /cases/:id/plan-versions #2', 'case.plan.draft_created');
 
-        const proposed2 = await asConsultant('post', `${BASE}/plan-versions/${planV2}/propose`).send({
+        const proposed2 = await asConsultant(
+          'post',
+          `${BASE}/plan-versions/${planV2}/propose`
+        ).send({
           expectedVersion: draft2.body.data.version,
         });
         expect(proposed2.status).toBe(200);
@@ -236,7 +245,10 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         record('POST /run-bindings', 'run.bound_to_plan_version');
 
         const nodeRunId = `noderun-${randomUUID()}`;
-        const acceptance = await asConsultant('post', `${BASE}/runs/${runId}/node-result-acceptances`).send({
+        const acceptance = await asConsultant(
+          'post',
+          `${BASE}/runs/${runId}/node-result-acceptances`
+        ).send({
           nodeRunId,
           nodeType: 'CAPABILITY',
           nodeCompletionState: 'COMPLETED',
@@ -361,9 +373,11 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         expect(executed.status).toBe(200);
         record('POST /proposals/:id/transition-to-executed', 'proposal.executed');
 
-        const audited = await asSponsor('post', `${BASE}/proposals/${actionProposalId}/audit`).send({
-          expectedVersion: executed.body.data.version,
-        });
+        const audited = await asSponsor('post', `${BASE}/proposals/${actionProposalId}/audit`).send(
+          {
+            expectedVersion: executed.body.data.version,
+          }
+        );
         expect(audited.status).toBe(200);
         record('POST /proposals/:id/audit', 'proposal.audited');
 
@@ -386,7 +400,10 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         expect(pinned.status).toBe(200);
         record('POST /artifact-links/:id/pin', 'evidence.pinned');
 
-        const measurement = await asConsultant('post', `${BASE}/cases/${caseId}/value-measurements`).send({
+        const measurement = await asConsultant(
+          'post',
+          `${BASE}/cases/${caseId}/value-measurements`
+        ).send({
           metricKey: 'close_cycle_days',
           metricName: 'Month-end close cycle (days)',
           baselineValue: 9,
@@ -595,7 +612,9 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         //     assertion is not available on this schema.)
         for (const row of causal) {
           const parent = byEventId.get(row.causation_id as string)!;
-          expect(createdAtText.get(parent.event_id)! <= createdAtText.get(row.event_id)!).toBe(true);
+          expect(createdAtText.get(parent.event_id)! <= createdAtText.get(row.event_id)!).toBe(
+            true
+          );
         }
         // The publish/supersede pair specifically IS one transaction.
         expect(createdAtText.get(supersededEvent!.event_id)).toBe(
@@ -616,12 +635,17 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
           expect(row.aggregate_id).toBeTruthy();
         }
         const withoutCaseId = outbox.filter((r) => r.case_id === null).map((r) => r.event_type);
-        expect({ chainEventsMissingCaseId: withoutCaseId }).toEqual({ chainEventsMissingCaseId: [] });
+        expect({ chainEventsMissingCaseId: withoutCaseId }).toEqual({
+          chainEventsMissingCaseId: [],
+        });
 
         const runScoped = outbox.filter((r) =>
-          ['run.bound_to_plan_version', 'node.result_accepted', 'wait.registered', 'wait.satisfied'].includes(
-            r.event_type
-          )
+          [
+            'run.bound_to_plan_version',
+            'node.result_accepted',
+            'wait.registered',
+            'wait.satisfied',
+          ].includes(r.event_type)
         );
         expect(runScoped.length).toBe(4);
         for (const row of runScoped) expect(row.run_id).toBe(runId);
@@ -654,11 +678,16 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
             .query(`DELETE FROM case_workspace_value_measurements WHERE case_id = $1`, [caseId])
             .catch(() => undefined);
           await control
-            .query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [caseId])
+            .query(`DELETE FROM case_workspace_node_result_acceptances WHERE case_id = $1`, [
+              caseId,
+            ])
             .catch(() => undefined);
           await control
-            .query(`DELETE FROM case_plan_view_state WHERE case_plan_version_id IN
-                      (SELECT case_plan_version_id FROM case_plan_versions WHERE case_id = $1)`, [caseId])
+            .query(
+              `DELETE FROM case_plan_view_state WHERE case_plan_version_id IN
+                      (SELECT case_plan_version_id FROM case_plan_versions WHERE case_id = $1)`,
+              [caseId]
+            )
             .catch(() => undefined);
           await control
             .query(`DELETE FROM case_workspace_history_events WHERE case_id = $1`, [caseId])
@@ -666,9 +695,10 @@ suite('INTEGRATION GATE — full business chain, correlation/causation, event co
         }
         if (actionProposalId) {
           await control
-            .query(`DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`, [
-              actionProposalId,
-            ])
+            .query(
+              `DELETE FROM case_workspace_action_proposal_decisions WHERE action_proposal_id = $1`,
+              [actionProposalId]
+            )
             .catch(() => undefined);
         }
         await fx.teardown();

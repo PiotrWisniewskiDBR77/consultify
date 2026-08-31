@@ -35,20 +35,11 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 import {
-  toRoiAssumption,
-  toRoiBenefitEvidenceLink,
-  toRoiBenefitLine,
-  toRoiCalculationPolicy,
-  toRoiCalculationRun,
-  toRoiCostLine,
-  toRoiScenario,
-  toRoiScenarioOverride,
   type RoiAssumption,
   type RoiAssumptionRow,
   type RoiBenefitEvidenceLink,
@@ -65,6 +56,14 @@ import {
   type RoiScenarioOverride,
   type RoiScenarioOverrideRow,
   type RoiScenarioRow,
+  toRoiAssumption,
+  toRoiBenefitEvidenceLink,
+  toRoiBenefitLine,
+  toRoiCalculationPolicy,
+  toRoiCalculationRun,
+  toRoiCostLine,
+  toRoiScenario,
+  toRoiScenarioOverride,
 } from './roiEconomicModelTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -76,7 +75,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -153,8 +156,16 @@ async function getSingleCaseScopedRow<TRow extends QueryResultRow>(
 // getCalculationPolicy
 // ==========================================
 
-export async function getCalculationPolicy(params: CaseScopedParams): Promise<RoiCalculationPolicy | null> {
-  const rows = await caseScopedRows<RoiCalculationPolicyRow>(params, 'p', 'rvn_roi_calculation_policy', '', 'p.case_id');
+export async function getCalculationPolicy(
+  params: CaseScopedParams
+): Promise<RoiCalculationPolicy | null> {
+  const rows = await caseScopedRows<RoiCalculationPolicyRow>(
+    params,
+    'p',
+    'rvn_roi_calculation_policy',
+    '',
+    'p.case_id'
+  );
   const row = rows[0];
   return row ? toRoiCalculationPolicy(row) : null;
 }
@@ -169,7 +180,13 @@ export interface ListAssumptionsParams extends CaseScopedParams {
 
 export async function listAssumptions(params: ListAssumptionsParams): Promise<RoiAssumption[]> {
   const extraWhere = params.includeDeleted ? '' : 'AND a.deleted_at IS NULL';
-  const rows = await caseScopedRows<RoiAssumptionRow>(params, 'a', 'rvn_roi_assumptions', extraWhere, 'a.created_at, a.assumption_id');
+  const rows = await caseScopedRows<RoiAssumptionRow>(
+    params,
+    'a',
+    'rvn_roi_assumptions',
+    extraWhere,
+    'a.created_at, a.assumption_id'
+  );
   return rows.map(toRoiAssumption);
 }
 
@@ -198,7 +215,13 @@ export interface ListCostLinesParams extends CaseScopedParams {
 
 export async function listCostLines(params: ListCostLinesParams): Promise<RoiCostLine[]> {
   const extraWhere = params.includeDeleted ? '' : 'AND cl.deleted_at IS NULL';
-  const rows = await caseScopedRows<RoiCostLineRow>(params, 'cl', 'rvn_roi_cost_lines', extraWhere, 'cl.created_at, cl.cost_line_id');
+  const rows = await caseScopedRows<RoiCostLineRow>(
+    params,
+    'cl',
+    'rvn_roi_cost_lines',
+    extraWhere,
+    'cl.created_at, cl.cost_line_id'
+  );
   return rows.map(toRoiCostLine);
 }
 
@@ -207,7 +230,13 @@ export interface GetCostLineParams extends CaseScopedParams {
 }
 
 export async function getCostLine(params: GetCostLineParams): Promise<RoiCostLine | null> {
-  const row = await getSingleCaseScopedRow<RoiCostLineRow>(params, 'cl', 'rvn_roi_cost_lines', 'cost_line_id', params.costLineId);
+  const row = await getSingleCaseScopedRow<RoiCostLineRow>(
+    params,
+    'cl',
+    'rvn_roi_cost_lines',
+    'cost_line_id',
+    params.costLineId
+  );
   return row ? toRoiCostLine(row) : null;
 }
 
@@ -297,10 +326,16 @@ export async function listBenefitEvidenceLinks(
     resourceType: ROI_RESOURCE_TYPE,
   });
   const values = [...wrapped.values, caseId, benefitLineId];
-  const rows = await withReadClient((client) => queryRows<RoiBenefitEvidenceLinkRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiBenefitEvidenceLinkRow>(client, wrapped.sql, values)
+  );
 
   if (!hydrateKpiDetails || rows.length === 0) {
-    return rows.map((row) => ({ ...toRoiBenefitEvidenceLink(row), kpiDetails: null, isStale: null }));
+    return rows.map((row) => ({
+      ...toRoiBenefitEvidenceLink(row),
+      kpiDetails: null,
+      isStale: null,
+    }));
   }
 
   // KPI's own visibility-scoped CTE, joined against rvn_kpi_definitions —
@@ -319,15 +354,21 @@ export async function listBenefitEvidenceLinks(
        AND kd.kpi_id = ANY($${VISIBILITY_CTE_PARAM_COUNT + 1}::uuid[])
   `;
   const kpiValues = [...kpiCte.values, kpiIds];
-  const kpiRows = await withReadClient((client) => queryRows<KpiHydrationRow>(client, kpiQuerySql, kpiValues));
+  const kpiRows = await withReadClient((client) =>
+    queryRows<KpiHydrationRow>(client, kpiQuerySql, kpiValues)
+  );
   const kpiRowById = new Map(kpiRows.map((k) => [k.kpi_id, k]));
 
   return rows.map((row) => {
     const kpiRow = kpiRowById.get(row.kpi_id);
     return {
       ...toRoiBenefitEvidenceLink(row),
-      kpiDetails: kpiRow ? { kpiId: kpiRow.kpi_id, kpiCode: kpiRow.kpi_code, status: kpiRow.status } : null,
-      isStale: kpiRow ? row.pinned_kpi_definition_version_id !== kpiRow.current_definition_version_id : null,
+      kpiDetails: kpiRow
+        ? { kpiId: kpiRow.kpi_id, kpiCode: kpiRow.kpi_code, status: kpiRow.status }
+        : null,
+      isStale: kpiRow
+        ? row.pinned_kpi_definition_version_id !== kpiRow.current_definition_version_id
+        : null,
     };
   });
 }
@@ -367,7 +408,9 @@ export async function listRoiEvidenceLinksByKpi(
     resourceType: ROI_RESOURCE_TYPE,
   });
   const values = [...wrapped.values, kpiId];
-  const rows = await withReadClient((client) => queryRows<RoiBenefitEvidenceLinkRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiBenefitEvidenceLinkRow>(client, wrapped.sql, values)
+  );
 
   if (rows.length === 0) {
     return [];
@@ -389,14 +432,20 @@ export async function listRoiEvidenceLinksByKpi(
        AND kd.kpi_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
   const kpiValues = [...kpiCte.values, kpiId];
-  const kpiRows = await withReadClient((client) => queryRows<KpiHydrationRow>(client, kpiQuerySql, kpiValues));
+  const kpiRows = await withReadClient((client) =>
+    queryRows<KpiHydrationRow>(client, kpiQuerySql, kpiValues)
+  );
   const kpiRow = kpiRows[0];
-  const kpiDetails = kpiRow ? { kpiId: kpiRow.kpi_id, kpiCode: kpiRow.kpi_code, status: kpiRow.status } : null;
+  const kpiDetails = kpiRow
+    ? { kpiId: kpiRow.kpi_id, kpiCode: kpiRow.kpi_code, status: kpiRow.status }
+    : null;
 
   return rows.map((row) => ({
     ...toRoiBenefitEvidenceLink(row),
     kpiDetails,
-    isStale: kpiRow ? row.pinned_kpi_definition_version_id !== kpiRow.current_definition_version_id : null,
+    isStale: kpiRow
+      ? row.pinned_kpi_definition_version_id !== kpiRow.current_definition_version_id
+      : null,
   }));
 }
 
@@ -410,7 +459,13 @@ export interface ListScenariosParams extends CaseScopedParams {
 
 export async function listScenarios(params: ListScenariosParams): Promise<RoiScenario[]> {
   const extraWhere = params.includeDeleted ? '' : 'AND s.deleted_at IS NULL';
-  const rows = await caseScopedRows<RoiScenarioRow>(params, 's', 'rvn_roi_scenarios', extraWhere, 's.created_at, s.scenario_id');
+  const rows = await caseScopedRows<RoiScenarioRow>(
+    params,
+    's',
+    'rvn_roi_scenarios',
+    extraWhere,
+    's.created_at, s.scenario_id'
+  );
   return rows.map(toRoiScenario);
 }
 
@@ -429,9 +484,15 @@ export async function getScenario(params: GetScenarioParams): Promise<RoiScenari
        AND s.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND s.scenario_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, scenarioId];
-  const rows = await withReadClient((client) => queryRows<RoiScenarioRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiScenarioRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiScenario(row) : null;
 }
@@ -440,7 +501,9 @@ export interface ListScenarioOverridesParams extends CaseScopedParams {
   scenarioId: string;
 }
 
-export async function listScenarioOverrides(params: ListScenarioOverridesParams): Promise<RoiScenarioOverride[]> {
+export async function listScenarioOverrides(
+  params: ListScenarioOverridesParams
+): Promise<RoiScenarioOverride[]> {
   const { userId, organizationId, caseId, scenarioId } = params;
   // Overrides have no case_id column of their own — visibility inherits via
   // their parent scenario, joined explicitly here rather than by adding a
@@ -456,9 +519,15 @@ export async function listScenarioOverrides(params: ListScenarioOverridesParams)
        AND ov.scenario_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
      ORDER BY ov.created_at, ov.override_id
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, scenarioId];
-  const rows = await withReadClient((client) => queryRows<RoiScenarioOverrideRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiScenarioOverrideRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiScenarioOverride);
 }
 
@@ -471,9 +540,15 @@ export interface ListCalculationRunsParams extends CaseScopedParams {
   offset?: number;
 }
 
-export async function listCalculationRuns(params: ListCalculationRunsParams): Promise<RoiCalculationRun[]> {
+export async function listCalculationRuns(
+  params: ListCalculationRunsParams
+): Promise<RoiCalculationRun[]> {
   const { userId, organizationId, caseId, limit = 50, offset = 0 } = params;
-  const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const cte = await buildVisibilityScopedCte({
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values: unknown[] = [...cte.values, caseId, limit, offset];
   const baseQuerySql = `
     SELECT r.*
@@ -485,7 +560,9 @@ export async function listCalculationRuns(params: ListCalculationRunsParams): Pr
      ORDER BY r.created_at DESC
      LIMIT $${VISIBILITY_CTE_PARAM_COUNT + 2} OFFSET $${VISIBILITY_CTE_PARAM_COUNT + 3}
   `;
-  const rows = await withReadClient((client) => queryRows<RoiCalculationRunRow>(client, `${cte.sql}\n${baseQuerySql}`, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiCalculationRunRow>(client, `${cte.sql}\n${baseQuerySql}`, values)
+  );
   return rows.map(toRoiCalculationRun);
 }
 
@@ -493,7 +570,9 @@ export interface GetCalculationRunParams extends CaseScopedParams {
   runId: string;
 }
 
-export async function getCalculationRun(params: GetCalculationRunParams): Promise<RoiCalculationRun | null> {
+export async function getCalculationRun(
+  params: GetCalculationRunParams
+): Promise<RoiCalculationRun | null> {
   const { userId, organizationId, caseId, runId } = params;
   const baseQuerySql = `
     SELECT r.*
@@ -504,9 +583,15 @@ export async function getCalculationRun(params: GetCalculationRunParams): Promis
        AND r.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND r.run_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, runId];
-  const rows = await withReadClient((client) => queryRows<RoiCalculationRunRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiCalculationRunRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiCalculationRun(row) : null;
 }

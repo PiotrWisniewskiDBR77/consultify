@@ -19,11 +19,29 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
     title: 'SWOT — wejście na rynek DACH',
     status: 'draft',
     items: [
-      { id: 'i1', label: 'Silny zespół wdrożeniowy', bucket: 'strengths', evidenceKind: 'fact', impact: 'high' },
-      { id: 'i2', label: 'Rosnący popyt w DACH', bucket: 'opportunities', evidenceKind: 'observation', impact: 'medium' },
+      {
+        id: 'i1',
+        label: 'Silny zespół wdrożeniowy',
+        bucket: 'strengths',
+        evidenceKind: 'fact',
+        impact: 'high',
+      },
+      {
+        id: 'i2',
+        label: 'Rosnący popyt w DACH',
+        bucket: 'opportunities',
+        evidenceKind: 'observation',
+        impact: 'medium',
+      },
     ],
     tensions: [
-      { id: 't1', posture: 'attack', title: 'Zespół × popyt', sourceItemIds: ['i1', 'i2'], priority: 5 },
+      {
+        id: 't1',
+        posture: 'attack',
+        title: 'Zespół × popyt',
+        sourceItemIds: ['i1', 'i2'],
+        priority: 5,
+      },
     ],
     conclusions: [
       {
@@ -32,7 +50,11 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
         k2Meaning: 'Przewaga wdrożeniowa jest niewykorzystana.',
         k3Actions: ['Uruchomić pilota w DACH'],
         k4Effect: 'Pierwszy klient referencyjny w 6 miesięcy.',
-        tradeoff: { chosen: 'Pilot w DACH', rejected: 'Rozwój produktu', why: 'Okno rynkowe zamyka się szybko.' },
+        tradeoff: {
+          chosen: 'Pilot w DACH',
+          rejected: 'Rozwój produktu',
+          why: 'Okno rynkowe zamyka się szybko.',
+        },
         sourceTensionIds: ['t1'],
       },
       {
@@ -41,7 +63,11 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
         k2Meaning: 'Ekspozycja na presję cenową rośnie.',
         k3Actions: ['Zmierzyć czas ostatnich wdrożeń'],
         k4Effect: 'Skrócenie ścieżki wdrożenia o 30%.',
-        tradeoff: { chosen: 'Standaryzacja', rejected: 'Nowe funkcje', why: 'Ryzyko cenowe jest pilniejsze.' },
+        tradeoff: {
+          chosen: 'Standaryzacja',
+          rejected: 'Nowe funkcje',
+          why: 'Ryzyko cenowe jest pilniejsze.',
+        },
         sourceTensionIds: [],
       },
     ],

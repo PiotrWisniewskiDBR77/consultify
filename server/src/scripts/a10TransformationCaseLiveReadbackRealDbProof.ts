@@ -62,9 +62,8 @@ const proofDb = {
 async function main(): Promise<void> {
   (globalThis as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = proofDb;
   (process as unknown as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = proofDb;
-  const { evaluateTransformationCaseLive } = await import(
-    '../services/v8/agentQualityEvaluationService.js'
-  );
+  const { evaluateTransformationCaseLive } =
+    await import('../services/v8/agentQualityEvaluationService.js');
 
   const latest = (
     await pool.query<{

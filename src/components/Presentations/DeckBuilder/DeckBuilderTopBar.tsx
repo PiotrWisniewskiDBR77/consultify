@@ -78,9 +78,15 @@ const ConfidentialityBadge: React.FC<{
     return Date.now() - ts <= 60_000;
   })();
 
-  const titleParts = [`${t('presentations.builder.confidentiality.label', 'Confidentiality')}: ${label}`];
+  const titleParts = [
+    `${t('presentations.builder.confidentiality.label', 'Confidentiality')}: ${label}`,
+  ];
   if (isRecentAgentActivity && lastAgentActivityAt) {
-    titleParts.push(t('presentations.builder.confidentiality.recentAiActivity', 'Recent AI activity: {{date}}', { date: lastAgentActivityAt }));
+    titleParts.push(
+      t('presentations.builder.confidentiality.recentAiActivity', 'Recent AI activity: {{date}}', {
+        date: lastAgentActivityAt,
+      })
+    );
   }
 
   return (

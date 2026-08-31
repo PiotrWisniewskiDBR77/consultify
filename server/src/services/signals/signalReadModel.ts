@@ -1,10 +1,10 @@
+import { isSignalProducerEnabled } from '../../jobs/workSignalProducerJob.js';
 import type {
   SignalDTO,
   SignalEvidence,
   SignalQuery,
   WorkSignalRow,
 } from '../../types/workSignals.js';
-import { isSignalProducerEnabled } from '../../jobs/workSignalProducerJob.js';
 import { translateSignal } from './i18n/dictionary.js';
 
 interface FeedRow extends WorkSignalRow {

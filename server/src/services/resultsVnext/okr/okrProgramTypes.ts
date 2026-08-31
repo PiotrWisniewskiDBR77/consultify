@@ -16,7 +16,13 @@
 export const OKR_PROGRAM_STATUSES = ['draft', 'active', 'suspended', 'retired'] as const;
 export type OkrProgramStatus = (typeof OKR_PROGRAM_STATUSES)[number];
 
-export const OKR_CYCLE_MODELS = ['quarterly', 'trimester', 'half_year', 'annual', 'custom'] as const;
+export const OKR_CYCLE_MODELS = [
+  'quarterly',
+  'trimester',
+  'half_year',
+  'annual',
+  'custom',
+] as const;
 export type OkrCycleModel = (typeof OKR_CYCLE_MODELS)[number];
 
 export const OKR_CHECKIN_FREQUENCIES = ['weekly', 'biweekly', 'monthly', 'custom'] as const;
@@ -25,7 +31,12 @@ export type OkrCheckinFrequency = (typeof OKR_CHECKIN_FREQUENCIES)[number];
 export const OKR_SCORING_MODELS = ['zero_to_one', 'percentage', 'categories', 'custom'] as const;
 export type OkrScoringModel = (typeof OKR_SCORING_MODELS)[number];
 
-export const OKR_OBJECTIVE_ROLLUP_MODELS = ['equal_average', 'weighted_average', 'manual', 'none'] as const;
+export const OKR_OBJECTIVE_ROLLUP_MODELS = [
+  'equal_average',
+  'weighted_average',
+  'manual',
+  'none',
+] as const;
 export type OkrObjectiveRollupModel = (typeof OKR_OBJECTIVE_ROLLUP_MODELS)[number];
 
 export const OKR_CONFIDENCE_MODELS = ['high_medium_low', 'numeric', 'custom'] as const;
@@ -229,7 +240,9 @@ export interface OkrProgramPolicyVersion {
   publishedAt: string;
 }
 
-export function toOkrProgramPolicyVersion(row: OkrProgramPolicyVersionRow): OkrProgramPolicyVersion {
+export function toOkrProgramPolicyVersion(
+  row: OkrProgramPolicyVersionRow
+): OkrProgramPolicyVersion {
   return {
     policyVersionId: row.policy_version_id,
     programId: row.program_id,

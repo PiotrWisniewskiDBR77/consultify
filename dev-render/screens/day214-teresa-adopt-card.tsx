@@ -163,8 +163,8 @@ export default function Day214TeresaAdoptCardScreen(): React.ReactElement {
   return (
     <div className="flex min-h-screen w-full flex-col items-center gap-8 bg-c-bg p-10">
       <h1 className="text-sm font-semibold text-c-text">
-        FIX-214 pkt 4 — karta adopcji szkicu z czatu Teresy (GovernedInitiativeHandoffCard,
-        realny komponent, dane z fixture&#39;ów harnessu — patrz komentarz na górze pliku)
+        FIX-214 pkt 4 — karta adopcji szkicu z czatu Teresy (GovernedInitiativeHandoffCard, realny
+        komponent, dane z fixture&#39;ów harnessu — patrz komentarz na górze pliku)
       </h1>
       <div className="flex w-full max-w-[560px] flex-col gap-6">
         <AutoDrive initiativeId="day214-demo-idle" title="idle (bez kliknięcia)" steps={[]} />

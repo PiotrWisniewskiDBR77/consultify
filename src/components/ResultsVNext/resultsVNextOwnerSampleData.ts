@@ -1,7 +1,8 @@
+import { isPublicProductionHost } from '@/utils/publicProduction';
+
 import type { KpiDefinitionDto, KpiDefinitionVersionDto, KpiMeasurementDto } from './kpiApi';
 import type { OkrSetDto } from './okr/okrApi';
 import type { RoiCaseListItem, RoiOrgBenefitsRealizationRow } from './roi/roiApi';
-import { isPublicProductionHost } from '@/utils/publicProduction';
 
 export function shouldUseResultsVNextOwnerSampleData(
   source: { search: string; hostname: string } | undefined = typeof window === 'undefined'

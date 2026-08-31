@@ -74,7 +74,10 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
           className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
         >
           Przykład i dowody
-          <ChevronDown size={14} className={examplesOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          <ChevronDown
+            size={14}
+            className={examplesOpen ? 'rotate-180 transition-transform' : 'transition-transform'}
+          />
         </button>
         {examplesOpen && (
           <div className="px-3 pb-3 space-y-1.5 text-xs text-c-text-secondary">
@@ -126,12 +129,18 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
             className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
           >
             Porównaj poziomy
-            <ChevronDown size={14} className={compareOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
+            <ChevronDown
+              size={14}
+              className={compareOpen ? 'rotate-180 transition-transform' : 'transition-transform'}
+            />
           </button>
           {compareOpen && (
             <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
               {help.levels.map((level) => (
-                <div key={level.level} className="rounded-md border border-c-border-subtle p-2 text-xs">
+                <div
+                  key={level.level}
+                  className="rounded-md border border-c-border-subtle p-2 text-xs"
+                >
                   <p className="font-semibold text-c-text">
                     Poziom {level.level} — {level.title}
                   </p>

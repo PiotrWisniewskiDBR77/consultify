@@ -266,13 +266,11 @@ describe.skipIf(!REAL_DB)(
       // Now actually change the content via the real manual-save path.
       const live = await request(app).get(`/api/document-studio/${ARTIFACT}`);
       expect(live.status).toBe(200);
-      const save = await request(app)
-        .put(`/api/document-studio/${ARTIFACT}/content`)
-        .send({
-          sections: [],
-          expectedVersion: live.body.schema.updatedAt,
-          title: 'Changed title',
-        });
+      const save = await request(app).put(`/api/document-studio/${ARTIFACT}/content`).send({
+        sections: [],
+        expectedVersion: live.body.schema.updatedAt,
+        title: 'Changed title',
+      });
       expect(save.status).toBe(200);
 
       const c3 = await request(app)

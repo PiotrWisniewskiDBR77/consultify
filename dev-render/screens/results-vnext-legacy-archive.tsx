@@ -38,7 +38,12 @@ type MockIndexRow = {
 // `getRoiLegacyArchiveIndex`/`getOkrLegacyArchiveIndex` — not invented.
 const MOCK_INDEX: Record<ResultsVNextDomain, MockIndexRow[]> = {
   kpi: [
-    { sourceTable: 'kpis', originDomain: 'results_legacy', label: 'Legacy archive — read-only', count: 12 },
+    {
+      sourceTable: 'kpis',
+      originDomain: 'results_legacy',
+      label: 'Legacy archive — read-only',
+      count: 12,
+    },
     {
       sourceTable: 'kpi_definitions',
       originDomain: 'results_legacy',
@@ -103,7 +108,12 @@ const MOCK_INDEX: Record<ResultsVNextDomain, MockIndexRow[]> = {
     },
   ],
   okr: [
-    { sourceTable: 'okr_cycles', originDomain: 'results_legacy', label: 'OKR legacy archive — read-only', count: 6 },
+    {
+      sourceTable: 'okr_cycles',
+      originDomain: 'results_legacy',
+      label: 'OKR legacy archive — read-only',
+      count: 6,
+    },
     {
       sourceTable: 'okr_objectives',
       originDomain: 'results_legacy',
@@ -147,10 +157,16 @@ if (!g.__RVN_LEGACY_ARCHIVE_FETCH__) {
         });
       }
       if (state === 'error') {
-        return new Response(JSON.stringify({ error: 'Internal server error', code: 'KPI_LEGACY_ARCHIVE_INTERNAL_ERROR' }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({
+            error: 'Internal server error',
+            code: 'KPI_LEGACY_ARCHIVE_INTERNAL_ERROR',
+          }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
       const data = state === 'empty' ? [] : MOCK_INDEX[matchedDomain];
       return new Response(
@@ -173,7 +189,10 @@ if (!g.__RVN_LEGACY_ARCHIVE_FETCH__) {
 
 export function ResultsVNextLegacyArchiveScreen(): React.ReactElement {
   return (
-    <div style={{ height: '100vh', width: '100vw', overflow: 'hidden' }} className="bg-white dark:bg-navy-900">
+    <div
+      style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}
+      className="bg-white dark:bg-navy-900"
+    >
       <ResultsVNextLegacyArchivePanel domain={domain} />
     </div>
   );

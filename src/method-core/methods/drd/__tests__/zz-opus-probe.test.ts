@@ -1,12 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
-import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
-import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
+import { describe, expect, it, vi } from 'vitest';
+
 import { canStartSession } from '@/method-core/contracts';
+import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
+import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 
 describe('OPUS PROBE — DRD', () => {
   it('aboveGap NIE podnosi currentLevel', () => {
     const r = drdAdapter.resolveOpenLevels({
-      unitId: '1A', confirmedLevels: [1, 2, 4, 5],
+      unitId: '1A',
+      confirmedLevels: [1, 2, 4, 5],
       evidenceByLevel: { 1: 'E3', 2: 'E3', 4: 'E3', 5: 'E3' },
     });
     expect(r.currentLevel).toBe(2);
@@ -17,12 +19,12 @@ describe('OPUS PROBE — DRD', () => {
   it('skala jest PER OS', () => {
     const { pack } = compileDrdPack();
     expect(pack.units).toHaveLength(39);
-    const s = (id: string) => pack.units.find(u => u.unitId === id)!.levelScale;
-    expect(s('1A')).toEqual([1,2,3,4,5,6,7]);
-    expect(s('4A')).toEqual([1,2,3,4,5,6,7]);
-    expect(s('5A')).toEqual([1,2,3,4,5,6]);
-    expect(s('7A')).toEqual([1,2,3,4,5]);
-    expect(s('2A')).toEqual([1,2,3,4,5]);
+    const s = (id: string) => pack.units.find((u) => u.unitId === id)!.levelScale;
+    expect(s('1A')).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(s('4A')).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(s('5A')).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(s('7A')).toEqual([1, 2, 3, 4, 5]);
+    expect(s('2A')).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('readiness jest uczciwy — pack NIE startuje sesji', () => {

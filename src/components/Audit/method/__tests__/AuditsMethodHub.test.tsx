@@ -55,28 +55,29 @@ vi.mock('../auditsMethodApi', async () => {
 });
 
 import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '@/services/initiatives-execution/persistentCommandId';
+
+import {
+  type AuditPackSummary,
+  type AuditProgramSummary,
+  getProgram,
+  getProgramCoverage,
+  getProgramLifecycle,
+  listOutputs,
+  listPacks,
+  listProgramCriteria,
+  listPrograms,
+  listProposals,
+  listReports,
+} from '../auditsMethodApi';
+import {
   AUDIT_START_COMMAND_NAMESPACE,
   AuditsMethodHub,
   auditStartFingerprint,
   claimAuditStart,
 } from '../AuditsMethodHub';
-import {
-  clearPersistentCommandId,
-  persistentCommandId,
-} from '@/services/initiatives-execution/persistentCommandId';
-import {
-  getProgram,
-  getProgramCoverage,
-  getProgramLifecycle,
-  listProgramCriteria,
-  listOutputs,
-  listPacks,
-  listPrograms,
-  listProposals,
-  listReports,
-  type AuditPackSummary,
-  type AuditProgramSummary,
-} from '../auditsMethodApi';
 
 const mockedListPacks = vi.mocked(listPacks);
 const mockedListPrograms = vi.mocked(listPrograms);

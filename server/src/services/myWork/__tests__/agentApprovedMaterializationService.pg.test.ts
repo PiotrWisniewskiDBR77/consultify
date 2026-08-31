@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
+
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -12,7 +13,7 @@ describe.skipIf(!enabled)('MYW-AGT-BVP approved materialization — real PG', ()
   const approver = `approver-${tag}`;
   const revoked = `revoked-${tag}`;
   const plan = `plan-${tag}`;
-  const expiresAt = new Date(Date.now()+3_600_000).toISOString();
+  const expiresAt = new Date(Date.now() + 3_600_000).toISOString();
   let pool: Pool;
   let service: typeof import('../agentApprovedMaterializationService.js');
   let sourceVersion: number;
@@ -20,30 +21,65 @@ describe.skipIf(!enabled)('MYW-AGT-BVP approved materialization — real PG', ()
 
   beforeAll(async () => {
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    await pool.query(`INSERT INTO organizations(id,name,plan,status) VALUES($1,'MYW AGT','enterprise','active')`, [org]);
-    for (const [user, status] of [[requester,'ACTIVE'],[approver,'ACTIVE'],[revoked,'INACTIVE']]) {
-      await pool.query(`INSERT INTO users(id,organization_id,email,password,role,status) VALUES($1,$2,$3,'unused','OWNER','active')`,
-        [user,org,`${user}@test.local`]);
-      await pool.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER',$4)`,
-        [randomUUID(),org,user,status]);
+    await pool.query(
+      `INSERT INTO organizations(id,name,plan,status) VALUES($1,'MYW AGT','enterprise','active')`,
+      [org]
+    );
+    for (const [user, status] of [
+      [requester, 'ACTIVE'],
+      [approver, 'ACTIVE'],
+      [revoked, 'INACTIVE'],
+    ]) {
+      await pool.query(
+        `INSERT INTO users(id,organization_id,email,password,role,status) VALUES($1,$2,$3,'unused','OWNER','active')`,
+        [user, org, `${user}@test.local`]
+      );
+      await pool.query(
+        `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER',$4)`,
+        [randomUUID(), org, user, status]
+      );
     }
-    await pool.query(`INSERT INTO ai_agent_plans(id,organization_id,user_id,title,plan_json,updated_at) VALUES($1,$2,$3,'Source','[]',date_trunc('milliseconds',now()))`,
-      [plan,org,requester]);
+    await pool.query(
+      `INSERT INTO ai_agent_plans(id,organization_id,user_id,title,plan_json,updated_at) VALUES($1,$2,$3,'Source','[]',date_trunc('milliseconds',now()))`,
+      [plan, org, requester]
+    );
     service = await import('../agentApprovedMaterializationService.js');
-    ({ sourceVersion, sourceHash } = await service.getAgentPlanSourceIdentity(org, plan, requester));
+    ({ sourceVersion, sourceHash } = await service.getAgentPlanSourceIdentity(
+      org,
+      plan,
+      requester
+    ));
   });
 
   afterAll(async () => {
-    await pool.query(`ALTER TABLE myw_agent_materialization_receipts DISABLE TRIGGER trg_myw_agent_receipt_append_only`);
-    await pool.query(`ALTER TABLE myw_agent_materialization_approvals DISABLE TRIGGER trg_myw_agent_approval_append_only`);
-    await pool.query(`ALTER TABLE myw_agent_materialization_proposals DISABLE TRIGGER trg_myw_agent_proposal_guard`);
-    await pool.query(`DELETE FROM myw_agent_materialization_receipts WHERE organization_id=$1`, [org]);
+    await pool.query(
+      `ALTER TABLE myw_agent_materialization_receipts DISABLE TRIGGER trg_myw_agent_receipt_append_only`
+    );
+    await pool.query(
+      `ALTER TABLE myw_agent_materialization_approvals DISABLE TRIGGER trg_myw_agent_approval_append_only`
+    );
+    await pool.query(
+      `ALTER TABLE myw_agent_materialization_proposals DISABLE TRIGGER trg_myw_agent_proposal_guard`
+    );
+    await pool.query(`DELETE FROM myw_agent_materialization_receipts WHERE organization_id=$1`, [
+      org,
+    ]);
     await pool.query(`DELETE FROM myw_agent_canonical_outbox WHERE organization_id=$1`, [org]);
-    await pool.query(`DELETE FROM myw_agent_materialization_approvals WHERE organization_id=$1`, [org]);
-    await pool.query(`DELETE FROM myw_agent_materialization_proposals WHERE organization_id=$1`, [org]);
-    await pool.query(`ALTER TABLE myw_agent_materialization_receipts ENABLE TRIGGER trg_myw_agent_receipt_append_only`);
-    await pool.query(`ALTER TABLE myw_agent_materialization_approvals ENABLE TRIGGER trg_myw_agent_approval_append_only`);
-    await pool.query(`ALTER TABLE myw_agent_materialization_proposals ENABLE TRIGGER trg_myw_agent_proposal_guard`);
+    await pool.query(`DELETE FROM myw_agent_materialization_approvals WHERE organization_id=$1`, [
+      org,
+    ]);
+    await pool.query(`DELETE FROM myw_agent_materialization_proposals WHERE organization_id=$1`, [
+      org,
+    ]);
+    await pool.query(
+      `ALTER TABLE myw_agent_materialization_receipts ENABLE TRIGGER trg_myw_agent_receipt_append_only`
+    );
+    await pool.query(
+      `ALTER TABLE myw_agent_materialization_approvals ENABLE TRIGGER trg_myw_agent_approval_append_only`
+    );
+    await pool.query(
+      `ALTER TABLE myw_agent_materialization_proposals ENABLE TRIGGER trg_myw_agent_proposal_guard`
+    );
     await pool.query(`DELETE FROM tasks WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM decisions WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM notebook_pages WHERE organization_id=$1`, [org]);
@@ -54,124 +90,382 @@ describe.skipIf(!enabled)('MYW-AGT-BVP approved materialization — real PG', ()
     await pool.end();
   });
 
-  const request = (targetKind: 'task'|'decision'|'notebook', key: string, content: Record<string,unknown> = { title: `${targetKind} title`, description: 'approved body' }) =>
-    ({ organizationId: org,requesterId: requester,sourcePlanId: plan,sourceVersion,sourceHash,targetKind,content,
-      idempotencyKey: key,expiresAt });
-
-  it.each(['task','decision','notebook'] as const)('materializes one real canonical %s through separate approval and receipt', async (kind) => {
-    const created = await service.createMaterializationProposal(request(kind, `${kind}-${tag}`));
-    await expect(service.decideMaterializationProposal({ proposalId: created.proposal.proposal_id,organizationId: org,
-      approverId: requester,decision:'APPROVE',expectedStateVersion:1,sourceHash })).rejects.toThrow('SELF_APPROVAL');
-    const decided = await service.decideMaterializationProposal({ proposalId: created.proposal.proposal_id,organizationId: org,
-      approverId: approver,decision:'APPROVE',expectedStateVersion:1,sourceHash });
-    const eight = await Promise.all(Array.from({length:8},()=>service.materializeApprovedProposal({ proposalId: created.proposal.proposal_id,
-      organizationId:org,actorId:approver,expectedStateVersion:2 })));
-    expect(new Set(eight.map(x=>x.receipt.target_id)).size).toBe(1);
-    const target = kind === 'task' ? 'tasks' : kind === 'decision' ? 'decisions' : 'notebook_pages';
-    expect((await pool.query(`SELECT count(*)::int n FROM ${target} WHERE id=$1`, [eight[0].receipt.target_id])).rows[0].n).toBe(1);
-    expect(eight[0].receipt).toMatchObject({status:'SUCCEEDED',command_version:1});
-    expect(eight[0].receipt.output_digest).toMatch(/^[0-9a-f]{64}$/);
-    expect(decided.approval.approver_id).toBe(approver);
+  const request = (
+    targetKind: 'task' | 'decision' | 'notebook',
+    key: string,
+    content: Record<string, unknown> = {
+      title: `${targetKind} title`,
+      description: 'approved body',
+    }
+  ) => ({
+    organizationId: org,
+    requesterId: requester,
+    sourcePlanId: plan,
+    sourceVersion,
+    sourceHash,
+    targetKind,
+    content,
+    idempotencyKey: key,
+    expiresAt,
   });
+
+  it.each(['task', 'decision', 'notebook'] as const)(
+    'materializes one real canonical %s through separate approval and receipt',
+    async (kind) => {
+      const created = await service.createMaterializationProposal(request(kind, `${kind}-${tag}`));
+      await expect(
+        service.decideMaterializationProposal({
+          proposalId: created.proposal.proposal_id,
+          organizationId: org,
+          approverId: requester,
+          decision: 'APPROVE',
+          expectedStateVersion: 1,
+          sourceHash,
+        })
+      ).rejects.toThrow('SELF_APPROVAL');
+      const decided = await service.decideMaterializationProposal({
+        proposalId: created.proposal.proposal_id,
+        organizationId: org,
+        approverId: approver,
+        decision: 'APPROVE',
+        expectedStateVersion: 1,
+        sourceHash,
+      });
+      const eight = await Promise.all(
+        Array.from({ length: 8 }, () =>
+          service.materializeApprovedProposal({
+            proposalId: created.proposal.proposal_id,
+            organizationId: org,
+            actorId: approver,
+            expectedStateVersion: 2,
+          })
+        )
+      );
+      expect(new Set(eight.map((x) => x.receipt.target_id)).size).toBe(1);
+      const target =
+        kind === 'task' ? 'tasks' : kind === 'decision' ? 'decisions' : 'notebook_pages';
+      expect(
+        (
+          await pool.query(`SELECT count(*)::int n FROM ${target} WHERE id=$1`, [
+            eight[0].receipt.target_id,
+          ])
+        ).rows[0].n
+      ).toBe(1);
+      expect(eight[0].receipt).toMatchObject({ status: 'SUCCEEDED', command_version: 1 });
+      expect(eight[0].receipt.output_digest).toMatch(/^[0-9a-f]{64}$/);
+      expect(decided.approval.approver_id).toBe(approver);
+    }
+  );
 
   it('converges 8-way proposal replay, rejects collision, stale, revoked, rejected and append-only mutation', async () => {
     const input = request('task', `eight-${tag}`);
-    const results = await Promise.all(Array.from({length:8},()=>service.createMaterializationProposal(input)));
-    expect(new Set(results.map(x=>x.proposal.proposal_id)).size).toBe(1);
-    await expect(service.createMaterializationProposal({...input,content:{title:'changed'}})).rejects.toThrow('COLLISION');
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => service.createMaterializationProposal(input))
+    );
+    expect(new Set(results.map((x) => x.proposal.proposal_id)).size).toBe(1);
+    await expect(
+      service.createMaterializationProposal({ ...input, content: { title: 'changed' } })
+    ).rejects.toThrow('COLLISION');
     const proposalId = results[0].proposal.proposal_id;
-    await expect(service.decideMaterializationProposal({proposalId,organizationId:org,approverId:revoked,decision:'APPROVE',expectedStateVersion:1,sourceHash}))
-      .rejects.toThrow('MEMBERSHIP');
-    await service.decideMaterializationProposal({proposalId,organizationId:org,approverId:approver,decision:'REJECT',expectedStateVersion:1,sourceHash});
-    await expect(service.materializeApprovedProposal({proposalId,organizationId:org,actorId:approver,expectedStateVersion:2})).rejects.toThrow();
-    expect((await pool.query(`SELECT count(*)::int n FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,[proposalId])).rows[0].n).toBe(0);
-    await expect(pool.query(`UPDATE myw_agent_materialization_approvals SET decision='APPROVE' WHERE proposal_id=$1`,[proposalId])).rejects.toThrow(/append.only/i);
-    await expect(pool.query(`DELETE FROM myw_agent_materialization_approvals WHERE proposal_id=$1`,[proposalId])).rejects.toThrow(/append.only/i);
-    await expect(pool.query(`DELETE FROM myw_agent_materialization_proposals WHERE proposal_id=$1`,[proposalId])).rejects.toThrow(/append.only/i);
+    await expect(
+      service.decideMaterializationProposal({
+        proposalId,
+        organizationId: org,
+        approverId: revoked,
+        decision: 'APPROVE',
+        expectedStateVersion: 1,
+        sourceHash,
+      })
+    ).rejects.toThrow('MEMBERSHIP');
+    await service.decideMaterializationProposal({
+      proposalId,
+      organizationId: org,
+      approverId: approver,
+      decision: 'REJECT',
+      expectedStateVersion: 1,
+      sourceHash,
+    });
+    await expect(
+      service.materializeApprovedProposal({
+        proposalId,
+        organizationId: org,
+        actorId: approver,
+        expectedStateVersion: 2,
+      })
+    ).rejects.toThrow();
+    expect(
+      (
+        await pool.query(
+          `SELECT count(*)::int n FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,
+          [proposalId]
+        )
+      ).rows[0].n
+    ).toBe(0);
+    await expect(
+      pool.query(
+        `UPDATE myw_agent_materialization_approvals SET decision='APPROVE' WHERE proposal_id=$1`,
+        [proposalId]
+      )
+    ).rejects.toThrow(/append.only/i);
+    await expect(
+      pool.query(`DELETE FROM myw_agent_materialization_approvals WHERE proposal_id=$1`, [
+        proposalId,
+      ])
+    ).rejects.toThrow(/append.only/i);
+    await expect(
+      pool.query(`DELETE FROM myw_agent_materialization_proposals WHERE proposal_id=$1`, [
+        proposalId,
+      ])
+    ).rejects.toThrow(/append.only/i);
   });
 
   it('reconciles an existing canonical target after a crash before receipt completion and protects receipt payload', async () => {
-    const current = await service.getAgentPlanSourceIdentity(org,plan,requester);
-    const created = await service.createMaterializationProposal({ ...request('task',`crash-reconcile-${tag}`),
-      sourceVersion:current.sourceVersion,sourceHash:current.sourceHash });
-    await service.decideMaterializationProposal({proposalId:created.proposal.proposal_id,organizationId:org,approverId:approver,
-      decision:'APPROVE',expectedStateVersion:1,sourceHash:current.sourceHash});
-    const [{TaskService},{getDatabase}] = await Promise.all([import('../../TaskService.js'),import('../../../database/Database.js')]);
-    const sourceIdentityValue=`${plan}:${current.sourceVersion}:${current.sourceHash}`;
-    await expect(new TaskService(await getDatabase() as any).createTask({title:'task title',description:'approved body',status:'todo',priority:'medium'},
-      requester,{idempotencyKey:`myw-agent:${created.proposal.proposal_id}`,sourceType:'myw_agent_proposal',sourceId:sourceIdentityValue,
-        faultInjection:'AFTER_CORE'})).rejects.toThrow('AFTER_CORE');
-    const before=(await pool.query(`SELECT id FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`,
-      [org,`myw-agent:${created.proposal.proposal_id}`])).rows[0];
-    const reconciled = await service.materializeApprovedProposal({proposalId:created.proposal.proposal_id,organizationId:org,
-      actorId:approver,expectedStateVersion:2});
+    const current = await service.getAgentPlanSourceIdentity(org, plan, requester);
+    const created = await service.createMaterializationProposal({
+      ...request('task', `crash-reconcile-${tag}`),
+      sourceVersion: current.sourceVersion,
+      sourceHash: current.sourceHash,
+    });
+    await service.decideMaterializationProposal({
+      proposalId: created.proposal.proposal_id,
+      organizationId: org,
+      approverId: approver,
+      decision: 'APPROVE',
+      expectedStateVersion: 1,
+      sourceHash: current.sourceHash,
+    });
+    const [{ TaskService }, { getDatabase }] = await Promise.all([
+      import('../../TaskService.js'),
+      import('../../../database/Database.js'),
+    ]);
+    const sourceIdentityValue = `${plan}:${current.sourceVersion}:${current.sourceHash}`;
+    await expect(
+      new TaskService((await getDatabase()) as any).createTask(
+        { title: 'task title', description: 'approved body', status: 'todo', priority: 'medium' },
+        requester,
+        {
+          idempotencyKey: `myw-agent:${created.proposal.proposal_id}`,
+          sourceType: 'myw_agent_proposal',
+          sourceId: sourceIdentityValue,
+          faultInjection: 'AFTER_CORE',
+        }
+      )
+    ).rejects.toThrow('AFTER_CORE');
+    const before = (
+      await pool.query(`SELECT id FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`, [
+        org,
+        `myw-agent:${created.proposal.proposal_id}`,
+      ])
+    ).rows[0];
+    const reconciled = await service.materializeApprovedProposal({
+      proposalId: created.proposal.proposal_id,
+      organizationId: org,
+      actorId: approver,
+      expectedStateVersion: 2,
+    });
     expect(reconciled.receipt.target_id).toBe(before.id);
-    expect((await pool.query(`SELECT count(*)::int n FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`,
-      [org,`myw-agent:${created.proposal.proposal_id}`])).rows[0].n).toBe(1);
-    await expect(pool.query(`UPDATE myw_agent_materialization_receipts SET organization_id='foreign' WHERE proposal_id=$1`,
-      [created.proposal.proposal_id])).rejects.toThrow(/append.only/i);
-    await expect(pool.query(`DELETE FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,
-      [created.proposal.proposal_id])).rejects.toThrow(/append.only/i);
+    expect(
+      (
+        await pool.query(
+          `SELECT count(*)::int n FROM tasks WHERE organization_id=$1 AND idempotency_key=$2`,
+          [org, `myw-agent:${created.proposal.proposal_id}`]
+        )
+      ).rows[0].n
+    ).toBe(1);
+    await expect(
+      pool.query(
+        `UPDATE myw_agent_materialization_receipts SET organization_id='foreign' WHERE proposal_id=$1`,
+        [created.proposal.proposal_id]
+      )
+    ).rejects.toThrow(/append.only/i);
+    await expect(
+      pool.query(`DELETE FROM myw_agent_materialization_receipts WHERE proposal_id=$1`, [
+        created.proposal.proposal_id,
+      ])
+    ).rejects.toThrow(/append.only/i);
   });
 
-  it.each(['decision','notebook'] as const)('resumes required canonical %s steps after an injected crash', async (kind) => {
-    const current=await service.getAgentPlanSourceIdentity(org,plan,requester);
-    const created=await service.createMaterializationProposal({...request(kind,`resume-${kind}-${tag}`),sourceVersion:current.sourceVersion,sourceHash:current.sourceHash});
-    await service.decideMaterializationProposal({proposalId:created.proposal.proposal_id,organizationId:org,approverId:approver,
-      decision:'APPROVE',expectedStateVersion:1,sourceHash:current.sourceHash});
-    const commandKey=`myw-agent:${created.proposal.proposal_id}`;
-    const identity=`${plan}:${current.sourceVersion}:${current.sourceHash}`;
-    if(kind==='decision'){
-      const {default:decisionService}=await import('../../decisionService.js');
-      await expect(decisionService.createDecision({organizationId:org,title:'decision title',description:'approved body',type:'APPROVAL',
-        decisionMakerId:approver,stakeholderIds:[requester],createdBy:requester,idempotencyKey:commandKey,sourceType:'myw_agent_proposal',sourceId:identity,
-        faultInjection:'AFTER_HISTORY'})).rejects.toThrow('AFTER_HISTORY');
-    }else{
-      const {createNotebookNote}=await import('../../notebookService.js');
-      await expect(createNotebookNote({organizationId:org,userId:requester,title:'notebook title',body:'approved body',
-        source:'myw_agent_proposal',proposalId:created.proposal.proposal_id,idempotencyKey:commandKey,sourceIdentity:identity,
-        faultInjection:'AFTER_CORE'})).rejects.toThrow('AFTER_CORE');
+  it.each(['decision', 'notebook'] as const)(
+    'resumes required canonical %s steps after an injected crash',
+    async (kind) => {
+      const current = await service.getAgentPlanSourceIdentity(org, plan, requester);
+      const created = await service.createMaterializationProposal({
+        ...request(kind, `resume-${kind}-${tag}`),
+        sourceVersion: current.sourceVersion,
+        sourceHash: current.sourceHash,
+      });
+      await service.decideMaterializationProposal({
+        proposalId: created.proposal.proposal_id,
+        organizationId: org,
+        approverId: approver,
+        decision: 'APPROVE',
+        expectedStateVersion: 1,
+        sourceHash: current.sourceHash,
+      });
+      const commandKey = `myw-agent:${created.proposal.proposal_id}`;
+      const identity = `${plan}:${current.sourceVersion}:${current.sourceHash}`;
+      if (kind === 'decision') {
+        const { default: decisionService } = await import('../../decisionService.js');
+        await expect(
+          decisionService.createDecision({
+            organizationId: org,
+            title: 'decision title',
+            description: 'approved body',
+            type: 'APPROVAL',
+            decisionMakerId: approver,
+            stakeholderIds: [requester],
+            createdBy: requester,
+            idempotencyKey: commandKey,
+            sourceType: 'myw_agent_proposal',
+            sourceId: identity,
+            faultInjection: 'AFTER_HISTORY',
+          })
+        ).rejects.toThrow('AFTER_HISTORY');
+      } else {
+        const { createNotebookNote } = await import('../../notebookService.js');
+        await expect(
+          createNotebookNote({
+            organizationId: org,
+            userId: requester,
+            title: 'notebook title',
+            body: 'approved body',
+            source: 'myw_agent_proposal',
+            proposalId: created.proposal.proposal_id,
+            idempotencyKey: commandKey,
+            sourceIdentity: identity,
+            faultInjection: 'AFTER_CORE',
+          })
+        ).rejects.toThrow('AFTER_CORE');
+      }
+      const completed = await service.materializeApprovedProposal({
+        proposalId: created.proposal.proposal_id,
+        organizationId: org,
+        actorId: approver,
+        expectedStateVersion: 2,
+      });
+      expect(completed.receipt.status).toBe('SUCCEEDED');
+      if (kind === 'decision') {
+        expect(
+          (
+            await pool.query(
+              `SELECT count(*)::int n FROM decision_history WHERE decision_id=$1 AND action='created'`,
+              [completed.receipt.target_id]
+            )
+          ).rows[0].n
+        ).toBe(1);
+        expect(
+          (
+            await pool.query(
+              `SELECT count(*)::int n FROM decision_stakeholders WHERE decision_id=$1 AND user_id=$2`,
+              [completed.receipt.target_id, requester]
+            )
+          ).rows[0].n
+        ).toBe(1);
+      } else {
+        expect(
+          (
+            await pool.query(
+              `SELECT materialization_provenance IS NOT NULL provenance,materialization_fts_completed fts FROM notebook_pages WHERE id=$1`,
+              [completed.receipt.target_id]
+            )
+          ).rows[0]
+        ).toEqual({ provenance: true, fts: true });
+      }
+      expect(
+        (
+          await pool.query(
+            `SELECT count(*)::int n FROM myw_agent_canonical_outbox WHERE organization_id=$1 AND command_key=$2`,
+            [org, commandKey]
+          )
+        ).rows[0].n
+      ).toBe(1);
     }
-    const completed=await service.materializeApprovedProposal({proposalId:created.proposal.proposal_id,organizationId:org,actorId:approver,expectedStateVersion:2});
-    expect(completed.receipt.status).toBe('SUCCEEDED');
-    if(kind==='decision'){
-      expect((await pool.query(`SELECT count(*)::int n FROM decision_history WHERE decision_id=$1 AND action='created'`,[completed.receipt.target_id])).rows[0].n).toBe(1);
-      expect((await pool.query(`SELECT count(*)::int n FROM decision_stakeholders WHERE decision_id=$1 AND user_id=$2`,
-        [completed.receipt.target_id,requester])).rows[0].n).toBe(1);
-    }else{
-      expect((await pool.query(`SELECT materialization_provenance IS NOT NULL provenance,materialization_fts_completed fts FROM notebook_pages WHERE id=$1`,
-        [completed.receipt.target_id])).rows[0]).toEqual({provenance:true,fts:true});
-    }
-    expect((await pool.query(`SELECT count(*)::int n FROM myw_agent_canonical_outbox WHERE organization_id=$1 AND command_key=$2`,[org,commandKey])).rows[0].n).toBe(1);
-  });
+  );
 
   it('fails closed on source drift and writer failure without a false receipt, including cold readback', async () => {
-    const drift = await service.createMaterializationProposal(request('task',`drift-${tag}`));
-    await service.decideMaterializationProposal({proposalId:drift.proposal.proposal_id,organizationId:org,approverId:approver,
-      decision:'APPROVE',expectedStateVersion:1,sourceHash});
-    await pool.query(`UPDATE ai_agent_plans SET title='drifted',updated_at=updated_at+interval '1 second' WHERE id=$1`,[plan]);
-    await expect(service.materializeApprovedProposal({proposalId:drift.proposal.proposal_id,organizationId:org,actorId:approver,expectedStateVersion:2}))
-      .rejects.toThrow('SOURCE_DRIFT');
-    expect((await pool.query(`SELECT count(*)::int n FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,[drift.proposal.proposal_id])).rows[0].n).toBe(0);
-    const cold = new Pool({connectionString:process.env.DATABASE_URL,max:1});
-    expect((await cold.query(`SELECT state FROM myw_agent_materialization_proposals WHERE proposal_id=$1`,[drift.proposal.proposal_id])).rows[0].state).toBe('APPROVED');
+    const drift = await service.createMaterializationProposal(request('task', `drift-${tag}`));
+    await service.decideMaterializationProposal({
+      proposalId: drift.proposal.proposal_id,
+      organizationId: org,
+      approverId: approver,
+      decision: 'APPROVE',
+      expectedStateVersion: 1,
+      sourceHash,
+    });
+    await pool.query(
+      `UPDATE ai_agent_plans SET title='drifted',updated_at=updated_at+interval '1 second' WHERE id=$1`,
+      [plan]
+    );
+    await expect(
+      service.materializeApprovedProposal({
+        proposalId: drift.proposal.proposal_id,
+        organizationId: org,
+        actorId: approver,
+        expectedStateVersion: 2,
+      })
+    ).rejects.toThrow('SOURCE_DRIFT');
+    expect(
+      (
+        await pool.query(
+          `SELECT count(*)::int n FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,
+          [drift.proposal.proposal_id]
+        )
+      ).rows[0].n
+    ).toBe(0);
+    const cold = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+    expect(
+      (
+        await cold.query(
+          `SELECT state FROM myw_agent_materialization_proposals WHERE proposal_id=$1`,
+          [drift.proposal.proposal_id]
+        )
+      ).rows[0].state
+    ).toBe('APPROVED');
     await cold.end();
 
-    const current = await service.getAgentPlanSourceIdentity(org,plan,requester);
-    const invalid = await service.createMaterializationProposal({ ...request('task',`writer-fail-${tag}`,{title:''}),
-      sourceVersion:current.sourceVersion,sourceHash:current.sourceHash });
-    await service.decideMaterializationProposal({proposalId:invalid.proposal.proposal_id,organizationId:org,approverId:approver,
-      decision:'APPROVE',expectedStateVersion:1,sourceHash:current.sourceHash});
-    await expect(service.materializeApprovedProposal({proposalId:invalid.proposal.proposal_id,organizationId:org,actorId:approver,expectedStateVersion:2}))
-      .rejects.toThrow('CONTENT_INVALID');
-    const failedReceipt = await pool.query(`SELECT status,target_id FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,[invalid.proposal.proposal_id]);
-    expect(failedReceipt.rows[0]).toMatchObject({status:'FAILED',target_id:null});
+    const current = await service.getAgentPlanSourceIdentity(org, plan, requester);
+    const invalid = await service.createMaterializationProposal({
+      ...request('task', `writer-fail-${tag}`, { title: '' }),
+      sourceVersion: current.sourceVersion,
+      sourceHash: current.sourceHash,
+    });
+    await service.decideMaterializationProposal({
+      proposalId: invalid.proposal.proposal_id,
+      organizationId: org,
+      approverId: approver,
+      decision: 'APPROVE',
+      expectedStateVersion: 1,
+      sourceHash: current.sourceHash,
+    });
+    await expect(
+      service.materializeApprovedProposal({
+        proposalId: invalid.proposal.proposal_id,
+        organizationId: org,
+        actorId: approver,
+        expectedStateVersion: 2,
+      })
+    ).rejects.toThrow('CONTENT_INVALID');
+    const failedReceipt = await pool.query(
+      `SELECT status,target_id FROM myw_agent_materialization_receipts WHERE proposal_id=$1`,
+      [invalid.proposal.proposal_id]
+    );
+    expect(failedReceipt.rows[0]).toMatchObject({ status: 'FAILED', target_id: null });
 
-    const expired = await service.createMaterializationProposal({ ...request('notebook',`expired-${tag}`),
-      sourceVersion:current.sourceVersion,sourceHash:current.sourceHash,expiresAt:new Date(Date.now()+300).toISOString() });
-    await new Promise(resolve=>setTimeout(resolve,350));
-    const expiredDecision = await service.decideMaterializationProposal({proposalId:expired.proposal.proposal_id,organizationId:org,
-      approverId:approver,decision:'APPROVE',expectedStateVersion:1,sourceHash:current.sourceHash});
+    const expired = await service.createMaterializationProposal({
+      ...request('notebook', `expired-${tag}`),
+      sourceVersion: current.sourceVersion,
+      sourceHash: current.sourceHash,
+      expiresAt: new Date(Date.now() + 300).toISOString(),
+    });
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    const expiredDecision = await service.decideMaterializationProposal({
+      proposalId: expired.proposal.proposal_id,
+      organizationId: org,
+      approverId: approver,
+      decision: 'APPROVE',
+      expectedStateVersion: 1,
+      sourceHash: current.sourceHash,
+    });
     expect(expiredDecision.proposal.state).toBe('EXPIRED');
     expect(expiredDecision.approval).toBeNull();
   });

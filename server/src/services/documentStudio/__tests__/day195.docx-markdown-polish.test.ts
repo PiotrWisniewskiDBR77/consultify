@@ -40,7 +40,9 @@ const schema: DocumentSchema = {
         {
           blockId: 'p1',
           type: 'paragraph',
-          content: { text: '**Priorytet:** uruchomić pilotaż.\n- Potwierdzić właściciela\n- Zamknąć ryzyka' },
+          content: {
+            text: '**Priorytet:** uruchomić pilotaż.\n- Potwierdzić właściciela\n- Zamknąć ryzyka',
+          },
           isAssumption: true,
         },
       ],

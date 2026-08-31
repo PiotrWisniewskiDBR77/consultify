@@ -31,7 +31,10 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { BaselineOutputDto, BaselinePeriodComputeSummaryDto } from '@/services/api/financeV2.types';
+import type {
+  BaselineOutputDto,
+  BaselinePeriodComputeSummaryDto,
+} from '@/services/api/financeV2.types';
 
 import { CalculationsView, type PeriodMeta } from '../CalculationsView';
 
@@ -87,9 +90,30 @@ const OUTPUTS: BaselineOutputDto[] = [
 ];
 
 const MONTHLY_RESULTS: BaselinePeriodComputeSummaryDto[] = [
-  { periodId: 'per-2026-01', converged: true, iterationsUsed: 4, cash: -125000, netIncome: -8000, qualityFlag: 'FUNDING_GAP' },
-  { periodId: 'per-2026-02', converged: true, iterationsUsed: 3, cash: 0, netIncome: 500, qualityFlag: null },
-  { periodId: 'per-2026-03', converged: true, iterationsUsed: 2, cash: 0, netIncome: 900, qualityFlag: null },
+  {
+    periodId: 'per-2026-01',
+    converged: true,
+    iterationsUsed: 4,
+    cash: -125000,
+    netIncome: -8000,
+    qualityFlag: 'FUNDING_GAP',
+  },
+  {
+    periodId: 'per-2026-02',
+    converged: true,
+    iterationsUsed: 3,
+    cash: 0,
+    netIncome: 500,
+    qualityFlag: null,
+  },
+  {
+    periodId: 'per-2026-03',
+    converged: true,
+    iterationsUsed: 2,
+    cash: 0,
+    netIncome: 900,
+    qualityFlag: null,
+  },
 ];
 
 function baseProps() {
@@ -177,9 +201,45 @@ describe('CalculationsView — PIĘĆ stanów wartości (korekta kanonu, master 
     const props = baseProps();
     const outputsWithFiveStates: BaselineOutputDto[] = [
       ...OUTPUTS,
-      { ...cashOutput('per-2026-01', { status: 'NA', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }), lineCode: 'AR', canonicalLineId: 'line-ar-1', statementType: 'BS' },
-      { ...cashOutput('per-2026-01', { status: 'NOT_APPLICABLE', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }), lineCode: 'INVENTORY', canonicalLineId: 'line-inv-1', statementType: 'BS' },
-      { ...cashOutput('per-2026-01', { status: 'MISSING', valueDecimal: null, nativeCurrency: 'PLN', presentationCurrency: 'PLN', unit: 'UNITS', multiplier: '1' }), lineCode: 'AP', canonicalLineId: 'line-ap-1', statementType: 'BS' },
+      {
+        ...cashOutput('per-2026-01', {
+          status: 'NA',
+          valueDecimal: null,
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+          unit: 'UNITS',
+          multiplier: '1',
+        }),
+        lineCode: 'AR',
+        canonicalLineId: 'line-ar-1',
+        statementType: 'BS',
+      },
+      {
+        ...cashOutput('per-2026-01', {
+          status: 'NOT_APPLICABLE',
+          valueDecimal: null,
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+          unit: 'UNITS',
+          multiplier: '1',
+        }),
+        lineCode: 'INVENTORY',
+        canonicalLineId: 'line-inv-1',
+        statementType: 'BS',
+      },
+      {
+        ...cashOutput('per-2026-01', {
+          status: 'MISSING',
+          valueDecimal: null,
+          nativeCurrency: 'PLN',
+          presentationCurrency: 'PLN',
+          unit: 'UNITS',
+          multiplier: '1',
+        }),
+        lineCode: 'AP',
+        canonicalLineId: 'line-ap-1',
+        statementType: 'BS',
+      },
     ];
     // AR/INVENTORY/AP nie mają wartości dla 02/2026 i 03/2026 w tym mocku —
     // wystarczy 01/2026 (granularity=monthly=domyślna, grupa 1-elementowa)

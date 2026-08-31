@@ -33,10 +33,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 import {
-  clearPersistentCommandId,
-  persistentCommandId,
-} from '@/services/initiatives-execution/persistentCommandId';
-import {
   V8ResultsApi,
   type V8ResultsCloseRecoveryCardConflict,
   type V8ResultsKpiRecoveryAction,
@@ -50,6 +46,10 @@ import {
   type V8ResultsRecoveryExperimentVerdict,
   type V8ResultsRecoveryListItem,
 } from '@/services/api/v8/results';
+import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '@/services/initiatives-execution/persistentCommandId';
 
 function recoveryIntentFingerprint(operation: string, identity: Record<string, unknown>): string {
   return `${operation}:${JSON.stringify(identity, Object.keys(identity).sort())}`;
@@ -60,11 +60,19 @@ function requireCanonicalActionReadback(
   expected: V8ResultsKpiRecoveryAction
 ): void {
   const actual = card.actions.find((item) => item.id === expected.id);
-  if (!actual || expected.rowVersion === undefined || actual.rowVersion !== expected.rowVersion ||
-      actual.status !== expected.status || actual.ownerUserId !== expected.ownerUserId ||
-      actual.dueDate !== expected.dueDate || actual.linkedTaskId !== expected.linkedTaskId ||
-      actual.taskLinkStatus !== expected.taskLinkStatus) {
-    const error = new Error('Canonical recovery action readback mismatch') as Error & { code?: string };
+  if (
+    !actual ||
+    expected.rowVersion === undefined ||
+    actual.rowVersion !== expected.rowVersion ||
+    actual.status !== expected.status ||
+    actual.ownerUserId !== expected.ownerUserId ||
+    actual.dueDate !== expected.dueDate ||
+    actual.linkedTaskId !== expected.linkedTaskId ||
+    actual.taskLinkStatus !== expected.taskLinkStatus
+  ) {
+    const error = new Error('Canonical recovery action readback mismatch') as Error & {
+      code?: string;
+    };
     error.code = 'CANONICAL_READBACK_MISMATCH';
     throw error;
   }
@@ -75,10 +83,17 @@ function requireCanonicalCheckpointReadback(
   expected: V8ResultsKpiRecoveryCheckpoint
 ): void {
   const actual = card.checkpoints.find((item) => item.id === expected.id);
-  if (!actual || expected.rowVersion === undefined || actual.rowVersion !== expected.rowVersion ||
-      actual.status !== expected.status || actual.kpiTimeSeriesId !== expected.kpiTimeSeriesId ||
-      actual.checkpointDate !== expected.checkpointDate) {
-    const error = new Error('Canonical recovery checkpoint readback mismatch') as Error & { code?: string };
+  if (
+    !actual ||
+    expected.rowVersion === undefined ||
+    actual.rowVersion !== expected.rowVersion ||
+    actual.status !== expected.status ||
+    actual.kpiTimeSeriesId !== expected.kpiTimeSeriesId ||
+    actual.checkpointDate !== expected.checkpointDate
+  ) {
+    const error = new Error('Canonical recovery checkpoint readback mismatch') as Error & {
+      code?: string;
+    };
     error.code = 'CANONICAL_READBACK_MISMATCH';
     throw error;
   }
@@ -88,17 +103,26 @@ function requireCanonicalCardReadback(
   actual: V8ResultsKpiRecoveryCard,
   expected: V8ResultsKpiRecoveryCard
 ): void {
-  if (actual.id !== expected.id || actual.version !== expected.version ||
-      actual.lifecycleStatus !== expected.lifecycleStatus || actual.hypothesis !== expected.hypothesis ||
-      actual.confirmedCause !== expected.confirmedCause || actual.impactDescription !== expected.impactDescription ||
-      actual.priority !== expected.priority || actual.expectedImpact !== expected.expectedImpact ||
-      JSON.stringify(actual.dependencies) !== JSON.stringify(expected.dependencies) ||
-      JSON.stringify(actual.risks) !== JSON.stringify(expected.risks) ||
-      actual.expectedRecoveryDate !== expected.expectedRecoveryDate ||
-      actual.effectivenessCriteria !== expected.effectivenessCriteria ||
-      actual.effectivenessRating !== expected.effectivenessRating ||
-      actual.evidenceText !== expected.evidenceText || actual.evidenceRef !== expected.evidenceRef) {
-    const error = new Error('Canonical recovery card readback mismatch') as Error & { code?: string };
+  if (
+    actual.id !== expected.id ||
+    actual.version !== expected.version ||
+    actual.lifecycleStatus !== expected.lifecycleStatus ||
+    actual.hypothesis !== expected.hypothesis ||
+    actual.confirmedCause !== expected.confirmedCause ||
+    actual.impactDescription !== expected.impactDescription ||
+    actual.priority !== expected.priority ||
+    actual.expectedImpact !== expected.expectedImpact ||
+    JSON.stringify(actual.dependencies) !== JSON.stringify(expected.dependencies) ||
+    JSON.stringify(actual.risks) !== JSON.stringify(expected.risks) ||
+    actual.expectedRecoveryDate !== expected.expectedRecoveryDate ||
+    actual.effectivenessCriteria !== expected.effectivenessCriteria ||
+    actual.effectivenessRating !== expected.effectivenessRating ||
+    actual.evidenceText !== expected.evidenceText ||
+    actual.evidenceRef !== expected.evidenceRef
+  ) {
+    const error = new Error('Canonical recovery card readback mismatch') as Error & {
+      code?: string;
+    };
     error.code = 'CANONICAL_READBACK_MISMATCH';
     throw error;
   }
@@ -772,13 +796,21 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (!card) return;
       if (action.rowVersion === undefined) {
         await fetchCard({ background: true });
-        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        toast.error(
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
+        );
         return;
       }
       setActionBusyId(action.id);
       const nextStatus = action.status === 'DONE' ? 'OPEN' : 'DONE';
       const fingerprint = recoveryIntentFingerprint('update-action', {
-        cardId: card.id, actionId: action.id, expectedVersion: action.rowVersion, status: nextStatus,
+        cardId: card.id,
+        actionId: action.id,
+        expectedVersion: action.rowVersion,
+        status: nextStatus,
       });
       const namespace = 'results-recovery-update-action';
       try {
@@ -811,12 +843,20 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (!card) return;
       if (action.rowVersion === undefined) {
         await fetchCard({ background: true });
-        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        toast.error(
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
+        );
         return;
       }
       setActionBusyId(action.id);
       const fingerprint = recoveryIntentFingerprint('cancel-action', {
-        cardId: card.id, actionId: action.id, expectedVersion: action.rowVersion, status: 'CANCELLED',
+        cardId: card.id,
+        actionId: action.id,
+        expectedVersion: action.rowVersion,
+        status: 'CANCELLED',
       });
       const namespace = 'results-recovery-update-action';
       try {
@@ -847,12 +887,19 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (!card) return;
       if (action.rowVersion === undefined) {
         await fetchCard({ background: true });
-        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        toast.error(
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
+        );
         return;
       }
       setActionBusyId(action.id);
       const fingerprint = recoveryIntentFingerprint('link-task', {
-        cardId: card.id, actionId: action.id, expectedVersion: action.rowVersion,
+        cardId: card.id,
+        actionId: action.id,
+        expectedVersion: action.rowVersion,
       });
       const namespace = 'results-recovery-link-task';
       try {
@@ -862,10 +909,12 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
           expectedVersion: action.rowVersion,
           idempotencyKey: persistentCommandId(namespace, fingerprint),
         });
-        if (!linked.action || !linked.linkedTaskId) throw new Error('Canonical task link response is incomplete');
+        if (!linked.action || !linked.linkedTaskId)
+          throw new Error('Canonical task link response is incomplete');
         const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
         requireCanonicalActionReadback(fresh, linked.action);
-        if (linked.action.linkedTaskId !== linked.linkedTaskId) throw new Error('Canonical task identity mismatch');
+        if (linked.action.linkedTaskId !== linked.linkedTaskId)
+          throw new Error('Canonical task identity mismatch');
         setCard(fresh);
         clearPersistentCommandId(namespace, fingerprint);
         onChanged?.();
@@ -884,8 +933,14 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
   const handleAddCheckpoint = useCallback(async () => {
     if (!card || !newCheckpointDate) return;
     setAddingCheckpoint(true);
-    const payload = { checkpointDate: newCheckpointDate, notes: newCheckpointNotes.trim() || undefined };
-    const fingerprint = recoveryIntentFingerprint('create-checkpoint', { cardId: card.id, ...payload });
+    const payload = {
+      checkpointDate: newCheckpointDate,
+      notes: newCheckpointNotes.trim() || undefined,
+    };
+    const fingerprint = recoveryIntentFingerprint('create-checkpoint', {
+      cardId: card.id,
+      ...payload,
+    });
     const namespace = 'results-recovery-create-checkpoint';
     try {
       // createRecoveryCheckpoint returns only the new checkpoint — refetch
@@ -924,14 +979,22 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (!card) return;
       if (checkpoint.rowVersion === undefined) {
         await fetchCard({ background: true });
-        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        toast.error(
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
+        );
         return;
       }
       setCheckpointBusyId(checkpoint.id);
       const kpiTimeSeriesId = checkpointMeasurementDraft[checkpoint.id]?.trim() || undefined;
       const fingerprint = recoveryIntentFingerprint('resolve-checkpoint', {
-        cardId: card.id, checkpointId: checkpoint.id, expectedVersion: checkpoint.rowVersion,
-        status, kpiTimeSeriesId,
+        cardId: card.id,
+        checkpointId: checkpoint.id,
+        expectedVersion: checkpoint.rowVersion,
+        status,
+        kpiTimeSeriesId,
       });
       const namespace = 'results-recovery-resolve-checkpoint';
       try {
@@ -1025,7 +1088,16 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     } finally {
       setClosing(false);
     }
-  }, [card, closeRating, closeEvidenceText, closeEvidenceRef, deviationCaseId, fetchCard, onChanged, t]);
+  }, [
+    card,
+    closeRating,
+    closeEvidenceText,
+    closeEvidenceRef,
+    deviationCaseId,
+    fetchCard,
+    onChanged,
+    t,
+  ]);
 
   const handleContinue = useCallback(async () => {
     if (!card) return;
@@ -1704,7 +1776,9 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        disabled={checkpointBusyId === checkpoint.id || checkpoint.rowVersion === undefined}
+                        disabled={
+                          checkpointBusyId === checkpoint.id || checkpoint.rowVersion === undefined
+                        }
                         onClick={() => void handleResolveCheckpoint(checkpoint, 'MET')}
                         className={secondaryPillCls}
                       >
@@ -1712,7 +1786,9 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                       </button>
                       <button
                         type="button"
-                        disabled={checkpointBusyId === checkpoint.id || checkpoint.rowVersion === undefined}
+                        disabled={
+                          checkpointBusyId === checkpoint.id || checkpoint.rowVersion === undefined
+                        }
                         onClick={() => void handleResolveCheckpoint(checkpoint, 'MISSED')}
                         className={secondaryPillCls}
                       >

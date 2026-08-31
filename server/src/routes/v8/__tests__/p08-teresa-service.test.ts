@@ -232,7 +232,12 @@ function buildKpiPayload() {
           target_evidence_note: null,
           duplicate_risk: { candidate_kpi_ids: [], note: null },
         },
-        evidence_breakdown: { facts: [], inference: [], missing_evidence: [], recommendation: 'draft as proposed' },
+        evidence_breakdown: {
+          facts: [],
+          inference: [],
+          missing_evidence: [],
+          recommendation: 'draft as proposed',
+        },
       },
     },
     evidence_pointers: ['note:kpi-draft'],

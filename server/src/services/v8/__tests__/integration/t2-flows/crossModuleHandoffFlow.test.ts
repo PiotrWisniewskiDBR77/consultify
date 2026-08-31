@@ -36,15 +36,12 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 
 import type { InitiativeHandoffKind } from '../../../../initiative/initiativeLifecycleCanon.js';
 import { buildInitiativeOutboundHandoffPayload } from '../../../../initiative/initiativeLifecycleCanon.js';
+import type { P10EvidencePointer, P10EvidencePointerType } from '../../../interviewInsightCanon.js';
 import {
   buildP10HandoffToInitiativesSkeleton,
   P10_CONFIDENCE_LEVELS,
   P10_EVIDENCE_POINTER_TYPES,
   P10_HANDOFF_TO_INITIATIVES,
-} from '../../../interviewInsightCanon.js';
-import type {
-  P10EvidencePointer,
-  P10EvidencePointerType,
 } from '../../../interviewInsightCanon.js';
 import { P07_HANDOFF_COMMON_FIELDS, P07_HANDOFF_TARGETS } from '../../../notebookCanon.js';
 import {
@@ -107,7 +104,6 @@ beforeEach(() => {
 // ═══════════════════════════════════════════════════════════════════════════
 // C1: P09 → P10 → P11  (Survey → Insight → Initiative)
 // ═══════════════════════════════════════════════════════════════════════════
-
 
 /**
  * The frozen P10 evidence pointer is

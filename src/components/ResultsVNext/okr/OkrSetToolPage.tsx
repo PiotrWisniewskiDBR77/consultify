@@ -25,17 +25,17 @@
  * Loading/error/forbidden states mirror `../kpiTool/KpiToolPage.tsx` /
  * `../roi/RoiCaseToolPage.tsx` byte-for-byte.
  */
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Blocks } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { EmptyState } from '@/components/shared/states';
 import { ROUTES } from '@/routes/routeConfig';
 
+import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
 import type { ResultsVNextForbiddenDetail } from '../types';
-import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import { getOkrSet, type OkrSetDto } from './okrApi';
 import { OkrSetWorkspace } from './OkrSetWorkspace';
 
@@ -85,7 +85,10 @@ export const OkrSetToolPage: React.FC = () => {
 
   if (!enabled) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-okr-tool-disabled">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-okr-tool-disabled"
+      >
         <EmptyState
           variant="new"
           icon={Blocks}
@@ -106,15 +109,23 @@ export const OkrSetToolPage: React.FC = () => {
 
   if (loading || (!set && !loadError)) {
     return (
-      <div className="h-full flex items-center justify-center" data-testid="results-vnext-okr-tool-loading">
-        <div className="text-sm text-c-text-muted">{t('Ładowanie zestawu OKR…', 'Loading OKR set…')}</div>
+      <div
+        className="h-full flex items-center justify-center"
+        data-testid="results-vnext-okr-tool-loading"
+      >
+        <div className="text-sm text-c-text-muted">
+          {t('Ładowanie zestawu OKR…', 'Loading OKR set…')}
+        </div>
       </div>
     );
   }
 
   if (loadError || !set) {
     return (
-      <div className="h-full flex items-center justify-center p-6" data-testid="results-vnext-okr-tool-error">
+      <div
+        className="h-full flex items-center justify-center p-6"
+        data-testid="results-vnext-okr-tool-error"
+      >
         <EmptyState
           variant="error"
           icon={AlertTriangle}

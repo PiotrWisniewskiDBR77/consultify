@@ -136,7 +136,8 @@ export function solvePeriod(inputs: CircularityPeriodInputs): CircularityPeriodR
     let mandatorySweep = 0;
     if (inputs.mandatoryContractualCashSweepModeled) {
       const fcfAfterScheduledDebtService = cfo + cfi - scheduledAmortization;
-      mandatorySweep = inputs.sweepPct * Math.max(0, fcfAfterScheduledDebtService - inputs.sweepThreshold);
+      mandatorySweep =
+        inputs.sweepPct * Math.max(0, fcfAfterScheduledDebtService - inputs.sweepThreshold);
       // Never sweep more principal than remains after the scheduled payment — a contractual sweep
       // clause cannot manufacture negative debt (fail-closed floor, not a silent clamp of a bug).
       mandatorySweep = Math.min(mandatorySweep, Math.max(0, priorDebt - scheduledAmortization));
@@ -154,8 +155,19 @@ export function solvePeriod(inputs: CircularityPeriodInputs): CircularityPeriodR
     debtGuess = newDebt;
 
     last = {
-      newCash, newDebt, interestExpense, interestIncome, mandatorySweep,
-      pretaxIncome, taxExpense, netIncome, cfo, cfi, cff, netChangeCash, residual,
+      newCash,
+      newDebt,
+      interestExpense,
+      interestIncome,
+      mandatorySweep,
+      pretaxIncome,
+      taxExpense,
+      netIncome,
+      cfo,
+      cfi,
+      cff,
+      netChangeCash,
+      residual,
     };
 
     if (residual <= toleranceCurrency) {

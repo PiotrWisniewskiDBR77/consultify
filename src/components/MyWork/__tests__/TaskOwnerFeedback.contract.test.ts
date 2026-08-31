@@ -13,9 +13,7 @@ describe('Task owner-feedback contracts', () => {
     expect(taskSource).toContain("t('myWork.taskDetail.title13', 'Analyze')");
     expect(taskSource).toContain("t('myWork.taskDetail.analyzeRisks', 'Analyze')");
     expect(taskSource).not.toContain("t('myWork.taskDetail.title13', 'Analyze risks with AI')");
-    expect(taskSource).toContain(
-      'setRisks((currentRisks) => [...currentRisks, ...aiRisks])'
-    );
+    expect(taskSource).toContain('setRisks((currentRisks) => [...currentRisks, ...aiRisks])');
   });
 
   it('renders Task history through the compact chronological list variant', () => {

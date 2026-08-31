@@ -4,8 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { estimateAgentToolCostUsd } from '../toolCostEstimates.js';
 import { reserveAgentResource } from '../../v8/agentResourceGovernanceService.js';
+import { estimateAgentToolCostUsd } from '../toolCostEstimates.js';
 
 const enabled = process.env.RUN_DB_TESTS === '1' && process.env.RUN_REDIS_TESTS === '1';
 
@@ -107,9 +107,7 @@ describe.skipIf(!enabled)('DAY174 resource policy and cost — real PG + Redis',
 // `enabled`).
 describe('DAY174 tool cost table — exhaustive, no silent zero', () => {
   it('throws unknown_tool_cost for an unregistered tool name', () => {
-    expect(() => estimateAgentToolCostUsd('this_tool_does_not_exist')).toThrow(
-      'unknown_tool_cost'
-    );
+    expect(() => estimateAgentToolCostUsd('this_tool_does_not_exist')).toThrow('unknown_tool_cost');
   });
 
   it('prices the two previously-fictitiously-free tools', () => {

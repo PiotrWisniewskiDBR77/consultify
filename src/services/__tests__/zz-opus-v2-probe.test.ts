@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { calculateAxisScoreV2, calculateOverallScoreV2, calculateAxisScore } from '@/services/drdStructure';
+import { describe, expect, it } from 'vitest';
+
+import {
+  calculateAxisScore,
+  calculateAxisScoreV2,
+  calculateOverallScoreV2,
+} from '@/services/drdStructure';
 
 describe('OPUS PROBE — COORD-11 drd_scoring_v2', () => {
   it('★ 5/5 i 5/7 NIE daja tego samego wyniku znormalizowanego', () => {
@@ -25,10 +30,12 @@ describe('OPUS PROBE — COORD-11 drd_scoring_v2', () => {
 
   it('★ unassessed NIE jest zerem i obniza coverage, nie wynik', () => {
     const dwa = calculateAxisScoreV2(2, {
-      '2A': { actual: 4, target: 5 }, '2B': { actual: 4, target: 5 },
+      '2A': { actual: 4, target: 5 },
+      '2B': { actual: 4, target: 5 },
     } as never);
     const zNieocenionym = calculateAxisScoreV2(2, {
-      '2A': { actual: 4, target: 5 }, '2B': { actual: 4, target: 5 },
+      '2A': { actual: 4, target: 5 },
+      '2B': { actual: 4, target: 5 },
       '2C': { actual: 0, target: 0 },
     } as never);
     console.log('PROBE v2 dwa ocenione   =', JSON.stringify(dwa));
@@ -43,10 +50,18 @@ describe('OPUS PROBE — COORD-11 drd_scoring_v2', () => {
 
   it('★ agregacja 2/3 ocenionych pokazuje coverage 66,7%', () => {
     const r = calculateAxisScoreV2(2, {
-      '2A': { actual: 4, target: 5 }, '2B': { actual: 3, target: 5 },
+      '2A': { actual: 4, target: 5 },
+      '2B': { actual: 3, target: 5 },
       '2C': { actual: 0, target: 0 },
     } as never);
-    console.log('PROBE coverage 2/3 =', r.coverage, '| assessed =', r.assessedCount, '| unassessed =', r.unassessedCount);
+    console.log(
+      'PROBE coverage 2/3 =',
+      r.coverage,
+      '| assessed =',
+      r.assessedCount,
+      '| unassessed =',
+      r.unassessedCount
+    );
     expect(r.assessedCount).toBe(2);
     expect(r.unassessedCount).toBe(1);
     expect(r.coverage).toBeCloseTo(2 / 3, 3);

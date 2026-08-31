@@ -15,16 +15,28 @@
  * (autor nie recenzuje własnego ustalenia) jest lokalna tutaj:
  * `finding.authorId === currentUserId` chowa przycisk przeglądu z powodem.
  */
-import { AlertTriangle, CheckCircle2, ClipboardList, RotateCcw, Send, ShieldAlert, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ClipboardList,
+  RotateCcw,
+  Send,
+  ShieldAlert,
+  XCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { PreviewActionButton } from '@/components/shared/PreviewPane/PreviewActionButton';
-import { ErrorState, LoadingState, SaveStateIndicator, type SaveStatus } from '@/components/shared/states';
+import {
+  ErrorState,
+  LoadingState,
+  SaveStateIndicator,
+  type SaveStatus,
+} from '@/components/shared/states';
+import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
 
 import TeresaProposalCard from './TeresaProposalCard';
-import * as workspaceApi from './workspaceApi';
 import type {
   FindingSeverity,
   ResponsePosition,
@@ -32,6 +44,7 @@ import type {
   WorkspaceFinding,
   WorkspaceFindingDetail,
 } from './workspaceApi';
+import * as workspaceApi from './workspaceApi';
 
 export interface FindingPanelProps {
   programId: string;
@@ -109,7 +122,11 @@ export function findingStatusLabel(status: string, isPolish: boolean): string {
   return (isPolish ? FINDING_STATUS_LABEL_PL : FINDING_STATUS_LABEL_EN)[status] ?? status;
 }
 export function findingClassificationLabel(classification: string, isPolish: boolean): string {
-  return (isPolish ? FINDING_CLASSIFICATION_LABEL_PL : FINDING_CLASSIFICATION_LABEL_EN)[classification] ?? classification;
+  return (
+    (isPolish ? FINDING_CLASSIFICATION_LABEL_PL : FINDING_CLASSIFICATION_LABEL_EN)[
+      classification
+    ] ?? classification
+  );
 }
 
 export const FindingPanel: React.FC<FindingPanelProps> = ({
@@ -155,7 +172,11 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
       .listFindings({ programId, criterionId })
       .then((res) => setItems(res.items))
       .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : t('Nie udało się wczytać ustaleń', 'Could not load findings'))
+        setError(
+          e instanceof Error
+            ? e.message
+            : t('Nie udało się wczytać ustaleń', 'Could not load findings')
+        )
       )
       .finally(() => setLoading(false));
   }, [programId, criterionId, t]);
@@ -224,7 +245,16 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
     } catch (e: unknown) {
       setSaveStatus('error');
     }
-  }, [programId, criterionId, statement, classification, severity, loadList, onFindingsChanged, onSelectFinding]);
+  }, [
+    programId,
+    criterionId,
+    statement,
+    classification,
+    severity,
+    loadList,
+    onFindingsChanged,
+    onSelectFinding,
+  ]);
 
   const handleReview = useCallback(
     async (decision: 'confirm' | 'send_back' | 'reject', note?: string) => {
@@ -296,7 +326,9 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
       label: t('Klasyfikacja', 'Classification'),
       width: '160px',
       render: (row: WorkspaceFinding) => (
-        <span className="text-sm text-c-text">{findingClassificationLabel(row.classification, isPolish)}</span>
+        <span className="text-sm text-c-text">
+          {findingClassificationLabel(row.classification, isPolish)}
+        </span>
       ),
     },
     {
@@ -304,7 +336,10 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
       label: t('Status', 'Status'),
       width: '150px',
       render: (row: WorkspaceFinding) => (
-        <StatusChip label={findingStatusLabel(row.status, isPolish)} tone={findingStatusTone(row.status)} />
+        <StatusChip
+          label={findingStatusLabel(row.status, isPolish)}
+          tone={findingStatusTone(row.status)}
+        />
       ),
     },
   ];
@@ -312,7 +347,10 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
   // Autor nie recenzuje własnego ustalenia — mirror assertNotReviewingOwnFinding.
   const isOwnFinding = !!detail && !!currentUserId && detail.authorId === currentUserId;
   const reviewBlockedReason = isOwnFinding
-    ? t('Nie możesz zrecenzować własnego ustalenia — recenzja wymaga niezależności.', 'You cannot review your own finding — review requires independence.')
+    ? t(
+        'Nie możesz zrecenzować własnego ustalenia — recenzja wymaga niezależności.',
+        'You cannot review your own finding — review requires independence.'
+      )
     : null;
 
   if (error) {
@@ -415,8 +453,14 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
               icon: ClipboardList,
               title: t('Brak ustaleń', 'No findings yet'),
               description: canDraft
-                ? t('Utwórz pierwsze ustalenie dla tego kryterium.', 'Create the first finding for this criterion.')
-                : t('Dla tego kryterium nie zarejestrowano jeszcze ustalenia.', 'No finding has been recorded for this criterion yet.'),
+                ? t(
+                    'Utwórz pierwsze ustalenie dla tego kryterium.',
+                    'Create the first finding for this criterion.'
+                  )
+                : t(
+                    'Dla tego kryterium nie zarejestrowano jeszcze ustalenia.',
+                    'No finding has been recorded for this criterion yet.'
+                  ),
             }}
           />
           {maxRows && items.length > maxRows && (
@@ -453,13 +497,17 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
                 variant="warning"
                 label={t('Odeślij do audytora', 'Send back')}
                 icon={RotateCcw}
-                onClick={() => handleReview('send_back', t('Wymaga doprecyzowania', 'Needs clarification'))}
+                onClick={() =>
+                  handleReview('send_back', t('Wymaga doprecyzowania', 'Needs clarification'))
+                }
               />
               <PreviewActionButton
                 variant="destructive"
                 label={t('Odrzuć', 'Reject')}
                 icon={XCircle}
-                onClick={() => handleReview('reject', t('Ustalenie nieuzasadnione', 'Finding not substantiated'))}
+                onClick={() =>
+                  handleReview('reject', t('Ustalenie nieuzasadnione', 'Finding not substantiated'))
+                }
               />
             </div>
           )}
@@ -468,41 +516,47 @@ export const FindingPanel: React.FC<FindingPanelProps> = ({
           )}
           {!canReview && detail.status === 'draft' && (
             <p className="text-xs text-c-text-muted">
-              {t('Recenzja ustalenia wymaga roli lead auditor/auditor/reviewer.', 'Reviewing a finding requires the lead auditor/auditor/reviewer role.')}
+              {t(
+                'Recenzja ustalenia wymaga roli lead auditor/auditor/reviewer.',
+                'Reviewing a finding requires the lead auditor/auditor/reviewer role.'
+              )}
             </p>
           )}
 
-          {canRespond && (detail.status === 'confirmed' || detail.status === 'response_pending') && (
-            <div data-testid="management-response-form" className="space-y-2">
-              <p className="text-xs font-semibold text-c-text">{t('Odpowiedź właściciela obszaru', 'Management response')}</p>
-              <select
-                value={responsePosition}
-                onChange={(e) => setResponsePosition(e.target.value as ResponsePosition)}
-                aria-label={t('Stanowisko', 'Position')}
-                className="w-full rounded-token-sm border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text"
-              >
-                <option value="accept">accept</option>
-                <option value="partially_accept">partially_accept</option>
-                <option value="reject">reject</option>
-                <option value="request_clarification">request_clarification</option>
-              </select>
-              <textarea
-                value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
-                placeholder={t('Treść odpowiedzi', 'Response text')}
-                aria-label={t('Treść odpowiedzi', 'Response text')}
-                className="w-full rounded-token-sm border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text"
-                rows={2}
-              />
-              <PreviewActionButton
-                variant="neutral"
-                label={t('Wyślij odpowiedź', 'Submit response')}
-                icon={Send}
-                onClick={handleRespond}
-                disabled={!responseText.trim()}
-              />
-            </div>
-          )}
+          {canRespond &&
+            (detail.status === 'confirmed' || detail.status === 'response_pending') && (
+              <div data-testid="management-response-form" className="space-y-2">
+                <p className="text-xs font-semibold text-c-text">
+                  {t('Odpowiedź właściciela obszaru', 'Management response')}
+                </p>
+                <select
+                  value={responsePosition}
+                  onChange={(e) => setResponsePosition(e.target.value as ResponsePosition)}
+                  aria-label={t('Stanowisko', 'Position')}
+                  className="w-full rounded-token-sm border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text"
+                >
+                  <option value="accept">accept</option>
+                  <option value="partially_accept">partially_accept</option>
+                  <option value="reject">reject</option>
+                  <option value="request_clarification">request_clarification</option>
+                </select>
+                <textarea
+                  value={responseText}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  placeholder={t('Treść odpowiedzi', 'Response text')}
+                  aria-label={t('Treść odpowiedzi', 'Response text')}
+                  className="w-full rounded-token-sm border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text"
+                  rows={2}
+                />
+                <PreviewActionButton
+                  variant="neutral"
+                  label={t('Wyślij odpowiedź', 'Submit response')}
+                  icon={Send}
+                  onClick={handleRespond}
+                  disabled={!responseText.trim()}
+                />
+              </div>
+            )}
 
           {detail.managementResponses.length > 0 && (
             <div className="space-y-1">

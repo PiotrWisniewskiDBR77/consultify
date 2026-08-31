@@ -9,17 +9,21 @@
  * (`@/method-core/contracts`), so this logic is runtime-agnostic by
  * construction — it never imports either session runtime.
  */
-import type { TableColumn } from '@/components/standard/StandardTable';
 import type {
   InterviewFocusQuestion,
   MatrixRow,
   MethodEvidenceState,
   MethodNavigatorNode,
 } from '@/components/method-workspace/types';
+import type { TableColumn } from '@/components/standard/StandardTable';
+import {
+  EVIDENCE_STRENGTHS,
+  type EvidenceStrength,
+  type MethodEvent,
+} from '@/method-core/contracts';
 import { compileDrdPack } from '@/method-core/methods/drd/compileDrdPack';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import { DRD_STRUCTURE, type DRDAxis } from '@/services/drdStructure';
-import { EVIDENCE_STRENGTHS, type EvidenceStrength, type MethodEvent } from '@/method-core/contracts';
 
 export const { pack } = compileDrdPack();
 
@@ -45,7 +49,12 @@ export function confirmedLevelsFor(events: readonly MethodEvent[], unitId: strin
     // jako zero — ani jako sukces). Only a genuinely `confirmed` answer
     // state may ever mark a level as achieved.
     const answerState = (e.payload as { answerState?: string } | undefined)?.answerState;
-    if (e.type === 'ANSWER_CONFIRMED' && e.unitId === unitId && typeof e.level === 'number' && answerState === 'confirmed') {
+    if (
+      e.type === 'ANSWER_CONFIRMED' &&
+      e.unitId === unitId &&
+      typeof e.level === 'number' &&
+      answerState === 'confirmed'
+    ) {
       levels.add(e.level);
     }
   }
@@ -79,11 +88,17 @@ export function evidenceEventsFor(events: readonly MethodEvent[], unitId: string
  * SCORING_CONTRACT.md §5) — never blend it into the same badge as the other
  * two.
  */
-export function evidenceStrengthFor(events: readonly MethodEvent[], unitId: string): EvidenceStrength | null {
+export function evidenceStrengthFor(
+  events: readonly MethodEvent[],
+  unitId: string
+): EvidenceStrength | null {
   let best: EvidenceStrength | null = null;
   for (const e of evidenceEventsFor(events, unitId)) {
     const strength = (e.payload as { strength?: EvidenceStrength })?.strength;
-    if (strength && (!best || EVIDENCE_STRENGTHS.indexOf(strength) > EVIDENCE_STRENGTHS.indexOf(best))) {
+    if (
+      strength &&
+      (!best || EVIDENCE_STRENGTHS.indexOf(strength) > EVIDENCE_STRENGTHS.indexOf(best))
+    ) {
       best = strength;
     }
   }
@@ -106,14 +121,20 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
   for (const axis of DRD_STRUCTURE as DRDAxis[]) {
     const axisAreaStates = axis.areas.map((area) => {
       const confirmed = confirmedLevelsFor(events, area.id);
-      const progression = drdAdapter.resolveOpenLevels({ unitId: area.id, confirmedLevels: confirmed, evidenceByLevel: {} });
+      const progression = drdAdapter.resolveOpenLevels({
+        unitId: area.id,
+        confirmedLevels: confirmed,
+        evidenceByLevel: {},
+      });
       return { area, progression };
     });
     const axisEvidenceState: MethodEvidenceState = axisAreaStates.some(
       (s) => evidenceStateFor(events, s.area.id, s.progression.blockedAtLevel) === 'missing'
     )
       ? 'missing'
-      : axisAreaStates.every((s) => evidenceStateFor(events, s.area.id, s.progression.blockedAtLevel) === 'complete')
+      : axisAreaStates.every(
+            (s) => evidenceStateFor(events, s.area.id, s.progression.blockedAtLevel) === 'complete'
+          )
         ? 'complete'
         : 'weak';
 
@@ -131,10 +152,16 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
 
     axis.areas.forEach((area, idx) => {
       const confirmed = confirmedLevelsFor(events, area.id);
-      const progression = drdAdapter.resolveOpenLevels({ unitId: area.id, confirmedLevels: confirmed, evidenceByLevel: {} });
+      const progression = drdAdapter.resolveOpenLevels({
+        unitId: area.id,
+        confirmedLevels: confirmed,
+        evidenceByLevel: {},
+      });
       const target = targetLevelFor(events, area.id);
       const focusLevel = progression.blockedAtLevel ?? Math.min(...area.levels.map((l) => l.level));
-      const openCount = pack.questions.filter((q) => q.unitId === area.id && q.level === focusLevel).length;
+      const openCount = pack.questions.filter(
+        (q) => q.unitId === area.id && q.level === focusLevel
+      ).length;
       nodes.push({
         unitId: area.id,
         name: area.namePL || area.name,
@@ -143,7 +170,10 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
         currentLevel: progression.currentLevel,
         targetLevel: target,
         evidenceState: evidenceStateFor(events, area.id, progression.blockedAtLevel),
-        gap: target !== null && progression.currentLevel !== null ? target - progression.currentLevel : null,
+        gap:
+          target !== null && progression.currentLevel !== null
+            ? target - progression.currentLevel
+            : null,
         openQuestionCount: openCount,
       });
     });
@@ -158,7 +188,11 @@ export function buildMatrixRowsForAxis(
 ): MatrixRow[] {
   return axis.areas.map((area) => {
     const confirmed = confirmedLevelsFor(events, area.id);
-    const progression = drdAdapter.resolveOpenLevels({ unitId: area.id, confirmedLevels: confirmed, evidenceByLevel: {} });
+    const progression = drdAdapter.resolveOpenLevels({
+      unitId: area.id,
+      confirmedLevels: confirmed,
+      evidenceByLevel: {},
+    });
     const target = targetLevelFor(events, area.id);
     const levels = area.levels.map((l) => l.level).sort((a, b) => a - b);
     return {
@@ -196,8 +230,14 @@ export function questionAnswerState(
   let state: InterviewFocusQuestion['answerState'] = null;
   let text = '';
   for (const e of events) {
-    if ((e.type === 'ANSWER_CONFIRMED' || e.type === 'ANSWER_DRAFTED') && (e.payload as { questionId?: string })?.questionId === questionId) {
-      const payload = e.payload as { answerState?: InterviewFocusQuestion['answerState']; text?: string };
+    if (
+      (e.type === 'ANSWER_CONFIRMED' || e.type === 'ANSWER_DRAFTED') &&
+      (e.payload as { questionId?: string })?.questionId === questionId
+    ) {
+      const payload = e.payload as {
+        answerState?: InterviewFocusQuestion['answerState'];
+        text?: string;
+      };
       state = payload.answerState ?? state;
       text = payload.text ?? text;
     }

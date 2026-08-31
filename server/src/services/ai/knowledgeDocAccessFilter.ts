@@ -32,11 +32,15 @@ export function buildKnowledgeDocAccessFilter({
     `${documentAlias}.scope = 'organization'`,
   ];
   if (userId && columns.has('owner_id')) {
-    scopeAllowed.push(`(${documentAlias}.scope = 'user' AND ${documentAlias}.owner_id = ${placeholder(userId)})`);
+    scopeAllowed.push(
+      `(${documentAlias}.scope = 'user' AND ${documentAlias}.owner_id = ${placeholder(userId)})`
+    );
   }
   if (projectIds.length > 0 && columns.has('project_id')) {
     const allowedProjects = projectIds.map((id) => placeholder(id)).join(', ');
-    scopeAllowed.push(`(${documentAlias}.scope = 'project' AND ${documentAlias}.project_id IN (${allowedProjects}))`);
+    scopeAllowed.push(
+      `(${documentAlias}.scope = 'project' AND ${documentAlias}.project_id IN (${allowedProjects}))`
+    );
   }
   const allowed = `(${scopeAllowed.join(' OR ')}) AND COALESCE(${documentAlias}.ai_visibility, 'allowed') = 'allowed' AND COALESCE(${documentAlias}.sensitivity, 'internal') != 'confidential'`;
   if (!embeddingAlias) return { sql: `(${allowed})`, params };

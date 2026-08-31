@@ -68,7 +68,12 @@ const ActionExecutionAdapter = {
 
     const correlationId = decision.correlation_id || `corr - ${uuidv4()} `;
     const orgId = decision.organization_id;
-    await assertLegacyNoncanonicalExecution({ entrypoint: 'action_execution_adapter', organizationId: orgId, entityId: decisionId, payloads: [decision, decision.proposal_snapshot, options] });
+    await assertLegacyNoncanonicalExecution({
+      entrypoint: 'action_execution_adapter',
+      organizationId: orgId,
+      entityId: decisionId,
+      payloads: [decision, decision.proposal_snapshot, options],
+    });
 
     // 2. Validate state
     const validStates = ['APPROVED', 'MODIFIED'];

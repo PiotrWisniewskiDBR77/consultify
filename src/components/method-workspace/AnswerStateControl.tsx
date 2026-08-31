@@ -10,8 +10,8 @@
 import { AlertCircle, Check, CircleSlash, FileQuestion, HelpCircle, Minus } from 'lucide-react';
 import React, { useState } from 'react';
 
-import type { MethodAnswerState, ResolutionAction, ResolutionCardData } from './types';
 import { ResolutionCard } from './ResolutionCard';
+import type { MethodAnswerState, ResolutionAction, ResolutionCardData } from './types';
 
 export interface AnswerStateControlProps {
   value: MethodAnswerState | null;
@@ -31,17 +31,26 @@ const OPTIONS: Array<{
   { id: 'confirmed', label: 'Potwierdzone', icon: <Check size={14} />, tone: 'success' },
   { id: 'partial', label: 'Częściowo', icon: <Minus size={14} />, tone: 'warning' },
   { id: 'no', label: 'Nie', icon: <CircleSlash size={14} />, tone: 'neutral' },
-  { id: 'dont_know', label: 'Nie wiem / potrzebuję pomocy', icon: <HelpCircle size={14} />, tone: 'info' },
+  {
+    id: 'dont_know',
+    label: 'Nie wiem / potrzebuję pomocy',
+    icon: <HelpCircle size={14} />,
+    tone: 'info',
+  },
   { id: 'no_evidence', label: 'Nie mam dowodu', icon: <FileQuestion size={14} />, tone: 'muted' },
   { id: 'not_applicable', label: 'Nie dotyczy', icon: <AlertCircle size={14} />, tone: 'muted' },
 ];
 
 const TONE_CLASSES: Record<string, string> = {
-  success: 'data-[selected=true]:border-c-success data-[selected=true]:bg-c-success/10 data-[selected=true]:text-c-success',
-  warning: 'data-[selected=true]:border-c-warning data-[selected=true]:bg-c-warning/10 data-[selected=true]:text-c-warning',
-  neutral: 'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text',
+  success:
+    'data-[selected=true]:border-c-success data-[selected=true]:bg-c-success/10 data-[selected=true]:text-c-success',
+  warning:
+    'data-[selected=true]:border-c-warning data-[selected=true]:bg-c-warning/10 data-[selected=true]:text-c-warning',
+  neutral:
+    'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text',
   info: 'data-[selected=true]:border-c-info data-[selected=true]:bg-c-info/10 data-[selected=true]:text-c-info',
-  muted: 'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text-secondary',
+  muted:
+    'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text-secondary',
 };
 
 export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
@@ -128,7 +137,9 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
         </div>
       )}
 
-      {value === 'dont_know' && <ResolutionCard data={resolutionData} onAction={onResolutionAction} />}
+      {value === 'dont_know' && (
+        <ResolutionCard data={resolutionData} onAction={onResolutionAction} />
+      )}
     </div>
   );
 };

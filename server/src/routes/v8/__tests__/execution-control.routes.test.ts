@@ -3,10 +3,10 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  default as executionControlRoutes,
   V8_EXECUTION_CONTROL_MUTATION_CONTRACT,
   V8_EXECUTION_CONTROL_READ_CONTRACT,
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
-  default as executionControlRoutes,
 } from '../execution-control.routes.js';
 
 const mockDetectRiskSignals = vi.fn();

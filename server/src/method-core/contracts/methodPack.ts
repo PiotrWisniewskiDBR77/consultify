@@ -197,9 +197,7 @@ export interface MethodCompileReport {
  * Uniform compiler signature. DRD, SIRI and every future method return this.
  * Consumers destructure `{ pack }`; tooling and DoD checks read `report`.
  */
-export interface MethodCompileResult<
-  TReport extends MethodCompileReport = MethodCompileReport,
-> {
+export interface MethodCompileResult<TReport extends MethodCompileReport = MethodCompileReport> {
   readonly pack: MethodPack;
   readonly report: TReport;
 }

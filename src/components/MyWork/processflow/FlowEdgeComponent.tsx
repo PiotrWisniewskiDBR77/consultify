@@ -104,9 +104,11 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   // `Position` is a runtime value (enum-like object), not a type, under the
   // shim (`export const Position: any`) — `typeof Position` is the type of
   // that value, which is what we actually want here (was TS2749).
-  const isHorizontalPosition = (pos: typeof Position) => pos === Position.Left || pos === Position.Right;
+  const isHorizontalPosition = (pos: typeof Position) =>
+    pos === Position.Left || pos === Position.Right;
   const sameRow = Math.abs(sourceY - targetY) < 1;
-  const handleDirX = sourcePosition === Position.Right ? 1 : sourcePosition === Position.Left ? -1 : 0;
+  const handleDirX =
+    sourcePosition === Position.Right ? 1 : sourcePosition === Position.Left ? -1 : 0;
   const actualDirX = targetX >= sourceX ? 1 : -1;
   const isReversedRow =
     !useOrthogonal &&

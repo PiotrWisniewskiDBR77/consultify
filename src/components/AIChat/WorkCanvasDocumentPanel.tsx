@@ -68,8 +68,8 @@ import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
-import { CanvasViewModeControl } from './CanvasViewModeControl';
 import { CanvasPresentationView } from './CanvasPresentationView';
+import { CanvasViewModeControl } from './CanvasViewModeControl';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
 
@@ -1513,7 +1513,13 @@ function WorkCanvasMarkdownDocumentPanel({
     return () => {
       cancelled = true;
     };
-  }, [authOrganizationId, authUserId, conversationId, currentCapabilityAuthScope, isAuthInitializing]);
+  }, [
+    authOrganizationId,
+    authUserId,
+    conversationId,
+    currentCapabilityAuthScope,
+    isAuthInitializing,
+  ]);
 
   React.useEffect(() => {
     persistCanvasMode(mode);

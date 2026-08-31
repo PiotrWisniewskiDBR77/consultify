@@ -26,8 +26,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { OkrSetWorkspace } from '../../src/components/ResultsVNext/okr/OkrSetWorkspace';
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
+import { OkrSetWorkspace } from '../../src/components/ResultsVNext/okr/OkrSetWorkspace';
 
 const MOCK_SET_ID = 'okr-set-5';
 const OWNER_ID = 'user-anna-kowalska';
@@ -38,7 +38,10 @@ const setStatus = (params.get('setStatus') || 'active') as OkrSetDto['status'];
 const asOwner = params.get('asOwner') === '1';
 
 function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 function mockSet(status: OkrSetDto['status']): OkrSetDto {
@@ -59,7 +62,8 @@ function mockSet(status: OkrSetDto['status']): OkrSetDto {
     approvedAt: '2026-06-05T09:00:00Z',
     changesRequestedBy: null,
     changesRequestedAt: null,
-    changesRequestedReason: status === 'changes_requested' ? 'Cel 2 nie ma jeszcze drugiego Kluczowego Rezultatu.' : null,
+    changesRequestedReason:
+      status === 'changes_requested' ? 'Cel 2 nie ma jeszcze drugiego Kluczowego Rezultatu.' : null,
     currentVersion: 3,
     approvedVersion: 2,
     latestApprovedSnapshotId: 'snap-5-v2',
@@ -103,7 +107,8 @@ const MOCK_KEY_RESULTS_OBJ1 = [
     rangeMax: null,
     progress: '0.8333333333',
     progressCalcPolicyVersionId: 'policy-1',
-    progressCalcReason: 'increase: (current_value - baseline_value) / (target_value - baseline_value)',
+    progressCalcReason:
+      'increase: (current_value - baseline_value) / (target_value - baseline_value)',
     outOfRangeDistance: null,
     confidence: 'high',
     confidenceNumericValue: null,
@@ -137,7 +142,8 @@ const MOCK_KEY_RESULTS_OBJ1 = [
     rangeMax: null,
     progress: '1.3',
     progressCalcPolicyVersionId: 'policy-1',
-    progressCalcReason: 'increase: (current_value - baseline_value) / (target_value - baseline_value)',
+    progressCalcReason:
+      'increase: (current_value - baseline_value) / (target_value - baseline_value)',
     outOfRangeDistance: null,
     confidence: 'high',
     confidenceNumericValue: null,
@@ -170,7 +176,8 @@ const MOCK_OBJECTIVES = [
     confidence: 'high',
     confidenceNumericValue: null,
     confidenceCalcPolicyVersionId: 'policy-1',
-    confidenceCalcReason: 'lowest_kr: categorical confidence, worst of 2 key result(s) (high > medium > low, never averaged)',
+    confidenceCalcReason:
+      'lowest_kr: categorical confidence, worst of 2 key result(s) (high > medium > low, never averaged)',
     sortOrder: 0,
     rowVersion: 5,
     createdBy: OWNER_ID,
@@ -192,11 +199,13 @@ const MOCK_OBJECTIVES = [
     status: 'at_risk',
     progress: null,
     progressCalcPolicyVersionId: 'policy-1',
-    progressCalcReason: 'not_calculable: every key result under this objective is itself not_calculable',
+    progressCalcReason:
+      'not_calculable: every key result under this objective is itself not_calculable',
     confidence: null,
     confidenceNumericValue: null,
     confidenceCalcPolicyVersionId: 'policy-1',
-    confidenceCalcReason: 'not_calculable: no key result under this objective has a confidence value set yet',
+    confidenceCalcReason:
+      'not_calculable: no key result under this objective has a confidence value set yet',
     sortOrder: 1,
     rowVersion: 3,
     createdBy: REVIEWER_ID,
@@ -284,7 +293,15 @@ const MOCK_REVIEWS = [
     reviewerUserId: REVIEWER_ID,
     status: 'submitted',
     outcome: null,
-    comments: [{ level: 'set', targetId: MOCK_SET_ID, text: 'Dobry postęp, dopilnuj celu 2.', createdAt: '2026-08-10T10:00:00Z', createdBy: REVIEWER_ID }],
+    comments: [
+      {
+        level: 'set',
+        targetId: MOCK_SET_ID,
+        text: 'Dobry postęp, dopilnuj celu 2.',
+        createdAt: '2026-08-10T10:00:00Z',
+        createdBy: REVIEWER_ID,
+      },
+    ],
     reviewedSetVersion: 3,
     submittedBy: REVIEWER_ID,
     submittedAt: '2026-08-10T10:00:00Z',
@@ -396,8 +413,28 @@ const MOCK_DECISION_LINK = {
 };
 
 const MOCK_HISTORY_ENTRIES = [
-  { kind: 'event', eventId: 'evt-1', sequence: '10', eventType: 'okr_set.submitted', actorUserId: OWNER_ID, actorEffectiveRole: 'member', occurredAt: '2026-08-01T09:00:00Z', reason: null, payload: {} },
-  { kind: 'event', eventId: 'evt-2', sequence: '11', eventType: 'okr_set.approved', actorUserId: REVIEWER_ID, actorEffectiveRole: 'admin', occurredAt: '2026-08-02T09:00:00Z', reason: null, payload: {} },
+  {
+    kind: 'event',
+    eventId: 'evt-1',
+    sequence: '10',
+    eventType: 'okr_set.submitted',
+    actorUserId: OWNER_ID,
+    actorEffectiveRole: 'member',
+    occurredAt: '2026-08-01T09:00:00Z',
+    reason: null,
+    payload: {},
+  },
+  {
+    kind: 'event',
+    eventId: 'evt-2',
+    sequence: '11',
+    eventType: 'okr_set.approved',
+    actorUserId: REVIEWER_ID,
+    actorEffectiveRole: 'admin',
+    occurredAt: '2026-08-02T09:00:00Z',
+    reason: null,
+    payload: {},
+  },
   {
     kind: 'material_change',
     versionId: 'ver-1',
@@ -412,8 +449,22 @@ const MOCK_HISTORY_ENTRIES = [
 ];
 
 const MOCK_SNAPSHOTS = [
-  { snapshotId: 'snap-5-v1', setId: MOCK_SET_ID, sequenceNumber: 1, approvedBy: REVIEWER_ID, approvedAt: '2026-06-05T09:00:00Z', contentHash: 'hash-v1' },
-  { snapshotId: 'snap-5-v2', setId: MOCK_SET_ID, sequenceNumber: 2, approvedBy: REVIEWER_ID, approvedAt: '2026-08-02T09:00:00Z', contentHash: 'hash-v2' },
+  {
+    snapshotId: 'snap-5-v1',
+    setId: MOCK_SET_ID,
+    sequenceNumber: 1,
+    approvedBy: REVIEWER_ID,
+    approvedAt: '2026-06-05T09:00:00Z',
+    contentHash: 'hash-v1',
+  },
+  {
+    snapshotId: 'snap-5-v2',
+    setId: MOCK_SET_ID,
+    sequenceNumber: 2,
+    approvedBy: REVIEWER_ID,
+    approvedAt: '2026-08-02T09:00:00Z',
+    contentHash: 'hash-v2',
+  },
 ];
 
 // Install the offline fetch stub once (idempotent across HMR).
@@ -445,7 +496,9 @@ if (!g.__OKR_WORKSPACE_FETCH__) {
       }
 
       // Set lifecycle transitions — echo back an updated set.
-      const transitionMatch = url.match(/\/sets\/([^/]+)\/(submit|approve|request-changes|activate|open-review|cancel|close|final-score)$/);
+      const transitionMatch = url.match(
+        /\/sets\/([^/]+)\/(submit|approve|request-changes|activate|open-review|cancel|close|final-score)$/
+      );
       if (transitionMatch && method === 'POST') {
         const [, , action] = transitionMatch;
         const nextStatus: Record<string, OkrSetDto['status']> = {
@@ -458,13 +511,31 @@ if (!g.__OKR_WORKSPACE_FETCH__) {
           close: 'closed',
           'final-score': currentSet.status,
         };
-        currentSet = { ...currentSet, status: nextStatus[action] ?? currentSet.status, rowVersion: currentSet.rowVersion + 1 };
-        if (action === 'approve') return jsonResponse({ outcome: 'applied', set: currentSet, snapshot: MOCK_SNAPSHOTS[1] });
-        if (action === 'final-score') return jsonResponse({ outcome: 'applied', set: currentSet, scoredObjectives: [{ objectiveId: 'obj-1', finalScore: '0.82', scoringModelUnsupported: false }] });
+        currentSet = {
+          ...currentSet,
+          status: nextStatus[action] ?? currentSet.status,
+          rowVersion: currentSet.rowVersion + 1,
+        };
+        if (action === 'approve')
+          return jsonResponse({ outcome: 'applied', set: currentSet, snapshot: MOCK_SNAPSHOTS[1] });
+        if (action === 'final-score')
+          return jsonResponse({
+            outcome: 'applied',
+            set: currentSet,
+            scoredObjectives: [
+              { objectiveId: 'obj-1', finalScore: '0.82', scoringModelUnsupported: false },
+            ],
+          });
         return jsonResponse({ outcome: 'applied', set: currentSet });
       }
       if (url.match(/\/sets\/[^/]+\/carry-forward$/) && method === 'POST') {
-        const carried = { ...currentSet, setId: 'okr-set-carried', status: 'draft' as const, rowVersion: 1, carriedFromSetId: currentSet.setId };
+        const carried = {
+          ...currentSet,
+          setId: 'okr-set-carried',
+          status: 'draft' as const,
+          rowVersion: 1,
+          carriedFromSetId: currentSet.setId,
+        };
         return jsonResponse({ sourceSet: currentSet, carriedSet: carried, created: true });
       }
 
@@ -476,10 +547,24 @@ if (!g.__OKR_WORKSPACE_FETCH__) {
         return jsonResponse({ alignments: MOCK_ALIGNMENTS_IN });
       }
       if (url.match(/\/objectives\/[^/]+\/alignments$/) && method === 'POST') {
-        return jsonResponse({ outcome: 'applied', alignment: { ...MOCK_ALIGNMENTS_OUT[0], alignmentId: `align-${Date.now()}`, status: 'proposed' }, created: true }, 201);
+        return jsonResponse(
+          {
+            outcome: 'applied',
+            alignment: {
+              ...MOCK_ALIGNMENTS_OUT[0],
+              alignmentId: `align-${Date.now()}`,
+              status: 'proposed',
+            },
+            created: true,
+          },
+          201
+        );
       }
       if (url.match(/\/alignments\/[^/]+\/(accept|reject|remove)$/) && method === 'POST') {
-        return jsonResponse({ outcome: 'applied', alignment: { ...MOCK_ALIGNMENTS_IN[0], status: 'accepted' } });
+        return jsonResponse({
+          outcome: 'applied',
+          alignment: { ...MOCK_ALIGNMENTS_IN[0], status: 'accepted' },
+        });
       }
 
       // Reviews
@@ -490,7 +575,10 @@ if (!g.__OKR_WORKSPACE_FETCH__) {
         return jsonResponse({ outcome: 'applied', review: MOCK_REVIEWS[0] });
       }
       if (url.match(/\/reviews\/manager\/(approve|request-changes)$/) && method === 'POST') {
-        return jsonResponse({ outcome: 'applied', review: { ...MOCK_REVIEWS[1], status: 'approved' } });
+        return jsonResponse({
+          outcome: 'applied',
+          review: { ...MOCK_REVIEWS[1], status: 'approved' },
+        });
       }
       if (url.match(/\/reviews\/(self|manager)\/comments$/) && method === 'POST') {
         return jsonResponse({ outcome: 'applied', review: MOCK_REVIEWS[1] });
@@ -500,7 +588,32 @@ if (!g.__OKR_WORKSPACE_FETCH__) {
       if (url.match(/\/objectives\/[^/]+\/reflection$/) && method === 'POST') {
         return jsonResponse({
           outcome: 'applied',
-          reflection: { reflectionId: 'refl-1', setId: MOCK_SET_ID, objectiveId: 'obj-1', organizationId: 'org-1', status: 'draft', finalScore: null, scoringModelUnsupported: false, finalScorePayload: null, scoringPolicyVersionId: null, scoredBy: null, scoredAt: null, whatWorked: null, whatDidNotWork: null, why: null, learning: null, nextCycleChange: null, disposition: null, finalizedBy: null, finalizedAt: null, rowVersion: 1, createdBy: OWNER_ID, createdAt: '2026-08-10T09:00:00Z', updatedBy: null, updatedAt: '2026-08-10T09:00:00Z' },
+          reflection: {
+            reflectionId: 'refl-1',
+            setId: MOCK_SET_ID,
+            objectiveId: 'obj-1',
+            organizationId: 'org-1',
+            status: 'draft',
+            finalScore: null,
+            scoringModelUnsupported: false,
+            finalScorePayload: null,
+            scoringPolicyVersionId: null,
+            scoredBy: null,
+            scoredAt: null,
+            whatWorked: null,
+            whatDidNotWork: null,
+            why: null,
+            learning: null,
+            nextCycleChange: null,
+            disposition: null,
+            finalizedBy: null,
+            finalizedAt: null,
+            rowVersion: 1,
+            createdBy: OWNER_ID,
+            createdAt: '2026-08-10T09:00:00Z',
+            updatedBy: null,
+            updatedAt: '2026-08-10T09:00:00Z',
+          },
         });
       }
 
@@ -516,20 +629,39 @@ if (!g.__OKR_WORKSPACE_FETCH__) {
       if (url.match(/\/sets\/[^/]+\/support-requests/) && method === 'GET') {
         return jsonResponse({ supportRequests: MOCK_SUPPORT_REQUESTS });
       }
-      if (url.match(/\/objectives\/[^/]+\/(comments|recognition|support-requests)$/) && method === 'POST') {
+      if (
+        url.match(/\/objectives\/[^/]+\/(comments|recognition|support-requests)$/) &&
+        method === 'POST'
+      ) {
         return jsonResponse({ outcome: 'applied', supportRequest: MOCK_SUPPORT_REQUESTS[0] }, 201);
       }
       if (url.match(/\/support-requests\/[^/]+\/acknowledge$/) && method === 'POST') {
-        return jsonResponse({ outcome: 'applied', supportRequest: { ...MOCK_SUPPORT_REQUESTS[0], status: 'acknowledged' } });
+        return jsonResponse({
+          outcome: 'applied',
+          supportRequest: { ...MOCK_SUPPORT_REQUESTS[0], status: 'acknowledged' },
+        });
       }
       if (url.match(/\/support-requests\/[^/]+\/resolve$/) && method === 'POST') {
-        return jsonResponse({ outcome: 'applied', supportRequest: { ...MOCK_SUPPORT_REQUESTS[0], status: 'resolved' } });
+        return jsonResponse({
+          outcome: 'applied',
+          supportRequest: { ...MOCK_SUPPORT_REQUESTS[0], status: 'resolved' },
+        });
       }
       if (url.match(/\/support-requests\/[^/]+\/dismiss$/) && method === 'POST') {
-        return jsonResponse({ outcome: 'applied', supportRequest: { ...MOCK_SUPPORT_REQUESTS[0], status: 'dismissed' } });
+        return jsonResponse({
+          outcome: 'applied',
+          supportRequest: { ...MOCK_SUPPORT_REQUESTS[0], status: 'dismissed' },
+        });
       }
       if (url.match(/\/support-requests\/[^/]+\/request-decision$/) && method === 'POST') {
-        return jsonResponse({ outcome: 'applied', supportRequest: MOCK_SUPPORT_REQUESTS[0], decisionLink: MOCK_DECISION_LINK }, 201);
+        return jsonResponse(
+          {
+            outcome: 'applied',
+            supportRequest: MOCK_SUPPORT_REQUESTS[0],
+            decisionLink: MOCK_DECISION_LINK,
+          },
+          201
+        );
       }
       if (url.match(/\/support-requests\/[^/]+\/decision-link$/) && method === 'GET') {
         return jsonResponse({ decisionLink: MOCK_DECISION_LINK });

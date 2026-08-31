@@ -30,17 +30,17 @@ import OrganizationGoalsMetricsScreen from '../components/Organization/redesign/
 import OrganizationIdentityOperatingScreen from '../components/Organization/redesign/OrganizationIdentityOperatingScreen';
 import OrganizationKnowledgeGraphScreen from '../components/Organization/redesign/OrganizationKnowledgeGraphScreen';
 import OrganizationReadinessScreen from '../components/Organization/redesign/OrganizationReadinessScreen';
-import OrganizationRisksOpportunitiesScreen from '../components/Organization/redesign/OrganizationRisksOpportunitiesScreen';
-import OrganizationRootCausesBlockersScreen from '../components/Organization/redesign/OrganizationRootCausesBlockersScreen';
-import OrganizationScenariosBriefScreen from '../components/Organization/redesign/OrganizationScenariosBriefScreen';
-import OrganizationScopeCollaborationScreen from '../components/Organization/redesign/OrganizationScopeCollaborationScreen';
-import OrganizationSourcesClaimsScreen from '../components/Organization/redesign/OrganizationSourcesClaimsScreen';
 import {
   getOrganizationRedesignModules,
   ORGANIZATION_REDESIGN_MODULES,
   resolveRedesignScreen,
 } from '../components/Organization/redesign/organizationRedesignNav';
+import OrganizationRisksOpportunitiesScreen from '../components/Organization/redesign/OrganizationRisksOpportunitiesScreen';
+import OrganizationRootCausesBlockersScreen from '../components/Organization/redesign/OrganizationRootCausesBlockersScreen';
+import OrganizationScenariosBriefScreen from '../components/Organization/redesign/OrganizationScenariosBriefScreen';
+import OrganizationScopeCollaborationScreen from '../components/Organization/redesign/OrganizationScopeCollaborationScreen';
 import OrganizationScreenShell from '../components/Organization/redesign/OrganizationScreenShell';
+import OrganizationSourcesClaimsScreen from '../components/Organization/redesign/OrganizationSourcesClaimsScreen';
 import { SettingsHeaderActionsProvider } from '../components/settings/SettingsHeaderActions';
 import DomainScreenHeader from '../components/settings/shared/DomainScreenHeader';
 import { useOrgContextSync } from '../hooks/useOrgContextSync';
@@ -91,10 +91,7 @@ const SCREEN_META: Record<OrganizationScreen, { title: string; subtitle: string 
     )
   ) as Record<OrganizationScreen, { title: string; subtitle: string }>;
 
-function resolveOrganizationLocation(
-  pathname: string,
-  redesign = false
-): OrganizationLocation {
+function resolveOrganizationLocation(pathname: string, redesign = false): OrganizationLocation {
   const modules = redesign ? ORGANIZATION_REDESIGN_MODULES : ORGANIZATION_MODULES;
   const segments = pathname
     .replace(/^\/organization\/?/, '')

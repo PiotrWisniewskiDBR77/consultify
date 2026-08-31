@@ -13,8 +13,8 @@ import type { StandardPreviewProps, TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
-import { formatRoiPercent, ROI_STATUS_TONE, roiStatusLabel } from './roiRegistryMappers';
 import type { RoiOrgPirOutcomeCaseRow, RoiPirOutcome } from './roiApi';
+import { formatRoiPercent, ROI_STATUS_TONE, roiStatusLabel } from './roiRegistryMappers';
 
 const PIR_OUTCOME_LABEL: Record<RoiPirOutcome, { pl: string; en: string }> = {
   benefits_fully_realized: { pl: 'W pełni zrealizowane', en: 'Fully realized' },
@@ -51,14 +51,19 @@ export function buildRoiPirOutcomesColumns(isPolish: boolean): TableColumn[] {
       id: 'title',
       label: isPolish ? 'Sprawa' : 'Case',
       width: '280px',
-      render: (row: RoiOrgPirOutcomeCaseRow) => <span className="text-sm font-medium text-c-text">{row.title}</span>,
+      render: (row: RoiOrgPirOutcomeCaseRow) => (
+        <span className="text-sm font-medium text-c-text">{row.title}</span>
+      ),
     },
     {
       id: 'status',
       label: 'Status',
       width: '170px',
       render: (row: RoiOrgPirOutcomeCaseRow) => (
-        <StatusChip label={roiStatusLabel(row.status, isPolish)} tone={ROI_STATUS_TONE[row.status]} />
+        <StatusChip
+          label={roiStatusLabel(row.status, isPolish)}
+          tone={ROI_STATUS_TONE[row.status]}
+        />
       ),
     },
     {
@@ -67,7 +72,10 @@ export function buildRoiPirOutcomesColumns(isPolish: boolean): TableColumn[] {
       width: '190px',
       render: (row: RoiOrgPirOutcomeCaseRow) =>
         row.pirOutcome ? (
-          <StatusChip label={roiPirOutcomeLabel(row.pirOutcome, isPolish)} tone={PIR_OUTCOME_TONE[row.pirOutcome]} />
+          <StatusChip
+            label={roiPirOutcomeLabel(row.pirOutcome, isPolish)}
+            tone={PIR_OUTCOME_TONE[row.pirOutcome]}
+          />
         ) : (
           <span className="text-sm text-c-text-muted">
             {isPolish ? 'W trakcie przeglądu' : 'Review in progress'}
@@ -90,7 +98,9 @@ export function buildRoiPirOutcomesColumns(isPolish: boolean): TableColumn[] {
               : 'No approved benefits (zero denominator) or no actual value recorded yet.'
           }
           format={(v) => (
-            <span className="tabular-nums font-medium text-sm text-c-text">{formatRoiPercent(v, isPolish)}</span>
+            <span className="tabular-nums font-medium text-sm text-c-text">
+              {formatRoiPercent(v, isPolish)}
+            </span>
           )}
         />
       ),
@@ -100,7 +110,9 @@ export function buildRoiPirOutcomesColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Sfinalizowano' : 'Finalized',
       width: '150px',
       render: (row: RoiOrgPirOutcomeCaseRow) => (
-        <span className="text-sm text-c-text-muted">{formatRoiDateShort(row.finalizedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-muted">
+          {formatRoiDateShort(row.finalizedAt, isPolish)}
+        </span>
       ),
     },
   ];
@@ -117,7 +129,10 @@ export function buildRoiPirOutcomesPreview(
     meta: {
       pills: [
         { label: roiStatusLabel(row.status, isPolish), tone: ROI_STATUS_TONE[row.status] },
-        { label: isPolish ? 'Perspektywa organizacji — PIR' : 'Org perspective — PIR', tone: 'neutral' },
+        {
+          label: isPolish ? 'Perspektywa organizacji — PIR' : 'Org perspective — PIR',
+          tone: 'neutral',
+        },
       ],
       recommendation: isPolish
         ? 'Zakres z perspektywy managera (łańcuch zarządzania) — sprawy w przeglądzie po inwestycji lub zamknięte.'
@@ -128,7 +143,12 @@ export function buildRoiPirOutcomesPreview(
       propertyLabel: isPolish ? 'Właściwość' : 'Property',
       valueLabel: isPolish ? 'Wartość' : 'Value',
       properties: [
-        { id: 'initiative', label: isPolish ? 'Inicjatywa' : 'Initiative', value: row.initiativeId, mono: true },
+        {
+          id: 'initiative',
+          label: isPolish ? 'Inicjatywa' : 'Initiative',
+          value: row.initiativeId,
+          mono: true,
+        },
         {
           id: 'pirOutcome',
           label: isPolish ? 'Wynik PIR' : 'PIR outcome',

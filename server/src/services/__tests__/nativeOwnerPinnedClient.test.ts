@@ -37,12 +37,10 @@ const explodingDb = {
 (globalThis as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = explodingDb;
 (process as unknown as Record<string, unknown>).__CONSULTIFY_GLOBAL_DB_INSTANCE__ = explodingDb;
 
-const { createNativeReport, setDependencies, withReportBuilderClient } = await import(
-  '../reportBuilderService.js'
-);
-const { createNativeDeck, createNativeDeckVersion, withPresentationOwnerClient } = await import(
-  '../presentationGeneratorService.js'
-);
+const { createNativeReport, setDependencies, withReportBuilderClient } =
+  await import('../reportBuilderService.js');
+const { createNativeDeck, createNativeDeckVersion, withPresentationOwnerClient } =
+  await import('../presentationGeneratorService.js');
 const { withArtifactRegistryClient } = await import('../v8/artifactRegistryService.js');
 
 setDependencies({ db: explodingDb as never });
@@ -98,7 +96,9 @@ function recordingClient() {
         const [org, runtime, record] = params as string[];
         const found = links.find(
           (l) =>
-            l.organization_id === org && l.origin_runtime === runtime && l.origin_record_id === record
+            l.organization_id === org &&
+            l.origin_runtime === runtime &&
+            l.origin_record_id === record
         );
         return { rows: (found ? [found] : []) as T[], rowCount: found ? 1 : 0 };
       }

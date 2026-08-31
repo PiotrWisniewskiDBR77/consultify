@@ -27,8 +27,8 @@
 import { AlertTriangle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 export interface OkrActionDialogField {
   id: string;
@@ -61,7 +61,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -127,10 +128,22 @@ export const OkrActionDialog: React.FC<OkrActionDialogProps> = ({
       preventEscapeClose={busy}
       footer={
         <>
-          <button type="button" onClick={onClose} disabled={busy} className={GHOST_BUTTON_CLASS} data-testid="okr-action-dialog-back">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className={GHOST_BUTTON_CLASS}
+            data-testid="okr-action-dialog-back"
+          >
             {isPolish ? 'Wstecz' : 'Back'}
           </button>
-          <button type="button" onClick={handleSubmit} disabled={submitDisabled} data-testid="okr-action-dialog-submit" className={buttonClass}>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitDisabled}
+            data-testid="okr-action-dialog-submit"
+            className={buttonClass}
+          >
             <span>{busy ? (isPolish ? 'Zapisywanie…' : 'Saving…') : submitLabel}</span>
           </button>
         </>
@@ -144,7 +157,13 @@ export const OkrActionDialog: React.FC<OkrActionDialogProps> = ({
             <div key={f.id}>
               <label className={LABEL_CLASS} htmlFor={`okr-action-dialog-${f.id}`}>
                 {isPolish ? f.label.pl : f.label.en}
-                {f.required ? (isPolish ? ' (wymagane)' : ' (required)') : isPolish ? ' (opcjonalnie)' : ' (optional)'}
+                {f.required
+                  ? isPolish
+                    ? ' (wymagane)'
+                    : ' (required)'
+                  : isPolish
+                    ? ' (opcjonalnie)'
+                    : ' (optional)'}
               </label>
               <textarea
                 id={`okr-action-dialog-${f.id}`}
@@ -157,7 +176,11 @@ export const OkrActionDialog: React.FC<OkrActionDialogProps> = ({
                 aria-describedby={fieldError ? `okr-action-dialog-${f.id}-error` : undefined}
               />
               {fieldError ? (
-                <p id={`okr-action-dialog-${f.id}-error`} className="mt-1 text-[11px] text-c-danger" data-testid={`okr-action-dialog-${f.id}-error`}>
+                <p
+                  id={`okr-action-dialog-${f.id}-error`}
+                  className="mt-1 text-[11px] text-c-danger"
+                  data-testid={`okr-action-dialog-${f.id}-error`}
+                >
                   {isPolish ? 'To pole jest wymagane' : 'This field is required'}
                 </p>
               ) : null}

@@ -57,8 +57,8 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as caseCoreService from '../caseCoreService.js';
-import * as casePlanVersionService from '../casePlanVersionService.js';
 import type { CanonicalGraph } from '../casePlanVersionService.js';
+import * as casePlanVersionService from '../casePlanVersionService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -180,10 +180,10 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   /** A fresh, uniquely-named organization row. */
   async function seedOrg(label: string): Promise<string> {
     const orgId = `case-planv-org-${label}-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      orgId,
-      `Case Plan Version test org (${label})`,
-    ]);
+    await control.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgId, `Case Plan Version test org (${label})`]
+    );
     return orgId;
   }
 
@@ -247,7 +247,11 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
     return { orgId, projectId, caseId: created.caseId, actorId };
   }
 
-  async function teardown(orgIds: string[], projectIds: string[], userIds: string[] = []): Promise<void> {
+  async function teardown(
+    orgIds: string[],
+    projectIds: string[],
+    userIds: string[] = []
+  ): Promise<void> {
     for (const projectId of projectIds) {
       // case_plan_versions/case_plan_view_state cascade off case_core via
       // ON DELETE CASCADE — deleting case_core is enough to clean both up.
@@ -266,7 +270,9 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       await control
         .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -359,8 +365,12 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       const rows = await readPlanVersionRowsForCase(caseId);
       expect(rows).toHaveLength(2);
       expect(rows.map((r) => r.plan_number)).toEqual([1, 2]);
-      expect(rows.find((r) => r.case_plan_version_id === first.casePlanVersionId)?.plan_number).toBe(1);
-      expect(rows.find((r) => r.case_plan_version_id === second.casePlanVersionId)?.plan_number).toBe(2);
+      expect(
+        rows.find((r) => r.case_plan_version_id === first.casePlanVersionId)?.plan_number
+      ).toBe(1);
+      expect(
+        rows.find((r) => r.case_plan_version_id === second.casePlanVersionId)?.plan_number
+      ).toBe(2);
       expect(rows.every((r) => r.status === 'DRAFT')).toBe(true);
     } finally {
       await teardown([orgId], [projectId], [actorId]);
@@ -531,7 +541,11 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
       );
       expect(putResult.viewType).toBe('SIMPLE');
 
-      const getResult = await casePlanVersionService.getViewState(draft.casePlanVersionId, 'SIMPLE', actorId);
+      const getResult = await casePlanVersionService.getViewState(
+        draft.casePlanVersionId,
+        'SIMPLE',
+        actorId
+      );
       expect(getResult).not.toBeNull();
       expect(getResult?.viewState).toMatchObject({ viewport: { x: 12, y: 34, zoom: 1.5 } });
 
@@ -624,7 +638,14 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         // unreachable from entryNodeIds and no path exists to any declared
         // terminal node — both are real, distinct, expected consequences of
         // this specific defect, not incidental noise.
-        edges: [{ edgeId: 'e1', sourceNodeId: 'n1', targetNodeId: 'n-does-not-exist', edgeType: 'SEQUENCE' }],
+        edges: [
+          {
+            edgeId: 'e1',
+            sourceNodeId: 'n1',
+            targetNodeId: 'n-does-not-exist',
+            edgeType: 'SEQUENCE',
+          },
+        ],
       };
 
       const draft = await casePlanVersionService.createPlanDraft({
@@ -633,7 +654,10 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         createdByActorId: actorId,
       });
 
-      const result = await casePlanVersionService.validatePlanVersion(draft.casePlanVersionId, actorId);
+      const result = await casePlanVersionService.validatePlanVersion(
+        draft.casePlanVersionId,
+        actorId
+      );
       expect(result.valid).toBe(false);
 
       const codes = result.blockers.map((b) => b.code);
@@ -652,7 +676,10 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
         semanticGraph: validGraph('validation-control'),
         createdByActorId: actorId,
       });
-      const goodResult = await casePlanVersionService.validatePlanVersion(goodDraft.casePlanVersionId, actorId);
+      const goodResult = await casePlanVersionService.validatePlanVersion(
+        goodDraft.casePlanVersionId,
+        actorId
+      );
       const goodCodes = goodResult.blockers.map((b) => b.code);
       expect(goodCodes).not.toContain('DANGLING_EDGE');
       expect(goodCodes).not.toContain('NO_TERMINAL_PATH');
@@ -667,7 +694,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   //    membership, and wrong-org membership, both fail closed with the
   //    caseId never learnable from the error shape.
   // -------------------------------------------------------------------------
-  it('createPlanDraft rejects an actor with no organization_members row for the Case\'s org, creating no case_plan_versions row', async () => {
+  it("createPlanDraft rejects an actor with no organization_members row for the Case's org, creating no case_plan_versions row", async () => {
     const { orgId, projectId, caseId } = await seedOrgProjectCase('auth-create');
     const noMembershipActor = await seedUser(orgId, 'auth-create-outsider');
     try {
@@ -745,7 +772,7 @@ suite('casePlanVersionService — Case Plan Version against a real PostgreSQL (C
   // identical to what requireCaseAccess(caseId) already throws for a
   // caseId that does not exist at all.
   // -------------------------------------------------------------------------
-  it('getPlanVersion resolves null (not a throw) for an actor with no membership in the plan version\'s Case org; listPlanVersionsForCase still rejects', async () => {
+  it("getPlanVersion resolves null (not a throw) for an actor with no membership in the plan version's Case org; listPlanVersionsForCase still rejects", async () => {
     const { orgId, projectId, caseId, actorId } = await seedOrgProjectCase('auth-read');
     const noMembershipActor = await seedUser(orgId, 'auth-read-outsider');
     try {

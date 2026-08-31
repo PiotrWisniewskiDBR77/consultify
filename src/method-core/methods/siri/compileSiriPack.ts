@@ -49,6 +49,8 @@
  * transcription of the licensed PDF, and it is NOT dimension-specific.
  */
 
+import { SIRI_MATURITY_LEVELS, SIRI_PRIORITISATION_AREAS } from '@/services/siriStructure';
+
 import type {
   MethodCompileReport,
   MethodCompileResult,
@@ -60,10 +62,6 @@ import type {
   MethodUnit,
   ScoringFixture,
 } from '../../contracts';
-import {
-  SIRI_MATURITY_LEVELS,
-  SIRI_PRIORITISATION_AREAS,
-} from '@/services/siriStructure';
 
 export const SIRI_METHOD_PACK_ID = 'siri';
 export const SIRI_METHOD_PACK_VERSION = '0.1.0-draft';
@@ -246,8 +244,7 @@ export function buildSiriSources(): MethodSourceRef[] {
     {
       sourceId: 'assessment-kb-siri-canon',
       title: 'ASSESSMENT-KB-SIRI — SIRI knowledge base + Workbench communication canon',
-      locator:
-        'docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/ASSESSMENT_KB_SIRI.md',
+      locator: 'docs/program/WEEKEND_COMPLETION_2026-08-01/AGREEMENTS/ASSESSMENT_KB_SIRI.md',
       retrievedAt: RETRIEVED_AT,
       usageRight: 'internal_reference',
     },
@@ -302,7 +299,8 @@ export function buildSiriScoringFixtures(): ScoringFixture[] {
     },
     {
       fixtureId: 'siri-8020-boundary-just-below-80',
-      description: '79% (3.95/5, i.e. 3/5=60% here) is NOT sufficient — must stay at the prior band.',
+      description:
+        '79% (3.95/5, i.e. 3/5=60% here) is NOT sufficient — must stay at the prior band.',
       kind: 'boundary',
       input: {
         unitId: 'horizontal_integration',
@@ -437,8 +435,7 @@ function buildSiriCompileReport(pack: MethodPack): SiriCompileReport {
       bandsPerDimension: 6,
       levelsTotal: levels.length,
       levelsMarkedEvidenceMissing,
-      dimensionsWithDedicatedQuestions:
-        SIRI_QBANK_V1_COVERAGE.dimensionsWithDedicatedQuestions,
+      dimensionsWithDedicatedQuestions: SIRI_QBANK_V1_COVERAGE.dimensionsWithDedicatedQuestions,
       questionsTotal: pack.questions.length,
     },
   };

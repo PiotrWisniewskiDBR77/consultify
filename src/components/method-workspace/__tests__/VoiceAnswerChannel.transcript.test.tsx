@@ -163,7 +163,10 @@ describe('Voice transcript reaches InterviewFocusPanel through the SAME handler 
     // EXACT SAME onAnswerChange prop the textarea uses, appending to the
     // existing answerText — there is no separate voice-only save path.
     await waitFor(() =>
-      expect(onAnswerChange).toHaveBeenCalledWith(question.question.questionId, 'Wstępna notatka. dowód kompletny')
+      expect(onAnswerChange).toHaveBeenCalledWith(
+        question.question.questionId,
+        'Wstępna notatka. dowód kompletny'
+      )
     );
     expect(onAnswerChange).toHaveBeenCalledTimes(1);
   });

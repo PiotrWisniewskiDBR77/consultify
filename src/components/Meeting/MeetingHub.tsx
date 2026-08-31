@@ -1338,7 +1338,8 @@ export const MeetingHub: React.FC = () => {
                             ) : null}
                             {note.decisionReason ? (
                               <p className="mt-2 text-xs text-c-text-muted">
-                                {t('meeting.notes.decisionReason', 'Decision reason')}: {note.decisionReason}
+                                {t('meeting.notes.decisionReason', 'Decision reason')}:{' '}
+                                {note.decisionReason}
                               </p>
                             ) : null}
                           </div>

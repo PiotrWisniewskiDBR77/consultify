@@ -116,7 +116,8 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       });
     }
     const body = init?.body ? JSON.parse(String(init.body)) : {};
-    if (Object.prototype.hasOwnProperty.call(body, 'goals')) orgContextStoreState.goals = body.goals;
+    if (Object.prototype.hasOwnProperty.call(body, 'goals'))
+      orgContextStoreState.goals = body.goals;
     if (Object.prototype.hasOwnProperty.call(body, 'challenges'))
       orgContextStoreState.challenges = body.challenges;
     if (Object.prototype.hasOwnProperty.call(body, 'synthesis'))
@@ -126,9 +127,7 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   }
   if (url.includes('/api/organizations/current')) {
     return json({
-      organizations: [
-        { id: 'org-dbr77-demo', name: 'Northstar Advisory Group', is_current: true },
-      ],
+      organizations: [{ id: 'org-dbr77-demo', name: 'Northstar Advisory Group', is_current: true }],
     });
   }
   return originalFetch(input as RequestInfo, init);

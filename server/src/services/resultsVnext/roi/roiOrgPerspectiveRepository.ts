@@ -26,7 +26,6 @@ import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { buildVisibilityScopedCte } from '../platform/visibilityScopedQuery.js';
-
 import { ROI_RESOURCE_TYPE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
 import type { RoiPirOutcome } from './roiPirTypes.js';
 import type { RoiCaseStatus } from './roiTypes.js';
@@ -189,7 +188,8 @@ SELECT
     const actualFinancialBenefits =
       row.actual_financial_benefits === null ? null : Number(row.actual_financial_benefits);
 
-    if (approvedFinancialBenefits !== null) totalApprovedFinancialBenefits += approvedFinancialBenefits;
+    if (approvedFinancialBenefits !== null)
+      totalApprovedFinancialBenefits += approvedFinancialBenefits;
     if (actualFinancialBenefits !== null) {
       totalActualFinancialBenefits += actualFinancialBenefits;
       caseCountWithActual += 1;
@@ -198,7 +198,9 @@ SELECT
     // Same D10 formula as the single-case view: null when either side is
     // missing OR the approved denominator is 0.
     const benefitsRealizationPct =
-      approvedFinancialBenefits === null || approvedFinancialBenefits === 0 || actualFinancialBenefits === null
+      approvedFinancialBenefits === null ||
+      approvedFinancialBenefits === 0 ||
+      actualFinancialBenefits === null
         ? null
         : (actualFinancialBenefits / approvedFinancialBenefits) * 100;
 
@@ -337,7 +339,9 @@ SELECT
     const actualFinancialBenefits =
       row.actual_financial_benefits === null ? null : Number(row.actual_financial_benefits);
     const benefitsRealizationPct =
-      approvedFinancialBenefits === null || approvedFinancialBenefits === 0 || actualFinancialBenefits === null
+      approvedFinancialBenefits === null ||
+      approvedFinancialBenefits === 0 ||
+      actualFinancialBenefits === null
         ? null
         : (actualFinancialBenefits / approvedFinancialBenefits) * 100;
 
@@ -361,6 +365,11 @@ SELECT
 
   return {
     cases,
-    portfolioTotals: { closedCaseCount, fullyRealizedCount, partiallyRealizedCount, notRealizedCount },
+    portfolioTotals: {
+      closedCaseCount,
+      fullyRealizedCount,
+      partiallyRealizedCount,
+      notRealizedCount,
+    },
   };
 }

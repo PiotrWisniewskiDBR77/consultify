@@ -32,21 +32,20 @@ describe('bezpiecznik: suity bazodanowe nie mogą zniknąć po cichu', () => {
         process.env.RUN_DB_TESTS,
         'REQUIRE_DB_TESTS=1, ale RUN_DB_TESTS nie jest ustawione na 1 — suity ' +
           'integracyjne pominęłyby się po cichu i przebieg pokazałby zieleń bez ' +
-          'sprawdzenia bazy.',
+          'sprawdzenia bazy.'
       ).toBe('1');
 
       expect(
         process.env.MOCK_DB,
         'REQUIRE_DB_TESTS=1, ale MOCK_DB nie jest "false" — warstwa bazy ' +
-          'zostałaby zamockowana i testy „przeszłyby" nie dotykając PostgreSQL-a.',
+          'zostałaby zamockowana i testy „przeszłyby" nie dotykając PostgreSQL-a.'
       ).toBe('false');
 
       expect(
         process.env.DATABASE_URL,
-        'REQUIRE_DB_TESTS=1, ale DATABASE_URL jest pusty — nie ma do czego się ' +
-          'połączyć.',
+        'REQUIRE_DB_TESTS=1, ale DATABASE_URL jest pusty — nie ma do czego się ' + 'połączyć.'
       ).toBeTruthy();
-    },
+    }
   );
 
   it('bez REQUIRE_DB_TESTS bezpiecznik nie przeszkadza w pracy lokalnej', () => {

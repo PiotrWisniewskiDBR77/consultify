@@ -33,17 +33,13 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
+import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
 import {
   buildVisibilityScopedCte,
-  wrapWithVisibilityScope,
   VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
 } from '../platform/visibilityScopedQuery.js';
-import { resultsTextMatchPattern, resultsTextMatchSql } from '../platform/textMatch.js';
-
 import {
-  toKpiDefinition,
-  toKpiDefinitionVersion,
-  toKpiMeasurement,
   type KpiDefinition,
   type KpiDefinitionRow,
   type KpiDefinitionVersion,
@@ -51,6 +47,9 @@ import {
   type KpiMeasurement,
   type KpiMeasurementRow,
   type KpiStatus,
+  toKpiDefinition,
+  toKpiDefinitionVersion,
+  toKpiMeasurement,
 } from './kpiTypes.js';
 
 /**

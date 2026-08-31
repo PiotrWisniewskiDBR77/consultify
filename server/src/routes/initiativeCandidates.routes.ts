@@ -26,6 +26,11 @@ import {
   verifyToken,
 } from '../middleware/auth.middleware.js';
 import {
+  certifyFlowTransformLineage,
+  type FlowSourceKind,
+  FlowTransformLineageError,
+} from '../services/flowTransform/flowTransformLineageService.js';
+import {
   acceptCandidate,
   type CandidateStatus,
   dismissCandidate,
@@ -34,11 +39,6 @@ import {
 } from '../services/initiative/initiativeCandidateService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
-import {
-  certifyFlowTransformLineage,
-  FlowTransformLineageError,
-  type FlowSourceKind,
-} from '../services/flowTransform/flowTransformLineageService.js';
 
 const router = Router();
 
@@ -58,12 +58,10 @@ router.post(
     const sourceReceiptId = String(req.body?.sourceReceiptId || '');
     if (!organizationId || !actorId) return void res.status(401).json({ error: 'Unauthorized' });
     if (!FLOW_SOURCE_KINDS.includes(sourceKind) || !sourceReceiptId) {
-      return void res
-        .status(400)
-        .json({
-          error: 'Valid sourceKind and sourceReceiptId are required',
-          code: 'FLOW_SOURCE_REF_INVALID',
-        });
+      return void res.status(400).json({
+        error: 'Valid sourceKind and sourceReceiptId are required',
+        code: 'FLOW_SOURCE_REF_INVALID',
+      });
     }
     try {
       const result = await certifyFlowTransformLineage({

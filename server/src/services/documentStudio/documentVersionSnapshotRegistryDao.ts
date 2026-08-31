@@ -415,7 +415,8 @@ export async function loadVersionLineage(
       versionNumber: Number(row.version_number),
       parentVersionId: row.parent_version_id ?? null,
       contentHash: row.content_hash ?? null,
-      capturedAt: row.captured_at instanceof Date ? row.captured_at.toISOString() : String(row.captured_at),
+      capturedAt:
+        row.captured_at instanceof Date ? row.captured_at.toISOString() : String(row.captured_at),
       capturedBy: row.captured_by,
       origin: row.origin,
       label: row.label ?? null,

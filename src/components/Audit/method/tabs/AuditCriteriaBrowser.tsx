@@ -45,12 +45,17 @@ import { ArrowLeft, ListChecks, Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { type StandardRowMenu, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import type { FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
+import {
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn,
+  type TableRow,
+} from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
 
-import { criterionWorkStatusLabel, criterionWorkStatusTone } from '../auditStatusTones';
 import type { AuditCriterionSummary } from '../auditsMethodApi';
+import { criterionWorkStatusLabel, criterionWorkStatusTone } from '../auditStatusTones';
 
 /**
  * Mirrors `FilterableTable.tsx`'s `filteredData` memo exactly (same grouping
@@ -58,7 +63,10 @@ import type { AuditCriterionSummary } from '../auditsMethodApi';
  * array-valued-column handling), so lifting the filter here changes WHERE
  * it runs, never WHAT it matches.
  */
-function applyColumnFilters<T extends Record<string, unknown>>(rows: T[], activeFilters: FilterChip[]): T[] {
+function applyColumnFilters<T extends Record<string, unknown>>(
+  rows: T[],
+  activeFilters: FilterChip[]
+): T[] {
   if (activeFilters.length === 0) return rows;
   const byColumn = new Map<string, string[]>();
   for (const f of activeFilters) {
@@ -77,7 +85,13 @@ function applyColumnFilters<T extends Record<string, unknown>>(rows: T[], active
 
 const PAGE_SIZE = 25;
 
-const CRITERION_WORK_STATUS_ORDER = ['open', 'evidence_requested', 'evidence_received', 'tested', 'concluded'];
+const CRITERION_WORK_STATUS_ORDER = [
+  'open',
+  'evidence_requested',
+  'evidence_received',
+  'tested',
+  'concluded',
+];
 
 export interface AuditCriteriaBrowserProps {
   programId: string;
@@ -115,7 +129,11 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
   // Filter the FULL search-matched set — `paged` below slices the result of
   // this, never the other way around (R2(b) fix).
   const filtered = useMemo(
-    () => applyColumnFilters(searched as unknown as Array<Record<string, unknown>>, activeFilters) as unknown as AuditCriterionSummary[],
+    () =>
+      applyColumnFilters(
+        searched as unknown as Array<Record<string, unknown>>,
+        activeFilters
+      ) as unknown as AuditCriterionSummary[],
     [searched, activeFilters]
   );
 
@@ -136,7 +154,9 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
       label: isPolish ? 'Ref.' : 'Ref.',
       width: '110px',
       render: (row: AuditCriterionSummary) => (
-        <span className="text-xs font-medium text-c-text-muted tabular-nums">{row.refCode || '—'}</span>
+        <span className="text-xs font-medium text-c-text-muted tabular-nums">
+          {row.refCode || '—'}
+        </span>
       ),
     },
     {
@@ -168,7 +188,7 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
       width: '90px',
       render: (row: AuditCriterionSummary) => (
         <span className="text-xs text-c-text-secondary">
-          {row.applicable ? (isPolish ? 'Tak' : 'Yes') : (isPolish ? 'Nie' : 'No')}
+          {row.applicable ? (isPolish ? 'Tak' : 'Yes') : isPolish ? 'Nie' : 'No'}
         </span>
       ),
     },

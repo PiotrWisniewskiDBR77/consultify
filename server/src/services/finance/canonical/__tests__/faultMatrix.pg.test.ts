@@ -99,7 +99,10 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
     jobs = await import('../computeJobService.js');
 
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'W9 Fault Matrix Org'])
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'W9 Fault Matrix Org',
+      ])
     );
 
     const created = await svc.createArtifact({
@@ -136,7 +139,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
   async function readOutputs(jobId: string) {
     return withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string; committed_by_attempt_number: number; content_semantic_hash: string }>(
+      tx.queryAll<{
+        id: string;
+        committed_by_attempt_number: number;
+        content_semantic_hash: string;
+      }>(
         `SELECT id, committed_by_attempt_number, content_semantic_hash FROM compute_job_outputs WHERE job_id = ?`,
         [jobId]
       )
@@ -145,7 +152,13 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
   async function readRuns(jobId: string) {
     return withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ attempt_number: number; worker_id: string; outcome: string | null; last_heartbeat_at: string; finished_at: string | null }>(
+      tx.queryAll<{
+        attempt_number: number;
+        worker_id: string;
+        outcome: string | null;
+        last_heartbeat_at: string;
+        finished_at: string | null;
+      }>(
         `SELECT attempt_number, worker_id, outcome, last_heartbeat_at, finished_at
            FROM compute_job_runs WHERE job_id = ? ORDER BY attempt_number`,
         [jobId]
@@ -178,7 +191,12 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       const jobType = `w9b1_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
-      const [claimed] = await jobs.claim({ workerId: 'w9b1-doomed-worker', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 300 });
+      const [claimed] = await jobs.claim({
+        workerId: 'w9b1-doomed-worker',
+        jobTypes: [jobType],
+        limit: 1,
+        leaseDurationSeconds: 300,
+      });
       expect(claimed.id).toBe(job.id);
 
       const running = await readJob(job.id);
@@ -191,7 +209,10 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       // a dead process cannot. We only fast-forward the lease past expiry,
       // which is exactly what wall-clock would do 5 minutes later.
       const expired = await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE compute_jobs SET lease_expires_at = now() - interval '1 minute' WHERE id = ?`, [job.id])
+        tx.queryRun(
+          `UPDATE compute_jobs SET lease_expires_at = now() - interval '1 minute' WHERE id = ?`,
+          [job.id]
+        )
       );
       expect(expired.changes).toBe(1);
 
@@ -225,7 +246,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       expect(runsAfterReap[0].finished_at).toBeTruthy();
 
       // claim() does NOT see it yet — its backoff window has not passed.
-      const tooEarly = await jobs.claim({ workerId: 'w9b1-too-early', jobTypes: [jobType], limit: 5 });
+      const tooEarly = await jobs.claim({
+        workerId: 'w9b1-too-early',
+        jobTypes: [jobType],
+        limit: 5,
+      });
       expect(tooEarly).toHaveLength(0);
 
       // Fast-forward the backoff clock (test-side only, same pattern used
@@ -234,7 +259,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       await withPinnedPostgresTransaction((tx) =>
         tx.queryRun(`UPDATE compute_jobs SET next_attempt_at = now() WHERE id = ?`, [job.id])
       );
-      const reclaimed = await jobs.claim({ workerId: 'w9b1-rescuer', jobTypes: [jobType], limit: 5 });
+      const reclaimed = await jobs.claim({
+        workerId: 'w9b1-rescuer',
+        jobTypes: [jobType],
+        limit: 5,
+      });
       expect(reclaimed).toHaveLength(1);
       expect(reclaimed[0].id).toBe(job.id);
       expect(reclaimed[0].attempt_count).toBe(2); // bumped by the ORIGINAL claim, not reset by the reaper
@@ -249,12 +278,21 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
       // --- case 1: fresh heartbeat -> untouched ---
       const { job: freshJob } = await enqueueOne(jobType);
-      const [freshClaimed] = await jobs.claim({ workerId: 'w9b1hb-alive', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 2 });
+      const [freshClaimed] = await jobs.claim({
+        workerId: 'w9b1hb-alive',
+        jobTypes: [jobType],
+        limit: 1,
+        leaseDurationSeconds: 2,
+      });
       expect(freshClaimed.id).toBe(freshJob.id);
 
       // Worker heartbeats BEFORE its short lease would expire, extending it
       // well past "now".
-      const hb = await jobs.heartbeat({ jobId: freshJob.id, workerId: 'w9b1hb-alive', leaseDurationSeconds: 300 });
+      const hb = await jobs.heartbeat({
+        jobId: freshJob.id,
+        workerId: 'w9b1hb-alive',
+        leaseDurationSeconds: 300,
+      });
       expect(hb.ok).toBe(true);
       if (!hb.ok) throw new Error('unreachable');
       expect(new Date(hb.leaseExpiresAt).getTime()).toBeGreaterThan(Date.now() + 60_000);
@@ -271,7 +309,12 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
       // --- case 2: stale (no heartbeat, past its short lease) -> reclaimed ---
       const { job: staleJob } = await enqueueOne(jobType);
-      const [staleClaimed] = await jobs.claim({ workerId: 'w9b1hb-dead', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 1 });
+      const [staleClaimed] = await jobs.claim({
+        workerId: 'w9b1hb-dead',
+        jobTypes: [jobType],
+        limit: 1,
+        leaseDurationSeconds: 1,
+      });
       expect(staleClaimed.id).toBe(staleJob.id);
 
       await new Promise((resolve) => setTimeout(resolve, 1200)); // let the 1s lease actually pass wall-clock
@@ -288,7 +331,12 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
     it('heartbeat on a lease already reaped/lost returns LEASE_LOST (ADR §5.2: worker must stop computing)', async () => {
       const jobType = `w9b1hbl_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
-      await jobs.claim({ workerId: 'w9b1hbl-worker', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 1 });
+      await jobs.claim({
+        workerId: 'w9b1hbl-worker',
+        jobTypes: [jobType],
+        limit: 1,
+        leaseDurationSeconds: 1,
+      });
 
       await new Promise((resolve) => setTimeout(resolve, 1200));
       const reaped = await jobs.reapExpiredLeases({ batchSize: 50 });
@@ -312,7 +360,10 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       expect(claimed.attempt_count).toBe(1);
 
       await withPinnedPostgresTransaction((tx) =>
-        tx.queryRun(`UPDATE compute_jobs SET lease_expires_at = now() - interval '1 minute' WHERE id = ?`, [job.id])
+        tx.queryRun(
+          `UPDATE compute_jobs SET lease_expires_at = now() - interval '1 minute' WHERE id = ?`,
+          [job.id]
+        )
       );
 
       const reaped = await jobs.reapExpiredLeases({ batchSize: 10 });
@@ -323,7 +374,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
         tx.queryRun(`UPDATE compute_jobs SET next_attempt_at = now() WHERE id = ?`, [job.id])
       );
 
-      const [reclaimed] = await jobs.claim({ workerId: 'w9b1r-live', jobTypes: [jobType], limit: 1 });
+      const [reclaimed] = await jobs.claim({
+        workerId: 'w9b1r-live',
+        jobTypes: [jobType],
+        limit: 1,
+      });
       expect(reclaimed.id).toBe(job.id);
       expect(reclaimed.attempt_count).toBe(2); // attempt bumped, not reset
 
@@ -363,7 +418,12 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       });
       const jobId = enqueued.job.id;
 
-      await jobs.claim({ workerId: 'w9b1dlq-dead', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 1 });
+      await jobs.claim({
+        workerId: 'w9b1dlq-dead',
+        jobTypes: [jobType],
+        limit: 1,
+        leaseDurationSeconds: 1,
+      });
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
       const reaped = await jobs.reapExpiredLeases({ batchSize: 10 });
@@ -398,7 +458,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       const jobType = `w9b2_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
-      const [claimed] = await jobs.claim({ workerId: 'w9b2-worker-1', jobTypes: [jobType], limit: 1 });
+      const [claimed] = await jobs.claim({
+        workerId: 'w9b2-worker-1',
+        jobTypes: [jobType],
+        limit: 1,
+      });
       expect(claimed.attempt_count).toBe(1);
 
       // FAULT INJECTION: the worker has computed its domain rows and is inside
@@ -422,14 +486,21 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       // Physical proof the partial write did not survive.
       expect(await readOutputs(job.id)).toHaveLength(0);
       const orphan = await withPinnedPostgresTransaction((tx) =>
-        tx.queryAll<{ id: string }>(`SELECT id FROM compute_job_outputs WHERE content_semantic_hash = ?`, [partialMarker])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM compute_job_outputs WHERE content_semantic_hash = ?`,
+          [partialMarker]
+        )
       );
       expect(orphan).toHaveLength(0);
 
       // The dead worker's job is still `running` (nothing reaps it — see B1),
       // so the retry has to be driven by an explicit failJob, which IS
       // implemented and IS what a supervising caller would do.
-      const failed = await jobs.failJob({ jobId: job.id, organizationId: orgId, error: 'worker killed mid-commit' });
+      const failed = await jobs.failJob({
+        jobId: job.id,
+        organizationId: orgId,
+        error: 'worker killed mid-commit',
+      });
       expect(failed).not.toBeNull();
       expect(failed!.status).toBe('queued'); // attempts remain -> requeued
 
@@ -442,7 +513,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
         tx.queryRun(`UPDATE compute_jobs SET next_attempt_at = now() WHERE id = ?`, [job.id])
       );
 
-      const [retry] = await jobs.claim({ workerId: 'w9b2-worker-2', jobTypes: [jobType], limit: 1 });
+      const [retry] = await jobs.claim({
+        workerId: 'w9b2-worker-2',
+        jobTypes: [jobType],
+        limit: 1,
+      });
       expect(retry.id).toBe(job.id);
       expect(retry.attempt_count).toBe(2);
 
@@ -586,7 +661,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       const jobType = `w9b4_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
-      const [claimed] = await jobs.claim({ workerId: 'w9b4-worker', jobTypes: [jobType], limit: 1 });
+      const [claimed] = await jobs.claim({
+        workerId: 'w9b4-worker',
+        jobTypes: [jobType],
+        limit: 1,
+      });
       expect(claimed.id).toBe(job.id);
       expect((await readJob(job.id))!.status).toBe('running');
 
@@ -644,7 +723,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       // fix must not try to close a row that never existed.
       const jobType = `w9b4q_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
-      const cancelled = await jobs.cancelJob(orgId, job.id, 'cancelled while still queued, bookkeeping probe');
+      const cancelled = await jobs.cancelJob(
+        orgId,
+        job.id,
+        'cancelled while still queued, bookkeeping probe'
+      );
       expect(cancelled!.status).toBe('cancelled');
       expect(cancelled!.finished_at).toBeTruthy();
 
@@ -705,7 +788,8 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       expect(terminal!.lease_owner).toBeNull();
 
       // DLQ is a computed predicate, not a column (ADR §10).
-      const isDeadLetter = terminal!.status === 'failed' && terminal!.attempt_count >= terminal!.max_attempts;
+      const isDeadLetter =
+        terminal!.status === 'failed' && terminal!.attempt_count >= terminal!.max_attempts;
       expect(isDeadLetter).toBe(true);
 
       // Both attempts are recorded, both closed as failed.
@@ -737,7 +821,13 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
       // Independent read straight from the table — never the service's return value.
       const raised = await withPinnedPostgresTransaction((tx) =>
-        tx.queryAll<{ id: string; severity: string; reason_code: string; artifact_id: string; organization_id: string }>(
+        tx.queryAll<{
+          id: string;
+          severity: string;
+          reason_code: string;
+          artifact_id: string;
+          organization_id: string;
+        }>(
           `SELECT id, severity, reason_code, artifact_id, organization_id FROM finance_exceptions
             WHERE organization_id = ? AND source_ref::text LIKE ?`,
           [orgId, `%${jobId}%`]
@@ -814,21 +904,32 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
     it('FIXED EM-2: heartbeat() advances last_heartbeat_at and extends lease_expires_at', async () => {
       const jobType = `w9bhb_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
-      await jobs.claim({ workerId: 'hb-worker', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 2 });
+      await jobs.claim({
+        workerId: 'hb-worker',
+        jobTypes: [jobType],
+        limit: 1,
+        leaseDurationSeconds: 2,
+      });
 
       const before = (await readRuns(job.id))[0];
       const leaseBefore = (await readJob(job.id))!.lease_expires_at;
 
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
-      const hb = await jobs.heartbeat({ jobId: job.id, workerId: 'hb-worker', leaseDurationSeconds: 300 });
+      const hb = await jobs.heartbeat({
+        jobId: job.id,
+        workerId: 'hb-worker',
+        leaseDurationSeconds: 300,
+      });
       expect(hb.ok).toBe(true);
 
       // Independent physical read — never the heartbeat() return value.
       const after = (await readRuns(job.id))[0];
       const leaseAfter = (await readJob(job.id))!.lease_expires_at;
 
-      expect(new Date(after.last_heartbeat_at).getTime()).toBeGreaterThan(new Date(before.last_heartbeat_at).getTime());
+      expect(new Date(after.last_heartbeat_at).getTime()).toBeGreaterThan(
+        new Date(before.last_heartbeat_at).getTime()
+      );
       expect(new Date(leaseAfter!).getTime()).toBeGreaterThan(new Date(leaseBefore!).getTime());
       expect(new Date(leaseAfter!).getTime()).toBeGreaterThan(Date.now() + 60_000); // extended ~300s out
     });
@@ -853,24 +954,40 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
           `SELECT proname FROM pg_proc WHERE proname IN ('org_concurrency_limit', 'is_org_compute_killed')`
         )
       );
-      expect(present.map((r) => r.proname).sort()).toEqual(['is_org_compute_killed', 'org_concurrency_limit']);
+      expect(present.map((r) => r.proname).sort()).toEqual([
+        'is_org_compute_killed',
+        'org_concurrency_limit',
+      ]);
     });
 
     it('FIXED EM-3: an active kill switch for (org, job_type) makes claim() see zero eligible jobs; clearing it un-blocks', async () => {
       const jobType = `w9bkill_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
-      await jobs.setKillSwitch({ organizationId: orgId, jobType, reason: 'w9b kill switch probe', actorId: userId });
+      await jobs.setKillSwitch({
+        organizationId: orgId,
+        jobType,
+        reason: 'w9b kill switch probe',
+        actorId: userId,
+      });
       expect(await jobs.isOrgComputeKilled(orgId, jobType)).toBe(true);
 
-      const blockedClaim = await jobs.claim({ workerId: 'kill-worker', jobTypes: [jobType], limit: 5 });
+      const blockedClaim = await jobs.claim({
+        workerId: 'kill-worker',
+        jobTypes: [jobType],
+        limit: 5,
+      });
       expect(blockedClaim).toHaveLength(0);
       expect((await readJob(job.id))!.status).toBe('queued'); // untouched, not silently dropped
 
       await jobs.clearKillSwitch({ organizationId: orgId, jobType });
       expect(await jobs.isOrgComputeKilled(orgId, jobType)).toBe(false);
 
-      const unblockedClaim = await jobs.claim({ workerId: 'kill-worker', jobTypes: [jobType], limit: 5 });
+      const unblockedClaim = await jobs.claim({
+        workerId: 'kill-worker',
+        jobTypes: [jobType],
+        limit: 5,
+      });
       expect(unblockedClaim).toHaveLength(1);
       expect(unblockedClaim[0].id).toBe(job.id);
     });
@@ -879,11 +996,20 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       const jobType = `w9bkillg_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
-      await jobs.setKillSwitch({ organizationId: null, jobType, reason: 'global kill probe', actorId: userId });
+      await jobs.setKillSwitch({
+        organizationId: null,
+        jobType,
+        reason: 'global kill probe',
+        actorId: userId,
+      });
       try {
         expect(await jobs.isOrgComputeKilled(orgId, jobType)).toBe(true);
         expect(await jobs.isOrgComputeKilled(`some-other-org-${randomUUID()}`, jobType)).toBe(true);
-        const claimed = await jobs.claim({ workerId: 'global-kill-worker', jobTypes: [jobType], limit: 5 });
+        const claimed = await jobs.claim({
+          workerId: 'global-kill-worker',
+          jobTypes: [jobType],
+          limit: 5,
+        });
         expect(claimed).toHaveLength(0);
       } finally {
         await jobs.clearKillSwitch({ organizationId: null, jobType });
@@ -893,20 +1019,36 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
     it('FIXED EM-4: an explicit LOW concurrency limit for (org, job_type) caps claim() even when more jobs are queued and limit param requests more', async () => {
       const jobType = `w9bconclow_${randomUUID()}`;
-      await jobs.setOrgConcurrencyLimit({ organizationId: orgId, jobType, maxConcurrent: 2, actorId: userId });
+      await jobs.setOrgConcurrencyLimit({
+        organizationId: orgId,
+        jobType,
+        maxConcurrent: 2,
+        actorId: userId,
+      });
 
       await Promise.all(Array.from({ length: 6 }, () => enqueueOne(jobType)));
-      const claimed = await jobs.claim({ workerId: 'conc-low-worker', jobTypes: [jobType], limit: 6 });
+      const claimed = await jobs.claim({
+        workerId: 'conc-low-worker',
+        jobTypes: [jobType],
+        limit: 6,
+      });
       expect(claimed).toHaveLength(2); // capped, not 6
 
       // The remaining 4 are still queued, not lost.
       const stillQueued = await withPinnedPostgresTransaction((tx) =>
-        tx.queryAll<{ id: string }>(`SELECT id FROM compute_jobs WHERE job_type = ? AND status = 'queued'`, [jobType])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM compute_jobs WHERE job_type = ? AND status = 'queued'`,
+          [jobType]
+        )
       );
       expect(stillQueued).toHaveLength(4);
 
       // A SECOND claim call, while the first 2 are still `running`, claims nothing more — the cap holds across calls.
-      const secondAttempt = await jobs.claim({ workerId: 'conc-low-worker-2', jobTypes: [jobType], limit: 6 });
+      const secondAttempt = await jobs.claim({
+        workerId: 'conc-low-worker-2',
+        jobTypes: [jobType],
+        limit: 6,
+      });
       expect(secondAttempt).toHaveLength(0);
     });
 
@@ -920,7 +1062,11 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       // rejected (canonicalServices.pg.test.ts's SKIP LOCKED test).
       const jobType = `w9bconcdefault_${randomUUID()}`;
       await Promise.all(Array.from({ length: 6 }, () => enqueueOne(jobType)));
-      const claimed = await jobs.claim({ workerId: 'conc-default-worker', jobTypes: [jobType], limit: 6 });
+      const claimed = await jobs.claim({
+        workerId: 'conc-default-worker',
+        jobTypes: [jobType],
+        limit: 6,
+      });
       expect(claimed).toHaveLength(6);
       expect(await jobs.getOrgConcurrencyLimit(orgId, jobType)).toBe(50);
     });

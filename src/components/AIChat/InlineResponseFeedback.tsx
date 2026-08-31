@@ -267,7 +267,10 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
   // advanced values are still in state.
   if (status === 'error' || status === 'forbidden') {
     return (
-      <div className="flex items-center gap-1.5 text-[10px] py-1" data-testid="feedback-error-state">
+      <div
+        className="flex items-center gap-1.5 text-[10px] py-1"
+        data-testid="feedback-error-state"
+      >
         <AlertCircle size={10} className="text-danger-500 shrink-0" />
         <span className="text-danger-600 dark:text-danger-400">
           {status === 'forbidden'
@@ -301,9 +304,14 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     // + "Thank you"), so the UI never actually told the user WHICH rating
     // they had given, only that they had rated at all. Surface the actual
     // selected thumb here too, not just on first click.
-    const RatingIcon = rating === 'negative' ? ThumbsDown : rating === 'positive' ? ThumbsUp : Check;
+    const RatingIcon =
+      rating === 'negative' ? ThumbsDown : rating === 'positive' ? ThumbsUp : Check;
     const ratingIconClass =
-      rating === 'negative' ? 'text-danger-500' : rating === 'positive' ? 'text-green-500' : 'text-green-500';
+      rating === 'negative'
+        ? 'text-danger-500'
+        : rating === 'positive'
+          ? 'text-green-500'
+          : 'text-green-500';
     return (
       <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 animate-fade-in py-1">
         <RatingIcon size={10} className={ratingIconClass} />

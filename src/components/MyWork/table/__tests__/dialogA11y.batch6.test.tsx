@@ -153,9 +153,7 @@ function baseProps(): TableToolbarProps {
     FilterPanelComponent: Null,
     HeatmapControlsComponent: Null,
     ColorPaletteComponent: Null,
-    MobileToolbarMenuComponent: ({ children }: { children: React.ReactNode }) => (
-      <>{children}</>
-    ),
+    MobileToolbarMenuComponent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     BatchAIFillButtonComponent: Null,
     WorkspacePresenceIndicatorComponent: Null,
     WorkspaceLockIndicatorComponent: Null,

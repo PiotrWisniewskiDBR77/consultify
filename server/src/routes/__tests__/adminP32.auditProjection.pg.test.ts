@@ -108,7 +108,13 @@ describe.skipIf(!enabled)('Admin P32 canonical audit projection mounted RealPG',
       res.status(500).json({ error: String(error?.message || error) })
     );
     token = jwt.sign(
-      { id: owner, userId: owner, organizationId: org, email: `${owner}@test.invalid`, role: 'OWNER' },
+      {
+        id: owner,
+        userId: owner,
+        organizationId: org,
+        email: `${owner}@test.invalid`,
+        role: 'OWNER',
+      },
       secret,
       { algorithm: 'HS256', expiresIn: '10m' }
     );

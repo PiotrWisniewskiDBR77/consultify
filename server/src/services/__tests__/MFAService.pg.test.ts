@@ -94,7 +94,9 @@ describe.skipIf(!REAL_DB)('MFAService login enforcement — real PostgreSQL', ()
   it('persists trusted devices for 30 days and fails closed after expiry', async () => {
     const fingerprint = `browser-${randomUUID()}`;
     expect(await service.isDeviceTrusted(orgId, userId, fingerprint)).toBe(false);
-    await expect(service.trustDevice(orgId, userId, fingerprint, 'Signed Chromium')).resolves.toEqual({
+    await expect(
+      service.trustDevice(orgId, userId, fingerprint, 'Signed Chromium')
+    ).resolves.toEqual({
       success: true,
     });
     expect(await service.isDeviceTrusted(orgId, userId, fingerprint)).toBe(true);
@@ -181,13 +183,18 @@ describe.skipIf(!REAL_DB)('MFAService login enforcement — real PostgreSQL', ()
     const credential = `rotate-${randomUUID()}`;
     await service.trustDevice(orgId, userId, credential, 'Rotating browser');
     await service.createLoginChallenge(orgId, userId, '127.0.0.1', 'browser-b');
-    await pool.query(
-      `UPDATE user_mfa SET factor_generation=factor_generation+1 WHERE user_id=$1`,
-      [userId]
-    );
+    await pool.query(`UPDATE user_mfa SET factor_generation=factor_generation+1 WHERE user_id=$1`, [
+      userId,
+    ]);
     expect(await service.isDeviceTrusted(orgId, userId, credential)).toBe(false);
     expect(
-      Number((await pool.query(`SELECT COUNT(*) count FROM mfa_login_challenges WHERE user_id=$1`, [userId])).rows[0].count)
+      Number(
+        (
+          await pool.query(`SELECT COUNT(*) count FROM mfa_login_challenges WHERE user_id=$1`, [
+            userId,
+          ])
+        ).rows[0].count
+      )
     ).toBe(0);
   });
 });

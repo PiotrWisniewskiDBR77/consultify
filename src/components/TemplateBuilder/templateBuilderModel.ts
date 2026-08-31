@@ -37,7 +37,15 @@ export interface DocSection {
 
 /** deck — jeden slajd prezentacji. */
 export type SlideArchetype =
-  'cover' | 'agenda' | 'section' | 'content' | 'two-column' | 'kpi' | 'chart' | 'quote' | 'closing';
+  | 'cover'
+  | 'agenda'
+  | 'section'
+  | 'content'
+  | 'two-column'
+  | 'kpi'
+  | 'chart'
+  | 'quote'
+  | 'closing';
 
 export interface DeckSlide {
   id: string;

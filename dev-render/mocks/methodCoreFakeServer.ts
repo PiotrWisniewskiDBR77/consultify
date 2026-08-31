@@ -33,11 +33,11 @@
  * enough to exercise the real UI's rendering of that data, not a
  * reimplementation of `drdAdapter.resolveOpenLevels`.
  */
+import { canTransition } from '../../src/method-core/contracts/session';
 import {
   DRD_METHOD_PACK_ID,
   DRD_METHOD_PACK_VERSION,
 } from '../../src/method-core/methods/drd/compileDrdPack';
-import { canTransition } from '../../src/method-core/contracts/session';
 import { DRD_STRUCTURE } from '../../src/services/drdStructure';
 
 // ---------------------------------------------------------------------------

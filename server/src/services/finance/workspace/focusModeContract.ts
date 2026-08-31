@@ -27,7 +27,7 @@
  * refetched, cannot have reset scroll, and cannot have dropped a draft.
  */
 
-import { cellRefsEqual, type CellRef } from '../../../types/finance/CellRef.js';
+import { type CellRef, cellRefsEqual } from '../../../types/finance/CellRef.js';
 import type { FinanceWorkspaceState } from '../../../types/finance/WorkspaceState.js';
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,9 @@ export const FOCUS_MODE_HIDDEN_REGIONS = [
 
 export type FocusModeRegionVisibility = 'retained' | 'hidden';
 
-export function regionVisibilityInFocusMode(region: FinanceChromeRegion): FocusModeRegionVisibility {
+export function regionVisibilityInFocusMode(
+  region: FinanceChromeRegion
+): FocusModeRegionVisibility {
   return (FOCUS_MODE_RETAINED_REGIONS as readonly FinanceChromeRegion[]).includes(region)
     ? 'retained'
     : 'hidden';
@@ -143,7 +145,9 @@ export const FOCUS_MODE_PRESERVED_STATE_KEYS = [
 ] as const;
 export type FocusModePreservedStateKey = (typeof FOCUS_MODE_PRESERVED_STATE_KEYS)[number];
 
-export const FOCUS_MODE_PRESERVED_STATE_SOURCE: Readonly<Record<FocusModePreservedStateKey, string>> = {
+export const FOCUS_MODE_PRESERVED_STATE_SOURCE: Readonly<
+  Record<FocusModePreservedStateKey, string>
+> = {
   selection: 'FinanceWorkspaceState.selection',
   filters: 'FinanceWorkspaceState.filters',
   scroll: 'FinanceWorkspaceState.scroll',
@@ -163,7 +167,11 @@ export const FOCUS_MODE_NEVER_REFETCHES = true as const;
 // Session + toggle.
 // ---------------------------------------------------------------------------
 
-export type FocusModeTrigger = 'toggle-control' | 'escape-key' | 'programmatic' | 'keyboard-shortcut';
+export type FocusModeTrigger =
+  | 'toggle-control'
+  | 'escape-key'
+  | 'programmatic'
+  | 'keyboard-shortcut';
 
 export interface FocusModeSession {
   active: boolean;
@@ -761,7 +769,12 @@ export function focusRestoreTargetOnExit(session: FocusModeSession): FocusModeRe
 
 export type FocusModelAgreement =
   | { ok: true; cell: CellRef | null }
-  | { ok: false; reason: 'CELL_MISMATCH' | 'NULLNESS_MISMATCH'; ap09: CellRef | null; ap03: CellRef | null };
+  | {
+      ok: false;
+      reason: 'CELL_MISMATCH' | 'NULLNESS_MISMATCH';
+      ap09: CellRef | null;
+      ap03: CellRef | null;
+    };
 
 /**
  * Prove the two models are describing the same focus. Compared by
@@ -814,7 +827,9 @@ export interface ViewportCapability {
  * FAIL-CLOSED with a clear DesktopRequired. Mobile is not a gate for this
  * release, but the contract must already say "no", not "unspecified".
  */
-export const FINANCE_VIEWPORT_CAPABILITIES: Readonly<Record<FinanceViewportClass, ViewportCapability>> = {
+export const FINANCE_VIEWPORT_CAPABILITIES: Readonly<
+  Record<FinanceViewportClass, ViewportCapability>
+> = {
   desktop: { edit: true, compute: true, review: true, read: true, focusMode: true },
   tablet: { edit: false, compute: false, review: true, read: true, focusMode: true },
   mobile: { edit: false, compute: false, review: false, read: false, focusMode: false },

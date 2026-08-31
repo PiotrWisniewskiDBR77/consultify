@@ -12,19 +12,20 @@
  * financialModelingService.approvePersist.perfgate.pg.test.ts.
  */
 import { randomUUID } from 'node:crypto';
+
 import { Pool } from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  approveModel,
-  computeModel,
-  persistComputeResult,
-  type ComputeResult,
-} from '../financialModelingService.js';
-import {
   getPoolClientForPinnedTransaction,
   getPrimaryPoolSaturationPercent,
 } from '../../database/PostgresDatabase.js';
+import {
+  approveModel,
+  computeModel,
+  type ComputeResult,
+  persistComputeResult,
+} from '../financialModelingService.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -112,13 +113,21 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
     return id;
   }
 
-  async function counts(modelId: string): Promise<{ outputs: number; validations: number; versions: number }> {
+  async function counts(
+    modelId: string
+  ): Promise<{ outputs: number; validations: number; versions: number }> {
     const o = await pool.query<{ n: number }>(
-      `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`, [modelId]);
+      `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`,
+      [modelId]
+    );
     const v = await pool.query<{ n: number }>(
-      `SELECT count(*)::int n FROM financial_model_validations WHERE model_id = $1`, [modelId]);
+      `SELECT count(*)::int n FROM financial_model_validations WHERE model_id = $1`,
+      [modelId]
+    );
     const ver = await pool.query<{ n: number }>(
-      `SELECT count(*)::int n FROM financial_model_versions WHERE model_id = $1`, [modelId]);
+      `SELECT count(*)::int n FROM financial_model_versions WHERE model_id = $1`,
+      [modelId]
+    );
     return { outputs: o.rows[0].n, validations: v.rows[0].n, versions: ver.rows[0].n };
   }
 
@@ -126,16 +135,22 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
     pool = new Pool({ connectionString: CONNECTION_STRING, max: 16 });
     await pool.query(
       `INSERT INTO organizations(id,name,plan,status,is_active,created_at)
-       VALUES($1,$2,'enterprise','active',1,now()) ON CONFLICT (id) DO NOTHING`, [org, org]);
+       VALUES($1,$2,'enterprise','active',1,now()) ON CONFLICT (id) DO NOTHING`,
+      [org, org]
+    );
     await pool.query(
       `INSERT INTO users(id,organization_id,email,role,status) VALUES($1,$2,$3,'ADMIN','active')
-       ON CONFLICT (id) DO NOTHING`, [user, org, `${user}@example.test`]);
+       ON CONFLICT (id) DO NOTHING`,
+      [user, org, `${user}@example.test`]
+    );
   }, 60_000);
 
   afterAll(async () => {
     if (!pool) return;
     await pool.query(`DELETE FROM financial_model_versions WHERE model_id = ANY($1)`, [modelIds]);
-    await pool.query(`DELETE FROM financial_model_validations WHERE model_id = ANY($1)`, [modelIds]);
+    await pool.query(`DELETE FROM financial_model_validations WHERE model_id = ANY($1)`, [
+      modelIds,
+    ]);
     await pool.query(`DELETE FROM financial_model_outputs WHERE model_id = ANY($1)`, [modelIds]);
     await pool.query(`DELETE FROM financial_models WHERE id = ANY($1)`, [modelIds]);
     await pool.query(`DELETE FROM users WHERE id = $1`, [user]);
@@ -173,19 +188,31 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
     expect((await approveModel(modelId, user)).success).toBe(true);
 
     const persisted = await pool.query<{
-      period_date: string; statement_type: string; line_code: string; value: number;
+      period_date: string;
+      statement_type: string;
+      line_code: string;
+      value: number;
     }>(
       `SELECT period_date::text, statement_type, line_code, value
          FROM financial_model_outputs WHERE model_id = $1
-        ORDER BY period_date, statement_type, line_code`, [modelId]);
+        ORDER BY period_date, statement_type, line_code`,
+      [modelId]
+    );
     expect(persisted.rows).toHaveLength(EXPECTED_OUTPUT_ROWS);
 
     const fresh = await computeModel(modelId);
     const expectedByKey = new Map<string, number>();
     for (const period of fresh.periods) {
-      for (const [type, lines] of [['P&L', period.pl], ['BS', period.bs], ['CF', period.cf]] as const) {
+      for (const [type, lines] of [
+        ['P&L', period.pl],
+        ['BS', period.bs],
+        ['CF', period.cf],
+      ] as const) {
         for (const [code, value] of Object.entries(lines)) {
-          expectedByKey.set(`${period.date}|${type}|${code}`, Math.round((value as number) * 100) / 100);
+          expectedByKey.set(
+            `${period.date}|${type}|${code}`,
+            Math.round((value as number) * 100) / 100
+          );
         }
       }
     }
@@ -214,8 +241,9 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
       Array.from({ length: 8 }, () => approveModel(modelId, user, { expectedVersion: 1 }))
     );
 
-    const fulfilled = settled.filter((s) => s.status === 'fulfilled') as
-      PromiseFulfilledResult<Awaited<ReturnType<typeof approveModel>>>[];
+    const fulfilled = settled.filter((s) => s.status === 'fulfilled') as PromiseFulfilledResult<
+      Awaited<ReturnType<typeof approveModel>>
+    >[];
     expect(fulfilled, 'no approve call may throw').toHaveLength(8);
 
     const winners = fulfilled.filter((s) => s.value.success);
@@ -236,15 +264,21 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
     const coldPool = new Pool({ connectionString: CONNECTION_STRING, max: 2 });
     try {
       const cold = await coldPool.query<{ status: string; version: number; approved_by: string }>(
-        `SELECT status, version, approved_by FROM financial_models WHERE id = $1`, [modelId]);
+        `SELECT status, version, approved_by FROM financial_models WHERE id = $1`,
+        [modelId]
+      );
       expect(cold.rows[0]).toEqual({ status: 'approved', version: 2, approved_by: user });
 
       const coldOutputs = await coldPool.query<{ n: number }>(
-        `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`, [modelId]);
+        `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`,
+        [modelId]
+      );
       expect(coldOutputs.rows[0].n).toBe(EXPECTED_OUTPUT_ROWS);
 
       const coldVersion = await coldPool.query<{ version: number }>(
-        `SELECT version FROM financial_model_versions WHERE model_id = $1`, [modelId]);
+        `SELECT version FROM financial_model_versions WHERE model_id = $1`,
+        [modelId]
+      );
       expect(coldVersion.rows.map((r) => Number(r.version))).toEqual([2]);
     } finally {
       await coldPool.end();
@@ -278,7 +312,9 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
     ).rejects.toThrow();
 
     const rows = await pool.query<{ line_code: string; value: number }>(
-      `SELECT line_code, value::int AS value FROM financial_model_outputs WHERE model_id = $1`, [modelId]);
+      `SELECT line_code, value::int AS value FROM financial_model_outputs WHERE model_id = $1`,
+      [modelId]
+    );
     expect(rows.rows, 'pre-existing row survives; new batch fully undone').toEqual([
       { line_code: 'REVENUE', value: 999 },
     ]);
@@ -306,11 +342,13 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
       ).toEqual({ outputs: 0, validations: 0, versions: 0 });
 
       const model = await pool.query<{ status: string; version: number }>(
-        `SELECT status, version FROM financial_models WHERE id = $1`, [modelId]);
-      expect(
-        model.rows[0],
-        'the model row must not have been flipped to approved'
-      ).toEqual({ status: 'draft', version: 1 });
+        `SELECT status, version FROM financial_models WHERE id = $1`,
+        [modelId]
+      );
+      expect(model.rows[0], 'the model row must not have been flipped to approved').toEqual({
+        status: 'draft',
+        version: 1,
+      });
     } finally {
       await pool.query(
         `ALTER TABLE financial_model_validations DROP CONSTRAINT tmp_no_reconcile_summary`
@@ -363,12 +401,12 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
       expect(c.versions, 'only the pre-seeded row remains').toBe(1);
 
       const model = await pool.query<{ status: string; version: number }>(
-        `SELECT status, version FROM financial_models WHERE id = $1`, [modelId]);
+        `SELECT status, version FROM financial_models WHERE id = $1`,
+        [modelId]
+      );
       expect(model.rows[0]).toEqual({ status: 'draft', version: 1 });
     } finally {
-      await pool.query(
-        `ALTER TABLE financial_model_versions DROP CONSTRAINT tmp_uq_model_version`
-      );
+      await pool.query(`ALTER TABLE financial_model_versions DROP CONSTRAINT tmp_uq_model_version`);
     }
   }, 60_000);
 
@@ -397,10 +435,14 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
 
       const c = await counts(modelId);
       expect(c, 'a COMMIT-time failure must leave zero rows').toEqual({
-        outputs: 0, validations: 0, versions: 0,
+        outputs: 0,
+        validations: 0,
+        versions: 0,
       });
       const model = await pool.query<{ status: string; version: number }>(
-        `SELECT status, version FROM financial_models WHERE id = $1`, [modelId]);
+        `SELECT status, version FROM financial_models WHERE id = $1`,
+        [modelId]
+      );
       expect(model.rows[0]).toEqual({ status: 'draft', version: 1 });
     } finally {
       await pool.query(`DROP TRIGGER IF EXISTS tmp_fail_at_commit_trg ON financial_model_outputs`);
@@ -431,10 +473,14 @@ describe.skipIf(!REAL_PG)('Finance B2 — approveModel() unit of work (real Post
     const coldPool = new Pool({ connectionString: CONNECTION_STRING, max: 2 });
     try {
       const outputs = await coldPool.query<{ n: number }>(
-        `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`, [modelId]);
+        `SELECT count(*)::int n FROM financial_model_outputs WHERE model_id = $1`,
+        [modelId]
+      );
       expect(outputs.rows[0].n).toBe(EXPECTED_OUTPUT_ROWS);
       const model = await coldPool.query<{ status: string; version: number }>(
-        `SELECT status, version FROM financial_models WHERE id = $1`, [modelId]);
+        `SELECT status, version FROM financial_models WHERE id = $1`,
+        [modelId]
+      );
       expect(model.rows[0]).toEqual({ status: 'approved', version: 2 });
     } finally {
       await coldPool.end();

@@ -273,7 +273,9 @@ function validateBusinessCaseBlueprint(sections: TemplateSectionBlueprint[]): vo
     .filter((value): value is string => typeof value === 'string')
     .join(' | ')
     .toLowerCase();
-  if (!/(methodology|approach|scope|proposed initiative|proposed solution)/i.test(authoredSemantics)) {
+  if (
+    !/(methodology|approach|scope|proposed initiative|proposed solution)/i.test(authoredSemantics)
+  ) {
     throw new Error('business_case_scope_or_approach_required');
   }
   if (!/(assumption|scenario|sensitivity|economic analysis)/i.test(authoredSemantics)) {

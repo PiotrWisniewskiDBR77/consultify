@@ -1,9 +1,11 @@
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { ROUTES } from '@/routes/routeConfig';
+import { partnerText } from '@/views/partner/partnerProgramLocale';
 import {
   CommissionCalculatorSection,
   FAQSection,
@@ -11,8 +13,6 @@ import {
   TierProgressionSection,
   ValueCardsSection,
 } from '@/views/partner/ProviderHomeView';
-import { partnerText } from '@/views/partner/partnerProgramLocale';
-import { useTranslation } from 'react-i18next';
 
 /**
  * Public, publication-safe entry to the Consultify Partner Program.
@@ -36,10 +36,16 @@ export const BecomePartnerView: React.FC = () => {
                 {partnerText('Consultify Partner Program', language)}
               </span>
               <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl">
-                {partnerText('Find the right model for your first joint client opportunity.', language)}
+                {partnerText(
+                  'Find the right model for your first joint client opportunity.',
+                  language
+                )}
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-c-text-secondary md:text-lg">
-                {partnerText('Six partner paths, five cooperation models and one evidence-led journey from qualification to an informed expansion decision. Choose your path before you apply.', language)}
+                {partnerText(
+                  'Six partner paths, five cooperation models and one evidence-led journey from qualification to an informed expansion decision. Choose your path before you apply.',
+                  language
+                )}
               </p>
               <div className="mt-7 flex flex-wrap items-center gap-4">
                 <button
@@ -51,7 +57,10 @@ export const BecomePartnerView: React.FC = () => {
                   <ArrowRight className="h-4 w-4" />
                 </button>
                 <p className="text-xs leading-5 text-c-text-muted">
-                  {partnerText('Program fit and commercial terms are confirmed during qualification.', language)}
+                  {partnerText(
+                    'Program fit and commercial terms are confirmed during qualification.',
+                    language
+                  )}
                 </p>
               </div>
             </div>

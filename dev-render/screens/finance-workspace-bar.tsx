@@ -29,10 +29,10 @@ import {
   type WorkspaceBarEvaluationContext,
 } from '../../src/components/Finance/shared/financeWorkspaceBar.contract';
 import {
-  financeValueDisplayReasonLabel,
-  formatFinanceValueForDisplay,
   type FinanceRole,
   type FinanceValue,
+  financeValueDisplayReasonLabel,
+  formatFinanceValueForDisplay,
 } from '../../src/services/api/financeV2.types';
 
 const params = new URLSearchParams(window.location.search);
@@ -54,13 +54,32 @@ type SceneKey =
   | 'empty'
   | 'error';
 
-const SCENE_META: Record<SceneKey, { status: WorkspaceBarConfig['identity']['status']; freshness: WorkspaceBarConfig['identity']['freshness']; name: string }> = {
+const SCENE_META: Record<
+  SceneKey,
+  {
+    status: WorkspaceBarConfig['identity']['status'];
+    freshness: WorkspaceBarConfig['identity']['freshness'];
+    name: string;
+  }
+> = {
   draft: { status: 'DRAFT', freshness: 'CURRENT', name: 'DBR77 — Model bazowy FY2026' },
   stale: { status: 'DRAFT', freshness: 'STALE_SOURCE', name: 'DBR77 — Model bazowy FY2026' },
-  approved: { status: 'APPROVED', freshness: 'CURRENT', name: 'DBR77 — Model bazowy FY2026 (zatwierdzony)' },
+  approved: {
+    status: 'APPROVED',
+    freshness: 'CURRENT',
+    name: 'DBR77 — Model bazowy FY2026 (zatwierdzony)',
+  },
   failed: { status: 'DRAFT', freshness: 'COMPUTE_FAILED', name: 'DBR77 — Model bazowy FY2026' },
-  computing: { status: 'IN_REVIEW', freshness: 'NEVER_COMPUTED', name: 'DBR77 — Model bazowy FY2026' },
-  'needs-changes': { status: 'NEEDS_CHANGES', freshness: 'STALE_ASSUMPTIONS', name: 'DBR77 — Model bazowy FY2026' },
+  computing: {
+    status: 'IN_REVIEW',
+    freshness: 'NEVER_COMPUTED',
+    name: 'DBR77 — Model bazowy FY2026',
+  },
+  'needs-changes': {
+    status: 'NEEDS_CHANGES',
+    freshness: 'STALE_ASSUMPTIONS',
+    name: 'DBR77 — Model bazowy FY2026',
+  },
   longname: {
     status: 'DRAFT',
     freshness: 'CURRENT',
@@ -81,7 +100,11 @@ function buildConfig(): WorkspaceBarConfig {
     moduleId: 'baselineModel',
     artifactType: 'BASELINE_MODEL',
     identity: {
-      artifactRef: { artifactType: 'BASELINE_MODEL', businessVersionId: 'bv-dbr77-1', artifactId: 'art-dbr77-model' },
+      artifactRef: {
+        artifactType: 'BASELINE_MODEL',
+        businessVersionId: 'bv-dbr77-1',
+        artifactId: 'art-dbr77-model',
+      },
       back: { targetListRoute: '/finance', label: { key: 'back', pl: 'Wróć do listy' } },
       name: {
         value: name,
@@ -102,7 +125,11 @@ function buildConfig(): WorkspaceBarConfig {
     viewNavigation: {
       kind: 'tabs',
       views: [
-        { id: 'assumptions', label: { key: 'assumptions', pl: 'Założenia' }, state: { kind: 'ready', label: { key: 'ready', pl: 'Gotowe' } } },
+        {
+          id: 'assumptions',
+          label: { key: 'assumptions', pl: 'Założenia' },
+          state: { kind: 'ready', label: { key: 'ready', pl: 'Gotowe' } },
+        },
         { id: 'events', label: { key: 'events', pl: 'Zdarzenia' }, state: null },
         {
           id: 'outputs',
@@ -203,9 +230,30 @@ function buildConfig(): WorkspaceBarConfig {
         label: { key: 'more', pl: 'Więcej' },
         enablement: ENABLEMENT_ALWAYS,
         items: [
-          { id: 'more.duplicate', label: { key: 'duplicate', pl: 'Duplikuj' }, group: 'document', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.history', label: { key: 'history', pl: 'Historia wersji' }, group: 'navigation', enablement: ENABLEMENT_ALWAYS, destructive: false, requiresConfirmation: false },
-          { id: 'more.archive', label: { key: 'archive', pl: 'Archiwizuj' }, group: 'danger', enablement: ENABLEMENT_ALWAYS, destructive: true, requiresConfirmation: true },
+          {
+            id: 'more.duplicate',
+            label: { key: 'duplicate', pl: 'Duplikuj' },
+            group: 'document',
+            enablement: ENABLEMENT_ALWAYS,
+            destructive: false,
+            requiresConfirmation: false,
+          },
+          {
+            id: 'more.history',
+            label: { key: 'history', pl: 'Historia wersji' },
+            group: 'navigation',
+            enablement: ENABLEMENT_ALWAYS,
+            destructive: false,
+            requiresConfirmation: false,
+          },
+          {
+            id: 'more.archive',
+            label: { key: 'archive', pl: 'Archiwizuj' },
+            group: 'danger',
+            enablement: ENABLEMENT_ALWAYS,
+            destructive: true,
+            requiresConfirmation: true,
+          },
         ],
       },
       fullscreen: {
@@ -269,8 +317,8 @@ function ValuesDemoPanel(): React.ReactElement {
         Dowód: brak danych nigdy nie renderuje się jako 0
       </h2>
       <p className="text-xs text-c-text-muted mb-4">
-        `formatFinanceValueForDisplay` — PRESENT_ZERO renderuje „0”; MISSING/NA/NOT_APPLICABLE renderują „—”
-        (wizualnie odróżnialne), z powodem w etykiecie obok.
+        `formatFinanceValueForDisplay` — PRESENT_ZERO renderuje „0”; MISSING/NA/NOT_APPLICABLE
+        renderują „—” (wizualnie odróżnialne), z powodem w etykiecie obok.
       </p>
       <table className="w-full text-sm border-collapse">
         <thead>
@@ -288,7 +336,9 @@ function ValuesDemoPanel(): React.ReactElement {
             return (
               <tr key={row.label} className="border-b border-c-border-subtle/50">
                 <td className="py-2 pr-4 text-c-text">{row.label}</td>
-                <td className="py-2 pr-4 text-c-text-muted font-mono text-xs">{row.value.status}</td>
+                <td className="py-2 pr-4 text-c-text-muted font-mono text-xs">
+                  {row.value.status}
+                </td>
                 <td
                   className={`py-2 pr-4 text-right tabular-nums font-medium ${
                     display.isMissingLikeGlyph ? 'text-c-text-muted' : 'text-c-text'
@@ -312,7 +362,8 @@ function EmptyStatePanel(): React.ReactElement {
     <div className="flex min-h-[300px] flex-col items-center justify-center gap-2 p-6 text-center">
       <p className="text-sm font-semibold text-c-text">Ten model nie ma jeszcze żadnych założeń</p>
       <p className="text-xs text-c-text-muted max-w-sm">
-        Dodaj pierwsze założenie, aby rozpocząć budowę modelu bazowego. Pusty stan — uczciwy, bez zmyślonych liczb.
+        Dodaj pierwsze założenie, aby rozpocząć budowę modelu bazowego. Pusty stan — uczciwy, bez
+        zmyślonych liczb.
       </p>
     </div>
   );
@@ -327,7 +378,8 @@ function ErrorBoundaryScene(): React.ReactElement {
   return (
     <div className="p-6">
       <div className="mb-4 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-xs text-c-text-muted">
-        Reszta powłoki (Menu 1 — symulowane niżej, FinanceWorkspaceBar powyżej) żyje mimo błędu w jednym dokumencie.
+        Reszta powłoki (Menu 1 — symulowane niżej, FinanceWorkspaceBar powyżej) żyje mimo błędu w
+        jednym dokumencie.
       </div>
       <FinanceErrorBoundary
         key={attempt}
@@ -356,7 +408,11 @@ function SimulatedMenu1(): React.ReactElement {
 export default function FinanceWorkspaceBarScreen(): React.ReactElement {
   const config = buildConfig();
   return (
-    <div className="min-h-screen bg-c-bg" data-testid="finance-workspace-bar-screen" data-scene={scene}>
+    <div
+      className="min-h-screen bg-c-bg"
+      data-testid="finance-workspace-bar-screen"
+      data-scene={scene}
+    >
       <SimulatedMenu1 />
       <FinanceWorkspaceBar
         config={config}
@@ -376,7 +432,8 @@ export default function FinanceWorkspaceBarScreen(): React.ReactElement {
       {scene === 'error' && <ErrorBoundaryScene />}
       {!['values', 'empty', 'error'].includes(scene) && (
         <div className="p-6 text-sm text-c-text-muted">
-          Treść workspace'u (poza zakresem tego pakietu — placeholder). Scena: <span className="font-mono">{scene}</span>
+          Treść workspace'u (poza zakresem tego pakietu — placeholder). Scena:{' '}
+          <span className="font-mono">{scene}</span>
         </div>
       )}
     </div>

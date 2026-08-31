@@ -15,6 +15,7 @@ vi.mock('../auditsMethodApi', async () => {
 vi.mock('@/services/api', () => ({ Api: { getUsers: vi.fn().mockResolvedValue([]) } }));
 
 import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
+
 import { AuditReportDocumentView } from '../AuditReportDocumentView';
 import { getProgram, getReport, listEvidence, listProgramCriteria } from '../auditsMethodApi';
 

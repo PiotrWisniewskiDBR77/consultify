@@ -418,7 +418,11 @@ export interface SourceArtifact {
   label: string;
   confidence?: number;
   readiness?:
-    'ready' | 'partial_ready' | 'missing_sales_data' | 'policy_blocked' | 'insufficient_evidence';
+    | 'ready'
+    | 'partial_ready'
+    | 'missing_sales_data'
+    | 'policy_blocked'
+    | 'insufficient_evidence';
   lineage?: {
     runtime?: string;
     recordId?: string;
@@ -2449,10 +2453,7 @@ export async function generateDeck(
           confidentiality: knowledgeSource.confidentiality,
         });
       })().catch((err: any) =>
-        logger.warn(
-          '[artifactKnowledgeIndex] deck hook failed (ignored):',
-          err?.message || err
-        )
+        logger.warn('[artifactKnowledgeIndex] deck hook failed (ignored):', err?.message || err)
       );
     }
 

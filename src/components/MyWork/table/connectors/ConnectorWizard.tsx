@@ -372,7 +372,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       {connectorType === 'google_sheets' && (
         <>
           <div>
-            <label className={labelCls}>{t('myWorkTable.connectorWizard.spreadsheetId', 'Spreadsheet ID')}</label>
+            <label className={labelCls}>
+              {t('myWorkTable.connectorWizard.spreadsheetId', 'Spreadsheet ID')}
+            </label>
             <input
               className={inputCls}
               value={config.spreadsheetId ?? ''}
@@ -414,7 +416,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             />
           </div>
           <div>
-            <label className={labelCls}>{t('myWorkTable.connectorWizard.apiToken', 'API Token')}</label>
+            <label className={labelCls}>
+              {t('myWorkTable.connectorWizard.apiToken', 'API Token')}
+            </label>
             <input
               className={inputCls}
               type="password"
@@ -459,7 +463,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>{t('myWorkTable.connectorWizard.database', 'Database')}</label>
+              <label className={labelCls}>
+                {t('myWorkTable.connectorWizard.database', 'Database')}
+              </label>
               <input
                 className={inputCls}
                 value={config.database ?? ''}
@@ -467,7 +473,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               />
             </div>
             <div>
-              <label className={labelCls}>{t('myWorkTable.connectorWizard.schema', 'Schema')}</label>
+              <label className={labelCls}>
+                {t('myWorkTable.connectorWizard.schema', 'Schema')}
+              </label>
               <input
                 className={inputCls}
                 value={config.schema ?? 'public'}
@@ -528,7 +536,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               />
             </div>
             <div>
-              <label className={labelCls}>{t('myWorkTable.connectorWizard.apiToken', 'API Token')}</label>
+              <label className={labelCls}>
+                {t('myWorkTable.connectorWizard.apiToken', 'API Token')}
+              </label>
               <input
                 className={inputCls}
                 type="password"
@@ -548,7 +558,11 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             />
           </div>
           <div>
-            <label className={labelCls}>{t('myWorkTable.connectorWizard.jqlLabel', 'JQL ({{optional}})', { optional: t('myWorkTable.connectorWizard.optional') })}</label>
+            <label className={labelCls}>
+              {t('myWorkTable.connectorWizard.jqlLabel', 'JQL ({{optional}})', {
+                optional: t('myWorkTable.connectorWizard.optional'),
+              })}
+            </label>
             <input
               className={inputCls}
               value={config.jql ?? ''}

@@ -21,9 +21,9 @@ import {
   type EvidenceContractSource,
 } from '../evidence/evidenceContract.js';
 import {
-  enforceBlockGrounding,
   type ContentBlock,
   type ContentBlockType,
+  enforceBlockGrounding,
 } from './documentBlockContentGenerator.js';
 import type {
   DocumentBlock,
@@ -218,9 +218,7 @@ export function enforceDocumentSchemaGrounding(
         groundingSource
       );
       block.content = guarded.content;
-      block.isAssumption =
-        block.isAssumption === true ||
-        guarded.changed;
+      block.isAssumption = block.isAssumption === true || guarded.changed;
       if (language === 'pl') {
         const localized = localizePolishValue(block.content);
         block.content = localized.value;
@@ -444,9 +442,10 @@ export function enforceDocumentSchemaGrounding(
       // business cases must state an explicit approve/decide action so the
       // reader knows which governance gate is being requested.
       if (!/\b(approv(?:e|ing)|decide|zatwierd|decyduj)/i.test(executiveText)) {
-        const decisionText = language === 'pl'
-          ? 'Rekomendujemy zatwierdzenie kolejnego etapu walidacji opisanego w tym business case.'
-          : 'We recommend approving the next validation gate described in this business case.';
+        const decisionText =
+          language === 'pl'
+            ? 'Rekomendujemy zatwierdzenie kolejnego etapu walidacji opisanego w tym business case.'
+            : 'We recommend approving the next validation gate described in this business case.';
         const insertAt = executive.blocks.findIndex((block) => block.type !== 'heading');
         executive.blocks.splice(insertAt < 0 ? executive.blocks.length : insertAt, 0, {
           blockId: uuidv4(),
@@ -468,7 +467,8 @@ export function enforceDocumentSchemaGrounding(
     );
   });
   const localizedDocumentTitle = language === 'pl' ? localizePolishValue(next.title) : null;
-  const documentTitleSignal = guardText(next.title).changed || localizedDocumentTitle?.changed === true;
+  const documentTitleSignal =
+    guardText(next.title).changed || localizedDocumentTitle?.changed === true;
   if (documentTitleSignal) {
     evidence.toVerify.push(
       language === 'pl'

@@ -165,7 +165,12 @@ router.post(
         actionId: body.targetStatus === 'CLOSED' ? 'case.close' : 'case.cancel',
         targetId: params.caseId,
         operation: async () => {
-          return svc.transitionStatus(params.caseId, body.targetStatus, { actorUserId: actor.actorUserId }, body.reason);
+          return svc.transitionStatus(
+            params.caseId,
+            body.targetStatus,
+            { actorUserId: actor.actorUserId },
+            body.reason
+          );
         },
       });
       res.status(200).json({ data: updated });
@@ -257,10 +262,17 @@ router.post(
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(recordClosureBody, req.body);
     const updated = await executeGovernedCaseAction({
-      actor, actionId: 'case.close', targetId: params.caseId,
+      actor,
+      actionId: 'case.close',
+      targetId: params.caseId,
       operation: async () => {
         await requireCaseAccessForActor(actor, params.caseId);
-        return svc.recordClosure(params.caseId, body.closureType, { actorUserId: actor.actorUserId }, body.evidenceRef ?? null);
+        return svc.recordClosure(
+          params.caseId,
+          body.closureType,
+          { actorUserId: actor.actorUserId },
+          body.evidenceRef ?? null
+        );
       },
     });
     res.status(200).json({ data: updated });
@@ -276,7 +288,9 @@ router.post(
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(cancelCaseBody, req.body);
     const updated = await executeGovernedCaseAction({
-      actor, actionId: 'case.cancel', targetId: params.caseId,
+      actor,
+      actionId: 'case.cancel',
+      targetId: params.caseId,
       operation: async () => {
         await requireCaseAccessForActor(actor, params.caseId);
         return svc.cancelCase(params.caseId, { actorUserId: actor.actorUserId }, body.reason);

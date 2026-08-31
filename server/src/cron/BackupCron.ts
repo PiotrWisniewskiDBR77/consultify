@@ -88,14 +88,22 @@ class BackupCron {
     reason?: string;
     type?: 'full';
     options?: { organizationId?: string; actorId?: string; tables?: string[] };
-  }): Promise<{ claimed: boolean; backupId?: string; backup?: { id: string; [key: string]: unknown } }> {
+  }): Promise<{
+    claimed: boolean;
+    backupId?: string;
+    backup?: { id: string; [key: string]: unknown };
+  }> {
     const deps = await this.ensureDeps();
     const claim = await deps.backupService.claimBackupRun(input);
-    if (!claim.claimed || !claim.receiptId || !claim.leaseToken || !claim.fence) return { claimed: false };
+    if (!claim.claimed || !claim.receiptId || !claim.leaseToken || !claim.fence)
+      return { claimed: false };
     if (this.running) {
       await deps.backupService.finishBackupRun({
-        receiptId: claim.receiptId, leaseToken: claim.leaseToken, fence: claim.fence,
-        status: 'FAILED', error: 'BACKUP_SKIPPED_OVERLAP',
+        receiptId: claim.receiptId,
+        leaseToken: claim.leaseToken,
+        fence: claim.fence,
+        status: 'FAILED',
+        error: 'BACKUP_SKIPPED_OVERLAP',
       });
       logger.warn('[BackupCron] Scheduled tick skipped: previous backup is still running');
       return { claimed: false };
@@ -105,7 +113,8 @@ class BackupCron {
     let createdBackupId: string | undefined;
     try {
       const scheduled = input.scheduleName === 'internal-beta-15m';
-      if (input.type && input.type !== 'full') throw new Error('BACKUP_INCREMENTAL_NOT_IMPLEMENTED');
+      if (input.type && input.type !== 'full')
+        throw new Error('BACKUP_INCREMENTAL_NOT_IMPLEMENTED');
       const result = await deps.backupService.createBackup(
         'full',
         input.reason || (scheduled ? 'scheduled-rpo-15m' : 'manual'),
@@ -149,15 +158,29 @@ class BackupCron {
       if (createdBackupId) {
         await deps.backupService.reconcileUnboundBackup(createdBackupId, err.message);
       }
-      await deps.backupService.finishBackupRun({
-        receiptId: claim.receiptId, leaseToken: claim.leaseToken, fence: claim.fence,
-        status: 'FAILED', error: err.message,
-      }).catch((receiptError) => logger.error('[BackupCron] Failed receipt could not be finalized', receiptError));
+      await deps.backupService
+        .finishBackupRun({
+          receiptId: claim.receiptId,
+          leaseToken: claim.leaseToken,
+          fence: claim.fence,
+          status: 'FAILED',
+          error: err.message,
+        })
+        .catch((receiptError) =>
+          logger.error('[BackupCron] Failed receipt could not be finalized', receiptError)
+        );
       logger.error('[BackupCron] Scheduled backup failed:', err);
       try {
         deps.sentry?.captureException(err, {
-          tags: { component: 'backup', job: input.scheduleName, failureCount: String(this.failureCount) },
-          extra: { successCount: this.successCount, lastBackupTime: this.lastBackupTime?.toISOString() || null },
+          tags: {
+            component: 'backup',
+            job: input.scheduleName,
+            failureCount: String(this.failureCount),
+          },
+          extra: {
+            successCount: this.successCount,
+            lastBackupTime: this.lastBackupTime?.toISOString() || null,
+          },
         });
       } catch {
         // Observability is non-fatal after the durable FAILED receipt is written.
@@ -183,7 +206,7 @@ class BackupCron {
   async triggerManualBackup(
     reason = 'manual',
     options: {
-    type?: 'full';
+      type?: 'full';
       organizationId?: string;
       actorId?: string;
       tables?: string[];
@@ -243,7 +266,7 @@ export const runBackupTick = async (
     scheduleName: 'internal-beta-15m' | 'manual';
     scheduledFor: string;
     reason?: string;
-      type?: 'full';
+    type?: 'full';
     options?: { organizationId?: string; actorId?: string; tables?: string[] };
   },
   deps?: Partial<Dependencies>

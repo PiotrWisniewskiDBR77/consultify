@@ -64,12 +64,21 @@ export function buildWaccByTerminalGGrid(params: {
 }): BuildSensitivityGridResult {
   const { wacc, terminalG } = params.axes;
   if (wacc.length !== 5 || terminalG.length !== 5) {
-    return { ok: false, code: 'AXIS_LENGTH_INVALID', message: 'both axes must have exactly 5 values' };
+    return {
+      ok: false,
+      code: 'AXIS_LENGTH_INVALID',
+      message: 'both axes must have exactly 5 values',
+    };
   }
   const baseColIndex = wacc.findIndex((w) => w === params.baseWaccPct);
   const baseRowIndex = terminalG.findIndex((g) => g === params.baseGPct);
   if (baseColIndex === -1 || baseRowIndex === -1) {
-    return { ok: false, code: 'BASE_VALUES_NOT_ON_AXIS', message: 'baseWaccPct/baseGPct must be exact members of the corresponding axis so the base cell is unambiguous' };
+    return {
+      ok: false,
+      code: 'BASE_VALUES_NOT_ON_AXIS',
+      message:
+        'baseWaccPct/baseGPct must be exact members of the corresponding axis so the base cell is unambiguous',
+    };
   }
 
   const cells: SensitivityCellValue[] = [];
@@ -78,9 +87,17 @@ export function buildWaccByTerminalGGrid(params: {
       const gPct = terminalG[r];
       const waccPct = wacc[c];
       let cellValueDecimal: number | null = null;
-      const terminal = computeGordonTerminalValue({ fcffTerminalYear: params.fcffTerminalYear, gPct, waccPct });
+      const terminal = computeGordonTerminalValue({
+        fcffTerminalYear: params.fcffTerminalYear,
+        gPct,
+        waccPct,
+      });
       if (terminal.ok) {
-        const discounted = discountCashFlows({ years: params.years, waccPct, terminalValue: terminal.terminalValue });
+        const discounted = discountCashFlows({
+          years: params.years,
+          waccPct,
+          terminalValue: terminal.terminalValue,
+        });
         cellValueDecimal = discounted.enterpriseValue;
       }
       cells.push({
@@ -165,7 +182,9 @@ export class SensitivityGridAccessError extends Error {
   }
 }
 
-export async function writeSensitivityGrid(params: WriteSensitivityGridParams): Promise<{ gridId: string }> {
+export async function writeSensitivityGrid(
+  params: WriteSensitivityGridParams
+): Promise<{ gridId: string }> {
   if (params.cells.length !== 25) {
     throw new Error(`writeSensitivityGrid: expected exactly 25 cells, got ${params.cells.length}`);
   }
@@ -205,7 +224,16 @@ export async function writeSensitivityGrid(params: WriteSensitivityGridParams): 
          row_axis_variable = EXCLUDED.row_axis_variable, column_axis_variable = EXCLUDED.column_axis_variable,
          grid_status = 'DRAFT', updated_at = now()
        WHERE finance_valuation_sensitivity_grids.organization_id = ?`,
-      [gridId, params.organizationId, params.methodId, params.gridLabel, params.rowAxisVariable, params.columnAxisVariable, params.createdBy, params.organizationId]
+      [
+        gridId,
+        params.organizationId,
+        params.methodId,
+        params.gridLabel,
+        params.rowAxisVariable,
+        params.columnAxisVariable,
+        params.createdBy,
+        params.organizationId,
+      ]
     );
     const resolvedGridId = (
       await tx.queryOne<{ id: string }>(
@@ -218,22 +246,41 @@ export async function writeSensitivityGrid(params: WriteSensitivityGridParams): 
       // above), OR the WHERE clause on the ON CONFLICT UPDATE just refused to
       // touch a row owned by another organization — either way this must
       // fail loudly, never silently proceed against someone else's grid.
-      throw new SensitivityGridAccessError('writeSensitivityGrid: grid row not found after upsert (organization mismatch or insert failure)');
+      throw new SensitivityGridAccessError(
+        'writeSensitivityGrid: grid row not found after upsert (organization mismatch or insert failure)'
+      );
     }
 
-    await tx.queryRun(`DELETE FROM finance_valuation_sensitivity_cells WHERE grid_id = ? AND organization_id = ?`, [resolvedGridId, params.organizationId]);
+    await tx.queryRun(
+      `DELETE FROM finance_valuation_sensitivity_cells WHERE grid_id = ? AND organization_id = ?`,
+      [resolvedGridId, params.organizationId]
+    );
     for (const cell of params.cells) {
       await tx.queryRun(
         `INSERT INTO finance_valuation_sensitivity_cells (
            id, organization_id, grid_id, row_index, col_index, row_axis_value, column_axis_value, cell_value_decimal, is_base_cell, created_by
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [uuidv4(), params.organizationId, resolvedGridId, cell.rowIndex, cell.colIndex, cell.rowAxisValue, cell.columnAxisValue, cell.cellValueDecimal, cell.isBaseCell, params.createdBy]
+        [
+          uuidv4(),
+          params.organizationId,
+          resolvedGridId,
+          cell.rowIndex,
+          cell.colIndex,
+          cell.rowAxisValue,
+          cell.columnAxisValue,
+          cell.cellValueDecimal,
+          cell.isBaseCell,
+          params.createdBy,
+        ]
       );
     }
     // Flip to COMPLETE in the SAME transaction as the 25 inserts — the DEFERRABLE constraint
     // triggers on both the cells table and this UPDATE are checked once, at COMMIT, per WP-D09
     // section 10 (mirrors the basket weight-sum trigger's own atomic-at-COMMIT semantics).
-    await tx.queryRun(`UPDATE finance_valuation_sensitivity_grids SET grid_status = 'COMPLETE' WHERE id = ?`, [resolvedGridId]);
+    await tx.queryRun(
+      `UPDATE finance_valuation_sensitivity_grids SET grid_status = 'COMPLETE' WHERE id = ?`,
+      [resolvedGridId]
+    );
     return resolvedGridId;
   });
 
@@ -271,7 +318,10 @@ export interface SensitivityCellRow {
   is_base_cell: boolean;
 }
 
-export async function listSensitivityGrids(organizationId: string, methodId: string): Promise<SensitivityGridRow[]> {
+export async function listSensitivityGrids(
+  organizationId: string,
+  methodId: string
+): Promise<SensitivityGridRow[]> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<SensitivityGridRow>(
       `SELECT id, organization_id, method_id, grid_label, row_axis_variable, column_axis_variable, grid_status

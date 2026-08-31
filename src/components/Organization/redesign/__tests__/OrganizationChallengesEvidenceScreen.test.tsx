@@ -10,10 +10,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { OrgContextSyncHandle } from '../useOrgContextStoreSection';
 import { useContextBuilderStore } from '../../../../store/useContextBuilderStore';
 import OrganizationChallengesEvidenceScreen from '../OrganizationChallengesEvidenceScreen';
 import OrganizationStatePanel from '../OrganizationStatePanel';
+import type { OrgContextSyncHandle } from '../useOrgContextStoreSection';
 
 vi.mock('../../../../store/useContextBuilderStore');
 
@@ -106,7 +106,9 @@ describe('OrganizationChallengesEvidenceScreen', () => {
     });
     expect(updateChallengesList).toHaveBeenCalledWith(
       'declaredChallenges',
-      expect.arrayContaining([expect.objectContaining({ challenge: 'Wysoki wskaźnik braków (Linia 2)' })])
+      expect.arrayContaining([
+        expect.objectContaining({ challenge: 'Wysoki wskaźnik braków (Linia 2)' }),
+      ])
     );
   });
 
@@ -129,8 +131,6 @@ describe('OrganizationChallengesEvidenceScreen', () => {
   it('gdy contextSync.isUnsynced=true, panel pokazuje napis o buforze lokalnym', () => {
     renderScreen(makeContextSync({ isUnsynced: true }));
 
-    expect(
-      screen.getByText(/Dane zapisywane są lokalnie \(bufor roboczy\)/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Dane zapisywane są lokalnie \(bufor roboczy\)/)).toBeInTheDocument();
   });
 });

@@ -67,7 +67,8 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
 
 const { DrdHttpMethodWorkspaceScreen } = await import('../DrdHttpMethodWorkspaceScreen');
 const { MethodCoreApiError } = await import('@/method-core/api/methodCoreApi');
-const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } = await import('@/method-core/methods/drd/compileDrdPack');
+const { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } =
+  await import('@/method-core/methods/drd/compileDrdPack');
 
 function makeMemoryStorage(seed: Record<string, string> = {}): Storage {
   const store = new Map<string, string>(Object.entries(seed));
@@ -200,8 +201,14 @@ describe('scenario 3 — przywrócenie połączenia -> RECONNECTING -> RECOVERED
 describe('scenario 4 — lokalna rewizja STARSZA niż serwerowa -> CONFLICT, brak nadpisania', () => {
   it('forceState="conflict" shows the CONFLICT badge and never calls getSession until the explicit choice', async () => {
     const storage = makeMemoryStorage();
-    hoisted.createSession.mockResolvedValue({ session: makeSession({ version: 3 }), idempotentReplay: false });
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 9 }), roles: ['owner'] });
+    hoisted.createSession.mockResolvedValue({
+      session: makeSession({ version: 3 }),
+      idempotentReplay: false,
+    });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 9 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="conflict" />);
@@ -230,10 +237,13 @@ describe('scenario 5 — lokalna rewizja NOWSZA -> propozycja zapisu, nadal za p
 });
 
 describe('scenario 6 — retry po nieudanym zapisie', () => {
-  it('the offline banner\'s retry button re-asks the server and clears the banner on success', async () => {
+  it("the offline banner's retry button re-asks the server and clears the banner on success", async () => {
     const storage = makeMemoryStorage();
     hoisted.createSession.mockResolvedValue({ session: makeSession(), idempotentReplay: false });
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 2 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 2 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="offline" />);
@@ -242,15 +252,23 @@ describe('scenario 6 — retry po nieudanym zapisie', () => {
     fireEvent.click(screen.getByText(/Spróbuj połączyć ponownie/));
 
     await waitFor(() => expect(hoisted.getSession).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.queryByTestId('drd-http-offline-banner')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByTestId('drd-http-offline-banner')).not.toBeInTheDocument()
+    );
   });
 });
 
 describe('scenario 7 — bezpieczne rozwiązanie konfliktu: obie wersje widoczne, wybór jawny', () => {
   it('the conflict view names both the local and server version numbers and offers an explicit resolve action', async () => {
     const storage = makeMemoryStorage();
-    hoisted.createSession.mockResolvedValue({ session: makeSession({ version: 3 }), idempotentReplay: false });
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 3 }), roles: ['owner'] });
+    hoisted.createSession.mockResolvedValue({
+      session: makeSession({ version: 3 }),
+      idempotentReplay: false,
+    });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 3 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState="conflict" />);
@@ -268,7 +286,10 @@ describe('scenario 8 — reopen po restarcie: serwer wygrywa', () => {
     const storage = makeMemoryStorage({
       'method-core:http-cache:sess-restart-1': JSON.stringify(makeSession({ version: 2 })),
     });
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ id: 'sess-restart-1', version: 9 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ id: 'sess-restart-1', version: 9 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-restart-1" />);
@@ -287,7 +308,10 @@ describe('scenario 8 — reopen po restarcie: serwer wygrywa', () => {
 
 describe('sanity — MethodCoreApiError is the real class (mock did not replace error semantics)', () => {
   it('constructs with status/body/isNetworkError intact', () => {
-    const err = new MethodCoreApiError('nope', 409, { error: 'version_conflict', currentVersion: 4 });
+    const err = new MethodCoreApiError('nope', 409, {
+      error: 'version_conflict',
+      currentVersion: 4,
+    });
     expect(err.status).toBe(409);
     expect(err.body.currentVersion).toBe(4);
     expect(err.isNetworkError).toBe(false);

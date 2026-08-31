@@ -182,7 +182,10 @@ export function useCanvasKeyboard({
       // map hydrates). When no `containerRef` is supplied at all, scoping
       // is skipped entirely — back-compat for any future caller that
       // hasn't opted in yet.
-      if (containerRef && !isElementWithinCanvas(containerRef.current, e.target, document.activeElement)) {
+      if (
+        containerRef &&
+        !isElementWithinCanvas(containerRef.current, e.target, document.activeElement)
+      ) {
         return;
       }
 

@@ -58,8 +58,8 @@ vi.mock('../../../utils/DbPromise.js', () => ({
   run: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-import { citationVerifier } from '../citationVerifier.js';
 import type { Citation } from '../citationExtractor.js';
+import { citationVerifier } from '../citationVerifier.js';
 
 function makeCitation(overrides: Partial<Citation> = {}): Citation {
   return {
@@ -81,19 +81,14 @@ describe('citationVerifier — ACL (M01-006)', () => {
   it('reports no_access for a citation whose document exists but belongs to a different organization', async () => {
     dbAll.mockResolvedValueOnce([{ id: 'doc-confidential-1', organization_id: 'org-OTHER' }]);
 
-    const report = await citationVerifier.verify(
-      [makeCitation()],
-      'conv-1',
-      'msg-1',
-      'org-CALLER'
-    );
+    const report = await citationVerifier.verify([makeCitation()], 'conv-1', 'msg-1', 'org-CALLER');
 
     expect(report.results).toHaveLength(1);
     expect(report.results[0].status).toBe('no_access');
     expect(report.results[0].sourceExists).toBe(true);
   });
 
-  it('still reports verified when the document belongs to the caller\'s own organization', async () => {
+  it("still reports verified when the document belongs to the caller's own organization", async () => {
     dbAll.mockResolvedValueOnce([{ id: 'doc-own-1', organization_id: 'org-CALLER' }]);
 
     const report = await citationVerifier.verify(

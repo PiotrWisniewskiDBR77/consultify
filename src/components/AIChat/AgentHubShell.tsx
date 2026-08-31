@@ -143,7 +143,6 @@ import {
 import { Segmented } from '@/components/TemplateBuilder/templateBuilderFields';
 import { EntityStatusChip, MetaChip, StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
-import { useAppStore } from '@/store/useAppStore';
 import { listAgentManifests } from '@/services/api/agentManifests.api';
 import {
   type AgentFolder,
@@ -159,16 +158,22 @@ import {
   listAgentProcesses,
   setAgentPlanFolder,
 } from '@/services/api/agentPlan.api';
+import { useAppStore } from '@/store/useAppStore';
 
+import { AgentMaterializationPanel } from './AgentMaterializationPanel';
+import { AgentOperationsPanel } from './AgentOperationsPanel';
 import { readablePhaseName } from './AgentPlanPanel';
 import { AgentPlanWorkspace } from './AgentPlanWorkspace';
-import { AgentOperationsPanel } from './AgentOperationsPanel';
-import { AgentMaterializationPanel } from './AgentMaterializationPanel';
 import { AgentProcessTemplatesPanel } from './AgentProcessTemplatesPanel';
 import { TransformationCasesPanel } from './TransformationCasesPanel';
 
 type AgentHubTab =
-  'processes' | 'templates' | 'governed_templates' | 'transformations' | 'approvals' | 'operations';
+  | 'processes'
+  | 'templates'
+  | 'governed_templates'
+  | 'transformations'
+  | 'approvals'
+  | 'operations';
 
 function agentHubTabLabel(tab: AgentHubTab, isPolish: boolean): string {
   const labels: Record<AgentHubTab, [string, string]> = {

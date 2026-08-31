@@ -14,8 +14,8 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 
-import { apiGateway } from '../../../../Gateway.js';
 import config from '../../../../config/Config.js';
+import { apiGateway } from '../../../../Gateway.js';
 import verifyToken, { validateOrgMembership } from '../../../../middleware/auth.middleware.js';
 import { attachV8Context, requireV8OrgContext } from '../../../../middleware/v8Auth.middleware.js';
 import casesRoutes from '../../../../routes/caseWorkspace/cases.routes.js';

@@ -226,7 +226,8 @@ describe.skipIf(!REAL_DB || !FLAG_ON)(
         organization_id: organizationId,
       });
 
-      const { searchKnowledgeBase } = await import('../../services/ai/tools/searchKnowledgeBase.js');
+      const { searchKnowledgeBase } =
+        await import('../../services/ai/tools/searchKnowledgeBase.js');
 
       // "Inny czlonek organizacji" — wyszukanie w kontekscie INNEGO userId niz
       // wlasciciel raportu, w tej samej organizacji.
@@ -244,9 +245,7 @@ describe.skipIf(!REAL_DB || !FLAG_ON)(
         { query: internalSecret, maxResults: 20 },
         { organizationId, userId: otherMemberId }
       );
-      expect(foundInternal.results.some((row) => row.content.includes(internalSecret))).toBe(
-        true
-      );
+      expect(foundInternal.results.some((row) => row.content.includes(internalSecret))).toBe(true);
     });
   }
 );

@@ -349,13 +349,19 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               }`}
             />
             {error ? (
-              <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-[10px] text-red-600 dark:text-red-400">
+              <p
+                role="alert"
+                className="mt-1.5 flex items-start gap-1.5 text-[10px] text-red-600 dark:text-red-400"
+              >
                 <AlertCircle size={11} className="mt-0.5 flex-shrink-0" />
                 {error}
               </p>
             ) : (
               <p className="mt-1.5 text-[9px] text-c-text-muted">
-                {t('myWorkTable.addColumnDialog.enterToCreate', 'Press Enter to create and add another.')}
+                {t(
+                  'myWorkTable.addColumnDialog.enterToCreate',
+                  'Press Enter to create and add another.'
+                )}
               </p>
             )}
           </div>
@@ -577,8 +583,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               })()}
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[10px] font-semibold text-c-text">
-                  {trimmedName ||
-                    t('myWorkTable.addColumnDialog.untitledField', 'Untitled field')}
+                  {trimmedName || t('myWorkTable.addColumnDialog.untitledField', 'Untitled field')}
                 </div>
                 <div className="mt-1">
                   <CellRenderer
@@ -614,7 +619,9 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                       <Check size={11} className="flex-shrink-0 text-emerald-500" />
                       <span className="truncate">{f.header}</span>
                       <span className="text-[9px] text-c-text-muted">
-                        ({isPl ? getPropertySpec(f.type).label.pl : getPropertySpec(f.type).label.en})
+                        (
+                        {isPl ? getPropertySpec(f.type).label.pl : getPropertySpec(f.type).label.en}
+                        )
                       </span>
                     </span>
                     {onUndo && (

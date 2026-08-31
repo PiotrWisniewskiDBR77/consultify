@@ -41,7 +41,10 @@ export async function runAuditIndependenceSchedulerTick(): Promise<void> {
     const result = await runTick();
     if (
       result.claimed &&
-      (result.withViolations > 0 || result.errors > 0 || result.cycleWrapped || !result.progressRecorded)
+      (result.withViolations > 0 ||
+        result.errors > 0 ||
+        result.cycleWrapped ||
+        !result.progressRecorded)
     ) {
       logger.warn('[Scheduler] Audit independence scan tick', {
         scanned: result.scanned,

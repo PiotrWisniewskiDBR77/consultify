@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import { canStartSession } from '@/method-core/contracts';
 import { compileSiriPack } from '@/method-core/methods/siri/compileSiriPack';
 import { siriAdapter } from '@/method-core/methods/siri/siriAdapter';
-import { canStartSession } from '@/method-core/contracts';
 import { calculateImpactValue } from '@/services/siriPrioritisation';
 
 describe('OPUS PROBE — SIRI', () => {
@@ -10,9 +11,9 @@ describe('OPUS PROBE — SIRI', () => {
     expect(pack.units).toHaveLength(16);
     for (const u of pack.units) {
       expect(u.levelScale).toEqual([0, 1, 2, 3, 4, 5]);
-      expect(u.parentId).toBeTruthy();          // zaden unit nie jest osierocony
+      expect(u.parentId).toBeTruthy(); // zaden unit nie jest osierocony
     }
-    const pillars = new Set(pack.units.map(u => u.parentId));
+    const pillars = new Set(pack.units.map((u) => u.parentId));
     expect(pillars.size).toBe(8);
     console.log('PROBE pillars =', [...pillars].sort().join(','));
   });
@@ -40,7 +41,14 @@ describe('OPUS PROBE — SIRI', () => {
     // przylozy sie wagi (Step 7). Silnik mnozy wagi przez SUROWE termy.
     // Dowod: dwa wymiary o identycznym profilu, ale rozna skala costProfile,
     // dostaja Impact Value proporcjonalne do surowej skali.
-    const base = { areaId: 'vertical_integration', costRelevance: 1, kpiRelevance: 1, kpiImportance: 1, bic: 4, ams: 1 };
+    const base = {
+      areaId: 'vertical_integration',
+      costRelevance: 1,
+      kpiRelevance: 1,
+      kpiImportance: 1,
+      bic: 4,
+      ams: 1,
+    };
     const small = calculateImpactValue({ ...base, costProfile: 1 });
     const big = calculateImpactValue({ ...base, costProfile: 100 });
     console.log('PROBE IV(costProfile=1) =', small, '| IV(costProfile=100) =', big);
@@ -52,10 +60,15 @@ describe('OPUS PROBE — SIRI', () => {
     // Whitepaper str.36 Step 4: "If the difference has a negative value,
     // indicate 0 into the Proximity Factor row."
     const iv = calculateImpactValue({
-      areaId: 'vertical_integration', costRelevance: 0, costProfile: 0,
-      kpiRelevance: 0, kpiImportance: 0, bic: 1, ams: 5,   // firma LEPSZA niz BIC
+      areaId: 'vertical_integration',
+      costRelevance: 0,
+      costProfile: 0,
+      kpiRelevance: 0,
+      kpiImportance: 0,
+      bic: 1,
+      ams: 5, // firma LEPSZA niz BIC
     });
     console.log('PROBE IV przy BIC-AMS = -4 :', iv);
-    expect(iv).toBeLessThan(0);   // dowod defektu: wynik ujemny zamiast 0
+    expect(iv).toBeLessThan(0); // dowod defektu: wynik ujemny zamiast 0
   });
 });

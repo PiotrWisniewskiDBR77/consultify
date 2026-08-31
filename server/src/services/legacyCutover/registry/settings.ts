@@ -154,7 +154,7 @@ export const SETTINGS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'observed',
       successor: null,
       reason:
-        "POST /api/settings/gdpr/deletion-request (settings.routes.ts:3155-3210) INSERTs into " +
+        'POST /api/settings/gdpr/deletion-request (settings.routes.ts:3155-3210) INSERTs into ' +
         "gdpr_requests (type='deletion', settings.routes.ts:3195), gated on verifyUserPassword before " +
         'scheduling. Live callers: src/services/api.ts:12059,17071 — this is the live deletion writer (a ' +
         "UI code comment elsewhere calls it 'canonical'). A second, independent deletion writer exists at " +

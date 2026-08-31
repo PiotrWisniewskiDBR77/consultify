@@ -168,12 +168,10 @@ vi.mock('../../../services/resultsVnext/kpi/kpiDeviationRepository.js', () => ({
   listDeviationCases: (...args: unknown[]) => mockListDeviationCases(...args),
 }));
 
-const { DeviationSelfApprovalDeniedError, KpiDeviationValidationError } = await import(
-  '../../../services/resultsVnext/kpi/kpiDeviationCommands.js'
-);
-const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } = await import(
-  '../../../services/resultsVnext/platform/atomicWrite.js'
-);
+const { DeviationSelfApprovalDeniedError, KpiDeviationValidationError } =
+  await import('../../../services/resultsVnext/kpi/kpiDeviationCommands.js');
+const { AtomicWriteConflictError, AtomicWriteAggregateNotFoundError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
 const kpiRoutes = (await import('../kpi.routes.js')).default;
 const kpiDeviationRoutes = (await import('../kpiDeviation.routes.js')).default;
@@ -777,10 +775,14 @@ describe('POST .../plan/approve — self-approval denial', () => {
 describe('optimistic-concurrency and not-found error mapping', () => {
   it('returns 409 STALE_VERSION when the command reports an optimistic-concurrency conflict', async () => {
     mockAcknowledgeDeviationCase.mockRejectedValue(
-      new AtomicWriteConflictError('Aggregate was modified since it was last read', 'STALE_VERSION', {
-        currentVersion: 3,
-        expectedVersion: 1,
-      })
+      new AtomicWriteConflictError(
+        'Aggregate was modified since it was last read',
+        'STALE_VERSION',
+        {
+          currentVersion: 3,
+          expectedVersion: 1,
+        }
+      )
     );
 
     const response = await request(createApp())

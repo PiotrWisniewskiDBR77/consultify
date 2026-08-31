@@ -86,4 +86,3 @@ describe('MoveToProjectModal visibility receipt readback', () => {
     ).not.toBeInTheDocument();
   });
 });
-

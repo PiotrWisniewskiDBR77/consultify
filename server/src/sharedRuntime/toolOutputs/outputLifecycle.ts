@@ -9,15 +9,13 @@
  */
 
 import { contentHash } from './contentHash.js';
-import type {
-  OutputConclusion,
-  ToolOutput,
-  ToolOutputStatus,
-} from './types.js';
+import type { OutputConclusion, ToolOutput, ToolOutputStatus } from './types.js';
 
 export class ImmutableOutputError extends Error {
   constructor(id: string) {
-    super(`Output ${id} jest zatwierdzony i niezmienny. Popraw przez reopen(), który tworzy nową rewizję.`);
+    super(
+      `Output ${id} jest zatwierdzony i niezmienny. Popraw przez reopen(), który tworzy nową rewizję.`
+    );
     this.name = 'ImmutableOutputError';
   }
 }

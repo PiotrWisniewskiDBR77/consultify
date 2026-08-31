@@ -4,6 +4,7 @@
  * create a Registered Initiative.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { KernelTestDbHandle } from '../../__tests__/kernelTestDb.js';
 
 let testDb: KernelTestDbHandle;
@@ -15,9 +16,8 @@ vi.mock('../../../utils/DbPromise.js', async () => {
 });
 
 const { MethodOutputService } = await import('../MethodOutputService.js');
-const { InitiativeDraftValidationError, MethodInitiativeDraftService } = await import(
-  '../MethodInitiativeDraftService.js'
-);
+const { InitiativeDraftValidationError, MethodInitiativeDraftService } =
+  await import('../MethodInitiativeDraftService.js');
 const { makeFreezeInput, makeFindingInput } = await import('./testFixtures.js');
 const outputsModule = await import('../MethodOutputService.js');
 const initiativeDraftModule = await import('../MethodInitiativeDraftService.js');
@@ -92,7 +92,9 @@ describe('MethodInitiativeDraftService (test 7)', () => {
 
   it('this module exports no way to create a Registered Initiative', () => {
     const exportedNames = [...Object.keys(outputsModule), ...Object.keys(initiativeDraftModule)];
-    const forbidden = exportedNames.filter((n) => /registerinitiative|registeredinitiative/i.test(n));
+    const forbidden = exportedNames.filter((n) =>
+      /registerinitiative|registeredinitiative/i.test(n)
+    );
     expect(forbidden).toEqual([]);
   });
 

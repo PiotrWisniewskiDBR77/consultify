@@ -5,6 +5,7 @@
  * Connected to real API endpoints
  */
 
+import type { TFunction } from 'i18next';
 import {
   Activity,
   AlertTriangle,
@@ -33,7 +34,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
@@ -68,10 +68,10 @@ import {
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
 import { useConversationStore } from '@/store/useConversationStore';
+import { isInitiativeBridgeEnabled } from '@/utils/initiativeBridgeFlag';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
-import { isInitiativeBridgeEnabled } from '@/utils/initiativeBridgeFlag';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
@@ -119,7 +119,6 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
-import { PortfolioHealthView } from './PortfolioHealthView';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -141,6 +140,7 @@ import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
+import { PortfolioHealthView } from './PortfolioHealthView';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -1362,23 +1362,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const projectId = String(currentProjectId || '').trim();
     const ownerId = String((currentUser as any)?.id || '').trim();
     if (!projectId || !ownerId) {
-      toast.error(t('initiatives.bridge.contextMissing', 'Project and initiative owner are required.'));
+      toast.error(
+        t('initiatives.bridge.contextMissing', 'Project and initiative owner are required.')
+      );
       return;
     }
-    const initiativeId = window.prompt(
-      t('initiatives.bridge.initiativeId', 'Classic initiative ID to adopt')
-    )?.trim();
+    const initiativeId = window
+      .prompt(t('initiatives.bridge.initiativeId', 'Classic initiative ID to adopt'))
+      ?.trim();
     if (!initiativeId) return;
-    const candidateId = window.prompt(
-      t('initiatives.bridge.candidateId', 'Accepted candidate ID linked to this initiative')
-    )?.trim();
+    const candidateId = window
+      .prompt(
+        t('initiatives.bridge.candidateId', 'Accepted candidate ID linked to this initiative')
+      )
+      ?.trim();
     if (!candidateId) return;
-    if (!window.confirm(
-      t('initiatives.bridge.confirm', {
-        defaultValue: 'Adopt classic initiative "{{initiativeId}}" into the canonical register?',
-        initiativeId,
-      })
-    )) return;
+    if (
+      !window.confirm(
+        t('initiatives.bridge.confirm', {
+          defaultValue: 'Adopt classic initiative "{{initiativeId}}" into the canonical register?',
+          initiativeId,
+        })
+      )
+    )
+      return;
 
     setIsAdoptingClassic(true);
     try {

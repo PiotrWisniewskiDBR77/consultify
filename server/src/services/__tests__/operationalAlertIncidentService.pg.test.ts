@@ -41,16 +41,30 @@ describe.skipIf(!REAL_PG)('OPS-OBS-001 durable incident ledger (real PostgreSQL)
     const ids = [...fixtureIncidentIds];
     try {
       await cleanup.query('BEGIN');
-      await cleanup.query('ALTER TABLE operational_alert_incident_events DISABLE TRIGGER trg_operational_alert_events_append_only');
-      await cleanup.query('DELETE FROM operational_alert_incident_events WHERE incident_id = ANY($1::uuid[])', [ids]);
-      await cleanup.query('ALTER TABLE operational_alert_incident_events ENABLE TRIGGER trg_operational_alert_events_append_only');
-      await cleanup.query('DELETE FROM operational_alert_incidents WHERE incident_id = ANY($1::uuid[])', [ids]);
+      await cleanup.query(
+        'ALTER TABLE operational_alert_incident_events DISABLE TRIGGER trg_operational_alert_events_append_only'
+      );
+      await cleanup.query(
+        'DELETE FROM operational_alert_incident_events WHERE incident_id = ANY($1::uuid[])',
+        [ids]
+      );
+      await cleanup.query(
+        'ALTER TABLE operational_alert_incident_events ENABLE TRIGGER trg_operational_alert_events_append_only'
+      );
+      await cleanup.query(
+        'DELETE FROM operational_alert_incidents WHERE incident_id = ANY($1::uuid[])',
+        [ids]
+      );
       await cleanup.query('COMMIT');
     } catch (error) {
       await cleanup.query('ROLLBACK').catch(() => undefined);
       // DDL is transactional in PostgreSQL, but force the production guard back on even if
       // the cleanup transaction failed after disabling it.
-      await cleanup.query('ALTER TABLE operational_alert_incident_events ENABLE TRIGGER trg_operational_alert_events_append_only').catch(() => undefined);
+      await cleanup
+        .query(
+          'ALTER TABLE operational_alert_incident_events ENABLE TRIGGER trg_operational_alert_events_append_only'
+        )
+        .catch(() => undefined);
       throw error;
     } finally {
       await cleanup.end();

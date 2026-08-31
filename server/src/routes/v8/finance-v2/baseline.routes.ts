@@ -22,22 +22,22 @@ import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { getBusinessVersion } from '../../../services/finance/canonical/artifactVersionService.js';
 import {
+  BASELINE_ASSUMPTION_RULES,
+  BASELINE_SCHEDULE_TYPES,
+  type BaselineAssumptionRule,
+  type BaselineScheduleType,
+  listBaselineAssumptions,
+  listBaselineOutputs,
+  runBaselineCompute,
+  type RunBaselineComputeParams,
+  type UpsertAssumptionInput,
+  upsertAssumptionsBatch,
+} from '../../../services/finance/canonical/baselineComputeService.js';
+import {
   BaselineContextError,
   configureBaselineWorkspaceContext,
   getBaselineWorkspaceContext,
 } from '../../../services/finance/canonical/baselineContextService.js';
-import {
-  BASELINE_ASSUMPTION_RULES,
-  BASELINE_SCHEDULE_TYPES,
-  listBaselineAssumptions,
-  listBaselineOutputs,
-  runBaselineCompute,
-  upsertAssumptionsBatch,
-  type BaselineAssumptionRule,
-  type BaselineScheduleType,
-  type RunBaselineComputeParams,
-  type UpsertAssumptionInput,
-} from '../../../services/finance/canonical/baselineComputeService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
@@ -78,9 +78,7 @@ router.put(
     if (
       !Array.isArray(body.forecastPeriodIds) ||
       body.forecastPeriodIds.length === 0 ||
-      body.forecastPeriodIds.some(
-        (value: unknown) => typeof value !== 'string' || !value.trim()
-      )
+      body.forecastPeriodIds.some((value: unknown) => typeof value !== 'string' || !value.trim())
     ) {
       return sendError(
         res,
@@ -138,7 +136,12 @@ router.get(
 
     const scheduleTypeRaw = req.query.scheduleType;
     if (scheduleTypeRaw !== undefined && !isScheduleType(scheduleTypeRaw)) {
-      return sendError(res, 400, 'INVALID_QUERY', `scheduleType must be one of ${BASELINE_SCHEDULE_TYPES.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_QUERY',
+        `scheduleType must be one of ${BASELINE_SCHEDULE_TYPES.join(', ')}`
+      );
     }
 
     const rows = await listBaselineAssumptions(organizationId, businessVersionId, {
@@ -155,7 +158,12 @@ router.get(
         periodId: a.period_id,
         basePeriodId: a.base_period_id,
         rule: a.rule,
-        value: { status: a.value_status, valueDecimal: a.value_decimal, unit: a.unit, sourceRef: a.source_ref },
+        value: {
+          status: a.value_status,
+          valueDecimal: a.value_decimal,
+          unit: a.unit,
+          sourceRef: a.source_ref,
+        },
         rangeLow: a.range_low,
         rangeHigh: a.range_high,
         quality: a.quality,
@@ -192,13 +200,33 @@ router.post(
     for (let i = 0; i < body.assumptions.length; i++) {
       const a = body.assumptions[i];
       if (!isScheduleType(a?.scheduleType)) {
-        return sendError(res, 400, 'INVALID_BODY', `assumptions[${i}].scheduleType must be one of ${BASELINE_SCHEDULE_TYPES.join(', ')}`);
+        return sendError(
+          res,
+          400,
+          'INVALID_BODY',
+          `assumptions[${i}].scheduleType must be one of ${BASELINE_SCHEDULE_TYPES.join(', ')}`
+        );
       }
       if (!isRule(a?.rule)) {
-        return sendError(res, 400, 'INVALID_BODY', `assumptions[${i}].rule must be one of ${BASELINE_ASSUMPTION_RULES.join(', ')}`);
+        return sendError(
+          res,
+          400,
+          'INVALID_BODY',
+          `assumptions[${i}].rule must be one of ${BASELINE_ASSUMPTION_RULES.join(', ')}`
+        );
       }
-      if (typeof a.driverCode !== 'string' || typeof a.entityId !== 'string' || typeof a.periodId !== 'string' || typeof a.unit !== 'string') {
-        return sendError(res, 400, 'INVALID_BODY', `assumptions[${i}] requires string driverCode/entityId/periodId/unit`);
+      if (
+        typeof a.driverCode !== 'string' ||
+        typeof a.entityId !== 'string' ||
+        typeof a.periodId !== 'string' ||
+        typeof a.unit !== 'string'
+      ) {
+        return sendError(
+          res,
+          400,
+          'INVALID_BODY',
+          `assumptions[${i}] requires string driverCode/entityId/periodId/unit`
+        );
       }
       if (typeof a.valueStatus !== 'string') {
         return sendError(res, 400, 'INVALID_BODY', `assumptions[${i}].valueStatus is required`);
@@ -220,10 +248,25 @@ router.post(
       });
     }
 
-    const written = await upsertAssumptionsBatch({ organizationId, businessVersionId, createdBy: userId, assumptions: inputs });
+    const written = await upsertAssumptionsBatch({
+      organizationId,
+      businessVersionId,
+      createdBy: userId,
+      assumptions: inputs,
+    });
 
     return res.status(200).json({
-      data: { businessVersionId, writtenCount: written.length, assumptions: written.map((a) => ({ assumptionId: a.id, scheduleType: a.schedule_type, driverCode: a.driver_code, entityId: a.entity_id, periodId: a.period_id })) },
+      data: {
+        businessVersionId,
+        writtenCount: written.length,
+        assumptions: written.map((a) => ({
+          assumptionId: a.id,
+          scheduleType: a.schedule_type,
+          driverCode: a.driver_code,
+          entityId: a.entity_id,
+          periodId: a.period_id,
+        })),
+      },
       meta: financeV2Meta(),
     });
   })
@@ -248,10 +291,21 @@ router.post(
     if (typeof body.entityId !== 'string' || !body.entityId.trim()) {
       return sendError(res, 400, 'INVALID_BODY', 'entityId is required');
     }
-    if (!Array.isArray(body.forecastPeriodIds) || body.forecastPeriodIds.some((p: unknown) => typeof p !== 'string')) {
-      return sendError(res, 400, 'INVALID_BODY', 'forecastPeriodIds must be an array of period id strings');
+    if (
+      !Array.isArray(body.forecastPeriodIds) ||
+      body.forecastPeriodIds.some((p: unknown) => typeof p !== 'string')
+    ) {
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'forecastPeriodIds must be an array of period id strings'
+      );
     }
-    if (typeof body.openingBalanceSheetPeriodId !== 'string' || !body.openingBalanceSheetPeriodId.trim()) {
+    if (
+      typeof body.openingBalanceSheetPeriodId !== 'string' ||
+      !body.openingBalanceSheetPeriodId.trim()
+    ) {
       return sendError(res, 400, 'INVALID_BODY', 'openingBalanceSheetPeriodId is required');
     }
 
@@ -259,7 +313,8 @@ router.post(
       organizationId,
       businessVersionId,
       requestedByUserId: userId,
-      engineManifestId: typeof body.engineManifestId === 'string' ? body.engineManifestId : bv.engine_manifest_id,
+      engineManifestId:
+        typeof body.engineManifestId === 'string' ? body.engineManifestId : bv.engine_manifest_id,
       entityId: body.entityId,
       forecastPeriodIds: body.forecastPeriodIds,
       openingBalanceSheetPeriodId: body.openingBalanceSheetPeriodId,
@@ -268,7 +323,10 @@ router.post(
     const result = await runBaselineCompute(params);
 
     if (!result.ok) {
-      const status = result.code === 'NO_SOURCE_STATEMENT_PACK_EDGE' || result.code === 'NO_BASELINE_MODEL_ROW' ? 404 : 409;
+      const status =
+        result.code === 'NO_SOURCE_STATEMENT_PACK_EDGE' || result.code === 'NO_BASELINE_MODEL_ROW'
+          ? 404
+          : 409;
       return sendError(res, status, result.code, result.message, {
         ...(result.failedAtPeriodId ? { failedAtPeriodId: result.failedAtPeriodId } : {}),
         ...(result.partialResults ? { partialResults: result.partialResults } : {}),
@@ -276,7 +334,12 @@ router.post(
     }
 
     return res.status(200).json({
-      data: { jobId: result.job.id, jobStatus: result.job.status, periodsComputed: result.periodsComputed, monthlyResults: result.monthlyResults },
+      data: {
+        jobId: result.job.id,
+        jobStatus: result.job.status,
+        periodsComputed: result.periodsComputed,
+        monthlyResults: result.monthlyResults,
+      },
       meta: financeV2Meta(),
     });
   })
@@ -300,7 +363,9 @@ router.get(
 
     const statementTypeRaw = req.query.statementType;
     const statementType =
-      statementTypeRaw === 'P&L' || statementTypeRaw === 'BS' || statementTypeRaw === 'CF' ? statementTypeRaw : undefined;
+      statementTypeRaw === 'P&L' || statementTypeRaw === 'BS' || statementTypeRaw === 'CF'
+        ? statementTypeRaw
+        : undefined;
     if (statementTypeRaw !== undefined && !statementType) {
       return sendError(res, 400, 'INVALID_QUERY', "statementType must be one of 'P&L', 'BS', 'CF'");
     }

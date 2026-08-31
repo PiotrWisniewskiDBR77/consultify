@@ -21,10 +21,12 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { VISIBILITY_CTE_PARAM_COUNT, wrapWithVisibilityScope } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
-import { toOkrSetVersion, type OkrSetVersionRow } from './okrSetTypes.js';
+import { type OkrSetVersionRow, toOkrSetVersion } from './okrSetTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await acquirePgClient();
@@ -35,7 +37,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -103,7 +109,9 @@ interface HistoryEventRow {
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 500;
 
-export async function getOkrSetHistory(params: GetOkrSetHistoryParams): Promise<GetOkrSetHistoryResult> {
+export async function getOkrSetHistory(
+  params: GetOkrSetHistoryParams
+): Promise<GetOkrSetHistoryResult> {
   const { userId, organizationId, setId } = params;
   const limit = Math.min(Math.max(params.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
   const cursor = params.cursor ?? null;
@@ -195,11 +203,13 @@ export async function getOkrSetHistory(params: GetOkrSetHistoryParams): Promise<
       });
     }
 
-    const entries: OkrSetHistoryEntry[] = [...eventEntries, ...materialChangeEntries].sort((a, b) => {
-      const aTime = a.kind === 'event' ? a.occurredAt : a.requestedAt;
-      const bTime = b.kind === 'event' ? b.occurredAt : b.requestedAt;
-      return new Date(aTime).getTime() - new Date(bTime).getTime();
-    });
+    const entries: OkrSetHistoryEntry[] = [...eventEntries, ...materialChangeEntries].sort(
+      (a, b) => {
+        const aTime = a.kind === 'event' ? a.occurredAt : a.requestedAt;
+        const bTime = b.kind === 'event' ? b.occurredAt : b.requestedAt;
+        return new Date(aTime).getTime() - new Date(bTime).getTime();
+      }
+    );
 
     return { entries, nextCursor };
   });

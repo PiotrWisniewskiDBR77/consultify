@@ -1,11 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  isMyWorkCalendarV2Enabled,
-  resetMyWorkCalendarV2FlagCache,
-} from '../myWorkCalendarV2Flag';
+import { isMyWorkCalendarV2Enabled, resetMyWorkCalendarV2FlagCache } from '../myWorkCalendarV2Flag';
 
 describe('My Work Calendar V2 default-on flag (D-6)', () => {
   beforeEach(() => {

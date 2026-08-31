@@ -48,7 +48,11 @@ const closureTypeEnum = z.enum([
 ]);
 const caseProfileEnum = z.enum(['LIGHT', 'STANDARD', 'TRANSFORMATION', 'MONITORING']);
 const governanceTierEnum = z.enum(['LIGHTWEIGHT', 'STANDARD', 'CONTROLLED']);
-const autonomyPolicyEnum = z.enum(['ASK_EACH_ACTION', 'ASK_MATERIAL_ACTIONS', 'EXECUTE_APPROVED_PLAN']);
+const autonomyPolicyEnum = z.enum([
+  'ASK_EACH_ACTION',
+  'ASK_MATERIAL_ACTIONS',
+  'EXECUTE_APPROVED_PLAN',
+]);
 
 /**
  * Note what is NOT trimmed here: `goal`, `scope[]`, `expectedOutcome`,

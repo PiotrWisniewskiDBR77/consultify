@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveAdminLocation } from '../AdminSettingsModule';
+import {
+  ADMIN_DEFAULTS,
+  ADMIN_DOMAINS,
+  type AdminDomain,
+} from '../../../components/Admin/adminNavigation';
 import { ROUTES } from '../../../routes/routeConfig';
-import { ADMIN_DOMAINS, ADMIN_DEFAULTS, type AdminDomain } from '../../../components/Admin/adminNavigation';
+import { resolveAdminLocation } from '../AdminSettingsModule';
 
 /**
  * DEC-2026-08-24-10 — Admin route alias cleanup.

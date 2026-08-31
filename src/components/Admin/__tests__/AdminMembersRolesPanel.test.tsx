@@ -92,7 +92,11 @@ describe('AdminMembersRolesPanel', () => {
       return { success: true };
     });
     mockedApi.getOrganizationMembers.mockImplementation(async () =>
-      changed ? members.map((member) => member.user_id === 'member-1' ? { ...member, role: 'ADMIN' } : member) : members
+      changed
+        ? members.map((member) =>
+            member.user_id === 'member-1' ? { ...member, role: 'ADMIN' } : member
+          )
+        : members
     );
     render(<AdminMembersRolesPanel />);
     const emailCell = await findTableText('member@acme.test');
@@ -162,7 +166,9 @@ describe('AdminMembersRolesPanel', () => {
       )
     );
     fireEvent.change(reconciledRow.querySelector('select')!, { target: { value: 'ADMIN' } });
-    await waitFor(() => expect(mockedApi.changeAdminOrganizationMemberRole).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(mockedApi.changeAdminOrganizationMemberRole).toHaveBeenCalledTimes(2)
+    );
     expect(mockedApi.changeAdminOrganizationMemberRole.mock.calls[1][3]).toBe('GUEST');
     expect(mockedApi.changeAdminOrganizationMemberRole.mock.calls[1][4]).not.toBe(firstCommandId);
   });
@@ -199,8 +205,16 @@ describe('AdminMembersRolesPanel', () => {
 
   it('resends and revokes a pending invitation with exact cold read-back', async () => {
     let resendCount = 0;
-    const pending = { id: 'invite-1', email: 'new@acme.test', role: 'MEMBER', status: 'pending', resend_count: 0 };
-    mockedApi.getInvitations.mockImplementation(async () => [{ ...pending, resend_count: resendCount }]);
+    const pending = {
+      id: 'invite-1',
+      email: 'new@acme.test',
+      role: 'MEMBER',
+      status: 'pending',
+      resend_count: 0,
+    };
+    mockedApi.getInvitations.mockImplementation(async () => [
+      { ...pending, resend_count: resendCount },
+    ]);
     mockedApi.resendOrganizationInvitation.mockImplementation(async () => {
       resendCount += 1;
       return { success: true };
@@ -211,17 +225,33 @@ describe('AdminMembersRolesPanel', () => {
     const row = (await findTableText('new@acme.test')).closest('tr')!;
     fireEvent.click(within(row).getByRole('button', { name: 'Resend' }));
     await waitFor(() =>
-      expect(mockedApi.resendOrganizationInvitation).toHaveBeenCalledWith('org-1', 'invite-1', expect.any(String))
+      expect(mockedApi.resendOrganizationInvitation).toHaveBeenCalledWith(
+        'org-1',
+        'invite-1',
+        expect.any(String)
+      )
     );
 
-    mockedApi.getInvitations.mockResolvedValue([
-      { ...pending, status: 'revoked' },
-    ]);
-    fireEvent.click(within((await findTableText('new@acme.test')).closest('tr')!).getByRole('button', { name: 'Revoke' }));
-    await waitFor(() =>
-      expect(mockedApi.revokeOrganizationInvitation).toHaveBeenCalledWith('org-1', 'invite-1', expect.any(String))
+    mockedApi.getInvitations.mockResolvedValue([{ ...pending, status: 'revoked' }]);
+    fireEvent.click(
+      within((await findTableText('new@acme.test')).closest('tr')!).getByRole('button', {
+        name: 'Revoke',
+      })
     );
-    await waitFor(async () => expect(within((await findTableText('new@acme.test')).closest('tr')!).queryByRole('button', { name: 'Revoke' })).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(mockedApi.revokeOrganizationInvitation).toHaveBeenCalledWith(
+        'org-1',
+        'invite-1',
+        expect.any(String)
+      )
+    );
+    await waitFor(async () =>
+      expect(
+        within((await findTableText('new@acme.test')).closest('tr')!).queryByRole('button', {
+          name: 'Revoke',
+        })
+      ).not.toBeInTheDocument()
+    );
   });
 
   it('requires confirmation and exact absence before reporting a member removal', async () => {

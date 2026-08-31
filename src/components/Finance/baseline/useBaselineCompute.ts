@@ -32,9 +32,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { computeBaseline, listBaselineOutputs } from '@/services/api/financeV2.api';
 import {
-  describeFinanceV2Error,
   type BaselineComputeParams,
   type BaselineComputeResultDto,
+  describeFinanceV2Error,
   type FinanceArtifactFreshness,
 } from '@/services/api/financeV2.types';
 
@@ -62,7 +62,11 @@ export function useBaselineCompute(
   const [state, setState] = useState<BaselineComputeUiState>('idle');
   const [result, setResult] = useState<BaselineComputeResultDto | null>(null);
   const [lastComputedAt, setLastComputedAt] = useState<Date | null>(null);
-  const [errorDetail, setErrorDetail] = useState<{ title: string; detail: string; code: string | null } | null>(null);
+  const [errorDetail, setErrorDetail] = useState<{
+    title: string;
+    detail: string;
+    code: string | null;
+  } | null>(null);
   const [wasRecovered, setWasRecovered] = useState(false);
   const [stale, setStale] = useState<{ stale: boolean; reason: BaselineStaleReason }>(() => ({
     stale: initialFreshness !== 'CURRENT',
@@ -106,10 +110,14 @@ export function useBaselineCompute(
         setState('recovering');
         const described = describeFinanceV2Error(e);
         try {
-          const outputs = await listBaselineOutputs(businessVersionId, { entityId: params.entityId });
+          const outputs = await listBaselineOutputs(businessVersionId, {
+            entityId: params.entityId,
+          });
           const hasForecastForRequestedPeriods =
             outputs.length > 0 &&
-            params.forecastPeriodIds.every((pid) => outputs.some((o) => o.periodId === pid && o.valueKind === 'FORECAST'));
+            params.forecastPeriodIds.every((pid) =>
+              outputs.some((o) => o.periodId === pid && o.valueKind === 'FORECAST')
+            );
           if (hasForecastForRequestedPeriods) {
             setLastComputedAt(new Date());
             setState('succeeded');

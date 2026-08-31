@@ -38,7 +38,8 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
@@ -87,7 +88,9 @@ export const RoiRemoveLineItemDialog: React.FC<RoiRemoveLineItemDialogProps> = (
             className={DANGER_BUTTON_CLASS}
           >
             <Trash2 size={16} />
-            <span>{busy ? (isPolish ? 'Usuwanie…' : 'Removing…') : isPolish ? 'Usuń' : 'Remove'}</span>
+            <span>
+              {busy ? (isPolish ? 'Usuwanie…' : 'Removing…') : isPolish ? 'Usuń' : 'Remove'}
+            </span>
           </button>
         </>
       }
@@ -108,9 +111,19 @@ export const RoiRemoveLineItemDialog: React.FC<RoiRemoveLineItemDialogProps> = (
         </div>
 
         {errorMessage ? (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text" data-testid="roi-remove-line-item-error">
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-c-danger/30 bg-c-danger/10 px-3 py-2 text-[12px] text-c-text"
+            data-testid="roi-remove-line-item-error"
+          >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

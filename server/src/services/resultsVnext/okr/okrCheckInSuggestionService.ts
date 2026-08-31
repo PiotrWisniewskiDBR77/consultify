@@ -64,7 +64,10 @@ function toNumberOrNull(value: string | null): number | null {
  * this suggestion for that measurement type; this function stays a pure
  * numeric utility.
  */
-export function suggestNextCheckInValue(priorCheckIns: OkrCheckIn[], keyResult: OkrKeyResult): SuggestNextCheckInValueResult {
+export function suggestNextCheckInValue(
+  priorCheckIns: OkrCheckIn[],
+  keyResult: OkrKeyResult
+): SuggestNextCheckInValueResult {
   const numericHistory = priorCheckIns
     .map((c) => ({ value: toNumberOrNull(c.newValue), submittedAt: c.submittedAt }))
     .filter((entry): entry is { value: number; submittedAt: string } => entry.value !== null)
@@ -82,7 +85,8 @@ export function suggestNextCheckInValue(priorCheckIns: OkrCheckIn[], keyResult: 
     return {
       suggestedValue: null,
       basis: 'no_history',
-      reason: 'no_history: exactly one prior check-in exists — at least two are required to compute a trend, never guessed from a single point',
+      reason:
+        'no_history: exactly one prior check-in exists — at least two are required to compute a trend, never guessed from a single point',
     };
   }
 

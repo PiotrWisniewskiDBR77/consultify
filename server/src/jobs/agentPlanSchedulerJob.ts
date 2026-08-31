@@ -35,8 +35,16 @@ async function enqueueBackgroundExecution(payload: {
   try {
     const { dispatchAgentTask } = await import('../services/ai/agentTaskDispatchService.js');
     const dispatchKey = payload.dispatchKey || payload.planId;
-    const enqueue = () => dispatchAgentTask({ planId: payload.planId, organizationId: payload.organizationId,
-      userId: payload.userId, dispatchKey }, { beforeEnqueue: payload.beforeEnqueue });
+    const enqueue = () =>
+      dispatchAgentTask(
+        {
+          planId: payload.planId,
+          organizationId: payload.organizationId,
+          userId: payload.userId,
+          dispatchKey,
+        },
+        { beforeEnqueue: payload.beforeEnqueue }
+      );
     if (payload.canonicalRunId) {
       const { agentPlannerService } = await import('../services/ai/agentPlannerService.js');
       const governed = await agentPlannerService.executeGovernedEnqueue({

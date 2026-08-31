@@ -43,8 +43,6 @@
 import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
-import logger from '../../utils/Logger.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 // Server-side bridge into the shared, engine-grounded domain layer. Path is
 // relative (not the `@/*` alias) because server/tsconfig.json's `@/*` maps to
 // server/src/*, not the repo-root src/*. Files in this shared dependency must
@@ -70,6 +68,8 @@ import type {
   ToolOutput,
   ToolReportKind,
 } from '../../sharedRuntime/toolOutputs/types.js';
+import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type { StructuredSlideInput } from '../presentationDeckDocumentService.js';
 
 /** Minimal shape this module needs from a `tool_sessions` row. */

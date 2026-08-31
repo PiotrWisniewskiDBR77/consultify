@@ -21,10 +21,10 @@ import React from 'react';
 
 import SlideDeckView from '@/components/DiscoveryTools/report/SlideDeckView';
 import ToolReportView from '@/components/DiscoveryTools/report/ToolReportView';
+import type { SWOTItem, SWOTMove, SWOTTension } from '@/store/useToolStore';
 import { buildSwotOutput } from '@/toolOutputs/buildSwotOutput';
 import { approve, submitForReview } from '@/toolOutputs/outputLifecycle';
 import { renderToolReport } from '@/toolOutputs/renderReport';
-import type { SWOTItem, SWOTMove, SWOTTension } from '@/store/useToolStore';
 
 /** Stan sesji — realistyczny, ale w pełni fikcyjny klient demo. */
 const ITEMS: SWOTItem[] = [

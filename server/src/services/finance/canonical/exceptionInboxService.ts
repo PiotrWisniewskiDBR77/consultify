@@ -173,13 +173,14 @@ const SEVERITY_RANK: Record<ExceptionInboxSeverity, number> = {
 };
 
 /** Fixed severity assigned to categories whose source table carries no severity column of its own (everything except tie_out_fail, which reuses the real `finance_exceptions.severity`). Documented, not derived — a future work package may want these configurable per-org. */
-const FIXED_SEVERITY_BY_CATEGORY: Partial<Record<ExceptionInboxCategory, ExceptionInboxSeverity>> = {
-  stale: 'WARNING',
-  compute_failed: 'MATERIAL',
-  blocker: 'MATERIAL',
-  review_assigned: 'INFO',
-  unusual_variance: 'WARNING',
-};
+const FIXED_SEVERITY_BY_CATEGORY: Partial<Record<ExceptionInboxCategory, ExceptionInboxSeverity>> =
+  {
+    stale: 'WARNING',
+    compute_failed: 'MATERIAL',
+    blocker: 'MATERIAL',
+    review_assigned: 'INFO',
+    unusual_variance: 'WARNING',
+  };
 
 /** WP-B05 section 7.2 SLA windows, reused verbatim (Info=none, Warning=30d, Material=5d, CriticalData=2d, Security=immediate). Calendar days, same simplification the ADR itself uses ("nie jest osobna kolumna ... wyliczana z created_at + domyślne okno"). */
 const SLA_WINDOW_MS: Record<ExceptionInboxSeverity, number | null> = {
@@ -253,7 +254,10 @@ interface TieOutFailRow {
   created_at: string;
 }
 
-async function fetchTieOutFailEntries(organizationId: string, artifactId?: string): Promise<RawInboxEntry[]> {
+async function fetchTieOutFailEntries(
+  organizationId: string,
+  artifactId?: string
+): Promise<RawInboxEntry[]> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<TieOutFailRow>(
       `SELECT id, exception_group_id, artifact_id, business_version_id, working_revision_id,
@@ -268,10 +272,17 @@ async function fetchTieOutFailEntries(organizationId: string, artifactId?: strin
 
   return rows.map((row) => {
     const sourceRef = parseJsonbMaybe<Record<string, unknown>>(row.source_ref);
-    const focus = (sourceRef?.cell_ref as string | undefined) ?? (sourceRef?.statement_line_code as string | undefined) ?? null;
+    const focus =
+      (sourceRef?.cell_ref as string | undefined) ??
+      (sourceRef?.statement_line_code as string | undefined) ??
+      null;
     const period = (sourceRef?.period_id as string | undefined) ?? null;
     const entity = (sourceRef?.entity_id as string | undefined) ?? null;
-    const entry: RawInboxEntry & { __focus: string | null; __period: string | null; __entity: string | null } = {
+    const entry: RawInboxEntry & {
+      __focus: string | null;
+      __period: string | null;
+      __entity: string | null;
+    } = {
       category: 'tie_out_fail',
       severity: row.severity,
       title: row.reason_code ? `Exception: ${row.reason_code}` : `Exception (${row.severity})`,
@@ -330,7 +341,9 @@ async function fetchFreshnessEntries(
         WHERE fbv.organization_id = ? AND fbv.freshness IN (${placeholders})
         ${artifactId ? 'AND fbv.artifact_id = ?' : ''}
         ORDER BY fbv.updated_at ASC`,
-      artifactId ? [organizationId, ...freshnessValues, artifactId] : [organizationId, ...freshnessValues]
+      artifactId
+        ? [organizationId, ...freshnessValues, artifactId]
+        : [organizationId, ...freshnessValues]
     )
   );
 
@@ -340,7 +353,8 @@ async function fetchFreshnessEntries(
     return {
       category,
       severity: FIXED_SEVERITY_BY_CATEGORY[category] as ExceptionInboxSeverity,
-      title: category === 'stale' ? `Freshness: ${row.freshness}` : 'Compute failed (last known state)',
+      title:
+        category === 'stale' ? `Freshness: ${row.freshness}` : 'Compute failed (last known state)',
       reasonRaw: row.freshness_reason,
       causeKey: normalizeCause(row.freshness_reason, `${category}:${row.business_version_id}`),
       owner,
@@ -381,7 +395,10 @@ interface ComputeJobFailedRow {
  * inbox. A later QUEUED/RUNNING/FAILED attempt does not suppress the entry:
  * the job is still not resolved yet.
  */
-async function fetchComputeJobFailedEntries(organizationId: string, artifactId?: string): Promise<RawInboxEntry[]> {
+async function fetchComputeJobFailedEntries(
+  organizationId: string,
+  artifactId?: string
+): Promise<RawInboxEntry[]> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<ComputeJobFailedRow>(
       `SELECT cj.id, cj.input_artifact_id, cj.job_type, cj.error, cj.requested_by_user_id, cj.created_at, cj.finished_at
@@ -438,7 +455,10 @@ interface BlockingCommentRow {
   current_assignee: string | null;
 }
 
-async function fetchBlockerEntries(organizationId: string, artifactId?: string): Promise<RawInboxEntry[]> {
+async function fetchBlockerEntries(
+  organizationId: string,
+  artifactId?: string
+): Promise<RawInboxEntry[]> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<BlockingCommentRow>(
       `SELECT c.id, c.artifact_id, c.business_version_id, c.anchor, c.author_id, c.body, c.created_at,
@@ -492,7 +512,10 @@ interface ReviewAssignedRow {
   assigned_at: string;
 }
 
-async function fetchReviewAssignedEntries(organizationId: string, artifactId?: string): Promise<RawInboxEntry[]> {
+async function fetchReviewAssignedEntries(
+  organizationId: string,
+  artifactId?: string
+): Promise<RawInboxEntry[]> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<ReviewAssignedRow>(
       `SELECT c.id, c.artifact_id, c.business_version_id, c.anchor, c.body, c.created_at,
@@ -565,7 +588,9 @@ async function fetchUnusualVarianceEntries(
           AND v.variance_pct IS NOT NULL AND ABS(v.variance_pct) > ?
         ${artifactId ? 'AND fbv.artifact_id = ?' : ''}
         ORDER BY v.created_at ASC`,
-      artifactId ? [organizationId, materialityThresholdPct, artifactId] : [organizationId, materialityThresholdPct]
+      artifactId
+        ? [organizationId, materialityThresholdPct, artifactId]
+        : [organizationId, materialityThresholdPct]
     )
   );
 
@@ -584,7 +609,11 @@ async function fetchUnusualVarianceEntries(
     workingRevisionId: null,
     cellRef: null,
     sourceRef: null,
-    extraDeepLinkParams: { variance: row.id, ...(row.period_id ? { period: row.period_id } : {}), ...(row.entity_id ? { entity: row.entity_id } : {}) },
+    extraDeepLinkParams: {
+      variance: row.id,
+      ...(row.period_id ? { period: row.period_id } : {}),
+      ...(row.entity_id ? { entity: row.entity_id } : {}),
+    },
     sourceTable: 'finance_analysis_variance',
     sourceId: row.id,
     explicitSlaDueAt: null,
@@ -657,8 +686,14 @@ function computeSlaDueAt(entry: RawInboxEntry, createdAt: string): string | null
 
 function toInboxEntry(group: RawInboxEntry[]): ExceptionInboxEntry {
   const rep = pickRepresentative(group);
-  const createdAt = group.reduce((min, e) => (e.createdAt < min ? e.createdAt : min), rep.createdAt);
-  const lastSeenAt = group.reduce((max, e) => (e.createdAt > max ? e.createdAt : max), rep.createdAt);
+  const createdAt = group.reduce(
+    (min, e) => (e.createdAt < min ? e.createdAt : min),
+    rep.createdAt
+  );
+  const lastSeenAt = group.reduce(
+    (max, e) => (e.createdAt > max ? e.createdAt : max),
+    rep.createdAt
+  );
   const severity = group.reduce<ExceptionInboxSeverity>(
     (max, e) => (SEVERITY_RANK[e.severity] > SEVERITY_RANK[max] ? e.severity : max),
     rep.severity
@@ -669,9 +704,15 @@ function toInboxEntry(group: RawInboxEntry[]): ExceptionInboxEntry {
   const ownerIsDefault = !explicitOwnerEntry;
 
   const mergedCategories = Array.from(new Set(group.map((e) => e.category)));
-  const sources: ExceptionInboxSourceRef[] = group.map((e) => ({ category: e.category, table: e.sourceTable, id: e.sourceId }));
+  const sources: ExceptionInboxSourceRef[] = group.map((e) => ({
+    category: e.category,
+    table: e.sourceTable,
+    id: e.sourceId,
+  }));
 
-  const focus = (rep as RawInboxEntry & { __focus?: string | null }).__focus ?? (rep.cellRef ? cellRefKey(rep.cellRef) : null);
+  const focus =
+    (rep as RawInboxEntry & { __focus?: string | null }).__focus ??
+    (rep.cellRef ? cellRefKey(rep.cellRef) : null);
   const period = (rep as RawInboxEntry & { __period?: string | null }).__period ?? null;
   const entity = (rep as RawInboxEntry & { __entity?: string | null }).__entity ?? null;
 
@@ -725,21 +766,41 @@ export interface ListExceptionInboxParams extends ListExceptionInboxOptions {
  * exception-like item across the sources listed at the top of this file,
  * sorted by severity desc then most-recently-seen desc (most urgent first).
  */
-export async function listExceptionInbox(params: ListExceptionInboxParams): Promise<ExceptionInboxEntry[]> {
+export async function listExceptionInbox(
+  params: ListExceptionInboxParams
+): Promise<ExceptionInboxEntry[]> {
   const { organizationId, artifactId, unusualVarianceMaterialityThresholdPct } = params;
 
-  const [tieOutFail, stale, computeFailedFreshness, computeFailedJobs, blockers, reviewAssigned, unusualVariance, benchmarkExpired, importConflict] =
-    await Promise.all([
-      fetchTieOutFailEntries(organizationId, artifactId),
-      fetchFreshnessEntries(organizationId, 'stale', ['STALE_SOURCE', 'STALE_ASSUMPTIONS'], artifactId),
-      fetchFreshnessEntries(organizationId, 'compute_failed', ['COMPUTE_FAILED'], artifactId),
-      fetchComputeJobFailedEntries(organizationId, artifactId),
-      fetchBlockerEntries(organizationId, artifactId),
-      fetchReviewAssignedEntries(organizationId, artifactId),
-      fetchUnusualVarianceEntries(organizationId, unusualVarianceMaterialityThresholdPct ?? UNUSUAL_VARIANCE_MATERIALITY_THRESHOLD_PCT, artifactId),
-      fetchBenchmarkExpiredEntries(),
-      fetchImportConflictEntries(),
-    ]);
+  const [
+    tieOutFail,
+    stale,
+    computeFailedFreshness,
+    computeFailedJobs,
+    blockers,
+    reviewAssigned,
+    unusualVariance,
+    benchmarkExpired,
+    importConflict,
+  ] = await Promise.all([
+    fetchTieOutFailEntries(organizationId, artifactId),
+    fetchFreshnessEntries(
+      organizationId,
+      'stale',
+      ['STALE_SOURCE', 'STALE_ASSUMPTIONS'],
+      artifactId
+    ),
+    fetchFreshnessEntries(organizationId, 'compute_failed', ['COMPUTE_FAILED'], artifactId),
+    fetchComputeJobFailedEntries(organizationId, artifactId),
+    fetchBlockerEntries(organizationId, artifactId),
+    fetchReviewAssignedEntries(organizationId, artifactId),
+    fetchUnusualVarianceEntries(
+      organizationId,
+      unusualVarianceMaterialityThresholdPct ?? UNUSUAL_VARIANCE_MATERIALITY_THRESHOLD_PCT,
+      artifactId
+    ),
+    fetchBenchmarkExpiredEntries(),
+    fetchImportConflictEntries(),
+  ]);
 
   const raw: RawInboxEntry[] = [
     ...tieOutFail,

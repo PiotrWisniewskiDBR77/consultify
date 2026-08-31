@@ -15,6 +15,7 @@
  */
 
 import type { ToolType } from '@/store/useToolStore';
+
 import type { RuntimeReadinessManifest } from './runtimeReadiness';
 
 /** Stan TREŚCI — czy narzędzie ma kompletny, zweryfikowany opis i Pack. */

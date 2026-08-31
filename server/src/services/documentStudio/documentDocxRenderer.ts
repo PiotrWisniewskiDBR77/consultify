@@ -32,9 +32,10 @@
 // `routes/report-builder.routes.ts`). We use the same namespace + cast pattern
 // so the renderer stays type-safe at call sites without forking the `docx`
 // types.
+import { AsyncLocalStorage } from 'node:async_hooks';
+
 import * as docxModule from 'docx';
 import { imageSize } from 'image-size';
-import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { renderChartBlockToPng } from './documentChartRasterizer.js';
 import {
@@ -47,14 +48,14 @@ import {
   buildDocxStyleConfig,
   clampHeadingText,
   clampTableColumns,
-  DRD_REPORT_GEOMETRY,
-  DRD_REPORT_PALETTE,
-  DRD_DOCX_STYLE_IDS,
   DOCX_PALETTE,
   DOCX_STYLE_IDS,
   DOCX_TITLE_MAX_CHARS,
   DOCX_TONE_COLOR,
   DOCX_TONE_FILL,
+  DRD_DOCX_STYLE_IDS,
+  DRD_REPORT_GEOMETRY,
+  DRD_REPORT_PALETTE,
   isDrdReportProfile,
   resolveDocxFonts,
   resolveFormattingClass,
@@ -501,10 +502,9 @@ function headingLevelForSection(
 
 function buildAssumptionMarker(font: string, language: string): TextRun {
   return new TextRun({
-    text:
-      language.toLowerCase().startsWith('pl')
-        ? '  [Założenie — wymaga źródła]'
-        : '  [Assumption — needs source]',
+    text: language.toLowerCase().startsWith('pl')
+      ? '  [Założenie — wymaga źródła]'
+      : '  [Assumption — needs source]',
     italics: true,
     color: DOCX_PALETTE.amberInk,
     size: 18,
@@ -602,9 +602,15 @@ function renderParagraphBlock(block: DocumentBlock, ctx: RenderContext): Paragra
         // Only the FIRST materialized paragraph may carry the block's page
         // break; repeating it would push every list item onto its own page.
         pageBreakBefore: index === 0 ? pageBreakBefore : undefined,
-        numbering: bullet || numbered
-          ? { reference: numbered ? DOCX_NUMBERING_REFERENCE.DECIMAL : DOCX_NUMBERING_REFERENCE.BULLET, level: 0 }
-          : undefined,
+        numbering:
+          bullet || numbered
+            ? {
+                reference: numbered
+                  ? DOCX_NUMBERING_REFERENCE.DECIMAL
+                  : DOCX_NUMBERING_REFERENCE.BULLET,
+                level: 0,
+              }
+            : undefined,
         children,
       });
     });

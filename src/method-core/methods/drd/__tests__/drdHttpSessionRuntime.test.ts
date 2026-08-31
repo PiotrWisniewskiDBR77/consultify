@@ -114,7 +114,10 @@ describe('requirement 6 — an OLDER cached revision never survives refresh()', 
     const storage = makeMemoryStorage();
     storage.setItem('method-core:http-cache:sess-1', JSON.stringify(makeSession({ version: 2 })));
 
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 5 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 5 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
@@ -133,7 +136,10 @@ describe('requirement 6 — an OLDER cached revision never survives refresh()', 
 describe('requirement 8 — frozen Output only ever comes from a server response', () => {
   it('a frozen session with NO cached output pointer never fabricates Output content', async () => {
     const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'frozen' }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
 
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
@@ -165,7 +171,11 @@ describe('requirement 8 — frozen Output only ever comes from a server response
       contentHash: 'abc123',
       frozenAt: '2026-08-13T00:00:00.000Z',
     };
-    hoisted.freeze.mockResolvedValue({ session: makeSession({ state: 'frozen', version: 2 }), output: serverOutput, selfHealed: false });
+    hoisted.freeze.mockResolvedValue({
+      session: makeSession({ state: 'frozen', version: 2 }),
+      output: serverOutput,
+      selfHealed: false,
+    });
 
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
     await runtime.refresh();
@@ -183,7 +193,10 @@ describe('requirement 8 — frozen Output only ever comes from a server response
   it('resuming a frozen session discovers the current Output from the server, ignoring a stale cached pointer', async () => {
     const storage = makeMemoryStorage();
     storage.setItem('method-core:http-cache:sess-1:output-id', 'out-stale');
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'frozen' }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
     const serverOutput = {
       id: 'out-1',
@@ -206,7 +219,11 @@ describe('requirement 8 — frozen Output only ever comes from a server response
       outputs: [{ id: 'out-1', sessionId: 'sess-1', outputVersion: 1 }],
       total: 1,
     });
-    hoisted.getOutput.mockResolvedValue({ output: serverOutput, superseded: false, supersededByOutputId: null });
+    hoisted.getOutput.mockResolvedValue({
+      output: serverOutput,
+      superseded: false,
+      supersededByOutputId: null,
+    });
 
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
     await runtime.refresh();
@@ -218,7 +235,10 @@ describe('requirement 8 — frozen Output only ever comes from a server response
 
   it('cold reopen hydrates persisted report and initiative state for the exact current Output', async () => {
     const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'frozen' }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
     hoisted.listOutputs.mockResolvedValue({
       outputs: [
@@ -229,10 +249,21 @@ describe('requirement 8 — frozen Output only ever comes from a server response
       total: 3,
     });
     const output = {
-      id: 'out-current', organizationId: 'org-1', sessionId: 'sess-1', module: 'assessment' as const,
-      methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1', outputVersion: 2,
-      scope: 'full', current: {}, target: {}, gap: {}, limitations: [], findings: [],
-      contentHash: 'canonical-cold-hash', frozenAt: '2026-08-13T00:00:00.000Z',
+      id: 'out-current',
+      organizationId: 'org-1',
+      sessionId: 'sess-1',
+      module: 'assessment' as const,
+      methodPackId: 'drd',
+      methodPackVersion: '2.0.0-methodpack.1',
+      outputVersion: 2,
+      scope: 'full',
+      current: {},
+      target: {},
+      gap: {},
+      limitations: [],
+      findings: [],
+      contentHash: 'canonical-cold-hash',
+      frozenAt: '2026-08-13T00:00:00.000Z',
     };
     const report = { id: 'report-1', outputId: 'out-current', title: 'Persisted DRD report' };
     const initiative = { id: 'draft-1', outputId: 'out-current', title: 'Persisted initiative' };
@@ -244,16 +275,28 @@ describe('requirement 8 — frozen Output only ever comes from a server response
     await runtime.refresh();
 
     expect(runtime.getState()).toMatchObject({
-      status: 'ready', output, reports: [report], initiatives: [initiative],
+      status: 'ready',
+      output,
+      reports: [report],
+      initiatives: [initiative],
     });
-    expect(hoisted.listReports).toHaveBeenCalledWith({ outputId: 'out-current', status: 'current' });
-    expect(hoisted.listInitiativeDrafts).toHaveBeenCalledWith({ outputId: 'out-current', status: 'current' });
+    expect(hoisted.listReports).toHaveBeenCalledWith({
+      outputId: 'out-current',
+      status: 'current',
+    });
+    expect(hoisted.listInitiativeDrafts).toHaveBeenCalledWith({
+      outputId: 'out-current',
+      status: 'current',
+    });
   });
 
   it('fails closed when canonical Output discovery is unavailable instead of presenting cached success', async () => {
     const storage = makeMemoryStorage();
     storage.setItem('method-core:http-cache:sess-1:output-id', 'out-cached');
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ state: 'frozen' }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ state: 'frozen' }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
     hoisted.listOutputs.mockRejectedValue(new Error('output listing unavailable'));
 
@@ -275,8 +318,15 @@ describe('mounted production write contract — API confirmation is mandatory', 
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
     await runtime.refresh();
 
-    await expect(runtime.recordAnswer({ unitId: 'unit-1', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' }))
-      .rejects.toMatchObject({ isNetworkError: true });
+    await expect(
+      runtime.recordAnswer({
+        unitId: 'unit-1',
+        level: 1,
+        questionId: 'q1',
+        answerState: 'confirmed',
+        text: 'x',
+      })
+    ).rejects.toMatchObject({ isNetworkError: true });
 
     expect(runtime.getState()).toMatchObject({ status: 'offline', pendingWriteCount: 0 });
     expect(runtime.hasPendingWrites()).toBe(false);
@@ -288,9 +338,17 @@ describe('mounted production write contract — API confirmation is mandatory', 
 describe('409 conflict — never silently overwritten', () => {
   it('a version_conflict on transition() flips status to conflict with the server version, and the caller must refresh() explicitly', async () => {
     const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 3 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 3 }),
+      roles: ['owner'],
+    });
     hoisted.listEvents.mockResolvedValue([]);
-    hoisted.transition.mockRejectedValue(new MethodCoreApiError('version_conflict', 409, { error: 'version_conflict', currentVersion: 7 }));
+    hoisted.transition.mockRejectedValue(
+      new MethodCoreApiError('version_conflict', 409, {
+        error: 'version_conflict',
+        currentVersion: 7,
+      })
+    );
 
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
     await runtime.refresh();
@@ -302,7 +360,10 @@ describe('409 conflict — never silently overwritten', () => {
     // replaced with a guess.
     expect(runtime.getState().session?.version).toBe(3);
 
-    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 7 }), roles: ['owner'] });
+    hoisted.getSession.mockResolvedValue({
+      session: makeSession({ version: 7 }),
+      roles: ['owner'],
+    });
     await runtime.refresh();
     expect(runtime.getState().status).toBe('ready');
     expect(runtime.getState().session?.version).toBe(7);

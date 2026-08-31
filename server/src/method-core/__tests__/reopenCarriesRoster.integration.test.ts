@@ -14,8 +14,8 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { genId, nowIso } from '../db.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { genId, nowIso } from '../db.js';
 import { methodEventStore } from '../MethodEventStore.js';
 import { methodPackRegistry } from '../MethodPackRegistry.js';
 import { MethodSessionService } from '../MethodSessionService.js';
@@ -49,11 +49,11 @@ describe.skipIf(!REAL_DB)('reopen przenosi skład zespołu na nową rewizję', (
     // sam — rejestracja przy drugiej próbie trafia na unikalny indeks.
     try {
       await methodPackRegistry.register({
-      organizationId: ORG,
-      packId: PACK_ID,
-      version: PACK_VERSION,
-      name: 'Pakiet testowy reopen',
-      readiness: 'released',
+        organizationId: ORG,
+        packId: PACK_ID,
+        version: PACK_VERSION,
+        name: 'Pakiet testowy reopen',
+        readiness: 'released',
         manifest: { units: [], levels: [], questions: [] },
       } as never);
     } catch {

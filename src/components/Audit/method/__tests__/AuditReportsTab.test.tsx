@@ -13,13 +13,13 @@ vi.mock('../auditsMethodApi', async () => {
   return { ...actual, listReports: vi.fn(), approveReport: vi.fn(), publishReport: vi.fn() };
 });
 
-import { AuditReportsTab } from '../tabs/AuditReportsTab';
 import {
   approveReport,
+  type AuditReportSummary,
   listReports,
   publishReport,
-  type AuditReportSummary,
 } from '../auditsMethodApi';
+import { AuditReportsTab } from '../tabs/AuditReportsTab';
 
 const mockedListReports = vi.mocked(listReports);
 const mockedApproveReport = vi.mocked(approveReport);

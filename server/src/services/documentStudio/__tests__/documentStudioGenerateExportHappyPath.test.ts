@@ -218,7 +218,8 @@ describe('Document Studio generate -> export happy path', () => {
     });
 
     const persisted = store.get(`org-delta::${run.artifactId}`)?.content_json as
-      import('../documentStudioTypes.js').DocumentSchema | undefined;
+      | import('../documentStudioTypes.js').DocumentSchema
+      | undefined;
     expect(persisted).toBeDefined();
     const serialized = JSON.stringify(persisted);
     expect(serialized).not.toMatch(/DACH|8 inicjatyw|horyzoncie 6-9|85%/);
@@ -307,7 +308,8 @@ describe('Document Studio generate -> export happy path', () => {
     });
 
     const persisted = store.get(`org-omega::${run.artifactId}`)?.content_json as
-      import('../documentStudioTypes.js').DocumentSchema | undefined;
+      | import('../documentStudioTypes.js').DocumentSchema
+      | undefined;
     expect(persisted).toBeDefined();
     const serialized = JSON.stringify(persisted);
     for (const english of canonicalTitles) expect(serialized).not.toContain(english);
@@ -395,7 +397,8 @@ describe('Document Studio generate -> export happy path', () => {
       useLlm: true,
     });
     const persisted = store.get(`org-sigma-2::${run.artifactId}`)?.content_json as
-      import('../documentStudioTypes.js').DocumentSchema | undefined;
+      | import('../documentStudioTypes.js').DocumentSchema
+      | undefined;
     expect(persisted).toBeDefined();
     const text = JSON.stringify(persisted);
     expect(text).toContain('Realizacja planu wynosi 72%');

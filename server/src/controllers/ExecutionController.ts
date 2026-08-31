@@ -571,8 +571,10 @@ export class ExecutionController {
         spi: portfolioEvm?.spi,
         cpi: portfolioEvm?.cpi,
       });
-      const evmHealthApplied = canonicalHealth.components.schedule != null || canonicalHealth.components.cost != null;
-      const executionDim = canonicalHealth.components.schedule ?? canonicalHealth.components.progress ?? 0;
+      const evmHealthApplied =
+        canonicalHealth.components.schedule != null || canonicalHealth.components.cost != null;
+      const executionDim =
+        canonicalHealth.components.schedule ?? canonicalHealth.components.progress ?? 0;
       const effectiveHealthScore = canonicalHealth.score ?? 0;
 
       const metrics: PortfolioHealthMetrics = {

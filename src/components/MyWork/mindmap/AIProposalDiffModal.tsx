@@ -80,7 +80,6 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
   const deselectAll = () =>
     setSelectedAddIdx(Object.fromEntries(proposal.add.nodes.map((_, idx) => [idx, false])));
 
-
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
       <div

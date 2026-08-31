@@ -339,8 +339,12 @@ describe.skipIf(!REAL_PG)(
          pmo_domain TEXT NOT NULL CHECK (pmo_domain IN
            ('SCHEDULE_MILESTONES','GOVERNANCE_DECISION_MAKING','CLOSURE'))`,
         async (client) => {
-          await client.query(`INSERT INTO initiative_lifecycle_gate_decisions VALUES ('history-1','CLOSURE')`);
-          const beforeRows = await client.query(`SELECT to_jsonb(t) AS row FROM initiative_lifecycle_gate_decisions t`);
+          await client.query(
+            `INSERT INTO initiative_lifecycle_gate_decisions VALUES ('history-1','CLOSURE')`
+          );
+          const beforeRows = await client.query(
+            `SELECT to_jsonb(t) AS row FROM initiative_lifecycle_gate_decisions t`
+          );
           await client.query(domainMigration);
           await client.query(
             `INSERT INTO initiative_lifecycle_gate_decisions VALUES ('resource-1','RESOURCE_RESPONSIBILITY')`
@@ -383,7 +387,9 @@ describe.skipIf(!REAL_PG)(
       ],
     ])('M18 fails before mutation for a wrong %s shape', async (_label, definition) => {
       await withMigrationProbe(definition, async (client) => {
-        await client.query(`INSERT INTO initiative_lifecycle_gate_decisions VALUES ('history-1','CLOSURE')`);
+        await client.query(
+          `INSERT INTO initiative_lifecycle_gate_decisions VALUES ('history-1','CLOSURE')`
+        );
         const before = await migrationProbeFingerprint(client);
         await expect(client.query(domainMigration)).rejects.toThrow(
           /INITIATIVE_RESOURCE_GATE_DOMAIN_PREFLIGHT/
@@ -393,7 +399,9 @@ describe.skipIf(!REAL_PG)(
     });
 
     it('records a GO (approved) decision that persists and is visible to hasApprovedGateDecision', async () => {
-      const result = await tx((client) => recordInitiativeLifecycleGateDecision(client, baseInput()));
+      const result = await tx((client) =>
+        recordInitiativeLifecycleGateDecision(client, baseInput())
+      );
       expect(result.idempotentReplay).toBe(false);
       expect(result.decision.version).toBe(1);
       expect(result.decision.decisionStatus).toBe('approved');
@@ -526,7 +534,7 @@ describe.skipIf(!REAL_PG)(
       expect(count).toBe(1);
     });
 
-    it('denies a cross-tenant WRITE: a different org cannot record a decision against another org\'s case/initiative', async () => {
+    it("denies a cross-tenant WRITE: a different org cannot record a decision against another org's case/initiative", async () => {
       await expect(
         tx((client) =>
           recordInitiativeLifecycleGateDecision(

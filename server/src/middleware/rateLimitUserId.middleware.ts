@@ -6,8 +6,8 @@
  * quota instead of sharing 300 req/15min across all users behind one office IP.
  */
 import type { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import type { VerifyOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const MAX_JWT_STRING_CHARS = 8192;
 const MAX_AUTHORIZATION_VALUE_SCAN_CHARS = MAX_JWT_STRING_CHARS + 256;

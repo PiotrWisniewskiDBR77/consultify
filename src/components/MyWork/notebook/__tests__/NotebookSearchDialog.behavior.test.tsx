@@ -62,8 +62,20 @@ describe('NotebookSearchDialog (MYW-NBK-004)', () => {
   it('renders real results with title and snippet, and opens the chosen page on click', async () => {
     notebookSemanticSearch.mockResolvedValue({
       results: [
-        { pageId: 'page-1', title: 'Q3 roadmap', snippet: 'Ship the roadmap by Q3…', score: 0.9, matchType: 'title' },
-        { pageId: 'page-2', title: 'Roadmap risks', snippet: 'Key risks to the roadmap…', score: 0.7, matchType: 'content' },
+        {
+          pageId: 'page-1',
+          title: 'Q3 roadmap',
+          snippet: 'Ship the roadmap by Q3…',
+          score: 0.9,
+          matchType: 'title',
+        },
+        {
+          pageId: 'page-2',
+          title: 'Roadmap risks',
+          snippet: 'Key risks to the roadmap…',
+          score: 0.7,
+          matchType: 'content',
+        },
       ],
       total: 2,
     });

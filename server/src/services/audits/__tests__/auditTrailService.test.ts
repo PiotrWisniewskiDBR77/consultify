@@ -10,22 +10,19 @@
  */
 
 import { randomUUID } from 'crypto';
-
 import { describe, expect, it } from 'vitest';
 
-import * as auditTrailService from '../auditTrailService.js';
 import { auditRun, recordAuditEvent } from '../auditsDb.js';
+import * as auditTrailService from '../auditTrailService.js';
 
 const REACHABLE =
-  process.env.RUN_DB_TESTS === '1' &&
-  process.env.MOCK_DB === 'false' &&
-  !!process.env.DATABASE_URL;
+  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && !!process.env.DATABASE_URL;
 
 if (!REACHABLE) {
   // eslint-disable-next-line no-console
   console.warn(
     '[auditTrailService.test SKIPPED — clean skip, not a failure] needs NODE_ENV=test DB_TYPE=postgres ' +
-      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<consultify_audits_u6>',
+      'RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<consultify_audits_u6>'
   );
 }
 
@@ -39,7 +36,7 @@ async function seedProgram(organizationId: string, programId: string): Promise<v
   await auditRun(
     `INSERT INTO audit_programs (id, organization_id, name, status, lifecycle_state, created_by)
      VALUES ($1,$2,'U6 trail program','active','fieldwork','seed')`,
-    [programId, organizationId],
+    [programId, organizationId]
   );
 }
 
@@ -103,7 +100,7 @@ describeDb('auditTrailService — ścieżka audytowa domeny', () => {
     ]);
     for (let i = 1; i < history.length; i += 1) {
       expect(new Date(history[i].occurredAt).getTime()).toBeGreaterThanOrEqual(
-        new Date(history[i - 1].occurredAt).getTime(),
+        new Date(history[i - 1].occurredAt).getTime()
       );
     }
   });
@@ -135,11 +132,19 @@ describeDb('auditTrailService — ścieżka audytowa domeny', () => {
       payload: {},
     });
 
-    const page1 = await auditTrailService.listEvents(organizationId, { programId, limit: 2, offset: 0 });
+    const page1 = await auditTrailService.listEvents(organizationId, {
+      programId,
+      limit: 2,
+      offset: 0,
+    });
     expect(page1.total).toBe(5);
     expect(page1.items.length).toBe(2);
 
-    const all = await auditTrailService.listEvents(organizationId, { programId, limit: 200, offset: 0 });
+    const all = await auditTrailService.listEvents(organizationId, {
+      programId,
+      limit: 200,
+      offset: 0,
+    });
     expect(all.items.length).toBe(5);
     expect(all.items.every((e) => e.eventType === 'criterion.tested')).toBe(true);
   });
@@ -224,7 +229,7 @@ describeDb('auditTrailService — ścieżka audytowa domeny', () => {
            (id, program_id, organization_id, ordinal, ref_code, title, work_status,
             auditee_responded_by, concluded_by, conformity_status)
          VALUES ($1,$2,$3,0,'C.1','Kryterium ze skażoną niezależnością','concluded',$4,$4,'conforming')`,
-        [criterionId, programId, organizationId, person],
+        [criterionId, programId, organizationId, person]
       );
 
       const report = await auditTrailService.getIndependenceReport(organizationId, programId);
@@ -246,19 +251,19 @@ describeDb('auditTrailService — ścieżka audytowa domeny', () => {
       await auditRun(
         `INSERT INTO audit_program_findings (id, program_id, organization_id, statement, classification, status)
          VALUES ($1,$2,$3,'Ustalenie testowe','nonconforming','remediation_in_progress')`,
-        [findingId, programId, organizationId],
+        [findingId, programId, organizationId]
       );
       await auditRun(
         `INSERT INTO audit_corrective_actions
            (id, finding_id, program_id, organization_id, action_kind, title, owner_user_id, status)
          VALUES ($1,$2,$3,$4,'corrective_action','Działanie testowe',$5,'implemented')`,
-        [actionId, findingId, programId, organizationId, person],
+        [actionId, findingId, programId, organizationId, person]
       );
       await auditRun(
         `INSERT INTO audit_verifications
            (id, corrective_action_id, finding_id, program_id, organization_id, verification_kind, performed_by, result)
          VALUES ($1,$2,$3,$4,$5,'effectiveness',$6,'effective')`,
-        [uid('averif'), actionId, findingId, programId, organizationId, person],
+        [uid('averif'), actionId, findingId, programId, organizationId, person]
       );
 
       const report = await auditTrailService.getIndependenceReport(organizationId, programId);
@@ -279,7 +284,7 @@ describeDb('auditTrailService — ścieżka audytowa domeny', () => {
         `INSERT INTO audit_program_findings
            (id, program_id, organization_id, statement, classification, status, author_id, reviewed_by)
          VALUES ($1,$2,$3,'Ustalenie recenzowane przez autora','nonconforming','in_review',$4,$4)`,
-        [findingId, programId, organizationId, person],
+        [findingId, programId, organizationId, person]
       );
 
       const report = await auditTrailService.getIndependenceReport(organizationId, programId);
@@ -299,7 +304,7 @@ describeDb('auditTrailService — ścieżka audytowa domeny', () => {
            (id, program_id, organization_id, ordinal, ref_code, title, work_status,
             auditee_responded_by, concluded_by, conformity_status)
          VALUES ($1,$2,$3,0,'C.2','Kryterium z poprawną niezależnością','concluded','user-a','user-b','conforming')`,
-        [criterionId, programId, organizationId],
+        [criterionId, programId, organizationId]
       );
 
       const report = await auditTrailService.getIndependenceReport(organizationId, programId);
@@ -321,7 +326,7 @@ describeDb('auditTrailService — ścieżka audytowa domeny', () => {
            (id, program_id, organization_id, ordinal, ref_code, title, work_status,
             auditee_responded_by, concluded_by, conformity_status)
          VALUES ($1,$2,$3,0,'D.1','Kryterium organizacji A','concluded',$4,$4,'conforming')`,
-        [criterionA, programA, orgA, person],
+        [criterionA, programA, orgA, person]
       );
 
       const reportA = await auditTrailService.getIndependenceReport(orgA, programA);

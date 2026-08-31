@@ -17,21 +17,25 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, executeAtomicCreate, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+  executeAtomicCreate,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { RoiEconomicModelNotEditableError } from './roiCalculationPolicyCommands.js';
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
-  toRoiBenefitLine,
   type RoiBenefitLine,
   type RoiBenefitLineRow,
   type RoiConfidenceLevel,
   type RoiRecurrenceCadence,
   type RoiTimingType,
+  toRoiBenefitLine,
 } from './roiEconomicModelTypes.js';
 
 // ==========================================
@@ -98,7 +102,11 @@ async function assertCaseEditableForUpdate(
 
 /** Design §4: isFinancial=true requires amount/currency; isFinancial=false
  * requires amount IS NULL — a clean typed 4xx instead of a raw 23514. */
-function assertFinancialAmountRule(isFinancial: boolean, amount: number | null, currency: string | null): void {
+function assertFinancialAmountRule(
+  isFinancial: boolean,
+  amount: number | null,
+  currency: string | null
+): void {
   if (isFinancial) {
     if (amount === null || currency === null) {
       throw new RoiBenefitLineValidationError(
@@ -149,7 +157,9 @@ export interface AddBenefitLineInput {
   access: CommandAccessContext;
 }
 
-export async function addBenefitLine(input: AddBenefitLineInput): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
+export async function addBenefitLine(
+  input: AddBenefitLineInput
+): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
   const {
     caseId,
     organizationId,
@@ -303,7 +313,9 @@ export interface UpdateBenefitLineInput {
   access: CommandAccessContext;
 }
 
-export async function updateBenefitLine(input: UpdateBenefitLineInput): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
+export async function updateBenefitLine(
+  input: UpdateBenefitLineInput
+): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
   const {
     benefitLineId,
     caseId,
@@ -358,23 +370,34 @@ export async function updateBenefitLine(input: UpdateBenefitLineInput): Promise<
         currency: edits.currency !== undefined ? edits.currency : currentRow.currency,
         timing_type: edits.timingType ?? currentRow.timing_type,
         one_time_period_date:
-          edits.oneTimePeriodDate !== undefined ? edits.oneTimePeriodDate : currentRow.one_time_period_date,
+          edits.oneTimePeriodDate !== undefined
+            ? edits.oneTimePeriodDate
+            : currentRow.one_time_period_date,
         recurrence_start_date:
-          edits.recurrenceStartDate !== undefined ? edits.recurrenceStartDate : currentRow.recurrence_start_date,
+          edits.recurrenceStartDate !== undefined
+            ? edits.recurrenceStartDate
+            : currentRow.recurrence_start_date,
         recurrence_end_date:
-          edits.recurrenceEndDate !== undefined ? edits.recurrenceEndDate : currentRow.recurrence_end_date,
+          edits.recurrenceEndDate !== undefined
+            ? edits.recurrenceEndDate
+            : currentRow.recurrence_end_date,
         recurrence_cadence:
-          edits.recurrenceCadence !== undefined ? edits.recurrenceCadence : currentRow.recurrence_cadence,
+          edits.recurrenceCadence !== undefined
+            ? edits.recurrenceCadence
+            : currentRow.recurrence_cadence,
         ramp_periods: edits.rampPeriods !== undefined ? edits.rampPeriods : currentRow.ramp_periods,
         double_counting_group:
-          edits.doubleCountingGroup !== undefined ? edits.doubleCountingGroup : currentRow.double_counting_group,
+          edits.doubleCountingGroup !== undefined
+            ? edits.doubleCountingGroup
+            : currentRow.double_counting_group,
         double_counting_resolution_note:
           edits.doubleCountingResolutionNote !== undefined
             ? edits.doubleCountingResolutionNote
             : currentRow.double_counting_resolution_note,
         confidence: edits.confidence !== undefined ? edits.confidence : currentRow.confidence,
         source: edits.source !== undefined ? edits.source : currentRow.source,
-        owner_user_id: edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
+        owner_user_id:
+          edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
       };
 
       assertFinancialAmountRule(
@@ -415,7 +438,8 @@ export async function updateBenefitLine(input: UpdateBenefitLineInput): Promise<
         ]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[updateBenefitLine] update returned no row for ${benefitLineId}`);
+      if (!updatedRow)
+        throw new Error(`[updateBenefitLine] update returned no row for ${benefitLineId}`);
       return toRoiBenefitLine(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -466,7 +490,9 @@ export interface RemoveBenefitLineInput {
   access: CommandAccessContext;
 }
 
-export async function removeBenefitLine(input: RemoveBenefitLineInput): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
+export async function removeBenefitLine(
+  input: RemoveBenefitLineInput
+): Promise<AtomicCommandOutcome<RoiBenefitLine>> {
   const {
     benefitLineId,
     caseId,
@@ -509,7 +535,8 @@ export async function removeBenefitLine(input: RemoveBenefitLineInput): Promise<
         [actorUserId, nextVersion, benefitLineId]
       );
       const updatedRow = updateResult.rows[0];
-      if (!updatedRow) throw new Error(`[removeBenefitLine] update returned no row for ${benefitLineId}`);
+      if (!updatedRow)
+        throw new Error(`[removeBenefitLine] update returned no row for ${benefitLineId}`);
       return toRoiBenefitLine(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {

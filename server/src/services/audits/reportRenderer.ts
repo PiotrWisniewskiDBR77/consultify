@@ -254,7 +254,7 @@ function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
 /** Zamienia grupę na tablicę {key, items}, posortowaną deterministycznie po kluczu. */
 function groupEntries<T>(
   map: Map<string, T[]>,
-  order?: (key: string) => number,
+  order?: (key: string) => number
 ): Array<{ key: string; items: T[] }> {
   const entries = Array.from(map.entries()).map(([key, items]) => ({ key, items }));
   entries.sort((a, b) => {
@@ -321,7 +321,7 @@ function buildLimitations(output: AuditOutputPayload): string[] {
   const insufficientEvidence = output.evidence.filter((e) => e.sufficiency === 'insufficient');
   if (insufficientEvidence.length > 0) {
     limitations.push(
-      `${insufficientEvidence.length} dowodów oceniono jako niewystarczające do pełnego potwierdzenia wniosku.`,
+      `${insufficientEvidence.length} dowodów oceniono jako niewystarczające do pełnego potwierdzenia wniosku.`
     );
   }
   const questionable = output.evidence.filter((e) => e.reliability === 'questionable');
@@ -329,11 +329,11 @@ function buildLimitations(output: AuditOutputPayload): string[] {
     limitations.push(`${questionable.length} dowodów ma zastrzeżoną wiarygodność.`);
   }
   const insufficientCriteria = output.criteriaWork.filter(
-    (c) => c.conformityStatus === 'evidence_insufficient',
+    (c) => c.conformityStatus === 'evidence_insufficient'
   );
   if (insufficientCriteria.length > 0) {
     limitations.push(
-      `${insufficientCriteria.length} kryteriów pozostaje bez rozstrzygnięcia z powodu niewystarczających dowodów.`,
+      `${insufficientCriteria.length} kryteriów pozostaje bez rozstrzygnięcia z powodu niewystarczających dowodów.`
     );
   }
   if (limitations.length === 0) {
@@ -343,11 +343,13 @@ function buildLimitations(output: AuditOutputPayload): string[] {
 }
 
 function buildEvidenceReferences(
-  output: AuditOutputPayload,
+  output: AuditOutputPayload
 ): Array<{ findingId: string; evidenceIds: string[]; evidenceTitles: string[] }> {
   const evidenceById = new Map(output.evidence.map((e) => [e.id, e]));
   return output.findings.map((f) => {
-    const entries = f.objectiveEvidence.map((id) => evidenceById.get(id)).filter(Boolean) as OutputEvidenceEntry[];
+    const entries = f.objectiveEvidence
+      .map((id) => evidenceById.get(id))
+      .filter(Boolean) as OutputEvidenceEntry[];
     return {
       findingId: f.id,
       evidenceIds: entries.map((e) => e.id),
@@ -385,14 +387,14 @@ function buildTraceabilityMatrix(output: AuditOutputPayload): TraceabilityRow[] 
   const evidenceById = new Map(output.evidence.map((e) => [e.id, e]));
 
   return output.findings.map((f) => {
-    const criterion = f.criterionId ? criterionById.get(f.criterionId) ?? null : null;
+    const criterion = f.criterionId ? (criterionById.get(f.criterionId) ?? null) : null;
     const evidenceEntries = f.objectiveEvidence
       .map((id) => evidenceById.get(id))
       .filter(Boolean) as OutputEvidenceEntry[];
     const actions = output.correctiveActionPlan.filter((a) => a.findingId === f.id);
     const actionIds = new Set(actions.map((a) => a.id));
     const verifications = output.verificationPlan.filter(
-      (v) => v.findingId === f.id || (v.correctiveActionId && actionIds.has(v.correctiveActionId)),
+      (v) => v.findingId === f.id || (v.correctiveActionId && actionIds.has(v.correctiveActionId))
     );
 
     return {
@@ -427,7 +429,7 @@ export interface RenderAuditReportOptions {
 
 export function renderAuditReport(
   output: AuditOutputPayload,
-  options: RenderAuditReportOptions,
+  options: RenderAuditReportOptions
 ): AuditReportDocument {
   const bySeverity = groupBy(output.findings, (f) => f.severity ?? 'unclassified');
   const byArea = groupBy(output.findings, (f) => resolveAreaForFinding(output, f));
@@ -554,7 +556,7 @@ function closureForecastNote(percentComplete: number, remaining: number): string
 
 function buildResidualRiskChange(
   output: AuditOutputPayload,
-  verifications: RemediationVerificationInput[],
+  verifications: RemediationVerificationInput[]
 ): Array<{ findingId: string; baselineResidualRisk: string | null; note: string }> {
   return output.residualRisk.map((r) => {
     const related = verifications.filter((v) => v.findingId === r.findingId);
@@ -564,7 +566,8 @@ function buildResidualRiskChange(
     } else if (related.some((v) => v.result === 'not_effective')) {
       note = 'Weryfikacja wykazała brak skuteczności — ryzyko rezydualne utrzymuje się.';
     } else if (related.some((v) => v.result === 'partially_effective')) {
-      note = 'Weryfikacja wykazała częściową skuteczność — ryzyko rezydualne częściowo zredukowane.';
+      note =
+        'Weryfikacja wykazała częściową skuteczność — ryzyko rezydualne częściowo zredukowane.';
     } else if (related.length > 0) {
       note = 'Weryfikacja w toku — wynik nierozstrzygający.';
     }
@@ -576,7 +579,7 @@ export function renderRemediationProgressReport(
   output: AuditOutputPayload,
   actions: RemediationActionInput[],
   verifications: RemediationVerificationInput[],
-  asOfDate: string,
+  asOfDate: string
 ): AuditReportDocument {
   const asOfTime = Date.parse(asOfDate);
   const total = actions.length;
@@ -589,10 +592,10 @@ export function renderRemediationProgressReport(
 
   const withoutOwner = actions.filter((a) => !a.ownerUserId);
   const withoutEvidence = actions.filter(
-    (a) => COMPLETED_ACTION_STATUSES.has(a.status) && !a.implementationEvidenceId,
+    (a) => COMPLETED_ACTION_STATUSES.has(a.status) && !a.implementationEvidenceId
   );
   const missingOwnerOrEvidenceById = new Map(
-    [...withoutOwner, ...withoutEvidence].map((a) => [a.id, a]),
+    [...withoutOwner, ...withoutEvidence].map((a) => [a.id, a])
   );
 
   const sections: ReportSection[] = [
@@ -655,7 +658,7 @@ export function renderRemediationProgressReport(
 
 function byDueDateThenId(
   a: { dueDate: string | null; id: string },
-  b: { dueDate: string | null; id: string },
+  b: { dueDate: string | null; id: string }
 ): number {
   if (a.dueDate && b.dueDate) {
     const cmp = a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0;
@@ -669,7 +672,7 @@ function byDueDateThenId(
 }
 
 function buildAccountabilities(
-  output: AuditOutputPayload,
+  output: AuditOutputPayload
 ): Array<{ ownerUserId: string; findingIds: string[]; actionIds: string[] }> {
   const byOwner = new Map<string, { findingIds: string[]; actionIds: string[] }>();
   const ensure = (owner: string) => {
@@ -690,7 +693,10 @@ export function renderPresentationView(output: AuditOutputPayload): AuditReportD
   const criticalFindings = output.findings.filter((f) => f.severity === 'critical');
   const criticalEvidence = output.evidence.filter((e) => e.supportsConformity === false);
   const priorities = output.correctiveActionPlan.slice().sort(byDueDateThenId);
-  const timeline = output.correctiveActionPlan.filter((a) => a.dueDate).slice().sort(byDueDateThenId);
+  const timeline = output.correctiveActionPlan
+    .filter((a) => a.dueDate)
+    .slice()
+    .sort(byDueDateThenId);
 
   const sections: ReportSection[] = [
     { id: 'conclusion', title: 'Konkluzja', kind: 'text', content: buildOverallConclusion(output) },

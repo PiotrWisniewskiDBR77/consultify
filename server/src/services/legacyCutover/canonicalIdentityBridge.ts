@@ -190,7 +190,8 @@ export async function resolveCanonicalIdentity(params: {
     };
   }
 
-  const businessVersionId = alias.business_version_id || artifact.current_business_version_id || null;
+  const businessVersionId =
+    alias.business_version_id || artifact.current_business_version_id || null;
 
   // Fourth link. Absence is NOT an error: an artifact with no open working
   // revision is still fully cut over for read and approve flows. It is recorded

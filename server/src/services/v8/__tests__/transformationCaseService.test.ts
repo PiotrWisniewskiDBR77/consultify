@@ -22,6 +22,7 @@ import {
   ProposeMobilizationBlueprintSchema,
   ProposeOpportunitySynthesisSchema,
   ProposePortfolioDecisionSchema,
+  ResolvePortfolioDecisionSchema,
   ReviewDrdAssessmentProposalSchema,
   ReviewFinanceKpiPackSchema,
   ReviewInitialIdeasProposalSchema,
@@ -29,7 +30,6 @@ import {
   ReviewMobilizationBlueprintSchema,
   ReviewOpportunitySynthesisSchema,
   ReviewPortfolioDecisionSchema,
-  ResolvePortfolioDecisionSchema,
   ReviseTransformationCaseSchema,
 } from '../../../types/transformationCase.js';
 import {
@@ -65,15 +65,35 @@ describe('EPIC-AGENT-T01 transformation plan compiler', () => {
   it('preserves server-owned lifecycle and capability truth while allowing safe custom steps', async () => {
     const { enforceAuthoritativeStepTruth } = await import('../transformationCaseService.js');
     const current = compileT01TransformationPlan().slice(0, 2);
-    const drafts = current.map(({stepId,stepIndex:_index,status:_status,...step})=>({...step,sourceStepId:stepId}));
+    const drafts = current.map(({ stepId, stepIndex: _index, status: _status, ...step }) => ({
+      ...step,
+      sourceStepId: stepId,
+    }));
     expect(() => enforceAuthoritativeStepTruth(drafts, current)).not.toThrow();
-    expect(() => enforceAuthoritativeStepTruth([{...drafts[0],capabilityStatus:'REAL'}],current)).toThrow(/server-owned/);
-    expect(() => enforceAuthoritativeStepTruth([{...drafts[0],lifecycleStage:'renamed_stage'}],current)).toThrow(/server-owned/);
-    const custom={...drafts[0],sourceStepId:undefined,lifecycleStage:'custom_review',capabilityStatus:'PROPOSAL_ONLY' as const,blockerReason:'No verified runtime capability binding.'};
-    expect(() => enforceAuthoritativeStepTruth([...drafts,custom],current)).not.toThrow();
-    expect(() => enforceAuthoritativeStepTruth([...drafts,{...custom,capabilityStatus:'REAL',blockerReason:null}],current)).toThrow(/PROPOSAL_ONLY/);
-    const referenced=current.map((step,index)=>index===1?{...step,dependsOn:[current[0].lifecycleStage]}:step);
-    expect(() => enforceAuthoritativeStepTruth([drafts[1]],referenced)).toThrow(/referenced by/);
+    expect(() =>
+      enforceAuthoritativeStepTruth([{ ...drafts[0], capabilityStatus: 'REAL' }], current)
+    ).toThrow(/server-owned/);
+    expect(() =>
+      enforceAuthoritativeStepTruth([{ ...drafts[0], lifecycleStage: 'renamed_stage' }], current)
+    ).toThrow(/server-owned/);
+    const custom = {
+      ...drafts[0],
+      sourceStepId: undefined,
+      lifecycleStage: 'custom_review',
+      capabilityStatus: 'PROPOSAL_ONLY' as const,
+      blockerReason: 'No verified runtime capability binding.',
+    };
+    expect(() => enforceAuthoritativeStepTruth([...drafts, custom], current)).not.toThrow();
+    expect(() =>
+      enforceAuthoritativeStepTruth(
+        [...drafts, { ...custom, capabilityStatus: 'REAL', blockerReason: null }],
+        current
+      )
+    ).toThrow(/PROPOSAL_ONLY/);
+    const referenced = current.map((step, index) =>
+      index === 1 ? { ...step, dependsOn: [current[0].lifecycleStage] } : step
+    );
+    expect(() => enforceAuthoritativeStepTruth([drafts[1]], referenced)).toThrow(/referenced by/);
   });
   it('compiles the complete Teresa-to-final-output lifecycle in canonical order', () => {
     const plan = compileT01TransformationPlan();

@@ -2,6 +2,7 @@ import { FolderKanban, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import {
   FolderCreateDialog,
   type FolderCreateSubmitInput,
@@ -12,7 +13,6 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
-import { ConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { Modal } from '@/components/ui/primitives/Modal';
 import { Api } from '@/services/api';
 

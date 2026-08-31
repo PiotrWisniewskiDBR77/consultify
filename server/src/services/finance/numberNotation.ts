@@ -320,12 +320,7 @@ export function parseStatementNumber(
   if (separatorIsGrouping === null) {
     // No document notation: do not invent one. Report the grouped reading (statement
     // subtotals are integers) but mark the value as requiring attention.
-    return finish(
-      `${head}${tail}`,
-      'grouping',
-      'AMBIGUOUS_SEPARATOR_NO_DOCUMENT_NOTATION',
-      true
-    );
+    return finish(`${head}${tail}`, 'grouping', 'AMBIGUOUS_SEPARATOR_NO_DOCUMENT_NOTATION', true);
   }
 
   return separatorIsGrouping

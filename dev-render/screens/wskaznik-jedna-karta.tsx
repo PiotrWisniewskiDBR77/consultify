@@ -61,6 +61,12 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import {
+  NModeContentBlock,
+  type NModeSection,
+  NModeShell,
+} from '../../src/components/shared/NModeLayout';
+import { PreviewRelations } from '../../src/components/shared/PreviewPane/PreviewRelations';
 import { ArtifactPropertiesTable } from '../../src/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
@@ -68,12 +74,6 @@ import {
   type ArtifactRightPanelSection,
 } from '../../src/components/standard/ArtifactRightPanel';
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-import { PreviewRelations } from '../../src/components/shared/PreviewPane/PreviewRelations';
-import {
-  NModeContentBlock,
-  NModeShell,
-  type NModeSection,
-} from '../../src/components/shared/NModeLayout';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
@@ -128,7 +128,10 @@ const StatTile: React.FC<{
 const KV: React.FC<{ rows: { label: string; value: string }[] }> = ({ rows }) => (
   <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
     {rows.map((r) => (
-      <div key={r.label} className="flex items-baseline justify-between gap-3 border-b border-c-border-subtle/60 pb-1.5">
+      <div
+        key={r.label}
+        className="flex items-baseline justify-between gap-3 border-b border-c-border-subtle/60 pb-1.5"
+      >
         <dt className="text-xs text-c-text-muted">{r.label}</dt>
         <dd className="text-right text-xs font-medium tabular-nums text-c-text">{r.value}</dd>
       </div>
@@ -190,55 +193,154 @@ const SimpleTable: React.FC<{
 // ── SEKCJA 1: KONTRAKT ──────────────────────────────────────────────────────
 const KontraktContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="kontrakt-definicja" scope={SCOPE} title="Co mierzy ten wskaźnik" readMode>
+    <NModeContentBlock
+      blockId="kontrakt-definicja"
+      scope={SCOPE}
+      title="Co mierzy ten wskaźnik"
+      readMode
+    >
       <p className="text-xs leading-relaxed text-c-text-secondary">
-        Średni czas przezbrojenia linii pakowania L3 — od zatrzymania linii po ostatnią
-        sztukę poprzedniej partii do pierwszej dobrej sztuki nowej partii. Mierzy, jak
-        szybko linia wraca do produkcji po zmianie asortymentu; to wskaźnik prowadzący
-        dla programu SMED i bezpośredni wkład do modelu ROI tej inicjatywy.
+        Średni czas przezbrojenia linii pakowania L3 — od zatrzymania linii po ostatnią sztukę
+        poprzedniej partii do pierwszej dobrej sztuki nowej partii. Mierzy, jak szybko linia wraca
+        do produkcji po zmianie asortymentu; to wskaźnik prowadzący dla programu SMED i bezpośredni
+        wkład do modelu ROI tej inicjatywy.
       </p>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="kontrakt-parametry" scope={SCOPE} title="Kontrakt wskaźnika" readMode>
+    <NModeContentBlock
+      blockId="kontrakt-parametry"
+      scope={SCOPE}
+      title="Kontrakt wskaźnika"
+      readMode
+    >
       <KV
         rows={[
           { label: 'Jednostka', value: 'minuty (średnia na przezbrojenie)' },
-          { label: 'Wzór', value: 'suma minut przezbrojeń w okresie ÷ liczba przezbrojeń, ważona wolumenem zmiany' },
-          { label: 'Źródło danych', value: 'SAP PM — rejestr zdarzeń przezbrojenia (automatyczny odczyt)' },
-          { label: 'Częstotliwość pomiaru', value: 'miesięcznie (podgląd tygodniowy do wykrywania trendu)' },
+          {
+            label: 'Wzór',
+            value: 'suma minut przezbrojeń w okresie ÷ liczba przezbrojeń, ważona wolumenem zmiany',
+          },
+          {
+            label: 'Źródło danych',
+            value: 'SAP PM — rejestr zdarzeń przezbrojenia (automatyczny odczyt)',
+          },
+          {
+            label: 'Częstotliwość pomiaru',
+            value: 'miesięcznie (podgląd tygodniowy do wykrywania trendu)',
+          },
           { label: 'Właściciel wskaźnika', value: 'Marek Zieliński (Kierownik Linii L3)' },
           { label: 'Zatwierdzający próg', value: 'Anna Kowalczyk (Dyrektor Operacyjna)' },
         ]}
       />
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="kontrakt-progi" scope={SCOPE} title="Progi (aktualne, od 5 marca 2027)" readMode>
+    <NModeContentBlock
+      blockId="kontrakt-progi"
+      scope={SCOPE}
+      title="Progi (aktualne, od 5 marca 2027)"
+      readMode
+    >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="Cel" value="26 min" sub="target po rewizji" tone="success" icon={Target} />
-        <StatTile label="Ostrzeżenie" value="≥ 32 min" sub="żółty próg" tone="warning" icon={AlertTriangle} />
-        <StatTile label="Krytyczny" value="≥ 38 min" sub="czerwony próg" tone="danger" icon={AlertTriangle} />
-        <StatTile label="Baseline" value="47 min" sub="przed programem SMED" tone="neutral" icon={Gauge} />
+        <StatTile
+          label="Ostrzeżenie"
+          value="≥ 32 min"
+          sub="żółty próg"
+          tone="warning"
+          icon={AlertTriangle}
+        />
+        <StatTile
+          label="Krytyczny"
+          value="≥ 38 min"
+          sub="czerwony próg"
+          tone="danger"
+          icon={AlertTriangle}
+        />
+        <StatTile
+          label="Baseline"
+          value="47 min"
+          sub="przed programem SMED"
+          tone="neutral"
+          icon={Gauge}
+        />
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-c-text-muted">
-        Poprzedni cel (22 min) obowiązywał do 5 marca 2027 — pełna historia zmiany progu
-        i uzasadnienie w sekcji „Rodowód”.
+        Poprzedni cel (22 min) obowiązywał do 5 marca 2027 — pełna historia zmiany progu i
+        uzasadnienie w sekcji „Rodowód”.
       </p>
     </NModeContentBlock>
   </div>
 );
 
 // ── SEKCJA 2: POMIARY ────────────────────────────────────────────────────────
-const POMIARY_ROWS: { okres: string; wartosc: number; status: 'ok' | 'ostrzezenie' | 'krytyczny'; komentarz: string }[] = [
-  { okres: 'Sierpień 2026 (baseline)', wartosc: 47, status: 'krytyczny', komentarz: 'Przed startem programu SMED — punkt odniesienia.' },
-  { okres: 'Wrzesień 2026', wartosc: 44, status: 'krytyczny', komentarz: 'Pierwsze szkolenia zmiany dziennej.' },
-  { okres: 'Październik 2026', wartosc: 39, status: 'ostrzezenie', komentarz: 'Zmiana dzienna certyfikowana w 6/8.' },
-  { okres: 'Listopad 2026', wartosc: 35, status: 'ostrzezenie', komentarz: 'Start szkoleń zmiany popołudniowej.' },
-  { okres: 'Grudzień 2026', wartosc: 31, status: 'ostrzezenie', komentarz: 'Zmiana dzienna w pełni certyfikowana (8/8).' },
-  { okres: 'Styczeń 2027', wartosc: 29, status: 'ok', komentarz: 'Pierwszy miesiąc pod ówczesnym celem 22 min — jeszcze nieosiągnięty, ale w trendzie.' },
-  { okres: 'Luty 2027', wartosc: 31, status: 'ostrzezenie', komentarz: 'POGORSZENIE względem stycznia — zmiana nocna dalej pracuje starym sposobem (41 min), ciągnie średnią w górę.' },
-  { okres: 'Marzec 2027', wartosc: 28, status: 'ok', komentarz: 'Start coachingu zmiany nocnej (decyzja z 5 marca).' },
-  { okres: 'Kwiecień 2027', wartosc: 26, status: 'ok', komentarz: 'Zmiana nocna: 4/8 certyfikowanych.' },
-  { okres: 'Maj 2027 (ostatni pomiar)', wartosc: 25, status: 'ok', komentarz: 'Poniżej nowego celu 26 min drugi miesiąc z rzędu.' },
+const POMIARY_ROWS: {
+  okres: string;
+  wartosc: number;
+  status: 'ok' | 'ostrzezenie' | 'krytyczny';
+  komentarz: string;
+}[] = [
+  {
+    okres: 'Sierpień 2026 (baseline)',
+    wartosc: 47,
+    status: 'krytyczny',
+    komentarz: 'Przed startem programu SMED — punkt odniesienia.',
+  },
+  {
+    okres: 'Wrzesień 2026',
+    wartosc: 44,
+    status: 'krytyczny',
+    komentarz: 'Pierwsze szkolenia zmiany dziennej.',
+  },
+  {
+    okres: 'Październik 2026',
+    wartosc: 39,
+    status: 'ostrzezenie',
+    komentarz: 'Zmiana dzienna certyfikowana w 6/8.',
+  },
+  {
+    okres: 'Listopad 2026',
+    wartosc: 35,
+    status: 'ostrzezenie',
+    komentarz: 'Start szkoleń zmiany popołudniowej.',
+  },
+  {
+    okres: 'Grudzień 2026',
+    wartosc: 31,
+    status: 'ostrzezenie',
+    komentarz: 'Zmiana dzienna w pełni certyfikowana (8/8).',
+  },
+  {
+    okres: 'Styczeń 2027',
+    wartosc: 29,
+    status: 'ok',
+    komentarz:
+      'Pierwszy miesiąc pod ówczesnym celem 22 min — jeszcze nieosiągnięty, ale w trendzie.',
+  },
+  {
+    okres: 'Luty 2027',
+    wartosc: 31,
+    status: 'ostrzezenie',
+    komentarz:
+      'POGORSZENIE względem stycznia — zmiana nocna dalej pracuje starym sposobem (41 min), ciągnie średnią w górę.',
+  },
+  {
+    okres: 'Marzec 2027',
+    wartosc: 28,
+    status: 'ok',
+    komentarz: 'Start coachingu zmiany nocnej (decyzja z 5 marca).',
+  },
+  {
+    okres: 'Kwiecień 2027',
+    wartosc: 26,
+    status: 'ok',
+    komentarz: 'Zmiana nocna: 4/8 certyfikowanych.',
+  },
+  {
+    okres: 'Maj 2027 (ostatni pomiar)',
+    wartosc: 25,
+    status: 'ok',
+    komentarz: 'Poniżej nowego celu 26 min drugi miesiąc z rzędu.',
+  },
 ];
 
 const PomiaryContent: React.FC = () => (
@@ -249,13 +351,18 @@ const PomiaryContent: React.FC = () => (
     >
       <TrendingDown size={16} className="mt-0.5 shrink-0 text-c-warning" />
       <span>
-        Luty 2027: wynik <strong>pogorszył się</strong> względem stycznia (29 → 31 min) — to
-        nie jest błąd pomiaru, tylko realny regres napędzany zmianą nocną. Przyczyna i
-        reakcja opisane w sekcjach „Odchylenia” i „Działania korygujące”.
+        Luty 2027: wynik <strong>pogorszył się</strong> względem stycznia (29 → 31 min) — to nie
+        jest błąd pomiaru, tylko realny regres napędzany zmianą nocną. Przyczyna i reakcja opisane w
+        sekcjach „Odchylenia” i „Działania korygujące”.
       </span>
     </div>
 
-    <NModeContentBlock blockId="pomiary-historia" scope={SCOPE} title="Historia pomiarów — jeden wskaźnik, dziesięć okresów" readMode>
+    <NModeContentBlock
+      blockId="pomiary-historia"
+      scope={SCOPE}
+      title="Historia pomiarów — jeden wskaźnik, dziesięć okresów"
+      readMode
+    >
       <SimpleTable
         head={['Okres', 'Wartość', 'Status', 'Komentarz']}
         rows={POMIARY_ROWS.map((r) => [
@@ -272,7 +379,11 @@ const PomiaryContent: React.FC = () => (
           >
             {r.wartosc} min
           </span>,
-          r.status === 'krytyczny' ? 'Krytyczny' : r.status === 'ostrzezenie' ? 'Ostrzeżenie' : 'W normie',
+          r.status === 'krytyczny'
+            ? 'Krytyczny'
+            : r.status === 'ostrzezenie'
+              ? 'Ostrzeżenie'
+              : 'W normie',
           <span key="c" className="text-left text-c-text-muted">
             {r.komentarz}
           </span>,
@@ -280,17 +391,41 @@ const PomiaryContent: React.FC = () => (
       />
       <p className="mt-3 text-[11px] leading-relaxed text-c-text-muted">
         To JEDEN wskaźnik oglądany w dziesięciu okresach, nie dziesięć osobnych wskaźników —
-        historia trwa od baseline'u (sierpień 2026) do ostatniego pomiaru (maj 2027) bez
-        zerwania ciągłości, nawet gdy zmieniał się próg (marzec 2027, patrz „Rodowód”).
+        historia trwa od baseline'u (sierpień 2026) do ostatniego pomiaru (maj 2027) bez zerwania
+        ciągłości, nawet gdy zmieniał się próg (marzec 2027, patrz „Rodowód”).
       </p>
     </NModeContentBlock>
 
     <NModeContentBlock blockId="pomiary-trend" scope={SCOPE} title="Trend w liczbach" readMode>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Ostatni pomiar" value="25 min" sub="maj 2027" tone="success" icon={TrendingDown} />
-        <StatTile label="Zmiana vs baseline" value="−47%" sub="47 → 25 min" tone="success" icon={TrendingUp} />
-        <StatTile label="Najgorszy pomiar" value="47 min" sub="sierpień 2026" tone="danger" icon={AlertTriangle} />
-        <StatTile label="Okresów pod celem" value="4 / 10" sub="od stycznia 2027" tone="neutral" icon={CheckCircle2} />
+        <StatTile
+          label="Ostatni pomiar"
+          value="25 min"
+          sub="maj 2027"
+          tone="success"
+          icon={TrendingDown}
+        />
+        <StatTile
+          label="Zmiana vs baseline"
+          value="−47%"
+          sub="47 → 25 min"
+          tone="success"
+          icon={TrendingUp}
+        />
+        <StatTile
+          label="Najgorszy pomiar"
+          value="47 min"
+          sub="sierpień 2026"
+          tone="danger"
+          icon={AlertTriangle}
+        />
+        <StatTile
+          label="Okresów pod celem"
+          value="4 / 10"
+          sub="od stycznia 2027"
+          tone="neutral"
+          icon={CheckCircle2}
+        />
       </div>
     </NModeContentBlock>
   </div>
@@ -299,48 +434,74 @@ const PomiaryContent: React.FC = () => (
 // ── SEKCJA 3: ODCHYLENIA ─────────────────────────────────────────────────────
 const OdchyleniaContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="odchylenia-lista" scope={SCOPE} title="Przekroczenia progu" readMode>
+    <NModeContentBlock
+      blockId="odchylenia-lista"
+      scope={SCOPE}
+      title="Przekroczenia progu"
+      readMode
+    >
       <SimpleTable
-        head={['Okres', 'Wartość', 'Próg obowiązujący wtedy', 'Skala przekroczenia', 'Status sprawy']}
+        head={[
+          'Okres',
+          'Wartość',
+          'Próg obowiązujący wtedy',
+          'Skala przekroczenia',
+          'Status sprawy',
+        ]}
         rows={[
           [
             'Sierpień – grudzień 2026',
             '47 → 31 min',
             '22 min (cel pierwotny)',
-            <span key="a" className="text-c-danger">powyżej celu cały okres</span>,
+            <span key="a" className="text-c-danger">
+              powyżej celu cały okres
+            </span>,
             'Oczekiwane — okres rozruchu programu, brak sprawy odchylenia.',
           ],
           [
             'Luty 2027',
             '31 min',
             '22 min (cel pierwotny)',
-            <span key="b" className="text-c-danger">+9 min ponad cel; zmiana III: 41 min (+19 min)</span>,
+            <span key="b" className="text-c-danger">
+              +9 min ponad cel; zmiana III: 41 min (+19 min)
+            </span>,
             'ODCH-0031 — otwarta.',
           ],
         ]}
       />
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="odchylenia-szczegoly" scope={SCOPE} title="ODCH-0031 — co dokładnie przekroczyło próg" readMode>
+    <NModeContentBlock
+      blockId="odchylenia-szczegoly"
+      scope={SCOPE}
+      title="ODCH-0031 — co dokładnie przekroczyło próg"
+      readMode
+    >
       <div className="flex flex-col gap-3 text-xs text-c-text-secondary">
         <p>
-          Rozbicie lutowego pomiaru na zmiany pokazuje, że przekroczenie nie jest
-          rozłożone równo — zmiana nocna (III) ma dziś tylko{' '}
-          <strong className="text-c-text">1 z 8 operatorów</strong> certyfikowanych w
-          metodzie SMED.
+          Rozbicie lutowego pomiaru na zmiany pokazuje, że przekroczenie nie jest rozłożone równo —
+          zmiana nocna (III) ma dziś tylko <strong className="text-c-text">1 z 8 operatorów</strong>{' '}
+          certyfikowanych w metodzie SMED.
         </p>
         <SimpleTable
           head={['Zmiana', 'Luty 2027', 'Cel wtedy', 'Certyfikacja SMED']}
           rows={[
             ['I — dzienna', '23 min', '22 min', '8/8'],
             ['II — popołudniowa', '29 min', '22 min', '5/8'],
-            ['III — nocna', '41 min', '22 min', <span key="n" className="text-c-danger">1/8</span>],
+            [
+              'III — nocna',
+              '41 min',
+              '22 min',
+              <span key="n" className="text-c-danger">
+                1/8
+              </span>,
+            ],
           ]}
         />
         <p>
-          Zmiana III odpowiada za ok. 1/3 wolumenu przezbrojeń, ale ciągnie średnią ważoną
-          w górę nieproporcjonalnie do swojego udziału — dokładnie ta sama przyczyna, którą
-          opisuje analiza ROI tej inicjatywy w sekcji „Wnioski i rekomendacja”.
+          Zmiana III odpowiada za ok. 1/3 wolumenu przezbrojeń, ale ciągnie średnią ważoną w górę
+          nieproporcjonalnie do swojego udziału — dokładnie ta sama przyczyna, którą opisuje analiza
+          ROI tej inicjatywy w sekcji „Wnioski i rekomendacja”.
         </p>
       </div>
     </NModeContentBlock>
@@ -350,7 +511,12 @@ const OdchyleniaContent: React.FC = () => (
 // ── SEKCJA 4: DZIAŁANIA KORYGUJĄCE ──────────────────────────────────────────
 const DzialaniaKorygujaceContent: React.FC = () => (
   <div className="flex flex-col gap-4">
-    <NModeContentBlock blockId="cas-0031" scope={SCOPE} title="CAS-0031 — reakcja na ODCH-0031" readMode>
+    <NModeContentBlock
+      blockId="cas-0031"
+      scope={SCOPE}
+      title="CAS-0031 — reakcja na ODCH-0031"
+      readMode
+    >
       <KV
         rows={[
           { label: 'Powiązana sprawa odchylenia', value: 'ODCH-0031 (luty 2027)' },
@@ -366,26 +532,51 @@ const DzialaniaKorygujaceContent: React.FC = () => (
       <SimpleTable
         head={['Działanie', 'Termin', 'Kto', 'Status']}
         rows={[
-          ['Sesja coachingu SMED #1 — zmiana III', '12 marca 2027', 'Trener SMED (zewn.), 4 operatorów', 'Zamknięte'],
-          ['Sesja coachingu SMED #2 — zmiana III', '26 marca 2027', 'Trener SMED (zewn.), 4 operatorów', 'Zamknięte'],
-          ['Sesja coachingu SMED #3 — zmiana III', '9 kwietnia 2027', 'Trener SMED (zewn.), pozostali operatorzy', 'Zamknięte'],
-          ['Sesja coachingu SMED #4 — zmiana III', '30 kwietnia 2027', 'Trener SMED (zewn.), certyfikacja końcowa', 'Zaplanowane'],
+          [
+            'Sesja coachingu SMED #1 — zmiana III',
+            '12 marca 2027',
+            'Trener SMED (zewn.), 4 operatorów',
+            'Zamknięte',
+          ],
+          [
+            'Sesja coachingu SMED #2 — zmiana III',
+            '26 marca 2027',
+            'Trener SMED (zewn.), 4 operatorów',
+            'Zamknięte',
+          ],
+          [
+            'Sesja coachingu SMED #3 — zmiana III',
+            '9 kwietnia 2027',
+            'Trener SMED (zewn.), pozostali operatorzy',
+            'Zamknięte',
+          ],
+          [
+            'Sesja coachingu SMED #4 — zmiana III',
+            '30 kwietnia 2027',
+            'Trener SMED (zewn.), certyfikacja końcowa',
+            'Zaplanowane',
+          ],
         ]}
       />
       <p className="mt-3 text-[11px] leading-relaxed text-c-text-muted">
-        Efekt widoczny już w pomiarach: marzec 28 min, kwiecień 26 min, maj 25 min —
-        odchylenie ODCH-0031 traktowane jako zamknięte po potwierdzeniu w czerwcowym
-        pomiarze, zgodnie z regułą „dwa kolejne okresy pod progiem".
+        Efekt widoczny już w pomiarach: marzec 28 min, kwiecień 26 min, maj 25 min — odchylenie
+        ODCH-0031 traktowane jako zamknięte po potwierdzeniu w czerwcowym pomiarze, zgodnie z regułą
+        „dwa kolejne okresy pod progiem".
       </p>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="cas-decyzja-towarzysząca" scope={SCOPE} title="Decyzja towarzysząca" readMode>
+    <NModeContentBlock
+      blockId="cas-decyzja-towarzysząca"
+      scope={SCOPE}
+      title="Decyzja towarzysząca"
+      readMode
+    >
       <div className="flex items-start gap-2 rounded-lg border border-c-info/30 bg-c-info/10 px-3 py-2.5 text-xs text-c-text">
         <Target size={16} className="mt-0.5 shrink-0 text-c-info" />
         <span>
-          Równolegle z działaniem korygującym podjęto decyzję o rewizji celu (22 → 26 min) —
-          nie jako ucieczka od problemu, tylko urealnienie targetu do czasu domknięcia
-          certyfikacji zmiany nocnej. Pełny zapis w sekcji „Rodowód”.
+          Równolegle z działaniem korygującym podjęto decyzję o rewizji celu (22 → 26 min) — nie
+          jako ucieczka od problemu, tylko urealnienie targetu do czasu domknięcia certyfikacji
+          zmiany nocnej. Pełny zapis w sekcji „Rodowód”.
         </span>
       </div>
     </NModeContentBlock>
@@ -399,12 +590,17 @@ const RodowodContent: React.FC = () => (
       <p className="text-xs leading-relaxed text-c-text-secondary">
         Ta sekcja broni wiarygodności liczby. Wskaźnik żyje przez wiele okresów (decyzja
         właściciela, sierpień 2026) — więc kiedy próg albo wzór się zmienia, trzeba wiedzieć
-        DOKŁADNIE kiedy, dlaczego i kto to zatwierdził, żeby porównanie „25 min dziś vs 47 min
-        na starcie" nadal znaczyło to samo.
+        DOKŁADNIE kiedy, dlaczego i kto to zatwierdził, żeby porównanie „25 min dziś vs 47 min na
+        starcie" nadal znaczyło to samo.
       </p>
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="rodowod-zmiany-definicji" scope={SCOPE} title="Historia zmian definicji" readMode>
+    <NModeContentBlock
+      blockId="rodowod-zmiany-definicji"
+      scope={SCOPE}
+      title="Historia zmian definicji"
+      readMode
+    >
       <SimpleTable
         head={['Data', 'Co się zmieniło', 'Z / na', 'Zatwierdził']}
         rows={[
@@ -430,20 +626,24 @@ const RodowodContent: React.FC = () => (
       />
     </NModeContentBlock>
 
-    <NModeContentBlock blockId="rodowod-uzasadnienie" scope={SCOPE} title="Uzasadnienie rewizji progu (5 marca 2027)" readMode>
+    <NModeContentBlock
+      blockId="rodowod-uzasadnienie"
+      scope={SCOPE}
+      title="Uzasadnienie rewizji progu (5 marca 2027)"
+      readMode
+    >
       <div className="flex flex-col gap-3 text-xs text-c-text-secondary">
         <p>
-          Cytat z decyzji: „Cel 22 minuty zakładał pełną certyfikację SMED wszystkich trzech
-          zmian do lutego 2027. Harmonogram szkoleń poślizgnął się przez kolizję z przeglądem
-          UDT linii L3 — trener dotarł do zmiany nocnej dopiero w tygodniu 14, nie 8. Target
-          zostaje urealniony do 26 minut na czas domknięcia coachingu (kwiecień 2027), z
-          powrotem do 22 minut po pełnej certyfikacji zmiany III."
+          Cytat z decyzji: „Cel 22 minuty zakładał pełną certyfikację SMED wszystkich trzech zmian
+          do lutego 2027. Harmonogram szkoleń poślizgnął się przez kolizję z przeglądem UDT linii L3
+          — trener dotarł do zmiany nocnej dopiero w tygodniu 14, nie 8. Target zostaje urealniony
+          do 26 minut na czas domknięcia coachingu (kwiecień 2027), z powrotem do 22 minut po pełnej
+          certyfikacji zmiany III."
         </p>
         <p className="text-[11px] text-c-text-muted">
-          Ważne: rewizja progu NIE zmienia historii pomiarów sprzed 5 marca 2027 — wiersze w
-          sekcji „Pomiary" z lutego 2026 – lutego 2027 nadal są oceniane względem progu
-          obowiązującego w danym momencie (kolumna „Próg obowiązujący wtedy" w sekcji
-          „Odchylenia").
+          Ważne: rewizja progu NIE zmienia historii pomiarów sprzed 5 marca 2027 — wiersze w sekcji
+          „Pomiary" z lutego 2026 – lutego 2027 nadal są oceniane względem progu obowiązującego w
+          danym momencie (kolumna „Próg obowiązujący wtedy" w sekcji „Odchylenia").
         </p>
       </div>
     </NModeContentBlock>
@@ -613,9 +813,7 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
       badge: 1,
       children: (
         <Bullets
-          items={[
-            'Protokół rewizji progu (PDF) — zatwierdzony 5 marca 2027, wersja 1.0.',
-          ]}
+          items={['Protokół rewizji progu (PDF) — zatwierdzony 5 marca 2027, wersja 1.0.']}
         />
       ),
     },
@@ -631,14 +829,12 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
             {
               author: 'Anna Kowalczyk',
               when: '4 marca 2027, 08:52',
-              text:
-                'Zanim zgodzę się na przesunięcie progu — czy mamy pewność, że to problem adopcji, a nie samego wzoru? Chcę zobaczyć rozbicie na zmiany, nie tylko średnią.',
+              text: 'Zanim zgodzę się na przesunięcie progu — czy mamy pewność, że to problem adopcji, a nie samego wzoru? Chcę zobaczyć rozbicie na zmiany, nie tylko średnią.',
             },
             {
               author: 'Marek Zieliński',
               when: '4 marca 2027, 15:10',
-              text:
-                'Rozbicie w sekcji „Odchylenia" — zmiana III: 41 min, 1/8 certyfikowanych. Wzór działa poprawnie, to czysto adopcja. Stąd wniosek: coaching, nie zmiana metody liczenia.',
+              text: 'Rozbicie w sekcji „Odchylenia" — zmiana III: 41 min, 1/8 certyfikowanych. Wzór działa poprawnie, to czysto adopcja. Stąd wniosek: coaching, nie zmiana metody liczenia.',
             },
           ].map((c) => (
             <div key={c.author + c.when} className="rounded-lg border border-c-border-subtle p-2.5">
@@ -661,11 +857,26 @@ function buildRightPanelSections(): ArtifactRightPanelSection[] {
       children: (
         <ul className="flex flex-col gap-2.5">
           {[
-            { when: '12 sierpnia 2026', text: 'Wskaźnik utworzony — powiązany z inicjatywą SMED L3.' },
-            { when: '3 listopada 2026', text: 'Zmiana metody agregacji na średnią ważoną (patrz „Rodowód").' },
-            { when: '1 stycznia 2027', text: 'Dołączony do zestawienia „KPI procesowe — sierpień 2026" (retro-uzupełnienie okresu).' },
-            { when: '5 marca 2027', text: 'Otwarta sprawa odchylenia ODCH-0031, rewizja progu zatwierdzona.' },
-            { when: '30 kwietnia 2027', text: 'Ostatnia z czterech sesji coachingu zmiany nocnej zaplanowana na koniec miesiąca.' },
+            {
+              when: '12 sierpnia 2026',
+              text: 'Wskaźnik utworzony — powiązany z inicjatywą SMED L3.',
+            },
+            {
+              when: '3 listopada 2026',
+              text: 'Zmiana metody agregacji na średnią ważoną (patrz „Rodowód").',
+            },
+            {
+              when: '1 stycznia 2027',
+              text: 'Dołączony do zestawienia „KPI procesowe — sierpień 2026" (retro-uzupełnienie okresu).',
+            },
+            {
+              when: '5 marca 2027',
+              text: 'Otwarta sprawa odchylenia ODCH-0031, rewizja progu zatwierdzona.',
+            },
+            {
+              when: '30 kwietnia 2027',
+              text: 'Ostatnia z czterech sesji coachingu zmiany nocnej zaplanowana na koniec miesiąca.',
+            },
           ].map((h) => (
             <li key={h.when} className="flex items-start gap-2 text-xs text-c-text-secondary">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-c-text-muted" />

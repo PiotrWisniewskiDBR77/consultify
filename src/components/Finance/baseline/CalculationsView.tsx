@@ -15,19 +15,19 @@
 import React, { useMemo, useState } from 'react';
 
 import {
+  type BaselineOutputDto,
+  type BaselinePeriodComputeSummaryDto,
   financeValueDisplayReasonLabel,
   financeValueStatusLabel,
   formatFinanceValueForDisplay,
   isMissingFinanceValue,
-  type BaselineOutputDto,
-  type BaselinePeriodComputeSummaryDto,
 } from '@/services/api/financeV2.types';
 
 import {
   CANONICAL_LINE_META,
   CANONICAL_LINE_ORDER,
-  STATEMENT_TYPE_OF_LINE,
   type CanonicalLineCode,
+  STATEMENT_TYPE_OF_LINE,
 } from './baselineLabels';
 import type { BaselineComputeUiState, BaselineStaleReason } from './useBaselineCompute';
 
@@ -91,7 +91,18 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
   // punktu 2 orkiestratora: JEDNA akcja „Przelicz", w `FinanceWorkspaceBar`,
   // nie zdublowana tu w podpasku). Prop zostaje w interfejsie — caller
   // (`BaselineWorkspace.tsx`) i istniejące testy nadal go przekazują.
-  const { outputs, loadingOutputs, outputsError, forecastPeriods, computeState, computeErrorDetail, lastComputedAt, wasRecovered, stale, monthlyResults } = props;
+  const {
+    outputs,
+    loadingOutputs,
+    outputsError,
+    forecastPeriods,
+    computeState,
+    computeErrorDetail,
+    lastComputedAt,
+    wasRecovered,
+    stale,
+    monthlyResults,
+  } = props;
   const [granularity, setGranularity] = useState<RollupGranularity>('monthly');
   const [lineageOpenFor, setLineageOpenFor] = useState<string | null>(null);
 
@@ -106,7 +117,11 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       }
       membersByGroup.get(key)!.push(p);
     }
-    return order.map((key) => ({ key, label: rollupLabel(key, granularity, membersByGroup.get(key)![0].label), members: membersByGroup.get(key)! }));
+    return order.map((key) => ({
+      key,
+      label: rollupLabel(key, granularity, membersByGroup.get(key)![0].label),
+      members: membersByGroup.get(key)!,
+    }));
   }, [forecastPeriods, granularity]);
 
   const outputsByLineAndPeriod = useMemo(() => {
@@ -134,29 +149,56 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
     group: { members: PeriodMeta[] }
   ): { text: string; isMissingLikeGlyph: boolean; numeric: number | null; reason: string | null } {
     const meta = CANONICAL_LINE_META[line];
-    const cellsInGroup = group.members.map((p) => outputsByLineAndPeriod.get(`${line}::${p.periodId}`));
+    const cellsInGroup = group.members.map((p) =>
+      outputsByLineAndPeriod.get(`${line}::${p.periodId}`)
+    );
     if (cellsInGroup.some((c) => c === undefined)) {
       // Brak choćby jednego miesiąca w grupie = brak danych dla całej grupy — NIGDY nie renderujemy częściowej sumy jako pełnego wyniku.
-      return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wyliczenia dla przynajmniej jednego miesiąca w tym okresie (roll-up)' };
+      return {
+        text: '—',
+        isMissingLikeGlyph: true,
+        numeric: null,
+        reason: 'Brak wyliczenia dla przynajmniej jednego miesiąca w tym okresie (roll-up)',
+      };
     }
     const present = cellsInGroup as BaselineOutputDto[];
-    const missingLike = present.filter((c) => c.value.status === 'MISSING' || c.value.status === 'NA' || c.value.status === 'NOT_APPLICABLE');
+    const missingLike = present.filter(
+      (c) =>
+        c.value.status === 'MISSING' ||
+        c.value.status === 'NA' ||
+        c.value.status === 'NOT_APPLICABLE'
+    );
     if (missingLike.length > 0 || present.some((c) => isMissingFinanceValue(c.value))) {
       const reason =
         present.length === 1
           ? financeValueDisplayReasonLabel(present[0].value.status)
-          : missingLike.length === present.length && new Set(missingLike.map((c) => c.value.status)).size === 1
+          : missingLike.length === present.length &&
+              new Set(missingLike.map((c) => c.value.status)).size === 1
             ? financeValueDisplayReasonLabel(missingLike[0].value.status)
-            : `Część okresów w tym roll-upie bez danych (${Array.from(new Set(missingLike.map((c) => c.value.status)))
+            : `Część okresów w tym roll-upie bez danych (${Array.from(
+                new Set(missingLike.map((c) => c.value.status))
+              )
                 .map((status) => financeValueStatusLabel(status))
                 .join(', ')})`;
       return { text: '—', isMissingLikeGlyph: true, numeric: null, reason };
     }
-    const numbers = present.map((c) => (c.value.valueDecimal === null ? null : Number(c.value.valueDecimal)));
-    if (numbers.some((n) => n === null)) return { text: '—', isMissingLikeGlyph: true, numeric: null, reason: 'Brak wartości liczbowej' };
+    const numbers = present.map((c) =>
+      c.value.valueDecimal === null ? null : Number(c.value.valueDecimal)
+    );
+    if (numbers.some((n) => n === null))
+      return {
+        text: '—',
+        isMissingLikeGlyph: true,
+        numeric: null,
+        reason: 'Brak wartości liczbowej',
+      };
     const nums = numbers as number[];
-    const value = meta.aggregation === 'flow-sum' ? nums.reduce((a, b) => a + b, 0) : nums[nums.length - 1];
-    const display = formatFinanceValueForDisplay({ status: value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', valueDecimal: String(value) });
+    const value =
+      meta.aggregation === 'flow-sum' ? nums.reduce((a, b) => a + b, 0) : nums[nums.length - 1];
+    const display = formatFinanceValueForDisplay({
+      status: value === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+      valueDecimal: String(value),
+    });
     return { text: display.text, isMissingLikeGlyph: false, numeric: value, reason: null };
   }
 
@@ -164,7 +206,10 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
     CANONICAL_LINE_ORDER.filter((code) => STATEMENT_TYPE_OF_LINE[code] === statementType);
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden" data-testid="baseline-calculations-view">
+    <div
+      className="flex h-full w-full flex-col overflow-hidden"
+      data-testid="baseline-calculations-view"
+    >
       {/* ── Pasek stanu compute (bez duplikowania statusu z FinanceWorkspaceBar — tylko informacje SPECYFICZNE dla tego widoku: horyzont, ostatnie udane przeliczenie, alarm).
           ★ NAPRAWA punktu 2 orkiestratora: BEZ własnego przycisku „Przelicz" tutaj — jedyna akcja compute
           żyje w `FinanceWorkspaceBar` (prawy górny róg), ten pasek jest wyłącznie informacyjny. ── */}
@@ -190,8 +235,15 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
               : 'Jeszcze nie przeliczono'}
           </span>
           {stale.stale && (
-            <span className="rounded-full bg-c-warning/10 px-2 py-0.5 font-medium text-c-warning" data-testid="baseline-stale-badge">
-              {stale.reason === 'ASSUMPTIONS_EDITED' ? 'Nieaktualne — założenia zmienione' : stale.reason === 'SOURCE_CHANGED' ? 'Nieaktualne — źródło zmienione' : 'Nie przeliczono'}
+            <span
+              className="rounded-full bg-c-warning/10 px-2 py-0.5 font-medium text-c-warning"
+              data-testid="baseline-stale-badge"
+            >
+              {stale.reason === 'ASSUMPTIONS_EDITED'
+                ? 'Nieaktualne — założenia zmienione'
+                : stale.reason === 'SOURCE_CHANGED'
+                  ? 'Nieaktualne — źródło zmienione'
+                  : 'Nie przeliczono'}
             </span>
           )}
         </div>
@@ -199,18 +251,29 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
 
       {/* ── Stan compute — NIGDY surowy "Request timed out" (OWN-FIN-018). ── */}
       {computeState === 'computing' && (
-        <div className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary" data-testid="baseline-compute-computing-banner">
+        <div
+          className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary"
+          data-testid="baseline-compute-computing-banner"
+        >
           Trwa przeliczanie modelu (solver zbieżności iteruje po każdym miesiącu)…
         </div>
       )}
       {computeState === 'recovering' && (
-        <div className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary" data-testid="baseline-compute-recovering-banner">
+        <div
+          className="border-b border-c-border-subtle bg-c-surface-raised/60 px-4 py-2 text-xs text-c-text-secondary"
+          data-testid="baseline-compute-recovering-banner"
+        >
           Połączenie trwało dłużej niż zwykle — sprawdzam, czy przeliczenie mimo to się zakończyło…
         </div>
       )}
       {computeState === 'failed' && computeErrorDetail && (
-        <div role="alert" className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-2 text-xs text-c-danger" data-testid="baseline-compute-failed-banner">
-          <span className="font-semibold">{computeErrorDetail.title}.</span> {computeErrorDetail.detail}
+        <div
+          role="alert"
+          className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-2 text-xs text-c-danger"
+          data-testid="baseline-compute-failed-banner"
+        >
+          <span className="font-semibold">{computeErrorDetail.title}.</span>{' '}
+          {computeErrorDetail.detail}
         </div>
       )}
 
@@ -223,15 +286,19 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
         >
           <span aria-hidden="true">⚠</span>
           <span>
-            Luka finansowania w {fundingGapPeriods.length} {fundingGapPeriods.length === 1 ? 'okresie' : 'okresach'} — gotówka spada
-            poniżej zera i POZOSTAJE ujemna (model nie dodaje finansowania ani nie spłaca długu automatycznie). Okresy:{' '}
-            {fundingGapPeriods.map((p) => p.periodId).join(', ')}.
+            Luka finansowania w {fundingGapPeriods.length}{' '}
+            {fundingGapPeriods.length === 1 ? 'okresie' : 'okresach'} — gotówka spada poniżej zera i
+            POZOSTAJE ujemna (model nie dodaje finansowania ani nie spłaca długu automatycznie).
+            Okresy: {fundingGapPeriods.map((p) => p.periodId).join(', ')}.
           </span>
         </div>
       )}
 
       {outputsError && (
-        <div role="alert" className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-2 text-xs text-c-danger">
+        <div
+          role="alert"
+          className="border-b border-c-border-subtle bg-c-danger/5 px-4 py-2 text-xs text-c-danger"
+        >
           Nie udało się wczytać wyliczeń: {outputsError}
         </div>
       )}
@@ -245,24 +312,38 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
       */}
       <div className="flex-1 overflow-auto pb-16">
         {loadingOutputs ? (
-          <div className="flex min-h-[240px] items-center justify-center text-sm text-c-text-muted">Wczytuję wyliczenia…</div>
+          <div className="flex min-h-[240px] items-center justify-center text-sm text-c-text-muted">
+            Wczytuję wyliczenia…
+          </div>
         ) : outputs.length === 0 && groupedPeriods.length === 0 ? (
           <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 p-6 text-center">
             <p className="text-sm font-semibold text-c-text">Brak wyliczeń</p>
-            <p className="max-w-sm text-xs text-c-text-muted">Uruchom przeliczenie, aby zobaczyć prognozowany P&amp;L, bilans i przepływy.</p>
+            <p className="max-w-sm text-xs text-c-text-muted">
+              Uruchom przeliczenie, aby zobaczyć prognozowany P&amp;L, bilans i przepływy.
+            </p>
           </div>
         ) : (
           (['P&L', 'BS', 'CF'] as const).map((statementType) => (
-            <table key={statementType} /* §27-exempt: archetyp Excel — sprawozdanie finansowe (P&L/BS/CF) z liniami kanonicznymi i roll-upem, nie lista rekordów encji (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2) */ className="w-full min-w-[900px] border-collapse text-sm" data-testid={`baseline-statement-table-${statementType.replace('&', '')}`}>
+            <table
+              key={statementType}
+              /* §27-exempt: archetyp Excel — sprawozdanie finansowe (P&L/BS/CF) z liniami kanonicznymi i roll-upem, nie lista rekordów encji (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md #2) */ className="w-full min-w-[900px] border-collapse text-sm"
+              data-testid={`baseline-statement-table-${statementType.replace('&', '')}`}
+            >
               <thead className="sticky top-0 z-10 bg-c-surface-raised text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
                 <tr>
                   <th className="px-3 py-2 text-left" style={{ minWidth: 220 }}>
-                    {statementType === 'P&L' ? 'Rachunek wyników (P&L)' : statementType === 'BS' ? 'Bilans (BS)' : 'Przepływy pieniężne (CF)'}
+                    {statementType === 'P&L'
+                      ? 'Rachunek wyników (P&L)'
+                      : statementType === 'BS'
+                        ? 'Bilans (BS)'
+                        : 'Przepływy pieniężne (CF)'}
                   </th>
                   {groupedPeriods.map((g) => (
                     <th key={g.key} className="px-3 py-2 text-right" style={{ minWidth: 100 }}>
                       <div>{g.label}</div>
-                      <div className="text-[9px] font-normal normal-case text-c-text-muted">Prognoza</div>
+                      <div className="text-[9px] font-normal normal-case text-c-text-muted">
+                        Prognoza
+                      </div>
                     </th>
                   ))}
                 </tr>
@@ -283,8 +364,14 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
                           {meta.labelPl}
                         </button>
                         {lineageOpenFor === line && (
-                          <p className="mt-0.5 text-[10px] text-c-text-muted" data-testid={`baseline-line-lineage-${line}`}>
-                            Ślad: {DRIVING_SCHEDULE_LABEL_OF_LINE[line] ? `Założenie (${DRIVING_SCHEDULE_LABEL_OF_LINE[line]}) → formuła silnika → ${meta.labelPl}` : `Wyliczone z innych linii → ${meta.labelPl} (bez bezpośredniego harmonogramu założeń)`}
+                          <p
+                            className="mt-0.5 text-[10px] text-c-text-muted"
+                            data-testid={`baseline-line-lineage-${line}`}
+                          >
+                            Ślad:{' '}
+                            {DRIVING_SCHEDULE_LABEL_OF_LINE[line]
+                              ? `Założenie (${DRIVING_SCHEDULE_LABEL_OF_LINE[line]}) → formuła silnika → ${meta.labelPl}`
+                              : `Wyliczone z innych linii → ${meta.labelPl} (bez bezpośredniego harmonogramu założeń)`}
                           </p>
                         )}
                       </td>
@@ -303,9 +390,17 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
                           <td
                             key={g.key}
                             className={`px-3 py-1.5 text-right tabular-nums ${
-                              agg.isMissingLikeGlyph ? 'text-c-text-muted' : isCriticalNegative ? 'font-semibold text-c-danger' : 'text-c-text'
+                              agg.isMissingLikeGlyph
+                                ? 'text-c-text-muted'
+                                : isCriticalNegative
+                                  ? 'font-semibold text-c-danger'
+                                  : 'text-c-text'
                             }`}
-                            data-testid={isCashLine ? `baseline-cash-value-${g.key}` : `baseline-line-value-${line}-${g.key}`}
+                            data-testid={
+                              isCashLine
+                                ? `baseline-cash-value-${g.key}`
+                                : `baseline-line-value-${line}-${g.key}`
+                            }
                             title={agg.reason ?? undefined}
                           >
                             {agg.text}

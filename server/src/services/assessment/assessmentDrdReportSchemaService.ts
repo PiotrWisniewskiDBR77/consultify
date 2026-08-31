@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 
 import DRD_STRUCTURE, { type DRDAxis } from '../../data/drdStructure.js';
-import type { DocumentBlock, DocumentSchema } from '../documentStudio/documentStudioTypes.js';
 import { DRD_DOCX_STYLE_IDS, DRD_REPORT_PALETTE } from '../documentStudio/documentDocxStyles.js';
+import type { DocumentBlock, DocumentSchema } from '../documentStudio/documentStudioTypes.js';
 import type { AssessmentReportContractService } from './assessmentReportContractService.js';
 
 export type AssessmentReportContract = Awaited<

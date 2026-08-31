@@ -53,16 +53,17 @@
  * layer, not hidden at the repository layer (which deliberately still
  * `SELECT *`s both columns).
  */
-import { Router } from 'express';
 import type { Response } from 'express';
+import { Router } from 'express';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
-import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { denyMutations } from '../../middleware/readOnlyGuard.middleware.js';
+import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { validateParams, validateQuery } from '../../middleware/validation.middleware.js';
+import { resultsVnextOkrLegacyArchiveHitsTotal } from '../../services/metricsService.js';
 import {
   getLegacyOkrCheckIn,
   getLegacyOkrCycle,
@@ -75,7 +76,6 @@ import {
   listLegacyOkrObjectives,
   type OkrLegacyOriginDomain,
 } from '../../services/resultsVnext/okr/okrLegacyArchiveRepository.js';
-import { resultsVnextOkrLegacyArchiveHitsTotal } from '../../services/metricsService.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -128,19 +128,23 @@ interface LegacyArchiveMeta {
 const LEGACY_LABELS: Record<string, { originDomain: OkrLegacyOriginDomain; label: string }> = {
   cycles: {
     originDomain: 'okr_legacy_live',
-    label: 'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
+    label:
+      'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
   },
   objectives: {
     originDomain: 'okr_legacy_live',
-    label: 'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
+    label:
+      'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
   },
   'key-results': {
     originDomain: 'okr_legacy_live',
-    label: 'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
+    label:
+      'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
   },
   'check-ins': {
     originDomain: 'okr_legacy_live',
-    label: 'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
+    label:
+      'Legacy OKR (resultsStrategic.routes.ts /:projectId/okr/*) — live, external to Results vNext',
   },
 };
 
@@ -175,7 +179,9 @@ function handleLegacyRouteError(res: Response, err: unknown, op: string): void {
   logger.error(`[resultsVnext/okrLegacyArchive.routes] ${op} failed`, {
     error: err instanceof Error ? err.message : String(err),
   });
-  res.status(500).json({ error: 'Internal server error', code: 'OKR_LEGACY_ARCHIVE_INTERNAL_ERROR' });
+  res
+    .status(500)
+    .json({ error: 'Internal server error', code: 'OKR_LEGACY_ARCHIVE_INTERNAL_ERROR' });
 }
 
 // ==========================================
@@ -205,23 +211,27 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 // cycles
 // ==========================================
 
-router.get('/cycles', validateQuery(ListOkrLegacyQuerySchema), async (req: AuthenticatedRequest, res: Response) => {
-  const auth = requireAuth(req, res);
-  if (!auth) return;
-  try {
-    const query = req.query as unknown as import('zod').infer<typeof ListOkrLegacyQuerySchema>;
-    const limit = query.limit ?? 50;
-    const offset = query.offset ?? 0;
-    const { rows, total } = await listLegacyOkrCycles(auth.organizationId, limit, offset);
-    resultsVnextOkrLegacyArchiveHitsTotal.inc({ source_table: 'okr_cycles' });
-    res.json({
-      data: rows,
-      meta: legacyMeta('cycles', 'okr_cycles', auth.organizationId, total, limit, offset),
-    });
-  } catch (err) {
-    handleLegacyRouteError(res, err, 'listLegacyOkrCycles');
+router.get(
+  '/cycles',
+  validateQuery(ListOkrLegacyQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const query = req.query as unknown as import('zod').infer<typeof ListOkrLegacyQuerySchema>;
+      const limit = query.limit ?? 50;
+      const offset = query.offset ?? 0;
+      const { rows, total } = await listLegacyOkrCycles(auth.organizationId, limit, offset);
+      resultsVnextOkrLegacyArchiveHitsTotal.inc({ source_table: 'okr_cycles' });
+      res.json({
+        data: rows,
+        meta: legacyMeta('cycles', 'okr_cycles', auth.organizationId, total, limit, offset),
+      });
+    } catch (err) {
+      handleLegacyRouteError(res, err, 'listLegacyOkrCycles');
+    }
   }
-});
+);
 
 router.get(
   '/cycles/:legacyId',
@@ -230,10 +240,14 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof OkrLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof OkrLegacyIdParamsSchema
+      >;
       const row = await getLegacyOkrCycle(auth.organizationId, legacyId);
       if (!row) {
-        res.status(404).json({ data: null, meta: legacyMeta('cycles', 'okr_cycles', auth.organizationId) });
+        res
+          .status(404)
+          .json({ data: null, meta: legacyMeta('cycles', 'okr_cycles', auth.organizationId) });
         return;
       }
       resultsVnextOkrLegacyArchiveHitsTotal.inc({ source_table: 'okr_cycles' });
@@ -277,14 +291,22 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof OkrLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof OkrLegacyIdParamsSchema
+      >;
       const row = await getLegacyOkrObjective(auth.organizationId, legacyId);
       if (!row) {
-        res.status(404).json({ data: null, meta: legacyMeta('objectives', 'okr_objectives', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('objectives', 'okr_objectives', auth.organizationId),
+        });
         return;
       }
       resultsVnextOkrLegacyArchiveHitsTotal.inc({ source_table: 'okr_objectives' });
-      res.json({ data: row, meta: legacyMeta('objectives', 'okr_objectives', auth.organizationId) });
+      res.json({
+        data: row,
+        meta: legacyMeta('objectives', 'okr_objectives', auth.organizationId),
+      });
     } catch (err) {
       handleLegacyRouteError(res, err, 'getLegacyOkrObjective');
     }
@@ -315,7 +337,14 @@ router.get(
       resultsVnextOkrLegacyArchiveHitsTotal.inc({ source_table: 'okr_key_results' });
       res.json({
         data: rows,
-        meta: legacyMeta('key-results', 'okr_key_results', auth.organizationId, total, limit, offset),
+        meta: legacyMeta(
+          'key-results',
+          'okr_key_results',
+          auth.organizationId,
+          total,
+          limit,
+          offset
+        ),
         warnings: [KEY_RESULTS_D09_WARNING],
       });
     } catch (err) {
@@ -331,7 +360,9 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof OkrLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof OkrLegacyIdParamsSchema
+      >;
       const row = await getLegacyOkrKeyResult(auth.organizationId, legacyId);
       if (!row) {
         res.status(404).json({
@@ -386,10 +417,15 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
-      const { legacyId } = req.params as unknown as import('zod').infer<typeof OkrLegacyIdParamsSchema>;
+      const { legacyId } = req.params as unknown as import('zod').infer<
+        typeof OkrLegacyIdParamsSchema
+      >;
       const row = await getLegacyOkrCheckIn(auth.organizationId, legacyId);
       if (!row) {
-        res.status(404).json({ data: null, meta: legacyMeta('check-ins', 'okr_check_ins', auth.organizationId) });
+        res.status(404).json({
+          data: null,
+          meta: legacyMeta('check-ins', 'okr_check_ins', auth.organizationId),
+        });
         return;
       }
       resultsVnextOkrLegacyArchiveHitsTotal.inc({ source_table: 'okr_check_ins' });

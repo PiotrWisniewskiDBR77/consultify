@@ -144,7 +144,10 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Code size={16} className="text-c-info" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="embed-in-reports-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="embed-in-reports-modal-heading"
+            >
               {t('ideas.mindmap.embedReport', 'Embed in Report')}
             </h3>
           </div>

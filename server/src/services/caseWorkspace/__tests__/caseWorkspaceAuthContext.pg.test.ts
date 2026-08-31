@@ -126,10 +126,10 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
   /** A fresh, uniquely-named organization row. */
   async function seedOrg(label: string): Promise<string> {
     const orgId = `authctx-org-${label}-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      orgId,
-      `Auth context test org (${label})`,
-    ]);
+    await control.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgId, `Auth context test org (${label})`]
+    );
     return orgId;
   }
 
@@ -199,14 +199,18 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
     userIds?: string[];
   }): Promise<void> {
     for (const projectId of opts.projectIds ?? []) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of opts.userIds ?? []) {
       await control.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => undefined);
     }
     for (const orgId of opts.orgIds ?? []) {
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -285,10 +289,14 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
       await seedMember(orgId, activeUserId, 'MEMBER', 'ACTIVE');
 
       await expect(requireOrgMember(noRowUserId, orgId)).rejects.toThrow(CaseWorkspaceAuthError);
-      await expect(requireOrgMember(noRowUserId, orgId)).rejects.toMatchObject({ code: 'not_org_member' });
+      await expect(requireOrgMember(noRowUserId, orgId)).rejects.toMatchObject({
+        code: 'not_org_member',
+      });
 
       await expect(requireOrgMember(revokedUserId, orgId)).rejects.toThrow(CaseWorkspaceAuthError);
-      await expect(requireOrgMember(revokedUserId, orgId)).rejects.toMatchObject({ code: 'not_org_member' });
+      await expect(requireOrgMember(revokedUserId, orgId)).rejects.toMatchObject({
+        code: 'not_org_member',
+      });
 
       const membership = await requireOrgMember(activeUserId, orgId);
       expect(membership.userId).toBe(activeUserId);
@@ -319,13 +327,17 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
       expect(adminMembership.userId).toBe(adminUserId);
 
       // MEMBER does not outrank ADMIN -> throws insufficient_org_role.
-      await expect(requireOrgRole(memberUserId, orgId, 'ADMIN')).rejects.toThrow(CaseWorkspaceAuthError);
+      await expect(requireOrgRole(memberUserId, orgId, 'ADMIN')).rejects.toThrow(
+        CaseWorkspaceAuthError
+      );
       await expect(requireOrgRole(memberUserId, orgId, 'ADMIN')).rejects.toMatchObject({
         code: 'insufficient_org_role',
       });
 
       // CONSULTANT does not outrank MEMBER -> throws insufficient_org_role.
-      await expect(requireOrgRole(consultantUserId, orgId, 'MEMBER')).rejects.toThrow(CaseWorkspaceAuthError);
+      await expect(requireOrgRole(consultantUserId, orgId, 'MEMBER')).rejects.toThrow(
+        CaseWorkspaceAuthError
+      );
       await expect(requireOrgRole(consultantUserId, orgId, 'MEMBER')).rejects.toMatchObject({
         code: 'insufficient_org_role',
       });
@@ -348,23 +360,31 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
 
     // (b) A caseId that exists but belongs to a DIFFERENT organization than
     // the actor is a member of.
-    const { orgId: otherOrgId, projectId: otherProjectId, caseId: otherOrgCaseId } =
-      await seedOrgProjectCase('oracle-other-org');
+    const {
+      orgId: otherOrgId,
+      projectId: otherProjectId,
+      caseId: otherOrgCaseId,
+    } = await seedOrgProjectCase('oracle-other-org');
     const actorOrgId = await seedOrg('oracle-actor-org');
     const actorForCrossTenant = await seedUser(actorOrgId, 'oracle-cross-tenant');
     await seedMember(actorOrgId, actorForCrossTenant, 'ADMIN', 'ACTIVE');
 
     // (c) A caseId that exists in the actor's OWN organization, but the
     // actor has NO organization_members row at all for that org.
-    const { orgId: ownOrgId, projectId: ownProjectId, caseId: ownOrgCaseId } = await seedOrgProjectCase(
-      'oracle-own-org-no-membership'
-    );
+    const {
+      orgId: ownOrgId,
+      projectId: ownProjectId,
+      caseId: ownOrgCaseId,
+    } = await seedOrgProjectCase('oracle-own-org-no-membership');
     const actorForOwnOrgNoMembership = await seedUser(ownOrgId, 'oracle-own-org-no-membership');
 
     // Success case: a real case in the actor's own org, actor IS an active
     // member of that org.
-    const { orgId: successOrgId, projectId: successProjectId, caseId: successCaseId } =
-      await seedOrgProjectCase('oracle-success');
+    const {
+      orgId: successOrgId,
+      projectId: successProjectId,
+      caseId: successCaseId,
+    } = await seedOrgProjectCase('oracle-success');
     const successActorId = await seedUser(successOrgId, 'oracle-success');
     await seedMember(successOrgId, successActorId, 'MEMBER', 'ACTIVE');
 
@@ -416,7 +436,11 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
       // distinguishable from each other, proving the identical code/message
       // above isn't merely an artifact of internalReason also happening to
       // collapse.
-      const internalReasons = new Set([errorA!.internalReason, errorB!.internalReason, errorC!.internalReason]);
+      const internalReasons = new Set([
+        errorA!.internalReason,
+        errorB!.internalReason,
+        errorC!.internalReason,
+      ]);
       expect(internalReasons.size).toBeGreaterThan(1);
 
       // Success: a real case in the actor's own org, actor IS an active
@@ -429,8 +453,16 @@ suite('caseWorkspaceAuthContext — Authorization Context against a real Postgre
       await teardown({ userIds: [actorForNonexistent] });
       await teardown({ orgIds: [otherOrgId], projectIds: [otherProjectId] });
       await teardown({ orgIds: [actorOrgId], userIds: [actorForCrossTenant] });
-      await teardown({ orgIds: [ownOrgId], projectIds: [ownProjectId], userIds: [actorForOwnOrgNoMembership] });
-      await teardown({ orgIds: [successOrgId], projectIds: [successProjectId], userIds: [successActorId] });
+      await teardown({
+        orgIds: [ownOrgId],
+        projectIds: [ownProjectId],
+        userIds: [actorForOwnOrgNoMembership],
+      });
+      await teardown({
+        orgIds: [successOrgId],
+        projectIds: [successProjectId],
+        userIds: [successActorId],
+      });
     }
   }, 30_000);
 });

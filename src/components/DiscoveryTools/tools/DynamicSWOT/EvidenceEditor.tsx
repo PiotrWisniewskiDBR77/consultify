@@ -26,11 +26,7 @@ import { AlertTriangle } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { evaluateSwotAcceptGate } from '@/config/swot/swotAcceptGate';
-import type {
-  SWOTEvidenceType,
-  SWOTItem,
-  SWOTStrengthClassification,
-} from '@/store/useToolStore';
+import type { SWOTEvidenceType, SWOTItem, SWOTStrengthClassification } from '@/store/useToolStore';
 
 const EVIDENCE_TYPE_LABEL: Record<SWOTEvidenceType, { pl: string; en: string }> = {
   fact: { pl: 'Fakt', en: 'Fact' },
@@ -169,7 +165,9 @@ export function EvidenceEditor({ item, isPolish, onChange }: EvidenceEditorProps
               value={item.evidenceSource ?? ''}
               onChange={(e) => onChange({ evidenceSource: e.target.value })}
               placeholder={
-                isPolish ? 'np. wywiad z klientem X, raport Q3, benchmark' : 'e.g. interview with client X, Q3 report, benchmark'
+                isPolish
+                  ? 'np. wywiad z klientem X, raport Q3, benchmark'
+                  : 'e.g. interview with client X, Q3 report, benchmark'
               }
               className="mt-1 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
             />

@@ -6,8 +6,9 @@
  * poda wyszukiwarce. W trybie prywatnym dokument organizacji nie ma prawa tam
  * być; poza trybem prywatnym — ma (czułość testu).
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
+
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 process.env.DB_TYPE = 'postgres';
 

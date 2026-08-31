@@ -44,14 +44,26 @@ export async function validateGovernedSnapshotRef(
   const snapshotId = requireText(ref.snapshotId, 'snapshotId');
   const contentHash = requireText(ref.contentHash, 'contentHash');
   if (!Number.isInteger(ref.version) || ref.version <= 0) {
-    throw new GovernedSnapshotBindingError('version must be a positive integer', 'SNAPSHOT_REF_INVALID', 400);
+    throw new GovernedSnapshotBindingError(
+      'version must be a positive integer',
+      'SNAPSHOT_REF_INVALID',
+      400
+    );
   }
 
-  const snapshot = await organizationContextService.getSnapshotVersion(organizationId, ref.version, {
-    includeRestricted: true,
-  });
+  const snapshot = await organizationContextService.getSnapshotVersion(
+    organizationId,
+    ref.version,
+    {
+      includeRestricted: true,
+    }
+  );
   if (!snapshot || snapshot.snapshotId !== snapshotId) {
-    throw new GovernedSnapshotBindingError('governed snapshot not found', 'SNAPSHOT_NOT_FOUND', 404);
+    throw new GovernedSnapshotBindingError(
+      'governed snapshot not found',
+      'SNAPSHOT_NOT_FOUND',
+      404
+    );
   }
   if (snapshot.contentHash !== contentHash) {
     throw new GovernedSnapshotBindingError(
@@ -155,8 +167,16 @@ export async function recordGovernedConsumerBinding(input: {
       [snapshot.snapshotId, input.organizationId]
     );
     const pinned = snapshotRows.rows[0];
-    if (!pinned || Number(pinned.version) !== snapshot.version || pinned.content_hash !== snapshot.contentHash) {
-      throw new GovernedSnapshotBindingError('snapshot changed during binding', 'SNAPSHOT_POLICY_DRIFT', 409);
+    if (
+      !pinned ||
+      Number(pinned.version) !== snapshot.version ||
+      pinned.content_hash !== snapshot.contentHash
+    ) {
+      throw new GovernedSnapshotBindingError(
+        'snapshot changed during binding',
+        'SNAPSHOT_POLICY_DRIFT',
+        409
+      );
     }
     const proposalResult = await query<ProposalRow>(
       `SELECT proposal_id, producer_kind, producer_record_id, source_content_hash, payload_json
@@ -165,12 +185,31 @@ export async function recordGovernedConsumerBinding(input: {
       [input.proposalId, input.organizationId]
     );
     const proposal = proposalResult.rows[0];
-    if (!proposal || proposal.producer_kind !== input.consumerKind || proposal.producer_record_id !== input.consumerRecordId) {
-      throw new GovernedSnapshotBindingError('consumer proposal not found', 'PROPOSAL_NOT_FOUND', 404);
+    if (
+      !proposal ||
+      proposal.producer_kind !== input.consumerKind ||
+      proposal.producer_record_id !== input.consumerRecordId
+    ) {
+      throw new GovernedSnapshotBindingError(
+        'consumer proposal not found',
+        'PROPOSAL_NOT_FOUND',
+        404
+      );
     }
-    const payloadRef = parsePayload(proposal.payload_json).governedSnapshotRef as GovernedSnapshotRef | undefined;
-    if (!payloadRef || payloadRef.snapshotId !== snapshot.snapshotId || Number(payloadRef.version) !== snapshot.version || payloadRef.contentHash !== snapshot.contentHash) {
-      throw new GovernedSnapshotBindingError('proposal payload is not pinned to the requested governed snapshot', 'PROPOSAL_SNAPSHOT_MISMATCH', 409);
+    const payloadRef = parsePayload(proposal.payload_json).governedSnapshotRef as
+      | GovernedSnapshotRef
+      | undefined;
+    if (
+      !payloadRef ||
+      payloadRef.snapshotId !== snapshot.snapshotId ||
+      Number(payloadRef.version) !== snapshot.version ||
+      payloadRef.contentHash !== snapshot.contentHash
+    ) {
+      throw new GovernedSnapshotBindingError(
+        'proposal payload is not pinned to the requested governed snapshot',
+        'PROPOSAL_SNAPSHOT_MISMATCH',
+        409
+      );
     }
     const existing = await query<BindingRow>(
       `SELECT * FROM organization_context_consumer_bindings
@@ -179,8 +218,19 @@ export async function recordGovernedConsumerBinding(input: {
     );
     if (existing.rows[0]) {
       const row = existing.rows[0];
-      if (row.consumer_kind !== input.consumerKind || row.consumer_record_id !== input.consumerRecordId || row.snapshot_id !== snapshot.snapshotId || Number(row.snapshot_version) !== snapshot.version || row.snapshot_content_hash !== snapshot.contentHash || row.proposal_source_hash !== proposal.source_content_hash) {
-        throw new GovernedSnapshotBindingError('existing binding differs from proposal/snapshot bytes', 'BINDING_CONFLICT', 409);
+      if (
+        row.consumer_kind !== input.consumerKind ||
+        row.consumer_record_id !== input.consumerRecordId ||
+        row.snapshot_id !== snapshot.snapshotId ||
+        Number(row.snapshot_version) !== snapshot.version ||
+        row.snapshot_content_hash !== snapshot.contentHash ||
+        row.proposal_source_hash !== proposal.source_content_hash
+      ) {
+        throw new GovernedSnapshotBindingError(
+          'existing binding differs from proposal/snapshot bytes',
+          'BINDING_CONFLICT',
+          409
+        );
       }
       return { binding: mapBinding(row), replayed: true };
     }
@@ -190,13 +240,25 @@ export async function recordGovernedConsumerBinding(input: {
          binding_id, organization_id, consumer_kind, consumer_record_id, proposal_id,
          snapshot_id, snapshot_version, snapshot_content_hash, proposal_source_hash, bound_by
        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [bindingId, input.organizationId, input.consumerKind, input.consumerRecordId, input.proposalId, snapshot.snapshotId, snapshot.version, snapshot.contentHash, proposal.source_content_hash, input.boundBy]
+      [
+        bindingId,
+        input.organizationId,
+        input.consumerKind,
+        input.consumerRecordId,
+        input.proposalId,
+        snapshot.snapshotId,
+        snapshot.version,
+        snapshot.contentHash,
+        proposal.source_content_hash,
+        input.boundBy,
+      ]
     );
     const inserted = await query<BindingRow>(
       `SELECT * FROM organization_context_consumer_bindings WHERE binding_id=$1 AND organization_id=$2`,
       [bindingId, input.organizationId]
     );
-    if (!inserted.rows[0]) throw new GovernedSnapshotBindingError('binding readback failed', 'READBACK_FAILED', 500);
+    if (!inserted.rows[0])
+      throw new GovernedSnapshotBindingError('binding readback failed', 'READBACK_FAILED', 500);
     return { binding: mapBinding(inserted.rows[0]), replayed: false };
   });
 }

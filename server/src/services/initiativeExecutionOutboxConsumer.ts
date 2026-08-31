@@ -61,7 +61,11 @@ export async function consumeNextInitiativeExecutionEvent(
       await tx.query(
         `UPDATE ie_outbox_events SET dead_lettered_at=now(),processing_started_at=NULL,
            last_error=? WHERE id=? AND organization_id=?`,
-        [`unsupported_ie_outbox_payload_version:${event.payload_version}`, event.id, event.organization_id]
+        [
+          `unsupported_ie_outbox_payload_version:${event.payload_version}`,
+          event.id,
+          event.organization_id,
+        ]
       );
       return { eventId: event.id, receiptId: null, status: 'DEAD_LETTER', replay: false };
     }
@@ -74,61 +78,80 @@ export async function consumeNextInitiativeExecutionEvent(
            event_type,payload_version,payload_json,correlation_id,causation_id)
          VALUES (?,?,?,?,?,?,?,?::jsonb,?,?)
          ON CONFLICT (organization_id,source_event_id) DO NOTHING RETURNING receipt_id`,
-        [event.organization_id,event.id,event.aggregate_type,event.aggregate_id,event.aggregate_version,
-         event.event_type,event.payload_version,JSON.stringify(event.payload_json),event.correlation_id,event.causation_id]
+        [
+          event.organization_id,
+          event.id,
+          event.aggregate_type,
+          event.aggregate_id,
+          event.aggregate_version,
+          event.event_type,
+          event.payload_version,
+          JSON.stringify(event.payload_json),
+          event.correlation_id,
+          event.causation_id,
+        ]
       );
-      const existing = inserted.rows[0] ? null : await tx.query<{ receipt_id: string }>(
-        `SELECT receipt_id FROM ie_outbox_delivery_receipts
-          WHERE organization_id=? AND source_event_id=?`, [event.organization_id,event.id]
-      );
-      const receiptId=inserted.rows[0]?.receipt_id ?? existing?.rows[0]?.receipt_id;
+      const existing = inserted.rows[0]
+        ? null
+        : await tx.query<{ receipt_id: string }>(
+            `SELECT receipt_id FROM ie_outbox_delivery_receipts
+          WHERE organization_id=? AND source_event_id=?`,
+            [event.organization_id, event.id]
+          );
+      const receiptId = inserted.rows[0]?.receipt_id ?? existing?.rows[0]?.receipt_id;
       if (!receiptId) throw new Error('ie_outbox_receipt_missing_after_upsert');
       await tx.query(
         `UPDATE ie_outbox_events SET processed_at=COALESCE(processed_at,now()),
           processing_started_at=NULL,last_error=NULL WHERE id=? AND organization_id=?`,
-        [event.id,event.organization_id]
+        [event.id, event.organization_id]
       );
-      return {eventId:event.id,receiptId,status:'DELIVERED',replay:!inserted.rows[0]};
+      return { eventId: event.id, receiptId, status: 'DELIVERED', replay: !inserted.rows[0] };
     } catch (error) {
-      const message=error instanceof Error ? error.message : String(error);
-      const deadLetter=Number(event.attempt_count) >= Number(event.max_attempts);
+      const message = error instanceof Error ? error.message : String(error);
+      const deadLetter = Number(event.attempt_count) >= Number(event.max_attempts);
       await tx.query(
         `UPDATE ie_outbox_events SET processing_started_at=NULL,last_error=?,
           dead_lettered_at=CASE WHEN ? THEN now() ELSE NULL END,
           available_at=CASE WHEN ? THEN available_at ELSE now()+interval '30 seconds' END
           WHERE id=? AND organization_id=?`,
-        [message,deadLetter,deadLetter,event.id,event.organization_id]
+        [message, deadLetter, deadLetter, event.id, event.organization_id]
       );
-      return {eventId:event.id,receiptId:null,status:deadLetter?'DEAD_LETTER':'RETRY',replay:false};
+      return {
+        eventId: event.id,
+        receiptId: null,
+        status: deadLetter ? 'DEAD_LETTER' : 'RETRY',
+        replay: false,
+      };
     }
   });
 }
 
 export async function redriveInitiativeExecutionDeadLetter(
-  organizationId: string,eventId: string
+  organizationId: string,
+  eventId: string
 ): Promise<boolean> {
   return withPgTransaction(async (tx) => {
-    const result=await tx.query(
+    const result = await tx.query(
       `UPDATE ie_outbox_events SET dead_lettered_at=NULL,processing_started_at=NULL,
         attempt_count=0,last_error=NULL,available_at=now()
        WHERE id=? AND organization_id=? AND dead_lettered_at IS NOT NULL`,
-      [eventId,organizationId]
+      [eventId, organizationId]
     );
     return result.rowCount === 1;
   });
 }
 
-export async function drainInitiativeExecutionOutbox(batchSize=50):Promise<number>{
-  let delivered=0;
-  for(let i=0;i<Math.max(0,Math.min(batchSize,500));i+=1){
-    const result=await consumeNextInitiativeExecutionEvent();
-    if(!result) break;
-    if(result.status==='DELIVERED') delivered+=1;
+export async function drainInitiativeExecutionOutbox(batchSize = 50): Promise<number> {
+  let delivered = 0;
+  for (let i = 0; i < Math.max(0, Math.min(batchSize, 500)); i += 1) {
+    const result = await consumeNextInitiativeExecutionEvent();
+    if (!result) break;
+    if (result.status === 'DELIVERED') delivered += 1;
   }
   return delivered;
 }
 
-let cronHandle:ReturnType<typeof setInterval>|null=null;
+let cronHandle: ReturnType<typeof setInterval> | null = null;
 export type InitiativeExecutionOutboxConsumerStart = 'DISABLED' | 'STARTED' | 'ALREADY_RUNNING';
 
 export function getInitiativeExecutionOutboxConsumerState(): {
@@ -143,14 +166,24 @@ export function getInitiativeExecutionOutboxConsumerState(): {
   };
 }
 
-export function startInitiativeExecutionOutboxConsumer(intervalMs=30_000):InitiativeExecutionOutboxConsumerStart{
-  if(process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER !== 'true') return 'DISABLED';
-  if(cronHandle) return 'ALREADY_RUNNING';
-  cronHandle=setInterval(()=>{void drainInitiativeExecutionOutbox().catch((error)=>
-    logger.error(`[InitiativeExecutionOutbox] tick failed: ${error instanceof Error?error.message:String(error)}`));},intervalMs);
-  if(typeof cronHandle.unref==='function') cronHandle.unref();
+export function startInitiativeExecutionOutboxConsumer(
+  intervalMs = 30_000
+): InitiativeExecutionOutboxConsumerStart {
+  if (process.env.ENABLE_INITIATIVE_EXECUTION_OUTBOX_CONSUMER !== 'true') return 'DISABLED';
+  if (cronHandle) return 'ALREADY_RUNNING';
+  cronHandle = setInterval(() => {
+    void drainInitiativeExecutionOutbox().catch((error) =>
+      logger.error(
+        `[InitiativeExecutionOutbox] tick failed: ${error instanceof Error ? error.message : String(error)}`
+      )
+    );
+  }, intervalMs);
+  if (typeof cronHandle.unref === 'function') cronHandle.unref();
   return 'STARTED';
 }
-export function stopInitiativeExecutionOutboxConsumer():void{
-  if(cronHandle){clearInterval(cronHandle);cronHandle=null;}
+export function stopInitiativeExecutionOutboxConsumer(): void {
+  if (cronHandle) {
+    clearInterval(cronHandle);
+    cronHandle = null;
+  }
 }

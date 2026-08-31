@@ -424,11 +424,7 @@ function summariseRateLimitEvent(
   );
 }
 
-function recordRateLimitEvent(
-  prefix: string,
-  key: string,
-  reason: RateLimitTelemetryReason
-): void {
+function recordRateLimitEvent(prefix: string, key: string, reason: RateLimitTelemetryReason): void {
   try {
     const bucket = telemetryBucketFor(prefix);
     if (bucket) {
@@ -541,7 +537,9 @@ function isRateLimitBypassed(): boolean {
  * `open` lets every request through; that is an explicitly accepted risk.
  */
 function resolveSharedStoreFailMode(): SharedStoreFailMode {
-  const configured = normalizeOptionalString(process.env[SHARED_STORE_FAIL_MODE_ENV])?.toLowerCase();
+  const configured = normalizeOptionalString(
+    process.env[SHARED_STORE_FAIL_MODE_ENV]
+  )?.toLowerCase();
   if (configured === 'open' || configured === 'local') return configured;
   return 'closed';
 }

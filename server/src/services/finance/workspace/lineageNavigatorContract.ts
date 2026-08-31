@@ -54,9 +54,9 @@
  */
 
 import {
-  FinanceArtifactTypeValues,
   type ArtifactRef,
   type FinanceArtifactType,
+  FinanceArtifactTypeValues,
 } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
 import type {
@@ -65,7 +65,7 @@ import type {
   FinanceGridSelectionState,
   FinanceWorkspaceState,
 } from '../../../types/finance/WorkspaceState.js';
-import { TERMINAL_STATUSES, type BusinessVersionStatus } from '../canonical/lifecycleService.js';
+import { type BusinessVersionStatus, TERMINAL_STATUSES } from '../canonical/lifecycleService.js';
 import type { LineageEdgeRow, LineageEdgeType } from '../canonical/lineageService.js';
 import type { WorkspaceBarLabel } from './workspaceBarContract.js';
 
@@ -91,12 +91,28 @@ export interface LineageEdgeTopology {
 }
 
 export const LINEAGE_EDGE_TOPOLOGY: readonly LineageEdgeTopology[] = [
-  { edgeType: 'STATEMENT_TO_ANALYSIS', sourceTypes: ['STATEMENT_PACK'], targetType: 'HISTORICAL_ANALYSIS' },
+  {
+    edgeType: 'STATEMENT_TO_ANALYSIS',
+    sourceTypes: ['STATEMENT_PACK'],
+    targetType: 'HISTORICAL_ANALYSIS',
+  },
   { edgeType: 'STATEMENT_TO_MODEL', sourceTypes: ['STATEMENT_PACK'], targetType: 'BASELINE_MODEL' },
-  { edgeType: 'ANALYSIS_TO_MODEL', sourceTypes: ['HISTORICAL_ANALYSIS'], targetType: 'BASELINE_MODEL' },
-  { edgeType: 'MODEL_TO_SCENARIO', sourceTypes: ['BASELINE_MODEL'], targetType: 'PREDICTION_SCENARIO' },
+  {
+    edgeType: 'ANALYSIS_TO_MODEL',
+    sourceTypes: ['HISTORICAL_ANALYSIS'],
+    targetType: 'BASELINE_MODEL',
+  },
+  {
+    edgeType: 'MODEL_TO_SCENARIO',
+    sourceTypes: ['BASELINE_MODEL'],
+    targetType: 'PREDICTION_SCENARIO',
+  },
   { edgeType: 'MODEL_TO_VALUATION', sourceTypes: ['BASELINE_MODEL'], targetType: 'VALUATION_CASE' },
-  { edgeType: 'SCENARIO_TO_VALUATION', sourceTypes: ['PREDICTION_SCENARIO'], targetType: 'VALUATION_CASE' },
+  {
+    edgeType: 'SCENARIO_TO_VALUATION',
+    sourceTypes: ['PREDICTION_SCENARIO'],
+    targetType: 'VALUATION_CASE',
+  },
   { edgeType: 'VERSION_TO_REPORT', sourceTypes: 'any-upstream', targetType: 'REPORT_EXPORT' },
   {
     edgeType: 'VERSION_TO_MANAGEMENT_ADJUSTED_VARIANT',
@@ -433,7 +449,9 @@ export const LINEAGE_CREATE_NEW_BLOCKED_LABELS: Readonly<
   },
 };
 
-export function staleBadgeFromFreshness(freshness: FinanceArtifactFreshness): LineageStaleBadge | null {
+export function staleBadgeFromFreshness(
+  freshness: FinanceArtifactFreshness
+): LineageStaleBadge | null {
   switch (freshness) {
     case 'CURRENT':
       return null;
@@ -546,7 +564,10 @@ export interface BuildLineageTrailParams {
 }
 
 export function buildLineageTrail(params: BuildLineageTrailParams): LineageTrail {
-  const maxNodes = Math.max(params.maxNodes ?? LINEAGE_TRAIL_DEFAULT_MAX_NODES, LINEAGE_TRAIL_MIN_NODES);
+  const maxNodes = Math.max(
+    params.maxNodes ?? LINEAGE_TRAIL_DEFAULT_MAX_NODES,
+    LINEAGE_TRAIL_MIN_NODES
+  );
 
   const { own: ownEdges, foreignEdgeIds } = partitionEdgesByOrganization(
     params.ancestorEdges,
@@ -633,7 +654,8 @@ function pickPrimaryParent(candidates: readonly LineageEdgeRow[]): LineageEdgeRo
   if (candidates.length === 0) return null;
   if (candidates.length === 1) return candidates[0];
   const sorted = [...candidates].sort((a, b) => {
-    const rankDelta = lineageStageRank(b.source_artifact_type) - lineageStageRank(a.source_artifact_type);
+    const rankDelta =
+      lineageStageRank(b.source_artifact_type) - lineageStageRank(a.source_artifact_type);
     if (rankDelta !== 0) return rankDelta;
     const priorityDelta =
       LINEAGE_PRIMARY_PARENT_EDGE_PRIORITY.indexOf(a.edge_type) -
@@ -690,7 +712,11 @@ export interface LineageCreateNewAction {
   targetArtifactType: FinanceArtifactType;
   label: WorkspaceBarLabel;
   /** OWN-FIN-007: "+ New z preselected source" — the exact immutable version, never the artifact name. */
-  preselectedSource: { artifactId: string; artifactType: FinanceArtifactType; businessVersionId: string };
+  preselectedSource: {
+    artifactId: string;
+    artifactType: FinanceArtifactType;
+    businessVersionId: string;
+  };
 }
 
 export interface LineageRelatedPanel {
@@ -794,7 +820,11 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
       .map((edge) => {
         const metadata = scoped.resolve(edge.source_version_id);
         if (!metadata) return null;
-        return relatedEntry(metadata, edge.edge_type, ancestorDepths.get(edge.source_version_id) ?? 2);
+        return relatedEntry(
+          metadata,
+          edge.edge_type,
+          ancestorDepths.get(edge.source_version_id) ?? 2
+        );
       })
   );
 
@@ -810,9 +840,16 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     if (!cycleVersionIds.includes(versionId)) cycleVersionIds.push(versionId);
   }
   const directChildEdges = descendantEdges.filter(
-    (e) => e.source_version_id === params.focusVersionId && !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)
+    (e) =>
+      e.source_version_id === params.focusVersionId &&
+      !LINEAGE_SIBLING_EDGE_TYPES.includes(e.edge_type)
   );
-  const childEntries = toEntries(directChildEdges, (edge) => edge.target_version_id, 1, scoped.resolve);
+  const childEntries = toEntries(
+    directChildEdges,
+    (edge) => edge.target_version_id,
+    1,
+    scoped.resolve
+  );
 
   const directChildIds = new Set(directChildEdges.map((e) => e.target_version_id));
   const indirectEdges = descendantEdges.filter(
@@ -825,7 +862,11 @@ export function buildRelatedPanel(params: BuildRelatedPanelParams): LineageRelat
     indirectEdges.map((edge) => {
       const metadata = scoped.resolve(edge.target_version_id);
       if (!metadata) return null;
-      return relatedEntry(metadata, edge.edge_type, descendantDepths.get(edge.target_version_id) ?? 2);
+      return relatedEntry(
+        metadata,
+        edge.edge_type,
+        descendantDepths.get(edge.target_version_id) ?? 2
+      );
     })
   );
 
@@ -1166,7 +1207,9 @@ export function financeWorkspaceStateKey(params: {
   artifactId: string;
   businessVersionId: string;
 }): string {
-  return [params.organizationId, params.userId, params.artifactId, params.businessVersionId].join('::');
+  return [params.organizationId, params.userId, params.artifactId, params.businessVersionId].join(
+    '::'
+  );
 }
 
 export interface LineageWorkspaceRestorePoint {

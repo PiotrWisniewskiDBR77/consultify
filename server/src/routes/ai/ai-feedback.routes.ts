@@ -514,15 +514,15 @@ router.post(
 
       const isPersonalOwner = Boolean(
         messageAccess &&
-          messageAccess.conversation_user_id === userId &&
-          (messageAccess.conversation_org_id == null ||
-            messageAccess.conversation_org_id === organizationId)
+        messageAccess.conversation_user_id === userId &&
+        (messageAccess.conversation_org_id == null ||
+          messageAccess.conversation_org_id === organizationId)
       );
       const isTeamMember = Boolean(
         messageAccess &&
-          messageAccess.project_scope === 'team' &&
-          organizationId &&
-          messageAccess.project_org_id === organizationId
+        messageAccess.project_scope === 'team' &&
+        organizationId &&
+        messageAccess.project_org_id === organizationId
       );
 
       if (!messageAccess || (!isPersonalOwner && !isTeamMember)) {

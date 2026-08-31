@@ -18,24 +18,28 @@ import type { StandardBreadcrumb } from '@/components/standard';
 import { tokenService } from '@/services/tokenService';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { OkrSetDto } from './okrApi';
+import { OkrCancelDialog } from './OkrCancelDialog';
+import { OkrKeyResultFormModal, type OkrKeyResultFormValues } from './OkrKeyResultFormModal';
+import {
+  buildOkrKeyResultColumns,
+  buildOkrKeyResultPreview,
+  buildOkrKeyResultRowMenu,
+} from './okrKeyResultPresenters';
 import {
   cancelKeyResult,
   createKeyResult,
+  type CreateOkrKeyResultInput,
   getObjectiveWithKeyResults,
   newOkrIdempotencyKey,
-  OkrObjectiveApiError,
-  updateKeyResult,
-  type CreateOkrKeyResultInput,
   type OkrKeyResultDto,
+  OkrObjectiveApiError,
   type OkrObjectiveWithKeyResultsDto,
+  updateKeyResult,
   type UpdateOkrKeyResultInput,
 } from './okrObjectiveApi';
 import { getOkrSetChildEditLock } from './okrObjectiveMappers';
-import { buildOkrKeyResultColumns, buildOkrKeyResultPreview, buildOkrKeyResultRowMenu } from './okrKeyResultPresenters';
-import { OkrCancelDialog } from './OkrCancelDialog';
-import { OkrKeyResultFormModal, type OkrKeyResultFormValues } from './OkrKeyResultFormModal';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 function resolveCurrentUserIdFromToken(): string | null {
   try {
@@ -56,10 +60,20 @@ export interface OkrKeyResultsViewProps {
   objectiveId: string;
   isPolish: boolean;
   breadcrumbs: StandardBreadcrumb[];
-  onOpenCheckIns: (keyResult: OkrKeyResultDto, objective: OkrObjectiveWithKeyResultsDto, set: OkrSetDto) => void;
+  onOpenCheckIns: (
+    keyResult: OkrKeyResultDto,
+    objective: OkrObjectiveWithKeyResultsDto,
+    set: OkrSetDto
+  ) => void;
 }
 
-export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objectiveId, isPolish, breadcrumbs, onOpenCheckIns }) => {
+export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({
+  set,
+  objectiveId,
+  isPolish,
+  breadcrumbs,
+  onOpenCheckIns,
+}) => {
   const [objective, setObjective] = useState<OkrObjectiveWithKeyResultsDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -220,7 +234,11 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
                   description: isPolish
                     ? 'Ten cel nie ma jeszcze żadnego Kluczowego Rezultatu.'
                     : 'This objective has no Key Result yet.',
-                  actionLabel: childLock ? undefined : isPolish ? 'Nowy Kluczowy Rezultat' : 'New Key Result',
+                  actionLabel: childLock
+                    ? undefined
+                    : isPolish
+                      ? 'Nowy Kluczowy Rezultat'
+                      : 'New Key Result',
                   onAction: childLock ? undefined : openCreate,
                 }
               : undefined,

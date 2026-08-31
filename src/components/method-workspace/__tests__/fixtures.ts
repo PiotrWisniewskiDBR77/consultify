@@ -68,7 +68,9 @@ export function makeReadiness(overrides: Partial<MethodReadiness> = {}): MethodR
   };
 }
 
-export function makeResolutionData(overrides: Partial<ResolutionCardData> = {}): ResolutionCardData {
+export function makeResolutionData(
+  overrides: Partial<ResolutionCardData> = {}
+): ResolutionCardData {
   return {
     questionId: 'q-1',
     whatIsUnknown: 'Czy proces ma właściciela.',

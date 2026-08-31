@@ -11,16 +11,18 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
 import { ROI_RESOURCE_TYPE } from './roiCaseCommands.js';
 import {
-  toRoiFinanceLink,
-  toRoiFinanceReconciliation,
   type RoiFinanceLink,
   type RoiFinanceLinkRow,
   type RoiFinanceReconciliation,
   type RoiFinanceReconciliationRow,
+  toRoiFinanceLink,
+  toRoiFinanceReconciliation,
 } from './roiFinanceSeamTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -32,7 +34,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -47,7 +53,9 @@ export interface ListRoiFinanceLinksParams {
   caseId: string;
 }
 
-export async function listRoiFinanceLinks(params: ListRoiFinanceLinksParams): Promise<RoiFinanceLink[]> {
+export async function listRoiFinanceLinks(
+  params: ListRoiFinanceLinksParams
+): Promise<RoiFinanceLink[]> {
   const { userId, organizationId, caseId } = params;
   const baseQuerySql = `
     SELECT fl.*
@@ -58,9 +66,15 @@ export async function listRoiFinanceLinks(params: ListRoiFinanceLinksParams): Pr
        AND fl.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY fl.linked_at, fl.link_id
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId];
-  const rows = await withReadClient((client) => queryRows<RoiFinanceLinkRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiFinanceLinkRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiFinanceLink);
 }
 
@@ -71,7 +85,9 @@ export interface GetRoiFinanceLinkParams {
   linkId: string;
 }
 
-export async function getRoiFinanceLink(params: GetRoiFinanceLinkParams): Promise<RoiFinanceLink | null> {
+export async function getRoiFinanceLink(
+  params: GetRoiFinanceLinkParams
+): Promise<RoiFinanceLink | null> {
   const { userId, organizationId, caseId, linkId } = params;
   const baseQuerySql = `
     SELECT fl.*
@@ -82,9 +98,15 @@ export async function getRoiFinanceLink(params: GetRoiFinanceLinkParams): Promis
        AND fl.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND fl.link_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, linkId];
-  const rows = await withReadClient((client) => queryRows<RoiFinanceLinkRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiFinanceLinkRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiFinanceLink(row) : null;
 }
@@ -112,9 +134,15 @@ export async function listRoiFinanceReconciliations(
        AND r.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY r.opened_at DESC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId];
-  const rows = await withReadClient((client) => queryRows<RoiFinanceReconciliationRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiFinanceReconciliationRow>(client, wrapped.sql, values)
+  );
   return rows.map(toRoiFinanceReconciliation);
 }
 
@@ -138,9 +166,15 @@ export async function getRoiFinanceReconciliation(
        AND r.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
        AND r.reconciliation_id = $${VISIBILITY_CTE_PARAM_COUNT + 2}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: ROI_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: ROI_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, caseId, reconciliationId];
-  const rows = await withReadClient((client) => queryRows<RoiFinanceReconciliationRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<RoiFinanceReconciliationRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toRoiFinanceReconciliation(row) : null;
 }

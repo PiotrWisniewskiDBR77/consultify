@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { canonicalize, contentHash } from '../contentHash';
 import {
-  ImmutableOutputError,
-  InvalidTransitionError,
   approve,
   computeOutputHash,
+  ImmutableOutputError,
+  InvalidTransitionError,
   mutateConclusions,
   proposeInitiatives,
   reopen,
@@ -38,12 +38,36 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
     title: 'SWOT — wejście na rynek DACH',
     status: 'draft',
     items: [
-      { id: 'i1', label: 'Silny zespół wdrożeniowy', bucket: 'strengths', evidenceKind: 'fact', impact: 'high' },
-      { id: 'i2', label: 'Rosnący popyt w DACH', bucket: 'opportunities', evidenceKind: 'observation', impact: 'medium' },
+      {
+        id: 'i1',
+        label: 'Silny zespół wdrożeniowy',
+        bucket: 'strengths',
+        evidenceKind: 'fact',
+        impact: 'high',
+      },
+      {
+        id: 'i2',
+        label: 'Rosnący popyt w DACH',
+        bucket: 'opportunities',
+        evidenceKind: 'observation',
+        impact: 'medium',
+      },
     ],
     tensions: [
-      { id: 't1', posture: 'attack', title: 'Zespół × popyt', sourceItemIds: ['i1', 'i2'], priority: 5 },
-      { id: 't2', posture: 'defend', title: 'Zespół × presja cenowa', sourceItemIds: ['i1', 'i2'], priority: 3 },
+      {
+        id: 't1',
+        posture: 'attack',
+        title: 'Zespół × popyt',
+        sourceItemIds: ['i1', 'i2'],
+        priority: 5,
+      },
+      {
+        id: 't2',
+        posture: 'defend',
+        title: 'Zespół × presja cenowa',
+        sourceItemIds: ['i1', 'i2'],
+        priority: 3,
+      },
     ],
     conclusions: [
       {
@@ -52,7 +76,11 @@ function makeOutput(overrides: Partial<ToolOutput> = {}): ToolOutput {
         k2Meaning: 'Przewaga wdrożeniowa jest niewykorzystana, a okno rynkowe się zamyka.',
         k3Actions: ['Uruchomić pilota w DACH', 'Zatrudnić dwóch wdrożeniowców'],
         k4Effect: 'Pierwszy klient referencyjny w 6 miesięcy.',
-        tradeoff: { chosen: 'Pilot w DACH', rejected: 'Rozwój produktu', why: 'Okno rynkowe zamyka się szybciej niż dług produktowy rośnie.' },
+        tradeoff: {
+          chosen: 'Pilot w DACH',
+          rejected: 'Rozwój produktu',
+          why: 'Okno rynkowe zamyka się szybciej niż dług produktowy rośnie.',
+        },
         sourceTensionIds: ['t1'],
       },
     ],

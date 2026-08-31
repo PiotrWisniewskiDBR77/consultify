@@ -342,7 +342,9 @@ router.get(
             // exposing it would defeat the point of the redaction (the
             // viewer would learn who the busy owner is even though the
             // title/description are hidden).
-            ...(foreignBusy ? {} : { description: row.description || undefined, ownerId: row.owner_id }),
+            ...(foreignBusy
+              ? {}
+              : { description: row.description || undefined, ownerId: row.owner_id }),
           });
         }
       }

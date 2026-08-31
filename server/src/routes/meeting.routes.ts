@@ -5,14 +5,6 @@ import { closedBetaModuleGate } from '../middleware/betaGate.middleware.js';
 import { meetingIntelligenceService } from '../services/ai/meetingIntelligenceService.js';
 import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
 import {
-  decideMeetingNote,
-  findMeetingNoteReplay,
-  listMeetingNotesForMeeting,
-  MeetingBoundaryError,
-  proposeMeetingNote,
-  retryMeetingNoteMaterialization,
-} from '../services/meetingBoundary/meetingBoundaryService.js';
-import {
   addMeetingAttachment,
   deleteMeetingAttachment,
   listMeetingAttachments,
@@ -34,20 +26,28 @@ import {
   type MeetingOccurrenceScope,
 } from '../services/meeting/meetingOccurrenceService.js';
 import {
+  decideMeetingNote,
+  findMeetingNoteReplay,
+  listMeetingNotesForMeeting,
+  MeetingBoundaryError,
+  proposeMeetingNote,
+  retryMeetingNoteMaterialization,
+} from '../services/meetingBoundary/meetingBoundaryService.js';
+import {
+  createMeeting,
   createMeetingDecisionRecord,
   createMeetingFollowUpRecord,
-  createMeeting,
+  deleteMeeting,
   deleteMeetingDecisionRecord,
   deleteMeetingFollowUpRecord,
-  deleteMeeting,
   ensureMeetingTables,
   getMeeting,
   listMeetingDecisionRecords,
   listMeetingFollowUpRecords,
   listMeetings,
+  updateMeeting,
   updateMeetingDecisionRecord,
   updateMeetingFollowUpRecord,
-  updateMeeting,
   updateMeetingStatus,
 } from '../services/meetingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';

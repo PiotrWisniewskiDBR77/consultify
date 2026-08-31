@@ -61,7 +61,8 @@ export function discountCashFlows(params: {
   const terminalDiscountFactor = discountFactor(params.waccPct, terminalT);
   const presentValueOfTerminal = params.terminalValue * terminalDiscountFactor;
   const enterpriseValue = presentValueOfExplicitFcff + presentValueOfTerminal;
-  const terminalSharePct = enterpriseValue !== 0 ? (presentValueOfTerminal / enterpriseValue) * 100 : null;
+  const terminalSharePct =
+    enterpriseValue !== 0 ? (presentValueOfTerminal / enterpriseValue) * 100 : null;
 
   return {
     years: discounted,

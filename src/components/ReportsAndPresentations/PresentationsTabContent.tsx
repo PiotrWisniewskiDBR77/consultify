@@ -464,11 +464,14 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                   `${t('rap.columns.slides', 'Slajdy')}: ${previewItem.slideCount ?? '—'}`,
                   `${t('common.updated', 'Updated')}: ${
                     previewItem.updatedAt
-                      ? new Date(previewItem.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
+                      ? new Date(previewItem.updatedAt).toLocaleDateString(
+                          isPolish ? 'pl-PL' : 'en-US',
+                          {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          }
+                        )
                       : '—'
                   }`,
                 ].join('\n'),

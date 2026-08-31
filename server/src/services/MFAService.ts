@@ -72,11 +72,7 @@ const mfaService = {
   /**
    * Check if a device is trusted
    */
-  isDeviceTrusted: async (
-    organizationId: string,
-    userId: string,
-    deviceCredential: string
-  ) => {
+  isDeviceTrusted: async (organizationId: string, userId: string, deviceCredential: string) => {
     if (!deviceCredential) return false;
     const row = await dbGet<{ id: string }>(
       `SELECT td.id

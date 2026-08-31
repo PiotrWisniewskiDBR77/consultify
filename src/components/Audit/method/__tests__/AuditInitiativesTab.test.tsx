@@ -19,8 +19,8 @@ vi.mock('../auditsMethodApi', async () => {
   };
 });
 
+import { type AuditProposalSummary, listProposals, registerProposal } from '../auditsMethodApi';
 import { AuditInitiativesTab } from '../tabs/AuditInitiativesTab';
-import { listProposals, registerProposal, type AuditProposalSummary } from '../auditsMethodApi';
 
 const mockedListProposals = vi.mocked(listProposals);
 const mockedRegisterProposal = vi.mocked(registerProposal);
@@ -36,7 +36,11 @@ const draftProposal: AuditProposalSummary = {
   updatedAt: '2026-08-10',
 };
 
-const registeredProposal: AuditProposalSummary = { ...draftProposal, id: 'prop-2', status: 'registered' };
+const registeredProposal: AuditProposalSummary = {
+  ...draftProposal,
+  id: 'prop-2',
+  status: 'registered',
+};
 
 async function openKebab(index = 0) {
   const triggers = await screen.findAllByRole('button', { name: /row actions/i });

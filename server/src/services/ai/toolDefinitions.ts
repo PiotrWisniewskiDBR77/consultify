@@ -1202,7 +1202,8 @@ async function executeGetAssessment(args: any, ctx: ToolExecutionContext): Promi
     const projectId = ctx.projectId;
     if (!projectId) return JSON.stringify({ source: 'assessment', note: 'No active project' });
     // FIX-206 (P0): jak wyzej — fail-closed bez kontekstu organizacji.
-    if (!ctx.organizationId) return JSON.stringify({ source: 'assessment', note: 'No organization context' });
+    if (!ctx.organizationId)
+      return JSON.stringify({ source: 'assessment', note: 'No organization context' });
 
     const assessment = (await dbGet(
       `SELECT id, name, framework, status, overall_score, target_score 
@@ -1316,7 +1317,8 @@ async function executeGetInitiativeStatus(args: any, ctx: ToolExecutionContext):
     // FIX-206 (P0, ODBIOR_205_206.md): bez organizacji z kontekstu nie wolno czytac
     // NICZEGO — audytor zmierzyl wyciek cross-org (org-A + cudzy projectId z ciala
     // zadania -> nazwa/status/ROI inicjatywy org-B). Fail-closed.
-    if (!ctx.organizationId) return JSON.stringify({ source: 'initiatives', note: 'No organization context' });
+    if (!ctx.organizationId)
+      return JSON.stringify({ source: 'initiatives', note: 'No organization context' });
 
     if (args.initiative_id) {
       const initiative = await dbAll(

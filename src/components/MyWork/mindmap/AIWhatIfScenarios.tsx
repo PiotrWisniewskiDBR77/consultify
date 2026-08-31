@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 interface WhatIfScenario {
@@ -144,7 +143,10 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <GitBranch size={14} className="text-c-text-secondary" />
-              <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="a-i-what-if-scenarios-modal-heading">
+              <h3
+                className="text-sm font-bold text-c-text dark:text-c-text"
+                id="a-i-what-if-scenarios-modal-heading"
+              >
                 {t('ideas.mindmap.whatIf', 'What if...?')}
               </h3>
             </div>

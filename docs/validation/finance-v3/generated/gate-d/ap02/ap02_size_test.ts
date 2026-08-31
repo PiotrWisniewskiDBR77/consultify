@@ -31,15 +31,19 @@
 import { performance } from 'node:perf_hooks';
 
 async function main() {
-  const financeExcelShared = await import('../../../../../../server/src/services/finance/canonical/financeExcelShared.js');
-  const financeImportService = await import('../../../../../../server/src/services/finance/canonical/financeImportService.js');
+  const financeExcelShared =
+    await import('../../../../../../server/src/services/finance/canonical/financeExcelShared.js');
+  const financeImportService =
+    await import('../../../../../../server/src/services/finance/canonical/financeImportService.js');
   const ExcelJS = (await import('exceljs')).default;
 
   const ENTITY_COUNT = 50;
   const LINE_COUNT = 100; // 50 x 100 = 5,000 row-combinations
   const PERIOD_COUNT = 60;
   const TOTAL_CELLS = ENTITY_COUNT * LINE_COUNT * PERIOD_COUNT;
-  console.log(`AP-02 size test: ${ENTITY_COUNT} entities x ${LINE_COUNT} lines x ${PERIOD_COUNT} periods = ${TOTAL_CELLS.toLocaleString()} cells`);
+  console.log(
+    `AP-02 size test: ${ENTITY_COUNT} entities x ${LINE_COUNT} lines x ${PERIOD_COUNT} periods = ${TOTAL_CELLS.toLocaleString()} cells`
+  );
 
   // --- Synthetic taxonomy (in-memory Maps, no DB) -----------------------------
   const organizationId = 'org-ap02-sizetest';
@@ -52,7 +56,8 @@ async function main() {
   for (let p = 0; p < PERIOD_COUNT; p++) periodByLabel.set(`P${p}`, { period_id: `period-${p}` });
 
   const lineByKey = new Map<string, { id: string; statement_type: string }>();
-  for (let l = 0; l < LINE_COUNT; l++) lineByKey.set(`P&L|LINE${l}`, { id: `line-${l}`, statement_type: 'P&L' });
+  for (let l = 0; l < LINE_COUNT; l++)
+    lineByKey.set(`P&L|LINE${l}`, { id: `line-${l}`, statement_type: 'P&L' });
 
   const lookups = { entityByCode, periodByLabel, lineByKey };
   const current = new Map(); // empty — every resolved cell classifies as "add" (worst case for diff-building cost)
@@ -87,11 +92,17 @@ async function main() {
     }
   }
   const t1 = performance.now();
-  console.log(`  row generation:        ${(t1 - t0).toFixed(0)} ms for ${rows.length.toLocaleString()} rows`);
+  console.log(
+    `  row generation:        ${(t1 - t0).toFixed(0)} ms for ${rows.length.toLocaleString()} rows`
+  );
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(financeExcelShared.FINANCE_EXCEL_SHEET_NAMES.values);
-  sheet.columns = financeExcelShared.FINANCE_EXCEL_VALUE_COLUMNS.map((header: string) => ({ header, key: header, width: 18 }));
+  sheet.columns = financeExcelShared.FINANCE_EXCEL_VALUE_COLUMNS.map((header: string) => ({
+    header,
+    key: header,
+    width: 18,
+  }));
   for (const row of rows) {
     sheet.addRow({
       ...financeExcelShared.financeExcelRowToCells(row),
@@ -103,14 +114,18 @@ async function main() {
 
   const buffer = Buffer.from((await workbook.xlsx.writeBuffer()) as unknown as ArrayBuffer);
   const t3 = performance.now();
-  console.log(`  workbook write (xlsx):  ${(t3 - t2).toFixed(0)} ms  (buffer size: ${(buffer.length / 1024 / 1024).toFixed(1)} MB)`);
+  console.log(
+    `  workbook write (xlsx):  ${(t3 - t2).toFixed(0)} ms  (buffer size: ${(buffer.length / 1024 / 1024).toFixed(1)} MB)`
+  );
   console.log(`  PHASE 1 (build+write) TOTAL: ${(t3 - t0).toFixed(0)} ms`);
 
   // --- Phase 2: parse the .xlsx buffer back into rows -------------------------
   const t4 = performance.now();
   const parsed = await financeImportService.parseFinanceExcelBuffer(buffer, 'ap02_sizetest.xlsx');
   const t5 = performance.now();
-  console.log(`  PHASE 2 (parse) TOTAL:       ${(t5 - t4).toFixed(0)} ms  (parsed ${parsed.rows.length.toLocaleString()} rows)`);
+  console.log(
+    `  PHASE 2 (parse) TOTAL:       ${(t5 - t4).toFixed(0)} ms  (parsed ${parsed.rows.length.toLocaleString()} rows)`
+  );
   if (parsed.rows.length !== rows.length) {
     console.error(`  MISMATCH: expected ${rows.length} parsed rows, got ${parsed.rows.length}`);
     process.exitCode = 1;
@@ -123,10 +138,18 @@ async function main() {
 
   // --- Phase 3: diff (resolve + classify), the exact applyFinanceImport hot path
   const t6 = performance.now();
-  const diffResult = financeImportService.computeFinanceImportDiffPure(organizationId, businessVersionId, rawRows, lookups as any, current as any);
+  const diffResult = financeImportService.computeFinanceImportDiffPure(
+    organizationId,
+    businessVersionId,
+    rawRows,
+    lookups as any,
+    current as any
+  );
   const t7 = performance.now();
   console.log(`  PHASE 3 (diff/resolve) TOTAL: ${(t7 - t6).toFixed(0)} ms`);
-  console.log(`    rowErrors: ${diffResult.rowErrors.length}, toAdd: ${diffResult.diff.toAdd.length.toLocaleString()}, toChange: ${diffResult.diff.toChange.length}, toClear: ${diffResult.diff.toClear.length}, unchanged: ${diffResult.diff.unchangedCount}`);
+  console.log(
+    `    rowErrors: ${diffResult.rowErrors.length}, toAdd: ${diffResult.diff.toAdd.length.toLocaleString()}, toChange: ${diffResult.diff.toChange.length}, toClear: ${diffResult.diff.toClear.length}, unchanged: ${diffResult.diff.unchangedCount}`
+  );
   if (diffResult.rowErrors.length > 0) {
     console.error(`  FIRST ROW ERROR: ${JSON.stringify(diffResult.rowErrors[0])}`);
   }
@@ -136,7 +159,9 @@ async function main() {
   }
 
   const totalMs = t7 - t0;
-  console.log(`\n=== TOTAL end-to-end (build -> write -> parse -> diff): ${totalMs.toFixed(0)} ms (${(totalMs / 1000).toFixed(1)} s) for ${TOTAL_CELLS.toLocaleString()} cells ===`);
+  console.log(
+    `\n=== TOTAL end-to-end (build -> write -> parse -> diff): ${totalMs.toFixed(0)} ms (${(totalMs / 1000).toFixed(1)} s) for ${TOTAL_CELLS.toLocaleString()} cells ===`
+  );
   console.log(`Per-cell average: ${((totalMs / TOTAL_CELLS) * 1000).toFixed(2)} microseconds/cell`);
 }
 

@@ -17,14 +17,14 @@ import { MENU_2_TAB_ACTIVE, MENU_2_TAB_INACTIVE } from '@/components/shared/Modu
 import {
   createEmptyScenarioDraft,
   detectClientSideOverlaps,
-  isBaseModeStructurallyPassthrough,
-  scenarioModeToTrack,
   type DraftDriverOverride,
   type DraftImpact,
   type DraftInitiative,
+  isBaseModeStructurallyPassthrough,
   type PredictionScheduleType,
   type ScenarioDraft,
   type ScenarioMode,
+  scenarioModeToTrack,
 } from './predictionScenarioModel';
 
 const CONTROL_CLASS =
@@ -59,13 +59,20 @@ export interface ScenarioAssumptionsViewProps {
   allowedScenarioModes?: readonly ScenarioMode[];
 }
 
-const MODE_TABS: Array<{ track: 'STANDARD' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE'; label: string }> = [
+const MODE_TABS: Array<{
+  track: 'STANDARD' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE';
+  label: string;
+}> = [
   { track: 'STANDARD', label: 'A · Standardowy (Base/Bull/Bear)' },
   { track: 'DRIVER_OVERRIDE', label: 'B · Wskaźnikowy (drivery/KPI)' },
   { track: 'FUNDAMENTAL_INITIATIVE', label: 'C · Fundamentalny (inicjatywy)' },
 ];
 
-export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes }: ScenarioAssumptionsViewProps): React.ReactElement {
+export function ScenarioAssumptionsView({
+  draft,
+  onChange,
+  allowedScenarioModes,
+}: ScenarioAssumptionsViewProps): React.ReactElement {
   const activeTrack = scenarioModeToTrack(draft.scenarioMode);
 
   function setMode(mode: ScenarioMode): void {
@@ -80,7 +87,10 @@ export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes 
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-4" data-testid="prediction-assumptions-view">
+    <div
+      className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-4"
+      data-testid="prediction-assumptions-view"
+    >
       {/*
         Kontener był `rounded-lg bg-c-surface-raised p-1` (segmented control) —
         czyli wypełnienie NIOSŁA obudowa, a nie sama zakładka. Kanon Menu 2
@@ -88,7 +98,11 @@ export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes 
         (patrz rząd widoków w `FinanceWorkspaceBar`). Podkładka pod
         `bg-state-selected` dawałaby dodatkowo szarość na szarości.
       */}
-      <div className="flex shrink-0 flex-wrap items-center gap-1.5" role="tablist" aria-label="Tryb budowy scenariusza">
+      <div
+        className="flex shrink-0 flex-wrap items-center gap-1.5"
+        role="tablist"
+        aria-label="Tryb budowy scenariusza"
+      >
         {MODE_TABS.map((tab) => (
           <button
             key={tab.track}
@@ -107,9 +121,19 @@ export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes 
         ))}
       </div>
 
-      {activeTrack === 'STANDARD' && <StandardScenarioPanel draft={draft} onChange={onChange} allowedScenarioModes={allowedScenarioModes} />}
-      {activeTrack === 'DRIVER_OVERRIDE' && <DriverOverridePanel draft={draft} onChange={onChange} />}
-      {activeTrack === 'FUNDAMENTAL_INITIATIVE' && <FundamentalInitiativePanel draft={draft} onChange={onChange} />}
+      {activeTrack === 'STANDARD' && (
+        <StandardScenarioPanel
+          draft={draft}
+          onChange={onChange}
+          allowedScenarioModes={allowedScenarioModes}
+        />
+      )}
+      {activeTrack === 'DRIVER_OVERRIDE' && (
+        <DriverOverridePanel draft={draft} onChange={onChange} />
+      )}
+      {activeTrack === 'FUNDAMENTAL_INITIATIVE' && (
+        <FundamentalInitiativePanel draft={draft} onChange={onChange} />
+      )}
     </div>
   );
 }
@@ -118,27 +142,35 @@ export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes 
 // A — standardowy: Base / Upside / Downside
 // ---------------------------------------------------------------------------
 
-function StandardScenarioPanel({ draft, onChange, allowedScenarioModes }: ScenarioAssumptionsViewProps): React.ReactElement {
+function StandardScenarioPanel({
+  draft,
+  onChange,
+  allowedScenarioModes,
+}: ScenarioAssumptionsViewProps): React.ReactElement {
   const isBase = draft.scenarioMode === 'STANDARD_BASE';
   const passthrough = isBaseModeStructurallyPassthrough(draft);
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-c-border-subtle bg-c-surface p-4">
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Wariant standardowy">
-        {(
-          [
-            { mode: 'STANDARD_BASE' as const, label: 'Base' },
-            { mode: 'STANDARD_UPSIDE' as const, label: 'Upside (Bull)' },
-            { mode: 'STANDARD_DOWNSIDE' as const, label: 'Downside (Bear)' },
-          ]
-        ).map((opt) => (
+        {[
+          { mode: 'STANDARD_BASE' as const, label: 'Base' },
+          { mode: 'STANDARD_UPSIDE' as const, label: 'Upside (Bull)' },
+          { mode: 'STANDARD_DOWNSIDE' as const, label: 'Downside (Bear)' },
+        ].map((opt) => (
           <button
             key={opt.mode}
             type="button"
             role="radio"
             aria-checked={draft.scenarioMode === opt.mode}
             disabled={allowedScenarioModes != null && !allowedScenarioModes.includes(opt.mode)}
-            onClick={() => onChange({ ...draft, scenarioMode: opt.mode, lastAssumptionChangeAt: new Date().toISOString() })}
+            onClick={() =>
+              onChange({
+                ...draft,
+                scenarioMode: opt.mode,
+                lastAssumptionChangeAt: new Date().toISOString(),
+              })
+            }
             className={`${draft.scenarioMode === opt.mode ? MENU_2_TAB_ACTIVE : MENU_2_TAB_INACTIVE} shrink-0 ${PILL_DISABLED}`}
           >
             {opt.label}
@@ -154,8 +186,10 @@ function StandardScenarioPanel({ draft, onChange, allowedScenarioModes }: Scenar
         </p>
       ) : (
         <p className="text-sm text-c-text-secondary">
-          Presety standardowe ({draft.scenarioMode === 'STANDARD_UPSIDE' ? 'Upside' : 'Downside'}) nakładają zestaw predefiniowanych nadpisań na baseline —
-          edytuj je w trybie B (Wskaźnikowy) po przełączeniu, źródło nadpisania zostaje oznaczone jako preset, nie ręczne.
+          Presety standardowe ({draft.scenarioMode === 'STANDARD_UPSIDE' ? 'Upside' : 'Downside'})
+          nakładają zestaw predefiniowanych nadpisań na baseline — edytuj je w trybie B
+          (Wskaźnikowy) po przełączeniu, źródło nadpisania zostaje oznaczone jako preset, nie
+          ręczne.
         </p>
       )}
     </div>
@@ -166,9 +200,19 @@ function StandardScenarioPanel({ draft, onChange, allowedScenarioModes }: Scenar
 // B — wskaźnikowy: edycja driverów/KPI
 // ---------------------------------------------------------------------------
 
-const SCHEDULE_TYPE_OPTIONS: PredictionScheduleType[] = ['revenue_pvm', 'cogs_opex', 'wc_dso_dio_dpo', 'capex_depreciation', 'debt_maturity', 'tax_nol'];
+const SCHEDULE_TYPE_OPTIONS: PredictionScheduleType[] = [
+  'revenue_pvm',
+  'cogs_opex',
+  'wc_dso_dio_dpo',
+  'capex_depreciation',
+  'debt_maturity',
+  'tax_nol',
+];
 
-function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps): React.ReactElement {
+function DriverOverridePanel({
+  draft,
+  onChange,
+}: ScenarioAssumptionsViewProps): React.ReactElement {
   const formId = useId();
   const [scheduleType, setScheduleType] = useState<PredictionScheduleType>('cogs_opex');
   const [driverCode, setDriverCode] = useState('COGS_PCT_OF_REVENUE');
@@ -186,27 +230,44 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
       entityId,
       periodId,
       overrideSource: 'MANUAL',
-      valueStatus: v === null || Number.isNaN(v) ? 'MISSING' : v === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+      valueStatus:
+        v === null || Number.isNaN(v) ? 'MISSING' : v === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
       valueDecimal: v === null || Number.isNaN(v) ? null : v,
       unit: 'RATIO',
       baselineValueDecimal: null,
       rationale: null,
       canonicalLineCode,
     };
-    onChange({ ...draft, driverOverrides: [...draft.driverOverrides, row], lastAssumptionChangeAt: new Date().toISOString() });
+    onChange({
+      ...draft,
+      driverOverrides: [...draft.driverOverrides, row],
+      lastAssumptionChangeAt: new Date().toISOString(),
+    });
     setValue('');
   }
 
   function removeOverride(id: string): void {
-    onChange({ ...draft, driverOverrides: draft.driverOverrides.filter((o) => o.id !== id), lastAssumptionChangeAt: new Date().toISOString() });
+    onChange({
+      ...draft,
+      driverOverrides: draft.driverOverrides.filter((o) => o.id !== id),
+      lastAssumptionChangeAt: new Date().toISOString(),
+    });
   }
 
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-2 rounded-xl border border-c-border-subtle bg-c-surface p-4 sm:grid-cols-6">
-        <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-schedule`}>
+        <label
+          className="flex flex-col gap-1 text-xs text-c-text-secondary"
+          htmlFor={`${formId}-schedule`}
+        >
           Schedule
-          <select id={`${formId}-schedule`} className={CONTROL_CLASS} value={scheduleType} onChange={(e) => setScheduleType(e.target.value as PredictionScheduleType)}>
+          <select
+            id={`${formId}-schedule`}
+            className={CONTROL_CLASS}
+            value={scheduleType}
+            onChange={(e) => setScheduleType(e.target.value as PredictionScheduleType)}
+          >
             {SCHEDULE_TYPE_OPTIONS.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -214,35 +275,82 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-driver`}>
+        <label
+          className="flex flex-col gap-1 text-xs text-c-text-secondary"
+          htmlFor={`${formId}-driver`}
+        >
           Driver
-          <input id={`${formId}-driver`} className={CONTROL_CLASS} value={driverCode} onChange={(e) => setDriverCode(e.target.value)} />
+          <input
+            id={`${formId}-driver`}
+            className={CONTROL_CLASS}
+            value={driverCode}
+            onChange={(e) => setDriverCode(e.target.value)}
+          />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-line`}>
+        <label
+          className="flex flex-col gap-1 text-xs text-c-text-secondary"
+          htmlFor={`${formId}-line`}
+        >
           Linia kanoniczna
-          <input id={`${formId}-line`} className={CONTROL_CLASS} value={canonicalLineCode} onChange={(e) => setCanonicalLineCode(e.target.value)} />
+          <input
+            id={`${formId}-line`}
+            className={CONTROL_CLASS}
+            value={canonicalLineCode}
+            onChange={(e) => setCanonicalLineCode(e.target.value)}
+          />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-entity`}>
+        <label
+          className="flex flex-col gap-1 text-xs text-c-text-secondary"
+          htmlFor={`${formId}-entity`}
+        >
           Podmiot
-          <input id={`${formId}-entity`} className={CONTROL_CLASS} value={entityId} onChange={(e) => setEntityId(e.target.value)} />
+          <input
+            id={`${formId}-entity`}
+            className={CONTROL_CLASS}
+            value={entityId}
+            onChange={(e) => setEntityId(e.target.value)}
+          />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-period`}>
+        <label
+          className="flex flex-col gap-1 text-xs text-c-text-secondary"
+          htmlFor={`${formId}-period`}
+        >
           Okres
-          <input id={`${formId}-period`} className={CONTROL_CLASS} value={periodId} onChange={(e) => setPeriodId(e.target.value)} />
+          <input
+            id={`${formId}-period`}
+            className={CONTROL_CLASS}
+            value={periodId}
+            onChange={(e) => setPeriodId(e.target.value)}
+          />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-c-text-secondary" htmlFor={`${formId}-value`}>
+        <label
+          className="flex flex-col gap-1 text-xs text-c-text-secondary"
+          htmlFor={`${formId}-value`}
+        >
           Wartość
-          <input id={`${formId}-value`} className={CONTROL_CLASS} value={value} onChange={(e) => setValue(e.target.value)} placeholder="np. 0.58" />
+          <input
+            id={`${formId}-value`}
+            className={CONTROL_CLASS}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="np. 0.58"
+          />
         </label>
         <div className="col-span-2 flex items-end sm:col-span-6">
-          <button type="button" className={BUTTON_CLASS} onClick={addOverride} data-testid="add-driver-override">
+          <button
+            type="button"
+            className={BUTTON_CLASS}
+            onClick={addOverride}
+            data-testid="add-driver-override"
+          >
             + Dodaj nadpisanie
           </button>
         </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-c-border-subtle">
-        <table className="w-full text-left text-sm">{/* §27-exempt — driver-override grid (Excel/Platforma-tabel archetyp, DOKTRYNA_TABELA_NIE_EXCEL.md Decyzja 07-13), nie lista rekordów: zero pstryczka/kebab/preview, kolumny to pola jednej edycji, nie wiersze encji. */}
+        <table className="w-full text-left text-sm">
+          {/* §27-exempt — driver-override grid (Excel/Platforma-tabel archetyp, DOKTRYNA_TABELA_NIE_EXCEL.md Decyzja 07-13), nie lista rekordów: zero pstryczka/kebab/preview, kolumny to pola jednej edycji, nie wiersze encji. */}
           <thead className="bg-c-surface-raised text-xs uppercase tracking-wide text-c-text-muted">
             <tr>
               <th className="px-3 py-2">Schedule</th>
@@ -269,9 +377,15 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
                 <td className="px-3 py-2">{o.canonicalLineCode}</td>
                 <td className="px-3 py-2">{o.entityId}</td>
                 <td className="px-3 py-2">{o.periodId}</td>
-                <td className="px-3 py-2 tabular-nums">{o.valueDecimal === null ? '—' : o.valueDecimal}</td>
+                <td className="px-3 py-2 tabular-nums">
+                  {o.valueDecimal === null ? '—' : o.valueDecimal}
+                </td>
                 <td className="px-3 py-2 text-right">
-                  <button type="button" className={`${BUTTON_CLASS} min-h-9 px-2 text-xs`} onClick={() => removeOverride(o.id)}>
+                  <button
+                    type="button"
+                    className={`${BUTTON_CLASS} min-h-9 px-2 text-xs`}
+                    onClick={() => removeOverride(o.id)}
+                  >
                     Usuń
                   </button>
                 </td>
@@ -288,7 +402,10 @@ function DriverOverridePanel({ draft, onChange }: ScenarioAssumptionsViewProps):
 // C — fundamentalny: initiative -> assumption -> driver/KPI -> statement line -> forecast
 // ---------------------------------------------------------------------------
 
-function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsViewProps): React.ReactElement {
+function FundamentalInitiativePanel({
+  draft,
+  onChange,
+}: ScenarioAssumptionsViewProps): React.ReactElement {
   const overlaps = detectClientSideOverlaps(draft);
 
   function addInitiative(): void {
@@ -307,7 +424,11 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
       implementationCostDecimal: null,
       status: 'DRAFT',
     };
-    onChange({ ...draft, initiatives: [...draft.initiatives, initiative], lastAssumptionChangeAt: new Date().toISOString() });
+    onChange({
+      ...draft,
+      initiatives: [...draft.initiatives, initiative],
+      lastAssumptionChangeAt: new Date().toISOString(),
+    });
   }
 
   function updateInitiative(id: string, patch: Partial<DraftInitiative>): void {
@@ -341,44 +462,75 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
       probabilityPct: 80,
       cannibalizesImpactId: null,
     };
-    onChange({ ...draft, impacts: [...draft.impacts, impact], lastAssumptionChangeAt: new Date().toISOString() });
+    onChange({
+      ...draft,
+      impacts: [...draft.impacts, impact],
+      lastAssumptionChangeAt: new Date().toISOString(),
+    });
   }
 
   function updateImpact(id: string, patch: Partial<DraftImpact>): void {
-    onChange({ ...draft, impacts: draft.impacts.map((i) => (i.id === id ? { ...i, ...patch } : i)), lastAssumptionChangeAt: new Date().toISOString() });
+    onChange({
+      ...draft,
+      impacts: draft.impacts.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+      lastAssumptionChangeAt: new Date().toISOString(),
+    });
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-c-text-secondary">Łańcuch: inicjatywa → założenie → driver/KPI → linia sprawozdania → prognoza.</p>
-        <button type="button" className={BUTTON_CLASS} onClick={addInitiative} data-testid="add-initiative">
+        <p className="text-sm text-c-text-secondary">
+          Łańcuch: inicjatywa → założenie → driver/KPI → linia sprawozdania → prognoza.
+        </p>
+        <button
+          type="button"
+          className={BUTTON_CLASS}
+          onClick={addInitiative}
+          data-testid="add-initiative"
+        >
           + Dodaj inicjatywę
         </button>
       </div>
 
       {overlaps.length > 0 && (
-        <div className="rounded-xl border border-c-warning/40 bg-c-warning/10 p-3" role="alert" data-testid="overlap-warnings">
-          <p className="text-sm font-semibold text-c-text">Wykryto możliwe nakładanie się wpływów ({overlaps.length})</p>
+        <div
+          className="rounded-xl border border-c-warning/40 bg-c-warning/10 p-3"
+          role="alert"
+          data-testid="overlap-warnings"
+        >
+          <p className="text-sm font-semibold text-c-text">
+            Wykryto możliwe nakładanie się wpływów ({overlaps.length})
+          </p>
           <p className="mb-2 text-xs text-c-text-muted">
-            Podgląd kliencki, nieautorytatywny — uruchom „Uruchom preflight" w pasku, żeby dostać realną (Layer 2, waluta) analizę serwera.
+            Podgląd kliencki, nieautorytatywny — uruchom „Uruchom preflight" w pasku, żeby dostać
+            realną (Layer 2, waluta) analizę serwera.
           </p>
           <ul className="space-y-1 text-sm text-c-text-secondary">
             {overlaps.map((f) => (
               <li key={`${f.entityId}-${f.canonicalLineCode}-${f.periodId}`}>
-                {f.canonicalLineCode} · {f.periodId} · {f.entityId} — {f.sourceCount} źródła nakładają się (suma naiwna {f.naiveCombinedDelta.toFixed(4)})
+                {f.canonicalLineCode} · {f.periodId} · {f.entityId} — {f.sourceCount} źródła
+                nakładają się (suma naiwna {f.naiveCombinedDelta.toFixed(4)})
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      {draft.initiatives.length === 0 && <p className="rounded-xl border border-dashed border-c-border-subtle p-6 text-center text-sm text-c-text-muted">Brak inicjatyw — dodaj pierwszą powyżej.</p>}
+      {draft.initiatives.length === 0 && (
+        <p className="rounded-xl border border-dashed border-c-border-subtle p-6 text-center text-sm text-c-text-muted">
+          Brak inicjatyw — dodaj pierwszą powyżej.
+        </p>
+      )}
 
       {draft.initiatives.map((initiative) => {
         const impacts = draft.impacts.filter((i) => i.initiativeId === initiative.id);
         return (
-          <div key={initiative.id} className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-testid={`initiative-card-${initiative.id}`}>
+          <div
+            key={initiative.id}
+            className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+            data-testid={`initiative-card-${initiative.id}`}
+          >
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <input
                 className={CONTROL_CLASS}
@@ -400,14 +552,20 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                 max={100}
                 value={initiative.confidencePct ?? ''}
                 placeholder="Confidence %"
-                onChange={(e) => updateInitiative(initiative.id, { confidencePct: e.target.value === '' ? null : Number(e.target.value) })}
+                onChange={(e) =>
+                  updateInitiative(initiative.id, {
+                    confidencePct: e.target.value === '' ? null : Number(e.target.value),
+                  })
+                }
                 aria-label="Confidence procent"
               />
               <input
                 className={CONTROL_CLASS}
                 value={initiative.defaultStartPeriodId ?? ''}
                 placeholder="Domyślny okres startu"
-                onChange={(e) => updateInitiative(initiative.id, { defaultStartPeriodId: e.target.value || null })}
+                onChange={(e) =>
+                  updateInitiative(initiative.id, { defaultStartPeriodId: e.target.value || null })
+                }
                 aria-label="Domyślny okres startu"
               />
               <input
@@ -416,7 +574,11 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                 min={0}
                 value={initiative.defaultRampMonths ?? ''}
                 placeholder="Ramp-up (miesiące)"
-                onChange={(e) => updateInitiative(initiative.id, { defaultRampMonths: e.target.value === '' ? null : Number(e.target.value) })}
+                onChange={(e) =>
+                  updateInitiative(initiative.id, {
+                    defaultRampMonths: e.target.value === '' ? null : Number(e.target.value),
+                  })
+                }
                 aria-label="Ramp-up w miesiącach"
               />
               <input
@@ -424,25 +586,47 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                 type="number"
                 value={initiative.implementationCostDecimal ?? ''}
                 placeholder="Koszt wdrożenia"
-                onChange={(e) => updateInitiative(initiative.id, { implementationCostDecimal: e.target.value === '' ? null : Number(e.target.value) })}
+                onChange={(e) =>
+                  updateInitiative(initiative.id, {
+                    implementationCostDecimal:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  })
+                }
                 aria-label="Koszt wdrożenia"
               />
             </div>
 
             <div className="mt-3 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">Wpływy ({impacts.length})</p>
-              <button type="button" className={`${BUTTON_CLASS} min-h-9 px-2 text-xs`} onClick={() => addImpact(initiative.id)}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                Wpływy ({impacts.length})
+              </p>
+              <button
+                type="button"
+                className={`${BUTTON_CLASS} min-h-9 px-2 text-xs`}
+                onClick={() => addImpact(initiative.id)}
+              >
                 + Dodaj wpływ
               </button>
             </div>
 
             {impacts.map((impact) => (
-              <div key={impact.id} className="mt-2 grid grid-cols-2 gap-2 rounded-lg border border-c-border-subtle p-3 sm:grid-cols-4" data-testid={`impact-row-${impact.id}`}>
-                <input className={CONTROL_CLASS} value={impact.statementLineCode} onChange={(e) => updateImpact(impact.id, { statementLineCode: e.target.value })} aria-label="Linia sprawozdania" />
+              <div
+                key={impact.id}
+                className="mt-2 grid grid-cols-2 gap-2 rounded-lg border border-c-border-subtle p-3 sm:grid-cols-4"
+                data-testid={`impact-row-${impact.id}`}
+              >
+                <input
+                  className={CONTROL_CLASS}
+                  value={impact.statementLineCode}
+                  onChange={(e) => updateImpact(impact.id, { statementLineCode: e.target.value })}
+                  aria-label="Linia sprawozdania"
+                />
                 <select
                   className={CONTROL_CLASS}
                   value={impact.sign}
-                  onChange={(e) => updateImpact(impact.id, { sign: e.target.value as DraftImpact['sign'] })}
+                  onChange={(e) =>
+                    updateImpact(impact.id, { sign: e.target.value as DraftImpact['sign'] })
+                  }
                   aria-label="Znak"
                 >
                   <option value="NEGATIVE">Redukcja (−)</option>
@@ -452,10 +636,20 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                   className={CONTROL_CLASS}
                   type="number"
                   value={impact.amountDecimal}
-                  onChange={(e) => updateImpact(impact.id, { amountDecimal: Number(e.target.value) })}
+                  onChange={(e) =>
+                    updateImpact(impact.id, { amountDecimal: Number(e.target.value) })
+                  }
                   aria-label="Wielkość wpływu"
                 />
-                <input className={CONTROL_CLASS} value={impact.startPeriodId ?? ''} placeholder="Start (dziedziczy z inicjatywy)" onChange={(e) => updateImpact(impact.id, { startPeriodId: e.target.value || null })} aria-label="Okres startu wpływu" />
+                <input
+                  className={CONTROL_CLASS}
+                  value={impact.startPeriodId ?? ''}
+                  placeholder="Start (dziedziczy z inicjatywy)"
+                  onChange={(e) =>
+                    updateImpact(impact.id, { startPeriodId: e.target.value || null })
+                  }
+                  aria-label="Okres startu wpływu"
+                />
                 <input
                   className={CONTROL_CLASS}
                   type="number"
@@ -463,7 +657,11 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                   max={100}
                   value={impact.confidencePct ?? ''}
                   placeholder="Confidence %"
-                  onChange={(e) => updateImpact(impact.id, { confidencePct: e.target.value === '' ? null : Number(e.target.value) })}
+                  onChange={(e) =>
+                    updateImpact(impact.id, {
+                      confidencePct: e.target.value === '' ? null : Number(e.target.value),
+                    })
+                  }
                   aria-label="Confidence wpływu"
                 />
                 <input
@@ -473,16 +671,30 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
                   max={100}
                   value={impact.probabilityPct ?? ''}
                   placeholder="Probability %"
-                  onChange={(e) => updateImpact(impact.id, { probabilityPct: e.target.value === '' ? null : Number(e.target.value) })}
+                  onChange={(e) =>
+                    updateImpact(impact.id, {
+                      probabilityPct: e.target.value === '' ? null : Number(e.target.value),
+                    })
+                  }
                   aria-label="Prawdopodobieństwo wpływu"
                 />
-                <input className={CONTROL_CLASS} value={impact.amountUnit} onChange={(e) => updateImpact(impact.id, { amountUnit: e.target.value })} aria-label="Jednostka" />
+                <input
+                  className={CONTROL_CLASS}
+                  value={impact.amountUnit}
+                  onChange={(e) => updateImpact(impact.id, { amountUnit: e.target.value })}
+                  aria-label="Jednostka"
+                />
                 <input
                   className={CONTROL_CLASS}
                   type="number"
                   value={impact.implementationCostDecimal ?? ''}
                   placeholder="Koszt wdrożenia (per-impact)"
-                  onChange={(e) => updateImpact(impact.id, { implementationCostDecimal: e.target.value === '' ? null : Number(e.target.value) })}
+                  onChange={(e) =>
+                    updateImpact(impact.id, {
+                      implementationCostDecimal:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    })
+                  }
                   aria-label="Koszt wdrożenia wpływu"
                 />
               </div>
@@ -495,5 +707,8 @@ function FundamentalInitiativePanel({ draft, onChange }: ScenarioAssumptionsView
 }
 
 export function createDemoFundamentalDraft(): ScenarioDraft {
-  return createEmptyScenarioDraft({ name: 'Demo scenariusz', scenarioMode: 'FUNDAMENTAL_INITIATIVE' });
+  return createEmptyScenarioDraft({
+    name: 'Demo scenariusz',
+    scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+  });
 }

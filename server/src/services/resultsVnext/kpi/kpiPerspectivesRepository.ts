@@ -125,7 +125,13 @@ export interface ListMyKpisParams {
  * branches) `$4`=now() `$5`=limit `$6`=offset.
  */
 export async function listMyKpis(params: ListMyKpisParams): Promise<MyKpiAttentionItem[]> {
-  const { userId, organizationId, now = new Date().toISOString(), limit = 100, offset = 0 } = params;
+  const {
+    userId,
+    organizationId,
+    now = new Date().toISOString(),
+    limit = 100,
+    offset = 0,
+  } = params;
 
   const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: 'kpi' });
   const values: unknown[] = [...cte.values, now, limit, offset];
@@ -323,13 +329,38 @@ LIMIT $5 OFFSET $6;
 // ==========================================
 
 export interface OrganizationKpiAttention {
-  processCoverage: Array<{ primaryProcessId: string | null; totalKpis: number; activeKpis: number }>;
+  processCoverage: Array<{
+    primaryProcessId: string | null;
+    totalKpis: number;
+    activeKpis: number;
+  }>;
   ownerLoad: Array<{ ownerUserId: string; activeKpiCount: number; openDeviationCaseCount: number }>;
   missingOwnership: Array<{ kpiId: string; kpiCode: string }>;
-  performanceDistribution: { onTarget: number; warning: number; critical: number; neutralOrMissing: number };
-  overdueObligations: Array<{ obligationId: string; kpiId: string; assigneeUserId: string; obligationType: string; dueAt: string }>;
-  repeatedDeviations: Array<{ kpiId: string; kpiCode: string; caseCountLast180Days: number; anySelfReportedRecurrence: boolean }>;
-  ineffectiveCorrectiveActions: Array<{ caseId: string; kpiId: string; verificationId: string; status: 'ineffective' | 'partially_effective' }>;
+  performanceDistribution: {
+    onTarget: number;
+    warning: number;
+    critical: number;
+    neutralOrMissing: number;
+  };
+  overdueObligations: Array<{
+    obligationId: string;
+    kpiId: string;
+    assigneeUserId: string;
+    obligationType: string;
+    dueAt: string;
+  }>;
+  repeatedDeviations: Array<{
+    kpiId: string;
+    kpiCode: string;
+    caseCountLast180Days: number;
+    anySelfReportedRecurrence: boolean;
+  }>;
+  ineffectiveCorrectiveActions: Array<{
+    caseId: string;
+    kpiId: string;
+    verificationId: string;
+    status: 'ineffective' | 'partially_effective';
+  }>;
 }
 
 export interface ListOrganizationKpiAttentionParams {
@@ -418,11 +449,11 @@ SELECT
  WHERE kd.owner_user_id IS NOT NULL
  GROUP BY kd.owner_user_id`;
   const rows = await withReadClient((client) =>
-    queryRows<{ owner_user_id: string; active_kpi_count: string; open_deviation_case_count: string }>(
-      client,
-      sql,
-      base.values
-    )
+    queryRows<{
+      owner_user_id: string;
+      active_kpi_count: string;
+      open_deviation_case_count: string;
+    }>(client, sql, base.values)
   );
   return rows.map((row) => ({
     ownerUserId: row.owner_user_id,
@@ -575,11 +606,12 @@ SELECT ev.deviation_case_id AS case_id, dc.kpi_id, ev.verification_id, ev.status
   INNER JOIN scoped_kpis kd ON kd.kpi_id = dc.kpi_id
  WHERE ev.status IN ('ineffective', 'partially_effective')`;
   const rows = await withReadClient((client) =>
-    queryRows<{ case_id: string; kpi_id: string; verification_id: string; status: 'ineffective' | 'partially_effective' }>(
-      client,
-      sql,
-      base.values
-    )
+    queryRows<{
+      case_id: string;
+      kpi_id: string;
+      verification_id: string;
+      status: 'ineffective' | 'partially_effective';
+    }>(client, sql, base.values)
   );
   return rows.map((row) => ({
     caseId: row.case_id,

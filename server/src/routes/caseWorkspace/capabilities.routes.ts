@@ -48,7 +48,11 @@ const effectClassEnum = z.enum([
 // previously read AUTO | NOTIFY_ONLY | REQUIRE_APPROVAL — words that appear
 // nowhere in the schema or the service — so any caller reaching this route
 // would have been rejected by the CHECK constraint.
-const approvalClassEnum = z.enum(['auto_executable', 'policy_approvable', 'requires_human_approval']);
+const approvalClassEnum = z.enum([
+  'auto_executable',
+  'policy_approvable',
+  'requires_human_approval',
+]);
 const healthEnum = z.enum(['HEALTHY', 'DEGRADED', 'UNHEALTHY', 'UNKNOWN']);
 const lifecycleEnum = z.enum(['ACTIVE', 'DEPRECATED', 'UNAVAILABLE']);
 
@@ -123,7 +127,10 @@ router.get(
 router.get(
   '/capabilities/active',
   caseWorkspaceHandler(async (req, res, actor) => {
-    const query = parseQuery(z.object({ ownerModule: z.string().trim().min(1).optional() }), req.query);
+    const query = parseQuery(
+      z.object({ ownerModule: z.string().trim().min(1).optional() }),
+      req.query
+    );
     await requireOrgMemberForActor(actor);
     const items = await svc.listActiveCapabilities(query, actor.actorUserId, actor.organizationId);
     res.status(200).json({ data: items });
@@ -134,7 +141,10 @@ router.get(
 router.get(
   '/capabilities/by-id/:capabilityRegistryId',
   caseWorkspaceHandler(async (req, res, actor) => {
-    const params = parseParams(z.object({ capabilityRegistryId: z.string().trim().min(1) }), req.params);
+    const params = parseParams(
+      z.object({ capabilityRegistryId: z.string().trim().min(1) }),
+      req.params
+    );
     await requireOrgMemberForActor(actor);
     const found = await svc.getCapabilityByRegistryId(
       params.capabilityRegistryId,
@@ -142,7 +152,9 @@ router.get(
       actor.organizationId
     );
     if (!found) {
-      res.status(404).json({ error: { code: 'CAPABILITY_NOT_FOUND', message: 'Capability not found.' } });
+      res
+        .status(404)
+        .json({ error: { code: 'CAPABILITY_NOT_FOUND', message: 'Capability not found.' } });
       return;
     }
     res.status(200).json({ data: found });
@@ -154,7 +166,10 @@ router.get(
   '/capabilities/:capabilityId/versions/:capabilityVersion',
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(
-      z.object({ capabilityId: z.string().trim().min(1), capabilityVersion: z.string().trim().min(1) }),
+      z.object({
+        capabilityId: z.string().trim().min(1),
+        capabilityVersion: z.string().trim().min(1),
+      }),
       req.params
     );
     await requireOrgMemberForActor(actor);
@@ -165,7 +180,9 @@ router.get(
       actor.organizationId
     );
     if (!found) {
-      res.status(404).json({ error: { code: 'CAPABILITY_NOT_FOUND', message: 'Capability not found.' } });
+      res
+        .status(404)
+        .json({ error: { code: 'CAPABILITY_NOT_FOUND', message: 'Capability not found.' } });
       return;
     }
     res.status(200).json({ data: found });
@@ -182,7 +199,10 @@ const markHealthBody = z.object({
 router.post(
   '/capabilities/by-id/:capabilityRegistryId/health',
   caseWorkspaceHandler(async (req, res, actor) => {
-    const params = parseParams(z.object({ capabilityRegistryId: z.string().trim().min(1) }), req.params);
+    const params = parseParams(
+      z.object({ capabilityRegistryId: z.string().trim().min(1) }),
+      req.params
+    );
     const body = parseBody(markHealthBody, req.body);
     await requireOrgRoleForActor(actor, 'ADMIN');
     const updated = await svc.markCapabilityHealth(
@@ -203,12 +223,19 @@ const idempotencyCheckBody = z.object({ requestPayload: z.unknown() });
 router.post(
   '/capabilities/by-id/:capabilityRegistryId/idempotency-check',
   caseWorkspaceHandler(async (req, res, actor) => {
-    const params = parseParams(z.object({ capabilityRegistryId: z.string().trim().min(1) }), req.params);
+    const params = parseParams(
+      z.object({ capabilityRegistryId: z.string().trim().min(1) }),
+      req.params
+    );
     const body = parseBody(idempotencyCheckBody, req.body);
-    const idempotencyKey = readIdempotencyKeyHeader(req) ?? (req.body as { idempotencyKey?: unknown })?.idempotencyKey;
+    const idempotencyKey =
+      readIdempotencyKeyHeader(req) ?? (req.body as { idempotencyKey?: unknown })?.idempotencyKey;
     if (typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
       res.status(400).json({
-        error: { code: 'VALIDATION_ERROR', message: 'Idempotency-Key header (or body.idempotencyKey) is required.' },
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Idempotency-Key header (or body.idempotencyKey) is required.',
+        },
       });
       return;
     }

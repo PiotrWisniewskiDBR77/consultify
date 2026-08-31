@@ -51,7 +51,10 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
 }));
 vi.mock('../../../middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
-  requireOrgRole: (..._roles: string[]) => (_req: any, _res: any, next: () => void) => next(),
+  requireOrgRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
 }));
 vi.mock('../../../middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
@@ -64,7 +67,8 @@ vi.mock('../../../utils/Logger.js', () => ({
 }));
 
 vi.mock('../../../services/resultsVnext/okr/okrSetCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/okr/okrSetCommands.js')>();
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/okr/okrSetCommands.js')>();
   return {
     ...actual,
     closeOkrSet: (...args: unknown[]) => mockCloseOkrSet(...args),
@@ -78,14 +82,20 @@ vi.mock('../../../services/resultsVnext/okr/okrSetRepository.js', () => ({
   getOkrSetApprovedSnapshot: (...args: unknown[]) => mockGetOkrSetApprovedSnapshot(...args),
 }));
 vi.mock('../../../services/resultsVnext/okr/okrObjectiveRepository.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/okr/okrObjectiveRepository.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrObjectiveRepository.js')
+    >();
   return {
     ...actual,
     getObjective: (...args: unknown[]) => mockGetObjective(...args),
   };
 });
 vi.mock('../../../services/resultsVnext/okr/okrReflectionCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/okr/okrReflectionCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrReflectionCommands.js')
+    >();
   return {
     ...actual,
     finalScoreOkrSet: (...args: unknown[]) => mockFinalScoreOkrSet(...args),
@@ -93,13 +103,17 @@ vi.mock('../../../services/resultsVnext/okr/okrReflectionCommands.js', async (im
   };
 });
 vi.mock('../../../services/resultsVnext/okr/okrReviewCommands.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../services/resultsVnext/okr/okrReviewCommands.js')>();
+  const actual =
+    await importOriginal<
+      typeof import('../../../services/resultsVnext/okr/okrReviewCommands.js')
+    >();
   return {
     ...actual,
     submitOkrSetSelfReview: (...args: unknown[]) => mockSubmitOkrSetSelfReview(...args),
     submitOkrSetForManagerReview: (...args: unknown[]) => mockSubmitOkrSetForManagerReview(...args),
     approveOkrSetManagerReview: (...args: unknown[]) => mockApproveOkrSetManagerReview(...args),
-    requestChangesOnOkrSetManagerReview: (...args: unknown[]) => mockRequestChangesOnOkrSetManagerReview(...args),
+    requestChangesOnOkrSetManagerReview: (...args: unknown[]) =>
+      mockRequestChangesOnOkrSetManagerReview(...args),
     recordOkrSetReviewComment: (...args: unknown[]) => mockRecordOkrSetReviewComment(...args),
     listOkrSetReviews: (...args: unknown[]) => mockListOkrSetReviews(...args),
   };
@@ -111,14 +125,17 @@ vi.mock('../../../services/resultsVnext/okr/okrSetHistoryRepository.js', () => (
   getOkrSetHistory: (...args: unknown[]) => mockGetOkrSetHistory(...args),
 }));
 
-const { OkrSetValidationError } = await import('../../../services/resultsVnext/okr/okrSetCommands.js');
+const { OkrSetValidationError } =
+  await import('../../../services/resultsVnext/okr/okrSetCommands.js');
 const {
   OkrManagerReviewSelfApprovalDeniedError,
   OkrSetManagerReviewRequiredError,
   OkrSetSelfReviewRequiredError,
 } = await import('../../../services/resultsVnext/okr/okrReviewCommands.js');
-const { OkrSetReflectionRequiredError } = await import('../../../services/resultsVnext/okr/okrReflectionCommands.js');
-const { AtomicWriteConflictError } = await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const { OkrSetReflectionRequiredError } =
+  await import('../../../services/resultsVnext/okr/okrReflectionCommands.js');
+const { AtomicWriteConflictError } =
+  await import('../../../services/resultsVnext/platform/atomicWrite.js');
 
 const okrRoutes = (await import('../okr.routes.js')).default;
 
@@ -272,7 +289,12 @@ describe('POST .../sets/:setId/final-score', () => {
       outcome: 'applied',
       eventId: 'evt-2',
       resultingVersion: 4,
-      result: { set: setFixture({ status: 'review', rowVersion: 4 }), scoredObjectives: [{ objectiveId: OBJECTIVE_ID, finalScore: 0.5, scoringModelUnsupported: false }] },
+      result: {
+        set: setFixture({ status: 'review', rowVersion: 4 }),
+        scoredObjectives: [
+          { objectiveId: OBJECTIVE_ID, finalScore: 0.5, scoringModelUnsupported: false },
+        ],
+      },
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/final-score`)
@@ -300,7 +322,11 @@ describe('POST .../sets/:setId/final-score', () => {
 
 describe('POST .../objectives/:objectiveId/reflection', () => {
   it('200s on success (create path, expectedVersion=0)', async () => {
-    mockGetObjective.mockResolvedValue({ objectiveId: OBJECTIVE_ID, setId: SET_ID, keyResults: [] });
+    mockGetObjective.mockResolvedValue({
+      objectiveId: OBJECTIVE_ID,
+      setId: SET_ID,
+      keyResults: [],
+    });
     mockRecordObjectiveReflection.mockResolvedValue({
       outcome: 'applied',
       eventId: 'evt-3',
@@ -327,7 +353,11 @@ describe('POST .../objectives/:objectiveId/reflection', () => {
   });
 
   it('400s when setId is missing from the body', async () => {
-    mockGetObjective.mockResolvedValue({ objectiveId: OBJECTIVE_ID, setId: SET_ID, keyResults: [] });
+    mockGetObjective.mockResolvedValue({
+      objectiveId: OBJECTIVE_ID,
+      setId: SET_ID,
+      keyResults: [],
+    });
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/objectives/${OBJECTIVE_ID}/reflection`)
       .send({ expectedVersion: 0 });
@@ -412,7 +442,9 @@ describe('POST .../sets/:setId/reviews/manager/approve', () => {
 
   it('maps AtomicWriteConflictError to 409', async () => {
     mockGetOkrSet.mockResolvedValue(setFixture());
-    mockApproveOkrSetManagerReview.mockRejectedValue(new AtomicWriteConflictError('stale', 'STALE_VERSION'));
+    mockApproveOkrSetManagerReview.mockRejectedValue(
+      new AtomicWriteConflictError('stale', 'STALE_VERSION')
+    );
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/reviews/manager/approve`)
       .send({ expectedVersion: 1 });
@@ -452,7 +484,17 @@ describe('POST .../sets/:setId/reviews/:reviewType/comments', () => {
       outcome: 'applied',
       eventId: 'evt-8',
       resultingVersion: 2,
-      result: reviewFixture({ comments: [{ level: 'set', targetId: SET_ID, text: 'note', createdAt: '2026-01-01T00:00:00.000Z', createdBy: 'user-1' }] }),
+      result: reviewFixture({
+        comments: [
+          {
+            level: 'set',
+            targetId: SET_ID,
+            text: 'note',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            createdBy: 'user-1',
+          },
+        ],
+      }),
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/okr/sets/${SET_ID}/reviews/manager/comments`)
@@ -477,8 +519,13 @@ describe('POST .../sets/:setId/reviews/:reviewType/comments', () => {
 
 describe('GET .../sets/:setId/reviews', () => {
   it('200s with the list', async () => {
-    mockListOkrSetReviews.mockResolvedValue([reviewFixture(), reviewFixture({ reviewType: 'self', reviewId: 'review-2' })]);
-    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/reviews`);
+    mockListOkrSetReviews.mockResolvedValue([
+      reviewFixture(),
+      reviewFixture({ reviewType: 'self', reviewId: 'review-2' }),
+    ]);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/reviews`
+    );
     expect(response.status).toBe(200);
     expect(response.body.reviews).toHaveLength(2);
   });
@@ -554,7 +601,12 @@ describe('POST .../sets/:setId/carry-forward', () => {
     mockGetOkrSet.mockResolvedValue(setFixture({ status: 'closed' }));
     mockCarryForwardOkrSet.mockResolvedValue({
       sourceSet: setFixture({ status: 'closed' }),
-      carriedSet: setFixture({ setId: 'carried-set-1', status: 'draft', cycleId: '33333333-3333-4333-8333-333333333333', carriedFromSetId: SET_ID }),
+      carriedSet: setFixture({
+        setId: 'carried-set-1',
+        status: 'draft',
+        cycleId: '33333333-3333-4333-8333-333333333333',
+        carriedFromSetId: SET_ID,
+      }),
       created: true,
     });
     const response = await request(createApp())
@@ -569,7 +621,11 @@ describe('POST .../sets/:setId/carry-forward', () => {
     mockGetOkrSet.mockResolvedValue(setFixture({ status: 'closed' }));
     mockCarryForwardOkrSet.mockResolvedValue({
       sourceSet: setFixture({ status: 'closed' }),
-      carriedSet: setFixture({ setId: 'carried-set-1', status: 'draft', cycleId: '33333333-3333-4333-8333-333333333333' }),
+      carriedSet: setFixture({
+        setId: 'carried-set-1',
+        status: 'draft',
+        cycleId: '33333333-3333-4333-8333-333333333333',
+      }),
       created: false,
     });
     const response = await request(createApp())
@@ -608,10 +664,24 @@ describe('POST .../sets/:setId/carry-forward', () => {
 describe('GET .../sets/:setId/history', () => {
   it('200s with the merged entries + nextCursor', async () => {
     mockGetOkrSetHistory.mockResolvedValue({
-      entries: [{ kind: 'event', eventId: 'evt-1', sequence: '1', eventType: 'okr_set.created', actorUserId: 'user-1', actorEffectiveRole: 'member', occurredAt: '2026-01-01T00:00:00.000Z', reason: null, payload: {} }],
+      entries: [
+        {
+          kind: 'event',
+          eventId: 'evt-1',
+          sequence: '1',
+          eventType: 'okr_set.created',
+          actorUserId: 'user-1',
+          actorEffectiveRole: 'member',
+          occurredAt: '2026-01-01T00:00:00.000Z',
+          reason: null,
+          payload: {},
+        },
+      ],
       nextCursor: null,
     });
-    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/history`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/history`
+    );
     expect(response.status).toBe(200);
     expect(response.body.entries).toHaveLength(1);
     expect(response.body.nextCursor).toBeNull();
@@ -619,7 +689,9 @@ describe('GET .../sets/:setId/history', () => {
 
   it('passes cursor/limit query params through', async () => {
     mockGetOkrSetHistory.mockResolvedValue({ entries: [], nextCursor: null });
-    const response = await request(createApp()).get(`/api/vnext/results/okr/sets/${SET_ID}/history?cursor=42&limit=10`);
+    const response = await request(createApp()).get(
+      `/api/vnext/results/okr/sets/${SET_ID}/history?cursor=42&limit=10`
+    );
     expect(response.status).toBe(200);
     expect(mockGetOkrSetHistory).toHaveBeenCalledWith(
       expect.objectContaining({ setId: SET_ID, cursor: '42', limit: 10 })

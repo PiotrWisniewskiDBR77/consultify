@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import config from '../config/Config.js';
 import { withPgTransaction } from '../database/PostgresDatabase.js';
 import adminAuditService from '../services/adminAuditService.js';
-import { setV8OrgFlag } from '../services/v8/featureFlagService.js';
 import { __resetApprovalServiceForTests } from '../services/documentStudio/documentApprovalService.js';
+import { setV8OrgFlag } from '../services/v8/featureFlagService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -720,11 +720,11 @@ router.post(
             ? 'SuperAdmin'
             : userRole === 'OWNER'
               ? 'Owner'
-            : userRole === 'ADMIN'
-              ? 'Admin'
-              : userRole === 'GUEST'
-                ? 'Guest'
-                : 'User',
+              : userRole === 'ADMIN'
+                ? 'Admin'
+                : userRole === 'GUEST'
+                  ? 'Guest'
+                  : 'User',
         ],
         { fallback: false }
       );
@@ -768,11 +768,11 @@ router.post(
         ? 'E2E SuperAdmin'
         : userRole === 'OWNER'
           ? 'E2E Owner'
-        : userRole === 'ADMIN'
-          ? 'E2E Admin'
-          : userRole === 'GUEST'
-            ? 'E2E Guest'
-            : 'E2E User';
+          : userRole === 'ADMIN'
+            ? 'E2E Admin'
+            : userRole === 'GUEST'
+              ? 'E2E Guest'
+              : 'E2E User';
 
     const token = makeSignedToken({
       id: userId,
@@ -981,55 +981,57 @@ router.post(
 
     const created: Record<string, unknown> = {};
     try {
-    for (const persona of RBAC_PERSONAS) {
-      const userId = uuidv4();
-      const organizationId = persona.tenant === 'foreign' ? foreignOrgId : primaryOrgId;
-      const email = `g4+${slug}-${persona.key}@local.test`.toLowerCase();
+      for (const persona of RBAC_PERSONAS) {
+        const userId = uuidv4();
+        const organizationId = persona.tenant === 'foreign' ? foreignOrgId : primaryOrgId;
+        const email = `g4+${slug}-${persona.key}@local.test`.toLowerCase();
 
-      await DbPromise.run(
-        `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+        await DbPromise.run(
+          `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, organizationId, email, hashed, persona.userRole, 'active', 'G4', persona.key],
-        { fallback: false }
-      );
-      await insertMembership(uuidv4(), organizationId, userId, persona.memberRole, 'ACTIVE');
+          [userId, organizationId, email, hashed, persona.userRole, 'active', 'G4', persona.key],
+          { fallback: false }
+        );
+        await insertMembership(uuidv4(), organizationId, userId, persona.memberRole, 'ACTIVE');
 
-      created[persona.key] = {
-        userId,
-        email,
-        organizationId,
-        memberRole: persona.memberRole,
-        userRole: persona.userRole,
-        tenant: persona.tenant,
-      };
-    }
+        created[persona.key] = {
+          userId,
+          email,
+          organizationId,
+          memberRole: persona.memberRole,
+          userRole: persona.userRole,
+          tenant: persona.tenant,
+        };
+      }
 
-    const anchorUserId = (created.platformAdmin as { userId: string }).userId;
-    await DbPromise.run(
-      `INSERT INTO test_support_runs (run_id, organization_id, user_id)
+      const anchorUserId = (created.platformAdmin as { userId: string }).userId;
+      await DbPromise.run(
+        `INSERT INTO test_support_runs (run_id, organization_id, user_id)
        VALUES (?, ?, ?)
        ON CONFLICT (run_id) DO UPDATE SET organization_id = EXCLUDED.organization_id,
                                           user_id = EXCLUDED.user_id`,
-      [runId, primaryOrgId, anchorUserId],
-      { fallback: false }
-    );
+        [runId, primaryOrgId, anchorUserId],
+        { fallback: false }
+      );
 
-    return res.status(201).json({
-      runId,
-      primaryOrgId,
-      foreignOrgId,
-      password,
-      personas: created,
-      note: 'No token issued by design — obtain every session through POST /api/auth/login.',
-    });
+      return res.status(201).json({
+        runId,
+        primaryOrgId,
+        foreignOrgId,
+        password,
+        personas: created,
+        note: 'No token issued by design — obtain every session through POST /api/auth/login.',
+      });
     } catch (error) {
       // A partial failure used to leak whatever had already been inserted: the
       // caller never receives ids, so it cannot clean up what it never saw.
       // Roll the run back here instead, then report the original failure.
       for (const organizationId of [primaryOrgId, foreignOrgId]) {
-        await DbPromise.run(`DELETE FROM organization_members WHERE organization_id = ?`, [
-          organizationId,
-        ], { fallback: true });
+        await DbPromise.run(
+          `DELETE FROM organization_members WHERE organization_id = ?`,
+          [organizationId],
+          { fallback: true }
+        );
         await DbPromise.run(`DELETE FROM users WHERE organization_id = ?`, [organizationId], {
           fallback: true,
         });
@@ -1067,7 +1069,9 @@ router.post(
 
     const userId = String(req.body?.userId || '').trim();
     const organizationId = String(req.body?.organizationId || '').trim();
-    const status = String(req.body?.status || 'REVOKED').trim().toUpperCase();
+    const status = String(req.body?.status || 'REVOKED')
+      .trim()
+      .toUpperCase();
     if (!userId || !organizationId) {
       return res.status(400).json({ error: 'userId and organizationId are required' });
     }
@@ -1272,8 +1276,14 @@ router.post(
       counts[label] = Number(row?.count ?? 0);
     };
 
-    await countIn('organizations', `SELECT COUNT(*)::text AS count FROM organizations WHERE id = ANY(?)`);
-    await countIn('users', `SELECT COUNT(*)::text AS count FROM users WHERE organization_id = ANY(?)`);
+    await countIn(
+      'organizations',
+      `SELECT COUNT(*)::text AS count FROM organizations WHERE id = ANY(?)`
+    );
+    await countIn(
+      'users',
+      `SELECT COUNT(*)::text AS count FROM users WHERE organization_id = ANY(?)`
+    );
     await countIn(
       'organization_members',
       `SELECT COUNT(*)::text AS count FROM organization_members WHERE organization_id = ANY(?)`
@@ -1376,14 +1386,17 @@ router.post(
         { fallback: true }
       );
       flagsCleared[flagKey] = organizationIds;
-      flagsRestored[flagKey] = `${removed.changes ?? 0} override row(s) removed; production definition untouched`;
+      flagsRestored[flagKey] =
+        `${removed.changes ?? 0} override row(s) removed; production definition untouched`;
     }
 
     for (const organizationId of organizationIds) {
       await purgeByOrganizationId(organizationId);
-      await DbPromise.run(`DELETE FROM organization_members WHERE organization_id = ?`, [
-        organizationId,
-      ], { fallback: true });
+      await DbPromise.run(
+        `DELETE FROM organization_members WHERE organization_id = ?`,
+        [organizationId],
+        { fallback: true }
+      );
       await DbPromise.run(`DELETE FROM users WHERE organization_id = ?`, [organizationId], {
         fallback: true,
       });

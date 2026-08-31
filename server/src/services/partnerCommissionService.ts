@@ -172,11 +172,12 @@ function calculatePayoutEligibility(
   const fees = Math.max(eligibleGross * (policy.payoutFeeBps / 10_000), 0);
   const eligibleNet = eligibleGross - fees;
   const minimumThreshold = policy.minimumPayoutMinor / 100;
-  const reason: PayoutEligibilityReason = approvedCommissions.length === 0
-    ? 'NO_APPROVED_COMMISSIONS'
-    : eligibleNet < minimumThreshold
-      ? 'BELOW_MINIMUM'
-      : 'ELIGIBLE';
+  const reason: PayoutEligibilityReason =
+    approvedCommissions.length === 0
+      ? 'NO_APPROVED_COMMISSIONS'
+      : eligibleNet < minimumThreshold
+        ? 'BELOW_MINIMUM'
+        : 'ELIGIBLE';
   return {
     eligible: reason === 'ELIGIBLE',
     eligibleGross,
@@ -698,7 +699,9 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
     const idempotencyKey = String(params.idempotencyKey || '').trim();
     client = await acquirePgClient();
     await client.query('BEGIN');
-    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`partner-payout:${partnerOrgId}`]);
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [
+      `partner-payout:${partnerOrgId}`,
+    ]);
 
     if (idempotencyKey) {
       const prior = await client.query(
@@ -734,7 +737,8 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
 
     // Get payout threshold
     const partnerResult = await client.query<{ payout_method: string }>(
-      `SELECT payout_method FROM partner_organizations WHERE id = $1`, [partnerOrgId]
+      `SELECT payout_method FROM partner_organizations WHERE id = $1`,
+      [partnerOrgId]
     );
     const partner = partnerResult.rows[0];
 
@@ -795,9 +799,18 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
          source_ref, actor, actor_id, correlation_id, idempotency_key, reason_code, note,
          rule_version, related_entry_id, dispute_status)
        VALUES ($1,$2,'payout.requested',$3,$4,$5,$5,$6,'partner',$7,NULL,$8,NULL,$9,$10,NULL,NULL)`,
-      [uuidv4(), partnerOrgId, netAmount, policy.baseCurrency, now,
-       JSON.stringify({ payoutId, payoutAccountId: payoutAccountId || null }), requestedBy || null,
-       idempotencyKey || `partner-payout-request:${payoutId}`, notes || null, policy.version]
+      [
+        uuidv4(),
+        partnerOrgId,
+        netAmount,
+        policy.baseCurrency,
+        now,
+        JSON.stringify({ payoutId, payoutAccountId: payoutAccountId || null }),
+        requestedBy || null,
+        idempotencyKey || `partner-payout-request:${payoutId}`,
+        notes || null,
+        policy.version,
+      ]
     );
     await client.query('COMMIT');
 

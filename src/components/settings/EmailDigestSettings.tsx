@@ -283,7 +283,10 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
             {/* comment). One honest notice replaces them.          */}
             {/* ═══════════════════════════════════════════════ */}
             <ReadOnlyState
-              title={t('settings.emailDigest.plannedTitle', 'Planned — this channel will go live after rollout')}
+              title={t(
+                'settings.emailDigest.plannedTitle',
+                'Planned — this channel will go live after rollout'
+              )}
               description={t(
                 'settings.emailDigest.plannedDesc',
                 'Digest emails are not sent yet. Individual notifications for the categories above still go out as configured.'

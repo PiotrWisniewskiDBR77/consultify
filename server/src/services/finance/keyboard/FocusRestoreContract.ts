@@ -27,8 +27,8 @@
  */
 
 import type { CellRef } from '../../../types/finance/CellRef.js';
+import { type Operation, operationTargets } from '../../../types/finance/Operation.js';
 import type { FinanceGridSelectionState } from '../../../types/finance/WorkspaceState.js';
-import { operationTargets, type Operation } from '../../../types/finance/Operation.js';
 import type { FocusModeEffect, FocusModeSession } from '../workspace/focusModeContract.js';
 
 // ---------------------------------------------------------------------------
@@ -103,7 +103,9 @@ export function focusTargetForOperation(operation: Operation): CellRef {
   // is broken, not a case this function should silently paper over.
   const first = targets[0];
   if (!first) {
-    throw new Error('focusTargetForOperation: operation has no targets (violates the AP-00 Operation contract).');
+    throw new Error(
+      'focusTargetForOperation: operation has no targets (violates the AP-00 Operation contract).'
+    );
   }
   return first;
 }
@@ -133,9 +135,17 @@ export interface FocusRestorePatch {
   collapseSelection: boolean;
 }
 
-const COLLAPSE_ON_REASONS: ReadonlySet<FocusRestoreReason> = new Set(['undo', 'redo', 'paste', 'bulkOp']);
+const COLLAPSE_ON_REASONS: ReadonlySet<FocusRestoreReason> = new Set([
+  'undo',
+  'redo',
+  'paste',
+  'bulkOp',
+]);
 
-export function resolveFocusRestorePatch(reason: FocusRestoreReason, target: CellRef): FocusRestorePatch {
+export function resolveFocusRestorePatch(
+  reason: FocusRestoreReason,
+  target: CellRef
+): FocusRestorePatch {
   return { activeCell: target, collapseSelection: COLLAPSE_ON_REASONS.has(reason) };
 }
 
@@ -204,7 +214,9 @@ export function focusSnapshotFromFocusModeSession(
 export function focusRestorePatchFromFocusModeEffects(
   effects: readonly FocusModeEffect[]
 ): FocusRestorePatch | null {
-  const moveFocus = effects.find((e): e is Extract<FocusModeEffect, { kind: 'move-focus' }> => e.kind === 'move-focus');
+  const moveFocus = effects.find(
+    (e): e is Extract<FocusModeEffect, { kind: 'move-focus' }> => e.kind === 'move-focus'
+  );
   if (!moveFocus || moveFocus.cell === null) return null;
   // 'focusModeExit' never collapses: AP-09's contract is that the toggle
   // preserves selection, filters, scroll, focus and draft. Collapsing the

@@ -10,12 +10,12 @@
  */
 
 import {
-  AuditDomainError,
-  AuditNotFoundError,
-  AuditStateError,
   auditAll,
+  AuditDomainError,
   auditGet,
+  AuditNotFoundError,
   auditRun,
+  AuditStateError,
   newId,
   parseJson,
   recordAuditEvent,
@@ -71,10 +71,13 @@ function mapReportRow(row: Row): AuditReport {
   };
 }
 
-async function loadCorrectiveActions(orgId: string, programId: string): Promise<RemediationActionInput[]> {
+async function loadCorrectiveActions(
+  orgId: string,
+  programId: string
+): Promise<RemediationActionInput[]> {
   const rows = await auditAll<Row>(
     `SELECT * FROM audit_corrective_actions WHERE organization_id=$1 AND program_id=$2`,
-    [orgId, programId],
+    [orgId, programId]
   );
   return rows.map((r) => ({
     id: String(r.id),
@@ -89,11 +92,14 @@ async function loadCorrectiveActions(orgId: string, programId: string): Promise<
   }));
 }
 
-async function loadVerifications(orgId: string, programId: string): Promise<RemediationVerificationInput[]> {
-  const rows = await auditAll<Row>(`SELECT * FROM audit_verifications WHERE organization_id=$1 AND program_id=$2`, [
-    orgId,
-    programId,
-  ]);
+async function loadVerifications(
+  orgId: string,
+  programId: string
+): Promise<RemediationVerificationInput[]> {
+  const rows = await auditAll<Row>(
+    `SELECT * FROM audit_verifications WHERE organization_id=$1 AND program_id=$2`,
+    [orgId, programId]
+  );
   return rows.map((r) => ({
     id: String(r.id),
     correctiveActionId: (r.corrective_action_id as string) ?? null,
@@ -130,7 +136,7 @@ export interface GenerateReportInput {
 export async function generateReport(
   orgId: string,
   actor: AuditActor,
-  input: GenerateReportInput,
+  input: GenerateReportInput
 ): Promise<AuditReport> {
   await requireCapability(actor, input.programId, 'report.draft');
 
@@ -145,7 +151,10 @@ export async function generateReport(
   let snapshotDate: string | null = null;
 
   if (input.reportKind === 'audit_report') {
-    document = renderAuditReport(payload, { generatedAt: new Date().toISOString(), title: input.title });
+    document = renderAuditReport(payload, {
+      generatedAt: new Date().toISOString(),
+      title: input.title,
+    });
   } else if (input.reportKind === 'remediation_progress') {
     const asOfDate = (input.asOfDate || '').trim() || new Date().toISOString().slice(0, 10);
     const [actions, verifications] = await Promise.all([
@@ -158,7 +167,7 @@ export async function generateReport(
     throw new AuditDomainError(
       `Nieobsługiwany rodzaj raportu: ${input.reportKind}`,
       400,
-      'AUDIT_REPORT_KIND_UNSUPPORTED',
+      'AUDIT_REPORT_KIND_UNSUPPORTED'
     );
   }
 
@@ -190,13 +199,13 @@ export async function generateReport(
         input.confidentiality ?? null,
         snapshotDate,
         actor.userId,
-      ],
+      ]
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (/uq_audit_reports_program_kind_version|duplicate key/i.test(message)) {
       throw new AuditStateError(
-        'Wykryto równoległe generowanie raportu tego samego rodzaju dla programu — spróbuj ponownie',
+        'Wykryto równoległe generowanie raportu tego samego rodzaju dla programu — spróbuj ponownie'
       );
     }
     throw error;
@@ -214,13 +223,18 @@ export async function generateReport(
   });
 
   const created = await getReport(orgId, id);
-  if (!created) throw new AuditDomainError('Raport nie został poprawnie zapisany', 500, 'AUDIT_REPORT_WRITE_FAILED');
+  if (!created)
+    throw new AuditDomainError(
+      'Raport nie został poprawnie zapisany',
+      500,
+      'AUDIT_REPORT_WRITE_FAILED'
+    );
   return created;
 }
 
 export async function listReports(
   orgId: string,
-  filters: { programId?: string; reportKind?: ReportKind } = {},
+  filters: { programId?: string; reportKind?: ReportKind } = {}
 ): Promise<AuditReport[]> {
   const params: unknown[] = [orgId];
   let sql = `SELECT * FROM audit_reports WHERE organization_id = $1`;
@@ -237,25 +251,32 @@ export async function listReports(
 }
 
 export async function getReport(orgId: string, id: string): Promise<AuditReport | null> {
-  const row = await auditGet<Row>(`SELECT * FROM audit_reports WHERE organization_id=$1 AND id=$2`, [orgId, id]);
+  const row = await auditGet<Row>(
+    `SELECT * FROM audit_reports WHERE organization_id=$1 AND id=$2`,
+    [orgId, id]
+  );
   return row ? mapReportRow(row) : null;
 }
 
-export async function approveReport(orgId: string, actor: AuditActor, id: string): Promise<AuditReport> {
+export async function approveReport(
+  orgId: string,
+  actor: AuditActor,
+  id: string
+): Promise<AuditReport> {
   const report = await getReport(orgId, id);
   if (!report) throw new AuditNotFoundError('Raport');
   await requireCapability(actor, report.programId, 'report.approve');
 
   if (report.status !== 'draft' && report.status !== 'in_review') {
     throw new AuditStateError(
-      `Raport w statusie „${report.status}" nie może zostać zatwierdzony (wymagany draft/in_review)`,
+      `Raport w statusie „${report.status}" nie może zostać zatwierdzony (wymagany draft/in_review)`
     );
   }
 
   await auditRun(
     `UPDATE audit_reports SET status='approved', approved_by=$1, approved_at=NOW(), updated_at=NOW()
       WHERE organization_id=$2 AND id=$3`,
-    [actor.userId, orgId, id],
+    [actor.userId, orgId, id]
   );
 
   await recordAuditEvent({
@@ -273,14 +294,18 @@ export async function approveReport(orgId: string, actor: AuditActor, id: string
   return updated;
 }
 
-export async function publishReport(orgId: string, actor: AuditActor, id: string): Promise<AuditReport> {
+export async function publishReport(
+  orgId: string,
+  actor: AuditActor,
+  id: string
+): Promise<AuditReport> {
   const report = await getReport(orgId, id);
   if (!report) throw new AuditNotFoundError('Raport');
   await requireCapability(actor, report.programId, 'report.publish');
 
   if (report.status !== 'approved') {
     throw new AuditStateError(
-      `Raport w statusie „${report.status}" nie może zostać opublikowany (wymagany status approved)`,
+      `Raport w statusie „${report.status}" nie może zostać opublikowany (wymagany status approved)`
     );
   }
 
@@ -288,7 +313,7 @@ export async function publishReport(orgId: string, actor: AuditActor, id: string
     const output = await outputService.getOutput(orgId, report.outputId);
     if (output?.supersededBy) {
       throw new AuditStateError(
-        'Nie można opublikować raportu opartego na Outputcie, który został zastąpiony nowszą wersją',
+        'Nie można opublikować raportu opartego na Outputcie, który został zastąpiony nowszą wersją'
       );
     }
   }
@@ -296,7 +321,7 @@ export async function publishReport(orgId: string, actor: AuditActor, id: string
   await auditRun(
     `UPDATE audit_reports SET status='published', published_at=NOW(), updated_at=NOW()
       WHERE organization_id=$1 AND id=$2`,
-    [orgId, id],
+    [orgId, id]
   );
 
   await recordAuditEvent({
@@ -319,7 +344,7 @@ export async function supersedeReport(
   orgId: string,
   actor: AuditActor,
   id: string,
-  newReportId: string,
+  newReportId: string
 ): Promise<AuditReport> {
   const report = await getReport(orgId, id);
   if (!report) throw new AuditNotFoundError('Raport');
@@ -337,7 +362,7 @@ export async function supersedeReport(
   await auditRun(
     `UPDATE audit_reports SET status='superseded', superseded_by=$1, updated_at=NOW()
       WHERE organization_id=$2 AND id=$3`,
-    [newReportId, orgId, id],
+    [newReportId, orgId, id]
   );
 
   await recordAuditEvent({
@@ -360,7 +385,7 @@ export async function linkMaterial(
   orgId: string,
   actor: AuditActor,
   id: string,
-  materialId: string,
+  materialId: string
 ): Promise<AuditReport> {
   const report = await getReport(orgId, id);
   if (!report) throw new AuditNotFoundError('Raport');
@@ -370,11 +395,10 @@ export async function linkMaterial(
     throw new AuditDomainError('materialId jest wymagany', 400, 'AUDIT_MATERIAL_ID_REQUIRED');
   }
 
-  await auditRun(`UPDATE audit_reports SET material_id=$1, updated_at=NOW() WHERE organization_id=$2 AND id=$3`, [
-    materialId,
-    orgId,
-    id,
-  ]);
+  await auditRun(
+    `UPDATE audit_reports SET material_id=$1, updated_at=NOW() WHERE organization_id=$2 AND id=$3`,
+    [materialId, orgId, id]
+  );
 
   await recordAuditEvent({
     organizationId: orgId,
@@ -392,11 +416,16 @@ export async function linkMaterial(
 }
 
 /** Renderuje widok prezentacyjny live z Outputu powiązanego z istniejącym raportem — nic nie zapisuje. */
-export async function renderReportPresentation(orgId: string, id: string): Promise<AuditReportDocument> {
+export async function renderReportPresentation(
+  orgId: string,
+  id: string
+): Promise<AuditReportDocument> {
   const report = await getReport(orgId, id);
   if (!report) throw new AuditNotFoundError('Raport');
   if (!report.outputId) {
-    throw new AuditStateError('Raport nie ma powiązanego Outputu — brak danych do widoku prezentacyjnego');
+    throw new AuditStateError(
+      'Raport nie ma powiązanego Outputu — brak danych do widoku prezentacyjnego'
+    );
   }
   const output = await outputService.getOutput(orgId, report.outputId);
   if (!output) throw new AuditNotFoundError('Output powiązany z raportem');

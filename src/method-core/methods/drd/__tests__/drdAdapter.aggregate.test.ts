@@ -57,7 +57,10 @@ describe('drdAdapter.aggregate — explicit, versioned area→axis rule', () => 
   });
 
   it('is deterministic — same input aggregated twice yields identical output', () => {
-    const input = { mappingVersion: DRD_AGGREGATION_VERSION, unitLevels: { '1A': 3, '1B': null, '1C': 5 } };
+    const input = {
+      mappingVersion: DRD_AGGREGATION_VERSION,
+      unitLevels: { '1A': 3, '1B': null, '1C': 5 },
+    };
     const a = drdAdapter.aggregate(input);
     const b = drdAdapter.aggregate(input);
     expect(a).toEqual(b);

@@ -17,17 +17,13 @@
 import { randomUUID } from 'crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import {
-  normalizeActorKind,
-  toKernelEventType,
-  type KernelActorKind,
-} from './kernelEventMap.js';
 import logger from '../../utils/Logger.js';
+import { type KernelActorKind, normalizeActorKind, toKernelEventType } from './kernelEventMap.js';
 
 /** Odczyt wielu wierszy. Błąd SQL rzuca wyjątek zamiast zwracać pustą listę. */
 export async function auditAll<T = Record<string, unknown>>(
   sql: string,
-  params: unknown[] = [],
+  params: unknown[] = []
 ): Promise<T[]> {
   return (await dbAll<T>(sql, params, { fallback: false })) ?? [];
 }
@@ -35,7 +31,7 @@ export async function auditAll<T = Record<string, unknown>>(
 /** Odczyt jednego wiersza. Brak wiersza → null; błąd SQL → wyjątek. */
 export async function auditGet<T = Record<string, unknown>>(
   sql: string,
-  params: unknown[] = [],
+  params: unknown[] = []
 ): Promise<T | null> {
   return (await dbGet<T>(sql, params, { fallback: false })) ?? null;
 }
@@ -157,7 +153,7 @@ export async function recordAuditEvent(input: DomainEventInput): Promise<void> {
         input.idempotencyKey ?? null,
         normalizeActorKind(input.actorKind),
         input.supersedes ?? null,
-      ],
+      ]
     );
   } catch (error) {
     logger.error('[audits] nie udało się zapisać zdarzenia domenowego', {

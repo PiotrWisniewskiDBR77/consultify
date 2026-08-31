@@ -34,10 +34,7 @@ export function seedDefaultHiddenColumns(
     if (window.localStorage.getItem(storageKey) !== null) return;
     const visibility: Record<string, boolean> = {};
     for (const id of hiddenColumnIds) visibility[id] = false;
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify({ widths: {}, visibility, order: {} })
-    );
+    window.localStorage.setItem(storageKey, JSON.stringify({ widths: {}, visibility, order: {} }));
   } catch {
     // Storage unavailable/quota — table just falls back to all-visible, harmless.
   }

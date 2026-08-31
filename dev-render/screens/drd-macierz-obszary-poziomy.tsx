@@ -30,8 +30,8 @@
  */
 import React from 'react';
 
-import { AreaMatrixTable } from '@/components/Reports/AreaMatrixTable';
 import type { AreaAssessment, MatrixLevelDef } from '@/components/Reports/AreaMatrixTable';
+import { AreaMatrixTable } from '@/components/Reports/AreaMatrixTable';
 import { DRD_STRUCTURE, getAxisById } from '@/services/drdStructure';
 
 /**

@@ -364,7 +364,10 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
                 <div className="h-6 w-48 animate-pulse rounded bg-c-surface-raised" />
               ) : (
                 <>
-                  <h2 id="record-expand-modal-title" className="truncate text-base font-bold text-c-text">
+                  <h2
+                    id="record-expand-modal-title"
+                    className="truncate text-base font-bold text-c-text"
+                  >
                     {primaryValue}
                   </h2>
                   {resolvedTableName && (

@@ -1482,57 +1482,57 @@ export function SWOTInsightsPhase({
           ═══════════════════════════════════════════════════ */}
           {items.length > 0 && (
             <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-          <SectionHeader
-            title={t('discoveryToolsTools.dynamicSwot.insightsPhase.factorPictureTitle')}
-            badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.evidenceBadge')}
-          />
-          <div className="grid gap-4 p-5 md:grid-cols-2">
-            {(['strengths', 'weaknesses', 'opportunities', 'threats'] as const).map((q) => {
-              const qItems = items.filter((i) => i.quadrant === q);
-              const meta = QUADRANT_META[q];
-              return (
-                <div key={q} className="space-y-1.5">
-                  <div
-                    className={`mb-2 text-[11px] font-bold uppercase tracking-[0.16em] ${meta.label}`}
-                  >
-                    {isPolish ? meta.title.pl : meta.title.en} ({qItems.length})
-                  </div>
-                  {qItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`rounded-xl border ${meta.border} ${meta.bg} px-3 py-2 text-sm leading-relaxed ${meta.text}`}
-                    >
-                      <span className="font-medium">{item.text}</span>
-                      {item.impact === 'high' && (
-                        <span className="ml-2 text-[9px] font-bold uppercase tracking-wider opacity-60">
-                          high impact
-                        </span>
+              <SectionHeader
+                title={t('discoveryToolsTools.dynamicSwot.insightsPhase.factorPictureTitle')}
+                badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.evidenceBadge')}
+              />
+              <div className="grid gap-4 p-5 md:grid-cols-2">
+                {(['strengths', 'weaknesses', 'opportunities', 'threats'] as const).map((q) => {
+                  const qItems = items.filter((i) => i.quadrant === q);
+                  const meta = QUADRANT_META[q];
+                  return (
+                    <div key={q} className="space-y-1.5">
+                      <div
+                        className={`mb-2 text-[11px] font-bold uppercase tracking-[0.16em] ${meta.label}`}
+                      >
+                        {isPolish ? meta.title.pl : meta.title.en} ({qItems.length})
+                      </div>
+                      {qItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`rounded-xl border ${meta.border} ${meta.bg} px-3 py-2 text-sm leading-relaxed ${meta.text}`}
+                        >
+                          <span className="font-medium">{item.text}</span>
+                          {item.impact === 'high' && (
+                            <span className="ml-2 text-[9px] font-bold uppercase tracking-wider opacity-60">
+                              high impact
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {qItems.length === 0 && (
+                        <div className="text-sm text-slate-600">
+                          {t('discoveryToolsTools.common.none')}
+                        </div>
                       )}
                     </div>
-                  ))}
-                  {qItems.length === 0 && (
-                    <div className="text-sm text-slate-600">
-                      {t('discoveryToolsTools.common.none')}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-      {/* ═══════════════════════════════════════════════════
+          {/* ═══════════════════════════════════════════════════
           SYNTHESIS 1 — Per-quadrant observations
           ═══════════════════════════════════════════════════ */}
-      <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-        <SectionHeader
-          title=""
-          badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.synthesisBadge')}
-        >
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsTitle')}
-          </h2>
+          <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
+            <SectionHeader
+              title=""
+              badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.synthesisBadge')}
+            >
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsTitle')}
+              </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsSubtitle')}
               </p>
@@ -1553,341 +1553,341 @@ export function SWOTInsightsPhase({
                 items={opportunities}
                 isPolish={isPolish}
               />
-          <QuadrantObservationsBlock quadrant="threats" items={threats} isPolish={isPolish} />
-        </div>
-      </section>
+              <QuadrantObservationsBlock quadrant="threats" items={threats} isPolish={isPolish} />
+            </div>
+          </section>
 
-      {/* ═══════════════════════════════════════════════════
+          {/* ═══════════════════════════════════════════════════
           SYNTHESIS 2 — Internal synthesis (S + W)
           ═══════════════════════════════════════════════════ */}
-      <InternalSynthesisBlock
-        strengths={strengths}
-        weaknesses={weaknesses}
-        correlations={correlations}
-        executiveSummary={executiveSummary}
-        isPolish={isPolish}
-        getItemText={getItemText}
-      />
+          <InternalSynthesisBlock
+            strengths={strengths}
+            weaknesses={weaknesses}
+            correlations={correlations}
+            executiveSummary={executiveSummary}
+            isPolish={isPolish}
+            getItemText={getItemText}
+          />
 
-      {/* ═══════════════════════════════════════════════════
+          {/* ═══════════════════════════════════════════════════
           SYNTHESIS 3 — External synthesis (O + T)
           ═══════════════════════════════════════════════════ */}
-      <ExternalSynthesisBlock
-        opportunities={opportunities}
-        threats={threats}
-        correlations={correlations}
-        isPolish={isPolish}
-        getItemText={getItemText}
-      />
+          <ExternalSynthesisBlock
+            opportunities={opportunities}
+            threats={threats}
+            correlations={correlations}
+            isPolish={isPolish}
+            getItemText={getItemText}
+          />
 
-      {/* ═══════════════════════════════════════════════════
+          {/* ═══════════════════════════════════════════════════
           STRATEGIC INSIGHTS — ciało doradcze
           ═══════════════════════════════════════════════════ */}
-      <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-        <SectionHeader
-          title=""
-          badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.insightsBadge')}
-        >
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInsightsTitle')}
-          </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInsightsSubtitle')}
-          </p>
-        </SectionHeader>
-        <div className="space-y-6 px-6 py-5">
-          {hasProposals && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => acceptAllInPhase('insights')}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-              >
-                <Check className="h-3.5 w-3.5" />
-                {t('discoveryToolsTools.common.acceptAllProposals')}
-              </button>
-            </div>
-          )}
-
-          {/* Key insights from AI */}
-          {keyInsights.length > 0 && (
-            <div>
-              <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">
-                {t('discoveryToolsTools.dynamicSwot.insightsPhase.keyInsightsTitle')}
-              </div>
-              <div className="space-y-2">
-                {keyInsights.map((insight, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 rounded-xl border border-amber-200/50 bg-amber-50/40 p-3.5 dark:border-amber-900/30 dark:bg-amber-950/15"
+          <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
+            <SectionHeader
+              title=""
+              badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.insightsBadge')}
+            >
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInsightsTitle')}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInsightsSubtitle')}
+              </p>
+            </SectionHeader>
+            <div className="space-y-6 px-6 py-5">
+              {hasProposals && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => acceptAllInPhase('insights')}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                   >
-                    <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
-                    <span className="text-sm leading-relaxed text-slate-800 dark:text-slate-200">
-                      {insight}
+                    <Check className="h-3.5 w-3.5" />
+                    {t('discoveryToolsTools.common.acceptAllProposals')}
+                  </button>
+                </div>
+              )}
+
+              {/* Key insights from AI */}
+              {keyInsights.length > 0 && (
+                <div>
+                  <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">
+                    {t('discoveryToolsTools.dynamicSwot.insightsPhase.keyInsightsTitle')}
+                  </div>
+                  <div className="space-y-2">
+                    {keyInsights.map((insight, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-3 rounded-xl border border-amber-200/50 bg-amber-50/40 p-3.5 dark:border-amber-900/30 dark:bg-amber-950/15"
+                      >
+                        <Lightbulb className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+                        <span className="text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+                          {insight}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Applied conclusions from AI */}
+              {appliedConclusions.length > 0 && (
+                <div>
+                  <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    {t('discoveryToolsTools.dynamicSwot.insightsPhase.appliedConclusionsTitle')}
+                  </div>
+                  <ul className="space-y-1.5">
+                    {appliedConclusions.map((c, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Strategic tensions from AI — TOWS */}
+              {tensions.length > 0 && (
+                <div>
+                  <div className="mb-4 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                      {t('discoveryToolsTools.dynamicSwot.insightsPhase.towsTitle')}
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Applied conclusions from AI */}
-          {appliedConclusions.length > 0 && (
-            <div>
-              <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                {t('discoveryToolsTools.dynamicSwot.insightsPhase.appliedConclusionsTitle')}
-              </div>
-              <ul className="space-y-1.5">
-                {appliedConclusions.map((c, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-300"
-                  >
-                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Strategic tensions from AI — TOWS */}
-          {tensions.length > 0 && (
-            <div>
-              <div className="mb-4 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary-500" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {t('discoveryToolsTools.dynamicSwot.insightsPhase.towsTitle')}
-                </span>
-              </div>
-              <div className="space-y-4">
-                {TENSION_BUCKETS.map((bucket) => {
-                  const bucketTensions = tensionsByType[bucket.type] || [];
-                  if (bucketTensions.length === 0) return null;
-                  const BucketIcon = bucket.icon;
-                  return (
-                    <div key={bucket.type}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <BucketIcon className={`h-3.5 w-3.5 ${bucket.accent}`} />
-                        <span
-                          className={`text-[11px] font-bold uppercase tracking-[0.16em] ${bucket.accent}`}
-                        >
-                          {bucket.label}
-                        </span>
-                        <span className="text-[11px] text-slate-600">
-                          {isPolish ? bucket.title.pl : bucket.title.en}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        {bucketTensions.map((tension) => {
-                          const isProposal =
-                            tension.proposalStatus === 'ai-proposed' ||
-                            tension.proposalStatus === 'rethinking';
-                          const content = (
-                            <div>
-                              <div className="text-sm font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
-                                {tension.title}
-                              </div>
-                              <div className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                                {tension.insight}
-                              </div>
-                              {tension.whyNow && (
-                                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                  <span className="font-semibold">
-                                    {t('discoveryToolsTools.common.whyNowColon')}
-                                  </span>{' '}
-                                  {tension.whyNow}
-                                </div>
-                              )}
-                              {(tension.linkedItemIds || []).length > 0 && (
-                                <div className="mt-1.5 text-[11px] text-slate-600 dark:text-slate-500">
-                                  {(tension.linkedItemIds || [])
-                                    .slice(0, 3)
-                                    .map(getItemText)
-                                    .join(' \u2022 ')}
-                                </div>
-                              )}
-                            </div>
-                          );
-                          if (isProposal) {
-                            return (
-                              <ProposalCard
-                                key={tension.id}
-                                cardId={tension.id}
-                                cardType="tension"
-                                proposalStatus={tension.proposalStatus}
-                                onAccept={onAcceptCard || acceptCard}
-                                onReject={onRejectCard || rejectCard}
-                                onRethink={onRethinkCard || (() => {})}
-                                compact
-                              >
-                                {content}
-                              </ProposalCard>
-                            );
-                          }
-                          return (
-                            <div
-                              key={tension.id}
-                              className="rounded-xl border border-slate-200/50 bg-slate-50/50 p-4 dark:border-navy-700/50 dark:bg-navy-950/30"
+                  <div className="space-y-4">
+                    {TENSION_BUCKETS.map((bucket) => {
+                      const bucketTensions = tensionsByType[bucket.type] || [];
+                      if (bucketTensions.length === 0) return null;
+                      const BucketIcon = bucket.icon;
+                      return (
+                        <div key={bucket.type}>
+                          <div className="mb-2 flex items-center gap-2">
+                            <BucketIcon className={`h-3.5 w-3.5 ${bucket.accent}`} />
+                            <span
+                              className={`text-[11px] font-bold uppercase tracking-[0.16em] ${bucket.accent}`}
                             >
-                              {content}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                              {bucket.label}
+                            </span>
+                            <span className="text-[11px] text-slate-600">
+                              {isPolish ? bucket.title.pl : bucket.title.en}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {bucketTensions.map((tension) => {
+                              const isProposal =
+                                tension.proposalStatus === 'ai-proposed' ||
+                                tension.proposalStatus === 'rethinking';
+                              const content = (
+                                <div>
+                                  <div className="text-sm font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
+                                    {tension.title}
+                                  </div>
+                                  <div className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                                    {tension.insight}
+                                  </div>
+                                  {tension.whyNow && (
+                                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                      <span className="font-semibold">
+                                        {t('discoveryToolsTools.common.whyNowColon')}
+                                      </span>{' '}
+                                      {tension.whyNow}
+                                    </div>
+                                  )}
+                                  {(tension.linkedItemIds || []).length > 0 && (
+                                    <div className="mt-1.5 text-[11px] text-slate-600 dark:text-slate-500">
+                                      {(tension.linkedItemIds || [])
+                                        .slice(0, 3)
+                                        .map(getItemText)
+                                        .join(' \u2022 ')}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                              if (isProposal) {
+                                return (
+                                  <ProposalCard
+                                    key={tension.id}
+                                    cardId={tension.id}
+                                    cardType="tension"
+                                    proposalStatus={tension.proposalStatus}
+                                    onAccept={onAcceptCard || acceptCard}
+                                    onReject={onRejectCard || rejectCard}
+                                    onRethink={onRethinkCard || (() => {})}
+                                    compact
+                                  >
+                                    {content}
+                                  </ProposalCard>
+                                );
+                              }
+                              return (
+                                <div
+                                  key={tension.id}
+                                  className="rounded-xl border border-slate-200/50 bg-slate-50/50 p-4 dark:border-navy-700/50 dark:bg-navy-950/30"
+                                >
+                                  {content}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-          {/* Derived cross-quadrant insights (always shown when items exist) */}
-          {items.length > 0 && derivedInsights.length > 0 && (
-            <div>
-              <div className="mb-4 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary-500" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  {t('discoveryToolsTools.dynamicSwot.insightsPhase.crossFactorAnalysisTitle')}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {derivedInsights.map((insight, idx) => {
-                  const typeMeta = INSIGHT_TYPE_META[insight.type];
-                  const InsightIcon = typeMeta.icon;
-                  return (
-                    <div key={idx} className="rounded-xl bg-white/70 dark:bg-navy-950/40">
-                      <div className="flex items-center gap-2 px-4 pt-4">
-                        <InsightIcon className={`h-4 w-4 ${typeMeta.accent}`} />
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-[0.14em] ${typeMeta.accent}`}
-                        >
-                          {isPolish ? typeMeta.label.pl : typeMeta.label.en}
-                        </span>
-                      </div>
-                      <div className="px-4 pb-4">
-                        <ObservationCard obs={insight} isPolish={isPolish} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+              {/* Derived cross-quadrant insights (always shown when items exist) */}
+              {items.length > 0 && derivedInsights.length > 0 && (
+                <div>
+                  <div className="mb-4 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                      {t('discoveryToolsTools.dynamicSwot.insightsPhase.crossFactorAnalysisTitle')}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {derivedInsights.map((insight, idx) => {
+                      const typeMeta = INSIGHT_TYPE_META[insight.type];
+                      const InsightIcon = typeMeta.icon;
+                      return (
+                        <div key={idx} className="rounded-xl bg-white/70 dark:bg-navy-950/40">
+                          <div className="flex items-center gap-2 px-4 pt-4">
+                            <InsightIcon className={`h-4 w-4 ${typeMeta.accent}`} />
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-[0.14em] ${typeMeta.accent}`}
+                            >
+                              {isPolish ? typeMeta.label.pl : typeMeta.label.en}
+                            </span>
+                          </div>
+                          <div className="px-4 pb-4">
+                            <ObservationCard obs={insight} isPolish={isPolish} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-          {/* True empty state — no data at all */}
-          {items.length === 0 && keyInsights.length === 0 && tensions.length === 0 && (
-            <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <Lightbulb className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
-              <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t('discoveryToolsTools.dynamicSwot.insightsPhase.noInsightsEmptyState')}
-              </div>
+              {/* True empty state — no data at all */}
+              {items.length === 0 && keyInsights.length === 0 && tensions.length === 0 && (
+                <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
+                  <Lightbulb className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
+                  <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    {t('discoveryToolsTools.dynamicSwot.insightsPhase.noInsightsEmptyState')}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </section>
+          </section>
 
-      {/* ═══════════════════════════════════════════════════
+          {/* ═══════════════════════════════════════════════════
           RECOMMENDATIONS — rekomendacje z "Utwórz inicjatywę"
           ═══════════════════════════════════════════════════ */}
-      <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
-        <SectionHeader
-          title=""
-          badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsBadge')}
-        >
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsBadge')}
-          </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsSubtitle')}
-          </p>
-        </SectionHeader>
-        <div className="space-y-4 px-6 py-5">
-          {/* AI-generated moves (when available) */}
-          {activeMoves.length > 0 && (
-            <div className="space-y-4">
-              <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-                {t('discoveryToolsTools.dynamicSwot.insightsPhase.aiRecommendationsTitle')}
-              </div>
-              {activeMoves.map((move, idx) => {
-                const isProposal =
-                  move.proposalStatus === 'ai-proposed' || move.proposalStatus === 'rethinking';
-                const catMeta = MOVE_CATEGORY_META[move.category];
-                const CatIcon = catMeta?.icon || ArrowRight;
+          <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
+            <SectionHeader
+              title=""
+              badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsBadge')}
+            >
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsBadge')}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.recommendationsSubtitle')}
+              </p>
+            </SectionHeader>
+            <div className="space-y-4 px-6 py-5">
+              {/* AI-generated moves (when available) */}
+              {activeMoves.length > 0 && (
+                <div className="space-y-4">
+                  <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
+                    {t('discoveryToolsTools.dynamicSwot.insightsPhase.aiRecommendationsTitle')}
+                  </div>
+                  {activeMoves.map((move, idx) => {
+                    const isProposal =
+                      move.proposalStatus === 'ai-proposed' || move.proposalStatus === 'rethinking';
+                    const catMeta = MOVE_CATEGORY_META[move.category];
+                    const CatIcon = catMeta?.icon || ArrowRight;
 
-                const moveContent = (
-                  <div>
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white dark:bg-slate-100 dark:text-slate-900">
-                        {idx + 1}
-                      </span>
-                      <CatIcon className={`h-4 w-4 ${catMeta?.color || 'text-slate-500'}`} />
-                      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
-                        {isPolish ? catMeta?.label.pl : catMeta?.label.en}
-                      </span>
-                      <div className="ml-auto flex gap-2">
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            move.expectedImpact === 'high'
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
-                              : move.expectedImpact === 'medium'
-                                ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                                : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-950/40 dark:text-slate-400'
-                          }`}
-                        >
-                          {t('discoveryToolsTools.common.impact')}: {move.expectedImpact}
-                        </span>
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            move.estimatedEffort === 'low'
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
-                              : move.estimatedEffort === 'medium'
-                                ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                                : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
-                          }`}
-                        >
-                          {t('discoveryToolsTools.common.effort')}: {move.estimatedEffort}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="ml-9">
-                      <div className="text-sm font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
-                        {move.title}
-                      </div>
-                      <div className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                        {move.rationale}
-                      </div>
-                      {move.firstStep && (
-                        <div className="mt-3 rounded-lg bg-slate-50/80 px-3 py-2 text-xs text-slate-600 dark:bg-navy-950/40 dark:text-slate-400">
-                          <span className="font-semibold">
-                            {t('discoveryToolsTools.common.firstStepColon')}
-                          </span>{' '}
-                          {move.firstStep}
-                        </div>
-                      )}
-                      {!isProposal && (
-                        <div className="mt-3 flex justify-end">
-                          {candidateReceipts[move.id] ? (
+                    const moveContent = (
+                      <div>
+                        <div className="mb-3 flex items-center gap-2">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white dark:bg-slate-100 dark:text-slate-900">
+                            {idx + 1}
+                          </span>
+                          <CatIcon className={`h-4 w-4 ${catMeta?.color || 'text-slate-500'}`} />
+                          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
+                            {isPolish ? catMeta?.label.pl : catMeta?.label.en}
+                          </span>
+                          <div className="ml-auto flex gap-2">
                             <span
-                              data-testid={`swot-candidate-receipt-${move.id}`}
-                              title={
-                                candidateReceipts[move.id].lineageState === 'PINNED'
-                                  ? `${candidateReceipts[move.id].toolOutputId}@${candidateReceipts[move.id].toolOutputVersion}`
-                                  : 'NEEDS_DECISION: historical receipt has no frozen output lineage'
-                              }
-                              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
-                                candidateReceipts[move.id].lineageState === 'PINNED'
-                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
-                                  : 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                move.expectedImpact === 'high'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                                  : move.expectedImpact === 'medium'
+                                    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                                    : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-950/40 dark:text-slate-400'
                               }`}
                             >
-                              {candidateReceipts[move.id].lineageState === 'PINNED' ? (
-                                <Check className="h-3.5 w-3.5" />
-                              ) : (
-                                <AlertTriangle className="h-3.5 w-3.5" />
-                              )}
-                              {candidateReceipts[move.id].lineageState === 'PINNED'
-                                ? t('discoveryToolsTools.common.candidateCreated')
-                                : 'NEEDS_DECISION'}
+                              {t('discoveryToolsTools.common.impact')}: {move.expectedImpact}
+                            </span>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                move.estimatedEffort === 'low'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                                  : move.estimatedEffort === 'medium'
+                                    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                                    : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
+                              }`}
+                            >
+                              {t('discoveryToolsTools.common.effort')}: {move.estimatedEffort}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-9">
+                          <div className="text-sm font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
+                            {move.title}
+                          </div>
+                          <div className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                            {move.rationale}
+                          </div>
+                          {move.firstStep && (
+                            <div className="mt-3 rounded-lg bg-slate-50/80 px-3 py-2 text-xs text-slate-600 dark:bg-navy-950/40 dark:text-slate-400">
+                              <span className="font-semibold">
+                                {t('discoveryToolsTools.common.firstStepColon')}
+                              </span>{' '}
+                              {move.firstStep}
+                            </div>
+                          )}
+                          {!isProposal && (
+                            <div className="mt-3 flex justify-end">
+                              {candidateReceipts[move.id] ? (
+                                <span
+                                  data-testid={`swot-candidate-receipt-${move.id}`}
+                                  title={
+                                    candidateReceipts[move.id].lineageState === 'PINNED'
+                                      ? `${candidateReceipts[move.id].toolOutputId}@${candidateReceipts[move.id].toolOutputVersion}`
+                                      : 'NEEDS_DECISION: historical receipt has no frozen output lineage'
+                                  }
+                                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
+                                    candidateReceipts[move.id].lineageState === 'PINNED'
+                                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                                      : 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+                                  }`}
+                                >
+                                  {candidateReceipts[move.id].lineageState === 'PINNED' ? (
+                                    <Check className="h-3.5 w-3.5" />
+                                  ) : (
+                                    <AlertTriangle className="h-3.5 w-3.5" />
+                                  )}
+                                  {candidateReceipts[move.id].lineageState === 'PINNED'
+                                    ? t('discoveryToolsTools.common.candidateCreated')
+                                    : 'NEEDS_DECISION'}
                                 </span>
                               ) : (
                                 <button
@@ -1908,186 +1908,186 @@ export function SWOTInsightsPhase({
                                   <Rocket className="h-3.5 w-3.5" />
                                   {creatingRecommendationId === move.id
                                     ? t('discoveryToolsTools.common.creatingCandidate')
-                                : t('discoveryToolsTools.common.createCandidate')}
-                            </button>
+                                    : t('discoveryToolsTools.common.createCandidate')}
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      </div>
+                    );
+
+                    if (isProposal) {
+                      return (
+                        <ProposalCard
+                          key={move.id}
+                          cardId={move.id}
+                          cardType="move"
+                          proposalStatus={move.proposalStatus}
+                          onAccept={onAcceptCard || acceptCard}
+                          onReject={onRejectCard || rejectCard}
+                          onRethink={onRethinkCard || (() => {})}
+                          compact
+                        >
+                          {moveContent}
+                        </ProposalCard>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={move.id}
+                        className="rounded-2xl border border-slate-200/50 bg-slate-50/40 p-5 dark:border-navy-700/50 dark:bg-navy-950/30"
+                      >
+                        {moveContent}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Derived recommendations (always shown when items exist) */}
+              {items.length > 0 && derivedRecommendations.length > 0 && (
+                <div className="space-y-4">
+                  {activeMoves.length > 0 && (
+                    <div className="mt-2 border-t border-slate-200/50 pt-4 dark:border-navy-700/40">
+                      <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                        {t(
+                          'discoveryToolsTools.dynamicSwot.insightsPhase.analysisDerivedRecommendationsTitle'
+                        )}
+                      </div>
                     </div>
+                  )}
+                  {derivedRecommendations.map((rec, idx) => (
+                    <RecommendationCard
+                      key={rec.id}
+                      rec={rec}
+                      index={activeMoves.length > 0 ? activeMoves.length + idx : idx}
+                      isPolish={isPolish}
+                      onCreateCandidate={handleCreateCandidate}
+                      candidateHandoffAllowed={candidateHandoffAllowed}
+                      showCandidateAction={false}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Deferred AI moves */}
+              {deferredMoves.length > 0 && (
+                <div className="mt-2">
+                  <div className="mb-3 flex items-center gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-danger-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-danger-600 dark:text-danger-400">
+                      {t('discoveryToolsTools.common.notNowDefer')}
+                    </span>
                   </div>
-                );
-
-                if (isProposal) {
-                  return (
-                    <ProposalCard
-                      key={move.id}
-                      cardId={move.id}
-                      cardType="move"
-                      proposalStatus={move.proposalStatus}
-                      onAccept={onAcceptCard || acceptCard}
-                      onReject={onRejectCard || rejectCard}
-                      onRethink={onRethinkCard || (() => {})}
-                      compact
-                    >
-                      {moveContent}
-                    </ProposalCard>
-                  );
-                }
-
-                return (
-                  <div
-                    key={move.id}
-                    className="rounded-2xl border border-slate-200/50 bg-slate-50/40 p-5 dark:border-navy-700/50 dark:bg-navy-950/30"
-                  >
-                    {moveContent}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Derived recommendations (always shown when items exist) */}
-          {items.length > 0 && derivedRecommendations.length > 0 && (
-            <div className="space-y-4">
-              {activeMoves.length > 0 && (
-                <div className="mt-2 border-t border-slate-200/50 pt-4 dark:border-navy-700/40">
-                  <div className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    {t(
-                      'discoveryToolsTools.dynamicSwot.insightsPhase.analysisDerivedRecommendationsTitle'
-                    )}
+                  <div className="space-y-2">
+                    {deferredMoves.map((move) => (
+                      <div
+                        key={move.id}
+                        className="rounded-xl border border-danger-200/40 bg-danger-50/30 p-3 dark:border-danger-900/25 dark:bg-danger-900/10"
+                      >
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          {move.title}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                          {move.rationale}
+                        </div>
+                        <div className="mt-1 text-xs text-danger-600 dark:text-danger-400">
+                          {t('discoveryToolsTools.dynamicSwot.insightsPhase.deferredEffortNote')}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
-              {derivedRecommendations.map((rec, idx) => (
-                <RecommendationCard
-                  key={rec.id}
-                  rec={rec}
-                  index={activeMoves.length > 0 ? activeMoves.length + idx : idx}
-                  isPolish={isPolish}
-                  onCreateCandidate={handleCreateCandidate}
-                  candidateHandoffAllowed={candidateHandoffAllowed}
-                  showCandidateAction={false}
-                />
-              ))}
-            </div>
-          )}
 
-          {/* Deferred AI moves */}
-          {deferredMoves.length > 0 && (
-            <div className="mt-2">
-              <div className="mb-3 flex items-center gap-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-danger-500" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-danger-600 dark:text-danger-400">
-                  {t('discoveryToolsTools.common.notNowDefer')}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {deferredMoves.map((move) => (
-                  <div
-                    key={move.id}
-                    className="rounded-xl border border-danger-200/40 bg-danger-50/30 p-3 dark:border-danger-900/25 dark:bg-danger-900/10"
-                  >
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {move.title}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                      {move.rationale}
-                    </div>
-                    <div className="mt-1 text-xs text-danger-600 dark:text-danger-400">
-                      {t('discoveryToolsTools.dynamicSwot.insightsPhase.deferredEffortNote')}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* True empty state */}
-          {items.length === 0 && activeMoves.length === 0 && (
-            <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <ArrowRight className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
-              <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t('discoveryToolsTools.dynamicSwot.insightsPhase.noRecommendationsEmptyState')}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════
-          INITIATIVES — created from recommendations
-          ═══════════════════════════════════════════════════ */}
-      {(session.generatedInitiatives || []).length > 0 && (
-        <section className="rounded-[28px] border border-primary-200/70 bg-gradient-to-br from-primary-50/40 to-white dark:border-primary-900/40 dark:from-primary-950/20 dark:to-navy-900/40">
-          <SectionHeader
-            title=""
-            badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.initiativesBadge')}
-          >
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInitiativesTitle')}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInitiativesSubtitle')}
-            </p>
-          </SectionHeader>
-          <div className="space-y-3 px-6 py-5">
-            {(session.generatedInitiatives || []).map((initiative, idx) => {
-              const iMeta = REC_TYPE_META[initiative.type] || REC_TYPE_META.strategic;
-              const IIcon = iMeta.icon;
-              return (
-                <div
-                  key={initiative.id}
-                  className="flex items-start gap-3 rounded-xl border border-primary-200/50 bg-white/80 p-4 shadow-sm dark:border-primary-900/30 dark:bg-navy-950/40"
-                >
-                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white dark:bg-primary-500">
-                    {idx + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-center gap-2">
-                      <IIcon className={`h-3.5 w-3.5 ${iMeta.color}`} />
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-[0.14em] ${iMeta.color}`}
-                      >
-                        {isPolish ? iMeta.label.pl : iMeta.label.en}
-                      </span>
-                      <div className="ml-auto flex gap-2">
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            initiative.estimatedImpact === 'high'
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
-                              : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                          }`}
-                        >
-                          {t('discoveryToolsTools.common.impact')}: {initiative.estimatedImpact}
-                        </span>
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            initiative.estimatedEffort === 'low'
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
-                              : initiative.estimatedEffort === 'medium'
-                                ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
-                                : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
-                          }`}
-                        >
-                          {t('discoveryToolsTools.common.effort')}: {initiative.estimatedEffort}
-                        </span>
-                      </div>
-                    </div>
-                    <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {initiative.title}
-                    </h4>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                      {initiative.description}
-                    </p>
-                    <div className="mt-2 rounded-lg bg-primary-50/60 px-3 py-2 text-xs text-slate-600 dark:bg-primary-950/20 dark:text-slate-400">
-                      <span className="font-semibold">
-                        {t('discoveryToolsTools.common.rationaleColon')}
-                      </span>{' '}
-                      {initiative.rationale}
-                    </div>
+              {/* True empty state */}
+              {items.length === 0 && activeMoves.length === 0 && (
+                <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
+                  <ArrowRight className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
+                  <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    {t('discoveryToolsTools.dynamicSwot.insightsPhase.noRecommendationsEmptyState')}
                   </div>
                 </div>
-              );
+              )}
+            </div>
+          </section>
+
+          {/* ═══════════════════════════════════════════════════
+          INITIATIVES — created from recommendations
+          ═══════════════════════════════════════════════════ */}
+          {(session.generatedInitiatives || []).length > 0 && (
+            <section className="rounded-[28px] border border-primary-200/70 bg-gradient-to-br from-primary-50/40 to-white dark:border-primary-900/40 dark:from-primary-950/20 dark:to-navy-900/40">
+              <SectionHeader
+                title=""
+                badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.initiativesBadge')}
+              >
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInitiativesTitle')}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {t('discoveryToolsTools.dynamicSwot.insightsPhase.strategicInitiativesSubtitle')}
+                </p>
+              </SectionHeader>
+              <div className="space-y-3 px-6 py-5">
+                {(session.generatedInitiatives || []).map((initiative, idx) => {
+                  const iMeta = REC_TYPE_META[initiative.type] || REC_TYPE_META.strategic;
+                  const IIcon = iMeta.icon;
+                  return (
+                    <div
+                      key={initiative.id}
+                      className="flex items-start gap-3 rounded-xl border border-primary-200/50 bg-white/80 p-4 shadow-sm dark:border-primary-900/30 dark:bg-navy-950/40"
+                    >
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white dark:bg-primary-500">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center gap-2">
+                          <IIcon className={`h-3.5 w-3.5 ${iMeta.color}`} />
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-[0.14em] ${iMeta.color}`}
+                          >
+                            {isPolish ? iMeta.label.pl : iMeta.label.en}
+                          </span>
+                          <div className="ml-auto flex gap-2">
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                initiative.estimatedImpact === 'high'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                                  : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                              }`}
+                            >
+                              {t('discoveryToolsTools.common.impact')}: {initiative.estimatedImpact}
+                            </span>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                initiative.estimatedEffort === 'low'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                                  : initiative.estimatedEffort === 'medium'
+                                    ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                                    : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/20 dark:text-danger-300'
+                              }`}
+                            >
+                              {t('discoveryToolsTools.common.effort')}: {initiative.estimatedEffort}
+                            </span>
+                          </div>
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {initiative.title}
+                        </h4>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                          {initiative.description}
+                        </p>
+                        <div className="mt-2 rounded-lg bg-primary-50/60 px-3 py-2 text-xs text-slate-600 dark:bg-primary-950/20 dark:text-slate-400">
+                          <span className="font-semibold">
+                            {t('discoveryToolsTools.common.rationaleColon')}
+                          </span>{' '}
+                          {initiative.rationale}
+                        </div>
+                      </div>
+                    </div>
+                  );
                 })}
               </div>
             </section>

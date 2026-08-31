@@ -261,8 +261,12 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await query(`CREATE INDEX idx_integrations_org ON "${twinSchema}".${TWIN_TABLE}(organization_id)`);
-    await query(`CREATE INDEX idx_integrations_connector ON "${twinSchema}".${TWIN_TABLE}(connector_id)`);
+    await query(
+      `CREATE INDEX idx_integrations_org ON "${twinSchema}".${TWIN_TABLE}(organization_id)`
+    );
+    await query(
+      `CREATE INDEX idx_integrations_connector ON "${twinSchema}".${TWIN_TABLE}(connector_id)`
+    );
     expect(tempSchema).not.toBe('');
   });
 
@@ -486,8 +490,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
       .map((r) => ({ name: r.indexname, using: usingClause(r.indexdef) }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
-  const rowsOf = (schema: string) =>
-    query(`SELECT * FROM "${schema}".${TABLE} ORDER BY id`);
+  const rowsOf = (schema: string) => query(`SELECT * FROM "${schema}".${TABLE} ORDER BY id`);
 
   // -------------------------------------------------------------------
   // SELF-TEST: a comparison harness has no evidentiary value until it is
@@ -544,7 +547,11 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
       [tempSchema, TWIN_TABLE]
     );
     const targetColumnsSorted = [...result.columns]
-      .map((c) => ({ column_name: c.column_name, data_type: c.data_type, column_default: c.column_default }))
+      .map((c) => ({
+        column_name: c.column_name,
+        data_type: c.data_type,
+        column_default: c.column_default,
+      }))
       .sort((a, b) => a.column_name.localeCompare(b.column_name));
     expect(targetColumnsSorted).toEqual(twinColumns.rows);
 
@@ -815,7 +822,11 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     const result = await shape(schema);
     const targetNew = result.columns
       .filter((c) => (NEW_COLUMNS as readonly string[]).includes(c.column_name))
-      .map((c) => ({ column_name: c.column_name, data_type: c.data_type, column_default: c.column_default }))
+      .map((c) => ({
+        column_name: c.column_name,
+        data_type: c.data_type,
+        column_default: c.column_default,
+      }))
       .sort((a, b) => a.column_name.localeCompare(b.column_name));
 
     const twinAll = await query(
@@ -850,7 +861,10 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // is present.
     const expectedIdx = [
       ...normalizeIdx(twinIdx),
-      { name: 'integrations_organization_id_provider_id_key', using: 'USING btree (organization_id, provider_id)' },
+      {
+        name: 'integrations_organization_id_provider_id_key',
+        using: 'USING btree (organization_id, provider_id)',
+      },
     ].sort((a, b) => a.name.localeCompare(b.name));
     expect(normalizeIdx(targetIdx)).toEqual(expectedIdx);
   });
@@ -953,7 +967,9 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
         WHERE table_schema=$1 AND table_name=$2 AND column_name IN ('provider_id','auth_type','organization_id')`,
       [schema, TABLE]
     );
-    const byName = Object.fromEntries(afterCols.rows.map((r: any) => [r.column_name, r.is_nullable]));
+    const byName = Object.fromEntries(
+      afterCols.rows.map((r: any) => [r.column_name, r.is_nullable])
+    );
     expect(byName.provider_id).toBe('YES');
     expect(byName.auth_type).toBe('YES');
     expect(byName.organization_id).toBe('NO');
@@ -1041,9 +1057,11 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
        VALUES ('int-uniq', 'org-uniq', 'int-slack', 'oauth2', 'user-uniq')`
     );
     const before = await shape(schema);
-    expect(before.constraints.some((c: any) => c.definition.includes('UNIQUE (organization_id, provider_id)'))).toBe(
-      true
-    ); // sanity: legacy uniqueness genuinely present before
+    expect(
+      before.constraints.some((c: any) =>
+        c.definition.includes('UNIQUE (organization_id, provider_id)')
+      )
+    ).toBe(true); // sanity: legacy uniqueness genuinely present before
 
     await apply(schema);
 

@@ -136,7 +136,8 @@ export interface CapexDepreciationResult {
 }
 
 export function computeCapexDepreciation(inputs: CapexDepreciationInputs): CapexDepreciationResult {
-  if (inputs.usefulLifeMonths <= 0) throw new Error('computeCapexDepreciation: usefulLifeMonths must be > 0');
+  if (inputs.usefulLifeMonths <= 0)
+    throw new Error('computeCapexDepreciation: usefulLifeMonths must be > 0');
   const capex = inputs.revenue * inputs.capexPctOfRevenue;
   const depreciation = inputs.priorFixedAssets / inputs.usefulLifeMonths;
   const closingFixedAssets = inputs.priorFixedAssets + capex - depreciation;
@@ -157,7 +158,10 @@ export interface AmortizationSchedule {
 }
 
 /** `periodIndex` is 0-based (0 = first forecast month of the horizon). Returns 0 once the schedule is exhausted (facility fully amortized), never a negative or fabricated figure. */
-export function lookupScheduledAmortization(schedule: AmortizationSchedule, periodIndex: number): number {
+export function lookupScheduledAmortization(
+  schedule: AmortizationSchedule,
+  periodIndex: number
+): number {
   if (periodIndex < 0) throw new Error('lookupScheduledAmortization: periodIndex must be >= 0');
   return schedule.scheduledPrincipalByMonth[periodIndex] ?? 0;
 }
@@ -196,7 +200,10 @@ export interface EquityReInputs {
 }
 
 export function computeEquityRe(inputs: EquityReInputs): { closingRetainedEarnings: number } {
-  return { closingRetainedEarnings: inputs.priorRetainedEarnings + inputs.netIncome - inputs.dividendsDeclared };
+  return {
+    closingRetainedEarnings:
+      inputs.priorRetainedEarnings + inputs.netIncome - inputs.dividendsDeclared,
+  };
 }
 
 // ---------------------------------------------------------------------------

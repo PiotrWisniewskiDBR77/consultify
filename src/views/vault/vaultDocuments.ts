@@ -67,7 +67,10 @@ export const categoryLabel = (
   if (!category) return '';
   switch (category) {
     case 'Best Practices':
-      return t('vault.categories.bestPractices', isPolish ? 'Najlepsze praktyki' : 'Best Practices');
+      return t(
+        'vault.categories.bestPractices',
+        isPolish ? 'Najlepsze praktyki' : 'Best Practices'
+      );
     case 'Methodology':
       return t('vault.categories.methodology', isPolish ? 'Metodyka' : 'Methodology');
     case 'Standards':

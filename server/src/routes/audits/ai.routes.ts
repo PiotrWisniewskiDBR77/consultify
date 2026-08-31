@@ -11,7 +11,6 @@ import { Router } from 'express';
 
 import * as aiProposalService from '../../services/audits/aiProposalService.js';
 import { requireCapability } from '../../services/audits/permissions.js';
-
 import { assertActor, auditActor, parsePaging, route } from './context.js';
 
 const router = Router();
@@ -31,7 +30,7 @@ router.post(
       context: (body.context as Record<string, unknown> | undefined) ?? {},
     });
     res.status(201).json({ success: true, data: created });
-  }),
+  })
 );
 
 router.get(
@@ -42,7 +41,9 @@ router.get(
     const query = req.query as Record<string, unknown>;
     const programId = query.programId ? String(query.programId) : '';
     if (!programId) {
-      res.status(400).json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_MISSING_PROGRAM' });
+      res
+        .status(400)
+        .json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_MISSING_PROGRAM' });
       return;
     }
     await requireCapability(actor, programId, 'program.read');
@@ -56,7 +57,7 @@ router.get(
       offset,
     });
     res.json({ success: true, data: items });
-  }),
+  })
 );
 
 router.get(
@@ -66,7 +67,7 @@ router.get(
     assertActor(actor);
     const data = await aiProposalService.getProposal(actor.organizationId, req.params.id);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -76,7 +77,7 @@ router.get(
     assertActor(actor);
     const data = await aiProposalService.getPreview(actor.organizationId, req.params.id);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -90,7 +91,7 @@ router.post(
       note: (body.note as string | null | undefined) ?? null,
     });
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -100,7 +101,7 @@ router.post(
     assertActor(actor);
     const data = await aiProposalService.commit(actor.organizationId, actor, req.params.id);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.post(
@@ -110,7 +111,7 @@ router.post(
     assertActor(actor);
     const data = await aiProposalService.settle(actor.organizationId, req.params.id);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 router.get(
@@ -120,13 +121,15 @@ router.get(
     assertActor(actor);
     const programId = String((req.query as Record<string, unknown>).programId || '');
     if (!programId) {
-      res.status(400).json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_MISSING_PROGRAM' });
+      res
+        .status(400)
+        .json({ success: false, error: 'programId jest wymagany', code: 'AUDIT_MISSING_PROGRAM' });
       return;
     }
     await requireCapability(actor, programId, 'program.read');
     const data = await aiProposalService.detectEvidenceGaps(actor.organizationId, programId);
     res.json({ success: true, data });
-  }),
+  })
 );
 
 export default router;

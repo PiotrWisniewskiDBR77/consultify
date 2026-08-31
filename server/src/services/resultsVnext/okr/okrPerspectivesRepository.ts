@@ -34,9 +34,8 @@ import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { buildVisibilityScopedCte } from '../platform/visibilityScopedQuery.js';
-
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
-import { toOkrSet, type OkrSet, type OkrSetRow } from './okrSetTypes.js';
+import { type OkrSet, type OkrSetRow, toOkrSet } from './okrSetTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await acquirePgClient();
@@ -47,7 +46,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -77,7 +80,11 @@ export interface ListMyOkrSetsParams {
  */
 export async function listMyOkrSets(params: ListMyOkrSetsParams): Promise<OkrSet[]> {
   const { userId, organizationId, limit = 100, offset = 0 } = params;
-  const cte = await buildVisibilityScopedCte({ userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const cte = await buildVisibilityScopedCte({
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values: unknown[] = [...cte.values, limit, offset];
   const limitParamIndex = values.length - 1;
   const offsetParamIndex = values.length;
@@ -124,8 +131,15 @@ interface ScopedBase {
  * missing maintenance piece; naming the gap again here, not fixing it
  * outside this file's own ownership.
  */
-async function buildScopedOkrSetsBase(managerId: string, organizationId: string): Promise<ScopedBase> {
-  const cte = await buildVisibilityScopedCte({ userId: managerId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+async function buildScopedOkrSetsBase(
+  managerId: string,
+  organizationId: string
+): Promise<ScopedBase> {
+  const cte = await buildVisibilityScopedCte({
+    userId: managerId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values: unknown[] = [...cte.values, managerId];
   const sql = `${cte.sql},
 chain_members AS (
@@ -196,26 +210,36 @@ export async function listOrganizationOkrTeamHealth(
       const base = await buildScopedOkrSetsBase(managerId, organizationId);
       const sql = `${base.sql}
 SELECT status, COUNT(*)::int AS count FROM scoped_okr_sets GROUP BY status`;
-      return withReadClient((client) => queryRows<{ status: string; count: number }>(client, sql, base.values));
+      return withReadClient((client) =>
+        queryRows<{ status: string; count: number }>(client, sql, base.values)
+      );
     })(),
     (async () => {
       const base = await buildScopedOkrSetsBase(managerId, organizationId);
       const sql = `${base.sql}
 SELECT scope_type, COUNT(*)::int AS count FROM scoped_okr_sets GROUP BY scope_type`;
-      return withReadClient((client) => queryRows<{ scope_type: string; count: number }>(client, sql, base.values));
+      return withReadClient((client) =>
+        queryRows<{ scope_type: string; count: number }>(client, sql, base.values)
+      );
     })(),
     (async () => {
       const base = await buildScopedOkrSetsBase(managerId, organizationId);
       const sql = `${base.sql}
 SELECT attention_state, COUNT(*)::int AS count FROM scoped_okr_sets GROUP BY attention_state`;
-      return withReadClient((client) => queryRows<{ attention_state: string; count: number }>(client, sql, base.values));
+      return withReadClient((client) =>
+        queryRows<{ attention_state: string; count: number }>(client, sql, base.values)
+      );
     })(),
     (async () => {
       const base = await buildScopedOkrSetsBase(managerId, organizationId);
       const sql = `${base.sql}
 SELECT set_id, current_version, status, scope_type FROM scoped_okr_sets ORDER BY updated_at DESC`;
       return withReadClient((client) =>
-        queryRows<{ set_id: string; current_version: number; status: string; scope_type: string }>(client, sql, base.values)
+        queryRows<{ set_id: string; current_version: number; status: string; scope_type: string }>(
+          client,
+          sql,
+          base.values
+        )
       );
     })(),
   ]);
@@ -223,7 +247,10 @@ SELECT set_id, current_version, status, scope_type FROM scoped_okr_sets ORDER BY
   return {
     countsByStatus: byStatus.map((r) => ({ status: r.status, count: Number(r.count) })),
     countsByScopeType: byScope.map((r) => ({ scopeType: r.scope_type, count: Number(r.count) })),
-    attentionBreakdown: byAttention.map((r) => ({ attentionState: r.attention_state, count: Number(r.count) })),
+    attentionBreakdown: byAttention.map((r) => ({
+      attentionState: r.attention_state,
+      count: Number(r.count),
+    })),
     sets: sets.map((r) => ({
       setId: r.set_id,
       currentVersion: Number(r.current_version),

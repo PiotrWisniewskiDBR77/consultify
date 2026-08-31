@@ -1,5 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'node:crypto';
+
+import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';

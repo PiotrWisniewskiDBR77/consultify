@@ -6,10 +6,10 @@ import { describe, expect, it } from 'vitest';
 
 import { ORGANIZATION_MODULES } from '../../OrganizationSidebar';
 import {
+  getOrganizationRedesignModules,
   ORGANIZATION_REDESIGN_MODULES,
   ORGANIZATION_REDESIGN_SCREEN_COUNT,
   REDESIGN_SCREEN_REDIRECTS,
-  getOrganizationRedesignModules,
   resolveRedesignScreen,
 } from '../organizationRedesignNav';
 

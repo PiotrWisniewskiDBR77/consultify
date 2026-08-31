@@ -395,7 +395,9 @@ export const AIMissionControl: React.FC = () => {
             .map(([id, res]) => (
               <div key={id} className="mb-4">
                 <div className="flex gap-2">
-                  <span className="text-blue-300">[{new Date().toLocaleTimeString(localeListy())}]</span>
+                  <span className="text-blue-300">
+                    [{new Date().toLocaleTimeString(localeListy())}]
+                  </span>
                   <span className="text-amber-300">{id.toUpperCase()}</span>
                   <span
                     className={res.status === 'SUCCESS' ? 'text-emerald-200' : 'text-danger-200'}

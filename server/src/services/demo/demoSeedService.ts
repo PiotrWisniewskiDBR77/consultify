@@ -6,7 +6,6 @@ import {
   triggerImmediateDeliveryBestEffort,
 } from '../closureDeliveryReceiptService.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
-import { seedAtelierPresentationDecks } from './atelierPresentationDeckSeed.js';
 import {
   ATELIER_CANONICAL_DISCOUNT_RATE_PCT,
   ATELIER_CANONICAL_MODEL_NAME_EN,
@@ -17,6 +16,7 @@ import {
   upsertAtelierFinanceGoldenFlow,
   verifyAtelierFinanceGoldenFlowComplete,
 } from './atelierFinanceSeed.js';
+import { seedAtelierPresentationDecks } from './atelierPresentationDeckSeed.js';
 import {
   type DemoLeaderTemplate,
   getAtelierToysDeliverables,
@@ -2544,7 +2544,10 @@ async function upsertReports(
   return reports.length;
 }
 
-export async function upsertKnowledgeDocs(organizationId: string, locale: DemoLocale): Promise<number> {
+export async function upsertKnowledgeDocs(
+  organizationId: string,
+  locale: DemoLocale
+): Promise<number> {
   if (!(await tableExists('knowledge_docs'))) return 0;
   const hasCategory = await columnExists('knowledge_docs', 'category');
   const hasMetadata = await columnExists('knowledge_docs', 'metadata');

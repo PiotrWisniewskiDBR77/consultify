@@ -22,8 +22,8 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/shared/states';
 
-import { ResultsVNextRegistryShell } from './ResultsVNextRegistryShell';
 import { isResultsVNextFlagEnabled, type ResultsVNextFlag } from './resultsVNextFeatureFlags';
+import { ResultsVNextRegistryShell } from './ResultsVNextRegistryShell';
 import type { ResultsVNextDomain } from './types';
 
 export interface ResultsVNextRegistryRouteBaseProps {
@@ -53,9 +53,7 @@ export const ResultsVNextRegistryRouteBase: React.FC<ResultsVNextRegistryRouteBa
         <EmptyState
           variant="new"
           icon={Blocks}
-          title={
-            isPolish ? `${title} — jeszcze nie włączone` : `${title} — not yet enabled`
-          }
+          title={isPolish ? `${title} — jeszcze nie włączone` : `${title} — not yet enabled`}
           description={
             isPolish
               ? 'Ten rejestr jest w budowie. Wróć później albo poproś administratora o dostęp za flagą.'

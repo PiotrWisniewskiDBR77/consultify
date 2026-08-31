@@ -58,7 +58,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type ActionContext, getActionsForSurface, runIdeaAction } from '@/actions/ideaActionRegistry';
+import {
+  type ActionContext,
+  getActionsForSurface,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
 import { Button } from '@/components/ui/primitives/Button';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import {
@@ -538,7 +542,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             className="bg-c-surface rounded-xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] p-4 w-72 outline-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 id="table-save-view-dialog-title" className="text-sm font-semibold mb-2 text-c-text">
+            <h3
+              id="table-save-view-dialog-title"
+              className="text-sm font-semibold mb-2 text-c-text"
+            >
               {t('ideas.table.saveView', 'Save view')}
             </h3>
             <input
@@ -890,7 +897,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   icon: Presentation,
                   label: t('ideas.table.exportToPresentation', 'Export to Presentation'),
                   onClick: () =>
-                    runAction('idea.view.table_export_presentation', props.onShowExportPresentation),
+                    runAction(
+                      'idea.view.table_export_presentation',
+                      props.onShowExportPresentation
+                    ),
                 },
                 {
                   icon: Rocket,

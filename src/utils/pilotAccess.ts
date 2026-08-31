@@ -1,5 +1,5 @@
-import { isPilotRestrictedRole } from './roleGuards';
 import { isBetaClosed } from './betaAccess';
+import { isPilotRestrictedRole } from './roleGuards';
 
 // VTS pilot scope: Chat + Interview plus My Work (Ideas stays locked via
 // isPilotAllowedMyWorkTab), Initiatives, Execution and Settings.

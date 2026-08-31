@@ -20,7 +20,12 @@ import {
  * `useProcessFlowAIProposal.ts`'s `tr()`), not read from global i18next
  * state, so the message language stays deterministic per-call.
  */
-function tr(isPl: boolean, key: string, defaultValue: string, vars?: Record<string, unknown>): string {
+function tr(
+  isPl: boolean,
+  key: string,
+  defaultValue: string,
+  vars?: Record<string, unknown>
+): string {
   return i18n.t(`myWorkIdeas.processFlowTool.${key}`, defaultValue, {
     lng: isPl ? 'pl' : 'en',
     ...vars,

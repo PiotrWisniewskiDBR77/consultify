@@ -2,8 +2,8 @@ import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import type { ResultsSearchKind } from '../../../validators/resultsVnextSearch.validators.js';
-import { buildVisibilityScopedCte } from './visibilityScopedQuery.js';
 import { resultsTextMatchPattern, resultsTextMatchSql } from './textMatch.js';
+import { buildVisibilityScopedCte } from './visibilityScopedQuery.js';
 
 export interface ResultsSearchHit {
   kind: ResultsSearchKind;

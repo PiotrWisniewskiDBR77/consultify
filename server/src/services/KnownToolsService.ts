@@ -1,8 +1,8 @@
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { QueryAdapter } from '../utils/QueryAdapter.js';
-import { APPROVED_MVP_TOOL_TYPES } from './toolCatalog/approvedMvpToolTypes.js';
 import { mergeLibraryContentJson } from './libraryContentMerge.js';
+import { APPROVED_MVP_TOOL_TYPES } from './toolCatalog/approvedMvpToolTypes.js';
 
 type ToolRow = {
   id: string;

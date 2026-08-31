@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
-  resolveFinanceWorkspace,
   type FinanceArtifactTypeId,
   type FinanceResolveResult,
   type FinanceWorkspaceId,
+  resolveFinanceWorkspace,
 } from '../financeWorkspaceResolver';
 
 const mappings: [FinanceArtifactTypeId, FinanceWorkspaceId][] = [

@@ -188,7 +188,12 @@ const permissionsService = {
    * Check if user can modify a base — requires data_editor or higher.
    */
   async canModifyBase(userId: string, orgId: string, baseId: string): Promise<boolean> {
-    const { allowed } = await permissionsService.requireRole(baseId, userId, orgId, DATA_WRITE_ROLES);
+    const { allowed } = await permissionsService.requireRole(
+      baseId,
+      userId,
+      orgId,
+      DATA_WRITE_ROLES
+    );
     return allowed;
   },
 
@@ -196,7 +201,12 @@ const permissionsService = {
    * Check if user can modify schema — requires schema_editor or base_owner.
    */
   async canModifySchema(userId: string, orgId: string, baseId: string): Promise<boolean> {
-    const { allowed } = await permissionsService.requireRole(baseId, userId, orgId, SCHEMA_WRITE_ROLES);
+    const { allowed } = await permissionsService.requireRole(
+      baseId,
+      userId,
+      orgId,
+      SCHEMA_WRITE_ROLES
+    );
     return allowed;
   },
 

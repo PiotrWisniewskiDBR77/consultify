@@ -19,28 +19,28 @@ import { CheckCircle2, FileText, Send } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ErrorState } from '@/components/shared/states';
 import {
-  type StandardRowMenu,
   StandardPreview,
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
 import {
   approveReport,
   AUDIT_REPORT_STATUSES,
+  type AuditReportSummary,
   listReports,
   publishReport,
-  type AuditReportSummary,
 } from '../auditsMethodApi';
+import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
 
 export interface AuditReportsTabProps {
   isPolish: boolean;
@@ -465,7 +465,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           data-testid="audit-report-preview"
         >
           {exportError ? (
-            <div className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+            <div
+              className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger"
+              role="alert"
+            >
               {exportError}
             </div>
           ) : null}

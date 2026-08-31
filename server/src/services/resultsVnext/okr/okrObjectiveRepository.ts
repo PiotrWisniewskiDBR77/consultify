@@ -27,14 +27,12 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
 import {
-  toOkrKeyResult,
-  type OkrKeyResult,
-  type OkrKeyResultRow,
-} from './okrKeyResultTypes.js';
-import { toOkrObjective, type OkrObjective, type OkrObjectiveRow } from './okrObjectiveTypes.js';
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
+import { type OkrKeyResult, type OkrKeyResultRow, toOkrKeyResult } from './okrKeyResultTypes.js';
+import { type OkrObjective, type OkrObjectiveRow, toOkrObjective } from './okrObjectiveTypes.js';
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -46,7 +44,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -102,7 +104,9 @@ export interface ListObjectivesForSetParams {
  * the Set gets an empty array, same "not found, not forbidden" posture
  * `okrSetRepository.ts`'s own routes rely on.
  */
-export async function listObjectivesForSet(params: ListObjectivesForSetParams): Promise<OkrObjectiveWithKeyResults[]> {
+export async function listObjectivesForSet(
+  params: ListObjectivesForSetParams
+): Promise<OkrObjectiveWithKeyResults[]> {
   const { userId, organizationId, setId } = params;
   const baseQuerySql = `
     SELECT o.*
@@ -113,7 +117,11 @@ export async function listObjectivesForSet(params: ListObjectivesForSetParams): 
        AND o.set_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY o.sort_order ASC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, setId];
 
   return withReadClient(async (client) => {
@@ -141,7 +149,9 @@ export interface GetObjectiveParams {
   objectiveId: string;
 }
 
-export async function getObjective(params: GetObjectiveParams): Promise<OkrObjectiveWithKeyResults | null> {
+export async function getObjective(
+  params: GetObjectiveParams
+): Promise<OkrObjectiveWithKeyResults | null> {
   const { userId, organizationId, objectiveId } = params;
   const baseQuerySql = `
     SELECT o.*
@@ -151,7 +161,11 @@ export async function getObjective(params: GetObjectiveParams): Promise<OkrObjec
      WHERE o.organization_id = $1
        AND o.objective_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, objectiveId];
 
   return withReadClient(async (client) => {
@@ -159,7 +173,11 @@ export async function getObjective(params: GetObjectiveParams): Promise<OkrObjec
     const row = rows[0];
     if (!row) return null;
     const objective = toOkrObjective(row);
-    const krByObjective = await loadKeyResultsByObjectiveIds(client, [objective.objectiveId], organizationId);
+    const krByObjective = await loadKeyResultsByObjectiveIds(
+      client,
+      [objective.objectiveId],
+      organizationId
+    );
     return { ...objective, keyResults: krByObjective.get(objective.objectiveId) ?? [] };
   });
 }
@@ -186,10 +204,16 @@ export async function getKeyResult(params: GetKeyResultParams): Promise<OkrKeyRe
      WHERE kr.organization_id = $1
        AND kr.key_result_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, keyResultId];
 
-  const rows = await withReadClient((client) => queryRows<OkrKeyResultRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<OkrKeyResultRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toOkrKeyResult(row) : null;
 }

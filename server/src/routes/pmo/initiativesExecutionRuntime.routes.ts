@@ -16,6 +16,10 @@ import {
   startAnalysis,
 } from '../../domain/initiatives-execution/analysisDecision.js';
 import { evaluateAnalysisReadiness } from '../../domain/initiatives-execution/analysisReadiness.js';
+import {
+  assignGoalPerspective,
+  GOAL_PERSPECTIVES,
+} from '../../domain/initiatives-execution/assignGoalPerspective.js';
 import { cancelInitiative } from '../../domain/initiatives-execution/cancelInitiative.js';
 import {
   createCapacityOptions,
@@ -46,6 +50,15 @@ import {
   createEffectivenessCase,
   transitionEffectiveness,
 } from '../../domain/initiatives-execution/effectivenessClosure.js';
+import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
+import {
+  createExecutionBudgetEntry,
+  executeCanonicalManagerAction,
+  recordExecutionRealization,
+  recordRaidMitigation,
+  reviewManagerSuggestion,
+  voidExecutionBudgetEntry,
+} from '../../domain/initiatives-execution/executionControlWrites.js';
 import { createExecutionMilestone } from '../../domain/initiatives-execution/executionMilestone.js';
 import {
   completeExecutionTask,
@@ -59,19 +72,6 @@ import {
   transitionCanonicalDecision,
   transitionCanonicalTask,
 } from '../../domain/initiatives-execution/executionWorkHardening.js';
-import {
-  createExecutionBudgetEntry,
-  executeCanonicalManagerAction,
-  recordRaidMitigation,
-  recordExecutionRealization,
-  reviewManagerSuggestion,
-  voidExecutionBudgetEntry,
-} from '../../domain/initiatives-execution/executionControlWrites.js';
-import { authorExecutionControlKpiPolicy } from '../../domain/initiatives-execution/executionControlKpiPolicyAuthoring.js';
-import {
-  assignGoalPerspective,
-  GOAL_PERSPECTIVES,
-} from '../../domain/initiatives-execution/assignGoalPerspective.js';
 import {
   gateSignoffId,
   submitGateSignoff,
@@ -116,12 +116,12 @@ import {
   mutatePortfolioScenario,
   type PortfolioScenario,
 } from '../../domain/initiatives-execution/portfolioScenario.js';
+import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import {
   type EffectiveGovernancePolicy,
   PostgresGovernancePolicyResolver,
 } from '../../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
 import { PostgresInitiativeReader } from '../../domain/initiatives-execution/postgresInitiativeReader.js';
-import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 import { publishInitiativeCard } from '../../domain/initiatives-execution/publishInitiativeCard.js';
 import { createRaidItem, deleteRaidItem } from '../../domain/initiatives-execution/raidItem.js';
@@ -131,11 +131,11 @@ import {
   createReportDefinition,
   transitionReportDefinition,
 } from '../../domain/initiatives-execution/reportDefinition.js';
+import { reconstructReportRun } from '../../domain/initiatives-execution/reportReconstruction.js';
 import {
   createReportRun,
   transitionReportRun,
 } from '../../domain/initiatives-execution/reportRun.js';
-import { reconstructReportRun } from '../../domain/initiatives-execution/reportReconstruction.js';
 import { resolveDefinitionRemediationWork } from '../../domain/initiatives-execution/resolveDefinitionRemediationWork.js';
 import {
   acceptResourceCommitment,
@@ -4944,8 +4944,7 @@ export function createInitiativesExecutionRuntimeRouter(
         projectIds.length > 0
           ? await authorizeProjects(actor, projectIds, 'initiative.update')
           : await deps.authorize(actor, '', 'initiative.update');
-      if (!canUpdate)
-        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
       const { expectedVersion, clientRequestId, ...item } = parsed.data;
       const result = await createRaidItem(deps.unitOfWork, {
         organizationId: actor.organizationId,
@@ -4982,8 +4981,7 @@ export function createInitiativesExecutionRuntimeRouter(
         projectIds.length > 0
           ? await authorizeProjects(actor, projectIds, 'initiative.update')
           : await deps.authorize(actor, '', 'initiative.update');
-      if (!canUpdate)
-        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
       const result = await deleteRaidItem(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,

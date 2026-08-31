@@ -624,7 +624,10 @@ export async function recordGatewayEvaluation(
     OUTCOME_STATUSES,
     'gateway_evaluation_outcome_status_invalid'
   );
-  const evaluatedAt = requireNonBlank(input.evaluatedAt, 'gateway_evaluation_evaluated_at_required');
+  const evaluatedAt = requireNonBlank(
+    input.evaluatedAt,
+    'gateway_evaluation_evaluated_at_required'
+  );
   const recordedByActorId = requireNonBlank(
     input.recordedByActorId,
     'gateway_evaluation_recorded_by_actor_required'
@@ -634,7 +637,9 @@ export async function recordGatewayEvaluation(
   // are only meaningful for PARALLEL_JOIN; join_policy is required for
   // PARALLEL_JOIN, join_required_count only meaningful for N_OF_M.
   const hasJoinFields =
-    input.joinPolicy != null || input.joinRequiredCount != null || input.joinBranchTotalCount != null;
+    input.joinPolicy != null ||
+    input.joinRequiredCount != null ||
+    input.joinBranchTotalCount != null;
   if (hasJoinFields && gatewayNodeType !== 'PARALLEL_JOIN') {
     throw new Error('gateway_evaluation_invalid_fields_for_node_type');
   }
@@ -648,7 +653,8 @@ export async function recordGatewayEvaluation(
   // Condition fields (condition_expression/condition_schema_version) are
   // only meaningful for DECISION_GATEWAY, and are co-required (both-or-
   // neither) whenever either is set.
-  const hasConditionFields = input.conditionExpression != null || input.conditionSchemaVersion != null;
+  const hasConditionFields =
+    input.conditionExpression != null || input.conditionSchemaVersion != null;
   if (hasConditionFields && gatewayNodeType !== 'DECISION_GATEWAY') {
     throw new Error('gateway_evaluation_invalid_fields_for_node_type');
   }
@@ -728,7 +734,9 @@ export async function recordGatewayEvaluation(
           outcomeStatus: insertedRow.outcome_status,
           joinPolicy: insertedRow.join_policy,
           joinRequiredCount:
-            insertedRow.join_required_count === null ? null : Number(insertedRow.join_required_count),
+            insertedRow.join_required_count === null
+              ? null
+              : Number(insertedRow.join_required_count),
           joinBranchTotalCount:
             insertedRow.join_branch_total_count === null
               ? null
@@ -866,7 +874,11 @@ export async function recordNodeResultAcceptance(
 ): Promise<CaseNodeResultAcceptance> {
   const nodeRunId = requireNonBlank(input.nodeRunId, 'node_result_acceptance_node_run_id_required');
   const runId = requireNonBlank(input.runId, 'node_result_acceptance_run_id_required');
-  const nodeType = requireEnum(input.nodeType, NODE_TYPES, 'node_result_acceptance_node_type_invalid');
+  const nodeType = requireEnum(
+    input.nodeType,
+    NODE_TYPES,
+    'node_result_acceptance_node_type_invalid'
+  );
   const nodeCompletionState = requireEnum(
     input.nodeCompletionState,
     NODE_COMPLETION_STATES,
@@ -877,13 +889,19 @@ export async function recordNodeResultAcceptance(
     RESULT_ACCEPTANCE_VALUES,
     'node_result_acceptance_value_invalid'
   );
-  const occurredAt = requireNonBlank(input.occurredAt, 'node_result_acceptance_occurred_at_required');
+  const occurredAt = requireNonBlank(
+    input.occurredAt,
+    'node_result_acceptance_occurred_at_required'
+  );
   const recordedByActorId = requireNonBlank(
     input.recordedByActorId,
     'node_result_acceptance_recorded_by_actor_required'
   );
 
-  if (nodeCompletionState === 'SKIPPED' && typeof input.skipAuthorizedByGraphCondition !== 'boolean') {
+  if (
+    nodeCompletionState === 'SKIPPED' &&
+    typeof input.skipAuthorizedByGraphCondition !== 'boolean'
+  ) {
     throw new Error('node_result_acceptance_skip_authorization_required');
   }
 
@@ -1055,7 +1073,10 @@ export async function listNodeResultAcceptancesForCase(
   actorUserId: string
 ): Promise<CaseNodeResultAcceptance[]> {
   const id = requireNonBlank(caseId, 'node_result_acceptance_case_id_required');
-  await requireCaseAccess(requireNonBlank(actorUserId, 'node_result_acceptance_actor_required'), id);
+  await requireCaseAccess(
+    requireNonBlank(actorUserId, 'node_result_acceptance_actor_required'),
+    id
+  );
   const rows = await queryAll<CaseWorkspaceNodeResultAcceptanceRow>(
     `SELECT * FROM case_workspace_node_result_acceptances WHERE case_id = ? ORDER BY recorded_at ASC`,
     [id]

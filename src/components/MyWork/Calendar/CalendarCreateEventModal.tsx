@@ -11,7 +11,7 @@ import { isMyWorkCalendarV2Enabled } from '@/utils/myWorkCalendarV2Flag';
 
 import { duplicateCalendarEventFourWeeks } from '../CalendarV2/duplicateCalendarEvent';
 import { useConfirmDialog } from '../shared/ConfirmDialog';
-import { CalendarAttendeesField, type CalendarAttendeeOption } from './CalendarAttendeesField';
+import { type CalendarAttendeeOption, CalendarAttendeesField } from './CalendarAttendeesField';
 
 interface CalendarConflictItem {
   id: string;
@@ -219,233 +219,235 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
 
   return (
     <>
-    <Modal
-      open={open}
-      onClose={onClose}
-      size="lg"
-      title={t('myWork.calendarCreateEvent.title', 'Add to calendar')}
-      description={
-        v2
-          ? t('myWork.calendarV2.createDescription', 'Create an event or a task deadline.')
-          : t(
-              'myWork.calendarCreateEvent.inV1CalendarCreation',
-              'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
-            )
-      }
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={saving}>
-            {t('myWork.calendarCreateEvent.cancel', 'Cancel')}
-          </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            form="calendar-create-event-form"
-            loading={saving}
-          >
-            {t('myWork.calendarCreateEvent.add', 'Add')}
-          </Button>
-        </>
-      }
-    >
-      <form id="calendar-create-event-form" onSubmit={handleSubmit} className="space-y-5">
-        {v2 ? (
-          <div
-            className="flex gap-2"
-            role="group"
-            aria-label={t('myWork.calendarV2.entryType', 'Entry type')}
-          >
-            {(['event', 'task'] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={entryType === type}
-                onClick={() => setEntryType(type)}
-                className="rounded-lg border border-c-border px-3 py-2 text-sm aria-pressed:bg-c-surface-raised"
-              >
-                {type === 'event'
-                  ? t('myWork.calendarV2.event', 'Event')
-                  : t('myWork.calendarV2.task', 'Task')}
-              </button>
-            ))}
-          </div>
-        ) : null}
-        {!v2 ? (
-          <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
-            <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
-              <CheckSquare size={16} className="text-c-info" />
-              {t('myWork.calendarCreateEvent.artifactTypeTask', 'Artifact type: Task')}
+      <Modal
+        open={open}
+        onClose={onClose}
+        size="lg"
+        title={t('myWork.calendarCreateEvent.title', 'Add to calendar')}
+        description={
+          v2
+            ? t('myWork.calendarV2.createDescription', 'Create an event or a task deadline.')
+            : t(
+                'myWork.calendarCreateEvent.inV1CalendarCreation',
+                'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
+              )
+        }
+        footer={
+          <>
+            <Button variant="secondary" onClick={onClose} disabled={saving}>
+              {t('myWork.calendarCreateEvent.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              form="calendar-create-event-form"
+              loading={saving}
+            >
+              {t('myWork.calendarCreateEvent.add', 'Add')}
+            </Button>
+          </>
+        }
+      >
+        <form id="calendar-create-event-form" onSubmit={handleSubmit} className="space-y-5">
+          {v2 ? (
+            <div
+              className="flex gap-2"
+              role="group"
+              aria-label={t('myWork.calendarV2.entryType', 'Entry type')}
+            >
+              {(['event', 'task'] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  aria-pressed={entryType === type}
+                  onClick={() => setEntryType(type)}
+                  className="rounded-lg border border-c-border px-3 py-2 text-sm aria-pressed:bg-c-surface-raised"
+                >
+                  {type === 'event'
+                    ? t('myWork.calendarV2.event', 'Event')
+                    : t('myWork.calendarV2.task', 'Task')}
+                </button>
+              ))}
             </div>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {t(
-                'myWork.calendarCreateEvent.decisionsAndInitiativesFrom',
-                'Decisions and initiatives from calendar are prepared for a later phase.'
-              )}
-            </p>
-          </div>
-        ) : null}
+          ) : null}
+          {!v2 ? (
+            <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
+              <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
+                <CheckSquare size={16} className="text-c-info" />
+                {t('myWork.calendarCreateEvent.artifactTypeTask', 'Artifact type: Task')}
+              </div>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'myWork.calendarCreateEvent.decisionsAndInitiativesFrom',
+                  'Decisions and initiatives from calendar are prepared for a later phase.'
+                )}
+              </p>
+            </div>
+          ) : null}
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {t('myWork.calendarCreateEvent.title2', 'Title')}
-          </label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            autoFocus
-            placeholder={t('myWork.calendarCreateEvent.placeholder', 'e.g. Prepare review deck')}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
-          />
-        </div>
-
-        {v2 && entryType === 'event' ? (
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm">
-              {t('myWork.calendarV2.from', 'From')}
-              <input
-                aria-label={t('myWork.calendarV2.from', 'From')}
-                type="time"
-                value={startTime}
-                onChange={(event) => setStartTime(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
-              />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              {t('myWork.calendarCreateEvent.title2', 'Title')}
             </label>
-            <label className="text-sm">
-              {t('myWork.calendarV2.to', 'To')}
-              <input
-                aria-label={t('myWork.calendarV2.to', 'To')}
-                type="time"
-                value={endTime}
-                onChange={(event) => setEndTime(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
-              />
-            </label>
-            <label className="col-span-2 text-sm">
-              {t('myWork.calendarV2.visibility', 'Visibility')}
-              <select
-                value={visibility}
-                onChange={(event) => setVisibility(event.target.value as typeof visibility)}
-                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
-              >
-                <option value="private">{t('myWork.calendarV2.private', 'Private')}</option>
-                <option value="busy">{t('myWork.calendarV2.busy', 'Busy')}</option>
-                <option value="org">{t('myWork.calendarV2.organization', 'Organization')}</option>
-              </select>
-            </label>
-            <CalendarAttendeesField selected={attendees} onChange={setAttendees} />
-            <label className="col-span-2 flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={duplicateFourWeeks}
-                onChange={(event) => setDuplicateFourWeeks(event.target.checked)}
-              />
-              {t('myWork.calendarV2.duplicateFourWeeks', 'Duplicate for the next 4 weeks')}
-            </label>
-            {duplicateResult ? (
-              <output className="col-span-2 text-sm" aria-live="polite">
-                {duplicateResult}
-              </output>
-            ) : null}
-          </div>
-        ) : null}
-
-        {!v2 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            {t('myWork.calendarCreateEvent.recurrencePlanned', 'Repeating: planned')}
-          </p>
-        ) : null}
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {t('myWork.calendarCreateEvent.description', 'Description')}
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            placeholder={t(
-              'myWork.calendarCreateEvent.shortContextOrDefinition',
-              'Short context or definition of done...'
-            )}
-            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            {t('myWork.calendarCreateEvent.date', 'Date')}
-          </label>
-          <div className="relative">
-            <CalendarDays
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
-            />
             <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+              placeholder={t('myWork.calendarCreateEvent.placeholder', 'e.g. Prepare review deck')}
+              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
           </div>
-          {helperText && <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>}
-        </div>
 
-        <div
-          className={`rounded-xl px-4 py-3 ${
-            hasCalendarWarning
-              ? 'bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-100'
-              : 'bg-slate-50 text-slate-700 dark:bg-navy-950 dark:text-slate-300'
-          }`}
-        >
-          <div className="flex items-start gap-2">
-            <AlertTriangle
-              size={16}
-              className={hasCalendarWarning ? 'text-amber-500' : 'text-slate-600'}
+          {v2 && entryType === 'event' ? (
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-sm">
+                {t('myWork.calendarV2.from', 'From')}
+                <input
+                  aria-label={t('myWork.calendarV2.from', 'From')}
+                  type="time"
+                  value={startTime}
+                  onChange={(event) => setStartTime(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
+                />
+              </label>
+              <label className="text-sm">
+                {t('myWork.calendarV2.to', 'To')}
+                <input
+                  aria-label={t('myWork.calendarV2.to', 'To')}
+                  type="time"
+                  value={endTime}
+                  onChange={(event) => setEndTime(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
+                />
+              </label>
+              <label className="col-span-2 text-sm">
+                {t('myWork.calendarV2.visibility', 'Visibility')}
+                <select
+                  value={visibility}
+                  onChange={(event) => setVisibility(event.target.value as typeof visibility)}
+                  className="mt-1 w-full rounded-lg border border-c-border bg-c-surface p-2"
+                >
+                  <option value="private">{t('myWork.calendarV2.private', 'Private')}</option>
+                  <option value="busy">{t('myWork.calendarV2.busy', 'Busy')}</option>
+                  <option value="org">{t('myWork.calendarV2.organization', 'Organization')}</option>
+                </select>
+              </label>
+              <CalendarAttendeesField selected={attendees} onChange={setAttendees} />
+              <label className="col-span-2 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={duplicateFourWeeks}
+                  onChange={(event) => setDuplicateFourWeeks(event.target.checked)}
+                />
+                {t('myWork.calendarV2.duplicateFourWeeks', 'Duplicate for the next 4 weeks')}
+              </label>
+              {duplicateResult ? (
+                <output className="col-span-2 text-sm" aria-live="polite">
+                  {duplicateResult}
+                </output>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!v2 ? (
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {t('myWork.calendarCreateEvent.recurrencePlanned', 'Repeating: planned')}
+            </p>
+          ) : null}
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              {t('myWork.calendarCreateEvent.description', 'Description')}
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder={t(
+                'myWork.calendarCreateEvent.shortContextOrDefinition',
+                'Short context or definition of done...'
+              )}
+              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium">
-                {hasCalendarWarning
-                  ? conflictsError
-                    ? t('myWork.calendarCreateEvent.dayPreviewLimited')
-                    : t('myWork.calendarCreateEvent.dayAlreadyBusy')
-                  : t('myWork.calendarCreateEvent.dayLoadPreview', 'Day load preview')}
-              </div>
-              <div className="mt-1 text-xs opacity-80">
-                {conflictsError ||
-                  conflicts?.suggestion ||
-                  t(
-                    'myWork.calendarCreateEvent.theFormChecksExisting',
-                    'The form checks existing tasks and decisions for the selected day.'
-                  )}
-              </div>
+          </div>
 
-              {totalExistingItems > 0 && (
-                <div className="mt-3 space-y-2">
-                  {conflicts?.tasks?.slice(0, 3).map((item) => (
-                    <div key={`task-${item.id}`} className="text-xs">
-                      {t('myWork.calendarCreateEvent.task', 'Task')}: {item.title}
-                    </div>
-                  ))}
-                  {conflicts?.decisions?.slice(0, 3).map((item) => (
-                    <div key={`decision-${item.id}`} className="text-xs">
-                      {t('myWork.calendarCreateEvent.decision', 'Decision')}: {item.title}
-                    </div>
-                  ))}
-                </div>
-              )}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              {t('myWork.calendarCreateEvent.date', 'Date')}
+            </label>
+            <div className="relative">
+              <CalendarDays
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
+              />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              />
+            </div>
+            {helperText && (
+              <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>
+            )}
+          </div>
 
-              {conflictsLoading && (
-                <div className="mt-3 inline-flex items-center gap-2 text-xs opacity-80">
-                  <Loader2 size={14} className="animate-spin" />
-                  {t('myWork.calendarCreateEvent.loadingConflicts', 'Loading conflicts...')}
+          <div
+            className={`rounded-xl px-4 py-3 ${
+              hasCalendarWarning
+                ? 'bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-100'
+                : 'bg-slate-50 text-slate-700 dark:bg-navy-950 dark:text-slate-300'
+            }`}
+          >
+            <div className="flex items-start gap-2">
+              <AlertTriangle
+                size={16}
+                className={hasCalendarWarning ? 'text-amber-500' : 'text-slate-600'}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium">
+                  {hasCalendarWarning
+                    ? conflictsError
+                      ? t('myWork.calendarCreateEvent.dayPreviewLimited')
+                      : t('myWork.calendarCreateEvent.dayAlreadyBusy')
+                    : t('myWork.calendarCreateEvent.dayLoadPreview', 'Day load preview')}
                 </div>
-              )}
+                <div className="mt-1 text-xs opacity-80">
+                  {conflictsError ||
+                    conflicts?.suggestion ||
+                    t(
+                      'myWork.calendarCreateEvent.theFormChecksExisting',
+                      'The form checks existing tasks and decisions for the selected day.'
+                    )}
+                </div>
+
+                {totalExistingItems > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {conflicts?.tasks?.slice(0, 3).map((item) => (
+                      <div key={`task-${item.id}`} className="text-xs">
+                        {t('myWork.calendarCreateEvent.task', 'Task')}: {item.title}
+                      </div>
+                    ))}
+                    {conflicts?.decisions?.slice(0, 3).map((item) => (
+                      <div key={`decision-${item.id}`} className="text-xs">
+                        {t('myWork.calendarCreateEvent.decision', 'Decision')}: {item.title}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {conflictsLoading && (
+                  <div className="mt-3 inline-flex items-center gap-2 text-xs opacity-80">
+                    <Loader2 size={14} className="animate-spin" />
+                    {t('myWork.calendarCreateEvent.loadingConflicts', 'Loading conflicts...')}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </form>
-    </Modal>
-    {/* FIX-21 (Day 3 layer-2 acceptance, caught by the required dev-render
+        </form>
+      </Modal>
+      {/* FIX-21 (Day 3 layer-2 acceptance, caught by the required dev-render
         pass before showing the owner): <Modal> renders through a React
         portal straight to document.body (Modal.tsx), but <ConfirmDialog>
         (useConfirmDialog's `dialog`) does not — both share the same
@@ -456,7 +458,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
         always mounts after the open Modal) puts it on top, same as native
         window.confirm() always did. Scoped to this call site — no other
         screen currently combines an open <Modal> with useConfirmDialog(). */}
-    {createPortal(duplicateConfirmDialog, document.body)}
+      {createPortal(duplicateConfirmDialog, document.body)}
     </>
   );
 };

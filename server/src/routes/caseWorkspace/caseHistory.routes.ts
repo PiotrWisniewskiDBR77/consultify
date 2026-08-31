@@ -22,8 +22,8 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/caseHistoryService.js';
 import { requireCaseAccessForActor } from './_shared/access.js';
-import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
+import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
 
 const router = Router();
@@ -162,7 +162,10 @@ router.get(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(caseIdParams, req.params);
     const query = parseQuery(
-      z.object({ metricKey: z.string().trim().min(1).optional(), status: valueMeasurementStatusEnum.optional() }),
+      z.object({
+        metricKey: z.string().trim().min(1).optional(),
+        status: valueMeasurementStatusEnum.optional(),
+      }),
       req.query
     );
     await requireCaseAccessForActor(actor, params.caseId);
@@ -175,9 +178,16 @@ router.get(
 router.get(
   '/cases/:caseId/value-measurements/metric/:metricKey',
   caseWorkspaceHandler(async (req, res, actor) => {
-    const params = parseParams(caseIdParams.merge(z.object({ metricKey: z.string().trim().min(1) })), req.params);
+    const params = parseParams(
+      caseIdParams.merge(z.object({ metricKey: z.string().trim().min(1) })),
+      req.params
+    );
     await requireCaseAccessForActor(actor, params.caseId);
-    const items = await svc.listValueMeasurementsForMetric(params.caseId, params.metricKey, actor.actorUserId);
+    const items = await svc.listValueMeasurementsForMetric(
+      params.caseId,
+      params.metricKey,
+      actor.actorUserId
+    );
     res.status(200).json({ data: items });
   })
 );

@@ -110,7 +110,10 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
             title={t('presentations.builder.cardToolbar.background', 'Background')}
-            aria-label={t('presentations.builder.cardToolbar.chooseBackground', 'Choose slide background')}
+            aria-label={t(
+              'presentations.builder.cardToolbar.chooseBackground',
+              'Choose slide background'
+            )}
           >
             <Palette size={14} />
           </button>
@@ -172,7 +175,10 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
               : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
           title={t('presentations.builder.cardToolbar.animations', 'Animations')}
-          aria-label={t('presentations.builder.cardToolbar.toggleAnimations', 'Toggle block animations')}
+          aria-label={t(
+            'presentations.builder.cardToolbar.toggleAnimations',
+            'Toggle block animations'
+          )}
         >
           <Sparkles size={14} />
         </button>

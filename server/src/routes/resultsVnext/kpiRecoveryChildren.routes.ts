@@ -12,17 +12,17 @@ import { requireResultsInternalBetaVisibility } from '../../middleware/resultsIn
 import { validateBody, validateParams } from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
+  closeRecoveryCard,
+  progressRecoveryCard,
+  updateRecoveryCard,
+} from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
+import {
   createRecoveryAction,
   createRecoveryCheckpoint,
   linkRecoveryActionTask,
   resolveRecoveryCheckpoint,
   updateRecoveryAction,
 } from '../../services/resultsVnext/kpi/kpiRecoveryChildCommands.js';
-import {
-  closeRecoveryCard,
-  progressRecoveryCard,
-  updateRecoveryCard,
-} from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
 import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
@@ -33,7 +33,13 @@ import logger from '../../utils/Logger.js';
 import { getCorrelationId } from './correlationId.js';
 
 const router = Router();
-router.use(apiAuthRateLimiter, verifyToken, requireOrgAccess(), requireResultsInternalBetaVisibility, demoContextMiddleware);
+router.use(
+  apiAuthRateLimiter,
+  verifyToken,
+  requireOrgAccess(),
+  requireResultsInternalBetaVisibility,
+  demoContextMiddleware
+);
 
 const CardParams = z.object({ cardId: z.string().min(1).max(200) });
 const ActionParams = CardParams.extend({ actionId: z.string().min(1).max(200) });
@@ -49,14 +55,17 @@ const CreateAction = z.object({
   dueDate: z.string().date().nullable().optional(),
   idempotencyKey: Idempotency,
 });
-const UpdateAction = z.object({
-  expectedVersion: Version,
-  status: z.enum(['OPEN', 'DONE', 'CANCELLED']).optional(),
-  ownerUserId: z.string().trim().min(1).max(200).nullable().optional(),
-  dueDate: z.string().date().nullable().optional(),
-  idempotencyKey: Idempotency,
-}).refine((v) => v.status !== undefined || v.ownerUserId !== undefined || v.dueDate !== undefined,
-  { message: 'At least one action field is required' });
+const UpdateAction = z
+  .object({
+    expectedVersion: Version,
+    status: z.enum(['OPEN', 'DONE', 'CANCELLED']).optional(),
+    ownerUserId: z.string().trim().min(1).max(200).nullable().optional(),
+    dueDate: z.string().date().nullable().optional(),
+    idempotencyKey: Idempotency,
+  })
+  .refine((v) => v.status !== undefined || v.ownerUserId !== undefined || v.dueDate !== undefined, {
+    message: 'At least one action field is required',
+  });
 const LinkTask = z.object({ expectedVersion: Version, idempotencyKey: Idempotency });
 const CreateCheckpoint = z.object({
   checkpointDate: z.string().date(),
@@ -69,31 +78,62 @@ const ResolveCheckpoint = z.object({
   kpiTimeSeriesId: z.string().trim().min(1).max(200).nullable().optional(),
   idempotencyKey: Idempotency,
 });
-const UpdateCard = z.object({
-  expectedVersion: Version,
-  hypothesis: z.string().max(10000).nullable().optional(),
-  confirmedCause: z.string().max(10000).nullable().optional(),
-  impactDescription: z.string().max(10000).nullable().optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
-  expectedImpact: z.string().max(10000).nullable().optional(),
-  dependencies: z.array(z.object({ description: z.string().trim().min(1), relatedId: z.string().optional(), note: z.string().optional() })).max(50).optional(),
-  risks: z.array(z.object({ description: z.string().trim().min(1), relatedId: z.string().optional(), note: z.string().optional() })).max(50).optional(),
-  expectedRecoveryDate: z.string().date().nullable().optional(),
-  effectivenessCriteria: z.string().max(10000).nullable().optional(),
-  idempotencyKey: Idempotency,
-}).refine((v) => v.hypothesis !== undefined || v.confirmedCause !== undefined ||
-  v.impactDescription !== undefined || v.priority !== undefined || v.expectedImpact !== undefined ||
-  v.dependencies !== undefined || v.risks !== undefined || v.expectedRecoveryDate !== undefined ||
-  v.effectivenessCriteria !== undefined, { message: 'At least one recovery-card field is required' });
-const CloseCard = z.object({
-  expectedVersion: Version,
-  evidenceText: z.string().trim().max(10000).nullable().optional(),
-  evidenceRef: z.string().trim().max(2000).nullable().optional(),
-  effectivenessRating: z.enum(['EFFECTIVE', 'PARTIALLY_EFFECTIVE', 'INEFFECTIVE']),
-  idempotencyKey: Idempotency,
-}).refine((value) => Boolean(value.evidenceText || value.evidenceRef), {
-  message: 'Evidence text or reference is required',
-});
+const UpdateCard = z
+  .object({
+    expectedVersion: Version,
+    hypothesis: z.string().max(10000).nullable().optional(),
+    confirmedCause: z.string().max(10000).nullable().optional(),
+    impactDescription: z.string().max(10000).nullable().optional(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+    expectedImpact: z.string().max(10000).nullable().optional(),
+    dependencies: z
+      .array(
+        z.object({
+          description: z.string().trim().min(1),
+          relatedId: z.string().optional(),
+          note: z.string().optional(),
+        })
+      )
+      .max(50)
+      .optional(),
+    risks: z
+      .array(
+        z.object({
+          description: z.string().trim().min(1),
+          relatedId: z.string().optional(),
+          note: z.string().optional(),
+        })
+      )
+      .max(50)
+      .optional(),
+    expectedRecoveryDate: z.string().date().nullable().optional(),
+    effectivenessCriteria: z.string().max(10000).nullable().optional(),
+    idempotencyKey: Idempotency,
+  })
+  .refine(
+    (v) =>
+      v.hypothesis !== undefined ||
+      v.confirmedCause !== undefined ||
+      v.impactDescription !== undefined ||
+      v.priority !== undefined ||
+      v.expectedImpact !== undefined ||
+      v.dependencies !== undefined ||
+      v.risks !== undefined ||
+      v.expectedRecoveryDate !== undefined ||
+      v.effectivenessCriteria !== undefined,
+    { message: 'At least one recovery-card field is required' }
+  );
+const CloseCard = z
+  .object({
+    expectedVersion: Version,
+    evidenceText: z.string().trim().max(10000).nullable().optional(),
+    evidenceRef: z.string().trim().max(2000).nullable().optional(),
+    effectivenessRating: z.enum(['EFFECTIVE', 'PARTIALLY_EFFECTIVE', 'INEFFECTIVE']),
+    idempotencyKey: Idempotency,
+  })
+  .refine((value) => Boolean(value.evidenceText || value.evidenceRef), {
+    message: 'Evidence text or reference is required',
+  });
 const ProgressCard = z.object({
   expectedVersion: Version,
   decision: z.enum(['CONTINUE', 'ESCALATE']),
@@ -116,22 +156,30 @@ async function context(req: AuthenticatedRequest, a: NonNullable<ReturnType<type
     organizationId: a.organizationId,
     actorUserId: a.userId,
     actorEffectiveRole: a.role,
-    access: await resolveEffectiveAccess({ userId: a.userId, organizationId: a.organizationId,
-      applicationRole: req.user?.role }),
+    access: await resolveEffectiveAccess({
+      userId: a.userId,
+      organizationId: a.organizationId,
+      applicationRole: req.user?.role,
+    }),
     correlationId: getCorrelationId(req),
   };
 }
 
-function key(value?: string): string { return value?.trim() || randomUUID(); }
+function key(value?: string): string {
+  return value?.trim() || randomUUID();
+}
 function fail(res: Response, err: unknown, op: string): void {
   if (err instanceof CommandCapabilityDeniedError) {
-    res.status(403).json({ error: err.message, code: err.code }); return;
+    res.status(403).json({ error: err.message, code: err.code });
+    return;
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
-    res.status(404).json({ error: 'Recovery resource not found', code: 'NOT_FOUND' }); return;
+    res.status(404).json({ error: 'Recovery resource not found', code: 'NOT_FOUND' });
+    return;
   }
   if (err instanceof AtomicWriteConflictError) {
-    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) }); return;
+    res.status(409).json({ error: err.message, code: err.code, ...(err.details || {}) });
+    return;
   }
   logger.error(`[resultsVnext/kpiRecoveryChildren] ${op} failed`, {
     error: err instanceof Error ? err.message : String(err),
@@ -139,93 +187,204 @@ function fail(res: Response, err: unknown, op: string): void {
   res.status(500).json({ error: 'Internal server error', code: 'RECOVERY_CHILD_INTERNAL_ERROR' });
 }
 
-router.patch('/:cardId', validateParams(CardParams), validateBody(UpdateCard), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof UpdateCard>;
-    const { expectedVersion, idempotencyKey, ...patch } = b;
-    const outcome = await updateRecoveryCard({ ...(await context(req, a)), cardId: req.params.cardId!,
-      expectedVersion, patch, idempotencyKey: key(idempotencyKey) });
-    res.status(200).json({ ...outcome, card: outcome.result });
-  } catch (err) { fail(res, err, 'updateRecoveryCard'); }
-});
+router.patch(
+  '/:cardId',
+  validateParams(CardParams),
+  validateBody(UpdateCard),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof UpdateCard>;
+      const { expectedVersion, idempotencyKey, ...patch } = b;
+      const outcome = await updateRecoveryCard({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        expectedVersion,
+        patch,
+        idempotencyKey: key(idempotencyKey),
+      });
+      res.status(200).json({ ...outcome, card: outcome.result });
+    } catch (err) {
+      fail(res, err, 'updateRecoveryCard');
+    }
+  }
+);
 
-router.post('/:cardId/close', validateParams(CardParams), validateBody(CloseCard), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof CloseCard>;
-    const outcome = await closeRecoveryCard({ ...(await context(req, a)), cardId: req.params.cardId!,
-      expectedVersion: b.expectedVersion, evidenceText: b.evidenceText,
-      evidenceRef: b.evidenceRef, effectivenessRating: b.effectivenessRating,
-      idempotencyKey: key(b.idempotencyKey) });
-    res.status(200).json({ ...outcome, card: outcome.result });
-  } catch (err) { fail(res, err, 'closeRecoveryCard'); }
-});
+router.post(
+  '/:cardId/close',
+  validateParams(CardParams),
+  validateBody(CloseCard),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof CloseCard>;
+      const outcome = await closeRecoveryCard({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        expectedVersion: b.expectedVersion,
+        evidenceText: b.evidenceText,
+        evidenceRef: b.evidenceRef,
+        effectivenessRating: b.effectivenessRating,
+        idempotencyKey: key(b.idempotencyKey),
+      });
+      res.status(200).json({ ...outcome, card: outcome.result });
+    } catch (err) {
+      fail(res, err, 'closeRecoveryCard');
+    }
+  }
+);
 
-router.post('/:cardId/continue', validateParams(CardParams), validateBody(ProgressCard), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof ProgressCard>;
-    const outcome = await progressRecoveryCard({ ...(await context(req, a)), cardId: req.params.cardId!,
-      expectedVersion: b.expectedVersion, decision: b.decision, note: b.note,
-      idempotencyKey: key(b.idempotencyKey) });
-    res.status(200).json({ ...outcome, card: outcome.result });
-  } catch (err) { fail(res, err, 'progressRecoveryCard'); }
-});
+router.post(
+  '/:cardId/continue',
+  validateParams(CardParams),
+  validateBody(ProgressCard),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof ProgressCard>;
+      const outcome = await progressRecoveryCard({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        expectedVersion: b.expectedVersion,
+        decision: b.decision,
+        note: b.note,
+        idempotencyKey: key(b.idempotencyKey),
+      });
+      res.status(200).json({ ...outcome, card: outcome.result });
+    } catch (err) {
+      fail(res, err, 'progressRecoveryCard');
+    }
+  }
+);
 
-router.post('/:cardId/actions', validateParams(CardParams), validateBody(CreateAction), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof CreateAction>;
-    const outcome = await createRecoveryAction({ ...(await context(req, a)), cardId: req.params.cardId!,
-      actionType: b.actionType, title: b.title, description: b.description,
-      ownerUserId: b.ownerUserId, dueDate: b.dueDate, idempotencyKey: key(b.idempotencyKey) });
-    res.status(outcome.outcome === 'applied' ? 201 : 200).json({ ...outcome, action: outcome.result });
-  } catch (err) { fail(res, err, 'createRecoveryAction'); }
-});
+router.post(
+  '/:cardId/actions',
+  validateParams(CardParams),
+  validateBody(CreateAction),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof CreateAction>;
+      const outcome = await createRecoveryAction({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        actionType: b.actionType,
+        title: b.title,
+        description: b.description,
+        ownerUserId: b.ownerUserId,
+        dueDate: b.dueDate,
+        idempotencyKey: key(b.idempotencyKey),
+      });
+      res
+        .status(outcome.outcome === 'applied' ? 201 : 200)
+        .json({ ...outcome, action: outcome.result });
+    } catch (err) {
+      fail(res, err, 'createRecoveryAction');
+    }
+  }
+);
 
-router.patch('/:cardId/actions/:actionId', validateParams(ActionParams), validateBody(UpdateAction), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof UpdateAction>;
-    const outcome = await updateRecoveryAction({ ...(await context(req, a)), cardId: req.params.cardId!,
-      actionId: req.params.actionId!, expectedVersion: b.expectedVersion, status: b.status,
-      ownerUserId: b.ownerUserId, dueDate: b.dueDate, idempotencyKey: key(b.idempotencyKey) });
-    res.status(200).json({ ...outcome, action: outcome.result });
-  } catch (err) { fail(res, err, 'updateRecoveryAction'); }
-});
+router.patch(
+  '/:cardId/actions/:actionId',
+  validateParams(ActionParams),
+  validateBody(UpdateAction),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof UpdateAction>;
+      const outcome = await updateRecoveryAction({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        actionId: req.params.actionId!,
+        expectedVersion: b.expectedVersion,
+        status: b.status,
+        ownerUserId: b.ownerUserId,
+        dueDate: b.dueDate,
+        idempotencyKey: key(b.idempotencyKey),
+      });
+      res.status(200).json({ ...outcome, action: outcome.result });
+    } catch (err) {
+      fail(res, err, 'updateRecoveryAction');
+    }
+  }
+);
 
-router.post('/:cardId/actions/:actionId/link-task', validateParams(ActionParams), validateBody(LinkTask), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof LinkTask>;
-    const outcome = await linkRecoveryActionTask({ ...(await context(req, a)), cardId: req.params.cardId!,
-      actionId: req.params.actionId!, expectedVersion: b.expectedVersion,
-      idempotencyKey: key(b.idempotencyKey) });
-    res.status(200).json({ ...outcome, ...outcome.result });
-  } catch (err) { fail(res, err, 'linkRecoveryActionTask'); }
-});
+router.post(
+  '/:cardId/actions/:actionId/link-task',
+  validateParams(ActionParams),
+  validateBody(LinkTask),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof LinkTask>;
+      const outcome = await linkRecoveryActionTask({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        actionId: req.params.actionId!,
+        expectedVersion: b.expectedVersion,
+        idempotencyKey: key(b.idempotencyKey),
+      });
+      res.status(200).json({ ...outcome, ...outcome.result });
+    } catch (err) {
+      fail(res, err, 'linkRecoveryActionTask');
+    }
+  }
+);
 
-router.post('/:cardId/checkpoints', validateParams(CardParams), validateBody(CreateCheckpoint), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof CreateCheckpoint>;
-    const outcome = await createRecoveryCheckpoint({ ...(await context(req, a)), cardId: req.params.cardId!,
-      checkpointDate: b.checkpointDate, notes: b.notes, idempotencyKey: key(b.idempotencyKey) });
-    res.status(outcome.outcome === 'applied' ? 201 : 200).json({ ...outcome, checkpoint: outcome.result });
-  } catch (err) { fail(res, err, 'createRecoveryCheckpoint'); }
-});
+router.post(
+  '/:cardId/checkpoints',
+  validateParams(CardParams),
+  validateBody(CreateCheckpoint),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof CreateCheckpoint>;
+      const outcome = await createRecoveryCheckpoint({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        checkpointDate: b.checkpointDate,
+        notes: b.notes,
+        idempotencyKey: key(b.idempotencyKey),
+      });
+      res
+        .status(outcome.outcome === 'applied' ? 201 : 200)
+        .json({ ...outcome, checkpoint: outcome.result });
+    } catch (err) {
+      fail(res, err, 'createRecoveryCheckpoint');
+    }
+  }
+);
 
-router.patch('/:cardId/checkpoints/:checkpointId', validateParams(CheckpointParams), validateBody(ResolveCheckpoint), async (req: AuthenticatedRequest, res) => {
-  const a = auth(req, res); if (!a) return;
-  try {
-    const b = req.body as z.infer<typeof ResolveCheckpoint>;
-    const outcome = await resolveRecoveryCheckpoint({ ...(await context(req, a)), cardId: req.params.cardId!,
-      checkpointId: req.params.checkpointId!, expectedVersion: b.expectedVersion,
-      status: b.status, kpiTimeSeriesId: b.kpiTimeSeriesId,
-      idempotencyKey: key(b.idempotencyKey) });
-    res.status(200).json({ ...outcome, checkpoint: outcome.result });
-  } catch (err) { fail(res, err, 'resolveRecoveryCheckpoint'); }
-});
+router.patch(
+  '/:cardId/checkpoints/:checkpointId',
+  validateParams(CheckpointParams),
+  validateBody(ResolveCheckpoint),
+  async (req: AuthenticatedRequest, res) => {
+    const a = auth(req, res);
+    if (!a) return;
+    try {
+      const b = req.body as z.infer<typeof ResolveCheckpoint>;
+      const outcome = await resolveRecoveryCheckpoint({
+        ...(await context(req, a)),
+        cardId: req.params.cardId!,
+        checkpointId: req.params.checkpointId!,
+        expectedVersion: b.expectedVersion,
+        status: b.status,
+        kpiTimeSeriesId: b.kpiTimeSeriesId,
+        idempotencyKey: key(b.idempotencyKey),
+      });
+      res.status(200).json({ ...outcome, checkpoint: outcome.result });
+    } catch (err) {
+      fail(res, err, 'resolveRecoveryCheckpoint');
+    }
+  }
+);
 
 export default router;

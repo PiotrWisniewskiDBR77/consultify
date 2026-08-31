@@ -59,7 +59,9 @@ describe('normSourceService', () => {
     expect(updated.title).toBe('Źródło zaktualizowane');
 
     await deleteSource(actorA, created.id);
-    await expect(getSource(actorA.organizationId, created.id)).rejects.toThrow(/nie został znaleziony/);
+    await expect(getSource(actorA.organizationId, created.id)).rejects.toThrow(
+      /nie został znaleziony/
+    );
     // Usunięte — nie sprzątamy go drugi raz.
     cleanupSourceIds.pop();
   });
@@ -71,7 +73,9 @@ describe('normSourceService', () => {
     });
     cleanupSourceIds.push(created.id);
 
-    await expect(getSource(actorB.organizationId, created.id)).rejects.toThrow(/nie został znaleziony/);
+    await expect(getSource(actorB.organizationId, created.id)).rejects.toThrow(
+      /nie został znaleziony/
+    );
 
     const listForB = await listSources(actorB.organizationId, {});
     expect(listForB.items.some((s) => s.id === created.id)).toBe(false);
@@ -91,7 +95,7 @@ describe('normSourceService', () => {
 
     // Brak source_version, publisher i rights_status nieuprawniający — blokada.
     await expect(
-      verifySource(actorA, created.id, { verificationStatus: 'VERIFIED' }),
+      verifySource(actorA, created.id, { verificationStatus: 'VERIFIED' })
     ).rejects.toThrow(/AUDIT_SOURCE_NOT_VERIFIABLE|nie można oznaczyć/i);
 
     // Uzupełniamy brakujące pola.
@@ -122,11 +126,13 @@ describe('normSourceService', () => {
       `INSERT INTO audit_packs
          (id, organization_id, pack_key, version, title, source_id, classification, publication_status)
        VALUES ($1,$2,$3,1,$4,$5,'DEMONSTRATION','published')`,
-      [packId, actorA.organizationId, `pack-key-${packId}`, 'Pakiet używający źródła', created.id],
+      [packId, actorA.organizationId, `pack-key-${packId}`, 'Pakiet używający źródła', created.id]
     );
     cleanupPackIds.push(packId);
 
-    await expect(deleteSource(actorA, created.id)).rejects.toThrow(/wykorzystywane przez opublikowany pakiet/);
+    await expect(deleteSource(actorA, created.id)).rejects.toThrow(
+      /wykorzystywane przez opublikowany pakiet/
+    );
 
     // Po usunięciu pakietu usunięcie źródła powinno się udać.
     await auditRun(`DELETE FROM audit_packs WHERE id = $1`, [packId]);
@@ -142,7 +148,7 @@ describe('normSourceService', () => {
         title: 'Zły rodzaj',
         // @ts-expect-error celowo nieprawidłowa wartość
         sourceKind: 'not_a_real_kind',
-      }),
+      })
     ).rejects.toThrow(/Nieznany rodzaj źródła/);
   });
 });

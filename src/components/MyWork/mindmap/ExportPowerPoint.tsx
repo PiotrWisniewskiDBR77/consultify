@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
-
 import { Api } from '@/services/api';
 
 import { isMindmapPptxNativeEnabled } from './mindmapExportFlags';
@@ -44,7 +43,10 @@ function generateSlideHTML(
   const ideasLabel = t('ideas.mindmap.ideas', 'ideas');
   const noIdeasYetLabel = t('ideas.mindmap.noIdeasYet', 'No ideas yet');
   const summaryLabel = t('ideas.mindmap.summary', 'Summary');
-  const presentationTitleLabel = t('ideas.mindmap.mindMapPresentationTitle', 'Mind Map Presentation');
+  const presentationTitleLabel = t(
+    'ideas.mindmap.mindMapPresentationTitle',
+    'Mind Map Presentation'
+  );
 
   const slides = [
     `<div style="page-break-after:always;padding:60px;min-height:700px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#f59e0b22,#f59e0b11);">
@@ -185,7 +187,10 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
         <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Presentation size={16} className="text-c-info" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="export-power-point-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="export-power-point-modal-heading"
+            >
               {t('ideas.mindmap.exportPresentation', 'Export Presentation')}
             </h3>
           </div>

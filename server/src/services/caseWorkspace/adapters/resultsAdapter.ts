@@ -120,27 +120,35 @@
  */
 
 import {
-  CapabilityHandlerError,
-  registerCapabilityBinding,
-  registerCapabilityWithAdapter,
-  type CapabilityExecutionEnvelope,
-  type InternalCommandBinding,
-} from '../capabilityAdapterService.js';
-import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
-import * as artifactLinkService from '../artifactLinkService.js';
-import {
   createScorecard,
-  getScorecard,
   type CreateScorecardInput,
+  getScorecard,
   type KpiScorecardRow,
 } from '../../results/kpiScorecardService.js';
-import { attachArtifactLink, requireNonBlankInput, resolveCaseContext, resultRefFor } from './_shared.js';
+import * as artifactLinkService from '../artifactLinkService.js';
+import {
+  type CapabilityExecutionEnvelope,
+  CapabilityHandlerError,
+  type InternalCommandBinding,
+  registerCapabilityBinding,
+  registerCapabilityWithAdapter,
+} from '../capabilityAdapterService.js';
+import type { RegisterCapabilityInput } from '../capabilityRegistryService.js';
+import {
+  attachArtifactLink,
+  requireNonBlankInput,
+  resolveCaseContext,
+  resultRefFor,
+} from './_shared.js';
 
 export const RESULTS_SCORECARD_CREATE_CAPABILITY_ID = 'case-workspace.results.scorecard.create';
 export const RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION = '1.0.0';
 
 export interface ResultsAdapterDeps {
-  createScorecard?: (organizationId: string, data: CreateScorecardInput) => Promise<KpiScorecardRow>;
+  createScorecard?: (
+    organizationId: string,
+    data: CreateScorecardInput
+  ) => Promise<KpiScorecardRow>;
   getScorecard?: (
     organizationId: string,
     scorecardId: string
@@ -152,7 +160,9 @@ function readOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
-export function buildResultsScorecardCreateBinding(deps: ResultsAdapterDeps = {}): InternalCommandBinding {
+export function buildResultsScorecardCreateBinding(
+  deps: ResultsAdapterDeps = {}
+): InternalCommandBinding {
   const create = deps.createScorecard ?? createScorecard;
   const read = deps.getScorecard ?? getScorecard;
 
@@ -185,7 +195,9 @@ export function buildResultsScorecardCreateBinding(deps: ResultsAdapterDeps = {}
         // periodStart/periodEnd the `date` column rejects), never OUR bug.
         throw new CapabilityHandlerError(
           'CAPABILITY_INPUT_INVALID',
-          error instanceof Error ? error.name || 'results_scorecard_create_rejected' : 'results_scorecard_create_rejected'
+          error instanceof Error
+            ? error.name || 'results_scorecard_create_rejected'
+            : 'results_scorecard_create_rejected'
         );
       }
 
@@ -224,7 +236,9 @@ export function buildResultsScorecardCreateBinding(deps: ResultsAdapterDeps = {}
       };
     },
     validateOutput: (output) =>
-      typeof output.scorecardId === 'string' && output.scorecardId.length > 0 && typeof output.status === 'string',
+      typeof output.scorecardId === 'string' &&
+      output.scorecardId.length > 0 &&
+      typeof output.status === 'string',
   };
 }
 
@@ -238,7 +252,9 @@ export function registerResultsScorecardCreateAdapterBinding(deps: ResultsAdapte
 }
 
 /** The registry row this capability registers as, per doc 05 §5's CapabilityDefinition. */
-export function resultsScorecardCreateRegistrationInput(createdByActorId: string): RegisterCapabilityInput {
+export function resultsScorecardCreateRegistrationInput(
+  createdByActorId: string
+): RegisterCapabilityInput {
   return {
     capabilityId: RESULTS_SCORECARD_CREATE_CAPABILITY_ID,
     capabilityVersion: RESULTS_SCORECARD_CREATE_CAPABILITY_VERSION,

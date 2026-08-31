@@ -203,9 +203,15 @@ suite('CW-T-A — Case Identity: Cardinality and Name (integration, real Postgre
     return userId;
   }
 
-  async function teardown(orgIds: string[], projectIds: string[], userIds: string[]): Promise<void> {
+  async function teardown(
+    orgIds: string[],
+    projectIds: string[],
+    userIds: string[]
+  ): Promise<void> {
     for (const projectId of projectIds) {
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of userIds) {
@@ -215,7 +221,9 @@ suite('CW-T-A — Case Identity: Cardinality and Name (integration, real Postgre
       await control
         .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
         .catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -253,7 +261,10 @@ suite('CW-T-A — Case Identity: Cardinality and Name (integration, real Postgre
     order: intake.WorkOrderDraftInput,
     actorId: string
   ): Promise<intake.ConfirmWorkOrderResult> {
-    const proposal = await intake.proposeWorkOrder({ workOrder: order, proposedByActorId: actorId });
+    const proposal = await intake.proposeWorkOrder({
+      workOrder: order,
+      proposedByActorId: actorId,
+    });
     return intake.confirmWorkOrder({
       workOrder: order,
       confirmedDigest: proposal.workOrderDigest,
@@ -307,7 +318,10 @@ suite('CW-T-A — Case Identity: Cardinality and Name (integration, real Postgre
     const actorId = await seedMemberedUser(orgId, 'retry');
     try {
       const order = orderOne(orgId, projectId);
-      const proposal = await intake.proposeWorkOrder({ workOrder: order, proposedByActorId: actorId });
+      const proposal = await intake.proposeWorkOrder({
+        workOrder: order,
+        proposedByActorId: actorId,
+      });
 
       const first = await intake.confirmWorkOrder({
         workOrder: order,
@@ -353,7 +367,10 @@ suite('CW-T-A — Case Identity: Cardinality and Name (integration, real Postgre
     const actorId = await seedMemberedUser(orgId, 'race-same');
     try {
       const order = orderOne(orgId, projectId);
-      const proposal = await intake.proposeWorkOrder({ workOrder: order, proposedByActorId: actorId });
+      const proposal = await intake.proposeWorkOrder({
+        workOrder: order,
+        proposedByActorId: actorId,
+      });
 
       const [a, b] = await Promise.all([
         intake.confirmWorkOrder({
@@ -511,7 +528,11 @@ suite('CW-T-A — Case Identity: Cardinality and Name (integration, real Postgre
       );
       expect(Number(attackerOrgEvents.rows[0]?.n ?? -1)).toBe(0);
     } finally {
-      await teardown([victim.orgId, attackerOrg.orgId], [victim.projectId, attackerOrg.projectId], [attacker]);
+      await teardown(
+        [victim.orgId, attackerOrg.orgId],
+        [victim.projectId, attackerOrg.projectId],
+        [attacker]
+      );
     }
   }, 60_000);
 
@@ -532,7 +553,9 @@ suite('CW-T-A — Case Identity: Cardinality and Name (integration, real Postgre
       await expect(
         intake.confirmWorkOrder({
           workOrder: orderOne(orgId, projectId),
-          confirmedDigest: intake.computeWorkOrderDigest(intake.normalizeWorkOrder(orderOne(orgId, projectId))),
+          confirmedDigest: intake.computeWorkOrderDigest(
+            intake.normalizeWorkOrder(orderOne(orgId, projectId))
+          ),
           confirmedByActorId: revokedActor,
         })
       ).rejects.toMatchObject({ code: 'not_org_member' });

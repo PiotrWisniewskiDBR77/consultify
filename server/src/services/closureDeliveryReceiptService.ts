@@ -68,7 +68,10 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { type PgTransactionClient, withPgTransaction } from '../utils/queryHelpers.js';
 import { CLOSURE_HANDOFF_SOURCE, handoffFromClosure } from './executionResultsBridge.js';
 import { observeWriter } from './results/resultsWriterObservationService.js';
-import { ClosureReceiptRoiBindingError, ensureRoiCaseForClosureReceipt } from './resultsVnext/roi/closureReceiptRoiCaseAdapter.js';
+import {
+  ClosureReceiptRoiBindingError,
+  ensureRoiCaseForClosureReceipt,
+} from './resultsVnext/roi/closureReceiptRoiCaseAdapter.js';
 
 const LOG_PREFIX = '[ClosureDeliveryReceipt]';
 
@@ -79,7 +82,13 @@ function closureRoiBindingEnabled(): boolean {
 export const SYSTEM_ACTOR_LABEL = 'system:exe-009-closure-receipt';
 
 export type ResultsStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'FAILED' | 'DEAD_LETTER';
-export type FinanceStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'FAILED' | 'NEEDS_DECISION' | 'DEAD_LETTER';
+export type FinanceStatus =
+  | 'PENDING'
+  | 'DELIVERING'
+  | 'DELIVERED'
+  | 'FAILED'
+  | 'NEEDS_DECISION'
+  | 'DEAD_LETTER';
 
 export interface ClosureDeliveryReceipt {
   id: string;
@@ -204,19 +213,21 @@ export async function createReceiptOnClosure(
  * not pass through the transition transaction. The deterministic id makes
  * repeated seeding a replay, never a second closure event. */
 export async function ensureReceiptForMaterializedDone(
-  organizationId:string,initiativeId:string,actorId:string|null
-):Promise<string>{
-  const receiptId=`materialized-done:${organizationId}:${initiativeId}`;
+  organizationId: string,
+  initiativeId: string,
+  actorId: string | null
+): Promise<string> {
+  const receiptId = `materialized-done:${organizationId}:${initiativeId}`;
   await queryHelpers.queryRun(
     `INSERT INTO closure_delivery_receipts
       (id,organization_id,initiative_id,transition_audit_ref,actor_id,actor_label)
      SELECT ?,i.organization_id,i.id,?,?,?
        FROM initiatives i WHERE i.id=? AND i.organization_id=? AND UPPER(i.status)='DONE'
      ON CONFLICT (id) DO NOTHING`,
-    [receiptId,receiptId,actorId,SYSTEM_ACTOR_LABEL,initiativeId,organizationId]
+    [receiptId, receiptId, actorId, SYSTEM_ACTOR_LABEL, initiativeId, organizationId]
   );
-  const receipt=await getReceiptById(receiptId,organizationId);
-  if(!receipt) throw new Error(`${LOG_PREFIX} materialized DONE receipt was not persisted`);
+  const receipt = await getReceiptById(receiptId, organizationId);
+  if (!receipt) throw new Error(`${LOG_PREFIX} materialized DONE receipt was not persisted`);
   return receiptId;
 }
 
@@ -499,11 +510,15 @@ export async function attemptDeliveryInternal(
          finance_status='DEAD_LETTER',dead_lettered_at=CURRENT_TIMESTAMP,
          results_last_error=?,finance_last_error=?,next_retry_at=NULL,updated_at=CURRENT_TIMESTAMP
        WHERE id=?`,
-      [`unsupported_closure_payload_version:${receipt.payload_version}`,
-       `unsupported_closure_payload_version:${receipt.payload_version}`,receiptId]
+      [
+        `unsupported_closure_payload_version:${receipt.payload_version}`,
+        `unsupported_closure_payload_version:${receipt.payload_version}`,
+        receiptId,
+      ]
     );
-    const unsupported=await queryHelpers.queryOne<ReceiptRow>(
-      `SELECT * FROM closure_delivery_receipts WHERE id=?`,[receiptId]
+    const unsupported = await queryHelpers.queryOne<ReceiptRow>(
+      `SELECT * FROM closure_delivery_receipts WHERE id=?`,
+      [receiptId]
     );
     return toReceipt(unsupported as ReceiptRow);
   }
@@ -682,27 +697,36 @@ export async function attemptDeliveryInternal(
         [JSON.stringify({ roiCaseId: binding.result.case.caseId }), receiptId, organizationId]
       );
     } catch (err) {
-      if (err instanceof ClosureReceiptRoiBindingError && err.code === 'CLOSURE_RECEIPT_ACTOR_REQUIRED') {
+      if (
+        err instanceof ClosureReceiptRoiBindingError &&
+        err.code === 'CLOSURE_RECEIPT_ACTOR_REQUIRED'
+      ) {
         await queryHelpers.queryRun(
           `UPDATE closure_delivery_receipts
               SET finance_payload = COALESCE(finance_payload, '{}'::jsonb) || ?::jsonb,
                   next_retry_at = NULL,
                   updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND organization_id = ?`,
-          [JSON.stringify({ roiBindingDisposition: 'NON_BINDABLE_MISSING_ACTOR' }), receiptId, organizationId]
+          [
+            JSON.stringify({ roiBindingDisposition: 'NON_BINDABLE_MISSING_ACTOR' }),
+            receiptId,
+            organizationId,
+          ]
         );
-        logger.warn(`${LOG_PREFIX} ROI case binding permanently skipped for receipt ${receiptId}: missing actor identity`);
+        logger.warn(
+          `${LOG_PREFIX} ROI case binding permanently skipped for receipt ${receiptId}: missing actor identity`
+        );
       } else {
-      logger.warn(`${LOG_PREFIX} ROI case binding deferred for receipt ${receiptId}`, {
-        message: err instanceof Error ? err.message : String(err),
-      });
-      await queryHelpers.queryRun(
-        `UPDATE closure_delivery_receipts
+        logger.warn(`${LOG_PREFIX} ROI case binding deferred for receipt ${receiptId}`, {
+          message: err instanceof Error ? err.message : String(err),
+        });
+        await queryHelpers.queryRun(
+          `UPDATE closure_delivery_receipts
             SET next_retry_at = COALESCE(next_retry_at, CURRENT_TIMESTAMP),
                 updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND organization_id = ?`,
-        [receiptId, organizationId]
-      );
+          [receiptId, organizationId]
+        );
       }
     }
   }
@@ -801,7 +825,7 @@ export async function redriveDeadLetterForOrg(
        finance_attempts=CASE WHEN finance_status='DEAD_LETTER' THEN 0 ELSE finance_attempts END,
        dead_lettered_at=NULL,next_retry_at=NULL,updated_at=CURRENT_TIMESTAMP
      WHERE id=? AND organization_id=? AND (results_status='DEAD_LETTER' OR finance_status='DEAD_LETTER')`,
-    [receiptId,organizationId]
+    [receiptId, organizationId]
   );
   return attemptDeliveryInternal(receiptId);
 }

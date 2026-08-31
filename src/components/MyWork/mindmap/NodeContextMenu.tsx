@@ -857,7 +857,13 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     // Delete — last, alone, separated (unchanged from before this pass).
     flat.push(
       buildItem(
-        { id: 'ctx_delete', labelEn: 'Delete', icon: Trash2, danger: true, disabled: isLocked || isProtected },
+        {
+          id: 'ctx_delete',
+          labelEn: 'Delete',
+          icon: Trash2,
+          danger: true,
+          disabled: isLocked || isProtected,
+        },
         { separatorBefore: true, shortcutOverride: 'Del' }
       )
     );

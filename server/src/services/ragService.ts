@@ -526,7 +526,11 @@ const RagService = {
     // not waved through). VLT-002 rationale (no userId in this call chain =>
     // exclude Vault-private docs) still holds — the shared filter's owner
     // branch is skipped whenever `userId` is undefined, same net effect.
-    const access = buildKnowledgeDocAccessFilter({ columns: cols, dialect: 'question', documentAlias: 'd' });
+    const access = buildKnowledgeDocAccessFilter({
+      columns: cols,
+      dialect: 'question',
+      documentAlias: 'd',
+    });
     sql += ` AND ${access.sql}`;
     params.push(...access.params);
 
@@ -616,7 +620,11 @@ const RagService = {
     // in production via `searchRelevantChunks`'s error-fallback and
     // `getContext`'s own no-embedding fallback, neither of which threads
     // `userId`/`projectIds` here either.
-    const access = buildKnowledgeDocAccessFilter({ columns: cols, dialect: 'question', documentAlias: 'd' });
+    const access = buildKnowledgeDocAccessFilter({
+      columns: cols,
+      dialect: 'question',
+      documentAlias: 'd',
+    });
     sql += ` AND ${access.sql}`;
     params.push(...access.params);
 
@@ -671,7 +679,14 @@ const RagService = {
     }>
   > => {
     await initDeps();
-    const { limit = 5, organizationId, userId, projectIds, minSimilarity = 0.5, documentIds } = options;
+    const {
+      limit = 5,
+      organizationId,
+      userId,
+      projectIds,
+      minSimilarity = 0.5,
+      documentIds,
+    } = options;
 
     try {
       // Conversation-scoped RAG: if documentIds are provided, bypass embeddingService.search()
@@ -919,7 +934,14 @@ const RagService = {
     const candidateLimit = limit * 3;
     const [bm25Results, vectorResults] = await Promise.all([
       RagService.bm25Search(query, candidateLimit, organizationId, documentIds, userId, projectIds),
-      RagService._vectorSearch(query, candidateLimit, organizationId, documentIds, userId, projectIds),
+      RagService._vectorSearch(
+        query,
+        candidateLimit,
+        organizationId,
+        documentIds,
+        userId,
+        projectIds
+      ),
     ]);
 
     aiLogger.info(

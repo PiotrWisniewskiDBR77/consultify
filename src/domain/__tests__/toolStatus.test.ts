@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   KNOWN_TOOL_STATUS_RAW_VALUES,
   resolveToolStatus,
-  toolStatusLabel,
   type ToolStatusDomain,
+  toolStatusLabel,
 } from '../toolStatus';
 
 /**
@@ -52,7 +52,9 @@ const EXPECTED_DOMAIN_BY_RAW: Record<string, ToolStatusDomain> = {
 
 describe('resolveToolStatus — table-driven round-trip over ALL known values', () => {
   it('the fixture exactly matches the mapper vocabulary (no drift either direction)', () => {
-    expect(new Set(KNOWN_TOOL_STATUS_RAW_VALUES)).toEqual(new Set(Object.keys(EXPECTED_DOMAIN_BY_RAW)));
+    expect(new Set(KNOWN_TOOL_STATUS_RAW_VALUES)).toEqual(
+      new Set(Object.keys(EXPECTED_DOMAIN_BY_RAW))
+    );
   });
 
   for (const raw of KNOWN_TOOL_STATUS_RAW_VALUES) {

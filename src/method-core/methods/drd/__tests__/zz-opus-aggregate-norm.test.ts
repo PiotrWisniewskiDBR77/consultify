@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
+import { describe, expect, it } from 'vitest';
+
 import { DRD_AGGREGATION_VERSION } from '@/method-core/methods/drd/compileDrdPack';
+import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 
 describe('OPUS — aggregate: byGroup natywne, byGroupNorm porownywalne', () => {
   it('★ ta sama LICZBA na osi 1 (1-7) i osi 2 (1-5) daje ROZNE wartosci znormalizowane', () => {

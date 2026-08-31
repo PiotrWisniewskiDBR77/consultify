@@ -4,8 +4,8 @@ vi.mock('../../v8/executionVisibilityService.js', () => ({
   emitSignal: vi.fn(async () => ({ signalId: 'legacy-1' })),
 }));
 
-import { emitSignal } from '../../v8/executionVisibilityService.js';
 import type { RuleHit, SignalRule } from '../../../types/workSignals.js';
+import { emitSignal } from '../../v8/executionVisibilityService.js';
 import { adaptNewExecutionSignal } from '../executionSignalAdapter.js';
 
 const hit: RuleHit = {

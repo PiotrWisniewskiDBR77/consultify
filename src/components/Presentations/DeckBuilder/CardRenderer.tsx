@@ -25,6 +25,7 @@ import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
 import { sanitizeDeckBlock, sanitizeDeckDisplayText } from './deckTextSanitizer';
 import { EditableBlock } from './EditableBlock';
+import { type BlockGeometry, normalizeGeometry, patchGeometry } from './geometryOps';
 import {
   assignBlocksToRegions,
   blockDensityFor,
@@ -33,7 +34,6 @@ import {
   verticalFillMode,
 } from './layouts/LayoutEngine';
 import { blockFrameStyle, blockGeometryStyle } from './manualEditing';
-import { normalizeGeometry, patchGeometry, type BlockGeometry } from './geometryOps';
 import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
 interface CardRendererProps {
@@ -140,7 +140,10 @@ const FreeformBlockFrame: React.FC<{
           <button
             type="button"
             aria-label={t('presentations.builder.freeform.move', 'Move selected block')}
-            title={t('presentations.builder.freeform.moveHint', 'Drag to move; arrow keys move by 1%, Shift by 5%')}
+            title={t(
+              'presentations.builder.freeform.moveHint',
+              'Drag to move; arrow keys move by 1%, Shift by 5%'
+            )}
             onPointerDown={(event) => startPointer(event, 'move')}
             onKeyDown={keyboardMove}
             className="absolute left-1/2 top-0 z-20 h-4 w-10 -translate-x-1/2 -translate-y-1/2 cursor-move rounded-full border border-c-focus bg-c-surface shadow"
@@ -403,10 +406,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
       <div className="absolute inset-0 p-8 flex flex-col overflow-hidden">
         {card.blocks.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
-            <p
-              className="text-lg font-semibold"
-              style={{ color: theme.colors.textPrimary }}
-            >
+            <p className="text-lg font-semibold" style={{ color: theme.colors.textPrimary }}>
               {sanitizeDeckDisplayText(card.title)}
             </p>
           </div>

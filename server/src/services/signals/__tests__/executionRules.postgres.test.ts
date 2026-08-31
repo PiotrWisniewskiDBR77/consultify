@@ -4,11 +4,11 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { SignalQuery, SignalRule } from '../../../types/workSignals.js';
-import { evaluateSignalRules } from '../signalEvaluator.js';
 import { initiativeNoBaselineRule } from '../rules/execution/initiativeNoBaseline.js';
 import { taskBlockedStaleRule } from '../rules/execution/taskBlockedStale.js';
 import { taskDueSoonNotStartedRule } from '../rules/execution/taskDueSoonNotStarted.js';
 import { taskOverdueRule } from '../rules/execution/taskOverdue.js';
+import { evaluateSignalRules } from '../signalEvaluator.js';
 
 const connectionString = process.env.DATABASE_URL;
 const describePg = connectionString ? describe : describe.skip;

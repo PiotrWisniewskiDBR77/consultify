@@ -13,10 +13,10 @@ type ArtifactKnowledgeInput = {
 };
 
 export function inferKnowledgeScope(confidentiality?: string | null): ArtifactKnowledgeScope {
-  const normalized = String(confidentiality || 'internal').trim().toLowerCase();
-  return normalized === 'confidential' || normalized === 'restricted'
-    ? 'user'
-    : 'organization';
+  const normalized = String(confidentiality || 'internal')
+    .trim()
+    .toLowerCase();
+  return normalized === 'confidential' || normalized === 'restricted' ? 'user' : 'organization';
 }
 
 function knowledgeDocumentId(kind: 'document' | 'deck' | 'report', artifactId: string): string {
@@ -127,9 +127,7 @@ export function deckArtifactToKnowledgeMarkdown(deckJson: unknown, unifiedJson?:
 
   if (lines.length === 0) {
     const unified =
-      unifiedJson && typeof unifiedJson === 'object'
-        ? (unifiedJson as Record<string, any>)
-        : null;
+      unifiedJson && typeof unifiedJson === 'object' ? (unifiedJson as Record<string, any>) : null;
     for (const slide of Array.isArray(unified?.slides) ? unified.slides : []) {
       collectText(slide?.key_message, lines);
       collectText(slide?.content, lines);

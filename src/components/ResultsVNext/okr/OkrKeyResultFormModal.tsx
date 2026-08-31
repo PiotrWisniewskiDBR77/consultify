@@ -23,8 +23,8 @@
 import { AlertTriangle, Plus, Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import type {
   OkrKeyResultConfidence,
@@ -84,7 +84,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -155,10 +156,13 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
 
   const titleError = touched && !title.trim();
   const currencyError = touched && measurementType === 'currency' && !currency.trim();
-  const rangeError = touched && direction === 'maintain_range' && (rangeMin.trim() === '' || rangeMax.trim() === '');
-  const confidenceNumericError = touched && confidence === 'numeric' && confidenceNumericValue.trim() === '';
+  const rangeError =
+    touched && direction === 'maintain_range' && (rangeMin.trim() === '' || rangeMax.trim() === '');
+  const confidenceNumericError =
+    touched && confidence === 'numeric' && confidenceNumericValue.trim() === '';
   const ownerMissing = mode === 'create' && !currentUserId;
-  const ownerUserId = mode === 'edit' ? (initial?.ownerUserId ?? currentUserId ?? '') : currentUserId ?? '';
+  const ownerUserId =
+    mode === 'edit' ? (initial?.ownerUserId ?? currentUserId ?? '') : (currentUserId ?? '');
 
   const submitDisabled = busy || ownerMissing || !!blockedReason;
 
@@ -166,7 +170,8 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
     setTouched(true);
     if (!title.trim() || !ownerUserId) return;
     if (measurementType === 'currency' && !currency.trim()) return;
-    if (direction === 'maintain_range' && (rangeMin.trim() === '' || rangeMax.trim() === '')) return;
+    if (direction === 'maintain_range' && (rangeMin.trim() === '' || rangeMax.trim() === ''))
+      return;
     if (confidence === 'numeric' && confidenceNumericValue.trim() === '') return;
     onSubmit({
       ownerUserId,
@@ -197,7 +202,15 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
     <Modal
       open={open}
       onClose={busy ? () => {} : onClose}
-      title={isEdit ? (isPolish ? 'Edytuj Kluczowy Rezultat' : 'Edit Key Result') : isPolish ? 'Nowy Kluczowy Rezultat' : 'New Key Result'}
+      title={
+        isEdit
+          ? isPolish
+            ? 'Edytuj Kluczowy Rezultat'
+            : 'Edit Key Result'
+          : isPolish
+            ? 'Nowy Kluczowy Rezultat'
+            : 'New Key Result'
+      }
       description={
         isEdit
           ? isPolish
@@ -248,7 +261,10 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
             className="flex items-start gap-2 rounded-lg border border-amber-400/50 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-[12px] text-c-text"
             data-testid="okr-kr-form-blocked"
           >
-            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
+            <AlertTriangle
+              size={14}
+              className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300"
+            />
             <span>{blockedReason}</span>
           </div>
         ) : null}
@@ -265,7 +281,11 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
             data-testid="okr-kr-title"
             aria-invalid={titleError || undefined}
           />
-          {titleError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Tytuł jest wymagany' : 'Title is required'}</p> : null}
+          {titleError ? (
+            <p className="mt-1 text-[11px] text-c-danger">
+              {isPolish ? 'Tytuł jest wymagany' : 'Title is required'}
+            </p>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -300,7 +320,9 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
               <option value="increase">{isPolish ? 'Wzrost' : 'Increase'}</option>
               <option value="decrease">{isPolish ? 'Spadek' : 'Decrease'}</option>
               <option value="reach">{isPolish ? 'Osiągnięcie wartości' : 'Reach'}</option>
-              <option value="maintain_range">{isPolish ? 'Utrzymanie zakresu' : 'Maintain range'}</option>
+              <option value="maintain_range">
+                {isPolish ? 'Utrzymanie zakresu' : 'Maintain range'}
+              </option>
               <option value="binary">{isPolish ? 'Binarny (tak/nie)' : 'Binary (yes/no)'}</option>
             </select>
           </div>
@@ -327,7 +349,9 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
             </select>
             {currencyError ? (
               <p className="mt-1 text-[11px] text-c-danger">
-                {isPolish ? 'Waluta jest wymagana dla typu „walutowy"' : 'Currency is required for "currency" measurement type'}
+                {isPolish
+                  ? 'Waluta jest wymagana dla typu „walutowy"'
+                  : 'Currency is required for "currency" measurement type'}
               </p>
             ) : null}
           </div>
@@ -480,7 +504,9 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
               />
               {confidenceNumericError ? (
                 <p className="mt-1 text-[11px] text-c-danger">
-                  {isPolish ? 'Wymagane, gdy pewność = „liczbowa"' : 'Required when confidence = "numeric"'}
+                  {isPolish
+                    ? 'Wymagane, gdy pewność = „liczbowa"'
+                    : 'Required when confidence = "numeric"'}
                 </p>
               ) : null}
             </div>
@@ -529,7 +555,9 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
             id="okr-kr-source-reference"
             value={sourceReference}
             onChange={(e) => setSourceReference(e.target.value)}
-            placeholder={isPolish ? 'wolny tekst, bez powiązania z KPI' : 'free text, not linked to any KPI'}
+            placeholder={
+              isPolish ? 'wolny tekst, bez powiązania z KPI' : 'free text, not linked to any KPI'
+            }
             className={FIELD_CLASS}
             data-testid="okr-kr-source-reference"
           />
@@ -583,7 +611,13 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
             data-testid="okr-kr-form-error"
           >
             <AlertTriangle size={14} className="mt-0.5 shrink-0 text-c-danger" />
-            <span>{isConflict ? (isPolish ? `Konflikt zapisu: ${errorMessage}` : `Write conflict: ${errorMessage}`) : errorMessage}</span>
+            <span>
+              {isConflict
+                ? isPolish
+                  ? `Konflikt zapisu: ${errorMessage}`
+                  : `Write conflict: ${errorMessage}`
+                : errorMessage}
+            </span>
           </div>
         ) : null}
       </div>

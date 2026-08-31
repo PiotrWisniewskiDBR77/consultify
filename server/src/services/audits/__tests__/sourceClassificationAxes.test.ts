@@ -15,11 +15,11 @@ import { auditRun } from '../auditsDb.js';
 import { createSource, updateSource, verifySource } from '../normSourceService.js';
 import { validatePack } from '../packValidator.js';
 import {
+  type AuditActor,
+  type AuditNormSource,
   isComplianceGrade,
   isNormativeSourceType,
   NORMATIVE_SOURCE_TYPES,
-  type AuditActor,
-  type AuditNormSource,
 } from '../types.js';
 
 const ORG = `axes-org-${Date.now()}`;

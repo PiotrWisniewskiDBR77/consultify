@@ -4,16 +4,20 @@
  * identity/status/akcje), `FinanceWorkspaceBar` NARZUCA wygląd — zero własnego markupu nagłówka tu.
  */
 import {
+  canRenameArtifact,
   ENABLEMENT_ALWAYS,
+  resolveViewNavigationPlacement,
   WORKSPACE_BAR_CONTEXT_FIELDS,
   WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
   WORKSPACE_BAR_NAME_MAX_CHARS,
-  canRenameArtifact,
-  resolveViewNavigationPlacement,
   type WorkspaceBarConfig,
   type WorkspaceBarEvaluationContext,
 } from '@/components/Finance/shared/financeWorkspaceBar.contract';
-import type { BusinessVersionStatus, FinanceArtifactFreshness, FinanceRole } from '@/services/api/financeV2.types';
+import type {
+  BusinessVersionStatus,
+  FinanceArtifactFreshness,
+  FinanceRole,
+} from '@/services/api/financeV2.types';
 
 import type { ScenarioDraft } from './predictionScenarioModel';
 
@@ -31,11 +35,15 @@ export interface BuildPredictionWorkspaceBarConfigParams {
   hasUncommittedWorkingRevision?: boolean;
 }
 
-export function buildPredictionEvaluationContext(params: Pick<BuildPredictionWorkspaceBarConfigParams, 'status' | 'role' | 'freshness'>): WorkspaceBarEvaluationContext {
+export function buildPredictionEvaluationContext(
+  params: Pick<BuildPredictionWorkspaceBarConfigParams, 'status' | 'role' | 'freshness'>
+): WorkspaceBarEvaluationContext {
   return { status: params.status, role: params.role, freshness: params.freshness, gates: {} };
 }
 
-export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspaceBarConfigParams): WorkspaceBarConfig {
+export function buildPredictionWorkspaceBarConfig(
+  params: BuildPredictionWorkspaceBarConfigParams
+): WorkspaceBarConfig {
   const { draft } = params;
   const resultsFreshness = params.freshness;
   const rename = canRenameArtifact(params.status, params.role);
@@ -52,10 +60,19 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
       label: { key: 'finance.prediction.view.results', pl: 'Modele/Wyniki' },
       state:
         resultsFreshness === 'NEVER_COMPUTED'
-          ? { kind: 'not-configured' as const, label: { key: 'finance.prediction.results.neverComputed', pl: 'Nie przeliczono' } }
+          ? {
+              kind: 'not-configured' as const,
+              label: { key: 'finance.prediction.results.neverComputed', pl: 'Nie przeliczono' },
+            }
           : resultsFreshness !== 'CURRENT'
-            ? { kind: 'stale' as const, label: { key: 'finance.prediction.results.stale', pl: 'Nieaktualne' } }
-            : { kind: 'ready' as const, label: { key: 'finance.prediction.results.ready', pl: 'Aktualne' } },
+            ? {
+                kind: 'stale' as const,
+                label: { key: 'finance.prediction.results.stale', pl: 'Nieaktualne' },
+              }
+            : {
+                kind: 'ready' as const,
+                label: { key: 'finance.prediction.results.ready', pl: 'Aktualne' },
+              },
     },
   ];
 
@@ -63,8 +80,15 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
     moduleId: 'prediction',
     artifactType: 'PREDICTION_SCENARIO',
     identity: {
-      artifactRef: { artifactType: 'PREDICTION_SCENARIO', businessVersionId, artifactId: params.artifactId },
-      back: { targetListRoute: '/finance/prediction', label: { key: 'finance.back', pl: 'Wróć do listy' } },
+      artifactRef: {
+        artifactType: 'PREDICTION_SCENARIO',
+        businessVersionId,
+        artifactId: params.artifactId,
+      },
+      back: {
+        targetListRoute: '/finance/prediction',
+        label: { key: 'finance.back', pl: 'Wróć do listy' },
+      },
       name: {
         value: draft.name,
         editable: rename.editable,
@@ -81,7 +105,9 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
       },
       status: params.status,
       freshness: params.freshness,
-      contextFields: [...WORKSPACE_BAR_CONTEXT_FIELDS].filter((f) => f === 'type' || f === 'lastCompute') as (typeof WORKSPACE_BAR_CONTEXT_FIELDS)[number][],
+      contextFields: [...WORKSPACE_BAR_CONTEXT_FIELDS].filter(
+        (f) => f === 'type' || f === 'lastCompute'
+      ) as (typeof WORKSPACE_BAR_CONTEXT_FIELDS)[number][],
     },
     viewNavigation: {
       kind: 'tabs',
@@ -107,7 +133,14 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
       },
       lifecycle: null,
       more: null,
-      fullscreen: { kind: 'fullscreen', id: 'fullscreen', label: { key: 'finance.fullscreen', pl: 'Pełny ekran' }, enablement: ENABLEMENT_ALWAYS, iconOnly: true, ariaLabel: { key: 'finance.fullscreen.aria', pl: 'Przełącz tryb pełnoekranowy' } },
+      fullscreen: {
+        kind: 'fullscreen',
+        id: 'fullscreen',
+        label: { key: 'finance.fullscreen', pl: 'Pełny ekran' },
+        enablement: ENABLEMENT_ALWAYS,
+        iconOnly: true,
+        ariaLabel: { key: 'finance.fullscreen.aria', pl: 'Przełącz tryb pełnoekranowy' },
+      },
       extraDirectControls: [],
     },
   };

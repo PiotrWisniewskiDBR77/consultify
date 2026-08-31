@@ -94,10 +94,7 @@ export interface ContextClaimInput {
   reviewStatus?: string;
 }
 
-export type ContextWriteExecutor = (
-  sql: string,
-  params: unknown[]
-) => Promise<unknown>;
+export type ContextWriteExecutor = (sql: string, params: unknown[]) => Promise<unknown>;
 
 export interface ContextSourceRecordInput {
   organizationId: string;
@@ -1780,10 +1777,7 @@ export class OrganizationContextService {
   }): Promise<void> {
     const claims: ContextClaimInput[] = [];
     const sections: Array<'goals' | 'challenges' | 'synthesis'> = [];
-    const addSection = (
-      section: 'goals' | 'challenges' | 'synthesis',
-      value: unknown
-    ) => {
+    const addSection = (section: 'goals' | 'challenges' | 'synthesis', value: unknown) => {
       if (!value || typeof value !== 'object' || !Object.keys(value as object).length) return;
       claims.push({
         claimPath: 'notes.manualContext',

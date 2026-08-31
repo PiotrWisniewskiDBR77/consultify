@@ -9,9 +9,9 @@ import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const NO_RETRY = { retry: 0 } as const;
 const ARTIFACT = '/private/tmp/cx-day160-brama-zadania-artefakty/day160-http-db-evidence.json';

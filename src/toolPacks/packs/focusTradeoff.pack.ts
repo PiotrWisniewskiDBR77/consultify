@@ -31,7 +31,8 @@ export const focusTradeoffPack: ToolPack = {
     { source: 'src/store/useToolStore.ts (FOCUS_TRADEOFF_STEPS)', verifiableInRepo: true },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
     {
-      source: 'Porterowska doktryna "strategy is choosing what not to do" — brak noty licencyjnej w repo',
+      source:
+        'Porterowska doktryna "strategy is choosing what not to do" — brak noty licencyjnej w repo',
       verifiableInRepo: false,
       note: 'Koncepcja z domeny publicznej strategii konkurencyjnej; brak potwierdzonego źródła licencyjnego w repo (L10).',
     },
@@ -97,7 +98,8 @@ export const focusTradeoffPack: ToolPack = {
         pl: 'Określić konkurujące priorytety, kryteria decyzji i sygnał sukcesu.',
         en: 'Frame the competing priorities, decision criteria, and success signal.',
       },
-      whatGoodLooksLike: 'Jasne ograniczenie mocy (czas/budżet/zespół), wobec którego priorytety konkurują.',
+      whatGoodLooksLike:
+        'Jasne ograniczenie mocy (czas/budżet/zespół), wobec którego priorytety konkurują.',
       evidenceToAskFor: 'Jakie jest realne ograniczenie zasobu, nie tylko lista chęci.',
       completionCriterion: 'Ograniczenie i kryteria zaakceptowane przez właściciela decyzji.',
     },
@@ -110,7 +112,8 @@ export const focusTradeoffPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każda opcja ma nazwanego sponsora — mandat zewnętrzny (zarząd/klient/regulator) albo przekonanie właściciela (focusQuestionBank.ts opt1-surface).',
-      evidenceToAskFor: 'Kto realnie prosi o tę opcję i jaki jest twardy dowód, że zasługuje na uwagę teraz.',
+      evidenceToAskFor:
+        'Kto realnie prosi o tę opcję i jaki jest twardy dowód, że zasługuje na uwagę teraz.',
       completionCriterion: 'Każda opcja ma źródło mandatu i status dowodu.',
     },
     {
@@ -122,7 +125,8 @@ export const focusTradeoffPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każdy priorytet ma valueScore, effortScore i strategicFit (1-5) ze wskazanym dowodem, nie entuzjazmem.',
-      evidenceToAskFor: 'Twardy dowód (dane popytu, podpisane zobowiązanie, zmierzony koszt zaniechania), nie „wszyscy się zgadzają".',
+      evidenceToAskFor:
+        'Twardy dowód (dane popytu, podpisane zobowiązanie, zmierzony koszt zaniechania), nie „wszyscy się zgadzają".',
       completionCriterion: 'Co najmniej dwa zaakceptowane priorytety z pełną trójką ocen.',
     },
     {
@@ -134,8 +138,10 @@ export const focusTradeoffPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Macierz koszt-alternatywny paruje każdy priorytet z konkretnym konkurentem, nie z "wszystkim naraz"; werdykt anty-fokusu sprawdzony.',
-      evidenceToAskFor: 'Który konkretny priorytet traci moc, gdy ten wygrywa — nigdy „nic nie traci".',
-      completionCriterion: 'Werdykt detectAntiFocus nie jest flagged=true bez świadomego uzasadnienia.',
+      evidenceToAskFor:
+        'Który konkretny priorytet traci moc, gdy ten wygrywa — nigdy „nic nie traci".',
+      completionCriterion:
+        'Werdykt detectAntiFocus nie jest flagged=true bez świadomego uzasadnienia.',
     },
     {
       id: 'outputs',
@@ -144,9 +150,11 @@ export const focusTradeoffPack: ToolPack = {
         pl: 'Przygotować sekwencję ruchów fokusu z trade-offem.',
         en: 'Prepare the final source summary and generate downstream outputs and initiatives.',
       },
-      whatGoodLooksLike: 'Każdy ruch (commit/sequence/cut/rebalance/experiment) ma rationale, trade-off i odrzucony wariant.',
+      whatGoodLooksLike:
+        'Każdy ruch (commit/sequence/cut/rebalance/experiment) ma rationale, trade-off i odrzucony wariant.',
       evidenceToAskFor: 'Co świadomie tniemy lub odkładamy, wybierając ten ruch.',
-      completionCriterion: 'Każdy ruch spełnia bramkę W2 i co najmniej jeden priorytet ma lane="drop" lub "defer".',
+      completionCriterion:
+        'Każdy ruch spełnia bramkę W2 i co najmniej jeden priorytet ma lane="drop" lub "defer".',
     },
   ],
 
@@ -159,7 +167,8 @@ export const focusTradeoffPack: ToolPack = {
         en: 'What is the real capacity constraint (time/budget/team) these priorities compete for?',
       },
       answerType: 'text',
-      challengeRule: 'Odrzuć odpowiedź bez policzalnego ograniczenia — bez limitu każdy priorytet "mieści się".',
+      challengeRule:
+        'Odrzuć odpowiedź bez policzalnego ograniczenia — bez limitu każdy priorytet "mieści się".',
     },
     {
       id: 'focus-input-sponsor',
@@ -274,15 +283,19 @@ export const focusTradeoffPack: ToolPack = {
    * Flaga bazy license='free' jest flagą PRODUKTOWĄ, nie dowodem prawnym.
    */
   rights: {
-    methodologyName: 'Priorytetyzacja przez koszt alternatywny („strategia to wybór, czego nie robić")',
+    methodologyName:
+      'Priorytetyzacja przez koszt alternatywny („strategia to wybór, czego nie robić")',
     commonlyAttributedTo: 'Michael Porter („What Is Strategy?", HBR 1996)',
-    sourceUsed: 'src/config/focustradeoffs/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
+    sourceUsed:
+      'src/config/focustradeoffs/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
-    trademarkNote: 'Sformułowanie szeroko cytowane i zgenerycznieniałe; HBR ma prawa do tekstu oryginalnego (nie reprodukowany).',
+    trademarkNote:
+      'Sformułowanie szeroko cytowane i zgenerycznieniałe; HBR ma prawa do tekstu oryginalnego (nie reprodukowany).',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',
-    uncertainty: 'ŚREDNIE — atrybucja obecna w komentarzach kodu, ale bez wskazania licencjonowanego dokumentu.',
+    uncertainty:
+      'ŚREDNIE — atrybucja obecna w komentarzach kodu, ale bez wskazania licencjonowanego dokumentu.',
   },
 };

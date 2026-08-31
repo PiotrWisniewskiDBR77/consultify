@@ -11,7 +11,8 @@
  */
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildDrdReportModel, type AreaScores } from '@/services/report/drdReportModel';
+
+import { type AreaScores, buildDrdReportModel } from '@/services/report/drdReportModel';
 import { DRD_SCORING_V2_FLAG_KEYS } from '@/utils/drdScoringV2Flag';
 
 const FIXTURE: AreaScores = {
@@ -46,7 +47,10 @@ describe('DrdReportModel — calculationVersion (test 10: Report reveals calcula
     expect(model.scoringV2).toBeDefined();
     expect(model.scoringV2!.overall.calculationVersion).toBe('drd_scoring_v2');
     // 2B (actual 0, legacy sentinel) is excluded from v2's mean, unlike legacy's overall.
-    expect(model.scoringV2!.byAxis[2].excluded).toContainEqual({ areaId: '2B', state: 'unassessed' });
+    expect(model.scoringV2!.byAxis[2].excluded).toContainEqual({
+      areaId: '2B',
+      state: 'unassessed',
+    });
   });
 });
 

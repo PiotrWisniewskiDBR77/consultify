@@ -19,13 +19,23 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
-import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
+import {
+  ROI_CALCULATION_ENGINE_VERSION,
+  runRoiCalculationEngine,
+} from './engine/roiCalculationEngine.js';
+import type {
+  RoiCalculationEngineInput,
+  RoiEngineScenarioOverride,
+} from './engine/roiCalculationEngine.types.js';
 import {
   assumptionRowToEngine,
   benefitLineRowToEngine,
@@ -33,19 +43,18 @@ import {
   policyStampObject,
   toDateOnlyString,
 } from './roiCalculationRunCommands.js';
-import { ROI_CALCULATION_ENGINE_VERSION, runRoiCalculationEngine } from './engine/roiCalculationEngine.js';
-import type { RoiCalculationEngineInput, RoiEngineScenarioOverride } from './engine/roiCalculationEngine.types.js';
-import {
-  toRoiForecastVersion,
-  type RoiForecastVersion,
-  type RoiForecastVersionRow,
-} from './roiForecastActualTypes.js';
+import { ROI_EVENT_SOURCE, ROI_TRACKING_ACTIVE_STATUSES } from './roiCaseCommands.js';
 import type {
   RoiAssumptionRow,
   RoiBenefitLineRow,
   RoiCalculationPolicyRow,
   RoiCostLineRow,
 } from './roiEconomicModelTypes.js';
+import {
+  type RoiForecastVersion,
+  type RoiForecastVersionRow,
+  toRoiForecastVersion,
+} from './roiForecastActualTypes.js';
 import type { RoiCaseRow } from './roiTypes.js';
 
 // ==========================================
@@ -55,7 +64,11 @@ import type { RoiCaseRow } from './roiTypes.js';
 export class RoiForecastVersionValidationError extends Error {
   code: string;
   details?: Record<string, unknown>;
-  constructor(message: string, code = 'INVALID_FORECAST_VERSION_REQUEST', details?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    code = 'INVALID_FORECAST_VERSION_REQUEST',
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'RoiForecastVersionValidationError';
     this.code = code;
@@ -172,7 +185,9 @@ export async function createRoiForecastVersion(
       );
       const policyRow = policyResult.rows[0];
       if (!policyRow) {
-        throw new Error(`[createRoiForecastVersion] no calculation-policy row found for case ${caseId}`);
+        throw new Error(
+          `[createRoiForecastVersion] no calculation-policy row found for case ${caseId}`
+        );
       }
       const assumptionsResult = await client.query<RoiAssumptionRow>(
         `SELECT * FROM rvn_roi_assumptions
@@ -236,7 +251,8 @@ export async function createRoiForecastVersion(
         granularity: currentRow.granularity,
         analysisStart,
         analysisEnd,
-        discountRatePct: policyRow.discount_rate_pct === null ? null : Number(policyRow.discount_rate_pct),
+        discountRatePct:
+          policyRow.discount_rate_pct === null ? null : Number(policyRow.discount_rate_pct),
         roundingPolicy: policyRow.rounding_policy,
         requiredMetrics: policyRow.required_metrics,
         assumptions: assumptionsResult.rows.map(assumptionRowToEngine),
@@ -313,7 +329,9 @@ export async function createRoiForecastVersion(
       );
       const forecastRow = insertResult.rows[0];
       if (!forecastRow) {
-        throw new Error('[createRoiForecastVersion] insert into rvn_roi_forecast_versions returned no row');
+        throw new Error(
+          '[createRoiForecastVersion] insert into rvn_roi_forecast_versions returned no row'
+        );
       }
 
       // Decision D6: current_forecast_version_id always moves to the latest.
@@ -349,7 +367,11 @@ export async function createRoiForecastVersion(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { caseId, forecastVersionId: result.forecastVersionId, sequenceNumber: result.sequenceNumber },
+        payload: {
+          caseId,
+          forecastVersionId: result.forecastVersionId,
+          sequenceNumber: result.sequenceNumber,
+        },
       } satisfies AtomicEventInput;
     },
   });

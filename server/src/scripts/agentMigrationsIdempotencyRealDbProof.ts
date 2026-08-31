@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+
 import { Pool } from 'pg';
 
 /** Frozen Agent/T01 release order. Do not infer it from the filesystem. */

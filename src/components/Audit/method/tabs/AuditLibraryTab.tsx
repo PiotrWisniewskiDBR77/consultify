@@ -17,19 +17,28 @@
 import { Library as LibraryIcon, PlayCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { ErrorState } from '@/components/shared/states';
 import {
-  type StandardRowMenu,
   StandardPreview,
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { auditRoleLabel } from '../auditRoleLabels';
+import {
+  AUDIT_SOURCE_TYPES,
+  AUDIT_VERIFICATION_STATES,
+  type AuditPackDetail,
+  type AuditPackSummary,
+  getPack,
+  isComplianceGrade,
+  PACK_PUBLICATION_STATUSES,
+} from '../auditsMethodApi';
 import {
   packPublicationLabel,
   packPublicationTone,
@@ -38,15 +47,6 @@ import {
   packVerificationLabel,
   packVerificationTone,
 } from '../auditStatusTones';
-import {
-  AUDIT_SOURCE_TYPES,
-  AUDIT_VERIFICATION_STATES,
-  getPack,
-  isComplianceGrade,
-  PACK_PUBLICATION_STATUSES,
-  type AuditPackDetail,
-  type AuditPackSummary,
-} from '../auditsMethodApi';
 
 export interface AuditLibraryTabProps {
   packs: AuditPackSummary[];
@@ -216,7 +216,9 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
       width: '140px',
       sortable: true,
       render: (row: AuditPackSummary) => (
-        <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
+        <span className="text-xs text-c-text-secondary tabular-nums">
+          {formatListDate(row.updatedAt)}
+        </span>
       ),
     },
   ];
@@ -247,7 +249,11 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     return (
       <div className="p-4">
         <ErrorState
-          title={isPolish ? 'Nie udało się wczytać biblioteki pakietów' : 'Could not load the pack library'}
+          title={
+            isPolish
+              ? 'Nie udało się wczytać biblioteki pakietów'
+              : 'Could not load the pack library'
+          }
           description={error}
           onRetry={onRetry}
         />

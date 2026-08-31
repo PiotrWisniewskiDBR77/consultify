@@ -10,7 +10,7 @@
  * report's "React/UI poza zakresem" section.
  */
 
-export * from './workspaceBarContract.js';
 export * from './focusModeContract.js';
-export * from './moduleAdapters.js';
 export * from './lineageNavigatorContract.js';
+export * from './moduleAdapters.js';
+export * from './workspaceBarContract.js';

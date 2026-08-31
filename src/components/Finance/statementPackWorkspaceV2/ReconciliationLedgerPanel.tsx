@@ -16,10 +16,10 @@ import React from 'react';
 
 import {
   reconciliationBucketLabel,
-  reconciliationResultQualityLabel,
-  reconciliationRunStatusLabel,
   type ReconciliationDetailRowDto,
+  reconciliationResultQualityLabel,
   type ReconciliationRunDetailDto,
+  reconciliationRunStatusLabel,
   type ReconciliationRunSummaryDto,
 } from '@/services/api/financeV2.types';
 
@@ -81,8 +81,11 @@ function runBadgeLabel(resultQuality: string | null, status: string): string {
     : reconciliationRunStatusLabel(status);
 }
 
-export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps): React.ReactElement {
-  const { runs, loading, selectedRunId, onSelectRun, runDetail, runDetailLoading, emptyLabel } = props;
+export function ReconciliationLedgerPanel(
+  props: ReconciliationLedgerPanelProps
+): React.ReactElement {
+  const { runs, loading, selectedRunId, onSelectRun, runDetail, runDetailLoading, emptyLabel } =
+    props;
 
   if (loading) {
     return (
@@ -143,14 +146,20 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
             <div data-testid="reconciliation-run-detail">
               <div className="mb-2 grid grid-cols-2 gap-2 text-[11px]">
                 <Metric label="Status" value={reconciliationRunStatusLabel(runDetail.status)} />
-                <Metric label="Jakość" value={reconciliationResultQualityLabel(runDetail.resultQuality)} />
+                <Metric
+                  label="Jakość"
+                  value={reconciliationResultQualityLabel(runDetail.resultQuality)}
+                />
                 <Metric label="Residual" value={formatPct(runDetail.residualPct)} />
                 <Metric label="Wierszy" value={String(runDetail.rows.length)} />
               </div>
               <BucketBreakdown rows={runDetail.rows} />
             </div>
           ) : (
-            <p className="text-[11px] text-c-text-muted" data-testid="reconciliation-run-detail-missing">
+            <p
+              className="text-[11px] text-c-text-muted"
+              data-testid="reconciliation-run-detail-missing"
+            >
               Nie udało się wczytać detalu tego przebiegu.
             </p>
           )}
@@ -174,13 +183,17 @@ function BucketBreakdown({ rows }: { rows: ReconciliationDetailRowDto[] }): Reac
   const duplicateCount = counts.DUPLICATE ?? 0;
   return (
     <div>
-      <p className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-c-text-muted">Podział po bucketach</p>
+      <p className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-c-text-muted">
+        Podział po bucketach
+      </p>
       <div className="flex flex-wrap gap-1.5" data-testid="reconciliation-bucket-breakdown">
         {Object.entries(counts).map(([bucket, count]) => (
           <span
             key={bucket}
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold ${
-              bucket === 'DUPLICATE' ? 'bg-c-warning/10 text-c-warning' : 'bg-c-surface-raised text-c-text-secondary'
+              bucket === 'DUPLICATE'
+                ? 'bg-c-warning/10 text-c-warning'
+                : 'bg-c-surface-raised text-c-text-secondary'
             }`}
           >
             {reconciliationBucketLabel(bucket as ReconciliationDetailRowDto['bucket'])}: {count}
@@ -188,7 +201,10 @@ function BucketBreakdown({ rows }: { rows: ReconciliationDetailRowDto[] }): Reac
         ))}
       </div>
       {duplicateCount > 0 && (
-        <p className="mt-1.5 text-[10px] text-c-warning" data-testid="reconciliation-duplicate-warning">
+        <p
+          className="mt-1.5 text-[10px] text-c-warning"
+          data-testid="reconciliation-duplicate-warning"
+        >
           {duplicateCount} {duplicateCount === 1 ? 'wiersz oznaczony' : 'wierszy oznaczonych'} jako{' '}
           {reconciliationBucketLabel('DUPLICATE').toLowerCase()} w tym przebiegu.
         </p>

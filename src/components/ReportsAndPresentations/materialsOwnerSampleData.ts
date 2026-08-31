@@ -9,7 +9,9 @@ export const MATERIALS_OWNER_SAMPLE_QUERY = 'materials-vnext';
 
 export function isMaterialsOwnerSampleEnabled(): boolean {
   if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).get('sampleData') === MATERIALS_OWNER_SAMPLE_QUERY;
+  return (
+    new URLSearchParams(window.location.search).get('sampleData') === MATERIALS_OWNER_SAMPLE_QUERY
+  );
 }
 
 export const materialsOwnerRegistryRows = [

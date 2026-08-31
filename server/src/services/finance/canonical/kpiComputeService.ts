@@ -52,18 +52,18 @@
 import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import * as artifactVersionService from './artifactVersionService.js';
-import { canonicalPayloadHash } from './contentHash.js';
 import type { BusinessVersionRow, TransitionServiceResult } from './artifactVersionService.js';
-import * as computeJobService from './computeJobService.js';
+import * as artifactVersionService from './artifactVersionService.js';
 import type { ComputeJobRow } from './computeJobService.js';
+import * as computeJobService from './computeJobService.js';
+import { canonicalPayloadHash } from './contentHash.js';
 import {
-  evaluateFormula,
   type CellRefOperand,
   type CellResolution,
   type CellResolver,
   type DynamicConstantResolver,
   type EvalContext,
+  evaluateFormula,
   type EvaluationResult,
   type FormulaNode,
   type FormulaRefResolver,
@@ -73,9 +73,9 @@ import type { FinanceRole } from './lifecycleService.js';
 import {
   annualizationFactor,
   daysInPeriod,
-  resolvePeriodOffset,
   type PeriodGraphLookup,
   type PeriodMeta,
+  resolvePeriodOffset,
 } from './periodConventionResolver.js';
 
 // ---------------------------------------------------------------------------
@@ -122,7 +122,12 @@ interface StmtLineCell {
 // FULL_YEAR row for the same annual period) — annual KPI compute prefers the FULL_YEAR figure.
 const ACCUMULATION_BASIS_PRIORITY = ['FULL_YEAR', 'LTM', 'YTD', 'QUARTER_ONLY'];
 
-function cellKey(entityId: string, canonicalLineId: string, periodId: string, consolidationScope: string): string {
+function cellKey(
+  entityId: string,
+  canonicalLineId: string,
+  periodId: string,
+  consolidationScope: string
+): string {
   return [entityId, canonicalLineId, periodId, consolidationScope].join('::');
 }
 
@@ -216,7 +221,9 @@ function applySignConvention(value: number | null, signConvention: string | null
   return signConvention === 'CONTRA' ? -value : value;
 }
 
-async function loadStmtLineCells(sourceBusinessVersionId: string): Promise<Map<string, StmtLineCell>> {
+async function loadStmtLineCells(
+  sourceBusinessVersionId: string
+): Promise<Map<string, StmtLineCell>> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<{
       entity_id: string;
@@ -245,7 +252,10 @@ async function loadStmtLineCells(sourceBusinessVersionId: string): Promise<Map<s
         basisPriority: rank,
         cell: {
           status: r.value_status,
-          value: applySignConvention(r.value_decimal === null ? null : Number(r.value_decimal), r.sign_convention),
+          value: applySignConvention(
+            r.value_decimal === null ? null : Number(r.value_decimal),
+            r.sign_convention
+          ),
         },
       });
     }
@@ -255,7 +265,9 @@ async function loadStmtLineCells(sourceBusinessVersionId: string): Promise<Map<s
   return out;
 }
 
-async function loadActiveCatalogByCode(organizationId: string): Promise<Map<string, KpiCatalogRow>> {
+async function loadActiveCatalogByCode(
+  organizationId: string
+): Promise<Map<string, KpiCatalogRow>> {
   const rows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<KpiCatalogRow & { formula_ast: unknown }>(
       `SELECT id, kpi_code, catalog_version, status, tier, category, kpi_name, unit_type, formula_ast,
@@ -296,7 +308,10 @@ export interface ListKpiCatalogOptions {
 }
 
 /** Three-layer catalog (universal / industry / org-custom), WP-D03 §3. Read-only mirror of `loadActiveCatalogByCode`'s own WHERE clause — see that function for why `tier != 'ORG_CUSTOM' OR organization_id = ?` is the whole visibility rule. */
-export async function listKpiCatalog(organizationId: string, options: ListKpiCatalogOptions = {}): Promise<KpiCatalogListRow[]> {
+export async function listKpiCatalog(
+  organizationId: string,
+  options: ListKpiCatalogOptions = {}
+): Promise<KpiCatalogListRow[]> {
   const conditions: string[] = [`(tier != 'ORG_CUSTOM' OR organization_id = ?)`];
   const params: unknown[] = [organizationId];
   if (!options.includeAllStatuses) {
@@ -390,17 +405,31 @@ interface ResolverDeps {
   stmtLineCells: Map<string, StmtLineCell>;
 }
 
-function makeCellResolver(deps: ResolverDeps, defaultEntityId: string, anchorPeriodId: string): CellResolver {
+function makeCellResolver(
+  deps: ResolverDeps,
+  defaultEntityId: string,
+  anchorPeriodId: string
+): CellResolver {
   return {
     async resolveCell(cellRef: CellRefOperand): Promise<CellResolution> {
       const entityId =
-        cellRef.entityScope === 'ANALYSIS_DEFAULT' ? defaultEntityId : deps.entityByCode.get(cellRef.entityScope.entityCode);
+        cellRef.entityScope === 'ANALYSIS_DEFAULT'
+          ? defaultEntityId
+          : deps.entityByCode.get(cellRef.entityScope.entityCode);
       if (!entityId) {
-        return { ok: false, reason: 'ENTITY_NOT_FOUND', detail: `entityScope not found in source Statement Pack Version entities` };
+        return {
+          ok: false,
+          reason: 'ENTITY_NOT_FOUND',
+          detail: `entityScope not found in source Statement Pack Version entities`,
+        };
       }
       const canonicalLineId = deps.lineCodeToId.get(cellRef.canonicalLineCode);
       if (!canonicalLineId) {
-        return { ok: false, reason: 'CANONICAL_LINE_NOT_FOUND', detail: `canonicalLineCode ${cellRef.canonicalLineCode} not found` };
+        return {
+          ok: false,
+          reason: 'CANONICAL_LINE_NOT_FOUND',
+          detail: `canonicalLineCode ${cellRef.canonicalLineCode} not found`,
+        };
       }
       const plan = resolvePeriodOffset(cellRef.periodOffset, anchorPeriodId, deps.periodLookup);
       if (!plan.ok) {
@@ -409,7 +438,9 @@ function makeCellResolver(deps: ResolverDeps, defaultEntityId: string, anchorPer
 
       const points: number[] = [];
       for (const pid of plan.periodIds) {
-        const cell = deps.stmtLineCells.get(cellKey(entityId, canonicalLineId, pid, cellRef.consolidationScope));
+        const cell = deps.stmtLineCells.get(
+          cellKey(entityId, canonicalLineId, pid, cellRef.consolidationScope)
+        );
         if (!cell || cell.status === 'MISSING' || cell.value === null) {
           // Never fabricate a partial average/sum from the points that DO exist — one missing
           // point makes the whole convention un-computable for this cell (never silent zero).
@@ -420,10 +451,15 @@ function makeCellResolver(deps: ResolverDeps, defaultEntityId: string, anchorPer
 
       let combined: number;
       if (plan.combine === 'SINGLE') combined = points[0];
-      else if (plan.combine === 'AVERAGE') combined = points.reduce((a, b) => a + b, 0) / points.length;
+      else if (plan.combine === 'AVERAGE')
+        combined = points.reduce((a, b) => a + b, 0) / points.length;
       else combined = points.reduce((a, b) => a + b, 0); // SUM
 
-      return { ok: true, status: combined === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO', value: combined };
+      return {
+        ok: true,
+        status: combined === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+        value: combined,
+      };
     },
   };
 }
@@ -465,7 +501,13 @@ function makeFormulaRefResolver(
               {
                 cellResolver,
                 dynamicConstants,
-                formulaRefResolver: makeFormulaRefResolver(catalogByCode, cellResolver, dynamicConstants, memoKeyPrefix, memo),
+                formulaRefResolver: makeFormulaRefResolver(
+                  catalogByCode,
+                  cellResolver,
+                  dynamicConstants,
+                  memoKeyPrefix,
+                  memo
+                ),
               },
               catalogRow.negative_denominator_policy
             );
@@ -568,7 +610,10 @@ export type ComputeAnalysisKpisResult =
  * finance_lineage_edges has a NOT NULL organization_id (migration
  * 20260809_finance_v3_b03_lineage_freshness.sql).
  */
-async function resolveSourceStatementPackVersion(organizationId: string, businessVersionId: string): Promise<string | null> {
+async function resolveSourceStatementPackVersion(
+  organizationId: string,
+  businessVersionId: string
+): Promise<string | null> {
   const row = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ source_version_id: string }>(
       `SELECT source_version_id FROM finance_lineage_edges
@@ -579,8 +624,13 @@ async function resolveSourceStatementPackVersion(organizationId: string, busines
   return row?.source_version_id ?? null;
 }
 
-export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Promise<ComputeAnalysisKpisResult> {
-  const sourceVersionId = await resolveSourceStatementPackVersion(params.organizationId, params.businessVersionId);
+export async function computeAnalysisKpis(
+  params: ComputeAnalysisKpisParams
+): Promise<ComputeAnalysisKpisResult> {
+  const sourceVersionId = await resolveSourceStatementPackVersion(
+    params.organizationId,
+    params.businessVersionId
+  );
   if (!sourceVersionId) {
     return {
       ok: false,
@@ -596,7 +646,10 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   // mode of this function already used, so an HTTP layer mapped a tenant
   // boundary refusal to a 500 instead of a 404. Now typed, consistent with
   // NO_SOURCE_STATEMENT_PACK_EDGE above.
-  const bv = await artifactVersionService.getBusinessVersion(params.organizationId, params.businessVersionId);
+  const bv = await artifactVersionService.getBusinessVersion(
+    params.organizationId,
+    params.businessVersionId
+  );
   if (!bv) {
     return {
       ok: false,
@@ -605,29 +658,35 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     };
   }
 
-  const [periodGraph, entityByCode, lineCodeToId, stmtLineCells, catalogByCode, kpiValueRows] = await Promise.all([
-    loadPeriodGraph(params.organizationId),
-    loadEntityCodeMap(sourceVersionId),
-    loadCanonicalLineMap(params.organizationId),
-    loadStmtLineCells(sourceVersionId),
-    loadActiveCatalogByCode(params.organizationId),
-    withPinnedPostgresTransaction((tx) =>
-      // W3-hashconsol NOTE / W3-determinism fix (see
-      // `docs/validation/finance-v3/generated/gate-d/W3_COMPUTE_DETERMINISM_report.md`):
-      // this row set STILL has no ORDER BY on purpose — adding `ORDER BY id` would pin a
-      // RANDOM UUID's order, which is not a meaningful sort key and would itself churn
-      // on every schema/storage change. `evaluateAllRows` below still iterates in
-      // whatever order Postgres returns (that iteration order is harmless — it only
-      // affects the UPDATE order in `persistResults`, and the delta-vs-prior computation
-      // reads by a `Map` keyed lookup, not array position). What DOES need a stable
-      // order is the payload fed to `canonicalPayloadHash()` for `content_semantic_hash`
-      // — see the `hashPayloadFor()` call below, which sorts a SEPARATE copy by a
-      // value-based key (kpiCode/entityId/periodId) immediately before hashing, never
-      // touching this query or the `results` array this function returns to callers.
-      tx.queryAll<KpiValueRow>(`SELECT * FROM finance_analysis_kpi_values WHERE business_version_id = ?`, [params.businessVersionId])
-    ),
-  ]);
-  const catalogById = new Map<string, KpiCatalogRow>(Array.from(catalogByCode.values()).map((c) => [c.id, c]));
+  const [periodGraph, entityByCode, lineCodeToId, stmtLineCells, catalogByCode, kpiValueRows] =
+    await Promise.all([
+      loadPeriodGraph(params.organizationId),
+      loadEntityCodeMap(sourceVersionId),
+      loadCanonicalLineMap(params.organizationId),
+      loadStmtLineCells(sourceVersionId),
+      loadActiveCatalogByCode(params.organizationId),
+      withPinnedPostgresTransaction((tx) =>
+        // W3-hashconsol NOTE / W3-determinism fix (see
+        // `docs/validation/finance-v3/generated/gate-d/W3_COMPUTE_DETERMINISM_report.md`):
+        // this row set STILL has no ORDER BY on purpose — adding `ORDER BY id` would pin a
+        // RANDOM UUID's order, which is not a meaningful sort key and would itself churn
+        // on every schema/storage change. `evaluateAllRows` below still iterates in
+        // whatever order Postgres returns (that iteration order is harmless — it only
+        // affects the UPDATE order in `persistResults`, and the delta-vs-prior computation
+        // reads by a `Map` keyed lookup, not array position). What DOES need a stable
+        // order is the payload fed to `canonicalPayloadHash()` for `content_semantic_hash`
+        // — see the `hashPayloadFor()` call below, which sorts a SEPARATE copy by a
+        // value-based key (kpiCode/entityId/periodId) immediately before hashing, never
+        // touching this query or the `results` array this function returns to callers.
+        tx.queryAll<KpiValueRow>(
+          `SELECT * FROM finance_analysis_kpi_values WHERE business_version_id = ?`,
+          [params.businessVersionId]
+        )
+      ),
+    ]);
+  const catalogById = new Map<string, KpiCatalogRow>(
+    Array.from(catalogByCode.values()).map((c) => [c.id, c])
+  );
   const periodLookup: PeriodGraphLookup = (pid) => periodGraph.get(pid);
 
   // --- Job bookkeeping (ADR section 8.2). Idempotency key: this run's own (business_version_id,
@@ -635,7 +694,13 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   //     read-back, same idempotency contract computeJobService already documents. ---
   const kpiValueIdsSorted = kpiValueRows.map((r) => r.id).sort();
   const inputRevisionHash = createHash('sha256')
-    .update(JSON.stringify({ businessVersionId: params.businessVersionId, sourceVersionId, kpiValueIdsSorted }))
+    .update(
+      JSON.stringify({
+        businessVersionId: params.businessVersionId,
+        sourceVersionId,
+        kpiValueIdsSorted,
+      })
+    )
     .digest('hex');
   const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
@@ -677,11 +742,23 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
 
   let results: ComputedKpiResult[];
   try {
-    results = await evaluateAllRows({ kpiValueRows, catalogById, periodGraph, periodLookup, entityByCode, lineCodeToId, stmtLineCells });
+    results = await evaluateAllRows({
+      kpiValueRows,
+      catalogById,
+      periodGraph,
+      periodLookup,
+      entityByCode,
+      lineCodeToId,
+      stmtLineCells,
+    });
     await persistResults(results);
   } catch (error: any) {
     if (runningJob.status === 'running')
-      await computeJobService.failJob({ jobId: runningJob.id, organizationId: params.organizationId, error: String(error?.message || error) });
+      await computeJobService.failJob({
+        jobId: runningJob.id,
+        organizationId: params.organizationId,
+        error: String(error?.message || error),
+      });
     throw error;
   }
 
@@ -724,12 +801,15 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   };
   if (params.attemptReadinessTransition) {
     const checks = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ check_name: string; passed: boolean; detail: string }>(`SELECT * FROM finance_analysis_readiness_check(?)`, [
-        params.businessVersionId,
-      ])
+      tx.queryAll<{ check_name: string; passed: boolean; detail: string }>(
+        `SELECT * FROM finance_analysis_readiness_check(?)`,
+        [params.businessVersionId]
+      )
     );
     const readyRow = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ ready: boolean }>(`SELECT finance_analysis_is_ready_for_review(?) AS ready`, [params.businessVersionId])
+      tx.queryOne<{ ready: boolean }>(`SELECT finance_analysis_is_ready_for_review(?) AS ready`, [
+        params.businessVersionId,
+      ])
     );
     readinessOut.checked = true;
     readinessOut.checks = checks;
@@ -737,7 +817,9 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
 
     if (readinessOut.ready) {
       if (!params.actorId || !params.role || params.expectedVersion === undefined) {
-        throw new Error('attemptReadinessTransition=true requires actorId, role, and expectedVersion');
+        throw new Error(
+          'attemptReadinessTransition=true requires actorId, role, and expectedVersion'
+        );
       }
       readinessOut.transitionAttempted = true;
       const transitionResult = await artifactVersionService.transition({
@@ -772,7 +854,9 @@ interface EvaluateAllRowsDeps {
 }
 
 async function evaluateAllRows(deps: EvaluateAllRowsDeps): Promise<ComputedKpiResult[]> {
-  const catalogByCode = new Map<string, KpiCatalogRow>(Array.from(deps.catalogById.values()).map((c) => [c.kpi_code, c]));
+  const catalogByCode = new Map<string, KpiCatalogRow>(
+    Array.from(deps.catalogById.values()).map((c) => [c.kpi_code, c])
+  );
   const results: ComputedKpiResult[] = [];
   // Shared across the whole run: a formula_ref target for the SAME (kpiCode, entityId, periodId)
   // triple is computed once no matter how many rows/composites ask for it.
@@ -789,7 +873,8 @@ async function evaluateAllRows(deps: EvaluateAllRowsDeps): Promise<ComputedKpiRe
         status: 'MISSING',
         value: null,
         qualityFlag: null,
-        detail: 'referenced kpi_catalog_id is not ACTIVE/COMPILED_OK (readiness gate check 4 catches this before READY_FOR_REVIEW)',
+        detail:
+          'referenced kpi_catalog_id is not ACTIVE/COMPILED_OK (readiness gate check 4 catches this before READY_FOR_REVIEW)',
       });
       continue;
     }
@@ -811,12 +896,23 @@ async function evaluateAllRows(deps: EvaluateAllRowsDeps): Promise<ComputedKpiRe
 
     const memoKeyPrefix = `${row.entity_id}::${row.period_id}`;
     const cellResolver = makeCellResolver(
-      { periodLookup: deps.periodLookup, entityByCode: deps.entityByCode, lineCodeToId: deps.lineCodeToId, stmtLineCells: deps.stmtLineCells },
+      {
+        periodLookup: deps.periodLookup,
+        entityByCode: deps.entityByCode,
+        lineCodeToId: deps.lineCodeToId,
+        stmtLineCells: deps.stmtLineCells,
+      },
       row.entity_id,
       row.period_id
     );
     const dynamicConstants = makeDynamicConstants(period);
-    const formulaRefResolver = makeFormulaRefResolver(catalogByCode, cellResolver, dynamicConstants, memoKeyPrefix, globalMemo);
+    const formulaRefResolver = makeFormulaRefResolver(
+      catalogByCode,
+      cellResolver,
+      dynamicConstants,
+      memoKeyPrefix,
+      globalMemo
+    );
 
     const evalResult = await evaluateFormula(
       catalogRow.formula_ast,
@@ -847,9 +943,15 @@ async function evaluateAllRows(deps: EvaluateAllRowsDeps): Promise<ComputedKpiRe
   return results.map((r) => {
     const row = byRowId.get(r.kpiValueId)!;
     const plan = resolvePeriodOffset('PRIOR_PERIOD', row.period_id, deps.periodLookup);
-    if (!plan.ok || r.status === 'MISSING' || r.status === 'NOT_APPLICABLE' || r.value === null) return r;
+    if (!plan.ok || r.status === 'MISSING' || r.status === 'NOT_APPLICABLE' || r.value === null)
+      return r;
     const prior = resultByTriple.get(`${r.kpiCode}::${r.entityId}::${plan.periodIds[0]}`);
-    if (!prior || prior.value === null || (prior.status !== 'PRESENT_NONZERO' && prior.status !== 'PRESENT_ZERO')) return r;
+    if (
+      !prior ||
+      prior.value === null ||
+      (prior.status !== 'PRESENT_NONZERO' && prior.status !== 'PRESENT_ZERO')
+    )
+      return r;
     const delta = r.value - prior.value;
     const deltaPct = prior.value !== 0 ? delta / Math.abs(prior.value) : null;
     return { ...r, deltaVsPrior: delta, deltaPctVsPrior: deltaPct } as ComputedKpiResult & {
@@ -861,7 +963,10 @@ async function evaluateAllRows(deps: EvaluateAllRowsDeps): Promise<ComputedKpiRe
 
 async function persistResults(results: ComputedKpiResult[]): Promise<void> {
   await withPinnedPostgresTransaction(async (tx) => {
-    for (const r of results as (ComputedKpiResult & { deltaVsPrior?: number; deltaPctVsPrior?: number | null })[]) {
+    for (const r of results as (ComputedKpiResult & {
+      deltaVsPrior?: number;
+      deltaPctVsPrior?: number | null;
+    })[]) {
       await tx.queryRun(
         `UPDATE finance_analysis_kpi_values
             SET value_status = ?, value_decimal = ?, quality_flag = ?,

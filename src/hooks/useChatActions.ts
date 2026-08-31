@@ -16,10 +16,12 @@ import { type ChatActionPayload } from '@/types/domain/chatActions';
 
 export type ChatAction = NavigateAction | ChatActionPayload;
 
-export function useChatActions(options: {
-  projectId?: string;
-  initiativeId?: string;
-} = {}) {
+export function useChatActions(
+  options: {
+    projectId?: string;
+    initiativeId?: string;
+  } = {}
+) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [lastError, setLastError] = useState<string | null>(null);
@@ -72,7 +74,11 @@ export function useChatActions(options: {
         onOpenReportBuilder: () => navigate('/document-studio'),
         onOpenPresentationWizard: (params) => {
           const template = String(params?.templateId || '').trim();
-          navigate(template ? `/prezentacje?templateArtifactId=${encodeURIComponent(template)}` : '/prezentacje');
+          navigate(
+            template
+              ? `/prezentacje?templateArtifactId=${encodeURIComponent(template)}`
+              : '/prezentacje'
+          );
         },
         onOpenKpiDrawer: (kpiId) => navigate(`/results/kpi/${encodeURIComponent(kpiId)}`),
       };

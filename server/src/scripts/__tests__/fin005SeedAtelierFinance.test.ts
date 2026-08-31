@@ -61,6 +61,7 @@ import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { SeedRecoveryManifest } from '../../../scripts/fin005-seed-atelier-finance.js';
 import {
   buildCanonicalModelEventUpsert,
   buildCanonicalModelUpsert,
@@ -89,7 +90,6 @@ import {
   SNAPSHOT_TABLES,
   WRITE_PATH_IDENTITY_FIELDS,
 } from '../../../scripts/fin005-seed-atelier-finance.js';
-import type { SeedRecoveryManifest } from '../../../scripts/fin005-seed-atelier-finance.js';
 import {
   ATELIER_CANONICAL_MODEL_NAME_EN,
   ATELIER_FINANCE_CURRENCY,

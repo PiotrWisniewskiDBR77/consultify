@@ -15,7 +15,6 @@
  */
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
 import { createObligation } from '../platform/obligations.js';
-
 import {
   applySetRollupUpdate,
   CHECK_IN_OBLIGATION_TYPE,
@@ -90,13 +89,20 @@ export async function generateCadenceOccurrencesAndSeedCheckInObligations(
   let obligationsSeeded = 0;
   let cadenceOccurrenceIds: string[] = [];
   try {
-    const occurrenceRowsResult = await client.query<{ cadence_occurrence_id: string; window_end: string }>(
+    const occurrenceRowsResult = await client.query<{
+      cadence_occurrence_id: string;
+      window_end: string;
+    }>(
       `SELECT cadence_occurrence_id, window_end FROM okr_vnext_checkin_occurrences WHERE cadence_occurrence_id = ANY($1::uuid[])`,
       [generated.createdOccurrenceIds]
     );
     cadenceOccurrenceIds = occurrenceRowsResult.rows.map((row) => row.cadence_occurrence_id);
 
-    const krRowsResult = await client.query<{ key_result_id: string; owner_user_id: string; row_version: number }>(
+    const krRowsResult = await client.query<{
+      key_result_id: string;
+      owner_user_id: string;
+      row_version: number;
+    }>(
       `SELECT kr.key_result_id, kr.owner_user_id, kr.row_version
          FROM okr_vnext_key_results kr
          JOIN okr_vnext_sets s ON s.set_id = kr.set_id
@@ -267,7 +273,13 @@ export async function detectAndFlagMissedCheckIns(
         continue;
       }
       const { snapshot } = await resolveOkrCyclePinnedPolicySnapshot(client, setId, organizationId);
-      await applySetRollupUpdate(client, setRow, organizationId, OKR_CHECKIN_SCHEDULER_ACTOR, snapshot);
+      await applySetRollupUpdate(
+        client,
+        setRow,
+        organizationId,
+        OKR_CHECKIN_SCHEDULER_ACTOR,
+        snapshot
+      );
       await client.query('COMMIT');
       setsReassessed += 1;
     } catch {
@@ -300,7 +312,13 @@ export async function detectAndFlagMissedCheckIns(
          JOIN okr_vnext_checkin_occurrences occ ON occ.cadence_occurrence_id::text = o.cadence_occurrence_id
         WHERE o.organization_id = $2 AND o.obligation_type = $3 AND o.status = 'open'
           AND occ.cycle_id = $4 AND occ.window_end < $5`,
-      [OKR_CHECKIN_KEY_RESULT_REFERENCE_TYPE, organizationId, CHECK_IN_OBLIGATION_TYPE, cycleId, asOf.toISOString()]
+      [
+        OKR_CHECKIN_KEY_RESULT_REFERENCE_TYPE,
+        organizationId,
+        CHECK_IN_OBLIGATION_TYPE,
+        cycleId,
+        asOf.toISOString(),
+      ]
     );
     obligationsStillOpen = Number(obligationsStillOpenResult.rows[0]?.count ?? '0');
   } finally {

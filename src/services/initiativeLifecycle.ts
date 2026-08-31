@@ -58,7 +58,12 @@ export const VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
  * Module identifiers for routing
  */
 export type ModuleId =
-  'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits' | 'reporting';
+  | 'tools'
+  | 'assessment'
+  | 'initiatives'
+  | 'execution'
+  | 'benefits'
+  | 'reporting';
 
 /**
  * Module configuration

@@ -38,8 +38,8 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { HandoffSpineError } from '../../artifactHandoff/handoffSpineService.js';
 import * as queryHelpers from '../../../utils/queryHelpers.js';
+import { HandoffSpineError } from '../../artifactHandoff/handoffSpineService.js';
 import {
   buildIdeaArtifactPayload,
   canonicalSourceHash,
@@ -124,9 +124,18 @@ beforeAll(async () => {
         `(server/migrations/20260912_claude_c_handoff_spine.sql). Found ${tables.rows.length}/3.`
     );
   }
-  await pool.query(`INSERT INTO organizations (id,name,plan,status) VALUES ($1,$2,'enterprise','active')`, [ORG_A, 'Idea handoff A']);
-  await pool.query(`INSERT INTO organizations (id,name,plan,status) VALUES ($1,$2,'enterprise','active')`, [ORG_B, 'Idea handoff B']);
-  for (const [userId, organizationId] of [[USER_A, ORG_A], [USER_B, ORG_B]]) {
+  await pool.query(
+    `INSERT INTO organizations (id,name,plan,status) VALUES ($1,$2,'enterprise','active')`,
+    [ORG_A, 'Idea handoff A']
+  );
+  await pool.query(
+    `INSERT INTO organizations (id,name,plan,status) VALUES ($1,$2,'enterprise','active')`,
+    [ORG_B, 'Idea handoff B']
+  );
+  for (const [userId, organizationId] of [
+    [USER_A, ORG_A],
+    [USER_B, ORG_B],
+  ]) {
     await pool.query(
       `INSERT INTO users (id,organization_id,email,password,role,status) VALUES ($1,$2,$3,'unused','OWNER','active')`,
       [userId, organizationId, `${userId}@example.test`]
@@ -155,51 +164,79 @@ afterAll(async () => {
     await pool.query(
       `DELETE FROM artifact_evidence WHERE artifact_id IN (
          SELECT artifact_id FROM wave5_artifacts WHERE organization_id LIKE $1
-       )`, [`${PREFIX}%`]
+       )`,
+      [`${PREFIX}%`]
     );
     await pool.query(
       `DELETE FROM wave5_artifact_versions WHERE artifact_id IN (
          SELECT artifact_id FROM wave5_artifacts WHERE organization_id LIKE $1
-       )`, [`${PREFIX}%`]
+       )`,
+      [`${PREFIX}%`]
     );
     await pool.query(
       `DELETE FROM wave5_artifacts WHERE organization_id LIKE $1 AND artifact_id LIKE 'idea-document-%'`,
       [`${PREFIX}%`]
     );
-    await pool.query(
-      `DELETE FROM presentation_decks WHERE organization_id LIKE $1`,
-      [`${PREFIX}%`]
-    );
+    await pool.query(`DELETE FROM presentation_decks WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(
       `DELETE FROM generated_workbooks WHERE organization_id LIKE $1 AND id LIKE 'idea-workbook-%'`,
       [`${PREFIX}%`]
     );
     // Children (FK -> proposals, and FK -> my_ideas) before parents.
-    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
-    await pool.query(`DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
+    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
+    await pool.query(`DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(`DELETE FROM my_ideas WHERE id LIKE $1`, [`${PREFIX}%`]);
-    await pool.query(`DELETE FROM conversation_messages WHERE conversation_id IN (SELECT id FROM conversations WHERE organization_id = ANY($1::text[]))`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM conversations WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM chat_projects WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
+    await pool.query(
+      `DELETE FROM conversation_messages WHERE conversation_id IN (SELECT id FROM conversations WHERE organization_id = ANY($1::text[]))`,
+      [[ORG_A, ORG_B]]
+    );
+    await pool.query(`DELETE FROM conversations WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
+    await pool.query(`DELETE FROM chat_projects WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
     await pool.query(`DELETE FROM tasks WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM decisions WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM reports WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM initiatives WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM projects WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM tool_sessions WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
-    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
+    await pool.query(`DELETE FROM decisions WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
+    await pool.query(`DELETE FROM reports WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
+    await pool.query(`DELETE FROM initiatives WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
+    await pool.query(`DELETE FROM projects WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
+    await pool.query(`DELETE FROM tool_sessions WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [
+      [ORG_A, ORG_B],
+    ]);
     await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_A, USER_B]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
 
     const remaining = await countFixtureRows();
     expect(remaining).toEqual({ ideas: 0, proposals: 0, receipts: 0 });
-    expect((await pool.query(
-      `SELECT
+    expect(
+      (
+        await pool.query(
+          `SELECT
         (SELECT count(*)::int FROM wave5_artifact_versions WHERE organization_id LIKE $1) document_versions,
         (SELECT count(*)::int FROM presentation_decks WHERE organization_id LIKE $1) decks,
         (SELECT count(*)::int FROM generated_workbooks WHERE organization_id LIKE $1) workbooks`,
-      [`${PREFIX}%`]
-    )).rows[0]).toEqual({ document_versions: 0, decks: 0, workbooks: 0 });
+          [`${PREFIX}%`]
+        )
+      ).rows[0]
+    ).toEqual({ document_versions: 0, decks: 0, workbooks: 0 });
   } finally {
     await pool.end();
   }
@@ -269,11 +306,12 @@ describe('propose -> approve -> materialize, per target kind', () => {
       expect(materialized.receipt.targetRecordId).toBe(
         `idea-${targetKind}-${proposed.proposal.proposalId}`
       );
-      const [ownerTable, ownerIdColumn] = targetKind === 'document'
-        ? ['wave5_artifacts', 'artifact_id']
-        : targetKind === 'presentation'
-          ? ['presentation_decks', 'id']
-          : ['generated_workbooks', 'id'];
+      const [ownerTable, ownerIdColumn] =
+        targetKind === 'document'
+          ? ['wave5_artifacts', 'artifact_id']
+          : targetKind === 'presentation'
+            ? ['presentation_decks', 'id']
+            : ['generated_workbooks', 'id'];
       const owner = await pool.query(
         `SELECT ${ownerIdColumn} FROM ${ownerTable} WHERE ${ownerIdColumn} = $1 AND organization_id = $2`,
         [materialized.receipt.targetRecordId, ORG_A]
@@ -301,53 +339,84 @@ describe('propose -> approve -> materialize, per target kind', () => {
 describe('one pinned transaction owns queryHelpers and all three artifact owners', () => {
   it('queryHelpers reuses one backend session, holds the advisory lock, and rolls back', async () => {
     const rollbackIdeaId = `${PREFIX}rollback-${randomUUID()}`;
-    await expect(queryHelpers.withPgTransaction(async () => {
-      const first = await queryHelpers.queryOne<{ pid: number }>(`SELECT pg_backend_pid() pid`);
-      await queryHelpers.queryRun(`SELECT pg_advisory_xact_lock(hashtext(?))`, [rollbackIdeaId]);
-      const second = await queryHelpers.queryOne<{ pid: number }>(`SELECT pg_backend_pid() pid`);
-      expect(second?.pid).toBe(first?.pid);
-      const contender = await pool.query<{ acquired: boolean }>(
-        `SELECT pg_try_advisory_xact_lock(hashtext($1)) acquired`, [rollbackIdeaId]
-      );
-      expect(contender.rows[0].acquired).toBe(false);
-      await queryHelpers.queryRun(
-        `INSERT INTO my_ideas (id,user_id,organization_id,title,tags) VALUES (?,?,?,?,?)`,
-        [rollbackIdeaId, USER_A, ORG_A, 'must rollback', '[]']
-      );
-      throw new Error('rollback-probe');
-    })).rejects.toThrow('rollback-probe');
-    expect((await pool.query(`SELECT 1 FROM my_ideas WHERE id=$1`, [rollbackIdeaId])).rows).toHaveLength(0);
+    await expect(
+      queryHelpers.withPgTransaction(async () => {
+        const first = await queryHelpers.queryOne<{ pid: number }>(`SELECT pg_backend_pid() pid`);
+        await queryHelpers.queryRun(`SELECT pg_advisory_xact_lock(hashtext(?))`, [rollbackIdeaId]);
+        const second = await queryHelpers.queryOne<{ pid: number }>(`SELECT pg_backend_pid() pid`);
+        expect(second?.pid).toBe(first?.pid);
+        const contender = await pool.query<{ acquired: boolean }>(
+          `SELECT pg_try_advisory_xact_lock(hashtext($1)) acquired`,
+          [rollbackIdeaId]
+        );
+        expect(contender.rows[0].acquired).toBe(false);
+        await queryHelpers.queryRun(
+          `INSERT INTO my_ideas (id,user_id,organization_id,title,tags) VALUES (?,?,?,?,?)`,
+          [rollbackIdeaId, USER_A, ORG_A, 'must rollback', '[]']
+        );
+        throw new Error('rollback-probe');
+      })
+    ).rejects.toThrow('rollback-probe');
+    expect(
+      (await pool.query(`SELECT 1 FROM my_ideas WHERE id=$1`, [rollbackIdeaId])).rows
+    ).toHaveLength(0);
   });
 
   for (const targetKind of IDEA_ARTIFACT_TARGET_KINDS) {
     it(`${targetKind}: injected owner->receipt failure rolls back owner and receipt`, async () => {
       const ideaId = await seedIdea({ title: `Rollback ${targetKind}` });
       const proposed = await proposeIdeaArtifact({
-        organizationId: ORG_A, ideaId, targetKind, createdBy: USER_A,
+        organizationId: ORG_A,
+        ideaId,
+        targetKind,
+        createdBy: USER_A,
       });
       await decideIdeaArtifact({
-        organizationId: ORG_A, ideaId, proposalId: proposed.proposal.proposalId,
-        decidedBy: USER_A, action: 'approve',
+        organizationId: ORG_A,
+        ideaId,
+        proposalId: proposed.proposal.proposalId,
+        decidedBy: USER_A,
+        action: 'approve',
       });
-      await expect(materializeIdeaArtifact({
-        organizationId: ORG_A, ideaId, proposalId: proposed.proposal.proposalId,
-        materializedBy: USER_A, failureInjection: 'after-owner',
-      })).rejects.toThrow('Injected failure');
+      await expect(
+        materializeIdeaArtifact({
+          organizationId: ORG_A,
+          ideaId,
+          proposalId: proposed.proposal.proposalId,
+          materializedBy: USER_A,
+          failureInjection: 'after-owner',
+        })
+      ).rejects.toThrow('Injected failure');
       const targetId = `idea-${targetKind}-${proposed.proposal.proposalId}`;
-      const ownerCount = targetKind === 'document'
-        ? await pool.query(`SELECT count(*)::int n FROM wave5_artifacts WHERE artifact_id=$1`, [targetId])
-        : targetKind === 'presentation'
-          ? await pool.query(`SELECT count(*)::int n FROM presentation_decks WHERE id=$1`, [targetId])
-          : await pool.query(`SELECT count(*)::int n FROM generated_workbooks WHERE id=$1`, [targetId]);
+      const ownerCount =
+        targetKind === 'document'
+          ? await pool.query(`SELECT count(*)::int n FROM wave5_artifacts WHERE artifact_id=$1`, [
+              targetId,
+            ])
+          : targetKind === 'presentation'
+            ? await pool.query(`SELECT count(*)::int n FROM presentation_decks WHERE id=$1`, [
+                targetId,
+              ])
+            : await pool.query(`SELECT count(*)::int n FROM generated_workbooks WHERE id=$1`, [
+                targetId,
+              ]);
       expect(ownerCount.rows[0].n).toBe(0);
-      expect((await pool.query(
-        `SELECT count(*)::int n FROM artifact_handoff_receipts WHERE proposal_id=$1`,
-        [proposed.proposal.proposalId]
-      )).rows[0].n).toBe(0);
+      expect(
+        (
+          await pool.query(
+            `SELECT count(*)::int n FROM artifact_handoff_receipts WHERE proposal_id=$1`,
+            [proposed.proposal.proposalId]
+          )
+        ).rows[0].n
+      ).toBe(0);
       if (targetKind === 'document') {
-        expect((await pool.query(
-          `SELECT count(*)::int n FROM artifact_evidence WHERE artifact_id=$1`, [targetId]
-        )).rows[0].n).toBe(0);
+        expect(
+          (
+            await pool.query(`SELECT count(*)::int n FROM artifact_evidence WHERE artifact_id=$1`, [
+              targetId,
+            ])
+          ).rows[0].n
+        ).toBe(0);
       }
     });
   }
@@ -357,7 +426,14 @@ describe('the concrete duplicate-conversion fix', () => {
   it('mounted legacy route requires a key for all six targets and replays exact response after stage mutation', async () => {
     const ideaId = await seedIdea({ title: 'Mounted legacy idempotency idea' });
     const bearer = { Authorization: `Bearer ${ownerToken}` };
-    for (const target of ['initiative','task_set','decision','team_chat','report','presentation']) {
+    for (const target of [
+      'initiative',
+      'task_set',
+      'decision',
+      'team_chat',
+      'report',
+      'presentation',
+    ]) {
       const missing = await request(mountedApp)
         .post(`/api/my-work/my-ideas/${ideaId}/convert`)
         .set(bearer)
@@ -365,29 +441,46 @@ describe('the concrete duplicate-conversion fix', () => {
       expect(missing.status).toBe(428);
     }
 
-    for (const target of ['initiative','task_set','decision','team_chat','report','presentation']) {
+    for (const target of [
+      'initiative',
+      'task_set',
+      'decision',
+      'team_chat',
+      'report',
+      'presentation',
+    ]) {
       const targetIdeaId = await seedIdea({ title: `Mounted ${target} idempotency idea` });
       const key = `${PREFIX}legacy-${target}`;
       const first = await request(mountedApp)
         .post(`/api/my-work/my-ideas/${targetIdeaId}/convert`)
-        .set(bearer).set('Idempotency-Key', key)
+        .set(bearer)
+        .set('Idempotency-Key', key)
         .send({ target, options: {} });
       expect(first.status, `${target}: ${JSON.stringify(first.body)}`).toBe(200);
       expect(first.body.replayed).toBe(false);
       const replay = await request(mountedApp)
         .post(`/api/my-work/my-ideas/${targetIdeaId}/convert`)
-        .set(bearer).set('Idempotency-Key', key)
+        .set(bearer)
+        .set('Idempotency-Key', key)
         .send({ target, options: {} });
       expect(replay.status).toBe(200);
       expect(replay.body).toEqual({ ...first.body, replayed: true });
-      expect((await pool.query(
-        `SELECT count(*)::int n FROM my_idea_conversions WHERE organization_id=$1 AND idempotency_key=$2`,
-        [ORG_A, key]
-      )).rows[0].n).toBe(1);
-      await pool.query(`UPDATE my_ideas SET title=$1 WHERE id=$2`, [`changed ${target}`, targetIdeaId]);
+      expect(
+        (
+          await pool.query(
+            `SELECT count(*)::int n FROM my_idea_conversions WHERE organization_id=$1 AND idempotency_key=$2`,
+            [ORG_A, key]
+          )
+        ).rows[0].n
+      ).toBe(1);
+      await pool.query(`UPDATE my_ideas SET title=$1 WHERE id=$2`, [
+        `changed ${target}`,
+        targetIdeaId,
+      ]);
       const collision = await request(mountedApp)
         .post(`/api/my-work/my-ideas/${targetIdeaId}/convert`)
-        .set(bearer).set('Idempotency-Key', key)
+        .set(bearer)
+        .set('Idempotency-Key', key)
         .send({ target, options: {} });
       expect(collision.status, `${target}: ${JSON.stringify(collision.body)}`).toBe(409);
       expect(collision.body.code).toBe('IDEMPOTENCY_COLLISION');

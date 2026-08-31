@@ -12,8 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireActiveTenantMembership } from '../middleware/auditsStrictMembership.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
   validateBody,
@@ -122,33 +122,31 @@ const router = Router();
 
 /** Chat streaming is provider-bearing: stale role claims and SUPERADMIN do not
  * replace an authoritative ACTIVE tenant membership row. */
-const requireActiveChatMembership = asyncHandler(
-  async (req: AuthRequest, res: Response, next) => {
-    const userId = String(req.userId || req.user?.id || '').trim();
-    const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
-    if (!userId || !organizationId) {
+const requireActiveChatMembership = asyncHandler(async (req: AuthRequest, res: Response, next) => {
+  const userId = String(req.userId || req.user?.id || '').trim();
+  const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
+  if (!userId || !organizationId) {
+    return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
+  }
+  try {
+    const membership = await dbGet<{ status?: string }>(
+      `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
+      [userId, organizationId],
+      { fallback: false }
+    );
+    if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
       return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
     }
-    try {
-      const membership = await dbGet<{ status?: string }>(
-        `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
-        [userId, organizationId],
-        { fallback: false }
-      );
-      if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
-        return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
-      }
-    } catch (error) {
-      logger.warn('[AI Stream] membership verification unavailable', {
-        userId,
-        organizationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
-    }
-    next();
+  } catch (error) {
+    logger.warn('[AI Stream] membership verification unavailable', {
+      userId,
+      organizationId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
   }
-);
+  next();
+});
 
 function isConnectorFreshDataAsk(message: unknown): boolean {
   const text = String(message || '').toLowerCase();
@@ -656,7 +654,6 @@ router.post(
     } finally {
       client.release();
     }
-
   })
 );
 
@@ -4073,8 +4070,7 @@ router.post(
         } as any;
       }
 
-      const orgKnowledgeRetrievalEnabled =
-        process.env.ENABLE_ORG_KNOWLEDGE_RETRIEVAL === 'true';
+      const orgKnowledgeRetrievalEnabled = process.env.ENABLE_ORG_KNOWLEDGE_RETRIEVAL === 'true';
 
       // Day 131 fix (N3): an EXPLICIT context-scope choice made by the user is authoritative.
       // The feature flag may supply a default when the user made no choice, but it must never
@@ -4156,7 +4152,9 @@ router.post(
                 type: 'document',
                 title: String(chunk?.filename || 'Organization document'),
                 reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
-                excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                excerpt: String(chunk?.content || '')
+                  .trim()
+                  .slice(0, 500),
                 fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
               })),
             });
@@ -4264,7 +4262,9 @@ router.post(
                   type: 'document',
                   title: String(chunk?.filename || 'Organization document'),
                   reference: `${String(chunk?.filename || 'Organization document')} — fragment ${typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : 'unknown'}`,
-                  excerpt: String(chunk?.content || '').trim().slice(0, 500),
+                  excerpt: String(chunk?.content || '')
+                    .trim()
+                    .slice(0, 500),
                   fragmentIndex: typeof chunk?.chunkIndex === 'number' ? chunk.chunkIndex : null,
                 })),
               });
@@ -4278,94 +4278,95 @@ router.post(
           );
         }
 
-        if (governedAttachmentDocIds.length > 0) try {
-          const ragModule = await import('../services/ragService.js');
-          const ragService = (ragModule.default || ragModule) as any;
-          const chunks = await ragService.searchRelevantChunks(message, {
-            limit: 5,
-            organizationId: req.organizationId || undefined,
-            // FIX-2 (dyżur 210): thread the real requester so an owner-aware
-            // access filter (ragService.appendKnowledgeDocAccessFilter) can
-            // see their own private docs. Same identity resolution as
-            // sharedRetrieval.retrieveContext above.
-            userId: (req as any).user?.id || (req as any).userId || undefined,
-            documentIds: governedAttachmentDocIds,
-          });
-
-          if (Array.isArray(chunks) && chunks.length > 0) {
-            attachmentChunksInjected = true;
-            emitSSE({
-              type: 'thought',
-              step: 'attachments',
-              status: 'completed',
-              label: `Found ${chunks.length} relevant fragment(s) across ${governedAttachmentDocIds.length} attachment(s).`,
+        if (governedAttachmentDocIds.length > 0)
+          try {
+            const ragModule = await import('../services/ragService.js');
+            const ragService = (ragModule.default || ragModule) as any;
+            const chunks = await ragService.searchRelevantChunks(message, {
+              limit: 5,
+              organizationId: req.organizationId || undefined,
+              // FIX-2 (dyżur 210): thread the real requester so an owner-aware
+              // access filter (ragService.appendKnowledgeDocAccessFilter) can
+              // see their own private docs. Same identity resolution as
+              // sharedRetrieval.retrieveContext above.
+              userId: (req as any).user?.id || (req as any).userId || undefined,
+              documentIds: governedAttachmentDocIds,
             });
-            const attachmentsText = chunks
-              .slice(0, 5)
-              .map((c: any, i: number) => {
+
+            if (Array.isArray(chunks) && chunks.length > 0) {
+              attachmentChunksInjected = true;
+              emitSSE({
+                type: 'thought',
+                step: 'attachments',
+                status: 'completed',
+                label: `Found ${chunks.length} relevant fragment(s) across ${governedAttachmentDocIds.length} attachment(s).`,
+              });
+              const attachmentsText = chunks
+                .slice(0, 5)
+                .map((c: any, i: number) => {
+                  const source = String(c?.source || 'Attachment');
+                  const content = String(c?.content || '').trim();
+                  return `[A${i + 1}] ${source}\n${content}`;
+                })
+                .join('\n\n');
+              const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
                 const source = String(c?.source || 'Attachment');
-                const content = String(c?.content || '').trim();
-                return `[A${i + 1}] ${source}\n${content}`;
-              })
-              .join('\n\n');
-            const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
-              const source = String(c?.source || 'Attachment');
-              return {
-                id: `attachment_${i + 1}`,
-                type: 'document',
-                title: source,
-                reference: source,
-                excerpt: String(c?.content || '')
-                  .trim()
-                  .slice(0, 500),
-                // GF-CHAT-02 fragment anchor: real chunk ordinal
-                // (knowledge_chunks.chunk_index via ragService.searchRelevantChunks),
-                // `null` — never a fabricated `0` — when the source has none.
-                fragmentIndex: typeof c?.chunkIndex === 'number' ? c.chunkIndex : null,
-              };
-            });
-            emitSSE({ type: 'citations', citations: attachmentCitations });
-            hasGovernedGrounding = true;
+                return {
+                  id: `attachment_${i + 1}`,
+                  type: 'document',
+                  title: source,
+                  reference: source,
+                  excerpt: String(c?.content || '')
+                    .trim()
+                    .slice(0, 500),
+                  // GF-CHAT-02 fragment anchor: real chunk ordinal
+                  // (knowledge_chunks.chunk_index via ragService.searchRelevantChunks),
+                  // `null` — never a fabricated `0` — when the source has none.
+                  fragmentIndex: typeof c?.chunkIndex === 'number' ? c.chunkIndex : null,
+                };
+              });
+              emitSSE({ type: 'citations', citations: attachmentCitations });
+              hasGovernedGrounding = true;
 
-            pipelineRequest = {
-              ...pipelineRequest,
-              options: {
-                ...(pipelineRequest.options || {}),
-                systemInstruction:
-                  String((pipelineRequest.options as any)?.systemInstruction || '') +
-                  `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
-              },
-              context: {
-                ...((pipelineRequest as any).context || {}),
-                external: {
-                  ...(context as any)?.external,
-                  attachmentsRag: {
-                    documentIds: governedAttachmentDocIds,
-                    chunks,
+              pipelineRequest = {
+                ...pipelineRequest,
+                options: {
+                  ...(pipelineRequest.options || {}),
+                  systemInstruction:
+                    String((pipelineRequest.options as any)?.systemInstruction || '') +
+                    `\n\n## ATTACHMENTS (conversation-scoped sources)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Prefer these attachments when relevant.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n- If the attachments do not contain the needed info, say so.\n`,
+                },
+                context: {
+                  ...((pipelineRequest as any).context || {}),
+                  external: {
+                    ...(context as any)?.external,
+                    attachmentsRag: {
+                      documentIds: governedAttachmentDocIds,
+                      chunks,
+                    },
                   },
                 },
-              },
-            } as any;
+              } as any;
 
-            if (chatRunId) {
-              import('../services/ai/chatTraceService.js')
-                .then((m: any) =>
-                  (m.default || m).addEvent(chatRunId, 'attachment_rag', {
-                    attachmentDocIdsCount: governedAttachmentDocIds.length,
-                    chunksCount: chunks.length,
-                  })
-                )
-                .catch(() => {
-                  /* ignore */
-                });
+              if (chatRunId) {
+                import('../services/ai/chatTraceService.js')
+                  .then((m: any) =>
+                    (m.default || m).addEvent(chatRunId, 'attachment_rag', {
+                      attachmentDocIdsCount: governedAttachmentDocIds.length,
+                      chunksCount: chunks.length,
+                    })
+                  )
+                  .catch(() => {
+                    /* ignore */
+                  });
+              }
             }
+          } catch (err: any) {
+            logger.warn(
+              '[AI Stream] Attachment RAG failed, continuing without it:',
+              err?.message || String(err)
+            );
           }
-        } catch (err: any) {
-          logger.warn(
-            '[AI Stream] Attachment RAG failed, continuing without it:',
-            err?.message || String(err)
-          );
-        }
 
         // Fallback: if RAG returned no chunks (e.g. embedding failure, query mismatch),
         // load raw chunks directly from DB to ensure the AI always sees attachment content.
@@ -4812,9 +4813,8 @@ router.post(
             writeProposalTools: {
               context: {
                 onProposalToolCall: async (toolName: string, args: unknown) => {
-                  const { checkChatPermission } = await import(
-                    '../services/chatPermissionService.js'
-                  );
+                  const { checkChatPermission } =
+                    await import('../services/chatPermissionService.js');
                   const chatPermission = await checkChatPermission(
                     String(req.userId || ''),
                     String(req.organizationId || ''),
@@ -4824,7 +4824,8 @@ router.post(
                     return {
                       status: 'PROPOSAL_REJECTED',
                       tool: toolName,
-                      message: chatPermission.reason || 'Write permission denied; no change was made.',
+                      message:
+                        chatPermission.reason || 'Write permission denied; no change was made.',
                     };
                   }
 
@@ -4932,7 +4933,6 @@ router.post(
           ).slice(0, 160)}`
         );
       }
-
 
       // Day206 / 17-B: READ-only tool loop. The executor stays on the existing
       // governed path; no raw result is ever emitted through SSE.

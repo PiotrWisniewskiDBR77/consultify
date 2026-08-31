@@ -22,8 +22,8 @@
 import { AlertTriangle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { Modal } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { Modal } from '@/components/ui/primitives';
 
 import { ROI_TRANSITIONS, type RoiTransitionId } from './roiRegistryMappers';
 
@@ -48,7 +48,8 @@ const TEXTAREA_CLASS =
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
 
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
@@ -143,7 +144,9 @@ export const RoiTransitionDialog: React.FC<RoiTransitionDialogProps> = ({
           />
           {reasonError ? (
             <p id="roi-transition-reason-error" className="mt-1 text-[11px] text-c-danger">
-              {isPolish ? 'Powód jest wymagany dla tego przejścia' : 'A reason is required for this transition'}
+              {isPolish
+                ? 'Powód jest wymagany dla tego przejścia'
+                : 'A reason is required for this transition'}
             </p>
           ) : null}
         </div>

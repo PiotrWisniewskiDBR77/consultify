@@ -1,6 +1,7 @@
 // @ts-nocheck
-import { Worker } from 'bullmq';
 import os from 'node:os';
+
+import { Worker } from 'bullmq';
 
 import redisConfig from '../config/QueueConfig.js';
 import logger from '../utils/Logger.js';
@@ -96,14 +97,27 @@ export const processAiTaskJob = async (job) => {
         const payloadUserId = String(payload?.userId || '').trim();
         const receiptId = String(payload?.receiptId || '').trim();
         const payloadDigest = String(payload?.payloadDigest || '').trim();
-        if (!organizationId || !payloadUserId || payloadUserId !== String(userId || '') || !receiptId || !payloadDigest) {
+        if (
+          !organizationId ||
+          !payloadUserId ||
+          payloadUserId !== String(userId || '') ||
+          !receiptId ||
+          !payloadDigest
+        ) {
           throw new Error('AGENT_BACKGROUND_TASK_TENANT_CONTEXT_INVALID');
         }
         const workerId = `${os.hostname()}-${process.pid}`;
-        const { claimAgentTask, finishAgentTask } = await import('../services/ai/agentTaskDispatchService.js');
-        const claim = await claimAgentTask({ planId: String(payload.planId || ''), organizationId,
-          userId: payloadUserId, dispatchKey: String(payload.dispatchKey || `route:${payload.planId}`),
-          receiptId, payloadDigest, workerId });
+        const { claimAgentTask, finishAgentTask } =
+          await import('../services/ai/agentTaskDispatchService.js');
+        const claim = await claimAgentTask({
+          planId: String(payload.planId || ''),
+          organizationId,
+          userId: payloadUserId,
+          dispatchKey: String(payload.dispatchKey || `route:${payload.planId}`),
+          receiptId,
+          payloadDigest,
+          workerId,
+        });
         if (claim.replayed) return { replayed: true };
         const { agentPlannerService } = await import('../services/ai/agentPlannerService.js');
         try {

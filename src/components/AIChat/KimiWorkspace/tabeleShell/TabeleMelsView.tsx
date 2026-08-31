@@ -40,9 +40,9 @@ import TabelePreviewLayout from '../tabelePreview/TabelePreviewLayout';
 import { TabeleLeftRail, type TabeleOutlineItem, type TabeleSectionId } from './TabeleLeftRail';
 import {
   buildTabeleRightRailTools,
+  type TabeleArtifactMeta,
   TabeleArtifactPanel,
   TabeleRightRailPanel,
-  type TabeleArtifactMeta,
   type TabeleRightRailPanelRenderers,
   type TabeleRightRailToolId,
 } from './TabeleRightRail';

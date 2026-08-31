@@ -40,16 +40,20 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
+import type { CommandAccessContext } from '../../resultsVnext/platform/commandCapabilityGuard.js';
 import { createRoiFinanceLink } from '../../resultsVnext/roi/roiFinanceLinkCommands.js';
 import { listRoiFinanceLinks } from '../../resultsVnext/roi/roiFinanceLinkRepository.js';
-import type { CommandAccessContext } from '../../resultsVnext/platform/commandCapabilityGuard.js';
 import {
-  toRoiFinanceLink,
   type RoiFinanceLink,
   type RoiFinanceLinkRow,
+  toRoiFinanceLink,
 } from '../../resultsVnext/roi/roiFinanceSeamTypes.js';
-
-import { getArtifact, getBusinessVersion, type ArtifactRow, type BusinessVersionRow } from './artifactVersionService.js';
+import {
+  type ArtifactRow,
+  type BusinessVersionRow,
+  getArtifact,
+  getBusinessVersion,
+} from './artifactVersionService.js';
 
 // ==========================================
 // ERRORS
@@ -271,10 +275,14 @@ export type FinanceContextForLink =
  * is a NEW, narrower query (a bare PK SELECT), not a duplicate of the
  * visibility-scoped repository's CTE-joined one.
  */
-async function loadRoiFinanceLinkById(client: PoolClient, linkId: string): Promise<RoiFinanceLinkRow | undefined> {
-  const result = await client.query<RoiFinanceLinkRow>(`SELECT * FROM rvn_roi_finance_links WHERE link_id = $1`, [
-    linkId,
-  ]);
+async function loadRoiFinanceLinkById(
+  client: PoolClient,
+  linkId: string
+): Promise<RoiFinanceLinkRow | undefined> {
+  const result = await client.query<RoiFinanceLinkRow>(
+    `SELECT * FROM rvn_roi_finance_links WHERE link_id = $1`,
+    [linkId]
+  );
   return result.rows[0];
 }
 

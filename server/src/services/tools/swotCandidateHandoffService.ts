@@ -72,7 +72,10 @@ export type SwotCandidateReceipt = {
   createdAt: string;
 };
 
-function parsePayload(value: unknown): { conclusions?: FrozenConclusion[]; sourceRevision?: number } {
+function parsePayload(value: unknown): {
+  conclusions?: FrozenConclusion[];
+  sourceRevision?: number;
+} {
   if (typeof value === 'string') {
     try {
       return JSON.parse(value) as { conclusions?: FrozenConclusion[]; sourceRevision?: number };
@@ -88,9 +91,9 @@ function parsePayload(value: unknown): { conclusions?: FrozenConclusion[]; sourc
 function mapReceipt(row: HandoffRow): SwotCandidateReceipt {
   const pinned = Boolean(
     row.tool_output_id &&
-      row.tool_output_version != null &&
-      row.tool_output_content_hash &&
-      row.source_revision != null
+    row.tool_output_version != null &&
+    row.tool_output_content_hash &&
+    row.source_revision != null
   );
   return {
     lineageState: pinned ? 'PINNED' : 'HISTORICAL_UNRESOLVED',
@@ -204,10 +207,10 @@ export async function handoffSwotRecommendation(params: {
     // read-first idempotency check. The durable UNIQUE index remains the
     // backstop, while this transaction lock makes concurrent double-clicks
     // converge without turning the losing transaction into a 23505/500.
-    await tx.query(
-      `SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))`,
-      [params.organizationId, `${params.toolSessionId}:${recommendationId}`]
-    );
+    await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))`, [
+      params.organizationId,
+      `${params.toolSessionId}:${recommendationId}`,
+    ]);
 
     const existing = await tx.query<HandoffRow>(
       `SELECT id, candidate_id, recommendation_id, tool_output_id, tool_output_version,

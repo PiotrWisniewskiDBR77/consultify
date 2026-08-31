@@ -2,11 +2,11 @@ import { createHash } from 'node:crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
+import type { TransformationPlanStep } from '../../types/transformationCase.js';
 import { all as dbAll, get as dbGet, run as dbRun, transaction } from '../../utils/DbPromise.js';
 import type { BranchTaskDraft, WorkGraphMode } from './multiAgentWorkManagerService.js';
 import { createWorkGraph } from './multiAgentWorkManagerService.js';
 import { validateAndCompileTransformationPlan } from './transformationCaseService.js';
-import type { TransformationPlanStep } from '../../types/transformationCase.js';
 
 export interface AgentPlanningBlueprint {
   intakeDefaults: {
@@ -258,7 +258,10 @@ export async function transitionAgentProcessTemplate(input: {
     if (version.content_digest && version.content_digest !== contentDigest)
       throw new Error('agent_template_content_digest_mismatch');
     if (!version.content_digest)
-      await dbRun(`UPDATE ai_playbook_template_versions SET content_digest=? WHERE id=? AND content_digest IS NULL`,[contentDigest,version.id]);
+      await dbRun(
+        `UPDATE ai_playbook_template_versions SET content_digest=? WHERE id=? AND content_digest IS NULL`,
+        [contentDigest, version.id]
+      );
   }
   const status = input.action === 'publish' ? 'PUBLISHED' : 'DEPRECATED';
   const result = await dbRun(
@@ -331,11 +334,11 @@ export async function listAgentProcessTemplates(organizationId: string): Promise
     `SELECT id, key, title, description, status, version, usage_count, template_graph, created_at, updated_at FROM ai_playbook_templates WHERE organization_id = ? ORDER BY updated_at DESC`,
     [organizationId]
   );
-  return rows.map((row:any)=>({
+  return rows.map((row: any) => ({
     ...row,
-    status:String(row.status || '').toLowerCase(),
-    has_planning_blueprint:Boolean(JSON.parse(row.template_graph || '{}').planningBlueprint),
-    template_graph:undefined,
+    status: String(row.status || '').toLowerCase(),
+    has_planning_blueprint: Boolean(JSON.parse(row.template_graph || '{}').planningBlueprint),
+    template_graph: undefined,
   }));
 }
 

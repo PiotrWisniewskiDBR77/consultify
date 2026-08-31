@@ -24,10 +24,12 @@
 import type { PoolClient, QueryResultRow } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-import { wrapWithVisibilityScope, VISIBILITY_CTE_PARAM_COUNT } from '../platform/visibilityScopedQuery.js';
-
+import {
+  VISIBILITY_CTE_PARAM_COUNT,
+  wrapWithVisibilityScope,
+} from '../platform/visibilityScopedQuery.js';
+import { type OkrCheckIn, type OkrCheckInRow, toOkrCheckIn } from './okrCheckInTypes.js';
 import { OKR_SET_RESOURCE_TYPE } from './okrSetCommands.js';
-import { toOkrCheckIn, type OkrCheckIn, type OkrCheckInRow } from './okrCheckInTypes.js';
 
 async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await acquirePgClient();
@@ -38,7 +40,11 @@ async function withReadClient<T>(fn: (client: PoolClient) => Promise<T>): Promis
   }
 }
 
-async function queryRows<T extends QueryResultRow>(client: PoolClient, sql: string, values: unknown[]): Promise<T[]> {
+async function queryRows<T extends QueryResultRow>(
+  client: PoolClient,
+  sql: string,
+  values: unknown[]
+): Promise<T[]> {
   const result = await client.query<T>(sql, values);
   return result.rows;
 }
@@ -90,9 +96,15 @@ export async function listCheckIns(params: ListCheckInsParams): Promise<OkrCheck
        ${currentOnlyClause}
      ORDER BY c.submitted_at DESC
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, keyResultId];
-  const rows = await withReadClient((client) => queryRows<OkrCheckInRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<OkrCheckInRow>(client, wrapped.sql, values)
+  );
   return rows.map(toOkrCheckIn);
 }
 
@@ -116,9 +128,15 @@ export async function getCheckIn(params: GetCheckInParams): Promise<OkrCheckIn |
      WHERE c.organization_id = $1
        AND c.checkin_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
-  const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
+  const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
+    userId,
+    organizationId,
+    resourceType: OKR_SET_RESOURCE_TYPE,
+  });
   const values = [...wrapped.values, checkInId];
-  const rows = await withReadClient((client) => queryRows<OkrCheckInRow>(client, wrapped.sql, values));
+  const rows = await withReadClient((client) =>
+    queryRows<OkrCheckInRow>(client, wrapped.sql, values)
+  );
   const row = rows[0];
   return row ? toOkrCheckIn(row) : null;
 }

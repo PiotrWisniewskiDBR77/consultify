@@ -33,15 +33,10 @@ import type { StandardModuleTab, TableRow } from '@/components/standard';
 import { useAppStore } from '@/store/useAppStore';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
 import type { RoiCaseListItem } from './roiApi';
 import type { RoiCardModeProps } from './RoiCaseCardSections';
-import {
-  buildRoiPirLessonsDraftHandoffContext,
-  buildRoiPirLessonsDraftSuggestion,
-  buildRoiPirLessonsDraftTargetPayload,
-  roiPirTeresaConsequencePreview,
-} from './roiTeresaLessonsDraft';
 import {
   createRoiFinanceLink,
   getRoiPostInvestmentReview,
@@ -53,12 +48,12 @@ import {
   recordRoiPirTeresaDraftDisposition,
   removeRoiFinanceLink,
   RoiApiError,
-  scheduleRoiPostInvestmentReview,
-  updateRoiFinanceReconciliationStatus,
-  updateRoiPostInvestmentReviewDraft,
   type RoiFinanceLink,
   type RoiFinanceReconciliation,
   type RoiPostInvestmentReview,
+  scheduleRoiPostInvestmentReview,
+  updateRoiFinanceReconciliationStatus,
+  updateRoiPostInvestmentReviewDraft,
 } from './roiCaseFullToolApi';
 import {
   buildRoiFinanceLinkColumns,
@@ -72,6 +67,7 @@ import {
   buildRoiPirRowMenu,
   withRoiFullToolId,
 } from './roiCaseFullToolPresenters';
+import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
 import {
   RoiFinanceLinkFormModal,
   RoiFinanceReconciliationFormModal,
@@ -81,12 +77,20 @@ import {
   RoiPirTeresaDispositionModal,
 } from './RoiLearnModals';
 import { RoiRemoveLineItemDialog } from './RoiRemoveLineItemDialog';
-import { buildRoiCasePhaseChips, type RoiCasePhase } from './RoiCasePhaseNav';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
+import {
+  buildRoiPirLessonsDraftHandoffContext,
+  buildRoiPirLessonsDraftSuggestion,
+  buildRoiPirLessonsDraftTargetPayload,
+  roiPirTeresaConsequencePreview,
+} from './roiTeresaLessonsDraft';
 
 type LearnTab = 'pir' | 'finance-links' | 'finance-reconciliations';
 
-interface WriteState { busy: boolean; error: string | null; isConflict: boolean; }
+interface WriteState {
+  busy: boolean;
+  error: string | null;
+  isConflict: boolean;
+}
 const IDLE_WRITE: WriteState = { busy: false, error: null, isConflict: false };
 
 export interface RoiCaseLearnWorkspaceProps {
@@ -101,10 +105,18 @@ export interface RoiCaseLearnWorkspaceProps {
   cardMode?: RoiCardModeProps;
 }
 
-export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({
+  roiCase,
+  isPolish,
+  onBack,
+  phase,
+  onPhaseChange,
+  cardMode,
+}) => {
   const [localTab, setLocalTab] = useState<LearnTab>('pir');
   const tab = (cardMode ? cardMode.activeTab : localTab) as LearnTab;
-  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as LearnTab));
+  const setTab = (id: string) =>
+    cardMode ? cardMode.onTabChange(id) : setLocalTab(id as LearnTab);
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
   const messageOf = (err: unknown) => toUserFacingErrorMessage(err, isPolish);
@@ -127,8 +139,12 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
   const currentOrganization = useAppStore((s) => s.currentOrganization);
 
   const loadPirs = useCallback(() => {
-    setPirLoading(true); setPirError(null);
-    listRoiPostInvestmentReviews(roiCase.caseId).then(setPirs).catch((e) => setPirError(messageOf(e))).finally(() => setPirLoading(false));
+    setPirLoading(true);
+    setPirError(null);
+    listRoiPostInvestmentReviews(roiCase.caseId)
+      .then(setPirs)
+      .catch((e) => setPirError(messageOf(e)))
+      .finally(() => setPirLoading(false));
   }, [roiCase.caseId]);
 
   // ── Finance links ─────────────────────────────────────────────────────
@@ -142,8 +158,12 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
   const [flIdempotencyKey, setFlIdempotencyKey] = useState('');
 
   const loadFinanceLinks = useCallback(() => {
-    setFlLoading(true); setFlError(null);
-    listRoiFinanceLinks(roiCase.caseId).then(setFinanceLinks).catch((e) => setFlError(messageOf(e))).finally(() => setFlLoading(false));
+    setFlLoading(true);
+    setFlError(null);
+    listRoiFinanceLinks(roiCase.caseId)
+      .then(setFinanceLinks)
+      .catch((e) => setFlError(messageOf(e)))
+      .finally(() => setFlLoading(false));
   }, [roiCase.caseId]);
 
   // ── Finance reconciliations ──────────────────────────────────────────
@@ -157,30 +177,42 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
   const [frIdempotencyKey, setFrIdempotencyKey] = useState('');
 
   const loadReconciliations = useCallback(() => {
-    setFrLoading(true); setFrError(null);
-    listRoiFinanceReconciliations(roiCase.caseId).then(setReconciliations).catch((e) => setFrError(messageOf(e))).finally(() => setFrLoading(false));
+    setFrLoading(true);
+    setFrError(null);
+    listRoiFinanceReconciliations(roiCase.caseId)
+      .then(setReconciliations)
+      .catch((e) => setFrError(messageOf(e)))
+      .finally(() => setFrLoading(false));
   }, [roiCase.caseId]);
 
   useEffect(() => {
     if (tab === 'pir' && pirs === null && !pirLoading) loadPirs();
     if (tab === 'finance-links' && financeLinks === null && !flLoading) loadFinanceLinks();
-    if (tab === 'finance-reconciliations' && reconciliations === null && !frLoading) loadReconciliations();
+    if (tab === 'finance-reconciliations' && reconciliations === null && !frLoading)
+      loadReconciliations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   const breadcrumbs = cardMode
     ? undefined
-    : [{ label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack }, { label: roiCase.title }];
+    : [
+        { label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack },
+        { label: roiCase.title },
+      ];
   const tabs: StandardModuleTab[] = cardMode
     ? cardMode.tabs
     : [
-      { id: 'pir', label: 'PIR' },
-      { id: 'finance-links', label: isPolish ? 'Powiązania Finance' : 'Finance links' },
-      { id: 'finance-reconciliations', label: isPolish ? 'Rekoncyliacje' : 'Reconciliations' },
+        { id: 'pir', label: 'PIR' },
+        { id: 'finance-links', label: isPolish ? 'Powiązania Finance' : 'Finance links' },
+        { id: 'finance-reconciliations', label: isPolish ? 'Rekoncyliacje' : 'Reconciliations' },
       ];
   const chipsBar = cardMode
     ? {}
-    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
+    : {
+        chips: phaseChips,
+        activeChip: phase,
+        onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase),
+      };
 
   if (tab === 'finance-links') {
     const rows: TableRow[] = (financeLinks ?? []).map((l) => withRoiFullToolId(l, 'linkId'));
@@ -190,23 +222,60 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-            showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
-            primaryCta: { label: isPolish ? 'Nowe powiązanie' : 'New link', icon: Link2, onClick: () => { setFlWrite(IDLE_WRITE); setFlIdempotencyKey(newRoiIdempotencyKey()); setFlFormOpen(true); }, testId: 'roi-learn-finance-link-create-cta' },
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: setTab,
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            ...chipsBar,
+            primaryCta: {
+              label: isPolish ? 'Nowe powiązanie' : 'New link',
+              icon: Link2,
+              onClick: () => {
+                setFlWrite(IDLE_WRITE);
+                setFlIdempotencyKey(newRoiIdempotencyKey());
+                setFlFormOpen(true);
+              },
+              testId: 'roi-learn-finance-link-create-cta',
+            },
           }}
           table={{
             columns: buildRoiFinanceLinkColumns(isPolish),
-            data: rows, persistKey: 'results-vnext.roi-learn.finance-links',
-            loading: flLoading, error: flError, onRetry: loadFinanceLinks,
-            empty: !flLoading && !flError && rows.length === 0 ? { title: isPolish ? 'Brak powiązań Finance' : 'No finance links yet', description: isPolish ? 'Ta sprawa nie ma jeszcze powiązań z artefaktami Finance.' : 'This case has no finance-artifact links yet.' } : undefined,
-            selectedRowId: selectedFlId, onRowClick: (row) => setSelectedFlId(String(row.linkId)),
-            rowMenu: (row) => buildRoiFinanceLinkRowMenu(row as unknown as RoiFinanceLink, roiCase.status, isPolish, {
-              onPreview: (r) => setSelectedFlId(r.linkId),
-              onRemove: (r) => setRemoveFl(r),
-            }),
+            data: rows,
+            persistKey: 'results-vnext.roi-learn.finance-links',
+            loading: flLoading,
+            error: flError,
+            onRetry: loadFinanceLinks,
+            empty:
+              !flLoading && !flError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak powiązań Finance' : 'No finance links yet',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze powiązań z artefaktami Finance.'
+                      : 'This case has no finance-artifact links yet.',
+                  }
+                : undefined,
+            selectedRowId: selectedFlId,
+            onRowClick: (row) => setSelectedFlId(String(row.linkId)),
+            rowMenu: (row) =>
+              buildRoiFinanceLinkRowMenu(
+                row as unknown as RoiFinanceLink,
+                roiCase.status,
+                isPolish,
+                {
+                  onPreview: (r) => setSelectedFlId(r.linkId),
+                  onRemove: (r) => setRemoveFl(r),
+                }
+              ),
             defaultSort: { columnId: 'asOf', direction: 'desc' },
           }}
-          preview={selected ? buildRoiFinanceLinkPreview(selected, isPolish, () => setSelectedFlId(null)) : null}
+          preview={
+            selected
+              ? buildRoiFinanceLinkPreview(selected, isPolish, () => setSelectedFlId(null))
+              : null
+          }
         />
         <RoiFinanceLinkFormModal
           open={flFormOpen}
@@ -215,11 +284,20 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
           onSubmit={(values) => {
             setFlWrite({ busy: true, error: null, isConflict: false });
             createRoiFinanceLink(roiCase.caseId, { ...values, idempotencyKey: flIdempotencyKey })
-              .then((res) => { setFinanceLinks((prev) => [res.financeLink, ...(prev ?? [])]); setSelectedFlId(res.financeLink.linkId); setFlFormOpen(false); })
-              .catch((err) => setFlWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+              .then((res) => {
+                setFinanceLinks((prev) => [res.financeLink, ...(prev ?? [])]);
+                setSelectedFlId(res.financeLink.linkId);
+                setFlFormOpen(false);
+              })
+              .catch((err) =>
+                setFlWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setFlWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={flWrite.busy} errorMessage={flWrite.error} isConflict={flWrite.isConflict}
+          isPolish={isPolish}
+          busy={flWrite.busy}
+          errorMessage={flWrite.error}
+          isConflict={flWrite.isConflict}
         />
         <RoiRemoveLineItemDialog
           open={!!removeFl}
@@ -229,42 +307,98 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
           onSubmit={(reason) => {
             if (!removeFl) return;
             setFlWrite({ busy: true, error: null, isConflict: false });
-            removeRoiFinanceLink(roiCase.caseId, removeFl.linkId, { expectedVersion: removeFl.rowVersion, reason, idempotencyKey: newRoiIdempotencyKey() })
-              .then(() => { setFinanceLinks((prev) => (prev ?? []).filter((l) => l.linkId !== removeFl.linkId)); if (selectedFlId === removeFl.linkId) setSelectedFlId(null); setRemoveFl(null); })
-              .catch((err) => setFlWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            removeRoiFinanceLink(roiCase.caseId, removeFl.linkId, {
+              expectedVersion: removeFl.rowVersion,
+              reason,
+              idempotencyKey: newRoiIdempotencyKey(),
+            })
+              .then(() => {
+                setFinanceLinks((prev) => (prev ?? []).filter((l) => l.linkId !== removeFl.linkId));
+                if (selectedFlId === removeFl.linkId) setSelectedFlId(null);
+                setRemoveFl(null);
+              })
+              .catch((err) =>
+                setFlWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setFlWrite((s) => ({ ...s, busy: false })));
           }}
-          busy={flWrite.busy} errorMessage={flWrite.error} isConflict={flWrite.isConflict}
+          busy={flWrite.busy}
+          errorMessage={flWrite.error}
+          isConflict={flWrite.isConflict}
         />
       </>
     );
   }
 
   if (tab === 'finance-reconciliations') {
-    const rows: TableRow[] = (reconciliations ?? []).map((r) => withRoiFullToolId(r, 'reconciliationId'));
-    const selected = (reconciliations ?? []).find((r) => r.reconciliationId === selectedFrId) ?? null;
+    const rows: TableRow[] = (reconciliations ?? []).map((r) =>
+      withRoiFullToolId(r, 'reconciliationId')
+    );
+    const selected =
+      (reconciliations ?? []).find((r) => r.reconciliationId === selectedFrId) ?? null;
     return (
       <>
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-            showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
-            primaryCta: { label: isPolish ? 'Otwórz rekoncyliację' : 'Open reconciliation', icon: Plus, onClick: () => { setFrWrite(IDLE_WRITE); setFrIdempotencyKey(newRoiIdempotencyKey()); setFrFormOpen(true); }, testId: 'roi-learn-reconciliation-create-cta' },
+            breadcrumbs,
+            tabs,
+            activeTab: tab,
+            onTabChange: setTab,
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+            ...chipsBar,
+            primaryCta: {
+              label: isPolish ? 'Otwórz rekoncyliację' : 'Open reconciliation',
+              icon: Plus,
+              onClick: () => {
+                setFrWrite(IDLE_WRITE);
+                setFrIdempotencyKey(newRoiIdempotencyKey());
+                setFrFormOpen(true);
+              },
+              testId: 'roi-learn-reconciliation-create-cta',
+            },
           }}
           table={{
             columns: buildRoiFinanceReconciliationColumns(isPolish),
-            data: rows, persistKey: 'results-vnext.roi-learn.finance-reconciliations',
-            loading: frLoading, error: frError, onRetry: loadReconciliations,
-            empty: !frLoading && !frError && rows.length === 0 ? { title: isPolish ? 'Brak rekoncyliacji' : 'No reconciliations yet', description: isPolish ? 'Ta sprawa nie ma jeszcze otwartych rekoncyliacji.' : 'This case has no open reconciliations yet.' } : undefined,
-            selectedRowId: selectedFrId, onRowClick: (row) => setSelectedFrId(String(row.reconciliationId)),
-            rowMenu: (row) => buildRoiFinanceReconciliationRowMenu(row as unknown as RoiFinanceReconciliation, isPolish, {
-              onPreview: (r) => setSelectedFrId(r.reconciliationId),
-              onEditStatus: (r) => { setFrWrite(IDLE_WRITE); setFrStatusTarget(r); },
-            }),
+            data: rows,
+            persistKey: 'results-vnext.roi-learn.finance-reconciliations',
+            loading: frLoading,
+            error: frError,
+            onRetry: loadReconciliations,
+            empty:
+              !frLoading && !frError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak rekoncyliacji' : 'No reconciliations yet',
+                    description: isPolish
+                      ? 'Ta sprawa nie ma jeszcze otwartych rekoncyliacji.'
+                      : 'This case has no open reconciliations yet.',
+                  }
+                : undefined,
+            selectedRowId: selectedFrId,
+            onRowClick: (row) => setSelectedFrId(String(row.reconciliationId)),
+            rowMenu: (row) =>
+              buildRoiFinanceReconciliationRowMenu(
+                row as unknown as RoiFinanceReconciliation,
+                isPolish,
+                {
+                  onPreview: (r) => setSelectedFrId(r.reconciliationId),
+                  onEditStatus: (r) => {
+                    setFrWrite(IDLE_WRITE);
+                    setFrStatusTarget(r);
+                  },
+                }
+              ),
             defaultSort: { columnId: 'openedAt', direction: 'desc' },
           }}
-          preview={selected ? buildRoiFinanceReconciliationPreview(selected, isPolish, () => setSelectedFrId(null)) : null}
+          preview={
+            selected
+              ? buildRoiFinanceReconciliationPreview(selected, isPolish, () =>
+                  setSelectedFrId(null)
+                )
+              : null
+          }
         />
         <RoiFinanceReconciliationFormModal
           open={frFormOpen}
@@ -272,12 +406,24 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
           onClose={() => (frWrite.busy ? undefined : setFrFormOpen(false))}
           onSubmit={(values) => {
             setFrWrite({ busy: true, error: null, isConflict: false });
-            openRoiFinanceReconciliation(roiCase.caseId, { ...values, idempotencyKey: frIdempotencyKey })
-              .then((res) => { setReconciliations((prev) => [res.financeReconciliation, ...(prev ?? [])]); setSelectedFrId(res.financeReconciliation.reconciliationId); setFrFormOpen(false); })
-              .catch((err) => setFrWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            openRoiFinanceReconciliation(roiCase.caseId, {
+              ...values,
+              idempotencyKey: frIdempotencyKey,
+            })
+              .then((res) => {
+                setReconciliations((prev) => [res.financeReconciliation, ...(prev ?? [])]);
+                setSelectedFrId(res.financeReconciliation.reconciliationId);
+                setFrFormOpen(false);
+              })
+              .catch((err) =>
+                setFrWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setFrWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={frWrite.busy} errorMessage={frWrite.error} isConflict={frWrite.isConflict}
+          isPolish={isPolish}
+          busy={frWrite.busy}
+          errorMessage={frWrite.error}
+          isConflict={frWrite.isConflict}
         />
         <RoiFinanceReconciliationStatusModal
           open={!!frStatusTarget}
@@ -286,12 +432,30 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
           onSubmit={(values) => {
             if (!frStatusTarget) return;
             setFrWrite({ busy: true, error: null, isConflict: false });
-            updateRoiFinanceReconciliationStatus(roiCase.caseId, frStatusTarget.reconciliationId, { ...values, expectedVersion: frStatusTarget.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
-              .then((res) => { setReconciliations((prev) => (prev ?? []).map((r) => (r.reconciliationId === res.financeReconciliation.reconciliationId ? res.financeReconciliation : r))); setFrStatusTarget(null); })
-              .catch((err) => setFrWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+            updateRoiFinanceReconciliationStatus(roiCase.caseId, frStatusTarget.reconciliationId, {
+              ...values,
+              expectedVersion: frStatusTarget.rowVersion,
+              idempotencyKey: newRoiIdempotencyKey(),
+            })
+              .then((res) => {
+                setReconciliations((prev) =>
+                  (prev ?? []).map((r) =>
+                    r.reconciliationId === res.financeReconciliation.reconciliationId
+                      ? res.financeReconciliation
+                      : r
+                  )
+                );
+                setFrStatusTarget(null);
+              })
+              .catch((err) =>
+                setFrWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+              )
               .finally(() => setFrWrite((s) => ({ ...s, busy: false })));
           }}
-          isPolish={isPolish} busy={frWrite.busy} errorMessage={frWrite.error} isConflict={frWrite.isConflict}
+          isPolish={isPolish}
+          busy={frWrite.busy}
+          errorMessage={frWrite.error}
+          isConflict={frWrite.isConflict}
         />
       </>
     );
@@ -305,49 +469,117 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
-          breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
-          showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
-          primaryCta: { label: isPolish ? 'Zaplanuj przegląd' : 'Schedule review', icon: CalendarClock, onClick: () => setScheduleOpen(true), testId: 'roi-learn-pir-schedule-cta' },
+          breadcrumbs,
+          tabs,
+          activeTab: tab,
+          onTabChange: setTab,
+          showTabCounts: false,
+          viewModes: ['table'],
+          viewMode: 'table',
+          ...chipsBar,
+          primaryCta: {
+            label: isPolish ? 'Zaplanuj przegląd' : 'Schedule review',
+            icon: CalendarClock,
+            onClick: () => setScheduleOpen(true),
+            testId: 'roi-learn-pir-schedule-cta',
+          },
         }}
         table={{
           columns: buildRoiPirColumns(isPolish),
-          data: rows, persistKey: 'results-vnext.roi-learn.pir',
-          loading: pirLoading, error: pirError, onRetry: loadPirs,
-          empty: !pirLoading && !pirError && rows.length === 0 ? { title: isPolish ? 'Brak przeglądów poinwestycyjnych' : 'No post-investment reviews yet', description: isPolish ? 'PIR powstaje po przejściu sprawy do statusu „Przegląd poinwestycyjny".' : 'A PIR is created once the case transitions to Post-investment review.' } : undefined,
-          selectedRowId: selectedPirId, onRowClick: (row) => setSelectedPirId(String(row.pirId)),
-          rowMenu: (row) => buildRoiPirRowMenu(row as unknown as RoiPostInvestmentReview, isPolish, {
-            onPreview: (r) => setSelectedPirId(r.pirId),
-            onEditDraft: (r) => { setPirWrite(IDLE_WRITE); setDraftEditTarget(r); },
-            onTeresaDisposition: (r) => { setPirWrite(IDLE_WRITE); setTeresaTarget(r); },
-            onAskTeresa: (r) => { setAskTeresaKey(newRoiIdempotencyKey()); setAskTeresaTarget(r); },
-          }),
+          data: rows,
+          persistKey: 'results-vnext.roi-learn.pir',
+          loading: pirLoading,
+          error: pirError,
+          onRetry: loadPirs,
+          empty:
+            !pirLoading && !pirError && rows.length === 0
+              ? {
+                  title: isPolish
+                    ? 'Brak przeglądów poinwestycyjnych'
+                    : 'No post-investment reviews yet',
+                  description: isPolish
+                    ? 'PIR powstaje po przejściu sprawy do statusu „Przegląd poinwestycyjny".'
+                    : 'A PIR is created once the case transitions to Post-investment review.',
+                }
+              : undefined,
+          selectedRowId: selectedPirId,
+          onRowClick: (row) => setSelectedPirId(String(row.pirId)),
+          rowMenu: (row) =>
+            buildRoiPirRowMenu(row as unknown as RoiPostInvestmentReview, isPolish, {
+              onPreview: (r) => setSelectedPirId(r.pirId),
+              onEditDraft: (r) => {
+                setPirWrite(IDLE_WRITE);
+                setDraftEditTarget(r);
+              },
+              onTeresaDisposition: (r) => {
+                setPirWrite(IDLE_WRITE);
+                setTeresaTarget(r);
+              },
+              onAskTeresa: (r) => {
+                setAskTeresaKey(newRoiIdempotencyKey());
+                setAskTeresaTarget(r);
+              },
+            }),
           defaultSort: { columnId: 'startedAt', direction: 'desc' },
         }}
-        preview={selected ? buildRoiPirPreview(selected, isPolish, () => setSelectedPirId(null)) : null}
+        preview={
+          selected ? buildRoiPirPreview(selected, isPolish, () => setSelectedPirId(null)) : null
+        }
       />
       <RoiPirScheduleModal
         open={scheduleOpen}
         onClose={() => setScheduleOpen(false)}
         onSubmit={(values) => {
-          scheduleRoiPostInvestmentReview(roiCase.caseId, { ...values, expectedVersion: roiCase.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
+          scheduleRoiPostInvestmentReview(roiCase.caseId, {
+            ...values,
+            expectedVersion: roiCase.rowVersion,
+            idempotencyKey: newRoiIdempotencyKey(),
+          })
             .then(() => setScheduleOpen(false))
             .catch(() => undefined);
         }}
-        isPolish={isPolish} busy={false} errorMessage={null} isConflict={false}
+        isPolish={isPolish}
+        busy={false}
+        errorMessage={null}
+        isConflict={false}
       />
       <RoiPirDraftEditModal
         open={!!draftEditTarget}
-        current={draftEditTarget ? { outcome: draftEditTarget.outcome, lessonsLearned: draftEditTarget.lessonsLearned, recommendation: draftEditTarget.recommendation } : null}
+        current={
+          draftEditTarget
+            ? {
+                outcome: draftEditTarget.outcome,
+                lessonsLearned: draftEditTarget.lessonsLearned,
+                recommendation: draftEditTarget.recommendation,
+              }
+            : null
+        }
         onClose={() => (pirWrite.busy ? undefined : setDraftEditTarget(null))}
         onSubmit={(values) => {
           if (!draftEditTarget) return;
           setPirWrite({ busy: true, error: null, isConflict: false });
-          updateRoiPostInvestmentReviewDraft(roiCase.caseId, draftEditTarget.pirId, { ...values, expectedVersion: draftEditTarget.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
-            .then((res) => { setPirs((prev) => (prev ?? []).map((p) => (p.pirId === res.postInvestmentReview.pirId ? res.postInvestmentReview : p))); setDraftEditTarget(null); })
-            .catch((err) => setPirWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+          updateRoiPostInvestmentReviewDraft(roiCase.caseId, draftEditTarget.pirId, {
+            ...values,
+            expectedVersion: draftEditTarget.rowVersion,
+            idempotencyKey: newRoiIdempotencyKey(),
+          })
+            .then((res) => {
+              setPirs((prev) =>
+                (prev ?? []).map((p) =>
+                  p.pirId === res.postInvestmentReview.pirId ? res.postInvestmentReview : p
+                )
+              );
+              setDraftEditTarget(null);
+            })
+            .catch((err) =>
+              setPirWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+            )
             .finally(() => setPirWrite((s) => ({ ...s, busy: false })));
         }}
-        isPolish={isPolish} busy={pirWrite.busy} errorMessage={pirWrite.error} isConflict={pirWrite.isConflict}
+        isPolish={isPolish}
+        busy={pirWrite.busy}
+        errorMessage={pirWrite.error}
+        isConflict={pirWrite.isConflict}
       />
       <RoiPirTeresaDispositionModal
         open={!!teresaTarget}
@@ -355,62 +587,95 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
         onSubmit={(values) => {
           if (!teresaTarget) return;
           setPirWrite({ busy: true, error: null, isConflict: false });
-          recordRoiPirTeresaDraftDisposition(roiCase.caseId, teresaTarget.pirId, { ...values, expectedVersion: teresaTarget.rowVersion, idempotencyKey: newRoiIdempotencyKey() })
-            .then((res) => { setPirs((prev) => (prev ?? []).map((p) => (p.pirId === res.postInvestmentReview.pirId ? res.postInvestmentReview : p))); setTeresaTarget(null); })
-            .catch((err) => setPirWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) }))
+          recordRoiPirTeresaDraftDisposition(roiCase.caseId, teresaTarget.pirId, {
+            ...values,
+            expectedVersion: teresaTarget.rowVersion,
+            idempotencyKey: newRoiIdempotencyKey(),
+          })
+            .then((res) => {
+              setPirs((prev) =>
+                (prev ?? []).map((p) =>
+                  p.pirId === res.postInvestmentReview.pirId ? res.postInvestmentReview : p
+                )
+              );
+              setTeresaTarget(null);
+            })
+            .catch((err) =>
+              setPirWrite({ busy: false, error: messageOf(err), isConflict: conflictOf(err) })
+            )
             .finally(() => setPirWrite((s) => ({ ...s, busy: false })));
         }}
-        isPolish={isPolish} busy={pirWrite.busy} errorMessage={pirWrite.error} isConflict={pirWrite.isConflict}
+        isPolish={isPolish}
+        busy={pirWrite.busy}
+        errorMessage={pirWrite.error}
+        isConflict={pirWrite.isConflict}
       />
-      {askTeresaTarget ? (() => {
-        const suggestion = buildRoiPirLessonsDraftSuggestion({ roiCase, pir: askTeresaTarget, isPolish });
-        return (
-          <TeresaProposalPanel
-            open={!!askTeresaTarget}
-            onClose={() => setAskTeresaTarget(null)}
-            isPolish={isPolish}
-            title={isPolish ? 'Poproś Teresę o szkic wniosków' : 'Ask Teresa for a lessons draft'}
-            targetModule="roi"
-            sessionId={`roi-pir-teresa-${roiCase.caseId}`}
-            idempotencyKey={askTeresaKey}
-            buildHandoffContext={() =>
-              buildRoiPirLessonsDraftHandoffContext({
-                roiCase,
-                pir: askTeresaTarget,
-                organizationId: currentOrganization?.id ?? roiCase.organizationId,
-                suggestion,
-                sessionId: `roi-pir-teresa-${roiCase.caseId}`,
-              })
-            }
-            buildTargetPayload={() =>
-              buildRoiPirLessonsDraftTargetPayload({ pir: askTeresaTarget, caseId: roiCase.caseId, suggestion })
-            }
-            renderProposedChange={() => (
-              <p className="whitespace-pre-wrap" data-testid="teresa-roi-draft-text">
-                {suggestion.draftLessonsText}
-              </p>
-            )}
-            evidenceBreakdown={suggestion.evidenceBreakdown}
-            evidencePointers={suggestion.evidencePointers}
-            consequencePreview={roiPirTeresaConsequencePreview(askTeresaTarget, isPolish)}
-            onCompleted={() => {
-              // D13 "przeładowanie i zimne otwarcie" — re-fetch the PIR from
-              // the server rather than approximating the write locally, so
-              // the row the disposition step opens next is the real,
-              // server-truth state (teresaDraftLessonsPayload/
-              // teresaDraftGeneratedAt as actually persisted).
-              getRoiPostInvestmentReview(roiCase.caseId, askTeresaTarget.pirId).then((fresh) => {
-                if (fresh) setPirs((prev) => (prev ?? []).map((p) => (p.pirId === fresh.pirId ? fresh : p)));
-              });
-            }}
-            onManualFallback={() => {
-              setAskTeresaTarget(null);
-              setPirWrite(IDLE_WRITE);
-              setDraftEditTarget(askTeresaTarget);
-            }}
-          />
-        );
-      })() : null}
+      {askTeresaTarget
+        ? (() => {
+            const suggestion = buildRoiPirLessonsDraftSuggestion({
+              roiCase,
+              pir: askTeresaTarget,
+              isPolish,
+            });
+            return (
+              <TeresaProposalPanel
+                open={!!askTeresaTarget}
+                onClose={() => setAskTeresaTarget(null)}
+                isPolish={isPolish}
+                title={
+                  isPolish ? 'Poproś Teresę o szkic wniosków' : 'Ask Teresa for a lessons draft'
+                }
+                targetModule="roi"
+                sessionId={`roi-pir-teresa-${roiCase.caseId}`}
+                idempotencyKey={askTeresaKey}
+                buildHandoffContext={() =>
+                  buildRoiPirLessonsDraftHandoffContext({
+                    roiCase,
+                    pir: askTeresaTarget,
+                    organizationId: currentOrganization?.id ?? roiCase.organizationId,
+                    suggestion,
+                    sessionId: `roi-pir-teresa-${roiCase.caseId}`,
+                  })
+                }
+                buildTargetPayload={() =>
+                  buildRoiPirLessonsDraftTargetPayload({
+                    pir: askTeresaTarget,
+                    caseId: roiCase.caseId,
+                    suggestion,
+                  })
+                }
+                renderProposedChange={() => (
+                  <p className="whitespace-pre-wrap" data-testid="teresa-roi-draft-text">
+                    {suggestion.draftLessonsText}
+                  </p>
+                )}
+                evidenceBreakdown={suggestion.evidenceBreakdown}
+                evidencePointers={suggestion.evidencePointers}
+                consequencePreview={roiPirTeresaConsequencePreview(askTeresaTarget, isPolish)}
+                onCompleted={() => {
+                  // D13 "przeładowanie i zimne otwarcie" — re-fetch the PIR from
+                  // the server rather than approximating the write locally, so
+                  // the row the disposition step opens next is the real,
+                  // server-truth state (teresaDraftLessonsPayload/
+                  // teresaDraftGeneratedAt as actually persisted).
+                  getRoiPostInvestmentReview(roiCase.caseId, askTeresaTarget.pirId).then(
+                    (fresh) => {
+                      if (fresh)
+                        setPirs((prev) =>
+                          (prev ?? []).map((p) => (p.pirId === fresh.pirId ? fresh : p))
+                        );
+                    }
+                  );
+                }}
+                onManualFallback={() => {
+                  setAskTeresaTarget(null);
+                  setPirWrite(IDLE_WRITE);
+                  setDraftEditTarget(askTeresaTarget);
+                }}
+              />
+            );
+          })()
+        : null}
     </>
   );
 };

@@ -137,7 +137,8 @@ const parent = {
   // identical to the original. TAX_EXPENSE held constant (see scope decision
   // #1 above), so the full pretax delta flows straight to NET_INCOME.
   restatement: {
-    reason: 'Inventory valuation error discovered during FY2025 Q1 close: obsolete/slow-moving finished-goods stock at the Radom plant was carried at cost instead of net realizable value in the FY2024 audited pack.',
+    reason:
+      'Inventory valuation error discovered during FY2025 Q1 close: obsolete/slow-moving finished-goods stock at the Radom plant was carried at cost instead of net realizable value in the FY2024 audited pack.',
     restatementClass: 'ERROR_CORRECTION' as const,
     inventoryWriteDown: 3_000_000,
   },
@@ -227,15 +228,33 @@ const sub = {
 const INTERCOMPANY_LOAN_PLN = 3_320_000; // PARENT's receivable, PLN, FY2025 only
 // Sanity check at module load: 800,000 EUR * 4.15 closing rate must equal
 // the PLN amount above EXACTLY, by construction (documented, not a coincidence).
-if (Math.abs(sub.FY2025.intercompanyLoanPayableEur * FX.FY2025.closing - INTERCOMPANY_LOAN_PLN) > 1e-9) {
-  throw new Error('oracle internal inconsistency: intercompany loan legs do not translate to the same PLN amount');
+if (
+  Math.abs(sub.FY2025.intercompanyLoanPayableEur * FX.FY2025.closing - INTERCOMPANY_LOAN_PLN) > 1e-9
+) {
+  throw new Error(
+    'oracle internal inconsistency: intercompany loan legs do not translate to the same PLN amount'
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Derived P&L / BS values, per entity per year (oracle formulas, verbatim).
 // ---------------------------------------------------------------------------
-type PLInputs = { revenue: number; cogs: number; opex: number; depreciation: number; interest: number; taxExpense: number };
-type BSInputs = { cash: number; ar: number; inventory: number; fixedAssets: number; ap: number; longTermDebt: number };
+type PLInputs = {
+  revenue: number;
+  cogs: number;
+  opex: number;
+  depreciation: number;
+  interest: number;
+  taxExpense: number;
+};
+type BSInputs = {
+  cash: number;
+  ar: number;
+  inventory: number;
+  fixedAssets: number;
+  ap: number;
+  longTermDebt: number;
+};
 
 function derivePL(x: PLInputs) {
   const grossMargin = x.revenue - x.cogs; // GROSS_MARGIN = REVENUE - COGS
@@ -279,11 +298,19 @@ function rollForwardRE(openingRE: number, netIncome: number, dividendsDeclared: 
 const parentFY2023PL = derivePL(parent.FY2023);
 const parentFY2023BS = withEquityPlug(deriveBS(parent.FY2023));
 const PARENT_FY2023_OPENING_RE = 60_000_000; // FY2023 is the first period on record: this is an assumed opening balance carried in from before the group's tracked history, NOT rolled forward from an earlier tracked period (previous_period_id is NULL for FY2023 -> the DB roll-forward trigger is a documented no-op for this period, see report).
-const parentFY2023ClosingRE = rollForwardRE(PARENT_FY2023_OPENING_RE, parentFY2023PL.netIncome, parent.FY2023.dividendsDeclared);
+const parentFY2023ClosingRE = rollForwardRE(
+  PARENT_FY2023_OPENING_RE,
+  parentFY2023PL.netIncome,
+  parent.FY2023.dividendsDeclared
+);
 
 const parentFY2024OrigPL = derivePL(parent.FY2024_original);
 const parentFY2024OrigBS = withEquityPlug(deriveBS(parent.FY2024_original));
-const parentFY2024OrigClosingRE = rollForwardRE(parentFY2023ClosingRE, parentFY2024OrigPL.netIncome, parent.FY2024_original.dividendsDeclared);
+const parentFY2024OrigClosingRE = rollForwardRE(
+  parentFY2023ClosingRE,
+  parentFY2024OrigPL.netIncome,
+  parent.FY2024_original.dividendsDeclared
+);
 
 // Restated FY2024 = original with the write-down applied to COGS/inventory,
 // TAX_EXPENSE held constant (scope decision #1).
@@ -297,20 +324,35 @@ const parentFY2024RestatedBSInputs: BSInputs = {
   inventory: parent.FY2024_original.inventory - parent.restatement.inventoryWriteDown,
 };
 const parentFY2024RestatedBS = withEquityPlug(deriveBS(parentFY2024RestatedBSInputs));
-const parentFY2024RestatedClosingRE = rollForwardRE(parentFY2023ClosingRE, parentFY2024RestatedPL.netIncome, parent.FY2024_original.dividendsDeclared);
+const parentFY2024RestatedClosingRE = rollForwardRE(
+  parentFY2023ClosingRE,
+  parentFY2024RestatedPL.netIncome,
+  parent.FY2024_original.dividendsDeclared
+);
 
 // Cross-check (must hold EXACTLY by construction; asserted, not just hoped):
 // restated NET_INCOME = original NET_INCOME - inventoryWriteDown (tax held constant).
-if (parentFY2024OrigPL.netIncome - parentFY2024RestatedPL.netIncome !== parent.restatement.inventoryWriteDown) {
-  throw new Error('oracle internal inconsistency: restatement net-income delta does not equal the write-down amount');
+if (
+  parentFY2024OrigPL.netIncome - parentFY2024RestatedPL.netIncome !==
+  parent.restatement.inventoryWriteDown
+) {
+  throw new Error(
+    'oracle internal inconsistency: restatement net-income delta does not equal the write-down amount'
+  );
 }
 // restated TOTAL_ASSETS = original TOTAL_ASSETS - inventoryWriteDown; restated
 // TOTAL_EQUITY = original TOTAL_EQUITY - inventoryWriteDown (plug absorbs it
 // identically on both sides -> balance sheet stays balanced after restatement).
-if (parentFY2024OrigBS.totalAssets - parentFY2024RestatedBS.totalAssets !== parent.restatement.inventoryWriteDown) {
+if (
+  parentFY2024OrigBS.totalAssets - parentFY2024RestatedBS.totalAssets !==
+  parent.restatement.inventoryWriteDown
+) {
   throw new Error('oracle internal inconsistency: restated total assets delta wrong');
 }
-if (parentFY2024OrigBS.totalEquity - parentFY2024RestatedBS.totalEquity !== parent.restatement.inventoryWriteDown) {
+if (
+  parentFY2024OrigBS.totalEquity - parentFY2024RestatedBS.totalEquity !==
+  parent.restatement.inventoryWriteDown
+) {
   throw new Error('oracle internal inconsistency: restated total equity delta wrong');
 }
 
@@ -318,7 +360,11 @@ if (parentFY2024OrigBS.totalEquity - parentFY2024RestatedBS.totalEquity !== pare
 // always builds on the corrected history, never the superseded original).
 const parentFY2025PL = derivePL(parent.FY2025);
 const parentFY2025BS = withEquityPlug(deriveBS(parent.FY2025));
-const parentFY2025ClosingRE = rollForwardRE(parentFY2024RestatedClosingRE, parentFY2025PL.netIncome, parent.FY2025.dividendsDeclared);
+const parentFY2025ClosingRE = rollForwardRE(
+  parentFY2024RestatedClosingRE,
+  parentFY2025PL.netIncome,
+  parent.FY2025.dividendsDeclared
+);
 
 // ---------------------------------------------------------------------------
 // FY2025 monthly detail (PARENT, P&L only). Weighted allocation of the
@@ -361,11 +407,17 @@ const monthlyPL = monthlyRevenue.map((revenue, i) =>
 // RESTATED FY2024 closing cash (9,500,000, unaffected by the non-cash
 // inventory write-down) -- continuing the SAME restated history FY2025
 // itself is built on.
-const monthlyNetChangeCash = allocateMonthly(parent.FY2025.cfo + parent.FY2025.cfi + parent.FY2025.cff, parent.monthlyWeights);
+const monthlyNetChangeCash = allocateMonthly(
+  parent.FY2025.cfo + parent.FY2025.cfi + parent.FY2025.cff,
+  parent.monthlyWeights
+);
 {
   const sum = monthlyNetChangeCash.reduce((a: number, b: number) => a + b, 0);
   const annual = parent.FY2025.cfo + parent.FY2025.cfi + parent.FY2025.cff;
-  if (sum !== annual) throw new Error(`oracle internal inconsistency: monthly netChangeCash sums to ${sum}, expected ${annual}`);
+  if (sum !== annual)
+    throw new Error(
+      `oracle internal inconsistency: monthly netChangeCash sums to ${sum}, expected ${annual}`
+    );
 }
 const monthlyOpeningCashJan = parent.FY2024_original.cash; // restated cash == original cash (non-cash correction)
 const monthlyClosingCash: number[] = [];
@@ -378,7 +430,9 @@ const monthlyClosingCash: number[] = [];
 }
 // Assert December's cumulative closing cash ties EXACTLY to the FY2025 annual closing cash.
 if (monthlyClosingCash[11] !== parent.FY2025.cash) {
-  throw new Error(`oracle internal inconsistency: monthly cumulative closing cash (${monthlyClosingCash[11]}) != FY2025 annual cash (${parent.FY2025.cash})`);
+  throw new Error(
+    `oracle internal inconsistency: monthly cumulative closing cash (${monthlyClosingCash[11]}) != FY2025 annual cash (${parent.FY2025.cash})`
+  );
 }
 
 // Assert monthly sums tie EXACTLY to the annual FY2025 figures.
@@ -388,7 +442,10 @@ for (const [label, monthly, annual] of [
   ['opex', monthlyOpex, parent.FY2025.opex],
 ] as const) {
   const sum = monthly.reduce((a: number, b: number) => a + b, 0);
-  if (sum !== annual) throw new Error(`oracle internal inconsistency: monthly ${label} sums to ${sum}, expected ${annual}`);
+  if (sum !== annual)
+    throw new Error(
+      `oracle internal inconsistency: monthly ${label} sums to ${sum}, expected ${annual}`
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -398,15 +455,27 @@ for (const [label, monthly, annual] of [
 const subFY2023PL = derivePL(sub.FY2023);
 const subFY2023BS = withEquityPlug(deriveBS(sub.FY2023));
 const SUB_FY2023_OPENING_RE_EUR = 3_000_000; // first period on record, same convention as PARENT
-const subFY2023ClosingRE = rollForwardRE(SUB_FY2023_OPENING_RE_EUR, subFY2023PL.netIncome, sub.FY2023.dividendsDeclared);
+const subFY2023ClosingRE = rollForwardRE(
+  SUB_FY2023_OPENING_RE_EUR,
+  subFY2023PL.netIncome,
+  sub.FY2023.dividendsDeclared
+);
 
 const subFY2024PL = derivePL(sub.FY2024);
 const subFY2024BS = withEquityPlug(deriveBS(sub.FY2024));
-const subFY2024ClosingRE = rollForwardRE(subFY2023ClosingRE, subFY2024PL.netIncome, sub.FY2024.dividendsDeclared);
+const subFY2024ClosingRE = rollForwardRE(
+  subFY2023ClosingRE,
+  subFY2024PL.netIncome,
+  sub.FY2024.dividendsDeclared
+);
 
 const subFY2025PL = derivePL(sub.FY2025);
 const subFY2025BS = withEquityPlug(deriveBS(sub.FY2025));
-const subFY2025ClosingRE = rollForwardRE(subFY2024ClosingRE, subFY2025PL.netIncome, sub.FY2025.dividendsDeclared);
+const subFY2025ClosingRE = rollForwardRE(
+  subFY2024ClosingRE,
+  subFY2025PL.netIncome,
+  sub.FY2025.dividendsDeclared
+);
 
 // ---------------------------------------------------------------------------
 // FY2025 consolidation: translate SUB into PLN, eliminate the intercompany
@@ -452,12 +521,16 @@ const subFY2025CTA =
   subFY2025TranslatedBSPreCTA.totalAssets -
   subFY2025TranslatedBSPreCTA.totalLiabilities -
   subFY2025TranslatedBSPreCTA.totalEquityAtHistoricalRate;
-const subFY2025TranslatedEquityPostCTA = subFY2025TranslatedBSPreCTA.totalEquityAtHistoricalRate + subFY2025CTA;
-const subFY2025TranslatedTotalLiabEquity = subFY2025TranslatedBSPreCTA.totalLiabilities + subFY2025TranslatedEquityPostCTA;
+const subFY2025TranslatedEquityPostCTA =
+  subFY2025TranslatedBSPreCTA.totalEquityAtHistoricalRate + subFY2025CTA;
+const subFY2025TranslatedTotalLiabEquity =
+  subFY2025TranslatedBSPreCTA.totalLiabilities + subFY2025TranslatedEquityPostCTA;
 
 // Sanity: SUB's own translated BS must independently balance (assets = liab+equity+CTA).
 if (Math.abs(subFY2025TranslatedBSPreCTA.totalAssets - subFY2025TranslatedTotalLiabEquity) > 1e-6) {
-  throw new Error('oracle internal inconsistency: SUB FY2025 translated balance sheet does not balance');
+  throw new Error(
+    'oracle internal inconsistency: SUB FY2025 translated balance sheet does not balance'
+  );
 }
 
 // NCI (20%) split of SUB's translated equity and translated net income.
@@ -486,25 +559,48 @@ const groupFY2025 = {
     nciNetIncome: nciNetIncomeFY2025,
   },
   bs: {
-    totalAssets: parentFY2025BS.totalAssets + subFY2025TranslatedBSPreCTA.totalAssets - INTERCOMPANY_LOAN_PLN,
-    totalLiabilities: parentFY2025BS.totalLiabilities + subFY2025TranslatedBSPreCTA.totalLiabilities - INTERCOMPANY_LOAN_PLN,
+    totalAssets:
+      parentFY2025BS.totalAssets + subFY2025TranslatedBSPreCTA.totalAssets - INTERCOMPANY_LOAN_PLN,
+    totalLiabilities:
+      parentFY2025BS.totalLiabilities +
+      subFY2025TranslatedBSPreCTA.totalLiabilities -
+      INTERCOMPANY_LOAN_PLN,
     totalEquity: parentFY2025BS.totalEquity + subFY2025TranslatedEquityPostCTA, // unaffected by the loan elimination
     equityAttributableToParent: parentFY2025BS.totalEquity + equityAttributableToParentFY2025,
     nciEquity: nciEquityFY2025,
   },
 };
-groupFY2025.bs['totalLiabilitiesEquity' as const] = groupFY2025.bs.totalLiabilities + groupFY2025.bs.totalEquity;
+groupFY2025.bs['totalLiabilitiesEquity' as const] =
+  groupFY2025.bs.totalLiabilities + groupFY2025.bs.totalEquity;
 
 // Sanity: group BS must balance.
 if (Math.abs(groupFY2025.bs.totalAssets - (groupFY2025.bs as any).totalLiabilitiesEquity) > 1e-6) {
-  throw new Error('oracle internal inconsistency: GoldCo Group FY2025 consolidated balance sheet does not balance');
+  throw new Error(
+    'oracle internal inconsistency: GoldCo Group FY2025 consolidated balance sheet does not balance'
+  );
 }
 // Sanity: equity split must sum back to total equity.
-if (Math.abs(groupFY2025.bs.equityAttributableToParent + groupFY2025.bs.nciEquity - groupFY2025.bs.totalEquity) > 1e-6) {
-  throw new Error('oracle internal inconsistency: NCI + parent-attributable equity does not sum to total equity');
+if (
+  Math.abs(
+    groupFY2025.bs.equityAttributableToParent +
+      groupFY2025.bs.nciEquity -
+      groupFY2025.bs.totalEquity
+  ) > 1e-6
+) {
+  throw new Error(
+    'oracle internal inconsistency: NCI + parent-attributable equity does not sum to total equity'
+  );
 }
-if (Math.abs(groupFY2025.pl.netIncomeAttributableToParent + groupFY2025.pl.nciNetIncome - groupFY2025.pl.netIncomeConsolidated) > 1e-6) {
-  throw new Error('oracle internal inconsistency: NCI + parent-attributable net income does not sum to consolidated net income');
+if (
+  Math.abs(
+    groupFY2025.pl.netIncomeAttributableToParent +
+      groupFY2025.pl.nciNetIncome -
+      groupFY2025.pl.netIncomeConsolidated
+  ) > 1e-6
+) {
+  throw new Error(
+    'oracle internal inconsistency: NCI + parent-attributable net income does not sum to consolidated net income'
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -518,18 +614,93 @@ const oracle = {
     fx: FX,
   },
   parent: {
-    FY2023: { pl: parentFY2023PL, bs: parentFY2023BS, openingRE: PARENT_FY2023_OPENING_RE, closingRE: parentFY2023ClosingRE, dividendsDeclared: parent.FY2023.dividendsDeclared, cfo: parent.FY2023.cfo, cfi: parent.FY2023.cfi, cff: parent.FY2023.cff, netChangeCash: parent.FY2023.cfo + parent.FY2023.cfi + parent.FY2023.cff },
-    FY2024_original: { pl: parentFY2024OrigPL, bs: parentFY2024OrigBS, openingRE: parentFY2023ClosingRE, closingRE: parentFY2024OrigClosingRE, dividendsDeclared: parent.FY2024_original.dividendsDeclared, cfo: parent.FY2024_original.cfo, cfi: parent.FY2024_original.cfi, cff: parent.FY2024_original.cff, netChangeCash: parent.FY2024_original.cfo + parent.FY2024_original.cfi + parent.FY2024_original.cff },
-    FY2024_restated: { pl: parentFY2024RestatedPL, bs: parentFY2024RestatedBS, openingRE: parentFY2023ClosingRE, closingRE: parentFY2024RestatedClosingRE, dividendsDeclared: parent.FY2024_original.dividendsDeclared, cfo: parent.FY2024_original.cfo, cfi: parent.FY2024_original.cfi, cff: parent.FY2024_original.cff, netChangeCash: parent.FY2024_original.cfo + parent.FY2024_original.cfi + parent.FY2024_original.cff, restatementDeltaNetIncome: parentFY2024RestatedPL.netIncome - parentFY2024OrigPL.netIncome, restatementDeltaTotalAssets: parentFY2024RestatedBS.totalAssets - parentFY2024OrigBS.totalAssets },
-    FY2025: { pl: parentFY2025PL, bs: parentFY2025BS, openingRE: parentFY2024RestatedClosingRE, closingRE: parentFY2025ClosingRE, dividendsDeclared: parent.FY2025.dividendsDeclared, cfo: parent.FY2025.cfo, cfi: parent.FY2025.cfi, cff: parent.FY2025.cff, netChangeCash: parent.FY2025.cfo + parent.FY2025.cfi + parent.FY2025.cff },
-    FY2025_monthly: monthlyPL.map((m, i) => ({ month: i + 1, ...m, cash: monthlyClosingCash[i], netChangeCash: monthlyNetChangeCash[i] })),
+    FY2023: {
+      pl: parentFY2023PL,
+      bs: parentFY2023BS,
+      openingRE: PARENT_FY2023_OPENING_RE,
+      closingRE: parentFY2023ClosingRE,
+      dividendsDeclared: parent.FY2023.dividendsDeclared,
+      cfo: parent.FY2023.cfo,
+      cfi: parent.FY2023.cfi,
+      cff: parent.FY2023.cff,
+      netChangeCash: parent.FY2023.cfo + parent.FY2023.cfi + parent.FY2023.cff,
+    },
+    FY2024_original: {
+      pl: parentFY2024OrigPL,
+      bs: parentFY2024OrigBS,
+      openingRE: parentFY2023ClosingRE,
+      closingRE: parentFY2024OrigClosingRE,
+      dividendsDeclared: parent.FY2024_original.dividendsDeclared,
+      cfo: parent.FY2024_original.cfo,
+      cfi: parent.FY2024_original.cfi,
+      cff: parent.FY2024_original.cff,
+      netChangeCash:
+        parent.FY2024_original.cfo + parent.FY2024_original.cfi + parent.FY2024_original.cff,
+    },
+    FY2024_restated: {
+      pl: parentFY2024RestatedPL,
+      bs: parentFY2024RestatedBS,
+      openingRE: parentFY2023ClosingRE,
+      closingRE: parentFY2024RestatedClosingRE,
+      dividendsDeclared: parent.FY2024_original.dividendsDeclared,
+      cfo: parent.FY2024_original.cfo,
+      cfi: parent.FY2024_original.cfi,
+      cff: parent.FY2024_original.cff,
+      netChangeCash:
+        parent.FY2024_original.cfo + parent.FY2024_original.cfi + parent.FY2024_original.cff,
+      restatementDeltaNetIncome: parentFY2024RestatedPL.netIncome - parentFY2024OrigPL.netIncome,
+      restatementDeltaTotalAssets:
+        parentFY2024RestatedBS.totalAssets - parentFY2024OrigBS.totalAssets,
+    },
+    FY2025: {
+      pl: parentFY2025PL,
+      bs: parentFY2025BS,
+      openingRE: parentFY2024RestatedClosingRE,
+      closingRE: parentFY2025ClosingRE,
+      dividendsDeclared: parent.FY2025.dividendsDeclared,
+      cfo: parent.FY2025.cfo,
+      cfi: parent.FY2025.cfi,
+      cff: parent.FY2025.cff,
+      netChangeCash: parent.FY2025.cfo + parent.FY2025.cfi + parent.FY2025.cff,
+    },
+    FY2025_monthly: monthlyPL.map((m, i) => ({
+      month: i + 1,
+      ...m,
+      cash: monthlyClosingCash[i],
+      netChangeCash: monthlyNetChangeCash[i],
+    })),
     FY2025_monthlyOpeningCashJan: monthlyOpeningCashJan,
   },
   sub: {
-    FY2023: { pl: subFY2023PL, bs: subFY2023BS, openingRE: SUB_FY2023_OPENING_RE_EUR, closingRE: subFY2023ClosingRE, dividendsDeclared: sub.FY2023.dividendsDeclared },
-    FY2024: { pl: subFY2024PL, bs: subFY2024BS, openingRE: subFY2023ClosingRE, closingRE: subFY2024ClosingRE, dividendsDeclared: sub.FY2024.dividendsDeclared },
-    FY2025: { pl: subFY2025PL, bs: subFY2025BS, openingRE: subFY2024ClosingRE, closingRE: subFY2025ClosingRE, dividendsDeclared: sub.FY2025.dividendsDeclared, intercompanyLoanPayableEur: sub.FY2025.intercompanyLoanPayableEur },
-    FY2025_translated: { pl: subFY2025TranslatedPL, bsPreCTA: subFY2025TranslatedBSPreCTA, cta: subFY2025CTA, equityPostCTA: subFY2025TranslatedEquityPostCTA, totalLiabilitiesEquity: subFY2025TranslatedTotalLiabEquity },
+    FY2023: {
+      pl: subFY2023PL,
+      bs: subFY2023BS,
+      openingRE: SUB_FY2023_OPENING_RE_EUR,
+      closingRE: subFY2023ClosingRE,
+      dividendsDeclared: sub.FY2023.dividendsDeclared,
+    },
+    FY2024: {
+      pl: subFY2024PL,
+      bs: subFY2024BS,
+      openingRE: subFY2023ClosingRE,
+      closingRE: subFY2024ClosingRE,
+      dividendsDeclared: sub.FY2024.dividendsDeclared,
+    },
+    FY2025: {
+      pl: subFY2025PL,
+      bs: subFY2025BS,
+      openingRE: subFY2024ClosingRE,
+      closingRE: subFY2025ClosingRE,
+      dividendsDeclared: sub.FY2025.dividendsDeclared,
+      intercompanyLoanPayableEur: sub.FY2025.intercompanyLoanPayableEur,
+    },
+    FY2025_translated: {
+      pl: subFY2025TranslatedPL,
+      bsPreCTA: subFY2025TranslatedBSPreCTA,
+      cta: subFY2025CTA,
+      equityPostCTA: subFY2025TranslatedEquityPostCTA,
+      totalLiabilitiesEquity: subFY2025TranslatedTotalLiabEquity,
+    },
   },
   intercompany: { loanPLN: INTERCOMPANY_LOAN_PLN, loanEUR: sub.FY2025.intercompanyLoanPayableEur },
   nci: { equityFY2025: nciEquityFY2025, netIncomeFY2025: nciNetIncomeFY2025 },
@@ -541,4 +712,6 @@ fs.writeFileSync(outPath, JSON.stringify(oracle, null, 2));
 // eslint-disable-next-line no-console
 console.log(`[goldco_oracle] wrote ${outPath}`);
 // eslint-disable-next-line no-console
-console.log(`[goldco_oracle] all internal consistency assertions passed (balance/roll-forward/monthly-sum checks embedded above)`);
+console.log(
+  `[goldco_oracle] all internal consistency assertions passed (balance/roll-forward/monthly-sum checks embedded above)`
+);

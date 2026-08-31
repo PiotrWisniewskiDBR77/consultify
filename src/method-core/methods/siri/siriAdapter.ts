@@ -7,6 +7,24 @@
  * inventing one (`EVIDENCE_MISSING` / "PENDING OWNER APPROVAL" markers).
  */
 
+import {
+  buildDefaultInputs,
+  DEFAULT_SIRI_PM_WEIGHTS,
+  rankByImpactValue,
+  rankByImpactValueV2,
+  SIRI_PM_WEIGHT_PRESETS,
+  type SiriPmCalculationVersion,
+  type SiriPmPlanningHorizon,
+  type SIRIPrioritisationInput,
+  type SIRIPrioritisationWeights,
+} from '@/services/siriPrioritisation';
+import {
+  SIRI_DIMENSIONS,
+  SIRI_PRIORITISATION_AREAS,
+  type SIRIBuildingBlock,
+} from '@/services/siriStructure';
+import { isSiriPmV2Enabled } from '@/utils/siriPmV2Flag';
+
 import type {
   AdapterCapability,
   AggregationInput,
@@ -22,23 +40,6 @@ import type {
   ScoringResult,
 } from '../../contracts';
 import { EVIDENCE_STRENGTHS } from '../../contracts';
-import {
-  SIRI_DIMENSIONS,
-  SIRI_PRIORITISATION_AREAS,
-  type SIRIBuildingBlock,
-} from '@/services/siriStructure';
-import {
-  buildDefaultInputs,
-  DEFAULT_SIRI_PM_WEIGHTS,
-  rankByImpactValue,
-  rankByImpactValueV2,
-  SIRI_PM_WEIGHT_PRESETS,
-  type SiriPmCalculationVersion,
-  type SiriPmPlanningHorizon,
-  type SIRIPrioritisationInput,
-  type SIRIPrioritisationWeights,
-} from '@/services/siriPrioritisation';
-import { isSiriPmV2Enabled } from '@/utils/siriPmV2Flag';
 import {
   compileSiriPackOnly,
   DEFAULT_MINIMUM_EVIDENCE_STRENGTH,
@@ -68,8 +69,7 @@ function resolveOpenLevels(input: ProgressionInput): ProgressionResult {
     }
   }
 
-  const blockedAtLevel =
-    currentLevel === null ? 0 : currentLevel < 5 ? currentLevel + 1 : null;
+  const blockedAtLevel = currentLevel === null ? 0 : currentLevel < 5 ? currentLevel + 1 : null;
 
   const openLevels: number[] = [];
   if (currentLevel !== null) {
@@ -485,7 +485,10 @@ function packForCapabilityLookup(): MethodPack {
  * (wrong unit id, or a level outside 0-5) — a structurally different refusal
  * from "content exists upstream but is not transcribed here".
  */
-export function getSiriLevelCanonicalText(unitId: string, level: number): AdapterCapability<string> {
+export function getSiriLevelCanonicalText(
+  unitId: string,
+  level: number
+): AdapterCapability<string> {
   const pack = packForCapabilityLookup();
   const match = pack.levels.find((l) => l.unitId === unitId && l.level === level);
   if (!match) {

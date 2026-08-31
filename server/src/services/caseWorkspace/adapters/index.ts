@@ -32,21 +32,21 @@
  * has no access to any of it.
  */
 
+export * from './assessmentAdapter.js';
 export * from './decisionAdapter.js';
+export * from './documentsAdapter.js';
+export * from './financeAdapter.js';
 export * from './initiativeAdapter.js';
 export * from './kpiAdapter.js';
-export * from './financeAdapter.js';
-export * from './assessmentAdapter.js';
 export * from './resultsAdapter.js';
-export * from './documentsAdapter.js';
 
+import { registerAssessmentCreateCapability } from './assessmentAdapter.js';
 import { registerDecisionCreateCapability } from './decisionAdapter.js';
+import { registerDocumentsAndPresentationCapabilities } from './documentsAdapter.js';
+import { registerFinanceModelCreateCapability } from './financeAdapter.js';
 import { registerInitiativeCreateCapability } from './initiativeAdapter.js';
 import { registerKpiCreateCapability } from './kpiAdapter.js';
-import { registerFinanceModelCreateCapability } from './financeAdapter.js';
-import { registerAssessmentCreateCapability } from './assessmentAdapter.js';
 import { registerResultsScorecardCreateCapability } from './resultsAdapter.js';
-import { registerDocumentsAndPresentationCapabilities } from './documentsAdapter.js';
 
 /**
  * Registers all four Golden Case adapters (registry row + binding, coupled

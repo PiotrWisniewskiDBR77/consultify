@@ -39,7 +39,9 @@ const SOURCE = readFileSync(SOURCE_PATH, 'utf-8');
  */
 function extractCallbackBody(source: string, constName: string): string {
   const declMatch = source.match(
-    new RegExp(`const ${constName} = useCallback\\(\\s*(?:async\\s*)?\\([^)]*\\)\\s*(?::[^{]*)?=>\\s*{`)
+    new RegExp(
+      `const ${constName} = useCallback\\(\\s*(?:async\\s*)?\\([^)]*\\)\\s*(?::[^{]*)?=>\\s*{`
+    )
   );
   if (!declMatch || declMatch.index === undefined) {
     throw new Error(

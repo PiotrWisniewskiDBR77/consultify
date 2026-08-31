@@ -9,13 +9,12 @@ import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
-import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 
 const NO_RETRY = { retry: 0 } as const;
-const ARTIFACT =
-  '/private/tmp/cx-day168-wskaznik-bootstrap-artefakty/day168-http-db-evidence.json';
+const ARTIFACT = '/private/tmp/cx-day168-wskaznik-bootstrap-artefakty/day168-http-db-evidence.json';
 
 describe('Day 168 KPI bootstrap through the real ApiGateway and PostgreSQL', NO_RETRY, () => {
   const suffix = randomUUID().replaceAll('-', '');
@@ -34,7 +33,9 @@ describe('Day 168 KPI bootstrap through the real ApiGateway and PostgreSQL', NO_
 
     sql = new Client({ connectionString: String(process.env.DATABASE_URL) });
     await sql.connect();
-    const target = await sql.query('SELECT current_database() AS database, inet_server_port() AS port');
+    const target = await sql.query(
+      'SELECT current_database() AS database, inet_server_port() AS port'
+    );
     expect(target.rows[0].database.length).toBeGreaterThan(0);
     expect(target.rows[0].port).toBeGreaterThan(0);
 
@@ -57,7 +58,14 @@ describe('Day 168 KPI bootstrap through the real ApiGateway and PostgreSQL', NO_
     );
 
     authorization = `Bearer ${jwt.sign(
-      { id: userId, userId, email: `day168_${suffix}@example.test`, organizationId, organization_id: organizationId, role: 'ADMIN' },
+      {
+        id: userId,
+        userId,
+        email: `day168_${suffix}@example.test`,
+        organizationId,
+        organization_id: organizationId,
+        role: 'ADMIN',
+      },
       config.JWT_SECRET,
       { algorithm: 'HS256', expiresIn: '1h' }
     )}`;
@@ -151,7 +159,11 @@ describe('Day 168 KPI bootstrap through the real ApiGateway and PostgreSQL', NO_
       [organizationId, kpiId]
     );
     expect(policyAfter.rows).toHaveLength(1);
-    expect(policyAfter.rows[0]).toMatchObject({ domain: 'kpi', visibility_mode: 'OPEN_ORG', is_active: true });
+    expect(policyAfter.rows[0]).toMatchObject({
+      domain: 'kpi',
+      visibility_mode: 'OPEN_ORG',
+      is_active: true,
+    });
     expect(Number(measurementAfter.rows[0].actual_value)).toBe(73.5);
 
     Object.assign(evidence, {
@@ -216,7 +228,10 @@ describe('Day 168 KPI bootstrap through the real ApiGateway and PostgreSQL', NO_
     const publish = await request(app)
       .post(`/api/vnext/results/okr/programs/${programId}/publish`)
       .set('Authorization', authorization)
-      .send({ expectedVersion: program.body.resultingVersion, idempotencyKey: `day168-publish-${suffix}` });
+      .send({
+        expectedVersion: program.body.resultingVersion,
+        idempotencyKey: `day168-publish-${suffix}`,
+      });
     expect(publish.status, JSON.stringify(publish.body)).toBe(200);
 
     const cycle = await request(app)

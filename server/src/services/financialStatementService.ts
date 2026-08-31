@@ -11,16 +11,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import {
-  type CanonicalStatementType,
-  getCanonicalLineById,
-  getRequiredCanonicalLineIds,
-} from './financeCanonicalRegistry.js';
-import {
   detectNumberNotation,
   type NumberNotation,
   type NumberNotationProfile,
   parseStatementNumber,
 } from './finance/numberNotation.js';
+import {
+  type CanonicalStatementType,
+  getCanonicalLineById,
+  getRequiredCanonicalLineIds,
+} from './financeCanonicalRegistry.js';
 import { detachStatementFromPack } from './financialStatementPackService.js';
 
 // ---------------------------------------------------------------------------
@@ -259,25 +259,66 @@ export async function assertAtomicStatementImportSchema(): Promise<void> {
       'statement_pack_id',
     ],
     financial_statement_ingest_runs: [
-      'id', 'statement_id', 'organization_id', 'run_status', 'current_stage',
-      'source_file_name', 'source_file_path', 'parse_method', 'document_class',
-      'extraction_strategy', 'template_family', 'raw_text_length',
-      'summary_json', 'latest_reason_codes', 'created_by', 'completed_at', 'updated_at',
+      'id',
+      'statement_id',
+      'organization_id',
+      'run_status',
+      'current_stage',
+      'source_file_name',
+      'source_file_path',
+      'parse_method',
+      'document_class',
+      'extraction_strategy',
+      'template_family',
+      'raw_text_length',
+      'summary_json',
+      'latest_reason_codes',
+      'created_by',
+      'completed_at',
+      'updated_at',
     ],
     financial_statement_extracted_sections: [
-      'id', 'statement_id', 'ingest_run_id', 'section_key', 'section_label',
-      'statement_type', 'source_page_start', 'source_page_end', 'line_start',
-      'line_end', 'confidence', 'text_excerpt', 'metadata_json',
+      'id',
+      'statement_id',
+      'ingest_run_id',
+      'section_key',
+      'section_label',
+      'statement_type',
+      'source_page_start',
+      'source_page_end',
+      'line_start',
+      'line_end',
+      'confidence',
+      'text_excerpt',
+      'metadata_json',
     ],
     financial_statement_candidate_rows: [
-      'id', 'statement_id', 'ingest_run_id', 'section_id', 'row_key', 'row_label',
-      'normalized_label', 'source_row', 'source_page', 'selected_period_label',
-      'raw_value', 'normalized_value', 'currency', 'scaling', 'confidence',
-      'classification_reason', 'metadata_json',
+      'id',
+      'statement_id',
+      'ingest_run_id',
+      'section_id',
+      'row_key',
+      'row_label',
+      'normalized_label',
+      'source_row',
+      'source_page',
+      'selected_period_label',
+      'raw_value',
+      'normalized_value',
+      'currency',
+      'scaling',
+      'confidence',
+      'classification_reason',
+      'metadata_json',
     ],
     financial_statement_lines: [
-      'id', 'statement_type', 'line_code', 'line_name', 'line_name_pl',
-      'organization_id', 'is_system',
+      'id',
+      'statement_type',
+      'line_code',
+      'line_name',
+      'line_name_pl',
+      'organization_id',
+      'is_system',
     ],
     financial_statement_line_aliases: [
       'organization_id',
@@ -287,21 +328,58 @@ export async function assertAtomicStatementImportSchema(): Promise<void> {
       'template_family',
     ],
     finance_statement_source_receipts: [
-      'receipt_id', 'organization_id', 'statement_id', 'ingest_run_id', 'upload_id',
-      'durable_object_id', 'original_file_name', 'content_sha256', 'size_bytes',
-      'mime_type', 'source_kind', 'importer_name', 'importer_version', 'entity_name',
-      'periods_json', 'page_ranges_json', 'imported_by',
+      'receipt_id',
+      'organization_id',
+      'statement_id',
+      'ingest_run_id',
+      'upload_id',
+      'durable_object_id',
+      'original_file_name',
+      'content_sha256',
+      'size_bytes',
+      'mime_type',
+      'source_kind',
+      'importer_name',
+      'importer_version',
+      'entity_name',
+      'periods_json',
+      'page_ranges_json',
+      'imported_by',
     ],
     financial_statement_packs: [
-      'id', 'organization_id', 'entity_name', 'period_start', 'period_end',
-      'period_label', 'currency', 'scaling', 'pack_status', 'pack_readiness_status',
-      'pack_readiness_score', 'pack_quality_summary', 'pack_quality_reason_codes',
-      'source_statement_count', 'missing_statement_types', 'metadata_json', 'updated_at',
+      'id',
+      'organization_id',
+      'entity_name',
+      'period_start',
+      'period_end',
+      'period_label',
+      'currency',
+      'scaling',
+      'pack_status',
+      'pack_readiness_status',
+      'pack_readiness_score',
+      'pack_quality_summary',
+      'pack_quality_reason_codes',
+      'source_statement_count',
+      'missing_statement_types',
+      'metadata_json',
+      'updated_at',
     ],
     financial_statement_validations: [
-      'id', 'statement_id', 'statement_pack_id', 'validation_scope', 'status',
-      'check_code', 'check_name', 'severity', 'expected_value', 'actual_value',
-      'difference', 'tolerance', 'message', 'details_json',
+      'id',
+      'statement_id',
+      'statement_pack_id',
+      'validation_scope',
+      'status',
+      'check_code',
+      'check_name',
+      'severity',
+      'expected_value',
+      'actual_value',
+      'difference',
+      'tolerance',
+      'message',
+      'details_json',
     ],
     organization_members: ['organization_id', 'user_id', 'role', 'status'],
   };
@@ -322,7 +400,9 @@ export async function assertAtomicStatementImportSchema(): Promise<void> {
     actual.set(row.table_name, columns);
   }
   const missing = Object.entries(required).flatMap(([table, columns]) =>
-    columns.filter((column) => !actual.get(table)?.has(column)).map((column) => `${table}.${column}`)
+    columns
+      .filter((column) => !actual.get(table)?.has(column))
+      .map((column) => `${table}.${column}`)
   );
   if (missing.length > 0) {
     throw Object.assign(new Error(`Statement import schema is incomplete: ${missing.join(', ')}`), {
@@ -356,7 +436,9 @@ export async function assertAtomicStatementImportSchema(): Promise<void> {
   ];
   if (invalidIndexes.length > 0) {
     throw Object.assign(
-      new Error(`Statement import schema has incompatible pack identity indexes: ${invalidIndexes.join(', ')}`),
+      new Error(
+        `Statement import schema has incompatible pack identity indexes: ${invalidIndexes.join(', ')}`
+      ),
       {
         code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE',
         statusCode: 503,
@@ -1859,9 +1941,11 @@ export function extractFinancialLines(
     String(options?.comparisonPeriodLabel || columnSelection.comparisonPeriodLabel || '').trim() ||
     null;
   const rawLines = scopedText.split(/\r?\n/);
-  const hasExplicitNoteColumn = rawLines.slice(0, 30).some(
-    (line) => /(?:^|\t)\s*(?:nota|note)\s*(?:\t|$)/i.test(line) && /(?:19|20)\d{2}/.test(line)
-  );
+  const hasExplicitNoteColumn = rawLines
+    .slice(0, 30)
+    .some(
+      (line) => /(?:^|\t)\s*(?:nota|note)\s*(?:\t|$)/i.test(line) && /(?:19|20)\d{2}/.test(line)
+    );
   let rawTableCount = 0;
   let pendingLabel: string | null = null;
 
@@ -8579,9 +8663,7 @@ export async function updateStatementMetadata(
         patch.periodLabel || null,
         patch.currency || null,
         patch.scaling || null,
-        patch.overallConfidence == null
-          ? null
-          : clampStatementConfidence(patch.overallConfidence),
+        patch.overallConfidence == null ? null : clampStatementConfidence(patch.overallConfidence),
         patch.documentClass || null,
         patch.extractionStrategy || null,
         patch.templateFamily || null,
@@ -8610,9 +8692,7 @@ export async function updateStatementMetadata(
         patch.periodLabel || null,
         patch.currency || null,
         patch.scaling || null,
-        patch.overallConfidence == null
-          ? null
-          : clampStatementConfidence(patch.overallConfidence),
+        patch.overallConfidence == null ? null : clampStatementConfidence(patch.overallConfidence),
         statementId,
       ],
       [0]

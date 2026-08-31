@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { buildDeterministicInitiativeBudgetFromPrompt } from '../deterministicInitiativeBudget.js';
 import WorkbookGeneratorService from '../WorkbookGeneratorService.js';
 import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
-import { buildDeterministicInitiativeBudgetFromPrompt } from '../deterministicInitiativeBudget.js';
 
 const PROMPT =
-  'Teresa, utwórz od zera bez użycia template\'u skoroszyt „Initiative Budget — Teresa — E2E-20260806” dla 12-miesięcznego budżetu inicjatywy. ' +
+  "Teresa, utwórz od zera bez użycia template'u skoroszyt „Initiative Budget — Teresa — E2E-20260806” dla 12-miesięcznego budżetu inicjatywy. " +
   'Użyj dokładnie jawnych założeń: budżet całkowity 1 200 000 EUR; plan miesięczny 100 000 EUR od stycznia do grudnia; ' +
   'faktyczne koszty: 90000, 95000, 102000, 98000, 110000, 105000, 97000, 101000, 99000, 108000, 104000, 106000 EUR. ' +
   'Zbuduj minimum 3 arkusze: Inputs, Monthly Budget, Summary. Dodaj formuły variance = plan minus actual, cumulative plan, cumulative actual oraz utilization %.';
@@ -22,8 +22,7 @@ describe('deterministic initiative budget', () => {
     ]);
     expect(schema?.sheets[0].rows[0].cells.value.value).toBe(1_200_000);
     expect(schema?.sheets[0].rows.slice(2).map((row) => row.cells.value.value)).toEqual([
-      90000, 95000, 102000, 98000, 110000, 105000,
-      97000, 101000, 99000, 108000, 104000, 106000,
+      90000, 95000, 102000, 98000, 110000, 105000, 97000, 101000, 99000, 108000, 104000, 106000,
     ]);
     expect(schema?.sheets[1].rows).toHaveLength(12);
     expect(schema?.sheets[1].rows[0].cells.variance.formula).toBe('B2-C2');

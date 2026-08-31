@@ -7,8 +7,8 @@ import type { Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
-import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { requireActiveAuditsMembership } from '../../middleware/auditsStrictMembership.middleware.js';
+import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { logIntegrationConnectionEvent } from '../../services/integrationConnectionLogService.js';
 import {

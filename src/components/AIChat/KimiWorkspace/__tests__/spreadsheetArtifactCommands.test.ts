@@ -4,7 +4,10 @@ import type { ArtifactCommandContext } from '@/components/shared/ArtifactStudio'
 
 import { createSpreadsheetArtifactCommandRegistry } from '../spreadsheetArtifactCommands';
 
-function context(kind: 'none' | 'cell' | 'range' | 'row' | 'column', edit = true): ArtifactCommandContext {
+function context(
+  kind: 'none' | 'cell' | 'range' | 'row' | 'column',
+  edit = true
+): ArtifactCommandContext {
   return {
     selection: { artifactType: 'spreadsheet', kind },
     permissions: { grants: new Set(edit ? ['artifact.read', 'artifact.edit'] : ['artifact.read']) },
@@ -12,7 +15,9 @@ function context(kind: 'none' | 'cell' | 'range' | 'row' | 'column', edit = true
   };
 }
 
-const payload = (overrides: Partial<Parameters<typeof createSpreadsheetArtifactCommandRegistry>[0]> = {}) => ({
+const payload = (
+  overrides: Partial<Parameters<typeof createSpreadsheetArtifactCommandRegistry>[0]> = {}
+) => ({
   editSelectedCell: vi.fn(),
   clearSelectedCell: vi.fn(),
   copySelection: vi.fn(),
@@ -121,12 +126,24 @@ describe('spreadsheetArtifactCommands', () => {
     );
 
     for (const kind of ['cell', 'range', 'row', 'column'] as const) {
-      expect(registry.resolveState('xlsx.row.insertAbove', context(kind))).toEqual({ visibility: 'enabled' });
-      expect(registry.resolveState('xlsx.column.insertLeft', context(kind))).toEqual({ visibility: 'enabled' });
+      expect(registry.resolveState('xlsx.row.insertAbove', context(kind))).toEqual({
+        visibility: 'enabled',
+      });
+      expect(registry.resolveState('xlsx.column.insertLeft', context(kind))).toEqual({
+        visibility: 'enabled',
+      });
     }
-    expect(registry.resolveState('xlsx.row.insertAbove', context('none'))).toEqual({ visibility: 'hidden', reason: 'selection' });
-    expect(registry.resolveState('xlsx.column.insertLeft', context('none'))).toEqual({ visibility: 'hidden', reason: 'selection' });
-    expect(registry.resolveState('xlsx.column.delete', context('column'))).toEqual({ visibility: 'enabled' });
+    expect(registry.resolveState('xlsx.row.insertAbove', context('none'))).toEqual({
+      visibility: 'hidden',
+      reason: 'selection',
+    });
+    expect(registry.resolveState('xlsx.column.insertLeft', context('none'))).toEqual({
+      visibility: 'hidden',
+      reason: 'selection',
+    });
+    expect(registry.resolveState('xlsx.column.delete', context('column'))).toEqual({
+      visibility: 'enabled',
+    });
 
     await registry.execute('xlsx.row.insertAbove', context('row'));
     await registry.execute('xlsx.column.insertLeft', context('cell'));
@@ -161,7 +178,9 @@ describe('spreadsheetArtifactCommands', () => {
     const registry = createSpreadsheetArtifactCommandRegistry(payload({ toggleBold }));
 
     for (const kind of ['cell', 'range', 'row', 'column'] as const) {
-      expect(registry.resolveState('xlsx.format.bold', context(kind))).toEqual({ visibility: 'enabled' });
+      expect(registry.resolveState('xlsx.format.bold', context(kind))).toEqual({
+        visibility: 'enabled',
+      });
     }
     expect(registry.resolveState('xlsx.format.bold', context('none'))).toEqual({
       visibility: 'hidden',

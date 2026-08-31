@@ -22,7 +22,8 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string | { defaultValue?: string }) => {
       if (typeof fallback === 'string') return fallback;
-      if (fallback && typeof fallback === 'object' && fallback.defaultValue) return fallback.defaultValue;
+      if (fallback && typeof fallback === 'object' && fallback.defaultValue)
+        return fallback.defaultValue;
       return key;
     },
     i18n: { language: 'en' },
@@ -32,7 +33,13 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-hot-toast', () => {
   const fn = vi.fn();
-  return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn(), loading: vi.fn(() => 'toast-id') }) };
+  return {
+    default: Object.assign(fn, {
+      success: vi.fn(),
+      error: vi.fn(),
+      loading: vi.fn(() => 'toast-id'),
+    }),
+  };
 });
 
 vi.mock('../auditsMethodApi', async () => {
@@ -53,8 +60,16 @@ vi.mock('../auditsMethodApi', async () => {
   };
 });
 
+import {
+  type AuditPackSummary,
+  type AuditProgramSummary,
+  listOutputs,
+  listPacks,
+  listPrograms,
+  listProposals,
+  listReports,
+} from '../auditsMethodApi';
 import { AuditsMethodHub } from '../AuditsMethodHub';
-import { type AuditPackSummary, type AuditProgramSummary, listOutputs, listPacks, listPrograms, listProposals, listReports } from '../auditsMethodApi';
 
 const mockedListPacks = vi.mocked(listPacks);
 const mockedListPrograms = vi.mocked(listPrograms);

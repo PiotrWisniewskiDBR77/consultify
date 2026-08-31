@@ -35,7 +35,8 @@ const TEXTAREA_CLASS =
   'w-full min-h-[64px] rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text ' +
   'placeholder:text-c-text-muted transition-colors resize-y ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:border-c-border-strong';
-const LABEL_CLASS = 'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
+const LABEL_CLASS =
+  'block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5';
 const GHOST_BUTTON_CLASS =
   'inline-flex h-9 items-center gap-2 rounded-lg border border-c-border bg-transparent px-4 ' +
   'text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised ' +
@@ -61,7 +62,9 @@ export interface CreateKpiScorecardReviewSnapshotModalProps {
   isConflict?: boolean;
 }
 
-export const CreateKpiScorecardReviewSnapshotModal: React.FC<CreateKpiScorecardReviewSnapshotModalProps> = ({
+export const CreateKpiScorecardReviewSnapshotModal: React.FC<
+  CreateKpiScorecardReviewSnapshotModalProps
+> = ({
   open,
   onClose,
   onSubmit,
@@ -122,7 +125,15 @@ export const CreateKpiScorecardReviewSnapshotModal: React.FC<CreateKpiScorecardR
             className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <Plus size={16} />
-            <span>{busy ? (isPolish ? 'Tworzenie…' : 'Creating…') : isPolish ? 'Utwórz migawkę' : 'Create snapshot'}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Tworzenie…'
+                  : 'Creating…'
+                : isPolish
+                  ? 'Utwórz migawkę'
+                  : 'Create snapshot'}
+            </span>
           </button>
         </>
       }
@@ -142,7 +153,9 @@ export const CreateKpiScorecardReviewSnapshotModal: React.FC<CreateKpiScorecardR
               data-testid="kpi-scorecard-snapshot-start"
               aria-invalid={startError || undefined}
             />
-            {startError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagane' : 'Required'}</p> : null}
+            {startError ? (
+              <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagane' : 'Required'}</p>
+            ) : null}
           </div>
           <div>
             <label className={LABEL_CLASS} htmlFor="kpi-scorecard-snapshot-end">
@@ -157,7 +170,9 @@ export const CreateKpiScorecardReviewSnapshotModal: React.FC<CreateKpiScorecardR
               data-testid="kpi-scorecard-snapshot-end"
               aria-invalid={endError || undefined}
             />
-            {endError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagane' : 'Required'}</p> : null}
+            {endError ? (
+              <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wymagane' : 'Required'}</p>
+            ) : null}
           </div>
         </div>
         <div>
@@ -173,7 +188,11 @@ export const CreateKpiScorecardReviewSnapshotModal: React.FC<CreateKpiScorecardR
           />
         </div>
         {errorMessage ? (
-          <p className="text-[12px] text-c-danger" role="alert" data-testid="kpi-scorecard-create-snapshot-error">
+          <p
+            className="text-[12px] text-c-danger"
+            role="alert"
+            data-testid="kpi-scorecard-create-snapshot-error"
+          >
             {isConflict
               ? isPolish
                 ? `Konflikt zapisu: ${errorMessage}`
@@ -201,7 +220,9 @@ export interface PublishKpiScorecardReviewSnapshotDialogProps {
   isConflict?: boolean;
 }
 
-export const PublishKpiScorecardReviewSnapshotDialog: React.FC<PublishKpiScorecardReviewSnapshotDialogProps> = ({
+export const PublishKpiScorecardReviewSnapshotDialog: React.FC<
+  PublishKpiScorecardReviewSnapshotDialogProps
+> = ({
   open,
   periodLabel,
   isPolish,
@@ -240,7 +261,15 @@ export const PublishKpiScorecardReviewSnapshotDialog: React.FC<PublishKpiScoreca
             className={`${MENU_1_PRIMARY_CTA} disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <CheckCircle2 size={16} />
-            <span>{busy ? (isPolish ? 'Publikowanie…' : 'Publishing…') : isPolish ? 'Opublikuj' : 'Publish'}</span>
+            <span>
+              {busy
+                ? isPolish
+                  ? 'Publikowanie…'
+                  : 'Publishing…'
+                : isPolish
+                  ? 'Opublikuj'
+                  : 'Publish'}
+            </span>
           </button>
         </>
       }
@@ -264,7 +293,11 @@ export const PublishKpiScorecardReviewSnapshotDialog: React.FC<PublishKpiScoreca
           />
         </div>
         {errorMessage ? (
-          <p className="flex items-start gap-1.5 text-[12px] text-c-danger" role="alert" data-testid="kpi-scorecard-publish-snapshot-error">
+          <p
+            className="flex items-start gap-1.5 text-[12px] text-c-danger"
+            role="alert"
+            data-testid="kpi-scorecard-publish-snapshot-error"
+          >
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
             <span>
               {isConflict

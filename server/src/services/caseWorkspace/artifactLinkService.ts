@@ -148,7 +148,6 @@
  */
 
 import { createHash } from 'crypto';
-
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -380,7 +379,10 @@ function mapRow(row: CaseWorkspaceArtifactLinkRow): CaseArtifactLink {
   };
 }
 
-async function loadForUpdate(client: PgTransactionClient, linkId: string): Promise<CaseWorkspaceArtifactLinkRow> {
+async function loadForUpdate(
+  client: PgTransactionClient,
+  linkId: string
+): Promise<CaseWorkspaceArtifactLinkRow> {
   const result = await client.query<CaseWorkspaceArtifactLinkRow>(
     `SELECT * FROM case_workspace_artifact_links WHERE link_id = ? FOR UPDATE`,
     [linkId]
@@ -429,12 +431,21 @@ function requireActive(row: CaseWorkspaceArtifactLinkRow): void {
  * could be added but is not required, matching how createCase() leans on
  * its own UNIQUE constraint as ultimate enforcement.
  */
-export async function linkArtifactToCase(input: LinkArtifactToCaseInput): Promise<CaseArtifactLink> {
+export async function linkArtifactToCase(
+  input: LinkArtifactToCaseInput
+): Promise<CaseArtifactLink> {
   const caseId = requireNonBlank(input.caseId, 'artifact_link_case_id_required');
   const artifactType = requireNonBlank(input.artifactType, 'artifact_link_artifact_type_required');
   const artifactId = requireNonBlank(input.artifactId, 'artifact_link_artifact_id_required');
-  const linkedByActorId = requireNonBlank(input.linkedByActorId, 'artifact_link_linked_by_actor_id_required');
-  const relation = requireEnum(input.relation, ARTIFACT_LINK_RELATIONS, 'artifact_link_relation_invalid');
+  const linkedByActorId = requireNonBlank(
+    input.linkedByActorId,
+    'artifact_link_linked_by_actor_id_required'
+  );
+  const relation = requireEnum(
+    input.relation,
+    ARTIFACT_LINK_RELATIONS,
+    'artifact_link_relation_invalid'
+  );
   const artifactRevision = input.artifactRevision ?? null;
 
   await requireCaseAccess(linkedByActorId, caseId);
@@ -577,7 +588,12 @@ export async function pinArtifactRevision(
     // entry is added.
     const nextHistory: RevisionPinHistoryEntry[] = [
       ...history,
-      { revision: nextRevision, pinnedAt: now, pinnedByActorId: actorUserId, reason: reason ?? null },
+      {
+        revision: nextRevision,
+        pinnedAt: now,
+        pinnedByActorId: actorUserId,
+        reason: reason ?? null,
+      },
     ];
 
     const updated = await client.query<CaseWorkspaceArtifactLinkRow>(
@@ -912,15 +928,21 @@ export async function listArtifactLinksForCase(
 
   if (filters?.relation) {
     conditions.push('relation = ?');
-    params.push(requireEnum(filters.relation, ARTIFACT_LINK_RELATIONS, 'artifact_link_relation_invalid'));
+    params.push(
+      requireEnum(filters.relation, ARTIFACT_LINK_RELATIONS, 'artifact_link_relation_invalid')
+    );
   }
   if (filters?.artifactType) {
     conditions.push('artifact_type = ?');
-    params.push(requireNonBlank(filters.artifactType, 'artifact_link_artifact_type_filter_invalid'));
+    params.push(
+      requireNonBlank(filters.artifactType, 'artifact_link_artifact_type_filter_invalid')
+    );
   }
   if (filters?.linkStatus) {
     conditions.push('link_status = ?');
-    params.push(requireEnum(filters.linkStatus, ARTIFACT_LINK_STATUSES, 'artifact_link_status_invalid'));
+    params.push(
+      requireEnum(filters.linkStatus, ARTIFACT_LINK_STATUSES, 'artifact_link_status_invalid')
+    );
   }
   if (typeof filters?.isStale === 'boolean') {
     conditions.push('is_stale = ?');
@@ -1098,9 +1120,10 @@ export async function resolveArtifactLinkOpen(
   const link = await getArtifactLink(id, actor);
   if (!link) return null;
 
-  const caseRow = await queryOne<CaseCorePhaseRow>(`SELECT case_status FROM case_core WHERE case_id = ?`, [
-    link.caseId,
-  ]);
+  const caseRow = await queryOne<CaseCorePhaseRow>(
+    `SELECT case_status FROM case_core WHERE case_id = ?`,
+    [link.caseId]
+  );
   // Structurally, a link row always FKs to an existing case_core row (see
   // the migration's header) — caseRow absent would mean the FK itself was
   // violated, not a normal runtime outcome. 'UNKNOWN' is a defensive
@@ -1117,10 +1140,18 @@ export async function resolveArtifactLinkOpen(
     deepLink = null;
   } else if (link.isStale) {
     state = 'STALE';
-    deepLink = { artifactType: link.artifactType, artifactId: link.artifactId, artifactRevision: link.artifactRevision };
+    deepLink = {
+      artifactType: link.artifactType,
+      artifactId: link.artifactId,
+      artifactRevision: link.artifactRevision,
+    };
   } else {
     state = 'AVAILABLE';
-    deepLink = { artifactType: link.artifactType, artifactId: link.artifactId, artifactRevision: link.artifactRevision };
+    deepLink = {
+      artifactType: link.artifactType,
+      artifactId: link.artifactId,
+      artifactRevision: link.artifactRevision,
+    };
   }
 
   return {

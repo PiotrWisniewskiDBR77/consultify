@@ -24,22 +24,26 @@ import { AlertCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { ErrorState, LoadingState, SaveStateIndicator, type SaveStatus } from '@/components/shared/states';
+import {
+  ErrorState,
+  LoadingState,
+  SaveStateIndicator,
+  type SaveStatus,
+} from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { useAppStore } from '@/store/useAppStore';
 
-import { CriterionChain } from './CriterionChain';
-import { EvidencePanel } from './EvidencePanel';
-import { FindingPanel } from './FindingPanel';
-import { RemediationPanel } from './RemediationPanel';
-import { TeresaProposalCard } from './TeresaProposalCard';
 import {
   buildChainLinks,
   REMEDIATION_LABELS_EN,
   REMEDIATION_LABELS_PL,
   REMEDIATION_LINK_IDS,
 } from './chainLinks';
-import * as workspaceApi from './workspaceApi';
+import { CriterionChain } from './CriterionChain';
+import { EvidencePanel } from './EvidencePanel';
+import { FindingPanel } from './FindingPanel';
+import { RemediationPanel } from './RemediationPanel';
+import { TeresaProposalCard } from './TeresaProposalCard';
 import type {
   ConformityStatus,
   CriterionDetail,
@@ -47,6 +51,7 @@ import type {
   WorkspaceCapability,
   WorkspaceFindingDetail,
 } from './workspaceApi';
+import * as workspaceApi from './workspaceApi';
 
 export const CriterionWorkspace: React.FC = () => {
   const params = useParams<{ programId: string; criterionId: string }>();
@@ -77,7 +82,9 @@ export const CriterionWorkspace: React.FC = () => {
   const [conformityChoice, setConformityChoice] = useState<ConformityStatus | ''>('');
 
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
-  const [selectedFindingDetail, setSelectedFindingDetail] = useState<WorkspaceFindingDetail | null>(null);
+  const [selectedFindingDetail, setSelectedFindingDetail] = useState<WorkspaceFindingDetail | null>(
+    null
+  );
 
   const load = useCallback(() => {
     if (!criterionId) return;
@@ -93,7 +100,11 @@ export const CriterionWorkspace: React.FC = () => {
         setDetail(res);
       })
       .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : t('Nie udało się wczytać kryterium', 'Could not load the criterion'))
+        setError(
+          e instanceof Error
+            ? e.message
+            : t('Nie udało się wczytać kryterium', 'Could not load the criterion')
+        )
       )
       .finally(() => setLoading(false));
   }, [criterionId, t]);
@@ -150,7 +161,8 @@ export const CriterionWorkspace: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [criterion?.id, hasAcceptedEvidence]);
 
-  const isOwnAuditeeResponse = !!criterion && !!currentUserId && criterion.auditeeRespondedBy === currentUserId;
+  const isOwnAuditeeResponse =
+    !!criterion && !!currentUserId && criterion.auditeeRespondedBy === currentUserId;
 
   const canRespondAsAuditee = capabilities.has('criterion.respond_as_auditee');
   const canPerformTest = capabilities.has('criterion.perform_test');
@@ -170,7 +182,11 @@ export const CriterionWorkspace: React.FC = () => {
 
   const handleSubmitAuditeeResponse = useCallback(() => {
     if (!criterionId || !auditeeResponseDraft.trim()) return;
-    run(() => workspaceApi.submitAuditeeResponse(criterionId, auditeeResponseDraft.trim()).then(() => load()));
+    run(() =>
+      workspaceApi
+        .submitAuditeeResponse(criterionId, auditeeResponseDraft.trim())
+        .then(() => load())
+    );
   }, [criterionId, auditeeResponseDraft, run, load]);
 
   const handleRecordTest = useCallback(() => {
@@ -210,11 +226,21 @@ export const CriterionWorkspace: React.FC = () => {
         isPolish,
         t,
       }),
-    [criterion, detail?.findings, hasAcceptedEvidence, selectedFindingId, selectedFindingDetail, isPolish, t]
+    [
+      criterion,
+      detail?.findings,
+      hasAcceptedEvidence,
+      selectedFindingId,
+      selectedFindingDetail,
+      isPolish,
+      t,
+    ]
   );
 
   if (loading) {
-    return <LoadingState template="panel" label={t('Wczytywanie kryterium…', 'Loading criterion…')} />;
+    return (
+      <LoadingState template="panel" label={t('Wczytywanie kryterium…', 'Loading criterion…')} />
+    );
   }
 
   if (error || !criterion) {
@@ -228,16 +254,32 @@ export const CriterionWorkspace: React.FC = () => {
   }
 
   return (
-    <div data-testid="criterion-workspace" className="flex h-full min-h-0 flex-col gap-4 overflow-auto p-4">
+    <div
+      data-testid="criterion-workspace"
+      className="flex h-full min-h-0 flex-col gap-4 overflow-auto p-4"
+    >
       <header className="space-y-1">
         <div className="flex items-center gap-2">
-          {criterion.refCode && <span className="font-mono text-xs text-c-text-muted">{criterion.refCode}</span>}
+          {criterion.refCode && (
+            <span className="font-mono text-xs text-c-text-muted">{criterion.refCode}</span>
+          )}
           <h2 className="text-lg font-semibold text-c-text">{criterion.title}</h2>
-          <StatusChip label={criterion.conformityStatus} tone={criterion.conformityStatus === 'conforming' ? 'success' : criterion.conformityStatus === 'nonconforming' ? 'danger' : 'neutral'} />
+          <StatusChip
+            label={criterion.conformityStatus}
+            tone={
+              criterion.conformityStatus === 'conforming'
+                ? 'success'
+                : criterion.conformityStatus === 'nonconforming'
+                  ? 'danger'
+                  : 'neutral'
+            }
+          />
         </div>
         <SaveStateIndicator status={saveStatus} />
         {!rolesLoaded && (
-          <p className="text-xs text-c-text-muted">{t('Wczytywanie uprawnień…', 'Loading permissions…')}</p>
+          <p className="text-xs text-c-text-muted">
+            {t('Wczytywanie uprawnień…', 'Loading permissions…')}
+          </p>
         )}
       </header>
 
@@ -245,27 +287,49 @@ export const CriterionWorkspace: React.FC = () => {
 
       {/* Ogniwo 1: kryterium/źródło */}
       <section data-testid="chain-link-kryterium-zrodlo" className="space-y-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Kryterium / źródło', 'Criterion / source')}</h3>
-        <p className="text-sm text-c-text">{criterion.requirementText || t('Brak sformułowanego wymagania.', 'No requirement text yet.')}</p>
-        {criterion.sourceReference && <p className="text-xs text-c-text-muted">{criterion.sourceReference}</p>}
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Kryterium / źródło', 'Criterion / source')}
+        </h3>
+        <p className="text-sm text-c-text">
+          {criterion.requirementText ||
+            t('Brak sformułowanego wymagania.', 'No requirement text yet.')}
+        </p>
+        {criterion.sourceReference && (
+          <p className="text-xs text-c-text-muted">{criterion.sourceReference}</p>
+        )}
       </section>
 
       {/* Ogniwo 2: pytanie audytowe */}
       <section data-testid="chain-link-pytanie-audytowe" className="space-y-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Pytanie audytowe', 'Audit question')}</h3>
-        <p className="text-sm text-c-text">{criterion.auditQuestion || t('Brak zdefiniowanego pytania audytowego.', 'No audit question defined.')}</p>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Pytanie audytowe', 'Audit question')}
+        </h3>
+        <p className="text-sm text-c-text">
+          {criterion.auditQuestion ||
+            t('Brak zdefiniowanego pytania audytowego.', 'No audit question defined.')}
+        </p>
       </section>
 
       {/* Ogniwo 3: oczekiwany dowód */}
       <section data-testid="chain-link-oczekiwany-dowod" className="space-y-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Oczekiwany dowód', 'Expected evidence')}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Oczekiwany dowód', 'Expected evidence')}
+        </h3>
         {criterion.expectedEvidence.length === 0 ? (
-          <p className="text-sm text-c-text-muted">{t('Pakiet nie zdefiniował oczekiwanego dowodu.', 'The pack does not define expected evidence.')}</p>
+          <p className="text-sm text-c-text-muted">
+            {t(
+              'Pakiet nie zdefiniował oczekiwanego dowodu.',
+              'The pack does not define expected evidence.'
+            )}
+          </p>
         ) : (
           <ul className="list-disc space-y-0.5 pl-4 text-sm text-c-text">
             {criterion.expectedEvidence.map((e, i) => (
               <li key={i}>
-                {e.description} {e.mandatory ? <span className="text-c-text-muted">({t('wymagany', 'required')})</span> : null}
+                {e.description}{' '}
+                {e.mandatory ? (
+                  <span className="text-c-text-muted">({t('wymagany', 'required')})</span>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -274,22 +338,38 @@ export const CriterionWorkspace: React.FC = () => {
 
       {/* Ogniwo 4: dostarczony dowód */}
       <section data-testid="chain-link-dostarczony-dowod" className="space-y-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Dostarczony dowód', 'Provided evidence')}</h3>
-        <EvidencePanel programId={programId} criterionId={criterionId} capabilities={capabilities} isPolish={isPolish} onEvidenceChanged={load} />
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Dostarczony dowód', 'Provided evidence')}
+        </h3>
+        <EvidencePanel
+          programId={programId}
+          criterionId={criterionId}
+          capabilities={capabilities}
+          isPolish={isPolish}
+          onEvidenceChanged={load}
+        />
       </section>
 
       {/* Ogniwa 5-8: procedura audytora / próba / wykonany test / wynik testu */}
       {!criterion.applicable ? (
-        <section data-testid="chain-link-procedura-audytora" className="rounded-token-md border border-c-border-subtle p-3">
+        <section
+          data-testid="chain-link-procedura-audytora"
+          className="rounded-token-md border border-c-border-subtle p-3"
+        >
           <p className="flex items-center gap-2 text-xs text-c-text-muted">
             <AlertCircle size={14} aria-hidden />
-            {t('Kryterium oznaczone jako „nie dotyczy" — próba i test są nieosiągalne.', 'Criterion marked "not applicable" — sampling and testing are unreachable.')}
+            {t(
+              'Kryterium oznaczone jako „nie dotyczy" — próba i test są nieosiągalne.',
+              'Criterion marked "not applicable" — sampling and testing are unreachable.'
+            )}
           </p>
         </section>
       ) : (
         <>
           <section data-testid="chain-link-procedura-audytora" className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Procedura audytora', "Auditor's procedure")}</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              {t('Procedura audytora', "Auditor's procedure")}
+            </h3>
             <textarea
               value={procedurePerformed}
               onChange={(e) => setProcedurePerformed(e.target.value)}
@@ -301,7 +381,9 @@ export const CriterionWorkspace: React.FC = () => {
           </section>
 
           <section data-testid="chain-link-proba" className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Próba', 'Sample')}</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              {t('Próba', 'Sample')}
+            </h3>
             <textarea
               value={sampleDescription}
               onChange={(e) => setSampleDescription(e.target.value)}
@@ -313,7 +395,9 @@ export const CriterionWorkspace: React.FC = () => {
           </section>
 
           <section data-testid="chain-link-wykonany-test" className="space-y-1">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Wykonany test', 'Test performed')}</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              {t('Wykonany test', 'Test performed')}
+            </h3>
             <textarea
               value={testPerformed}
               onChange={(e) => setTestPerformed(e.target.value)}
@@ -325,7 +409,9 @@ export const CriterionWorkspace: React.FC = () => {
           </section>
 
           <section data-testid="chain-link-wynik-testu" className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Wynik testu', 'Test result')}</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+              {t('Wynik testu', 'Test result')}
+            </h3>
             <select
               value={testResult}
               onChange={(e) => setTestResult(e.target.value as TestResult)}
@@ -350,7 +436,10 @@ export const CriterionWorkspace: React.FC = () => {
               </button>
             ) : (
               <p className="text-xs text-c-text-muted">
-                {t('Wykonanie testu wymaga roli audytora.', 'Performing the test requires the auditor role.')}
+                {t(
+                  'Wykonanie testu wymaga roli audytora.',
+                  'Performing the test requires the auditor role.'
+                )}
               </p>
             )}
           </section>
@@ -359,10 +448,15 @@ export const CriterionWorkspace: React.FC = () => {
 
       {/* Ogniwo 9: wniosek audytora */}
       <section data-testid="chain-link-wniosek-audytora" className="space-y-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Wniosek audytora', "Auditor's conclusion")}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Wniosek audytora', "Auditor's conclusion")}
+        </h3>
         {!criterion.testResult ? (
           <p className="text-xs text-c-text-muted">
-            {t('Nieosiągalne: wymaga wcześniej wykonanej procedury testowej (wynik testu).', 'Unreachable: requires a recorded test result first.')}
+            {t(
+              'Nieosiągalne: wymaga wcześniej wykonanej procedury testowej (wynik testu).',
+              'Unreachable: requires a recorded test result first.'
+            )}
           </p>
         ) : (
           <textarea
@@ -378,10 +472,15 @@ export const CriterionWorkspace: React.FC = () => {
 
       {/* Ogniwo 10: status zgodności */}
       <section data-testid="chain-link-status-zgodnosci" className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Status zgodności', 'Conformity status')}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Status zgodności', 'Conformity status')}
+        </h3>
         {!criterion.testResult ? (
           <p className="text-xs text-c-text-muted">
-            {t('Nieosiągalne: wymaga wcześniej wykonanej procedury testowej (wynik testu).', 'Unreachable: requires a recorded test result first.')}
+            {t(
+              'Nieosiągalne: wymaga wcześniej wykonanej procedury testowej (wynik testu).',
+              'Unreachable: requires a recorded test result first.'
+            )}
           </p>
         ) : isOwnAuditeeResponse ? (
           <p className="text-xs text-c-text-muted">
@@ -392,7 +491,10 @@ export const CriterionWorkspace: React.FC = () => {
           </p>
         ) : !canConclude ? (
           <p className="text-xs text-c-text-muted">
-            {t('Wyciągnięcie wniosku wymaga roli audytora/lead auditora.', 'Concluding requires the auditor/lead auditor role.')}
+            {t(
+              'Wyciągnięcie wniosku wymaga roli audytora/lead auditora.',
+              'Concluding requires the auditor/lead auditor role.'
+            )}
           </p>
         ) : (
           <>
@@ -435,7 +537,9 @@ export const CriterionWorkspace: React.FC = () => {
           niezbędnym wejściem do „ustalenia"; renderowana obok ogniwa 4/9 jako
           osobna, jawnie podpisana sekcja (nie zlana z żadnym innym polem). */}
       <section data-testid="chain-link-odpowiedz-audytowanego" className="space-y-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Odpowiedź audytowanego', 'Auditee response')}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Odpowiedź audytowanego', 'Auditee response')}
+        </h3>
         {canRespondAsAuditee ? (
           <>
             <textarea
@@ -455,7 +559,10 @@ export const CriterionWorkspace: React.FC = () => {
             </button>
           </>
         ) : (
-          <p className="text-sm text-c-text-muted">{criterion.auditeeResponse || t('Brak odpowiedzi audytowanego.', 'No auditee response yet.')}</p>
+          <p className="text-sm text-c-text-muted">
+            {criterion.auditeeResponse ||
+              t('Brak odpowiedzi audytowanego.', 'No auditee response yet.')}
+          </p>
         )}
       </section>
 
@@ -473,7 +580,9 @@ export const CriterionWorkspace: React.FC = () => {
 
       {/* Ogniwa 11-12: ustalenie / odpowiedź właściciela */}
       <section data-testid="chain-link-ustalenie" className="space-y-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{t('Ustalenie i odpowiedź właściciela', 'Finding and management response')}</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+          {t('Ustalenie i odpowiedź właściciela', 'Finding and management response')}
+        </h3>
         <FindingPanel
           programId={programId}
           criterionId={criterionId}
@@ -503,12 +612,19 @@ export const CriterionWorkspace: React.FC = () => {
       ) : (
         <div className="space-y-2">
           {REMEDIATION_LINK_IDS.map((id) => (
-            <section key={id} data-testid={`chain-link-${id}`} aria-label={isPolish ? REMEDIATION_LABELS_PL[id] : REMEDIATION_LABELS_EN[id]}>
+            <section
+              key={id}
+              data-testid={`chain-link-${id}`}
+              aria-label={isPolish ? REMEDIATION_LABELS_PL[id] : REMEDIATION_LABELS_EN[id]}
+            >
               <h4 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                 {isPolish ? REMEDIATION_LABELS_PL[id] : REMEDIATION_LABELS_EN[id]}
               </h4>
               <p className="text-xs text-c-text-muted">
-                {t('Wybierz ustalenie powyżej, aby zobaczyć ten krok naprawczy.', 'Select a finding above to see this remediation step.')}
+                {t(
+                  'Wybierz ustalenie powyżej, aby zobaczyć ten krok naprawczy.',
+                  'Select a finding above to see this remediation step.'
+                )}
               </p>
             </section>
           ))}

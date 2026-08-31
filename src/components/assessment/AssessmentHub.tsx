@@ -918,14 +918,44 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           render: (row) => {
             if (row._isImported) {
               const importStatusConfig: Record<string, { label: string; tone: StatusTone }> = {
-                pending: { label: t('assessment.hub.table.importStatus.pending', 'Uploaded'), tone: 'neutral' },
-                detecting: { label: t('assessment.hub.table.importStatus.detecting', 'Detecting...'), tone: 'warning' },
-                extracting: { label: t('assessment.hub.table.importStatus.extracting', 'Extracting...'), tone: 'warning' },
-                ready_for_review: { label: t('assessment.hub.table.importStatus.readyForReview', 'Ready for review'), tone: 'success' },
-                assessment_created: { label: t('assessment.hub.table.importStatus.assessmentCreated', 'Assessment created'), tone: 'info' },
-                initiatives_created: { label: t('assessment.hub.table.importStatus.initiativesCreated', 'Initiatives created'), tone: 'info' },
-                completed: { label: t('assessment.hub.table.importStatus.completed', 'Completed'), tone: 'success' },
-                failed: { label: t('assessment.hub.table.importStatus.failed', 'Failed'), tone: 'danger' },
+                pending: {
+                  label: t('assessment.hub.table.importStatus.pending', 'Uploaded'),
+                  tone: 'neutral',
+                },
+                detecting: {
+                  label: t('assessment.hub.table.importStatus.detecting', 'Detecting...'),
+                  tone: 'warning',
+                },
+                extracting: {
+                  label: t('assessment.hub.table.importStatus.extracting', 'Extracting...'),
+                  tone: 'warning',
+                },
+                ready_for_review: {
+                  label: t('assessment.hub.table.importStatus.readyForReview', 'Ready for review'),
+                  tone: 'success',
+                },
+                assessment_created: {
+                  label: t(
+                    'assessment.hub.table.importStatus.assessmentCreated',
+                    'Assessment created'
+                  ),
+                  tone: 'info',
+                },
+                initiatives_created: {
+                  label: t(
+                    'assessment.hub.table.importStatus.initiativesCreated',
+                    'Initiatives created'
+                  ),
+                  tone: 'info',
+                },
+                completed: {
+                  label: t('assessment.hub.table.importStatus.completed', 'Completed'),
+                  tone: 'success',
+                },
+                failed: {
+                  label: t('assessment.hub.table.importStatus.failed', 'Failed'),
+                  tone: 'danger',
+                },
               };
               const cfg = importStatusConfig[row._importStatus] || importStatusConfig.pending;
               return <StatusChip label={cfg.label} tone={cfg.tone} />;
@@ -962,12 +992,36 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           width: '140px',
           filterable: true,
           filterOptions: [
-            { value: 'DRAFT', label: t('assessment.hub.table.initiativeStatus.draft', 'Draft'), color: 'bg-c-text-muted' },
-            { value: 'REVIEW', label: t('assessment.hub.table.initiativeStatus.review', 'In Review'), color: 'bg-amber-500' },
-            { value: 'PLANNING', label: t('assessment.hub.table.initiativeStatus.planning', 'Planning'), color: 'bg-blue-500' },
-            { value: 'APPROVED', label: t('assessment.hub.table.initiativeStatus.approved', 'Approved'), color: 'bg-emerald-500' },
-            { value: 'EXECUTING', label: t('assessment.hub.table.initiativeStatus.executing', 'Executing'), color: 'bg-blue-500' },
-            { value: 'CANCELLED', label: t('assessment.hub.table.initiativeStatus.cancelled', 'Cancelled'), color: 'bg-danger-500' },
+            {
+              value: 'DRAFT',
+              label: t('assessment.hub.table.initiativeStatus.draft', 'Draft'),
+              color: 'bg-c-text-muted',
+            },
+            {
+              value: 'REVIEW',
+              label: t('assessment.hub.table.initiativeStatus.review', 'In Review'),
+              color: 'bg-amber-500',
+            },
+            {
+              value: 'PLANNING',
+              label: t('assessment.hub.table.initiativeStatus.planning', 'Planning'),
+              color: 'bg-blue-500',
+            },
+            {
+              value: 'APPROVED',
+              label: t('assessment.hub.table.initiativeStatus.approved', 'Approved'),
+              color: 'bg-emerald-500',
+            },
+            {
+              value: 'EXECUTING',
+              label: t('assessment.hub.table.initiativeStatus.executing', 'Executing'),
+              color: 'bg-blue-500',
+            },
+            {
+              value: 'CANCELLED',
+              label: t('assessment.hub.table.initiativeStatus.cancelled', 'Cancelled'),
+              color: 'bg-danger-500',
+            },
           ],
         },
         {
@@ -976,10 +1030,26 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           width: '100px',
           filterable: true,
           filterOptions: [
-            { value: 'critical', label: t('assessment.hub.table.priorityLevel.critical', 'Critical'), color: 'bg-danger-500' },
-            { value: 'high', label: t('assessment.hub.table.priorityLevel.high', 'High'), color: 'bg-amber-500' },
-            { value: 'medium', label: t('assessment.hub.table.priorityLevel.medium', 'Medium'), color: 'bg-blue-500' },
-            { value: 'low', label: t('assessment.hub.table.priorityLevel.low', 'Low'), color: 'bg-c-text-muted' },
+            {
+              value: 'critical',
+              label: t('assessment.hub.table.priorityLevel.critical', 'Critical'),
+              color: 'bg-danger-500',
+            },
+            {
+              value: 'high',
+              label: t('assessment.hub.table.priorityLevel.high', 'High'),
+              color: 'bg-amber-500',
+            },
+            {
+              value: 'medium',
+              label: t('assessment.hub.table.priorityLevel.medium', 'Medium'),
+              color: 'bg-blue-500',
+            },
+            {
+              value: 'low',
+              label: t('assessment.hub.table.priorityLevel.low', 'Low'),
+              color: 'bg-c-text-muted',
+            },
           ],
           render: (row) => {
             const levels: Record<string, PriorityLevel> = {

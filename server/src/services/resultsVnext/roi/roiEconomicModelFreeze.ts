@@ -35,7 +35,10 @@ export interface FreezeRoiEconomicModelParams {
   frozenBy: string;
 }
 
-export async function freezeRoiEconomicModel(client: PoolClient, params: FreezeRoiEconomicModelParams): Promise<void> {
+export async function freezeRoiEconomicModel(
+  client: PoolClient,
+  params: FreezeRoiEconomicModelParams
+): Promise<void> {
   const { caseId, organizationId, frozenBy } = params;
 
   await client.query(

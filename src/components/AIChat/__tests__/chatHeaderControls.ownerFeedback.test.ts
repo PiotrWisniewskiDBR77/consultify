@@ -2,12 +2,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { BranchSelector } from '../BranchSelector';
 import {
   CHAT_HEADER_CONTROL_ACTIVE_CLASS,
   CHAT_HEADER_ICON_CONTROL_CLASS,
   CHAT_HEADER_SELECTOR_CLASS,
 } from '../chatHeaderControlStyles';
-import { BranchSelector } from '../BranchSelector';
 
 describe('Chat header owner feedback', () => {
   it('shares one measured geometry and Liquid Glass focus contract', () => {
@@ -53,11 +53,11 @@ describe('Chat header owner feedback', () => {
     expect(panelSource).toContain('max-[520px]:flex-wrap');
     expect(panelSource).toContain('flex-1 flex-wrap');
     expect(panelSource).toContain(
-      'className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${showWorkPanel ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : \'\'}`}'
+      "className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${showWorkPanel ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}"
     );
     expect(panelSource).toContain('aria-pressed={autoReadEnabled}');
     expect(panelSource).toContain(
-      'className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${autoReadEnabled ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : \'\'}`}'
+      "className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${autoReadEnabled ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}"
     );
     expect(branchSource).toContain('aria-expanded={isOpen}');
     expect(branchSource).toContain('aria-haspopup="dialog"');
@@ -123,7 +123,10 @@ describe('Chat header owner feedback', () => {
     );
 
     const trigger = screen.getByTestId('branch-selector-trigger');
-    expect(trigger).toHaveAttribute('title', 'A deliberately long client transformation branch name');
+    expect(trigger).toHaveAttribute(
+      'title',
+      'A deliberately long client transformation branch name'
+    );
     fireEvent.click(trigger);
     const dialog = screen.getByRole('dialog');
     await waitFor(() => expect(dialog).toHaveFocus());

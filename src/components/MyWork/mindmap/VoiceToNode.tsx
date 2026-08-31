@@ -140,7 +140,10 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
         <div className="px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Mic size={16} className="text-c-danger" />
-            <h3 className="text-sm font-bold text-c-text dark:text-c-text" id="voice-to-node-modal-heading">
+            <h3
+              className="text-sm font-bold text-c-text dark:text-c-text"
+              id="voice-to-node-modal-heading"
+            >
               {t('ideas.mindmap.voiceNode', 'Voice to Node')}
             </h3>
           </div>

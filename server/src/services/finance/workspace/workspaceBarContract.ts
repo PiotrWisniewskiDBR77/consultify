@@ -44,12 +44,12 @@
 
 import type { ArtifactRef, FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
-import type { FinanceChromeRegion } from './focusModeContract.js';
 import type {
   BusinessVersionStatus,
   FinanceRole,
   LifecycleAction,
 } from '../canonical/lifecycleService.js';
+import type { FinanceChromeRegion } from './focusModeContract.js';
 
 // ---------------------------------------------------------------------------
 // Hard limits — the numbers section 7 of the addendum states literally.
@@ -292,7 +292,12 @@ export const RENAMEABLE_STATUSES: readonly BusinessVersionStatus[] = [
   'NEEDS_CHANGES',
 ];
 
-export const RENAMEABLE_ROLES: readonly FinanceRole[] = ['preparer', 'reviewer', 'approver', 'finance_admin'];
+export const RENAMEABLE_ROLES: readonly FinanceRole[] = [
+  'preparer',
+  'reviewer',
+  'approver',
+  'finance_admin',
+];
 
 export function canRenameArtifact(
   status: BusinessVersionStatus,
@@ -315,7 +320,11 @@ export function validateWorkspaceName(raw: string): WorkspaceNameValidation {
   }
   // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001F\u007F]/.test(normalized)) {
-    return { ok: false, code: 'NAME_CONTROL_CHARS', message: 'Nazwa zawiera niedozwolone znaki sterujące' };
+    return {
+      ok: false,
+      code: 'NAME_CONTROL_CHARS',
+      message: 'Nazwa zawiera niedozwolone znaki sterujące',
+    };
   }
   if (normalized.length > WORKSPACE_BAR_NAME_MAX_CHARS) {
     return {
@@ -366,7 +375,9 @@ export interface WorkspaceBarViewNavigation {
   placement: WorkspaceBarViewNavigationPlacement;
 }
 
-export function resolveViewNavigationPlacement(viewCount: number): WorkspaceBarViewNavigationPlacement {
+export function resolveViewNavigationPlacement(
+  viewCount: number
+): WorkspaceBarViewNavigationPlacement {
   return viewCount <= WORKSPACE_BAR_INLINE_VIEW_LIMIT ? 'in-bar' : 'separate-row';
 }
 
@@ -374,7 +385,13 @@ export function resolveViewNavigationPlacement(viewCount: number): WorkspaceBarV
 // Right-hand controls. THE part the 5-control budget governs.
 // ---------------------------------------------------------------------------
 
-export type WorkspaceBarControlKind = 'primary' | 'secondary' | 'lifecycle' | 'more' | 'fullscreen' | 'extra';
+export type WorkspaceBarControlKind =
+  | 'primary'
+  | 'secondary'
+  | 'lifecycle'
+  | 'more'
+  | 'fullscreen'
+  | 'extra';
 
 interface WorkspaceBarControlBase {
   id: string;
@@ -420,7 +437,12 @@ export interface WorkspaceBarLifecycleTransition {
   requiresReason: boolean;
 }
 
-export type WorkspaceBarMoreMenuItemGroup = 'document' | 'report' | 'data' | 'navigation' | 'danger';
+export type WorkspaceBarMoreMenuItemGroup =
+  | 'document'
+  | 'report'
+  | 'data'
+  | 'navigation'
+  | 'danger';
 
 export interface WorkspaceBarMoreMenuItem {
   id: string;
@@ -549,7 +571,9 @@ export interface WorkspaceChromeDeclaration {
   /** Chrome regions the module renders in NORMAL mode, besides the bar itself. */
   regionsRendered: readonly FinanceChromeRegion[];
   /** Identity elements carried per region. A region absent from the map carries none. */
-  identityElementsByRegion: Readonly<Partial<Record<FinanceChromeRegion, readonly DocumentIdentityElement[]>>>;
+  identityElementsByRegion: Readonly<
+    Partial<Record<FinanceChromeRegion, readonly DocumentIdentityElement[]>>
+  >;
 }
 
 /**
@@ -736,14 +760,16 @@ export function validateWorkspaceBarConfig(
     errors.push({
       code: 'MISSING_PRIMARY_ACTION',
       path: 'actions.primary',
-      message: 'Every Finance workspace must declare exactly one primary action (addendum section 7: "1 primary").',
+      message:
+        'Every Finance workspace must declare exactly one primary action (addendum section 7: "1 primary").',
     });
   }
   if (!actions.fullscreen) {
     errors.push({
       code: 'MISSING_FULLSCREEN_CONTROL',
       path: 'actions.fullscreen',
-      message: 'Fullscreen (focus mode) is a mandatory, always-last control (OWN-FIN-004 / OWN-FIN-011).',
+      message:
+        'Fullscreen (focus mode) is a mandatory, always-last control (OWN-FIN-004 / OWN-FIN-011).',
     });
   }
 
@@ -753,7 +779,8 @@ export function validateWorkspaceBarConfig(
   if (actions.secondary) controlIds.push({ id: actions.secondary.id, path: 'actions.secondary' });
   if (actions.lifecycle) controlIds.push({ id: actions.lifecycle.id, path: 'actions.lifecycle' });
   if (actions.more) controlIds.push({ id: actions.more.id, path: 'actions.more' });
-  if (actions.fullscreen) controlIds.push({ id: actions.fullscreen.id, path: 'actions.fullscreen' });
+  if (actions.fullscreen)
+    controlIds.push({ id: actions.fullscreen.id, path: 'actions.fullscreen' });
   actions.extraDirectControls.forEach((extra, index) =>
     controlIds.push({ id: extra.id, path: `actions.extraDirectControls[${index}]` })
   );
@@ -961,7 +988,12 @@ export interface WorkspaceBarLayoutEstimate {
   /** The stress-case name length being judged (default 60, per the addendum). */
   targetNameChars: number;
   slackPx: number;
-  breakdown: { identityFixedPx: number; viewNavigationPx: number; actionsPx: number; gapsPx: number };
+  breakdown: {
+    identityFixedPx: number;
+    viewNavigationPx: number;
+    actionsPx: number;
+    gapsPx: number;
+  };
 }
 
 /**
@@ -993,9 +1025,11 @@ export function estimateWorkspaceBarLayout(
 
   const identityFixedPx = m.backControlPx + m.versionBadgePx + m.statusBadgePx;
 
-  const inlineViews = config.viewNavigation.placement === 'in-bar' ? config.viewNavigation.views : [];
+  const inlineViews =
+    config.viewNavigation.placement === 'in-bar' ? config.viewNavigation.views : [];
   const viewNavigationPx = inlineViews.reduce(
-    (total, v) => total + Math.max(m.inlineViewMinPx, m.inlineViewPaddingPx + v.label.pl.length * m.charPx),
+    (total, v) =>
+      total + Math.max(m.inlineViewMinPx, m.inlineViewPaddingPx + v.label.pl.length * m.charPx),
     0
   );
 
@@ -1012,7 +1046,8 @@ export function estimateWorkspaceBarLayout(
   actionsPx += m.iconControlPx; // fullscreen
   for (const extra of actions.extraDirectControls) actionsPx += labeledPx(extra.label.pl);
 
-  const gapCount = 3 /* identity internals */ + inlineViews.length + countDirectRightControls(actions) + 1;
+  const gapCount =
+    3 /* identity internals */ + inlineViews.length + countDirectRightControls(actions) + 1;
   const gapsPx = gapCount * m.gapPx + 2 * m.edgePaddingPx;
 
   const fixedPx = identityFixedPx + viewNavigationPx + actionsPx + gapsPx;

@@ -78,7 +78,12 @@ export interface KeyCombo {
 }
 
 function normalizeCombo(combo: KeyCombo): Required<KeyCombo> {
-  return { key: combo.key, mod: combo.mod ?? false, shift: combo.shift ?? false, alt: combo.alt ?? false };
+  return {
+    key: combo.key,
+    mod: combo.mod ?? false,
+    shift: combo.shift ?? false,
+    alt: combo.alt ?? false,
+  };
 }
 
 /** Stable string identity for a combo — used for collision detection and as a `Map` key. Case-folds `key` so `'c'`/`'C'` (a `keydown` for the same physical key with/without an unrelated caps-lock state) collide as intended. */
@@ -115,7 +120,11 @@ export function comboHasGuardModifier(combo: KeyCombo): boolean {
  * native Mac app extends the same courtesy: Ctrl-anything is a different,
  * unrelated shortcut space on macOS, not a fallback for Cmd).
  */
-export function comboMatchesEvent(combo: KeyCombo, event: KeyboardEventLike, platform: Platform): boolean {
+export function comboMatchesEvent(
+  combo: KeyCombo,
+  event: KeyboardEventLike,
+  platform: Platform
+): boolean {
   const n = normalizeCombo(combo);
   if (event.key.toLowerCase() !== n.key.toLowerCase()) return false;
   const modPressed = platform === 'mac' ? event.metaKey : event.ctrlKey;
@@ -320,8 +329,8 @@ export type CommandEngineBinding =
 // KeyboardCommand — one registry entry.
 // ---------------------------------------------------------------------------
 
-import type { FocusRestoreReason } from './FocusRestoreContract.js';
 import type { KeyboardCommandAvailability } from './CommandAvailability.js';
+import type { FocusRestoreReason } from './FocusRestoreContract.js';
 
 // ---------------------------------------------------------------------------
 // Destructiveness — the SAME vocabulary AP-09's `workspaceBarContract.ts`

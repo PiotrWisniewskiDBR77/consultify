@@ -212,7 +212,10 @@ const AsyncJobService = {
   enqueueActionExecution: async (params: any) => {
     const { decisionId, organizationId, correlationId, priority = 'normal', createdBy } = params;
     await assertLegacyNoncanonicalExecution({
-      entrypoint: 'async_job_service', organizationId, entityId: decisionId, payloads: [params],
+      entrypoint: 'async_job_service',
+      organizationId,
+      entityId: decisionId,
+      payloads: [params],
     });
     // Step 11.1 - Deduplication: Check for existing active job
     const existingJob = await AsyncJobService.findActiveJob(JOB_TYPES.EXECUTE_DECISION, decisionId);
@@ -309,7 +312,10 @@ const AsyncJobService = {
   enqueuePlaybookAdvance: async (params: any) => {
     const { runId, stepId, organizationId, correlationId, priority = 'normal', createdBy } = params;
     await assertLegacyNoncanonicalExecution({
-      entrypoint: 'async_job_service', organizationId, entityId: runId, payloads: [params],
+      entrypoint: 'async_job_service',
+      organizationId,
+      entityId: runId,
+      payloads: [params],
     });
     const entityId = stepId || runId;
 

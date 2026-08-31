@@ -36,8 +36,8 @@ import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import * as artifactLinkService from '../../artifactLinkService.js';
 import type { LinkArtifactToCaseInput } from '../../artifactLinkService.js';
+import * as artifactLinkService from '../../artifactLinkService.js';
 import * as caseCoreService from '../../caseCoreService.js';
 import { requireCaseAccess } from '../../caseWorkspaceAuthContext.js';
 
@@ -97,10 +97,10 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
 
   async function seedOrg(label: string): Promise<string> {
     const orgId = `seclink-org-${label}-${randomUUID()}`;
-    await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`, [
-      orgId,
-      `Stream E artifact-link test org (${label})`,
-    ]);
+    await control.query(
+      `INSERT INTO organizations (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      [orgId, `Stream E artifact-link test org (${label})`]
+    );
     return orgId;
   }
 
@@ -143,7 +143,9 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
     return userId;
   }
 
-  async function seedOrgProjectCase(label: string): Promise<{ orgId: string; projectId: string; caseId: string }> {
+  async function seedOrgProjectCase(
+    label: string
+  ): Promise<{ orgId: string; projectId: string; caseId: string }> {
     const orgId = await seedOrg(label);
     const projectId = `seclink-project-${label}-${randomUUID()}`;
     await control.query(
@@ -178,14 +180,25 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
   }
 
   async function readLinkRow(linkId: string) {
-    const result = await control.query(`SELECT * FROM case_workspace_artifact_links WHERE link_id = $1`, [linkId]);
+    const result = await control.query(
+      `SELECT * FROM case_workspace_artifact_links WHERE link_id = $1`,
+      [linkId]
+    );
     return result.rows[0] ?? null;
   }
 
-  async function teardown(opts: { orgIds?: string[]; projectIds?: string[]; userIds?: string[] }): Promise<void> {
+  async function teardown(opts: {
+    orgIds?: string[];
+    projectIds?: string[];
+    userIds?: string[];
+  }): Promise<void> {
     for (const projectId of opts.projectIds ?? []) {
-      await control.query(`DELETE FROM case_workspace_artifact_links WHERE project_id = $1`, [projectId]).catch(() => undefined);
-      await control.query(`DELETE FROM case_core WHERE project_id = $1`, [projectId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_workspace_artifact_links WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM case_core WHERE project_id = $1`, [projectId])
+        .catch(() => undefined);
       await control.query(`DELETE FROM projects WHERE id = $1`, [projectId]).catch(() => undefined);
     }
     for (const userId of opts.userIds ?? []) {
@@ -196,8 +209,12 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
       // organizations); users does not carry that FK, so any actor seeded
       // via seedActiveActor()/seedUser() for this org is swept here by
       // organization_id rather than needing per-test tracking.
-      await control.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]).catch(() => undefined);
-      await control.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => undefined);
+      await control
+        .query(`DELETE FROM users WHERE organization_id = $1`, [orgId])
+        .catch(() => undefined);
+      await control
+        .query(`DELETE FROM organizations WHERE id = $1`, [orgId])
+        .catch(() => undefined);
     }
   }
 
@@ -206,7 +223,11 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
   // =========================================================================
   describe('(A) target contract: requireCaseAccess in front of artifactLinkService fails closed', () => {
     it('IDOR: an actor with no standing in the victim org is denied requireCaseAccess before linkArtifactToCase would even run', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } = await seedOrgProjectCase('idor-victim');
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('idor-victim');
       const attackerOrgId = await seedOrg('idor-attacker');
       const attackerUserId = await seedUser(attackerOrgId, 'idor-attacker');
       await seedMember(attackerOrgId, attackerUserId, 'ADMIN', 'ACTIVE');
@@ -216,12 +237,20 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
           code: 'case_access_denied',
         });
       } finally {
-        await teardown({ orgIds: [victimOrgId, attackerOrgId], projectIds: [victimProjectId], userIds: [attackerUserId] });
+        await teardown({
+          orgIds: [victimOrgId, attackerOrgId],
+          projectIds: [victimProjectId],
+          userIds: [attackerUserId],
+        });
       }
     }, 30_000);
 
     it('information leakage: requireCaseAccess gives byte-for-byte identical denial for a real cross-tenant caseId and a nonexistent one, before any artifact-link call', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } = await seedOrgProjectCase('leak');
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('leak');
       const attackerOrgId = await seedOrg('leak-attacker');
       const attackerUserId = await seedUser(attackerOrgId, 'leak-attacker');
       await seedMember(attackerOrgId, attackerUserId, 'OWNER', 'ACTIVE');
@@ -234,13 +263,20 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
             await requireCaseAccess(attackerUserId, caseId);
             throw new Error(`expected throw for ${caseId}`);
           } catch (err) {
-            errors.push({ code: (err as Error & { code?: string }).code, message: (err as Error).message });
+            errors.push({
+              code: (err as Error & { code?: string }).code,
+              message: (err as Error).message,
+            });
           }
         }
         expect(errors[0].code).toBe(errors[1].code);
         expect(errors[0].message).toBe(errors[1].message);
       } finally {
-        await teardown({ orgIds: [victimOrgId, attackerOrgId], projectIds: [victimProjectId], userIds: [attackerUserId] });
+        await teardown({
+          orgIds: [victimOrgId, attackerOrgId],
+          projectIds: [victimProjectId],
+          userIds: [attackerUserId],
+        });
       }
     }, 30_000);
   });
@@ -264,7 +300,11 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
   // =========================================================================
   describe('(B) gap CLOSED by Stream A (formerly known gap P1): artifactLinkService now self-enforces the Case-ACL half of SEC-008', () => {
     it('GAP CLOSED: linkArtifactToCase now REJECTS a caseId belonging to a DIFFERENT organization than the calling actor (was: succeeded silently)', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } = await seedOrgProjectCase('gap-link');
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('gap-link');
       const attackerOrgId = await seedOrg('gap-link-attacker');
       const attackerUserId = await seedUser(attackerOrgId, 'gap-link-attacker');
       await seedMember(attackerOrgId, attackerUserId, 'CONSULTANT', 'ACTIVE');
@@ -276,19 +316,34 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
         // attacker is only a member of a different org.
         await expect(
           artifactLinkService.linkArtifactToCase(
-            minimalLinkInput({ caseId: victimCaseId, tag: 'gap-link', linkedByActorId: attackerUserId })
+            minimalLinkInput({
+              caseId: victimCaseId,
+              tag: 'gap-link',
+              linkedByActorId: attackerUserId,
+            })
           )
         ).rejects.toMatchObject({ code: 'case_access_denied' });
 
-        const rows = await control.query(`SELECT link_id FROM case_workspace_artifact_links WHERE case_id = $1`, [victimCaseId]);
+        const rows = await control.query(
+          `SELECT link_id FROM case_workspace_artifact_links WHERE case_id = $1`,
+          [victimCaseId]
+        );
         expect(rows.rows).toHaveLength(0); // no row was ever inserted
       } finally {
-        await teardown({ orgIds: [victimOrgId, attackerOrgId], projectIds: [victimProjectId], userIds: [attackerUserId] });
+        await teardown({
+          orgIds: [victimOrgId, attackerOrgId],
+          projectIds: [victimProjectId],
+          userIds: [attackerUserId],
+        });
       }
     }, 30_000);
 
-    it('GAP CLOSED: markLinkArtifactUnavailable now REJECTS an out-of-org actor against a real link (was: an attacker could make a victim\'s evidence appear unavailable)', async () => {
-      const { orgId: victimOrgId, projectId: victimProjectId, caseId: victimCaseId } = await seedOrgProjectCase('gap-unavailable');
+    it("GAP CLOSED: markLinkArtifactUnavailable now REJECTS an out-of-org actor against a real link (was: an attacker could make a victim's evidence appear unavailable)", async () => {
+      const {
+        orgId: victimOrgId,
+        projectId: victimProjectId,
+        caseId: victimCaseId,
+      } = await seedOrgProjectCase('gap-unavailable');
       const attackerOrgId = await seedOrg('gap-unavailable-attacker');
       const attackerUserId = await seedUser(attackerOrgId, 'gap-unavailable-attacker');
       await seedMember(attackerOrgId, attackerUserId, 'MEMBER', 'ACTIVE');
@@ -297,7 +352,11 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
       const legitLinkerId = await seedActiveActor(victimOrgId, 'gap-unavailable-legit-linker');
 
       const link = await artifactLinkService.linkArtifactToCase(
-        minimalLinkInput({ caseId: victimCaseId, tag: 'gap-unavailable', linkedByActorId: legitLinkerId })
+        minimalLinkInput({
+          caseId: victimCaseId,
+          tag: 'gap-unavailable',
+          linkedByActorId: legitLinkerId,
+        })
       );
 
       try {
@@ -316,7 +375,11 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
         expect(row?.link_status).toBe('ACTIVE'); // unchanged — the forged mutation never landed
         expect(row?.unavailable_marked_by_actor_id).toBeNull();
       } finally {
-        await teardown({ orgIds: [victimOrgId, attackerOrgId], projectIds: [victimProjectId], userIds: [attackerUserId] });
+        await teardown({
+          orgIds: [victimOrgId, attackerOrgId],
+          projectIds: [victimProjectId],
+          userIds: [attackerUserId],
+        });
       }
     }, 30_000);
   });
@@ -343,8 +406,18 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
       );
       try {
         const [a, b] = await Promise.all([
-          artifactLinkService.pinArtifactRevision(link.linkId, 'rev-a', { actorUserId: pinnerAId }, 'concurrent A'),
-          artifactLinkService.pinArtifactRevision(link.linkId, 'rev-b', { actorUserId: pinnerBId }, 'concurrent B'),
+          artifactLinkService.pinArtifactRevision(
+            link.linkId,
+            'rev-a',
+            { actorUserId: pinnerAId },
+            'concurrent A'
+          ),
+          artifactLinkService.pinArtifactRevision(
+            link.linkId,
+            'rev-b',
+            { actorUserId: pinnerBId },
+            'concurrent B'
+          ),
         ]);
         expect([a.version, b.version].sort()).toEqual([2, 3]);
         const row = await readLinkRow(link.linkId);
@@ -368,7 +441,9 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
           ...minimalLinkInput({ caseId, tag: 'malformed-relation' }),
           relation: 'NOT_A_REAL_RELATION' as LinkArtifactToCaseInput['relation'],
         };
-        await expect(artifactLinkService.linkArtifactToCase(badInput)).rejects.toThrow('artifact_link_relation_invalid');
+        await expect(artifactLinkService.linkArtifactToCase(badInput)).rejects.toThrow(
+          'artifact_link_relation_invalid'
+        );
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });
       }
@@ -377,8 +452,13 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
     it('linkArtifactToCase rejects a missing artifactId with a domain error', async () => {
       const { orgId, projectId, caseId } = await seedOrgProjectCase('malformed-missing-artifact');
       try {
-        const badInput = { ...minimalLinkInput({ caseId, tag: 'malformed-missing-artifact' }), artifactId: '' };
-        await expect(artifactLinkService.linkArtifactToCase(badInput)).rejects.toThrow('artifact_link_artifact_id_required');
+        const badInput = {
+          ...minimalLinkInput({ caseId, tag: 'malformed-missing-artifact' }),
+          artifactId: '',
+        };
+        await expect(artifactLinkService.linkArtifactToCase(badInput)).rejects.toThrow(
+          'artifact_link_artifact_id_required'
+        );
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });
       }
@@ -400,7 +480,11 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
       const actorId = await seedActiveActor(orgId, 'malformed-no-case-actor');
       const nonexistentCaseId = `case-nonexistent-${randomUUID()}`;
       try {
-        const input = minimalLinkInput({ caseId: nonexistentCaseId, tag: 'malformed-no-case', linkedByActorId: actorId });
+        const input = minimalLinkInput({
+          caseId: nonexistentCaseId,
+          tag: 'malformed-no-case',
+          linkedByActorId: actorId,
+        });
         await expect(artifactLinkService.linkArtifactToCase(input)).rejects.toMatchObject({
           code: 'case_access_denied',
         });
@@ -418,9 +502,15 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
         minimalLinkInput({ caseId, tag: 'malformed-inactive-pin', linkedByActorId: linkerId })
       );
       try {
-        await artifactLinkService.unlinkArtifactFromCase(link.linkId, { actorUserId: linkerId }, 'no longer needed');
+        await artifactLinkService.unlinkArtifactFromCase(
+          link.linkId,
+          { actorUserId: linkerId },
+          'no longer needed'
+        );
         await expect(
-          artifactLinkService.pinArtifactRevision(link.linkId, 'rev-after-unlink', { actorUserId: linkerId })
+          artifactLinkService.pinArtifactRevision(link.linkId, 'rev-after-unlink', {
+            actorUserId: linkerId,
+          })
         ).rejects.toThrow('artifact_link_not_active');
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });
@@ -445,7 +535,10 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
         );
         expect(replay.linkId).toBe(first.linkId);
 
-        const rows = await control.query(`SELECT link_id FROM case_workspace_artifact_links WHERE case_id = $1`, [caseId]);
+        const rows = await control.query(
+          `SELECT link_id FROM case_workspace_artifact_links WHERE case_id = $1`,
+          [caseId]
+        );
         expect(rows.rows).toHaveLength(1);
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });
@@ -458,12 +551,29 @@ suite('artifactLinkService — adversarial security (Stream E, CW-P09/E10)', () 
       const dedupeKey = `dedupe-concurrent-${randomUUID()}`;
       try {
         const [a, b] = await Promise.all([
-          artifactLinkService.linkArtifactToCase(minimalLinkInput({ caseId, tag: 'dup-concurrent', dedupeKey, linkedByActorId: linkerId })),
-          artifactLinkService.linkArtifactToCase(minimalLinkInput({ caseId, tag: 'dup-concurrent', dedupeKey, linkedByActorId: linkerId })),
+          artifactLinkService.linkArtifactToCase(
+            minimalLinkInput({
+              caseId,
+              tag: 'dup-concurrent',
+              dedupeKey,
+              linkedByActorId: linkerId,
+            })
+          ),
+          artifactLinkService.linkArtifactToCase(
+            minimalLinkInput({
+              caseId,
+              tag: 'dup-concurrent',
+              dedupeKey,
+              linkedByActorId: linkerId,
+            })
+          ),
         ]);
         expect(a.linkId).toBe(b.linkId);
 
-        const rows = await control.query(`SELECT link_id FROM case_workspace_artifact_links WHERE case_id = $1`, [caseId]);
+        const rows = await control.query(
+          `SELECT link_id FROM case_workspace_artifact_links WHERE case_id = $1`,
+          [caseId]
+        );
         expect(rows.rows).toHaveLength(1);
       } finally {
         await teardown({ orgIds: [orgId], projectIds: [projectId] });

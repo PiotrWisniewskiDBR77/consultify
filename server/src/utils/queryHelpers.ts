@@ -5,8 +5,9 @@
  * Eliminates callback hell and provides consistent error handling.
  */
 
-import { Client as PgClient } from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
+
+import { Client as PgClient } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
 import { getDatabase } from '../database/Database.js';

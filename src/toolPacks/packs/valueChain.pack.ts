@@ -34,7 +34,10 @@ export const valueChainPack: ToolPack = {
     { source: 'src/config/valuechain/valueChainInsightStaircase.ts', verifiableInRepo: true },
     { source: 'src/config/valuechain/valueChainQuestionBank.ts', verifiableInRepo: true },
     { source: 'src/config/valuechain/conclusionPrompts.ts', verifiableInRepo: true },
-    { source: 'src/store/useToolStore.ts (VALUE_CHAIN_STEPS, ValueActivity, ValueChainMove)', verifiableInRepo: true },
+    {
+      source: 'src/store/useToolStore.ts (VALUE_CHAIN_STEPS, ValueActivity, ValueChainMove)',
+      verifiableInRepo: true,
+    },
     { source: 'docs/standards/CONCLUSION_LAYER_STANDARD.md', verifiableInRepo: true },
   ],
 
@@ -57,7 +60,7 @@ export const valueChainPack: ToolPack = {
     },
     whyItMatters: {
       pl: 'Silnik liczy dźwignię każdego ogniwa (leverScore = koszt/wartość × luka dojrzałości) i rankinguje 2-3 ogniwa o najwyższej dźwigni — zamiast rozmowy o wszystkim naraz, wskazuje gdzie ruch się opłaca najbardziej.',
-      en: 'The engine computes each activity\'s leverage (leverScore = cost/value × maturity gap) and ranks the top 2-3 highest-leverage activities — instead of discussing everything at once, it names where a move pays off most.',
+      en: "The engine computes each activity's leverage (leverScore = cost/value × maturity gap) and ranks the top 2-3 highest-leverage activities — instead of discussing everything at once, it names where a move pays off most.",
     },
     inputsRequired: {
       pl: 'Pytanie decyzyjne o kosztach/różnicowaniu, dane o strukturze kosztów per ogniwo, ocena dojrzałości względem benchmarku oraz osoba znająca realia operacyjne.',
@@ -99,8 +102,10 @@ export const valueChainPack: ToolPack = {
         pl: 'Zdefiniować biznes, zakres łańcucha wartości, pozycjonowanie i sygnał sukcesu.',
         en: 'Define the business, value chain scope, strategic positioning, and success signal.',
       },
-      whatGoodLooksLike: 'Jedno ostre pytanie o koszt/różnicowanie z zakresem łańcucha i horyzontem.',
-      evidenceToAskFor: 'Zakres biznesu, obecne pozycjonowanie (koszt vs różnicowanie), kryterium sukcesu.',
+      whatGoodLooksLike:
+        'Jedno ostre pytanie o koszt/różnicowanie z zakresem łańcucha i horyzontem.',
+      evidenceToAskFor:
+        'Zakres biznesu, obecne pozycjonowanie (koszt vs różnicowanie), kryterium sukcesu.',
       completionCriterion: 'Zakres i pozycjonowanie zaakceptowane przez właściciela decyzji.',
     },
     {
@@ -110,7 +115,8 @@ export const valueChainPack: ToolPack = {
         pl: 'Zebrać sygnały kosztu, operacji i różnicowania z kontekstu i wywiadów.',
         en: 'Capture cost, operations, and differentiation signals from context and interviews.',
       },
-      whatGoodLooksLike: 'Sygnały przypisane do konkretnego ogniwa, nie ogólne „operacje są nieefektywne".',
+      whatGoodLooksLike:
+        'Sygnały przypisane do konkretnego ogniwa, nie ogólne „operacje są nieefektywne".',
       evidenceToAskFor: 'Źródło każdego sygnału kosztowego/wartościowego.',
       completionCriterion: 'Wystarczające sygnały, by rozpocząć ocenę co najmniej jednego ogniwa.',
     },
@@ -123,8 +129,10 @@ export const valueChainPack: ToolPack = {
       },
       whatGoodLooksLike:
         'Każde ocenione ogniwo ma staircase R1→R4 (powierzchnia → dowód kosztowo-wartościowy → benchmark → potencjał), nie samą etykietę.',
-      evidenceToAskFor: 'Udział w koszcie ORAZ wpływ na wartość dla klienta (obie strony, nie jedna).',
-      completionCriterion: 'Co najmniej jedno ogniwo prymarne i jedno wsparcia ocenione, mapa marży ma gradient (≥1 twórca i ≥1 drenaż).',
+      evidenceToAskFor:
+        'Udział w koszcie ORAZ wpływ na wartość dla klienta (obie strony, nie jedna).',
+      completionCriterion:
+        'Co najmniej jedno ogniwo prymarne i jedno wsparcia ocenione, mapa marży ma gradient (≥1 twórca i ≥1 drenaż).',
     },
     {
       id: 'insights',
@@ -133,9 +141,11 @@ export const valueChainPack: ToolPack = {
         pl: 'Przekształcić łańcuch w dźwignie marży, werdykt pozycjonowania i ruchy strategiczne.',
         en: 'Synthesize the chain into margin levers, a positioning verdict, and strategic moves.',
       },
-      whatGoodLooksLike: '2-3 ogniwa o najwyższej dźwigni nazwane wprost, nie lista wszystkich 9 aktywności.',
+      whatGoodLooksLike:
+        '2-3 ogniwa o najwyższej dźwigni nazwane wprost, nie lista wszystkich 9 aktywności.',
       evidenceToAskFor: 'Które ogniwa mają najwyższy leverScore i sugerowany typ ruchu.',
-      completionCriterion: 'Mapa marży i kandydaci na dźwignię policzeni przez silnik z ocenionych aktywności.',
+      completionCriterion:
+        'Mapa marży i kandydaci na dźwignię policzeni przez silnik z ocenionych aktywności.',
     },
     {
       id: 'outputs',
@@ -144,9 +154,12 @@ export const valueChainPack: ToolPack = {
         pl: 'Przygotować final source summary oraz wygenerować wyniki i inicjatywy.',
         en: 'Prepare the final source summary and generate downstream outputs and initiatives.',
       },
-      whatGoodLooksLike: 'Każdy ruch nazywa decyzję (usprawnij/zautomatyzuj/outsourcuj/zintegruj) z trade-offem.',
-      evidenceToAskFor: 'Co tracimy kontroli/zależności wybierając dany ruch (szczególnie outsourcing).',
-      completionCriterion: 'Każdy ruch przechodzi validateValueChainMove (rationale zakotwiczone + trade-off + odrzucona alternatywa + pierwszy krok).',
+      whatGoodLooksLike:
+        'Każdy ruch nazywa decyzję (usprawnij/zautomatyzuj/outsourcuj/zintegruj) z trade-offem.',
+      evidenceToAskFor:
+        'Co tracimy kontroli/zależności wybierając dany ruch (szczególnie outsourcing).',
+      completionCriterion:
+        'Każdy ruch przechodzi validateValueChainMove (rationale zakotwiczone + trade-off + odrzucona alternatywa + pierwszy krok).',
     },
   ],
 
@@ -159,7 +172,8 @@ export const valueChainPack: ToolPack = {
         en: 'Do you compete mainly on cost or on differentiation today, and what cost decision should come out of this session?',
       },
       answerType: 'text',
-      challengeRule: 'Odrzuć odpowiedź bez nazwanego pozycjonowania — bez tego nie da się ocenić, czy ogniwo tworzy czy zjada marżę.',
+      challengeRule:
+        'Odrzuć odpowiedź bez nazwanego pozycjonowania — bez tego nie da się ocenić, czy ogniwo tworzy czy zjada marżę.',
     },
     {
       id: 'valuechain-input-signal',
@@ -169,14 +183,15 @@ export const valueChainPack: ToolPack = {
         en: 'Which activity hurts the most today — on cost or quality — and how do you know?',
       },
       answerType: 'evidence',
-      challengeRule: 'Sygnał bez wskazanego ogniwa (inboundLogistics/operations/.../procurement) nie da się przypisać do mapy marży.',
+      challengeRule:
+        'Sygnał bez wskazanego ogniwa (inboundLogistics/operations/.../procurement) nie da się przypisać do mapy marży.',
     },
     {
       id: 'valuechain-activities-proof',
       phaseId: 'activities',
       prompt: {
         pl: 'Jaki jest udział tego ogniwa w koszcie CAŁKOWITYM i jak wpływa na to, ile klient jest gotów zapłacić?',
-        en: 'What is this activity\'s share of TOTAL cost, and how does it affect what the customer is willing to pay?',
+        en: "What is this activity's share of TOTAL cost, and how does it affect what the customer is willing to pay?",
       },
       answerType: 'evidence',
       challengeRule:
@@ -282,7 +297,8 @@ export const valueChainPack: ToolPack = {
     sourceUsed: 'src/config/valuechain/ (kod silnika; brak zewnętrznego dokumentu metody w repo)',
     sourceType: 'ENGINE_DERIVED',
     copiedContent: 'no',
-    trademarkNote: 'Nie znaleziono znaku towarowego; tekst książki z 1985 objęty prawem autorskim, nie reprodukowany.',
+    trademarkNote:
+      'Nie znaleziono znaku towarowego; tekst książki z 1985 objęty prawem autorskim, nie reprodukowany.',
     commercialUseStatus: 'LEGAL_REVIEW_REQUIRED',
     legalReviewStatus: 'LEGAL_REVIEW_REQUIRED',
     publicationStatus: 'LEGAL_REVIEW_REQUIRED',

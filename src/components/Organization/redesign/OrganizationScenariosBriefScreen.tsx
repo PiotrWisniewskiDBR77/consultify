@@ -37,6 +37,7 @@
  *     decyzji, czy wraca jako rozwijana sekcja w kolejnym kroku.
  */
 
+import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   Bot,
@@ -48,7 +49,6 @@ import {
   Target,
   Zap,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { recommendScenario, SCENARIOS } from '../../../data/transformationScenarios';
@@ -108,7 +108,11 @@ export const OrganizationScenariosBriefScreen: React.FC<{
   const chips: StandardCounterChip[] = [
     { id: 'scenario', label: 'Scenariusz wybrany', count: selectedScenario ? 1 : 0 },
     { id: 'risks', label: 'Ryzyka krytyczne/wysokie', count: criticalRisks.length },
-    { id: 'challenges', label: 'Wyzwania zadeklarowane', count: challenges.declaredChallenges.length },
+    {
+      id: 'challenges',
+      label: 'Wyzwania zadeklarowane',
+      count: challenges.declaredChallenges.length,
+    },
   ];
 
   const handleSave = useCallback(() => {
@@ -117,7 +121,8 @@ export const OrganizationScenariosBriefScreen: React.FC<{
   }, []);
 
   const statePanel: OrganizationStatePanelProps = {
-    completenessNote: 'Wybór scenariusza zapisywany jest lokalnie na bieżąco — przycisk potwierdza stan.',
+    completenessNote:
+      'Wybór scenariusza zapisywany jest lokalnie na bieżąco — przycisk potwierdza stan.',
     onSave: handleSave,
     saveLabel: saved ? 'Zapisano' : 'Zapisz zmiany',
   };
@@ -187,35 +192,47 @@ export const OrganizationScenariosBriefScreen: React.FC<{
               Dojrzałość
             </p>
             <p className="mt-1 text-[13px] text-c-text">
-              Dziś: <span className="font-semibold">{companyProfile.currentMaturityLevel || '—'}</span>
+              Dziś:{' '}
+              <span className="font-semibold">{companyProfile.currentMaturityLevel || '—'}</span>
             </p>
             <p className="text-[13px] text-c-text">
-              Cel: <span className="font-semibold">{companyProfile.targetMaturityLevel || '—'}</span>
+              Cel:{' '}
+              <span className="font-semibold">{companyProfile.targetMaturityLevel || '—'}</span>
             </p>
           </div>
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
               Wybrany scenariusz
             </p>
-            <p className="mt-1 text-[13px] font-semibold text-c-text">{selectedScenario?.name || '—'}</p>
+            <p className="mt-1 text-[13px] font-semibold text-c-text">
+              {selectedScenario?.name || '—'}
+            </p>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">Ryzyka</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
+              Ryzyka
+            </p>
             <p className="mt-1 text-2xl font-semibold text-c-text">{synthesis.risks.length}</p>
-            <p className="text-[11px] text-c-text-muted">{criticalRisks.length} krytyczne/wysokie</p>
+            <p className="text-[11px] text-c-text-muted">
+              {criticalRisks.length} krytyczne/wysokie
+            </p>
           </div>
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">Szanse</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
+              Szanse
+            </p>
             <p className="mt-1 text-2xl font-semibold text-c-text">{synthesis.strengths.length}</p>
           </div>
           <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
               Wyzwania
             </p>
-            <p className="mt-1 text-2xl font-semibold text-c-text">{challenges.declaredChallenges.length}</p>
+            <p className="mt-1 text-2xl font-semibold text-c-text">
+              {challenges.declaredChallenges.length}
+            </p>
           </div>
         </div>
 

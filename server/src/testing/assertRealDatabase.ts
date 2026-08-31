@@ -91,7 +91,9 @@ export async function assertRealDatabase(
 
   let rows: Array<Record<string, unknown>>;
   try {
-    rows = await runner('SELECT current_database() AS current_database, current_schema() AS current_schema');
+    rows = await runner(
+      'SELECT current_database() AS current_database, current_schema() AS current_schema'
+    );
   } catch (err) {
     throw new Error(
       `[assertRealDatabase] Could not execute a real round-trip query against the configured database: ${
@@ -103,7 +105,12 @@ export async function assertRealDatabase(
   const row = rows[0];
   const currentDatabase = row?.current_database;
   const currentSchema = row?.current_schema;
-  if (typeof currentDatabase !== 'string' || !currentDatabase || typeof currentSchema !== 'string' || !currentSchema) {
+  if (
+    typeof currentDatabase !== 'string' ||
+    !currentDatabase ||
+    typeof currentSchema !== 'string' ||
+    !currentSchema
+  ) {
     throw new Error(
       '[assertRealDatabase] current_database()/current_schema() returned no usable row — this is not a real ' +
         `PostgreSQL connection. Got: ${JSON.stringify(row ?? null)}`

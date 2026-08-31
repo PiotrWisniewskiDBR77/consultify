@@ -45,7 +45,7 @@ import { Api, API_URL, getHeaders } from '@/services/api';
 
 import { isNotFoundError } from '../kpiApi';
 
-export { isNotFoundError, httpErrorCode, type HttpError } from '../kpiApi';
+export { type HttpError, httpErrorCode, isNotFoundError } from '../kpiApi';
 
 // ==========================================
 // ENUMS (mirror the CHECK constraints in `kpiScorecardTypes.ts` /
@@ -75,7 +75,12 @@ export type KpiScorecardReviewFrequency = (typeof KPI_SCORECARD_REVIEW_FREQUENCI
 /** No `'pending_approval'` — a Scorecard is a curation/membership object, not
  * a governed contract requiring maker-checker (migration's own column
  * comment, quoted in `kpiScorecardTypes.ts`). Never add a 5th state. */
-export const KPI_SCORECARD_LIFECYCLE_STATUSES = ['draft', 'active', 'suspended', 'archived'] as const;
+export const KPI_SCORECARD_LIFECYCLE_STATUSES = [
+  'draft',
+  'active',
+  'suspended',
+  'archived',
+] as const;
 export type KpiScorecardLifecycleStatus = (typeof KPI_SCORECARD_LIFECYCLE_STATUSES)[number];
 
 export const KPI_SCORECARD_ITEM_ROLES = ['primary', 'supporting'] as const;
@@ -207,9 +212,7 @@ export async function listKpiScorecards(
 // ==========================================
 
 export async function listKpiScorecardsForKpi(kpiId: string): Promise<KpiScorecardDto[]> {
-  const resp = await Api.get(
-    `/vnext/results/kpi/scorecards/for-kpi/${encodeURIComponent(kpiId)}`
-  );
+  const resp = await Api.get(`/vnext/results/kpi/scorecards/for-kpi/${encodeURIComponent(kpiId)}`);
   return (resp?.scorecards ?? []) as KpiScorecardDto[];
 }
 
@@ -377,7 +380,11 @@ async function deleteWithBody<T>(path: string, body: unknown): Promise<T> {
     // non-JSON body — fall through, res.ok still gates below
   }
   if (!res.ok) {
-    const data = (payload ?? {}) as { error?: string; code?: string; details?: Record<string, unknown> };
+    const data = (payload ?? {}) as {
+      error?: string;
+      code?: string;
+      details?: Record<string, unknown>;
+    };
     const err = new Error(data.error || `Request failed (${res.status})`) as Error & {
       status?: number;
       data?: typeof data;
@@ -512,7 +519,9 @@ export interface ReorderKpiScorecardItemsInput {
 
 export async function reorderKpiScorecardItems(
   input: ReorderKpiScorecardItemsInput
-): Promise<KpiScorecardWriteOutcome & { scorecard: KpiScorecardDto; items: KpiScorecardItemDto[] }> {
+): Promise<
+  KpiScorecardWriteOutcome & { scorecard: KpiScorecardDto; items: KpiScorecardItemDto[] }
+> {
   const resp = await Api.patch(
     `/vnext/results/kpi/scorecards/${encodeURIComponent(input.scorecardId)}/items/reorder`,
     {

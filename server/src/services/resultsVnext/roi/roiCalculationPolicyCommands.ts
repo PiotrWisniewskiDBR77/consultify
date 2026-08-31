@@ -18,20 +18,23 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+} from '../platform/atomicWrite.js';
 import {
   assertCommandCapability,
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
-
 import { NON_EDITABLE_STATUSES, ROI_EVENT_SOURCE } from './roiCaseCommands.js';
 import {
-  toRoiCalculationPolicy,
   type RoiCalculationPolicy,
   type RoiCalculationPolicyRow,
-  type RoiTaxTreatment,
   type RoiConfidenceLevel,
   type RoiRoundingPolicy,
+  type RoiTaxTreatment,
+  toRoiCalculationPolicy,
 } from './roiEconomicModelTypes.js';
 
 // ==========================================
@@ -52,7 +55,9 @@ export class RoiEconomicModelNotEditableError extends Error {
   code = 'NOT_EDITABLE';
   details: Record<string, unknown>;
   constructor(caseId: string, status: string) {
-    super(`ROI case ${caseId} is "${status}" — the economic model may not be edited from this status`);
+    super(
+      `ROI case ${caseId} is "${status}" — the economic model may not be edited from this status`
+    );
     this.name = 'RoiEconomicModelNotEditableError';
     this.details = { caseId, status };
   }
@@ -153,22 +158,34 @@ export async function captureOrUpdateCalculationPolicy(
       if (currentRow.frozen_at !== null) {
         throw new RoiCalculationPolicyFrozenError(caseId, currentRow.policy_row_id);
       }
-      if (NON_EDITABLE_STATUSES.includes(caseStatusRow.status as (typeof NON_EDITABLE_STATUSES)[number])) {
+      if (
+        NON_EDITABLE_STATUSES.includes(
+          caseStatusRow.status as (typeof NON_EDITABLE_STATUSES)[number]
+        )
+      ) {
         throw new RoiEconomicModelNotEditableError(caseId, caseStatusRow.status);
       }
 
       beforeState = { calculationPolicy: toRoiCalculationPolicy(currentRow) };
 
       const merged = {
-        discount_rate_pct: edits.discountRatePct !== undefined ? edits.discountRatePct : currentRow.discount_rate_pct,
-        tax_treatment: edits.taxTreatment !== undefined ? edits.taxTreatment : currentRow.tax_treatment,
+        discount_rate_pct:
+          edits.discountRatePct !== undefined
+            ? edits.discountRatePct
+            : currentRow.discount_rate_pct,
+        tax_treatment:
+          edits.taxTreatment !== undefined ? edits.taxTreatment : currentRow.tax_treatment,
         inflation_rate_pct:
-          edits.inflationRatePct !== undefined ? edits.inflationRatePct : currentRow.inflation_rate_pct,
+          edits.inflationRatePct !== undefined
+            ? edits.inflationRatePct
+            : currentRow.inflation_rate_pct,
         rounding_policy: edits.roundingPolicy ?? currentRow.rounding_policy,
-        required_metrics: edits.requiredMetrics !== undefined ? edits.requiredMetrics : currentRow.required_metrics,
+        required_metrics:
+          edits.requiredMetrics !== undefined ? edits.requiredMetrics : currentRow.required_metrics,
         notes: edits.notes !== undefined ? edits.notes : currentRow.notes,
         confidence: edits.confidence !== undefined ? edits.confidence : currentRow.confidence,
-        owner_user_id: edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
+        owner_user_id:
+          edits.ownerUserId !== undefined ? edits.ownerUserId : currentRow.owner_user_id,
       };
 
       const updateResult = await client.query<RoiCalculationPolicyRow>(
@@ -193,7 +210,9 @@ export async function captureOrUpdateCalculationPolicy(
       );
       const updatedRow = updateResult.rows[0];
       if (!updatedRow) {
-        throw new Error(`[captureOrUpdateCalculationPolicy] update returned no row for case ${caseId}`);
+        throw new Error(
+          `[captureOrUpdateCalculationPolicy] update returned no row for case ${caseId}`
+        );
       }
       return toRoiCalculationPolicy(updatedRow);
     },

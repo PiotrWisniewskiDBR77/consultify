@@ -380,11 +380,9 @@ export async function collectUserData(userId: string): Promise<UserDataExport> {
   if (userColumns.has('last_login_at')) userSelect.push('last_login_at');
   else if (userColumns.has('last_login')) userSelect.push('last_login AS last_login_at');
 
-  data.user = await dbGet(
-    `SELECT ${userSelect.join(', ')} FROM users WHERE id = ?`,
-    [userId],
-    { fallback: false }
-  );
+  data.user = await dbGet(`SELECT ${userSelect.join(', ')} FROM users WHERE id = ?`, [userId], {
+    fallback: false,
+  });
 
   if (userColumns.has('extended_preferences')) {
     const prefsRow = await dbGet<{ extended_preferences?: string }>(

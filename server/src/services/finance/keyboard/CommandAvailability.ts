@@ -58,7 +58,7 @@
 import type { FinanceArtifactType } from '../../../types/finance/ArtifactRef.js';
 import type { FinanceArtifactFreshness } from '../../../types/finance/financeValueSemantics.js';
 import type { BusinessVersionStatus, FinanceRole } from '../canonical/lifecycleService.js';
-import { viewportCapability, type ViewportCapability } from '../workspace/focusModeContract.js';
+import { type ViewportCapability, viewportCapability } from '../workspace/focusModeContract.js';
 import {
   resolveControlState,
   type WorkspaceBarEnablement,
@@ -80,7 +80,9 @@ export interface KeyboardCommandAvailability extends WorkspaceBarEnablement {
   requiresViewportCapability: ViewportCapabilityKey | null;
 }
 
-export function commandAvailability(partial: Partial<KeyboardCommandAvailability>): KeyboardCommandAvailability {
+export function commandAvailability(
+  partial: Partial<KeyboardCommandAvailability>
+): KeyboardCommandAvailability {
   return {
     statuses: partial.statuses ?? 'any',
     roles: partial.roles ?? 'any',
@@ -96,7 +98,12 @@ export const AVAILABILITY_ALWAYS: KeyboardCommandAvailability = commandAvailabil
 
 // Role bands, named exactly as `moduleAdapters.ts` (AP-10) names them, so the
 // two files can be diffed against each other.
-export const PREPARER_PLUS: readonly FinanceRole[] = ['preparer', 'reviewer', 'approver', 'finance_admin'];
+export const PREPARER_PLUS: readonly FinanceRole[] = [
+  'preparer',
+  'reviewer',
+  'approver',
+  'finance_admin',
+];
 export const REVIEWER_PLUS: readonly FinanceRole[] = ['reviewer', 'approver', 'finance_admin'];
 
 /** Same two statuses `moduleAdapters.ts` calls `EDITABLE_STATUSES`. Content is immutable everywhere else (DEC-FIN-007). */
@@ -157,7 +164,13 @@ export interface CommandEvaluationContext extends WorkspaceBarEvaluationContext 
 }
 
 /** AP-09's four codes, widened by the two dimensions the keyboard layer adds. */
-export type CommandUnavailableReason = 'STATUS' | 'ROLE' | 'FRESHNESS' | 'GATE' | 'ARTIFACT_TYPE' | 'VIEWPORT';
+export type CommandUnavailableReason =
+  | 'STATUS'
+  | 'ROLE'
+  | 'FRESHNESS'
+  | 'GATE'
+  | 'ARTIFACT_TYPE'
+  | 'VIEWPORT';
 
 export type CommandExecutability =
   | { canExecute: true }
@@ -261,7 +274,9 @@ export function describeCommandUnavailability(
       };
     default: {
       const exhaustive: never = reason;
-      throw new Error(`describeCommandUnavailability: unhandled reason ${JSON.stringify(exhaustive)}`);
+      throw new Error(
+        `describeCommandUnavailability: unhandled reason ${JSON.stringify(exhaustive)}`
+      );
     }
   }
 }
@@ -280,7 +295,10 @@ export function evaluateCommandAvailability(
   availability: KeyboardCommandAvailability,
   ctx: CommandEvaluationContext
 ): CommandExecutability {
-  if (availability.artifactTypes !== 'any' && !availability.artifactTypes.includes(ctx.artifactType)) {
+  if (
+    availability.artifactTypes !== 'any' &&
+    !availability.artifactTypes.includes(ctx.artifactType)
+  ) {
     return {
       canExecute: false,
       reason: 'ARTIFACT_TYPE',

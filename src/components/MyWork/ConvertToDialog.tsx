@@ -9,8 +9,8 @@ import { FileOutput, Loader2, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { BudgetConversionConfig } from '@/services/conversionService';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { materializeMyWorkSession } from '@/services/traceabilityService';
 import type { MyWorkDerivedSource, MyWorkSession } from '@/types/domain/traceability';
 

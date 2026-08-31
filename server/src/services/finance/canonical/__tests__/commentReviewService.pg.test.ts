@@ -97,7 +97,16 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
            value_status, value_decimal, native_currency, presentation_currency, unit, accounting_policy, created_by
          ) VALUES (?, ?, ?, ?, ?, ?, 'PRESENT_NONZERO', ?, 'PLN', 'PLN', 'UNITS', 'IFRS', ?)
          RETURNING id`,
-        [orgId, params.businessVersionId, params.statementType, params.canonicalLineId, params.entityId, params.periodId, params.value, preparerId]
+        [
+          orgId,
+          params.businessVersionId,
+          params.statementType,
+          params.canonicalLineId,
+          params.entityId,
+          params.periodId,
+          params.value,
+          preparerId,
+        ]
       )
     );
     if (!row) throw new Error('finance_stmt_lines fixture insert returned no row');
@@ -125,7 +134,10 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
     });
     if (!started.ok) throw new Error(`start_review failed: ${started.message}`);
     await withPinnedPostgresTransaction((tx) =>
-      tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [bvId])
+      tx.queryRun(
+        `UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`,
+        [bvId]
+      )
     );
     return started.businessVersion.version;
   }
@@ -137,7 +149,12 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
     reviewChecklistService = await import('../reviewChecklistService.js');
     ({ financeStmtLinesCellRef } = await import('../../../../types/finance/CellRef.js'));
 
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'FinV3 AP-06 Test Org']));
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'FinV3 AP-06 Test Org',
+      ])
+    );
 
     const cal = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -178,7 +195,9 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
     // artifact_lifecycle_events rows exist anyway (append-only). Clean up what IS safely
     // deletable so this file leaves no dangling rows of its own tables behind.
     await withPinnedPostgresTransaction(async (tx) => {
-      await tx.queryRun(`DELETE FROM finance_comment_assignments WHERE organization_id = ?`, [orgId]);
+      await tx.queryRun(`DELETE FROM finance_comment_assignments WHERE organization_id = ?`, [
+        orgId,
+      ]);
       await tx.queryRun(`DELETE FROM finance_comments WHERE organization_id = ?`, [orgId]);
       await tx.queryRun(`DELETE FROM finance_review_checklists WHERE organization_id = ?`, [orgId]);
     });
@@ -263,7 +282,10 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
 
       // Confirm directly against the DB, not just the service's own return value.
       const bvRow = await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ status: string }>(`SELECT status FROM finance_business_versions WHERE business_version_id = ?`, [bvId])
+        tx.queryOne<{ status: string }>(
+          `SELECT status FROM finance_business_versions WHERE business_version_id = ?`,
+          [bvId]
+        )
       );
       expect(bvRow?.status).toBe('APPROVED');
     });
@@ -313,13 +335,18 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
       });
       expect(commentResult.ok).toBe(true);
       if (!commentResult.ok) throw new Error('unreachable');
-      expect(commentResult.comment.mentions.slice().sort()).toEqual([mentionedUser, otherUser].sort());
+      expect(commentResult.comment.mentions.slice().sort()).toEqual(
+        [mentionedUser, otherUser].sort()
+      );
       expect(commentResult.comment.is_blocking).toBe(false);
       expect(commentResult.comment.anchor).toBeNull();
 
       const mentioned = await commentService.listMentioning(orgId, mentionedUser);
       expect(mentioned.some((c) => c.id === commentResult.comment.id)).toBe(true);
-      const notMentioned = await commentService.listMentioning(orgId, `user-unrelated-${randomUUID()}`);
+      const notMentioned = await commentService.listMentioning(
+        orgId,
+        `user-unrelated-${randomUUID()}`
+      );
       expect(notMentioned.some((c) => c.id === commentResult.comment.id)).toBe(false);
 
       const firstAssignee = `user-assignee-1-${randomUUID()}`;
@@ -427,7 +454,11 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
       // The only outstanding required item is now checked; the optional item does not count.
       expect(await reviewChecklistService.allRequiredItemsChecked(orgId, bvId)).toBe(true);
 
-      const madeRequired = await reviewChecklistService.setChecklistItemRequired(orgId, item2.item.id, true);
+      const madeRequired = await reviewChecklistService.setChecklistItemRequired(
+        orgId,
+        item2.item.id,
+        true
+      );
       expect(madeRequired.ok).toBe(true);
       expect(await reviewChecklistService.allRequiredItemsChecked(orgId, bvId)).toBe(false);
 
@@ -439,18 +470,58 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
   describe('changed-only reviewer entry (AP-06 x finance_stmt_lines)', () => {
     it('50 cells across two versions, 3 changed -> getChangedCellsForStatementPack returns exactly those 3', async () => {
       const LINE_CODES = [
-        'fsl-bs-ap', 'fsl-bs-ar', 'fsl-cf-capex', 'fsl-bs-cash', 'fsl-cf-financing',
-        'fsl-cf-investing', 'fsl-cf-operating', 'fsl-pl-cogs', 'fsl-bs-current-assets', 'fsl-bs-current-liabilities',
-        'fsl-pl-depreciation', 'fsl-bs-dividends-declared', 'fsl-pl-ebit', 'fsl-pl-ebitda', 'fsl-bs-equity',
-        'fsl-cf-fcf', 'fsl-bs-fixed', 'fsl-pl-gross', 'fsl-pl-interest', 'fsl-bs-inventory',
-        'fsl-bs-long-term-debt', 'fsl-cf-net-change-cash', 'fsl-pl-net', 'fsl-pl-opex', 'fsl-bs-retained-earnings',
+        'fsl-bs-ap',
+        'fsl-bs-ar',
+        'fsl-cf-capex',
+        'fsl-bs-cash',
+        'fsl-cf-financing',
+        'fsl-cf-investing',
+        'fsl-cf-operating',
+        'fsl-pl-cogs',
+        'fsl-bs-current-assets',
+        'fsl-bs-current-liabilities',
+        'fsl-pl-depreciation',
+        'fsl-bs-dividends-declared',
+        'fsl-pl-ebit',
+        'fsl-pl-ebitda',
+        'fsl-bs-equity',
+        'fsl-cf-fcf',
+        'fsl-bs-fixed',
+        'fsl-pl-gross',
+        'fsl-pl-interest',
+        'fsl-bs-inventory',
+        'fsl-bs-long-term-debt',
+        'fsl-cf-net-change-cash',
+        'fsl-pl-net',
+        'fsl-pl-opex',
+        'fsl-bs-retained-earnings',
       ] as const; // 25 lines x 2 periods = 50 cells
       const STATEMENT_TYPE_BY_LINE: Record<string, 'P&L' | 'BS' | 'CF'> = {
-        'fsl-bs-ap': 'BS', 'fsl-bs-ar': 'BS', 'fsl-cf-capex': 'CF', 'fsl-bs-cash': 'BS', 'fsl-cf-financing': 'CF',
-        'fsl-cf-investing': 'CF', 'fsl-cf-operating': 'CF', 'fsl-pl-cogs': 'P&L', 'fsl-bs-current-assets': 'BS', 'fsl-bs-current-liabilities': 'BS',
-        'fsl-pl-depreciation': 'P&L', 'fsl-bs-dividends-declared': 'BS', 'fsl-pl-ebit': 'P&L', 'fsl-pl-ebitda': 'P&L', 'fsl-bs-equity': 'BS',
-        'fsl-cf-fcf': 'CF', 'fsl-bs-fixed': 'BS', 'fsl-pl-gross': 'P&L', 'fsl-pl-interest': 'P&L', 'fsl-bs-inventory': 'BS',
-        'fsl-bs-long-term-debt': 'BS', 'fsl-cf-net-change-cash': 'CF', 'fsl-pl-net': 'P&L', 'fsl-pl-opex': 'P&L', 'fsl-bs-retained-earnings': 'BS',
+        'fsl-bs-ap': 'BS',
+        'fsl-bs-ar': 'BS',
+        'fsl-cf-capex': 'CF',
+        'fsl-bs-cash': 'BS',
+        'fsl-cf-financing': 'CF',
+        'fsl-cf-investing': 'CF',
+        'fsl-cf-operating': 'CF',
+        'fsl-pl-cogs': 'P&L',
+        'fsl-bs-current-assets': 'BS',
+        'fsl-bs-current-liabilities': 'BS',
+        'fsl-pl-depreciation': 'P&L',
+        'fsl-bs-dividends-declared': 'BS',
+        'fsl-pl-ebit': 'P&L',
+        'fsl-pl-ebitda': 'P&L',
+        'fsl-bs-equity': 'BS',
+        'fsl-cf-fcf': 'CF',
+        'fsl-bs-fixed': 'BS',
+        'fsl-pl-gross': 'P&L',
+        'fsl-pl-interest': 'P&L',
+        'fsl-bs-inventory': 'BS',
+        'fsl-bs-long-term-debt': 'BS',
+        'fsl-cf-net-change-cash': 'CF',
+        'fsl-pl-net': 'P&L',
+        'fsl-pl-opex': 'P&L',
+        'fsl-bs-retained-earnings': 'BS',
       };
       expect(LINE_CODES.length).toBe(25);
 
@@ -482,7 +553,8 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
         expectedVersion: version,
       });
       expect(approvedV1.ok).toBe(true);
-      if (!approvedV1.ok) throw new Error(`v1 approve unexpectedly failed: ${JSON.stringify(approvedV1)}`);
+      if (!approvedV1.ok)
+        throw new Error(`v1 approve unexpectedly failed: ${JSON.stringify(approvedV1)}`);
 
       // --- v2: reopen (spawns a fresh DRAFT business_version_id); its own entity row + its own
       // 50 finance_stmt_lines rows, since neither table is copied by reopenVersion() (see
@@ -509,7 +581,8 @@ describe.skipIf(!REAL_PG)('AP-06 comments/review — real PostgreSQL', () => {
 
       for (const lineId of LINE_CODES) {
         for (const periodId of [periodIdA, periodIdB]) {
-          const isTheChangedCell = CHANGED_LINE_IDS.has(lineId) && changedPeriodByLine[lineId] === periodId;
+          const isTheChangedCell =
+            CHANGED_LINE_IDS.has(lineId) && changedPeriodByLine[lineId] === periodId;
           await insertStmtLine({
             businessVersionId: bv2Id,
             entityId: entity2Id,

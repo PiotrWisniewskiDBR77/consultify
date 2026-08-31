@@ -71,13 +71,19 @@ beforeAll(async () => {
 afterAll(async () => {
   const client = await db();
   try {
-    await client.query(`DELETE FROM tool_output_approvals WHERE organization_id=$1`, [organizationId]);
+    await client.query(`DELETE FROM tool_output_approvals WHERE organization_id=$1`, [
+      organizationId,
+    ]);
     await client.query(`DELETE FROM tool_outputs WHERE organization_id=$1`, [organizationId]);
-    await client.query(`DELETE FROM tool_initiative_links WHERE organization_id=$1`, [organizationId]);
+    await client.query(`DELETE FROM tool_initiative_links WHERE organization_id=$1`, [
+      organizationId,
+    ]);
     await client.query(`DELETE FROM initiatives WHERE organization_id=$1`, [organizationId]);
     await client.query(`DELETE FROM my_ideas WHERE organization_id=$1`, [organizationId]);
     await client.query(`DELETE FROM tool_sessions WHERE organization_id=$1`, [organizationId]);
-    await client.query(`DELETE FROM organization_members WHERE organization_id=$1`, [organizationId]);
+    await client.query(`DELETE FROM organization_members WHERE organization_id=$1`, [
+      organizationId,
+    ]);
     await client.query(`DELETE FROM users WHERE id=$1`, [userId]);
     await client.query(`DELETE FROM organizations WHERE id=$1`, [organizationId]);
   } finally {
@@ -118,14 +124,17 @@ describe('Day150 market-forces path behind the inactive catalog gate (real Gatew
     expect(opened.status, JSON.stringify(opened.body)).toBe(200);
     expect(opened.body.toolType).toBe('market-forces');
 
-    const saved = await request(app).put(`/api/tools/${sessionId}`).set(auth()).send({
-      answers,
-      contextSnapshot: { measurement: 'day150' },
-      completionPercent: 100,
-      confidenceAvg: 4.5,
-      missingItems: [],
-      expectedVersion: 1,
-    });
+    const saved = await request(app)
+      .put(`/api/tools/${sessionId}`)
+      .set(auth())
+      .send({
+        answers,
+        contextSnapshot: { measurement: 'day150' },
+        completionPercent: 100,
+        confidenceAvg: 4.5,
+        missingItems: [],
+        expectedVersion: 1,
+      });
     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
     expect(saved.body.version).toBe(2);
 
@@ -162,22 +171,24 @@ describe('Day150 market-forces path behind the inactive catalog gate (real Gatew
 
       const { renderToolReport } = await import('../../../../../src/toolOutputs/renderReport.js');
       const report = renderToolReport(
-        [{
-          id: result.rows[0].id,
-          organizationId,
-          toolSessionId: sessionId,
-          toolType: 'market-forces',
-          methodPackVersion: '1.0.0',
-          version: 1,
-          title: 'Day150 Porter output',
-          status: 'approved',
-          items: payload.items,
-          tensions: payload.tensions,
-          conclusions: payload.conclusions,
-          createdAt: new Date(0).toISOString(),
-          createdBy: userId,
-          contentHash: 'day150-measurement',
-        }],
+        [
+          {
+            id: result.rows[0].id,
+            organizationId,
+            toolSessionId: sessionId,
+            toolType: 'market-forces',
+            methodPackVersion: '1.0.0',
+            version: 1,
+            title: 'Day150 Porter output',
+            status: 'approved',
+            items: payload.items,
+            tensions: payload.tensions,
+            conclusions: payload.conclusions,
+            createdAt: new Date(0).toISOString(),
+            createdBy: userId,
+            contentHash: 'day150-measurement',
+          },
+        ],
         { id: 'day150-report', organizationId, kind: 'report', title: 'Day150 report' }
       );
       expect(report.sections).toHaveLength(1);

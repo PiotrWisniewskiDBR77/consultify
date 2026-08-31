@@ -22,17 +22,23 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import { computeStateHash } from '../kpi/kpiDefinitionCommands.js';
-import { executeAtomicCommand, type AtomicCommandOutcome, type AtomicEventInput } from '../platform/atomicWrite.js';
-import { assertCommandCapability, type CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
+import {
+  type AtomicCommandOutcome,
+  type AtomicEventInput,
+  executeAtomicCommand,
+} from '../platform/atomicWrite.js';
+import {
+  assertCommandCapability,
+  type CommandAccessContext,
+} from '../platform/commandCapabilityGuard.js';
 import { OKR_EVENT_SOURCE } from './okrProgramCommands.js';
 import { OkrSetValidationError } from './okrSetCommands.js';
-import { toOkrSet, type OkrSet, type OkrSetRow } from './okrSetTypes.js';
+import { type OkrSet, type OkrSetRow, toOkrSet } from './okrSetTypes.js';
 import {
-  toOkrSetVersion,
   type OkrSetVersion,
   type OkrSetVersionFieldName,
   type OkrSetVersionRow,
+  toOkrSetVersion,
 } from './okrSetTypes.js';
 
 // ==========================================
@@ -60,11 +66,12 @@ function setRowVersion(row: OkrSetRow): number {
  * strings, but expressed as an explicit map (not string interpolation of
  * caller input) so this can never become a SQL-injection vector even if the
  * allowed field set grows. */
-const FIELD_COLUMN: Record<OkrSetVersionFieldName, 'title' | 'owner_user_id' | 'reviewer_user_id'> = {
-  title: 'title',
-  owner_user_id: 'owner_user_id',
-  reviewer_user_id: 'reviewer_user_id',
-};
+const FIELD_COLUMN: Record<OkrSetVersionFieldName, 'title' | 'owner_user_id' | 'reviewer_user_id'> =
+  {
+    title: 'title',
+    owner_user_id: 'owner_user_id',
+    reviewer_user_id: 'reviewer_user_id',
+  };
 
 // RN-G5 — command capability name (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md).
 export const OKR_SET_MATERIAL_CHANGE_CAPABILITY = 'results.okr.set.record_material_change';
@@ -151,11 +158,22 @@ export async function recordOkrSetMaterialChange(
            (set_id, organization_id, version_number, field_name, before_value, after_value, reason, requested_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [setId, organizationId, versionNumber, fieldName, beforeValue, afterValue, reason, requestedBy]
+        [
+          setId,
+          organizationId,
+          versionNumber,
+          fieldName,
+          beforeValue,
+          afterValue,
+          reason,
+          requestedBy,
+        ]
       );
       const versionRow = versionInsert.rows[0];
       if (!versionRow) {
-        throw new Error(`[recordOkrSetMaterialChange] insert into okr_vnext_set_versions returned no row for ${setId}`);
+        throw new Error(
+          `[recordOkrSetMaterialChange] insert into okr_vnext_set_versions returned no row for ${setId}`
+        );
       }
 
       const updateResult = await client.query<OkrSetRow>(
@@ -196,7 +214,12 @@ export async function recordOkrSetMaterialChange(
         idempotencyKey,
         expectedVersion,
         resultingVersion: nextVersion,
-        payload: { setId, versionId: result.version.versionId, fieldName, versionNumber: result.version.versionNumber },
+        payload: {
+          setId,
+          versionId: result.version.versionId,
+          fieldName,
+          versionNumber: result.version.versionNumber,
+        },
       } satisfies AtomicEventInput;
     },
   });

@@ -541,7 +541,10 @@ const ARTIFACT_LINK_OPEN_STATE_LABELS: Record<string, Bilingual> = {
   DELETED: { en: 'Unlinked from the Case', pl: 'Odpięty od zlecenia' },
 };
 
-export function artifactLinkOpenStateLabel(raw: string | null | undefined, isPolish: boolean): string {
+export function artifactLinkOpenStateLabel(
+  raw: string | null | undefined,
+  isPolish: boolean
+): string {
   const key = String(raw ?? '')
     .trim()
     .toUpperCase();

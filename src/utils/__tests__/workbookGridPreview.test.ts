@@ -11,7 +11,11 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildWorkbookGridSheets, isFormulaDisplayValue, isNegativeVarianceCell } from '../workbookGridPreview';
+import {
+  buildWorkbookGridSheets,
+  isFormulaDisplayValue,
+  isNegativeVarianceCell,
+} from '../workbookGridPreview';
 
 describe('buildWorkbookGridSheets', () => {
   it('carries the real sheet name through for each sheet', () => {

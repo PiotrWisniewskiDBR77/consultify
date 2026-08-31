@@ -10,22 +10,24 @@
 import { randomUUID } from 'node:crypto';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
-
 import { AtomicWriteConflictError } from '../platform/atomicWrite.js';
 import type { CommandAccessContext } from '../platform/commandCapabilityGuard.js';
-
-import type { OkrProgramPolicyVersionRow } from './okrProgramTypes.js';
 import {
   OKR_CYCLE_ACTIVATE_SPEC,
   OKR_CYCLE_CLOSE_SPEC,
   OKR_CYCLE_OPEN_DRAFTING_SPEC,
   OKR_CYCLE_OPEN_REVIEW_SPEC,
+  type OkrCycleLifecycleTransitionSpec,
   OkrCycleValidationError,
   runOkrCycleLifecycleTransition,
-  type OkrCycleLifecycleTransitionSpec,
 } from './okrCycleCommands.js';
 import type { OkrCycleRow, OkrCycleStatus } from './okrCycleTypes.js';
-import { OKR_SET_OPEN_REVIEW_SPEC, runOkrSetLifecycleTransition, OkrSetValidationError } from './okrSetCommands.js';
+import type { OkrProgramPolicyVersionRow } from './okrProgramTypes.js';
+import {
+  OKR_SET_OPEN_REVIEW_SPEC,
+  OkrSetValidationError,
+  runOkrSetLifecycleTransition,
+} from './okrSetCommands.js';
 import type { OkrSetRow } from './okrSetTypes.js';
 
 /** The platform's actual service-actor convention (design §6.6): nullable
@@ -255,7 +257,10 @@ function computeCadenceWindows(
   while (cursor.getTime() <= rangeEnd.getTime() && iterations < MAX_ITERATIONS) {
     const next = advanceCadence(cursor, frequency);
     const windowEndCandidate = new Date(Math.min(next.getTime() - DAY_MS, rangeEnd.getTime()));
-    const windowEnd = windowEndCandidate.getTime() >= cursor.getTime() ? windowEndCandidate : new Date(cursor.getTime());
+    const windowEnd =
+      windowEndCandidate.getTime() >= cursor.getTime()
+        ? windowEndCandidate
+        : new Date(cursor.getTime());
     windows.push({ start: toDateOnly(cursor), end: toDateOnly(windowEnd) });
     cursor = next;
     iterations += 1;
@@ -329,7 +334,11 @@ export async function generateCadenceOccurrences(
       return { created: 0, skippedExisting: 0, createdOccurrenceIds: [] };
     }
 
-    const windows = computeCadenceWindows(cycleRow.active_start_at, cycleRow.final_update_due_at, checkinFrequency);
+    const windows = computeCadenceWindows(
+      cycleRow.active_start_at,
+      cycleRow.final_update_due_at,
+      checkinFrequency
+    );
 
     let created = 0;
     let skippedExisting = 0;

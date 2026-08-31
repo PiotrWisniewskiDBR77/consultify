@@ -220,349 +220,356 @@ function percentile(sortedMs: number[], p: number): number {
   return sortedMs[Math.max(0, idx)]!;
 }
 
-suite('outbox dispatch throughput/latency at DoD-I volumes (server-side only — see file header for scope)', () => {
-  let control: Pool;
+suite(
+  'outbox dispatch throughput/latency at DoD-I volumes (server-side only — see file header for scope)',
+  () => {
+    let control: Pool;
 
-  beforeAll(async () => {
-    control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
-  }, 60_000);
+    beforeAll(async () => {
+      control = new Pool({ connectionString: CONNECTION_STRING, max: 8 });
+    }, 60_000);
 
-  afterAll(async () => {
-    await control?.end().catch(() => undefined);
-  }, 60_000);
+    afterAll(async () => {
+      await control?.end().catch(() => undefined);
+    }, 60_000);
 
-  // =========================================================================
-  // SECTION 1 — 10,000-event backlog across 1,000 Cases: dispatch throughput,
-  // per-tick latency distribution, and queue-lag read cost.
-  // =========================================================================
-  it(
-    `drains a ${EVENT_COUNT}-event backlog spread across ${CASE_COUNT} Cases, reports p50/p95/p99 tick ` +
-      'latency and total wall-clock throughput, and confirms getOutboxBacklog() stays cheap at this volume',
-    async () => {
-      const orgId = `cwperf-org-${randomUUID()}`;
+    // =========================================================================
+    // SECTION 1 — 10,000-event backlog across 1,000 Cases: dispatch throughput,
+    // per-tick latency distribution, and queue-lag read cost.
+    // =========================================================================
+    it(
+      `drains a ${EVENT_COUNT}-event backlog spread across ${CASE_COUNT} Cases, reports p50/p95/p99 tick ` +
+        'latency and total wall-clock throughput, and confirms getOutboxBacklog() stays cheap at this volume',
+      async () => {
+        const orgId = `cwperf-org-${randomUUID()}`;
 
-      try {
-        // ---- SEED: one bulk multi-row INSERT, no publishEvent() round trips ----
-        // Each row needs exactly 6 bind params (event_id, organization_id,
-        // aggregate_type, aggregate_id, case_id, actor_user_id);
-        // correlation_id (NOT NULL, no default) is computed in SQL from
-        // event_id rather than bound, so it never has to be threaded through
-        // the chunking below.
-        const PARAMS_PER_ROW = 6;
-        function buildRowParams(i: number): unknown[] {
-          const caseId = `cwperf-case-${i % CASE_COUNT}`;
-          const eventId = `cwperf-evt-${orgId}-${i}`;
-          return [eventId, orgId, 'CASE', caseId, caseId, `cwperf-actor-${i % 50}`];
-        }
-
-        const seedStarted = Date.now();
-        // Chunk the INSERT so one statement never carries all 10,000 rows'
-        // worth of params (keeps this a realistic "several bulk writes",
-        // matching how a real backfill/import would seed volume, and avoids
-        // any driver-side param-count ceiling).
-        const CHUNK = 1000;
-        for (let offset = 0; offset < EVENT_COUNT; offset += CHUNK) {
-          const chunkSize = Math.min(CHUNK, EVENT_COUNT - offset);
-          const paramsChunk: unknown[] = [];
-          let n = 1;
-          const localRows: string[] = [];
-          for (let j = 0; j < chunkSize; j += 1) {
-            paramsChunk.push(...buildRowParams(offset + j));
-            localRows.push(
-              `($${n++}, 'case.status_changed', 1, $${n++}, $${n++}, $${n++}, $${n++}, $${n++}, '{}'::jsonb)`
-            );
+        try {
+          // ---- SEED: one bulk multi-row INSERT, no publishEvent() round trips ----
+          // Each row needs exactly 6 bind params (event_id, organization_id,
+          // aggregate_type, aggregate_id, case_id, actor_user_id);
+          // correlation_id (NOT NULL, no default) is computed in SQL from
+          // event_id rather than bound, so it never has to be threaded through
+          // the chunking below.
+          const PARAMS_PER_ROW = 6;
+          function buildRowParams(i: number): unknown[] {
+            const caseId = `cwperf-case-${i % CASE_COUNT}`;
+            const eventId = `cwperf-evt-${orgId}-${i}`;
+            return [eventId, orgId, 'CASE', caseId, caseId, `cwperf-actor-${i % 50}`];
           }
-          expect(paramsChunk.length).toBe(chunkSize * PARAMS_PER_ROW);
-          await control.query(
-            `INSERT INTO case_workspace_event_outbox
+
+          const seedStarted = Date.now();
+          // Chunk the INSERT so one statement never carries all 10,000 rows'
+          // worth of params (keeps this a realistic "several bulk writes",
+          // matching how a real backfill/import would seed volume, and avoids
+          // any driver-side param-count ceiling).
+          const CHUNK = 1000;
+          for (let offset = 0; offset < EVENT_COUNT; offset += CHUNK) {
+            const chunkSize = Math.min(CHUNK, EVENT_COUNT - offset);
+            const paramsChunk: unknown[] = [];
+            let n = 1;
+            const localRows: string[] = [];
+            for (let j = 0; j < chunkSize; j += 1) {
+              paramsChunk.push(...buildRowParams(offset + j));
+              localRows.push(
+                `($${n++}, 'case.status_changed', 1, $${n++}, $${n++}, $${n++}, $${n++}, $${n++}, '{}'::jsonb)`
+              );
+            }
+            expect(paramsChunk.length).toBe(chunkSize * PARAMS_PER_ROW);
+            await control.query(
+              `INSERT INTO case_workspace_event_outbox
                (event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary, correlation_id)
              SELECT event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary,
                     'cwperf-corr-' || event_id
                FROM (VALUES ${localRows.join(',')}) AS t(event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary)`,
-            paramsChunk
+              paramsChunk
+            );
+          }
+          const seedMs = Date.now() - seedStarted;
+
+          const seededCount = await control.query<{ n: string }>(
+            `SELECT count(*)::int AS n FROM case_workspace_event_outbox WHERE organization_id = $1`,
+            [orgId]
           );
-        }
-        const seedMs = Date.now() - seedStarted;
+          expect(Number(seededCount.rows[0]?.n)).toBe(EVENT_COUNT);
 
-        const seededCount = await control.query<{ n: string }>(
-          `SELECT count(*)::int AS n FROM case_workspace_event_outbox WHERE organization_id = $1`,
-          [orgId]
-        );
-        expect(Number(seededCount.rows[0]?.n)).toBe(EVENT_COUNT);
-
-        // ---- QUEUE LAG READ COST at full volume, BEFORE any dispatch -------
-        const backlogReadStarted = Date.now();
-        const backlogBeforeDrain = await eventOutboxService.getOutboxBacklog({ organizationId: orgId });
-        const backlogReadMs = Date.now() - backlogReadStarted;
-        expect(backlogBeforeDrain.pending).toBe(EVENT_COUNT);
-
-        // ---- DRAIN: repeated dispatch ticks, timing EACH ONE -----------------
-        const tickDurationsMs: number[] = [];
-        const drainStarted = Date.now();
-        let claimedTotal = 0;
-        let deliveredTotal = 0;
-        // Safety ceiling so a genuine regression fails the test instead of
-        // looping forever.
-        const maxTicks = Math.ceil(EVENT_COUNT / DISPATCH_BATCH_SIZE) + 5;
-        for (let tick = 0; tick < maxTicks; tick += 1) {
-          const tickStarted = Date.now();
-          const result = await eventOutboxService.dispatchPendingEvents({
+          // ---- QUEUE LAG READ COST at full volume, BEFORE any dispatch -------
+          const backlogReadStarted = Date.now();
+          const backlogBeforeDrain = await eventOutboxService.getOutboxBacklog({
             organizationId: orgId,
-            batchSize: DISPATCH_BATCH_SIZE,
           });
-          tickDurationsMs.push(Date.now() - tickStarted);
-          claimedTotal += result.claimed;
-          deliveredTotal += result.delivered;
-          if (result.claimed === 0) break;
+          const backlogReadMs = Date.now() - backlogReadStarted;
+          expect(backlogBeforeDrain.pending).toBe(EVENT_COUNT);
+
+          // ---- DRAIN: repeated dispatch ticks, timing EACH ONE -----------------
+          const tickDurationsMs: number[] = [];
+          const drainStarted = Date.now();
+          let claimedTotal = 0;
+          let deliveredTotal = 0;
+          // Safety ceiling so a genuine regression fails the test instead of
+          // looping forever.
+          const maxTicks = Math.ceil(EVENT_COUNT / DISPATCH_BATCH_SIZE) + 5;
+          for (let tick = 0; tick < maxTicks; tick += 1) {
+            const tickStarted = Date.now();
+            const result = await eventOutboxService.dispatchPendingEvents({
+              organizationId: orgId,
+              batchSize: DISPATCH_BATCH_SIZE,
+            });
+            tickDurationsMs.push(Date.now() - tickStarted);
+            claimedTotal += result.claimed;
+            deliveredTotal += result.delivered;
+            if (result.claimed === 0) break;
+          }
+          const drainWallClockMs = Date.now() - drainStarted;
+
+          expect(claimedTotal).toBe(EVENT_COUNT);
+          expect(deliveredTotal).toBe(EVENT_COUNT);
+
+          const backlogAfterDrain = await eventOutboxService.getOutboxBacklog({
+            organizationId: orgId,
+          });
+          expect(backlogAfterDrain.pending).toBe(0);
+
+          const sorted = [...tickDurationsMs].sort((a, b) => a - b);
+          const p50 = percentile(sorted, 50);
+          const p95 = percentile(sorted, 95);
+          const p99 = percentile(sorted, 99);
+          const eventsPerSecond = EVENT_COUNT / (drainWallClockMs / 1000);
+
+          // -------------------------------------------------------------------
+          // THE EVIDENCE. Printed unconditionally (not gated behind a verbose
+          // flag) because this suite's entire purpose is to be quoted in the
+          // packet report — a number that only exists in a variable is not
+          // evidence.
+          // -------------------------------------------------------------------
+          // eslint-disable-next-line no-console
+          console.log(
+            `[outboxThroughput] EVIDENCE eventCount=${EVENT_COUNT} caseCount=${CASE_COUNT} ` +
+              `batchSize=${DISPATCH_BATCH_SIZE} seedMs=${seedMs} backlogReadMs(at full volume)=${backlogReadMs} ` +
+              `ticks=${tickDurationsMs.length} drainWallClockMs=${drainWallClockMs} ` +
+              `eventsPerSecond=${eventsPerSecond.toFixed(1)} tickLatencyMs p50=${p50} p95=${p95} p99=${p99} ` +
+              `minMs=${sorted[0]} maxMs=${sorted[sorted.length - 1]}`
+          );
+
+          // The queue-lag READ itself must stay cheap even with 10,000 pending
+          // rows — it is a count(*)+min(created_at) against a PARTIAL index on
+          // undelivered rows (see the outbox migration's own
+          // idx_case_workspace_event_outbox_pending), so it must not degrade
+          // with total table volume. 2s is a generous ceiling for an
+          // unthrottled local/CI database; the printed number is the real
+          // evidence, this is only a regression tripwire.
+          expect(backlogReadMs).toBeLessThan(2_000);
+        } finally {
+          await control
+            .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+            .catch(() => undefined);
         }
-        const drainWallClockMs = Date.now() - drainStarted;
+      },
+      300_000
+    );
 
-        expect(claimedTotal).toBe(EVENT_COUNT);
-        expect(deliveredTotal).toBe(EVENT_COUNT);
+    // =========================================================================
+    // SECTION 2 — publishEvent()'s own commit latency: the DB-transaction FLOOR
+    // of DoD-I's "p95 server-backed mutation feedback <= 1 s" (see file header —
+    // this has NO HTTP framing, NO network throttle on top; it can only
+    // understate the real number).
+    // =========================================================================
+    it('publishEvent() commit latency (p50/p95/p99) over 200 real single-mutation transactions — the DB-only floor of the DoD-I 1s mutation-feedback budget', async () => {
+      const orgId = `cwperf-mut-org-${randomUUID()}`;
+      const caseId = `cwperf-mut-case-${randomUUID()}`;
+      const SAMPLE_SIZE = 200;
+      const durationsMs: number[] = [];
 
-        const backlogAfterDrain = await eventOutboxService.getOutboxBacklog({ organizationId: orgId });
-        expect(backlogAfterDrain.pending).toBe(0);
+      try {
+        for (let i = 0; i < SAMPLE_SIZE; i += 1) {
+          const started = Date.now();
+          await withPgTransaction((client) =>
+            eventOutboxService.publishEvent(client, {
+              eventId: `cwperf-mut-evt-${orgId}-${i}`,
+              eventType: 'case.status_changed',
+              organizationId: orgId,
+              aggregateType: 'CASE',
+              aggregateId: caseId,
+              caseId,
+              actorUserId: 'cwperf-mut-actor',
+              redactedSummary: { caseStatus: 'ACTIVE', iteration: i },
+            })
+          );
+          durationsMs.push(Date.now() - started);
+        }
 
-        const sorted = [...tickDurationsMs].sort((a, b) => a - b);
+        const sorted = [...durationsMs].sort((a, b) => a - b);
         const p50 = percentile(sorted, 50);
         const p95 = percentile(sorted, 95);
         const p99 = percentile(sorted, 99);
-        const eventsPerSecond = EVENT_COUNT / (drainWallClockMs / 1000);
 
-        // -------------------------------------------------------------------
-        // THE EVIDENCE. Printed unconditionally (not gated behind a verbose
-        // flag) because this suite's entire purpose is to be quoted in the
-        // packet report — a number that only exists in a variable is not
-        // evidence.
-        // -------------------------------------------------------------------
         // eslint-disable-next-line no-console
         console.log(
-          `[outboxThroughput] EVIDENCE eventCount=${EVENT_COUNT} caseCount=${CASE_COUNT} ` +
-            `batchSize=${DISPATCH_BATCH_SIZE} seedMs=${seedMs} backlogReadMs(at full volume)=${backlogReadMs} ` +
-            `ticks=${tickDurationsMs.length} drainWallClockMs=${drainWallClockMs} ` +
-            `eventsPerSecond=${eventsPerSecond.toFixed(1)} tickLatencyMs p50=${p50} p95=${p95} p99=${p99} ` +
-            `minMs=${sorted[0]} maxMs=${sorted[sorted.length - 1]}`
+          `[outboxThroughput] EVIDENCE publishEvent commit latency sampleSize=${SAMPLE_SIZE} ` +
+            `p50Ms=${p50} p95Ms=${p95} p99Ms=${p99} minMs=${sorted[0]} maxMs=${sorted[sorted.length - 1]} ` +
+            `(DB-transaction floor only — NOT the full DoD-I HTTP/network/render number; see file header)`
         );
 
-        // The queue-lag READ itself must stay cheap even with 10,000 pending
-        // rows — it is a count(*)+min(created_at) against a PARTIAL index on
-        // undelivered rows (see the outbox migration's own
-        // idx_case_workspace_event_outbox_pending), so it must not degrade
-        // with total table volume. 2s is a generous ceiling for an
-        // unthrottled local/CI database; the printed number is the real
-        // evidence, this is only a regression tripwire.
-        expect(backlogReadMs).toBeLessThan(2_000);
+        // Sanity ceiling only — the DB-only floor should be a small fraction of
+        // the 1s full-stack DoD-I budget on any non-degenerate database. This
+        // is NOT a DoD-I pass/fail: DoD-I's own number needs the HTTP layer,
+        // the CW-NET-1 throttle profile and the frozen runner, none of which
+        // this packet's allowlist reaches.
+        expect(p95).toBeLessThan(1_000);
       } finally {
         await control
           .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
           .catch(() => undefined);
       }
-    },
-    300_000
-  );
+    }, 120_000);
 
-  // =========================================================================
-  // SECTION 2 — publishEvent()'s own commit latency: the DB-transaction FLOOR
-  // of DoD-I's "p95 server-backed mutation feedback <= 1 s" (see file header —
-  // this has NO HTTP framing, NO network throttle on top; it can only
-  // understate the real number).
-  // =========================================================================
-  it('publishEvent() commit latency (p50/p95/p99) over 200 real single-mutation transactions — the DB-only floor of the DoD-I 1s mutation-feedback budget', async () => {
-    const orgId = `cwperf-mut-org-${randomUUID()}`;
-    const caseId = `cwperf-mut-case-${randomUUID()}`;
-    const SAMPLE_SIZE = 200;
-    const durationsMs: number[] = [];
+    // =========================================================================
+    // SECTION 3 — CW-T-E / B4: heap during the heaviest operation this suite
+    // knows how to produce (draining the same 10,000-event backlog as Section 1,
+    // this time through the REAL production path — `outboxWorker.runOutboxWorkerTick()`
+    // — not the raw `dispatchPendingEvents()` call Section 1 uses), plus the
+    // SAME volume proving `getOutboxWorkerMetrics()` (queue-lag age, dead-letter
+    // count, cumulative totals) stays accurate at full 10,000-row scale, not
+    // just in the small-fixture integration tests.
+    //
+    // Run with `NODE_OPTIONS=--expose-gc` for a REAL forced-GC heap floor (same
+    // convention as the sibling `__tests__/performance/**` harness's own
+    // `lib/runProfile.ts`). Without it, `global.gc` is undefined and this test
+    // reports heap WITHOUT a forced collection — still printed, but visibly
+    // labelled `forcedGc=false` rather than silently passed off as the same
+    // measurement.
+    // =========================================================================
+    it(
+      `heap during the heaviest operation: draining a ${EVENT_COUNT}-event backlog through the ` +
+        'REAL outboxWorker.runOutboxWorkerTick() path (not raw dispatchPendingEvents), sampling this ' +
+        'Node process heap at baseline / post-seed / post-drain / post-forced-GC, and confirming ' +
+        'getOutboxWorkerMetrics() (queue-lag age, totals, tick-duration p50/p95) stays accurate at full volume',
+      async () => {
+        const orgId = `cwperf-heap-org-${randomUUID()}`;
+        const forcedGcAvailable = typeof global.gc === 'function';
 
-    try {
-      for (let i = 0; i < SAMPLE_SIZE; i += 1) {
-        const started = Date.now();
-        await withPgTransaction((client) =>
-          eventOutboxService.publishEvent(client, {
-            eventId: `cwperf-mut-evt-${orgId}-${i}`,
-            eventType: 'case.status_changed',
-            organizationId: orgId,
-            aggregateType: 'CASE',
-            aggregateId: caseId,
-            caseId,
-            actorUserId: 'cwperf-mut-actor',
-            redactedSummary: { caseStatus: 'ACTIVE', iteration: i },
-          })
-        );
-        durationsMs.push(Date.now() - started);
-      }
-
-      const sorted = [...durationsMs].sort((a, b) => a - b);
-      const p50 = percentile(sorted, 50);
-      const p95 = percentile(sorted, 95);
-      const p99 = percentile(sorted, 99);
-
-      // eslint-disable-next-line no-console
-      console.log(
-        `[outboxThroughput] EVIDENCE publishEvent commit latency sampleSize=${SAMPLE_SIZE} ` +
-          `p50Ms=${p50} p95Ms=${p95} p99Ms=${p99} minMs=${sorted[0]} maxMs=${sorted[sorted.length - 1]} ` +
-          `(DB-transaction floor only — NOT the full DoD-I HTTP/network/render number; see file header)`
-      );
-
-      // Sanity ceiling only — the DB-only floor should be a small fraction of
-      // the 1s full-stack DoD-I budget on any non-degenerate database. This
-      // is NOT a DoD-I pass/fail: DoD-I's own number needs the HTTP layer,
-      // the CW-NET-1 throttle profile and the frozen runner, none of which
-      // this packet's allowlist reaches.
-      expect(p95).toBeLessThan(1_000);
-    } finally {
-      await control
-        .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
-        .catch(() => undefined);
-    }
-  }, 120_000);
-
-  // =========================================================================
-  // SECTION 3 — CW-T-E / B4: heap during the heaviest operation this suite
-  // knows how to produce (draining the same 10,000-event backlog as Section 1,
-  // this time through the REAL production path — `outboxWorker.runOutboxWorkerTick()`
-  // — not the raw `dispatchPendingEvents()` call Section 1 uses), plus the
-  // SAME volume proving `getOutboxWorkerMetrics()` (queue-lag age, dead-letter
-  // count, cumulative totals) stays accurate at full 10,000-row scale, not
-  // just in the small-fixture integration tests.
-  //
-  // Run with `NODE_OPTIONS=--expose-gc` for a REAL forced-GC heap floor (same
-  // convention as the sibling `__tests__/performance/**` harness's own
-  // `lib/runProfile.ts`). Without it, `global.gc` is undefined and this test
-  // reports heap WITHOUT a forced collection — still printed, but visibly
-  // labelled `forcedGc=false` rather than silently passed off as the same
-  // measurement.
-  // =========================================================================
-  it(
-    `heap during the heaviest operation: draining a ${EVENT_COUNT}-event backlog through the ` +
-      'REAL outboxWorker.runOutboxWorkerTick() path (not raw dispatchPendingEvents), sampling this ' +
-      'Node process heap at baseline / post-seed / post-drain / post-forced-GC, and confirming ' +
-      'getOutboxWorkerMetrics() (queue-lag age, totals, tick-duration p50/p95) stays accurate at full volume',
-    async () => {
-      const orgId = `cwperf-heap-org-${randomUUID()}`;
-      const forcedGcAvailable = typeof global.gc === 'function';
-
-      function sampleHeapMb(): number {
-        if (forcedGcAvailable) global.gc!();
-        return process.memoryUsage().heapUsed / (1024 * 1024);
-      }
-
-      outboxWorker._resetOutboxWorkerForTests();
-
-      try {
-        const baselineHeapMb = sampleHeapMb();
-
-        // ---- SEED: identical shape to Section 1 (bulk INSERT, see that
-        // section's own header note on why 10,000 publishEvent() round trips
-        // would measure connection churn instead of dispatch/worker cost). ----
-        const PARAMS_PER_ROW = 6;
-        function buildRowParams(i: number): unknown[] {
-          const caseId = `cwperfheap-case-${i % CASE_COUNT}`;
-          const eventId = `cwperfheap-evt-${orgId}-${i}`;
-          return [eventId, orgId, 'CASE', caseId, caseId, `cwperfheap-actor-${i % 50}`];
+        function sampleHeapMb(): number {
+          if (forcedGcAvailable) global.gc!();
+          return process.memoryUsage().heapUsed / (1024 * 1024);
         }
-        const CHUNK = 1000;
-        for (let offset = 0; offset < EVENT_COUNT; offset += CHUNK) {
-          const chunkSize = Math.min(CHUNK, EVENT_COUNT - offset);
-          const paramsChunk: unknown[] = [];
-          let n = 1;
-          const localRows: string[] = [];
-          for (let j = 0; j < chunkSize; j += 1) {
-            paramsChunk.push(...buildRowParams(offset + j));
-            localRows.push(
-              `($${n++}, 'case.status_changed', 1, $${n++}, $${n++}, $${n++}, $${n++}, $${n++}, '{}'::jsonb)`
-            );
+
+        outboxWorker._resetOutboxWorkerForTests();
+
+        try {
+          const baselineHeapMb = sampleHeapMb();
+
+          // ---- SEED: identical shape to Section 1 (bulk INSERT, see that
+          // section's own header note on why 10,000 publishEvent() round trips
+          // would measure connection churn instead of dispatch/worker cost). ----
+          const PARAMS_PER_ROW = 6;
+          function buildRowParams(i: number): unknown[] {
+            const caseId = `cwperfheap-case-${i % CASE_COUNT}`;
+            const eventId = `cwperfheap-evt-${orgId}-${i}`;
+            return [eventId, orgId, 'CASE', caseId, caseId, `cwperfheap-actor-${i % 50}`];
           }
-          expect(paramsChunk.length).toBe(chunkSize * PARAMS_PER_ROW);
-          await control.query(
-            `INSERT INTO case_workspace_event_outbox
+          const CHUNK = 1000;
+          for (let offset = 0; offset < EVENT_COUNT; offset += CHUNK) {
+            const chunkSize = Math.min(CHUNK, EVENT_COUNT - offset);
+            const paramsChunk: unknown[] = [];
+            let n = 1;
+            const localRows: string[] = [];
+            for (let j = 0; j < chunkSize; j += 1) {
+              paramsChunk.push(...buildRowParams(offset + j));
+              localRows.push(
+                `($${n++}, 'case.status_changed', 1, $${n++}, $${n++}, $${n++}, $${n++}, $${n++}, '{}'::jsonb)`
+              );
+            }
+            expect(paramsChunk.length).toBe(chunkSize * PARAMS_PER_ROW);
+            await control.query(
+              `INSERT INTO case_workspace_event_outbox
                (event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary, correlation_id)
              SELECT event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary,
                     'cwperfheap-corr-' || event_id
                FROM (VALUES ${localRows.join(',')}) AS t(event_id, event_type, schema_version, organization_id, aggregate_type, aggregate_id, case_id, actor_user_id, redacted_summary)`,
-            paramsChunk
-          );
-        }
-
-        const seededCount = await control.query<{ n: string }>(
-          `SELECT count(*)::int AS n FROM case_workspace_event_outbox WHERE organization_id = $1`,
-          [orgId]
-        );
-        expect(Number(seededCount.rows[0]?.n)).toBe(EVENT_COUNT);
-
-        const postSeedHeapMb = sampleHeapMb();
-
-        // ---- DRAIN via the REAL outboxWorker.runOutboxWorkerTick() path,
-        // sampling heap at ~25%/~75% progress and after full drain. ----
-        const heapDuringDrainMb: number[] = [];
-        const maxTicks = Math.ceil(EVENT_COUNT / DISPATCH_BATCH_SIZE) + 5;
-        const quarterTick = Math.max(1, Math.floor(maxTicks / 4));
-        const threeQuarterTick = Math.max(quarterTick + 1, Math.floor((maxTicks * 3) / 4));
-
-        for (let tickIndex = 0; tickIndex < maxTicks; tickIndex += 1) {
-          const result = await outboxWorker.runOutboxWorkerTick({
-            organizationId: orgId,
-            batchSize: DISPATCH_BATCH_SIZE,
-          });
-          if (tickIndex === quarterTick || tickIndex === threeQuarterTick) {
-            heapDuringDrainMb.push(process.memoryUsage().heapUsed / (1024 * 1024));
+              paramsChunk
+            );
           }
-          if (result.claimed === 0) break;
-        }
 
-        const postDrainHeapMb = sampleHeapMb();
-
-        const finalMetrics = outboxWorker.getOutboxWorkerMetrics();
-        const finalBacklog = await eventOutboxService.getOutboxBacklog({ organizationId: orgId });
-
-        expect(finalMetrics.totalClaimed).toBe(EVENT_COUNT);
-        expect(finalMetrics.totalDelivered).toBe(EVENT_COUNT);
-        expect(finalMetrics.totalFailed).toBe(0);
-        expect(finalBacklog.pending).toBe(0);
-        // §10 "queue lag ... observable": the age metric must go back to
-        // "empty" once the real worker path has actually drained everything,
-        // not just the row-count backlog.
-        expect(finalMetrics.lastTickResult?.oldestPendingAgeSeconds).toBeNull();
-        // The rolling tick-duration percentiles must have real data at this
-        // volume — the whole point of exercising 21+ ticks here.
-        expect(finalMetrics.tickDurationMsP50).not.toBeNull();
-        expect(finalMetrics.tickDurationMsP95).not.toBeNull();
-
-        const growthPct =
-          baselineHeapMb > 0 ? ((postDrainHeapMb - baselineHeapMb) / baselineHeapMb) * 100 : null;
-
-        // -------------------------------------------------------------------
-        // THE EVIDENCE.
-        // -------------------------------------------------------------------
-        // eslint-disable-next-line no-console
-        console.log(
-          `[outboxThroughput] EVIDENCE heap forcedGc=${forcedGcAvailable} eventCount=${EVENT_COUNT} ` +
-            `caseCount=${CASE_COUNT} ticks=${finalMetrics.ticks} baselineHeapMb=${baselineHeapMb.toFixed(2)} ` +
-            `postSeedHeapMb=${postSeedHeapMb.toFixed(2)} duringDrainHeapMb=[${heapDuringDrainMb
-              .map((v) => v.toFixed(2))
-              .join(', ')}] postDrainHeapMb=${postDrainHeapMb.toFixed(2)} ` +
-            `growthPctBaselineToPostDrain=${growthPct === null ? 'n/a' : growthPct.toFixed(2) + '%'} ` +
-            `tickDurationMsP50=${finalMetrics.tickDurationMsP50} tickDurationMsP95=${finalMetrics.tickDurationMsP95} ` +
-            `stuckTicks=${finalMetrics.stuckTicks} totalDelivered=${finalMetrics.totalDelivered}` +
-            (forcedGcAvailable
-              ? ''
-              : ' (NOTE: run with NODE_OPTIONS=--expose-gc for a forced-GC floor instead of a raw sample)')
-        );
-
-        if (!forcedGcAvailable) {
-          // eslint-disable-next-line no-console
-          console.warn(
-            '[outboxThroughput] heap section ran WITHOUT --expose-gc — the numbers above are raw ' +
-              'process.memoryUsage() samples, not a post-forced-GC floor. Re-run with ' +
-              'NODE_OPTIONS=--expose-gc for the stronger measurement.'
+          const seededCount = await control.query<{ n: string }>(
+            `SELECT count(*)::int AS n FROM case_workspace_event_outbox WHERE organization_id = $1`,
+            [orgId]
           );
+          expect(Number(seededCount.rows[0]?.n)).toBe(EVENT_COUNT);
+
+          const postSeedHeapMb = sampleHeapMb();
+
+          // ---- DRAIN via the REAL outboxWorker.runOutboxWorkerTick() path,
+          // sampling heap at ~25%/~75% progress and after full drain. ----
+          const heapDuringDrainMb: number[] = [];
+          const maxTicks = Math.ceil(EVENT_COUNT / DISPATCH_BATCH_SIZE) + 5;
+          const quarterTick = Math.max(1, Math.floor(maxTicks / 4));
+          const threeQuarterTick = Math.max(quarterTick + 1, Math.floor((maxTicks * 3) / 4));
+
+          for (let tickIndex = 0; tickIndex < maxTicks; tickIndex += 1) {
+            const result = await outboxWorker.runOutboxWorkerTick({
+              organizationId: orgId,
+              batchSize: DISPATCH_BATCH_SIZE,
+            });
+            if (tickIndex === quarterTick || tickIndex === threeQuarterTick) {
+              heapDuringDrainMb.push(process.memoryUsage().heapUsed / (1024 * 1024));
+            }
+            if (result.claimed === 0) break;
+          }
+
+          const postDrainHeapMb = sampleHeapMb();
+
+          const finalMetrics = outboxWorker.getOutboxWorkerMetrics();
+          const finalBacklog = await eventOutboxService.getOutboxBacklog({ organizationId: orgId });
+
+          expect(finalMetrics.totalClaimed).toBe(EVENT_COUNT);
+          expect(finalMetrics.totalDelivered).toBe(EVENT_COUNT);
+          expect(finalMetrics.totalFailed).toBe(0);
+          expect(finalBacklog.pending).toBe(0);
+          // §10 "queue lag ... observable": the age metric must go back to
+          // "empty" once the real worker path has actually drained everything,
+          // not just the row-count backlog.
+          expect(finalMetrics.lastTickResult?.oldestPendingAgeSeconds).toBeNull();
+          // The rolling tick-duration percentiles must have real data at this
+          // volume — the whole point of exercising 21+ ticks here.
+          expect(finalMetrics.tickDurationMsP50).not.toBeNull();
+          expect(finalMetrics.tickDurationMsP95).not.toBeNull();
+
+          const growthPct =
+            baselineHeapMb > 0 ? ((postDrainHeapMb - baselineHeapMb) / baselineHeapMb) * 100 : null;
+
+          // -------------------------------------------------------------------
+          // THE EVIDENCE.
+          // -------------------------------------------------------------------
+          // eslint-disable-next-line no-console
+          console.log(
+            `[outboxThroughput] EVIDENCE heap forcedGc=${forcedGcAvailable} eventCount=${EVENT_COUNT} ` +
+              `caseCount=${CASE_COUNT} ticks=${finalMetrics.ticks} baselineHeapMb=${baselineHeapMb.toFixed(2)} ` +
+              `postSeedHeapMb=${postSeedHeapMb.toFixed(2)} duringDrainHeapMb=[${heapDuringDrainMb
+                .map((v) => v.toFixed(2))
+                .join(', ')}] postDrainHeapMb=${postDrainHeapMb.toFixed(2)} ` +
+              `growthPctBaselineToPostDrain=${growthPct === null ? 'n/a' : growthPct.toFixed(2) + '%'} ` +
+              `tickDurationMsP50=${finalMetrics.tickDurationMsP50} tickDurationMsP95=${finalMetrics.tickDurationMsP95} ` +
+              `stuckTicks=${finalMetrics.stuckTicks} totalDelivered=${finalMetrics.totalDelivered}` +
+              (forcedGcAvailable
+                ? ''
+                : ' (NOTE: run with NODE_OPTIONS=--expose-gc for a forced-GC floor instead of a raw sample)')
+          );
+
+          if (!forcedGcAvailable) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              '[outboxThroughput] heap section ran WITHOUT --expose-gc — the numbers above are raw ' +
+                'process.memoryUsage() samples, not a post-forced-GC floor. Re-run with ' +
+                'NODE_OPTIONS=--expose-gc for the stronger measurement.'
+            );
+          }
+        } finally {
+          await control
+            .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
+            .catch(() => undefined);
+          outboxWorker._resetOutboxWorkerForTests();
         }
-      } finally {
-        await control
-          .query(`DELETE FROM case_workspace_event_outbox WHERE organization_id = $1`, [orgId])
-          .catch(() => undefined);
-        outboxWorker._resetOutboxWorkerForTests();
-      }
-    },
-    300_000
-  );
-});
+      },
+      300_000
+    );
+  }
+);

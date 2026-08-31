@@ -118,7 +118,12 @@ const MOCK_AI_ACTIONS = [
 ];
 
 const MOCK_AI_RUNS = [
-  { id: 'run-8841', runId: 'run-8841', status: 'pending_review', actionType: 'update_initiative_status' },
+  {
+    id: 'run-8841',
+    runId: 'run-8841',
+    status: 'pending_review',
+    actionType: 'update_initiative_status',
+  },
   { id: 'run-8839', runId: 'run-8839', status: 'approved', actionType: 'send_email' },
   { id: 'run-8820', runId: 'run-8820', status: 'executed', actionType: 'delete_record' },
 ];
@@ -138,8 +143,13 @@ Api.getAIActionCenter = (async ({ scope }: { scope: string; limit?: number }) =>
   if (scope === 'mine') return { actions: MOCK_AI_ACTIONS };
   return { actions: MOCK_AI_ACTIONS };
 }) as typeof Api.getAIActionCenter;
-Api.getAIActionAuditTrail = (async () => ({ audit: MOCK_AUDIT })) as typeof Api.getAIActionAuditTrail;
-Api.getAIRunLedger = (async () => ({ runs: MOCK_AI_RUNS, success: true })) as typeof Api.getAIRunLedger;
+Api.getAIActionAuditTrail = (async () => ({
+  audit: MOCK_AUDIT,
+})) as typeof Api.getAIActionAuditTrail;
+Api.getAIRunLedger = (async () => ({
+  runs: MOCK_AI_RUNS,
+  success: true,
+})) as typeof Api.getAIRunLedger;
 Api.approveAIAction = (async () => ({ success: true })) as typeof Api.approveAIAction;
 Api.rejectAIAction = (async () => ({ success: true })) as typeof Api.rejectAIAction;
 Api.executeAIAction = (async () => ({ success: true })) as typeof Api.executeAIAction;
@@ -215,17 +225,28 @@ Api.listResearchSessions = (async () => ({
   sessions: MOCK_RESEARCH_SESSIONS,
 })) as typeof Api.listResearchSessions;
 Api.getResearchSession = (async (sessionId: string) => ({
-  session: MOCK_RESEARCH_SESSIONS.find((s) => s.sessionId === sessionId) || MOCK_RESEARCH_SESSIONS[0],
+  session:
+    MOCK_RESEARCH_SESSIONS.find((s) => s.sessionId === sessionId) || MOCK_RESEARCH_SESSIONS[0],
 })) as typeof Api.getResearchSession;
 Api.createResearchSession = (async () => ({
   success: true,
   session: MOCK_RESEARCH_SESSIONS[2],
 })) as typeof Api.createResearchSession;
-Api.approveResearchSession = (async () => ({ session: MOCK_RESEARCH_SESSIONS[2] })) as typeof Api.approveResearchSession;
-Api.startResearchSession = (async () => ({ session: MOCK_RESEARCH_SESSIONS[0] })) as typeof Api.startResearchSession;
-Api.cancelResearchSessionV1 = (async () => ({ session: MOCK_RESEARCH_SESSIONS[0] })) as typeof Api.cancelResearchSessionV1;
-Api.resumeResearchSession = (async () => ({ session: MOCK_RESEARCH_SESSIONS[0] })) as typeof Api.resumeResearchSession;
-Api.retryResearchSession = (async () => ({ session: MOCK_RESEARCH_SESSIONS[3] })) as typeof Api.retryResearchSession;
+Api.approveResearchSession = (async () => ({
+  session: MOCK_RESEARCH_SESSIONS[2],
+})) as typeof Api.approveResearchSession;
+Api.startResearchSession = (async () => ({
+  session: MOCK_RESEARCH_SESSIONS[0],
+})) as typeof Api.startResearchSession;
+Api.cancelResearchSessionV1 = (async () => ({
+  session: MOCK_RESEARCH_SESSIONS[0],
+})) as typeof Api.cancelResearchSessionV1;
+Api.resumeResearchSession = (async () => ({
+  session: MOCK_RESEARCH_SESSIONS[0],
+})) as typeof Api.resumeResearchSession;
+Api.retryResearchSession = (async () => ({
+  session: MOCK_RESEARCH_SESSIONS[3],
+})) as typeof Api.retryResearchSession;
 
 // ── ARTIFACTS: Wave5ArtifactRuntimePanel ─────────────────────────────────
 const MOCK_WAVE5_ARTIFACT = {
@@ -261,9 +282,27 @@ const MOCK_WAVE5_ARTIFACT = {
 };
 
 const MOCK_WAVE5_ARTIFACTS_LIST = [
-  { artifactId: 'w5-art-1', artifactType: 'report', status: 'proposed', title: 'Raport zarządczy — Wdrożenie CRM Q3', version: 3 },
-  { artifactId: 'w5-art-2', artifactType: 'slide_deck', status: 'committed', title: 'Prezentacja dla zarządu — Wyniki Q2', version: 5 },
-  { artifactId: 'w5-art-3', artifactType: 'financial_model', status: 'draft', title: 'Model finansowy — Case biznesowy CRM', version: 1 },
+  {
+    artifactId: 'w5-art-1',
+    artifactType: 'report',
+    status: 'proposed',
+    title: 'Raport zarządczy — Wdrożenie CRM Q3',
+    version: 3,
+  },
+  {
+    artifactId: 'w5-art-2',
+    artifactType: 'slide_deck',
+    status: 'committed',
+    title: 'Prezentacja dla zarządu — Wyniki Q2',
+    version: 5,
+  },
+  {
+    artifactId: 'w5-art-3',
+    artifactType: 'financial_model',
+    status: 'draft',
+    title: 'Model finansowy — Case biznesowy CRM',
+    version: 1,
+  },
 ];
 
 Api.getWave5ArtifactSchema = (async () => ({
@@ -281,17 +320,32 @@ Api.getWave5ArtifactSchema = (async () => ({
     'financial_model',
   ],
 })) as typeof Api.getWave5ArtifactSchema;
-Api.listWave5Artifacts = (async () => ({ artifacts: MOCK_WAVE5_ARTIFACTS_LIST })) as typeof Api.listWave5Artifacts;
-Api.getWave5Artifact = (async () => ({ artifact: MOCK_WAVE5_ARTIFACT })) as typeof Api.getWave5Artifact;
-Api.createWave5Artifact = (async () => ({ success: true, artifact: MOCK_WAVE5_ARTIFACT })) as typeof Api.createWave5Artifact;
+Api.listWave5Artifacts = (async () => ({
+  artifacts: MOCK_WAVE5_ARTIFACTS_LIST,
+})) as typeof Api.listWave5Artifacts;
+Api.getWave5Artifact = (async () => ({
+  artifact: MOCK_WAVE5_ARTIFACT,
+})) as typeof Api.getWave5Artifact;
+Api.createWave5Artifact = (async () => ({
+  success: true,
+  artifact: MOCK_WAVE5_ARTIFACT,
+})) as typeof Api.createWave5Artifact;
 Api.proposeWave5ArtifactMutation = (async () => ({
   success: true,
   mutation: MOCK_WAVE5_ARTIFACT.mutations[0],
 })) as typeof Api.proposeWave5ArtifactMutation;
-Api.approveWave5ArtifactMutation = (async () => ({ success: true })) as typeof Api.approveWave5ArtifactMutation;
-Api.commitWave5ArtifactMutation = (async () => ({ success: true })) as typeof Api.commitWave5ArtifactMutation;
-Api.rejectWave5ArtifactMutation = (async () => ({ success: true })) as typeof Api.rejectWave5ArtifactMutation;
-Api.fillWave5DocumentTemplate = (async () => ({ artifact: MOCK_WAVE5_ARTIFACT })) as typeof Api.fillWave5DocumentTemplate;
+Api.approveWave5ArtifactMutation = (async () => ({
+  success: true,
+})) as typeof Api.approveWave5ArtifactMutation;
+Api.commitWave5ArtifactMutation = (async () => ({
+  success: true,
+})) as typeof Api.commitWave5ArtifactMutation;
+Api.rejectWave5ArtifactMutation = (async () => ({
+  success: true,
+})) as typeof Api.rejectWave5ArtifactMutation;
+Api.fillWave5DocumentTemplate = (async () => ({
+  artifact: MOCK_WAVE5_ARTIFACT,
+})) as typeof Api.fillWave5DocumentTemplate;
 Api.generateWave5StructuredArtifact = (async () => ({
   success: true,
   artifact: MOCK_WAVE5_ARTIFACT,
@@ -345,12 +399,18 @@ const MOCK_WAVE6_PANEL = {
   ],
 };
 
-Api.getWave6ContextPanel = (async () => ({ panel: MOCK_WAVE6_PANEL })) as typeof Api.getWave6ContextPanel;
-Api.captureWave6ContextSnapshot = (async () => ({ success: true })) as typeof Api.captureWave6ContextSnapshot;
+Api.getWave6ContextPanel = (async () => ({
+  panel: MOCK_WAVE6_PANEL,
+})) as typeof Api.getWave6ContextPanel;
+Api.captureWave6ContextSnapshot = (async () => ({
+  success: true,
+})) as typeof Api.captureWave6ContextSnapshot;
 Api.captureWave6MemoryCandidate = (async () => ({
   candidate: MOCK_WAVE6_PANEL.memories[0],
 })) as typeof Api.captureWave6MemoryCandidate;
-Api.decideWave6MemoryCandidate = (async () => ({ success: true })) as typeof Api.decideWave6MemoryCandidate;
+Api.decideWave6MemoryCandidate = (async () => ({
+  success: true,
+})) as typeof Api.decideWave6MemoryCandidate;
 
 // ── CONNECTORS: Wave7ConnectorAdminPanel ─────────────────────────────────
 const MOCK_WAVE7_CONNECTORS = [
@@ -411,7 +471,9 @@ Api.getWave7ConnectorCatalog = (async () => ({
     { provider: 'slack', displayName: 'Slack' },
   ],
 })) as typeof Api.getWave7ConnectorCatalog;
-Api.listWave7Connectors = (async () => ({ connectors: MOCK_WAVE7_CONNECTORS })) as typeof Api.listWave7Connectors;
+Api.listWave7Connectors = (async () => ({
+  connectors: MOCK_WAVE7_CONNECTORS,
+})) as typeof Api.listWave7Connectors;
 Api.getWave7ConnectorHealth = (async () => ({
   health: { total: 3, connected: 1, stale: 1, failed: 0, organizationId: 'org-dbr77-demo' },
 })) as typeof Api.getWave7ConnectorHealth;
@@ -444,7 +506,9 @@ Api.executeWave7ConnectorTool = (async () => ({
   run: { status: 'completed' },
 })) as typeof Api.executeWave7ConnectorTool;
 Api.linkWave7Connector = (async () => ({ success: true })) as typeof Api.linkWave7Connector;
-Api.disconnectWave7Connector = (async () => ({ success: true })) as typeof Api.disconnectWave7Connector;
+Api.disconnectWave7Connector = (async () => ({
+  success: true,
+})) as typeof Api.disconnectWave7Connector;
 Api.updateWave7Connector = (async () => ({ success: true })) as typeof Api.updateWave7Connector;
 Api.reindexWave7Connector = (async () => ({ success: true })) as typeof Api.reindexWave7Connector;
 
@@ -484,7 +548,9 @@ const MOCK_WAVE8_AGENTS = [
   },
 ];
 
-Api.getWave8AgentCatalog = (async () => ({ agents: MOCK_WAVE8_AGENTS })) as typeof Api.getWave8AgentCatalog;
+Api.getWave8AgentCatalog = (async () => ({
+  agents: MOCK_WAVE8_AGENTS,
+})) as typeof Api.getWave8AgentCatalog;
 Api.listWave8AgentRuns = (async () => ({
   runs: [
     {
@@ -540,8 +606,12 @@ Api.launchWave8Agent = (async () => ({
   run: { status: 'accepted', schemaValid: true },
 })) as typeof Api.launchWave8Agent;
 Api.executeWave8AgentTool = (async () => ({ allowed: true })) as typeof Api.executeWave8AgentTool;
-Api.upsertWave8AgentDefinition = (async () => ({ success: true })) as typeof Api.upsertWave8AgentDefinition;
-Api.processDueWave8AgentSchedules = (async () => ({ processed: ['sch-1'] })) as typeof Api.processDueWave8AgentSchedules;
+Api.upsertWave8AgentDefinition = (async () => ({
+  success: true,
+})) as typeof Api.upsertWave8AgentDefinition;
+Api.processDueWave8AgentSchedules = (async () => ({
+  processed: ['sch-1'],
+})) as typeof Api.processDueWave8AgentSchedules;
 
 // ── OUTCOMES: Wave9OutcomeAIOpsPanel ─────────────────────────────────────
 const MOCK_WAVE9_OUTCOMES = [
@@ -563,7 +633,9 @@ const MOCK_WAVE9_OUTCOMES = [
   },
 ];
 
-Api.listWave9Outcomes = (async () => ({ outcomes: MOCK_WAVE9_OUTCOMES })) as typeof Api.listWave9Outcomes;
+Api.listWave9Outcomes = (async () => ({
+  outcomes: MOCK_WAVE9_OUTCOMES,
+})) as typeof Api.listWave9Outcomes;
 Api.getWave9AIOpsDashboard = (async () => ({
   dashboard: {
     providerHealth: [{ provider: 'primary-llm', status: 'healthy' }],
@@ -583,7 +655,9 @@ Api.buildWave9Report = (async () => ({
     businessEffectSummary: { assumptions: ['Adopcja w docelowej grupie'], confidence: 0.75 },
   },
 })) as typeof Api.buildWave9Report;
-Api.recordWave9ProviderHealth = (async () => ({ success: true })) as typeof Api.recordWave9ProviderHealth;
+Api.recordWave9ProviderHealth = (async () => ({
+  success: true,
+})) as typeof Api.recordWave9ProviderHealth;
 Api.recordWave9Incident = (async () => ({ success: true })) as typeof Api.recordWave9Incident;
 Api.recordWave9EvalRun = (async () => ({ success: true })) as typeof Api.recordWave9EvalRun;
 Api.registerWave9AcceptanceRun = (async () => ({

@@ -20,10 +20,14 @@ import {
 
 describe('computeRevenuePvm', () => {
   it('GoldCo January 2026: 11,375,000 * 1.05 = 11,943,750', () => {
-    expect(computeRevenuePvm({ priorYearSameMonthRevenue: 11_375_000, annualGrowthRate: 0.05 })).toBeCloseTo(11_943_750, 6);
+    expect(
+      computeRevenuePvm({ priorYearSameMonthRevenue: 11_375_000, annualGrowthRate: 0.05 })
+    ).toBeCloseTo(11_943_750, 6);
   });
   it('0% growth is a pure carry-forward', () => {
-    expect(computeRevenuePvm({ priorYearSameMonthRevenue: 1_000_000, annualGrowthRate: 0 })).toBe(1_000_000);
+    expect(computeRevenuePvm({ priorYearSameMonthRevenue: 1_000_000, annualGrowthRate: 0 })).toBe(
+      1_000_000
+    );
   });
 });
 
@@ -40,13 +44,29 @@ describe('computeCogsOpex', () => {
 
 describe('computeWcDsoDioDpo', () => {
   it('brief literal formula: AR = revenue/days_in_period * DSO', () => {
-    const result = computeWcDsoDioDpo({ revenue: 11_943_750, cogs: 7_743_750, daysInPeriod: 31, dsoDays: 52.14285714285714, dioDays: 60.317796610169495, dpoDays: 54.131355932203384 });
+    const result = computeWcDsoDioDpo({
+      revenue: 11_943_750,
+      cogs: 7_743_750,
+      daysInPeriod: 31,
+      dsoDays: 52.14285714285714,
+      dioDays: 60.317796610169495,
+      dpoDays: 54.131355932203384,
+    });
     expect(result.ar).toBeCloseTo(20_089_717.74193548, 1);
     expect(result.inventory).toBeCloseTo(15_067_288.306451613, 1);
     expect(result.ap).toBeCloseTo(13_521_925.403225804, 1);
   });
   it('rejects zero/negative daysInPeriod', () => {
-    expect(() => computeWcDsoDioDpo({ revenue: 1, cogs: 1, daysInPeriod: 0, dsoDays: 1, dioDays: 1, dpoDays: 1 })).toThrow();
+    expect(() =>
+      computeWcDsoDioDpo({
+        revenue: 1,
+        cogs: 1,
+        daysInPeriod: 0,
+        dsoDays: 1,
+        dioDays: 1,
+        dpoDays: 1,
+      })
+    ).toThrow();
   });
 });
 
@@ -60,7 +80,10 @@ describe('computeCapexDepreciation', () => {
     });
     expect(result.capex).toBeCloseTo(590_625, 3);
     expect(result.depreciation).toBeCloseTo(613_557.8583765113, 1);
-    expect(result.closingFixedAssets).toBeCloseTo(101_500_000 + result.capex - result.depreciation, 6);
+    expect(result.closingFixedAssets).toBeCloseTo(
+      101_500_000 + result.capex - result.depreciation,
+      6
+    );
   });
 });
 
@@ -94,35 +117,65 @@ describe('computeTaxNol', () => {
 
 describe('computeEquityRe', () => {
   it('no-dividend roll-forward: closing = opening + NI', () => {
-    expect(computeEquityRe({ priorRetainedEarnings: 84_603_000, netIncome: 968_661.54, dividendsDeclared: 0 }).closingRetainedEarnings).toBeCloseTo(
-      85_571_661.54,
-      2
-    );
+    expect(
+      computeEquityRe({
+        priorRetainedEarnings: 84_603_000,
+        netIncome: 968_661.54,
+        dividendsDeclared: 0,
+      }).closingRetainedEarnings
+    ).toBeCloseTo(85_571_661.54, 2);
   });
 });
 
 describe('computeHeadcount (implemented, not yet wired to a P0 canonical output line)', () => {
   it('hires minus attrition, salary grows monthly', () => {
-    const result = computeHeadcount({ priorHeadcount: 100, hiresPerPeriod: 5, attritionRatePct: 0.02, priorAvgMonthlySalary: 10_000, avgSalaryGrowthRatePct: 0.003 });
+    const result = computeHeadcount({
+      priorHeadcount: 100,
+      hiresPerPeriod: 5,
+      attritionRatePct: 0.02,
+      priorAvgMonthlySalary: 10_000,
+      avgSalaryGrowthRatePct: 0.003,
+    });
     expect(result.closingHeadcount).toBeCloseTo(103, 6); // 100 + 5 - 100*0.02
     expect(result.avgMonthlySalary).toBeCloseTo(10_030, 6);
     expect(result.payrollCost).toBeCloseTo(103 * 10_030, 6);
   });
   it('never produces a negative headcount', () => {
-    const result = computeHeadcount({ priorHeadcount: 5, hiresPerPeriod: 0, attritionRatePct: 5, priorAvgMonthlySalary: 1000, avgSalaryGrowthRatePct: 0 });
+    const result = computeHeadcount({
+      priorHeadcount: 5,
+      hiresPerPeriod: 0,
+      attritionRatePct: 5,
+      priorAvgMonthlySalary: 1000,
+      avgSalaryGrowthRatePct: 0,
+    });
     expect(result.closingHeadcount).toBe(0);
   });
 });
 
 describe('computeLeases (implemented, not yet wired to a P0 canonical output line)', () => {
   it('escalates once per fiscal year, not compounded every month', () => {
-    const jan = computeLeases({ priorLeaseLiability: 1_000_000, monthlyLeasePayment: 10_000, escalationRateAnnual: 0.02, monthIndexInYear: 0 });
+    const jan = computeLeases({
+      priorLeaseLiability: 1_000_000,
+      monthlyLeasePayment: 10_000,
+      escalationRateAnnual: 0.02,
+      monthIndexInYear: 0,
+    });
     expect(jan.effectiveMonthlyPayment).toBeCloseTo(10_200, 6);
-    const feb = computeLeases({ priorLeaseLiability: jan.closingLeaseLiability, monthlyLeasePayment: 10_000, escalationRateAnnual: 0.02, monthIndexInYear: 1 });
+    const feb = computeLeases({
+      priorLeaseLiability: jan.closingLeaseLiability,
+      monthlyLeasePayment: 10_000,
+      escalationRateAnnual: 0.02,
+      monthIndexInYear: 1,
+    });
     expect(feb.effectiveMonthlyPayment).toBeCloseTo(10_000, 6);
   });
   it('liability never goes negative', () => {
-    const result = computeLeases({ priorLeaseLiability: 5_000, monthlyLeasePayment: 10_000, escalationRateAnnual: 0, monthIndexInYear: 1 });
+    const result = computeLeases({
+      priorLeaseLiability: 5_000,
+      monthlyLeasePayment: 10_000,
+      escalationRateAnnual: 0,
+      monthIndexInYear: 1,
+    });
     expect(result.closingLeaseLiability).toBe(0);
   });
 });

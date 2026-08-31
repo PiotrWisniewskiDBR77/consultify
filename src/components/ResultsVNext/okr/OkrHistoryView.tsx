@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { StandardBreadcrumb, TableColumn, TableRow } from '@/components/standard';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { toUserFacingErrorMessage } from '../shared/errorMessage';
 import type { OkrSetDto } from './okrApi';
 import {
   getOkrSetHistory,
@@ -18,7 +19,6 @@ import {
   type OkrSetHistoryEntry,
 } from './okrWorkspaceApi';
 import { formatOkrWorkspaceDate, shortWorkspaceId } from './okrWorkspaceMappers';
-import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 export interface OkrHistoryViewProps {
   set: OkrSetDto;
@@ -62,7 +62,11 @@ export const OkrHistoryView: React.FC<OkrHistoryViewProps> = ({ set, isPolish, b
       width: '160px',
       render: (row: OkrSetHistoryEntry) => (
         <span className="text-sm text-c-text">
-          {row.kind === 'event' ? row.eventType : isPolish ? `Zmiana pola: ${row.fieldName}` : `Field change: ${row.fieldName}`}
+          {row.kind === 'event'
+            ? row.eventType
+            : isPolish
+              ? `Zmiana pola: ${row.fieldName}`
+              : `Field change: ${row.fieldName}`}
         </span>
       ),
     },
@@ -94,7 +98,12 @@ export const OkrHistoryView: React.FC<OkrHistoryViewProps> = ({ set, isPolish, b
       label: isPolish ? 'Kiedy' : 'When',
       width: '170px',
       render: (row: OkrSetHistoryEntry) => (
-        <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(row.kind === 'event' ? row.occurredAt : row.requestedAt, isPolish)}</span>
+        <span className="text-sm text-c-text-secondary">
+          {formatOkrWorkspaceDate(
+            row.kind === 'event' ? row.occurredAt : row.requestedAt,
+            isPolish
+          )}
+        </span>
       ),
     },
   ];
@@ -115,7 +124,12 @@ export const OkrHistoryView: React.FC<OkrHistoryViewProps> = ({ set, isPolish, b
         defaultSort: { columnId: 'when', direction: 'desc' },
         empty:
           !loading && !error && rows.length === 0
-            ? { title: isPolish ? 'Brak historii' : 'No history', description: isPolish ? 'Brak zdarzeń dla tego zestawu.' : 'No events for this set yet.' }
+            ? {
+                title: isPolish ? 'Brak historii' : 'No history',
+                description: isPolish
+                  ? 'Brak zdarzeń dla tego zestawu.'
+                  : 'No events for this set yet.',
+              }
             : undefined,
       }}
       preview={

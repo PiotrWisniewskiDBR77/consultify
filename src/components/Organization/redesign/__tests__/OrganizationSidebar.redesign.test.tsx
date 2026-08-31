@@ -39,13 +39,17 @@ describe('OrganizationSidebar — flaga orgRedesignV1', () => {
       .filter((button) => button.hasAttribute('aria-expanded'));
     expect(groups).toHaveLength(6);
     // OFF: akordeon jak dotąd — rozwinięta wyłącznie grupa aktywna.
-    expect(groups.filter((group) => group.getAttribute('aria-expanded') === 'true')).toHaveLength(1);
+    expect(groups.filter((group) => group.getAttribute('aria-expanded') === 'true')).toHaveLength(
+      1
+    );
 
     expandAll();
     const legacyScreens = ORGANIZATION_MODULES.flatMap((module) => module.children);
     expect(legacyScreens).toHaveLength(21);
     for (const child of legacyScreens)
-      expect(screen.getByRole('button', { name: new RegExp(child.label, 'i') })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: new RegExp(child.label, 'i') })
+      ).toBeInTheDocument();
   });
 
   it('ON: pokazuje 11 skonsolidowanych ekranów w tych samych 6 grupach', () => {

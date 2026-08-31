@@ -221,9 +221,7 @@ const PANEL_KEY: Record<TabeleRightRailToolId, keyof TabeleRightRailPanelRendere
 
 const PropertyRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div className="flex items-start justify-between gap-3 py-1.5">
-    <span className="shrink-0 text-[11px] uppercase tracking-wider text-c-text-muted">
-      {label}
-    </span>
+    <span className="shrink-0 text-[11px] uppercase tracking-wider text-c-text-muted">{label}</span>
     <span className="text-right text-xs text-c-text">{value}</span>
   </div>
 );
@@ -255,7 +253,10 @@ export function buildTabeleArtifactSections(meta: TabeleArtifactMeta): ArtifactR
             />
           ) : null}
           {meta.governanceVerdict ? (
-            <PropertyRow label={isPl ? 'Governance' : 'Governance'} value={meta.governanceVerdict} />
+            <PropertyRow
+              label={isPl ? 'Governance' : 'Governance'}
+              value={meta.governanceVerdict}
+            />
           ) : null}
           {typeof meta.recordCount === 'number' ? (
             <PropertyRow label={isPl ? 'Rekordy' : 'Records'} value={meta.recordCount} />

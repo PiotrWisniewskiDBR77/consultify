@@ -11,13 +11,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { approveAction, proposeAction, reportImplementation } from '../correctiveActionService.js';
 import { createFinding, reviewFinding } from '../findingService.js';
+import type { AuditActor } from '../types.js';
 import {
   getVerificationReadiness,
   listVerifications,
   performVerification,
   planVerification,
 } from '../verificationService.js';
-import type { AuditActor } from '../types.js';
 import {
   actorFor,
   addMember,
@@ -107,7 +107,7 @@ describe('verificationService', () => {
     // Weryfikujący MUSI być inny niż właściciel/wykonawca działania (auditee) —
     // używamy leadAuditor, który nie jest właścicielem ani wykonawcą.
     await expect(
-      performVerification(fx.organizationId, leadAuditor, verification.id, { result: 'effective' }),
+      performVerification(fx.organizationId, leadAuditor, verification.id, { result: 'effective' })
     ).rejects.toThrow(/skuteczność musi opierać się na dowodzie/i);
 
     const performed = await performVerification(fx.organizationId, leadAuditor, verification.id, {
@@ -168,7 +168,10 @@ describe('verificationService', () => {
       verificationKind: 'effectiveness',
     });
 
-    const onlyEffectiveness = await listVerifications(fx.organizationId, { findingId, kind: 'effectiveness' });
+    const onlyEffectiveness = await listVerifications(fx.organizationId, {
+      findingId,
+      kind: 'effectiveness',
+    });
     expect(onlyEffectiveness).toHaveLength(1);
     expect(onlyEffectiveness[0].verificationKind).toBe('effectiveness');
   });
@@ -211,7 +214,7 @@ describe('verificationService', () => {
         performVerification(fx.organizationId, leadAuditor, otherVerification.id, {
           result: 'effective',
           evidenceId: fx.evidenceId,
-        }),
+        })
       ).rejects.toThrow(/nie został znaleziony/);
     } finally {
       await cleanupFixture(other.organizationId);

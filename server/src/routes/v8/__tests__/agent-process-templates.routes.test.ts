@@ -71,11 +71,41 @@ describe('agent process template routes', () => {
     );
   });
 
-  it('preserves a governed planning blueprint through template validation', async()=>{
-    createTemplate.mockResolvedValue({templateId:'template-plan',version:1,status:'DRAFT'});
-    const step={lifecycleStage:'mandate',businessPurpose:'Confirm mandate',moduleTarget:'Agent',capabilityStatus:'PROPOSAL_ONLY',inputs:[],outputs:['plan'],ownerRole:'Sponsor',dependsOn:[],approvalClass:'requires_human_approval',riskClass:'safe_additive',executionMode:'foreground',estimatedEffort:'1 h',blockerReason:'No verified runtime capability binding.'};
-    const response=await request(await appFor('OWNER')).post('/api/v8/agent-process-templates').send({key:'planning',title:'Planning',graph:{...graph,planningBlueprint:{intakeDefaults:{mandate:'Transform operations'},steps:[step]}}});
-    expect(response.status).toBe(201);expect(createTemplate).toHaveBeenCalledWith(expect.objectContaining({graph:expect.objectContaining({planningBlueprint:expect.objectContaining({steps:[step]})})}));
+  it('preserves a governed planning blueprint through template validation', async () => {
+    createTemplate.mockResolvedValue({ templateId: 'template-plan', version: 1, status: 'DRAFT' });
+    const step = {
+      lifecycleStage: 'mandate',
+      businessPurpose: 'Confirm mandate',
+      moduleTarget: 'Agent',
+      capabilityStatus: 'PROPOSAL_ONLY',
+      inputs: [],
+      outputs: ['plan'],
+      ownerRole: 'Sponsor',
+      dependsOn: [],
+      approvalClass: 'requires_human_approval',
+      riskClass: 'safe_additive',
+      executionMode: 'foreground',
+      estimatedEffort: '1 h',
+      blockerReason: 'No verified runtime capability binding.',
+    };
+    const response = await request(await appFor('OWNER'))
+      .post('/api/v8/agent-process-templates')
+      .send({
+        key: 'planning',
+        title: 'Planning',
+        graph: {
+          ...graph,
+          planningBlueprint: { intakeDefaults: { mandate: 'Transform operations' }, steps: [step] },
+        },
+      });
+    expect(response.status).toBe(201);
+    expect(createTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        graph: expect.objectContaining({
+          planningBlueprint: expect.objectContaining({ steps: [step] }),
+        }),
+      })
+    );
   });
 
   it('requires a governance reason for publication', async () => {

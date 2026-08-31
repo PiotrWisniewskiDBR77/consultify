@@ -28,14 +28,20 @@ describe('mergeBusinessCaseOutlineRequirements', () => {
 
     const merged = mergeBusinessCaseOutlineRequirements(intake, outline);
     expect(merged.sections.map((section) => section.title)).toEqual(
-      expect.arrayContaining(['Scope and Approach', 'Scenarios and Assumptions', 'Economic Analysis'])
-    );
-    expect(merged.sections.findIndex((section) => section.title === 'Scope and Approach')).toBeLessThan(
-      merged.sections.findIndex((section) => section.title === 'Proposed Initiative')
+      expect.arrayContaining([
+        'Scope and Approach',
+        'Scenarios and Assumptions',
+        'Economic Analysis',
+      ])
     );
     expect(
+      merged.sections.findIndex((section) => section.title === 'Scope and Approach')
+    ).toBeLessThan(merged.sections.findIndex((section) => section.title === 'Proposed Initiative'));
+    expect(
       merged.sections.findIndex((section) => section.title === 'Scenarios and Assumptions')
-    ).toBeGreaterThan(merged.sections.findIndex((section) => section.title === 'Proposed Initiative'));
+    ).toBeGreaterThan(
+      merged.sections.findIndex((section) => section.title === 'Proposed Initiative')
+    );
   });
 
   it('does not change non-business-case outlines', () => {

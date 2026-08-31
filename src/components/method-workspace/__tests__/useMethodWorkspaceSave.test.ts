@@ -84,7 +84,9 @@ describe('useMethodWorkspaceSave', () => {
 
   it('offline edits queue as OFFLINE_PENDING instead of erroring', async () => {
     const save = vi.fn().mockResolvedValue({ ok: true });
-    const { result } = renderHook(() => useMethodWorkspaceSave({ save, debounceMs: 10, isOnline: false }));
+    const { result } = renderHook(() =>
+      useMethodWorkspaceSave({ save, debounceMs: 10, isOnline: false })
+    );
 
     await act(async () => {
       await result.current.saveNow();

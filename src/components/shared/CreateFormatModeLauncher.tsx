@@ -22,10 +22,7 @@ import type { LucideIcon } from 'lucide-react';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import {
-  getMaterialVisualIdentity,
-  type MaterialKind,
-} from './materialsVisualIdentity';
+import { getMaterialVisualIdentity, type MaterialKind } from './materialsVisualIdentity';
 
 function resolveFormatIcon(id: string, fallback: LucideIcon): LucideIcon {
   if (id === 'document' || id === 'presentation' || id === 'spreadsheet') {
@@ -184,10 +181,7 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
                 {format ? (stepTwoTitle?.(format) ?? title) : title}
               </h2>
               {headerHint ? (
-                <p
-                  id={`${testId}-description`}
-                  className="mt-1 text-sm text-c-text-secondary"
-                >
+                <p id={`${testId}-description`} className="mt-1 text-sm text-c-text-secondary">
                   {headerHint}
                 </p>
               ) : null}

@@ -145,8 +145,10 @@ export async function createPersonalTask(
   const priority = String(input.priority || 'medium').trim() || 'medium';
   const dueDate = input.dueDate ? String(input.dueDate).trim() : undefined;
   const tags = parseTagsArray(input.tags);
-  const sourceType = typeof sourceTypeRaw === 'string' && sourceTypeRaw.trim() ? sourceTypeRaw.trim() : null;
-  const sourceId = typeof sourceIdRaw === 'string' && sourceIdRaw.trim() ? sourceIdRaw.trim() : null;
+  const sourceType =
+    typeof sourceTypeRaw === 'string' && sourceTypeRaw.trim() ? sourceTypeRaw.trim() : null;
+  const sourceId =
+    typeof sourceIdRaw === 'string' && sourceIdRaw.trim() ? sourceIdRaw.trim() : null;
   const idempotencyKey =
     typeof idempotencyKeyRaw === 'string' && idempotencyKeyRaw.trim()
       ? idempotencyKeyRaw.trim()

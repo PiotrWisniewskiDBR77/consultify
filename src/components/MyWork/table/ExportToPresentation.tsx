@@ -286,7 +286,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           <Presentation size={16} className="text-c-info" />
-          <span id="export-to-presentation-title" className="text-sm font-bold text-slate-800 dark:text-slate-200">
+          <span
+            id="export-to-presentation-title"
+            className="text-sm font-bold text-slate-800 dark:text-slate-200"
+          >
             {t('myWorkTable.exportToPresentation.exportToPresentation')}
           </span>
           <div className="flex-1" />

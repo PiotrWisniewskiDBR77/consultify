@@ -86,9 +86,7 @@ describe('board-ready Documents template migration', () => {
   });
 
   it('repairs the empty KPI starter row without any division formula', () => {
-    const payload = JSON.parse(
-      formulaRepairSql.match(/\$\$([\s\S]*?)\$\$::jsonb/)?.[1] ?? 'null'
-    );
+    const payload = JSON.parse(formulaRepairSql.match(/\$\$([\s\S]*?)\$\$::jsonb/)?.[1] ?? 'null');
     const parsed = WorkbookSchemaValidator.safeParse(payload);
     expect(parsed.success, parsed.success ? undefined : parsed.error.message).toBe(true);
     const sheet = payload.sheets[0];
@@ -133,7 +131,8 @@ describe('board-ready Documents template migration', () => {
     for (const outline of presentationOutlines as PresentationSlideBrief[][]) {
       expect(
         outline.every(
-          (slide) => slide.keyMessage && (slide.dataNeeded?.length ?? 0) >= 3 && slide.suggestedVisual
+          (slide) =>
+            slide.keyMessage && (slide.dataNeeded?.length ?? 0) >= 3 && slide.suggestedVisual
         )
       ).toBe(true);
     }

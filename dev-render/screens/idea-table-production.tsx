@@ -145,7 +145,10 @@ export function IdeaTableProductionScreen(): React.ReactElement {
         not the way the exploratory `idea-table.tsx` artefact-panel harness
         does.
       */}
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg" style={{ height: '100vh', width: '100vw' }}>
+      <div
+        className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg"
+        style={{ height: '100vh', width: '100vw' }}
+      >
         {/* MyIdeasListContent.tsx:1791 */}
         <div className="flex flex-col flex-1 min-h-0">
           <IdeasTableContent

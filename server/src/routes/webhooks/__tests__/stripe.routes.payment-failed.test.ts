@@ -92,8 +92,6 @@ describe('notifyPaymentFailedAdmins (N1.2)', () => {
     mockDbAll.mockResolvedValue([{ id: 'admin-1' }]);
     mockSend.mockRejectedValue(new Error('email provider down'));
 
-    await expect(
-      notifyPaymentFailedAdmins('org-1', 'message')
-    ).resolves.toBeUndefined();
+    await expect(notifyPaymentFailedAdmins('org-1', 'message')).resolves.toBeUndefined();
   });
 });

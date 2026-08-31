@@ -66,9 +66,8 @@ import {
   FINANCE_PROJECTION_RECONCILIATION_ACTOR,
   openRoiFinanceReconciliationFromProjection,
 } from '../roi/roiFinanceReconciliationCommands.js';
-
-import type { RvnOutboxRow } from './outboxDrain.js';
 import type { RvnPlatformEventRow } from './consumerRegistry.js';
+import type { RvnOutboxRow } from './outboxDrain.js';
 
 const CONSUMER_GROUP = 'finance_projection';
 
@@ -145,7 +144,12 @@ async function readApprovalSnapshotFigure(
  * own query shape. */
 async function readForecastVersionFigure(
   client: PoolClient,
-  params: { forecastVersionId: string; caseId: string; organizationId: string; metric: RoiCompareMetric }
+  params: {
+    forecastVersionId: string;
+    caseId: string;
+    organizationId: string;
+    metric: RoiCompareMetric;
+  }
 ): Promise<ResolvedFigure | null> {
   const result = await client.query<{
     sequence_number: number;
@@ -192,7 +196,12 @@ async function readForecastVersionFigure(
  * from the query below still propagates normally). */
 async function readActualSnapshotFigure(
   client: PoolClient,
-  params: { actualSnapshotId: string; caseId: string; organizationId: string; metric: RoiCompareMetric }
+  params: {
+    actualSnapshotId: string;
+    caseId: string;
+    organizationId: string;
+    metric: RoiCompareMetric;
+  }
 ): Promise<ResolvedFigure | null> {
   if (params.metric === 'paybackPeriods') {
     logger.debug(
@@ -288,7 +297,12 @@ async function readCaseProjectionContext(
  * id at all (`{ caseId, linkId }`) — there is nothing else to seed from. */
 async function resolveSeedFigure(
   client: PoolClient,
-  params: { caseId: string; organizationId: string; metric: RoiCompareMetric; caseContext: CaseProjectionContext }
+  params: {
+    caseId: string;
+    organizationId: string;
+    metric: RoiCompareMetric;
+    caseContext: CaseProjectionContext;
+  }
 ): Promise<ResolvedFigure | null> {
   const { caseId, organizationId, metric, caseContext } = params;
   if (caseContext.currentActualSnapshotId) {
@@ -330,7 +344,10 @@ interface ReconciliationMirror {
   reconciliationId: string;
 }
 
-async function findOpenReconciliation(client: PoolClient, financeLinkId: string): Promise<ReconciliationMirror | null> {
+async function findOpenReconciliation(
+  client: PoolClient,
+  financeLinkId: string
+): Promise<ReconciliationMirror | null> {
   const result = await client.query<{ reconciliation_id: string; status: string }>(
     `SELECT reconciliation_id, status FROM rvn_roi_finance_reconciliations
       WHERE finance_link_id = $1 AND status IN ('open','investigating')
@@ -374,7 +391,16 @@ async function checkAndOpenDivergence(
     eventId: string;
   }
 ): Promise<ReconciliationMirror | null> {
-  const { link, caseId, organizationId, roiValue, resultsActualSnapshotId, resultsActualMetric, caseCurrency, eventId } = params;
+  const {
+    link,
+    caseId,
+    organizationId,
+    roiValue,
+    resultsActualSnapshotId,
+    resultsActualMetric,
+    caseCurrency,
+    eventId,
+  } = params;
   const pinnedValue = Number(link.pinned_finance_value);
 
   let divergenceReason: string | null = null;
@@ -452,8 +478,16 @@ async function upsertFinanceProjectionRow(
     reconciliation: ReconciliationMirror | null;
   }
 ): Promise<void> {
-  const { financeLinkId, caseId, organizationId, caseStatus, trackedMetric, figure, currency, reconciliation } =
-    params;
+  const {
+    financeLinkId,
+    caseId,
+    organizationId,
+    caseStatus,
+    trackedMetric,
+    figure,
+    currency,
+    reconciliation,
+  } = params;
   await client.query(
     `INSERT INTO rvn_roi_finance_projections (
        finance_link_id, case_id, organization_id, case_status, is_link_active,
@@ -536,9 +570,17 @@ async function applyFigureToAllLinks(
 
     if (link.tracked_metric !== null && isRoiCompareMetric(link.tracked_metric)) {
       figure = await resolveFigure(link.tracked_metric);
-      if (figure?.sourceKind === 'actual_snapshot' && link.pinned_finance_value !== null && link.tracked_metric !== 'paybackPeriods') {
+      if (
+        figure?.sourceKind === 'actual_snapshot' &&
+        link.pinned_finance_value !== null &&
+        link.tracked_metric !== 'paybackPeriods'
+      ) {
         reconciliation = await checkAndOpenDivergence(client, {
-          link: { link_id: link.link_id, pinned_finance_value: link.pinned_finance_value, currency: link.currency },
+          link: {
+            link_id: link.link_id,
+            pinned_finance_value: link.pinned_finance_value,
+            currency: link.currency,
+          },
           caseId,
           organizationId,
           roiValue: figure.value,
@@ -589,7 +631,9 @@ async function handleFinanceLinkCreated(
     // rvn_roi_finance_reconciliations/this event's own aggregate imply the
     // link row was just committed in the SAME atomic transaction that
     // produced this event — unreachable in practice.
-    throw new Error(`[financeProjectionConsumer] rvn_roi_finance_links row not found for link ${linkId}`);
+    throw new Error(
+      `[financeProjectionConsumer] rvn_roi_finance_links row not found for link ${linkId}`
+    );
   }
 
   let figure: ResolvedFigure | null = null;
@@ -600,10 +644,23 @@ async function handleFinanceLinkCreated(
   // it stays NULL forever for this link.
   if (link.tracked_metric !== null && isRoiCompareMetric(link.tracked_metric)) {
     // IO-F5: seed priority actual > forecast > approved.
-    figure = await resolveSeedFigure(client, { caseId, organizationId, metric: link.tracked_metric, caseContext });
-    if (figure?.sourceKind === 'actual_snapshot' && link.pinned_finance_value !== null && link.tracked_metric !== 'paybackPeriods') {
+    figure = await resolveSeedFigure(client, {
+      caseId,
+      organizationId,
+      metric: link.tracked_metric,
+      caseContext,
+    });
+    if (
+      figure?.sourceKind === 'actual_snapshot' &&
+      link.pinned_finance_value !== null &&
+      link.tracked_metric !== 'paybackPeriods'
+    ) {
       reconciliation = await checkAndOpenDivergence(client, {
-        link: { link_id: linkId, pinned_finance_value: link.pinned_finance_value, currency: link.currency },
+        link: {
+          link_id: linkId,
+          pinned_finance_value: link.pinned_finance_value,
+          currency: link.currency,
+        },
         caseId,
         organizationId,
         roiValue: figure.value,
@@ -650,7 +707,10 @@ async function handleFinanceLinkRemoved(client: PoolClient, linkId: string): Pro
  * `checkAndOpenDivergence` — the latter already mirrors status/id directly
  * at open time, so this handler re-applies the identical values when its
  * OWN follow-up event later dispatches; idempotent, harmless. */
-async function mirrorReconciliationStatus(client: PoolClient, reconciliationId: string): Promise<void> {
+async function mirrorReconciliationStatus(
+  client: PoolClient,
+  reconciliationId: string
+): Promise<void> {
   const result = await client.query<{ finance_link_id: string; status: string }>(
     `SELECT finance_link_id, status FROM rvn_roi_finance_reconciliations WHERE reconciliation_id = $1`,
     [reconciliationId]
@@ -703,7 +763,8 @@ export async function dispatchFinanceProjection(
         organizationId,
         eventId: event.event_id,
         caseContext,
-        resolveFigure: (metric) => readApprovalSnapshotFigure(client, { snapshotId, caseId, organizationId, metric }),
+        resolveFigure: (metric) =>
+          readApprovalSnapshotFigure(client, { snapshotId, caseId, organizationId, metric }),
       });
       break;
     }
@@ -755,7 +816,12 @@ export async function dispatchFinanceProjection(
       break;
     case 'roi.finance_link_created': {
       const linkId = requirePayloadString(event, 'linkId');
-      await handleFinanceLinkCreated(client, { caseId, organizationId, linkId, eventId: event.event_id });
+      await handleFinanceLinkCreated(client, {
+        caseId,
+        organizationId,
+        linkId,
+        eventId: event.event_id,
+      });
       break;
     }
     case 'roi.finance_link_removed': {

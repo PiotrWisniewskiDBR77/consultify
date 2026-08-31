@@ -22,8 +22,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import YAML from 'yaml';
 import { describe, expect, it } from 'vitest';
+import YAML from 'yaml';
 
 import caseWorkspaceRoutes from '../../index.js';
 
@@ -99,7 +99,9 @@ function collectSpecOperations(doc: any): string[] {
 const specText = fs.readFileSync(OPENAPI_PATH, 'utf8');
 const spec = YAML.parse(specText);
 
-const mounted = collectRoutes((caseWorkspaceRoutes as unknown as { stack: ExpressLayer[] }).stack).sort();
+const mounted = collectRoutes(
+  (caseWorkspaceRoutes as unknown as { stack: ExpressLayer[] }).stack
+).sort();
 const declared = collectSpecOperations(spec).sort();
 
 describe('CONTRACT — OpenAPI ↔ mounted router parity', () => {

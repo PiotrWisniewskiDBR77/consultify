@@ -176,7 +176,9 @@ const isoDateTime = (d: Date) => d.toISOString();
   totalItems: dateKey === isoDate(atDay(2)) ? 2 : 1,
   hasConflicts: false,
   tasks: [{ id: 'task-dbr77-demo-1', title: 'Termin: mapa AS-IS raportowania (DRD)' }],
-  decisions: [{ id: 'decision-dbr77-demo-1', title: 'Decyzja: podejście do automatyzacji raportów DRD' }],
+  decisions: [
+    { id: 'decision-dbr77-demo-1', title: 'Decyzja: podejście do automatyzacji raportów DRD' },
+  ],
   suggestion: null,
 });
 

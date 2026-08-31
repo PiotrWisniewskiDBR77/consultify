@@ -9,12 +9,12 @@
 import { Client, Pool, type PoolClient, type PoolConfig, type QueryResultRow } from 'pg';
 
 import databaseConfig from '../config/DatabaseConfig.js';
-import { resolveDbTargetLabel } from '../config/dbTargetLabel.js';
 import {
+  type DatabaseIdentity,
   emitDatabaseIdentity,
   parseDatabaseIdentityFromUrl,
-  type DatabaseIdentity,
 } from '../config/databaseIdentity.js';
+import { resolveDbTargetLabel } from '../config/dbTargetLabel.js';
 import logger from '../utils/Logger.js';
 import { recordQueryPerformance } from '../utils/queryHelpers.js';
 import { getConflictTarget, resolveConflictTargetSql } from './conflictTargets.js';
