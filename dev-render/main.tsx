@@ -98,18 +98,17 @@ const AdminCommandCenterPanelScreen = React.lazy(
 const AdminSsoSelfServiceCardScreen = React.lazy(
   () => import('./screens/admin-sso-self-service-card')
 );
-// admin-security (runda pełna) — 10 screens of the `security` admin domain
-// (adminNavigation.ts ADMIN_DOMAINS['security'].children), one dev-render
-// story file (screens/admin-security.tsx) mounting the REAL
-// <AdminSettingsModule>. One lazy wrapper around the named `AdminSecurityScreen`
-// export (accepts an `ekran` prop); each SCREENS entry below passes a
-// different `ekran` so all 10 nav slots reuse the same chunk.
-const AdminSecurityScreen = React.lazy(() =>
-  import('./screens/admin-security').then((m) => ({ default: m.AdminSecurityScreen }))
-);
+// admin-security (runda pełna) — 10 ekranów domeny security z adminNavigation.ts,
+// jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-security.tsx
+// (wzorzec 1:1 z admin-billing.tsx poniżej).
+const AdminSecurityScreen = React.lazy(() => import('./screens/admin-security'));
 // admin-billing (runda pełna) — 9 ekranów domeny billing z adminNavigation.ts,
 // jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-billing.tsx.
 const AdminBillingScreen = React.lazy(() => import('./screens/admin-billing'));
+// admin-team (runda pełna) — 8 ekranów domeny team z adminNavigation.ts,
+// jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-team.tsx
+// (wzorzec 1:1 z admin-billing.tsx powyżej).
+const AdminTeamScreen = React.lazy(() => import('./screens/admin-team'));
 const SuperadminPlatformOperationsDay15Screen = React.lazy(
   () => import('./screens/superadmin-platform-operations-day15')
 );
@@ -1049,6 +1048,51 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
     render: () => <AdminSsoSelfServiceCardScreen />,
   },
+  // admin-security (runda pełna) — odbiór grafiki 146-admin-security (2026-08-31),
+  // domena "Bezpieczeństwo i tożsamość" (adminNavigation.ts), 10 ekranów,
+  // mapowanie 1:1 z AdminSettingsModule.tsx case 'security'. security-policy
+  // i sso są ALIASEM tej samej zakładki `policy` w AdminSecurityIdentityPanel
+  // (WIRE_ONLY, nie błąd harnessu) — patrz nagłówek dev-render/screens/admin-security.tsx.
+  'admin-security-security-policy': {
+    label: 'Admin security — Polityka bezpieczeństwa (AdminSecurityIdentityPanel tab=policy)',
+    render: () => <AdminSecurityScreen adminScreen="security-policy" />,
+  },
+  'admin-security-sso': {
+    label: 'Admin security — SSO (ALIAS Polityki bezpieczeństwa, ta sama zakładka policy)',
+    render: () => <AdminSecurityScreen adminScreen="sso" />,
+  },
+  'admin-security-scim-lifecycle': {
+    label: 'Admin security — SCIM i cykl życia (AdminSecurityIdentityPanel tab=scim)',
+    render: () => <AdminSecurityScreen adminScreen="scim-lifecycle" />,
+  },
+  'admin-security-sessions': {
+    label: 'Admin security — Sesje (AdminSessionsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="sessions" />,
+  },
+  'admin-security-api-access': {
+    label: 'Admin security — Dostęp API (AdminSecurityIdentityPanel tab=api-access, ApiKeysManagementView)',
+    render: () => <AdminSecurityScreen adminScreen="api-access" />,
+  },
+  'admin-security-domains': {
+    label: 'Admin security — Domeny (AdminDomainsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="domains" />,
+  },
+  'admin-security-service-accounts': {
+    label: 'Admin security — Konta usługowe (AdminServiceAccountsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="service-accounts" />,
+  },
+  'admin-security-security-alerts': {
+    label: 'Admin security — Alerty bezpieczeństwa (AdminSecurityAlertsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="security-alerts" />,
+  },
+  'admin-security-break-glass': {
+    label: 'Admin security — Break-glass (AdminBreakGlassPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="break-glass" />,
+  },
+  'admin-security-risk-summary': {
+    label: 'Admin security — Podsumowanie ryzyka (AdminSecurityIdentityPanel tab=risk)',
+    render: () => <AdminSecurityScreen adminScreen="risk-summary" />,
+  },
   // admin-billing (runda pełna) — odbiór grafiki 146-admin-billing (2026-08-31),
   // domena "Rozliczenia i plany" (adminNavigation.ts), 9 ekranów, mapowanie
   // 1:1 z AdminSettingsModule.tsx case 'billing'. Dwie pary są aliasami tej
@@ -1091,6 +1135,42 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'admin-billing-plan-history': {
     label: 'Admin billing — Historia zmian planu (AdminPlanHistoryPanel, StandardTable)',
     render: () => <AdminBillingScreen adminScreen="plan-history" />,
+  },
+  // admin-team (runda pełna) — odbiór grafiki 146-admin-team (2026-08-31),
+  // domena "Zespół i dostęp" (adminNavigation.ts), 8 ekranów, mapowanie 1:1
+  // z AdminSettingsModule.tsx case 'team'. Patrz nagłówek
+  // dev-render/screens/admin-team.tsx dla mapowania komponentów i endpointów.
+  'admin-team-members': {
+    label: 'Admin team — Użytkownicy (AdminMembersRolesPanel screen=members)',
+    render: () => <AdminTeamScreen adminScreen="members" />,
+  },
+  'admin-team-invitations': {
+    label: 'Admin team — Zaproszenia (AdminMembersRolesPanel screen=invitations, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="invitations" />,
+  },
+  'admin-team-roles-permissions': {
+    label: 'Admin team — Role i uprawnienia (AdminRolesPermissionsPanel, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="roles-permissions" />,
+  },
+  'admin-team-teams': {
+    label: 'Admin team — Zespoły (AdminTeamsPanel, StandardTable + panel członków po kliknięciu)',
+    render: () => <AdminTeamScreen adminScreen="teams" />,
+  },
+  'admin-team-guests-external': {
+    label: 'Admin team — Goście i dostęp zewnętrzny (AdminGuestsPanel, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="guests-external" />,
+  },
+  'admin-team-access-requests': {
+    label: 'Admin team — Wnioski o dostęp (AdminAccessRequestsPanel — STATYCZNY placeholder, brak API)',
+    render: () => <AdminTeamScreen adminScreen="access-requests" />,
+  },
+  'admin-team-access-reviews': {
+    label: 'Admin team — Przeglądy dostępów (AdminAccessReviewsPanel, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="access-reviews" />,
+  },
+  'admin-team-ownership': {
+    label: 'Admin team — Własność (AdminMembersRolesPanel screen=ownership → OwnershipManagementView)',
+    render: () => <AdminTeamScreen adminScreen="ownership" />,
   },
   'superadmin-platform-operations-day15': {
     label: 'Day 15 — REALNY <PlatformOperationsView>, katalogi fixture; &scene=ready|empty|error',
