@@ -23,12 +23,7 @@ const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.setAttribute('data-theme', theme);
 
-// i18n (2026-08-31, Z-21): ten bootstrap nigdy nie wołał i18n.changeLanguage(),
-// więc detektor przeglądarki dawał 'en' w świeżym headless renderze — dokładnie
-// ta sama pułapka co naprawiona 2026-08-27 w tools-outputs-insights-tab-main.tsx
-// (naprawa per wywołanie odrosła w bliźniakach). Konwencja ?lang= jak w main.tsx.
 const lang = params.get('lang') === 'en' ? 'en' : 'pl';
-void i18n.changeLanguage(lang);
 
 const el = document.getElementById('root');
 if (el) {
@@ -51,9 +46,13 @@ if (el) {
       </React.StrictMode>
     );
   };
+  // i18n (2026-08-31, Z-21): język ustawiamy PO 'initialized' i montujemy w .finally —
+  // wzorzec z tools-outputs-insights-tab-main.tsx (naprawa 2026-08-27); changeLanguage
+  // przed montażem rozstraja sekwencję czekania na init (biały ekran).
+  const start = () => { void i18n.changeLanguage(lang).finally(mount); };
   if (i18n.isInitialized) {
-    mount();
+    start();
   } else {
-    i18n.on('initialized', mount);
+    i18n.on('initialized', start);
   }
 }
