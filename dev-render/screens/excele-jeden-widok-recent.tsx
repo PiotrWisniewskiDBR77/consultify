@@ -32,7 +32,7 @@ const wiersz = (cells: Record<string, { value?: unknown; formula?: string }>) =>
 
 const ZALOZENIA = {
   name: 'Założenia',
-  columns: [kol('driver', 'Driver'), kol('wartosc', 'Wartość')],
+  columns: [kol('driver', 'Założenie'), kol('wartosc', 'Wartość')],
   rows: [
     wiersz({ driver: { value: 'Budżet roczny' }, wartosc: { value: 250000 } }),
     wiersz({ driver: { value: 'Wzrost %' }, wartosc: { value: 0.08 } }),
