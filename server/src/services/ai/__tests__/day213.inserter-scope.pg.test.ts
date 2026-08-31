@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
 import { knowledgeIndexer } from '../knowledgeIndexer.js';
 import { indexInsightInKnowledgeBase } from '../../v8/insightSignalBridgeService.js';
+import { upsertKnowledgeDocs } from '../../demo/demoSeedService.js';
 
 vi.mock('../../v8/interviewInsightFindingsService.js', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
@@ -31,12 +32,16 @@ describe('Day 213 explicit organization scope for service inserters on real Post
   });
 
   afterAll(async () => {
-    await pool.query('DELETE FROM knowledge_chunks WHERE doc_id = ANY($1::text[])', [
-      [indexerDocId, `insight-${insightId}`],
-    ]).catch(() => undefined);
-    await pool.query('DELETE FROM knowledge_docs WHERE id = ANY($1::text[])', [
-      [indexerDocId, `insight-${insightId}`],
-    ]);
+    // Broad cleanup by organization_id: also removes the demo-seed knowledge docs/chunks
+    // inserted by upsertKnowledgeDocs (their ids are derived from demo template slugs,
+    // not known ahead of time).
+    await pool
+      .query(
+        'DELETE FROM knowledge_chunks WHERE doc_id IN (SELECT id FROM knowledge_docs WHERE organization_id = $1)',
+        [organizationId]
+      )
+      .catch(() => undefined);
+    await pool.query('DELETE FROM knowledge_docs WHERE organization_id = $1', [organizationId]);
     await pool.query('DELETE FROM organizations WHERE id = $1', [organizationId]);
     await pool.end();
   });
@@ -73,5 +78,17 @@ describe('Day 213 explicit organization scope for service inserters on real Post
     expect(result.error).toBeUndefined();
     const row = await pool.query('SELECT scope FROM knowledge_docs WHERE id = $1', [result.docId]);
     expect(row.rows[0]?.scope).toBe('organization');
+  });
+
+  it('demoSeedService.upsertKnowledgeDocs (the fifth inserter, FIX-213-1) writes organization scope explicitly', async () => {
+    const docCount = await upsertKnowledgeDocs(organizationId, 'en');
+    expect(docCount).toBeGreaterThan(0);
+    const rows = await pool.query('SELECT scope FROM knowledge_docs WHERE organization_id = $1', [
+      organizationId,
+    ]);
+    expect(rows.rows.length).toBeGreaterThan(0);
+    for (const row of rows.rows) {
+      expect(row.scope).toBe('organization');
+    }
   });
 });
