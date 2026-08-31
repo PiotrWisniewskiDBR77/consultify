@@ -65,6 +65,19 @@ const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
   }
 };
 
+// FIX-4 (dyżur 210): `buildKnowledgeDocAccessFilter`'s "no `scope` column"
+// branch is fail-closed (excludes the entire knowledge base, not just
+// private docs — see ODBIÓR_210.md §2), which is the RIGHT call for
+// security, but it used to do so in total silence. `PostgresDatabase.initDb()`
+// creates `knowledge_docs` WITHOUT `scope` (it only arrives via a runtime
+// ALTER in `KnowledgeService.ts`/`ContextDocumentService.ts`), so an
+// unlucky bootstrap order can go fully dark with zero signal in the logs.
+// Module-level (not per-instance) so this fires ONCE per process regardless
+// of how many `EmbeddingService` instances exist, instead of on every single
+// search — `buildKnowledgeDocAccessFilter` re-queries `information_schema`
+// per call (FIX-9, left as debt), so a naive per-call warn would flood logs.
+let missingScopeColumnWarned = false;
+
 export class EmbeddingService {
   private openaiConfigured: boolean;
 
@@ -355,6 +368,17 @@ export class EmbeddingService {
     }
 
     if (!hasScope) {
+      if (!missingScopeColumnWarned) {
+        missingScopeColumnWarned = true;
+        logger.error(
+          '[EmbeddingService] knowledge_docs.scope column is missing — the entire ' +
+            'knowledge base (not just private Vault docs) is being excluded from ' +
+            'embedding search fail-closed. This is expected only immediately after a ' +
+            'fresh migration, before KnowledgeService/ContextDocumentService run their ' +
+            'runtime ALTER TABLE. If this persists, retrieval is silently dark; run the ' +
+            'ALTER (or the equivalent migration) against knowledge_docs.'
+        );
+      }
       return {
         sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs d WHERE d.id = ${embeddingAlias}.document_id)`,
         params: [],
