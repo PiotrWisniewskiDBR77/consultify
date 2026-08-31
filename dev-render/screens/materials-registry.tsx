@@ -125,7 +125,7 @@ export default function MaterialsRegistryScreen() {
         <MemoryRouter initialEntries={['/presentations?tab=all']}>
           <div className="min-h-screen bg-c-bg p-6">
             <div className="mx-auto max-w-[1400px]">
-              <div className="mb-4">
+              <div className="mb-4" data-dev-render-chrome="true">
                 <h1 className="text-lg font-semibold text-c-text">
                   Materiały — Wszystkie (rejestr wspólny)
                 </h1>
