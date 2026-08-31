@@ -18,7 +18,7 @@ export function buildKnowledgeDocAccessFilter({
   projectIds = [],
 }: KnowledgeDocAccessFilterInput): { sql: string; params: string[] } {
   const parentlessOnly = `NOT EXISTS (SELECT 1 FROM knowledge_docs ${documentAlias} WHERE ${documentAlias}.id = ${embeddingAlias}.document_id)`;
-  if (!columns.has('scope')) {
+  if (['scope', 'ai_visibility', 'sensitivity'].some((column) => !columns.has(column))) {
     return { sql: embeddingAlias ? parentlessOnly : '1 = 0', params: [] };
   }
 
@@ -38,7 +38,7 @@ export function buildKnowledgeDocAccessFilter({
     const allowedProjects = projectIds.map((id) => placeholder(id)).join(', ');
     scopeAllowed.push(`(${documentAlias}.scope = 'project' AND ${documentAlias}.project_id IN (${allowedProjects}))`);
   }
-  const allowed = `(${scopeAllowed.join(' OR ')})`;
+  const allowed = `(${scopeAllowed.join(' OR ')}) AND COALESCE(${documentAlias}.ai_visibility, 'allowed') = 'allowed' AND COALESCE(${documentAlias}.sensitivity, 'internal') != 'confidential'`;
   if (!embeddingAlias) return { sql: `(${allowed})`, params };
   return {
     sql: `NOT EXISTS (SELECT 1 FROM knowledge_docs ${documentAlias} WHERE ${documentAlias}.id = ${embeddingAlias}.document_id AND NOT (${allowed}))`,

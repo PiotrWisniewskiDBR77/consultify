@@ -103,4 +103,14 @@ describe('Day 213 unified knowledge document access filter on real PostgreSQL', 
     expect(allowed.map((row) => row.content).join('\n')).toContain(projectMarker);
   });
 
+  it.each([
+    ['blocked visibility', blockedMarker, blockedDocId],
+    ['confidential sensitivity', confidentialMarker, confidentialDocId],
+  ])('embedding and rag paths both exclude %s', async (_label, marker, docId) => {
+    const embeddingRows = await embeddings.search(marker, { organizationId, limit: 10 });
+    const ragRows = await RagService.searchRelevantChunks(marker, { organizationId, documentIds: [docId], limit: 10 });
+    expect(embeddingRows.map((row) => row.content).join('\n')).not.toContain(marker);
+    expect(ragRows.map((row) => row.content).join('\n')).not.toContain(marker);
+  });
+
 });
