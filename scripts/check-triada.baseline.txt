@@ -92,7 +92,6 @@
 5	src/components/AIChat/VoiceConversationOverlay.tsx
 2	src/components/AIChat/Wave5ArtifactRuntimePanel.tsx
 1	src/components/AIChat/WorkCanvas/WorkCanvasShell.tsx
-25	src/components/AIChat/WorkCanvasDocumentPanel.tsx
 5	src/components/AIChat/WorkModeMenu.tsx
 2	src/components/AIFeedbackButton.tsx
 2	src/components/AISettings/AuditLogViewer.tsx
@@ -327,7 +326,16 @@
 1	src/components/MyWork/notebook/ConvertChecklistModal.tsx
 2	src/components/MyWork/notebook/NotebookInlineAIMenu.tsx
 1	src/components/MyWork/notebook/NotebookQuickCapture.tsx
-1	src/components/MyWork/notebook/__tests__/NotebookInlineAIMenu.governanceContract.test.ts
+# VF6 (2026-08-31, m03 gate restoration): 2, not 1 — false alarm, not new usage.
+# Line 13 is a NEGATIVE assertion (`expect(source).not.toContain('border-c-accent/30
+# bg-c-accent-soft')`) guarding that NotebookInlineAIMenu.tsx stays crimson-free — the
+# banned string exists here only as string-literal test DATA the strażnik greps for by
+# raw substring match, not as live crimson usage. Same pattern already allowlisted for
+# OrganizationKnowledgeGraphScreen.test.tsx (see triada-allowlist.txt header). Content
+# unchanged since the a691aa8ccc VF5 regen (git diff a691aa8ccc..HEAD is empty for this
+# file) — the true count was always 2 (bare `c-accent` + bare `c-accent-soft`, distinct
+# after sort -u), the prior baseline of 1 undercounted it. Do not "fix" the assertion.
+2	src/components/MyWork/notebook/__tests__/NotebookInlineAIMenu.governanceContract.test.ts
 1	src/components/MyWork/processflow/ProcessFlowToolbar.tsx
 1	src/components/MyWork/shared/KeyboardShortcutsModal.tsx
 2	src/components/MyWork/table/RowDetailPanel.tsx
@@ -761,7 +769,21 @@
 4	src/components/shared/NModeBlocks/ArtifactPreviewCard.tsx
 4	src/components/shared/NModeBlocks/ChecklistBlock.tsx
 3	src/components/shared/NModeBlocks/EmbeddedView.tsx
-1	src/components/shared/NModeBlocks/EmptyStateInline.tsx
+# VF6 (2026-08-31, m03 gate restoration): 3, not 1 — reviewed line-by-line, no fix applied.
+# 2 of 3 are FALSE ALARMS: lines 45/46 are prose in a JSDoc comment (the string
+# `text-primary-500` appears as documentation text discussing the very problem, not as a
+# live class). 1 of 3 is REAL, deliberate scoped debt: line 93's default fallback
+# `text-primary-500` on the CTA link (`neutralAccent` opt-in, Finance only) is CTA/
+# navigation-link decoration per kanon (not critical/destructive), and the file's own
+# comment (lines 43-53, added in d5471a6769 "close live crimson-leak in EmptyState
+# family") already documents that it is WRONG and that fixing it unconditionally would
+# recolor 8 other screens (KpisSection, InsightCreatorModal, InsightViewer, CalendarView,
+# HomeView, IdeaProcessFlowTool, IdeaTableTool) outside this session's scope and without
+# owner visual sign-off (CLAUDE.md §7/§9: no en-masse visual changes, no un-reviewed
+# screens go live) — expanding it requires a separate owner decision, not a silent fix
+# here. Content unchanged since a691aa8ccc (git diff empty) — true count was already 3
+# then; prior baseline of 1 undercounted it.
+3	src/components/shared/NModeBlocks/EmptyStateInline.tsx
 2	src/components/shared/NModeCompleteness/AIFillDialog.tsx
 2	src/components/shared/NModeCompleteness/MissingItemsList.tsx
 2	src/components/shared/Onboarding/OnboardingBanner.tsx
