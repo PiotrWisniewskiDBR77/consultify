@@ -236,6 +236,13 @@ function safeParseJson(raw: string): LlmBlockProseResponse | null {
     .trim();
   try {
     const parsed = JSON.parse(fenceStripped);
+    // FIX-195 (1): the model answers the "fill these blocks" prompt with a BARE
+    // ARRAY at least as often as with `{ "blocks": [...] }` — measured on the
+    // real provider by the day-195 acceptance (3/3 runs returned an array, the
+    // `isRecord` guard rejected all three and the document silently degraded to
+    // `llm_prose_fallback`, i.e. ZERO model prose). Both shapes are the same
+    // payload; wrap the array so the caller's `parsed.blocks` contract holds.
+    if (Array.isArray(parsed)) return { blocks: parsed } as LlmBlockProseResponse;
     return isRecord(parsed) ? (parsed as LlmBlockProseResponse) : null;
   } catch {
     return null;
