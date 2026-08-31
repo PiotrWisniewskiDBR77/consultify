@@ -6,7 +6,13 @@ CONTAINER_NAME="${DAY161_CONTAINER_NAME:-cx-day161-pg}"
 HOST_PORT="${DAY161_PG_PORT:-6049}"
 DATABASE_NAME="${DAY161_DATABASE_NAME:-cx161}"
 DATABASE_PASSWORD="${DAY161_DATABASE_PASSWORD:-cx}"
-ARTIFACT_DIR="${DAY161_ARTIFACT_DIR:-/private/tmp/cx-day161-lancuch-migracji-artefakty}"
+# Katalog artefaktow MUSI byc przenosny.
+#
+# Bylo tu na sztywno `/private/tmp/...` — sciezka istniejaca wylacznie na macOS.
+# Na runnerze Linux `mkdir -p /private/...` konczy sie "Permission denied", wiec
+# bramka umierala w pierwszej sekundzie, PRZED podniesieniem bazy. Wygladala na
+# czerwona z powodu migracji, a nigdy zadnej migracji nie uruchomila.
+ARTIFACT_DIR="${DAY161_ARTIFACT_DIR:-${TMPDIR:-/tmp}/cx-day161-lancuch-migracji-artefakty}"
 DATABASE_URL="postgresql://postgres:${DATABASE_PASSWORD}@127.0.0.1:${HOST_PORT}/${DATABASE_NAME}"
 RUN_LOG="${ARTIFACT_DIR}/day161-fresh-migration-gate.log"
 REPLAY_LOG="${ARTIFACT_DIR}/day161-fresh-migration-gate-replay.log"
