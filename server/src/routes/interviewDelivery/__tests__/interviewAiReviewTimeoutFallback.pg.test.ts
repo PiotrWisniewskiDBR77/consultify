@@ -67,6 +67,42 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
   const questionId = `question-timeout-${tag}`;
   const assignmentId = `assignment-timeout-${tag}`;
 
+  // Z31-adjacent isolation bug (found 2026-08-31): the second test used to
+  // reuse test 1's fixtures AND rely on test 1 having already fired the HTTP
+  // request that starts the background "hung provider" — so it passed only
+  // when run after test 1 and failed in isolation (`expected null to match
+  // object {...}`), because nothing had ever POSTed to the endpoint. Each
+  // test now creates and triggers its own fixture set so either can run
+  // alone or together.
+  const tag2 = randomUUID();
+  const sessionId2 = `session-timeout-${tag2}`;
+  const questionId2 = `question-timeout-${tag2}`;
+  const assignmentId2 = `assignment-timeout-${tag2}`;
+
+  const insertFixtureSet = async (
+    sess: string,
+    question: string,
+    assignment: string
+  ): Promise<void> => {
+    await pool.query(
+      `INSERT INTO interview_sessions (id, organization_id, owner_id, status)
+       VALUES ($1, $2, $3, 'in_progress')`,
+      [sess, orgId, userId]
+    );
+    await pool.query(
+      `INSERT INTO interview_questions
+         (id, session_id, organization_id, category, question_text, answer_text, status, is_required)
+       VALUES ($1, $2, $3, 'strategy', 'What is your goal?', 'the user''s already-persisted answer', 'answered', 0)`,
+      [question, sess, orgId]
+    );
+    await pool.query(
+      `INSERT INTO interview_assignments
+         (id, organization_id, assignee_user_id, template_id, session_id)
+       VALUES ($1, $2, $3, 'tmpl-timeout', $4)`,
+      [assignment, orgId, userId, sess]
+    );
+  };
+
   beforeAll(async () => {
     const { Pool: PgPool } = await import('pg');
     pool = new PgPool({ connectionString: CONNECTION_STRING });
@@ -78,23 +114,8 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
       `INSERT INTO users (id, organization_id, email, role) VALUES ($1, $2, $3, 'MEMBER')`,
       [userId, orgId, `${userId}@example.test`]
     );
-    await pool.query(
-      `INSERT INTO interview_sessions (id, organization_id, owner_id, status)
-       VALUES ($1, $2, $3, 'in_progress')`,
-      [sessionId, orgId, userId]
-    );
-    await pool.query(
-      `INSERT INTO interview_questions
-         (id, session_id, organization_id, category, question_text, answer_text, status, is_required)
-       VALUES ($1, $2, $3, 'strategy', 'What is your goal?', 'the user''s already-persisted answer', 'answered', 0)`,
-      [questionId, sessionId, orgId]
-    );
-    await pool.query(
-      `INSERT INTO interview_assignments
-         (id, organization_id, assignee_user_id, template_id, session_id)
-       VALUES ($1, $2, $3, 'tmpl-timeout', $4)`,
-      [assignmentId, orgId, userId, sessionId]
-    );
+    await insertFixtureSet(sessionId, questionId, assignmentId);
+    await insertFixtureSet(sessionId2, questionId2, assignmentId2);
 
     const { InterviewController } = await import('../../../controllers/InterviewController.js');
     app = express();
@@ -143,13 +164,18 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
 
   afterAll(async () => {
     if (!pool) return;
-    await pool.query(
-      `DELETE FROM audit_log WHERE action = 'ai.interview_review.timeout' AND resource_id = $1`,
-      [sessionId]
-    );
-    await pool.query(`DELETE FROM interview_assignments WHERE id = $1`, [assignmentId]);
-    await pool.query(`DELETE FROM interview_questions WHERE session_id = $1`, [sessionId]);
-    await pool.query(`DELETE FROM interview_sessions WHERE id = $1`, [sessionId]);
+    for (const [sess, assignment] of [
+      [sessionId, assignmentId],
+      [sessionId2, assignmentId2],
+    ] as const) {
+      await pool.query(
+        `DELETE FROM audit_log WHERE action = 'ai.interview_review.timeout' AND resource_id = $1`,
+        [sess]
+      );
+      await pool.query(`DELETE FROM interview_assignments WHERE id = $1`, [assignment]);
+      await pool.query(`DELETE FROM interview_questions WHERE session_id = $1`, [sess]);
+      await pool.query(`DELETE FROM interview_sessions WHERE id = $1`, [sess]);
+    }
     await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
     await pool.end();
@@ -198,13 +224,22 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
   });
 
   it('the late provider response does not crash the process and does not corrupt the persisted answer once it finally resolves', async () => {
-    // Let the "hung provider" from the previous test actually resolve
-    // (background persistSnapshot path) and confirm the answer row is still
-    // exactly what it was — the AI review endpoint never writes to
-    // interview_questions under any timing.
+    // Self-contained: fires its OWN request against its OWN fixture set
+    // (sessionId2/questionId2/assignmentId2) instead of depending on the
+    // previous test having already started the "hung provider" — this test
+    // must pass whether it runs alone or after the HEADLINE test.
+    const res = await request(app).post(
+      `/api/interview/sessions/${sessionId2}/evaluate-answers`
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.timedOut).toBe(true);
+
+    // Let the "hung provider" started by the request above actually resolve
+    // and confirm the answer row is still exactly what it was — the AI
+    // review endpoint never writes to interview_questions under any timing.
     await new Promise((r) => setTimeout(r, PROVIDER_DELAY_MS - TEST_TIMEOUT_MS + 300));
     const row = await pool.query(`SELECT answer_text FROM interview_questions WHERE id = $1`, [
-      questionId,
+      questionId2,
     ]);
     expect(row.rows[0].answer_text).toBe("the user's already-persisted answer");
 
@@ -213,12 +248,14 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
     try {
       const persisted = await cold.query(
         `SELECT ai_review_snapshot_json FROM interview_assignments WHERE id = $1`,
-        [assignmentId]
+        [assignmentId2]
       );
       const snapshot =
         typeof persisted.rows[0].ai_review_snapshot_json === 'string'
           ? JSON.parse(persisted.rows[0].ai_review_snapshot_json)
           : persisted.rows[0].ai_review_snapshot_json;
+      // The late-resolving provider must NOT overwrite the terminal timeout
+      // snapshot already persisted synchronously by the request above.
       expect(snapshot).toMatchObject({ overallVerdict: 'timeout', timedOut: true });
 
       const audit = await cold.query(
@@ -226,10 +263,14 @@ describe.skipIf(!REAL_DB)('evaluateSessionAnswers server-side timeout — real P
            FROM audit_log
           WHERE action = 'ai.interview_review.timeout'
             AND resource_id = $1 AND organization_id = $2`,
-        [sessionId, orgId]
+        [sessionId2, orgId]
       );
       expect(audit.rows).toHaveLength(1);
-      expect(audit.rows[0]).toMatchObject({ result: 'failure', resource_id: sessionId, organization_id: orgId });
+      expect(audit.rows[0]).toMatchObject({
+        result: 'failure',
+        resource_id: sessionId2,
+        organization_id: orgId,
+      });
       const metadata =
         typeof audit.rows[0].metadata === 'string'
           ? JSON.parse(audit.rows[0].metadata)
