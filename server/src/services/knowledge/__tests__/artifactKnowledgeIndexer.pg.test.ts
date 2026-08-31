@@ -7,6 +7,8 @@ import { assertRealPostgresTestEnvironment } from '../../../../../tests/integrat
 import { EmbeddingService, embeddingService } from '../../ai/embeddingService.js';
 import { searchKnowledgeBase } from '../../ai/tools/searchKnowledgeBase.js';
 import {
+  deckArtifactToKnowledgeMarkdown,
+  indexDeckArtifactForKnowledge,
   indexDocumentArtifactForKnowledge,
   inferKnowledgeScope,
 } from '../artifactKnowledgeIndexer.js';
@@ -24,10 +26,13 @@ describe.skipIf(!REAL_DB)('Day 209 R1 artifact knowledge index (real PostgreSQL)
   const ownerB = `day209_owner_b_${suffix}`;
   const internalArtifactId = `day209_internal_${suffix}`;
   const privateArtifactId = `day209_private_${suffix}`;
+  const privateDeckId = `day209_private_deck_${suffix}`;
   const internalDocumentId = `generated-document-${internalArtifactId}`;
   const privateDocumentId = `generated-document-${privateArtifactId}`;
+  const privateDeckDocumentId = `generated-deck-${privateDeckId}`;
   const internalSecret = `DAY209_INTERNAL_SEARCHABLE_CONTENT_FOR_REAL_POSTGRES_${suffix}`;
   const privateSecret = `DAY209_PRIVATE_CONTENT_MUST_NEVER_LEAK_TO_ANOTHER_USER_${suffix}`;
+  const privateDeckSecret = `DAY209_PRIVATE_DECK_MUST_NEVER_LEAK_TO_ANOTHER_USER_${suffix}`;
   let pool: Pool;
 
   beforeAll(async () => {
@@ -46,13 +51,13 @@ describe.skipIf(!REAL_DB)('Day 209 R1 artifact knowledge index (real PostgreSQL)
     vi.restoreAllMocks();
     if (!pool) return;
     await pool.query('DELETE FROM ai_knowledge_embeddings WHERE document_id = ANY($1)', [
-      [internalDocumentId, privateDocumentId],
+      [internalDocumentId, privateDocumentId, privateDeckDocumentId],
     ]);
     await pool.query('DELETE FROM knowledge_chunks WHERE doc_id = ANY($1)', [
-      [internalDocumentId, privateDocumentId],
+      [internalDocumentId, privateDocumentId, privateDeckDocumentId],
     ]);
     await pool.query('DELETE FROM knowledge_docs WHERE id = ANY($1)', [
-      [internalDocumentId, privateDocumentId],
+      [internalDocumentId, privateDocumentId, privateDeckDocumentId],
     ]);
     await pool.end();
   });
@@ -138,5 +143,51 @@ describe.skipIf(!REAL_DB)('Day 209 R1 artifact knowledge index (real PostgreSQL)
     );
 
     expect(result.results.some((row) => row.content.includes(privateSecret))).toBe(false);
+  });
+
+  it('extracts deck titles and block content from canonical deck_json', () => {
+    const markdown = deckArtifactToKnowledgeMarkdown({
+      title: 'Day 209 deck',
+      cards: [
+        {
+          title: 'Decision',
+          key_message: 'Approve the guarded index',
+          blocks: [{ content: { text: privateDeckSecret } }],
+        },
+      ],
+    });
+
+    expect(markdown).toContain('Day 209 deck');
+    expect(markdown).toContain('Decision');
+    expect(markdown).toContain(privateDeckSecret);
+  });
+
+  it('keeps a confidential deck out of the global embedding index', async () => {
+    const indexed = await indexDeckArtifactForKnowledge({
+      artifactId: privateDeckId,
+      organizationId,
+      ownerId: ownerA,
+      title: 'Private day 209 deck',
+      contentMd: privateDeckSecret,
+      confidentiality: 'confidential',
+    });
+
+    expect(indexed.scope).toBe('user');
+    const doc = await pool.query('SELECT scope, owner_id FROM knowledge_docs WHERE id = $1', [
+      privateDeckDocumentId,
+    ]);
+    expect(doc.rows[0]).toMatchObject({ scope: 'user', owner_id: ownerA });
+    const globalCount = await pool.query(
+      'SELECT count(*)::int AS count FROM ai_knowledge_embeddings WHERE document_id = $1',
+      [privateDeckDocumentId]
+    );
+    expect(globalCount.rows[0]?.count).toBe(0);
+    const searchAsOtherUser = await searchKnowledgeBase(
+      { query: privateDeckSecret, maxResults: 20 },
+      { organizationId }
+    );
+    expect(searchAsOtherUser.results.some((row) => row.content.includes(privateDeckSecret))).toBe(
+      false
+    );
   });
 });

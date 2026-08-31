@@ -7,6 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { isArtifactKnowledgeIndexEnabled } from '../config/FeatureFlags.js';
 import { all as pooledAll, get as pooledGet, run as pooledRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
@@ -32,6 +33,10 @@ import {
   type EvidenceContractSource,
 } from './evidence/evidenceContract.js';
 import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
+import {
+  deckArtifactToKnowledgeMarkdown,
+  indexDeckArtifactForKnowledge,
+} from './knowledge/artifactKnowledgeIndexer.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
@@ -2421,6 +2426,35 @@ export async function generateDeck(
         organizationId,
       ]
     );
+
+    if (isArtifactKnowledgeIndexEnabled()) {
+      void (async () => {
+        const knowledgeSource = (await dbGet(
+          `SELECT title, confidentiality, deck_json, unified_json, generated_by
+             FROM presentation_decks
+            WHERE id = ? AND organization_id = ? AND status = 'ready'`,
+          [deckId, organizationId]
+        )) as any;
+        if (!knowledgeSource) return;
+
+        await indexDeckArtifactForKnowledge({
+          artifactId: deckId,
+          organizationId,
+          ownerId: String(knowledgeSource.generated_by || 'system'),
+          title: String(knowledgeSource.title || setup.title || 'Presentation'),
+          contentMd: deckArtifactToKnowledgeMarkdown(
+            knowledgeSource.deck_json,
+            knowledgeSource.unified_json
+          ),
+          confidentiality: knowledgeSource.confidentiality,
+        });
+      })().catch((err: any) =>
+        logger.warn(
+          '[artifactKnowledgeIndex] deck hook failed (ignored):',
+          err?.message || err
+        )
+      );
+    }
 
     await artifactRegistryService.registerArtifactOrigin({
       organizationId,
