@@ -19,7 +19,7 @@
  * URL: ?screen=excele-jeden-widok-recent&theme=light|dark&lang=pl
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { ExceleView } from '@/components/AIChat/KimiWorkspace/ExceleView';
@@ -102,6 +102,26 @@ const queryClient = new QueryClient({
 
 export default function ExceleJedenWidokRecentScreen(): React.ReactElement {
   installMocks();
+
+  // GRAFIKA (2026-08-31): `ArtifactModuleHome` domyślnie montuje się na tabie
+  // "Templates" (`useState<HomeTab>('templates')` — nie ma propa/URL-a, który
+  // pozwoliłby wystartować od razu na "Recent"). Bez kliknięcia ten harness
+  // renderował dokładnie ten sam ekran co `excele-engine-reveal.tsx` (oba to
+  // pusty/generyczny stan "Templates") — zmokowany wiersz w Recent nigdy nie
+  // wchodził do kadru, mimo że mock sieciowy działał poprawnie. Symulujemy
+  // realny klik użytkownika w drugą pigułkę zakładek (index 1 = Recent w
+  // kolejności [templates, recent, saved] z ArtifactModuleHome.tsx) —
+  // niezależnie od języka etykiety (PL/EN).
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const tabButtons = document.querySelectorAll<HTMLButtonElement>(
+        'div.px-6.pb-3.flex.items-center.gap-1\\.5 > button'
+      );
+      tabButtons[1]?.click();
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/excele']}>
