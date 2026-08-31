@@ -1122,6 +1122,8 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
         await import('../services/report/drdReportGrounding.js');
       grounding = buildDrdGroundingProvider({
         organizationId,
+        // FIX-2 (dyżur 210): thread the real requester for owner-aware access.
+        userId: req.user?.id,
         language,
         logger: { warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta) },
       });

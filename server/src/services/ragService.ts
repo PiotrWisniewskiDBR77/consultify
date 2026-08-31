@@ -191,6 +191,8 @@ type HybridOptions = {
    * Restrict hybrid search to specific documents (conversation-scoped RAG).
    */
   documentIds?: string[];
+  /** FIX-2 (dyżur 210): requesting user, for owner-aware private-doc access. */
+  userId?: string | null;
 };
 
 // M01-P04C — the ONLY legitimate reason `knowledge_docs.organization_id IS
@@ -232,14 +234,26 @@ function appendKnowledgeDocAccessFilter(params: {
   columns: Set<string>;
   organizationId: string | null;
   documentIds?: string[];
+  /**
+   * FIX-2 (dyżur 210): requesting user's identity, when the caller has one.
+   * Threaded through so an owner CAN see their own `scope='user'` (Vault
+   * private) document via this path — mirrors
+   * `embeddingService.buildKnowledgeDocAccessFilter`'s owner exception.
+   * `undefined`/`null` keeps the pre-210 fail-closed behavior below
+   * (exclude ALL private docs) — same posture as before for anonymous/
+   * system callers (Anna, virtual workers) that have no real per-user
+   * identity to thread.
+   */
+  userId?: string | null;
 }): { sql: string; allowed: boolean } {
-  const { columns, organizationId, documentIds, queryParams } = params;
+  const { columns, organizationId, documentIds, queryParams, userId } = params;
   let sql = params.sql;
   const hasOrg = columns.has('organization_id');
   const hasStatus = columns.has('status');
   const hasDeletedAt = columns.has('deleted_at');
   const hasScope = columns.has('scope');
   const hasSourceType = columns.has('source_type');
+  const hasOwner = columns.has('owner_id');
 
   if (Array.isArray(documentIds) && documentIds.length > 0) {
     if (!hasOrg) {
@@ -290,17 +304,21 @@ function appendKnowledgeDocAccessFilter(params: {
     sql += " AND (d.status IS NULL OR d.status IN ('ready', 'indexed'))";
   }
 
-  // ★ VLT-002: these code paths (bm25Search/_vectorSearch → AI/Teresa retrieval) run
-  // WITHOUT a requesting userId, so there is no owner to check a `scope='user'`
-  // (Vault-private, VLT-001) document against. Mirrors the "no userId" branch of
-  // KnowledgeService.getDocuments (:748-751 on feat/vlt-001-vault-scope): a private
-  // document must never surface in a context-less/other-user AI answer, so it is
-  // excluded outright from this shared retrieval path. Owner-aware retrieval (so A's
-  // own private docs CAN ground A's own AI chat) needs userId threaded through the
-  // whole tool-call chain (searchKnowledgeBase → ragService) — not done here, see
-  // DZIENNIK VLT-002 wątpliwości.
+  // ★ VLT-002 / FIX-2 (dyżur 210): a `scope='user'` (Vault-private) document
+  // must never surface in a context-less/other-user AI answer. When the
+  // caller threads a real `userId` AND the schema has `owner_id`, the owner
+  // gets an exception — mirrors the "no userId" branch of
+  // KnowledgeService.getDocuments (:748-751 on feat/vlt-001-vault-scope) and
+  // `embeddingService.buildKnowledgeDocAccessFilter`. Callers with no real
+  // per-user identity (Anna/virtual-worker: anonymous/system context) keep
+  // the pre-210 fail-closed behavior — exclude ALL private docs.
   if (hasScope) {
-    sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
+    if (userId && hasOwner) {
+      sql += ` AND (d.scope IS NULL OR d.scope != 'user' OR d.owner_id = ?)`;
+      queryParams.push(userId);
+    } else {
+      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
+    }
   }
 
   return { sql, allowed: true };
@@ -648,6 +666,7 @@ const RagService = {
           organizationId: organizationId || null,
           enableReranking: true,
           documentIds,
+          userId: userId || null,
         });
         return results.map((r) => {
           const meta = r.metadata || {};
@@ -782,7 +801,8 @@ const RagService = {
     query: string,
     limit = 10,
     organizationId: string | null = null,
-    documentIds?: string[]
+    documentIds?: string[],
+    userId?: string | null
   ): Promise<RerankableChunk[]> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
@@ -813,6 +833,7 @@ const RagService = {
       columns: cols,
       organizationId,
       documentIds,
+      userId,
     });
     if (!accessFilter.allowed) return [];
     sql = accessFilter.sql;
@@ -866,6 +887,7 @@ const RagService = {
       alpha = HYBRID_CONFIG.alpha,
       enableReranking = HYBRID_CONFIG.rerankerEnabled,
       documentIds,
+      userId = null,
     } = options;
 
     aiLogger.info(
@@ -875,8 +897,8 @@ const RagService = {
 
     const candidateLimit = limit * 3;
     const [bm25Results, vectorResults] = await Promise.all([
-      RagService.bm25Search(query, candidateLimit, organizationId, documentIds),
-      RagService._vectorSearch(query, candidateLimit, organizationId, documentIds),
+      RagService.bm25Search(query, candidateLimit, organizationId, documentIds, userId),
+      RagService._vectorSearch(query, candidateLimit, organizationId, documentIds, userId),
     ]);
 
     aiLogger.info(
@@ -964,7 +986,8 @@ const RagService = {
     query: string,
     limit: number,
     organizationId: string | null = null,
-    documentIds?: string[]
+    documentIds?: string[],
+    userId?: string | null
   ): Promise<Array<RerankableChunk & { vectorScore: number }>> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
@@ -999,6 +1022,7 @@ const RagService = {
       columns: cols,
       organizationId,
       documentIds,
+      userId,
     });
     if (!accessFilter.allowed) return [];
     sql = accessFilter.sql;

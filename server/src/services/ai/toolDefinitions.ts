@@ -907,7 +907,12 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     const ragService = (ragMod.default || ragMod) as {
       hybridSearch?: (
         query: string,
-        opts?: { organizationId?: string; limit?: number; documentIds?: string[] }
+        opts?: {
+          organizationId?: string;
+          userId?: string;
+          limit?: number;
+          documentIds?: string[];
+        }
       ) => Promise<
         Array<{
           content?: string;
@@ -1050,8 +1055,18 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
       }
     }
 
+    // FIX-2 (dyżur 210): `documentIds` above is already the caller's
+    // owner-filtered Vault allow-list (KnowledgeService.getDocuments —
+    // scope='user' requires owner_id === ctx.userId). But
+    // `ragService.appendKnowledgeDocAccessFilter` ALSO applies its own
+    // trailing `scope != 'user'` exclusion unconditionally when no `userId`
+    // is passed — so even a document already correctly allow-listed as the
+    // caller's own private doc was silently stripped a second time. Thread
+    // `ctx.userId` (the real, per-request identity — never fabricated) so
+    // that second filter's owner exception can fire.
     const results = await ragService.hybridSearch(args.query, {
       organizationId: ctx.organizationId,
+      userId: ctx.userId,
       limit: 5,
       documentIds,
     });

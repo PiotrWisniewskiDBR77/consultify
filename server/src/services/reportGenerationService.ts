@@ -1179,6 +1179,7 @@ const DRD_GROUNDABLE_SECTION_TYPES = new Set<string>([
 async function buildDrdBookGroundingBlock(
   query: string,
   organizationId: string,
+  userId?: string,
   maxChunks = 3
 ): Promise<string> {
   try {
@@ -1188,7 +1189,12 @@ async function buildDrdBookGroundingBlock(
 
     const { results } = await searchKnowledgeBase(
       { query, maxResults: maxChunks, toolSlug: 'drd', packType: 'methodology' },
-      { organizationId }
+      // FIX-2 (dyżur 210): thread the requesting user through so an
+      // owner-aware access filter can see their own private docs. This
+      // query is tool_slug='drd'/pack_type='methodology' book grounding
+      // (always global tool_pack content today), so it has no practical
+      // effect yet — kept honest for whenever a caller narrows this query.
+      { organizationId, userId }
     );
 
     const excerpts = (results || [])
@@ -1392,7 +1398,8 @@ export async function generateSectionContent(
   ) {
     const groundingBlock = await buildDrdBookGroundingBlock(
       drdGroundingQueryForSection(section),
-      organizationId
+      organizationId,
+      userId
     );
     if (groundingBlock) {
       prompts.user = `${prompts.user}${groundingBlock}`;
