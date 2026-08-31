@@ -71,8 +71,8 @@ const DOMAIN_VOCAB: Record<
   { title: string; metricLabel: string; unit: string; rows: MockRow[] }
 > = {
   kpi: {
-    title: 'KPI Registry',
-    metricLabel: 'Current value',
+    title: 'Rejestr KPI',
+    metricLabel: 'Wartość bieżąca',
     unit: '%',
     rows: [
       {
@@ -80,7 +80,7 @@ const DOMAIN_VOCAB: Record<
         name: 'OEE linii pakowania',
         owner: 'Anna Kowalska',
         status: 'in_review',
-        metricLabel: 'Current value',
+        metricLabel: 'Wartość bieżąca',
         metricValue: 74,
         metricUnit: '%',
         updatedAt: '2026-08-08',
@@ -90,17 +90,17 @@ const DOMAIN_VOCAB: Record<
         name: 'Pokrycie audytu dostawców',
         owner: 'Tomasz Nowak',
         status: 'draft',
-        metricLabel: 'Current value',
+        metricLabel: 'Wartość bieżąca',
         metricValue: null,
         metricUnit: '%',
         updatedAt: '2026-08-01',
       },
       {
         id: 'kpi-3',
-        name: 'Redukcja kosztów pracy (degenerate baseline)',
+        name: 'Redukcja kosztów pracy (zdegenerowana baza odniesienia)',
         owner: 'Piotr Wiśniewski',
         status: 'approved',
-        metricLabel: 'Deviation vs baseline',
+        metricLabel: 'Odchylenie od bazy odniesienia',
         metricValue: 'not_calculable',
         metricUnit: '%',
         updatedAt: '2026-08-05',
@@ -111,10 +111,10 @@ const DOMAIN_VOCAB: Record<
         owner: 'Anna Kowalska',
         status: 'closed',
         locked: {
-          label: 'Closed',
-          reason: 'Deviation case closed — measurements are read-only until reopened.',
+          label: 'Zamknięty',
+          reason: 'Sprawa odchylenia zamknięta — pomiary tylko do odczytu do ponownego otwarcia.',
         },
-        metricLabel: 'Current value',
+        metricLabel: 'Wartość bieżąca',
         metricValue: 5,
         metricUnit: 'dni',
         updatedAt: '2026-07-30',
@@ -122,7 +122,7 @@ const DOMAIN_VOCAB: Record<
     ],
   },
   roi: {
-    title: 'ROI Registry',
+    title: 'Rejestr ROI',
     metricLabel: 'NPV',
     unit: 'PLN',
     rows: [
@@ -148,7 +148,7 @@ const DOMAIN_VOCAB: Record<
       },
       {
         id: 'roi-3',
-        name: 'Program szkoleń Lean (zero cost basis)',
+        name: 'Program szkoleń Lean (zerowa baza kosztowa)',
         owner: 'Piotr Wiśniewski',
         status: 'blocked',
         metricLabel: 'IRR',
@@ -162,8 +162,8 @@ const DOMAIN_VOCAB: Record<
         owner: 'Anna Kowalska',
         status: 'approved',
         locked: {
-          label: 'Approved',
-          reason: 'Approved case — baseline and assumptions are frozen (approval snapshot taken).',
+          label: 'Zatwierdzony',
+          reason: 'Sprawa zatwierdzona — baza odniesienia i założenia zamrożone (pobrano migawkę zatwierdzenia).',
         },
         metricLabel: 'NPV',
         metricValue: 140000,
@@ -173,8 +173,8 @@ const DOMAIN_VOCAB: Record<
     ],
   },
   okr: {
-    title: 'OKR Registry',
-    metricLabel: 'Progress',
+    title: 'Rejestr OKR',
+    metricLabel: 'Postęp',
     unit: '%',
     rows: [
       {
@@ -182,7 +182,7 @@ const DOMAIN_VOCAB: Record<
         name: 'Zbudować cyfrową dojrzałość operacji do poziomu 4',
         owner: 'Anna Kowalska',
         status: 'in_review',
-        metricLabel: 'Progress',
+        metricLabel: 'Postęp',
         metricValue: 72,
         metricUnit: '%',
         updatedAt: '2026-08-06',
@@ -192,17 +192,17 @@ const DOMAIN_VOCAB: Record<
         name: 'Uzyskać dyscyplinę finansową portfela inicjatyw',
         owner: 'Tomasz Nowak',
         status: 'draft',
-        metricLabel: 'Progress',
+        metricLabel: 'Postęp',
         metricValue: null,
         metricUnit: '%',
         updatedAt: '2026-08-03',
       },
       {
         id: 'okr-3',
-        name: 'Zero key results (degenerate geometry)',
+        name: 'Zero key results (zdegenerowana geometria)',
         owner: 'Piotr Wiśniewski',
         status: 'blocked',
-        metricLabel: 'Confidence',
+        metricLabel: 'Pewność',
         metricValue: 'not_calculable',
         metricUnit: '',
         updatedAt: '2026-08-01',
@@ -213,10 +213,10 @@ const DOMAIN_VOCAB: Record<
         owner: 'Anna Kowalska',
         status: 'closed',
         locked: {
-          label: 'Closed',
-          reason: 'Cycle closed — carry-forward required to continue this Key Result.',
+          label: 'Zamknięty',
+          reason: 'Cykl zamknięty — kontynuacja tego Key Result wymaga przeniesienia na kolejny cykl.',
         },
-        metricLabel: 'Progress',
+        metricLabel: 'Postęp',
         metricValue: 100,
         metricUnit: '%',
         updatedAt: '2026-07-25',
@@ -234,18 +234,18 @@ const STATUS_TONE: Record<MockRow['status'], 'info' | 'warning' | 'success' | 'd
 };
 
 const STATUS_LABEL: Record<MockRow['status'], string> = {
-  draft: 'Draft',
-  in_review: 'In review',
-  approved: 'Approved',
-  closed: 'Closed',
-  blocked: 'Blocked',
+  draft: 'Szkic',
+  in_review: 'W przeglądzie',
+  approved: 'Zatwierdzony',
+  closed: 'Zamknięty',
+  blocked: 'Zablokowany',
 };
 
 function buildColumns(): TableColumn[] {
   return [
     {
       id: 'name',
-      label: 'Name',
+      label: 'Nazwa',
       width: '320px',
       render: (row: MockRow) => (
         <span className="text-sm font-medium text-c-text">{row.name}</span>
@@ -266,7 +266,7 @@ function buildColumns(): TableColumn[] {
     },
     {
       id: 'owner',
-      label: 'Owner',
+      label: 'Właściciel',
       width: '160px',
       render: (row: MockRow) => (
         <span className="text-sm text-c-text-secondary">{row.owner}</span>
@@ -274,17 +274,17 @@ function buildColumns(): TableColumn[] {
     },
     {
       id: 'metric',
-      label: 'Value',
+      label: 'Wartość',
       width: '140px',
       align: 'right',
       render: (row: MockRow) => (
         <HonestValueCell
           value={row.metricValue}
           align="right"
-          notCalculableReason={`${row.metricLabel} is structurally undefined for this record (e.g. zero baseline).`}
+          notCalculableReason={`${row.metricLabel} jest strukturalnie niedefiniowalna dla tego rekordu (np. zerowa baza odniesienia).`}
           format={(v) => (
             <span className="tabular-nums font-medium text-c-text">
-              {v.toLocaleString('en-US')}
+              {v.toLocaleString('pl-PL')}
               {row.metricUnit ? ` ${row.metricUnit}` : ''}
             </span>
           )}
@@ -293,7 +293,7 @@ function buildColumns(): TableColumn[] {
     },
     {
       id: 'updatedAt',
-      label: 'Updated',
+      label: 'Zaktualizowano',
       width: '120px',
       sortable: true,
       render: (row: MockRow) => (
@@ -308,16 +308,16 @@ function buildRowMenu(row: MockRow): StandardRowMenu {
     primary: [
       {
         id: 'open',
-        label: 'Open',
+        label: 'Otwórz',
         onClick: () => {},
       },
     ],
     statusTransitions: row.locked
-      ? [lockedRowMenuAction({ id: 'approve', label: 'Approve' }, row.locked.reason)]
+      ? [lockedRowMenuAction({ id: 'approve', label: 'Zatwierdź' }, row.locked.reason)]
       : [
           {
             id: 'approve',
-            label: 'Approve',
+            label: 'Zatwierdź',
             onClick: () => {},
           },
         ],
@@ -361,12 +361,12 @@ function buildPreview(
       trailing: <span className="text-[11px] font-semibold text-c-text-secondary">{row.updatedAt}</span>,
       recommendation: row.locked
         ? row.locked.reason
-        : 'AI recommendation: on track — no action needed this cycle.',
+        : 'Rekomendacja AI: zgodnie z planem — brak działań wymaganych w tym cyklu.',
     },
     details: {
       showWordCount: false,
       properties: [
-        { id: 'owner', label: 'Owner', value: row.owner },
+        { id: 'owner', label: 'Właściciel', value: row.owner },
         {
           id: 'metric',
           label: row.metricLabel,
@@ -376,19 +376,19 @@ function buildPreview(
       ],
     },
     ai: {
-      hints: ['Summarize record', 'Suggest next steps'],
+      hints: ['Podsumuj rekord', 'Zaproponuj kolejne kroki'],
       disabled: true,
-      disabledTooltip: 'Coming soon',
+      disabledTooltip: 'Wkrótce',
     },
     relations: [],
     actions: row.locked
-      ? { informational: [{ id: 'noop', variant: 'neutral', label: 'Locked', onClick: () => {}, disabled: true }] }
+      ? { informational: [{ id: 'noop', variant: 'neutral', label: 'Zablokowane', onClick: () => {}, disabled: true }] }
       : {
           resolutions: [
-            { id: 'approve', variant: 'positive', label: 'Approve', onClick: () => {} },
+            { id: 'approve', variant: 'positive', label: 'Zatwierdź', onClick: () => {} },
           ],
           informational: [
-            { id: 'delegate', variant: 'neutral', label: 'Delegate', onClick: () => {} },
+            { id: 'delegate', variant: 'neutral', label: 'Deleguj', onClick: () => {} },
           ],
         },
   };
@@ -419,9 +419,9 @@ const ResultsVNextRegistryShellScreen: React.FC = () => {
     empty:
       state === 'empty'
         ? {
-            title: `No ${domain.toUpperCase()}s yet`,
-            description: 'Create the first record to start tracking this registry.',
-            actionLabel: `New ${domain.toUpperCase()}`,
+            title: `Brak jeszcze pozycji ${domain.toUpperCase()}`,
+            description: 'Utwórz pierwszy rekord, aby zacząć śledzić ten rejestr.',
+            actionLabel: `Nowy ${domain.toUpperCase()}`,
             onAction: () => {},
           }
         : undefined,
@@ -437,21 +437,21 @@ const ResultsVNextRegistryShellScreen: React.FC = () => {
         domain={domain}
         moduleBar={{
           tabs: [
-            { id: 'my', label: 'My' },
-            { id: 'org', label: 'Org' },
+            { id: 'my', label: 'Moje' },
+            { id: 'org', label: 'Organizacja' },
           ],
           activeTab: 'my',
           onTabChange: () => {},
           showTabCounts: false,
           viewModes: ['table'],
           viewMode: 'table',
-          primaryCta: { label: `New ${domain.toUpperCase()}`, onClick: () => {} },
+          primaryCta: { label: `Nowy ${domain.toUpperCase()}`, onClick: () => {} },
           chips: [
-            { id: 'all', label: 'All', count: vocab.rows.length },
-            { id: 'locked', label: 'Locked', count: vocab.rows.filter((r) => r.locked).length },
+            { id: 'all', label: 'Wszystkie', count: vocab.rows.length },
+            { id: 'locked', label: 'Zablokowane', count: vocab.rows.filter((r) => r.locked).length },
             {
               id: 'not_calculable',
-              label: 'Not calculable',
+              label: 'Nie do obliczenia',
               count: vocab.rows.filter((r) => r.metricValue === 'not_calculable').length,
             },
           ],
