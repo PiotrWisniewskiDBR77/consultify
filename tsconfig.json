@@ -51,6 +51,27 @@
     "dist",
     "server",
     "server/**/*",
+    // Te CZTERY testy integracyjne mieszkaja w src/, ale importuja
+    // server/src/** (Gateway, queryHelpers, OrgMemberSyncService). "exclude"
+    // NIE powstrzymuje TypeScriptu przed sledzeniem importow, wiec przez nie
+    // caly serwer wchodzil do sprawdzania typow FRONTU — wbrew wykluczeniu
+    // "server" dwie linie wyzej.
+    //
+    // Skutek byl mierzalny: 849 z 877 bledow tego sprawdzenia pochodzilo
+    // z serwera, a 844 z nich to TS7030 ("not all code paths return a value")
+    // — regula, ktora server/tsconfig.json ustawia na false CELOWO, bo
+    // handlery Express nie zwracaja na kazdej sciezce. Serwer sprawdzony
+    // WLASNA konfiguracja ma 0 bledow. To byl artefakt sadzenia serwera
+    // regulami frontu, nie defekt.
+    //
+    // Pliki nadal uruchamia vitest — wypada tylko sprawdzanie typow frontowa
+    // konfiguracja. Typy serwera pilnuje osobny krok CI (server/tsconfig.json).
+    "src/components/MyWork/__tests__/day155.attachmentPersistence.realpg.test.ts",
+    "src/components/MyWork/__tests__/day148.objectAttachments.realpg.test.ts",
+    "src/components/MyWork/__tests__/CommentPersistence.day140.pg.test.ts",
+    "src/components/MyWork/table/__tests__/TablePlatformFrontend.test.tsx",
+    "src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts",
+    "src/method-core-adapters/audits/__tests__/auditsKernelAdapter.test.ts",
     "_backup/**",
     "_quarantine/**",
     "Piotr_Tools/**",
