@@ -20,6 +20,7 @@ pierwszy test w pliku przechodzi, każdy następny cicho idzie prawdziwą ście�
 **Zmierzony zasięg: 87 plików testowych ustawia implementację w `beforeAll`.**
 Zysk: przestajemy ufać zieleni, która nic nie znaczy. To jest warunek wstępny
 dla wszystkiego, co niżej.
+Zmierzone ponownie 2026-08-31 komendą `node /private/tmp/cx-day211-atrapy-scratch/probe-clearallmocks-211.mjs`: 5 plików, z czego 4 w grupie (a) — nie 87.
 
 ### 212 · Przemiatanie zabezpieczeń bez testu omijającego
 Reguła z `WSPOLNA_PRZYCZYNA_ODBIORY_204_210.md`: w 3 z 4 dyżurów testy zostały

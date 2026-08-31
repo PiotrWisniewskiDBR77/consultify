@@ -40,7 +40,12 @@ describe('RagService - Integration', () => {
     const mod = await import('../../../server/src/services/ragService.js');
     RagService = mod.default || mod;
 
-    // Inject dependencies to prevent real DB connection
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // ★ DAY211 — the global setup clears chained implementations. Reinstall
+    // the cheap dependency mocks here after that global beforeEach.
     if (RagService.setDependencies) {
       RagService.setDependencies({
         db: mockDb,
@@ -53,12 +58,6 @@ describe('RagService - Integration', () => {
         OpenAI: vi.fn(),
       });
     }
-  });
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    // Ensure default polymorphic implementations are active
-    // (The initial definitions in mockDb handle polymorphism correctly)
   });
 
   describe('generateEmbedding', () => {

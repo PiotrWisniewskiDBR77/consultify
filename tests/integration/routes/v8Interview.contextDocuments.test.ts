@@ -8,6 +8,7 @@ const contextDocumentServiceMock = vi.hoisted(() => ({
   canAccessProject: vi.fn(),
   uploadAndIngest: vi.fn(),
 }));
+const permissionServiceMock = { hasPermission: vi.fn() };
 
 vi.mock('../../../server/src/services/organizationContext/ContextDocumentService.js', () => ({
   default: contextDocumentServiceMock,
@@ -49,15 +50,17 @@ describe('V8 interview context document routes', () => {
     process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
     vi.resetModules();
     permissionMiddleware = await import('../../../server/src/middleware/permission.middleware.ts');
-    permissionMiddleware.setDependencies({
-      PermissionService: {
-        hasPermission: vi.fn().mockResolvedValue(true),
-      },
-    });
     router = (await import('../../../server/src/routes/v8/interview.routes.ts')).default;
   });
 
   beforeEach(() => {
+    // ★ DAY211 — reinstall after the global beforeEach clears chained mock
+    // implementations; the imported middleware remains the same instance.
+    permissionMiddleware.setDependencies({
+      PermissionService: {
+        hasPermission: permissionServiceMock.hasPermission.mockReset().mockResolvedValue(true),
+      },
+    });
     contextDocumentServiceMock.listAccessibleDocuments.mockReset().mockResolvedValue([]);
     contextDocumentServiceMock.canAccessProject.mockReset().mockResolvedValue(true);
     contextDocumentServiceMock.uploadAndIngest.mockReset().mockResolvedValue({
