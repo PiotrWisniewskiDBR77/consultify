@@ -277,6 +277,22 @@ export function formatBenchmarkText(benchmark: AnalysisKpiValueDto['benchmark'])
   return `${benchmark.rangeLow}–${benchmark.rangeHigh} (${benchmark.industryCode}) · ${benchmark.source}`;
 }
 
+/**
+ * `downstreamUses` w wierszu to TABLICA (`string[]`), a nie string —
+ * `FilterableTable` bez `column.render` robi `row[column.id]` wprost. React
+ * przyjmuje tablicę stringów jako dziecko, ale skleja elementy BEZ separatora
+ * („Model bazowy — driver marżyRaport zarządczy Q3"), a pusta tablica `[]`
+ * NIE jest łapana przez `isEmptyCell` (sprawdza tylko null/undefined/pusty
+ * string), więc komórka renderowała się PUSTA zamiast „—". Ta sama klasa
+ * defektu co `yoyDelta`/`benchmark` piętro wyżej, tylko bez wysypki runtime —
+ * dlatego przeszła sito zrzutu (fixtura `finance-analysis-workspace` nie
+ * wypełnia `downstreamUses`, więc żaden wiersz nie miał treści w tej kolumnie).
+ */
+export function formatDownstreamUsesText(downstreamUses: readonly string[] | null | undefined): string {
+  if (!downstreamUses || downstreamUses.length === 0) return '—';
+  return downstreamUses.join(', ');
+}
+
 // ---------------------------------------------------------------------------
 // Kolumny — persystencja widoku (widoczność/kolejność/pin) jest już
 // zaimplementowana w `StandardTable` (prop `persistKey`, localStorage) — ten
@@ -363,7 +379,13 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
     { id: 'benchmark', label: 'Benchmark', align: 'left', width: '110px', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
     { id: 'interpretationSpecific', label: 'Komentarz', align: 'left', width: '116px' },
     { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true, width: '176px' },
-    { id: 'downstreamUses', label: 'Przeznaczenie', align: 'left', width: '133px' },
+    {
+      id: 'downstreamUses',
+      label: 'Przeznaczenie',
+      align: 'left',
+      width: '133px',
+      render: (row: TableRow) => formatDownstreamUsesText(row.downstreamUses as string[]),
+    },
   ];
 }
 
