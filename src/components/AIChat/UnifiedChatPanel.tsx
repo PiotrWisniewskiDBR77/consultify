@@ -862,7 +862,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
 
   const pendingActionsCount = useAIActionsStore((s) => s.pendingCount);
-  const { handleAction: handleChatAction } = useChatActions();
+  const { handleAction: handleChatAction } = useChatActions({
+    projectId: workspaceContext?.projectId || undefined,
+    initiativeId:
+      workspaceContext?.type === 'initiative' ? workspaceContext.entityId || undefined : undefined,
+  });
 
   // B3 patch-mode — useCanvasAIStream reports the outcome of a surgical
   // canvas patch via 'canvas-patch-result' (it has no chat access). Reply
@@ -1613,6 +1617,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     streamStartedAt,
     streamCompletedSignal,
   } = useAIStream({
+    onExecutionProposal: (proposal) => {
+      useProposalLifecycleStore.getState().patchLifecycle(proposal.proposalId, {
+        lifecycleState: 'pending_review',
+        actionType: proposal.actionType,
+        latestMessageType: 'execution_proposal',
+      });
+      addChatMessage({
+        id: `execution-proposal-${proposal.proposalId}`,
+        role: 'ai',
+        content:
+          proposal.toolName === 'create_decision'
+            ? 'Decision proposal awaiting approval.'
+            : 'Task proposal awaiting approval.',
+        timestamp: new Date(),
+        type: 'execution_proposal',
+        metadata: {
+          executionProposal: {
+            proposalId: proposal.proposalId,
+            lifecycleState: proposal.lifecycleState,
+            actionType: proposal.actionType,
+            risk: 'low',
+            stepCount: 1,
+          },
+        },
+      } as any);
+    },
     onStreamDone: async (fullText, thinking, artifacts, meta) => {
       const safeText =
         typeof fullText === 'string' && fullText.trim().length > 0
@@ -2781,6 +2811,57 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           action: { type: 'NAVIGATE', targetModule: 'interview' },
         }
       );
+    }
+
+    const projectId = workspaceContext?.projectId || undefined;
+    const entityData = (workspaceContext as any)?.entityData || {};
+    const templateArtifactId = String(entityData.templateArtifactId || '').trim();
+    const kpiId = String(entityData.kpiId || '').trim();
+    if (projectId) {
+      items.push(
+        {
+          id: 'generate-report',
+          label: t('chat.suggestions.generateReport', 'Create document'),
+          type: 'generic',
+          action: { type: 'GENERATE_REPORT', version: '1.0', params: { projectId } },
+        },
+        {
+          id: 'generate-presentation',
+          label: t('chat.suggestions.generatePresentation', 'Create presentation'),
+          type: 'generic',
+          action: { type: 'GENERATE_PRESENTATION', version: '1.0', params: { projectId } },
+        },
+        {
+          id: 'browse-templates',
+          label: t('chat.suggestions.browseTemplates', 'Browse templates'),
+          type: 'generic',
+          action: { type: 'BROWSE_TEMPLATES', version: '1.0', params: {} },
+        }
+      );
+      if (templateArtifactId) {
+        items.unshift({
+          id: 'use-template',
+          label: t('chat.suggestions.useTemplate', 'Use this template'),
+          type: 'generic',
+          action: {
+            type: 'USE_TEMPLATE',
+            version: '1.0',
+            params: { templateArtifactId, outputType: 'presentation' },
+          },
+        });
+      }
+      if (kpiId) {
+        items.unshift({
+          id: 'record-kpi',
+          label: t('chat.suggestions.recordKpi', 'Record KPI value'),
+          type: 'results',
+          action: {
+            type: 'RECORD_KPI',
+            version: '1.0',
+            params: { kpiId, initiativeId: workspaceContext?.entityId || undefined },
+          },
+        });
+      }
     }
 
     // Removed always-on "Open Tools hub" / "View Results" nav chips (declutter —

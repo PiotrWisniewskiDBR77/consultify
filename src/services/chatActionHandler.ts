@@ -172,9 +172,7 @@ export async function handleChatAction(
             templateId: params.templateId as string | undefined,
           });
         } else {
-          deps.navigate(
-            `/reports/builder?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}${params.templateId ? `&templateId=${params.templateId}` : ''}`
-          );
+          deps.navigate('/document-studio');
         }
         return { success: true };
       }
@@ -187,8 +185,11 @@ export async function handleChatAction(
             templateId: params.templateId as string | undefined,
           });
         } else {
+          const templateId = String(params.templateId || '').trim();
           deps.navigate(
-            `/presentations?new=1${params.sourceType ? `&sourceType=${params.sourceType}` : ''}${params.sourceId ? `&sourceId=${params.sourceId}` : ''}`
+            templateId
+              ? `/prezentacje?templateArtifactId=${encodeURIComponent(templateId)}`
+              : '/prezentacje'
           );
         }
         return { success: true };
@@ -287,7 +288,7 @@ export async function handleChatAction(
         if (deps.onOpenKpiDrawer) {
           deps.onOpenKpiDrawer(kpiId, params.initiativeId as string | undefined);
         } else {
-          deps.navigate(`/benefits?kpi=${encodeURIComponent(kpiId)}`);
+          deps.navigate(`/results/kpi/${encodeURIComponent(kpiId)}`);
         }
         return { success: true };
       }
@@ -338,7 +339,7 @@ export async function handleChatAction(
         const qs = new URLSearchParams({ tab: 'templates' });
         if (params.templateType) qs.set('type', String(params.templateType));
         if (params.category) qs.set('category', String(params.category));
-        deps.navigate(`/presentations?${qs.toString()}`);
+        deps.navigate(`/prezentacje?${qs.toString()}`);
         return { success: true };
       }
 

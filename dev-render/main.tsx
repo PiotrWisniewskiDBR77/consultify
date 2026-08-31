@@ -102,6 +102,7 @@ const SuperadminPlatformOperationsDay15Screen = React.lazy(
   () => import('./screens/superadmin-platform-operations-day15')
 );
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
+const Day207WriteProposalScreen = React.lazy(() => import('./screens/day207-write-proposal'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
@@ -1027,6 +1028,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AGT-007 — AgentPlanCanvas przestawialny schemat (ścieżka ① 5-fazowy vs ② pusty), status planning',
     render: () => <AgentPlanCanvasScreen />,
+  },
+  'day207-write-proposal': {
+    label: 'Day207 — real ExecutionProposalMessage for a same-turn pending WRITE proposal',
+    render: () => <Day207WriteProposalScreen />,
   },
   'agent-hub': {
     label:
