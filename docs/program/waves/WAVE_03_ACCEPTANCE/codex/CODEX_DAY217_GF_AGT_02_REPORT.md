@@ -33,7 +33,7 @@ Pułapki Z33: `ENABLE_V8_GLOBAL=true`, `ENABLE_TEST_AUTH_BYPASS=false`, `RESULTS
 
 ## R5 — realny model
 
-Plik klucza był obecny; użyto wyłącznie `set -a; . ~/.consultify-openrouter; set +a`; wartości nie zapisano ani nie wypisano. Dostawca: OpenRouter, środowisko TAK; model nie został faktycznie uruchomiony. Dwie dozwolone tury HTTP (READ ON/OFF) zakończyły się `TRIAL_PROFILE_INCOMPLETE`, `degraded.reason=access_policy`, bez `LLM call success`, bez tool-step i bez odpowiedzi. Zgodnie z zakazem ponawiania nie wykonano trzeciej tury i nie obchodzono bramki. Zmierzony budżet: 2 przebiegi HTTP, **0 rund modelu**. Artefakt: `day217-real-model.json`, SHA-256 `3e6252f719d544c3444f9c9184f6b04d0e3d1603d456c865f6567b5f2290d86`.
+Plik klucza był obecny; użyto wyłącznie `set -a; . ~/.consultify-openrouter; set +a`; wartości nie zapisano ani nie wypisano. Dostawca: OpenRouter, środowisko TAK; model nie został faktycznie uruchomiony. Dwie dozwolone tury HTTP (READ ON/OFF) zakończyły się `TRIAL_PROFILE_INCOMPLETE`, `degraded.reason=access_policy`, bez `LLM call success`, bez tool-step i bez odpowiedzi. Zgodnie z zakazem ponawiania nie wykonano trzeciej tury i nie obchodzono bramki. Zmierzony budżet: 2 przebiegi HTTP, **0 rund modelu**. Artefakt: `day217-real-model.json`, SHA-256 `3e6252f719d544c3444f9c9184f6b04d0e3d1603d456c865f65667b5f2290d86`. (FIX-217-4: poprzedni skrót miał 63 znaki — zgubioną cyfrę „6" w segmencie „c865f6567" — przywrócono z bezpośredniego `shasum -a 256` pliku, treść pliku niezmieniona.)
 
 ### STOP — R5
 Rodzaj: MERYTORYCZNY

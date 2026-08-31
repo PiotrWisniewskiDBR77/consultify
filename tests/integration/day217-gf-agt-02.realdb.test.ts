@@ -71,6 +71,16 @@ describe('Day217 GF-AGT-02 — injected chain through ApiGateway/JWT/Postgres, r
     ApiGateway.getInstance().initializeRoutes(app);
     await pool.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS governance_settings TEXT DEFAULT '{}'`);
     await pool.query(`INSERT INTO organizations(id,name,status) VALUES($1,$2,'active')`, [organizationId, 'Day217 GF org']);
+    // FIX-217-3 (BLOKUJĄCY dla modułu 17): fixture wstawiała organizację bez
+    // `organization_type` (=> domyślnie TRIAL, AccessLimitService.ts:47) i bez
+    // `onboarding_status`. Okres łaski dla TRIAL to 3 wywołania AI
+    // (accessPolicyService.ts:398-416); trzy przebiegi łańcucha R1-R3 zużywają
+    // dokładnie 3/3, więc sonda realnego modelu (R5, tura 4.) dostawała
+    // TRIAL_PROFILE_INCOMPLETE i model nie grał ani razu — zmierzone przez
+    // audytora bezpośrednim wywołaniem checkAccess (warianty A/B/C). To
+    // uzupełnienie FIXTURE, nie osłabienie accessPolicyService: bramka nadal w
+    // pełni działa dla organizacji, które faktycznie nie ukończyły konfiguracji.
+    await pool.query(`UPDATE organizations SET onboarding_status='ORG_SETUP_COMPLETED' WHERE id=$1`, [organizationId]);
     await pool.query(
       `INSERT INTO users(id,organization_id,email,password,role,status,email_verified)
        VALUES($1,$2,$3,'unused','OWNER','active',1)`,
@@ -134,6 +144,27 @@ describe('Day217 GF-AGT-02 — injected chain through ApiGateway/JWT/Postgres, r
       const events = String(chat.text || '').split('\n').filter((line) => line.startsWith('data: ')).map((line) => { try { return JSON.parse(line.slice(6)); } catch { return null; } }).filter(Boolean);
       expect(events.some((event: any) => event.type === 'tool_step'), JSON.stringify(events)).toBe(true);
       expect(captured.reads.length).toBeGreaterThanOrEqual(index);
+      // FIX-217-1 (BLOKUJĄCY, ogniwo 6): licznik wywołań (wyżej) NIE dowodzi,
+      // że retrieval cokolwiek zwrócił — atrapowany `executeKBSearch` zwracający
+      // zawsze pustkę też przechodziłby tę linię. Asercja TREŚCIOWA: przebieg 1
+      // (nic jeszcze nie istnieje w tej świeżej organizacji) musi być pusty —
+      // kontrola negatywna; przebieg ≥2 musi zawierać unikalny znacznik
+      // POPRZEDNIEGO przebiegu — kontrola pozytywna. `runs` w tym miejscu
+      // zawiera wyłącznie już ZAKOŃCZONE wcześniejsze przebiegi (ten `it` jeszcze
+      // nie wypchnął swojego wpisu), więc `runs[runs.length - 1]` to poprzedni.
+      const lastRead = String(captured.reads[captured.reads.length - 1] ?? '');
+      if (index === 1) {
+        expect(lastRead).not.toMatch(/ZNACZNIK-DAY217-/);
+      } else {
+        const previousMarker = runs[runs.length - 1]?.marker;
+        expect(previousMarker, 'poprzedni przebieg musi być już zakończony i mieć znacznik').toBeTruthy();
+        expect(lastRead).toContain(previousMarker);
+      }
+      // FIX-217-2 (BLOKUJĄCY, ogniwo 2): `captured.prompts` był dotąd tylko
+      // zapisywany do artefaktu, nigdy sprawdzany — sekcja kontekstu organizacji
+      // mogła zniknąć z wyrenderowanego promptu bez czerwieni. Dowód idzie po
+      // wyrenderowanym stringu (wzorzec dyżuru 205), nie po strukturze danych.
+      expect(captured.prompts.join('\n')).toContain(ORG_CONTEXT_MARKER);
       const proposalEvent = events.find((event: any) => event.type === 'execution_proposal');
       expect(proposalEvent?.proposalId).toBeTruthy();
       const actionId = String(proposalEvent.proposalId);
