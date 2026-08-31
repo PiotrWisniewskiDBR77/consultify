@@ -135,4 +135,17 @@ if [ "$CANONICAL16_STATUS" -ne 0 ]; then
   exit 1
 fi
 
+# 10) DAY211 — chained mock implementations installed in beforeAll are erased
+#     by the global clearAllMocks lifecycle. Ratchet only staged test files.
+MOCK_LIFECYCLE_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(test|spec)\.(ts|tsx|js|jsx)$' || true)
+if [ -n "$MOCK_LIFECYCLE_FILES" ]; then
+  MOCK_LIFECYCLE_OUT=$(bash scripts/check-mock-lifecycle.sh --ci $MOCK_LIFECYCLE_FILES 2>&1)
+  MOCK_LIFECYCLE_STATUS=$?
+  if [ "$MOCK_LIFECYCLE_STATUS" -ne 0 ]; then
+    echo "$MOCK_LIFECYCLE_OUT" >&2
+    echo "  ⛔ Commit blocked: mock implementation debt in beforeAll grew (DAY211)." >&2
+    exit 1
+  fi
+fi
+
 exit 0
