@@ -4,15 +4,34 @@
  * importem/wiringiem co ReportsAndPresentationsHub.tsx (state → overlay
  * fixed inset-0 z-modal → TemplateBuilderFlow). Nie mockuje całego Huba
  * (routing/store/API) — tylko sam punkt wejścia + flaga.
+ *
+ * ★ GRAFIKA 2026-08-31 (naprawa oceny C — „ekran nie pokazuje obiecanego
+ * kreatora"): pierwotna wersja renderowała TYLKO instrukcję dla testera
+ * ("Kliknij „Nowy szablon"…") i czekała na RĘCZNY klik — narzędzie zrzutowe
+ * nie klika, więc zrzut zawsze łapał stan sprzed otwarcia. Kreator NIE jest
+ * martwy (flaga `ff_templateBuilder`/`ff.template_builder` domyślnie ON poza
+ * publiczną produkcją — patrz `templateBuilderFlags.ts` — i jest realnie
+ * wpięty w `ReportsAndPresentationsHub.tsx`), więc naprawa to symulacja kliku
+ * po montażu, wzorem `excele-jeden-widok-recent.tsx` (tab „Recent").
  */
 import { BookTemplate, Plus } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { isTemplateBuilderEnabled, TemplateBuilderFlow } from '@/components/TemplateBuilder';
 
 export default function TemplateLibraryNewEntryScreen(): React.ReactElement {
   const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
   const enabled = isTemplateBuilderEnabled();
+
+  // Symulacja realnego kliku „Nowy szablon" po montażu — bez tego harness
+  // zrzuca tylko stan sprzed otwarcia (instrukcję dla testera), a nie
+  // rzeczywisty kreator, który ma pokazać ten ekran.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setTemplateBuilderOpen(true);
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, []);
 
   return (
     <div className="h-screen w-screen bg-c-bg">
