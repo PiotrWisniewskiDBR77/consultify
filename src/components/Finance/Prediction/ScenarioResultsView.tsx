@@ -17,6 +17,7 @@ import {
   resolveResultFreshness,
   type CanonicalValueMap,
   type ExceptionLedgerEntry,
+  type ExceptionLevel,
   type MaterialStatus,
   type ScenarioDraft,
 } from './predictionScenarioModel';
@@ -34,6 +35,18 @@ function toDisplay(value: number | null) {
 }
 
 const STATUS_LABEL: Record<MaterialStatus, string> = { clean: 'Czysty', conditional: 'Warunkowy', provisional: 'Tymczasowy (Provisional)' };
+// NAPRAWIONE (sweep 148-finanse-parametry): rejestr wyjątków renderował
+// `e.level` wprost (`INFO`/`WARNING`/`MATERIAL`/`CRITICAL_DATA`/
+// `SECURITY_OR_UNDEFINED_MATH`, `predictionScenarioModel.ts` EXCEPTION_LEVELS
+// — pięć poziomów DEC-FIN-009) — ten sam wzorzec co `STATUS_LABEL` tuż wyżej,
+// tylko dla drugiego pola tego samego rejestru.
+const EXCEPTION_LEVEL_LABEL: Record<ExceptionLevel, string> = {
+  INFO: 'Informacja',
+  WARNING: 'Ostrzeżenie',
+  MATERIAL: 'Istotny',
+  CRITICAL_DATA: 'Krytyczne dane',
+  SECURITY_OR_UNDEFINED_MATH: 'Bezpieczeństwo / matematyka',
+};
 const STATUS_TONE: Record<MaterialStatus, string> = {
   clean: 'border-c-success/30 bg-c-success/10 text-c-success',
   conditional: 'border-c-warning/30 bg-c-warning/10 text-c-warning',
@@ -144,7 +157,7 @@ export function ScenarioResultsView({ draft, scenarioValues, baselineValues, exc
           <ul className="space-y-1 text-sm text-c-text-secondary">
             {exceptionLedger.map((e) => (
               <li key={e.id} data-testid={`exception-${e.id}`}>
-                <span className="font-medium text-c-text">[{e.level}]</span> {e.message}
+                <span className="font-medium text-c-text">[{EXCEPTION_LEVEL_LABEL[e.level]}]</span> {e.message}
               </li>
             ))}
           </ul>
