@@ -195,3 +195,42 @@ czy programista jako etykietę kontrolki?* Pierwsze zostaje po angielsku, drugie
 - **Macierz DRD** — angielskie nazwy poziomów w komórkach nie są powodem do naprawy.
   Nadal otwarte zostaje to, co realnie kłamie: **treść komórek** (23 z 63 fałszywych na osi 1,
   filtr szesnastu skrótów) i **zmyślone etykiety wierszy** — patrz `MACIERZ_TRESC_KOMOREK.md`.
+
+## ★★ 2026-08-31 — LICENCJA SIRI: ograniczenie jest OPERACYJNE, nie treściowe
+
+Właściciel, dosłownie:
+> „Pozwala nam wykorzystywać materiały graficzne. Generalnie licencja wymaga tylko zgłoszenia
+> dokonania audytu i opłatę przez nas, zanim przekażemy finalny raport. Metodyka jest tak
+> powszechna jak DRD."
+
+### Co to znaczy dla kodu
+
+**SIRI nie jest własnością właściciela** (w odróżnieniu od DRD) — Consultify ma licencję
+na autoryzację, zdane egzaminy asesorskie i umowę. **Ale ograniczenie nie dotyczy treści:**
+
+| | wolno | nie wolno / wymaga działania |
+| --- | --- | --- |
+| treść metodyki, macierz oceny, pasma dojrzałości | **TAK** — powszechna jak DRD | — |
+| materiały graficzne SIRI | **TAK** | — |
+| **wydanie finalnego raportu klientowi** | dopiero **po** zgłoszeniu audytu licencjodawcy **i opłacie** | wydanie raportu bez zgłoszenia i opłaty |
+
+**Znacznik `EVIDENCE_MISSING` w `src/method-core/methods/siri/compileSiriPack.ts:88`
+przestaje obowiązywać** — mówi „Requires owner-approved licensing review before transcription".
+Ta zgoda została udzielona. Transkrypcja treści SIRI jest dozwolona.
+
+### ★ WYMÓG, KTÓRY MUSI STAĆ SIĘ FUNKCJĄ PRODUKTU — nie notatką w dokumentacji
+
+„Zgłoszenie audytu i opłata **przed** przekazaniem finalnego raportu" to **warunek licencyjny
+wpięty w przepływ pracy konsultanta**, nie formalność administracyjna. Produkt, który pozwala
+wyeksportować finalny raport SIRI bez odnotowania zgłoszenia i opłaty, **naraża właściciela
+na naruszenie umowy z licencjodawcą.**
+
+Wymagania do zaprojektowania (tor funkcji, nie grafiki):
+1. Sesja SIRI ma **stan zgłoszenia** do licencjodawcy (niezgłoszona · zgłoszona · opłacona).
+2. **Bramka przed wydaniem finalnego raportu** — eksport/przekazanie klientowi możliwe dopiero
+   po odnotowaniu obu kroków. Raport roboczy: bez ograniczeń.
+3. Bramka mówi **językiem uczciwości**, dlaczego blokuje: to warunek licencji, nie usterka.
+4. Ślad w historii sesji: kto, kiedy, jaka kwota — to dowód wobec licencjodawcy.
+
+**Różnica wobec DRD jest jedna i istotna:** DRD wolno wydać klientowi kiedykolwiek, SIRI dopiero
+po dopełnieniu obowiązku. To jedyne miejsce, w którym te dwie metodyki wymagają innego produktu.
