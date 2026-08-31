@@ -148,4 +148,22 @@ if [ -n "$MOCK_LIFECYCLE_FILES" ]; then
   fi
 fi
 
+# 11) Z31 detektor (2026-08-31) — new database-name pins (silent skip when
+#     that one disposable DB is missing/renamed) and new permanent,
+#     unjustified skips (disabled and forgotten). Ratchet only staged test
+#     files; pre-existing debt is grandfathered in scripts/check-z31.baseline.json
+#     (docs/program/funkcje/INWENTARZ_POMINIEC.md has the full inventory).
+Z31_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(test|spec)\.(ts|tsx|mts)$' || true)
+if [ -n "$Z31_FILES" ]; then
+  Z31_OUT=$(bash scripts/check-z31.sh --ci $Z31_FILES 2>&1)
+  Z31_STATUS=$?
+  if [ "$Z31_STATUS" -ne 0 ]; then
+    echo "$Z31_OUT" >&2
+    echo "  ⛔ Commit blocked: new Z31 debt (database-name pin or a permanent, unjustified skip)." >&2
+    echo "     SSOT: docs/program/funkcje/INWENTARZ_POMINIEC.md. Unpin to RUN_DB_TESTS/MOCK_DB/" >&2
+    echo "     postgres:// instead of a literal name, or add a comment/reason explaining the skip." >&2
+    exit 1
+  fi
+fi
+
 exit 0
