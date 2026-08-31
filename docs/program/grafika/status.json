@@ -912,21 +912,17 @@
         {
           "id": "assessment-artifacts-restart",
           "nazwa": "Wnioski z oceny",
-          "ocena": "C",
-          "co": "ZDJĘTE Z ODBIORU po przeglądzie kart (2026-08-31): zakładka 'Wnioski' — cztery chipy filtra statusu (Szkic/W przeglądzie/Oczekuje na zatwierdzenie/Zatwierdzony) pokazują surowy tekst deweloperski zamiast liczb: '0 · 3 ukryte: hub nie pobiera podzia…' (identyczny we wszystkich czterech chipach, tekst ucięty w połowie słowa 'podział[u]'). Kontrast: analogiczny pasek chipów w zakładce 'Procesy' (assessment-menu3-status-chips) pokazuje poprawne liczby (Szkic 1, W przeglądzie 2 itd.) — defekt jest lokalny dla tego ekranu, nie całej rodziny.",
+          "ocena": "A",
+          "co": "SPRAWDZONE: zakładka 'Wnioski', sześć chipów statusu (Wszystkie 3 / Szkic / W przeglądzie / Oczekuje na zatwierdzenie / Zatwierdzony / Odrzucony / Zarchiwizowany) pokazuje teraz krótką etykietę '0 · 3 ukryte' zamiast uciętego surowego tekstu deweloperskiego '0 · 3 ukryte: hub nie pobiera podzia…' — pełne zdanie przeniesione do podpowiedzi, zgodnie z zapowiedzianą naprawą. Tabela z trzema wierszami: 'DBR77 · Digital Readiness — Grupa (runda Q3 2026)' (Ocena, v2, Aktualny, 10/08/2026), 'Segment Manufacturing — DRD Light (pilotaż)' (Ocena, v1, Aktualny), 'DBR77 · Digital Readiness — Grupa (runda Q2 2026)' (Ocena, v1, Zastąpiony).",
           "naprawione": [
-            "Chipy statusu nachodziły na siebie — naprawione.",
-            "Baner błędu nieczytelny w motywie jasnym — naprawiony.",
-            "Angielskie 'Retry' — naprawione."
+            "Ucięty surowy komunikat dev w chipach filtra zamieniony na krótką etykietę '0 · 3 ukryte' (pełne zdanie przeniesione do podpowiedzi)."
           ],
-          "wyjatki": [
-            "NOWE: chipy filtra statusu w zakładce Wnioski pokazują surowy tekst deweloperski '0 · 3 ukryte: hub nie pobiera podzia…' zamiast liczb — nie występuje w zakładce Procesy tego samego modułu."
-          ],
+          "wyjatki": [],
           "warianty": [
             "assessment-five-surfaces",
             "assessment-menu3-status-chips"
           ],
-          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" (Outputs) → wewnętrzny segment Wnioski/Raporty/Inicjatywy — pięć statusów artefaktu (m.in. „zastąpiony\" po nowej wersji) z banerem ostrzegawczym."
+          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" (Outputs) → wewnętrzny segment Wnioski/Raporty/Inicjatywy — pięć statusów artefaktu (m.in. „zastąpiony\" po nowej wersji) z banerem ostrzegawczym. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "assessment-five-surfaces",
@@ -1817,14 +1813,15 @@
         {
           "id": "template-library-new-entry",
           "nazwa": "Biblioteka wzorcow — nowy szablon",
-          "ocena": "C",
-          "co": "ZDJĘTE Z ODBIORU po przeglądzie kart (2026-08-31): zgłoszenie 'nie pokazuje kreatora' — dev-render tego wiersza jest z założenia uproszczonym dowodem wpięcia przycisku (PUSTKA ZAMIERZONA, własny pasek, nie realny StandardModuleBar), nie realnym ekranem kreatora. Brak świeżego zrzutu potwierdzającego realny przepływ TemplateBuilderFlow w tej rundzie.",
-          "naprawione": [],
-          "wyjatki": [
-            "PUSTKA ZAMIERZONA — dowód wpięcia przycisku, nie ekran z danymi ani realny kreator.",
-            "Zgłoszenie z przeglądu kart: ekran 'nie pokazuje kreatora' — do zweryfikowania realnym zrzutem TemplateBuilderFlow, nie tym harnessem."
+          "ocena": "B",
+          "co": "SPRAWDZONE: modal 'Nowy szablon' / 'Krok 1 z 3' z polem 'Nazwa szablonu' (przykład 'np. Raport statusu projektu'), podpowiedzią 'Nazwę zmienisz później w builderze.', przyciskami 'Anuluj' / 'Dalej' — kreator TemplateBuilderFlow RZECZYWIŚCIE SIĘ OTWIERA i renderuje po polsku. Główny zarzut 'nie pokazuje kreatora' NAPRAWIONY.",
+          "naprawione": [
+            "Kreator TemplateBuilderFlow (krok 1/3, pole nazwy, przyciski Anuluj/Dalej) faktycznie się renderuje — wcześniej zarzut był 'nie pokazuje kreatora'."
           ],
-          "gdzie": "Materiały → zakładka „Biblioteka wzorców\" → przycisk „Nowy szablon\" w prawym górnym rogu paska — otwiera TemplateBuilderFlow (wizard→builder), sprawdzone klikiem (src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx). Realny przycisk używa dokładnie tych samych klas co kanoniczny ciemny CTA (bg-navy-900/dark:bg-[#F4F7FB]) i bywa split-buttonem z dodatkową strzałką (Architekt szablonów / Generator arkuszy w Excelu), gdy włączone są flagi deckArchitect/workbookTemplates — dziś domyślnie ON. UWAGA: ten konkretny dev-render to celowo uproszczony dowód wpięcia (własny, ręcznie zbity pasek, NIE realny StandardModuleBar) — PUSTKA ZAMIERZONA, dowód działania przycisku, nie ekran z danymi."
+          "wyjatki": [
+            "Pasek w tle za modalem to nadal uproszczony dev-render (nie realny StandardModuleBar), z widoczną etykietą harnessu 'flaga templateBuilder: ON' w kadrze — sam modal kreatora jest realny i poprawny."
+          ],
+          "gdzie": "Materiały → zakładka „Biblioteka wzorców\" → przycisk „Nowy szablon\" w prawym górnym rogu paska — otwiera TemplateBuilderFlow (wizard→builder), sprawdzone klikiem (src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx). Realny przycisk używa dokładnie tych samych klas co kanoniczny ciemny CTA (bg-navy-900/dark:bg-[#F4F7FB]) i bywa split-buttonem z dodatkową strzałką (Architekt szablonów / Generator arkuszy w Excelu), gdy włączone są flagi deckArchitect/workbookTemplates — dziś domyślnie ON. UWAGA: ten konkretny dev-render to celowo uproszczony dowód wpięcia (własny, ręcznie zbity pasek, NIE realny StandardModuleBar) — PUSTKA ZAMIERZONA, dowód działania przycisku, nie ekran z danymi. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "document-studio-resume-error",
@@ -1872,16 +1869,14 @@
         {
           "id": "deck-quality-badge",
           "nazwa": "Deck — ocena jakosci",
-          "ocena": "C",
-          "co": "ZDJĘTE Z ODBIORU po przeglądzie kart (2026-08-31): odznaka jakości wygenerowanego decka pokazuje surowy kod języka 'EN' zamiast polskiej etykiety. Brak świeżego zrzutu w katalogach dzisiejszych napraw (147/148/149/151/152) — defekt NIE został potwierdzony jako naprawiony.",
+          "ocena": "A",
+          "co": "SPRAWDZONE: ekran wyniku kreatora prezentacji — 'Twój deck jest gotowy!' / '8 slajdów wygenerowanych pomyślnie', odznaka jakości 'Jakość: 3 ostrzeżeń' 'Wynik 62/100' (kolor bursztynowy/ostrzegawczy, NIE crimson), metadane '8 slajdów · Briefing · Angielski · Wewnętrzny' — surowy kod języka 'EN' zamieniony na polską etykietę 'Angielski' (to język treści decka, nie interfejsu — zgodnie z kryteriami nie jest to defekt). Główny przycisk 'Otwórz Deck Builder' w kolorze neutralnym (navy/biały), nie crimson.",
           "naprawione": [
-            "CRIMSON na przycisku głównym — Pułapka nr 1 z kodeksu",
-            "Surowy angielski enum Internal/Briefing"
+            "Surowy kod języka 'EN' → etykieta 'Angielski'.",
+            "Crimson na przycisku głównym zamieniony na neutralny (Pułapka nr 1)."
           ],
-          "wyjatki": [
-            "Surowy kod języka 'EN' na odznadze jakości — zgłoszone przy przeglądzie kart, brak dowodu naprawy w tej rundzie."
-          ],
-          "gdzie": "Materiały → kreator prezentacji → ekran wyniku (krok końcowy kreatora) — odznaka jakości wygenerowanego decka."
+          "wyjatki": [],
+          "gdzie": "Materiały → kreator prezentacji → ekran wyniku (krok końcowy kreatora) — odznaka jakości wygenerowanego decka. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "document-artifact",
@@ -1944,12 +1939,12 @@
         {
           "id": "excele-prawy-panel-standard",
           "nazwa": "Excel — prawy panel",
-          "ocena": "C",
-          "co": "Szyna ikon prawego panelu (Akcje, Powiązania, Źródła, Rezultaty, Historia) — SPRAWDZONE na świeżym zrzucie 152-czysty-kadr (2026-08-31): nagłówek kolumny arkusza 'Driver' nadal po angielsku (obok polskiej kolumny 'Wartość'). Defekt zgłoszony przy przeglądzie kart NIE został naprawiony mimo świeżego zrzutu.",
-          "naprawione": [],
-          "wyjatki": [
-            "Nagłówek kolumny 'Driver' w arkuszu 'Ocena opłacalności projektu (NPV/IRR)' nieprzetłumaczony."
+          "ocena": "A",
+          "co": "SPRAWDZONE na świeżym zrzucie 155-materialy-ocena (2026-08-31, oba motywy): arkusz 'Ocena opłacalności projektu (NPV/IRR)', nagłówek kolumny 'Założenie' (był 'Driver' po angielsku) obok kolumny 'Wartość'; przykładowy wiersz 'Nakład początkowy (inwestycja) — 500 000'. Prawy panel w całości po polsku: 'AKCJE' (Kopiuj link wewnętrzny, Zapytaj Teresę), 'WŁAŚCIWOŚCI', 'POWIĄZANIA', 'ŹRÓDŁA I ZAŁOŻENIA', 'KOMENTARZE', 'HISTORIA'.",
+          "naprawione": [
+            "Nagłówek kolumny 'Driver' → 'Założenie' naprawiony w realnym szablonie serwerowym (nie tylko w makiecie)."
           ],
+          "wyjatki": [],
           "warianty": [
             "excele-edytowalna-siatka",
             "excele-engine-reveal",
@@ -1959,7 +1954,7 @@
             "excele-reopen-verify",
             "sheet-artifact"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza → prawy panel — szyna ikon (Akcje, Powiązania, Źródła, Rezultaty, Historia) zgodna z decyzją z 28.07 o jednym wspólnym wzorze panelu."
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza → prawy panel — szyna ikon (Akcje, Powiązania, Źródła, Rezultaty, Historia) zgodna z decyzją z 28.07 o jednym wspólnym wzorze panelu. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "excele-engine-reveal",
@@ -2123,16 +2118,16 @@
         {
           "id": "prezentacje-template-states",
           "nazwa": "Prezentacje — trzy stany szablonu",
-          "ocena": "C",
-          "co": "ZDJĘTE Z ODBIORU po przeglądzie kart (2026-08-31): zgłoszenie 'tylko spinner zamiast trzech stanów' — zamiast trzech opisanych stanów (ładowanie, wzorzec bez rekordu, brak dostępu) ekran pokazuje wyłącznie stan ładowania. Brak świeżego zrzutu potwierdzającego pozostałe dwa stany w tej rundzie.",
-          "naprawione": [],
-          "wyjatki": [
-            "Zgłoszenie z przeglądu kart: widoczny tylko spinner ładowania, nie trzy opisane stany."
+          "ocena": "A",
+          "co": "SPRAWDZONE — trzy stany sfotografowane osobno (podkatalogi loading/orphaned/forbidden), oba motywy: (1) ładowanie — 'Tworzenie prezentacji z szablonu…'; (2) wzorzec bez rekordu — 'Ten wzorzec nie ma już kanonicznego rekordu — nie ma z czego generować. Wybierz inny wzorzec w Bibliotece.' z przyciskiem 'Wróć do Biblioteki'; (3) brak dostępu — 'Nie masz dostępu do tego wzorca.' z tym samym przyciskiem. Wcześniej zarzut: widoczny tylko spinner niezależnie od stanu.",
+          "naprawione": [
+            "Trzy stany (ładowanie / wzorzec bez rekordu / brak dostępu) faktycznie renderują się osobno i są udokumentowane osobnymi zrzutami — wcześniej widoczny był tylko spinner."
           ],
+          "wyjatki": [],
           "warianty": [
             "execution-export-prezentacja"
           ],
-          "gdzie": "Materiały → zakładka „Prezentacje\" → otwarcie prezentacji z wzorca — trzy stany: ładowanie, wzorzec bez rekordu, brak dostępu."
+          "gdzie": "Materiały → zakładka „Prezentacje\" → otwarcie prezentacji z wzorca — trzy stany: ładowanie, wzorzec bez rekordu, brak dostępu. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "report-artifact",
@@ -2248,12 +2243,13 @@
         {
           "id": "excele-edytowalna-siatka",
           "nazwa": "Excel — edytowalna siatka",
-          "ocena": "C",
-          "co": "Realny arkusz NPV/IRR z produkcyjnego szablonu — SPRAWDZONE na świeżym zrzucie 152-czysty-kadr (2026-08-31): ten sam nagłówek kolumny 'Driver' po angielsku obok polskiej kolumny 'Wartość'. Defekt zgłoszony przy przeglądzie kart NIE został naprawiony mimo świeżego zrzutu.",
-          "naprawione": [],
+          "ocena": "A",
+          "co": "SPRAWDZONE: ten sam arkusz NPV/IRR — kolumna 'Założenie' zamiast 'Driver', wiersze: 'Nakład początkowy (inwestycja) 500 000', 'Przepływ operacyjny brutto — rok 1 220 000', 'Wzrost przepływów % rocznie 0,06', 'Stopa dyskontowa (wymagana stopa zwrotu) 0,1', 'Wartość rezydualna (koniec horyzontu) 50 000', 'Stopa podatkowa 0,19'. Pasek narzędzi w pełni po polsku (Waluta, Procent, Pogrubienie, Wstaw/Usuń wiersz/kolumnę, Liczba, Format ogólny).",
+          "naprawione": [
+            "Nagłówek kolumny 'Driver' → 'Założenie' w realnym, edytowalnym arkuszu produkcyjnym."
+          ],
           "wyjatki": [
-            "Kolumna 'Driver' nieprzetłumaczona.",
-            "Nagłówek 'Zadanie ukończone' obok '0/8 kroków' przy ponownym otwarciu zapisanego pliku — mechanika, zgłoszone torowi funkcji, nie widoczne na tym konkretnym zrzucie ale nie zweryfikowane jako naprawione."
+            "Mechanika 'Zadanie ukończone' obok '0/8 kroków' przy ponownym otwarciu zapisanego pliku — nie widoczna na tym zrzucie (inny przepływ), nie zweryfikowana w tej rundzie."
           ],
           "warianty": [
             "excele-engine-reveal",
@@ -2264,7 +2260,7 @@
             "excele-reopen-verify",
             "sheet-artifact"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza z produkcyjnego szablonu (np. NPV/IRR) — realna, edytowalna siatka."
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza z produkcyjnego szablonu (np. NPV/IRR) — realna, edytowalna siatka. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "report-builder-library-template",
@@ -3247,138 +3243,146 @@
         {
           "id": "org-strategic-intent",
           "nazwa": "Organizacja — Intencja strategiczna",
-          "ocena": "C",
-          "co": "Menu boczne po polsku, ale CAŁA treść formularza po angielsku: 'Primary Objective (North Star)', pytanie 'What is the single most important goal...', 'Secondary Objectives', lista 'Top Priorities (Select max 3)' z opcjami typu 'Efficiency / Cost Reduction', 'Growth / Sales Increase'.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Cele i oczekiwania (4 ekrany) w całości po angielsku w treści formularza."
+          "ocena": "A",
+          "co": "SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n (2026-08-31, oba motywy): ekran w całości po polsku. Nagłówek 'Intencja strategiczna', pole 'Cel główny (gwiazda północna)' z przykładem 'Np. Zostać liderem rynku w produkcji na zamówienie, skracając czas realizacji o 50%...', pole 'Cele drugorzędne', sekcja 'Najważniejsze priorytety (wybierz maks. 3)' z sześcioma opcjami PL: 'Efektywność / Redukcja kosztów', 'Wzrost / Zwiększenie sprzedaży', 'Innowacje / Nowe produkty', 'Jakość / Zgodność', 'Szybkość / Zwinność', 'Doświadczenie klienta'. Wcześniej cały formularz był po angielsku ('Primary Objective (North Star)', 'Top Priorities').",
+          "naprawione": [
+            "Cały formularz 'Intencja strategiczna' przetłumaczony na polski (był w całości po angielsku)."
           ],
-          "gdzie": "Organizacja → Cele i oczekiwania → Intencja strategiczna. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Intencja strategiczna. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-success-metrics",
           "nazwa": "Organizacja — Mierniki sukcesu",
-          "ocena": "C",
-          "co": "Tabela 'Success Metrics (KPIs)' z nagłówkami angielskimi (KPI NAME / BASELINE / TARGET / TIMEFRAME / ACTIONS), pusty stan 'No items yet. Add one!', przycisk '+ Add Item' — wszystko po angielsku, brak danych.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Cele i oczekiwania w całości po angielsku."
+          "ocena": "A",
+          "co": "SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n: nagłówek 'Mierniki sukcesu (KPI)', opis 'Zdefiniuj mierzalne wskaźniki śledzące sukces. Użyj „Dodaj pozycję”, aby dodać nowe KPI.', kolumny tabeli 'NAZWA KPI / WARTOŚĆ BAZOWA / CEL / HORYZONT CZASU / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'. Wcześniej cała tabela była po angielsku ('Success Metrics (KPIs)', 'KPI NAME'/'BASELINE'/'TARGET', 'No items yet. Add one!').",
+          "naprawione": [
+            "Nagłówki tabeli i opisy przetłumaczone z angielskiego na polski."
           ],
-          "gdzie": "Organizacja → Cele i oczekiwania → Mierniki sukcesu. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Mierniki sukcesu. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-scope-boundaries",
           "nazwa": "Organizacja — Zakres i granice",
-          "ocena": "C",
-          "co": "Dwie kolumny 'In Scope (Included)' / 'Out of Scope (Excluded)', obie z pustym stanem 'No items yet. Add one!' — nagłówki i treść po angielsku, brak danych.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Cele i oczekiwania w całości po angielsku."
+          "ocena": "A",
+          "co": "SPRAWDZONE: dwie kolumny 'W zakresie (uwzględnione)' i 'Poza zakresem (wykluczone)', nagłówki tabel 'POZYCJA / OBSZAR / NOTATKI / AKCJE' oraz 'POZYCJA / OBSZAR / POWÓD / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!' w obu kolumnach. Wcześniej: 'In Scope (Included)' / 'Out of Scope (Excluded)' po angielsku.",
+          "naprawione": [
+            "Obie kolumny (nagłówki + puste stany) przetłumaczone na polski."
           ],
-          "gdzie": "Organizacja → Cele i oczekiwania → Zakres i granice. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Zakres i granice. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-stakeholder-expectations",
           "nazwa": "Organizacja — Oczekiwania interesariuszy",
-          "ocena": "C",
-          "co": "Karty treści ('Transformation Archetype', 'Human-AI Collaboration', 'Steering & Governance') z pełnym opisowym tekstem po angielsku.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Cele i oczekiwania w całości po angielsku."
+          "ocena": "A",
+          "co": "SPRAWDZONE: trzy karty 'Archetyp transformacji', 'Współpraca człowiek-AI', 'Sterowanie i nadzór' z pełnym opisowym tekstem po polsku, np. 'Pilotaż i skalowanie (Agile)' — 'Szybkie prototypowanie, MVP, krótkie pętle informacji zwrotnej. Najlepsze przy dużej niepewności.', 'Doradca strategiczny' — 'AI kwestionuje założenia i dostarcza benchmarki. Ty decydujesz.'. Wcześniej całe karty ('Transformation Archetype' itd.) były po angielsku.",
+          "naprawione": [
+            "Wszystkie trzy kolumny kart (9 opcji) przetłumaczone z angielskiego na polski."
           ],
-          "gdzie": "Organizacja → Cele i oczekiwania → Oczekiwania interesariuszy. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Oczekiwania interesariuszy. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-declared-challenges",
           "nazwa": "Organizacja — Zadeklarowane wyzwania",
-          "ocena": "C",
-          "co": "'Declared Challenges' / 'Official problems reported by the client (symptoms).' Tabela z nagłówkami CHALLENGE / SYMPTOM | FUNCTIONAL AREA | SEVERITY | NOTES / CONTEXT | ACTIONS, pusty stan 'No items yet. Add one!', badge 'DLA: DECLARED CHALLENGES' — całość po angielsku mimo polskiego menu bocznego.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Wyzwania (4 ekrany) w całości po angielsku."
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Zadeklarowane wyzwania', badge 'DLA: ZADEKLAROWANE WYZWANIA' (był 'DLA: DECLARED CHALLENGES'), opis 'Oficjalne problemy zgłoszone przez klienta (objawy).', nagłówki tabeli 'WYZWANIE / OBJAW / OBSZAR FUNKCJONALNY / WAGA / NOTATKI / KONTEKST / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
+          "naprawione": [
+            "Badge i nagłówki tabeli przetłumaczone na polski (były w całości po angielsku mimo polskiego menu bocznego)."
           ],
-          "gdzie": "Organizacja → Wyzwania → Zadeklarowane wyzwania. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Wyzwania → Zadeklarowane wyzwania. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-root-causes",
           "nazwa": "Organizacja — Przyczyny źródłowe",
-          "ocena": "C",
-          "co": "Banner 'Diagnostic Questions: These answers help AI identify hidden root causes...' + 4 pytania po angielsku ('Where do decisions get stuck?', 'Where is the strongest resistance to change?', 'What initiatives failed in the past and why?', 'Is there a gap between management view and reality?') z angielskimi placeholderami.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Wyzwania w całości po angielsku."
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Przyczyny źródłowe', baner 'Pytania diagnostyczne: Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.', cztery pytania po polsku: 'Gdzie utykają decyzje?', 'Gdzie jest najsilniejszy opór wobec zmiany?', 'Jakie inicjatywy zawiodły w przeszłości i dlaczego?', 'Czy istnieje rozdźwięk między wizją zarządu a rzeczywistością?' z polskimi przykładami (np. 'Obawy kadry średniego szczebla, brak danych...'). Wcześniej całość po angielsku.",
+          "naprawione": [
+            "Baner i cztery pytania diagnostyczne (z przykładami) przetłumaczone na polski."
           ],
-          "gdzie": "Organizacja → Wyzwania → Przyczyny źródłowe. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Wyzwania → Przyczyny źródłowe. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-goal-blockers",
           "nazwa": "Organizacja — Blockery celów",
-          "ocena": "C",
-          "co": "'Suggested Obstacles' — 4 kategorie po angielsku (CULTURE/Fear of Failure, PROCESS/Meeting Overload, STRATEGY/Change Fatigue, TECHNOLOGY/Data Fragmentation), 'Active Blockers 0', pusty stan 'No blockers identified yet. Add from suggestions or create a custom one.'",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Wyzwania w całości po angielsku."
+          "ocena": "B",
+          "co": "SPRAWDZONE: nagłówek 'Blockery celów', sekcja 'Sugerowane przeszkody' z czterema kategoriami PL ('KULTURA — Strach przed porażką', 'PROCES — Nadmiar spotkań', 'STRATEGIA — Zmęczenie zmianą', 'TECHNOLOGIA — Rozproszenie danych'), 'Aktywne blokery 0', pusty stan 'Nie zidentyfikowano jeszcze blokerów. Dodaj z sugestii lub utwórz własny.'. Treść w pełni przetłumaczona. NOWY DEFEKT (niezwiązany z i18n): ikona lupy przy 'Sugerowane przeszkody' i przycisk '+ Utwórz własny' są w kolorze crimson — akcja niekrytyczna, widoczne w obu motywach.",
+          "naprawione": [
+            "Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego."
           ],
-          "gdzie": "Organizacja → Wyzwania → Blockery celów. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [
+            "Crimson na ikonie lupy i przycisku '+ Utwórz własny' — akcja niekrytyczna, narusza zasadę 'crimson tylko dla semantyki krytycznej' (Pułapka nr 1 z kodeksu)."
+          ],
+          "gdzie": "Organizacja → Wyzwania → Blockery celów. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-evidence",
           "nazwa": "Organizacja — Dowody",
-          "ocena": "C",
-          "co": "'Evidence & Data Points' / 'Hard facts, metrics, or logs that prove the existence of challenges.' Tabela METRIC / DATA POINT | SYMPTOM / OBSERVATION | SOURCE SYSTEM / DOC | LINK / REFERENCE, pusty stan 'No items yet. Add one!'",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Wyzwania w całości po angielsku."
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Dowody', badge 'DLA: DOWODY', nagłówek sekcji 'Dowody i punkty danych', nagłówki tabeli 'WSKAŹNIK / PUNKT DANYCH / OBJAW / OBSERWACJA / SYSTEM ŹRÓDŁOWY / DOKUMENT / LINK / ODWOŁANIE / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
+          "naprawione": [
+            "Badge i nagłówki tabeli przetłumaczone na polski."
           ],
-          "gdzie": "Organizacja → Wyzwania → Dowody. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Wyzwania → Dowody. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-risks-opportunities",
           "nazwa": "Organizacja — Ryzyka i szanse",
-          "ocena": "C",
-          "co": "Baner 'Risk Assessment Logic' w kolorze crimson: 'Based on your 0 declared challenges and 0 active constraints, we have identified the following risks.' Tabela 'Hidden Risks & Threats' z nagłówkami RISK / THREAT | WHY (ROOT CAUSE) | SEVERITY | MITIGATION STRATEGY, pusty stan 'No items yet. Add one!' — całość po angielsku.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Synteza strategiczna (4 ekrany) w całości po angielsku.",
-            "Crimson dekoracyjny w banerze — treść informacyjna, nie stan krytyczny."
+          "ocena": "B",
+          "co": "SPRAWDZONE: nagłówek 'Ryzyka i szanse', baner 'Logika oceny ryzyka — Na podstawie 0 zadeklarowanych wyzwań oraz 0 aktywnych ograniczeń, zidentyfikowaliśmy poniższe ryzyka.', sekcja 'Ukryte ryzyka i zagrożenia', nagłówki tabeli 'RYZYKO / ZAGROŻENIE / DLACZEGO (PRZYCZYNA ŹRÓDŁOWA) / WAGA / STRATEGIA OGRANICZANIA / AKCJE', menu boczne zawiera już 'Podsumowanie dla zarządu' (było 'Executive brief'). Treść w pełni przetłumaczona.",
+          "naprawione": [
+            "Cała treść (baner, tabela, nagłówki) przetłumaczona na polski.",
+            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'."
           ],
-          "gdzie": "Organizacja → Synteza strategiczna → Ryzyka i szanse. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [
+            "Baner 'Logika oceny ryzyka' w kolorze crimson — informacyjny, nie stan krytyczny."
+          ],
+          "gdzie": "Organizacja → Synteza strategiczna → Ryzyka i szanse. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-scenarios",
           "nazwa": "Organizacja — Scenariusze",
-          "ocena": "C",
-          "co": "Baner 'Recommended transformation scenario' po angielsku ('Based on 0 declared challenges, the recommended direction is Digital Foundation.') + 6 kart scenariuszy w całości po angielsku (Digital Foundation, Customer Experience Revolution, Operational Excellence, AI-Powered Transformation, Business Model Innovation, Data-Driven Organization) z pigułką 'RECOMMENDED' w kolorze crimson.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Synteza strategiczna w całości po angielsku.",
-            "Crimson dekoracyjny — pigułka 'RECOMMENDED', nie stan krytyczny."
+          "ocena": "B",
+          "co": "SPRAWDZONE (dowód PRZED/PO w evidence/grafika/156-organizacja-i18n): wszystkie sześć kart scenariuszy przetłumaczone — 'Fundament cyfrowy' ('Najpierw fundamenty, potem tempo.'), 'Rewolucja doświadczenia klienta', 'Doskonałość operacyjna', 'Transformacja napędzana AI', 'Innowacja modelu biznesowego', 'Organizacja oparta na danych'; baner 'Rekomendowany scenariusz transformacji — Na podstawie 0 zadeklarowanych wyzwań rekomendowany kierunek to Fundament cyfrowy.'; wskaźniki TEMPO/AMBICJA/RYZYKO. PRZED: całość po angielsku (Digital Foundation, Recommended).",
+          "naprawione": [
+            "Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO)."
           ],
-          "gdzie": "Organizacja → Synteza strategiczna → Scenariusze. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [
+            "Pigułka 'REKOMENDOWANY' wypełniona kolorem crimson — dekoracyjna, nie stan krytyczny."
+          ],
+          "gdzie": "Organizacja → Synteza strategiczna → Scenariusze. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-recommendation",
           "nazwa": "Organizacja — Rekomendacja",
-          "ocena": "C",
-          "co": "Baner 'Strategic Advantages' po angielsku ('Based on your Company Profile and Goals, we have identified these key strengths and market opportunities.'). Tabela 'Strengths & Opportunities' z nagłówkami STRENGTH / OPPORTUNITY | EVIDENCE / WHERE SEEN | HOW TO LEVERAGE | ACTIONS, pusty stan 'No items yet. Add one!' — całość po angielsku.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Synteza strategiczna w całości po angielsku."
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Rekomendacja', baner (zielony, nie crimson) 'Przewagi strategiczne — Na podstawie profilu firmy i celów zidentyfikowaliśmy te kluczowe mocne strony i szanse rynkowe.', sekcja 'Mocne strony i szanse', nagłówki tabeli 'MOCNA STRONA / SZANSA / DOWÓD / GDZIE ZAOBSERWOWANO / JAK WYKORZYSTAĆ / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
+          "naprawione": [
+            "Baner i tabela przetłumaczone na polski."
           ],
-          "gdzie": "Organizacja → Synteza strategiczna → Rekomendacja. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Synteza strategiczna → Rekomendacja. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-executive-brief",
           "nazwa": "Organizacja — Executive brief",
-          "ocena": "C",
-          "co": "'Executive Strategic Summary' po angielsku. Baner z NIEPODSTAWIONYM placeholderem 'Company Name' / 'Manufacturing • — employees • — revenue' (dane firmy nie zostały wstawione do szablonu). 'Current Maturity Level 2' / 'Target Maturity Level 4' (liczba w kolorze crimson), karty Risk Profile / Opportunities / Challenges wszystkie '0', 'No Scenario Selected'.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: moduł Synteza strategiczna w całości po angielsku.",
-            "Literalny, niepodstawiony placeholder 'Company Name' zamiast nazwy firmy — błąd renderowania szablonu, nie tylko brak tłumaczenia.",
-            "Crimson dekoracyjny — liczba 'Level 4', nie stan krytyczny."
+          "ocena": "B",
+          "co": "SPRAWDZONE: menu boczne 'Podsumowanie dla zarządu' (było 'Executive brief'), nagłówek 'Strategiczne podsumowanie dla zarządu', PRAWDZIWY profil organizacji w banerze: 'Atelier Toys Sp. z o.o.' / 'Professional Services • 62 pracowników • — przychodu' zamiast literalnego niepodstawionego placeholdera 'Company Name' widocznego wcześniej — GŁÓWNY DEFEKT NAPRAWIONY. Karty 'Profil ryzyka — Do opanowania', 'Szanse — Rozwijające się', 'Wyzwania — 0 aktywnych', 'Nie wybrano scenariusza'.",
+          "naprawione": [
+            "Realny profil organizacji ('Atelier Toys Sp. z o.o.', branża, liczba pracowników) zamiast niepodstawionego placeholdera 'Company Name'.",
+            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
+            "Treść karty w pełni przetłumaczona."
           ],
-          "gdzie": "Organizacja → Synteza strategiczna → Executive brief. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [
+            "Wartość 'Docelowa dojrzałość: Brak danych' wyświetlona w kolorze crimson mimo że to zwykły brak danych, nie stan krytyczny.",
+            "Motyw ciemny: cały baner z profilem firmy ma pełne tło crimson — bardzo widoczne naruszenie Pułapki nr 1, sprawdzone osobno w dark."
+          ],
+          "gdzie": "Organizacja → Synteza strategiczna → Executive brief. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-files",
@@ -3392,25 +3396,26 @@
         {
           "id": "org-claims-sources",
           "nazwa": "Organizacja — Twierdzenia i źródła",
-          "ocena": "C",
-          "co": "'Nadzorowany kontekst organizacji' — sekcje 'Źródła (2)' i 'Twierdzenia (2)' po polsku, ale wartości wewnątrz kart surowe/techniczne: typ źródła 'interview' / 'document' (małe litery, nieprzetłumaczone), identyfikatory 'item-1' / 'item-2', zakres 'organization', klucz pola 'profile.description' (kropkowa notacja zamiast etykiety), status 'approved' (angielski, małe litery), metadane 'interview · 86% · organization'.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: surowe wartości techniczne na ekranach 'Twierdzenia i źródła'/'Konflikty źródeł'."
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Twierdzenia i źródła', sekcja 'Nadzorowany kontekst organizacji', 'Źródła (2)' pokazuje 'Wywiad' / 'Dokument' (było 'interview'/'document' małymi literami), 'Konflikty (0)' — 'Brak sprzecznych wartości w widocznych twierdzeniach.', 'Twierdzenia (2)' z kartami 'Opis firmy' (było 'item-1') i 'Branża', treść 'Niezależna firma doradcza z sektora handlu i produkcji.', metadane 'Wywiad · 86% · Cała organizacja' (było 'interview · 86% · organization'), status 'Zatwierdzone' / 'Oczekuje na decyzję' (było 'approved').",
+          "naprawione": [
+            "Surowe wartości 'interview'/'document'/'organization'/'approved'/'item-1' zamienione na polskie etykiety ('Wywiad', 'Dokument', 'Cała organizacja', 'Zatwierdzone', opisowe nazwy pól)."
           ],
-          "gdzie": "Organizacja → Źródła i wiedza → Twierdzenia i źródła. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [],
+          "gdzie": "Organizacja → Źródła i wiedza → Twierdzenia i źródła. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-source-conflicts",
           "nazwa": "Organizacja — Konflikty źródeł",
-          "ocena": "C",
-          "co": "Ta sama zawartość co 'Twierdzenia i źródła' (identyczne karty 'Źródła (2)'/'Konflikty (0)'/'Twierdzenia (2)' z surowymi wartościami 'interview'/'item-1'/'organization'/'profile.description'/'approved') — kliknięcie 'Konflikty źródeł' w menu NIE filtruje widoku do samych konfliktów, renderuje identyczny ekran jak sąsiednia pozycja menu.",
-          "naprawione": [],
-          "wyjatki": [
-            "ZNANE ZGŁOSZENIE: surowe wartości techniczne na ekranie 'Konflikty źródeł'.",
-            "Dodatkowo: ekran nie różni się treścią od 'Twierdzenia i źródła' — do potwierdzenia, czy to celowy wspólny widok czy błąd routingu."
+          "ocena": "A",
+          "co": "SPRAWDZONE: identyczna naprawa jak 'Twierdzenia i źródła' (ten sam widok renderuje się pod pozycją menu 'Konflikty źródeł') — surowe wartości ('interview'/'item-1'/'organization'/'approved') zamienione na polskie etykiety.",
+          "naprawione": [
+            "Surowe wartości techniczne zamienione na etykiety PL (jak w 'Twierdzenia i źródła')."
           ],
-          "gdzie": "Organizacja → Źródła i wiedza → Konflikty źródeł. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+          "wyjatki": [
+            "Ekran nie różni się treścią od 'Twierdzenia i źródła' — możliwe, że to celowy wspólny widok; do potwierdzenia, nieblokujące dla i18n."
+          ],
+          "gdzie": "Organizacja → Źródła i wiedza → Konflikty źródeł. Zrzuty: evidence/grafika/156-organizacja-i18n/"
         },
         {
           "id": "org-knowledge-graph",
