@@ -24,6 +24,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell';
+import {
+  czyTerminToPlaceholder,
+  etykietyPoziomowZMetodyki,
+  skrocTerminDoKomorki,
+} from '@/components/assessment/drd/drdMatrixCellContent';
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
 import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
 import { Tooltip } from '@/components/ui/primitives';
@@ -216,6 +221,11 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   const hiddenColumns =
     hiddenPx > 0 ? Math.max(1, Math.ceil(hiddenPx / (effectiveColumnMinPx + 8))) : 0;
 
+  const levelLabels = React.useMemo(
+    () => etykietyPoziomowZMetodyki(areas, levelCount),
+    [areas, levelCount]
+  );
+
   return (
     <div className="mt-6">
       <div className="relative">
@@ -231,16 +241,7 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
           >
             {/* Wiersze poziomów (najwyższy u góry — logika pracy, nie ruszać) */}
             {Array.from({ length: levelCount }, (_, i) => levelCount - i).map((level) => {
-              const levelLabels: Record<number, string> = {
-                1: 'Basic / Manual',
-                2: 'Digitized',
-                3: 'Integrated',
-                4: 'Automated',
-                5: 'Optimized',
-                6: 'AI-Driven',
-                7: 'Autonomous',
-              };
-              const label = levelLabels[level] || `Level ${level}`;
+              const label = levelLabels[level] || '';
 
               return (
                 <React.Fragment key={`row-${level}`}>
@@ -250,7 +251,8 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-bold text-c-text">
-                        <span className="text-c-text-secondary">{level}.</span> {label}
+                        <span className="text-c-text-secondary">{level}.</span>
+                        {label ? ` ${label}` : ''}
                       </div>
                     </div>
                     <div className="mt-1 text-[11px] text-c-text-muted">{rowHint}</div>
@@ -279,36 +281,34 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                         ? `${MATRIX_FILL_TARGET} hover:bg-blue-200 dark:hover:bg-blue-500/25`
                         : `${MATRIX_FILL_IDLE} hover:bg-c-surface-hover dark:hover:bg-white/[0.07]`;
 
-                    // Skróty technologiczne / tytuł poziomu — TREŚĆ jest poza
-                    // zakresem polerowania wyglądu (drugi tor). Zmieniony jest
-                    // wyłącznie sygnał ucięcia: wielokropek + pełny tytuł w
-                    // `title=` (audyt §B4 — urwańce kończące się na „&").
-                    const keyTechs = [
-                      'AI',
-                      'ML',
-                      'RPA',
-                      'IoT',
-                      'AGV',
-                      'WMS',
-                      'MES',
-                      'ERP',
-                      'CRM',
-                      'BI',
-                      'API',
-                      'EDI',
-                      'PLM',
-                      'APS',
-                      'TMS',
-                      'YMS',
-                    ];
-                    const highlighted = techs.filter((t) => keyTechs.includes(t)).slice(0, 2);
+                    /**
+                     * TREŚĆ KOMÓRKI — docs/program/grafika/MACIERZ_TRESC_KOMOREK.md §4.3.
+                     *
+                     * Komórka niesie JEDEN termin: wiodącą technologię tego
+                     * obszaru na tym poziomie, czyli `suggestedTechnologies[0]`
+                     * — pozycję, na którą nakładki wiedzy konsekwentnie wstawiają
+                     * termin z książki. Nazwa poziomu NIE może tu stać: wszystkie
+                     * obszary osi 1 mają te same 7 nazw, więc dałaby dziewięć
+                     * identycznych kolumn (tak wyglądały 1C i 1I do 2026-08-31).
+                     * Nazwa poziomu jest teraz etykietą wiersza, reszta listy
+                     * technologii i pełny opis zostają w popoverze.
+                     *
+                     * Dwóch terminów nie łączymy: kropka `·` czytała się jak „i"
+                     * i sugerowała parę, której książka nie stawia.
+                     */
+                    const surowyTech = techs[0]?.trim() || '';
+                    const leadTech = czyTerminToPlaceholder(surowyTech) ? '' : surowyTech;
                     const fullTitle = areaLevelInfo?.title || '';
-                    const titleWords = fullTitle ? fullTitle.split(' ') : [];
-                    const shortTitle = fullTitle
-                      ? titleWords.slice(0, 3).join(' ') + (titleWords.length > 3 ? '…' : '')
-                      : null;
-                    const displayContent =
-                      highlighted.length > 0 ? highlighted.join(' · ') : shortTitle || '—';
+                    // Fallback bez `slice(0, 3)` — urywał tytuł na spójniku
+                    // („Centralized Data &", „AI as a" — audyt §B4).
+                    const displayContent = leadTech
+                      ? skrocTerminDoKomorki(leadTech)
+                      : fullTitle || '—';
+                    const fullContent = leadTech
+                      ? fullTitle
+                        ? `${leadTech} — ${fullTitle}`
+                        : leadTech
+                      : fullTitle;
 
                     return (
                       <button
@@ -320,7 +320,7 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           dymek już pokazuje pełny tytuł — dwa dymki naraz to
                           szum, nie pomoc.
                         */
-                        title={onCellMouseEnter ? undefined : fullTitle || undefined}
+                        title={onCellMouseEnter ? undefined : fullContent || undefined}
                         className={`group relative rounded-lg border transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                           density.cellPadding
                         } ${
@@ -341,7 +341,7 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center px-1`}
                         >
                           <span
-                            className={`text-[11px] font-medium leading-tight ${
+                            className={`text-[11px] font-medium leading-tight line-clamp-2 break-words ${
                               isAchieved
                                 ? MATRIX_TEXT_ACHIEVED
                                 : isTarget

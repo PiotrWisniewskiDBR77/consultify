@@ -31,7 +31,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista zamówień z datami wpisu vs datami podpisania (eksport z systemu); wydruk lub zrzut przykładowej umowy/zlecenia z wypełnionymi polami. Akceptowalny poziom: 100% zleceń z miesiąca bieżącego wpisanych w ciągu 24h.',
-      suggestedTechnologies: ['CRM', 'Order Management System', 'Contract & Order Registry'],
+      suggestedTechnologies: ['Order Management System', 'Contract & Order Registry', 'CRM'],
     },
 
     '1A#2': {
@@ -42,7 +42,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: zrzut ekranu aktywnego raportu/dashboardu z datą wygenerowania; lista dostępnych KPI w narzędziu raportowym; historia wysłanych raportów (np. z e-maila lub CRM). Sygnał poziomu II: raport generuje się automatycznie, nie z ręcznego eksportu.',
-      suggestedTechnologies: ['CRM', 'Reporting', 'KPI Dashboards', 'Performance Monitoring'],
+      suggestedTechnologies: ['Reporting', 'KPI Dashboards', 'Performance Monitoring', 'CRM'],
     },
 
     '1A#3': {
@@ -258,7 +258,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport z symulacji (np. z Tecnomatix, Arena, SimPy, SolidWorks Simulation) z datą i wnioskami; decyzja projektowa uzasadniona wynikami symulacji (protokół, e-mail zarządu); czas od koncepcji do pierwszej symulacji (cel: <2 tyg.). Sygnał: symulacja poprzedza decyzję, nie dokumentuje jej po fakcie.',
-      suggestedTechnologies: ['CAD', 'Simulation Tools', 'PLM/PDM', 'Digital Twin'],
+      suggestedTechnologies: ['Simulation Tools', 'Digital Twin', 'CAD', 'PLM/PDM'],
     },
 
     '1C#3': {
@@ -334,7 +334,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista dostawców z systemu z % wypełnienia kluczowych pól; przykładowe zamówienie zakupowe z wszystkimi polami (dostawca, pozycje, ceny, termin); log zamówień z ostatniego miesiąca. Sygnał: 100% zamówień powyżej progu (np. 1000 PLN) rejestrowanych w systemie dzień po złożeniu.',
-      suggestedTechnologies: ['Supplier Registry', 'Purchase Orders', 'MRP', 'Contract & Order Registry'],
+      suggestedTechnologies: [
+        'Supplier Registry',
+        'Purchase Orders',
+        'MRP',
+        'Contract & Order Registry',
+      ],
     },
 
     '1D#2': {
@@ -356,7 +361,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: log workflow zakupowego z ostatnich 30 dni (kto zatwierdził, kiedy, czas oczekiwania); konfiguracja progów i akceptantów w systemie; raport zamówień przekraczających SLA akceptacji. Sygnał poziomu III: zero zamówień „z pominięciem" systemu — każdy zakup ma ślad cyfrowy.',
-      suggestedTechnologies: ['Workflow Management', 'Approval Flows', 'ERP', 'Process Orchestration'],
+      suggestedTechnologies: [
+        'Workflow Management',
+        'Approval Flows',
+        'ERP',
+        'Process Orchestration',
+      ],
     },
 
     '1D#4': {
@@ -437,7 +447,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: zrzut workflow zamówienia w WMS (statusy: nowe → picking → pakowanie → wysłane); konfiguracja EDI z listą partnerów i dokumentów; log optymalizacji lokalizacji magazynowej. Sygnał: całość od zamówienia do listu przewozowego w jednym systemie bez ręcznego przepisywania.',
-      suggestedTechnologies: ['WMS', 'EDI', 'B2B Integration', 'Barcode/RFID', 'Warehouse Analytics'],
+      suggestedTechnologies: [
+        'WMS',
+        'EDI',
+        'B2B Integration',
+        'Barcode/RFID',
+        'Warehouse Analytics',
+      ],
     },
 
     '1E#4': {
@@ -518,7 +534,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport OEE (Dostępność × Wydajność × Jakość) z ostatnich 30 dni z trendem; plan przeglądów z CMMS (zlecenia PM z datami i wykonawcami); VSM z aktualną datą i oznaczonymi marnotrawstwami. Sygnał: OEE > 65% jest punktem wyjścia dla działań doskonalących, nie tylko informacją historyczną.',
-      suggestedTechnologies: ['CMMS', 'OEE Dashboard', 'Value Stream Mapping (VSM)', 'MES', 'SCADA'],
+      suggestedTechnologies: [
+        'CMMS',
+        'OEE Dashboard',
+        'Value Stream Mapping (VSM)',
+        'MES',
+        'SCADA',
+      ],
     },
 
     '1F#4': {
@@ -529,7 +551,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: mapa linii produkcyjnej z oznaczeniem stanowisk zautomatyzowanych; raport OEE/dostępności robotów z ostatnich 90 dni; czas przestawienia (changeover) przy zmianie produktu z logiem. Sygnał: automatyzacja dotyczy stanowisk, gdzie błąd ludzki był główną przyczyną defektów.',
-      suggestedTechnologies: ['PLC', 'MES', 'Cobots', 'Robot Safety Systems', 'Automation Cells'],
+      suggestedTechnologies: ['Cobots', 'Robot Safety Systems', 'Automation Cells', 'PLC', 'MES'],
     },
 
     '1F#5': {
@@ -551,7 +573,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: mapa integracji systemów (ERP ↔ MES ↔ WMS ↔ QMS) z flow danych; demo zmiany zamówienia klienta → automatycznej aktualizacji planu produkcji i materiałowego; raport odchyleń plan vs wykonanie z trendami. Sygnał: czas od zmiany zamówienia do aktualizacji planu produkcji < 1h bez ręcznej interwencji.',
-      suggestedTechnologies: ['ERP', 'MES', 'Master Data Management (MDM)', 'API Integration', 'SCADA'],
+      suggestedTechnologies: [
+        'ERP',
+        'MES',
+        'Master Data Management (MDM)',
+        'API Integration',
+        'SCADA',
+      ],
     },
 
     '1F#7': {
@@ -562,7 +590,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport optymalizacji harmonogramu AI (before/after OEE, changeover time, OTIF); symulacja digital twin z udokumentowaną decyzją; log predykcji anomalii z ostatnich 30 dni (true positive rate). Sygnał: AI-scheduler działa na żywych danych, nie tylko jako demo.',
-      suggestedTechnologies: ['Digital Twin', 'ML Models', 'MES', 'Simulation Models', 'IoT Data Feeds'],
+      suggestedTechnologies: [
+        'Digital Twin',
+        'ML Models',
+        'MES',
+        'Simulation Models',
+        'IoT Data Feeds',
+      ],
     },
 
     // ================================================================
@@ -588,7 +622,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista stanowisk z automatyczną kontrolą jakości (maszyna, parametr, SPC chart); raport false positive/false negative z systemu wizyjnego z ostatnich 90 dni; czas od pomiaru do wpisu w QMS. Sygnał: automatyczna kontrola obejmuje ≥50% krytycznych parametrów jakościowych.',
-      suggestedTechnologies: ['Machine Vision', 'Cameras', 'Automated Inspection', 'QMS', 'MES'],
+      suggestedTechnologies: ['Cameras', 'Machine Vision', 'Automated Inspection', 'QMS', 'MES'],
     },
 
     '1G#3': {
@@ -599,7 +633,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: diagram przepływu NC (niezgodność) w systemie QMS z automatycznym routingiem; raport alertów jakościowych z ostatnich 30 dni z czasem reakcji i wynikiem; % alertów z podjętym działaniem korygującym. Sygnał: czas od wykrycia niezgodności do poinformowania właściwych osób < 15 minut.',
-      suggestedTechnologies: ['QMS', 'Corrective Action Tracking (CAPA)', 'MES', 'Reporting'],
+      suggestedTechnologies: ['Corrective Action Tracking (CAPA)', 'QMS', 'MES', 'Reporting'],
     },
 
     '1G#4': {
@@ -621,7 +655,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista aktywnych dokumentów QMS z datami rewizji i właścicielami; karta SPC lub raport Cp/Cpk z ostatnich 30 dni; zmiana systemu produkcyjnego udokumentowana jako konsekwencja analizy QMS. Sygnał: QMS jest źródłem inicjatyw doskonalących, nie tylko archiwum certyfikatów.',
-      suggestedTechnologies: ['QMS', 'Quality Planning', 'Inspection Reporting', 'MES', 'Reporting'],
+      suggestedTechnologies: [
+        'QMS',
+        'Quality Planning',
+        'Inspection Reporting',
+        'MES',
+        'Reporting',
+      ],
     },
 
     '1G#6': {
@@ -669,7 +709,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: zrzut dashboardu FC z datą ostatniego odświeżenia; lista alertów finansowych z systemu (KPI, progi, odbiorcy); raport variance analysis z ostatniego miesiąca (plan vs actuals z drilldown). Sygnał: CFO widzi bieżące wyniki bez raportu od controllera.',
-      suggestedTechnologies: ['BI', 'Data Warehouse', 'Reporting', 'KPI Dashboards', 'Budgeting'],
+      suggestedTechnologies: ['KPI Dashboards', 'Budgeting', 'Data Warehouse', 'Reporting', 'BI'],
     },
 
     '1H#3': {
@@ -680,7 +720,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: konfiguracja matrycy akceptacji w systemie (kwoty, role, eskalacje); raport oczekujących akceptacji z datami; czas cyklu procesu akceptacji (wniosek → decyzja) z percentylami za ostatni miesiąc. Sygnał: zero zatwierdzonych płatności poza systemem — pełny ślad audytowy.',
-      suggestedTechnologies: ['Workflow Management', 'Approval Flows', 'ERP', 'Process Orchestration'],
+      suggestedTechnologies: [
+        'Approval Flows',
+        'Workflow Management',
+        'ERP',
+        'Process Orchestration',
+      ],
     },
 
     '1H#4': {
@@ -713,7 +758,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: demo generowania P&L lub balance sheet z ERP (czas generowania < 10 min); lista modułów ERP zintegrowanych z finansami (mapa data flow); liczba „shadow spreadsheets" zidentyfikowanych w ostatnim audycie IT. Sygnał: sprawozdanie finansowe zamknięcia miesiąca < 3 dni roboczych.',
-      suggestedTechnologies: ['ERP', 'Budgeting', 'Financial Planning', 'Reporting', 'API Integration'],
+      suggestedTechnologies: [
+        'ERP',
+        'Budgeting',
+        'Financial Planning',
+        'Reporting',
+        'API Integration',
+      ],
     },
 
     '1H#7': {
@@ -739,7 +790,7 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: zrzut systemu RCP lub ewidencji czasu pracy z przykładowym dniem; % pracowników z elektroniczną ewidencją czasu (cel: 100%); czas od złożenia wniosku o potwierdzenie obecności do odpowiedzi (SLA < 5 min z systemu). Sygnał: 100% pracowników rejestruje czas w systemie, zero kart papierowych.',
-      suggestedTechnologies: ['Biometric Readers', 'Time & Attendance', 'Access Control', 'HRM'],
+      suggestedTechnologies: ['Time & Attendance', 'Access Control', 'HRM', 'Biometric Readers'],
     },
 
     '1I#2': {
@@ -805,7 +856,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport AI screeningu CV (precision kandydatów do 1. rozmowy vs ręczny przegląd); predykcja rotacji z accuracy za ostatnie 6 miesięcy; przykład spersonalizowanego planu szkoleniowego wygenerowanego przez AI vs standard. Sygnał: time-to-hire skrócił się o ≥20% po wdrożeniu AI w rekrutacji.',
-      suggestedTechnologies: ['ML Models', 'HRM', 'NLP', 'Training Planning', 'Performance Reviews'],
+      suggestedTechnologies: [
+        'ML Models',
+        'HRM',
+        'NLP',
+        'Training Planning',
+        'Performance Reviews',
+      ],
     },
 
     // ================================================================
@@ -831,7 +888,11 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista formatów dostępnych per tytuł/produkt; zrzut panelu zarządzania dystrybucją multi-platform; raport oglądania/słuchania per platformę i urządzenie. Sygnał: treść wgrywana raz, dystrybuowana automatycznie na ≥3 platformy/formaty.',
-      suggestedTechnologies: ['Content Management', 'Multi-platform Distribution', 'Streaming Platform'],
+      suggestedTechnologies: [
+        'Content Management',
+        'Multi-platform Distribution',
+        'Streaming Platform',
+      ],
     },
 
     '2A#3': {
@@ -842,7 +903,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: opis funkcji zaawansowanych w produkcie (nie w prezentacji sprzedażowej — w działającym produkcie); raport engagement metrics z ostatnich 30 dni; A/B test personalizacji z wynikiem. Sygnał: użytkownicy wracają do produktu z powodu cyfrowych funkcji, nie tylko treści.',
-      suggestedTechnologies: ['Mobile App', 'Personalization Engine', 'Analytics SDK', 'AI Features'],
+      suggestedTechnologies: [
+        'Mobile App',
+        'Personalization Engine',
+        'Analytics SDK',
+        'AI Features',
+      ],
     },
 
     '2A#4': {
@@ -853,7 +919,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport User-Generated Content (liczba, typy, aktywność twórcza) z ostatnich 30 dni; zrzut funkcji kolaboratywnej lub konfiguracyjnej dostępnej dla użytkownika; DAU/MAU ratio (cel: >30% aktywna baza). Sygnał: produkt ma cechy platformy — wartość rośnie wraz z liczbą aktywnych użytkowników.',
-      suggestedTechnologies: ['Interactive Platform', 'Collaboration Features', 'User Analytics', 'Gamification'],
+      suggestedTechnologies: [
+        'Interactive Platform',
+        'Collaboration Features',
+        'User Analytics',
+        'Gamification',
+      ],
     },
 
     '2A#5': {
@@ -901,7 +972,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista zidentyfikowanych ekspertów w społeczności z ich wkładem (posty, rozwiązane problemy, materiały); raport odpowiedzi udzielonych przez ekspertów z community vs support firmowy; program ekspertów z opisem benefitów. Sygnał: eksperci ze społeczności odpowiadają na pytania szybciej niż helpdesk firmy.',
-      suggestedTechnologies: ['Expert Community', 'Reputation System', 'Knowledge Base', 'Mentoring Platform'],
+      suggestedTechnologies: [
+        'Expert Community',
+        'Reputation System',
+        'Knowledge Base',
+        'Mentoring Platform',
+      ],
     },
 
     '2B#4': {
@@ -912,7 +988,11 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista wspólnych projektów/artefaktów z historią kontrybucji; regulamin własności treści UGC; raport reużycia treści społecznościowej przez firmę z ostatnich 12 miesięcy. Sygnał: firma i społeczność współtworzą wartość w jawnym modelu — nie firma konsumuje UGC bez reciprocity.',
-      suggestedTechnologies: ['Co-creation Platform', 'Contribution Tracking', 'Licensing Management'],
+      suggestedTechnologies: [
+        'Co-creation Platform',
+        'Contribution Tracking',
+        'Licensing Management',
+      ],
     },
 
     '2B#5': {
@@ -923,7 +1003,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport votowania funkcji (feature requests) z listą wdrożonych propozycji i datami; udokumentowana decyzja produktowa z powołaniem na feedback społeczności; wyniki badania NPS/CSAT z segmentem „zaangażowana społeczność" vs reszta. Sygnał: roadmapa zawiera ≥30% pozycji zainicjowanych przez społeczność.',
-      suggestedTechnologies: ['Product Roadmap Tool', 'Feature Voting', 'Community Governance', 'Beta Program'],
+      suggestedTechnologies: [
+        'Product Roadmap Tool',
+        'Feature Voting',
+        'Community Governance',
+        'Beta Program',
+      ],
     },
 
     // ================================================================
@@ -949,7 +1034,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport systemu rekomendacji z metrykami (click-through rate, conversion uplift) za ostatnie 90 dni; A/B test personalizacji z grupą kontrolną; przykład rekomendacji dla fikcyjnego profilu klienta z wyjaśnieniem algorytmu. Sygnał: personalizacja zwiększa konwersję o ≥10% vs wariant bez niej.',
-      suggestedTechnologies: ['Recommendation Engine', 'ML Models', 'Customer Data Platform (CDP)', 'A/B Testing'],
+      suggestedTechnologies: [
+        'Recommendation Engine',
+        'ML Models',
+        'Customer Data Platform (CDP)',
+        'A/B Testing',
+      ],
     },
 
     '2C#3': {
@@ -960,7 +1050,13 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport SLA obsługi klienta per kanał (first response time, resolution time); zrzut widoku agenta z historią kontaktu multi-channel; containment rate chatbota/portalu z ostatnich 30 dni. Sygnał: klient nie musi powtarzać swojego problemu po zmianie kanału komunikacji.',
-      suggestedTechnologies: ['Helpdesk', 'Chatbots', 'CRM', 'Omni-channel Platform', 'Self-service Portal'],
+      suggestedTechnologies: [
+        'Helpdesk',
+        'Chatbots',
+        'CRM',
+        'Omni-channel Platform',
+        'Self-service Portal',
+      ],
     },
 
     '2C#4': {
@@ -971,7 +1067,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista aktywnych automatyzacji CRM/MA z triggerami i targetingiem; raport wyników automatycznych kampanii vs ręcznych; korelacja personalizacji z wynikami NPS/retencji. Sygnał: klient otrzymuje właściwą wiadomość w właściwym momencie bez manualnej interwencji marketera.',
-      suggestedTechnologies: ['CRM', 'Marketing Automation', 'Personalization Engine', 'Customer Journey Platform'],
+      suggestedTechnologies: [
+        'CRM',
+        'Marketing Automation',
+        'Personalization Engine',
+        'Customer Journey Platform',
+      ],
     },
 
     '2C#5': {
@@ -982,7 +1083,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: dokument innowacji produktowej z ostatnich 12 miesięcy z powiązaniem do danych ICT; unikalny produkt/usługa niemożliwa do skopiowania bez posiadanych danych; raport trendów klientowskich wygenerowany przez analitykę big data. Sygnał: ICT jest źródłem przewagi konkurencyjnej, nie tylko narzędziem operacyjnym.',
-      suggestedTechnologies: ['Big Data Analytics', 'ML Models', 'Predictive Analytics', 'Customer Intelligence'],
+      suggestedTechnologies: [
+        'Big Data Analytics',
+        'ML Models',
+        'Predictive Analytics',
+        'Customer Intelligence',
+      ],
     },
 
     // ================================================================
@@ -997,7 +1103,11 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport multi-channel analytics z udziałem sprzedaży per kanał; historia zmian asortymentu/prezentacji opartych na danych; mapa ścieżki klienta z oznaczonym punktem decyzji. Sygnał: oferta jest spójna niezależnie od kanału kontaktu klienta z produktem.',
-      suggestedTechnologies: ['Customer Data Platform (CDP)', 'Multi-channel Analytics', 'Product Catalog'],
+      suggestedTechnologies: [
+        'Customer Data Platform (CDP)',
+        'Multi-channel Analytics',
+        'Product Catalog',
+      ],
     },
 
     '2D#2': {
@@ -1019,7 +1129,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport zmian cen z ostatnich 90 dni z uzasadnieniem (trigger: dane vs decyzja); konfiguracja modelu cenowego w systemie (czy to możliwe automatycznie?); raport SLA obsługi klienta per kanał. Sygnał: przynajmniej jeden element cenowy dostosowuje się automatycznie na bazie danych.',
-      suggestedTechnologies: ['Pricing Engine', 'CRM', 'E-commerce Platform', 'Customer Support Platform'],
+      suggestedTechnologies: [
+        'Pricing Engine',
+        'CRM',
+        'E-commerce Platform',
+        'Customer Support Platform',
+      ],
     },
 
     '2D#4': {
@@ -1030,7 +1145,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: profil użytkownika z danymi personalizacyjnymi (historia, preferencje, kontekst); raport A/B test personalizacji 1-to-1 vs segmentowej vs bez personalizacji; przykład automatycznie spersonalizowanego e-maila lub widoku z logu wysyłki. Sygnał: każdy aktywny użytkownik dostaje inną wersję doświadczenia.',
-      suggestedTechnologies: ['1-to-1 Personalization', 'Real-time Decisioning', 'CRM', 'Recommendation Engine'],
+      suggestedTechnologies: [
+        '1-to-1 Personalization',
+        'Real-time Decisioning',
+        'CRM',
+        'Recommendation Engine',
+      ],
     },
 
     '2D#5': {
@@ -1041,7 +1161,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: konfigurator produktu online z przepływem do realizacji; raport trafności predykcji potrzeb klientów; dokumentacja procesu data-driven product design z konkretnymi decyzjami opartymi o dane. Sygnał: klient może skonfigurować i zamówić unikatowy produkt bez ingerencji człowieka.',
-      suggestedTechnologies: ['Product Configurator', 'ML Models', 'Predictive Analytics', 'CPQ (Configure-Price-Quote)'],
+      suggestedTechnologies: [
+        'Product Configurator',
+        'ML Models',
+        'Predictive Analytics',
+        'CPQ (Configure-Price-Quote)',
+      ],
     },
 
     // ================================================================
@@ -1067,7 +1192,11 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport przychodów i użytkowników per kraj z trendem 12 mies.; dokumentacja adaptacji produktu per rynek (język, płatności, regulacje); NPS per rynek z ostatniego kwartału. Sygnał: nowy rynek pokazuje ≥60% retention macierzystego w ciągu 6 miesięcy.',
-      suggestedTechnologies: ['Multi-language Support', 'Local Payment Methods', 'Compliance Management'],
+      suggestedTechnologies: [
+        'Multi-language Support',
+        'Local Payment Methods',
+        'Compliance Management',
+      ],
     },
 
     '2E#3': {
@@ -1078,7 +1207,11 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: zrzut listingu na globalnej platformie z datą i ocenami; raport pobrań/instalacji per kraj z globalnej platformy; historia zmian w opisie lub funkcjach produktu podyktowanych algorytmem platformy. Sygnał: produkt generuje organiczny ruch z globalnej platformy bez aktywnego marketingu lokalnego.',
-      suggestedTechnologies: ['App Store Optimization (ASO)', 'Global Marketplace', 'Cloud Distribution'],
+      suggestedTechnologies: [
+        'App Store Optimization (ASO)',
+        'Global Marketplace',
+        'Cloud Distribution',
+      ],
     },
 
     '2E#4': {
@@ -1089,7 +1222,12 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: lista rynków z dokumentacją adaptacji per rynek; czas wdrożenia na nowy rynek (time-to-market) z historii ekspansji; architektura produktu z wyróżnionymi modułami i18n/l10n. Sygnał: czas wejścia na nowy rynek jest < 3 miesiące, nie 1,5 roku.',
-      suggestedTechnologies: ['i18n/l10n Framework', 'Multi-currency', 'Local Compliance Tools', 'CDN'],
+      suggestedTechnologies: [
+        'i18n/l10n Framework',
+        'Multi-currency',
+        'Local Compliance Tools',
+        'CDN',
+      ],
     },
 
     '2E#5': {
@@ -1100,6 +1238,11 @@ export const DRD_OVERRIDES_AXIS_1_2: Partial<Record<DRDAreaLevelKey, Partial<DRD
       ],
       example:
         'Dowód: raport użycia produktu per kraj (mapa ciepła świata) z ostatnich 30 dni; dokumentacja architektury multi-region z SLA dostępności; przykład A/B test adaptacji kulturowej z wynikami. Sygnał: produkt obsługuje ≥20 krajów z lokalnym SLA i lokalnymi płatnościami bez dedykowanego oprogramowania per kraj.',
-      suggestedTechnologies: ['Global CDN', 'Multi-region Cloud', 'i18n/l10n', 'Global Payment Gateway'],
+      suggestedTechnologies: [
+        'Global CDN',
+        'Multi-region Cloud',
+        'i18n/l10n',
+        'Global Payment Gateway',
+      ],
     },
   };
