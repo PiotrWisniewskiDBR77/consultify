@@ -9,10 +9,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ApiGateway } from '../../../server/src/Gateway.js';
 
 const DATABASE_URL = String(process.env.DATABASE_URL || '');
+// Z31 detektor 2026-08-31: unpinned from a hardcoded '/cx_day47' database-name
+// suffix that silently skipped this suite (exit 0) on any other disposable
+// database name. RUN_DB_TESTS/MOCK_DB plus a real postgres:// URL is the gate.
 const enabled =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  DATABASE_URL.endsWith('/cx_day47');
+  DATABASE_URL.startsWith('postgres');
 const describeReal = enabled ? describe : describe.skip;
 const NO_RETRY = { retry: 0 } as const;
 const JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-min-32-chars-long-for-validation';
@@ -28,11 +31,14 @@ describeReal('Day 47 My Work live-tab reachability through the real ApiGateway',
   beforeAll(async () => {
     sql = new Client({ connectionString: DATABASE_URL });
     await sql.connect();
+    // Z31 detektor 2026-08-31: this used to re-pin to the literal 'cx_day47'
+    // name inside beforeAll, duplicating the outer `enabled` gate above with
+    // the same hardcoded name. Only require a real, non-empty database name.
     const target = await sql.query<{ database: string; port: number | null }>(
       'SELECT current_database() AS database, inet_server_port() AS port'
     );
-    if (target.rows[0]?.database !== 'cx_day47') {
-      throw new Error(`DAY47_REFUSING_DATABASE:${target.rows[0]?.database || 'unknown'}`);
+    if (!target.rows[0]?.database) {
+      throw new Error('DAY47_NO_REAL_DATABASE');
     }
 
     await sql.query(

@@ -10,10 +10,14 @@ import { ApiGateway } from '../../../server/src/Gateway.js';
 import config from '../../../server/src/config/Config.js';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
+// Z31 detektor 2026-08-31: unpinned from an exact hardcoded connection string
+// (host, port AND database name all literal), which silently skipped this
+// suite (exit 0) against any other disposable Postgres. Any real postgres://
+// URL with the env gate set is now sufficient.
 const REAL_DB =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  DATABASE_URL === 'postgresql://postgres:cx@127.0.0.1:5830/cx_day50';
+  DATABASE_URL.startsWith('postgres');
 
 function binary(
   res: NodeJS.ReadableStream,
