@@ -152,18 +152,31 @@ const MOCK_SCORECARDS: Record<string, any> = {
   },
 };
 
+// RN-G2 i18n/141 (2026-08-31) FIX: every item below was missing `kpiName`
+// entirely, even though `KpiScorecardItemDto.kpiName` is a real field
+// (`kpiScorecardApi.ts`) the server genuinely joins in
+// (`kpiScorecardRepository.ts:225`, `dv.name AS kpi_name`) — verified by
+// reading the SQL, not assumed. `kpiScorecardPresenters.tsx`'s own item
+// column/preview already handle `kpiName ?? shortKpiScorecardId(kpiId)`
+// correctly; the absent field just meant every mock item silently hit the
+// fallback branch, showing a truncated raw id ("kpi-oee-…") on every screen
+// unconditionally — not a real "name missing" case. (`RESTRICTED_KPI_ID`
+// below simulates an ABAC-hidden row by being FILTERED OUT of the response
+// entirely, not by being present with a null name — a `kpiName` on it here
+// is harmless, it is only ever read on the branch where it was not
+// filtered.)
 const MOCK_ITEMS: Record<string, any[]> = {
   'sc-1': [],
   'sc-2': [
-    { itemId: 'item-1', scorecardId: 'sc-2', kpiId: 'kpi-oee-linia-pakowania-001', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-anna', addedAt: '2026-05-02T08:00:00Z' },
-    { itemId: 'item-2', scorecardId: 'sc-2', kpiId: 'kpi-defekty-na-milion-002', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 2, displayConfig: null, addedBy: 'user-anna', addedAt: '2026-05-02T08:05:00Z' },
-    { itemId: 'item-3', scorecardId: 'sc-2', kpiId: 'kpi-czas-przestoju-003', organizationId: 'org-dbr77-demo', role: 'supporting', sortOrder: 3, displayConfig: null, addedBy: 'user-piotr-demo', addedAt: '2026-06-10T11:00:00Z' },
+    { itemId: 'item-1', scorecardId: 'sc-2', kpiId: 'kpi-oee-linia-pakowania-001', kpiName: 'OEE linii pakowania', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-anna', addedAt: '2026-05-02T08:00:00Z' },
+    { itemId: 'item-2', scorecardId: 'sc-2', kpiId: 'kpi-defekty-na-milion-002', kpiName: 'Defekty na milion (DPMO)', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 2, displayConfig: null, addedBy: 'user-anna', addedAt: '2026-05-02T08:05:00Z' },
+    { itemId: 'item-3', scorecardId: 'sc-2', kpiId: 'kpi-czas-przestoju-003', kpiName: 'Czas przestoju linii', organizationId: 'org-dbr77-demo', role: 'supporting', sortOrder: 3, displayConfig: null, addedBy: 'user-piotr-demo', addedAt: '2026-06-10T11:00:00Z' },
   ],
   'sc-3': [
-    { itemId: 'item-4', scorecardId: 'sc-3', kpiId: 'kpi-koszt-pracy-004', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-marek', addedAt: '2026-04-12T09:00:00Z' },
+    { itemId: 'item-4', scorecardId: 'sc-3', kpiId: 'kpi-koszt-pracy-004', kpiName: 'Redukcja kosztów pracy', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-marek', addedAt: '2026-04-12T09:00:00Z' },
   ],
   'sc-4': [
-    { itemId: 'item-5', scorecardId: 'sc-4', kpiId: 'kpi-cykl-zamkniecia-005', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-piotr-demo', addedAt: '2026-01-10T09:00:00Z' },
+    { itemId: 'item-5', scorecardId: 'sc-4', kpiId: 'kpi-cykl-zamkniecia-005', kpiName: 'Cykl zamknięcia miesiąca', organizationId: 'org-dbr77-demo', role: 'primary', sortOrder: 1, displayConfig: null, addedBy: 'user-piotr-demo', addedAt: '2026-01-10T09:00:00Z' },
   ],
 };
 
