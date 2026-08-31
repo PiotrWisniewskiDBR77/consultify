@@ -102,3 +102,24 @@ To reguła z pomiaru, nie teoria: usunięcie filtra
 `server/src/services/ai/embeddingService.ts:341` pozostawiło wcześniejszy
 scenariusz dyżuru 210 zielony, dopóki FIX-210 nie dodał testu omijającego, który
 na tej samej mutacji czerwienieje.
+
+
+## ★★ REGUŁA NR 7 — push WYŁĄCZNIE na `github-backup`
+
+31.08 robotnik wypchnął gałąź roboczą na `origin`. Sprawdzone: **`origin` to
+PUBLICZNE repozytorium** (`PiotrWisniewskiDBR77/consultify`). Zawartość była
+nieszkodliwa (trzy pliki testowe i poprawka komentarza, zero sekretów —
+przeskanowane), praca została sprowadzona do vaulta i scalona, a gałąź z `origin`
+**usunięta przez CTO** po potwierdzeniu, że kopia w vaulcie istnieje i jest
+przodkiem tipa linii integracyjnej.
+
+**Przyczyna była po stronie instrukcji, nie wykonawcy:** zakaz pushu poza vault nie
+był w niej postawiony tak widocznie jak zakaz `git stash`. Od teraz jest.
+
+Obowiązuje w każdym zleceniu:
+- push **wyłącznie** `github-backup`, jawnie: `git push github-backup HEAD:refs/heads/<gałąź>`;
+- `git remote -v` **przed pierwszym pushem** — `origin` jest publiczny;
+- zakaz `git push` bez wskazania remote (bierze `origin` z konfiguracji).
+
+Zakaz jest tej samej wagi co `Z27` (zakaz `git stash`) i `Z28` (zakaz połączeń do
+demo, stagingu, produkcji i Railway).
