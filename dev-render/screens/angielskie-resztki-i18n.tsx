@@ -25,6 +25,8 @@
  *
  * URL: ?screen=angielskie-resztki-i18n&theme=light|dark&lang=pl
  *      &rows=<n>   liczba wierszy w siatce (domyślnie 250)
+ *      &cap=<n>    rowCap (domyślnie 100 — jak w produkcji; niższy = stopka
+ *                  widoczna na zrzucie pełnostronicowym bez scrollowania)
  */
 import React from 'react';
 
@@ -34,6 +36,9 @@ import type { FormulaSheet } from '@/utils/workbookFormulaEngine';
 
 const params = new URLSearchParams(window.location.search);
 const ROW_COUNT = Math.max(1, Number(params.get('rows') ?? '250') || 250);
+/** rowCap podkręcany z URL — przy niskim capie stopka mieści się na jednym
+ *  zrzucie pełnostronicowym (przy produkcyjnych 100 trzeba by scrollować). */
+const ROW_CAP = Math.max(1, Number(params.get('cap') ?? '100') || 100);
 
 /** Deterministyczna atrapa symulacji — kształt 1:1 z `MonteCarloNpvResponse`. */
 const fetcher = async () => ({
@@ -82,12 +87,12 @@ export default function AngielskieResztkiI18nScreen(): React.ReactElement {
       </section>
 
       <section className="rounded-xl border border-c-border bg-c-surface overflow-hidden">
-        <div className="h-[420px] overflow-auto">
+        <div className="max-h-[560px] overflow-auto">
           <EditableSpreadsheetGrid
             workbookId="wb-dev-render-angielskie-resztki"
             sheets={[SHEET]}
             activeSheetIndex={0}
-            rowCap={100}
+            rowCap={ROW_CAP}
           />
         </div>
       </section>
