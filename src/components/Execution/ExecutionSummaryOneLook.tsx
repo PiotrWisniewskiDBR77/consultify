@@ -300,7 +300,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'title',
         label: tr('Pozycja', 'Item'),
-        width: '320px',
+        width: '130px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
           return (
@@ -319,24 +319,35 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'kind',
         label: tr('Typ', 'Type'),
-        width: '150px',
+        width: '210px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
           const label = decisionKindLabel(row.kind);
-          // Defekt „ucinany tekst" (2026-08-31): karta jest wąska (grid
-          // lg:grid-cols-2), a `StandardTable` bez `minTableWidth="auto"`
-          // wymusza domyślne 980px — kolumna renderowała się SZERZEJ, ale
-          // fizycznie poza widocznym skrawkiem karty, więc „Przeterminowana"
-          // ucinało się bez wielokropka na krawędzi (nie w komórce). Naprawa
-          // właściwa jest niżej, przy wywołaniu `<StandardTable minTableWidth="auto">`
-          // — to tutaj to DRUGA linia obrony: gdy dopasowanie do kontenera
-          // i tak zwęzi tę kolumnę do podłogi (112px), pełny tekst dalej jest
-          // dostępny w `title`, a widoczny fragment kończy się wielokropkiem
-          // zamiast łamać się w połowie wyrazu — wzorem kolumny „Pozycja"
-          // wyżej (`truncate`), ale z jawnym `title`, bo TU skracanie realnie
-          // się zdarza (tam tylko teoretycznie).
+          // Defekt „ucinany tekst" (2026-08-31, domknięcie): karta jest wąska
+          // (grid lg:grid-cols-2, kontener tabeli ~506px), a najdłuższa
+          // etykieta „Przeterminowana" (115px tekstu) nie mieściła się
+          // jednowierszowo — ani przycięta (`truncate`+`title`), ani przy
+          // umiarkowanym poszerzeniu (kolumna i tak lądowała na PODŁODZE
+          // dopasowania `FIT_MIN_COLUMN_WIDTH`=112px niezależnie od
+          // deklarowanej szerokości, bo `FilterableTable`/`columnFit`
+          // rozdaje budżet iteracyjnie: kolumny „Pozycja"/„Właściciel"/„Wiek"
+          // miały deklarowane szerokości POWYŻEJ własnej podłogi, więc same
+          // przyklamrowywały się do niej najpierw i to ONE zjadały budżet
+          // kosztem „Typ"). Naprawa: „Pozycja"/„Właściciel"/„Wiek" dostały
+          // deklaracje NA SWOJEJ podłodze (130/120/70 — „Właściciel" dostał
+          // 120, nie mniej, bo nazwisko „Wiśniewski"/nagłówek „Właściciel"
+          // same potrzebują ~75px i przy węższej kolumnie łamały się w
+          // POŁOWIE nazwiska, ten sam defekt piętro niżej) — więc
+          // przyklamrowują się do dokładnie tego, i CAŁA reszta budżetu
+          // kontenera trafia do „Typ" (deklaracja 210px, faktycznie renderuje
+          // ~186px — z zapasem nad potrzebnymi ~147px). `line-clamp-2`
+          // zostaje jako siatka bezpieczeństwa (nigdy „…", najwyżej 2 pełne
+          // linie przy jeszcze węższym viewport/dark-mode reflow), nie jako
+          // główny mechanizm.
           return (
-            <span className={`block truncate text-sm font-medium ${band.text}`} title={label}>
+            <span
+              className={`block line-clamp-2 leading-tight text-sm font-medium ${band.text}`}
+            >
               {label}
             </span>
           );
@@ -345,7 +356,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'owner',
         label: tr('Właściciel', 'Owner'),
-        width: '160px',
+        width: '120px',
         render: (row: any) => (
           <span className="text-sm text-c-text-secondary">{row.ownerName || '—'}</span>
         ),
@@ -353,7 +364,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'age',
         label: tr('Wiek', 'Age'),
-        width: '90px',
+        width: '70px',
         align: 'right',
         render: (row: any) => (
           <span className="text-sm tabular-nums text-c-text-secondary">
