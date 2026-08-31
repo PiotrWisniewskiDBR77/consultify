@@ -50,11 +50,17 @@ describe('Day 210 embedding scope contract on real PostgreSQL', () => {
   const organizationDocId = 'day210-organization';
   const marker = 'DAY210-PRIVATE-7f9c2e4a6b8d1f30527496ace013579b';
   const sharedMarker = 'DAY210-SHARED-9462bd870ae135cf5074186efab239dc';
+  // FIX-1 (dyżur 210): hoisted out of `beforeAll` so the new dispatcher/fallback
+  // tests below can call the REAL (unmocked) `EmbeddingService.search()` on the
+  // same deterministic-embedding instance, instead of going through
+  // `RagService`'s injected stub (which used to call `searchPg` directly,
+  // bypassing both the `search()` dispatcher and `searchSqlite` entirely).
+  let deterministicEmbeddingService: EmbeddingService;
 
   beforeAll(async () => {
     await assertRealPostgresTestEnvironment();
     expect(process.env.DB_TYPE).toBe('postgres');
-    const deterministicEmbeddingService = new EmbeddingService();
+    deterministicEmbeddingService = new EmbeddingService();
     RagService.setDependencies({
       embeddingService: {
         generateEmbedding: async () => vector,
@@ -161,6 +167,74 @@ describe('Day 210 embedding scope contract on real PostgreSQL', () => {
       returned,
       `Private document owned by user A was returned to user B: ${returned}`
     ).not.toContain(marker);
+  });
+
+  // FIX-1 (dyżur 210, bramka §6): the two tests above only prove the leak is
+  // closed through `RagService`'s injected stub, whose `search` called
+  // `searchPg` DIRECTLY (`RagService.setDependencies` above) — it never went
+  // through `EmbeddingService.search()`'s dispatcher (embeddingService.ts
+  // `search()`), and NEVER exercised `searchSqlite` at all. Both tests below
+  // call the real, unmocked `deterministicEmbeddingService.search()` so the
+  // dispatcher itself is proven, on both branches it can take.
+  it('search() dispatcher (pgvector branch) does not return user A private Vault document to user B', async () => {
+    expect(process.env.DB_TYPE).toBe('postgres');
+    const result = await deterministicEmbeddingService.search(marker, {
+      organizationId,
+      userId: userB,
+      limit: 10,
+    });
+    const returned = result.map((row) => row.content).join('\n');
+    expect(
+      returned,
+      `[dispatcher/searchPg] Private document owned by user A was returned to user B: ${returned}`
+    ).not.toContain(marker);
+  });
+
+  it('search() dispatcher (fallback/searchSqlite branch) does not return user A private Vault document to user B', async () => {
+    // FIX-1 bramka: forces `EmbeddingService.search()`'s dispatcher
+    // (embeddingService.ts `const isPg = process.env.DB_TYPE === 'postgres'`)
+    // down the `searchSqlite` branch for the duration of this one call, while
+    // still querying the SAME real Postgres container (`DbPromise.all` routes
+    // through the shared `dbProxy`/`getDatabase()` singleton regardless of
+    // this literal env flip — SQLite itself was fully removed from this
+    // codebase, see `server/src/database/Database.ts` header comment; this IS
+    // the only "fallback" code path that still exists). Restored in `finally`
+    // so it cannot leak into any other test in this file or suite.
+    const originalDbType = process.env.DB_TYPE;
+    process.env.DB_TYPE = 'sqlite-fallback-test';
+    try {
+      const result = await deterministicEmbeddingService.search(marker, {
+        organizationId,
+        userId: userB,
+        limit: 10,
+      });
+      const returned = result.map((row) => row.content).join('\n');
+      expect(
+        returned,
+        `[dispatcher/searchSqlite] Private document owned by user A was returned to user B: ${returned}`
+      ).not.toContain(marker);
+    } finally {
+      process.env.DB_TYPE = originalDbType;
+    }
+  });
+
+  it('search() dispatcher (fallback/searchSqlite branch) returns user A own private Vault document to user A', async () => {
+    // Regression companion to the leak test above: proves the fallback
+    // branch's fix does not ALSO block the owner (§7 of ODBIÓR_210 — the
+    // failure mode this repo already paid for once is a fix that closes
+    // access for everyone, not just other users).
+    const originalDbType = process.env.DB_TYPE;
+    process.env.DB_TYPE = 'sqlite-fallback-test';
+    try {
+      const result = await deterministicEmbeddingService.search(marker, {
+        organizationId,
+        userId: userA,
+        limit: 10,
+      });
+      expect(result.map((row) => row.content).join('\n')).toContain(marker);
+    } finally {
+      process.env.DB_TYPE = originalDbType;
+    }
   });
 
   it('returns an organization-scoped Vault document to another organization member', async () => {

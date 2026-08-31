@@ -214,7 +214,15 @@ export class EmbeddingService {
   ): Promise<EmbeddingRow[]> {
     const { limit = 5, organizationId, userId, minSimilarity = 0.5 } = options;
 
-    let sql = `SELECT e.* FROM ai_knowledge_embeddings e`;
+    // FIX-1 (dyżur 210): `e.*` alone never populated `EmbeddingRow.content` — the
+    // real (Postgres-only, see Database.ts header) `ai_knowledge_embeddings`
+    // schema names the column `chunk_text`, not `content`, so every caller
+    // reading `row.content` off this branch silently got `undefined` regardless
+    // of access filtering. Alias it exactly like `searchPg` does, so this branch
+    // actually returns usable content (surfaced by writing the day210 mutation
+    // gate test for this path — the assertion was vacuously true before this fix,
+    // since an always-undefined `content` can never "contain" anything).
+    let sql = `SELECT e.*, e.chunk_text as content FROM ai_knowledge_embeddings e`;
     const params: Array<string | number> = [];
     const where: string[] = [];
 
