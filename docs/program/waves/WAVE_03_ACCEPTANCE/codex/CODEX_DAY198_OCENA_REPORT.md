@@ -140,3 +140,70 @@ Pierwszy commit/push R1: `32b925a5fc` (`github-backup/codex/day198-ocena-fixture
 Końcowy cold SQL przed sprzątaniem: `reports=1`, `assessment_initiatives=0`, `smtp_settings=0`. Zweryfikowany reset na dokładnym manifeście `fixture-manifest-green.json` zwrócił `dropped:true`, `catalogAbsent:true`. Następnie usunięto wyłącznie własny kontener i wolumen komendą `docker rm -fv cx-day198-pg`. Porty `6130`, `5070`, `5071` po sprzątaniu: brak listenerów.
 
 Końcowy commit testu i dokumentacji: `e6a833c29c`; push na `github-backup/codex/day198-ocena-fixture-20260831` zakończony powodzeniem.
+
+## FIX-198 — errata: 5 zrzutów „light" były ciemnymi duplikatami (2026-08-31)
+
+Ten rozdział NIE zastępuje powyższego — dopisuje sprostowanie do przodu, zgodnie z zasadą „errata, nie przepisywanie".
+
+**Wada w oryginalnym pakiecie 16/20 wyżej**: pliki `01-library-light-full.png`, `11-processes-light-empty.png`, `13-insights-light-empty.png`, `15-reports-light-empty.png`, `17-initiatives-light-empty.png` były bajtowo (11/13/15/17) lub wizualnie (01) IDENTYCZNE ze swoimi ciemnymi odpowiednikami (`02`, `12`, `14`, `16`, `18`). Zmierzone `mean_luma` (skala szarości PIL, 0=czerń, 255=biel) PRZED naprawą:
+
+```text
+01-library-light-full.png       24.34   (powinno być ~245, jak 04/06/08)
+02-library-dark-full.png        26.44
+11-processes-light-empty.png    28.38   (identyczne z 12, bajt-w-bajt)
+12-processes-dark-empty.png     28.38
+13-insights-light-empty.png     25.20   (identyczne z 14, bajt-w-bajt)
+14-insights-dark-empty.png      25.20
+15-reports-light-empty.png      27.51   (identyczne z 16, bajt-w-bajt)
+16-reports-dark-empty.png       27.51
+17-initiatives-light-empty.png  27.22   (identyczne z 18, bajt-w-bajt)
+18-initiatives-dark-empty.png   27.22
+```
+
+**Przyczyna**: skrypt zrzutowy ustawiał `localStorage['consultify-storage']` (motyw) przez `page.evaluate()` PO `page.goto()`/zamontowaniu Reacta. `src/index.tsx` (`initThemeClass()`) czyta ten klucz WYŁĄCZNIE raz, synchronicznie, przed hydratacją — ustawienie go po starcie strony nie zmienia klasy `dark` na `<html>`, więc zrzut łapał jakikolwiek motyw był wcześniej (systemowy/domyślny, w tym środowisku = ciemny).
+
+**Naprawa**: Playwright `context.addInitScript()` ustawia `localStorage['token']`, `['refreshToken']` i `['consultify-storage']` (`{state:{theme:'light'},version:2}`) PRZED pierwszą nawigacją, więc `initThemeClass()` czyta już poprawną wartość przy starcie strony. Zweryfikowano `document.documentElement.className` na każdym z 5 zrzutów — brak klasy `dark`.
+
+**Świeże środowisko**: kontener Postgres `cx-fix198-pg` (`pgvector/pgvector:pg17`, port `6142`, `docker rm -f -v` po zakończeniu), świeża baza `consultify_w3_assessment_owner_cx198fix` (870/870 migracji), seed `server/scripts/seed-wave3-assessment-owner-review.ts seed` (bez zmian w skrypcie), runtime przez `scripts/dev/start-wave3-owner-runtime.mjs` (porty `5090`/`5091`, `WAVE3_RUNTIME_MODE=adopt-existing`), realny UI login przez `POST /api/auth/login` (owner: `w3.assessment.owner@local.test`; foreign/pusta organizacja: `w3.assessment.foreign@local.test` — ten sam login, którego R2 Insights-empty już używał w oryginalnym przebiegu). `01-library-light-full` = owner, tab `library`. `11/13/15/17` = foreign (pusta organizacja), taby `processes`/`outputs`/`reports`/`initiatives` — DOKŁADNIE ten sam mechanizm co już poprawne `12/14/16/18`, tylko w motywie light zamiast dark.
+
+**mean_luma PO naprawie i różnica względem sparowanego motywu ciemnego** (próg akceptacji >150):
+
+```text
+plik                              mean_luma   |diff vs ciemny parzysty|
+01-library-light-full.png           248.12    221.68  (vs 02: 26.44)
+02-library-dark-full.png             26.44
+03-processes-dark-full.png           23.62
+04-processes-light-full.png         245.02    221.40  (vs 03: 23.62)
+05-insights-dark-full.png            22.23
+06-insights-light-full.png          246.17    223.94  (vs 05: 22.23)
+07-reports-dark-full.png             22.08
+08-reports-light-full.png           245.39    223.31  (vs 07: 22.08)
+11-processes-light-empty.png        247.47    219.09  (vs 12: 28.38)
+12-processes-dark-empty.png          28.38
+13-insights-light-empty.png         249.21    224.01  (vs 14: 25.20)
+14-insights-dark-empty.png           25.20
+15-reports-light-empty.png          248.11    220.60  (vs 16: 27.51)
+16-reports-dark-empty.png            27.51
+17-initiatives-light-empty.png      248.34    221.12  (vs 18: 27.22)
+18-initiatives-dark-empty.png        27.22
+```
+
+Wszystkie 8 par light/dark różnią się o >150 (zakres zmierzony: 219.09–224.01). 5 zamienionych plików nadpisano w `/private/tmp/cx-day198-ocena-fixture-artefakty/` (te same nazwy, nowa treść); pozostałe 11 plików niezmienione bajtowo (te same sha256, co w tabeli powyżej).
+
+**sha256 po naprawie** (5 zmienionych; 11 pozostałych — patrz tabela wyżej, bez zmian):
+
+```text
+88836c3628f36b4b5f72223d2c3314d4344cfdb3cedd423c6c07a210da31acc1  01-library-light-full.png
+d1ad2d32d149f76f8336fb9e65db5837ede9e202834586b2deb8bf903a1c9027  11-processes-light-empty.png
+633108228095f08e275b362cae18d1b4e81431a197b9a881d42294ae428e8837  13-insights-light-empty.png
+94e1a98314bd793c7c2272981d06d189f1a5b83df281083fc25c30aae3aa1ef1  15-reports-light-empty.png
+ddb5b16e5d2eaa6dbff7420bb2184504dd0a63e04d13fa2a8ec01063c2b1a97f  17-initiatives-light-empty.png
+```
+
+**Sprostowanie oględzin**: powyższy rozdział „Pakiet zrzutów — 16/20" twierdzi „brak ucięcia treści krytycznej". To nieprawdziwe dla stanów pustych (`11/13/15/17` i ich ciemne odpowiedniki `12/14/16/18`): rząd chipów statusu w zakładce Wnioski (Insights) jest wizualnie ucięty przy prawej krawędzi ekranu — widoczny tekst kończy się w połowie słowa, np. `„0 · 0 ukryte: hub nie pobiera podział..."`, a chip po prawej stronie („Zatwierdzony") jest częściowo poza widocznym obszarem 1440px. Ucięcie widać jednakowo w obu motywach (nie jest artefaktem tej naprawy) — obejmuje ono co najmniej `13-insights-light-empty.png`/`14-insights-dark-empty.png`.
+
+**Defekt produktowy zaobserwowany przy okazji (NIE naprawiony — poza licencją FIX-198)**: pusty stan tabel Processes/Reports/Initiatives w `src/components/assessment/AssessmentHub.tsx` renderuje spolszczony nagłówek (np. „Brak raportów", „Brak inicjatyw" — tłumaczone przez `t('assessment.reports.emptyState.title', …)` / `t('assessment.initiatives.emptyState.title', …)`) razem z ANGIELSKĄ, niezlokalizowaną i kontekstowo błędną treścią `"No assessments found. Create your first assessment to get started."` — ten sam surowy string na zakładkach Reports i Initiatives, mimo że mówi „assessment", nie „report"/„initiative". Źródło: stała `emptyStateMessage` w `AssessmentHub.tsx:1443-1446` (bez wywołania `t()`), zużywana bez zmian w trzech miejscach: `AssessmentHub.tsx:2160` (Processes/list), `AssessmentHub.tsx:2284` (Reports), `AssessmentHub.tsx:2404` (Initiatives). Zarejestrowano jako pozycję otwartą w karcie `04_ASSESSMENT/MODULE_ACCEPTANCE.md`.
+
+Kontener i wolumen `cx-fix198-pg` usunięte (`docker rm -f -v`) po zakończeniu; porty `6142`/`5090`/`5091` po sprzątaniu: brak listenerów. Runtime zatrzymany przez kanoniczny `stop` (`portsFree:true`, `databasePreserved:true`, `catalogPresentAndPreserved:true`). Test `tests/integration/assessment/day198.fixture-reachability.realpg.test.ts` ponownie uruchomiony na świeżym fixture (`RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce --retry=0`): `2/2 PASS`.
+
+Żadna zmienna SMTP ani flaga wysyłki nie została ustawiona; żaden e-mail, zaproszenie kalendarzowe ani powiadomienie zewnętrzne nie zostało wysłane. Nie zmieniono kodu produktowego — zmiana obejmuje wyłącznie 5 plików PNG w katalogu poza repo i dokumentację.
