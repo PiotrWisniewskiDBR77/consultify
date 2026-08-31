@@ -282,6 +282,12 @@ try {
     [I.scorecard, I.org, I.owner, F]
   );
   await db.query(
+    `INSERT INTO rvn_platform_resource_visibility(
+       resource_type,resource_id,organization_id,visibility_mode,policy_id,owner_user_id)
+     VALUES('kpi_scorecard',$1,$2,'OPEN_ORG',$3,$4)`,
+    [I.scorecard, I.org, I.kpiVisibilityPolicy, I.owner]
+  );
+  await db.query(
     `INSERT INTO rvn_kpi_scorecard_items(item_id,scorecard_id,kpi_id,organization_id,role,sort_order,display_config,added_by,added_at)
      VALUES($1,$2,$3,$4,'primary',1,'{"emphasis":"primary"}',$5,$6)`,
     [I.scorecardItem, I.scorecard, I.kpi, I.org, I.owner, F]
@@ -651,7 +657,7 @@ try {
       I.roi,
       I.set,
       I.org,
-      [I.kpi, I.roi, I.set],
+      [I.kpi, I.roi, I.set, I.scorecard],
       I.owner,
       I.approvalSnap,
       I.actualSnap,
@@ -686,7 +692,7 @@ try {
     reviews: 1,
     support_requests: 1,
     reflections: 1,
-    visibility_rows: 3,
+    visibility_rows: 4,
     roi_governance: 1,
     execution_graph: 1,
     execution_orphans: 0,
