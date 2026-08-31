@@ -1197,11 +1197,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminAiScreen adminScreen="personas" />,
   },
   'admin-ai-models-providers': {
-    label: 'Admin ai — Modele i dostawcy (AIModule tab=models-providers → ModelsProvidersTab, RAW <table>)',
+    label: 'Admin ai — Modele i dostawcy (AIModule tab=models-providers → ModelsProvidersTab, tabela HTML surowa, bez StandardTable)',
     render: () => <AdminAiScreen adminScreen="models-providers" />,
   },
   'admin-ai-ai-limits-budgets': {
-    label: 'Admin ai — Limity i budżety (AIModule tab=access-limits → AccessLimitsTab, RAW <table>)',
+    label: 'Admin ai — Limity i budżety (AIModule tab=access-limits → AccessLimitsTab, tabela HTML surowa, bez StandardTable)',
     render: () => <AdminAiScreen adminScreen="ai-limits-budgets" />,
   },
   'admin-ai-data-privacy': {
@@ -1225,7 +1225,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <AdminAiScreen adminScreen="ai-operations" />,
   },
   'admin-ai-ai-audit': {
-    label: 'Admin ai — Audyt AI (AIModule tab=audit-compliance → AuditComplianceTab, RAW <table>)',
+    label: 'Admin ai — Audyt AI (AIModule tab=audit-compliance → AuditComplianceTab, tabela HTML surowa, bez StandardTable)',
     render: () => <AdminAiScreen adminScreen="ai-audit" />,
   },
   // admin-audit-health (runda pełna) — odbiór grafiki 146-admin-audit-health
