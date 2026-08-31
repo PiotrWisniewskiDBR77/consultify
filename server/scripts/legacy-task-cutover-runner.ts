@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 
 import { Pool } from 'pg';
 
-import { createExecutionTask } from '../src/domain/initiatives-execution/executionWork.js';
+import { createExecutionTaskForLegacyCutover } from '../src/domain/initiatives-execution/executionWork.js';
 import { PostgresMaterialCommandUnitOfWork } from '../src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 import {
   logSelectedDatabaseTarget,
@@ -62,7 +62,7 @@ type TaskMapping = {
 
 type PlannedTask = { task: LegacyTask; mapping: TaskMapping };
 
-export type MigrateOutcome = 'MIGRATED' | 'SKIPPED' | 'NOOP';
+export type MigrateOutcome = 'MIGRATED' | 'SKIPPED' | 'NOOP' | 'FAILED';
 
 function value(args: string[], name: string): string | undefined {
   const equals = args.find((arg) => arg.startsWith(`${name}=`));
@@ -142,6 +142,24 @@ function checksum(valueToHash: unknown): string {
   return createHash('sha256').update(JSON.stringify(valueToHash)).digest('hex');
 }
 
+function migrationChecksum(task: LegacyTask, mapping: TaskMapping, options: RunnerOptions): string {
+  return checksum({
+    task,
+    mapping,
+    policy: {
+      ownerFallback: options.ownerFallback ?? null,
+      slaOffsetDays: options.slaOffsetDays ?? null,
+    },
+  });
+}
+
+function migrationFailureCode(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.startsWith('CANONICAL_HOME_MISSING:')) return 'CANONICAL_HOME_MISSING';
+  if (message.startsWith('checksum conflict for ')) return 'CHECKSUM_CONFLICT';
+  return 'MIGRATION_ERROR';
+}
+
 function addDays(iso: string, days: number): string {
   const date = new Date(iso);
   date.setUTCDate(date.getUTCDate() + days);
@@ -209,6 +227,7 @@ export async function selectCandidateTasks(
           SELECT 1 FROM legacy_task_cutover_ledger ledger
            WHERE ledger.organization_id=tasks.organization_id
              AND ledger.legacy_task_id=tasks.id
+             AND ledger.status <> 'FAILED'
         )
       GROUP BY organization_id, initiative_id
       ORDER BY organization_id, initiative_id
@@ -231,6 +250,7 @@ export async function selectCandidateTasks(
           SELECT 1 FROM legacy_task_cutover_ledger ledger
            WHERE ledger.organization_id=tasks.organization_id
              AND ledger.legacy_task_id=tasks.id
+             AND ledger.status <> 'FAILED'
         )
       ORDER BY organization_id,initiative_id NULLS LAST,id
       LIMIT $3`,
@@ -258,6 +278,16 @@ export async function selectCandidateTasks(
  * selector) against a task that is already ledgered AND already has a
  * version-1 canonical aggregate; with the guard removed this throws
  * `aggregate version conflict` instead of no-opping.
+ *
+ * FIX-216-1: the guard is now status-aware. A `FAILED` ledger row records a
+ * migration attempt that never wrote a canonical aggregate (the failing
+ * `createExecutionTaskForLegacyCutover` call rolled its whole transaction
+ * back — see the R1 atomicity proof), so it must NOT be treated as "already
+ * safely migrated". Only a non-FAILED row (MIGRATED/SKIPPED/PENDING) is a
+ * genuine prior outcome worth a checksum-gated no-op; a FAILED row falls
+ * through and retries the real migration below, and the resulting ledger
+ * write (`appendLegacyTaskCutoverLedgerEntry`) upserts over it by primary
+ * key instead of colliding.
  */
 export async function migrateOneTask(
   pool: Pool,
@@ -267,19 +297,12 @@ export async function migrateOneTask(
   options: RunnerOptions
 ): Promise<MigrateOutcome> {
   const clientRequestId = `tasks-canonical-v1:${task.organization_id}:${task.id}`;
-  const taskChecksum = checksum({
-    task,
-    mapping,
-    policy: {
-      ownerFallback: options.ownerFallback ?? null,
-      slaOffsetDays: options.slaOffsetDays ?? null,
-    },
-  });
+  const taskChecksum = migrationChecksum(task, mapping, options);
   const existing = await pool.query<{ checksum: string; status: string }>(
     `SELECT checksum,status FROM legacy_task_cutover_ledger WHERE organization_id=$1 AND legacy_task_id=$2`,
     [task.organization_id, task.id]
   );
-  if (existing.rows[0]) {
+  if (existing.rows[0] && existing.rows[0].status !== 'FAILED') {
     if (existing.rows[0].checksum !== taskChecksum)
       throw new Error(`checksum conflict for ${task.id}`);
     return 'NOOP';
@@ -313,50 +336,47 @@ export async function migrateOneTask(
     throw new Error(`CANONICAL_HOME_MISSING:${task.organization_id}:${task.initiative_id}`);
   }
   const caseBefore = caseRow.rows[0].version;
-  const result = await createExecutionTask(uow, {
-    organizationId: task.organization_id,
-    actorId: options.actorId,
-    aggregateType: 'execution_task',
-    aggregateId: `legacy-task:${task.id}`,
-    expectedVersion: 0,
-    clientRequestId,
-    correlationId: options.batchId,
-    policyId: 'legacy-task-cutover-v1',
-    policyVersion: 1,
-    commandType: 'execution.task.create',
-    createIfMissing: true,
-    payload: {
-      executionCaseId: caseRow.rows[0].aggregate_id,
-      initiativeId: task.initiative_id!,
-      title: task.title,
-      description: '',
-      assigneeId: task.assignee_id!,
-      ownerId: mapping.ownerId!,
-      dueAt: mapping.dueAt!,
-      slaAt: mapping.slaAt!,
-      blockerDecisionIds: [],
-      dependencyTaskIds: [],
-      milestoneIds: [],
-      evidenceRefs: [`legacy-task:${task.id}`],
-      expectedCaseVersion: caseBefore,
-    },
-  });
-  await pool.query(
-    `INSERT INTO legacy_task_cutover_ledger
-     (organization_id,legacy_task_id,batch_id,status,client_request_id,canonical_id,
-      case_version_before,case_version_after,actor_id,checksum,completed_at)
-     VALUES($1,$2,$3,'MIGRATED',$4,$5,$6,$7,$8,$9,CURRENT_TIMESTAMP)`,
-    [
-      task.organization_id,
-      task.id,
-      options.batchId,
+  await createExecutionTaskForLegacyCutover(
+    uow,
+    {
+      organizationId: task.organization_id,
+      actorId: options.actorId,
+      aggregateType: 'execution_task',
+      aggregateId: `legacy-task:${task.id}`,
+      expectedVersion: 0,
       clientRequestId,
-      `legacy-task:${task.id}`,
-      caseBefore,
-      result.aggregateVersion,
-      options.actorId,
-      taskChecksum,
-    ]
+      correlationId: options.batchId,
+      policyId: 'legacy-task-cutover-v1',
+      policyVersion: 1,
+      commandType: 'execution.task.create',
+      createIfMissing: true,
+      payload: {
+        executionCaseId: caseRow.rows[0].aggregate_id,
+        initiativeId: task.initiative_id!,
+        title: task.title,
+        description: '',
+        assigneeId: task.assignee_id!,
+        ownerId: mapping.ownerId!,
+        dueAt: mapping.dueAt!,
+        slaAt: mapping.slaAt!,
+        blockerDecisionIds: [],
+        dependencyTaskIds: [],
+        milestoneIds: [],
+        evidenceRefs: [`legacy-task:${task.id}`],
+        expectedCaseVersion: caseBefore,
+      },
+    },
+    {
+      organizationId: task.organization_id,
+      legacyTaskId: task.id,
+      batchId: options.batchId,
+      status: 'MIGRATED',
+      clientRequestId,
+      canonicalId: `legacy-task:${task.id}`,
+      caseVersionBefore: caseBefore,
+      actorId: options.actorId,
+      checksum: taskChecksum,
+    }
   );
   return 'MIGRATED';
 }
@@ -385,7 +405,60 @@ export async function runLegacyTaskCutover(
   }
   const outcomes: MigrateOutcome[] = [];
   for (const { task, mapping } of plan) {
-    outcomes.push(await migrateOneTask(pool, uow, task, mapping, options));
+    try {
+      outcomes.push(await migrateOneTask(pool, uow, task, mapping, options));
+    } catch (error) {
+      const clientRequestId = `tasks-canonical-v1:${task.organization_id}:${task.id}`;
+      // FIX-216-3: an unqualified `ON CONFLICT DO NOTHING` silently absorbs
+      // ANY unique-constraint collision here, including the routine case of
+      // retrying a task that already has a `FAILED` row (same primary key)
+      // — the FAILED row never gets updated with the new reason/batch, and
+      // nothing signals that. Name the conflict target explicitly (the
+      // ledger's primary key) and upgrade batch_id/reason_code/checksum on
+      // a genuine retry-that-failed-again; leave an already-MIGRATED row
+      // untouched. Any OTHER unique-constraint collision (e.g. a
+      // client_request_id clash on a different row) is a different,
+      // unexpected failure mode — catch and log it instead of letting it
+      // vanish silently or crash the whole batch.
+      try {
+        const write = await pool.query(
+          `INSERT INTO legacy_task_cutover_ledger
+           (organization_id,legacy_task_id,batch_id,status,reason_code,client_request_id,
+            actor_id,checksum,completed_at)
+           VALUES($1,$2,$3,'FAILED',$4,$5,$6,$7,CURRENT_TIMESTAMP)
+           ON CONFLICT (organization_id, legacy_task_id) DO UPDATE SET
+             batch_id = EXCLUDED.batch_id,
+             status = 'FAILED',
+             reason_code = EXCLUDED.reason_code,
+             client_request_id = EXCLUDED.client_request_id,
+             actor_id = EXCLUDED.actor_id,
+             checksum = EXCLUDED.checksum,
+             completed_at = EXCLUDED.completed_at,
+             updated_at = CURRENT_TIMESTAMP
+           WHERE legacy_task_cutover_ledger.status <> 'MIGRATED'
+           RETURNING legacy_task_id`,
+          [
+            task.organization_id,
+            task.id,
+            options.batchId,
+            migrationFailureCode(error),
+            clientRequestId,
+            options.actorId,
+            migrationChecksum(task, mapping, options),
+          ]
+        );
+        if (write.rowCount === 0) {
+          console.warn(
+            `[${LABEL}] FAILED ledger write skipped for ${task.organization_id}:${task.id} — an existing MIGRATED row was left untouched`
+          );
+        }
+      } catch (ledgerWriteError) {
+        console.warn(
+          `[${LABEL}] FAILED ledger write skipped for ${task.organization_id}:${task.id} — conflicting ledger row on a different constraint: ${(ledgerWriteError as Error).message}`
+        );
+      }
+      outcomes.push('FAILED');
+    }
   }
   return { mode: 'WRITE', initiativesConsidered, plan, outcomes };
 }
@@ -434,6 +507,7 @@ async function main(): Promise<void> {
           migrated: run.outcomes.filter((o) => o === 'MIGRATED').length,
           skipped: run.outcomes.filter((o) => o === 'SKIPPED').length,
           noop: run.outcomes.filter((o) => o === 'NOOP').length,
+          failed: run.outcomes.filter((o) => o === 'FAILED').length,
         },
         null,
         2
