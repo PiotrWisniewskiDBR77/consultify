@@ -66,9 +66,8 @@ import {
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { Api } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
-import { type IdempotencyState, resolveIdempotencyKey } from '@/utils/createIdempotencyKey';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
 import { mergeChangeValue } from '@/services/cardAnalysis';
@@ -78,8 +77,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode } from '@/utils/artifactLinks';
-
-import { TASK_GENERATED_SECTION_PERSISTENCE } from './taskGeneratedSectionPersistence';
+import { type IdempotencyState, resolveIdempotencyKey } from '@/utils/createIdempotencyKey';
 
 // ── AI Field Enhancer (shared) ───────────────────────────────────────────────
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
@@ -160,12 +158,110 @@ import { type RelatedItemEntry, RelatedItemsList } from './shared/RelatedItemsLi
 // MIGRACJA (D-8): kompozycja kart Task wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z luźnego TASK_SPEC — patrz taskCardContract.ts.
 import { TASK_CARD_RENDER_IDS, TASK_CARD_SPEC } from './taskCardContract';
+import { TaskCardV2 } from './TaskCardV2';
+import { isTaskCardV2Enabled } from './taskCardV2Flag';
+import { TASK_GENERATED_SECTION_PERSISTENCE } from './taskGeneratedSectionPersistence';
 
 interface TaskDetailViewProps {
   taskId: string | null;
   onClose: () => void;
   onSaved?: (data: any) => void;
   onOpenDecision?: (decisionId: string) => void;
+}
+
+export const mapTaskServerComment = (comment: any): Comment => ({
+  id: String(comment.id),
+  content: String(comment.content || ''),
+  authorId: String(comment.userId || comment.user?.id || ''),
+  authorName:
+    [comment.user?.firstName, comment.user?.lastName].filter(Boolean).join(' ') ||
+    String(comment.userId || 'Unknown user'),
+  authorAvatar: comment.user?.avatarUrl || undefined,
+  createdAt: String(comment.createdAt),
+  updatedAt: comment.updatedAt ? String(comment.updatedAt) : undefined,
+  likes: 0,
+  likedByMe: false,
+});
+
+export async function addTaskCommentAndReload(
+  api: Pick<typeof Api, 'addTaskComment' | 'getTaskComments'>,
+  taskId: string,
+  content: string
+): Promise<Comment[]> {
+  await api.addTaskComment(taskId, content);
+  return (await api.getTaskComments(taskId)).map(mapTaskServerComment);
+}
+
+export async function deleteTaskCommentAndReload(
+  api: Pick<typeof Api, 'deleteTaskComment' | 'getTaskComments'>,
+  taskId: string,
+  commentId: string
+): Promise<Comment[]> {
+  await api.deleteTaskComment(taskId, commentId);
+  return (await api.getTaskComments(taskId)).map(mapTaskServerComment);
+}
+
+type ObjectAttachmentApi = Pick<typeof Api, 'get' | 'postMultipart' | 'delete'>;
+
+const mapTaskServerAttachment = (taskId: string, attachment: any): Attachment => ({
+  id: String(attachment.id),
+  name: String(attachment.fileName || 'attachment'),
+  type: String(attachment.mimeType || 'application/octet-stream'),
+  size: Number(attachment.sizeBytes || 0),
+  url: `/my-work/object-attachments/task/${encodeURIComponent(taskId)}/${encodeURIComponent(String(attachment.id))}/download`,
+  uploadedAt: String(attachment.createdAt || ''),
+  uploadedBy: attachment.createdBy ? String(attachment.createdBy) : undefined,
+});
+
+export async function uploadTaskAttachmentsAndReload(
+  api: ObjectAttachmentApi,
+  taskId: string,
+  files: File[]
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/task/${encodeURIComponent(taskId)}`;
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    await api.postMultipart(baseUrl, formData);
+  }
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapTaskServerAttachment(taskId, attachment)
+  );
+}
+
+export async function loadTaskAttachments(
+  api: Pick<typeof Api, 'get'>,
+  taskId: string
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/task/${encodeURIComponent(taskId)}`;
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapTaskServerAttachment(taskId, attachment)
+  );
+}
+
+export async function deleteTaskAttachmentAndReload(
+  api: ObjectAttachmentApi,
+  taskId: string,
+  attachmentId: string
+): Promise<Attachment[]> {
+  const baseUrl = `/my-work/object-attachments/task/${encodeURIComponent(taskId)}`;
+  await api.delete(`${baseUrl}/${encodeURIComponent(attachmentId)}`);
+  const response = await api.get(baseUrl);
+  return (response.data.data || []).map((attachment: any) =>
+    mapTaskServerAttachment(taskId, attachment)
+  );
+}
+
+export async function downloadTaskAttachment(
+  api: { downloadObjectAttachment: (url: string) => Promise<Blob> },
+  taskId: string,
+  attachmentId: string
+): Promise<Blob> {
+  return api.downloadObjectAttachment(
+    `/my-work/object-attachments/task/${encodeURIComponent(taskId)}/${encodeURIComponent(attachmentId)}/download`
+  );
 }
 
 // VF1-1 (SPEC-A wzorzec): gate for visible token/shell fixes on the N-mode
@@ -553,6 +649,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [riskAnalysisError, setRiskAnalysisError] = useState<string | null>(null);
   const riskAnalysisInFlightRef = useRef(false);
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+  // FIX-175 (Z-1): baseline snapshot of risks/alternatives AS LOADED, so
+  // handleSave can tell whether the user actually touched this section in
+  // this editing session. The PUT below always hits the gated route (409),
+  // so firing it unconditionally on every save produced a permanent red
+  // toast on every task save, even when Risk & Alternatives was untouched.
+  // Same "compare to a stored snapshot" pattern as `lastSavedSnapshot` above.
+  const riskAlternativesBaselineRef = useRef<string>(JSON.stringify({ risks: [], alternatives: [] }));
   const [selectedAlternativeId, setSelectedAlternativeId] = useState<string>('');
   const [implementationIdeas, setImplementationIdeas] = useState<ImplementationIdea[]>([]);
   const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
@@ -1006,8 +1109,32 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setCreatedAt(task.createdAt || '');
       setTags(task.tags || []);
       setChecklist(task.checklist || []);
-      setAttachments(task.attachments || []);
-      setComments(task.comments || []);
+      try {
+        const riskAlternativesResponse = await Api.get(
+          `/tasks/${encodeURIComponent(id)}/risk-alternatives`
+        );
+        const riskAlternatives = riskAlternativesResponse?.data ?? riskAlternativesResponse;
+        const loadedRisks = Array.isArray(riskAlternatives?.risks) ? riskAlternatives.risks : [];
+        const loadedAlternatives = Array.isArray(riskAlternatives?.alternatives)
+          ? riskAlternatives.alternatives
+          : [];
+        setRisks(loadedRisks);
+        setAlternatives(loadedAlternatives);
+        // FIX-175: remember exactly what loaded, so a later save can tell a
+        // real edit apart from an untouched section.
+        riskAlternativesBaselineRef.current = JSON.stringify({
+          risks: loadedRisks,
+          alternatives: loadedAlternatives,
+        });
+      } catch (error) {
+        console.warn('[TaskDetailView] Failed to load Risk & Alternatives', error);
+        setRisks([]);
+        setAlternatives([]);
+        riskAlternativesBaselineRef.current = JSON.stringify({ risks: [], alternatives: [] });
+      }
+      setAttachments(await loadTaskAttachments(Api, id));
+      const serverComments = await Api.getTaskComments(id);
+      setComments(serverComments.map(mapTaskServerComment));
       setLinkedItems(task.linkedItems || []);
       setSourceType(task.sourceType || task.source_type || null);
       setSourceId(task.sourceId || task.source_id || null);
@@ -1204,6 +1331,32 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
           emitMyWorkEvent({ type: 'item:completed', entityType: 'task', entityId: taskId });
         }
         onSaved?.({ ...personalPayload, id: taskId });
+
+        // FIX-175 (Z-1): this route sits behind a gate and always answers
+        // 409 — firing it on every save meant a red toast on EVERY task
+        // save, whether or not Risk & Alternatives was touched. Only PUT
+        // when the section actually changed in this editing session; the
+        // 409's honest error toast still fires when it was edited.
+        const riskAlternativesSnapshot = JSON.stringify({ risks, alternatives });
+        if (riskAlternativesSnapshot !== riskAlternativesBaselineRef.current) {
+          try {
+            await Api.put(`/tasks/${encodeURIComponent(taskId)}/risk-alternatives`, {
+              risks,
+              alternatives,
+            });
+            riskAlternativesBaselineRef.current = riskAlternativesSnapshot;
+          } catch (error) {
+            console.warn('[TaskDetailView] Risk & Alternatives were not saved', error);
+            if (!silent) {
+              toast.error(
+                t(
+                  'myWork.taskDetail.riskAlternativesNotSaved',
+                  'Task saved, but Risk & Alternatives could not be saved'
+                )
+              );
+            }
+          }
+        }
       } else {
         // Same payload (double-click, retry after a timeout) -> same key, so the
         // server collapses it to one row. Edited payload -> new key, so a
@@ -1396,57 +1549,81 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // Attachment handlers
   const handleUploadAttachments = async (files: FileList) => {
-    const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: URL.createObjectURL(file),
-      uploadedAt: new Date().toISOString(),
-    }));
-    setAttachments([...attachments, ...newAttachments]);
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
+    try {
+      setAttachments(await uploadTaskAttachmentsAndReload(Api, taskId, Array.from(files)));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
   };
 
   const handleDeleteAttachment = async (id: string) => {
-    setAttachments(attachments.filter((a) => a.id !== id));
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
+    try {
+      setAttachments(await deleteTaskAttachmentAndReload(Api, taskId, id));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
+  };
+
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    if (!taskId) return;
+    try {
+      const blob = await downloadTaskAttachment(
+        {
+          downloadObjectAttachment: async (url) => {
+            const response = await fetch(`${API_URL}${url}`, {
+              headers: getHeaders(),
+              credentials: 'include',
+            });
+            if (!response.ok) throw new Error('Failed to download attachment');
+            return response.blob();
+          },
+        },
+        taskId,
+        attachment.id
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.name;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(t('myWork.attachments.toastDownloadError', 'Failed to download attachment'));
+    }
   };
 
   // Comment handlers
   const handleAddComment = async (content: string, parentId?: string) => {
-    const newComment: Comment = {
-      id: Math.random().toString(36).substr(2, 9),
-      content,
-      authorId: 'current-user',
-      authorName: 'Current User',
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      likedByMe: false,
-      parentId,
-    };
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
     if (parentId) {
-      setComments(
-        comments.map((c) =>
-          c.id === parentId ? { ...c, replies: [...(c.replies || []), newComment] } : c
-        )
-      );
-    } else {
-      setComments([...comments, newComment]);
+      return { ok: false as const, error: new Error('Task comment replies are not supported') };
+    }
+    try {
+      setComments(await addTaskCommentAndReload(Api, taskId, content));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
     }
   };
 
   const handleDeleteComment = async (id: string) => {
-    setComments(comments.filter((c) => c.id !== id));
+    if (!taskId) return { ok: false as const, error: new Error('Save the task first') };
+    try {
+      setComments(await deleteTaskCommentAndReload(Api, taskId, id));
+      return { ok: true as const };
+    } catch (error) {
+      return { ok: false as const, error };
+    }
   };
 
-  const handleLikeComment = async (id: string) => {
-    setComments(
-      comments.map((c) =>
-        c.id === id
-          ? { ...c, likes: c.likedByMe ? c.likes - 1 : c.likes + 1, likedByMe: !c.likedByMe }
-          : c
-      )
-    );
-  };
+  const handleLikeComment = async (_id: string) => ({
+    ok: false as const,
+    error: new Error('Task comment reactions are not supported by the server'),
+  });
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
@@ -1456,9 +1633,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       toast(t('myWork.taskDetail.toast', 'This item is already linked'), {
         icon: '⚠️',
       });
-      return;
+      return { ok: false as const, error: new Error('Item already linked') };
     }
     setLinkedItems((prev) => [...prev, item]);
+    return { ok: true as const };
   };
 
   const handleRemoveLinkedItem = async (item: Pick<LinkedItem, 'id' | 'type'>) => {
@@ -1467,6 +1645,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         item.type ? !(i.id === item.id && i.type === item.type) : i.id !== item.id
       )
     );
+    return { ok: true as const };
   };
 
   const searchLinkedItems = useCallback(async (query: string): Promise<LinkedItem[]> => {
@@ -5102,6 +5281,28 @@ Return ONLY the final comment text.`;
     );
   }
 
+  if (presentationMode === 'n' && isTaskCardV2Enabled()) {
+    const owner = users.find((user) => user.id === ownerId);
+    return (
+      <TaskCardV2
+        taskId={taskId}
+        title={title}
+        description={description}
+        status={status}
+        priority={priority}
+        dueDate={dueDate}
+        blockedReason={blockedReason}
+        ownerName={owner ? `${owner.firstName} ${owner.lastName}`.trim() : ''}
+        checklist={checklist}
+        evidenceItems={evidenceItems}
+        dependencies={dependencies}
+        saving={saving}
+        onBack={onClose}
+        onSave={() => void handleSave()}
+      />
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // N-MODE RENDER
   // ═══════════════════════════════════════════════════════════════════════════
@@ -5418,7 +5619,16 @@ Return ONLY the final comment text.`;
         // ── Źródła i założenia (n-Type §7.2 poz. 4 / §6.6) ──────────────────
         // Trzecie miejsce, do którego zjechała treść usuniętego bannera:
         // KONTEKST UTWORZENIA zadania (z czego i kiedy powstało).
-        id: 'sources-assumptions',
+        // ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): id MUSI być
+        // kanonicznym 'evidence' (ArtifactRightPanel.ARTIFACT_PANEL_SECTION_ORDER),
+        // inaczej ArtifactRightPanel nie rozpoznaje tej sekcji jako już
+        // zadeklarowanej i DOKŁADA własną, pustą sekcję kanonu o tej samej
+        // etykiecie „Źródła i założenia" (ShieldCheck, „Brak zapisanych źródeł
+        // i założeń.") zaraz pod tą — realny, widoczny na zrzucie duplikat
+        // (dwa razy „ŹRÓDŁA I ZAŁOŻENIA" w prawym panelu karty Zadania).
+        // DecisionDetailView.tsx i NotificationDetailView.tsx już używają
+        // poprawnego id 'evidence' — tylko ten plik miał starą nazwę.
+        id: 'evidence',
         label: t('myWork.taskDetail.sourcesAndAssumptions', 'Sources and assumptions'),
         icon: FileText,
         defaultOpen: false,
@@ -8275,6 +8485,7 @@ Return ONLY the final comment text.`;
               attachments={attachments}
               onUpload={handleUploadAttachments}
               onDelete={handleDeleteAttachment}
+              onDownload={handleDownloadAttachment}
               expanded={expandedSections.has('attachments')}
               onToggleExpand={() => toggleSection('attachments')}
             />

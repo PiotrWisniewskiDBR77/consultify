@@ -15,6 +15,7 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { RailResizeHandle } from './RailResizeHandle';
 
@@ -60,6 +61,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
   onResize,
   testId,
 }) => {
+  const { t } = useTranslation();
   const effectiveWidth = collapsed ? COLLAPSED_WIDTH : width;
 
   return (
@@ -69,7 +71,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
       data-testid={testId ?? 'mels-left-rail'}
       data-collapsed={collapsed ? 'true' : 'false'}
       aria-expanded={!collapsed}
-      aria-label={title ?? 'Outline'}
+      aria-label={title ?? t('mels.outline', 'Outline')}
     >
       <div className="flex min-h-12 items-center justify-between px-2 py-0.5 border-b border-slate-200 dark:border-navy-700 flex-shrink-0">
         {!collapsed && title ? (
@@ -83,8 +85,8 @@ export const LeftRail: React.FC<LeftRailProps> = ({
           type="button"
           onClick={onToggleCollapse}
           className="flex h-11 w-11 items-center justify-center rounded text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-          title={toggleLabel ?? (collapsed ? 'Expand left rail' : 'Collapse left rail')}
-          aria-label={toggleLabel ?? (collapsed ? 'Expand left rail' : 'Collapse left rail')}
+          title={toggleLabel ?? (collapsed ? t('mels.expandLeftRail', 'Expand left rail') : t('mels.collapseLeftRail', 'Collapse left rail'))}
+          aria-label={toggleLabel ?? (collapsed ? t('mels.expandLeftRail', 'Expand left rail') : t('mels.collapseLeftRail', 'Collapse left rail'))}
           aria-pressed={collapsed}
           data-testid="mels-left-rail-toggle"
         >
@@ -119,7 +121,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
       ) : null}
 
       {!collapsed && onResize ? (
-        <RailResizeHandle side="left" currentWidth={width} onResize={onResize} />
+        <RailResizeHandle ariaLabel={t('mels.resizeLeftRail', 'Resize left rail')} side="left" currentWidth={width} onResize={onResize} />
       ) : null}
     </aside>
   );

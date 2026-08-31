@@ -1,11 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type CanvasViewMode = 'rich' | 'document' | 'md';
 
-const CANVAS_VIEW_MODES: readonly [CanvasViewMode, string][] = [
-  ['rich', 'Rich'],
-  ['document', 'DOC'],
-  ['md', 'MD'],
+const CANVAS_VIEW_MODES: readonly [CanvasViewMode, string, string][] = [
+  ['rich', 'canvas.viewMode.rich', 'Editor'],
+  ['document', 'canvas.viewMode.document', 'Document'],
+  ['md', 'canvas.viewMode.markdown', 'Markdown'],
 ];
 
 export function CanvasViewModeControl({
@@ -15,14 +16,16 @@ export function CanvasViewModeControl({
   mode: CanvasViewMode;
   onModeChange: (mode: CanvasViewMode) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div
       className="inline-flex shrink-0 rounded-full border border-slate-200 bg-slate-100/80 p-0.5 dark:border-white/10 dark:bg-white/10"
       data-testid="canvas-direct-view-switcher"
-      aria-label="Canvas view"
+      aria-label={t('canvas.viewMode.ariaLabel', 'Canvas view')}
       role="radiogroup"
     >
-      {CANVAS_VIEW_MODES.map(([viewMode, label]) => (
+      {CANVAS_VIEW_MODES.map(([viewMode, labelKey, fallback]) => (
         <button
           key={viewMode}
           type="button"
@@ -33,7 +36,9 @@ export function CanvasViewModeControl({
           onKeyDown={(event) => {
             if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
             event.preventDefault();
-            const currentIndex = CANVAS_VIEW_MODES.findIndex(([candidate]) => candidate === viewMode);
+            const currentIndex = CANVAS_VIEW_MODES.findIndex(
+              ([candidate]) => candidate === viewMode
+            );
             const nextIndex =
               event.key === 'Home'
                 ? 0
@@ -54,11 +59,9 @@ export function CanvasViewModeControl({
               : 'text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white'
           }`}
         >
-          {label}
+          {t(labelKey, fallback)}
         </button>
       ))}
     </div>
   );
 }
-
-

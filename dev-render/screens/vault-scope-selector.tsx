@@ -157,7 +157,7 @@ if (!g.__VAULT_SCOPE_FETCH__) {
 
 export default function VaultScopeSelectorScreen(): React.ReactElement {
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto' }}>
+    <div >
       <DocumentsRAGTab variant="client" />
     </div>
   );

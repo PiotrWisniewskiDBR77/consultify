@@ -19,7 +19,9 @@ describe('Agent production build boundary', () => {
       scripts?: Record<string, string>;
     };
 
-    expect(pkg.scripts?.build).toBe('tsc --build tsconfig.build.json --force');
+    expect(pkg.scripts?.build).toContain('sync-server-runtime-mirrors.mjs --check');
+    expect(pkg.scripts?.build).toContain('tsc --build tsconfig.build.json --force');
+    expect(pkg.scripts?.build).toContain('npm run build:copy-assets');
     expect(pkg.scripts?.build).not.toContain('noCheck');
   });
 
@@ -48,25 +50,21 @@ describe('Agent production build boundary', () => {
   });
 
   it('runs the packaged strict Postgres migrator before the Railway API starts', () => {
-    const proofSource = fs.readFileSync(
-      path.join(root, 'server/src/scripts/agentMigrationsIdempotencyRealDbProof.ts'),
-      'utf8'
-    );
-    const releaseMigrations = [
-      ...proofSource.matchAll(/'(202608\d{2}_[^']+\.sql)'/g),
-    ].map((match) => match[1]);
-    expect(releaseMigrations).toHaveLength(22);
-
-    const expectedCommand =
-      'DATABASE_URL=$DATABASE_PUBLIC_URL DB_TYPE=postgres node dist/scripts/migrate.postgres.js --dir migrations --only ' +
-      releaseMigrations.join(',');
-
     for (const filename of ['railway.json', 'railway.api.json']) {
       const config = JSON.parse(fs.readFileSync(path.join(root, filename), 'utf8')) as {
         deploy?: { preDeployCommand?: string };
       };
-      expect(config.deploy?.preDeployCommand).toBe(expectedCommand);
+      expect(config.deploy?.preDeployCommand).toBe('node dist/scripts/release-migration-gate.js');
       expect(config.deploy?.preDeployCommand).not.toContain('--safe');
     }
+
+    const gate = fs.readFileSync(
+      path.join(root, 'server/scripts/release-migration-gate.ts'),
+      'utf8'
+    );
+    expect(gate).toContain('migrate.postgres.js');
+    expect(gate).toContain('DATABASE_PUBLIC_URL');
+    expect(gate).toContain("const args = [runner, '--dir', migrationsDir]");
+    expect(gate).toContain('assertNoForbiddenFlags(argv)');
   });
 });

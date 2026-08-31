@@ -5,7 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotebookRightRail } from '../NotebookRightRail';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (_key: string, fallback: string) => fallback }),
+  useTranslation: () => ({
+    t: (_key: string, fallback: string) => fallback,
+    i18n: { language: 'pl' },
+  }),
 }));
 
 vi.mock('../NotebookContextPanel', () => ({
@@ -59,16 +62,55 @@ function Harness() {
 // now lives under "Właściwości"; "Context" relations now live under
 // "Powiązania". Both can be open at once.
 describe('NotebookRightRail — SPEC-A accordion', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.history.replaceState({}, '', '/');
+    window.localStorage.clear();
+  });
 
-  it('renders the five canonical sections in the fixed order', () => {
+  it('keeps the accepted bespoke rail when ENABLE_NOTEBOOK_SPEC_A_SHELL is not enabled', () => {
+    render(<Harness />);
+    expect(screen.getByLabelText('Document details and context')).not.toHaveClass(
+      'border-l',
+      'border-c-border-subtle'
+    );
+  });
+
+  it('renders the shared ArtifactRightPanel only for an explicit review override', () => {
+    window.localStorage.setItem('ff.ENABLE_NOTEBOOK_SPEC_A_SHELL', 'true');
+    render(<Harness />);
+    const panel = screen.getByLabelText('Document details and context');
+    expect(panel).toHaveClass('border-l', 'border-c-border-subtle');
+    expect(screen.getByRole('button', { name: /^Akcje/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: /^Właściwości/ })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
+    expect(screen.getByRole('button', { name: /^Powiązania/ })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+  });
+
+  it('renders the six canonical sections in the fixed order', () => {
     render(<Harness />);
     const headers = screen
       .getAllByRole('button')
       .map((btn) => btn.textContent?.replace(/\s+/g, ' ').trim())
       .filter((text): text is string => !!text);
     // Every section header renders regardless of collapsed state.
-    const known = ['Akcje', 'Właściwości', 'Powiązania', 'Komentarze', 'Historia i AI'];
+    // ★ 2026-08-30: SZEŚĆ sekcji, nie pięć. „Źródła i założenia" to sekcja
+    // kanonu, której notatnik nie miał, a ostatnia sekcja nazywa się
+    // „Historia" — bez dopisku „i AI" (SSOT nazw:
+    // `ARTIFACT_PANEL_SECTION_LABELS` w `standard/ArtifactRightPanel.tsx`).
+    const known = [
+      'Akcje',
+      'Właściwości',
+      'Powiązania',
+      'Źródła i założenia',
+      'Komentarze',
+      'Historia',
+    ];
     const seen = known.filter((label) => headers.some((h) => h?.startsWith(label)));
     expect(seen).toEqual(known);
   });

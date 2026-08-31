@@ -50,11 +50,26 @@
  * NIE jest tu modyfikowany — jego dotychczasowy `slate-*`/`navy-*` chrom
  * zostaje 1:1 jak w Wordzie/Decku, żeby ekran wyglądał TAK SAMO jak reszta,
  * nie „poprawiony inaczej").
+ *
+ * ★ Rozwożenie prawego pasa (2026-08-30, docs/program/grafika/ANALIZA_PRAWY_PANEL.md
+ * §7 krok 4): brakującym trybem wobec formuły `ArtifactRightRail` był
+ * „Artefakt" — kanoniczny accordion (Akcje·Właściwości·Powiązania·
+ * Komentarze·Historia). Za flagą `ff_artifact_right_rail`
+ * (`isArtifactRightRailEnabled`, domyślnie OFF) dokłada się PIĄTA ikona,
+ * PIERWSZA na szynie (kolejność formuły: Artefakt → Teresa → typeModes; tu
+ * nie ma Teresy — Excel oddaje ją głównemu czatowi), przed dotychczasowymi
+ * czterema (Źródła i liczby · Struktura · Wybrane · Historia i wydania),
+ * które zostają NIETKNIĘTE — to NIE jest zamiana, tylko dołożenie. Treść
+ * „Artefakt" pochodzi z `useExceleRightPanelSections` (ten sam hook, którego
+ * używa `ExceleRightPanel.tsx` — JEDNO źródło, nie druga kopia ~150 linii
+ * budowy sekcji). Przy fladze OFF `tools`/`renderPanel` są dokładnie takie
+ * jak dziś — `isArtifactRightRailEnabled`/`artifactSections` martwe.
  */
 import {
   Download,
   FileSpreadsheet,
   History as HistoryIcon,
+  LayoutGrid,
   Link2,
   ListTree,
   ShieldOff,
@@ -70,7 +85,10 @@ import {
 } from '@/components/shared/ExecutiveModuleShell/RightRail';
 import { useRailState } from '@/components/shared/ExecutiveModuleShell/useRailState';
 import { PreviewActionButton } from '@/components/shared/PreviewPane';
+import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
+import { useExceleRightPanelSections } from './ExceleRightPanel';
 import type { ArtifactPreview, TaskStep } from './KimiWorkspaceShell';
 
 export interface ExceleRightRailProps {
@@ -131,7 +149,40 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
   const qualityScore = preview?.qualityScore;
   const hasSourceTable = Boolean(workbookId && onPreviewFile);
 
+  // Flaga DOMYŚLNIE OFF (src/utils/artifactRightRailFlag.ts) — przy OFF ta
+  // zmienna jest `false`, więc ikona „Artefakt" niżej nigdy się nie dokłada
+  // i `tools`/`renderPanel` są dokładnie takie jak przed tą zmianą.
+  const artifactRailEnabled = isArtifactRightRailEnabled();
+  const artifactSections = useExceleRightPanelSections({
+    preview,
+    workbookId,
+    taskSteps,
+    isGenerating,
+    isFailed,
+    failureReason,
+    onDownload,
+    onPreviewFile,
+    onAllFiles,
+    onOpenVersionHistory,
+    onCheckpoint,
+    onShare,
+    onRevokeShare,
+    isShared,
+    onExportCsv,
+  });
+
   const tools: RightRailToolDescriptor[] = [
+    // „Artefakt" jest PIERWSZA — kolejność formuły (Artefakt → Teresa →
+    // typeModes) narzuca to miejsce, nie preferencja tego pliku.
+    ...(artifactRailEnabled
+      ? [
+          {
+            id: 'artefakt',
+            label: t('excele.rightRail.artifact', 'Artefakt'),
+            icon: LayoutGrid,
+          } satisfies RightRailToolDescriptor,
+        ]
+      : []),
     {
       id: 'sources',
       label: t('excele.rightRail.sources', 'Źródła i liczby'),
@@ -350,8 +401,19 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
     </div>
   );
 
+  const renderArtefakt = (): React.ReactElement => (
+    <ArtifactRightPanel
+      ariaLabel={t('excele.rightPanel.ariaLabel', 'Szczegóły arkusza')}
+      className="border-l-0"
+      width="100%"
+      sections={artifactSections}
+    />
+  );
+
   const renderPanel = (): React.ReactNode => {
     switch (activeToolId) {
+      case 'artefakt':
+        return renderArtefakt();
       case 'sources':
         return renderSources();
       case 'structure':
@@ -375,6 +437,7 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
       collapsed={rail.rightCollapsed}
       onToggleCollapse={rail.toggleRight}
       onResize={rail.setRightWidth}
+      resizeLabel={t('excele.rightRail.resize', 'Resize right rail')}
       collapseLabel={t('excele.rightRail.collapseLabel', 'Zwiń/rozwiń pasek narzędzi')}
       testId="excele-right-rail"
     />

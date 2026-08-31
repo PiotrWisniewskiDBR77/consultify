@@ -253,6 +253,58 @@ export function financeArtifactTypeLabel(artifactType: FinanceArtifactType): str
   }
 }
 
+/**
+ * Polska etykieta jednostki skali (`FinanceValue['unit']` i pokrewne, np.
+ * `FinanceExcelManifestDto.defaultUnit`) — CLAUDE.md enum-leak rule: nigdy
+ * surowy token. Znany wzorzec defektu tej klasy w produkcie: token jednostki
+ * renderowany po angielsku wprost w polskim zdaniu (np. „jednostka
+ * THOUSANDS" zamiast „jednostka: tysiące" — złapane na
+ * finance-export-import-panel, port etykiet z `CanonicalStatementTableV2`,
+ * który miał tę samą mapę tylko lokalnie, nie do współdzielenia).
+ */
+export function financeUnitLabel(unit: 'UNITS' | 'THOUSANDS' | 'MILLIONS' | 'BILLIONS'): string {
+  switch (unit) {
+    case 'UNITS':
+      return 'jednostki';
+    case 'THOUSANDS':
+      return 'tysiące';
+    case 'MILLIONS':
+      return 'miliony';
+    case 'BILLIONS':
+      return 'miliardy';
+    default: {
+      const _exhaustive: never = unit;
+      return _exhaustive;
+    }
+  }
+}
+
+export function formatAnalysisKpiValueForDisplay(
+  input: Pick<AnalysisKpiValueDto, 'unitType' | 'value'>,
+  formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
+): FinanceValueDisplay {
+  const numericFormatter = input.unitType === 'PERCENT' ? (n: number) => formatNumber(n * 100) : formatNumber;
+  const base = formatFinanceValueForDisplay(input.value, numericFormatter);
+  if (base.isMissingLikeGlyph) return base;
+
+  switch (input.unitType) {
+    case 'PERCENT':
+      return { ...base, text: `${base.text}%` };
+    case 'MULTIPLE':
+      return { ...base, text: `${base.text} ×` };
+    case 'DAYS':
+      return { ...base, text: `${base.text} dni` };
+    case 'MONETARY': {
+      const currency = input.value.presentationCurrency?.trim();
+      const unit = input.value.unit;
+      const scale = unit === 'THOUSANDS' || unit === 'MILLIONS' || unit === 'BILLIONS' ? financeUnitLabel(unit) : null;
+      return { ...base, text: `${base.text}${currency ? ` ${currency}` : ''}${scale ? `, ${scale}` : ''}` };
+    }
+    default:
+      return base;
+  }
+}
+
 export interface ArtifactRef {
   organizationId: string;
   artifactType: FinanceArtifactType;
@@ -798,6 +850,63 @@ export const ReconciliationBucketValues = [
 ] as const;
 export type ReconciliationBucket = (typeof ReconciliationBucketValues)[number];
 
+/**
+ * Polski etykieta dla `ReconciliationBucket` — nigdy nie renderuj `bucket`
+ * surowo. Jeden słownik, dwaj konsumenci: `ReconciliationLedgerPanel.tsx`
+ * (podział po bucketach) i `SourceEvidencePanel.tsx` (wiersz mapowania) —
+ * oba renderowały kod wprost (`MAPPED`, `UNMAPPED`, …) zamiast tej mapy
+ * (sweep 148-finanse-parametry, rodzina „surowa wartość").
+ */
+export const RECONCILIATION_BUCKET_LABEL_PL: Record<ReconciliationBucket, string> = {
+  MAPPED: 'Zmapowane',
+  EXCLUDED: 'Wykluczone',
+  UNMAPPED: 'Niezmapowane',
+  DUPLICATE: 'Duplikat',
+  RECLASS: 'Reklasyfikacja',
+  ELIMINATION: 'Eliminacja',
+  CANONICAL: 'Kanoniczne',
+};
+
+export function reconciliationBucketLabel(bucket: ReconciliationBucket): string {
+  return RECONCILIATION_BUCKET_LABEL_PL[bucket] ?? bucket;
+}
+
+/**
+ * `finance_reconciliation_runs.status` (`statementReconciliationService.ts:224`,
+ * `server/migrations/20260809_finance_v3_b05_exception_ledger.sql:136`) —
+ * jakość SUMY przebiegu (residual vs próg istotności), NIE to samo pole co
+ * `resultQuality` poniżej (ta bierze pod uwagę też pokrycie/skoki okresów).
+ */
+export function reconciliationRunStatusLabel(status: string | null | undefined): string {
+  switch (status) {
+    case 'CLEAN':
+      return 'Czysto';
+    case 'WITHIN_TOLERANCE':
+      return 'W granicach tolerancji';
+    case 'EXCEEDS_MATERIALITY':
+      return 'Przekracza istotność';
+    default:
+      return status ?? '—';
+  }
+}
+
+/**
+ * `ReconciliationResultQuality` (`statementReconciliationService.ts:227`,
+ * kolumna `result_quality` — CHECK w `20260809_finance_v3_b05_exception_ledger.sql:161`).
+ */
+export function reconciliationResultQualityLabel(quality: string | null | undefined): string {
+  switch (quality) {
+    case 'CLEAN':
+      return 'Czysty';
+    case 'CONDITIONAL':
+      return 'Warunkowy';
+    case 'PROVISIONAL':
+      return 'Prowizoryczny';
+    default:
+      return quality ?? '—';
+  }
+}
+
 /** statements.routes.ts:195-223 (GET /statements/:id/lines), jeden wiersz. */
 export interface StatementLineDto {
   stmtLineId: string;
@@ -1304,6 +1413,7 @@ export interface ValuationMethodAgreementWarningDto {
 
 export interface ValuationResultsDto {
   businessVersionId: string;
+  currency: string | null;
   variant: { id: string; case_id: string; name: string; description: string | null } | null;
   status: string;
   freshness: string;
@@ -1594,6 +1704,19 @@ export function financeLineageTransformationKindLabel(kind: string | null): stri
       return 'Wycena na bazie modelu bazowego (Baseline)';
     case 'VALUATION_FROM_SCENARIO':
       return 'Wycena na bazie scenariusza predykcji';
+    // ★ TOR GRAFIKI 2026-08-30 (finance-valuation-workspace, krok „Źródło"):
+    // te dwa kody opisują WCZEŚNIEJSZE ogniwa tego samego łańcucha pochodzenia
+    // (Sprawozdanie → Baseline → Scenariusz → Wycena) i realnie występują w
+    // konwencji API (patrz `dev-render/screens/finance-statement-pack-workspace-v2.tsx`
+    // oraz `finance-valuation-workspace.tsx`) — bez wpisu tutaj spadały do
+    // fallbacku niżej i renderowały się po angielsku ("Baseline from statement",
+    // "Scenario from baseline") obok w pełni przetłumaczonych sąsiednich kroków.
+    case 'baseline_from_statement':
+      return 'Model bazowy na bazie sprawozdania';
+    case 'scenario_from_baseline':
+      return 'Scenariusz predykcji na bazie modelu bazowego';
+    case 'analysis_from_statement':
+      return 'Analiza na bazie sprawozdania';
     default:
       return kind
         .toLowerCase()
@@ -2318,7 +2441,7 @@ export function compareComparisonTypeLabel(type: CompareComparisonTypeDto): stri
     case 'VALUATION_METHOD':
       return 'Metoda / metoda';
     case 'ACTUAL_VS_FORECAST':
-      return 'Actual / forecast';
+      return 'Rzeczywiste / prognoza';
     case 'GENERIC':
       return 'Porównanie ogólne';
     default: {

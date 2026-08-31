@@ -1,0 +1,16 @@
+NOWY — DYŻUR 113
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_113_ZERO_ZAMIAST_PRAWDY.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 113.
+
+Marker: ec0a6a4dc6926579b244dbd46f70ea2416e72b10
+Zasoby wyłączne: baza 5995, runtime 4890 i 4891 (PARA — kanoniczny runtime wymaga obu).
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

@@ -1,32 +1,55 @@
 /**
- * Harness: Dynamic SWOT — Session Workspace (`ToolWorkspace`, live work
- * surface: header, canvas, action bar, review panel).
+ * Harness: Dynamic SWOT — Session Workspace.
  *
- * Mounts the REAL component over a realistic, fully fictional demo session.
- * `ToolWorkspace` is deeply wired to TWO zustand stores (`useToolStore`,
- * `useAppStore`) plus several `Api.*` calls fired on mount (getUsers,
- * getToolSession, getInitiatives, and a 1.5s-debounced autosave via
- * updateToolSession — see the effects at ToolWorkspace.tsx:444-598). No
- * login, no backend: the stores are pre-seeded via `setState` (the
- * documented zustand escape hatch) instead of going through a network round
- * trip, and the handful of `Api.*` calls the mount effects fire are patched
- * to safe fixture responses — same method-patch approach as
- * `tools-swot-library-detail.tsx`.
+ * NAPRAWA 2026-08-30 (odbiór Piotra, uwaga „tools-swot-session-workspace"
+ * [ODRZUCONY]: „Jest jakaś prehistoryczna karta jeszcze za tym, zanim
+ * przerobiliśmy to."). Zbadane i POTWIERDZONE: ten ekran montował
+ * `<ToolWorkspace>` (`@/components/DiscoveryTools/ToolWorkspace`) — a ten
+ * komponent NIE renderuje się nigdzie w produkcie. Jedyne realne miejsce
+ * JSX `<ToolWorkspace ...>` poza tym harnessem to
+ * `src/views/discovery-tools/OperationalToolsView.tsx`, a CAŁY barrel
+ * `src/views/discovery-tools/index.ts` (5 widoków, w tym ten) nie ma ANI
+ * JEDNEGO importera w resztcie `src/` — martwy, nigdy nie podpięty do
+ * routingu ani menu. Dla realnej sesji `dynamic-swot` produkt idzie inną
+ * drogą: `dynamic-swot` jest w `DEDICATED_TOOL_TYPES`
+ * (`dedicatedToolTypes.ts`), więc `DiscoveryToolsHub.tsx` (linia ~3786)
+ * renderuje `<ToolDocumentView>`, NIE `<ToolWorkspace>`. `ToolWorkspace`
+ * jest więc dosłownie „prehistoryczną kartą" — kodem sprzed przepisania na
+ * `ToolDocumentView`, którego nikt nie usunął.
+ *
+ * Ten harness miał WŁASNE wejście .html właśnie po to, żeby ominąć listę
+ * awaryjną `?screen=` — ale to tylko udowodniło, że plik .tsx się
+ * renderuje, nie że renderowany komponent jest tym, co widzi użytkownik.
+ * Poprzedni odbiór (`docs/program/grafika/status.json`, id
+ * `tools-swot-session-workspace`, ocena A) pomylił „harness się ładuje" z
+ * „to jest aktualny ekran" — dokładnie pułapka „wołacz istnieje ≠
+ * renderuje się".
+ *
+ * PO naprawie: mountujemy REALNY `<DiscoveryToolsHub>` (ten sam komponent
+ * co produkcja) z otwartą sesją `dynamic-swot`, dokładnie techniką z
+ * `tools-sesja-wyjscie.tsx` (sprawdzona, zbudowana 2026-07-27 dla innego
+ * zgłoszenia Piotra — patrz ten plik po wyjaśnienie wzorca: seed
+ * `sessionStorage['moduleHub.openDocuments.tools']` + podmiana METOD
+ * `Api.*`, nie `window.fetch`). `dynamic-swot` w DEDICATED_TOOL_TYPES ⇒
+ * hub renderuje `ToolDocumentView` — TO jest dziś „warsztat sesji".
  *
  * URL: ?screen=tools-swot-session-workspace&theme=light|dark
+ *      /tools-swot-session-workspace.html?theme=light|dark
  */
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
 
-import { ToolWorkspace } from '@/components/DiscoveryTools/ToolWorkspace';
-import { HelpProvider } from '@/contexts/HelpContext';
+import { DiscoveryToolsHub } from '@/components/Discovery/DiscoveryToolsHub';
+import { AppProviders } from '@/providers/AppProviders';
 import { Api } from '@/services/api';
-import { useAppStore } from '@/store/useAppStore';
-import type { SWOTData, ToolSession } from '@/store/useToolStore';
-import { useToolStore } from '@/store/useToolStore';
+import type { SWOTData } from '@/store/useToolStore';
 
 const SESSION_ID = 'sess-demo-1';
 
+// Ta sama treść demo co przed naprawą (fikcyjna, realistyczna) — tylko
+// wehikuł zmieniony z `useToolStore.savedSessions` (czytane przez
+// ToolWorkspace) na `Api.getToolSession().answers` (czytane przez
+// ToolDocumentView → hydrateSessionFromApi, patrz useToolStore.ts:4198 —
+// `answers` jest mergowane do `inputData`, więc kształt SWOTData zostaje).
 const SWOT_DATA: Partial<SWOTData> = {
   context: {
     goal: 'Zdecydować, czy i jak wejść na rynek DACH w tym kwartale.',
@@ -56,58 +79,91 @@ const SWOT_DATA: Partial<SWOTData> = {
   outputCandidates: [],
 } as unknown as SWOTData;
 
-const SESSION: ToolSession = {
+const SESSION_ROW = {
   id: SESSION_ID,
-  toolType: 'dynamic-swot',
   name: 'Wejście na rynek DACH',
+  toolType: 'dynamic-swot',
+  tool_type: 'dynamic-swot',
+  status: 'DRAFT',
+  category: 'strategic',
+  completion_percent: 40,
+  completionPercent: 40,
   createdAt: '2026-08-10T09:00:00Z',
   updatedAt: '2026-08-13T11:40:00Z',
-  currentStep: 2,
-  steps: [],
-  inputData: SWOT_DATA as SWOTData,
-  chatHistory: [],
-  generatedInitiatives: [],
-  status: 'DRAFT' as ToolSession['status'],
-} as unknown as ToolSession;
-
-// ---- Seed BOTH zustand stores directly (documented escape hatch — no
-// network round trip needed for a harness). ----
-useToolStore.setState({ savedSessions: [SESSION], currentSession: null } as never);
-useAppStore.setState({
-  currentOrganization: { id: 'org-demo', name: 'Firma Demo Sp. z o.o.' },
-  currentProjectId: 'proj-demo-1',
-  activeChatMessages: [],
-} as never);
-
-// ---- Patch the handful of Api.* calls ToolWorkspace's mount effects fire
-// (getUsers, getToolSession, getInitiatives, updateToolSession) to safe
-// fixture responses — same method-patch approach as the Library-detail
-// harness. Nothing here is a network round trip. ----
-(Api as any).getUsers = async () => [];
-(Api as any).getToolSession = async () => ({
-  id: SESSION_ID,
-  status: 'draft',
-  version: 1,
+  answers: SWOT_DATA,
+  inputData: SWOT_DATA,
   generatedInitiatives: [],
   decisions: [],
-  permissions: { canRequestReview: true, canApproveTool: false, canGenerate: true },
-});
-(Api as any).getInitiatives = async () => ({ items: [] });
-// `useOrganizationContext` (src/hooks/discovery/useOrganizationContext.ts)
-// calls this unconditionally on mount; unstubbed it hits the dev-render
-// catch-all HTML route and throws a JSON parse error in the console.
-(Api as any).organizationContextGet = async () => ({ context: null });
-(Api as any).updateToolSession = async () => ({ version: 1 });
-(Api as any).createToolSession = async () => ({ id: SESSION_ID, status: 'draft', version: 1 });
+  permissions: { canRequestReview: true, canApproveTool: true, canGenerate: true },
+};
+
+const USERS = [
+  { id: 'u1', firstName: 'Piotr', lastName: 'Wiśniewski', email: 'piotr@dbr77.com', name: 'Piotr Wiśniewski' },
+];
+
+/** Podmiana METOD Api (nie window.fetch) — ten sam wzorzec co tools-sesja-wyjscie.tsx. */
+let patched = false;
+const patchApi = () => {
+  if (patched) return;
+  patched = true;
+  const api = Api as unknown as Record<string, any>;
+
+  api.listToolSessions = async () => [SESSION_ROW];
+  api.getToolSession = async () => SESSION_ROW;
+  api.updateToolSession = async () => SESSION_ROW;
+  api.createToolSession = async () => SESSION_ROW;
+  api.getToolGeneratedInitiatives = async () => [];
+  api.getUsers = async () => USERS;
+  api.getInitiativesByStatus = async () => [];
+  api.getInitiativeById = async () => null;
+  api.getInitiativeTasks = async () => [];
+  api.getLinkGraphBacklinks = async () => [];
+  api.suggestTools = async () => [];
+  // `useOrganizationContext` (src/hooks/discovery/useOrganizationContext.ts)
+  // woła to bezwarunkowo na mount; bez stuba trafia w catch-all HTML route
+  // dev-render i wybucha błędem parsowania JSON w konsoli.
+  api.organizationContextGet = async () => ({ context: null });
+  api.get = async () => [];
+  api.post = async () => ({});
+  api.patch = async () => ({});
+  api.delete = async () => ({});
+};
+
+/** Zasiew otwartej sesji dokładnie tam, skąd czyta `useModuleOpenDocuments('tools')`. */
+const seedOpenSession = () => {
+  window.sessionStorage.setItem(
+    'moduleHub.openDocuments.tools',
+    JSON.stringify({
+      openDocuments: [
+        {
+          id: SESSION_ID,
+          name: SESSION_ROW.name,
+          type: 'tool',
+          subType: 'dynamic-swot',
+          status: 'DRAFT',
+        },
+      ],
+      activeDocumentId: SESSION_ID,
+    })
+  );
+};
 
 export default function ToolsSwotSessionWorkspaceScreen() {
+  const [ready, setReady] = React.useState(false);
+
+  React.useEffect(() => {
+    patchApi();
+    seedOpenSession();
+    setReady(true);
+  }, []);
+
+  if (!ready) return null;
+
   return (
-    <MemoryRouter>
-      <HelpProvider>
-        <div className="min-h-screen bg-c-bg">
-          <ToolWorkspace toolType="dynamic-swot" sessionId={SESSION_ID} onBack={() => {}} />
-        </div>
-      </HelpProvider>
-    </MemoryRouter>
+    <AppProviders>
+      <div className="h-screen w-screen overflow-hidden bg-c-bg text-c-text">
+        <DiscoveryToolsHub initialTab="sessions" />
+      </div>
+    </AppProviders>
   );
 }

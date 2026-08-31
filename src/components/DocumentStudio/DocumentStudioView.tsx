@@ -12,7 +12,7 @@
  * See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md.
  */
 
-import { Layers, Sparkles } from 'lucide-react';
+import { FileQuestion, Layers, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -924,18 +924,26 @@ export const DocumentStudioView: React.FC = () => {
           // P0.1 fix (2026-07-26): blocking state, same pattern as
           // `template-resolve-error` above — a document that failed to load
           // must never silently present as "start a new document".
-          <div
-            data-testid="document-load-error"
-            className="mx-auto max-w-xl rounded-xl border border-c-border bg-c-surface p-6 text-center"
-          >
-            <p className="text-sm text-c-text">{artifactLoadMessage}</p>
-            <button
-              type="button"
-              onClick={() => navigate('/presentations?tab=documents')}
-              className="mt-4 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+            <div
+              data-testid="document-load-error"
+              className="w-full max-w-md rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
             >
-              {t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
-            </button>
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-c-surface-raised">
+                <FileQuestion className="h-6 w-6 text-c-text-muted" aria-hidden="true" />
+              </div>
+              <h2 className="mb-2 text-base font-semibold text-c-text">
+                {t('documentStudio.view.artifactNotFoundTitle', 'Nie ma tu dokumentu')}
+              </h2>
+              <p className="text-sm leading-relaxed text-c-text-secondary">{artifactLoadMessage}</p>
+              <button
+                type="button"
+                onClick={() => navigate('/presentations?tab=documents')}
+                className="mt-6 rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+              </button>
+            </div>
           </div>
         ) : phase === 'intake' ? (
           docEntryMode === 'blank' ? (
@@ -991,18 +999,28 @@ export const DocumentStudioView: React.FC = () => {
             // ★ Stan blokujący: wzorzec nie do rozwiązania (osierocony, brak
             // dostępu, wycofany, niezaindeksowany). ŻADNEGO fallbacku do
             // pickera ani do generacji z AI — uczciwy komunikat i wyjście.
-            <div
-              data-testid="template-resolve-error"
-              className="mx-auto max-w-xl rounded-xl border border-c-border bg-c-surface p-6 text-center"
-            >
-              <p className="text-sm text-c-text">{templateResolveMessage}</p>
-              <button
-                type="button"
-                onClick={() => navigate('/presentations?tab=templates')}
-                className="mt-4 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+              <div
+                data-testid="template-resolve-error"
+                className="w-full max-w-md rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
               >
-                {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
-              </button>
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-c-surface-raised">
+                  <FileQuestion className="h-6 w-6 text-c-text-muted" aria-hidden="true" />
+                </div>
+                <h2 className="mb-2 text-base font-semibold text-c-text">
+                  {t('documentStudio.view.templateResolveTitle', 'Nie da się użyć tego wzorca')}
+                </h2>
+                <p className="text-sm leading-relaxed text-c-text-secondary">
+                  {templateResolveMessage}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/presentations?tab=templates')}
+                  className="mt-6 rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
+                </button>
+              </div>
             </div>
           ) : zaiTeresaEnabled && docEntryMode === 'ai' ? (
             // FAZA B1 (2026-07-27, flaga `ff_zai_teresa`, default OFF) — N11:

@@ -126,7 +126,7 @@ export function buildKpiScorecardColumns(
       width: '140px',
       render: (row: KpiScorecardDto) => (
         <span className="text-sm text-c-text-secondary">
-          {kpiScorecardOwnerDisplay(row.ownerUserId, currentUserId, isPolish)}
+          {row.ownerName ?? kpiScorecardOwnerDisplay(row.ownerUserId, currentUserId, isPolish)}
         </span>
       ),
     },
@@ -294,11 +294,16 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
       ),
     },
     details: {
+      // Bramka parytetu jezykowego (2026-08-30): StandardPreview domyslnie
+      // pokazuje angielskie naglowki "Property"/"Value" gdy wywolujacy ich
+      // nie poda — patrz komentarz w StandardPreview.tsx przy propertyLabel.
+      propertyLabel: t('Właściwość', 'Property'),
+      valueLabel: t('Wartość', 'Value'),
       properties: [
         {
           id: 'owner',
           label: t('Właściciel', 'Owner'),
-          value: kpiScorecardOwnerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
+          value: row.ownerName ?? kpiScorecardOwnerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
         },
         {
           id: 'reviewFrequency',
@@ -387,7 +392,7 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
       width: '220px',
       render: (row: KpiScorecardItemDto) => (
         <span className="text-sm font-mono text-c-text" title={row.kpiId}>
-          {shortKpiScorecardId(row.kpiId)}
+          {row.kpiName ?? shortKpiScorecardId(row.kpiId)}
         </span>
       ),
     },
@@ -422,7 +427,7 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Dodane przez' : 'Added by',
       width: '150px',
       render: (row: KpiScorecardItemDto) => (
-        <span className="text-sm text-c-text-secondary">{shortKpiScorecardId(row.addedBy)}</span>
+        <span className="text-sm text-c-text-secondary" title={row.addedBy}>{row.addedByName ?? shortKpiScorecardId(row.addedBy)}</span>
       ),
     },
     {
@@ -512,7 +517,7 @@ export function buildKpiScorecardItemPreview(
 ): StandardPreviewProps {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   return {
-    title: `KPI ${shortKpiScorecardId(row.kpiId)}`,
+    title: `KPI ${row.kpiName ?? shortKpiScorecardId(row.kpiId)}`,
     onClose: ctx.onClose,
     meta: {
       pills: [{ label: kpiScorecardItemRoleLabel(row.role, ctx.isPolish), tone: row.role === 'primary' ? 'info' : 'neutral' }],
@@ -523,10 +528,12 @@ export function buildKpiScorecardItemPreview(
       ),
     },
     details: {
+      propertyLabel: t('Właściwość', 'Property'),
+      valueLabel: t('Wartość', 'Value'),
       properties: [
         { id: 'kpiId', label: 'KPI ID', value: row.kpiId, mono: true },
         { id: 'sortOrder', label: t('Kolejność', 'Sort order'), value: String(row.sortOrder) },
-        { id: 'addedBy', label: t('Dodane przez', 'Added by'), value: shortKpiScorecardId(row.addedBy) },
+        { id: 'addedBy', label: t('Dodane przez', 'Added by'), value: row.addedByName ?? shortKpiScorecardId(row.addedBy) },
         { id: 'addedAt', label: t('Dodano', 'Added'), value: formatKpiScorecardDate(row.addedAt, ctx.isPolish) },
       ],
     },
@@ -685,10 +692,12 @@ export function buildKpiScorecardSnapshotPreview(
       // Deliberately NO snapshotPayload contents here — see file header
       // (decision #6b non-leak finding: a bare listing's stored payload is
       // not re-filtered per-reader the way getPublishedSnapshot's is).
+      propertyLabel: t('Właściwość', 'Property'),
+      valueLabel: t('Wartość', 'Value'),
       properties: [
-        { id: 'createdBy', label: t('Utworzono przez', 'Created by'), value: shortKpiScorecardId(row.createdBy) },
+        { id: 'createdBy', label: t('Utworzono przez', 'Created by'), value: row.createdByName ?? shortKpiScorecardId(row.createdBy) },
         { id: 'createdAt', label: t('Utworzono', 'Created'), value: formatKpiScorecardDate(row.createdAt, ctx.isPolish) },
-        { id: 'publishedBy', label: t('Opublikowano przez', 'Published by'), value: shortKpiScorecardId(row.publishedBy) },
+        { id: 'publishedBy', label: t('Opublikowano przez', 'Published by'), value: row.publishedByName ?? shortKpiScorecardId(row.publishedBy) },
         { id: 'publishedAt', label: t('Opublikowano', 'Published'), value: formatKpiScorecardDate(row.publishedAt, ctx.isPolish) },
         {
           id: 'supersededAt',

@@ -218,9 +218,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       return { changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO tasks')) {
-      const [id, projectId, title, description, assigneeId, dueDate, createdBy] = params;
+      const [id, organizationId, projectId, title, description, assigneeId, dueDate, createdBy] =
+        params;
       db.tasks.push({
         id,
+        organization_id: organizationId,
         project_id: projectId,
         title,
         description,
@@ -315,7 +317,7 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
     expect(executed.success).toBe(true);
     expect(executed.status).toBe('EXECUTED');
     expect(executed.lifecycleState).toBe('audited');
-    expect(executed.rollbackStatus).toBe('rollback_available');
+    expect(executed.rollbackStatus).toBe('rollback_unavailable');
     expect(db.tasks).toHaveLength(1);
     expect(db.tasks[0].title).toBe('COO follow-up');
     expect(db.events.map((event) => event.event_type)).toEqual([
@@ -326,8 +328,8 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
     ]);
     expect(db.ledgers.get(created.actionId)?.status).toBe('audited');
     expect(JSON.parse(db.ledgers.get(created.actionId)?.audit || '{}')).toMatchObject({
-      rollbackStatus: 'rollback_available',
-      rollbackAvailable: true,
+      rollbackStatus: 'rollback_unavailable',
+      rollbackAvailable: false,
     });
   });
 

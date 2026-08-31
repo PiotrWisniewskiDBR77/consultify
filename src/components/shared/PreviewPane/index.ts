@@ -47,6 +47,7 @@ export {
   PreviewMetaCard,
   type PreviewMetaCardProps,
 } from './PreviewMetaCard';
+export { PreviewPaneAside, type PreviewPaneAsideProps } from './PreviewPaneAside';
 export {
   PreviewRelations,
   type PreviewRelationsProps,
@@ -65,6 +66,10 @@ export {
   KEBAB_ITEM,
   KEBAB_MENU,
   pillColorScheme,
+  PREVIEW_HEADER_ICON_BUTTON,
+  PREVIEW_HEADER_ICON_BUTTON_ACTIVE,
+  PREVIEW_HEADER_ICON_SIZE,
+  PREVIEW_HEADER_OPEN_BUTTON,
   PREVIEW_HINT_CHIP,
   PREVIEW_META_PILL,
   PREVIEW_PILL_BASE,
@@ -74,3 +79,4 @@ export {
   SKELETON_LINE_3,
   SKELETON_LINE_4,
 } from './previewStyles';
+export { PreviewWhatsNextCard, type PreviewWhatsNextCardProps } from './PreviewWhatsNextCard';

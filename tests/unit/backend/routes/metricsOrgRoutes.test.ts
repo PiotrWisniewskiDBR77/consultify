@@ -8,8 +8,8 @@ import express from 'express';
 import request from 'supertest';
 
 // Mock the authentication middleware
-vi.mock('../../../../server/src/middleware/authMiddleware.js', () => ({
-  requireAuth: (req: any, res: any, next: any) => {
+vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: (req: any, res: any, next: any) => {
     req.user = {
       id: 'test-user-id',
       organizationId: 'test-org-id',
@@ -51,6 +51,9 @@ describe('Metrics Organization Routes', () => {
     // Import and use the routes after mocks are set up
     const metricsRoutes = (await import('../../../../server/src/routes/metrics.routes.js')).default;
     app.use('/api/metrics', metricsRoutes);
+    app.use((_err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) =>
+      res.status(500).json({ error: 'Internal server error' })
+    );
   });
 
   afterEach(() => {

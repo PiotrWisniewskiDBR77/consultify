@@ -114,6 +114,18 @@ const USERS = [
   },
 ];
 
+/**
+ * `?dane=pelne` (tor grafiki, 2026-08-30) — Piotr nigdy nie ocenia pustej
+ * karty (CLAUDE.md #7). Sekcje „Hipoteza" i „Wnioski i lekcje" czytają wprost
+ * `initiative.hypothesisStatement` / `initiative.lessonsLearned`
+ * (InitiativeDocumentView.tsx:1546-1549 — `savedHypothesis`/`savedLessons`,
+ * bez fallbacku demo/localStorage), a mock ich dotąd nie ustawiał — stąd obie
+ * karty renderowały swój uczciwy stan pusty niezależnie od reszty bogatego
+ * mocka. Domyślnie zostają puste (prawda o świeżo nienapisanej hipotezie);
+ * z `?dane=pelne` dostają treść zgodną z historią SMED L3 poniżej.
+ */
+const __danePelne = new URLSearchParams(window.location.search).get('dane') === 'pelne';
+
 // ── INICJATYWA ────────────────────────────────────────────────────────────
 const INITIATIVE = {
   id: INITIATIVE_ID,
@@ -344,6 +356,29 @@ const INITIATIVE = {
       description: 'Bramka: wynik ≤ 45 min otwiera rozszerzenie na L1/L2/L4.',
     },
   ],
+
+  ...(__danePelne
+    ? {
+        hypothesisStatement:
+          'Wierzymy, że rozdzielenie czynności wewnętrznych i zewnętrznych przezbrojenia oraz ' +
+          'standaryzacja wózka narzędziowego skróci czas przezbrojenia z 96 do 45 minut, ' +
+          'mierzone medianą z MES. Będziemy wiedzieć, że mieliśmy rację, gdy trzy kolejne ' +
+          'przezbrojenia po wdrożeniu standardu zmieszczą się poniżej 50 minut bez udziału ' +
+          'mechanika utrzymania ruchu.\n\n' +
+          'Obalone zostanie, jeśli po przeszkoleniu trzech zmian mediana nie spadnie poniżej ' +
+          '70 minut — wtedy problem nie jest w organizacji przezbrojenia, tylko w samym sprzęcie ' +
+          '(np. czasie nagrzewania formy), i SMED nie wystarczy.',
+        lessonsLearned:
+          'Z dwóch pierwszych nagranych przezbrojeń (etap diagnozy) wynika, że 60% czasu ' +
+          'przestoju to czynności, które dałoby się wykonać PRZED zatrzymaniem linii (czynności ' +
+          'zewnętrzne) — więcej niż zakładane na starcie 40%. Warto zrewidować cel pośredni na ' +
+          '40 minut zamiast 45, jeśli standaryzacja wózka pójdzie zgodnie z planem.\n\n' +
+          'Ryzyko organizacyjne: operatorzy nocnej zmiany nie byli objęci pierwszymi nagraniami ' +
+          '— plan szkolenia (kamień milowy „Szkolenie trzech zmian") musi to uwzględnić, inaczej ' +
+          'standard nie przetrwa na trzeciej zmianie tak, jak nie przetrwał poprzedni projekt 5S ' +
+          'na L2 w 2025.',
+      }
+    : {}),
 };
 
 // ── KPI ───────────────────────────────────────────────────────────────────

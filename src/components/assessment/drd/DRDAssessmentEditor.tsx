@@ -24,6 +24,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell';
+import {
+  czyTerminToPlaceholder,
+  etykietyPoziomowZMetodyki,
+  skrocTerminDoKomorki,
+} from '@/components/assessment/drd/drdMatrixCellContent';
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
 import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
 import { Tooltip } from '@/components/ui/primitives';
@@ -90,6 +95,363 @@ function setAreaState(
     },
   };
 }
+
+/* ==========================================================================
+ * MACIERZ — JEDNA IMPLEMENTACJA SIATKI (widok zwykły + pełnoekranowy)
+ * --------------------------------------------------------------------------
+ * Do 2026-08-30 siatka macierzy istniała w tym pliku DWA RAZY: raz w widoku
+ * zwykłym, raz w nakładce pełnoekranowej. Kopie zdążyły się rozjechać
+ * (minmax(150px) vs minmax(180px), inny podpis wiersza, inne rozmiary kafli
+ * liczbowych) — audyt `docs/program/grafika/MACIERZ_DRD_AUDYT.md` §C10.
+ * Skutek: każda poprawka wizualna musiała być robiona dwa razy.
+ *
+ * Teraz jest jedna siatka. RÓŻNICE CELOWE zostały jako PARAMETRY:
+ *   - `columnMinPx`   — pełny ekran ma więcej miejsca, więc szersze kolumny,
+ *   - `rowHint`       — widok zwykły ma podpowiedź o najeździe, pełny ekran nie
+ *                       (w pełnym ekranie nie ma dymka najazdowego),
+ *   - `selectedCell` / `dimOthers` — popover żyje tylko w widoku zwykłym,
+ *   - `onCellMouseEnter/Leave` — dymek najazdowy tylko w widoku zwykłym.
+ * ========================================================================== */
+
+/** Gęstość siatki — przełącznik „Spacious" MUSI być odczuwalny (audyt §B3). */
+const MATRIX_DENSITY = {
+  compact: {
+    gap: 'gap-2',
+    cellPadding: 'p-2',
+    cellMinHeight: 'min-h-[40px]',
+    rowLabelPadding: 'p-3',
+  },
+  spacious: {
+    gap: 'gap-2',
+    cellPadding: 'p-3',
+    cellMinHeight: 'min-h-[60px]',
+    rowLabelPadding: 'p-4',
+  },
+} as const;
+
+/**
+ * Kolory komórek — JEDNO źródło dla siatki I dla legendy (audyt §B2: legenda
+ * pokazywała kolory, których w komórkach nie ma). Oba motywy: do 2026-08-30
+ * siatka miała wymuszone `className="dark"` i była ciemną wyspą w jasnej
+ * karcie (audyt §B1).
+ */
+const MATRIX_FILL_ACHIEVED =
+  'border-slate-500 bg-slate-300 dark:border-slate-400/50 dark:bg-slate-500/25';
+const MATRIX_FILL_TARGET =
+  'border-blue-500 bg-blue-100 dark:border-blue-400/40 dark:bg-blue-500/15';
+const MATRIX_FILL_IDLE = 'border-c-border bg-c-surface dark:border-white/10 dark:bg-white/[0.03]';
+
+const MATRIX_TEXT_ACHIEVED = 'text-slate-900 dark:text-white';
+const MATRIX_TEXT_TARGET = 'text-blue-900 dark:text-blue-100';
+/** Nieoceniona komórka miała 2,42:1 (audyt §A3) — całe kolumny znikały. */
+const MATRIX_TEXT_IDLE = 'text-slate-600 dark:text-slate-400';
+
+type MatrixCellRef = { areaId: string; level: number };
+
+type DRDMatrixGridProps = {
+  areas: DRDArea[];
+  levelCount: number;
+  value: DRDEditorAnswers | undefined;
+  /** false = „Spacious" włączony */
+  compact: boolean;
+  /** różnica celowa: pełny ekran ma więcej miejsca */
+  columnMinPx: number;
+  /** różnica celowa: podpowiedź pod etykietą wiersza (pełny ekran nie ma dymka) */
+  rowHint: string;
+  /** komórka z otwartym popoverem (tylko widok zwykły) */
+  selectedCell?: MatrixCellRef | null;
+  onCellClick: (areaId: string, level: number, e: React.MouseEvent<HTMLButtonElement>) => void;
+  onCellMouseEnter?: (
+    areaId: string,
+    level: number,
+    e: React.MouseEvent<HTMLButtonElement>
+  ) => void;
+  onCellMouseLeave?: () => void;
+  onAreaClick: (areaId: string) => void;
+  /** etykiety własne ekranu — zostają po angielsku do decyzji właściciela */
+  areaStripLabel: string;
+  overflowHint: (ukryte: number) => string;
+};
+
+const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
+  areas,
+  levelCount,
+  value,
+  compact,
+  columnMinPx,
+  rowHint,
+  selectedCell = null,
+  onCellClick,
+  onCellMouseEnter,
+  onCellMouseLeave,
+  onAreaClick,
+  areaStripLabel,
+  overflowHint,
+}) => {
+  const density = compact ? MATRIX_DENSITY.compact : MATRIX_DENSITY.spacious;
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [hiddenPx, setHiddenPx] = useState(0);
+
+  /**
+   * A4 (audyt): przy 9 obszarach trzy kolumny wypadały poza kadr i NIC o tym
+   * nie informowało (clientWidth 1182 vs scrollWidth 1670). Teraz: węższa
+   * kolumna etykiet i węższe minimum kolumn przy gęstych osiach, a jeśli mimo
+   * to nie mieści się — widoczny pasek przewijania, cień krawędziowy i podpis.
+   */
+  const labelColumnPx = 240;
+  const effectiveColumnMinPx =
+    areas.length >= 9
+      ? Math.min(columnMinPx, 92)
+      : areas.length >= 7
+        ? Math.min(columnMinPx, 120)
+        : columnMinPx;
+
+  React.useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const measure = () => setHiddenPx(Math.max(0, el.scrollWidth - el.clientWidth));
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => ro.disconnect();
+  }, [areas.length, levelCount, compact, columnMinPx]);
+
+  const hiddenColumns =
+    hiddenPx > 0 ? Math.max(1, Math.ceil(hiddenPx / (effectiveColumnMinPx + 8))) : 0;
+
+  const levelLabels = React.useMemo(
+    () => etykietyPoziomowZMetodyki(areas, levelCount),
+    [areas, levelCount]
+  );
+
+  return (
+    <div className="mt-6">
+      <div className="relative">
+        <div
+          ref={scrollerRef}
+          className="app-table-scrollbar overflow-x-auto pb-2 rounded-xl border border-c-border bg-c-surface-subtle dark:border-white/10 dark:bg-navy-950 p-2"
+        >
+          <div
+            className={`grid ${density.gap}`}
+            style={{
+              gridTemplateColumns: `${labelColumnPx}px repeat(${areas.length}, minmax(${effectiveColumnMinPx}px, 1fr))`,
+            }}
+          >
+            {/* Wiersze poziomów (najwyższy u góry — logika pracy, nie ruszać) */}
+            {Array.from({ length: levelCount }, (_, i) => levelCount - i).map((level) => {
+              const label = levelLabels[level] || '';
+
+              return (
+                <React.Fragment key={`row-${level}`}>
+                  {/* Etykieta wiersza */}
+                  <div
+                    className={`sticky left-0 z-10 rounded-xl border border-c-border bg-c-surface dark:border-white/10 dark:bg-gradient-to-r dark:from-navy-800/60 dark:to-navy-950 ${density.rowLabelPadding}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-bold text-c-text">
+                        <span className="text-c-text-secondary">{level}.</span>
+                        {label ? ` ${label}` : ''}
+                      </div>
+                    </div>
+                    <div className="mt-1 text-[11px] text-c-text-muted">{rowHint}</div>
+                  </div>
+
+                  {/* Komórki */}
+                  {areas.map((area) => {
+                    const s = getAreaState(value, area.id, levelCount);
+                    const achieved = s.achievedLevel || 0;
+                    const target = s.targetLevel || 0;
+
+                    const isAchieved = level <= achieved;
+                    const isTarget = target > 0 && level <= target && !isAchieved;
+
+                    const areaLevelInfo = area.levels?.find((l) => l.level === level);
+                    const knowledge = getDRDKnowledge(area.id, level);
+                    const techs = knowledge?.suggestedTechnologies || [];
+
+                    const isSelected =
+                      selectedCell?.areaId === area.id && selectedCell?.level === level;
+                    const hasActivePopup = selectedCell !== null;
+
+                    const fill = isAchieved
+                      ? `${MATRIX_FILL_ACHIEVED} hover:bg-slate-400 dark:hover:bg-slate-500/35`
+                      : isTarget
+                        ? `${MATRIX_FILL_TARGET} hover:bg-blue-200 dark:hover:bg-blue-500/25`
+                        : `${MATRIX_FILL_IDLE} hover:bg-c-surface-hover dark:hover:bg-white/[0.07]`;
+
+                    /**
+                     * TREŚĆ KOMÓRKI — docs/program/grafika/MACIERZ_TRESC_KOMOREK.md §4.3.
+                     *
+                     * Komórka niesie JEDEN termin: wiodącą technologię tego
+                     * obszaru na tym poziomie, czyli `suggestedTechnologies[0]`
+                     * — pozycję, na którą nakładki wiedzy konsekwentnie wstawiają
+                     * termin z książki. Nazwa poziomu NIE może tu stać: wszystkie
+                     * obszary osi 1 mają te same 7 nazw, więc dałaby dziewięć
+                     * identycznych kolumn (tak wyglądały 1C i 1I do 2026-08-31).
+                     * Nazwa poziomu jest teraz etykietą wiersza, reszta listy
+                     * technologii i pełny opis zostają w popoverze.
+                     *
+                     * Dwóch terminów nie łączymy: kropka `·` czytała się jak „i"
+                     * i sugerowała parę, której książka nie stawia.
+                     */
+                    const surowyTech = techs[0]?.trim() || '';
+                    const leadTech = czyTerminToPlaceholder(surowyTech) ? '' : surowyTech;
+                    const fullTitle = areaLevelInfo?.title || '';
+                    // Fallback bez `slice(0, 3)` — urywał tytuł na spójniku
+                    // („Centralized Data &", „AI as a" — audyt §B4).
+                    const displayContent = leadTech
+                      ? skrocTerminDoKomorki(leadTech)
+                      : fullTitle || '—';
+                    const fullContent = leadTech
+                      ? fullTitle
+                        ? `${leadTech} — ${fullTitle}`
+                        : leadTech
+                      : fullTitle;
+
+                    return (
+                      <button
+                        key={`${area.id}-${level}`}
+                        type="button"
+                        /*
+                          Natywny dymek TYLKO tam, gdzie NIE ma własnego dymka
+                          najazdowego (pełny ekran). W widoku zwykłym własny
+                          dymek już pokazuje pełny tytuł — dwa dymki naraz to
+                          szum, nie pomoc.
+                        */
+                        title={onCellMouseEnter ? undefined : fullContent || undefined}
+                        className={`group relative rounded-lg border transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                          density.cellPadding
+                        } ${
+                          isSelected
+                            ? 'border-c-border-strong bg-c-surface-raised ring-2 ring-c-focus scale-[1.02] z-10 dark:border-white/60 dark:bg-white/20 dark:ring-white/30'
+                            : hasActivePopup
+                              ? `opacity-40 ${fill}`
+                              : fill
+                        }`}
+                        onClick={(e) => onCellClick(area.id, level, e)}
+                        onMouseEnter={
+                          onCellMouseEnter ? (e) => onCellMouseEnter(area.id, level, e) : undefined
+                        }
+                        onMouseLeave={onCellMouseLeave}
+                        aria-label={`${area.name}, level ${level}`}
+                      >
+                        <div
+                          className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center px-1`}
+                        >
+                          <span
+                            className={`text-[11px] font-medium leading-tight line-clamp-2 break-words ${
+                              isAchieved
+                                ? MATRIX_TEXT_ACHIEVED
+                                : isTarget
+                                  ? MATRIX_TEXT_TARGET
+                                  : MATRIX_TEXT_IDLE
+                            }`}
+                          >
+                            {displayContent}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+
+            {/* Dolny pasek osi X (obszary) — logika pracy: nagłówki NA DOLE */}
+            <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-c-border bg-c-surface dark:border-white/10 dark:bg-navy-950 p-2">
+              <div className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
+                {areaStripLabel}
+              </div>
+            </div>
+            {areas.map((area) => {
+              const s = getAreaState(value, area.id, levelCount);
+              const achieved = s.achievedLevel || 0;
+              const target = s.targetLevel || 0;
+              return (
+                <button
+                  key={`x-${area.id}`}
+                  type="button"
+                  onClick={() => onAreaClick(area.id)}
+                  title={area.name}
+                  className="sticky bottom-0 z-20 rounded-xl border border-c-border bg-c-surface hover:bg-c-surface-hover dark:border-white/10 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/[0.06] dark:hover:from-white/[0.14] dark:hover:to-white/[0.08] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <span className="text-[11px] font-bold text-c-text-secondary">{area.id}</span>
+                    <div className="flex items-center gap-1">
+                      {achieved > 0 && (
+                        <span className="px-1.5 py-0.5 rounded whitespace-nowrap bg-slate-300 text-slate-900 dark:bg-slate-500/30 dark:text-white text-[9px] font-bold">
+                          AS {achieved}
+                        </span>
+                      )}
+                      {target > 0 && (
+                        <span className="px-1.5 py-0.5 rounded whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-200 text-[9px] font-bold">
+                          TO {target}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-[11px] font-medium text-c-text leading-tight line-clamp-2">
+                    {area.name}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Cień krawędziowy — sygnał, że po prawej jest jeszcze treść (audyt §A4) */}
+        {hiddenPx > 0 && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute right-0 top-0 bottom-2 w-10 rounded-r-xl bg-gradient-to-l from-c-bg to-transparent"
+          />
+        )}
+      </div>
+
+      {hiddenPx > 0 && (
+        <div className="mt-1.5 text-[11px] text-c-text-muted">{overflowHint(hiddenColumns)}</div>
+      )}
+    </div>
+  );
+};
+
+/** Legenda — kropki DOKŁADNIE w kolorach komórek (audyt §B2). */
+const DRDMatrixLegend: React.FC<{ compact: boolean; onCompactChange: (v: boolean) => void }> = ({
+  compact,
+  onCompactChange,
+}) => (
+  <div className="flex flex-col gap-2 text-xs text-c-text-secondary">
+    <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        {/*
+          Wypełnienie kropki = DOKŁADNIE wypełnienie komórki (audyt §B2: legenda
+          pokazywała kolory, których w siatce nie ma). Obwódka jest MOCNIEJSZA od
+          obwódki komórki, bo kropka 14 px na karcie musi być widoczna sama z
+          siebie — stara kropka `bg-navy-900` na `dark:bg-navy-950` miała 1,07:1.
+        */}
+        <span className="h-3.5 w-3.5 rounded-full border-2 bg-slate-300 border-slate-600 dark:bg-slate-500/25 dark:border-slate-300" />
+        <span>AS-IS</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="h-3.5 w-3.5 rounded-full border-2 bg-blue-100 border-blue-500 dark:bg-blue-500/15 dark:border-blue-300" />
+        <span>TO-BE</span>
+      </div>
+    </div>
+    <div className="flex items-center gap-4 text-[11px] text-c-text-secondary">
+      <label className="inline-flex items-center gap-2 select-none">
+        <input
+          type="checkbox"
+          checked={!compact}
+          onChange={(e) => onCompactChange(!e.target.checked)}
+          className="h-4 w-4 rounded border-c-border accent-slate-600 dark:accent-slate-300 focus:ring-c-focus"
+        />
+        Spacious
+      </label>
+    </div>
+  </div>
+);
 
 type Props = {
   assessmentId: string;
@@ -652,7 +1014,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       return (
                         <div className="mt-1.5 h-1 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-navy-900 transition-all duration-300"
+                            className="h-full bg-navy-900 dark:bg-slate-300 transition-all duration-300"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -727,29 +1089,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
                 {/* Right side: Legend + Fullscreen */}
                 <div className="flex items-center gap-3">
-                  <div className="flex flex-col gap-2 text-xs text-slate-700 dark:text-slate-200">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-3.5 rounded-full bg-navy-900 " />
-                        <span>AS-IS</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-3.5 rounded-full bg-blue-500/70 ring-1 ring-blue-300/60" />
-                        <span>TO-BE</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 text-[11px] text-slate-700 dark:text-slate-300">
-                      <label className="inline-flex items-center gap-2 select-none">
-                        <input
-                          type="checkbox"
-                          checked={!matrixCompact}
-                          onChange={(e) => setMatrixCompact(!e.target.checked)}
-                          className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white focus:ring-c-focus"
-                        />
-                        Spacious
-                      </label>
-                    </div>
-                  </div>
+                  <DRDMatrixLegend compact={matrixCompact} onCompactChange={setMatrixCompact} />
 
                   <button
                     type="button"
@@ -763,202 +1103,41 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Matrix */}
-              <div className="dark mt-6 overflow-x-auto pb-2 rounded-xl bg-navy-950 p-2">
-                <div
-                  className="grid gap-2 min-w-[1100px]"
-                  style={{
-                    gridTemplateColumns: `240px repeat(${axisAreas.length}, minmax(150px, 1fr))`,
-                  }}
-                >
-                  {/* Level rows (high -> low) */}
-                  {Array.from({ length: levelCount }, (_, i) => levelCount - i).map((level) => {
-                    const levelLabels: Record<number, string> = {
-                      1: 'Basic / Manual',
-                      2: 'Digitized',
-                      3: 'Integrated',
-                      4: 'Automated',
-                      5: 'Optimized',
-                      6: 'AI-Driven',
-                      7: 'Autonomous',
-                    };
-                    const label = levelLabels[level] || `Level ${level}`;
-
-                    return (
-                      <React.Fragment key={`row-${level}`}>
-                        {/* Row label */}
-                        <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-gradient-to-r from-navy-800/40 to-navy-950/60 backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="text-white font-bold">
-                              <span className="text-slate-200">{level}.</span> {label}
-                            </div>
-                          </div>
-                          <div className="mt-1 text-[11px] text-slate-600">
-                            Hover for preview · Click for details
-                          </div>
-                        </div>
-
-                        {/* Cells */}
-                        {axisAreas.map((area) => {
-                          const s = getAreaState(value, area.id, levelCount);
-                          const achieved = s.achievedLevel || 0;
-                          const target = s.targetLevel || 0;
-
-                          const isAchieved = level <= achieved;
-                          const isTarget = target > 0 && level <= target && !isAchieved;
-
-                          const areaLevelInfo = area.levels?.find((l) => l.level === level);
-                          const knowledge = getDRDKnowledge(area.id, level);
-                          const techs = knowledge?.suggestedTechnologies || [];
-
-                          // Check if this cell is selected (popup open)
-                          const isSelected =
-                            popupCell?.areaId === area.id && popupCell?.level === level;
-                          // Check if any popup is open (for dimming other cells)
-                          const hasActivePopup = popupCell !== null;
-
-                          return (
-                            <button
-                              key={`${area.id}-${level}`}
-                              type="button"
-                              className={`group relative rounded-lg border transition-all duration-200 text-left ${
-                                matrixCompact ? 'p-2' : 'p-2.5'
-                              } ${
-                                isSelected
-                                  ? 'border-white/60 bg-white/20 ring-2 ring-white/30 scale-[1.02] z-10'
-                                  : hasActivePopup
-                                    ? 'opacity-40'
-                                    : ''
-                              } ${
-                                !isSelected && !hasActivePopup && isAchieved
-                                  ? 'border-slate-400/50 bg-slate-500/25 hover:bg-slate-500/35'
-                                  : !isSelected && !hasActivePopup && isTarget
-                                    ? 'border-blue-400/40 bg-blue-500/15 hover:bg-blue-500/25'
-                                    : !isSelected && !hasActivePopup
-                                      ? 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
-                                      : ''
-                              }`}
-                              onClick={(e) => {
-                                if (e.shiftKey && !readOnly) {
-                                  const cur = getAreaState(value, area.id, levelCount);
-                                  onChange(
-                                    setAreaState(value, area.id, {
-                                      ...cur,
-                                      targetLevel: clamp(level, 1, levelCount),
-                                    })
-                                  );
-                                  return;
-                                }
-                                // Open popup overlay instead of navigating
-                                openCellPopup(area.id, level, e);
-                              }}
-                              onMouseEnter={(e) => showHoverTooltip(area.id, level, e)}
-                              onMouseLeave={hideHoverTooltip}
-                              aria-label={`${area.name}, level ${level}`}
-                            >
-                              {/* Ultra-simple cell: just 2-3 keywords */}
-                              {(() => {
-                                // Prefer key technologies, fallback to short title
-                                const keyTechs = [
-                                  'AI',
-                                  'ML',
-                                  'RPA',
-                                  'IoT',
-                                  'AGV',
-                                  'WMS',
-                                  'MES',
-                                  'ERP',
-                                  'CRM',
-                                  'BI',
-                                  'API',
-                                  'EDI',
-                                  'PLM',
-                                  'APS',
-                                  'TMS',
-                                  'YMS',
-                                ];
-                                const highlighted = techs
-                                  .filter((t) => keyTechs.includes(t))
-                                  .slice(0, 2);
-                                const shortTitle = areaLevelInfo?.title
-                                  ? areaLevelInfo.title.split(' ').slice(0, 3).join(' ')
-                                  : null;
-                                const displayContent =
-                                  highlighted.length > 0
-                                    ? highlighted.join(' · ')
-                                    : shortTitle || '—';
-
-                                return (
-                                  <div className="h-full min-h-[40px] flex items-center justify-center text-center px-1">
-                                    <span
-                                      className={`text-[11px] font-medium leading-tight ${
-                                        isAchieved
-                                          ? 'text-white'
-                                          : isTarget
-                                            ? 'text-blue-100'
-                                            : 'text-slate-600'
-                                      }`}
-                                    >
-                                      {displayContent}
-                                    </span>
-                                  </div>
-                                );
-                              })()}
-                            </button>
-                          );
-                        })}
-                      </React.Fragment>
+              <DRDMatrixGrid
+                areas={axisAreas}
+                levelCount={levelCount}
+                value={value}
+                compact={matrixCompact}
+                columnMinPx={150}
+                rowHint="Hover for preview · Click for details"
+                selectedCell={popupCell}
+                onCellClick={(cellAreaId, cellLevel, e) => {
+                  if (e.shiftKey && !readOnly) {
+                    const cur = getAreaState(value, cellAreaId, levelCount);
+                    onChange(
+                      setAreaState(value, cellAreaId, {
+                        ...cur,
+                        targetLevel: clamp(cellLevel, 1, levelCount),
+                      })
                     );
-                  })}
-
-                  {/* Bottom X-axis strip (process areas) */}
-                  <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
-                    <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
-                      Area
-                    </div>
-                  </div>
-                  {axisAreas.map((area) => {
-                    const s = getAreaState(value, area.id, levelCount);
-                    const achieved = s.achievedLevel || 0;
-                    const target = s.targetLevel || 0;
-                    return (
-                      <button
-                        key={`x-${area.id}`}
-                        type="button"
-                        onClick={() => {
-                          setAreaId(area.id);
-                          onAreaChange?.(area.id);
-                          setViewMode('surveys');
-                        }}
-                        className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/[0.06] backdrop-blur p-2 text-left hover:from-white/[0.14] hover:to-white/[0.08] transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
-                      >
-                        {/* Top line: ID + badges */}
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">
-                            {area.id}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            {achieved > 0 && (
-                              <span className="px-1.5 py-0.5 rounded bg-slate-500/30 text-[9px] font-bold text-white">
-                                AS {achieved}
-                              </span>
-                            )}
-                            {target > 0 && (
-                              <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-[9px] font-bold text-blue-200">
-                                TO {target}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {/* Area name - 2 lines max */}
-                        <div className="text-[11px] font-medium text-white leading-tight line-clamp-2">
-                          {area.name}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                    return;
+                  }
+                  openCellPopup(cellAreaId, cellLevel, e);
+                }}
+                onCellMouseEnter={(cellAreaId, cellLevel, e) =>
+                  showHoverTooltip(cellAreaId, cellLevel, e)
+                }
+                onCellMouseLeave={hideHoverTooltip}
+                onAreaClick={(clickedAreaId) => {
+                  setAreaId(clickedAreaId);
+                  onAreaChange?.(clickedAreaId);
+                  setViewMode('surveys');
+                }}
+                areaStripLabel="Area"
+                overflowHint={(n) =>
+                  `${n} more column${n > 1 ? 's' : ''} to the right — scroll to see them`
+                }
+              />
 
               {/* Summary strip */}
               {(() => {
@@ -1098,31 +1277,31 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             {popupCell && popupPosition && (
               <div
                 ref={popupRef}
-                className="fixed z-[200] w-[360px] rounded-2xl border border-slate-200 dark:border-white/20 bg-white/98 dark:bg-navy-950/98 backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200"
+                className="fixed z-[200] w-[360px] rounded-2xl border border-slate-200 dark:border-white/20 bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl shadow-[0_25px_60px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200"
                 style={{ top: popupPosition.top, left: popupPosition.left }}
               >
                 {/* Arrow indicator */}
                 {popupPosition.arrowPosition === 'top' && (
                   <div
-                    className="absolute -top-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-navy-950/98 border-l border-t border-slate-200 dark:border-white/20"
+                    className="absolute -top-2 w-4 h-4 rotate-45 bg-white/95 dark:bg-navy-950/95 border-l border-t border-slate-200 dark:border-white/20"
                     style={{ left: popupPosition.arrowOffset - 8 }}
                   />
                 )}
                 {popupPosition.arrowPosition === 'bottom' && (
                   <div
-                    className="absolute -bottom-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-navy-950/98 border-r border-b border-slate-200 dark:border-white/20"
+                    className="absolute -bottom-2 w-4 h-4 rotate-45 bg-white/95 dark:bg-navy-950/95 border-r border-b border-slate-200 dark:border-white/20"
                     style={{ left: popupPosition.arrowOffset - 8 }}
                   />
                 )}
                 {popupPosition.arrowPosition === 'left' && (
                   <div
-                    className="absolute -left-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-navy-950/98 border-l border-b border-slate-200 dark:border-white/20"
+                    className="absolute -left-2 w-4 h-4 rotate-45 bg-white/95 dark:bg-navy-950/95 border-l border-b border-slate-200 dark:border-white/20"
                     style={{ top: popupPosition.arrowOffset - 8 }}
                   />
                 )}
                 {popupPosition.arrowPosition === 'right' && (
                   <div
-                    className="absolute -right-2 w-4 h-4 rotate-45 bg-white/98 dark:bg-navy-950/98 border-r border-t border-slate-200 dark:border-white/20"
+                    className="absolute -right-2 w-4 h-4 rotate-45 bg-white/95 dark:bg-navy-950/95 border-r border-t border-slate-200 dark:border-white/20"
                     style={{ top: popupPosition.arrowOffset - 8 }}
                   />
                 )}
@@ -1350,7 +1529,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                             className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
                               isPopupTarget
                                 ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                                : 'bg-blue-500/20 text-blue-700 dark:text-blue-200 hover:bg-blue-500/30'
                             }`}
                           >
                             <Target className="w-3.5 h-3.5" />
@@ -2013,211 +2192,44 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                     </div>
 
                     {/* Legend */}
-                    <div className="flex flex-col gap-2 text-xs text-slate-700 dark:text-slate-200">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="h-3.5 w-3.5 rounded-full bg-navy-900 " />
-                          <span>AS-IS</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="h-3.5 w-3.5 rounded-full bg-blue-500/70 ring-1 ring-blue-300/60" />
-                          <span>TO-BE</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-[11px] text-slate-700 dark:text-slate-300">
-                        <label className="inline-flex items-center gap-2 select-none">
-                          <input
-                            type="checkbox"
-                            checked={!matrixCompact}
-                            onChange={(e) => setMatrixCompact(!e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white focus:ring-c-focus"
-                          />
-                          Spacious
-                        </label>
-                      </div>
-                    </div>
+                    <DRDMatrixLegend compact={matrixCompact} onCompactChange={setMatrixCompact} />
                   </div>
 
-                  {/* Matrix */}
-                  <div className="dark mt-6 overflow-x-auto pb-2 rounded-xl bg-navy-950 p-2">
-                    <div
-                      className="grid gap-2 min-w-[1100px]"
-                      style={{
-                        gridTemplateColumns: `240px repeat(${axisAreas.length}, minmax(180px, 1fr))`,
-                      }}
-                    >
-                      {/* Level rows (high -> low) */}
-                      {Array.from({ length: levelCount }, (_, i) => levelCount - i).map((level) => {
-                        const levelLabels: Record<number, string> = {
-                          1: 'Basic / Manual',
-                          2: 'Digitized',
-                          3: 'Integrated',
-                          4: 'Automated',
-                          5: 'Optimized',
-                          6: 'AI-Driven',
-                          7: 'Autonomous',
-                        };
-                        const label = levelLabels[level] || `Level ${level}`;
-
-                        return (
-                          <React.Fragment key={`row-fs-${level}`}>
-                            {/* Row label */}
-                            <div className="sticky left-0 z-10 rounded-xl border border-white/10 bg-gradient-to-r from-navy-800/40 to-navy-950/60 backdrop-blur p-3 shadow-[10px_0_30px_rgba(0,0,0,0.18)]">
-                              <div className="text-white font-bold">
-                                <span className="text-slate-200">{level}.</span> {label}
-                              </div>
-                              <div className="mt-1 text-[11px] text-slate-600">
-                                Click for details
-                              </div>
-                            </div>
-
-                            {axisAreas.map((area) => {
-                              const s = getAreaState(value, area.id, levelCount);
-                              const achieved = s.achievedLevel || 0;
-                              const target = s.targetLevel || 0;
-
-                              const isAchieved = level <= achieved;
-                              const isTarget = target > 0 && level <= target && !isAchieved;
-
-                              const areaLevelInfo = area.levels?.find((l) => l.level === level);
-                              const knowledge = getDRDKnowledge(area.id, level);
-                              const techs = knowledge?.suggestedTechnologies || [];
-
-                              return (
-                                <button
-                                  key={`cell-fs-${area.id}-${level}`}
-                                  type="button"
-                                  className={`group relative rounded-lg border transition-all duration-200 text-left ${
-                                    matrixCompact ? 'p-2' : 'p-2.5'
-                                  } ${
-                                    isAchieved
-                                      ? 'border-slate-400/50 bg-slate-500/25 hover:bg-slate-500/35'
-                                      : isTarget
-                                        ? 'border-blue-400/40 bg-blue-500/15 hover:bg-blue-500/25'
-                                        : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06]'
-                                  }`}
-                                  onClick={(e) => {
-                                    if (e.shiftKey && !readOnly) {
-                                      const cur = getAreaState(value, area.id, levelCount);
-                                      onChange(
-                                        setAreaState(value, area.id, {
-                                          ...cur,
-                                          targetLevel: clamp(level, 1, levelCount),
-                                        })
-                                      );
-                                      return;
-                                    }
-                                    setAreaId(area.id);
-                                    onAreaChange?.(area.id);
-                                    setLevel(level);
-                                    setViewMode('surveys');
-                                    setIsMatrixFullscreen(false);
-                                  }}
-                                  aria-label={`${area.name}, level ${level}`}
-                                >
-                                  {/* Ultra-simple cell: just 2-3 keywords */}
-                                  {(() => {
-                                    const keyTechs = [
-                                      'AI',
-                                      'ML',
-                                      'RPA',
-                                      'IoT',
-                                      'AGV',
-                                      'WMS',
-                                      'MES',
-                                      'ERP',
-                                      'CRM',
-                                      'BI',
-                                      'API',
-                                      'EDI',
-                                      'PLM',
-                                      'APS',
-                                      'TMS',
-                                      'YMS',
-                                    ];
-                                    const highlighted = techs
-                                      .filter((t) => keyTechs.includes(t))
-                                      .slice(0, 2);
-                                    const shortTitle = areaLevelInfo?.title
-                                      ? areaLevelInfo.title.split(' ').slice(0, 3).join(' ')
-                                      : null;
-                                    const displayContent =
-                                      highlighted.length > 0
-                                        ? highlighted.join(' \u00b7 ')
-                                        : shortTitle || '\u2014';
-
-                                    return (
-                                      <div className="h-full min-h-[40px] flex items-center justify-center text-center px-1">
-                                        <span
-                                          className={`text-[11px] font-medium leading-tight ${
-                                            isAchieved
-                                              ? 'text-white'
-                                              : isTarget
-                                                ? 'text-blue-100'
-                                                : 'text-slate-600'
-                                          }`}
-                                        >
-                                          {displayContent}
-                                        </span>
-                                      </div>
-                                    );
-                                  })()}
-                                </button>
-                              );
-                            })}
-                          </React.Fragment>
+                  <DRDMatrixGrid
+                    areas={axisAreas}
+                    levelCount={levelCount}
+                    value={value}
+                    compact={matrixCompact}
+                    columnMinPx={180}
+                    rowHint="Click for details"
+                    onCellClick={(cellAreaId, cellLevel, e) => {
+                      if (e.shiftKey && !readOnly) {
+                        const cur = getAreaState(value, cellAreaId, levelCount);
+                        onChange(
+                          setAreaState(value, cellAreaId, {
+                            ...cur,
+                            targetLevel: clamp(cellLevel, 1, levelCount),
+                          })
                         );
-                      })}
-
-                      {/* Bottom X-axis strip (process areas) */}
-                      <div className="sticky bottom-0 left-0 z-30 rounded-xl border border-white/10 bg-navy-950/95 backdrop-blur p-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)]">
-                        <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
-                          Area
-                        </div>
-                      </div>
-                      {axisAreas.map((area) => {
-                        const s = getAreaState(value, area.id, levelCount);
-                        const achieved = s.achievedLevel || 0;
-                        const target = s.targetLevel || 0;
-                        return (
-                          <button
-                            key={`x-fs-${area.id}`}
-                            type="button"
-                            onClick={() => {
-                              setAreaId(area.id);
-                              onAreaChange?.(area.id);
-                              setViewMode('surveys');
-                              setIsMatrixFullscreen(false);
-                            }}
-                            className="sticky bottom-0 z-20 rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/[0.06] backdrop-blur p-2 text-left hover:from-white/[0.14] hover:to-white/[0.08] transition-colors shadow-[0_-10px_30px_rgba(0,0,0,0.22)]"
-                          >
-                            {/* Top line: ID + badges */}
-                            <div className="flex items-center justify-between gap-1 mb-1">
-                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">
-                                {area.id}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                {achieved > 0 && (
-                                  <span className="px-1.5 py-0.5 rounded bg-slate-500/30 text-[9px] font-bold text-white">
-                                    AS {achieved}
-                                  </span>
-                                )}
-                                {target > 0 && (
-                                  <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-[9px] font-bold text-blue-200">
-                                    TO {target}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            {/* Area name - 2 lines max */}
-                            <div className="text-[11px] font-medium text-white leading-tight line-clamp-2">
-                              {area.name}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                        return;
+                      }
+                      setAreaId(cellAreaId);
+                      onAreaChange?.(cellAreaId);
+                      setLevel(cellLevel);
+                      setViewMode('surveys');
+                      setIsMatrixFullscreen(false);
+                    }}
+                    onAreaClick={(clickedAreaId) => {
+                      setAreaId(clickedAreaId);
+                      onAreaChange?.(clickedAreaId);
+                      setViewMode('surveys');
+                      setIsMatrixFullscreen(false);
+                    }}
+                    areaStripLabel="Area"
+                    overflowHint={(n) =>
+                      `${n} more column${n > 1 ? 's' : ''} to the right — scroll to see them`
+                    }
+                  />
 
                   {/* Summary strip */}
                   {(() => {

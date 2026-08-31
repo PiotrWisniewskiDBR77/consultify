@@ -152,7 +152,7 @@ describeIfDb('UserService', () => {
         db.get(`SELECT * FROM users WHERE id = ?`, [userId], (_, row) => resolve(row));
       });
 
-      expect(user).toBeUndefined();
+      expect(user).toBeNull();
     });
   });
 
@@ -210,7 +210,7 @@ describeIfDb('UserService', () => {
         );
       });
 
-      expect(user).toBeUndefined();
+      expect(user).toBeNull();
     });
   });
 

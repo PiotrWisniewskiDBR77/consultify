@@ -1,0 +1,16 @@
+NOWY — DYŻUR 165
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_165_AGENT_WZNOWIENIE.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 165.
+
+Marker: 22124537f7
+Zasoby wyłączne: baza 6056, runtime 4998 i 4999.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

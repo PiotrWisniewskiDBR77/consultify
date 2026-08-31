@@ -39,11 +39,14 @@ const ORG_SECONDARY = '55555555-5555-4555-8555-555555555555';
 const ORG_TENANT_B = '66666666-6666-4666-8666-666666666666';
 
 let sql: Client;
+const TEST_SCHEMA = 'm16_final_repair_test';
 
 async function reset() {
-  await sql.query(`DROP TABLE IF EXISTS partner_resources, partner_attributions,
-    partner_client_organizations, partner_payouts, partner_program_ledger,
-    organizations, users, projects CASCADE`);
+  // Own the entire fixture namespace. The previous version dropped and
+  // recreated public core tables, corrupting every test that shared the DB.
+  await sql.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+  await sql.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+  await sql.query(`SET search_path TO ${TEST_SCHEMA}, public`);
 
   // `organizations.id` is text and `partner_attributions.organization_id` is
   // uuid on demo — reproduce that shape so the cast in the join is exercised.
@@ -123,8 +126,8 @@ async function reset() {
 
 /** Schema BEFORE migration 555 — no file_key/file_name/mime_type/size_bytes. */
 async function createResourcesTableCompat() {
-  await sql.query(`DROP TABLE IF EXISTS partner_resources`);
-  await sql.query(`CREATE TABLE partner_resources (
+  await sql.query(`DROP TABLE IF EXISTS ${TEST_SCHEMA}.partner_resources CASCADE`);
+  await sql.query(`CREATE TABLE ${TEST_SCHEMA}.partner_resources (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(), title text, category text,
     file_type text, file_size_bytes bigint, min_partner_tier text, is_active boolean)`);
 }
@@ -132,7 +135,7 @@ async function createResourcesTableCompat() {
 async function seedResources(count: number) {
   for (let i = 0; i < count; i += 1) {
     await sql.query(
-      `INSERT INTO partner_resources (title, category, file_type, file_size_bytes, min_partner_tier, is_active)
+      `INSERT INTO ${TEST_SCHEMA}.partner_resources (title, category, file_type, file_size_bytes, min_partner_tier, is_active)
        VALUES ($1,'documentation','PDF',1024,'registered',TRUE)`,
       [`Doc ${i + 1}`]
     );
@@ -153,13 +156,14 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
+  await sql?.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
   await sql?.end();
 });
 
 describe('M16 — resources: EMPTY vs DEGRADED_UNAVAILABLE (real PG)', () => {
   it('classifies a genuinely empty catalogue as EMPTY, not degraded', async () => {
     await createResourcesTableCompat();
-    const rows = await sql.query(`SELECT ${COMPAT_PROJECTION} FROM partner_resources WHERE is_active = TRUE`);
+    const rows = await sql.query(`SELECT ${COMPAT_PROJECTION} FROM ${TEST_SCHEMA}.partner_resources WHERE is_active = TRUE`);
     expect(rows.rowCount).toBe(0);
     // compat read succeeded => capability is a real read, list is honestly empty
   });
@@ -170,20 +174,20 @@ describe('M16 — resources: EMPTY vs DEGRADED_UNAVAILABLE (real PG)', () => {
 
     // Full projection fails on this schema...
     await expect(
-      sql.query(`SELECT ${FULL_PROJECTION} FROM partner_resources WHERE is_active = TRUE`)
+      sql.query(`SELECT ${FULL_PROJECTION} FROM ${TEST_SCHEMA}.partner_resources WHERE is_active = TRUE`)
     ).rejects.toThrow(/file_key/);
 
     // ...and the compat projection the repair falls back to returns all 15 rows.
     const compat = await sql.query(
-      `SELECT ${COMPAT_PROJECTION} FROM partner_resources WHERE is_active = TRUE`
+      `SELECT ${COMPAT_PROJECTION} FROM ${TEST_SCHEMA}.partner_resources WHERE is_active = TRUE`
     );
     expect(compat.rowCount).toBe(15);
   });
 
   it('DEGRADED_UNAVAILABLE when the table itself cannot be read', async () => {
-    await sql.query(`DROP TABLE IF EXISTS partner_resources`);
+    await sql.query(`DROP TABLE IF EXISTS ${TEST_SCHEMA}.partner_resources CASCADE`);
     await expect(
-      sql.query(`SELECT ${COMPAT_PROJECTION} FROM partner_resources WHERE is_active = TRUE`)
+      sql.query(`SELECT ${COMPAT_PROJECTION} FROM ${TEST_SCHEMA}.partner_resources WHERE is_active = TRUE`)
     ).rejects.toThrow(/partner_resources/);
   });
 
@@ -195,7 +199,7 @@ describe('M16 — resources: EMPTY vs DEGRADED_UNAVAILABLE (real PG)', () => {
     const legacySwallowingRead = async () => {
       try {
         const r = await sql.query(
-          `SELECT ${FULL_PROJECTION} FROM partner_resources WHERE is_active = TRUE`
+          `SELECT ${FULL_PROJECTION} FROM ${TEST_SCHEMA}.partner_resources WHERE is_active = TRUE`
         );
         return r.rows;
       } catch {
@@ -206,7 +210,7 @@ describe('M16 — resources: EMPTY vs DEGRADED_UNAVAILABLE (real PG)', () => {
     const swallowed = await legacySwallowingRead();
     expect(swallowed).toHaveLength(0); // the old bug, reproduced
 
-    const actualRows = await sql.query(`SELECT id FROM partner_resources WHERE is_active = TRUE`);
+    const actualRows = await sql.query(`SELECT id FROM ${TEST_SCHEMA}.partner_resources WHERE is_active = TRUE`);
     expect(actualRows.rowCount).toBe(15);
     // An empty list that is really 15 rows is exactly what must never ship.
     expect(swallowed.length).not.toBe(actualRows.rowCount);
@@ -344,6 +348,7 @@ describe('M16 — paid total vs settled payout register (real PG)', () => {
     await sql.end();
     sql = new Client({ connectionString: CONNECTION });
     await sql.connect();
+    await sql.query(`SET search_path TO ${TEST_SCHEMA}, public`);
     const second = await balances(PARTNER_A);
     expect(second).toEqual(first);
   });

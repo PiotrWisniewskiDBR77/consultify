@@ -18,6 +18,7 @@
  *    robi to samo dla procesu (draft) albo tworzy plan od razu dla manifestu.
  */
 import React, { useEffect, useState } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 import { installAgentHubFetchMock } from '../mocks/agentHubMocks';
 
@@ -37,11 +38,17 @@ export default function AgentHubScreen(): React.ReactElement {
     import('@/components/AIChat/AgentHubShell').then((m) => ({ default: m.AgentHubShell }))
   );
 
+  // AgentHubShell woła `useSearchParams()` (react-router), a harness
+  // dev-render NIE montuje żadnego routera w main.tsx — bez tego opakowania
+  // ekran wywalał się w całości ("useLocation() may be used only in the
+  // context of a <Router> component"). Wzór jak w chat-signals-feed.tsx.
   return (
-    <div className="h-screen w-screen overflow-hidden bg-c-bg">
-      <React.Suspense fallback={<div className="text-c-text-muted text-sm p-8">Loading…</div>}>
-        <AgentHubShell />
-      </React.Suspense>
-    </div>
+    <MemoryRouter>
+      <div className="h-screen w-screen overflow-hidden bg-c-bg">
+        <React.Suspense fallback={<div className="text-c-text-muted text-sm p-8">Loading…</div>}>
+          <AgentHubShell />
+        </React.Suspense>
+      </div>
+    </MemoryRouter>
   );
 }

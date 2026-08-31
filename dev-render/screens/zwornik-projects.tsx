@@ -12,6 +12,7 @@
  * open the preview panel — the 5 read-only sections stack there (light+dark).
  */
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 import { MyProjects } from '../../src/components/MyWork/MyProjects';
 
@@ -245,8 +246,13 @@ if (!g.__ZWORNIK_FETCH__) {
 
 export default function ZwornikProjectsScreen(): React.ReactElement {
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <MyProjects />
-    </div>
+    // MyProjects wywołuje teraz useNavigate() (breadcrumb „My Work" → powrót
+    // do /my-work, naprawa 2026-08-30 droga-dojscia #4) — bez Routera crash.
+    // Wzór: dev-render/screens/admin-command-center-panel.tsx.
+    <MemoryRouter>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <MyProjects />
+      </div>
+    </MemoryRouter>
   );
 }

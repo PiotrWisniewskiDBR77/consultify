@@ -38,6 +38,7 @@
 
 import React, { useEffect, useId, useRef, useState } from 'react';
 
+import { MENU_2_TAB_ACTIVE, MENU_2_TAB_INACTIVE } from '@/components/shared/ModuleMenu3';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
@@ -335,10 +336,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
 
         {/* ŚRODEK — tylko gdy ≤2 widoki */}
         {viewNavigation.placement === 'in-bar' && (
-          <div
-            className="hidden shrink-0 items-center gap-1 rounded-lg bg-c-surface-raised p-1 md:flex"
-            role="tablist"
-          >
+          <div className="hidden shrink-0 items-center gap-1.5 md:flex" role="tablist">
             {viewNavigation.views.map((view) => (
               <ViewTab
                 key={view.id}
@@ -492,7 +490,7 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
       {/* ── Osobny kompaktowy rząd nawigacji, gdy >2 widoki ─────────────── */}
       {viewNavigation.placement === 'separate-row' && (
         <div
-          className="flex w-full items-center gap-1 overflow-x-auto border-t border-c-border-subtle bg-c-surface-raised/40 px-4 py-1.5"
+          className="flex w-full items-center gap-1.5 overflow-x-auto border-t border-c-border-subtle bg-c-surface px-4 py-2"
           role="tablist"
         >
           {viewNavigation.views.map((view) => (
@@ -547,6 +545,34 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
 // Podkomponenty
 // ---------------------------------------------------------------------------
 
+/**
+ * `ViewTab` — pigułka nawigacji widoków.
+ *
+ * ★ NAPRAWA GRAFIKI (uwaga Piotra, ekran wyceny, 2026-08-30): „przyciski
+ * u góry są po prostu słowami, nie przyciskami okrągłymi. Popraw je graficznie,
+ * żeby wyglądały tak jak reszta naszego dokumentu."
+ *
+ * PRZED: `rounded-md` bez ramki, nieaktywny = goły tekst (`text-c-text-secondary`,
+ * tło przezroczyste), aktywny = `bg-c-surface shadow-sm` — czyli biel na bieli.
+ * Na zrzucie rząd „Źródło · Założenia · Metody i wagi · Wyniki …" czytał się jako
+ * zdanie, nie jako sterowanie.
+ *
+ * PO: klasy 1:1 z KANONEM Menu 2 — `MENU_2_TAB_ACTIVE` / `MENU_2_TAB_INACTIVE`
+ * z `src/components/shared/ModuleMenu3.tsx` (te same, których używa
+ * `ModuleHub/ModuleNavBar.tsx` i `MyWorkHub`). NOTATKA-PRAWO Piotra z 2026-07-04,
+ * cytowana w `ModuleNavBar.tsx:125`: „pigułki Menu 2 = zaokrąglone, Z WIDOCZNĄ
+ * RAMKĄ, aktywna = neutralne wypełnienie". Zero autorskiego kształtu — nawigacja
+ * widoków Finance to ta sama warstwa co Menu 2 w hubach, więc dziedziczy SSOT.
+ *
+ * Konsekwencje, świadome:
+ *  · aktywny = `bg-state-selected` + `border-slate-300` (NEUTRALNE, nigdy
+ *    crimson — `primary-*` każdy numer = #85182F, tylko semantyka krytyczna);
+ *  · fokus = `ring-c-focus` (niebieski token) — już w `MENU_2_TAB_BASE`;
+ *  · wysokość `h-9` = 2.25rem, dokładnie tyle co poprzednie
+ *    `min-h-[2.25rem]`, więc geometria paska się nie przesuwa;
+ *  · `shrink-0` zostaje lokalnie — rzędy widoków są `overflow-x-auto`
+ *    i pigułka nie może się zgniatać (kanon: zakaz ucinania tekstu).
+ */
 function ViewTab({
   view,
   active,
@@ -562,11 +588,7 @@ function ViewTab({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`inline-flex min-h-[2.25rem] shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-        active
-          ? 'bg-c-surface text-c-text shadow-sm'
-          : 'text-c-text-secondary hover:bg-c-surface-raised'
-      }`}
+      className={`${active ? MENU_2_TAB_ACTIVE : MENU_2_TAB_INACTIVE} shrink-0`}
     >
       <span>{view.label.pl}</span>
       {view.state && <ViewStateBadge state={view.state} />}
@@ -636,7 +658,11 @@ function IdentityBadge({
       <span className="tabular-nums">{version.label}</span>
       <span aria-hidden="true">·</span>
       <span>{STATUS_LABELS[status] ?? status}</span>
-      {version.hasUncommittedWorkingRevision && (
+      {/* Status DRAFT już czyta się jako „Wersja robocza" — dopisek „· robocza"
+          dubluje ten sam fakt (widoczne np. na finance-analysis-workspace jako
+          „v1 · Wersja robocza · robocza"). Pokazuj dopisek tylko gdy status
+          NIE jest DRAFT, a mimo to są niezapisane zmiany. */}
+      {version.hasUncommittedWorkingRevision && status !== 'DRAFT' && (
         <span className="text-c-text-muted">· robocza</span>
       )}
     </span>

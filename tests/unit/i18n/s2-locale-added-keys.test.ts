@@ -68,6 +68,15 @@ const ROOT = process.cwd();
 // stream's supported-locale commitment covers exactly the keys added up to
 // this point, not keys added by later, unrelated work on the same branch.
 const BASE_SHA = '9d17cac114';
+// Upper bound of the S2-LOCALE stream. Without this ceiling the test compares
+// BASE_SHA with today's English catalogue and silently annexes every key
+// added by unrelated programs after the stream was closed, contradicting the
+// scope stated above. This is the final S2/S23 locale-stream commit: it
+// includes the translated payload and the Japanese BCP47 migration. The
+// later integration commit was rebuilt on a different parent and is not a
+// valid catalogue ceiling (its English diff against BASE_SHA has only 7
+// leaves, while this gate's own sanity contract requires >300).
+const SCOPE_SHA = '2c12080ebf030e27b345b499d085f4c4b42fe253';
 
 const SUPPORTED_TARGET_LOCALES = ['de', 'es', 'ar', 'ja'] as const;
 type TargetLocale = (typeof SUPPORTED_TARGET_LOCALES)[number];
@@ -83,9 +92,13 @@ function flatten(obj: unknown, prefix: string, out: Record<string, unknown>): Re
   return out;
 }
 
-function readCurrentEn(): Record<string, unknown> {
-  const p = path.join(ROOT, 'public', 'locales', 'en', 'translation.json');
-  return flatten(JSON.parse(readFileSync(p, 'utf8')), '', {});
+function readScopedEn(): Record<string, unknown> {
+  const raw = execSync(`git show ${SCOPE_SHA}:public/locales/en/translation.json`, {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return flatten(JSON.parse(raw), '', {});
 }
 
 function readBaseEn(): Record<string, unknown> {
@@ -102,7 +115,7 @@ function readTargetLocale(locale: TargetLocale): Record<string, unknown> {
   return flatten(JSON.parse(readFileSync(p, 'utf8')), '', {});
 }
 
-const enCurrent = readCurrentEn();
+const enCurrent = readScopedEn();
 const enBase = readBaseEn();
 const addedKeys = Object.keys(enCurrent).filter((k) => !(k in enBase));
 

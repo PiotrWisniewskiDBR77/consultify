@@ -73,8 +73,13 @@ const TABLE_COLUMNS = [
     type: 'select',
     visible: true,
     width: 160,
-    options: ['todo', 'in_progress', 'done'],
-    optionColors: { todo: 'slate', in_progress: 'amber', done: 'emerald' },
+    // GRAFIKA 13 (2026-08-30): to jest kolumna typu "select" — jej opcje to
+    // WOLNY tekst, który normalnie wpisuje użytkownik. Mock trzymał surowe
+    // angielskie tokeny backendu ('todo'/'in_progress'/'done') zamiast
+    // polskiej etykiety, którą realny użytkownik by tu wpisał — defekt
+    // "surowe enumy" z kanonu grafiki, nie coś, co komponent tłumaczy sam.
+    options: ['Do zrobienia', 'W trakcie', 'Zrobione'],
+    optionColors: { 'Do zrobienia': 'slate', 'W trakcie': 'amber', Zrobione: 'emerald' },
   },
   { key: 'owner', header: 'Właściciel', type: 'text', visible: true, width: 160 },
 ];
@@ -83,27 +88,27 @@ const TABLE_NODES = [
   {
     id: 'rec-1',
     type: 'idea',
-    data: { label: 'Zdefiniować poziomy programu', status: 'done', owner: 'Anna K.' },
+    data: { label: 'Zdefiniować poziomy programu', status: 'Zrobione', owner: 'Anna K.' },
   },
   {
     id: 'rec-2',
     type: 'idea',
-    data: { label: 'Integracja z CRM', status: 'in_progress', owner: 'Marek T.' },
+    data: { label: 'Integracja z CRM', status: 'W trakcie', owner: 'Marek T.' },
   },
   {
     id: 'rec-3',
     type: 'idea',
-    data: { label: 'Regulamin prawny programu', status: 'in_progress', owner: 'Zofia L.' },
+    data: { label: 'Regulamin prawny programu', status: 'W trakcie', owner: 'Zofia L.' },
   },
   {
     id: 'rec-4',
     type: 'idea',
-    data: { label: 'Materiały komunikacyjne', status: 'todo', owner: 'Bartek P.' },
+    data: { label: 'Materiały komunikacyjne', status: 'Do zrobienia', owner: 'Bartek P.' },
   },
   {
     id: 'rec-5',
     type: 'idea',
-    data: { label: 'Pilotaż z top-10 klientami', status: 'todo', owner: 'Anna K.' },
+    data: { label: 'Pilotaż z top-10 klientami', status: 'Do zrobienia', owner: 'Anna K.' },
   },
 ];
 

@@ -44,9 +44,11 @@
  *   7. Esc closes the last-opened modal; back to registry via breadcrumb
  */
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import { ResultsRoiHub } from '../../src/components/ResultsVNext/roi/ResultsRoiHub';
+import { RoiCaseToolPage } from '../../src/components/ResultsVNext/roi/RoiCaseToolPage';
+import { ROUTES } from '../../src/routes/routeConfig';
 
 const harnessParams = new URLSearchParams(window.location.search);
 /** Forces `GET /cases` (the registry's own list fetch) to the given
@@ -725,8 +727,18 @@ if (!g.__RVN_ROI_FULL_TOOL_FETCH__) {
 
 const ResultsVNextRoiFullToolScreen: React.FC = () => (
   <div className="h-screen bg-c-bg text-c-text">
+    {/* dev-render fix: the harness previously mounted ONLY `<ResultsRoiHub>`
+     * with no `<Routes>` — the row kebab's "Otwórz pełne narzędzie" calls a
+     * real `navigate()` to `ROUTES.RESULTS_ROI.CASE` (see ResultsRoiHub.tsx),
+     * which silently did nothing without a matching `<Route>` to swap to
+     * `RoiCaseToolPage`/`RoiCaseFullTool`. Wiring both routes here is what
+     * makes the golden click-chain in this file's header comment actually
+     * reachable — it was previously undocumented dead air. */}
     <MemoryRouter initialEntries={['/results/roi']}>
-      <ResultsRoiHub />
+      <Routes>
+        <Route path={ROUTES.RESULTS_ROI.ROOT} element={<ResultsRoiHub />} />
+        <Route path={ROUTES.RESULTS_ROI.CASE} element={<RoiCaseToolPage />} />
+      </Routes>
     </MemoryRouter>
   </div>
 );

@@ -1005,8 +1005,9 @@ export const AIContextBuilder = {
           })),
         };
       }
-    } catch {
-      // fail-open
+    } catch (error) {
+      documents = [];
+      logger.warn('[AIContextBuilder] document governance failed — dropping all documents', error);
     }
 
     return {

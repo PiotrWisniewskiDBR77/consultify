@@ -209,10 +209,17 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
       render: (row: TableRow) => {
         const safe = row as unknown as VaultSafe;
         const Icon = SAFE_ICON[safe.type] || FolderKanban;
+        const name = safeDisplayName(safe, isPolish, t);
         return (
-          <span className="inline-flex items-center gap-2 text-sm font-medium text-c-text">
+          // GRAFIKA 20-tabele-szerokosc (2026-08-30): `truncate` + `min-w-0`,
+          // sama nazwa łamała się na 2 linie dla dłuższych sejfów projektowych
+          // (kanon: wiersz = jedna linia).
+          <span
+            className="inline-flex min-w-0 items-center gap-2 text-sm font-medium text-c-text"
+            title={name}
+          >
             <Icon size={14} className="text-c-text-muted shrink-0" />
-            {safeDisplayName(safe, isPolish, t)}
+            <span className="truncate">{name}</span>
           </span>
         );
       },
@@ -220,13 +227,20 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
     {
       id: 'scope',
       label: t('vault.safes.scope', isPolish ? 'Zakres' : 'Scope'),
+      // GRAFIKA 20-tabele-szerokosc (2026-08-30): kolumna bez `width` dostawała
+      // domyślne 140px (FilterableTable.tsx:657), a treść „Sejf projektu · <pełna
+      // nazwa projektu>" łamała się na 2-3 linie (kanon: wiersz = jedna linia).
+      // `truncate` (1:1 z name/author w ReportsManagementPanel) + szerszy budżet
+      // bazowy, żeby kolumna nie padała ofiarą proporcjonalnego rozciągania
+      // `table-fixed` do węższego pasa niż sąsiednie kolumny.
+      width: '220px',
       sortable: true,
       sortAccessor: (row: TableRow) =>
         safeLevelLabel((row as unknown as VaultSafe).type, isPolish, t),
       render: (row: TableRow) => {
         const safe = row as unknown as VaultSafe;
         return (
-          <span className="text-sm text-c-text-secondary">
+          <span className="block truncate text-sm text-c-text-secondary" title={`${safeLevelLabel(safe.type, isPolish, t)}${safe.type === 'project' ? ` · ${safe.name}` : ''}`}>
             {safeLevelLabel(safe.type, isPolish, t)}
             {safe.type === 'project' ? ` · ${safe.name}` : ''}
           </span>
@@ -304,7 +318,7 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
           <StatusChip
             label={String(
               t('vault.safes.indexingErrorsCount', {
-                defaultValue: isPolish ? '{{count}} błąd(y)' : '{{count}} error(s)',
+                defaultValue: isPolish ? 'Błędy: {{count}}' : '{{count}} error(s)',
                 count: errors,
               })
             )}

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -90,7 +91,6 @@ export interface ReportsManagementPanelProps {
 const STATUS_CONFIG: Record<
   ReportStatus,
   {
-    label: string;
     color: string;
     bgColor: string;
     borderColor: string;
@@ -98,28 +98,24 @@ const STATUS_CONFIG: Record<
   }
 > = {
   DRAFT: {
-    label: 'Draft',
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
     icon: Edit3,
   },
   CONFIGURING: {
-    label: 'Configuring',
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
     icon: Clock,
   },
   GENERATING: {
-    label: 'Generating',
     color: 'text-amber-700 dark:text-amber-300',
     bgColor: 'bg-amber-50 dark:bg-amber-500/10',
     borderColor: 'border-amber-200 dark:border-amber-500/30',
     icon: Loader2,
   },
   GENERATED: {
-    label: 'Generated',
     // Pułapka #1 (kanon): `primary`=crimson; status informacyjny → indygo, nie crimson.
     color: 'text-indigo-700 dark:text-indigo-300',
     bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
@@ -127,49 +123,42 @@ const STATUS_CONFIG: Record<
     icon: Sparkles,
   },
   IN_REVIEW: {
-    label: 'In review',
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
     borderColor: 'border-blue-200 dark:border-blue-500/30',
     icon: Eye,
   },
   APPROVED: {
-    label: 'Approved',
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     icon: CheckCircle2,
   },
   SENT_INTERNAL: {
-    label: 'Sent (internal)',
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
     borderColor: 'border-blue-200 dark:border-blue-500/30',
     icon: Upload,
   },
   SENT_EXTERNAL: {
-    label: 'Sent (external)',
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
     borderColor: 'border-blue-200 dark:border-blue-500/30',
     icon: Upload,
   },
   UTILIZED: {
-    label: 'Utilized',
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     icon: FileOutput,
   },
   FINAL: {
-    label: 'Final',
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
     icon: CheckCircle2,
   },
   ARCHIVED: {
-    label: 'Archived',
     color: 'text-slate-500 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
@@ -210,6 +199,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   onCreateReport,
   onCreateInitiatives,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,6 +208,35 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   const [creatingReport, setCreatingReport] = useState(false);
 
   const isApproved = workflowStatus === 'APPROVED';
+
+  /**
+   * Stan przebiegu/przeglądu z workbencha ('in_progress', 'not_started', …)
+   * na etykietę PL/EN. Nieznany stan → dawne zachowanie (podkreślenia na spacje),
+   * żeby nowe stany silnika nie znikały z ekranu.
+   */
+  const workbenchStateLabel = useCallback(
+    (state: string): string =>
+      t(`assessment.reportsManagePanel.workbenchState.${state}`, {
+        defaultValue: String(state).replace(/_/g, ' '),
+      }),
+    [t]
+  );
+
+  /** „przebieg X • przegląd: w toku" — wspólne dla wiersza i nagłówka. */
+  const provenanceSuffix = useCallback(
+    (reviewState?: string | null, runState?: string | null): string => {
+      if (reviewState) {
+        return ` • ${t('assessment.reportsManagePanel.provenance.review', {
+          state: workbenchStateLabel(String(reviewState)),
+        })}`;
+      }
+      if (runState) {
+        return ` • ${workbenchStateLabel(String(runState))}`;
+      }
+      return '';
+    },
+    [t, workbenchStateLabel]
+  );
 
   // Fetch reports for this assessment from Report Builder API
   const fetchReports = useCallback(async () => {
@@ -228,7 +247,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
       const apiReports = response?.reports || [];
       const mapped: Report[] = apiReports.map((r: any) => ({
         id: String(r.id),
-        name: String(r.title || r.name || 'Report'),
+        name: String(r.title || r.name || t('assessment.reportsManagePanel.defaultReportName')),
         assessmentId,
         assessmentName: String(r.sourceName || assessmentName || ''),
         status: (String(r.status || 'DRAFT').toUpperCase() as ReportStatus) || 'DRAFT',
@@ -257,7 +276,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [assessmentId, assessmentName]);
+  }, [assessmentId, assessmentName, t]);
 
   useEffect(() => {
     fetchReports();
@@ -287,10 +306,10 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   const handleFinalize = async (reportId: string) => {
     try {
       await Api.post(`/report-builder/${reportId}/finalize`, {});
-      toast.success('Report finalized');
+      toast.success(t('assessment.reportsManagePanel.toast.finalized'));
       await fetchReports();
     } catch (err) {
-      toast.error('Failed to finalize report');
+      toast.error(t('assessment.reportsManagePanel.toast.finalizeFailed'));
     }
   };
 
@@ -326,46 +345,46 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
   const handleExportPDF = async (reportId: string, reportName: string) => {
     try {
       await downloadExport('pdf', reportId, reportName);
-      toast.success('PDF exported');
+      toast.success(t('assessment.reportsManagePanel.toast.pdfExported'));
     } catch (err) {
-      toast.error('Failed to export PDF');
+      toast.error(t('assessment.reportsManagePanel.toast.pdfExportFailed'));
     }
   };
 
   const handleExportPPTX = async (reportId: string, reportName: string) => {
     try {
       await downloadExport('pptx', reportId, reportName);
-      toast.success('PPTX exported');
+      toast.success(t('assessment.reportsManagePanel.toast.pptxExported'));
     } catch (err) {
-      toast.error('Failed to export PPTX');
+      toast.error(t('assessment.reportsManagePanel.toast.pptxExportFailed'));
     }
   };
 
   const handleExportWord = async (reportId: string, reportName: string) => {
     try {
       await downloadExport('doc', reportId, reportName);
-      toast.success('Word exported');
+      toast.success(t('assessment.reportsManagePanel.toast.wordExported'));
     } catch (err) {
-      toast.error('Failed to export Word');
+      toast.error(t('assessment.reportsManagePanel.toast.wordExportFailed'));
     }
   };
 
   const handleExportExcel = async (reportId: string, reportName: string) => {
     try {
       await downloadExport('excel', reportId, reportName);
-      toast.success('Excel exported');
+      toast.success(t('assessment.reportsManagePanel.toast.excelExported'));
     } catch (err) {
-      toast.error('Failed to export Excel');
+      toast.error(t('assessment.reportsManagePanel.toast.excelExportFailed'));
     }
   };
 
   const handleDelete = async (reportId: string) => {
     try {
       await Api.delete(`/report-builder/${reportId}`);
-      toast.success('Report deleted');
+      toast.success(t('assessment.reportsManagePanel.toast.deleted'));
       await fetchReports();
     } catch (err: any) {
-      toast.error(err?.error || 'Failed to delete report');
+      toast.error(err?.error || t('assessment.reportsManagePanel.toast.deleteFailed'));
     }
   };
 
@@ -409,7 +428,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
     () => [
       {
         id: 'name',
-        label: 'Report',
+        label: t('assessment.reportsManagePanel.columns.report'),
         width: '260px',
         render: (row) => {
           const report = row as unknown as Report;
@@ -423,12 +442,13 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 <div className="text-xs text-c-text-muted truncate">{report.assessmentName}</div>
                 {report.provenance?.assessmentRunId ? (
                   <div className="text-[10px] text-c-text-muted truncate">
-                    run {report.provenance.assessmentRunId}
-                    {report.provenance.workbenchReviewState
-                      ? ` • review ${String(report.provenance.workbenchReviewState).replace(/_/g, ' ')}`
-                      : report.provenance.workbenchRunState
-                        ? ` • ${String(report.provenance.workbenchRunState).replace(/_/g, ' ')}`
-                        : ''}
+                    {t('assessment.reportsManagePanel.provenance.run', {
+                      run: report.provenance.assessmentRunId,
+                    })}
+                    {provenanceSuffix(
+                      report.provenance.workbenchReviewState,
+                      report.provenance.workbenchRunState
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -438,7 +458,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
       },
       {
         id: 'author',
-        label: 'Author',
+        label: t('assessment.reportsManagePanel.columns.author'),
         width: '110px',
         render: (row) => {
           const report = row as unknown as Report;
@@ -460,25 +480,26 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('assessment.reportsManagePanel.columns.status'),
         width: '130px',
         render: (row) => {
           const report = row as unknown as Report;
-          const cfg = STATUS_CONFIG[report.status] || STATUS_CONFIG.DRAFT;
+          const statusKey: ReportStatus = STATUS_CONFIG[report.status] ? report.status : 'DRAFT';
+          const cfg = STATUS_CONFIG[statusKey];
           const StatusIcon = cfg.icon;
           return (
             <div
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold ${cfg.bgColor} ${cfg.color} ${cfg.borderColor} border`}
             >
               <StatusIcon size={12} />
-              {cfg.label}
+              {t(`assessment.reportsManagePanel.status.${statusKey}`)}
             </div>
           );
         },
       },
       {
         id: 'initiatives',
-        label: 'Initiatives',
+        label: t('assessment.reportsManagePanel.columns.initiatives'),
         width: '130px',
         render: (row) => {
           const report = row as unknown as Report;
@@ -488,14 +509,16 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
               <Sparkles size={12} />
-              {report.initiativesCount} generated
+              {t('assessment.reportsManagePanel.initiativesGenerated', {
+                count: report.initiativesCount,
+              })}
             </span>
           );
         },
       },
       {
         id: 'updatedAt',
-        label: 'Updated',
+        label: t('assessment.reportsManagePanel.columns.updated'),
         width: '110px',
         sortable: true,
         render: (row) => {
@@ -506,7 +529,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         },
       },
     ],
-    []
+    [t, provenanceSuffix]
   );
 
   // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
@@ -524,7 +547,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         if (report.status === 'GENERATED') {
           primary.push({
             id: 'finalize',
-            label: 'Submit Review',
+            label: t('assessment.reportsManagePanel.menu.submitReview'),
             icon: ArrowRight,
             onClick: () => {
               void (async () => {
@@ -537,19 +560,34 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
             },
           });
         } else {
-          primary.push({ id: 'edit', label: 'Edit Report', icon: Edit3, onClick: openReport });
+          primary.push({
+            id: 'edit',
+            label: t('assessment.reportsManagePanel.menu.editReport'),
+            icon: Edit3,
+            onClick: openReport,
+          });
         }
       } else if (report.status === 'IN_REVIEW') {
-        primary.push({ id: 'review', label: 'Review', icon: Eye, onClick: openReport });
+        primary.push({
+          id: 'review',
+          label: t('assessment.reportsManagePanel.menu.review'),
+          icon: Eye,
+          onClick: openReport,
+        });
       } else {
-        primary.push({ id: 'view', label: 'View Report', icon: Eye, onClick: openReport });
+        primary.push({
+          id: 'view',
+          label: t('assessment.reportsManagePanel.menu.viewReport'),
+          icon: Eye,
+          onClick: openReport,
+        });
       }
 
       if (exportable) {
         primary.push(
           {
             id: 'export-pdf',
-            label: 'Export PDF',
+            label: t('assessment.reportsManagePanel.menu.exportPdf'),
             icon: FileText,
             onClick: () => {
               void handleExportPDF(report.id, report.name);
@@ -557,7 +595,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
           },
           {
             id: 'export-pptx',
-            label: 'Export PPTX',
+            label: t('assessment.reportsManagePanel.menu.exportPptx'),
             icon: FileOutput,
             onClick: () => {
               void handleExportPPTX(report.id, report.name);
@@ -565,7 +603,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
           },
           {
             id: 'export-word',
-            label: 'Export Word',
+            label: t('assessment.reportsManagePanel.menu.exportWord'),
             icon: FileText,
             onClick: () => {
               void handleExportWord(report.id, report.name);
@@ -585,7 +623,12 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         destructive: deletable
           ? {
               onClick: () => {
-                if (!confirm(`Delete report "${report.name}"?`)) return;
+                if (
+                  !confirm(
+                    t('assessment.reportsManagePanel.confirmDelete', { name: report.name })
+                  )
+                )
+                  return;
                 void (async () => {
                   try {
                     await handleDelete(report.id);
@@ -599,6 +642,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
       };
     },
     [
+      t,
       canManage,
       handleOpenReport,
       handleFinalize,
@@ -620,19 +664,26 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 <FileText size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Reports</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('assessment.reportsManagePanel.header.title')}
+                </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {stats.total} report{stats.total !== 1 ? 's' : ''} • {stats.draft} in progress •{' '}
-                  {stats.inReview} in review • {stats.approved} approved
+                  {t('assessment.reportsManagePanel.header.summary', {
+                    total: stats.total,
+                    draft: stats.draft,
+                    inReview: stats.inReview,
+                    approved: stats.approved,
+                  })}
                 </p>
                 {latestRunReadback?.assessmentRunId ? (
                   <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
-                    Current report lane readback: run {latestRunReadback.assessmentRunId}
-                    {latestRunReadback.workbenchReviewState
-                      ? ` • review ${String(latestRunReadback.workbenchReviewState).replace(/_/g, ' ')}`
-                      : latestRunReadback.workbenchRunState
-                        ? ` • ${String(latestRunReadback.workbenchRunState).replace(/_/g, ' ')}`
-                        : ''}
+                    {t('assessment.reportsManagePanel.header.laneReadback', {
+                      run: latestRunReadback.assessmentRunId,
+                    })}
+                    {provenanceSuffix(
+                      latestRunReadback.workbenchReviewState,
+                      latestRunReadback.workbenchRunState
+                    )}
                   </p>
                 ) : null}
               </div>
@@ -641,6 +692,8 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
+                title={t('assessment.reportsManagePanel.header.refresh')}
+                aria-label={t('assessment.reportsManagePanel.header.refresh')}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
@@ -654,10 +707,14 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                       ? 'bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   }`}
-                  title={!onCreateReport ? 'Report creation not available' : undefined}
+                  title={
+                    !onCreateReport
+                      ? t('assessment.reportsManagePanel.header.newReportUnavailable')
+                      : undefined
+                  }
                 >
                   <Plus size={16} />
-                  New Report
+                  {t('assessment.reportsManagePanel.header.newReport')}
                 </button>
               )}
             </div>
@@ -670,8 +727,8 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-slate-500 dark:text-slate-400 flex-shrink-0 mt-0.5" />
               <div className="text-xs text-slate-600 dark:text-slate-300">
-                You can draft reports before approval. A report becomes visible in the global
-                Reports tab after it is <strong>finalized</strong>.
+                {t('assessment.reportsManagePanel.note.text')}{' '}
+                <strong>{t('assessment.reportsManagePanel.note.emphasis')}</strong>.
               </div>
             </div>
           </div>
@@ -683,26 +740,26 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
               <FileText size={14} className="text-slate-500" />
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {stats.total} Total
+                {t('assessment.reportsManagePanel.stats.total', { count: stats.total })}
               </span>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
               <Edit3 size={14} className="text-amber-600 dark:text-amber-400" />
               <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                {stats.draft} In Progress
+                {t('assessment.reportsManagePanel.stats.inProgress', { count: stats.draft })}
               </span>
             </div>
             {/* Pułapka #1 (kanon): `primary`=crimson; stat informacyjny → niebieski, nie crimson. */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
               <Eye size={14} className="text-blue-600 dark:text-blue-400" />
               <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                {stats.inReview} In Review
+                {t('assessment.reportsManagePanel.stats.inReview', { count: stats.inReview })}
               </span>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30">
               <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400" />
               <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                {stats.approved} Approved
+                {t('assessment.reportsManagePanel.stats.approved', { count: stats.approved })}
               </span>
             </div>
           </div>
@@ -719,7 +776,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search reports..."
+              placeholder={t('assessment.reportsManagePanel.search.placeholder')}
               className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus/30 focus:border-c-focus transition-colors"
             />
           </div>
@@ -735,12 +792,14 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 <FileOutput size={24} className="text-slate-500 dark:text-slate-400" />
               </div>
               <p className="text-sm font-medium text-slate-900 dark:text-white">
-                {searchQuery ? 'No reports match your search' : 'No reports yet'}
+                {searchQuery
+                  ? t('assessment.reportsManagePanel.empty.noMatchTitle')
+                  : t('assessment.reportsManagePanel.empty.noneTitle')}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {isApproved
-                  ? 'Create a report to get started'
-                  : 'Approve the assessment to create reports'}
+                  ? t('assessment.reportsManagePanel.empty.approvedDesc')
+                  : t('assessment.reportsManagePanel.empty.notApprovedDesc')}
               </p>
               {isApproved && canManage && (
                 <button
@@ -753,7 +812,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   ) : (
                     <Plus size={16} />
                   )}
-                  Create First Report
+                  {t('assessment.reportsManagePanel.empty.createFirst')}
                 </button>
               )}
             </div>
@@ -779,11 +838,11 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
           <div className="flex items-center gap-6 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
             <div className="flex items-center gap-1.5">
               <Edit3 size={12} className="text-slate-500 dark:text-slate-400" />
-              <span>Draft - Editable</span>
+              <span>{t('assessment.reportsManagePanel.footer.draft')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 size={12} className="text-emerald-500" />
-              <span>Final - Visible globally</span>
+              <span>{t('assessment.reportsManagePanel.footer.final')}</span>
             </div>
           </div>
         </div>

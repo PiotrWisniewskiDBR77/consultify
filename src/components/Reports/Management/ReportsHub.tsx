@@ -348,7 +348,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           <div>
             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
-              {new Date(row.createdAt).toLocaleDateString()}
+              {new Date(row.createdAt).toLocaleDateString('pl-PL')}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {row.generatedByName || '—'}
@@ -463,7 +463,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportTemplate) => (
           <div>
             <div className="text-sm text-slate-600 dark:text-slate-300">
-              {new Date(row.createdAt).toLocaleDateString()}
+              {new Date(row.createdAt).toLocaleDateString('pl-PL')}
             </div>
             {row.createdByName && (
               <p className="text-xs text-slate-500 dark:text-slate-400">{row.createdByName}</p>
@@ -528,7 +528,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportSchedule) =>
           row.nextScheduledAt ? (
             <div className="text-sm text-slate-600 dark:text-slate-300">
-              {new Date(row.nextScheduledAt).toLocaleDateString()}
+              {new Date(row.nextScheduledAt).toLocaleDateString('pl-PL')}
             </div>
           ) : (
             <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
@@ -719,7 +719,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       case 'RAID':
         return <RaidReport report={currentReport} />;
       default:
-        return <div className="p-6 text-slate-600">Unknown report type</div>;
+        return <div className="p-6 text-slate-600">Nieznany typ raportu</div>;
     }
   };
 
@@ -809,7 +809,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
                       {t('reports.col.generated', 'Generated')}
                     </dt>
                     <dd className="text-slate-700 dark:text-slate-200 text-right">
-                      {new Date(item.createdAt).toLocaleString()}
+                      {new Date(item.createdAt).toLocaleString('pl-PL')}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">

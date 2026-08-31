@@ -42,7 +42,33 @@ ALLOWLIST="$SCRIPT_DIR/triada-allowlist.txt"
 # skrypt nie przewiduje wyjatku regexowego dla semantyki danger/critical
 # (canon: primary nigdy nie jest legalny nawet dla stanow krytycznych - do
 # tego sluza tokeny c-danger/c-critical, patrz TRIADA_KANON.md czesc C).
-VIOL_RE='primary-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|focus:(ring|border)-primary([^0-9]|$)|bg-crimson-[0-9]'
+#
+# VF5 (2026-08-31, zgloszenie przy rejestracji modulu Ustawien): crimson
+# #85182F jest w repo dostepny pod WIELOMA nazwami poza `primary-*` —
+# `tailwind.config.js` definiuje DWIE inne skale o IDENTYCZNYCH wartosciach
+# hex (`crimson-*` linie 171-184 i `brand-*` linie 288-303, legacy alias),
+# a `src/index.css` eksponuje ten sam kolor jako `--c-accent`/`c-accent`
+# (juz lapane od VF0-2) ORAZ jako `--c-accent-soft`/`c-accent-soft` (ten sam
+# crimson, tylko z wbudowana alfa 0.08/0.14 — NIE lapane: filtr accent_viol
+# dopasowywal WYLACZNIE dokladny token `c-accent`/`--c-accent`, wiec
+# `bg-c-accent-soft` przechodzil bez zadnego ostrzezenia). Zmierzone na
+# `src/**` (2026-08-31): `crimson-*` — 151 linii w scope, tylko 31 lapanych
+# starym `bg-crimson-[0-9]` (120 przechodzilo, np. text-crimson-600,
+# border-crimson-500, group-hover/btn:to-crimson-700); `brand-*` — 133 linie,
+# `brand` NIE BYL W REGEXIE WCALE (0 lapanych, przypadkowe 2 to inny wzorzec
+# na tej samej linii); `c-accent-soft` — 483 wystapien tokenu w ~195 plikach,
+# z czego ~66 plikow w samym `src/components/settings/` (moment zgloszenia:
+# modul Ustawien uzywa `--c-accent-soft` dekoracyjnie — hover/selected/badge
+# tła — prawie wylacznie, patrz probka w raporcie audytu, nie w tym pliku).
+# Rozszerzenie NIZEJ dopisuje `crimson-(50..900)` (ten sam trik substring co
+# primary — lapie kazdy prefiks/warianty bez enumeracji), `brand-(50..900)`
+# analogicznie, plus jawna enumeracje prefiksow dla BEZ-numerowej (DEFAULT)
+# formy `brand` (bg-/text-/border-/ring-/from-/shadow-), bo bare "-brand" bez
+# ograniczenia do konkretnych prefiksow lapalby falszywie prozaiczne "on-brand"
+# / "off-brand" / "tenant-branding" w komentarzach i identyfikatorach (realnie
+# wystepujace w repo). Filtr `c-accent-soft` jest osobno w find_violations/
+# count_violations_full (accent_viol), patrz nizej.
+VIOL_RE='primary-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|focus:(ring|border)-primary([^0-9]|$)|crimson-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|brand-(50|100|200|300|400|500|600|700|800|900)([^0-9]|$)|(bg|text|border|ring|from|shadow)-brand([^0-9a-zA-Z-]|$)'
 
 is_scope_file() {
   # Tylko frontend TS/TSX w src/components lub src/views (jak oryginał).
@@ -95,7 +121,9 @@ count_violations_full() {
   accent_tokens=$(grep -oE '(--)?c-accent(-[a-zA-Z0-9]+)?' "$f" 2>/dev/null || true)
   accent_exact=0
   if [ -n "$accent_tokens" ]; then
-    accent_exact=$(printf '%s\n' "$accent_tokens" | grep -xE '(--)?c-accent' | sort -u | grep -c . || true)
+    # VF5: `(-soft)?` dopisany obok bare c-accent — `--c-accent-soft`/`c-accent-soft`
+    # to TEN SAM crimson #85182F (tylko z wbudowana alfa), patrz komentarz przy VIOL_RE.
+    accent_exact=$(printf '%s\n' "$accent_tokens" | grep -xE '(--)?c-accent(-soft)?' | sort -u | grep -c . || true)
   fi
   echo $((viol_lines + accent_exact))
 }
@@ -179,7 +207,7 @@ if [ "${1:-}" = "--all" ] || [ "${1:-}" = "--update" ]; then
     fi
   else
     echo "" >&2
-    echo "  KANON TRIADY: primary-* (KAŻDY numer) i c-accent/var(--c-accent) = crimson #85182F." >&2
+    echo "  KANON TRIADY: primary-*/crimson-*/brand-* (KAŻDY numer) i c-accent/c-accent-soft/var(--c-accent...) = crimson #85182F." >&2
     echo "  Nowych plików z naruszeniem: $new_files · plików z urosłym długiem: $grown_files." >&2
     echo "  SSOT: docs/ui-standards/TRIADA_KANON.md (część C)." >&2
   fi
@@ -193,7 +221,8 @@ find_violations() {
   accent_tokens=$(printf '%s' "$payload" | grep -oE '(--)?c-accent(-[a-zA-Z0-9]+)?' 2>/dev/null || true)
   accent_viol=""
   if [ -n "$accent_tokens" ]; then
-    accent_viol=$(printf '%s\n' "$accent_tokens" | grep -xE '(--)?c-accent' | sort -u | head -6)
+    # VF5: patrz komentarz przy VIOL_RE — `-soft` to ten sam crimson z wbudowaną alfą.
+    accent_viol=$(printf '%s\n' "$accent_tokens" | grep -xE '(--)?c-accent(-soft)?' | sort -u | head -6)
   fi
   all=$(printf '%s\n%s\n' "$viol" "$accent_viol" | grep -v '^$' || true)
   printf '%s' "$all"
@@ -240,7 +269,7 @@ if [ "$MODE" = "hook" ]; then
   if [ -n "$ALL_VIOL" ]; then
     jq -n --arg v "$ALL_VIOL" --arg f "$FILE" '{
       decision: "block",
-      reason: ("⛔ KANON TRIADY: nowa treść w " + $f + " zawiera zakazane wzorce:\n" + $v + "\nprimary = crimson #85182F (KAŻDY numer, w tym 100/200/300); c-accent/var(--c-accent) = ten sam crimson pod inną nazwą. CTA/stany aktywne = NEUTRALNE (bg-navy-900 / dark:bg-[#F4F7FB]); fokus = niebieski c-focus. SSOT: docs/ui-standards/TRIADA_KANON.md (część C). Popraw wpisywany kod, albo — jeśli to świadomy wyjątek brand/logo — dopisz ścieżkę do scripts/triada-allowlist.txt."),
+      reason: ("⛔ KANON TRIADY: nowa treść w " + $f + " zawiera zakazane wzorce:\n" + $v + "\nprimary/crimson/brand = crimson #85182F (KAŻDY numer, w tym 100/200/300); c-accent/c-accent-soft/var(--c-accent...) = ten sam crimson pod inną nazwą (aliasy). CTA/stany aktywne = NEUTRALNE (bg-navy-900 / dark:bg-[#F4F7FB]); fokus = niebieski c-focus. SSOT: docs/ui-standards/TRIADA_KANON.md (część C). Popraw wpisywany kod, albo — jeśli to świadomy wyjątek brand/logo — dopisz ścieżkę do scripts/triada-allowlist.txt."),
       systemMessage: ("Kanon triady: zablokowano crimson (primary-*/c-accent) w " + $f)
     }'
     exit 0
@@ -298,8 +327,8 @@ EOF
 
 if [ "$fail" -eq 1 ]; then
   echo "" >&2
-  echo "  KANON TRIADY: primary-* (KAŻDY numer, w tym 100/200/300) i c-accent/var(--c-accent)" >&2
-  echo "  to crimson #85182F. CTA/stany aktywne = NEUTRALNE, fokus = c-focus." >&2
+  echo "  KANON TRIADY: primary-*/crimson-*/brand-* (KAŻDY numer, w tym 100/200/300) i" >&2
+  echo "  c-accent/c-accent-soft/var(--c-accent...) to crimson #85182F. CTA/stany aktywne = NEUTRALNE, fokus = c-focus." >&2
   echo "  SSOT: docs/ui-standards/TRIADA_KANON.md (część C). Świadomy wyjątek brand/logo →" >&2
   echo "  dopisz ścieżkę do scripts/triada-allowlist.txt." >&2
   exit 1

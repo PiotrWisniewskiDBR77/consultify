@@ -9,8 +9,17 @@ import { AITableProposal, type TableProposal } from '@/components/MyWork/table/A
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'en' },
-    t: (key: string) => key,
+    i18n: { language: 'en', resolvedLanguage: 'en' },
+    t: (key: string) => ({
+      'myWorkTable.aiTableProposal.columns': 'Columns',
+      'myWorkTable.aiTableProposal.views': 'Views',
+      'myWorkTable.aiTableProposal.starterRows': 'Rows',
+      'myWorkTable.aiTableProposal.reject': 'Reject',
+      'myWorkTable.aiTableProposal.applySelected': 'Apply selected',
+      'myWorkTable.aiTableProposal.itemsSelected': 'items selected',
+      'myWorkTable.aiTableProposal.contextSources': 'Context sources',
+      'myWorkTable.aiTableProposal.aiContext': 'AI context',
+    } as Record<string, string>)[key] ?? key,
   }),
 }));
 

@@ -39,7 +39,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       "Evidence: list of orders with entry dates vs. signing dates (system export); a printout or screenshot of a sample contract/order with fields filled in. Acceptable level: 100% of this month's orders entered within 24 hours.",
-    suggestedTechnologies: ['CRM', 'Order Management System', 'Contract & Order Registry'],
+    suggestedTechnologies: ['Order Management System', 'Contract & Order Registry', 'CRM'],
   },
 
   '1A#2': {
@@ -50,7 +50,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       'Evidence: screenshot of a live report/dashboard with a generation timestamp; list of KPIs available in the reporting tool; history of reports sent (e.g. via email or CRM). Level II signal: the report is generated automatically, not from a manual export.',
-    suggestedTechnologies: ['CRM', 'Reporting', 'KPI Dashboards', 'Performance Monitoring'],
+    suggestedTechnologies: ['Reporting', 'KPI Dashboards', 'Performance Monitoring', 'CRM'],
   },
 
   '1A#3': {
@@ -266,7 +266,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       "Evidence: simulation report (e.g. from Tecnomatix, Arena, SimPy, SolidWorks Simulation) with date and conclusions; a design decision justified by simulation results (minutes, an executive email); time from concept to first simulation (target: <2 weeks). Signal: simulation precedes the decision — it doesn't just document it after the fact.",
-    suggestedTechnologies: ['CAD', 'Simulation Tools', 'PLM/PDM', 'Digital Twin'],
+    suggestedTechnologies: ['Simulation Tools', 'Digital Twin', 'CAD', 'PLM/PDM'],
   },
 
   '1C#3': {
@@ -547,7 +547,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       'Evidence: a production line map flagging automated stations; a robot OEE/availability report for the last 90 days; changeover time logged for a product switch. Signal: automation targets stations where human error was the leading cause of defects.',
-    suggestedTechnologies: ['PLC', 'MES', 'Cobots', 'Robot Safety Systems', 'Automation Cells'],
+    suggestedTechnologies: ['Cobots', 'Robot Safety Systems', 'Automation Cells', 'PLC', 'MES'],
   },
 
   '1F#5': {
@@ -618,7 +618,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       'Evidence: a list of stations with automated quality control (machine, parameter, SPC chart); a false-positive/false-negative report from the vision system for the last 90 days; time from measurement to QMS entry. Signal: automated inspection covers ≥50% of critical quality parameters.',
-    suggestedTechnologies: ['Machine Vision', 'Cameras', 'Automated Inspection', 'QMS', 'MES'],
+    suggestedTechnologies: ['Cameras', 'Machine Vision', 'Automated Inspection', 'QMS', 'MES'],
   },
 
   '1G#3': {
@@ -629,7 +629,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       'Evidence: a nonconformance-flow diagram in the QMS showing automatic routing; a quality-alert report for the last 30 days with response time and outcome; % of alerts with a corrective action taken. Signal: time from nonconformance detection to notifying the right people is under 15 minutes.',
-    suggestedTechnologies: ['QMS', 'Corrective Action Tracking (CAPA)', 'MES', 'Reporting'],
+    suggestedTechnologies: ['Corrective Action Tracking (CAPA)', 'QMS', 'MES', 'Reporting'],
   },
 
   '1G#4': {
@@ -699,7 +699,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       'Evidence: a screenshot of the FC dashboard with last-refresh date; a list of financial alerts from the system (KPI, thresholds, recipients); a variance-analysis report from the last month (plan vs. actuals with drilldown). Signal: the CFO sees current results without waiting on a report from the controller.',
-    suggestedTechnologies: ['BI', 'Data Warehouse', 'Reporting', 'KPI Dashboards', 'Budgeting'],
+    suggestedTechnologies: ['KPI Dashboards', 'Budgeting', 'Data Warehouse', 'Reporting', 'BI'],
   },
 
   '1H#3': {
@@ -711,8 +711,8 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     example:
       'Evidence: the approval-matrix configuration in the system (amounts, roles, escalations); a report of pending approvals with dates; the approval cycle time (request → decision) with percentiles for the last month. Signal: zero payments approved outside the system — a full audit trail.',
     suggestedTechnologies: [
-      'Workflow Management',
       'Approval Flows',
+      'Workflow Management',
       'ERP',
       'Process Orchestration',
     ],
@@ -780,7 +780,7 @@ export const DRD_OVERRIDES_AXIS_1_2_EN: Partial<
     ],
     example:
       'Evidence: a screenshot of the access-control system or time-and-attendance record for a sample day; % of employees with electronic time tracking (target: 100%); response time for an attendance-confirmation request (SLA <5 min from the system). Signal: 100% of employees log time in the system, zero paper timecards.',
-    suggestedTechnologies: ['Biometric Readers', 'Time & Attendance', 'Access Control', 'HRM'],
+    suggestedTechnologies: ['Time & Attendance', 'Access Control', 'HRM', 'Biometric Readers'],
   },
 
   '1I#2': {

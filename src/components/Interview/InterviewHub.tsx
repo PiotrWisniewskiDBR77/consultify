@@ -122,6 +122,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
 import { formatListDate } from '@/utils/listDateFormat';
+import {
+  formatPresentationCount,
+  knownPresentation,
+  type PresentationState,
+  unknownPresentation,
+} from '@/utils/presentationState';
 
 import {
   type FilterChip,
@@ -757,6 +763,9 @@ export const InterviewHub: React.FC = () => {
   );
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
+  const [templatesPresentation, setTemplatesPresentation] = useState<PresentationState<number>>(
+    unknownPresentation(t('presentationState.templatesPendingReason', 'templates are loading'))
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingDemoData, setIsUsingDemoData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1165,10 +1174,19 @@ export const InterviewHub: React.FC = () => {
       }
 
       if (templatesRes.status === 'fulfilled') {
-        setTemplates(unwrapApiList(templatesRes.value, 'templates').map(normalizeTemplateRecord));
+        const nextTemplates = unwrapApiList(templatesRes.value, 'templates').map(
+          normalizeTemplateRecord
+        );
+        setTemplates(nextTemplates);
+        setTemplatesPresentation(knownPresentation(nextTemplates.length));
       } else {
         console.error('[InterviewHub] Failed to load templates:', templatesRes.reason);
         setTemplates([]);
+        setTemplatesPresentation(
+          unknownPresentation(
+            t('presentationState.templatesLoadFailedReason', 'templates could not be loaded')
+          )
+        );
       }
 
       // Lineage read-back — degrade gracefully to an honest empty state on
@@ -6925,6 +6943,12 @@ Return ONLY the answer text (no markdown fences).`;
       if (activeTab === 'sessions') return sessionsLoadError;
       if (activeTab === 'insights') return insightsLoadError;
       if (activeTab === 'initiatives') return initiativesLoadError;
+      if (activeTab === 'templates' && templatesPresentation.state === 'unknown') {
+        return formatPresentationCount(templatesPresentation, {
+          hidden: t('presentationState.hidden', 'hidden'),
+          unknown: t('presentationState.unknown', 'unknown'),
+        });
+      }
       if (
         activeTab === 'my_assignments' ||
         activeTab === 'managed' ||
@@ -7652,11 +7676,19 @@ Return ONLY the answer text (no markdown fences).`;
                     label: `${t('interview.hub.insight2')}: ${(src.title || src.id).slice(0, 40)}`,
                     tone: 'text-amber-600 dark:text-amber-300',
                   });
-                if (item.priority)
+                if (item.priority) {
+                  // Surowa wartość enuma ("medium") pokazywana wprost — naprawione na
+                  // etykietę z tej samej mapy tłumaczeń, której używa NewSessionModal
+                  // (interview.newSessionModal.priorityLabel.<low|medium|high|urgent>).
+                  const priorityKey = String(item.priority).toLowerCase();
                   relations.push({
-                    label: `${t('interview.hub.priority')}: ${String(item.priority).toLowerCase()}`,
+                    label: `${t('interview.hub.priority')}: ${t(
+                      `interview.newSessionModal.priorityLabel.${priorityKey}`,
+                      String(item.priority)
+                    )}`,
                     tone: 'text-c-text-secondary',
                   });
+                }
                 if (item.updatedAt || item.createdAt)
                   relations.push({
                     label: `${t('interview.hub.updated')}: ${new Date(
@@ -8056,6 +8088,7 @@ Return ONLY the answer text (no markdown fences).`;
       // canon §8: grid/cards MUST be inside the same TableWithPreviewLayout (preview pane stays alive)
       return (
         <div className="h-full flex flex-col">
+          {renderDegradedBanner()}
           <TableWithPreviewLayout<InterviewTemplate & { title: string }>
             selectedId={selectedTemplateId}
             selectedItem={selectedItem}

@@ -75,8 +75,15 @@ export const MENU_3_CHIP_ACTIVE = cn(
   'dark:border-white/30 dark:text-white'
 );
 
+// max-w + truncate: większość wywołań to krótka liczba ("12"), więc bez
+// wpływu — ale `formatPresentationCount` (utils/presentationState.ts) potrafi
+// zwrócić pełne, uczciwe zdanie ("0 · 3 ukryte: hub nie pobiera podziału
+// wyników według statusu", AssessmentHub.tsx status chips) i bez tego badge
+// rozpychał pigułkę na całą szerokość paska, łamiąc kształt i nachodząc na
+// sąsiednie chipy (kanon #4: tekst ucięty/nachodzący). Pełny tekst zostaje
+// dostępny przez `title` na tym samym elemencie (patrz AssessmentMenu3ActionBar).
 export const MENU_3_BADGE_BASE =
-  'rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums';
+  'inline-block max-w-[200px] truncate align-middle rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums';
 
 export const MENU_3_BADGE_INACTIVE = cn(
   MENU_3_BADGE_BASE,

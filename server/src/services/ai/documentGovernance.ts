@@ -31,7 +31,7 @@ export async function filterDocumentsByVisibility(
   try {
     const placeholders = docIds.map(() => '?').join(',');
     const rows = (await dbAll(
-      `SELECT id, ai_visibility, sensitivity FROM knowledge_documents WHERE id IN (${placeholders})`,
+      `SELECT id, ai_visibility, sensitivity FROM knowledge_docs WHERE id IN (${placeholders})`,
       docIds
     )) as Array<{
       id: string;
@@ -102,12 +102,12 @@ export async function filterDocumentsByVisibility(
         !result.blocked.includes(id) &&
         !result.requiresApproval.includes(id)
       ) {
-        result.allowed.push(id);
+        result.blocked.push(id);
       }
     }
   } catch {
-    logger.warn('[DocGov] filterDocumentsByVisibility failed — fail-open');
-    return { allowed: docIds, blocked: [], requiresApproval: [] };
+    logger.warn('[DocGov] filterDocumentsByVisibility failed — fail-closed');
+    return { allowed: [], blocked: docIds, requiresApproval: [] };
   }
 
   return result;
@@ -119,7 +119,7 @@ export async function setDocumentVisibility(
 ): Promise<void> {
   try {
     await dbRun(
-      `UPDATE knowledge_documents SET ai_visibility = ?, updated_at = datetime('now') WHERE id = ?`,
+      `UPDATE knowledge_docs SET ai_visibility = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [visibility, docId]
     );
   } catch (err: unknown) {
@@ -135,7 +135,7 @@ export async function setDocumentSensitivity(
 ): Promise<void> {
   try {
     await dbRun(
-      `UPDATE knowledge_documents SET sensitivity = ?, updated_at = datetime('now') WHERE id = ?`,
+      `UPDATE knowledge_docs SET sensitivity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [sensitivity, docId]
     );
   } catch (err: unknown) {

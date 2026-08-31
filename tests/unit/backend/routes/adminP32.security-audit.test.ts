@@ -62,7 +62,7 @@ describe('PUT /api/admin/security — audit emission (BUG A / H2.12)', () => {
     getLogs.mockReset();
     dbRun.mockResolvedValue({ changes: 1 });
     dbAll.mockResolvedValue([]);
-    dbGet.mockResolvedValue({ role: 'ADMIN' });
+    dbGet.mockResolvedValue({ role: 'ADMIN', status: 'ACTIVE' });
     logAction.mockResolvedValue({ id: 'audit-1', persisted: true });
   });
 

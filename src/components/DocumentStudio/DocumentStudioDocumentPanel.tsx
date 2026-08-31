@@ -52,6 +52,7 @@ import {
   validateExecutionModuleManifest,
 } from '@/services/executionModuleStandard/api';
 import type { ExecutionModuleValidationResult } from '@/services/executionModuleStandard/types';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 import { isArtifactStudioLaneEnabled } from '@/utils/artifactStudioFlags';
 import { emitArtifactStudioShellSelected } from '@/utils/artifactStudioTelemetry';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
@@ -202,6 +203,61 @@ export const DocumentGenerationWarningsChip: React.FC<{
   );
 };
 
+/**
+ * Odbiór 2026-08-30 (kanon „surowe wartości zamiast etykiet"): `schema.documentType`
+ * i `schema.confidentiality` to techniczne enumy (`steering_committee_report`,
+ * `client_confidential`) i wcześniej trafiały na ekran wprost, bez tłumaczenia.
+ * `documentType` ma już pełny komplet kluczy i18n (`documentStudio.docType.*`,
+ * ten sam słownik co `DocumentStudioIntakeForm.tsx`) — poniższa mapa go
+ * odnajduje. `confidentiality` nie ma odpowiednika w słowniku i18n (public/locales
+ * jest poza zakresem tego przeglądu), więc dla tych czterech wartości trzymamy
+ * lokalny literał PL/EN — ten sam wzorzec co `L()` w
+ * `Presentations/DeckBuilder/DeckBuilderMelsView.tsx`.
+ */
+const DOCUMENT_TYPE_LABEL_KEYS: Record<string, string> = {
+  executive_memo: 'documentStudio.docType.executiveMemo',
+  project_status_report: 'documentStudio.docType.projectStatusReport',
+  steering_committee_report: 'documentStudio.docType.steeringCommitteeReport',
+  ai_audit_report: 'documentStudio.docType.aiAuditReport',
+  interview_summary_report: 'documentStudio.docType.interviewSummaryReport',
+  workshop_summary: 'documentStudio.docType.workshopSummary',
+  business_case: 'documentStudio.docType.businessCase',
+  risk_register_report: 'documentStudio.docType.riskRegisterReport',
+  sop_document: 'documentStudio.docType.sopDocument',
+  implementation_plan: 'documentStudio.docType.implementationPlan',
+  board_report: 'documentStudio.docType.boardReport',
+  sales_proposal: 'documentStudio.docType.salesProposal',
+  client_final_report: 'documentStudio.docType.clientFinalReport',
+  generic_document: 'documentStudio.docType.genericDocument',
+};
+
+function documentTypeLabel(t: (key: string, fallback: string) => string, value: string): string {
+  const key = DOCUMENT_TYPE_LABEL_KEYS[value];
+  return key ? t(key, value) : value;
+}
+
+const CONFIDENTIALITY_LABELS: Record<string, { pl: string; en: string }> = {
+  internal: { pl: 'Wewnętrzne', en: 'Internal' },
+  client_confidential: { pl: 'Poufne (klient)', en: 'Client confidential' },
+  restricted: { pl: 'Zastrzeżone', en: 'Restricted' },
+  public: { pl: 'Publiczne', en: 'Public' },
+};
+
+function confidentialityLabel(language: string, value: string): string {
+  const entry = CONFIDENTIALITY_LABELS[value];
+  if (!entry) return value;
+  return language.startsWith('pl') ? entry.pl : entry.en;
+}
+
+/**
+ * `documentStudio.density.*` już istnieje i jest tłumaczony (dokładnie ten sam
+ * klucz, którego używa `DocumentStudioIntakeForm.tsx:545` przy WYBORZE gęstości)
+ * — więc PODGLĄD po prostu go odczytuje, zamiast trzymać drugi, osobny słownik.
+ */
+function densityLabel(t: (key: string, fallback: string) => string, value: string): string {
+  return t(`documentStudio.density.${value}`, value);
+}
+
 function renderSectionPreview(section: DocumentSection, idx: number): React.ReactNode {
   return (
     <section
@@ -331,6 +387,13 @@ function SourceListPanel({
   assumptionCount: number;
 }): React.ReactElement {
   const { t } = useTranslation();
+  // ★ Rozwożenie prawego pasa — ten NAGŁÓWEK jest tekst, który użytkownik
+  // faktycznie CZYTA (w przeciwieństwie do etykiety ikony szyny, widocznej
+  // tylko jako tooltip po najechaniu) — więc to on jest prawdziwym celem
+  // „jednego słownika" (sources ≡ evidence). JEDEN klucz i18n z ikoną szyny
+  // (`toolEvidence`) niżej, nie druga kopia frazy. Przy OFF nagłówek zostaje
+  // 1:1 „Sources"/„Źródła".
+  const railEnabled = isArtifactRightRailEnabled();
   const usedSourceKeys = useMemo(() => collectBlockSourceKeys(sections), [sections]);
   const assumptionBlockCount = useMemo(
     () =>
@@ -359,7 +422,9 @@ function SourceListPanel({
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-c-text">
-          {t('documentStudio.panel.sourcesTitle', 'Sources')}
+          {railEnabled
+            ? t('documentStudio.panel.toolEvidence', 'Sources & assumptions')
+            : t('documentStudio.panel.sourcesTitle', 'Sources')}
         </h3>
         <p className="text-xs text-c-text-secondary">
           {t('documentStudio.panel.sourcesSummary', {
@@ -462,17 +527,20 @@ function PropertiesPanel({
   sourceCount: number;
   assumptionCount: number;
 }): React.ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const notSet = t('documentStudio.panel.notSet', 'Not set');
   const rows: Array<[string, string]> = [
-    [t('documentStudio.panel.propType', 'Type'), schema.documentType],
+    [t('documentStudio.panel.propType', 'Type'), documentTypeLabel(t, schema.documentType)],
     [t('documentStudio.panel.propLanguage', 'Language'), schema.language.toUpperCase()],
     [t('documentStudio.panel.propAudience', 'Audience'), metadataLabel(schema.audience, notSet)],
     [t('documentStudio.panel.propGoal', 'Goal'), schema.goal],
     [t('documentStudio.panel.propRegister', 'Register'), schema.communicationRegister],
-    [t('documentStudio.panel.propDensity', 'Density'), schema.density],
+    [t('documentStudio.panel.propDensity', 'Density'), densityLabel(t, schema.density)],
     [t('documentStudio.panel.propStyle', 'Style'), schema.languageStyle],
-    [t('documentStudio.panel.propConfidentiality', 'Confidentiality'), schema.confidentiality],
+    [
+      t('documentStudio.panel.propConfidentiality', 'Confidentiality'),
+      confidentialityLabel(i18n.language, schema.confidentiality),
+    ],
     [
       t('documentStudio.panel.propTemplate', 'Template'),
       schema.templateRef
@@ -639,6 +707,10 @@ function OutlinePanel({
 
 function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactElement {
   const { t } = useTranslation();
+  // ★ Rozwożenie prawego pasa — `activity` ≡ kanoniczne `history`, JEDEN
+  // klucz i18n z chipem paska górnego (`chipHistory`), który już dziś
+  // otwiera dokładnie ten panel pod nazwą „History" — patrz `topBarChips`.
+  const railEnabled = isArtifactRightRailEnabled();
   const [entries, setEntries] = useState<DocumentAccessHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -668,7 +740,9 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-c-text">
-            {t('documentStudio.panel.activityTitle', 'Activity')}
+            {railEnabled
+              ? t('documentStudio.panel.chipHistory', 'History')
+              : t('documentStudio.panel.activityTitle', 'Activity')}
           </h3>
           <p className="text-xs text-c-text-secondary">
             {t(
@@ -706,7 +780,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
               </span>
             </div>
             <div className="mt-1 text-c-text-secondary">
-              {entry.actorId} · {new Date(entry.occurredAt).toLocaleString()}
+              {entry.actorId} · {new Date(entry.occurredAt).toLocaleString('pl-PL')}
             </div>
           </li>
         ))}
@@ -1220,7 +1294,7 @@ export function SchemaDiffPanel({
             </option>
             {[...snapshots].reverse().map((snapshot) => (
               <option key={snapshot.versionId} value={snapshot.versionId}>
-                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString()}${
+                {`v${snapshot.versionNumber} · ${new Date(snapshot.capturedAt).toLocaleString('pl-PL')}${
                   snapshot.label ? ` · ${snapshot.label}` : ''
                 }`}
               </option>
@@ -1237,7 +1311,7 @@ export function SchemaDiffPanel({
                 defaultValue: 'Baseline v{{version}}',
                 version: result.baseSnapshot.versionNumber,
               })}{' '}
-              · {new Date(result.baseSnapshot.capturedAt).toLocaleString()}
+              · {new Date(result.baseSnapshot.capturedAt).toLocaleString('pl-PL')}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -2070,22 +2144,30 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     // the editor instance. Reading this revision deliberately refreshes the
     // registry predicates after each editor transaction.
     void editorCommandRevision;
+    // Guard against a destroyed-but-not-yet-cleared editor instance (e.g.
+    // React StrictMode's dev-only mount→unmount→mount cycle): TipTap's
+    // `Editor.destroy()` nulls out `commandManager` but the React state
+    // holding `tiptapEditor` can still reference that stale instance for
+    // one render, and calling `.can()`/`.chain()` on it throws
+    // "Cannot read properties of null (reading 'can')" — a real crash
+    // (ErrorBoundary "Something went wrong"), not a display-only defect.
+    const editorLive = tiptapEditor && !tiptapEditor.isDestroyed ? tiptapEditor : null;
     return createDocumentArtifactCommandRegistry(
       {
-        undo: () => tiptapEditor?.chain().focus().undo().run(),
-        redo: () => tiptapEditor?.chain().focus().redo().run(),
-        setParagraph: () => tiptapEditor?.chain().focus().setParagraph().run(),
-        setHeading: (level) => tiptapEditor?.chain().focus().toggleHeading({ level }).run(),
-        toggleBulletList: () => tiptapEditor?.chain().focus().toggleBulletList().run(),
-        toggleOrderedList: () => tiptapEditor?.chain().focus().toggleOrderedList().run(),
-        toggleBold: () => tiptapEditor?.chain().focus().toggleBold().run(),
-        toggleItalic: () => tiptapEditor?.chain().focus().toggleItalic().run(),
-        toggleUnderline: () => tiptapEditor?.chain().focus().toggleUnderline().run(),
+        undo: () => editorLive?.chain().focus().undo().run(),
+        redo: () => editorLive?.chain().focus().redo().run(),
+        setParagraph: () => editorLive?.chain().focus().setParagraph().run(),
+        setHeading: (level) => editorLive?.chain().focus().toggleHeading({ level }).run(),
+        toggleBulletList: () => editorLive?.chain().focus().toggleBulletList().run(),
+        toggleOrderedList: () => editorLive?.chain().focus().toggleOrderedList().run(),
+        toggleBold: () => editorLive?.chain().focus().toggleBold().run(),
+        toggleItalic: () => editorLive?.chain().focus().toggleItalic().run(),
+        toggleUnderline: () => editorLive?.chain().focus().toggleUnderline().run(),
       },
       {
-        canUndo: tiptapEditor?.can().undo() ?? false,
-        canRedo: tiptapEditor?.can().redo() ?? false,
-        editorReady: Boolean(tiptapEditor),
+        canUndo: editorLive?.can().undo() ?? false,
+        canRedo: editorLive?.can().redo() ?? false,
+        editorReady: Boolean(editorLive),
       }
     );
   }, [tiptapEditor, editorCommandRevision]);
@@ -2771,7 +2853,17 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     () => [
       {
         id: 'sources',
-        label: t('documentStudio.panel.toolSources', 'Sources'),
+        // ★ Rozwożenie prawego pasa (2026-08-30, ANALIZA_PRAWY_PANEL.md §7
+        // krok 4, uzupełnienie „dokumenty"): JEDEN słownik — `sources` ≡
+        // kanoniczne `evidence`. Za flagą `ff_artifact_right_rail`
+        // (domyślnie OFF) etykieta przechodzi na TĘ SAMĄ frazę, której ten
+        // plik już używa dla przeciwległej, flagowanej karty HP-17
+        // (`documentStudio.panel.toolEvidence`, patrz `overflowRightRailTools`
+        // niżej) — jeden klucz i18n, nie druga kopia tekstu. Przy OFF etykieta
+        // zostaje 1:1 „Sources"/„Źródła".
+        label: isArtifactRightRailEnabled()
+          ? t('documentStudio.panel.toolEvidence', 'Sources & assumptions')
+          : t('documentStudio.panel.toolSources', 'Sources'),
         icon: FileText,
         badge: sourceCount > 0 ? sourceCount : undefined,
         dotTone: assumptionCount > 0 ? 'warning' : sourceCount > 0 ? 'success' : 'warning',
@@ -2805,7 +2897,18 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     () => [
       {
         id: 'activity',
-        label: t('documentStudio.panel.toolActivity', 'Activity'),
+        // ★ Rozwożenie prawego pasa — `activity` ≡ kanoniczne `history`.
+        // Za flagą `ff_artifact_right_rail` (domyślnie OFF) etykieta
+        // przechodzi na TĘ SAMĄ frazę, której już używa pasek chipów tego
+        // pliku dla przycisku otwierającego dokładnie tę kartę
+        // (`documentStudio.panel.chipHistory` — patrz `topBarChips` wyżej,
+        // „Open the unified activity feed from the right rail"). Dziś chip
+        // mówi „History", a karta „Activity" — dwie nazwy jednej rzeczy w
+        // TYM SAMYM pliku. Jeden klucz i18n usuwa ten rozjazd. Przy OFF
+        // etykieta zostaje 1:1 „Activity"/„Aktywność".
+        label: isArtifactRightRailEnabled()
+          ? t('documentStudio.panel.chipHistory', 'History')
+          : t('documentStudio.panel.toolActivity', 'Activity'),
         icon: History,
       },
       {
@@ -3203,8 +3306,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 {t('documentStudio.panel.documentPreview', 'Document preview')}
               </h2>
               <p className="text-xs text-c-text-secondary">
-                {schema.documentType} · {schema.language.toUpperCase()} · {schema.density} ·{' '}
-                {schema.confidentiality}
+                {documentTypeLabel(t, schema.documentType)} · {schema.language.toUpperCase()} ·{' '}
+                {densityLabel(t, schema.density)} ·{' '}
+                {confidentialityLabel(i18n.language, schema.confidentiality)}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -3373,7 +3477,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                     : t('common.saved', 'Zapisano')}
             </span>
             <span className="rounded-md border border-c-border px-2 py-1 whitespace-nowrap">
-              {schema.confidentiality}
+              {confidentialityLabel(i18n.language, schema.confidentiality)}
             </span>
           </div>
         ) : undefined
@@ -3382,7 +3486,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         <div className="text-right text-[11px] text-c-text-secondary">
           <div>
             {schema.language.toUpperCase()}
-            {!artifactStudioMode ? ` · ${schema.confidentiality}` : ''}
+            {!artifactStudioMode
+              ? ` · ${confidentialityLabel(i18n.language, schema.confidentiality)}`
+              : ''}
           </div>
           <div>
             {t('documentStudio.panel.presenceSources', {

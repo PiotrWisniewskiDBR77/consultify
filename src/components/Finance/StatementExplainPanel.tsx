@@ -63,6 +63,28 @@ const EVIDENCE_TYPE_FALLBACKS: Record<string, string> = {
   manual_note: 'Manual note',
 };
 
+// NAPRAWIONE (sweep 148-finanse-parametry, rodzina „surowa wartość"):
+// `MetaRow label={originLabel}` renderował `explain.valueOrigin` wprost
+// (kod backendu — `financialStatementValueWriteService.ts:175`, jedyne pięć
+// możliwych wartości poniżej) zamiast etykiety — ten sam wzorzec co
+// `EVIDENCE_TYPE_I18N_KEYS`/`MAPPING_STATUS_CONFIG` tuż niżej w tym pliku,
+// tylko dla trzeciego pola tego samego panelu.
+const VALUE_ORIGIN_I18N_KEYS: Record<string, string> = {
+  source: 'finance.explainPanel.valueOrigin.source',
+  mapped: 'finance.explainPanel.valueOrigin.mapped',
+  manual: 'finance.explainPanel.valueOrigin.manual',
+  computed: 'finance.explainPanel.valueOrigin.computed',
+  estimated: 'finance.explainPanel.valueOrigin.estimated',
+};
+
+const VALUE_ORIGIN_FALLBACKS: Record<string, string> = {
+  source: 'Source',
+  mapped: 'Mapped',
+  manual: 'Manual',
+  computed: 'Computed',
+  estimated: 'Estimated',
+};
+
 const MAPPING_STATUS_CONFIG: Record<
   string,
   { i18nKey: string; fallback: string; icon: React.ReactNode; dotColor: string }
@@ -176,7 +198,7 @@ function EvidenceCard({
                   {t('finance.explainPanel.contribution', 'Contribution')}
                 </span>
                 <span className="font-mono font-semibold tabular-nums">
-                  {Number(evidence.contributionValue).toLocaleString()}
+                  {Number(evidence.contributionValue).toLocaleString('pl-PL')}
                 </span>
               </div>
             )}
@@ -302,7 +324,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
             <div className="flex items-end justify-between">
               <div>
                 <div className="font-mono text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
-                  {new Intl.NumberFormat('en-US', {
+                  {new Intl.NumberFormat('pl-PL', {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                     useGrouping: true,
@@ -364,7 +386,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                         }`}
                       >
                         {pv.value != null
-                          ? new Intl.NumberFormat('en-US', { useGrouping: true }).format(pv.value)
+                          ? new Intl.NumberFormat('pl-PL', { useGrouping: true }).format(pv.value)
                           : '—'}
                       </div>
                     </div>
@@ -430,7 +452,13 @@ export const StatementExplainPanel: React.FC<Props> = ({
                         {t(mappingCfg.i18nKey, mappingCfg.fallback)}
                       </span>
                     </MetaRow>
-                    <MetaRow label={originLabel}>{explain.valueOrigin || 'source'}</MetaRow>
+                    <MetaRow label={originLabel}>
+                      {t(
+                        VALUE_ORIGIN_I18N_KEYS[explain.valueOrigin || 'source'] ??
+                          'finance.explainPanel.valueOrigin.source',
+                        VALUE_ORIGIN_FALLBACKS[explain.valueOrigin || 'source'] ?? 'Source'
+                      )}
+                    </MetaRow>
                     {explain.lineCode && (
                       <MetaRow label={t('finance.explainPanel.lineCode', 'Line code')}>
                         <span className="inline-flex items-center gap-1 font-mono text-[10px]">

@@ -12,11 +12,16 @@
  * for DriverPlanner), so this host needs no backend/DB/login.
  *
  * URL params (in addition to the harness-wide ?lang= & ?theme=):
- *   &panel=value|driver   which panel to mount (default: value)
+ *   &panel=value|driver|monte-carlo|real-options|frontier|sensitivity|scenarios
  *   &state=populated|empty  which state (default: populated)
  */
-import React from 'react';
+import React, { useEffect } from 'react';
 
+import { EfficientFrontierPanel } from '../../src/components/Economics/panels/EfficientFrontierPanel';
+import { MonteCarloNpvPanel } from '../../src/components/Economics/panels/MonteCarloNpvPanel';
+import { RealOptionsPanel } from '../../src/components/Economics/panels/RealOptionsPanel';
+import { ScenarioComputePanel } from '../../src/components/Economics/panels/ScenarioComputePanel';
+import { WhatIfSensitivityPanel } from '../../src/components/Economics/panels/WhatIfSensitivityPanel';
 import {
   type DriverNode,
   DriverPlannerPanel,
@@ -185,13 +190,148 @@ const MOCK_DRIVER_TREE: DriverNode = {
   ],
 };
 
-export default function FinanceValuePanelsScreen(): React.ReactElement {
+const MOCK_MONTE_CARLO_RESULT = {
+  simulation: {
+    samples: [],
+    mean: 1_140_000,
+    p10: 420_000,
+    p50: 1_090_000,
+    p90: 1_920_000,
+    probPositive: 0.94,
+    valueAtRisk5: 180_000,
+  },
+  histogram: [
+    { binStart: 0, binEnd: 400_000, count: 80 },
+    { binStart: 400_000, binEnd: 800_000, count: 310 },
+    { binStart: 800_000, binEnd: 1_200_000, count: 690 },
+    { binStart: 1_200_000, binEnd: 1_600_000, count: 570 },
+    { binStart: 1_600_000, binEnd: 2_000_000, count: 280 },
+    { binStart: 2_000_000, binEnd: 2_400_000, count: 70 },
+  ],
+};
+
+const MOCK_FRONTIER_RESULT = {
+  curve: [
+    { risk: 0.12, value: 320_000, mix: ['init-1'] },
+    { risk: 0.2, value: 610_000, mix: ['init-1', 'init-3'] },
+    { risk: 0.29, value: 940_000, mix: ['init-1', 'init-2', 'init-3'] },
+    { risk: 0.38, value: 1_170_000, mix: ['init-1', 'init-2', 'init-3', 'init-4'] },
+  ],
+  current: {
+    risk: 0.38,
+    value: 1_170_000,
+    mix: ['init-1', 'init-2', 'init-3', 'init-4'],
+  },
+  optimal: { risk: 0.29, value: 940_000, mix: ['init-1', 'init-2', 'init-3'] },
+};
+
+const MOCK_TORNADO_RESULT = {
+  base: 1_080_000,
+  bars: [
+    { label: 'Revenue growth', low: 620_000, high: 1_560_000 },
+    { label: 'Gross margin', low: 770_000, high: 1_390_000 },
+    { label: 'Operating costs', low: 890_000, high: 1_270_000 },
+  ],
+};
+
+const MOCK_HEATMAP_RESULT = {
+  xLabels: [80, 90, 100, 110, 120],
+  yLabels: [6, 8, 10, 12, 14],
+  matrix: [6, 8, 10, 12, 14].flatMap((y) =>
+    [80, 90, 100, 110, 120].map((x) => ({ x, y, value: 520_000 + x * 8_000 - y * 20_000 }))
+  ),
+};
+
+function AutoRun({ testIds, children }: { testIds: string[]; children: React.ReactNode }) {
+  useEffect(() => {
+    for (const testId of testIds) {
+      document.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)?.click();
+    }
+  }, [testIds]);
+  return <>{children}</>;
+}
+
+const AUTO_RUN_MONTE_CARLO = ['mc-run'];
+const AUTO_RUN_REAL_OPTIONS = ['ro-run'];
+const AUTO_RUN_FRONTIER = ['frontier-run'];
+const AUTO_RUN_SENSITIVITY = ['sens-run-tornado', 'sens-run-heatmap'];
+const AUTO_RUN_SCENARIOS = ['scenario-run'];
+
+export interface FinanceValuePanelsScreenProps {
+  panelOverride?: string;
+  stateOverride?: string;
+}
+
+export default function FinanceValuePanelsScreen({
+  panelOverride,
+  stateOverride,
+}: FinanceValuePanelsScreenProps = {}): React.ReactElement {
   const params = new URLSearchParams(window.location.search);
-  const panel = params.get('panel') || 'value';
-  const state = params.get('state') || 'populated';
+  const panel = panelOverride ?? params.get('panel') ?? 'value';
+  const state = stateOverride ?? params.get('state') ?? 'populated';
 
   let body: React.ReactElement;
-  if (panel === 'driver') {
+  if (panel === 'monte-carlo') {
+    body = (
+      <AutoRun testIds={AUTO_RUN_MONTE_CARLO}>
+        <MonteCarloNpvPanel fetcher={async () => MOCK_MONTE_CARLO_RESULT} />
+      </AutoRun>
+    );
+  } else if (panel === 'real-options') {
+    body = (
+      <AutoRun testIds={AUTO_RUN_REAL_OPTIONS}>
+        <RealOptionsPanel
+          fetcher={{
+            defer: async () => ({
+              optionValue: 285_000,
+              expandedNpv: 385_000,
+              recommendation: 'defer',
+            }),
+          }}
+        />
+      </AutoRun>
+    );
+  } else if (panel === 'frontier') {
+    body = (
+      <AutoRun testIds={AUTO_RUN_FRONTIER}>
+        <EfficientFrontierPanel fetcher={async () => MOCK_FRONTIER_RESULT} />
+      </AutoRun>
+    );
+  } else if (panel === 'sensitivity') {
+    body = (
+      <AutoRun testIds={AUTO_RUN_SENSITIVITY}>
+        <WhatIfSensitivityPanel
+          fetcher={{
+            tornado: async () => MOCK_TORNADO_RESULT,
+            dataTable: async () => MOCK_HEATMAP_RESULT,
+          }}
+        />
+      </AutoRun>
+    );
+  } else if (panel === 'scenarios') {
+    body = (
+      <AutoRun testIds={AUTO_RUN_SCENARIOS}>
+        <ScenarioComputePanel
+          fetcher={{
+            apply: async ({ assumptions, scenario }) => {
+              const factors = { base: 1, optimistic: 1.18, conservative: 0.84 };
+              const series = assumptions.revenue as number[];
+              return {
+                assumptions: { revenue: series.map((value) => value * factors[scenario]) },
+              };
+            },
+            fan: async ({ scenarios }) => ({
+              base: scenarios.base?.revenue ?? [],
+              bands: [
+                { label: 'optimistic', values: scenarios.optimistic?.revenue ?? [] },
+                { label: 'conservative', values: scenarios.conservative?.revenue ?? [] },
+              ],
+            }),
+          }}
+        />
+      </AutoRun>
+    );
+  } else if (panel === 'driver') {
     body =
       state === 'empty' ? (
         <DriverPlannerPanel />
@@ -213,7 +353,10 @@ export default function FinanceValuePanelsScreen(): React.ReactElement {
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: 24, background: 'var(--c-bg)' }}>
+      {/* ★ NAPRAWIONE (powtórka 08-31): pastylka harnessu bez `data-dev-render-chrome`
+          — ta sama pułapka #15 co finance-statement-pack-workspace-v2.tsx. */}
       <div
+        data-dev-render-chrome="true"
         style={{
           marginBottom: 12,
           fontFamily: 'system-ui',

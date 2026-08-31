@@ -35,11 +35,92 @@ import { DecisionDetailView } from '../../src/components/MyWork/DecisionDetailVi
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { Api } from '../../src/services/api';
+import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
 
 const DECISION_ID = 'decision-prv-mywork-1';
+
+/**
+ * `DecisionDetailView.loadDecision()` ma WBUDOWANY fallback na angielskie
+ * stałe `DEMO_ALTERNATIVES`/`DEMO_RISKS`/`DEMO_COMMENTS`/`DEMO_ATTACHMENTS`/
+ * `DEMO_STAKEHOLDERS`/`DEMO_ESCALATION`/`DEMO_REMINDERS` za każdym razem, gdy
+ * tablica z API jest pusta A `isDemo === true` (linie ~1983-2050 w src).
+ * `seedRealisticSession()` ustawia `isDemoMode: true` dla WSZYSTKICH ekranów
+ * (potrzebne dla currentUser/providerów) — bez wyłączenia tego przełącznika
+ * TUTAJ obie wersje karty (pusta i `?dane=pelne`) pokazywałyby gdzieniegdzie
+ * angielski seed deweloperski zamiast treści z MOCK_* poniżej, co łamie
+ * „jedna historia po polsku". Wyłączamy `isDemoMode`/`currentUser.isDemo` NA
+ * TYM EKRANIE ZAWSZE (obie wersje) i sami w 100% kontrolujemy puste/pełne
+ * przez `MOCK_DECISION_EFEKTYWNY` niżej — provider tree zostaje pełny, bo
+ * zależy od `currentUser?.id`, nie od `isDemo`.
+ */
+const __danePelneWczesnie = new URLSearchParams(window.location.search).get('dane') === 'pelne';
+{
+  const cu = useAppStore.getState().currentUser;
+  useAppStore.setState({
+    isDemoMode: false,
+    currentUser: cu ? ({ ...cu, isDemo: false } as any) : cu,
+  });
+}
+
+/**
+ * `consequenceScenarios` (macierz 3×3: optymistyczny/neutralny/pesymistyczny ×
+ * 7/30/90 dni) NIE MA ŻADNEGO mapowania z API w `loadDecision()` — grep
+ * potwierdza zero `setConsequenceScenarios(decision....)`. Jedyna ścieżka
+ * wczytania to `localStorage['consultify-decision-enhancements:<id>']`
+ * (blok „Hydrate local enhancements", ok. linii 2115-2148 w src) — dokładnie
+ * ten sam mechanizm lokalnej trwałości, którego komponent używa jako JEDYNEGO
+ * źródła prawdy dla tego pola (nawet po stronie produkcyjnej). Zasianie tego
+ * klucza stąd NIE jest symulacją kliknięcia AI — to ten sam „rekord", który
+ * produkt sam czyta przy starcie; bez tego kroku sekcja „Konsekwencje"
+ * zostałaby pusta w wariancie `?dane=pelne` mimo istnienia treści w mocku,
+ * bo `loadDecision()` nie ma skąd jej wziąć z Api.get(.../detail).
+ * Historia treści: ta sama decyzja (rezydencja danych, 2 klientów enterprise,
+ * komitet inwestycyjny 5 sierpnia, budżet 168 000 PLN z wariantu A).
+ */
+const KARTA_DECYZJA_STORAGE_KEY = `consultify-decision-enhancements:${DECISION_ID}`;
+if (__danePelneWczesnie) {
+  try {
+    window.localStorage.setItem(
+      KARTA_DECYZJA_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 1,
+        savedAt: '2026-07-19T08:30:00Z',
+        consequenceScenarios: {
+          updatedAt: '2026-07-19T08:30:00Z',
+          source: 'ai',
+          optimistic: {
+            d7: 'Decyzja o wariancie A podjęta do 5 sierpnia. Budżet 168 000 PLN zatwierdzony w rezerwie programu bez korekty planu na Q4.',
+            d30: 'Migracja na instancję we Frankfurcie w toku zgodnie z oknem 10-24 sierpnia, bez kolizji z przebudową kolejek — rozdzielone na dwa etapy.',
+            d90: 'Obaj klienci enterprise odblokowują odbiór etapu (łącznie 1,4 mln PLN). Rezydencja danych w EU staje się argumentem w przetargach publicznych 2027.',
+          },
+          neutral: {
+            d7: 'Decyzja podjęta z 2-dniowym poślizgiem względem 5 sierpnia — tuż przed zamknięciem puli komitetu inwestycyjnego.',
+            d30: 'Migracja przesunięta o tydzień z powodu kolizji z zespołem platformowym; okno migracyjne wydłużone do 31 sierpnia.',
+            d90: 'Odbiór etapu zamknięty dla obu klientów, ale jeden z nich żąda dodatkowego potwierdzenia od zewnętrznej kancelarii — kolejny miesiąc administracji.',
+          },
+          pessimistic: {
+            d7: 'Brak decyzji do 5 sierpnia. Budżet na wariant A wypada z rezerwy programu i wraca dopiero w planie na 2027.',
+            d30: 'Zwłoka blokuje odbiór etapu w dwóch projektach (1,4 mln PLN) i wstrzymuje podpisanie aneksu z trzecim klientem — ok. 32 000 PLN niezafakturowanej pracy tygodniowo.',
+            d90: 'Obaj klienci enterprise eskalują do swoich zarządów; ryzyko wypowiedzenia kontraktu. Brak rezydencji danych wyklucza start w przetargach publicznych 2027.',
+          },
+        },
+      })
+    );
+  } catch {
+    // localStorage niedostępny (np. tryb prywatny) — sekcja Konsekwencje
+    // zostanie pusta, ale reszta karty działa normalnie.
+  }
+} else {
+  try {
+    window.localStorage.removeItem(KARTA_DECYZJA_STORAGE_KEY);
+    window.localStorage.removeItem(`consultify:accordionSections:decision:${DECISION_ID}`);
+  } catch {
+    // ignore
+  }
+}
 
 /**
  * ★ LICZBY MUSZĄ BYĆ WIDOCZNE NA EKRANIE, NIE TYLKO W DANYCH.
@@ -420,6 +501,42 @@ const MOCK_DECISION = {
   comments: MOCK_COMMENTS,
   linkedItems: MOCK_LINKED_ITEMS,
   attachments: MOCK_ATTACHMENTS,
+  // `RACI i eskalacja` = stakeholders (RACI, wyżej) + przypomnienia/eskalacja
+  // (poniżej). Oba pola CZYTANE wprost z rekordu w loadDecision() — w
+  // przeciwieństwie do consequenceScenarios nie trzeba ich zasiewać przez
+  // localStorage.
+  reminders: [
+    {
+      id: 'rem-1',
+      type: 'before_due',
+      days: 3,
+      recipients: 'both',
+      inAppNotification: true,
+      emailNotification: true,
+      message:
+        'Za 3 dni termin decyzji (5 sierpnia) — budżet 168 000 PLN na wariant A wypada z rezerwy programu, jeśli decyzja nie zapadnie na czas.',
+      enabled: true,
+    },
+    {
+      id: 'rem-2',
+      type: 'before_due',
+      days: 1,
+      recipients: 'stakeholders',
+      inAppNotification: true,
+      emailNotification: false,
+      message: 'Jutro komitet inwestycyjny — decyzja musi być zatwierdzona przed posiedzeniem.',
+      enabled: true,
+    },
+  ],
+  escalation: {
+    id: 'esc-1',
+    enabled: true,
+    escalateTo: 'user-marek',
+    escalateToName: 'Marek Zieliński',
+    afterDays: 2,
+    message:
+      'Decyzja przeterminowana o 2 dni — eskalacja do partnera prowadzącego, bo 5 sierpnia to twardy termin komitetu inwestycyjnego.',
+  },
 };
 
 const MOCK_USERS = [
@@ -468,13 +585,48 @@ const MOCK_HISTORY = [
   },
 ];
 
+// ★ NAPRAWA (2026-08-30, tor grafiki): `DecisionDetailView.loadDecision()` NIE
+// wywołuje `Api.getDecision(id)` — realny caller to `Api.get('/decisions/:id/detail')`
+// (zwraca proxy, gdzie `.data` = rekord). Stary patch łatał metodę, której komponent
+// nigdy nie woła, więc `detailResponse.data` trafiał w siatkę bezpieczeństwa
+// (`window.fetch` → `{data:[],items:[]}`) i karta renderowała się PUSTA (tytuł
+// placeholder, „Ta sekcja jest jeszcze pusta") niezależnie od treści MOCK_DECISION.
+// `Api.getDecision` zostaje (nieużywany przez ten komponent, ale nieszkodliwy —
+// inne miejsca w apce mogą go wołać przez ten sam singleton).
 Api.getDecision = (async () => MOCK_DECISION) as typeof Api.getDecision;
 Api.getDecisionHistory = (async () => MOCK_HISTORY) as typeof Api.getDecisionHistory;
+
+/**
+ * `?dane=pelne` — Piotr nigdy nie ocenia pustej karty (CLAUDE.md #7). Domyślnie
+ * (bez parametru) rekord ma tylko opis i kontekst — sekcje, które w produkcie
+ * zapełnia Teresa po kliknięciu AI (Alternatywy = „Decision Option Analyzer",
+ * RACI = „RACI Team Advisor") albo dodaje człowiek (Ryzyka, Komentarze,
+ * Załączniki, Powiązania) zostają puste, tak jak świeża decyzja bez pracy.
+ * Z parametrem — komplet treści z MOCK_DECISION/MOCK_* powyżej (bez zmian —
+ * to ta sama polska historia: rezydencja danych wywiadowczych, 2 klientów
+ * enterprise, termin 5 sierpnia).
+ */
+const __danePelne = __danePelneWczesnie;
+const MOCK_DECISION_EFEKTYWNY = __danePelne
+  ? MOCK_DECISION
+  : {
+      ...MOCK_DECISION,
+      alternatives: [],
+      selectedAlternativeId: '',
+      risks: [],
+      comments: [],
+      linkedItems: [],
+      attachments: [],
+      reminders: [],
+      escalation: null,
+    };
+const MOCK_STAKEHOLDERS_EFEKTYWNY = __danePelne ? MOCK_STAKEHOLDERS : [];
 
 const realApiGet = Api.get.bind(Api);
 Api.get = (async (url: string) => {
   if (url === '/users') return { users: MOCK_USERS };
-  if (url.includes('/stakeholders')) return { stakeholders: MOCK_STAKEHOLDERS };
+  if (url.includes(`/decisions/${DECISION_ID}/detail`)) return { data: MOCK_DECISION_EFEKTYWNY };
+  if (url.includes('/stakeholders')) return { stakeholders: MOCK_STAKEHOLDERS_EFEKTYWNY };
   return realApiGet(url);
 }) as typeof Api.get;
 

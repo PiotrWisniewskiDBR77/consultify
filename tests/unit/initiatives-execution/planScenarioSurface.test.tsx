@@ -153,6 +153,26 @@ const PLAN_TRANSLATIONS: Record<string, string> = {
   'common.cancel': 'Anuluj',
   'common.close': 'Zamknij',
   'common.delete': 'Usuń',
+  // Odbiór 141-plan-scenario (2026-08-31): powierzchnia tłumaczy enumy backendu
+  // przez te klucze także w warsztacie planu — bez nich mock `t` zwracał tu
+  // gołe klucze i test nie mógłby odróżnić etykiety od surowego enuma.
+  'common.open': 'Otwórz',
+  'common.high': 'Wysoki',
+  'common.medium': 'Średni',
+  'common.low': 'Niski',
+  'initiatives.planScenario.states.known': 'Znane',
+  'initiatives.planScenario.states.unknown': 'Nieznane',
+  'initiatives.planScenario.states.current': 'W backlogu',
+  'initiatives.planScenario.states.none': 'Brak',
+  'initiatives.planScenario.band.now': 'Teraz',
+  'initiatives.planScenario.band.next': 'Kolejno',
+  'initiatives.planScenario.band.later': 'Później',
+  'initiatives.planScenario.band.unscheduled': 'Nie zaplanowano',
+  'initiatives.planScenario.nextActions.proposeWindow': 'Zaproponuj okno',
+  'initiatives.planScenario.nextActions.resolveCapacity': 'Rozwiąż moc przerobową',
+  'initiatives.planScenario.nextActions.reviewTentativeWindow': 'Przejrzyj wstępne okno',
+  'initiatives.planScenario.nextActions.validateDependencies': 'Zwaliduj zależności',
+  'initiatives.planScenario.nextActions.addToPlanOrExclude': 'Dodaj do planu lub wyklucz',
 };
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -279,16 +299,21 @@ describe('PlanScenarioSurface', () => {
     vi.mocked(reviewPlanAnalysisProposal).mockReset().mockResolvedValue({});
   });
 
-  it('loads the persistent register and opens exact Plan Workbench with Enter', async () => {
+  it('loads the persistent register and opens exact Plan Workbench from its own action', async () => {
     render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
     expect((await screen.findByLabelText('Aktywny scenariusz planu')).textContent).toContain('Szkic');
     expect(screen.queryByText(/\bDRAFT\b/)).not.toBeInTheDocument();
     const row = (await screen.findByText('Automation')).closest('tr')!;
     fireEvent.click(row);
     expect(screen.getByText('Okno inicjatywy w planie')).toBeInTheDocument();
+    // Odbiór 141-plan-scenario: Enter/„Otwórz"/dwuklik NIE otwierają już warsztatu
+    // planu — obiecują obiekt wiersza (kartę inicjatywy). Warsztat ma własną,
+    // uczciwie nazwaną akcję.
     const layout = row.closest('div[tabindex="0"]')!;
     layout.focus();
     fireEvent.keyDown(layout, { key: 'Enter' });
+    expect(screen.queryByRole('region', { name: 'Warsztat scenariusza planu' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Otwórz narzędzia planu' }));
     expect(
       await screen.findByRole('region', { name: 'Warsztat scenariusza planu' })
     ).toBeInTheDocument();
@@ -297,8 +322,34 @@ describe('PlanScenarioSurface', () => {
     );
     expect(readPlanScenario).toHaveBeenCalledWith('plan-q4');
     expect(screen.getByLabelText('Termin docelowy initiative-1')).toHaveValue('2026-10-15T00:00');
-    expect(screen.getByText('UNKNOWN: Supplier window unconfirmed')).toBeInTheDocument();
+    expect(screen.getByText('Nieznane: Supplier window unconfirmed')).toBeInTheDocument();
+    expect(screen.queryByText('UNKNOWN: Supplier window unconfirmed')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Zamknij narzędzia planu' }));
+    expect(screen.queryByRole('region', { name: 'Warsztat scenariusza planu' })).toBeNull();
+  });
+
+  it('opens the initiative card from the preview, never the plan workbench', async () => {
+    const onOpenInitiative = vi.fn();
+    render(
+      <PlanScenarioSurface
+        initiatives={[{ id: 'initiative-1', name: 'Automation' }]}
+        onOpenInitiative={onOpenInitiative}
+      />
+    );
+    const row = (await screen.findByText('Automation')).closest('tr')!;
+    fireEvent.click(row);
+    fireEvent.click(screen.getByRole('button', { name: 'Otwórz' }));
+    expect(onOpenInitiative).toHaveBeenCalledWith('initiative-1', 'Automation');
+    expect(screen.queryByRole('region', { name: 'Warsztat scenariusza planu' })).toBeNull();
+  });
+
+  it('disables the preview open button when the host cannot show an initiative card', async () => {
+    render(<PlanScenarioSurface initiatives={[{ id: 'initiative-1', name: 'Automation' }]} />);
+    const row = (await screen.findByText('Automation')).closest('tr')!;
+    fireEvent.click(row);
+    const open = screen.getByRole('button', { name: 'Otwórz' });
+    expect(open).toBeDisabled();
+    fireEvent.click(open);
     expect(screen.queryByRole('region', { name: 'Warsztat scenariusza planu' })).toBeNull();
   });
 
@@ -311,7 +362,7 @@ describe('PlanScenarioSurface', () => {
         ]}
       />
     );
-    fireEvent.doubleClick((await screen.findByText('Automation')).closest('tr')!);
+    fireEvent.click(await screen.findByRole('button', { name: 'Otwórz narzędzia planu' }));
     await screen.findByRole('region', { name: 'Warsztat scenariusza planu' });
     expect(screen.getByLabelText('Uwzględnij Automation')).toBeChecked();
     fireEvent.change(screen.getByLabelText('Filtr statusu inicjatyw planu'), {
@@ -406,8 +457,18 @@ describe('PlanScenarioSurface', () => {
       />
     );
     expect(await screen.findByText('Automation in execution')).toBeInTheDocument();
-    expect(screen.getByText('Nie przypisano okna planu')).toBeInTheDocument();
-    expect(screen.getByText('ADD_TO_PLAN_OR_EXCLUDE')).toBeInTheDocument();
+    // 97-czternascie-kolumn (2026-08-30): the zbiorcza "Wstępny .../.../..."
+    // column (previously the only place this text rendered) was a confirmed
+    // literal duplicate of the earliest/target/latest columns for SCHEDULED
+    // rows and was removed. For an unscheduled row those three columns each
+    // render '—' instead — that em dash is now how "no window" is shown.
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
+    // 141-plan-scenario (2026-08-31): asercja była CZERWONA od czasu, gdy
+    // kolumna „Następna akcja" zaczęła iść przez `planNextActionKey` — surowy
+    // enum nie ma prawa się tu renderować. Sprawdzamy etykietę i pilnujemy,
+    // że enum NIE wraca.
+    expect(screen.getByText('Dodaj do planu lub wyklucz')).toBeInTheDocument();
+    expect(screen.queryByText('ADD_TO_PLAN_OR_EXCLUDE')).toBeNull();
   });
 
   it('creates a weekly planning horizon without exposing raw JSON', async () => {

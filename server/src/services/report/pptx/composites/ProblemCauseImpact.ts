@@ -9,6 +9,7 @@ import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js
 
 export interface ProblemCauseImpactProps {
   problem: string;
+  language?: 'en' | 'pl';
   causes: Array<{
     cause: string;
     impact: string;
@@ -23,6 +24,7 @@ export function ProblemCauseImpact(
 ): RenderedElement[] {
   const { position: p } = props;
   const elements: RenderedElement[] = [];
+  const isPolish = props.language === 'pl';
 
   // ── Vertical rhythm: problem banner on top, table fills the rest ──
   const problemH = 0.8;
@@ -77,7 +79,7 @@ export function ProblemCauseImpact(
   // Table: Cause | Impact | Severity
   const headerRow = [
     {
-      text: 'Cause',
+      text: isPolish ? 'Przyczyna' : 'Cause',
       options: {
         bold: true,
         fill: { color: tokens.colors.primary },
@@ -87,7 +89,7 @@ export function ProblemCauseImpact(
       },
     },
     {
-      text: 'Impact',
+      text: isPolish ? 'Wpływ' : 'Impact',
       options: {
         bold: true,
         fill: { color: tokens.colors.primary },
@@ -97,7 +99,7 @@ export function ProblemCauseImpact(
       },
     },
     {
-      text: 'Severity',
+      text: isPolish ? 'Ważność' : 'Severity',
       options: {
         bold: true,
         fill: { color: tokens.colors.primary },
@@ -121,7 +123,9 @@ export function ProblemCauseImpact(
         options: { fontSize: 10, fontFace: tokens.fonts.body, color: tokens.colors.textPrimary },
       },
       {
-        text: c.severity.toUpperCase(),
+        text: isPolish
+          ? ({ high: 'WYSOKA', medium: 'ŚREDNIA', low: 'NISKA' } as const)[c.severity]
+          : c.severity.toUpperCase(),
         options: {
           fontSize: 9,
           fontFace: tokens.fonts.body,

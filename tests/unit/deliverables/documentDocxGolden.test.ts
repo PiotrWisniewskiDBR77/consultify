@@ -131,10 +131,11 @@ describe('Document Studio golden DOCX export (C4)', () => {
     expect(document).toContain('w:type="page"'); // cover → body hard break
   });
 
-  it('embeds a Word TOC field (formattingSchema.toc = true in the golden fixture)', async () => {
+  it('renders a deterministic static TOC when nativeField is not requested', async () => {
     const buffer = await renderDocumentSchemaToDocxBuffer(makeGoldenDocumentSchema());
     const { document } = await unzipDocx(buffer);
-    expect(document).toContain('TOC ');
+    expect(document).toContain('Table of Contents');
+    expect(document).not.toContain('TOC ');
     expect(document).toContain(`w:val="${DOCX_STYLE_IDS.TOC_HEADING}"`);
   });
 

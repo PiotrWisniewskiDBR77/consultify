@@ -123,6 +123,7 @@ import { PostgresInitiativeReader } from '../../domain/initiatives-execution/pos
 import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 import { publishInitiativeCard } from '../../domain/initiatives-execution/publishInitiativeCard.js';
+import { createRaidItem, deleteRaidItem } from '../../domain/initiatives-execution/raidItem.js';
 import { refreshInitiativeSource } from '../../domain/initiatives-execution/refreshInitiativeSource.js';
 import { registerInitiative } from '../../domain/initiatives-execution/registerInitiative.js';
 import {
@@ -830,6 +831,24 @@ const RaidMitigationSchema = z.object({
   mitigationOwnerId: z.string().min(1),
   mitigationDueDate: z.string().datetime().nullable().default(null),
   mitigationStatus: z.string().min(1),
+});
+const RaidItemCreateSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  type: z.enum(['RISK', 'ASSUMPTION', 'ISSUE', 'DEPENDENCY']),
+  title: z.string().min(1),
+  description: z.string().nullable().default(null),
+  status: z.enum(['OPEN', 'MITIGATED', 'REALIZED', 'CLOSED']).default('OPEN'),
+  probability: z.enum(['LOW', 'MEDIUM', 'HIGH']).nullable().default(null),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).nullable().default(null),
+  ownerId: z.string().nullable().default(null),
+  dueDate: z.string().nullable().default(null),
+  mitigationPlan: z.string().nullable().default(null),
+  linkedItems: z.array(z.string()).default([]),
+});
+const RaidItemDeleteSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
 });
 const ManagerExecutionActionSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -2217,6 +2236,26 @@ export function createInitiativesExecutionRuntimeRouter(
             denialCode: canUpdate ? null : 'NOT_FOUND',
             legacyDenialAt: 'BRAMKA_LEGACY',
             legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+          },
+          raidItem: {
+            create: {
+              available: canUpdate,
+              canonicalCommand:
+                'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
+              denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+              denialCode: canUpdate ? null : 'NOT_FOUND',
+              legacyDenialAt: 'BRAMKA_LEGACY',
+              legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+            },
+            delete: {
+              available: canUpdate,
+              canonicalCommand:
+                'DELETE /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
+              denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+              denialCode: canUpdate ? null : 'NOT_FOUND',
+              legacyDenialAt: 'BRAMKA_LEGACY',
+              legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+            },
           },
           managerAction: {
             available: canUpdate,
@@ -4814,6 +4853,80 @@ export function createInitiativesExecutionRuntimeRouter(
           (item: any) => item.realizationId
         ),
       });
+    })
+  );
+  router.post(
+    '/initiatives/:initiativeId/raid-items/:raidItemId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = RaidItemCreateSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      const canUpdate =
+        projectIds.length > 0
+          ? await authorizeProjects(actor, projectIds, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+      if (!canUpdate)
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...item } = parsed.data;
+      const result = await createRaidItem(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'raid_item',
+        aggregateId: firstParam(req.params.raidItemId),
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'raid-item.create',
+        createIfMissing: true,
+        payload: { ...item, initiativeId },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  router.delete(
+    '/initiatives/:initiativeId/raid-items/:raidItemId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = RaidItemDeleteSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      const canUpdate =
+        projectIds.length > 0
+          ? await authorizeProjects(actor, projectIds, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+      if (!canUpdate)
+        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const result = await deleteRaidItem(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'raid_item',
+        aggregateId: firstParam(req.params.raidItemId),
+        expectedVersion: parsed.data.expectedVersion,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId: parsed.data.clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'raid-item.delete',
+        payload: { initiativeId },
+      });
+      res.status(200).json(result);
     })
   );
   router.post(

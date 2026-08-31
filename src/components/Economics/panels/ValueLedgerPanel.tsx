@@ -27,13 +27,13 @@ import {
 
 const fmt = (v: number | null | undefined): string => {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(v);
+  return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }).format(v);
 };
 
 const fmtDate = (v: string | null | undefined): string => {
   if (!v) return '—';
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? v : d.toLocaleDateString();
+  return Number.isNaN(d.getTime()) ? v : d.toLocaleDateString('pl-PL');
 };
 
 export interface ValueLedgerPanelProps {

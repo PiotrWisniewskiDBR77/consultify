@@ -24,10 +24,14 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: () => {} },
-  useTranslation: () => ({ t: (_k: string, fallback?: string) => fallback ?? _k }),
+  useTranslation: () => ({
+    t: (_k: string, fallback?: string) => fallback ?? _k,
+    i18n: { language: 'en', resolvedLanguage: 'en' },
+  }),
 }));
 
 vi.mock('@/services/funnelAnalytics', () => ({ trackFunnelEvent: vi.fn() }));
+vi.mock('@/utils/orgRedesignFlag', () => ({ isOrgRedesignV1Enabled: () => false }));
 
 // Stub heavy child surfaces — the smoke test only asserts the shell + routing wiring.
 vi.mock('@/components/Organization/KnowledgeGraphExplorer', () => ({
@@ -38,10 +42,15 @@ vi.mock('@/components/Organization/OrganizationAdminPanel', () => ({
     <div data-testid="admin-panel">{section}</div>
   ),
 }));
-vi.mock('@/components/Organization/OrganizationSidebar', () => ({
-  __esModule: true,
-  default: () => <nav data-testid="org-sidebar" />,
-}));
+vi.mock('@/components/Organization/OrganizationSidebar', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@/components/Organization/OrganizationSidebar')
+  >();
+  return {
+    ...actual,
+    default: () => <nav data-testid="org-sidebar" />,
+  };
+});
 vi.mock('@/components/Organization/OrgContextSummaryBanner', () => ({
   OrgContextSummaryBanner: () => <div data-testid="context-banner" />,
 }));
@@ -76,19 +85,27 @@ describe('OrganizationView (smoke)', () => {
     ['/organization/challenges', 'challenges-module'],
     ['/organization/strategy', 'strategy-module'],
     ['/organization/knowledge-graph', 'kg-explorer'],
-    ['/organization/members', 'route-redirect'],
-    ['/organization/limits', 'route-redirect'],
   ];
 
-  it.each(sectionCases)('renders %s without crashing', (path, testId) => {
+  it.each(sectionCases)('renders %s without crashing', async (path, testId) => {
     locationState.pathname = path;
     render(<OrganizationView />);
-    expect(screen.getByTestId(testId)).toBeInTheDocument();
+    expect(await screen.findByTestId(testId)).toBeInTheDocument();
   });
 
-  it('always renders the live context summary banner', () => {
+  it('always renders the live context summary banner', async () => {
     render(<OrganizationView />);
-    expect(screen.getByTestId('context-banner')).toBeInTheDocument();
+    expect(await screen.findByTestId('context-banner')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/organization/members', '/admin/people'],
+    ['/organization/limits', '/admin/billing'],
+  ])('hands legacy admin route %s to the canonical admin surface', async (path, target) => {
+    locationState.pathname = path;
+    render(<OrganizationView />);
+    await screen.findByTestId('profile-module');
+    expect(navigateMock).toHaveBeenCalledWith(target, { replace: true });
   });
 
   it('renders the sidebar shell', () => {

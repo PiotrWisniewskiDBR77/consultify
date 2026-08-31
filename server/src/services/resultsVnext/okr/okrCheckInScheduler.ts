@@ -39,6 +39,17 @@ export interface GenerateCadenceOccurrencesAndSeedCheckInObligationsInput {
 export interface GenerateCadenceOccurrencesAndSeedCheckInObligationsResult {
   occurrencesCreated: number;
   obligationsSeeded: number;
+  cadenceOccurrenceIds: string[];
+}
+
+export interface SeedExistingCheckInObligationsForSetInput {
+  organizationId: string;
+  setId: string;
+}
+
+export interface SeedExistingCheckInObligationsForSetResult {
+  obligationsSeeded: number;
+  cadenceOccurrenceIds: string[];
 }
 
 /**
@@ -68,16 +79,22 @@ export async function generateCadenceOccurrencesAndSeedCheckInObligations(
   const generated = await generateCadenceOccurrences({ organizationId, cycleId });
 
   if (generated.createdOccurrenceIds.length === 0) {
-    return { occurrencesCreated: generated.created, obligationsSeeded: 0 };
+    return {
+      occurrencesCreated: generated.created,
+      obligationsSeeded: 0,
+      cadenceOccurrenceIds: [],
+    };
   }
 
   const client = await acquirePgClient();
   let obligationsSeeded = 0;
+  let cadenceOccurrenceIds: string[] = [];
   try {
     const occurrenceRowsResult = await client.query<{ cadence_occurrence_id: string; window_end: string }>(
       `SELECT cadence_occurrence_id, window_end FROM okr_vnext_checkin_occurrences WHERE cadence_occurrence_id = ANY($1::uuid[])`,
       [generated.createdOccurrenceIds]
     );
+    cadenceOccurrenceIds = occurrenceRowsResult.rows.map((row) => row.cadence_occurrence_id);
 
     const krRowsResult = await client.query<{ key_result_id: string; owner_user_id: string; row_version: number }>(
       `SELECT kr.key_result_id, kr.owner_user_id, kr.row_version
@@ -107,7 +124,75 @@ export async function generateCadenceOccurrencesAndSeedCheckInObligations(
     client.release();
   }
 
-  return { occurrencesCreated: generated.created, obligationsSeeded };
+  return {
+    occurrencesCreated: generated.created,
+    obligationsSeeded,
+    cadenceOccurrenceIds,
+  };
+}
+
+/**
+ * Seeds obligations for a Set activated after its Cycle's cadence windows
+ * were materialized. The obligation deduplication key makes repeated calls
+ * safe; unlike the Cycle activation path, this deliberately reads every
+ * existing occurrence for the Set's Cycle.
+ */
+export async function seedExistingCheckInObligationsForSet(
+  input: SeedExistingCheckInObligationsForSetInput
+): Promise<SeedExistingCheckInObligationsForSetResult> {
+  const { organizationId, setId } = input;
+  const client = await acquirePgClient();
+  let obligationsSeeded = 0;
+  let cadenceOccurrenceIds: string[] = [];
+  try {
+    const occurrenceRowsResult = await client.query<{
+      cadence_occurrence_id: string;
+      window_end: string;
+    }>(
+      `SELECT occ.cadence_occurrence_id, occ.window_end
+         FROM okr_vnext_checkin_occurrences occ
+         JOIN okr_vnext_sets s ON s.cycle_id = occ.cycle_id AND s.organization_id = occ.organization_id
+        WHERE s.set_id = $1 AND s.organization_id = $2`,
+      [setId, organizationId]
+    );
+    cadenceOccurrenceIds = occurrenceRowsResult.rows.map((row) => row.cadence_occurrence_id);
+    const krRowsResult = await client.query<{
+      key_result_id: string;
+      owner_user_id: string;
+      row_version: number;
+    }>(
+      `SELECT kr.key_result_id, kr.owner_user_id, kr.row_version
+         FROM okr_vnext_key_results kr
+         JOIN okr_vnext_sets s ON s.set_id = kr.set_id
+        WHERE s.set_id = $1 AND s.organization_id = $2
+          AND s.status = 'active' AND kr.status <> 'cancelled'`,
+      [setId, organizationId]
+    );
+
+    for (const occurrence of occurrenceRowsResult.rows) {
+      for (const kr of krRowsResult.rows) {
+        const created = await createObligation(client, {
+          organizationId,
+          assigneeUserId: kr.owner_user_id,
+          referenceType: OKR_CHECKIN_KEY_RESULT_REFERENCE_TYPE,
+          referenceId: kr.key_result_id,
+          aggregateVersionAtCreation: kr.row_version,
+          obligationType: CHECK_IN_OBLIGATION_TYPE,
+          dueAt: occurrence.window_end,
+          cadenceOccurrenceId: occurrence.cadence_occurrence_id,
+          deduplicationKey: `${organizationId}:${OKR_CHECKIN_KEY_RESULT_REFERENCE_TYPE}:${kr.key_result_id}:${CHECK_IN_OBLIGATION_TYPE}:${occurrence.cadence_occurrence_id}`,
+        });
+        if (created) obligationsSeeded += 1;
+      }
+    }
+  } finally {
+    client.release();
+  }
+
+  return {
+    obligationsSeeded,
+    cadenceOccurrenceIds,
+  };
 }
 
 // ==========================================

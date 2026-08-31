@@ -1,0 +1,30 @@
+NOWY — DYŻUR 132 — „Jeden strażnik poufności na wszystkich żywych wejściach do promptu Teresy"
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ. To nie jest
+Twoja wina i nie jest powodem do STOP-u. Instrukcja leży na dysku, poza repo.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day132-straznik-poufnosci-scratch/INSTRUKCJA_DYZUR_132.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 132.
+Zacznij od sekcji „§0.1-BIS" — NADPISUJE ona procedurę §0.1.
+
+★ W procedurze §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Wykonujesz tylko (0) — miejsce na dysku — oraz (7) — sanity.
+
+Katalog pracy:  /private/tmp/cx-day132-straznik-poufnosci
+Gałąź:          codex/day132-straznik-poufnosci-20260830  (już założona)
+Marker:         c05c4c3910                                 (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day132-straznik-poufnosci-scratch
+Artefakty:      /private/tmp/cx-day132-straznik-poufnosci-artefakty
+
+Zasoby wyłączne: baza 6015, kontener cx-day132-pg, runtime 4930 i 4931 (PARA).
+ZAJĘTE, NIE DOTYKAJ: 6014 i 4928/4929 (dyżur 130 BIEGNIE), 6013 (dyżur 131),
+6012 (żywy kontener fz120-f3-pg-20260829).
+
+★ NIE PUSHUJESZ. Commitujesz per krok na swojej gałęzi i zgłaszasz gotowość.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

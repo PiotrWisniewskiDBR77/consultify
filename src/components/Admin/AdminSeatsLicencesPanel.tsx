@@ -9,6 +9,8 @@ import {
   type SeatTransaction,
   updateAdminSeatAutoAdd,
 } from '../../services/adminSeatsApi';
+import { humanizeEnum } from '../../utils/enumLabels';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 const buttonClass =
   'inline-flex items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]';
@@ -89,8 +91,10 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
     () =>
       history.map((item) => ({
         id: item.id,
-        date: new Date(item.created_at).toLocaleString(),
-        type: item.transaction_type,
+        date: formatListDateTime(item.created_at),
+        type: t(`admin.billing.seats-licences.types.${item.transaction_type}`, {
+          defaultValue: humanizeEnum(item.transaction_type),
+        }),
         count: item.seats_count,
         user:
           [item.first_name, item.last_name].filter(Boolean).join(' ') ||

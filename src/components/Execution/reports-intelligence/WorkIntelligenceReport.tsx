@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
+import { StandardTable, type TableColumn, type TableRow } from '@/components/standard/StandardTable';
 import {
   listExecutionCases,
   readExecutionMilestones,
@@ -70,6 +70,46 @@ const SEVERITY_BADGE_CLASS: Record<string, string> = {
   amber: 'bg-[color-mix(in_srgb,var(--c-warning)_14%,transparent)] text-c-warning',
   neutral: 'bg-c-surface-raised text-c-text-secondary',
   unknown: 'bg-c-surface-raised text-c-text-muted',
+};
+
+// Odbiór grafiki 07-realizacja (2026-08-30, kontynuacja "Polish pass" powyżej):
+// epistemiczne etykiety (FACT/RECOMMENDATION/CALCULATED), severity badge
+// (RED/AMBER/NEUTRAL) i kody przyczyn (BRAK_API_*) renderowały się jako
+// surowe stałe wprost w JSX — nigdy nie przeszły przez t(), mimo że reszta
+// sekcji już jest po polsku. Klucze fallback poniżej idą tym samym wzorcem
+// t(key, fallback) co reszta pliku.
+const SEVERITY_LABEL_KEY: Record<string, [string, string]> = {
+  red: ['execution.reports.intelligence.severity.red', 'Critical'],
+  amber: ['execution.reports.intelligence.severity.amber', 'Warning'],
+  neutral: ['execution.reports.intelligence.severity.neutral', 'Neutral'],
+  unknown: ['execution.reports.intelligence.severity.unknown', 'Unknown'],
+};
+const REASON_LABEL_KEY: Record<string, [string, string]> = {
+  BRAK_API_HISTORY: [
+    'execution.reports.intelligence.reasons.noApiHistory',
+    'No history API available',
+  ],
+  BRAK_API_BSC: [
+    'execution.reports.intelligence.reasons.noApiBsc',
+    'No objective-mapping API available',
+  ],
+};
+const EPISTEMIC_LABEL_KEY: Record<'fact' | 'recommendation' | 'unknown' | 'calculated', [string, string]> = {
+  fact: ['execution.reports.intelligence.epistemic.fact', 'FACT'],
+  recommendation: ['execution.reports.intelligence.epistemic.recommendation', 'RECOMMENDATION'],
+  unknown: ['execution.reports.intelligence.epistemic.unknown', 'UNKNOWN'],
+  calculated: ['execution.reports.intelligence.epistemic.calculated', 'CALCULATED'],
+};
+// Małe opakowanie, żeby nie rozkładać krotki [key, fallback] przez spread w
+// wywołaniach t() (i18next ma przeciążone sygnatury — spread gubi typy).
+const trPair = (t: (key: string, fallback: string) => string, pair: [string, string]): string =>
+  t(pair[0], pair[1]);
+// Kolumna TYP w rejestrze renderowała row.kind ('TASK'/'DECISION'/'MILESTONE')
+// bez żadnego mapowania — ten sam znany defekt co wyżej.
+const KIND_LABEL_KEY: Record<string, [string, string]> = {
+  TASK: ['execution.reports.intelligence.kinds.task', 'Task'],
+  DECISION: ['execution.reports.intelligence.kinds.decision', 'Decision'],
+  MILESTONE: ['execution.reports.intelligence.kinds.milestone', 'Milestone'],
 };
 
 export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactElement {
@@ -178,7 +218,16 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
       label: t('execution.reports.intelligence.columns.title', 'Record'),
       sortable: true,
     },
-    { id: 'kind', label: t('execution.reports.intelligence.columns.kind', 'Type'), sortable: true },
+    {
+      id: 'kind',
+      label: t('execution.reports.intelligence.columns.kind', 'Type'),
+      sortable: true,
+      render: (row: TableRow) =>
+        trPair(
+          t,
+          KIND_LABEL_KEY[row.kind as string] ?? [row.kind as string, row.kind as string]
+        ),
+    },
     {
       id: 'status',
       label: t('execution.reports.intelligence.columns.status', 'Status'),
@@ -308,8 +357,18 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                   // so the "CZAS DECYZJI" (decisionLatency) card does not
                   // collapse to a shorter height and break the grid row.
                   <>
-                    <strong className="mt-2 block text-2xl">UNKNOWN</strong>
-                    <span className="text-xs text-c-text-muted">{metric.value.reason}</span>
+                    <strong className="mt-2 block text-2xl">
+                      {trPair(t, EPISTEMIC_LABEL_KEY.unknown)}
+                    </strong>
+                    <span className="text-xs text-c-text-muted">
+                      {trPair(
+                        t,
+                        REASON_LABEL_KEY[metric.value.reason] ?? [
+                          metric.value.reason,
+                          metric.value.reason,
+                        ]
+                      )}
+                    </span>
                   </>
                 ) : (
                   <>
@@ -319,7 +378,8 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                         : metric.value.value}
                     </strong>
                     <span className="text-xs text-c-text-muted">
-                      {metric.value.numerator}/{metric.value.denominator} · CALCULATED
+                      {metric.value.numerator}/{metric.value.denominator} ·{' '}
+                      {trPair(t, EPISTEMIC_LABEL_KEY.calculated)}
                     </span>
                   </>
                 )}
@@ -328,7 +388,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
                     SEVERITY_BADGE_CLASS[metric.severity] ?? SEVERITY_BADGE_CLASS.unknown
                   }`}
                 >
-                  {metric.severity.toUpperCase()}
+                  {trPair(t, SEVERITY_LABEL_KEY[metric.severity] ?? SEVERITY_LABEL_KEY.unknown)}
                 </span>
               </button>
             ))}
@@ -340,7 +400,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.hurts', 'What hurts today')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            FACT ·{' '}
+            {trPair(t, EPISTEMIC_LABEL_KEY.fact)} ·{' '}
             {t(
               'execution.reports.intelligence.hurtsBody',
               'Overdue, due-today, blocked and undated records are derived from the exact register below.'
@@ -368,7 +428,8 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.stake', 'What is at stake')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            UNKNOWN · BRAK_API_BSC ·{' '}
+            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
+            {trPair(t, REASON_LABEL_KEY.BRAK_API_BSC)} ·{' '}
             {t(
               'execution.reports.intelligence.operationalOnly',
               'Objective mappings are unavailable; this remains an operational report, not a strategy report.'
@@ -380,7 +441,7 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
             {t('execution.reports.intelligence.sections.why', 'Why it is happening')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            FACT ·{' '}
+            {trPair(t, EPISTEMIC_LABEL_KEY.fact)} ·{' '}
             {t(
               'execution.reports.intelligence.whyBody',
               'Blocked records and declared dependencies are shown without inferring unverified causes.'
@@ -391,14 +452,17 @@ export function WorkIntelligenceReport({ onOpenDocument }: Props): React.ReactEl
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.trend', 'How the system is changing')}
           </h2>
-          <p className="text-sm text-c-text-secondary">UNKNOWN · BRAK_API_HISTORY</p>
+          <p className="text-sm text-c-text-secondary">
+            {trPair(t, EPISTEMIC_LABEL_KEY.unknown)} ·{' '}
+            {trPair(t, REASON_LABEL_KEY.BRAK_API_HISTORY)}
+          </p>
         </section>
         <section data-section-order={sections[7]} className={SECTION_SHELL_CLASS}>
           <h2 className="font-semibold">
             {t('execution.reports.intelligence.sections.actions', 'What management should do')}
           </h2>
           <p className="text-sm text-c-text-secondary">
-            RECOMMENDATION ·{' '}
+            {trPair(t, EPISTEMIC_LABEL_KEY.recommendation)} ·{' '}
             {t(
               'execution.reports.intelligence.actionsUnavailable',
               'No recommendation is issued without verified impact weights and evidence.'

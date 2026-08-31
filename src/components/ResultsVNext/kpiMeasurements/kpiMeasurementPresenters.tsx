@@ -81,6 +81,7 @@ export function buildKpiMeasurementColumns(isPolish: boolean, showLineage: boole
       width: '120px',
       render: (row: KpiMeasurementDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.actualValue}
           align="right"
           format={(v) => (
@@ -268,6 +269,7 @@ export function buildKpiMeasurementPreview(
           label: t('Wartość', 'Value'),
           value: (
             <HonestValueCell
+              isPolish={ctx.isPolish}
               value={row.actualValue}
               format={(v) => (
                 <span className="tabular-nums font-medium text-c-text">{v.toLocaleString(lang)}</span>

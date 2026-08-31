@@ -1,7 +1,7 @@
 // @ts-ignore — getSmoothStepPath is exported at runtime but types re-export may not resolve
 import { getSmoothStepPath } from '@reactflow/core';
 import React from 'react';
-import { EdgeProps } from 'reactflow';
+import { EdgeProps, Position, useStore } from 'reactflow';
 
 import {
   arrowMarkerAttrs,
@@ -42,6 +42,8 @@ function normalizeWaypoints(raw: unknown): RoutePoint[] {
 
 export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -71,6 +73,58 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
   // flows render unchanged.
   const useOrthogonal = Boolean(data?.orthogonal) || waypoints.length > 0;
 
+  // ★ 141 (2026-08-31): "backward" same-row connectors (e.g. a rework/resubmit
+  // loop that goes from a later step back to an earlier one on the SAME lane
+  // row) hit a degenerate case in react-flow's own getSmoothStepPath: when
+  // sourceY === targetY, its auto-computed centerY collapses to that same Y,
+  // so the step path is a single straight horizontal line with zero vertical
+  // offset — it cuts straight through the body/label of any node sitting
+  // between source and target instead of looping around it (repro: the
+  // "Poproś o uzupełnienie danych" → "Klient składa zgłoszenie" resubmit edge
+  // drew straight through "Klient składa zgłoszenie", reading as struck-
+  // through text). getSmoothStepPath accepts an explicit `centerY` override —
+  // when we detect this exact shape (opposite horizontal handles, same row,
+  // geometric direction opposite the handle's own direction) we nudge centerY
+  // below the row so the path takes the vertical detour it should have taken
+  // on its own. Drop distance is derived from the actual node height (via
+  // useNodes) so it clears the row regardless of node size, with a safe
+  // fallback when dimensions aren't measured yet.
+  // TS fix (post-403a64bc0c): the local reactflow type shim
+  // (src/types/vendor/reactflow.d.ts, kept repo-wide to dodge upstream
+  // `moduleResolution: bundler` resolution issues) does not declare
+  // `useNodes` at all, so importing it as a named export threw TS2614.
+  // Swap to `useStore` + the same selector reactflow's own `useNodes` uses
+  // internally (`state.getNodes()`), with the result cast to a concrete
+  // shape so the `.find()` calls below get proper contextual typing
+  // instead of falling back to implicit `any` params (TS7006).
+  const nodesForRowDrop = useStore((state: any) => state.getNodes()) as Array<{
+    id: string;
+    height?: number | null;
+  }>;
+  // `Position` is a runtime value (enum-like object), not a type, under the
+  // shim (`export const Position: any`) — `typeof Position` is the type of
+  // that value, which is what we actually want here (was TS2749).
+  const isHorizontalPosition = (pos: typeof Position) => pos === Position.Left || pos === Position.Right;
+  const sameRow = Math.abs(sourceY - targetY) < 1;
+  const handleDirX = sourcePosition === Position.Right ? 1 : sourcePosition === Position.Left ? -1 : 0;
+  const actualDirX = targetX >= sourceX ? 1 : -1;
+  const isReversedRow =
+    !useOrthogonal &&
+    sameRow &&
+    handleDirX !== 0 &&
+    handleDirX !== actualDirX &&
+    isHorizontalPosition(sourcePosition) &&
+    isHorizontalPosition(targetPosition);
+  const rowDropOffset = React.useMemo(() => {
+    if (!isReversedRow) return 0;
+    const FALLBACK_NODE_HEIGHT = 32;
+    const CLEARANCE = 16;
+    const srcNode = nodesForRowDrop.find((n) => n.id === source);
+    const tgtNode = nodesForRowDrop.find((n) => n.id === target);
+    const h = Math.max(srcNode?.height || 0, tgtNode?.height || 0, FALLBACK_NODE_HEIGHT);
+    return h / 2 + CLEARANCE;
+  }, [isReversedRow, nodesForRowDrop, source, target]);
+
   let edgePath: string;
   let labelX: number;
   let labelY: number;
@@ -91,6 +145,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
       targetX,
       targetY,
       targetPosition,
+      ...(isReversedRow ? { centerY: sourceY + rowDropOffset } : {}),
     });
     edgePath = p;
     labelX = lx;

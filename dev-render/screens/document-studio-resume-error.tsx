@@ -51,8 +51,12 @@ export default function DocumentStudioResumeErrorScreen(): React.ReactElement {
       {/* #84b: widok czyta artifactId z path LUB query — query nie wymaga
           definiowania Route z parametrem w harnessie. */}
       <MemoryRouter initialEntries={['/document-studio?artifactId=art-nie-istnieje-404']}>
-        <div className="min-h-screen w-full bg-c-bg">
-          <div className="border-b border-c-border px-6 py-3">
+        {/* GRAFIKA 2026-08-30: `min-h-screen` dawał kontenerowi wysokość NATURALNĄ,
+            więc wyśrodkowany w pionie komunikat błędu i tak lądował przy górze —
+            i wyglądał na niewyśrodkowany, choć w produkcie jest. Pełna wysokość
+            z rozciągliwym środkiem, żeby zrzut pokazywał to, co widzi użytkownik. */}
+        <div className="flex h-screen w-full flex-col overflow-hidden bg-c-bg">
+          <div className="border-b border-c-border px-6 py-3" data-dev-render-chrome="true">
             <div className="text-sm font-semibold text-c-text">
               Document Studio — nieudane wznowienie dokumentu (P0.2)
             </div>
@@ -60,7 +64,9 @@ export default function DocumentStudioResumeErrorScreen(): React.ReactElement {
               case={caseKey} · oczekiwane: blokujący błąd PL, NIGDY formularz intake
             </div>
           </div>
-          <DocumentStudioView />
+          <div className="min-h-0 flex-1">
+            <DocumentStudioView />
+          </div>
         </div>
       </MemoryRouter>
     </QueryClientProvider>

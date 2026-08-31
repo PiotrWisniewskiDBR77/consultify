@@ -109,6 +109,7 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
       label: isPolish ? 'Postęp ogólny' : 'Overall progress',
       value: (
         <HonestValueCell
+          isPolish={isPolish}
           value={progress}
           align="right"
           notCalculableReason={

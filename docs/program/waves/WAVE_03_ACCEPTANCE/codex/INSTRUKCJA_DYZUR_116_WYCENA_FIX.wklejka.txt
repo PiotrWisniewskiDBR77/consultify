@@ -1,0 +1,16 @@
+NOWY — DYŻUR 116
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_116_WYCENA_FIX.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 116.
+
+Marker: eecf2c1dae434bb1f1fb68a72094825e317bc5ea
+Zasoby wyłączne: baza 5998, runtime 4896 i 4897 (PARA — runtime wymaga obu).
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

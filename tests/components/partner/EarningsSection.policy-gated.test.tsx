@@ -54,7 +54,10 @@ describe('EarningsSection policy gate', () => {
     render(<EarningsSection subsection="payouts" />);
 
     expect(await screen.findByText('Partner economics unavailable')).toBeInTheDocument();
-    expect(screen.getByText(/AMD-PRT-ECONOMICS-002/)).toBeInTheDocument();
+    expect(
+      screen.getByText('Commission accrual and payout operations are currently unavailable.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/AMD-PRT-ECONOMICS-002/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /try again|retry/i })).not.toBeInTheDocument();
   });
 });

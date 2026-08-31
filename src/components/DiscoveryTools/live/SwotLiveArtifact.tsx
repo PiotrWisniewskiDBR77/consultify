@@ -53,6 +53,23 @@ const EVIDENCE_LABEL_PL: Record<EvidenceKind, string> = {
   hypothesis: 'hipoteza',
 };
 
+/**
+ * Odbiór 2026-08-30 (przegląd modułów 04/11/16): pigułka „poza polem" renderowała
+ * SUROWĄ wartość `proposalStatus` (`ai-proposed`, `rethinking`) wprost, tylko
+ * ostylowaną `uppercase` — stąd „AI-PROPOSED" i „RETHINKING" po angielsku na
+ * jedynym miejscu tego ekranu, które mówiło nie po polsku. Te same etykiety co
+ * `ProposalStatusBadge` (`discoveryToolsSteps.proposalCardGovernance.status.*`
+ * w translation.json), przepisane na stałą mapę — plik nie ma `useTranslation`
+ * nigdzie indziej (patrz `EVIDENCE_LABEL_PL` obok), więc zamiast wprowadzać i18n
+ * tylko dla jednej etykiety, trzymam się istniejącej konwencji pliku.
+ */
+const PROPOSAL_STATUS_LABEL_PL: Record<string, string> = {
+  'ai-proposed': 'Propozycja AI',
+  rethinking: 'Przemyślenie',
+  accepted: 'Zaakceptowane',
+  rejected: 'Odrzucone',
+};
+
 /** Hipoteza NIGDY nie ma tonu faktu — trzy odrębne, jednoznaczne sygnały. */
 const EVIDENCE_TONE: Record<EvidenceKind, string> = {
   fact: 'text-c-success',
@@ -375,7 +392,8 @@ export function SwotLiveArtifact({
               >
                 <span>{item.text}</span>
                 <span className="shrink-0 text-[10px] uppercase tracking-[0.1em]">
-                  {item.proposalStatus ?? item.status ?? 'brak statusu'}
+                  {PROPOSAL_STATUS_LABEL_PL[item.proposalStatus ?? item.status ?? ''] ??
+                    'Brak statusu'}
                 </span>
               </li>
             ))}

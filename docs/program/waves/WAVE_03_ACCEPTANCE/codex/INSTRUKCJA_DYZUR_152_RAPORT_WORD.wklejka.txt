@@ -1,0 +1,48 @@
+NOWY — DYŻUR 152
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day152-raport-word-scratch/INSTRUKCJA_DYZUR_152.md
+
+Przeczytaj w CAŁOŚCI, potem wykonuj. Zacznij od „§0.1-BIS" — NADPISUJE §0.1.
+
+★ W §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Kontrola bazy: git merge-base --is-ancestor cefa960d00 HEAD
+  NIE równość SHA. Twój HEAD po własnych commitach BĘDZIE inny — to poprawne.
+
+Katalog pracy:  /private/tmp/cx-day152-raport-word
+Gałąź:          codex/day152-raport-word-20260830   (już założona)
+Marker:         cefa960d00                              (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day152-raport-word-scratch
+Artefakty:      /private/tmp/cx-day152-raport-word-artefakty
+
+Zasoby wyłączne: baza 6038, kontener cx-day152-pg, runtime 4970 i 4971 (PARA).
+ZAJĘTE: 6012, 5433 oraz zasoby trzech pozostałych dyżurów wydawanych razem z tym.
+
+★ TO JEST DYŻUR POMIAROWY. ZERO ZMIAN PRODUKTU.
+  Jeżeli kończysz z niepustym git diff poza testami i raportem — coś poszło nie tak.
+  NIE zmieniasz APPROVED_MVP_TOOL_TYPES. NIE włączasz narzędzia.
+
+★ ZNANE FAKTY — potwierdzone wcześniej, NIE zgłaszaj ich jako odkrycia:
+  • Generator prozy DZIAŁA i stoi za parametrem useLlm (stan Reacta, domyślnie true,
+    DocumentStudioIntakeForm.tsx:171) — NIE za flagą środowiskową.
+  • Defekty składu z czerwca NIE reprodukują się w plikach nowszych niż 25 czerwca.
+  • Nowsze raporty mają ok. 1550 słów wobec 3712 w starym — o 60% mniej treści.
+    Przyczyna NIEZNANA i jest przedmiotem pozycji R3.
+  ★ TEMAT DOKUMENTU JEST ZADANY PRZEZ WŁAŚCICIELA:
+    analiza transformacji cyfrowej firmy farmaceutycznej, raport dla zarządu.
+    NIE wymyślasz własnego tematu.
+
+★ ROZSTRZYGNIĘTE Z GÓRY, nie zgłaszaj ponownie:
+  • Z34a kontra "nie pushujesz" → NIE PUSHUJESZ.
+  • Z24 odsyła do §0.4a, którego nie ma → odwołanie martwe, POMIŃ.
+  • server/vitest.config.ts PRZYPINA DB_TYPE='sqlite' i wygrywa z linią komend.
+    Test z asercją DB_TYPE='postgres' zostanie POMINIĘTY, a pominięty ≠ PASS.
+    Użyj configu POZA repo, bez tego przypięcia. Chronionego configu nie zmieniasz.
+
+★ NIE PUSHUJESZ. Commit per krok, potem zgłoszenie gotowości.
+
+Jeżeli cokolwiek w tej wklejce różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.

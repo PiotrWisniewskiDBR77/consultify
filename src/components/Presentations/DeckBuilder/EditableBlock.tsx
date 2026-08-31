@@ -46,6 +46,30 @@ const TOOLBAR_HEIGHT_PX = 32; // approx rendered height incl. border; used for t
 const TOOLBAR_GAP_PX = 6;
 const VIEWPORT_TOP_SAFE_PX = 8; // never place the toolbar's top edge above this
 
+/**
+ * U1 · uzupełnienie (2026-08-30, tor grafika).
+ *
+ * `VIEWPORT_TOP_SAFE_PX` pilnował krawędzi OKNA, a nie krawędzi płótna. W
+ * powłoce warsztatu nad płótnem stoi Menu 1 (~56 px) i pasek narzędzi Menu 3
+ * (48 px), więc pływający pasek bloku „mieścił się u góry" dokładnie w
+ * miejscu, gdzie leżą etykiety `Obraz` / `Duplikuj slajd` — i je zasłaniał
+ * (widoczne na zrzucie PO-3 przed tą poprawką). Granicą bezpieczną jest
+ * górna krawędź NAJBLIŻSZEGO PRZODKA ZE SCROLLEM, czyli realnego płótna;
+ * gdy takiego nie ma (podgląd, testy), zostaje krawędź okna — więc zmiana
+ * jest addytywna dla każdego dotychczasowego kontekstu.
+ */
+function nearestScrollableTop(el: HTMLElement): number {
+  let node: HTMLElement | null = el.parentElement;
+  while (node && node !== document.body) {
+    const overflowY = window.getComputedStyle(node).overflowY;
+    if (/(auto|scroll|overlay)/.test(overflowY) && node.scrollHeight > node.clientHeight) {
+      return node.getBoundingClientRect().top;
+    }
+    node = node.parentElement;
+  }
+  return 0;
+}
+
 function useFloatingToolbarPosition(
   anchorRef: React.RefObject<HTMLElement | null>,
   isSelected: boolean
@@ -61,8 +85,8 @@ function useFloatingToolbarPosition(
       const el = anchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const spaceAbove = rect.top;
-      const fitsAbove = spaceAbove - TOOLBAR_HEIGHT_PX - TOOLBAR_GAP_PX >= VIEWPORT_TOP_SAFE_PX;
+      const safeTop = Math.max(VIEWPORT_TOP_SAFE_PX, nearestScrollableTop(el));
+      const fitsAbove = rect.top - TOOLBAR_HEIGHT_PX - TOOLBAR_GAP_PX >= safeTop;
       const top = fitsAbove
         ? rect.top - TOOLBAR_GAP_PX - TOOLBAR_HEIGHT_PX
         : rect.bottom + TOOLBAR_GAP_PX;

@@ -6,7 +6,7 @@
  *
  * Bug this replaces: each studio route used to hand `MainLayout` its own
  * 2-string breadcrumb array with no path back to the Materiały hub — e.g.
- * `/document-studio` sent `[t('sidebar.documentStudio'), t('documentStudio.breadcrumb')]`,
+ * `/document-studio` sent `[t('sidebar.documentStudio'), t('documentStudio.breadcrumb.new')]`,
  * and the second key never existed in the locale files, so it silently fell
  * back to the English default `'Document Studio'` — duplicating segment 1
  * ("Document Studio › Document Studio") regardless of the active language.

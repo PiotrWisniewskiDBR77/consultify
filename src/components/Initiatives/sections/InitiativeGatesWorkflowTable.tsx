@@ -51,10 +51,12 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import {
   GATE_PERMISSIONS,
-  type GateTypeValue,
   getGateForTransition,
   getLifecycleOrder,
+  getLocalizedStatusDescription,
+  getLocalizedStatusLabel,
   getStatusMeta,
+  type GateTypeValue,
 } from '@/services/initiativeLifecycle';
 import { InitiativeStatus } from '@/types';
 
@@ -396,10 +398,21 @@ export const InitiativeGatesWorkflowTable: FC = () => {
   // ── Stage definitions ───────────────────────────────────────────────────
 
   const stages: LifecycleGateStage[] = useMemo(() => {
-    const mk = (s: InitiativeStatus): { label: string; description: string } => {
-      const meta = getStatusMeta(s);
-      return { label: meta?.label || s, description: meta?.description || '' };
-    };
+    // ★ 2026-08-30 — defekt językowy naprawiony u źródła. Tabela brała ZAWSZE
+    // `meta.label` i `meta.description`, czyli wersje angielskie, mimo że
+    // `INITIATIVE_STATUS_METADATA` ma komplet `labelPL`/`descriptionPL` dla
+    // wszystkich 13 etapów, a komponent ma `isPolish` pod ręką. Skutkiem był
+    // polski ekran z angielskimi opisami cyklu życia („Benefits tracking in
+    // progress", „Initiative was cancelled", „Archived for reference") obok
+    // polskich etykiet akcji i statusu bramy. Zmierzone na zrzucie 2026-08-30.
+    // Etykieta i opis idą przez funkcje KANONICZNE oparte na kluczach tłumaczeń
+    // (CB-06/RB-035), a nie przez surowe `getStatusMeta`. Surowa tablica
+    // `STATUS_METADATA` niesie wyłącznie angielski — stąd brał się polski ekran
+    // z angielskimi opisami cyklu życia.
+    const mk = (s: InitiativeStatus): { label: string; description: string } => ({
+      label: getLocalizedStatusLabel(s, t),
+      description: getLocalizedStatusDescription(s, t),
+    });
 
     const getRoles = (gateKey: GateKey | null): string[] => {
       if (!gateKey) return [];
@@ -637,7 +650,9 @@ export const InitiativeGatesWorkflowTable: FC = () => {
       .filter((d) => indexByStatus.has(d.status))
       .sort((a, b) => (indexByStatus.get(a.status) ?? 0) - (indexByStatus.get(b.status) ?? 0))
       .map((d, idx) => ({ ...d, order: idx + 1 }));
-  }, [lifecycle]);
+    // ★ 2026-08-30: `t` w zależnościach — etykiety i opisy etapów idą teraz przez
+    // klucze tłumaczeń, więc memo musi się przeliczyć po zmianie języka.
+  }, [lifecycle, t]);
 
   // ── Decision lookup ─────────────────────────────────────────────────────
 

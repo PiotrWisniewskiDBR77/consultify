@@ -38,6 +38,13 @@ interface UsageAlertsConfigProps {
 
 export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) => {
   const { t } = useTranslation();
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pl-PL', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<AlertSettings>({
@@ -178,7 +185,10 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                     {threshold}%
                   </div>
                   <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {t(`billing.alerts.threshold${threshold}`, `Alert at ${threshold}% usage`)}
+                    {t(
+                      `billing.alerts.tokenThreshold${threshold}`,
+                      `Alert przy wykorzystaniu ${threshold}% tokenów`
+                    )}
                   </span>
                 </div>
                 <button
@@ -228,7 +238,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     {t(
                       `billing.alerts.storageThreshold${threshold}`,
-                      `Alert at ${threshold}% storage`
+                      `Alert przy wykorzystaniu ${threshold}% pamięci`
                     )}
                   </span>
                 </div>
@@ -266,14 +276,18 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
         </p>
 
         <div className="relative">
-          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
           <input
-            type="number"
-            value={settings.cost_cap_monthly || ''}
+            type="text"
+            inputMode="decimal"
+            value={
+              settings.cost_cap_monthly === null ? '' : formatCurrency(settings.cost_cap_monthly)
+            }
             onChange={(e) =>
               setSettings((prev) => ({
                 ...prev,
-                cost_cap_monthly: e.target.value ? parseFloat(e.target.value) : null,
+                cost_cap_monthly: e.target.value
+                  ? Number(e.target.value.replace(/[^\d,-]/g, '').replace(',', '.'))
+                  : null,
               }))
             }
             placeholder={t('billing.alerts.noCap', 'No limit')}
@@ -327,7 +341,7 @@ export const UsageAlertsConfig: React.FC<UsageAlertsConfigProps> = ({ onSave }) 
             <option value="">{t('billing.alerts.selectPlan', 'Select upgrade plan...')}</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} - ${plan.price_monthly}/mo
+                {plan.name} — {formatCurrency(plan.price_monthly)} / {t('billing.alerts.month', 'miesiąc')}
               </option>
             ))}
           </select>

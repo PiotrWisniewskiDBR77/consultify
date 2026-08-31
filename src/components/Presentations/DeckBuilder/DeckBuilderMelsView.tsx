@@ -24,10 +24,30 @@
  *                         palette, share modal, bottom bar (supplied verbatim).
  */
 
-import { ChevronDown, Play } from 'lucide-react';
+import {
+  Activity,
+  ChevronDown,
+  FileSearch,
+  History,
+  Link2,
+  MessageSquare,
+  Palette,
+  Play,
+  Share2,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { CURATED_COLOR_SETS } from '@/components/shared/colorPatterns/curatedColorSets';
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
+import {
+  ARTIFACT_PANEL_SECTION_ORDER,
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 
 import {
   buildDeckBuilderTopBarChips,
@@ -43,6 +63,26 @@ import {
   type DeckBuilderRightRailState,
   type DeckBuilderRightRailToolId,
 } from './DeckBuilderMelsRightRail';
+
+/**
+ * Metadane artefaktu-prezentacji pokazywane w sekcji „Właściwości" prawego
+ * panelu. Świadomie PRYMITYWY (a nie cały `Deck`): widok jest prezentacyjny,
+ * a każdy props-obiekt domeny zaciąga tu logikę, której ten plik nie ma prawa
+ * mieć (ten sam idiom co `topBarState`/`rightRailState`).
+ */
+export interface DeckBuilderArtifactPanelMeta {
+  slideCount: number;
+  /** 'public' | 'internal' | 'confidential' — etykieta rozwiązywana niżej. */
+  confidentiality?: string;
+  /** Status cyklu życia decku (draft/in_review/approved/final/ready). */
+  status?: string;
+  /** Numer wersji z serwera (CAS token). */
+  version?: number | null;
+  /** Nazwa zestawu kolorów / motywu. */
+  colorSetId?: string | null;
+  /** Liczba zablokowanych (ręcznie edytowanych) slajdów — sygnał dla Teresy. */
+  lockedSlideCount?: number;
+}
 
 export interface DeckBuilderMelsViewProps {
   /** Enables the staged Artifact Studio shell contract. */
@@ -92,6 +132,12 @@ export interface DeckBuilderMelsViewProps {
   presenceSlot?: React.ReactNode;
   /** Artifact identity metadata rendered directly after the editable title. */
   titleTrailingSlot?: React.ReactNode;
+
+  /**
+   * Metadane prezentacji do sekcji „Właściwości" prawego panelu artefaktu
+   * (SPEC-A §11.2). Pominięcie propa = sekcja nieobecna, nie pusty akordeon.
+   */
+  artifactPanelMeta?: DeckBuilderArtifactPanelMeta;
 
   /** Shortcut registry hooks. */
   onRunPrimary?: () => void;
@@ -153,7 +199,7 @@ const PresentMenu: React.FC<{
         ref={optionsButtonRef}
         type="button"
         disabled={!enabled}
-        aria-label="Presentation options"
+        aria-label={labels?.runOptions ?? 'Presentation options'}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -164,7 +210,7 @@ const PresentMenu: React.FC<{
       {open ? (
         <div
           role="menu"
-          aria-label="Presentation options"
+          aria-label={labels?.runOptions ?? 'Presentation options'}
           className="absolute right-0 top-[calc(100%+6px)] z-dropdown min-w-56 rounded-lg border border-c-border bg-c-surface p-1.5 shadow-xl"
         >
           <button
@@ -173,7 +219,7 @@ const PresentMenu: React.FC<{
             onClick={() => run(onCurrent)}
             className="w-full rounded-md px-3 py-2 text-left text-sm text-c-text hover:bg-c-surface-raised"
           >
-            From current slide
+            {labels?.runFromCurrent ?? 'From current slide'}
           </button>
           <button
             type="button"
@@ -226,11 +272,14 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   overlays,
   presenceSlot,
   titleTrailingSlot,
+  artifactPanelMeta,
   onRunPrimary,
   onOpenCommandPalette,
   onOpenShortcutHelp,
   persistRailState = true,
 }) => {
+  const { i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
   const [artifactLeftMode, setArtifactLeftMode] = useState<
     'structure' | 'comments' | 'sources' | 'review'
   >('structure');
@@ -300,6 +349,16 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     [rightRailState, rightRailLabels, includeEvidence, includeMedia]
   );
 
+  /*
+    ★ LEWA SZYNA = WYŁĄCZNIE STRUKTURA (2026-08-30).
+    Do dziś ta szyna miała cztery zakładki: Slajdy · Komentarze · Źródła ·
+    QA i przegląd. Trzy z nich („o artefakcie", nie „po artefakcie") wróciły
+    tam, gdzie SPEC-A §11.2 je stawia — do prawego panelu-akordeonu niżej.
+    Trzymanie ich po obu stronach byłoby podwójnym wejściem do tej samej
+    treści, czyli szumem; a lewa szyna prezentacji to sorter slajdów.
+    „QA i przegląd" ZOSTAJE po lewej: to pełnowysokościowy warsztat przeglądu
+    (lista kryteriów + akcje), nie metadana, i akordeon by go zdusił.
+  */
   const artifactLeftRail = artifactStudioMode ? (
     <div className="flex h-full min-h-0 flex-col">
       <div
@@ -308,14 +367,9 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         aria-label="Narzędzia prezentacji"
       >
         {(
-          [
-            ['structure', 'Slajdy'],
-            ...(rightRailPanels.comments ? [['comments', 'Komentarze']] : []),
-            ...(rightRailPanels.evidence || rightRailPanels.relations
-              ? [['sources', 'Źródła']]
-              : []),
-            ...(reviewPanel ? [['review', 'QA i przegląd']] : []),
-          ] as Array<[typeof artifactLeftMode, string]>
+          [['structure', 'Slajdy'], ...(reviewPanel ? [['review', 'QA i przegląd']] : [])] as Array<
+            [typeof artifactLeftMode, string]
+          >
         ).map(([mode, label]) => (
           <button
             key={mode}
@@ -334,18 +388,231 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         ))}
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
-        {artifactLeftMode === 'structure'
-          ? leftRail
-          : artifactLeftMode === 'comments'
-            ? rightRailPanels.comments
-            : artifactLeftMode === 'sources'
-              ? rightRailPanels.evidence || rightRailPanels.relations
-              : reviewPanel}
+        {artifactLeftMode === 'review' && reviewPanel ? reviewPanel : leftRail}
       </div>
     </div>
   ) : (
     leftRail
   );
+
+  /**
+   * ★ PRAWY PANEL ARTEFAKTU-PREZENTACJI (SPEC-A §10.2/§11.2).
+   *
+   * POWÓD ISTNIENIA (uwaga właściciela 2026-08-30 do `?screen=deck-artifact`:
+   * „układ graficzny — pełna zgoda […] do przepracowania mamy prawy panel"):
+   * w trybie warsztatu powłoka wygasza `rightRailTools` (linia niżej: `[]`),
+   * a `DeckBuilder` podawał `aiEntrySlot` WYŁĄCZNIE przy wyłączonym torze —
+   * czyli włączenie toru `presentation` zabierało prezentacji CAŁĄ prawą
+   * powierzchnię. Zmierzone przed naprawą: 56 px szyny ikon + 361 px czatu
+   * Teresy = 417 px przy torze OFF, i 0 px przy torze ON. Ani jedno, ani
+   * drugie nie jest kanonem: kanon to jeden akordeon `ArtifactRightPanel`
+   * o stałej, wąskiej szerokości.
+   *
+   * Kolejność sekcji NIE jest tu zapisana ręcznie — bierze się z
+   * `ARTIFACT_PANEL_SECTION_ORDER` (Akcje · Właściwości · Powiązania · Źródła
+   * i założenia · Rezultaty · Komentarze · Historia), więc dosypanie sekcji
+   * niżej nie może przestawić kolejności. Sekcja bez treści od wołającego
+   * jest POMINIĘTA (kanon: „lepiej brak niż pusty akordeon udający funkcję").
+   */
+  const panelAction = (
+    key: string,
+    label: string,
+    Icon: typeof Palette,
+    onClick?: () => void
+  ): React.ReactNode =>
+    onClick ? (
+      <button
+        key={key}
+        type="button"
+        onClick={onClick}
+        className="inline-flex min-h-10 w-full items-center gap-2 rounded-lg border border-c-border px-3 text-left text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-hover hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+      >
+        <Icon size={15} aria-hidden="true" />
+        <span className="truncate">{label}</span>
+      </button>
+    ) : null;
+
+  const detailRow = (label: string, value: React.ReactNode): React.ReactNode => (
+    <div key={label} className="flex items-baseline justify-between gap-3 py-1">
+      <dt className="shrink-0 text-xs text-c-text-muted">{label}</dt>
+      <dd className="min-w-0 truncate text-right text-xs font-medium text-c-text">{value}</dd>
+    </div>
+  );
+
+  const artifactRightPanel = useMemo((): React.ReactNode => {
+    if (!artifactStudioMode) return undefined;
+
+    const L = (pl: string, en: string): string => (isPolish ? pl : en);
+    const commentsBadge =
+      typeof rightRailState?.openCommentCount === 'number' && rightRailState.openCommentCount > 0
+        ? rightRailState.openCommentCount
+        : undefined;
+    const activityBadge =
+      typeof rightRailState?.agentActivityCount === 'number' &&
+      rightRailState.agentActivityCount > 0
+        ? rightRailState.agentActivityCount
+        : undefined;
+
+    const actions = [
+      panelAction(
+        'theme',
+        L('Motyw i kolorystyka', 'Theme and colours'),
+        Palette,
+        topBarHandlers.onTheme
+      ),
+      panelAction(
+        'history',
+        L('Historia wersji', 'Version history'),
+        History,
+        topBarHandlers.onHistory
+      ),
+      panelAction('share', L('Udostępnij', 'Share'), Share2, topBarHandlers.onShare),
+      panelAction(
+        'teresa',
+        L('Zapytaj Teresę', 'Ask Teresa'),
+        Sparkles,
+        topBarHandlers.onToggleAgent
+      ),
+    ].filter(Boolean);
+
+    const propertyRows = artifactPanelMeta
+      ? [
+          detailRow(L('Slajdy', 'Slides'), artifactPanelMeta.slideCount),
+          artifactPanelMeta.confidentiality
+            ? detailRow(
+                L('Klasyfikacja', 'Classification'),
+                artifactPanelMeta.confidentiality === 'public'
+                  ? L('Publiczna', 'Public')
+                  : artifactPanelMeta.confidentiality === 'confidential'
+                    ? L('Poufna', 'Confidential')
+                    : L('Wewnętrzna', 'Internal')
+              )
+            : null,
+          artifactPanelMeta.status
+            ? detailRow(
+                L('Status', 'Status'),
+                artifactPanelMeta.status === 'in_review'
+                  ? L('Do przeglądu', 'In review')
+                  : artifactPanelMeta.status === 'approved'
+                    ? L('Zatwierdzona', 'Approved')
+                    : artifactPanelMeta.status === 'final'
+                      ? L('Finalna', 'Final')
+                      : artifactPanelMeta.status === 'ready'
+                        ? L('Gotowa', 'Ready')
+                        : L('Szkic', 'Draft')
+              )
+            : null,
+          artifactPanelMeta.colorSetId
+            ? detailRow(
+                L('Motyw', 'Theme'),
+                artifactPanelMeta.colorSetId === 'brand_kit'
+                  ? L('Identyfikacja marki', 'Brand kit')
+                  : (CURATED_COLOR_SETS.find((set) => set.id === artifactPanelMeta.colorSetId)
+                      ?.name ?? artifactPanelMeta.colorSetId.replace(/_/g, ' '))
+              )
+            : null,
+          typeof artifactPanelMeta.version === 'number'
+            ? detailRow(L('Wersja', 'Version'), artifactPanelMeta.version)
+            : null,
+          typeof artifactPanelMeta.lockedSlideCount === 'number' &&
+          artifactPanelMeta.lockedSlideCount > 0
+            ? detailRow(
+                L('Edytowane ręcznie', 'Hand-edited'),
+                L(
+                  `${artifactPanelMeta.lockedSlideCount} z ${artifactPanelMeta.slideCount}`,
+                  `${artifactPanelMeta.lockedSlideCount} of ${artifactPanelMeta.slideCount}`
+                )
+              )
+            : null,
+        ].filter(Boolean)
+      : [];
+
+    const byId: Partial<Record<string, ArtifactRightPanelSection>> = {};
+    if (actions.length > 0) {
+      byId.actions = {
+        id: 'actions',
+        label: L('Akcje', 'Actions'),
+        icon: ShieldCheck,
+        defaultOpen: true,
+        children: <div className="space-y-2">{actions}</div>,
+      };
+    }
+    if (propertyRows.length > 0) {
+      byId.properties = {
+        id: 'properties',
+        label: L('Właściwości', 'Properties'),
+        icon: SlidersHorizontal,
+        defaultOpen: true,
+        children: <dl className="divide-y divide-c-border-subtle">{propertyRows}</dl>,
+      };
+    }
+    if (rightRailPanels.relations) {
+      byId.relations = {
+        id: 'relations',
+        label: L('Powiązania', 'Relations'),
+        icon: Link2,
+        defaultOpen: false,
+        children: rightRailPanels.relations,
+      };
+    }
+    if (rightRailPanels.evidence) {
+      byId.evidence = {
+        id: 'evidence',
+        label: L('Źródła i założenia', 'Sources and assumptions'),
+        icon: FileSearch,
+        defaultOpen: false,
+        children: rightRailPanels.evidence,
+      };
+    }
+    if (rightRailPanels.comments) {
+      byId.comments = {
+        id: 'comments',
+        label: L('Komentarze', 'Comments'),
+        icon: MessageSquare,
+        defaultOpen: false,
+        badge: commentsBadge,
+        children: rightRailPanels.comments,
+      };
+    }
+    if (rightRailPanels.activity) {
+      byId.history = {
+        id: 'history',
+        label: L('Historia', 'History'),
+        icon: Activity,
+        defaultOpen: false,
+        badge: activityBadge,
+        children: rightRailPanels.activity,
+      };
+    }
+
+    const sections = ARTIFACT_PANEL_SECTION_ORDER.map((id) => byId[id]).filter(
+      (section): section is ArtifactRightPanelSection => section !== undefined
+    );
+    if (sections.length === 0) return undefined;
+
+    return (
+      <ArtifactRightPanel
+        sections={sections}
+        width="100%"
+        ariaLabel={L('Panel prezentacji', 'Presentation panel')}
+      />
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    artifactStudioMode,
+    artifactPanelMeta,
+    isPolish,
+    rightRailPanels.relations,
+    rightRailPanels.evidence,
+    rightRailPanels.comments,
+    rightRailPanels.activity,
+    rightRailState?.openCommentCount,
+    rightRailState?.agentActivityCount,
+    topBarHandlers.onTheme,
+    topBarHandlers.onHistory,
+    topBarHandlers.onShare,
+    topBarHandlers.onToggleAgent,
+  ]);
 
   const shell = (
     <ExecutiveModuleShell
@@ -375,13 +642,19 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       topBarTitleTrailingSlot={artifactStudioMode ? titleTrailingSlot : undefined}
       leftRailTitle={artifactStudioMode ? 'Struktura prezentacji' : leftRailTitle}
       leftRailContent={artifactLeftRail}
+      // Stary pas ikon jest w trybie warsztatu wygaszany; prawa powierzchnia
+      // prezentacji to `artifactRightPanelSlot` niżej (SPEC-A §11.2).
       rightRailTools={artifactStudioMode ? [] : rightTools}
+      artifactRightPanelSlot={artifactRightPanel}
+      artifactRightPanelWidth={300}
       activeRightRailToolId={activeRightRailToolId}
       onActiveRightRailToolChange={onActiveRightRailToolChange}
       renderRightRailPanel={(activeToolId) => (
         <DeckBuilderRightRailPanel
           activeToolId={activeToolId as DeckBuilderRightRailToolId | null}
           panels={rightRailPanels}
+          isPolish={isPolish}
+          state={rightRailState}
         />
       )}
       canvas={canvas}

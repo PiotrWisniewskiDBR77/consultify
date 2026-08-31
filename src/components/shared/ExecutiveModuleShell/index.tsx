@@ -81,6 +81,22 @@ export interface ExecutiveModuleShellProps {
   artifactStudioMode?: boolean;
   /** Global application Teresa surface. Never a module-local AI editor. */
   globalTeresaSlot?: React.ReactNode;
+  /**
+   * PRAWY PANEL ARTEFAKTU (SPEC-A §10.2/§11.2 — accordion `ArtifactRightPanel`).
+   *
+   * POWÓD ISTNIENIA (2026-08-30, uwaga właściciela powtórzona trzykrotnie):
+   * „Wyrzucamy całą tę zabawę z góry do prawego menu, do prawego panelu".
+   * W trybie `artifactStudioMode` powłoka WYGASZA stary pas ikon
+   * (`rightRailTools`), więc do 2026-08-30 warsztat arkusza nie miał ŻADNEJ
+   * prawej powierzchni — metadane (liczba arkuszy, format, opis) nie miały
+   * dokąd zjechać z góry ekranu.
+   *
+   * ADDYTYWNE: kto tego propa pomija (Word, Deck, wszyscy dzisiejsi
+   * konsumenci), dostaje układ bajt w bajt taki jak wcześniej.
+   */
+  artifactRightPanelSlot?: React.ReactNode;
+  /** Szerokość panelu artefaktu w px (domyślnie 300). */
+  artifactRightPanelWidth?: number;
   /** Canonical 32-36px view/status bar below the working area. */
   bottomBar?: React.ReactNode;
   /** Minimum usable canvas width used by Artifact Studio panel arbitration. */
@@ -207,6 +223,8 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   secondBar,
   artifactStudioMode = false,
   globalTeresaSlot,
+  artifactRightPanelSlot,
+  artifactRightPanelWidth = 300,
   bottomBar,
   artifactMinCanvasWidth = moduleKey === 'prezentacje' ? 760 : 680,
   leftRailTitle,
@@ -682,6 +700,28 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           </div>
         ) : null}
 
+        {/*
+          Prawy panel artefaktu (SPEC-A). CELOWO poza arbitrażem
+          `resolveArtifactPanelArbitration`: arbitraż przy szerokości <1600 px
+          zwija LEWĄ szynę, a w arkuszu lewa szyna to zakładki arkuszy — bez
+          nich skoroszyt przestaje być skoroszytem. Zamiast tego panel po
+          prostu znika poniżej 1280 px (`hidden xl:flex`), gdzie płótno i tak
+          nie zniosłoby trzech kolumn.
+
+          `div`, nie `aside` — kanoniczny `ArtifactRightPanel` renderuje WŁASNY
+          `<aside aria-label>`; zagnieżdżone punkty orientacyjne to dla czytnika
+          ekranu dwa panele zamiast jednego.
+        */}
+        {artifactStudioMode && artifactRightPanelSlot ? (
+          <div
+            className="hidden shrink-0 xl:flex xl:flex-col"
+            style={{ width: artifactRightPanelWidth }}
+            data-testid="artifact-studio-right-panel"
+          >
+            {artifactRightPanelSlot}
+          </div>
+        ) : null}
+
         {artifactStudioMode && globalTeresaSlot ? (
           <aside
             className={`${
@@ -700,7 +740,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           <aside
             className="hidden sm:flex flex-shrink-0 border-l border-c-border-subtle bg-c-surface"
             data-testid="mels-ai-entry"
-            aria-label="Discuss with Teresa"
+            aria-label={t('mels.discussWithTeresa', 'Discuss with Teresa')}
           >
             {aiEntrySlot}
           </aside>

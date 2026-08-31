@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ActivityLogPanel } from '@/components/assessment/ActivityLogPanel';
@@ -144,6 +145,7 @@ export function AssessmentManagePanel(props: {
   onCreateReport?: () => void;
 }) {
   const { assessmentId, assessmentName, initialTab, onOpenReport, onCreateReport } = props;
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<TabId>(initialTab || 'workflow');
@@ -198,7 +200,10 @@ export function AssessmentManagePanel(props: {
   const [roleEdits, setRoleEdits] = useState<Record<string, RoleRecord['role']>>({});
   const [gateDecisions, setGateDecisions] = useState<GateDecision[]>([]);
 
-  const title = useMemo(() => assessmentName || 'Assessment', [assessmentName]);
+  const title = useMemo(
+    () => assessmentName || t('assessment.managePanel.defaultAssessmentName', 'Assessment'),
+    [assessmentName, t]
+  );
   const canManageTeam = Boolean(eligibility?.roleInfo?.permissions?.canManageTeam);
   const canManage = Boolean(eligibility?.roleInfo?.permissions?.canManage);
   const assessmentType = String(eligibility?.assessment?.type || '')
@@ -449,15 +454,23 @@ export function AssessmentManagePanel(props: {
             status: 'REJECTED',
           });
         }
-        toast.success(`Gate action completed: ${action}`);
+        toast.success(
+          t(
+            'assessment.managePanel.toast.gateActionCompleted',
+            'Gate action completed: {{action}}',
+            { action }
+          )
+        );
         await reload();
       } catch (e: any) {
-        const errorMsg = e?.message || `Failed to ${action}`;
+        const errorMsg =
+          e?.message ||
+          t('assessment.managePanel.toast.gateActionFailed', 'Failed to {{action}}', { action });
         setError(errorMsg);
         toast.error(errorMsg);
       }
     },
-    [assessmentId]
+    [assessmentId, t]
   );
 
   const handleAssignGate = useCallback(
@@ -467,15 +480,16 @@ export function AssessmentManagePanel(props: {
         await Api.put(`/assessment-workflow-v2/${assessmentId}/gate-decisions/${gateType}`, {
           assigneeId,
         });
-        toast.success('Assignee updated');
+        toast.success(t('assessment.managePanel.toast.assigneeUpdated', 'Assignee updated'));
         await reload();
       } catch (e: any) {
-        const errorMsg = e?.message || 'Failed to assign gate';
+        const errorMsg =
+          e?.message || t('assessment.managePanel.toast.assignGateFailed', 'Failed to assign gate');
         setError(errorMsg);
         toast.error(errorMsg);
       }
     },
-    [assessmentId]
+    [assessmentId, t]
   );
 
   // Get organizationId from roles or workflow
@@ -530,10 +544,10 @@ export function AssessmentManagePanel(props: {
         userId,
         role,
       });
-      toast.success('Member added successfully');
+      toast.success(t('assessment.managePanel.toast.memberAdded', 'Member added successfully'));
       await reload();
     },
-    [assessmentId]
+    [assessmentId, t]
   );
 
   const handleUpdateMember = useCallback(
@@ -541,19 +555,19 @@ export function AssessmentManagePanel(props: {
       await Api.put(`/assessment-workflow-v2/${assessmentId}/roles/${userId}`, {
         role,
       });
-      toast.success('Role updated');
+      toast.success(t('assessment.managePanel.toast.roleUpdated', 'Role updated'));
       await reload();
     },
-    [assessmentId]
+    [assessmentId, t]
   );
 
   const handleRemoveMember = useCallback(
     async (userId: string) => {
       await Api.delete(`/assessment-workflow-v2/${assessmentId}/roles/${userId}`);
-      toast.success('Member removed');
+      toast.success(t('assessment.managePanel.toast.memberRemoved', 'Member removed'));
       await reload();
     },
-    [assessmentId]
+    [assessmentId, t]
   );
 
   const handleAssignArea = useCallback(
@@ -564,19 +578,19 @@ export function AssessmentManagePanel(props: {
         dueAt: dueAt ? new Date(dueAt).toISOString() : null,
         status: 'ACTIVE',
       });
-      toast.success('Area assigned');
+      toast.success(t('assessment.managePanel.toast.areaAssigned', 'Area assigned'));
       await reload();
     },
-    [assessmentId]
+    [assessmentId, t]
   );
 
   const handleRemoveAssignment = useCallback(
     async (assignmentId: string) => {
       await V8AssessmentApi.deleteAssignment(assessmentId, assignmentId);
-      toast.success('Assignment removed');
+      toast.success(t('assessment.managePanel.toast.assignmentRemoved', 'Assignment removed'));
       await reload();
     },
-    [assessmentId]
+    [assessmentId, t]
   );
 
   useEffect(() => {
@@ -622,7 +636,9 @@ export function AssessmentManagePanel(props: {
       })
       .catch((e: any) => {
         if (cancelled) return;
-        setError(e?.message || 'Failed to load Manage data');
+        setError(
+          e?.message || t('assessment.managePanel.error.loadFailed', 'Failed to load Manage data')
+        );
       })
       .finally(() => {
         if (cancelled) return;
@@ -638,9 +654,17 @@ export function AssessmentManagePanel(props: {
     <div className="px-6 py-5">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">Manage</div>
+          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('assessment.managePanel.header.title', 'Manage')}
+          </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {title} • permissions, workflow, and logs
+            {t(
+              'assessment.managePanel.header.subtitle',
+              '{{name}} • permissions, workflow, and logs',
+              {
+                name: title,
+              }
+            )}
           </div>
         </div>
 
@@ -657,14 +681,14 @@ export function AssessmentManagePanel(props: {
               }`}
             >
               {id === 'workflow'
-                ? 'Workflow'
+                ? t('assessment.managePanel.tabs.workflow', 'Workflow')
                 : id === 'team'
-                  ? 'Team'
+                  ? t('assessment.managePanel.tabs.team', 'Team')
                   : id === 'reports'
-                    ? 'Reports'
+                    ? t('assessment.managePanel.tabs.reports', 'Reports')
                     : id === 'initiatives'
-                      ? 'Initiatives'
-                      : 'Logs'}
+                      ? t('assessment.managePanel.tabs.initiatives', 'Initiatives')
+                      : t('assessment.managePanel.tabs.logs', 'Logs')}
             </button>
           ))}
         </div>
@@ -672,7 +696,9 @@ export function AssessmentManagePanel(props: {
 
       <div className="mt-4 rounded-xl border border-slate-200 dark:border-navy-800 bg-white/60 dark:bg-navy-900/40 overflow-hidden">
         {loading ? (
-          <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Loading…</div>
+          <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
+            {t('assessment.managePanel.loading', 'Loading…')}
+          </div>
         ) : error ? (
           <div className="p-6 text-sm text-danger-600 dark:text-danger-300">{error}</div>
         ) : tab === 'team' ? (
@@ -743,7 +769,13 @@ export function AssessmentManagePanel(props: {
                   });
                   await reload();
                 } catch (e: any) {
-                  setError(e?.message || 'Failed to generate initiatives');
+                  setError(
+                    e?.message ||
+                      t(
+                        'assessment.managePanel.error.generateInitiativesFailed',
+                        'Failed to generate initiatives'
+                      )
+                  );
                   throw e;
                 } finally {
                   setActionBusy(null);
@@ -775,7 +807,7 @@ export function AssessmentManagePanel(props: {
           <div className="divide-y divide-slate-200 dark:divide-navy-800">
             {requests.length === 0 ? (
               <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
-                No access requests.
+                {t('assessment.managePanel.access.empty', 'No access requests.')}
               </div>
             ) : (
               requests.map((r) => (
@@ -786,7 +818,21 @@ export function AssessmentManagePanel(props: {
                         {r.requesterName || r.requesterEmail || r.requesterId}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                        requests {r.requestedRole} • {r.priority} • {r.status}
+                        {t(
+                          'assessment.managePanel.access.summary',
+                          'requests {{role}} • {{priority}} • {{status}}',
+                          {
+                            role: t(
+                              `assessment.managePanel.role.${r.requestedRole}`,
+                              r.requestedRole
+                            ),
+                            priority: t(
+                              `assessment.managePanel.priority.${r.priority}`,
+                              r.priority
+                            ),
+                            status: t(`assessment.managePanel.requestStatus.${r.status}`, r.status),
+                          }
+                        )}
                       </div>
                     </div>
                     {r.status === 'PENDING' ? (
@@ -804,20 +850,33 @@ export function AssessmentManagePanel(props: {
                               );
                               await reload();
                             } catch (e: any) {
-                              setError(e?.message || 'Failed to approve request');
+                              setError(
+                                e?.message ||
+                                  t(
+                                    'assessment.managePanel.error.approveRequestFailed',
+                                    'Failed to approve request'
+                                  )
+                              );
                             } finally {
                               setRequestBusyId(null);
                             }
                           }}
                           className="h-8 px-3 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-[12px] font-semibold transition-colors"
                         >
-                          {requestBusyId === r.id ? 'Working…' : 'Approve'}
+                          {requestBusyId === r.id
+                            ? t('assessment.managePanel.access.working', 'Working…')
+                            : t('assessment.managePanel.access.approve', 'Approve')}
                         </button>
                         <button
                           type="button"
                           disabled={!canManage || requestBusyId !== null}
                           onClick={async () => {
-                            const reason = window.prompt('Reason for rejection?');
+                            const reason = window.prompt(
+                              t(
+                                'assessment.managePanel.access.rejectPrompt',
+                                'Reason for rejection?'
+                              )
+                            );
                             if (!reason || reason.trim().length < 2) return;
                             setRequestBusyId(r.id);
                             setError(null);
@@ -828,14 +887,20 @@ export function AssessmentManagePanel(props: {
                               );
                               await reload();
                             } catch (e: any) {
-                              setError(e?.message || 'Failed to reject request');
+                              setError(
+                                e?.message ||
+                                  t(
+                                    'assessment.managePanel.error.rejectRequestFailed',
+                                    'Failed to reject request'
+                                  )
+                              );
                             } finally {
                               setRequestBusyId(null);
                             }
                           }}
                           className="h-8 px-3 rounded-lg bg-danger-500 hover:bg-danger-600 disabled:bg-danger-300 text-white text-[12px] font-semibold transition-colors"
                         >
-                          Reject
+                          {t('assessment.managePanel.access.reject', 'Reject')}
                         </button>
                       </div>
                     ) : null}

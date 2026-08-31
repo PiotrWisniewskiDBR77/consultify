@@ -352,7 +352,7 @@ export function FinanceCommentsPanel({
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold text-c-text-secondary">Checklist review</p>
+            <p className="text-xs font-semibold text-c-text-secondary">Lista kontrolna przeglądu</p>
             <span
               className={`text-[11px] ${requiredChecked ? 'text-c-text-secondary' : 'text-c-danger'}`}
               data-testid="checklist-required-status"

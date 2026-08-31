@@ -1,0 +1,46 @@
+NOWY — DYŻUR 151
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day151-lancuch-farma-scratch/INSTRUKCJA_DYZUR_151.md
+
+Przeczytaj w CAŁOŚCI, potem wykonuj. Zacznij od „§0.1-BIS" — NADPISUJE §0.1.
+
+★ W §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Kontrola bazy: git merge-base --is-ancestor cefa960d00 HEAD
+  NIE równość SHA. Twój HEAD po własnych commitach BĘDZIE inny — to poprawne.
+
+Katalog pracy:  /private/tmp/cx-day151-lancuch-farma
+Gałąź:          codex/day151-lancuch-farma-20260830   (już założona)
+Marker:         cefa960d00                              (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day151-lancuch-farma-scratch
+Artefakty:      /private/tmp/cx-day151-lancuch-farma-artefakty
+
+Zasoby wyłączne: baza 6037, kontener cx-day151-pg, runtime 4968 i 4969 (PARA).
+ZAJĘTE: 6012, 5433 oraz zasoby trzech pozostałych dyżurów wydawanych razem z tym.
+
+★ TO JEST DYŻUR POMIAROWY. ZERO ZMIAN PRODUKTU.
+  Jeżeli kończysz z niepustym git diff poza testami i raportem — coś poszło nie tak.
+  NIE zmieniasz APPROVED_MVP_TOOL_TYPES. NIE włączasz narzędzia.
+
+★ ZNANE FAKTY — potwierdzone wcześniej, NIE zgłaszaj ich jako odkrycia:
+  • Istnieją DWA rozłączne magazyny inicjatyw: tabela initiatives i ie_aggregate_state.
+  • Most adoptions/accepted-classic obsługuje WYŁĄCZNIE zaakceptowanych kandydatów
+    SWOT z zatwierdzonym wynikiem narzędzia — zwykły rekord przez niego nie przejdzie.
+  • Wnioski (Conclusions) są ukryte decyzją właściciela: wpis w menuConfig.ts jest
+    zakomentowany, ale AppView.CONCLUSIONS i trasa nadal istnieją.
+  Twoim zadaniem jest zmierzyć PRZEJŚCIA między ogniwami, nie powtarzać tych faktów.
+
+★ ROZSTRZYGNIĘTE Z GÓRY, nie zgłaszaj ponownie:
+  • Z34a kontra "nie pushujesz" → NIE PUSHUJESZ.
+  • Z24 odsyła do §0.4a, którego nie ma → odwołanie martwe, POMIŃ.
+  • server/vitest.config.ts PRZYPINA DB_TYPE='sqlite' i wygrywa z linią komend.
+    Test z asercją DB_TYPE='postgres' zostanie POMINIĘTY, a pominięty ≠ PASS.
+    Użyj configu POZA repo, bez tego przypięcia. Chronionego configu nie zmieniasz.
+
+★ NIE PUSHUJESZ. Commit per krok, potem zgłoszenie gotowości.
+
+Jeżeli cokolwiek w tej wklejce różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.

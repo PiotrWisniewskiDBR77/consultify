@@ -27,6 +27,8 @@ import {
 import {
   BASELINE_RULE_LABELS,
   BASELINE_SCHEDULE_TYPE_LABELS,
+  CANONICAL_LINE_META,
+  type CanonicalLineCode,
   controlKindForUnit,
   driverLabel,
 } from './baselineLabels';
@@ -35,6 +37,26 @@ import type {
   UseBaselineAssumptionsEditorResult,
 } from './useBaselineAssumptionsEditor';
 import { cellKeyOf } from './useBaselineAssumptionsEditor';
+
+/**
+ * Wartości z `unit === 'PCT'` (wzrost r/r, COGS/OPEX % przychodów, CAPEX %,
+ * oprocentowanie, stawka CIT) są w danych ułamkiem dziesiętnym (0,12 = 12%).
+ * `formatFinanceValueForDisplay`'s domyślny formatter pokazuje surowy ułamek
+ * ("0,12") bez znaku procenta — myląca ta sama klasa defektu co w
+ * `finance-analysis-workspace` ("wskaźniki bez %"), ale TU jednostka JEST
+ * znana (`cell.unit`/`historical.unit`), więc naprawialna w wyglądzie.
+ */
+function formatPctAwareValue(
+  value: Pick<FinanceValue, 'status' | 'valueDecimal'>,
+  unit: string | undefined
+): ReturnType<typeof formatFinanceValueForDisplay> {
+  return formatFinanceValueForDisplay(
+    value,
+    unit === 'PCT'
+      ? (n) => `${(n * 100).toLocaleString('pl-PL', { maximumFractionDigits: 2 })}%`
+      : undefined
+  );
+}
 
 /** Który harmonogram zasila które linie wyliczeń — port `DRIVING_SCHEDULE_TYPE` (baselineComputeService.ts:132-140), odwrócony do „podgląd wpływu". */
 const SCHEDULE_FEEDS_LINES: Record<string, string[]> = {
@@ -48,6 +70,11 @@ const SCHEDULE_FEEDS_LINES: Record<string, string[]> = {
   headcount: [],
   leases: [],
 };
+
+/** Etykieta linii kanonicznej dla kolumny „Podgląd wpływu" — surowy kod tylko jako fallback dla nieznanego kodu (nie powinien wystąpić, `SCHEDULE_FEEDS_LINES` wypełniamy wyłącznie z `CanonicalLineCode`). */
+function feedLineLabel(code: string): string {
+  return CANONICAL_LINE_META[code as CanonicalLineCode]?.labelPl ?? code;
+}
 
 function periodLabelOf(periodId: string, periodLabelById?: Record<string, string>): string {
   return periodLabelById?.[periodId] ?? periodId;
@@ -321,7 +348,29 @@ export function AssumptionsView({
               <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
                 Jakość
               </th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
+              {
+                /**
+                 * ★ NAPRAWA drugiego przebiegu (148-finanse-parametry): ten
+                 * element tabeli (§27-exempt, patrz znacznik na otwierającym
+                 * tagu wyżej) NIE ma table-layout: fixed — to natywny HTML
+                 * z auto-layout, kolumny renderują się szerzej niż
+                 * `minWidth`, gdy trzeba (żadnego `columnFit`/ściskania jak w
+                 * `FilterableTable`). Zbyt szeroki `minWidth` tutaj NIE ucina
+                 * tekstu wielokropkiem (ta komórka zawija normalnie, dowód:
+                 * `text-c-text-muted` bez `overflow-hidden`/`text-ellipsis`)
+                 * — zamiast tego rozpycha CAŁY element szerzej niż widoczny
+                 * kontener (`flex-1 overflow-auto`, 1440px), więc kolumna
+                 * ląduje ZA prawą krawędzią i jest obcięta przez SCROLL, nie
+                 * przez CSS (żywy pomiar: 200px dawało scrollWidth 1569px >
+                 * kontener 1440px — „Zasila: Przychody (REVEN" urywało się na
+                 * krawędzi ekranu bez przewinięcia, mimo że DOM miał pełny
+                 * tekst). 150px: mieści najszersze POJEDYNCZE słowo etykiety
+                 * PL („długoterminowy," ≈94px + padding 24px ≈118px) z
+                 * zapasem, a suma kolumn 1-9 (1260+150=1410px) zostaje w
+                 * granicach 1440px — kolumna w pełni widoczna bez przewijania.
+                 */
+              }
+              <th className="px-3 py-2 text-left" style={{ minWidth: 150 }}>
                 Podgląd wpływu
               </th>
               <th className="px-3 py-2 text-center" style={{ minWidth: 90 }}>
@@ -336,15 +385,18 @@ export function AssumptionsView({
               const server = cell?.server ?? null;
               const historical = historicalValueOf(server);
               const historicalDisplay = historical
-                ? formatFinanceValueForDisplay(historical)
+                ? formatPctAwareValue(historical, historical.unit)
                 : { text: '—', isMissingLikeGlyph: true };
-              const valueDisplay = formatFinanceValueForDisplay({
-                status: cell?.valueStatus ?? 'MISSING',
-                valueDecimal:
-                  cell?.valueDecimal !== null && cell?.valueDecimal !== undefined
-                    ? String(cell.valueDecimal)
-                    : null,
-              });
+              const valueDisplay = formatPctAwareValue(
+                {
+                  status: cell?.valueStatus ?? 'MISSING',
+                  valueDecimal:
+                    cell?.valueDecimal !== null && cell?.valueDecimal !== undefined
+                      ? String(cell.valueDecimal)
+                      : null,
+                },
+                cell?.unit
+              );
               const control = controlKindForUnit(cell?.unit ?? 'PCT');
               const warning = preflightByKey.get(key);
               const feeds = SCHEDULE_FEEDS_LINES[spec.scheduleType] ?? [];
@@ -520,7 +572,7 @@ export function AssumptionsView({
                     </select>
                   </td>
                   <td className="px-3 py-2 text-xs text-c-text-muted">
-                    {feeds.length > 0 ? `Zasila: ${feeds.join(', ')}` : '—'}
+                    {feeds.length > 0 ? `Zasila: ${feeds.map(feedLineLabel).join(', ')}` : '—'}
                   </td>
                   <td className="px-3 py-2 text-center">
                     <button

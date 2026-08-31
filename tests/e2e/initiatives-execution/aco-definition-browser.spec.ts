@@ -730,7 +730,14 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
   await page.getByRole('button', { name: 'Publish Plan Scenario' }).click();
   await expect(page.getByText(`Plan Workbench · ${planScenarioId}:v2`)).toBeVisible();
   await expect(page.getByText(`Portfolio ${portfolioScenarioId}:v2`)).toBeVisible();
-  await expect(page.getByText('UNKNOWN: Constraint requires validation')).toBeVisible();
+  // 141-plan-scenario (2026-08-31): stan ograniczenia jest teraz ETYKIETĄ
+  // (`initiatives.planScenario.states.unknown`), a nie surowym enumem backendu
+  // — wartość w danych pozostaje 'UNKNOWN'. Ten spec miesza etykiety PL i EN
+  // (patrz „Nowy plan" obok „Save draft"), więc nie zgaduję języka runtime:
+  // dopuszczamy obie etykiety, ale NIE surowy enum.
+  await expect(
+    page.getByText(/^(Unknown|Nieznane): Constraint requires validation$/)
+  ).toBeVisible();
   await page.screenshot({
     path: 'docs/implementation/evidence/aco-browser-plan-scenario-steps-21-22.png',
     fullPage: true,

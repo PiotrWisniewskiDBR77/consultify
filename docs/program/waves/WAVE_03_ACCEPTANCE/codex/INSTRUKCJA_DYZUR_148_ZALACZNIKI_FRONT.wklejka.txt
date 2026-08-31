@@ -1,0 +1,48 @@
+NOWY — DYŻUR 148
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day148-zalaczniki-front-scratch/INSTRUKCJA_DYZUR_148.md
+
+Przeczytaj w CAŁOŚCI, potem wykonuj. Zacznij od „§0.1-BIS" — NADPISUJE §0.1.
+
+★ W §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Kontrola bazy: git merge-base --is-ancestor cefa960d00 HEAD
+  NIE równość SHA. Twój HEAD po własnych commitach BĘDZIE inny — to poprawne.
+
+Katalog pracy:  /private/tmp/cx-day148-zalaczniki-front
+Gałąź:          codex/day148-zalaczniki-front-20260830   (już założona)
+Marker:         cefa960d00                              (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day148-zalaczniki-front-scratch
+Artefakty:      /private/tmp/cx-day148-zalaczniki-front-artefakty
+
+Zasoby wyłączne: baza 6034, kontener cx-day148-pg, runtime 4962 i 4963 (PARA).
+ZAJĘTE: 6012, 5433 oraz zasoby trzech pozostałych dyżurów wydawanych razem z tym.
+
+★ TEN DYŻUR ZMIENIA PRODUKT — ale tylko dwa pliki widoku.
+  Backend z dyżuru 147 jest GOTOWY i NIETYKALNY. Masz go zawołać, nie zmieniać.
+
+★ ZNANE FAKTY — potwierdzone, NIE zgłaszaj jako odkrycia:
+  • Widżety src/components/MyWork/shared/ mają kontrakt MutationResult z dyżuru 133
+    i sa NIETYKALNE — masz go wypelnic, nie zmienic.
+  • Decyzja karmi DWA widoki tymi samymi handlerami: AttachmentsLinksCanvas
+    (kontrakt Promise<void>, plik NIETYKALNY) i wbudowana tabele. Handler moze
+    zwracac void na zewnatrz — rozroznienie sukcesu i porazki trzymasz w srodku.
+  • Import AttachmentsSection w DecisionDetailView.tsx NIE JEST renderowany —
+    to nie jest cel podpiecia.
+  • Pobranie pliku wymaga uwierzytelnionego fetch+blob; gole window.open na
+    chroniona trase sie nie uda.
+
+★ ROZSTRZYGNIĘTE Z GÓRY, nie zgłaszaj ponownie:
+  • Z34a kontra "nie pushujesz" → NIE PUSHUJESZ.
+  • Z24 odsyła do §0.4a, którego nie ma → odwołanie martwe, POMIŃ.
+  • server/vitest.config.ts PRZYPINA DB_TYPE='sqlite' i wygrywa z linią komend.
+    Test z asercją DB_TYPE='postgres' zostanie POMINIĘTY, a pominięty ≠ PASS.
+    Użyj configu POZA repo, bez tego przypięcia. Chronionego configu nie zmieniasz.
+
+★ NIE PUSHUJESZ. Commit per krok, potem zgłoszenie gotowości.
+
+Jeżeli cokolwiek w tej wklejce różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.

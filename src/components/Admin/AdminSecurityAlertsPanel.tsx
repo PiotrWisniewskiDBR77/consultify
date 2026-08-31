@@ -7,6 +7,8 @@ import {
   resolveSecurityAlert,
   type SecurityAlert,
 } from '../../services/adminSecurityAlertsApi';
+import { humanizeEnum } from '../../utils/enumLabels';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminSecurityAlertsPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -28,6 +30,10 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
       {
         id: 'type',
         label: t('admin.security.security-alerts.columns.type'),
+        render: (row) =>
+          t(`admin.security.security-alerts.eventTypes.${row.typeRaw}`, {
+            defaultValue: humanizeEnum(row.typeRaw),
+          }),
       },
       {
         id: 'severity',
@@ -57,10 +63,11 @@ export const AdminSecurityAlertsPanel: React.FC = () => {
       data.map((a) => ({
         id: a.id,
         type: a.event_type,
+        typeRaw: a.event_type,
         severity: a.severity,
         user: a.user_email || '—',
         ip: a.ip_address || '—',
-        time: new Date(a.created_at).toLocaleString(),
+        time: formatListDateTime(a.created_at),
         status: a.resolved
           ? t('admin.security.security-alerts.status.resolved')
           : t('admin.security.security-alerts.status.open'),

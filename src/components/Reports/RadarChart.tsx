@@ -22,49 +22,63 @@ import {
   Tooltip,
 } from 'recharts';
 
-// DRD 7 Axes configuration
+import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '@/services/drdStructure';
+
+// maxLevel per axis, read from the single source of truth
+// (src/services/drdStructure.ts). Do NOT hand-copy these numbers again:
+// DRD_STRUCTURE[*].levelCount is per-axis (5, 6 or 7 — culture and
+// cybersecurity are 6, not 5). This table previously hand-maintained
+// maxLevel: 5 for both, which capped the radar's fullMark at 5 and made
+// level 6 unreachable on those two axes.
+const DRD_AXIS_LEVEL_COUNT: Record<string, number> = Object.fromEntries(
+  DRD_STRUCTURE.map((axis) => [DRD_AXIS_KEY_MAP[axis.id], axis.levelCount])
+);
+
+// DRD 7 Axes configuration. namePl/nameEn/icon are presentation-only (short
+// chart labels + icon, not part of DRD_STRUCTURE), so they stay
+// hand-maintained here — only maxLevel comes from the source above.
 const DRD_AXES = {
   processes: {
     namePl: 'Procesy Cyfrowe',
     nameEn: 'Digital Processes',
     icon: '⚙️',
-    maxLevel: 7,
+    maxLevel: DRD_AXIS_LEVEL_COUNT.processes,
   },
   digitalProducts: {
     namePl: 'Produkty Cyfrowe',
     nameEn: 'Digital Products',
     icon: '📦',
-    maxLevel: 5,
+    maxLevel: DRD_AXIS_LEVEL_COUNT.digitalProducts,
   },
   businessModels: {
     namePl: 'Modele Biznesowe',
     nameEn: 'Business Models',
     icon: '💼',
-    maxLevel: 5,
+    maxLevel: DRD_AXIS_LEVEL_COUNT.businessModels,
   },
   dataManagement: {
     namePl: 'Zarządzanie Danymi',
     nameEn: 'Data Management',
     icon: '📊',
-    maxLevel: 7,
+    maxLevel: DRD_AXIS_LEVEL_COUNT.dataManagement,
   },
   culture: {
     namePl: 'Kultura Transformacji',
     nameEn: 'Transformation Culture',
     icon: '🎯',
-    maxLevel: 5,
+    maxLevel: DRD_AXIS_LEVEL_COUNT.culture,
   },
   cybersecurity: {
     namePl: 'Cyberbezpieczeństwo',
     nameEn: 'Cybersecurity',
     icon: '🔒',
-    maxLevel: 5,
+    maxLevel: DRD_AXIS_LEVEL_COUNT.cybersecurity,
   },
   aiMaturity: {
     namePl: 'Dojrzałość AI',
     nameEn: 'AI Maturity',
     icon: '🤖',
-    maxLevel: 5,
+    maxLevel: DRD_AXIS_LEVEL_COUNT.aiMaturity,
   },
 };
 

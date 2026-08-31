@@ -226,12 +226,12 @@ export function buildRoiSettingsPreview(
         properties: b
           ? [
               { id: 'method', label: isPolish ? 'Metoda projekcji BAU' : 'BAU projection method', value: roiBaselineProjectionMethodLabel(b.bauProjectionMethod, isPolish) },
-              { id: 'currentValue', label: isPolish ? 'Bieżąca wartość zmierzona' : 'Current measured value', value: <HonestValueCell value={b.currentMeasuredValue} format={(v) => `${formatRoiNumber(v, isPolish)}${b.currentMeasuredUnit ? ` ${b.currentMeasuredUnit}` : ''}`} /> },
+              { id: 'currentValue', label: isPolish ? 'Bieżąca wartość zmierzona' : 'Current measured value', value: <HonestValueCell isPolish={isPolish} value={b.currentMeasuredValue} format={(v) => `${formatRoiNumber(v, isPolish)}${b.currentMeasuredUnit ? ` ${b.currentMeasuredUnit}` : ''}`} /> },
               { id: 'asOf', label: isPolish ? 'Stan na dzień' : 'Measured as of', value: formatRoiDate(b.currentMeasuredAsOf, isPolish) },
               { id: 'periodStart', label: isPolish ? 'Początek okresu baseline' : 'Baseline period start', value: formatRoiDate(b.baselinePeriodStart, isPolish) },
               { id: 'periodEnd', label: isPolish ? 'Koniec okresu baseline' : 'Baseline period end', value: formatRoiDate(b.baselinePeriodEnd, isPolish) },
-              { id: 'growthRate', label: isPolish ? 'Stopa wzrostu BAU' : 'BAU growth rate', value: <HonestValueCell value={b.bauGrowthRatePct} format={(v) => `${v}%`} /> },
-              { id: 'referenceValue', label: isPolish ? 'Wartość referencyjna BAU' : 'BAU reference value', value: <HonestValueCell value={b.bauReferenceValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
+              { id: 'growthRate', label: isPolish ? 'Stopa wzrostu BAU' : 'BAU growth rate', value: <HonestValueCell isPolish={isPolish} value={b.bauGrowthRatePct} format={(v) => `${v}%`} /> },
+              { id: 'referenceValue', label: isPolish ? 'Wartość referencyjna BAU' : 'BAU reference value', value: <HonestValueCell isPolish={isPolish} value={b.bauReferenceValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
               { id: 'notes', label: isPolish ? 'Notatki porównawcze' : 'Comparison notes', value: b.interventionComparisonNotes ?? '—' },
               { id: 'source', label: isPolish ? 'Źródło' : 'Source', value: b.source ?? '—' },
               { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', value: roiConfidenceLabel(b.confidence, isPolish) },
@@ -260,9 +260,9 @@ export function buildRoiSettingsPreview(
       valueLabel,
       properties: p
         ? [
-            { id: 'discountRate', label: isPolish ? 'Stopa dyskonta' : 'Discount rate', value: <HonestValueCell value={p.discountRatePct} format={(v) => `${v}%`} /> },
+            { id: 'discountRate', label: isPolish ? 'Stopa dyskonta' : 'Discount rate', value: <HonestValueCell isPolish={isPolish} value={p.discountRatePct} format={(v) => `${v}%`} /> },
             { id: 'taxTreatment', label: isPolish ? 'Traktowanie podatkowe' : 'Tax treatment', value: roiTaxTreatmentLabel(p.taxTreatment, isPolish) },
-            { id: 'inflationRate', label: isPolish ? 'Stopa inflacji' : 'Inflation rate', value: <HonestValueCell value={p.inflationRatePct} format={(v) => `${v}%`} /> },
+            { id: 'inflationRate', label: isPolish ? 'Stopa inflacji' : 'Inflation rate', value: <HonestValueCell isPolish={isPolish} value={p.inflationRatePct} format={(v) => `${v}%`} /> },
             { id: 'roundingPolicy', label: isPolish ? 'Polityka zaokrągleń' : 'Rounding policy', value: roiRoundingPolicyLabel(p.roundingPolicy, isPolish) },
             { id: 'requiredMetrics', label: isPolish ? 'Wymagane metryki' : 'Required metrics', value: p.requiredMetrics && p.requiredMetrics.length > 0 ? p.requiredMetrics.join(', ') : '—' },
             { id: 'notes', label: isPolish ? 'Notatki' : 'Notes', value: p.notes ?? '—' },
@@ -291,7 +291,7 @@ export function buildRoiAssumptionColumns(isPolish: boolean): TableColumn[] {
       width: '140px',
       align: 'right',
       render: (row: RoiAssumption) => (
-        <HonestValueCell value={row.baseValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}{row.unit ? ` ${row.unit}` : ''}</span>} />
+        <HonestValueCell isPolish={isPolish} value={row.baseValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}{row.unit ? ` ${row.unit}` : ''}</span>} />
       ),
     },
     {
@@ -299,14 +299,14 @@ export function buildRoiAssumptionColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Pesymistyczna' : 'Downside',
       width: '130px',
       align: 'right',
-      render: (row: RoiAssumption) => <HonestValueCell value={row.downsideValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>} />,
+      render: (row: RoiAssumption) => <HonestValueCell isPolish={isPolish} value={row.downsideValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>} />,
     },
     {
       id: 'upsideValue',
       label: isPolish ? 'Optymistyczna' : 'Upside',
       width: '130px',
       align: 'right',
-      render: (row: RoiAssumption) => <HonestValueCell value={row.upsideValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>} />,
+      render: (row: RoiAssumption) => <HonestValueCell isPolish={isPolish} value={row.upsideValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>} />,
     },
     { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', width: '110px', render: (row: RoiAssumption) => <span className="text-sm text-c-text-secondary">{roiConfidenceLabel(row.confidence, isPolish)}</span> },
     { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '130px', sortable: true, render: (row: RoiAssumption) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
@@ -326,9 +326,9 @@ export function buildRoiAssumptionPreview(row: RoiAssumption, caseStatus: RoiCas
       propertyLabel,
       valueLabel,
       properties: [
-        { id: 'base', label: isPolish ? 'Wartość bazowa' : 'Base value', value: <HonestValueCell value={row.baseValue} format={(v) => `${formatRoiNumber(v, isPolish)}${row.unit ? ` ${row.unit}` : ''}`} /> },
-        { id: 'downside', label: isPolish ? 'Pesymistyczna' : 'Downside', value: <HonestValueCell value={row.downsideValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
-        { id: 'upside', label: isPolish ? 'Optymistyczna' : 'Upside', value: <HonestValueCell value={row.upsideValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
+        { id: 'base', label: isPolish ? 'Wartość bazowa' : 'Base value', value: <HonestValueCell isPolish={isPolish} value={row.baseValue} format={(v) => `${formatRoiNumber(v, isPolish)}${row.unit ? ` ${row.unit}` : ''}`} /> },
+        { id: 'downside', label: isPolish ? 'Pesymistyczna' : 'Downside', value: <HonestValueCell isPolish={isPolish} value={row.downsideValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
+        { id: 'upside', label: isPolish ? 'Optymistyczna' : 'Upside', value: <HonestValueCell isPolish={isPolish} value={row.upsideValue} format={(v) => formatRoiNumber(v, isPolish)} /> },
         { id: 'sensitivity', label: isPolish ? 'Ranga wrażliwości' : 'Sensitivity rank', value: row.sensitivityRank ?? '—' },
         { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', value: roiConfidenceLabel(row.confidence, isPolish) },
         { id: 'evidence', label: isPolish ? 'Dowód' : 'Evidence ref', value: row.evidenceRef ?? '—' },
@@ -420,6 +420,7 @@ export function buildRoiBenefitLineColumns(isPolish: boolean): TableColumn[] {
       sortable: true,
       render: (row: RoiBenefitLine) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.amount}
           align="right"
           format={(v) => <span className="tabular-nums">{formatRoiCurrency(v, row.currency ?? 'USD', isPolish)}</span>}
@@ -456,7 +457,7 @@ export function buildRoiBenefitLinePreview(row: RoiBenefitLine, caseStatus: RoiC
       valueLabel,
       properties: [
         { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
-        { id: 'amount', label: isPolish ? 'Kwota' : 'Amount', value: <HonestValueCell value={row.amount} format={(v) => formatRoiCurrency(v, row.currency ?? 'USD', isPolish)} /> },
+        { id: 'amount', label: isPolish ? 'Kwota' : 'Amount', value: <HonestValueCell isPolish={isPolish} value={row.amount} format={(v) => formatRoiCurrency(v, row.currency ?? 'USD', isPolish)} /> },
         { id: 'timing', label: isPolish ? 'Harmonogram' : 'Timing', value: describeRoiLineTiming(row, isPolish, formatRoiDate) },
         { id: 'ramp', label: isPolish ? 'Okresy narastania' : 'Ramp periods', value: row.rampPeriods ?? '—' },
         { id: 'doubleCounting', label: isPolish ? 'Grupa podwójnego liczenia' : 'Double-counting group', value: row.doubleCountingGroup ?? '—' },

@@ -276,7 +276,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                           )}
                           <span>{item.uploaded_by_name || 'User'}</span>
                           <span>•</span>
-                          <span>{new Date(item.uploaded_at).toLocaleDateString('en-US')}</span>
+                          <span>{new Date(item.uploaded_at).toLocaleDateString('pl-PL')}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

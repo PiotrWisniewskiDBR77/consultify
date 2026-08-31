@@ -22,8 +22,19 @@
  * selected — same pattern as `dev-render/screens/karta-task.tsx` and
  * `dev-render/screens/document-studio-template-resolve-error.tsx`.
  *
- * URL: ?screen=prezentacje-template-states&templateArtifactId=fake-1
- *        [&variant=loading|orphaned|forbidden][&theme=light|dark]
+ * URL: ?screen=prezentacje-template-states[&variant=loading|orphaned|forbidden]
+ *        [&templateArtifactId=…][&theme=light|dark]
+ *
+ * ★ PROSTUJE BŁĄD Z 2026-08-30 (przegląd przed odbiorem). `templateArtifactId`
+ * było OBOWIĄZKOWE, ale rejestr ekranów w `dev-render/main.tsx` reklamuje
+ * wyłącznie „?variant=loading|orphaned|forbidden". Kto poszedł za rejestrem,
+ * dostawał ekran domowy Prezentacji (galerię wzorców) i słusznie meldował, że
+ * „?variant= nie działa" — a trzy stany, o które chodzi, były nieobejrzane.
+ * Powód jest w `PrezentacjeView` L456: bez `templateArtifactId` efekt
+ * `from-template` w ogóle nie startuje, więc żaden z trzech stanów nie
+ * powstaje. Teraz harness DOPISUJE to id do adresu, gdy go nie ma — router
+ * czyta `window.location.search`, a to podstawienie dzieje się na poziomie
+ * modułu, czyli przed pierwszym renderem.
  *
  * variant=loading (default) — POST never resolves: view is frozen on the PL
  *   loading copy "Tworzenie prezentacji z szablonu…" (PrezentacjeView L638-647).
@@ -48,6 +59,14 @@ seedRealisticSession();
 
 const params = new URLSearchParams(window.location.search);
 const variant = params.get('variant') || 'loading';
+
+// Patrz komentarz nagłówkowy: bez `templateArtifactId` `PrezentacjeView` nigdy
+// nie wchodzi w ścieżkę „Użyj wzorca" i ekran renderuje galerię zamiast stanu.
+// `replaceState` (nie `pushState`) — nie zaśmiecamy historii wstecz.
+if (params.get('screen') === 'prezentacje-template-states' && !params.get('templateArtifactId')) {
+  params.set('templateArtifactId', 'fake-1');
+  window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+}
 
 function resolveRejection(status: number, code: string): Error {
   const err: any = new Error(code);

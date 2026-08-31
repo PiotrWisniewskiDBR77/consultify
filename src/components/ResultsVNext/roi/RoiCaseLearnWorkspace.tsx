@@ -35,6 +35,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { TeresaProposalPanel } from '../teresa/TeresaProposalPanel';
 import type { RoiCaseListItem } from './roiApi';
+import type { RoiCardModeProps } from './RoiCaseCardSections';
 import {
   buildRoiPirLessonsDraftHandoffContext,
   buildRoiPirLessonsDraftSuggestion,
@@ -94,10 +95,16 @@ export interface RoiCaseLearnWorkspaceProps {
   onBack: () => void;
   phase: RoiCasePhase;
   onPhaseChange: (phase: RoiCasePhase) => void;
+  /** Tryb JEDNEJ KARTY N — patrz `RoiCaseCardSections.ts`. Gdy podany, rząd
+   * zakładek i stan aktywnej zakładki należą do karty, a pasek faz (Menu 3)
+   * i okruszki znikają: niesie je Menu 1 karty i jej lewa nawigacja. */
+  cardMode?: RoiCardModeProps;
 }
 
-export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange }) => {
-  const [tab, setTab] = useState<LearnTab>('pir');
+export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+  const [localTab, setLocalTab] = useState<LearnTab>('pir');
+  const tab = (cardMode ? cardMode.activeTab : localTab) as LearnTab;
+  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as LearnTab));
   const phaseChips = buildRoiCasePhaseChips(isPolish);
   const conflictOf = (err: unknown) => err instanceof RoiApiError && err.status === 409;
   const messageOf = (err: unknown) => toUserFacingErrorMessage(err, isPolish);
@@ -161,13 +168,19 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  const breadcrumbs = [{ label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack }, { label: roiCase.title }];
-  const tabs: StandardModuleTab[] = [
-    { id: 'pir', label: 'PIR' },
-    { id: 'finance-links', label: isPolish ? 'Powiązania Finance' : 'Finance links' },
-    { id: 'finance-reconciliations', label: isPolish ? 'Rekoncyliacje' : 'Reconciliations' },
-  ];
-  const chipsBar = { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
+  const breadcrumbs = cardMode
+    ? undefined
+    : [{ label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack }, { label: roiCase.title }];
+  const tabs: StandardModuleTab[] = cardMode
+    ? cardMode.tabs
+    : [
+      { id: 'pir', label: 'PIR' },
+      { id: 'finance-links', label: isPolish ? 'Powiązania Finance' : 'Finance links' },
+      { id: 'finance-reconciliations', label: isPolish ? 'Rekoncyliacje' : 'Reconciliations' },
+      ];
+  const chipsBar = cardMode
+    ? {}
+    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
 
   if (tab === 'finance-links') {
     const rows: TableRow[] = (financeLinks ?? []).map((l) => withRoiFullToolId(l, 'linkId'));
@@ -177,7 +190,7 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as LearnTab),
+            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
             showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
             primaryCta: { label: isPolish ? 'Nowe powiązanie' : 'New link', icon: Link2, onClick: () => { setFlWrite(IDLE_WRITE); setFlIdempotencyKey(newRoiIdempotencyKey()); setFlFormOpen(true); }, testId: 'roi-learn-finance-link-create-cta' },
           }}
@@ -235,7 +248,7 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
         <ResultsVNextRegistryShell
           domain="roi"
           moduleBar={{
-            breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as LearnTab),
+            breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
             showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
             primaryCta: { label: isPolish ? 'Otwórz rekoncyliację' : 'Open reconciliation', icon: Plus, onClick: () => { setFrWrite(IDLE_WRITE); setFrIdempotencyKey(newRoiIdempotencyKey()); setFrFormOpen(true); }, testId: 'roi-learn-reconciliation-create-cta' },
           }}
@@ -292,7 +305,7 @@ export const RoiCaseLearnWorkspace: React.FC<RoiCaseLearnWorkspaceProps> = ({ ro
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
-          breadcrumbs, tabs, activeTab: tab, onTabChange: (id) => setTab(id as LearnTab),
+          breadcrumbs, tabs, activeTab: tab, onTabChange: setTab,
           showTabCounts: false, viewModes: ['table'], viewMode: 'table', ...chipsBar,
           primaryCta: { label: isPolish ? 'Zaplanuj przegląd' : 'Schedule review', icon: CalendarClock, onClick: () => setScheduleOpen(true), testId: 'roi-learn-pir-schedule-cta' },
         }}

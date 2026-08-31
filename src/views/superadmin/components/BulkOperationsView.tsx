@@ -667,23 +667,27 @@ export const BulkOperationsView: React.FC = () => {
       )}
 
       <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
-        <StandardTable
-          columns={userColumns}
-          data={users as unknown as TableRow[]}
-          loading={loadingUsers}
-          error={usersLoadError}
-          onRetry={fetchUsers}
-          empty={{
-            icon: Users,
-            title: 'No users found',
-            actionLabel: 'Load users',
-            onAction: fetchUsers,
-          }}
-          selection={{
-            selectedIds: new Set(selectedUsers),
-            onChange: (ids) => setSelectedUsers(Array.from(ids)),
-          }}
-        />
+        {usersLoadError ? (
+          <div className="p-6">
+            <DegradedState title="Users unavailable" description={usersLoadError} />
+          </div>
+        ) : (
+          <StandardTable
+            columns={userColumns}
+            data={users as unknown as TableRow[]}
+            loading={loadingUsers}
+            empty={{
+              icon: Users,
+              title: 'No users found',
+              actionLabel: 'Load users',
+              onAction: fetchUsers,
+            }}
+            selection={{
+              selectedIds: new Set(selectedUsers),
+              onChange: (ids) => setSelectedUsers(Array.from(ids)),
+            }}
+          />
+        )}
       </div>
     </div>
   );

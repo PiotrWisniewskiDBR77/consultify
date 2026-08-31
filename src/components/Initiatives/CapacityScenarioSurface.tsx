@@ -2,6 +2,7 @@ import { AlertTriangle, Eye, Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
@@ -46,6 +47,20 @@ const rowKindLabel: Record<string, string> = {
 const criticalityLabel: Record<string, string> = {
   KNOWN: 'Oceniona',
   UNKNOWN: 'Do oceny',
+};
+// Odbiór grafiki 07-realizacja (2026-08-30): kilka kolumn tabeli obciążenia
+// (demand/supply/gap/saturation/affectedInitiatives/freshness/proposedResponse)
+// dla wierszy typu CONSTRAINT nie mają jeszcze realnych danych i renderowały
+// surowy token stanu ('UNKNOWN'/'KNOWN') wprost — znany defekt "surowe enumy
+// zamiast etykiet". Ta funkcja tłumaczy WYŁĄCZNIE ten token (prefiks złożonych
+// napisów typu "UNKNOWN — brak pełnego zakresu" też), nie rusza już
+// sformatowanych wartości (liczby, zakresy, daty).
+const renderKnowledgeToken = (value: unknown): React.ReactNode => {
+  if (typeof value !== 'string') return value as React.ReactNode;
+  if (value in knowledgeLabel) return knowledgeLabel[value as K];
+  const composedMatch = value.match(/^(KNOWN|UNKNOWN|ESTIMATED|UNCONFIRMED)\b(.*)$/);
+  if (composedMatch) return `${knowledgeLabel[composedMatch[1] as K]}${composedMatch[2]}`;
+  return value;
 };
 const actorLabel = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(value)
@@ -205,17 +220,60 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   const [nextInputKind, setNextInputKind] = useState<'MATERIAL_CHANGE' | 'SCHEDULE_DECISION'>(
     'MATERIAL_CHANGE'
   );
+
+  // 97-czternascie-kolumn (2026-08-30): 13 kolumny danych + kolumna akcji nie
+  // mieszczą się w typowym obszarze obciążenia (1334 px) nawet na podłodze
+  // czytelności FilterableTable (`FIT_MIN_COLUMN_WIDTH`/`_PRIMARY`). Brak tu
+  // dosłownej duplikacji jak w planie inicjatyw — chowamy więc trzy kolumny o
+  // najniższej wartości domyślnej: proposedResponse jest ZAWSZE 'UNKNOWN'
+  // (nieobliczane dla żadnego wiersza), a affectedInitiatives/freshness są
+  // realne wyłącznie dla wierszy okresu i zawsze 'UNKNOWN' dla ograniczeń.
+  // Pstryczek widoczności kolumn (FilterableTable) zostaje — użytkownik
+  // włącza je sam. Musi wykonać się PRZED montażem <StandardTable> (guard w
+  // ciele renderu, nie w useEffect) — patrz defaultHiddenColumns.ts.
+  const capacityColumnsSeeded = useRef(false);
+  if (!capacityColumnsSeeded.current) {
+    seedDefaultHiddenColumns('initiatives.capacity-constraints.v2', [
+      'proposedResponse',
+      'affectedInitiatives',
+      'freshness',
+    ]);
+    capacityColumnsSeeded.current = true;
+  }
+
   const constraintRows = useMemo(() => {
     if (!scenario) return [];
     const formatRange = (range: Range) =>
       range.low == null || range.base == null || range.high == null
         ? range.knowledgeState
         : `${range.low}/${range.base}/${range.high} ${scenario.windowUnit}`;
+    // 98-rola-zespol-duplikat (2026-08-30): kolumna „Rola / zespół” powtarzała
+    // co do znaku kolumnę „Opiekun” dla wierszy okresu — obie brały
+    // `period.supply.ownerId` i obie szły przez `actorLabel()`. To są jednak dwie
+    // różne osie: opiekun to właściciel ŹRÓDŁA liczby (`CapacityRange.ownerId`,
+    // walidator: „Capacity source owner”), a rola/zespół to CZYJEJ mocy okres
+    // dotyczy. W `CapacityScenario` rolę nosi wyłącznie
+    // `ProposedAssignment.resourceOrRoleId`, wiązany z okresem przez `periodIds`
+    // (tego samego pola używa już panel przydziałów niżej). Brak przydziału dla
+    // okresu = 'UNKNOWN', nie pusta komórka — brak danych nie oznacza zera.
+    const rolesByPeriod = new Map<string, Set<string>>();
+    for (const assignment of scenario.proposedAssignments) {
+      if (!assignment.resourceOrRoleId?.trim()) continue;
+      for (const periodId of assignment.periodIds) {
+        const roles = rolesByPeriod.get(periodId) ?? new Set<string>();
+        roles.add(assignment.resourceOrRoleId);
+        rolesByPeriod.set(periodId, roles);
+      }
+    }
     const periods = scenario.periods.map((period) => ({
       id: `period:${period.periodId}`,
       title: period.periodId,
       kind: 'PERIOD',
-      roleTeamSkill: actorLabel(period.supply.ownerId || 'UNKNOWN'),
+      roleTeamSkill:
+        [...(rolesByPeriod.get(period.periodId) ?? [])]
+          .map((roleId) => actorLabel(roleId))
+          .sort((a, b) => a.localeCompare(b, 'pl'))
+          .join(' · ') || 'UNKNOWN',
       demand: formatRange(period.demand),
       demandState: period.demand.knowledgeState,
       supply: formatRange(period.supply),
@@ -258,7 +316,11 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       id: `constraint:${constraint.constraintId}`,
       title: constraint.constraintId,
       kind: 'CONSTRAINT',
-      roleTeamSkill: 'Ograniczenie przekrojowe',
+      // Ograniczenie nie ma w domenie żadnego pola roli. Poprzednia wartość
+      // ('Ograniczenie przekrojowe') powtarzała kolumnę „Rodzaj” i twierdziła coś,
+      // czego w danych nie ma — w danych demo wręcz nieprawdę (`engineering-capacity`
+      // dotyczy konkretnego zespołu, nie jest przekrojowe).
+      roleTeamSkill: 'UNKNOWN',
       demand: 'UNKNOWN',
       demandState: 'UNKNOWN',
       supply: constraint.state,
@@ -899,9 +961,10 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             { id: 'title', label: 'Okres / ograniczenie', sortable: true, width: '240px' },
             {
               id: 'roleTeamSkill',
-              label: 'Rola / zespół / kompetencja',
+              label: 'Rola / zespół',
               sortable: true,
               filterable: true,
+              render: (row) => renderKnowledgeToken(row.roleTeamSkill),
             },
             {
               id: 'kind',
@@ -912,18 +975,25 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             },
             {
               id: 'demand',
-              label: 'Zapotrzebowanie low / base / high',
+              label: 'Potrzeby (zakres)',
               sortable: true,
               filterable: true,
+              render: (row) => renderKnowledgeToken(row.demand),
             },
             {
               id: 'supply',
-              label: 'Stan / zakres dostępności',
+              label: 'Zasoby (zakres)',
               sortable: true,
               filterable: true,
+              render: (row) => renderKnowledgeToken(row.supply),
             },
-            { id: 'gap', label: 'Luka', sortable: true },
-            { id: 'saturation', label: 'Saturacja (zakres)', sortable: true },
+            { id: 'gap', label: 'Luka', sortable: true, render: (row) => renderKnowledgeToken(row.gap) },
+            {
+              id: 'saturation',
+              label: 'Presja (zakres)',
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.saturation),
+            },
             {
               id: 'confidence',
               label: 'Pewność',
@@ -933,21 +1003,39 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             },
             {
               id: 'criticality',
-              label: 'Krytyczność',
+              label: 'Waga',
               sortable: true,
               filterable: true,
               render: (row) => criticalityLabel[row.criticality] ?? row.criticality,
             },
             {
               id: 'owner',
-              label: 'Właściciel',
+              label: 'Opiekun',
               sortable: true,
               filterable: true,
               render: (row) => actorLabel(row.owner),
             },
-            { id: 'affectedInitiatives', label: 'Dotknięte inicjatywy', sortable: true },
-            { id: 'freshness', label: 'Aktualność założeń', sortable: true },
-            { id: 'proposedResponse', label: 'Proponowana reakcja', sortable: true },
+            {
+              id: 'affectedInitiatives',
+              label: 'Dotknięte inicjatywy',
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.affectedInitiatives),
+            },
+            {
+              id: 'freshness',
+              label: 'Aktualność założeń',
+              sortable: true,
+              render: (row) =>
+                row.freshness === 'UNKNOWN'
+                  ? knowledgeLabel.UNKNOWN
+                  : formatPeriodDate(row.freshness),
+            },
+            {
+              id: 'proposedResponse',
+              label: 'Proponowana reakcja',
+              sortable: true,
+              render: (row) => renderKnowledgeToken(row.proposedResponse),
+            },
           ]}
           data={visibleConstraintRows}
           selectedRowId={selectedConstraintId}

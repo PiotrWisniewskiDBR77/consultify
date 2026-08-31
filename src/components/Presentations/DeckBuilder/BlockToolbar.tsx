@@ -80,8 +80,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
       {/* Icon strip */}
       <div className="w-14 border-l border-c-border-subtle bg-c-surface flex flex-col items-center py-3 gap-1">
         <button
-          aria-label="Undo"
-          title="Undo (⌘Z)"
+          aria-label="Cofnij"
+          title="Cofnij (⌘Z)"
           disabled={!canUndo}
           onClick={onUndo}
           className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
@@ -89,8 +89,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
           <Undo2 size={18} />
         </button>
         <button
-          aria-label="Redo"
-          title="Redo (⇧⌘Z)"
+          aria-label="Ponów"
+          title="Ponów (⇧⌘Z)"
           disabled={!canRedo}
           onClick={onRedo}
           className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
@@ -167,63 +167,64 @@ const SelectionTools: React.FC<{
   onAlign?: (alignment: HorizontalAlignment | VerticalAlignment) => void;
   onDistribute?: (axis: 'horizontal' | 'vertical') => void;
 }> = ({ blocks, onGroup, onUngroup, onAlign, onDistribute }) => {
+  const { t } = useTranslation();
   const geometryCount = blocks.filter((block) => block.geometry).length;
   const hasGroup = blocks.some((block) => block.group_id);
   const buttonClass =
     'rounded-md border border-c-border-subtle px-2 py-1.5 text-[10px] font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-35';
   return (
-    <section aria-label="Multiple block selection tools" className="mb-4 space-y-2">
+    <section aria-label={t('presentations.builder.selection.tools', 'Multiple block selection tools')} className="mb-4 space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-c-text">{blocks.length} blocks selected</h3>
-        <span className="text-[10px] text-c-text-secondary">Shift/⌘ click</span>
+        <h3 className="text-xs font-semibold text-c-text">{t('presentations.builder.selection.count', '{{count}} blocks selected', { count: blocks.length })}</h3>
+        <span className="text-[10px] text-c-text-secondary">{t('presentations.builder.selection.clickHint', 'Shift/⌘ click')}</span>
       </div>
       <div className="grid grid-cols-2 gap-1">
-        <button className={buttonClass} onClick={onGroup} aria-label="Group selected blocks">
-          Group
+        <button className={buttonClass} onClick={onGroup} aria-label={t('presentations.builder.selection.groupAria', 'Group selected blocks')}>
+          {t('presentations.builder.selection.group', 'Group')}
         </button>
         <button
           className={buttonClass}
           onClick={onUngroup}
           disabled={!hasGroup}
-          aria-label="Ungroup selected blocks"
+          aria-label={t('presentations.builder.selection.ungroupAria', 'Ungroup selected blocks')}
         >
-          Ungroup
+          {t('presentations.builder.selection.ungroup', 'Ungroup')}
         </button>
       </div>
-      <div className="grid grid-cols-3 gap-1" aria-label="Align selected blocks">
+      <div className="grid grid-cols-3 gap-1" aria-label={t('presentations.builder.selection.alignTools', 'Align selected blocks')}>
         {(['left', 'center', 'right', 'top', 'middle', 'bottom'] as const).map((alignment) => (
           <button
             key={alignment}
             className={buttonClass}
             disabled={geometryCount < 2}
             onClick={() => onAlign?.(alignment)}
-            aria-label={`Align ${alignment}`}
+            aria-label={t(`presentations.builder.selection.align.${alignment}`, `Align ${alignment}`)}
           >
-            {alignment}
+            {t(`presentations.builder.selection.position.${alignment}`, alignment)}
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-1" aria-label="Distribute selected blocks">
+      <div className="grid grid-cols-2 gap-1" aria-label={t('presentations.builder.selection.distributeTools', 'Distribute selected blocks')}>
         <button
           className={buttonClass}
           disabled={geometryCount < 3}
           onClick={() => onDistribute?.('horizontal')}
-          aria-label="Distribute horizontally"
+          aria-label={t('presentations.builder.selection.distributeHorizontal', 'Distribute horizontally')}
         >
-          Distribute H
+          {t('presentations.builder.selection.distributeH', 'Distribute H')}
         </button>
         <button
           className={buttonClass}
           disabled={geometryCount < 3}
           onClick={() => onDistribute?.('vertical')}
-          aria-label="Distribute vertically"
+          aria-label={t('presentations.builder.selection.distributeVertical', 'Distribute vertically')}
         >
-          Distribute V
+          {t('presentations.builder.selection.distributeV', 'Distribute V')}
         </button>
       </div>
       {geometryCount < 2 && (
         <p className="text-[10px] text-c-text-secondary">
-          Alignment becomes available for freeform-positioned blocks.
+          {t('presentations.builder.selection.alignmentHint', 'Alignment becomes available for freeform-positioned blocks.')}
         </p>
       )}
     </section>
@@ -421,17 +422,17 @@ const SearchPanel: React.FC<{ cards: DeckCard[]; onSelectCard?: (index: number) 
     <div>
       <input
         type="text"
-        placeholder="Search deck content..."
-        aria-label="Search deck content"
+        placeholder="Szukaj w prezentacji…"
+        aria-label="Szukaj w prezentacji"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
       />
       {!normalized && (
-        <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all slides</p>
+        <p className="text-[10px] text-c-text-secondary mt-2">Wpisz tekst, aby przeszukać wszystkie slajdy</p>
       )}
       {normalized && matches.length === 0 && (
-        <p className="text-xs text-c-text-secondary mt-3">No matching slides</p>
+        <p className="text-xs text-c-text-secondary mt-3">Brak pasujących slajdów</p>
       )}
       <div className="mt-2 space-y-1">
         {matches.map(({ card, cardIndex }) => (
@@ -497,7 +498,7 @@ const BlockInspector: React.FC<{
       </h4>
       {(block.type === 'heading' || block.type === 'paragraph' || block.type === 'callout') && (
         <InspectorField
-          label="Text"
+          label="Tekst"
           multiline
           value={String(content.text || '')}
           onChange={(text) => patchContent({ text })}
@@ -507,7 +508,7 @@ const BlockInspector: React.FC<{
         block.type === 'numbered_list' ||
         block.type === 'smart_diagram') && (
         <InspectorField
-          label="Items (one per line)"
+          label="Elementy (po jednym w wierszu)"
           multiline
           value={items
             .map((x: unknown) =>
@@ -526,7 +527,7 @@ const BlockInspector: React.FC<{
       )}
       {block.type === 'metric_strip' && (
         <InspectorField
-          label="Metrics (one per line: label | value | unit | trend | change)"
+          label="Miary (po jednej w wierszu: etykieta | wartość | jednostka | kierunek | zmiana)"
           multiline
           value={serializeMetricStrip(content.metrics)}
           onChange={(value) => patchContent({ metrics: parseMetricStrip(value) })}
@@ -535,12 +536,12 @@ const BlockInspector: React.FC<{
       {block.type === 'table' && (
         <>
           <InspectorField
-            label="Headers (comma separated)"
+            label="Nagłówki (oddzielone przecinkami)"
             value={(Array.isArray(content.headers) ? content.headers : []).join(', ')}
             onChange={(value) => patchContent({ headers: value.split(',').map((x) => x.trim()) })}
           />
           <InspectorField
-            label="Rows (CSV, one row per line)"
+            label="Wiersze CSV (po jednym w wierszu)"
             multiline
             value={(Array.isArray(content.rows) ? content.rows : [])
               .map((r: unknown) => (Array.isArray(r) ? r.join(', ') : ''))
@@ -559,27 +560,27 @@ const BlockInspector: React.FC<{
       {block.type === 'chart' && (
         <>
           <InspectorField
-            label="Chart title"
+            label="Tytuł wykresu"
             value={String(content.title || '')}
             onChange={(title) => patchContent({ title })}
           />
           <label className="block text-[10px] text-c-text-secondary">
             Chart type
             <select
-              aria-label="Chart type"
+              aria-label="Typ wykresu"
               value={String(content.chartType || 'bar')}
               onChange={(e) => patchContent({ chartType: e.target.value })}
               className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
             >
-              <option value="bar">Bar</option>
-              <option value="line">Line</option>
-              <option value="area">Area</option>
-              <option value="pie">Pie</option>
-              <option value="donut">Donut</option>
+              <option value="bar">Słupkowy</option>
+              <option value="line">Liniowy</option>
+              <option value="area">Warstwowy</option>
+              <option value="pie">Kołowy</option>
+              <option value="donut">Pierścieniowy</option>
             </select>
           </label>
           <InspectorField
-            label="Chart data (JSON)"
+            label="Dane wykresu (JSON)"
             multiline
             value={dataText}
             onChange={(value) => {
@@ -595,17 +596,17 @@ const BlockInspector: React.FC<{
       {block.type === 'kpi_widget' && (
         <>
           <InspectorField
-            label="KPI label"
+            label="Etykieta wskaźnika"
             value={String(content.label || '')}
             onChange={(label) => patchContent({ label })}
           />
           <InspectorField
-            label="KPI value"
+            label="Wartość wskaźnika"
             value={String(content.value || '')}
             onChange={(value) => patchContent({ value })}
           />
           <InspectorField
-            label="Trend"
+            label="Kierunek zmiany"
             value={String(content.trend || '')}
             onChange={(trend) => patchContent({ trend })}
           />
@@ -614,12 +615,12 @@ const BlockInspector: React.FC<{
       {block.type === 'image' && (
         <>
           <InspectorField
-            label="Image URL"
+            label="Adres URL obrazu"
             value={String(content.url || '')}
             onChange={(url) => patchContent({ url })}
           />
           <InspectorField
-            label="Alt text"
+            label="Tekst alternatywny"
             value={String(content.alt || '')}
             onChange={(alt) => patchContent({ alt })}
           />
@@ -627,14 +628,14 @@ const BlockInspector: React.FC<{
       )}
       <div className="grid grid-cols-2 gap-2">
         <InspectorField
-          label="Font size"
+          label="Rozmiar pisma"
           value={String((content.style as any)?.fontSize || '')}
           onChange={(fontSize) =>
             patchContent({ style: { ...((content.style as any) || {}), fontSize } })
           }
         />
         <InspectorField
-          label="Text color"
+          label="Kolor tekstu"
           value={String((content.style as any)?.color || '')}
           onChange={(color) =>
             patchContent({ style: { ...((content.style as any) || {}), color } })
@@ -644,12 +645,12 @@ const BlockInspector: React.FC<{
       <label className="block text-[10px] text-c-text-secondary">
         Font family
         <select
-          aria-label="Font family"
+          aria-label="Krój pisma"
           value={String(textStyle.fontFamily || '')}
           onChange={(e) => patchContent({ style: { ...textStyle, fontFamily: e.target.value } })}
           className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
         >
-          <option value="">Theme default</option>
+          <option value="">Domyślny dla motywu</option>
           <option value="Inter">Inter</option>
           <option value="Arial">Arial</option>
           <option value="Georgia">Georgia</option>
@@ -660,33 +661,33 @@ const BlockInspector: React.FC<{
         <label className="block text-[10px] text-c-text-secondary">
           Font weight
           <select
-            aria-label="Font weight"
+            aria-label="Grubość pisma"
             value={String(textStyle.fontWeight || 'normal')}
             onChange={(e) => patchContent({ style: { ...textStyle, fontWeight: e.target.value } })}
             className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
           >
-            <option value="normal">Regular</option>
-            <option value="500">Medium</option>
-            <option value="600">Semibold</option>
-            <option value="700">Bold</option>
+            <option value="normal">Zwykłe</option>
+            <option value="500">Średnie</option>
+            <option value="600">Pogrubione</option>
+            <option value="700">Grube</option>
           </select>
         </label>
         <InspectorField
-          label="Line height"
+          label="Interlinia"
           value={String(textStyle.lineHeight || '')}
           onChange={(lineHeight) => patchContent({ style: { ...textStyle, lineHeight } })}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <InspectorField
-          label="Letter spacing"
+          label="Odstępy między literami"
           value={String(textStyle.letterSpacing || '')}
           onChange={(letterSpacing) => patchContent({ style: { ...textStyle, letterSpacing } })}
         />
         <div className="flex items-end gap-3 pb-1">
           <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
             <input
-              aria-label="Italic"
+              aria-label="Kursywa"
               type="checkbox"
               checked={textStyle.fontStyle === 'italic'}
               onChange={(e) =>
@@ -699,7 +700,7 @@ const BlockInspector: React.FC<{
           </label>
           <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
             <input
-              aria-label="Underline"
+              aria-label="Podkreślenie"
               type="checkbox"
               checked={textStyle.textDecoration === 'underline'}
               onChange={(e) =>
@@ -718,7 +719,7 @@ const BlockInspector: React.FC<{
       <label className="block text-[10px] text-c-text-secondary">
         Alignment
         <select
-          aria-label="Alignment"
+          aria-label="Wyrównanie"
           value={String((content.style as any)?.textAlign || 'left')}
           onChange={(e) =>
             patchContent({
@@ -727,9 +728,9 @@ const BlockInspector: React.FC<{
           }
           className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
         >
-          <option value="left">Left</option>
-          <option value="center">Center</option>
-          <option value="right">Right</option>
+          <option value="left">Do lewej</option>
+          <option value="center">Do środka</option>
+          <option value="right">Do prawej</option>
         </select>
       </label>
       <div className="mt-3 border-t border-c-border-subtle pt-3 space-y-2">
@@ -740,7 +741,7 @@ const BlockInspector: React.FC<{
           <label className="block text-[10px] text-c-text-secondary">
             Layout region
             <select
-              aria-label="Layout region"
+              aria-label="Obszar układu"
               value={block.position.area}
               onChange={(e) =>
                 onUpdate({
@@ -752,16 +753,16 @@ const BlockInspector: React.FC<{
               }
               className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
             >
-              <option value="full">Full</option>
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-              <option value="top">Top</option>
-              <option value="bottom">Bottom</option>
-              <option value="overlay">Overlay</option>
+              <option value="full">Całość</option>
+              <option value="left">Lewa strona</option>
+              <option value="right">Prawa strona</option>
+              <option value="top">Góra</option>
+              <option value="bottom">Dół</option>
+              <option value="overlay">Nakładka</option>
             </select>
           </label>
           <InspectorField
-            label="Layer order"
+            label="Kolejność warstw"
             value={String(block.position.order)}
             onChange={(value) =>
               onUpdate({
@@ -772,14 +773,14 @@ const BlockInspector: React.FC<{
         </div>
         <div className="grid grid-cols-2 gap-2">
           <InspectorField
-            label="Width (%)"
+            label="Szerokość (%)"
             value={String(frameStyle.widthPercent || 100)}
             onChange={(widthPercent) =>
               onUpdate({ style_overrides: { ...frameStyle, widthPercent } })
             }
           />
           <InspectorField
-            label="Minimum height (px)"
+            label="Minimalna wysokość (px)"
             value={String(frameStyle.minHeight || '')}
             onChange={(minHeight) => onUpdate({ style_overrides: { ...frameStyle, minHeight } })}
           />
@@ -787,17 +788,17 @@ const BlockInspector: React.FC<{
         <label className="block text-[10px] text-c-text-secondary">
           Horizontal placement
           <select
-            aria-label="Horizontal placement"
+            aria-label="Położenie w poziomie"
             value={String(frameStyle.alignSelf || 'stretch')}
             onChange={(e) =>
               onUpdate({ style_overrides: { ...frameStyle, alignSelf: e.target.value } })
             }
             className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
           >
-            <option value="stretch">Stretch</option>
-            <option value="flex-start">Left</option>
-            <option value="center">Center</option>
-            <option value="flex-end">Right</option>
+            <option value="stretch">Rozciągnij</option>
+            <option value="flex-start">Do lewej</option>
+            <option value="center">Do środka</option>
+            <option value="flex-end">Do prawej</option>
           </select>
         </label>
       </div>

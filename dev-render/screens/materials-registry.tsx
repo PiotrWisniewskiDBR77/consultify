@@ -107,6 +107,17 @@ const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.setAttribute('data-theme', theme);
 
+// GRAFIKA (2026-08-30): to dedykowane wejście harnessu (materials-registry-
+// main.tsx, poza dev-render/main.tsx) nigdy nie wymuszało języka — świeży
+// kontekst przeglądarki (bez localStorage) trafiał w i18n LanguageDetector
+// na `navigator.language` i renderował CAŁĄ tabelę (nagłówki kolumn, Ready/
+// Approved/Organization) po angielsku, mimo że komponent ma poprawne polskie
+// tłumaczenia (rap.columns.owner="Właściciel" itd. w public/locales/pl/
+// translation.json). Realny użytkownik z zapisanym PL nigdy tego nie widzi —
+// to był fałszywy negatyw zrzutu, nie defekt produktu. Wzorzec identyczny
+// jak `dev-render/main.tsx` (`void i18n.changeLanguage(lang)`).
+void i18n.changeLanguage(params.get('lang') === 'en' ? 'en' : 'pl');
+
 export default function MaterialsRegistryScreen() {
   return (
     <I18nextProvider i18n={i18n}>
@@ -114,7 +125,7 @@ export default function MaterialsRegistryScreen() {
         <MemoryRouter initialEntries={['/presentations?tab=all']}>
           <div className="min-h-screen bg-c-bg p-6">
             <div className="mx-auto max-w-[1400px]">
-              <div className="mb-4">
+              <div className="mb-4" data-dev-render-chrome="true">
                 <h1 className="text-lg font-semibold text-c-text">
                   Materiały — Wszystkie (rejestr wspólny)
                 </h1>

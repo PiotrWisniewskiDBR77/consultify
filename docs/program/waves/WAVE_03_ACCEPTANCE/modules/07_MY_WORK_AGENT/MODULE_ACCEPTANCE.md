@@ -2,7 +2,7 @@
 
 ID: `MYW`
 Routes: `/my-work`
-Current gate: `IDEAS_AND_NOTEBOOK_VISUAL_REVIEWS_COMPLETE / CORE_DESIGN_TASKS_REQUIRED / BROADER_MYW_OWNER_REVIEW_PENDING`
+Current gate: `DAY100_PARTIAL_OWNER_PACKET / 3_OF_5_SURFACES_HAVE_FULL_STATE / CORE_DESIGN_TASKS_REQUIRED / NOT_ACCEPTED`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -38,6 +38,27 @@ owner/admin action, stale proposal, duplicate prevention and foreign tenant.
 | G18  | Module accepted on exact SHA and checkpointed                  | `NOT_STARTED`                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | G19  | Later-change regression obligations resolved                   | `NOT_STARTED`                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | G20  | Final 16/16 replay                                             | `NOT_STARTED`                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+## Day 100 current-state packet — 2026-08-29
+
+Status: `PARTIAL / OWNER_REVIEW_POSSIBLE_FOR_INBOX_TASKS_DECISIONS / NOT_ACCEPTED`.
+
+On exact marker `8c7a853a6cb82c9b498210049c5487ea033caa9b`, an owned local
+PostgreSQL fixture and canonical runtime produced `20 z 20` requested desktop
+screenshots: Ideas, Notebook, Inbox, Tasks and Decisions × light/dark ×
+OWNER/foreign-empty. `16 z 20` are semantically consistent with the named
+state. The four `full` captures for Ideas and Notebook remain empty because the
+fixture readback contains `0` Ideas and `0` Notebook pages; they were not
+relabelled. Inbox (`2`), Tasks (`1` visible OWNER task) and Decisions (`1`) are
+nonempty and counters match visible rows.
+
+Current visible findings: UI is EN, not PL; Tasks/Decisions show right-edge menu
+or cell clipping; the crimson `Model` pill is non-critical decoration; empty
+states are honest but foreign-scope absence is not distinguishable from true
+zero. No raw UUID was visible. DoD §18.1 visual score: `3 z 16`; keyboard,
+tablet, PL and record mutation/cold-reload remain unmeasured. Full evidence,
+per-image observations and SHA-256 values:
+`../../codex/CODEX_DAY100_MOJA_PRACA_OWNER_REPORT.md`.
 
 ## Piotr review card
 
@@ -102,7 +123,7 @@ regression-locked in code), `CZĘŚCIOWE` (partially built; gap stated in Eviden
 
 | Finding ID | Captured | Piotr wording | Category/Route | Status | Severity | Evidence | Decision/status |
 | ---------- | -------- | -------------- | --------------- | ------ | -------- | -------- | ---------------- |
-| `MYW-NBK-CORE-001` | 2026-08-22 | Two deliberate views instead of overlapping Tools/Work/Context: Work = document record, Context = live relationships; remove Tools after audit. | Product/UX · Notebook | `ZROBIONE_W_KODZIE` | P0 | `NotebookRightRail.tsx:46` — type is exactly `'work' \| 'context'` (no `tools`); tablist with roving focus `:112–135`, tabpanels `:176,523`. Metadata persists server-side (`verificationStatus`/`review_cadence` in `server/src/routes/v8/my-work.routes.ts`). | `CLOSED`. |
+| `MYW-NBK-CORE-001` | 2026-08-22 | Two deliberate views instead of overlapping Tools/Work/Context: Work = document record, Context = live relationships; remove Tools after audit. | Product/UX · Notebook | `READY_FOR_OWNER_SCREENSHOT_REVIEW` | P0 | Day 98: `NotebookRightRail.tsx` realnie renderuje wspólny `ArtifactRightPanel` z kolejnością Akcje · Właściwości · Powiązania · Komentarze · Historia wyłącznie za `ENABLE_NOTEBOOK_SPEC_A_SHELL`; flaga ma literalny default `false`, OFF zachowuje zastany rail. `8/8` zrzutów light/dark + oba stany, mutacja RED→GREEN, `31/31` plików i `82/82` nazw testów Notatnika PASS. Raport: `../../codex/CODEX_DAY98_NOTATNIK_SPEC_A_REPORT.md`. | `OWNER_REVIEW_REQUIRED`; brak zgody na zmianę defaultu. |
 | `MYW-NBK-CORE-002` | 2026-08-22 | Native block insertion: right-click at cursor, visible picker, same action registry as kebab, insert/describe/move/duplicate/delete, `Edit with AI` with explicit preview/apply/reject. | Product/UX · Notebook | `CZĘŚCIOWE` | P0 | Registry exists: `notebookActionRegistry.ts` (387 lines, 7 surfaces). Gap: the audit itself declares 3 `blocked` and 4 `partial` actions, all `execution: 'governed-api'` (`:220,238,252,264`) — durable mutation via Slash/Inline-AI is not yet live. | `FALA_3` — finish the governed-api wiring for the blocked/partial actions. |
 | `MYW-NBK-003` | 2026-08-22 | Living context: when a linked artifact changes, show what changed, which sections are stale, and a sourced update proposal; explicit diff/apply/partial-apply/reject. | Product · Notebook | `NIEZROBIONE` | P1 | `src/components/MyWork/notebook/NotebookContextPanel.tsx` — 0 hits for `diff`, `stale`, `proposeUpdate`, `applyPartial`, `freshness`. | `FALA_3_PROTOTYPE_REQUIRED` — needs provenance/history/conflict-resolution model before code. |
 | `MYW-NBK-004` | 2026-08-22 | Complete artifact graph + fast search across all notebooks: title, content, tags, topics, people/project, related artifacts, filters, highlights, keyboard. | Product/Integration · Notebook | `CZĘŚCIOWE` | P1 | **2026-08-25 (Fala 1):** wired. New `NotebookSearchDialog` (`src/components/MyWork/notebook/NotebookSearchDialog.tsx`), triggered from a new search button in `NotebookHeaderActions.tsx`, calls the previously-unconsumed `Api.notebookSemanticSearch` (`src/services/api.ts:18727–18744`, real `GET /notebook/search`, org/user-scoped). Debounced query, real loading/empty/error states, keyboard (Arrow/Enter/Escape), click-through opens the page cross-notebook via `Api.getNotebookPage` fallback (mirrors the existing `openPageId` deep-link effect in `NotebookContent.tsx`). Tests: `notebook/__tests__/NotebookSearchDialog.behavior.test.tsx` (8 cases), `__tests__/NotebookHeaderActions.a11y.test.tsx` (+3 cases, PL+EN). **Still open:** the endpoint returns only pageId/title/snippet/score/matchType — no tags/topics/people/related-artifact facets, no filters, no highlighted match terms in the snippet. Those richer facets remain `FALA_3_PROTOTYPE_REQUIRED` (needs a canonical facet model, not just wiring). | `PARTIALLY_CLOSED` — fast cross-notebook title/content search is real and shipped; faceted filters/highlights tracked separately under Fala 3. |

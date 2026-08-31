@@ -19,6 +19,12 @@ import { ChevronLeft, ChevronRight, Pin, PinOff } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  PREVIEW_HEADER_ICON_BUTTON,
+  PREVIEW_HEADER_ICON_BUTTON_ACTIVE,
+  PREVIEW_HEADER_ICON_SIZE,
+  PREVIEW_HEADER_OPEN_BUTTON,
+} from '@/components/shared/PreviewPane/previewStyles';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useDeviceType } from '@/hooks/useDeviceType';
 
@@ -38,6 +44,18 @@ interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
   onSelect: (id: string | null) => void;
   /** Called when full detail should open (double-click / Enter) */
   onOpenFull?: (id: string) => void;
+  /**
+   * Odbiór 141-plan-scenario (2026-08-31) — prop ADDYTYWNY, lustro kontraktu
+   * `StandardPreview.openDisabledReason` (FIX-1, dyżur 26 chat-signals-front).
+   *
+   * Ten layout, a nie `StandardPreview`, rysuje nagłówek podglądu w trybie
+   * `embedded` — więc bez tego propu powierzchnia bez destynacji ma tylko dwa
+   * wyjścia: przycisk „Otwórz" prowadzący w złe miejsce albo BRAK przycisku
+   * (milczenie o istnieniu obiektu). Podany BEZ `onOpenFull` renderuje
+   * WYŁĄCZONY „Otwórz" z tym powodem w tooltipie. Gdy `onOpenFull` jest
+   * podany, prop jest ignorowany. Brak obu ⇒ zero zmian (przycisku nie ma).
+   */
+  openDisabledReason?: string;
   /** Render the preview body */
   renderPreview: (item: T) => React.ReactNode;
   /** Render preview footer quick actions */
@@ -73,6 +91,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   selectedItem,
   onSelect,
   onOpenFull,
+  openDisabledReason,
   renderPreview,
   renderPreviewFooter,
   renderPreviewActions,
@@ -344,23 +363,41 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
         {getItemById && !isMobile ? (
           <button
             onClick={handlePin}
-            className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-colors ${
+            className={
               pinnedId === selectedItem.id
-                ? 'text-[var(--c-info)] bg-slate-100 dark:bg-white/[0.10]'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-            }`}
+                ? PREVIEW_HEADER_ICON_BUTTON_ACTIVE
+                : PREVIEW_HEADER_ICON_BUTTON
+            }
             title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
             aria-label={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
           >
-            {pinnedId === selectedItem.id ? <PinOff size={14} /> : <Pin size={14} />}
+            {pinnedId === selectedItem.id ? (
+              <PinOff size={PREVIEW_HEADER_ICON_SIZE} />
+            ) : (
+              <Pin size={PREVIEW_HEADER_ICON_SIZE} />
+            )}
           </button>
         ) : null}
         {renderPreviewActions?.(selectedItem)}
         {onOpenFull && (
           <button
             onClick={() => onOpenFull(selectedItem.id)}
-            className="inline-flex items-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
+            /* §7.3 pkt 1 — ten sam pill co w `StandardPreview` (wspólne klasy
+               z `previewStyles.ts`). Poprzednio focus ring był
+               crimsonowy pierscien fokusa z rodziny primary — kanon wymaga `c-focus`. */
+            className={PREVIEW_HEADER_OPEN_BUTTON}
             title={t('common.open', 'Open')}
+          >
+            <span>{t('common.open', 'Open')}</span>
+          </button>
+        )}
+        {!onOpenFull && openDisabledReason && (
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            className={PREVIEW_HEADER_OPEN_BUTTON}
+            title={openDisabledReason}
           >
             <span>{t('common.open', 'Open')}</span>
           </button>
@@ -414,11 +451,14 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               actions={
                 <button
                   onClick={handleUnpin}
-                  className="inline-flex items-center justify-center h-7 w-7 rounded-full text-primary-500 bg-primary-50 dark:bg-primary-500/10"
+                  /* Było crimsonowy tekst i tlo z rodziny primary na kontrolce
+                     stanu (pułapka nr 1 z CLAUDE.md). Stan aktywny pinezki ma
+                     akcent `--c-info`, ten sam co w nagłówku obok. */
+                  className={PREVIEW_HEADER_ICON_BUTTON_ACTIVE}
                   title="Unpin"
                   aria-label="Unpin"
                 >
-                  <PinOff size={14} />
+                  <PinOff size={PREVIEW_HEADER_ICON_SIZE} />
                 </button>
               }
             >

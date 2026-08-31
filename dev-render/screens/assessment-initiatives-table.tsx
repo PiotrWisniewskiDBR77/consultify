@@ -26,7 +26,7 @@ const INITIATIVES = [
     priority: 'CRITICAL',
     axis: 'Operacje',
     projectId: 'proj-1',
-    projectName: 'DBR77 · Manufacturing',
+    projectName: 'DBR77 · Produkcja',
     locationId: 'loc-1',
     locationName: 'Zakład Poznań',
     expectedRoi: 2.4,
@@ -42,9 +42,9 @@ const INITIATIVES = [
     summary: 'Dashboard OEE zasilany z hali w czasie rzeczywistym.',
     status: 'PLANNING',
     priority: 'HIGH',
-    axis: 'Manufacturing',
+    axis: 'Produkcja',
     projectId: 'proj-1',
-    projectName: 'DBR77 · Manufacturing',
+    projectName: 'DBR77 · Produkcja',
     locationId: 'loc-1',
     locationName: 'Zakład Poznań',
     expectedRoi: 1.8,
@@ -120,7 +120,9 @@ if (!g.__ASSESSMENT_INITIATIVES_TABLE_FETCH__) {
 export default function AssessmentInitiativesTableScreen(): React.ReactElement {
   return (
     <MemoryRouter initialEntries={['/']}>
-      <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px', height: 640 }}>
+      {/* GRAFIKA 20-tabele-szerokosc (2026-08-30): `maxWidth: 1180, margin: '0 auto'`
+          usunięty — HARNESS-ONLY artefakt bez odpowiednika w realnym mounterze. */}
+      <div style={{ padding: '16px', height: 640 }}>
         <InitiativesTable projectId="proj-1" onOpenInitiative={() => {}} />
       </div>
     </MemoryRouter>

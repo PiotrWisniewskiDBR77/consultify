@@ -388,6 +388,23 @@ const STATUS_CONFIG: Record<string, { badgeClass: string; icon: React.ReactNode 
   },
 };
 
+// ★ NAPRAWIONE (powtórka 08-31): statusBadge() renderował `status.toUpperCase()`
+// — surowy enum ("DRAFT"/"REVIEW"/"APPROVED") wprost w interfejsie, bez
+// tłumaczenia, mimo że dokładnie ten sam koncept (status modelu/sprawozdania)
+// ma już polskie etykiety gdzie indziej w tym module (finance-hub: Szkic/
+// Zatwierdzone/Przegląd). Etykiety lokalne (nie `t()`/locales — te pliki są
+// poza moim zakresem), zgodne z istniejącym nazewnictwem.
+const STATUS_BADGE_LABEL_PL: Record<string, string> = {
+  draft: 'Szkic',
+  review: 'Do przeglądu',
+  approved: 'Zatwierdzony',
+};
+const STATUS_BADGE_LABEL_EN: Record<string, string> = {
+  draft: 'Draft',
+  review: 'In review',
+  approved: 'Approved',
+};
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -736,13 +753,24 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 
   // ── Render helpers ──
 
+  // ★ NAPRAWIONE (defekt 3/148-finanse-parametry): pasek „Oparte na"
+  // (grounded-on) renderował `source_statement.status` WPROST w zdaniu
+  // (`PL • PLN • approved`) — ten sam surowy enum, ta sama etykieta
+  // `STATUS_BADGE_LABEL_PL`/`_EN` co status modelu bazowego, tylko bez
+  // dzwonka/pigułki. Wydzielone z `statusBadge()`, żeby NIE powstała druga
+  // mapa etykiet — jeden słownik, dwa miejsca renderowania (pigułka + zdanie).
+  const statusLabelText = (status: string): string => {
+    const labels = isPl ? STATUS_BADGE_LABEL_PL : STATUS_BADGE_LABEL_EN;
+    return labels[status] ?? status.toUpperCase();
+  };
+
   const statusBadge = (status: string) => {
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.badgeClass}`}
       >
-        {cfg.icon} {status.toUpperCase()}
+        {cfg.icon} {statusLabelText(status)}
       </span>
     );
   };
@@ -955,8 +983,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                   {statusBadge(selectedModel.status)}
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  {selectedModel.currency} · {selectedModel.granularity} ·{' '}
-                  {selectedModel.horizon_months} {t('finance.model.months', 'months')}
+                  {selectedModel.currency} ·{' '}
+                  {t(
+                    `finance.model.${selectedModel.granularity}`,
+                    selectedModel.granularity
+                  )}{' '}
+                  · {selectedModel.horizon_months}{' '}
+                  {t('finance.model.months', 'months')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1021,7 +1054,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                     <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                       {selectedModel.source_statement
-                        ? `${selectedModel.source_statement.statement_type} • ${selectedModel.source_statement.currency} • ${selectedModel.source_statement.status}`
+                        ? `${selectedModel.source_statement.statement_type} • ${selectedModel.source_statement.currency} • ${statusLabelText(selectedModel.source_statement.status)}`
                         : seedSource?.type === 'statement_pack'
                           ? t('finance.model.seededFromPack', 'Seeded from approved statement pack')
                           : t(
@@ -1202,13 +1235,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        ['Revenue', baselineAssumptions.revenue, 'baseline.revenue'],
-                        ['COGS', baselineAssumptions.cogs, 'baseline.cogs'],
-                        ['OPEX', baselineAssumptions.opex, 'baseline.opex'],
-                        ['Depreciation', baselineAssumptions.depreciation, 'baseline.depreciation'],
-                        ['Interest', baselineAssumptions.interest, 'baseline.interest'],
-                        ['Tax', baselineAssumptions.tax, 'baseline.tax'],
-                        ['CAPEX', baselineAssumptions.capex, 'baseline.capex'],
+                        ['Przychody (REVENUE)', baselineAssumptions.revenue, 'baseline.revenue'],
+                        ['Koszt własny sprzedaży (COGS)', baselineAssumptions.cogs, 'baseline.cogs'],
+                        ['Koszty operacyjne (OPEX)', baselineAssumptions.opex, 'baseline.opex'],
+                        ['Amortyzacja', baselineAssumptions.depreciation, 'baseline.depreciation'],
+                        ['Koszty odsetkowe', baselineAssumptions.interest, 'baseline.interest'],
+                        ['Podatek dochodowy', baselineAssumptions.tax, 'baseline.tax'],
+                        ['Nakłady inwestycyjne (CAPEX)', baselineAssumptions.capex, 'baseline.capex'],
                       ].map(([label, value, driverKey]) => (
                         <div
                           key={String(label)}
@@ -1588,10 +1621,10 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                               }
                               className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
                             >
-                              <option value="operating">Operating</option>
-                              <option value="investing">Investing</option>
-                              <option value="financing">Financing</option>
-                              <option value="none">None</option>
+                              <option value="operating">{t('finance.model.cfOperating', 'Operacyjne')}</option>
+                              <option value="investing">{t('finance.model.cfInvesting', 'Inwestycyjne')}</option>
+                              <option value="financing">{t('finance.model.cfFinancing', 'Finansowe')}</option>
+                              <option value="none">{t('finance.model.cfNone', 'Brak')}</option>
                             </select>
                           </div>
                         </div>

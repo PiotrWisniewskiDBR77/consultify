@@ -101,7 +101,7 @@ function KindBadge({ kind }: { kind: ModelKind }) {
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${style.bg} ${style.text}`}
     >
       <Icon size={12} />
-      {kind}
+      {KIND_LABELS[kind]}
     </span>
   );
 }
@@ -287,11 +287,22 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
   );
 }
 
+// Odbiór grafiki 07-realizacja (2026-08-30): rodzaj modelu renderował się
+// wprost jako surowy enum backendu (TEXT_LLM/IMAGE_MODEL/BUSINESS_MODEL) —
+// znany defekt "surowe enumy zamiast etykiet" z kanonu grafiki. Etykieta
+// tłumaczy WYŁĄCZNIE tekst wyświetlany; wartość filtra/klucz danych zostaje
+// bez zmian (kind === 'TEXT_LLM' itd. nadal działa).
+const KIND_LABELS: Record<'TEXT_LLM' | 'IMAGE_MODEL' | 'BUSINESS_MODEL', string> = {
+  TEXT_LLM: 'Model tekstowy',
+  IMAGE_MODEL: 'Model obrazu',
+  BUSINESS_MODEL: 'Model biznesowy',
+};
+
 // ── Filter options (kolumny StandardTable) ─────────────────────────────────
 const KIND_FILTER_OPTIONS = [
-  { value: 'TEXT_LLM', label: 'TEXT_LLM' },
-  { value: 'IMAGE_MODEL', label: 'IMAGE_MODEL' },
-  { value: 'BUSINESS_MODEL', label: 'BUSINESS_MODEL' },
+  { value: 'TEXT_LLM', label: KIND_LABELS.TEXT_LLM },
+  { value: 'IMAGE_MODEL', label: KIND_LABELS.IMAGE_MODEL },
+  { value: 'BUSINESS_MODEL', label: KIND_LABELS.BUSINESS_MODEL },
 ];
 
 const PROVIDER_TYPE_FILTER_OPTIONS = [
@@ -737,7 +748,7 @@ export const ModelCatalogTable: React.FC = () => {
           <p className="text-sm text-c-text-muted mt-1">
             {t(
               'modelRegistry.catalog.description',
-              'All registered models across TEXT_LLM, IMAGE_MODEL, and BUSINESS_MODEL kinds'
+              'All registered text, image, and business models'
             )}
           </p>
         </div>
@@ -770,16 +781,16 @@ export const ModelCatalogTable: React.FC = () => {
               </div>
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
-              <div className="text-sm text-c-info">TEXT_LLM</div>
+              <div className="text-sm text-c-info">{KIND_LABELS.TEXT_LLM}</div>
               <div className="text-2xl font-bold text-c-text">{kindCounts.TEXT_LLM}</div>
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               {/* kanon TRIADA pułapka #1: c-accent = crimson; spójne z badge purple. */}
-              <div className="text-sm text-purple-400">IMAGE_MODEL</div>
+              <div className="text-sm text-purple-400">{KIND_LABELS.IMAGE_MODEL}</div>
               <div className="text-2xl font-bold text-c-text">{kindCounts.IMAGE_MODEL}</div>
             </div>
             <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
-              <div className="text-sm text-c-warning">BUSINESS_MODEL</div>
+              <div className="text-sm text-c-warning">{KIND_LABELS.BUSINESS_MODEL}</div>
               <div className="text-2xl font-bold text-c-text">{kindCounts.BUSINESS_MODEL}</div>
             </div>
           </div>
@@ -798,10 +809,14 @@ export const ModelCatalogTable: React.FC = () => {
               },
             }}
             chips={[
-              { id: 'all', label: 'All', count: models.length },
-              { id: 'TEXT_LLM', label: 'TEXT_LLM', count: kindCounts.TEXT_LLM },
-              { id: 'IMAGE_MODEL', label: 'IMAGE_MODEL', count: kindCounts.IMAGE_MODEL },
-              { id: 'BUSINESS_MODEL', label: 'BUSINESS_MODEL', count: kindCounts.BUSINESS_MODEL },
+              { id: 'all', label: 'Wszystkie', count: models.length },
+              { id: 'TEXT_LLM', label: KIND_LABELS.TEXT_LLM, count: kindCounts.TEXT_LLM },
+              { id: 'IMAGE_MODEL', label: KIND_LABELS.IMAGE_MODEL, count: kindCounts.IMAGE_MODEL },
+              {
+                id: 'BUSINESS_MODEL',
+                label: KIND_LABELS.BUSINESS_MODEL,
+                count: kindCounts.BUSINESS_MODEL,
+              },
             ]}
             activeChip={kindTab}
             onChipChange={(id) => setKindTab(id as typeof kindTab)}

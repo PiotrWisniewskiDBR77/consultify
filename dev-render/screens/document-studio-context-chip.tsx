@@ -27,7 +27,7 @@ useAppStore.setState({
 export default function DocumentStudioContextChipScreen(): React.ReactElement {
   return (
     <div className="min-h-screen w-full bg-c-bg">
-      <div className="border-b border-c-border px-6 py-3">
+      <div className="border-b border-c-border px-6 py-3" data-dev-render-chrome="true">
         <div className="text-sm font-semibold text-c-text">
           Document Studio — chip kontekstu organizacji (P0)
         </div>

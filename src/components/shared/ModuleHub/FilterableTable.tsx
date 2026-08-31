@@ -24,6 +24,7 @@ import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
 import { FilterChip } from './ActiveFilters';
 import { TableSettingsPopover } from './TableSettingsPopover';
+import { localeListy } from '../../../utils/listDateFormat';
 
 // Column definition
 export interface TableColumn {
@@ -191,6 +192,64 @@ export const DEFAULT_MIN_TABLE_WIDTH = 980;
  * wymuszanie 980 px nie daje nic poza ukrytym przewijaniem.
  */
 export const AUTO_MIN_WIDTH_COLUMN_THRESHOLD = 2;
+
+/**
+ * Szerokość strukturalnej kolumny akcji (kebab + Settings2) w px — musi być
+ * zgodna z klasą `w-20` na jej `th`/`td`. Kolumna jest `sticky right-0`, więc
+ * przy przepełnieniu przykrywa ogon ostatniej kolumny danych; dlatego wchodzi
+ * do bilansu szerokości w `columnFit`.
+ */
+export const ROW_ACTIONS_COLUMN_WIDTH = 80;
+
+/**
+ * Podłogi używane WYŁĄCZNIE przy dopasowaniu do kontenera (`columnFit`).
+ *
+ * Świadomie NIŻSZE niż `minWidth` z `ColumnConfig` (90 / 200 px), bo tamte są
+ * podłogami RĘCZNEGO resize'u — użytkownik nie ma prawa zwęzić kolumny poniżej.
+ * Przy dopasowaniu automatycznym te same wartości blokowały naprawę: tabela
+ * o 14 kolumnach ma sumę podłóg 200 + 13×90 = 1370 px, czyli więcej niż typowy
+ * obszar 1286 px — dopasowanie by się nie odpaliło i ostatnia kolumna dalej
+ * chowałaby się pod przypiętą kolumną akcji. Wartości wyprowadzone z pomiaru, nie z oka: komórka ma
+ * `px-4` (2×16 px), a nagłówek dodatkowo ikonę sortowania (~16 px), więc przy
+ * 112 px zostaje 80 px na treść (mieści „Nieznane", „15 wrz 2026") i 64 px na
+ * słowo nagłówka. Przy 84 px zostawało 39 px i nagłówki łamały się co cztery
+ * litery („GOTO WOŚĆ") — sprawdzone zrzutem, odrzucone.
+ */
+export const FIT_MIN_COLUMN_WIDTH = 112;
+export const FIT_MIN_PRIMARY_COLUMN_WIDTH = 180;
+
+/**
+ * ŁAMANIE TEKSTU W KOMÓRCE — granica wyrazu, nigdy środek wyrazu (2026-08-30).
+ *
+ * Skąd to się wzięło: commit „ostatnia kolumna przestaje być ucinana" dołożył
+ * `break-words` do nagłówków i komórek, żeby długie etykiety nie wylewały się
+ * poza kolumnę i nie chowały pod przypiętą (`sticky right-0`) kolumną akcji.
+ * `break-words` to w Tailwind 3.4 (`corePlugins.js:1605`) DOKŁADNIE
+ * `overflow-wrap: break-word` — a ta reguła z definicji rozrywa wyraz, który
+ * sam z siebie nie mieści się w linii. Po zwężeniu kolumn odpaliła realnie
+ * i produkt zaczął pokazywać „ZAKTUALI ZOWANO", „OGÓLNA INTERPRETAC JA",
+ * „engineerin g team", „Ograniczen ie". To NIE było `word-break: break-all`
+ * (tej klasy w pliku nigdy nie było) — sprawdzone w źródle Tailwinda.
+ *
+ * Oba skrajne zachowania są złe: bez łamania tekst ucieka poza komórkę,
+ * z `overflow-wrap: break-word` rozrywa się w połowie wyrazu. Trzecia droga,
+ * zmierzona w Chromium przed wdrożeniem:
+ *   `break-normal`   → `overflow-wrap: normal` — łam TYLKO na spacji,
+ *   `overflow-hidden`+`text-ellipsis` → wyraz szerszy niż kolumna dostaje
+ *                      wielokropek zamiast rozdarcia.
+ * `text-overflow: ellipsis` działa także przy zawijaniu (`white-space: normal`),
+ * nie tylko przy `nowrap` — zmierzone: „OGOLNA / INTERPR…", nie „INTERPRETAC / JA".
+ *
+ * ŚWIADOMIE stosowane na WARSTWIE TEKSTU (span etykiety, span wartości), a NIE
+ * na `th`/`td`. Powód: `overflow: hidden` na komórce przycięłoby popovery i menu,
+ * które komórki renderują (filtr w nagłówku, kebab, chipy z tooltipem) — dlatego
+ * `break-words` zostaje na samej komórce jako ostatnia deska ratunku dla treści
+ * renderowanej przez moduł jako ELEMENTY. `overflow-wrap` jest dziedziczone,
+ * więc `break-normal` na spanie musi być podane jawnie, żeby zbić to z komórki.
+ *
+ * Pełna treść nie ginie: element dostaje `title` z całym tekstem.
+ */
+export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-ellipsis';
 
 // True when a regular cell value should render as an em-dash placeholder
 // (null / undefined / empty-or-whitespace string).
@@ -741,6 +800,98 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     return minTableWidth;
   }, [minTableWidth, visibleColumns]);
 
+  /**
+   * ── Dopasowanie kolumn do kontenera (defekt „ucięta ostatnia kolumna") ────
+   *
+   * MECHANIZM DEFEKTU. Nagłówek renderował KAŻDĄ kolumnę na jej zadeklarowanej
+   * szerokości w pikselach (`width: ${width}px`) i nigdy nie porównywał SUMY
+   * tych szerokości z realną szerokością kontenera. Przy `table-fixed` suma
+   * wygrywa: element tabeli rozpycha się ponad `overflow-x-auto`, a strukturalna
+   * kolumna akcji (`sticky right-0`, 80 px) parkuje NAD ogonem ostatniej
+   * widocznej kolumny danych. Efekt na zrzucie: nagłówek i wartości ostatniej
+   * kolumny przecięte w pionie w połowie znaku („KOSZT OPÓŹNIENIA" → „KOS
+   * OPÓŹN", „Nieznane" → „Niezna"). Zmierzone: plan-scenario-d1 — 14 kolumn
+   * danych, tabela 2140 px w obszarze 1366 px (nadmiar 774 px).
+   *
+   * NAPRAWA JEST TUTAJ, a nie w ekranach. Poprzednia próba łatania szerokości
+   * per wywołanie odrosła po ośmiu tygodniach w kilkunastu plikach; `min-width`
+   * przy `table-fixed` niczego nie ratuje, bo to on wymusza nadmiar.
+   *
+   * ZASADA: gdy naturalna szerokość (suma kolumn + kolumna akcji) przekracza
+   * dostępny obszar, skalujemy kolumny PROPORCJONALNIE w dół, z podłogą
+   * `FIT_MIN_COLUMN_WIDTH` / `FIT_MIN_PRIMARY_COLUMN_WIDTH` per kolumna;
+   * kolumna zaznaczenia (44 px) nie kurczy się nigdy.
+   * Gdy nawet podłogi się nie mieszczą, zostaje UCZCIWE przewijanie poziome —
+   * dokładnie jak dotąd, bez cichego chowania treści.
+   *
+   * BRAK ZMIANY dla list, które już się mieszczą: `scale === 1`, wartości
+   * `width` identyczne co do piksela jak przed zmianą.
+   */
+  const columnFit = useMemo<{ widths: Record<string, number>; scale: number }>(() => {
+    const declared = visibleColumns.map((c) => {
+      const width = columnWidths[c.id] ?? parsePx(c.width, 140);
+      const isPrimary = c.id === 'title' || c.id === 'name';
+      return {
+        id: c.id,
+        isSelect: c.type === 'select',
+        width,
+        // Kolumna węższa niż podłoga zostaje na swojej szerokości — podłoga
+        // nigdy nie ROZPYCHA, tylko ogranicza kurczenie.
+        floor: Math.min(
+          width,
+          isPrimary ? FIT_MIN_PRIMARY_COLUMN_WIDTH : FIT_MIN_COLUMN_WIDTH
+        ),
+      };
+    });
+    const widths: Record<string, number> = {};
+    for (const c of declared) widths[c.id] = c.width;
+
+    const actionsWidth = hideRowActions ? 0 : ROW_ACTIONS_COLUMN_WIDTH;
+    const natural = declared.reduce((sum, c) => sum + c.width, 0) + actionsWidth;
+    const available = Math.max(horizontalViewportWidth, resolvedMinTableWidth ?? 0);
+    if (horizontalViewportWidth <= 0 || available <= 0 || natural <= available) {
+      return { widths, scale: 1 };
+    }
+
+    const fixedTotal = declared.filter((c) => c.isSelect).reduce((sum, c) => sum + c.width, 0);
+    let pool = declared.filter((c) => !c.isSelect);
+    let budget = available - actionsWidth - fixedTotal;
+    const floorTotal = pool.reduce((sum, c) => sum + Math.min(c.floor, c.width), 0);
+    // Nawet na podłogach się nie mieści → uczciwe przewijanie, zero udawania.
+    if (budget < floorTotal) return { widths, scale: 1 };
+
+    // Rozdział proporcjonalny z klamrowaniem do podłóg (iteracyjnie, bo
+    // przyklamrowanie jednej kolumny zmienia budżet dla pozostałych).
+    for (;;) {
+      const poolTotal = pool.reduce((sum, c) => sum + c.width, 0);
+      if (poolTotal <= 0) break;
+      const ratio = budget / poolTotal;
+      const clamped = pool.filter((c) => c.width * ratio < Math.min(c.floor, c.width));
+      if (clamped.length === 0) {
+        for (const c of pool) widths[c.id] = Math.floor(c.width * ratio);
+        break;
+      }
+      for (const c of clamped) {
+        const floored = Math.min(c.floor, c.width);
+        widths[c.id] = floored;
+        budget -= floored;
+      }
+      pool = pool.filter((c) => !clamped.includes(c));
+      if (pool.length === 0) break;
+    }
+
+    const naturalData = natural - actionsWidth - fixedTotal;
+    const scale = naturalData > 0 ? (available - actionsWidth - fixedTotal) / naturalData : 1;
+    return { widths, scale: scale > 0 && scale < 1 ? scale : 1 };
+  }, [
+    visibleColumns,
+    columnWidths,
+    parsePx,
+    hideRowActions,
+    horizontalViewportWidth,
+    resolvedMinTableWidth,
+  ]);
+
   // First data (non-select) column hosts the optional row-description line.
   const firstDataColumnId = useMemo(
     () => visibleColumns.find((c) => c.type !== 'select')?.id ?? null,
@@ -923,7 +1074,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     if (hours < 1) return t('sharedComponents.filterableTable.justNow');
     if (hours < 24) return t('sharedComponents.filterableTable.hoursAgo', { count: hours });
     if (days < 7) return t('sharedComponents.filterableTable.daysAgo', { count: days });
-    return d.toLocaleDateString();
+    // Odbiór grafiki 2026-08-30: gołe `toLocaleDateString()` bierze format z
+    // PRZEGLĄDARKI, nie z języka konta — polski użytkownik na angielskim systemie
+    // widział „8/21/2026" obok „3 dni temu" w tej samej kolumnie. To domyślny
+    // renderer WSPÓLNEJ tabeli, więc dotyczyło każdego modułu z kolumną daty.
+    // SSOT formatu: src/utils/listDateFormat.ts.
+    return d.toLocaleDateString(localeListy());
   };
 
   return (
@@ -939,11 +1095,21 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
               <tr>
                 {visibleColumns.map((column, idx) => {
                   const cfg = columnConfigs.find((c) => c.id === column.id);
-                  const width = columnWidths[column.id] ?? parsePx(column.width, 140);
-                  const minWidth =
+                  // `width` = szerokość RENDEROWANA (po dopasowaniu do kontenera,
+                  // patrz `columnFit`). Model logiczny (`columnWidths`) zostaje
+                  // nietknięty, więc resize i persistencja liczą dalej na
+                  // zadeklarowanych wartościach.
+                  const width =
+                    columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
+                  const declaredMinWidth =
                     cfg?.minWidth ?? (column.id === 'title' || column.id === 'name' ? 200 : 90);
-                  const maxWidth =
+                  const declaredMaxWidth =
                     cfg?.maxWidth ?? (column.id === 'title' || column.id === 'name' ? 520 : 320);
+                  // Przy dopasowaniu `min-width` MUSI zejść razem z `width` —
+                  // inaczej to ono odtwarza nadmiar, który właśnie usunęliśmy
+                  // (`min-width` przy `table-fixed` nie ratuje, tylko rozpycha).
+                  const minWidth = Math.min(declaredMinWidth, width);
+                  const maxWidth = Math.max(declaredMaxWidth, width);
                   const isLastDataCol = idx === visibleColumns.length - 1;
                   const isSelectCol = column.type === 'select' && !!selection;
                   return (
@@ -978,8 +1144,15 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           />
                         </div>
                       ) : (
+                        // `min-w-0` + `break-words`: bez tego etykieta jest
+                        // elementem flex z domyślnym `min-width: auto`, więc
+                        // NIE kurczy się poniżej najdłuższego słowa i wylewa
+                        // się na sąsiednią kolumnę („SZACUNKOWE ZAPOTRZEBOWANIE"
+                        // nachodzące na „STAN MOCY PRZEROBOWEJ"). Przy szerokich
+                        // kolumnach bez zmian — łamanie odpala się dopiero, gdy
+                        // słowo naprawdę się nie mieści.
                         <div
-                          className={`flex items-center gap-1 ${
+                          className={`flex items-center gap-1 min-w-0 break-words ${
                             column.align === 'right'
                               ? 'justify-end'
                               : column.align === 'center'
@@ -995,16 +1168,26 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               // przeglądarka rysuje własny outline — na tym motywie
                               // bursztynowy rgb(229,151,0) — i łamie kanon na KAŻDYM
                               // ekranie listowym, bo to wspólny nagłówek sortowania.
-                              className="inline-flex items-center gap-1 uppercase tracking-wider transition-colors hover:text-c-text-secondary rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                              className="inline-flex items-center gap-1 min-w-0 uppercase tracking-wider transition-colors hover:text-c-text-secondary rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               aria-label={t('common.sortByColumn', 'Sort by {{column}}', {
                                 column: column.label,
                               })}
                             >
-                              <span>{column.label}</span>
+                              <span
+                                className={`min-w-0 ${CELL_TEXT_CLAMP_CLASS}`}
+                                title={column.label}
+                              >
+                                {column.label}
+                              </span>
                               <SortIcon columnId={column.id} />
                             </button>
                           ) : (
-                            <span>{column.label}</span>
+                            <span
+                              className={`min-w-0 ${CELL_TEXT_CLAMP_CLASS}`}
+                              title={column.label}
+                            >
+                              {column.label}
+                            </span>
                           )}
                           {column.filterable && (
                             <FilterDropdown
@@ -1024,7 +1207,18 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           currentWidth={width}
                           minWidth={minWidth}
                           maxWidth={maxWidth}
-                          onResize={handleColumnResize}
+                          // Uchwyt operuje w pikselach EKRANU; model logiczny
+                          // trzyma szerokości zadeklarowane. Przy dopasowaniu
+                          // (`scale < 1`) przeliczamy z powrotem, żeby chwyt
+                          // podążał 1:1 za kursorem i nie skakał.
+                          onResize={(columnId, newWidth) =>
+                            handleColumnResize(
+                              columnId,
+                              columnFit.scale === 1
+                                ? newWidth
+                                : Math.round(newWidth / columnFit.scale)
+                            )
+                          }
                         />
                       ) : null}
                     </th>
@@ -1282,10 +1476,44 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       .filter(Boolean)
                       .join(' ')}
                   >
-                    {visibleColumns.map((column) => (
+                    {visibleColumns.map((column) => {
+                      /**
+                       * Moduły bardzo często zwracają z `render` GOŁY tekst
+                       * (zmierzone: 18 z 22 komórek ekranu „Obciążenie" to
+                       * czysty string bez żadnego elementu). Taki tekst ląduje
+                       * bezpośrednio w `td` i dziedziczy z niego
+                       * `overflow-wrap: break-word` — to on rozrywał
+                       * „engineerin g team" i „Ograniczen ie".
+                       *
+                       * Owijamy go w warstwę tekstu z `CELL_TEXT_CLAMP_CLASS`
+                       * (łamanie na spacji + wielokropek + `title`). Treść
+                       * renderowana jako ELEMENTY zostaje nietknięta — tam
+                       * `overflow-hidden` przycinałby popovery.
+                       */
+                      const rendered = column.render ? column.render(row) : undefined;
+                      const renderedIsPlainText =
+                        typeof rendered === 'string' || typeof rendered === 'number';
+                      return (
                       <td
                         key={column.id}
-                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} ${column.align ? alignToClass(column.align) : ''}`}
+                        // `break-words` — treść komórki musi łamać się DO
+                        // szerokości kolumny. Bez tego długie słowo wylewa się
+                        // poza komórkę i przy wąskiej kolumnie chowa się pod
+                        // przypiętą (`sticky right-0`) kolumną akcji — dokładnie
+                        // ten sam objaw „ucięcia w połowie znaku", tylko piętro
+                        // niżej. Świadomie NIE `overflow-hidden` ani
+                        // `overflow-x: clip`: komórki renderują popovery/menu,
+                        // które muszą móc wyjść poza obrys wiersza. To NIE jest
+                        // teoria — sprawdzone 2026-08-30:
+                        // `PMO/StatusTransitionDropdown.tsx:259` rysuje panel
+                        // `absolute z-overlay w-48` (192 px) BEZ portalu, prosto
+                        // w komórce `assessment/InitiativesTable.tsx:389`.
+                        // Przycięcie komórki obcięłoby go do szerokości kolumny.
+                        // Dlatego wielokropek zakłada się PIĘTRO NIŻEJ, na
+                        // warstwie tekstu (CELL_TEXT_CLAMP_CLASS), a `break-words`
+                        // zostaje tu jako ostatnia deska ratunku dla treści,
+                        // którą moduł renderuje jako własne ELEMENTY.
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''}`}
                       >
                         {column.type === 'select' && selection ? (
                           <input
@@ -1300,7 +1528,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-info focus:ring-c-focus cursor-pointer"
                           />
                         ) : column.render ? (
-                          column.render(row)
+                          renderedIsPlainText ? (
+                            <span className={CELL_TEXT_CLAMP_CLASS} title={String(rendered)}>
+                              {rendered}
+                            </span>
+                          ) : (
+                            rendered
+                          )
                         ) : column.id === 'status' ? (
                           <EntityStatusChip status={row.status} />
                         ) : column.id === 'progress' ? (
@@ -1316,9 +1550,13 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             <span
                               className={[
                                 'text-sm text-slate-700 dark:text-slate-200',
+                                // `title`/`name` mają WŁASNY, ostrzejszy kanon:
+                                // jedna linia + wielokropek (`truncate`). Reszta
+                                // kolumn zawija na spacji i skraca dopiero wyraz
+                                // szerszy niż kolumna (patrz CELL_TEXT_CLAMP_CLASS).
                                 column.id === 'title' || column.id === 'name'
                                   ? 'block truncate'
-                                  : '',
+                                  : CELL_TEXT_CLAMP_CLASS,
                               ].join(' ')}
                               title={
                                 typeof row[column.id] === 'string' ? row[column.id] : undefined
@@ -1344,7 +1582,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             })()
                           : null}
                       </td>
-                    ))}
+                      );
+                    })}
                     {!hideRowActions ? (
                       // R09-1a — sam mirror nagłówka: kebab przypięty do prawej
                       // krawędzi, żeby nie wypadał poza widoczny obszar razem z

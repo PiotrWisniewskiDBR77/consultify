@@ -10,6 +10,22 @@ interface DeepDivePanelProps {
   isRecommended: boolean;
 }
 
+// Renders `**term**` segments of a translated sentence as <strong>, so the
+// static AI-reasoning copy below can stay one translatable string per
+// sentence (public/locales/*/translation.json) while keeping its bold
+// key-term styling.
+function renderEmphasis(text: string): React.ReactNode {
+  return text.split('**').map((part, i) =>
+    i % 2 === 1 ? (
+      <strong key={i} className="font-semibold text-navy-900 dark:text-white">
+        {part}
+      </strong>
+    ) : (
+      part
+    )
+  );
+}
+
 export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecommended }) => {
   const { t: translate } = useTranslation();
   const translated = translate('transformationScenarios', { returnObjects: true });
@@ -23,8 +39,14 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
   // Helpers to fallback to english or default
   const getName = () => sTexts?.name || scenario.name;
   const getDesc = () => sTexts?.description || scenario.description;
-  const getGains = () => (sTexts?.gains || scenario.gains) as string[];
-  const getSacrifices = () => (sTexts?.sacrifices || scenario.sacrifices) as string[];
+  // `gains`/`sacrifices` are optional on ScenarioArchetype and were entirely
+  // absent from src/data/transformationScenarios.ts -- with no `|| []`
+  // fallback this `.map()`'d straight into "Cannot read properties of
+  // undefined" (confirmed live: opening ANY scenario card crashed the whole
+  // app, ErrorBoundary at DeepDivePanel.tsx). The `|| []` guard makes an
+  // unpopulated scenario render an honest empty list instead of crashing.
+  const getGains = () => ((sTexts?.gains || scenario.gains || []) as string[]);
+  const getSacrifices = () => ((sTexts?.sacrifices || scenario.sacrifices || []) as string[]);
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-black/20">
@@ -68,22 +90,19 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
               <div className="flex gap-3">
                 <ShieldAlert size={18} className="text-primary-400 shrink-0 mt-0.5" />
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Addresses key hidden risks related to{' '}
-                  <strong className="text-primary-700 dark:text-primary-300">
-                    process fragmentation
-                  </strong>{' '}
-                  and <strong className="text-primary-700 dark:text-primary-300">compliance</strong>{' '}
-                  found in your profile.
+                  {renderEmphasis(
+                    t.deepDive?.aiReasoningRisk ||
+                      'Addresses key hidden risks related to **process fragmentation** and **compliance** found in your profile.'
+                  )}
                 </p>
               </div>
               <div className="flex gap-3">
                 <TrendingUp size={18} className="text-primary-400 shrink-0 mt-0.5" />
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Leverages your organizational strength in{' '}
-                  <strong className="text-primary-700 dark:text-primary-300">
-                    engineering culture
-                  </strong>{' '}
-                  to drive the change via the core team.
+                  {renderEmphasis(
+                    t.deepDive?.aiReasoningStrength ||
+                      'Leverages your organizational strength in **engineering culture** to drive the change via the core team.'
+                  )}
                 </p>
               </div>
             </div>

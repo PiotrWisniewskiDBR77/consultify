@@ -24,6 +24,44 @@ const LANE_KEYS: Record<ArtifactStudioLane, { query: string; storage: string; en
   },
 };
 
+/**
+ * DOMYŚLNY STAN TORU (2026-08-30, decyzja właściciela: „To, co jest — włączyć
+ * i wypolerować.").
+ *
+ * Do dziś WSZYSTKIE trzy tory startowały fail-closed (`false`), więc warsztat
+ * arkusza — 2400 linii gotowego kodu z serwerem, formułami, cofaniem i
+ * eksportem — był niewidoczny dla każdego, kto nie znał nazwy flagi. Zamiast
+ * kasować flagę (co odbiera przycisk cofania z `_RUNBOOK_COFANIA.md`),
+ * przestawiamy WYŁĄCZNIE domyślną wartość toru `spreadsheet`.
+ *
+ * ★ TOR `document` (Word) ZOSTAJE WYŁĄCZONY. To nie jest ostrożność „na
+ * wszelki wypadek": `DocumentStudioDocumentPanel.tsx:3549` zeruje prawy pas
+ * ikon dokładnie wtedy, gdy tor `document` jest włączony. Wspólne przestawienie
+ * domyślnej wartości ZABRAŁOBY Wordowi prawy panel, który właściciel uznaje za
+ * działający.
+ *
+ * ★ TOR `presentation` (Deck) WŁĄCZONY 2026-08-30 — ale DOPIERO PO tym, jak
+ * `DeckBuilderMelsView` dostał własny `artifactRightPanelSlot`. Ta sama pułapka
+ * co w Wordzie istniała tu do dziś (`DeckBuilderMelsView.tsx:381`:
+ * `rightRailTools={artifactStudioMode ? [] : rightTools}` PLUS `DeckBuilder.tsx`
+ * podawał `aiEntrySlot` wyłącznie przy WYŁĄCZONYM torze) — czyli włączenie
+ * flagi bez tej naprawy zabierało prezentacji CAŁĄ prawą powierzchnię:
+ * zmierzone 417 px → 0 px. Kolejność jest istotna: najpierw panel, potem flaga.
+ *
+ * Powód włączenia: bez tego toru nie ma paska `Nowy slajd · Pole tekstowe ·
+ * Obraz · Motyw`, więc edycja slajdów — która działa BEZ żadnej flagi
+ * (`CardCanvas.tsx:138` przekazuje `editable` bezwarunkowo) — jest niewidoczna.
+ * Uwaga właściciela: „nie widzę nigdzie, gdzie mogę edytować".
+ *
+ * Wyłączenie z powrotem: `?ff_spreadsheetStudioV2=0` / `?ff_presentationStudioV2=0`
+ * (albo `ff_artifactStudio=0`, albo `VITE_*_STUDIO_V2=0` na budowie).
+ */
+const LANE_DEFAULT_ENABLED: Record<ArtifactStudioLane, boolean> = {
+  document: false,
+  presentation: true,
+  spreadsheet: true,
+};
+
 function parseFlag(raw: string | null | undefined): boolean | null {
   if (raw == null) return null;
   const normalized = String(raw).trim().toLowerCase();
@@ -130,7 +168,10 @@ export function isArtifactStudioLaneEnabled(
     source
   );
   const laneValue = resolveFlagFromSource(LANE_KEYS[lane], source);
-  return global === true && laneValue === true;
+  // Tor bez decyzji właściciela zostaje fail-closed; tor z decyzją startuje
+  // włączony, ale KAŻDA jawna wartość `0`/`false` nadal go wyłącza.
+  const fallback = LANE_DEFAULT_ENABLED[lane];
+  return (global ?? fallback) === true && (laneValue ?? fallback) === true;
 }
 
 /**
@@ -161,8 +202,9 @@ export function getArtifactStudioRolloutDecision(
     source
   );
   const laneFlag = resolveFlagWithSource(LANE_KEYS[lane], source);
-  const globalEnabled = global.value === true;
-  const laneEnabled = laneFlag.value === true;
+  const fallback = LANE_DEFAULT_ENABLED[lane];
+  const globalEnabled = (global.value ?? fallback) === true;
+  const laneEnabled = (laneFlag.value ?? fallback) === true;
 
   return {
     lane,

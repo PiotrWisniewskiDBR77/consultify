@@ -72,6 +72,14 @@ const AssessmentQualityReviewPanelScreen = React.lazy(
 const AssessmentPresentationViewScreen = React.lazy(
   () => import('./screens/assessment-presentation-view')
 );
+// GRAFIKA (2026-08-30, ANALIZA_PRAWY_PANEL.md) — prototyp „prawy pas jako
+// jedna formuła" (szyna ikon 56px: Artefakt · Teresa · narzędzie zależne od
+// typu). Jeden plik/komponent, zarejestrowany 5×: interaktywny (przełącznik
+// klikany przez Piotra) + 4 warianty ze stałym stanem startowym potrzebne dla
+// deterministycznych zrzutów skryptowych (grafika-zrzuty.mjs nie klika UI).
+const PrawyPasJednaFormulaScreen = React.lazy(
+  () => import('./screens/prawy-pas-jedna-formula')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -90,6 +98,44 @@ const AdminCommandCenterPanelScreen = React.lazy(
 const AdminSsoSelfServiceCardScreen = React.lazy(
   () => import('./screens/admin-sso-self-service-card')
 );
+// admin-security (runda pełna) — 10 ekranów domeny security z adminNavigation.ts,
+// jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-security.tsx
+// (wzorzec 1:1 z admin-billing.tsx poniżej).
+const AdminSecurityScreen = React.lazy(() => import('./screens/admin-security'));
+// admin-billing (runda pełna) — 9 ekranów domeny billing z adminNavigation.ts,
+// jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-billing.tsx.
+const AdminBillingScreen = React.lazy(() => import('./screens/admin-billing'));
+// admin-team (runda pełna) — 8 ekranów domeny team z adminNavigation.ts,
+// jeden plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-team.tsx
+// (wzorzec 1:1 z admin-billing.tsx powyżej).
+const AdminTeamScreen = React.lazy(() => import('./screens/admin-team'));
+// admin-ai (runda pełna) — 10 ekranów domeny ai z adminNavigation.ts, jeden
+// plik z przełącznikiem `adminScreen`, patrz dev-render/screens/admin-ai.tsx
+// (wzorzec 1:1 z admin-billing.tsx powyżej).
+const AdminAiScreen = React.lazy(() => import('./screens/admin-ai'));
+// ustawienia-organizacja (runda pełna) — 150-ustawienia-organizacja
+// (2026-08-31): 10 grup Ustawień (SettingsSidebar.tsx navGroups, ZWERYFIKOWANE
+// w kodzie — nie 9 jak sugerowała dokumentacja) + 20 brakujących ekranów
+// modułu Organizacja wariantu DOMYŚLNEGO (OrganizationSidebar.tsx,
+// ORGANIZATION_MODULES — flaga orgRedesignV1 OFF od 2026-08-29). Patrz
+// nagłówki dev-render/screens/ustawienia-grupy.tsx i org-legacy.tsx.
+const UstawieniaGrupyScreen = React.lazy(() => import('./screens/ustawienia-grupy'));
+const OrgLegacyScreen = React.lazy(() => import('./screens/org-legacy'));
+// admin-audit-health (runda pełna) — 7+7 ekranów domen audit i health
+// z adminNavigation.ts, dwa pliki z przełącznikiem `adminScreen`, patrz
+// dev-render/screens/admin-audit.tsx i admin-health.tsx (wzorzec 1:1
+// z admin-billing.tsx powyżej).
+const AdminAuditScreen = React.lazy(() => import('./screens/admin-audit'));
+const AdminHealthScreen = React.lazy(() => import('./screens/admin-health'));
+// admin-command (runda pełna) — 11 ekranów domeny command z adminNavigation.ts
+// ("Centrum administracyjne"), jeden plik z przełącznikiem `adminScreen`,
+// patrz dev-render/screens/admin-command.tsx (wzorzec 1:1 z admin-billing.tsx
+// powyżej). Nie duplikuje istniejącego wpisu `admin-command-center-panel`
+// (ten zostaje — fotografuje te same 6 zakładek przez stary `&tab=`); ta
+// runda dodaje osobny wiersz na KAŻDY z 11 nav-slotów, w tym te, których
+// stary story nie fotografował (attention-queue, cost-capacity,
+// organization-defaults, agent-trace, benchmark).
+const AdminCommandScreen = React.lazy(() => import('./screens/admin-command'));
 const SuperadminPlatformOperationsDay15Screen = React.lazy(
   () => import('./screens/superadmin-platform-operations-day15')
 );
@@ -99,6 +145,13 @@ const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
 const MenuDlugiDomkniecieScreen = React.lazy(() => import('./screens/menu-dlugi-domkniecie'));
 const AgentWarsztatScreen = React.lazy(() => import('./screens/agent-warsztat'));
+// GRAFIKA (2026-08-30, tor 13-agent-planowanie): drd-library-entry i
+// initiative-record istniały w dev-render/screens/ ale nigdy nie trafiły do
+// SCREENS — ten sam brak wpisu jak przy report-artifact/insight-artifact
+// (patrz komentarz niżej przy ReportArtifactScreen). Bez wpisu harness
+// pokazywał tylko awaryjną listę ekranów, więc nie dało się w ogóle zmierzyć.
+const DrdLibraryEntryScreen = React.lazy(() => import('./screens/drd-library-entry'));
+const InitiativeRecordScreen = React.lazy(() => import('./screens/initiative-record'));
 const VaultSejfWnetrzeScreen = React.lazy(() => import('./screens/vault-sejf-wnetrze'));
 const VaultFolderBlockProofScreen = React.lazy(() => import('./screens/vault-folder-block-proof'));
 const MyWorkIdeaInspectorLekkiScreen = React.lazy(
@@ -107,6 +160,39 @@ const MyWorkIdeaInspectorLekkiScreen = React.lazy(
 const MyWorkNotebookRailSpecAScreen = React.lazy(
   () => import('./screens/mywork-notebook-rail-speca')
 );
+// GRAFIKA (2026-08-30, ANALIZA_PRAWY_PANEL.md) — NOTATNIK na wspólnym prawym
+// pasie `ArtifactRightRail` (szyna 56px: Artefakt · Teresa · Struktura), za
+// flagą `?ff_artifact_right_rail=1`. Jeden plik ekranu, zarejestrowany 3× ze
+// stałym trybem startowym — `grafika-zrzuty.mjs` nie klika UI, a wszystkie
+// trzy tryby pod jednym `?screen=` nadpisywałyby sobie plik wyjściowy.
+const PrawyPasNotatnikSystemScreen = React.lazy(
+  () => import('./screens/prawy-pas-notatnik-system')
+);
+// Drugi krok rozwożenia (2026-08-30, ANALIZA_PRAWY_PANEL.md §7 krok 4): Idee
+// na tym samym wzorcu — jeden plik ekranu, zarejestrowany 3× ze stałym
+// trybem startowym (Artefakt/Teresa/Sugestie).
+const PrawyPasIdeaSystemScreen = React.lazy(() => import('./screens/prawy-pas-idea-system'));
+// Trzeci krok (2026-08-30): Tabele, powierzchnia trudna — patrz komentarz
+// przy rejestracji SCREENS niżej.
+const PrawyPasTabeleSystemScreen = React.lazy(() => import('./screens/prawy-pas-tabele-system'));
+// Tor grafiki (2026-08-30/31, ANALIZA_PRAWY_PANEL.md §6 uzupełnienie
+// „dokumenty"): dwie kolejne powierzchnie TRUDNE — Prezentacje (generator,
+// dziś jeden płaski identyfikator `activity`) i Deck Builder (dziś sześć
+// płaskich identyfikatorów, bez rozróżnienia „o artefakcie"/„po artefakcie").
+// Montują REALNY `PrezentacjeMelsView`/`DeckBuilderMelsView` (adaptery
+// prezentacyjne, nie kopie) z minimalnymi, ale prawdziwymi propsami.
+const PrawyPasPrezentacjeSystemScreen = React.lazy(
+  () => import('./screens/prawy-pas-prezentacje-system')
+);
+const PrawyPasDeckBuilderSystemScreen = React.lazy(
+  () => import('./screens/prawy-pas-deck-builder-system')
+);
+// Odbiór grafiki (2026-08-30): pliki ekranów już istniały (napisane, gotowe,
+// bez zależności Api/fetch) ale nigdy nie zostały wpięte do rejestru SCREENS —
+// `?screen=calendar-sync-settings` / `?screen=notebook-quick-capture` renderowały
+// awaryjną listę harnessu zamiast realnego ekranu. Dopisuję tylko rejestrację.
+const CalendarSyncSettingsScreen = React.lazy(() => import('./screens/calendar-sync-settings'));
+const NotebookQuickCaptureScreen = React.lazy(() => import('./screens/notebook-quick-capture'));
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -116,6 +202,7 @@ const AssessmentInitiativesTableScreen = React.lazy(
 const AssessmentFiveSurfacesScreen = React.lazy(() => import('./screens/assessment-five-surfaces'));
 const AssessmentManagePanelScreen = React.lazy(() => import('./screens/assessment-manage-panel'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
+const AssessmentMatrycaScreen = React.lazy(() => import('./screens/assessment-matryca'));
 const StandardModuleBarChildrenScreen = React.lazy(
   () => import('./screens/standard-module-bar-children')
 );
@@ -154,12 +241,34 @@ const DocumentStudioNowyDokumentMartweprzyciskiScreen = React.lazy(
   () => import('./screens/document-studio-nowy-dokument-martwe-przyciski')
 );
 const EvFootballFieldScreen = React.lazy(() => import('./screens/ev-football-field'));
-const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
+// OSIEROCONY (odbior grafiki 2026-08-30): komponent ExecutionChangeSignalsPanel
+// zostal usuniety z produktu jako fantom (DEC-120/A7). Ekran nie moze sie
+// wyrenderowac, a jego zepsuty import zatruwal wspolny serwer dev-render —
+// blad z tego pliku wyciekal na zrzuty INNYCH ekranow. Wyrejestrowany, plik
+// zostaje. Powrot = odkomentowac po przywroceniu komponentu.
+// Dopisane 2026-08-30 (odbiór grafiki): osiem ekranów istniało jako pliki
+// z domyślnym eksportem i NIGDY nie było zarejestrowanych — harness na każdy
+// z nich odpowiadał listą awaryjną „Unknown ?screen=…". Nikt ich nie widział.
+const ToolsSwotLiveScreen = React.lazy(() => import('./screens/tools-swot-live'));
+const ToolsSwotLibraryDetailScreen = React.lazy(() => import('./screens/tools-swot-library-detail'));
+const ToolsSwotSessionWorkspaceScreen = React.lazy(() => import('./screens/tools-swot-session-workspace'));
+const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
+const ToolOutputsPanelScreen = React.lazy(() => import('./screens/tool-outputs-panel'));
+const ToolsOutputsInsightsTabScreen = React.lazy(() => import('./screens/tools-outputs-insights-tab'));
+const ChatSignalsFeedScreen = React.lazy(() => import('./screens/chat-signals-feed'));
+const ExecSummaryOnelookScreen = React.lazy(() => import('./screens/exec-summary-onelook'));
+// const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
 const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-report-day11'));
-const ExecutionExportPrezentacjaScreen = React.lazy(
-  () => import('./screens/execution-export-prezentacja')
-);
+// 145-execution-taby — REALNY <ExecutionHub initialTab=...>, 7 brakujących
+// zakładek (rejestr grafiki pokrywał dotąd tylko "reports"). Jeden plik
+// ekranu (dev-render/screens/execution-tab.tsx), tab podany wprost w propie
+// per rejestr — patrz komentarz w pliku ekranu za "DLACZEGO".
+const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
+// const ExecutionExportPrezentacjaScreen = React.lazy(
+//   () => import('./screens/execution-export-prezentacja')
+// );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
+const FinanceHubScreen = React.lazy(() => import('./screens/finance-hub'));
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
 const FinanceFocusModeScreen = React.lazy(() => import('./screens/finance-focus-mode'));
@@ -228,6 +337,7 @@ const RoseDangerTokenParityScreen = React.lazy(() => import('./screens/rose-dang
 const SettingsCrimsonNeutralizedScreen = React.lazy(
   () => import('./screens/settings-crimson-neutralized')
 );
+const StandardGridCardScreen = React.lazy(() => import('./screens/standard-grid-card'));
 const StandardKanbanCardScreen = React.lazy(() => import('./screens/standard-kanban-card'));
 const TemplateBuilderDeckScreen = React.lazy(() => import('./screens/template-builder-deck'));
 const TemplateBuilderDocScreen = React.lazy(() => import('./screens/template-builder-doc'));
@@ -245,6 +355,9 @@ const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
 const KartaInitiativeScreen = React.lazy(() => import('./screens/karta-initiative'));
 const KartaInsightScreen = React.lazy(() => import('./screens/karta-insight'));
 const KartaInterviewScreen = React.lazy(() => import('./screens/karta-interview'));
+const InterviewProgressbar153Screen = React.lazy(
+  () => import('./screens/interview-progressbar-153')
+);
 const InterviewPreviewCanonScreen = React.lazy(() => import('./screens/interview-preview-canon'));
 const InterviewCreatorShellScreen = React.lazy(() => import('./screens/interview-creator-shell'));
 const InterviewSessionsStatusScreen = React.lazy(
@@ -253,6 +366,9 @@ const InterviewSessionsStatusScreen = React.lazy(
 const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'));
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
+const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
+const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
+const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
 const IdeaTableRecordTemplatesScreen = React.lazy(
@@ -277,6 +393,20 @@ const TeresaChipyPanelArtefaktuScreen = React.lazy(
 );
 const DeckArtifactScreen = React.lazy(() => import('./screens/deck-artifact'));
 const DocumentArtifactScreen = React.lazy(() => import('./screens/document-artifact'));
+// GRAFIKA (2026-08-30): report-artifact/insight-artifact istniały w
+// dev-render/screens/ od vf0 (1c97db682d) ale nigdy nie trafiły do SCREENS —
+// jedyne dwa z tamtej paczki, które ktoś pominął (deck/document/sheet-artifact
+// obok nich są zarejestrowane). Bez wpisu ekran nie istnieje dla harnessu
+// (fallback = lista awaryjna), więc nie dało się go w ogóle zmierzyć.
+const ReportArtifactScreen = React.lazy(() => import('./screens/report-artifact'));
+const InsightArtifactScreen = React.lazy(() => import('./screens/insight-artifact'));
+const DrdEmbeddedMatrixAxisLevelsScreen = React.lazy(
+  () => import('./screens/drd-embedded-matrix-axis-levels')
+);
+const DrdMacierzOcenyScreen = React.lazy(() => import('./screens/drd-macierz-oceny'));
+const DrdMacierzObszaryPoziomyScreen = React.lazy(
+  () => import('./screens/drd-macierz-obszary-poziomy')
+);
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
 const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'));
 const ExceleEdytowalnaSiatkaScreen = React.lazy(() => import('./screens/excele-edytowalna-siatka'));
@@ -284,6 +414,8 @@ const ExcelePrawyPanelStandardScreen = React.lazy(
   () => import('./screens/excele-prawy-panel-standard')
 );
 const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
+// aios (runda pełna) — 146-aios, Internal Tools / AI OS submenu (8 ekranów), 2026-08-31.
+const AiosScreen = React.lazy(() => import('./screens/aios'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -308,9 +440,9 @@ const ExceleJedenWidokMaterialyScreen = React.lazy(
 );
 const ExceleJedenWidokPustyScreen = React.lazy(() => import('./screens/excele-jeden-widok-pusty'));
 const OdbiorScreen = React.lazy(() => import('./screens/odbior'));
-const InitiativesPortfolioAnalysisScreen = React.lazy(
-  () => import('./screens/initiatives-portfolio-analysis')
-);
+// const InitiativesPortfolioAnalysisScreen = React.lazy(
+//   () => import('./screens/initiatives-portfolio-analysis')
+// );
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
 const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel-szyna-ikon'));
@@ -320,6 +452,11 @@ const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identi
 const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
+// Pomiar mechaniki KPI/OKR/ROI (2026-08-30) — kanoniczne wejście "lista
+// inicjatyw" pod odkrywalną nazwą. Sam REALNY <InitiativesHub> już istniał w
+// harnessie (patrz StagingFixesInitiativesI18nScreen wyżej) — ten wpis go
+// tylko wystawia pod nazwą, którą właściciel faktycznie odnajdzie.
+const InicjatywyListaScreen = React.lazy(() => import('./screens/inicjatywy-lista'));
 const CapacityAdvisorA3Screen = React.lazy(() => import('./screens/capacity-advisor-a3'));
 const PlanScenarioD1Screen = React.lazy(() => import('./screens/plan-scenario-d1'));
 const StagingFixesExecutionI18nScreen = React.lazy(
@@ -334,6 +471,8 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
 );
 const MethodWorkspaceScreen = React.lazy(() => import('./screens/method-workspace'));
 const DrdHttpWorkspaceScreen = React.lazy(() => import('./screens/drd-http-workspace'));
+const SiriWorkspaceScreen = React.lazy(() => import('./screens/siri-workspace'));
+const SiriTierScreen = React.lazy(() => import('./screens/siri-tier'));
 const AssessmentArtifactsRestartScreen = React.lazy(
   () => import('./screens/assessment-artifacts-restart')
 );
@@ -343,6 +482,7 @@ const ResultsVNextRegistryShellScreen = React.lazy(
 const ResultsVNextKpiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-registry')
 );
+const ResultsZestawieniaScreen = React.lazy(() => import('./screens/results-zestawienia'));
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
@@ -350,6 +490,9 @@ const ResultsVNextRoiModelScreen = React.lazy(() => import('./screens/results-vn
 const ResultsVNextRoiFullToolScreen = React.lazy(
   () => import('./screens/results-vnext-roi-full-tool')
 );
+const RoiJednaKartaScreen = React.lazy(() => import('./screens/roi-jedna-karta'));
+const WskaznikJednaKartaScreen = React.lazy(() => import('./screens/wskaznik-jedna-karta'));
+const CelJednaKartaScreen = React.lazy(() => import('./screens/cel-jedna-karta'));
 const ResultsVNextOkrRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-okr-registry')
 );
@@ -390,6 +533,16 @@ const ToolsSwotInitiativeProposalScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'calendar-sync-settings': {
+    label:
+      '#24b — UI „Połącz kalendarz" (Ustawienia → Calendar Sync). Mock providerów (Google połączony, Outlook/Apple do połączenia), zero Api/fetch.',
+    render: () => <CalendarSyncSettingsScreen />,
+  },
+  'notebook-quick-capture': {
+    label:
+      '#12a — REALNY <NotebookQuickCapture> (pasek szybkiego wrzucania w Notatniku). Wpisz tekst, aby zobaczyć przycisk „Wrzuć" w stanie aktywnym.',
+    render: () => <NotebookQuickCaptureScreen />,
+  },
   'meetings-module': {
     label:
       'MOD06 Meetings etap 2 — REALNY <MeetingHub> (lista) + <MeetingObjectPage> (Szczegóły/Protokół/Decyzje). &view=list|object &tab=details|minutes|decisions',
@@ -404,6 +557,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'TRI-MUST-05 staging-fixes-20260826 Naprawa 1 — REALNY <InitiativesHub>: weryfikacja brakujących kluczy i18n (toast/hub/filters/materialize/kanban) i selektora poziomu inicjatywy w modalu "Nowa inicjatywa" (getInitiativeLevels(t) zamiast statycznej angielskiej stałej).',
     render: () => <StagingFixesInitiativesI18nScreen />,
+  },
+  'inicjatywy-lista': {
+    label:
+      'Pomiar KPI/OKR/ROI 2026-08-30 — LISTA INICJATYW: REALNY <InitiativesHub> (StandardModuleBar + StandardTable, kanon triady) pod odkrywalną nazwą — właściciel nigdy nie widział tego ekranu. Dane przykładowe (isDemoMode).',
+    render: () => <InicjatywyListaScreen />,
   },
   'capacity-advisor-a3': {
     label:
@@ -450,6 +608,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'Tools — Dynamic SWOT: SummaryStep dynamic-swot branch (Results & Readiness, night-sweep-20260826 #3)',
     render: () => <ToolsSwotInitiativeProposalScreen />,
   },
+  'drd-library-entry': {
+    label:
+      'GRAFIKA 13 — DRD Library/Processes entry point (StandardModuleBar + StandardTable, jeden mock-wiersz DRD; NIE mock AssessmentHub, patrz nagłówek pliku)',
+    render: () => <DrdLibraryEntryScreen />,
+  },
   'drd-http-workspace': {
     label:
       'T5 — REALNY <DrdHttpMethodWorkspaceScreen> (P0C, HTTP source-of-truth, ff drdHttpSourceOfTruthV1 not-yet-wired) — &stage=fresh|inprogress|blocked|frozen &state=loading|error|offline|conflict &view=interview|split|matrix',
@@ -465,6 +628,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'A5 — Method Workspace shell (interview/split/matrix), ff methodWorkspaceShellV1. &view=interview|split|matrix &state=default|resolution|savefailed|teresaRich',
     render: () => <MethodWorkspaceScreen />,
   },
+  'siri-workspace': {
+    label:
+      'A7 — SIRI vertical slice: REALNY <MethodWorkspaceShell> (A5) wpięty w dane SIRI (siriWorkspaceView/siriAdapter). &view=interview|split|matrix &case=default|leapfrog',
+    render: () => <SiriWorkspaceScreen />,
+  },
+  'siri-tier': {
+    label:
+      'A7 — SIRI TIER / Prioritisation Matrix (osobny widok po freeze, bez MethodWorkspaceShell; siriTierView → siriPrioritisation). &frozen=1|0 &flag=1|0 &horizon=strategic|tactical|operational',
+    render: () => <SiriTierScreen />,
+  },
   'results-vnext-registry-shell': {
     label:
       'RN-G2 P0 — REALNY <ResultsVNextRegistryShell> (KPI/ROI/OKR): loading/empty/error/forbidden + locked/honest-missing. &domain=kpi|roi|okr &state=ready|loading|empty|error|forbidden &reason=<deny> &selected=<id|none>',
@@ -474,6 +647,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 P1 — REALNY <ResultsKpiRegistryPage> (KPI registry, real GET/POST /vnext/results/kpi* stubbed): My/Org tabs, status chips, lifecycle kebab (activate/suspend/archive), lazy measurement preview, deep-link forbidden. &state=ready|loading|empty|error &kpiId=<id> &ff=off',
     render: () => <ResultsVNextKpiRegistryScreen />,
+  },
+  'results-zestawienia': {
+    label:
+      'DECYZJA_WYNIKI_TRZY_POZIOMY (2026-08-30) — prototyp POZIOMU 1: rejestr ZESTAWIEŃ OKRESOWYCH (nie pojedynczych wskaźników), ten sam budulec co results-vnext-kpi-registry (ResultsVNextRegistryShell = StandardModuleBar+StandardTable+StandardPreview) z ręcznymi wierszami — zastępuje treść dzisiejszego rejestru KPI. Klik prowadzi (docelowo) na poziom 2 = results-vnext-kpi-scorecards. &state=ready|loading|empty|error &filter=all|open|closed &selected=<id|none>',
+    render: () => <ResultsZestawieniaScreen />,
   },
   'results-vnext-roi-registry': {
     label:
@@ -489,6 +667,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'FALA 1 (ROI) — REALNY <ResultsRoiHub> -> <RoiCaseFullTool> (4 fazy: Build Case/Decision/Realize Value/Learn), window.fetch stubbed statefully for the whole /vnext/results/roi surface, real onClose (no harness no-op). Click the case row, then kebab "Otwórz pełne narzędzie".',
     render: () => <ResultsVNextRoiFullToolScreen />,
+  },
+  'roi-jedna-karta': {
+    label:
+      'DECYZJA WŁAŚCICIELA (2026-08-30) — PROTOTYP jednej N-karty ROI (wzorzec: karta Inicjatywy), zastępuje 3 osobne ekrany (registry zostaje listą poza kartą). 5 sekcji lewego menu: Założenia/Model/Wynik/Wyniki po wdrożeniu/Wnioski i rekomendacja + prawy panel 7 sekcji kanonu. &sekcja=zalozenia|model|wynik|wyniki-po-wdrozeniu|wnioski',
+    render: () => <RoiJednaKartaScreen />,
+  },
+  'wskaznik-jedna-karta': {
+    label:
+      'DECYZJA WŁAŚCICIELA (2026-08-30) — PROTOTYP jednej N-karty wskaźnika (poziom 3 z DECYZJA_WYNIKI_TRZY_POZIOMY.md), ta sama formuła co roi-jedna-karta. Ciągłość NordFood/SMED L3: KPI-0087 czyta się z ROI i cel. 5 sekcji: Kontrakt/Pomiary/Odchylenia/Działania korygujące/Rodowód + prawy panel 7 sekcji kanonu. &sekcja=kontrakt|pomiary|odchylenia|dzialania-korygujace|rodowod',
+    render: () => <WskaznikJednaKartaScreen />,
+  },
+  'cel-jedna-karta': {
+    label:
+      'DECYZJA WŁAŚCICIELA (2026-08-30) — PROTOTYP jednej N-karty celu/OKR (poziom 3 z DECYZJA_WYNIKI_TRZY_POZIOMY.md), ta sama formuła co roi-jedna-karta i wskaznik-jedna-karta. Ciągłość NordFood/SMED L3: OKR-0019, KR1 czyta się automatycznie z KPI-0087. 5 sekcji: Cel/Kluczowe rezultaty/Postęp/Powiązania/Refleksja + prawy panel 7 sekcji kanonu. &sekcja=cel|kluczowe-rezultaty|postep|powiazania|refleksja',
+    render: () => <CelJednaKartaScreen />,
   },
   'results-vnext-okr-registry': {
     label:
@@ -648,16 +841,63 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'ASSESSMENT — Widok prezentacji (9 slajdów z zamrożonego Outputu, tryb pełnoekranowy, zero recompute). ?variant=full|risksOnly|allMet|unknowns|empty|noOutput|notFound|forbidden|offline|badShape &narrative=1',
     render: () => <AssessmentPresentationViewScreen />,
   },
+  'prawy-pas-jedna-formula': {
+    label:
+      'GRAFIKA — Prawy pas jako JEDNA FORMUŁA (szyna 56px: Artefakt · Teresa · narzędzie zależne od typu). Interaktywny — przełącznik notatka/idea i Artefakt/Teresa klikany na ekranie.',
+    render: () => <PrawyPasJednaFormulaScreen />,
+  },
+  'prawy-pas-jedna-formula-notatka-artefakt': {
+    label:
+      'GRAFIKA — jw., wariant do zrzutu: Notatka · tryb Artefakt (7 sekcji akordeonu, Akcje+Właściwości rozwinięte).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="notatka"
+        initialRailMode="artefakt"
+        interactive={false}
+      />
+    ),
+  },
+  'prawy-pas-jedna-formula-notatka-teresa': {
+    label: 'GRAFIKA — jw., wariant do zrzutu: Notatka · tryb Teresa (pełna wysokość, własne pole pisania).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="notatka"
+        initialRailMode="teresa"
+        interactive={false}
+      />
+    ),
+  },
+  'prawy-pas-jedna-formula-idea-artefakt': {
+    label:
+      'GRAFIKA — jw., wariant do zrzutu: Idea · tryb Artefakt (7 sekcji akordeonu, Akcje+Właściwości rozwinięte).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="idea"
+        initialRailMode="artefakt"
+        interactive={false}
+      />
+    ),
+  },
+  'prawy-pas-jedna-formula-idea-teresa': {
+    label: 'GRAFIKA — jw., wariant do zrzutu: Idea · tryb Teresa (pełna wysokość, własne pole pisania).',
+    render: () => (
+      <PrawyPasJednaFormulaScreen
+        initialObjectType="idea"
+        initialRailMode="teresa"
+        interactive={false}
+      />
+    ),
+  },
   'menu-canon-sidebar-check': {
     label:
       'SIDEBAR — potwierdzenie braku osobnej pozycji "Excel" po feat/materials-menu-canon-5-tabs.',
     render: () => <MenuCanonSidebarCheckScreen />,
   },
-  'initiatives-portfolio-analysis': {
-    label:
-      'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
-    render: () => <InitiativesPortfolioAnalysisScreen />,
-  },
+//  'initiatives-portfolio-analysis': {
+//    label:
+//      'Inicjatywy → analiza portfela — 5 podwidoków po wycięciu atrap AI (&sub=…, &ai=ok|fail|empty)',
+//    render: () => <InitiativesPortfolioAnalysisScreen />,
+//  },
   'ntype-analizuj-ai': {
     label:
       'n-Type ETAP 3 — „Analizuj z AI": menu 2 + panel wyników (Braki · Ryzyka · Sugestie · Zmiany)',
@@ -728,7 +968,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <IdeaTableToolKebabScreen />,
   },
   'idea-table-record-templates': {
-    label: 'IDEE Table — RecordTemplateManager (RISK-06 dead-mount wiring) — 2026-08-12',
+    label:
+      'IDEE Table — RecordTemplateManager (RISK-06 dead-mount wiring). ?stan=lista|pusty|blad — 2026-08-12',
     render: () => <IdeaTableRecordTemplatesScreen />,
   },
   'idea-table-tool-paste': {
@@ -754,6 +995,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'KARTY N — Tool (harness odbioru 2026-07-21)',
     render: () => <KartaToolScreen />,
   },
+  'initiative-record': {
+    label:
+      'FORMULA-20 — REALNY <InitiativeDocumentView> (archetyp C·Rekord, SPEC-A), showcase fixture init-showcase-margin-leakage-recovery',
+    render: () => <InitiativeRecordScreen />,
+  },
   'karta-initiative': {
     label: 'KARTY N — Initiative (harness odbioru 2026-07-21)',
     render: () => <KartaInitiativeScreen />,
@@ -765,6 +1011,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-interview': {
     label: 'KARTY N — Interview Session (harness odbioru 2026-07-21)',
     render: () => <KartaInterviewScreen />,
+  },
+  'interview-progressbar-153': {
+    label:
+      '153-crimson-naprawa — InterviewWorkspace dedicated_question_workspace (progress bar bg-c-accent -> bg-c-success)',
+    render: () => <InterviewProgressbar153Screen />,
   },
   'interview-preview-canon': {
     label:
@@ -792,6 +1043,19 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'KARTY N — Task (harness odbioru 2026-07-21)',
     render: () => <KartaTaskScreen />,
   },
+  'karta-task-pelna': {
+    label:
+      '02-moja-praca — Task pełny rekord (double-click, N-mode) — re-eksport karta-task, 145-nowe-ekrany 2026-08-31',
+    render: () => <KartaTaskPelnaScreen />,
+  },
+  'mywork-inbox': {
+    label: '02-moja-praca — Skrzynka (zakładka domyślna) — 145-nowe-ekrany 2026-08-31',
+    render: () => <MyWorkInboxScreen />,
+  },
+  'mywork-calendar': {
+    label: '02-moja-praca — Kalendarz (widok bazowy) — 145-nowe-ekrany 2026-08-31',
+    render: () => <MyWorkCalendarScreen />,
+  },
   'preview-4-zakladki': {
     label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
     render: () => <PreviewZakladkiScreen />,
@@ -810,9 +1074,308 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&tab=)',
     render: () => <AdminCommandCenterPanelScreen />,
   },
+  'finance-hub': {
+    label:
+      'GRAFIKA 17 — REALNY <FinanceHub> (ekran wejściowy Finansów, brakująca „pierwsza karta" — sześć analizowanych spółek, PLN/EUR/USD/GBP). &tab=statements|analysis|models|prediction|valuation',
+    render: () => <FinanceHubScreen />,
+  },
   'admin-sso-self-service-card': {
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
     render: () => <AdminSsoSelfServiceCardScreen />,
+  },
+  // admin-security (runda pełna) — odbiór grafiki 146-admin-security (2026-08-31),
+  // domena "Bezpieczeństwo i tożsamość" (adminNavigation.ts), 10 ekranów,
+  // mapowanie 1:1 z AdminSettingsModule.tsx case 'security'. security-policy
+  // i sso są ALIASEM tej samej zakładki `policy` w AdminSecurityIdentityPanel
+  // (WIRE_ONLY, nie błąd harnessu) — patrz nagłówek dev-render/screens/admin-security.tsx.
+  'admin-security-security-policy': {
+    label: 'Admin security — Polityka bezpieczeństwa (AdminSecurityIdentityPanel tab=policy)',
+    render: () => <AdminSecurityScreen adminScreen="security-policy" />,
+  },
+  'admin-security-sso': {
+    label: 'Admin security — SSO (ALIAS Polityki bezpieczeństwa, ta sama zakładka policy)',
+    render: () => <AdminSecurityScreen adminScreen="sso" />,
+  },
+  'admin-security-scim-lifecycle': {
+    label: 'Admin security — SCIM i cykl życia (AdminSecurityIdentityPanel tab=scim)',
+    render: () => <AdminSecurityScreen adminScreen="scim-lifecycle" />,
+  },
+  'admin-security-sessions': {
+    label: 'Admin security — Sesje (AdminSessionsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="sessions" />,
+  },
+  'admin-security-api-access': {
+    label: 'Admin security — Dostęp API (AdminSecurityIdentityPanel tab=api-access, ApiKeysManagementView)',
+    render: () => <AdminSecurityScreen adminScreen="api-access" />,
+  },
+  'admin-security-domains': {
+    label: 'Admin security — Domeny (AdminDomainsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="domains" />,
+  },
+  'admin-security-service-accounts': {
+    label: 'Admin security — Konta usługowe (AdminServiceAccountsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="service-accounts" />,
+  },
+  'admin-security-security-alerts': {
+    label: 'Admin security — Alerty bezpieczeństwa (AdminSecurityAlertsPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="security-alerts" />,
+  },
+  'admin-security-break-glass': {
+    label: 'Admin security — Break-glass (AdminBreakGlassPanel, StandardTable)',
+    render: () => <AdminSecurityScreen adminScreen="break-glass" />,
+  },
+  'admin-security-risk-summary': {
+    label: 'Admin security — Podsumowanie ryzyka (AdminSecurityIdentityPanel tab=risk)',
+    render: () => <AdminSecurityScreen adminScreen="risk-summary" />,
+  },
+  // admin-billing (runda pełna) — odbiór grafiki 146-admin-billing (2026-08-31),
+  // domena "Rozliczenia i plany" (adminNavigation.ts), 9 ekranów, mapowanie
+  // 1:1 z AdminSettingsModule.tsx case 'billing'. Dwie pary są aliasami tej
+  // samej zakładki w produkcie (usage-costs≡overview, billing-details≡budgets-alerts)
+  // — patrz nagłówek dev-render/screens/admin-billing.tsx.
+  'admin-billing-overview': {
+    label: 'Admin billing — Przegląd (AdminBillingFinOpsPanel screen=summary)',
+    render: () => <AdminBillingScreen adminScreen="overview" />,
+  },
+  'admin-billing-plan-limits': {
+    label: 'Admin billing — Plan i limity (AdminBillingFinOpsPanel screen=plan)',
+    render: () => <AdminBillingScreen adminScreen="plan-limits" />,
+  },
+  'admin-billing-usage-costs': {
+    label:
+      'Admin billing — Wykorzystanie i koszty (ALIAS Przeglądu, ta sama zakładka summary)',
+    render: () => <AdminBillingScreen adminScreen="usage-costs" />,
+  },
+  'admin-billing-payment-methods': {
+    label: 'Admin billing — Metody płatności (AdminBillingFinOpsPanel screen=payments)',
+    render: () => <AdminBillingScreen adminScreen="payment-methods" />,
+  },
+  'admin-billing-invoices': {
+    label: 'Admin billing — Faktury (AdminBillingFinOpsPanel screen=invoices)',
+    render: () => <AdminBillingScreen adminScreen="invoices" />,
+  },
+  'admin-billing-seats-licences': {
+    label: 'Admin billing — Miejsca i licencje (AdminSeatsLicencesPanel, StandardTable)',
+    render: () => <AdminBillingScreen adminScreen="seats-licences" />,
+  },
+  'admin-billing-billing-details': {
+    label:
+      'Admin billing — Dane rozliczeniowe (ALIAS Budżetów i alertów, ta sama zakładka controls)',
+    render: () => <AdminBillingScreen adminScreen="billing-details" />,
+  },
+  'admin-billing-budgets-alerts': {
+    label: 'Admin billing — Budżety i alerty (AdminBillingFinOpsPanel screen=controls)',
+    render: () => <AdminBillingScreen adminScreen="budgets-alerts" />,
+  },
+  'admin-billing-plan-history': {
+    label: 'Admin billing — Historia zmian planu (AdminPlanHistoryPanel, StandardTable)',
+    render: () => <AdminBillingScreen adminScreen="plan-history" />,
+  },
+  // admin-team (runda pełna) — odbiór grafiki 146-admin-team (2026-08-31),
+  // domena "Zespół i dostęp" (adminNavigation.ts), 8 ekranów, mapowanie 1:1
+  // z AdminSettingsModule.tsx case 'team'. Patrz nagłówek
+  // dev-render/screens/admin-team.tsx dla mapowania komponentów i endpointów.
+  'admin-team-members': {
+    label: 'Admin team — Użytkownicy (AdminMembersRolesPanel screen=members)',
+    render: () => <AdminTeamScreen adminScreen="members" />,
+  },
+  'admin-team-invitations': {
+    label: 'Admin team — Zaproszenia (AdminMembersRolesPanel screen=invitations, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="invitations" />,
+  },
+  'admin-team-roles-permissions': {
+    label: 'Admin team — Role i uprawnienia (AdminRolesPermissionsPanel, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="roles-permissions" />,
+  },
+  'admin-team-teams': {
+    label: 'Admin team — Zespoły (AdminTeamsPanel, StandardTable + panel członków po kliknięciu)',
+    render: () => <AdminTeamScreen adminScreen="teams" />,
+  },
+  'admin-team-guests-external': {
+    label: 'Admin team — Goście i dostęp zewnętrzny (AdminGuestsPanel, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="guests-external" />,
+  },
+  'admin-team-access-requests': {
+    label: 'Admin team — Wnioski o dostęp (AdminAccessRequestsPanel — STATYCZNY placeholder, brak API)',
+    render: () => <AdminTeamScreen adminScreen="access-requests" />,
+  },
+  'admin-team-access-reviews': {
+    label: 'Admin team — Przeglądy dostępów (AdminAccessReviewsPanel, StandardTable)',
+    render: () => <AdminTeamScreen adminScreen="access-reviews" />,
+  },
+  'admin-team-ownership': {
+    label: 'Admin team — Własność (AdminMembersRolesPanel screen=ownership → OwnershipManagementView)',
+    render: () => <AdminTeamScreen adminScreen="ownership" />,
+  },
+  // admin-ai (runda pełna) — odbiór grafiki 146-admin-ai (2026-08-31), domena
+  // "Sterowanie AI" (adminNavigation.ts), 10 ekranów, mapowanie 1:1 z
+  // AdminSettingsModule.tsx case 'ai' + AI_MODULE_TAB_BY_SCREEN. Pięć z nich
+  // (models-providers/ai-limits-budgets/data-privacy/ai-operations/ai-audit)
+  // dzielą tę samą powłokę AdminAIControlCenterPanel→AIModule z podwójnym
+  // wewnętrznym pill-tabs — patrz nagłówek dev-render/screens/admin-ai.tsx.
+  'admin-ai-policy-autonomy': {
+    label: 'Admin ai — Polityka i autonomia (AdminAIControlCenterPanel tab=settings → OrgAISettingsView, tab policy)',
+    render: () => <AdminAiScreen adminScreen="policy-autonomy" />,
+  },
+  'admin-ai-personas': {
+    label: 'Admin ai — Persony (PersonasPanel)',
+    render: () => <AdminAiScreen adminScreen="personas" />,
+  },
+  'admin-ai-models-providers': {
+    label: 'Admin ai — Modele i dostawcy (AIModule tab=models-providers → ModelsProvidersTab, tabela HTML surowa, bez StandardTable)',
+    render: () => <AdminAiScreen adminScreen="models-providers" />,
+  },
+  'admin-ai-ai-limits-budgets': {
+    label: 'Admin ai — Limity i budżety (AIModule tab=access-limits → AccessLimitsTab, tabela HTML surowa, bez StandardTable)',
+    render: () => <AdminAiScreen adminScreen="ai-limits-budgets" />,
+  },
+  'admin-ai-data-privacy': {
+    label: 'Admin ai — Dane i prywatność (AIModule tab=features-privacy → FeaturesPrivacyTab)',
+    render: () => <AdminAiScreen adminScreen="data-privacy" />,
+  },
+  'admin-ai-quality-evaluations': {
+    label: 'Admin ai — Ewaluacje jakości (AdminAiQualityPanel, StandardTable ×2)',
+    render: () => <AdminAiScreen adminScreen="quality-evaluations" />,
+  },
+  'admin-ai-ai-incidents': {
+    label: 'Admin ai — Incydenty AI (AdminAiIncidentsPanel, StandardTable)',
+    render: () => <AdminAiScreen adminScreen="ai-incidents" />,
+  },
+  'admin-ai-configuration-versions': {
+    label: 'Admin ai — Wersje konfiguracji (AdminConfigurationVersionsPanel, StandardTable, V8 prompt-os)',
+    render: () => <AdminAiScreen adminScreen="configuration-versions" />,
+  },
+  'admin-ai-ai-operations': {
+    label: 'Admin ai — Operacje AI (AIModule tab=ai-health → AIMissionControl)',
+    render: () => <AdminAiScreen adminScreen="ai-operations" />,
+  },
+  'admin-ai-ai-audit': {
+    label: 'Admin ai — Audyt AI (AIModule tab=audit-compliance → AuditComplianceTab, tabela HTML surowa, bez StandardTable)',
+    render: () => <AdminAiScreen adminScreen="ai-audit" />,
+  },
+  // admin-audit-health (runda pełna) — odbiór grafiki 146-admin-audit-health
+  // (2026-08-31), domeny "Dziennik audytu" (audit) i "Stan systemu" (health)
+  // z adminNavigation.ts, mapowanie 1:1 z AdminSettingsModule.tsx case
+  // 'audit' / case 'health'. Trzy pary aliasów tej samej zakładki w
+  // produkcie (high-risk-changes≡events, retention-export≡events,
+  // diagnostics≡service-status) i osobny gate UNAUTHORIZED dla
+  // platform-operations (CAN_ACCESS_PLATFORM_OPERATIONS na sztywno false)
+  // — patrz nagłówki dev-render/screens/admin-audit.tsx i admin-health.tsx.
+  'admin-audit-events': {
+    label: 'Admin audit — Zdarzenia (AdminAuditLogPanel, FilterableTable)',
+    render: () => <AdminAuditScreen adminScreen="events" />,
+  },
+  'admin-audit-high-risk-changes': {
+    label: 'Admin audit — Zmiany wysokiego ryzyka (ALIAS Zdarzeń, ten sam AdminAuditLogPanel)',
+    render: () => <AdminAuditScreen adminScreen="high-risk-changes" />,
+  },
+  'admin-audit-compliance-evidence': {
+    label:
+      'Admin audit — Dowody zgodności (AdminComplianceEvidencePanel, StandardTable — kolumny Zdarzenie/Aktor/Ryzyko PUSTE, patrz nagłówek pliku)',
+    render: () => <AdminAuditScreen adminScreen="compliance-evidence" />,
+  },
+  'admin-audit-retention-export': {
+    label: 'Admin audit — Retencja i eksport (ALIAS Zdarzeń, ten sam AdminAuditLogPanel)',
+    render: () => <AdminAuditScreen adminScreen="retention-export" />,
+  },
+  'admin-audit-integrity': {
+    label: 'Admin audit — Integralność (AdminAuditIntegrityPanel, karty, bez tabeli)',
+    render: () => <AdminAuditScreen adminScreen="integrity" />,
+  },
+  'admin-audit-legal-hold': {
+    label: 'Admin audit — Legal hold (AdminLegalHoldPanel, karta statusu, bez tabeli)',
+    render: () => <AdminAuditScreen adminScreen="legal-hold" />,
+  },
+  'admin-audit-export-history': {
+    label: 'Admin audit — Historia eksportów (AdminAuditExportHistoryPanel, StandardTable)',
+    render: () => <AdminAuditScreen adminScreen="export-history" />,
+  },
+  'admin-health-service-status': {
+    label:
+      'Admin health — Stan usług (AdminHealthPanel canRunDiagnostics=false → statyczna karta UNKNOWN, patrz nagłówek pliku)',
+    render: () => <AdminHealthScreen adminScreen="service-status" />,
+  },
+  'admin-health-diagnostics': {
+    label: 'Admin health — Diagnostyka (ALIAS Stanu usług, ten sam AdminHealthPanel)',
+    render: () => <AdminHealthScreen adminScreen="diagnostics" />,
+  },
+  'admin-health-dependencies': {
+    label: 'Admin health — Zależności (AdminDependenciesPanel, karty <details>, bez tabeli)',
+    render: () => <AdminHealthScreen adminScreen="dependencies" />,
+  },
+  'admin-health-incident-history': {
+    label: 'Admin health — Historia incydentów (AdminIncidentHistoryPanel, karty, bez tabeli)',
+    render: () => <AdminHealthScreen adminScreen="incident-history" />,
+  },
+  'admin-health-queues-jobs': {
+    label: 'Admin health — Kolejki i zadania (AdminJobsPanel, StandardTable)',
+    render: () => <AdminHealthScreen adminScreen="queues-jobs" />,
+  },
+  'admin-health-sla-slo': {
+    label: 'Admin health — SLA / SLO (AdminSlaSloPanel, karty, bez tabeli)',
+    render: () => <AdminHealthScreen adminScreen="sla-slo" />,
+  },
+  'admin-health-platform-operations': {
+    label:
+      'Admin health — Operacje platformowe (gate UNAUTHORIZED, odfiltrowane z menu — brak dostępu z nawigacji)',
+    render: () => <AdminHealthScreen adminScreen="platform-operations" />,
+  },
+  // admin-command (runda pełna) — odbiór grafiki 146-admin-command
+  // (2026-08-31), domena "Centrum administracyjne" (adminNavigation.ts), 11
+  // ekranów, mapowanie 1:1 z AdminSettingsModule.tsx case 'command'. Po
+  // naprawie ADM-OWN-001 (DEC night-fixes-b-20260826) żaden z 11 nie jest
+  // aliasem innego — organization-defaults ma osobny komponent (formularz,
+  // bez StandardTable, to poprawne dla tego typu treści), pozostałe 10 mają
+  // odrębną treść wewnątrz AdminCommandCenterPanel. Patrz nagłówek
+  // dev-render/screens/admin-command.tsx dla mapowania endpointów i
+  // ZNALEZISKA (bug w attention-queue: sygnał "ryzyko" czyta płaską ścieżkę
+  // `risk?.highRiskCount`, backend zwraca zagnieżdżoną
+  // `risk.summary.audit.highRiskCount` — sygnał zawsze pokazuje 0/info).
+  'admin-command-overview': {
+    label: 'Admin command — Przegląd (AdminCommandCenterPanel aggregationOnly, kafle+podsumowania)',
+    render: () => <AdminCommandScreen adminScreen="overview" />,
+  },
+  'admin-command-attention-queue': {
+    label:
+      'Admin command — Kolejka uwagi (CommandCenterAttentionQueue; ZNALEZISKO: sygnał ryzyka zawsze info/0, patrz nagłówek admin-command.tsx)',
+    render: () => <AdminCommandScreen adminScreen="attention-queue" />,
+  },
+  'admin-command-cost-capacity': {
+    label: 'Admin command — Koszt i pojemność (CommandCenterCostCapacity, StandardTable)',
+    render: () => <AdminCommandScreen adminScreen="cost-capacity" />,
+  },
+  'admin-command-organization-defaults': {
+    label:
+      'Admin command — Ustawienia domyślne organizacji (AdminOrganizationDefaultsPanel, formularz surowy <label>/<input>)',
+    render: () => <AdminCommandScreen adminScreen="organization-defaults" />,
+  },
+  'admin-command-agent-trace': {
+    label: 'Admin command — Ślad agentów (CommandCenterAgentTraceTab, StandardTable)',
+    render: () => <AdminCommandScreen adminScreen="agent-trace" />,
+  },
+  'admin-command-audit': {
+    label: 'Admin command — Audyt SOC2 (CommandCenterAuditTab, StandardTable)',
+    render: () => <AdminCommandScreen adminScreen="audit" />,
+  },
+  'admin-command-dlp': {
+    label: 'Admin command — DLP (CommandCenterDlpTab, StandardTable+kebab)',
+    render: () => <AdminCommandScreen adminScreen="dlp" />,
+  },
+  'admin-command-residency': {
+    label: 'Admin command — Rezydencja danych (CommandCenterResidencyTab, formularz)',
+    render: () => <AdminCommandScreen adminScreen="residency" />,
+  },
+  'admin-command-retention': {
+    label: 'Admin command — Retencja (CommandCenterRetentionTab, StandardTable, inline edit)',
+    render: () => <AdminCommandScreen adminScreen="retention" />,
+  },
+  'admin-command-ai-policy': {
+    label: 'Admin command — Polityka AI (CommandCenterAiPolicyTab, formularz)',
+    render: () => <AdminCommandScreen adminScreen="ai-policy" />,
+  },
+  'admin-command-benchmark': {
+    label: 'Admin command — Benchmark konsultingowy (CommandCenterBenchmarkTab, karty statyczne)',
+    render: () => <AdminCommandScreen adminScreen="benchmark" />,
   },
   'superadmin-platform-operations-day15': {
     label: 'Day 15 — REALNY <PlatformOperationsView>, katalogi fixture; &scene=ready|empty|error',
@@ -865,8 +1428,100 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'mywork-notebook-rail-speca': {
     label:
-      'DEC-69 — prawa szyna Notatnika w kanonie SPEC-A (5 sekcji accordion, nie tabs) wg mywork-notatnik-szyna-prototyp.html',
-    render: () => <MyWorkNotebookRailSpecAScreen />,
+      'DEC-69 — prawa szyna Notatnika w kanonie SPEC-A (5 sekcji accordion, nie tabs) wg mywork-notatnik-szyna-prototyp.html. ' +
+      'NAPRAWA (2026-08-30): flaga ff_notebookSpecAShell jest domyślnie OFF i harness jej nie ustawiał — ten wpis teraz FORSUJE ją ON ' +
+      '(localStorage), więc ekran pokazuje SPEC-A, nie stary panel. Porównanie ze STARYM: mywork-notebook-rail-speca-stary.',
+    render: () => <MyWorkNotebookRailSpecAScreen specA />,
+  },
+  'mywork-notebook-rail-speca-stary': {
+    label:
+      'DEC-69 — jw., ale STARA szyna Notatnika (ff_notebookSpecAShell wymuszona OFF) — do porównania PRZED/PO z mywork-notebook-rail-speca.',
+    render: () => <MyWorkNotebookRailSpecAScreen specA={false} />,
+  },
+  'prawy-pas-notatnik-artefakt': {
+    label:
+      'PRAWY PAS (system) — Notatnik, tryb ARTEFAKT (akordeon kanonu). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasNotatnikSystemScreen tryb="artefakt" />,
+  },
+  'prawy-pas-notatnik-teresa': {
+    label:
+      'PRAWY PAS (system) — Notatnik, tryb TERESA (pełna wysokość, własne pole pisania). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasNotatnikSystemScreen tryb="teresa" />,
+  },
+  'prawy-pas-notatnik-struktura': {
+    label:
+      'PRAWY PAS (system) — Notatnik, tryb zależny od typu: STRUKTURA NOTATKI. Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasNotatnikSystemScreen tryb="struktura" />,
+  },
+  'prawy-pas-idea-artefakt': {
+    label:
+      'PRAWY PAS (system) — Idea, tryb ARTEFAKT (akordeon kanonu, bez „Historia" — bez zastosowania). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasIdeaSystemScreen tryb="artefakt" />,
+  },
+  'prawy-pas-idea-teresa': {
+    label:
+      'PRAWY PAS (system) — Idea, tryb TERESA (4 komendy + CTA „Rozmawiaj z Teresą", wyjęte z akordeonu). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasIdeaSystemScreen tryb="teresa" />,
+  },
+  'prawy-pas-idea-sugestie': {
+    label:
+      'PRAWY PAS (system) — Idea, tryb zależny od typu: SUGESTIE (IdeaAISuggestionsPanel, własna ikona szyny). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasIdeaSystemScreen tryb="sugestie" />,
+  },
+  // Trzeci krok rozwożenia (2026-08-30, ANALIZA_PRAWY_PANEL.md §7 krok 4):
+  // Tabele — powierzchnia TRUDNA (7 narzędzi „po artefakcie" bez ŻADNEJ
+  // sekcji „o artefakcie" — dodajemy ósmy, pierwszy tool `'artefakt'`,
+  // reszta 1:1). Wymaga TAKŻE `?ff_melsTabele=1` — `<TabeleView>` montuje
+  // `TabeleMelsView` (jedyny konsument `TabeleRightRail.tsx`) tylko za tą
+  // WCZEŚNIEJSZĄ, osobną flagą (domyślnie OFF, EPIC-T16); bez niej ten
+  // harness renderowałby legacy `KimiWorkspaceShell`, który nie ma right
+  // railu wcale (zła powierzchnia — patrz pułapka z arkuszem, CLAUDE.md).
+  'prawy-pas-tabele-off': {
+    label:
+      'PRAWY PAS (system) — Tabele, STAN DZISIEJSZY, szyna ZAMKNIĘTA (bez propa activeRightRailToolId — dokładnie jak w produkcji). Wymaga ?ff_melsTabele=1 — sumy kontrolne z tym wpisem PRZED zmianą dowodzą OFF-identyczności niezależnie od harness-owego propa sterującego.',
+    render: () => <PrawyPasTabeleSystemScreen tryb="closed" />,
+  },
+  'prawy-pas-tabele-search': {
+    label:
+      'PRAWY PAS (system) — Tabele, tryb SEARCH (pierwszy tool „po artefakcie", stan dzisiejszy z otwartym panelem). Wymaga ?ff_melsTabele=1',
+    render: () => <PrawyPasTabeleSystemScreen tryb="search" />,
+  },
+  'prawy-pas-tabele-artefakt': {
+    label:
+      'PRAWY PAS (system) — Tabele, tryb ARTEFAKT (akordeon kanonu: Właściwości/Powiązania/Komentarze — jedyne z realnymi danymi). Wymaga ?ff_melsTabele=1&ff_artifact_right_rail=1',
+    render: () => <PrawyPasTabeleSystemScreen tryb="artefakt" />,
+  },
+  // Czwarty/piąty krok rozwożenia (2026-08-31, tor grafiki, dwie „trudne"
+  // szyny): Prezentacje (generator) — dziś JEDEN identyfikator `activity`
+  // bez akordeonu. Baseline OFF renderuje się bez `?ff_artifact_right_rail`.
+  'prawy-pas-prezentacje-off': {
+    label:
+      'PRAWY PAS (system) — Prezentacje (generator), STAN DZISIEJSZY (ikona „Activity", bez akordeonu) — sumy kontrolne z tym wpisem PRZED zmianą dowodzą OFF-identyczności.',
+    render: () => <PrawyPasPrezentacjeSystemScreen />,
+  },
+  'prawy-pas-prezentacje-artefakt': {
+    label:
+      'PRAWY PAS (system) — Prezentacje (generator), tryb ARTEFAKT (akordeon kanonu, jedyna zastosowana sekcja: Historia). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasPrezentacjeSystemScreen />,
+  },
+  // Deck Builder — dziś SZEŚĆ płaskich identyfikatorów (blocks/media/
+  // evidence/relations/comments/activity) na jednej szynie. ON: Blocks
+  // (po artefakcie, osobna ikona) → Artefakt (Powiązania/Źródła/Komentarze/
+  // Historia scalone w akordeon).
+  'prawy-pas-deck-builder-off': {
+    label:
+      'PRAWY PAS (system) — Deck Builder, STAN DZISIEJSZY (5 płaskich ikon: Blocks/Comments/Activity/Relations/Evidence) — sumy kontrolne z tym wpisem PRZED zmianą dowodzą OFF-identyczności.',
+    render: () => <PrawyPasDeckBuilderSystemScreen />,
+  },
+  'prawy-pas-deck-builder-blocks': {
+    label:
+      'PRAWY PAS (system) — Deck Builder, tryb PO ARTEFAKCIE: BLOCKS (osobna ikona, żywa edycja). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasDeckBuilderSystemScreen tryb="blocks" />,
+  },
+  'prawy-pas-deck-builder-artefakt': {
+    label:
+      'PRAWY PAS (system) — Deck Builder, tryb ARTEFAKT (akordeon kanonu: Powiązania/Źródła i założenia/Komentarze/Historia, scalone z 4 dawnych płaskich ikon). Wymaga ?ff_artifact_right_rail=1',
+    render: () => <PrawyPasDeckBuilderSystemScreen tryb="artefakt" />,
   },
   'capability-gate-demo': {
     label: 'Faza C — CapabilityGate: shadow vs debugCapabilities vs enforce (model ról PM)',
@@ -988,19 +1643,89 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Finance export import panel',
     render: () => <FinanceExportImportPanelScreen />,
   },
-  'execution-change-signals': {
-    label:
-      'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
-    render: () => <ExecutionChangeSignalsScreen />,
-  },
+//  'execution-change-signals': {
+//    label:
+//      'M14-wire — ExecutionChangeSignalsPanel (capacity signals · ADKAR readiness · champions), flaga changeSignals default OFF',
+//    render: () => <ExecutionChangeSignalsScreen />,
+//  },
   'execution-report-day11': {
     label: 'Execution Day 11 — reports intelligence and governed generator',
     render: () => <ExecutionReportDay11Screen />,
   },
-  'execution-export-prezentacja': {
+  // 145-execution-taby — REALNY <ExecutionHub initialTab="..."> pełna powłoka
+  // (Menu 1 StandardModuleBar + treść zakładki), 7 brakujących zakładek z 8
+  // (rejestr grafiki pokrywał dotąd tylko "Raporty"). Dane: patrz nagłówek
+  // dev-render/screens/execution-tab.tsx (demo-fallback/local-review, zero
+  // ręcznego mockowania fetch — realne ścieżki degradacji produktu w DEV).
+  'execution-tab-list': {
+    label: 'Realizacja → zakładka "Realizacje" (Portfolio), REALNY <ExecutionHub initialTab="list">',
+    render: () => <ExecutionTabScreen tab="list" />,
+  },
+  'execution-tab-work': {
+    label: 'Realizacja → zakładka "Praca", REALNY <ExecutionHub initialTab="work"> (ExecutionWorkSurface)',
+    render: () => <ExecutionTabScreen tab="work" />,
+  },
+  'execution-tab-resources': {
     label:
-      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
-    render: () => <ExecutionExportPrezentacjaScreen />,
+      'Realizacja → zakładka "Zasoby", REALNY <ExecutionHub initialTab="resources"> (ExecutionResourcesSurface)',
+    render: () => <ExecutionTabScreen tab="resources" />,
+  },
+  'execution-tab-control': {
+    label:
+      'Realizacja → zakładka "Sterowanie", REALNY <ExecutionHub initialTab="control"> (ExecutionControlSurface)',
+    render: () => <ExecutionTabScreen tab="control" />,
+  },
+  'execution-tab-rollout': {
+    label:
+      'Realizacja → zakładka "Rollout" (chromeless, /rollout deep-link), REALNY <ExecutionHub initialTab="rollout"> (RolloutTab: Plan/KPI/Ryzyka/Zmiany/Zamknięcie)',
+    render: () => <ExecutionTabScreen tab="rollout" />,
+  },
+  'execution-tab-summary': {
+    label:
+      'Realizacja → zakładka "Summary one-look" (chromeless, za flagą summaryOneLook — domyślnie ON poza public-prod), REALNY <ExecutionHub initialTab="summary">',
+    render: () => <ExecutionTabScreen tab="summary" />,
+  },
+  'execution-tab-people_change': {
+    label:
+      'Realizacja → zakładka "People & Change" (chromeless, osiągana z Action Center), REALNY <ExecutionHub initialTab="people_change"> (ExecutionManagementView)',
+    render: () => <ExecutionTabScreen tab="people_change" />,
+  },
+//  'execution-export-prezentacja': {
+//    label:
+//      'Naprawa 2026-07-27 — Execution „Export as presentation" → PrezentacjeView konsumuje sourceType/sourceName/content (2 fazy: klik → auto-start Z AI)',
+//    render: () => <ExecutionExportPrezentacjaScreen />,
+//  },
+  'tools-swot-live': {
+    label: 'Narzędzia → Dynamic SWOT: sesja na żywo',
+    render: () => <ToolsSwotLiveScreen />,
+  },
+  'tools-swot-library-detail': {
+    label: 'Narzędzia → Dynamic SWOT: karta w bibliotece',
+    render: () => <ToolsSwotLibraryDetailScreen />,
+  },
+  'tools-swot-session-workspace': {
+    label: 'Narzędzia → Dynamic SWOT: warsztat sesji',
+    render: () => <ToolsSwotSessionWorkspaceScreen />,
+  },
+  'tools-sesja-wyjscie': {
+    label: 'Narzędzia → wyjście z sesji',
+    render: () => <ToolsSesjaWyjscieScreen />,
+  },
+  'tool-outputs-panel': {
+    label: 'Narzędzia → panel rezultatów',
+    render: () => <ToolOutputsPanelScreen />,
+  },
+  'tools-outputs-insights-tab': {
+    label: 'Narzędzia → zakładka wniosków',
+    render: () => <ToolsOutputsInsightsTabScreen />,
+  },
+  'chat-signals-feed': {
+    label: 'Czat → strumień sygnałów',
+    render: () => <ChatSignalsFeedScreen />,
+  },
+  'exec-summary-onelook': {
+    label: 'Realizacja → streszczenie na jeden rzut oka',
+    render: () => <ExecSummaryOnelookScreen />,
   },
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
@@ -1014,6 +1739,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ASM-ID TRIADA — real <AssessmentManagePanel> (Workflow/Team/Reports/Initiatives tabs, crimson sweep verification) — &tab=workflow|team|reports|initiatives|logs',
     render: () => <AssessmentManagePanelScreen />,
+  },
+  'assessment-matryca': {
+    label:
+      'SPEC-A archetyp D — sesja Assessment jako Matryca: REALNY <DRDMatrixSession> w realnej powłoce <TopBar> (Menu 1) + <ArtifactRightPanel>. &lang=pl|en &theme=light|dark',
+    render: () => <AssessmentMatrycaScreen />,
   },
   'standard-module-bar-children': {
     label:
@@ -1101,6 +1831,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'VF1-4 — REALNY <DecisionDetailView> (archetyp C·Rekord, SPEC-A powłoka) N-mode; &ff_vf1DecisionSpeca=1 wraz z VITE_VF1_DECISION_SPECA=true dla stanów gated',
     render: () => <DecisionRecordScreen />,
+  },
+  'standard-grid-card': {
+    label: '#76a JEDEN kanon karty grid/kafelkowej (StandardGridCard)',
+    render: () => <StandardGridCardScreen />,
   },
   'standard-kanban-card': {
     label: '#75b JEDEN kanon karty kanban (StandardKanbanCard)',
@@ -1253,6 +1987,29 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'DOKUMENTY — Arkusz jako artefakt (pełny obiekt: zakładki, siatka, formuły)',
     render: () => <SheetArtifactScreen />,
   },
+  'report-artifact': {
+    label: 'DOKUMENTY — Report jako artefakt (GeneratedReportView, wariant „raport doradczy")',
+    render: () => <ReportArtifactScreen />,
+  },
+  'insight-artifact': {
+    label: 'DOKUMENTY — Insight jako artefakt (tryb demo komponentu)',
+    render: () => <InsightArtifactScreen />,
+  },
+  'drd-embedded-matrix-axis-levels': {
+    label:
+      'DRD — EmbeddedMatrix dowód naprawy maxLevel (culture/cybersecurity=6, SSOT drdStructure.ts)',
+    render: () => <DrdEmbeddedMatrixAxisLevelsScreen />,
+  },
+  'drd-macierz-oceny': {
+    label:
+      'DRD — MACIERZ OCENY, stan zastany do AUDYTU (realny DRDAssessmentEditor, żywy w produkcie), &os=1..7',
+    render: () => <DrdMacierzOcenyScreen />,
+  },
+  'drd-macierz-obszary-poziomy': {
+    label:
+      'DRD — MACIERZ 2D obszary (kolumny) × poziomy (wiersze), realny AreaMatrixTable, &os=1..7',
+    render: () => <DrdMacierzObszaryPoziomyScreen />,
+  },
   'excele-edytowalna-siatka': {
     label:
       'DOKUMENTY — Excel EDYTOWALNY (NPV/IRR, za ff_excele_edit — klik→edycja→przeliczenie→zapis)',
@@ -1261,6 +2018,176 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'excele-prawy-panel-standard': {
     label: 'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
     render: () => <ExcelePrawyPanelStandardScreen />,
+  },
+  // aios (runda pełna) — 146-aios, Internal Tools / AI OS (8 pozycji submenu),
+  // odbiór grafiki 2026-08-31. Realne komponenty z src/components/AIChat/,
+  // przełącznik `&screen=` w dev-render/screens/aios.tsx.
+  'aios-home': {
+    label: 'AI OS — Home (AIOSHub, harness odbioru 2026-08-31)',
+    render: () => <AiosScreen />,
+  },
+  'aios-actions': {
+    label: 'AI OS — AI Actions (ActionCenter, harness odbioru 2026-08-31) &screen=actions',
+    render: () => <AiosScreen />,
+  },
+  'aios-research': {
+    label: 'AI OS — Research Sessions (ResearchSessionsDock, harness odbioru 2026-08-31) &screen=research',
+    render: () => <AiosScreen />,
+  },
+  'aios-artifacts': {
+    label: 'AI OS — Artifacts (Wave5ArtifactRuntimePanel, harness odbioru 2026-08-31) &screen=artifacts',
+    render: () => <AiosScreen />,
+  },
+  'aios-memory': {
+    label: 'AI OS — Memory & Scope (Wave6ContextLearningPanel, harness odbioru 2026-08-31) &screen=memory',
+    render: () => <AiosScreen />,
+  },
+  'aios-connectors': {
+    label: 'AI OS — Connectors (Wave7ConnectorAdminPanel, harness odbioru 2026-08-31) &screen=connectors',
+    render: () => <AiosScreen />,
+  },
+  'aios-agents': {
+    label: 'AI OS — Agents (Wave8AgentCatalogPanel, harness odbioru 2026-08-31) &screen=agents',
+    render: () => <AiosScreen />,
+  },
+  'aios-outcomes': {
+    label: 'AI OS — KPI/ROI & AI Ops (Wave9OutcomeAIOpsPanel, harness odbioru 2026-08-31) &screen=outcomes',
+    render: () => <AiosScreen />,
+  },
+  // ustawienia-organizacja (runda pełna) — odbiór grafiki 150-ustawienia-organizacja
+  // (2026-08-31). Ustawienia: REALNY <SettingsView>, 10 grup nawigacji
+  // (SettingsSidebar.tsx). Patrz nagłówek dev-render/screens/ustawienia-grupy.tsx.
+  'ustawienia-personalne': {
+    label: 'Ustawienia — PERSONAL (REALNY <SettingsView>, grupa my-settings → profile)',
+    render: () => <UstawieniaGrupyScreen grupa="personalne" />,
+  },
+  'ustawienia-workflow': {
+    label: 'Ustawienia — WORKFLOW (REALNY <SettingsView>, grupa work-preferences → dashboard)',
+    render: () => <UstawieniaGrupyScreen grupa="workflow" />,
+  },
+  'ustawienia-ai-automatyzacja': {
+    label:
+      'Ustawienia — MODULES: AI & AUTOMATION (REALNY <SettingsView>, grupa ai-automation-group → ai-behavior)',
+    render: () => <UstawieniaGrupyScreen grupa="ai-automatyzacja" />,
+  },
+  'ustawienia-powiadomienia': {
+    label:
+      'Ustawienia — MODULES: NOTIFICATIONS (REALNY <SettingsView>, grupa notifications → notifications-overview)',
+    render: () => <UstawieniaGrupyScreen grupa="powiadomienia" />,
+  },
+  'ustawienia-bezpieczenstwo': {
+    label: 'Ustawienia — SECURITY (REALNY <SettingsView>, grupa security → security-dashboard)',
+    render: () => <UstawieniaGrupyScreen grupa="bezpieczenstwo" />,
+  },
+  'ustawienia-integracje': {
+    label:
+      'Ustawienia — MODULES: INTEGRATIONS (REALNY <SettingsView>, grupa integrations → connected-apps, surowy fetch)',
+    render: () => <UstawieniaGrupyScreen grupa="integracje" />,
+  },
+  'ustawienia-dane-prywatnosc': {
+    label: 'Ustawienia — DATA & PRIVACY (REALNY <SettingsView>, grupa data-privacy → data-controls)',
+    render: () => <UstawieniaGrupyScreen grupa="dane-prywatnosc" />,
+  },
+  'ustawienia-billing': {
+    label:
+      'Ustawienia — BILLING (REALNY <SettingsView>, grupa billing → billing; renderContent() zwraca null — ZNALEZISKO, patrz nagłówek pliku)',
+    render: () => <UstawieniaGrupyScreen grupa="billing" />,
+  },
+  'ustawienia-wyglad': {
+    label: 'Ustawienia — APPEARANCE (REALNY <SettingsView>, grupa appearance → theme)',
+    render: () => <UstawieniaGrupyScreen grupa="wyglad" />,
+  },
+  'ustawienia-zaawansowane': {
+    label: 'Ustawienia — ADVANCED & HISTORY (REALNY <SettingsView>, grupa advanced → import-export)',
+    render: () => <UstawieniaGrupyScreen grupa="zaawansowane" />,
+  },
+  // Organizacja: REALNY <OrganizationView>, wariant DOMYŚLNY (flaga orgRedesignV1
+  // OFF), 20 ekranów brakujących w rejestrze. Patrz nagłówek
+  // dev-render/screens/org-legacy.tsx. `org-identity-operating` (profile/identity-scale)
+  // ma już wpis — pominięty tutaj (choć renderuje wariant ON, patrz ZGŁASZAM w raporcie).
+  'org-operating-model': {
+    label: 'Organizacja — Model działania (REALNY <OrganizationView>, domyślnie OFF, profile/operating-model)',
+    render: () => <OrgLegacyScreen module="profile" screen="operating-model" />,
+  },
+  'org-position-direction': {
+    label: 'Organizacja — Pozycja i kierunek (REALNY <OrganizationView>, domyślnie OFF, profile/position-direction)',
+    render: () => <OrgLegacyScreen module="profile" screen="position-direction" />,
+  },
+  'org-technology-culture-constraints': {
+    label:
+      'Organizacja — Technologia, kultura i ograniczenia (REALNY <OrganizationView>, domyślnie OFF, profile/technology-culture-constraints)',
+    render: () => <OrgLegacyScreen module="profile" screen="technology-culture-constraints" />,
+  },
+  'org-strategic-intent': {
+    label: 'Organizacja — Intencja strategiczna (REALNY <OrganizationView>, domyślnie OFF, goals/strategic-intent)',
+    render: () => <OrgLegacyScreen module="goals" screen="strategic-intent" />,
+  },
+  'org-success-metrics': {
+    label: 'Organizacja — Mierniki sukcesu (REALNY <OrganizationView>, domyślnie OFF, goals/success-metrics)',
+    render: () => <OrgLegacyScreen module="goals" screen="success-metrics" />,
+  },
+  'org-scope-boundaries': {
+    label: 'Organizacja — Zakres i granice (REALNY <OrganizationView>, domyślnie OFF, goals/scope-boundaries)',
+    render: () => <OrgLegacyScreen module="goals" screen="scope-boundaries" />,
+  },
+  'org-stakeholder-expectations': {
+    label:
+      'Organizacja — Oczekiwania interesariuszy (REALNY <OrganizationView>, domyślnie OFF, goals/stakeholder-expectations)',
+    render: () => <OrgLegacyScreen module="goals" screen="stakeholder-expectations" />,
+  },
+  'org-declared-challenges': {
+    label:
+      'Organizacja — Zadeklarowane wyzwania (REALNY <OrganizationView>, domyślnie OFF, challenges/declared-challenges)',
+    render: () => <OrgLegacyScreen module="challenges" screen="declared-challenges" />,
+  },
+  'org-root-causes': {
+    label: 'Organizacja — Przyczyny źródłowe (REALNY <OrganizationView>, domyślnie OFF, challenges/root-causes)',
+    render: () => <OrgLegacyScreen module="challenges" screen="root-causes" />,
+  },
+  'org-goal-blockers': {
+    label: 'Organizacja — Blockery celów (REALNY <OrganizationView>, domyślnie OFF, challenges/goal-blockers)',
+    render: () => <OrgLegacyScreen module="challenges" screen="goal-blockers" />,
+  },
+  'org-evidence': {
+    label: 'Organizacja — Dowody (REALNY <OrganizationView>, domyślnie OFF, challenges/evidence)',
+    render: () => <OrgLegacyScreen module="challenges" screen="evidence" />,
+  },
+  'org-risks-opportunities': {
+    label: 'Organizacja — Ryzyka i szanse (REALNY <OrganizationView>, domyślnie OFF, strategy/risks-opportunities)',
+    render: () => <OrgLegacyScreen module="strategy" screen="risks-opportunities" />,
+  },
+  'org-scenarios': {
+    label: 'Organizacja — Scenariusze (REALNY <OrganizationView>, domyślnie OFF, strategy/scenarios)',
+    render: () => <OrgLegacyScreen module="strategy" screen="scenarios" />,
+  },
+  'org-recommendation': {
+    label: 'Organizacja — Rekomendacja (REALNY <OrganizationView>, domyślnie OFF, strategy/recommendation)',
+    render: () => <OrgLegacyScreen module="strategy" screen="recommendation" />,
+  },
+  'org-executive-brief': {
+    label: 'Organizacja — Executive brief (REALNY <OrganizationView>, domyślnie OFF, strategy/executive-brief)',
+    render: () => <OrgLegacyScreen module="strategy" screen="executive-brief" />,
+  },
+  'org-files': {
+    label:
+      'Organizacja — Pliki (REALNY <OrganizationView>, domyślnie OFF, sources/files, statyczny komunikat NIEZWERYFIKOWANE)',
+    render: () => <OrgLegacyScreen module="sources" screen="files" />,
+  },
+  'org-claims-sources': {
+    label: 'Organizacja — Twierdzenia i źródła (REALNY <OrganizationView>, domyślnie OFF, sources/claims-sources)',
+    render: () => <OrgLegacyScreen module="sources" screen="claims-sources" />,
+  },
+  'org-source-conflicts': {
+    label: 'Organizacja — Konflikty źródeł (REALNY <OrganizationView>, domyślnie OFF, sources/source-conflicts)',
+    render: () => <OrgLegacyScreen module="sources" screen="source-conflicts" />,
+  },
+  'org-knowledge-graph': {
+    label: 'Organizacja — Graf wiedzy (REALNY <OrganizationView>, domyślnie OFF, sources/knowledge-graph)',
+    render: () => <OrgLegacyScreen module="sources" screen="knowledge-graph" />,
+  },
+  'org-summary': {
+    label: 'Organizacja — Gotowość organizacji (REALNY <OrganizationView>, domyślnie OFF, readiness/summary)',
+    render: () => <OrgLegacyScreen module="readiness" screen="summary" />,
   },
 };
 
@@ -1352,8 +2279,38 @@ createRoot(mount).render(
       {/* Toasty (react-hot-toast). Do 2026-07-23 harness NIE montował <Toaster/>,
           więc każdy `toast.error(...)` z ekranu był NIEWIDOCZNY — a to właśnie
           toastem produkt mówi „AI niedostępne, oto powód". Bez tego nie dało się
-          zweryfikować oczami ścieżki awaryjnej. */}
-      <Toaster position="bottom-center" />
+          zweryfikować oczami ścieżki awaryjnej.
+          GRAFIKA (2026-08-30): domyślny styl react-hot-toast jest NA SZTYWNO
+          biały/czarny — w motywie dark dawał jasną kartę na ciemnym tle
+          (odkryte na excele-reopen-verify__dark). Realny <Toaster/> produktu
+          (src/providers/AppProviders.tsx) jest tokenowy (--c-surface-raised/
+          --c-text/--c-border) i motyw śledzi poprawnie — kopiujemy DOKŁADNIE
+          te same tokeny tutaj, żeby zrzut harnessu pokazywał to, co naprawdę
+          zobaczy właściciel, nie domyślny styl biblioteki. */}
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            maxWidth: 'min(420px, calc(100vw - 2rem))',
+            padding: '10px 14px',
+            borderRadius: '12px',
+            fontSize: '14px',
+            lineHeight: '1.4',
+            background: 'var(--c-surface-raised)',
+            color: 'var(--c-text)',
+            border: '1px solid var(--c-border)',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.14)',
+          },
+          success: {
+            iconTheme: { primary: 'var(--c-success)', secondary: 'var(--c-surface-raised)' },
+          },
+          error: {
+            duration: 6000,
+            iconTheme: { primary: 'var(--c-danger)', secondary: 'var(--c-surface-raised)' },
+          },
+        }}
+      />
     </DebugBoundary>
   </React.StrictMode>
 );

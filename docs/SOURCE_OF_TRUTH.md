@@ -32,6 +32,8 @@ Consultinity ma kilka **rozłącznych rodzajów prawdy**:
 | Jaki jest aktualny stan realizacji? | rejestr pracy i dowody odbioru, nie stary plan |
 | Dlaczego podjęto decyzję? | zaakceptowana decyzja/ADR, następnie historia i evidence |
 | Jaki jest kierunek przyszłego rozwoju? | strategia; strategia nie dowodzi, że funkcja już działa |
+| Kiedy plik wychodzący do klienta jest gotowy? | rubryka odbioru deliverable'u oraz kanon eksportu — sekcja „Deliverable" poniżej |
+| Która decyzja właściciela obowiązuje i od kiedy? | rejestr decyzji właściciela — [`program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`](program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md) |
 
 ## Hierarchia autorytetu
 
@@ -65,6 +67,29 @@ Dokument docelowy nie jest dowodem wdrożenia — wdrożenie potwierdza runtime.
 - Prawda wykonawcza: `src/components/standard/` i współdzielone powłoki w
   `src/components/shared/`
 
+### Deliverable — plik, który wychodzi do klienta
+
+To jest **osobny rodzaj prawdy**. Ekran ocenia się kanonem UI, plik — rubryką
+odbioru. Mylenie tych dwóch było przyczyną tego, że przez cały program nie
+powstał ani jeden dokument oceniony formalnie.
+
+- Rubryka odbioru pliku (trzy osie, progi, karta odbioru):
+  [`../Harvard/wdrozenie-100/DELIVERABLES_QUALITY_RUBRIC.md`](../Harvard/wdrozenie-100/DELIVERABLES_QUALITY_RUBRIC.md)
+- Parametry liczbowe do rubryki:
+  [`../Harvard/wdrozenie-100/DELIVERABLES_GRAPHIC_PARAMETERS.md`](../Harvard/wdrozenie-100/DELIVERABLES_GRAPHIC_PARAMETERS.md)
+- Kanon składu, typografii i marki eksportów (PPTX · DOCX · XLSX · PDF):
+  [`ui-standards/00-foundation/BRAND_EXPORT_CANON.md`](ui-standards/00-foundation/BRAND_EXPORT_CANON.md)
+- Standard warstwy wniosków (reguły treści, walidatory, zakaz ogólników):
+  [`standards/CONCLUSION_LAYER_STANDARD.md`](standards/CONCLUSION_LAYER_STANDARD.md)
+
+**Reguła rozstrzygająca.** Dokument odebrany wtedy i tylko wtedy, gdy przechodzą
+**wszystkie trzy** osie rubryki jednocześnie: kompletność, merytoryka i grafika.
+Dokument piękny-ale-pusty jest odrzucony tak samo jak mądry-ale-brzydki.
+
+**Znane ograniczenie, które trzeba usunąć, zanim rubryka zadziała w pełni:**
+jej najostrzejsze kryterium (porównanie z realnym dokumentem) wymaga zestawu
+wzorcowego, którego nie ma — patrz `DELIVERABLES_QUALITY_RUBRIC.md` §7.
+
 ### Architektura, dane i API
 
 - Architektura: [`architecture/ARCHITECTURE_MAP.md`](architecture/ARCHITECTURE_MAP.md)
@@ -97,6 +122,24 @@ Dokument docelowy nie jest dowodem wdrożenia — wdrożenie potwierdza runtime.
 `Harvard/`, `wdrozenia/`, `evidence/`, raporty audytowe i handoffy są ważnym
 zapisem wiedzy, lecz nie stają się automatycznie nadrzędnym SSOT tylko dlatego,
 że zawierają słowo „kanon”, „master” lub „final”.
+
+## ★ Martwe prefiksy ścieżek — reguła odczytu
+
+Wiele dokumentów wskazuje swoje źródła prefiksem `DRD/consultify/docs/...`
+(czasem jako pełny `file:///Users/.../Antygracity/DRD/consultify/docs/...`).
+**Katalog `DRD/` nie istnieje w tym repozytorium** — to pozostałość po dawnej
+lokalizacji projektu. Zmierzone 2026-08-29: **4317 wystąpień w 224 plikach**.
+
+**Reguła:** zdejmij prefiks do `docs/`. Sprawdzone na próbie 23 odwołań — 21
+rozwiązuje się poprawnie po zdjęciu prefiksu. Dwa wyjątki, które **nie istnieją
+w żadnej postaci** i są martwe: `.cursor/rules/21-ai-actions-menu3-placement.mdc`
+oraz `.cursor/rules/ai-actions-menu3.mdc` (wskazywane przez
+`modules/02_moja-praca/SSOT.md` jako źródło zablokowanego kanonu Radaru).
+
+**Dlaczego nie poprawiono tego masowo:** globalna podmiana w 224 plikach jest
+w tym repozytorium operacją wysokiego ryzyka — analogiczna zniszczyła wcześniej
+ramki wartownika w wydanych instrukcjach. Prefiks poprawia się **przy okazji
+dotykania pliku z innego powodu**, nie osobną akcją.
 
 ## Konflikt między dokumentami
 

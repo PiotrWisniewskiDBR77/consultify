@@ -14,10 +14,13 @@
 
 import React from 'react';
 
-import type {
-  ReconciliationDetailRowDto,
-  ReconciliationRunDetailDto,
-  ReconciliationRunSummaryDto,
+import {
+  reconciliationBucketLabel,
+  reconciliationResultQualityLabel,
+  reconciliationRunStatusLabel,
+  type ReconciliationDetailRowDto,
+  type ReconciliationRunDetailDto,
+  type ReconciliationRunSummaryDto,
 } from '@/services/api/financeV2.types';
 
 export interface ReconciliationLedgerPanelProps {
@@ -44,11 +47,38 @@ function formatPct(value: string | null): string {
   return Number.isFinite(n) ? `${n.toFixed(2)}%` : '—';
 }
 
-function qualityTone(quality: string | null): string {
-  if (quality === 'CLEAN') return 'bg-c-success/10 text-c-success';
-  if (quality === 'WITHIN_TOLERANCE') return 'bg-c-surface-raised text-c-text-secondary';
-  if (quality === 'MATERIAL_BREAK') return 'bg-c-danger/10 text-c-danger';
+/**
+ * NAPRAWIONE (sweep 148-finanse-parametry): dwie odrębne wady w tej samej
+ * funkcji.
+ * 1. `MATERIAL_BREAK` nigdy nie jest realną wartością `resultQuality`
+ *    (`ReconciliationResultQuality` = CLEAN/CONDITIONAL/PROVISIONAL,
+ *    `financeV2.types.ts`) ani `status`
+ *    (`ReconciliationRunStatus` = CLEAN/WITHIN_TOLERANCE/EXCEEDS_MATERIALITY) —
+ *    martwa gałąź, kolor nigdy się nie uruchamiał.
+ * 2. Wywołanie w JSX (linia z badge'em) kolorowało WYŁĄCZNIE po
+ *    `resultQuality`, ale WYŚWIETLANY tekst był `resultQuality ?? status`
+ *    (fallback na inne pole) — gdy `resultQuality` było `null`, badge
+ *    pokazywał `status` (np. „EXCEEDS_MATERIALITY") zawsze w SZAREJ,
+ *    domyślnej barwie, nigdy w czerwonej mimo że to najgorszy wynik.
+ * `runBadgeTone()` koloruje dokładnie to pole, które faktycznie się
+ * wyświetla (`resultQuality ?? status` — ten sam fallback co treść).
+ */
+function runBadgeTone(resultQuality: string | null, status: string): string {
+  const value = resultQuality ?? status;
+  if (value === 'CLEAN') return 'bg-c-success/10 text-c-success';
+  if (value === 'WITHIN_TOLERANCE' || value === 'CONDITIONAL') {
+    return 'bg-c-surface-raised text-c-text-secondary';
+  }
+  if (value === 'EXCEEDS_MATERIALITY' || value === 'PROVISIONAL') {
+    return 'bg-c-danger/10 text-c-danger';
+  }
   return 'bg-c-surface-raised text-c-text-muted';
+}
+
+function runBadgeLabel(resultQuality: string | null, status: string): string {
+  return resultQuality != null
+    ? reconciliationResultQualityLabel(resultQuality)
+    : reconciliationRunStatusLabel(status);
 }
 
 export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps): React.ReactElement {
@@ -91,9 +121,9 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-medium text-c-text">{run.sourceSystem}</span>
                 <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold ${qualityTone(run.resultQuality)}`}
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-semibold ${runBadgeTone(run.resultQuality, run.status)}`}
                 >
-                  {run.resultQuality ?? run.status}
+                  {runBadgeLabel(run.resultQuality, run.status)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2 text-[10px] text-c-text-muted">
@@ -112,8 +142,8 @@ export function ReconciliationLedgerPanel(props: ReconciliationLedgerPanelProps)
           ) : runDetail ? (
             <div data-testid="reconciliation-run-detail">
               <div className="mb-2 grid grid-cols-2 gap-2 text-[11px]">
-                <Metric label="Status" value={runDetail.status} />
-                <Metric label="Jakość" value={runDetail.resultQuality ?? '—'} />
+                <Metric label="Status" value={reconciliationRunStatusLabel(runDetail.status)} />
+                <Metric label="Jakość" value={reconciliationResultQualityLabel(runDetail.resultQuality)} />
                 <Metric label="Residual" value={formatPct(runDetail.residualPct)} />
                 <Metric label="Wierszy" value={String(runDetail.rows.length)} />
               </div>
@@ -153,13 +183,14 @@ function BucketBreakdown({ rows }: { rows: ReconciliationDetailRowDto[] }): Reac
               bucket === 'DUPLICATE' ? 'bg-c-warning/10 text-c-warning' : 'bg-c-surface-raised text-c-text-secondary'
             }`}
           >
-            {bucket}: {count}
+            {reconciliationBucketLabel(bucket as ReconciliationDetailRowDto['bucket'])}: {count}
           </span>
         ))}
       </div>
       {duplicateCount > 0 && (
         <p className="mt-1.5 text-[10px] text-c-warning" data-testid="reconciliation-duplicate-warning">
-          {duplicateCount} {duplicateCount === 1 ? 'wiersz oznaczony' : 'wierszy oznaczonych'} jako DUPLICATE w tym przebiegu.
+          {duplicateCount} {duplicateCount === 1 ? 'wiersz oznaczony' : 'wierszy oznaczonych'} jako{' '}
+          {reconciliationBucketLabel('DUPLICATE').toLowerCase()} w tym przebiegu.
         </p>
       )}
     </div>

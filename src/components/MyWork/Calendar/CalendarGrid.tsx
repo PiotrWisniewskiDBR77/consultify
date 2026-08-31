@@ -257,7 +257,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   return (
     <div className="flex-1 flex flex-col min-w-0 min-h-0">
       {/* Toolbar */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+      <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <button
             onClick={goToday}
@@ -300,7 +300,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   viewMode === id
-                    ? 'bg-white text-primary-600 shadow-sm dark:bg-navy-800 dark:text-primary-400'
+                    ? 'bg-white text-slate-900 shadow-sm dark:bg-navy-800 dark:text-white'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >

@@ -121,28 +121,28 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <ToolbarBtn
             active={editor.isActive('bold')}
             onClick={() => editor.chain().focus().toggleBold().run()}
-            title="Bold"
+            title="Pogrubienie"
           >
             <Bold size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive('italic')}
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            title="Italic"
+            title="Kursywa"
           >
             <Italic size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive('strike')}
             onClick={() => editor.chain().focus().toggleStrike().run()}
-            title="Strikethrough"
+            title="Przekreślenie"
           >
             <Strikethrough size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive('highlight')}
             onClick={() => editor.chain().focus().toggleHighlight().run()}
-            title="Highlight"
+            title="Wyróżnienie"
           >
             <Highlighter size={14} />
           </ToolbarBtn>
@@ -150,14 +150,14 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <ToolbarBtn
             active={editor.isActive('bulletList')}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            title="Bullet list"
+            title="Lista punktowana"
           >
             <List size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive('orderedList')}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            title="Numbered list"
+            title="Lista numerowana"
           >
             <ListOrdered size={14} />
           </ToolbarBtn>
@@ -165,21 +165,21 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           <ToolbarBtn
             active={editor.isActive({ textAlign: 'left' })}
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
-            title="Align left"
+            title="Wyrównaj do lewej"
           >
             <AlignLeft size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive({ textAlign: 'center' })}
             onClick={() => editor.chain().focus().setTextAlign('center').run()}
-            title="Align center"
+            title="Wyrównaj do środka"
           >
             <AlignCenter size={14} />
           </ToolbarBtn>
           <ToolbarBtn
             active={editor.isActive({ textAlign: 'right' })}
             onClick={() => editor.chain().focus().setTextAlign('right').run()}
-            title="Align right"
+            title="Wyrównaj do prawej"
           >
             <AlignRight size={14} />
           </ToolbarBtn>
@@ -192,7 +192,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 editor.chain().focus().setLink({ href: url }).run();
               }
             }}
-            title="Link"
+            title="Odnośnik"
           >
             <LinkIcon size={14} />
           </ToolbarBtn>

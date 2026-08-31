@@ -1,3 +1,8 @@
+/**
+ * Odbiór grafiki 2026-08-30: „Dodaj więcej" i stan zaznaczenia świeciły czerwienią
+ * zarezerwowaną dla semantyki krytycznej (CLAUDE.md pułapka #1). Przycisk →
+ * neutralny, zaznaczenie → niebieskie c-focus. Zmierzone na zrzucie, nie z kodu.
+ */
 import { Check, ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -1126,7 +1131,7 @@ export function SWOTInputExplorationPhase({
                                       setFeedbackInput('');
                                       setSelectedDeepen('');
                                     }}
-                                    className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
+                                    className="inline-flex items-center rounded-full border border-c-border-strong bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised"
                                   >
                                     {labels.deepen}
                                   </button>
@@ -1167,7 +1172,7 @@ export function SWOTInputExplorationPhase({
                                               }
                                               className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                                 active
-                                                  ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
+                                                  ? 'border-c-focus bg-c-focus-subtle text-c-text dark:border-c-focus dark:text-c-text'
                                                   : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
                                               }`}
                                             >
@@ -1361,7 +1366,7 @@ export function SWOTInputExplorationPhase({
                                 setFeedbackInput('');
                                 setSelectedDeepen('');
                               }}
-                              className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
+                              className="inline-flex items-center rounded-full border border-c-border-strong bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised"
                             >
                               {labels.deepen}
                             </button>
@@ -1399,7 +1404,7 @@ export function SWOTInputExplorationPhase({
                                         }
                                         className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
                                           active
-                                            ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
+                                            ? 'border-c-focus bg-c-focus-subtle text-c-text dark:border-c-focus dark:text-c-text'
                                             : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
                                         }`}
                                       >

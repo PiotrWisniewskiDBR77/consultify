@@ -31,8 +31,9 @@ describe('auth.middleware private helpers', () => {
     expect(__private__.mapRole('admin')).toBe('administrator');
   });
 
-  it('mapRole maps superadmin to owner', () => {
-    expect(__private__.mapRole('superadmin')).toBe('owner');
+  it('mapRole preserves the distinct superadmin role', () => {
+    expect(__private__.mapRole('superadmin')).toBe('superadmin');
+    expect(__private__.mapRole('super_admin')).toBe('superadmin');
   });
 
   it('normalizePermissionRole maps manager to PROJECT_MANAGER', () => {

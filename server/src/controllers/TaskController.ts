@@ -3025,6 +3025,70 @@ export class TaskController {
   );
 
   // ==========================================
+  // TASK SECTION: RISK & ALTERNATIVES
+  // ==========================================
+
+  static getTaskRiskAlternatives = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const taskId = req.params.id;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const task = await DbPromise.get<{ risks: unknown; alternatives: unknown }>(
+        `SELECT risks, alternatives
+         FROM tasks
+         WHERE id = ? AND organization_id = ?`,
+        [taskId, orgId]
+      );
+      if (!task) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
+
+      res.json({
+        risks: Array.isArray(task.risks) ? task.risks : [],
+        alternatives: Array.isArray(task.alternatives) ? task.alternatives : [],
+      });
+    }
+  );
+
+  static updateTaskRiskAlternatives = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const taskId = req.params.id;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const risks = Array.isArray(req.body?.risks) ? req.body.risks : [];
+      const alternatives = Array.isArray(req.body?.alternatives) ? req.body.alternatives : [];
+      const result = await DbPromise.run(
+        `UPDATE tasks
+         SET risks = CAST(? AS JSONB), alternatives = CAST(? AS JSONB), updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ?`,
+        [JSON.stringify(risks), JSON.stringify(alternatives), taskId, orgId]
+      );
+      if (!result.changes) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
+
+      const task = await DbPromise.get<{ risks: unknown; alternatives: unknown }>(
+        `SELECT risks, alternatives FROM tasks WHERE id = ? AND organization_id = ?`,
+        [taskId, orgId]
+      );
+      res.json({
+        risks: Array.isArray(task?.risks) ? task.risks : [],
+        alternatives: Array.isArray(task?.alternatives) ? task.alternatives : [],
+      });
+    }
+  );
+
+  // ==========================================
   // TASK DEPENDENCIES (Gantt-style)
   // ==========================================
 

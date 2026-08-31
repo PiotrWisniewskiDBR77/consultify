@@ -7,7 +7,7 @@
  * the same component `MyIdeasListContent` mounts in production) wrapped in
  * the REAL shared powłoka: `<TopBar>` (Menu 1) from `ExecutiveModuleShell` +
  * the canonical `<ArtifactRightPanel>` accordion (Akcje·Właściwości·
- * Powiązania·Komentarze·Historia/AI — SSOT order). No re-implementation:
+ * Powiązania·Źródła i założenia·Komentarze·Historia — SSOT order). No re-implementation:
  * `IdeasTableContent` is pure-presentational (all data + handlers via
  * props, no store/API), so it mounts standalone with a mocked `MyIdea[]`
  * array — the same pattern as `dev-render/screens/assessment-initiatives-table.tsx`.
@@ -244,7 +244,10 @@ export function IdeaTableScreen(): React.ReactElement {
       },
       {
         id: 'history',
-        label: isPl ? 'Historia / AI' : 'History / AI',
+        // Nazwę sekcji kanonu narzuca `ArtifactRightPanel`
+        // (`ARTIFACT_PANEL_SECTION_LABELS`) — ta wartość jest ignorowana.
+        // Zostaje kanoniczna, żeby harness nie kłamał w kodzie.
+        label: isPl ? 'Historia' : 'History',
         children: (
           <PreviewAIHintStrip
             hints={[

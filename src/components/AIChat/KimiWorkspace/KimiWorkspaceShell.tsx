@@ -154,6 +154,7 @@ interface KimiWorkspaceShellProps {
   taskSteps: TaskStep[];
   totalSteps: number;
   completedSteps: number;
+  showProgressCount?: boolean;
   isGenerating: boolean;
   isCompleted: boolean;
   isFailed?: boolean;
@@ -320,6 +321,7 @@ function TaskProgressBar({
   completed,
   isGenerating,
   isCompleted,
+  showProgressCount,
   onReplay,
   onRemix,
 }: {
@@ -328,6 +330,7 @@ function TaskProgressBar({
   completed: number;
   isGenerating: boolean;
   isCompleted: boolean;
+  showProgressCount: boolean;
   onReplay?: () => void;
   onRemix?: () => void;
 }) {
@@ -357,9 +360,11 @@ function TaskProgressBar({
                 ? t('kimi.executingTask', 'Executing task...')
                 : t('kimi.taskProgress', 'Task Progress')}
           </span>
-          <span className="text-xs text-c-text-secondary font-mono">
-            {completed}/{total}
-          </span>
+          {showProgressCount && (
+            <span className="text-xs text-c-text-secondary font-mono">
+              {completed}/{total}
+            </span>
+          )}
           {isExpanded ? (
             <ChevronUp size={14} className="text-c-text-secondary" />
           ) : (
@@ -1019,6 +1024,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
   taskSteps,
   totalSteps,
   completedSteps,
+  showProgressCount = true,
   isGenerating,
   isCompleted,
   isFailed,
@@ -1074,6 +1080,7 @@ export const KimiWorkspaceShell: React.FC<KimiWorkspaceShellProps> = ({
           completed={completedSteps}
           isGenerating={isGenerating}
           isCompleted={isCompleted}
+          showProgressCount={showProgressCount}
           onReplay={onReplay}
           onRemix={onRemix}
         />

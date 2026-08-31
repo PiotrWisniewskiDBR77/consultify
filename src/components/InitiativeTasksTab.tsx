@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle, CheckSquare, Clock, Plus, Square, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 import { FullInitiative, InitiativeStatus, Task, TaskStatus, User } from '../types';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -66,6 +67,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       setIsCreateModalOpen(false);
     } catch (error) {
       console.error('Failed to create task', error);
+      toast.error('Failed to create task');
     }
   };
 

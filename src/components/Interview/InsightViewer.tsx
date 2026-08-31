@@ -137,6 +137,12 @@ import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { looksLikeInternalIdentifierText } from '@/utils/detectInternalIdentifierText';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
+import {
+  formatPresentationCount,
+  knownPresentation,
+  type PresentationState,
+  unknownPresentation,
+} from '@/utils/presentationState';
 
 // MIGRACJA (D-8): kompozycja kart Insight płynie z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z martwego mirrora INSIGHT_SPEC — patrz
@@ -1575,6 +1581,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   >({});
   const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
   const [findings, setFindings] = useState<V8InsightFinding[]>([]);
+  const [findingsPresentation, setFindingsPresentation] = useState<PresentationState<number>>(
+    unknownPresentation(t('presentationState.findingsPendingReason', 'findings are loading'))
+  );
   const [candidates, setCandidates] = useState<V8InsightCandidate[]>([]);
   const [analysis, setAnalysis] = useState<V8InsightAnalysis | null>(null);
   const [sourcePack, setSourcePack] = useState<V8InsightSourcePack | null>(null);
@@ -1602,19 +1611,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [draftPriority, setDraftPriority] = useState<CommentPriority>('normal');
 
   const loadPersistedFindings = useCallback(async (currentInsightId: string) => {
+    setFindingsPresentation(
+      unknownPresentation(t('presentationState.findingsPendingReason', 'findings are loading'))
+    );
     try {
-      const findingsRes = await V8InterviewApi.listFindings(currentInsightId)
-        .then((r) => r.findings)
-        .catch((err) => {
-          warnInsightSilentFailure(`listFindings(${currentInsightId}) failed`, err);
-          return [];
-        });
-      setFindings(Array.isArray(findingsRes) ? findingsRes : []);
+      const findingsRes = await V8InterviewApi.listFindings(currentInsightId).then(
+        (r) => r.findings
+      );
+      const nextFindings = Array.isArray(findingsRes) ? findingsRes : [];
+      setFindings(nextFindings);
+      setFindingsPresentation(knownPresentation(nextFindings.length));
     } catch (err) {
       warnInsightSilentFailure(`loadPersistedFindings(${currentInsightId}) failed`, err);
       setFindings([]);
+      setFindingsPresentation(
+        unknownPresentation(
+          t('presentationState.findingsLoadFailedReason', 'findings could not be loaded')
+        )
+      );
     }
-  }, []);
+  }, [t]);
 
   const loadInsightAnalysis = useCallback(async (currentInsightId: string) => {
     try {
@@ -1904,6 +1920,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         );
         setNComments((interviewDemoData.insightCommentsById[id] || []) as CommentItem[]);
         setFindings([]);
+        // ★ NAPRAWA 2026-08-31 — ZAWIESZONY STAN ŁADOWANIA POKAZANY JAKO DANA.
+        // Gałąź demo NIE woła `loadPersistedFindings` (zaraz niżej jest
+        // `if (isInterviewDemoId(insightId) && applyDemoInsight(...)) return`),
+        // więc `findingsPresentation` zostawało NA ZAWSZE w stanie startowym
+        // `unknown('trwa pobieranie ustaleń')`. Właściwość „Ustalenia" w prawym
+        // panelu pokazywała więc „— · nieznane: trwa pobieranie ustaleń" —
+        // zdanie o trwającym pobieraniu, którego nikt nigdy nie rozpoczął.
+        // Nic się nie ładuje, więc ekran ma powiedzieć PRAWDĘ: rejestr ustaleń
+        // nie jest wpięty w tym trybie. Brak NAZWANY, nie udawana dana
+        // (język uczciwości, KANON_Z_ODBIOROW.md: „braki wymienione z nazwy").
+        setFindingsPresentation(
+          unknownPresentation(
+            t(
+              'presentationState.findingsNotWiredInDemoReason',
+              'the findings register is not wired in demo mode'
+            )
+          )
+        );
         setCandidates([]);
         setAnalysis(null);
         setSourcePack(null);
@@ -4087,38 +4121,68 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 {executiveSummary || t('interview.insightViewer.noSummaryAvailable')}
               </Callout>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-[inset_3px_0_0_var(--c-border-strong)]">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-c-text-muted">
+              {/* ODBIÓR WŁAŚCICIELA 2026-08-30 (karta-insight, „do poprawki"), dosłownie:
+                  „W oknie centralnym mamy trzy kolumny (…). Zróbmy to w trzech dużych
+                  wierszach z trzema kolorami, aby było czytelne od góry do dołu."
+                  Trzy kafle obok siebie zmuszały do czytania w poprzek; teraz to trzy
+                  pełnowymiarowe wiersze, każdy z własnym kolorem szyny po lewej.
+                  Pierwszy dostał niebieski `c-info` — wcześniej był szary, więc kolory
+                  były realnie DWA, nie trzy. Niebieski, nie crimson: to nie jest stan
+                  krytyczny (CLAUDE.md pułapka #1). */}
+              <div className="flex flex-col gap-2">
+                {/* ODBIÓR WŁAŚCICIELA 2026-08-30 (druga tura): poprzednik dał temu
+                    wierszowi TYLKO niebieską szynę i niebieski napis, a tło i ramkę
+                    zostawił neutralne (`bg-c-surface-raised` = tło karty). Na zrzucie
+                    — zwłaszcza w ciemnym motywie — wiersz nie miał wtedy koloru:
+                    wypełnienie widać było w dwóch wierszach na trzy, więc „trzy kolory"
+                    czytały się jako dwa i szara pustka. Teraz wypełnienie i ramka idą
+                    z tokenu `--c-info`, jak szyna i napis — dokładnie tak, jak
+                    danger/emerald w wierszach niżej. Niebieski, nie crimson: to nie
+                    jest stan krytyczny (CLAUDE.md pułapka #1).
+
+                    JASNY MOTYW — WYPEŁNIENIE Z INNEGO ŹRÓDŁA NIŻ SZYNA, i to jest
+                    świadome. Wypełnienie liczone z `--c-info` (#3b2883, HBS Blue 1)
+                    wychodziło #E8E8F1, a Callout „Czytaj jak brief konsultingowy"
+                    tuż nad wierszem ma #EEECF9 — zmierzone z pikseli zrzutu, różnica
+                    kilku punktów na kanał i identyczny fiolet (R≈G). Wiersz czytał
+                    się jako szara plama i drugi fiolet, nie jako trzeci kolor.
+                    `hbs-blue-100` ma G>R, więc jest niebieski wobec fioletu Callouta,
+                    i tę samą jasność co `danger-50/60` i `emerald-50/60` niżej —
+                    trzy wiersze ważą tyle samo. Ciemny motyw zostaje na `--c-info`
+                    (#58a6ff), bo tam jest już jednoznacznie niebieski. */}
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-blue-200 dark:border-[color-mix(in_srgb,var(--c-info)_25%,transparent)] bg-blue-100/60 dark:bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] px-5 py-4 shadow-[inset_4px_0_0_var(--c-info)]">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info">
                     {t('interview.insightViewer.officialAnswers')}
                   </div>
-                  {/* Wszystkie trzy kafle czytają `insightCounts` — te same
+                  {/* Wszystkie trzy wiersze czytają `insightCounts` — te same
                       liczby, co plakietki nawigacji (R2/defekt #3). */}
-                  <div className="mt-1 text-2xl font-bold text-c-text">
+                  <div className="text-3xl font-bold leading-none text-c-text tabular-nums">
                     {insightCounts.officialAnswers}
                   </div>
                 </div>
-                <div className="rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.danger.400)]">
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-danger-200/40 dark:border-danger-900/30 bg-danger-50/60 dark:bg-danger-500/10 px-5 py-4 shadow-[inset_4px_0_0_theme(colors.danger.400)]">
                   {/* AA (sędzia grafiki, pkt 6): `danger-500` (#E80538) na jasnym
                       tle dawał 4,21:1 przy 11 px — poniżej progu 4,5. `danger-700`
                       (#910A28) to odcień opisany w palecie jako „AA text on white".
                       Ciemny motyw zmierzony na 7,3:1 → `danger-400` zostaje. */}
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks')}
                   </div>
-                  <div className="mt-1 text-2xl font-bold text-c-text">{insightCounts.issues}</div>
+                  <div className="text-3xl font-bold leading-none text-c-text tabular-nums">
+                    {insightCounts.issues}
+                  </div>
                 </div>
-                <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.emerald.400)]">
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-5 py-4 shadow-[inset_4px_0_0_theme(colors.emerald.400)]">
                   {/* AA (sędzia grafiki, pkt 6): `emerald-600` (#388A22) dawał
                       4,08:1 przy 11 px. `emerald-700` (#026833) = HBS Green 1,
                       w palecie opisany jako AA na białym. Dark bez zmian. */}
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     {t('interview.insightViewer.signalsOpportunities')}
                   </div>
-                  {/* Kafel łączy dwie sekcje nawigacji („Sygnały" +
+                  {/* Wiersz łączy dwie sekcje nawigacji („Sygnały" +
                       „Przestrzenie szans"), więc jego wartość musi być SUMĄ
                       dokładnie tych dwóch liczników — nie trzeciego zestawu. */}
-                  <div className="mt-1 text-2xl font-bold text-c-text">
+                  <div className="text-3xl font-bold leading-none text-c-text tabular-nums">
                     {insightCounts.signals + insightCounts.opportunities}
                   </div>
                 </div>
@@ -8864,18 +8928,37 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // `readMode` jest PIERWSZYM warunkiem pustki: przyciski niżej wywołują
       // `runStatusTransition`, czyli ZAPIS statusu wniosku. W Podglądzie
       // sekcja mówi to samo, co w Zadaniu i Decyzji — akcje są w Edycji.
-      // Etap 4 gridu n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w
-      // Podglądzie sekcja jest ZWINIĘTA z licznikiem 0, bez komunikatu
-      // opisowego (był tu tekst „Actions are hidden in preview mode" — SSOT
-      // go zakazuje wprost). Drugi powód pustki (`!statusEditable` /
-      // brak opcji statusu) zachowuje swój własny, opisowy komunikat — to
-      // NIE jest tryb Podgląd, więc reguła go nie dotyczy.
-      defaultOpen: !(readMode || !statusEditable || statusBaseOptions.length === 0),
-      isEmpty: readMode || !statusEditable || statusBaseOptions.length === 0,
+      //
+      // ★ AKTUALIZACJA 2026-08-30 — decyzja właściciela ZASTĘPUJE zakaz z 24.07.
+      // Etap 4 gridu n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md) kazał tu
+      // sekcję ZWINIĘTĄ z licznikiem 0 i BEZ komunikatu, więc w Podglądzie
+      // zostawało NAGIE ZERO. Właściciel rozstrzygnął, że nagie zero wprowadza
+      // w błąd („liczba 0 nie oznacza braku działań" — wzorzec INS-2026-014,
+      // docs/program/grafika/KANON_Z_ODBIOROW.md) i kazał dopisać zdanie
+      // wyjaśniające. Zakazany był komunikat po ANGIELSKU, mówiący o TRYBIE
+      // („Actions are hidden in preview mode"); ten mówi o ZNACZENIU LICZBY,
+      // po polsku — i to jest różnica, której tamten zakaz dotyczył.
+      // Sekcja jest w Podglądzie ROZWINIĘTA: zwinięta chowałaby dokładnie to,
+      // co miało przestać wprowadzać w błąd.
+      //
+      // Drugi powód pustki (`!statusEditable` / brak opcji statusu) zachowuje
+      // swój własny, opisowy komunikat — to NIE jest tryb Podgląd, więc reguła
+      // nagiego zera go nie dotyczy (nie ma tam licznika `0`).
+      defaultOpen: readMode || !(!statusEditable || statusBaseOptions.length === 0),
+      // W Podglądzie sekcja NIE jest „pusta" — niesie zdanie o znaczeniu
+      // licznika. Licznik zostaje `0`, bo działań realnie w tym widoku nie ma.
+      isEmpty: !readMode && (!statusEditable || statusBaseOptions.length === 0),
       badge: readMode ? 0 : undefined,
       showZeroBadge: true,
       emptyLabel: readMode ? undefined : t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
-      children: readMode ? null : (
+      children: readMode ? (
+        <p className="text-xs leading-relaxed text-c-text-muted">
+          {t(
+            'interview.insightViewer.actionsZeroDescribesViewNote',
+            'Actions are unavailable in Preview. The 0 describes this view, not the insight — it is a limit of the preview, not a statement that there are no actions. Switch to Edit to see them.'
+          )}
+        </p>
+      ) : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-1.5">
             {statusBaseOptions
@@ -8949,7 +9032,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             {
               id: 'findings',
               label: t('interview.insightViewer.findings'),
-              value: String(findingsSummary.total),
+              value: formatPresentationCount(findingsPresentation, {
+                hidden: t('presentationState.hidden', 'hidden'),
+                unknown: t('presentationState.unknown', 'unknown'),
+              }),
               mono: true,
             },
             {

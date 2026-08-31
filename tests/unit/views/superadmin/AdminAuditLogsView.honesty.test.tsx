@@ -89,7 +89,8 @@ describe('AdminAuditLogsView honest UI', () => {
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
     expect(screen.queryByText(/Invalid Date/i)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Resolve audit log log-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Resolve$/i }));
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed and remediated' },
     });
@@ -128,7 +129,8 @@ describe('AdminAuditLogsView honest UI', () => {
     render(<AdminAuditLogsView />);
 
     await screen.findByText('delete');
-    fireEvent.click(screen.getByRole('button', { name: /Resolve audit log log-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Resolve$/i }));
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed' },
     });

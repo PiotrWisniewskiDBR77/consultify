@@ -26,7 +26,7 @@ import type { TableColumn, TableRow } from '../../src/components/standard/Standa
 import { StandardTable } from '../../src/components/standard/StandardTable';
 
 const COLUMNS: TableColumn[] = [
-  { id: 'title', label: 'Nazwa', type: 'text', width: '40%' },
+  { id: 'title', label: 'Nazwa', type: 'text', width: '360px' },
   { id: 'owner', label: 'Właściciel', type: 'text' },
   { id: 'status', label: 'Status', type: 'text' },
   { id: 'updated', label: 'Aktualizacja', type: 'text' },

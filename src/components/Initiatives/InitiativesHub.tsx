@@ -71,6 +71,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, formatRelativeTime, formatShortDate } from '@/utils/initiativeHelpers';
+import { isInitiativeBridgeEnabled } from '@/utils/initiativeBridgeFlag';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
@@ -285,6 +286,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     return requestedTab && CANONICAL_INITIATIVES_TABS.has(requestedTab) ? requestedTab : initialTab;
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAdoptingClassic, setIsAdoptingClassic] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   // V3-A02: Persistent dynamic tabs via sessionStorage
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
@@ -1356,6 +1358,55 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     fetchData(true);
   }, [bulkOwnerExecutionId, fetchData, isPilotParticipant, selectedIds, t]);
 
+  const handleAdoptClassicInitiative = useCallback(async () => {
+    const projectId = String(currentProjectId || '').trim();
+    const ownerId = String((currentUser as any)?.id || '').trim();
+    if (!projectId || !ownerId) {
+      toast.error(t('initiatives.bridge.contextMissing', 'Project and initiative owner are required.'));
+      return;
+    }
+    const initiativeId = window.prompt(
+      t('initiatives.bridge.initiativeId', 'Classic initiative ID to adopt')
+    )?.trim();
+    if (!initiativeId) return;
+    const candidateId = window.prompt(
+      t('initiatives.bridge.candidateId', 'Accepted candidate ID linked to this initiative')
+    )?.trim();
+    if (!candidateId) return;
+    if (!window.confirm(
+      t('initiatives.bridge.confirm', {
+        defaultValue: 'Adopt classic initiative "{{initiativeId}}" into the canonical register?',
+        initiativeId,
+      })
+    )) return;
+
+    setIsAdoptingClassic(true);
+    try {
+      const response = await fetch('/api/initiatives/runtime-v1/adoptions/accepted-classic', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          candidateId,
+          initiativeId,
+          expectedVersion: 0,
+          clientRequestId: crypto.randomUUID(),
+          projectId,
+          visibility: 'PROJECT',
+          initiativeOwnerId: ownerId,
+        }),
+      });
+      if (!response.ok) throw new Error(`Accepted-classic adoption failed (${response.status})`);
+      toast.success(t('initiatives.bridge.adopted', 'Initiative added to the canonical register.'));
+      await fetchData(true);
+    } catch (error) {
+      console.error('[InitiativesHub] Accepted-classic adoption failed:', error);
+      toast.error(t('initiatives.bridge.failed', 'Could not adopt the classic initiative.'));
+    } finally {
+      setIsAdoptingClassic(false);
+    }
+  }, [currentProjectId, currentUser, fetchData, t]);
+
   // Canon §9: Archive initiative (only DONE/CANCELLED → ARCHIVED per backend rule)
   const handleArchiveInitiative = useCallback(
     async (initiative: PortfolioInitiative) => {
@@ -1580,6 +1631,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           initiatives={planInitiatives}
           activePreset={canonicalMenu3Preset.plan}
           onCountsChange={handlePlanMenu3Counts}
+          /* Odbiór 141-plan-scenario (2026-08-31): „Otwórz" w podglądzie planu
+             prowadzi do KARTY INICJATYWY — ta sama droga co w PortfolioHealthView
+             niżej. Wcześniej otwierał warsztat planu pod tabelą. */
+          onOpenInitiative={(id, title) => {
+            const initiative = allInitiatives.find((item) => item.id === id);
+            handleOpenInitiativeDocument(
+              initiative ??
+                ({ id, name: title, status: InitiativeStatus.DRAFT } as PortfolioInitiative)
+            );
+          }}
         />
       );
     }
@@ -2287,6 +2348,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           );
         })}
       </div>
+      {isInitiativeBridgeEnabled() && !isPilotParticipant && (
+        <div className={MENU_3_RIGHT_CLASS}>
+          <button
+            type="button"
+            onClick={() => void handleAdoptClassicInitiative()}
+            disabled={isAdoptingClassic}
+            className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isAdoptingClassic
+              ? t('initiatives.bridge.adopting', 'Adopting…')
+              : t('initiatives.bridge.action', 'Adopt classic initiative')}
+          </button>
+        </div>
+      )}
       {/* P-22 (Piotr, OBR-102 2026-07-27): „Te dwa przyciski nie są potrzebne
           na pewno" — prawa strona Menu 3 jest teraz PUSTA.
           - „+ New"   → usunięty 07-27 (D-01: dublował CTA „New initiative")

@@ -44,7 +44,7 @@ describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   });
 
   it('should trigger circuit on 502 or Network Error', () => {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       recordGlobalTransportFailure('/api/some-endpoint', 502);
     }
     const blocked = maybeGetGlobalBlockedTransportResponse('/api/some-endpoint');
@@ -53,7 +53,7 @@ describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   });
 
   it('should clear circuit on clearGlobalTransportFailure', () => {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       recordGlobalTransportFailure('/api/some-endpoint', 502);
     }
     expect(maybeGetGlobalBlockedTransportResponse('/api/some-endpoint')).not.toBeNull();
@@ -73,7 +73,7 @@ describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   });
 
   it('should not block bypassed endpoints even if circuit is open', () => {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       recordGlobalTransportFailure('/api/some-endpoint', 502);
     }
     expect(maybeGetGlobalBlockedTransportResponse('/api/interview/sessions')).toBeNull();

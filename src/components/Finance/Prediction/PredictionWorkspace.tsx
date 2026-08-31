@@ -510,7 +510,11 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
         >
           Realny rekord (wersja {mountCheck.version.versionNo}, status:{' '}
           {businessVersionStatusLabel(mountCheck.version.status)}) i kanoniczna treść założeń
-          zostały odczytane. Rewizja authoringu: {authoringState.revision}.
+          zostały odczytane. Rewizja edycji:{' '}
+          {authoringState.revision !== undefined && authoringState.revision !== null
+            ? authoringState.revision
+            : '—'}
+          .
           <button
             type="button"
             className="ml-3 rounded border border-c-border px-3 py-1 font-medium text-c-text-primary disabled:opacity-50"

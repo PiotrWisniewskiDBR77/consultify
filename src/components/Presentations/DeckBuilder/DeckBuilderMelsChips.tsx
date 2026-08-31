@@ -67,6 +67,8 @@ export interface DeckBuilderTopBarChipsLabels {
   share?: string;
   agent?: string;
   run?: string;
+  runOptions?: string;
+  runFromCurrent?: string;
   runFromStart?: string;
   presenter?: string;
 }
@@ -130,6 +132,8 @@ const DEFAULT_LABELS: Required<Omit<DeckBuilderTopBarChipsLabels, 'internalLabel
   share: 'Share',
   agent: 'Teresa',
   run: 'Present',
+  runOptions: 'Presentation options',
+  runFromCurrent: 'From current slide',
   runFromStart: 'Present from beginning',
   presenter: 'Presenter view',
 };

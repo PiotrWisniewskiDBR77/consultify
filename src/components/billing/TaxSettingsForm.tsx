@@ -80,7 +80,8 @@ interface TaxSettingsFormProps {
 }
 
 export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const regionNames = new Intl.DisplayNames(i18n.language || 'pl', { type: 'region' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<TaxSettings>({
@@ -183,7 +184,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               <option value="">{t('billing.tax.selectType', 'Select type...')}</option>
               {TAX_ID_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
-                  {type.label}
+                  {t(`billing.tax.idType.${type.value}`, type.label)}
                 </option>
               ))}
             </select>
@@ -197,7 +198,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               type="text"
               value={settings.tax_id || ''}
               onChange={(e) => handleChange('tax_id', e.target.value)}
-              placeholder="e.g., EU123456789"
+              placeholder={t('billing.tax.taxIdPlaceholder', 'np. PL1234567890')}
               className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -245,7 +246,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 type="text"
                 value={settings.billing_name || ''}
                 onChange={(e) => handleChange('billing_name', e.target.value)}
-                placeholder="Acme Corporation"
+                placeholder={t('billing.tax.billingNamePlaceholder', 'np. Przykładowa Sp. z o.o.')}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -258,7 +259,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 type="email"
                 value={settings.billing_email || ''}
                 onChange={(e) => handleChange('billing_email', e.target.value)}
-                placeholder="billing@company.com"
+                placeholder={t('billing.tax.billingEmailPlaceholder', 'np. rozliczenia@firma.pl')}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -272,7 +273,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               type="text"
               value={settings.billing_address_line1 || ''}
               onChange={(e) => handleChange('billing_address_line1', e.target.value)}
-              placeholder="123 Business Street"
+              placeholder={t('billing.tax.addressLine1Placeholder', 'np. ul. Przykładowa 12')}
               className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -285,7 +286,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
               type="text"
               value={settings.billing_address_line2 || ''}
               onChange={(e) => handleChange('billing_address_line2', e.target.value)}
-              placeholder="Suite 100"
+              placeholder={t('billing.tax.addressLine2Placeholder', 'np. lokal 10')}
               className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -299,7 +300,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 type="text"
                 value={settings.billing_city || ''}
                 onChange={(e) => handleChange('billing_city', e.target.value)}
-                placeholder="Warsaw"
+                placeholder={t('billing.tax.cityPlaceholder', 'np. Warszawa')}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -312,7 +313,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 type="text"
                 value={settings.billing_state || ''}
                 onChange={(e) => handleChange('billing_state', e.target.value)}
-                placeholder="Mazovia"
+                placeholder={t('billing.tax.statePlaceholder', 'np. mazowieckie')}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -342,7 +343,7 @@ export const TaxSettingsForm: React.FC<TaxSettingsFormProps> = ({ onSave }) => {
                 <option value="">{t('billing.tax.selectCountry', 'Select...')}</option>
                 {COUNTRIES.map((country) => (
                   <option key={country.code} value={country.code}>
-                    {country.name}
+                  {regionNames.of(country.code) || country.name}
                   </option>
                 ))}
               </select>

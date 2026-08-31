@@ -1161,7 +1161,21 @@ html.reduce-motion.focus-style-animated :focus-visible {
 
 /* CHAT-OWN-012 — restrained idle affordance around the Teresa composer.
    It is mounted only while the input is empty, enabled, unfocused and neither
-   sending nor recording, so it never impersonates an operation state. */
+   sending nor recording, so it never impersonates an operation state.
+
+   NAPRAWA 2026-08-30 (defekt zmierzony na zrzutach 01-czat-kanwy): orbita NIE
+   MOŻE być robiona przez `transform: rotate()` na ::before. Pseudo-element to
+   prostokąt (zmierzone 343x125), a maska `xor` maluje ring PO JEGO KRAWĘDZI.
+   Obrót kręci więc całym prostokątem — ring ODKLEJA się od ramki composera
+   i tnie cienką crimsonową kreską przez placeholder i listę wiadomości
+   (przy 90° kreska biegła 110 px WEWNĄTRZ pola, pionowo przez tekst).
+   Poprawnie: pseudo-element stoi nieruchomo, animujemy SAM kąt startowy
+   gradientu — ring zawsze pokrywa się z ramką, a akcent po niej wędruje. */
+@property --chat-orbit-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
 .chat-composer-idle-pulse::before {
   position: absolute;
   inset: -1px;
@@ -1171,7 +1185,7 @@ html.reduce-motion.focus-style-animated :focus-visible {
   pointer-events: none;
   content: '';
   background: conic-gradient(
-    from 0deg,
+    from var(--chat-orbit-angle),
     transparent 0deg 260deg,
     rgb(133 24 47 / 0.08) 285deg,
     rgb(133 24 47 / 0.55) 330deg,
@@ -1183,12 +1197,11 @@ html.reduce-motion.focus-style-animated :focus-visible {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   animation: chat-composer-idle-orbit 12s linear infinite;
-  will-change: transform;
 }
 
 @keyframes chat-composer-idle-orbit {
   to {
-    transform: rotate(1turn);
+    --chat-orbit-angle: 360deg;
   }
 }
 
@@ -1196,13 +1209,11 @@ html.reduce-motion.focus-style-animated :focus-visible {
   .chat-composer-idle-pulse::before {
     animation: none;
     opacity: 0.18;
-    will-change: auto;
   }
 }
 html.reduce-motion .chat-composer-idle-pulse::before {
   animation: none;
   opacity: 0.18;
-  will-change: auto;
 }
 /* reduce-motion: keep a static accent frame, drop the pulse */
 html.reduce-motion .chat-streaming-frame::after {

@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type AdminGuest, getAdminGuests, revokeAdminGuest } from '../../services/adminGuestsApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminGuestsPanel: React.FC = () => {
@@ -55,9 +56,9 @@ export const AdminGuestsPanel: React.FC = () => {
             scope: g.project_id
               ? t('admin.team.guests-external.scope.project', { projectId: g.project_id })
               : t('admin.team.guests-external.scope.organization'),
-            granted: new Date(g.granted_at).toLocaleString(),
+            granted: formatListDateTime(g.granted_at),
             expires: g.expires_at
-              ? new Date(g.expires_at).toLocaleString()
+              ? formatListDateTime(g.expires_at)
               : t('admin.team.guests-external.noExpiry'),
             status: expired ? t('admin.team.guests-external.status.expired') : g.status,
           };

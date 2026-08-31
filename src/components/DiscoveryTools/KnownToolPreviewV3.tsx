@@ -16,6 +16,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { formatListDate } from '@/utils/listDateFormat';
 
 type KnownToolListItem = {
   id: string;
@@ -65,12 +66,12 @@ const clampText = (s: string, max = 120) => {
   return `${t.slice(0, max - 1)}…`;
 };
 
-const formatDate = (iso?: string | null) => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
+/**
+ * Odbiór 2026-08-30 (przegląd modułów 04/11/16): `toLocaleDateString(undefined, …)`
+ * bierze locale z przeglądarki, nie z konta — patrz `src/utils/listDateFormat.ts`
+ * (SSOT, 270 takich wywołań znalezionych 2026-07-27).
+ */
+const formatDate = (iso?: string | null) => formatListDate(iso);
 
 async function refineText(params: {
   text: string;

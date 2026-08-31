@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '@/services/api';
@@ -83,7 +83,11 @@ describe('DeviceManagementView honest UI', () => {
 
     expect(await screen.findByText('Unknown device')).toBeInTheDocument();
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Block device device-1/i })).toBeDisabled();
+    // Row actions are exposed through the canonical StandardTable kebab. The
+    // former per-row button was removed intentionally; assert the live menu
+    // contract instead of pinning the retired surface.
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /Block device/i })).toBeDisabled();
     expect(screen.queryByText(/Invalid Date/i)).not.toBeInTheDocument();
   });
 

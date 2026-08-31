@@ -27,6 +27,7 @@ const MIGRATION_PATH = path.resolve(
 );
 
 const PG_URL = process.env.RES10_PG_URL;
+const TEST_SCHEMA = 'day71_kpi_scorecard_service_tenant';
 const describeIfPg = PG_URL ? describe : describe.skip;
 
 let client: Client;
@@ -71,6 +72,10 @@ describeIfPg('RES-10 — kpiScorecardService cross-tenant (real PostgreSQL)', ()
   beforeAll(async () => {
     client = new Client({ connectionString: PG_URL });
     await client.connect();
+
+    await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
+    await client.query(`CREATE SCHEMA ${TEST_SCHEMA}`);
+    await client.query(`SET search_path TO ${TEST_SCHEMA}, public`);
 
     await client.query(
       `DROP TABLE IF EXISTS kpi_scorecard_items, kpi_scorecards, initiative_kpis CASCADE`
@@ -124,6 +129,7 @@ describeIfPg('RES-10 — kpiScorecardService cross-tenant (real PostgreSQL)', ()
     await client.query(
       `DROP TABLE IF EXISTS kpi_scorecard_items, kpi_scorecards, initiative_kpis CASCADE`
     );
+    await client.query(`DROP SCHEMA IF EXISTS ${TEST_SCHEMA} CASCADE`);
     await client.end();
   });
 

@@ -8,6 +8,7 @@ import {
   getAccessReviewData,
   type PrivilegedMember,
 } from '../../services/adminAccessReviewsApi';
+import { formatListDate } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminAccessReviewsPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -25,9 +26,7 @@ export const AdminAccessReviewsPanel: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
   const next = policy
-    ? new Date(
-        Date.now() + Number(policy.accessReviewCadenceDays || 90) * 86400000
-      ).toLocaleDateString()
+    ? formatListDate(Date.now() + Number(policy.accessReviewCadenceDays || 90) * 86400000)
     : '—';
   const cols = useMemo<TableColumn[]>(
       () => [
@@ -42,6 +41,12 @@ export const AdminAccessReviewsPanel: React.FC = () => {
         {
           id: 'role',
           label: t('admin.team.access-reviews.columns.role'),
+          // Same PL/EN role map as the Members screen (admin.membersRoles.roles.*) —
+          // OWNER/ADMIN must read identically everywhere, not via a second map.
+          render: (row) =>
+            t(`admin.membersRoles.roles.${String(row.role || '').toLowerCase()}`, {
+              defaultValue: row.role,
+            }),
         },
         {
           id: 'status',

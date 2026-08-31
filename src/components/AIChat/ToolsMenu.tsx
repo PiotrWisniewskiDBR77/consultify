@@ -17,6 +17,7 @@ import {
   ChevronRight,
   FolderPlus,
   GraduationCap,
+  Lightbulb,
   Lock,
   MessageSquare,
   Pen,
@@ -208,6 +209,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     ttsRate,
     ttsVoice,
     privateMode,
+    chatSuggestionsEnabled,
   } = aiConfig as any;
 
   const activeModeCount = [
@@ -253,6 +255,22 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.modes.textToSpeech.label',
       descKey: 'aiChat.menu.modes.textToSpeech.desc',
       enabled: textToSpeech,
+    },
+    // D-104 (2026-08-30) — owner: "chipy sugestii ... możemy gdzieś jakoś
+    // kontekstowo to włączać, wyłączać ... wyrzucenie tego całkiem nie jest
+    // okej". Placed here (not next to the "+" attachments menu — that menu is
+    // specifically file/cloud sources, a suggestions toggle there would be a
+    // false match) because this is the existing, established home for
+    // persisted chat-display preferences (checkmark list, same aiConfig
+    // slice). Default ON, so nobody's chips disappear from under them; a
+    // user who finds them noisy switches this off here, once, and it stays
+    // off (persisted via aiConfig, same as every mode above).
+    {
+      id: 'chatSuggestionsEnabled',
+      icon: Lightbulb,
+      labelKey: 'aiChat.menu.modes.chatSuggestionsEnabled.label',
+      descKey: 'aiChat.menu.modes.chatSuggestionsEnabled.desc',
+      enabled: chatSuggestionsEnabled ?? true,
     },
   ];
 

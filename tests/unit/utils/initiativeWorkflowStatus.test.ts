@@ -16,9 +16,9 @@ describe('initiativeWorkflowStatus', () => {
     expect(hasInitiativeStatusReadDrift({ statusReadDrift: true })).toBe(true);
   });
 
-  it('detects drift when raw and display disagree', () => {
+  it('does not infer drift from distinct raw and portfolio vocabularies', () => {
     expect(
       hasInitiativeStatusReadDrift({ status: 'OLD', displayStatus: 'EXECUTING' })
-    ).toBe(true);
+    ).toBe(false);
   });
 });

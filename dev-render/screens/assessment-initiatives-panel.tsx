@@ -148,7 +148,7 @@ export default function AssessmentInitiativesPanelScreen(): React.ReactElement {
   return (
     <FeatureFlagsProvider showDevTools={false}>
       <MemoryRouter initialEntries={['/']}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px' }}>
+        <div style={{ padding: '16px' }}>
           <InitiativesManagementPanel
             assessmentId={ASSESSMENT_ID}
             assessmentName="DBR77 · Digital Readiness Diagnosis"

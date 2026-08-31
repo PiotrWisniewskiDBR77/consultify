@@ -15,6 +15,7 @@
  * then `?screen=vault-safes-table&theme=light|dark`.
  */
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 import { useAppStore } from '../../src/store/useAppStore';
 import { ClientDocumentsVault } from '../../src/views/vault/ClientDocumentsVault';
@@ -269,8 +270,19 @@ if (!g.__VAULT_SAFES_FETCH__) {
 
 export default function VaultSafesTableScreen(): React.ReactElement {
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto', height: '80vh' }}>
-      <ClientDocumentsVault />
-    </div>
+    // HARNESS-ONLY FIX (2026-08-30): ClientDocumentsVault's DocumentsRAGTab
+    // calls useSearchParams() (react-router-dom), which throws without a
+    // Router ancestor — this screen previously crashed with "useLocation()
+    // may be used only in the context of a <Router> component" before any
+    // paint. Pattern from dev-render/screens/idea-table.tsx. Production
+    // always mounts this inside the app's real Router.
+    <MemoryRouter initialEntries={['/']}>
+      {/* GRAFIKA 20-tabele-szerokosc (2026-08-30): `maxWidth: 1180, margin: '0 auto'`
+          usunięty — HARNESS-ONLY artefakt (MyWorkHub.tsx montuje
+          <ClientDocumentsVault /> bez żadnego limitu szerokości). */}
+      <div style={{ height: '80vh' }}>
+        <ClientDocumentsVault />
+      </div>
+    </MemoryRouter>
   );
 }

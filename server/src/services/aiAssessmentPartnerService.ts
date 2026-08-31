@@ -15,6 +15,7 @@ import {
   ROIEstimateSchema,
   validateOrFallback,
 } from '../utils/AISchemaValidator.js';
+import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '../data/drdStructure.js';
 import logger from '../utils/Logger.js';
 
 // AI THINKING_PARTNER Mode Configuration
@@ -49,12 +50,29 @@ const AI_PARTNER_CONFIG = {
   },
 };
 
-// DRD Axis Definitions for Context
+// Level count per axis key, sourced from the single source of truth
+// (server/src/data/drdStructure.ts, DRD_STRUCTURE / DRD_AXIS_KEY_MAP).
+// Do NOT hand-copy this number here: axis.levelCount is 5, 6 or 7 depending
+// on the axis (digitalProducts, businessModels, aiMaturity = 5; culture,
+// cybersecurity = 6; processes, dataManagement = 7). A hand-maintained copy
+// previously invented levels 6-7 for every axis below, including axes the
+// owner's methodology caps at 5 or 6 — see
+// tests/unit/backend/aiAssessmentPartnerService.test.ts ("should have 7
+// maturity levels for each axis") for a test that still encodes that defect.
+const AXIS_LEVEL_COUNT: Record<string, number> = Object.fromEntries(
+  DRD_STRUCTURE.map((axis) => [DRD_AXIS_KEY_MAP[axis.id], axis.levelCount])
+);
+
+// DRD Axis Definitions for Context.
+// `levelCount` comes from AXIS_LEVEL_COUNT (the SOT) above — never hardcode
+// it. The `levels` maps below hold hand-written, THINKING_PARTNER-specific
+// prose per level and must not contain entries beyond levelCount.
 const DRD_AXES = {
   processes: {
     name: 'Digital Processes',
     description:
       'Level of digital automation, integration and optimization of operational processes',
+    levelCount: AXIS_LEVEL_COUNT.processes,
     levels: {
       1: 'Manual, paper-based processes with no digital tools',
       2: 'Basic digitization of some processes (spreadsheets, email)',
@@ -68,32 +86,31 @@ const DRD_AXES = {
   digitalProducts: {
     name: 'Digital Products & Services',
     description: 'Extent to which products/services incorporate digital capabilities',
+    levelCount: AXIS_LEVEL_COUNT.digitalProducts,
     levels: {
       1: 'Traditional physical products with no digital components',
       2: 'Basic digital documentation and support',
       3: 'Connected products with data collection',
       4: 'Smart products with analytics and user personalization',
       5: 'Platform-based products with ecosystem integration',
-      6: 'AI-driven products with predictive capabilities',
-      7: 'Autonomous, adaptive product ecosystems',
     },
   },
   businessModels: {
     name: 'Digital Business Models',
     description: 'Adoption of digital-enabled revenue streams and business models',
+    levelCount: AXIS_LEVEL_COUNT.businessModels,
     levels: {
       1: 'Traditional product/service sales only',
       2: 'Basic e-commerce or digital sales channels',
       3: 'Digital services as add-on revenue',
       4: 'Subscription or outcome-based models',
       5: 'Platform/marketplace business models',
-      6: 'Data monetization and ecosystem orchestration',
-      7: 'Autonomous value creation networks',
     },
   },
   dataManagement: {
     name: 'Data & Analytics',
     description: 'Maturity of data infrastructure, governance and analytics capabilities',
+    levelCount: AXIS_LEVEL_COUNT.dataManagement,
     levels: {
       1: 'Scattered data in silos, no analytics',
       2: 'Basic reporting from operational systems',
@@ -107,6 +124,7 @@ const DRD_AXES = {
   culture: {
     name: 'Organizational Culture',
     description: 'Digital-first mindset, agility and innovation culture',
+    levelCount: AXIS_LEVEL_COUNT.culture,
     levels: {
       1: 'Resistance to change, hierarchical',
       2: 'Awareness of digital need, limited action',
@@ -114,12 +132,12 @@ const DRD_AXES = {
       4: 'Organization-wide digital transformation commitment',
       5: 'Agile, experimentation-driven culture',
       6: 'Innovation as core competency',
-      7: 'Adaptive, self-organizing digital-native culture',
     },
   },
   cybersecurity: {
     name: 'Cybersecurity & Risk',
     description: 'Security posture, risk management and compliance maturity',
+    levelCount: AXIS_LEVEL_COUNT.cybersecurity,
     levels: {
       1: 'No formal security measures',
       2: 'Basic firewall and antivirus',
@@ -127,20 +145,18 @@ const DRD_AXES = {
       4: 'ISMS, incident response, regular audits',
       5: 'Advanced threat detection and response',
       6: 'Zero-trust architecture with AI security',
-      7: 'Autonomous security operations',
     },
   },
   aiMaturity: {
     name: 'AI & Machine Learning',
     description: 'Adoption and sophistication of AI/ML capabilities',
+    levelCount: AXIS_LEVEL_COUNT.aiMaturity,
     levels: {
       1: 'No AI awareness or usage',
       2: 'Exploration of AI use cases',
       3: 'Pilot AI projects in specific areas',
       4: 'Production AI solutions with governance',
       5: 'AI-first strategy with MLOps',
-      6: 'Pervasive AI across organization',
-      7: 'AI-native organization with autonomous systems',
     },
   },
 };
@@ -561,6 +577,9 @@ class AIAssessmentPartnerService {
     return Math.round(base * multiplier);
   }
 
+  // NOTE: like DRD_AXES above, this map must not contain entries beyond
+  // AXIS_LEVEL_COUNT[axisId] — levels 6/7 were previously hand-added for
+  // 5- and 6-level axes and have been removed (2026-08-30 DRD level-count fix).
   _getKeyActivities(axisId, level) {
     const activities = {
       processes: {
@@ -576,8 +595,6 @@ class AIAssessmentPartnerService {
         3: ['Implement IoT sensors', 'Build data collection layer'],
         4: ['Add analytics dashboard', 'Personalization features'],
         5: ['Build platform APIs', 'Ecosystem integrations'],
-        6: ['Implement predictive AI', 'Autonomous features'],
-        7: ['Full product autonomy', 'Self-evolving capabilities'],
       },
       dataManagement: {
         2: ['Consolidate data sources', 'Basic reporting tools'],
@@ -593,7 +610,6 @@ class AIAssessmentPartnerService {
         4: ['Organization-wide commitment', 'Leadership buy-in'],
         5: ['Agile methodologies', 'Experimentation culture'],
         6: ['Innovation programs', 'Intrapreneurship'],
-        7: ['Self-organizing teams', 'Continuous evolution'],
       },
       cybersecurity: {
         2: ['Firewall & antivirus', 'Basic policies'],
@@ -601,23 +617,18 @@ class AIAssessmentPartnerService {
         4: ['ISMS implementation', 'Incident response'],
         5: ['SIEM & threat detection', 'Penetration testing'],
         6: ['Zero-trust architecture', 'AI-based security'],
-        7: ['Autonomous SOC', 'Self-healing security'],
       },
       businessModels: {
         2: ['E-commerce setup', 'Digital sales channels'],
         3: ['Digital service add-ons', 'Online subscriptions'],
         4: ['Outcome-based models', 'Usage-based pricing'],
         5: ['Platform business model', 'Marketplace setup'],
-        6: ['Data monetization', 'Ecosystem orchestration'],
-        7: ['Autonomous value networks', 'AI-driven models'],
       },
       aiMaturity: {
         2: ['AI use case discovery', 'Proof of concepts'],
         3: ['Pilot AI projects', 'Data scientist hiring'],
         4: ['Production AI', 'AI governance'],
         5: ['AI-first strategy', 'MLOps platform'],
-        6: ['Pervasive AI', 'AI center of excellence'],
-        7: ['AI-native organization', 'Autonomous AI systems'],
       },
     };
 
@@ -643,7 +654,7 @@ class AIAssessmentPartnerService {
             You are helping a consultant write a justification for a digital maturity assessment.
             
             Axis: ${axis.name}
-            Score: ${score}/7
+            Score: ${score}/${axis.levelCount}
             Level Description: ${axis.levels[score]}
             ${context.industry ? `Industry: ${context.industry}` : ''}
             ${context.companySize ? `Company Size: ${context.companySize}` : ''}
@@ -701,7 +712,7 @@ class AIAssessmentPartnerService {
             You are helping identify evidence for a digital maturity assessment.
             
             Axis: ${axis.name}
-            Score: ${score}/7
+            Score: ${score}/${axis.levelCount}
             Level: ${axis.levels[score]}
             ${context.industry ? `Industry: ${context.industry}` : ''}
             
@@ -771,11 +782,11 @@ class AIAssessmentPartnerService {
     };
 
     const multiplier = ambitionMultipliers[ambitionLevel] || 2;
-    let suggestedTarget = Math.min(7, currentScore + multiplier);
+    let suggestedTarget = Math.min(axis.levelCount, currentScore + multiplier);
 
     // Adjust based on industry context
     if (context.industryAverage && suggestedTarget < context.industryAverage) {
-      suggestedTarget = Math.min(7, context.industryAverage + 1);
+      suggestedTarget = Math.min(axis.levelCount, context.industryAverage + 1);
     }
 
     const reasoning = this._getTargetReasoning(
@@ -865,7 +876,7 @@ class AIAssessmentPartnerService {
             Complete this partial justification for a digital maturity assessment.
             
             Axis: ${axis.name}
-            Score: ${score}/7
+            Score: ${score}/${axis.levelCount}
             Partial text: "${partialText}"
             
             Complete the sentence/paragraph naturally. Keep it professional.

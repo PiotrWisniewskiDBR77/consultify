@@ -1,5 +1,6 @@
 import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface DynamicListItem {
   id: string;
@@ -36,11 +37,14 @@ export const DynamicList: React.FC<DynamicListProps> = ({
   onDelete,
   title,
   description,
-  emptyStateMessage = 'No items yet. Add one!',
+  emptyStateMessage,
   onRowClick,
 }) => {
+  const { t } = useTranslation();
   // Safety check for undefined items
   const safeItems = items || [];
+  const resolvedEmptyStateMessage =
+    emptyStateMessage ?? t('contextBuilder.dynamicList.empty', 'No items yet. Add one!');
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -105,14 +109,16 @@ export const DynamicList: React.FC<DynamicListProps> = ({
             {col.label}
           </div>
         ))}
-        <div className="w-20 text-right">Actions</div>
+        <div className="w-20 text-right">
+          {t('contextBuilder.dynamicList.actions', 'Actions')}
+        </div>
       </div>
 
       {/* List Items */}
       <div className="space-y-2">
         {safeItems.length === 0 && !isAdding && (
           <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-500">
-            {emptyStateMessage}
+            {resolvedEmptyStateMessage}
           </div>
         )}
 
@@ -137,7 +143,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                         className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
                       >
                         <option value="" disabled>
-                          Select...
+                          {t('contextBuilder.dynamicList.selectPlaceholder', 'Select...')}
                         </option>
                         {col.options?.map((opt) => (
                           <option key={opt.value} value={opt.value}>
@@ -227,7 +233,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
                     className="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-800 text-sm focus:ring-1 focus:ring-primary-500"
                   >
                     <option value="" disabled>
-                      Select...
+                      {t('contextBuilder.dynamicList.selectPlaceholder', 'Select...')}
                     </option>
                     {col.options?.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -264,7 +270,7 @@ export const DynamicList: React.FC<DynamicListProps> = ({
             className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg text-slate-500 dark:text-slate-400 hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-all flex items-center justify-center gap-2 font-medium text-sm"
           >
             <Plus size={16} />
-            Add Item
+            {t('contextBuilder.dynamicList.addItem', 'Add Item')}
           </button>
         )}
       </div>

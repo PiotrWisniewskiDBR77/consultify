@@ -2,51 +2,118 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "grafika-odbior-20260830",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3020",
+        "--strictPort"
+      ],
+      "port": 3020
+    },
+    {
       "name": "initiatives-day49-finish-d1",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3361", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3361",
+        "--strictPort"
+      ],
       "port": 3361
     },
     {
       "name": "audits-block-20260825",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "4520", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4520",
+        "--strictPort"
+      ],
       "port": 4520
     },
     {
       "name": "audits-gaps-20260826",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "4530", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4530",
+        "--strictPort"
+      ],
       "port": 4530
     },
     {
       "name": "audits-r1r3-20260826",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "4540", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4540",
+        "--strictPort"
+      ],
       "port": 4540
     },
     {
       "name": "org-redesign-build",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "4521", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4521",
+        "--strictPort"
+      ],
       "port": 4521
     },
     {
       "name": "materials-registry-fix",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3610", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3610",
+        "--strictPort"
+      ],
       "port": 3610
     },
     {
       "name": "s4-tool-outputs-panel",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3555"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3555"
+      ],
       "port": 3555
     },
     {
       "name": "p10-p11-p12-document-studio",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3079"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3079"
+      ],
       "port": 3079
     },
     {
@@ -185,25 +252,53 @@
     {
       "name": "execution-export-prezentacja",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3421", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3421",
+        "--strictPort"
+      ],
       "port": 3421
     },
     {
       "name": "document-studio-menu-pliku",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3077", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3077",
+        "--strictPort"
+      ],
       "port": 3077
     },
     {
       "name": "fix-wzorce-kolory-ekstrakcja",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3082", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3082",
+        "--strictPort"
+      ],
       "port": 3082
     },
     {
       "name": "tabele-fala2",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3450", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3450",
+        "--strictPort"
+      ],
       "port": 3450
     },
     {
@@ -222,13 +317,20 @@
     {
       "name": "mw007-browser-backend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["scripts/dev/mw007-browser-backend.sh"],
+      "runtimeArgs": [
+        "scripts/dev/mw007-browser-backend.sh"
+      ],
       "port": 3001
     },
     {
       "name": "mw007-browser-frontend",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vite", "--port", "3000", "--strictPort"],
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "3000",
+        "--strictPort"
+      ],
       "port": 3000
     },
     {
@@ -437,6 +539,19 @@
         "--strictPort"
       ],
       "port": 3354
+    },
+    {
+      "name": "triada-153-crimson-naprawa",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "4991",
+        "--strictPort"
+      ],
+      "port": 4991
     }
   ]
 }

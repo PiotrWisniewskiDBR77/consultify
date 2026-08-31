@@ -28,30 +28,30 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     ) {
       return { changes: 0 };
     }
-    if (normalized.startsWith('INSERT INTO benefits_register')) {
-      const [
-        id,
-        organizationId,
-        initiativeId,
-        name,
-        ownerId,
-        kpiName,
-        baselineValue,
-        targetValue,
-        currentValue,
-        cadence,
-        status,
-        source,
-        createdAt,
-        updatedAt,
-      ] = params;
+    if (
+      normalized.startsWith('INSERT INTO benefits_register') ||
+      normalized.startsWith('INSERT INTO initiative_benefits')
+    ) {
+      const canonical = normalized.startsWith('INSERT INTO initiative_benefits');
+      const [id, organizationId, initiativeId, name] = params;
+      const ownerId = params[4];
+      const kpiName = canonical ? null : params[5];
+      const offset = canonical ? -1 : 0;
+      const baselineValue = params[6 + offset];
+      const targetValue = params[7 + offset];
+      const currentValue = params[8 + offset];
+      const cadence = params[9 + offset];
+      const status = params[10 + offset];
+      const source = params[11 + offset];
+      const createdAt = params[12 + (canonical ? 0 : 0)];
+      const updatedAt = params[13 + (canonical ? 0 : 0)];
       db.benefits.set(id, {
         id,
         organization_id: organizationId,
         initiative_id: initiativeId,
         name,
         owner_id: ownerId,
-        kpi_name: kpiName,
+        kpi_name: canonical ? null : kpiName,
         baseline_value: baselineValue,
         target_value: targetValue,
         current_value: currentValue,
@@ -67,15 +67,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   },
   get: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.includes('FROM benefits_register')) {
-      // handoff dedupe lookup: org + initiative + source + kpi_name
-      const [organizationId, initiativeId, source, , kpiName] = params;
+    if (normalized.includes('FROM initiative_benefits')) {
+      // handoff dedupe lookup: org + initiative + source_tag + persisted name
+      const [organizationId, initiativeId, source, name] = params;
       const match = Array.from(db.benefits.values()).find(
         (row) =>
           row.organization_id === organizationId &&
           row.initiative_id === initiativeId &&
           row.source === source &&
-          ((row.kpi_name == null && kpiName == null) || row.kpi_name === kpiName)
+          row.name === name
       );
       return match || null;
     }
@@ -83,7 +83,10 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   },
   all: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.includes('FROM benefits_register')) {
+    if (
+      normalized.includes('FROM benefits_register') ||
+      normalized.includes('FROM initiative_benefits')
+    ) {
       const organizationId = params[0];
       const initiativeId = params.length > 1 ? params[1] : undefined;
       return Array.from(db.benefits.values()).filter(

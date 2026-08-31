@@ -950,7 +950,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 {statusOptions.length > 0 ? (
                   <div>
                     <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
-                      {t('rap.filters.status', 'Status')}
+                      {t('rap.filters.statusLabel', 'Status')}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       {statusOptions.map((o) => {

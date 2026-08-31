@@ -93,6 +93,8 @@ import { StatusChip } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import { ROUTES } from '@/routes/routeConfig';
 import { EmptyState } from '@/components/shared/states';
+import { OrganizationApi } from '@/services/api/organizations.api';
+import { useAppStore } from '@/store/useAppStore';
 
 import { HonestValueCell } from '../HonestValue';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
@@ -111,6 +113,12 @@ import {
   type KpiStatus,
 } from '../kpiApi';
 import { ResultsKpiMeasurementsPanel } from '../kpiMeasurements/ResultsKpiMeasurementsPanel';
+import {
+  KPI_DATA_QUALITY_STATUS_TONE,
+  KPI_PERFORMANCE_STATUS_TONE,
+  kpiDataQualityStatusLabel,
+  kpiPerformanceStatusLabel,
+} from '../kpiMeasurements/kpiMeasurementMappers';
 import {
   listDeviationCases,
   type DeviationCaseDto,
@@ -184,8 +192,8 @@ function formatDate(iso: string | null | undefined, isPolish: boolean): string {
   return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function honestNumber(value: number | null): React.ReactNode {
-  return <HonestValueCell value={value} align="right" />;
+function honestNumber(value: number | null, isPolish: boolean): React.ReactNode {
+  return <HonestValueCell isPolish={isPolish} value={value} align="right" />;
 }
 
 /** Contract section (task 3) — exactly the bound fields
@@ -197,37 +205,37 @@ function targetGeometryRows(v: KpiDefinitionVersionDto, isPolish: boolean): Arti
   switch (v.targetGeometry) {
     case 'threshold_min':
       return [
-        { id: 'targetValue', label: isPolish ? 'Próg (min.)' : 'Threshold (min)', value: honestNumber(v.targetValue), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow), mono: true },
-        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow), mono: true },
+        { id: 'targetValue', label: isPolish ? 'Próg (min.)' : 'Threshold (min)', value: honestNumber(v.targetValue, isPolish), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow, isPolish), mono: true },
+        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow, isPolish), mono: true },
       ];
     case 'threshold_max':
       return [
-        { id: 'targetValue', label: isPolish ? 'Próg (maks.)' : 'Threshold (max)', value: honestNumber(v.targetValue), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning up to', value: honestNumber(v.warningHigh), mono: true },
-        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical up to', value: honestNumber(v.criticalHigh), mono: true },
+        { id: 'targetValue', label: isPolish ? 'Próg (maks.)' : 'Threshold (max)', value: honestNumber(v.targetValue, isPolish), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning up to', value: honestNumber(v.warningHigh, isPolish), mono: true },
+        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical up to', value: honestNumber(v.criticalHigh, isPolish), mono: true },
       ];
     case 'range':
       return [
-        { id: 'targetMin', label: isPolish ? 'Cel od' : 'Target from', value: honestNumber(v.targetMin), mono: true },
-        { id: 'targetMax', label: isPolish ? 'Cel do' : 'Target to', value: honestNumber(v.targetMax), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning to', value: honestNumber(v.warningHigh), mono: true },
+        { id: 'targetMin', label: isPolish ? 'Cel od' : 'Target from', value: honestNumber(v.targetMin, isPolish), mono: true },
+        { id: 'targetMax', label: isPolish ? 'Cel do' : 'Target to', value: honestNumber(v.targetMax, isPolish), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Ostrzeżenie od' : 'Warning from', value: honestNumber(v.warningLow, isPolish), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Ostrzeżenie do' : 'Warning to', value: honestNumber(v.warningHigh, isPolish), mono: true },
       ];
     case 'exact':
       return [
-        { id: 'targetValue', label: isPolish ? 'Wartość dokładna' : 'Exact value', value: honestNumber(v.targetValue), mono: true },
-        { id: 'warningLow', label: isPolish ? 'Tolerancja od' : 'Tolerance from', value: honestNumber(v.warningLow), mono: true },
-        { id: 'warningHigh', label: isPolish ? 'Tolerancja do' : 'Tolerance to', value: honestNumber(v.warningHigh), mono: true },
-        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow), mono: true },
-        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical to', value: honestNumber(v.criticalHigh), mono: true },
+        { id: 'targetValue', label: isPolish ? 'Wartość dokładna' : 'Exact value', value: honestNumber(v.targetValue, isPolish), mono: true },
+        { id: 'warningLow', label: isPolish ? 'Tolerancja od' : 'Tolerance from', value: honestNumber(v.warningLow, isPolish), mono: true },
+        { id: 'warningHigh', label: isPolish ? 'Tolerancja do' : 'Tolerance to', value: honestNumber(v.warningHigh, isPolish), mono: true },
+        { id: 'criticalLow', label: isPolish ? 'Krytyczne od' : 'Critical from', value: honestNumber(v.criticalLow, isPolish), mono: true },
+        { id: 'criticalHigh', label: isPolish ? 'Krytyczne do' : 'Critical to', value: honestNumber(v.criticalHigh, isPolish), mono: true },
       ];
     case 'binary':
       return [
         {
           id: 'binarySuccessValue',
           label: isPolish ? 'Wartość sukcesu (0 lub 1)' : 'Success value (0 or 1)',
-          value: honestNumber(v.binarySuccessValue),
+          value: honestNumber(v.binarySuccessValue, isPolish),
           mono: true,
         },
       ];
@@ -261,6 +269,43 @@ export const KpiToolPage: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
   const [pending, setPending] = useState<'activate' | 'suspend' | 'archive' | null>(null);
+
+  // 143-resztki (2026-08-31) — Properties panel showed the RAW `ownerUserId`
+  // ("user-pio…") instead of a name. Same id->name resolver convention
+  // `ResultsRoiHub.tsx`/`ResultsOkrHub.tsx`/`attentionPresenters.tsx` already
+  // use in this same ResultsVNext family (real org member list via
+  // `OrganizationApi.getOrganizationMembers`, honest fallback to the id when
+  // unresolved) — `GET /kpi/:kpiId` itself has no owner-name join (verified:
+  // `kpiRepository.ts` only joins `dv.name`, never a users/members table), so
+  // this is a client-side stitch against a real, already-fetched-elsewhere
+  // endpoint, not a fabricated field.
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!currentOrganization?.id) return;
+    let cancelled = false;
+    OrganizationApi.getOrganizationMembers(currentOrganization.id)
+      .then((members) => {
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        members.forEach((m) => {
+          const label = (m.name && m.name.trim()) || m.email || m.userId;
+          if (label) map[m.userId] = label;
+        });
+        setMemberNameById(map);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberNameById({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrganization?.id]);
+  const resolveMemberName = useCallback(
+    (userId: string | null | undefined): string =>
+      (userId && memberNameById[userId]) || shortId(userId),
+    [memberNameById]
+  );
 
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
   // RN-G6 UI fix (task 3) — Contract section previously showed ONLY the raw
@@ -479,8 +524,22 @@ export const KpiToolPage: React.FC = () => {
     };
   }
 
+  // RN-G2 i18n/141 (2026-08-31) FIX: the H1 used to be the raw `kpiCode`
+  // unconditionally (e.g. "OEE-LINIA-PAKOWANIA") — no name, no signature —
+  // even though the business name IS reachable here: `definitionVersion`
+  // (fetched above via `getKpiCurrentDefinitionVersion`, same join the
+  // Contract section already reads `definitionVersion.name` from) carries it
+  // whenever the joined fetch resolves. Falls back to the bare `kpiCode`
+  // only while `definitionVersion` is still loading/null (honest-missing,
+  // same discipline as every other field in this file) — the code itself
+  // remains visible unconditionally in the Contract section's "Kod KPI" row
+  // below, this is not losing that value, only no longer using it as the
+  // ONLY thing the H1 ever shows.
+  const kpiTitle =
+    (definitionVersion !== 'loading' && definitionVersion?.name) || kpi.name || kpi.kpiCode;
+
   const header: NModeHeaderConfig = {
-    title: kpi.kpiCode,
+    title: kpiTitle,
     onTitleChange: () => {},
     titleReadOnly: true,
     artifactType: 'kpi',
@@ -503,11 +562,24 @@ export const KpiToolPage: React.FC = () => {
         : [],
   };
 
+  // `process`/`responsePolicy` stay raw ids on purpose — grepped
+  // `resultsVnextKpi.validators.ts`/`kpiTypes.ts`/`KpiDraftFormModal.tsx`:
+  // both are free-form strings with NO backing registry/table anywhere in
+  // production (no processes/policies list, no name join, no picker), unlike
+  // `ownerUserId` (real org members) or `currentDefinitionVersionId` (real
+  // `GET /kpi/:kpiId/version` join, already fetched into `definitionVersion`
+  // below for the Contract section) — showing a name here would be invented.
+  const definitionVersionDisplay =
+    definitionVersion && definitionVersion !== 'loading' &&
+    definitionVersion.definitionVersionId === kpi.currentDefinitionVersionId
+      ? `${definitionVersion.name} (v${definitionVersion.versionNumber})`
+      : shortId(kpi.currentDefinitionVersionId);
+
   const propertyRows: ArtifactPropertyRow[] = [
-    { id: 'owner', label: t('Właściciel', 'Owner'), value: shortId(kpi.ownerUserId) },
+    { id: 'owner', label: t('Właściciel', 'Owner'), value: resolveMemberName(kpi.ownerUserId) },
     { id: 'process', label: t('Proces', 'Process'), value: shortId(kpi.primaryProcessId) },
     { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: shortId(kpi.responsePolicyId) },
-    { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: shortId(kpi.currentDefinitionVersionId), mono: true },
+    { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
     { id: 'created', label: t('Utworzono', 'Created'), value: formatDate(kpi.createdAt, isPolish) },
     { id: 'updated', label: t('Zaktualizowano', 'Updated'), value: formatDate(kpi.updatedAt, isPolish) },
     { id: 'rowVersion', label: t('Wersja (CAS)', 'Version (CAS)'), value: String(kpi.rowVersion), mono: true },
@@ -590,6 +662,7 @@ export const KpiToolPage: React.FC = () => {
           ) : (
             <div className="flex items-center gap-4">
               <HonestValueCell
+                isPolish={isPolish}
                 value={measurement ? measurement.actualValue : null}
                 format={(v) => <span className="text-2xl font-semibold tabular-nums text-c-text">{v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}</span>}
               />
@@ -600,8 +673,8 @@ export const KpiToolPage: React.FC = () => {
                     {formatDate(measurement.periodStart, isPolish)} – {formatDate(measurement.periodEnd, isPolish)}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <StatusChip label={measurement.performanceStatus} tone={measurement.performanceStatus === 'critical' ? 'danger' : measurement.performanceStatus === 'warning' ? 'warning' : measurement.performanceStatus === 'on_target' ? 'success' : 'neutral'} />
-                    <StatusChip label={measurement.dataQualityStatus} tone={measurement.dataQualityStatus === 'disputed' ? 'danger' : measurement.dataQualityStatus === 'verified' ? 'success' : 'neutral'} />
+                    <StatusChip label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)} tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]} />
+                    <StatusChip label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)} tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]} />
                   </div>
                   <p className="mt-2 text-[11px] text-c-text-muted">
                     {t(

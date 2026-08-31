@@ -240,13 +240,20 @@ const KPI_VALUES_BY_SCENE: Record<Scene, Record<string, unknown>[]> = {
       kpiName: 'Dni zapasów',
       category: 'Operacje',
       tier: 'INDUSTRY',
+      // ★ NAPRAWIONE (powtórka 08-31): brakowało `unitType: 'DAYS'` na tym
+      // poziomie — kpiValue() domyślnie ustawia 'PERCENT', więc realny
+      // formatAnalysisKpiValueForDisplay() (financeV2.types.ts) mnożył 58
+      // razy 100 i renderował „5800%" zamiast „58 dni". `value.unit` też był
+      // błędny ('DAYS' nie jest wartością skali — financeUnitLabel zna tylko
+      // UNITS/THOUSANDS/MILLIONS/BILLIONS), poprawione na 'UNITS'.
+      unitType: 'DAYS',
       periodId: 'p-2025',
       value: {
         status: 'PRESENT_NONZERO',
         valueDecimal: '58',
         nativeCurrency: 'PLN',
         presentationCurrency: 'PLN',
-        unit: 'DAYS',
+        unit: 'UNITS',
         multiplier: '1',
       },
     }),
@@ -256,13 +263,14 @@ const KPI_VALUES_BY_SCENE: Record<Scene, Record<string, unknown>[]> = {
       kpiName: 'Dni zapasów',
       category: 'Operacje',
       tier: 'INDUSTRY',
+      unitType: 'DAYS',
       periodId: 'p-2026',
       value: {
         status: 'NA',
         valueDecimal: null,
         nativeCurrency: 'PLN',
         presentationCurrency: 'PLN',
-        unit: 'DAYS',
+        unit: 'UNITS',
         multiplier: '1',
       },
     }),
@@ -320,6 +328,11 @@ const KPI_VALUES_BY_SCENE: Record<Scene, Record<string, unknown>[]> = {
       kpiName: 'Rotacja aktywów',
       category: 'Operacje',
       tier: 'INDUSTRY',
+      // ★ NAPRAWIONE (powtórka 08-31): ten sam brak `unitType` co przy
+      // INVENTORY_DAYS wyżej — katalog deklaruje 'RATIO' (migracja
+      // 20260809_finance_v3_d03_analysis_01_tables.sql:60-61), domyślne
+      // 'PERCENT' z kpiValue() renderowało 1,4 jako „140%".
+      unitType: 'RATIO',
       periodId: 'p-2025',
       value: {
         status: 'PRESENT_NONZERO',
@@ -336,6 +349,7 @@ const KPI_VALUES_BY_SCENE: Record<Scene, Record<string, unknown>[]> = {
       kpiName: 'Rotacja aktywów',
       category: 'Operacje',
       tier: 'INDUSTRY',
+      unitType: 'RATIO',
       periodId: 'p-2026',
       value: {
         status: 'PRESENT_NONZERO',

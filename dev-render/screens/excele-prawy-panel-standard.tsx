@@ -15,15 +15,53 @@
  * (ten sam model, bez flagi edycji — tu weryfikujemy TYLKO prawy panel).
  *
  * URL: ?screen=excele-prawy-panel-standard&theme=light|dark&lang=pl
- *      &ff_excele_right_rail=1   ← WYMAGANE, żeby zobaczyć szynę zamiast
- *                                    starego accordionu (flaga domyślnie OFF)
+ *      &ff_excele_right_rail=1   ← historycznie WYMAGANE; DZIŚ już nie ma
+ *                                    znaczenia (patrz notatka niżej).
+ *
+ * ★ USTALENIE (grafika 2026-08-31, przy naprawie "przyrząd zasłania produkt"):
+ * ten opis i `&ff_excele_right_rail=1` są STALE — identyczna sytuacja jak
+ * w `excele-edytowalna-siatka.tsx` (przeczytaj notatkę tam po pełne
+ * wyjaśnienie). `ExceleRightRail`/`ExceleRightPanel` (to, co ta flaga
+ * przełącza) żyją WYŁĄCZNIE w starej ścieżce `KimiWorkspaceShell`. Ten sam
+ * plik od 2026-08-30 wymusza `ff.artifact_studio`+`ff.spreadsheet_studio_v2`
+ * — a tor `spreadsheet` ma od 2026-08-30 DOMYŚLNIE `true`
+ * (`src/utils/artifactStudioFlags.ts`), więc reopen istniejącego skoroszytu
+ * renderuje `SpreadsheetArtifactStudio` (WŁASNY `ArtifactRightPanel`,
+ * standard SPEC-A) — `ExceleRightRail` jest w tej ścieżce NIEOSIĄGALNY.
+ * Dlatego ten zrzut wychodzi bajt w bajt identyczny z
+ * `excele-edytowalna-siatka.tsx` (ten sam model WORKBOOK) — to jest ZGODNE
+ * ze stanem realnego produktu, nie błąd narzędzia zrzutowego.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+
 import { ExceleView } from '@/components/AIChat/KimiWorkspace/ExceleView';
 import { Api } from '@/services/api';
+
+/**
+ * ★ WŁĄCZONE NA PROŚBĘ WŁAŚCICIELA (2026-08-30): ten harness startuje z WŁĄCZONYM
+ * pełnym warsztatem (`ff_artifactStudio` + tor arkusza/prezentacji).
+ *
+ * UWAGA — to NIE jest to, co widzi dziś użytkownik. Domyślnie obie flagi są
+ * wyłączone i produkt pokazuje okrojoną wersję. Tu włączamy je celowo, żeby
+ * właściciel mógł kliknąć warsztat, zanim zdecydujemy o włączeniu na stałe.
+ * Żeby zobaczyć stan dzisiejszy: dopisz `&ff_artifactStudio=0` do adresu.
+ */
+if (typeof window !== 'undefined') {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('ff_artifactStudio') !== '0') {
+    try {
+      window.localStorage.setItem('ff.artifact_studio', '1');
+      window.localStorage.setItem('ff.spreadsheet_studio_v2', '1');
+      window.localStorage.setItem('ff.presentation_studio_v2', '1');
+    } catch {
+      /* prywatne okno — trudno, wtedy trzeba parametrem w adresie */
+    }
+  }
+}
 
 const ID = 'wb-dev-render-prawy-panel';
 
@@ -32,7 +70,7 @@ const wiersz = (cells: Record<string, { value?: unknown; formula?: string }>) =>
 
 const ZALOZENIA = {
   name: 'Założenia',
-  columns: [kol('driver', 'Driver'), kol('wartosc', 'Wartość')],
+  columns: [kol('driver', 'Założenie'), kol('wartosc', 'Wartość')],
   rows: [
     wiersz({ driver: { value: 'Nakład początkowy (inwestycja)' }, wartosc: { value: 500000 } }),
     wiersz({ driver: { value: 'Przepływ operacyjny brutto — rok 1' }, wartosc: { value: 220000 } }),
@@ -138,11 +176,23 @@ const queryClient = new QueryClient({
 export default function ExcelePrawyPanelStandardScreen(): React.ReactElement {
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/excele?artifactId=${ID}`]}>
-        <div className="h-screen w-full overflow-hidden bg-c-bg">
-          <ExceleView />
-        </div>
-      </MemoryRouter>
+      {/*
+        GRAFIKA 2026-08-30: dolozony `FeatureFlagsProvider` (1:1 jak w
+        `excele-edytowalna-siatka.tsx`). POWOD: naglowek tego pliku wlacza
+        `ff.artifact_studio` + `ff.spreadsheet_studio_v2`, a wtedy `ExceleView`
+        montuje `SpreadsheetArtifactStudio`, ktory przez `useOpenChatWithContext`
+        czyta `useFeatureFlagsContext`. Bez providera ekran wywalal sie na
+        `useFeatureFlagsContext must be used within FeatureFlagsProvider` i zrzut
+        pokazywal czerwony stos zamiast arkusza — czyli NIE DALO SIE zmierzyc
+        stanu zastanego (regula #7).
+      */}
+      <FeatureFlagsProvider config={{ enableLocalOverrides: true }} showDevTools={false}>
+        <MemoryRouter initialEntries={[`/excele?artifactId=${ID}`]}>
+          <div className="h-screen w-full overflow-hidden bg-c-bg">
+            <ExceleView />
+          </div>
+        </MemoryRouter>
+      </FeatureFlagsProvider>
     </QueryClientProvider>
   );
 }

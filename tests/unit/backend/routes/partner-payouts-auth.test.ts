@@ -40,6 +40,22 @@ vi.mock('../../../../server/src/middleware/superAdmin.middleware.js', () => ({
   verifySuperAdmin: (_req: any, _res: any, next: () => void) => next(),
 }));
 
+vi.mock('../../../../server/src/middleware/rbac.middleware.js', () => ({
+  requireOrgRole: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../../../server/src/services/legacyCutover/requireActiveMembership.js', () => ({
+  requireActiveMembership: (_req: any, _res: any, next: () => void) => next(),
+}));
+
+// This file proves payout auth resolution, not durable cutover signalling.
+// Keep the router-level guard in the chain while isolating its persistence
+// subsystem; otherwise the focused test reaches the developer DATABASE_URL
+// and fails before the route under test is executed.
+vi.mock('../../../../server/src/services/legacyCutover/legacyCutoverKernel.js', () => ({
+  createLegacyCutoverGuard: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
 vi.mock('../../../../server/src/services/partnerOrgResolution.js', () => ({
   getActivePartnerOrgIdForUser: vi.fn(async () => resolvedPartnerOrgId),
 }));
@@ -55,6 +71,8 @@ vi.mock('../../../../server/src/services/partnerCommissionService.js', () => ({
 }));
 
 vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
+  get: vi.fn(async () => null),
+  run: vi.fn(async () => ({ changes: 0 })),
   tableExists: vi.fn(async () => true),
 }));
 

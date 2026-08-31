@@ -1,27 +1,41 @@
 /**
- * Dev-render host — EKRAN PORÓWNAWCZY stopek preview czterech zakładek My Work
- * (Ideas · Inbox · Tasks · Decisions) PO zmianie wariantów z commita 2d38fd2293
- * („jeden zestaw wariantow przyciskow — skutek, nie ekran").
+ * Dev-render host — EKRAN PORÓWNAWCZY podglądów. NIE jest ekranem produktu.
  *
- * CEL ODBIORU: właściciel ma na JEDNYM zrzucie zobaczyć, że ta sama akcja wygląda
- * tak samo w każdej zakładce, a wariant wynika ze SKUTKU akcji, nie z ekranu
- * (kanon docs/ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md §7.3b).
+ * ── CZEMU ISTNIEJE (słowa właściciela, 2026-08-30) ─────────────────────────
+ * „Zobacz, to jest wartościowy obrazek, bo pokazuje, jak nieporównywalne są
+ *  podglądy, które powinny być takie same."
  *
- * CO JEST PRAWDZIWE, A CO ZŁOŻONE TUTAJ — uczciwie:
- *  • Prawdziwe są WSZYSTKIE prymitywy: PreviewMetaCard · PreviewDetailsSection ·
- *    PreviewAIHintStrip · PreviewRelations · PreviewActionBar · ConvertToOutputMenu,
- *    importowane z `@/components/shared/PreviewPane` i `@/components/MyWork`.
- *    Zero przepisywania, zero atrap wyglądu — kolory pigułek liczy realny
- *    `actionPillClass()` z `previewStyles.ts`.
- *  • Złożone tutaj są tylko KOMPOZYCJE stopek. Produkcyjne stopki to domknięcia
- *    wewnątrz czterech wielkich komponentów listowych (InboxContent 1500+ linii,
- *    MyTasksListContent 2600+), zależnych od store'ów, API i sesji — nie da się
- *    ich zamontować pojedynczo bez backendu. `actionRows` poniżej są przepisane
- *    1:1 z produkcji (etykiety zPL, ikony, warianty, skróty, układ wierszy /
- *    `columns`), z odnośnikiem plik:linia przy każdej zakładce.
+ * Ekran jest przyrządem pomiarowym: cztery podglądy obok siebie, jeden zrzut,
+ * i albo widać, że są takie same, albo widać, że nie są. Nic tu nie ma być
+ * ładniejsze niż w produkcie — ma być IDENTYCZNE z produktem.
+ *
+ * ── CO SIĘ ZMIENIŁO 2026-08-30 ─────────────────────────────────────────────
+ * Poprzednia wersja tego pliku sama była częścią problemu, który miała mierzyć:
+ * składała cztery stopki RĘCZNIE z prymitywów (`PreviewMetaCard`,
+ * `PreviewDetailsSection`, `PreviewAIHintStrip`, `PreviewRelations`,
+ * `PreviewActionBar`) w czterech różnych układach, w czterech różnych
+ * kolumnach-rusztowaniach. Skutki widoczne na zrzucie PRZED:
+ *   • żadna kolumna nie miała bloku 1 (nagłówek: tytuł · Pin · Otwórz · ×) —
+ *     zamiast niego był harnessowy `<header>` z nazwą pliku źródłowego;
+ *   • Ideas renderował „Co dalej" PRZED akcjami, pozostałe trzy nie miały go
+ *     wcale — cztery różne kolejności bloków na jednym obrazku;
+ *   • czterokolumnowy wiersz akcji Inboxa wychodził poza kolumnę i nachodził
+ *     na sąsiednią;
+ *   • Decisions miał doklejony ręcznie pill „Odłóż" obok `PreviewActionBar`.
+ *
+ * Teraz każda kolumna montuje `StandardPreview` — JEDYNĄ fasadę bloków 1–6
+ * (`TABLE_AND_PREVIEW_CANON.md` §7.0/§7.3, `TRIADA_KANON.md` §A7). Ekran
+ * deklaruje wyłącznie TREŚĆ (tytuł, chipy meta, opis, chipy AI, powiązania,
+ * akcje, „Co dalej"); wygląd, kolejność bloków, geometrię nagłówka i
+ * szerokość panelu narzuca komponent. Jeśli po tej zmianie cztery kolumny
+ * nadal wyglądają różnie — to znaczy, że rozjazd jest w komponencie, a nie
+ * w ekranie, i widać to natychmiast. O to w tym przyrządzie chodzi.
+ *
+ * Etykiety, ikony, warianty i skróty są przepisane 1:1 z produkcji, z
+ * odnośnikiem plik:linia przy każdej kolumnie.
  *
  * Parametry URL (poza ?theme, ?lang z harnessu):
- *   ?legenda=0   ukrywa pasek legendy skutek→wariant (czysty zrzut samych stopek)
+ *   ?legenda=0   ukrywa pasek legendy skutek→wariant (czysty zrzut podglądów)
  */
 import {
   AlarmClockOff,
@@ -40,7 +54,10 @@ import {
   MessageSquare,
   Pause,
   Presentation,
+  Rocket,
   Sparkles,
+  StickyNote,
+  Table as TableIcon,
   Target,
   TrendingUp,
   UserPlus,
@@ -51,20 +68,36 @@ import {
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { ConvertToOutputMenu } from '@/components/MyWork/ConvertToOutputMenu';
+import { actionPillClass, type MetaPill, type RelationItem } from '@/components/shared/PreviewPane';
 import {
-  actionPillClass,
-  type ActionRow,
-  type MetaPill,
-  PreviewActionBar,
-  PreviewAIHintStrip,
-  PreviewDetailsSection,
-  PreviewMetaCard,
-  PreviewRelations,
-  type RelationItem,
-} from '@/components/shared/PreviewPane';
+  StandardPreview,
+  type StandardPreviewActions,
+  type StandardPreviewWhatsNext,
+} from '@/components/standard/StandardPreview';
+import { CANON_PREVIEW } from '@/contracts/tableSurface/canon';
 
 const noop = () => undefined;
+
+/**
+ * Szerokość kolumny na tym przyrządzie — WYLICZONA z kanonu, nie wpisana.
+ *
+ * Kanonem szerokości podglądu jest `clamp(340px, 28%, 480px)` (§7.2), gdzie
+ * `28%` liczy się od obszaru roboczego EKRANU, na którym podgląd stoi obok
+ * swojej tabeli. Cztery takie panele nie mogą stać obok siebie w jednym
+ * wierszu — cztery razy 28% jednej szerokości nigdy się w niej nie zmieści
+ * (4·0,28W = 1,12W). Ekran porównawczy pokazuje więc każdy podgląd w
+ * szerokości, jaką kanon daje mu na typowym ekranie 1440 px: `clamp` zwinięty
+ * do liczby przy tej jednej referencji. Składniki biorę z `CANON_PREVIEW` —
+ * ten sam obiekt, z którego powstaje `PREVIEW_PANE_WIDTH` — więc zmiana
+ * kanonu przesuwa ten przyrząd sama, bez szukania literałów.
+ */
+const SZEROKOSC_EKRANU_ODNIESIENIA = 1440;
+const SZEROKOSC_PODGLADU = Math.round(
+  Math.min(
+    CANON_PREVIEW.maxWidth,
+    Math.max(CANON_PREVIEW.minWidth, CANON_PREVIEW.preferredRatio * SZEROKOSC_EKRANU_ODNIESIENIA)
+  )
+);
 
 // ── Legenda: skutek akcji → wariant (kanon §7.3b, tabela rozstrzygająca) ─────
 const LEGENDA: {
@@ -79,209 +112,333 @@ const LEGENDA: {
   { wariant: 'primary', skutek: 'Jedyna główna akcja preview', przyklad: 'Konwertuj' },
 ];
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ZAKŁADKA 1 — IDEAS (Ideas → widok tabeli)
-// Źródło: src/components/MyWork/IdeasTableContent.tsx:634-652 + strip 664-676
-// ═══════════════════════════════════════════════════════════════════════════
-const IDEAS_PILLS: MetaPill[] = [
-  { label: 'Etap', value: 'Rośnie', tone: 'success' },
-  { label: 'Narzędzie', value: 'Mind Map', tone: 'info' },
-  { label: 'Właściciel', value: 'Anna Kowalska', tone: 'neutral' },
-];
-
-const IDEAS_RELATIONS: RelationItem[] = [
-  { label: 'Notatka z zarządu 09.07', icon: FileText, onClick: noop, type: 'note' },
-  { label: 'Model finansowy DACH', icon: FileSpreadsheet, onClick: noop, type: 'model' },
-];
-
-const IDEAS_ACTIONS: ActionRow[] = [
-  {
-    columns: 2,
-    buttons: [
-      { label: 'Konwertuj', icon: Sparkles, onClick: noop, colorScheme: 'primary' },
-      { label: 'Otwórz Flow', icon: Workflow, onClick: noop, colorScheme: 'neutral' },
-    ],
-  },
-];
+interface OpisPodgladu {
+  zakladka: string;
+  ikona: React.ElementType;
+  zrodlo: string;
+  tytul: string;
+  meta: MetaPill[];
+  termin: string;
+  opis: string;
+  ai: string[];
+  relacje: RelationItem[];
+  akcje: StandardPreviewActions;
+  coDalej?: StandardPreviewWhatsNext;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ZAKŁADKA 2 — INBOX
-// Źródło: src/components/MyWork/InboxContent.tsx:1396-1460 (dwa wiersze)
+// ZAKŁADKA 1 — IDEAS · źródło: src/components/MyWork/IdeasTableContent.tsx:634
 // ═══════════════════════════════════════════════════════════════════════════
-const INBOX_PILLS: MetaPill[] = [
-  { label: 'Źródło', value: 'E-mail', tone: 'neutral' },
-  { label: 'Priorytet', value: 'Wysoki', tone: 'warning' },
-  { label: 'Od', value: 'Marek Zieliński', tone: 'neutral' },
-];
-
-const INBOX_RELATIONS: RelationItem[] = [
-  { label: 'Projekt ZPUE — DRD', icon: Target, onClick: noop, type: 'project' },
-  { label: 'Warsztat 24.07', icon: CalendarClock, onClick: noop, type: 'meeting' },
-];
-
-const INBOX_ACTIONS: ActionRow[] = [
-  {
-    buttons: [
+const IDEAS: OpisPodgladu = {
+  zakladka: 'Ideas',
+  ikona: Lightbulb,
+  zrodlo: 'IdeasTableContent.tsx:634',
+  tytul: 'Wejście na rynek DACH — mapa hipotez',
+  meta: [
+    { label: 'Etap', value: 'Rośnie', tone: 'success' },
+    { label: 'Narzędzie', value: 'Mind Map', tone: 'info' },
+    { label: 'Właściciel', value: 'Anna Kowalska', tone: 'neutral' },
+  ],
+  termin: '11.07.2026',
+  opis:
+    'Gałęzie: popyt mid-market, konkurencja lokalna, kanały sprzedaży, ryzyka regulacyjne. ' +
+    'Priorytet na Q3: zwalidować popyt zanim ruszy budowa oferty.',
+  ai: ['Rozwiń pomysł', 'Znajdź ryzyka', 'Zaproponuj następny krok'],
+  relacje: [
+    { label: 'Notatka z zarządu 09.07', icon: FileText, onClick: noop, type: 'note' },
+    { label: 'Model finansowy DACH', icon: FileSpreadsheet, onClick: noop, type: 'model' },
+  ],
+  akcje: {
+    resolutions: [
       {
-        label: 'Dziś',
-        icon: Zap,
+        id: 'konwertuj',
+        variant: 'primary',
+        label: 'Konwertuj',
+        icon: Sparkles,
         onClick: noop,
-        colorScheme: 'neutral',
-        flex: true,
-        shortcut: 'T',
       },
       {
+        id: 'flow',
+        variant: 'neutral',
+        label: 'Otwórz Flow',
+        icon: Workflow,
+        onClick: noop,
+      },
+    ],
+  },
+  // Jedyna z czterech encji z zaimplementowaną konwersją na artefakt innego
+  // modułu — więc jedyna, która wg §7.3c ma mieć ten blok (§7.3a: ikona+hue
+  // = moduł docelowy). Pozostałe trzy: strefa NIEOBECNA, nie pusta.
+  coDalej: {
+    note: 'Najpierw tworzy sesję MyWork',
+    items: [
+      { id: 'raport', label: 'Raport', icon: FileText, onClick: noop },
+      { id: 'deck', label: 'Prezentacja', icon: Presentation, onClick: noop },
+      { id: 'tabela', label: 'Tabela', icon: TableIcon, onClick: noop },
+      { id: 'notatka', label: 'Notatka', icon: StickyNote, onClick: noop },
+      { id: 'inicjatywa', label: 'Inicjatywa', icon: Rocket, onClick: noop },
+    ],
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ZAKŁADKA 2 — INBOX · źródło: src/components/MyWork/InboxContent.tsx:1396
+// ═══════════════════════════════════════════════════════════════════════════
+const INBOX: OpisPodgladu = {
+  zakladka: 'Inbox',
+  ikona: InboxIcon,
+  zrodlo: 'InboxContent.tsx:1396',
+  tytul: 'ZPUE prosi o przesunięcie warsztatu',
+  meta: [
+    { label: 'Źródło', value: 'E-mail', tone: 'neutral' },
+    { label: 'Priorytet', value: 'Wysoki', tone: 'warning' },
+    { label: 'Od', value: 'Marek Zieliński', tone: 'neutral' },
+  ],
+  termin: 'dziś 09:14',
+  opis:
+    'Klient prosi o przesunięcie warsztatu diagnostycznego z 24.07 na pierwszy tydzień sierpnia ' +
+    '— kolizja z audytem ISO. Pyta też, czy da się skrócić sesję do pół dnia.',
+  ai: ['Streść wątek', 'Zaproponuj odpowiedź', 'Wyciągnij zadania'],
+  relacje: [
+    { label: 'Projekt ZPUE — DRD', icon: Target, onClick: noop, type: 'project' },
+    { label: 'Warsztat 24.07', icon: CalendarClock, onClick: noop, type: 'meeting' },
+  ],
+  akcje: {
+    // 'Zrobione' zamyka sprawę pozytywnie — ten sam skutek co Tasks.'Zrobione',
+    // więc ten sam wariant `positive` (§7.3b).
+    resolutions: [
+      {
+        id: 'zrobione',
+        variant: 'positive',
+        label: 'Zrobione',
+        icon: CheckCircle2,
+        shortcut: 'D',
+        onClick: noop,
+      },
+      {
+        id: 'odrzuc',
+        variant: 'neutral',
+        label: 'Odrzuć',
+        icon: Archive,
+        shortcut: 'X',
+        onClick: noop,
+      },
+    ],
+    informational: [
+      {
+        id: 'zapisz',
+        variant: 'neutral',
+        label: 'Zapisz',
+        icon: Bookmark,
+        shortcut: 'S',
+        onClick: noop,
+      },
+      {
+        id: 'notatka',
+        variant: 'neutral',
+        label: 'Notatka',
+        icon: FileText,
+        shortcut: 'N',
+        onClick: noop,
+      },
+    ],
+    // Rodzina planowania w całości na `neutral` (§7.3b).
+    time: [
+      { id: 'dzis', variant: 'neutral', label: 'Dziś', icon: Zap, shortcut: 'T', onClick: noop },
+      {
+        id: 'tydzien',
+        variant: 'neutral',
         label: 'Tydzień',
         icon: CalendarClock,
-        onClick: noop,
-        colorScheme: 'neutral',
-        flex: true,
         shortcut: 'W',
+        onClick: noop,
       },
       {
+        id: 'pozniej',
+        variant: 'neutral',
         label: 'Później',
         icon: Calendar,
-        onClick: noop,
-        colorScheme: 'neutral',
-        flex: true,
         shortcut: 'L',
+        onClick: noop,
       },
     ],
   },
-  {
-    columns: 4,
-    buttons: [
-      // 'Zrobione' zamyka sprawe pozytywnie — ten sam skutek co Tasks.'Zrobione' ponizej,
-      // wiec ten sam wariant emerald (§7.3b). Bylo 'neutral' — rozjazd znaleziony i naprawiony
-      // w InboxContent.tsx po zgloszeniu Piotra 2026-07-21 na tym wlasnie ekranie.
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ZAKŁADKA 3 — TASKS · źródło: src/components/MyWork/MyTasksListContent.tsx:2594
+// ═══════════════════════════════════════════════════════════════════════════
+const TASKS: OpisPodgladu = {
+  zakladka: 'Tasks',
+  ikona: ListChecks,
+  zrodlo: 'MyTasksListContent.tsx:2594',
+  tytul: 'Karta inicjatywy — onboarding 21→7 dni',
+  meta: [
+    { label: 'Status', value: 'W toku', tone: 'info' },
+    { label: 'Termin', value: '23.07', tone: 'warning' },
+    { label: 'Przypisane', value: 'Piotr Wiśniewski', tone: 'neutral' },
+  ],
+  termin: 'za 2 dni',
+  opis:
+    'Spisać zakres, właściciela i mierniki dla inicjatywy skrócenia onboardingu. ' +
+    'Wejście: wnioski z warsztatu 09.07 i dane z trzech ostatnich wdrożeń.',
+  ai: ['Rozbij na podzadania', 'Oszacuj czas', 'Kto powinien to robić'],
+  relacje: [
+    { label: 'Inicjatywa: Onboarding 21→7 dni', icon: Target, onClick: noop, type: 'initiative' },
+    { label: 'Decyzja: pilot Logistics', icon: ListChecks, onClick: noop, type: 'decision' },
+  ],
+  akcje: {
+    resolutions: [
       {
+        id: 'zrobione',
+        variant: 'positive',
         label: 'Zrobione',
         icon: CheckCircle2,
-        onClick: noop,
-        colorScheme: 'emerald',
         shortcut: 'D',
-      },
-      { label: 'Zapisz', icon: Bookmark, onClick: noop, colorScheme: 'neutral', shortcut: 'S' },
-      { label: 'Notatka', icon: FileText, onClick: noop, colorScheme: 'neutral', shortcut: 'N' },
-      { label: 'Odrzuć', icon: Archive, onClick: noop, colorScheme: 'neutral', shortcut: 'X' },
-    ],
-  },
-];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ZAKŁADKA 3 — TASKS
-// Źródło: src/components/MyWork/MyTasksListContent.tsx:2594-2628 (dwa wiersze)
-// ═══════════════════════════════════════════════════════════════════════════
-const TASKS_PILLS: MetaPill[] = [
-  { label: 'Status', value: 'W toku', tone: 'info' },
-  { label: 'Termin', value: '23.07', tone: 'warning' },
-  { label: 'Przypisane', value: 'Piotr Wiśniewski', tone: 'neutral' },
-];
-
-const TASKS_RELATIONS: RelationItem[] = [
-  { label: 'Inicjatywa: Onboarding 21→7 dni', icon: Target, onClick: noop, type: 'initiative' },
-  { label: 'Decyzja: pilot Logistics', icon: ListChecks, onClick: noop, type: 'decision' },
-];
-
-const TASKS_ACTIONS: ActionRow[] = [
-  {
-    buttons: [
-      {
-        label: 'Dziś',
-        icon: Zap,
         onClick: noop,
-        colorScheme: 'neutral',
-        flex: true,
-        shortcut: 'T',
       },
+    ],
+    time: [
+      { id: 'dzis', variant: 'neutral', label: 'Dziś', icon: Zap, shortcut: 'T', onClick: noop },
       {
+        id: 'odloz',
+        variant: 'neutral',
         label: 'Odłóż',
         icon: Pause,
-        onClick: noop,
-        colorScheme: 'neutral',
-        flex: true,
         shortcut: 'Z',
-      },
-    ],
-  },
-  {
-    buttons: [
-      {
-        label: 'Zrobione',
-        icon: CheckCircle2,
         onClick: noop,
-        colorScheme: 'emerald',
-        flex: true,
-        shortcut: 'D',
       },
     ],
   },
-];
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ZAKŁADKA 4 — DECISIONS
-// Źródło: src/components/MyWork/DecisionPreviewPanel.tsx (Zatwierdź/Odrzuć w
-//   PreviewActionBar) + ręczny wiersz Odłóż + menu "..." (Więcej info/Deleguj/
-//   Przypomnij/Eskaluj), POZA ActionBar. Skonsolidowane 2026-07-21 — zgloszenie
-//   Piotra: stopka miala 7 widocznych przyciskow w 3 wierszach (DOKTRYNA_GESTOSCI
-//   §1/§15). Teraz: 3 zawsze widoczne + 4 w overflow.
+// ZAKŁADKA 4 — DECISIONS · źródło: src/components/MyWork/DecisionPreviewPanel.tsx:402
 // ═══════════════════════════════════════════════════════════════════════════
-const DECISIONS_PILLS: MetaPill[] = [
-  { label: 'Status', value: 'Czeka na Ciebie', tone: 'warning' },
-  { label: 'Wpływ', value: 'Wysoki', tone: 'danger' },
-  { label: 'Termin', value: '22.07', tone: 'neutral' },
-];
-
-const DECISIONS_RELATIONS: RelationItem[] = [
-  { label: 'Diagnoza Logistics BU', icon: FileText, onClick: noop, type: 'assessment' },
-  { label: 'Prezentacja dla zarządu', icon: Presentation, onClick: noop, type: 'deck' },
-];
-
-// Zgloszenie Piotra 2026-07-21: stopka Decision miala 7 widocznych przyciskow
-// w 3 wierszach — lamie DOKTRYNA_GESTOSCI.md §1 (<=5 widocznych, 6+ -> overflow)
-// i §15 ("gesty i plytki, nie plaski wysyp"). Naprawione w DecisionPreviewPanel.tsx:
-// zostaja widoczne Zatwierdz/Odrzuc/Odloz (3), reszta (Wiecej info/Deleguj/
-// Przypomnij/Eskaluj) przeniesiona do menu "...". Ten mockup odwzorowuje NOWY stan.
-const DECISIONS_ACTIONS: ActionRow[] = [
-  {
-    buttons: [
+const DECISIONS: OpisPodgladu = {
+  zakladka: 'Decisions',
+  ikona: ListChecks,
+  zrodlo: 'DecisionPreviewPanel.tsx:402',
+  tytul: 'Pilot DRD w segmencie Logistics — Q3',
+  meta: [
+    { label: 'Status', value: 'Czeka na Ciebie', tone: 'warning' },
+    { label: 'Wpływ', value: 'Wysoki', tone: 'danger' },
+    { label: 'Termin', value: '22.07', tone: 'neutral' },
+  ],
+  termin: '22.07.2026',
+  opis:
+    'Czy uruchamiamy pilota w Logistics BU już w Q3, czy czekamy na domknięcie diagnozy ' +
+    'Manufacturing. Koszt wejścia 180 tys. zł, zwrot szacowany na 4 kwartały.',
+  ai: ['Argumenty za i przeciw', 'Ryzyka odroczenia', 'Kto jeszcze decyduje'],
+  relacje: [
+    { label: 'Diagnoza Logistics BU', icon: FileText, onClick: noop, type: 'assessment' },
+    { label: 'Prezentacja dla zarządu', icon: Presentation, onClick: noop, type: 'deck' },
+  ],
+  akcje: {
+    resolutions: [
       {
+        id: 'zatwierdz',
+        variant: 'positive',
         label: 'Zatwierdź',
         icon: Check,
-        onClick: noop,
-        colorScheme: 'emerald',
-        flex: true,
         shortcut: 'A',
+        onClick: noop,
       },
-      { label: 'Odrzuć', icon: X, onClick: noop, colorScheme: 'red', flex: true, shortcut: 'R' },
+      {
+        id: 'odrzuc',
+        variant: 'destructive',
+        label: 'Odrzuć',
+        icon: X,
+        shortcut: 'R',
+        onClick: noop,
+      },
+    ],
+    informational: [
+      {
+        id: 'info',
+        variant: 'neutral',
+        label: 'Więcej info',
+        icon: MessageSquare,
+        shortcut: 'I',
+        onClick: noop,
+      },
+      {
+        id: 'deleguj',
+        variant: 'neutral',
+        label: 'Deleguj',
+        icon: UserPlus,
+        shortcut: 'G',
+        onClick: noop,
+      },
+    ],
+    time: [
+      {
+        id: 'odloz',
+        variant: 'neutral',
+        label: 'Odłóż',
+        icon: AlarmClockOff,
+        shortcut: 'Z',
+        onClick: noop,
+      },
+      { id: 'przypomnij', variant: 'neutral', label: 'Przypomnij', icon: Bell, onClick: noop },
+      { id: 'eskaluj', variant: 'warning', label: 'Eskaluj', icon: TrendingUp, onClick: noop },
     ],
   },
-];
+};
 
-// ── Rusztowanie kolumny ─────────────────────────────────────────────────────
-const Kolumna: React.FC<{
-  ikona: React.ElementType;
-  zakladka: string;
-  tytul: string;
-  zrodlo: string;
-  children: React.ReactNode;
-}> = ({ ikona: Ikona, zakladka, tytul, zrodlo, children }) => (
-  <section className="flex min-w-0 flex-col rounded-2xl border border-c-border-subtle bg-c-surface-raised">
-    <header className="flex items-start gap-2 border-b border-c-border-subtle px-3.5 py-3">
-      <Ikona size={16} className="mt-0.5 shrink-0 text-c-text-muted" />
-      <div className="min-w-0">
-        <div className="text-sm font-semibold text-c-text-primary">{zakladka}</div>
-        <div className="mt-0.5 truncate text-[11px] text-c-text-muted" title={tytul}>
-          {tytul}
-        </div>
-        <div className="mt-1 font-mono text-[10px] leading-tight text-c-text-muted/70">
-          {zrodlo}
+const PODGLADY = [IDEAS, INBOX, TASKS, DECISIONS];
+
+/**
+ * Rusztowanie kolumny — WYŁĄCZNIE etykieta pomiarowa nad panelem (skąd wzięta
+ * treść). Nie dotyka wnętrza podglądu: szerokość jest kanoniczna
+ * (`PREVIEW_PANE_WIDTH`), a wszystko poniżej rysuje `StandardPreview`.
+ */
+const Kolumna: React.FC<{ opis: OpisPodgladu }> = ({ opis }) => {
+  const Ikona = opis.ikona;
+  const [przypiete, setPrzypiete] = React.useState(false);
+  return (
+    <div className="flex shrink-0 flex-col gap-2">
+      <div className="flex items-center gap-2 px-1">
+        <Ikona size={15} className="shrink-0 text-c-text-muted" />
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-c-text-primary">{opis.zakladka}</div>
+          <div className="font-mono text-[10px] leading-tight text-c-text-muted/70">
+            {opis.zrodlo}
+          </div>
         </div>
       </div>
-    </header>
-    <div className="flex flex-1 flex-col gap-2.5 p-3.5">{children}</div>
-  </section>
-);
+      <div
+        className="h-[880px] shrink-0 bg-slate-50 p-3 dark:bg-navy-950"
+        style={{ width: SZEROKOSC_PODGLADU }}
+      >
+        <StandardPreview
+          title={opis.tytul}
+          onClose={noop}
+          onOpenFull={noop}
+          pinned={przypiete}
+          onTogglePin={() => setPrzypiete((v) => !v)}
+          meta={{
+            pills: opis.meta,
+            trailing: (
+              <span className="text-[11px] tabular-nums text-c-text-muted">{opis.termin}</span>
+            ),
+          }}
+          details={{
+            label: 'Szczegóły',
+            text: opis.opis,
+            onCopy: noop,
+            onExport: noop,
+            onDownload: noop,
+          }}
+          ai={{ hints: opis.ai }}
+          relations={opis.relacje}
+          actions={opis.akcje}
+          whatsNext={opis.coDalej}
+        />
+      </div>
+    </div>
+  );
+};
 
 export const Preview4ZakladkiScreen: React.FC = () => {
   const params = new URLSearchParams(window.location.search);
@@ -290,22 +447,20 @@ export const Preview4ZakladkiScreen: React.FC = () => {
   return (
     <MemoryRouter initialEntries={['/my-work']}>
       <div className="min-h-screen bg-c-surface p-6">
-        <div className="mx-auto max-w-[1600px]">
-          {/* ── Nagłówek ── */}
+        <div className="mx-auto w-fit">
           <header className="mb-5">
             <h1 className="text-lg font-semibold text-c-text-primary">
-              Stopki preview — cztery zakładki My Work obok siebie
+              Podglądy — cztery zakładki My Work obok siebie
             </h1>
             <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
-              Ta sama akcja ma wyglądać tak samo w każdej zakładce. O wariancie decyduje{' '}
-              <strong className="font-semibold text-c-text-primary">skutek akcji</strong> — co
-              przycisk robi z rekordem — a nie to, na którym ekranie stoi. Rodzina planowania (Dziś
-              · Tydzień · Później · Odłóż) idzie w całości na neutral; „Zrobione" i „Zatwierdź" to
-              ten sam skutek, więc ten sam zielony; „primary" występuje maksymalnie raz na preview.
+              Przyrząd pomiarowy, nie ekran produktu. Każda kolumna to ten sam komponent{' '}
+              <strong className="font-semibold text-c-text-primary">StandardPreview</strong> — ekran
+              podaje wyłącznie treść, a nagłówek, kolejność sześciu bloków, geometrię i szerokość
+              narzuca komponent. Cztery panele mają wyglądać identycznie wszędzie poza treścią;
+              każda różnica poza treścią jest defektem do zgłoszenia.
             </p>
           </header>
 
-          {/* ── Legenda skutek → wariant ── */}
           {pokazLegende ? (
             <div className="mb-6 rounded-2xl border border-c-border-subtle bg-c-surface-raised p-3.5">
               <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
@@ -327,166 +482,42 @@ export const Preview4ZakladkiScreen: React.FC = () => {
             </div>
           ) : null}
 
-          {/* ── Cztery kolumny ── */}
-          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {/* ─────────── IDEAS ─────────── */}
-            <Kolumna
-              ikona={Lightbulb}
-              zakladka="Ideas"
-              tytul="Wejście na rynek DACH — mapa hipotez"
-              zrodlo="IdeasTableContent.tsx:634"
-            >
-              <PreviewMetaCard pills={IDEAS_PILLS} trailing={<Meta>11.07.2026</Meta>} />
-              <PreviewDetailsSection
-                compact
-                label="Szczegóły"
-                text={
-                  'Gałęzie: popyt mid-market, konkurencja lokalna, kanały sprzedaży, ryzyka regulacyjne. Priorytet na Q3: zwalidować popyt zanim ruszy budowa oferty.'
-                }
-              />
-              <PreviewAIHintStrip
-                hints={['Rozwiń pomysł', 'Znajdź ryzyka', 'Zaproponuj następny krok']}
-              />
-              <PreviewRelations items={IDEAS_RELATIONS} emptyLabel="Brak powiązań" />
-              {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown */}
-              <div>
-                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-                  Co dalej
-                </div>
-                <ConvertToOutputMenu
-                  sourceType="idea"
-                  sourceId="idea-dach-001"
-                  sourceTitle="Wejście na rynek DACH — mapa hipotez"
-                  onConvertComplete={noop}
-                  variant="inline"
-                />
-              </div>
-              <PreviewActionBar rows={IDEAS_ACTIONS} />
-            </Kolumna>
-
-            {/* ─────────── INBOX ─────────── */}
-            <Kolumna
-              ikona={InboxIcon}
-              zakladka="Inbox"
-              tytul="ZPUE prosi o przesunięcie warsztatu"
-              zrodlo="InboxContent.tsx:1396"
-            >
-              <PreviewMetaCard pills={INBOX_PILLS} trailing={<Meta>dziś 09:14</Meta>} />
-              <PreviewDetailsSection
-                compact
-                label="Szczegóły"
-                text={
-                  'Klient prosi o przesunięcie warsztatu diagnostycznego z 24.07 na pierwszy tydzień sierpnia — kolizja z audytem ISO. Pyta też, czy da się skrócić sesję do pół dnia.'
-                }
-              />
-              <PreviewAIHintStrip
-                hints={['Streść wątek', 'Zaproponuj odpowiedź', 'Wyciągnij zadania']}
-              />
-              <PreviewRelations items={INBOX_RELATIONS} emptyLabel="Brak powiązań" />
-              <PreviewActionBar rows={INBOX_ACTIONS} />
-            </Kolumna>
-
-            {/* ─────────── TASKS ─────────── */}
-            <Kolumna
-              ikona={ListChecks}
-              zakladka="Tasks"
-              tytul="Karta inicjatywy — onboarding 21→7 dni"
-              zrodlo="MyTasksListContent.tsx:2594"
-            >
-              <PreviewMetaCard pills={TASKS_PILLS} trailing={<Meta>za 2 dni</Meta>} />
-              <PreviewDetailsSection
-                compact
-                label="Szczegóły"
-                text={
-                  'Spisać zakres, właściciela i mierniki dla inicjatywy skrócenia onboardingu. Wejście: wnioski z warsztatu 09.07 i dane z trzech ostatnich wdrożeń.'
-                }
-              />
-              <PreviewAIHintStrip
-                hints={['Rozbij na podzadania', 'Oszacuj czas', 'Kto powinien to robić']}
-              />
-              <PreviewRelations items={TASKS_RELATIONS} emptyLabel="Brak powiązań" />
-              <PreviewActionBar rows={TASKS_ACTIONS} />
-            </Kolumna>
-
-            {/* ─────────── DECISIONS ─────────── */}
-            <Kolumna
-              ikona={ListChecks}
-              zakladka="Decisions"
-              tytul="Pilot DRD w segmencie Logistics — Q3"
-              zrodlo="DecisionPreviewPanel.tsx:402"
-            >
-              <PreviewMetaCard pills={DECISIONS_PILLS} trailing={<Meta>22.07.2026</Meta>} />
-              <PreviewDetailsSection
-                compact
-                label="Szczegóły"
-                text={
-                  'Czy uruchamiamy pilota w Logistics BU już w Q3, czy czekamy na domknięcie diagnozy Manufacturing. Koszt wejścia 180 tys. zł, zwrot szacowany na 4 kwartały.'
-                }
-              />
-              <PreviewAIHintStrip
-                hints={['Argumenty za i przeciw', 'Ryzyka odroczenia', 'Kto jeszcze decyduje']}
-              />
-              <PreviewRelations items={DECISIONS_RELATIONS} emptyLabel="Brak powiązań" />
-              <PreviewActionBar rows={DECISIONS_ACTIONS} />
-              {/* Odłóż: produkcja renderuje to RĘCZNIE (DecisionPreviewPanel.tsx) —
-                  ma wlasny dropdown presetow czasu (1h/4h/jutro/tydzien), ktorego
-                  generyczny overflow nie odwzorowuje. Menu "..." obok NIE jest
-                  juz reczna kopia — to PRAWDZIWY PreviewActionBar.overflowActions,
-                  ten sam kod co w produkcji (naprawione 2026-07-21 po zgloszeniu
-                  Piotra: trzecia reczna kopia tego samego menu w jednym wieczorze
-                  byla dokladnie tym, czego ten prop mial nie dopuscic). */}
-              <div className="flex gap-2">
-                <button onClick={noop} className={actionPillClass('neutral', 'flex-1')}>
-                  <AlarmClockOff size={14} />
-                  Odłóż
-                </button>
-                <PreviewActionBar
-                  rows={[]}
-                  overflowLabel="More actions"
-                  overflowActions={[
-                    {
-                      label: 'Więcej info',
-                      icon: MessageSquare,
-                      onClick: noop,
-                      colorScheme: 'neutral',
-                    },
-                    { label: 'Deleguj', icon: UserPlus, onClick: noop, colorScheme: 'neutral' },
-                    { label: 'Przypomnij', icon: Bell, onClick: noop, colorScheme: 'neutral' },
-                    { label: 'Eskaluj', icon: TrendingUp, onClick: noop, colorScheme: 'amber' },
-                  ]}
-                />
-              </div>
-            </Kolumna>
+          <div className="flex flex-nowrap items-start gap-4">
+            {PODGLADY.map((opis) => (
+              <Kolumna key={opis.zakladka} opis={opis} />
+            ))}
           </div>
 
-          {/* ── Inwentarz wariantów ── */}
           <footer className="mt-6 rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3">
             <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-              Co widać na tym zrzucie
+              Co ma być widać na tym zrzucie
             </div>
             <ul className="space-y-1 text-[12px] leading-relaxed text-c-text-secondary">
               <li>
-                • <strong className="text-c-text-primary">Dziś</strong> jest neutralne w Inboxie i w
-                Tasks — ten sam przycisk, ten sam wygląd (wcześniej: primary w Inboxie, emerald w
-                Tasks).
+                • <strong className="text-c-text-primary">Blok 1</strong> we wszystkich czterech:
+                tytuł · pinezka · „Otwórz" (bez ikony) · „×" — ten sam zestaw, ta sama kolejność, ta
+                sama geometria.
               </li>
               <li>
-                • <strong className="text-c-text-primary">Zrobione</strong> (Tasks) i{' '}
-                <strong className="text-c-text-primary">Zatwierdź</strong> (Decisions) to ten sam
-                skutek — jeden zielony emerald, nie dwa odcienie.
+                • <strong className="text-c-text-primary">Kolejność bloków</strong> identyczna: meta
+                → Szczegóły (⋮ + licznik słów) → AI → Powiązania → Akcje → „Co dalej".
               </li>
               <li>
-                • <strong className="text-c-text-primary">Konwertuj</strong> to jedyny primary na
-                całym zrzucie — granatowo-biały kontrast, nie crimson.
+                • <strong className="text-c-text-primary">„Co dalej"</strong> tylko w Ideas — jako
+                jedyna z czterech encji ma zaimplementowaną konwersję (§7.3c). W pozostałych blok
+                jest NIEOBECNY, nie pusty, a kolejność reszty się nie zmienia.
               </li>
               <li>
-                • Cała rodzina planowania (Dziś · Tydzień · Później · Odłóż · Przypomnij · Deleguj ·
-                Zapisz · Notatka) jest neutralna.
+                • <strong className="text-c-text-primary">Warianty ze skutku, nie z ekranu</strong>:
+                „Zrobione" (Inbox, Tasks) i „Zatwierdź" (Decisions) mają ten sam zielony; cała
+                rodzina planowania jest neutralna; „Konwertuj" to jedyny primary — granatowo-biały
+                kontrast, nie crimson.
               </li>
               <li>
-                • <strong className="text-c-text-primary">Decisions</strong>: 7 widocznych
-                przycisków w 3 wierszach → 3 (Zatwierdź/Odrzuć/Odłóż) + menu „…" (Więcej
-                info/Deleguj/Przypomnij/Eskaluj) — zgodnie z DOKTRYNA_GESTOSCI §1 (≤5 widocznych).
+                • <strong className="text-c-text-primary">Szerokość</strong> ta sama we wszystkich
+                czterech ({SZEROKOSC_PODGLADU}&nbsp;px) — wyliczona z `CANON_PREVIEW` (clamp
+                340–480&nbsp;px przy ekranie {SZEROKOSC_EKRANU_ODNIESIENIA}&nbsp;px), a nie wpisana
+                w ekran.
               </li>
             </ul>
           </footer>
@@ -495,9 +526,5 @@ export const Preview4ZakladkiScreen: React.FC = () => {
     </MemoryRouter>
   );
 };
-
-const Meta: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="text-[11px] tabular-nums text-c-text-muted">{children}</span>
-);
 
 export default Preview4ZakladkiScreen;

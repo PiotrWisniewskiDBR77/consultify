@@ -33,6 +33,7 @@ vi.mock('../../../../server/src/controllers/StaffingPlanController.js', () => ({
 }));
 
 vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   verifyToken: (req: any, res: any, next: () => void) => {
     if (!mockUser) {
       res.status(401).json({ error: 'No token provided' });

@@ -105,6 +105,7 @@ export async function findExpiredAssignments(): Promise<ExpiredAssignment[]> {
          FROM approval_assignments aa
          LEFT JOIN organizations o ON aa.org_id = o.id
          WHERE aa.status IN ('PENDING', 'ACKED')
+         AND COALESCE(aa.assignment_kind, 'project_gate') = 'project_gate'
          AND aa.sla_due_at < datetime('now')
          AND aa.escalated_at IS NULL`,
     []

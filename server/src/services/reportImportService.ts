@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+import { DRD_STRUCTURE } from '../data/drdStructure.js';
 import DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { baseStorageDir } from '../utils/storagePaths.js';
@@ -273,25 +274,23 @@ const FRAMEWORK_PATTERNS: Record<SupportedFramework, { keywords: string[]; patte
 // DRD STRUCTURE REFERENCE
 // ============================================
 
-const DRD_AXES = [
-  { id: 1, name: 'Digital Processes', namePL: 'Procesy Cyfrowe', levelCount: 7 },
-  { id: 2, name: 'Digital Products', namePL: 'Produkty Cyfrowe', levelCount: 5 },
-  { id: 3, name: 'Digital Business Models', namePL: 'Cyfrowe Modele Biznesowe', levelCount: 5 },
-  { id: 4, name: 'Data Management', namePL: 'Zarządzanie Danymi', levelCount: 7 },
-  { id: 5, name: 'Culture of Transformation', namePL: 'Kultura Transformacji', levelCount: 5 },
-  { id: 6, name: 'Cybersecurity', namePL: 'Cyberbezpieczeństwo', levelCount: 5 },
-  { id: 7, name: 'AI Maturity', namePL: 'Dojrzałość AI', levelCount: 5 },
-];
+// Thin adapter over the single source of truth (server/src/data/drdStructure.ts).
+// Do NOT hand-maintain name/namePL/levelCount or the area-id lists here again:
+// DRD_STRUCTURE[*].levelCount is per-axis (5, 6 or 7 — culture and
+// cybersecurity are 6, not 5) and DRD_STRUCTURE[*].areas carries the real
+// area ids. This table previously hand-copied levelCount: 5 for both culture
+// and cybersecurity, which rejected extracted/validated scores of 6 for
+// those two axes as "invalid" (see the `> axis.levelCount` checks below).
+const DRD_AXES = DRD_STRUCTURE.map((axis) => ({
+  id: axis.id,
+  name: axis.name,
+  namePL: axis.namePL || axis.name,
+  levelCount: axis.levelCount,
+}));
 
-const DRD_AREAS: Record<number, string[]> = {
-  1: ['1A', '1B', '1C', '1D', '1E', '1F', '1G', '1H', '1I'],
-  2: ['2A', '2B', '2C', '2D', '2E'],
-  3: ['3A', '3B', '3C', '3D', '3E'],
-  4: ['4A', '4B', '4C', '4D', '4E'],
-  5: ['5A', '5B', '5C', '5D', '5E'],
-  6: ['6A', '6B', '6C', '6D', '6E'],
-  7: ['7A', '7B', '7C', '7D', '7E'],
-};
+const DRD_AREAS: Record<number, string[]> = Object.fromEntries(
+  DRD_STRUCTURE.map((axis) => [axis.id, axis.areas.map((area) => area.id)])
+);
 
 // ============================================
 // SIRI STRUCTURE REFERENCE

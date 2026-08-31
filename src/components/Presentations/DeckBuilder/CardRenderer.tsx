@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
@@ -72,6 +73,7 @@ const FreeformBlockFrame: React.FC<{
   onCommit: (geometry: BlockGeometry) => void;
   children: React.ReactNode;
 }> = ({ geometry, selected, onCommit, children }) => {
+  const { t } = useTranslation();
   const frameRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<BlockGeometry | null>(null);
   const visible = draft ?? geometry;
@@ -137,23 +139,23 @@ const FreeformBlockFrame: React.FC<{
         <>
           <button
             type="button"
-            aria-label="Move selected block"
-            title="Drag to move; arrow keys move by 1%, Shift by 5%"
+            aria-label={t('presentations.builder.freeform.move', 'Move selected block')}
+            title={t('presentations.builder.freeform.moveHint', 'Drag to move; arrow keys move by 1%, Shift by 5%')}
             onPointerDown={(event) => startPointer(event, 'move')}
             onKeyDown={keyboardMove}
             className="absolute left-1/2 top-0 z-20 h-4 w-10 -translate-x-1/2 -translate-y-1/2 cursor-move rounded-full border border-c-focus bg-c-surface shadow"
           />
           <button
             type="button"
-            aria-label="Rotate selected block"
-            title="Drag to rotate"
+            aria-label={t('presentations.builder.freeform.rotate', 'Rotate selected block')}
+            title={t('presentations.builder.freeform.rotateHint', 'Drag to rotate')}
             onPointerDown={(event) => startPointer(event, 'rotate')}
             className="absolute left-1/2 -top-6 z-20 h-3 w-3 -translate-x-1/2 cursor-crosshair rounded-full border-2 border-c-focus bg-c-surface shadow"
           />
           <button
             type="button"
-            aria-label="Resize selected block"
-            title="Drag to resize"
+            aria-label={t('presentations.builder.freeform.resize', 'Resize selected block')}
+            title={t('presentations.builder.freeform.resizeHint', 'Drag to resize')}
             onPointerDown={(event) => startPointer(event, 'resize')}
             className="absolute -bottom-1.5 -right-1.5 z-20 h-3 w-3 cursor-se-resize rounded-sm border border-c-focus bg-c-surface shadow"
           />

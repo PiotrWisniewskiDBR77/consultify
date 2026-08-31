@@ -39,9 +39,14 @@ describe('Wave 3 Admin owner fixture guard', () => {
   it('requires literal YES before seed or whole-database reset', () => {
     for (const command of ['seed', 'reset']) {
       const manifest = path.join(os.tmpdir(), `w3-admin-never-written-${process.pid}-${command}.json`);
-      const result = run(command, 'postgresql://user:pass@127.0.0.1/consultify_w3_admin_owner_guard_test', undefined, manifest);
-      expect(result.status).not.toBe(0);
-      expect(result.stderr).toContain('requires ADMIN_OWNER_FIXTURE_CONFIRM=YES');
+      if (command === 'reset') fs.writeFileSync(manifest, '{}', { mode: 0o600 });
+      try {
+        const result = run(command, 'postgresql://user:pass@127.0.0.1/consultify_w3_admin_owner_guard_test', undefined, manifest);
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain('requires ADMIN_OWNER_FIXTURE_CONFIRM=YES');
+      } finally {
+        if (fs.existsSync(manifest)) fs.unlinkSync(manifest);
+      }
     }
   });
 

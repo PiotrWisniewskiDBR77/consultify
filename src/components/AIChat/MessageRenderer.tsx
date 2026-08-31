@@ -871,34 +871,49 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 // `teresaPendingConfirm` w UnifiedChatPanel.tsx). Treść odmowy
                 // (PL, z rejestru) zostaje bez zmian; przyciski dochodzą tylko
                 // dopóki TA KONKRETNA wiadomość jest oczekującym potwierdzeniem.
-                <div className="not-prose space-y-2">
-                  <div className="whitespace-pre-wrap">{userVisibleContent}</div>
-                  {isTeresaConfirmPending && (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onTeresaConfirmProceed?.()}
-                        disabled={teresaConfirmBusy}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-text hover:opacity-90 text-c-surface disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {teresaConfirmBusy
-                          ? teresaPendingConfirm?.language === 'pl'
-                            ? 'Wykonuję…'
-                            : 'Running…'
-                          : teresaPendingConfirm?.language === 'pl'
-                            ? 'Potwierdź'
-                            : 'Confirm'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onTeresaConfirmCancel?.()}
-                        disabled={teresaConfirmBusy}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {teresaPendingConfirm?.language === 'pl' ? 'Anuluj' : 'Cancel'}
-                      </button>
+                //
+                // Uwaga właściciela (2026-08-30, ?screen=teresa-confirm-chip):
+                // pierwotna wersja była pełnoszerokim blokiem tekstu + jednym
+                // pełnym czarnym przyciskiem CTA — czytało się jak ciężki
+                // modal. Dzisiejsze konwersacyjne UI (w tym Claude) pytają o
+                // potwierdzenie lekko: mała, wtopiona w rozmowę karta, która
+                // owija się wokół treści zamiast rozciągać na całą szerokość,
+                // subtelne obramowanie/tło zamiast kontrastowego CTA. Czytelność
+                // bez zmian — treść potwierdzenia zostaje w pełnym rozmiarze
+                // (text-sm), zmienia się tylko kolor (c-text-secondary, wciąż
+                // ~9:1 kontrastu) i waga przycisków.
+                <div className="not-prose">
+                  <div className="inline-flex max-w-sm flex-col gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised/70 px-3 py-2.5">
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed text-c-text-secondary">
+                      {userVisibleContent}
                     </div>
-                  )}
+                    {isTeresaConfirmPending && (
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onTeresaConfirmProceed?.()}
+                          disabled={teresaConfirmBusy}
+                          className="inline-flex items-center gap-1 rounded-md border border-c-border-strong bg-c-surface px-2.5 py-1 text-xs font-medium text-c-text hover:bg-c-surface-hover disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          {teresaConfirmBusy
+                            ? teresaPendingConfirm?.language === 'pl'
+                              ? 'Wykonuję…'
+                              : 'Running…'
+                            : teresaPendingConfirm?.language === 'pl'
+                              ? 'Potwierdź'
+                              : 'Confirm'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onTeresaConfirmCancel?.()}
+                          disabled={teresaConfirmBusy}
+                          className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-c-text-muted hover:bg-c-surface-hover hover:text-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          {teresaPendingConfirm?.language === 'pl' ? 'Anuluj' : 'Cancel'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : isDeepThinkingConfirm ? (
                 <div className="space-y-3">

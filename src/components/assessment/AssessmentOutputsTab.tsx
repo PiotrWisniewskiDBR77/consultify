@@ -50,6 +50,7 @@ import {
 } from '@/method-core/api/methodCoreApi';
 import { formatListDate } from '@/utils/listDateFormat';
 
+import { PreviewPaneAside } from '../shared/PreviewPane';
 import { EmptyState } from '../shared/states';
 import { type MetaPill, StandardPreview } from '../standard/StandardPreview';
 import {
@@ -213,22 +214,39 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   const columns: TableColumn[] = useMemo(
     () => [
       {
+        // Nagłówki kolumn tej tabeli wołały `t()` z kluczami, których nie ma
+        // w public/locales/pl (plik wspólny, nie do naprawy stąd) — spadały
+        // po cichu na angielski fallback ("Scope"/"Module"/"Frozen at",
+        // wielką literą przez CSS nagłówka: SCOPE/MODULE/FROZEN AT) obok
+        // reszty ekranu w 100% po polsku. Naprawione tak samo jak
+        // `statusLabel(isPolish, …)` niżej w tym pliku — inline po `isPolish`,
+        // bez zależności od brakującego klucza. Przegląd nocny 03-wywiad/
+        // 05-ocena, 2026-08-30.
         id: 'scope',
-        label: t('assessment.outputs.table.scope', 'Scope'),
+        label: isPolish ? 'Zakres' : 'Scope',
         sortable: true,
         render: (row) =>
-          (row.scope as string | null) || t('assessment.outputs.table.untitled', 'Untitled output'),
+          (row.scope as string | null) || (isPolish ? 'Bez tytułu' : 'Untitled output'),
       },
       {
         id: 'module',
-        label: t('assessment.outputs.table.module', 'Module'),
+        label: isPolish ? 'Moduł' : 'Module',
         width: '110px',
         sortable: true,
-        render: (row) => (row.module as string | null) || '—',
+        render: (row) => {
+          const raw = row.module as string | null;
+          if (!raw) return '—';
+          // Surowy identyfikator modułu ("assessment") pokazywany wprost —
+          // ten sam błąd co "Priorytet: medium" w Interview/InterviewHub.tsx
+          // naprawione tej samej nocy. Dziś jedyna prawdziwa wartość to
+          // 'assessment' (ten hub), więc mapa jest celowo krótka.
+          if (raw === 'assessment') return isPolish ? 'Ocena' : 'Assessment';
+          return raw;
+        },
       },
       {
         id: 'outputVersion',
-        label: t('assessment.outputs.table.version', 'Version'),
+        label: isPolish ? 'Wersja' : 'Version',
         width: '160px',
         sortable: true,
         render: (row) => {
@@ -248,7 +266,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
       },
       {
         id: 'frozenAt',
-        label: t('assessment.outputs.table.frozenAt', 'Frozen at'),
+        label: isPolish ? 'Zamrożono' : 'Frozen at',
         width: '150px',
         sortable: true,
         render: (row) => (row.frozenAt ? formatListDate(row.frozenAt as string) : '—'),
@@ -349,7 +367,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         </div>
 
         {showLineage && lineageSessionId ? (
-          <aside className="w-[400px] shrink-0 p-3 overflow-hidden">
+          // Ten sam slot co podgląd niżej — więc ta sama szerokość z komponentu,
+          // żeby przełączenie lineage↔podgląd nie przesuwało tabeli (§7.2).
+          <PreviewPaneAside className="!bg-transparent dark:!bg-transparent">
             <ArtifactLineagePanel
               sessionId={lineageSessionId}
               onClose={() => setLineageSessionId(null)}
@@ -366,11 +386,11 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                 onNavigate?.('initiatives');
               }}
             />
-          </aside>
+          </PreviewPaneAside>
         ) : selectedRow ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <PreviewPaneAside>
             <StandardPreview
-              title={selectedRow.scope || t('assessment.outputs.table.untitled', 'Untitled output')}
+              title={selectedRow.scope || (isPolish ? 'Bez tytułu' : 'Untitled output')}
               onClose={() => setSelectedOutputId(null)}
               loading={detailLoading}
               meta={{
@@ -469,7 +489,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                   : undefined,
               }}
             />
-          </aside>
+          </PreviewPaneAside>
         ) : null}
       </div>
     </div>

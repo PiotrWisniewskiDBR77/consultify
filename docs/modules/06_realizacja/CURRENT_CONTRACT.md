@@ -2,11 +2,33 @@
 module_id: MODULE_EXECUTION
 truth_type: product-target
 status: canonical
+superseded_in_scope_by: INITIATIVES_EXECUTION_FUNCTIONS_CANON.md (spis funkcji Menu 2)
 owner: product
 last_reviewed: 2026-07-30
 ---
 
 # Execution — aktualny kontrakt funkcjonalny
+
+> ### ★ ROZSTRZYGNIĘCIE SPORU O KANON — 2026-08-29
+>
+> Ten kontrakt i [`../INITIATIVES_EXECUTION_FUNCTIONS_CANON.md`](../INITIATIVES_EXECUTION_FUNCTIONS_CANON.md)
+> miały jednocześnie status `canonical` i opisywały **różne zestawy funkcji Menu 2**,
+> bez `superseded_by` w żadną stronę. Wg [`../../SOURCE_OF_TRUTH.md`](../../SOURCE_OF_TRUTH.md)
+> był to stan `disputed`, w którym **nie wolno wdrażać na podstawie zgadywania**.
+>
+> **Rozstrzygnięcie, wiążące dla wykonawców:**
+> - **Spis funkcji i anatomia Menu 2** — rozstrzyga **kanon** (nowszy, `2026-08-09`,
+>   z jawnym `supersedes_in_scope` dla dawnych definicji powierzchni). Tabela „Funkcje"
+>   w tym pliku jest w tym zakresie **historyczna**.
+> - **Cel, granice modułu, własność obiektów, dane, role i integracje** — rozstrzyga
+>   **ten kontrakt**. Kanon ich nie zastępuje.
+>
+> **Ograniczenie, o którym trzeba wiedzieć:** kanon ma `runtime_status: not_implemented`,
+> a towarzyszący mu `initiatives-execution-canon/01_PROCESS_GOVERNANCE_AND_GATES.md`
+> ma status `draft_for_owner_review` z blokującą decyzją **OD-02** (właściciel musi
+> zatwierdzić domyślne terminy bramek). Do czasu tej decyzji kanon jest **wiążącym
+> kierunkiem**, nie potwierdzoną specyfikacją do odbioru.
+
 
 ## Cel
 

@@ -115,7 +115,8 @@ describe('IPWhitelistView honest UI', () => {
     render(<IPWhitelistView />);
 
     await screen.findByText('10.0.0.1');
-    fireEvent.click(screen.getByRole('button', { name: /Remove IP 10\.0\.0\.1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete$/i }));
 
     await waitFor(() => {
       expect(
@@ -150,7 +151,8 @@ describe('IPWhitelistView honest UI', () => {
 
     expect(await screen.findByText('10.0.0.1')).toBeInTheDocument();
     expect(screen.getByText('Org One')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Remove IP 10\.0\.0\.1/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Delete$/i })).toBeInTheDocument();
   });
 
   it('does not claim remove success when read-back still contains the IP', async () => {
@@ -169,7 +171,8 @@ describe('IPWhitelistView honest UI', () => {
     render(<IPWhitelistView />);
 
     await screen.findByText('10.0.0.1');
-    fireEvent.click(screen.getByRole('button', { name: /Remove IP 10\.0\.0\.1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete$/i }));
 
     await waitFor(() => {
       expect(

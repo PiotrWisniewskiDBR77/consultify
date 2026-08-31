@@ -13,24 +13,21 @@ import OrganizationController from '../../../../server/src/controllers/Organizat
 
 const dbGet = vi.fn();
 const getMembers = vi.fn();
-const updateMemberRole = vi.fn();
-const removeMember = vi.fn();
-const logAction = vi.fn();
+const changeMemberRoleViaIam = vi.fn();
+const removeMemberViaIam = vi.fn();
 
 vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
   get: (...args: any[]) => dbGet(...args),
 }));
 
-vi.mock('../../../../server/src/services/adminAuditService.js', () => ({
-  default: {
-    logAction: (...args: any[]) => logAction(...args),
-  },
+vi.mock('../../../../server/src/services/orgPeopleIamService.js', () => ({
+  changeOrganizationMemberRoleAtomicallyViaIam: (...args: any[]) =>
+    changeMemberRoleViaIam(...args),
+  removeOrganizationMemberAtomicallyViaIam: (...args: any[]) => removeMemberViaIam(...args),
 }));
 
 vi.mock('../../../../server/src/services/organizationService.js', () => ({
   getMembers: (...args: any[]) => getMembers(...args),
-  updateMemberRole: (...args: any[]) => updateMemberRole(...args),
-  removeMember: (...args: any[]) => removeMember(...args),
   normalizeOrganizationRole: (role?: string) => {
     const n = String(role || '')
       .trim()
@@ -59,10 +56,8 @@ describe('Admin audit emission (BUG A / H2.12)', () => {
   beforeEach(() => {
     dbGet.mockReset();
     getMembers.mockReset();
-    updateMemberRole.mockReset();
-    removeMember.mockReset();
-    logAction.mockReset();
-    logAction.mockResolvedValue({ id: 'audit-1', persisted: true });
+    changeMemberRoleViaIam.mockReset().mockResolvedValue({ denied: false });
+    removeMemberViaIam.mockReset().mockResolvedValue({ denied: false });
   });
 
   it('emits update_member_role with correct action + actor on a role change', async () => {
@@ -70,7 +65,6 @@ describe('Admin audit emission (BUG A / H2.12)', () => {
       { user_id: 'admin-1', role: 'ADMIN' },
       { user_id: 'member-1', role: 'MEMBER' },
     ]);
-    updateMemberRole.mockResolvedValue({ success: true });
 
     const req: any = {
       params: { orgId: 'org-1', memberId: 'member-1' },
@@ -81,22 +75,23 @@ describe('Admin audit emission (BUG A / H2.12)', () => {
 
     await OrganizationController.updateMemberRole(req, res, vi.fn());
 
-    expect(updateMemberRole).toHaveBeenCalled();
-    expect(logAction).toHaveBeenCalledTimes(1);
-    const arg = logAction.mock.calls[0][0];
-    expect(arg.actionType).toBe('update_member_role');
-    expect(arg.adminId).toBe('admin-1');
-    expect(arg.details).toMatchObject({ orgId: 'org-1', targetUserId: 'member-1' });
+    expect(changeMemberRoleViaIam).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'admin-1',
+        organizationId: 'org-1',
+        targetMemberId: 'member-1',
+        newRole: 'ADMIN',
+      })
+    );
     expect(res.statusCode).toBe(200);
   });
 
-  it('is fail-safe: audit throwing does NOT block the role change (still 200)', async () => {
+  it('is fail-closed: atomic IAM failure does not report a successful role change', async () => {
     getMembers.mockResolvedValue([
       { user_id: 'admin-1', role: 'ADMIN' },
       { user_id: 'member-1', role: 'MEMBER' },
     ]);
-    updateMemberRole.mockResolvedValue({ success: true });
-    logAction.mockRejectedValue(new Error('audit DB down'));
+    changeMemberRoleViaIam.mockRejectedValue(new Error('audit DB down'));
 
     const req: any = {
       params: { orgId: 'org-1', memberId: 'member-1' },
@@ -105,12 +100,13 @@ describe('Admin audit emission (BUG A / H2.12)', () => {
     };
     const res = createResponse();
 
-    await OrganizationController.updateMemberRole(req, res, vi.fn());
+    const next = vi.fn();
+    await OrganizationController.updateMemberRole(req, res, next);
 
-    // The mutation ran and the response is a success despite the audit failure.
-    expect(updateMemberRole).toHaveBeenCalled();
+    expect(changeMemberRoleViaIam).toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ message: 'audit DB down' }));
     expect(res.statusCode).toBe(200);
-    expect(res.json).toHaveBeenCalledWith({ success: true });
+    expect(res.json).not.toHaveBeenCalled();
   });
 
   it('emits remove_member on a successful member removal', async () => {
@@ -118,7 +114,6 @@ describe('Admin audit emission (BUG A / H2.12)', () => {
       { user_id: 'admin-1', role: 'ADMIN' },
       { user_id: 'member-1', role: 'MEMBER' },
     ]);
-    removeMember.mockResolvedValue({ success: true });
 
     const req: any = {
       params: { orgId: 'org-1', memberId: 'member-1' },
@@ -128,8 +123,12 @@ describe('Admin audit emission (BUG A / H2.12)', () => {
 
     await OrganizationController.removeMember(req, res, vi.fn());
 
-    expect(removeMember).toHaveBeenCalled();
-    expect(logAction).toHaveBeenCalledTimes(1);
-    expect(logAction.mock.calls[0][0].actionType).toBe('remove_member');
+    expect(removeMemberViaIam).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'admin-1',
+        organizationId: 'org-1',
+        targetMemberId: 'member-1',
+      })
+    );
   });
 });

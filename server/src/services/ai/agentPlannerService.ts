@@ -12,6 +12,7 @@ import logger from '../../utils/Logger.js';
 import { projectCanonicalRunAfterExternalTransition } from '../v8/agentCanonicalRunService.js';
 import { revalidateCanonicalRunContextForWorker } from '../v8/agentContextGroundingService.js';
 import { executeWithAgentResourceReservation } from '../v8/agentResourceGovernanceService.js';
+import { estimateAgentToolCostUsd } from './toolCostEstimates.js';
 import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
 
 // Re-exported for backward compatibility with any existing import of
@@ -503,6 +504,15 @@ class AgentPlannerService {
     const failedSteps: PlanStep[] = [];
 
     for (let i = plan.currentStepIndex; i < plan.steps.length; i++) {
+      const current = (await dbGet(`SELECT status FROM ai_agent_plans WHERE id = ?`, [planId])) as
+        | { status?: PlanStatus }
+        | undefined;
+      if (current?.status === 'cancelled') {
+        await this.releaseCancelledExecutionLease(lease, i);
+        const cancelled = await this.getPlan(planId);
+        if (!cancelled) throw new Error(`Plan ${planId} disappeared after cancellation`);
+        return cancelled;
+      }
       const step = plan.steps[i];
 
       // Gate: pause only an un-approved side-effect step. `approveStep` sets the
@@ -662,18 +672,30 @@ class AgentPlannerService {
         ? `Completed ${plan.steps.length}/${plan.steps.length} steps.`
         : `Completed ${plan.steps.length - failedSteps.length}/${plan.steps.length} steps (${failedSteps.length} failed — see report).`;
 
-    await this.finalizePlan(planId, finalStatus, finalResultSummary, finalErrorMessage, lease);
+    const settledStatus = await this.finalizePlan(
+      planId,
+      finalStatus,
+      finalResultSummary,
+      finalErrorMessage,
+      lease,
+      plan.steps.length
+    );
+    // Okno a2 (FIX-174): finalizePlan may have discovered a cancellation
+    // that raced the last step instead of persisting `finalStatus` — reflect
+    // the ACTUAL persisted state (and the report fields it actually wrote,
+    // none for cancelled — same as the mid-loop cancel branch above) rather
+    // than the completed/completed_with_errors verdict this loop computed.
     emitter?.emit('agent_plan', {
       planId,
-      status: finalStatus,
+      status: settledStatus,
       failedCount: failedSteps.length,
       totalSteps: plan.steps.length,
     });
 
-    plan.status = finalStatus;
+    plan.status = settledStatus;
     plan.completedSteps = plan.steps.length;
-    plan.resultSummary = finalResultSummary;
-    plan.errorMessage = finalErrorMessage;
+    plan.resultSummary = settledStatus === 'cancelled' ? undefined : finalResultSummary;
+    plan.errorMessage = settledStatus === 'cancelled' ? undefined : finalErrorMessage;
     return plan;
   }
 
@@ -1055,7 +1077,7 @@ class AgentPlannerService {
         agentId: 'agent-planner',
         toolName,
         idempotencyKey: `planner:${plan.canonicalRunId}:${execution?.operationKey || `${plan.id}:${toolName}`}`,
-        estimatedCostUsd: 0,
+        estimatedCostUsd: estimateAgentToolCostUsd(toolName),
         execute: () =>
           executeToolCall(toolName, input, {
             organizationId: payload.organizationId,
@@ -1099,28 +1121,60 @@ class AgentPlannerService {
     await dbRun(`UPDATE ai_agent_plans SET ${sets.join(', ')} WHERE id = ?`, params);
   }
 
-  /** Terminal-state writer for `executePlan`'s end-of-loop finalization (continue-on-error report). */
+  /**
+   * Terminal-state writer for `executePlan`'s end-of-loop finalization
+   * (continue-on-error report). Returns the status actually persisted —
+   * normally `status`, but see the okno a2 branch below.
+   *
+   * Okno a2 (FIX-174 / ERRATA ODBIOR_174 pkt 1): `executePlan`'s loop only
+   * checks `status = 'cancelled'` at the START of each iteration, so a
+   * cancellation that lands WHILE the last step is executing is invisible
+   * until this call — by then the plan row is already `cancelled`, so the
+   * `WHERE status = 'executing'` guard below matches zero rows. Previously
+   * that fell straight into `guardedPlanRun`'s generic "0 rows changed"
+   * path, which throws `AgentExecutionLeaseLostError` — leaking the
+   * execution lease (~5 min until it expires on its own) and making
+   * `aiWorker`'s `AGENT_BACKGROUND_TASK` handler close the receipt FAILED
+   * with a misleading "lease lost" reason, when the true story is an
+   * ordinary, already-recorded cancellation. Distinguish the two: if the
+   * 0-row miss is because the plan is `cancelled`, close it the same way
+   * the mid-loop cancel branch does (`releaseCancelledExecutionLease` —
+   * clears the lease, does not touch result_summary/error_message) and
+   * report back `'cancelled'` instead of throwing. Any other 0-row cause
+   * (a genuinely stolen lease) still throws, unchanged.
+   */
   private async finalizePlan(
     planId: string,
     status: PlanStatus,
     resultSummary: string,
     errorMessage: string | undefined,
-    lease: ExecutionLease
-  ): Promise<void> {
-    await this.guardedPlanRun(
-      lease,
+    lease: ExecutionLease,
+    currentStep: number
+  ): Promise<PlanStatus> {
+    const result = await dbRun(
       `UPDATE ai_agent_plans
        SET status = ?, result_summary = ?, error_message = ?, completed_at = datetime('now'),
            updated_at = datetime('now'), execution_owner_token = NULL,
            execution_lease_expires_at = NULL, execution_heartbeat_at = NULL
-       WHERE id = ? AND ${this.leasePredicate()}`,
-      [status, resultSummary, errorMessage || null, planId]
+       WHERE id = ? AND status = 'executing' AND ${this.leasePredicate()}`,
+      [status, resultSummary, errorMessage || null, planId, lease.ownerToken, lease.fencingToken]
     );
+    if (!result.changes) {
+      const current = (await dbGet(`SELECT status FROM ai_agent_plans WHERE id = ?`, [
+        planId,
+      ])) as { status?: PlanStatus } | undefined;
+      if (current?.status === 'cancelled') {
+        await this.releaseCancelledExecutionLease(lease, currentStep);
+        return 'cancelled';
+      }
+      throw new AgentExecutionLeaseLostError(lease.planId);
+    }
     await this.projectCanonicalPlanTransition(
       planId,
       null,
       `Agent plan finalized with status ${status}.`
     );
+    return status;
   }
 
   private async updateStepStatus(
@@ -1176,6 +1230,21 @@ class AgentPlannerService {
       lease.planId,
       null,
       `Agent plan paused at checkpoint with status ${status}.`
+    );
+  }
+
+  private async releaseCancelledExecutionLease(
+    lease: ExecutionLease,
+    currentStep: number
+  ): Promise<void> {
+    await this.guardedPlanRun(
+      lease,
+      `UPDATE ai_agent_plans
+       SET current_step_index = ?, updated_at = datetime('now'),
+           execution_owner_token = NULL, execution_lease_expires_at = NULL,
+           execution_heartbeat_at = NULL
+       WHERE id = ? AND status = 'cancelled' AND ${this.leasePredicate()}`,
+      [currentStep, lease.planId]
     );
   }
 

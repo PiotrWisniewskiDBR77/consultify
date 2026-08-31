@@ -12499,7 +12499,12 @@ export const Api = {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data?.error || 'Failed to start OAuth');
+        // Attach the HTTP status so callers can tell an honest "not configured
+        // yet" (409 not-approved, 503 missing credentials) apart from a real
+        // failure, instead of matching on message text alone.
+        const err: any = new Error(data?.error || 'Failed to start OAuth');
+        err.status = res.status;
+        throw err;
       }
       return { authUrl: data.authUrl };
     } catch (error) {
@@ -12609,8 +12614,16 @@ export const Api = {
       });
       return handleResponse(res, 'Failed to create calendar event');
     }
+    const start = body.start ?? body.startAt;
+    if (!start) {
+      throw new Error('Calendar event start is required');
+    }
     try {
-      return await V8MyWorkApi.createCalendarEvent(body);
+      return await V8MyWorkApi.createCalendarEvent({
+        ...body,
+        start,
+        source: body.source === 'event' ? undefined : body.source,
+      });
     } catch (error) {
       if (!Api.shouldFallbackToLegacyMyWorkCalendar(error)) {
         throw error;

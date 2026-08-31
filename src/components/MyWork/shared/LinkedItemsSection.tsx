@@ -26,6 +26,8 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { MutationResult } from './AttachmentsSection';
+
 export type LinkedItemType =
   | 'task'
   | 'decision'
@@ -61,8 +63,8 @@ export interface LinkedItem {
 
 interface LinkedItemsSectionProps {
   items: LinkedItem[];
-  onAdd?: (item: LinkedItem) => Promise<void>;
-  onRemove: (itemId: string) => Promise<void>;
+  onAdd?: (item: LinkedItem) => Promise<MutationResult>;
+  onRemove: (itemId: string) => Promise<MutationResult>;
   onNavigate?: (item: LinkedItem) => void;
   searchItems?: (query: string, type?: LinkedItemType) => Promise<LinkedItem[]>;
   readOnly?: boolean;
@@ -183,11 +185,15 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       if (!onAdd) return;
 
       try {
-        await onAdd(item);
-        setSearchQuery('');
-        setSearchResults([]);
-        setIsAddingLink(false);
-        toast.success(t('myWork.linkedItems.toastSuccess', 'Link added'));
+        const result = await onAdd(item);
+        if (result.ok) {
+          setSearchQuery('');
+          setSearchResults([]);
+          setIsAddingLink(false);
+          toast.success(t('myWork.linkedItems.toastSuccess', 'Link added'));
+        } else {
+          toast.error(t('myWork.linkedItems.toastError', 'Failed to add link'));
+        }
       } catch (error) {
         toast.error(t('myWork.linkedItems.toastError', 'Failed to add link'));
       }
@@ -206,8 +212,12 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
       }
 
       try {
-        await onRemove(itemId);
-        toast.success(t('myWork.linkedItems.toastSuccess2', 'Link removed'));
+        const result = await onRemove(itemId);
+        if (result.ok) {
+          toast.success(t('myWork.linkedItems.toastSuccess2', 'Link removed'));
+        } else {
+          toast.error(t('myWork.linkedItems.toastError2', 'Failed to remove link'));
+        }
       } catch (error) {
         toast.error(t('myWork.linkedItems.toastError2', 'Failed to remove link'));
       }
@@ -235,11 +245,15 @@ export const LinkedItemsSection: React.FC<LinkedItemsSectionProps> = ({
     };
 
     try {
-      await onAdd(externalItem);
-      setExternalUrl('');
-      setExternalTitle('');
-      setIsAddingExternal(false);
-      toast.success(t('myWork.linkedItems.toastSuccess3', 'External link added'));
+      const result = await onAdd(externalItem);
+      if (result.ok) {
+        setExternalUrl('');
+        setExternalTitle('');
+        setIsAddingExternal(false);
+        toast.success(t('myWork.linkedItems.toastSuccess3', 'External link added'));
+      } else {
+        toast.error(t('myWork.linkedItems.toastError4', 'Failed to add link'));
+      }
     } catch (error) {
       toast.error(t('myWork.linkedItems.toastError4', 'Failed to add link'));
     }

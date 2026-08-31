@@ -17,7 +17,16 @@ vi.mock('@/services/api', () => ({
 const healthData = {
   api: { status: 'up', responseTime: 25, version: '1.0.0' },
   database: { status: 'up', responseTime: 10, type: 'postgres' },
-  ai: { status: 'up', providers: { openai: true, anthropic: false, groq: false } },
+  ai: {
+    status: 'up',
+    providers: {
+      openrouter: true,
+      openai: true,
+      anthropic: false,
+      groq: false,
+      google: true,
+    },
+  },
   system: {
     nodeVersion: 'v20',
     environment: 'test',
@@ -40,8 +49,10 @@ const alert = {
 };
 
 const mockHealthyPayloads = (alertsPayload: unknown) => {
-  vi.mocked(Api.getSystemHealth).mockResolvedValue(healthData);
   vi.mocked(Api.get).mockImplementation(async (url: string) => {
+    if (url === '/superadmin/system-health') {
+      return healthData;
+    }
     if (url === '/system-health/services') {
       return {
         data: {
@@ -55,7 +66,7 @@ const mockHealthyPayloads = (alertsPayload: unknown) => {
     if (url === '/system-health/metrics') {
       return { data: { api: { requests_last_hour: 120 }, timestamp: 'not-a-date' } };
     }
-    if (url === '/superadmin/system-health/alerts') {
+    if (url === '/system-health/alerts') {
       return alertsPayload;
     }
     return {};
@@ -122,6 +133,12 @@ describe('EnterpriseHealthMonitor honest UI', () => {
     render(<EnterpriseHealthMonitor />);
 
     await screen.findByText('All systems operational');
+    expect(Api.get).toHaveBeenCalledWith('/superadmin/system-health');
+    expect(Api.get).toHaveBeenCalledWith('/system-health/services');
+    expect(Api.get).toHaveBeenCalledWith('/system-health/metrics');
+    expect(Api.get).toHaveBeenCalledWith('/system-health/alerts');
+    expect(screen.getByText('OpenRouter')).toBeInTheDocument();
+    expect(screen.getByText('Google AI')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Alerts/i }));
     fireEvent.click(screen.getByRole('button', { name: /Add Alert/i }));
     fireEvent.change(screen.getByPlaceholderText('Alert name'), {
@@ -153,6 +170,7 @@ describe('EnterpriseHealthMonitor honest UI', () => {
         'Alert creation was not confirmed by the server'
       );
     });
+    expect(Api.post).toHaveBeenCalledWith('/system-health/alerts', expect.any(Object));
 
     fireEvent.click(screen.getByRole('button', { name: /Cancel/i }));
     fireEvent.click(screen.getByRole('button', { name: /Disable alert CPU high/i }));
@@ -162,6 +180,7 @@ describe('EnterpriseHealthMonitor honest UI', () => {
         'Alert toggle was not confirmed by the server'
       );
     });
+    expect(Api.put).toHaveBeenCalledWith('/system-health/alerts/alert-1/toggle', {});
 
     fireEvent.click(screen.getByRole('button', { name: /Delete alert CPU high/i }));
 
@@ -170,6 +189,7 @@ describe('EnterpriseHealthMonitor honest UI', () => {
         'Alert deletion was not confirmed by the server'
       );
     });
+    expect(Api.delete).toHaveBeenCalledWith('/system-health/alerts/alert-1');
     expect(screen.getByText('CPU high')).toBeInTheDocument();
   });
 

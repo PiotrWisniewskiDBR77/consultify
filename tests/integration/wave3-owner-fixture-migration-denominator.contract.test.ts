@@ -11,7 +11,7 @@ const guardedFixtureScripts = [
   ['server/scripts/seed-wave3-finance-owner-review.ts', 834],
   ['server/scripts/seed-wave3-initiatives-owner-review.ts', 834],
   ['server/scripts/seed-wave3-organization-owner-review.ts', 831],
-  ['server/scripts/seed-wave3-partner-owner-review.ts', 831],
+  ['server/scripts/seed-wave3-partner-owner-review.ts', null],
 ] as const;
 
 describe('Wave 3 owner fixture migration denominator', () => {
@@ -20,7 +20,12 @@ describe('Wave 3 owner fixture migration denominator', () => {
     (file, expectedMigrations) => {
       const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
       expect(source).not.toMatch(/\b817\b/);
-      expect(source).toMatch(new RegExp(`\\b${expectedMigrations}\\b`));
+      if (expectedMigrations === null) {
+        expect(source).not.toMatch(/must have exactly \d+ successful migrations/);
+        expect(source).toContain('fully successful migration ledger');
+      } else {
+        expect(source).toMatch(new RegExp(`\\b${expectedMigrations}\\b`));
+      }
     }
   );
 });

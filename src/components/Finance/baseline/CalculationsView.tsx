@@ -16,6 +16,7 @@ import React, { useMemo, useState } from 'react';
 
 import {
   financeValueDisplayReasonLabel,
+  financeValueStatusLabel,
   formatFinanceValueForDisplay,
   isMissingFinanceValue,
   type BaselineOutputDto,
@@ -146,7 +147,9 @@ export function CalculationsView(props: CalculationsViewProps): React.ReactEleme
           ? financeValueDisplayReasonLabel(present[0].value.status)
           : missingLike.length === present.length && new Set(missingLike.map((c) => c.value.status)).size === 1
             ? financeValueDisplayReasonLabel(missingLike[0].value.status)
-            : `Część okresów w tym roll-upie bez danych (${Array.from(new Set(missingLike.map((c) => c.value.status))).join(', ')})`;
+            : `Część okresów w tym roll-upie bez danych (${Array.from(new Set(missingLike.map((c) => c.value.status)))
+                .map((status) => financeValueStatusLabel(status))
+                .join(', ')})`;
       return { text: '—', isMissingLikeGlyph: true, numeric: null, reason };
     }
     const numbers = present.map((c) => (c.value.valueDecimal === null ? null : Number(c.value.valueDecimal)));

@@ -5,7 +5,8 @@ describe('valuationService.defaultAssumptions', () => {
   it('returns defaults with expected baseline values', () => {
     const assumptions = defaultAssumptions();
     expect(assumptions.horizonYears).toBe(5);
-    expect(assumptions.waccPercent).toBe(12);
+    // Derived from the asserted CAPM/debt breakdown below, not a flat legacy default.
+    expect(assumptions.waccPercent).toBeCloseTo(8.94, 8);
     expect(assumptions.waccBreakdown).toEqual(
       expect.objectContaining({
         riskFreeRate: 4,

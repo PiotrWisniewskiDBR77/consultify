@@ -40,13 +40,23 @@
  *
  * RN-G5 (2026-08-12) — create/edit/submit/approve/reject mocks, mirroring
  * the real routes' contract (`kpi.routes.ts`/`kpiDefinitionCommands.ts`):
- * every GET response below is STILL the bare `rvn_kpi_definitions` row
- * (kpiCode/status/owner only, no name/geometry — see the real
- * `kpiRepository.ts`'s `getKpi`/`listKpis`, bare `SELECT kd.*`) — the mock
- * deliberately does NOT enrich GET with version data the real backend can't
- * produce; only the five WRITE endpoints' responses carry the version, same
- * as production. A floating "Przełącz aktora" button (bottom-right, harness
- * chrome only — not part of any production component) swaps
+ * the SINGLE-kpi GET (`GET /kpi/:kpiId`) is STILL the bare
+ * `rvn_kpi_definitions` row (kpiCode/status/owner only, no name/geometry —
+ * see the real `kpiRepository.ts`'s `getKpi`, bare `SELECT kd.*`) — the mock
+ * deliberately does NOT enrich that ONE endpoint with version data the real
+ * backend can't produce there either; only the five WRITE endpoints'
+ * responses carry the full version, same as production.
+ *
+ * CORRECTION (RN-G2 i18n/141, 2026-08-31): this comment previously claimed
+ * `listKpis` (the LIST GET, plural `/kpi`) was equally bare — that was
+ * wrong; `kpiRepository.ts`'s `listKpis` does an additive
+ * `LEFT JOIN rvn_kpi_definition_versions dv ... dv.name AS
+ * current_definition_name`, verified by reading the SQL. The list mock below
+ * now joins `name` in from `MOCK_KPI_VERSIONS` to match (see that const's
+ * own doc comment) — every row showing "Kod KPI (brak nazwy)" was this stale
+ * comment's mock, not the real product. A floating "Przełącz aktora" button
+ * (bottom-right, harness chrome only — not part of any production component)
+ * swaps
  * `useAppStore`'s `currentUser` between two fixed identities WITHOUT
  * unmounting the page, so a create->edit->submit->approve click-through can
  * demonstrate the self-approval denial (same actor tries to approve their
@@ -201,9 +211,23 @@ const MOCK_KPIS: MockKpi[] = [
 ];
 
 // RN-G5 (2026-08-12) — definition-version fixtures, one per MOCK_KPIS row's
-// `currentDefinitionVersionId`. NEVER returned by any GET mock below (see
-// file header) — only readable through the write-endpoint mocks, exactly
-// mirroring the real backend gap `kpiApi.ts`'s RN-G5 note documents.
+// `currentDefinitionVersionId`. The FULL row is never returned by any GET
+// mock below (see file header) — only readable through the write-endpoint
+// mocks, exactly mirroring the real backend gap `kpiApi.ts`'s RN-G5 note
+// documents for the SINGLE-kpi `GET /kpi/:kpiId`.
+//
+// RN-G2 i18n/141 (2026-08-31) FIX: the LIST endpoint (`GET /kpi`, below) is
+// a DIFFERENT query — `kpiRepository.ts`'s `listKpis` does
+// `SELECT kd.*, dv.name AS current_definition_name LEFT JOIN
+// rvn_kpi_definition_versions dv ...` (verified by reading the SQL directly,
+// not assumed) — so `name` IS additively present on every list row in real
+// production. This file's own header comment claimed listKpis was "bare
+// SELECT kd.*" too, same as getKpi — that was true when this screen was
+// first written but went stale once the join landed; the effect was every
+// mock KPI showing "Kod KPI (brak nazwy)" unconditionally, which is not
+// what a real, populated org looks like. Only `name` is joined below (never
+// the rest of `MockKpiDefinitionVersion`) — same shape the real join
+// produces.
 interface MockKpiDefinitionVersion {
   definitionVersionId: string;
   kpiId: string;
@@ -554,7 +578,20 @@ Api.get = (async (url: string) => {
     // Same fix as the single-KPI branch above — fresh array AND fresh
     // per-row objects on every call, so React's `setRows` never bails out
     // on an unchanged reference after a mutation made by a write mock.
-    return { kpis: MOCK_KPIS.map((k) => ({ ...k })) };
+    // RN-G2 i18n/141 — `name` joined in from `MOCK_KPI_VERSIONS`, mirroring
+    // `listKpis`' real `LEFT JOIN ... dv.name AS current_definition_name`
+    // (see `MOCK_KPI_VERSIONS`' own doc comment above). `null` when a row's
+    // `currentDefinitionVersionId` has no fixture — honest-missing, never
+    // fabricated — same as a real KPI whose current version pointer is
+    // stale/absent.
+    return {
+      kpis: MOCK_KPIS.map((k) => ({
+        ...k,
+        name: k.currentDefinitionVersionId
+          ? (MOCK_KPI_VERSIONS[k.currentDefinitionVersionId]?.name ?? null)
+          : null,
+      })),
+    };
   }
   return realGet(url);
 }) as typeof Api.get;
@@ -980,6 +1017,13 @@ const ResultsVNextKpiRegistryScreen: React.FC = () => {
       <button
         type="button"
         data-testid="harness-actor-switch"
+        // ★ 2026-08-30: `data-dev-render-chrome` — to jest KONTROLKA HARNESSU,
+        // nie produkt, i nie może trafić na zrzut do akceptu (CLAUDE.md §7c
+        // „zrzut czysty"). Bez tego atrybutu pastylka „Aktor: Piotr" siedziała
+        // na zrzucie mimo `uwagi=0` i zasłaniała treść tabeli — złapane
+        // w przeglądzie przed odbiorem 30.08. `grafika-zrzuty.mjs` chowa
+        // wszystko z tym atrybutem regułą CSS przed zrzutem.
+        data-dev-render-chrome
         onClick={() => {
           const next = actor === 'piotr' ? 'anna' : 'piotr';
           useAppStore.setState({ currentUser: next === 'piotr' ? ACTOR_PIOTR : ACTOR_ANNA } as any);

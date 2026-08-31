@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { DegradedState } from './AdminState';
 
 type RiskSummary = {
@@ -42,7 +43,7 @@ const formatIncidentStartedAt = (value?: string) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? i18n.t('admin.security.riskSummary.unknownTime', 'Unknown time')
-    : date.toLocaleString();
+    : formatListDateTime(date);
 };
 
 const MetricCard: React.FC<{

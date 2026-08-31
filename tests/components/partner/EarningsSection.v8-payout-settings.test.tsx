@@ -17,7 +17,8 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'en' },
   }),
 }));
@@ -109,7 +110,9 @@ describe('EarningsSection V8 payout settings seam', () => {
       whatNext: [],
       hold: null,
     } as any);
-    vi.mocked(V8PartnerApi.getCommissionTransactions).mockResolvedValue({ transactions: [] } as any);
+    vi.mocked(V8PartnerApi.getCommissionTransactions).mockResolvedValue({
+      transactions: [],
+    } as any);
     vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({ payouts: [] } as any);
   });
 
@@ -132,8 +135,13 @@ describe('EarningsSection V8 payout settings seam', () => {
     expect(await screen.findByText('Partner Co', {}, { timeout: 10000 })).toBeInTheDocument();
     expect(screen.getByText('DE89 3704 0044 0532 0130 00')).toBeInTheDocument();
     expect(screen.getByTestId('historical-payout-method')).toHaveTextContent('PAYPAL');
-    expect(screen.getByText('Payout operations unavailable')).toBeInTheDocument();
-    expect(screen.getByText(/AMD-PRT-ECONOMICS-002/)).toBeInTheDocument();
+    expect(screen.getByText('Operacje wypłat są niedostępne')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Naliczanie prowizji oraz operacje wypłat są niedostępne. Historyczne ustawienia pozostają dostępne tylko do odczytu.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/AMD-PRT-ECONOMICS-002/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
@@ -175,7 +183,9 @@ describe('EarningsSection V8 payout settings seam', () => {
     render(<EarningsSection />);
 
     expect(await screen.findByTestId('partner-economics-approved-out')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Request payout|Zażądaj wypłaty/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Request payout|Zażądaj wypłaty/i })
+    ).not.toBeInTheDocument();
     expect(V8PartnerApi.requestPayout).not.toHaveBeenCalled();
   });
 
@@ -222,7 +232,9 @@ describe('EarningsSection V8 payout settings seam', () => {
     });
     render(<EarningsSection subsection="payout-settings" />);
 
-    expect(await screen.findByText('Legacy Partner Co', {}, { timeout: 10000 })).toBeInTheDocument();
+    expect(
+      await screen.findByText('Legacy Partner Co', {}, { timeout: 10000 })
+    ).toBeInTheDocument();
     expect(screen.getByText('PL001234')).toBeInTheDocument();
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/payout-settings');

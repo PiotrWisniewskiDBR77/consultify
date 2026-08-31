@@ -26,7 +26,12 @@ const MANIFEST_PATH = process.env.ADMIN_OWNER_FIXTURE_MANIFEST || '';
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 const DB_PREFIX = 'consultify_w3_admin_owner_';
 const FIXTURE_ID = 'W3-ADMIN-OWNER-v1';
-const EXPECTED_MIGRATIONS = 831;
+// Minimalna liczba zastosowanych migracji, NIE dokladna. Lancuch migracji
+// rosnie z definicji (831 -> 863 miedzy 2026-08-25 a 2026-08-29), wiec asercja
+// rownosci jest bledna z konstrukcji. Dyzur 75 naprawil ten wzorzec w czterech
+// seederach (DEC-2026-08-29-296) i przeoczyl ten jeden — dyzur 111 stanal na nim
+// po trzech podejsciach i oddal 0 z 20 zrzutow.
+const MIN_MIGRATIONS = 831;
 
 const IDS = Object.freeze({
   mainOrg: '14000000-0000-4000-8000-000000000001',
@@ -317,8 +322,8 @@ async function readback({ databaseName }: { databaseName: string }, expectedNonc
     for (const [key, value] of Object.entries(expected)) {
       if (String(rb[key]) !== String(value)) fail(`readback ${key} expected ${value}, got ${rb[key]}`);
     }
-    if (Number(rb.successful_migrations) !== EXPECTED_MIGRATIONS) {
-      fail(`migration ledger expected exactly ${EXPECTED_MIGRATIONS}, got ${rb.successful_migrations}`);
+    if (Number(rb.successful_migrations) < MIN_MIGRATIONS) {
+      fail(`migration ledger expected at least ${MIN_MIGRATIONS}, got ${rb.successful_migrations}`);
     }
     const marker = await client.query(
       `SELECT ownership_nonce,database_name FROM wave3_owner_fixture_markers WHERE fixture_id=$1`,

@@ -192,6 +192,61 @@ z sekcji „TEZY ZLECENIA", z komentarzem `#   oczekiwane: …`>>
 
 ---
 
+
+---
+
+## A.1-BIS. ★★ TRZY POPRAWKI WYMUSZONE PRZEZ DYŻURY 130–135 (2026-08-30)
+
+Każda z nich spowodowała realny, **niezasadny merytorycznie** STOP albo sprzeczność
+zgłoszoną w „Korektach" przez wykonawcę. Autor instrukcji ma obowiązek je nanieść.
+
+### (1) Sanity worktree: marker ma być PRZODKIEM, nie równy
+
+Zapis „`git log --oneline -1` ma pokazać `<MARKER>`" jest poprawny **wyłącznie przy
+pierwszym uruchomieniu**. Wykonawca, który wznawia pracę po własnych commitach, widzi
+własny SHA i zgłasza STOP zgodnie z literą instrukcji. Zdarzyło się w dyżurze 133.
+
+**Poprawna kontrola bazy:**
+
+```bash
+git merge-base --is-ancestor <MARKER> HEAD \
+  && echo "BAZA OK — marker jest przodkiem HEAD" \
+  || echo "MARKER BRAK — STOP"
+```
+
+Kontrola równości SHA zostaje **tylko** jako informacja, nie jako warunek STOP-u.
+
+### (2) `Z34a` (push po pierwszym commicie) kontra „Nie pushujesz"
+
+Część wspólna `§0.1` nakazuje push, a treść merytoryczna dyżurów wewnętrznych go
+zabrania. Zgłoszone niezależnie przez dyżury **133 i 134**. Autor instrukcji
+**wybiera jedno** i usuwa drugie z wydanego dokumentu. Domyślnie dla dyżurów
+odbieranych przez nadzorcę: **nie pushuje wykonawca, pushuje nadzorca po odbiorze**.
+
+### (3) `Z24` odsyła do nieistniejącego `§0.4a`
+
+Zgłoszone przez dyżury **130, 133 i 134**. Albo wklejasz sekcję `§0.4a` z pomiarem
+pełnych nazw testów, albo **usuwasz odwołanie z `Z24`**. Odsyłacz do sekcji,
+której nie ma, kosztuje wykonawcę czas i produkuje pozorną korektę.
+
+### (4) Licencja musi obejmować **typy przechodnie**, nie tylko pliki
+
+Dyżur 133 stanął, bo instrukcja jednocześnie: (a) kazała zmienić typ callbacku
+w widżecie współdzielonym na poziomie kompilatora i (b) uczyniła jednego z jego
+konsumentów **nietykalnym**. To sprzeczność z konstrukcji — konsument przestaje się
+kompilować. Wykonawca udowodnił ją minimalną reprodukcją `TS2322` i słusznie nie
+obszedł jej rzutowaniem.
+
+**Reguła:** zanim zabronisz dotykać pliku, sprawdź, czy **typ**, który zmieniasz,
+przez niego przepływa:
+
+```bash
+grep -rl "<NazwaWidzetu>" src/ --include='*.tsx' | grep -v __tests__
+```
+
+Każdy znaleziony konsument albo wchodzi do licencji, albo zmiana typu jest
+niewykonalna i trzeba ją zaprojektować inaczej.
+
 ## A.2. `§0.2` — KOMPLET BEZPIECZNIKÓW `Z1`–`Z40` (kopiuj dosłownie)
 
 **Numeracja jest WSPÓLNA dla wszystkich dyżurów i NIE WOLNO jej przestawiać.**
@@ -257,13 +312,23 @@ dyżurze", nie kasujesz numeru.**
 ### 0.2b. ★★ PROTOKÓŁ `Z30` — ZERO WYSYŁKI, A MIMO TO PEŁNY DOWÓD
 
 **(1) Czego NIE WOLNO Ci zrobić — nigdy:**
-- ustawić `<<FLAGA_LIVE_WYSYLKI>>` na `true`;
+- ★ **UWAGA — SPROSTOWANIE 2026-08-30.** Ten szkielet wymieniał tu wcześniej
+  przełącznik `ENABLE_LIVE_EMAIL`. **Taka flaga NIE ISTNIEJE w kodzie** — `grep`
+  po całym `server/src` i `src` daje zero trafień. Był to fantom, powielany
+  w każdej wydanej instrukcji. **Nie szukaj go i nie raportuj, że jest wyłączony.**
+  Realny warunek wysyłki jest inny i opisany w punkcie (2) poniżej: poczta wychodzi
+  wyłącznie wtedy, gdy `emailService.ts:202` zobaczy **jednocześnie** `smtpConfig.host`
+  i `smtpConfig.auth.user`, sklejone **najpierw z tabeli `settings`**, dopiero potem
+  ze zmiennych środowiskowych. Bez tych dwóch wartości serwis pisze na konsolę;
 - ustawić `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM`
   w środowisku, w `.env*`, w `docker-compose*` ani nigdzie indziej;
 - wstawić wiersza konfiguracji SMTP do tabeli ustawień w swojej bazie;
-- uruchomić serwera pełnym `server/src/index.ts` — **tam startują drenaże
-  outboxów**; Twoje testy montują `ApiGateway`, nie cały serwer, i to jest
-  różnica, która trzyma `Z30`;
+- uruchomić serwera pełnym `server/src/index.ts` **na potrzeby testów** — tam
+  startują drenaże outboxów; testy montują `ApiGateway`, nie cały serwer
+  (`Z22`);
+- uruchomić `server/src/index.ts` na potrzeby zrzutów inaczej niż przez
+  kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs` i bez spełnienia
+  wszystkich warunków z punktu (4) poniżej;
 - wywołać ręcznie żadnej funkcji `drain*` / `startNotificationOutboxDrainCron`
   / `outboxWorker`.
 
@@ -274,7 +339,7 @@ zapisującego:**
 cd <<WORKTREE>>
 
 # (a) srodowisko nie ma ani jednej zmiennej poczty
-env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL|<<FLAGA_LIVE_WYSYLKI>>)" || echo "BRAK ZMIENNYCH POCZTY"
+env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL)" || echo "BRAK ZMIENNYCH POCZTY"
 
 # (b) ★ DRUGIE DNO: emailService czyta SMTP NAJPIERW Z BAZY (emailService.ts:180-185).
 #     Dowod „nie mam zmiennych" NIE WYSTARCZA. Po migracjach uruchom:
@@ -283,16 +348,58 @@ docker exec <<KONTENER>> psql -U postgres -d <<BAZA>> \
 #   oczekiwane: 0 wierszy. Jezeli tabela `settings` nie istnieje — wklej TEN blad,
 #   to tez jest dowod (nie ma skad wziac konfiguracji poczty).
 
-# (c) zaden drenaz outboxu nie dziala w Twoim procesie testowym
+# (c) dla TESTOW: zaden drenaz outboxu nie dziala w procesie testowym
 grep -n "startNotificationOutboxDrainCron\|outboxWorker\|platformOutboxDrainCron" server/src/Gateway.ts
 #   oczekiwane: 0 trafien — drenaze startuja w server/src/index.ts, ktorego NIE uruchamiasz
 ```
 
-**(3) Deklaracja obowiązkowa w raporcie, dosłownie:**
+**(3) Deklaracja obowiązkowa dla TESTÓW w raporcie, dosłownie:**
 **„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
 zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani
 żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało
 wysłane."**
+
+**(4) Wyjątek wyłącznie dla ZRZUTÓW ODBIOROWYCH — pełny produkt, nie replika.**
+Pełny `server/src/index.ts` wolno uruchomić wyłącznie przez kanoniczny
+`scripts/dev/start-wave3-owner-runtime.mjs`, po wykonaniu dowodów (a) i (b),
+oraz tylko gdy wszystkie poniższe warunki są spełnione imiennie:
+
+- runtime pracuje wyłącznie na efemerycznej lokalnej bazie dyżuru pod
+  `127.0.0.1`, na zasobach przydzielonych w instrukcji; nie wolno adoptować
+  bazy zawierającej jakikolwiek klucz `smtp%`;
+- środowisko procesu serwera pochodzi z `childEnv(...)`, ma
+  `DOTENV_DISABLED='1'` i nie zawiera `SMTP_*`, `RESEND`, `SENDGRID` ani
+  `MAIL*`; trzeba to potwierdzić dla uruchomionego procesu, nie tylko dla
+  powłoki wywołującej;
+- zapytanie z dowodu (b), wykonane po wszystkich migracjach i seedach, zwraca
+  `0` wierszy bezpośrednio przed startem runtime'u;
+- nie ustawiasz flag drenaży na `true`, nie wywołujesz żadnego drenażu ręcznie
+  i nie wykonujesz żadnej operacji, która tworzy wiadomość, zaproszenie lub
+  powiadomienie; runtime służy wyłącznie do odczytu i wykonania zrzutów;
+- po starcie ponownie sprawdzasz środowisko należącego do Ciebie procesu oraz
+  log serwera. Trafienie konfiguracji poczty, próby realnego transportu albo
+  niejednoznaczność dowodu oznacza natychmiastowe zatrzymanie runtime'u i STOP
+  całego dyżuru (`Z30`).
+
+Brak konfiguracji nie wyłącza samych drenaży: w runtime z realną bazą startują
+one domyślnie. Ochroną jest fail-closed protokół powyżej — `emailService`
+tworzy realny transporter dopiero przy jednoczesnej obecności hosta i
+użytkownika SMTP; bez nich pozostaje atrapą konsolową. Dowody (a) i (b)
+obowiązują zatem zarówno testy, jak i zrzuty odbiorowe.
+
+**Deklaracja obowiązkowa dla ZRZUTÓW ODBIOROWYCH w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Uruchomiłem `server/src/index.ts` wyłącznie
+przez kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs`, na lokalnej bazie
+dyżuru, tylko w celu wykonania zrzutów. Zweryfikowałem środowisko procesu i log
+serwera zgodnie z `§0.2b` (4). Żaden e-mail, zaproszenie kalendarzowe ani
+powiadomienie zewnętrzne nie zostało wysłane."**
+
+**Ostrzeżenie wsteczne (`DEC-2026-08-29-314`):** dyżury `70`, `72`, `73`,
+`76`, `81` i `85` uruchomiły kanoniczny runtime do zrzutów, przez co
+sześciokrotnie naruszyły wcześniejsze bezwarunkowe brzmienie `§0.2b`. Do szkody
+nie doszło, ponieważ niezależny protokół `Z30` wymagał wykazania, że dostawca
+poczty jest atrapą. To ostrzeżenie nie znosi zakazu ani nie zastępuje dowodów.
 ````
 
 ---

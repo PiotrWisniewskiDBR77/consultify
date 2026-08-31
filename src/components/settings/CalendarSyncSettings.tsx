@@ -90,13 +90,23 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       }
       toast.success(t('settings.integrations.connected', 'Calendar connected'));
     } catch (error: unknown) {
-      // Graceful handling for not-yet-implemented providers (server 501):
-      // show a clear "Coming soon" instead of a scary "Failed to connect".
+      // Graceful handling for providers the backend doesn't actually support
+      // yet: show a clear "Coming soon" instead of a scary "Failed to connect".
+      // Real outcomes today for a not-yet-approved/configured connector are
+      // 501 (Apple stub), 409 (OAuth provider awaiting scopes/residency
+      // approval) or 503 (missing client credentials) — all three mean the
+      // same thing to the user: "not available yet", not "broken".
       const status =
         (error as { status?: number; statusCode?: number })?.status ??
         (error as { statusCode?: number })?.statusCode;
       const rawMsg = String((error as { message?: string })?.message || '');
-      const isNotImplemented = status === 501 || /501|not implemented|coming soon/i.test(rawMsg);
+      const isNotImplemented =
+        status === 501 ||
+        status === 409 ||
+        status === 503 ||
+        /501|409|503|not implemented|not approved|not configured|disabled until|missing api credentials|coming soon/i.test(
+          rawMsg
+        );
       if (isNotImplemented) {
         const comingSoon = t(
           'settings.integrations.comingSoon',
@@ -211,7 +221,13 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{cal.icon}</span>
+                {/* Odbiór grafiki 2026-08-30 (Piotr): surowe emoji dostawców (📅/📆/🍎)
+                    to dekoracja zakazana przez TRIADA_KANON — "🍎" wyglądał zwłaszcza
+                    nieporządnie. lucide-react nie ma logotypów Apple/Outlook; reszta
+                    aplikacji (IntegrationSettings.tsx PROVIDER_ICON) już rozwiązuje to
+                    samo jedną neutralną ikoną Calendar dla wszystkich dostawców
+                    kalendarza — idziemy tym samym śladem. */}
+                <Calendar size={22} className="text-c-text-secondary flex-shrink-0" />
                 <div>
                   <span className="font-medium text-c-text">{cal.name}</span>
                   {cal.connected && cal.connection && (
@@ -250,6 +266,11 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       )}
 
       {/* Sync Options */}
+      {/* Odbiór grafiki (2026-08-30): oba przełączniki miały peer-checked:bg-navy-900 —
+          w motywie ciemnym navy-900 (#0F172A) jest niemal nieodróżnialny od tła
+          panelu/karty, więc stan włączony był praktycznie niewidoczny (kontrast).
+          Kanoniczny <Switch> (src/components/ui/primitives/Switch.tsx) używa
+          bg-c-focus-solid dla stanu on — przełączam na ten sam token. */}
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-c-text-secondary">
           {t('settings.integrations.syncOptions', 'Sync Options')}
@@ -272,7 +293,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               disabled={savingSettings}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
 
@@ -293,7 +314,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               disabled={savingSettings}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
       </div>

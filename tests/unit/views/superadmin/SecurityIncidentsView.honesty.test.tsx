@@ -143,9 +143,10 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     expect(await screen.findByText('Suspicious login')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /View incident incident-1/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Resolve incident incident-1/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Delete incident incident-1/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /View Details/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /^Resolve$/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /^Delete$/i })).toBeInTheDocument();
   });
 
   it('normalizes staging incident rows before rendering details', async () => {
@@ -170,7 +171,8 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     expect(await screen.findByText('Privileged session anomaly')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /View incident incident-snake-case/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /View Details/i }));
 
     expect(screen.getAllByText('Privilege Escalation').length).toBeGreaterThan(0);
     expect(screen.getByText('admin-session-1')).toBeInTheDocument();
@@ -203,7 +205,8 @@ describe('SecurityIncidentsView honest UI', () => {
 
     await screen.findByText('Suspicious login');
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Resolve incident incident-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Resolve$/i }));
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed' },
     });
@@ -215,7 +218,8 @@ describe('SecurityIncidentsView honest UI', () => {
       );
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Delete incident incident-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -233,7 +237,8 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     await screen.findByText('Suspicious login');
-    fireEvent.click(screen.getByRole('button', { name: /Delete incident incident-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -248,7 +253,8 @@ describe('SecurityIncidentsView honest UI', () => {
     render(<SecurityIncidentsView />);
 
     await screen.findByText('Suspicious login');
-    fireEvent.click(screen.getByRole('button', { name: /Resolve incident incident-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Resolve$/i }));
     fireEvent.change(screen.getByPlaceholderText('Resolution notes...'), {
       target: { value: 'Reviewed' },
     });

@@ -1,0 +1,40 @@
+NOWY — DYŻUR 145
+
+★ TWÓJ WORKTREE JEST JUŻ GOTOWY. Nie twórz go sam — sandbox nie ma prawa zapisu
+do vaulta i `git worktree add` oraz `git fetch` w vaulcie ODMÓWIĄ.
+
+★ PIERWSZA KOMENDA — odczyt instrukcji BEZ gita i BEZ sieci:
+
+cat /private/tmp/cx-day145-raid-polecenia-scratch/INSTRUKCJA_DYZUR_145.md
+
+Przeczytaj w CAŁOŚCI, potem wykonuj. Zacznij od „§0.1-BIS" — NADPISUJE §0.1.
+
+★ W §0.1 POMIJASZ kroki (1), (3), (4), (5) i (6).
+  Kontrola bazy: git merge-base --is-ancestor c685ea65af HEAD
+  NIE równość SHA. Twój HEAD po własnych commitach BĘDZIE inny — to poprawne.
+
+Katalog pracy:  /private/tmp/cx-day145-raid-polecenia
+Gałąź:          codex/day145-raid-polecenia-20260830   (już założona)
+Marker:         c685ea65af                                   (już wycheckoutowany)
+Scratch:        /private/tmp/cx-day145-raid-polecenia-scratch
+Artefakty:      /private/tmp/cx-day145-raid-polecenia-artefakty
+
+Zasoby wyłączne: baza 6031, kontener cx-day145-pg, runtime 4956 i 4957 (PARA).
+ZAJĘTE: 6012, 5433 oraz zasoby trzech pozostałych dyżurów wydawanych razem z tym.
+
+★ TEN DYŻUR NIE TWORZY MIGRACJI. Tabela raid_items JUŻ ISTNIEJE.
+★ TEN DYŻUR NIE DOTYKA FRONTU. Zero zmian w src/**.
+★ MASZ ZAZIELENIĆ ISTNIEJĄCY CZERWONY KONTRAKT z dyżuru 141:
+  server/src/routes/pmo/__tests__/day141.raid-runtime-contract.pg.test.ts
+  NIE przepisujesz go i NIE osłabiasz jego asercji.
+
+★ ROZSTRZYGNIĘTE Z GÓRY, nie zgłaszaj ponownie:
+  • Z34a kontra "nie pushujesz" → NIE PUSHUJESZ.
+  • Z24 odsyła do §0.4a, którego nie ma → odwołanie martwe, POMIŃ.
+  • server/vitest.config.ts PRZYPINA DB_TYPE='sqlite' i wygrywa z linią komend.
+    Test z asercją DB_TYPE='postgres' zostanie POMINIĘTY, a pominięty ≠ PASS.
+    Użyj configu POZA repo, bez tego przypięcia. Chronionego configu nie zmieniasz.
+
+★ NIE PUSHUJESZ. Commit per krok, potem zgłoszenie gotowości.
+
+Jeżeli cokolwiek w tej wklejce różni się od instrukcji — WIĄŻĄCA JEST INSTRUKCJA.

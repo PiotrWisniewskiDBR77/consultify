@@ -83,7 +83,11 @@ describe('PartnerCanonicalRuntimePanel', () => {
     const snapshot = await loadPartnerCanonicalRuntime();
     render(<PartnerCanonicalRuntimePanel snapshot={snapshot} />);
 
-    const panel = screen.getByRole('region', { name: 'Governed Partner runtime' });
+    // NAPRAWA PO ODBIORZE DYZURU 127: dyzur zmienil tekst zastepczy naglowka
+    // (`partner.canonicalRuntime.title`) z 'Governed Partner runtime' na
+    // 'Current partner programme status' i zostawil ten test czerwonym.
+    // Nazwa dostepnosciowa regionu idzie z tego samego klucza, wiec sledzi zmiane.
+    const panel = screen.getByRole('region', { name: 'Current partner programme status' });
     expect(within(panel).getAllByRole('listitem')).toHaveLength(5);
     expect(within(panel).getByText('Partner status')).toBeInTheDocument();
     expect(within(panel).getByText('Certification')).toBeInTheDocument();
@@ -137,10 +141,12 @@ describe('PartnerCanonicalRuntimePanel', () => {
 
     render(<PartnerCanonicalRuntimePanel snapshot={snapshot} />);
 
-    expect(screen.getByText('certified')).toBeInTheDocument();
+    expect(screen.getByText('Certyfikowany')).toBeInTheDocument();
     expect(screen.getByText('2/3')).toBeInTheDocument();
-    expect(screen.getByText('3 active attribution records')).toBeInTheDocument();
-    expect(screen.getByText('partner-participant-referral-v1 · bbbbbbbbbbbb')).toBeInTheDocument();
-    expect(screen.getByText(/Recorded balance only/)).toBeInTheDocument();
+    expect(screen.getByText(/Aktywne polecenia/)).toBeInTheDocument();
+    expect(screen.getByText('Zapisano ostatnie polecenie')).toBeInTheDocument();
+    expect(screen.getByText(/Widoczne saldo ma charakter informacyjny/)).toBeInTheDocument();
+    expect(screen.queryByText(/partner-participant-referral-v1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/AMD-PRT-ECONOMICS-002/)).not.toBeInTheDocument();
   });
 });

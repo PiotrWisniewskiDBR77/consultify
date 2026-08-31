@@ -21,6 +21,7 @@
 import { ArrowLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { IDEA_MENU1_TOOL_SLOT_ID } from '@/utils/ideaTableGuidedBarFlag';
@@ -238,6 +239,7 @@ function groupOverflowSections(chips: TopBarChipDescriptor[]): OverflowSection[]
  * the sole destructive `danger` chip renders in red.
  */
 const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -267,8 +269,8 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-        title="More actions"
-        aria-label="More actions"
+        title={t('mels.moreActions', 'More actions')}
+        aria-label={t('mels.moreActions', 'More actions')}
         aria-haspopup="menu"
         aria-expanded={open}
         data-testid="mels-topbar-overflow"

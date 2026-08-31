@@ -292,6 +292,7 @@ export function buildRoiCalculationRunColumns(isPolish: boolean): TableColumn[] 
       align: 'right',
       render: (row: RoiCalculationRun) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={deriveRunOrForecastNpv(row)}
           format={(v) => formatRoiNumber(v, isPolish)}
           notCalculableReason={calcRunNpvReason(row, isPolish)}
@@ -306,6 +307,7 @@ export function buildRoiCalculationRunColumns(isPolish: boolean): TableColumn[] 
       align: 'right',
       render: (row: RoiCalculationRun) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={deriveRunOrForecastIrr(row)}
           format={(v) => formatRoiPercent(v, isPolish)}
           notCalculableReason={calcRunIrrReason(row, isPolish)}
@@ -320,6 +322,7 @@ export function buildRoiCalculationRunColumns(isPolish: boolean): TableColumn[] 
       align: 'right',
       render: (row: RoiCalculationRun) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.status === 'failed' ? 'not_calculable' : row.simpleRoi}
           format={(v) => formatRoiPercent(v, isPolish)}
           align="right"
@@ -384,6 +387,7 @@ export function buildRoiCalculationRunPreview(
           label: 'NPV',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={deriveRunOrForecastNpv(run)}
               format={(v) => formatRoiNumber(v, isPolish)}
               notCalculableReason={calcRunNpvReason(run, isPolish)}
@@ -395,6 +399,7 @@ export function buildRoiCalculationRunPreview(
           label: 'IRR',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={deriveRunOrForecastIrr(run)}
               format={(v) => formatRoiPercent(v, isPolish)}
               notCalculableReason={calcRunIrrReason(run, isPolish)}
@@ -406,6 +411,7 @@ export function buildRoiCalculationRunPreview(
           label: isPolish ? 'Prosty ROI' : 'Simple ROI',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={run.status === 'failed' ? 'not_calculable' : run.simpleRoi}
               format={(v) => formatRoiPercent(v, isPolish)}
             />
@@ -416,6 +422,7 @@ export function buildRoiCalculationRunPreview(
           label: isPolish ? 'Suma kosztów' : 'Total costs',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={run.status === 'failed' ? 'not_calculable' : run.totalCosts}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -426,6 +433,7 @@ export function buildRoiCalculationRunPreview(
           label: isPolish ? 'Suma korzyści' : 'Total benefits',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={run.status === 'failed' ? 'not_calculable' : run.totalFinancialBenefits}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -436,6 +444,7 @@ export function buildRoiCalculationRunPreview(
           label: isPolish ? 'Okres zwrotu' : 'Payback',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={run.status === 'failed' ? 'not_calculable' : run.paybackPeriods}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -446,6 +455,7 @@ export function buildRoiCalculationRunPreview(
           label: isPolish ? 'Wskaźnik korzyści/koszty' : 'Benefit-cost ratio',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={run.status === 'failed' ? 'not_calculable' : run.benefitCostRatio}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -621,6 +631,7 @@ export function buildRoiForecastVersionColumns(isPolish: boolean): TableColumn[]
       align: 'right',
       render: (row: RoiForecastVersion) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={deriveRunOrForecastNpv(row)}
           format={(v) => formatRoiNumber(v, isPolish)}
           notCalculableReason={forecastVersionNpvReason(row, isPolish)}
@@ -635,6 +646,7 @@ export function buildRoiForecastVersionColumns(isPolish: boolean): TableColumn[]
       align: 'right',
       render: (row: RoiForecastVersion) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={deriveRunOrForecastIrr(row)}
           format={(v) => formatRoiPercent(v, isPolish)}
           notCalculableReason={forecastVersionIrrReason(row, isPolish)}
@@ -701,6 +713,7 @@ export function buildRoiForecastVersionPreview(
           label: 'NPV',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={deriveRunOrForecastNpv(fv)}
               format={(v) => formatRoiNumber(v, isPolish)}
               notCalculableReason={forecastVersionNpvReason(fv, isPolish)}
@@ -712,6 +725,7 @@ export function buildRoiForecastVersionPreview(
           label: 'IRR',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={deriveRunOrForecastIrr(fv)}
               format={(v) => formatRoiPercent(v, isPolish)}
               notCalculableReason={forecastVersionIrrReason(fv, isPolish)}
@@ -723,6 +737,7 @@ export function buildRoiForecastVersionPreview(
           label: isPolish ? 'Suma kosztów' : 'Total costs',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={fv.status === 'failed' ? 'not_calculable' : fv.totalCosts}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -733,6 +748,7 @@ export function buildRoiForecastVersionPreview(
           label: isPolish ? 'Suma korzyści' : 'Total benefits',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={fv.status === 'failed' ? 'not_calculable' : fv.totalFinancialBenefits}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -743,6 +759,7 @@ export function buildRoiForecastVersionPreview(
           label: isPolish ? 'Okres zwrotu' : 'Payback',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={fv.status === 'failed' ? 'not_calculable' : fv.paybackPeriods}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -794,6 +811,7 @@ function renderBenefitsRealizationPct(
   }
   return (
     <HonestValueCell
+      isPolish={isPolish}
       value={slot.value === null ? 'not_calculable' : slot.value}
       format={(value) => formatRoiPercent(value, isPolish)}
       notCalculableReason={
@@ -897,6 +915,7 @@ export function buildRoiCaseViewsPreview(
                   : 'Approved financial benefits',
                 value: (
                   <HonestValueCell
+                    isPolish={isPolish}
                     value={v.approvedFinancialBenefits}
                     format={(x) => formatRoiNumber(x, isPolish)}
                   />
@@ -907,6 +926,7 @@ export function buildRoiCaseViewsPreview(
                 label: isPolish ? 'Rzeczywiste korzyści finansowe' : 'Actual financial benefits',
                 value: (
                   <HonestValueCell
+                    isPolish={isPolish}
                     value={v.actualFinancialBenefits}
                     format={(x) => formatRoiNumber(x, isPolish)}
                   />
@@ -998,6 +1018,7 @@ export function buildRoiActualEntryColumns(isPolish: boolean): TableColumn[] {
       align: 'right',
       render: (row: RoiActualEntry) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.amount}
           format={(v) =>
             row.currency
@@ -1108,6 +1129,7 @@ export function buildRoiActualEntryPreview(
           label: isPolish ? 'Kwota' : 'Amount',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={entry.amount}
               format={(v) =>
                 entry.currency
@@ -1190,6 +1212,7 @@ export function buildRoiActualSnapshotColumns(isPolish: boolean): TableColumn[] 
       align: 'right',
       render: (row: RoiActualSnapshot) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.coveragePct}
           format={(v) => formatRoiPercent(v, isPolish)}
           align="right"
@@ -1203,6 +1226,7 @@ export function buildRoiActualSnapshotColumns(isPolish: boolean): TableColumn[] 
       align: 'right',
       render: (row: RoiActualSnapshot) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.actualNpv}
           format={(v) => formatRoiNumber(v, isPolish)}
           align="right"
@@ -1271,6 +1295,7 @@ export function buildRoiActualSnapshotPreview(
           label: isPolish ? 'Suma kosztów rzeczywistych' : 'Total actual costs',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={s.totalActualCosts}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -1281,6 +1306,7 @@ export function buildRoiActualSnapshotPreview(
           label: isPolish ? 'Suma korzyści rzeczywistych' : 'Total actual benefits',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={s.totalActualFinancialBenefits}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -1291,6 +1317,7 @@ export function buildRoiActualSnapshotPreview(
           label: isPolish ? 'Rzeczywisty prosty ROI' : 'Actual simple ROI',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={s.actualSimpleRoi}
               format={(v) => formatRoiPercent(v, isPolish)}
             />
@@ -1300,14 +1327,14 @@ export function buildRoiActualSnapshotPreview(
           id: 'npv',
           label: isPolish ? 'Rzeczywiste NPV' : 'Actual NPV',
           value: (
-            <HonestValueCell value={s.actualNpv} format={(v) => formatRoiNumber(v, isPolish)} />
+            <HonestValueCell isPolish={isPolish} value={s.actualNpv} format={(v) => formatRoiNumber(v, isPolish)} />
           ),
         },
         {
           id: 'coverage',
           label: isPolish ? 'Pokrycie okresów' : 'Period coverage',
           value: (
-            <HonestValueCell value={s.coveragePct} format={(v) => formatRoiPercent(v, isPolish)} />
+            <HonestValueCell isPolish={isPolish} value={s.coveragePct} format={(v) => formatRoiPercent(v, isPolish)} />
           ),
         },
         {
@@ -1376,6 +1403,7 @@ export function buildRoiVarianceColumns(isPolish: boolean): TableColumn[] {
       align: 'right',
       render: (row: RoiVariance) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.variancePct}
           format={(v) => formatRoiPercent(v, isPolish)}
           align="right"
@@ -1492,6 +1520,7 @@ export function buildRoiVariancePreview(
           label: isPolish ? 'Wartość bazowa' : 'Baseline value',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={variance.baselineValue}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -1502,6 +1531,7 @@ export function buildRoiVariancePreview(
           label: isPolish ? 'Wartość porównawcza' : 'Comparison value',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={variance.comparisonValue}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -1512,6 +1542,7 @@ export function buildRoiVariancePreview(
           label: isPolish ? 'Kwota odchylenia' : 'Variance amount',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={variance.varianceAmount}
               format={(v) => formatRoiNumber(v, isPolish)}
             />
@@ -1522,6 +1553,7 @@ export function buildRoiVariancePreview(
           label: isPolish ? 'Odchylenie %' : 'Variance %',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={variance.variancePct}
               format={(v) => formatRoiPercent(v, isPolish)}
             />
@@ -1920,6 +1952,7 @@ export function buildRoiFinanceReconciliationColumns(isPolish: boolean): TableCo
       align: 'right',
       render: (row: RoiFinanceReconciliation) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.roiValue}
           format={(v) => formatRoiNumber(v, isPolish)}
           align="right"
@@ -1933,6 +1966,7 @@ export function buildRoiFinanceReconciliationColumns(isPolish: boolean): TableCo
       align: 'right',
       render: (row: RoiFinanceReconciliation) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={row.financeValue}
           format={(v) => formatRoiNumber(v, isPolish)}
           align="right"
@@ -2016,14 +2050,14 @@ export function buildRoiFinanceReconciliationPreview(
           id: 'roiValue',
           label: isPolish ? 'Wartość ROI' : 'ROI value',
           value: (
-            <HonestValueCell value={r.roiValue} format={(v) => formatRoiNumber(v, isPolish)} />
+            <HonestValueCell isPolish={isPolish} value={r.roiValue} format={(v) => formatRoiNumber(v, isPolish)} />
           ),
         },
         {
           id: 'financeValue',
           label: isPolish ? 'Wartość Finance' : 'Finance value',
           value: (
-            <HonestValueCell value={r.financeValue} format={(v) => formatRoiNumber(v, isPolish)} />
+            <HonestValueCell isPolish={isPolish} value={r.financeValue} format={(v) => formatRoiNumber(v, isPolish)} />
           ),
         },
         {

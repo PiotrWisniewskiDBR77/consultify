@@ -11,6 +11,7 @@
 import React from 'react';
 
 import { NotebookRightRail } from '@/components/MyWork/notebook/NotebookRightRail';
+import { NOTEBOOK_SPEC_A_SHELL_FLAG_KEYS } from '@/components/MyWork/notebook/notebookSpecAShellFlag';
 import { Api } from '@/services/api';
 import type { NotebookPage } from '@/types/myWork';
 
@@ -59,7 +60,33 @@ const ACTIVE_PAGE: NotebookPage = {
   updatedAt: '2026-07-30T15:04:00Z',
 };
 
-export default function MyWorkNotebookRailSpecAScreen(): React.ReactElement {
+export default function MyWorkNotebookRailSpecAScreen({
+  specA = true,
+}: {
+  /**
+   * Naprawa (2026-08-30, domknięcie próbki ArtifactRightPanel): ten ekran
+   * nazywa się „rail-speca" ale bez tego forsowania renderował STARY panel —
+   * flaga `ff_notebookSpecAShell` jest domyślnie OFF i harness jej nigdy nie
+   * ustawiał, więc `?screen=mywork-notebook-rail-speca` bez ręcznie dopisanego
+   * `&ff_notebookSpecAShell=1` pokazywał dokładnie to, czego nazwa przeczy.
+   * Domyślnie `true` (ekran pokazuje to, co obiecuje nazwa); `specA={false}`
+   * daje STARĄ ścieżkę do porównania PRZED/PO w tym samym pliku ekranu.
+   */
+  specA?: boolean;
+} = {}): React.ReactElement {
+  // Synchronicznie w ciele renderu (nie w efekcie) — `NotebookRightRail`
+  // czyta flagę PODCZAS własnego renderu (patrz `isNotebookSpecAShellEnabled`),
+  // więc localStorage musi być ustawiony ZANIM dziecko się wyrenderuje, nie
+  // dopiero po commit (efekt spóźniłby się o jedną klatkę).
+  try {
+    if (specA) {
+      window.localStorage.setItem(NOTEBOOK_SPEC_A_SHELL_FLAG_KEYS.localStorage, '1');
+    } else {
+      window.localStorage.removeItem(NOTEBOOK_SPEC_A_SHELL_FLAG_KEYS.localStorage);
+    }
+  } catch {
+    // localStorage niedostępny (np. prywatna karta) — flaga zostaje na domyślnym OFF.
+  }
   const [activeTab, setActiveTab] = React.useState<'work' | 'context'>('work');
   return (
     <div className="flex h-screen w-screen items-stretch justify-end bg-c-bg">

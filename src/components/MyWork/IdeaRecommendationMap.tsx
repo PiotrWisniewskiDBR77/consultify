@@ -988,7 +988,9 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
           className="!opacity-0 !w-1 !h-1"
         />
         <div className={`text-xs font-semibold ${colors.text}`}>{data.label}</div>
-        <div className="text-[10px] text-slate-600 dark:text-c-text-muted">{childCount} nodes</div>
+        <div className="text-[10px] text-slate-600 dark:text-c-text-muted">
+          {t('ideas.mindmap.branchNodeCount', '{{count}} nodes', { count: childCount })}
+        </div>
       </div>
     );
   }
@@ -1051,7 +1053,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         {data.label}
       </div>
       <div className="text-[10px] text-slate-600 dark:text-c-text-muted mt-0.5">
-        {childCount} {childCount === 1 ? 'node' : 'nodes'}
+        {t('ideas.mindmap.branchNodeCount', '{{count}} nodes', { count: childCount })}
         {collapsed ? ` (${collapsed ? '...' : ''})` : ''}
       </div>
       {selected && (

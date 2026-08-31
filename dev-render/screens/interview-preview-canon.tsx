@@ -70,7 +70,13 @@ function SessionScreen() {
 
   return (
     <div className="h-screen w-screen bg-slate-50 p-4 dark:bg-navy-950">
-      <div className="mx-auto h-full max-w-[1100px]">
+      {/* Bez `max-w` — szerokość podglądu to `clamp(340px, 28%, 480px)` liczone
+          od obszaru roboczego. Harness zaciskał go wcześniej do `max-w-[1100px]`,
+          więc 28% wypadało poniżej dolnej granicy i panel renderował się na
+          sztywnych 340 px — czyli WĘŻSZY niż w produkcie (403 px przy 1440 px).
+          Właściciel oceniał szerokość na tym zrzucie i słusznie nie potrafił jej
+          ocenić: mierzył ograniczenie harnessu, nie komponent. */}
+      <div className="mx-auto h-full w-full">
         <TableWithPreviewLayout
           selectedId={item.id}
           selectedItem={previewOpen ? item : null}
@@ -88,9 +94,7 @@ function SessionScreen() {
               detailsExpanded={detailsExpanded}
               onToggleDetailsExpanded={() => setDetailsExpanded((v) => !v)}
               onCopyStats={() =>
-                copyToClipboard(
-                  `id: ${mockSession.id}\nstatus: completed\nanswered: 6/6`
-                )
+                copyToClipboard(`id: ${mockSession.id}\nstatus: completed\nanswered: 6/6`)
               }
               onCopyId={() => copyToClipboard(mockSession.id)}
             />
@@ -103,13 +107,20 @@ function SessionScreen() {
               aiHints={['Podsumuj', 'Ryzyka', 'Następne kroki']}
               onRunAiHint={() => {}}
               relations={[
-                { label: 'Assignee: Ala Kowalska', tone: 'text-slate-600 dark:text-slate-300' },
+                // Etykiety 1:1 z produkcją (InterviewHub.tsx ~L7092: `t('interview.hub.assignee3')`
+                // = "Przypisany", nie "Assignee") — harness miał literalny angielski napis w
+                // polskich mock-danych, co wyglądało jak defekt produktu, a było artefaktem
+                // przyrządu pomiarowego (mock nie zgodny z i18n, który realnie renderuje ekran).
+                { label: 'Przypisany: Ala Kowalska', tone: 'text-slate-600 dark:text-slate-300' },
                 {
                   label: 'Szablon: Diagnoza jakości przekazania klienta',
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
                 {
-                  label: 'Organizacja: W3 Interview Owner Review',
+                  // Poprzednia wartość "W3 Interview Owner Review" była nazwą wewnętrznego
+                  // zadania roboczego (fala 3, przegląd modułu Wywiad), nie nazwą organizacji
+                  // klienta — myliła zrzut z realną treścią produktu.
+                  label: 'Organizacja: Grupa Norden',
                   tone: 'text-slate-600 dark:text-slate-300',
                 },
               ]}
@@ -149,7 +160,13 @@ function InitiativeScreen() {
 
   return (
     <div className="h-screen w-screen bg-slate-50 p-4 dark:bg-navy-950">
-      <div className="mx-auto h-full max-w-[1100px]">
+      {/* Bez `max-w` — szerokość podglądu to `clamp(340px, 28%, 480px)` liczone
+          od obszaru roboczego. Harness zaciskał go wcześniej do `max-w-[1100px]`,
+          więc 28% wypadało poniżej dolnej granicy i panel renderował się na
+          sztywnych 340 px — czyli WĘŻSZY niż w produkcie (403 px przy 1440 px).
+          Właściciel oceniał szerokość na tym zrzucie i słusznie nie potrafił jej
+          ocenić: mierzył ograniczenie harnessu, nie komponent. */}
+      <div className="mx-auto h-full w-full">
         <TableWithPreviewLayout
           selectedId={item.id}
           selectedItem={item}
@@ -187,7 +204,13 @@ function InitiativeScreen() {
                   label: 'Wniosek: Przekazanie klienta ze sprzedaży do wdrożenia',
                   tone: 'text-amber-600 dark:text-amber-300',
                 },
-                { label: 'Priorytet: medium', tone: 'text-slate-600 dark:text-slate-300' },
+                {
+                  // Był surowy enum "medium" zamiast etykiety — ta sama pułapka co w
+                  // InterviewHub.tsx (naprawione tam osobno, ZGŁASZAM: literówka
+                  // "Sredni" bez ogonka w public/locales/pl/translation.json:7024).
+                  label: 'Priorytet: Średni',
+                  tone: 'text-slate-600 dark:text-slate-300',
+                },
                 { label: 'Aktualizacja: 25.08.2026', tone: 'text-slate-600 dark:text-slate-300' },
               ]}
               onSendToReview={() => {}}

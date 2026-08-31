@@ -12,8 +12,10 @@ let queryHelpers: any;
 // Mock dependencies
 const mockGetDatabase = vi.fn();
 const mockLogger = {
+  info: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
+  debug: vi.fn(),
 };
 
 vi.mock('../../../../server/src/database/Database.js', () => ({

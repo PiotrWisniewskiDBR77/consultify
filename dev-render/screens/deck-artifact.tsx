@@ -62,6 +62,28 @@ import { Api } from '../../src/services/api';
 import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
 
+/**
+ * ★ WŁĄCZONE NA PROŚBĘ WŁAŚCICIELA (2026-08-30): ten harness startuje z WŁĄCZONYM
+ * pełnym warsztatem (`ff_artifactStudio` + tor arkusza/prezentacji).
+ *
+ * UWAGA — to NIE jest to, co widzi dziś użytkownik. Domyślnie obie flagi są
+ * wyłączone i produkt pokazuje okrojoną wersję. Tu włączamy je celowo, żeby
+ * właściciel mógł kliknąć warsztat, zanim zdecydujemy o włączeniu na stałe.
+ * Żeby zobaczyć stan dzisiejszy: dopisz `&ff_artifactStudio=0` do adresu.
+ */
+if (typeof window !== 'undefined') {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('ff_artifactStudio') !== '0') {
+    try {
+      window.localStorage.setItem('ff.artifact_studio', '1');
+      window.localStorage.setItem('ff.spreadsheet_studio_v2', '1');
+      window.localStorage.setItem('ff.presentation_studio_v2', '1');
+    } catch {
+      /* prywatne okno — trudno, wtedy trzeba parametrem w adresie */
+    }
+  }
+}
+
 seedRealisticSession();
 
 useAppStore.setState({

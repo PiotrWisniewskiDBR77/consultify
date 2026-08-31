@@ -477,6 +477,7 @@ export const TabeleView: React.FC = () => {
       taskSteps={pipeline.taskSteps}
       totalSteps={pipeline.totalSteps}
       completedSteps={pipeline.completedSteps}
+      showProgressCount={!reopenPreview || !!pipeline.currentRun}
       isGenerating={pipeline.isGenerating}
       isCompleted={effectiveCompleted}
       isFailed={pipeline.isFailed}

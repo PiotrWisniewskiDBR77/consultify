@@ -321,7 +321,7 @@ if (!g.__ASM_QUALITY_REVIEW_FETCH__) {
 
 export default function AssessmentQualityReviewPanelScreen(): React.ReactElement {
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto', padding: '16px', height: '900px' }}>
+    <div style={{ padding: '16px', height: '900px' }}>
       <AssessmentQualityReviewPanel assessmentId={ASSESSMENT_ID} />
     </div>
   );

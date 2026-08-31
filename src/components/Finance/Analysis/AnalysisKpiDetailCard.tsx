@@ -10,7 +10,7 @@ import { X } from 'lucide-react';
 import React from 'react';
 
 import type { AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
-import { financeValueDisplayReasonLabel, formatFinanceValueForDisplay } from '../../../services/api/financeV2.types';
+import { financeValueDisplayReasonLabel, formatAnalysisKpiValueForDisplay } from '../../../services/api/financeV2.types';
 import { industryLabelForCode } from './analysisKpiCatalog';
 import type { AnalysisKpiCatalogFormulaInfo } from './analysisKpiTable.contract';
 import type { YoyDelta } from './analysisKpiTable.contract';
@@ -75,7 +75,7 @@ function SparklineChart({ points }: { points: AnalysisKpiPeriodSeriesPoint[] }):
 
 export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.ReactElement {
   const { kpiValue, formulaInfo, yoyDelta, periodSeries, history, sourceLineageLabel, onClose } = props;
-  const display = formatFinanceValueForDisplay(kpiValue.value);
+  const display = formatAnalysisKpiValueForDisplay(kpiValue);
   const reason = financeValueDisplayReasonLabel(kpiValue.value.status);
 
   return (
@@ -127,7 +127,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
             {periodSeries.map((p) => (
               <span key={p.periodLabel} className={p.isForecast ? 'italic' : ''}>
                 {p.periodLabel}
-                {p.isForecast ? ' (prognoza)' : ''}: {formatFinanceValueForDisplay(p.value).text}
+                {p.isForecast ? ' (prognoza)' : ''}: {formatAnalysisKpiValueForDisplay({ value: p.value, unitType: kpiValue.unitType }).text}
               </span>
             ))}
           </div>

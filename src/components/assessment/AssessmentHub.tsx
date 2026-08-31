@@ -36,6 +36,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PreviewPaneAside } from '@/components/shared/PreviewPane';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
@@ -65,6 +66,14 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
 import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
+import {
+  formatPresentationBadge,
+  formatPresentationCount,
+  knownPresentation,
+  partialPresentation,
+  presentationReason,
+  unknownPresentation,
+} from '@/utils/presentationState';
 
 import { InitiativeDocumentView } from '../Initiatives/InitiativeDocumentView';
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
@@ -87,12 +96,12 @@ import { Menu3BulkRow } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { AssessmentOutputsTab } from './AssessmentOutputsTab';
-import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import {
   buildAssessmentInitiativePreviewDetails,
   buildAssessmentPreviewDetails,
   buildAssessmentReportPreviewDetails,
 } from './assessmentPreviewDetails';
+import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
@@ -762,13 +771,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       return [
         {
           id: 'list' as ModuleTab,
-          label: 'Assessment',
+          label: t('assessment.hub.tabs.assessment', 'Assessment'),
           icon: <FileText size={16} />,
           count: assessments.length,
         },
         {
           id: 'reports' as ModuleTab,
-          label: 'Reports',
+          label: t('assessment.hub.tabs.reports', 'Reports'),
           icon: <FileText size={16} />,
           // Count all report documents (APPROVED + legacy FINAL),
           // while the default filter still shows APPROVED only.
@@ -776,7 +785,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         },
         {
           id: 'initiatives' as ModuleTab,
-          label: 'Initiatives',
+          label: t('assessment.hub.tabs.initiatives', 'Initiatives'),
           icon: <Lightbulb size={16} />,
           count: initiatives.length,
         },
@@ -785,14 +794,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     return [
       {
         id: 'library' as ModuleTab,
-        label: 'Library',
+        label: t('assessment.hub.tabs.library', 'Library'),
         icon: <Library size={16} />,
       },
       {
         // Former 'list' — identical content (same table, columns, preview),
         // only the tab id + label changed.
         id: 'processes' as ModuleTab,
-        label: 'Processes',
+        label: t('assessment.hub.tabs.processes', 'Processes'),
         icon: <FileText size={16} />,
         count: assessments.length,
       },
@@ -801,19 +810,19 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         // Owner-approved product language: the immutable Method Core records
         // remain `outputs` in the API/route contract, while the user-facing
         // Assessment surface is Insights.
-        label: 'Insights',
+        label: t('assessment.hub.tabs.insights', 'Insights'),
         icon: <Package size={16} />,
         count: outputsCount ?? undefined,
       },
       {
         id: 'reports' as ModuleTab,
-        label: 'Reports',
+        label: t('assessment.hub.tabs.reports', 'Reports'),
         icon: <FileText size={16} />,
         count: reports.length + importedReports.length,
       },
       {
         id: 'initiatives' as ModuleTab,
-        label: 'Initiatives',
+        label: t('assessment.hub.tabs.initiatives', 'Initiatives'),
         icon: <Lightbulb size={16} />,
         count: initiatives.length,
       },
@@ -825,6 +834,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     initiatives,
     importedReports,
     outputsCount,
+    t,
   ]);
 
   // Table columns for assessments
@@ -1554,18 +1564,53 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const statusChipOptions = useMemo(() => getStatusesForModule(statusContext), [statusContext]);
   const statusFilterChips = useMemo(
     () =>
-      statusChipOptions.map((opt) => ({
-        id: `status-${opt.id}`,
-        label: isPolish ? opt.labelPL : opt.label,
-        badge: statusCounts[opt.id] ?? 0,
-        active: statusFilter === opt.id,
-        icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
-        onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
-        title: t('assessment.hub.statusFilterTooltip', 'Filter the list by status "{{status}}".', {
-          status: isPolish ? opt.labelPL : opt.label,
-        }),
-      })),
-    [isPolish, statusChipOptions, statusCounts, statusFilter, t]
+      statusChipOptions.map((opt) => {
+        const presentation =
+          activeTab !== 'outputs'
+            ? knownPresentation(statusCounts[opt.id] ?? 0)
+            : outputsCount === null
+              ? unknownPresentation(
+                  t('presentationState.outputsUnavailableReason', 'output count is unavailable')
+                )
+              : opt.id === 'all'
+                ? knownPresentation(outputsCount)
+                : partialPresentation(
+                    0,
+                    outputsCount,
+                    t(
+                      'presentationState.outputStatusHiddenReason',
+                      'a breakdown by status is not yet available for outputs'
+                    )
+                  );
+        // Short, never-truncated badge (kanon MENU_3_BADGE_BASE: max-w-[200px]
+        // truncate) — the honest reason for a partial/unknown count belongs in
+        // the chip's own hover tooltip below as a FULL sentence (still built
+        // via `formatPresentationCount`, same honesty contract as before —
+        // Day 119), not squeezed into the 200px pill where it mid-word-cuts
+        // and reads as a leaked debug note (grafika 2026-08-31,
+        // assessment-artifacts-restart C-grade).
+        const countCopy = {
+          hidden: t('presentationState.hidden', 'hidden'),
+          unknown: t('presentationState.unknown', 'unknown'),
+        };
+        const reason = presentationReason(presentation);
+        const fullReasonSentence = formatPresentationCount(presentation, countCopy);
+        const filterTooltip = t(
+          'assessment.hub.statusFilterTooltip',
+          'Filter the list by status "{{status}}".',
+          { status: isPolish ? opt.labelPL : opt.label }
+        );
+        return {
+          id: `status-${opt.id}`,
+          label: isPolish ? opt.labelPL : opt.label,
+          badge: formatPresentationBadge(presentation, countCopy),
+          active: statusFilter === opt.id,
+          icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
+          onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
+          title: reason ? `${filterTooltip} (${fullReasonSentence})` : filterTooltip,
+        };
+      }),
+    [activeTab, isPolish, outputsCount, statusChipOptions, statusCounts, statusFilter, t]
   );
 
   const hubMenu3InfoChips = useMemo(
@@ -1578,14 +1623,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         id: 'active-tab',
         label:
           activeTab === 'reports'
-            ? 'Reports'
+            ? t('assessment.hub.tabs.reports', 'Reports')
             : activeTab === 'initiatives'
-              ? 'Initiatives'
+              ? t('assessment.hub.tabs.initiatives', 'Initiatives')
               : activeTab === 'library'
-                ? 'Library'
+                ? t('assessment.hub.tabs.library', 'Library')
                 : activeTab === 'outputs'
-                  ? 'Outputs'
-                  : 'Assessment',
+                  ? t('assessment.hub.tabs.insights', 'Insights')
+                  : t('assessment.hub.tabs.assessment', 'Assessment'),
         badge: currentData.length,
         active: true,
         title: t(
@@ -1595,7 +1640,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       },
       {
         id: 'status-filter',
-        label: statusFilter === 'all' ? 'All statuses' : `Status ${statusFilter}`,
+        label:
+          statusFilter === 'all'
+            ? t('assessment.hub.allStatuses', 'All statuses')
+            : t('assessment.hub.statusValue', 'Status {{status}}', { status: statusFilter }),
         title: t(
           'assessment.hub.statusFilterAppliedTooltip',
           'Status filter applied to the list (click a status in the table to set it).'
@@ -1603,7 +1651,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       },
       {
         id: 'documents',
-        label: openDocuments.length > 0 ? 'Focused documents' : 'List workspace',
+        label:
+          openDocuments.length > 0
+            ? t('assessment.hub.focusedDocuments', 'Focused documents')
+            : t('assessment.hub.listWorkspace', 'List workspace'),
         badge: openDocuments.length || null,
         title: t(
           'assessment.hub.documentsTooltip',
@@ -2153,7 +2204,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           </div>
 
           {selectedRow ? (
-            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <PreviewPaneAside>
               <StandardPreview
                 title={selectedRow.name || 'Assessment'}
                 onClose={() => setSelectedAssessmentId(null)}
@@ -2213,7 +2264,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                     : undefined
                 }
               />
-            </aside>
+            </PreviewPaneAside>
           ) : null}
         </div>
       );
@@ -2294,7 +2345,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           </div>
 
           {selectedRow ? (
-            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <PreviewPaneAside>
               <StandardPreview
                 title={selectedRow.name || 'Report'}
                 onClose={() => setSelectedReportRowId(null)}
@@ -2336,7 +2387,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                   />
                 )}
               </StandardPreview>
-            </aside>
+            </PreviewPaneAside>
           ) : null}
         </div>
       );
@@ -2397,7 +2448,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           </div>
 
           {selectedRow ? (
-            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <PreviewPaneAside>
               <StandardPreview
                 title={selectedRow.name || 'Initiative'}
                 onClose={() => setSelectedInitiativeRowId(null)}
@@ -2430,7 +2481,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 relations={[]}
                 actions={previewActions}
               />
-            </aside>
+            </PreviewPaneAside>
           ) : null}
         </div>
       );
@@ -2597,17 +2648,25 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
               !activeDocumentId &&
               assessments.length === 0
             ) && (
-              <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              // Light-mode-readability §5/§18.2 (SYS-3/VIS-001, wzór StatusChip.tsx
+              // TONE_SHELL.warning): `text-amber-100`/`text-amber-300` bez pary
+              // jasnego motywu były dobrane pod ciemne tło i w light mode dawały
+              // prawie niewidoczny tekst na jasnym tle (kanon: kontrast czytelny
+              // w OBU motywach, nie tylko dark).
+              <div className="mx-4 mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+                    <AlertCircle
+                      size={16}
+                      className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300"
+                    />
                     <p>{loadWarning}</p>
                   </div>
                   <button
                     onClick={() => refreshData()}
-                    className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
+                    className="shrink-0 rounded-lg border border-amber-400/50 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-400/10 dark:border-amber-400/30 dark:text-amber-100"
                   >
-                    Retry
+                    {t('common.retry', 'Retry')}
                   </button>
                 </div>
               </div>

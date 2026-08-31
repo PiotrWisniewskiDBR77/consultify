@@ -1,0 +1,719 @@
+{
+ "karta-insight": {
+  "decyzja": "poprawka",
+  "uwaga": "Tutaj problemem jest to. W oknie centralnym mamy trzy kolumny; jest to zaciągnięte. Zróbmy to w trzech dużych wierszach z trzema kolorami, aby było czytelne od góry do dołu. ",
+  "kiedy": "2026-08-30T08:21:39.269Z"
+ },
+ "karta-decision": {
+  "decyzja": "ok",
+  "uwaga": "Tutaj ważne jest to, że mamy w górnym pasku przycisk „AI”, a później w pasku dalszego arkusza mamy „Analizuj z AI”. Pamiętaj, że to są dwie różne funkcjonalności. Górny pasek AI dotyczy wypełnienia całego narzędzia, a dolny pasek dotyczy danej karty. ",
+  "kiedy": "2026-08-30T08:21:05.940Z"
+ },
+ "karta-task": {
+  "decyzja": "ok",
+  "uwaga": "Tutaj tak naprawdę powiedziawszy z częścią tej karty i jej odbiorem. Problem polega na tym, że połowa karty jest niewypełniona. Jak jest niewypełniona, to trudno jest to weryfikować. ",
+  "kiedy": "2026-08-30T08:40:50.368Z"
+ },
+ "karta-tool": {
+  "decyzja": "poprawka",
+  "uwaga": "Zobacz tutaj w karcie ostatniej w przykładzie. Mieliśmy usunąć dwa przykłady, bo mieliśmy trzy. Został jeden, ale w postaci jednej kolumny. To wygląda bez sensu. No i w tym narzędziu nie mam, jak przeklikać samego wypełniania dokumentu. ",
+  "kiedy": "2026-08-30T08:45:16.570Z"
+ },
+ "karta-notification": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T08:36:34.080Z"
+ },
+ "decision-record": {
+  "decyzja": "ok",
+  "uwaga": "Tam jest jakiś komentarz – zobacz na tym screenie, że informacje przekazane nie są wysyłane do serwera, tylko zostają w pamięci przeglądarki. Mam nadzieję, że to jest jakiś błąd, nie? Tak, weźmy to pod uwagę, aby oczywiście ta karta była połączona z całym systemem. ",
+  "kiedy": "2026-08-30T08:46:49.298Z"
+ },
+ "karta-initiative": {
+  "decyzja": "poprawka",
+  "uwaga": "Tutaj będę robił jeszcze więcej przeglądów, jak załadujesz je danymi. Natomiast na ten moment widzę, że nie ma przycisku AI w górnym pasku, który będzie odpowiadał za wypełnienie karty. Poza tym wygląda zajebiście. ",
+  "kiedy": "2026-08-30T08:48:38.876Z"
+ },
+ "results-vnext-kpi-registry": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T08:49:48.443Z"
+ },
+ "results-vnext-kpi-scorecards": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T08:50:24.222Z"
+ },
+ "results-vnext-kpi-tool": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:00:08.815Z"
+ },
+ "results-vnext-roi-registry": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:01:22.105Z"
+ },
+ "results-vnext-roi-full-tool": {
+  "decyzja": "nie",
+  "uwaga": "Wiesz co, wydaje mi się, że mamy do poprawki, bo ROI to jedna analiza i powinna mieć formułę N‑karty. Tak jak teraz, gdy tworzysz to w menu poziomym, nie mamy możliwości ułożenia tego w strukturze dokumentu. To musi być n‑karta, gdzie będziemy mieli z nowej strony te zakładki, które teraz masz w menu, bo to menu, które teraz masz, już się nie wciśnie – byłoby to czwarte menu, a to byłoby zupełnie niepotrzebne. Dlatego musi być n‑karta. Każda jedna analiza RI, łącznie z modelem, to jest po prostu jedna karta. ",
+  "kiedy": "2026-08-30T09:04:05.201Z"
+ },
+ "results-vnext-roi-model": {
+  "decyzja": "nie",
+  "uwaga": "Tutaj muszę to odrzucić, bo wniosek jest dokładnie taki, jak wcześniej opisałem. Musimy przenieść to do jednej n‑karty. ",
+  "kiedy": "2026-08-30T09:04:20.286Z"
+ },
+ "results-vnext-roi-pir-outcomes": {
+  "decyzja": "nie",
+  "uwaga": "I to jest, jak rozumiem, konsekwencja poprzednich, czyli to jest kolejna N‑karta w jednym ROI‑u. ",
+  "kiedy": "2026-08-30T09:04:37.778Z"
+ },
+ "results-vnext-okr-registry": {
+  "decyzja": "poprawka",
+  "uwaga": "Dobrze, tutaj zgłaszałem, ja już to się zapisało. W prawym, głównym rogu powinien być przycisk „Nowe dodawanie OKR”, a teraz są jakieś inne niepotrzebne przyciski. ",
+  "kiedy": "2026-08-30T09:08:34.429Z"
+ },
+ "finance-model-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:25:21.062Z"
+ },
+ "finance-analysis-workspace": {
+  "decyzja": "poprawka",
+  "uwaga": "Nie mam jak tego zatwierdzić, nic tu nie widać, nic z tego nie można wyciągnąć. ",
+  "kiedy": "2026-08-30T09:26:29.697Z"
+ },
+ "finance-valuation-workspace": {
+  "decyzja": "poprawka",
+  "uwaga": "Dobrze, słuchaj, to jak merytorycznie pewnie wygląda, to dobrze. Popracuj trochę nad grafiką. Zobacz, przyciski u góry są po prostu słowami, nie przyciskami okrągłymi. Popraw je graficznie, żeby wyglądały tak jak reszta naszego dokumentu. Układ merytoryczny i przepływ informacji są super. ",
+  "kiedy": "2026-08-30T09:26:56.063Z"
+ },
+ "finance-compare-panel": {
+  "decyzja": "nie",
+  "kiedy": "2026-08-30T09:44:03.654Z"
+ },
+ "finance-statement-pack-workspace-v2": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:11.116Z"
+ },
+ "finance-prediction-workspace": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:16.415Z"
+ },
+ "finance-export-import-panel": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:21.354Z"
+ },
+ "finance-saved-views-panel": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:22.780Z"
+ },
+ "finance-comments-panel": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:24.423Z"
+ },
+ "finance-lineage-navigator": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:25.957Z"
+ },
+ "finance-workspace-bar": {
+  "decyzja": "poprawka",
+  "kiedy": "2026-08-30T09:44:28.247Z"
+ },
+ "idea-table": {
+  "decyzja": "poprawka",
+  "uwaga": "Tutaj podgląd, widoczny po prawej stronie ekranu, nie jest zgodny ze standardem. Układ od góry do dołu również nie spełnia wymagań. Zastanawiałem się, co mogło to spowodować. ",
+  "kiedy": "2026-08-30T09:45:26.610Z"
+ },
+ "idea-table-tool-empty-filter": {
+  "decyzja": "ok",
+  "uwaga": "Wiedziałem, że mamy taką tabelę w ogóle. ",
+  "kiedy": "2026-08-30T09:45:47.346Z"
+ },
+ "idea-table-tool-grouping": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:14.889Z"
+ },
+ "idea-table-tool-kebab": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:40.190Z"
+ },
+ "idea-table-tool-sortfilter": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:42.308Z"
+ },
+ "idea-table-tool-paste": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:46:45.240Z"
+ },
+ "idea-table-record-templates": {
+  "decyzja": "nie",
+  "kiedy": "2026-08-30T09:46:56.665Z"
+ },
+ "idea-templates-catalog": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:47:16.895Z"
+ },
+ "ideas-preview-overlay": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:47:34.211Z"
+ },
+ "ideas-teresa-panel": {
+  "decyzja": "nie",
+  "uwaga": "Dobra, przeanalizowałem i teraz tak: cały ten prawy panel jest ewidentnie do przepracowania. Zarówno w ujęciu graficznym, kolejności myśli, jak i merytorsnym, co się tutaj musi wydarzyć. Koniecznie trzeba wrzucić to do backlogu, aby przeanalizować, jak ten panel powinien być zorganizowany, żeby był w pełni pomocny i użyteczny. Jednocześnie grafiki, które tutaj mamy, rozwiązania graficzne, też nie są przeanalizowane przez Ciebie i nie są zgodne ze standardem grafik, tylko tak, jak zostały przekonane przeze mnie dawno temu automatycznie. To jest słabe. ",
+  "kiedy": "2026-08-30T09:52:53.808Z"
+ },
+ "idea-confidentiality-control": {
+  "decyzja": "nie",
+  "kiedy": "2026-08-30T09:52:55.242Z"
+ },
+ "mywork-idea-inspector-lekki": {
+  "decyzja": "ok",
+  "uwaga": "Nie wiem, nie mam pojęcia, gdzie ten plik, gdzie ten ekran jest, szczerze mówiąc. Domyślam się, że może tak wyglądać, bo jest techniczny, ale nie wiem, do czego służy. ",
+  "kiedy": "2026-08-30T09:53:32.783Z"
+ },
+ "mywork-idea-topbar": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T09:54:15.142Z"
+ },
+ "mywork-notebook-rail-speca": {
+  "decyzja": "poprawka",
+  "uwaga": "Teraz tak: on jest generalnie dużo lepszy niż to, co jest w Idea. Natomiast te dra‑meni, moim zdaniem, powinny wyglądać tak samo, mieć te same elementy albo prawie zbliżone, ale na pewno rządzić się tymi samymi zasadami. Więc jeśli tam zrobiliśmy informację, że idzie to do backlogu i trzeba to koniecznie przerobić gruntownie, myślę, że tutaj ta informacja powinna być powiązana z tym, co jest tam. ",
+  "kiedy": "2026-08-30T09:55:31.896Z"
+ },
+ "notatnik-centrum-mysli": {
+  "decyzja": "ok",
+  "uwaga": "To byłoby zajebiste, żeby to tak działało. ",
+  "kiedy": "2026-08-30T09:58:46.071Z"
+ },
+ "notatnik-osierocone-graf": {
+  "decyzja": "ok",
+  "uwaga": "Nie wiem, szczerze powiedziawszy, gdzie to jest, ale oby to tak działało. Dalej rozszerzać te okna, nie? Te okna po lewej stronie, żeby można było je rozszerzać i tam dokładać elementy, może. Ale generalnie, no tak, taka wizualizacja jest super ",
+  "kiedy": "2026-08-30T09:59:52.563Z"
+ },
+ "vault-sejf-wnetrze": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:00:23.904Z"
+ },
+ "vault-safes-table": {
+  "decyzja": "poprawka",
+  "uwaga": "Ja mam takie wrażenie, że tabela tego SEF‑u jest dziwnie wąska. Nie rozciąga się na całą szerokość tabeli. Pracuj nad tym, żeby wiersze mieściły się w jednej linii, a nie rozkładały się na cztery wiersze – żeby każdy wiersz był jedną linią, jak w tabeli. Układ jest okej, nie?  Tylko mogę uznać to za wąskie. ",
+  "kiedy": "2026-08-30T10:01:26.595Z"
+ },
+ "vault-folder-block-proof": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:01:48.405Z"
+ },
+ "template-builder-doc": {
+  "decyzja": "ok",
+  "uwaga": "To jest super!!!!!!! proste i czytelne - brawo ",
+  "kiedy": "2026-08-30T10:11:59.262Z"
+ },
+ "document-artifact": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:14:08.605Z"
+ },
+ "template-builder-deck": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:15:17.599Z"
+ },
+ "template-builder-table": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:16:40.021Z"
+ },
+ "template-create-wizard": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:16:44.478Z"
+ },
+ "template-library-new-entry": {
+  "decyzja": "poprawka",
+  "uwaga": "No, tak jak rozumiem, to jest normalna tabela, bo przecież to jest po prostu tabela, w której mamy w menu funkcję pod tytułem „wzorzec”, czyli template. To jest normalna tabela, ale już przyciski – przycisk dodawania, … ",
+  "kiedy": "2026-08-30T10:17:29.231Z"
+ },
+ "materialy-launcher": {
+  "decyzja": "poprawka",
+  "uwaga": "Magicznie jest w porządku, tylko mogłoby być trochę bardziej seksowne. ",
+  "kiedy": "2026-08-30T10:17:49.432Z"
+ },
+ "materialy-template-library-slice": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:18:10.255Z"
+ },
+ "materialy-draft-template-visibledraft-fix": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:18:21.671Z"
+ },
+ "document-studio-menu-pliku": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:18:53.793Z"
+ },
+ "document-studio-nowy-dokument-martwe-przyciski": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:19:00.878Z"
+ },
+ "document-studio-save-as-template": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:19:04.426Z"
+ },
+ "document-studio-blocks-i18n": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:19:18.753Z"
+ },
+ "document-studio-context-chip": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:20:19.563Z"
+ },
+ "sheet-artifact": {
+  "decyzja": "poprawka",
+  "uwaga": "Tutaj mamy niestety trochę do poprawy. Słuchaj, tak jak tabela w Excelu, sama tabela powinna zaczynać się od samej góry, więc powinniśmy mieć małe menu potencjalnych funkcjonalności. Poniżej powinniśmy mieć już tylko nazwę kolumn i samą tabelę. Teraz, jedna trzecia ekranu jest zużyta zupełnie niepotrzebnie na informacje albo funkcje, które mogłyby być w panelu bocznym rozwijanym. Mamy, rzeczywiście, upodobnić się tutaj do narzędzi tabelarycznych, takich jak Excel. ",
+  "kiedy": "2026-08-30T10:23:56.588Z"
+ },
+ "deck-artifact": {
+  "decyzja": "poprawka",
+  "uwaga": "Dobrze, jeśli chodzi o układ graficzny – pełna zgoda, ekran jest super. Do przepracowania mamy prawy panel. Nie, i nie widzę nigdzie, gdzie mogę edytować, nie? Czyli narzędzia do edycji ręcznej też nie widzę. Podobnie, zresztą, jak w Excelu. ",
+  "kiedy": "2026-08-30T10:25:41.856Z"
+ },
+ "deck-quality-badge": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:25:53.705Z"
+ },
+ "word-quality-badge": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:25:59.011Z"
+ },
+ "b2-template-gallery": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:26:19.205Z"
+ },
+ "document-studio-ai-teresa": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:26:27.413Z"
+ },
+ "document-studio-streaming-honesty-n3": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:26:45.970Z"
+ },
+ "audyty-warsztat-kryterium": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:30:27.147Z"
+ },
+ "assessment-five-surfaces": {
+  "decyzja": "poprawka",
+  "uwaga": "Niestety, tutaj tabela preview nie trzyma się opisanego standardu. ",
+  "kiedy": "2026-08-30T10:30:50.320Z"
+ },
+ "assessment-output-report": {
+  "decyzja": "poprawka",
+  "uwaga": "No dobra, i teraz tak: jeśli chodzi o raporty z oceny, trochę to pomieszaliśmy, nie? Audyt i oceny to dwie różne historie. Oceny mają swój framework i raporty. Jeżeli chodzi o DRD, mamy konkretną formułę, w której znajdują się wszystkie poszczególne osie. Dla każdej osi określony jest obszar analityczny, więc musimy zbudować raport o dosyć sformalizowanej strukturze:  1. Wstęp z opisem, jak było prowadzone badanie.   2. Siedem osi – dla każdej z nich opisujemy najpierw samą oś, a następnie obszar.   3. Opisujemy odpowiedzi oraz wstępną paletę wniosków.   4. Na koniec podsumowanie.  Tak więc raport jest znacznie bardziej sformalizowany.  Podobnie w przypadku Siri – istnieje dokument opisujący, jak ma wyglądać raport.    W audytach jest nieco większa dowolność, ale również trzeba przejść przez wnioski audytowe w kolejności, w jakiej audyt jest realizowany. ",
+  "kiedy": "2026-08-30T10:32:45.222Z"
+ },
+ "assessment-quality-review-panel": {
+  "decyzja": "poprawka",
+  "uwaga": "Znowu taki wniosek: taka tabela jest możliwa, tylko pamiętaj, że w asesmencie mamy macierz odpowiedzi i ona jest ważna, bo jest narzędziem. To nie jest tylko prezentacja, to jest narzędzie, które sprawia, że wchodzimy w interakcję. Nie wiem, czy to, co mi tu pokazujesz, ma zastąpić macierz. Jeśli tak, to nie działa w ten sposób.  Jeśli chcesz mieć oddzielną taką tabelę, to super, tylko to nie jest macierz. Dobrze, przejrzałem wszystkie karty. Nigdzie nie znalazłem macierzy. Macierz jest przedstawieniem graficznym na wszystkich osiach ze zmiennymi osiami. Poszukaj tego dokładnie. To w kodzie istnieje. To jest super ważne, bo ta macierz później wchodzi do raportu i wizualizuje poziomy oraz następne kroki. To jest jakby wizualizacja z głównym narzędziem tutaj. ",
+  "kiedy": "2026-08-30T10:39:42.429Z"
+ },
+ "assessment-reports-table": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:33:51.376Z"
+ },
+ "assessment-artifacts-restart": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:01.049Z"
+ },
+ "assessment-menu3-status-chips": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:17.283Z"
+ },
+ "drd-http-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:30.332Z"
+ },
+ "method-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:46.941Z"
+ },
+ "audyty-piec-powierzchni": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:34:52.366Z"
+ },
+ "audyty-raport-dokument": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:35:19.661Z"
+ },
+ "audyty-drd-report": {
+  "decyzja": "poprawka",
+  "uwaga": "Znowu nie wiem, gdzie to jest, ale to nie wygląda jak pełna tabela. To muszą być raporty, które są po prostu pełną tabelą na pełną szerokość. ",
+  "kiedy": "2026-08-30T10:35:46.932Z"
+ },
+ "assessment-list": {
+  "decyzja": "poprawka",
+  "uwaga": "To samo rozumiem, że to ma być tabela na całą szerokość ekranu, a nie jakaś fragmentaryczna. ",
+  "kiedy": "2026-08-30T10:36:11.797Z"
+ },
+ "assessment-presentation-view": {
+  "decyzja": "nie",
+  "uwaga": "Nie, no to wygląda fatalnie, nie wiem, co to jest, nie? Tutaj musi być. Jeśli to ma być raport, to musi być opis, muszą być na nim macierze, muszą być ich opisy, co na nich macierze muszą być. Teraz nie ma macierzy nawet. ",
+  "kiedy": "2026-08-30T10:36:54.214Z"
+ },
+ "assessment-reports-panel": {
+  "decyzja": "poprawka",
+  "uwaga": "No, to jest normalna tabela na pełną szerokość, jak rozumiem. ",
+  "kiedy": "2026-08-30T10:39:03.094Z"
+ },
+ "assessment-initiatives-table": {
+  "decyzja": "poprawka",
+  "uwaga": "No, już to jest po prostu pełna tabela na pełną szerokość, a to wygląda, jakby to był jakiś raport w raporcie albo nie wiem co, nie? To ma być normalna tabela inicjatyw. Na koniec inicjatywy, na koniec każdej oceny, czy na koniec assessmentu, to są po prostu drafty inicjatywy, a normalnie w tabeli inicjatyw. ",
+  "kiedy": "2026-08-30T10:37:43.799Z"
+ },
+ "siri-workspace": {
+  "decyzja": "ok",
+  "uwaga": "Ty, nie wiesz, co rozumiem, że okej, więc zobaczymy, jak to będzie, jak to wyjdzie. Ja nie znam Sir, więc trudno mi to ocenić. ",
+  "kiedy": "2026-08-30T10:38:49.665Z"
+ },
+ "chat-split-teresa-right": {
+  "decyzja": "ok",
+  "uwaga": "Znaczy, ja to akceptuję, ale trzeba mieć świadomość, że to nie jest pełen obraz, nie? To znaczy, na przykład w czacie nie ma wszystkich przycisków. Rozumiem, że pokazujemy tutaj koncepcyjnie, że po lewej stronie mamy artefakt, i to jest zgoda. ",
+  "kiedy": "2026-08-30T10:40:31.563Z"
+ },
+ "teresa-confirm-chip": {
+  "decyzja": "poprawka",
+  "uwaga": "A zaproponujmy może trochę bardziej delikatną formułę graficzną tego okna, bo ono teraz jest takie duże i trochę toporne, a dzisiaj standardy tego typu konwersacji są już bardziej delikatne. Jak na przykład to robi właśnie Claude. ",
+  "kiedy": "2026-08-30T10:47:21.742Z"
+ },
+ "teresa-chipy-panel-artefaktu": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:47:57.178Z"
+ },
+ "teresa-chipy-sugestii": {
+  "decyzja": "poprawka",
+  "uwaga": "A możemy gdzieś jakoś kontekstowo to włączać, wyłączać, bo ja generalnie jestem przeciwnikiem, ale pewnie są tacy, którzy dzięki temu rozumieją, co mają zrobić. Także wyrzucenie tego całkiem nie jest okej, ale w sobie tego nie lubię. Może tam, gdzie mamy plus, w nie wiem, zaproponuj coś – wiemy coś fajnego. ",
+  "kiedy": "2026-08-30T10:49:04.312Z"
+ },
+ "ntype-analizuj-ai": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:49:44.895Z"
+ },
+ "mindmap-canvas": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:49:48.695Z"
+ },
+ "mindmap-i18n-smoke": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:50:01.753Z"
+ },
+ "whiteboard-canvas": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:50:51.088Z"
+ },
+ "whiteboard-workshop": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:51:29.129Z"
+ },
+ "processflow-canvas": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:51:31.204Z"
+ },
+ "melscanvas-workspace": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:51:33.012Z"
+ },
+ "canvas-new-doc": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:52:03.930Z"
+ },
+ "canvas-kebab-restructure": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:52:24.096Z"
+ },
+ "canvas-toolbar-md-history": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:52:27.396Z"
+ },
+ "agent-plan-canvas": {
+  "decyzja": "poprawka",
+  "uwaga": "Uważam, że potrzebujemy tu popracować nad ikonami w poszczególnych oknach; powinny one startować zwinięte, a nie rozwinięte, bo tak przerażają swoją ilością. ",
+  "kiedy": "2026-08-30T10:54:27.906Z"
+ },
+ "agent-warsztat": {
+  "decyzja": "poprawka",
+  "uwaga": "Słuchaj, prokuruję tutaj narzędzia, jak na przykład dodanie, zrównoleglenie procesów. Merytorycznie ten agent jest jeszcze do wypracowania. Na tym poziomie myślę, że graficznie nam to pasuje – naprawdę za małe są te elementy. ",
+  "kiedy": "2026-08-30T10:54:48.218Z"
+ },
+ "ev-football-field": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T10:56:17.807Z"
+ },
+ "agent-plan-view": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:19:50.777Z"
+ },
+ "plan-scenario-d1": {
+  "decyzja": "poprawka",
+  "uwaga": "Tabela niestety dalej nie wygląda jak kompletna tabela. Tu jest większy problem. Problem polega na tym, że narzędzie otwiera tę wybraną linię jako tabelę poniżej tej tabeli. Ma ona otwierać konkretną kartę. W ogóle nie rozumiem, jak to działa. ",
+  "kiedy": "2026-08-30T11:28:57.809Z"
+ },
+ "capacity-advisor-a3": {
+  "decyzja": "nie",
+  "uwaga": "  Dobrze, to jeszcze raz, bo już to opisywałem wiele razy. Słuchaj, jest tak: tutaj powinna być tabela, w której mamy na dany moment stworzony raport, czyli przycisk „Tworzy raport”. Raport jest generowany na bieżąco, na konkretną chwilę.  Obecnie, albo po jego wygenerowaniu, w tym momencie tworzono jest zestawienie, ile osób jest w danym projekcie albo ile osób jest we wszystkich projektach, oraz ich analiza obciążenia zgodnie z planem. A teraz nie wiadomo, czemu otwiera się to w ramach tej karty. Nic tu nie zostało zmienione w ramach tej naprawy. ",
+  "kiedy": "2026-08-30T11:30:28.697Z"
+ },
+ "assessment-report-contract": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:22:46.941Z"
+ },
+ "idea-financial-case-persistence": {
+  "uwaga": "Tak, to nawet nie wiem, co to jest i do czego to przypiąć. ",
+  "kiedy": "2026-08-30T11:23:14.250Z"
+ },
+ "idea-table-timeline-stuck": {
+  "decyzja": "ok",
+  "uwaga": "Tutaj, tak samo jak we wszystkich innych IDEach, wraca kwestia prawego menu. ",
+  "kiedy": "2026-08-30T11:23:44.813Z"
+ },
+ "initiative-record": {
+  "decyzja": "ok",
+  "uwaga": "Inicjatywę oceniałem już wcześniej, raz. Nie wiem, czemu to jest inna tabela inicjatyw. Czy to pomyłka, czy celowo – powinniśmy mieć jedną tabelę inicjatyw. ",
+  "kiedy": "2026-08-30T11:24:10.752Z"
+ },
+ "drd-library-entry": {
+  "decyzja": "poprawka",
+  "uwaga": "Znowu dałeś mi coś bez analizy własnej. Tutaj nie ma żadnego podglądu; z całą pewnością kolumny nie są wystarczające. To nie jest dobra statystyka tego, co powinno być w tej tabeli. Do powtórki. ",
+  "kiedy": "2026-08-30T11:24:39.995Z"
+ },
+ "zwornik-projects": {
+  "decyzja": "poprawka",
+  "uwaga": "Słuchaj, wiesz co, znowu nie wiem, gdzie to się uruchamia. Natomiast, jeśli mamy przyciski „dodaj i projekt” oraz coś tam drugiego, nie ma pełnej, dobrej nawigacji. ",
+  "kiedy": "2026-08-30T11:25:23.323Z"
+ },
+ "tools-swot-report": {
+  "decyzja": "ok",
+  "uwaga": "Oczywiście wygląda to dobrze, jakby treść była w porządku, z tym że żaden słod nie będzie tylko tak małą analizą, nie? Ale generalnie wygląda ok. ",
+  "kiedy": "2026-08-30T11:25:56.857Z"
+ },
+ "tools-swot-initiative-proposal": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:26:08.148Z"
+ },
+ "prompt-registry-tab": {
+  "decyzja": "ok",
+  "uwaga": "Znowuż nie mam pojęcia, gdzie to jest, tak szczerze powiedziawszy, i do czego to ma służyć. ",
+  "kiedy": "2026-08-30T11:34:18.484Z"
+ },
+ "admin-command-center-panel": {
+  "decyzja": "poprawka",
+  "uwaga": "Znowu nie mam pojęcia, co to jest. ",
+  "kiedy": "2026-08-30T11:27:21.592Z"
+ },
+ "admin-sso-self-service-card": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:27:33.991Z"
+ },
+ "public-booking-widget": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:33:10.194Z"
+ },
+ "execution-report-day11": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:28:14.458Z"
+ },
+ "superadmin-platform-operations-day15": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:30:49.964Z"
+ },
+ "org-identity-operating": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:31:03.730Z"
+ },
+ "partner-settlements-view": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:31:17.651Z"
+ },
+ "model-catalog-table": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:31:20.913Z"
+ },
+ "exe-002-004-ui-audit": {
+  "decyzja": "ok",
+  "uwaga": "Trzeci raz dajesz mi tę kartę do akceptacji. ",
+  "kiedy": "2026-08-30T11:31:44.922Z"
+ },
+ "interview-creator-shell": {
+  "decyzja": "poprawka",
+  "uwaga": "To jest do poprawy wielkość ścianek, też już to zgłaszałem. Wilka z czcionek, obrazków – to nie wygląda jak sekcja tech, nie? Wszystkie elementy są w porządku, jest to w miarę czytelne, ale nie wygląda ładnie. ",
+  "kiedy": "2026-08-30T11:32:16.510Z"
+ },
+ "interview-preview-canon": {
+  "decyzja": "poprawka",
+  "uwaga": "Nie umiem ocenić, czy szerokość tego jest wystarczająca, ale pamiętaj, że mamy opisane, jak ma to wyglądać. Wszystkie przewidywania muszą być opisane zgodnie ze standardem. To jest komponent. ",
+  "kiedy": "2026-08-30T11:32:50.945Z"
+ },
+ "interview-sessions-status": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:32:54.042Z"
+ },
+ "meetings-module": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:33:05.680Z"
+ },
+ "unified-create-launcher": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:33:27.542Z"
+ },
+ "calendar-sync-settings": {
+  "decyzja": "poprawka",
+  "uwaga": " Dodaj tutaj Outlooka i zmień to jabłuszko na jakieś normalne, a nie takie jabłko. ",
+  "kiedy": "2026-08-30T11:33:55.458Z"
+ },
+ "notebook-quick-capture": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:34:08.392Z"
+ },
+ "report-artifact": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:34:33.908Z"
+ },
+ "excele-jeden-widok-recent": {
+  "decyzja": "nie",
+  "uwaga": "Nie rozumiem, po co to ma być tutaj w ogóle, nie? Jak otwieramy arkusz, to pierwsze – nowy – to pierwsze, co on nas pyta, czy chcemy otworzyć go z szablonów, czy otworzyć go jako czysty, czy otworzyć go z teresą. To omawialiśmy. I teraz, jeśli wybierzemy któryś z tych przycisków, uruchamia się odpowiedni wątek.  Nie potrzebny w ogóle ten narkusz. Z pozostałością w ogóle pierwszych jakichś prób. ",
+  "kiedy": "2026-08-30T11:35:22.497Z"
+ },
+ "excele-jeden-widok-materialy": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:35:30.008Z"
+ },
+ "excele-jeden-widok-pusty": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:40:13.438Z"
+ },
+ "excele-prawy-panel-standard": {
+  "decyzja": "poprawka",
+  "uwaga": "To już zgłaszałem, tak? Tutaj musimy usunąć więcej niepotrzebnego panelu, aby tabela zajmowała całą centralną część ekranu. No i wielki problem polega na tym, że nie mam tutaj w ogóle narzędzia Excelowego. Zmiany, jakbym chciał zmienić coś w tych tabelach, jak w Excelu, jakbym chciał nim pracować, to nie mogę. W Wordzie mogę, w PowerPoincie też nie mogę – to trzeba dorobić. ",
+  "kiedy": "2026-08-30T11:41:30.693Z"
+ },
+ "excele-engine-reveal": {
+  "decyzja": "nie",
+  "kiedy": "2026-08-30T11:41:32.871Z"
+ },
+ "excele-reopen-verify": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:41:49.431Z"
+ },
+ "prezentacje-template-states": {
+  "decyzja": "poprawka",
+  "uwaga": "Jeżeli to ma być tabela szablonów, to okej. A jeżeli to nie jest tabela szablonów, to nie wiem, po co to jest w ogóle. Taki krok w ogóle nie jest potrzebny. ",
+  "kiedy": "2026-08-30T11:42:17.376Z"
+ },
+ "gen-word-content-hints": {
+  "decyzja": "nie",
+  "uwaga": "Wiem, do czego ten ekran miałby służyć. Znowu, gdy mamy generator do wyboru, wybieramy „generuj tabelę template”, otwiera się generator szablonów, a potem mamy je w liście szablonów. Widzimy, po co jest ten ekran. ",
+  "kiedy": "2026-08-30T11:42:45.384Z"
+ },
+ "gen-deck-content-hints": {
+  "decyzja": "nie",
+  "uwaga": "Samo, nie wiem, po co on w ogóle jest. ",
+  "kiedy": "2026-08-30T11:43:02.868Z"
+ },
+ "gen-excel-templates-tab": {
+  "decyzja": "nie",
+  "uwaga": "To samo nie wiem, po co on jest. ",
+  "kiedy": "2026-08-30T11:43:14.627Z"
+ },
+ "excele-edytowalna-siatka": {
+  "decyzja": "poprawka",
+  "uwaga": "Tak jak pisałem już trzy razy, wyrzucamy całą tę zabawę z góry do prawego menu, do prawego panelu i musimy dołożyć u góry listę narzędzi do pracy z tabelą. ",
+  "kiedy": "2026-08-30T11:43:41.939Z"
+ },
+ "report-builder-library-template": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:44:01.814Z"
+ },
+ "materials-registry": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:44:13.773Z"
+ },
+ "standard-module-bar-children": {
+  "decyzja": "poprawka",
+  "uwaga": "Nie mam pojęcia, co to w ogóle jest. ",
+  "kiedy": "2026-08-30T11:44:47.439Z"
+ },
+ "preview-4-zakladki": {
+  "decyzja": "poprawka",
+  "uwaga": "Zobacz, to jest wartościowy obrazek, bo pokazuje, jak nieporównywalne są podglądy, które powinny być takie same. Nie wiem, czy to przyda się w aplikacji – chyba nie – ale widać, że podglądy wymagają poprawy. ",
+  "kiedy": "2026-08-30T11:45:16.789Z"
+ },
+ "prawy-panel-szyna-ikon": {
+  "decyzja": "poprawka",
+  "uwaga": "Nie wiem, czy to jest naprawdę jakaś poprawa, szczerze powiedział. ",
+  "kiedy": "2026-08-30T11:45:45.256Z"
+ },
+ "standard-grid-card": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:46:00.090Z"
+ },
+ "fab-rail-kebab": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:46:13.309Z"
+ },
+ "rn-g3-class-l-record-shell": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:46:25.739Z"
+ },
+ "document-studio-resume-error": {
+  "decyzja": "poprawka",
+  "uwaga": "Napisz to ładniej, wyśrodkuj na ekranie. ",
+  "kiedy": "2026-08-30T11:46:42.687Z"
+ },
+ "document-studio-template-resolve-error": {
+  "decyzja": "poprawka",
+  "uwaga": "Napisz to jakoś ładniej na środku ekranu, z ładniejszą grafiką. ",
+  "kiedy": "2026-08-30T11:46:51.532Z"
+ },
+ "word-intake-uselm-default": {
+  "decyzja": "poprawka",
+  "uwaga": "Też można poprawić grafiki, nie? W wielu miejscach można poprawić je na ładniejszy styl, troszeczkę. Przyciski, żeby były zgodne ze standardem. Wiem, że to nie jest super ważne, ale nic tu nie poprawiłeś. ",
+  "kiedy": "2026-08-30T11:47:15.948Z"
+ },
+ "mw-007-calendar-narrow-viewport": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:47:29.455Z"
+ },
+ "results-vnext-legacy-archive": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:47:41.965Z"
+ },
+ "results-vnext-teresa-okr-reflection": {
+  "decyzja": "poprawka",
+  "uwaga": "Grafika tego jest fatalna, po prostu stara. ",
+  "kiedy": "2026-08-30T11:47:58.074Z"
+ },
+ "standard-kanban-card": {
+  "decyzja": "ok",
+  "uwaga": "Super, wybierzmy ten standard jeden. To jest dobry pomysł. ",
+  "kiedy": "2026-08-30T11:48:27.264Z"
+ },
+ "tools-swot-live": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:48:52.086Z"
+ },
+ "tools-swot-library-detail": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:48:54.766Z"
+ },
+ "tools-outputs-insights-tab": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:48:58.898Z"
+ },
+ "chat-signals-feed": {
+  "decyzja": "ok",
+  "uwaga": "Nie wiem, gdzie to jest, ale to jest w ogóle super mądre. ",
+  "kiedy": "2026-08-30T11:49:21.515Z"
+ },
+ "tools-swot-session-workspace": {
+  "decyzja": "nie",
+  "uwaga": "Jest jakaś prehistoryczna karta jeszcze za tym, zanim przerobiliśmy to. ",
+  "kiedy": "2026-08-30T11:49:42.073Z"
+ },
+ "exec-summary-onelook": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:49:57.839Z"
+ },
+ "tools-sesja-wyjscie": {
+  "decyzja": "ok",
+  "kiedy": "2026-08-30T11:50:11.733Z"
+ }
+}

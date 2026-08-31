@@ -104,7 +104,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
         {onOpenBuilder && (
           <button
             onClick={onOpenBuilder}
-            className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-blue-600 text-white font-semibold rounded-xl hover:from-primary-500 hover:to-blue-500 shadow-lg shadow-primary-500/25 text-lg"
+            className="flex items-center gap-2 px-8 py-4 bg-navy-900 dark:bg-white text-white dark:text-navy-900 font-semibold rounded-xl hover:bg-navy-800 dark:hover:bg-slate-100 shadow-lg shadow-navy-900/15 text-lg"
           >
             <ExternalLink size={20} /> {t('presentations.result.openBuilder', 'Open Deck Builder')}
           </button>
@@ -114,7 +114,7 @@ export const ResultStep: React.FC<ResultStepProps> = ({
           className={`flex items-center gap-2 px-8 py-4 font-semibold rounded-xl text-lg ${
             onOpenBuilder
               ? 'border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-              : 'bg-gradient-to-r from-primary-600 to-blue-600 text-white hover:from-primary-500 hover:to-blue-500 shadow-lg shadow-primary-500/25'
+              : 'bg-navy-900 dark:bg-white text-white dark:text-navy-900 hover:bg-navy-800 dark:hover:bg-slate-100 shadow-lg shadow-navy-900/15'
           }`}
         >
           <Download size={20} /> {t('presentations.result.downloadPptx', 'Download PPTX')}
@@ -133,11 +133,15 @@ export const ResultStep: React.FC<ResultStepProps> = ({
             <strong>{result.slideCount}</strong> {t('presentations.outline.slides', 'slides')}
           </span>
           <span>&middot;</span>
-          <span className="capitalize">{settings.presentationMode}</span>
+          <span>
+            {t(`presentations.wizard.modes.${settings.presentationMode}`, settings.presentationMode)}
+          </span>
           <span>&middot;</span>
-          <span>{settings.language.toUpperCase()}</span>
+          <span>{t(`presentations.languages.${settings.language}`, settings.language.toUpperCase())}</span>
           <span>&middot;</span>
-          <span className="capitalize">{settings.confidentiality}</span>
+          <span>
+            {t(`presentations.confidentialities.${settings.confidentiality}`, settings.confidentiality)}
+          </span>
         </div>
       </div>
     </div>

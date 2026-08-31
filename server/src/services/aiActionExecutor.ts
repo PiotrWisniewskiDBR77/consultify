@@ -142,21 +142,11 @@ function allowsPatternAutoApprovalForGovernedMutation(
   );
 }
 
-function rollbackStateForResult(result: any): {
+function rollbackStateForResult(_result: any): {
   rollbackStatus: 'rollback_available' | 'rollback_unavailable';
   rollbackAvailable: boolean;
   rollbackStrategy?: string;
 } {
-  const hasOutputRef = Boolean(
-    result && Object.entries(result).some(([key, value]) => /id$/i.test(key) && Boolean(value))
-  );
-  if (hasOutputRef) {
-    return {
-      rollbackStatus: 'rollback_available',
-      rollbackAvailable: true,
-      rollbackStrategy: 'delete_created_output_refs',
-    };
-  }
   return {
     rollbackStatus: 'rollback_unavailable',
     rollbackAvailable: false,
@@ -1098,8 +1088,8 @@ const AIActionExecutor = {
     // 23502. `action.organization_id` is the established convention elsewhere
     // in this file.
     await dbRun(
-      `INSERT INTO tasks (id, organization_id, project_id, title, description, assignee_id, due_date, status, created_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'TODO', ?)`,
+      `INSERT INTO tasks (id, organization_id, project_id, title, description, assignee_id, due_date, status, created_by, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'TODO', ?, 'ai')`,
       [
         taskId,
         action.organization_id,

@@ -23,7 +23,8 @@ interface V8ContextIndicatorProps {
 }
 
 export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8ContextIndicatorProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n?.language?.startsWith('pl');
   const { showV8Chat } = useV8Gate();
   const [isOpen, setIsOpen] = useState(false);
   const panelId = useId();
@@ -139,7 +140,7 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
             ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200'
             : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-900/25 dark:text-emerald-300 dark:hover:bg-emerald-900/35'
         }`}
-        title={t('v8.contextSnapshots', 'V8 Context Snapshots: {{count}}', { count: items.length })}
+        title={t('v8.contextSnapshots', 'Zapisy rozmowy: {{count}}', { count: items.length })}
       >
         {isDegraded ? (
           <AlertTriangle size={11} aria-hidden="true" />
@@ -148,16 +149,25 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
         ) : (
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
         )}
-        V8 {items.length}
+        {isPolish
+          ? t('v8.contextShortCount', 'Kontekst: {{count}}', { count: items.length })
+          : `V8 ${items.length}`}
         {traces.length > 0 && (
           <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-sky-700 dark:border-sky-800/70 dark:bg-sky-950/50 dark:text-sky-300">
             <Search size={10} />
-            RAG {traces.length}
+            {isPolish
+              ? t('v8.searchShortCount', 'Wyszukiwania: {{count}}', { count: traces.length })
+              : `RAG ${traces.length}`}
           </span>
         )}
         {handoffItems.length > 0 && (
           <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-sky-700 dark:border-sky-800/70 dark:bg-sky-950/50 dark:text-sky-300">
-            <GitBranch size={10} />H {handoffItems.length}
+            <GitBranch size={10} />
+            {isPolish
+              ? t('v8.handoffShortCount', 'Przekazania: {{count}}', {
+                  count: handoffItems.length,
+                })
+              : `H ${handoffItems.length}`}
           </span>
         )}
       </button>
@@ -258,7 +268,12 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                   <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
                     <div className="opacity-70">{t('v8.handoffIntent', 'Intent')}</div>
                     <div className="mt-0.5 font-medium">
-                      {latestHandoff.intentClassification?.intentType || 'unknown'}
+                      {isPolish
+                        ? t(
+                            `v8.handoffIntentValue.${latestHandoff.intentClassification?.intentType || 'unknown'}`,
+                            'Nie określono'
+                          )
+                        : latestHandoff.intentClassification?.intentType || 'unknown'}
                     </div>
                   </div>
                 </div>
@@ -266,11 +281,13 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                   <div className="opacity-70">{t('v8.handoffGoal', 'Latest goal')}</div>
                   <div className="mt-0.5 font-medium">{latestHandoff.goal}</div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-[11px] text-sky-800 dark:text-sky-200">
-                  <span>
-                    {t('v8.handoffRun', 'Run')}: {latestHandoff.executionRunId}
-                  </span>
-                </div>
+                {!isPolish && (
+                  <div className="flex flex-wrap gap-2 text-[11px] text-sky-800 dark:text-sky-200">
+                    <span>
+                      {t('v8.handoffRun', 'Run')}: {latestHandoff.executionRunId}
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -316,7 +333,11 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
                     <div className="opacity-70">{t('v8.retrievalPreset', 'Preset')}</div>
-                    <div className="mt-0.5 font-medium">{latestTrace.presetUsed}</div>
+                    <div className="mt-0.5 font-medium">
+                      {isPolish
+                        ? t('v8.retrievalPresetConfigured', 'Ustawienie dobrane do rozmowy')
+                        : latestTrace.presetUsed}
+                    </div>
                   </div>
                   <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
                     <div className="opacity-70">{t('v8.retrievalResults', 'Results')}</div>

@@ -19,7 +19,12 @@
 
 import React from 'react';
 
-import type { FinanceArtifactType, LineageEdgeDto } from '@/services/api/financeV2.types';
+import {
+  financeArtifactTypeLabel,
+  financeLineageTransformationKindLabel,
+  type FinanceArtifactType,
+  type LineageEdgeDto,
+} from '@/services/api/financeV2.types';
 
 const RELATED_ARTIFACT_TYPES: readonly FinanceArtifactType[] = [
   'HISTORICAL_ANALYSIS',
@@ -27,15 +32,6 @@ const RELATED_ARTIFACT_TYPES: readonly FinanceArtifactType[] = [
   'PREDICTION_SCENARIO',
   'VALUATION_CASE',
 ];
-
-const ARTIFACT_TYPE_LABELS: Record<FinanceArtifactType, string> = {
-  STATEMENT_PACK: 'Statement Pack',
-  HISTORICAL_ANALYSIS: 'Analysis',
-  BASELINE_MODEL: 'Models',
-  PREDICTION_SCENARIO: 'Prediction',
-  VALUATION_CASE: 'Enterprise valuation',
-  REPORT_EXPORT: 'Report Export',
-};
 
 export interface RelatedArtifactsSectionProps {
   sourceBusinessVersionId: string;
@@ -83,7 +79,7 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
           <div key={type} className="px-3 py-2.5" data-testid={`related-artifacts-group-${type}`}>
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-c-text">
-                {ARTIFACT_TYPE_LABELS[type]}
+                {financeArtifactTypeLabel(type)}
                 <span
                   className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-c-surface-raised px-1 text-[9px] font-bold text-c-text-secondary"
                   data-testid={`related-artifacts-count-${type}`}
@@ -113,7 +109,9 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
                       className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left text-[11px] text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       <span className="truncate font-mono text-[10px]">v.{edge.targetVersionId.slice(0, 8)}</span>
-                      <span className="shrink-0 text-[9px] text-c-text-muted">{edge.transformationKind || edge.edgeType}</span>
+                      <span className="shrink-0 text-[9px] text-c-text-muted">
+                        {financeLineageTransformationKindLabel(edge.transformationKind || edge.edgeType)}
+                      </span>
                     </button>
                   </li>
                 ))}

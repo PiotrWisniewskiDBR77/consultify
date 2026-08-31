@@ -20,6 +20,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   type StandardRowMenu,
@@ -28,7 +29,7 @@ import {
 } from '@/components/standard';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
-import { getStatusesForModule, getStatusMeta } from '../../services/initiativeLifecycle';
+import { getLocalizedStatusLabel, getStatusesForModule } from '../../services/initiativeLifecycle';
 import { InitiativeStatus } from '../../types';
 import { InitiativeCompletenessChecker } from '../PMO/InitiativeCompletenessChecker';
 import { StatusTransitionDropdown } from '../PMO/StatusTransitionDropdown';
@@ -78,9 +79,9 @@ interface Initiative {
 }
 
 // Map API response to Initiative interface
-const mapApiToInitiative = (item: any): Initiative => ({
+const mapApiToInitiative = (item: any, defaultName: string): Initiative => ({
   id: item.id,
-  name: item.name || 'Unnamed Initiative',
+  name: item.name || defaultName,
   description: item.summary || item.description || '',
   summary: item.summary,
   problemStatement: item.problemStatement,
@@ -150,6 +151,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
   assessmentId,
   onOpenInitiative,
 }) => {
+  const { t } = useTranslation();
   // State
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -179,7 +181,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       if (response.ok) {
         const data = await response.json();
         // Map API response to Initiative interface
-        const mapped = (data.initiatives || []).map(mapApiToInitiative);
+        const mapped = (data.initiatives || []).map((item: any) =>
+          mapApiToInitiative(item, t('assessment.initiativesBoard.defaultName'))
+        );
         setInitiatives(mapped);
 
         // Extract unique projects and locations for filters
@@ -201,7 +205,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, t]);
 
   useEffect(() => {
     fetchInitiatives();
@@ -226,7 +230,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
 
   // Delete initiative
   const handleDelete = async (initiativeId: string) => {
-    if (!confirm('Are you sure you want to delete this initiative?')) return;
+    if (!confirm(t('assessment.initiativesBoard.confirmDelete'))) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -293,12 +297,15 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     }
   );
 
-  const formatStatusList = (statuses: InitiativeStatus[]) => {
-    const labels = statuses.map((status) => getStatusMeta(status).label.toLowerCase());
-    if (labels.length <= 1) return labels[0] || 'draft';
-    if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
-    return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
-  };
+  /**
+   * Lista faz w podtytule. Etykiety idą przez kanoniczny `getLocalizedStatusLabel`
+   * (klucze `initiativeStatus.*`, CB-06/RB-035) — nie przez angielskie
+   * `getStatusMeta().label`. Rozdzielnik to przecinek: polskie „i" między
+   * etykietami w mianowniku („Szkic i Oczekuje na przegląd") brzmi sztucznie.
+   */
+  const statusPhaseList = STATUS_TABS.map((status) => getLocalizedStatusLabel(status, t)).join(
+    ', '
+  );
 
   // Open initiative — 1:1 z dawnym inline handlerem (nazwa + strzałka + kebab).
   const openInitiative = useCallback(
@@ -318,7 +325,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
     () => [
       {
         id: 'name',
-        label: 'Initiative',
+        label: t('assessment.initiativesBoard.columns.initiative'),
         width: '320px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -338,7 +345,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                   <button
                     onClick={() => openInitiative(initiative)}
                     className="p-1 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors shrink-0"
-                    title="Open initiative details"
+                    title={t('assessment.initiativesBoard.openDetails')}
                   >
                     <ArrowRight size={14} />
                   </button>
@@ -374,7 +381,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       },
       {
         id: 'status',
-        label: 'Status',
+        label: t('assessment.initiativesBoard.columns.status'),
         width: '190px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -393,7 +400,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       },
       {
         id: 'completeness',
-        label: 'Completeness',
+        label: t('assessment.initiativesBoard.columns.completeness'),
         width: '120px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -402,14 +409,16 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       },
       {
         id: 'owner',
-        label: 'Owner',
+        label: t('assessment.initiativesBoard.columns.owner'),
         width: '110px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
           const owner = initiative.ownerBusiness;
           if (!owner) {
             return (
-              <span className="text-xs text-slate-600 dark:text-slate-500 italic">Unassigned</span>
+              <span className="text-xs text-slate-600 dark:text-slate-500 italic">
+                {t('assessment.initiativesBoard.unassigned')}
+              </span>
             );
           }
           return (
@@ -433,13 +442,19 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       },
       {
         id: 'priority',
-        label: 'Priority',
-        width: '100px',
+        label: t('assessment.initiativesBoard.columns.priority'),
+        // 100px ucinało „CRITICAL"/„MEDIUM" w StatusChip (ChipBase wymusza
+        // `truncate` — kanon #4 tekst ucięty). 140px mieści najdłuższą
+        // etykietę bez elipsy, 1:1 z szerokością kolumny Status (190px dla
+        // krótszych „Draft"/„Planning").
+        width: '140px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
           return (
             <StatusChip
-              label={initiative.priority}
+              label={t(`priority.${initiative.priority.toLowerCase()}`, {
+                defaultValue: initiative.priority,
+              })}
               tone={PRIORITY_TONE[initiative.priority] ?? 'neutral'}
             />
           );
@@ -447,7 +462,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       },
       {
         id: 'budget',
-        label: 'Budget',
+        label: t('assessment.initiativesBoard.columns.budget'),
         width: '130px',
         render: (row) => {
           const initiative = row as unknown as Initiative;
@@ -459,7 +474,9 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
               {initiative.estimatedROI > 0 && (
                 <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                   <TrendingUp size={12} />
-                  <span>{initiative.estimatedROI}x ROI</span>
+                  <span>
+                    {t('assessment.initiativesBoard.roi', { value: initiative.estimatedROI })}
+                  </span>
                 </div>
               )}
             </div>
@@ -467,7 +484,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         },
       },
     ],
-    [openInitiative, handleStatusChange]
+    [t, openInitiative, handleStatusChange]
   );
 
   // Triada standard (StandardTable rowMenu contract, ANEKS #4): moduł deklaruje
@@ -485,13 +502,13 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         primary: [
           {
             id: 'view-details',
-            label: 'View Details',
+            label: t('assessment.initiativesBoard.menu.viewDetails'),
             icon: Eye,
             onClick: () => openInitiative(initiative),
           },
           {
             id: 'duplicate',
-            label: 'Duplicate',
+            label: t('assessment.initiativesBoard.menu.duplicate'),
             icon: Copy,
           },
         ],
@@ -501,10 +518,10 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         },
         destructive: canDelete
           ? { onClick: () => handleDelete(initiative.id) }
-          : { note: 'Only draft/planning initiatives can be deleted here' },
+          : { note: t('assessment.initiativesBoard.menu.deleteNote') },
       };
     },
-    [openInitiative, handleDelete]
+    [t, openInitiative, handleDelete]
   );
 
   return (
@@ -514,10 +531,15 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-              Strategic Initiatives Board
+              {t('assessment.initiativesBoard.header.title')}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Initiatives in {formatStatusList(STATUS_TABS)} phase • {stats.total} total
+              {t(
+                STATUS_TABS.length === 1
+                  ? 'assessment.initiativesBoard.header.subtitleOne'
+                  : 'assessment.initiativesBoard.header.subtitle',
+                { phases: statusPhaseList, total: stats.total }
+              )}
             </p>
           </div>
           <button
@@ -525,7 +547,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
             className="flex items-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg transition-colors"
           >
             <Sparkles size={18} />
-            Generate from Report
+            {t('assessment.initiativesBoard.header.generate')}
           </button>
         </div>
 
@@ -541,7 +563,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
               }`}
             >
-              All ({stats.total})
+              {t('assessment.initiativesBoard.filter.all', { count: stats.total })}
             </button>
             {STATUS_TABS.map((status) => (
               <button
@@ -553,7 +575,10 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
                 }`}
               >
-                {getStatusMeta(status).label} ({stats.byStatus[status] ?? 0})
+                {t('assessment.initiativesBoard.filter.tab', {
+                  label: getLocalizedStatusLabel(status, t),
+                  count: stats.byStatus[status] ?? 0,
+                })}
               </button>
             ))}
           </div>
@@ -567,7 +592,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
               onChange={(e) => setFilterProject(e.target.value)}
               className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
             >
-              <option value="">All Projects</option>
+              <option value="">{t('assessment.initiativesBoard.filter.allProjects')}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -583,7 +608,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
               onChange={(e) => setFilterLocation(e.target.value)}
               className="px-3 py-1.5 text-xs bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
             >
-              <option value="">All Locations</option>
+              <option value="">{t('assessment.initiativesBoard.filter.allLocations')}</option>
               {locations.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
@@ -604,7 +629,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search initiatives..."
+              placeholder={t('assessment.initiativesBoard.search.placeholder')}
               className="w-full pl-9 pr-4 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
             />
           </div>
@@ -612,7 +637,8 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           <button
             onClick={fetchInitiatives}
             className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
-            title="Refresh"
+            title={t('assessment.initiativesBoard.filter.refresh')}
+            aria-label={t('assessment.initiativesBoard.filter.refresh')}
           >
             <RefreshCw size={16} />
           </button>
@@ -627,8 +653,10 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
             data={filteredInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
             loading={isLoading}
             empty={{
-              title: searchQuery ? 'No initiatives match your search' : 'No initiatives yet',
-              description: 'Generate initiatives from a finalized report',
+              title: searchQuery
+                ? t('assessment.initiativesBoard.empty.noMatchTitle')
+                : t('assessment.initiativesBoard.empty.noneTitle'),
+              description: t('assessment.initiativesBoard.empty.description'),
               icon: Lightbulb,
             }}
             onRowDoubleClick={(row) => openInitiative(row as unknown as Initiative)}

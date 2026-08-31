@@ -37,6 +37,7 @@ import {
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
+  PreviewWhatsNextCard,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
@@ -566,7 +567,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   const toolColumn: ColumnDef = useMemo(
     () => ({
       id: 'tool',
-      label: isPolish ? 'Narzedzie' : 'Tool',
+      label: isPolish ? 'Narzędzie' : 'Tool',
       width: columnWidths.tool,
       minWidth: 150,
       maxWidth: 220,
@@ -749,11 +750,17 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
           emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
         />
 
-        {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown */}
-        <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-            {isPolish ? 'Co dalej' : "What's next"}
-          </div>
+        <PreviewActionBar rows={actionRows} />
+
+        {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown.
+            KOLEJNOŚĆ (§7.3 pkt 4.4 + §7.0): ten blok stoi POZA numeracją sześciu
+            bloków TRIADY i renderuje się ZAWSZE NA KOŃCU, po bloku 6 (Akcje) —
+            tak jak robi to `StandardPreview` (`whatsNext` po `actionRows`).
+            Do 2026-08-30 stał tutaj PRZED paskiem akcji, więc podgląd Ideas miał
+            inną kolejność od podglądu Assessment i Interview, mimo tego samego
+            kanonu. Ramka i typografia też są równane do `StandardPreview`, żeby
+            ten sam blok nie miał dwóch wyglądów. */}
+        <PreviewWhatsNextCard isPolish={isPolish}>
           <ConvertToOutputMenu
             sourceType="idea"
             sourceId={idea.id}
@@ -761,9 +768,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
             onConvertComplete={() => onRefresh()}
             variant="inline"
           />
-        </div>
-
-        <PreviewActionBar rows={actionRows} />
+        </PreviewWhatsNextCard>
       </div>
     );
   };
@@ -905,7 +910,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     onClick={() => onSort('title')}
                     className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
-                    {isPolish ? 'Tytul' : 'Title'}
+                    {isPolish ? 'Tytuł' : 'Title'}
                     <SortIndicator active={sortField === 'title'} direction={sortDir} />
                   </button>
                   <ColumnResizer
@@ -1016,7 +1021,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                               : ''
                           }
                         >
-                          {isPolish ? 'Narzedzie' : 'Tool'}
+                          {isPolish ? 'Narzędzie' : 'Tool'}
                         </span>
                         <SortIndicator active={sortField === 'tool'} direction={sortDir} />
                       </button>
@@ -1453,7 +1458,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           </button>
                         ) : null}
                         <div className="truncate pr-4 text-sm font-semibold leading-5 text-c-text">
-                          {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
+                          {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                         </div>
                       </div>
                       {showRowDescription && idea.body ? (

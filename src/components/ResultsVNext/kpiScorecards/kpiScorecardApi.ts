@@ -98,6 +98,7 @@ export interface KpiScorecardDto {
   scopeType: KpiScorecardScopeType;
   scopeId: string | null;
   ownerUserId: string;
+  ownerName: string | null;
   reviewFrequency: KpiScorecardReviewFrequency;
   lifecycleStatus: KpiScorecardLifecycleStatus;
   rowVersion: number;
@@ -110,11 +111,13 @@ export interface KpiScorecardItemDto {
   itemId: string;
   scorecardId: string;
   kpiId: string;
+  kpiName: string | null;
   organizationId: string;
   role: KpiScorecardItemRole;
   sortOrder: number;
   displayConfig: Record<string, unknown> | null;
   addedBy: string;
+  addedByName: string | null;
   addedAt: string;
 }
 
@@ -159,11 +162,13 @@ export interface KpiScorecardReviewSnapshotDto {
   status: KpiScorecardSnapshotStatus;
   contentHash: string | null;
   publishedBy: string | null;
+  publishedByName: string | null;
   publishedAt: string | null;
   supersededBySnapshotId: string | null;
   supersededAt: string | null;
   rowVersion: number;
   createdBy: string;
+  createdByName: string | null;
   createdAt: string;
   updatedAt: string;
 }

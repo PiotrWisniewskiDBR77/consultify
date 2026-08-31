@@ -143,7 +143,7 @@ describe('Help Chat Routes', () => {
         .send({ message: 'test' });
 
       expect(res.status).toBe(500);
-      expect(res.body.error).toBe('AI unavailable');
+      expect(res.body.error).toBe('HelpChat request failed');
     });
   });
 });

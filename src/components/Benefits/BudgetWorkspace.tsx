@@ -481,7 +481,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const projectionPeriods = activeScenario?.projections?.periods || [];
 
   const fmtNumber = useMemo(
-    () => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }),
+    () => new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 }),
     []
   );
 

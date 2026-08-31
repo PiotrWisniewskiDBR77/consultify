@@ -13,6 +13,37 @@
 export const PREVIEW_PILL_BASE =
   'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
+/* ── Blok 1 (nagłówek podglądu) — JEDEN zestaw klas dla obu powłok ──────────
+ *
+ * POWÓD ISTNIENIA (zgłoszenie właściciela 2026-08-30, ekran `preview-4-zakladki`:
+ * „jak nieporównywalne są podglądy, które powinny być takie same"): nagłówek
+ * bloku 1 renderowały DWA komponenty, każdy własnymi literałami —
+ * `StandardPreview` („Otwórz" z ikoną ExternalLink, h-8 px-3, Pin size 13)
+ * i `TableWithPreviewLayout` („Otwórz" bez ikony, h-9 px-4, Pin size 14,
+ * focus ring crimsonowy pierscien fokusa (rodzina primary)). Każdy moduł dziedziczył ten rozjazd
+ * bez własnej winy: Assessment przez `StandardPreview`, Interview i Ideas przez
+ * `TableWithPreviewLayout`. Dwa źródła prawdy dla jednego bloku kanonu = rozjazd
+ * pewny, nie prawdopodobny — dlatego klasy stoją tutaj, a oba komponenty je
+ * importują.
+ *
+ * KANON: `TABLE_AND_PREVIEW_CANON.md` §7.3 pkt 1 — zestaw akcji nagłówka jest
+ * ZAMKNIĘTY: Pin · Otwórz · ×, w tej kolejności. „Otwórz" = ghost/outline pill
+ * **BEZ IKONY — sam tekst**. Fokus zawsze niebieski `c-focus`, nigdy crimson.
+ */
+export const PREVIEW_HEADER_OPEN_BUTTON =
+  'inline-flex items-center h-9 px-4 rounded-full border border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed';
+
+/** Ikona nagłówka podglądu (Pin / PinOff) — stan spoczynkowy. */
+export const PREVIEW_HEADER_ICON_BUTTON =
+  'inline-flex items-center justify-center h-7 w-7 rounded-full text-c-text-muted hover:bg-state-hover transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
+/** Ikona nagłówka podglądu w stanie aktywnym (przypięte) — akcent `--c-info`. */
+export const PREVIEW_HEADER_ICON_BUTTON_ACTIVE =
+  'inline-flex items-center justify-center h-7 w-7 rounded-full text-[var(--c-info)] bg-state-selected transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
+/** Rozmiar ikony Pin/PinOff w nagłówku podglądu (jeden dla obu powłok). */
+export const PREVIEW_HEADER_ICON_SIZE = 14;
+
 export const PREVIEW_META_PILL =
   'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
 

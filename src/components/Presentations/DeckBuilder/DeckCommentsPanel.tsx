@@ -63,7 +63,7 @@ function formatWhen(iso: string): string {
   const ms = Date.parse(iso);
   if (!Number.isFinite(ms)) return '';
   try {
-    return new Date(ms).toLocaleString();
+    return new Date(ms).toLocaleString('pl-PL');
   } catch {
     return '';
   }

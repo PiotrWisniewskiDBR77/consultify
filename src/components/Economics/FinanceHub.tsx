@@ -128,6 +128,7 @@ import { isFinanceOwnerSampleDataEnabled } from './financeOwnerSampleData';
 import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
+import { FinanceValuePanelsSurface } from './FinanceValuePanelsSurface';
 import { FinanceSampleDataBanner } from './FinanceSampleDataBanner';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
 import { useFinancePreview } from './FinancePreviewPanel';
@@ -570,7 +571,12 @@ export function clearCanonicalFinanceSearchParams(current: URLSearchParams): URL
 
 export type CanonicalFinanceQueryOutcome =
   | { kind: 'none' }
-  | { kind: 'direct-workspace'; artifactId: string; businessVersionId: string; artifactType: string }
+  | {
+      kind: 'direct-workspace';
+      artifactId: string;
+      businessVersionId: string;
+      artifactType: string;
+    }
   | { kind: 'clear-stale' };
 
 /**
@@ -4056,6 +4062,7 @@ export const FinanceHub: React.FC = () => {
         }
       >
         <FinanceSampleDataBanner enabled={isFinanceOwnerSampleDataEnabled()} />
+        {activeTab === 'valuation' && !activeDocumentId && <FinanceValuePanelsSurface />}
         {isFinanceRuntimeV8 && (
           <FinanceDegradedBanner
             degradedAlerts={lane.degradedAlerts}

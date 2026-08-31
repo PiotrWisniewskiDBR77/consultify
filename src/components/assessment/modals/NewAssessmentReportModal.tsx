@@ -1,5 +1,6 @@
 import { FileText, Loader2, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { Api } from '@/services/api';
@@ -21,6 +22,8 @@ type ReportTemplate = {
   isDefault?: boolean;
 };
 
+const NS = 'reportBuilder.newAssessmentReportModal';
+
 export function NewAssessmentReportModal(props: {
   isOpen: boolean;
   assessments: AssessmentOption[];
@@ -39,6 +42,7 @@ export function NewAssessmentReportModal(props: {
   titleOverride?: string;
   subtitleOverride?: string;
 }) {
+  const { t } = useTranslation();
   const {
     isOpen,
     assessments,
@@ -87,10 +91,11 @@ export function NewAssessmentReportModal(props: {
             </div>
             <div>
               <div className="text-base font-semibold text-navy-900 dark:text-white">
-                {titleOverride || 'New assessment report'}
+                {titleOverride || t(`${NS}.title`, 'New assessment report')}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {subtitleOverride || 'Choose assessment + template. A draft will be generated.'}
+                {subtitleOverride ||
+                  t(`${NS}.subtitle`, 'Choose assessment + template. A draft will be generated.')}
               </div>
             </div>
           </div>
@@ -98,7 +103,7 @@ export function NewAssessmentReportModal(props: {
             type="button"
             onClick={() => !busy && onClose()}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
-            aria-label="Close"
+            aria-label={t(`${NS}.close`, 'Close')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -107,7 +112,7 @@ export function NewAssessmentReportModal(props: {
         <div className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-              Assessment
+              {t(`${NS}.assessment`, 'Assessment')}
             </label>
             <select
               value={assessmentId}
@@ -117,8 +122,8 @@ export function NewAssessmentReportModal(props: {
             >
               <option value="">
                 {approvedAssessments.length === 0
-                  ? 'No approved assessments available'
-                  : 'Select assessment…'}
+                  ? t(`${NS}.noApprovedAssessments`, 'No approved assessments available')
+                  : t(`${NS}.selectAssessmentPlaceholder`, 'Select assessment…')}
               </option>
               {approvedAssessments.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -128,8 +133,10 @@ export function NewAssessmentReportModal(props: {
             </select>
             {approvedAssessments.length === 0 && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Only approved assessments can be used to create reports. Approve an assessment
-                first.
+                {t(
+                  `${NS}.onlyApprovedWarning`,
+                  'Only approved assessments can be used to create reports. Approve an assessment first.'
+                )}
               </p>
             )}
           </div>
@@ -138,10 +145,10 @@ export function NewAssessmentReportModal(props: {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                  Template
+                  {t(`${NS}.template`, 'Template')}
                 </div>
                 <div className="mt-1 text-sm font-semibold text-navy-900 dark:text-white truncate">
-                  {template?.name || 'Not selected'}
+                  {template?.name || t(`${NS}.notSelected`, 'Not selected')}
                 </div>
                 {template?.description ? (
                   <div className="mt-1 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
@@ -151,7 +158,7 @@ export function NewAssessmentReportModal(props: {
               </div>
               {lockTemplate ? (
                 <span className="shrink-0 h-9 px-3 inline-flex items-center rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-100 dark:bg-navy-800 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  Z Biblioteki
+                  {t(`${NS}.fromLibrary`, 'Z Biblioteki')}
                 </span>
               ) : (
                 <button
@@ -160,7 +167,7 @@ export function NewAssessmentReportModal(props: {
                   disabled={busy}
                   className="shrink-0 h-9 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
                 >
-                  Choose
+                  {t(`${NS}.choose`, 'Choose')}
                 </button>
               )}
             </div>
@@ -173,7 +180,7 @@ export function NewAssessmentReportModal(props: {
               className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
               disabled={busy}
             >
-              Cancel
+              {t(`${NS}.cancel`, 'Cancel')}
             </button>
             <button
               type="button"
@@ -181,11 +188,13 @@ export function NewAssessmentReportModal(props: {
               onClick={async () => {
                 if (!assessmentId || !template?.id) return;
                 setBusy(true);
-                const toastId = toast.loading('Creating report…');
+                const toastId = toast.loading(t(`${NS}.toast.creatingReport`, 'Creating report…'));
                 try {
                   const title = selectedAssessment?.name
-                    ? `Report - ${selectedAssessment.name}`
-                    : 'Report';
+                    ? t(`${NS}.reportTitleWithName`, 'Report - {{name}}', {
+                        name: selectedAssessment.name,
+                      })
+                    : t(`${NS}.reportTitleFallback`, 'Report');
                   const created: any = await Api.post('/report-builder', {
                     sourceType: 'ASSESSMENT',
                     sourceId: assessmentId,
@@ -198,7 +207,10 @@ export function NewAssessmentReportModal(props: {
                   );
                   if (!reportId) throw new Error('Missing report id');
 
-                  toast.loading('Generating report content with AI…', { id: toastId });
+                  toast.loading(
+                    t(`${NS}.toast.generatingContent`, 'Generating report content with AI…'),
+                    { id: toastId }
+                  );
                   try {
                     await Api.post(`/report-builder/${reportId}/generate`, {
                       regenerateAll: false,
@@ -210,11 +222,17 @@ export function NewAssessmentReportModal(props: {
                     );
                   }
 
-                  toast.success('Report generated — opening editor', { id: toastId });
+                  toast.success(
+                    t(`${NS}.toast.generatedOpening`, 'Report generated — opening editor'),
+                    { id: toastId }
+                  );
                   onCreated(reportId);
                   onClose();
                 } catch (e: any) {
-                  toast.error(e?.error || e?.message || 'Failed to create report', { id: toastId });
+                  toast.error(
+                    e?.error || e?.message || t(`${NS}.toast.createFailed`, 'Failed to create report'),
+                    { id: toastId }
+                  );
                 } finally {
                   setBusy(false);
                 }
@@ -224,12 +242,12 @@ export function NewAssessmentReportModal(props: {
               {busy ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating…
+                  {t(`${NS}.generating`, 'Generating…')}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
-                  Create draft
+                  {t(`${NS}.createDraft`, 'Create draft')}
                 </span>
               )}
             </button>

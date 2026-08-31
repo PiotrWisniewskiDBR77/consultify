@@ -14,6 +14,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
@@ -87,6 +88,26 @@ interface RegisterRow extends TableRow {
 interface Props extends CanonicalMenu3Contract {
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
   demoMode?: boolean;
+  /**
+   * Odbiór grafiki 141-plan-scenario (2026-08-31) — DEFEKT „Otwórz".
+   *
+   * Kanoniczny przycisk „Otwórz" w nagłówku `StandardPreview` obiecuje OBIEKT
+   * wiersza, czyli KARTĘ INICJATYWY. Był podpięty pod `showWorkspace`, co
+   * montowało warsztat planu POD tabelą (druga tabela pod pierwszą, strona
+   * rosła z 900 px do 2681 px) — przycisk nie prowadził tam, dokąd obiecywał.
+   *
+   * Wzorzec rodzica jest już w module: `PortfolioHealthView` dostaje
+   * `onOpenInitiative?: (id, title) => void`, a `InitiativesHub` wiąże je
+   * z `handleOpenInitiativeDocument` (InitiativesHub.tsx §renderContent).
+   * Ta powierzchnia idzie tą samą drogą.
+   *
+   * Gdy rodzic NIE poda handlera (np. harness dev-render, gdzie nie ma
+   * hosta karty), „Otwórz" renderuje się WYŁĄCZONY z powodem w tooltipie
+   * (kanon FIX-1 `StandardPreview.openDisabledReason`) — zamiast milczeć
+   * albo prowadzić w złe miejsce. Warsztat planu ma własną, uczciwie
+   * nazwaną akcję „Otwórz narzędzia planu".
+   */
+  onOpenInitiative?: (id: string, title: string) => void;
 }
 const formatDate = (value: string | null) => {
   if (!value) return 'UNKNOWN';
@@ -156,6 +177,43 @@ const planStatusKey: Record<PlanScenario['status'], string> = {
   SUPERSEDED: 'initiatives.planScenario.status.superseded',
 };
 
+// Odbiór grafiki 07-realizacja (2026-08-30): kolumny planu renderowały surowe
+// enumy backendu (UNKNOWN/KNOWN/CURRENT/NONE/HIGH…) wprost jako tekst komórki —
+// dokładnie znany defekt "surowe enumy zamiast etykiet" z kanonu grafiki.
+// Mapy niżej tłumaczą wartość na etykietę bez ruszania logiki filtrów/presetów,
+// które nadal porównują surowe stałe (row.dependency === 'UNKNOWN' itd.).
+const planReadinessStateKey: Record<string, string> = {
+  KNOWN: 'initiatives.planScenario.states.known',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planBacklogStateKey: Record<string, string> = {
+  CURRENT: 'initiatives.planScenario.states.current',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planConflictStateKey: Record<string, string> = {
+  NONE: 'initiatives.planScenario.states.none',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planConfidenceKey: Record<string, string> = {
+  HIGH: 'common.high',
+  MEDIUM: 'common.medium',
+  LOW: 'common.low',
+  UNKNOWN: 'initiatives.planScenario.states.unknown',
+};
+const planBandKey: Record<string, string> = {
+  NOW: 'initiatives.planScenario.band.now',
+  NEXT: 'initiatives.planScenario.band.next',
+  LATER: 'initiatives.planScenario.band.later',
+  UNSCHEDULED: 'initiatives.planScenario.band.unscheduled',
+};
+const planNextActionKey: Record<string, string> = {
+  PROPOSE_WINDOW: 'initiatives.planScenario.nextActions.proposeWindow',
+  RESOLVE_CAPACITY: 'initiatives.planScenario.nextActions.resolveCapacity',
+  REVIEW_TENTATIVE_WINDOW: 'initiatives.planScenario.nextActions.reviewTentativeWindow',
+  VALIDATE_DEPENDENCIES: 'initiatives.planScenario.nextActions.validateDependencies',
+  ADD_TO_PLAN_OR_EXCLUDE: 'initiatives.planScenario.nextActions.addToPlanOrExclude',
+};
+
 const planPresets = [
   'unscheduled',
   'now',
@@ -172,6 +230,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   activePreset,
   onCountsChange,
   demoMode = false,
+  onOpenInitiative,
 }) => {
   const { t } = useTranslation();
   const [rows, setRows] = useState<RegisterRow[]>([]);
@@ -201,6 +260,26 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [showCreate, setShowCreate] = useState(false);
   const [initiativeLifecycleFilter, setInitiativeLifecycleFilter] = useState('ALL');
   const commandIds = useRef(new Map<string, string>());
+
+  // 97-czternascie-kolumn (2026-08-30): 14 kolumny danych + kolumna akcji
+  // nie mieszczą się w typowym obszarze planu (1366 px) nawet na podłodze
+  // czytelności FilterableTable (`FIT_MIN_COLUMN_WIDTH`/`_PRIMARY`) — po
+  // usunięciu jawnie zduplikowanej kolumny "Wstępny.../.../..." zostaje 13,
+  // wciąż za dużo. mandatoryDeadline/costOfDelay/roughDemand są w tym
+  // ekranie zawsze 'UNKNOWN' (nieobliczane), więc chowamy je domyślnie przez
+  // istniejący pstryczek widoczności kolumn — użytkownik włącza je sam, gdy
+  // ta logika kiedyś zostanie policzona. Musi wykonać się PRZED montażem
+  // <StandardTable>/<FilterableTable> (stąd guard w ciele renderu, nie w
+  // useEffect) — patrz komentarz w defaultHiddenColumns.ts.
+  const planWindowsColumnsSeeded = useRef(false);
+  if (!planWindowsColumnsSeeded.current) {
+    seedDefaultHiddenColumns('initiatives.plan-windows.v2', [
+      'mandatoryDeadline',
+      'costOfDelay',
+      'roughDemand',
+    ]);
+    planWindowsColumnsSeeded.current = true;
+  }
 
   const loadHistory = useCallback(
     async (scenarioId: string) => {
@@ -492,6 +571,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const showWorkspace = () => {
     if (draft && selectedId) setWorkspaceOpen(true);
   };
+  /**
+   * „Otwórz" = KARTA INICJATYWY (obiekt wiersza), nie warsztat planu.
+   * Zwraca `undefined`, gdy rodzic nie potrafi otworzyć karty — wtedy
+   * `StandardPreview` renderuje wyłączony przycisk z powodem, a nie akcję
+   * prowadzącą w inne miejsce niż napis.
+   */
+  const openInitiativeCard = useCallback(
+    (id: string | null) => {
+      if (!onOpenInitiative || !id) return;
+      const row = planWindowRows.find((item) => item.id === id);
+      onOpenInitiative(id, row?.title ?? id);
+    },
+    [onOpenInitiative, planWindowRows]
+  );
+  const openCardDisabledReason = onOpenInitiative
+    ? undefined
+    : t('initiatives.planScenario.openCardUnavailable', {
+        defaultValue: 'Kartę inicjatywy otwiera moduł Inicjatywy — ten widok jest tylko planem.',
+      });
   const create = () => {
     const periods = createWeeklyPeriods(newStart, newWeekCount);
     if (
@@ -917,7 +1015,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         selectedId={selectedWindowId}
         selectedItem={visiblePlanWindows.find((row) => row.id === selectedWindowId) ?? null}
         onSelect={setSelectedWindowId}
-        onOpenFull={showWorkspace}
+        onOpenFull={onOpenInitiative ? (id) => openInitiativeCard(id) : undefined}
+        openDisabledReason={openCardDisabledReason}
         itemIds={visiblePlanWindows.map((row) => row.id)}
         getItemById={(id) => visiblePlanWindows.find((row) => row.id === id) ?? null}
         previewOpen={!workspaceOpen && Boolean(selectedWindowId)}
@@ -926,12 +1025,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             embedded
             title={row.title}
             onClose={() => setSelectedWindowId(null)}
-            onOpenFull={showWorkspace}
+            onOpenFull={onOpenInitiative ? () => openInitiativeCard(row.id) : undefined}
+            openDisabledReason={openCardDisabledReason}
             meta={{
               pills: [
-                { label: row.band, tone: 'neutral' },
-                { label: row.confidence, tone: 'neutral' },
-                { label: row.published, tone: 'neutral' },
+                { label: t(planBandKey[row.band] ?? row.band), tone: 'neutral' },
+                { label: t(planConfidenceKey[row.confidence] ?? row.confidence), tone: 'neutral' },
+                { label: t(planStatusKey[row.published as PlanScenario['status']] ?? row.published), tone: 'neutral' },
               ],
               trailing: <span>{row.target}</span>,
             }}
@@ -939,7 +1039,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               label: t('initiatives.planScenario.preview.windowLabel'),
               text: t('initiatives.planScenario.preview.windowText'),
               properties: [
-                { id: 'window', label: t('initiatives.planScenario.columns.window'), value: row.band },
+                {
+                  id: 'window',
+                  label: t('initiatives.planScenario.columns.window'),
+                  value: t(planBandKey[row.band] ?? row.band),
+                },
                 {
                   id: 'target',
                   label: t('initiatives.planScenario.columns.proposedTarget'),
@@ -948,17 +1052,17 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 {
                   id: 'dependencies',
                   label: t('initiatives.planScenario.columns.dependencies'),
-                  value: row.dependency,
+                  value: t(planReadinessStateKey[row.dependency] ?? row.dependency),
                 },
                 {
                   id: 'capacity',
                   label: t('initiatives.planScenario.columns.capacity'),
-                  value: row.capacity,
+                  value: t(planReadinessStateKey[row.capacity] ?? row.capacity),
                 },
                 {
                   id: 'conflict',
                   label: t('initiatives.planScenario.columns.conflict'),
-                  value: row.conflict,
+                  value: t(planConflictStateKey[row.conflict] ?? row.conflict),
                 },
               ],
             }}
@@ -1001,11 +1105,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               label: t('initiatives.planScenario.columns.backlogState'),
               sortable: true,
               filterable: true,
-            },
-            {
-              id: 'proposedWindow',
-              label: t('initiatives.planScenario.columns.tentativeWindow'),
-              sortable: true,
+              render: (row) => t(planBacklogStateKey[row.backlogState] ?? row.backlogState),
             },
             { id: 'earliest', label: t('initiatives.planScenario.columns.earliest'), sortable: true },
             {
@@ -1019,38 +1119,61 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               label: t('initiatives.planScenario.columns.dependencyReadiness'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planReadinessStateKey[row.dependency] ?? row.dependency),
             },
             {
               id: 'mandatoryDeadline',
               label: t('initiatives.planScenario.columns.mandatoryDeadline'),
               sortable: true,
+              render: (row) =>
+                t(planReadinessStateKey[row.mandatoryDeadline] ?? row.mandatoryDeadline),
             },
-            { id: 'costOfDelay', label: t('initiatives.planScenario.columns.costOfDelay'), sortable: true },
-            { id: 'roughDemand', label: t('initiatives.planScenario.columns.roughDemand'), sortable: true },
+            {
+              id: 'costOfDelay',
+              label: t('initiatives.planScenario.columns.costOfDelay'),
+              sortable: true,
+              render: (row) => t(planReadinessStateKey[row.costOfDelay] ?? row.costOfDelay),
+            },
+            {
+              id: 'roughDemand',
+              label: t('initiatives.planScenario.columns.roughDemand'),
+              sortable: true,
+              render: (row) => t(planReadinessStateKey[row.roughDemand] ?? row.roughDemand),
+            },
             {
               id: 'capacity',
               label: t('initiatives.planScenario.columns.capacityState'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planReadinessStateKey[row.capacity] ?? row.capacity),
             },
             {
               id: 'confidence',
               label: t('initiatives.planScenario.columns.scheduleConfidence'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planConfidenceKey[row.confidence] ?? row.confidence),
             },
             {
               id: 'conflict',
               label: t('initiatives.planScenario.columns.conflict'),
               sortable: true,
               filterable: true,
+              render: (row) => t(planConflictStateKey[row.conflict] ?? row.conflict),
             },
-            { id: 'nextAction', label: t('initiatives.planScenario.columns.nextAction'), sortable: true },
+            {
+              id: 'nextAction',
+              label: t('initiatives.planScenario.columns.nextAction'),
+              sortable: true,
+              render: (row) => t(planNextActionKey[row.nextAction] ?? row.nextAction),
+            },
           ]}
           data={visiblePlanWindows}
           selectedRowId={selectedWindowId}
           onRowClick={(row) => setSelectedWindowId(String(row.id))}
-          onRowDoubleClick={showWorkspace}
+          onRowDoubleClick={
+            onOpenInitiative ? (row) => openInitiativeCard(String(row.id)) : undefined
+          }
           rowMenu={(row) => ({
             primary: [
               {
@@ -1146,7 +1269,18 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             <StandardTable
               columns={[
                 { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true },
-                { id: 'band', label: t('initiatives.planScenario.columns.window'), sortable: true },
+                // Odbiór 141-plan-scenario (2026-08-31): ta tabela warsztatu jako
+                // JEDYNA w powierzchni renderowała surowe enumy backendu
+                // (NOW/NEXT/LATER/UNSCHEDULED, HIGH/MEDIUM/LOW, KNOWN/UNKNOWN/NONE).
+                // Tabela główna i podgląd tłumaczyły je od 2026-08-30 tymi samymi
+                // mapami — tu ich po prostu nie podpięto. Dane zostają angielskie,
+                // tłumaczona jest wyłącznie etykieta komórki.
+                {
+                  id: 'band',
+                  label: t('initiatives.planScenario.columns.window'),
+                  sortable: true,
+                  render: (row) => t(planBandKey[row.band] ?? row.band),
+                },
                 {
                   id: 'target',
                   label: t('initiatives.planScenario.workbench.proposedWindow'),
@@ -1156,14 +1290,26 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   id: 'dependency',
                   label: t('initiatives.planScenario.columns.dependencies'),
                   sortable: true,
+                  render: (row) => t(planReadinessStateKey[row.dependency] ?? row.dependency),
                 },
-                { id: 'capacity', label: t('initiatives.planScenario.columns.capacity'), sortable: true },
+                {
+                  id: 'capacity',
+                  label: t('initiatives.planScenario.columns.capacity'),
+                  sortable: true,
+                  render: (row) => t(planReadinessStateKey[row.capacity] ?? row.capacity),
+                },
                 {
                   id: 'confidence',
                   label: t('initiatives.planScenario.workbench.confidence'),
                   sortable: true,
+                  render: (row) => t(planConfidenceKey[row.confidence] ?? row.confidence),
                 },
-                { id: 'conflict', label: t('initiatives.planScenario.columns.conflict'), sortable: true },
+                {
+                  id: 'conflict',
+                  label: t('initiatives.planScenario.columns.conflict'),
+                  sortable: true,
+                  render: (row) => t(planConflictStateKey[row.conflict] ?? row.conflict),
+                },
               ]}
               data={visiblePlanWindows}
               persistKey="initiatives.plan-windows.v1"
@@ -1427,14 +1573,16 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                                 aria-pressed={active}
                                 className={`min-h-12 w-full p-2 text-xs transition ${
                                   active
-                                    ? 'bg-c-accent text-white'
+                                    ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950'
                                     : 'bg-c-surface hover:bg-c-surface-raised'
                                 }`}
                                 onClick={() =>
                                   assignWindowToPeriod(window.initiativeId, periodIndex)
                                 }
                               >
-                                {active ? window.confidence : '—'}
+                                {active
+                                  ? t(planConfidenceKey[window.confidence] ?? window.confidence)
+                                  : '—'}
                               </button>
                             </td>
                           );
@@ -1564,10 +1712,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                               })
                             }
                           >
-                            <option>UNKNOWN</option>
-                            <option>LOW</option>
-                            <option>MEDIUM</option>
-                            <option>HIGH</option>
+                            {/* Wartość zapisywana zostaje angielska (kontrakt
+                                backendu), tłumaczy się wyłącznie etykieta opcji. */}
+                            {(['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH'] as const).map((level) => (
+                              <option key={level} value={level}>
+                                {t(planConfidenceKey[level] ?? level)}
+                              </option>
+                            ))}
                           </select>
                           <textarea
                             aria-label={t('initiatives.planScenario.workbench.rationaleAria', {
@@ -1616,7 +1767,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                         <div>
                           {window.constraintSnapshot.map((constraint) => (
                             <div key={constraint.constraintId} className="text-xs">
-                              {constraint.state}: {constraint.detail}
+                              {/* ta sama mapa co w kolumnach — bez niej w tej samej
+                                  sekcji zostawało gołe „UNKNOWN:" */}
+                              {t(planReadinessStateKey[constraint.state] ?? constraint.state)}:{' '}
+                              {constraint.detail}
                             </div>
                           ))}
                           <button

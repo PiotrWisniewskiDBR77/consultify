@@ -206,9 +206,10 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
         setSelectedTask(null);
       } catch (error: any) {
         console.error('[InitiativeSidePanel] Failed to save task:', error);
+        toast.error(t('portfolio.toast.taskSaveError', 'Nie udało się zapisać zadania'));
       }
     },
-    [fetchTasks]
+    [fetchTasks, t]
   );
 
   const formatCurrency = (amount: number) => {

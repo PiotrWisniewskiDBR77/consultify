@@ -30,6 +30,7 @@ import {
   evaluateAdvisorRules,
   generateValuationAdvisorOutput,
   listAdvisorOutputs,
+  loadValuationCurrency,
   loadValuationSnapshot,
   resolveHeadlineEnterpriseValue,
   type CompareVariantsParams,
@@ -624,7 +625,25 @@ router.post(
       valuationAsOfDate: typeof body.valuationAsOfDate === 'string' ? body.valuationAsOfDate : undefined,
     };
 
-    const result = await runDcfFcffValuation(params);
+    let result: Awaited<ReturnType<typeof runDcfFcffValuation>>;
+    try {
+      result = await runDcfFcffValuation(params);
+    } catch (error: unknown) {
+      const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+      const message = error instanceof Error ? error.message : String(error);
+      if (
+        code === 'P0001' &&
+        /finance_valuation_wacc_inputs: parent business_version .* is APPROVED and immutable; UPDATE not permitted/.test(message)
+      ) {
+        return sendError(
+          res,
+          409,
+          'APPROVED_VERSION_IMMUTABLE',
+          'This valuation version is approved and cannot be changed. Create a new version to recompute WACC.'
+        );
+      }
+      throw error;
+    }
     if (!result.ok) {
       return sendError(res, statusForDcfError(result.code), result.code, result.message);
     }
@@ -663,6 +682,7 @@ router.get(
     const snap = await loadValuationSnapshot(organizationId, businessVersionId);
     if (!snap.ok) return sendError(res, 404, snap.code, snap.message);
     const snapshot = snap.snapshot;
+    const currency = await loadValuationCurrency(organizationId);
 
     const headline = resolveHeadlineEnterpriseValue(snapshot);
     const weighted = computeWeightedRecommendation(snapshot.methods);
@@ -674,6 +694,7 @@ router.get(
     return res.status(200).json({
       data: {
         businessVersionId,
+        currency,
         variant: snapshot.variant,
         status: snapshot.status,
         freshness: snapshot.freshness,

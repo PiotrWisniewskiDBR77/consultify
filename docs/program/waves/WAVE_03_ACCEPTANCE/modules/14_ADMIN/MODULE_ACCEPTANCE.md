@@ -76,6 +76,75 @@ backup/restore claim.
 | `ADM-PF-002` | Exact retained fixture contains three canonical member commands and three matching audit rows, but `/admin/audit/events` rendered total `0` and an empty Admin Audit Log.                                                                      | product defect: split audit read store             | The Admin audit route previously read only legacy `admin_audit_logs`, while canonical IAM commands atomically wrote `role_change_audit_events`. A tenant-scoped normalized projection now merges both stores for list/stats/export, trusts exact `organization_id`, and uses metadata tenant identity only for legacy NULL-column rows; canonical IAM remains single-write. Focused route/component `30/30 PASS`; fresh `817`-migration mounted RealPG `1/1 PASS`; exact retained-fixture browser/API replay on `4082/4083` shows three rows and exact list/stats/CSV parity `3/3/3`. | `FIXED_LOCAL_BROWSER_PROVEN`        |
 | `ADM-PF-003` | `TRI-MUST-08` semantic audit coverage was `20/83`; global middleware is fail-open, context-dependent and forensically generic.                                                                                                                 | product defect: non-universal semantic audit       | Day 22 adds fail-closed semantic events for break-glass create/revoke and service-account create/revoke, with real-PG mutation/audit readback, secret-free metadata, tenant negatives and honest partial-success 503. Coverage is now `24/83 (28.9%)`; adding projection legs 4/5 was rejected by experiment because it duplicates request events. Bulk/access/domain and platform Superadmin visibility remain open.                                                                                                                                                                 | `CZĘŚCIOWO / 24_OF_83`              |
 
+## Day 111 — bieżący pakiet odbioru wizualnego (2026-08-29)
+
+Stan: `PARTIAL / CURRENT FRESH FIXTURE READBACK BLOCKED / 0 z 20 SCREENSHOTS`.
+
+Na markerze `74a1d733e9b6f5535c49d003844678fe87d0c9b3` świeży lokalny PostgreSQL
+zawiera spójną fixture (`8` person, `3` aktywne członkostwa głównej organizacji,
+`3` komendy i `3` audyty, marker `W3-ADMIN-OWNER-v1` z 64-znakowym nonce), a
+drugi przebieg migracji zastosował `0` zmian. Kanoniczny readback seedera jest
+jednak czerwony po `3 z 3` podejściach: kod oczekuje dokładnie `831` migracji,
+podczas gdy świeży ledger ma `863`. Manifest nie powstał. Zgodnie z §B.1 nie
+uruchomiono runtime'u `4884/4885`; macierz wizualna pozostaje uczciwie `0 z 20`,
+a G08–G10 nie są podnoszone. Szczegóły i mapa powierzchni AI/knowledge:
+`../../codex/CODEX_DAY111_ADMIN_OWNER_REPORT.md`.
+
+## Day 111b — wznowiony odbiór wizualny (2026-08-29)
+
+Stan: `PARTIAL / 20_OF_20_FILES / 12_OF_20_SEMANTIC / OWNER_REVIEW_PENDING`.
+
+Na markerze `4f63c65d85d77073b2cc14fbc43419ed53ad3ebb` poprawiony seeder
+zaakceptował rosnący ledger migracji: świeża lokalna baza przeszła kanoniczny
+readback przy `863` migracjach, a drugi przebieg zastosował `0` zmian.
+Kanoniczny runtime na `4884/4885`, realnym PostgreSQL `5992`, z
+`ENABLE_TEST_AUTH_BYPASS=false`, został zakwalifikowany i posłużył wyłącznie
+do odbioru pięciu powierzchni w dwóch motywach i dwóch deklarowanych stanach.
+
+Powstało i obejrzano `20 z 20` plików. Semantycznie prawidłowe są `12 z 20`:
+Members `4/4`, Audit Events `4/4`, Billing `2/4`, Security Policy `2/4`,
+AI Policy `0/4`. Stany `empty` dla Billing, AI i Security nie są osiągalne
+bez mutacji produktu/fixture; pliki zachowano jawnie jako `empty-attempt`.
+AI Policy dodatkowo pokazuje `Nieznany / 0 / n/d` po błędzie nieistniejącej
+relacji `llm_org_policies`. Log ujawnia także niezgodności schematu Billing
+(`invoices.issue_date`) i SCIM (`organization_id`).
+
+G08–G10 pozostają `NOT_STARTED`: wykonany pakiet jest technicznym odbiorem
+wizualnym i rejestrem defektów, nie werdyktem Ownera ani dowodem alternatywnych
+stanów dla wszystkich pięciu powierzchni. Pełna macierz, oględziny każdego
+pliku, hashe, deklaracja bezpieczeństwa poczty i zachowana mapa Admin/SuperAdmin
+AI: `../../codex/CODEX_DAY111_ADMIN_OWNER_REPORT.md`.
+
+## Day 117 — status dostawcy AI (2026-08-29)
+
+`FIXED` wyłącznie dla kontraktu backendowego
+`GET /api/superadmin/system-health`: status i mapa dostawców obejmują OpenRouter
+oraz cztery aliasy Google/Gemini, bez zmiany trybu OpenRouter-only. Dowód
+mutacyjny: stary fragment `3/9 PASS, 6/9 FAIL`; po przywróceniu `9/9 PASS`,
+delta pełnych nazw `tests/unit` `0/17297`. Commity `891ff965e1`, `f0af1495b9`.
+
+Widoczna powierzchnia pozostaje `PARTIAL / NO_CONSUMER`: ekran System Health
+woła `/system-health`, a naprawiona trasa jest pod `/superadmin/system-health`,
+więc `4/4` zrzuty przed/po pokazują ten sam uczciwy stan `endpoint does not
+exist`. G08–G10 i akceptacja modułu nie są podnoszone. Pełny raport:
+`../../codex/CODEX_DAY117_STATUS_AI_REPORT.md`.
+
+## Day 118 — propagacja statusu AI do ekranu (2026-08-29)
+
+`FIXED / MUTATION_VERIFIED` wyłącznie dla widocznego ekranu System Health:
+główny health i mapa dostawców korzystają z istniejącego
+`/superadmin/system-health`, a services, metrics i alerts z istniejącego
+`/system-health/*`. Ekran pokazuje OpenRouter i Google AI obok trzech
+dotychczasowych dostawców. Mutacja: `2/5 PASS, 3/5 FAIL`; po przywróceniu
+`5/5 PASS`; delta pięciu pełnych nazw `0/5`; zrzuty `4/4` w dwóch motywach.
+Commity produktu/testu: `9a39cd41d6`, `73cb3bf395`.
+
+Komunikat wyceny pozostaje `BLOCKED / NOT_AUTHORIZED`: realny wołacz jest w
+`src/components/Economics/hooks/useFinanceRowActions.ts`, poza licencją §D.
+Czerwony kontrakt `1/1 FAIL` zapisano w `0caec88e83`. G08–G10 i akceptacja
+modułu pozostają bez zmian. Pełny raport:
+`../../codex/CODEX_DAY118_PROPAGACJA_REPORT.md`.
+
 ## Owner verdict
 
 Decision: `PENDING`

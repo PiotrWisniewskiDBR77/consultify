@@ -2,7 +2,7 @@
 
 ID: `TLS`
 Routes: `/discovery-tools`
-Current gate: `TECHNICAL_BROWSER_COMPLETE / OWNER_QUALITY_REVIEW_IN_PROGRESS / LIVE_REGISTER_OPEN / NO_REMEDIATION_AUTHORIZED`
+Current gate: `TECHNICAL_BROWSER_COMPLETE / OWNER_QUALITY_REVIEW_IN_PROGRESS / SPEC_A_CANVAS_REPLAY_BLOCKED_ON_LOCAL_FIXTURE / LIVE_REGISTER_OPEN / NO_REMEDIATION_AUTHORIZED`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -69,6 +69,7 @@ These are technical observations, not Piotr owner findings.
 | `TLS-PF-002` | The BVP teardown selected generated target rows by a session-ID prefix that their UUID identifiers did not contain, leaving two test lineage rows. Cleanup now scopes them by the exact fixture organizations. | Initial residue `2`; corrected BVP replay `11/11 PASS`; tested-prefix residue `0`; commit `fbf400a8e3`. | `FIXED_VERIFIED` |
 | `TLS-PF-003` | Focused component tests pass but repeatedly emit React updates-not-wrapped-in-`act(...)` warnings. | Component/output replay `9/9` files, `78/78 PASS` with warning output. | `OPEN_NONBLOCKING_TEST_QUALITY` |
 | `TLS-PF-004` | The frontend persistence adapter documentation and types still described optimistic concurrency as absent/optional after the server had already made it mandatory, risking saves without an authoritative expected version. | Adapter types now require numeric versions on create/GET/update; the sync hook re-reads a missing version before PUT and advances it only from the successful server receipt. Focused adapter/hook replay `2/2` files, `23/23 PASS`. | `FIXED_VERIFIED` |
+| `TLS-PF-005` | Day 96 could not start the SPEC-A Canvas owner replay on the marker database: after `863` migrations the Tools fixture seeder required a pre-existing owner, while the canonical browser-persona seeder rejected the required `consultify_w3_tools_owner_*` database prefix. | `CODEX_DAY96_SPEC_A_CANVAS_REPORT.md`: three guarded attempts, `0/12` screenshots, `0/3` keyboard contracts measured; no manual SQL/persona fabrication and no product/runtime change. | `OPEN_FIXTURE_CONTRACT_BLOCKER / PARTIAL` |
 
 ## Owner UI/UX/CX register
 

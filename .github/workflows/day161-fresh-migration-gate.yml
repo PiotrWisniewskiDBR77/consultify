@@ -1,0 +1,44 @@
+name: Day 161 Fresh Migration Gate
+
+on:
+  push:
+    branches: [main, develop, Londyn, demo]
+    paths:
+      - 'server/migrations/**'
+      - 'server/scripts/migrate.postgres.ts'
+      - 'scripts/dev/day161-fresh-migration-check.sh'
+      - 'package.json'
+      - '.github/workflows/day161-fresh-migration-gate.yml'
+  pull_request:
+    branches: [main, develop, Londyn, demo]
+    paths:
+      - 'server/migrations/**'
+      - 'server/scripts/migrate.postgres.ts'
+      - 'scripts/dev/day161-fresh-migration-check.sh'
+      - 'package.json'
+      - '.github/workflows/day161-fresh-migration-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fresh-migration-gate:
+    name: Fresh PostgreSQL migration chain
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+      - run: npm ci
+      - name: Verify direct Docker access
+        run: docker version
+      - name: Run fresh migration gate
+        env:
+          DAY161_CONTAINER_NAME: cx-day167-pg
+          DAY161_PG_PORT: '6058'
+          DAY161_DATABASE_NAME: cx167
+          DAY161_DATABASE_PASSWORD: cx
+        run: npm run test:migrations:day161:fresh

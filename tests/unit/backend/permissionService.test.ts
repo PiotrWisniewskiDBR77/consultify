@@ -181,7 +181,8 @@ describe('PermissionService', () => {
         expect(DbPromise.get).toHaveBeenCalledWith(
           mockDb,
           expect.stringContaining('org_user_permissions'),
-          expect.arrayContaining([testUsers.user.id, testOrganizations.org1.id, 'PERMISSION_KEY'])
+          expect.arrayContaining([testUsers.user.id, testOrganizations.org1.id, 'PERMISSION_KEY']),
+          { fallback: false }
         );
       });
 
@@ -777,9 +778,10 @@ describe('PermissionService', () => {
       expect(result).toBe(false);
       // Verify query includes correct organization ID
       expect(DbPromise.get).toHaveBeenCalledWith(
-        mockDb,
-        expect.anything(),
-        expect.arrayContaining([testUsers.user.id, testOrganizations.org2.id, 'PERMISSION_KEY'])
+          mockDb,
+          expect.anything(),
+          expect.arrayContaining([testUsers.user.id, testOrganizations.org2.id, 'PERMISSION_KEY']),
+          { fallback: false }
       );
     });
 

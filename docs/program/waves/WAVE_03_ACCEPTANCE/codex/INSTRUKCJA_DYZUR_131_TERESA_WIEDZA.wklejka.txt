@@ -1,0 +1,16 @@
+NOWY — DYŻUR 131
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_131_TERESA_WIEDZA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 131.
+
+Marker: 70d8e8a9c9b290dbad559cd0f4330aa3959f6b3b
+Zasoby wyłączne: baza 6014, runtime 4928 i 4929 (PARA — runtime wymaga obu).
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.

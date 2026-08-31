@@ -240,7 +240,7 @@ describe('StatementPackWorkspaceV2 — chain proof (source -> mapping -> canonic
       expect(screen.getByTestId('source-evidence-mapping-row')).toBeInTheDocument()
     );
     // Step 2 proof: the SAME cell's mapping row is now visible, tying source -> mapping -> canonical line -> presentation.
-    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('MAPPED');
+    expect(screen.getByTestId('source-evidence-mapping-bucket')).toHaveTextContent('Zmapowane');
     expect(screen.getByTestId('source-evidence-mapping-source-row-ref')).toHaveTextContent(
       'trial_balance.csv'
     );

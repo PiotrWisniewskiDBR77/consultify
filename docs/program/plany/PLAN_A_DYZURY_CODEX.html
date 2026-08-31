@@ -1,0 +1,510 @@
+<meta charset="utf-8">
+<title>Droga do stu procent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --ground:#F4F7FB; --surface:#FFFFFF; --surface-2:#EDF2F8;
+    --ink:#121B2E; --ink-soft:#46536B; --ink-mute:#6E7B92;
+    --line:#DBE3EE;
+    --accent:#1F5A8F; --accent-soft:#E3EDF6;
+    --critical:#85182F; --critical-bg:#F7E7EA;
+    --good:#1F6B4D; --good-bg:#E4F0EA;
+    --warn:#8A5A12; --warn-bg:#F6EDDC;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+    --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+    --line:#26344E;
+    --accent:#7FB2DD; --accent-soft:#1A2C42;
+    --critical:#E8879B; --critical-bg:#35161F;
+    --good:#7CC7A4; --good-bg:#14291F;
+    --warn:#D9AE68; --warn-bg:#2E2413;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0D1524; --surface:#141F33; --surface-2:#1B2942;
+    --ink:#E9EFF7; --ink-soft:#B0BCD0; --ink-mute:#8492AA;
+    --line:#26344E;
+    --accent:#7FB2DD; --accent-soft:#1A2C42;
+    --critical:#E8879B; --critical-bg:#35161F;
+    --good:#7CC7A4; --good-bg:#14291F;
+    --warn:#D9AE68; --warn-bg:#2E2413;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    font-size:16.5px;line-height:1.62;margin:0;padding:0 20px 96px;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:980px;margin:0 auto;}
+  .col{max-width:660px;}
+
+  .masthead{padding:60px 0 34px;border-bottom:2px solid var(--ink);margin-bottom:44px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 18px;}
+  h1{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(38px,6vw,60px);
+    line-height:1.04;letter-spacing:-.015em;margin:0 0 20px;text-wrap:balance;}
+  .standfirst{font-family:Spectral,Georgia,serif;font-size:clamp(18px,2.4vw,21px);
+    line-height:1.55;color:var(--ink-soft);max-width:640px;margin:0;}
+
+  h2{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(25px,3.4vw,32px);
+    line-height:1.18;letter-spacing:-.01em;margin:0 0 8px;text-wrap:balance;}
+  section{margin-bottom:66px;}
+  .lead{color:var(--ink-soft);margin:0 0 26px;max-width:640px;}
+  p{margin:0 0 16px;}
+  .col p:last-child{margin-bottom:0;}
+
+  .rule-label{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--accent);margin:0 0 14px;display:flex;align-items:center;gap:12px;}
+  .rule-label::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  /* faza */
+  .phase{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    margin-bottom:20px;overflow:hidden;}
+  .ph-head{display:grid;grid-template-columns:70px 1fr auto;gap:20px;align-items:start;
+    padding:24px 26px;border-bottom:1px solid var(--line);}
+  .ph-num{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;color:var(--accent);
+    letter-spacing:.08em;padding-top:5px;}
+  .ph-head h3{font-size:20px;font-weight:600;margin:0 0 5px;line-height:1.3;letter-spacing:-.01em;}
+  .ph-head .why{font-size:15px;color:var(--ink-soft);margin:0;}
+  .tagset{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex:0 0 auto;}
+  .tag{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;padding:3px 9px;border-radius:2px;white-space:nowrap;}
+  .t-crit{background:var(--critical-bg);color:var(--critical);}
+  .t-warn{background:var(--warn-bg);color:var(--warn);}
+  .t-good{background:var(--good-bg);color:var(--good);}
+  .t-neut{background:var(--surface-2);color:var(--ink-mute);}
+
+  .ph-body{padding:22px 26px;}
+  .ph-body h4{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-mute);margin:0 0 10px;}
+  .ph-body h4:not(:first-child){margin-top:22px;}
+  .ph-body ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .ph-body li{display:flex;gap:11px;font-size:15.5px;line-height:1.55;color:var(--ink-soft);}
+  .ph-body li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);
+    flex:0 0 auto;margin-top:9px;}
+  .ph-body li b{color:var(--ink);font-weight:600;}
+  .gate{margin-top:22px;background:var(--surface-2);border-left:3px solid var(--accent);
+    padding:13px 17px;border-radius:0 3px 3px 0;font-size:15px;}
+  .gate b{color:var(--accent);}
+
+  /* liczby */
+  .figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-bottom:28px;}
+  .fig{background:var(--surface);padding:20px 22px;}
+  .fig .n{font-family:"IBM Plex Mono",monospace;font-size:31px;font-weight:500;line-height:1;
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block;margin-bottom:8px;}
+  .fig .k{font-size:13.5px;color:var(--ink-mute);line-height:1.4;display:block;}
+  .fig.crit .n{color:var(--critical);}
+  .fig.good .n{color:var(--good);}
+
+  .note{border-left:3px solid var(--line);padding-left:22px;color:var(--ink-soft);font-size:15.5px;}
+  .note strong{color:var(--ink);}
+  .note+.note{margin-top:15px;}
+
+  table.plain{width:100%;border-collapse:collapse;font-size:15px;}
+  table.plain th,table.plain td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);
+    vertical-align:top;}
+  table.plain th{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--ink-mute);font-weight:500;}
+  table.plain td:first-child{font-weight:600;width:30%;}
+  table.plain tbody tr:last-child td{border-bottom:none;}
+  .scroller{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface);}
+
+  code{font-family:"IBM Plex Mono",monospace;font-size:.875em;background:var(--surface-2);
+    padding:1px 5px;border-radius:2px;}
+  .quote{font-family:Spectral,Georgia,serif;font-size:19px;font-style:italic;color:var(--ink-soft);
+    border-left:2px solid var(--accent);padding-left:20px;margin:0 0 18px;}
+
+  footer{margin-top:30px;padding-top:26px;border-top:1px solid var(--line);
+    font-size:14px;color:var(--ink-mute);}
+  footer p{margin:0 0 8px;}
+  a{color:var(--accent);}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+  @media (max-width:620px){.ph-head{grid-template-columns:1fr;gap:10px;}.tagset{align-items:flex-start;flex-direction:row;flex-wrap:wrap;}}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Consultify · plan dokończenia funkcji · 29 sierpnia 2026</p>
+    <h1>Droga do stu procent</h1>
+    <p class="standfirst">Sześć faz, ułożonych nie według wielkości pracy, tylko według tego, co blokuje następną. Wszystko poniżej pochodzi z pomiaru kodu wykonanego dzisiaj — nie z dokumentacji i nie z pamięci.</p>
+  </header>
+
+  <section>
+    <p class="rule-label">Stan wyjściowy</p>
+    <div class="figures">
+      <div class="fig crit"><span class="n">35</span><span class="k">miejsc, w których produkt potwierdza zapis, którego nie wykonał</span></div>
+      <div class="fig crit"><span class="n">0 z 10</span><span class="k">kart przechodzi bramkę analizy przez interfejs</span></div>
+      <div class="fig"><span class="n">2</span><span class="k">rozłączne magazyny inicjatyw, most napisany i nigdy niepodłączony</span></div>
+      <div class="fig"><span class="n">18</span><span class="k">kart bez edytora — w tym osiem wymaganych przez bramkę</span></div>
+      <div class="fig crit"><span class="n">0</span><span class="k">wyszukań w dokumentach klienta przy rozmowie z Teresą</span></div>
+      <div class="fig crit"><span class="n">21,2%</span><span class="k">słów w najlepszym dokumencie to wypełniacz „do uzupełnienia"</span></div>
+      <div class="fig"><span class="n">4</span><span class="k">niezależne rodziny KPI bez wspólnego klucza</span></div>
+    </div>
+    <div class="col">
+      <p class="note"><strong>Zdanie, które trzeba powiedzieć na początku.</strong> Nie brakuje typów, migracji ani endpointów. Prawie wszystko jest zbudowane — i zbudowane porządnie. Brakuje <em>połączeń</em> między rzeczami, które już istnieją, i <em>włączenia</em> tego, co czeka wyłączone. To jest zupełnie inna wycena niż „trzeba dobudować moduły".</p>
+      <p class="note"><strong>Kolejność nie jest dowolna.</strong> Każda faza otwiera następną. Odwrócenie dwóch pierwszych sprawia, że produkt zaczyna zapisywać na szeroką skalę rzeczy, których nie da się rozliczyć ani cofnąć.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Sześć faz</p>
+    <h2>Plan</h2>
+    <p class="lead">Przy każdej fazie: dlaczego akurat tam, co dokładnie robimy, i po czym poznamy, że jest skończona.</p>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 1</span>
+        <div>
+          <h3>Produkt przestaje kłamać</h3>
+          <p class="why">Doradca dodaje komentarz, załącznik albo ryzyko, produkt mówi „dodano" — i po odświeżeniu tego nie ma.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">Pilne</span><span class="tag t-good">W toku</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Co dokładnie</h4>
+        <ul>
+          <li><b>Kontrakt trzech wspólnych widżetów.</b> Dziś potwierdzają sukces same, bezwarunkowo — gospodarz, który niczego nie zapisał, dostaje potwierdzenie za darmo. To jedna przyczyna <b>28 z 35</b> miejsc.</li>
+          <li><b>Podpięcie ekranów tam, gdzie endpoint już istnieje.</b> Rejestr ryzyk ma działający zapis cztery tysiące linii wyżej w tym samym pliku i kanwa go nie używa.</li>
+          <li><b>Backend załączników</b> dla Inicjatywy, Zadania i Decyzji — dziś nie istnieje żaden: ani tabela, ani trasa, ani serwis.</li>
+          <li><b>Uczciwy stan tam, gdzie nie domykamy.</b> Ekran mówi wprost „jeszcze nie zapisuje", zamiast udawać.</li>
+        </ul>
+        <h4>Na czym budujemy</h4>
+        <ul>
+          <li>Wzorzec poprawny istnieje w produkcie i jest sprawdzony — powiązania Inicjatywy: <code>await zapis → sukces → widok → komunikat</code>, przy błędzie cofnięcie.</li>
+          <li>Wzorzec uczciwy też istnieje: jeden ekran ustawień mówi wprost, że jest tylko do odczytu, dopóki zapis nie zostanie podłączony.</li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> dla każdego naprawionego miejsca dowód mutacyjny w obie strony. Test, który przechodzi także przed naprawą, nie liczy się.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 2</span>
+        <div>
+          <h3>Karta staje się obiektem</h3>
+          <p class="why">Twoja teza brzmi: karta jest nośnikiem wiedzy. Dziś jest nim w jednym module, a w sześciu pozostałych jest sposobem rysowania sekcji.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">Rdzeń</span><span class="tag t-neut">Zmierzone</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Trzy rzeczy, w tej kolejności</h4>
+        <ul>
+          <li><b>Odblokowanie bramek.</b> Trzy zmiany we froncie, z czego jedna jest poprawką jednoliniowej stałej. Dziś <b>żadna karta nie przechodzi żadnej bramki</b> — nie „mało", tylko zero. Najmniejszy klocek z całego planu, największy skutek.</li>
+          <li><b>Osiemnaście brakujących edytorów.</b> Cztery to zwykłe pola tekstowe — dosłownie po jednej linii w mapie, bez migracji i bez zmian serwera. Cztery wymagają wyboru obiektu z innego modułu. Dziesięć nie blokuje niczego i zostaje na później.</li>
+          <li><b>Most między dwoma magazynami.</b> Ocena, Narzędzia, Audyty i Pomysły tworzą inicjatywy w jednym magazynie, a lista Inicjatyw czyta drugi. Most jest napisany i <b>nigdy niepodłączony</b>.</li>
+        </ul>
+        <h4>Skutek, który to daje</h4>
+        <ul>
+          <li>Inicjatywa zrodzona z Oceny <b>przestaje być niewidoczna</b> w module Inicjatyw.</li>
+          <li>Otwiera się etap analizy — a to jest dokładnie ten etap, na którym miały się spotkać finanse i wskaźniki.</li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> inicjatywa utworzona z Oceny pojawia się na liście i przechodzi bramkę definicji przez interfejs, bez wpisu do bazy z boku.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 3</span>
+        <div>
+          <h3>Teresa wie o kliencie</h3>
+          <p class="why">Cała maszyna wyszukiwania działa i jest wypełniana. W rozmowie odpala się wyłącznie na plikach załączonych do tej jednej rozmowy.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">Bezpieczeństwo</span><span class="tag t-good">Wydane</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Co dokładnie</h4>
+        <ul>
+          <li><b>Podpięcie wyniku, który już się liczy i jest wyrzucany.</b> Wyszukiwanie z filtrem uprawnień wykonuje się przy każdej rozmowie — a jego wynik służy tylko do wpisu w dzienniku.</li>
+          <li><b>Strażnik poufności na właściwej tabeli.</b> Dziś odpytuje inną niż ta, w której leżą dokumenty; nieznany dokument przepuszcza, błąd przepuszcza wszystko. <b>Oznaczenie „poufny" nie ma żadnego skutku.</b></li>
+          <li><b>Kolumna organizacji w tabeli wektorów.</b> Izolacja stoi dziś na znaczniku w danych pomocniczych, a fragment bez znacznika jest widoczny dla każdej organizacji.</li>
+        </ul>
+        <h4>Dlaczego granice są w tej samej fazie, a nie w następnej</h4>
+        <ul>
+          <li>Dziś Teresa czyta wyłącznie to, co doradca sam załączył. Po podpięciu będzie czytać <b>cały korpus klienta</b>. Pozycja główna bez granic <b>zwielokrotnia powierzchnię wycieku</b> — a mówimy o produkcie, w którym każdy klient to inna firma.</li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> test rozróżniający — przy cofniętej naprawie materiał obcej organizacji jest widoczny, po naprawie nie jest. Plus policzona liczba fragmentów bez znacznika, której nikt dotąd nie policzył.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 4</span>
+        <div>
+          <h3>Agent wykonuje i zostawia ślad</h3>
+          <p class="why">Ekran „uruchom agenta" jest widoczny i domyślnie włączony. Plany powstają i nigdy nie ruszają.</p>
+        </div>
+        <div class="tagset"><span class="tag t-warn">Duże</span><span class="tag t-neut">Zmierzone</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Co jest, a czego nie ma</h4>
+        <ul>
+          <li><b>Jest prawdziwa pętla agentowa</b> w czacie — model potrafi utworzyć zadanie, decyzję, inicjatywę i dokument. Za flagą domyślnie wyłączoną.</li>
+          <li><b>Jest sterowanie otwartym artefaktem</b> — około dwustu akcji, tą samą drogą co klik człowieka, część z potwierdzeniem. To najlepszy wzorzec bezpieczeństwa w produkcie.</li>
+          <li><b>Nie ma wykonawcy.</b> Zlecenie planu zwraca „niedostępne" bez włączonego robotnika w tle, a plan zostaje w stanie planowania.</li>
+          <li><b>Nie ma produktu na końcu planu.</b> Ostatni krok każdego planu zwraca kopertę metadanych, nie treść.</li>
+          <li><b>★ Nie ma śladu.</b> Zadanie utworzone przez model jest w bazie <b>nieodróżnialne</b> od wpisanego ręcznie. Nie ma cofania.</li>
+        </ul>
+        <h4>Kolejność wewnątrz fazy</h4>
+        <ul>
+          <li>Najpierw <b>uruchomienie tego, co zbudowane</b> — żeby zobaczyć silnik w działaniu i mieć co oceniać.</li>
+          <li>Zaraz potem, <b>nie później</b>, ślad i cofanie. W chwili, gdy agent naprawdę pisze do bazy, brak proweniencji staje się skażeniem danych — a dane demo są twarzą produktu.</li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> uruchomiony plan kończy się artefaktem, który da się otworzyć, a wszystko, co agent utworzył, da się wskazać i cofnąć.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 5</span>
+        <div>
+          <h3>Dokument wychodzi z produktu</h3>
+          <p class="why">Zmierzone. Wynik obala to, co nosiliśmy tygodniami — i wskazuje zupełnie inną przyczynę niż zakładaliśmy.</p>
+        </div>
+        <div class="tagset"><span class="tag t-crit">Najwyższa waga</span><span class="tag t-good">Zmierzone</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>★ Sprostowanie — eksport DZIAŁA, we wszystkich czterech formatach</h4>
+        <ul>
+          <li><b>Prezentacja, dokument, arkusz i PDF — wszystkie cztery da się dziś pobrać.</b> Cztery warstwy kompletne: przycisk, klient, trasa, silnik. Na dysku leżą gotowe pliki jako dowód materialny.</li>
+          <li>Przekonanie „prezentacja nie powstała nigdy" jest <b>nieprawdziwe</b>. Silnik prezentacji ma osiemnaście układów slajdów i pięć motywów, a wyeksportowane pliki istnieją.</li>
+        </ul>
+        <h4>Prawdziwa przyczyna jest inna i gorsza</h4>
+        <ul>
+          <li><b>Dokument w ogóle nie przechodzi przez generator prozy.</b> Bramka jakości treści jest domyślnie wyłączona — przy niej wyłączonej powstaje deterministyczny szkielet: nagłówki i jedno zdanie o przeznaczeniu sekcji. Treść nie jest ocenzurowana. <b>Ona nigdy nie zostaje napisana.</b></li>
+          <li><b>Strażnik uziemienia kasuje cały akapit za jedną niedopasowaną liczbę</b> — i dodatkowo oznacza blok jako założenie, co <b>blokuje eksport</b> pięciu typów dokumentów. Podwójne zabójstwo: najpierw usuwa treść, potem zamyka drzwi.</li>
+          <li><b>Twardy pomiar z pełnymi danymi demo:</b> najlepszy dokument programu ma <b>21,2% słów będących wypełniaczem</b> — co piąte słowo to „do uzupełnienia".</li>
+        </ul>
+        <h4>Sprostowanie mojego wcześniejszego zdania</h4>
+        <ul>
+          <li>Mówiłem, że strażnik kasuje za liczby <b>i za skróty</b>. Reguła skrótowa została wyłączona 29 sierpnia — komentarz autora mówi wprost, że kasowała normalną prozę doradczą i zostawiała puste dokumenty. <b>Połowa strażnika już nie kasuje.</b></li>
+        </ul>
+        <h4>Co jeszcze leży gotowe i nieużyte</h4>
+        <ul>
+          <li><b>Dziewięć modeli finansowych w Excelu z formułami</b> — gotowe, przetestowane, za flagą wyłączoną. Najtańszy przyrost wartości w całym planie.</li>
+          <li><b>Dziewięć szablonów dokumentów</b> — raport audytowy, memo zarządcze, deck inwestorski, rejestr ryzyk — napisane i <b>bez ani jednego importera</b>.</li>
+          <li><b>Drugi, znacznie gorszy tor prezentacji</b> produkuje trzy slajdy gołego tekstu z wypełniaczem. Pięć wyeksportowanych plików ma identyczny rozmiar co do bajta.</li>
+        </ul>
+        <div class="gate"><b>Miara odbioru, twarda i policzalna:</b> ten sam dokument na tych samych danych schodzi z <b>21,2% wypełniaczy poniżej 5%</b>. Docelowo: doradca pobiera plik i podpisuje go nazwiskiem bez poprawiania.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">FAZA 6</span>
+        <div>
+          <h3>Liczby są jedne</h3>
+          <p class="why">Wskaźniki żyją dziś w czterech niezależnych rodzinach bez wspólnego klucza.</p>
+        </div>
+        <div class="tagset"><span class="tag t-warn">Wymaga Twojej decyzji</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Stan</h4>
+        <ul>
+          <li>Moduł Wyników renderuje się na jednym zestawie tabel, wskaźnik inicjatywy siedzi w zupełnie innym. <b>Wspólnego klucza nie ma.</b></li>
+          <li>Most istnieje, ale prowadzi w jedną stronę i widać go tylko od strony Wyników.</li>
+          <li>Jedna rzecz działa i jest zdrowsza, niż zakładałem: zapis wpływu wskaźnika dopisuje krawędź do grafu powiązań, a ta wraca do inicjatywy i widać ją w karcie „Użyte w".</li>
+        </ul>
+        <h4>Decyzja, której nie podejmę za Ciebie</h4>
+        <ul>
+          <li><b>Którą rodzinę wskaźników uznajemy za prawdziwą.</b> Od tego zależy, co jest migracją, a co usunięciem. To jest decyzja produktowa, nie techniczna.</li>
+        </ul>
+        <div class="gate"><b>Bramka:</b> wskaźnik zdefiniowany w inicjatywie jest tym samym obiektem, co wskaźnik widoczny w Wynikach — jedno źródło, jedna nazwa, jedna wartość.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">★ Kiedy co na sto procent</p>
+    <h2>Łańcuch dostarczenia</h2>
+    <p class="lead">Consultify ma wykonać całą pracę doradczą — od poznania klienta po dokument oddany klientowi. To jest łańcuch dziewięciu ogniw i jest tak mocny, jak najsłabsze z nich. Poniżej: które moduły i które funkcje muszą być domknięte na sto procent, żeby łańcuch działał do danego miejsca.</p>
+
+    <div class="col" style="margin-bottom:26px">
+      <p class="note"><strong>Zasada tej listy.</strong> Kamień milowy nie jest „skończonym modułem". Jest <strong>dłuższym działającym łańcuchem</strong>. Moduł może być w osiemdziesięciu procentach i nie blokować nic, albo w dziewięćdziesięciu i blokować wszystko — decyduje to, czy przez niego przechodzi praca.</p>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">M1</span>
+        <div><h3>Produkt nie gubi pracy</h3>
+          <p class="why">Warunek wstępny wszystkiego. Nie ma sensu wydłużać łańcucha, którego ogniwa gubią zawartość.</p></div>
+        <div class="tagset"><span class="tag t-crit">Fundament</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Na sto procent muszą być</h4>
+        <ul>
+          <li><b>Moja praca</b> — trwałość zapisu w Zadaniu i Decyzji: komentarze, załączniki, powiązania, interesariusze. Dziś dwadzieścia miejsc gubi treść.</li>
+          <li><b>Inicjatywy</b> — trwałość zapisu w dokumencie inicjatywy: załączniki, powiązania, rejestr ryzyk. Dziś dziewięć miejsc.</li>
+          <li><b>Proweniencja</b> — wszystko, co utworzył model, ma być odróżnialne od tego, co wpisał człowiek, i możliwe do cofnięcia.</li>
+        </ul>
+        <h4>Wystarczy „działa", nie trzeba stu procent</h4>
+        <ul>
+          <li>Wygląd tych ekranów. Na tym etapie liczy się, że zapis dochodzi — szata przychodzi falą drugą planu grafik.</li>
+        </ul>
+        <div class="gate"><b>Sprawdzian:</b> doradca dodaje komentarz, załącznik i ryzyko, odświeża stronę — wszystko jest na miejscu. Dziś nie jest.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">M2</span>
+        <div><h3>Doradca prowadzi jedną sprawę od początku do końca</h3>
+          <p class="why">Pierwszy pełny łańcuch: poznaj klienta → porozmawiaj z ludźmi → wyciągnij wniosek → zrób z niego inicjatywę → rozpisz na zadania.</p></div>
+        <div class="tagset"><span class="tag t-crit">Rdzeń produktu</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Na sto procent muszą być</h4>
+        <ul>
+          <li><b>Organizacja</b> — kontekst klienta: profil, wyzwania, źródła i twierdzenia. To wejście do całego łańcucha; bez niego reszta pracuje w próżni.</li>
+          <li><b>Wywiad</b> — sesja wywiadu w trzech trybach, wniosek z sesji, przekazanie wniosku dalej. To tu powstaje nowa wiedza.</li>
+          <li><b>Inicjatywy</b> — bramka definicji przechodzi przez interfejs, karty mają edytory, most między dwoma magazynami działa. <b>Dziś nie przechodzi żadna karta w żadnej bramce</b>, a inicjatywa z Oceny nie pojawia się nawet na liście.</li>
+          <li><b>Moja praca</b> — zadanie i decyzja jako pełne artefakty z trwałym zapisem.</li>
+        </ul>
+        <h4>Wystarczy „działa"</h4>
+        <ul>
+          <li>Realizacja i Spotkania — obsługują pracę wokół, nie sam łańcuch.</li>
+        </ul>
+        <div class="gate"><b>Sprawdzian:</b> doradca zakłada organizację, prowadzi wywiad, generuje wniosek, robi z niego inicjatywę, rozpisuje ją na zadania i przechodzi bramkę definicji — <b>bez ani jednego wpisu do bazy z boku</b>.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">M3</span>
+        <div><h3>Doradca mierzy, analizuje i wycenia</h3>
+          <p class="why">Łańcuch wydłuża się o to, za co klient płaci najwięcej: diagnozę, analizę i liczbę.</p></div>
+        <div class="tagset"><span class="tag t-warn">Wymaga decyzji o bramkach</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Na sto procent muszą być</h4>
+        <ul>
+          <li><b>Ocena</b> — diagnoza dojrzałości w metodyce DRD od wypełnienia po wynik i generowanie inicjatyw. Pozostałe metodyki mogą zostać oznaczone jako wkrótce, ale <b>jedna musi działać w całości</b>.</li>
+          <li><b>Audyty</b> — warsztat kryterium przez pełny łańcuch: dowód, ustalenie, naprawa, zamknięcie, raport. Ten moduł jest najbliżej gotowości — warsztat już ma Twój akcept.</li>
+          <li><b>Narzędzia</b> — sesja narzędzia od startu po wynik. Uwaga: <b>trzydzieści jeden wariantów</b>, więc „sto procent" znaczy tu: komplet dla narzędzi, które wchodzą do oferty, a nie dla wszystkich trzydziestu jeden.</li>
+          <li><b>Wyniki</b> — wskaźniki jako jeden obiekt, wspólny dla inicjatywy i modułu Wyników. <b>Dziś to cztery niezależne rodziny bez wspólnego klucza.</b></li>
+          <li><b>Finanse</b> — wycena przedsiębiorstwa i analiza opłacalności. Dziś cały moduł jest w zamkniętej becie.</li>
+        </ul>
+        <h4>Decyzje, które to blokują</h4>
+        <ul>
+          <li><b>Którą rodzinę wskaźników uznajemy za prawdziwą.</b></li>
+          <li><b>Czy Finanse wchodzą do produktu w tej rundzie</b> — dziś osiemnaście ekranów, których klient nie widzi.</li>
+          <li><b>Które narzędzia wchodzą do oferty</b> — od tego zależy, czy „sto procent" to pięć wariantów, czy trzydzieści jeden.</li>
+        </ul>
+        <div class="gate"><b>Sprawdzian:</b> doradca przeprowadza ocenę, robi analizę narzędziem, wylicza wartość i widzi ten sam wskaźnik w inicjatywie i w Wynikach — jedną nazwę, jedną wartość.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">M4</span>
+        <div><h3>Klient dostaje dokument do ręki</h3>
+          <p class="why">Ostatnie ogniwo i jedyne, które opuszcza produkt. Bez niego cała reszta jest warsztatem bez wyniku.</p></div>
+        <div class="tagset"><span class="tag t-crit">Najwyższa waga</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Na sto procent muszą być</h4>
+        <ul>
+          <li><b>Materiały</b> — biblioteka, studio dokumentów, studio prezentacji, sejf klienta. To jedyny moduł z tej czwórki, który klient realnie dziś widzi.</li>
+          <li><b>Silnik szablonów</b> — od wyboru szablonu po <b>plik do pobrania</b>. Dokument, prezentacja, arkusz.</li>
+          <li><b>Strażnik treści</b> — przestaje kasować akapity, zaczyna je oznaczać. Dziś usuwa całe akapity, gdy zawierają liczbę nieobecną dosłownie w źródle.</li>
+        </ul>
+        <h4>Twoja własna poprzeczka</h4>
+        <ul>
+          <li>Powiedziałeś: <b>nie powstał ani jeden naprawdę dobry dokument z szablonu, a prezentacja nie powstała nigdy.</b> To jest definicja stu procent dla tego kamienia — i jest wyższa niż „eksport działa".</li>
+        </ul>
+        <div class="gate"><b>Sprawdzian:</b> doradca pobiera dokument z szablonu i <b>podpisuje go nazwiskiem bez poprawiania</b>.</div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="ph-head">
+        <span class="ph-num">M5</span>
+        <div><h3>Produkt wykonuje pracę, nie tylko ją porządkuje</h3>
+          <p class="why">To jest różnica między narzędziem doradcy a produktem AI-native. Dopiero tutaj, bo agent bez działającego łańcucha nie ma czego wykonywać.</p></div>
+        <div class="tagset"><span class="tag t-warn">Po M1–M4</span></div>
+      </div>
+      <div class="ph-body">
+        <h4>Na sto procent muszą być</h4>
+        <ul>
+          <li><b>Czat i Teresa</b> — Teresa czyta dokumenty klienta, pamięta rozmowy, zna kontekst organizacji. Z granicami: wiedza jednego klienta nie wycieka do drugiego.</li>
+          <li><b>Silnik agenta</b> — plan powstaje, wykonuje się, kończy artefaktem, zostawia ślad i da się go cofnąć.</li>
+        </ul>
+        <h4>Dlaczego dopiero teraz, a nie wcześniej</h4>
+        <ul>
+          <li>Agent, który wykonuje pracę w produkcie gubiącym zapis, <b>gubi ją na skalę</b>.</li>
+          <li>Teresa bez działającego łańcucha wie o kliencie tyle, ile ktoś wpisał ręcznie — a więc niewiele.</li>
+        </ul>
+        <div class="gate"><b>Sprawdzian:</b> doradca zleca zadanie słowami, wraca po godzinie i zastaje wykonaną pracę, którą potrafi sprawdzić i cofnąć.</div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:44px">Moduły, które nie mają własnego kamienia</h2>
+    <div class="col">
+      <p class="note"><strong>Administracja, Ustawienia i Partner obsługują produkt, nie realizują doradztwa.</strong> Muszą być <em>wystarczające</em>, nie doskonałe: administrator ma wpuścić ludzi i ustawić organizację, doradca ma ustawić swój profil i model. Ich sto procent to spójny system narzędziowy, a nie sto siedemdziesiąt sześć indywidualnych projektów.</p>
+      <p class="note"><strong>Realizacja i Spotkania</strong> towarzyszą łańcuchowi, ale go nie tworzą. Wchodzą przy kamieniu drugim jako „działa", a domykane są po czwartym.</p>
+      <p class="note"><strong>Jedna rzecz do naprawienia niezależnie od kamieni:</strong> pozycja „Subskrypcja i rozliczenia" jest widoczna w menu doradcy i wyrzuca go z ekranu. Widoczny przycisk prowadzący donikąd psuje wrażenie z produktu bardziej niż brak funkcji.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Kreatory — zmierzone</p>
+    <h2>Szesnaście kreatorów, dwa kłamią</h2>
+    <p class="lead">Wymieniłeś kreatory jako brak. Pomiar mówi co innego: <strong>jest ich szesnaście i czternaście działa.</strong> Problem jest węższy i konkretniejszy.</p>
+
+    <div class="col">
+      <p class="note"><strong>★ Kreator Wniosku istnieje i jest w pełni żywy.</strong> Trzy kroki, twarda walidacja, zapis do bazy, wsparcie modelu. To obala założenie, że go brakuje — sprawdziłem cztery warstwy, wszystkie są.</p>
+
+      <p class="note"><strong>Dwa kreatory kłamią użytkownikowi.</strong> Kreator analizy finansowej prowadzi przez <em>sześć kroków</em> — wersja źródłowa, okresy, branża, cel, wybór wskaźników, kontrola wstępna — a potem <strong>wyrzuca wszystko jedną instrukcją</strong> i tworzy pusty artefakt bez związku z tym, co użytkownik wyklikał. Kreator raportu w Realizacji kończy pracę zdarzeniem w przeglądarce: <strong>odświeżenie strony kasuje raport.</strong> Żadnego zapisu, żadnej tabeli.</p>
+
+      <p class="note"><strong>Najtańsza naprawa w całym pomiarze.</strong> Kreator inicjatyw <em>zapisuje szkic na serwerze</em> — endpointy istnieją i działają. Front nigdy go nie odzyskuje. Zamknięcie okna gubi wygenerowanych przez model kandydatów, mimo że leżą w bazie.</p>
+
+      <p class="note"><strong>Jedenaście dróg do utworzenia inicjatywy.</strong> Trzy prowadzą do jednego magazynu, osiem do drugiego. To jest ta sama dziura, którą opisuje faza druga — tylko widziana od strony użytkownika: „Utwórz inicjatywę" w Ocenie i w Inicjatywach dają obiekty, <strong>które się nawzajem nie widzą</strong>.</p>
+
+      <p class="note"><strong>I rzecz, którą muszę zgłosić osobno.</strong> Wspólne wejście „Nowy" jest napisane, ma <em>włączoną flagę z Twoim akceptem z lipca</em> — i nikt go nie renderuje. Do tego dwa komentarze w kodzie twierdzą, że karta inicjatywy jest przez nie dostępna. <strong>To nieprawda.</strong> Dziś do karty inicjatywy da się wejść wyłącznie z Wniosku; z modułu Inicjatywy jest niedostępna.</p>
+
+      <p class="note"><strong>Około pięciu i pół tysiąca linii martwych kreatorów</strong> — prezentacji, audytu, importu, narzędzia. Wszystkie kompletne, żaden renderowany.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Zależności</p>
+    <h2>Dlaczego ta kolejność, a nie inna</h2>
+    <div class="scroller">
+      <table class="plain">
+        <thead><tr><th>Faza</th><th>Czego wymaga przed sobą</th><th>Co otwiera po sobie</th></tr></thead>
+        <tbody>
+          <tr><td>1 · Produkt przestaje kłamać</td><td>niczego — startuje natychmiast</td><td>zaufanie do danych, bez którego reszta pomiarów jest niepewna</td></tr>
+          <tr><td>2 · Karta staje się obiektem</td><td>niczego — biegnie równolegle do fazy 1</td><td>etap analizy, a przez to finanse i wskaźniki</td></tr>
+          <tr><td>3 · Teresa wie o kliencie</td><td>niczego technicznie; granice obowiązkowo w tej samej fazie</td><td>wszystko, co opiera się na wiedzy o kliencie — w tym jakość dokumentów</td></tr>
+          <tr><td>4 · Agent wykonuje</td><td>fazy 1, bo agent zacznie pisać do bazy na szeroką skalę</td><td>skalowanie pracy doradcy</td></tr>
+          <tr><td>5 · Dokument wychodzi</td><td>fazy 3 — dokument bez wiedzy o kliencie będzie ogólnikiem</td><td>wynik, za który klient płaci</td></tr>
+          <tr><td>6 · Liczby są jedne</td><td>fazy 2, bo wskaźnik jest kartą inicjatywy</td><td>wiarygodność ekranów zarządczych</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <p class="rule-label">Uczciwie</p>
+    <h2>Czego w tym planie nie ma</h2>
+    <div class="col">
+      <p class="quote">Trzy najcenniejsze rzeczy, jakie można oddać: dowód, że coś, co uchodziło za działające, nie działa; dowód, że coś, co uchodziło za zepsute, jest sprawne; i uczciwe zdanie „tego nie zmierzyłem".</p>
+      <p><strong>Nie ma wyceny w dniach.</strong> Nie podam jej uczciwie, dopóki nie zobaczę, jak idzie pierwszy duży klocek — a ten właśnie biegnie. Podawanie liczby dni teraz byłoby zgadywaniem w kostiumie planu.</p>
+      <p><strong>Nie ma fazy „kreatory".</strong> Wymieniłeś je i mierzę je właśnie teraz — ile ich jest, czy kończą się zapisem, czy gubią pracę przy zamknięciu okna. Dopiszę je jako osobną fazę, gdy będę wiedział, co tam naprawdę jest.</p>
+      <p><strong>Nie ma stanu żywej bazy.</strong> Wszystkie liczby pochodzą z kodu. Nie wiem, ile inicjatyw leży w drugim magazynie ani ile fragmentów wiedzy nie ma znacznika organizacji. To dwa zapytania i chcę je wykonać — rozstrzygają, czy część tych faz jest naprawą, czy budową od zera.</p>
+      <p><strong>Nie ma modułów, których jeszcze nie zmierzyłem funkcjonalnie.</strong> Spotkania, Materiały, Realizacja i Administracja są w spisie ekranów, ale nie w tym planie — bo nie sprawdziłem jeszcze, co w nich nie działa. Nie wpiszę fazy, której nie umiem uzasadnić pomiarem.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="col">
+      <p>Wszystkie liczby z pomiaru kodu wykonanego 29 sierpnia 2026 na linii integracyjnej. Każda ma odtwarzalną komendę w materiale źródłowym.</p>
+      <p>Plan rozwoju grafik jest osobnym dokumentem — jego wejściem jest spis wszystkich ekranów, który właśnie powstaje.</p>
+    </div>
+  </footer>
+
+</div>

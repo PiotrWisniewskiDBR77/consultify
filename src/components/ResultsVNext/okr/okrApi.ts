@@ -283,3 +283,84 @@ export async function getOkrSet(setId: string): Promise<OkrSetDto | null> {
     throw err;
   }
 }
+
+// ==========================================
+// POST /api/vnext/results/okr/sets — createOkrSet
+//
+// Odbiór grafiki 2026-08-30 (Piotr, `results-vnext-okr-registry`): "W prawym,
+// głównym rogu powinien być przycisk »Nowe dodawanie OKR«" — the corner had
+// no create entry point at all, only the Programs/Cycles admin-nav pair
+// (`ResultsOkrHub.tsx`'s `adminLinksCta`). The route was already fully
+// mounted server-side (`okr.routes.ts` L916 `router.post('/sets', ...)`,
+// `CreateOkrSetSchema` in `resultsVnextOkr.validators.ts` L240) — only the
+// client had no wrapper and no UI, same "list/get done, create was simply
+// never wired to a Hub" gap `kpiApi.ts`/`roiApi.ts` each closed for their
+// own domains (RN-G5).
+//
+// `ownerUserId` IS accepted by the schema (unlike `createKpiDraft`, which
+// the server defaults to the caller) — but this quick-create form still
+// only ever sends the current user's id, deliberately: same reasoning
+// `kpiApi.ts`'s own `createKpiDraft` doc comment gives for KPI ("no
+// generally-available 'list org members' endpoint a normal member can call
+// to populate a picker for anyone else"); `OrganizationApi.getOrganizationMembers`
+// this Hub already calls for name display is scoped to resolving IDs the
+// Set rows already reference, not to offering every org member as an
+// assign-to-someone-else target from a quick-create form.
+// ==========================================
+
+export interface CreateOkrSetInput {
+  programId: string;
+  cycleId: string;
+  scopeType: OkrSetScopeType;
+  scopeId: string;
+  ownerUserId: string;
+  title: string;
+  reason?: string | null;
+  idempotencyKey: string;
+}
+
+export interface CreateOkrSetResult {
+  set: OkrSetDto;
+  created: boolean;
+}
+
+/** New idempotency key per form OPEN (not per submit) — same convention as
+ * `kpiApi.ts`'s `newKpiIdempotencyKey`/`roiApi.ts`'s `newRoiIdempotencyKey`:
+ * a retry within the same open (e.g. after a transient network error)
+ * reuses it, so a double-send can never create two Sets. */
+export function newOkrSetIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
+export async function createOkrSet(input: CreateOkrSetInput): Promise<CreateOkrSetResult> {
+  const url = `${API_URL}/vnext/results/okr/sets`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        programId: input.programId,
+        cycleId: input.cycleId,
+        scopeType: input.scopeType,
+        scopeId: input.scopeId,
+        ownerUserId: input.ownerUserId,
+        title: input.title,
+        reason: input.reason ?? null,
+        idempotencyKey: input.idempotencyKey,
+      }),
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new OkrApiError(`Network error contacting ${url}: ${msg}`, 0);
+  }
+  const body = await res.json().catch(() => ({}) as Record<string, unknown>);
+  if (!res.ok) {
+    throw new OkrApiError(
+      (body as { error?: string })?.error || `Request failed (${res.status})`,
+      res.status,
+      (body as { code?: string })?.code
+    );
+  }
+  return { set: body.set as OkrSetDto, created: Boolean(body.created) };
+}

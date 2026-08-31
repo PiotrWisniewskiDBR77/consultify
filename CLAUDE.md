@@ -16,7 +16,7 @@ to osobnym modułem głównego menu.
 1. **Standard jest KODEM, nie opisem**: ekrany listowe budujemy WYŁĄCZNIE komponentami
    `src/components/standard/` (StandardModuleBar · StandardTable · StandardPreview).
    Moduł deklaruje treść, komponent narzuca wygląd. Zakaz własnych tabel/menu/preview per ekran.
-2. **SSOT wyglądu: `docs/ui-standards/TRIADA_KANON.md`** (opis + twarde wartości + 40-punktowa
+2. **SSOT wyglądu: `docs/ui-standards/TRIADA_KANON.md`** (opis + twarde wartości + 43-punktowa
    lista czekowania + fotki referencyjne). Surowe słowa właściciela:
    `Harvard/wdrozenie-100/_STANDARD_TRIADA_NOTATKA.md`. Przy każdej pracy nad ekranem listowym
    użyj skilla `consultify-triada`.
@@ -82,7 +82,12 @@ Deploy"). Ręczny `railway up` = tylko incydentalnie; po nim obowiązkowo napraw
 ## ZŁOTE REGUŁY (dwie pułapki, które kosztowały tygodnie — nienaruszalne)
 1. **Weryfikuj REALNY runtime, nie docy/flagi.** Audyty starzeją się w ~3 dni i zawyżają. Zanim
    powiesz „działa/gotowe": `grep` realnego callera w `src/`/`server/src/` (URL/handler), sprawdź
-   czy flaga ma implementację (bywają FANTOMY — `ENABLE_TERESA_NOTE_CREATE` = 0 kodu), a stan danych
+   czy flaga ma implementację (bywają FANTOMY — trzeba to mierzyć ZA KAŻDYM RAZEM;
+   przykład użyty tu wcześniej, `ENABLE_TERESA_NOTE_CREATE`, przestał być fantomem:
+   zmierzone 2026-08-30 — ma `notebookService.createNote`, potwierdzenie w
+   `creationConfirmation.ts` i domyślnie jest WŁĄCZONA. Fantom bywa czasowy —
+   dlatego reguła brzmi „zmierz", a nie „pamiętaj, która flaga była pusta"),
+   a stan danych
    czytaj z ŻYWEJ bazy, nie z kodu. „Testy przeszły" ≠ „działa".
 2. **Baza gałęzi ZAWSZE `origin/develop`** (od 2026-08-31: rozdzielenie środowisk — praca płynie
    `develop` → auto-deploy staging → odbiór/akcept Piotra → ręczna promocja na demo z taga

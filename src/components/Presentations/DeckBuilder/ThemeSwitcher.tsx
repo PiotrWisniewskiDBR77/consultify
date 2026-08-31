@@ -36,7 +36,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
 
       {/* Current theme preview */}
       <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
-        <p className="text-[10px] text-slate-600 uppercase mb-2">Active theme</p>
+        <p className="text-[10px] text-slate-600 uppercase mb-2">Aktywny motyw</p>
         <div className="flex items-center gap-3">
           <div className="flex gap-0.5 h-8 w-24 rounded-lg overflow-hidden">
             <div className="flex-1" style={{ backgroundColor: theme.colors.primary }} />
@@ -69,7 +69,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
         {/* Brand Kit first */}
         {brandKit && (
           <div className="mb-3">
-            <p className="text-[10px] text-slate-600 uppercase mb-2">Brand Kit</p>
+            <p className="text-[10px] text-slate-600 uppercase mb-2">Identyfikacja marki</p>
             <ThemeCard
               colorSet={{
                 id: 'brand_kit',
@@ -102,7 +102,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
           </div>
         )}
 
-        <p className="text-[10px] text-slate-600 uppercase mb-2">Curated palettes</p>
+        <p className="text-[10px] text-slate-600 uppercase mb-2">Gotowe palety</p>
         <div className="grid grid-cols-3 gap-2">
           {CURATED_COLOR_SETS.map((set) => (
             <ThemeCard

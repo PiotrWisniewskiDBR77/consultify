@@ -13,14 +13,23 @@
  *
  * Wyłącznie tokeny `c-*`. CTA/stany aktywne = neutralne; fokus = c-focus.
  * Zero crimson (pułapka `primary-*`).
+ *
+ * ★ Rozwożenie prawego pasa (2026-08-30, docs/program/grafika/ANALIZA_PRAWY_PANEL.md
+ * §3/§4): za flagą `ff_artifact_right_rail` Teresa przestaje być tą kartą
+ * akordeonu — staje się IKONĄ SZYNY w `IdeaRightPanel`/`ArtifactRightRail`.
+ * `IDEA_TERESA_COMMANDS` i `seedIdeaTeresaPrompt` są WYEKSPORTOWANE właśnie
+ * po to, żeby wołający (`IdeaMapWorkspace`) mógł zbudować te same 4 komendy
+ * dla trybu Teresy szyny — JEDNO źródło treści komend, nie druga kopia
+ * etykiet/promptów. Ten komponent (i jego OFF-owa ścieżka akordeonu) zostaje
+ * bez zmian zachowania.
  */
-import { CheckCircle2, MessageSquarePlus, RefreshCw, Sparkles, Wand2 } from 'lucide-react';
+import { CheckCircle2, MessageSquarePlus, RefreshCw, Sparkles, Wand2, type LucideIcon } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 
 /** Kanoniczny kanał zasiewu promptu do dokowanej Teresy (parytet z InsightViewer/AIConsultantPanel). */
-function seedTeresaPrompt(prompt: string): void {
+export function seedIdeaTeresaPrompt(prompt: string): void {
   try {
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(
@@ -34,21 +43,21 @@ function seedTeresaPrompt(prompt: string): void {
   }
 }
 
-interface TeresaCommand {
+export interface IdeaTeresaCommand {
   id: string;
   label: string;
   labelEn: string;
-  icon: React.ReactNode;
+  icon: LucideIcon;
   promptPl: string;
   promptEn: string;
 }
 
-const COMMANDS: TeresaCommand[] = [
+export const IDEA_TERESA_COMMANDS: IdeaTeresaCommand[] = [
   {
     id: 'fill-empty',
     label: 'Uzupełnij puste',
     labelEn: 'Fill empty',
-    icon: <Wand2 size={13} />,
+    icon: Wand2,
     promptPl:
       'Uzupełnij puste i słabe miejsca tej mapy/idei dobrze uzasadnioną propozycją, opartą na istniejącym kontekście. Wskaż, co dokładasz.',
     promptEn:
@@ -58,7 +67,7 @@ const COMMANDS: TeresaCommand[] = [
     id: 'synthesize',
     label: 'Synteza',
     labelEn: 'Synthesize',
-    icon: <Sparkles size={13} />,
+    icon: Sparkles,
     promptPl:
       'Zsyntetyzuj tę ideę: wydobądź kluczowe wątki, napięcia i myśl przewodnią spinającą całość.',
     promptEn:
@@ -68,7 +77,7 @@ const COMMANDS: TeresaCommand[] = [
     id: 'quality-check',
     label: 'Kontrola jakości',
     labelEn: 'Quality check',
-    icon: <CheckCircle2 size={13} />,
+    icon: CheckCircle2,
     promptPl:
       'Zrób kontrolę jakości tej idei: czego brakuje, co jest słabe, sprzeczne lub niegotowe? Podaj listę priorytetową.',
     promptEn:
@@ -78,7 +87,7 @@ const COMMANDS: TeresaCommand[] = [
     id: 'continue',
     label: 'Kontynuuj',
     labelEn: 'Continue',
-    icon: <RefreshCw size={13} />,
+    icon: RefreshCw,
     promptPl:
       'Kontynuujmy pracę nad tą ideą od miejsca, w którym skończyliśmy — jaki jest najbardziej wartościowy następny krok i pomóż mi go wykonać.',
     promptEn:
@@ -100,15 +109,15 @@ export const IdeaTeresaSection: React.FC<IdeaTeresaSectionProps> = ({
   isPolish = false,
 }) => {
   const runCommand = useCallback(
-    (cmd: TeresaCommand) => {
+    (cmd: IdeaTeresaCommand) => {
       // Otwórz JEDNĄ dokowaną Teresę, potem zasiej prompt komendy.
       onDiscuss?.();
-      seedTeresaPrompt(isPolish ? cmd.promptPl : cmd.promptEn);
+      seedIdeaTeresaPrompt(isPolish ? cmd.promptPl : cmd.promptEn);
     },
     [onDiscuss, isPolish]
   );
 
-  const commands = useMemo(() => COMMANDS, []);
+  const commands = useMemo(() => IDEA_TERESA_COMMANDS, []);
 
   return (
     <div className="flex flex-col gap-3">
@@ -135,7 +144,7 @@ export const IdeaTeresaSection: React.FC<IdeaTeresaSectionProps> = ({
               onClick={() => runCommand(cmd)}
               className="inline-flex items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 py-1 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-inset"
             >
-              <span className="text-c-text-muted">{cmd.icon}</span>
+              <cmd.icon size={13} className="text-c-text-muted" aria-hidden="true" />
               {isPolish ? cmd.label : cmd.labelEn}
             </button>
           ))}

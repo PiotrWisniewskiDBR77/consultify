@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
   Check,
@@ -30,6 +31,7 @@ import {
   type CanvasContextMenuItemDescriptor,
 } from '@/components/shared/CanvasContextMenu';
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
+import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
 import type { TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell/ChipDescriptor';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -1832,6 +1834,28 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
       className="relative h-full min-h-0 overflow-auto bg-c-canvas p-3"
       data-testid="spreadsheet-canvas"
     >
+      {/*
+        UCZCIWOŚĆ ZAPISU (2026-08-30). Do tej pory nieudany zapis komórki
+        zmieniał wyłącznie 11-pikselowy napisek „Błąd zapisu" w pasku formuły,
+        a błąd polecenia strukturalnego lądował w LEWEJ szynie, w zakładce
+        „Arkusze" — czyli znikał, gdy szyna pokazywała cokolwiek innego albo
+        była zwinięta. Tymczasem siatka pokazuje optymistycznie NOWĄ wartość,
+        więc człowiek widzi liczbę, której na serwerze nie ma. To jest gorsze
+        niż brak zapisu: to zapis pozorny.
+      */}
+      {saveState === 'error' || sheetCommandError ? (
+        <div
+          role="alert"
+          data-testid="spreadsheet-save-error"
+          className="mb-3 flex items-start gap-2 rounded-lg border border-c-danger/40 bg-c-danger/10 px-3 py-2 text-sm text-c-text"
+        >
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-c-danger" aria-hidden="true" />
+          <span>
+            {sheetCommandError ??
+              'Nie udało się zapisać zmiany na serwerze. Wartość widoczna w siatce NIE jest zapisana — odśwież arkusz i wpisz ją ponownie.'}
+          </span>
+        </div>
+      ) : null}
       {searchMode ? (
         <section
           role="search"
@@ -1984,6 +2008,124 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     </div>
   );
 
+  /**
+   * PRAWY PANEL ARKUSZA (SPEC-A §10.2/§11.2 — accordion `ArtifactRightPanel`).
+   *
+   * Powód: warsztat czyści górę ekranu z wszystkiego poza tytułem, paskiem
+   * narzędzi i paskiem formuły (dokładnie o to prosił właściciel: „Poniżej
+   * powinniśmy mieć już tylko nazwę kolumn i samą tabelę"). Rzeczy, które
+   * stamtąd znikły — nazwa pliku, format, liczba arkuszy, zdanie opisowe —
+   * to metadane, nie narzędzia, więc mają mieszkać tutaj. Tryb warsztatu
+   * wygaszał do dziś KAŻDĄ prawą powierzchnię, więc nie było ich gdzie
+   * położyć; powłoka dostała na to osobny, addytywny slot.
+   */
+  const detailRow = (label: string, value: React.ReactNode) => (
+    <div className="flex items-baseline justify-between gap-3 py-1">
+      <dt className="shrink-0 text-xs text-c-text-muted">{label}</dt>
+      <dd className="min-w-0 truncate text-right text-xs font-medium text-c-text">{value}</dd>
+    </div>
+  );
+
+  const panelAction = (
+    key: string,
+    label: string,
+    Icon: typeof Download,
+    onClick: () => void
+  ) => (
+    <button
+      key={key}
+      type="button"
+      onClick={onClick}
+      className="inline-flex min-h-10 w-full items-center gap-2 rounded-lg border border-c-border px-3 text-left text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+    >
+      <Icon size={15} aria-hidden="true" />
+      <span className="truncate">{label}</span>
+    </button>
+  );
+
+  const rightPanel = (
+    <ArtifactRightPanel
+      width="100%"
+      ariaLabel="Szczegóły skoroszytu"
+      sections={[
+        {
+          id: 'actions',
+          label: 'Akcje',
+          icon: ShieldCheck,
+          defaultOpen: true,
+          children: (
+            /*
+             * CELOWO BEZ eksportu i udostępniania: te dwa siedzą jako pigułki
+             * w pasku tytułu (Menu 1) i podwójne wejście do tej samej akcji
+             * to nie „więcej funkcji", tylko szum. Zostają wyłącznie akcje,
+             * które w Menu 1 są schowane pod wielokropkiem albo w stopce.
+             */
+            <div className="space-y-2">
+              {panelAction('copy', 'Kopiuj link wewnętrzny', Copy, onCopyLink)}
+              {panelAction('teresa', 'Zapytaj Teresę', Sparkles, () => openTeresa())}
+            </div>
+          ),
+        },
+        {
+          id: 'properties',
+          label: 'Właściwości',
+          icon: Files,
+          defaultOpen: true,
+          children: (
+            <dl className="divide-y divide-c-border-subtle">
+              {detailRow('Nazwa pliku', preview.fileName ?? `${workbookTitle}.xlsx`)}
+              {detailRow('Format', 'XLSX')}
+              {detailRow('Arkusze', sheetNames.length)}
+              {detailRow(
+                'Klasyfikacja',
+                classification === 'public'
+                  ? 'Publiczny'
+                  : classification === 'confidential'
+                    ? 'Poufny'
+                    : 'Wewnętrzny'
+              )}
+              {detailRow(
+                'Status',
+                lifecycleStatus === 'in_review'
+                  ? 'Do przeglądu'
+                  : lifecycleStatus === 'approved'
+                    ? 'Zatwierdzony'
+                    : lifecycleStatus === 'final'
+                      ? 'Finalny'
+                      : 'Szkic'
+              )}
+              {detailRow('Wersja', version)}
+              {preview.summary ? (
+                <p className="pt-2 text-xs leading-relaxed text-c-text-secondary">
+                  {preview.summary}
+                </p>
+              ) : null}
+            </dl>
+          ),
+        },
+        {
+          id: 'evidence',
+          label: 'Źródła i założenia',
+          icon: SearchCheck,
+          defaultOpen: false,
+          badge: sourceItems.length,
+          isEmpty: sourceItems.length === 0,
+          emptyLabel: 'Ten skoroszyt nie ma jeszcze podpiętych źródeł.',
+          children: (
+            <ul className="space-y-1">
+              {sourceItems.map((entry) => (
+                <li key={entry.id} className="truncate text-xs text-c-text-secondary">
+                  <span className="text-c-text-muted">{entry.group}: </span>
+                  {sourceLabel(entry.item)}
+                </li>
+              ))}
+            </ul>
+          ),
+        },
+      ]}
+    />
+  );
+
   return (
     <>
       <ExecutiveModuleShell
@@ -2017,12 +2159,22 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   : 'Historia wersji'
         }
         leftRailContent={leftRail}
+        // Stary pas ikon jest w trybie warsztatu wygaszany przez samą powłokę;
+        // prawa powierzchnia arkusza to `artifactRightPanelSlot` niżej.
         rightRailTools={[]}
+        artifactRightPanelSlot={rightPanel}
         secondBar={
           <ArtifactMenu3
             registry={registry}
             context={commandContext}
             resolveLabel={(label) => label}
+            // 9 miejsc = Cofnij · Ponów · Waluta · Procent · Pogrubienie ·
+            // Wstaw/Usuń wiersz · Wstaw/Usuń kolumnę. Domyślne 7 wypychało
+            // wstawianie kolumn pod „Więcej" — to była pierwsza przyczyna
+            // „nie umiem dodać kolumny". Pasek jest pełnej szerokości ekranu
+            // (siedzi nad kolumnami powłoki), więc dziewięć pigułek mieści się
+            // bez ucinania.
+            maxVisible={9}
             ariaLabel="Narzędzia arkusza"
           />
         }

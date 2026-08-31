@@ -187,6 +187,11 @@
     "finalizing": "Finalizing..."
   },
   "aiChat": {
+    "teresaAction": {
+      "unconfirmed": "「{{action}}」アクションが実際に実行されたという確認がありません。完了したと判断する前に、手動で確認してください。",
+      "error": "「{{action}}」アクションはエラーにより失敗しました。完了したことは確認されていません。",
+      "refusedNoReason": "「{{action}}」アクションは実行していません。レジストリが理由を示さず拒否しました。"
+    },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
     "openSidebar": "Open sidebar",

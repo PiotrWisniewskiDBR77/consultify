@@ -348,6 +348,45 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     if (scaling === 'millions') return isPl ? 'Miliony' : 'Millions';
     return scaling;
   };
+  const statusLabel = (status: unknown) => {
+    const normalized = String(status || 'pending').toLowerCase();
+    return t(`finance.statusValue.${normalized}`, 'Oczekuje');
+  };
+  // NAPRAWIONE (sweep 148-finanse-parametry, rodzina „surowa wartość"):
+  // panel „Quality runs" renderował `run.stage`/`run.result_status` wprost
+  // (surowe kody backendu — `server/migrations/20260803_fin005_statement_ready_contract.sql`
+  // CHECK: stage IN upload/detect/extract/map/validate/repair/readiness/
+  // confirm/benchmark; result_status IN pass/warning/fail/info). Lokalne mapy
+  // — brak istniejącego słownika dla tych dwóch pól w tym pliku ani w
+  // `public/locales/*/translation.json` (`finance.statusValue.*` obejmuje
+  // inny zestaw wartości — pending/ready/recoverable/rejected/…).
+  const QUALITY_RUN_STAGE_LABEL_PL: Record<string, string> = {
+    upload: 'Wgrywanie',
+    detect: 'Rozpoznanie',
+    extract: 'Ekstrakcja danych',
+    map: 'Mapowanie',
+    validate: 'Walidacja',
+    repair: 'Naprawa',
+    readiness: 'Gotowość',
+    confirm: 'Potwierdzenie',
+    benchmark: 'Benchmark',
+  };
+  const QUALITY_RUN_RESULT_LABEL_PL: Record<string, string> = {
+    pass: 'OK',
+    warning: 'Ostrzeżenie',
+    fail: 'Błąd',
+    info: 'Informacja',
+  };
+  const qualityRunStageLabel = (stage: unknown) => {
+    const key = String(stage || '').toLowerCase();
+    return isPl ? (QUALITY_RUN_STAGE_LABEL_PL[key] ?? String(stage ?? '—')) : String(stage ?? '—');
+  };
+  const qualityRunResultLabel = (resultStatus: unknown) => {
+    const key = String(resultStatus || '').toLowerCase();
+    return isPl
+      ? (QUALITY_RUN_RESULT_LABEL_PL[key] ?? String(resultStatus ?? '—'))
+      : String(resultStatus ?? '—');
+  };
   const [detail, setDetail] = useState<StatementDetail | null>(null);
   const [ratios, setRatios] = useState<RatioResult | null>(null);
   const [canonicalLines, setCanonicalLines] = useState<FinancialStatementCanonicalLineOption[]>([]);
@@ -743,9 +782,9 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
               [t('finance.statements.scaling', 'Scaling'), scalingLabel(detail.scaling)],
-              [t('finance.statements.status', 'Status'), detail.status],
-              [t('finance.statements.readiness', 'Readiness'), detail.readinessStatus || 'pending'],
-              [t('finance.statements.validation', 'Validation'), detail.validation_status],
+              [t('finance.statements.status', 'Status'), statusLabel(detail.status)],
+              [t('finance.statements.readiness', 'Readiness'), statusLabel(detail.readinessStatus)],
+              [t('finance.statements.validation', 'Validation'), statusLabel(detail.validation_status)],
               [t('finance.statements.sourceFile', 'Source file'), detail.source_file_name || '—'],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl bg-slate-50 dark:bg-navy-800/70 p-3">
@@ -899,7 +938,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                           </div>
                           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                             {t('finance.statements.readiness', 'Readiness')}:{' '}
-                            {statement.readiness_status || 'pending'} •{' '}
+                            {statusLabel(statement.readiness_status)} •{' '}
                             {t('finance.statements.mappedLines', 'Mapped lines')}:{' '}
                             {statement.mapped_line_count || 0} •{' '}
                             {t('finance.statements.unmappedLines', 'Unmapped lines')}:{' '}
@@ -1135,7 +1174,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                     className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-navy-800/70 dark:text-slate-300"
                   >
                     <div className="font-medium text-slate-900 dark:text-white">
-                      {run.stage} • {run.result_status}
+                      {qualityRunStageLabel(run.stage)} • {qualityRunResultLabel(run.result_status)}
                     </div>
                     <div className="mt-1">{run.summary || run.strategy || '—'}</div>
                   </div>
@@ -1162,10 +1201,11 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                     className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-navy-800/70 dark:text-slate-300"
                   >
                     <div className="font-medium text-slate-900 dark:text-white">
-                      {run.current_stage} • {run.run_status}
+                      {t('finance.statements.importStage', 'Przetwarzanie dokumentu')} •{' '}
+                      {statusLabel(run.run_status)}
                     </div>
                     <div className="mt-1">
-                      {run.document_class || 'unknown'} • {run.extraction_strategy || '—'}
+                      {t('finance.statements.documentRecognized', 'Rozpoznano rodzaj dokumentu')}
                     </div>
                   </div>
                 ))}

@@ -40,9 +40,9 @@ const doc: ReportDocument = {
           kind: 'metrics',
           items: [
             { label: 'Budżet wykorzystany', value: '62%', hint: 'z 430k EUR', tone: 'default' },
-            { label: 'Kamienie milowe', value: '5/6', hint: 'on-time', tone: 'good' },
+            { label: 'Kamienie milowe', value: '5/6', hint: 'na czas', tone: 'good' },
             { label: 'Ryzyka wysokie', value: '1', hint: 'systemy/integracje', tone: 'warn' },
-            { label: 'Confidence', value: '78%', tone: 'good' },
+            { label: 'Poziom pewności', value: '78%', tone: 'good' },
           ],
         },
         {

@@ -261,8 +261,8 @@ export default function DocumentStudioStreamingHonestyN3Screen(): React.ReactEle
     <QueryClientProvider client={queryClient}>
       <AppProviders>
         <FeatureFlagsProvider showDevTools={false}>
-          <div className="min-h-screen w-full bg-c-bg">
-            <div className="border-b border-c-border px-6 py-3">
+          <div className="h-screen w-full bg-c-bg flex flex-col">
+            <div className="border-b border-c-border px-6 py-3 shrink-0" data-dev-render-chrome="true">
               <div className="text-sm font-semibold text-c-text">
                 Document Studio — N3 doktryna streaming (4 naprawy)
               </div>
@@ -284,7 +284,7 @@ export default function DocumentStudioStreamingHonestyN3Screen(): React.ReactEle
                 )}
               </div>
             </div>
-            <div className="h-[calc(100vh-72px)]">
+            <div className="flex-1 min-h-0">
               <DocumentStudioView />
             </div>
           </div>

@@ -4,9 +4,11 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
+import { EntityStatusChip } from '../ui/primitives/chips';
 
 export const AdminAuditLogPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -160,7 +162,17 @@ export const AdminAuditLogPanel: React.FC = () => {
         { value: 'OPEN', label: t('admin.security.auditLog.status.open', 'Open') },
         { value: 'PENDING', label: t('admin.security.auditLog.status.pending', 'Pending') },
       ],
-      render: (row) => <span className="text-slate-600 dark:text-slate-300">{row.logStatus}</span>,
+      // Wcześniej surowy `row.logStatus` ("OPEN"/"RESOLVED"/"PENDING") bez
+      // tłumaczenia, mimo że etykiety PL już istniały (filtry obok) — po prostu
+      // nie były użyte w renderze wiersza.
+      render: (row) => (
+        <EntityStatusChip
+          status={String(row.logStatus || '').toLowerCase()}
+          label={t(`admin.security.auditLog.status.${String(row.logStatus || '').toLowerCase()}`, {
+            defaultValue: row.logStatus,
+          })}
+        />
+      ),
     },
     {
       id: 'createdAt',
@@ -347,7 +359,7 @@ export const AdminAuditLogPanel: React.FC = () => {
                 actor: log.admin_id,
                 risk: log.risk_level ? `${log.risk_level} (${log.risk_score})` : '-',
                 logStatus: log.status || '-',
-                createdAt: log.created_at ? new Date(log.created_at).toLocaleString() : '-',
+                createdAt: log.created_at ? formatListDateTime(log.created_at) : '-',
               }))}
               hideRowActions
               activeFilters={auditFilters}

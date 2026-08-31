@@ -1,4 +1,126 @@
 {
+  "contextBuilder": {
+    "dynamicList": {
+      "actions": "Actions",
+      "selectPlaceholder": "Select...",
+      "addItem": "Add Item",
+      "empty": "No items yet. Add one!"
+    },
+    "shared": {
+      "refining": "Refining..."
+    }
+  },
+  "transformationScenarios": {
+    "banner": {
+      "title": "Recommended transformation scenario",
+      "subtitle": "Based on {count} declared challenges, the recommended direction is {name}."
+    },
+    "recommended": "Recommended",
+    "cancel": "Cancel",
+    "selected": "Selected",
+    "select": "Select scenario",
+    "metricLabels": {
+      "tempo": "Tempo",
+      "ambition": "Ambition",
+      "risk": "Risk"
+    },
+    "deepDive": {
+      "title": "Scenario details",
+      "subtitle": "Business implications of {name}",
+      "definition": "What this scenario means",
+      "aiReasoning": "Why this scenario fits",
+      "aiReasoningRisk": "Addresses key hidden risks related to **process fragmentation** and **compliance** found in your profile.",
+      "aiReasoningStrength": "Leverages your organizational strength in **engineering culture** to drive the change via the core team.",
+      "tradeoffs": "Trade-offs",
+      "gains": "Gains",
+      "sacrifices": "Sacrifices",
+      "impact": "Organizational impact"
+    },
+    "scenarios": {
+      "digital-foundation": {
+        "name": "Digital Foundation",
+        "narrative": "Foundations first, speed second.",
+        "description": "Build core digital capabilities and infrastructure",
+        "gains": [
+          "A stable data and process baseline for later initiatives",
+          "Lower technical risk on subsequent rollouts",
+          "Faster adoption of new tools in later phases"
+        ],
+        "sacrifices": [
+          "Slower initial business results",
+          "Requires investment discipline before results appear"
+        ]
+      },
+      "customer-experience": {
+        "name": "Customer Experience Revolution",
+        "narrative": "The customer at the center of every decision.",
+        "description": "Transform customer touchpoints and engagement",
+        "gains": [
+          "Higher customer satisfaction and loyalty",
+          "Faster response to market needs",
+          "New sales and service channels"
+        ],
+        "sacrifices": [
+          "Requires a culture shift, not just new tools",
+          "Higher upfront cost (research, prototypes, customer testing)"
+        ]
+      },
+      "operational-excellence": {
+        "name": "Operational Excellence",
+        "narrative": "The same work, less waste.",
+        "description": "Optimize processes and increase efficiency",
+        "gains": [
+          "Measurable reduction in operating costs",
+          "Shorter cycle time and fewer bottlenecks",
+          "Better quality through standardized processes"
+        ],
+        "sacrifices": [
+          "Long rollout horizon (12-24 months)",
+          "Resistance to standardization in operational teams"
+        ]
+      },
+      "ai-powered": {
+        "name": "AI-Powered Transformation",
+        "narrative": "AI as a lever, not an add-on.",
+        "description": "Leverage AI and automation across the organization",
+        "gains": [
+          "Automation of repetitive work at scale",
+          "Faster, more accurate data-driven decisions",
+          "Competitive edge in data-intensive areas"
+        ],
+        "sacrifices": [
+          "High demands on data quality and governance",
+          "The longest and most complex rollout horizon"
+        ]
+      },
+      "business-model-innovation": {
+        "name": "Business Model Innovation",
+        "narrative": "New value, not just new tools.",
+        "description": "Reinvent revenue streams and value proposition",
+        "gains": [
+          "New revenue streams independent of the current market",
+          "Greater resilience against industry disruption"
+        ],
+        "sacrifices": [
+          "The highest strategic risk of all scenarios",
+          "Requires board buy-in for experiments without a guaranteed payoff"
+        ]
+      },
+      "data-driven": {
+        "name": "Data-Driven Organization",
+        "narrative": "Decisions on data, not on gut feeling.",
+        "description": "Build analytics capabilities and data culture",
+        "gains": [
+          "Decisions based on data instead of intuition",
+          "One source of truth instead of scattered spreadsheets"
+        ],
+        "sacrifices": [
+          "Requires consolidating data spread across silos",
+          "Changing decision-making habits takes time"
+        ]
+      }
+    }
+  },
   "chatSignals": {
     "untitled": "Untitled signal",
     "severity": {
@@ -1204,6 +1326,7 @@
       "title": "Partner Portal",
       "subtitle": "DBR77 Consultify",
       "backToApp": "Back to app",
+      "new": "New",
       "partnerHome": "Home",
       "dashboard": "Dashboard",
       "metrics": "Metrics",
@@ -1270,6 +1393,13 @@
       "userCount": "{{count}} users"
     },
     "dashboard": {
+      "startProject": "Start Project",
+      "viewResources": "View Resources",
+      "downloadMaterials": "Download Materials",
+      "certification": {
+        "registered": "Registered",
+        "certified": "Certified"
+      },
       "welcome": "Welcome back",
       "subtitle": "Here's an overview of your partner activity",
       "activeClients": "Active Clients",
@@ -1329,7 +1459,10 @@
       "noCourses": "No courses available",
       "certificatesEmpty": "No certificates earned yet",
       "examTitle": "Certification exam",
-      "deadline": "Deadline"
+      "deadline": "Deadline",
+      "issued": "Issued",
+      "validUntil": "Valid until",
+      "certificateUnavailable": "Certificate unavailable"
     },
     "clients": {
       "organizations": "Organizations",
@@ -1503,6 +1636,9 @@
       "minimumNotReached": "Minimum payout amount is {{amount}}",
       "bankInfoRequired": "Up-to-date bank and tax information is required to receive commission payments.",
       "bankInfoRuntimeNotice": "Use the governed payout settings surface to keep payout details up to date.",
+      "policyUnavailableTitle": "Partner settlements are unavailable",
+      "payoutOperationsUnavailable": "Commission accrual and payout operations are currently unavailable.",
+      "historicalReadOnlyUnavailable": "No settlement history is available for this partner.",
       "recentTransactions": "Recent Commission Statements",
       "noDataToExport": "No transactions to export",
       "exported": "Exported {{n}} transactions",
@@ -1557,6 +1693,40 @@
     },
     "referrals": {
       "deleteFailed": "Failed to delete deck"
+    },
+    "canonicalRuntime": {
+      "title": "Current partner programme status",
+      "subtitle": "Current programme, certification, referral and financial information.",
+      "readOnly": "Information overview",
+      "partnerStatus": "Partner status",
+      "certification": "Certification",
+      "attribution": "Referrals",
+      "referralHistory": "Referral history",
+      "payoutEligibility": "Amount available for payout",
+      "payoutEligibilityDetail": "The displayed balance is informational. Payout availability depends on approved programme rules.",
+      "latestReferralRecorded": "Latest referral recorded",
+      "noReferralsRecorded": "No referrals recorded yet",
+      "unknown": "Unknown",
+      "statusUnverified": "Status could not be verified",
+      "awaitingReview": "Awaiting review: {{count}}",
+      "noPendingReview": "No referrals awaiting review",
+      "activeAttributions": "Active referrals: {{count}}",
+      "policyNotice": "This history contains referral information only. Commission accrual, payout requests and automated payouts are currently unavailable.",
+      "state": {
+        "ready": "Ready",
+        "empty": "No data",
+        "degraded": "Limited operation",
+        "unavailable": "Unavailable",
+        "policyGated": "Subject to programme rules"
+      },
+      "lifecycle": {
+        "active": "Active",
+        "certified": "Certified",
+        "earn": "Earnings",
+        "onboarding": "Onboarding",
+        "pending": "Pending",
+        "suspended": "Suspended"
+      }
     },
     "common": {
       "comingSoon": "Coming soon"
@@ -1879,6 +2049,10 @@
       "risk": {
         "high": "High risk",
         "critical": "Critical risk"
+      },
+      "riskBadge": {
+        "high": "High",
+        "critical": "Critical"
       },
       "session": {
         "title": "Recent operations in this session",
@@ -2888,6 +3062,7 @@
         "updatedObject": "Updated object properties"
       },
       "toast": {
+        "pasted": "Pasted",
         "selectFirst": "Select elements first",
         "libraryEmpty": "Library is empty",
         "noSnapshot": "No snapshot to restore",
@@ -3135,7 +3310,9 @@
       "calendar": "Calendar",
       "tasks": "Tasks",
       "decisions": "Decisions",
+      "projects": "Projects",
       "manager": "Manager",
+      "agent": "Run agent",
       "myWork": "My Work",
       "idea": "Idea",
       "toastSuccess": "Downloaded spreadsheet (.xlsx)",
@@ -3148,6 +3325,7 @@
       "label4": "Calendar",
       "label5": "Tasks",
       "label6": "Decisions",
+      "labelProjects": "Projects",
       "label7": "All",
       "label8": "Overdue",
       "label9": "Today",
@@ -3274,6 +3452,7 @@
       "unifiedCreateNew": "+ New",
       "vault": "Client Vault"
     },
+    "openDocuments": "Open documents",
     "inboxContent": {
       "justNow": "Just now",
       "dToLocaleDateString": "en-US",
@@ -3701,6 +3880,7 @@
       }
     },
     "decisionsPanel": {
+      "loadErrorHint": "Check your connection and try again.",
       "critical": "Critical",
       "high": "High",
       "low": "Low",
@@ -4010,6 +4190,8 @@
       "priorityLow": "Low"
     },
     "tasksList": {
+      "possibleDuplicate": "Possible duplicate ({{count}})",
+      "possibleDuplicateHint": "Another task with the same title and project exists — check it is not a duplicate.",
       "you": "You",
       "ariaLabel": "Select task",
       "label": "Open preview",
@@ -6718,6 +6900,7 @@
       "groupAudit": "Audit",
       "derivedFromPerspectives": "Derived from {{count}} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.",
       "actionsLiveInHeaderAndToolbar": "Actions for this insight live in the header and toolbar.",
+      "actionsZeroDescribesViewNote": "Actions are unavailable in Preview. The 0 describes this view, not the insight — it is a limit of the preview, not a statement that there are no actions. Switch to Edit to see them.",
       "panelActionsHint": "Pick a state to move this insight forward in its lifecycle.",
       "statusOptionLabel": {
         "draft": "Draft",
@@ -7280,7 +7463,8 @@
       "sessionUnit_one": "session",
       "sessionUnit_other": "sessions",
       "usedNTimes": "used {{count}}×",
-      "close": "Close"
+      "close": "Close",
+      "requiredMarker": "required"
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transcript approved.",
@@ -7821,7 +8005,25 @@
       "resumeLatestTooltip": "Opens the editor for your most recently updated assessment, back where you left off.",
       "aiTriageTooltip": "Opens AI chat with a ready-made prompt: what in this list needs attention first.",
       "chatTooltip": "Opens a blank AI chat for this hub.",
-      "connectionError": "Connection error"
+      "connectionError": "Connection error",
+      "warnings": {
+        "methodCoreUnavailable": "DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.",
+        "rateLimitedCached": "Assessment data is temporarily rate limited. Showing the last available list while staging recovers.",
+        "rateLimitedEmpty": "Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.",
+        "legacyUnavailable": "Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown."
+      },
+      "tabs": {
+        "assessment": "Assessment",
+        "library": "Library",
+        "processes": "Processes",
+        "insights": "Insights",
+        "reports": "Reports",
+        "initiatives": "Initiatives"
+      },
+      "allStatuses": "All statuses",
+      "statusValue": "Status {{status}}",
+      "focusedDocuments": "Focused documents",
+      "listWorkspace": "List workspace"
     },
     "newModal": {
       "comingSoonBadge": "Coming soon",
@@ -8070,7 +8272,9 @@
       "assessmentLabel": "Assessment",
       "descriptionLabel": "Description",
       "whatYouGet": "What you get",
-      "startAssessment": "Start assessment"
+      "startAssessment": "Start assessment",
+      "aiSummarize": "Summarize assessment",
+      "aiNextSteps": "Suggest next steps"
     },
     "form": {
       "current": "Current",
@@ -8107,7 +8311,11 @@
       "relatedHint": "Related to the current assessment",
       "goAfterPlanning": "Go to Initiatives after PLANNING",
       "goTo": "Go to Initiatives",
-      "sourceReport": "Source report"
+      "sourceReport": "Source report",
+      "emptyState": {
+        "title": "No initiatives yet",
+        "generate": "Initiative Pack"
+      }
     },
     "drd": {
       "whyThisMatters": {
@@ -8159,6 +8367,20 @@
       "apply": "Apply"
     },
     "reportsTable": {
+      "sourceType": {
+        "ASSESSMENT": "Assessment"
+      },
+      "status": {
+        "draft": "Draft",
+        "configuring": "Configuring",
+        "generating": "Generating",
+        "generated": "Generated",
+        "inReview": "In Review",
+        "approved": "Approved",
+        "sentInternal": "Sent Internal",
+        "sentExternal": "Sent External",
+        "utilized": "Utilized"
+      },
       "toastApproved": "Report approved",
       "toastApproveFailed": "Failed to approve report",
       "toastSentInternal": "Marked as sent internally",
@@ -8292,7 +8514,16 @@
       }
     },
     "reports": {
-      "source": "Source assessment"
+      "source": "Source assessment",
+      "emptyState": {
+        "title": "No reports yet",
+        "generate": "Generate Report"
+      }
+    },
+    "whatsNext": {
+      "report": "Report",
+      "initiatives": "Initiative pack",
+      "note": "Uses this assessment as the source."
     },
     "emptyState": {
       "title": "No assessments yet",
@@ -8462,6 +8693,468 @@
       "addDimension": "Add dimension",
       "removeDimension": "Remove dimension",
       "evidenceReferenceOnFile": "Reference on file"
+    },
+    "workflowStages": {
+      "stage": {
+        "draft": {
+          "label": "Draft",
+          "description": "Assessment is being filled in by the team"
+        },
+        "submitForReview": {
+          "label": "Submit for Review",
+          "description": "Request review from Project Lead"
+        },
+        "inReview": {
+          "label": "In Review",
+          "description": "Assessment is being reviewed"
+        },
+        "awaitingApproval": {
+          "label": "Awaiting Approval",
+          "description": "Assessment awaiting final approval"
+        },
+        "generateReport": {
+          "label": "Generate Report",
+          "description": "Generate analytical report from assessment data"
+        },
+        "approved": {
+          "label": "Approved",
+          "description": "Assessment approved, can generate initiatives"
+        }
+      },
+      "currentBadge": "CURRENT",
+      "gate": {
+        "requestReview": {
+          "name": "REQUEST REVIEW",
+          "action": "Submit for Review"
+        },
+        "approveReport": {
+          "name": "APPROVE REPORT",
+          "action": "Approve Report"
+        },
+        "approveAssessment": {
+          "name": "APPROVE ASSESSMENT",
+          "action": "Approve Assessment"
+        },
+        "generateReport": {
+          "name": "GENERATE REPORT",
+          "action": "Generate Report"
+        },
+        "generateInitiatives": {
+          "name": "GENERATE INITIATIVES",
+          "action": "Generate Initiatives"
+        }
+      },
+      "requirements": {
+        "blocked_one": "1 blocked",
+        "blocked_other": "{{count}} blocked",
+        "warnings_one": "1 warning",
+        "warnings_other": "{{count}} warnings",
+        "allPassed": "All passed",
+        "title": "Gate Requirements",
+        "pass": "PASS",
+        "block": "BLOCK",
+        "warn": "WARN"
+      },
+      "role": {
+        "manager": "Manager",
+        "admin": "Admin",
+        "editor": "Editor",
+        "viewer": "Viewer"
+      },
+      "assignee": {
+        "unknown": "Unknown",
+        "assign": "Assign...",
+        "notAssigned": "Not assigned",
+        "eligibleApprovers": "Eligible Approvers",
+        "noEligibleApprovers": "No eligible approvers"
+      },
+      "gateStatus": {
+        "notStarted": "Not Started",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "skipped": "Skipped"
+      },
+      "daysWaiting_one": "1d waiting",
+      "daysWaiting_other": "{{count}}d waiting",
+      "actions": {
+        "request": "Request",
+        "approve": "Approve",
+        "reject": "Reject",
+        "sendReminder": "Send Reminder",
+        "blocked": "Blocked",
+        "done": "Done"
+      },
+      "requirement": {
+        "dod": "Definition of Done (DoD)",
+        "dodReason": "Completion: {{completion}}% (≥100%), Confidence: {{confidence}} (≥3)",
+        "reportApproved": "Report Approved",
+        "reportApprovedReason": "Report must be approved first"
+      },
+      "columns": {
+        "stage": "Stage",
+        "gateDecision": "Gate Decision",
+        "requirements": "Requirements",
+        "approver": "Approver",
+        "assignee": "Assignee",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "header": {
+        "title": "Workflow Progression",
+        "current": "Current",
+        "completion": "Completion"
+      },
+      "workflowStatus": {
+        "DRAFT": "Draft",
+        "IN_REVIEW": "In Review",
+        "AWAITING_APPROVAL": "Awaiting Approval",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "ARCHIVED": "Archived"
+      },
+      "legend": {
+        "completed": "Completed",
+        "current": "Current",
+        "pending": "Pending",
+        "blocked": "Blocked",
+        "notStarted": "Not Started"
+      }
+    },
+    "managePanel": {
+      "defaultAssessmentName": "Assessment",
+      "toast": {
+        "gateActionCompleted": "Gate action completed: {{action}}",
+        "gateActionFailed": "Failed to {{action}}",
+        "assigneeUpdated": "Assignee updated",
+        "assignGateFailed": "Failed to assign gate",
+        "memberAdded": "Member added successfully",
+        "roleUpdated": "Role updated",
+        "memberRemoved": "Member removed",
+        "areaAssigned": "Area assigned",
+        "assignmentRemoved": "Assignment removed"
+      },
+      "error": {
+        "loadFailed": "Failed to load Manage data",
+        "generateInitiativesFailed": "Failed to generate initiatives",
+        "approveRequestFailed": "Failed to approve request",
+        "rejectRequestFailed": "Failed to reject request"
+      },
+      "header": {
+        "title": "Manage",
+        "subtitle": "{{name}} • permissions, workflow, and logs"
+      },
+      "tabs": {
+        "workflow": "Workflow",
+        "team": "Team",
+        "reports": "Reports",
+        "initiatives": "Initiatives",
+        "logs": "Logs"
+      },
+      "loading": "Loading…",
+      "access": {
+        "empty": "No access requests.",
+        "summary": "requests {{role}} • {{priority}} • {{status}}",
+        "working": "Working…",
+        "approve": "Approve",
+        "reject": "Reject",
+        "rejectPrompt": "Reason for rejection?"
+      },
+      "role": {
+        "editor": "Editor",
+        "manager": "Manager"
+      },
+      "priority": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      },
+      "requestStatus": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "initiativesPanel": {
+      "status": {
+        "draft": "Draft",
+        "pendingReview": "Pending Review",
+        "review": "Review",
+        "promoted": "Promoted",
+        "planning": "Planning",
+        "approved": "Approved",
+        "scheduled": "Scheduled",
+        "executing": "Executing",
+        "blocked": "Blocked",
+        "done": "Done",
+        "tracking": "Tracking",
+        "cancelled": "Cancelled",
+        "archived": "Archived"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "methodology": {
+        "impactFeasibility": "Impact x Feasibility",
+        "moscow": "MoSCoW",
+        "rice": "RICE",
+        "valueEffort": "Value x Effort",
+        "strategicFit": "Strategic Fit"
+      },
+      "generateModal": {
+        "title": "Generate Initiatives",
+        "subtitle": "AI-powered initiative generation",
+        "methodology": "Prioritization Methodology",
+        "count": "Number of Initiatives",
+        "countOption_one": "1 initiative",
+        "countOption_other": "{{count}} initiatives",
+        "includeChat": "Include chat context",
+        "includeChatHint": "Use conversation history for better suggestions",
+        "cancel": "Cancel",
+        "generating": "Generating...",
+        "generate": "Generate"
+      },
+      "toast": {
+        "generateFailed": "Failed to generate initiatives",
+        "createFailed": "Failed to create initiative",
+        "updateStatusFailed": "Failed to update status",
+        "updated": "Initiative updated",
+        "updateFailed": "Failed to update initiative",
+        "duplicated": "Initiative duplicated",
+        "duplicateFailed": "Failed to duplicate initiative",
+        "deleted": "Initiative deleted",
+        "deleteFailed": "Failed to delete initiative"
+      },
+      "copySuffix": "(copy)",
+      "draftSuffix": "draft",
+      "proceedAnyway": "Do you want to proceed anyway?",
+      "confirmDelete": "Delete initiative \"{{title}}\"?",
+      "filter": {
+        "allStatuses": "All statuses",
+        "selected_one": "1 selected",
+        "selected_other": "{{count}} selected",
+        "status": "Status",
+        "byStatus": "Filter by status",
+        "all": "All",
+        "clear": "Clear",
+        "clearSelection": "Clear selection",
+        "showingOf": "Showing {{shown}} of {{total}}"
+      },
+      "columns": {
+        "initiative": "Initiative",
+        "priority": "Priority",
+        "status": "Status",
+        "impactEffort": "Impact/Effort",
+        "owner": "Owner",
+        "created": "Created"
+      },
+      "menu": {
+        "openInInitiatives": "Open in Initiatives",
+        "duplicate": "Duplicate"
+      },
+      "header": {
+        "title": "Initiatives",
+        "counts": "{{initiatives}} • {{batches}}",
+        "initiativeCount_one": "1 initiative",
+        "initiativeCount_other": "{{count}} initiatives",
+        "batchCount_one": "1 batch",
+        "batchCount_other": "{{count}} batches"
+      },
+      "actions": {
+        "new": "New",
+        "quick": "Quick",
+        "wizard": "Wizard (50+)",
+        "needsApprovalTooltip": "Assessment must be approved to generate initiatives"
+      },
+      "notApproved": {
+        "title": "Assessment not approved",
+        "description": "Initiatives can only be generated from approved assessments. Current status:"
+      },
+      "workflowStatus": {
+        "DRAFT": "Draft",
+        "IN_REVIEW": "In Review",
+        "AWAITING_APPROVAL": "Awaiting Approval",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "ARCHIVED": "Archived"
+      },
+      "search": {
+        "placeholder": "Search initiatives..."
+      },
+      "empty": {
+        "noMatch": "No initiatives match your search",
+        "none": "No initiatives yet",
+        "hintApproved": "Generate initiatives from the assessment data",
+        "hintNotApproved": "Approve the assessment to generate initiatives",
+        "generate": "Generate Initiatives"
+      },
+      "batches": {
+        "title": "Generation Batches",
+        "summary_one": "{{methodology}} • 1 item",
+        "summary_other": "{{methodology}} • {{count}} items",
+        "run": "run {{id}}"
+      },
+      "legend": {
+        "planned": "Planned",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "criticalPriority": "Critical Priority"
+      },
+      "editModal": {
+        "title": "Edit initiative",
+        "save": "Save"
+      },
+      "runState": {
+        "completed": "completed",
+        "running": "running",
+        "draft": "draft",
+        "awaiting_evidence": "awaiting evidence",
+        "waiting_for_review": "waiting for review",
+        "interpretation_proposed": "interpretation proposed",
+        "interpretation_reviewed": "interpretation reviewed",
+        "score_proposed": "score proposed",
+        "score_reviewed": "score reviewed"
+      }
+    },
+    "reportsManagePanel": {
+      "defaultReportName": "Report",
+      "header": {
+        "title": "Reports",
+        "summary": "Total: {{total}} • In progress: {{draft}} • In review: {{inReview}} • Approved: {{approved}}",
+        "laneReadback": "Current report lane readback: run {{run}}",
+        "refresh": "Refresh list",
+        "newReport": "New Report",
+        "newReportUnavailable": "Report creation not available"
+      },
+      "provenance": {
+        "run": "run {{run}}",
+        "review": "review: {{state}}",
+        "state": "{{state}}"
+      },
+      "workbenchState": {
+        "not_started": "not started",
+        "in_progress": "in progress",
+        "completed": "completed",
+        "pending": "pending",
+        "approved": "approved",
+        "rejected": "rejected",
+        "blocked": "blocked"
+      },
+      "note": {
+        "text": "You can draft reports before approval. A report becomes visible in the global Reports tab only once it is",
+        "emphasis": "finalized"
+      },
+      "stats": {
+        "total": "Total: {{count}}",
+        "inProgress": "In progress: {{count}}",
+        "inReview": "In review: {{count}}",
+        "approved": "Approved: {{count}}"
+      },
+      "search": {
+        "placeholder": "Search reports..."
+      },
+      "columns": {
+        "report": "Report",
+        "author": "Author",
+        "status": "Status",
+        "initiatives": "Initiatives",
+        "updated": "Updated"
+      },
+      "status": {
+        "DRAFT": "Draft",
+        "CONFIGURING": "Configuring",
+        "GENERATING": "Generating",
+        "GENERATED": "Generated",
+        "IN_REVIEW": "In review",
+        "APPROVED": "Approved",
+        "SENT_INTERNAL": "Sent (internal)",
+        "SENT_EXTERNAL": "Sent (external)",
+        "UTILIZED": "Utilized",
+        "FINAL": "Final",
+        "ARCHIVED": "Archived"
+      },
+      "initiativesGenerated": "{{count}} generated",
+      "menu": {
+        "submitReview": "Submit Review",
+        "editReport": "Edit Report",
+        "review": "Review",
+        "viewReport": "View Report",
+        "exportPdf": "Export PDF",
+        "exportPptx": "Export PPTX",
+        "exportWord": "Export Word"
+      },
+      "confirmDelete": "Delete report “{{name}}”?",
+      "empty": {
+        "noMatchTitle": "No reports match your search",
+        "noneTitle": "No reports yet",
+        "approvedDesc": "Create a report to get started",
+        "notApprovedDesc": "Approve the assessment to create reports",
+        "createFirst": "Create First Report"
+      },
+      "footer": {
+        "draft": "Draft - Editable",
+        "final": "Final - Visible globally"
+      },
+      "toast": {
+        "finalized": "Report submitted for review",
+        "finalizeFailed": "Failed to submit report for review",
+        "pdfExported": "PDF exported",
+        "pdfExportFailed": "Failed to export PDF",
+        "pptxExported": "PPTX exported",
+        "pptxExportFailed": "Failed to export PPTX",
+        "wordExported": "Word exported",
+        "wordExportFailed": "Failed to export Word",
+        "excelExported": "Excel exported",
+        "excelExportFailed": "Failed to export Excel",
+        "deleted": "Report deleted",
+        "deleteFailed": "Failed to delete report"
+      }
+    },
+    "initiativesBoard": {
+      "defaultName": "Unnamed Initiative",
+      "header": {
+        "title": "Strategic Initiatives Board",
+        "subtitleOne": "Initiatives in phase: {{phases}} • total: {{total}}",
+        "subtitle": "Initiatives in phases: {{phases}} • total: {{total}}",
+        "generate": "Generate from Report"
+      },
+      "filter": {
+        "all": "All ({{count}})",
+        "tab": "{{label}} ({{count}})",
+        "allProjects": "All Projects",
+        "allLocations": "All Locations",
+        "refresh": "Refresh list"
+      },
+      "search": {
+        "placeholder": "Search initiatives..."
+      },
+      "columns": {
+        "initiative": "Initiative",
+        "status": "Status",
+        "completeness": "Completeness",
+        "owner": "Owner",
+        "priority": "Priority",
+        "budget": "Budget"
+      },
+      "openDetails": "Open initiative details",
+      "unassigned": "Unassigned",
+      "roi": "{{value}}x ROI",
+      "menu": {
+        "viewDetails": "View Details",
+        "duplicate": "Duplicate",
+        "deleteNote": "Only draft/planning initiatives can be deleted here"
+      },
+      "confirmDelete": "Are you sure you want to delete this initiative?",
+      "empty": {
+        "noMatchTitle": "No initiatives match your search",
+        "noneTitle": "No initiatives yet",
+        "description": "Generate initiatives from a finalized report"
+      }
     }
   },
   "initiatives": {
@@ -8819,6 +9512,25 @@
         "capacityState": "Capacity state",
         "scheduleConfidence": "Schedule confidence",
         "nextAction": "Next action"
+      },
+      "states": {
+        "known": "Known",
+        "unknown": "Unknown",
+        "current": "In backlog",
+        "none": "None"
+      },
+      "band": {
+        "now": "Now",
+        "next": "Next",
+        "later": "Later",
+        "unscheduled": "Unscheduled"
+      },
+      "nextActions": {
+        "proposeWindow": "Propose window",
+        "resolveCapacity": "Resolve capacity",
+        "reviewTentativeWindow": "Review tentative window",
+        "validateDependencies": "Validate dependencies",
+        "addToPlanOrExclude": "Add to plan or exclude"
       },
       "archiveNote": "Published plan history is immutable",
       "destructiveNote": "Plans are superseded, not deleted",
@@ -10802,7 +11514,8 @@
       "linkCopyError": "Copy failed",
       "archiveGoverned": "Archive is available only from the governed closure workflow.",
       "cancelled": "Initiative cancelled",
-      "cancelError": "Could not cancel initiative"
+      "cancelError": "Could not cancel initiative",
+      "statusChangedTo": "Status changed to {{status}}"
     },
     "decisions": {
       "decision": "Decision",
@@ -11187,6 +11900,12 @@
         "keyResult": "Key result",
         "objective": "Objective"
       }
+    },
+    "confirmStatusChangeTo": "Change status to {{status}}?",
+    "calendar": {
+      "toast": {
+        "rescheduleFailed": "Couldn't reschedule"
+      }
     }
   },
   "execution": {
@@ -11519,6 +12238,27 @@
         "hurtsBody": "Overdue, due-today, blocked and undated records are derived from the exact register below.",
         "whyBody": "Blocked records and declared dependencies are shown without inferring unverified causes.",
         "actionsUnavailable": "No recommendation is issued without verified impact weights and evidence.",
+        "epistemic": {
+          "fact": "Fact",
+          "recommendation": "Recommendation",
+          "unknown": "Unknown",
+          "calculated": "Calculated"
+        },
+        "severity": {
+          "red": "Critical",
+          "amber": "Warning",
+          "neutral": "Neutral",
+          "unknown": "Unknown"
+        },
+        "reasons": {
+          "noApiHistory": "No history API available",
+          "noApiBsc": "No objective-mapping API available"
+        },
+        "kinds": {
+          "task": "Task",
+          "decision": "Decision",
+          "milestone": "Milestone"
+        },
         "workEmpty": "No work records are available for the selected scope.",
         "noContributors": "No contributing records",
         "sections": {
@@ -11715,6 +12455,8 @@
     },
     "empty": {
       "noInExecution": "No initiatives in execution. Move initiatives to execution first.",
+      "noTimelineDates_one": "{{count}} of {{total}} initiative in execution has no dates and is not visible on the timeline. Add dates to show it.",
+      "noTimelineDates_other": "{{count}} of {{total}} initiatives in execution have no dates and are not visible on the timeline. Add dates to show them.",
       "noAvailable": "No initiatives available.",
       "noDeadlines": "No deadlines scheduled",
       "deadlinesWillAppear": "Tasks and decisions will appear here",
@@ -16440,6 +17182,16 @@
     "deletedBanner": "This conversation has been deleted.",
     "permissionDenied": "You do not have access to this conversation. Contact the folder owner for access.",
     "notFound": "This conversation does not exist or has been permanently removed.",
+    "partialRecovery": {
+      "discoveryFailed": "Interrupted response could not be checked.",
+      "missingPrompt": "The original request is unavailable; start a new message.",
+      "resumeFailed": "The interrupted response could not be resumed.",
+      "forbidden": "Your access to this workspace was revoked, so the interrupted response cannot be opened.",
+      "stale": "This interrupted response is out of date — the conversation already continued past it.",
+      "available": "An interrupted response is available.",
+      "resuming": "Resuming…",
+      "resume": "Resume"
+    },
     "startNewConversation": "Start a new conversation",
     "openHistory": "Open conversation history",
     "composer": {
@@ -16532,6 +17284,14 @@
     },
     "language": "Conversation language",
     "chatMenuTitle": "Menu",
+    "skipToInput": "Skip to chat input",
+    "conversationRegion": "Conversation",
+    "voiceUnavailable": "Voice is unavailable. You can continue by text or dictation.",
+    "send": "Send",
+    "startDictation": "Dictate (fills input; review and send)",
+    "workPanel": {
+      "open": "Open work panel"
+    },
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
     "dailyBrief": "Daily brief",
@@ -16636,6 +17396,8 @@
       }
     },
     "homeCards": {
+      "startInChat": "Start in chat",
+      "openCapability": "Open capability",
       "market": {
         "label": "Market analysis",
         "desc": "Market, competitors, positioning",
@@ -16733,6 +17495,7 @@
         "kickoff": "I want to run a financial analysis. What should we analyze (budget, costs, revenue, ROI, CAPEX/OPEX)? Ask me 5 questions, then propose an analysis structure."
       },
       "consulting": {
+        "acceptanceDesc": "Use classic frameworks and tools",
         "label": "Classic consulting",
         "desc": "Frameworks and toolkits",
         "kickoff": "I want to use classic consulting frameworks. What problem are we solving and in what context? Ask me 5 questions, then recommend 2–3 best frameworks (e.g., SWOT, 5 Forces, Ansoff, Value Chain)."
@@ -16971,6 +17734,10 @@
         "marketResearch": {
           "label": "Market Research",
           "desc": "Structured market analysis with data"
+        },
+        "chatSuggestionsEnabled": {
+          "label": "Suggestion chips",
+          "desc": "Show next-step suggestions under the conversation"
         }
       },
       "sources": {
@@ -17118,6 +17885,7 @@
       "actionsPrompt": "Create a task to review our Q1 roadmap progress"
     },
     "onboarding": {
+      "acceptanceHint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis",
       "hint": "Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis"
     },
     "branch": {
@@ -17596,6 +18364,12 @@
           "succeeded": "Succeeded",
           "failed": "Failed"
         },
+        "types": {
+          "send_invite_email": "Send invite email",
+          "sync_scim_group": "Sync SCIM group",
+          "export_audit_logs": "Export audit logs",
+          "recalculate_seats": "Recalculate seats"
+        },
         "empty": {
           "title": "No jobs",
           "description": "This organization has no queued administrative jobs."
@@ -17748,6 +18522,12 @@
           "count": "Count",
           "amount": "Amount"
         },
+        "types": {
+          "purchase": "Purchase",
+          "auto_add": "Auto-added",
+          "manual_adjustment": "Manual adjustment",
+          "release": "Seat released"
+        },
         "title": "Seats and licences",
         "description": "Seat pool status for the current organization.",
         "summary": {
@@ -17785,6 +18565,16 @@
           "toPlan": "New plan",
           "reason": "Reason",
           "actor": "Performed by"
+        },
+        "actions": {
+          "upgrade": "Plan upgrade",
+          "downgrade": "Plan downgrade",
+          "renewal": "Renewal",
+          "cancellation": "Cancellation",
+          "suspended": "Suspended",
+          "reactivated": "Reactivated",
+          "dunning_started": "Dunning started",
+          "dunning_exited": "Dunning exited"
         },
         "systemActor": "System",
         "title": "Plan change history",
@@ -18333,7 +19123,9 @@
         },
         "values": {
           "unknown": "Unknown",
-          "unknownLocation": "Unknown"
+          "unknownLocation": "Unknown",
+          "unknownDevice": "Unknown device",
+          "automationAgent": "Automation agent"
         },
         "actions": {
           "revoke": "Revoke session"
@@ -18409,6 +19201,11 @@
         "status": {
           "resolved": "Resolved",
           "open": "Open"
+        },
+        "eventTypes": {
+          "impossible_travel": "Impossible travel",
+          "repeated_failed_login": "Repeated failed logins",
+          "new_device_login": "New device login"
         },
         "metrics": {
           "unresolved": "Unresolved: {{count}}",
@@ -19564,6 +20361,10 @@
           "lastError": "Last error",
           "source": "Source"
         },
+        "sources": {
+          "llm_health_events": "LLM availability monitoring",
+          "llm_observatory": "LLM observatory"
+        },
         "noIncidentsInWindow": "No incidents in the current measurement window.",
         "empty": {
           "title": "No incidents",
@@ -19637,6 +20438,10 @@
           "exportKind": "Export",
           "rows": "Rows",
           "format": "Format"
+        },
+        "kinds": {
+          "audit_logs_csv": "Audit log (CSV)",
+          "compliance_summary_pdf": "Compliance summary (PDF)"
         },
         "empty": {
           "title": "No exports",
@@ -19928,6 +20733,12 @@
         "failing": "Failing",
         "unknown": "No result"
       },
+      "kind": {
+        "database": "Database",
+        "internal_service": "Internal service",
+        "queue": "Queue",
+        "external_provider": "External provider"
+      },
       "empty": {
         "title": "No declared dependencies",
         "description": "The dependency map contains no entries."
@@ -19936,6 +20747,49 @@
         "title": "Probes without a declared dependency",
         "description": "The map is a manual, verifiable declaration. Unlisted dependencies remain pending until supported by code evidence.",
         "none": "Every registered probe has a declaration."
+      }
+    },
+    "ownership": {
+      "title": "Organization Ownership",
+      "desc": "Manage the team owner and ownership transfer safeguards",
+      "errors": {
+        "loadTitle": "Ownership information unavailable",
+        "loadFallback": "Ownership information failed to load.",
+        "adminsFallback": "Admin candidates failed to load.",
+        "pendingTransferTitle": "Pending ownership transfer status unavailable",
+        "pendingTransferFallback": "Pending ownership transfer status failed to load.",
+        "genericLoad": "Failed to load ownership information",
+        "noOrganization": "No organization selected"
+      },
+      "toasts": {
+        "selectAdmin": "Please select an admin to transfer ownership to",
+        "transferSent": "Ownership transfer request sent. The new owner must accept the transfer.",
+        "transferFailed": "Failed to initiate ownership transfer",
+        "transferCancelled": "Transfer cancelled",
+        "cancelFailed": "Failed to cancel transfer",
+        "acceptedOwnership": "You are now the organization owner!",
+        "acceptFailed": "Failed to accept transfer"
+      },
+      "pendingBanner": {
+        "title": "Ownership Transfer Pending",
+        "description": "You have been selected to become the new organization owner for this team.",
+        "accept": "Accept Ownership",
+        "decline": "Decline"
+      },
+      "ownerCard": {
+        "badge": "OWNER",
+        "since": "Owner since",
+        "initialSetup": "Initial Setup",
+        "warning": "The organization owner cannot be removed from the team list. To remove this user, transfer ownership first."
+      },
+      "transferAction": "Transfer Ownership",
+      "modal": {
+        "info": "Transferring ownership moves owner-only team safeguards to the selected admin. You will retain admin privileges but will no longer be the team owner.",
+        "selectLabel": "Select New Owner",
+        "selectPlaceholder": "Select an admin...",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Why are you transferring ownership?",
+        "cancel": "Cancel"
       }
     },
     "incidentHistory": {
@@ -21029,6 +21883,7 @@
       "budgetApproved": "Budget approved",
       "computeFailed": "Recalculation failed",
       "computeDcfFailed": "DCF computation failed",
+      "approvedVersionImmutable": "This valuation version is approved and immutable. To recompute WACC, create a new version.",
       "computed": "Forecast computed",
       "modelApproved": "Model approved",
       "pptxExported": "PPTX generated",
@@ -21486,7 +22341,14 @@
       "addAnalystComment": "Click to add analyst comment...",
       "technicalDetails": "Technical details",
       "lineCode": "Line code",
-      "selectedCandidate": "Selected candidate"
+      "selectedCandidate": "Selected candidate",
+      "valueOrigin": {
+        "source": "Source",
+        "mapped": "Mapped",
+        "manual": "Manual",
+        "computed": "Computed",
+        "estimated": "Estimated"
+      }
     },
     "canonicalTable": {
       "ariaLabel": "Financial statement table",
@@ -21879,7 +22741,8 @@
     "toast": {
       "cannotDowngrade": "Cannot downgrade status. Use Cancel or Archive.",
       "gateDecisionError": "Couldn't create the gate decision",
-      "projectRequired": "A project is required to raise a decision"
+      "projectRequired": "A project is required to raise a decision",
+      "taskSaveError": "Couldn't save the task"
     },
     "ai": {
       "selectedCount": "Selected",
@@ -21953,6 +22816,412 @@
     }
   },
   "organization": {
+    "goals": {
+      "tabs": {
+        "intent": "Strategic Intent",
+        "metrics": "Success Metrics",
+        "scope": "Scope & Boundaries",
+        "nogo": "No-Go Zone",
+        "expectations": "Expectations"
+      },
+      "aiSuggestion": {
+        "title": "AI Suggested Addition",
+        "bodyPre": "I noticed you haven't included",
+        "bodyPost": ". This is a standard manufacturing KPI. Shall I add it?",
+        "addKpi": "Add KPI",
+        "dismiss": "Dismiss"
+      },
+      "intent": {
+        "primaryObjectiveLabel": "Primary Objective (North Star)",
+        "primaryObjectiveHint": "What is the single most important goal for this transformation?",
+        "primaryObjectivePlaceholder": "E.g. Become the market leader in customized manufacturing by reducing lead times by 50%...",
+        "secondaryObjectivesLabel": "Secondary Objectives",
+        "secondaryObjectivesPlaceholder": "E.g. Improve employee retention, Reduce carbon footprint...",
+        "topPrioritiesLabel": "Top Priorities (Select max 3)",
+        "priorities": {
+          "eff": "Efficiency / Cost Reduction",
+          "growth": "Growth / Sales Increase",
+          "inv": "Innovation / New Products",
+          "qual": "Quality / Compliance",
+          "speed": "Speed / Agility",
+          "cust": "Customer Experience"
+        }
+      },
+      "metrics": {
+        "title": "Success Metrics (KPIs)",
+        "description": "Define verifiable metrics to track success. Use 'Add Item' to define new KPIs.",
+        "columns": {
+          "name": "KPI Name",
+          "baseline": "Baseline",
+          "target": "Target",
+          "timeframe": "Timeframe"
+        },
+        "placeholders": {
+          "name": "e.g. OEE",
+          "baseline": "e.g. 60%",
+          "target": "e.g. 85%"
+        },
+        "timeframeOptions": {
+          "3m": "3 Months",
+          "6m": "6 Months",
+          "12m": "12 Months"
+        }
+      },
+      "scope": {
+        "inTitle": "In Scope (Included)",
+        "inDescription": "Areas, departments, or processes explicitly included.",
+        "outTitle": "Out of Scope (Excluded)",
+        "outDescription": "Areas explicitly excluded to prevent scope creep.",
+        "columns": {
+          "item": "Item / Area",
+          "notes": "Notes",
+          "reason": "Reason"
+        },
+        "placeholders": {
+          "inItem": "e.g. Plant A",
+          "inNotes": "e.g. Full audit",
+          "outItem": "e.g. Logistics",
+          "outReason": "e.g. Already optimized"
+        }
+      },
+      "nogo": {
+        "title": "No-Go Zone",
+        "description": "Areas or topics that are off-limits due to politics, regulations, or strategy.",
+        "columns": {
+          "area": "Sensitive Area",
+          "reason": "Reason/Constraint"
+        },
+        "placeholders": {
+          "area": "e.g. Headcount",
+          "reason": "e.g. Strict union agreement until 2026"
+        }
+      },
+      "expectations": {
+        "archetype": {
+          "title": "Transformation Archetype",
+          "hint": "How do you want to deliver value? Define the speed and depth of change.",
+          "options": {
+            "fast": {
+              "label": "Pilot & Scale (Agile)",
+              "desc": "Rapid prototyping, MVPs, quick feedback loops. Best for high uncertainty."
+            },
+            "deep": {
+              "label": "Core Transformation (Waterfall)",
+              "desc": "Deep structural change, phased rollout, risk averse. Best for legacy systems."
+            },
+            "targeted": {
+              "label": "Value-Led / Use Case",
+              "desc": "Focus on specific high-ROI pain points. Best for tight budgets."
+            }
+          }
+        },
+        "aiRole": {
+          "title": "Human-AI Collaboration",
+          "hint": "Define the level of autonomy you grant to the AI in this engagement.",
+          "options": {
+            "advisor": {
+              "label": "Strategic Advisor",
+              "desc": "AI challenges assumptions & provides benchmarks. You decide."
+            },
+            "partner": {
+              "label": "Collaborative Co-Pilot",
+              "desc": "AI drafts content & plans. You review & refine."
+            },
+            "agent": {
+              "label": "Autonomous Agent",
+              "desc": "AI executes defined workflows (e.g., data hygiene) with oversight."
+            }
+          }
+        },
+        "cadence": {
+          "title": "Steering & Governance",
+          "hint": "How will we track progress and ensure alignment?",
+          "options": {
+            "weekly": {
+              "label": "Weekly SteerCo",
+              "desc": "Tactical alignment on sprints & blockers."
+            },
+            "monthly": {
+              "label": "Monthly QBR",
+              "desc": "Strategic review of value delivered & roadmap."
+            },
+            "daily": {
+              "label": "Daily Standups",
+              "desc": "High-touch operational coordination."
+            },
+            "milestone": {
+              "label": "Milestone Based",
+              "desc": "Reviews triggered by key deliverables."
+            }
+          }
+        }
+      }
+    },
+    "challenges": {
+      "tabs": {
+        "challenges": "Declared Challenges",
+        "rootcause": "Root Cause Signals",
+        "blockers": "Objective Blockers",
+        "evidence": "Evidence"
+      },
+      "declared": {
+        "uploaderTitle": "Declared Challenges",
+        "suggestions": [
+          "Operational Reports",
+          "Audit Logs",
+          "Customer Complaints",
+          "Shift Handover Notes"
+        ],
+        "title": "Declared Challenges",
+        "description": "Official problems reported by the client (symptoms).",
+        "columns": {
+          "challenge": "Challenge / Symptom",
+          "area": "Functional Area",
+          "severity": "Severity",
+          "notes": "Notes / Context"
+        },
+        "placeholders": {
+          "challenge": "e.g. High Scrap Rate",
+          "area": "e.g. Quality",
+          "notes": "Additional details..."
+        },
+        "severityOptions": {
+          "Critical": "Critical",
+          "High": "High",
+          "Medium": "Medium",
+          "Low": "Low"
+        }
+      },
+      "rootcause": {
+        "uploaderTitle": "Root Cause Signals",
+        "suggestions": [
+          "Incident Reports",
+          "5 Whys Docs",
+          "PFMEA",
+          "Ishikawa Diagrams"
+        ],
+        "diagnosticLabel": "Diagnostic Questions:",
+        "diagnosticBody": "These answers help AI identify hidden root causes behind the declared challenges.",
+        "questions": [
+          {
+            "q": "Where do decisions get stuck?",
+            "h": "e.g. Middle management fear, Lack of data..."
+          },
+          {
+            "q": "Where is the strongest resistance to change?",
+            "h": "e.g. Shop floor, Specific department..."
+          },
+          {
+            "q": "What initiatives failed in the past and why?",
+            "h": "e.g. Lean impl failed due to no follow-up..."
+          },
+          {
+            "q": "Is there a gap between management view and reality?",
+            "h": "e.g. CEO thinks ERP works, users use Excel..."
+          }
+        ]
+      },
+      "blockers": {
+        "uploaderTitle": "Objective Blockers",
+        "suggestions": [
+          "Employee Surveys",
+          "Risk Register",
+          "Strategy Deck",
+          "Cultural Assessment"
+        ],
+        "suggestedTitle": "Suggested Obstacles",
+        "suggestedHint": "Tap to add common issues to your board.",
+        "createCustom": "Create Custom",
+        "activeTitle": "Active Blockers",
+        "emptyMessage": "No blockers identified yet. Add from suggestions or create a custom one.",
+        "removeTitle": "Remove Blocker",
+        "aiDetected": "AI Detected ({{confidence}})",
+        "titlePlaceholder": "Blocker Title",
+        "descPlaceholder": "Describe the obstacle and its impact...",
+        "newObstacleTitle": "New Obstacle",
+        "types": {
+          "Culture": "Culture",
+          "Process": "Process",
+          "Technology": "Technology",
+          "Strategy": "Strategy",
+          "People": "People"
+        },
+        "library": {
+          "c1": {
+            "title": "Fear of Failure",
+            "desc": "Employees hide mistakes instead of reporting them."
+          },
+          "c2": {
+            "title": "Meeting Overload",
+            "desc": "Productivity lost to excessive alignment meetings."
+          },
+          "c3": {
+            "title": "Change Fatigue",
+            "desc": "Teams are burnt out from too many initiatives."
+          },
+          "c4": {
+            "title": "Data Fragmentation",
+            "desc": "Key KPIs are manually aggregated in Excel."
+          }
+        }
+      },
+      "evidence": {
+        "uploaderTitle": "Evidence",
+        "suggestions": [
+          "Raw Data Exports",
+          "KPI Dashboards",
+          "System Logs",
+          "Financial Reports"
+        ],
+        "title": "Evidence & Data Points",
+        "description": "Hard facts, metrics, or logs that prove the existence of challenges.",
+        "columns": {
+          "metric": "Metric / Data Point",
+          "symptom": "Symptom / Observation",
+          "source": "Source System / Doc",
+          "link": "Link / Reference"
+        },
+        "placeholders": {
+          "metric": "e.g. Scrap Rate 12%",
+          "symptom": "e.g. Line stops every hour",
+          "source": "e.g. SAP Report",
+          "link": "e.g. Page 12"
+        }
+      }
+    },
+    "synthesis": {
+      "tabs": {
+        "risks": "Hidden Risks",
+        "strengths": "Strengths & Opportunities",
+        "scenarios": "Transformation Scenarios",
+        "summary": "Executive Report"
+      },
+      "risks": {
+        "bannerTitle": "Risk Assessment Logic",
+        "bannerPre": "Based on your",
+        "bannerChallenges": "{{count}} declared challenges",
+        "bannerAnd": "and",
+        "bannerConstraints": "{{count}} active constraints",
+        "bannerPost": "we have identified the following risks.",
+        "listTitle": "Hidden Risks & Threats",
+        "listDescription": "What could derail this transformation? (Generated from Constraints + Challenges)",
+        "aiSuggestedTitle": "AI Suggested Risk",
+        "columns": {
+          "risk": "Risk / Threat",
+          "why": "Why (Root Cause)",
+          "severity": "Severity",
+          "mitigation": "Mitigation Strategy"
+        },
+        "placeholders": {
+          "risk": "e.g. Middle Management Resistance",
+          "why": "e.g. Fear of redundancy",
+          "mitigation": "e.g. Change Mgmt Program"
+        },
+        "severityOptions": {
+          "Critical": "Critical",
+          "High": "High",
+          "Medium": "Medium",
+          "Low": "Low"
+        },
+        "modal": {
+          "aiInsight": "AI Insight",
+          "identifiedDuring": "Identified during synthesis phase",
+          "severityLevel": "Severity Level",
+          "priority": "Priority",
+          "sourceContext": "Source / Context",
+          "sourcePattern": "Pattern Recognition Engine",
+          "sourceUser": "User Constraints",
+          "rootCauseAnalysis": "Root Cause Analysis",
+          "recommendedMitigation": "Recommended Mitigation",
+          "aiSuggestedNotePre": "This risk was suggested because similar organizations in",
+          "aiSuggestedNotePost": "typically struggle with this compliance gap during digital transformations.",
+          "aiSuggestedIndustry": "Automotive",
+          "close": "Close",
+          "updateStrategy": "Update Risk Strategy"
+        }
+      },
+      "strengths": {
+        "bannerTitle": "Strategic Advantages",
+        "bannerBody": "Based on your Company Profile and Goals, we have identified these key strengths and market opportunities.",
+        "listTitle": "Strengths & Opportunities",
+        "listDescription": "What strengths can you leverage? (Generated from Profile & Opportunities)",
+        "aiSuggestedTitle": "AI Suggested Opportunity",
+        "columns": {
+          "enabler": "Strength / Opportunity",
+          "seen": "Evidence / Where Seen",
+          "leverage": "How to Leverage"
+        },
+        "placeholders": {
+          "enabler": "e.g. Strong Engineering Team",
+          "seen": "e.g. R&D Performance",
+          "leverage": "e.g. Use as Pilot Champions"
+        },
+        "modal": {
+          "aiOpportunity": "AI Opportunity",
+          "identifiedStrength": "Identified Strength / Opportunity",
+          "impactPotential": "Impact Potential",
+          "confidence": "Confidence",
+          "medium": "Medium"
+        }
+      },
+      "executiveBrief": {
+        "heading": "Executive Strategic Summary",
+        "subheading": "AI-synthesized strategic analysis based on your inputs",
+        "exportPdf": "Export PDF",
+        "exporting": "Exporting...",
+        "exportToast": "Use \"Save as PDF\" in the print dialog to export this summary.",
+        "print": "Print",
+        "share": "Share",
+        "companyNameFallback": "No organization name on file",
+        "industryFallback": "No industry on file",
+        "employeesUnit": "employees",
+        "revenueUnit": "revenue",
+        "currentMaturity": "Current Maturity",
+        "targetMaturity": "Target Maturity",
+        "maturityNoData": "No data",
+        "activeConstraints": "Active Constraints",
+        "strategicGoals": "Strategic Goals",
+        "riskProfile": "Risk Profile",
+        "highRisk": "High Risk",
+        "manageable": "Manageable",
+        "identified": "identified",
+        "criticalPriorityNote": "critical/high priority requiring immediate attention",
+        "topRisks": "Top Risks",
+        "opportunities": "Opportunities",
+        "strong": "Strong",
+        "developing": "Developing",
+        "keyEnablersNote": "Key enablers for transformation success",
+        "topStrengths": "Top Strengths",
+        "challenges": "Challenges",
+        "active": "Active",
+        "declared": "declared",
+        "operationalPainNote": "Operational pain points to address",
+        "topChallenges": "Top Challenges",
+        "selectedScenario": "Selected Transformation Scenario",
+        "timeline": "Timeline",
+        "investment": "Investment",
+        "riskLevel": "Risk Level",
+        "noScenarioTitle": "No Scenario Selected",
+        "noScenarioBody": "Go to \"Transformation Scenarios\" tab to select a strategic approach",
+        "goalsProgressTitle": "Strategic Goals & Success Metrics",
+        "strategicGoalsLabel": "Strategic Goals",
+        "noGoalsYet": "No strategic goals defined yet",
+        "successMetricsLabel": "Success Metrics (KPIs)",
+        "noMetricsYet": "No success metrics defined yet",
+        "aiRecommendationsTitle": "AI Strategic Recommendations",
+        "immediatePriority": "Immediate Priority",
+        "immediatePriorityRisk": "Address \"{{risk}}\" before initiating transformation to reduce execution risk.",
+        "immediatePriorityManageable": "Risk profile is manageable. Focus on quick wins to build momentum.",
+        "strategicLeverage": "Strategic Leverage",
+        "strategicLeverageWithData": "Capitalize on \"{{strength}}\" as a key differentiator in your transformation journey.",
+        "strategicLeverageEmpty": "Identify internal champions to drive the transformation forward.",
+        "nextStep": "Next Step",
+        "nextStepWithScenario": "Develop detailed implementation plan for \"{{scenario}}\" scenario.",
+        "nextStepEmpty": "Select a transformation scenario to proceed with detailed planning.",
+        "employeesNoData": "No headcount on file",
+        "revenueNoData": "No revenue on file"
+      }
+    },
     "sidebar": {
       "title": "Organization",
       "subtitle": "Context & Administration",
@@ -22033,6 +23302,97 @@
       }
     },
     "governance": {
+      "sourceTypes": {
+        "organization_profile": "Organization profile",
+        "interview_context": "Interview context",
+        "interview_answer": "Interview answer",
+        "interview_evidence": "Interview evidence",
+        "interview": "Interview",
+        "organization_metadata": "Organization metadata",
+        "organization": "Organization",
+        "ai_context": "AI context",
+        "tool_session": "Tool session",
+        "my_work_idea": "My Work idea",
+        "chat_message": "Chat message",
+        "document_extraction": "Document extract",
+        "document": "Document",
+        "upload": "Uploaded file",
+        "manual": "Manual entry",
+        "organization_governed_snapshot": "Governed organization snapshot"
+      },
+      "reviewStates": {
+        "pending": "Awaiting review",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "visibilityScopes": {
+        "organization": "Whole organization",
+        "restricted": "Restricted visibility",
+        "private": "Private",
+        "project": "Project",
+        "review_shared": "Shared for review",
+        "demo": "Demo"
+      },
+      "claimPaths": {
+        "profile.companyName": "Company name",
+        "profile.description": "Company description",
+        "profile.industry": "Industry",
+        "profile.industryCode": "Industry code",
+        "profile.industrySubsector": "Industry subsector",
+        "profile.companySize": "Company size",
+        "profile.location": "Location",
+        "profile.employeeCount": "Employee count",
+        "profile.annualRevenue": "Annual revenue",
+        "profile.website": "Website",
+        "profile.defaultLanguage": "Default language",
+        "profile.defaultTimezone": "Default timezone",
+        "profile.currency": "Currency",
+        "profile.linkedinUrl": "LinkedIn",
+        "profile.twitterUrl": "X / Twitter",
+        "profile.customDomain": "Custom domain",
+        "profile.brandColor": "Brand color",
+        "profile.accentColor": "Accent color",
+        "profile.organizationType": "Organization type",
+        "profile.revenueModel": "Revenue model",
+        "profile.foundingYear": "Founding year",
+        "profile.communicationStyle": "Communication style",
+        "profile.industryJargonLevel": "Industry jargon level",
+        "strategic.goals": "Strategic goals",
+        "strategic.priorities": "Strategic priorities",
+        "strategic.mission": "Mission",
+        "strategic.vision": "Vision",
+        "strategic.competitivePosition": "Competitive position",
+        "strategic.growthStage": "Growth stage",
+        "strategic.riskAppetite": "Risk appetite",
+        "operations.keyMetrics": "Key metrics",
+        "operations.constraints": "Constraints",
+        "operations.gaps": "Gaps",
+        "operations.interviewAnswers": "Interview answers",
+        "operations.deliveryModel": "Delivery model",
+        "operations.productionArchetype": "Production archetype",
+        "operations.shiftPattern": "Shift pattern",
+        "operations.automationLevel": "Automation level",
+        "systems.stack": "Technology stack",
+        "systems.cloudAdoption": "Cloud adoption",
+        "systems.integrations": "Integrations",
+        "systems.coreSystems": "Core systems",
+        "stakeholders.people": "Stakeholders",
+        "notes.manualContext": "Manual note",
+        "metadata.custom": "Custom metadata",
+        "evidence.interview": "Interview evidence",
+        "evidence.documentExtraction": "Document evidence",
+        "signals.interviewInsights": "Interview insights",
+        "signals.interviewFindings": "Interview findings",
+        "tools.sessionOutput": "Tool session output",
+        "myWork.idea": "My Work idea",
+        "chat.explicitContext": "Chat context",
+        "integrations.signal": "Integration signal",
+        "finance.statements": "Financial statements",
+        "finance.models": "Financial models",
+        "finance.laneStatus": "Finance lane status",
+        "finance.versionStatus": "Version status"
+      },
+      "itemIdTooltip": "Record id: {{id}}",
       "loadError": "Governed context could not be loaded. Your existing data was not changed.",
       "uploaded": "The document was ingested and its pending governed claim was loaded.",
       "uploadError": "The document could not be ingested. No governed claim was accepted.",
@@ -22501,7 +23861,16 @@
       "mentions": "Mentions",
       "traverse": "Traverse",
       "provenance": "Provenance",
-      "sources": "Sources"
+      "sources": "Sources",
+      "entityTypes": {
+        "person": "Person",
+        "organization": "Organization",
+        "concept": "Concept",
+        "technology": "Technology",
+        "location": "Location",
+        "process": "Process",
+        "metric": "Metric"
+      }
     }
   },
   "megatrends": {
@@ -22833,6 +24202,7 @@
     }
   },
   "navigation": {
+    "aiChat": "AI Chat",
     "sidebar": {
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
@@ -22848,7 +24218,7 @@
   "modelRegistry": {
     "catalog": {
       "title": "Model Catalog",
-      "description": "All registered models across TEXT_LLM, IMAGE_MODEL, and BUSINESS_MODEL kinds",
+      "description": "All registered text, image, and business models",
       "addModel": "Add Model",
       "searchPlaceholder": "Search by name, model ID, provider..."
     },
@@ -24696,7 +26066,14 @@
       "formulaBarEmpty": "Select a cell to see its content",
       "saving": "Saving…",
       "saved": "Saved",
-      "saveFailed": "Save failed"
+      "saveFailed": "Save failed",
+      "workbookSummary": "Workbook \"{{title}}\" — {{count}} sheets.",
+      "sheetsLabel": "Sheets",
+      "qualityLabel": "Quality",
+      "qualityUnavailable": "N/A",
+      "sizeLabel": "Size",
+      "workbookQualitySuffix": "Quality: {{quality}}",
+      "rowsColsFormat": "{{rows}} rows × {{cols}} cols"
     },
     "xlsxPreview": "Spreadsheet preview",
     "deckPreview": "Presentation preview",
@@ -25745,7 +27122,8 @@
     "aiHintSummarize": "Summarize audit",
     "aiHintNextSteps": "Next steps",
     "noSuggestedPlan": "No suggested plan",
-    "drdReportsLoadFailed": "Could not load DRD reports"
+    "drdReportsLoadFailed": "Could not load DRD reports",
+    "drdSourceAssessment": "Assessment"
   },
   "audits": {
     "method": {
@@ -26390,6 +27768,12 @@
     "delete": "Delete"
   },
   "canvas": {
+    "viewMode": {
+      "ariaLabel": "Document view",
+      "rich": "Editor",
+      "document": "Document",
+      "markdown": "Markdown"
+    },
     "aiMenu": {
       "promptPlaceholder": "What should Teresa do with this text?",
       "explanation": "Explanation",
@@ -26836,6 +28220,7 @@
   },
   "voice": {
     "legend": {
+      "trigger": "Voice modes explained",
       "copy": {
         "failed": "Failed"
       }
@@ -27712,7 +29097,8 @@
       "planning": "Planning…",
       "submitTemplate": "Generate from template",
       "submitPlan": "Plan document",
-      "contextChip": "Context: {{organizationName}}"
+      "contextChip": "Context: {{organizationName}}",
+      "sectionBrief": "Brief"
     },
     "outline": {
       "type": "Type",
@@ -27806,7 +29192,9 @@
       "loadingDocument": "Loading document…",
       "noDocument": "No document loaded.",
       "backToMaterials": "Back to Materials",
-      "startOverConfirm": "Close this document and start a new one? The current document is saved — you can get back to it via \"Open\" in the File menu."
+      "startOverConfirm": "Close this document and start a new one? The current document is saved — you can get back to it via \"Open\" in the File menu.",
+      "artifactNotFoundTitle": "No document here",
+      "templateResolveTitle": "This template cannot be used"
     },
     "breadcrumb": {
       "new": "New document",
@@ -30124,6 +31512,8 @@
       "recordDetails": "Record details"
     },
     "mindmap": {
+      "branchNodeCount_one": "{{count}} node",
+      "branchNodeCount_other": "{{count}} nodes",
       "addNodeTab": "Add node (Tab)",
       "aiExpand": "AI Expand",
       "moreAi": "More AI",
@@ -30557,6 +31947,20 @@
       "months": "mo",
       "labelPlaceholder": "Untitled driver",
       "categoryPlaceholder": "Category",
+      "costType": {
+        "investment": "Investment",
+        "recurring": "Recurring"
+      },
+      "benefitType": {
+        "cash": "Cash",
+        "non_cash": "Non-cash",
+        "risk_avoidance": "Risk avoidance"
+      },
+      "confidence": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
       "confidenceHigh": "High",
       "confidenceMedium": "Medium",
       "confidenceLow": "Low",
@@ -30574,9 +31978,19 @@
       "driverCounts": "Drivers",
       "minimumsNotMet": "Needs ≥{{min}} of each for the acceptance case",
       "engineNotWired": "Calculation engine not connected in this build — no numbers are being fabricated.",
+      "status": {
+        "empty": "No drivers yet",
+        "stale": "Stale — recompute needed",
+        "computing": "Computing…",
+        "fresh": "Up to date",
+        "blocked": "Blocked — calculation engine not connected",
+        "error": "Calculation error"
+      },
       "convert": {
         "reasonStale": "Recompute the case first — a stale case cannot be converted.",
-        "reasonNotBuilt": "Conversion to a governed downstream artifact is not built yet in this release (epic E11)."
+        "reasonNotBuilt": "Conversion to a governed downstream artifact is not built yet in this release (epic E11).",
+        "toModel": "Convert to Financial Model",
+        "toBudget": "Convert to Budget"
       },
       "analytics": "Analytics",
       "cost": "Cost",
@@ -31265,6 +32679,8 @@
   },
   "myWorkIdeas": {
     "processFlowTool": {
+      "title": "Process flow",
+      "summarizeInChat": "Summarize this process flow",
       "you": "You",
       "aiProposalApplied": "AI proposal applied",
       "failedLoad": "Failed to load",
@@ -31704,7 +33120,11 @@
     },
     "aiNudgeStrip": {
       "go": "Go",
-      "dismissNudge": "Dismiss nudge"
+      "apply": "Apply",
+      "applying": "Applying…",
+      "retry": "Retry",
+      "dismissNudge": "Dismiss nudge",
+      "selectionReady": "Selected the unconnected elements. Connect them on the canvas; this suggestion will remain until you confirm the result."
     },
     "votingMode": {
       "votingMode": "Voting Mode",
@@ -32473,6 +33893,16 @@
     },
     "addColumnDialog": {
       "addColumn": "Add Column",
+      "nameRequired": "Give the field a name before creating it.",
+      "duplicateName": "A field named \"{{name}}\" already exists — choose a different name.",
+      "addedCount": "{{count}} field(s) added this session — keep going or press Done.",
+      "enterToCreate": "Press Enter to create and add another.",
+      "preview": "Preview",
+      "untitledField": "Untitled field",
+      "addedThisSession": "Added this session",
+      "undo": "Undo",
+      "done": "Done",
+      "addAnother": "Create field & add another",
       "name": "Name",
       "eGStatusPriority": "e.g. Status, Priority...",
       "type": "Type",
@@ -34370,6 +35800,7 @@
       "riskCount": "{{count}} risks"
     },
     "aiConsultantPanel": {
+      "title": "AI Consultant",
       "systemPromptNoun": {
         "initiative": "initiative",
         "insight": "insight"
@@ -34505,7 +35936,11 @@
     "filterableTable": {
       "justNow": "Just now",
       "hoursAgo": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago"
+      "daysAgo": "{{count}}d ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago"
     },
     "nModeLeftNav": {
       "dragSection": "Drag section",
@@ -34652,6 +36087,193 @@
     }
   },
   "reportBuilder": {
+    "blockTypesManager": {
+      "category": {
+        "content": "Content",
+        "data": "Data",
+        "visual": "Visual"
+      },
+      "render": {
+        "markdown": "Markdown",
+        "callout": "Callout",
+        "table": "Table",
+        "chart": "Chart",
+        "matrix": "Matrix",
+        "json": "JSON"
+      },
+      "type": {
+        "app": "App",
+        "org": "Org"
+      },
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{count}}d ago"
+      },
+      "columns": {
+        "block": "Block",
+        "type": "Type",
+        "category": "Category",
+        "render": "Render",
+        "sources": "Sources",
+        "updated": "Updated"
+      },
+      "rowMenu": {
+        "edit": "Edit",
+        "duplicateToOrg": "Duplicate to organization",
+        "comingSoon": "Coming soon (backend)",
+        "deactivate": "Deactivate",
+        "systemCannotDeactivate": "System blocks cannot be deactivated"
+      },
+      "preview": {
+        "sources": "Sources: {{sources}}",
+        "defaultLength": "Default length: {{length}}",
+        "defaultStyle": "Default style: {{style}}",
+        "promptTemplate": "Prompt template:"
+      },
+      "moduleBar": {
+        "newBlock": "New Block",
+        "all": "All",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "clear": "Clear"
+      },
+      "empty": {
+        "noMatchTitle": "No blocks match your search",
+        "noneTitle": "No blocks found",
+        "tryAdjusting": "Try adjusting your search terms",
+        "createToStart": "Create a new block to get started"
+      },
+      "modal": {
+        "editTitle": "Edit Block",
+        "newTitle": "New Block",
+        "name": "Name",
+        "renderKind": "Render Kind",
+        "description": "Description",
+        "sourcesCsv": "Sources (CSV)",
+        "sourcesPlaceholder": "ASSESSMENT, TOOL",
+        "length": "Length",
+        "lengthShort": "Short",
+        "lengthMedium": "Medium",
+        "lengthLong": "Long",
+        "style": "Style",
+        "styleBusiness": "Business",
+        "styleTechnical": "Technical",
+        "styleGeneral": "General",
+        "promptTemplate": "Prompt Template",
+        "promptPlaceholder": "E.g. \"Write a section about ... using data: {{exampleVar}}\"",
+        "cancel": "Cancel",
+        "saveChanges": "Save Changes",
+        "createBlock": "Create Block"
+      },
+      "toast": {
+        "updated": "Block updated",
+        "created": "Block created",
+        "saveFailed": "Failed to save",
+        "confirmDeactivate": "Deactivate this block type?",
+        "deactivated": "Block deactivated",
+        "deactivateFailed": "Failed to deactivate"
+      }
+    },
+    "templatesManager": {
+      "type": {
+        "app": "App",
+        "org": "Org"
+      },
+      "sourceType": {
+        "ASSESSMENT": "Assessment",
+        "INTERVIEW": "Interview",
+        "TOOL": "Tool",
+        "INITIATIVE": "Initiative"
+      },
+      "audience": {
+        "executive": "Executive",
+        "manager": "Manager",
+        "analyst": "Analyst",
+        "team": "Team",
+        "external": "External",
+        "general": "General"
+      },
+      "format": {
+        "vertical": "Vertical",
+        "horizontal": "Horizontal"
+      },
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{count}}d ago"
+      },
+      "columns": {
+        "type": "Type",
+        "template": "Template",
+        "module": "Module",
+        "audience": "Audience",
+        "format": "Format",
+        "user": "User",
+        "sections": "Sections",
+        "updated": "Updated"
+      },
+      "noSections": "No sections",
+      "systemAuthor": "System",
+      "copySuffix": "Copy",
+      "rowMenu": {
+        "duplicateToOrg": "Duplicate to organization",
+        "useTemplate": "Use template",
+        "duplicate": "Duplicate",
+        "systemTemplate": "System template",
+        "systemCannotDelete": "System templates cannot be deleted",
+        "delete": "Delete"
+      },
+      "preview": {
+        "sections": "Sections: {{count}}",
+        "noSections": "Sections: none",
+        "createdBy": "Created by: {{name}}"
+      },
+      "moduleBar": {
+        "newTemplate": "New Template",
+        "all": "All",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "clear": "Clear"
+      },
+      "empty": {
+        "noMatchTitle": "No templates match your search",
+        "noneTitle": "No templates found",
+        "tryAdjusting": "Try adjusting your search terms",
+        "createToStart": "Create a new template to get started"
+      },
+      "toast": {
+        "confirmDelete": "Are you sure you want to delete this template?",
+        "deleted": "Template deleted",
+        "deleteFailed": "Failed to delete",
+        "duplicated": "Template duplicated",
+        "duplicateFailed": "Failed to duplicate"
+      }
+    },
+    "newAssessmentReportModal": {
+      "title": "New assessment report",
+      "subtitle": "Choose assessment + template. A draft will be generated.",
+      "close": "Close",
+      "assessment": "Assessment",
+      "noApprovedAssessments": "No approved assessments available",
+      "selectAssessmentPlaceholder": "Select assessment…",
+      "onlyApprovedWarning": "Only approved assessments can be used to create reports. Approve an assessment first.",
+      "template": "Template",
+      "notSelected": "Not selected",
+      "fromLibrary": "From Library",
+      "choose": "Choose",
+      "cancel": "Cancel",
+      "createDraft": "Create draft",
+      "generating": "Generating…",
+      "reportTitleWithName": "Report - {{name}}",
+      "reportTitleFallback": "Report",
+      "toast": {
+        "creatingReport": "Creating report…",
+        "generatingContent": "Generating report content with AI…",
+        "generatedOpening": "Report generated — opening editor",
+        "createFailed": "Failed to create report"
+      }
+    },
     "settingsPanel": {
       "primaryColor": "Primary color",
       "justNow": "Just now",
@@ -38391,6 +40013,10 @@
   "agentPlan": {
     "loading": "Loading plan",
     "loadingBody": "Loading plan…",
+    "view": {
+      "title": "Run agent",
+      "body": "Pick a ready-made agent from the catalog and launch it as a background plan. Steps that need your sign-off wait in the Approvals section until you confirm them."
+    },
     "section": {
       "plan": "Plan",
       "progress": "Progress",
@@ -38632,6 +40258,25 @@
       "noMatch": "No block matches \"{{query}}\".",
       "comingSoon": "Coming soon",
       "approval": "approval"
+    },
+    "canvas": {
+      "moduleTag": {
+        "assessment": "Assessment",
+        "control": "Control",
+        "execution": "Execution",
+        "finance": "Finance",
+        "initiatives": "Initiatives",
+        "integrations": "Integrations",
+        "interview": "Interview",
+        "materials": "Materials",
+        "meeting": "Meeting",
+        "myWorkDecisions": "My Work · Decisions",
+        "myWork": "My Work",
+        "notebook": "Notebook",
+        "results": "Results",
+        "tables": "Tables",
+        "vault": "Vault"
+      }
     }
   },
   "views": {
@@ -38709,6 +40354,9 @@
     "executing": "Executing",
     "promoted": "Promoted",
     "proposed": "Proposed",
+    "queued": "Queued",
+    "running": "Running",
+    "succeeded": "Succeeded",
     "processing": "Processing",
     "uploaded": "Uploaded",
     "editing": "Editing",
@@ -38729,6 +40377,7 @@
     "accepted": "Accepted",
     "completed": "Completed",
     "done": "Done",
+    "resolved": "Resolved",
     "published": "Published",
     "ready": "Ready",
     "active": "Active",
@@ -38742,6 +40391,8 @@
     "blocked": "Blocked",
     "cancelled": "Cancelled",
     "overdue": "Overdue",
+    "expired": "Expired",
+    "revoked": "Revoked",
     "unreadable": "Unreadable",
     "deleted": "Deleted",
     "error": "Error",
@@ -38814,6 +40465,13 @@
       "levelOrganization": "Organization safe",
       "levelProject": "Project safe"
     },
+    "categories": {
+      "bestPractices": "Best Practices",
+      "methodology": "Methodology",
+      "standards": "Standards",
+      "templates": "Templates",
+      "other": "Other"
+    },
     "folders": {
       "loadFailed": "Failed to load folders",
       "newFolder": "New folder",
@@ -38848,6 +40506,63 @@
         "confirm": "Delete",
         "cancel": "Cancel"
       }
+    }
+  },
+  "presentationState": {
+    "hidden": "hidden",
+    "unknown": "unknown",
+    "outputsUnavailableReason": "output count is unavailable",
+    "outputStatusHiddenReason": "a breakdown by status is not yet available for outputs",
+    "findingsPendingReason": "findings are loading",
+    "findingsNotWiredInDemoReason": "the findings register is not wired in demo mode",
+    "findingsLoadFailedReason": "findings could not be loaded",
+    "templatesPendingReason": "templates are loading",
+    "templatesLoadFailedReason": "templates could not be loaded"
+  },
+  "initiativeStatusDescription": {
+    "draft": "Initial draft, awaiting promotion",
+    "pending_review": "Awaiting PM/Lead review",
+    "review": "Under business review",
+    "promoted": "Accepted for planning",
+    "planning": "Being planned and scoped",
+    "approved": "Approved, ready for scheduling",
+    "scheduled": "Scheduled in roadmap",
+    "executing": "Currently being implemented",
+    "blocked": "Blocked, requires decision",
+    "done": "Delivery completed",
+    "tracking": "Benefits tracking in progress",
+    "cancelled": "Initiative was cancelled",
+    "archived": "Archived for reference"
+  },
+  "standardPreview": {
+    "property": "Property",
+    "value": "Value"
+  },
+  "toolOutputs": {
+    "title": "Outputs",
+    "loadFailed": "Failed to load outputs",
+    "reopenFailed": "Failed to reopen output",
+    "backToOutputs": "Back to outputs",
+    "viewAsDocument": "View as document",
+    "viewAsSlides": "View as slides",
+    "empty": "No promoted output yet for this session.",
+    "selected": "Selected output",
+    "reopening": "Reopening…",
+    "reopen": "Reopen for correction",
+    "reports": "Reports & presentations",
+    "noReports": "No report or presentation generated from this output yet.",
+    "kindPresentation": "Presentation",
+    "kindReport": "Report",
+    "initiativeProposals": "Initiative proposals",
+    "noProposals": "No initiative was proposed from this output yet.",
+    "slides": {
+      "fullscreen": "Fullscreen (F)",
+      "exit": "Exit slide mode (Esc)",
+      "deckEyebrow": "Executive presentation",
+      "reportEyebrow": "Report",
+      "previous": "Previous slide",
+      "goToSlide": "Go to slide {{n}}",
+      "next": "Next slide"
     }
   }
 }

@@ -204,7 +204,7 @@ describeIfDb('TaskService', () => {
         db.get(`SELECT * FROM tasks WHERE id = ?`, [taskId], (_, row) => resolve(row));
       });
 
-      expect(task).toBeUndefined();
+      expect(task).toBeNull();
     });
   });
 
@@ -320,7 +320,7 @@ describeIfDb('TaskService', () => {
 
       expect(stats.length).toBeGreaterThan(0);
       const todoCount = stats.find((s) => s.status === 'todo');
-      expect(todoCount?.count).toBe(2);
+      expect(Number(todoCount?.count)).toBe(2);
     });
 
     it('should calculate completion rate', async () => {

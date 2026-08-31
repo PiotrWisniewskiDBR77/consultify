@@ -2714,6 +2714,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
 
   const chatSuggestions: ChatSuggestion[] = useMemo(() => {
+    // D-104 (2026-08-30) — owner's contextual on/off switch for the
+    // suggestion chips (?screen=teresa-chipy-sugestii). Toggle lives in
+    // ToolsMenu.tsx AI_MODES, persisted via aiConfig.chatSuggestionsEnabled
+    // (default true). Gated here so every consumer of `chatSuggestions`
+    // (including the badge-count logic) agrees on one source of truth.
+    if ((aiConfig as any)?.chatSuggestionsEnabled === false) return [];
     if (displayMessages.length < 2 || isStreaming) return [];
     const items: ChatSuggestion[] = [];
 
@@ -2790,7 +2796,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // heuristic went with them.
 
     return items;
-  }, [displayMessages.length, isStreaming, workspaceContext, t]);
+  }, [
+    displayMessages.length,
+    isStreaming,
+    workspaceContext,
+    t,
+    (aiConfig as any)?.chatSuggestionsEnabled,
+  ]);
 
   // `handleSuggestionClick` is declared below `handleSendMessage` to avoid a
   // temporal-dead-zone reference when a suggestion of type 'chat' forwards
@@ -6511,7 +6523,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           href="#chat-input"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-overlay focus:bg-c-text focus:text-c-bg focus:px-4 focus:py-2 focus:rounded-lg"
         >
-          {t('wcag.skipToInput', 'Skip to chat input')}
+          {t('aiChat.skipToInput', 'Skip to chat input')}
         </a>
 
         {/* Header — Tech Sexy (T104/T105) */}
@@ -6735,7 +6747,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           role="log"
           aria-live="polite"
           aria-relevant="additions text"
-          aria-label="Conversation"
+          aria-label={t('aiChat.conversationRegion', 'Conversation')}
           className={`flex-1 ${showWorkPanelEmptyState ? 'overflow-hidden' : 'overflow-y-auto'} ${
             isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'
           } ${isStreaming ? 'chat-streaming-frame' : ''}`}
@@ -6930,7 +6942,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     id: 'classic-consulting',
                     icon: Wrench,
                     label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
-                    desc: t('aiChat.homeCards.consulting.desc', 'Use classic frameworks and tools'),
+                    desc: t(
+                      'aiChat.homeCards.consulting.acceptanceDesc',
+                      'Use classic frameworks and tools'
+                    ),
                     prompt: t(
                       'aiChat.homeCards.consulting.kickoff',
                       'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
@@ -6998,7 +7013,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-c-text-secondary">
                 <Sparkles size={11} />
                 {t(
-                  'aiChat.onboarding.hint',
+                  'aiChat.onboarding.acceptanceHint',
                   'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis'
                 )}
               </p>

@@ -143,8 +143,20 @@ export default function RnG3ClassLRecordShell(): React.ReactElement {
         propertyLabel={isPolish ? 'Właściwość' : 'Property'}
         valueLabel={isPolish ? 'Wartość' : 'Value'}
         rows={[
-          { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: 'user-anna-kowalska' },
-          { id: 'process', label: isPolish ? 'Proces' : 'Process', value: 'proc-production' },
+          {
+            // Odbiór 2026-08-30 (przegląd modułów 04/11/16): fixture pokazywał
+            // surowe identyfikatory (`user-anna-kowalska`, `proc-production`)
+            // zamiast nazw — realny ekran rozwiązuje ID na nazwę przed
+            // wyświetleniem, ten dowód powinien pokazywać to samo.
+            id: 'owner',
+            label: isPolish ? 'Właściciel' : 'Owner',
+            value: 'Anna Kowalska',
+          },
+          {
+            id: 'process',
+            label: isPolish ? 'Proces' : 'Process',
+            value: isPolish ? 'Produkcja' : 'Production',
+          },
           {
             id: 'cadence',
             label: isPolish ? 'Cykl pomiaru' : 'Cadence',

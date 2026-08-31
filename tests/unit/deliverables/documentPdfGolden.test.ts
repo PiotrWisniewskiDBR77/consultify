@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Document Studio (M18) — PDF golden export-fidelity test (C4).
  *

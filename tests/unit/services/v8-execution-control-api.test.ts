@@ -208,10 +208,16 @@ describe('V8ExecutionControlApi', () => {
     });
   });
 
-  it('allows legacy execution-control fallback only for bounded non-supported statuses', () => {
-    expect(shouldFallbackToLegacyExecutionControl({ status: 404 })).toBe(true);
-    expect(shouldFallbackToLegacyExecutionControl({ status: 405 })).toBe(true);
-    expect(shouldFallbackToLegacyExecutionControl({ status: 501 })).toBe(true);
+  it('allows legacy fallback only for an explicit controlled compatibility response', () => {
+    expect(shouldFallbackToLegacyExecutionControl({ status: 404 })).toBe(false);
+    expect(shouldFallbackToLegacyExecutionControl({ status: 405 })).toBe(false);
+    expect(shouldFallbackToLegacyExecutionControl({ status: 501 })).toBe(false);
+    expect(
+      shouldFallbackToLegacyExecutionControl({
+        status: 501,
+        data: { error: { code: 'EXECUTION_CONTROL_CAPABILITY_UNAVAILABLE' } },
+      })
+    ).toBe(true);
   });
 
   it('prevents silent legacy execution-control fallback on transient failures', () => {

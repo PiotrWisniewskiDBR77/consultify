@@ -1,3 +1,5 @@
+/** @vitest-environment node */
+
 /**
  * Characterization test for generatePartnerCertificatePdf — added as the safety
  * net BEFORE migrating its pdfkit plumbing onto UnifiedExportService.renderPdf.
@@ -31,6 +33,20 @@ describe('generatePartnerCertificatePdf', () => {
       certificateType: 'delivery',
       language: 'pl',
     });
+    expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
+  it('integration contract: application font renders Polish glyph input into a valid PDF', async () => {
+    const buf = await generatePartnerCertificatePdf({
+      ...base,
+      partnerOrgName: 'Zażółć Gęślą Jaźń Sp. z o.o.',
+      userName: 'Łukasz Świątek',
+      certificateType: 'delivery',
+      language: 'pl',
+    });
+
+    expect(Buffer.isBuffer(buf)).toBe(true);
+    expect(buf.length).toBeGreaterThan(500);
     expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 });

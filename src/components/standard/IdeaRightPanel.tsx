@@ -30,6 +30,7 @@
  *                   pusta (`isEmpty`, emptyLabel „Brak komentarzy").
  *   - Historia      dawna karta „Teresa" (`teresaContent`, <IdeaTeresaSection>)
  *                   — bez zmian funkcji, nowa etykieta wg kanonu.
+ *                   ★ Ta linia opisuje WYŁĄCZNIE ścieżkę flagi OFF (patrz niżej).
  *
  * Zasady (reużycie 1:1, NIE bespoke):
  *  - Ten komponent buduje WYŁĄCZNIE strukturę sekcji + akcje-skrót (Akcje);
@@ -41,12 +42,41 @@
  *    Zero crimson, zero navy/slate. Fokus = c-focus (w ArtifactRightPanel).
  *  - Identyczny co do piksela dla 4 narzędzi (mindmap/process_flow/whiteboard/
  *    table) — różni się WYŁĄCZNIE deklaracja treści.
+ *
+ * ★ Rozwożenie prawego pasa (2026-08-30, docs/program/grafika/ANALIZA_PRAWY_PANEL.md
+ * §3/§4, właściciel: „cały ten prawy panel jest ewidentnie do przepracowania").
+ * Zmierzony defekt: Teresa (`teresaContent` = `<IdeaTeresaSection>`, komendy +
+ * strumień sugestii) mieszkała w sekcji akordeonu NAZWANEJ „Historia", mimo że
+ * nie ma nic wspólnego z historią zmian — dokładnie ten rozjazd nazw, który
+ * D17 nakazuje naprawić przez wyniesienie Teresy na osobną IKONĘ SZYNY (jak
+ * w Wordzie). Za flagą `ff_artifact_right_rail` (`isArtifactRightRailEnabled`,
+ * domyślnie OFF):
+ *  - Sekcja „Historia" znika z akordeonu Artefaktu (bez zastosowania — była
+ *    tylko kontenerem na Teresę, kanon mówi „lepiej brak niż pusty akordeon
+ *    udający funkcję"). Akcje/Właściwości/Powiązania/Komentarze zostają 1:1.
+ *  - Komendy Teresy (Uzupełnij puste · Synteza · Kontrola jakości · Kontynuuj)
+ *    i CTA „Rozmawiaj z Teresą" przechodzą do trybu Teresa szyny —
+ *    zbudowane przez wołającego (`IdeaMapWorkspace`) z JEDNEGO źródła treści
+ *    (`IDEA_TERESA_COMMANDS` w `IdeaTeresaSection.tsx`), nie drugiej kopii.
+ *  - Proaktywny strumień sugestii AI (`aiSuggestionsContent`, ten sam
+ *    `<IdeaAISuggestionsPanel embedded>` co dawniej) dostaje WŁASNĄ ikonę
+ *    szyny (tryb zależny od typu „Sugestie") zamiast być zagrzebany pod
+ *    komendami w jednej karcie — to realne, bogate narzędzie (generatory AI,
+ *    wyszukiwanie, akceptuj/odrzuć), nie pasuje do wąskiego kontraktu
+ *    wiadomości czatu trybu Teresa.
+ * Przy fladze OFF WSZYSTKIE nowe propsy (`title`/`onDiscussWithTeresa`/
+ * `teresaCommands`/`aiSuggestionsContent`/`defaultRailModeId`) są martwe —
+ * ścieżka renderu (`<ArtifactRightPanel sections={sections} />`, sections
+ * WŁĄCZNIE z „Historia") ich nie dotyka.
  */
 import {
   FileSpreadsheet,
+  History as HistoryIcon,
+  Lightbulb,
   Link2,
   MessageSquare,
   Repeat,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
@@ -54,10 +84,18 @@ import React, { useMemo } from 'react';
 
 import { PreviewActionBar } from '@/components/shared/PreviewPane';
 import {
+  ARTIFACT_PANEL_SECTION_ORDER,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import {
+  ArtifactRightRail,
+  type ArtifactRailTeresaCommand,
+  type ArtifactRailTeresaMode,
+  type ArtifactRailTypeMode,
+} from '@/components/standard/ArtifactRightRail';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
+import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 /** Która sekcja ma być otwarta na starcie (mapowana z aktywnego klawisza paska). */
 export type IdeaRightPanelSectionKey = 'properties' | 'relations' | 'teresa' | null;
@@ -101,6 +139,44 @@ export interface IdeaRightPanelProps {
   width?: number;
   /** PL/EN etykiety nagłówków sekcji. */
   isPolish?: boolean;
+
+  /**
+   * ★ Poniższe propsy mają skutek WYŁĄCZNIE za flagą `ff_artifact_right_rail`
+   * (`isArtifactRightRailEnabled`, domyślnie OFF) — przy OFF ich brak lub
+   * obecność nie zmienia renderu ani o jeden piksel.
+   */
+
+  /** Nazwa idei/mapy — nagłówek szyny + kontekst trybu Teresa. Bez tego — brak nagłówka (jak dziś). */
+  title?: string;
+  /**
+   * Otwiera JEDNĄ dokowaną Teresę z kontekstem idei (workspace
+   * `handleDiscussWithTeresa`). Zasila zarówno CTA stopki trybu Teresa, jak
+   * i `onClick` każdej z `teresaCommands` u wołającego. Pominięte → CTA się
+   * nie renderuje (nigdy stub).
+   */
+  onDiscussWithTeresa?: () => void;
+  /**
+   * Gotowe komendy trybu Teresa (Uzupełnij puste · Synteza · Kontrola
+   * jakości · Kontynuuj) — budowane przez wołającego z JEDNEGO źródła treści
+   * (`IDEA_TERESA_COMMANDS`, `IdeaTeresaSection.tsx`), bo etykiety i prompty
+   * to treść domeny Idei, nie tego generycznego panelu. Puste/pominięte →
+   * tryb Teresa renderuje się bez chipów komend (nie stub).
+   */
+  teresaCommands?: ArtifactRailTeresaCommand[];
+  /**
+   * Proaktywny strumień sugestii AI (zwykle
+   * `<IdeaAISuggestionsPanel embedded>`, ten sam komponent co dawniej pod
+   * kartą „Historia") — dostaje WŁASNĄ ikonę szyny (tryb zależny od typu),
+   * bo to realne, bogate narzędzie, nie treść czatu. Pominięte → brak tej
+   * ikony na szynie (nie pusty tryb udający funkcję).
+   */
+  aiSuggestionsContent?: React.ReactNode;
+  /**
+   * Który tryb szyny otwiera się na start (`artefakt` | `teresa` | `sugestie`).
+   * Nieustawiony → pierwszy zadeklarowany tryb (Artefakt). Realny konsument:
+   * harness dev-render, do deterministycznych zrzutów każdego trybu.
+   */
+  defaultRailModeId?: string;
 }
 
 export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
@@ -113,6 +189,11 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
   onConvert,
   width = 360,
   isPolish = false,
+  title,
+  onDiscussWithTeresa,
+  teresaCommands,
+  aiSuggestionsContent,
+  defaultRailModeId,
 }) => {
   const sections = useMemo<ArtifactRightPanelSection[]>(() => {
     const actionButtons = [
@@ -138,44 +219,70 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
 
     const hasActions = actionButtons.length > 0;
 
-    const base: ArtifactRightPanelSection[] = [
-      {
+    // ★ NAPRAWA 2026-08-30 (przegląd `PRZEGLAD_PRZED_ODBIOREM.md` §Z-2 + kanon
+    // z odbiorów): panel idei łamał kanon w DWÓCH miejscach naraz.
+    //  1. „Źródła i założenia" nie istniały jako sekcja — `EvidencePanelSection`
+    //     był doklejony pod treścią „Powiązań" (scalenie Z8). Czwarta sekcja
+    //     kanonu po prostu nie miała nagłówka, więc na zrzucie jej nie było.
+    //     Teraz jest własną sekcją `evidence`, a gdy idea nie ma jeszcze
+    //     artefaktu dowodowego — mówi to wprost stanem pustym (nie znika).
+    //  2. CAŁA Teresa (komendy + strumień sugestii) siedziała w środku sekcji
+    //     „Historia". To łamie kontrakt `ArtifactRailTeresaMode`
+    //     (`ArtifactRightRail.tsx`): „② Tryb Teresa — pełna wysokość, własne
+    //     pole pisania. NIGDY sekcja akordeonu." Dopóki wspólny pas jest za
+    //     flagą OFF, kanonicznym miejscem wejścia do Teresy jest sekcja AKCJE —
+    //     dokładnie tak, jak w odebranym przez właściciela `deck-artifact`
+    //     („Zapytaj Teresę" jako czwarty przycisk Akcji). „Historia" zostaje
+    //     historią i uczciwie mówi, że jest pusta.
+    // KOLEJNOŚĆ renderu pochodzi z kanonicznej `ARTIFACT_PANEL_SECTION_ORDER`,
+    // nazwy i domknięcie sześciu sekcji narzuca `ArtifactRightPanel`.
+    const byId: Partial<Record<ArtifactRightPanelSection['id'], ArtifactRightPanelSection>> = {
+      actions: {
         id: 'actions',
         label: isPolish ? 'Akcje' : 'Actions',
         icon: Sparkles,
-        defaultOpen: activeSection === null,
-        isEmpty: !hasActions,
+        defaultOpen: activeSection === null || activeSection === 'teresa',
+        isEmpty: !hasActions && !teresaContent,
         emptyLabel: isPolish ? 'Brak dostępnych akcji.' : 'No actions available.',
-        children: hasActions ? <PreviewActionBar rows={[{ buttons: actionButtons }]} /> : null,
+        children: (
+          <div className="space-y-4">
+            {hasActions ? <PreviewActionBar rows={[{ buttons: actionButtons }]} /> : null}
+            {teresaContent}
+          </div>
+        ),
       },
-      {
+      properties: {
         id: 'properties',
         label: isPolish ? 'Właściwości' : 'Properties',
         icon: SlidersHorizontal,
         children: propertiesContent,
         defaultOpen: activeSection === 'properties',
       },
-      {
+      relations: {
         id: 'relations',
         label: isPolish ? 'Powiązania' : 'Relations',
         icon: Link2,
         defaultOpen: activeSection === 'relations',
-        children: (
-          <div className="space-y-4">
-            {relationsContent}
-            {evidenceArtifactId ? (
-              <div className="border-t border-c-border-subtle pt-3">
-                <EvidencePanelSection
-                  artifactType="canvas"
-                  artifactId={evidenceArtifactId}
-                  isPolish={isPolish}
-                />
-              </div>
-            ) : null}
-          </div>
-        ),
+        children: relationsContent,
       },
-      {
+      evidence: {
+        id: 'evidence',
+        label: isPolish ? 'Źródła i założenia' : 'Sources and assumptions',
+        icon: ShieldCheck,
+        defaultOpen: false,
+        isEmpty: !evidenceArtifactId,
+        emptyLabel: isPolish
+          ? 'Brak zapisanych źródeł i założeń.'
+          : 'No sources or assumptions recorded.',
+        children: evidenceArtifactId ? (
+          <EvidencePanelSection
+            artifactType="canvas"
+            artifactId={evidenceArtifactId}
+            isPolish={isPolish}
+          />
+        ) : null,
+      },
+      comments: {
         id: 'comments',
         label: isPolish ? 'Komentarze' : 'Comments',
         icon: MessageSquare,
@@ -184,15 +291,19 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         emptyLabel: isPolish ? 'Brak komentarzy.' : 'No comments yet.',
         children: null,
       },
-      {
+      history: {
         id: 'history',
         label: isPolish ? 'Historia' : 'History',
-        icon: Sparkles,
-        children: teresaContent,
-        defaultOpen: activeSection === 'teresa',
+        icon: HistoryIcon,
+        defaultOpen: false,
+        isEmpty: true,
+        emptyLabel: isPolish ? 'Brak zapisanej historii.' : 'No history recorded.',
+        children: null,
       },
-    ];
-    return base;
+    };
+    return ARTIFACT_PANEL_SECTION_ORDER.map((id) => byId[id]).filter(
+      (section): section is ArtifactRightPanelSection => section !== undefined
+    );
   }, [
     isPolish,
     activeSection,
@@ -203,6 +314,80 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
     onExport,
     onConvert,
   ]);
+
+  // Wspólny prawy pas (`ArtifactRightRail`) — flaga DOMYŚLNIE OFF
+  // (src/utils/artifactRightRailFlag.ts). Przy OFF ta zmienna jest `false`,
+  // więc poniższa gałąź nigdy nie renderuje się i `sections` (WŁĄCZNIE z
+  // „Historia" = teresaContent) idzie 1:1 do dawnej ścieżki bez zmian.
+  const artifactRailEnabled = isArtifactRightRailEnabled();
+
+  const railTypeModes = useMemo<ArtifactRailTypeMode[]>(() => {
+    if (!aiSuggestionsContent) return [];
+    return [
+      {
+        id: 'sugestie',
+        label: isPolish ? 'Sugestie' : 'Suggestions',
+        icon: Lightbulb,
+        contextLabel: isPolish
+          ? 'Proaktywne sugestie AI dla tej idei — rozwiń mapę, uzupełnij luki, sprawdź ryzyka.'
+          : 'Proactive AI suggestions for this idea — expand the map, fill gaps, flag risks.',
+        content: aiSuggestionsContent,
+      },
+    ];
+  }, [aiSuggestionsContent, isPolish]);
+
+  const railTeresaMode = useMemo<ArtifactRailTeresaMode>(
+    () => ({
+      contextLabel: title
+        ? isPolish
+          ? `Idea „${title}"`
+          : `Idea "${title}"`
+        : undefined,
+      commands: teresaCommands ?? [],
+      // Idea nie ma dziś WŁASNEGO zapisanego wątku rozmowy per-artefakt — jest
+      // wspólny dok czatu. Mówimy to wprost (jak notatnik) zamiast rysować
+      // pusty strumień udający historię.
+      messages: [],
+      emptyLabel: isPolish
+        ? 'Ta idea nie ma jeszcze własnego wątku rozmowy — otwórz rozmowę, żeby zacząć.'
+        : 'This idea has no conversation thread of its own yet — open the conversation to start.',
+      // BRAK `onSend`: pole pisania renderuje się wyłączone z jawnym powodem.
+      // Wątek per-idea to praca toru funkcji (kontrakt danych), nie toru
+      // grafiki — patrz §"Połowa funkcjonalna" analizy prawego panelu.
+      composeDisabledReason: isPolish
+        ? 'Pisanie wprost w pasie będzie możliwe, gdy idea dostanie własny wątek rozmowy.'
+        : 'Typing directly in the rail will be possible once the idea has its own conversation thread.',
+      footerAction: onDiscussWithTeresa
+        ? {
+            label: isPolish ? 'Rozmawiaj z Teresą' : 'Discuss with Teresa',
+            icon: Sparkles,
+            onClick: onDiscussWithTeresa,
+          }
+        : undefined,
+    }),
+    [title, isPolish, teresaCommands, onDiscussWithTeresa]
+  );
+
+  if (artifactRailEnabled) {
+    // Sekcja „Historia" znika — bez zastosowania po wyniesieniu Teresy do
+    // ikony szyny (była tylko kontenerem na `teresaContent`, kanon mówi
+    // „lepiej brak niż pusty akordeon udający funkcję"). Kolejność
+    // pozostałych czterech sekcji zostaje 1:1 (pochodzi z tego samego
+    // `sections`, więc jedno źródło treści dla obu ścieżek).
+    const railArtifactSections = sections.filter((section) => section.id !== 'history');
+    return (
+      <ArtifactRightRail
+        title={title}
+        ariaLabel={isPolish ? 'Panel narzędzi idei' : 'Idea tools panel'}
+        artifact={{ sections: railArtifactSections }}
+        teresa={railTeresaMode}
+        typeModes={railTypeModes}
+        defaultModeId={defaultRailModeId}
+        panelWidth={width}
+        testId="idea-artifact-right-rail"
+      />
+    );
+  }
 
   return (
     <ArtifactRightPanel

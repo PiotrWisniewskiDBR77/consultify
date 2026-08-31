@@ -84,6 +84,7 @@ import {
 } from '../services/presentationDeckCollaboratorService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import {
+  buildDeckDocumentFromStructuredSlides,
   deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
   resolveDeckContentCoherence,
@@ -2318,11 +2319,20 @@ router.post(
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');
+    const deckDocument = buildDeckDocumentFromStructuredSlides({
+      deckId,
+      organizationId: orgId,
+      title,
+      theme: 'modern',
+      slides,
+      status: 'draft',
+      createdBy: userId,
+    });
     try {
       await ensureDeckLineageSchema();
       await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, version, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, version, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
@@ -2333,6 +2343,7 @@ router.post(
             templateArtifactId,
             canonicalTemplateId: resolved.canonicalTemplateId,
           }),
+          JSON.stringify(deckDocument),
         ]
       );
 

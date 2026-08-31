@@ -17,6 +17,7 @@ import React from 'react';
 
 import { DocumentStudioDocumentPanel } from '@/components/DocumentStudio/DocumentStudioDocumentPanel';
 import type { DocumentSchema } from '@/components/DocumentStudio/types';
+import { AppProviders } from '@/providers/AppProviders';
 
 const schema: DocumentSchema = {
   documentId: 'mock-doc-report-2',
@@ -67,9 +68,9 @@ const schema: DocumentSchema = {
           content: {
             items: [
               { label: 'Budżet wykorzystany', value: '62%', delta: '+8pp vs plan', trend: 'flat' },
-              { label: 'Kamienie milowe on-time', value: '5/6', trend: 'up' },
+              { label: 'Kamienie milowe na czas', value: '5/6', trend: 'up' },
               { label: 'Ryzyka otwarte', value: '2', delta: '-1 vs poprz. okres', trend: 'up' },
-              { label: 'Confidence', value: '78%', trend: 'up' },
+              { label: 'Poziom pewności', value: '78%', trend: 'up' },
             ],
           },
         },
@@ -213,17 +214,21 @@ const schema: DocumentSchema = {
 
 export default function DocumentArtifactScreen(): React.ReactElement {
   return (
-    <DocumentStudioDocumentPanel
-      artifactId={schema.artifactId}
-      schema={schema}
-      onStartOver={() => {
-        // eslint-disable-next-line no-console
-        console.log('[dev-render] onStartOver');
-      }}
-      onSchemaUpdated={(next) => {
-        // eslint-disable-next-line no-console
-        console.log('[dev-render] onSchemaUpdated', next);
-      }}
-    />
+    <AppProviders>
+      <div className="h-screen w-screen overflow-hidden bg-c-bg">
+        <DocumentStudioDocumentPanel
+          artifactId={schema.artifactId}
+          schema={schema}
+          onStartOver={() => {
+            // eslint-disable-next-line no-console
+            console.log('[dev-render] onStartOver');
+          }}
+          onSchemaUpdated={(next) => {
+            // eslint-disable-next-line no-console
+            console.log('[dev-render] onSchemaUpdated', next);
+          }}
+        />
+      </div>
+    </AppProviders>
   );
 }

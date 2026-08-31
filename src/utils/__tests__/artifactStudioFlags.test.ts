@@ -11,21 +11,22 @@ const storage = (values: Record<string, string> = {}) => ({
 
 describe('Artifact Studio rollout flags', () => {
   it('is fail-closed when no flags are configured', () => {
-    expect(isArtifactStudioLaneEnabled('presentation', {})).toBe(false);
+    // Tor `document` (Word) nie ma decyzji właściciela → nadal fail-closed.
+    expect(isArtifactStudioLaneEnabled('document', {})).toBe(false);
   });
 
   it('requires both the global and lane flag', () => {
     expect(
-      isArtifactStudioLaneEnabled('presentation', {
+      isArtifactStudioLaneEnabled('document', {
         storage: storage({ 'ff.artifact_studio': '1' }),
       })
     ).toBe(false);
 
     expect(
-      isArtifactStudioLaneEnabled('presentation', {
+      isArtifactStudioLaneEnabled('document', {
         storage: storage({
           'ff.artifact_studio': '1',
-          'ff.presentation_studio_v2': '1',
+          'ff.document_studio_v2': '1',
         }),
       })
     ).toBe(true);
@@ -45,11 +46,68 @@ describe('Artifact Studio rollout flags', () => {
 
   it('isolates lane enablement', () => {
     const source = {
-      query: new URLSearchParams('ff_artifactStudio=1&ff_documentStudioV2=1'),
+      query: new URLSearchParams('ff_documentStudioV2=0'),
     };
-    expect(isArtifactStudioLaneEnabled('document', source)).toBe(true);
-    expect(isArtifactStudioLaneEnabled('presentation', source)).toBe(false);
-    expect(isArtifactStudioLaneEnabled('spreadsheet', source)).toBe(false);
+    // Jawne `0` gasi WYŁĄCZNIE swój tor; dwa tory z decyzją właściciela
+    // (arkusz 2026-08-30, prezentacja 2026-08-30) zostają włączone.
+    expect(isArtifactStudioLaneEnabled('document', source)).toBe(false);
+    expect(isArtifactStudioLaneEnabled('presentation', source)).toBe(true);
+    expect(isArtifactStudioLaneEnabled('spreadsheet', source)).toBe(true);
+  });
+
+  it('★ WORD (tor `document`) zostaje wyłączony, choć arkusz i prezentacja są włączone', () => {
+    // ★ To jest bezpiecznik regresji WORDA. Gdyby ktoś przestawił domyślną
+    // wartość wspólnie dla wszystkich torów, `DocumentStudioDocumentPanel`
+    // (linia ~3549: `rightRailTools` zerowane w trybie warsztatu) wygasiłby
+    // prawy pas ikon — czyli zabrałby Wordowi panel, który właściciel uznaje
+    // za działający. Ten test ma paść, jeśli ktoś zrobi to hurtem.
+    expect(isArtifactStudioLaneEnabled('document', {})).toBe(false);
+    expect(isArtifactStudioLaneEnabled('spreadsheet', {})).toBe(true);
+    expect(isArtifactStudioLaneEnabled('presentation', {})).toBe(true);
+  });
+
+  it('★ PREZENTACJA włączona domyślnie — ale tylko razem z prawym panelem powłoki', () => {
+    // Warunek, który tę wartość uzasadnia, jest w KODZIE, nie w tym pliku:
+    // `DeckBuilderMelsView` musi podawać powłoce `artifactRightPanelSlot`.
+    // Bez niego `rightRailTools={[]}` + `aiEntrySlot` tylko przy torze OFF
+    // dawały prezentacji 0 px prawej powierzchni (zmierzone: 417 px → 0 px).
+    expect(isArtifactStudioLaneEnabled('presentation', {})).toBe(true);
+  });
+
+  it('keeps an explicit off switch for the presentation lane (przycisk cofania)', () => {
+    expect(
+      isArtifactStudioLaneEnabled('presentation', {
+        query: new URLSearchParams('ff_presentationStudioV2=0'),
+      })
+    ).toBe(false);
+    expect(
+      isArtifactStudioLaneEnabled('presentation', {
+        query: new URLSearchParams('ff_artifactStudio=0'),
+      })
+    ).toBe(false);
+    expect(
+      isArtifactStudioLaneEnabled('presentation', {
+        env: { VITE_PRESENTATION_STUDIO_V2: 'false' },
+      })
+    ).toBe(false);
+  });
+
+  it('keeps an explicit off switch for the spreadsheet lane (przycisk cofania)', () => {
+    expect(
+      isArtifactStudioLaneEnabled('spreadsheet', {
+        query: new URLSearchParams('ff_spreadsheetStudioV2=0'),
+      })
+    ).toBe(false);
+    expect(
+      isArtifactStudioLaneEnabled('spreadsheet', {
+        query: new URLSearchParams('ff_artifactStudio=0'),
+      })
+    ).toBe(false);
+    expect(
+      isArtifactStudioLaneEnabled('spreadsheet', {
+        env: { VITE_SPREADSHEET_STUDIO_V2: 'false' },
+      })
+    ).toBe(false);
   });
 
   it('reports flag provenance without exposing raw values', () => {

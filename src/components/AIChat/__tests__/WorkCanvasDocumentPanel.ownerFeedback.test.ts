@@ -28,12 +28,13 @@ describe('WorkCanvasDocumentPanel owner feedback', () => {
     }
   });
 
-  it('puts the Rich, DOC and MD switcher directly in the Canvas bar without menu duplicates', () => {
+  it('puts the localized view switcher directly in the Canvas bar without menu duplicates', () => {
     expect(source).toContain('<CanvasViewModeControl mode={mode} onModeChange={setMode} />');
     expect(viewControlSource).toContain('data-testid="canvas-direct-view-switcher"');
-    expect(viewControlSource).toContain("['rich', 'Rich']");
-    expect(viewControlSource).toContain("['document', 'DOC']");
-    expect(viewControlSource).toContain("['md', 'MD']");
+    expect(viewControlSource).toContain("['rich', 'canvas.viewMode.rich', 'Editor']");
+    expect(viewControlSource).toContain("['document', 'canvas.viewMode.document', 'Document']");
+    expect(viewControlSource).toContain("['md', 'canvas.viewMode.markdown', 'Markdown']");
+    expect(viewControlSource).toContain("t('canvas.viewMode.ariaLabel', 'Canvas view')");
     expect(source).not.toContain('data-testid="canvas-view-actions"');
     expect(source).not.toContain('Switch Rich/Dock/MD view');
     expect(source).not.toContain('Edit Markdown manually');

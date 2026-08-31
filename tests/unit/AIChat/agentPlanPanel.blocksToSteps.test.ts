@@ -204,7 +204,7 @@ describe('AgentPlanPanel.blocksToSteps (AGT-008 — klocek niesie wybrane narzę
 
     const [block] = stepsToBlocks([step]);
 
-    expect(block.name).toBe('Szukaj w wiedzy');
+    expect(block.name).toBe('Search knowledge');
     expect(block.toolName).toBe('search_knowledge_base');
   });
 

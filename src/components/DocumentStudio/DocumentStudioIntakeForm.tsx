@@ -110,6 +110,14 @@ const GOAL_OPTIONS: { value: DocumentGoal; label: string }[] = [
   { value: 'align', label: 'Align stakeholders' },
 ];
 
+/**
+ * Mikro-etykieta sekcji formularza — ten sam wzorzec, co `TEXT_L1`
+ * (`src/styles/typography.ts`) i co nagłówki bloków na kartach narzędzi.
+ * Trzymane lokalnie jako string, żeby nie ciągnąć zależności do formularza,
+ * który poza tym nic ze stylów wspólnych nie importuje.
+ */
+const SECTION_LABEL = 'text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted';
+
 export interface IntakeSubmitOptions {
   useLlm: boolean;
   templateId?: string | null;
@@ -321,7 +329,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             ref={templatePickerRef}
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
-            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="truncate rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="">
               {t(
@@ -349,8 +357,8 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       ) : null}
 
       {selectedTemplate && selectedTemplate.requiredInputs.length > 0 ? (
-        <div className="rounded-lg border border-sky-300/50 bg-sky-50 px-3 py-2 text-sm dark:border-sky-400/30 dark:bg-sky-500/5">
-          <div className="font-medium text-sky-900 dark:text-sky-200">
+        <div className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm">
+          <div className="font-medium text-c-text">
             {t(
               'documentStudio.intake.requiredSourcesTitle',
               'This template requires the following sources before it can generate'
@@ -381,7 +389,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
                         },
                       }))
                     }
-                    className="rounded-md border border-sky-300 bg-c-surface px-2 py-1"
+                    className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                   >
                     <option value="text">{t('documentStudio.intake.sourceText', 'Text')}</option>
                     <option value="url">{t('documentStudio.intake.sourceUrl', 'URL')}</option>
@@ -406,7 +414,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
                       'documentStudio.intake.requiredSourcePlaceholder',
                       'Paste content, URL, or an existing attachment ID'
                     )}
-                    className="rounded-md border border-sky-300 bg-c-surface px-2 py-1"
+                    className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                   />
                 </div>
               </li>
@@ -418,7 +426,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       {currentOrganization?.name ? (
         <div
           data-testid="docstudio-intake-context-chip"
-          className="flex items-center gap-1.5 self-start rounded-full border border-slate-200/60 bg-c-surface-raised px-3 py-1 text-xs text-c-text-secondary dark:border-white/[0.06]"
+          className="flex items-center gap-1.5 self-start rounded-full border border-c-border-subtle bg-c-surface-raised px-3 py-1 text-xs text-c-text-secondary"
         >
           <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span>
@@ -430,10 +438,31 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
         </div>
       ) : null}
 
+      {/*
+        GRUPOWANIE (odbiór właściciela 2026-08-30: „w wielu miejscach można
+        poprawić je na ładniejszy styl"). PRZED: dziewięć kontrolek stało w jednym
+        płaskim stosie, każda z etykietą o tej samej wadze — formularz nie miał
+        żadnej hierarchii i nie było widać, gdzie kończy się brief, a zaczynają
+        parametry. PO: dwie mikro-etykiety sekcji tym samym wzorcem, którego używa
+        cała aplikacja (11 px, wersaliki, tracking) — struktura bez ozdobnika.
+      */}
+      <div className={`${SECTION_LABEL} pt-2`}>
+        {t('documentStudio.intake.sectionBrief', 'Brief')}
+      </div>
+
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-c-text">
           {t('documentStudio.intake.descriptionLabel', 'Description')}{' '}
-          <span className="text-danger-500">*</span>
+          {/*
+            KANON (CLAUDE.md §3, odbiór 2026-08-30): crimson/danger WYŁĄCZNIE
+            dla semantyki krytycznej. Czerwona gwiazdka przy polu obowiązkowym
+            to ozdobnik konwencji, nie alarm — i była jedynym czerwonym pikselem
+            na całym ekranie, więc ściągała wzrok na etykietę zamiast na treść.
+            Zastąpione neutralnym słowem: czytelniejsze i zgodne z regułą.
+          */}
+          <span className="text-xs font-normal text-c-text-muted">
+            ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+          </span>
         </span>
         <textarea
           data-testid="docstudio-intake-input"
@@ -444,7 +473,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intake.descriptionPlaceholder',
             'e.g., Prepare an interview summary report for the client board: scope, key findings, risks, recommendations.'
           )}
-          className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           required
           minLength={10}
         />
@@ -462,9 +491,13 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intake.titlePlaceholder',
             'Auto-derived from description if empty'
           )}
-          className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
       </label>
+
+      <div className={`${SECTION_LABEL} pt-2`}>
+        {t('documentStudio.intake.sectionFormat', 'Format i odbiorcy')}
+      </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
@@ -474,7 +507,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey | '')}
-            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="truncate rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {DOCUMENT_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -491,7 +524,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="truncate rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="pl">{t('documentStudio.intake.languagePolish', 'Polish')}</option>
             <option value="en">{t('documentStudio.intake.languageEnglish', 'English')}</option>
@@ -505,7 +538,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={density}
             onChange={(e) => setDensity(e.target.value as DocumentDensity)}
-            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="truncate rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {DENSITY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -522,7 +555,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value as DocumentGoal)}
-            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="truncate rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {GOAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -545,12 +578,12 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intakeForm.audiencePlaceholder',
             'e.g., CEO, CFO, Transformation Officer'
           )}
-          className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
       </label>
 
       {!inTemplateMode ? (
-        <label className="flex items-start gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm">
+        <label className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm">
           <input
             type="checkbox"
             checked={useLlm}
@@ -583,7 +616,23 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
         </div>
       ) : null}
 
-      <div className="flex items-center justify-end gap-2 pt-2">
+      {/*
+        JĘZYK UCZCIWOŚCI (docs/program/grafika/00_ZASADY_PRACY.md, „Wzorzec
+        wizualny"). PRZED: przycisk stał wyszarzony sam w prawym rogu, lewa połowa
+        rzędu była pusta, a powód blokady nie był nigdzie napisany — użytkownik
+        widział martwą kontrolkę i musiał sam zgadnąć, czego brakuje. PO: warunek
+        wejścia jest nazwany wprost, dokładnie ten, który sprawdza `isValid`
+        (`description.trim().length >= 10`), i znika, gdy zostaje spełniony.
+      */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+        <span className="text-xs text-c-text-muted">
+          {!loading && description.trim().length < 10
+            ? t(
+                'documentStudio.intake.blockedReason',
+                'Aby zaplanować dokument, opisz go w co najmniej 10 znakach.'
+              )
+            : ''}
+        </span>
         <Button
           type="submit"
           variant="primary"

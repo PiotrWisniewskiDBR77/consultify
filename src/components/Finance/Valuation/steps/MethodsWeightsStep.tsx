@@ -29,6 +29,7 @@ export interface MethodsWeightsStepProps {
   } | null;
   onCreateMethod: (methodType: ValuationMethodType) => Promise<void>;
   onSaveBasket: (updates: ValuationBasketUpdate[]) => Promise<void>;
+  currency: string | null;
 }
 
 interface DraftRow {
@@ -46,7 +47,7 @@ function toDraftRows(methods: readonly ValuationMethodDto[]): DraftRow[] {
 }
 
 export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactElement {
-  const { methodsData, onCreateMethod, onSaveBasket } = props;
+  const { methodsData, onCreateMethod, onSaveBasket, currency } = props;
   const [draftRows, setDraftRows] = useState<DraftRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -121,6 +122,7 @@ export function MethodsWeightsStep(props: MethodsWeightsStepProps): React.ReactE
                   <ValuationValueCell
                     status={m.result.status}
                     valueDecimal={m.result.valueDecimal}
+                    unitSuffix={currency ?? undefined}
                   />
                 </td>
                 <td className="py-1.5 pr-2">

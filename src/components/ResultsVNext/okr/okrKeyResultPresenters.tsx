@@ -77,6 +77,7 @@ export function buildOkrKeyResultColumns(isPolish: boolean, parentSetStatus: str
       align: 'right',
       render: (row: OkrKeyResultDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrNumericField(row.currentValue)}
           align="right"
           format={(v) => <span className="tabular-nums text-sm text-c-text">{formatOkrNumeric(v, isPolish, row.unit)}</span>}
@@ -90,6 +91,7 @@ export function buildOkrKeyResultColumns(isPolish: boolean, parentSetStatus: str
       align: 'right',
       render: (row: OkrKeyResultDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrNumericField(row.targetValue)}
           align="right"
           format={(v) => <span className="tabular-nums text-sm text-c-text-secondary">{formatOkrNumeric(v, isPolish, row.unit)}</span>}
@@ -103,6 +105,7 @@ export function buildOkrKeyResultColumns(isPolish: boolean, parentSetStatus: str
       align: 'right',
       render: (row: OkrKeyResultDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrKeyResultProgress(row.progress, row.progressCalcReason)}
           align="right"
           notCalculableReason={row.progressCalcReason ?? undefined}
@@ -217,6 +220,7 @@ export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResul
       label: isPolish ? 'Wartość bazowa' : 'Baseline value',
       value: (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrNumericField(row.baselineValue)}
           format={(v) => formatOkrNumeric(v, isPolish, row.unit)}
         />
@@ -225,17 +229,17 @@ export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResul
     {
       id: 'startValue',
       label: isPolish ? 'Wartość startowa' : 'Start value',
-      value: <HonestValueCell value={parseOkrNumericField(row.startValue)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
+      value: <HonestValueCell isPolish={isPolish} value={parseOkrNumericField(row.startValue)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
     },
     {
       id: 'currentValue',
       label: isPolish ? 'Wartość bieżąca' : 'Current value',
-      value: <HonestValueCell value={parseOkrNumericField(row.currentValue)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
+      value: <HonestValueCell isPolish={isPolish} value={parseOkrNumericField(row.currentValue)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
     },
     {
       id: 'targetValue',
       label: isPolish ? 'Wartość docelowa' : 'Target value',
-      value: <HonestValueCell value={parseOkrNumericField(row.targetValue)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
+      value: <HonestValueCell isPolish={isPolish} value={parseOkrNumericField(row.targetValue)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
     },
   ];
 
@@ -244,19 +248,19 @@ export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResul
       {
         id: 'rangeMin',
         label: isPolish ? 'Zakres — min' : 'Range — min',
-        value: <HonestValueCell value={parseOkrNumericField(row.rangeMin)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
+        value: <HonestValueCell isPolish={isPolish} value={parseOkrNumericField(row.rangeMin)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
       },
       {
         id: 'rangeMax',
         label: isPolish ? 'Zakres — max' : 'Range — max',
-        value: <HonestValueCell value={parseOkrNumericField(row.rangeMax)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
+        value: <HonestValueCell isPolish={isPolish} value={parseOkrNumericField(row.rangeMax)} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
       },
       {
         id: 'outOfRangeDistance',
         label: isPolish ? 'Odległość poza zakresem' : 'Out-of-range distance',
         // `0` here is a REAL calculated value ("in-range" — okrProgressEngine.ts
         // L156-160), never treated as a missing value.
-        value: <HonestValueCell value={outOfRangeDistance} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
+        value: <HonestValueCell isPolish={isPolish} value={outOfRangeDistance} format={(v) => formatOkrNumeric(v, isPolish, row.unit)} />,
       }
     );
   }
@@ -267,6 +271,7 @@ export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResul
       label: isPolish ? 'Postęp' : 'Progress',
       value: (
         <HonestValueCell
+          isPolish={isPolish}
           value={progress}
           notCalculableReason={row.progressCalcReason ?? undefined}
           format={(v) => formatOkrProgressPercent(v, isPolish)}
@@ -278,7 +283,7 @@ export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResul
       label: isPolish ? 'Pewność' : 'Confidence',
       value: row.confidence ? okrKeyResultConfidenceLabel(row.confidence, isPolish) : '—',
     },
-    { id: 'weight', label: isPolish ? 'Waga' : 'Weight', value: <HonestValueCell value={parseOkrNumericField(row.weight)} format={(v) => formatOkrNumeric(v, isPolish)} /> },
+    { id: 'weight', label: isPolish ? 'Waga' : 'Weight', value: <HonestValueCell isPolish={isPolish} value={parseOkrNumericField(row.weight)} format={(v) => formatOkrNumeric(v, isPolish)} /> },
     { id: 'sourceType', label: isPolish ? 'Źródło' : 'Source', value: okrKeyResultSourceTypeLabel(row.sourceType, isPolish) },
     { id: 'sourceReference', label: isPolish ? 'Odniesienie źródła' : 'Source reference', value: row.sourceReference ?? '—' },
     { id: 'createdAt', label: isPolish ? 'Utworzono' : 'Created', value: formatOkrDate(row.createdAt, isPolish) },

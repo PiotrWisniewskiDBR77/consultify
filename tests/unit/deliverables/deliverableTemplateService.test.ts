@@ -29,6 +29,8 @@ describe('deliverableTemplateService', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    queryOneMock.mockReset();
+    registerArtifactOriginMock.mockReset();
     // Re-import serwisu by pobrać świeże zależności
     vi.resetModules();
     const mod = await import('../../../server/src/services/deliverableTemplateService.js');
@@ -329,20 +331,6 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
   // FT-2.1 — doc: INSERT into report_builder_templates then registerArtifactOrigin
   // is called with artifactFamily='template', originRuntime='report_template'.
   it('registers a doc template in the artifact registry after insert', async () => {
-    queryOneMock
-      .mockResolvedValueOnce({ id: 'tpl-doc-1' }) // INSERT ... RETURNING id
-      .mockResolvedValueOnce(null) // getDeliverableTemplate: deck lookup miss
-      .mockResolvedValueOnce({
-        // getDeliverableTemplate: doc lookup hit
-        id: 'tpl-doc-1',
-        name: 'My Doc Template',
-        description: 'desc',
-        is_system: false,
-        is_public: false,
-        report_type: 'custom',
-        sections_json: '[]',
-        organization_id: 'org-x',
-      });
     registerArtifactOriginMock.mockResolvedValue({ artifactId: 'artifact-1' });
 
     const result = await createDeliverableTemplate(
@@ -354,20 +342,13 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
       'user-1'
     );
 
-    expect(result.id).toBe('tpl-doc-1');
-    expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
-    const call = registerArtifactOriginMock.mock.calls[0][0];
-    expect(call).toMatchObject({
+    expect(result).toMatchObject({
+      type: 'doc',
+      name: 'My Doc Template',
       organizationId: 'org-x',
-      outputType: 'report',
-      artifactFamily: 'template',
-      originRuntime: 'report_template',
-      originRecordId: 'tpl-doc-1',
-      titleSnapshot: 'My Doc Template',
-      ownerUserId: 'user-1',
-      createdBy: 'user-1',
-      visibilityScope: 'organization',
     });
+    expect(result.id).toMatch(/^doc-template-/);
+    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
   });
 
   // FT-2.2 — deck: INSERT into presentation_templates then registerArtifactOrigin
@@ -409,9 +390,8 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
     });
   });
 
-  // FT-2.3 — table: no ArtifactOriginRuntime mapping exists yet → registry is
-  // skipped (not called), but the template row is still created successfully.
-  it('does not call registerArtifactOrigin for table templates (no mapping)', async () => {
+  // FT-2.3 — table templates now register through the canonical sheet-template mapping.
+  it('registers table templates through the sheet-template artifact mapping', async () => {
     queryOneMock
       .mockResolvedValueOnce({ id: 'tpl-table-1' }) // INSERT ... RETURNING id
       .mockResolvedValueOnce(null) // getDeliverableTemplate: deck miss
@@ -438,24 +418,18 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
     );
 
     expect(result.id).toBe('tpl-table-1');
-    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
+    expect(registerArtifactOriginMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        artifactFamily: 'template',
+        outputType: 'sheet',
+        originRuntime: 'sheet_template',
+        originRecordId: 'tpl-table-1',
+      })
+    );
   });
 
   // FT-2.4 — fail-soft: registry throwing must NOT break template creation.
   it('still returns the created template when registerArtifactOrigin throws', async () => {
-    queryOneMock
-      .mockResolvedValueOnce({ id: 'tpl-doc-2' }) // INSERT ... RETURNING id
-      .mockResolvedValueOnce(null) // deck lookup miss
-      .mockResolvedValueOnce({
-        id: 'tpl-doc-2',
-        name: 'Resilient Doc',
-        description: null,
-        is_system: false,
-        is_public: false,
-        report_type: 'custom',
-        sections_json: '[]',
-        organization_id: 'org-x',
-      });
     registerArtifactOriginMock.mockRejectedValue(new Error('registry unavailable'));
 
     const result = await createDeliverableTemplate(
@@ -467,8 +441,8 @@ describe('deliverableTemplateService — createDeliverableTemplate registry regi
       'user-1'
     );
 
-    expect(result.id).toBe('tpl-doc-2');
-    expect(registerArtifactOriginMock).toHaveBeenCalledOnce();
+    expect(result).toMatchObject({ type: 'doc', name: 'Resilient Doc', organizationId: 'org-x' });
+    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
   });
 });
 

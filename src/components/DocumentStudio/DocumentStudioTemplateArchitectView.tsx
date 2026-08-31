@@ -387,11 +387,19 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       templates.map((template) => ({
         id: template.templateId,
         name: template.name,
-        documentType: template.documentType.replace(/_/g, ' '),
+        // GRAFIKA (2026-08-30): był surowy enum po .replace('_',' ')
+        // ("steering committee report") — kanon zakazuje nieprzetłumaczonych
+        // enumów w UI. `documentTypeOptions` ma już tłumaczone etykiety dla
+        // każdej wartości `documentType` (public/locales/pl/translation.json,
+        // documentStudio.docType.*) — używamy tego samego mapowania co
+        // dropdown „Typ dokumentu" zamiast wyświetlać klucz wprost.
+        documentType:
+          documentTypeOptions.find((opt) => opt.value === template.documentType)?.label ||
+          template.documentType.replace(/_/g, ' '),
         meta: `v${template.version} · ${template.sectionBlueprint.length}`,
         status: template.status,
       })),
-    [templates]
+    [templates, documentTypeOptions]
   );
 
   const getRowActions = (row: TableRow): RowAction[] => {
@@ -677,7 +685,16 @@ export const DocumentStudioTemplateArchitectView: React.FC<
           <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
             <span className="font-medium text-c-text">
               {t('documentStudio.templateArchitect.purpose', 'Purpose')}{' '}
-              <span className="text-danger-500">*</span>
+              {/*
+                KANON (CLAUDE.md §3, odbiór 2026-08-30): crimson/danger WYŁĄCZNIE
+                dla semantyki krytycznej. Ta sama poprawka co
+                `DocumentStudioIntakeForm.tsx` (odbiór 2026-08-30) — czerwona
+                gwiazdka przy polu obowiązkowym to ozdobnik konwencji, nie alarm.
+                Zastąpione tym samym neutralnym wzorcem „(wymagane)".
+              */}
+              <span className="text-xs font-normal text-c-text-muted">
+                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+              </span>
             </span>
             <textarea
               value={purpose}
@@ -840,13 +857,13 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             ) : null}
             {showHistory ? (
               <div className="lg:col-span-2 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
-                <div className="font-semibold text-c-text">Version history</div>
+                <div className="font-semibold text-c-text">Historia wersji</div>
                 <ol className="mt-2 space-y-1 text-c-text-secondary">
                   {auditEntries.map((entry) => (
                     <li key={entry.auditId} className="flex items-center justify-between gap-3">
                       <span>
                         {entry.action.replace(/_/g, ' ')} ·{' '}
-                        {new Date(entry.occurredAt).toLocaleString()}
+                        {new Date(entry.occurredAt).toLocaleString('pl-PL')}
                       </span>
                       {entry.details?.templateSnapshot ? (
                         <span className="flex gap-2">
@@ -868,14 +885,14 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                           </Button>
                         </span>
                       ) : (
-                        <span className="text-xs">Snapshot unavailable</span>
+                        <span className="text-xs">Podgląd wersji jest niedostępny</span>
                       )}
                     </li>
                   ))}
                 </ol>
                 {comparedSnapshot ? (
                   <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
-                    <div className="font-semibold text-c-text">Snapshot comparison</div>
+                    <div className="font-semibold text-c-text">Porównanie wersji</div>
                     <dl className="mt-2 grid gap-1 text-xs">
                       <div>
                         Sections:{' '}

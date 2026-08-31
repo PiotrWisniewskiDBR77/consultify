@@ -1,8 +1,16 @@
 /**
  * AreaMatrixTable Component
  *
- * Displays a comprehensive matrix of 9 business areas × 7 maturity levels
- * for a specific DRD axis. Shows current state, target state, and gaps.
+ * Siatka DWUWYMIAROWA dla jednej osi DRD: kolumny = obszary, wiersze = poziomy
+ * dojrzałości (najwyższy u góry). Komórka pokazuje stan obecny (●) i docelowy
+ * (○). Pod siatką wiersze podsumowań: Aktualny / Docelowy / Luka / Priorytet.
+ *
+ * DOMYŚLNIE rysuje 9 sztywnych obszarów funkcyjnych × 7 poziomów
+ * (`BUSINESS_AREAS` / `MATURITY_LEVELS` poniżej) — to pasuje wyłącznie do osi 1.
+ * Osie 2..7 mają PIĘĆ obszarów i 5/6/7 poziomów, dlatego kolumny i wiersze da
+ * się podać propsami `areas` / `levels` z jedynego źródła prawdy
+ * (`src/services/drdStructure.ts`). Bez propsów zachowanie jest identyczne jak
+ * przed ich dodaniem.
  *
  * Based on BCG/McKinsey report standards.
  */
@@ -50,6 +58,26 @@ export interface AreaAssessment {
   intervieweeRole?: string;
 }
 
+/**
+ * Kolumna macierzy (obszar). Kształt zgodny z `BUSINESS_AREAS`.
+ */
+export interface MatrixAreaDef {
+  id: string;
+  name: string;
+  namePl: string;
+  icon?: string;
+}
+
+/**
+ * Wiersz macierzy (poziom dojrzałości). Kształt zgodny z `MATURITY_LEVELS`.
+ */
+export interface MatrixLevelDef {
+  level: number;
+  name: string;
+  namePl: string;
+  color: string;
+}
+
 interface AreaMatrixTableProps {
   axisId: string;
   axisName: string;
@@ -58,6 +86,20 @@ interface AreaMatrixTableProps {
   onAreaClick?: (areaId: string) => void;
   language?: 'pl' | 'en';
   showAnimation?: boolean;
+  /**
+   * Kolumny macierzy. DOMYŚLNIE `BUSINESS_AREAS` (9 sztywnych obszarów
+   * funkcyjnych) — czyli zachowanie sprzed wprowadzenia tego propa jest
+   * niezmienione. Przekazanie własnej listy pozwala nakarmić komponent
+   * jedynym źródłem prawdy (`src/services/drdStructure.ts` → `axis.areas`),
+   * bo osie DRD 2..7 mają PIĘĆ obszarów, nie dziewięć.
+   */
+  areas?: readonly MatrixAreaDef[];
+  /**
+   * Wiersze macierzy. DOMYŚLNIE `MATURITY_LEVELS` (7 sztywnych poziomów).
+   * Osie DRD mają 7, 6 albo 5 poziomów (`axis.levelCount`), więc bez tego
+   * propa macierz rysuje wiersze nieistniejące dla danej osi.
+   */
+  levels?: readonly MatrixLevelDef[];
 }
 
 // ============================================================================
@@ -72,6 +114,8 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
   onAreaClick,
   language = 'pl',
   showAnimation = true,
+  areas = BUSINESS_AREAS,
+  levels = MATURITY_LEVELS,
 }) => {
   const { t } = useTranslation();
   const isPolish = language === 'pl';
@@ -171,7 +215,9 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             </span>
           </div>
           <div className="summary-card">
-            <span className="summary-value">{stats.assessed}/9</span>
+            <span className="summary-value">
+              {stats.assessed}/{areas.length}
+            </span>
             <span className="summary-label">
               {t('reports.areaMatrixTable.assessedLabel', 'Assessed')}
             </span>
@@ -187,22 +233,22 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
           <thead>
             <tr>
               <th className="level-header">{t('reports.areaMatrixTable.levelLabel', 'Level')}</th>
-              {BUSINESS_AREAS.map((area) => (
+              {areas.map((area) => (
                 <th
                   key={area.id}
                   className="area-header"
                   onClick={() => onAreaClick?.(area.id)}
                   style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
                 >
-                  <span className="area-icon">{area.icon}</span>
+                  {area.icon ? <span className="area-icon">{area.icon}</span> : null}
                   <span className="area-name">{isPolish ? area.namePl : area.name}</span>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {/* Level rows (7 to 1) */}
-            {MATURITY_LEVELS.map((levelInfo) => (
+            {/* Wiersze = poziomy dojrzałości, malejąco (najwyższy u góry) */}
+            {levels.map((levelInfo) => (
               <motion.tr key={levelInfo.level} variants={cellVariants}>
                 <td
                   className="level-cell"
@@ -214,7 +260,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                   <span className="level-number">{levelInfo.level}.</span>
                   <span className="level-name">{isPolish ? levelInfo.namePl : levelInfo.name}</span>
                 </td>
-                {BUSINESS_AREAS.map((area) => {
+                {areas.map((area) => {
                   const assessment = getAreaAssessment(area.id);
                   const isCurrent = assessment?.currentLevel === levelInfo.level;
                   const isTarget = assessment?.targetLevel === levelInfo.level;
@@ -238,7 +284,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
 
             {/* Separator */}
             <tr className="separator-row">
-              <td colSpan={10}></td>
+              <td colSpan={areas.length + 1}></td>
             </tr>
 
             {/* Summary rows */}
@@ -246,7 +292,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               <td className="summary-label-cell">
                 {t('reports.areaMatrixTable.currentLabel', 'Current')}
               </td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 return (
                   <td key={`current-${area.id}`} className="summary-value-cell current">
@@ -259,7 +305,7 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               <td className="summary-label-cell">
                 {t('reports.areaMatrixTable.targetLabel', 'Target')}
               </td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
                 const assessment = getAreaAssessment(area.id);
                 return (
                   <td key={`target-${area.id}`} className="summary-value-cell target">
@@ -270,16 +316,25 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
             </tr>
             <tr className="summary-row gap-row">
               <td className="summary-label-cell">{t('reports.areaMatrixTable.gapLabel', 'Gap')}</td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
+                // ★ Luka LICZONA TYLKO Z ZMIERZONEGO STANU. `currentLevel === 0`
+                // znaczy w tym komponencie „nieocenione" (tak samo liczy
+                // `stats` wyżej: `filter(a => a.currentLevel > 0)`), a mimo to
+                // wiersz luki brał 0 jako pomiar i drukował np. „+3 ·
+                // Krytyczny" dla obszaru, którego NIKT nie ocenił — czyli
+                // wymyślał wniosek z zera. Dokładnie ten kształt fałszu
+                // opisano w `docs/program/grafika/RAPORT_OCENY_STAN.md`
+                // („kłamie: 0/7 → luka 0"). Brak pomiaru = „-".
                 const assessment = getAreaAssessment(area.id);
-                const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
+                const measured = !!assessment && assessment.currentLevel > 0;
+                const gap = measured ? assessment.targetLevel - assessment.currentLevel : 0;
                 return (
                   <td
                     key={`gap-${area.id}`}
                     className="summary-value-cell gap"
-                    style={{ color: getGapColor(gap) }}
+                    style={{ color: measured ? getGapColor(gap) : undefined }}
                   >
-                    {assessment ? (gap > 0 ? `+${gap}` : gap) : '-'}
+                    {measured ? (gap > 0 ? `+${gap}` : gap) : '-'}
                   </td>
                 );
               })}
@@ -288,19 +343,23 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
               <td className="summary-label-cell">
                 {t('reports.areaMatrixTable.priorityLabel', 'Priority')}
               </td>
-              {BUSINESS_AREAS.map((area) => {
+              {areas.map((area) => {
+                // Priorytet wyprowadzony z luki — więc dokładnie ta sama
+                // bramka „zmierzone czy nie" co w wierszu luki wyżej.
                 const assessment = getAreaAssessment(area.id);
-                const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
+                const measured = !!assessment && assessment.currentLevel > 0;
+                const gap = measured ? assessment.targetLevel - assessment.currentLevel : 0;
                 return (
                   <td
                     key={`priority-${area.id}`}
                     className="summary-value-cell priority"
-                    style={{
-                      background: `${getGapColor(gap)}15`,
-                      color: getGapColor(gap),
-                    }}
+                    style={
+                      measured
+                        ? { background: `${getGapColor(gap)}15`, color: getGapColor(gap) }
+                        : undefined
+                    }
                   >
-                    {assessment ? getPriorityLabel(gap) : '-'}
+                    {measured ? getPriorityLabel(gap) : '-'}
                   </td>
                 );
               })}
@@ -600,6 +659,73 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                         box-shadow: none;
                         border: 1px solid #e5e7eb;
                     }
+                }
+
+                /* ── TRYB CIEMNY (2026-08-30) ───────────────────────────────
+                   Ten komponent miał wpisane na sztywno „background: white"
+                   i jasne tła komórek, bez ANI JEDNEJ reguły dark — dopóki
+                   jego jedynym wołaczem był martwy barrel, nikt tego nie
+                   zobaczył. Od kiedy macierz wchodzi na slajd prezentacji
+                   z oceny, ekran musi być odbierany w obu motywach (kanon
+                   odbioru: dark + light), więc biały prostokąt na ciemnym
+                   tle jest defektem, nie detalem.
+                   Strategia tailwind w tym repo to darkMode: 'class'
+                   (.dark na <html>), dlatego selektory schodzą stąd —
+                   :global nie działa w zwykłym &lt;style&gt;, więc używamy
+                   pełnej ścieżki .dark .... Kolory sygnałowe (niebieski
+                   stan obecny, zielony cel, rampa poziomów) zostają
+                   nietknięte: to semantyka macierzy, nie ozdoba. */
+                .dark .area-matrix-container {
+                    background: var(--c-surface, #0f172a);
+                    box-shadow: none;
+                    border: 1px solid var(--c-border-subtle, #1e293b);
+                }
+
+                .dark .matrix-title h3 {
+                    color: var(--c-text, #e2e8f0);
+                }
+
+                .dark .summary-card {
+                    background: var(--c-surface-raised, #1e293b);
+                }
+
+                .dark .summary-card .summary-label,
+                .dark .matrix-legend {
+                    color: var(--c-text-muted, #94a3b8);
+                }
+
+                .dark .matrix-table th,
+                .dark .matrix-table td {
+                    border-color: var(--c-border-subtle, #334155);
+                    color: var(--c-text, #e2e8f0);
+                }
+
+                .dark .level-header,
+                .dark .area-header,
+                .dark .separator-row td {
+                    background: #312e81;
+                    color: #f8fafc;
+                }
+
+                .dark .area-header:hover {
+                    background: #3730a3;
+                }
+
+                .dark .matrix-cell:hover {
+                    background: rgba(148, 163, 184, 0.12);
+                }
+
+                .dark .summary-label-cell {
+                    background: var(--c-surface-raised, #1e293b);
+                }
+
+                .dark .matrix-legend,
+                .dark .legend-separator {
+                    border-top-color: var(--c-border-subtle, #334155);
+                }
+
+                .dark .legend-separator {
+                    color: var(--c-border, #475569);
                 }
             `}</style>
     </motion.div>

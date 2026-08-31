@@ -21,15 +21,56 @@
  * kontrakt (sheetIndex/rowIndex/columnKey/value|formula) pasuje do klienta.
  *
  * URL: ?screen=excele-edytowalna-siatka&theme=light|dark&lang=pl
- *      &ff_excele_edit=1   ← WYMAGANE, żeby zobaczyć edytowalną siatkę zamiast
- *                             starej tabeli tylko-do-odczytu (flaga domyślnie OFF)
+ *      &ff_excele_edit=1   ← historycznie WYMAGANE; DZIŚ już nie ma znaczenia
+ *                             (patrz notatka niżej).
+ *
+ * ★ USTALENIE (grafika 2026-08-31, przy naprawie "przyrząd zasłania produkt"):
+ * ten opis i `&ff_excele_edit=1` są STALE. `ff_excele_edit`/`EditableSpreadsheetGrid`
+ * żyją WYŁĄCZNIE w starej ścieżce `KimiWorkspaceShell` (`ExceleView.tsx`).
+ * Ale ten sam plik od 2026-08-30 wymusza `ff.artifact_studio`+`ff.spreadsheet_studio_v2`
+ * — a tor `spreadsheet` ma od 2026-08-30 DOMYŚLNIE `true`
+ * (`src/utils/artifactStudioFlags.ts` LANE_DEFAULT_ENABLED, decyzja właściciela
+ * "to co jest — włączyć i wypolerować"). Przy reopen istniejącego skoroszytu
+ * (`effectivePreview?.type === 'xlsx' && effectiveWorkbookId`) `ExceleView.tsx`
+ * renderuje wtedy `SpreadsheetArtifactStudio` (2560 linii, WŁASNY
+ * `EditableSpreadsheetGrid` bez gate'a na `ff_excele_edit` i WŁASNY
+ * `ArtifactRightPanel` zamiast `ExceleRightRail`) — `KimiWorkspaceShell`
+ * (jedyne miejsce, gdzie `ff_excele_edit` cokolwiek zmienia) jest w tej ścieżce
+ * NIEOSIĄGALNY. To dlatego ten zrzut i `excele-prawy-panel-standard.tsx`
+ * (identyczny model WORKBOOK) wychodzą bajt w bajt identyczne — i to jest
+ * ZGODNE ze stanem realnego produktu, nie błąd narzędzia zrzutowego. Naprawiać
+ * nie ma czego: to jest właściwy stan dzisiejszy.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+
 import { ExceleView } from '@/components/AIChat/KimiWorkspace/ExceleView';
 import { Api } from '@/services/api';
+
+/**
+ * ★ WŁĄCZONE NA PROŚBĘ WŁAŚCICIELA (2026-08-30): ten harness startuje z WŁĄCZONYM
+ * pełnym warsztatem (`ff_artifactStudio` + tor arkusza/prezentacji).
+ *
+ * UWAGA — to NIE jest to, co widzi dziś użytkownik. Domyślnie obie flagi są
+ * wyłączone i produkt pokazuje okrojoną wersję. Tu włączamy je celowo, żeby
+ * właściciel mógł kliknąć warsztat, zanim zdecydujemy o włączeniu na stałe.
+ * Żeby zobaczyć stan dzisiejszy: dopisz `&ff_artifactStudio=0` do adresu.
+ */
+if (typeof window !== 'undefined') {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('ff_artifactStudio') !== '0') {
+    try {
+      window.localStorage.setItem('ff.artifact_studio', '1');
+      window.localStorage.setItem('ff.spreadsheet_studio_v2', '1');
+      window.localStorage.setItem('ff.presentation_studio_v2', '1');
+    } catch {
+      /* prywatne okno — trudno, wtedy trzeba parametrem w adresie */
+    }
+  }
+}
 
 const ID = 'wb-dev-render-project-viability';
 
@@ -40,7 +81,7 @@ const wiersz = (cells: Record<string, { value?: unknown; formula?: string }>) =>
 // horyzont: 3 lata zamiast parametrycznych 3–15).
 const ZALOZENIA = {
   name: 'Założenia',
-  columns: [kol('driver', 'Driver'), kol('wartosc', 'Wartość')],
+  columns: [kol('driver', 'Założenie'), kol('wartosc', 'Wartość')],
   rows: [
     wiersz({ driver: { value: 'Nakład początkowy (inwestycja)' }, wartosc: { value: 500000 } }),
     wiersz({ driver: { value: 'Przepływ operacyjny brutto — rok 1' }, wartosc: { value: 220000 } }),
@@ -186,11 +227,23 @@ const queryClient = new QueryClient({
 export default function ExceleEdytowalnaSiatkaScreen(): React.ReactElement {
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/excele?artifactId=${ID}`]}>
-        <div className="h-screen w-full overflow-hidden bg-c-bg">
-          <ExceleView />
-        </div>
-      </MemoryRouter>
+      {/*
+        GRAFIKA 2026-08-30: dołożony `FeatureFlagsProvider`.
+        POWÓD: pełny pasek narzędzi arkusza (`SpreadsheetArtifactStudio` — wstaw
+        wiersz/kolumnę, formatowanie, waluta, procent) ISTNIEJE w kodzie za dwiema
+        flagami domyślnie wyłączonymi. Bez tego providera włączenie flag wywalało
+        ekran (`useFeatureFlagsContext must be used within FeatureFlagsProvider`),
+        więc NIE DAŁO SIĘ zobaczyć tego paska na zrzucie — a reguła #7 mówi, że
+        właściciel nigdy nie jest pierwszym testerem wizualnym.
+        Włączenie: `?ff_artifactStudio=1&ff_spreadsheetStudioV2=1`.
+      */}
+      <FeatureFlagsProvider config={{ enableLocalOverrides: true }} showDevTools={false}>
+        <MemoryRouter initialEntries={[`/excele?artifactId=${ID}`]}>
+          <div className="h-screen w-full overflow-hidden bg-c-bg">
+            <ExceleView />
+          </div>
+        </MemoryRouter>
+      </FeatureFlagsProvider>
     </QueryClientProvider>
   );
 }

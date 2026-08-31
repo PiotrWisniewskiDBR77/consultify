@@ -3,8 +3,26 @@
  * immutable accepted output for a single DRD assessment. Self-contained:
  * owns its own data fetching against the new v8 endpoints, does not
  * participate in the Hub's StandardTable/list machinery.
+ *
+ * ★ ODBIÓR WŁAŚCICIELA 2026-08-30 — pytanie, na które ten plik odpowiada:
+ * „Taka tabela jest możliwa, tylko pamiętaj, że w asesmencie mamy macierz
+ * odpowiedzi i ona jest ważna, bo jest narzędziem. To nie jest tylko
+ * prezentacja, to jest narzędzie, które sprawia, że wchodzimy w interakcję.
+ * Nie wiem, czy to, co mi tu pokazujesz, ma zastąpić macierz. Jeśli tak, to
+ * nie działa w ten sposób."
+ *
+ * ODPOWIEDŹ, sprawdzona w kodzie, a nie zgadnięta: NIE zastępuje. Ten panel
+ * nie ustawia ani jednego poziomu — nie ma tu żadnego zapisu poziomu obecnego
+ * ani docelowego. Robi trzy rzeczy: (1) czyta wyliczone pokrycie i średnie
+ * per oś (`V8AssessmentApi.getScoring`), (2) dokłada DOWÓD do wskazanej pary
+ * oś/obszar (`addEvidence`), (3) przyjmuje decyzję recenzenta accept/return
+ * (`submitReview`) i pokazuje zamrożony output. Poziomy ustawia się w macierzy
+ * sesji (`DRDAssessmentEditor` / `DRDMatrixSession`, trasa
+ * `/assessment/:framework/:assessmentId`, przełącznik „Macierz"). Dlatego od
+ * 2026-08-30 ekran mówi to CZYTELNIKOWI wprost, na górze panelu, i prowadzi
+ * do macierzy linkiem — zamiast zostawiać właściciela z tym pytaniem.
  */
-import { AlertTriangle, CheckCircle2, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Grid3x3, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { TableColumn, TableRow } from '@/components/standard/StandardTable';
@@ -199,10 +217,41 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
       className="h-full overflow-auto p-6 space-y-8"
       data-testid="assessment-quality-review-panel"
     >
+      {/* ── Czym ten ekran JEST, a czym NIE JEST — patrz nagłówek pliku ── */}
+      <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/5 p-4">
+        <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
+          Przegląd jakości oceny
+        </h3>
+        <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+          Ten ekran sprawdza <strong className="font-semibold text-navy-900 dark:text-white">jakość</strong>{' '}
+          gotowej oceny: ile obszarów ma dowód, gdzie dowodu brakuje, i czy recenzent tę ocenę przyjmuje.
+          Można tu dołożyć dowód i podjąć decyzję — ale nie ustawia się tu żadnego poziomu.
+        </p>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <strong className="font-semibold text-navy-900 dark:text-white">To nie jest macierz oceny</strong>{' '}
+          i jej nie zastępuje. Macierz (obszary × poziomy) jest narzędziem pracy — to w niej ustawia się
+          poziom obecny i docelowy każdego obszaru. Poniższa tabela jest odczytem jej wyniku, zwiniętym do
+          średniej per oś.
+        </p>
+        <a
+          href={`/assessment/drd/${assessmentId}`}
+          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-sm font-medium text-navy-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
+        >
+          <Grid3x3 size={16} />
+          Otwórz macierz oceny
+        </a>
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+          Otwiera sesję tej oceny; macierz jest tam pod przełącznikiem „Macierz" w nagłówku.
+        </p>
+      </section>
+
       <section>
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">
+        <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-1">
           Ocena i pokrycie dowodami
         </h3>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+          Odczyt z macierzy, zwinięty do średniej per oś — nie jest to miejsce edycji poziomów.
+        </p>
         {scoring ? (
           <>
             <div className="grid grid-cols-3 gap-3 mb-4">

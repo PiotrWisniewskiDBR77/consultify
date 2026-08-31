@@ -156,7 +156,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson }) => {
 
           <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-200 dark:border-navy-700/50">
             <span>
-              Added {new Date(lesson.createdAt).toLocaleDateString()}
+              Added {new Date(lesson.createdAt).toLocaleDateString('pl-PL')}
               {lesson.createdByName && ` by ${lesson.createdByName}`}
             </span>
           </div>

@@ -121,10 +121,10 @@ const GOAL_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   { value: 'align', labelKey: 'presentations.templates.goal.align', fallback: 'Align' },
 ];
 
-const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; fallback: string }[] = [
-  { value: 'corporate', fallback: 'Corporate' },
-  { value: 'minimal', fallback: 'Minimal' },
-  { value: 'modern', fallback: 'Modern' },
+const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; labelKey: string; fallback: string }[] = [
+  { value: 'corporate', labelKey: 'presentations.themes.corporate', fallback: 'Corporate' },
+  { value: 'minimal', labelKey: 'presentations.themes.minimal', fallback: 'Minimal' },
+  { value: 'modern', labelKey: 'presentations.themes.modern', fallback: 'Modern' },
 ];
 
 const DEFAULT_CUSTOM_TEMPLATE: PresentationCustomTemplateDefinition = {
@@ -306,14 +306,25 @@ export const PresentationTemplateArchitectView: React.FC<
 
   const tableRows = useMemo<TableRow[]>(
     () =>
-      templates.map((template) => ({
-        id: template.id,
-        name: template.name,
-        deckType: String(template.deck_type || '').replace(/_/g, ' '),
-        meta: String(template.outline_json?.length ?? 0),
-        status: template.lifecycle_state ?? 'draft',
-      })),
-    [templates]
+      templates.map((template) => {
+        // GRAFIKA (2026-08-30): był surowy enum po .replace('_',' ')
+        // ("steering committee") — kanon zakazuje nieprzetłumaczonych enumów
+        // w UI. `DECK_TYPE_OPTIONS` ma już tłumaczone etykiety (public/
+        // locales/pl/translation.json, presentations.templateArchitect.
+        // deckType.*) — to samo mapowanie co dropdown „Deck type" powyżej,
+        // zamiast wyświetlać klucz wprost.
+        const opt = DECK_TYPE_OPTIONS.find((o) => o.value === template.deck_type);
+        return {
+          id: template.id,
+          name: template.name,
+          deckType: opt
+            ? t(opt.labelKey, opt.fallback)
+            : String(template.deck_type || '').replace(/_/g, ' '),
+          meta: String(template.outline_json?.length ?? 0),
+          status: template.lifecycle_state ?? 'draft',
+        };
+      }),
+    [templates, t]
   );
 
   const refresh = async (): Promise<void> => {
@@ -732,7 +743,16 @@ export const PresentationTemplateArchitectView: React.FC<
           <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
             <span className="font-medium text-c-text">
               {t('presentations.templateArchitect.purpose', 'Purpose')}{' '}
-              <span className="text-danger-500">*</span>
+              {/*
+                KANON (CLAUDE.md §3, odbiór 2026-08-30): crimson/danger WYŁĄCZNIE
+                dla semantyki krytycznej. Ta sama poprawka co
+                `DocumentStudioTemplateArchitectView.tsx` (odbiór 2026-08-30) —
+                czerwona gwiazdka przy polu obowiązkowym to ozdobnik konwencji,
+                nie alarm. Zastąpione tym samym neutralnym wzorcem „(wymagane)".
+              */}
+              <span className="text-xs font-normal text-c-text-muted">
+                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+              </span>
             </span>
             <textarea
               value={purpose}
@@ -807,7 +827,7 @@ export const PresentationTemplateArchitectView: React.FC<
             >
               {THEME_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.fallback}
+                  {t(opt.labelKey, opt.fallback)}
                 </option>
               ))}
             </select>
@@ -996,10 +1016,10 @@ export const PresentationTemplateArchitectView: React.FC<
 
             <section
               className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3"
-              aria-label="Template version history"
+              aria-label="Historia wersji wzorca"
             >
               <div className="flex items-center justify-between gap-2">
-                <h4 className="text-xs font-semibold text-c-text">Version history</h4>
+                <h4 className="text-xs font-semibold text-c-text">Historia wersji</h4>
                 <span className="text-[10px] text-c-text-secondary">
                   {lineage.length} version(s)
                 </span>
@@ -1110,7 +1130,7 @@ export const PresentationTemplateArchitectView: React.FC<
                 >
                   {THEME_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
-                      {opt.fallback}
+                      {t(opt.labelKey, opt.fallback)}
                     </option>
                   ))}
                 </select>
@@ -1272,7 +1292,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { key: event.target.value })
                         }
-                        placeholder="key"
+                        placeholder="klucz"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <input
@@ -1282,7 +1302,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { label: event.target.value })
                         }
-                        placeholder="Label"
+                        placeholder="Etykieta"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <select
@@ -1309,7 +1329,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { defaultValue: event.target.value })
                         }
-                        placeholder="Default"
+                        placeholder="Wartość domyślna"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
                       />
                       <label className="flex items-center gap-1 text-xs text-c-text-secondary">
@@ -1343,7 +1363,7 @@ export const PresentationTemplateArchitectView: React.FC<
                         onChange={(event) =>
                           updateTemplateVariable(index, { description: event.target.value })
                         }
-                        placeholder="Description"
+                        placeholder="Opis"
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
                       />
                       {variable.type === 'enum' ? (
@@ -1359,7 +1379,7 @@ export const PresentationTemplateArchitectView: React.FC<
                                 .filter(Boolean),
                             })
                           }
-                          placeholder="Options, comma separated"
+                          placeholder="Opcje oddzielone przecinkami"
                           className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
                         />
                       ) : null}
@@ -1647,7 +1667,7 @@ export const PresentationTemplateArchitectView: React.FC<
                 className={`mt-3 rounded-lg border p-3 text-xs ${validationIssues.length === 0 ? 'border-success-500/30 bg-success-500/10 text-success-700' : 'border-danger-500/30 bg-danger-500/10 text-danger-700'}`}
               >
                 {validationIssues.length === 0 ? (
-                  <p className="font-medium">Validation passed. This draft is ready to publish.</p>
+                  <p className="font-medium">Kontrola zakończona pomyślnie. Wersja robocza jest gotowa do publikacji.</p>
                 ) : (
                   <>
                     <p className="font-medium">

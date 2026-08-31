@@ -209,13 +209,13 @@ export const BrandKitSettings: React.FC = () => {
           label={t('presentations.brandKit.headerText', 'Header text')}
           value={kit.header_text || ''}
           onChange={(v) => updateField('header_text', v || null)}
-          placeholder="Organization Name"
+          placeholder="Nazwa organizacji"
         />
         <TextField
           label={t('presentations.brandKit.footerText', 'Footer text')}
           value={kit.footer_text || ''}
           onChange={(v) => updateField('footer_text', v || null)}
-          placeholder="Confidential — For internal use only"
+          placeholder="Poufne — tylko do użytku wewnętrznego"
         />
         <div className="flex items-center gap-6">
           <ToggleField
@@ -241,9 +241,9 @@ export const BrandKitSettings: React.FC = () => {
           onChange={(e) => updateField('confidentiality_default', e.target.value)}
           className="w-full max-w-xs px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
         >
-          <option value="confidential">Confidential</option>
-          <option value="internal">Internal</option>
-          <option value="public">Public</option>
+          <option value="confidential">Poufne</option>
+          <option value="internal">Wewnętrzne</option>
+          <option value="public">Publiczne</option>
         </select>
       </div>
 

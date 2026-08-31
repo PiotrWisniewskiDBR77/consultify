@@ -4,6 +4,25 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AIMissionControl } from '@/components/Admin/AIMissionControl';
 import { Api } from '@/services/api';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback: string, values?: Record<string, unknown>) =>
+      Object.entries(values ?? {}).reduce(
+        (text, [name, value]) => text.replaceAll(`{{${name}}}`, String(value)),
+        fallback
+      ),
+  }),
+}));
+vi.mock('i18next', () => ({
+  default: {
+    t: (_key: string, fallback: string, values?: Record<string, unknown>) =>
+      Object.entries(values ?? {}).reduce(
+        (text, [name, value]) => text.replaceAll(`{{${name}}}`, String(value)),
+        fallback
+      ),
+  },
+}));
+
 vi.mock('@/services/api', () => ({
   Api: {
     get: vi.fn(),

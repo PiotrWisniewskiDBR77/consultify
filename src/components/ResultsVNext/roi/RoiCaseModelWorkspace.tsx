@@ -42,6 +42,7 @@ import type { RelationItem, StandardModuleTab, TableRow } from '@/components/sta
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
 import { shouldUseResultsVNextOwnerSampleData } from '../resultsVNextOwnerSampleData';
 import type { RoiCaseListItem } from './roiApi';
+import type { RoiCardModeProps } from './RoiCaseCardSections';
 import { isRoiCaseLocked, getRoiCaseLockInfo } from './roiRegistryMappers';
 import { roiEvidenceLinkPurposeLabel } from './roiCaseFullToolMappers';
 import {
@@ -139,6 +140,10 @@ export interface RoiCaseModelWorkspaceProps {
   onBack: () => void;
   phase: RoiCasePhase;
   onPhaseChange: (phase: RoiCasePhase) => void;
+  /** Tryb JEDNEJ KARTY N — patrz `RoiCaseCardSections.ts`. Gdy podany, rząd
+   * zakładek i stan aktywnej zakładki należą do karty, a pasek faz (Menu 3)
+   * i okruszki znikają: niesie je Menu 1 karty i jej lewa nawigacja. */
+  cardMode?: RoiCardModeProps;
 }
 
 function withId<T extends object>(row: T, idField: keyof T): T & { id: string } {
@@ -155,12 +160,17 @@ interface WriteState {
 }
 const IDLE_WRITE: WriteState = { busy: false, error: null, isConflict: false };
 
-export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange }) => {
-  const [tab, setTab] = useState<ModelTab>('settings');
+export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ roiCase, isPolish, onBack, phase, onPhaseChange, cardMode }) => {
+  const [localTab, setLocalTab] = useState<ModelTab>('settings');
+  const tab = (cardMode ? cardMode.activeTab : localTab) as ModelTab;
+  const setTab = (id: string) => (cardMode ? cardMode.onTabChange(id) : setLocalTab(id as ModelTab));
   const locked = isRoiCaseLocked(roiCase.status);
   const lock = getRoiCaseLockInfo(roiCase.status);
   const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : undefined;
   const phaseChips = buildRoiCasePhaseChips(isPolish);
+  const chipsBar = cardMode
+    ? {}
+    : { chips: phaseChips, activeChip: phase, onChipChange: (id: string) => onPhaseChange(id as RoiCasePhase) };
 
   // ── Scenarios (+ overrides) ──────────────────────────────────────────────
   const [scenarios, setScenarios] = useState<RoiScenario[] | null>(null);
@@ -636,19 +646,23 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
       .finally(() => setCalcRunWrite((s) => ({ ...s, busy: false })));
   };
 
-  const tabs: StandardModuleTab[] = [
-    { id: 'settings', label: isPolish ? 'Baseline i polityka' : 'Baseline & policy' },
-    { id: 'assumptions', label: isPolish ? 'Założenia' : 'Assumptions' },
-    { id: 'cost-lines', label: isPolish ? 'Koszty' : 'Cost lines' },
-    { id: 'benefit-lines', label: isPolish ? 'Korzyści' : 'Benefit lines' },
-    { id: 'scenarios', label: isPolish ? 'Scenariusze' : 'Scenarios' },
-    { id: 'calculation-runs', label: isPolish ? 'Przebiegi kalkulacji' : 'Calculation runs' },
-  ];
+  const tabs: StandardModuleTab[] = cardMode
+    ? cardMode.tabs
+    : [
+      { id: 'settings', label: isPolish ? 'Baseline i polityka' : 'Baseline & policy' },
+      { id: 'assumptions', label: isPolish ? 'Założenia' : 'Assumptions' },
+      { id: 'cost-lines', label: isPolish ? 'Koszty' : 'Cost lines' },
+      { id: 'benefit-lines', label: isPolish ? 'Korzyści' : 'Benefit lines' },
+      { id: 'scenarios', label: isPolish ? 'Scenariusze' : 'Scenarios' },
+      { id: 'calculation-runs', label: isPolish ? 'Przebiegi kalkulacji' : 'Calculation runs' },
+      ];
 
-  const breadcrumbs = [
-    { label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack },
-    { label: roiCase.title },
-  ];
+  const breadcrumbs = cardMode
+    ? undefined
+    : [
+        { label: isPolish ? 'Rejestr ROI' : 'ROI registry', onClick: onBack },
+        { label: roiCase.title },
+      ];
 
   /**
    * `StandardPrimaryCta.locked`/`lockedReason` (`StandardModuleBar.tsx`
@@ -682,13 +696,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             breadcrumbs,
             tabs,
             activeTab: tab,
-            onTabChange: (id) => setTab(id as ModelTab),
+            onTabChange: setTab,
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
-            chips: phaseChips,
-            activeChip: phase,
-            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+            ...chipsBar,
             primaryCta: addCta(isPolish ? 'Nowe założenie' : 'New assumption', openCreateAssumption, 'roi-model-assumption-create-cta'),
           }}
           table={{
@@ -763,13 +775,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             breadcrumbs,
             tabs,
             activeTab: tab,
-            onTabChange: (id) => setTab(id as ModelTab),
+            onTabChange: setTab,
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
-            chips: phaseChips,
-            activeChip: phase,
-            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+            ...chipsBar,
             primaryCta: addCta(isPolish ? 'Nowa pozycja kosztowa' : 'New cost line', openCreateCostLine, 'roi-model-cost-line-create-cta'),
           }}
           table={{
@@ -843,13 +853,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             breadcrumbs,
             tabs,
             activeTab: tab,
-            onTabChange: (id) => setTab(id as ModelTab),
+            onTabChange: setTab,
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
-            chips: phaseChips,
-            activeChip: phase,
-            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+            ...chipsBar,
             primaryCta: addCta(isPolish ? 'Nowa pozycja korzyści' : 'New benefit line', openCreateBenefitLine, 'roi-model-benefit-line-create-cta'),
           }}
           table={{
@@ -965,13 +973,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             breadcrumbs,
             tabs,
             activeTab: tab,
-            onTabChange: (id) => setTab(id as ModelTab),
+            onTabChange: setTab,
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
-            chips: phaseChips,
-            activeChip: phase,
-            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+            ...chipsBar,
             primaryCta: addCta(isPolish ? 'Nowy scenariusz' : 'New scenario', openCreateScenario, 'roi-model-scenario-create-cta'),
           }}
           table={{
@@ -1059,13 +1065,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
             breadcrumbs,
             tabs,
             activeTab: tab,
-            onTabChange: (id) => setTab(id as ModelTab),
+            onTabChange: setTab,
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
-            chips: phaseChips,
-            activeChip: phase,
-            onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+            ...chipsBar,
             primaryCta: {
               label: isPolish ? 'Nowy przebieg' : 'New run',
               icon: Plus,
@@ -1133,13 +1137,11 @@ export const RoiCaseModelWorkspace: React.FC<RoiCaseModelWorkspaceProps> = ({ ro
           breadcrumbs,
           tabs,
           activeTab: tab,
-          onTabChange: (id) => setTab(id as ModelTab),
+          onTabChange: setTab,
           showTabCounts: false,
           viewModes: ['table'],
           viewMode: 'table',
-          chips: phaseChips,
-          activeChip: phase,
-          onChipChange: (id) => onPhaseChange(id as RoiCasePhase),
+          ...chipsBar,
         }}
         table={{
           columns: buildRoiSettingsColumns(isPolish),

@@ -108,6 +108,7 @@ const STATUS_CONFIG: Record<
   ReportStatus,
   {
     label: string;
+    labelKey: string;
     color: string;
     bgColor: string;
     borderColor: string;
@@ -116,6 +117,7 @@ const STATUS_CONFIG: Record<
 > = {
   DRAFT: {
     label: 'Draft',
+    labelKey: 'assessment.reportsTable.status.draft',
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
@@ -123,6 +125,7 @@ const STATUS_CONFIG: Record<
   },
   CONFIGURING: {
     label: 'Configuring',
+    labelKey: 'assessment.reportsTable.status.configuring',
     color: 'text-slate-600 dark:text-slate-400',
     bgColor: 'bg-slate-50 dark:bg-slate-500/10',
     borderColor: 'border-slate-200 dark:border-slate-500/30',
@@ -130,6 +133,7 @@ const STATUS_CONFIG: Record<
   },
   GENERATING: {
     label: 'Generating',
+    labelKey: 'assessment.reportsTable.status.generating',
     color: 'text-amber-700 dark:text-amber-300',
     bgColor: 'bg-amber-50 dark:bg-amber-500/10',
     borderColor: 'border-amber-200 dark:border-amber-500/30',
@@ -137,6 +141,7 @@ const STATUS_CONFIG: Record<
   },
   GENERATED: {
     label: 'Generated',
+    labelKey: 'assessment.reportsTable.status.generated',
     // Pułapka #1 (kanon): `primary`=crimson; status informacyjny → indygo, nie crimson.
     color: 'text-indigo-700 dark:text-indigo-300',
     bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
@@ -145,6 +150,7 @@ const STATUS_CONFIG: Record<
   },
   IN_REVIEW: {
     label: 'In Review',
+    labelKey: 'assessment.reportsTable.status.inReview',
     // Pułapka #1 (kanon): `primary`=crimson; „w przeglądzie" to nie stan krytyczny → niebieski.
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
@@ -153,6 +159,7 @@ const STATUS_CONFIG: Record<
   },
   APPROVED: {
     label: 'Approved',
+    labelKey: 'assessment.reportsTable.status.approved',
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/30',
@@ -160,6 +167,7 @@ const STATUS_CONFIG: Record<
   },
   SENT_INTERNAL: {
     label: 'Sent Internal',
+    labelKey: 'assessment.reportsTable.status.sentInternal',
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
     borderColor: 'border-blue-200 dark:border-blue-500/30',
@@ -167,6 +175,7 @@ const STATUS_CONFIG: Record<
   },
   SENT_EXTERNAL: {
     label: 'Sent External',
+    labelKey: 'assessment.reportsTable.status.sentExternal',
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
     borderColor: 'border-blue-200 dark:border-blue-500/30',
@@ -174,6 +183,7 @@ const STATUS_CONFIG: Record<
   },
   UTILIZED: {
     label: 'Utilized',
+    labelKey: 'assessment.reportsTable.status.utilized',
     color: 'text-indigo-700 dark:text-indigo-300',
     bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
     borderColor: 'border-indigo-200 dark:border-indigo-500/30',
@@ -192,7 +202,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   showAllStatuses = false,
   onCreateTemplate,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   // State
@@ -394,10 +404,12 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     });
   }, [reports, filterStatus, searchQuery]);
 
-  // Format date
+  // Format date — locale follows the active UI language (parytet pl/en,
+  // patrz InitiativesManagementPanel.tsx / VersionHistoryPanel.tsx).
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
+    const locale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
+    return date.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -490,7 +502,10 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               </span>
               {report.sourceType && (
                 <span className="text-xs text-slate-600 dark:text-slate-500">
-                  {report.sourceType}
+                  {t(
+                    `assessment.reportsTable.sourceType.${report.sourceType}`,
+                    report.sourceType
+                  )}
                 </span>
               )}
             </div>
@@ -510,7 +525,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${cfg.bgColor} ${cfg.color} ${cfg.borderColor}`}
             >
               <StatusIcon size={12} />
-              {cfg.label}
+              {t(cfg.labelKey, cfg.label)}
             </div>
           );
         },

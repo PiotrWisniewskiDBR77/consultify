@@ -32,6 +32,8 @@ import {
   type ReportGroupResult,
 } from '@/method-core/outputs';
 
+import { buildAxisMatrices, groupNameOrId, type AxisMatrixModel } from '../groupLabels';
+
 // ---------------------------------------------------------------------------
 // Presenter-supplied narrative framing — OPTIONAL, NEVER invented in here.
 // ---------------------------------------------------------------------------
@@ -123,6 +125,14 @@ export interface PresentationDeckModel {
 
   readonly dimensionProfile: readonly DimensionProfileEntry[];
 
+  /**
+   * Macierze obszary × poziomy, po jednej na oś, w której cokolwiek
+   * zmierzono — odpowiedź na odbiór właściciela „nie ma macierzy nawet".
+   * Puste dla pakietu bez struktury osi; wtedy deck ma dokładnie tyle
+   * slajdów co przed 2026-08-30.
+   */
+  readonly axisMatrices: readonly AxisMatrixModel[];
+
   readonly strengths: readonly FindingHighlight[];
   readonly gapsAndRisks: readonly FindingHighlight[];
   readonly recommendations: readonly string[];
@@ -141,12 +151,33 @@ function unitNameLookup(output: AssessmentOutput): ReadonlyMap<string, string> {
   return map;
 }
 
-function dimensionProfileFrom(groupResults: readonly ReportGroupResult[]): DimensionProfileEntry[] {
+function dimensionProfileFrom(
+  groupResults: readonly ReportGroupResult[],
+  output: AssessmentOutput
+): DimensionProfileEntry[] {
+  // ★ LABEL RESOLUTION (see `../groupLabels.ts` for the layering rationale):
+  // `ReportGroupResult.groupName` from the shared kernel is ALWAYS the raw
+  // aggregation key (`groupName: groupId` in `reportSnapshot.ts`), so slide 5
+  // used to print `axis-1`/`axis-4` — or, on a pack whose keys are bare
+  // ordinals, a naked "1"/"4" with no word at all — where a client expects
+  // "Procesy Cyfrowe". Resolved here, in the BUILDER, against the Output's own
+  // PINNED pack version; unresolvable ids honestly fall back to the raw id.
+  // This is a dictionary lookup, not a recomputation: every NUMBER below is
+  // still copied verbatim from `groupResults`.
+  //
   // Sort by level descending (a display ordering — the values themselves
   // are untouched, copied straight from `groupResults`, which is itself
   // `output.aggregation.byGroup` reshaped by the shared kernel function).
   return [...groupResults]
-    .map((g) => ({ groupId: g.groupId, groupName: g.groupName, currentLevel: g.aggregatedLevel }))
+    .map((g) => ({
+      groupId: g.groupId,
+      groupName: groupNameOrId(
+        output.methodology.methodPackId,
+        output.methodology.version,
+        g.groupId
+      ),
+      currentLevel: g.aggregatedLevel,
+    }))
     .sort((a, b) => {
       if (a.currentLevel === null && b.currentLevel === null) return a.groupId.localeCompare(b.groupId);
       if (a.currentLevel === null) return 1;
@@ -231,7 +262,17 @@ export function buildPresentationDeck(
     aggregationRule: output.aggregation.rule,
     aggregationMappingVersion: output.aggregation.mappingVersion,
 
-    dimensionProfile: dimensionProfileFrom(report.groupResults),
+    dimensionProfile: dimensionProfileFrom(report.groupResults, output),
+
+    // Liczby kopiowane 1:1 z zamrożonego `current`/`target` per obszar —
+    // nie z `aggregation.byGroup`. To jest różnica między macierzą a siedmioma
+    // słupkami: średnia osi nie umie powiedzieć, KTÓRY obszar ją ciągnie.
+    axisMatrices: buildAxisMatrices(
+      output.methodology.methodPackId,
+      output.methodology.version,
+      output.current,
+      output.target
+    ),
 
     strengths,
     gapsAndRisks,

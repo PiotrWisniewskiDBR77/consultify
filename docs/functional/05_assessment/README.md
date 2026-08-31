@@ -108,14 +108,77 @@ Do potwierdzenia w runtime:
 - część testów hubów ma nieaktualne oczekiwanie `module-hub`, dlatego bieżący
   stan wizualny wymaga osobnego odbioru.
 
-## TO-BE
+## TO-BE — stan docelowy
 
-Źródła do scalenia:
+> **Scalone 2026-08-29.** Do tej pory ta sekcja była listą czterech plików „do
+> scalenia", czyli moduł jako jedyny z szesnastu **nie miał napisanego stanu
+> docelowego**. Poniższa treść pochodzi z `docs/product/ASSESSMENT_CONCEPT_V4_2026-06-28.md`
+> (koncepcja z decyzjami właściciela) oraz `ASSESSMENT_WORKBENCH_STANDARD_V3.md`.
+> Źródła pozostają w mocy jako rozwinięcie — ta sekcja ich nie zastępuje, tylko
+> przenosi rozstrzygnięcia tam, gdzie ich szukają wykonawcy.
 
-- `docs/product/ASSESSMENT_CONCEPT_V4_2026-06-28.md`
+### Architektura: jeden Workbench, pięć kanonów
+
+Wspólna powłoka identyczna dla wszystkich frameworków — setup sesji, nawigacja
+obszarów z postępem, scoring z dowodami i notatkami, żywe odbicie graficzne,
+coach w trybie propozycja→akcept, eksport raportu i decka. Pod nią **wymienny
+rdzeń metodyczny per framework** (struktura wymiarów, skala i poziomy, agregacja,
+bank pytań, wizualizacja sygnaturowa, priorytetyzacja, mapowanie na inicjatywy).
+Pod tym wspólny silnik wyniku: radar, luka as-is/to-be, benchmark, macierz
+wpływ × wysiłek, fazowana mapa inicjatyw.
+
+**Konsekwencja wiążąca:** dodanie albo domknięcie frameworka to **wypełnienie
+siedmiu pól kanonu**, nie budowa od zera.
+
+### Sześć zasad przewodnich
+
+1. **Wierność oryginałowi.** Każdy framework odwzorowuje strukturę, skalę
+   i agregację zgodnie ze źródłem autorytatywnym. Żadnych „mniej więcej".
+2. **Substancja = wizualizacja.** Wynik nie jest dobry, dopóki nie jest
+   jednocześnie metodycznie poprawny **i** dobrze wyglądający. Dwa odbiory, nie jeden.
+3. **Świadomość praw autorskich.** SIRI i CMMI są zastrzeżone i płatne.
+   Odwzorowujemy strukturę i mechanikę, treść piszemy własnymi słowami,
+   z jawnym zastrzeżeniem „narzędzie inspirowane metodyką X, nie jest oficjalną
+   oceną X". ADMA i Lean — swoboda. DRD — nasze.
+4. **Dyscyplina dowodowa.** Żadnego wyniku z opinii: każdy poziom ma dowód albo
+   jawny stan „brakuje dowodu".
+5. **Propozycja → akcept.** Model nigdy nie finalizuje wyniku bez człowieka.
+6. **Jedna powłoka, wymienny rdzeń.**
+
+### Zakres fali — rozstrzygnięty
+
+**W zakresie: SIRI · DRD · ADMA.** CMMI i LEAN — **później**, w wyborze widoczne
+jako „wkrótce" (decyzja właściciela `D5`, 2026-06-28). Wyborowi frameworka nie
+wolno obiecywać więcej, niż moduł ma zaimplementowane — koncepcja nazywa to
+wprost: *picker kłamie użytkownikowi*, i jest to defekt do usunięcia, nie stan
+przejściowy.
+
+### Definicja ukończenia
+
+- **Wierność:** struktura, skala i agregacja zgodne ze źródłem autorytatywnym,
+  z cytowanym źródłem i zastrzeżeniem tam, gdzie metodyka jest licencjonowana.
+- **Wizualnie:** wizualizacja sygnaturowa plus raport i deck w klasie premium,
+  z odbiorem wzrokowym właściciela.
+- **Od końca do końca na danych demo:** assessment → scoring → raport i deck →
+  inicjatywy, na realnych danych, bez wydmuszek.
+
+### Decyzje właściciela — otwarte od 2026-06-28
+
+| # | Rzecz | Rekomendacja | Stan |
+| --- | --- | --- | --- |
+| `D1` | Pozycjonowanie wobec praw do SIRI i CMMI | „inspirowane metodyką", własna treść, jawne zastrzeżenie — zamiast dążenia do oficjalnego partnerstwa (długie i płatne) | **OTWARTE — wymaga właściciela, ma skutek prawny** |
+| `D2` | Kanon DRD: kod ma 7 osi i 34 obszary, obietnica mówi o 8 wymiarach | zdefiniować kanoniczne 8 wymiarów i zmapować 34 obszary pod nie | **OTWARTE** |
+| `D3` | Kolejność: który framework pierwszy | DRD jako flagowiec — brak wyjścia jest tam największą dziurą | rekomendacja przyjęta domyślnie |
+| `D4` | Ambicja wizualna | wizualizacja sygnaturowa per framework zamiast jednego generycznego radaru | rekomendacja przyjęta domyślnie |
+| `D5` | CMMI i LEAN | później | **ROZSTRZYGNIĘTE 2026-06-28** |
+
+### Źródła rozwijające
+
+- `docs/product/ASSESSMENT_CONCEPT_V4_2026-06-28.md` — kanon metodyczny per
+  framework (§3), silnik wyniku (§4), język wizualny (§5), coach i dowody (§6),
+  załącznik ze źródłami autorytatywnymi (§10)
 - `docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md`
 - `docs/product/ASSESSMENTS_UNIFICATION_IMPLEMENTATION_BACKLOG_V3.md`
-- materiały `docs/modules/` i `Harvard/modules/` dotyczące assessmentów.
 
 ## GAP / NEXT
 

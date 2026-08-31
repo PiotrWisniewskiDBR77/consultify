@@ -149,8 +149,9 @@ describe('ThreatIntelligenceView honest UI', () => {
     render(<ThreatIntelligenceView />);
 
     expect(await screen.findByText('10.0.0.1')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Block threat threat-1/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Delete threat threat-1/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    expect(screen.getByRole('menuitem', { name: /^Block$/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /^Delete$/i })).toBeInTheDocument();
   });
 
   it('closes create modal only after threat is confirmed by read-back', async () => {
@@ -178,7 +179,8 @@ describe('ThreatIntelligenceView honest UI', () => {
 
     await screen.findByText('10.0.0.1');
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Block threat threat-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Block$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Threat block was not confirmed by the server');
@@ -186,14 +188,16 @@ describe('ThreatIntelligenceView honest UI', () => {
 
     vi.mocked(Api.getThreats).mockResolvedValue([{ ...threat, isBlocked: true }]);
     fireEvent.click(screen.getByRole('button', { name: /Refresh/i }));
-    await screen.findByRole('button', { name: /Unblock threat threat-1/i });
-    fireEvent.click(screen.getByRole('button', { name: /Unblock threat threat-1/i }));
+    await screen.findByText('10.0.0.1');
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Unblock$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Threat unblock was not confirmed by the server');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Delete threat threat-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Threat deletion was not confirmed by the server');
@@ -208,7 +212,8 @@ describe('ThreatIntelligenceView honest UI', () => {
     render(<ThreatIntelligenceView />);
 
     await screen.findByText('10.0.0.1');
-    fireEvent.click(screen.getByRole('button', { name: /Delete threat threat-1/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(

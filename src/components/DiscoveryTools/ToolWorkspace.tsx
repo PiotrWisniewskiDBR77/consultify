@@ -17,6 +17,7 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { ProposalCardType, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
@@ -482,7 +483,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   useEffect(() => {
     const ensureToolSession = async () => {
       if (toolSessionId || !currentSession) return;
-      const name = `${toolMeta.name} - ${new Date().toLocaleDateString()}`;
+      // Odbiór 2026-08-30 (przegląd modułów 04/11/16): `toLocaleDateString()`
+      // bez locale bierze locale z przeglądarki — patrz `src/utils/listDateFormat.ts`
+      // (SSOT, DD/MM/YYYY niezależnie od konta).
+      const name = `${toolMeta.name} - ${formatListDate(new Date())}`;
       const created = await Api.createToolSession({
         toolType,
         name,

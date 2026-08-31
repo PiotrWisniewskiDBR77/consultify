@@ -136,6 +136,7 @@ export function buildOkrSetColumns(
       align: 'right',
       render: (row: OkrSetDto) => (
         <HonestValueCell
+          isPolish={isPolish}
           value={parseOkrProgress(row.overallProgress)}
           align="right"
           // No `notCalculableReason` — this branch is unreachable for real
@@ -167,7 +168,11 @@ export function buildOkrSetColumns(
     {
       id: 'attentionState',
       label: isPolish ? 'Uwaga' : 'Attention',
-      width: '130px',
+      // 130px ucinało najdłuższą etykietę PL ("Wymaga działania", 17 znaków)
+      // w połowie litery — patrz zrzut results-vnext-okr-registry PRZED
+      // (2026-08-30). 190px mieści ją z zapasem, analogicznie do kolumny
+      // Status (200px dla "Złożony do akceptacji").
+      width: '190px',
       filterable: true,
       filterOptions: (Object.keys(OKR_SET_ATTENTION_TONE) as OkrSetDto['attentionState'][]).map(
         (s) => ({
@@ -357,6 +362,7 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
           label: isPolish ? 'Ogólny postęp' : 'Overall progress',
           value: (
             <HonestValueCell
+              isPolish={isPolish}
               value={progress}
               align="left"
               format={(v) => formatOkrProgressPercent(v, isPolish)}

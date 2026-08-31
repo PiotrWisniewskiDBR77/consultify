@@ -115,6 +115,26 @@ export type SourceProposalDisposition =
   | 'DISMISS';
 
 export interface MaterialCommandTransaction {
+  createRaidItem(input: {
+    organizationId: string;
+    initiativeId: string;
+    raidItemId: string;
+    type: 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY';
+    title: string;
+    description: string | null;
+    status: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED';
+    probability: 'LOW' | 'MEDIUM' | 'HIGH' | null;
+    impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
+    ownerId: string | null;
+    dueDate: string | null;
+    mitigationPlan: string | null;
+    linkedItems: string[];
+  }): Promise<void>;
+  deleteRaidItem(input: {
+    organizationId: string;
+    initiativeId: string;
+    raidItemId: string;
+  }): Promise<void>;
   adoptAcceptedClassicInitiative(input: {
     organizationId: string;
     candidateId: string;

@@ -284,6 +284,10 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         .listValuationMethods(businessVersionId)
         .then((m) => !cancelled && setMethodsData(m))
         .catch(() => undefined);
+      api
+        .getValuationResults(businessVersionId)
+        .then((r) => !cancelled && setResults(r))
+        .catch(() => undefined);
     } else if (activeStep === 'results') {
       api
         .getValuationResults(businessVersionId)
@@ -485,6 +489,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
               methodsData={methodsData}
               onCreateMethod={handleCreateMethod}
               onSaveBasket={handleSaveBasket}
+              currency={results?.currency ?? null}
             />
           )}
           {activeStep === 'results' && <ResultsStep results={results} />}
@@ -493,6 +498,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
               businessVersionId={businessVersionId}
               methodsData={methodsData}
               getGrid={api.getValuationSensitivityGrid}
+              currency={results?.currency ?? null}
             />
           )}
           {activeStep === 'advisor' && (

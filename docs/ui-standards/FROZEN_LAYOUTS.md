@@ -113,7 +113,7 @@
 - **Pełna specyfikacja:** `module-hub-standard.md` §3.2 (tło/separator), §3.3 (chipy), §3.4 (AI buttons) — **jeśli te sekcje nadal opisują fiolet lub `h-8` chipów, są RÓWNIEŻ nieaktualne**; kod (`ModuleMenu3.tsx`) i `TRIADA_KANON.md` §A3/§C5 rozstrzygają w razie sprzeczności.
 
 **Znany dług doc↔kod — wysokość paska Menu 3 (nierozstrzygnięte, 2026-08-02):**
-`docs/ui-standards/00-foundation/FOUNDATION_TOKEN_CONTRACT.md` (wiersz „contextual command / Menu 3") deklaruje wysokość **44 px**. Realny kod (`MENU_3_ROW_CLASS` = `py-2` czyli 8px+8px, `MENU_3_INNER_CLASS` = `min-h-8` czyli 32px) daje **~48 px** (8+32+8). Rozjazd 4px między kontraktem tokenów a implementacją. Nie wybieramy tu arbitralnie, która wartość jest "prawdziwa" — do rozstrzygnięcia: albo `FOUNDATION_TOKEN_CONTRACT.md` aktualizuje się na 48px, albo `MENU_3_INNER_CLASS`/`MENU_3_ROW_CLASS` w `ModuleMenu3.tsx` zmieniają się na 44px (co wymaga świadomej decyzji, bo dotyka też odstępu `mb-2` opisanego wyżej).
+`docs/ui-standards/00-foundation/FOUNDATION_TOKEN_CONTRACT.md` (wiersz „contextual command / Menu 3") deklaruje wysokość **44 px**. Realny kod (`MENU_3_ROW_CLASS` = `py-2` czyli 8px+8px, `MENU_3_INNER_CLASS` = `min-h-8` czyli 32px) daje **~48 px** (8+32+8). Rozjazd 4px między kontraktem tokenów a implementacją. **ROZSTRZYGNIĘTE 2026-08-29** (`S2`, CANON §2.2): obowiązuje **48 px** — dokument idzie za kodem. Kodu nie zmieniamy, bo 48→44 to zmiana wizualna na wszystkich ekranach listowych, której nikt nie odebrał.
 
 ---
 

@@ -7,6 +7,7 @@ import SCIMProvisioningView from '@/views/superadmin/SCIMProvisioningView';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
 
@@ -216,7 +217,8 @@ describe('SCIMProvisioningView honest UI', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /Group Mappings/i }));
     expect(await screen.findByText('Consultify Admins')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Delete mapping Consultify Admins'));
+    fireEvent.click(screen.getByRole('button', { name: /Row actions/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Delete mapping$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(

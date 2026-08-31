@@ -13,6 +13,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import bcrypt from 'bcryptjs';
 import pg from 'pg';
 
 const CONFIRM_ENV = 'SEED_WAVE3_INTERVIEW_OWNER_REVIEW';
@@ -50,6 +51,7 @@ const ids = {
   revokedDistribution: 'wave3-int-owner-revoked-distribution-v1',
   reviewSession: 'wave3-int-owner-review-session-v1',
   reviewAssignment: 'wave3-int-owner-review-assignment-v1',
+  reviewInsight: 'wave3-int-owner-review-insight-v1',
 } as const;
 
 const tokenFor = (kind: string) =>
@@ -84,6 +86,40 @@ const questions = [
 const client = new pg.Client({ connectionString: databaseUrl });
 await client.connect();
 try {
+  if (command === 'seed') {
+    // Migrations never create this fixture principal and no other seeder owns
+    // it, so the Interview fixture bootstraps its own organization and owner.
+    // Idempotent ON CONFLICT(id) DO UPDATE mirrors the Wave 3 Tools fixture.
+    await client.query(
+      `INSERT INTO organizations(id,name,status) VALUES($1,'W3 Interview Owner Review','active')
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status`,
+      [organizationId]
+    );
+    await client.query(
+      `INSERT INTO users(id,organization_id,email,password,first_name,last_name,role,status,language,timezone)
+       VALUES($1,$2,$3,$4,'Piotr','Wiśniewski','ADMIN','active','pl','Europe/Warsaw')
+       ON CONFLICT(id) DO UPDATE SET
+         organization_id=excluded.organization_id, email=excluded.email,
+         role=excluded.role, status=excluded.status, updated_at=CURRENT_TIMESTAMP`,
+      [
+        ownerId,
+        organizationId,
+        'w3.interview.owner@local.test',
+        await bcrypt.hash(process.env.WAVE3_OWNER_PASSWORD ?? 'Wave3InterviewOwner!2026', 10),
+      ]
+    );
+    // AuthController login gate reads organization_members with
+    // UPPER(COALESCE(status,''))='ACTIVE' and overwrites the session role with
+    // the membership role; without this row login fails ORG_MEMBERSHIP_REVOKED.
+    // Conflict target is the natural key, not the synthetic id.
+    await client.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status)
+       VALUES($1,$2,$3,'ADMIN','ACTIVE')
+       ON CONFLICT(organization_id,user_id) DO UPDATE SET
+         role=excluded.role, status=excluded.status`,
+      [`membership-${ownerId}`, organizationId, ownerId]
+    );
+  }
   const identity = await client.query<{
     organization_id: string;
     role: string;
@@ -98,12 +134,14 @@ try {
          (SELECT count(*)::int FROM interview_sessions WHERE id IN ($1,$2)) AS sessions,
          (SELECT count(*)::int FROM interview_questions WHERE session_id IN ($1,$2)) AS questions,
          (SELECT count(*)::int FROM interview_distributions WHERE id IN ($3,$4)) AS distributions,
-         (SELECT ownership_nonce FROM wave3_owner_fixture_markers WHERE fixture_id=$5) AS ownership_nonce`,
+         (SELECT count(*)::int FROM interview_insights WHERE id=$5) AS insights,
+         (SELECT ownership_nonce FROM wave3_owner_fixture_markers WHERE fixture_id=$6) AS ownership_nonce`,
       [
         ids.publicSession,
         ids.reviewSession,
         ids.publicDistribution,
         ids.revokedDistribution,
+        ids.reviewInsight,
         fixtureId,
       ]
     );
@@ -112,6 +150,7 @@ try {
       Number(row.sessions) !== 2 ||
       Number(row.questions) !== 6 ||
       Number(row.distributions) !== 2 ||
+      Number(row.insights) !== 1 ||
       !row.ownership_nonce
     ) {
       throw new Error('Wave 3 Interview FINAL readback mismatch');
@@ -282,6 +321,24 @@ try {
     }
 
     await client.query(
+      `UPDATE interview_sessions SET
+       summary_facts=$1, summary_gaps='[]', summary_constraints=$2,
+       summary_pain_points=$3, updated_at=CURRENT_TIMESTAMP
+       WHERE id=$4 AND organization_id=$5`,
+      [
+        JSON.stringify(questions.map((question) => `${question.text}: ${question.answer}`)),
+        JSON.stringify([
+          'Brak jednej definicji gotowości; zakres, właściciel i termin są sprawdzane w rozproszonych miejscach.',
+        ]),
+        JSON.stringify([
+          'Brak potwierdzonego właściciela danych po stronie klienta przesunął start o 9 dni.',
+        ]),
+        ids.reviewSession,
+        organizationId,
+      ]
+    );
+
+    await client.query(
       `INSERT INTO interview_distributions
        (id, organization_id, session_id, channel, recipient_email, recipient_name,
         public_token, status, anonymity_mode, expires_at)
@@ -300,12 +357,131 @@ try {
       [ids.revokedDistribution, organizationId, ids.publicSession, revokedToken, ownerId]
     );
 
+    const sourceSessionIds = JSON.stringify([ids.reviewSession]);
+    const issues = JSON.stringify([
+      {
+        title: 'Brak jednej definicji gotowości przekazania',
+        description:
+          'W 1 z 1 opisanych procesów zakres, właściciel i termin startu są sprawdzane w rozproszonych miejscach, bez wspólnej decyzji gotowe albo zwrot.',
+        severity: 'high',
+        evidence_refs: [`answer:${ids.reviewSession}-handoff-definition`],
+      },
+      {
+        title: 'Niepotwierdzony właściciel danych opóźnia start',
+        description:
+          'W 1 z 1 przywołanych przypadków brak potwierdzonego właściciela danych po stronie klienta przesunął start wdrożenia o 9 dni.',
+        severity: 'high',
+        evidence_refs: [`answer:${ids.reviewSession}-handoff-failure`],
+      },
+    ]);
+    const opportunities = JSON.stringify([
+      {
+        title: 'Jedna bramka gotowości przed startem wdrożenia',
+        description:
+          'Wprowadzić decyzję gotowe albo zwrot do uzupełnienia, prowadzoną przez 1 właściciela i opartą na 5 wymaganych polach.',
+        impact: 'high',
+        evidence_refs: [`answer:${ids.reviewSession}-handoff-change`],
+      },
+    ]);
+    const signals = JSON.stringify([
+      {
+        title: 'Zespół zna kryteria, ale nie ma wspólnego punktu kontroli',
+        description:
+          'W 3 z 3 odpowiedzi powtarzają się zakres, odpowiedzialność i kompletność danych; problemem jest brak wspólnej bramki, nie brak wiedzy operacyjnej.',
+        type: 'pattern',
+        evidence_refs: questions.map((question) => `answer:${ids.reviewSession}-${question.id}`),
+      },
+    ]);
+    const evidenceMap = JSON.stringify(
+      questions.map((question) => ({
+        source_id: `${ids.reviewSession}-${question.id}`,
+        source_type: 'interview_answer',
+        claim:
+          question.id === 'handoff-definition'
+            ? 'Brak jednej definicji gotowości przekazania.'
+            : question.id === 'handoff-failure'
+              ? 'Brak właściciela danych przesunął start o 9 dni.'
+              : 'Rekomendowana bramka ma 1 właściciela i 5 wymaganych pól.',
+      }))
+    );
+
+    await client.query(
+      `INSERT INTO interview_insights
+       (id, session_id, organization_id, category, title, prompt_type,
+        source_session_ids, content, status, source_session_count, created_by,
+        executive_summary, issues_json, opportunities_json, signals_json,
+        evidence_map_json, missing_data_json, analysis_mode, context_mode,
+        topic_focus_json, analysis_scope_json, material_quality_json)
+       VALUES ($1,$2,$3,'process','Gotowość przekazania klienta do wdrożenia','summary',
+        $4,$5,'completed',1,$6,$7,$8,$9,$10,$11,$12,
+        'general_consulting_synthesis','selected_interview_material_only',$13,$14,$15)
+       ON CONFLICT(id) DO UPDATE SET
+        session_id=excluded.session_id, organization_id=excluded.organization_id,
+        title=excluded.title, source_session_ids=excluded.source_session_ids,
+        content=excluded.content, status=excluded.status,
+        source_session_count=excluded.source_session_count,
+        executive_summary=excluded.executive_summary, issues_json=excluded.issues_json,
+        opportunities_json=excluded.opportunities_json, signals_json=excluded.signals_json,
+        evidence_map_json=excluded.evidence_map_json,
+        missing_data_json=excluded.missing_data_json,
+        analysis_mode=excluded.analysis_mode, context_mode=excluded.context_mode,
+        topic_focus_json=excluded.topic_focus_json,
+        analysis_scope_json=excluded.analysis_scope_json,
+        material_quality_json=excluded.material_quality_json,
+        updated_at=CURRENT_TIMESTAMP`,
+      [
+        ids.reviewInsight,
+        ids.reviewSession,
+        organizationId,
+        sourceSessionIds,
+        `## Problemy i ryzyka\n\n- W 1 z 1 opisanych procesów nie ma jednej definicji gotowości.\n- W 1 z 1 przywołanych przypadków brak właściciela danych przesunął start o 9 dni.\n\n## Szanse i usprawnienia\n\n- Jedna bramka gotowości: 1 właściciel, 5 wymaganych pól i decyzja gotowe albo zwrot.\n\n## Sygnały\n\n- Wszystkie 3 z 3 odpowiedzi wskazują na potrzebę wspólnego punktu kontroli.`,
+        ownerId,
+        'Przekazanie klienta jest dziś oceniane bez jednej bramki gotowości; opisany brak właściciela danych opóźnił start o 9 dni.',
+        issues,
+        opportunities,
+        signals,
+        evidenceMap,
+        JSON.stringify([
+          'Brak danych o liczbie wszystkich przekazań w kwartale, więc nie wyliczono częstości opóźnień.',
+          'Brak potwierdzenia perspektywy klienta i zespołu sprzedaży; materiał obejmuje 1 respondenta.',
+        ]),
+        JSON.stringify(['przekazanie klienta', 'gotowość wdrożenia']),
+        JSON.stringify({
+          source_session_ids: [ids.reviewSession],
+          source_scope_status: 'approved_only',
+          respondent_filters: [],
+          role_filters: [],
+          department_filters: [],
+          template_filters: [],
+          topic_focus: ['przekazanie klienta', 'gotowość wdrożenia'],
+          analysis_mode: 'general_consulting_synthesis',
+          context_mode: 'selected_interview_material_only',
+        }),
+        JSON.stringify({
+          overall_material_score: 58,
+          answer_quality_posture: 'usable',
+          coverage_posture: 'single_perspective',
+          approved_session_count: 1,
+          respondent_count: 1,
+          role_coverage: ['Właściciel procesu przekazania'],
+          department_coverage: ['Operacje'],
+          thin_answer_count: 0,
+          missing_voices: ['Sprzedaż', 'Wdrożenie', 'Klient'],
+          evidence_gap_count: 2,
+          contradiction_count: 0,
+          limitations: ['1 respondent', 'brak mianownika wszystkich przekazań'],
+          recommended_followups: ['Zweryfikować częstość opóźnień na pełnej próbie kwartalnej'],
+        }),
+      ]
+    );
+
     const ownershipNonce = randomBytes(32).toString('hex');
     await client.query(`CREATE TABLE IF NOT EXISTS wave3_owner_fixture_markers(
     fixture_id text PRIMARY KEY, ownership_nonce text NOT NULL, database_name text NOT NULL)`);
     await client.query(
       `INSERT INTO wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name)
-     VALUES($1,$2,current_database())`,
+     VALUES($1,$2,current_database())
+     ON CONFLICT(fixture_id) DO NOTHING`,
       [fixtureId, ownershipNonce]
     );
 

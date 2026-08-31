@@ -8,6 +8,23 @@ last_updated: 2026-07-29
 
 # Chat — AS-IS
 
+> ### ★ WEJŚCIE DO CANVAS — PYTANIE ZAMKNIĘTE, ALE NIEWYKREŚLONE (2026-08-29)
+>
+> `00_META.md` §Open Questions nadal pyta, które wejście uruchamia Canvas —
+> wybrany wynik rozmowy, osobna pozycja Menu 2 czy wspólna trasa. **`STATUS.md`
+> §Next Implementation Decision odpowiada: decyzja właściciela jest zamknięta —
+> wejściem jest WYBRANY WYNIK ROZMOWY.** Pytanie w `00_META.md` jest martwe
+> i nie jest powodem do zatrzymania pracy.
+>
+> **Uwaga o skali braku.** Ten plik mówi „Canvas ma znaczącą implementację, lecz nie
+> ma kompletnego dowodu ścieżki". Macierz odbioru tego samego modułu mówi więcej:
+> **brakuje wymaganej trasy startowej, komponentu pustego stanu i kontrolek przeglądu**.
+> Wiążąca jest macierz — to nie jest brak dowodu, to brak elementów.
+>
+> Ten moduł jako **jedyny z szesnastu nie ma pliku `CURRENT_CONTRACT.md`**; punktem
+> wejścia wskazanym w spisie menu jest ten plik.
+
+
 ## Rola w aplikacji
 
 Chat jest głównym interfejsem współpracy z Teresą. Użytkownik rozpoczyna lub
