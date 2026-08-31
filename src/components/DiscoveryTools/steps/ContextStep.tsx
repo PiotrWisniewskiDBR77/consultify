@@ -1201,11 +1201,23 @@ export const ContextStep: React.FC<ContextStepProps> = ({
 
     return (
       <div className="mx-auto max-w-5xl space-y-4">
-        <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(165,28,48,0.18),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
+        {/*
+          Odbiór 2026-08-30 (przegląd całości): karta miała crimsonowy odcień
+          w tle (`rgba(165,28,48,…)` = crimson `#85182F`) i chip „Misja i
+          kontekst" crimsonowy (`primary-*`) — CLAUDE.md §3 (Pułapka nr 1):
+          `primary-*` w Tailwindzie to crimson, czerwień WYŁĄCZNIE dla
+          semantyki krytycznej. Nic tu nie jest krytyczne — to zwykły,
+          aktywny chip nawigacyjny. Zamienione na neutralny granat/slate
+          (ten sam akcent co inne aktywne stany w aplikacji), bez zmiany
+          układu. Pigułka statusu obok miała twardy angielski literał
+          `'Draft'` (nawet nie przez `t()`) — zamienione na istniejący klucz
+          `preview.statuses.draft` (już PL="Szkic"/EN="Draft").
+        */}
+        <div className="overflow-hidden rounded-[30px] border border-slate-200/70 bg-[radial-gradient(circle_at_top_left,rgba(15,23,42,0.06),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] shadow-[0_20px_70px_-35px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(148,163,184,0.10),transparent_24%),linear-gradient(180deg,#0b1020,#0a0f1b)]">
           <div className="border-b border-slate-200/70 px-6 py-5 dark:border-white/10">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-200">
+                <span className="inline-flex items-center rounded-full border border-navy-900/15 bg-navy-900/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-navy-900 dark:border-white/15 dark:bg-white/10 dark:text-white">
                   {isPolish ? 'Misja i kontekst' : 'Mission & Context'}
                 </span>
                 <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
@@ -1215,7 +1227,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
                 {isGenerating
                   ? t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.aiWorking')
-                  : 'Draft'}
+                  : t('preview.statuses.draft', 'Draft')}
               </span>
             </div>
             <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-white">
