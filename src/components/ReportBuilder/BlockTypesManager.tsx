@@ -378,7 +378,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
       {
         id: 'renderKind',
         label: t(`${NS}.columns.render`, 'Render'),
-        width: '120px',
+        width: '160px',
         sortable: true,
         filterable: true,
         filterOptions: RENDER_FILTER_OPTIONS,
@@ -408,7 +408,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
       {
         id: 'updatedAt',
         label: t(`${NS}.columns.updated`, 'Updated'),
-        width: '110px',
+        width: '170px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.updatedAt || row.createdAt || ''),
         render: (row: TableRow) => (
