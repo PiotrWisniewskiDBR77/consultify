@@ -42416,7 +42416,7 @@
     "hidden": "ukryte",
     "unknown": "nieznane",
     "outputsUnavailableReason": "licznik wyników jest niedostępny",
-    "outputStatusHiddenReason": "hub nie pobiera podziału wyników według statusu",
+    "outputStatusHiddenReason": "rozbicie wyników według statusu nie jest jeszcze dostępne",
     "findingsPendingReason": "trwa pobieranie ustaleń",
     "findingsNotWiredInDemoReason": "rejestr ustaleń nie jest wpięty w trybie demonstracyjnym",
     "findingsLoadFailedReason": "nie udało się pobrać ustaleń",

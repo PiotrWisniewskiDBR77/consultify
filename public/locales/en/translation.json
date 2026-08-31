@@ -39877,7 +39877,7 @@
     "hidden": "hidden",
     "unknown": "unknown",
     "outputsUnavailableReason": "output count is unavailable",
-    "outputStatusHiddenReason": "the hub does not load the output status breakdown",
+    "outputStatusHiddenReason": "a breakdown by status is not yet available for outputs",
     "findingsPendingReason": "findings are loading",
     "findingsNotWiredInDemoReason": "the findings register is not wired in demo mode",
     "findingsLoadFailedReason": "findings could not be loaded",
