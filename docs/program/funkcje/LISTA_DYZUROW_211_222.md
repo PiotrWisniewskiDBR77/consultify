@@ -21,6 +21,13 @@ pierwszy test w pliku przechodzi, każdy następny cicho idzie prawdziwą ście�
 Zysk: przestajemy ufać zieleni, która nic nie znaczy. To jest warunek wstępny
 dla wszystkiego, co niżej.
 Zmierzone ponownie 2026-08-31 komendą `node /private/tmp/cx-day211-atrapy-scratch/probe-clearallmocks-211.mjs`: 5 plików, z czego 4 w grupie (a) — nie 87.
+**Sprostowanie (FIX-211, odbiór adwersaryjny):** `87` w tytule i w linii 20
+było szacunkiem nadzorcy przy planowaniu pozycji, nie wynikiem pomiaru —
+żadna sonda (wykonawcy dyżuru 211, audytora, ani FIX-211) nigdy nie zwróciła
+tej liczby. Jedyna liczba z niezależnie potwierdzonym pomiarem to **1**
+potwierdzone blokujące naruszenie repo-wide
+(`day205.decisionWisdom.pg.test.ts:34`) — szczegóły i dowód w
+`CODEX_DAY211_ATRAPY_REPORT.md`, sekcja „FIX-211 — cztery poprawki".
 
 ### 212 · Przemiatanie zabezpieczeń bez testu omijającego
 Reguła z `WSPOLNA_PRZYCZYNA_ODBIORY_204_210.md`: w 3 z 4 dyżurów testy zostały

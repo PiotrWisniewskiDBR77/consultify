@@ -89,3 +89,95 @@ Pakiety PG biegły z pełnym env w jednej linii: `RUN_DB_TESTS=1 MOCK_DB=false D
 - R1: 5 plików / 4 grupa (a), nie 4 / 2 ani 87.
 - `interviewAiReviewTimeoutFallback` ma niezależne sprzężenie kolejności drugiego testu z pierwszym; pozostawiono jawnie czerwony przebieg izolowany.
 - Pierwsza próba R0 dała 0 testów z powodu plików poza root i nie została zaliczona; poprawiony config sondy zaimportował prawdziwy `vitest.config.ts` i załadował prawdziwy `tests/setup.ts`.
+
+## FIX-211 — cztery poprawki po odbiorze adwersaryjnym (`ODBIOR_211.md`)
+
+Werdykt odbioru: `B` — scalić po FIX. Cztery punkty, zamknięte tym samym
+commitem co ten dopisek:
+
+**1) Dziura w bezpieczniku (blokująca).** `scripts/check-mock-lifecycle.sh`
+uznawał plik za czysty, gdy **jakikolwiek** setter był w **jakimkolwiek**
+`beforeEach` — nie sprawdzał, czy chodzi o TEN SAM cel. Audytor to potwierdził
+własnym przykładem i na prawdziwym, historycznym pliku tego dyżuru
+(`v8Interview.contextDocuments.test.ts` sprzed naprawy → 0 naruszeń, mimo że
+`PermissionService.hasPermission` nigdy nie był reinstalowany). Naprawione:
+dopasowanie per-cel (`vi.spyOn(obj,'method')` → klucz `obj.method`, z
+rozwiązywaniem zmiennej spy przypisanej przez `spy = vi.spyOn(...)`, żeby
+reinstalacja przez identyfikator w `beforeEach` też się liczyła). Dowód —
+bramka wymagana przez FIX-211, oba przebiegi:
+  - `v8Interview.contextDocuments.test.ts` sprzed naprawy (`fe33ce8036`) →
+    `mock-lifecycle: 0 blocking violation(s), 1 warning(s) in 1 file(s)` +
+    `...:54: WARNING (non-blocking): ...` (patrz punkt 2 — to konkretne
+    naruszenie jest gołym `vi.fn()`, więc trafia do warningu, nie do
+    blokady; zgłoszone, jak wymaga bramka).
+  - Ten sam plik po naprawie (HEAD) →
+    `mock-lifecycle: 0 blocking violation(s), 0 warning(s) in 0 file(s)`.
+  - Powtórka przykładu audytora (dwa `vi.spyOn` w `beforeAll`, `beforeEach`
+    reinstaluje tylko jeden) →
+    `mock-lifecycle: 1 blocking violation(s), 0 warning(s) in 1 file(s)` na
+    linii DRUGIEGO (niereinstalowanego) spy'a; pierwszy (reinstalowany) nie
+    jest zgłoszony. Ten sam przypadek zablokował prawdziwy `git commit` przez
+    prawdziwy `.husky/pre-commit`, tak jak przykład z odbioru.
+  - Bramka repo-wide (`bash scripts/check-mock-lifecycle.sh --ci`, bez
+    argumentów) daje dokładnie to samo co przed FIX-211: `1 blocking
+    violation(s)`, plik `day205.decisionWisdom.pg.test.ts:34` — baseline
+    (`total: 1`) NIE wymagał zmiany.
+
+**2) Rozróżnienie `vi.spyOn` od gołego `vi.fn()`.** Pułapka
+`clearAllMocks()` dotyczy wyłącznie `vi.spyOn(...)` (potwierdzone empirycznie
+przez audytora, 6/6 reprodukcji przeciw prawdziwemu `tests/setup.ts`). Bramka
+teraz liczy **dwa poziomy**: `vi.spyOn(...)` bez reinstalacji tego samego celu
+w `beforeEach` = **blokujące** (jak dotąd, liczy się do baseline/`--ci`); goły
+`vi.fn()` (zmienna albo przypisanie wprost do właściwości obiektu) bez
+reinstalacji = **WARNING, nieblokujące** — zostawione tylko jako informacja,
+bo z dowodu wynika, że goły `vi.fn()` PRZEŻYWA `clearAllMocks()` niezależnie
+od tego, czy `beforeEach` go reinstaluje. Nie usunąłem go całkowicie z
+raportowania (mogłem, zero wartości ochronnej), żeby ktoś czytający `report`
+dalej widział kształt ryzyka bez ryzyka wyłączenia bramki przez szum przy
+`--ci`. Treść `scripts/check-mock-lifecycle.baseline.json` NIE zmieniła się —
+liczy tylko poziom blokujący, a ten repo-wide wynosi nadal dokładnie 1.
+Zaktualizowano `tests/unit/scripts/checkMockLifecycle.test.mjs` (5/5 PASS) o
+scenariusze: `vi.fn()` niereinstalowany nie blokuje, `vi.spyOn` niereinstalowany
+blokuje, per-cel (dwa spy, jeden reinstalowany) blokuje tylko dla
+niereinstalowanego, zmienna spy reinstalowana przez identyfikator nie blokuje.
+
+**3) `interviewAiReviewTimeoutFallback.pg.test.ts` — sprzężenie kolejności
+POTWIERDZONE, nie wycofane.** Audytor nie odtworzył defektu, uruchamiając
+CAŁY plik osobno 3× (oba testy razem, po kolei) — to i tak przechodzi, bo
+drugi test ZAWSZE dostaje efekty uboczne pierwszego w tym trybie. Prawdziwa
+reprodukcja wymaga odizolowania DRUGIEGO testu bez uruchamiania pierwszego
+(`vitest run <plik> -t "does not crash the process"`) — wtedy `beforeAll`
+zakłada fixture, ale żaden HTTP request nigdy nie leci, więc
+`interview_assignments.ai_review_snapshot_json` zostaje `NULL` i asercja
+`expect(snapshot).toMatchObject(...)` dostaje `null`. Odtworzone
+**deterministycznie 6/6** (własna baza Postgres, port 6305, migracja od
+pustej bazy), identyczny komunikat co w raporcie
+(`AssertionError: expected null to match object { overallVerdict: 'timeout', … }`),
+zarówno na wersji sprzed naprawy (`fe33ce8036`) jak i na HEAD (naprawa
+FIX-211 nie dotykała tego pliku, więc sprzężenie jest nadal żywe i
+nienaprawione — zgodnie z tym, co raport już mówił: "pozostawiono jawnie
+czerwony przebieg izolowany"). Twierdzenie z raportu zostaje w mocy;
+dopisuję tylko dokładną komendę repro, żeby następny czytelnik nie trafił na
+ten sam fałszywy negatyw audytora.
+
+**4) Sprostowanie liczb 87 / 130 / 136.** Jedyna liczba z realnym pomiarem
+niezależnie potwierdzonym DWOMA różnymi sondami (wykonawcy i audytora) to
+**1 potwierdzone blokujące naruszenie w całym repo**:
+`server/src/services/ai/__tests__/day205.decisionWisdom.pg.test.ts:34`
+(sonda FIX-211, po obu poprawkach powyżej, daje dokładnie to samo, patrz
+punkt 1). Osobna, węższa liczba **"5 plików / 4 w grupie (a) + 1 w grupie
+(b)"** to zasięg WZORCA (setter w lokalnym `beforeAll`, dowolnego rodzaju,
+sprzed rozróżnienia spyOn/vi.fn() z punktu 2) — z tych 4 z grupy (a) tylko
+`day205` miał żywy defekt; pozostałe 3 (w tym `v8Interview.contextDocuments`)
+nie miały potwierdzonej różnicy przed/po. Liczba **87** (tytuł i treść pozycji
+211 w `docs/program/funkcje/LISTA_DYZUROW_211_222.md:16,20`) **pochodziła od
+nadzorcy przy planowaniu dyżuru, nie z pomiaru** — żadna sonda (wykonawcy,
+moja z FIX-211, ani audytora) nigdy nie zwróciła tej wartości dla żadnego
+zdefiniowanego kryterium (ani "setter w beforeAll", ani "potwierdzone
+naruszenie"). Liczby **130/136** to luźne współwystępowanie tekstowe
+(regex bez dopasowania hooków) z fazy W4 — słabszy, niedowodowy sygnał,
+zarejestrowany tylko jako "co warto było przejrzeć", nie jako miara zasięgu;
+136 (ponowny pomiar wykonawcy) różni się od 130 (liczba z instrukcji) bo to
+osobne przebiegi tego samego nieprecyzyjnego zapytania, nie dwie miary tego
+samego zbioru. **Do dalszych decyzji planistycznych liczyć wyłącznie: 1**
+(potwierdzone, blokujące, repo-wide).
