@@ -8,6 +8,7 @@
  */
 
 import logger from '../../utils/Logger.js';
+import { isUUID } from '../../utils/typeGuards.js';
 import { evaluateRetrievalPolicyDecision } from './chatPolicyGateway.js';
 import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
 
@@ -83,7 +84,7 @@ export const AI_TOOLS: ToolDefinition[] = [
           vault_project_id: {
             type: 'string',
             description:
-              'Project id for vault_scope="project". When omitted, falls back to the projects the caller is a member of.',
+              'Project id for vault_scope="project" — the internal UUID (format: 8-4-4-4-12 hex, e.g. "3fa85f64-5717-4562-b3fc-2c963f66afa6"), NOT the project\'s display name. Read it from the project record already in context (its "id" field) — never invent or guess one. If you only know the project by its name and no id is available in context, pass the exact name as a fallback: it is matched by name within the caller\'s own organization when it is not a valid UUID, and returns no results if the name is unknown or ambiguous. When omitted entirely, falls back to the projects the caller is a member of.',
           },
           // ★ VLT-FOLDERS — drugi, opcjonalny select klocka "Vault-kontekst":
           // folder WEWNĄTRZ wybranego sejfu. Gdy podane, `executeKBSearch`
@@ -1005,6 +1006,53 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     let folderName: string | undefined;
     let effectiveVaultScope = vaultScope;
     let effectiveProjectId = explicitProjectId;
+
+    // FIX-217 (moduł 17, ODBIOR_217.md, DROGA B) — `vault_project_id` bywa
+    // NAZWĄ projektu, nie identyfikatorem: dyżur 217 dowiódł na żywym modelu
+    // że ono samo sięga po to narzędzie, ale podało
+    // `vault_project_id: "Day217 R3 project"`. `executeKBSearch` się wtedy
+    // zachował poprawnie fail-closed (pusty wynik), ale to zostawiało model
+    // bez realnej odpowiedzi mimo trafnego pytania. Rozpoznaj nazwę → id
+    // WYŁĄCZNIE w obrębie organizacji wołającego (`ctx.organizationId` — ta
+    // sama granica co reszta tej funkcji; NIGDY inna organizacja, nawet przy
+    // identycznej nazwie — to dokładnie granica zamknięta w dyżurach 206/210,
+    // nie otwieramy jej z powrotem). Folder (jeśli podany) jest autorytatywny
+    // i tak nadpisze `effectiveProjectId` niżej, więc pomijamy rozpoznawanie
+    // gdy `requestedFolderId` jest ustawione — nie ma po co odpytywać.
+    if (
+      effectiveVaultScope === 'project' &&
+      effectiveProjectId &&
+      !requestedFolderId &&
+      !isUUID(effectiveProjectId)
+    ) {
+      // Fail-closed na błędzie odczytu: awaria samego rozpoznawania nazwy
+      // (DB niedostępna, itp.) NIE może wywrócić całego wywołania narzędzia
+      // — `effectiveProjectId` zostaje nierozpoznaną wartością, dokładnie
+      // jak przed FIX-217, i gałąź `documentIds.length === 0` niżej i tak
+      // zwróci pusty wynik dla nieznanego `project_id`.
+      try {
+        const { all: dbAllProjectsByName } = await import('../../utils/DbPromise.js');
+        const nameMatches = await dbAllProjectsByName<{ id: string }>(
+          `SELECT id FROM projects WHERE organization_id = ? AND lower(name) = lower(?)`,
+          [ctx.organizationId, effectiveProjectId]
+        );
+        const uniqueMatchIds = Array.from(
+          new Set((nameMatches || []).map((r: any) => String(r.id)).filter(Boolean))
+        );
+        // Dokładnie jedno trafienie → rozpoznane. Zero LUB więcej niż jedno
+        // (niejednoznaczna nazwa) → `effectiveProjectId` zostaje
+        // nierozpoznaną nazwą — fail-closed samo z siebie, nie zgadujemy
+        // między wieloma trafieniami.
+        if (uniqueMatchIds.length === 1) {
+          effectiveProjectId = uniqueMatchIds[0];
+        }
+      } catch (nameLookupErr: any) {
+        logger.warn(
+          `[executeKBSearch] vault_project_id name-resolution failed (fail-closed to unresolved value): ${nameLookupErr?.message || String(nameLookupErr)}`
+        );
+      }
+    }
+
     if (requestedFolderId) {
       const folder = KnowledgeService.getFolderById
         ? await KnowledgeService.getFolderById(ctx.organizationId, requestedFolderId)
