@@ -249,3 +249,16 @@ wysłane.
   przy ponowieniu z nowym `clientRequestId` — potwierdzone w źródle.
 - Aktor pilotażowy nie jest kontem systemowym; konto systemowe wymaga decyzji.
 - Test day160 nie został w tym dyżurze ponownie sprawdzony ani zmieniony.
+
+## ★ M3 — WYNIK REALNY (staging, 31.08, nadzorca za zgodą właściciela D-12)
+
+Sesja read-only (`SET default_transaction_read_only=on`), host trolley/railway:
+- `active_execution_cases = 14` (kanon już produkuje domy!)
+- `legacy_initiatives_with_tasks = 67`
+- `tasks: total 467 · personal_bez_inicjatywy 265 · bez_assignee 49 ·
+  bez_ownera 411 · bez_due 195 · bez_sla 467`
+
+**Rachunek etapu 2 (wariant ii):** ~53-67 domów do zbudowania × ≥16 poleceń
+≈ 850-1070 poleceń governance + ~202 zadania z inicjatywą do przeniesienia;
+265 osobistych zostaje w legacy (rekomendacja planu). Braki pól wymagają
+domyślnych mapowań (owner 411, sla 467, due 195) — wg tabeli A3 planu.

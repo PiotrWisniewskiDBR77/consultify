@@ -35,3 +35,4 @@ Pytanie o powierzchnię Audytów (hub vs warsztat) — zadane ponownie w rundzie
 | D-9 | Auto-polityka limitów agenta obejmuje też wave8/multiAgent/adapter (fail-open) | **ZAAKCEPTOWAĆ** | ostatni warunek K6 zamknięty — `ENABLE_AI_TASKS_WORKER=true` na STAGINGU przy deployu kandydata (K5); obserwacja licznika `[AgentResource] admission denied`; demo dopiero po akcepcie na stagingu |
 | D-10 | Źródło briefu prezentacji z szablonu | **OBA**: modal przy szablonie (dyżur 201, ta fala) + ścieżka przez Teresę (dyżur 203, następna) | 31.08 rano |
 | D-11 | Granulacja założeń vs próg gęstości QA | **próg liczy średnią SEKCJI** (nie bloku) — granulacja per akapit zostaje; wdrożenie w FIX-195 | 31.08 rano |
+| D-12 | Migracja E2: pomiar M3 przed decyzją | **TAK — read-only na stagingu** | wykonane 31.08: 14 domów / 67 inicjatyw z zadaniami / 467 zadań (265 osobistych); wynik w raporcie 197 |
