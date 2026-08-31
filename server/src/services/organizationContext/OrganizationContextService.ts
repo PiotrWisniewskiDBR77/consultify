@@ -1779,6 +1779,7 @@ export class OrganizationContextService {
     synthesis?: Record<string, unknown>;
   }): Promise<void> {
     const claims: ContextClaimInput[] = [];
+    const sections: Array<'goals' | 'challenges' | 'synthesis'> = [];
     const addSection = (
       section: 'goals' | 'challenges' | 'synthesis',
       value: unknown
@@ -1789,13 +1790,41 @@ export class OrganizationContextService {
         value: { section, ...(value as Record<string, unknown>) },
         confidence: 1,
       });
+      sections.push(section);
     };
     addSection('goals', params.goals);
     addSection('challenges', params.challenges);
     addSection('synthesis', params.synthesis);
     if (!claims.length) return;
 
-    await this.recordContextSource({
+    // FIX-205 pkt 2 (koszt R1, ODBIOR_205_206.md) — bez supersede każdy PUT tego
+    // samego redesignu ekranów APPENDOWAŁ nowy aktywny claim
+    // `notes.manualContext` dla tej samej (source_id=organizationId, section):
+    // liczba aktywnych claimów (i długość promptu, patrz FIX-205 pkt 1 w
+    // AIPipeline.buildOrganizationSection) rosłaby liniowo z liczbą zapisów
+    // zamiast zostać ograniczona liczbą sekcji (goals/challenges/synthesis =
+    // maks. 3). Zanim wstawimy nowe claimy, znajdujemy aktywne claimy tej samej
+    // sekcji, żeby po zapisie oznaczyć je jako `superseded` i wskazać przez
+    // nowy `supersedes_claim_id` — historia zostaje w wierszach (audyt), ale
+    // `buildResolvedContext`/prompt widzą tylko jeden aktywny claim na sekcję
+    // (filtr `status = 'active'`, patrz `getClaimQueryShape`).
+    const previousActiveBySection = new Map<string, string[]>();
+    const existingRows = await dbAll<{ id: string; value_json: string }>(
+      `SELECT id, value_json FROM organization_context_claims
+       WHERE organization_id = ? AND claim_path = 'notes.manualContext' AND status = 'active'`,
+      [params.organizationId]
+    );
+    for (const row of existingRows || []) {
+      const parsed = safeParseJson<Record<string, unknown>>(row.value_json, {});
+      const rowSection = typeof parsed?.section === 'string' ? parsed.section : null;
+      if (rowSection && sections.includes(rowSection as 'goals' | 'challenges' | 'synthesis')) {
+        const bucket = previousActiveBySection.get(rowSection) || [];
+        bucket.push(row.id);
+        previousActiveBySection.set(rowSection, bucket);
+      }
+    }
+
+    const { itemId } = await this.recordContextSource({
       organizationId: params.organizationId,
       sourceType: 'organization_context_store',
       sourceId: params.organizationId,
@@ -1809,7 +1838,37 @@ export class OrganizationContextService {
       },
       isExplicit: true,
       claims,
+      // pkt 2: `organization_context_snapshots.snapshot_json` jest write-only —
+      // żaden konsument go nie czyta, `buildResolvedContext` zawsze liczy
+      // claimy na żywo (patrz komentarz w 20260912_claude_c_org_context_snapshots.sql).
+      // Zapis-obok z pięciu ekranów nie musi więc płacić kosztu pełnego
+      // `rebuildSnapshot()` przy każdym PUT.
+      rebuildSnapshot: false,
     });
+
+    if (previousActiveBySection.size > 0) {
+      const newRows = await dbAll<{ id: string; value_json: string }>(
+        `SELECT id, value_json FROM organization_context_claims WHERE item_id = ?`,
+        [itemId]
+      );
+      for (const row of newRows || []) {
+        const parsed = safeParseJson<Record<string, unknown>>(row.value_json, {});
+        const rowSection = typeof parsed?.section === 'string' ? parsed.section : null;
+        const previousIds = rowSection ? previousActiveBySection.get(rowSection) : undefined;
+        if (previousIds && previousIds.length > 0) {
+          await dbRun(
+            `UPDATE organization_context_claims SET supersedes_claim_id = ? WHERE id = ?`,
+            [previousIds[0], row.id]
+          );
+        }
+      }
+      const allPreviousIds = [...previousActiveBySection.values()].flat();
+      await Promise.all(
+        allPreviousIds.map((id) =>
+          dbRun(`UPDATE organization_context_claims SET status = 'superseded' WHERE id = ?`, [id])
+        )
+      );
+    }
   }
 
   async recordManualAIContext(params: {
