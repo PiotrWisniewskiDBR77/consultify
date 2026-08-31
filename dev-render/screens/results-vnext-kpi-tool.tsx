@@ -40,9 +40,22 @@ import { KpiToolPage } from '../../src/components/ResultsVNext/kpiTool/KpiToolPa
 import { KpiDeviationCaseSubview } from '../../src/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview';
 import { ROUTES } from '../../src/routes/routeConfig';
 import { Api } from '../../src/services/api';
+import { OrganizationApi } from '../../src/services/api/organizations.api';
 import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
+
+// 143-resztki (2026-08-31) — Properties panel's Owner now resolves via
+// `OrganizationApi.getOrganizationMembers(currentOrganization.id)`, same
+// stub convention `results-vnext-roi-registry.tsx` already uses — so the
+// harness renders the REAL resolution (owner id below is 'user-piotr-demo',
+// matching `seedRealisticSession()`'s currentUser) instead of a silent
+// "fetch fails, falls back to raw id".
+OrganizationApi.getOrganizationMembers = (async () => [
+  { userId: 'user-piotr-demo', email: 'piotr.wisniewski@dbr77.com', name: 'Piotr Wiśniewski', role: 'owner', status: 'active' },
+  { userId: 'user-anna', email: 'anna.kowalska@dbr77.com', name: 'Anna Kowalska', role: 'member', status: 'active' },
+  { userId: 'user-marek', email: 'marek.nowak@dbr77.com', name: 'Marek Nowak', role: 'member', status: 'active' },
+]) as typeof OrganizationApi.getOrganizationMembers;
 
 const params = new URLSearchParams(window.location.search);
 const view = params.get('view') === 'case' ? 'case' : 'tool';

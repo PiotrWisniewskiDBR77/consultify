@@ -93,6 +93,8 @@ import { StatusChip } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import { ROUTES } from '@/routes/routeConfig';
 import { EmptyState } from '@/components/shared/states';
+import { OrganizationApi } from '@/services/api/organizations.api';
+import { useAppStore } from '@/store/useAppStore';
 
 import { HonestValueCell } from '../HonestValue';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
@@ -267,6 +269,43 @@ export const KpiToolPage: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState<ResultsVNextForbiddenDetail | null>(null);
   const [pending, setPending] = useState<'activate' | 'suspend' | 'archive' | null>(null);
+
+  // 143-resztki (2026-08-31) — Properties panel showed the RAW `ownerUserId`
+  // ("user-pio…") instead of a name. Same id->name resolver convention
+  // `ResultsRoiHub.tsx`/`ResultsOkrHub.tsx`/`attentionPresenters.tsx` already
+  // use in this same ResultsVNext family (real org member list via
+  // `OrganizationApi.getOrganizationMembers`, honest fallback to the id when
+  // unresolved) — `GET /kpi/:kpiId` itself has no owner-name join (verified:
+  // `kpiRepository.ts` only joins `dv.name`, never a users/members table), so
+  // this is a client-side stitch against a real, already-fetched-elsewhere
+  // endpoint, not a fabricated field.
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!currentOrganization?.id) return;
+    let cancelled = false;
+    OrganizationApi.getOrganizationMembers(currentOrganization.id)
+      .then((members) => {
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        members.forEach((m) => {
+          const label = (m.name && m.name.trim()) || m.email || m.userId;
+          if (label) map[m.userId] = label;
+        });
+        setMemberNameById(map);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberNameById({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentOrganization?.id]);
+  const resolveMemberName = useCallback(
+    (userId: string | null | undefined): string =>
+      (userId && memberNameById[userId]) || shortId(userId),
+    [memberNameById]
+  );
 
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);
   // RN-G6 UI fix (task 3) — Contract section previously showed ONLY the raw
@@ -523,11 +562,24 @@ export const KpiToolPage: React.FC = () => {
         : [],
   };
 
+  // `process`/`responsePolicy` stay raw ids on purpose — grepped
+  // `resultsVnextKpi.validators.ts`/`kpiTypes.ts`/`KpiDraftFormModal.tsx`:
+  // both are free-form strings with NO backing registry/table anywhere in
+  // production (no processes/policies list, no name join, no picker), unlike
+  // `ownerUserId` (real org members) or `currentDefinitionVersionId` (real
+  // `GET /kpi/:kpiId/version` join, already fetched into `definitionVersion`
+  // below for the Contract section) — showing a name here would be invented.
+  const definitionVersionDisplay =
+    definitionVersion && definitionVersion !== 'loading' &&
+    definitionVersion.definitionVersionId === kpi.currentDefinitionVersionId
+      ? `${definitionVersion.name} (v${definitionVersion.versionNumber})`
+      : shortId(kpi.currentDefinitionVersionId);
+
   const propertyRows: ArtifactPropertyRow[] = [
-    { id: 'owner', label: t('Właściciel', 'Owner'), value: shortId(kpi.ownerUserId) },
+    { id: 'owner', label: t('Właściciel', 'Owner'), value: resolveMemberName(kpi.ownerUserId) },
     { id: 'process', label: t('Proces', 'Process'), value: shortId(kpi.primaryProcessId) },
     { id: 'responsePolicy', label: t('Polityka odpowiedzi', 'Response policy'), value: shortId(kpi.responsePolicyId) },
-    { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: shortId(kpi.currentDefinitionVersionId), mono: true },
+    { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
     { id: 'created', label: t('Utworzono', 'Created'), value: formatDate(kpi.createdAt, isPolish) },
     { id: 'updated', label: t('Zaktualizowano', 'Updated'), value: formatDate(kpi.updatedAt, isPolish) },
     { id: 'rowVersion', label: t('Wersja (CAS)', 'Version (CAS)'), value: String(kpi.rowVersion), mono: true },
