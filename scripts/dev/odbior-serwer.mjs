@@ -44,9 +44,29 @@ function indeksZrzutow() {
       if (czesci.length < 3) continue;
       const [id, faza, motywPng] = czesci;
       const motyw = motywPng.replace('.png', '');
+      const pelna = path.join(full, f);
+      const mtime = fs.statSync(pelna).mtimeMs;
       out[id] ??= {};
       out[id][motyw] ??= {};
-      out[id][motyw][faza] = path.join(dir, f);
+      const obecny = out[id][motyw][faza];
+      // PUŁAPKA (2026-08-31, Z-20): katalogi `evidence/grafika/*` sortują się
+      // TEKSTOWO, nie chronologicznie — „15-", „90-", „99-" idą alfabetycznie ZA
+      // „144-"/„146-", bo porównanie jest po znakach, nie po liczbie. Poprzednia
+      // wersja brała OSTATNI plik napotkany w kolejności `fs.readdirSync`, więc
+      // stary zrzut (czasem sprzed napraw) przykrywał dzisiejszy na 120 z 229 kart.
+      // Wygrywa teraz plik o NAJNOWSZYM `mtime`, niezależnie od kolejności katalogów.
+      if (!obecny || mtime > obecny.mtime) {
+        out[id][motyw][faza] = { sciezka: path.join(dir, f), mtime };
+      }
+    }
+  }
+  // Spłaszczamy do samych ścieżek — mtime był potrzebny tylko do wyboru zwycięzcy,
+  // reszta kodu (wybierz PO/PRZED w karta()) oczekuje zwykłego stringa.
+  for (const id of Object.keys(out)) {
+    for (const motyw of Object.keys(out[id])) {
+      for (const faza of Object.keys(out[id][motyw])) {
+        out[id][motyw][faza] = out[id][motyw][faza].sciezka;
+      }
     }
   }
   return out;
