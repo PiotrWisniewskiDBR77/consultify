@@ -37897,6 +37897,193 @@
     }
   },
   "reportBuilder": {
+    "blockTypesManager": {
+      "category": {
+        "content": "Treść",
+        "data": "Dane",
+        "visual": "Wizualne"
+      },
+      "render": {
+        "markdown": "Markdown",
+        "callout": "Wyróżnienie",
+        "table": "Tabela",
+        "chart": "Wykres",
+        "matrix": "Macierz",
+        "json": "JSON"
+      },
+      "type": {
+        "app": "System",
+        "org": "Organizacja"
+      },
+      "date": {
+        "today": "Dzisiaj",
+        "yesterday": "Wczoraj",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "columns": {
+        "block": "Blok",
+        "type": "Typ",
+        "category": "Kategoria",
+        "render": "Renderowanie",
+        "sources": "Źródła",
+        "updated": "Zaktualizowano"
+      },
+      "rowMenu": {
+        "edit": "Edytuj",
+        "duplicateToOrg": "Duplikuj do organizacji",
+        "comingSoon": "Wkrótce (backend)",
+        "deactivate": "Dezaktywuj",
+        "systemCannotDeactivate": "Bloków systemowych nie można dezaktywować"
+      },
+      "preview": {
+        "sources": "Źródła: {{sources}}",
+        "defaultLength": "Domyślna długość: {{length}}",
+        "defaultStyle": "Domyślny styl: {{style}}",
+        "promptTemplate": "Szablon promptu:"
+      },
+      "moduleBar": {
+        "newBlock": "Nowy blok",
+        "all": "Wszystkie",
+        "selected": "{{count}} wybrano",
+        "selectAll": "Zaznacz wszystkie",
+        "clear": "Wyczyść"
+      },
+      "empty": {
+        "noMatchTitle": "Brak bloków pasujących do wyszukiwania",
+        "noneTitle": "Nie znaleziono bloków",
+        "tryAdjusting": "Spróbuj zmienić kryteria wyszukiwania",
+        "createToStart": "Utwórz nowy blok, aby zacząć"
+      },
+      "modal": {
+        "editTitle": "Edytuj blok",
+        "newTitle": "Nowy blok",
+        "name": "Nazwa",
+        "renderKind": "Rodzaj renderowania",
+        "description": "Opis",
+        "sourcesCsv": "Źródła (CSV)",
+        "sourcesPlaceholder": "ASSESSMENT, TOOL",
+        "length": "Długość",
+        "lengthShort": "Krótka",
+        "lengthMedium": "Średnia",
+        "lengthLong": "Długa",
+        "style": "Styl",
+        "styleBusiness": "Biznesowy",
+        "styleTechnical": "Techniczny",
+        "styleGeneral": "Ogólny",
+        "promptTemplate": "Szablon promptu",
+        "promptPlaceholder": "Np. \"Napisz sekcję o ... używając danych: {{exampleVar}}\"",
+        "cancel": "Anuluj",
+        "saveChanges": "Zapisz zmiany",
+        "createBlock": "Utwórz blok"
+      },
+      "toast": {
+        "updated": "Zaktualizowano blok",
+        "created": "Utworzono blok",
+        "saveFailed": "Nie udało się zapisać",
+        "confirmDeactivate": "Dezaktywować ten typ bloku?",
+        "deactivated": "Zdezaktywowano blok",
+        "deactivateFailed": "Nie udało się zdezaktywować"
+      }
+    },
+    "templatesManager": {
+      "type": {
+        "app": "System",
+        "org": "Organizacja"
+      },
+      "sourceType": {
+        "ASSESSMENT": "Assessment",
+        "INTERVIEW": "Interview",
+        "TOOL": "Tool",
+        "INITIATIVE": "Initiative"
+      },
+      "audience": {
+        "executive": "Zarząd",
+        "manager": "Kierownik",
+        "analyst": "Analityk",
+        "team": "Zespół",
+        "external": "Zewnętrzny",
+        "general": "Ogólny"
+      },
+      "format": {
+        "vertical": "Pionowy",
+        "horizontal": "Poziomy"
+      },
+      "date": {
+        "today": "Dzisiaj",
+        "yesterday": "Wczoraj",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "columns": {
+        "type": "Typ",
+        "template": "Szablon",
+        "module": "Moduł",
+        "audience": "Odbiorca",
+        "format": "Format",
+        "user": "Użytkownik",
+        "sections": "Sekcje",
+        "updated": "Zaktualizowano"
+      },
+      "noSections": "Brak sekcji",
+      "systemAuthor": "System",
+      "copySuffix": "Kopia",
+      "rowMenu": {
+        "duplicateToOrg": "Duplikuj do organizacji",
+        "useTemplate": "Użyj szablonu",
+        "duplicate": "Duplikuj",
+        "systemTemplate": "Szablon systemowy",
+        "systemCannotDelete": "Szablonów systemowych nie można usunąć",
+        "delete": "Usuń"
+      },
+      "preview": {
+        "sections": "Sekcje: {{count}}",
+        "noSections": "Sekcje: brak",
+        "createdBy": "Utworzone przez: {{name}}"
+      },
+      "moduleBar": {
+        "newTemplate": "Nowy szablon",
+        "all": "Wszystkie",
+        "selected": "{{count}} wybrano",
+        "selectAll": "Zaznacz wszystkie",
+        "clear": "Wyczyść"
+      },
+      "empty": {
+        "noMatchTitle": "Brak szablonów pasujących do wyszukiwania",
+        "noneTitle": "Nie znaleziono szablonów",
+        "tryAdjusting": "Spróbuj zmienić kryteria wyszukiwania",
+        "createToStart": "Utwórz nowy szablon, aby zacząć"
+      },
+      "toast": {
+        "confirmDelete": "Czy na pewno chcesz usunąć ten szablon?",
+        "deleted": "Usunięto szablon",
+        "deleteFailed": "Nie udało się usunąć",
+        "duplicated": "Zduplikowano szablon",
+        "duplicateFailed": "Nie udało się zduplikować"
+      }
+    },
+    "newAssessmentReportModal": {
+      "title": "Nowy raport z assessmentu",
+      "subtitle": "Wybierz assessment i szablon. Wersja robocza zostanie wygenerowana.",
+      "close": "Zamknij",
+      "assessment": "Assessment",
+      "noApprovedAssessments": "Brak zatwierdzonych assessmentów",
+      "selectAssessmentPlaceholder": "Wybierz assessment…",
+      "onlyApprovedWarning": "Tylko zatwierdzone assessmenty mogą być użyte do utworzenia raportu. Najpierw zatwierdź assessment.",
+      "template": "Szablon",
+      "notSelected": "Nie wybrano",
+      "fromLibrary": "Z Biblioteki",
+      "choose": "Wybierz",
+      "cancel": "Anuluj",
+      "createDraft": "Utwórz wersję roboczą",
+      "generating": "Generowanie…",
+      "reportTitleWithName": "Raport - {{name}}",
+      "reportTitleFallback": "Raport",
+      "toast": {
+        "creatingReport": "Tworzenie raportu…",
+        "generatingContent": "Generowanie treści raportu przez AI…",
+        "generatedOpening": "Raport wygenerowany — otwieranie edytora",
+        "createFailed": "Nie udało się utworzyć raportu"
+      }
+    },
     "settingsPanel": {
       "primaryColor": "Kolor główny",
       "justNow": "Przed chwilą",

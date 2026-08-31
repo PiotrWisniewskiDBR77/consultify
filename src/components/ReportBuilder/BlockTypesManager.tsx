@@ -22,6 +22,8 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
 
 import {
@@ -69,40 +71,36 @@ interface BlockTypesManagerProps {
 }
 
 // ==========================================
-// HELPERS
+// HELPERS (i18n — prefix reportBuilder.blockTypesManager)
 // ==========================================
 
-const CATEGORY_LABELS: Record<BlockCategory, string> = {
-  content: 'Content',
-  data: 'Data',
-  visual: 'Visual',
+const NS = 'reportBuilder.blockTypesManager';
+
+const getCategoryLabel = (t: TFunction, category: BlockCategory): string => {
+  const fallback: Record<BlockCategory, string> = {
+    content: 'Content',
+    data: 'Data',
+    visual: 'Visual',
+  };
+  return t(`${NS}.category.${category}`, fallback[category]);
 };
 
-const RENDER_LABELS: Record<BlockRenderKind, string> = {
-  markdown: 'Markdown',
-  callout: 'Callout',
-  table: 'Table',
-  chart: 'Chart',
-  matrix: 'Matrix',
-  json: 'JSON',
+const getRenderLabel = (t: TFunction, kind: BlockRenderKind): string => {
+  const fallback: Record<BlockRenderKind, string> = {
+    markdown: 'Markdown',
+    callout: 'Callout',
+    table: 'Table',
+    chart: 'Chart',
+    matrix: 'Matrix',
+    json: 'JSON',
+  };
+  return t(`${NS}.render.${kind}`, fallback[kind]);
 };
 
-const TYPE_FILTER_OPTIONS = [
-  { value: 'app', label: 'App' },
-  { value: 'org', label: 'Org' },
-];
+const getTypeLabel = (t: TFunction, isSystem: boolean): string =>
+  isSystem ? t(`${NS}.type.app`, 'App') : t(`${NS}.type.org`, 'Org');
 
-const CATEGORY_FILTER_OPTIONS = (Object.keys(CATEGORY_LABELS) as BlockCategory[]).map((v) => ({
-  value: v,
-  label: CATEGORY_LABELS[v],
-}));
-
-const RENDER_FILTER_OPTIONS = (Object.keys(RENDER_LABELS) as BlockRenderKind[]).map((v) => ({
-  value: v,
-  label: RENDER_LABELS[v],
-}));
-
-const formatDate = (dateStr?: string): string => {
+const formatDate = (t: TFunction, lang: string, dateStr?: string): string => {
   if (!dateStr) return '—';
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return '—';
@@ -111,10 +109,12 @@ const formatDate = (dateStr?: string): string => {
   const dateOnly = new Date(date);
   dateOnly.setHours(0, 0, 0, 0);
   const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'Today';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > -7 && diffDays < 0) return `${Math.abs(diffDays)}d ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (diffDays === 0) return t(`${NS}.date.today`, 'Today');
+  if (diffDays === -1) return t(`${NS}.date.yesterday`, 'Yesterday');
+  if (diffDays > -7 && diffDays < 0)
+    return t(`${NS}.date.daysAgo`, '{{count}}d ago', { count: Math.abs(diffDays) });
+  const locale = lang?.startsWith('pl') ? 'pl-PL' : 'en-US';
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 };
 
 const TagChip: React.FC<{ label: string; tone?: string | null }> = ({ label, tone }) => (
@@ -135,6 +135,7 @@ const TagChip: React.FC<{ label: string; tone?: string | null }> = ({ label, ton
 // ==========================================
 
 export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
+  const { t, i18n } = useTranslation();
   const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'app' | 'org'>('all');
@@ -155,6 +156,51 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
   const [promptTemplate, setPromptTemplate] = useState('');
   const [defaultLength, setDefaultLength] = useState<SectionLength>('medium');
   const [defaultLanguage, setDefaultLanguage] = useState<SectionLanguage>('business');
+
+  const CATEGORY_LABELS = useMemo<Record<BlockCategory, string>>(
+    () => ({
+      content: getCategoryLabel(t, 'content'),
+      data: getCategoryLabel(t, 'data'),
+      visual: getCategoryLabel(t, 'visual'),
+    }),
+    [t]
+  );
+
+  const RENDER_LABELS = useMemo<Record<BlockRenderKind, string>>(
+    () => ({
+      markdown: getRenderLabel(t, 'markdown'),
+      callout: getRenderLabel(t, 'callout'),
+      table: getRenderLabel(t, 'table'),
+      chart: getRenderLabel(t, 'chart'),
+      matrix: getRenderLabel(t, 'matrix'),
+      json: getRenderLabel(t, 'json'),
+    }),
+    [t]
+  );
+
+  const TYPE_FILTER_OPTIONS = useMemo(
+    () => [
+      { value: 'app', label: getTypeLabel(t, true) },
+      { value: 'org', label: getTypeLabel(t, false) },
+    ],
+    [t]
+  );
+
+  const CATEGORY_FILTER_OPTIONS = useMemo(
+    () => (Object.keys(CATEGORY_LABELS) as BlockCategory[]).map((v) => ({
+      value: v,
+      label: CATEGORY_LABELS[v],
+    })),
+    [CATEGORY_LABELS]
+  );
+
+  const RENDER_FILTER_OPTIONS = useMemo(
+    () => (Object.keys(RENDER_LABELS) as BlockRenderKind[]).map((v) => ({
+      value: v,
+      label: RENDER_LABELS[v],
+    })),
+    [RENDER_LABELS]
+  );
 
   const resetForm = useCallback(() => {
     setName('');
@@ -223,32 +269,32 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
     try {
       if (editing?.id) {
         await Api.put(`/report-builder/block-types/${editing.id}`, payload);
-        toast.success('Block updated');
+        toast.success(t(`${NS}.toast.updated`, 'Block updated'));
       } else {
         await Api.post('/report-builder/block-types', payload);
-        toast.success('Block created');
+        toast.success(t(`${NS}.toast.created`, 'Block created'));
       }
       setIsModalOpen(false);
       await fetchBlocks();
     } catch (err: any) {
-      toast.error(err?.error || 'Failed to save');
+      toast.error(err?.error || t(`${NS}.toast.saveFailed`, 'Failed to save'));
     }
   };
 
   const deactivate = useCallback(
     async (b: BlockType) => {
       if (b.isSystem) return;
-      if (!confirm('Deactivate this block type?')) return;
+      if (!confirm(t(`${NS}.toast.confirmDeactivate`, 'Deactivate this block type?'))) return;
       try {
         await Api.delete(`/report-builder/block-types/${b.id}`);
-        toast.success('Block deactivated');
+        toast.success(t(`${NS}.toast.deactivated`, 'Block deactivated'));
         setPreviewId((prev) => (prev === b.id ? null : prev));
         await fetchBlocks();
       } catch (err: any) {
-        toast.error(err?.error || 'Failed to deactivate');
+        toast.error(err?.error || t(`${NS}.toast.deactivateFailed`, 'Failed to deactivate'));
       }
     },
-    [fetchBlocks]
+    [fetchBlocks, t]
   );
 
   // ── Filtrowanie: chip App/Org (Menu 3) + lupa (Menu 2) ───────────────────
@@ -294,12 +340,12 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
     () => [
       {
         id: 'name',
-        label: 'Block',
+        label: t(`${NS}.columns.block`, 'Block'),
         sortable: true,
       },
       {
         id: 'type',
-        label: 'Type',
+        label: t(`${NS}.columns.type`, 'Type'),
         width: '110px',
         sortable: true,
         filterable: true,
@@ -310,14 +356,14 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
           return (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary">
               <Icon size={11} className="shrink-0 text-c-text-muted" />
-              {isSystem ? 'App' : 'Org'}
+              {getTypeLabel(t, isSystem)}
             </span>
           );
         },
       },
       {
         id: 'category',
-        label: 'Category',
+        label: t(`${NS}.columns.category`, 'Category'),
         width: '130px',
         sortable: true,
         filterable: true,
@@ -331,7 +377,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
       },
       {
         id: 'renderKind',
-        label: 'Render',
+        label: t(`${NS}.columns.render`, 'Render'),
         width: '120px',
         sortable: true,
         filterable: true,
@@ -345,7 +391,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
       },
       {
         id: 'sourceTypes',
-        label: 'Sources',
+        label: t(`${NS}.columns.sources`, 'Sources'),
         width: '220px',
         render: (row: TableRow) => {
           const sources = (row.sourceTypes as string[]) || [];
@@ -361,19 +407,27 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
       },
       {
         id: 'updatedAt',
-        label: 'Updated',
+        label: t(`${NS}.columns.updated`, 'Updated'),
         width: '110px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.updatedAt || row.createdAt || ''),
         render: (row: TableRow) => (
           <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
             <Calendar size={12} className="text-c-text-secondary" />
-            {formatDate((row.updatedAt as string) || (row.createdAt as string))}
+            {formatDate(t, i18n.language, (row.updatedAt as string) || (row.createdAt as string))}
           </div>
         ),
       },
     ],
-    []
+    [
+      t,
+      i18n.language,
+      TYPE_FILTER_OPTIONS,
+      CATEGORY_FILTER_OPTIONS,
+      CATEGORY_LABELS,
+      RENDER_FILTER_OPTIONS,
+      RENDER_LABELS,
+    ]
   );
 
   // ── Kebab — kontrakt 5 bloków (moduł deklaruje TYLKO bloki 1-3) ──────────
@@ -384,7 +438,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
         primary: [
           {
             id: 'edit',
-            label: 'Edit',
+            label: t(`${NS}.rowMenu.edit`, 'Edit'),
             icon: Edit3,
             onClick: () => openEdit(block),
           },
@@ -392,9 +446,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
             ? [
                 {
                   id: 'duplicate',
-                  label: 'Duplicate to organization',
+                  label: t(`${NS}.rowMenu.duplicateToOrg`, 'Duplicate to organization'),
                   icon: Copy,
-                  note: 'Coming soon (backend)',
+                  note: t(`${NS}.rowMenu.comingSoon`, 'Coming soon (backend)'),
                 },
               ]
             : []),
@@ -404,11 +458,15 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
           edit: () => openEdit(block),
         },
         destructive: block.isSystem
-          ? { note: 'System blocks cannot be deactivated' }
-          : { label: 'Deactivate', icon: Trash2, onClick: () => deactivate(block) },
+          ? { note: t(`${NS}.rowMenu.systemCannotDeactivate`, 'System blocks cannot be deactivated') }
+          : {
+              label: t(`${NS}.rowMenu.deactivate`, 'Deactivate'),
+              icon: Trash2,
+              onClick: () => deactivate(block),
+            },
       };
     },
-    [openEdit, deactivate]
+    [openEdit, deactivate, t]
   );
 
   // ── Preview actions (StandardPreview) ────────────────────────────────────
@@ -422,7 +480,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
                 {
                   id: 'deactivate',
                   variant: 'destructive' as const,
-                  label: 'Deactivate',
+                  label: t(`${NS}.rowMenu.deactivate`, 'Deactivate'),
                   icon: Trash2,
                   onClick: () => deactivate(previewBlock),
                 },
@@ -446,11 +504,11 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
       <StandardModuleBar
         onSearch={setSearchQuery}
         searchValue={searchQuery}
-        primaryCta={{ label: 'New Block', icon: Plus, onClick: openCreate }}
+        primaryCta={{ label: t(`${NS}.moduleBar.newBlock`, 'New Block'), icon: Plus, onClick: openCreate }}
         chips={[
-          { id: 'all', label: 'All', count: blocks.length },
-          { id: 'app', label: 'App', count: appCount },
-          { id: 'org', label: 'Org', count: orgCount },
+          { id: 'all', label: t(`${NS}.moduleBar.all`, 'All'), count: blocks.length },
+          { id: 'app', label: getTypeLabel(t, true), count: appCount },
+          { id: 'org', label: getTypeLabel(t, false), count: orgCount },
         ]}
         activeChip={filter}
         onChipChange={(id) => setFilter(id as typeof filter)}
@@ -458,11 +516,13 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
           selectedIds.size > 0
             ? {
                 count: selectedIds.size,
-                selectedLabel: `${selectedIds.size} selected`,
+                selectedLabel: t(`${NS}.moduleBar.selected`, '{{count}} selected', {
+                  count: selectedIds.size,
+                }),
                 onSelectAll: () => setSelectedIds(new Set(rows.map((r) => String(r.id)))),
-                selectAllLabel: 'Select all',
+                selectAllLabel: t(`${NS}.moduleBar.selectAll`, 'Select all'),
                 onClear: () => setSelectedIds(new Set()),
-                clearLabel: 'Clear',
+                clearLabel: t(`${NS}.moduleBar.clear`, 'Clear'),
                 actions: [],
               }
             : null
@@ -480,11 +540,13 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
             data={rows}
             empty={{
               icon: Blocks,
-              title: searchQuery ? 'No blocks match your search' : 'No blocks found',
+              title: searchQuery
+                ? t(`${NS}.empty.noMatchTitle`, 'No blocks match your search')
+                : t(`${NS}.empty.noneTitle`, 'No blocks found'),
               description: searchQuery
-                ? 'Try adjusting your search terms'
-                : 'Create a new block to get started',
-              actionLabel: searchQuery ? undefined : 'New Block',
+                ? t(`${NS}.empty.tryAdjusting`, 'Try adjusting your search terms')
+                : t(`${NS}.empty.createToStart`, 'Create a new block to get started'),
+              actionLabel: searchQuery ? undefined : t(`${NS}.moduleBar.newBlock`, 'New Block'),
               onAction: searchQuery ? undefined : openCreate,
             }}
             selectedRowId={previewId}
@@ -506,24 +568,30 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
               onOpenFull={() => openEdit(previewBlock)}
               meta={{
                 pills: [
-                  { label: previewBlock.isSystem ? 'App' : 'Org', tone: 'neutral' },
+                  { label: getTypeLabel(t, Boolean(previewBlock.isSystem)), tone: 'neutral' },
                   { label: CATEGORY_LABELS[previewBlock.category || 'content'], tone: 'neutral' },
                   { label: RENDER_LABELS[previewBlock.renderKind], tone: 'neutral' },
                 ],
                 trailing: (
                   <span className="text-[11px] font-semibold text-c-text-secondary">
-                    {formatDate(previewBlock.updatedAt || previewBlock.createdAt)}
+                    {formatDate(t, i18n.language, previewBlock.updatedAt || previewBlock.createdAt)}
                   </span>
                 ),
               }}
               details={{
                 text: [
                   previewBlock.description || '',
-                  `Sources: ${(previewBlock.sourceTypes || []).join(', ') || '—'}`,
-                  `Default length: ${previewBlock.defaultLength || 'medium'}`,
-                  `Default style: ${previewBlock.defaultLanguage || 'business'}`,
+                  t(`${NS}.preview.sources`, 'Sources: {{sources}}', {
+                    sources: (previewBlock.sourceTypes || []).join(', ') || '—',
+                  }),
+                  t(`${NS}.preview.defaultLength`, 'Default length: {{length}}', {
+                    length: previewBlock.defaultLength || 'medium',
+                  }),
+                  t(`${NS}.preview.defaultStyle`, 'Default style: {{style}}', {
+                    style: previewBlock.defaultLanguage || 'business',
+                  }),
                   previewBlock.promptTemplate
-                    ? `Prompt template:\n${previewBlock.promptTemplate}`
+                    ? `${t(`${NS}.preview.promptTemplate`, 'Prompt template:')}\n${previewBlock.promptTemplate}`
                     : '',
                 ]
                   .filter(Boolean)
@@ -545,7 +613,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
-              <h3 className="font-semibold text-c-text">{editing ? 'Edit Block' : 'New Block'}</h3>
+              <h3 className="font-semibold text-c-text">
+                {editing ? t(`${NS}.modal.editTitle`, 'Edit Block') : t(`${NS}.modal.newTitle`, 'New Block')}
+              </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary transition-colors"
@@ -557,7 +627,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-c-text mb-1">Name</label>
+                  <label className="block text-sm font-medium text-c-text mb-1">
+                    {t(`${NS}.modal.name`, 'Name')}
+                  </label>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -565,7 +637,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-c-text mb-1">Render Kind</label>
+                  <label className="block text-sm font-medium text-c-text mb-1">
+                    {t(`${NS}.modal.renderKind`, 'Render Kind')}
+                  </label>
                   <select
                     value={renderKind}
                     onChange={(e) => setRenderKind(e.target.value as BlockRenderKind)}
@@ -582,7 +656,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-c-text mb-1">Description</label>
+                <label className="block text-sm font-medium text-c-text mb-1">
+                  {t(`${NS}.modal.description`, 'Description')}
+                </label>
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -593,38 +669,42 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-c-text mb-1">
-                    Sources (CSV)
+                    {t(`${NS}.modal.sourcesCsv`, 'Sources (CSV)')}
                   </label>
                   <input
                     value={sourceTypesText}
                     onChange={(e) => setSourceTypesText(e.target.value)}
-                    placeholder="ASSESSMENT, TOOL"
+                    placeholder={t(`${NS}.modal.sourcesPlaceholder`, 'ASSESSMENT, TOOL')}
                     className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-c-text mb-1">Length</label>
+                    <label className="block text-sm font-medium text-c-text mb-1">
+                      {t(`${NS}.modal.length`, 'Length')}
+                    </label>
                     <select
                       value={defaultLength}
                       onChange={(e) => setDefaultLength(e.target.value as SectionLength)}
                       className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                     >
-                      <option value="short">Short</option>
-                      <option value="medium">Medium</option>
-                      <option value="long">Long</option>
+                      <option value="short">{t(`${NS}.modal.lengthShort`, 'Short')}</option>
+                      <option value="medium">{t(`${NS}.modal.lengthMedium`, 'Medium')}</option>
+                      <option value="long">{t(`${NS}.modal.lengthLong`, 'Long')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-c-text mb-1">Style</label>
+                    <label className="block text-sm font-medium text-c-text mb-1">
+                      {t(`${NS}.modal.style`, 'Style')}
+                    </label>
                     <select
                       value={defaultLanguage}
                       onChange={(e) => setDefaultLanguage(e.target.value as SectionLanguage)}
                       className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                     >
-                      <option value="business">Business</option>
-                      <option value="technical">Technical</option>
-                      <option value="general">General</option>
+                      <option value="business">{t(`${NS}.modal.styleBusiness`, 'Business')}</option>
+                      <option value="technical">{t(`${NS}.modal.styleTechnical`, 'Technical')}</option>
+                      <option value="general">{t(`${NS}.modal.styleGeneral`, 'General')}</option>
                     </select>
                   </div>
                 </div>
@@ -632,13 +712,17 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
 
               <div>
                 <label className="block text-sm font-medium text-c-text mb-1">
-                  Prompt Template
+                  {t(`${NS}.modal.promptTemplate`, 'Prompt Template')}
                 </label>
                 <textarea
                   value={promptTemplate}
                   onChange={(e) => setPromptTemplate(e.target.value)}
                   rows={6}
-                  placeholder='E.g. "Write a section about ... using data: {{facts}}"'
+                  placeholder={t(
+                    `${NS}.modal.promptPlaceholder`,
+                    'E.g. "Write a section about ... using data: {{exampleVar}}"',
+                    { exampleVar: '{{facts}}' }
+                  )}
                   className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text font-mono text-xs focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                 />
               </div>
@@ -649,14 +733,14 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
                 onClick={() => setIsModalOpen(false)}
                 className="px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised rounded-lg transition-colors"
               >
-                Cancel
+                {t(`${NS}.modal.cancel`, 'Cancel')}
               </button>
               <button
                 onClick={save}
                 disabled={!name.trim()}
                 className="px-4 py-2 text-sm font-medium bg-c-text text-c-surface rounded-lg hover:brightness-110 shadow-lg disabled:opacity-50 transition"
               >
-                {editing ? 'Save Changes' : 'Create Block'}
+                {editing ? t(`${NS}.modal.saveChanges`, 'Save Changes') : t(`${NS}.modal.createBlock`, 'Create Block')}
               </button>
             </div>
           </div>

@@ -35366,6 +35366,193 @@
     }
   },
   "reportBuilder": {
+    "blockTypesManager": {
+      "category": {
+        "content": "Content",
+        "data": "Data",
+        "visual": "Visual"
+      },
+      "render": {
+        "markdown": "Markdown",
+        "callout": "Callout",
+        "table": "Table",
+        "chart": "Chart",
+        "matrix": "Matrix",
+        "json": "JSON"
+      },
+      "type": {
+        "app": "App",
+        "org": "Org"
+      },
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{count}}d ago"
+      },
+      "columns": {
+        "block": "Block",
+        "type": "Type",
+        "category": "Category",
+        "render": "Render",
+        "sources": "Sources",
+        "updated": "Updated"
+      },
+      "rowMenu": {
+        "edit": "Edit",
+        "duplicateToOrg": "Duplicate to organization",
+        "comingSoon": "Coming soon (backend)",
+        "deactivate": "Deactivate",
+        "systemCannotDeactivate": "System blocks cannot be deactivated"
+      },
+      "preview": {
+        "sources": "Sources: {{sources}}",
+        "defaultLength": "Default length: {{length}}",
+        "defaultStyle": "Default style: {{style}}",
+        "promptTemplate": "Prompt template:"
+      },
+      "moduleBar": {
+        "newBlock": "New Block",
+        "all": "All",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "clear": "Clear"
+      },
+      "empty": {
+        "noMatchTitle": "No blocks match your search",
+        "noneTitle": "No blocks found",
+        "tryAdjusting": "Try adjusting your search terms",
+        "createToStart": "Create a new block to get started"
+      },
+      "modal": {
+        "editTitle": "Edit Block",
+        "newTitle": "New Block",
+        "name": "Name",
+        "renderKind": "Render Kind",
+        "description": "Description",
+        "sourcesCsv": "Sources (CSV)",
+        "sourcesPlaceholder": "ASSESSMENT, TOOL",
+        "length": "Length",
+        "lengthShort": "Short",
+        "lengthMedium": "Medium",
+        "lengthLong": "Long",
+        "style": "Style",
+        "styleBusiness": "Business",
+        "styleTechnical": "Technical",
+        "styleGeneral": "General",
+        "promptTemplate": "Prompt Template",
+        "promptPlaceholder": "E.g. \"Write a section about ... using data: {{exampleVar}}\"",
+        "cancel": "Cancel",
+        "saveChanges": "Save Changes",
+        "createBlock": "Create Block"
+      },
+      "toast": {
+        "updated": "Block updated",
+        "created": "Block created",
+        "saveFailed": "Failed to save",
+        "confirmDeactivate": "Deactivate this block type?",
+        "deactivated": "Block deactivated",
+        "deactivateFailed": "Failed to deactivate"
+      }
+    },
+    "templatesManager": {
+      "type": {
+        "app": "App",
+        "org": "Org"
+      },
+      "sourceType": {
+        "ASSESSMENT": "Assessment",
+        "INTERVIEW": "Interview",
+        "TOOL": "Tool",
+        "INITIATIVE": "Initiative"
+      },
+      "audience": {
+        "executive": "Executive",
+        "manager": "Manager",
+        "analyst": "Analyst",
+        "team": "Team",
+        "external": "External",
+        "general": "General"
+      },
+      "format": {
+        "vertical": "Vertical",
+        "horizontal": "Horizontal"
+      },
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{count}}d ago"
+      },
+      "columns": {
+        "type": "Type",
+        "template": "Template",
+        "module": "Module",
+        "audience": "Audience",
+        "format": "Format",
+        "user": "User",
+        "sections": "Sections",
+        "updated": "Updated"
+      },
+      "noSections": "No sections",
+      "systemAuthor": "System",
+      "copySuffix": "Copy",
+      "rowMenu": {
+        "duplicateToOrg": "Duplicate to organization",
+        "useTemplate": "Use template",
+        "duplicate": "Duplicate",
+        "systemTemplate": "System template",
+        "systemCannotDelete": "System templates cannot be deleted",
+        "delete": "Delete"
+      },
+      "preview": {
+        "sections": "Sections: {{count}}",
+        "noSections": "Sections: none",
+        "createdBy": "Created by: {{name}}"
+      },
+      "moduleBar": {
+        "newTemplate": "New Template",
+        "all": "All",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "clear": "Clear"
+      },
+      "empty": {
+        "noMatchTitle": "No templates match your search",
+        "noneTitle": "No templates found",
+        "tryAdjusting": "Try adjusting your search terms",
+        "createToStart": "Create a new template to get started"
+      },
+      "toast": {
+        "confirmDelete": "Are you sure you want to delete this template?",
+        "deleted": "Template deleted",
+        "deleteFailed": "Failed to delete",
+        "duplicated": "Template duplicated",
+        "duplicateFailed": "Failed to duplicate"
+      }
+    },
+    "newAssessmentReportModal": {
+      "title": "New assessment report",
+      "subtitle": "Choose assessment + template. A draft will be generated.",
+      "close": "Close",
+      "assessment": "Assessment",
+      "noApprovedAssessments": "No approved assessments available",
+      "selectAssessmentPlaceholder": "Select assessment…",
+      "onlyApprovedWarning": "Only approved assessments can be used to create reports. Approve an assessment first.",
+      "template": "Template",
+      "notSelected": "Not selected",
+      "fromLibrary": "From Library",
+      "choose": "Choose",
+      "cancel": "Cancel",
+      "createDraft": "Create draft",
+      "generating": "Generating…",
+      "reportTitleWithName": "Report - {{name}}",
+      "reportTitleFallback": "Report",
+      "toast": {
+        "creatingReport": "Creating report…",
+        "generatingContent": "Generating report content with AI…",
+        "generatedOpening": "Report generated — opening editor",
+        "createFailed": "Failed to create report"
+      }
+    },
     "settingsPanel": {
       "primaryColor": "Primary color",
       "justNow": "Just now",

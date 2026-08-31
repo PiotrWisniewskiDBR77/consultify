@@ -12,6 +12,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Building2, Calendar, Copy, FileText, Play, Plus, Trash2, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
 
 import {
@@ -64,33 +66,53 @@ interface TemplatesManagerProps {
 }
 
 // ==========================================
-// FILTER OPTIONS (kolumny StandardTable)
+// i18n — prefix reportBuilder.templatesManager
 // ==========================================
 
-const TYPE_FILTER_OPTIONS = [
-  { value: 'app', label: 'App' },
-  { value: 'org', label: 'Org' },
-];
+const NS = 'reportBuilder.templatesManager';
 
-const SOURCE_TYPE_FILTER_OPTIONS = [
-  { value: 'ASSESSMENT', label: 'Assessment' },
-  { value: 'INTERVIEW', label: 'Interview' },
-  { value: 'TOOL', label: 'Tool' },
-  { value: 'INITIATIVE', label: 'Initiative' },
-];
+const getTypeLabel = (t: TFunction, isSystem: boolean): string =>
+  isSystem ? t(`${NS}.type.app`, 'App') : t(`${NS}.type.org`, 'Org');
 
-const AUDIENCE_FILTER_OPTIONS = [
-  { value: 'executive', label: 'Executive' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'analyst', label: 'Analyst' },
-  { value: 'team', label: 'Team' },
-  { value: 'external', label: 'External' },
-];
+const getSourceTypeLabel = (t: TFunction, sourceType: string): string => {
+  const key = (sourceType || '').toUpperCase();
+  const fallback: Record<string, string> = {
+    ASSESSMENT: 'Assessment',
+    INTERVIEW: 'Interview',
+    TOOL: 'Tool',
+    INITIATIVE: 'Initiative',
+  };
+  if (!key || !fallback[key]) return sourceType || '—';
+  return t(`${NS}.sourceType.${key}`, fallback[key]);
+};
 
-const FORMAT_FILTER_OPTIONS = [
-  { value: 'vertical', label: 'Vertical' },
-  { value: 'horizontal', label: 'Horizontal' },
-];
+const getAudienceLabel = (t: TFunction, audience?: string): string => {
+  const key = (audience || '').toLowerCase();
+  const fallback: Record<string, string> = {
+    executive: 'Executive',
+    manager: 'Manager',
+    analyst: 'Analyst',
+    team: 'Team',
+    external: 'External',
+  };
+  if (!key || !fallback[key]) return t(`${NS}.audience.general`, 'General');
+  return t(`${NS}.audience.${key}`, fallback[key]);
+};
+
+const getFormatLabel = (t: TFunction, format?: string): string => {
+  const key = (format || 'vertical').toLowerCase();
+  return key === 'horizontal'
+    ? t(`${NS}.format.horizontal`, 'Horizontal')
+    : t(`${NS}.format.vertical`, 'Vertical');
+};
+
+// ==========================================
+// FILTER OPTION VALUES (nie tłumaczone — klucze filtra)
+// ==========================================
+
+const SOURCE_TYPE_VALUES = ['ASSESSMENT', 'INTERVIEW', 'TOOL', 'INITIATIVE'];
+const AUDIENCE_VALUES = ['executive', 'manager', 'analyst', 'team', 'external'];
+const FORMAT_VALUES = ['vertical', 'horizontal'];
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -100,11 +122,11 @@ const FORMAT_FILTER_OPTIONS = [
 const NEUTRAL_CHIP =
   'inline-flex items-center gap-1.5 rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary';
 
-const getTypeBadgeConfig = (isSystem: boolean) => {
+const getTypeBadgeConfig = (t: TFunction, isSystem: boolean) => {
   if (isSystem) {
-    return { label: 'App', icon: Building2, dot: 'bg-blue-400' };
+    return { label: getTypeLabel(t, true), icon: Building2, dot: 'bg-blue-400' };
   }
-  return { label: 'Org', icon: Building2, dot: 'bg-c-accent-soft' };
+  return { label: getTypeLabel(t, false), icon: Building2, dot: 'bg-c-accent-soft' };
 };
 
 const getSourceTypeBadgeConfig = (sourceType: string) => {
@@ -122,20 +144,20 @@ const getSourceTypeBadgeConfig = (sourceType: string) => {
   }
 };
 
-const getAudienceBadgeConfig = (audience?: string) => {
+const getAudienceBadgeConfig = (t: TFunction, audience?: string) => {
   switch (audience?.toLowerCase()) {
     case 'executive':
-      return { dot: 'bg-c-accent-soft', label: 'Executive' };
+      return { dot: 'bg-c-accent-soft', label: getAudienceLabel(t, 'executive') };
     case 'manager':
-      return { dot: 'bg-blue-400', label: 'Manager' };
+      return { dot: 'bg-blue-400', label: getAudienceLabel(t, 'manager') };
     case 'analyst':
-      return { dot: 'bg-emerald-400', label: 'Analyst' };
+      return { dot: 'bg-emerald-400', label: getAudienceLabel(t, 'analyst') };
     case 'team':
-      return { dot: 'bg-amber-400', label: 'Team' };
+      return { dot: 'bg-amber-400', label: getAudienceLabel(t, 'team') };
     case 'external':
-      return { dot: 'bg-danger-400', label: 'External' };
+      return { dot: 'bg-danger-400', label: getAudienceLabel(t, 'external') };
     default:
-      return { dot: 'bg-c-text-muted', label: 'General' };
+      return { dot: 'bg-c-text-muted', label: getAudienceLabel(t, undefined) };
   }
 };
 
@@ -148,7 +170,7 @@ const TagChip: React.FC<{ label: string; dot?: string }> = ({ label, dot }) => (
   </span>
 );
 
-const formatDate = (dateStr?: string): string => {
+const formatDate = (t: TFunction, lang: string, dateStr?: string): string => {
   if (!dateStr) return '—';
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return '—';
@@ -159,11 +181,13 @@ const formatDate = (dateStr?: string): string => {
 
   const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > -7 && diffDays < 0) return `${Math.abs(diffDays)}d ago`;
+  if (diffDays === 0) return t(`${NS}.date.today`, 'Today');
+  if (diffDays === -1) return t(`${NS}.date.yesterday`, 'Yesterday');
+  if (diffDays > -7 && diffDays < 0)
+    return t(`${NS}.date.daysAgo`, '{{count}}d ago', { count: Math.abs(diffDays) });
 
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const locale = lang?.startsWith('pl') ? 'pl-PL' : 'en-US';
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 };
 
 // ==========================================
@@ -174,6 +198,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   autoOpenNewTemplate,
   onUseTemplate,
 }) => {
+  const { t, i18n } = useTranslation();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
@@ -185,6 +210,29 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   const [activeFilters, setActiveFilters] = useState<
     { id: string; column: string; value: string; label: string }[]
   >([]);
+
+  const TYPE_FILTER_OPTIONS = useMemo(
+    () => [
+      { value: 'app', label: getTypeLabel(t, true) },
+      { value: 'org', label: getTypeLabel(t, false) },
+    ],
+    [t]
+  );
+
+  const SOURCE_TYPE_FILTER_OPTIONS = useMemo(
+    () => SOURCE_TYPE_VALUES.map((v) => ({ value: v, label: getSourceTypeLabel(t, v) })),
+    [t]
+  );
+
+  const AUDIENCE_FILTER_OPTIONS = useMemo(
+    () => AUDIENCE_VALUES.map((v) => ({ value: v, label: getAudienceLabel(t, v) })),
+    [t]
+  );
+
+  const FORMAT_FILTER_OPTIONS = useMemo(
+    () => FORMAT_VALUES.map((v) => ({ value: v, label: getFormatLabel(t, v) })),
+    [t]
+  );
 
   // Fetch templates
   const fetchTemplates = useCallback(async () => {
@@ -296,33 +344,34 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   // Handlers
   const handleDelete = useCallback(
     async (templateId: string) => {
-      if (!confirm('Are you sure you want to delete this template?')) return;
+      if (!confirm(t(`${NS}.toast.confirmDelete`, 'Are you sure you want to delete this template?')))
+        return;
 
       try {
         await Api.delete(`/report-builder/templates/${templateId}`);
-        toast.success('Template deleted');
+        toast.success(t(`${NS}.toast.deleted`, 'Template deleted'));
         setPreviewId((prev) => (prev === templateId ? null : prev));
         await fetchTemplates();
       } catch (err: any) {
-        toast.error(err?.error || 'Failed to delete');
+        toast.error(err?.error || t(`${NS}.toast.deleteFailed`, 'Failed to delete'));
       }
     },
-    [fetchTemplates]
+    [fetchTemplates, t]
   );
 
   const handleDuplicate = useCallback(
     async (template: Template) => {
       try {
         await Api.post(`/report-builder/templates/${template.id}/duplicate`, {
-          name: `${template.name} (Copy)`,
+          name: `${template.name} (${t(`${NS}.copySuffix`, 'Copy')})`,
         });
-        toast.success('Template duplicated');
+        toast.success(t(`${NS}.toast.duplicated`, 'Template duplicated'));
         await fetchTemplates();
       } catch (err: any) {
-        toast.error(err?.error || 'Failed to duplicate');
+        toast.error(err?.error || t(`${NS}.toast.duplicateFailed`, 'Failed to duplicate'));
       }
     },
-    [fetchTemplates]
+    [fetchTemplates, t]
   );
 
   const openEditor = useCallback((template?: Template) => {
@@ -335,20 +384,20 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
     () => [
       {
         id: 'type',
-        label: 'Type',
+        label: t(`${NS}.columns.type`, 'Type'),
         width: '90px',
         sortable: true,
         filterable: true,
         filterOptions: TYPE_FILTER_OPTIONS,
         render: (row: TableRow) => {
           const isSystem = row.type === 'app';
-          const config = getTypeBadgeConfig(isSystem);
+          const config = getTypeBadgeConfig(t, isSystem);
           return <TagChip label={config.label} dot={config.dot} />;
         },
       },
       {
         id: 'name',
-        label: 'Template',
+        label: t(`${NS}.columns.template`, 'Template'),
         sortable: true,
         render: (row: TableRow) => (
           <div className="flex flex-col">
@@ -363,84 +412,100 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       },
       {
         id: 'sourceType',
-        label: 'Module',
+        label: t(`${NS}.columns.module`, 'Module'),
         width: '120px',
         sortable: true,
         filterable: true,
         filterOptions: SOURCE_TYPE_FILTER_OPTIONS,
         render: (row: TableRow) => (
           <TagChip
-            label={(row.sourceType as string) || '—'}
+            label={
+              row.sourceType ? getSourceTypeLabel(t, row.sourceType as string) : '—'
+            }
             dot={getSourceTypeBadgeConfig(row.sourceType as string).dot}
           />
         ),
       },
       {
         id: 'audience',
-        label: 'Audience',
+        label: t(`${NS}.columns.audience`, 'Audience'),
         width: '110px',
         sortable: true,
         filterable: true,
         filterOptions: AUDIENCE_FILTER_OPTIONS,
         render: (row: TableRow) => {
-          const config = getAudienceBadgeConfig(row.audience as string);
+          const config = getAudienceBadgeConfig(t, row.audience as string);
           return <TagChip label={config.label} dot={config.dot} />;
         },
       },
       {
         id: 'format',
-        label: 'Format',
+        label: t(`${NS}.columns.format`, 'Format'),
         width: '100px',
         sortable: true,
         filterable: true,
         filterOptions: FORMAT_FILTER_OPTIONS,
         render: (row: TableRow) => (
-          <span className="text-sm text-c-text-secondary capitalize">
-            {(row.format as string) || 'vertical'}
+          <span className="text-sm text-c-text-secondary">
+            {getFormatLabel(t, row.format as string)}
           </span>
         ),
       },
       {
         id: 'createdBy',
-        label: 'User',
+        label: t(`${NS}.columns.user`, 'User'),
         width: '130px',
         render: (row: TableRow) => (
           <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
             <User size={13} className="text-c-text-secondary" />
             <span className="truncate">
-              {(row.createdByName as string) || (row.isSystem ? 'System' : '—')}
+              {(row.createdByName as string) ||
+                (row.isSystem ? t(`${NS}.systemAuthor`, 'System') : '—')}
             </span>
           </div>
         ),
       },
       {
         id: 'sections',
-        label: 'Sections',
-        width: '80px',
+        label: t(`${NS}.columns.sections`, 'Sections'),
+        width: '110px',
         align: 'right',
         sortAccessor: (row: TableRow) =>
           (row.sections as TemplateSection[] | undefined)?.length ?? 0,
-        render: (row: TableRow) => (
-          <span className="text-sm tabular-nums text-c-text">
-            {(row.sections as TemplateSection[] | undefined)?.length || 0}
-          </span>
-        ),
+        render: (row: TableRow) => {
+          const count = (row.sections as TemplateSection[] | undefined)?.length || 0;
+          if (count === 0) {
+            return (
+              <span className="text-xs text-c-text-muted">
+                {t(`${NS}.noSections`, 'No sections')}
+              </span>
+            );
+          }
+          return <span className="text-sm tabular-nums text-c-text">{count}</span>;
+        },
       },
       {
         id: 'updatedAt',
-        label: 'Updated',
+        label: t(`${NS}.columns.updated`, 'Updated'),
         width: '100px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.updatedAt || row.createdAt || ''),
         render: (row: TableRow) => (
           <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
             <Calendar size={12} className="text-c-text-secondary" />
-            {formatDate((row.updatedAt as string) || (row.createdAt as string))}
+            {formatDate(t, i18n.language, (row.updatedAt as string) || (row.createdAt as string))}
           </div>
         ),
       },
     ],
-    []
+    [
+      t,
+      i18n.language,
+      TYPE_FILTER_OPTIONS,
+      SOURCE_TYPE_FILTER_OPTIONS,
+      AUDIENCE_FILTER_OPTIONS,
+      FORMAT_FILTER_OPTIONS,
+    ]
   );
 
   // ── Kebab — kontrakt 5 blokow (modul deklaruje TYLKO bloki 1-3) ──────────
@@ -451,7 +516,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
         ? [
             {
               id: 'duplicate',
-              label: 'Duplicate to organization',
+              label: t(`${NS}.rowMenu.duplicateToOrg`, 'Duplicate to organization'),
               icon: Copy,
               onClick: () => handleDuplicate(template),
             },
@@ -461,7 +526,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               ? [
                   {
                     id: 'use',
-                    label: 'Use template',
+                    label: t(`${NS}.rowMenu.useTemplate`, 'Use template'),
                     icon: Play,
                     onClick: () => onUseTemplate(template.id),
                   },
@@ -469,7 +534,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               : []),
             {
               id: 'duplicate',
-              label: 'Duplicate',
+              label: t(`${NS}.rowMenu.duplicate`, 'Duplicate'),
               icon: Copy,
               onClick: () => handleDuplicate(template),
             },
@@ -480,14 +545,18 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
         universalHandlers: {
           preview: () => setPreviewId(template.id),
           edit: template.isSystem ? undefined : () => openEditor(template),
-          editNote: template.isSystem ? 'System template' : undefined,
+          editNote: template.isSystem ? t(`${NS}.rowMenu.systemTemplate`, 'System template') : undefined,
         },
         destructive: template.isSystem
-          ? { note: 'System templates cannot be deleted' }
-          : { label: 'Delete', icon: Trash2, onClick: () => handleDelete(template.id) },
+          ? { note: t(`${NS}.rowMenu.systemCannotDelete`, 'System templates cannot be deleted') }
+          : {
+              label: t(`${NS}.rowMenu.delete`, 'Delete'),
+              icon: Trash2,
+              onClick: () => handleDelete(template.id),
+            },
       };
     },
-    [handleDuplicate, handleDelete, openEditor, onUseTemplate]
+    [handleDuplicate, handleDelete, openEditor, onUseTemplate, t]
   );
 
   // ── Preview actions (StandardPreview) ────────────────────────────────────
@@ -499,7 +568,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                 {
                   id: 'duplicate',
                   variant: 'positive' as const,
-                  label: 'Duplicate to organization',
+                  label: t(`${NS}.rowMenu.duplicateToOrg`, 'Duplicate to organization'),
                   icon: Copy,
                   onClick: () => handleDuplicate(previewTemplate),
                 },
@@ -510,7 +579,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                       {
                         id: 'use',
                         variant: 'positive' as const,
-                        label: 'Use template',
+                        label: t(`${NS}.rowMenu.useTemplate`, 'Use template'),
                         icon: Play,
                         shortcut: 'U',
                         onClick: () => onUseTemplate(previewTemplate.id),
@@ -520,7 +589,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                 {
                   id: 'duplicate',
                   variant: 'neutral' as const,
-                  label: 'Duplicate',
+                  label: t(`${NS}.rowMenu.duplicate`, 'Duplicate'),
                   icon: Copy,
                   onClick: () => handleDuplicate(previewTemplate),
                 },
@@ -530,7 +599,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                 {
                   id: 'delete',
                   variant: 'destructive' as const,
-                  label: 'Delete',
+                  label: t(`${NS}.rowMenu.delete`, 'Delete'),
                   icon: Trash2,
                   onClick: () => handleDelete(previewTemplate.id),
                 },
@@ -554,11 +623,15 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       <StandardModuleBar
         onSearch={setSearchQuery}
         searchValue={searchQuery}
-        primaryCta={{ label: 'New Template', icon: Plus, onClick: () => openEditor() }}
+        primaryCta={{
+          label: t(`${NS}.moduleBar.newTemplate`, 'New Template'),
+          icon: Plus,
+          onClick: () => openEditor(),
+        }}
         chips={[
-          { id: 'all', label: 'All', count: templates.length },
-          { id: 'app', label: 'App', count: appCount },
-          { id: 'org', label: 'Org', count: orgCount },
+          { id: 'all', label: t(`${NS}.moduleBar.all`, 'All'), count: templates.length },
+          { id: 'app', label: getTypeLabel(t, true), count: appCount },
+          { id: 'org', label: getTypeLabel(t, false), count: orgCount },
         ]}
         activeChip={filter}
         onChipChange={(id) => setFilter(id as typeof filter)}
@@ -566,11 +639,13 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
           selectedIds.size > 0
             ? {
                 count: selectedIds.size,
-                selectedLabel: `${selectedIds.size} selected`,
+                selectedLabel: t(`${NS}.moduleBar.selected`, '{{count}} selected', {
+                  count: selectedIds.size,
+                }),
                 onSelectAll: () => setSelectedIds(new Set(rows.map((r) => String(r.id)))),
-                selectAllLabel: 'Select all',
+                selectAllLabel: t(`${NS}.moduleBar.selectAll`, 'Select all'),
                 onClear: () => setSelectedIds(new Set()),
-                clearLabel: 'Clear',
+                clearLabel: t(`${NS}.moduleBar.clear`, 'Clear'),
                 actions: [],
               }
             : null
@@ -588,11 +663,13 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
             data={rows}
             empty={{
               icon: FileText,
-              title: searchQuery ? 'No templates match your search' : 'No templates found',
+              title: searchQuery
+                ? t(`${NS}.empty.noMatchTitle`, 'No templates match your search')
+                : t(`${NS}.empty.noneTitle`, 'No templates found'),
               description: searchQuery
-                ? 'Try adjusting your search terms'
-                : 'Create a new template to get started',
-              actionLabel: searchQuery ? undefined : 'New Template',
+                ? t(`${NS}.empty.tryAdjusting`, 'Try adjusting your search terms')
+                : t(`${NS}.empty.createToStart`, 'Create a new template to get started'),
+              actionLabel: searchQuery ? undefined : t(`${NS}.moduleBar.newTemplate`, 'New Template'),
               onAction: searchQuery ? undefined : () => openEditor(),
             }}
             selectedRowId={previewId}
@@ -618,28 +695,39 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               meta={{
                 pills: [
                   {
-                    label: getTypeBadgeConfig(previewTemplate.isSystem).label,
+                    label: getTypeBadgeConfig(t, previewTemplate.isSystem).label,
                     tone: 'neutral',
                   },
-                  { label: previewTemplate.sourceType || '—', tone: 'neutral' },
                   {
-                    label: getAudienceBadgeConfig(previewTemplate.audience).label,
+                    label: previewTemplate.sourceType
+                      ? getSourceTypeLabel(t, previewTemplate.sourceType)
+                      : '—',
+                    tone: 'neutral',
+                  },
+                  {
+                    label: getAudienceBadgeConfig(t, previewTemplate.audience).label,
                     tone: 'neutral',
                   },
                 ],
                 trailing: (
                   <span className="text-[11px] font-semibold text-c-text-secondary">
-                    {formatDate(previewTemplate.updatedAt || previewTemplate.createdAt)}
+                    {formatDate(t, i18n.language, previewTemplate.updatedAt || previewTemplate.createdAt)}
                   </span>
                 ),
               }}
               details={{
                 text: [
                   previewTemplate.description || '',
-                  `Sections: ${previewTemplate.sections?.length || 0}`,
-                  `Created by: ${
-                    previewTemplate.createdByName || (previewTemplate.isSystem ? 'System' : '—')
-                  }`,
+                  previewTemplate.sections?.length
+                    ? t(`${NS}.preview.sections`, 'Sections: {{count}}', {
+                        count: previewTemplate.sections.length,
+                      })
+                    : t(`${NS}.preview.noSections`, 'Sections: none'),
+                  t(`${NS}.preview.createdBy`, 'Created by: {{name}}', {
+                    name:
+                      previewTemplate.createdByName ||
+                      (previewTemplate.isSystem ? t(`${NS}.systemAuthor`, 'System') : '—'),
+                  }),
                 ]
                   .filter(Boolean)
                   .join('\n\n'),
