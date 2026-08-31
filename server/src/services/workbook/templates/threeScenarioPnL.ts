@@ -178,7 +178,7 @@ function currencyNumFmt(hint: 'pln' | 'eur' | 'usd'): string {
 // ---------------------------------------------------------------------------
 // Layout constants — Assumptions ("Założenia") sheet
 //
-// Columns:  A = Driver (text) | B = Base | C = Bull | D = Bear
+// Columns:  A = Założenie (text) | B = Bazowy | C = Optymistyczny | D = Pesymistyczny
 // Rows (Excel row = data-index + 2, header is row 1):
 //   2  Revenue (base year)   ← currency
 //   3  Revenue growth %/yr   ← percent
@@ -192,7 +192,11 @@ function currencyNumFmt(hint: 'pln' | 'eur' | 'usd'): string {
 const A_COL = { base: 'B', bull: 'C', bear: 'D' } as const;
 type ScenKey = keyof typeof A_COL;
 const SCEN_ORDER: ScenKey[] = ['base', 'bull', 'bear'];
-const SCEN_LABEL: Record<ScenKey, string> = { base: 'Base', bull: 'Bull', bear: 'Bear' };
+const SCEN_LABEL: Record<ScenKey, string> = {
+  base: 'Bazowy',
+  bull: 'Optymistyczny',
+  bear: 'Pesymistyczny',
+};
 
 /** Excel rows of each assumption driver on the Założenia sheet. */
 const AR = {
@@ -224,10 +228,10 @@ function buildAssumptionsSheet(
   currencyLabel: string
 ): Sheet {
   const columns: ColumnDef[] = [
-    { key: 'driver', header: 'Driver', type: 'text', width: 30 },
-    { key: 'base', header: 'Base', type: 'number' },
-    { key: 'bull', header: 'Bull', type: 'number' },
-    { key: 'bear', header: 'Bear', type: 'number' },
+    { key: 'driver', header: 'Założenie', type: 'text', width: 30 },
+    { key: 'base', header: SCEN_LABEL.base, type: 'number' },
+    { key: 'bull', header: SCEN_LABEL.bull, type: 'number' },
+    { key: 'bear', header: SCEN_LABEL.bear, type: 'number' },
   ];
 
   // Input-cell chrome: a light fill + thin border so a reviewer instantly sees
@@ -533,7 +537,7 @@ function buildPnLSheet(startYear: number, currencyHint: 'pln' | 'eur' | 'usd'): 
 // cross-sheet formula off the P&L sheet — no constants. A color-scale highlights
 // best↔worst across the 3 scenario columns.
 //
-// Columns: A = Metryka (text) | B = Base | C = Bull | D = Bear
+// Columns: A = Metryka (text) | B = Bazowy | C = Optymistyczny | D = Pesymistyczny
 // Rows (Excel row = idx + 2):
 //   2  Przychody (Y3)
 //   3  EBITDA (Y3)
@@ -544,9 +548,9 @@ function buildComparisonSheet(startYear: number, currencyHint: 'pln' | 'eur' | '
   const y3 = startYear + 2;
   const columns: ColumnDef[] = [
     { key: 'metryka', header: 'Metryka', type: 'text', width: 26 },
-    { key: 'base', header: 'Base', type: 'number' },
-    { key: 'bull', header: 'Bull', type: 'number' },
-    { key: 'bear', header: 'Bear', type: 'number' },
+    { key: 'base', header: SCEN_LABEL.base, type: 'number' },
+    { key: 'bull', header: SCEN_LABEL.bull, type: 'number' },
+    { key: 'bear', header: SCEN_LABEL.bear, type: 'number' },
   ];
   const currencyFmt = currencyNumFmt(currencyHint);
 
@@ -625,7 +629,7 @@ export function buildThreeScenarioPnLSchema(params: ThreeScenarioPnLParams = {})
   return {
     title: `${companyName} — Model P&L (3 scenariusze × 3 lata)`,
     description:
-      'Parametryczny rachunek wyników: Base / Bull / Bear, lata ' +
+      'Parametryczny rachunek wyników: Bazowy / Optymistyczny / Pesymistyczny, lata ' +
       `${startYear}–${startYear + 2}. Każda pozycja P&L to formuła; wejścia na arkuszu „${ASSUMPTIONS_SHEET}".`,
     author: 'Consultify',
     sheets,
