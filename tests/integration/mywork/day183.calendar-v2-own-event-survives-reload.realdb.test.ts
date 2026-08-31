@@ -38,10 +38,13 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { assertRealPostgresTestEnvironment } from '../_helpers/assertRealPostgres.js';
 
 const DATABASE_URL = String(process.env.DATABASE_URL || '');
-const REAL_DB =
-  process.env.RUN_DB_TESTS === '1' &&
-  process.env.MOCK_DB === 'false' &&
-  DATABASE_URL.endsWith('/fix183');
+// Z31 detektor 2026-08-31: unpinned from a hardcoded '/fix183' database-name
+// suffix. That suffix silently skipped this describe block (exit 0) whenever
+// the disposable database happened to be named anything else. The env gate
+// below is intentionally the ONLY precondition; assertRealPostgresTestEnvironment
+// in beforeAll below fails LOUD (throws) if RUN_DB_TESTS/MOCK_DB/DATABASE_URL
+// are missing — see tests/integration/_helpers/assertRealPostgres.ts.
+const REAL_DB = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && DATABASE_URL.startsWith('postgres');
 
 describe.skipIf(!REAL_DB)('FIX-183 CalendarV2 own event survives full reload', () => {
   const prefix = `fix183_${randomUUID().replaceAll('-', '')}`;
@@ -59,7 +62,7 @@ describe.skipIf(!REAL_DB)('FIX-183 CalendarV2 own event survives full reload', (
   let restoreFetch: (() => void) | null = null;
 
   beforeAll(async () => {
-    await assertRealPostgresTestEnvironment({ expectedDatabase: 'fix183' });
+    await assertRealPostgresTestEnvironment();
 
     sql = new Client({ connectionString: DATABASE_URL });
     await sql.connect();

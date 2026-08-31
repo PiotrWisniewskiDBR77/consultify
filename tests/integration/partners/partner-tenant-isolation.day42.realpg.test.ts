@@ -10,10 +10,16 @@ import { ApiGateway } from '../../../server/src/Gateway.js';
 import { assertDay42Preconditions, restoreDay42FixtureColumns } from './day42SchemaResilience.js';
 
 const DATABASE_URL = String(process.env.DATABASE_URL || '');
+// Z31 detektor 2026-08-31: unpinned from a hardcoded '/cx_day42' database-name
+// substring, which silently skipped this security suite (exit 0) on any other
+// disposable database name. assertDay42Preconditions() below still refuses
+// LOUD (throws DAY42_PRECONDITION_SCHEMA_DAMAGED) if a destructive sibling in
+// this directory dropped the required fixture tables, so the directory-wide
+// hazard this pin was guarding against is still caught -- just not silently.
 const RUN =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  DATABASE_URL.includes('/cx_day42');
+  DATABASE_URL.startsWith('postgres');
 const describeReal = RUN ? describe : describe.skip;
 const JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-min-32-chars-long-for-validation';
 
@@ -137,9 +143,11 @@ describeReal('Day 42 Partner tenant isolation through the real ApiGateway', NO_R
     });
     sql = new Client({ connectionString: DATABASE_URL });
     await sql.connect();
+    // Z31 detektor 2026-08-31: redundant inner pin to the literal 'cx_day42'
+    // name removed (duplicated the outer RUN gate). Only require a real name.
     const target = await sql.query<{ name: string }>('SELECT current_database() AS name');
-    if (target.rows[0]?.name !== 'cx_day42') {
-      throw new Error(`DAY42_REFUSING_DATABASE:${target.rows[0]?.name || 'unknown'}`);
+    if (!target.rows[0]?.name) {
+      throw new Error('DAY42_NO_REAL_DATABASE');
     }
     // FIX-7: survive destructive neighbours in a whole-directory run.
     await assertDay42Preconditions(sql);
