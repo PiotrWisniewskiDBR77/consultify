@@ -247,10 +247,19 @@ export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow
 // funkcji nie widzi tego defektu.
 // ---------------------------------------------------------------------------
 
+// Polski separator dziesiętny (przecinek, nie kropka) — ten sam wzorzec co
+// `formatAnalysisKpiValueForDisplay` (financeV2.types.ts, `toLocaleString('pl-PL')`).
+// NAPRAWIONE (powtórka 08-31): `.toFixed(1)` dawało „+7.1%"/„-12.3%" z kropką —
+// dokładnie ta sama klasa defektu, którą wcześniej zamknięto na
+// finance-valuation-workspace („Kropka zamiast przecinka dziesiętnego").
+function formatPlPercent1(n: number): string {
+  return n.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
 export function formatYoyDeltaText(yoy: YoyDelta): string {
   switch (yoy.status) {
     case 'COMPUTED':
-      return yoy.percentDelta === null ? '—' : `${yoy.percentDelta >= 0 ? '+' : ''}${yoy.percentDelta.toFixed(1)}%`;
+      return yoy.percentDelta === null ? '—' : `${yoy.percentDelta >= 0 ? '+' : ''}${formatPlPercent1(yoy.percentDelta)}%`;
     case 'PRIOR_ZERO_PCT_UNDEFINED':
       return yoy.absoluteDelta === null ? '—' : `${yoy.absoluteDelta >= 0 ? '+' : ''}${yoy.absoluteDelta} (% nieokreślony)`;
     case 'MISSING_CURRENT':

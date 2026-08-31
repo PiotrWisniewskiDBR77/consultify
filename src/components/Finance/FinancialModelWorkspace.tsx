@@ -388,6 +388,23 @@ const STATUS_CONFIG: Record<string, { badgeClass: string; icon: React.ReactNode 
   },
 };
 
+// ★ NAPRAWIONE (powtórka 08-31): statusBadge() renderował `status.toUpperCase()`
+// — surowy enum ("DRAFT"/"REVIEW"/"APPROVED") wprost w interfejsie, bez
+// tłumaczenia, mimo że dokładnie ten sam koncept (status modelu/sprawozdania)
+// ma już polskie etykiety gdzie indziej w tym module (finance-hub: Szkic/
+// Zatwierdzone/Przegląd). Etykiety lokalne (nie `t()`/locales — te pliki są
+// poza moim zakresem), zgodne z istniejącym nazewnictwem.
+const STATUS_BADGE_LABEL_PL: Record<string, string> = {
+  draft: 'Szkic',
+  review: 'Do przeglądu',
+  approved: 'Zatwierdzony',
+};
+const STATUS_BADGE_LABEL_EN: Record<string, string> = {
+  draft: 'Draft',
+  review: 'In review',
+  approved: 'Approved',
+};
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -738,11 +755,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 
   const statusBadge = (status: string) => {
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
+    const labels = isPl ? STATUS_BADGE_LABEL_PL : STATUS_BADGE_LABEL_EN;
+    const label = labels[status] ?? status.toUpperCase();
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.badgeClass}`}
       >
-        {cfg.icon} {status.toUpperCase()}
+        {cfg.icon} {label}
       </span>
     );
   };

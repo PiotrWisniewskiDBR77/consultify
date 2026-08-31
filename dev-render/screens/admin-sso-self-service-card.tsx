@@ -18,10 +18,13 @@
  * `/admin/sso-self` substrings), not a `/api/*` catch-all — see
  * i18n-fala1-smoke.tsx header comment for the trap this avoids.
  *
- * KNOWN ISSUE (not fixed here — component, not story; task scope is
- * screenshots only): the header icon uses `text-primary-500`
- * (AdminSsoSelfServiceCard.tsx:208) — tailwind `primary` = crimson #85182F
- * (CLAUDE.md pułapka #1). Visible as a small red shield icon in the zrzut.
+ * ★ NIEAKTUALNE ostrzeżenie usunięte (powtórka 08-31, zweryfikowane zrzutem):
+ * poprzedni komentarz zgłaszał `text-primary-500` (crimson) na ikonie
+ * nagłówka. Stan dzisiejszy AdminSsoSelfServiceCard.tsx:208 —
+ * `<ShieldCheck className="h-4 w-4 text-c-text-secondary" />` — neutralny
+ * token, ikona jest ciemnoszara/granatowa na świeżym zrzucie w obu motywach,
+ * nie czerwona. Ktoś naprawił kod bez aktualizacji tego komentarza — klasyczna
+ * pułapka „dokumentacja starzeje się szybciej niż kod" z CLAUDE.md.
  */
 import React from 'react';
 

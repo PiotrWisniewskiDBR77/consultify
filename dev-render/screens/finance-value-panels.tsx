@@ -353,7 +353,10 @@ export default function FinanceValuePanelsScreen({
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: 24, background: 'var(--c-bg)' }}>
+      {/* ★ NAPRAWIONE (powtórka 08-31): pastylka harnessu bez `data-dev-render-chrome`
+          — ta sama pułapka #15 co finance-statement-pack-workspace-v2.tsx. */}
       <div
+        data-dev-render-chrome="true"
         style={{
           marginBottom: 12,
           fontFamily: 'system-ui',

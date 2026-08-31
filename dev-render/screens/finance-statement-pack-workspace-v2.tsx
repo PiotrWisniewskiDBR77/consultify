@@ -270,7 +270,9 @@ export default function FinanceStatementPackWorkspaceV2Screen(): React.ReactElem
 
   return (
     <div className="min-h-screen bg-c-bg p-4" data-testid="finance-statement-pack-workspace-v2-screen">
-      <div className="mb-2 font-mono text-[10px] text-c-text-muted">state=<b>{state}</b> (populated|empty|missing)</div>
+      {/* ★ NAPRAWIONE (powtórka 08-31): pastylka harnessu bez `data-dev-render-chrome`
+          — siedziała w kadrze na każdym zrzucie (dokładnie pułapka #15 z briefu). */}
+      <div className="mb-2 font-mono text-[10px] text-c-text-muted" data-dev-render-chrome="true">state=<b>{state}</b> (populated|empty|missing)</div>
       <div style={{ height: 'calc(100vh - 48px)' }}>
         <StatementPackWorkspaceV2
           businessVersionId="bv-statement-pack-dbr77-3"

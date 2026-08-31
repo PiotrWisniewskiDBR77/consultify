@@ -294,3 +294,116 @@ zakresem MyWork), `src/components/Execution/**`, `src/components/Interview/**` i
 Żadna zmiana nie dotyka `src/components/shared/**`, `src/components/standard/**`
 ani `public/locales/**`. `scripts/check-list-canon.sh` i `scripts/check-triada.sh`
 przechodzą (dług kanonu tabel nie rośnie: 394/394; zero nowych naruszeń crimson).
+
+## Moduły 09-finanse, 13-administracja, 14-organizacja (POWTÓRKA)
+
+★ Ta sekcja jest POWTÓRKĄ po unieważnionej ocenie poprzedniego robotnika (patrz
+ostrzeżenie nadzorcy na górze tego pliku). Wszystkie 22 ekrany zakresu (Finanse 16 ·
+Administracja 5 · Organizacja 1) dostały świeży zrzut w obu motywach, z właściwymi
+parametrami adresu wyciągniętymi z komentarza nagłówkowego każdego pliku
+`dev-render/screens/<id>.tsx` (nie z rejestru `main.tsx`, który ich nie wymienia —
+dokładnie pułapka opisana w briefie). Zrzuty: `evidence/grafika/137-finanse-admin-powtorka/`
+(44 pliki, 22×2 motywy), każdy przeczytany `Read`em osobiście.
+
+### ★ Pułapka pomiarowa złapana w tej sesji (nie produktowa)
+
+Narzędzie `grafika-zrzuty.mjs` przyjmuje `--parametry=` jako JEDEN string doklejany
+literalnie do URL-a. Żeby przekazać WIELE parametrów (`view=X&scene=Y&status=Z`) w
+bashu bez rozdzielenia przez powłokę (nieucieczony `&` uruchamia background job),
+pierwsze podejście użyło `%26` jako separatora — ale skrypt nie dekoduje `%26`, więc
+trafiało to do URL-a jako część WARTOŚCI pierwszego parametru
+(`view=assumptions&scene=default&status=DRAFT` całe trafiało do `params.get('view')`),
+a komponent cicho spadał na domyślny widok. Objaw: 6 błędów konsoli na
+`finance-baseline-workspace` (dodatkowe zapytania sieciowe z niespodziewanym stanem).
+Naprawione przez cytowanie `--parametry='view=assumptions&scene=default&status=DRAFT'`
+(prawdziwy `&`, w cudzysłowie) — błędy konsoli spadły do 0, zrzut pokazuje właściwy
+widok „Założenia". Przeliczone też `finance-prediction-workspace`/`finance-value-panels`/
+`finance-id-bridge` tą samą poprawną drogą — bez zmiany treści (domyślne wartości
+przypadkiem pokrywały się z zamierzonymi), więc nie wymagały ponownej oceny.
+
+### Tabela — wszystkie 22 ekrany
+
+| Ekran (id) | Ocena | Co jest nie tak | Naprawione/zgłoszone | Zrzut |
+|---|---|---|---|---|
+| `finance-comments-panel` | A | — | — | `finance-comments-panel__PRZED__{light,dark}.png` |
+| `finance-lineage-navigator` | A | — | — | `finance-lineage-navigator__PRZED__{light,dark}.png` |
+| `finance-workspace-bar` | A | Pusta treść pod paskiem — ZAMIERZONE (izolowany podgląd paska, ciało poza zakresem pakietu, opisane wprost w placeholderze). | — | `finance-workspace-bar__PRZED__{light,dark}.png` |
+| `finance-hub` | A | 1 błąd konsoli w obu motywach (niezidentyfikowany, brak widocznego objawu na zrzucie — nie dochodzone głębiej, zgłaszam jako obserwację). Kolumna TYP nadal pokazuje surowy kod „STM" — znany, zaakceptowany wyjątek sprzed tego dyżuru. | Zgłoszone (błąd konsoli, bez widocznego objawu) | `finance-hub__PRZED__{light,dark}.png` |
+| `finance-saved-views-panel` | A | — | — | `finance-saved-views-panel__PRZED__{light,dark}.png` |
+| `finance-analysis-workspace` | **A (było B)** | ★ TRZY realne defekty na jednym ekranie, wszystkie z tej samej rodziny: (1) `INVENTORY_DAYS` (Dni zapasów) renderowało się jako „5800%" zamiast „58 dni" — mock w harnessu nie ustawiał `unitType: 'DAYS'` na wartości KPI (tylko na katalogu), więc realny `formatAnalysisKpiValueForDisplay()` (financeV2.types.ts) mnożył 58×100 i doklejał „%"; (2) `ASSET_TURNOVER` (Rotacja aktywów) tym samym mechanizmem renderowało „140%" zamiast „1,4" (katalog deklaruje `unitType: 'RATIO'`); (3) kolumna „ZMIANA R/R" (`formatYoyDeltaText` w PRODUKCYJNYM `analysisKpiTable.contract.ts`, nie w mocku) używała gołego `.toFixed(1)` → „+7.1%"/„-100.0%" z KROPKĄ zamiast polskiego przecinka — ta sama klasa defektu co wcześniej zamknięta na `finance-valuation-workspace`. | **NAPRAWIONE**: `dev-render/screens/finance-analysis-workspace.tsx` (dodane `unitType: 'DAYS'`/`'RATIO'` na dwóch parach wpisów KPI, poprawiony `value.unit`), `src/components/Finance/Analysis/analysisKpiTable.contract.ts` (nowa `formatPlPercent1()`, `toLocaleString('pl-PL')` zamiast `.toFixed(1)`), zaktualizowany pinned test w `analysisKpiTable.contract.test.ts` | `finance-analysis-workspace__PRZED__{light,dark}.png` |
+| `finance-export-import-panel` | A | — | — | `finance-export-import-panel__PRZED__{light,dark}.png` |
+| `finance-model-workspace` | **A (było B)** | Odznaka statusu przy tytule pokazywała surowy enum „DRAFT" (`status.toUpperCase()`) — ten sam koncept ma już polską etykietę „Szkic" gdzieś indziej w tym samym module (finance-hub). Jeden błąd konsoli w obu motywach (niezidentyfikowany, przed i po mojej poprawce — niezwiązany), zgłaszam jako obserwację. | **NAPRAWIONE**: `src/components/Finance/FinancialModelWorkspace.tsx` (nowa mapa `STATUS_BADGE_LABEL_PL`/`_EN`, „DRAFT"/„REVIEW"/„APPROVED" → „Szkic"/„Do przeglądu"/„Zatwierdzony") | `finance-model-workspace__PRZED__{light,dark}.png` |
+| `finance-statement-pack-workspace-v2` | **A (było B)** | ★ Pastylka harnessu („state=populated (populated\|empty\|missing)") bez atrybutu `data-dev-render-chrome` — siedziała w kadrze na każdym zrzucie, dokładnie pułapka #15 z briefu. Reszta ekranu (tabela sprawozdania, panel powiązań, sekcja raportu) czysta i po polsku — poprzednie naprawy (angielskie nagłówki panelu, surowe kody przekształceń) się utrzymały. | **NAPRAWIONE**: `dev-render/screens/finance-statement-pack-workspace-v2.tsx` (dodany `data-dev-render-chrome="true"`) | `finance-statement-pack-workspace-v2__PRZED__{light,dark}.png` |
+| `finance-compare-panel` | A | — | — | `finance-compare-panel__PRZED__{light,dark}.png` |
+| `finance-prediction-workspace` | A | — | — | `finance-prediction-workspace__PRZED__{light,dark}.png` |
+| `finance-valuation-workspace` | A | Zrzut kroku „Wyniki" (most EV→Equity, wagi metod z %, wszystkie liczby z polskim przecinkiem) zamiast domyślnego „Źródło" — bardziej informacyjny dla „co" z rejestru. Główna kwota wyceny bez waluty — znany, zaakceptowany wyjątek (kontrakt danych nie niesie pola waluty). | — | `finance-valuation-workspace__PRZED__{light,dark}.png` (krok `step=results`) |
+| `finance-baseline-workspace` | A | 6 błędów konsoli na PIERWOTNYM zrzucie okazało się artefaktem mojej własnej pomyłki `--parametry` (patrz sekcja pułapki pomiarowej wyżej) — po poprawnym cytowaniu 0 błędów, widok „Założenia" renderuje się poprawnie z wartościami PCT jako „12%"/„58%" obok edytowalnego ułamka. | Zweryfikowane, nic do naprawy w produkcie | `finance-baseline-workspace__PRZED__{light,dark}.png` |
+| `finance-value-panels` | **B (było C)** | ★ Ta sama pastylka-bez-`data-dev-render-chrome` co `finance-statement-pack-workspace-v2` („panel=value · state=populated" w kadrze). Osie wykresu i etykiety kwadrantów („fund"/„defer"/„kill") po angielsku — znany, udokumentowany wyjątek (dane makietowe harnessu, komponent językowo neutralny, wymaga polskich danych mock, nie zmiany kodu). | **NAPRAWIONE** (pastylka): `dev-render/screens/finance-value-panels.tsx` (dodany `data-dev-render-chrome="true"`) | `finance-value-panels__PRZED__{light,dark}.png` |
+| `finance-id-bridge` | D | Narzędzie inżynierskie do diagnostyki (most identyfikatorów), nie ekran produktu — cały ekran to techniczny opis stanu, zgodnie z zamierzeniem. Zweryfikowane, zgadza się z poprzednią oceną. | — | `finance-id-bridge__PRZED__{light,dark}.png` |
+| `finance-focus-mode` | D | Narzędzie inżynierskie do diagnostyki (dowód zachowania stanu focus mode), nie ekran produktu — surowe `true`/`ok` w treści to zamierzony debug output asercji. Zweryfikowane, zgadza się z poprzednią oceną. | — | `finance-focus-mode__PRZED__{light,dark}.png` |
+| `admin-command-center-panel` | A | — | — | `admin-command-center-panel__PRZED__{light,dark}.png` |
+| `admin-sso-self-service-card` | A | ★ Komentarz nagłówkowy harnessu zgłaszał NIEAKTUALNY defekt („ikona nagłówka `text-primary-500`/crimson") — zweryfikowane wobec REALNEGO kodu: `AdminSsoSelfServiceCard.tsx:208` już używa `text-c-text-secondary` (neutralny token). Ikona na świeżym zrzucie jest ciemnoszara/granatowa w obu motywach, nie czerwona. Ktoś naprawił komponent bez aktualizacji komentarza — dokładnie wzorzec „dokumentacja starzeje się szybciej niż kod" z ZŁOTYCH REGUŁ. | **NAPRAWIONE** (komentarz): `dev-render/screens/admin-sso-self-service-card.tsx` (usunięty nieaktualny „KNOWN ISSUE", zastąpiony zweryfikowanym stanem) | `admin-sso-self-service-card__PRZED__{light,dark}.png` |
+| `superadmin-platform-operations-day15` | A | — | — | `superadmin-platform-operations-day15__PRZED__{light,dark}.png` |
+| `partner-settlements-view` | A | Ekran w całości po angielsku — znany, zaakceptowany wyjątek (narzędzie wewnętrzne SuperAdmin). „One Time" (nie „One_time") potwierdzone, poprzednia naprawa się utrzymała. | — | `partner-settlements-view__PRZED__{light,dark}.png` |
+| `model-catalog-table` | B | Kolumny STATUS/HEALTH po angielsku („Active"/„Inactive"/„healthy"/„degraded"/„unhealthy"/„unknown") — znany, zaakceptowany, duży osobny dług (opisany w poprzedniej ocenie). Chipy KIND („Model tekstowy"/„Model obrazu"/„Model biznesowy") po polsku, poprzednia naprawa się utrzymała. | — | `model-catalog-table__PRZED__{light,dark}.png` |
+| `org-identity-operating` | A | Zweryfikowane wobec domyślnego (bez `ff_org_redesign_v1`) wariantu — to jest to, co użytkownik widzi dziś, zgodnie z notatką wyjątku w rejestrze. Pierścień kompletności fioletowy/indygo (nie crimson), poprzednia naprawa się utrzymała w obu motywach. | — | `org-identity-operating__PRZED__{light,dark}.png` |
+
+### Ekrany, których NIE obejrzałem
+
+Żadnych. Wszystkie 22 ekrany zakresu (16 Finanse + 5 Administracja + 1 Organizacja)
+mają świeży zrzut z tej sesji w obu motywach, przeczytany `Read`em osobiście.
+
+### Podsumowanie ocen
+
+**A: 18 · B: 2 · C: 0 · D: 2** (na 22; trzy ekrany naprawione w tym dyżurze podniosły
+ocenę — `finance-analysis-workspace` B→A, `finance-model-workspace` B→A,
+`finance-statement-pack-workspace-v2` B→A; jeden ekran podniesiony częściowo —
+`finance-value-panels` C→B, pozostały dług to udokumentowany wyjątek angielskich
+danych makietowych, nie kod). Dwa ekrany D (`finance-id-bridge`, `finance-focus-mode`)
+to zamierzone narzędzia inżynierskie, nie ekrany produktu — zweryfikowane zgodnie
+z poprzednią oceną, nie licz ich jako defekt produktu.
+
+### Defekty poza zakresem / dług zaakceptowany (tylko zgłoszenie, nie dotykane)
+
+1. **`finance-hub`** — 1 błąd konsoli w obu motywach bez widocznego objawu na
+   zrzucie; nie dochodzone (poza budżetem tego dyżuru, brak wskazówki co do
+   przyczyny bez głębszego śledztwa w Network/Console).
+2. **`finance-model-workspace`** — 1 błąd konsoli w obu motywach, obecny
+   PRZED i PO mojej poprawce statusu — niezwiązany z moją zmianą, nie
+   dochodzony.
+3. **`finance-value-panels`** — angielskie osie wykresu i etykiety kwadrantów
+   (fund/defer/kill) — udokumentowany w komentarzu harnessu jako wymagający
+   polskich danych makietowych, nie zmiany kodu; zostawione zgodnie z tą notatką.
+4. **`model-catalog-table`** — kolumny STATUS/HEALTH po angielsku, opisane w
+   poprzedniej ocenie jako osobny, duży dług nadzorcy — nie dotykane w tym
+   dyżurze (poza wąskim zakresem jednego zrzutu-poprawki).
+5. **`partner-settlements-view`** — ekran w całości po angielsku, zaakceptowany
+   wyjątek (narzędzie wewnętrzne).
+
+### Pliki zmienione (mój zakres, zweryfikowane esbuild + oba hooki kanonu)
+
+- `dev-render/screens/finance-analysis-workspace.tsx` — mock KPI: dodane
+  `unitType: 'DAYS'`/`'RATIO'` na `INVENTORY_DAYS`/`ASSET_TURNOVER` (brakowało,
+  domyślne `'PERCENT'` z fabryki `kpiValue()` psuło formatowanie), poprawiony
+  `value.unit` z nieprawidłowego `'DAYS'` na `'UNITS'`
+- `src/components/Finance/Analysis/analysisKpiTable.contract.ts` — nowa
+  `formatPlPercent1()` (`toLocaleString('pl-PL')`), `formatYoyDeltaText()` używa
+  polskiego przecinka zamiast `.toFixed(1)` z kropką
+- `src/components/Finance/Analysis/__tests__/analysisKpiTable.contract.test.ts` —
+  zaktualizowane pinned expects (`+20.0%`→`+20,0%`, `-12.3%`→`-12,3%`) zgodnie
+  z naprawą powyżej
+- `src/components/Finance/FinancialModelWorkspace.tsx` — nowa mapa
+  `STATUS_BADGE_LABEL_PL`/`_EN`, `statusBadge()` używa etykiety zamiast
+  `status.toUpperCase()`
+- `dev-render/screens/finance-statement-pack-workspace-v2.tsx` — dodany
+  `data-dev-render-chrome="true"` na pastylce debugu harnessu
+- `dev-render/screens/finance-value-panels.tsx` — dodany
+  `data-dev-render-chrome="true"` na pastylce debugu harnessu
+- `dev-render/screens/admin-sso-self-service-card.tsx` — usunięty nieaktualny
+  komentarz „KNOWN ISSUE" (crimson ikona), zastąpiony zweryfikowanym stanem
+  (token już naprawiony w komponencie, nikt nie zaktualizował komentarza)
+
+Żadna zmiana nie dotyka `src/components/shared/**`, `src/components/standard/**`
+ani `public/locales/**`. `scripts/check-list-canon.sh` i `scripts/check-triada.sh`
+przechodzą (dług kanonu tabel nie rośnie: 394/394; zero nowych naruszeń crimson,
+sprawdzono 4 zmienione pliki).
