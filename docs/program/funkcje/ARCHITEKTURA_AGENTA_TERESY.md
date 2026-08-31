@@ -80,6 +80,8 @@ Jeden scenariusz, kanoniczny runtime, Piotr klika WYŁĄCZNIE zgody w UI:
 Bramki: każdy krok = wpis dowodowy; zero surowych INSERT; zero qaOverride.
 **Dopiero PASS tego scenariusza = akcept modułu 17.**
 
+Wykonanie techniczne łańcucha GF-AGT-02: patrz §12 (Day217); wynik jest częściowy, ponieważ realna druga rozmowa zatrzymała się na bramce profilu przed wywołaniem modelu.
+
 ## 7. PLAN DYŻURÓW MODUŁU 17 (po Twoim akcepcie TEGO dokumentu)
 
 17-A spięcie zapisów z kanonem (P2, zależne od 197-E1) · 17-B tool-loop READ
@@ -177,3 +179,14 @@ jest obejście ani dług — to jedyna strukturalnie możliwa droga przy dzisiej
 kształcie `registerInitiative`; kolejny czytelnik tego rozdziału nie powinien
 traktować wyboru `adoptAcceptedClassicInitiative` jako tymczasowego zamiennika
 czekającego na „prawdziwą” naprawę przez `registerInitiative`.
+
+## 12. Wykonanie — GF-AGT-02 (Day217)
+
+Ogniwo 1 (READ w rozmowie): działa — trzy realne żądania HTTP przez ApiGateway/JWT uruchomiły `search_knowledge_base` i zwróciły kroki narzędzia.
+Ogniwo 2 (kontekst organizacji w promptcie): działa — marker `DAY217-ORG-CONTEXT-89630f9a8a`, zapisany przez `OrganizationContextService`, wystąpił w pełnym wyrenderowanym promptcie każdego przebiegu.
+Ogniwo 3 (propozycja zapisu → zgoda → wykonanie → realne zadanie w My Work): działa — trzy actionId dały po jednym zadaniu z `source_type='ai_chat_proposal'`, `source_id=actionId`, widocznym przez GET My Work.
+Ogniwo 4 (dokument realną drogą): działa — trzy POST `/api/document-studio/generate` zapisały trzy artefakty ze świeżymi markerami.
+Ogniwo 5 (indeksacja z zasięgiem): działa — trzy dokumenty trafiły do `knowledge_docs` i `ai_knowledge_embeddings` ze scope `organization`; mutacja scope dała 4/6 czerwonych testów.
+Ogniwo 6 (druga rozmowa cytuje znalezisko z pierwszej): nie działa — obie dozwolone tury R5 zostały zatrzymane przez `TRIAL_PROFILE_INCOMPLETE` przed modelem, więc brak tool-call, cytatu i dowodu R3 Day206.
+
+Werdykt: techniczny łańcuch wstrzyknięty R1–R4 jest powtarzalnie zielony, lecz moduł 17 nie jest zamknięty, ponieważ realna pętla modelowa pozostaje `NOT_PROVEN`.
