@@ -300,25 +300,41 @@ export function analysisKpiTablePersistKey(businessVersionId: string): string {
  * poniżej naturalnej szerokości nagłówków „OGÓLNA INTERPRETACJA"/
  * „INTERPRETACJA WYNIKU"/„PRZEZNACZENIE" — stąd ucięcie wielokropkiem.
  *
- * Szerokości poniżej zmierzone na żywym DOM-ie (`th` sklonowany z
- * `white-space:nowrap`, więc pełny tekst nagłówka + jego padding/ikona
- * sortu/filtra w jednej linii) w harnessu `finance-analysis-workspace`
- * (`scene=draft-with-kpis`, 1440px, 6 wskaźników). Suma 11 kolumn + kolumna
- * kebab (`ROW_ACTIONS_COLUMN_WIDTH=80px`, `FilterableTable.tsx`) mieści się w
- * zmierzonym obszarze tabeli (~1406px) BEZ ściskania (scale===1).
+ * Szerokości poniżej zmierzone na żywym DOM-ie w harnessu
+ * `finance-analysis-workspace` (`scene=draft-with-kpis`, 1440px, 6
+ * wskaźników), DWIE osobne miary per kolumna (obie muszą się zmieścić):
+ *  1. nagłówek — `th` sklonowany z `white-space:nowrap` (pełny tekst +
+ *     padding + ikona sortu/filtra w jednej linii);
+ *  2. DANE — `FilterableTable`'s domyślne renderowanie komórki (brak
+ *     `column.render`, albo `render` zwracający goły string) owija treść w
+ *     `CELL_TEXT_CLAMP_CLASS` (`block break-normal overflow-hidden
+ *     text-ellipsis`) — łamie na SPACJACH, ale NAJSZERSZE POJEDYNCZE SŁOWO w
+ *     komórce musi zmieścić się w szerokości kolumny, inaczej TO SŁOWO (nie
+ *     cała komórka) dostaje własny wielokropek („Przychody" → „Prz…").
+ *     Zmierzone na tym samym harnessu: najszersze słowo w kolumnie „Wzór"
+ *     („(Przychody", nawiasy sklejone ze słowem w formule) = 73,49px — WIĘCEJ
+ *     niż nagłówek „Wzór" (68,59px) potrzebuje. Pierwsza wersja tej naprawy
+ *     (2026-08-31, pierwszy przebieg) budżetowała TYLKO nagłówki i dała
+ *     „Wzór" 69px — nagłówek już się mieścił, ale DANE („Przychody / Aktywa
+ *     razem") ucinały się do „Prz…"/„Akt…"/„raz…" na żywym zrzucie —
+ *     dokładnie ten sam kształt defektu piętro niżej, złapany dopiero na
+ *     PEŁNOROZDZIELCZYM zrzucie Playwright (scaled-down zrzut w toku pracy
+ *     tego nie pokazał).
  *
  * Pełny tekst wszystkich 11 nagłówków na raz (suma ≈1434px) NIE mieści się w
- * budżecie (≈1326px na 11 kolumn) — dwa najdłuższe dostają krótszy synonim
- * bez zmiany znaczenia (właściciel/CLAUDE.md „spróbuj pełny tekst najpierw"):
- * „Ogólna interpretacja" → „Interpretacja" (ta sama zasada formuły co „Wzór",
- * kolumna zostaje jednoznaczna obok „Interpretacja wyniku", która NIE jest
- * skracana — mieści się w pełni po odchudzeniu tamtych dwóch) i „Benchmark
- * branżowy" → „Benchmark" (branżowość wynika z kontekstu kolumny — wartość
- * komórki to zawsze zakres branżowy). Kolumny okresów (`P-2025`/`P-2026`,
- * DYNAMICZNE per businessVersion) dostają stały budżet 80px — z zapasem nad
- * zmierzonym „Q4 2026" (≈84px to jedyny zmierzony przypadek szerszy niż
- * `P-2025`/`FY2025`; 80px pokrywa realistyczne etykiety okresów tego kształtu
- * bez traktowania ich jak tekstu wolnej długości).
+ * budżecie (≈1326px na 11 kolumn), a „Wzór" osobno potrzebuje więcej niż
+ * jego własny nagłówek — dwa najdłuższe nagłówki dostają krótszy synonim bez
+ * zmiany znaczenia (właściciel/CLAUDE.md „spróbuj pełny tekst najpierw"):
+ * „Ogólna interpretacja" → „Interpretacja" (ta sama zasada formuły co
+ * „Wzór") i „Benchmark branżowy" → „Benchmark" (branżowość wynika z
+ * kontekstu kolumny — wartość komórki to zawsze zakres branżowy). „Interpretacja
+ * wyniku" (komentarz analityka do KONKRETNEGO wyniku, np. „Marża rośnie
+ * dzięki niższym kosztom materiałów.") → „Komentarz" — trzeci synonim,
+ * DOPISANY w drugim przebiegu tej naprawy: budżet zwolniony stąd (~72px)
+ * przechodzi na „Wzór", który inaczej nie mieści swojego najszerszego słowa.
+ * Kolumny okresów (`P-2025`/`P-2026`, DYNAMICZNE per businessVersion)
+ * dostają stały budżet 80px — z zapasem nad zmierzonym „Q4 2026" (≈84px to
+ * jedyny zmierzony przypadek szerszy niż `P-2025`/`FY2025`).
  */
 export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; label: string }[]): TableColumn[] {
   const periodColumns: TableColumn[] = periodLabels.map((p) => ({
@@ -330,9 +346,9 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
   }));
 
   return [
-    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left', width: '114px' },
-    { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true, width: '118px' },
-    { id: 'formulaDisplay', label: 'Wzór', align: 'left', width: '69px' },
+    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left', width: '120px' },
+    { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true, width: '122px' },
+    { id: 'formulaDisplay', label: 'Wzór', align: 'left', width: '122px' },
     { id: 'interpretationGeneral', label: 'Interpretacja', align: 'left', width: '131px' },
     ...periodColumns,
     {
@@ -345,7 +361,7 @@ export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; lab
       render: (row: TableRow) => formatYoyDeltaText(row.yoyDelta as YoyDelta),
     },
     { id: 'benchmark', label: 'Benchmark', align: 'left', width: '110px', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
-    { id: 'interpretationSpecific', label: 'Interpretacja wyniku', align: 'left', width: '184px' },
+    { id: 'interpretationSpecific', label: 'Komentarz', align: 'left', width: '116px' },
     { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true, width: '176px' },
     { id: 'downstreamUses', label: 'Przeznaczenie', align: 'left', width: '133px' },
   ];
