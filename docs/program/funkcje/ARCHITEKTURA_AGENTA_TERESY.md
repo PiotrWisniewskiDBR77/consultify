@@ -97,3 +97,34 @@ Szacunek: **8-10 dyżurów** + 2 sesje Twoich zgód.
 3. Kolejność włączeń flag po odbiorach: deliverables-light → teresa-retrieval →
    interpreter → korpus organizacji (proponowana).
 4. Czy GF-AGT-02 wykonujemy na stagingu (po K5) czy na lokalnym kanonicznym runtime?
+
+## 9. MĄDROŚĆ ORGANIZACJI — pętla „praca → wiedza → kontekst" (rekonesans 31.08)
+
+**Werdykt uczciwy: rdzeń pętli jest PRAWDĄ, nie mitem** — `organization_context_claims`
+z 9 realnymi pisarzami (wywiady, sesje narzędzi, idee My Work, czat, załączniki,
+profil org) + `orgContextRebuildJob` co 4h + `buildResolvedContext()` (30+ wołaczy)
+wpięty wprost w prompt Teresy. System NAPRAWDĘ odżywia się codzienną pracą,
+automatycznie. To jest przewaga, o której mówi właściciel — i ona istnieje.
+
+**ALE trzy dziury, z których jedna boli najbardziej:**
+- ★★ **Moduł 01 (CLOSED_FINAL!) pisze do MARTWEJ tabeli.** 5 ekranów Celów/Wyzwań/
+  Ryzyk/Zakresu/Przyczyn zapisuje do `organization_context_store` — tabeli o myląco
+  podobnej nazwie, której NIKT nie czyta poza jej własnym GET-em. Wiedza, którą
+  właściciel osobiście akceptował jako serce kontekstu, nigdy nie dociera do Teresy.
+  Naprawa NIE otwiera modułu (zapis-obok przez istniejący claim-writer, zero zmian ekranu).
+- **Wiedza-sieroca:** dokumenty ze Studio, raporty ~20 generatorów, decki — generowane
+  i GUBIONE (zero indeksacji do KB). Pamięć decyzji ma czytelnika bez pisarza
+  (`recordDecision` — zero wołaczy → `find_similar_decisions` zawsze puste).
+  Zamknięcia sygnałów bez śladu wiedzy. Crosswalk KPI/backfill 159 — nadal zero wołaczy.
+- Martwy `AIMemoryManager` (~900 linii, 8/9 metod bez wołacza) obok żywego
+  `aiMemoryService` — dublet do zgaszenia.
+
+**TOP-5 najtańszych spięć (wchodzą do planu jako 17-I):** (1) moduł 01 → claim-writer
+obok store (1 wywołanie w save-handlerze); (2) zamknięcie sygnału → recordManualAIContext
+(2 endpointy); (3) recordDecision przy rekomendacji (1 linia obok istniejącego
+czytelnika); (4) zdjęcie blokady migracji 946 po weryfikacji (kod obu stron istnieje);
+(5) indeksacja artefaktów Studio/raportów do KB (jeden hook w materializacji —
+większy, ale domyka „raport dzisiejszy = wiedza jutrzejsza").
+
+**Plan §7 rozszerzony:** `17-I` pętla mądrości (spięcia 1-4) · `17-J` indeksacja
+artefaktów (spięcie 5) — razem z 17-A..H daje 10-12 dyżurów modułu 17.
