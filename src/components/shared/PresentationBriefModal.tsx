@@ -60,7 +60,7 @@ export const PresentationBriefModal: React.FC<PresentationBriefModalProps> = ({
           value={brief}
           onChange={(event) => setBrief(event.target.value)}
           rows={5}
-          className="mt-3 w-full resize-y rounded-lg border border-c-border bg-c-background px-3 py-2 text-sm text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+          className="mt-3 w-full resize-y rounded-lg border border-c-border bg-c-background px-3 py-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           aria-label={title}
           placeholder={t(
             'kimi.artifactHome.briefModal.placeholder',

@@ -294,7 +294,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
               placeholder={t('myWork.calendarCreateEvent.placeholder', 'e.g. Prepare review deck')}
-              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-c-focus dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
           </div>
 
@@ -367,7 +367,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
                 'myWork.calendarCreateEvent.shortContextOrDefinition',
                 'Short context or definition of done...'
               )}
-              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-c-focus dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
             />
           </div>
 
@@ -384,7 +384,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+                className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-c-focus-solid focus-visible:ring-2 focus-visible:ring-c-focus dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
               />
             </div>
             {helperText && (

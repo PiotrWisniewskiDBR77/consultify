@@ -109,7 +109,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
       aria-modal="true"
       aria-labelledby="idea-funnel-analytics-view-heading"
       tabIndex={-1}
-      className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col outline-none"
+      className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">

@@ -158,7 +158,7 @@ export const PublicInterviewRespondentView: React.FC = () => {
           </h1>
           {!terminal && error.status !== 403 && (
             <button
-              className="mt-6 rounded bg-indigo-600 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="mt-6 rounded bg-indigo-600 px-4 py-2 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               onClick={() => void load()}
             >
               {text.retry}
@@ -238,7 +238,7 @@ export const PublicInterviewRespondentView: React.FC = () => {
                 onChange={(event) =>
                   setDrafts((current) => ({ ...current, [question.id]: event.target.value }))
                 }
-                className="w-full max-w-full resize-y rounded border border-slate-300 bg-white p-3 text-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 read-only:cursor-default read-only:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:read-only:bg-slate-800"
+                className="w-full max-w-full resize-y rounded border border-slate-300 bg-white p-3 text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus read-only:cursor-default read-only:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:read-only:bg-slate-800"
               />
               {!completed && (
                 <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -248,7 +248,7 @@ export const PublicInterviewRespondentView: React.FC = () => {
                       (question.isRequired && !(drafts[question.id] ?? '').trim())
                     }
                     onClick={() => void save(question.id)}
-                    className="rounded bg-indigo-600 px-4 py-2 text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="rounded bg-indigo-600 px-4 py-2 text-white disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     {busyId === question.id ? text.saving : text.save}
                   </button>
@@ -270,7 +270,7 @@ export const PublicInterviewRespondentView: React.FC = () => {
               snapshot.questions.some((q) => q.isRequired && !(drafts[q.id] ?? '').trim())
             }
             onClick={() => void complete()}
-            className="mt-10 w-full rounded bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="mt-10 w-full rounded bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             {busyId === 'complete' ? text.saving : text.complete}
           </button>

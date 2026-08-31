@@ -165,7 +165,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
       aria-modal="true"
       aria-labelledby="mindmap-3d-view-heading"
       tabIndex={-1}
-      className="fixed inset-0 z-modal bg-c-surface flex flex-col overflow-hidden outline-none"
+      className="fixed inset-0 z-modal bg-c-surface flex flex-col overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
     >
       <div className="flex items-center gap-3 px-6 py-3 bg-c-surface border-b border-c-border-subtle">
         <button

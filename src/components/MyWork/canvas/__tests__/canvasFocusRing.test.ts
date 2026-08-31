@@ -68,7 +68,7 @@ function extractRuleBody(css: string): string {
 describe.each(CSS_FILES)('$tool canvas — focused-node ring restored', ({ path: cssPath }) => {
   const css = fs.readFileSync(cssPath, 'utf8');
 
-  it("overrides ReactFlow's outline:none for every custom node type", () => {
+  it('restores the focus ring ReactFlow removes for every custom node type', () => {
     expect(css).toContain(FOCUS_RING_SELECTOR);
     const body = extractRuleBody(css);
     expect(body).toMatch(/outline\s*:\s*2px solid/);

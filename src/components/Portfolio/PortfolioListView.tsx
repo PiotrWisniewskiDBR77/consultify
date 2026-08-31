@@ -493,7 +493,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                               e.target.value as InitiativeStatus
                             )
                           }
-                          className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-c-text-secondary focus:outline-none"
+                          className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-c-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                         >
                           {ALL_INITIATIVE_STATUSES.map((s) => (
                             <option key={s} value={s}>
