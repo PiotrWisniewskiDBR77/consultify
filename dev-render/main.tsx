@@ -119,6 +119,15 @@ const AdminAiScreen = React.lazy(() => import('./screens/admin-ai'));
 // z admin-billing.tsx powyżej).
 const AdminAuditScreen = React.lazy(() => import('./screens/admin-audit'));
 const AdminHealthScreen = React.lazy(() => import('./screens/admin-health'));
+// admin-command (runda pełna) — 11 ekranów domeny command z adminNavigation.ts
+// ("Centrum administracyjne"), jeden plik z przełącznikiem `adminScreen`,
+// patrz dev-render/screens/admin-command.tsx (wzorzec 1:1 z admin-billing.tsx
+// powyżej). Nie duplikuje istniejącego wpisu `admin-command-center-panel`
+// (ten zostaje — fotografuje te same 6 zakładek przez stary `&tab=`); ta
+// runda dodaje osobny wiersz na KAŻDY z 11 nav-slotów, w tym te, których
+// stary story nie fotografował (attention-queue, cost-capacity,
+// organization-defaults, agent-trace, benchmark).
+const AdminCommandScreen = React.lazy(() => import('./screens/admin-command'));
 const SuperadminPlatformOperationsDay15Screen = React.lazy(
   () => import('./screens/superadmin-platform-operations-day15')
 );
@@ -1294,6 +1303,63 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Admin health — Operacje platformowe (gate UNAUTHORIZED, odfiltrowane z menu — brak dostępu z nawigacji)',
     render: () => <AdminHealthScreen adminScreen="platform-operations" />,
+  },
+  // admin-command (runda pełna) — odbiór grafiki 146-admin-command
+  // (2026-08-31), domena "Centrum administracyjne" (adminNavigation.ts), 11
+  // ekranów, mapowanie 1:1 z AdminSettingsModule.tsx case 'command'. Po
+  // naprawie ADM-OWN-001 (DEC night-fixes-b-20260826) żaden z 11 nie jest
+  // aliasem innego — organization-defaults ma osobny komponent (formularz,
+  // bez StandardTable, to poprawne dla tego typu treści), pozostałe 10 mają
+  // odrębną treść wewnątrz AdminCommandCenterPanel. Patrz nagłówek
+  // dev-render/screens/admin-command.tsx dla mapowania endpointów i
+  // ZNALEZISKA (bug w attention-queue: sygnał "ryzyko" czyta płaską ścieżkę
+  // `risk?.highRiskCount`, backend zwraca zagnieżdżoną
+  // `risk.summary.audit.highRiskCount` — sygnał zawsze pokazuje 0/info).
+  'admin-command-overview': {
+    label: 'Admin command — Przegląd (AdminCommandCenterPanel aggregationOnly, kafle+podsumowania)',
+    render: () => <AdminCommandScreen adminScreen="overview" />,
+  },
+  'admin-command-attention-queue': {
+    label:
+      'Admin command — Kolejka uwagi (CommandCenterAttentionQueue; ZNALEZISKO: sygnał ryzyka zawsze info/0, patrz nagłówek admin-command.tsx)',
+    render: () => <AdminCommandScreen adminScreen="attention-queue" />,
+  },
+  'admin-command-cost-capacity': {
+    label: 'Admin command — Koszt i pojemność (CommandCenterCostCapacity, StandardTable)',
+    render: () => <AdminCommandScreen adminScreen="cost-capacity" />,
+  },
+  'admin-command-organization-defaults': {
+    label:
+      'Admin command — Ustawienia domyślne organizacji (AdminOrganizationDefaultsPanel, formularz surowy <label>/<input>)',
+    render: () => <AdminCommandScreen adminScreen="organization-defaults" />,
+  },
+  'admin-command-agent-trace': {
+    label: 'Admin command — Ślad agentów (CommandCenterAgentTraceTab, StandardTable)',
+    render: () => <AdminCommandScreen adminScreen="agent-trace" />,
+  },
+  'admin-command-audit': {
+    label: 'Admin command — Audyt SOC2 (CommandCenterAuditTab, StandardTable)',
+    render: () => <AdminCommandScreen adminScreen="audit" />,
+  },
+  'admin-command-dlp': {
+    label: 'Admin command — DLP (CommandCenterDlpTab, StandardTable+kebab)',
+    render: () => <AdminCommandScreen adminScreen="dlp" />,
+  },
+  'admin-command-residency': {
+    label: 'Admin command — Rezydencja danych (CommandCenterResidencyTab, formularz)',
+    render: () => <AdminCommandScreen adminScreen="residency" />,
+  },
+  'admin-command-retention': {
+    label: 'Admin command — Retencja (CommandCenterRetentionTab, StandardTable, inline edit)',
+    render: () => <AdminCommandScreen adminScreen="retention" />,
+  },
+  'admin-command-ai-policy': {
+    label: 'Admin command — Polityka AI (CommandCenterAiPolicyTab, formularz)',
+    render: () => <AdminCommandScreen adminScreen="ai-policy" />,
+  },
+  'admin-command-benchmark': {
+    label: 'Admin command — Benchmark konsultingowy (CommandCenterBenchmarkTab, karty statyczne)',
+    render: () => <AdminCommandScreen adminScreen="benchmark" />,
   },
   'superadmin-platform-operations-day15': {
     label: 'Day 15 — REALNY <PlatformOperationsView>, katalogi fixture; &scene=ready|empty|error',
