@@ -168,7 +168,11 @@ describe('Day204 legacy task cutover idempotency (realDB, mutation-gated)', { re
   });
 
   it('FIX-204-3 Guard A (selector NOT EXISTS): two runs with --max-tasks=1 make forward progress instead of starving the pending task', async () => {
-    const options = baseOptions({ maxTasks: 1, batchId: 'day204-idem-pair' });
+    const options = baseOptions({
+      initiativeId: pairInitiativeId,
+      maxTasks: 1,
+      batchId: 'day204-idem-pair',
+    });
 
     const run1 = await runLegacyTaskCutover(pool, options);
     expect(run1.plan.map((p) => p.task.id)).toEqual([taskAId]);
