@@ -170,6 +170,8 @@ type CallParams = {
    * `tools`, nigdy `clientTools`.
    */
   clientTools?: ToolDefinition[];
+  /** Server-side READ tools. Their dispatcher is deliberately separate from MCP. */
+  readTools?: ToolDefinition[];
   context?: unknown;
   maxTokens?: number;
   temperature?: number;
@@ -1299,6 +1301,25 @@ export class LLMService {
             };
           },
         } as any);
+      }
+    }
+
+    if (params.readTools?.length && !wantsReasoning) {
+      const executeReadTool = (params.context as any)?.executeReadTool as
+        | ((name: string, args: Record<string, unknown>) => Promise<string>)
+        | undefined;
+      if (executeReadTool) {
+        if (!streamToolDefinitions) streamToolDefinitions = {};
+        for (const def of params.readTools) {
+          // READ intentionally wins collisions (notably search_knowledge_base),
+          // because this dispatcher is the governed executeToolCall path.
+          streamToolDefinitions[def.name] = tool({
+            description: def.description,
+            inputSchema: jsonSchema(def.parameters as any),
+            execute: async (args: unknown) =>
+              executeReadTool(def.name, (args || {}) as Record<string, unknown>),
+          } as any);
+        }
       }
     }
 

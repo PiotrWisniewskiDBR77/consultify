@@ -41,7 +41,7 @@ policzalnych miejscach i zdublowany w trzech. Moduł 17 to dyżury spinające
 
 | # | Ogniwo | Stan | Ruch |
 |---|---|---|---|
-| P1 | **Model nie ma pętli narzędziowej w czacie** — 19 narzędzi osiągalne tylko przez powierzchnię Wave-8; czat używa ręcznych regexów intencji | zerwane | tool-loop w /chat/stream: READ bez zgody, WRITE wyłącznie jako governed proposal (wzorzec już istnieje) |
+| P1 | **Model nie ma pętli narzędziowej w czacie** — 19 narzędzi osiągalne tylko przez powierzchnię Wave-8; czat używa ręcznych regexów intencji | zerwane | tool-loop w /chat/stream: READ bez zgody, WRITE wyłącznie jako governed proposal (wzorzec już istnieje); wykonanie 17-B: §10 |
 | P2 | **Zapisy czatu = trzecia droga poza kanonem** — create_task/decision robi surowy INSERT do legacy, omijając bramę 409 i ie_aggregate_state | groźne (D-7!) | przełączyć na kanoniczne polecenia (po 197-E2) albo przejściowo na governed proposal→trasy modułów; surowe INSERT-y wygasić |
 | P3 | **Dokument z czatu martwy** — ENABLE_DELIVERABLES_LIGHT=false, a silnik pod spodem to TEN SAM co Materiały (właśnie naprawiony) | flaga | odbiór ścieżki czatowej → ON |
 | P4 | **Inicjatywa z czatu = sierota** — draft bez wołania registerInitiative→handoff→execution_case | zerwane | opcjonalny krok „przekaż do realizacji" za zgodą (łańcuch z planu migracji A4.0) |
@@ -128,3 +128,17 @@ większy, ale domyka „raport dzisiejszy = wiedza jutrzejsza").
 
 **Plan §7 rozszerzony:** `17-I` pętla mądrości (spięcia 1-4) · `17-J` indeksacja
 artefaktów (spięcie 5) — razem z 17-A..H daje 10-12 dyżurów modułu 17.
+## 10. Wykonanie — 17-B (Day206)
+
+Pomiar na markerze `c50847c259` skorygował P1: wielokrokowa pętla model-driven już istniała
+w `callStream`, ale widziała wyłącznie narzędzia tworzące z MCP. Definicje 19 `AI_TOOLS`
+nie miały żadnego wołacza modelowego. Day206 dodał, za domyślnie wyłączoną flagą
+`ENABLE_TERESA_TOOL_LOOP`, osobną rodzinę 11 narzędzi READ (`AI_TOOLS` minus osiem
+`SIDE_EFFECT_TOOLS`) z dyspozytorem `executeToolCall`, limitem iteracji, timeoutem,
+egzekwowanym licznikiem kosztu oraz sanitarnym SSE `tool_step` renderowanym w czacie.
+
+Kolizja `search_knowledge_base` została rozstrzygnięta świadomie: w rodzinie READ pierwszeństwo
+ma implementacja `toolDefinitions.ts`, ponieważ zawiera mierzoną bramkę retrieval i izolację
+sejfu; implementacja MCP pozostaje bez zmian dla dotychczasowych konsumentów. WRITE nie weszło
+do pętli i pozostaje zakresem 17-C. Na etapie pierwszego commitu dowody R2 real-Postgres oraz
+R3 z realnym modelem pozostawały otwarte; aktualny stan i dowody są w raporcie Day206.

@@ -4856,6 +4856,129 @@ router.post(
         );
       }
 
+
+      // Day206 / 17-B: READ-only tool loop. The executor stays on the existing
+      // governed path; no raw result is ever emitted through SSE.
+      if (featureFlags.ENABLE_TERESA_TOOL_LOOP && !aiModes?.deepResearch) {
+        const { executeToolCall } = await import('../services/ai/toolDefinitions.js');
+        const { estimateAgentToolCostUsd } = await import('../services/ai/toolCostEstimates.js');
+        // FIX-206 (P0, ODBIOR_205_206.md): `context.projectId` przychodzi z ciala
+        // zadania, a executory czytaja po nim dane — audytor zmierzyl wyciek
+        // cross-org. Projekt wchodzi do petli TYLKO po potwierdzeniu, ze nalezy
+        // do organizacji z tokenu; inaczej petla dziala bez projektu (fail-closed).
+        let verifiedLoopProjectId: string | undefined;
+        {
+          const claimedProjectId = String((context as any)?.projectId || '').trim();
+          if (claimedProjectId && req.organizationId) {
+            try {
+              const { get: dbGetProject } = await import('../utils/DbPromise.js');
+              const ownedProject = (await dbGetProject(
+                `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+                [claimedProjectId, String(req.organizationId)]
+              )) as { id?: string } | undefined;
+              verifiedLoopProjectId = ownedProject?.id ? claimedProjectId : undefined;
+            } catch {
+              verifiedLoopProjectId = undefined;
+            }
+          }
+        }
+        let paidCostUsd = 0;
+        const maxPaidCostUsd = 0.08;
+        // Zegar kroku — konfigurowalny tak samo jak TERESA_TOOL_LOOP_MAX_ITERATIONS,
+        // zeby test mogl zmierzyc kopertę TIMEOUT bez 12-sekundowego czekania.
+        const timeoutMs = (() => {
+          const parsed = Number(process.env.TERESA_TOOL_LOOP_TIMEOUT_MS || 12_000);
+          return Number.isFinite(parsed) && parsed >= 10 && parsed <= 60_000 ? parsed : 12_000;
+        })();
+        (pipelineRequest as any).options = {
+          ...((pipelineRequest as any).options || {}),
+          readTools: {
+            enabled: true,
+            context: {
+              executeReadTool: async (toolName: string, args: Record<string, unknown>) => {
+                // FIX-206 (pkt 6): wycena kosztu MUSI byc wewnatrz try.
+                // `estimateAgentToolCostUsd` rzuca UnknownToolCostError dla
+                // narzedzia bez ceny — poza try ten wyjatek wychodzil z callbacku
+                // do dostawcy i wywracal CALA ture. Kontrakt: nieznana cena konczy
+                // JEDEN krok bledem, rozmowa zyje dalej.
+                let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+                try {
+                  const estimatedCostUsd = estimateAgentToolCostUsd(toolName);
+                  if (paidCostUsd + estimatedCostUsd > maxPaidCostUsd) {
+                    emitSSE({
+                      type: 'tool_step',
+                      toolName,
+                      status: 'blocked',
+                      costUsd: paidCostUsd,
+                    });
+                    return JSON.stringify({
+                      status: 'BLOCKED',
+                      error: 'Conversation tool cost limit reached',
+                    });
+                  }
+                  paidCostUsd += estimatedCostUsd;
+                  emitSSE({ type: 'tool_step', toolName, status: 'running', costUsd: paidCostUsd });
+                  logger.info(
+                    `[TeresaToolLoop] tool=${toolName} cumulativeCostUsd=${paidCostUsd.toFixed(4)}`
+                  );
+                  // FIX-206 (pkt 5): wyscig z zegarem musi byc ROZPOZNAWALNY.
+                  // Wczesniej koperta TIMEOUT wracala tym samym torem co wynik i
+                  // panel dostawal `completed` — krok wygladal na udany, choc
+                  // narzedzie nie odpowiedzialo.
+                  const TIMED_OUT = Symbol('tool_timeout');
+                  const result = await Promise.race([
+                    executeToolCall(toolName, args, {
+                      organizationId: String(req.organizationId || ''),
+                      userId: String(req.userId || ''),
+                      // FIX-206 (P0): projectId NIE moze pochodzic z ciala zadania —
+                      // executory czytaja po nim dane. Kontrakt: bierzemy go tylko
+                      // wtedy, gdy nalezy do organizacji z tokenu (druga warstwa
+                      // obrony; pierwsza to org-scope w samych zapytaniach).
+                      projectId: verifiedLoopProjectId,
+                      conversationId: conversationId || undefined,
+                      // FIX-206 (pkt 2): tryb prywatny rozmowy jedzie az do
+                      // executorow — to on odcina zakresy org_shared/public_kb
+                      // w chatPolicyGateway.
+                      privateMode: Boolean(privateMode),
+                    }),
+                    new Promise<typeof TIMED_OUT>((resolve) => {
+                      timeoutHandle = setTimeout(() => resolve(TIMED_OUT), timeoutMs);
+                    }),
+                  ]);
+                  if (result === TIMED_OUT) {
+                    emitSSE({
+                      type: 'tool_step',
+                      toolName,
+                      status: 'timeout',
+                      costUsd: paidCostUsd,
+                    });
+                    return JSON.stringify({
+                      status: 'TIMEOUT',
+                      error: 'Tool did not answer in time',
+                    });
+                  }
+                  emitSSE({
+                    type: 'tool_step',
+                    toolName,
+                    status: 'completed',
+                    costUsd: paidCostUsd,
+                  });
+                  return result as string;
+                } catch (error) {
+                  emitSSE({ type: 'tool_step', toolName, status: 'failed', costUsd: paidCostUsd });
+                  return JSON.stringify({
+                    status: 'ERROR',
+                    error: String((error as Error)?.message || error),
+                  });
+                } finally {
+                  if (timeoutHandle) clearTimeout(timeoutHandle);
+                }
+              },
+            },
+          },
+        };
+      }
+
       const aiPipeline = await getAIPipeline();
       const response = await (aiPipeline as any).process(
         pipelineRequest,

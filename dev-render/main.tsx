@@ -184,6 +184,7 @@ const CanvasToolbarMdHistoryScreen = React.lazy(
 );
 const CapabilityGateDemoScreen = React.lazy(() => import('./screens/capability-gate-demo'));
 const ChatSplitTeresaRightScreen = React.lazy(() => import('./screens/chat-split-teresa-right'));
+const ChatToolStepsDay206Screen = React.lazy(() => import('./screens/chat-tool-steps-day206'));
 const CrimsonMyWorkWave2Screen = React.lazy(() => import('./screens/crimson-mywork-wave2'));
 const CrimsonWaveChromeScreen = React.lazy(
   () => import('./screens/crimson-wave-chrome-2026-07-26')
@@ -1414,6 +1415,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'chat-split-teresa-right': {
     label: 'D17 /chat split ODWRÓCONY — artefakt po LEWEJ, Teresa po PRAWEJ',
     render: () => <ChatSplitTeresaRightScreen />,
+  },
+  'chat-tool-steps-day206': {
+    label: 'Day206 — realny komponent kroków narzędzi READ Teresy',
+    render: () => <ChatToolStepsDay206Screen />,
   },
   'crimson-mywork-wave2': {
     label: 'Crimson Wave #2 (MyWork) — CTA/aktywne bg-c-accent → neutralne (PRZED/PO)',
