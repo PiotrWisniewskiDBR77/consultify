@@ -16,6 +16,13 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-16 · Cztery incydenty wyścigu współdzielonego indeksu git w jednej fali robotników
+**Co się stało:** przy pięciu robotnikach commitujących równolegle w `/private/tmp/m03` wystąpiły cztery incydenty w kilka godzin: (1) robotnik InsightViewer zaciągnął `git add`-em cudze niecommitowane locales do commita `b4a7f5eb4e`; (2) robotnik dokumentacyjny — goły `git commit` objął cudze staged locales, wykrył po `git show --stat`, cofnął czysto (`reset --soft` + `restore --staged`) i zacommitował ponownie; (3) robotnik ReportBuilder gołym commitem `92fbf9c9d2` zmiótł 6 cudzych zastagowanych zrzutów PNG; (4) właściciel tych zrzutów zastał je w cudzym commicie o niepowiązanej treści. **Nic nie zginęło w żadnym z czterech** — ale wyłącznie dzięki temu, że robotnicy raportowali w sekcji ZGŁASZAM i weryfikowali `git show --stat` po commicie.
+**Dlaczego ważne:** to nie są cztery błędy czterech robotników, tylko jeden defekt procesu — wspólny indeks bez dyscypliny pathspec. Reguła „commituj tylko pliki wymienione z nazwy" NIE chroni: wymieniony plik może nieść cudzą treść, a goły commit zatwierdza cudzy stage.
+**Co z tego wynika:** reguła nr 14 w `00_ZASADY_PRACY.md` (commit tylko z jawnym pathspec + kontrola przed/po). Nadzorca wpisuje ją odtąd do każdego zlecenia.
+
+---
+
 ### Z-15 · Cztery raporty nocne SKASOWANE nadpisaniem pliku — odzyskane z gita, status.json kłamał w 3 z 4 zakresów
 **Co się stało:** robotnik sekcji Materiałów zapisał `NOC_PRZEGLAD_MODULOW.md` w trybie nadpisania całego pliku zamiast dopisania sekcji (commit `591ca8cec2`, 583→188 linii). Zniknęły cztery wcześniej wcommitowane sekcje (`a0194ba7fb`, `60160b5f82`): czat/agent/spotkania, wywiad/ocena, narzędzia/audyty/kanon, inicjatywy/realizacja/wyniki. Nadzorca rano przekazał następcy „201 z 202 ekranów obejrzanych, wynik w tabeli" — w dobrej wierze, bo praca była wykonana, ale plik już jej nie zawierał.
 **Drugie dno:** `status.json` w trzech z czterech zakresów nigdy nie dostał ustaleń przeglądu. Trzy potwierdzone defekty C (`processflow-canvas`, `agent-plan-view`, `plan-scenario-d1`) figurowały w bazie jako A — strona odbioru pokazywałaby właścicielowi zielone karty na zepsutych ekranach. Jedyny zsynchronizowany zakres (04-narzedzia) zawdzięcza to commitowi z BŁĘDNĄ etykietą „Wywiad i Ocena".

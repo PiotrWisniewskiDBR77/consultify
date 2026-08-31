@@ -413,3 +413,18 @@ To jest ta sama rodzina co „próbka zamiast zbioru" i „cudzy meldunek jako w
 obie nazwane w `DZIENNIK_GRAFIKA.md`. Różnica polega na tym, że tym razem błąd popełnił
 **robotnik**, a nadzorca złapał go **przed** przekazaniem właścicielowi — i to jest jedyna
 rzecz, która zadziałała jak trzeba.
+
+## ★★ REGUŁA NR 14 — współdzielony indeks git: commit TYLKO z jawnym pathspec (2026-08-31, po czterech incydentach jednego dnia)
+
+W katalogu `/private/tmp/m03` pracuje równolegle kilku robotników na JEDNYM indeksie git.
+Cztery incydenty jednego dnia, trzy różne mechanizmy:
+1. `git add <plik>` na pliku, w którym siedzą cudze niecommitowane zmiany, zabiera je do własnego commita (translation.json, 2×);
+2. goły `git commit` (bez pathspec) zatwierdza CAŁY indeks — w tym pliki zastagowane przez innego robotnika w międzyczasie;
+3. cudzy goły commit zamiata TWOJE zastagowane pliki do SWOJEGO commita.
+
+**Trzy obowiązki każdego robotnika:**
+1. **`git commit` ZAWSZE z jawnym pathspec**: `git commit -m "..." -- <pliki wymienione z nazwy>`. Nigdy goły `git commit`.
+2. **Przed `git add` na pliku współdzielonym** (locales, pliki zbiorcze docs): `git diff <plik>` — jeśli widzisz cudze zmiany, zgłoś nadzorcy zamiast commitować.
+3. **Po commicie**: `git show --stat HEAD` — jeśli w commicie są pliki spoza twojej listy, natychmiast zgłoś (nie cofaj historii samodzielnie).
+
+Do plików ZBIORCZYCH (NOC_PRZEGLAD_MODULOW.md, DZIENNIK_GRAFIKA.md) wolno DOPISYWAĆ sekcję — nigdy zapisywać całego pliku z własnej pamięci (kasacja czterech raportów, patrz Z-15).
