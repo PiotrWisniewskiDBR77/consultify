@@ -806,6 +806,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const { t, i18n } = useTranslation();
   const { isEnabled } = useFeatureFlagsContext();
   const signalsEnabled = isEnabled('myWorkSignalsV2');
+  const teresaAdoptChatDraftEnabled = isEnabled('ENABLE_TERESA_ADOPT_CHAT_DRAFT');
 
   const routeInfo = useMemo(
     () => ({
@@ -1081,6 +1082,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   >({});
   const [governedHandoffTargetById, setGovernedHandoffTargetById] = useState<
     Record<string, string | undefined>
+  >({});
+  const [initiativeHandoffByMessageId, setInitiativeHandoffByMessageId] = useState<
+    Record<string, { initiativeId: string; title?: string | null }>
   >({});
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const [dtHintDismissed, setDtHintDismissed] = useState(false);
@@ -2252,10 +2256,36 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // initiative) is already persisted; deep-link into the Initiatives module
       // to open it. Falls back to the module list when no id is present.
       if (payloadKind === 'initiative') {
+        const initiativeId = String(
+          (payload as any)?.initiativeId || payload?.draftId || payload?.generationId || ''
+        ).trim();
+        if (teresaAdoptChatDraftEnabled && initiativeId) {
+          const handoff = { initiativeId, title: payload.title || null };
+          const liveConversationId =
+            useConversationStore.getState().activeConversationId || activeConversationId;
+          if (liveConversationId) {
+            void addMessageToConversation({
+              conversationId: liveConversationId,
+              role: 'ai',
+              content: t(
+                'chat.initiativeHandoff.createdDraft',
+                'The initiative draft is ready. Review it before passing it to execution.'
+              ),
+              messageType: 'text',
+              metadata: { initiativeHandoff: handoff },
+            }).then((saved) => {
+              const messageId = String((saved as any)?.id || '').trim();
+              if (!messageId) return;
+              setInitiativeHandoffByMessageId((previous) => ({
+                ...previous,
+                [messageId]: handoff,
+              }));
+            });
+          }
+          toast.success(t('myWork.initiatives.createdFromChatToast', 'Initiative created from chat'));
+          return;
+        }
         try {
-          const initiativeId = String(
-            (payload as any)?.initiativeId || payload?.draftId || payload?.generationId || ''
-          ).trim();
           navigateToRoute(
             initiativeId
               ? `/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`
@@ -6338,6 +6368,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         governedHandoffBusyById={governedHandoffBusyById}
         governedHandoffErrorById={governedHandoffErrorById}
         governedHandoffTargetById={governedHandoffTargetById}
+        initiativeHandoffByMessageId={initiativeHandoffByMessageId}
+        onOpenInitiativeHandoff={(initiativeId) =>
+          navigateToRoute(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`)
+        }
+        onInitiativeHandoffAdopted={(initiativeId) =>
+          navigateToRoute(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`)
+        }
         onCreateGovernedDocument={handleCreateGovernedDocument}
         onApproveGovernedHandoff={(proposalId) => void decideGovernedHandoff(proposalId, 'approve')}
         onRejectGovernedHandoff={(proposalId) => void decideGovernedHandoff(proposalId, 'reject')}

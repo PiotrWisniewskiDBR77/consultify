@@ -207,6 +207,123 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     };
   }
 
+  async adoptChatDraftInitiative(input: {
+    organizationId: string;
+    chatInitiativeId: string;
+    initiativeId: string;
+    projectId: string;
+    initiativeOwnerId: string;
+    actorId: string;
+    policyId: string;
+    policyVersion: number;
+    correlationId: string;
+  }) {
+    await this.client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+      `${input.organizationId}:chat-draft:${input.chatInitiativeId}`,
+    ]);
+    const source = await this.client.query<{
+      id: string;
+      project_id: string;
+      title: string | null;
+      problem_statement: string | null;
+      source_type: string;
+      source_id: string | null;
+      owner_business_id: string | null;
+      owner_execution_id: string | null;
+    }>(
+      `SELECT id, organization_id, project_id, title, problem_statement,
+              source_type, source_id, owner_business_id, owner_execution_id
+         FROM initiatives
+        WHERE organization_id = $1 AND id = $2 AND source_type = 'teresa_chat'
+          AND project_id IS NOT NULL
+        FOR UPDATE`,
+      [input.organizationId, input.chatInitiativeId]
+    );
+    const row = source.rows[0];
+    if (!row) {
+      const diagnostic = await this.client.query<{
+        source_type: string | null;
+        project_id: string | null;
+      }>('SELECT source_type, project_id FROM initiatives WHERE organization_id=$1 AND id=$2', [
+        input.organizationId,
+        input.chatInitiativeId,
+      ]);
+      const found = diagnostic.rows[0];
+      if (!found) throw new MaterialCommandValidationError('Chat draft initiative not found');
+      if (found.source_type !== 'teresa_chat') {
+        throw new MaterialCommandValidationError('Initiative source_type must be teresa_chat');
+      }
+      throw new MaterialCommandValidationError('Initiative project_id is required before adoption');
+    }
+    if (!String(row.title || '').trim()) {
+      throw new MaterialCommandValidationError('Initiative title is required before adoption');
+    }
+    if (!String(row.problem_statement || '').trim()) {
+      throw new MaterialCommandValidationError(
+        'Initiative problem_statement is required before adoption'
+      );
+    }
+    if (row.project_id !== input.projectId) {
+      throw new MaterialCommandValidationError('Initiative project_id does not match adoption project');
+    }
+    const ownerId = row.owner_execution_id || row.owner_business_id;
+    if (!ownerId) {
+      throw new MaterialCommandValidationError('Initiative owner is required before adoption');
+    }
+    if (ownerId !== input.initiativeOwnerId) {
+      throw new MaterialCommandValidationError('Initiative owner does not match adoption owner');
+    }
+
+    const existing = await this.client.query<{
+      receipt_id: string;
+      chat_initiative_id: string;
+      runtime_initiative_id: string;
+      project_id: string;
+    }>(
+      `SELECT receipt_id,chat_initiative_id,runtime_initiative_id,project_id
+         FROM flow_teresa_chat_draft_adoptions
+        WHERE organization_id=$1 AND chat_initiative_id=$2 FOR UPDATE`,
+      [input.organizationId, input.chatInitiativeId]
+    );
+    const prior = existing.rows[0];
+    if (prior) {
+      if (
+        prior.runtime_initiative_id !== input.initiativeId ||
+        prior.project_id !== input.projectId
+      ) {
+        throw new MaterialCommandConflictError('chat-draft adoption identity conflict', 0, 1);
+      }
+      return {
+        receiptId: prior.receipt_id,
+        title: String(row.title),
+        problem: String(row.problem_statement),
+        sourceId: row.source_id || row.id,
+      };
+    }
+    const inserted = await this.client.query<{ receipt_id: string }>(
+      `INSERT INTO flow_teresa_chat_draft_adoptions
+       (organization_id,chat_initiative_id,runtime_initiative_id,project_id,
+        policy_id,policy_version,correlation_id,adopted_by)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING receipt_id`,
+      [
+        input.organizationId,
+        input.chatInitiativeId,
+        input.initiativeId,
+        input.projectId,
+        input.policyId,
+        input.policyVersion,
+        input.correlationId,
+        input.actorId,
+      ]
+    );
+    return {
+      receiptId: inserted.rows[0].receipt_id,
+      title: String(row.title),
+      problem: String(row.problem_statement),
+      sourceId: row.source_id || row.id,
+    };
+  }
+
   async findReceipt<TResponse>(
     organizationId: string,
     clientRequestId: string

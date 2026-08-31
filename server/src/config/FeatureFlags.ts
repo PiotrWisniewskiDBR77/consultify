@@ -32,6 +32,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
+  ENABLE_TERESA_ADOPT_CHAT_DRAFT: z.boolean().default(false),
   ENABLE_TERESA_TOOL_LOOP: z.boolean().default(false),
   ENABLE_TERESA_TOOL_LOOP_WRITE: z.boolean().default(false),
   ENABLE_TERESA_MINDMAP: z.boolean().default(true),
@@ -148,6 +149,7 @@ export function loadFeatureFlags(): FeatureFlags {
     // locate notes, insights and initiatives the user references by topic.
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
+    ENABLE_TERESA_ADOPT_CHAT_DRAFT: process.env.ENABLE_TERESA_ADOPT_CHAT_DRAFT === 'true',
     ENABLE_TERESA_TOOL_LOOP: process.env.ENABLE_TERESA_TOOL_LOOP === 'true',
 
     // Day207 / 17-C: model WRITE calls become governed ai_actions proposals.

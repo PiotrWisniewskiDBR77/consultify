@@ -44,7 +44,7 @@ policzalnych miejscach i zdublowany w trzech. Moduł 17 to dyżury spinające
 | P1 | **Model nie ma pętli narzędziowej w czacie** — 19 narzędzi osiągalne tylko przez powierzchnię Wave-8; czat używa ręcznych regexów intencji | zerwane | tool-loop w /chat/stream: READ bez zgody, WRITE wyłącznie jako governed proposal (wzorzec już istnieje); wykonanie 17-B: §10 |
 | P2 | **Zapisy czatu = trzecia droga poza kanonem** — create_task/decision robi surowy INSERT do legacy, omijając bramę 409 i ie_aggregate_state | groźne (D-7!) | przełączyć na kanoniczne polecenia (po 197-E2) albo przejściowo na governed proposal→trasy modułów; surowe INSERT-y wygasić |
 | P3 | **Dokument z czatu martwy** — ENABLE_DELIVERABLES_LIGHT=false, a silnik pod spodem to TEN SAM co Materiały (właśnie naprawiony) | flaga | odbiór ścieżki czatowej → ON |
-| P4 | **Inicjatywa z czatu = sierota** — draft bez wołania registerInitiative→handoff→execution_case | zerwane | opcjonalny krok „przekaż do realizacji" za zgodą (łańcuch z planu migracji A4.0) |
+| P4 | **Inicjatywa z czatu = sierota** — draft bez wołania registerInitiative→handoff→execution_case | zerwane | opcjonalny krok „przekaż do realizacji" za zgodą (łańcuch z planu migracji A4.0); wykonanie 17-D: [Day214](../waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY214_ADOPT_DRAFT_REPORT.md) |
 | P5 | **15/17 akcji czatu to widma** — handler je zna, nic ich nie produkuje (w tym GENERATE_REPORT); +2 stuby narzędzi (generate_report_section, schedule_meeting); +trzeci dispatcher bez importerów; +update_assessment_score poza filtrem | martwy kod udający funkcje | jedna decyzja: dobudować producentów (SmartSuggestions→akcje) dla 4-5 wartościowych, RESZTĘ USUNĄĆ; stuby podpiąć do realnych silników (report→document-studio; meeting→moduł otwarty D-1) |
 
 Plus dwa dublety do zgaszenia: martwy `server/src/ai/aiContextBuilder.ts` (0 importerów)
@@ -142,3 +142,38 @@ ma implementacja `toolDefinitions.ts`, ponieważ zawiera mierzoną bramkę retri
 sejfu; implementacja MCP pozostaje bez zmian dla dotychczasowych konsumentów. WRITE nie weszło
 do pętli i pozostaje zakresem 17-C. Na etapie pierwszego commitu dowody R2 real-Postgres oraz
 R3 z realnym modelem pozostawały otwarte; aktualny stan i dowody są w raporcie Day206.
+
+## 11. Wykonanie — 17-D (Day214)
+
+Day214 dodał za domyślnie wyłączoną flagą `ENABLE_TERESA_ADOPT_CHAT_DRAFT` bezpośredni
+most `initiative.adopt-chat-draft` z klasycznego draftu `source_type='teresa_chat'` do
+kanonicznego `REGISTERED_DRAFT`. Most reużywa identyfikator istniejącej inicjatywy,
+wymaga projektu, właściciela i treści problemu, zapisuje osobny append-only paragon oraz
+nie wykonuje żadnego dalszego kroku governance.
+
+Przy fladze OFF dotychczasowa nawigacja z czatu pozostaje bez zmian. Przy ON wiadomość
+czatu dostaje kartę `idle → checking → blocked|ready → adopting → adopted|failed`;
+adopcja wymaga osobnego kliknięcia, a stan `blocked` prowadzi do istniejącego dokumentu
+inicjatywy. Realny `ApiGateway`, podpisany JWT i lokalny PostgreSQL potwierdziły blokadę
+bez mutacji, pojedynczy paragon, kanoniczny readback i readiness ośmiu kart. Ograniczenie:
+równoległy replay tego samego `clientRequestId` nadal wpada w konflikt wspólnego silnika
+material commands; szczegóły i czerwony dowód są w raporcie Day214.
+
+**Korekta (FIX-214, odbiór adwersaryjny 31.08):** wiersz P4 w tabeli §3 (i pierwsze
+wydanie tego rozdziału) mogą sugerować, że naprawą miało być DOSŁOWNE wywołanie
+`registerInitiative→handoff→execution_case`. To było **strukturalnie niemożliwe** —
+`registerInitiative.ts` (`:80-95`) wymaga PRZED-ISTNIEJĄCEGO wiersza w
+`source_proposals` (czytanego przez `getSourceProposalForUpdate`) z dokładnym
+dopasowaniem treści do propozycji, a draft z czatu Teresy (`generateInitiative.ts`
+pisze bezpośrednio do `initiatives`, z pominięciem `source_proposals`) takiej
+propozycji nigdy nie ma i mieć nie może bez przebudowy generatora czatu (poza
+zakresem 17-D). Naiwne wywołanie `registerInitiative` na czatowym drafcie kończy
+się `MaterialCommandConflictError`. Zamiast tego most `initiative.adopt-chat-draft`
+naśladuje SPRAWDZONY wzorzec BEZPOŚREDNIEGO mostu `adoptAcceptedClassicInitiative`
+(most-siostra SWOT→runtime, `postgresMaterialCommandUnitOfWork.ts:90-206`) — obie
+metody wchodzą do kanonicznego `REGISTERED_DRAFT` z pominięciem dwuetapowego
+`submit-proposal→register`, przez ten sam silnik `executeMaterialCommand`. To NIE
+jest obejście ani dług — to jedyna strukturalnie możliwa droga przy dzisiejszym
+kształcie `registerInitiative`; kolejny czytelnik tego rozdziału nie powinien
+traktować wyboru `adoptAcceptedClassicInitiative` jako tymczasowego zamiennika
+czekającego na „prawdziwą” naprawę przez `registerInitiative`.
