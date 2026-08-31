@@ -118,6 +118,7 @@ import {
   type VaultBulkReceipt,
 } from './deleteVaultDocumentsWithReceipts';
 import {
+  categoryLabel,
   DOCUMENT_CATEGORIES,
   formatBytes,
   formatDate,
@@ -519,7 +520,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
     const body = rows.map((doc) =>
       [
         doc.filename,
-        doc.category || '',
+        categoryLabel(doc.category, isPolish, t),
         doc.tags.join(' | '),
         (doc.folder_id && folderNameById.get(doc.folder_id)) || '',
         scopeLabel(doc.scope, isPolish),
@@ -565,7 +566,9 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
         sortable: true,
         render: (row: TableRow) =>
           row.category ? (
-            <span className="text-sm text-c-text-secondary">{String(row.category)}</span>
+            <span className="text-sm text-c-text-secondary">
+              {categoryLabel(String(row.category), isPolish, t)}
+            </span>
           ) : (
             <span className="text-sm text-c-text-muted">—</span>
           ),
@@ -808,7 +811,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
     ? [
         [
           t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category'),
-          selectedDocument.category || '—',
+          selectedDocument.category ? categoryLabel(selectedDocument.category, isPolish, t) : '—',
         ],
         [
           t('vault.docs.colTags', isPolish ? 'Tagi' : 'Tags'),
@@ -933,7 +936,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
           </option>
           {DOCUMENT_CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>
-              {cat}
+              {categoryLabel(cat, isPolish, t)}
             </option>
           ))}
         </select>
@@ -1261,7 +1264,12 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
                   },
                   { label: scopeLabel(selectedDocument.scope, isPolish), tone: 'neutral' },
                   ...(selectedDocument.category
-                    ? [{ label: selectedDocument.category, tone: 'neutral' as const }]
+                    ? [
+                        {
+                          label: categoryLabel(selectedDocument.category, isPolish, t),
+                          tone: 'neutral' as const,
+                        },
+                      ]
                     : []),
                 ],
                 trailing: (

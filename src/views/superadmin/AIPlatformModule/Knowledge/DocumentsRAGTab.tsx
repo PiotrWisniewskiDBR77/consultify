@@ -22,6 +22,7 @@ import { toast } from 'react-hot-toast';
 import { DegradedState } from '@/components/Admin/AdminState';
 import { useAppStore } from '@/store/useAppStore';
 import { formatListDate } from '@/utils/listDateFormat';
+import { DOCUMENT_CATEGORIES } from '@/views/vault/vaultDocuments';
 
 import { LoadingState } from '../../../../components/ui/primitives';
 import { Api } from '../../../../services/api';
@@ -48,7 +49,8 @@ interface VaultProject {
   name: string;
 }
 
-const DOCUMENT_CATEGORIES = ['Best Practices', 'Methodology', 'Standards', 'Templates', 'Other'];
+// DOCUMENT_CATEGORIES: shared source `src/views/vault/vaultDocuments.ts`
+// (was a third duplicate of the same raw-English array).
 const AI_VISIBILITY_OPTIONS: Array<NonNullable<Document['ai_visibility']>> = [
   'allowed',
   'requires_approval',
