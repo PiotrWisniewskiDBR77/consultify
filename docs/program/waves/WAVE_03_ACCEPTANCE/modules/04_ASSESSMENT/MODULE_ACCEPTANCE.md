@@ -160,3 +160,13 @@ This update supersedes broader wording in G06/G10 only for the state measured on
 - **G11 remains `PASS_INTAKE`, not owner acceptance** — the Day 92 operator packet and hashes are registered in `../../codex/CODEX_DAY92_ASSESSMENT_OWNER_REPORT.md`; artifacts remain outside the repository at `/private/tmp/cx-day92-assessment-artefakty` as required by the duty instruction.
 
 No product code was changed and no defect was repaired in Day 92.
+
+## Day 198 fixture remediation retest — controlling bounded update (2026-08-31)
+
+This update supersedes the Day 92 count in G06/G10 only for the state measured on exact local SHA `32b925a5fc8c02e75b8c674caba051841fcb2199`; it does not change the owner verdict.
+
+- **G06: `PARTIAL_DAY198_16_OF_20`** — canonical runtime on local Postgres with 870 successful migrations, signed owner/foreign-tenant logins and light/dark desktop. The packet contains 16/20 semantically valid PNG files. Reports-full is now reachable through a legacy assessment + report created by the fixture over real HTTP; Insights-empty is reachable through the fixture's intentionally empty foreign organization. Library-empty and Initiatives-full remain honestly unreachable.
+- **G10: `PARTIAL_DAY198_MEASURED`** — all Processes, Insights and Reports full/empty states and both Initiatives-empty states were rendered in both themes. Library is a static five-row catalog without a predicate that can legally produce an empty state. The fixture still creates only a Method Core initiative draft, not a registered `initiatives` row; SQL and `GET /api/initiatives?source=assessment` both return zero.
+- **G11 remains `PASS_INTAKE`, not owner acceptance** — the Day 198 operator packet and hashes are registered in `../../codex/CODEX_DAY198_OCENA_REPORT.md`; artifacts remain outside the repository at `/private/tmp/cx-day198-ocena-fixture-artefakty`.
+
+No product verdict change. `Current gate:` remains unchanged.
