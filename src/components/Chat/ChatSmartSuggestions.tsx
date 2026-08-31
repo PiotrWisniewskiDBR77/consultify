@@ -80,7 +80,11 @@ export const ChatSmartSuggestions: React.FC<ChatSmartSuggestionsProps> = ({
     setLoadingId(suggestion.id);
     // Chat V8 — telemetry shape is polymorphic now that suggestions can be
     // either NAVIGATE or `chat` (prompt-prime). Discriminate safely.
-    if (suggestion.action.type === 'NAVIGATE') {
+    // `=== 'NAVIGATE'` NIE zaweza tej unii: `ChatActionPayload.type` ma typ
+    // `ChatActionType`, ktory rowniez zawiera 'NAVIGATE'. Po tym tescie zostaje
+    // wiec `NavigateAction | ChatActionPayload`, a druga nie ma `targetModule`.
+    // Zawezamy obecnoscia pola — to jest rozroznienie, ktore tu naprawde dziala.
+    if (suggestion.action.type === 'NAVIGATE' && 'targetModule' in suggestion.action) {
       trackFunnelEvent('chat_suggestion_clicked', {
         type: 'NAVIGATE',
         targetModule: suggestion.action.targetModule,
