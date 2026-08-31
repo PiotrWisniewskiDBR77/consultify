@@ -1,0 +1,1293 @@
+{
+  "modelBudget": {
+    "runs": 2,
+    "ceilingRounds": 5
+  },
+  "model": "platform-selected OpenRouter tool-capable route",
+  "fixture": {
+    "organizationId": "4728f766-83eb-43b6-b544-6c39cc7a31d5",
+    "userId": "19bf8c9d-3db2-425f-a01e-2de005c8cd72",
+    "projectId": "9cbf2b9f-1f00-4d16-bbe7-a09907e6c6dc",
+    "knowledgeId": "generated-document-artifact-96e0a090-d3e5-4416-91ce-b7cec7c34df4",
+    "docTitle": "Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f"
+  },
+  "marker": "ZNACZNIK-DAY217-R3-36ff422f",
+  "prompt": "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”? Sprawdź dostępne materiały i podaj najważniejszy szczegół.",
+  "on": {
+    "enabled": true,
+    "status": 200,
+    "durationMs": 4386,
+    "toolSteps": [
+      {
+        "type": "tool_step",
+        "toolName": "search_knowledge_base",
+        "status": "running",
+        "costUsd": 0.01
+      },
+      {
+        "type": "tool_step",
+        "toolName": "search_knowledge_base",
+        "status": "completed",
+        "costUsd": 0.01
+      }
+    ],
+    "text": "            The  document  titled  \" Day 217  R 3  probe  topic  Z N AC ZN IK -D AY 217 -R 3 - 36 ff 422 f \"  is  an  executive  memo  intended  for  internal  use .  It  appears  to  be  concise  and  written  in  a  consulting  style ,  aimed  at  informing  its  audience .  However ,  it  currently  lacks  content  in  critical  sections  like  the  key  message ,  findings ,  and  recommendations ,  indicating  that  these  areas  are  pending  completion  or  further  development .    Insufficient citations — audit diagnostic recorded.  ",
+    "markerPresent": false,
+    "events": [
+      {
+        "type": "thought",
+        "step": "starting",
+        "status": "in_progress",
+        "label": "Starting…"
+      },
+      {
+        "type": "thought",
+        "step": "policy",
+        "status": "in_progress",
+        "label": "Checking safety policy and evidence requirements…"
+      },
+      {
+        "type": "policy_decision",
+        "decision": {
+          "id": "cd39d25d-2f78-454c-b6b7-43eb8ffc0e7f",
+          "allowed": true,
+          "category": "ok",
+          "rationale": "Allowed by policy gateway",
+          "evidence": {
+            "required": true,
+            "uncertaintyMarkerRequiredIfInsufficientEvidence": true
+          }
+        }
+      },
+      {
+        "type": "thought",
+        "step": "memory",
+        "status": "in_progress",
+        "label": "Loading conversation context and memory…"
+      },
+      {
+        "type": "thought",
+        "step": "knowledge",
+        "status": "in_progress",
+        "label": "Searching knowledge base and documentation…"
+      },
+      {
+        "type": "thought",
+        "step": "web_search_check",
+        "status": "in_progress",
+        "label": "Checking if web search is needed…"
+      },
+      {
+        "type": "research_progress",
+        "topic": "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”? Sprawdź dostępne materiały i podaj najważniejszy szczegół.",
+        "stage": "searching",
+        "queries": [
+          "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”"
+        ],
+        "sources": []
+      },
+      {
+        "type": "citations",
+        "citations": [
+          {
+            "id": "web_1",
+            "type": "external",
+            "title": "Tłumacz Google",
+            "reference": "https://translate.google.pl/",
+            "link": "https://translate.google.pl/",
+            "excerpt": "translate.google.pl"
+          },
+          {
+            "id": "web_2",
+            "type": "external",
+            "title": "Google News",
+            "reference": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+            "link": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+            "excerpt": "news.google.com/home?hl=pl&ceid=PL:pl"
+          },
+          {
+            "id": "web_3",
+            "type": "external",
+            "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+            "reference": "https://wiadomosci.wp.pl/",
+            "link": "https://wiadomosci.wp.pl/",
+            "excerpt": "wiadomosci.wp.pl"
+          },
+          {
+            "id": "web_4",
+            "type": "external",
+            "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+            "reference": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+            "link": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+            "excerpt": "www.youtube.com/watch?v=Hey6prXtV6g 2026-08-05T00:00:00.0000000"
+          },
+          {
+            "id": "web_5",
+            "type": "external",
+            "title": "Onet - Jesteś na bieżąco",
+            "reference": "https://www.onet.pl/",
+            "link": "https://www.onet.pl/",
+            "excerpt": "www.onet.pl"
+          }
+        ]
+      },
+      {
+        "type": "research_progress",
+        "topic": "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”? Sprawdź dostępne materiały i podaj najważniejszy szczegół.",
+        "stage": "complete",
+        "queries": [
+          "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”"
+        ],
+        "sources": [
+          {
+            "title": "Tłumacz Google",
+            "url": "https://translate.google.pl/"
+          },
+          {
+            "title": "Google News",
+            "url": "https://news.google.com/home?hl=pl&ceid=PL:pl"
+          },
+          {
+            "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+            "url": "https://wiadomosci.wp.pl/"
+          },
+          {
+            "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+            "url": "https://www.youtube.com/watch?v=Hey6prXtV6g"
+          },
+          {
+            "title": "Onet - Jesteś na bieżąco",
+            "url": "https://www.onet.pl/"
+          }
+        ]
+      },
+      {
+        "type": "thought",
+        "step": "generating",
+        "status": "in_progress",
+        "label": "Generating response based on gathered context…"
+      },
+      {
+        "type": "tool_step",
+        "toolName": "search_knowledge_base",
+        "status": "running",
+        "costUsd": 0.01
+      },
+      {
+        "type": "tool_step",
+        "toolName": "search_knowledge_base",
+        "status": "completed",
+        "costUsd": 0.01
+      },
+      {
+        "text": "The"
+      },
+      {
+        "text": " document"
+      },
+      {
+        "text": " titled"
+      },
+      {
+        "text": " \""
+      },
+      {
+        "text": "Day"
+      },
+      {
+        "text": "217"
+      },
+      {
+        "text": " R"
+      },
+      {
+        "text": "3"
+      },
+      {
+        "text": " probe"
+      },
+      {
+        "text": " topic"
+      },
+      {
+        "text": " Z"
+      },
+      {
+        "text": "N"
+      },
+      {
+        "text": "AC"
+      },
+      {
+        "text": "ZN"
+      },
+      {
+        "text": "IK"
+      },
+      {
+        "text": "-D"
+      },
+      {
+        "text": "AY"
+      },
+      {
+        "text": "217"
+      },
+      {
+        "text": "-R"
+      },
+      {
+        "text": "3"
+      },
+      {
+        "text": "-"
+      },
+      {
+        "text": "36"
+      },
+      {
+        "text": "ff"
+      },
+      {
+        "text": "422"
+      },
+      {
+        "text": "f"
+      },
+      {
+        "text": "\""
+      },
+      {
+        "text": " is"
+      },
+      {
+        "text": " an"
+      },
+      {
+        "text": " executive"
+      },
+      {
+        "text": " memo"
+      },
+      {
+        "text": " intended"
+      },
+      {
+        "text": " for"
+      },
+      {
+        "text": " internal"
+      },
+      {
+        "text": " use"
+      },
+      {
+        "text": "."
+      },
+      {
+        "text": " It"
+      },
+      {
+        "text": " appears"
+      },
+      {
+        "text": " to"
+      },
+      {
+        "text": " be"
+      },
+      {
+        "text": " concise"
+      },
+      {
+        "text": " and"
+      },
+      {
+        "text": " written"
+      },
+      {
+        "text": " in"
+      },
+      {
+        "text": " a"
+      },
+      {
+        "text": " consulting"
+      },
+      {
+        "text": " style"
+      },
+      {
+        "text": ","
+      },
+      {
+        "text": " aimed"
+      },
+      {
+        "text": " at"
+      },
+      {
+        "text": " informing"
+      },
+      {
+        "text": " its"
+      },
+      {
+        "text": " audience"
+      },
+      {
+        "text": "."
+      },
+      {
+        "text": " However"
+      },
+      {
+        "text": ","
+      },
+      {
+        "text": " it"
+      },
+      {
+        "text": " currently"
+      },
+      {
+        "text": " lacks"
+      },
+      {
+        "text": " content"
+      },
+      {
+        "text": " in"
+      },
+      {
+        "text": " critical"
+      },
+      {
+        "text": " sections"
+      },
+      {
+        "text": " like"
+      },
+      {
+        "text": " the"
+      },
+      {
+        "text": " key"
+      },
+      {
+        "text": " message"
+      },
+      {
+        "text": ","
+      },
+      {
+        "text": " findings"
+      },
+      {
+        "text": ","
+      },
+      {
+        "text": " and"
+      },
+      {
+        "text": " recommendations"
+      },
+      {
+        "text": ","
+      },
+      {
+        "text": " indicating"
+      },
+      {
+        "text": " that"
+      },
+      {
+        "text": " these"
+      },
+      {
+        "text": " areas"
+      },
+      {
+        "text": " are"
+      },
+      {
+        "text": " pending"
+      },
+      {
+        "text": " completion"
+      },
+      {
+        "text": " or"
+      },
+      {
+        "text": " further"
+      },
+      {
+        "text": " development"
+      },
+      {
+        "text": "."
+      },
+      {
+        "type": "quality_score",
+        "relevance": 0.5,
+        "groundedness": 0.5,
+        "completeness": 1,
+        "coherence": 0.5,
+        "actionability": 0.36,
+        "meceQuality": 0.4,
+        "overall": 0.54,
+        "flags": [],
+        "llmJudged": false
+      },
+      {
+        "type": "source_ledger",
+        "decisionId": "cd39d25d-2f78-454c-b6b7-43eb8ffc0e7f",
+        "used_sources": [
+          {
+            "id": "web_1",
+            "type": "external",
+            "title": "Tłumacz Google",
+            "reference": "https://translate.google.pl/",
+            "link": "https://translate.google.pl/"
+          },
+          {
+            "id": "web_2",
+            "type": "external",
+            "title": "Google News",
+            "reference": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+            "link": "https://news.google.com/home?hl=pl&ceid=PL:pl"
+          },
+          {
+            "id": "web_3",
+            "type": "external",
+            "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+            "reference": "https://wiadomosci.wp.pl/",
+            "link": "https://wiadomosci.wp.pl/"
+          },
+          {
+            "id": "web_4",
+            "type": "external",
+            "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+            "reference": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+            "link": "https://www.youtube.com/watch?v=Hey6prXtV6g"
+          },
+          {
+            "id": "web_5",
+            "type": "external",
+            "title": "Onet - Jesteś na bieżąco",
+            "reference": "https://www.onet.pl/",
+            "link": "https://www.onet.pl/"
+          }
+        ],
+        "blocked_sources": [
+          {
+            "category": "cross_tenant",
+            "reason": "forbidden_by_policy",
+            "detail": null
+          },
+          {
+            "category": "other_user_private",
+            "reason": "forbidden_by_policy",
+            "detail": null
+          }
+        ],
+        "degraded": null,
+        "scope_resolution": {
+          "privateMode": false,
+          "knowledgeSources": {}
+        }
+      },
+      {
+        "type": "policy_validation",
+        "decisionId": "cd39d25d-2f78-454c-b6b7-43eb8ffc0e7f",
+        "validation": {
+          "totalClaims": 1,
+          "citedClaims": 0,
+          "uncitedClaims": 1,
+          "coverageScore": 0,
+          "passesPolicy": false,
+          "policyViolations": [
+            "Citation coverage 0% below minimum 25%"
+          ]
+        }
+      },
+      {
+        "type": "policy_notice",
+        "kind": "uncertainty",
+        "decisionId": "cd39d25d-2f78-454c-b6b7-43eb8ffc0e7f",
+        "displayToUser": false,
+        "message": "Insufficient citations — audit diagnostic recorded.",
+        "violations": [
+          "Citation coverage 0% below minimum 25%"
+        ]
+      },
+      {
+        "type": "citations",
+        "citations": [
+          {
+            "id": "web_1",
+            "status": "stale"
+          },
+          {
+            "id": "web_2",
+            "status": "stale"
+          },
+          {
+            "id": "web_3",
+            "status": "stale"
+          },
+          {
+            "id": "web_4",
+            "status": "stale"
+          },
+          {
+            "id": "web_5",
+            "status": "stale"
+          }
+        ]
+      },
+      {
+        "type": "trust_bundle",
+        "bundle": {
+          "version": "TrustBundleV1",
+          "answerId": "answer-day217-r3-on-1788203975725",
+          "conversationId": "day217-r3-on-1788203975725",
+          "messageId": "c2e7bfe1-3c18-4da6-8a71-766a3c3bf029",
+          "decisionId": "cd39d25d-2f78-454c-b6b7-43eb8ffc0e7f",
+          "model": "openai/gpt-4o",
+          "provider": "openrouter",
+          "tier": null,
+          "sourceClasses": [
+            "general"
+          ],
+          "citationsCount": 5,
+          "citations": [
+            {
+              "id": "web_1",
+              "type": "external",
+              "title": "Tłumacz Google",
+              "reference": "https://translate.google.pl/",
+              "link": "https://translate.google.pl/",
+              "excerpt": "translate.google.pl"
+            },
+            {
+              "id": "web_2",
+              "type": "external",
+              "title": "Google News",
+              "reference": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+              "link": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+              "excerpt": "news.google.com/home?hl=pl&ceid=PL:pl"
+            },
+            {
+              "id": "web_3",
+              "type": "external",
+              "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+              "reference": "https://wiadomosci.wp.pl/",
+              "link": "https://wiadomosci.wp.pl/",
+              "excerpt": "wiadomosci.wp.pl"
+            },
+            {
+              "id": "web_4",
+              "type": "external",
+              "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+              "reference": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+              "link": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+              "excerpt": "www.youtube.com/watch?v=Hey6prXtV6g 2026-08-05T00:00:00.0000000"
+            },
+            {
+              "id": "web_5",
+              "type": "external",
+              "title": "Onet - Jesteś na bieżąco",
+              "reference": "https://www.onet.pl/",
+              "link": "https://www.onet.pl/",
+              "excerpt": "www.onet.pl"
+            }
+          ],
+          "sourceLedgerSummary": {
+            "usedCount": 5,
+            "blockedCount": 2,
+            "degraded": null,
+            "scope": {
+              "privateMode": false,
+              "knowledgeSources": {}
+            }
+          },
+          "policyDecision": {
+            "id": "cd39d25d-2f78-454c-b6b7-43eb8ffc0e7f",
+            "allowed": true,
+            "category": "ok",
+            "rationale": "Allowed by policy gateway",
+            "evidence": {
+              "required": true,
+              "uncertaintyMarkerRequiredIfInsufficientEvidence": true
+            }
+          },
+          "policyNotices": [
+            {
+              "type": "policy_notice",
+              "kind": "uncertainty",
+              "decisionId": "cd39d25d-2f78-454c-b6b7-43eb8ffc0e7f",
+              "displayToUser": false,
+              "message": "Insufficient citations — audit diagnostic recorded.",
+              "violations": [
+                "Citation coverage 0% below minimum 25%"
+              ]
+            }
+          ],
+          "generatedAt": "2026-08-31T19:19:40.105Z",
+          "degraded": null,
+          "outputLength": 397,
+          "confidence": 0.52,
+          "citationVerification": {
+            "total": 5,
+            "verified": 0,
+            "unverified": 0,
+            "broken": 0,
+            "score": 0.5
+          },
+          "cost": null,
+          "tokens": {
+            "input": 38,
+            "output": 100,
+            "total": 138
+          },
+          "routingTrace": null,
+          "coverage": {
+            "totalClaims": 1,
+            "citedClaims": 0,
+            "uncitedClaims": 1,
+            "coverageScore": 0,
+            "passesPolicy": false
+          },
+          "warnings": [
+            "insufficient_citation_coverage"
+          ],
+          "assistant": "teresa",
+          "assistantSurface": "workspace_copilot",
+          "actionSurface": "governed_execution"
+        }
+      }
+    ]
+  },
+  "off": {
+    "enabled": false,
+    "status": 200,
+    "durationMs": 1698,
+    "toolSteps": [],
+    "text": "          Nie  mam  dost ępu  do  dokument u  zat ytu ł owan ego  „ Day 217  R 3  probe  topic  Z N AC ZN IK -D AY 217 -R 3 - 36 ff 422 f ”  ani  do  jego  zaw arto ści  w  mo im  obec nym  kon tek ście .  Jeśli  ch cesz ,  mog ę  pom óc  w  in nej  kwest ii  lub  dor adzi ć ,  jak  znaleźć  potrzeb ne  informacje  w  system ie  Consult ify .    Insufficient citations — audit diagnostic recorded.  ",
+    "markerPresent": false,
+    "events": [
+      {
+        "type": "thought",
+        "step": "starting",
+        "status": "in_progress",
+        "label": "Starting…"
+      },
+      {
+        "type": "thought",
+        "step": "policy",
+        "status": "in_progress",
+        "label": "Checking safety policy and evidence requirements…"
+      },
+      {
+        "type": "policy_decision",
+        "decision": {
+          "id": "cf24bea2-0de2-41ef-9779-dec08cb493b1",
+          "allowed": true,
+          "category": "ok",
+          "rationale": "Allowed by policy gateway",
+          "evidence": {
+            "required": true,
+            "uncertaintyMarkerRequiredIfInsufficientEvidence": true
+          }
+        }
+      },
+      {
+        "type": "thought",
+        "step": "memory",
+        "status": "in_progress",
+        "label": "Loading conversation context and memory…"
+      },
+      {
+        "type": "thought",
+        "step": "knowledge",
+        "status": "in_progress",
+        "label": "Searching knowledge base and documentation…"
+      },
+      {
+        "type": "thought",
+        "step": "web_search_check",
+        "status": "in_progress",
+        "label": "Checking if web search is needed…"
+      },
+      {
+        "type": "research_progress",
+        "topic": "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”? Sprawdź dostępne materiały i podaj najważniejszy szczegół.",
+        "stage": "searching",
+        "queries": [
+          "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”"
+        ],
+        "sources": []
+      },
+      {
+        "type": "citations",
+        "citations": [
+          {
+            "id": "web_1",
+            "type": "external",
+            "title": "Tłumacz Google",
+            "reference": "https://translate.google.pl/",
+            "link": "https://translate.google.pl/",
+            "excerpt": "translate.google.pl"
+          },
+          {
+            "id": "web_2",
+            "type": "external",
+            "title": "Google News",
+            "reference": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+            "link": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+            "excerpt": "news.google.com/home?hl=pl&ceid=PL:pl"
+          },
+          {
+            "id": "web_3",
+            "type": "external",
+            "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+            "reference": "https://wiadomosci.wp.pl/",
+            "link": "https://wiadomosci.wp.pl/",
+            "excerpt": "wiadomosci.wp.pl"
+          },
+          {
+            "id": "web_4",
+            "type": "external",
+            "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+            "reference": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+            "link": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+            "excerpt": "www.youtube.com/watch?v=Hey6prXtV6g 2026-08-05T00:00:00.0000000"
+          },
+          {
+            "id": "web_5",
+            "type": "external",
+            "title": "Onet - Jesteś na bieżąco",
+            "reference": "https://www.onet.pl/",
+            "link": "https://www.onet.pl/",
+            "excerpt": "www.onet.pl"
+          }
+        ]
+      },
+      {
+        "type": "research_progress",
+        "topic": "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”? Sprawdź dostępne materiały i podaj najważniejszy szczegół.",
+        "stage": "complete",
+        "queries": [
+          "Co wiadomo o dokumencie zatytułowanym „Day217 R3 probe topic ZNACZNIK-DAY217-R3-36ff422f”"
+        ],
+        "sources": [
+          {
+            "title": "Tłumacz Google",
+            "url": "https://translate.google.pl/"
+          },
+          {
+            "title": "Google News",
+            "url": "https://news.google.com/home?hl=pl&ceid=PL:pl"
+          },
+          {
+            "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+            "url": "https://wiadomosci.wp.pl/"
+          },
+          {
+            "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+            "url": "https://www.youtube.com/watch?v=Hey6prXtV6g"
+          },
+          {
+            "title": "Onet - Jesteś na bieżąco",
+            "url": "https://www.onet.pl/"
+          }
+        ]
+      },
+      {
+        "type": "thought",
+        "step": "generating",
+        "status": "in_progress",
+        "label": "Generating response based on gathered context…"
+      },
+      {
+        "text": "Nie"
+      },
+      {
+        "text": " mam"
+      },
+      {
+        "text": " dost"
+      },
+      {
+        "text": "ępu"
+      },
+      {
+        "text": " do"
+      },
+      {
+        "text": " dokument"
+      },
+      {
+        "text": "u"
+      },
+      {
+        "text": " zat"
+      },
+      {
+        "text": "ytu"
+      },
+      {
+        "text": "ł"
+      },
+      {
+        "text": "owan"
+      },
+      {
+        "text": "ego"
+      },
+      {
+        "text": " „"
+      },
+      {
+        "text": "Day"
+      },
+      {
+        "text": "217"
+      },
+      {
+        "text": " R"
+      },
+      {
+        "text": "3"
+      },
+      {
+        "text": " probe"
+      },
+      {
+        "text": " topic"
+      },
+      {
+        "text": " Z"
+      },
+      {
+        "text": "N"
+      },
+      {
+        "text": "AC"
+      },
+      {
+        "text": "ZN"
+      },
+      {
+        "text": "IK"
+      },
+      {
+        "text": "-D"
+      },
+      {
+        "text": "AY"
+      },
+      {
+        "text": "217"
+      },
+      {
+        "text": "-R"
+      },
+      {
+        "text": "3"
+      },
+      {
+        "text": "-"
+      },
+      {
+        "text": "36"
+      },
+      {
+        "text": "ff"
+      },
+      {
+        "text": "422"
+      },
+      {
+        "text": "f"
+      },
+      {
+        "text": "”"
+      },
+      {
+        "text": " ani"
+      },
+      {
+        "text": " do"
+      },
+      {
+        "text": " jego"
+      },
+      {
+        "text": " zaw"
+      },
+      {
+        "text": "arto"
+      },
+      {
+        "text": "ści"
+      },
+      {
+        "text": " w"
+      },
+      {
+        "text": " mo"
+      },
+      {
+        "text": "im"
+      },
+      {
+        "text": " obec"
+      },
+      {
+        "text": "nym"
+      },
+      {
+        "text": " kon"
+      },
+      {
+        "text": "tek"
+      },
+      {
+        "text": "ście"
+      },
+      {
+        "text": "."
+      },
+      {
+        "text": " Jeśli"
+      },
+      {
+        "text": " ch"
+      },
+      {
+        "text": "cesz"
+      },
+      {
+        "text": ","
+      },
+      {
+        "text": " mog"
+      },
+      {
+        "text": "ę"
+      },
+      {
+        "text": " pom"
+      },
+      {
+        "text": "óc"
+      },
+      {
+        "text": " w"
+      },
+      {
+        "text": " in"
+      },
+      {
+        "text": "nej"
+      },
+      {
+        "text": " kwest"
+      },
+      {
+        "text": "ii"
+      },
+      {
+        "text": " lub"
+      },
+      {
+        "text": " dor"
+      },
+      {
+        "text": "adzi"
+      },
+      {
+        "text": "ć"
+      },
+      {
+        "text": ","
+      },
+      {
+        "text": " jak"
+      },
+      {
+        "text": " znaleźć"
+      },
+      {
+        "text": " potrzeb"
+      },
+      {
+        "text": "ne"
+      },
+      {
+        "text": " informacje"
+      },
+      {
+        "text": " w"
+      },
+      {
+        "text": " system"
+      },
+      {
+        "text": "ie"
+      },
+      {
+        "text": " Consult"
+      },
+      {
+        "text": "ify"
+      },
+      {
+        "text": "."
+      },
+      {
+        "type": "quality_score",
+        "relevance": 0.64,
+        "groundedness": 0.5,
+        "completeness": 1,
+        "coherence": 0.5,
+        "actionability": 0.3,
+        "meceQuality": 0.4,
+        "overall": 0.56,
+        "flags": [],
+        "llmJudged": false
+      },
+      {
+        "type": "source_ledger",
+        "decisionId": "cf24bea2-0de2-41ef-9779-dec08cb493b1",
+        "used_sources": [
+          {
+            "id": "web_1",
+            "type": "external",
+            "title": "Tłumacz Google",
+            "reference": "https://translate.google.pl/",
+            "link": "https://translate.google.pl/"
+          },
+          {
+            "id": "web_2",
+            "type": "external",
+            "title": "Google News",
+            "reference": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+            "link": "https://news.google.com/home?hl=pl&ceid=PL:pl"
+          },
+          {
+            "id": "web_3",
+            "type": "external",
+            "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+            "reference": "https://wiadomosci.wp.pl/",
+            "link": "https://wiadomosci.wp.pl/"
+          },
+          {
+            "id": "web_4",
+            "type": "external",
+            "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+            "reference": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+            "link": "https://www.youtube.com/watch?v=Hey6prXtV6g"
+          },
+          {
+            "id": "web_5",
+            "type": "external",
+            "title": "Onet - Jesteś na bieżąco",
+            "reference": "https://www.onet.pl/",
+            "link": "https://www.onet.pl/"
+          }
+        ],
+        "blocked_sources": [
+          {
+            "category": "cross_tenant",
+            "reason": "forbidden_by_policy",
+            "detail": null
+          },
+          {
+            "category": "other_user_private",
+            "reason": "forbidden_by_policy",
+            "detail": null
+          }
+        ],
+        "degraded": null,
+        "scope_resolution": {
+          "privateMode": false,
+          "knowledgeSources": {}
+        }
+      },
+      {
+        "type": "policy_validation",
+        "decisionId": "cf24bea2-0de2-41ef-9779-dec08cb493b1",
+        "validation": {
+          "totalClaims": 1,
+          "citedClaims": 0,
+          "uncitedClaims": 1,
+          "coverageScore": 0,
+          "passesPolicy": false,
+          "policyViolations": [
+            "Citation coverage 0% below minimum 25%"
+          ]
+        }
+      },
+      {
+        "type": "policy_notice",
+        "kind": "uncertainty",
+        "decisionId": "cf24bea2-0de2-41ef-9779-dec08cb493b1",
+        "displayToUser": false,
+        "message": "Insufficient citations — audit diagnostic recorded.",
+        "violations": [
+          "Citation coverage 0% below minimum 25%"
+        ]
+      },
+      {
+        "type": "citations",
+        "citations": [
+          {
+            "id": "web_1",
+            "status": "stale"
+          },
+          {
+            "id": "web_2",
+            "status": "stale"
+          },
+          {
+            "id": "web_3",
+            "status": "stale"
+          },
+          {
+            "id": "web_4",
+            "status": "stale"
+          },
+          {
+            "id": "web_5",
+            "status": "stale"
+          }
+        ]
+      },
+      {
+        "type": "trust_bundle",
+        "bundle": {
+          "version": "TrustBundleV1",
+          "answerId": "answer-day217-r3-off-1788203980111",
+          "conversationId": "day217-r3-off-1788203980111",
+          "messageId": "4e158e53-eabc-418d-b21e-1c8a0d67138f",
+          "decisionId": "cf24bea2-0de2-41ef-9779-dec08cb493b1",
+          "model": "openai/gpt-4o",
+          "provider": "openrouter",
+          "tier": null,
+          "sourceClasses": [
+            "general"
+          ],
+          "citationsCount": 5,
+          "citations": [
+            {
+              "id": "web_1",
+              "type": "external",
+              "title": "Tłumacz Google",
+              "reference": "https://translate.google.pl/",
+              "link": "https://translate.google.pl/",
+              "excerpt": "translate.google.pl"
+            },
+            {
+              "id": "web_2",
+              "type": "external",
+              "title": "Google News",
+              "reference": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+              "link": "https://news.google.com/home?hl=pl&ceid=PL:pl",
+              "excerpt": "news.google.com/home?hl=pl&ceid=PL:pl"
+            },
+            {
+              "id": "web_3",
+              "type": "external",
+              "title": "Wiadomości z kraju i ze świata - najważniejsze i najnowsze informacje - WP",
+              "reference": "https://wiadomosci.wp.pl/",
+              "link": "https://wiadomosci.wp.pl/",
+              "excerpt": "wiadomosci.wp.pl"
+            },
+            {
+              "id": "web_4",
+              "type": "external",
+              "title": "Red Pill News | Follow the Money | 08/05/2026 - YouTube",
+              "reference": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+              "link": "https://www.youtube.com/watch?v=Hey6prXtV6g",
+              "excerpt": "www.youtube.com/watch?v=Hey6prXtV6g 2026-08-05T00:00:00.0000000"
+            },
+            {
+              "id": "web_5",
+              "type": "external",
+              "title": "Onet - Jesteś na bieżąco",
+              "reference": "https://www.onet.pl/",
+              "link": "https://www.onet.pl/",
+              "excerpt": "www.onet.pl"
+            }
+          ],
+          "sourceLedgerSummary": {
+            "usedCount": 5,
+            "blockedCount": 2,
+            "degraded": null,
+            "scope": {
+              "privateMode": false,
+              "knowledgeSources": {}
+            }
+          },
+          "policyDecision": {
+            "id": "cf24bea2-0de2-41ef-9779-dec08cb493b1",
+            "allowed": true,
+            "category": "ok",
+            "rationale": "Allowed by policy gateway",
+            "evidence": {
+              "required": true,
+              "uncertaintyMarkerRequiredIfInsufficientEvidence": true
+            }
+          },
+          "policyNotices": [
+            {
+              "type": "policy_notice",
+              "kind": "uncertainty",
+              "decisionId": "cf24bea2-0de2-41ef-9779-dec08cb493b1",
+              "displayToUser": false,
+              "message": "Insufficient citations — audit diagnostic recorded.",
+              "violations": [
+                "Citation coverage 0% below minimum 25%"
+              ]
+            }
+          ],
+          "generatedAt": "2026-08-31T19:19:41.804Z",
+          "degraded": null,
+          "outputLength": 256,
+          "confidence": 0.52,
+          "citationVerification": {
+            "total": 5,
+            "verified": 0,
+            "unverified": 0,
+            "broken": 0,
+            "score": 0.5
+          },
+          "cost": null,
+          "tokens": {
+            "input": 38,
+            "output": 64,
+            "total": 102
+          },
+          "routingTrace": null,
+          "coverage": {
+            "totalClaims": 1,
+            "citedClaims": 0,
+            "uncitedClaims": 1,
+            "coverageScore": 0,
+            "passesPolicy": false
+          },
+          "warnings": [
+            "insufficient_citation_coverage"
+          ],
+          "assistant": "teresa",
+          "assistantSurface": "workspace_copilot",
+          "actionSurface": "governed_execution"
+        }
+      }
+    ]
+  }
+}
