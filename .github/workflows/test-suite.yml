@@ -36,7 +36,16 @@ jobs:
   lint-typecheck:
     name: 🔍 Lint & Type Check
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    # 12 minut wystarczalo tylko dlatego, ze ESLint PADAL po ~4 minutach i
+    # `tsc` nigdy nie ruszal. Odkad lint jest zielony, zadanie po raz pierwszy
+    # dochodzi do sprawdzenia typow — i o nie sie rozbija:
+    #
+    #   checkout 68 s · npm ci 50 s · ESLint 4 min 03 s · tsc 6 min 06 s i dalej
+    #   liczyl, gdy 12-minutowy budzet zadania zostal wyczerpany.
+    #
+    # To ograniczenie CZASU, nie pamieci: zmierzony szczyt pamieci `tsc` na tym
+    # drzewie to 4,6 GB przy limicie sterty 8 GB, wiec heap zostaje bez zmian.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
