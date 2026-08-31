@@ -488,7 +488,6 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
-    const hasScope = cols.has('scope');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
 
     let expandedQuery = query;
@@ -515,11 +514,21 @@ const RagService = {
       params.push(organizationId);
     }
 
-    // ★ VLT-002: no userId in this call chain — exclude Vault-private (scope='user')
-    // docs, same rationale as appendKnowledgeDocAccessFilter above.
-    if (hasScope) {
-      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
-    }
+    // FIX-213-3: this used to be its own fail-open rule (`scope != 'user'`,
+    // no `ai_visibility`/`sensitivity` check at all — a `scope='project'` doc
+    // would pass here with zero project-membership check, since 'project' !=
+    // 'user'). Reachable in production: `searchRelevantChunks`'s fallback
+    // calls `getContext` whenever `embeddingService.search()` returns zero
+    // rows, and neither call site here threads `userId`/`projectIds` — so
+    // switching to the shared filter with `userId`/`projectIds` omitted is
+    // not just "one source of truth", it also closes the same fail-open gap
+    // FIX-213 closed everywhere else (no context => 'project' docs excluded,
+    // not waved through). VLT-002 rationale (no userId in this call chain =>
+    // exclude Vault-private docs) still holds — the shared filter's owner
+    // branch is skipped whenever `userId` is undefined, same net effect.
+    const access = buildKnowledgeDocAccessFilter({ columns: cols, dialect: 'question', documentAlias: 'd' });
+    sql += ` AND ${access.sql}`;
+    params.push(...access.params);
 
     const rows = await queryDb<{ content: string; filename: string; embedding: string }>(
       sql,
@@ -578,7 +587,6 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
-    const hasScope = cols.has('scope');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     if (!query) return '';
     const keywords = query
@@ -602,10 +610,15 @@ const RagService = {
       params.push(organizationId);
     }
 
-    // ★ VLT-002: no userId here either — same private-doc exclusion as getContext.
-    if (hasScope) {
-      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
-    }
+    // FIX-213-3: same unification as getContext above — was its own
+    // `scope != 'user'` fail-open rule (no ai_visibility/sensitivity check,
+    // `scope='project'` waved through with zero membership check). Reachable
+    // in production via `searchRelevantChunks`'s error-fallback and
+    // `getContext`'s own no-embedding fallback, neither of which threads
+    // `userId`/`projectIds` here either.
+    const access = buildKnowledgeDocAccessFilter({ columns: cols, dialect: 'question', documentAlias: 'd' });
+    sql += ` AND ${access.sql}`;
+    params.push(...access.params);
 
     sql += ` LIMIT ${limit}`;
 
