@@ -212,6 +212,42 @@ const safeGetHeader = (req: AuthRequest, headerName: string): unknown => {
   }
 };
 
+/**
+ * Hosty, na których tenant użytkownika ma być rozstrzygany po stronie serwera
+ * (z profilu użytkownika), a NIE z klienckiego `x-org-context`.
+ *
+ * `demo.consultify.ai` — pojedyncza powierzchnia prezentacyjna; klient trzyma w
+ * localStorage identyfikator organizacji, który po przesiadce/reseedzie bazy
+ * bywa martwym aliasem i przepinał zalogowanego właściciela w losowy tenant.
+ *
+ * `staging.consultify.ai` — od 2026-08-31 osobna powierzchnia pracy z własną
+ * bazą (D-4). Ma dokładnie ten sam problem: token/localStorage z poprzedniego
+ * środowiska nadal wskazuje organizację, której w tej bazie nie ma. Host jest
+ * porównywany przez zbiór, żeby dołożenie kolejnego środowiska nie wymagało
+ * dotykania logiki.
+ *
+ * UWAGA: pominięcie `x-org-context` na tych hostach NIE psuje przełącznika
+ * organizacji — `POST /api/auth/switch-organization` utrwala wybór przez
+ * `UPDATE users SET organization_id = ?` (auth.routes.ts), a blok „prefer user
+ * primary organization" poniżej czyta dokładnie tę kolumnę.
+ */
+const CANONICAL_TENANT_HOSTS = new Set(['demo.consultify.ai', 'staging.consultify.ai']);
+
+/**
+ * Normalizuje nagłówek hosta do samej nazwy: bierze pierwszy wpis z listy
+ * `x-forwarded-host` (proxy Railway potrafi skleić kilka po przecinku) i obcina
+ * port.
+ */
+const normalizeRequestHost = (rawHost: unknown): string =>
+  String(rawHost ?? '')
+    .split(',')[0]
+    .trim()
+    .split(':')[0]
+    .toLowerCase();
+
+const isCanonicalTenantHostname = (rawHost: unknown): boolean =>
+  CANONICAL_TENANT_HOSTS.has(normalizeRequestHost(rawHost));
+
 const safeRead = <T>(reader: () => T, fallback: T): T => {
   try {
     return reader();
@@ -645,16 +681,12 @@ const attachUser = async (
   );
   const isDemoHeader =
     normalizeOptionalStringClaim(safeGetHeader(req, 'X-Demo-Mode'))?.toLowerCase() === 'true';
-  const requestHost = (
+  const requestHost = normalizeRequestHost(
     normalizeOptionalStringClaim(safeGetHeader(req, 'x-forwarded-host')) ||
-    normalizeOptionalStringClaim(safeGetHeader(req, 'host')) ||
-    ''
-  )
-    .split(',')[0]
-    .trim()
-    .split(':')[0]
-    .toLowerCase();
-  const isCanonicalDemoHost = requestHost === 'demo.consultify.ai';
+      normalizeOptionalStringClaim(safeGetHeader(req, 'host')) ||
+      ''
+  );
+  const isCanonicalDemoHost = isCanonicalTenantHostname(requestHost);
   const requestedOrgContextId =
     normalizeBoundedOrgContextId(safeGetHeader(req, 'x-org-context')) ||
     normalizeBoundedOrgContextId(safeGetHeader(req, 'x-organization-id')) ||
@@ -1952,6 +1984,9 @@ export const __private__ = {
   parseRevokeAllTimestamp,
   readOptionalStringClaim,
   readBooleanTrueClaim,
+  normalizeRequestHost,
+  isCanonicalTenantHostname,
+  CANONICAL_TENANT_HOSTS,
 };
 
 // ==========================================
