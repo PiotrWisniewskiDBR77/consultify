@@ -221,6 +221,11 @@ const ChatSignalsFeedScreen = React.lazy(() => import('./screens/chat-signals-fe
 const ExecSummaryOnelookScreen = React.lazy(() => import('./screens/exec-summary-onelook'));
 // const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/execution-change-signals'));
 const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-report-day11'));
+// 145-execution-taby — REALNY <ExecutionHub initialTab=...>, 7 brakujących
+// zakładek (rejestr grafiki pokrywał dotąd tylko "reports"). Jeden plik
+// ekranu (dev-render/screens/execution-tab.tsx), tab podany wprost w propie
+// per rejestr — patrz komentarz w pliku ekranu za "DLACZEGO".
+const ExecutionTabScreen = React.lazy(() => import('./screens/execution-tab'));
 // const ExecutionExportPrezentacjaScreen = React.lazy(
 //   () => import('./screens/execution-export-prezentacja')
 // );
@@ -320,6 +325,9 @@ const InterviewSessionsStatusScreen = React.lazy(
 const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'));
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
+const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
+const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
+const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
 const PreviewZakladkiScreen = React.lazy(() => import('./screens/preview-4-zakladki'));
 const IdeaTableToolKebabScreen = React.lazy(() => import('./screens/idea-table-tool-kebab'));
 const IdeaTableRecordTemplatesScreen = React.lazy(
@@ -987,6 +995,19 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'KARTY N — Task (harness odbioru 2026-07-21)',
     render: () => <KartaTaskScreen />,
   },
+  'karta-task-pelna': {
+    label:
+      '02-moja-praca — Task pełny rekord (double-click, N-mode) — re-eksport karta-task, 145-nowe-ekrany 2026-08-31',
+    render: () => <KartaTaskPelnaScreen />,
+  },
+  'mywork-inbox': {
+    label: '02-moja-praca — Skrzynka (zakładka domyślna) — 145-nowe-ekrany 2026-08-31',
+    render: () => <MyWorkInboxScreen />,
+  },
+  'mywork-calendar': {
+    label: '02-moja-praca — Kalendarz (widok bazowy) — 145-nowe-ekrany 2026-08-31',
+    render: () => <MyWorkCalendarScreen />,
+  },
   'preview-4-zakladki': {
     label: 'KARTY N — Preview — 4 zakladki My Work (harness odbioru 2026-07-21)',
     render: () => <PreviewZakladkiScreen />,
@@ -1288,6 +1309,44 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'execution-report-day11': {
     label: 'Execution Day 11 — reports intelligence and governed generator',
     render: () => <ExecutionReportDay11Screen />,
+  },
+  // 145-execution-taby — REALNY <ExecutionHub initialTab="..."> pełna powłoka
+  // (Menu 1 StandardModuleBar + treść zakładki), 7 brakujących zakładek z 8
+  // (rejestr grafiki pokrywał dotąd tylko "Raporty"). Dane: patrz nagłówek
+  // dev-render/screens/execution-tab.tsx (demo-fallback/local-review, zero
+  // ręcznego mockowania fetch — realne ścieżki degradacji produktu w DEV).
+  'execution-tab-list': {
+    label: 'Realizacja → zakładka "Realizacje" (Portfolio), REALNY <ExecutionHub initialTab="list">',
+    render: () => <ExecutionTabScreen tab="list" />,
+  },
+  'execution-tab-work': {
+    label: 'Realizacja → zakładka "Praca", REALNY <ExecutionHub initialTab="work"> (ExecutionWorkSurface)',
+    render: () => <ExecutionTabScreen tab="work" />,
+  },
+  'execution-tab-resources': {
+    label:
+      'Realizacja → zakładka "Zasoby", REALNY <ExecutionHub initialTab="resources"> (ExecutionResourcesSurface)',
+    render: () => <ExecutionTabScreen tab="resources" />,
+  },
+  'execution-tab-control': {
+    label:
+      'Realizacja → zakładka "Sterowanie", REALNY <ExecutionHub initialTab="control"> (ExecutionControlSurface)',
+    render: () => <ExecutionTabScreen tab="control" />,
+  },
+  'execution-tab-rollout': {
+    label:
+      'Realizacja → zakładka "Rollout" (chromeless, /rollout deep-link), REALNY <ExecutionHub initialTab="rollout"> (RolloutTab: Plan/KPI/Ryzyka/Zmiany/Zamknięcie)',
+    render: () => <ExecutionTabScreen tab="rollout" />,
+  },
+  'execution-tab-summary': {
+    label:
+      'Realizacja → zakładka "Summary one-look" (chromeless, za flagą summaryOneLook — domyślnie ON poza public-prod), REALNY <ExecutionHub initialTab="summary">',
+    render: () => <ExecutionTabScreen tab="summary" />,
+  },
+  'execution-tab-people_change': {
+    label:
+      'Realizacja → zakładka "People & Change" (chromeless, osiągana z Action Center), REALNY <ExecutionHub initialTab="people_change"> (ExecutionManagementView)',
+    render: () => <ExecutionTabScreen tab="people_change" />,
   },
 //  'execution-export-prezentacja': {
 //    label:
