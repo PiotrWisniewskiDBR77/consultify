@@ -850,6 +850,63 @@ export const ReconciliationBucketValues = [
 ] as const;
 export type ReconciliationBucket = (typeof ReconciliationBucketValues)[number];
 
+/**
+ * Polski etykieta dla `ReconciliationBucket` — nigdy nie renderuj `bucket`
+ * surowo. Jeden słownik, dwaj konsumenci: `ReconciliationLedgerPanel.tsx`
+ * (podział po bucketach) i `SourceEvidencePanel.tsx` (wiersz mapowania) —
+ * oba renderowały kod wprost (`MAPPED`, `UNMAPPED`, …) zamiast tej mapy
+ * (sweep 148-finanse-parametry, rodzina „surowa wartość").
+ */
+export const RECONCILIATION_BUCKET_LABEL_PL: Record<ReconciliationBucket, string> = {
+  MAPPED: 'Zmapowane',
+  EXCLUDED: 'Wykluczone',
+  UNMAPPED: 'Niezmapowane',
+  DUPLICATE: 'Duplikat',
+  RECLASS: 'Reklasyfikacja',
+  ELIMINATION: 'Eliminacja',
+  CANONICAL: 'Kanoniczne',
+};
+
+export function reconciliationBucketLabel(bucket: ReconciliationBucket): string {
+  return RECONCILIATION_BUCKET_LABEL_PL[bucket] ?? bucket;
+}
+
+/**
+ * `finance_reconciliation_runs.status` (`statementReconciliationService.ts:224`,
+ * `server/migrations/20260809_finance_v3_b05_exception_ledger.sql:136`) —
+ * jakość SUMY przebiegu (residual vs próg istotności), NIE to samo pole co
+ * `resultQuality` poniżej (ta bierze pod uwagę też pokrycie/skoki okresów).
+ */
+export function reconciliationRunStatusLabel(status: string | null | undefined): string {
+  switch (status) {
+    case 'CLEAN':
+      return 'Czysto';
+    case 'WITHIN_TOLERANCE':
+      return 'W granicach tolerancji';
+    case 'EXCEEDS_MATERIALITY':
+      return 'Przekracza istotność';
+    default:
+      return status ?? '—';
+  }
+}
+
+/**
+ * `ReconciliationResultQuality` (`statementReconciliationService.ts:227`,
+ * kolumna `result_quality` — CHECK w `20260809_finance_v3_b05_exception_ledger.sql:161`).
+ */
+export function reconciliationResultQualityLabel(quality: string | null | undefined): string {
+  switch (quality) {
+    case 'CLEAN':
+      return 'Czysty';
+    case 'CONDITIONAL':
+      return 'Warunkowy';
+    case 'PROVISIONAL':
+      return 'Prowizoryczny';
+    default:
+      return quality ?? '—';
+  }
+}
+
 /** statements.routes.ts:195-223 (GET /statements/:id/lines), jeden wiersz. */
 export interface StatementLineDto {
   stmtLineId: string;
