@@ -348,7 +348,29 @@ export function AssumptionsView({
               <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
                 Jakość
               </th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 200 }}>
+              {
+                /**
+                 * ★ NAPRAWA drugiego przebiegu (148-finanse-parametry): ten
+                 * element tabeli (§27-exempt, patrz znacznik na otwierającym
+                 * tagu wyżej) NIE ma table-layout: fixed — to natywny HTML
+                 * z auto-layout, kolumny renderują się szerzej niż
+                 * `minWidth`, gdy trzeba (żadnego `columnFit`/ściskania jak w
+                 * `FilterableTable`). Zbyt szeroki `minWidth` tutaj NIE ucina
+                 * tekstu wielokropkiem (ta komórka zawija normalnie, dowód:
+                 * `text-c-text-muted` bez `overflow-hidden`/`text-ellipsis`)
+                 * — zamiast tego rozpycha CAŁY element szerzej niż widoczny
+                 * kontener (`flex-1 overflow-auto`, 1440px), więc kolumna
+                 * ląduje ZA prawą krawędzią i jest obcięta przez SCROLL, nie
+                 * przez CSS (żywy pomiar: 200px dawało scrollWidth 1569px >
+                 * kontener 1440px — „Zasila: Przychody (REVEN" urywało się na
+                 * krawędzi ekranu bez przewinięcia, mimo że DOM miał pełny
+                 * tekst). 150px: mieści najszersze POJEDYNCZE słowo etykiety
+                 * PL („długoterminowy," ≈94px + padding 24px ≈118px) z
+                 * zapasem, a suma kolumn 1-9 (1260+150=1410px) zostaje w
+                 * granicach 1440px — kolumna w pełni widoczna bez przewijania.
+                 */
+              }
+              <th className="px-3 py-2 text-left" style={{ minWidth: 150 }}>
                 Podgląd wpływu
               </th>
               <th className="px-3 py-2 text-center" style={{ minWidth: 90 }}>
