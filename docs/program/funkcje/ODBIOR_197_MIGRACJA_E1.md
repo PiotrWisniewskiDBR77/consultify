@@ -5,7 +5,7 @@ truth_type: acceptance
 established: 2026-08-31
 ---
 
-# ODBIÓR 197 — migracja E1 · KOD SCALONY · KARTA DECYZYJNA WSTRZYMANA (FIX-197)
+# ODBIÓR 197 — migracja E1 · KOD SCALONY · KARTA DECYZYJNA GOTOWA (po FIX-197 `cac843372b`) — przedstawiona właścicielowi jako bramka etapu 2
 
 Ledger **9/10** (odtworzony od pustej bazy: 871/0, kształt A4 pełny, walidator bez
 wzrostu długu, zakres 20261721 OK) · pomiary M1/M2 odtworzone co do liczby ·
