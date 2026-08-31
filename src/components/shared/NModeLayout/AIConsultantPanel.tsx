@@ -171,7 +171,8 @@ export const AIConsultantPanel: React.FC<AIConsultantPanelProps> = ({
   isPolish = false,
 }) => {
   const t = useMemo<TFunc>(() => i18n.getFixedT(isPolish ? 'pl' : 'en'), [isPolish]);
-  const resolvedTitle = title || t('sharedComponents.aiConsultantPanel.title', 'AI Consultant');
+  const resolvedTitle =
+    title || t('sharedComponents.aiConsultantPanel.title', { defaultValue: 'AI Consultant' });
 
   const systemPrompt = useMemo(
     () => buildSystemPrompt(artifactType, artifactTitle, contextText, t),

@@ -445,9 +445,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <p className="mt-2 text-xs font-medium uppercase tracking-wide text-primary-600 dark:text-primary-300">
                 {t(
                   `partner.canonicalRuntime.lifecycle.${programStatus.lifecyclePhase.toLowerCase()}`,
-                  programStatus.lifecyclePhase === 'certified'
-                    ? 'Certyfikowany'
-                    : programStatus.lifecyclePhase
+                  // Bylo tu jeszcze porownanie z 'certified', ktorego typ
+                  // lifecyclePhase (onboard|activate|earn|payout) nie dopuszcza
+                  // — galaz nigdy sie nie wykonywala.
+                  programStatus.lifecyclePhase
                 )}
               </p>
             )}

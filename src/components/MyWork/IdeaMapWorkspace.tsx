@@ -5203,7 +5203,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 onDiscussWithTeresa={handleTeresaDiscuss}
                 teresaCommands={teresaCommands}
                 aiSuggestionsContent={
-                  <IdeaAISuggestionsPanel {...ideaAISuggestionsPanelSharedProps} open embedded />
+                  <IdeaAISuggestionsPanel
+                    {...ideaAISuggestionsPanelSharedProps}
+                    open
+                    embedded
+                    // W trybie `embedded` panel nie renderuje wlasnej ramki
+                    // ani przycisku zamkniecia — nie ma czego zamykac.
+                    onClose={() => {}}
+                  />
                 }
               />
             );

@@ -120,6 +120,10 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
       activeChatMessages: [],
       currentStreamContent: '',
       aiConfig: {
+        // Domyslna wartosc taka sama jak w chatSlice.ts (tam ten sam obiekt
+        // aiConfig ma chatSuggestionsEnabled: true) — reset nie moze cichcem
+        // przestawiac ustawienia uzytkownika na inna wartosc niz start.
+        chatSuggestionsEnabled: true,
         autoMode: true,
         maxMode: false,
         multiModel: false,

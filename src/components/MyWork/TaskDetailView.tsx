@@ -7179,7 +7179,14 @@ Return ONLY the final comment text.`;
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
               onLikeComment={handleLikeComment}
-              onGenerateAIComment={generateAIComment}
+              onGenerateAIComment={async () => {
+                try {
+                  await generateAIComment();
+                  return { ok: true } as const;
+                } catch (error) {
+                  return { ok: false, error } as const;
+                }
+              }}
               isGeneratingAI={isGeneratingAIComment}
               currentUserId="current-user"
               expanded={expandedSections.has('comments')}

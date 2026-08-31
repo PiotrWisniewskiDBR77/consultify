@@ -346,7 +346,7 @@ export const mapDecisionServerRisk = (dto: any): RiskItem => ({
   title: String(dto.description || ''),
   probability: String(dto.likelihood || 'MEDIUM').toLowerCase() as RiskItem['probability'],
   impact: String(dto.severity || 'MEDIUM').toLowerCase() as RiskItem['impact'],
-  category: String(dto.category || 'business'),
+  category: String(dto.category || 'business') as RiskItem['category'],
   mitigation: String(dto.mitigation || ''),
   contingency: String(dto.contingency || ''),
 });
@@ -2274,7 +2274,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const dossierAlternatives = Array.isArray(decision.dossierAlternatives)
         ? decision.dossierAlternatives
         : [];
-      const mappedAlternatives = dossierAlternatives.map(mapDecisionServerAlternative);
+      // Adnotacja typu jest tu konieczna: `dossierAlternatives` jest `any`,
+      // wiec `.map()` zwracalo `any` i kazdy `(a) => ...` nizej byl niejawnym any
+      // — mimo ze sam mapper ma jawny typ zwracany `Alternative`.
+      const mappedAlternatives: Alternative[] = dossierAlternatives.map(
+        mapDecisionServerAlternative
+      );
       const nextAlternatives =
         mappedAlternatives.length > 0 ? mappedAlternatives : isDemo ? DEMO_ALTERNATIVES : [];
       setAlternatives(nextAlternatives);
@@ -2315,7 +2320,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       // MW-DEC-001: read from the REAL, persisted dossier (`dossierRisks` —
       // decision_risks rows), not the legacy `decision.risks` prose field.
       const dossierRisks = Array.isArray(decision.dossierRisks) ? decision.dossierRisks : [];
-      const mappedRisks = dossierRisks.map(mapDecisionServerRisk);
+      const mappedRisks: RiskItem[] = dossierRisks.map(mapDecisionServerRisk);
       const nextRisks = mappedRisks.length > 0 ? mappedRisks : isDemo ? DEMO_RISKS : [];
       setRisks(nextRisks);
       riskServerIdRef.current = new Map(mappedRisks.map((r) => [r.id, r.id]));
@@ -8906,16 +8911,6 @@ Use userId only from this list:
                                       </td>
                                       <td className="py-2 text-right">
                                         <button
-                                          onClick={() => handleDownloadAttachment(a)}
-                                          className="p-1 text-c-text-secondary dark:text-c-text-muted hover:text-c-info transition-colors"
-                                          title={t(
-                                            'myWork.attachments.downloadFile',
-                                            'Download file'
-                                          )}
-                                        >
-                                          <Download size={13} />
-                                        </button>
-                                        <button
                                           disabled={isDecisionStageLocked}
                                           onClick={() =>
                                             setStakeholders(
@@ -9342,7 +9337,14 @@ Use userId only from this list:
                           onAddComment={handleAddComment}
                           onDeleteComment={handleDeleteComment}
                           onLikeComment={handleLikeComment}
-                          onGenerateAIComment={generateAIComment}
+                          onGenerateAIComment={async () => {
+                            try {
+                              await generateAIComment();
+                              return { ok: true } as const;
+                            } catch (error) {
+                              return { ok: false, error } as const;
+                            }
+                          }}
                           isGeneratingAI={isGeneratingAIComment}
                           currentUserId={currentUser?.id}
                           expanded

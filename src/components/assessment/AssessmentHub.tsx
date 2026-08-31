@@ -1639,7 +1639,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           activeTab !== 'outputs'
             ? knownPresentation(statusCounts[opt.id] ?? 0)
             : outputsCount === null
-              ? unknownPresentation(
+              ? // Parametr T nie da sie wywnioskowac z samego powodu (funkcja
+                // przyjmuje tylko string), wiec bez jawnego <number> caly ten
+                // wyrazenie mialo typ PresentationState<unknown> i nie pasowalo
+                // do presentationReason/formatPresentationCount nizej.
+                unknownPresentation<number>(
                   t('presentationState.outputsUnavailableReason', 'output count is unavailable')
                 )
               : opt.id === 'all'
