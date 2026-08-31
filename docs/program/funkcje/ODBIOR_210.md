@@ -1,3 +1,42 @@
+# ★ SCALONE PO FIX-210 (`470cf94606`) — 31.08.2026
+
+**P0 ZAMKNIĘTY** i — co równie ważne — **funkcja przywrócona**. Cztery punkty:
+
+1. **Tożsamość przeprowadzona przez realny łańcuch.** Filtr był fail-closed, ale
+   `userId` nigdy nie docierał z góry, więc prywatne sejfy przestały działać także
+   dla własnych właścicieli. Przeprowadzone przez `ragService` (hybrid/bm25/vector),
+   `ai.routes.ts:4284`, `reportGenerationService`, `drdReportGrounding`,
+   `assessment-reports.routes.ts`.
+   **Odkrycie:** realna ścieżka czatu (`executeKBSearch`) ma własny, niezależny
+   mechanizm (AGT-008) i jest fail-closed — ale wołała `hybridSearch()` BEZ `userId`,
+   więc odcinała właścicielowi jego własny dokument mimo poprawnej allow-listy.
+   Jedna linia (`userId: ctx.userId`) — zweryfikowana mutacyjnie w obie strony.
+   `annaKnowledgeService`/`virtualWorkerKnowledgeService` świadomie nie wątkowane:
+   działają pod tożsamością syntetyczną i czytają wyłącznie treści globalne.
+2. **Bramka mutacyjna ścieżki zapasowej — CZERWONA.** Przy okazji wykryto, że
+   asercja była **pusto-prawdziwa**: `searchSqlite` nie aliasował `chunk_text` na
+   `content`, więc porównywane pole było zawsze `undefined` — test przechodziłby
+   niezależnie od stanu filtra. Naprawione (`chunk_text as content`); bez tego
+   bramka byłaby fałszywie zielona.
+3. **Koniec cichego pomijania.** Bez realnej bazy test dawał „4 skipped, exit 0" —
+   w CI nieodróżnialne od zieleni. Teraz `exit 1` z jawnym komunikatem.
+4. **Koniec ciszy przy braku kolumny `scope`** — brak kolumny kasował całą bazę
+   wiedzy z wyników bez śladu; teraz jednorazowy `logger.error`. Migracji nie
+   dodano (poza zasięgiem tej naprawy) — pozycja otwarta.
+
+**Dowód „realny łańcuch, nie laboratorium":** `day210.realchain.proof.pg.test.ts` woła
+produkcyjne `executeToolCall('search_knowledge_base')` — tę samą funkcję co żywy czat —
+przeciw żywemu Postgresowi: właściciel widzi swój prywatny dokument, inny członek
+organizacji nie widzi. Bez naprawy z punktu 1 test jest czerwony. Stan: 9/9 PASS.
+
+**Nadal otwarte (dług starszy niż 210, pozycje 5-9 karty):** cztery insertery nie
+ustawiają zasięgu, a domyślna wartość kolumny to „prywatne"; `scope='project'`
+nieobsługiwany; dwie niezależne implementacje tej samej reguły.
+
+---
+
+## Pierwotna karta odbioru adwersaryjnego
+
 # ODBIÓR 210 — P0 BEZPIECZEŃSTWA: scope embeddingów (baza wiedzy AI)
 
 Audyt adwersaryjny (Opus), 2026-08-31.
