@@ -280,14 +280,28 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
       }}
     >
       {/* Z17 (Fala 3): 4-side magnetic handles (Lucidchart parity). The two
-          UNNAMED handles below (Left/target, Right/source further down) are
-          kept id-less on purpose — old persisted edges have no
-          sourceHandle/targetHandle and react-flow resolves an undefined
-          handle id to the sole id-less handle of that type on the node, so
-          this is what keeps every pre-Z17 edge rendering unchanged. All new
-          handles get an explicit id so they never collide with that
-          fallback. */}
+          UNNAMED handles (Left/target, Right/source) are kept id-less on
+          purpose — old persisted edges have no sourceHandle/targetHandle.
+          ★ 141 (2026-08-31): react-flow does NOT resolve an id-less handle
+          id by matching `id === undefined` — `getHandle()` in
+          @reactflow/core just returns `bounds[0]`, i.e. whichever handle of
+          that TYPE was registered FIRST in DOM/JSX order, id-less or not.
+          The id-less Right/source handle used to be declared LAST among the
+          four source handles, so every edge without an explicit
+          sourceHandle silently resolved to the `id="left"` handle instead —
+          source AND target both defaulting to Left. A same-row "backward"
+          edge (target.x < source.x) then drew as a dead-straight line that
+          cut through any node sitting between them (repro: `e-reject-request`
+          overlaid "Klient składa zgłoszenie" — looked like struck-through
+          text). Fix: the id-less Right/source handle must be declared FIRST
+          among source handles (mirroring the id-less Left/target handle
+          already being first among target handles) so `bounds[0]` resolves
+          to the intended Right/Left default pair — the router then draws a
+          normal step-around detour instead of a straight cross-through line.
+          Do not reorder these two id-less handles below any named handle of
+          the same type again. */}
       <Handle type="target" position={Position.Left} className={HANDLE_CLASS} />
+      <Handle type="source" position={Position.Right} className={HANDLE_CLASS} />
       <Handle type="source" id="left" position={Position.Left} className={HANDLE_CLASS} />
       <Handle type="target" id="top" position={Position.Top} className={HANDLE_CLASS} />
       <Handle type="source" id="top-source" position={Position.Top} className={HANDLE_CLASS} />
@@ -428,7 +442,6 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className={HANDLE_CLASS} />
       <Handle type="target" id="right" position={Position.Right} className={HANDLE_CLASS} />
 
       {/* Context tooltip on hover */}
