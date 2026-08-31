@@ -35,6 +35,13 @@ describe('Day207 WRITE proposal — ApiGateway/JWT/Postgres', NO_RETRY, () => {
     ]);
     app.use(express.json());
     ApiGateway.getInstance().initializeRoutes(app);
+    // Fresh Day207 migration replay exposes a pre-existing schema drift: the
+    // policy engine reads this column but the baseline does not create it.
+    // Keep the product guard untouched (Z12); make the disposable fixture
+    // explicit and report the drift instead of silently mocking the policy.
+    await pool.query(
+      `ALTER TABLE projects ADD COLUMN IF NOT EXISTS governance_settings TEXT DEFAULT '{}'`
+    );
     await pool.query(`INSERT INTO organizations(id,name,status) VALUES($1,$1,'active')`, [
       organizationId,
     ]);
