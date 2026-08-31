@@ -485,8 +485,22 @@ export const KpiToolPage: React.FC = () => {
     };
   }
 
+  // RN-G2 i18n/141 (2026-08-31) FIX: the H1 used to be the raw `kpiCode`
+  // unconditionally (e.g. "OEE-LINIA-PAKOWANIA") — no name, no signature —
+  // even though the business name IS reachable here: `definitionVersion`
+  // (fetched above via `getKpiCurrentDefinitionVersion`, same join the
+  // Contract section already reads `definitionVersion.name` from) carries it
+  // whenever the joined fetch resolves. Falls back to the bare `kpiCode`
+  // only while `definitionVersion` is still loading/null (honest-missing,
+  // same discipline as every other field in this file) — the code itself
+  // remains visible unconditionally in the Contract section's "Kod KPI" row
+  // below, this is not losing that value, only no longer using it as the
+  // ONLY thing the H1 ever shows.
+  const kpiTitle =
+    (definitionVersion !== 'loading' && definitionVersion?.name) || kpi.name || kpi.kpiCode;
+
   const header: NModeHeaderConfig = {
-    title: kpi.kpiCode,
+    title: kpiTitle,
     onTitleChange: () => {},
     titleReadOnly: true,
     artifactType: 'kpi',

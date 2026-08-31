@@ -79,6 +79,52 @@ const KPI = {
   updatedAt: '2026-08-08T10:00:00Z',
 };
 
+// RN-G2 i18n/141 (2026-08-31) — `GET /kpi/:kpiId` (above, bare `SELECT kd.*`)
+// genuinely never returns `name` (real backend gap, kpiRepository.ts's
+// `getKpi` — confirmed by reading the SQL, unlike `listKpis`' additive join)
+// so `KPI` above stays honestly name-less. The joined definition-version row
+// DOES carry `name` (`rvn_kpi_definition_versions`, kpiRepository.ts's
+// `getKpiCurrentDefinitionVersion`) — this mock was previously missing
+// entirely (the `/version` request fell through to the generic
+// `/vnext/results/kpi/${KPI_ID}` prefix match below and got back `{ kpi }`
+// with no `definitionVersion` key), which is what made the KPI tool's H1
+// show the bare `kpiCode` unconditionally — never a real per-mock choice,
+// just an absent handler. Field values mirror the shape (not the content)
+// of `resultsVNextOwnerSampleData.ts`'s `RESULTS_VNEXT_SAMPLE_KPI_VERSIONS`.
+const DEFINITION_VERSION = {
+  definitionVersionId: 'ver-1',
+  kpiId: KPI_ID,
+  organizationId: 'org-dbr77-demo',
+  versionNumber: 1,
+  name: 'OEE linii pakowania',
+  description: 'Ogólna efektywność wyposażenia (OEE) linii pakowania — dostępność × wydajność × jakość.',
+  unit: '%',
+  targetGeometry: 'threshold_min' as const,
+  targetValue: 85,
+  targetMin: null,
+  targetMax: null,
+  warningLow: 80,
+  warningHigh: null,
+  criticalLow: 70,
+  criticalHigh: null,
+  binarySuccessValue: null,
+  formulaText: 'Dostępność × Wydajność × Jakość × 100',
+  approvalStatus: 'approved' as const,
+  effectiveFrom: '2026-06-01',
+  effectiveTo: null,
+  createdBy: 'user-piotr-demo',
+  createdAt: '2026-06-01T08:00:00Z',
+  updatedAt: '2026-06-01T08:00:00Z',
+  submittedBy: 'user-piotr-demo',
+  submittedAt: '2026-06-01T08:00:00Z',
+  approvedBy: 'user-anna',
+  approvedAt: '2026-06-01T09:00:00Z',
+  rejectedBy: null,
+  rejectedAt: null,
+  rejectionReason: null,
+  rowVersion: 1,
+};
+
 const MEASUREMENT = {
   measurementId: 'meas-1',
   kpiId: KPI_ID,
@@ -199,6 +245,14 @@ Api.get = (async (url: string) => {
   }
   if (url.startsWith('/vnext/results/kpi/deviation-cases')) {
     return { cases: [mutableCase] };
+  }
+  // RN-G2 i18n/141 — MUST be checked before the generic `.../${KPI_ID}`
+  // prefix match below (it would otherwise swallow this more specific path
+  // and answer with `{ kpi }`, no `definitionVersion` key — see
+  // `DEFINITION_VERSION`'s own doc comment above for why that silently broke
+  // the Contract section's name/unit/target fields AND the KPI tool's H1).
+  if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/version`)) {
+    return { definitionVersion: DEFINITION_VERSION };
   }
   if (url.startsWith(`/vnext/results/kpi/${KPI_ID}`)) {
     if (state === 'loading') return new Promise(() => {});
