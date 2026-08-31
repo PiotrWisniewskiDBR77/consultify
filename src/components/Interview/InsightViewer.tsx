@@ -1920,6 +1920,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         );
         setNComments((interviewDemoData.insightCommentsById[id] || []) as CommentItem[]);
         setFindings([]);
+        // ★ NAPRAWA 2026-08-31 — ZAWIESZONY STAN ŁADOWANIA POKAZANY JAKO DANA.
+        // Gałąź demo NIE woła `loadPersistedFindings` (zaraz niżej jest
+        // `if (isInterviewDemoId(insightId) && applyDemoInsight(...)) return`),
+        // więc `findingsPresentation` zostawało NA ZAWSZE w stanie startowym
+        // `unknown('trwa pobieranie ustaleń')`. Właściwość „Ustalenia" w prawym
+        // panelu pokazywała więc „— · nieznane: trwa pobieranie ustaleń" —
+        // zdanie o trwającym pobieraniu, którego nikt nigdy nie rozpoczął.
+        // Nic się nie ładuje, więc ekran ma powiedzieć PRAWDĘ: rejestr ustaleń
+        // nie jest wpięty w tym trybie. Brak NAZWANY, nie udawana dana
+        // (język uczciwości, KANON_Z_ODBIOROW.md: „braki wymienione z nazwy").
+        setFindingsPresentation(
+          unknownPresentation(
+            t(
+              'presentationState.findingsNotWiredInDemoReason',
+              'the findings register is not wired in demo mode'
+            )
+          )
+        );
         setCandidates([]);
         setAnalysis(null);
         setSourcePack(null);
@@ -8910,18 +8928,37 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // `readMode` jest PIERWSZYM warunkiem pustki: przyciski niżej wywołują
       // `runStatusTransition`, czyli ZAPIS statusu wniosku. W Podglądzie
       // sekcja mówi to samo, co w Zadaniu i Decyzji — akcje są w Edycji.
-      // Etap 4 gridu n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md): w
-      // Podglądzie sekcja jest ZWINIĘTA z licznikiem 0, bez komunikatu
-      // opisowego (był tu tekst „Actions are hidden in preview mode" — SSOT
-      // go zakazuje wprost). Drugi powód pustki (`!statusEditable` /
-      // brak opcji statusu) zachowuje swój własny, opisowy komunikat — to
-      // NIE jest tryb Podgląd, więc reguła go nie dotyczy.
-      defaultOpen: !(readMode || !statusEditable || statusBaseOptions.length === 0),
-      isEmpty: readMode || !statusEditable || statusBaseOptions.length === 0,
+      //
+      // ★ AKTUALIZACJA 2026-08-30 — decyzja właściciela ZASTĘPUJE zakaz z 24.07.
+      // Etap 4 gridu n-Type (_GRID_STABILIZATION_COMMAND_2026-07-24.md) kazał tu
+      // sekcję ZWINIĘTĄ z licznikiem 0 i BEZ komunikatu, więc w Podglądzie
+      // zostawało NAGIE ZERO. Właściciel rozstrzygnął, że nagie zero wprowadza
+      // w błąd („liczba 0 nie oznacza braku działań" — wzorzec INS-2026-014,
+      // docs/program/grafika/KANON_Z_ODBIOROW.md) i kazał dopisać zdanie
+      // wyjaśniające. Zakazany był komunikat po ANGIELSKU, mówiący o TRYBIE
+      // („Actions are hidden in preview mode"); ten mówi o ZNACZENIU LICZBY,
+      // po polsku — i to jest różnica, której tamten zakaz dotyczył.
+      // Sekcja jest w Podglądzie ROZWINIĘTA: zwinięta chowałaby dokładnie to,
+      // co miało przestać wprowadzać w błąd.
+      //
+      // Drugi powód pustki (`!statusEditable` / brak opcji statusu) zachowuje
+      // swój własny, opisowy komunikat — to NIE jest tryb Podgląd, więc reguła
+      // nagiego zera go nie dotyczy (nie ma tam licznika `0`).
+      defaultOpen: readMode || !(!statusEditable || statusBaseOptions.length === 0),
+      // W Podglądzie sekcja NIE jest „pusta" — niesie zdanie o znaczeniu
+      // licznika. Licznik zostaje `0`, bo działań realnie w tym widoku nie ma.
+      isEmpty: !readMode && (!statusEditable || statusBaseOptions.length === 0),
       badge: readMode ? 0 : undefined,
       showZeroBadge: true,
       emptyLabel: readMode ? undefined : t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
-      children: readMode ? null : (
+      children: readMode ? (
+        <p className="text-xs leading-relaxed text-c-text-muted">
+          {t(
+            'interview.insightViewer.actionsZeroDescribesViewNote',
+            'Actions are unavailable in Preview. The 0 describes this view, not the insight — it is a limit of the preview, not a statement that there are no actions. Switch to Edit to see them.'
+          )}
+        </p>
+      ) : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-1.5">
             {statusBaseOptions

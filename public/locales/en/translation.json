@@ -3188,6 +3188,7 @@
       "calendar": "Calendar",
       "tasks": "Tasks",
       "decisions": "Decisions",
+      "projects": "Projects",
       "manager": "Manager",
       "agent": "Run agent",
       "myWork": "My Work",
@@ -3202,6 +3203,7 @@
       "label4": "Calendar",
       "label5": "Tasks",
       "label6": "Decisions",
+      "labelProjects": "Projects",
       "label7": "All",
       "label8": "Overdue",
       "label9": "Today",
@@ -6776,6 +6778,7 @@
       "groupAudit": "Audit",
       "derivedFromPerspectives": "Derived from {{count}} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.",
       "actionsLiveInHeaderAndToolbar": "Actions for this insight live in the header and toolbar.",
+      "actionsZeroDescribesViewNote": "Actions are unavailable in Preview. The 0 describes this view, not the insight — it is a limit of the preview, not a statement that there are no actions. Switch to Edit to see them.",
       "panelActionsHint": "Pick a state to move this insight forward in its lifecycle.",
       "statusOptionLabel": {
         "draft": "Draft",
@@ -31223,6 +31226,20 @@
       "months": "mo",
       "labelPlaceholder": "Untitled driver",
       "categoryPlaceholder": "Category",
+      "costType": {
+        "investment": "Investment",
+        "recurring": "Recurring"
+      },
+      "benefitType": {
+        "cash": "Cash",
+        "non_cash": "Non-cash",
+        "risk_avoidance": "Risk avoidance"
+      },
+      "confidence": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
       "confidenceHigh": "High",
       "confidenceMedium": "Medium",
       "confidenceLow": "Low",
@@ -39534,6 +39551,13 @@
       "levelOrganization": "Organization safe",
       "levelProject": "Project safe"
     },
+    "categories": {
+      "bestPractices": "Best Practices",
+      "methodology": "Methodology",
+      "standards": "Standards",
+      "templates": "Templates",
+      "other": "Other"
+    },
     "folders": {
       "loadFailed": "Failed to load folders",
       "newFolder": "New folder",
@@ -39576,6 +39600,7 @@
     "outputsUnavailableReason": "output count is unavailable",
     "outputStatusHiddenReason": "the hub does not load the output status breakdown",
     "findingsPendingReason": "findings are loading",
+    "findingsNotWiredInDemoReason": "the findings register is not wired in demo mode",
     "findingsLoadFailedReason": "findings could not be loaded",
     "templatesPendingReason": "templates are loading",
     "templatesLoadFailedReason": "templates could not be loaded"

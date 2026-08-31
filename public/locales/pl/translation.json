@@ -2564,6 +2564,7 @@
       "calendar": "Kalendarz",
       "tasks": "Zadania",
       "decisions": "Decyzje",
+      "projects": "Projekty",
       "manager": "Menedżer",
       "agent": "Uruchom agenta",
       "myWork": "Moja Praca",
@@ -2578,6 +2579,7 @@
       "label4": "Kalendarz",
       "label5": "Zadania",
       "label6": "Decyzje",
+      "labelProjects": "Projekty",
       "label7": "Wszystkie",
       "label8": "Zaległe",
       "label9": "Dzisiaj",
@@ -6185,6 +6187,7 @@
       "groupAudit": "Audyt",
       "derivedFromPerspectives": "Zbudowane z {{count}} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora.",
       "actionsLiveInHeaderAndToolbar": "Akcje tego wniosku żyją w nagłówku i na pasku narzędzi.",
+      "actionsZeroDescribesViewNote": "W trybie Podglądu działania są niedostępne. Liczba 0 opisuje ten widok, nie wniosek — to ograniczenie podglądu, nie informacja, że działań nie ma. Przełącz na Edycję, żeby je zobaczyć.",
       "panelActionsHint": "Wybierz stan, aby przenieść wniosek dalej w cyklu życia.",
       "statusOptionLabel": {
         "draft": "Szkic",
@@ -19035,7 +19038,7 @@
       "urlReady": "Link przetworzony."
     },
     "stopTTS": "Zatrzymaj czytanie",
-    "sidebarEmptyHint": "Zapytaj Teresę o kontekst prezentacji albo poproś o propozycję kolejnego kroku.",
+    "sidebarEmptyHint": "Zapytaj Teresę o kontekst tej pracy albo poproś o propozycję kolejnego kroku.",
     "teresaAction": {
       "unconfirmed": "Nie mam potwierdzenia, że akcja „{{action}}” się wykonała — nic tego nie potwierdziło. Sprawdź ręcznie, zanim uznasz to za zrobione.",
       "error": "Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.",
@@ -33683,6 +33686,20 @@
       "months": "mies.",
       "labelPlaceholder": "Czynnik bez nazwy",
       "categoryPlaceholder": "Kategoria",
+      "costType": {
+        "investment": "Inwestycja",
+        "recurring": "Powtarzalny"
+      },
+      "benefitType": {
+        "cash": "Gotówkowa",
+        "non_cash": "Niegotówkowa",
+        "risk_avoidance": "Unikanie ryzyka"
+      },
+      "confidence": {
+        "low": "Niska",
+        "medium": "Średnia",
+        "high": "Wysoka"
+      },
       "confidenceHigh": "Wysoka",
       "confidenceMedium": "Średnia",
       "confidenceLow": "Niska",
@@ -42069,6 +42086,13 @@
       "levelOrganization": "Sejf organizacji",
       "levelProject": "Sejf projektu"
     },
+    "categories": {
+      "bestPractices": "Najlepsze praktyki",
+      "methodology": "Metodyka",
+      "standards": "Standardy",
+      "templates": "Szablony",
+      "other": "Inne"
+    },
     "folders": {
       "loadFailed": "Nie udało się pobrać folderów",
       "newFolder": "Nowy folder",
@@ -42111,6 +42135,7 @@
     "outputsUnavailableReason": "licznik wyników jest niedostępny",
     "outputStatusHiddenReason": "hub nie pobiera podziału wyników według statusu",
     "findingsPendingReason": "trwa pobieranie ustaleń",
+    "findingsNotWiredInDemoReason": "rejestr ustaleń nie jest wpięty w trybie demonstracyjnym",
     "findingsLoadFailedReason": "nie udało się pobrać ustaleń",
     "templatesPendingReason": "trwa pobieranie szablonów",
     "templatesLoadFailedReason": "nie udało się pobrać szablonów"
