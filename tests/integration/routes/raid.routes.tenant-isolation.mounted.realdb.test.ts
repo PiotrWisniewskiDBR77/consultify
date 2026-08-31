@@ -20,8 +20,18 @@
  *      attempts succeed (200) and actually mutate the row — proving the
  *      test is a real regression guard and not a false-positive 404.
  *
- * Requires a disposable, fully migrated database whose name starts with
- * `consultify_raid_idor_test`. Destroy the disposable database after the run.
+ * Requires a disposable, fully migrated Postgres database. Destroy the
+ * disposable database after the run.
+ *
+ * FIX-212 (2026-08-31): this file used to also require the database name to
+ * start with `consultify_raid_idor_test` (databaseName.startsWith(...)).
+ * That extra pin is the Z31 defect measured across six prior incidents —
+ * any disposable DB with a different name (e.g. one from a shared local
+ * Postgres container) made `enabled` false and the whole file SKIP at exit
+ * 0, silently. Per the standing rule ("odpinaj strażnika, nie przypinaj
+ * mocniej") the guard is removed, not tightened; the file now runs under
+ * the same three-condition gate (`RUN_DB_TESTS=1`, `MOCK_DB=false`, a
+ * postgres:// URL) used by its sibling realdb tests.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -34,18 +44,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import config from '../../../server/src/config/Config.js';
 
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const databaseName = (() => {
-  try {
-    return new URL(databaseUrl).pathname.replace(/^\//, '');
-  } catch {
-    return '';
-  }
-})();
 const enabled =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  databaseUrl.startsWith('postgres') &&
-  databaseName.startsWith('consultify_raid_idor_test');
+  databaseUrl.startsWith('postgres');
 
 describe.skipIf(!enabled).sequential('mounted RAID routes tenant isolation (IDOR fix)', () => {
   const suffix = randomUUID();
