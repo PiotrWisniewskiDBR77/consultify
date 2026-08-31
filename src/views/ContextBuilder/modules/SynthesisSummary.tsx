@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { SCENARIOS } from '../../../data/transformationScenarios';
 import { DynamicListItem } from '../shared/DynamicList';
@@ -49,15 +50,24 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
   strengths,
   selectedScenarioId,
 }) => {
+  const { t } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
 
   const selectedScenario = SCENARIOS.find((s) => s.id === selectedScenarioId);
+  const scenarioName = selectedScenario
+    ? t(`transformationScenarios.scenarios.${selectedScenario.id}.name`, selectedScenario.name)
+    : '';
 
   const handleExportPDF = async () => {
     setIsExporting(true);
     try {
       window.print();
-      toast.success('Use "Save as PDF" in the print dialog to export this summary.');
+      toast.success(
+        t(
+          'organization.synthesis.executiveBrief.exportToast',
+          'Use "Save as PDF" in the print dialog to export this summary.'
+        )
+      );
     } finally {
       setIsExporting(false);
     }
@@ -73,10 +83,13 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         <div>
           <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
             <Sparkles className="text-primary-500" size={28} />
-            Executive Strategic Summary
+            {t('organization.synthesis.executiveBrief.heading', 'Executive Strategic Summary')}
           </h2>
           <p className="text-c-text-muted mt-1">
-            AI-synthesized strategic analysis based on your inputs
+            {t(
+              'organization.synthesis.executiveBrief.subheading',
+              'AI-synthesized strategic analysis based on your inputs'
+            )}
           </p>
         </div>
         <div className="flex gap-3">
@@ -86,15 +99,17 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             className="flex items-center gap-2 px-4 py-2 bg-navy-900 dark:bg-primary-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <FileDown size={16} />
-            {isExporting ? 'Exporting...' : 'Export PDF'}
+            {isExporting
+              ? t('organization.synthesis.executiveBrief.exporting', 'Exporting...')
+              : t('organization.synthesis.executiveBrief.exportPdf', 'Export PDF')}
           </button>
           <button className="flex items-center gap-2 px-4 py-2 border border-c-border-subtle text-c-text-secondary rounded-lg hover:bg-c-bg dark:hover:bg-c-surface/5 transition-colors">
             <Printer size={16} />
-            Print
+            {t('organization.synthesis.executiveBrief.print', 'Print')}
           </button>
           <button className="flex items-center gap-2 px-4 py-2 border border-c-border-subtle text-c-text-secondary rounded-lg hover:bg-c-bg dark:hover:bg-c-surface/5 transition-colors">
             <Share2 size={16} />
-            Share
+            {t('organization.synthesis.executiveBrief.share', 'Share')}
           </button>
         </div>
       </div>
@@ -108,11 +123,22 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             </div>
             <div>
               <h3 className="text-2xl font-bold text-white">
-                {companyProfile.companyName || 'Company Name'}
+                {companyProfile.companyName || (
+                  <span className="text-white/60 text-lg font-medium">
+                    {t(
+                      'organization.synthesis.executiveBrief.companyNameFallback',
+                      'No organization name on file'
+                    )}
+                  </span>
+                )}
               </h3>
               <p className="text-white/70">
-                {companyProfile.industry || 'Industry'} • {companyProfile.employeeCount || '—'}{' '}
-                employees • {companyProfile.revenue || '—'} revenue
+                {companyProfile.industry ||
+                  t('organization.synthesis.executiveBrief.industryFallback', 'No industry on file')}{' '}
+                • {companyProfile.employeeCount || '—'}{' '}
+                {t('organization.synthesis.executiveBrief.employeesUnit', 'employees')} •{' '}
+                {companyProfile.revenue || '—'}{' '}
+                {t('organization.synthesis.executiveBrief.revenueUnit', 'revenue')}
               </p>
             </div>
           </div>
@@ -120,23 +146,25 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-              Current Maturity
+              {t('organization.synthesis.executiveBrief.currentMaturity', 'Current Maturity')}
             </div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
-              {companyProfile.currentMaturityLevel || 'Level 2'}
+              {companyProfile.currentMaturityLevel ||
+                t('organization.synthesis.executiveBrief.maturityNoData', 'No data')}
             </div>
           </div>
           <div>
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-              Target Maturity
+              {t('organization.synthesis.executiveBrief.targetMaturity', 'Target Maturity')}
             </div>
             <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-              {companyProfile.targetMaturityLevel || 'Level 4'}
+              {companyProfile.targetMaturityLevel ||
+                t('organization.synthesis.executiveBrief.maturityNoData', 'No data')}
             </div>
           </div>
           <div>
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-              Active Constraints
+              {t('organization.synthesis.executiveBrief.activeConstraints', 'Active Constraints')}
             </div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
               {companyProfile.activeConstraints.length}
@@ -144,7 +172,7 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           </div>
           <div>
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-              Strategic Goals
+              {t('organization.synthesis.executiveBrief.strategicGoals', 'Strategic Goals')}
             </div>
             <div className="text-2xl font-bold text-navy-900 dark:text-white">
               {goals.strategicGoals.length}
@@ -160,24 +188,32 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <AlertTriangle className="text-danger-500" size={18} />
-              Risk Profile
+              {t('organization.synthesis.executiveBrief.riskProfile', 'Risk Profile')}
             </h4>
             <span
               className={`px-2 py-1 rounded text-xs font-bold ${criticalRisks.length > 2 ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}
             >
-              {criticalRisks.length > 2 ? 'High Risk' : 'Manageable'}
+              {criticalRisks.length > 2
+                ? t('organization.synthesis.executiveBrief.highRisk', 'High Risk')
+                : t('organization.synthesis.executiveBrief.manageable', 'Manageable')}
             </span>
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {risks.length}{' '}
-            <span className="text-lg font-normal text-c-text-secondary">identified</span>
+            <span className="text-lg font-normal text-c-text-secondary">
+              {t('organization.synthesis.executiveBrief.identified', 'identified')}
+            </span>
           </div>
           <div className="text-sm text-c-text-muted">
-            {criticalRisks.length} critical/high priority requiring immediate attention
+            {criticalRisks.length}{' '}
+            {t(
+              'organization.synthesis.executiveBrief.criticalPriorityNote',
+              'critical/high priority requiring immediate attention'
+            )}
           </div>
           <div className="mt-4 pt-4 border-t border-c-border-subtle">
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
-              Top Risks
+              {t('organization.synthesis.executiveBrief.topRisks', 'Top Risks')}
             </div>
             <ul className="space-y-1">
               {risks.slice(0, 3).map((risk) => (
@@ -194,20 +230,29 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <TrendingUp className="text-green-500" size={18} />
-              Opportunities
+              {t('organization.synthesis.executiveBrief.opportunities', 'Opportunities')}
             </h4>
             <span className="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-              {strengths.length > 3 ? 'Strong' : 'Developing'}
+              {strengths.length > 3
+                ? t('organization.synthesis.executiveBrief.strong', 'Strong')
+                : t('organization.synthesis.executiveBrief.developing', 'Developing')}
             </span>
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {strengths.length}{' '}
-            <span className="text-lg font-normal text-c-text-secondary">identified</span>
+            <span className="text-lg font-normal text-c-text-secondary">
+              {t('organization.synthesis.executiveBrief.identified', 'identified')}
+            </span>
           </div>
-          <div className="text-sm text-c-text-muted">Key enablers for transformation success</div>
+          <div className="text-sm text-c-text-muted">
+            {t(
+              'organization.synthesis.executiveBrief.keyEnablersNote',
+              'Key enablers for transformation success'
+            )}
+          </div>
           <div className="mt-4 pt-4 border-t border-c-border-subtle">
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
-              Top Strengths
+              {t('organization.synthesis.executiveBrief.topStrengths', 'Top Strengths')}
             </div>
             <ul className="space-y-1">
               {strengths.slice(0, 3).map((s) => (
@@ -224,20 +269,28 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-navy-900 dark:text-white flex items-center gap-2">
               <Target className="text-blue-500" size={18} />
-              Challenges
+              {t('organization.synthesis.executiveBrief.challenges', 'Challenges')}
             </h4>
             <span className="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              {challenges.declaredChallenges.length} Active
+              {challenges.declaredChallenges.length}{' '}
+              {t('organization.synthesis.executiveBrief.active', 'Active')}
             </span>
           </div>
           <div className="text-3xl font-bold text-navy-900 dark:text-white mb-2">
             {challenges.declaredChallenges.length}{' '}
-            <span className="text-lg font-normal text-c-text-secondary">declared</span>
+            <span className="text-lg font-normal text-c-text-secondary">
+              {t('organization.synthesis.executiveBrief.declared', 'declared')}
+            </span>
           </div>
-          <div className="text-sm text-c-text-muted">Operational pain points to address</div>
+          <div className="text-sm text-c-text-muted">
+            {t(
+              'organization.synthesis.executiveBrief.operationalPainNote',
+              'Operational pain points to address'
+            )}
+          </div>
           <div className="mt-4 pt-4 border-t border-c-border-subtle">
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-2">
-              Top Challenges
+              {t('organization.synthesis.executiveBrief.topChallenges', 'Top Challenges')}
             </div>
             <ul className="space-y-1">
               {challenges.declaredChallenges.slice(0, 3).map((c) => (
@@ -260,36 +313,44 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="font-bold text-navy-900 dark:text-white text-lg">
-                  Selected Transformation Scenario
+                  {t(
+                    'organization.synthesis.executiveBrief.selectedScenario',
+                    'Selected Transformation Scenario'
+                  )}
                 </h4>
                 <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold uppercase rounded-full">
-                  {selectedScenario.id}
+                  {scenarioName}
                 </span>
               </div>
-              <p className="text-c-text-secondary">{selectedScenario.approach}</p>
+              <p className="text-c-text-secondary">
+                {t(
+                  `transformationScenarios.scenarios.${selectedScenario.id}.narrative`,
+                  selectedScenario.narrative || selectedScenario.description
+                )}
+              </p>
               <div className="mt-4 grid grid-cols-3 gap-4">
                 <div>
                   <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-                    Timeline
+                    {t('organization.synthesis.executiveBrief.timeline', 'Timeline')}
                   </div>
                   <div className="font-bold text-navy-900 dark:text-white">
-                    {selectedScenario.timeline}
+                    {selectedScenario.timeline || selectedScenario.typicalDuration || '—'}
                   </div>
                 </div>
                 <div>
                   <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-                    Investment
+                    {t('organization.synthesis.executiveBrief.investment', 'Investment')}
                   </div>
                   <div className="font-bold text-navy-900 dark:text-white">
-                    {selectedScenario.investment}
+                    {selectedScenario.investment || '—'}
                   </div>
                 </div>
                 <div>
                   <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-1">
-                    Risk Level
+                    {t('organization.synthesis.executiveBrief.riskLevel', 'Risk Level')}
                   </div>
                   <div className="font-bold text-navy-900 dark:text-white">
-                    {selectedScenario.riskLevel}
+                    {selectedScenario.riskLevel || selectedScenario.complexity || '—'}
                   </div>
                 </div>
               </div>
@@ -302,10 +363,13 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
         <div className="bg-c-surface-raised/50 rounded-xl border-2 border-dashed border-c-border-subtle p-8 text-center">
           <GitMerge className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
           <h4 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
-            No Scenario Selected
+            {t('organization.synthesis.executiveBrief.noScenarioTitle', 'No Scenario Selected')}
           </h4>
           <p className="text-c-text-muted">
-            Go to "Transformation Scenarios" tab to select a strategic approach
+            {t(
+              'organization.synthesis.executiveBrief.noScenarioBody',
+              'Go to "Transformation Scenarios" tab to select a strategic approach'
+            )}
           </p>
         </div>
       )}
@@ -314,15 +378,23 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       <div className="bg-c-surface rounded-xl shadow-md border border-c-border-subtle p-6">
         <h4 className="font-bold text-navy-900 dark:text-white text-lg mb-4 flex items-center gap-2">
           <CheckCircle className="text-primary-500" size={20} />
-          Strategic Goals & Success Metrics
+          {t(
+            'organization.synthesis.executiveBrief.goalsProgressTitle',
+            'Strategic Goals & Success Metrics'
+          )}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-3">
-              Strategic Goals
+              {t('organization.synthesis.executiveBrief.strategicGoalsLabel', 'Strategic Goals')}
             </div>
             {goals.strategicGoals.length === 0 ? (
-              <p className="text-c-text-muted italic">No strategic goals defined yet</p>
+              <p className="text-c-text-muted italic">
+                {t(
+                  'organization.synthesis.executiveBrief.noGoalsYet',
+                  'No strategic goals defined yet'
+                )}
+              </p>
             ) : (
               <ul className="space-y-2">
                 {goals.strategicGoals.map((goal) => (
@@ -344,10 +416,18 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
           </div>
           <div>
             <div className="text-xs font-bold text-c-text-secondary uppercase tracking-wider mb-3">
-              Success Metrics (KPIs)
+              {t(
+                'organization.synthesis.executiveBrief.successMetricsLabel',
+                'Success Metrics (KPIs)'
+              )}
             </div>
             {goals.successMetrics.length === 0 ? (
-              <p className="text-c-text-muted italic">No success metrics defined yet</p>
+              <p className="text-c-text-muted italic">
+                {t(
+                  'organization.synthesis.executiveBrief.noMetricsYet',
+                  'No success metrics defined yet'
+                )}
+              </p>
             ) : (
               <ul className="space-y-2">
                 {goals.successMetrics.map((metric) => (
@@ -366,31 +446,61 @@ export const SynthesisSummary: React.FC<SynthesisSummaryProps> = ({
       <div className="bg-gradient-to-r from-primary-900 to-crimson-900 rounded-xl p-6 text-white">
         <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
           <Sparkles className="text-yellow-300" size={24} />
-          AI Strategic Recommendations
+          {t(
+            'organization.synthesis.executiveBrief.aiRecommendationsTitle',
+            'AI Strategic Recommendations'
+          )}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-c-surface/10 rounded-lg p-4">
-            <h5 className="font-bold mb-2">Immediate Priority</h5>
+            <h5 className="font-bold mb-2">
+              {t('organization.synthesis.executiveBrief.immediatePriority', 'Immediate Priority')}
+            </h5>
             <p className="text-sm text-white/80">
               {criticalRisks.length > 0
-                ? `Address "${criticalRisks[0]?.risk}" before initiating transformation to reduce execution risk.`
-                : 'Risk profile is manageable. Focus on quick wins to build momentum.'}
+                ? t(
+                    'organization.synthesis.executiveBrief.immediatePriorityRisk',
+                    'Address "{{risk}}" before initiating transformation to reduce execution risk.',
+                    { risk: criticalRisks[0]?.risk }
+                  )
+                : t(
+                    'organization.synthesis.executiveBrief.immediatePriorityManageable',
+                    'Risk profile is manageable. Focus on quick wins to build momentum.'
+                  )}
             </p>
           </div>
           <div className="bg-c-surface/10 rounded-lg p-4">
-            <h5 className="font-bold mb-2">Strategic Leverage</h5>
+            <h5 className="font-bold mb-2">
+              {t('organization.synthesis.executiveBrief.strategicLeverage', 'Strategic Leverage')}
+            </h5>
             <p className="text-sm text-white/80">
               {strengths.length > 0
-                ? `Capitalize on "${strengths[0]?.enabler}" as a key differentiator in your transformation journey.`
-                : 'Identify internal champions to drive the transformation forward.'}
+                ? t(
+                    'organization.synthesis.executiveBrief.strategicLeverageWithData',
+                    'Capitalize on "{{strength}}" as a key differentiator in your transformation journey.',
+                    { strength: strengths[0]?.enabler }
+                  )
+                : t(
+                    'organization.synthesis.executiveBrief.strategicLeverageEmpty',
+                    'Identify internal champions to drive the transformation forward.'
+                  )}
             </p>
           </div>
           <div className="bg-c-surface/10 rounded-lg p-4">
-            <h5 className="font-bold mb-2">Next Step</h5>
+            <h5 className="font-bold mb-2">
+              {t('organization.synthesis.executiveBrief.nextStep', 'Next Step')}
+            </h5>
             <p className="text-sm text-white/80">
               {selectedScenario
-                ? `Develop detailed implementation plan for "${selectedScenario.id}" scenario.`
-                : 'Select a transformation scenario to proceed with detailed planning.'}
+                ? t(
+                    'organization.synthesis.executiveBrief.nextStepWithScenario',
+                    'Develop detailed implementation plan for "{{scenario}}" scenario.',
+                    { scenario: scenarioName }
+                  )
+                : t(
+                    'organization.synthesis.executiveBrief.nextStepEmpty',
+                    'Select a transformation scenario to proceed with detailed planning.'
+                  )}
             </p>
           </div>
         </div>
