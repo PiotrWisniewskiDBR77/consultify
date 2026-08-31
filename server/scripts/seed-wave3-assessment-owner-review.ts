@@ -212,13 +212,19 @@ async function journey() {
     CI: 'true',
     POSTGRES_SKIP_INIT_IN_TEST: '1',
   });
-  const [{ default: typedConfig }, { default: routes }, registry, { default: postgresDb }] =
-    await Promise.all([
-      import('../src/config/Config.js'),
-      import('../src/routes/method-core.routes.js'),
-      import('../src/method-core/MethodPackRegistry.js'),
-      import('../src/database/PostgresDatabase.js'),
-    ]);
+  const [
+    { default: typedConfig },
+    { default: routes },
+    registry,
+    { default: postgresDb },
+    { ApiGateway },
+  ] = await Promise.all([
+    import('../src/config/Config.js'),
+    import('../src/routes/method-core.routes.js'),
+    import('../src/method-core/MethodPackRegistry.js'),
+    import('../src/database/PostgresDatabase.js'),
+    import('../src/Gateway.js'),
+  ]);
   const config = typedConfig as typeof typedConfig & { JWT_ISSUER?: string; JWT_AUDIENCE?: string };
   const token = (id: string, org: string, role: string, email: string) =>
     jwt.sign({ id, email, organizationId: org, role }, config.JWT_SECRET, {
@@ -416,12 +422,57 @@ async function journey() {
   const after = await request(app).get(`/api/method/outputs/${output.id}`).set(auth(toks.owner));
   if (after.status !== 200 || String(after.body.output.contentHash) !== String(output.contentHash))
     fail('frozen output changed on cold read');
+
+  // Day198 R1: the Reports surface reads the legacy assessment_reports store,
+  // not Method Core outputs. Seed that store only through its real HTTP paths.
+  const gatewayApp = express();
+  gatewayApp.use(express.json());
+  ApiGateway.getInstance().initializeRoutes(gatewayApp);
+  const legacyAssessment = await request(gatewayApp)
+    .post('/api/assessments')
+    .set(auth(toks.owner))
+    .set('x-org-context', IDS.mainOrg)
+    .send({ name: 'Ocena gotowości klienta — fixture właściciela', type: 'DRD' });
+  if (legacyAssessment.status !== 201)
+    fail(
+      `legacy assessment failed ${legacyAssessment.status} ${JSON.stringify(legacyAssessment.body)}`
+    );
+  const legacyAssessmentId = String(legacyAssessment.body.assessment?.id || '');
+  if (!legacyAssessmentId) fail('legacy assessment response has no id');
+
+  const legacyReport = await request(gatewayApp)
+    .post('/api/assessment-reports')
+    .set(auth(toks.owner))
+    .set('x-org-context', IDS.mainOrg)
+    .send({
+      assessmentId: legacyAssessmentId,
+      name: 'Raport gotowości klienta — fixture właściciela',
+    });
+  if (legacyReport.status !== 201)
+    fail(`legacy report failed ${legacyReport.status} ${JSON.stringify(legacyReport.body)}`);
+  const legacyReportId = String(legacyReport.body.id || '');
+  if (!legacyReportId) fail('legacy report response has no id');
+
+  const legacyReports = await request(gatewayApp)
+    .get('/api/assessment-reports')
+    .set(auth(toks.owner))
+    .set('x-org-context', IDS.mainOrg);
+  if (
+    legacyReports.status !== 200 ||
+    !Array.isArray(legacyReports.body.reports) ||
+    !legacyReports.body.reports.some((report: any) => String(report.id) === legacyReportId)
+  )
+    fail(
+      `legacy report cold read failed ${legacyReports.status} ${JSON.stringify(legacyReports.body)}`
+    );
   await postgresDb.close();
   return {
     guidedSessionId: guided,
     frozenSessionId: frozen,
     outputId: String(output.id),
     initiativeDraftId: draftId,
+    legacyAssessmentId,
+    legacyReportId,
     outputContentHash: String(output.contentHash),
   };
 }
@@ -450,11 +501,20 @@ async function readback(db: string, d: any = null) {
       (await c.query(`select id from method_outputs where session_id=$1`, [frozen])).rows[0]?.id;
     const r = (
       await c.query(
-        `select (select count(*)::int from users where id=any($1::text[])) personas,(select count(*)::int from method_sessions where id=$2 and state='active') guided_active,(select count(*)::int from method_events where session_id=$2) guided_events,(select count(*)::int from method_sessions where id=$3 and state='frozen') frozen_sessions,(select count(*)::int from method_outputs where session_id=$3) frozen_outputs,(select count(*)::int from method_snapshots where session_id=$3) frozen_snapshots,(select count(*)::int from method_approvals where session_id=$3 and decision='approved' and actor_user_id=$4) distinct_approvals,(select count(*)::int from method_initiative_drafts where session_id=$3) initiative_drafts,(select count(*)::int from schema_migrations where status='success') successful_migrations`,
-        [USERS.map((u) => u.id), guided, frozen, IDS.approver]
+        `select (select count(*)::int from users where id=any($1::text[])) personas,(select count(*)::int from method_sessions where id=$2 and state='active') guided_active,(select count(*)::int from method_events where session_id=$2) guided_events,(select count(*)::int from method_sessions where id=$3 and state='frozen') frozen_sessions,(select count(*)::int from method_outputs where session_id=$3) frozen_outputs,(select count(*)::int from method_snapshots where session_id=$3) frozen_snapshots,(select count(*)::int from method_approvals where session_id=$3 and decision='approved' and actor_user_id=$4) distinct_approvals,(select count(*)::int from method_initiative_drafts where session_id=$3) initiative_drafts,(select count(*)::int from assessments where id=$5 and organization_id=$6) legacy_assessments,(select count(*)::int from assessment_reports where id=$7 and assessment_id=$5 and organization_id=$6) legacy_reports,(select count(*)::int from schema_migrations where status='success') successful_migrations`,
+        [
+          USERS.map((u) => u.id),
+          guided,
+          frozen,
+          IDS.approver,
+          d?.legacyAssessmentId || '',
+          IDS.mainOrg,
+          d?.legacyReportId || '',
+        ]
       )
     ).rows[0];
-    if (Number(r.successful_migrations) < 831) fail(`expected at least 831 successful migrations, got ${r.successful_migrations}`);
+    if (Number(r.successful_migrations) < 831)
+      fail(`expected at least 831 successful migrations, got ${r.successful_migrations}`);
     const exp: any = {
       personas: 5,
       guided_active: 1,
@@ -464,6 +524,8 @@ async function readback(db: string, d: any = null) {
       frozen_snapshots: 1,
       distinct_approvals: 1,
       initiative_drafts: 1,
+      legacy_assessments: 1,
+      legacy_reports: 1,
       successful_migrations: Number(r.successful_migrations),
     };
     for (const [k, v] of Object.entries(exp))
