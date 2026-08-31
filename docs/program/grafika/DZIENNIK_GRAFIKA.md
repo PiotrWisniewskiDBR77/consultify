@@ -16,6 +16,21 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-22 · Zrzut bez wymaganych parametrów adresu pokazywał pustkę zamiast naprawionego ekranu
+**Co się stało:** pełny przebieg zrzutów modułów zrobił część ekranów w wariancie DOMYŚLNYM, mimo że instrukcja wymieniała pułapkę parametrów wprost. Skutek: `finance-analysis-workspace` pokazywał pustą „Nową analizę (bez wskaźników)" zamiast tabeli sześciu wskaźników — czyli dokładnie tego ekranu, który tego samego dnia naprawiono (jednostki „58 dni" zamiast „5800%", polski przecinek w zmianie r/r). Podobnie modal case'u finansowego bez `state=reopened` i kontrolka poufności bez przewinięcia.
+**Jak wykryte:** nadzorca, oglądając karty przed właścicielem, zobaczył pustkę tam, gdzie rano była naprawa. Ponowny przebieg z parametrami (katalogi 147/148) pokazał pełne tabele — dowód, że produkt jest sprawny, a kłamał pomiar.
+**Co z tego wynika:** parametry adresu ekranu są częścią jego tożsamości, nie ozdobą. Przy każdym przebiegu zbiorczym trzeba je czytać z nagłówka pliku ekranu, a ekran, który wyszedł pusty, traktować jako podejrzenie błędu pomiaru, zanim uzna się go za defekt produktu. Siedemnasty zmierzony sposób, w jaki kłamie stanowisko.
+
+---
+
+### Z-21 · Osiem wejść harnessu nie ustawiało języka — ekrany wychodziły po angielsku, choć produkt ma polski
+**Co się stało:** ekrany otwierane własnym plikiem `.html` (a nie wspólnym rejestrem) renderowały się po angielsku, bo ich pliki startowe nigdy nie wołały przełączenia języka — o wyniku decydował detektor przeglądarki, który w świeżym zrzucie zawsze wybiera angielski. Osiem z szesnastu wejść miało tę lukę. Bliźniacze ekrany otwierane rejestrem były po polsku, więc zestawienie obok siebie wyglądało jak niekonsekwencja produktu.
+**Drugie dno:** ta sama usterka była już raz naprawiona 27.08 w jednym pliku, z obszernym komentarzem wyjaśniającym mechanizm. Naprawa nie objęła bliźniaków i odrosła — ten sam wzorzec, co defekty jądra tabel łatane per wywołanie.
+**Trzecie dno:** przy jednym ekranie samo dołożenie przełączenia języka przed montażem dało biały ekran, bo plik czekał na gotowość tłumaczeń w określonej kolejności. Poprawna kolejność (język po inicjalizacji, montaż po języku) jest w pliku naprawionym 27.08 — trzeba było ją skopiować w całości, nie we fragmencie.
+**Co z tego wynika:** naprawa pułapki stanowiska musi od razu obejmować wszystkie bliźniacze wejścia, a wzorzec kopiuje się w całości razem z kolejnością zdarzeń.
+
+---
+
 ### Z-20 · Strona odbioru pokazywała STARE zrzuty na 120 z 229 kart — sortowanie alfabetyczne katalogów
 **Co się stało:** indeks zrzutów serwera odbioru nadpisywał wpisy w kolejności alfabetycznej katalogów `evidence/grafika/*`. Katalogi „15-", „90-", „99-" sortują się tekstowo ZA „144-"/„146-", więc starsze zrzuty (w kilkunastu przypadkach faza PRZED sprzed napraw) przykrywały dzisiejszy pełny sweep na 120 z 229 kart A/B. Właściciel ocieniałby stany sprzed napraw, myśląc że patrzy na dzisiejsze.
 **Jak wykryte:** nadzorca, wykonując własny przegląd każdej karty PRZED właścicielem (reguła 3), zbudował manifest i pierwszy wiersz modułu Czat wskazał katalog „15-domkniecie/…PRZED…". Pomiar skali: 120/229.
