@@ -1632,10 +1632,12 @@
         {
           "id": "finance-analysis-workspace",
           "nazwa": "Analiza",
-          "ocena": "C",
-          "co": "Tabela wskaźników z formułami — SPRAWDZONE na świeżym zrzucie 148-finanse-parametry (2026-08-31): nagłówki kolumn nadal UCIĘTE — 'OGÓLNA INTERPRETA…', 'INTERPRETA… WYNIKU', 'PRZEZNACZ…' (kolumna 'Przeznaczenie' ucięta w połowie słowa). Defekt zgłoszony przy przeglądzie kart NIE został naprawiony mimo świeżego zrzutu.",
+          "ocena": "A",
+          "co": "Tabela wskaźników z formułami — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): wszystkie 11 nagłówków pełne, bez ucięcia — 'WSKAŹNIK', 'KATEGORIA', 'WZÓR', 'INTERPRETACJA', 'P-2025', 'ZMIANA R/R', 'P-2026', 'BENCHMARK', 'KOMENTARZ', 'JAKOŚĆ / DOSTĘPNOŚĆ', 'PRZEZNACZENIE'. Sprawdzono też dane w komórkach na całej szerokości tabeli (poprzedni defekt ucinał kolumnę 'Wzór' do 'Prz…') — kolumna 'Wzór' zawija się w pełni, np. wiersz 'Wzrost przychodów r/r' pokazuje cały wzór '(Przychody bieżący okres - Przychody rok wcześniej) / Przychody rok wcześniej', bez znaku ucięcia.",
           "naprawione": [
-            "Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku"
+            "Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku",
+            "11 nagłówków kolumn ucinanych w połowie słowa ('INTERPRETA…', 'PRZEZNACZ…') — teraz pełne na obu motywach, potwierdzone zrzutem 154-finanse-naprawa",
+            "Wartości w komórkach (kolumna 'Wzór') ucinane do 'Prz…' — teraz zawijają się w pełni bez ucięcia"
           ],
           "wyjatki": [
             "Wartości wskaźników bez znaku procenta w części wierszy — brak metadanych jednostki w danych, nie do naprawy w wyglądzie."
@@ -1658,11 +1660,12 @@
         {
           "id": "finance-model-workspace",
           "nazwa": "Model finansowy",
-          "ocena": "C",
-          "co": "Model bazowy z danymi wejściowymi i bilansem otwarcia — SPRAWDZONE na świeżym zrzucie 148-finanse-parametry (2026-08-31): badge 'OPARTE NA FY2025 · PL · PLN · approved' nadal pokazuje surowy angielski status 'approved' zamiast polskiej etykiety. Defekt zgłoszony przy przeglądzie kart NIE został naprawiony mimo świeżego zrzutu.",
+          "ocena": "A",
+          "co": "Model bazowy z danymi wejściowymi i bilansem otwarcia — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): badge 'OPARTE NA / FY2025 / PL • PLN • Zatwierdzony' — surowe 'approved' zastąpione polską etykietą 'Zatwierdzony'. Nagłówek pokazuje 'PLN · Kwartalnie · 36 miesięcy' (potwierdza wcześniejszą naprawę 'quarterly'→'Kwartalnie').",
           "naprawione": [
             "Surowy enum 'quarterly' zamiast etykiety",
-            "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika"
+            "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika",
+            "Surowy status 'approved' w badge 'OPARTE NA' — teraz polska etykieta 'Zatwierdzony', potwierdzone zrzutem 154-finanse-naprawa na obu motywach"
           ],
           "wyjatki": [
             "Pozostałe etykiety pól (PRZYCHODY (REVENUE), KOSZT WŁASNY SPRZEDAŻY (COGS) itd.) są dwujęzyczne celowo — akronim w nawiasie, nie surowy enum."
@@ -1728,15 +1731,15 @@
         {
           "id": "finance-baseline-workspace",
           "nazwa": "Baza porownania",
-          "ocena": "C",
-          "co": "Założenia (grid 9 wierszy) i wyliczenia — SPRAWDZONE na świeżym zrzucie 148-finanse-parametry (2026-08-31): kolumna 'PODGLĄD WPŁYWU' nadal pokazuje surowe kody pól technicznych zamiast etykiet: 'Zasila: REVENUE', 'Zasila: COGS, OPEX', 'Zasila: AR, INVENTORY, AP', 'Zasila: CAPEX, DEPRECIATION, FIXED_ASSETS', 'Zasila: LONG_TERM_DEBT, INTEREST_EXPENSE', 'Zasila: TAX_EXPENSE'. Defekt zgłoszony przy przeglądzie kart NIE został naprawiony w tej kolumnie mimo świeżego zrzutu (naprawa procentów w kolumnach 'Wart. historyczna'/'Wartość prognozy' — potwierdzona, widoczna '12%' obok wartości edytowalnej — to inny fragment ekranu).",
+          "ocena": "A",
+          "co": "Założenia (grid 9 wierszy) i wyliczenia — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): kolumna 'PODGLĄD WPŁYWU' pokazuje teraz polskie etykiety z kodem w nawiasie, np. 'Zasila: Przychody (REVENUE)', 'Zasila: Koszt własny sprzedaży (COGS), Koszty operacyjne (OPEX)', 'Zasila: Należności (AR), Zapasy, Zobowiązania handlowe (AP)', 'Zasila: Nakłady inwestycyjne (CAPEX), Amortyzacja, Aktywa trwałe', 'Zasila: Dług długoterminowy, Koszty odsetkowe', 'Zasila: Podatek dochodowy' — żadnego samodzielnego surowego kodu. Sprawdzono też, czy tabela nie wyjeżdża poza kontener (poprzedni defekt: kolumna poszerzona, ucinana scrollem) — na pełnowymiarowym zrzucie kolumna 'Podgląd wpływu' mieści się w prawej krawędzi kontenera, bez paska przewijania i bez ucięcia.",
           "naprawione": [
             "Crimson na linku 'Spróbuj ponownie'",
             "PRZYCZYNA trwałego błędu znaleziona i naprawiona: brakująca atrapa GET .../baseline/:id/context w harnessu.",
-            "Wartości PCT w kolumnach 'Wart. historyczna' i 'Wartość prognozy' pokazują teraz '12%' obok surowej wartości edytowalnej (formatPctAwareValue) — POTWIERDZONE na świeżym zrzucie."
+            "Wartości PCT w kolumnach 'Wart. historyczna' i 'Wartość prognozy' pokazują teraz '12%' obok surowej wartości edytowalnej (formatPctAwareValue) — POTWIERDZONE na świeżym zrzucie.",
+            "Kolumna 'Podgląd wpływu' pokazywała surowe kody pól (REVENUE/COGS/OPEX/CAPEX/AR/INVENTORY/AP/DEPRECIATION/FIXED_ASSETS/LONG_TERM_DEBT/INTEREST_EXPENSE/TAX_EXPENSE) — teraz polskie etykiety z kodem w nawiasie, potwierdzone zrzutem 154-finanse-naprawa na obu motywach; tabela nie wyjeżdża poza kontener"
           ],
           "wyjatki": [
-            "Kolumna 'Podgląd wpływu' (skrajnie prawa) nadal pokazuje surowe kody pól (REVENUE/COGS/OPEX/CAPEX/AR/INVENTORY/AP/DEPRECIATION/FIXED_ASSETS/LONG_TERM_DEBT/INTEREST_EXPENSE/TAX_EXPENSE) zamiast polskich etykiet — inna klasa defektu niż naprawione %.",
             "Ujemna gotówka w scenie fundinggap poprawnie czerwona (semantyka krytyczna — alarm, nie ozdoba)."
           ],
           "gdzie": "Finanse → zakładka „Analiza\" → baza porównania (założenia + wyliczenia) — punkt odniesienia, do którego porównuje się dalsze analizy. Adres pełny: ?screen=finance-baseline-workspace&view=assumptions|wyliczenia&scene=default|fundinggap&status=DRAFT|APPROVED|IN_REVIEW (widoki i sceny patrz komentarz nagłówkowy pliku)."
