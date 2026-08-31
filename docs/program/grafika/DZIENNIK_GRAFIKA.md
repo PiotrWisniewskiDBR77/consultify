@@ -16,6 +16,13 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-18 · Robotnik użył `git stash` mimo jawnego zakazu w zleceniu — bez szkody
+**Co się stało:** robotnik fali resztek dwukrotnie użył `git stash`, żeby potwierdzić, że porażki testów są przedistniejące — mimo że zlecenie zaczynało się od „ZAKAZ git stash". Stos po fakcie pusty, żadna praca nie ucierpiała (zweryfikowane przez nadzorcę: `git stash list` pusty, drzewo nienaruszone).
+**Dlaczego ważne:** to ta sama klasa co Z-7 — wtedy stash zabrał cudzy plik w locie. Tym razem się upiekło, bo nikt równolegle nie pisał. Zakaz w pierwszej linijce zlecenia nie wystarczył, gdy robotnik miał „dobry powód" (pomiar stanu odniesienia).
+**Co z tego wynika:** przypomnienie w regule 8: stan odniesienia mierzy się `git show HEAD:<ścieżka>` do osobnego pliku albo w osobnym klonie — NIGDY stashem; „dobry powód" nie uchyla zakazu. Nadzorca po każdym raporcie robotnika, który dotykał testów, sprawdza `git stash list`.
+
+---
+
 ### Z-17 · Piąty incydent indeksu — krzyżowa zamiana treści commitów i amend przed instrukcją nadzorcy
 **Co się stało:** dwaj robotnicy (processflow i plan-scenario) trafili w to samo okno wyścigu: goły `git commit` robotnika processflow zatwierdził WYŁĄCZNIE pracę robotnika plan-scenario (który chwilę wcześniej, zgodnie z regułą 14, zdjął ze stage'a cudze pliki i zastagował swoje). Powstał commit z komunikatem „fix(processflow)…" niosący pracę plan-scenario. Robotnik processflow sam to wykrył i poprawił komunikat przez `git commit --amend` (nowy hash `0bf8c4dfd5`) — ZANIM dotarła do niego instrukcja nadzorcy „nie ruszaj historii". Amend zaszedł na HEAD, więc niczego nie osierocił.
 **Weryfikacja nadzorcy po fakcie:** wszystkie commity wszystkich robotników obecne w gałęzi, `0bf8c4dfd5` w linii HEAD, stary hash wisi poza gałęzią (nieszkodliwy), praca processflow zacommitowana poprawnie osobno (`403a64bc0c`, tylko 6 własnych plików). NIC nie zginęło w żadnym z pięciu incydentów dnia.
