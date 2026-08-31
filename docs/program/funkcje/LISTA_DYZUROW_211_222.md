@@ -33,9 +33,24 @@ kilka". **Nie zmienia to jego kolejności** — pułapka jest realna, potwierdzo
 żywym przypadku w 209, a bezpiecznik na przyszłość i tak trzeba postawić. Zmienia
 za to koszt: to jest dyżur mały, nie duży.
 
-Otwarte, czego nie dało się rozstrzygnąć bez sondy w Vitest: czy ten sam efekt
-dotyczy atrap tworzonych jako `vi.fn(implementacja)` zamiast `spyOn(...).mockX()`.
-Dwa kandydaty wskazane; instrukcja każe zmierzyć to PRZED inwentarzem.
+**★★ DRUGA KOREKTA (31.08, po odbiorze adwersaryjnym 211) — liczba końcowa: JEDEN.**
+Audytor zbudował własną sondę o innej logice niż wykonawca i zmierzył repozytorium
+ponownie. Wynik: **jedno potwierdzone naruszenie w całym repo**
+(`day205.decisionWisdom.pg.test.ts:34`). Liczby 87 (moja), 4 i 130 (z pisania
+instrukcji) — wszystkie bez wartości dowodowej.
+
+Powód, dla którego skala jest tak mała, został zmierzony sześcioma reprodukcjami
+przeciw prawdziwemu `tests/setup.ts`: **pułapka dotyczy WYŁĄCZNIE `vi.spyOn(...)`**.
+Goły `vi.fn()` przeżywa `clearAllMocks()` — także gdy `.mockResolvedValue()` woła
+się później i gdy atrapa jest przypisana wprost do właściwości obiektu. Trzy z
+czterech plików „naprawionych" przez dyżur nie miały żywego defektu (dowód
+przed/po: zero różnicy). Wykonawca przyznał to sam w raporcie.
+
+**Wniosek dla programu:** incydent w 209 był prawdziwy (tam był `spyOn`), ale
+**nie jest to skaza rozlana po testach**. Moje zdanie do właściciela „część naszej
+zieleni mogła nic nie znaczyć" było przesadzone i zostało sprostowane. Wartość
+dyżuru 211 leży w BEZPIECZNIKU, nie w naprawach: bezpiecznik zablokował prawdziwy
+`git commit` ze świeżym naruszeniem napisanym ręką audytora.
 Zysk: przestajemy ufać zieleni, która nic nie znaczy. To jest warunek wstępny
 dla wszystkiego, co niżej.
 
