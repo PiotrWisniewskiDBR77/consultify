@@ -200,12 +200,13 @@ export async function indexInsightInKnowledgeBase(
     const now = new Date().toISOString();
 
     await queryHelpers.run(
-      `INSERT INTO knowledge_docs (id, filename, filepath, source_type, organization_id, chunk_count, metadata, indexed_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO knowledge_docs (id, filename, filepath, source_type, organization_id, chunk_count, metadata, scope, indexed_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'organization', ?, ?)
        ON CONFLICT(id) DO UPDATE SET
          filename = excluded.filename,
          chunk_count = excluded.chunk_count,
          metadata = excluded.metadata,
+         scope = 'organization',
          updated_at = excluded.updated_at`,
       [
         docId,

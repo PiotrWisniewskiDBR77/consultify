@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { embeddingService } from './ai/embeddingService.js';
+import { buildKnowledgeDocAccessFilter } from './ai/knowledgeDocAccessFilter.js';
 import { aiLogger } from './ai/logger.js';
 
 type _DbRow = Record<string, unknown>;
@@ -180,6 +181,7 @@ type SearchOptions = {
    * When provided, ONLY chunks belonging to these `knowledge_docs.id` are considered.
    */
   documentIds?: string[];
+  projectIds?: string[];
 };
 
 type HybridOptions = {
@@ -193,6 +195,7 @@ type HybridOptions = {
   documentIds?: string[];
   /** FIX-2 (dyżur 210): requesting user, for owner-aware private-doc access. */
   userId?: string | null;
+  projectIds?: string[];
 };
 
 // M01-P04C — the ONLY legitimate reason `knowledge_docs.organization_id IS
@@ -245,15 +248,14 @@ function appendKnowledgeDocAccessFilter(params: {
    * identity to thread.
    */
   userId?: string | null;
+  projectIds?: string[];
 }): { sql: string; allowed: boolean } {
-  const { columns, organizationId, documentIds, queryParams, userId } = params;
+  const { columns, organizationId, documentIds, queryParams, userId, projectIds } = params;
   let sql = params.sql;
   const hasOrg = columns.has('organization_id');
   const hasStatus = columns.has('status');
   const hasDeletedAt = columns.has('deleted_at');
-  const hasScope = columns.has('scope');
   const hasSourceType = columns.has('source_type');
-  const hasOwner = columns.has('owner_id');
 
   if (Array.isArray(documentIds) && documentIds.length > 0) {
     if (!hasOrg) {
@@ -312,14 +314,15 @@ function appendKnowledgeDocAccessFilter(params: {
   // `embeddingService.buildKnowledgeDocAccessFilter`. Callers with no real
   // per-user identity (Anna/virtual-worker: anonymous/system context) keep
   // the pre-210 fail-closed behavior — exclude ALL private docs.
-  if (hasScope) {
-    if (userId && hasOwner) {
-      sql += ` AND (d.scope IS NULL OR d.scope != 'user' OR d.owner_id = ?)`;
-      queryParams.push(userId);
-    } else {
-      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
-    }
-  }
+  const access = buildKnowledgeDocAccessFilter({
+    columns,
+    dialect: 'question',
+    documentAlias: 'd',
+    userId,
+    projectIds,
+  });
+  sql += ` AND ${access.sql}`;
+  queryParams.push(...access.params);
 
   return { sql, allowed: true };
 }
@@ -485,7 +488,6 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
-    const hasScope = cols.has('scope');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
 
     let expandedQuery = query;
@@ -512,11 +514,21 @@ const RagService = {
       params.push(organizationId);
     }
 
-    // ★ VLT-002: no userId in this call chain — exclude Vault-private (scope='user')
-    // docs, same rationale as appendKnowledgeDocAccessFilter above.
-    if (hasScope) {
-      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
-    }
+    // FIX-213-3: this used to be its own fail-open rule (`scope != 'user'`,
+    // no `ai_visibility`/`sensitivity` check at all — a `scope='project'` doc
+    // would pass here with zero project-membership check, since 'project' !=
+    // 'user'). Reachable in production: `searchRelevantChunks`'s fallback
+    // calls `getContext` whenever `embeddingService.search()` returns zero
+    // rows, and neither call site here threads `userId`/`projectIds` — so
+    // switching to the shared filter with `userId`/`projectIds` omitted is
+    // not just "one source of truth", it also closes the same fail-open gap
+    // FIX-213 closed everywhere else (no context => 'project' docs excluded,
+    // not waved through). VLT-002 rationale (no userId in this call chain =>
+    // exclude Vault-private docs) still holds — the shared filter's owner
+    // branch is skipped whenever `userId` is undefined, same net effect.
+    const access = buildKnowledgeDocAccessFilter({ columns: cols, dialect: 'question', documentAlias: 'd' });
+    sql += ` AND ${access.sql}`;
+    params.push(...access.params);
 
     const rows = await queryDb<{ content: string; filename: string; embedding: string }>(
       sql,
@@ -575,7 +587,6 @@ const RagService = {
     const cols = await ensureKnowledgeDocsColumns();
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasOrg = cols.has('organization_id');
-    const hasScope = cols.has('scope');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     if (!query) return '';
     const keywords = query
@@ -599,10 +610,15 @@ const RagService = {
       params.push(organizationId);
     }
 
-    // ★ VLT-002: no userId here either — same private-doc exclusion as getContext.
-    if (hasScope) {
-      sql += ` AND (d.scope IS NULL OR d.scope != 'user')`;
-    }
+    // FIX-213-3: same unification as getContext above — was its own
+    // `scope != 'user'` fail-open rule (no ai_visibility/sensitivity check,
+    // `scope='project'` waved through with zero membership check). Reachable
+    // in production via `searchRelevantChunks`'s error-fallback and
+    // `getContext`'s own no-embedding fallback, neither of which threads
+    // `userId`/`projectIds` here either.
+    const access = buildKnowledgeDocAccessFilter({ columns: cols, dialect: 'question', documentAlias: 'd' });
+    sql += ` AND ${access.sql}`;
+    params.push(...access.params);
 
     sql += ` LIMIT ${limit}`;
 
@@ -655,7 +671,7 @@ const RagService = {
     }>
   > => {
     await initDeps();
-    const { limit = 5, organizationId, userId, minSimilarity = 0.5, documentIds } = options;
+    const { limit = 5, organizationId, userId, projectIds, minSimilarity = 0.5, documentIds } = options;
 
     try {
       // Conversation-scoped RAG: if documentIds are provided, bypass embeddingService.search()
@@ -667,6 +683,7 @@ const RagService = {
           enableReranking: true,
           documentIds,
           userId: userId || null,
+          projectIds,
         });
         return results.map((r) => {
           const meta = r.metadata || {};
@@ -691,6 +708,7 @@ const RagService = {
         organizationId: organizationId || undefined,
         userId: userId || undefined,
         minSimilarity,
+        projectIds,
       });
 
       if (!results || results.length === 0) {
@@ -802,7 +820,8 @@ const RagService = {
     limit = 10,
     organizationId: string | null = null,
     documentIds?: string[],
-    userId?: string | null
+    userId?: string | null,
+    projectIds?: string[]
   ): Promise<RerankableChunk[]> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
@@ -834,6 +853,7 @@ const RagService = {
       organizationId,
       documentIds,
       userId,
+      projectIds,
     });
     if (!accessFilter.allowed) return [];
     sql = accessFilter.sql;
@@ -888,6 +908,7 @@ const RagService = {
       enableReranking = HYBRID_CONFIG.rerankerEnabled,
       documentIds,
       userId = null,
+      projectIds,
     } = options;
 
     aiLogger.info(
@@ -897,8 +918,8 @@ const RagService = {
 
     const candidateLimit = limit * 3;
     const [bm25Results, vectorResults] = await Promise.all([
-      RagService.bm25Search(query, candidateLimit, organizationId, documentIds, userId),
-      RagService._vectorSearch(query, candidateLimit, organizationId, documentIds, userId),
+      RagService.bm25Search(query, candidateLimit, organizationId, documentIds, userId, projectIds),
+      RagService._vectorSearch(query, candidateLimit, organizationId, documentIds, userId, projectIds),
     ]);
 
     aiLogger.info(
@@ -987,7 +1008,8 @@ const RagService = {
     limit: number,
     organizationId: string | null = null,
     documentIds?: string[],
-    userId?: string | null
+    userId?: string | null,
+    projectIds?: string[]
   ): Promise<Array<RerankableChunk & { vectorScore: number }>> => {
     await initDeps();
     const cols = await ensureKnowledgeDocsColumns();
@@ -1023,6 +1045,7 @@ const RagService = {
       organizationId,
       documentIds,
       userId,
+      projectIds,
     });
     if (!accessFilter.allowed) return [];
     sql = accessFilter.sql;

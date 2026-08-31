@@ -927,6 +927,7 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
           userId?: string;
           limit?: number;
           documentIds?: string[];
+          projectIds?: string[];
         }
       ) => Promise<
         Array<{
@@ -1098,11 +1099,24 @@ async function executeKBSearch(args: any, ctx: ToolExecutionContext): Promise<st
     // caller's own private doc was silently stripped a second time. Thread
     // `ctx.userId` (the real, per-request identity — never fabricated) so
     // that second filter's owner exception can fire.
+    //
+    // FIX-213-6: the SAME thing happens to `scope='project'` docs, and for
+    // the same reason — `buildKnowledgeDocAccessFilter` (inside hybridSearch)
+    // re-applies its own project-membership check on top of the already
+    // project-filtered `documentIds` allow-list, and without `projectIds` its
+    // `scope = 'project'` branch never matches, so those docs get excluded a
+    // second time even for a project member. `memberProjectIds` (queried from
+    // `project_members` for `ctx.userId` above — the same request context
+    // `organizationId`/`userId` come from, no new source invented) already
+    // carries exactly the projects the caller may see; `effectiveProjectId`
+    // narrows that to one project when a specific Vault/folder was selected.
+    const projectIdsForSearch = effectiveProjectId ? [effectiveProjectId] : memberProjectIds;
     const results = await ragService.hybridSearch(args.query, {
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       limit: 5,
       documentIds,
+      projectIds: projectIdsForSearch,
     });
     return JSON.stringify({
       source: 'knowledge_base',
