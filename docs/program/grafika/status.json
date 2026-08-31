@@ -1,6 +1,6 @@
 {
   "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
-  "_zaktualizowano": "2026-08-30",
+  "_zaktualizowano": "2026-08-31",
   "moduly": [
     {
       "katalog": "01-czat",
@@ -317,10 +317,15 @@
         {
           "id": "karta-task",
           "nazwa": "Karta zadania",
-          "ocena": "A",
-          "co": "Bez odchylen. Czerwien na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona.",
+          "ocena": "B",
+          "co": "Czerwień na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona. Poprzedni zapis „Bez odchyleń” był NIEPRAWDZIWY — odchylenie znalezione w rundzie 2026-08-31 (patrz wyjątki).",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "Przycisk PRIMARY „Wyślij do przeglądu” w NModeHeader używa surowych bg-navy-900 / dark:bg-[#F4F7FB] zamiast tokenów c-* (zweryfikowane w DOM, zob. zgłoszenie #14 do toru funkcji)."
+          ],
+          "warianty": [
+            "karta-task-pelna"
+          ],
           "gdzie": "Moja praca → zakładka Zadania → otwarcie pojedynczego zadania — pełna karta zadania."
         },
         {
@@ -596,6 +601,29 @@
             "Narzedzie pomiarowe"
           ],
           "gdzie": "To NIE jest osobny ekran produktu — to harness porównawczy (kopiuje 1:1 opakowanie, którego realnie używa `MyIdeasListContent.tsx`), zrobiony do sprawdzenia szerokości tabeli. Docelowo ten sam ekran co „idea-table\", widziany dokładnie tak, jak widzi go użytkownik w Moja praca → Idee → Tabela."
+        },
+        {
+          "id": "mywork-inbox",
+          "nazwa": "Skrzynka (Inbox) — zakładka domyślna",
+          "ocena": "B",
+          "co": "StandardTable (ff_m03InboxStandardTable ON), 9 pozycji.",
+          "naprawione": [],
+          "wyjatki": [
+            "Powłoka MyWorkHub ma ~87 surowych klas navy-*/slate-* — dług systemowy całego huba, nie tylko tego ekranu.",
+            "Stan przeczytane/nieprzeczytane NIE istnieje w danych (InboxContent nie zna isRead)."
+          ],
+          "gdzie": "Moja praca → zakładka „Skrzynka” (Inbox) — zakładka domyślna modułu. Zrzuty: evidence/grafika/145-nowe-ekrany/."
+        },
+        {
+          "id": "mywork-calendar",
+          "nazwa": "Kalendarz (widok bazowy)",
+          "ocena": "B",
+          "co": "CalendarView (ff_myWorkCalendarV2 OFF), 6 wydarzeń.",
+          "naprawione": [],
+          "wyjatki": [
+            "SOURCE_COLORS (src/components/MyWork/Calendar/calendarTypes.ts:91-99) hardkoduje crimson hexy (#A51C30, #D42B3D) jako kolory KATEGORII — Pułapka nr 1 (zob. zgłoszenie #13 do toru funkcji)."
+          ],
+          "gdzie": "Moja praca → zakładka „Kalendarz” (widok bazowy). Zrzuty: evidence/grafika/145-nowe-ekrany/."
         }
       ]
     },
@@ -1206,6 +1234,81 @@
             "Ekran harnessu wyrejestrowany, plik zostaje"
           ],
           "gdzie": "To NIE istnieje w produkcie — panel sygnałów zmiany w realizacji (ExecutionChangeSignalsPanel) został usunięty jako fantom bez pełnej implementacji."
+        },
+        {
+          "id": "execution-tab-list",
+          "nazwa": "Zakładka „Realizacje”",
+          "ocena": "B",
+          "co": "StandardTable + demo-fallback.",
+          "naprawione": [],
+          "wyjatki": [
+            "Statusy 'Scheduled'/'Blocked' po angielsku obok polskiego 'W realizacji' (STATUS_METADATA, src/services/initiativeLifecycle.ts ~198-217)."
+          ],
+          "gdzie": "Realizacja → zakładka „Realizacje”. Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-work",
+          "nazwa": "Zakładka „Praca”",
+          "ocena": "A",
+          "co": "ExecutionWorkSurface, StandardTable, bogate dane review.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Realizacja → zakładka „Praca”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json (A/B/C/D). Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-resources",
+          "nazwa": "Zakładka „Zasoby”",
+          "ocena": "B",
+          "co": "ExecutionResourcesSurface.",
+          "naprawione": [],
+          "wyjatki": [
+            "Wartości UNKNOWN po angielsku (ExecutionResourcesSurface.tsx).",
+            "Defekt \\w/\\b kapitalizacji łamie polskie diakrytyki (np. „WóJcik”, ExecutionResourcesSurface.tsx:68) — zob. zgłoszenie #16 do toru funkcji."
+          ],
+          "gdzie": "Realizacja → zakładka „Zasoby”. Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-control",
+          "nazwa": "Zakładka „Sterowanie”",
+          "ocena": "A",
+          "co": "Tabela interwencji, czysto.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Realizacja → zakładka „Sterowanie”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json. Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-rollout",
+          "nazwa": "„Rollout” (chromeless, deep-link)",
+          "ocena": "B",
+          "co": "Zmierzony tylko podwidok KPI.",
+          "naprawione": [],
+          "wyjatki": [
+            "RolloutTab.tsx:987 — błąd sieci gasi całą zakładkę zanim zadziała ścieżka degradacji (zob. zgłoszenie #12 do toru funkcji)."
+          ],
+          "gdzie": "Realizacja → „Rollout” (chromeless, deep-link). Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-summary",
+          "nazwa": "„Summary one-look” (chromeless, za flagą summaryOneLook)",
+          "ocena": "B",
+          "co": "Chromeless summary one-look.",
+          "naprawione": [],
+          "wyjatki": [
+            "Flaga ma komentarz „Default OFF do akceptu Piotra”, a logika (executionFeatureFlags.ts:115) włącza ją wszędzie poza public-prod — sprzeczność typu DEC-317, DO WYJAŚNIENIA z właścicielem (zob. zgłoszenie #11 do toru funkcji)."
+          ],
+          "gdzie": "Realizacja → „Summary one-look” (chromeless, za flagą summaryOneLook). Pomiar dał A-, podniesione do B wg skali status.json bo wyjątek jest nazwany i istotny. Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-people_change",
+          "nazwa": "„People & Change” (chromeless, z Action Center)",
+          "ocena": "C",
+          "co": "Bez mocka V8.",
+          "naprawione": [],
+          "wyjatki": [
+            "Banner 'V8 is not enabled' po angielsku + zera.",
+            "Etykiety ITEMS/CRITICAL/ISSUES/BLOCKED po angielsku (ExecutionManagementView.tsx:322)."
+          ],
+          "gdzie": "Realizacja → „People & Change” (chromeless, z Action Center). Zrzuty: evidence/grafika/145-execution-taby/."
         }
       ]
     },
@@ -2406,6 +2509,664 @@
             "Reszta tabeli po angielsku — osobny, duzo wiekszy dlug tego ekranu nadzorcy"
           ],
           "gdzie": "SuperAdmin → Model Registry → Katalog modeli AI — lista modeli językowych/obrazowych podłączonych do platformy, ze statusem i kosztem."
+        },
+        {
+          "id": "admin-billing-overview",
+          "nazwa": "Przegląd",
+          "ocena": "D",
+          "co": "Atrapa językowa.",
+          "naprawione": [],
+          "wyjatki": [
+            "Karty po angielsku mimo lang=pl.",
+            "Crimson dekoracja (ikona text-primary-500)."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Przegląd”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-plan-limits",
+          "nazwa": "Plan i limity",
+          "ocena": "C",
+          "co": "Treść po polsku (PL OK).",
+          "naprawione": [],
+          "wyjatki": [
+            "Przycisk „Przydziel plan i limity” variant=\"brand\" = crimson na zwykłym CTA (AdminBillingFinOpsPanel.tsx:511)."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Plan i limity”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-usage-costs",
+          "nazwa": "Wykorzystanie i koszty",
+          "ocena": "D",
+          "co": "Alias ekranu Przegląd (pixel-identyczny).",
+          "naprawione": [],
+          "wyjatki": [
+            "Mylący osobny slot menu dla identycznej treści."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Wykorzystanie i koszty”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-payment-methods",
+          "nazwa": "Metody płatności",
+          "ocena": "D",
+          "co": "Całość po angielsku (zero t()).",
+          "naprawione": [],
+          "wyjatki": [
+            "Surowy FilterableTable, brak kebab."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Metody płatności”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-invoices",
+          "nazwa": "Faktury",
+          "ocena": "D",
+          "co": "Nagłówki INVOICE/STATUS/AMOUNT DUE po angielsku.",
+          "naprawione": [],
+          "wyjatki": [
+            "FilterableTable, hideRowActions.",
+            "Kwoty bez PLN."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Faktury”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-seats-licences",
+          "nazwa": "Miejsca i licencje",
+          "ocena": "A",
+          "co": "StandardTable, PL, wzorcowy.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Miejsca i licencje”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-billing-details",
+          "nazwa": "Dane rozliczeniowe",
+          "ocena": "D",
+          "co": "Alias ekranu Budżety i alerty.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Dane rozliczeniowe”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-budgets-alerts",
+          "nazwa": "Budżety i alerty",
+          "ocena": "D",
+          "co": "Spend alerts/Save alerts po angielsku.",
+          "naprawione": [],
+          "wyjatki": [
+            "FilterableTable."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Budżety i alerty”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-plan-history",
+          "nazwa": "Historia zmian planu",
+          "ocena": "A",
+          "co": "StandardTable, PL, wzorcowy.",
+          "naprawione": [],
+          "wyjatki": [
+            "Drobne: toLocaleString bez pl-PL."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Historia zmian planu”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-team-members",
+          "nazwa": "Użytkownicy",
+          "ocena": "A",
+          "co": "Bez defektów na ekranie.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Użytkownicy”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-invitations",
+          "nazwa": "Zaproszenia",
+          "ocena": "B",
+          "co": "Lista zaproszeń.",
+          "naprawione": [],
+          "wyjatki": [
+            "Statusy expired/revoked po angielsku (brak kluczy statusChip.* w PL).",
+            "Daty w formacie US."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Zaproszenia”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-roles-permissions",
+          "nazwa": "Role i uprawnienia",
+          "ocena": "B",
+          "co": "Lista ról i uprawnień.",
+          "naprawione": [],
+          "wyjatki": [
+            "Daty w formacie US."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Role i uprawnienia”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-teams",
+          "nazwa": "Zespoły",
+          "ocena": "B",
+          "co": "Lista zespołów.",
+          "naprawione": [],
+          "wyjatki": [
+            "Kolumna Typ pokazuje surowe enumy consulting/finance/support."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Zespoły”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-guests-external",
+          "nazwa": "Goście i dostęp zewnętrzny",
+          "ocena": "B",
+          "co": "Lista gości.",
+          "naprawione": [],
+          "wyjatki": [
+            "Status revoked po angielsku.",
+            "Daty w formacie US."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Goście i dostęp zewnętrzny”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-access-requests",
+          "nazwa": "Wnioski o dostęp",
+          "ocena": "B",
+          "co": "Uczciwy placeholder bez mechaniki (celowy stan).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Wnioski o dostęp”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-access-reviews",
+          "nazwa": "Przeglądy dostępów",
+          "ocena": "B",
+          "co": "Lista przeglądów dostępu.",
+          "naprawione": [],
+          "wyjatki": [
+            "Data „Następny przegląd” w formacie US."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Przeglądy dostępów”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-ownership",
+          "nazwa": "Własność",
+          "ocena": "D",
+          "co": "Cały ekran po angielsku.",
+          "naprawione": [],
+          "wyjatki": [
+            "Namespace admin.ownership NIE ISTNIEJE w pl/translation.json.",
+            "Crimson banner pending-transfer w kodzie (OwnershipManagementView.tsx:209-230)."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Własność”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-security-security-policy",
+          "nazwa": "Polityka bezpieczeństwa",
+          "ocena": "C",
+          "co": "Własny pill-nav.",
+          "naprawione": [],
+          "wyjatki": [
+            "Wzorzec ADM-OWN-001 nienaprawiony tu.",
+            "Surowe klasy slate/navy.",
+            "Ikony crimson dekoracyjnie."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Polityka bezpieczeństwa”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-sso",
+          "nazwa": "SSO",
+          "ocena": "C",
+          "co": "Bitowo identyczny z ekranem Polityka bezpieczeństwa (WIRE_ONLY) — do potwierdzenia z właścicielem.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „SSO”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-scim-lifecycle",
+          "nazwa": "SCIM i cykl życia",
+          "ocena": "D",
+          "co": "Listy jako surowe wiersze tekstu.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nie używa StandardTable."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „SCIM i cykl życia”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-sessions",
+          "nazwa": "Sesje",
+          "ocena": "A",
+          "co": "Tabela sesji.",
+          "naprawione": [],
+          "wyjatki": [
+            "toLocaleString bez locale (format zależny od przeglądarki)."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Sesje”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-api-access",
+          "nazwa": "Dostęp API",
+          "ocena": "D",
+          "co": "Cały ekran po angielsku (zero t()).",
+          "naprawione": [],
+          "wyjatki": [
+            "Bespoke karty.",
+            "Crimson odznaki na każdym kluczu."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Dostęp API”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-domains",
+          "nazwa": "Domeny",
+          "ocena": "A",
+          "co": "Czysto.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Domeny”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-service-accounts",
+          "nazwa": "Konta usługowe",
+          "ocena": "A",
+          "co": "Czysto.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Konta usługowe”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-security-alerts",
+          "nazwa": "Alerty bezpieczeństwa",
+          "ocena": "C",
+          "co": "Lista alertów.",
+          "naprawione": [],
+          "wyjatki": [
+            "Typ/Dotkliwość surowe enumy (impossible_travel, critical)."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Alerty bezpieczeństwa”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-break-glass",
+          "nazwa": "Break-glass",
+          "ocena": "A",
+          "co": "Crimson prawidłowy (akcja realnie krytyczna).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Break-glass”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-risk-summary",
+          "nazwa": "Podsumowanie ryzyka",
+          "ocena": "D",
+          "co": "Kolejka jako surowe karty.",
+          "naprawione": [],
+          "wyjatki": [
+            "Status: resolved po angielsku.",
+            "Crimson dekoracyjny."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Podsumowanie ryzyka”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-audit-events",
+          "nazwa": "Zdarzenia",
+          "ocena": "C",
+          "co": "FilterableTable zamiast StandardTable.",
+          "naprawione": [],
+          "wyjatki": [
+            "Placeholder szukania obcięty.",
+            "Daty w formacie US."
+          ],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Zdarzenia”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-high-risk-changes",
+          "nazwa": "Zmiany wysokiego ryzyka",
+          "ocena": "D",
+          "co": "Alias ekranu Zdarzenia (zamierzony).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Zmiany wysokiego ryzyka”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-compliance-evidence",
+          "nazwa": "Dowody zgodności",
+          "ocena": "C",
+          "co": "REALNY BUG: kolumny Zdarzenie/Aktor/Ryzyko puste.",
+          "naprawione": [],
+          "wyjatki": [
+            "Frontend czyta action/actor/risk, backend zwraca action_type/admin_id/risk_level (AdminComplianceEvidencePanel.tsx:81-110 vs adminP32.routes.ts:2208-2296) — zob. zgłoszenie #9 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Dowody zgodności”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-retention-export",
+          "nazwa": "Retencja i eksport",
+          "ocena": "D",
+          "co": "Alias ekranu Zdarzenia (zamierzony).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Retencja i eksport”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-integrity",
+          "nazwa": "Integralność",
+          "ocena": "A",
+          "co": "Uczciwa treść.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Integralność”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-legal-hold",
+          "nazwa": "Legal hold",
+          "ocena": "B",
+          "co": "Legal hold.",
+          "naprawione": [],
+          "wyjatki": [
+            "Tytuł po angielsku."
+          ],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Legal hold”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-export-history",
+          "nazwa": "Historia eksportów",
+          "ocena": "B",
+          "co": "Historia eksportów.",
+          "naprawione": [],
+          "wyjatki": [
+            "Daty w formacie US."
+          ],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Historia eksportów”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-service-status",
+          "nazwa": "Stan usług",
+          "ocena": "D",
+          "co": "Placeholder zamierzony.",
+          "naprawione": [],
+          "wyjatki": [
+            "CAN_ACCESS_PLATFORM_OPERATIONS=false na sztywno, nigdy nie woła API."
+          ],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Stan usług”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-diagnostics",
+          "nazwa": "Diagnostyka",
+          "ocena": "D",
+          "co": "Alias ekranu Stan usług.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Diagnostyka”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-dependencies",
+          "nazwa": "Zależności",
+          "ocena": "A",
+          "co": "Czysto.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Zależności”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-incident-history",
+          "nazwa": "Historia incydentów",
+          "ocena": "B",
+          "co": "Historia incydentów.",
+          "naprawione": [],
+          "wyjatki": [
+            "Link do nieistniejącego /admin/health/overview (AdminIncidentHistoryPanel.tsx:76) — zob. zgłoszenie #17 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Historia incydentów”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-queues-jobs",
+          "nazwa": "Kolejki i zadania",
+          "ocena": "B",
+          "co": "Kolejki i zadania.",
+          "naprawione": [],
+          "wyjatki": [
+            "Statusy Succeeded/Running/Queued po angielsku; czerwień poprawna semantycznie."
+          ],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Kolejki i zadania”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-sla-slo",
+          "nazwa": "SLA / SLO",
+          "ocena": "A",
+          "co": "Uczciwe „Nie obliczono”.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „SLA / SLO”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-platform-operations",
+          "nazwa": "Operacje platformowe",
+          "ocena": "D",
+          "co": "Zamierzony fail-closed gate.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Operacje platformowe”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-ai-policy-autonomy",
+          "nazwa": "Polityka i autonomia",
+          "ocena": "D",
+          "co": "ProactivitySelector.",
+          "naprawione": [],
+          "wyjatki": [
+            "100% po angielsku.",
+            "Crimson na wybranej roli/focus/ikonie.",
+            "Trzeci poziom tabów kolidujący nazewniczo z menu."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Polityka i autonomia”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-personas",
+          "nazwa": "Persony",
+          "ocena": "B",
+          "co": "Karty person.",
+          "naprawione": [],
+          "wyjatki": [
+            "Karty pokazują surowy klucz (advisor_default) zamiast nazwy."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Persony”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-models-providers",
+          "nazwa": "Modele i dostawcy",
+          "ocena": "D",
+          "co": "Katalog modeli i dostawców.",
+          "naprawione": [],
+          "wyjatki": [
+            "2. poziom nawigacji w całości po angielsku.",
+            "Raw <table> z fałszywym self-exempt (ModelsProvidersTab.tsx:649) — zob. zgłoszenie #20 do toru funkcji.",
+            "Crimson na odznace PREMIUM."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Modele i dostawcy”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-limits-budgets",
+          "nazwa": "Limity i budżety",
+          "ocena": "D",
+          "co": "Limity i budżety AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Jak wyżej (2. poziom nawigacji EN) + crimson na suwakach/sub-tabie.",
+            "Nagłówki kart NIEWIDOCZNE w dark (SettingsCard.tsx:74 text-navy-900 bez dark:) — zob. zgłoszenie #18 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Limity i budżety”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-data-privacy",
+          "nazwa": "Dane i prywatność",
+          "ocena": "D",
+          "co": "Dane i prywatność AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Jak wyżej + WSZYSTKIE etykiety przełączników niewidoczne w dark (SettingsToggle.tsx:56 — komponent współdzielony) — zob. zgłoszenie #18 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Dane i prywatność”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-quality-evaluations",
+          "nazwa": "Jakość i ewaluacje",
+          "ocena": "B",
+          "co": "Jakość i ewaluacje AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Wartości positive/negative/Applied po angielsku w tabeli."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Jakość i ewaluacje”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-incidents",
+          "nazwa": "Incydenty AI",
+          "ocena": "B",
+          "co": "Incydenty AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Daty w formacie US."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Incydenty AI”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-configuration-versions",
+          "nazwa": "Wersje konfiguracji",
+          "ocena": "B",
+          "co": "Wersje konfiguracji.",
+          "naprawione": [],
+          "wyjatki": [
+            "Status miesza PL/EN (Rolled back/Canary)."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Wersje konfiguracji”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-operations",
+          "nazwa": "Operacje AI",
+          "ocena": "D",
+          "co": "Operacje AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nawigacja po angielsku.",
+            "Surowe id w polskim zdaniu („Sprawdź, czy connection działa poprawnie”, AIMissionControl.tsx:326)."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Operacje AI”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-audit",
+          "nazwa": "Audyt AI",
+          "ocena": "D",
+          "co": "Audyt AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nawigacja po angielsku.",
+            "„Settings Audit Log” bez t().",
+            "Niewidoczne w LIGHT (AuditLogViewer.tsx:174,322 text-white bez light-variant) — zob. zgłoszenie #18 do toru funkcji (promień rażenia, inny komponent)."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Audyt AI”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-command-overview",
+          "nazwa": "Przegląd",
+          "ocena": "A",
+          "co": "Kafle-linki + 5 kafli compliance.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Przegląd”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-attention-queue",
+          "nazwa": "Kolejka uwagi",
+          "ocena": "B",
+          "co": "Kolejka uwagi.",
+          "naprawione": [],
+          "wyjatki": [
+            "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Kolejka uwagi”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-cost-capacity",
+          "nazwa": "Koszt i pojemność",
+          "ocena": "A",
+          "co": "Koszt i pojemność.",
+          "naprawione": [],
+          "wyjatki": [
+            "Drobne: koszty bez separatora tysięcy/waluty (2490.00)."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Koszt i pojemność”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-organization-defaults",
+          "nazwa": "Ustawienia domyślne organizacji",
+          "ocena": "B",
+          "co": "Ustawienia domyślne organizacji.",
+          "naprawione": [],
+          "wyjatki": [
+            "Surowe label/input bez opakowania nagłówkowego jak siostrzane zakładki."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Ustawienia domyślne organizacji”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-agent-trace",
+          "nazwa": "Ślad agentów",
+          "ocena": "A",
+          "co": "StandardTable sortowalna.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Ślad agentów”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-audit",
+          "nazwa": "Audyt SOC2",
+          "ocena": "A",
+          "co": "Audyt SOC2.",
+          "naprawione": [],
+          "wyjatki": [
+            "Drobne: kolumna OPÓŹNIENIE obcięta do „OPÓŹNIE...”."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Audyt SOC2”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-dlp",
+          "nazwa": "DLP",
+          "ocena": "B",
+          "co": "DLP.",
+          "naprawione": [],
+          "wyjatki": [
+            "Waga „Wysoka” tym samym text-c-danger co „Krytyczna” (CommandCenterDlpTab.tsx:244) — dwa poziomy nieodróżnialne kolorem — zob. zgłoszenie #23 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „DLP”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-residency",
+          "nazwa": "Rezydencja danych",
+          "ocena": "A",
+          "co": "Rezydencja danych.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Rezydencja danych”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-retention",
+          "nazwa": "Retencja",
+          "ocena": "A",
+          "co": "Retencja. Crimson poprawny (akcja nieodwracalna).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Retencja”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-ai-policy",
+          "nazwa": "Polityka AI",
+          "ocena": "A",
+          "co": "Polityka AI.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Polityka AI”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-benchmark",
+          "nazwa": "Benchmark konsultingowy",
+          "ocena": "A",
+          "co": "Karty statyczne, bez fetch (zamierzone).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Benchmark konsultingowy”. Zrzuty: evidence/grafika/146-admin-command/."
         }
       ]
     },
@@ -2426,6 +3187,19 @@
             "Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis."
           ],
           "gdzie": "Organizacja (osobna pozycja w menu głównym) → profil organizacji — tożsamość i skala firmy, z podpowiedzią Teresy."
+        },
+        {
+          "id": "org-redesign-v1-full-closed-final-20260825",
+          "nazwa": "Organizacja — redesign 21→11, komplet",
+          "ocena": "A",
+          "co": "Zmigrowane z docs/program/grafika/REJESTR_EKRANOW.md: „ODEBRANY_CAŁY, redesign 21→11, 22 zrzuty” — CLOSED_FINAL, DEC-2026-08-24-11 (akcept wzorca) + DEC-2026-08-24-15 (akcept końcowy warunkowy, warunki a/b/c spełnione), tag final-01-organization, SHA b5aa07a28f (docs/program/waves/WAVE_03_ACCEPTANCE/modules/01_ORGANIZATION/MODULE_ACCEPTANCE.md).",
+          "naprawione": [],
+          "wyjatki": [
+            "Odbiór historyczny — świeży zrzut w TEJ rundzie NIE został zrobiony (zakaz nowego pomiaru przy migracji bookkeepingu).",
+            "Realny katalog dowodowy zlokalizowany: docs/program/waves/WAVE_03_ACCEPTANCE/modules/01_ORGANIZATION/evidence-m01-20260824/ (29 plików: 21 podekranów wg OrganizationSidebar.tsx + pełny ekran jasny/ciemny + cold-readback + przekierowanie /organization/members) — ALE żyje na branchu codex/m01-organization-20260824 (commit bab8ea24a8), NIEOBECNY w tym drzewie roboczym (branch codex/m03-admin-20260824). Katalogu NIE checkout'owano — worktree współdzielony, zakaz ryzykownych operacji na cudzej gałęzi.",
+            "Ocena „A” oznacza status historyczny „odebrane przez właściciela”, a NIE świeży pomiar wg skali status.json — mapowanie przyjęte przez konsolidatora przy migracji, do potwierdzenia."
+          ],
+          "gdzie": "Organizacja (osobna pozycja w menu głównym) → profil organizacji, redesign 21→11 ekranów za flagą orgRedesignV1 (ON potwierdzona w kodzie wg REJESTR_EKRANOW.md)."
         }
       ]
     },
@@ -2638,7 +3412,125 @@
           "gdzie": "Element wspólny (kanon) — karta widoku kanban (używana m.in. w Zadaniach, Inicjatywach) — cztery kolumny, pasek pilności, stopka z następną bramą."
         }
       ]
+    },
+    {
+      "katalog": "17-aios",
+      "nazwa": "Internal Tools / AI OS",
+      "opis": "Wewnętrzny panel akceptacyjny silnika AI — dostęp tylko dbr77.com.",
+      "ekrany": [
+        {
+          "id": "aios-home",
+          "nazwa": "AI OS — Home",
+          "ocena": "C",
+          "co": "Panel startowy.",
+          "naprawione": [],
+          "wyjatki": [
+            "Zero t().",
+            "Crimson plakietka."
+          ],
+          "gdzie": "Internal Tools / AI OS (dostęp tylko dbr77.com) → „Home”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-actions",
+          "nazwa": "AI Actions",
+          "ocena": "C",
+          "co": "Lista akcji AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Zero t().",
+            "Crimson."
+          ],
+          "gdzie": "Internal Tools / AI OS → „AI Actions”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-research",
+          "nazwa": "Research Sessions",
+          "ocena": "C",
+          "co": "Sesje badawcze.",
+          "naprawione": [],
+          "wyjatki": [
+            "Zero t().",
+            "Crimson."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Research Sessions”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-artifacts",
+          "nazwa": "Artifacts",
+          "ocena": "C",
+          "co": "PL OK.",
+          "naprawione": [],
+          "wyjatki": [
+            "Crimson eyebrow + crimson Retry (Wave5ArtifactRuntimePanel.tsx:284,295)."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Artifacts”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-memory",
+          "nazwa": "Memory & Scope",
+          "ocena": "B",
+          "co": "Pamięć i zakres.",
+          "naprawione": [],
+          "wyjatki": [
+            "humanizeFactKey/formatFactValue po angielsku na sztywno."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Memory & Scope”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-connectors",
+          "nazwa": "Connectors",
+          "ocena": "B",
+          "co": "Konektory.",
+          "naprawione": [],
+          "wyjatki": [
+            "Surowe enumy statusu w polskich zdaniach."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Connectors”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-agents",
+          "nazwa": "Agents",
+          "ocena": "B",
+          "co": "Agenci.",
+          "naprawione": [],
+          "wyjatki": [
+            "Domyślna wartość pola celu po angielsku."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Agents”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-outcomes",
+          "nazwa": "KPI/ROI & AI Ops",
+          "ocena": "B",
+          "co": "KPI/ROI i operacje AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Domyślne wartości pól i enum PASS po angielsku."
+          ],
+          "gdzie": "Internal Tools / AI OS → „KPI/ROI & AI Ops”. Zrzuty: evidence/grafika/146-aios/."
+        }
+      ]
+    },
+    {
+      "katalog": "18-ustawienia",
+      "nazwa": "Ustawienia",
+      "opis": "Ustawienia osobiste i konta użytkownika — 9 grup ekranów (profil, regionalne, powiadomienia, bezpieczeństwo, prywatność/GDPR i inne).",
+      "ekrany": [
+        {
+          "id": "settings-full-module-closed-final-20260825",
+          "nazwa": "Ustawienia — komplet 9 grup × 2 motywy",
+          "ocena": "A",
+          "co": "Zmigrowane z docs/program/grafika/REJESTR_EKRANOW.md: „ODEBRANY_CAŁY, 9 grup × 2 motywy, 21 zrzutów” — CLOSED_FINAL, DEC-2026-08-25-16, tag final-02-settings, SHA d5a1b6a99e (docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md).",
+          "naprawione": [],
+          "wyjatki": [
+            "Odbiór historyczny — świeży zrzut w TEJ rundzie NIE został zrobiony (zakaz nowego pomiaru przy migracji bookkeepingu).",
+            "Komplet 21 zrzutów NIE został zlokalizowany w evidence/ tego drzewa roboczego. Na branchu codex/m02-settings-20260824 istnieje wcześniejszy, mniejszy zestaw docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/evidence-m02-20260824/ (6 plików: settings-full-{light,dark}.png + 4 przekierowania) — to NIE jest komplet 21 z odbioru finalnego. Lokalizacja właściwego kompletu wymaga potwierdzenia z nadzorcą.",
+            "Ocena „A” w tym wierszu oznacza status historyczny „odebrane przez właściciela”, a NIE świeży pomiar wg skali status.json (A=do odbioru bez zastrzeżeń) — mapowanie przyjęte przez konsolidatora przy migracji, do potwierdzenia."
+          ],
+          "gdzie": "Ustawienia (dolne menu główne) → 9 grup ustawień osobistych (profil, regionalne, powiadomienia, bezpieczeństwo, prywatność/GDPR i inne)."
+        }
+      ]
     }
   ],
-  "_kolejnosc": "16 modułów w kolejności menu bocznego — od Czatu w dół (odbiór modułowy, ustalenie właściciela 2026-08-30)"
+  "_kolejnosc": "18 modułów w kolejności menu bocznego — od Czatu w dół, plus 17-aios (Internal Tools / AI OS, konsola wewnętrzna dbr77.com, poza głównym menu) i 18-ustawienia (dolne menu, zmigrowany bookkeeping) dopisane na końcu 2026-08-31 (odbiór modułowy, ustalenie właściciela 2026-08-30; runda pełna 2026-08-31)."
 }
