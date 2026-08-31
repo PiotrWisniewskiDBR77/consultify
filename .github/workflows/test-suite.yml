@@ -71,6 +71,13 @@ jobs:
       - name: Run TypeScript check
         run: npm run type-check
 
+      # Typy SERWERA nie byly sprawdzane przez zadna bramke CI. Wchodzily
+      # przypadkiem do sprawdzenia FRONTU (przez dwa testy integracyjne w src/,
+      # ktore importuja server/src) i byly tam sadzone regulami frontu — stad
+      # 844 falszywe TS7030. Teraz serwer ma wlasny krok, z wlasna konfiguracja.
+      - name: Run TypeScript check (server)
+        run: npm run type-check:server
+
       - name: Hardcoded-color ratchet gate (VEGAS V7.7)
         run: npm run check:colors
 

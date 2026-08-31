@@ -28,6 +28,7 @@
     "lint": "eslint . --quiet",
     "lint:warnings": "eslint . --report-unused-disable-directives-severity warn",
     "type-check": "NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit",
+    "type-check:server": "NODE_OPTIONS=--max-old-space-size=8192 tsc -p server/tsconfig.json --noEmit",
     "dev:backend": "npm run dev:backend:staging",
     "dev:backend:localdb": "node scripts/dev/reject-local-db.mjs dev:backend:localdb",
     "dev:backend:pg": "node scripts/dev/reject-local-db.mjs dev:backend:pg",
