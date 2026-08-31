@@ -100,6 +100,21 @@ export const INITIATIVE_IMPACT_CONFIDENCE_LABELS: Record<string, string> = {
   UNKNOWN: 'Nieznana',
 };
 
+/**
+ * Etykiety PL dla `sourceFreshness` (wartości danych zostają EN — kanon
+ * TRIADA). 143-resztki (2026-08-31) — podgląd rejestru inicjatyw pokazywał
+ * surowy enum ("Źródło: CURRENT"). Realne wartości: `InitiativeCardVersionReadModel['freshness']`
+ * / `publishInitiativeCard.ts` / `materialCommand.ts` (grep `freshness:
+ * 'CURRENT' | 'STALE' | 'SOURCE_UNAVAILABLE'`) plus lokalny fallback
+ * 'UNKNOWN' (`initiativeRegisterProjection.ts`'s own `|| 'UNKNOWN'`).
+ */
+export const INITIATIVE_SOURCE_FRESHNESS_LABELS: Record<string, string> = {
+  CURRENT: 'Aktualne',
+  STALE: 'Nieaktualne',
+  SOURCE_UNAVAILABLE: 'Źródło niedostępne',
+  UNKNOWN: 'Nieznane',
+};
+
 export const nextStepForLifecycle = (lifecycle: string) => {
   switch (lifecycle) {
     case 'REGISTERED_DRAFT':

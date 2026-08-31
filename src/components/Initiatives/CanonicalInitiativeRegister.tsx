@@ -18,6 +18,7 @@ import {
   INITIATIVE_HEALTH_STATE_LABELS,
   INITIATIVE_IMPACT_CONFIDENCE_LABELS,
   INITIATIVE_LIFECYCLE_LABELS,
+  INITIATIVE_SOURCE_FRESHNESS_LABELS,
 } from './initiativeRegisterProjection';
 
 /**
@@ -334,7 +335,9 @@ export const CanonicalInitiativeRegister = ({
           {
             id: 'freshness',
             label: 'Źródło',
-            value: String(initiative.sourceFreshness || 'UNKNOWN'),
+            value:
+              INITIATIVE_SOURCE_FRESHNESS_LABELS[String(initiative.sourceFreshness || 'UNKNOWN')] ||
+              String(initiative.sourceFreshness || 'UNKNOWN'),
           },
         ],
         onCopy: () =>
