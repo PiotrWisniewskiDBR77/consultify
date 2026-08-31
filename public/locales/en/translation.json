@@ -22341,7 +22341,14 @@
       "addAnalystComment": "Click to add analyst comment...",
       "technicalDetails": "Technical details",
       "lineCode": "Line code",
-      "selectedCandidate": "Selected candidate"
+      "selectedCandidate": "Selected candidate",
+      "valueOrigin": {
+        "source": "Source",
+        "mapped": "Mapped",
+        "manual": "Manual",
+        "computed": "Computed",
+        "estimated": "Estimated"
+      }
     },
     "canonicalTable": {
       "ariaLabel": "Financial statement table",
@@ -23383,8 +23390,7 @@
         "finance.laneStatus": "Finance lane status",
         "finance.versionStatus": "Version status"
       },
-      "itemIdTooltip": "Record id: {{id}}"
-,
+      "itemIdTooltip": "Record id: {{id}}",
       "loadError": "Governed context could not be loaded. Your existing data was not changed.",
       "uploaded": "The document was ingested and its pending governed claim was loaded.",
       "uploadError": "The document could not be ingested. No governed claim was accepted.",

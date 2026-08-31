@@ -23531,7 +23531,14 @@
       "addAnalystComment": "Kliknij, aby dodać komentarz analityka...",
       "technicalDetails": "Szczegóły techniczne",
       "lineCode": "Kod linii",
-      "selectedCandidate": "Wybrany kandydat"
+      "selectedCandidate": "Wybrany kandydat",
+      "valueOrigin": {
+        "source": "Źródło",
+        "mapped": "Zmapowane",
+        "manual": "Ręczne",
+        "computed": "Obliczone",
+        "estimated": "Szacowane"
+      }
     },
     "canonicalTable": {
       "ariaLabel": "Tabela sprawozdania finansowego",
@@ -24586,8 +24593,7 @@
         "finance.laneStatus": "Status ścieżki finansowej",
         "finance.versionStatus": "Status wersji"
       },
-      "itemIdTooltip": "Identyfikator rekordu: {{id}}"
-,
+      "itemIdTooltip": "Identyfikator rekordu: {{id}}",
       "loadError": "Nie udało się załadować nadzorowanego kontekstu. Istniejące dane nie zostały zmienione.",
       "uploaded": "Dokument został wczytany, a oczekujące twierdzenie pojawiło się na liście.",
       "uploadError": "Nie udało się wczytać dokumentu. Żadne twierdzenie nie zostało zaakceptowane.",
