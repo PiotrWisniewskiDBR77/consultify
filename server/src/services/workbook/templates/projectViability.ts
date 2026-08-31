@@ -159,7 +159,7 @@ function colLetter(idx0: number): string {
 // ---------------------------------------------------------------------------
 // Layout constants — Assumptions ("Założenia") sheet
 //
-// Columns: A = Driver (text) | B = Wartość (number)
+// Columns: A = Założenie (text) | B = Wartość (number)
 // Rows (Excel row = data-index + 2, header is row 1):
 //   2  Nakład początkowy (inwestycja)              ← currency
 //   3  Przepływ operacyjny brutto — rok 1           ← currency
@@ -198,7 +198,7 @@ function buildAssumptionsSheet(
   currencyLabel: string
 ): Sheet {
   const columns: ColumnDef[] = [
-    { key: 'driver', header: 'Driver', type: 'text', width: 38 },
+    { key: 'driver', header: 'Założenie', type: 'text', width: 38 },
     { key: 'wartosc', header: 'Wartość', type: 'number' },
   ];
 
