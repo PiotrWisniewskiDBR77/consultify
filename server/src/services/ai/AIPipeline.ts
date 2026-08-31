@@ -1846,6 +1846,41 @@ export class AIPipeline {
       }
     }
 
+    // FIX-205 (dyżur 205, ODBIOR_205_206.md) — `org.notes.manualContext` jest
+    // resolwowane z `organization_context_claims` (ścieżka `notes.manualContext`)
+    // przez `OrganizationContextService.buildResolvedContext` i już dociera do
+    // `ctx.organization`, ale nigdy nie było czytane w tej sekcji: audytor
+    // zmierzył `{inResolved:true, inOrgLayer:true, inPrompt:FALSE}` — zapis-obok
+    // pięciu ekranów redesignu Organization (`organization-context-store.routes.ts`)
+    // i ręczny kontekst AI (`recordManualAIContext`) trafiały do claimów, ale
+    // Teresa nigdy tego nie cytowała. Wpisy mają dwa kształty: `{section, ...}`
+    // (zapis-obok store'u) albo `{name, type, content, priority}` (ręczny
+    // kontekst / legacy `ai_contexts`).
+    const noteEntries: Array<Record<string, unknown>> = Array.isArray(org?.notes?.manualContext)
+      ? (org.notes.manualContext as Array<Record<string, unknown>>)
+      : [];
+    if (noteEntries.length > 0) {
+      lines.push('', '### Notatki organizacji (zapisane bezpośrednio w kontekście):');
+      for (const entry of noteEntries.slice(0, 5)) {
+        const section = typeof entry.section === 'string' ? entry.section : '';
+        const label =
+          section ||
+          (typeof entry.name === 'string' && entry.name) ||
+          (typeof entry.type === 'string' && entry.type) ||
+          'Notatka';
+        const content =
+          typeof entry.content === 'string' && entry.content
+            ? entry.content
+            : Object.entries(entry)
+                .filter(([key]) => !['section', 'name', 'type', 'priority', 'id', 'createdAt'].includes(key))
+                .map(([key, value]) => `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`)
+                .join('; ');
+        if (content) {
+          lines.push(`- **${label}**: ${content.slice(0, 300)}`);
+        }
+      }
+    }
+
     // Feedback #1b81d375 / #2f5803b0 / #30592ee0 / #fa158b06 — raw snapshot
     // of the tenant's collected context (Q&As, uploaded evidence, manual
     // notes, document extractions). Previously we had the data sitting in
