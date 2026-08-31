@@ -548,7 +548,13 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'filename',
         label: t('vault.docs.colName', isPolish ? 'Nazwa' : 'Name'),
-        width: '300px',
+        // ★ 143-resztki (2026-08-31) — budżet szerokości kolumn przycięty tak,
+        // by SUMA (+ select 44px + akcje 80px) mieściła się w kontenerze bez
+        // shrinku `columnFit` (metoda z 595d6f4735). Status urósł 160→190,
+        // reszta (w tym ta kolumna 300→220) oddała różnicę — nazwy plików już
+        // i tak się skracają (świadome, nie ten defekt), status nie miał na to
+        // prawa (nagłówek/pigułka).
+        width: '220px',
         sortable: true,
         render: (row: TableRow) => (
           <span className="flex min-w-0 items-center gap-2">
@@ -562,7 +568,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'category',
         label: t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category'),
-        width: '150px',
+        width: '120px',
         sortable: true,
         render: (row: TableRow) =>
           row.category ? (
@@ -580,7 +586,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'folder',
         label: t('vault.docs.colFolder', isPolish ? 'Folder' : 'Folder'),
-        width: '150px',
+        width: '120px',
         sortable: true,
         sortAccessor: (row: TableRow) =>
           (row.folder_id && folderNameById.get(row.folder_id as string)) || '',
@@ -599,7 +605,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'tags',
         label: t('vault.docs.colTags', isPolish ? 'Tagi' : 'Tags'),
-        width: '190px',
+        width: '155px',
         filterable: true,
         filterOptions: tagOptions,
         render: (row: TableRow) => {
@@ -620,7 +626,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'scope',
         label: t('vault.docs.colLevel', isPolish ? 'Poziom' : 'Level'),
-        width: '150px',
+        width: '140px',
         render: (row: TableRow) => {
           const meta = scopeMeta(row.scope as VaultScope);
           const Icon = meta.icon;
@@ -635,7 +641,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'file_size_bytes',
         label: t('vault.docs.colSize', isPolish ? 'Rozmiar' : 'Size'),
-        width: '110px',
+        width: '108px',
         align: 'right',
         sortable: true,
         sortAccessor: (row: TableRow) => Number(row.file_size_bytes) || 0,
@@ -656,7 +662,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'chunk_count',
         label: t('vault.docs.colChunks', isPolish ? 'W wiedzy AI' : 'In AI knowledge'),
-        width: '110px',
+        width: '100px',
         align: 'right',
         sortable: true,
         sortAccessor: (row: TableRow) => Number(row.chunk_count) || 0,
@@ -681,7 +687,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'created_at',
         label: t('vault.docs.colAdded', isPolish ? 'Dodano' : 'Added'),
-        width: '130px',
+        width: '104px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.created_at || ''),
         render: (row: TableRow) => (
@@ -693,7 +699,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       {
         id: 'status',
         label: t('vault.docs.colStatus', isPolish ? 'Status indeksowania' : 'Index status'),
-        width: '160px',
+        width: '190px',
         sortable: true,
         render: (row: TableRow) => (
           <StatusChip
