@@ -23,6 +23,13 @@ const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.setAttribute('data-theme', theme);
+
+// i18n (2026-08-31, Z-21): ten bootstrap nigdy nie wołał i18n.changeLanguage(),
+// więc detektor przeglądarki dawał 'en' w świeżym headless renderze — dokładnie
+// ta sama pułapka co naprawiona 2026-08-27 w tools-outputs-insights-tab-main.tsx
+// (naprawa per wywołanie odrosła w bliźniakach). Konwencja ?lang= jak w main.tsx.
+const lang = params.get('lang') === 'en' ? 'en' : 'pl';
+void i18n.changeLanguage(lang);
 // Naprawa 2026-08-30 (odbiór „prehistoryczna karta"): ekran montuje teraz
 // REALNY `<AppProviders>` (patrz screens/tools-swot-session-workspace.tsx),
 // który zawiera `ThemeSync` — komponent czytający `useAppStore.theme` i
