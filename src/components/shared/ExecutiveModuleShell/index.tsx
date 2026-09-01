@@ -31,6 +31,31 @@ import { buildMelsShortcuts, useMelsShortcuts } from './shortcuts';
 import { TopBar } from './TopBar';
 import { useRailState } from './useRailState';
 
+/**
+ * JEDNA SZEROKOŚĆ PRAWEGO PASA — token gridu n-Type (`src/index.css`).
+ *
+ * Wersja tekstowa idzie wprost do `style.width` (przeglądarka rozwija zmienną),
+ * wersja liczbowa jest potrzebna tam, gdzie na szerokości robimy ARYTMETYKĘ
+ * (uchwyt zmiany rozmiaru inspektora elementu liczy piksele przy przeciąganiu
+ * i zapisuje wynik do localStorage — nie da się tego zrobić na `var()`).
+ * Obie czytają TĘ SAMĄ deklarację, więc następna zmiana szerokości dalej jest
+ * zmianą w jednym pliku.
+ */
+const ARTIFACT_RIGHT_PANEL_WIDTH_TOKEN = 'var(--ntype-right-panel-width)';
+const ARTIFACT_RIGHT_PANEL_WIDTH_FALLBACK_PX = 320;
+
+function readRightPanelWidthPx(): number {
+  if (typeof window === 'undefined' || typeof document === 'undefined')
+    return ARTIFACT_RIGHT_PANEL_WIDTH_FALLBACK_PX;
+  const raw = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue('--ntype-right-panel-width');
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) && parsed > 0
+    ? Math.round(parsed)
+    : ARTIFACT_RIGHT_PANEL_WIDTH_FALLBACK_PX;
+}
+
 export interface ExecutiveModuleShellProps {
   /** Stable identifier — gates rail-state persistence. */
   moduleKey: string;
@@ -95,8 +120,22 @@ export interface ExecutiveModuleShellProps {
    * konsumenci), dostaje układ bajt w bajt taki jak wcześniej.
    */
   artifactRightPanelSlot?: React.ReactNode;
-  /** Szerokość panelu artefaktu w px (domyślnie 300). */
-  artifactRightPanelWidth?: number;
+  /**
+   * Szerokość panelu artefaktu. DOMYŚLNIE token `--ntype-right-panel-width`
+   * (320 px) — jedna, wspólna szerokość prawego pasa dla WSZYSTKICH powierzchni
+   * akordeonowych.
+   *
+   * ★ NAPRAWA 2026-09-01 (dyżur 164). Do dziś stało tu `300`, a token mówił
+   * `320` — i tak miały karty N (Zadanie/Insight/Decyzja/Inicjatywa/Narzędzie/
+   * Powiadomienie), czyli rodzina, którą właściciel oglądał najczęściej. Przez
+   * tę jedną liczbę Excel (`sheet-artifact`, `excele-prawy-panel-standard`)
+   * i Deck renderowały pas 300 px obok kart 320 px — zgłoszenie „prawe panele
+   * powinny wyglądać tak samo". Zmierzone: przy 300 px panel Decka miał
+   * WŁASNY poziomy pasek przewijania (treść nie mieściła się w 300 px), przy
+   * 320 px znika. Wpisanie liczby tutaj z powrotem odtwarza defekt — szerokość
+   * ma jedno źródło: `src/index.css`.
+   */
+  artifactRightPanelWidth?: number | string;
   /** Canonical 32-36px view/status bar below the working area. */
   bottomBar?: React.ReactNode;
   /** Minimum usable canvas width used by Artifact Studio panel arbitration. */
@@ -224,7 +263,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   artifactStudioMode = false,
   globalTeresaSlot,
   artifactRightPanelSlot,
-  artifactRightPanelWidth = 300,
+  artifactRightPanelWidth = ARTIFACT_RIGHT_PANEL_WIDTH_TOKEN,
   bottomBar,
   artifactMinCanvasWidth = moduleKey === 'prezentacje' ? 760 : 680,
   leftRailTitle,
@@ -282,7 +321,17 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
       const stored = Number(window.localStorage.getItem(elementInspectorStorageKey));
       if (Number.isFinite(stored) && stored > 0) return clampElementInspectorWidth(stored);
     }
-    return 400;
+    /**
+     * ★ NAPRAWA 2026-09-01 (dyżur 164). Stało tu `400`, a inspektor elementu
+     * (`IdeaElementInspector`) był przybity do 360 px — czyli powłoka
+     * rezerwowała 400 px, treść zajmowała 360 px, a 40 px zostawało PUSTE.
+     * To była czwarta szerokość prawego pasa w aplikacji (obok 300/320/360)
+     * i dosłownie „niepotrzebny panel" ze zgłoszenia właściciela. Domyślna
+     * szerokość idzie teraz z tego samego tokenu, co każdy inny prawy pas;
+     * ręczna zmiana rozmiaru przez użytkownika działa dalej (320–560 px)
+     * i dalej jest zapamiętywana.
+     */
+    return clampElementInspectorWidth(readRightPanelWidthPx());
   });
   const resolvedElementInspectorWidth = clampElementInspectorWidth(
     elementInspectorWidth ?? internalElementInspectorWidth
