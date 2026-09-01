@@ -118,7 +118,7 @@ export async function applyApprovedPresentationTeresaEdit(
     );
   }
 
-  const edit = applyPresentationEditPlan({
+  const edit = await applyPresentationEditPlan({
     plan,
     prompt: instruction,
     isPolish: String(input.language || '').toLowerCase().startsWith('pl'),
@@ -127,6 +127,7 @@ export async function applyApprovedPresentationTeresaEdit(
       deck_id: originalDeck.deck_id || deckId,
       title: originalDeck.title || row.title,
     },
+    organizationId: input.organizationId,
   });
   const operationId = randomUUID().replace(/-/g, '');
   const snapshotId = randomUUID().replace(/-/g, '');

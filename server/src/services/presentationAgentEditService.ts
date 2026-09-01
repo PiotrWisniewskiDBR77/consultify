@@ -1,3 +1,6 @@
+import { get as dbGet } from '../utils/DbPromise.js';
+import { AppError } from '../utils/ErrorHandler.js';
+
 type EditScope = 'slide' | 'section' | 'global' | 'methodological' | 'none';
 
 export interface PresentationEditPlan {
@@ -8,6 +11,12 @@ export interface PresentationEditPlan {
   requiresApproval: boolean;
   actionable: boolean;
   noOpReason?: string;
+  editorialOperation?:
+    | 'rewrite_slide'
+    | 'shorten_slide'
+    | 'split_slide'
+    | 'change_archetype'
+    | 'add_source';
 }
 
 export interface PresentationEditResult {
@@ -50,7 +59,10 @@ function detectSectionHint(prompt: string): string | undefined {
   return candidates.find((token) => normalized.includes(token));
 }
 
-export function parsePresentationEditIntent(prompt: string): PresentationEditPlan {
+export function parsePresentationEditIntent(
+  prompt: string,
+  options: { enableTeresaDeckEdit?: boolean } = {}
+): PresentationEditPlan {
   const normalized = String(prompt || '')
     .trim()
     .toLowerCase();
@@ -68,6 +80,29 @@ export function parsePresentationEditIntent(prompt: string): PresentationEditPla
   const targetSlides = extractTargetSlides(normalized);
   const sectionHint = detectSectionHint(normalized);
   const mutationKinds: PresentationEditPlan['mutationKinds'] = [];
+  const editorialOperation = options.enableTeresaDeckEdit
+    ? /(?:przeredaguj|rewrite)\b/.test(normalized)
+      ? 'rewrite_slide'
+      : normalized.includes('skróć') || /(?:skroc|shorten)\b/.test(normalized)
+        ? 'shorten_slide'
+        : /(?:rozbij|split)\b/.test(normalized)
+          ? 'split_slide'
+          : /(?:zmień|zmien|change)\s+(?:archetyp|archetype)\b/.test(normalized)
+            ? 'change_archetype'
+            : /(?:dodaj|add)\s+(?:źródło|zrodlo|source)\b/.test(normalized)
+              ? 'add_source'
+              : undefined
+    : undefined;
+
+  if (editorialOperation === 'rewrite_slide' || editorialOperation === 'shorten_slide') {
+    mutationKinds.push('content');
+  } else if (editorialOperation === 'split_slide') {
+    mutationKinds.push('structure');
+  } else if (editorialOperation === 'change_archetype') {
+    mutationKinds.push('layout');
+  } else if (editorialOperation === 'add_source') {
+    mutationKinds.push('methodology');
+  }
 
   if (
     normalized.includes('executive') ||
@@ -165,6 +200,7 @@ export function parsePresentationEditIntent(prompt: string): PresentationEditPla
     targetSlides,
     sectionHint,
     mutationKinds: uniqueKinds,
+    editorialOperation,
     requiresApproval: true,
     actionable: true,
   };
@@ -385,13 +421,59 @@ function fillExplicitDataRequired(card: any, values: Map<string, string>): numbe
   return changes;
 }
 
-export function applyPresentationEditPlan(params: {
+export interface VerifiedKnowledgeSource {
+  sourceId: string;
+  title: string;
+  url: string;
+}
+
+/**
+ * FIX-232 A2 (ODBIÓR 232, blokujący scalenie) — `add_source` may NOT turn an
+ * arbitrary URL pasted into chat into a citation. A citation is produced
+ * ONLY from a document that is actually registered in the organization's
+ * knowledge base (`knowledge_documents`, scoped by `organization_id`).
+ * Anything else must be rejected with a clear error, never silently
+ * accepted — this is the same class of defect FIX-231 closed a week earlier
+ * (provenance stamp that was an echo of a flag, not a fact).
+ *
+ * The returned title/id come from the verified database row, never from the
+ * user-supplied prompt text, so the citation cannot be spoofed by pasting a
+ * URL that happens to match a real document's address but claiming a
+ * different title.
+ */
+export async function verifyKnowledgeSourceUrl(
+  url: string,
+  organizationId: string
+): Promise<VerifiedKnowledgeSource | null> {
+  const trimmedUrl = String(url || '').trim();
+  const orgId = String(organizationId || '').trim();
+  if (!trimmedUrl || !orgId) return null;
+  try {
+    const row = (await dbGet(
+      `SELECT id, title, source_url FROM knowledge_documents
+       WHERE organization_id = ? AND source_url = ? AND is_active = ?`,
+      [orgId, trimmedUrl, true]
+    )) as { id?: string; title?: string; source_url?: string } | undefined;
+    if (!row?.id) return null;
+    return {
+      sourceId: String(row.id),
+      title: String(row.title || trimmedUrl),
+      url: String(row.source_url || trimmedUrl),
+    };
+  } catch {
+    // Fail-closed: a DB error must never be interpreted as "verified".
+    return null;
+  }
+}
+
+export async function applyPresentationEditPlan(params: {
   deck: any;
   prompt: string;
   isPolish: boolean;
   plan: PresentationEditPlan;
-}): PresentationEditResult {
-  const { deck, prompt, isPolish, plan } = params;
+  organizationId: string;
+}): Promise<PresentationEditResult> {
+  const { deck, prompt, isPolish, plan, organizationId } = params;
   if (!plan.actionable) {
     return {
       deck,
@@ -426,6 +508,87 @@ export function applyPresentationEditPlan(params: {
     const card = cards[index];
     return Boolean(card?.is_locked) && !explicitTargets.has(index);
   };
+
+  if (plan.editorialOperation === 'rewrite_slide') {
+    const replacement = String(prompt).split(':').slice(1).join(':').trim();
+    for (const index of plan.targetSlides) {
+      const card = cards[index];
+      if (!card || isProtected(index) || !replacement) continue;
+      const textBlock = (card.blocks || []).find((block: any) => typeof block?.content?.text === 'string');
+      if (textBlock) textBlock.content.text = replacement;
+      else card.title = replacement;
+      appliedActions.push(`rewrite_slide:${index + 1}`);
+    }
+  }
+
+  if (plan.editorialOperation === 'split_slide') {
+    for (const index of [...plan.targetSlides].sort((a, b) => b - a)) {
+      const card = cards[index];
+      if (!card || isProtected(index)) continue;
+      const blocks = Array.isArray(card.blocks) ? card.blocks : [];
+      const midpoint = Math.max(1, Math.ceil(blocks.length / 2));
+      const firstBlocks = blocks.slice(0, midpoint);
+      const secondBlocks = blocks.slice(midpoint);
+      if (secondBlocks.length === 0 && typeof firstBlocks[0]?.content?.text === 'string') {
+        const text = firstBlocks[0].content.text;
+        const splitAt = Math.max(1, Math.ceil(text.length / 2));
+        firstBlocks[0] = { ...firstBlocks[0], content: { ...firstBlocks[0].content, text: text.slice(0, splitAt).trim() } };
+        secondBlocks.push({ ...firstBlocks[0], content: { ...firstBlocks[0].content, text: text.slice(splitAt).trim() } });
+      }
+      const secondCard = {
+        ...card,
+        card_id: `${card.card_id || 'card'}-split-${Date.now()}`,
+        title: `${card.title || 'Slide'} — 2`,
+        blocks: secondBlocks,
+      };
+      cards.splice(index, 1, { ...card, title: `${card.title || 'Slide'} — 1`, blocks: firstBlocks }, secondCard);
+      appliedActions.push(`split_slide:${index + 1}`);
+    }
+  }
+
+  if (plan.editorialOperation === 'change_archetype') {
+    const match = String(prompt).match(/(?:archetyp|archetype).*?(?:na|to)\s+([a-z0-9_-]+)/i);
+    const layoutId = match?.[1];
+    for (const index of plan.targetSlides) {
+      if (!cards[index] || isProtected(index) || !layoutId) continue;
+      cards[index].layout_id = layoutId;
+      appliedActions.push(`change_archetype:${index + 1}:${layoutId}`);
+    }
+  }
+
+  if (plan.editorialOperation === 'add_source') {
+    const url = String(prompt).match(/https?:\/\/[^\s]+/i)?.[0];
+    if (url) {
+      // FIX-232 A2: the URL is only ever a raw string typed into chat — it
+      // MUST resolve to a real, organization-owned knowledge base document
+      // before it is allowed to become a citation. No match ⇒ fail closed
+      // with a clear, actionable error; never silently accept the string.
+      const verified = await verifyKnowledgeSourceUrl(url, organizationId);
+      if (!verified) {
+        throw new AppError(
+          isPolish
+            ? `Nie dodano źródła: adres „${url}” nie jest zarejestrowanym dokumentem w bazie wiedzy organizacji. Prześlij dokument do bazy wiedzy, zanim dodasz go jako źródło slajdu.`
+            : `Source not added: "${url}" is not a document registered in the organization's knowledge base. Upload it to the knowledge base before citing it on a slide.`,
+          422,
+          'AI_SOURCE_NOT_VERIFIED',
+          { url }
+        );
+      }
+      for (const index of plan.targetSlides) {
+        if (!cards[index] || isProtected(index)) continue;
+        cards[index].source_refs = [
+          ...(Array.isArray(cards[index].source_refs) ? cards[index].source_refs : []),
+          {
+            source_id: verified.sourceId,
+            source_type: 'knowledge_document',
+            title: verified.title,
+            url: verified.url,
+          },
+        ];
+        appliedActions.push(`add_source:${index + 1}`);
+      }
+    }
+  }
 
   if (explicitValues.size > 0) {
     let filled = 0;
@@ -496,6 +659,7 @@ export function applyPresentationEditPlan(params: {
     normalized.includes('zwi')
   ) {
     cards.forEach((card: any, idx: number) => {
+      if (plan.editorialOperation === 'shorten_slide' && !explicitTargets.has(idx)) return;
       if (isProtected(idx)) {
         skippedIndices.add(idx);
         return;

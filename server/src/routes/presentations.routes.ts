@@ -16,6 +16,7 @@ import { ZodError } from 'zod';
 
 import { isDeckOverflowWarningEnabled } from '../config/FeatureFlags.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { featureFlags } from '../config/FeatureFlags.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -435,6 +436,7 @@ const pendingDeckAiOperations = new Map<
     proposedDeckJson: string;
     reply: string;
     actions: string[];
+    status: 'draft' | 'accepted' | 'rejected' | 'applied';
     createdAt: string;
   }
 >();
@@ -449,6 +451,7 @@ type PendingDeckAiOperation = {
   reply: string;
   actions: string[];
   diff?: any;
+  status: 'draft' | 'accepted' | 'rejected' | 'applied';
   createdAt: string;
 };
 
@@ -889,8 +892,6 @@ async function saveAiOperation(op: PendingDeckAiOperation, prompt: string, versi
 }
 
 async function getAiOperation(operationId: string): Promise<PendingDeckAiOperation | null> {
-  const cached = pendingDeckAiOperations.get(operationId);
-  if (cached) return cached;
   try {
     const row = (await dbGet(`SELECT * FROM presentation_ai_operations WHERE id = ?`, [
       operationId,
@@ -906,29 +907,34 @@ async function getAiOperation(operationId: string): Promise<PendingDeckAiOperati
       reply: row.reply || '',
       actions: JSON.parse(row.actions_json || '[]'),
       diff: JSON.parse(row.diff_json || '{}'),
+      status: row.status,
       createdAt: row.created_at || new Date().toISOString(),
     };
   } catch (error) {
     if (!isSchemaMissingError(error))
       logger.warn('[Presentations] Could not read AI operation', error);
-    return null;
+    return pendingDeckAiOperations.get(operationId) || null;
   }
 }
 
 async function resolveAiOperation(
   operationId: string,
   status: 'accepted' | 'rejected' | 'applied',
-  versionAfter?: number
-) {
-  pendingDeckAiOperations.delete(operationId);
+  versionAfter?: number,
+  expectedStatus?: 'draft' | 'accepted'
+): Promise<boolean> {
   try {
-    await dbRun(
-      `UPDATE presentation_ai_operations SET status = ?, version_after = COALESCE(?, version_after), resolved_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [status, versionAfter || null, operationId]
-    );
+    const result = (await dbRun(
+      `UPDATE presentation_ai_operations SET status = ?, version_after = COALESCE(?, version_after), resolved_at = CURRENT_TIMESTAMP WHERE id = ?${expectedStatus ? ' AND status = ?' : ''}`,
+      [status, versionAfter || null, operationId, ...(expectedStatus ? [expectedStatus] : [])]
+    )) as { changes?: number } | undefined;
+    const resolved = (result?.changes ?? 0) === 1;
+    if (resolved) pendingDeckAiOperations.delete(operationId);
+    return resolved;
   } catch (error) {
     if (!isSchemaMissingError(error))
       logger.warn('[Presentations] Could not resolve AI operation', error);
+    return false;
   }
 }
 
@@ -4189,7 +4195,9 @@ router.post(
     const isPolish = String(req.headers['accept-language'] || '')
       .toLowerCase()
       .startsWith('pl');
-    const plan = parsePresentationEditIntent(prompt);
+    const plan = parsePresentationEditIntent(prompt, {
+      enableTeresaDeckEdit: featureFlags.ENABLE_TERESA_DECK_EDIT,
+    });
     if (!plan.actionable) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
@@ -4211,7 +4219,7 @@ router.post(
         },
       });
     }
-    const result = applyPresentationEditPlan({
+    const result = await applyPresentationEditPlan({
       plan,
       prompt,
       isPolish,
@@ -4220,6 +4228,7 @@ router.post(
         deck_id: deck.deck_id || deckId,
         title: deck.title || row.title,
       },
+      organizationId: orgId,
     });
 
     const operationId = uuidv4().replace(/-/g, '');
@@ -4245,6 +4254,7 @@ router.post(
         reply: result.reply,
         actions: result.appliedActions,
         diff,
+        status: 'draft',
         createdAt: new Date().toISOString(),
       },
       prompt,
@@ -4305,12 +4315,28 @@ router.post(
     if (!op || op.deckId !== deckId || op.organizationId !== orgId) {
       return res.status(404).json({ success: false, error: 'AI proposal not found' });
     }
+    if (op.status !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: `AI proposal is already ${op.status}`,
+        code: 'AI_PROPOSAL_ALREADY_RESOLVED',
+      });
+    }
 
     const row = (await dbGet(
       `SELECT version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [deckId, orgId]
     )) as any;
     if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    const claimed = await resolveAiOperation(operationId, 'accepted', undefined, 'draft');
+    if (!claimed) {
+      return res.status(409).json({
+        success: false,
+        error: 'AI proposal is no longer pending',
+        code: 'AI_PROPOSAL_STATE_CONFLICT',
+      });
+    }
 
     const nextVersion = (row.version || 1) + 1;
     try {
@@ -4342,7 +4368,7 @@ router.post(
       `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
       [JSON.stringify(proposed), nextVersion, deckId, orgId]
     );
-    await resolveAiOperation(operationId, 'applied', nextVersion);
+    await resolveAiOperation(operationId, 'applied', nextVersion, 'accepted');
     await recordPresentationRuntimeEvent({
       organizationId: orgId,
       deckId,
@@ -4395,7 +4421,21 @@ router.post(
     if (!op || op.deckId !== deckId || op.organizationId !== orgId) {
       return res.status(404).json({ success: false, error: 'AI proposal not found' });
     }
-    await resolveAiOperation(operationId, 'rejected');
+    if (op.status !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: `AI proposal is already ${op.status}`,
+        code: 'AI_PROPOSAL_ALREADY_RESOLVED',
+      });
+    }
+    const rejected = await resolveAiOperation(operationId, 'rejected', undefined, 'draft');
+    if (!rejected) {
+      return res.status(409).json({
+        success: false,
+        error: 'AI proposal is no longer pending',
+        code: 'AI_PROPOSAL_STATE_CONFLICT',
+      });
+    }
     await recordPresentationRuntimeEvent({
       organizationId: orgId,
       deckId,

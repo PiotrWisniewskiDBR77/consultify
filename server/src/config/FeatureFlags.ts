@@ -35,6 +35,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TERESA_ADOPT_CHAT_DRAFT: z.boolean().default(false),
   ENABLE_TERESA_TOOL_LOOP: z.boolean().default(false),
   ENABLE_TERESA_TOOL_LOOP_WRITE: z.boolean().default(false),
+  ENABLE_TERESA_DECK_EDIT: z.boolean().default(false),
   ENABLE_TERESA_MINDMAP: z.boolean().default(true),
   // Krok C (rozdział flagi-długu): funkcja B (retrieval search_org_mindmaps)
   // wydzielona z ENABLE_TERESA_MINDMAP na WŁASNĄ flagę. Default OFF. Realne
@@ -167,6 +168,7 @@ export function loadFeatureFlags(): FeatureFlags {
     // Day207 / 17-C: model WRITE calls become governed ai_actions proposals.
     // Kept separate from the READ tool loop and opt-in until owner visual acceptance.
     ENABLE_TERESA_TOOL_LOOP_WRITE: process.env.ENABLE_TERESA_TOOL_LOOP_WRITE === 'true',
+    ENABLE_TERESA_DECK_EDIT: process.env.ENABLE_TERESA_DECK_EDIT === 'true',
 
     // Teresa mind-map deliverable creation (ff_teresaMindmap / M06 Fala 2):
     // generate_deliverable(type:'mindmap') handler self-gate — mounts a real
