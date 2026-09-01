@@ -17,5 +17,7 @@ They are preserved for git blame and audit purposes.
 
 ## Current migration system
 
-All new migrations live in `server/migrations-v2/` starting from a clean
-`001_baseline_20260413.sql` (pg_dump of production as of 2026-04-13).
+All new migrations belong in `server/migrations/`, which is the directory read
+by default by `server/scripts/migrate.postgres.ts`. Do not add migrations here
+or to `server/migrations-v2/`: both directories are excluded from the Railway
+deploy upload by `.railwayignore`.
