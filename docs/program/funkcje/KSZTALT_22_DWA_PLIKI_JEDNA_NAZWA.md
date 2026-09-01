@@ -71,3 +71,36 @@ i odmówił.
 To jest ta sama lekcja, którą tor grafiki zapisał u siebie tego samego dnia przy „czerwonej
 ikonie": **teza nadzorcy wraca jako zweryfikowany fakt, jeśli wykonawca nie ma prawa jej
 zaprzeczyć.**
+
+---
+
+# DOMKNIĘTE — martwy plik usunięty 1.09
+
+## Weryfikacja przed usunięciem (nie skasowano „na oko")
+```
+grep -rn "routes/ai-settings.routes" .  | grep -v "routes/ai/ai-settings"
+→ zero importerów w kodzie
+→ trafienia wyłącznie w: historycznych raportach audytowych (maj), planie testów (luty),
+  raporcie strukturalnym migracji oraz komentarzu nowego testu, który OPISUJE ten plik
+  jako martwy
+
+find tests -name "ai-settings.routes*"   → brak testu importującego
+```
+**Zero importerów w kodzie, zero testów. Pozostałe trafienia to dokumenty historyczne**,
+które opisują stan z przeszłości i pozostają prawdziwe jako zapis.
+
+Plik żyje w historii repozytorium — **usunięcie jest odwracalne**, a pułapka znika.
+
+## ★ Drugie znalezisko przy tej samej okazji — zgłoszone, NIENAPRAWIONE
+Tor grafiki, prostując własne sprostowanie, zauważył rzecz, której nikt nie szukał:
+**przekształcenia nazw w ŻYWYM pliku obsługują wyłącznie PIERWSZĄ parę tras.**
+
+Zmierzone: plik ma **18 tras**, a wywołania przekształcenia są przy **trzech miejscach**
+(`:201`, `:228`, `:247`) — czyli przy jednej parze odczyt/zapis.
+
+Wstępny przesiew wskazuje co najmniej **dwie dalsze trasy zwracające dane surowo**,
+w tym **`/user`**. **To jest podejrzenie, nie pomiar** — wymaga sprawdzenia czterowarstwowego
+przy każdej z osobna, bo część tras może zwracać dane, których front i tak nie czyta.
+
+**To jest ten sam wzorzec „rodzina naprawiona w części", już czwarty raz tego dnia —
+tym razem WEWNĄTRZ jednego pliku.**
