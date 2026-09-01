@@ -48,6 +48,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
+  ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
@@ -203,6 +204,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // at CALL time (not this singleton) so the gate reflects late env changes in
     // background generation; this registry entry is the SSOT/documentation.
     ENABLE_DECK_CONCLUSION_SLIDE: process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true',
+
+    // Day 226: opt-in persistence and runtime exposure for Presentation
+    // Template Architect custom theme contracts. Default OFF until owner
+    // acceptance so legacy save/read behavior remains unchanged.
+    ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE:
+      process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true',
 
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated

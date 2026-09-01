@@ -41,6 +41,8 @@ describe('presentation template custom master persistence wiring', () => {
     expect(route).toContain('{ customTemplate: customTemplate || null }');
     expect(route).toContain('...currentLayoutPolicy');
     expect(route).toContain('validatePresentationCustomTemplate(customTemplate)');
+    expect(route).toContain("process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true'");
+    expect(route).toContain("error: 'custom_template_invalid'");
   });
 
   it('validates a custom contract again before approval', () => {
