@@ -55,3 +55,22 @@ Pozycja **przestaje wymagać ręki nadzorcy** i wraca do puli normalnych dyżur�
 sprawdza.** Trzy przypadki jednego dnia, każdy blokował albo mylił realną pracę.
 To najtańsza do wykrycia klasa: każde twierdzenie komentarza o **stanie bazy, trasy
 albo flagi** da się porównać z rzeczywistością maszynowo.
+
+## Wykonanie — Day225
+
+Na markerze `0a35699021` wykonano wyłącznie lokalny retest, bez połączenia do stagingu,
+demo ani produkcji. Świeży PostgreSQL w kontenerze `cx-day225-pg` zastosował `879`
+migracji, drugi przebieg zastosował `0`; log zawiera 946/947/948, a `tool_outputs`
+istnieje i początkowo ma `0` wierszy.
+
+Test przez realny `ApiGateway` i podpisany JWT potwierdził pusty odczyt ownera
+`200 { outputs: [] }`, następnie bezpośredni zapis lokalnego wiersza i jego HTTP/SQL
+readback `200`, a bez tokenu `401` bez danych. Kanoniczny lokalny runtime
+`W3-TOOLS-OWNER-v1`, uruchomiony na `127.0.0.1:5124/5125`, przy query
+`?ff_toolsInsightsWiring=1` zwrócił `GET /api/tool-outputs` `200` i pokazał zakładkę
+Insighty bez błędu pełnoekranowego.
+
+Retest lokalny POTWIERDZA, że blokada opisana w DEC-158 nie istnieje na tej bazie po
+migracjach — ścieżka działa. Flaga `VITE_TOOLS_INSIGHTS_WIRING` pozostaje domyślnie
+WYŁĄCZONA. Włączenie wymaga osobnej decyzji właściciela na czystym zrzucie. Pełny raport:
+`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY225_NARZEDZIA_REPORT.md`.
