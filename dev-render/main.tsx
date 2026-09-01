@@ -39,6 +39,12 @@ const PrezentacjeTemplateStatesScreen = React.lazy(
 const ReportBuilderLibraryTemplateScreen = React.lazy(
   () => import('./screens/report-builder-library-template')
 );
+// GRAFIKA (2026-09-01, zadanie 3 — audyt rodziny): plik ekranu istniał i miał
+// ocenę w docs/program/grafika/status.json (materials-registry, ocena B, z
+// realną listą "naprawione"), ale main.tsx nigdy go nie importował ani nie
+// rejestrował — `git log -S"materials-registry" -- dev-render/main.tsx` nie
+// zwraca ŻADNEGO commitu. Dopisuję tylko rejestrację, plik gotowy bez zmian.
+const MaterialsRegistryScreen = React.lazy(() => import('./screens/materials-registry'));
 const AudytyDrdReportScreen = React.lazy(() => import('./screens/audyty-drd-report'));
 const DocumentStudioContextChipScreen = React.lazy(
   () => import('./screens/document-studio-context-chip')
@@ -802,6 +808,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'REPORT BUILDER — „Użyj wzorca" z Biblioteki (report_template, R1 2026-07-26): sukces (modal, pole zablokowane) + stany blokujące. ?variant=success|orphaned|deprecated|forbidden',
     render: () => <ReportBuilderLibraryTemplateScreen />,
   },
+  'materials-registry': {
+    label:
+      'MATERIAŁY — rejestr wspólny „Wszystkie" (materials-registry-fix, 2026-08-25): REALNY OutputsAggregateTabContent, trzy wiersze mieszane po naprawie projekcji Document/Sheet/Presentation.',
+    render: () => <MaterialsRegistryScreen />,
+  },
   'document-studio-resume-error': {
     label:
       'DOCUMENT STUDIO — nieudane wznowienie (P0.2): blokujący błąd PL zamiast intake. ?case=notfound|server',
@@ -1555,10 +1566,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'P-10/P-11/P-12 (2026-07-28) — Nowy dokument: edycja tytułu, Cofnij/Ponów, przyciski paska',
     render: () => <DocumentStudioNowyDokumentMartweprzyciskiScreen />,
-  },
-  'document-studio-blocks-i18n': {
-    label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
-    render: () => <DocumentStudioBlocksI18nScreen />,
   },
   'wave3-creators-crimson': {
     label: 'Fala 3 — ReportBuilder+AIChat+Meeting: crimson-fill CTA sweep (swatch, PO naprawie)',
