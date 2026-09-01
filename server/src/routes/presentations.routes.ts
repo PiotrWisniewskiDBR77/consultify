@@ -2668,7 +2668,7 @@ router.get(
         success: true,
         data: {
           overflowWarnings: isDeckOverflowWarningEnabled()
-            ? wykryjPrzepelnienie(parseDeckPayload(deck))
+            ? wykryjPrzepelnienie(parseDeckPayload(deck), orgId)
             : [],
         },
       });
