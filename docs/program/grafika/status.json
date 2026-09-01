@@ -1,6 +1,6 @@
 {
   "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
-  "_zaktualizowano": "2026-08-31",
+  "_zaktualizowano": "2026-09-01",
   "moduly": [
     {
       "katalog": "01-czat",
@@ -99,7 +99,7 @@
           "id": "mindmap-canvas",
           "nazwa": "Mapa mysli",
           "ocena": "B",
-          "co": "Realna mapa mysli z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku w prawym pasku. Przywrocono z odzyskanego raportu nocnego.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Realna mapa mysli z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku w prawym pasku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Angielski przycisk Apply"
           ],
@@ -112,7 +112,7 @@
             "whiteboard-canvas",
             "whiteboard-workshop"
           ],
-          "gdzie": "Moja praca → Idee → otwarcie idei jako mapy myśli — realny graf doradczy (węzeł centralny + gałęzie + pod-węzły) z paskiem podpowiedzi AI."
+          "gdzie": "Moja praca → Idee → otwarcie idei jako mapy myśli — realny graf doradczy (węzeł centralny + gałęzie + pod-węzły) z paskiem podpowiedzi AI. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "mindmap-i18n-smoke",
@@ -251,9 +251,13 @@
           "nazwa": "Graf notatek",
           "ocena": "A",
           "co": "Graf polaczen z soczewka osieroconych.",
-          "naprawione": [],
-          "wyjatki": [],
-          "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań) — pokazuje, które notatki nie mają żadnego powiązania, żeby nie ginęły w archiwum."
+          "naprawione": [
+            "01.09: graf polaczen dostal tryb pelnoekranowy (przycisk „Pelny ekran” obok dokowanego panelu) — zgodnie ze zgloszeniem wlasciciela „zrob to na calym ekranie”; potwierdzone zrzutem, dark w pelni czytelny (evidence/grafika/171-pojedyncze/)."
+          ],
+          "wyjatki": [
+            "Na zrzucie w trybie jasnym (light, fullscreen) etykiety sasiednich wezlow sa przyciete na krawedziach modala (np. „DE (6)”, „ne (3)”, „Ekspa[nsja]”) — w trybie ciemnym te same wezly sa w pelni czytelne, wiec to raczej stan zoomu/pan w danym zrzucie niz twardy defekt, ale warto sprawdzic ponownie."
+          ],
+          "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań) — pokazuje, które notatki nie mają żadnego powiązania, żeby nie ginęły w archiwum. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
         },
         {
           "id": "idea-table-tool-grouping",
@@ -274,10 +278,10 @@
           "id": "mywork-idea-inspector-lekki",
           "nazwa": "Inspektor pomyslu",
           "ocena": "A",
-          "co": "Sekcje z licznikami.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Sekcje z licznikami.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → lekki inspektor po prawej stronie — szybki podgląd właściwości elementu (sekcje z licznikami zamiast pełnej tabeli), żeby nie trzeba było otwierać całej karty."
+          "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → lekki inspektor po prawej stronie — szybki podgląd właściwości elementu (sekcje z licznikami zamiast pełnej tabeli), żeby nie trzeba było otwierać całej karty. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "karta-decision",
@@ -359,22 +363,22 @@
           "id": "ideas-teresa-panel",
           "nazwa": "Panel Teresy",
           "ocena": "A",
-          "co": "Sugestie AI, zero crimsonu.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Sugestie AI, zero crimsonu.",
           "naprawione": [],
           "wyjatki": [],
           "warianty": [
             "idea-confidentiality-control"
           ],
-          "gdzie": "Moja praca → Idee → prawy panel idei (IdeaRightPanel) → sekcja „Teresa\" — sugestie AI dopasowane do kontekstu otwartej idei."
+          "gdzie": "Moja praca → Idee → prawy panel idei (IdeaRightPanel) → sekcja „Teresa\" — sugestie AI dopasowane do kontekstu otwartej idei. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "mywork-notebook-rail-speca",
           "nazwa": "Panel notatnika",
           "ocena": "A",
-          "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: sekcja AKCJE ma przycisk „Zapytaj Teresę o tę notatkę” zamiast wbudowanego czatu — potwierdzone zrzutem (evidence/grafika/169-teresa-szyna/, evidence/grafika/164-szerokosc-panelu/). Prawy panel z uczciwymi pustymi powiazaniami.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Moja praca → Notatnik → prawy panel (accordion: Akcje·Właściwości·Powiązania·Komentarze·Historia i AI) — z uczciwie pokazanym pustym stanem powiązań, gdy notatka nic nie łączy."
+          "gdzie": "Moja praca → Notatnik → prawy panel (accordion: Akcje·Właściwości·Powiązania·Komentarze·Historia i AI) — z uczciwie pokazanym pustym stanem powiązań, gdy notatka nic nie łączy. Zrzuty 01.09: evidence/grafika/169-teresa-szyna/, evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "ideas-preview-overlay",
@@ -554,7 +558,8 @@
             "Cztery literowki bez polskich znakow"
           ],
           "wyjatki": [
-            "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku."
+            "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku.",
+            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane w tej turze): „dalej jest problem — preview z tej tabeli nie jest zgodny ze standardem preview”. Brak dzisiejszej naprawy/zrzutu — zgloszone, nie zrobione."
           ],
           "warianty": [
             "assessment-matryca",
@@ -749,12 +754,14 @@
           "nazwa": "Karta narzedzia",
           "ocena": "A",
           "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
-          "naprawione": [],
+          "naprawione": [
+            "01.09: sekcja „AKCJE 0” po rozwinieciu pokazuje zdanie wyjasniajace („Ten wpis biblioteczny nie ma wlasnych akcji — startuj sesje przyciskiem w naglowku.”) zamiast golego zera — potwierdzone zrzutem (evidence/grafika/164-szerokosc-panelu/)."
+          ],
           "wyjatki": [],
           "warianty": [
             "tools-swot-library-detail"
           ],
-          "gdzie": "Narzędzia → Biblioteka → otwarcie karty narzędzia (np. znanego narzędzia konsultingowego) — pełna karta z sekcjami rozwijanymi."
+          "gdzie": "Narzędzia → Biblioteka → otwarcie karty narzędzia (np. znanego narzędzia konsultingowego) — pełna karta z sekcjami rozwijanymi. Zrzuty: evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "tools-outputs-insights-tab",
@@ -976,13 +983,15 @@
         {
           "id": "assessment-presentation-view",
           "nazwa": "Prezentacja z oceny (9 slajdow)",
-          "ocena": "B",
-          "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu. Slajd 6: macierz DRD ze slajdu opakowana komponentem DRDMatrixReadOnly (eksport z DRDAssessmentEditor) — zaakceptowana przez wlasciciela 2026-09-01 jako jedyne zrodlo macierzy w raporcie.",
-          "naprawione": [],
-          "wyjatki": [
-            "Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk"
+          "ocena": "A",
+          "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu. Slajd 6: macierz DRD ze slajdu opakowana komponentem DRDMatrixReadOnly (eksport z DRDAssessmentEditor) — zaakceptowana przez wlasciciela 2026-09-01 jako jedyne zrodlo macierzy w raporcie, potwierdzone zrzutem identycznym co do struktury z edytorem zrodlowym (evidence/grafika/159-macierz-drd/). SPROSTOWANIE (01.09): slajd 5 (Profil per wymiar) — wczesniejszy wyjatek „paski BEZ nazw osi, gole liczby” juz NIE jest prawdziwy: na najnowszym zrzucie kazdy pasek ma pelna, polska etykiete wymiaru (Cyfrowe Modele Biznesowe, Procesy Cyfrowe, Produkty Cyfrowe, Cyberbezpieczenstwo) obok wartosci liczbowej — potwierdzone w obu motywach (evidence/grafika/163-slajd5-cofniecie/). Katalog dowodowy nazwany „cofniecie” sugeruje, ze byla to naprawa przez wycofanie wczesniejszej zlej zmiany.",
+          "naprawione": [
+            "01.09: slajd 5 — nazwy wymiarow przywrocone przy kazdym pasku (byly widoczne jako gole liczby bez etykiet) — potwierdzone zrzutem PO, oba motywy."
           ],
-          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → eksport jako prezentacja — 9 slajdów z wyniku oceny."
+          "wyjatki": [
+            "Podtytul slajdu 6 („Assessment of digital transformation across core business processes”) pozostaje po angielsku mimo ze reszta slajdu (tytul, etykiety osi, stopka) jest po polsku — drobna niespojnosc jezykowa, nie blokujaca."
+          ],
+          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → eksport jako prezentacja — 9 slajdów z wyniku oceny. Zrzuty 01.09: evidence/grafika/159-macierz-drd/ (slajd 6, macierz DRD), evidence/grafika/163-slajd5-cofniecie/ (slajd 5, nazwy osi)."
         },
         {
           "id": "assessment-initiatives-table",
@@ -1113,11 +1122,16 @@
         {
           "id": "plan-scenario-d1",
           "nazwa": "Plan inicjatyw",
-          "ocena": "C",
-          "co": "Daty po polsku, stany po polsku. Przycisk Otworz w prawym panelu InitiativesHub nie otwiera karty inicjatywy - otwiera Warsztat planu jako druga tabele wcisnieta pod pierwsza (layout lamie sie), a druga tabela pokazuje surowe angielskie enumy (NOW/NEXT/LATER, HIGH/MEDIUM/LOW) zamiast polskich etykiet gornej tabeli. Przywrocono z odzyskanego raportu nocnego.",
-          "naprawione": [],
-          "wyjatki": [],
-          "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku."
+          "ocena": "B",
+          "co": "SPROSTOWANIE (01.09): przekazanie do tej rundy twierdzilo „przycisk Otworz prowadzi do karty” — NIE POTWIERDZONE zrzutem. Dostepne dowody: (1) evidence/grafika/166-tabela-szerokosc/ — tylko klik w WIERSZ (ten sam prawy panel podgladu co zawsze, PRZED i PO identyczne, dzialal juz wczesniej); (2) evidence/grafika/141-plan-scenario/ (31.08, poprzednia fala) — klik w przycisk „Otworz” u gory panelu jest WYLACZONY (disabled) i nic nie robi w obu wersjach; klik w „Otworz narzedzia planu” u dolu panelu nadal otwiera „Warsztat planu” jako DRUGA TABELA wciśnieta pod pierwsza (dokladnie ten layout, na ktory skarzyl sie wlasciciel 30.08) — jedyna zmiana to TLUMACZENIE etykiet w tej drugiej tabeli (NOW/NEXT/LATER -> Teraz/Kolejno/Pozniej, KNOWN/UNKNOWN -> Znane/Nieznane, HIGH/MEDIUM/LOW -> Wysoki/Sredni/Niski). Podniesiono ocene z C do B za ta czesciowa naprawe (czytelne polskie etykiety zamiast surowych enumow), ale glowna skarga wlasciciela („ma otwierac karte, nie rozumiem jak to dziala”, layout lamie sie) NIE ma dzisiejszego dowodu naprawy — wymaga ponownej weryfikacji na zywo, nie tylko na zrzucie.",
+          "naprawione": [
+            "31.08 (fala 141): enumy w tabeli „Warsztat planu” przetlumaczone na polski (NOW/NEXT/LATER, KNOWN/UNKNOWN, HIGH/MEDIUM/LOW) — potwierdzone zrzutem evidence/grafika/141-plan-scenario/plan-scenario-d1-warsztat__PO__*."
+          ],
+          "wyjatki": [
+            "NIEPOTWIERDZONE: czy klikniecie 'Otworz'/'Otworz narzedzia planu' faktycznie prowadzi teraz do karty inicjatywy zamiast do Warsztatu planu jako drugiej tabeli — brak dzisiejszego zrzutu tego dzialania.",
+            "Warsztat planu (jesli to nadal wlasciwe zachowanie) to nadal druga, pelna tabela wciśnieta pod pierwsza — layout, na ktory skarzyl sie wlasciciel 30.08, wyglada tak samo, tylko z polskimi etykietami."
+          ],
+          "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku. Zrzuty: evidence/grafika/166-tabela-szerokosc/ (klik w wiersz) i evidence/grafika/141-plan-scenario/ (klik w Otworz/Warsztat, 31.08)."
         },
         {
           "id": "ev-football-field",
@@ -1132,7 +1146,7 @@
           "id": "karta-initiative",
           "nazwa": "Karta inicjatywy",
           "ocena": "A",
-          "co": "Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza. Wypelnij z AI faktycznie otwiera dzialajacy panel Konsultant AI z 6 akcjami i czatem z Teresa - nie martwy przycisk; tresc bogata, po polsku. Przywrocono z odzyskanego raportu nocnego.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ta powloka dzieli wspolny prawy panel z initiative-record/deck-artifact/notatnikiem, gdzie czat Teresy zastapiono przyciskiem wejscia „Zapytaj Teresę o…”. UWAGA UCZCIWA: na TYM konkretnym zrzucie (evidence/grafika/169-teresa-produkt/) PRZED i PO sa PIKSEL W PIKSEL identyczne — bo ekran byl zlapany w trybie Podglad, gdzie sekcja AKCJE pokazuje 0 pozycji z dopiskiem „W trybie Podgladu dzialania sa niedostepne” — wiec przycisku Teresy nie widac w zadnej z wersji i NIE da sie z tego zrzutu potwierdzic wizualnie samej zmiany na tym ekranie (choc jest ona widoczna na initiative-record, deck-artifact i notatniku, ktore dziela ten sam komponent). Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza. Wypelnij z AI faktycznie otwiera dzialajacy panel Konsultant AI z 6 akcjami i czatem z Teresa - nie martwy przycisk; tresc bogata, po polsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Nagie zero przy Akcjach — dopisane zdanie, ze liczba opisuje widok, nie inicjatywe",
             "Angielskie opisy cyklu zycia w sekcji Bramy — naprawione u zrodla, dziala teraz wszedzie"
@@ -1140,21 +1154,23 @@
           "wyjatki": [
             "Zapisano bez daty i godziny",
             "Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu",
-            "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna"
+            "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna",
+            "Zmiana czatu Teresy na przycisk wejscia NIE jest potwierdzona wizualnie na TYM zrzucie (tryb Podglad nie pokazuje AKCJI w ogole) — do ponownego sprawdzenia w trybie Edycji."
           ],
           "warianty": [
             "exe-002-004-ui-audit",
             "initiative-record"
           ],
-          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — pełna karta (pasek tożsamości, prawy panel accordion, lewy rail z licznikami)."
+          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — pełna karta (pasek tożsamości, prawy panel accordion, lewy rail z licznikami). Zrzuty 01.09: evidence/grafika/169-teresa-produkt/ (PRZED=PO, tryb Podglad bez widocznych Akcji)."
         },
         {
           "id": "initiative-record",
           "nazwa": "Rekord inicjatywy",
           "ocena": "B",
-          "co": "Powloka, etykiety i akcje po polsku, dobry rytm.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: prawy panel AKCJE dostal nowy przycisk „Zapytaj Teresę o tę inicjatywę” (dawniej byly tylko „Utwórz wariant” i „Oznacz gotowe”) — czat Teresy zastapiony przyciskiem wejscia, potwierdzone zrzutem PRZED/PO (evidence/grafika/169-teresa-produkt/). Powloka, etykiety i akcje po polsku, dobry rytm.",
           "naprawione": [
-            "Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu"
+            "Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu",
+            "01.09: dodano przycisk „Zapytaj Teresę o tę inicjatywę” w sekcji AKCJE — potwierdzone zrzutem PRZED/PO, oba widoczne w evidence/grafika/169-teresa-produkt/."
           ],
           "wyjatki": [
             "Tresc danych demo po angielsku — nie ustalono, czy to defekt, czy wybor danych dla klienta miedzynarodowego"
@@ -1163,7 +1179,7 @@
             "exe-002-004-ui-audit",
             "karta-initiative"
           ],
-          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — ten sam komponent co „Karta inicjatywy\", inny zestaw danych demo."
+          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — ten sam komponent co „Karta inicjatywy\", inny zestaw danych demo. Zrzuty 01.09: evidence/grafika/169-teresa-produkt/."
         },
         {
           "id": "initiatives-portfolio-analysis",
@@ -1250,41 +1266,49 @@
           "nazwa": "Zakładka „Praca”",
           "ocena": "A",
           "co": "ExecutionWorkSurface, StandardTable, bogate dane review.",
-          "naprawione": [],
+          "naprawione": [
+            "01.09: pasek miedzy Menu 3 a tabela (tytul „Praca” + opis + filtr realizacji) usuniety; filtr „Wszystkie realizacje” przeniesiony na prawa strone Menu 2, tabela zaczyna sie od razu pod Menu 3 — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/165-menu3-pasek/)."
+          ],
           "wyjatki": [],
-          "gdzie": "Realizacja → zakładka „Praca”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json (A/B/C/D). Zrzuty: evidence/grafika/145-execution-taby/."
+          "gdzie": "Realizacja → zakładka „Praca”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json (A/B/C/D). Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
         },
         {
           "id": "execution-tab-resources",
           "nazwa": "Zakładka „Zasoby”",
           "ocena": "B",
           "co": "ExecutionResourcesSurface.",
-          "naprawione": [],
+          "naprawione": [
+            "01.09: ten sam pasek nad tabela usuniety, filtr realizacji przeniesiony na prawo od Menu 2 — potwierdzone zrzutem (evidence/grafika/165-menu3-pasek/)."
+          ],
           "wyjatki": [
             "Wartości UNKNOWN po angielsku (ExecutionResourcesSurface.tsx).",
             "Defekt \\w/\\b kapitalizacji łamie polskie diakrytyki (np. „WóJcik”, ExecutionResourcesSurface.tsx:68) — zob. zgłoszenie #16 do toru funkcji."
           ],
-          "gdzie": "Realizacja → zakładka „Zasoby”. Zrzuty: evidence/grafika/145-execution-taby/."
+          "gdzie": "Realizacja → zakładka „Zasoby”. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Na nowym zrzucie nadal widac wartosci „UNKNOWN” po angielsku oraz „Katarzyna WóJcik” (zla kapitalizacja) — wyjatki ponizej wciaz aktualne, NIE naprawione."
         },
         {
           "id": "execution-tab-control",
           "nazwa": "Zakładka „Sterowanie”",
           "ocena": "A",
           "co": "Tabela interwencji, czysto.",
-          "naprawione": [],
+          "naprawione": [
+            "01.09: pasek nad tabela usuniety, przyciski „Dodaj sygnal”/„Przygotuj interwencje” przeniesione na prawo od Menu 2 — potwierdzone zrzutem, oba motywy (evidence/grafika/165-menu3-pasek/)."
+          ],
           "wyjatki": [],
-          "gdzie": "Realizacja → zakładka „Sterowanie”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json. Zrzuty: evidence/grafika/145-execution-taby/."
+          "gdzie": "Realizacja → zakładka „Sterowanie”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
         },
         {
           "id": "execution-tab-rollout",
           "nazwa": "„Rollout” (chromeless, deep-link)",
           "ocena": "B",
           "co": "Zmierzony tylko podwidok KPI.",
-          "naprawione": [],
+          "naprawione": [
+            "01.09: zdanie opisowe „Monitoruj operacyjne i finansowe wyniki wdrozenia.” miedzy naglowkiem a tabela usuniete, zgodnie ze zgloszeniem wlasciciela — potwierdzone zrzutem PRZED/PO (evidence/grafika/165-menu3-pasek/)."
+          ],
           "wyjatki": [
             "RolloutTab.tsx:987 — błąd sieci gasi całą zakładkę zanim zadziała ścieżka degradacji (zob. zgłoszenie #12 do toru funkcji)."
           ],
-          "gdzie": "Realizacja → „Rollout” (chromeless, deep-link). Zrzuty: evidence/grafika/145-execution-taby/."
+          "gdzie": "Realizacja → „Rollout” (chromeless, deep-link). Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Wyjatek RolloutTab.tsx:987 (blad sieci gasi zakladke) NIE jest mozliwy do zweryfikowania na statycznym zrzucie — pozostaje jako niepotwierdzony, nienaprawiony."
         },
         {
           "id": "execution-tab-summary",
@@ -1469,11 +1493,15 @@
         {
           "id": "results-vnext-teresa-kpi-deviation",
           "nazwa": "Sprawa odchylenia",
-          "ocena": "A",
-          "co": "Formularz sprawy z uczciwymi komunikatami o brakach.",
-          "naprawione": [],
-          "wyjatki": [],
-          "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3) → „Sprawa odchylenia\" prowadzona przez Teresę, gdy wskaźnik odchyla się od celu — formularz z uczciwymi komunikatami o brakach."
+          "ocena": "B",
+          "co": "SPROSTOWANIE (01.09): zgloszenie wlasciciela „zrobiles grafike jak sprzed 5 lat, niespojna z UI/UX” dotyczylo prawdopodobnie stanu OTWARTEJ/edytowalnej sprawy — ten stan (evidence/grafika/171-pojedyncze/, PRZED i PO IDENTYCZNE) nadal wyglada surowo: plaskie pola tekstowe HTML, szare przyciski „Zapisz analize”/„Dodaj dzialanie”, i zolty baner sesji „Ta lista pokazuje wylacznie dzialania dodane w biezacej sesji przegladarki…” — NIC z tego sie nie zmienilo. Naprawiony zostal inny stan: sprawa ZAMKNIETA (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/) teraz pokazuje pelna narracje ze wszystkimi krokami wypelnionymi realna trescia (przyczyna, dzialania z realnym statusem, zatwierdzenie planu, obserwacja odbudowy, weryfikacja skutecznosci, zamkniecie sprawy) zamiast pustych formularzy — i bez zoltego baneru. To realna i duza poprawa, ale NIE adresuje wizualnej skargi o stanie aktywnym/edytowalnym, ktora prawdopodobnie byla powodem zgloszenia.",
+          "naprawione": [
+            "01.09: sprawy ZAMKNIETE pokazuja teraz pelny, wypelniony przebieg (przyczyna, dzialania ze statusami, zatwierdzenie planu, obserwacja, weryfikacja skutecznosci, zamkniecie) zamiast pustych formularzy — potwierdzone zrzutem (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/), plan czytany z danych sprawy (serwera), nie z sesji przegladarki."
+          ],
+          "wyjatki": [
+            "Stan OTWARTEJ sprawy (w trakcie analizy/dzialan) NIE zmienil sie wobec PRZED — plaskie niestylowane pola formularza, szare przyciski, zolty baner „dzialania z biezacej sesji przegladarki” nadal obecny — prawdopodobne zrodlo skargi wlasciciela „jak sprzed 5 lat”, wciaz nienaprawione."
+          ],
+          "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3) → „Sprawa odchylenia\" prowadzona przez Teresę, gdy wskaźnik odchyla się od celu — formularz z uczciwymi komunikatami o brakach. Zrzuty 01.09: evidence/grafika/171-pojedyncze/ (stan otwarty, bez zmian), evidence/grafika/173-diagnostyka/ i 173-diagnostyka-weryfikacje/ (stan zamkniety, naprawiony)."
         },
         {
           "id": "results-three-pairs",
@@ -1493,7 +1521,8 @@
           "ocena": "B",
           "co": "Trzynascie list roboczych „czym trzeba sie dzis zajac\", kazda z realnym licznikiem: siedem pod KPI (Brak wlasciciela · Zalegle obowiazki · Powtarzajace sie odchylenia · Nieskuteczne dzialania korygujace · Obciazenie wlascicieli · Pokrycie procesow · Rozklad wynikow) i szesc pod OKR (Nieaktualne check-iny · Cele o niskiej pewnosci · Otwarte prosby o wsparcie · Otwarte blokady · Eskalowane zestawy · Zdrowie zespolu). SPROSTOWANIE (01.09): wlasciciel widzial „tylko dwa przyciski w menu 2\" — bo Menu 2 to przelacznik ZRODLA (KPI/OKR), a tresc wybiera Menu 3. Zrzut, na ktory patrzyl, pokazywal najubozszy z trzynastu kubelkow (Brak wlasciciela ma z natury jedna kolumne). Zrzut PO pokazuje kubelek Obciazenie wlascicieli: trzy kolumny, prawdziwe nazwiska.",
           "naprawione": [
-            "2026-09-01: dorobione WEJSCIE — trasa /results/attention byla sierota, nic w aplikacji do niej nie prowadzilo (grep po RESULTS_ATTENTION i po literalnym adresie: zero odwolan poza definicja trasy i harnessem). Przycisk „Uwaga\" w powloce rejestrow Wynikow (ResultsVNextRegistryShell.tsx), za flaga attentionEntry (default OFF, czeka na odbior)."
+            "2026-09-01: dorobione WEJSCIE — trasa /results/attention byla sierota, nic w aplikacji do niej nie prowadzilo (grep po RESULTS_ATTENTION i po literalnym adresie: zero odwolan poza definicja trasy i harnessem). Przycisk „Uwaga\" w powloce rejestrow Wynikow (ResultsVNextRegistryShell.tsx), za flaga attentionEntry (default OFF, czeka na odbior).",
+            "01.09: potwierdzone zrzutem — przycisk „Uwaga” widoczny nad tabela w rejestrze KPI (ResultsVNextRegistryShell), prowadzi do tego ekranu (evidence/grafika/170-odrzucone-wykonanie/wejscie-uwaga-w-rejestrze__PO__light.png)."
           ],
           "wyjatki": [
             "Jednokolumnowa tabela w kubelku „Brak wlasciciela\" — sprawdzone, model serwera naprawde ma jedno pole",
@@ -1702,12 +1731,13 @@
           "co": "Tabela porownania z roznicami.",
           "naprawione": [
             "Angielska etykieta trybu",
-            "Dodana waluta z istniejacych danych"
+            "Dodana waluta z istniejacych danych",
+            "01.09: tabela porownania rozszerzona z waskiej wyśrodkowanej karty (~740 px) na pelna szerokosc dostepnego ekranu (~1364 px), zgodnie ze zgloszeniem wlasciciela „moze cala szerokosc dostepnego ekranu wykorzystajmy” — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/166-tabela-szerokosc/)."
           ],
           "wyjatki": [
             "Kody pozycji w kolumnie wymiarow — dane makietowe"
           ],
-          "gdzie": "Finanse → dowolny warsztat → panel porównania okresów — tabela porównania z różnicami."
+          "gdzie": "Finanse → dowolny warsztat → panel porównania okresów — tabela porównania z różnicami. Zrzuty naprawy: evidence/grafika/166-tabela-szerokosc/."
         },
         {
           "id": "finance-prediction-workspace",
@@ -1749,7 +1779,8 @@
             "Kolumna 'Podgląd wpływu' pokazywała surowe kody pól (REVENUE/COGS/OPEX/CAPEX/AR/INVENTORY/AP/DEPRECIATION/FIXED_ASSETS/LONG_TERM_DEBT/INTEREST_EXPENSE/TAX_EXPENSE) — teraz polskie etykiety z kodem w nawiasie, potwierdzone zrzutem 154-finanse-naprawa na obu motywach; tabela nie wyjeżdża poza kontener"
           ],
           "wyjatki": [
-            "Ujemna gotówka w scenie fundinggap poprawnie czerwona (semantyka krytyczna — alarm, nie ozdoba)."
+            "Ujemna gotówka w scenie fundinggap poprawnie czerwona (semantyka krytyczna — alarm, nie ozdoba).",
+            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane): „przyciski w menu tej karty sa kazdy inne, nie wyglada dobrze” + brak przycisku dodawania kolejnych zalozen. Na zrzucie kontrolnym z dzisiaj (evidence/grafika/171-pojedyncze/finance-baseline-workspace__DOWOD-braku-defektu__*) naglowek ma faktycznie rozne style przyciskow obok siebie (pigulka „v1 Wersja robocza”, dwie pigulki „NIEAKTUALNE”, dropdown „Wersja robocza”, czarny przycisk „Przelicz”) i nie widac przycisku dodawania zalozenia w widocznej czesci tabeli — plik nazwany „DOWOD-braku-defektu” sugeruje ze poprzednia runda uznala to za nie-defekt, ale wizualnie niespojnosc jest widoczna. Wymaga decyzji wlasciciela, nie automatycznego zamkniecia."
           ],
           "gdzie": "Finanse → zakładka „Analiza\" → baza porównania (założenia + wyliczenia) — punkt odniesienia, do którego porównuje się dalsze analizy. Adres pełny: ?screen=finance-baseline-workspace&view=assumptions|wyliczenia&scene=default|fundinggap&status=DRAFT|APPROVED|IN_REVIEW (widoki i sceny patrz komentarz nagłówkowy pliku)."
         },
@@ -1797,7 +1828,7 @@
           "id": "sheet-artifact",
           "nazwa": "Arkusz (podglad)",
           "ocena": "A",
-          "co": "Podglad arkusza kalkulacyjnego.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Podglad arkusza kalkulacyjnego.",
           "naprawione": [
             "Angielskie naglowki Workbook/Sheets"
           ],
@@ -1811,7 +1842,7 @@
             "excele-prawy-panel-standard",
             "excele-reopen-verify"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza — podgląd arkusza kalkulacyjnego."
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza — podgląd arkusza kalkulacyjnego. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "materialy-template-library-slice",
@@ -1871,12 +1902,14 @@
           "id": "deck-artifact",
           "nazwa": "Deck (szesc slajdow)",
           "ocena": "A",
-          "co": "Kreator decka wedlug kanonu artefaktow.",
-          "naprawione": [],
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: przycisk w AKCJACH zmienil etykiete z „Zapytaj Teresę” na „Zapytaj Teresę o tę prezentację” (spojnosc z initiative-record/notatnikiem) — potwierdzone zrzutem PRZED/PO; w obu wersjach nie bylo i nie ma osobnego okna czatu w panelu, wiec to tylko doprecyzowanie etykiety. Kreator decka wedlug kanonu artefaktow.",
+          "naprawione": [
+            "01.09: etykieta przycisku ujednolicona na „Zapytaj Teresę o tę prezentację” — potwierdzone zrzutem (evidence/grafika/169-teresa-produkt/ i 169-teresa-deck-legacy/)."
+          ],
           "wyjatki": [
             "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
           ],
-          "gdzie": "Materiały → „Nowy\" → Prezentacja → kreator decka — sześć slajdów wg kanonu artefaktów."
+          "gdzie": "Materiały → „Nowy\" → Prezentacja → kreator decka — sześć slajdów wg kanonu artefaktów. Zrzuty 01.09: evidence/grafika/169-teresa-produkt/, evidence/grafika/169-teresa-deck-legacy/."
         },
         {
           "id": "deck-quality-badge",
@@ -1894,7 +1927,7 @@
           "id": "document-artifact",
           "nazwa": "Dokument doradczy (pelny widok)",
           "ocena": "A",
-          "co": "Prawdziwy raport: szesc sekcji, pasek wskaznikow, tabela budzetu, wykres trendu z legenda, uczciwe oznaczenie poufnosci i zrodel.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Prawdziwy raport: szesc sekcji, pasek wskaznikow, tabela budzetu, wykres trendu z legenda, uczciwe oznaczenie poufnosci i zrodel.",
           "naprawione": [
             "Ekran w ogole sie nie renderowal — brak nawigacji w harnessie",
             "Angielskie etykiety w danych testowych"
@@ -1906,7 +1939,7 @@
             "document-studio-nowy-dokument-martwe-przyciski",
             "document-studio-save-as-template"
           ],
-          "gdzie": "Materiały → zakładka „Dokumenty\" → otwarcie dokumentu doradczego (pełny widok) — raport z sekcjami, paskiem wskaźników, tabelą budżetu i wykresem trendu."
+          "gdzie": "Materiały → zakładka „Dokumenty\" → otwarcie dokumentu doradczego (pełny widok) — raport z sekcjami, paskiem wskaźników, tabelą budżetu i wykresem trendu. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "excele-jeden-widok-materialy",
@@ -1952,7 +1985,7 @@
           "id": "excele-prawy-panel-standard",
           "nazwa": "Excel — prawy panel",
           "ocena": "A",
-          "co": "SPRAWDZONE na świeżym zrzucie 155-materialy-ocena (2026-08-31, oba motywy): arkusz 'Ocena opłacalności projektu (NPV/IRR)', nagłówek kolumny 'Założenie' (był 'Driver' po angielsku) obok kolumny 'Wartość'; przykładowy wiersz 'Nakład początkowy (inwestycja) — 500 000'. Prawy panel w całości po polsku: 'AKCJE' (Kopiuj link wewnętrzny, Zapytaj Teresę), 'WŁAŚCIWOŚCI', 'POWIĄZANIA', 'ŹRÓDŁA I ZAŁOŻENIA', 'KOMENTARZE', 'HISTORIA'.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. SPRAWDZONE na świeżym zrzucie 155-materialy-ocena (2026-08-31, oba motywy): arkusz 'Ocena opłacalności projektu (NPV/IRR)', nagłówek kolumny 'Założenie' (był 'Driver' po angielsku) obok kolumny 'Wartość'; przykładowy wiersz 'Nakład początkowy (inwestycja) — 500 000'. Prawy panel w całości po polsku: 'AKCJE' (Kopiuj link wewnętrzny, Zapytaj Teresę), 'WŁAŚCIWOŚCI', 'POWIĄZANIA', 'ŹRÓDŁA I ZAŁOŻENIA', 'KOMENTARZE', 'HISTORIA'.",
           "naprawione": [
             "Nagłówek kolumny 'Driver' → 'Założenie' naprawiony w realnym szablonie serwerowym (nie tylko w makiecie)."
           ],
@@ -1966,7 +1999,7 @@
             "excele-reopen-verify",
             "sheet-artifact"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza → prawy panel — szyna ikon (Akcje, Powiązania, Źródła, Rezultaty, Historia) zgodna z decyzją z 28.07 o jednym wspólnym wzorze panelu. Zrzuty: evidence/grafika/155-materialy-ocena/"
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza → prawy panel — szyna ikon (Akcje, Powiązania, Źródła, Rezultaty, Historia) zgodna z decyzją z 28.07 o jednym wspólnym wzorze panelu. Zrzuty: evidence/grafika/155-materialy-ocena/. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "excele-engine-reveal",
@@ -2130,12 +2163,14 @@
         {
           "id": "prezentacje-template-states",
           "nazwa": "Prezentacje — trzy stany szablonu",
-          "ocena": "A",
+          "ocena": "B",
           "co": "SPRAWDZONE — trzy stany sfotografowane osobno (podkatalogi loading/orphaned/forbidden), oba motywy: (1) ładowanie — 'Tworzenie prezentacji z szablonu…'; (2) wzorzec bez rekordu — 'Ten wzorzec nie ma już kanonicznego rekordu — nie ma z czego generować. Wybierz inny wzorzec w Bibliotece.' z przyciskiem 'Wróć do Biblioteki'; (3) brak dostępu — 'Nie masz dostępu do tego wzorca.' z tym samym przyciskiem. Wcześniej zarzut: widoczny tylko spinner niezależnie od stanu.",
           "naprawione": [
             "Trzy stany (ładowanie / wzorzec bez rekordu / brak dostępu) faktycznie renderują się osobno i są udokumentowane osobnymi zrzutami — wcześniej widoczny był tylko spinner."
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "SPRZECZNOSC (01.09): wlasciciel zglosil dzis o 05:31 „nie otwiera mi sie nic :(” dla tego ekranu — mimo ze ten wpis twierdzi „SPRAWDZONE” na podstawie zrzutu z 31.08 (evidence/grafika/155-materialy-ocena/). Brak jakiegokolwiek dzisiejszego zrzutu potwierdzajacego naprawe TEJ konkretnej skargi — wpis obnizony do B do czasu ponownej weryfikacji na zywym ekranie (nie tylko na starym zrzucie)."
+          ],
           "warianty": [
             "execution-export-prezentacja"
           ],
@@ -2259,7 +2294,8 @@
           "ocena": "A",
           "co": "SPRAWDZONE: ten sam arkusz NPV/IRR — kolumna 'Założenie' zamiast 'Driver', wiersze: 'Nakład początkowy (inwestycja) 500 000', 'Przepływ operacyjny brutto — rok 1 220 000', 'Wzrost przepływów % rocznie 0,06', 'Stopa dyskontowa (wymagana stopa zwrotu) 0,1', 'Wartość rezydualna (koniec horyzontu) 50 000', 'Stopa podatkowa 0,19'. Pasek narzędzi w pełni po polsku (Waluta, Procent, Pogrubienie, Wstaw/Usuń wiersz/kolumnę, Liczba, Format ogólny).",
           "naprawione": [
-            "Nagłówek kolumny 'Driver' → 'Założenie' w realnym, edytowalnym arkuszu produkcyjnym."
+            "Nagłówek kolumny 'Driver' → 'Założenie' w realnym, edytowalnym arkuszu produkcyjnym.",
+            "01.09: pasek narzedzi zmieniony ze slow („Waluta, Procent, Pogrubienie, Wstaw wiersz, Usun wiersz, Wstaw kolumne, Usun kolumne, Liczba”) na ikony ($, %, B, ikony wiersza/kolumny, #) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/)."
           ],
           "wyjatki": [
             "Mechanika 'Zadanie ukończone' obok '0/8 kroków' przy ponownym otwarciu zapisanego pliku — nie widoczna na tym zrzucie (inny przepływ), nie zweryfikowana w tej rundzie."
@@ -2273,7 +2309,7 @@
             "excele-reopen-verify",
             "sheet-artifact"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza z produkcyjnego szablonu (np. NPV/IRR) — realna, edytowalna siatka. Zrzuty: evidence/grafika/155-materialy-ocena/"
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza z produkcyjnego szablonu (np. NPV/IRR) — realna, edytowalna siatka. Zrzuty: evidence/grafika/155-materialy-ocena/. NIESPOJNOSC: sasiedni ekran „sheet-artifact” (podglad tego samego typu arkusza) nadal ma pasek ze slowami, nie ikonami — do ujednolicenia (zob. evidence/grafika/166-tabela-szerokosc/sheet-artifact__PO__light.png)."
         },
         {
           "id": "report-builder-library-template",
@@ -3098,11 +3134,15 @@
           "nazwa": "Kolejka uwagi",
           "ocena": "B",
           "co": "Kolejka uwagi.",
-          "naprawione": [],
-          "wyjatki": [
-            "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji."
+          "naprawione": [
+            "01.09: kolejka uwagi zmieniona z siatki 4 kart na tabele z filtrowalnymi kolumnami TYP i WAGA (zgodnie ze zgloszeniem wlasciciela „moze jakas tabela gdzie bedzie mozna filtrowac po typach”), etykiety wagi przetlumaczone (critical/warning/info -> KRYTYCZNA/OSTRZEZENIE/INFORMACYJNA) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/)."
           ],
-          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Kolejka uwagi”. Zrzuty: evidence/grafika/146-admin-command/."
+          "wyjatki": [
+            "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji.",
+            "Nowa tabela NIE ma widocznego linku/kebaba „Otworz ekran kanoniczny” per wiersz, ktory byl w starych kartach (PRZED) — mozliwa utrata nawigacji do ekranu zrodlowego; do sprawdzenia w zywej aplikacji, nie tylko na zrzucie.",
+            "„Ryzyka wymagajace przegladu” nadal pokazuje 0 identycznie jak PRZED naprawy tabeli — REALNY BUG (AdminCommandCenterPanel.tsx:106, zob. zgloszenie #22) prawdopodobnie wciaz nienaprawiony, tylko przeniesiony do nowego widoku."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Kolejka uwagi”. Zrzuty: evidence/grafika/146-admin-command/. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
         },
         {
           "id": "admin-command-cost-capacity",
@@ -3490,7 +3530,9 @@
           "naprawione": [
             "Cala paleta po angielsku mimo gotowych tlumaczen polskich — klucze byly, nikt ich nie wpial"
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "ZGLOSZENIE WLASCICIELA 01.09 (duza praca, poza zakresem tej fali): oczekuje przesuwalnych/ukladalnych klockow (jak flow w N8N) budowanych rowniez przez AI — obecny schemat tego nie robi. Zgloszone, swiadomie nie zrobione w tej turze."
+          ],
           "gdzie": "Moja praca → zakładka Agent → otwarcie planu agenta → sam schemat (canvas) — dwie ścieżki budowy schematu i paleta klocków."
         },
         {
@@ -3730,11 +3772,13 @@
           "nazwa": "Connectors",
           "ocena": "B",
           "co": "Konektory.",
-          "naprawione": [],
+          "naprawione": [
+            "01.09: dodano przelacznik „Kafle / Lista” nad „Stan konektorow” — widok Lista renderuje sie jako realna tabela (KONEKTOR/STATUS/SWIEZOSC/DOSTEP OAUTH/ACL/POWIAZANIE ZRODLA) — potwierdzone zrzutem, oba widoki (evidence/grafika/171-pojedyncze/)."
+          ],
           "wyjatki": [
             "Surowe enumy statusu w polskich zdaniach."
           ],
-          "gdzie": "Internal Tools / AI OS → „Connectors”. Zrzuty: evidence/grafika/146-aios/."
+          "gdzie": "Internal Tools / AI OS → „Connectors”. Zrzuty: evidence/grafika/146-aios/. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
         },
         {
           "id": "aios-agents",
