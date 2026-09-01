@@ -250,7 +250,25 @@ const AttentionQueueTable: React.FC<{ signals: AttentionSignal[] }> = ({ signals
       {
         id: 'title',
         label: t('admin.command.attention-queue.columns.title'),
-        render: (row) => <span className="font-medium text-c-text">{row.title}</span>,
+        /*
+         * Odbiór grafiki 174-domkniecie (2026-09-01) — ODZYSKANA NAWIGACJA.
+         * Wersja kartowa miała pod każdą kartą widoczny odnośnik „Otwórz ekran
+         * kanoniczny" ze strzałką. Przejście na `StandardTable` przeniosło samą
+         * nawigację do `onRowClick`, ale ZABRAŁO JEJ WIDOCZNOŚĆ: na zrzucie
+         * PRZED nie ma ani kebaba, ani strzałki, ani żadnego znaku, że wiersz
+         * dokądkolwiek prowadzi. Klucz `actions.openCanonical` został w i18n bez
+         * jednego wołacza. Strzałka wraca do komórki tytułu (sygnał „to jest
+         * skrót"), a nazwana akcja wraca do kebaba wiersza (blok 1 kanonu).
+         */
+        render: (row) => (
+          <span className="font-medium text-c-text">
+            {row.title}{' '}
+            <ArrowRight
+              className="inline h-3.5 w-3.5 shrink-0 align-[-2px] text-c-text-muted"
+              aria-hidden
+            />
+          </span>
+        ),
       },
       {
         id: 'severity',
@@ -304,6 +322,16 @@ const AttentionQueueTable: React.FC<{ signals: AttentionSignal[] }> = ({ signals
           columns={columns}
           data={rows}
           onRowClick={(row) => navigate(String(row.href))}
+          rowMenu={(row) => ({
+            primary: [
+              {
+                id: 'open-canonical',
+                label: t('admin.command.attention-queue.actions.openCanonical'),
+                icon: ArrowRight,
+                onClick: () => navigate(String(row.href)),
+              },
+            ],
+          })}
           empty={{
             title: t('admin.command.attention-queue.title'),
             description: t('admin.command.attention-queue.allSourcesError'),
