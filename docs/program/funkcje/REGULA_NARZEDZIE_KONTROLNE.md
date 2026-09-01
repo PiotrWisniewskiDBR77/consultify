@@ -198,3 +198,72 @@ Każdy pomiar kończący się zdaniem „nie znaleziono", „zero wystąpień", 
 tego samego polecenia na czymś znanym.
 
 **Bez tego wynik negatywny nie jest wynikiem.**
+
+---
+
+# Przegląd „bezpiecznika chroniącego najważniejszą regułę" — wynik DOBRY, i wzorzec do rozpowszechnienia
+
+Tor grafiki znalazł u siebie **pięć dziur na osiemnaście przejrzanych bezpieczników**,
+a najgroźniejsza była w tym, który **chroni zasadę „właściciel nigdy nie jest pierwszym
+testerem wizualnym"**: literówka w nazwie modułu dawała **`CZYSTO — można oddawać`
+przy ZERO sprawdzonych kartach**.
+
+> **Bramka pilnująca najważniejszej reguły była najłatwiejsza do uciszenia — bo nikt jej
+> nigdy nie uruchomił z błędnym parametrem.**
+
+Ich rekomendacja, przyjęta: **przejrzyj najpierw ten bezpiecznik, którego zielone światło
+ma największe konsekwencje** — nie najbardziej skomplikowany, nie najczęściej wołany.
+**U nich te zbiory się nie pokrywały.**
+
+## Nasz przegląd — wynik dobry, i to nie przypadkiem
+
+`scripts/check-list-canon.sh` chroni prawo, którego złamanie kosztowało program **krach
+12 lipca** (własne tabele zamiast kanonu). Uruchomiony z **pustym wejściem**:
+
+```
+⚠ check-list-canon: staging pusty — nie ma czego sprawdzić z diffa.
+  Przechodzę na PEŁNY skan repo (--all), żeby nie zameldować fałszywej zieleni.
+✓ ... (pełny skan repo (fallback z pustego stagingu): 171 plików; naruszeń 394, baseline 394)
+```
+
+**Nie „ostrzegam i przepuszczam". Nie „blokuję". Tylko: PRZECHODZĘ NA SZERSZY POMIAR.**
+Skrypt ma to nawet **opisane własnymi słowami w komunikacie** — *„żeby nie zameldować
+fałszywej zieleni"*.
+
+## ★ To jest trzecia, najlepsza odpowiedź na pytanie „co robisz, gdy nie możesz zmierzyć"
+
+Dotąd mieliśmy dwie: **blokuj** (zatrzymuje pracę — osobna szkoda) albo **ostrzeż i przepuść**
+(komunikat ginie wśród innych).
+
+**Trzecia: zmierz inaczej.**
+
+Ten sam wzorzec zastosowaliśmy dziś niezależnie w bramce spisu ekranów — gdy brakuje
+narzędzia do sprawdzenia składni, wchodzi **kontrola strukturalna bez zależności**, zamiast
+pomijać sprawdzenie. **Dwa niezależne dojścia do tej samej odpowiedzi.**
+
+> **Kolejność wyboru: (1) zmierz inaczej · (2) zatrzymaj · (3) ostrzeż i przepuść.**
+> Trzecia opcja jest dopuszczalna wyłącznie tam, gdzie zatrzymanie byłoby większą szkodą —
+> **i wtedy musi być zapisana jako DECYZJA z powodem, nie zostawiona jako brak.**
+
+## Granica, o której trzeba pamiętać po obu stronach
+Sformułowanie toru grafiki, przyjęte:
+
+> **Nadgorliwy bezpiecznik blokujący wszystkim pracę to osobna szkoda, nie mniejsza
+> od przepuszczającego. Wybór między „głośno i przepuść" a „zatrzymaj" zależy od tego,
+> czy ktoś ten komunikat przeczyta — a to zależy od tego, ile innych komunikatów obok
+> niego stoi.**
+
+**To jest realne u nas:** wyjście obu bramek kanonu widzę **przy każdym commicie**.
+Ostrzeżenie stałoby wśród nich i **przestałoby być widoczne po trzecim razie**.
+
+## Dwie dalsze drogi do tego samego kształtu — od toru grafiki, do sprawdzenia u nas
+1. **Tryb „aktualizuj pojedynczo" kasujący pamięć o długu.** Ich bramka parytetu przy
+   `--update --ekran=<id>` **nadpisywała całą linię bazową** wpisami jednego ekranu,
+   kasując dług ~40 pozostałych — **cicho, bo po operacji wszystko było zielone**,
+   a dokumentacja opisywała ten tryb jako zalecany.
+   **Do sprawdzenia u nas:** nasza podłoga liczebności podnosi się sama; **rośnie zawsze,
+   nigdy nie opada bez człowieka** — więc tej dziury nie ma, ale każdy przyszły tryb zapisu
+   linii bazowej musi przejść to samo pytanie.
+2. **Bajt zerowy w pliku.** Zwykłe przeszukiwanie **nie dopasowuje niczego po tym bajcie —
+   bez błędu, pusty wynik**. Trzecia droga do „nie ma naruszeń". Przy plikach generowanych
+   albo z danymi binarnymi trzeba wymusić traktowanie ich jako tekstu.
