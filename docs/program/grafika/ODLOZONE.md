@@ -302,6 +302,22 @@ ani jednego konsumenta w całym `src/`; `rcaSuggest` ma jednego — martwy
 przepuszcza przez pipeline dokładnie ten tekst, który człowiek już napisał —
 to governance, nie podpowiadanie przyczyn.
 
+**Decyzja nadzorcy/CTO (2026-09-01, nie właściciela) — rozbita na dwie części,
+bo silniki mają różny koszt odtworzenia:**
+- **automatyczne sugestie przyczyn źródłowych** (`deviationRcaSuggestService`
+  / `rca-suggest`) → **PÓŹNIEJ** (~1,5 dyżuru). Wymaga przeportowania silnika
+  na nowy model danych (`DeviationCaseDto`) — „wystarczy przycisk" to nie jest
+  prawda, to realna integracja.
+- **wykrywanie anomalii i prognoza** (`kpiAnomalyService`, `kpiForecastService`)
+  → **ODŁOŻONE** (~2 dyżury). Duży koszt budowy/utrzymania wobec małej
+  przewagi nad tym, co konsultant i tak zrobi sam patrząc na wykres.
+
+Kontekst wspólny dla tej decyzji i decyzji w sekcji 2. niżej: te funkcje stały
+się nieosiągalne przy wycofaniu starego huba Wyników 24.08 (commit
+`8df1cd413d`). Mechanika części z nich żyje na serwerze, ale stare i nowe
+narzędzie zapisują dane w dwóch niepołączonych miejscach — więc odzyskanie
+którejkolwiek z nich to nie jest „dorobienie drzwi", tylko budowa mostu.
+
 ### 2. Karta naprawcza (`ff_recoveryCard`) — **CZĘŚCIOWO**, cztery funkcje UTRACONE
 
 `RecoveryCardPanel.tsx` (2101 linii, nagłówek :1-16) prowadzi pełną pętlę
@@ -322,6 +338,24 @@ naprawczą jednej sprawy odchylenia. Następcą jest `KpiDeviationCaseSubview`
 | priorytet LOW…CRITICAL | `severity` warning/critical — to waga WYKRYCIA, nie priorytet planu | CZĘŚCIOWO |
 | kryteria skuteczności ustalane Z GÓRY | weryfikacja po fakcie (`rationale`) + polityka odpowiedzi KPI | CZĘŚCIOWO |
 
+**Decyzja nadzorcy/CTO (2026-09-01, nie właściciela) — per pozycja UTRACONA:**
+- **powiązanie działania naprawczego z Zadaniem** (`link-task`,
+  `taskLinkStatus`) → **ROBIMY** (~1 dyżur). Bez tego pętla naprawcza się
+  rwie: działanie korygujące nie trafia na niczyją listę zadań.
+- **typ działania natychmiastowe/trwałe** (IMMEDIATE/DURABLE) → **ROBIMY**
+  (~0,5 dyżuru). Tanie, a odróżnia gaszenie pożaru od naprawy przyczyny.
+- **eksperymenty** (utwórz/recenzuj/rozstrzygnij, werdykt + decyzja) →
+  **NIE WRACAJĄ**. To filozofia starego narzędzia; nowe prowadzi naprawę
+  prościej, a mieszanie dwóch podejść zaszkodziłoby produktowi.
+- **zależności i ryzyka** (listy na karcie) → **NIE WRACAJĄ**. Ta sama
+  przyczyna co eksperymenty.
+
+Kontekst (wspólny z decyzją w sekcji 1. wyżej): te funkcje stały się
+nieosiągalne przy wycofaniu starego huba Wyników 24.08 (commit
+`8df1cd413d`). Mechanika części z nich żyje na serwerze, ale stare i nowe
+narzędzie zapisują dane w dwóch niepołączonych miejscach — więc odzyskanie
+którejkolwiek z nich to nie jest „dorobienie drzwi", tylko budowa mostu.
+
 Punkty serwera dla wszystkich tych funkcji **żyją**
 (`v8/results.routes.ts:1885-2239`). Utracone jest wyłącznie **wejście**.
 
@@ -336,22 +370,25 @@ i konteksty**; „Kontrakt" jest PARTIAL — żaden `GET` nie zwraca wersji defi
 (nazwa, jednostka, geometria progu, status akceptacji), czyli sekcja `targets`
 starej szuflady nie ma pełnego pokrycia.
 
-### Co z tym zrobić — pytanie do właściciela
+### Co z tym zrobić — stan po decyzji nadzorcy/CTO (2026-09-01)
 
-**Nic z tego obszaru nie zostało w tym dyżurze zdjęte ani skasowane**, zgodnie
-z zasadą „ekranu nie zdejmuje się z drogi bez zbadania, co za nim stoi".
+**Nic z tego obszaru nie zostało w tym dyżurze zdjęte, skasowane ani
+zaimplementowane** — decyzje niżej rozstrzygają KIERUNEK, nie wykonanie.
 Ale sam `results-three-pairs` zszedł do oceny `D`, więc martwy hub przestał być
 widoczny w rejestrze odbioru — a razem z nim przestały być widoczne te trzy
 sprawy. Dlatego są tutaj, wypisane.
 
-Do rozstrzygnięcia, per pozycja:
-1. **Diagnostyka odchyleń** — dobudować wejście w nowym narzędziu KPI (silniki
-   gotowe, trzeba wołacza) czy uznać za świadomie porzuconą?
-2. **Cztery utracone funkcje karty naprawczej** (Zadania, eksperymenty,
-   zależności/ryzyka, typ działania) — przenieść do nowej sprawy odchylenia
-   czy uznać za nadmiarowe?
-3. **Historia/Rodowód wskaźnika** — to brak TRAS serwera, nie brak ekranu;
-   osobna praca po stronie `server/`.
+Stan per pozycja:
+1. **Diagnostyka odchyleń** — **ROZSTRZYGNIĘTE** (patrz decyzja w sekcji 1.
+   wyżej): automatyczne sugestie przyczyn źródłowych → PÓŹNIEJ; wykrywanie
+   anomalii i prognoza → ODŁOŻONE.
+2. **Cztery utracone funkcje karty naprawczej** — **ROZSTRZYGNIĘTE** (patrz
+   decyzja w sekcji 2. wyżej): powiązanie z Zadaniem i typ działania → ROBIMY;
+   eksperymenty i zależności/ryzyka → NIE WRACAJĄ.
+3. **Historia/Rodowód wskaźnika** — **WCIĄŻ OTWARTE**. To brak TRAS serwera,
+   nie brak ekranu; osobna praca po stronie `server/`.
 
-Dopóki nie ma decyzji: `ResultsHub.tsx`, `KPITimeSeriesDrawer.tsx`,
-`RecoveryCardPanel.tsx` i trzy silniki serwera **zostają nietknięte**.
+Implementacja pozycji oznaczonych ROBIMY/PÓŹNIEJ/ODŁOŻONE nie została w tym
+dyżurze rozpoczęta: `ResultsHub.tsx`, `KPITimeSeriesDrawer.tsx`,
+`RecoveryCardPanel.tsx` i trzy silniki serwera **zostają nietknięte**, dopóki
+któryś z tych kierunków nie trafi do partii roboczej.
