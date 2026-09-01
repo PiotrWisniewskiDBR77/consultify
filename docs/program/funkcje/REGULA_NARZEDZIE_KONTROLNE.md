@@ -101,3 +101,53 @@ szerokości panelu okazały się **piętnastoma**; dwa paski przyrządu w kadrze
    **zgłoszone punktowo, obszar NIEPRZEMIECIONY.** To jest dokładnie ten kształt: brakująca
    wartość **renderuje się cicho**, bez błędu i bez czerwieni, więc **żaden test tego nie łapie**.
    Ta sama rodzina co dwie z trzech przyczyn zer na ekranie polityk AI. **Przemiatanie zlecone.**
+
+---
+
+# PIĄTA REGUŁA — przegląd wszystkich bezpieczników jednym pytaniem (1.09, od toru grafiki)
+
+> **Co robi ten bezpiecznik, gdy NIE MOŻE wykonać pomiaru?**
+> **Jeśli odpowiedź brzmi „przechodzi dalej" — to jest ta sama dziura, niezależnie od tego,
+> czego pilnuje.**
+
+## Skąd ta reguła
+Bramka spisu ekranów opierała kontrolę składni **wyłącznie na jednym narzędziu**. W katalogu
+bez zainstalowanych pakietów pisała `• niedostepny — pominieto sprawdzenie` **i kończyła
+z wynikiem pozytywnym**. Przepuściła zepsuty plik **dwa razy tego samego dnia**.
+
+**Nadzorca przeczytał „pominięto sprawdzenie" jako „sprawdzenie przeszło".**
+
+Warunek, który przy kontroli par zrzutów uznaliśmy za **jedyną własność odróżniającą
+bezpiecznik od ozdoby** — *brak pomiaru nie jest wynikiem pozytywnym* — **nie był zastosowany
+do reszty narzędzi.** Nikt tego nie sprawdził, bo każde narzędzie oceniano osobno.
+
+## Przegląd własnych bezpieczników — wykonany, trzy wyniki
+
+| Bezpiecznik | Gdy nie może zmierzyć | Werdykt |
+| --- | --- | --- |
+| Bramka spisu ekranów | **przechodziła** → naprawione: kontrola strukturalna **bez zależności**, chodzi zawsze | **BYŁA DZIURAWA** |
+| Średnia jasność | **rzuca wyjątkiem** przy nieczytelnym pliku — głośno, nie da się przeoczyć | **POPRAWNY** |
+| Kontrola pary zrzutów | brak pomiaru → **dopisuje powód → wynik negatywny** | **POPRAWNY** |
+
+## ★ Ale ta sama dziura znalazła się o PIĘTRO WYŻEJ — i tam nadal jest
+Kontrola pary zrzutów odmawia przejścia przy braku pomiaru **tylko wtedy, gdy wołający
+o ten pomiar poprosi**. Parametr `requiresResultMarker` ma **wartość domyślną `false`**.
+
+**Czyli wołający, który go po prostu nie poda — nie dostanie ani kontroli, ani ostrzeżenia.
+Dostanie zielone.**
+
+Bezpiecznik jest poprawny; **jego wartość domyślna nie jest.** To jest ta sama choroba
+przeniesiona o warstwę wyżej: **nie „co robi, gdy nie może zmierzyć", tylko „co robi,
+gdy nikt nie kazał mu mierzyć".**
+
+Dziś to nie boli — **oba** istniejące wywołania podają ten parametr. Ale **następne
+wywołanie napisze ktoś inny**, i cisza będzie jego wynikiem domyślnym.
+
+**Do zrobienia:** odwrócić wartość domyślną — wymagać pomiaru, a **pominięcie kontroli
+zrobić jawnym i nazwanym** (osobny parametr „świadomie bez markera, powód: …").
+**Domyślna cisza jest błędem projektowym, nawet gdy dziś nikt z niej nie korzysta.**
+
+## Reguła ogólna, która z tego wynika
+> **Sprawdź nie tylko, co narzędzie robi przy braku pomiaru — ale też, co robi,
+> gdy nikt go o pomiar nie poprosił. Wartość domyślna bezpiecznika to też zachowanie
+> bezpiecznika.**

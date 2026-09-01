@@ -466,9 +466,13 @@ export const AssessmentLibraryTab: React.FC = () => {
         empty={{
           icon: LibraryIcon,
           title: isPolish ? 'Brak dostępnych metodyk oceny' : 'No assessment frameworks available',
+          // Stan PUSTY, nie stan bledu. Oryginal (obie wersje jezykowe) mowil
+          // "nie udalo sie wczytac" w bloku opisujacym pustke — czyli komunikat
+          // o awarii tam, gdzie awarii nie ma. Uzgodnione z torem grafiki 2026-09-01.
+          // Osobny stan bledu wczytywania to zadanie na osobny dyzur.
           description: isPolish
-            ? 'Katalog metodyk nie zawiera obecnie żadnych pozycji.'
-            : 'The methodology catalog currently has no entries.',
+            ? 'Katalog metodyk jest pusty.'
+            : 'The methodology catalog is empty.',
         }}
       />
       </div>
