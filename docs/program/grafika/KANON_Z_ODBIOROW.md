@@ -298,4 +298,16 @@ mówił wprost, dlaczego zapis jest wstrzymany, czego brakuje i co odblokuje wyn
 
 Na pytanie nadzorcy (rekomendacja: przetłumaczyć), właściciel odpowiedział: **„NorthStar — zostaje."**
 
-Dataset demo modułu Wywiad (`src/components/Interview/interviewDemoData.ts`, ~3600 linii, wnioski „NorthStar Digital Readiness") **pozostaje po angielsku**. Rozszerza to granicę językową z 31.08: obok metodyki także **treść danych demonstracyjnych** nie podlega tłumaczeniu. Zgłoszenie „treść wniosku/sesji demo po angielsku" NIE jest defektem — defektem pozostaje wyłącznie angielski INTERFEJS (przyciski, etykiety, komunikaty). Ekrany `insight-artifact` i pokrewne oceniamy z tym wyjątkiem nazwanym, nie obniżamy im oceny za język treści demo.
+Dataset demo modułu Wywiad (`src/components/Interview/interviewDemoData.ts`, ~3600 linii, wnioski „NorthStar Digital Readiness`) **pozostaje po angielsku**. Rozszerza to granicę językową z 31.08: obok metodyki także **treść danych demonstracyjnych** nie podlega tłumaczeniu. Zgłoszenie „treść wniosku/sesji demo po angielsku" NIE jest defektem — defektem pozostaje wyłącznie angielski INTERFEJS (przyciski, etykiety, komunikaty). Ekrany `insight-artifact` i pokrewne oceniamy z tym wyjątkiem nazwanym, nie obniżamy im oceny za język treści demo.
+
+---
+
+## 2026-09-01 — macierz DRD w raporcie z oceny ZAAKCEPTOWANA
+
+Właściciel na pytanie o slajd macierzy: **„tak to jest super"**.
+
+**Co zostało przyjęte:** macierz z edytora oceny (`DRDMatrixGrid` wyeksportowany z `DRDAssessmentEditor.tsx`, opakowany w `DRDMatrixReadOnly.tsx`) jako jedyne źródło macierzy w prezentacji raportu i w rozdziałach osi dokumentu. Poprzedni komponent (`AreaMatrixTable`) — odrzucony przez właściciela 30.08 — został z tej ścieżki usunięty.
+
+**★ Powtarzalna treść w wierszu poziomu NIE JEST defektem.** Zapytany wprost, czy `ERP` we wszystkich dziewięciu obszarach na poziomie 6 i `MES` w sześciu z dziewięciu na poziomie 5 to błąd filtra skrótów, właściciel potwierdził, że tak ma być. To systemy obejmujące całą firmę, więc powtarzają się w obszarach — w odróżnieniu od poziomów niższych i wyższych, gdzie treści są zróżnicowane (`CMMS`, `WMS`, `Machine Vision`, `RPA`, `NLP`). **Nie zgłaszać tego jako defektu i nie „naprawiać".**
+
+**Utrzymane cechy macierzy:** wiersze = poziomy (najwyższy u góry), kolumny = obszary, dolny pasek `AREA` z chipami `AS`/`TO`, wypełnienie kumulatywne (schodkowe — poziom 4 oznacza wypełnione 1–4), liczba poziomów per oś z metodyki (7/5/5/7/6/6/5), nieujednolicona. Angielskie nazwy poziomów i technologii zostają (metodyka).
