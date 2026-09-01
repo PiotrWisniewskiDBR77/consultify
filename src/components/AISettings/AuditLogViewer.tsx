@@ -134,9 +134,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
   const getLevelColor = (lvl: string) => {
     switch (lvl) {
       case 'superadmin':
-        return 'text-danger-400 bg-danger-500/10';
+        return 'text-c-danger bg-c-danger/10';
       case 'admin':
-        return 'text-amber-400 bg-amber-500/10';
+        return 'text-c-warning bg-c-warning/10';
       case 'user':
         return 'text-c-accent bg-c-accent-soft';
       default:
@@ -171,7 +171,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <History className="w-5 h-5 text-c-accent" />
-          <h3 className="font-semibold text-white">Settings Audit Log</h3>
+          <h3 className="font-semibold text-c-text">Settings Audit Log</h3>
           <span className="text-xs text-c-text-muted">({filteredEntries.length} entries)</span>
         </div>
 
@@ -179,7 +179,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           {showExport && (
             <button
               onClick={exportToCSV}
-              className="p-2 text-c-text-secondary hover:text-white transition-colors"
+              className="p-2 text-c-text-secondary hover:text-c-text transition-colors"
               title="Export CSV"
             >
               <Download className="w-4 h-4" />
@@ -188,7 +188,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           <button
             onClick={fetchAuditLog}
             disabled={loading}
-            className="p-2 text-c-text-secondary hover:text-white transition-colors"
+            className="p-2 text-c-text-secondary hover:text-c-text transition-colors"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -201,7 +201,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                 ${
                                   showFilterPanel
                                     ? 'bg-c-accent-soft text-c-accent'
-                                    : 'text-c-text-secondary hover:text-white'
+                                    : 'text-c-text-secondary hover:text-c-text'
                                 }
                             `}
             >
@@ -232,14 +232,14 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   className="
                                         w-full pl-9 pr-4 py-2 rounded-lg
                                         bg-c-surface border border-c-border-strong
-                                        text-white placeholder-c-text-muted
+                                        text-c-text placeholder-c-text-muted
                                         focus:outline-none focus:border-c-focus-solid
                                     "
                 />
                 {filterSearch && (
                   <button
                     onClick={() => setFilterSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -254,7 +254,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   className="
                                         px-3 py-2 rounded-lg
                                         bg-c-surface border border-c-border-strong
-                                        text-white
+                                        text-c-text
                                         focus:outline-none focus:border-c-focus-solid
                                     "
                 >
@@ -319,7 +319,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   >
                     {entry.level}
                   </span>
-                  <span className="text-white font-medium">{entry.settingKey}</span>
+                  <span className="text-c-text font-medium">{entry.settingKey}</span>
                 </div>
 
                 {/* Value change */}

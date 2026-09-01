@@ -162,8 +162,8 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
             <div className="flex items-center gap-2 text-sm">
               {isDirty ? (
                 <>
-                  <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                  <span className="text-amber-400">
+                  <span className="w-2 h-2 bg-c-warning rounded-full animate-pulse" />
+                  <span className="text-c-warning">
                     {t('settings.unsavedChanges', 'Unsaved changes')}
                   </span>
                 </>
