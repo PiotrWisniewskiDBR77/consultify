@@ -1264,6 +1264,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
         <FilterableTable
           canvasClassName="p-0"
           persistKey="partner.clients.organizations"
+          minTableWidth="auto"
           columns={[
             {
               id: 'name',
