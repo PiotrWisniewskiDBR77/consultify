@@ -2451,8 +2451,12 @@
           "nazwa": "Biblioteka audytow",
           "ocena": "A",
           "co": "Weryfikacja i status publikacji.",
-          "naprawione": [],
-          "wyjatki": [],
+          "naprawione": [
+            "2026-09-01: GET /audits/programs mial 3 pola z rozjazdem front/serwer (applicableCriteria/criteriaTotal, concludedCriteria/criteriaConcluded, openFindings/findingsOpen) — kolumny „Postęp\"/„Ustalenia otwarte\" w zakładce „Sesje\" pokazywaly bare „/\" i pustke. Dodano warstwe mapujaca w listPrograms() (auditsMethodApi.ts, wzorem getProgramCoverage()), poprawiono mock harnessu i test kontraktowy, ktore fabrykowaly dane w ksztalcie klienta zamiast serwera (dlatego defekt nie byl widoczny na testach ani na zrzucie)."
+          ],
+          "wyjatki": [
+            "OCENA A DOTYCZY WYLACZNIE ZAKLADKI „BIBLIOTEKA\" — zakladka „Sesje\" (AuditProcessesTab, ?tab=processes) NIGDY nie byla sfotografowana ani obejrzana przez wlasciciela w zadnej turze odbioru udokumentowanej w evidence/grafika/ do 2026-09-01. Defekt (patrz „naprawione\") zostal zmierzony i naprawiony 2026-09-01, dowod: evidence/grafika/190-audyty-sesje/ (PRZED/PO, light+dark). DO PONOWNEGO OBEJRZENIA przez wlasciciela: zakladka „Sesje\" nie ma jeszcze wlasnej oceny — dzisiejsza „A\" nie moze byc czytana jako pokrywajaca ten widok."
+          ],
           "gdzie": "Audyty → zakładka „Biblioteka audytów\" — weryfikacja metodyk i status publikacji."
         },
         {
