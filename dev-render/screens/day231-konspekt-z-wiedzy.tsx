@@ -3,6 +3,19 @@ import React, { useState } from 'react';
 import { OutlineStep } from '../../src/components/Presentations/wizard/OutlineStep';
 import type { OutlineItem } from '../../src/components/Presentations/wizard/types';
 
+// Rusztowanie dowodowe (NIE ekran produktu — patrz ODBIOR_231.md).
+//
+// Status po FIX-2 (server/src/services/presentationKnowledgeOutlineService.ts):
+// `filterOutlineSourcesByEvidence` dopasowuje teraz `zrodla[].etykieta`/`id`
+// do `documentTitle` z realnego wyniku `executeKBSearch` (normalizacja NFKC +
+// whitespace + case). Chipy poniżej pokazują więc kształt, jaki produkt
+// faktycznie umie dziś wyprodukować (etykieta = tytuł dokumentu z bazy
+// wiedzy); PRZED FIX-2 był to kształt strukturalnie niemożliwy (filtr
+// wymagał `documentId`, którego `executeKBSearch` nigdy nie zwraca — żadne
+// źródło nie mogło przejść). Nadal jest to STATYCZNY fixture harnessu, nie
+// dowód, że model sam wywoła `search_knowledge_base` z właściwym zasięgiem
+// (to zostaje otwarte jako R5c, budżet właściciela) — nie promuj tego ekranu
+// do produktu.
 const fixture: OutlineItem[] = [
   {
     intent: 'cover',
