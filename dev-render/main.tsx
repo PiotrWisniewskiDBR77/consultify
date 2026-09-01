@@ -437,6 +437,7 @@ const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel
 const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui-audit'));
 const AudytyPiecPowierzchniScreen = React.lazy(() => import('./screens/audyty-piec-powierzchni'));
 const OrgIdentityOperatingScreen = React.lazy(() => import('./screens/org-identity-operating'));
+const Day236OrganizacjaScreen = React.lazy(() => import('./screens/day236-organizacja'));
 const StagingFixesInitiativesI18nScreen = React.lazy(
   () => import('./screens/staging-fixes-initiatives-i18n')
 );
@@ -556,6 +557,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'M01 Organizacja — REALNY <OrganizationView> z flagą orgRedesignV1 ON: ekran „Tożsamość i model działania" (11 ekranów w nawigacji, Menu 2/3 ze StandardModuleBar, prawy panel stanu). Dodaj &ff_org_redesign_v1=1 w URL.',
     render: () => <OrgIdentityOperatingScreen />,
+  },
+  'day236-organizacja': {
+    label:
+      'DAY 236 Organizacja — REALNY <OrganizationView>, komplet 11 tras redesignu. &orgRoute=profile/identity-scale|profile/position-direction|goals/strategic-intent|goals/stakeholder-expectations|challenges/declared-challenges|challenges/root-causes|strategy/risks-opportunities|strategy/executive-brief|sources/claims-sources|sources/knowledge-graph|readiness/summary; &redesign=off dla legacy; &persona=member dla ograniczonej persony.',
+    render: () => <Day236OrganizacjaScreen />,
   },
   'staging-fixes-initiatives-i18n': {
     label:
