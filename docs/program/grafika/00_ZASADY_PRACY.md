@@ -504,3 +504,14 @@ klamrę zamykającą i zdublowało klucz ekranu — cały harness nie wstawał n
 u autora scalenia działał. U nas ten sam plik dwukrotnie wyglądał jak „ekran się nie renderuje", a
 przy przejęciu bezpiecznika okazało się, że plik ma w tej chwili realny zdublowany klucz
 (`document-studio-blocks-i18n`, linie 1546 i 1559) — dowód, że defekt nie jest teoretyczny.
+
+## ★★ REGUŁA NR 19 — zrzut ekranu, który coś liczy, czeka na WYNIK, nie na czas (2026-09-01)
+
+Ekran, który po wejściu albo po kliknięciu dociąga/oblicza wynik (wykres, histogram, policzony
+raport), zrzucaj przez `--wynik-selektor=<css>` (`scripts/dev/grafika-zrzuty.mjs`), nie przez sam
+`--osiad`. Para light/dark musi pokazywać TEN SAM stan programu — obecność wyniku w DOM w obu
+wariantach w chwili zrzutu, sprawdzoną `checkScreenshotPairState`.
+
+**Powód:** stały czas to loteria — odbiór dyżuru 233 zmierzył parę, w której light zdążył pokazać
+sam formularz, a dark już policzony wynik (KSZTAŁT 19), a stary bezpiecznik samej jasności to
+przepuszczał tym łatwiej, im większy był defekt.

@@ -25,6 +25,9 @@ import path from 'path';
 
 import { chromium } from 'playwright';
 
+import { checkScreenshotPairState } from './lib/checkScreenshotPairState.mjs';
+import { meanLuma } from './lib/meanLuma.mjs';
+
 const arg = (n, d) => {
   const m = process.argv.find((a) => a.startsWith(`--${n}=`));
   return m ? m.split('=').slice(1).join('=') : d;
@@ -115,6 +118,44 @@ const KLAWISZE = arg('klawisze', '')
  * dokładnie jak defekt produktu.
  */
 const KLIK = arg('klik', '').split(',').map((s) => s.trim()).filter(Boolean);
+/**
+ * `--wynik-selektor=<css>` — OPCJONALNY. Kilka selektorów po przecinku = WSZYSTKIE
+ * muszą być w DOM (AND), jak w `waitFor` z day233.
+ *
+ * POWÓD ISTNIENIA (przejęcie bezpiecznika 2026-09-01, KSZTAŁT 19 —
+ * docs/program/funkcje/KSZTALT_19_PARA_ZGODNA_ROZNE_STANY.md): narzędzie
+ * czekało wyłącznie stały czas (`OSIAD`) i potem robiło zrzut — loteria.
+ * Odbiór dyżuru 233 (Finanse) zmierzył, do czego to prowadzi: para
+ * light/dark POKAZAŁA DWA RÓŻNE STANY programu (light=sam formularz,
+ * dark=policzony wynik), a stary bezpiecznik jasności (próg 150) to
+ * przepuścił TYM ŁATWIEJ, im większy był defekt (różnica jasności > 200).
+ * Wzorzec naprawy: `scripts/dev/day233-finanse-panele-zrzuty-jasne.mjs`.
+ *
+ * Gdy podany:
+ *  1) PO interakcjach (`--klawisze`/`--klik`/`--przewin`) narzędzie czeka na
+ *     ten selektor (`waitForSelector`, `state:'attached'`) zamiast polegać
+ *     wyłącznie na stałym `OSIAD` — bo wynik często pojawia się DOPIERO po
+ *     kliknięciu „policz" (AutoRun bez klika, jak w day233, jest wyjątkiem,
+ *     nie regułą — dlatego czekanie na wynik siedzi PO `--klik`, nie zamiast
+ *     początkowego, krótkiego osiadnięcia startowego).
+ *  2) Po zrzucie narzędzie odczytuje przez `page.evaluate`, czy selektor(y)
+ *     są w DOM, i zapisuje to w ZBIORCZYM pliku wyników obok zrzutów
+ *     (`_wynik-kontrola__<FAZA>.json` w tym samym katalogu co PNG-i) —
+ *     wybrane zamiast sidecar-per-PNG, bo katalog `evidence/grafika/*`
+ *     bywa dziesiątkami plików na partię i jeden plik do przejrzenia/grep
+ *     jest czytelniejszy niż dziesiątki `.json` obok każdego `.png`.
+ *  3) Gdy dla danego ekranu powstanie PARA jasny+ciemny, narzędzie woła
+ *     `checkScreenshotPairState` (jasność RÓWNOCZEŚNIE z obecnością wyniku
+ *     w DOM) i GŁOŚNO zgłasza parę, która nie przechodzi (kod wyjścia 1).
+ *
+ * Bez tego parametru: DOKŁADNIE stare zachowanie (zgodność wsteczna) — brak
+ * jakiejkolwiek kontroli stanu, sam `OSIAD` jak dotąd. „Brak pomiaru nie jest
+ * wynikiem pozytywnym" — dlatego kontrola stanu jest tu OPT-IN, nie
+ * domyślnie włączona z cichym `true`, żeby dziesiątki istniejących wywołań
+ * (`scripts/dev/*.sh`, instrukcje) nie zaczęły nagle padać na ekranach, dla
+ * których nikt nie podał selektora wyniku.
+ */
+const WYNIK_SELEKTOR = arg('wynik-selektor', '').split(',').map((s) => s.trim()).filter(Boolean);
 
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
@@ -130,6 +171,10 @@ fs.mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
 const wyniki = [];
+// ekran → { light: {hasResultMarker, obrazJasnosc}, dark: {...} } — tylko
+// gdy --wynik-selektor podany (patrz komentarz przy WYNIK_SELEKTOR wyżej).
+const paryZapis = new Map();
+const wszystkiePary = [];
 
 for (const ekran of EKRANY) {
   for (const motyw of MOTYWY) {
@@ -144,6 +189,7 @@ for (const ekran of EKRANY) {
     const bledy = [];
     const przewinBrak = [];
     const klikBrak = [];
+    const wynikBrak = [];
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
     });
@@ -171,7 +217,16 @@ for (const ekran of EKRANY) {
     const plik = path.join(OUT, `${ekran}__${FAZA}__${motyw}.png`);
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-      await page.waitForTimeout(OSIAD);
+      if (WYNIK_SELEKTOR.length === 0) {
+        // Stare zachowanie, bez zmian (zgodność wsteczna) — patrz komentarz
+        // przy WYNIK_SELEKTOR.
+        await page.waitForTimeout(OSIAD);
+      } else {
+        // Krótkie osiadnięcie startowe — tylko żeby --klik/--przewin miały
+        // czego szukać. Właściwe czekanie NA WYNIK jest PO interakcjach
+        // (patrz niżej), bo wynik często wymaga kliknięcia „policz".
+        await page.waitForTimeout(300);
+      }
       for (const k of KLAWISZE) {
         await page.keyboard.press(k);
         await page.waitForTimeout(120);
@@ -197,6 +252,20 @@ for (const ekran of EKRANY) {
         if (!trafiony) przewinBrak.push(sel);
       }
       if (PRZEWIN.length > 0) await page.waitForTimeout(300);
+      if (WYNIK_SELEKTOR.length > 0) {
+        // Czekaj NA WYNIK zamiast wyłącznie na czas — rdzeń tego bezpiecznika.
+        // Selektor, którego nie ma, jest RAPORTOWANY (`wynik: BRAK`), nie
+        // wywala skryptu — chcemy zrzut nawet gdy wynik się nie pojawił,
+        // żeby było co ocenić i o czym krzyczeć w kontroli pary niżej.
+        for (const sel of WYNIK_SELEKTOR) {
+          await page
+            .waitForSelector(sel, { timeout: 20000, state: 'attached' })
+            .catch(() => wynikBrak.push(sel));
+        }
+        // Domalowanie po dotarciu węzła wyniku (wykresy przez ResizeObserver)
+        // — ten sam wzorzec co day233 (linia ~133).
+        await page.waitForTimeout(300);
+      }
       // Chrome harnessu wycina `uwagi=0` w adresie (patrz komentarz wyżej).
       // Ta reguła zostaje jako PAS BEZPIECZEŃSTWA dla ekranów, które oznaczają
       // własne elementy harnessu atrybutem `data-dev-render-chrome` — robi tak
@@ -209,6 +278,22 @@ for (const ekran of EKRANY) {
         szer: document.documentElement.scrollWidth,
         wys: document.documentElement.scrollHeight,
       }));
+      // Kontrola stanu (opcjonalna) — odczytaj PRAWDĘ z DOM w chwili zrzutu,
+      // nie z tego, czy `waitForSelector` się powiódł (te dwie rzeczy mogą się
+      // różnić: np. element dojdzie tuż PO timeoucie waitFor, ale ZANIM
+      // zrobiliśmy zrzut — wtedy evaluate go złapie, mimo wpisu w wynikBrak).
+      let hasResultMarker = null;
+      let obrazJasnosc = null;
+      if (WYNIK_SELEKTOR.length > 0) {
+        hasResultMarker = await page.evaluate(
+          (sels) => sels.every((s) => document.querySelector(s) !== null),
+          WYNIK_SELEKTOR
+        );
+        obrazJasnosc = await meanLuma(plik);
+        const zapis = paryZapis.get(ekran) || {};
+        zapis[motyw] = { hasResultMarker, obrazJasnosc };
+        paryZapis.set(ekran, zapis);
+      }
       wyniki.push({
         ekran,
         motyw,
@@ -216,15 +301,39 @@ for (const ekran of EKRANY) {
         szer,
         wys,
         bledy: bledy.length,
+        wynikSelektor: WYNIK_SELEKTOR.length > 0 ? WYNIK_SELEKTOR : undefined,
+        hasResultMarker,
+        obrazJasnosc,
         status: [
           klikBrak.length > 0 ? `klik BRAK: ${klikBrak.join(' ')}` : '',
           przewinBrak.length > 0 ? `przewin BRAK: ${przewinBrak.join(' ')}` : '',
+          wynikBrak.length > 0 ? `wynik BRAK: ${wynikBrak.join(' ')}` : '',
         ].filter(Boolean).join(' | ') || 'OK',
       });
     } catch (e) {
       wyniki.push({ ekran, motyw, plik: '—', szer: 0, wys: 0, bledy: bledy.length, status: `BŁĄD: ${e.message.slice(0, 80)}` });
     }
     await context.close();
+  }
+  // Para dla tego ekranu jest kompletna dopiero teraz (po pętli motywów) —
+  // sprawdzaj TU, nie w środku pętli motywów wyżej.
+  if (WYNIK_SELEKTOR.length > 0) {
+    const zapis = paryZapis.get(ekran);
+    if (zapis && zapis.light && zapis.dark) {
+      const werdykt = checkScreenshotPairState({
+        pairName: ekran,
+        lightMeanLuma: zapis.light.obrazJasnosc,
+        darkMeanLuma: zapis.dark.obrazJasnosc,
+        requiresResultMarker: true,
+        lightHasResultMarker: zapis.light.hasResultMarker,
+        darkHasResultMarker: zapis.dark.hasResultMarker,
+      });
+      wszystkiePary.push({ ekran, ok: werdykt.ok, reasons: werdykt.reasons });
+      if (!werdykt.ok) {
+        console.log(`\n★★★ PARA NIE PRZESZŁA KONTROLI STANU: ${ekran} ★★★`);
+        for (const powod of werdykt.reasons) console.log(`  ${powod}`);
+      }
+    }
   }
 }
 
@@ -241,3 +350,20 @@ for (const w of wyniki) {
 const zle = wyniki.filter((w) => w.status !== 'OK').length;
 console.log(`\n${wyniki.length - zle}/${wyniki.length} zrzutów wykonanych.`);
 if (zle > 0) process.exitCode = 1;
+
+if (WYNIK_SELEKTOR.length > 0) {
+  // Zbiorczy plik obok zrzutów (nie sidecar-per-PNG) — patrz uzasadnienie
+  // przy WYNIK_SELEKTOR na górze pliku.
+  const plikWynikow = path.join(OUT, `_wynik-kontrola__${FAZA}.json`);
+  fs.writeFileSync(
+    plikWynikow,
+    JSON.stringify({ wynikSelektor: WYNIK_SELEKTOR, wyniki, pary: wszystkiePary }, null, 2)
+  );
+  const zlePary = wszystkiePary.filter((p) => !p.ok).length;
+  console.log(`Zbiorczy plik kontroli stanu → ${plikWynikow}`);
+  console.log(`Kontrola stanu (--wynik-selektor): ${wszystkiePary.length - zlePary}/${wszystkiePary.length} par przeszło.`);
+  if (zlePary > 0) {
+    console.log(`★ ${zlePary} PARA(Y) NIE PRZESZŁY KONTROLI STANU (patrz wyżej) — kod wyjścia 1.`);
+    process.exitCode = 1;
+  }
+}
