@@ -723,14 +723,17 @@
         {
           "id": "tools-swot-live",
           "nazwa": "Dynamiczny SWOT — pole na zywo",
-          "ocena": "A",
+          "ocena": "C",
           "co": "Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.",
           "naprawione": [
             "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
             "AI-PROPOSED/RETHINKING surowe wartosci — tlumaczone (SwotLiveArtifact.tsx)"
           ],
           "wyjatki": [
-            "SwotLiveArtifact nie ma zadnego wolacza w produkcie (grep: zero uzyc poza harnessem i komentarzem) — komponent zbudowany, nigdy nie montowany w ToolWorkspace"
+            "SwotLiveArtifact nie ma zadnego wolacza w produkcie (grep: zero uzyc poza harnessem i komentarzem) — komponent zbudowany, nigdy nie montowany w ToolWorkspace",
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn \"<SwotLiveArtifact\" src/ server/src/ → ZERO trafień poza własnym plikiem i testami; jedyne wystąpienie w produkcji to komentarz w EvidenceEditor.tsx:41. Żadna sesja narzędzia tego nie montuje — pack `dynamicSwot.pack.ts:266` wskazuje renderer `tools/DynamicSWOT`, gdzie live-artefakt nie ma gniazda.",
+            "ZBUDOWANY, ALE NIEPODŁĄCZONY (nie martwy): silnik `swotTensionEngine.ts` i mapowanie `toEvidenceKind` są wspólne z żywym Wynikiem SWOT — brakuje JEDNEGO przewodu: gniazda/zakładki w sesji narzędzia Dynamiczny SWOT. Bez nowej trasy i bez zmian w silniku.",
+            "NIE POKAZUJEMY jako ekranu produktu do czasu podłączenia — właściciel oceniłby funkcję, której użytkownik nie widzi."
           ],
           "gdzie": "Narzędzia → sesja narzędzia „Dynamiczny SWOT\" → pole robocze na żywo — cztery obszary (SO/WO/ST/WT) z punktami oznaczonymi FAKT/HIPOTEZA/OBSERWACJA."
         },
@@ -1053,7 +1056,9 @@
           "naprawione": [],
           "wyjatki": [
             "Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi",
-            "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
+            "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=.",
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn \"siriTierView|runSiriTier|siriTierAvailability\" src/ server/src/ → poza własnym plikiem i testami wyłącznie DWA komentarze w `siriHttpSessionRuntime.ts` (101, 397), z których drugi mówi wprost, że runtime tego NIE woła. Żadna powierzchnia produktu nie renderuje TIER.",
+            "ZBUDOWANY, ALE NIEPODŁĄCZONY: logika (`siriAdapter.prioritise` / `siriPrioritisation.ts`) i testy są gotowe; brakuje widoku w produkcie i wejścia do niego (osobny ekran po zamrożeniu sesji, wg ASSESSMENT_KB_SIRI.md §4 nie wolno go zlać z formularzem Band) — czyli więcej niż jeden przewód: widok + pozycja w menu sesji."
           ],
           "gdzie": "To NIE jest ekran dostępny w aplikacji — macierz priorytetów SIRI istnieje jako czysta logika wyliczeniowa (method-core), bez żadnego komponentu React, który by ją renderował w produkcie; to stanowisko testowe/diagnostyczne dla inżyniera."
         },
@@ -1788,7 +1793,10 @@
           "co": "Most wartosci i planer nosnikow.",
           "naprawione": [],
           "wyjatki": [
-            "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu."
+            "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu.",
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): SIEDEM montowanych paneli (`DriverPlannerPanel`, `ValueOfficePanel`, `EfficientFrontierPanel`, `MonteCarloNpvPanel`, `RealOptionsPanel`, `ScenarioComputePanel`, `WhatIfSensitivityPanel`) ma po ZERO wołaczy JSX w src/ — grep \"<Nazwa\" nie trafia poza definicję. Finanse w produkcie renderują `FinanceHub` (EconomicsView).",
+            "ZBUDOWANE, ALE NIEPODŁĄCZONE (nie martwe): backend istnieje i zna te panele z nazwy — `server/src/routes/v8/financeValueDemoAllowlist.ts:113,121` wpisuje `ValueOfficePanel.tsx:98/112` jako `productionCaller`. Brakuje jednego przewodu po stronie UI: zakładki/gniazda w `FinanceHub` + przekazania fetcherów. Bez nowej trasy.",
+            "KOREKTA wcześniejszego powodu: „osie wykresu po angielsku, wymaga polskich danych makietowych\" opisywało objaw, nie przyczynę — przyczyną jest brak wołacza, więc to nie jest ekran produktu."
           ],
           "gdzie": "Finanse → panele wartości (Economics panels: granica efektywna, Monte Carlo NPV, opcje realne, kalkulator scenariuszy, wrażliwość what-if) — most wartości i planer nośników."
         },
@@ -1911,13 +1919,17 @@
         {
           "id": "deck-quality-badge",
           "nazwa": "Deck — ocena jakosci",
-          "ocena": "A",
+          "ocena": "C",
           "co": "SPRAWDZONE: ekran wyniku kreatora prezentacji — 'Twój deck jest gotowy!' / '8 slajdów wygenerowanych pomyślnie', odznaka jakości 'Jakość: 3 ostrzeżeń' 'Wynik 62/100' (kolor bursztynowy/ostrzegawczy, NIE crimson), metadane '8 slajdów · Briefing · Angielski · Wewnętrzny' — surowy kod języka 'EN' zamieniony na polską etykietę 'Angielski' (to język treści decka, nie interfejsu — zgodnie z kryteriami nie jest to defekt). Główny przycisk 'Otwórz Deck Builder' w kolorze neutralnym (navy/biały), nie crimson.",
           "naprawione": [
             "Surowy kod języka 'EN' → etykieta 'Angielski'.",
             "Crimson na przycisku głównym zamieniony na neutralny (Pułapka nr 1)."
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): harness montuje `ResultStep`, którego JEDYNYM wołaczem jest `PresentationWizard.tsx:323`; sam `PresentationWizard` nie ma w src/ ANI JEDNEGO importu, a trasa `/presentations/wizard` jest redirect-only (AppRoutes.tsx:2741). Ten konkretny ekran jest nieosiągalny.",
+            "MARTWY DUBLET ŻYWEJ FUNKCJI (nie brak funkcji): sama odznaka jakości decka JEST w produkcie — `DeckBuilder.tsx:1930-1959` renderuje „Jakość: N ostrzeżeń\" + wynik krytyka, a DeckBuilder stoi na żywej trasie (AppRoutes.tsx:252, lazy). Właściciel oceniał kopię z wycofanego kreatora.",
+            "DO ZROBIENIA W TORZE GRAFIKI: przepiąć ekran na `DeckBuilder` (żywa ścieżka), nie na kreator. Do tego czasu nie pokazujemy."
+          ],
           "gdzie": "Materiały → kreator prezentacji → ekran wyniku (krok końcowy kreatora) — odznaka jakości wygenerowanego decka. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
@@ -3501,7 +3513,11 @@
           "naprawione": [
             "Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku"
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn \"AgentPlanView\" src/ server/src/ → ZERO trafień poza `src/views/AgentPlanView.tsx`. Nagłówek pliku harnessu TWIERDZI, że komponent jest wpięty w AppRoutes.tsx + menuConfig.ts — to NIEPRAWDA w tej gałęzi: `/agent-plan` (AppRoutes.tsx:1618) tylko przekierowuje na `Moja praca?tab=agent`.",
+            "MARTWY, ALE FUNKCJA ŻYJE INNĄ DROGĄ (relokacja AGT-003): warsztat agenta użytkownik widzi przez MyWorkHub → AgentHubShell → AgentPlanWorkspace (AgentHubShell.tsx:1700). `AgentPlanView` to osierocona powierzchnia sprzed relokacji — nie ma czego podłączać, jest czego nie pokazywać.",
+            "NIE POKAZUJEMY — ekranem produktu jest Agent Hub, nie ten wrapper."
+          ],
           "gdzie": "Moja praca → zakładka Agent → lista czterech gotowych agentów w falach — starszy widok wejściowy sprzed przebudowy na Agent Hub, do sprawdzenia, czy nadal jest używany."
         },
         {
