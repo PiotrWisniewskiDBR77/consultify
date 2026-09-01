@@ -1,8 +1,8 @@
 # CODEX DAY225 — Narzędzia: komentarz i `GET /api/tool-outputs`
 
-Data: 2026-09-01  
-Marker: `0a35699021`  
-Gałąź: `codex/day225-narzedzia-20260901`  
+Data: 2026-09-01
+Marker: `0a35699021`
+Gałąź: `codex/day225-narzedzia-20260901`
 Werdykt: `A.1 ZROBIONE / A.2 ZROBIONE / A.3 POTWIERDZONE / OWNER_ACCEPTANCE PENDING`
 
 ## 1. Wejście: §0.1 (2) i (7)
