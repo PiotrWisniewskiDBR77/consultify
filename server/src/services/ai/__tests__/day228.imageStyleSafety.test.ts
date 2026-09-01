@@ -130,6 +130,32 @@ describe('Day 228 image style prompt and safety gates', () => {
     expect(result.visual?.asset?.provider).toBe('stock:test');
   });
 
+  it('FIX-228 pkt 1: OCR/text gate alone rejects through generateImageVisual, even when the face gate says clean (integration coverage gap found by audit — previously only the isolated OCR function had a unit test, so a mutation deleting the `hasText` condition inside generateImageVisual was never caught)', async () => {
+    process.env.ENABLE_PRESENTATION_IMAGE_STYLE = 'true';
+    let fallbackCalled = false;
+    const result = await generateImageVisual({
+      ...baseParams,
+      dependencies: {
+        selection: selection('openai'),
+        generate: async () => PIXEL,
+        detectText: async () => ({ hasText: true }), // burned-in text, no face
+        detectFace: async () => ({ hasFace: false }),
+        stockFallback: async (params) => {
+          fallbackCalled = true;
+          return {
+            slot: params.slot,
+            purpose: params.purpose,
+            label: params.label,
+            prompt: params.prompt,
+            asset: { url: 'https://stock.invalid/day228-ocr.png', provider: 'stock:test-ocr' },
+          } as any;
+        },
+      },
+    });
+    expect(fallbackCalled).toBe(true);
+    expect(result.visual?.asset?.provider).toBe('stock:test-ocr');
+  });
+
   it('accepts an image when neither OCR nor face gate finds forbidden content', async () => {
     process.env.ENABLE_PRESENTATION_IMAGE_STYLE = 'true';
     const result = await generateImageVisual({
