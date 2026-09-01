@@ -49,6 +49,11 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import {
+  DRDMatrixReadOnly,
+  drdOdpowiedziZOutputu,
+} from '../drd/DRDMatrixReadOnly';
+
 import { StandardTable, type TableColumn, type TableRow } from '../../standard/StandardTable';
 import { StatusChip } from '../../ui/primitives/chips';
 import {
@@ -362,6 +367,26 @@ const AxisSection: React.FC<{
         </p>
       ) : (
         <div className="space-y-2.5">
+          {/*
+            ★ MACIERZ OSI — odbiór właściciela 30.08 („Jeśli to ma być raport,
+            to muszą być na nim macierze") i eskalacja 01.09 („Ciągle nie wiem
+            dlaczego nie używasz mojej macierzy DRD"). Do dziś rozdział osi miał
+            same bloki obszarów — czytelnik nie widział drogi rozwoju obszaru
+            po drabinie poziomów, tylko dwie liczby na obszar.
+
+            To jest DOKŁADNIE ta siatka, którą właściciel zaakceptował na ekranie
+            „Macierz oceny DRD — obszary x poziomy" (`drd-macierz-oceny`), a nie
+            jej kopia — patrz `DRDMatrixReadOnly`.
+          */}
+          <DRDMatrixReadOnly
+            axisNumber={axis.axisNumber}
+            value={drdOdpowiedziZOutputu(
+              axis.areas.map((a) => a.id),
+              output.current ?? {},
+              output.target ?? {}
+            )}
+          />
+
           {assessed.map((area) => (
             <AreaBlock
               key={area.id}

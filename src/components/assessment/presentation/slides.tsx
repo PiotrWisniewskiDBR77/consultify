@@ -17,10 +17,9 @@ import {
 import React from 'react';
 
 import {
-  DRDMatrixGrid,
-  type DRDEditorAnswers,
-} from '@/components/assessment/drd/DRDAssessmentEditor';
-import { DRD_STRUCTURE } from '@/services/drdStructure';
+  DRDMatrixReadOnly,
+  drdOdpowiedziZOutputu,
+} from '@/components/assessment/drd/DRDMatrixReadOnly';
 
 import type { AxisMatrixModel } from '../groupLabels';
 import type { FindingHighlight, PresentationDeckModel } from './buildPresentationDeck';
@@ -213,33 +212,18 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
 // w `DRD_STRUCTURE` (7/5/5/7/6/6/5 — `KANON_Z_ODBIOROW.md`).
 // ---------------------------------------------------------------------------
 
-/**
- * Stan oceny w kształcie, którego oczekuje `DRDMatrixGrid` — przepisany 1:1
- * z zamrożonego Outputu. Żadnej nowej liczby: `currentLevel` → `achievedLevel`,
- * `targetLevel` → `targetLevel`. Obszar bez pomiaru NIE dostaje wpisu, więc
- * grid pokazuje go jako kolumnę nieocenioną (a nie jako zmierzone zero).
- */
-function macierzoweOdpowiedziZOutputu(matrix: AxisMatrixModel): DRDEditorAnswers {
-  const areas: NonNullable<DRDEditorAnswers['areas']> = {};
-  for (const a of matrix.areas) {
-    if (a.currentLevel === null && a.targetLevel === null) continue;
-    areas[a.id] = {
-      achievedLevel: a.currentLevel ?? 0,
-      ...(a.targetLevel !== null ? { targetLevel: a.targetLevel } : {}),
-    };
-  }
-  return { areas };
-}
-
 export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string }> = ({
   matrix,
 }) => {
-  // Oś metodyki, z której grid bierze obszary i ich drabiny poziomów.
-  // `buildAxisMatrices` zwraca macierze WYŁĄCZNIE dla przypiętej wersji pakietu
-  // DRD (bramka w `listDrdAxisNarratives`), więc trafienie jest tu regułą;
-  // brak trafienia = nie rysujemy nic udającego macierz.
-  const axis = DRD_STRUCTURE.find((a) => a.id === matrix.axisNumber);
-  const value = React.useMemo(() => macierzoweOdpowiedziZOutputu(matrix), [matrix]);
+  const value = React.useMemo(
+    () =>
+      drdOdpowiedziZOutputu(
+        matrix.areas.map((a) => a.id),
+        Object.fromEntries(matrix.areas.map((a) => [a.id, a.currentLevel])),
+        Object.fromEntries(matrix.areas.map((a) => [a.id, a.targetLevel]))
+      ),
+    [matrix]
+  );
 
   return (
     <PresentationSlideShell
@@ -253,39 +237,14 @@ export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string
         </span>
       }
     >
-      {axis ? (
-        /* `min-h-0 flex-1` + własne przewijanie: powłoka slajdu centruje treść
-           (`justify-center`), więc bez tego siatka wyższa od kadru jest po
-           cichu PRZYCINANA u dołu — zmierzone: dolny pasek „Area" z chipami
-           AS/TO wypadał poza slajd, czyli znikał dokładnie ten element, o który
-           właściciel się upomina. */
-        <div className="flex min-h-0 w-full flex-1 flex-col">
-          <DRDMatrixGrid
-            fillHeight
-            areas={axis.areas}
-            levelCount={axis.levelCount}
-            value={value}
-            /* Slajd ma 900 px wysokości i do dziewięciu kolumn — gęstość
-               zwykła, tak jak w widoku, który właściciel zaakceptował. */
-            compact
-            columnMinPx={150}
-            /* Raport się OGLĄDA, nie klika — podpowiedź o klikaniu byłaby
-               na slajdzie obietnicą bez pokrycia. */
-            rowHint=""
-            onCellClick={() => {}}
-            onAreaClick={() => {}}
-            areaStripLabel="Area"
-            overflowHint={(n) =>
-              `Jeszcze ${n} ${n === 1 ? 'kolumna' : 'kolumn'} po prawej — przewiń w bok.`
-            }
-          />
-        </div>
-      ) : (
-        <p className="text-sm text-c-text-secondary">
-          Macierzy tej osi nie da się narysować: struktura osi {matrix.axisNumber} nie występuje
-          w metodyce przypiętej do tego Outputu.
-        </p>
-      )}
+      {/* `min-h-0 flex-1` + przewijanie WEWNĄTRZ siatki: powłoka slajdu centruje
+          treść (`justify-center`), więc bez tego siatka wyższa od kadru jest po
+          cichu PRZYCINANA u dołu — zmierzone: dolny pasek „Area" z chipami
+          AS/TO wypadał poza slajd, czyli znikał dokładnie ten element, o który
+          właściciel się upomina. */}
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <DRDMatrixReadOnly axisNumber={matrix.axisNumber} value={value} fillHeight />
+      </div>
     </PresentationSlideShell>
   );
 };
