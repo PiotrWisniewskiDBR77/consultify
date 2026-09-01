@@ -21764,6 +21764,12 @@
           "billing": "Budżet",
           "health": "Kondycja usług"
         },
+        "sourceNames": {
+          "risk": "Panel ryzyka",
+          "audit": "Dziennik audytu",
+          "billing": "Rozliczenia i budżet",
+          "health": "Panel kondycji usług"
+        },
         "severity": {
           "critical": "Krytyczna",
           "warning": "Ostrzeżenie",

@@ -214,6 +214,16 @@ const AttentionQueueTable: React.FC<{ signals: AttentionSignal[] }> = ({ signals
     (type: AttentionSignalType) => t(`admin.command.attention-queue.types.${type}`),
     [t]
   );
+  /*
+   * 176-dwie-poprawki (uwaga nadzorcy, odbiór 2026-09-01): kolumna „Źródło"
+   * pokazywała surowy adres techniczny wołania (`GET /api/admin/health-panel/
+   * summary`) zamiast czytelnej nazwy systemu źródłowego. Adres zostaje w
+   * atrybucie `title` (podpowiedź po najechaniu) dla kogoś, kto go potrzebuje.
+   */
+  const sourceLabel = useCallback(
+    (type: AttentionSignalType) => t(`admin.command.attention-queue.sourceNames.${type}`),
+    [t]
+  );
   const severityLabel = useCallback(
     (severity: AttentionSignal['severity']) =>
       t(`admin.command.attention-queue.severity.${severity}`),
@@ -296,7 +306,11 @@ const AttentionQueueTable: React.FC<{ signals: AttentionSignal[] }> = ({ signals
       {
         id: 'source',
         label: t('admin.command.attention-queue.columns.source'),
-        render: (row) => <span className="text-xs text-c-text-muted">{row.source}</span>,
+        render: (row) => (
+          <span className="text-xs text-c-text-muted" title={row.source}>
+            {sourceLabel(row.type as AttentionSignalType)}
+          </span>
+        ),
       },
       {
         id: 'freshness',
@@ -304,7 +318,7 @@ const AttentionQueueTable: React.FC<{ signals: AttentionSignal[] }> = ({ signals
         render: (row) => <span className="text-xs text-c-text-muted">{row.freshness}</span>,
       },
     ],
-    [t, typeLabel, severityLabel]
+    [t, typeLabel, severityLabel, sourceLabel]
   );
 
   return (
@@ -321,6 +335,23 @@ const AttentionQueueTable: React.FC<{ signals: AttentionSignal[] }> = ({ signals
         <StandardTable
           columns={columns}
           data={rows}
+          /*
+           * 176-dwie-poprawki (uwaga właściciela: "to nie jest szerokość
+           * strony :("). Zmierzono w żywym DOM (1440px): tabela = 1100px
+           * wewnątrz karty 1152px, IDENTYCZNIE jak w admin-command-audit i
+           * admin-command-agent-trace (ten sam wzorzec `p-2` karty +
+           * domyślne `canvasClassName="p-4"` z FilterableTable). Podwójny
+           * odstęp (karta p-2 TU + wewnętrzny canvas p-4 w FilterableTable)
+           * jest zbędny — dziesiątki innych ekranów (np.
+           * `AdminAuditLogPanel.tsx:372`) już nadpisują `canvasClassName`,
+           * gdy tabela ma własną kartę-rodzica. `p-0` oddaje ~32px (16px na
+           * stronę) tabeli bez zmiany zachowania. Siostrzane zakładki Command
+           * Center (audit/agent-trace/dlp/retention) mają tę samą nadwyżkę,
+           * ale NIE są tu ruszane — masowa zmiana kilku ekranów naraz bez
+           * osobnej akceptacji jest zakazana (CLAUDE.md #9); zgłoszone jako
+           * osobne zadanie.
+           */
+          canvasClassName="p-0"
           onRowClick={(row) => navigate(String(row.href))}
           rowMenu={(row) => ({
             primary: [

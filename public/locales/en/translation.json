@@ -20564,6 +20564,12 @@
           "billing": "Billing",
           "health": "Service health"
         },
+        "sourceNames": {
+          "risk": "Risk panel",
+          "audit": "Audit log",
+          "billing": "Billing & budget",
+          "health": "Service health panel"
+        },
         "severity": {
           "critical": "Critical",
           "warning": "Warning",
