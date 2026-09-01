@@ -89,10 +89,10 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import {
-  ArtifactRightRail,
   type ArtifactRailTeresaCommand,
   type ArtifactRailTeresaMode,
   type ArtifactRailTypeMode,
+  ArtifactRightRail,
 } from '@/components/standard/ArtifactRightRail';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
@@ -346,11 +346,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
 
   const railTeresaMode = useMemo<ArtifactRailTeresaMode>(
     () => ({
-      contextLabel: title
-        ? isPolish
-          ? `Idea „${title}"`
-          : `Idea "${title}"`
-        : undefined,
+      contextLabel: title ? (isPolish ? `Idea „${title}"` : `Idea "${title}"`) : undefined,
       commands: teresaCommands ?? [],
       // Idea nie ma dziś WŁASNEGO zapisanego wątku rozmowy per-artefakt — jest
       // wspólny dok czatu. Mówimy to wprost (jak notatnik) zamiast rysować
@@ -365,6 +361,16 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
       composeDisabledReason: isPolish
         ? 'Pisanie wprost w pasie będzie możliwe, gdy idea dostanie własny wątek rozmowy.'
         : 'Typing directly in the rail will be possible once the idea has its own conversation thread.',
+      /*
+        ★ 2026-09-01 („jedna Teresa, w swoim oknie"): z całego trybu Teresy
+        powłoka renderuje dziś WYŁĄCZNIE `entryLabel` + `footerAction` — jako
+        przycisk-wejście w sekcji „Akcje". Etykieta nazywa OBIEKT (kanon
+        `TeresaEntryButton`, wzór `prawy-pas-jedna-formula.tsx`), bo
+        „Rozmawiaj z Teresą" nie mówiło, O CZYM będzie rozmowa. Pola wyżej
+        (`commands`/`messages`/`composeDisabledReason`) zostają w deklaracji,
+        ale nie mają już skutku wizualnego — czatu na szynie nie ma.
+      */
+      entryLabel: isPolish ? 'Zapytaj Teresę o tę ideę' : 'Ask Teresa about this idea',
       footerAction: onDiscussWithTeresa
         ? {
             label: isPolish ? 'Rozmawiaj z Teresą' : 'Discuss with Teresa',

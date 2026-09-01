@@ -45,7 +45,6 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { NotebookPage } from '@/types/myWork';
 import {
   ARTIFACT_PANEL_SECTION_LABELS,
   ARTIFACT_PANEL_SECTION_ORDER,
@@ -53,10 +52,11 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import {
-  ArtifactRightRail,
   type ArtifactRailTeresaCommand,
   type ArtifactRailTypeMode,
+  ArtifactRightRail,
 } from '@/components/standard/ArtifactRightRail';
+import type { NotebookPage } from '@/types/myWork';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 import type { ConvertTarget } from './AIChatInlinePanel';
@@ -108,10 +108,7 @@ const CAPTURE_SOURCE_LABELS: Record<string, { pl: string; en: string }> = {
   work_canvas: { pl: 'Kanwa', en: 'Canvas' },
 };
 
-function captureSourceLabel(
-  raw: string | null | undefined,
-  isPolish: boolean
-): string | null {
+function captureSourceLabel(raw: string | null | undefined, isPolish: boolean): string | null {
   if (!raw) return null;
   const entry = CAPTURE_SOURCE_LABELS[String(raw).trim().toLowerCase()];
   if (!entry) return null;
@@ -199,10 +196,7 @@ interface NotebookOutlineEntry {
   text: string;
 }
 
-function readNotebookOutline(
-  editor: Editor | null,
-  contentJson: unknown
-): NotebookOutlineEntry[] {
+function readNotebookOutline(editor: Editor | null, contentJson: unknown): NotebookOutlineEntry[] {
   let doc: unknown = null;
   try {
     doc = editor ? editor.getJSON() : contentJson;
@@ -224,7 +218,11 @@ function readNotebookOutline(
       .join('')
       .trim();
     if (!text) return;
-    out.push({ key: `${index}-${text}`, level: Math.min(Math.max(typed.attrs?.level ?? 1, 1), 3), text });
+    out.push({
+      key: `${index}-${text}`,
+      level: Math.min(Math.max(typed.attrs?.level ?? 1, 1), 3),
+      text,
+    });
   });
   return out;
 }
@@ -382,7 +380,12 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   const declareSections = specAShellEnabled || artifactRailEnabled;
   const specASections: ArtifactRightPanelSection[] = [];
 
-  const section = (id: RailSectionId, label: string, count: number | undefined, body: React.ReactNode) => {
+  const section = (
+    id: RailSectionId,
+    label: string,
+    count: number | undefined,
+    body: React.ReactNode
+  ) => {
     if (declareSections) {
       specASections.push({
         id,
@@ -401,7 +404,13 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         id={`notebook-rail-section-${id}`}
         className="border-b border-c-border-subtle last:border-b-0"
       >
-        <SectionHeader id={id} label={label} count={count} open={isOpen} onToggle={() => toggle(id)} />
+        <SectionHeader
+          id={id}
+          label={label}
+          count={count}
+          open={isOpen}
+          onToggle={() => toggle(id)}
+        />
         {isOpen ? <div className="px-4 pb-4 pt-0.5">{body}</div> : null}
       </section>
     );
@@ -480,10 +489,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
           undefined,
           <div className="space-y-3">
             {receiptCapableActionIds?.length === 0 ? (
-              <p
-                id="notebook-rail-receipt-unavailable"
-                className="text-xs text-c-text-muted"
-              >
+              <p id="notebook-rail-receipt-unavailable" className="text-xs text-c-text-muted">
                 {t(
                   'notebook.rightRail.receiptUnavailable',
                   'Editing controls are unavailable until the server can return a durable action receipt.'
@@ -496,7 +502,10 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 <span className="text-c-text-muted">
                   {t('notebook.rightRail.saveStatus', 'Save status')}
                 </span>
-                <span data-testid="notebook-save-state" role={saveState === 'error' ? 'alert' : 'status'}>
+                <span
+                  data-testid="notebook-save-state"
+                  role={saveState === 'error' ? 'alert' : 'status'}
+                >
                   {saveState === 'saving' && (
                     <span className="inline-flex items-center gap-1.5 text-c-text">
                       <Loader2 size={12} className="animate-spin" aria-hidden="true" />
@@ -525,7 +534,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                   data-notebook-action-id="rail:retry-save"
                   aria-disabled={!isReceiptCapable('retry-save') || undefined}
                   aria-describedby={
-                    !isReceiptCapable('retry-save') ? 'notebook-rail-receipt-unavailable' : undefined
+                    !isReceiptCapable('retry-save')
+                      ? 'notebook-rail-receipt-unavailable'
+                      : undefined
                   }
                   onClick={() => {
                     if (isReceiptCapable('retry-save')) onRetrySave();
@@ -542,7 +553,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                     data-notebook-action-id="rail:load-theirs"
                     aria-disabled={!isReceiptCapable('load-theirs') || undefined}
                     aria-describedby={
-                      !isReceiptCapable('load-theirs') ? 'notebook-rail-receipt-unavailable' : undefined
+                      !isReceiptCapable('load-theirs')
+                        ? 'notebook-rail-receipt-unavailable'
+                        : undefined
                     }
                     onClick={() => {
                       if (isReceiptCapable('load-theirs')) onReloadConflict();
@@ -556,7 +569,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                     data-notebook-action-id="rail:keep-mine"
                     aria-disabled={!isReceiptCapable('keep-mine') || undefined}
                     aria-describedby={
-                      !isReceiptCapable('keep-mine') ? 'notebook-rail-receipt-unavailable' : undefined
+                      !isReceiptCapable('keep-mine')
+                        ? 'notebook-rail-receipt-unavailable'
+                        : undefined
                     }
                     onClick={() => {
                       if (isReceiptCapable('keep-mine')) onKeepMineConflict();
@@ -647,7 +662,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 disabled={!onSetVerificationStatus}
                 className="-mx-1.5 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-c-text hover:border-c-border-subtle hover:bg-c-surface-raised focus:border-c-border focus:bg-c-surface focus:outline-none"
               >
-                <option value="unverified">{t('notebook.rightRail.unverified', 'Unverified')}</option>
+                <option value="unverified">
+                  {t('notebook.rightRail.unverified', 'Unverified')}
+                </option>
                 <option value="verified">{t('notebook.rightRail.verified', 'Verified')}</option>
                 <option value="disputed">{t('notebook.rightRail.disputed', 'Disputed')}</option>
               </select>
@@ -664,7 +681,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 value={activePage.reviewCadence || 'monthly'}
                 aria-disabled={!isReceiptCapable('review-cadence') || undefined}
                 aria-describedby={
-                  !isReceiptCapable('review-cadence') ? 'notebook-rail-receipt-unavailable' : undefined
+                  !isReceiptCapable('review-cadence')
+                    ? 'notebook-rail-receipt-unavailable'
+                    : undefined
                 }
                 onChange={(event) => {
                   if (isReceiptCapable('review-cadence')) {
@@ -727,7 +746,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                   data-notebook-action-id="rail:mark-reviewed"
                   aria-disabled={!isReceiptCapable('mark-reviewed') || undefined}
                   aria-describedby={
-                    !isReceiptCapable('mark-reviewed') ? 'notebook-rail-receipt-unavailable' : undefined
+                    !isReceiptCapable('mark-reviewed')
+                      ? 'notebook-rail-receipt-unavailable'
+                      : undefined
                   }
                   onClick={() => {
                     if (isReceiptCapable('mark-reviewed')) onMarkReviewed();
@@ -800,9 +821,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
           undefined,
           activePage.captureMetadata?.sourceId ? (
             <div className="space-y-1 text-[11.5px] text-c-text-secondary">
-              <p>
-                {t('notebook.rightRail.evidenceCaptured', 'Notatka powstała z przechwytu:')}
-              </p>
+              <p>{t('notebook.rightRail.evidenceCaptured', 'Notatka powstała z przechwytu:')}</p>
               <code className="block break-all text-[10px] text-c-text-muted">
                 {activePage.captureMetadata.sourceType || 'source'}:
                 {activePage.captureMetadata.sourceId}
@@ -850,10 +869,12 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 )}
               </p>
             )}
-            {/* Przycisk-wyjście „Open Teresa" znika, gdy Teresa jest IKONĄ
-                SZYNY (`ArtifactRightRail`) — dwa wejścia do tej samej rozmowy
+            {/* Przycisk-wyjście „Open Teresa" znika przy fladze ON — wspólna
+                szyna ma WŁASNE, kanoniczne wejście („Zapytaj Teresę o tę
+                notatkę" w sekcji Akcje), a dwa wejścia do tej samej rozmowy
                 w jednym pasie to dokładnie ten rozjazd, który likwidujemy.
-                Przy fladze OFF przycisk zostaje bez zmian. */}
+                Przy fladze OFF przycisk zostaje bez zmian — to jedyne wejście
+                starej szyny i nie wolno go zabrać razem z niczym innym. */}
             {onOpenAIChat && !artifactRailEnabled ? (
               <button
                 type="button"
@@ -955,6 +976,18 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             'notebook.rightRail.teresaComposeDisabled',
             'Pisanie wprost w pasie będzie możliwe, gdy notatka dostanie własny wątek rozmowy.'
           ),
+          /*
+            ★ 2026-09-01 („jedna Teresa, w swoim oknie"): z całego trybu
+            Teresy powłoka renderuje dziś WYŁĄCZNIE te dwa pola — jako
+            przycisk-wejście w sekcji „Akcje". Etykieta nazywa OBIEKT
+            (kanon `TeresaEntryButton`), nie funkcję: „Open Teresa" mówiło
+            czym jest cel, a nie o czym będzie rozmowa. Pola wyżej
+            (`commands`/`messages`/`composeDisabledReason`) zostają
+            zadeklarowane, ale NIE MAJĄ JUŻ SKUTKU WIZUALNEGO — czatu na
+            szynie nie ma. Zostawiamy je, bo kontrakt propsa się nie zmienił,
+            a skasowanie ich sugerowałoby, że komend nigdy nie było.
+          */
+          entryLabel: t('notebook.rightRail.askTeresaAboutNote', 'Zapytaj Teresę o tę notatkę'),
           footerAction: onOpenAIChat
             ? {
                 label: t('notebook.rightRail.openTeresa', 'Open Teresa'),
