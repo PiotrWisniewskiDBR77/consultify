@@ -84,6 +84,7 @@ import type { ChatContextAction } from '../../store/slices/uiSlice';
 import { useAIActionsStore } from '../../store/useAIActionsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
+import { resolveTeresaWorkspaceContext } from '../../store/teresaEntityContext';
 import { useConversationStore } from '../../store/useConversationStore';
 import { useProposalLifecycleStore } from '../../store/useProposalLifecycleStore';
 import {
@@ -785,7 +786,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   showHistoryTrigger = true,
   title,
   showFocusMode = true,
-  workspaceContext,
+  workspaceContext: workspaceContextProp,
   disabled = false,
   maxHeight,
   onMessageSent,
@@ -857,7 +858,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     notifyModelChange,
     exportConversation,
     purgeConversation,
+    teresaEntityContext,
   } = useConversationStore();
+
+  // ── „JEDNA TERESA, W SWOIM OKNIE" (2026-09-01) — JEDEN punkt scalenia ────
+  // Kontekst obiektu („Zapytaj Teresę o tę inicjatywę") przychodzi PRZYPIĘTY
+  // w store (`teresaEntityContext`), a nie propsem, bo:
+  //   • w doku `MainLayout` podaje propsem kontekst wyliczony z TRASY (bez
+  //     `entityId`) i nadpisywał encję na każdym renderze,
+  //   • pełne okno `/chat` renderuje ten panel BEZ PROPSA w ogóle.
+  // Scalenie robimy TU, więc oba tryby dostają kontekst tym samym kodem, a od
+  // tego miejsca w dół `workspaceContext` znaczy „kontekst efektywny" —
+  // łącznie z `selectedObjectId`/`selectedObjectType` w ładunku do modelu.
+  // Brak pinu (albo pin spoza zakresu) => props przechodzi BEZ ZMIAN.
+  // Pin czytamy z TEJ SAMEJ destrukturyzacji co reszta store'u (wyżej), a nie
+  // selektorem — atrapy store'u w testach zwracają cały stan i ignorują
+  // selektor, więc `useConversationStore((s) => s.teresaEntityContext)`
+  // oddawałoby tam cały obiekt stanu zamiast pola.
+  const workspaceContext = useMemo(
+    () =>
+      resolveTeresaWorkspaceContext(workspaceContextProp, teresaEntityContext, {
+        activeConversationId,
+        pathname: route.pathname,
+      }),
+    [workspaceContextProp, teresaEntityContext, activeConversationId, route.pathname]
+  );
 
   const { addArtifact, togglePanel: toggleArtifactsPanel, exportArtifact } = useArtifactsStore();
 
