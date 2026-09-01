@@ -2689,18 +2689,7 @@ Return ONLY the final comment text.`;
         return;
       }
 
-      const newComment: Comment = {
-        id: Math.random().toString(36).substr(2, 9),
-        content: generatedComment,
-        authorId: 'ai-assistant',
-        authorName: 'AI Assistant',
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        likedByMe: false,
-        isAIGenerated: true,
-      };
-
-      setComments((prev) => [...prev, newComment]);
+      setComments(await addTaskCommentAndReload(Api, taskId, generatedComment));
       addActivityLogEntry(
         'comment',
         t('myWork.taskDetail.aIGeneratedComment', 'AI generated comment')
