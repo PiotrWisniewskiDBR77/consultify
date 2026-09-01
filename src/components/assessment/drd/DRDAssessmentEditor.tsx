@@ -148,7 +148,22 @@ const MATRIX_TEXT_IDLE = 'text-slate-600 dark:text-slate-400';
 
 type MatrixCellRef = { areaId: string; level: number };
 
-type DRDMatrixGridProps = {
+/**
+ * ★ EKSPORTOWANE od 2026-09-01 (dyżur „macierz DRD w raporcie").
+ *
+ * Właściciel po raz trzeci zgłosił: „Ciągle nie wiem dlaczego nie używasz
+ * mojej macierzy DRD". Prezentacja z oceny rysowała `AreaMatrixTable` —
+ * komponent, który właściciel odrzucił wprost (`DZIENNIK_GRAFIKA.md` Z-10:
+ * „to nie tak ma wyglądać") i który pokazuje PUSTE komórki z kropką zamiast
+ * treści merytorycznej. Ta siatka jest tą, którą właściciel zaakceptował na
+ * ekranie `drd-macierz-oceny` (`status.json`: „Macierz oceny DRD — obszary
+ * x poziomy" — dokładnie te słowa, którymi wskazał ją 01.09).
+ *
+ * Eksport, a NIE kopia: kopii tej macierzy w repo jest już kilka
+ * (`AreaMatrixTable`, `EmbeddedMatrix`, `DRDMatrixSession`) i to one są
+ * przyczyną trzech pudeł w tej sprawie. Jedna siatka, dwa miejsca użycia.
+ */
+export type DRDMatrixGridProps = {
   areas: DRDArea[];
   levelCount: number;
   value: DRDEditorAnswers | undefined;
@@ -173,7 +188,7 @@ type DRDMatrixGridProps = {
   overflowHint: (ukryte: number) => string;
 };
 
-const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
+export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   areas,
   levelCount,
   value,
