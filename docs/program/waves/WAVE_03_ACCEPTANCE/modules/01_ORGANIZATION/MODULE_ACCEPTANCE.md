@@ -158,3 +158,11 @@ pisarz saveNow, dowód cold readback „Cele i mierniki" OK), wgrywacz dokument�
 i galeria blockerów przywrócone. Dowody: evidence-m01-20260824/ (komplet 22
 zrzutów + cold readbacki). Zamknięte znaczy zamknięte: nowe pomysły → backlog
 po-MVP z nowym ID; ponowne otwarcie wyłącznie nową jawną decyzją właściciela.
+
+## Dzień 236 — pomiar flagi i routingu redesignu (2026-09-01)
+
+- Flaga `orgRedesignV1` istnieje na bieżącej bazie m03 i jest rozwiązywana w kolejności query → localStorage → env/default (`src/utils/orgRedesignFlag.ts:70-93`); zdanie DEC-2026-08-25-74 „na m03 flagi w ogóle brak” jest więc dziś nieaktualne (`docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md:126`).
+- Realny default pozostaje `OFF`, ponieważ `readEnvFlag()` zwraca `false`, gdy env nie zawiera poprawnej wartości (`src/utils/orgRedesignFlag.ts:50-60`); część DEC-2026-08-25-74 o niewidocznym domyślnie redesignie nadal opisuje dzisiejszy runtime (`docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md:126`).
+- Mapa redesignu zawiera 6 grup i 11 ekranów, policzonych z dzieci `ORGANIZATION_REDESIGN_MODULES` (`src/components/Organization/redesign/organizationRedesignNav.ts:41-101,163-167`).
+- Routing jest zagnieżdżony jako para `{module, screen}` i wybiera osobną mapę dla flagi ON/OFF (`src/views/OrganizationView.tsx:94-118`); stare identyfikatory ekranów są kierowane przez jawne `REDESIGN_SCREEN_REDIRECTS` (`src/components/Organization/redesign/organizationRedesignNav.ts:126-144`).
+- Zrzuty Day236 są dowodem technicznym do odbioru, nie decyzją właściciela: `OWNER_NOT_REVIEWED` pozostaje bez zmiany do jawnego werdyktu (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/01_ORGANIZATION/MODULE_ACCEPTANCE.md:72-74`).
