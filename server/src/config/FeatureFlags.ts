@@ -49,6 +49,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
+  ENABLE_PPTX_CANONICAL_GEOMETRY: z.boolean().default(false),
   ENABLE_PRESENTATION_IMAGE_STYLE: z.boolean().default(false),
   ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE: z.boolean().default(false),
   ENABLE_DECK_OVERFLOW_WARNING: z.boolean().default(false),
@@ -217,6 +218,11 @@ export function loadFeatureFlags(): FeatureFlags {
     // at CALL time (not this singleton) so the gate reflects late env changes in
     // background generation; this registry entry is the SSOT/documentation.
     ENABLE_DECK_CONCLUSION_SLIDE: process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true',
+
+    // Day 227 — opt-in parity between the canonical PPTX pipeline and DeckStyler.
+    // The same gate also aligns the named Harvard palette with the product brand token.
+    ENABLE_PPTX_CANONICAL_GEOMETRY:
+      process.env.ENABLE_PPTX_CANONICAL_GEOMETRY === 'true',
 
     // Day 228 — opt-in image style prompt + mandatory OCR/face safety gates.
     // Read at call time by deckVisualsService; this registry is the SSOT.
