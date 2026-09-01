@@ -14,7 +14,6 @@ import {
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import type { ActionContext, ChatActionPayload } from '@/types/domain/chatActions';
 import { getArtifactPath } from '@/utils/artifactLinks';
-import { initiativeDocumentPath } from '@/utils/initiativeLinks';
 
 import { validateActionPayload } from './chatActionRegistry';
 
@@ -110,58 +109,6 @@ export async function handleChatAction(
           success: result.success,
           error: result.error,
         };
-      }
-
-      case 'CREATE_TASK': {
-        const title = String(params.title || '').trim();
-        if (!title) {
-          return { success: false, error: 'Task title is required' };
-        }
-        await Api.post('/tasks', {
-          title,
-          description: String(params.description || ''),
-          priority: String(params.priority || 'medium'),
-          status: 'todo',
-          dueDate: params.dueDate || null,
-          initiativeId: params.initiativeId || deps.context.initiativeId || null,
-        });
-        return { success: true };
-      }
-
-      case 'CREATE_DECISION': {
-        const title = String(params.title || '').trim();
-        if (!title) {
-          return { success: false, error: 'Decision title is required' };
-        }
-        await Api.post('/decisions', {
-          title,
-          description: String(params.description || ''),
-          priority: String(params.priority || 'medium'),
-          status: 'pending',
-          dueDate: params.dueDate || null,
-          initiativeId: params.initiativeId || deps.context.initiativeId || null,
-        });
-        return { success: true };
-      }
-
-      case 'CREATE_INITIATIVE': {
-        const title = String(params.title || '').trim();
-        if (!title) {
-          return { success: false, error: 'Initiative title is required' };
-        }
-        const created = (await Api.post('/initiatives', {
-          title,
-          description: String(params.description || ''),
-          templateId: params.templateId || undefined,
-          projectId: deps.context.projectId,
-        })) as { id?: string; initiative?: { id?: string } } | undefined;
-        // M13 flow redesign: chat-created initiative lands the user straight
-        // in its DOCUMENT (canonical deep link), not in a list/staging view.
-        const createdId = String(created?.id || created?.initiative?.id || '').trim();
-        if (createdId) {
-          deps.navigate(initiativeDocumentPath(createdId));
-        }
-        return { success: true, data: createdId ? { createdId } : undefined };
       }
 
       case 'GENERATE_REPORT': {

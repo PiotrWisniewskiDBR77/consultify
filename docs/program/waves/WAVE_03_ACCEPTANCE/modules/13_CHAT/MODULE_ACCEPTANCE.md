@@ -119,3 +119,12 @@ Evidence manifest: `OWNER_REVIEW_2026-08-22.md`; `docs/program/waves/WAVE_03_ACC
 Ryzyko wyścigu: rejestracja `*/15 * * * *` jest bezwarunkowa, więc `CRON` i `ON_DEMAND` mogą nałożyć się dla tej samej organizacji; dyżur 182 tego nie naprawia. W lokalnym oknie R1 scheduler nie był uruchomiony, zatem do nakładki nie doszło.
 
 Znany, nienaprawiony trzeci stan pustki: `ChatSignalsFeed.tsx` renderuje `chatSignals.empty.good`, gdy `producerEnabled === true` i lista sygnałów jest pusta, również dla organizacji bez kwalifikujących danych źródłowych. To nie dowodzi dobrego stanu reguł; producent nie miał czego ocenić.
+
+## Dyżur 223 — realny render governed proposal
+
+Na kandydacie `d1262f3416` potwierdzono w kanonicznym runtime, że wiadomość
+`execution_proposal` przechodzi przez prawdziwy `UnifiedChatPanel` i
+`MessageRenderer`: pełna karta `pending_review/create_task`, wiadomość użytkownika oraz
+kompozytor są widoczne w obu motywach. PNG, SHA-256 i różnica `mean_luma=224,9`
+są udokumentowane w `CODEX_DAY223_CZAT_RENDER_REPORT.md`; nie jest to izolowany
+dev-render/storybook.
