@@ -1,0 +1,167 @@
+# check-dev-render-parytet.mjs — BASELINE długu zastanego (ratchet).
+# Format: <ekran>\t<reguła>\t<szczegół>\t<powód>. Klucz = trzy pierwsze kolumny.
+#
+# POWÓD ISTNIENIA PLIKU: audyt 2026-09-01 wykazał 41 ekranów harnessu pokazujących
+# co innego niż produkt, z czego 29 jest w odbiorze z oceną A/B. Bramka blokująca
+# od pierwszego dnia cały ten dług zostałaby wyłączona (tak umarła zero-tolerancyjna
+# wersja check-list-canon.sh). Dług zapisany tutaj PRZECHODZI; każde NOWE naruszenie
+# spoza tego pliku blokuje.
+#
+# Kolumna POWÓD jest po to, żeby „przyrząd pomiarowy, nie ekran produktu" przechodziło
+# ŚWIADOMIE. Uzupełniaj ją ręcznie — regeneracja (--update) zachowuje istniejące powody.
+#
+# Regeneruj TYLKO gdy dług ŚWIADOMIE SPADŁ. Nigdy żeby uciszyć nową regresję.
+# WYGENEROWANO: 2026-09-01 (node scripts/check-dev-render-parytet.mjs --update)
+# RAZEM: 152 pozycji
+accent-soft-token-fix	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+accent-soft-token-fix	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+admin-health	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+agent-plan-canvas	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+agent-plan-canvas	R3	max-w-5xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-5xl, którego nie ma ani u wołacza, ani w komponencie
+agent-plan-view	R1	AgentPlanView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AgentPlanView>, którego żaden plik src/ nie renderuje
+angielskie-resztki-i18n	R1	MonteCarloNpvPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <MonteCarloNpvPanel>, którego żaden plik src/ nie renderuje
+angielskie-resztki-i18n	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
+assessment-initiatives-table	R1	InitiativesTable	dług zastany 2026-09-01 (audyt przyrządu): montuje <InitiativesTable>, którego żaden plik src/ nie renderuje
+assessment-matryca	R2	ArtifactRightPanel+DRDMatrixSession	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <ArtifactRightPanel> i <DRDMatrixSession>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	DRDMatrixSession+PreviewAIHintStrip	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <DRDMatrixSession> i <PreviewAIHintStrip>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	DRDMatrixSession+PreviewActionBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <DRDMatrixSession> i <PreviewActionBar>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	DRDMatrixSession+PreviewMetaCard	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <DRDMatrixSession> i <PreviewMetaCard>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	DRDMatrixSession+PreviewRelations	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <DRDMatrixSession> i <PreviewRelations>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	DRDMatrixSession+TopBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <DRDMatrixSession> i <TopBar>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	PreviewAIHintStrip+TopBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <PreviewAIHintStrip> i <TopBar>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	PreviewActionBar+TopBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <PreviewActionBar> i <TopBar>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	PreviewMetaCard+TopBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <PreviewMetaCard> i <TopBar>; produkcja nigdy ich razem nie renderuje
+assessment-matryca	R2	PreviewRelations+TopBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <PreviewRelations> i <TopBar>; produkcja nigdy ich razem nie renderuje
+assessment-output-report	R1	AssessmentReportView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AssessmentReportView>, którego żaden plik src/ nie renderuje
+assessment-presentation-view	R1	AssessmentPresentationView	dług zastany 2026-09-01 (audyt przyrządu): montuje <AssessmentPresentationView>, którego żaden plik src/ nie renderuje
+assessment-reports-table	R1	ReportsTable	dług zastany 2026-09-01 (audyt przyrządu): montuje <ReportsTable>, którego żaden plik src/ nie renderuje
+audyty-drd-report	R1	AuditsHub	dług zastany 2026-09-01 (audyt przyrządu): montuje <AuditsHub>, którego żaden plik src/ nie renderuje
+audyty-warsztat-kryterium	R1	CriterionWorkspaceGate	dług zastany 2026-09-01 (audyt przyrządu): montuje <CriterionWorkspaceGate>, którego żaden plik src/ nie renderuje
+calendar-sync-settings	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+calendar-sync-settings	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+canvas-kebab-restructure	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+canvas-new-doc	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+canvas-toolbar-md-history	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+capability-gate-demo	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+capability-gate-demo	R1	EffectiveAccessOverrideContext	dług zastany 2026-09-01 (audyt przyrządu): montuje <EffectiveAccessOverrideContext>, którego żaden plik src/ nie renderuje
+chat-split-teresa-right	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+chat-split-teresa-right	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+crimson-mywork-wave2	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+crimson-mywork-wave2	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+crimson-wave-chrome-2026-07-26	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+crimson-wave-chrome-2026-07-26	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+deck-quality-badge	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
+document-studio-context-chip	R3	max-w-4xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-4xl, którego nie ma ani u wołacza, ani w komponencie
+drd-embedded-matrix-axis-levels	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+drd-embedded-matrix-axis-levels	R3	max-w-5xl	ŚWIADOMIE: produkcja też centruje dokument, tylko innym tokenem (audyt 2026-09-01: ZGODNY)
+drd-macierz-obszary-poziomy	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+excele-jeden-widok-materialy	R2	ExceleView+OutputsAggregateTabContent	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <ExceleView> i <OutputsAggregateTabContent>; produkcja nigdy ich razem nie renderuje
+execution-change-signals	R1	ExecutionChangeSignalsPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <ExecutionChangeSignalsPanel>, którego żaden plik src/ nie renderuje
+execution-export-prezentacja	R1	ReportCompactPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <ReportCompactPanel>, którego żaden plik src/ nie renderuje
+fab-rail-kebab	R2	DocumentToggleButton+PreviewActionBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <DocumentToggleButton> i <PreviewActionBar>; produkcja nigdy ich razem nie renderuje
+fab-rail-kebab	R2	DocumentToggleButton+StandardTable	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <DocumentToggleButton> i <StandardTable>; produkcja nigdy ich razem nie renderuje
+fab-rail-kebab	R2	FeedbackToggleButton+PreviewActionBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <FeedbackToggleButton> i <PreviewActionBar>; produkcja nigdy ich razem nie renderuje
+fab-rail-kebab	R2	FeedbackToggleButton+StandardTable	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <FeedbackToggleButton> i <StandardTable>; produkcja nigdy ich razem nie renderuje
+fab-rail-kebab	R2	HelpToggleButton+PreviewActionBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <HelpToggleButton> i <PreviewActionBar>; produkcja nigdy ich razem nie renderuje
+fab-rail-kebab	R2	HelpToggleButton+StandardTable	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <HelpToggleButton> i <StandardTable>; produkcja nigdy ich razem nie renderuje
+fab-rail-kebab	R3	max-w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[560px], którego nie ma ani u wołacza, ani w komponencie
+fab-rail-kebab	R3	w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[560px], którego nie ma ani u wołacza, ani w komponencie
+finance-analysis-workspace	R1	AnalysisWorkspace	dług zastany 2026-09-01 (audyt przyrządu): montuje <AnalysisWorkspace>, którego żaden plik src/ nie renderuje
+finance-baseline-workspace	R1	BaselineWorkspace	dług zastany 2026-09-01 (audyt przyrządu): montuje <BaselineWorkspace>, którego żaden plik src/ nie renderuje
+finance-comments-panel	R3	max-w-xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-xl, którego nie ma ani u wołacza, ani w komponencie
+finance-export-import-panel	R3	max-w-md	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-md, którego nie ma ani u wołacza, ani w komponencie
+finance-focus-mode	R3	max-w-xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-xl, którego nie ma ani u wołacza, ani w komponencie
+finance-hub	R1	FinanceHubLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <FinanceHubLazy>, którego żaden plik src/ nie renderuje
+finance-id-bridge	R1	FinanceLegacyBridgeGateLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <FinanceLegacyBridgeGateLazy>, którego żaden plik src/ nie renderuje
+finance-id-bridge	R3	max-w-xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-xl, którego nie ma ani u wołacza, ani w komponencie
+finance-lineage-navigator	R3	max-w-xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-xl, którego nie ma ani u wołacza, ani w komponencie
+finance-model-workspace	R1	FinancialModelWorkspaceLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <FinancialModelWorkspaceLazy>, którego żaden plik src/ nie renderuje
+finance-prediction-workspace	R1	PredictionWorkspaceLazy	dług zastany 2026-09-01 (audyt przyrządu): montuje <PredictionWorkspaceLazy>, którego żaden plik src/ nie renderuje
+finance-saved-views-panel	R3	max-w-md	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-md, którego nie ma ani u wołacza, ani w komponencie
+finance-statement-pack-workspace-v2	R1	StatementPackWorkspaceV2	dług zastany 2026-09-01 (audyt przyrządu): montuje <StatementPackWorkspaceV2>, którego żaden plik src/ nie renderuje
+finance-value-panels	R1	DriverPlannerPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <DriverPlannerPanel>, którego żaden plik src/ nie renderuje
+finance-value-panels	R1	EfficientFrontierPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <EfficientFrontierPanel>, którego żaden plik src/ nie renderuje
+finance-value-panels	R1	MonteCarloNpvPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <MonteCarloNpvPanel>, którego żaden plik src/ nie renderuje
+finance-value-panels	R1	RealOptionsPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <RealOptionsPanel>, którego żaden plik src/ nie renderuje
+finance-value-panels	R1	ScenarioComputePanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <ScenarioComputePanel>, którego żaden plik src/ nie renderuje
+finance-value-panels	R1	ValueOfficePanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <ValueOfficePanel>, którego żaden plik src/ nie renderuje
+finance-value-panels	R1	WhatIfSensitivityPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <WhatIfSensitivityPanel>, którego żaden plik src/ nie renderuje
+finance-workspace-bar	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+i18n-fala1-smoke	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+i18n-fala1-smoke	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
+idea-table	R2	IdeasTableContent+TopBar	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <IdeasTableContent> i <TopBar>; produkcja nigdy ich razem nie renderuje
+idea-table-tool-empty-filter	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
+idea-table-tool-grouping	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
+idea-table-tool-kebab	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
+idea-table-tool-paste	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
+idea-table-tool-sortfilter	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
+idea-templates-catalog	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+idea-templates-catalog	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+ideas-preview-overlay	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+ideas-preview-overlay	R3	max-w-[1240px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[1240px], którego nie ma ani u wołacza, ani w komponencie
+ideas-preview-overlay	R3	w-[1240px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[1240px], którego nie ma ani u wołacza, ani w komponencie
+initiatives-portfolio-analysis	R1	PortfolioAnalysisView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PortfolioAnalysisView>, którego żaden plik src/ nie renderuje
+karta-task-pelna	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+materials-registry	R3	max-w-[1400px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[1400px], którego nie ma ani u wołacza, ani w komponencie
+materials-registry	R3	w-[1400px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[1400px], którego nie ma ani u wołacza, ani w komponencie
+mm-ppm-measure	R3	w-[1280px]	ŚWIADOMIE: przyrząd pomiarowy 1280×720 z kanonu, nie ekran produktu (audyt 2026-09-01: ZGODNY)
+notatnik-centrum-mysli	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+notatnik-centrum-mysli	R3	max-w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[560px], którego nie ma ani u wołacza, ani w komponencie
+notatnik-centrum-mysli	R3	max-w-[85%]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[85%], którego nie ma ani u wołacza, ani w komponencie
+notatnik-centrum-mysli	R3	w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[560px], którego nie ma ani u wołacza, ani w komponencie
+notatnik-osierocone-graf	R3	max-w-md	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-md, którego nie ma ani u wołacza, ani w komponencie
+notatnik-osierocone-graf	R3	w-[360px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[360px], którego nie ma ani u wołacza, ani w komponencie
+notebook-quick-capture	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+notebook-quick-capture	R3	max-w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[560px], którego nie ma ani u wołacza, ani w komponencie
+notebook-quick-capture	R3	w-[560px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[560px], którego nie ma ani u wołacza, ani w komponencie
+ntype-analizuj-ai	R2	Menu2AIButton+Menu2HowToButton	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <Menu2AIButton> i <Menu2HowToButton>; produkcja nigdy ich razem nie renderuje
+ntype-analizuj-ai	R2	Menu2HowToButton+NModeMenu2	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <Menu2HowToButton> i <NModeMenu2>; produkcja nigdy ich razem nie renderuje
+odbior	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+odbior	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+org-identity-operating	R1	OrganizationView	dług zastany 2026-09-01 (audyt przyrządu): montuje <OrganizationView>, którego żaden plik src/ nie renderuje
+org-legacy	R1	OrganizationView	dług zastany 2026-09-01 (audyt przyrządu): montuje <OrganizationView>, którego żaden plik src/ nie renderuje
+prawy-panel-szyna-ikon	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+prawy-panel-szyna-ikon	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
+prawy-pas-deck-builder-system	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+prawy-pas-jedna-formula	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+prawy-pas-jedna-formula	R1	PreviewStructuredList	dług zastany 2026-09-01 (audyt przyrządu): montuje <PreviewStructuredList>, którego żaden plik src/ nie renderuje
+prawy-pas-jedna-formula	R2	PreviewActivityStrip+RightRail	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <PreviewActivityStrip> i <RightRail>; produkcja nigdy ich razem nie renderuje
+prawy-pas-jedna-formula	R3	max-w-[640px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-[640px], którego nie ma ani u wołacza, ani w komponencie
+prawy-pas-jedna-formula	R3	w-[640px]	dług zastany 2026-09-01 (audyt przyrządu): narzuca w-[640px], którego nie ma ani u wołacza, ani w komponencie
+preview-4-zakladki	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+report-artifact	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
+results-vnext-legacy-archive	R1	ResultsVNextLegacyArchivePanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <ResultsVNextLegacyArchivePanel>, którego żaden plik src/ nie renderuje
+results-vnext-okr-admin	R2	OkrCyclesPage+OkrProgramsPage	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <OkrCyclesPage> i <OkrProgramsPage>; produkcja nigdy ich razem nie renderuje
+rn-g3-class-l-record-shell	R1	TeresaUnavailableNotice	dług zastany 2026-09-01 (audyt przyrządu): montuje <TeresaUnavailableNotice>, którego żaden plik src/ nie renderuje
+rn-g3-class-l-record-shell	R2	ArtifactBreadcrumb+SaveStateIndicator	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <ArtifactBreadcrumb> i <SaveStateIndicator>; produkcja nigdy ich razem nie renderuje
+rose-danger-token-parity	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+rose-danger-token-parity	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+settings-crimson-neutralized	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+settings-crimson-neutralized	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+siri-tier	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+siri-tier	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+standard-grid-card	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+standard-kanban-card	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+superadmin-platform-operations-day15	R3	max-w-6xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-6xl, którego nie ma ani u wołacza, ani w komponencie
+tabele-fala2-przed-po	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+tabele-fala2-przed-po	R2	ArtifactPropertiesTable+PriorityCell	dług zastany 2026-09-01 (audyt przyrządu): stawia obok siebie <ArtifactPropertiesTable> i <PriorityCell>; produkcja nigdy ich razem nie renderuje
+teresa-chipy-panel-artefaktu	R1	AIConsultantPanel	dług zastany 2026-09-01 (audyt przyrządu): montuje <AIConsultantPanel>, którego żaden plik src/ nie renderuje
+teresa-confirm-chip	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+tool-outputs-panel	R3	max-w-2xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-2xl, którego nie ma ani u wołacza, ani w komponencie
+tools-swot-initiative-proposal	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
+tools-swot-live	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+tools-swot-live	R1	SwotLiveArtifact	dług zastany 2026-09-01 (audyt przyrządu): montuje <SwotLiveArtifact>, którego żaden plik src/ nie renderuje
+tools-swot-live	R3	max-w-3xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-3xl, którego nie ma ani u wołacza, ani w komponencie
+ui-foundation-focus-01-evidence	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+ui-foundation-focus-01-evidence	R3	max-w-xs	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-xs, którego nie ma ani u wołacza, ani w komponencie
+unified-create-launcher	R1	UnifiedCreateLauncher	dług zastany 2026-09-01 (audyt przyrządu): montuje <UnifiedCreateLauncher>, którego żaden plik src/ nie renderuje
+ustawienia-grupy	R1	SettingsView	dług zastany 2026-09-01 (audyt przyrządu): montuje <SettingsView>, którego żaden plik src/ nie renderuje
+vault-folder-block-proof	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+vault-folder-block-proof	R3	max-w-2xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-2xl, którego nie ma ani u wołacza, ani w komponencie
+wave3-creators-crimson	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+wave3-creators-crimson	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+wave4-choices-crimson	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+wave4-choices-crimson	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+wave5-internal-crimson	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
+word-intake-uselm-default	R3	max-w-2xl	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-2xl, którego nie ma ani u wołacza, ani w komponencie
+word-quality-badge	R3	max-w-md	dług zastany 2026-09-01 (audyt przyrządu): narzuca max-w-md, którego nie ma ani u wołacza, ani w komponencie
