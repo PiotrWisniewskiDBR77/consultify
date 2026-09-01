@@ -15,6 +15,19 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+const contextBelongsToOrg = async (
+  contextId: string,
+  organizationId: string | undefined
+): Promise<boolean> => {
+  if (!organizationId) return false;
+  const row = (await dbGet('SELECT organization_id FROM ai_contexts WHERE id = ?', [
+    contextId,
+  ])) as {
+    organization_id?: string;
+  } | null;
+  return row?.organization_id === organizationId;
+};
+
 router.get(
   '/',
   verifyToken,
@@ -70,6 +83,9 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const orgId = req.user?.organizationId;
+    if (!(await contextBelongsToOrg(id, orgId))) {
+      return res.status(404).json({ error: 'Context not found' });
+    }
     const { name, content, isActive, priority } = req.body;
     const updates: string[] = [];
     const params: any[] = [];
@@ -118,6 +134,9 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await contextBelongsToOrg(req.params.id, req.user?.organizationId))) {
+      return res.status(404).json({ error: 'Context not found' });
+    }
     await dbRun('DELETE FROM ai_contexts WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   })
