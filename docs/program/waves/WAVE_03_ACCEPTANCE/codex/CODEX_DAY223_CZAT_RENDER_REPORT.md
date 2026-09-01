@@ -162,6 +162,12 @@ day223 ChatActionType producer inventory keeps governed draft creation out of th
    punktu zatrzymania. Przed startem wykazano 0 wierszy w bazie dyżuru `cx223`;
    w runtime DB wykazano 0 wierszy zaraz po kwalifikacji oraz brak kluczy SMTP
    w procesie/logu. Nie modyfikowano skryptu.
+5. Kanoniczny `stop` odmówił po commicie dokumentacji: stan runtime był związany
+   z `d1262f3416`, a bieżący HEAD z `ee52d84d2c`. Nie zmieniano manifestu ani
+   state. Zweryfikowano dokładne identity PID/PGID `46175/46175` (serwer) i
+   `46202/46202` (Vite), zakończono wyłącznie te grupy, usunięto wyłącznie bazę
+   `consultify_w3_runtime_day223` oraz kontener `cx-day223-pg`. Końcowy odczyt:
+   `6166/5120/5121 wolne`, `cx-day223-pg usuniety`.
 
 ## 7. TWIERDZENIA NIEZWERYFIKOWANE
 
