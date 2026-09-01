@@ -23,6 +23,7 @@ import {
   WorkspaceContext,
   WorkspaceType,
 } from '../types/workspace';
+import type { TeresaEntityContext } from './teresaEntityContext';
 
 const STORE_DEBUG = import.meta.env.VITE_STORE_DEBUG === 'true';
 
@@ -516,6 +517,13 @@ interface ConversationState {
   // Context about what's displayed in workspace (for split mode)
   workspaceContext: WorkspaceContext | null;
 
+  // PRZYPIĘTY kontekst obiektu, z którego otwarto Teresę („Zapytaj Teresę
+  // o tę inicjatywę"). ODDZIELNE pole od `workspaceContext`, bo tamto
+  // MainLayout przelicza z trasy na każdym renderze i nadpisywało encję.
+  // Persystowane (partialize) → przeżywa odświeżenie strony.
+  // Patrz src/store/teresaEntityContext.ts.
+  teresaEntityContext: TeresaEntityContext | null;
+
   // Previous view for "back" functionality
   previousView: AppView | null;
 
@@ -681,6 +689,12 @@ interface ConversationState {
   setWorkspaceContext: (context: WorkspaceContext | null) => void;
 
   /**
+   * Przypnij kontekst obiektu do okna Teresy (dok i pełne okno).
+   * `null` zdejmuje przypięcie.
+   */
+  setTeresaEntityContext: (context: TeresaEntityContext | null) => void;
+
+  /**
    * Update workspace context with view info (convenience method)
    */
   updateWorkspaceFromView: (
@@ -740,6 +754,7 @@ export const useConversationStore = create<ConversationState>()(
       // Unified Chat System state
       displayMode: 'full' as ChatDisplayMode,
       workspaceContext: null,
+      teresaEntityContext: null,
       previousView: null,
 
       // ==================== FETCH ====================
@@ -1832,6 +1847,16 @@ export const useConversationStore = create<ConversationState>()(
         set({ workspaceContext: context });
       },
 
+      setTeresaEntityContext: (context: TeresaEntityContext | null) => {
+        if (STORE_DEBUG)
+          console.log(
+            '[ConversationStore] setTeresaEntityContext:',
+            context?.type,
+            context?.entityId
+          );
+        set({ teresaEntityContext: context });
+      },
+
       updateWorkspaceFromView: (
         view: AppView,
         entityId?: string,
@@ -1934,6 +1959,11 @@ export const useConversationStore = create<ConversationState>()(
           : [],
         draftChatLanguage: state.draftChatLanguage,
         chatLanguageByConversationId: state.chatLanguageByConversationId,
+        // „Jedna Teresa" (2026-09-01): kontekst obiektu MUSI przeżyć odświeżenie
+        // strony — inaczej po F5 na karcie inicjatywy Teresa znowu nie wie,
+        // o czym rozmawia. Zakres obowiązywania pilnuje
+        // `isTeresaEntityContextInScope` (rozmowa albo ta sama trasa).
+        teresaEntityContext: state.teresaEntityContext,
       }),
       merge: (persistedState: any, currentState) => {
         const persisted = persistedState?.state || persistedState || {};
