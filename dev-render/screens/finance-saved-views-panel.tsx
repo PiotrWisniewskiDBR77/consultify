@@ -130,9 +130,16 @@ export default function FinanceSavedViewsPanelScreen(): React.ReactElement {
       data-scene={scene}
     >
       <SimulatedMenu1 />
-      <div className="mx-auto mt-4 max-w-md">
-        <FinanceSavedViewsPanel artifactId={ARTIFACT_ID} onApplyView={() => {}} />
-      </div>
+      {/* Produkcja: FinanceWorkspaceUtilities.tsx:74-99 — aside w-full + szuflada
+          max-h-[42vh] overflow-auto p-4, NIE osobna kartka max-w-md. */}
+      <aside
+        className="mt-4 w-full shrink-0 border-t border-c-border-subtle bg-c-surface"
+        data-testid="finance-workspace-utilities"
+      >
+        <div className="max-h-[42vh] overflow-auto border-t border-c-border-subtle p-4">
+          <FinanceSavedViewsPanel artifactId={ARTIFACT_ID} onApplyView={() => {}} />
+        </div>
+      </aside>
     </div>
   );
 }

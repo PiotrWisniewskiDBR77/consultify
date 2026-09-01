@@ -209,9 +209,16 @@ export default function FinanceCommentsPanelScreen(): React.ReactElement {
       data-scene={scene}
     >
       <SimulatedMenu1 />
-      <div className="mx-auto mt-4 max-w-xl">
-        <FinanceCommentsPanel artifactId={ARTIFACT_ID} businessVersionId={BV_ID} />
-      </div>
+      {/* Produkcja: FinanceWorkspaceUtilities.tsx:74-92 — aside w-full + szuflada
+          max-h-[42vh] overflow-auto p-4, NIE osobna kartka max-w-xl. */}
+      <aside
+        className="mt-4 w-full shrink-0 border-t border-c-border-subtle bg-c-surface"
+        data-testid="finance-workspace-utilities"
+      >
+        <div className="max-h-[42vh] overflow-auto border-t border-c-border-subtle p-4">
+          <FinanceCommentsPanel artifactId={ARTIFACT_ID} businessVersionId={BV_ID} />
+        </div>
+      </aside>
     </div>
   );
 }
