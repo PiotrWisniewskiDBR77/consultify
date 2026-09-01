@@ -1708,6 +1708,16 @@
     "knowledge": "Baza Wiedzy",
     "organization": "Organizacja",
     "adminPanel": "Panel Administratora",
+    "adminSection": {
+      "overview": "Przegląd",
+      "people": "Użytkownicy i dostęp",
+      "security": "Bezpieczeństwo i tożsamość",
+      "billing": "Rozliczenia i FinOps",
+      "ai": "Nadzór i operacje AI",
+      "integrations": "Integracje i synchronizacja",
+      "audit": "Audyt, zgodność i ryzyko",
+      "operations": "Operacje organizacji"
+    },
     "logOut": "Wyloguj się",
     "chat": "Czat AI",
     "aiChat": "Czat",
