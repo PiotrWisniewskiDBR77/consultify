@@ -2192,7 +2192,16 @@ export function KnownToolDetailView(props: {
         id: 'actions',
         label: t('discoveryToolsMain.knownToolDetailView.panelActions', 'Actions'),
         icon: Sparkles,
-        defaultOpen: false,
+        // ★ NAPRAWA 2026-09-01 (dyżur 164, rodzina „nagie zero"). Było
+        // `defaultOpen: false`. Sekcja pokazywała nagłówek „AKCJE 0" i
+        // CHOWAŁA pod zwiniętym akordeonem jedyne zdanie, które ten licznik
+        // tłumaczy („Ten wpis biblioteczny nie ma własnych akcji — startuj
+        // sesję przyciskiem w nagłówku."). Czyli dokładnie tam, gdzie miało
+        // być widoczne, nie było go widać — a samo „0" wprowadza w błąd.
+        // Wzorzec poprawny obok: `InitiativeDocumentView` (sekcja `actions`
+        // w Podglądzie: licznik 0 + otwarte zdanie wyjaśniające znaczenie
+        // liczby). Patrz docs/program/grafika/KANON_Z_ODBIOROW.md.
+        defaultOpen: true,
         isEmpty: true,
         badge: 0,
         showZeroBadge: true,

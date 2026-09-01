@@ -645,8 +645,12 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       // Stary pas ikon jest w trybie warsztatu wygaszany; prawa powierzchnia
       // prezentacji to `artifactRightPanelSlot` niżej (SPEC-A §11.2).
       rightRailTools={artifactStudioMode ? [] : rightTools}
+      // ★ 2026-09-01 (dyżur 164): `artifactRightPanelWidth={300}` USUNIĘTE.
+      // Panel Decka był o 20 px węższy od kart N i — zmierzone na żywym
+      // renderze — przy 300 px dostawał WŁASNY poziomy pasek przewijania
+      // (treść nie mieściła się w pasie). Szerokość bierze teraz powłoka
+      // z tokenu `--ntype-right-panel-width`; nie wpisuj tu liczby.
       artifactRightPanelSlot={artifactRightPanel}
-      artifactRightPanelWidth={300}
       activeRightRailToolId={activeRightRailToolId}
       onActiveRightRailToolChange={onActiveRightRailToolChange}
       renderRightRailPanel={(activeToolId) => (

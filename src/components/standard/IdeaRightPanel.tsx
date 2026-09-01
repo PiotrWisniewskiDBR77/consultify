@@ -135,8 +135,16 @@ export interface IdeaRightPanelProps {
    * nie renderuje.
    */
   onConvert?: () => void;
-  /** Szerokość panelu (default 360; kanon ArtifactRightPanel 320–420). */
-  width?: number;
+  /**
+   * Szerokość panelu. DOMYŚLNIE token `--ntype-right-panel-width` (320 px) —
+   * ta sama szerokość co karty N i każdy inny prawy pas akordeonowy.
+   *
+   * ★ NAPRAWA 2026-09-01 (dyżur 164): stało tu `360`, przez co dok Teresy
+   * Idei był o 40 px szerszy od kart N. Zmierzone przy 320 px: ZERO nowych
+   * ucięć treści względem 360 px. Nie wpisuj liczby — szerokość ma jedno
+   * źródło (`src/index.css`).
+   */
+  width?: number | string;
   /** PL/EN etykiety nagłówków sekcji. */
   isPolish?: boolean;
 
@@ -187,7 +195,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
   evidenceArtifactId,
   onExport,
   onConvert,
-  width = 360,
+  width = 'var(--ntype-right-panel-width)',
   isPolish = false,
   title,
   onDiscussWithTeresa,
@@ -383,7 +391,13 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         teresa={railTeresaMode}
         typeModes={railTypeModes}
         defaultModeId={defaultRailModeId}
-        panelWidth={width}
+        // Szyna ikon (`ArtifactRightRail`) to TRZECI, świadomy kształt prawego
+        // pasa — ten sam co Word (`document-artifact`) — i ma własną szerokość
+        // panelu spójną z `useRailState.defaultRightWidth`. Nadpisujemy ją
+        // tylko wtedy, gdy wołający podał JAWNĄ liczbę; token akordeonu
+        // (string `var(...)`) nie ma tu sensu, bo szyna liczy piksele przy
+        // zmianie rozmiaru.
+        panelWidth={typeof width === 'number' ? width : undefined}
         testId="idea-artifact-right-rail"
       />
     );

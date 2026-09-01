@@ -411,7 +411,13 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
     <aside
       aria-label={t('notebook.rightRail.label', 'Document details and context')}
       className="flex shrink-0 flex-col overflow-hidden bg-c-surface"
-      style={{ width: 360, minWidth: 360 }}
+      // ★ 2026-09-01 (dyżur 164): tu stała wpisana ręcznie szerokość 360 px.
+      // Ten pas (flaga SPEC-A OFF = stan produkcyjny) był o 40 px szerszy od
+      // kart N. Jedno źródło szerokości prawego pasa: `--ntype-right-panel-width`.
+      style={{
+        width: 'var(--ntype-right-panel-width)',
+        minWidth: 'var(--ntype-right-panel-width)',
+      }}
     >
       {/* Rail header — title + close, no tabs (DEC-69). */}
       <div className="flex h-11 items-center gap-2 border-b border-c-border-subtle px-4">
@@ -986,7 +992,11 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       <ArtifactRightPanel
         ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
         className="min-h-0 flex-1 border-l-0"
-        width={360}
+        // ★ 2026-09-01 (dyżur 164): jawne nadpisanie szerokości (360 px)
+        // USUNIĘTE. Pas Notatnika był o 40 px szerszy od kart N, mimo że oba
+        // renderują ten sam `ArtifactRightPanel`. Domyślna szerokość komponentu
+        // to token `--ntype-right-panel-width` — zmierzone przy 320 px: zero
+        // nowych ucięć treści względem poprzedniej szerokości.
         sections={specASections}
       />
     </div>

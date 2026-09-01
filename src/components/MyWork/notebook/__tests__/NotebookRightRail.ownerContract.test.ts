@@ -7,8 +7,13 @@ import { ARTIFACT_PANEL_SECTION_ORDER } from '@/components/standard/ArtifactRigh
 const source = fs.readFileSync(path.resolve(__dirname, '../NotebookRightRail.tsx'), 'utf8');
 
 // DEC-2026-08-25-69: replaced the bespoke Work/Context tablist with the
-// shared SPEC-A right-panel canon — a fixed-order accordion, 360px, no
-// tabs. This contract now checks for THAT shape instead of the old one.
+// shared SPEC-A right-panel canon — a fixed-order accordion, no tabs.
+// This contract now checks for THAT shape instead of the old one.
+//
+// ★ 2026-09-01 (dyżur 164): szerokość NIE jest już literałem `360`. Prawy pas
+// ma w całej aplikacji jedną szerokość z tokenu `--ntype-right-panel-width`
+// (`src/index.css`), więc test pilnuje TOKENU, a nie liczby — inaczej sam
+// blokowałby ujednolicenie, dla którego powstał.
 describe('Notebook right rail owner contract (SPEC-A accordion)', () => {
   it('renders the shared ArtifactRightPanel behind the default-off rollout flag', () => {
     expect(source).toContain("from '@/components/standard/ArtifactRightPanel'");
@@ -16,9 +21,14 @@ describe('Notebook right rail owner contract (SPEC-A accordion)', () => {
     expect(source).toContain('isNotebookSpecAShellEnabled()');
   });
 
-  it('is a 360px accordion rail, not a tablist', () => {
+  it('is a token-width accordion rail, not a tablist', () => {
     expect(source).toContain('<aside');
-    expect(source).toContain('width: 360, minWidth: 360');
+    expect(source).toContain("width: 'var(--ntype-right-panel-width)'");
+    expect(source).toContain("minWidth: 'var(--ntype-right-panel-width)'");
+    // Zakaz powrotu do liczby: każda szerokość wpisana ręcznie odtwarza
+    // rozjazd 300/320/360/400 px zmierzony 2026-09-01.
+    expect(source).not.toContain('width: 360');
+    expect(source).not.toContain('width={360}');
     expect(source).not.toContain('role="tablist"');
     expect(source).not.toContain('role="tab"');
     expect(source).not.toContain('role="tabpanel"');

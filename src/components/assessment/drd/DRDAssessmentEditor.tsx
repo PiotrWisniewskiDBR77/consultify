@@ -2390,7 +2390,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         left={contentWithExpandButton}
         right={navPanel}
         isRightOpen={isSidebarOpen && !isNavCollapsed}
-        rightWidthClass="w-[320px]"
+        // ★ 2026-09-01 (dyżur 164): usunięte `rightWidthClass="w-[320px]"`.
+        // Ta sama szerokość, ale teraz z tokenu `--ntype-right-panel-width`
+        // (domyślna wartość `AssessmentToolShell`) — nie odrasta przy
+        // następnej zmianie szerokości prawego pasa.
         rightSide="right"
       />
       <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />

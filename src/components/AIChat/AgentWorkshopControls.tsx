@@ -85,7 +85,12 @@ export interface AgentWorkshopControlsProps {
   onClose?: () => void;
   /** Komunikat błędu operacji (zapis/uruchomienie/zgoda). */
   errorMessage?: string | null;
-  width?: number;
+  /**
+   * Szerokość panelu. Domyślnie token `--ntype-right-panel-width` (320 px) —
+   * ★ 2026-09-01 (dyżur 164): stało tu 300 px, czyli piąta szerokość prawego
+   * pasa w aplikacji. Nie wpisuj liczby.
+   */
+  width?: number | string;
 }
 
 export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
@@ -101,7 +106,7 @@ export const AgentWorkshopControls: React.FC<AgentWorkshopControlsProps> = ({
   onApprove,
   onClose,
   errorMessage,
-  width = 300,
+  width = 'var(--ntype-right-panel-width)',
 }) => {
   const awaitingSteps = plan.steps.filter((s) => s.status === 'awaiting_approval');
   const progressPct =
