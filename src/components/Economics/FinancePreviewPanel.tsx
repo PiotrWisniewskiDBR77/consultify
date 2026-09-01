@@ -1269,14 +1269,13 @@ export function useFinancePreview({
 
       return (
         <div className="space-y-0">
-          <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-            <PreviewAIHintStrip
-              hints={aiHints}
-              onRunHint={(hint) =>
-                window.location.assign(`/chat?context=finance&prompt=${encodeURIComponent(hint)}`)
-              }
-            />
-          </div>
+          {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+          <PreviewAIHintStrip
+            hints={aiHints}
+            onRunHint={(hint) =>
+              window.location.assign(`/chat?context=finance&prompt=${encodeURIComponent(hint)}`)
+            }
+          />
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
           <PreviewRelations
             items={relationItems}

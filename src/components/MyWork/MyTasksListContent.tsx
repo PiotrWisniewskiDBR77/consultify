@@ -2749,31 +2749,30 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             return (
               // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
               <div className="space-y-2.5">
-                <div className="rounded-xl border border-c-border-subtle bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-                  <PreviewAIHintStrip
-                    hints={hints}
-                    loading={aiLoading}
-                    result={aiLoading ? 'Thinking…' : aiText}
-                    error={aiError}
-                    onRunHint={(hint) => {
-                      const intent = hintToIntent[hint];
-                      if (intent) runTaskAi(intent, task);
-                    }}
-                    onCopy={async () => {
-                      if (!aiText) return;
-                      try {
-                        await navigator.clipboard.writeText(aiText);
-                        toast.success(t('myWork.tasksList.toastSuccess3', 'Copied'));
-                      } catch {
-                        toast.error(t('myWork.tasksList.toastError2', 'Copy failed'));
-                      }
-                    }}
-                    onClear={() => {
-                      setAiText(null);
-                      setAiError(null);
-                    }}
-                  />
-                </div>
+                {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+                <PreviewAIHintStrip
+                  hints={hints}
+                  loading={aiLoading}
+                  result={aiLoading ? 'Thinking…' : aiText}
+                  error={aiError}
+                  onRunHint={(hint) => {
+                    const intent = hintToIntent[hint];
+                    if (intent) runTaskAi(intent, task);
+                  }}
+                  onCopy={async () => {
+                    if (!aiText) return;
+                    try {
+                      await navigator.clipboard.writeText(aiText);
+                      toast.success(t('myWork.tasksList.toastSuccess3', 'Copied'));
+                    } catch {
+                      toast.error(t('myWork.tasksList.toastError2', 'Copy failed'));
+                    }
+                  }}
+                  onClear={() => {
+                    setAiText(null);
+                    setAiError(null);
+                  }}
+                />
 
                 <PreviewRelations
                   items={relationItems}

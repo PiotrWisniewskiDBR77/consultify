@@ -637,14 +637,13 @@ export const InitiativePreviewV3Footer: React.FC<{
 
   return (
     <div className="space-y-0">
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-        <PreviewAIHintStrip
-          hints={aiHintLabels}
-          onRunHint={handleRunHint}
-          onRegenerate={handleRegenerate}
-          disabled={!onOpenChat}
-        />
-      </div>
+      {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+      <PreviewAIHintStrip
+        hints={aiHintLabels}
+        onRunHint={handleRunHint}
+        onRegenerate={handleRegenerate}
+        disabled={!onOpenChat}
+      />
 
       <div className="border-t border-c-border-subtle my-3" />
 

@@ -510,18 +510,17 @@ export const KnownToolPreviewV3Footer: React.FC<{
 
   return (
     <div className="space-y-0">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2">
-        <PreviewAIHintStrip
-          hints={aiHints}
-          loading={aiLoading || fullLoading}
-          result={aiText}
-          error={aiError}
-          onRunHint={(hint) => void runAi(hintToIntent[hint] ?? 'when_to_use')}
-          onRegenerate={handleRegenerateAi}
-          onCopy={handleCopyAi}
-          onClear={handleClearAi}
-        />
-      </div>
+      {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+      <PreviewAIHintStrip
+        hints={aiHints}
+        loading={aiLoading || fullLoading}
+        result={aiText}
+        error={aiError}
+        onRunHint={(hint) => void runAi(hintToIntent[hint] ?? 'when_to_use')}
+        onRegenerate={handleRegenerateAi}
+        onCopy={handleCopyAi}
+        onClear={handleClearAi}
+      />
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-2" />
 

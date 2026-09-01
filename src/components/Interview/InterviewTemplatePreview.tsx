@@ -280,9 +280,8 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
     <div className="space-y-2.5">
-      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
-        <PreviewAIHintStrip hints={aiHints} onRunHint={onRunAiHint} />
-      </div>
+      {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+      <PreviewAIHintStrip hints={aiHints} onRunHint={onRunAiHint} />
 
       <PreviewRelations items={relationItems} />
 

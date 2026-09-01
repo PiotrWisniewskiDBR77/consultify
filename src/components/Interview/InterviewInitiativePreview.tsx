@@ -253,18 +253,17 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
     <div className="space-y-2.5">
-      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
-        <PreviewAIHintStrip
-          hints={[
-            t('interview.initiativePreview.summarize'),
-            t('interview.initiativePreview.risks'),
-            t('interview.initiativePreview.nextSteps'),
-          ]}
-          onRunHint={() => {}}
-          disabled
-          disabledTooltip={t('interview.initiativePreview.aiForInitiativesComingSoon')}
-        />
-      </div>
+      {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+      <PreviewAIHintStrip
+        hints={[
+          t('interview.initiativePreview.summarize'),
+          t('interview.initiativePreview.risks'),
+          t('interview.initiativePreview.nextSteps'),
+        ]}
+        onRunHint={() => {}}
+        disabled
+        disabledTooltip={t('interview.initiativePreview.aiForInitiativesComingSoon')}
+      />
 
       <PreviewRelations items={relationItems} />
 

@@ -442,19 +442,18 @@ export const DecisionPreviewFooter: React.FC<{
   return (
     // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
     <div className="space-y-2.5">
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-        <PreviewAIHintStrip
-          hints={hints}
-          loading={aiLoading}
-          result={aiText}
-          error={aiError}
-          onRunHint={(hint) => onRunAi(hintToIntent(hint))}
-          onRegenerate={onRegenerateAi}
-          onCopy={onCopyAi}
-          onClear={onClearAi}
-          disabled={!decision?.id}
-        />
-      </div>
+      {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+      <PreviewAIHintStrip
+        hints={hints}
+        loading={aiLoading}
+        result={aiText}
+        error={aiError}
+        onRunHint={(hint) => onRunAi(hintToIntent(hint))}
+        onRegenerate={onRegenerateAi}
+        onCopy={onCopyAi}
+        onClear={onClearAi}
+        disabled={!decision?.id}
+      />
 
       <PreviewRelations
         items={relationItems}
