@@ -33,10 +33,40 @@ Do tego gotowy komponent wyboru `ImageStyleSelector.tsx` z ikonami
 **Sześć — dokładnie tyle, ile właściciel wskazał z pamięci** („z sześciu typów
 obrazów"). Ktoś w tym zespole rozłożył Gammę na czynniki wcześniej niż my.
 
-## Dlaczego tego nie widać w produkcie
-Robotnik zmierzył: `ImageStylePreset` występuje **wyłącznie we własnym pliku typów
-i we własnym komponencie**. Zero wołaczy z zewnątrz. Komponent **nie jest nigdzie
-renderowany**.
+## ★ SPROSTOWANIE NADZORCY (w tej samej godzinie) — komponent JEST renderowany
+
+Napisałem wyżej „komponent nie jest nigdzie renderowany". **To była nieprawda i
+przyczyną był mój własny grep**: użyłem w powłoce `zsh` przełącznika, który
+unieważnił wyszukiwanie, i dostałem pustkę interpretowaną jako „zero wołaczy".
+**Ten sam błąd popełniłem dziś już raz** przy liczeniu twierdzeń w komentarzach —
+wtedy dał „zero" przy 600 trafieniach.
+
+Pomiar poprawny:
+- `ImageStyleSelector` **jest wołany** — `SetupStep.tsx:291`, eksportowany też
+  w `wizard/index.ts:3`;
+- `SetupStep` **jest renderowany** — `PresentationWizard.tsx:300`.
+
+**Czyli użytkownik ten wybór WIDZI i może go dokonać.**
+
+## Gdzie przewód jest naprawdę przerwany
+
+Zmierzone: wybrana wartość **nie pojawia się w żądaniu do backendu** — brak
+jakiegokolwiek `imageStyle`/`image_style` w warstwie wysyłającej kreatora.
+Po stronie serwera pole istnieje, ale **żyje własnym życiem**:
+- `presentations.routes.ts:2155` ustawia `image_style_preset: 'minimal_no_images'`
+  **na sztywno**;
+- `presentationGeneratorService.ts:2073` podaje `imageStylePreset: v.styleHint || 'corporate'`
+  — wartość spoza sześciu presetów kreatora;
+- `presentationVisionQAService.ts:14,85` czyta `imageStylePreset` i wkleja go do
+  polecenia dla modelu — **czyli ogniwo „styl trafia do polecenia" ISTNIEJE**.
+
+**Wniosek jest mocniejszy niż pierwotny:** to nie jest martwy kod czekający na
+zbudowanie. To **kompletny łańcuch z jednym przerwanym przewodem pośrodku** —
+człowiek wybiera styl, model dostaje styl, ale **nie ten, który człowiek wybrał**,
+tylko wartość zaszytą na sztywno.
+
+Dyżur 228 robi się przez to **mniejszy i pewniejszy**: przeprowadzić wybór
+użytkownika przez żądanie do miejsca, które już umie go użyć.
 
 To jest **trzeci martwy kanał** wykryty w tej okolicy jednego dnia:
 1. edytor krojów i kolorów — dane **giną przy zapisie** (backend nie odbiera pola);
