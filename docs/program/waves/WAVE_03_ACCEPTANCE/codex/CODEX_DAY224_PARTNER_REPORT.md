@@ -159,6 +159,13 @@ i `--retry=0`; strażnik wywołano bez argumentów.
 4. `minTableWidth="auto"` nie spełnia mobile DoD — wynik, nie sprzeczność instrukcji.
 5. Komenda testu z rootem i `--config server/vitest.config.ts` dała 0 testów; właściwy
    serwerowy root to katalog `server` z `--config vitest.config.ts`.
+6. Cleanup: pierwsza komenda kanonicznego stopu została odrzucona, ponieważ po commitach
+   `WAVE3_RUNTIME_EXPECTED_SHA` nie odpowiadał już HEAD. Powłoka usunęła następnie
+   wyłącznie własny `cx-day224-pg`, pozostawiając własne procesy bez bazy. Zweryfikowano
+   dokładne PID/PGID i `lstart` z kanonicznego `state.json`, zakończono wyłącznie grupy
+   `67052` (server) i `67074` (client), a readback potwierdził: porty
+   `6167/5122/5123` wolne oraz kontener nie istnieje. Nie sygnalizowano żadnego cudzego
+   procesu.
 
 ## 8. TWIERDZENIA NIEZWERYFIKOWANE
 
