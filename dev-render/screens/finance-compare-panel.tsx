@@ -156,7 +156,23 @@ export default function FinanceComparePanelScreen(): React.ReactElement {
       data-scene={scene}
     >
       <SimulatedMenu1 />
-      <div className="mx-auto mt-4 max-w-3xl">
+      {/*
+       * ★ SZEROKOŚĆ: BEZ `max-w-*` (odbiór grafiki 2026-09-01, uwaga
+       * `finance-compare-panel`: „A może całą szerokość dostępnego ekranu
+       * wykorzystajmy").
+       *
+       * Do 09-01 stało tu `mx-auto mt-4 max-w-3xl` — 768 px kontenera przy
+       * oknie 1440 px, czyli tabela 740 px i 672 px pustki po bokach (46,7%
+       * ekranu). POMIAR w żywym DOM wskazał, że ograniczenie siedziało
+       * WYŁĄCZNIE W TYM PLIKU: `FinanceComparePanel` nie ma żadnego
+       * `max-width`, a jego jedyny produkcyjny montaż
+       * (`src/components/Finance/shared/FinanceWorkspaceUtilities.tsx:101`,
+       * przez `CanonicalFinanceWorkspaceMount` w `FinanceHub.tsx:230`) siedzi
+       * w kontenerze pełnej szerokości. Czyli: właściciel oglądał zwężenie
+       * WPROWADZONE PRZEZ PRZYRZĄD, nie przez produkt — kolejny przypadek
+       * „harness kłamie". Host musi pokazywać to, co widać w produkcie.
+       */}
+      <div className="mt-4">
         <FinanceComparePanel request={REQUEST} />
       </div>
     </div>
