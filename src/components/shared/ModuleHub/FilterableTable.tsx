@@ -801,6 +801,33 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   }, [minTableWidth, visibleColumns]);
 
   /**
+   * ── `min-width` NIE MOŻE być szersze niż realny kontener ───────────────────
+   *
+   * DRUGA, NIEZALEŻNA przyczyna „uciętej ostatniej kolumny" (pomiar 2026-09-01).
+   * `DEFAULT_MIN_TABLE_WIDTH` = 980 px było narzucane BEZWARUNKOWO — także gdy
+   * obszar tabeli był węższy (otwarty podgląd zabiera ~410 px z 1398 px).
+   * Wtedy `min-width` SAM wytwarzał nadmiar, mimo że kolumny mieściły się bez
+   * problemu, a przypięta kolumna akcji zasłaniała ogon ostatniej kolumny.
+   *
+   * Dowód arytmetyczny z przelotu przez 94 ekrany listowe: na DZIESIĘCIU
+   * ekranach nadmiar równał się CO DO PIKSELA `980 − szerokość kontenera`
+   * (audyty-drd-report 934→46, execution-tab-control 943→37,
+   * partner-settlements-view 954→26, agent-hub 957→23, execution-tab-work
+   * 966→14, interview-sessions-status 967→13, assessment-five-surfaces
+   * 971→9, report-builder-block-types 974→6 …). Taka zgodność nie jest
+   * przypadkiem — to podpis tej jednej przyczyny.
+   *
+   * `min-width` ma bronić przed ZAPADNIĘCIEM tabeli, a nie rozpychać ją ponad
+   * dostępny obszar; przed zapadnięciem broni dziś `columnFit` (podłogi
+   * czytelności). Dlatego przycinamy je do realnej szerokości kontenera.
+   */
+  const effectiveMinTableWidth = useMemo<number | undefined>(() => {
+    if (resolvedMinTableWidth === undefined) return undefined;
+    if (horizontalViewportWidth <= 0) return resolvedMinTableWidth;
+    return Math.min(resolvedMinTableWidth, horizontalViewportWidth);
+  }, [resolvedMinTableWidth, horizontalViewportWidth]);
+
+  /**
    * ── Dopasowanie kolumn do kontenera (defekt „ucięta ostatnia kolumna") ────
    *
    * MECHANIZM DEFEKTU. Nagłówek renderował KAŻDĄ kolumnę na jej zadeklarowanej
@@ -848,7 +875,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
 
     const actionsWidth = hideRowActions ? 0 : ROW_ACTIONS_COLUMN_WIDTH;
     const natural = declared.reduce((sum, c) => sum + c.width, 0) + actionsWidth;
-    const available = Math.max(horizontalViewportWidth, resolvedMinTableWidth ?? 0);
+    const available = Math.max(horizontalViewportWidth, effectiveMinTableWidth ?? 0);
     if (horizontalViewportWidth <= 0 || available <= 0 || natural <= available) {
       return { widths, scale: 1 };
     }
@@ -940,7 +967,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     parsePx,
     hideRowActions,
     horizontalViewportWidth,
-    resolvedMinTableWidth,
+    effectiveMinTableWidth,
   ]);
 
   // First data (non-select) column hosts the optional row-description line.
@@ -1139,8 +1166,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         <div ref={horizontalViewportRef} className="w-full overflow-x-auto">
           <table
             /* §27-exempt: to JEST kanoniczny komponent FilterableTable (§2 SSOT) — surowy <table> tutaj to jego implementacja, nie luka */ className="w-full table-fixed"
-            data-min-table-width={resolvedMinTableWidth ?? 'auto'}
-            style={{ minWidth: resolvedMinTableWidth }}
+            data-min-table-width={effectiveMinTableWidth ?? 'auto'}
+            style={{ minWidth: effectiveMinTableWidth }}
           >
             <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
               <tr>
