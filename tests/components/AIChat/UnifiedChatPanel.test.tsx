@@ -2504,4 +2504,61 @@ describe('UnifiedChatPanel (L2)', () => {
       expect(screenContext?.selectedObjectType).toBeNull();
     });
   });
+
+  // =========================================================================
+  // Dyżur 172 — MOST „Teresa sama poprawia artefakt" w jednym oknie Teresy.
+  //
+  // Dopóki czat był OSADZONY w ekranie artefaktu, ekran podawał propsa
+  // `onModuleIntent`. Po decyzji „jedna Teresa, w swoim oknie" tamten props
+  // nie miał kto podać (dok renderuje MainLayout, pełne okno AppRoutes), więc
+  // most `DeckBuilder` (prompt → agent-edit → banner Zaakceptuj/Odrzuć) stał
+  // się nieosiągalny z ekranu. Ekran publikuje teraz handler w `uiSlice`.
+  // =========================================================================
+  describe('most edycji artefaktu z jednego okna Teresy (172)', () => {
+    it('bierze handler opublikowany przez ekran artefaktu, gdy nie ma propsa', async () => {
+      const handler = vi.fn(async () => ({ handled: true, reply: 'Przygotowałam poprawkę talii.' }));
+      appStoreState.chatModuleIntent = { owner: 'deckBuilder:deck-7', handler };
+      conversationStoreState.activeConversationId = 'conv-1';
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+      fireEvent.click(screen.getByTestId('send-button'));
+
+      await waitFor(() => expect(handler).toHaveBeenCalledWith('hello'));
+      // Tura należy do modułu — nie idzie równolegle do modelu.
+      expect(startStreamMock).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(addChatMessageMock).toHaveBeenCalledWith(
+          expect.objectContaining({ role: 'ai', content: 'Przygotowałam poprawkę talii.' })
+        )
+      );
+      appStoreState.chatModuleIntent = null;
+    });
+
+    it('gdy moduł NIE obsłużył wiadomości, tura wraca do Teresy (nic nie jest połykane)', async () => {
+      const handler = vi.fn(async () => ({ handled: false }));
+      appStoreState.chatModuleIntent = { owner: 'deckBuilder:deck-7', handler };
+      conversationStoreState.activeConversationId = 'conv-1';
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+      fireEvent.click(screen.getByTestId('send-button'));
+
+      await waitFor(() => expect(handler).toHaveBeenCalled());
+      await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+      appStoreState.chatModuleIntent = null;
+    });
+
+    it('props onModuleIntent ma pierwszeństwo (wsteczna zgodność osadzonych czatów)', async () => {
+      const fromStore = vi.fn(async () => ({ handled: true, reply: 'ze store' }));
+      const fromProp = vi.fn(async () => ({ handled: true, reply: 'z propsa' }));
+      appStoreState.chatModuleIntent = { owner: 'x', handler: fromStore };
+      conversationStoreState.activeConversationId = 'conv-1';
+
+      renderWithRouter(<UnifiedChatPanel mode="full" onModuleIntent={fromProp} />);
+      fireEvent.click(screen.getByTestId('send-button'));
+
+      await waitFor(() => expect(fromProp).toHaveBeenCalled());
+      expect(fromStore).not.toHaveBeenCalled();
+      appStoreState.chatModuleIntent = null;
+    });
+  });
 });
