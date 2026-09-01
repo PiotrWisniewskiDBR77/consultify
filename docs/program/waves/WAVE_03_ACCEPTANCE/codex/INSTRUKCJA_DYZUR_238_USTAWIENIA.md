@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `e99e81301a`**
+> **SHA markera: `e014ba0d8b`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -37,7 +37,7 @@ wskazanymi ścieżkami w repo.
 Data wystawienia: 2026-09-01.
 Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
 Język pracy i raportowania: **polski**.
-Zakres: ****15 USTAWIENIA (`/settings/*`) — moduł bez ŻADNEGO dyżuru w fali WAVE_03, ze sprzecznością między dwoma dokumentami kanonicznymi.** `docs/FUNCTIONAL_DOCUMENTATION.md:66`: „aktywny · CLOSED_FINAL 2026-08-25, tag `final-02-settings`”. Karta modułu G08/G09: `NOT_STARTED`. Zmierzone na markerze `e99e81301a`: `src/components/settings/SettingsSidebar.tsx` deklaruje **37** liści-sekcji w **11** grupach (`my-settings`, `work-preferences`, `ai-automation-group`, `notifications`, `security`, `integrations`, `data-privacy`, `billing`, `appearance`, `advanced`). `src/utils/pilotAccess.ts:15-18` (`PILOT_ALLOWED_SETTINGS_SECTIONS`) dopuszcza dla roli pilotażowej wyłącznie 4: `profile`, `auth-access`, `language`, `theme`. Mechanizm zasłaniania: `src/components/RouterSync.tsx:330-338` — przekierowanie efektu ubocznego nawigacji do `/settings/profile`, BEZ komunikatu, dla każdej z pozostałych 33 sekcji. Pozycja „Ustawienia” w sidebarze pozostaje widoczna (`SETTINGS` jest w `PILOT_VISIBLE_MENU_IDS`), więc problem jest niewidoczny na poziomie menu — ujawnia się dopiero po kliknięciu.**.
+Zakres: ****15 USTAWIENIA (`/settings/*`) — moduł bez ŻADNEGO dyżuru w fali WAVE_03, ze sprzecznością między dwoma dokumentami kanonicznymi.** `docs/FUNCTIONAL_DOCUMENTATION.md:66`: „aktywny · CLOSED_FINAL 2026-08-25, tag `final-02-settings`”. Karta modułu G08/G09: `NOT_STARTED`. Zmierzone na markerze `e014ba0d8b`: `src/components/settings/SettingsSidebar.tsx` deklaruje **37** liści-sekcji w **11** grupach (`my-settings`, `work-preferences`, `ai-automation-group`, `notifications`, `security`, `integrations`, `data-privacy`, `billing`, `appearance`, `advanced`). `src/utils/pilotAccess.ts:15-18` (`PILOT_ALLOWED_SETTINGS_SECTIONS`) dopuszcza dla roli pilotażowej wyłącznie 4: `profile`, `auth-access`, `language`, `theme`. Mechanizm zasłaniania: `src/components/RouterSync.tsx:330-338` — przekierowanie efektu ubocznego nawigacji do `/settings/profile`, BEZ komunikatu, dla każdej z pozostałych 33 sekcji. Pozycja „Ustawienia” w sidebarze pozostaje widoczna (`SETTINGS` jest w `PILOT_VISIBLE_MENU_IDS`), więc problem jest niewidoczny na poziomie menu — ujawnia się dopiero po kliknięciu.**.
 Trasy front: ``src/components/settings/SettingsSidebar.tsx` (37 sekcji, 11 grup, `:143-660`) · `src/views/SettingsView.tsx` · reprezentatywne panele treści (jeden na grupę — `ProfileSettings.tsx`, `RegionalSettings.tsx`, AI grupa, `notifications-overview`, `security-dashboard`, `connected-apps`, `data-controls`/`privacy`, `BillingSettings.tsx`, `AppearanceSettings.tsx`/`AccessibilitySettings.tsx`, `advanced` grupa) · `UsageMeters.tsx` (martwy kod podejrzany, `REKONESANS...md` „Tezy OBALONE”: bug `t()` realny na `:174`, ale zero importerów `SidebarUsage`). ★★ Ósmy kształt fałszywego gotowe: komponent zaimportowany ≠ realnie renderowany z danymi — każdy zrzut musi pochodzić z realnego montażu przez `dev-render` harness z fixture danych. Kanon: `docs/ui-standards/TRIADA_KANON.md` — **nie przebudowujesz powłoki**, tylko montujesz do zrzutu`. Trasy tył: `Ten dyżur jest w większości front-only (mechanizm zasłaniania jest routingiem klienckim, nie bramką backendu) — `server/src/middleware/auth.middleware.ts` jako kontekst uwierzytelnienia person OWNER/ADMIN/MEMBER użytych w fixture'ach `R1`. Zero zmian backendu w tym dyżurze (patrz `§4` tabela licencji)`.
 
 ---
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day238-ustawienia
-MARKER=e99e81301a
+MARKER=e014ba0d8b
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline e99e81301a..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only e99e81301a..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline e014ba0d8b..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only e014ba0d8b..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only e99e81301a..HEAD
+git -C "$WT" diff --name-only e014ba0d8b..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `7` komend, wszystkie obowiązkowe.**
@@ -640,7 +640,7 @@ przeszedł pierwszego przeglądu wizualnego właściciela. Cel tego dyżuru **ni
 wszystko"** — jest nim rozstrzygnięcie tej sprzeczności pomiarem i przygotowanie modułu do
 pierwszych, kompletnych zrzutów.
 
-## ★★ POMIAR NA MARKERZE `e99e81301a` — SKALA ZASŁONIĘTYCH EKRANÓW JEST DZIESIĘCIOKROTNIE WIĘKSZA NIŻ MÓWI TABLICA ZAMKNIĘĆ
+## ★★ POMIAR NA MARKERZE `e014ba0d8b` — SKALA ZASŁONIĘTYCH EKRANÓW JEST DZIESIĘCIOKROTNIE WIĘKSZA NIŻ MÓWI TABLICA ZAMKNIĘĆ
 
 Sprawdź każde zdanie u siebie (komendy w `§0`) — poniżej wynik.
 

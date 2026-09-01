@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `e99e81301a`**
+> **SHA markera: `e014ba0d8b`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -37,7 +37,7 @@ wskazanymi ścieżkami w repo.
 Data wystawienia: 2026-09-01.
 Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
 Język pracy i raportowania: **polski**.
-Zakres: ****08 SPOTKANIA / MEETING (`/meetings`, obiekt `/meetings/:meetingId`, legacy alias `/meeting`) — moduł bez ŻADNEGO dyżuru w fali WAVE_03, świeżo otwarty (dyżur 181, 30.08).** Zmierzone na markerze `e99e81301a`: `src/utils/betaMenuStatus.ts:57` i mirror `server/src/sharedRuntime/utils/betaMenuStatus.ts:58` = `MODULE_MEETING: 'open'` (commit `a5526c2ca4`). Trasa zamontowana pod `<BetaGate moduleId="MODULE_MEETING">` (`src/routes/AppRoutes.tsx:2619`). `src/utils/pilotAccess.ts` ma TRZY niezależne bramki dla ról pilotażowych w JEDNYM pliku: `PILOT_VISIBLE_MENU_IDS` (`:6-13`, widoczność w sidebarze), `PILOT_ALLOWED_ROUTE_PREFIXES` (`:19-38`, dostęp do trasy), `PILOT_ALLOWED_SETTINGS_SECTIONS` (nieistotne tu). Commit `4a6f6487b8` (ten sam dzień, 181) dopisał `/meetings` do `PILOT_ALLOWED_ROUTE_PREFIXES`, ale **nie dotknął** `PILOT_VISIBLE_MENU_IDS` — ten zbiór nadal nie zawiera `MODULE_MEETING`. Konsument: `src/components/navigation/Sidebar/Sidebar.tsx:132`, `isPilotAllowedMenuId(item.id)`. Karta modułu, G09: żywy, nienaprawiony bug — `GET /decision-records` zwraca `[]` mimo zatwierdzonej decyzji w `meeting_notes.decisions_json`.**.
+Zakres: ****08 SPOTKANIA / MEETING (`/meetings`, obiekt `/meetings/:meetingId`, legacy alias `/meeting`) — moduł bez ŻADNEGO dyżuru w fali WAVE_03, świeżo otwarty (dyżur 181, 30.08).** Zmierzone na markerze `e014ba0d8b`: `src/utils/betaMenuStatus.ts:57` i mirror `server/src/sharedRuntime/utils/betaMenuStatus.ts:58` = `MODULE_MEETING: 'open'` (commit `a5526c2ca4`). Trasa zamontowana pod `<BetaGate moduleId="MODULE_MEETING">` (`src/routes/AppRoutes.tsx:2619`). `src/utils/pilotAccess.ts` ma TRZY niezależne bramki dla ról pilotażowych w JEDNYM pliku: `PILOT_VISIBLE_MENU_IDS` (`:6-13`, widoczność w sidebarze), `PILOT_ALLOWED_ROUTE_PREFIXES` (`:19-38`, dostęp do trasy), `PILOT_ALLOWED_SETTINGS_SECTIONS` (nieistotne tu). Commit `4a6f6487b8` (ten sam dzień, 181) dopisał `/meetings` do `PILOT_ALLOWED_ROUTE_PREFIXES`, ale **nie dotknął** `PILOT_VISIBLE_MENU_IDS` — ten zbiór nadal nie zawiera `MODULE_MEETING`. Konsument: `src/components/navigation/Sidebar/Sidebar.tsx:132`, `isPilotAllowedMenuId(item.id)`. Karta modułu, G09: żywy, nienaprawiony bug — `GET /decision-records` zwraca `[]` mimo zatwierdzonej decyzji w `meeting_notes.decisions_json`.**.
 Trasy front: ``src/components/Meeting/MeetingHub.tsx` (lista) · `src/components/Meeting/MeetingObjectPage.tsx` (obiekt, trzy stany governance: pending/rejected/approved) · `src/components/navigation/Sidebar/Sidebar.tsx:132` (filtr `isPilotAllowedMenuId`) · `src/components/RouterSync.tsx:316-325` (`isPilotAllowedRoute` gate). ★★ Ósmy kształt fałszywego gotowe: komponent zaimportowany ≠ realnie renderowany z danymi — każdy zrzut musi pochodzić z realnego montażu przez `dev-render` harness z fixture danych, nigdy z atrapy propsów. Kanon: `docs/ui-standards/TRIADA_KANON.md` (`StandardModuleBar`/`StandardTable`/`StandardPreview` dla listy) i `docs/ui-standards` odpowiednik dla obiektu — **nie przebudowujesz powłoki**, tylko montujesz do zrzutu`. Trasy tył: ``server/src` trasa `GET /api/meeting/:id/notes` i `GET /decision-records` (nazwy dokładne do zmierzenia samodzielnie w `R2` — karta modułu G09 wskazuje rozjazd źródeł `meeting_notes.decisions_json` vs `meeting_decisions`, bez podania dokładnych plików tras/serwisów). Ten dyżur NIE naprawia backendu (patrz `§4` tabela licencji) — trasy backendowe są tu kontekstem diagnostycznym dla `R2`, nie przedmiotem zmian`.
 
 ---
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day237-spotkania
-MARKER=e99e81301a
+MARKER=e014ba0d8b
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline e99e81301a..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only e99e81301a..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline e014ba0d8b..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only e014ba0d8b..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only e99e81301a..HEAD
+git -C "$WT" diff --name-only e014ba0d8b..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `6` komend, wszystkie obowiązkowe.**
@@ -634,7 +634,7 @@ tego dyżuru **nie jest „napraw wszystko"** — jest nim domiar tego, co odbi�
 181/181-bis zostawił otwarte, i doprowadzenie modułu do stanu z kompletem ekranów gotowych
 do zrzutów.
 
-## ★★ POMIAR NA MARKERZE `e99e81301a` — REKONESANS JEST NIEAKTUALNY W DWÓCH PUNKTACH NAJWAŻNIEJSZYCH
+## ★★ POMIAR NA MARKERZE `e014ba0d8b` — REKONESANS JEST NIEAKTUALNY W DWÓCH PUNKTACH NAJWAŻNIEJSZYCH
 
 Sprawdź każde zdanie u siebie (komendy w `§0`) — poniżej wynik.
 

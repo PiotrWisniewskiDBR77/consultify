@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `e99e81301a`**
+> **SHA markera: `e014ba0d8b`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -37,7 +37,7 @@ wskazanymi ścieżkami w repo.
 Data wystawienia: 2026-09-01.
 Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
 Język pracy i raportowania: **polski**.
-Zakres: ****01 ORGANIZACJA (`/organization`) — moduł bez ŻADNEGO dyżuru w fali WAVE_03 (218-235), z dokumentacyjną sprzecznością co do jego stanu.** Zmierzone na markerze `e99e81301a`: `src/utils/orgRedesignFlag.ts` (98 linii, kompletny) implementuje flagę `orgRedesignV1` z kolejnością query→localStorage→env→default (`:30-34`), realny gate w `src/views/OrganizationView.tsx:51,132` (czytany raz na mount). Katalog `src/components/Organization/redesign/` ma 14 plików `.tsx`: 11 realnych ekranów (`OrganizationIdentityOperatingScreen`, `OrganizationGoalsMetricsScreen`, `OrganizationChallengesEvidenceScreen`, `OrganizationRisksOpportunitiesScreen`, `OrganizationSourcesClaimsScreen`, `OrganizationScopeCollaborationScreen`, `OrganizationDirectionConstraintsScreen`, `OrganizationRootCausesBlockersScreen`, `OrganizationScenariosBriefScreen`, `OrganizationKnowledgeGraphScreen`, `OrganizationReadinessScreen`) + 3 współdzielone (`OrganizationScreenShell`, `OrganizationCardPrimitives`, `OrganizationStatePanel`). **Domyślny stan flagi jest sprzeczny wewnątrz jednego pliku — patrz `§1.2` ciała dyżuru.** Karta modułu (`MODULE_ACCEPTANCE.md`, G08-G10) potwierdza: captured evidence z Day85 istnieje (20/20 plików), ale `OWNER_NOT_REVIEWED`, i tylko 2 z 5 sekcji mają prawdziwy pełny fixture (Goals/Challenges/Risks puste).**.
+Zakres: ****01 ORGANIZACJA (`/organization`) — moduł bez ŻADNEGO dyżuru w fali WAVE_03 (218-235), z dokumentacyjną sprzecznością co do jego stanu.** Zmierzone na markerze `e014ba0d8b`: `src/utils/orgRedesignFlag.ts` (98 linii, kompletny) implementuje flagę `orgRedesignV1` z kolejnością query→localStorage→env→default (`:30-34`), realny gate w `src/views/OrganizationView.tsx:51,132` (czytany raz na mount). Katalog `src/components/Organization/redesign/` ma 14 plików `.tsx`: 11 realnych ekranów (`OrganizationIdentityOperatingScreen`, `OrganizationGoalsMetricsScreen`, `OrganizationChallengesEvidenceScreen`, `OrganizationRisksOpportunitiesScreen`, `OrganizationSourcesClaimsScreen`, `OrganizationScopeCollaborationScreen`, `OrganizationDirectionConstraintsScreen`, `OrganizationRootCausesBlockersScreen`, `OrganizationScenariosBriefScreen`, `OrganizationKnowledgeGraphScreen`, `OrganizationReadinessScreen`) + 3 współdzielone (`OrganizationScreenShell`, `OrganizationCardPrimitives`, `OrganizationStatePanel`). **Domyślny stan flagi jest sprzeczny wewnątrz jednego pliku — patrz `§1.2` ciała dyżuru.** Karta modułu (`MODULE_ACCEPTANCE.md`, G08-G10) potwierdza: captured evidence z Day85 istnieje (20/20 plików), ale `OWNER_NOT_REVIEWED`, i tylko 2 z 5 sekcji mają prawdziwy pełny fixture (Goals/Challenges/Risks puste).**.
 Trasy front: ``src/views/OrganizationView.tsx` (gate `:132`, router zagnieżdżony `resolveOrganizationLocation` `:94-117`) · `src/components/Organization/redesign/*.tsx` (14 plików, 11 ekranów) · `src/components/Organization/OrganizationSidebar.tsx` (stara nawigacja 21×6, komentarz `:80-81` o nadpisaniu IA pod flagą) · `src/utils/orgRedesignFlag.ts`. ★★ Ósmy kształt fałszywego gotowe: komponent zaimportowany ≠ realnie renderowany z danymi — każdy zrzut musi pochodzić z realnego montażu przez `dev-render` harness z fixture danych, nigdy z atrapy propsów. Kanon: `docs/ui-standards/TRIADA_KANON.md` i `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (Organizacja to ekrany-rekordy/artefakty, nie lista) — **nie przebudowujesz powłoki**, tylko montujesz do zrzutu`. Trasy tył: ``server/src/routes/` rodzina organizacyjna (profil/claims/snapshoty — governed publish flow z G02 karty modułu: `profile/source -> claim proposals -> human approve/reject -> immutable snapshot -> exact version/hash reopen`) · `server/src/middleware/auth.middleware.ts`. Ten dyżur NIE dotyka backendu (patrz `§4` tabela licencji) — trasy backendowe są tu wyłącznie kontekstem dla fixture'u w `R1`/`R2`, nie przedmiotem zmian`.
 
 ---
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day236-organizacja
-MARKER=e99e81301a
+MARKER=e014ba0d8b
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline e99e81301a..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only e99e81301a..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline e014ba0d8b..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only e014ba0d8b..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only e99e81301a..HEAD
+git -C "$WT" diff --name-only e014ba0d8b..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `7` komend, wszystkie obowiązkowe.**
@@ -641,7 +641,7 @@ pokazuje 21 ekranów"*. Cel tego dyżuru **nie jest „napraw wszystko"** — je
 tę sprzeczność pomiarem na dzisiejszym kodzie i doprowadzić moduł do stanu, w którym da się
 pokazać **komplet ekranów na czystych zrzutach**.
 
-## ★★ POMIAR NA MARKERZE `e99e81301a` — DEC-74 JEST CZĘŚCIOWO NIEAKTUALNY, NIE CAŁKOWICIE FAŁSZYWY
+## ★★ POMIAR NA MARKERZE `e014ba0d8b` — DEC-74 JEST CZĘŚCIOWO NIEAKTUALNY, NIE CAŁKOWICIE FAŁSZYWY
 
 Sprawdź każde zdanie u siebie (komendy w `§0`) — poniżej wynik.
 
