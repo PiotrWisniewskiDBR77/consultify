@@ -4090,7 +4090,7 @@ router.post(
         },
       });
     }
-    const result = applyPresentationEditPlan({
+    const result = await applyPresentationEditPlan({
       plan,
       prompt,
       isPolish,
@@ -4099,6 +4099,7 @@ router.post(
         deck_id: deck.deck_id || deckId,
         title: deck.title || row.title,
       },
+      organizationId: orgId,
     });
 
     const operationId = uuidv4().replace(/-/g, '');

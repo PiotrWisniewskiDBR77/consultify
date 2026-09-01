@@ -1,3 +1,6 @@
+import { get as dbGet } from '../utils/DbPromise.js';
+import { AppError } from '../utils/ErrorHandler.js';
+
 type EditScope = 'slide' | 'section' | 'global' | 'methodological' | 'none';
 
 export interface PresentationEditPlan {
@@ -418,13 +421,59 @@ function fillExplicitDataRequired(card: any, values: Map<string, string>): numbe
   return changes;
 }
 
-export function applyPresentationEditPlan(params: {
+export interface VerifiedKnowledgeSource {
+  sourceId: string;
+  title: string;
+  url: string;
+}
+
+/**
+ * FIX-232 A2 (ODBIÓR 232, blokujący scalenie) — `add_source` may NOT turn an
+ * arbitrary URL pasted into chat into a citation. A citation is produced
+ * ONLY from a document that is actually registered in the organization's
+ * knowledge base (`knowledge_documents`, scoped by `organization_id`).
+ * Anything else must be rejected with a clear error, never silently
+ * accepted — this is the same class of defect FIX-231 closed a week earlier
+ * (provenance stamp that was an echo of a flag, not a fact).
+ *
+ * The returned title/id come from the verified database row, never from the
+ * user-supplied prompt text, so the citation cannot be spoofed by pasting a
+ * URL that happens to match a real document's address but claiming a
+ * different title.
+ */
+export async function verifyKnowledgeSourceUrl(
+  url: string,
+  organizationId: string
+): Promise<VerifiedKnowledgeSource | null> {
+  const trimmedUrl = String(url || '').trim();
+  const orgId = String(organizationId || '').trim();
+  if (!trimmedUrl || !orgId) return null;
+  try {
+    const row = (await dbGet(
+      `SELECT id, title, source_url FROM knowledge_documents
+       WHERE organization_id = ? AND source_url = ? AND is_active = ?`,
+      [orgId, trimmedUrl, true]
+    )) as { id?: string; title?: string; source_url?: string } | undefined;
+    if (!row?.id) return null;
+    return {
+      sourceId: String(row.id),
+      title: String(row.title || trimmedUrl),
+      url: String(row.source_url || trimmedUrl),
+    };
+  } catch {
+    // Fail-closed: a DB error must never be interpreted as "verified".
+    return null;
+  }
+}
+
+export async function applyPresentationEditPlan(params: {
   deck: any;
   prompt: string;
   isPolish: boolean;
   plan: PresentationEditPlan;
-}): PresentationEditResult {
-  const { deck, prompt, isPolish, plan } = params;
+  organizationId: string;
+}): Promise<PresentationEditResult> {
+  const { deck, prompt, isPolish, plan, organizationId } = params;
   if (!plan.actionable) {
     return {
       deck,
@@ -509,13 +558,35 @@ export function applyPresentationEditPlan(params: {
 
   if (plan.editorialOperation === 'add_source') {
     const url = String(prompt).match(/https?:\/\/[^\s]+/i)?.[0];
-    for (const index of plan.targetSlides) {
-      if (!cards[index] || isProtected(index) || !url) continue;
-      cards[index].source_refs = [
-        ...(Array.isArray(cards[index].source_refs) ? cards[index].source_refs : []),
-        { source_id: `agent-${Date.now()}`, source_type: 'url', title: url, url },
-      ];
-      appliedActions.push(`add_source:${index + 1}`);
+    if (url) {
+      // FIX-232 A2: the URL is only ever a raw string typed into chat — it
+      // MUST resolve to a real, organization-owned knowledge base document
+      // before it is allowed to become a citation. No match ⇒ fail closed
+      // with a clear, actionable error; never silently accept the string.
+      const verified = await verifyKnowledgeSourceUrl(url, organizationId);
+      if (!verified) {
+        throw new AppError(
+          isPolish
+            ? `Nie dodano źródła: adres „${url}” nie jest zarejestrowanym dokumentem w bazie wiedzy organizacji. Prześlij dokument do bazy wiedzy, zanim dodasz go jako źródło slajdu.`
+            : `Source not added: "${url}" is not a document registered in the organization's knowledge base. Upload it to the knowledge base before citing it on a slide.`,
+          422,
+          'AI_SOURCE_NOT_VERIFIED',
+          { url }
+        );
+      }
+      for (const index of plan.targetSlides) {
+        if (!cards[index] || isProtected(index)) continue;
+        cards[index].source_refs = [
+          ...(Array.isArray(cards[index].source_refs) ? cards[index].source_refs : []),
+          {
+            source_id: verified.sourceId,
+            source_type: 'knowledge_document',
+            title: verified.title,
+            url: verified.url,
+          },
+        ];
+        appliedActions.push(`add_source:${index + 1}`);
+      }
     }
   }
 
