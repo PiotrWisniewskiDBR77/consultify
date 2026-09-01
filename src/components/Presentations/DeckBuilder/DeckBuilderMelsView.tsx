@@ -26,6 +26,7 @@
 
 import {
   Activity,
+  Bot,
   ChevronDown,
   FileSearch,
   History,
@@ -36,7 +37,6 @@ import {
   Share2,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -467,10 +467,15 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         topBarHandlers.onHistory
       ),
       panelAction('share', L('Udostępnij', 'Share'), Share2, topBarHandlers.onShare),
+      /* ★ 2026-09-01 („jedna Teresa, w swoim oknie"): to jest WEJŚCIE do
+         głównego okna Teresy z kontekstem tej prezentacji, nie pstryczek
+         własnego czatu panelu. Dlatego etykieta nazywa OBIEKT (kanon
+         `TeresaEntryButton`: „…o tę notatkę" / „…o tę ideę"), a ikona to
+         `Bot` — ta sama co we wzorcu z `prawy-pas-jedna-formula`. */
       panelAction(
         'teresa',
-        L('Zapytaj Teresę', 'Ask Teresa'),
-        Sparkles,
+        L('Zapytaj Teresę o tę prezentację', 'Ask Teresa about this presentation'),
+        Bot,
         topBarHandlers.onToggleAgent
       ),
     ].filter(Boolean);
