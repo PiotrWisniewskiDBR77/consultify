@@ -148,13 +148,16 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
                   (112px) dated from when `groupName` echoed the raw
                   `aggregation.byGroup` key (`axis-1`); now that
                   `buildPresentationDeck` resolves real names, every DRD axis
-                  ("Digital Business Models", "Cybersecurity") clipped to
-                  "Cyfrowe Mode…" on a board-facing deck. `title` stays as the
-                  fallback for an unusually long name from another pack.
-                  224px (`w-56`) clears the longest DRD axis label — English,
-                  per CLAUDE.md's language boundary (2026-09-01): "Culture of
-                  Transformation" measured at 174px — verified in the
-                  dev-render harness, not estimated. */}
+                  ("Cyfrowe Modele Biznesowe", "Cyberbezpieczeństwo") clipped
+                  to "Cyfrowe Mode…" on a board-facing deck. `title` stays as
+                  the fallback for an unusually long name from another pack.
+                  224px (`w-56`) clears the longest DRD axis label, measured at
+                  185px — verified in the dev-render harness, not estimated.
+                  Slajd 5 świadomie zostaje po polsku (odwrócone 2026-09-01,
+                  patrz komentarz przy `dimensionProfileFrom` w
+                  `buildPresentationDeck.ts`) — spójność ze slajdem 6
+                  (macierz), zaakceptowanym przez właściciela tego samego
+                  dnia z polskim tytułem osi. */}
               <span
                 className="w-56 flex-shrink-0 truncate text-sm font-semibold text-c-text-secondary"
                 title={d.groupName}

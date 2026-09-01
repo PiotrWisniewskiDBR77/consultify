@@ -49,10 +49,12 @@ export function resolveGroupName(
 
 /**
  * Convenience wrapper for the common "name or raw id" call, so consumers do
- * not each re-invent the fallback. `language` defaults to `'pl'` (unchanged
- * behaviour for every existing caller); pass `'en'` where the axis name is
- * methodology content that must stay in its source language — see
- * `AXIS_NAME_EN_BY_ID` in `drdLabels.ts`.
+ * not each re-invent the fallback. `language` defaults to `'pl'`; ŻADEN
+ * dzisiejszy wołający nie prosi o `'en'` (decyzja właściciela 2026-09-01
+ * cofnęła to dla slajdu 5 prezentacji — patrz `dimensionProfileFrom` w
+ * `presentation/buildPresentationDeck.ts`). Parametr zostaje na przyszłość:
+ * gdy trzeba będzie zbudować raport po angielsku dla klienta zagranicznego,
+ * przekaż `'en'` — słownik `AXIS_NAME_EN_BY_ID` w `drdLabels.ts` już istnieje.
  */
 export function groupNameOrId(
   methodPackId: string,

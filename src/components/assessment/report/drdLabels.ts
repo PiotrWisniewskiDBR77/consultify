@@ -115,15 +115,23 @@ const AXIS_NAME_BY_ID: Record<string, string> = Object.fromEntries(
  * `namePL` fallback. NOT a second copy of the structure — one extra field
  * pick off the same `DRD_STRUCTURE` array the dictionary above already reads.
  *
- * ★ WHY THIS EXISTS (assessment-presentation-view slide 5, 2026-09-01):
- * CLAUDE.md's language boundary is explicit — "angielskie nazwy osi,
- * obszarów i poziomów w metodyce ZOSTAJĄ — nie tłumacz ich. Polski
- * obowiązuje w interfejsie (etykiety kontrolek, nagłówki sekcji)." An axis
- * name is methodology content, not UI chrome, so it stays English wherever
- * a caller asks for it. `AXIS_NAME_BY_ID` above still defaults to Polish
- * for its EXISTING callers (`resolveDrdUnitLabel`, the report document's
- * "Wynik per wymiar" section, the slide-6 matrix title) — none of those are
- * in scope for this fix and changing their language is a separate decision.
+ * ★ PO CO TO ISTNIEJE, SKORO NIC JEJ DZIŚ NIE UŻYWA (2026-09-01): commit
+ * 2c0e2be8f7 wprowadził ten słownik, żeby slajd 5 prezentacji pokazywał
+ * angielskie nazwy osi (interpretacja granicy językowej z CLAUDE.md: "nazwa
+ * osi to treść metodyki, nie chrome UI"). Decyzja WŁAŚCICIELA z 2026-09-01
+ * to cofnęła: angielski jest wiodącym językiem METODYKI (nie trzeba
+ * tłumaczyć angielskiego na polski), ale to nie znaczy, że trzeba
+ * odpolszczać to, co już jest po polsku — a chwilę wcześniej właściciel
+ * zaakceptował slajd 6 (tytuł osi macierzy) PO POLSKU słowami „tak to jest
+ * super" (`docs/program/grafika/KANON_Z_ODBIOROW.md`, wpis 2026-09-01).
+ * Slajd 5 wrócił więc na domyślne `'pl'` (patrz `dimensionProfileFrom` w
+ * `buildPresentationDeck.ts`) — ale sam mechanizm zostaje w kodzie: gdy
+ * kiedyś trzeba będzie zbudować raport PO ANGIELSKU dla klienta
+ * zagranicznego, wystarczy przekazać `language: 'en'` do `resolveDrdAxisName`
+ * / `resolveGroupName` / `groupNameOrId` — nie trzeba pisać tego od nowa.
+ * `AXIS_NAME_BY_ID` powyżej nadal jest domyślnym słownikiem dla WSZYSTKICH
+ * wołających (`resolveDrdUnitLabel`, sekcja "Wynik per wymiar" dokumentu
+ * raportu, tytuł macierzy slajdu 6, i teraz też slajd 5).
  */
 const AXIS_NAME_EN_BY_ID: Record<string, string> = Object.fromEntries(
   DRD_STRUCTURE.map((axis) => [`axis-${axis.id}`, axis.name])

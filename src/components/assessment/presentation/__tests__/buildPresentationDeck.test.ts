@@ -53,7 +53,7 @@ describe('buildPresentationDeck', () => {
     expect(model.dimensionProfile.map((d) => d.currentLevel)).toEqual([5, 3, 1]);
   });
 
-  it('dimensionProfile resolves real DRD axis names in English — slide 5 never prints a raw `axis-N` id, and methodology names stay in their source language (CLAUDE.md language boundary)', () => {
+  it('dimensionProfile resolves real DRD axis names — slide 5 never prints a raw `axis-N` id', () => {
     const output = makeOutput({
       methodology: { methodPackId: 'drd', version: DRD_METHOD_PACK_VERSION },
       aggregation: {
@@ -65,9 +65,9 @@ describe('buildPresentationDeck', () => {
     });
     const model = buildPresentationDeck(output);
     expect(model.dimensionProfile.map((d) => d.groupName)).toEqual([
-      'Data Management',
-      'Digital Processes',
-      'Cybersecurity',
+      'Zarządzanie Danymi',
+      'Procesy Cyfrowe',
+      'Cyberbezpieczeństwo',
     ]);
     // The raw ids are still carried for keying/traceability — only the
     // human-facing label changed.

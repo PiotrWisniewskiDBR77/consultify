@@ -165,11 +165,17 @@ function dimensionProfileFrom(
   // id. This is a dictionary lookup, not a recomputation: every NUMBER below
   // is still copied verbatim from `groupResults`.
   //
-  // ★ LANGUAGE (CLAUDE.md language boundary, 2026-09-01): an axis name is
-  // methodology content, not UI chrome, so it is requested in `'en'` here —
-  // `groupNameOrId`'s 4th argument — instead of the default `'pl'` that
-  // other callers (report document, slide-6 matrix title) still use. Same
-  // dictionary source (`DRD_STRUCTURE` via `drdLabels.ts`), different field.
+  // ★ LANGUAGE (odwrócone 2026-09-01, patrz decyzja właściciela poniżej):
+  // slajd 5 zostaje na domyślnym `'pl'` — NIE przekazujemy tu `'en'` jako
+  // 4. argumentu `groupNameOrId`. Właściciel zaakceptował 2026-09-01 slajd 6
+  // (tytuł osi macierzy "Procesy Cyfrowe" po polsku, słowami „tak to jest
+  // super" — `docs/program/grafika/KANON_Z_ODBIOROW.md`, wpis 2026-09-01).
+  // Ta sama prezentacja nie może mieć slajdu 5 po angielsku i slajdu 6 po
+  // polsku — to niespójność w jednym dokumencie. Parametr `language` i
+  // `AXIS_NAME_EN_BY_ID` (`../report/drdLabels.ts`) zostają w kodzie: gdy
+  // kiedyś będziemy budować raport po angielsku dla klienta zagranicznego,
+  // wystarczy tu przekazać `'en'` — infrastruktura jest gotowa, tylko
+  // świadomie nieużywana na tym slajdzie.
   //
   // Sort by level descending (a display ordering — the values themselves
   // are untouched, copied straight from `groupResults`, which is itself
@@ -180,8 +186,7 @@ function dimensionProfileFrom(
       groupName: groupNameOrId(
         output.methodology.methodPackId,
         output.methodology.version,
-        g.groupId,
-        'en'
+        g.groupId
       ),
       currentLevel: g.aggregatedLevel,
     }))
