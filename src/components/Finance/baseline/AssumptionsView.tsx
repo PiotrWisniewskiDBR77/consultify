@@ -13,8 +13,10 @@
  * ★ V-5: brak martwej przestrzeni — grid wypełnia pełną szerokość
  * (`w-full`, kolumny `minmax`, nie stałe px).
  */
+import { RotateCcw, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
+import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import {
   type BaselineAssumptionDto,
@@ -661,7 +663,16 @@ export function AssumptionsView({
               <th className="px-3 py-2 text-right" style={{ minWidth: 140 }}>
                 Wartość prognozy
               </th>
-              <th className="px-3 py-2 text-left" style={{ minWidth: 180 }}>
+              {/*
+                185-usuwanie-zalozenia: kebab w kolumnie Akcje sam nie
+                domykał 1440px (zostawał 36px nadmiaru) — winna kolumna
+                „Bezpieczny zakres", jedyna poza Akcje, która realnie
+                (nie tylko wg minWidth) rosła do 199px z powodu dwóch pól
+                liczbowych `w-20` (80px). Zwężone do `w-14` (56px, mieści
+                „0,155" — najdłuższą realną wartość w danych demo) —
+                kolumna spada do naturalnych ~140px.
+              */}
+              <th className="px-2 py-2 text-left" style={{ minWidth: 140 }}>
                 Bezpieczny zakres
               </th>
               <th className="px-3 py-2 text-left" style={{ minWidth: 140 }}>
@@ -692,7 +703,21 @@ export function AssumptionsView({
               <th className="px-3 py-2 text-left" style={{ minWidth: 150 }}>
                 Podgląd wpływu
               </th>
-              <th className="px-3 py-2 text-center" style={{ minWidth: 90 }}>
+              {/*
+                185-usuwanie-zalozenia (uwaga właściciela: "dalej nie mam...
+                możliwości usuwania linii" — DRUGIE zgłoszenie). Kolumna z
+                dwoma przyciskami tekstowymi (Reset + Usuń, 90px) pchała sumę
+                kolumn 1-10 na 1500px > 1440px kontener — mechanizm istniał,
+                ale wymagał przewinięcia w prawo, którego właściciel nie
+                zrobił (i nie ma powodu robić — nic go tam nie kieruje).
+                Kebab (`RowActionsMenu`, wzorzec z 26 miejsc w repo, w tym
+                `StandardTable`) mieści obie akcje w jednym przycisku 32×32,
+                44px kolumny zamiast 90 — suma spada do 1454, w granicach
+                zmierzonego zapasu (patrz kolumna „Podgląd wpływu" wyżej,
+                miała już wykorzystany budżet do 1440 BEZ tej kolumny; kebab
+                dowozi resztę w klawiszu, nie w tekście, więc mieści się).
+              */}
+              <th className="px-1 py-2 text-center" style={{ minWidth: 44 }}>
                 Akcje
               </th>
             </tr>
@@ -832,7 +857,7 @@ export function AssumptionsView({
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-2">
                     {cell?.rangeLow !== null &&
                     cell?.rangeHigh !== null &&
                     cell?.rangeLow !== undefined &&
@@ -840,12 +865,13 @@ export function AssumptionsView({
                       <div className="flex items-center gap-1 text-xs text-c-text-secondary">
                         {/* ★ NAPRAWA a11y (Pakiet I, wymaganie #5): pola zakresu
                             bez aria-label (axe: "label" critical). */}
+                        {/* 185-usuwanie-zalozenia: w-20→w-14 (patrz nagłówek kolumny wyżej dla uzasadnienia). */}
                         <input
                           type="number"
                           disabled={readOnly}
                           value={roundForRangeDisplay(cell.rangeLow)}
                           onChange={(e) => setCellValue(spec, { rangeLow: Number(e.target.value) })}
-                          className="w-20 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          className="w-14 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           data-testid={`baseline-assumption-range-low-${index}`}
                           aria-label={`Bezpieczny zakres — dolna granica — ${driverLabel(spec.driverCode)}`}
                         />
@@ -857,7 +883,7 @@ export function AssumptionsView({
                           onChange={(e) =>
                             setCellValue(spec, { rangeHigh: Number(e.target.value) })
                           }
-                          className="w-20 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          className="w-14 rounded-md border border-c-border-subtle bg-c-bg px-1.5 py-1 text-right tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           data-testid={`baseline-assumption-range-high-${index}`}
                           aria-label={`Bezpieczny zakres — górna granica — ${driverLabel(spec.driverCode)}`}
                         />
@@ -893,32 +919,40 @@ export function AssumptionsView({
                   <td className="px-3 py-2 text-xs text-c-text-muted">
                     {feeds.length > 0 ? `Zasila: ${feeds.map(feedLineLabel).join(', ')}` : '—'}
                   </td>
-                  <td className="px-3 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        type="button"
-                        disabled={!cell?.dirty || readOnly}
-                        onClick={() => resetCellToServer(spec)}
-                        title="Cofnij do ostatniej zapisanej wartości"
-                        className="inline-flex min-h-[2.25rem] items-center rounded-md border border-c-border-subtle px-2 text-[11px] text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
-                        data-testid={`baseline-assumption-reset-${index}`}
-                      >
-                        Reset
-                      </button>
-                      {/* 176-dwie-poprawki: usuwanie WIERSZA (nie tylko wartości komórki) — patrz `deleteRow` w useBaselineAssumptionsEditor.ts. */}
-                      <button
-                        type="button"
-                        disabled={readOnly}
-                        onClick={() => {
-                          setDeleteError(null);
-                          setPendingDelete(spec);
-                        }}
-                        title="Usuń wiersz założenia"
-                        className="inline-flex min-h-[2.25rem] items-center rounded-md border border-c-border-subtle px-2 text-[11px] text-c-danger hover:bg-c-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
-                        data-testid={`baseline-assumption-delete-${index}`}
-                      >
-                        Usuń
-                      </button>
+                  <td className="px-1 py-2 text-center">
+                    {/*
+                      185-usuwanie-zalozenia: dwa przyciski tekstowe (Reset +
+                      Usuń) rozpychały kolumnę do 90px i pchały tabelę poza
+                      1440px kontener — mechanizm istniał, ale wymagał
+                      przewinięcia, którego właściciel nie zrobił. Kebab
+                      (`RowActionsMenu`, ten sam komponent co `StandardTable`,
+                      26 miejsc renderu w repo) mieści obie akcje w jednym
+                      przycisku 32×32 — kolumna spada do 44px, bez
+                      przewijania.
+                    */}
+                    <div className="flex items-center justify-center" data-testid={`baseline-assumption-actions-${index}`}>
+                      <RowActionsMenu
+                        actions={[
+                          {
+                            id: 'reset',
+                            label: 'Cofnij do ostatniej zapisanej wartości',
+                            icon: RotateCcw,
+                            disabled: !cell?.dirty || readOnly,
+                            onClick: () => resetCellToServer(spec),
+                          },
+                          {
+                            id: 'delete',
+                            label: 'Usuń wiersz założenia',
+                            icon: Trash2,
+                            variant: 'danger',
+                            disabled: readOnly,
+                            onClick: () => {
+                              setDeleteError(null);
+                              setPendingDelete(spec);
+                            },
+                          },
+                        ]}
+                      />
                     </div>
                   </td>
                 </tr>
