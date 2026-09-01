@@ -573,6 +573,22 @@ const AI_SETTINGS_AUDIT = [
   },
 ];
 
+// --- /llm/analytics + /llm/logs (AdminLLMView, zakladka "Panel stanu") ---
+// POWOD ISTNIENIA (dyzur crimson/odwrocona semantyka 2026-09-01): bez tych dwoch
+// wpisow `loadAnalytics()` leci wyjatkiem, AdminLLMView pokazuje pusty stan
+// "Analityka LLM niedostepna" i CZTERY karty KPI (w tym "ERROR RATE") w ogole
+// sie nie renderuja — czyli nie da sie zrobic zrzutu ekranu, ktory sie ocenia.
+// `error_rate` celowo ZDROWY (0.012 < prog 0.05), bo oceniany jest wlasnie
+// wyglad stanu zdrowego.
+const LLM_ANALYTICS = {
+  total_requests: 18432,
+  avg_latency: 842,
+  total_cost: 12.4137,
+  error_rate: 0.012,
+  error_count: 221,
+};
+const LLM_LOGS = { logs: [] };
+
 // --- /llm/health/status (AIMissionControl) ---
 const LLM_HEALTH_STATUS = {
   // AIMissionControl.tsx:279 filters `p.status === 'ACTIVE'` (exact literal,
@@ -657,6 +673,8 @@ if (!g.__ADMIN_AI_FETCH__) {
       if (url.includes('/admin-data/security-events/')) return jsonResponse(SECURITY_EVENTS);
       if (url.includes('/admin-data/compliance-reports/')) return jsonResponse(COMPLIANCE_REPORTS);
       if (url.includes('/llm/health/status')) return jsonResponse(LLM_HEALTH_STATUS);
+      if (url.includes('/llm/analytics')) return jsonResponse(LLM_ANALYTICS);
+      if (url.includes('/llm/logs')) return jsonResponse(LLM_LOGS);
     } catch {
       /* fall through to real fetch (np. i18n /locales/**) */
     }
