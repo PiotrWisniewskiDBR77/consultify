@@ -1483,10 +1483,14 @@ async function assignBillingPlan(
 }
 
 async function readAiSummary(orgId: string) {
+  type FetchStatus = 'ok' | 'unavailable';
   let governancePolicy: any = null;
   let governanceSummary: any = null;
   let contextPolicy: any = null;
   let llmPolicy: any = null;
+  let governanceStatus: FetchStatus = 'ok';
+  let contextStatus: FetchStatus = 'ok';
+  let llmStatus: FetchStatus = 'ok';
 
   try {
     const AIPolicyEngine = (await import('../services/aiPolicyEngine.js')).default;
@@ -1499,6 +1503,7 @@ async function readAiSummary(orgId: string) {
   } catch {
     governancePolicy = null;
     governanceSummary = null;
+    governanceStatus = 'unavailable';
   }
 
   try {
@@ -1506,6 +1511,7 @@ async function readAiSummary(orgId: string) {
     contextPolicy = await getOrgContextPolicy(orgId);
   } catch {
     contextPolicy = null;
+    contextStatus = 'unavailable';
   }
 
   try {
@@ -1516,10 +1522,11 @@ async function readAiSummary(orgId: string) {
        ORDER BY updated_at DESC
        LIMIT 1`,
       [orgId],
-      { fallback: true }
+      { fallback: false }
     );
   } catch {
     llmPolicy = null;
+    llmStatus = 'unavailable';
   }
 
   return {
@@ -1527,6 +1534,11 @@ async function readAiSummary(orgId: string) {
     governanceSummary,
     contextPolicy,
     llmPolicy,
+    statuses: {
+      governance: governanceStatus,
+      context: contextStatus,
+      llm: llmStatus,
+    },
   };
 }
 

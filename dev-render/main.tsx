@@ -95,6 +95,9 @@ const UiFoundationFocus01EvidenceScreen = React.lazy(
 const AdminCommandCenterPanelScreen = React.lazy(
   () => import('./screens/admin-command-center-panel')
 );
+const AdminAIControlCenterPanelScreen = React.lazy(
+  () => import('./screens/admin-ai-control-center-panel')
+);
 const AdminSsoSelfServiceCardScreen = React.lazy(
   () => import('./screens/admin-sso-self-service-card')
 );
@@ -1007,6 +1010,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&tab=)',
     render: () => <AdminCommandCenterPanelScreen />,
+  },
+  'admin-ai-control-center-panel': {
+    label: 'Day 218 — AI policy honest full/empty/unavailable states (&state=)',
+    render: () => <AdminAIControlCenterPanelScreen />,
   },
   'finance-hub': {
     label:

@@ -145,6 +145,20 @@ Czerwony kontrakt `1/1 FAIL` zapisano w `0caec88e83`. G08–G10 i akceptacja
 modułu pozostają bez zmian. Pełny raport:
 `../../codex/CODEX_DAY118_PROPAGACJA_REPORT.md`.
 
+## Day 218 — AI Policy: uczciwe dane i błąd (2026-09-01)
+
+`FIXED / MUTATION_VERIFIED / VISUAL_PROOF_6_OF_6` wyłącznie dla ekranu AI
+Policy. Dodano addytywną tabelę `llm_org_policies`, statusy `ok/unavailable`
+oraz realne mapowanie pól governance/context bez fabrykowania
+`modelCount/budgetStatus/defaultSensitivity/allowExternalContext`.
+
+Pełny `ApiGateway → verifyToken → podpisany JWT → PostgreSQL → HTTP` przeszedł
+`3/3`; komponent `5/5`; routing `30/30`. Mutacja zabezpieczenia dała
+`2/3 PASS, 1/3 FAIL`, po przywróceniu `3/3 PASS`. Sześć zrzutów full/empty/
+unavailable w dwóch motywach ma różnicę luminancji 221–223. Główna bramka
+modułu i Owner verdict pozostają bez zmian. Raport:
+`../../codex/CODEX_DAY218_ADMIN_POLITYKI_REPORT.md`.
+
 ## Owner verdict
 
 Decision: `PENDING`

@@ -11,12 +11,18 @@ import { OrgAISettingsView } from '../../views/admin/OrgAISettingsView';
 type AiSummaryResponse = {
   summary?: {
     governanceSummary?: {
-      policyLevel?: string;
-      modelCount?: number;
-      budgetStatus?: string;
+      currentLevel?: string;
+      internetEnabled?: boolean;
+      auditRequired?: boolean;
+      capabilities?: { canExecuteActions?: boolean };
     };
     llmPolicy?: { review_state?: string; mode?: string };
-    contextPolicy?: { allowExternalContext?: boolean; defaultSensitivity?: string };
+    contextPolicy?: { piiRedaction?: 'inherit' | 'off' | 'on' };
+    statuses?: {
+      governance?: 'ok' | 'unavailable';
+      context?: 'ok' | 'unavailable';
+      llm?: 'ok' | 'unavailable';
+    };
   };
 };
 
@@ -58,6 +64,11 @@ export const AdminAIControlCenterPanel: React.FC<AdminAIControlCenterPanelProps>
         const result = await Api.getAdminAISummary();
         setSummary(result);
       } catch (error: any) {
+        setSummary({
+          summary: {
+            statuses: { governance: 'unavailable', context: 'unavailable', llm: 'unavailable' },
+          },
+        });
         toast.error(
           error?.message ||
             t('admin.aiControlCenter.panel.errors.loadSummary', 'Failed to load AI summary')
@@ -68,6 +79,10 @@ export const AdminAIControlCenterPanel: React.FC<AdminAIControlCenterPanelProps>
     void load();
   }, [t]);
 
+  const unavailable = t('admin.aiControlCenter.panel.unavailable', 'Unavailable (check failed)');
+  const notAvailable = t('admin.aiControlCenter.panel.notAvailable', 'n/a');
+  const statuses = summary?.summary?.statuses;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-3">
@@ -77,14 +92,17 @@ export const AdminAIControlCenterPanel: React.FC<AdminAIControlCenterPanelProps>
             {t('admin.aiControlCenter.panel.governanceLevel', 'Governance level')}
           </div>
           <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-            {summary?.summary?.governanceSummary?.policyLevel ||
-              t('admin.aiControlCenter.panel.unknown', 'Unknown')}
+            {statuses?.governance === 'unavailable'
+              ? unavailable
+              : summary?.summary?.governanceSummary?.currentLevel ||
+                t('admin.aiControlCenter.panel.unknown', 'Unknown')}
           </div>
           <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
             {t('admin.aiControlCenter.panel.reviewState', 'Review state: {{state}}', {
               state:
-                summary?.summary?.llmPolicy?.review_state ||
-                t('admin.aiControlCenter.panel.notAvailable', 'n/a'),
+                statuses?.llm === 'unavailable'
+                  ? unavailable
+                  : summary?.summary?.llmPolicy?.review_state || notAvailable,
             })}
           </div>
         </div>
@@ -92,16 +110,27 @@ export const AdminAIControlCenterPanel: React.FC<AdminAIControlCenterPanelProps>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
             <Cpu className="h-4 w-4" />
-            {t('admin.aiControlCenter.panel.modelPosture', 'Model posture')}
+            {t('admin.aiControlCenter.panel.modelPosture', 'AI controls')}
           </div>
           <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-            {summary?.summary?.governanceSummary?.modelCount || 0}
+            {statuses?.governance === 'unavailable'
+              ? unavailable
+              : summary?.summary?.governanceSummary?.internetEnabled === true
+                ? t('admin.aiControlCenter.panel.internetEnabled', 'Internet enabled')
+                : summary?.summary?.governanceSummary?.internetEnabled === false
+                  ? t('admin.aiControlCenter.panel.internetDisabled', 'Internet disabled')
+                  : notAvailable}
           </div>
           <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            {t('admin.aiControlCenter.panel.budget', 'Budget: {{status}}', {
+            {t('admin.aiControlCenter.panel.audit', 'Audit: {{status}}', {
               status:
-                summary?.summary?.governanceSummary?.budgetStatus ||
-                t('admin.aiControlCenter.panel.notAvailable', 'n/a'),
+                statuses?.governance === 'unavailable'
+                  ? unavailable
+                  : summary?.summary?.governanceSummary?.auditRequired === true
+                    ? t('admin.aiControlCenter.panel.required', 'required')
+                    : summary?.summary?.governanceSummary?.auditRequired === false
+                      ? t('admin.aiControlCenter.panel.notRequired', 'not required')
+                      : notAvailable,
             })}
           </div>
         </div>
@@ -112,16 +141,16 @@ export const AdminAIControlCenterPanel: React.FC<AdminAIControlCenterPanelProps>
             {t('admin.aiControlCenter.panel.contextControls', 'Context controls')}
           </div>
           <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-            {summary?.summary?.contextPolicy?.defaultSensitivity ||
-              t('admin.aiControlCenter.panel.notAvailable', 'n/a')}
+            {statuses?.context === 'unavailable'
+              ? unavailable
+              : summary?.summary?.contextPolicy?.piiRedaction || notAvailable}
           </div>
           <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            {summary?.summary?.contextPolicy?.allowExternalContext
-              ? t('admin.aiControlCenter.panel.externalContextAllowed', 'External context allowed')
-              : t(
-                  'admin.aiControlCenter.panel.externalContextRestricted',
-                  'External context restricted'
-                )}
+            {t('admin.aiControlCenter.panel.externalContext', 'External context: {{status}}', {
+              // OrgContextPolicy categories describe organization-owned data, not external context.
+              // Until the backend defines that concept, showing n/a is more honest than a derived boolean.
+              status: statuses?.context === 'unavailable' ? unavailable : notAvailable,
+            })}
           </div>
         </div>
       </div>
