@@ -90,6 +90,37 @@ let mutableCase = {
   updatedAt: '2026-08-08T09:05:00Z',
 };
 
+// 171-pojedyncze (uwaga właściciela: "grafika jak z przed 5 lat, niespójna
+// z UI/UX") — zbadane: powłoka i tokeny (NModeShell/ArtifactRightPanel/
+// StatusChip/MENU_1_PRIMARY_CTA) są już standardowe; PRZED pokazywał sprawę
+// w NAJWCZEŚNIEJSZEJ fazie (status='analysis_required', wszystkie pola
+// puste) — większość przycisków disabled:opacity-50, stąd płaski/wyblakły
+// odbiór. `&stan=closed` pokazuje tę samą, realną sprawę wypełnioną do
+// końca (spójne z historią klienta L3/SMED z wskaznik-jedna-karta.tsx), bez
+// zmiany produkcyjnego kodu — tylko dane demonstracyjne.
+if (harnessParams.get('stan') === 'closed') {
+  mutableCase = {
+    ...mutableCase,
+    status: 'closed',
+    rootCauseSummary:
+      'Awaria czujnika pozycji na stacji formatu — czas wymiany narzędzia wzrósł o 60% w zmianie nocnej.',
+    rootCauseCategory: 'Awaria sprzętu',
+    recurrenceFlag: true,
+    expectedRecoveryDate: '2026-08-20',
+    expectedRecoveryValue: 26,
+    planSubmittedBy: 'user-marek',
+    planSubmittedAt: '2026-08-09T14:00:00Z',
+    planApprovedBy: 'user-anna',
+    planApprovedAt: '2026-08-09T16:30:00Z',
+    recoveryObservedBy: 'user-marek',
+    recoveryObservedAt: '2026-08-18T08:00:00Z',
+    recoveryObservationMeasurementId: MEASUREMENT.measurementId,
+    closedAt: '2026-08-22T10:00:00Z',
+    closedBy: 'user-anna',
+    rowVersion: 8,
+  };
+}
+
 function bump(update: Partial<typeof mutableCase>) {
   mutableCase = { ...mutableCase, ...update, rowVersion: mutableCase.rowVersion + 1, updatedAt: new Date().toISOString() };
   return mutableCase;

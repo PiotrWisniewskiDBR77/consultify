@@ -372,6 +372,25 @@ export const KpiDeviationCaseSubview: React.FC = () => {
   const isVerification = kase.status === 'verification';
   const isClosed = kase.status === 'closed';
 
+  // 171-pojedyncze (uwaga właściciela: "grafika jak z przed 5 lat, niespójna
+  // z UI/UX"): sprawa przeszła dalej, ale fazy 3/4/5/6 nadal renderowały
+  // swój PUSTY formularz edycji (disabled, ale widoczny) zamiast zwięzłego
+  // podsumowania „co się stało" — dokładnie ten wzorzec, który fazy 2 i 7
+  // już poprawnie stosują (`kase.rootCauseSummary && !isAnalysis` / `isClosed`
+  // niżej). Te same nazwy co `done` na każdym PhaseCard, żeby nie rozjechać
+  // dwóch kopii tego samego warunku.
+  const phase3Done = !isOpen && !isAnalysis && !isPlanRequired;
+  const phase4Done = phase3Done && !isPlanSubmitted;
+  // Content swap for phase 4 uses a LATER gate than `phase4Done`/the
+  // PhaseCard checkmark on purpose: right at 'approved' the approve button
+  // is disabled but briefly stays put (existing behavior, still asserted by
+  // KpiDeviationCaseSubview.test.tsx's maker-checker flow) — it only
+  // collapses into the read-only recap once the case has visibly moved on
+  // to execution.
+  const phase4Settled = isExecuting || isRecoveryObserved || isVerification || isClosed;
+  const phase5Done = isRecoveryObserved || isVerification || isClosed;
+  const phase6Done = isVerification || isClosed;
+
   const header: NModeHeaderConfig = {
     title: t(`Sprawa odchylenia ${shortId(kase.caseId)}`, `Deviation case ${shortId(kase.caseId)}`),
     onTitleChange: () => {},
@@ -535,21 +554,26 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               `Trigger measurement: ${shortId(kase.triggerMeasurementId)} · detected ${formatDateTime(kase.detectedAt, isPolish)}`
             )}
           </p>
-          <button
-            type="button"
-            disabled={busy || !isOpen}
-            title={!isOpen ? t('Dostępne tylko w stanie „Otwarta"', 'Only available while "Open"') : undefined}
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() =>
-              run(
-                () => acknowledgeDeviationCase(kase.caseId, { expectedVersion: kase.rowVersion }),
-                (res) => setKase(res.case),
-                t('Sprawa potwierdzona', 'Case acknowledged')
-              )
-            }
-          >
-            {t('Potwierdź', 'Acknowledge')}
-          </button>
+          {isOpen ? (
+            <button
+              type="button"
+              disabled={busy}
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() =>
+                run(
+                  () => acknowledgeDeviationCase(kase.caseId, { expectedVersion: kase.rowVersion }),
+                  (res) => setKase(res.case),
+                  t('Sprawa potwierdzona', 'Case acknowledged')
+                )
+              }
+            >
+              {t('Potwierdź', 'Acknowledge')}
+            </button>
+          ) : (
+            <p className="text-xs text-c-text-secondary">
+              {t('Potwierdzona.', 'Acknowledged.')}
+            </p>
+          )}
         </PhaseCard>
 
         {/* Phase 2 — root cause analysis */}
@@ -668,17 +692,19 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           index={3}
           title={t('Działania korygujące i plan', 'Corrective actions & plan')}
           current={isPlanRequired}
-          done={!isOpen && !isAnalysis && !isPlanRequired}
+          done={phase3Done}
         >
-          <div
-            role="note"
-            className="mb-3 rounded-lg border border-c-warning/30 bg-c-warning/10 px-3 py-2 text-[11px] text-c-text-secondary"
-          >
-            {t(
-              'Ta lista pokazuje wyłącznie działania dodane w bieżącej sesji przeglądarki — po odświeżeniu strony wcześniej zapisane działania mogą tu nie być widoczne.',
-              'This list shows only actions added in the current browser session — after refreshing the page, previously saved actions may not appear here.'
-            )}
-          </div>
+          {!phase3Done || correctiveActions.length > 0 ? (
+            <div
+              role="note"
+              className="mb-3 rounded-lg border border-c-warning/30 bg-c-warning/10 px-3 py-2 text-[11px] text-c-text-secondary"
+            >
+              {t(
+                'Ta lista pokazuje wyłącznie działania dodane w bieżącej sesji przeglądarki — po odświeżeniu strony wcześniej zapisane działania mogą tu nie być widoczne.',
+                'This list shows only actions added in the current browser session — after refreshing the page, previously saved actions may not appear here.'
+              )}
+            </div>
+          ) : null}
           {correctiveActions.length > 0 ? (
             <ul className="space-y-2 mb-3">
               {correctiveActions.map((a) => (
@@ -717,84 +743,93 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               ))}
             </ul>
           ) : null}
-          <div className="space-y-2">
-            <input
-              value={actionTitle}
-              onChange={(e) => setActionTitle(e.target.value)}
-              placeholder={t('Tytuł działania', 'Action title')}
-              disabled={!isPlanRequired}
-              className={FIELD_CLASS}
-              data-testid="kpi-deviation-action-title"
-            />
-            <div className="grid grid-cols-2 gap-2">
+          {phase3Done ? (
+            <p className="text-xs text-c-text-secondary">
+              {t(
+                'Plan złożony — status zatwierdzenia w sekcji „Zatwierdzenie planu" poniżej.',
+                'Plan submitted — see "Plan approval" below for its approval status.'
+              )}
+            </p>
+          ) : (
+            <div className="space-y-2">
               <input
-                value={actionOwner}
-                onChange={(e) => setActionOwner(e.target.value)}
-                placeholder={t('ID właściciela działania', 'Action owner user id')}
+                value={actionTitle}
+                onChange={(e) => setActionTitle(e.target.value)}
+                placeholder={t('Tytuł działania', 'Action title')}
                 disabled={!isPlanRequired}
                 className={FIELD_CLASS}
-                data-testid="kpi-deviation-action-owner"
+                data-testid="kpi-deviation-action-title"
               />
-              <input
-                type="date"
-                value={actionDue}
-                onChange={(e) => setActionDue(e.target.value)}
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={actionOwner}
+                  onChange={(e) => setActionOwner(e.target.value)}
+                  placeholder={t('ID właściciela działania', 'Action owner user id')}
+                  disabled={!isPlanRequired}
+                  className={FIELD_CLASS}
+                  data-testid="kpi-deviation-action-owner"
+                />
+                <input
+                  type="date"
+                  value={actionDue}
+                  onChange={(e) => setActionDue(e.target.value)}
+                  disabled={!isPlanRequired}
+                  className={FIELD_CLASS}
+                />
+              </div>
+              <textarea
+                value={actionExpectedEffect}
+                onChange={(e) => setActionExpectedEffect(e.target.value)}
+                placeholder={t('Oczekiwany efekt (opcjonalnie)', 'Expected effect (optional)')}
                 disabled={!isPlanRequired}
-                className={FIELD_CLASS}
+                className={TEXTAREA_CLASS}
               />
+              <button
+                type="button"
+                disabled={busy || !isPlanRequired || !actionTitle.trim() || !actionOwner.trim()}
+                title={!isPlanRequired ? t('Dostępne tylko w stanie „Wymaga planu"', 'Only available while "Plan required"') : undefined}
+                className={GHOST_BUTTON_CLASS}
+                data-testid="kpi-deviation-add-action"
+                onClick={() =>
+                  run(
+                    () =>
+                      addCorrectiveAction(kase.caseId, {
+                        title: actionTitle.trim(),
+                        ownerUserId: actionOwner.trim(),
+                        dueDate: actionDue || null,
+                        expectedEffect: actionExpectedEffect.trim() || null,
+                      }),
+                    (res) => {
+                      setCorrectiveActions((prev) => [...prev, res.action]);
+                      setActionTitle('');
+                      setActionOwner('');
+                      setActionDue('');
+                      setActionExpectedEffect('');
+                    },
+                    t('Działanie dodane', 'Action added')
+                  )
+                }
+              >
+                {t('Dodaj działanie', 'Add action')}
+              </button>
+              <button
+                type="button"
+                disabled={busy || !isPlanRequired}
+                title={!isPlanRequired ? t('Dostępne tylko w stanie „Wymaga planu"', 'Only available while "Plan required"') : undefined}
+                className={PRIMARY_BUTTON_CLASS}
+                data-testid="kpi-deviation-submit-plan"
+                onClick={() =>
+                  run(
+                    () => submitPlan(kase.caseId, { expectedVersion: kase.rowVersion }),
+                    (res) => setKase(res.case),
+                    t('Plan złożony', 'Plan submitted')
+                  )
+                }
+              >
+                {t('Złóż plan', 'Submit plan')}
+              </button>
             </div>
-            <textarea
-              value={actionExpectedEffect}
-              onChange={(e) => setActionExpectedEffect(e.target.value)}
-              placeholder={t('Oczekiwany efekt (opcjonalnie)', 'Expected effect (optional)')}
-              disabled={!isPlanRequired}
-              className={TEXTAREA_CLASS}
-            />
-            <button
-              type="button"
-              disabled={busy || !isPlanRequired || !actionTitle.trim() || !actionOwner.trim()}
-              title={!isPlanRequired ? t('Dostępne tylko w stanie „Wymaga planu"', 'Only available while "Plan required"') : undefined}
-              className={GHOST_BUTTON_CLASS}
-              data-testid="kpi-deviation-add-action"
-              onClick={() =>
-                run(
-                  () =>
-                    addCorrectiveAction(kase.caseId, {
-                      title: actionTitle.trim(),
-                      ownerUserId: actionOwner.trim(),
-                      dueDate: actionDue || null,
-                      expectedEffect: actionExpectedEffect.trim() || null,
-                    }),
-                  (res) => {
-                    setCorrectiveActions((prev) => [...prev, res.action]);
-                    setActionTitle('');
-                    setActionOwner('');
-                    setActionDue('');
-                    setActionExpectedEffect('');
-                  },
-                  t('Działanie dodane', 'Action added')
-                )
-              }
-            >
-              {t('Dodaj działanie', 'Add action')}
-            </button>
-            <button
-              type="button"
-              disabled={busy || !isPlanRequired}
-              title={!isPlanRequired ? t('Dostępne tylko w stanie „Wymaga planu"', 'Only available while "Plan required"') : undefined}
-              className={PRIMARY_BUTTON_CLASS}
-              data-testid="kpi-deviation-submit-plan"
-              onClick={() =>
-                run(
-                  () => submitPlan(kase.caseId, { expectedVersion: kase.rowVersion }),
-                  (res) => setKase(res.case),
-                  t('Plan złożony', 'Plan submitted')
-                )
-              }
-            >
-              {t('Złóż plan', 'Submit plan')}
-            </button>
-          </div>
+          )}
         </PhaseCard>
 
         {/* Phase 4 — plan approval (maker-checker) */}
@@ -802,7 +837,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           index={4}
           title={t('Zatwierdzenie planu', 'Plan approval')}
           current={isPlanSubmitted}
-          done={!isOpen && !isAnalysis && !isPlanRequired && !isPlanSubmitted}
+          done={phase4Done}
         >
           <p className="text-xs text-c-text-muted mb-3">
             {t(
@@ -810,28 +845,39 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               `Submitted by: ${shortId(kase.planSubmittedBy)} · ${formatDateTime(kase.planSubmittedAt, isPolish)}`
             )}
           </p>
-          <p className="text-[11px] text-c-text-muted mb-2">
-            {t(
-              'Zasada maker-checker: zatwierdzić może wyłącznie osoba INNA niż złożyła plan i inna niż twórca sprawy (kpiDeviationCommands.ts:796-801).',
-              'Maker-checker rule: only someone OTHER than the plan submitter and the case creator may approve (kpiDeviationCommands.ts:796-801).'
-            )}
-          </p>
-          <button
-            type="button"
-            disabled={busy || !isPlanSubmitted}
-            title={!isPlanSubmitted ? t('Dostępne tylko w stanie „Plan złożony"', 'Only available while "Plan submitted"') : undefined}
-            className={PRIMARY_BUTTON_CLASS}
-            data-testid="kpi-deviation-approve-plan"
-            onClick={() =>
-              run(
-                () => approvePlan(kase.caseId, { expectedVersion: kase.rowVersion }),
-                (res) => setKase(res.case),
-                t('Plan zatwierdzony', 'Plan approved')
-              )
-            }
-          >
-            {t('Zatwierdź plan', 'Approve plan')}
-          </button>
+          {phase4Settled ? (
+            <p className="text-xs text-c-text-secondary">
+              {t(
+                `Zatwierdzono: ${shortId(kase.planApprovedBy)} · ${formatDateTime(kase.planApprovedAt, isPolish)}`,
+                `Approved by: ${shortId(kase.planApprovedBy)} · ${formatDateTime(kase.planApprovedAt, isPolish)}`
+              )}
+            </p>
+          ) : (
+            <>
+              <p className="text-[11px] text-c-text-muted mb-2">
+                {t(
+                  'Zasada maker-checker: zatwierdzić może wyłącznie osoba INNA niż złożyła plan i inna niż twórca sprawy (kpiDeviationCommands.ts:796-801).',
+                  'Maker-checker rule: only someone OTHER than the plan submitter and the case creator may approve (kpiDeviationCommands.ts:796-801).'
+                )}
+              </p>
+              <button
+                type="button"
+                disabled={busy || !isPlanSubmitted}
+                title={!isPlanSubmitted ? t('Dostępne tylko w stanie „Plan złożony"', 'Only available while "Plan submitted"') : undefined}
+                className={PRIMARY_BUTTON_CLASS}
+                data-testid="kpi-deviation-approve-plan"
+                onClick={() =>
+                  run(
+                    () => approvePlan(kase.caseId, { expectedVersion: kase.rowVersion }),
+                    (res) => setKase(res.case),
+                    t('Plan zatwierdzony', 'Plan approved')
+                  )
+                }
+              >
+                {t('Zatwierdź plan', 'Approve plan')}
+              </button>
+            </>
+          )}
         </PhaseCard>
 
         {/* Phase 5 — recovery observation */}
@@ -839,49 +885,60 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           index={5}
           title={t('Obserwacja odbudowy', 'Recovery observation')}
           current={isExecuting}
-          done={isRecoveryObserved || isVerification || isClosed}
+          done={phase5Done}
         >
-          <p className="text-xs text-c-text-muted mb-2">
-            {t(
-              'Pierwsze działanie, które przejdzie w „W trakcie", automatycznie przenosi sprawę approved → executing (decyzja #8).',
-              'The first action to reach "Active" auto-transitions the case approved → executing (decision #8).'
-            )}
-          </p>
-          <div className="space-y-2">
-            <select
-              value={recoveryMeasurementId}
-              onChange={(e) => setRecoveryMeasurementId(e.target.value)}
-              disabled={!isExecuting}
-              className={FIELD_CLASS}
-              data-testid="kpi-deviation-recovery-measurement"
-            >
-              <option value="">{t('Wybierz pomiar…', 'Select measurement…')}</option>
-              {measurementOptions.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              disabled={busy || !isExecuting || !recoveryMeasurementId}
-              title={!isExecuting ? t('Dostępne tylko w stanie „W realizacji"', 'Only available while "Executing"') : undefined}
-              className={GHOST_BUTTON_CLASS}
-              onClick={() =>
-                run(
-                  () =>
-                    recordRecoveryObservation(kase.caseId, {
-                      expectedVersion: kase.rowVersion,
-                      recoveryObservationMeasurementId: recoveryMeasurementId,
-                    }),
-                  (res) => setKase(res.case),
-                  t('Obserwacja odbudowy zapisana', 'Recovery observation recorded')
-                )
-              }
-            >
-              {t('Zapisz obserwację odbudowy', 'Record recovery observation')}
-            </button>
-          </div>
+          {phase5Done ? (
+            <p className="text-xs text-c-text-secondary">
+              {t(
+                `Zaobserwowano: ${shortId(kase.recoveryObservedBy)} · ${formatDateTime(kase.recoveryObservedAt, isPolish)}`,
+                `Observed by: ${shortId(kase.recoveryObservedBy)} · ${formatDateTime(kase.recoveryObservedAt, isPolish)}`
+              )}
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-c-text-muted mb-2">
+                {t(
+                  'Pierwsze działanie, które przejdzie w „W trakcie", automatycznie przenosi sprawę approved → executing (decyzja #8).',
+                  'The first action to reach "Active" auto-transitions the case approved → executing (decision #8).'
+                )}
+              </p>
+              <div className="space-y-2">
+                <select
+                  value={recoveryMeasurementId}
+                  onChange={(e) => setRecoveryMeasurementId(e.target.value)}
+                  disabled={!isExecuting}
+                  className={FIELD_CLASS}
+                  data-testid="kpi-deviation-recovery-measurement"
+                >
+                  <option value="">{t('Wybierz pomiar…', 'Select measurement…')}</option>
+                  {measurementOptions.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={busy || !isExecuting || !recoveryMeasurementId}
+                  title={!isExecuting ? t('Dostępne tylko w stanie „W realizacji"', 'Only available while "Executing"') : undefined}
+                  className={GHOST_BUTTON_CLASS}
+                  onClick={() =>
+                    run(
+                      () =>
+                        recordRecoveryObservation(kase.caseId, {
+                          expectedVersion: kase.rowVersion,
+                          recoveryObservationMeasurementId: recoveryMeasurementId,
+                        }),
+                      (res) => setKase(res.case),
+                      t('Obserwacja odbudowy zapisana', 'Recovery observation recorded')
+                    )
+                  }
+                >
+                  {t('Zapisz obserwację odbudowy', 'Record recovery observation')}
+                </button>
+              </div>
+            </>
+          )}
         </PhaseCard>
 
         {/* Phase 6 — effectiveness verification */}
@@ -889,17 +946,19 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           index={6}
           title={t('Weryfikacja skuteczności', 'Effectiveness verification')}
           current={isExecuting || isRecoveryObserved}
-          done={isVerification || isClosed}
+          done={phase6Done}
         >
-          <div
-            role="note"
-            className="mb-3 rounded-lg border border-c-warning/30 bg-c-warning/10 px-3 py-2 text-[11px] text-c-text-secondary"
-          >
-            {t(
-              'Ta lista, tak jak działania korygujące, pokazuje wyłącznie weryfikacje zgłoszone w tej sesji — brak GET dla pełnej historii.',
-              'Like corrective actions, this list shows only verifications submitted in this session — no GET exists for the full history.'
-            )}
-          </div>
+          {!phase6Done || verifications.length > 0 ? (
+            <div
+              role="note"
+              className="mb-3 rounded-lg border border-c-warning/30 bg-c-warning/10 px-3 py-2 text-[11px] text-c-text-secondary"
+            >
+              {t(
+                'Ta lista, tak jak działania korygujące, pokazuje wyłącznie weryfikacje zgłoszone w tej sesji — brak GET dla pełnej historii.',
+                'Like corrective actions, this list shows only verifications submitted in this session — no GET exists for the full history.'
+              )}
+            </div>
+          ) : null}
           {verifications.length > 0 ? (
             <ul className="space-y-1.5 mb-3">
               {verifications.map((v) => (
@@ -913,102 +972,113 @@ export const KpiDeviationCaseSubview: React.FC = () => {
               ))}
             </ul>
           ) : null}
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className={LABEL_CLASS}>{t('Początek okna', 'Window start')}</label>
-                <input
-                  type="date"
-                  value={verificationStart}
-                  onChange={(e) => setVerificationStart(e.target.value)}
-                  disabled={!isExecuting && !isRecoveryObserved}
-                  className={FIELD_CLASS}
-                />
+          {phase6Done ? (
+            verifications.length === 0 ? (
+              <p className="text-xs text-c-text-secondary">
+                {t(
+                  'Weryfikacja zgłoszona — sprawa poszła dalej.',
+                  'Verification submitted — the case has moved on.'
+                )}
+              </p>
+            ) : null
+          ) : (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={LABEL_CLASS}>{t('Początek okna', 'Window start')}</label>
+                  <input
+                    type="date"
+                    value={verificationStart}
+                    onChange={(e) => setVerificationStart(e.target.value)}
+                    disabled={!isExecuting && !isRecoveryObserved}
+                    className={FIELD_CLASS}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>{t('Koniec okna', 'Window end')}</label>
+                  <input
+                    type="date"
+                    value={verificationEnd}
+                    onChange={(e) => setVerificationEnd(e.target.value)}
+                    disabled={!isExecuting && !isRecoveryObserved}
+                    className={FIELD_CLASS}
+                  />
+                </div>
               </div>
-              <div>
-                <label className={LABEL_CLASS}>{t('Koniec okna', 'Window end')}</label>
-                <input
-                  type="date"
-                  value={verificationEnd}
-                  onChange={(e) => setVerificationEnd(e.target.value)}
-                  disabled={!isExecuting && !isRecoveryObserved}
-                  className={FIELD_CLASS}
-                />
-              </div>
-            </div>
-            <select
-              value={verificationOutcome}
-              onChange={(e) => setVerificationOutcome(e.target.value as EffectivenessVerificationStatus)}
-              disabled={!isExecuting && !isRecoveryObserved}
-              className={FIELD_CLASS}
-              data-testid="kpi-deviation-verification-outcome"
-            >
-              {(['effective', 'partially_effective', 'ineffective'] as const).map((s) => (
-                <option key={s} value={s}>
-                  {effectivenessVerificationStatusLabel(s, isPolish)}
-                </option>
-              ))}
-            </select>
-            <textarea
-              value={verificationRationale}
-              onChange={(e) => setVerificationRationale(e.target.value)}
-              placeholder={t('Uzasadnienie', 'Rationale')}
-              disabled={!isExecuting && !isRecoveryObserved}
-              className={TEXTAREA_CLASS}
-            />
-            <div className="space-y-1">
-              <span className="text-[11px] text-c-text-muted">{t('Powiązane pomiary (opcjonalnie)', 'Related measurements (optional)')}</span>
-              <div className="flex flex-wrap gap-2">
-                {measurementOptions.map((m) => (
-                  <label key={m.id} className="flex items-center gap-1 text-[11px] text-c-text-secondary">
-                    <input
-                      type="checkbox"
-                      checked={verificationMeasurementIds.includes(m.id)}
-                      disabled={!isExecuting && !isRecoveryObserved}
-                      onChange={(e) =>
-                        setVerificationMeasurementIds((prev) =>
-                          e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id)
-                        )
-                      }
-                      className="h-3 w-3"
-                    />
-                    {m.label}
-                  </label>
+              <select
+                value={verificationOutcome}
+                onChange={(e) => setVerificationOutcome(e.target.value as EffectivenessVerificationStatus)}
+                disabled={!isExecuting && !isRecoveryObserved}
+                className={FIELD_CLASS}
+                data-testid="kpi-deviation-verification-outcome"
+              >
+                {(['effective', 'partially_effective', 'ineffective'] as const).map((s) => (
+                  <option key={s} value={s}>
+                    {effectivenessVerificationStatusLabel(s, isPolish)}
+                  </option>
                 ))}
+              </select>
+              <textarea
+                value={verificationRationale}
+                onChange={(e) => setVerificationRationale(e.target.value)}
+                placeholder={t('Uzasadnienie', 'Rationale')}
+                disabled={!isExecuting && !isRecoveryObserved}
+                className={TEXTAREA_CLASS}
+              />
+              <div className="space-y-1">
+                <span className="text-[11px] text-c-text-muted">{t('Powiązane pomiary (opcjonalnie)', 'Related measurements (optional)')}</span>
+                <div className="flex flex-wrap gap-2">
+                  {measurementOptions.map((m) => (
+                    <label key={m.id} className="flex items-center gap-1 text-[11px] text-c-text-secondary">
+                      <input
+                        type="checkbox"
+                        checked={verificationMeasurementIds.includes(m.id)}
+                        disabled={!isExecuting && !isRecoveryObserved}
+                        onChange={(e) =>
+                          setVerificationMeasurementIds((prev) =>
+                            e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id)
+                          )
+                        }
+                        className="h-3 w-3"
+                      />
+                      {m.label}
+                    </label>
+                  ))}
+                </div>
               </div>
+              <button
+                type="button"
+                disabled={busy || (!isExecuting && !isRecoveryObserved) || !verificationStart || !verificationEnd}
+                title={
+                  !isExecuting && !isRecoveryObserved
+                    ? t('Dostępne w stanie „W realizacji" lub „Odbudowa zaobserwowana"', 'Only available while "Executing" or "Recovery observed"')
+                    : undefined
+                }
+                className={PRIMARY_BUTTON_CLASS}
+                data-testid="kpi-deviation-submit-verification"
+                onClick={() =>
+                  run(
+                    () =>
+                      submitEffectivenessVerification(kase.caseId, {
+                        expectedVersion: kase.rowVersion,
+                        verificationWindowStart: verificationStart,
+                        verificationWindowEnd: verificationEnd,
+                        outcome: verificationOutcome,
+                        rationale: verificationRationale.trim() || null,
+                        measurementIds: verificationMeasurementIds,
+                      }),
+                    (res) => {
+                      setKase(res.case);
+                      setVerifications((prev) => [...prev, res.verification]);
+                    },
+                    t('Weryfikacja zgłoszona', 'Verification submitted')
+                  )
+                }
+              >
+                {t('Zgłoś weryfikację', 'Submit verification')}
+              </button>
             </div>
-            <button
-              type="button"
-              disabled={busy || (!isExecuting && !isRecoveryObserved) || !verificationStart || !verificationEnd}
-              title={
-                !isExecuting && !isRecoveryObserved
-                  ? t('Dostępne w stanie „W realizacji" lub „Odbudowa zaobserwowana"', 'Only available while "Executing" or "Recovery observed"')
-                  : undefined
-              }
-              className={PRIMARY_BUTTON_CLASS}
-              data-testid="kpi-deviation-submit-verification"
-              onClick={() =>
-                run(
-                  () =>
-                    submitEffectivenessVerification(kase.caseId, {
-                      expectedVersion: kase.rowVersion,
-                      verificationWindowStart: verificationStart,
-                      verificationWindowEnd: verificationEnd,
-                      outcome: verificationOutcome,
-                      rationale: verificationRationale.trim() || null,
-                      measurementIds: verificationMeasurementIds,
-                    }),
-                  (res) => {
-                    setKase(res.case);
-                    setVerifications((prev) => [...prev, res.verification]);
-                  },
-                  t('Weryfikacja zgłoszona', 'Verification submitted')
-                )
-              }
-            >
-              {t('Zgłoś weryfikację', 'Submit verification')}
-            </button>
-          </div>
+          )}
         </PhaseCard>
 
         {/* Phase 7 — close / reopen */}
