@@ -68,6 +68,28 @@ const FLAGS = {
     localStorage: 'ff.results_vnext_management_report_entry',
     env: 'VITE_RESULTS_VNEXT_MANAGEMENT_REPORT_ENTRY_ENABLED',
   },
+  /**
+   * 2026-09-01 (ANALIZA_ODRZUCONE_20260901.md §3) — wejście do ekranu
+   * „Uwaga" (`ROUTES.RESULTS_ATTENTION`). POWÓD: ta trasa była SIEROTĄ —
+   * zmierzone grepem po `RESULTS_ATTENTION` i po literalnym
+   * `/results/attention`: poza definicją trasy (`routeConfig.ts:192`),
+   * jej montażem (`AppRoutes.tsx:3188`) i harnessem dev-render NIE BYŁO
+   * ANI JEDNEGO odwołania w całej aplikacji. Trafiało się tam wyłącznie
+   * ręcznym wpisaniem adresu, mimo że za ekranem stoją trzy prawdziwe
+   * punkty serwera i trzynaście wypełnionych kubełków. Menu 2 Wyników
+   * (`resultsDomainNavigation.ts`) to przełącznik DOMENY (KPI/OKR/ROI) i
+   * „Uwaga" nie jest czwartą domeną (D10) — dlatego wejście jest linkiem
+   * w powłoce rejestrów, dokładnie tym samym kształtem co
+   * `managementReportEntry` powyżej (jedna zmiana, wszystkie cztery
+   * powierzchnie Wyników dostają to samo wejście).
+   * Default OFF (kanon #7 — najpierw zrzut z dev-render i odbiór Piotra,
+   * dopiero potem domyślne włączenie).
+   */
+  attentionEntry: {
+    query: 'ff_resultsVNextAttentionEntry',
+    localStorage: 'ff.results_vnext_attention_entry',
+    env: 'VITE_RESULTS_VNEXT_ATTENTION_ENTRY_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type ResultsVNextFlag = keyof typeof FLAGS;
@@ -169,6 +191,7 @@ export function isResultsVNextFlagEnabled(
   }
   if (flag === 'resultsSearch') return false;
   if (flag === 'managementReportEntry') return false;
+  if (flag === 'attentionEntry') return false;
   // No D-D default-on set yet for roi/okr. Every host (prod, demo, stage,
   // dev) reads OFF until an explicit opt-in.
   return false;
