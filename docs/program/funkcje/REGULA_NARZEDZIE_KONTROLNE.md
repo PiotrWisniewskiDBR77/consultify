@@ -62,18 +62,42 @@ doładowywał po zdarzeniu**. Statyczny widok na danych podstawionych **nie ma c
 ### Nasza lista — ekrany dowodowe podwyższonego ryzyka (z 246)
 Kryterium: ekran zawiera obliczenie albo doładowanie po zdarzeniu.
 
-| Ekran | Uwaga |
-| --- | --- |
-| `results-vnext-roi-full-tool` | najwyższe zagęszczenie obliczeń w całym zbiorze |
-| `results-vnext-roi-registry` | jw. |
-| `finance-statement-pack-workspace-v2` | warsztat pakietu sprawozdań |
-| `results-vnext-registry-shell` | powłoka rejestru |
-| `document-studio-streaming-honesty-n3` | strumieniowanie treści |
-| `deck-artifact` · `karta-insight` · `insight-artifact` | generowanie treści |
-| `idea-financial-case-persistence` | zapis i przeliczenie |
-| panele wyceny (Monte Carlo, scenariusze, opcje realne, granica, wrażliwość) | **tu defekt WYSTĄPIŁ** — dyżur 233 |
+**★ Kolumna „status" jest obowiązkowa i wprowadzona na żądanie toru grafiki.**
+Mieszanie **zmierzonego** z **przewidywanym** w jednej liście to dokładnie sposób,
+w jaki **hipoteza nadzorcy wraca po tygodniu jako „zweryfikowany fakt"**.
+Właściciel ma prawo widzieć tę różnicę.
 
-**Pozostałe ~237 ekranów to widoki statyczne — ryzyko kształtu 19 jest tam bliskie zeru.**
+| Ekran | Status |
+| --- | --- |
+| **panele wyceny** (Monte Carlo, scenariusze, opcje realne, granica, wrażliwość) | **ZMIERZONE — defekt WYSTĄPIŁ**, dyżur 233; jedyne miejsce, gdzie widzieliśmy to na oczy |
+| `results-vnext-roi-full-tool` | hipoteza o zasięgu — najwyższe zagęszczenie obliczeń w zbiorze |
+| `results-vnext-roi-registry` | hipoteza o zasięgu |
+| `finance-statement-pack-workspace-v2` | hipoteza o zasięgu |
+| `results-vnext-registry-shell` | hipoteza o zasięgu |
+| `document-studio-streaming-honesty-n3` | hipoteza o zasięgu — strumieniowanie treści |
+| `deck-artifact` · `karta-insight` · `insight-artifact` | hipoteza o zasięgu — generowanie treści |
+| `idea-financial-case-persistence` | hipoteza o zasięgu — zapis i przeliczenie |
+
+**Jeden wiersz zmierzony, osiem hipotez o zasięgu.** Pozostałe ~237 ekranów to widoki
+statyczne — ryzyko bliskie zeru.
 
 **Przy najbliższym oglądaniu partii przez właściciela zrzuty z tej listy mają być świeże.**
-Reszta może zostać.
+Reszta może zostać. **Próg uzgodniony z torem grafiki — jeden, nie dwa.**
+
+## Czwarta reguła — zgłoszenie punktowe jest hipotezą o zasięgu
+Od toru grafiki, potwierdzona u nich **cztery razy jednego dnia**: cztery zgłoszone
+szerokości panelu okazały się **piętnastoma**; dwa paski przyrządu w kadrze okazały się
+**dziewiętnastoma ekranami**.
+
+> **Zanim naprawisz punkt, przemieć obszar tym samym wzorcem — inaczej naprawa odrasta.**
+
+**Stosuje się do nas natychmiast, w trzech dzisiejszych sprawach:**
+1. **Dziura w uprawnieniach formularzy** — przemiatanie **uruchomione** (audyt wszystkich
+   rodzin tras serwera).
+2. **Fałszywa obietnica zapisu** (kreator formularzy, dziewiąty przypadek) — przemiatanie
+   **wykonane** w Mojej Pracy i Portalu Partnerskim; reszta produktu **nieprzemieciona**.
+3. **Rozjazd nazw pól front-zaplecze** (kolumna „Postęp" w Audytach pokazująca literalnie
+   ukośnik, bo ekran pyta o `concludedCriteria`, a odpowiedź niesie `criteriaConcluded`) —
+   **zgłoszone punktowo, obszar NIEPRZEMIECIONY.** To jest dokładnie ten kształt: brakująca
+   wartość **renderuje się cicho**, bez błędu i bez czerwieni, więc **żaden test tego nie łapie**.
+   Ta sama rodzina co dwie z trzech przyczyn zer na ekranie polityk AI. **Przemiatanie zlecone.**
