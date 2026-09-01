@@ -16,18 +16,22 @@
  * request through still gets the server's real error surfaced honestly via
  * `errorDetail`, never swallowed).
  *
- * -- HONEST GAP BANNER (see `kpiDeviationApi.ts` header, "KNOWN GAP #2"):
- * `getDeviationCase`/no route anywhere returns a case's corrective actions
- * or effectiveness verifications. This screen accumulates them CLIENT-SIDE,
- * ONLY for actions taken in the current browser session (appended after a
- * successful `addCorrectiveAction`/`submitEffectivenessVerification` call —
- * both real writes, really persisted server-side). On a fresh page load
- * (cold reopen) this local list is EMPTY even when the case already has
- * actions in the database — the banner below says this explicitly, every
- * time, so a reviewer never mistakes "list empty" for "no actions exist".
- * This is reported as a blocker in the task evidence packet, not silently
- * routed around by adding a server route (`server/**` is outside this
- * package's allowlist).
+ * -- COLD REOPEN — FIXED 2026-09-01 (dyżur 173). This screen used to
+ * accumulate corrective actions and effectiveness verifications CLIENT-SIDE
+ * only, for the current browser session, and carried two permanent warning
+ * banners saying so ("after refreshing the page, previously saved actions
+ * may not appear here"). That limitation was real when this file was
+ * written, but the server had ALREADY closed it in the RN-G6-SRV / B3 pass
+ * and nobody wired the client to it — the screen went on warning about a gap
+ * that no longer existed, which is worse than the gap: it told the user the
+ * data was unreliable while the real, persisted list sat one GET away.
+ * `loadChildren()` below now fetches both lists from the live routes
+ * (`listCorrectiveActionsForCase`/`listEffectivenessVerificationsForCase` —
+ * see `kpiDeviationApi.ts` header for the route/file:line table) on mount
+ * and re-fetches after every successful write, so a cold reopen shows what
+ * is actually in the database. Both banners are gone. Writes still update
+ * local state optimistically first (instant feedback), with the refetch as
+ * the authority.
  *
  * -- D06: an action blocked by the CURRENT phase not matching is visible,
  * disabled, with a short reason (TRIADA §C3) — never hidden. A server-side
@@ -94,6 +98,8 @@ import {
   deviationErrorDetail,
   escalateDeviationCase,
   getDeviationCase,
+  listCorrectiveActionsForCase,
+  listEffectivenessVerificationsForCase,
   recordRecoveryObservation,
   reopenDeviationCase,
   submitEffectivenessVerification,
@@ -198,9 +204,18 @@ export const KpiDeviationCaseSubview: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
-  // Session-local accumulation only — see file header "HONEST GAP BANNER".
+  // Loaded from the server on mount and after every successful write — see
+  // file header "COLD REOPEN — FIXED".
   const [correctiveActions, setCorrectiveActions] = useState<CorrectiveActionDto[]>([]);
   const [verifications, setVerifications] = useState<EffectivenessVerificationDto[]>([]);
+  /** True until the first children fetch settles — keeps an empty list from
+   * rendering as a confident "no actions yet" while the request is still in
+   * flight. */
+  const [childrenLoading, setChildrenLoading] = useState(true);
+  /** Set when the children fetch itself failed. An empty list after a FAILED
+   * load is not evidence of an empty case, and the UI must not present it as
+   * one — this drives an explicit error note instead of a silent blank. */
+  const [childrenError, setChildrenError] = useState<string | null>(null);
 
   // Measurement picklist for "recovery observation" / "effectiveness
   // verification" — real KPI measurements, never a free-text id.
@@ -229,10 +244,33 @@ export const KpiDeviationCaseSubview: React.FC = () => {
     }
   }, [caseId]);
 
+  /** Fetches the case's corrective actions + effectiveness verifications from
+   * the live server routes. Both are visibility-scoped server-side and return
+   * an empty list (never a 404) for a case the caller cannot see, so a clean
+   * empty result here genuinely means "nothing recorded", not "hidden". */
+  const loadChildren = useCallback(async () => {
+    if (!caseId) return;
+    setChildrenLoading(true);
+    try {
+      const [actions, verificationList] = await Promise.all([
+        listCorrectiveActionsForCase(caseId),
+        listEffectivenessVerificationsForCase(caseId),
+      ]);
+      setCorrectiveActions(actions);
+      setVerifications(verificationList);
+      setChildrenError(null);
+    } catch (err) {
+      setChildrenError(toUserFacingErrorMessage(err, isPolish));
+    } finally {
+      setChildrenLoading(false);
+    }
+  }, [caseId, isPolish]);
+
   useEffect(() => {
     if (!enabled) return;
     void loadCase();
-  }, [enabled, loadCase]);
+    void loadChildren();
+  }, [enabled, loadCase, loadChildren]);
 
   useEffect(() => {
     if (!enabled || !kpiId) return;
@@ -694,16 +732,23 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           current={isPlanRequired}
           done={phase3Done}
         >
-          {!phase3Done || correctiveActions.length > 0 ? (
+          {childrenError ? (
             <div
               role="note"
               className="mb-3 rounded-lg border border-c-warning/30 bg-c-warning/10 px-3 py-2 text-[11px] text-c-text-secondary"
+              data-testid="kpi-deviation-actions-load-error"
             >
               {t(
-                'Ta lista pokazuje wyłącznie działania dodane w bieżącej sesji przeglądarki — po odświeżeniu strony wcześniej zapisane działania mogą tu nie być widoczne.',
-                'This list shows only actions added in the current browser session — after refreshing the page, previously saved actions may not appear here.'
-              )}
+                'Nie udało się wczytać zapisanych działań — poniższa lista może być niepełna.',
+                'Saved actions could not be loaded — the list below may be incomplete.'
+              )}{' '}
+              {childrenError}
             </div>
+          ) : null}
+          {childrenLoading && correctiveActions.length === 0 ? (
+            <p className="mb-3 text-xs text-c-text-muted" data-testid="kpi-deviation-actions-loading">
+              {t('Wczytywanie działań…', 'Loading actions…')}
+            </p>
           ) : null}
           {correctiveActions.length > 0 ? (
             <ul className="space-y-2 mb-3">
@@ -725,6 +770,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                             () => updateCorrectiveAction(kase.caseId, a.actionId, { expectedVersion: a.rowVersion, status: nextStatus }),
                             (res) => {
                               setCorrectiveActions((prev) => prev.map((x) => (x.actionId === a.actionId ? res.action : x)));
+                              void loadChildren();
                               if (res.caseAutoTransitionedToExecuting) void loadCase();
                             },
                             t('Działanie zaktualizowane', 'Action updated')
@@ -800,11 +846,15 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                         expectedEffect: actionExpectedEffect.trim() || null,
                       }),
                     (res) => {
+                      // Optimistic append for instant feedback; the refetch
+                      // right after is the authority (it also picks up any
+                      // action added from another surface or session).
                       setCorrectiveActions((prev) => [...prev, res.action]);
                       setActionTitle('');
                       setActionOwner('');
                       setActionDue('');
                       setActionExpectedEffect('');
+                      void loadChildren();
                     },
                     t('Działanie dodane', 'Action added')
                   )
@@ -948,16 +998,10 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           current={isExecuting || isRecoveryObserved}
           done={phase6Done}
         >
-          {!phase6Done || verifications.length > 0 ? (
-            <div
-              role="note"
-              className="mb-3 rounded-lg border border-c-warning/30 bg-c-warning/10 px-3 py-2 text-[11px] text-c-text-secondary"
-            >
-              {t(
-                'Ta lista, tak jak działania korygujące, pokazuje wyłącznie weryfikacje zgłoszone w tej sesji — brak GET dla pełnej historii.',
-                'Like corrective actions, this list shows only verifications submitted in this session — no GET exists for the full history.'
-              )}
-            </div>
+          {childrenLoading && verifications.length === 0 ? (
+            <p className="mb-3 text-xs text-c-text-muted" data-testid="kpi-deviation-verifications-loading">
+              {t('Wczytywanie weryfikacji…', 'Loading verifications…')}
+            </p>
           ) : null}
           {verifications.length > 0 ? (
             <ul className="space-y-1.5 mb-3">
@@ -1070,6 +1114,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                     (res) => {
                       setKase(res.case);
                       setVerifications((prev) => [...prev, res.verification]);
+                      void loadChildren();
                     },
                     t('Weryfikacja zgłoszona', 'Verification submitted')
                   )
