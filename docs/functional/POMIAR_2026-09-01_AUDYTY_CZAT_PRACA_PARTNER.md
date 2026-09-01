@@ -294,10 +294,11 @@ sprawdzenia** w Mojej Pracy i Portalu Partnerskim — wynik poniżej, §3.4 i §
 
 Przeszukano `src/components/MyWork/**` i `src/views/vault/**` pod kątem
 uchwytów upload/attach/save, które pokazują sukces **bez** poprzedzającego
-realnego wywołania backendu (ten sam kształt co defekt Inicjatyw). Wynik
-szczegółowy: patrz sekcja delegowanego pomiaru poniżej (§5) — wklejona tu,
-gdy dostępna, z `plik:linia` dla każdego kandydata albo z jawnym „nie
-znaleziono" i opisem zakresu przeszukania.
+realnego wywołania backendu (ten sam kształt co defekt Inicjatyw). **Wynik:
+DZIEWIĄTY potwierdzony przypadek wzorca** — Form Builder w narzędziu Tabel
+Idei (`IdeaTableTool.tsx:5061-5103`) pokazuje „Formularz zapisany" i wyrzuca
+całą konfigurację, mimo że realne API formularzy istnieje i jest gotowe do
+użycia. Szczegóły, cytaty i weryfikacja plik-po-pliku: §5.1-5.4.
 
 ### 3.5 Ile ekranów jest dziś nieosiągalnych i dlaczego
 
@@ -376,7 +377,9 @@ defekt.**
 ### 4.4 Sprawdzone: bezwarunkowe komunikaty sukcesu w Portalu Partnerskim
 
 Przeszukano komponenty Portalu Partnerskiego pod tym samym kątem co w §3.4.
-Wynik: patrz §5 poniżej.
+**Wynik: czysty.** Moduł nie ma w ogóle mechanizmu wysyłania plików, więc nie
+może mieć tej konkretnej klasy defektu; sprawdzone komunikaty sukcesu są
+warunkowane realnym wywołaniem zaplecza. Szczegóły: §5.2.
 
 ### 4.5 Ile ekranów jest dziś nieosiągalnych i dlaczego
 
@@ -404,7 +407,84 @@ je naprawionymi.**
 
 ## 5. Bezwarunkowe komunikaty sukcesu — My Work i Partner (wynik przeszukania)
 
-<!-- PLACEHOLDER: uzupełnione po zakończeniu przeszukania kodu (patrz zadanie w tle tej sesji). -->
+### 5.1 POTWIERDZONY DEFEKT — dziewiąty przypadek wzorca „fałszywa obietnica zapisu" (Moja Praca)
+
+Przeszukano `src/components/MyWork/**` i `src/views/vault/**` pod kątem
+uchwytów upload/attach/save pokazujących sukces bez poprzedzającego realnego
+wywołania backendu — ten sam kształt co ósmy potwierdzony przypadek
+(Inicjatywy, §3.3).
+
+**Znaleziony: `src/components/MyWork/IdeaTableTool.tsx:5061-5103`** — kreator
+formularzy (Form Builder) w narzędziu Tabel Idei.
+
+- `onSave` (`:5089-5092`) **ignoruje przekazane dane**, nie woła zaplecza i
+  **bezwarunkowo** pokazuje `toast.success(... 'Form saved')`, po czym zamyka
+  okno. `onDelete` (`:5093-5095`) tylko zamyka okno, bez wywołania.
+- Obiekt formularza przekazywany do kreatora (`:5071-5079`) jest **twardo
+  wpisanym literałem** (`name: 'New Form'`, `config: { fields: [] }`,
+  `is_published: false`) tworzonym **od nowa przy każdym otwarciu** — nigdy
+  nie pobieranym z zaplecza.
+
+**Skutek dla użytkownika:** konfiguruje pola, publikuje formularz, klika
+Zapisz, widzi „Formularz zapisany" — a **cała konfiguracja jest wyrzucana**.
+Po ponownym otwarciu widzi znowu pusty formularz domyślny; „opublikowany"
+formularz **nigdy nie jest żywy**.
+
+**To NIE jest niedokończona integracja** — komplet realnych funkcji zaplecza
+**istnieje i jest nieużywany**: `src/services/api/tablePlatform.api.ts:796`
+(`createForm`), `:808` (`listForms`), `:815` (`getForm`), `:822`
+(`updateForm`), `:834` (`deleteForm`) — zweryfikowane bezpośrednio w pliku.
+Ten sam plik woła zaplecze intensywnie w innych miejscach; zero wywołań akurat
+tej rodziny funkcji z `IdeaTableTool.tsx`.
+
+**Stan: zgłoszone, świadomie NIE naprawione** — zgodnie z zasadą „opisz, nie
+naprawiaj" tego zadania dokumentacyjnego.
+
+### 5.2 Obszary sprawdzone i CZYSTE — wynik „nie ma problemu"
+
+Wspólne klocki Mojej Pracy (`AttachmentsSection`, `CommentsSection`,
+`LinkedItemsSection`) **warunkują komunikat sukcesu wynikiem operacji**, a w
+repozytorium istnieje dedykowany test regresyjny pilnujący dokładnie tej
+klasy błędu:
+`src/components/MyWork/shared/__tests__/MutationResult.redContract.test.tsx`
+(zweryfikowano istnienie pliku). Karta zadania, karta decyzji, notatnik,
+tablica i skarbiec dokumentów — wszystkie czekają na odpowiedź zaplecza przed
+komunikatem sukcesu.
+
+**Portal Partnerski: czysty.** Moduł **nie ma w ogóle mechanizmu wysyłania
+plików** — nie może mieć tego konkretnego defektu. Każdy sprawdzony komunikat
+sukcesu jest warunkowany realnym wywołaniem zaplecza.
+
+### 5.3 Obserwacja (NIE defekt) — okno między komunikatem a zapisem w Decisions
+
+`src/components/MyWork/DecisionDetailView.tsx:3582` — komunikat o
+zastosowaniu zespołu RACI przez AI (`toast.success(...'aiRaciApplied'...)`)
+pada **zaraz po** `setStakeholders(next)` (`:3581`), synchronicznie ze zmianą
+stanu lokalnego. Realny zapis na serwer idzie **osobno, z opóźnieniem**: osobny
+`useEffect` (`:2499-2507`) obserwuje `stakeholders` i po 500 ms debounce woła
+`replaceDecisionStakeholdersOnServer(Api, decisionId, stakeholders)`.
+
+Realne wywołanie zaplecza **istnieje** — to nie jest ten sam błąd co §5.1. Jest
+jednak krótkie okno (do 500 ms), w którym komunikat sukcesu już padł, a zapis
+na serwer jeszcze się nie wykonał — jeśli użytkownik odświeży stronę w tym
+oknie, może stracić zmianę mimo widzianego komunikatu. Zapisane jako
+obserwacja do dalszej obserwacji, nie jako potwierdzony defekt.
+
+### 5.4 Wniosek — zabezpieczenie w warstwie wspólnej nie chroni przed wywołaniem, które je omija
+
+Wspólna warstwa Mojej Pracy (`AttachmentsSection`/`CommentsSection`/
+`LinkedItemsSection`) **ma zabezpieczenie i test regresyjny** (§5.2). Defekt
+§5.1 siedzi w **osobnym, równoległym komponencie** (`FormBuilder` wewnątrz
+`IdeaTableTool.tsx`), który tę warstwę **całkowicie omija** — buduje własny
+`onSave` zamiast reużyć chroniony wzorzec. Test regresyjny warstwy wspólnej
+nie mógł tego złapać, bo nigdy nie widzi tego wywołania.
+
+To jest ta sama rodzina ryzyka co lekcja „Naprawa per-wywołanie odrasta" z
+notatnika metodycznego właściciela (plik osobisty, poza tym repozytorium —
+NIE cytuję ścieżki repo, bo taki plik tu nie istnieje; sprawdzono
+`[ -e ... ]`) — naprawa jednego wywołania nie chroni pozostałych, jeśli nie ma
+wymuszenia reużycia wzorca na poziomie code review/lint, nie tylko testu
+jednego miejsca.
 
 ---
 
