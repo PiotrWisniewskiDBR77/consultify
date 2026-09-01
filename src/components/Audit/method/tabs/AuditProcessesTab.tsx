@@ -259,8 +259,16 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
       render: (row: AuditProgramSummary) => {
         const name =
           (row.leadAuditorId && userNameById.get(row.leadAuditorId)) || row.leadAuditorName;
+        // NAPRAWA (2026-09-01): `truncate` bez `block`+`max-w-[…]` nie tnie
+        // nic na inline `span` — FilterableTable świadomie NIE stawia
+        // `overflow-hidden` na `<td>` (żeby nie ucinać popoverów/menu, patrz
+        // `CELL_TEXT_CLAMP_CLASS` w FilterableTable.tsx), więc długie
+        // nazwisko (np. "Aleksandra Dąbrowska") wchodziło w kolumnę „Start".
+        // Wzorem sąsiedniej kolumny „pack" (max-w = deklarowana szerokość −
+        // wewnętrzny padding) — działa dla KAŻDEGO nazwiska, nie tylko tego
+        // najdłuższego w dzisiejszych danych demo.
         return (
-          <span className="text-sm text-c-text truncate">
+          <span className="text-sm text-c-text truncate block max-w-[140px]">
             {name || <span className="text-slate-400">—</span>}
           </span>
         );

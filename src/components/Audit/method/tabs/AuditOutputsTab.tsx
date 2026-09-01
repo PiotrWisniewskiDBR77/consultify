@@ -171,8 +171,14 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
       width: '160px',
       render: (row: AuditOutputSummary) => {
         const name = (row.finalizedBy && userNameById.get(row.finalizedBy)) || row.finalizedByName;
+        // Same class of bug as AuditProcessesTab's "leadAuditor" column
+        // (2026-09-01, reguła 20 — sprawdzenie rodziny): `truncate` na
+        // inline `span` bez `block`+`max-w-[…]` nie tnie nic, bo
+        // FilterableTable nie stawia `overflow-hidden` na `<td>` (żeby nie
+        // ucinać popoverów/menu). Długie nazwisko wchodziło w kolejną
+        // kolumnę (kebab akcji).
         return (
-          <span className="text-sm text-c-text truncate">
+          <span className="text-sm text-c-text truncate block max-w-[140px]">
             {name || <span className="text-slate-400">—</span>}
           </span>
         );
