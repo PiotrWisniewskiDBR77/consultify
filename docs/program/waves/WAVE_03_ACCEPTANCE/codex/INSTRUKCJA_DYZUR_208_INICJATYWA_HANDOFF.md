@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `29f004c670`**
+> **SHA markera: `e99e81301a`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day208-inicjatywa-handoff
-MARKER=29f004c670
+MARKER=e99e81301a
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 29f004c670..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 29f004c670..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline e99e81301a..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only e99e81301a..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 29f004c670..HEAD
+git -C "$WT" diff --name-only e99e81301a..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `siedem` komend, wszystkie obowiązkowe.**
@@ -180,7 +180,7 @@ sed -n '2283,2320p' server/src/routes/pmo/initiativesExecutionRuntime.routes.ts 
 
 # (T7) PORT I MIEJSCE NA DYSKU
 df -h /
-lsof -nP -iTCP:6148 -iTCP:5088 -iTCP:5089 -sTCP:LISTEN
+lsof -nP -iTCP:6187 -iTCP:5162 -iTCP:5163 -sTCP:LISTEN
 docker ps -a --format '{{.Names}}' | grep -E 'cx-day(204|205|206|207|208)'
 #   oczekiwane: df >5GB wolnego; lsof PUSTY; docker ps może pokazać cx-day204/205/206/207-pg
 #   żywe (dyżury równoległe) — NIE dotykaj ich, tylko cx-day208-pg jest Twój.
@@ -215,7 +215,7 @@ Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie 
 | `Z4` | **Nie czytasz i nie kopiujesz wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`) ani katalogu `server/src/_backup/**` | Warianty produktowe właściciela; `_backup` to śmietnik kolizji TS/JS |
 | `Z5` | **★★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`. Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)**, `DEC-2026-08-26-86` | Brudny checkout właściciela. **Naruszony 28.08: STOP dyżuru 53 kosztował godzinę** |
 | `Z6` | **Nie dotykasz cudzych worktree** w `/private/tmp/consultify-*`, `/private/tmp/cx-*`, `/private/tmp/fix-*`, `/private/tmp/odbior-*`, `/private/tmp/instr-*`, `/private/tmp/finish-*`. **Wyjątek: katalogi, które SAM zakładasz w tym dyżurze, są Twoje** | Żyje ich ponad 100 |
-| `Z7` | **★★ Twój JEDYNY port bazy to `6148`. Twój JEDYNY port harnessu to `5088 i 5089`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day208-pg`**. **ZAKAZANE:** `6012, 5433, 6047, 6054-6127, 5010-5077, 6404-6411 (odbiory nadzorcy i dyżury wcześniejsze niż 204). Zmierzone WPROST z cfg/body dyżurów równoległych na tym torze: 6144/5078-5079 (dyżur 204), 6145/5080-5081 (dyżur 205), 6146/5084-5085 (dyżur 206 — jego WŁASNY cfg mówi `5084 i 5085`, NIE `5082-5083` jak zgadywał wcześniejszy cfg205; ufaj cfg206, nie cudzej prognozie). Dyżur 207: PORT_DB/PORT_HARNESS NIE ZNALEZIONY w żadnym cfg/body dostępnym z tego miejsca (katalog roboczy `w207` istnieje w scratchu nadzorcy, ale bez configu) — zakres `6147`/`5086-5087` podany Ci przez nadzorcę jako fakt zewnętrzny, NIE zweryfikowany przeze mnie w plikach; potwierdź `lsof`/`docker ps` sam w BLOKU 0 i zapisz wynik. Twój własny, wyłączny przydział: baza `6148`, harness `5088 i 5089`. ★ PORT 5000 ZAJĘTY NA STAŁE przez macOS Control Center. ★ PORT 5037 ZAJĘTY NA STAŁE przez adb. ★ PORTY 5060-5061 potwierdź jako wolne przed startem (dyżur 196, historyczny). Zmierzone TERAZ (2026-08-31, przed wydaniem tej instrukcji): `lsof -nP -iTCP:6144-6149 -iTCP:5078-5091 -sTCP:LISTEN` pokazuje WYŁĄCZNIE `127.0.0.1:6146` (kontener `cx-day206-pg` żywy — dyżur równoległy, NIE dotykaj) — Twoje porty 6148/5088/5089 były WOLNE w chwili pomiaru, ale to migawka, nie gwarancja; zweryfikuj ponownie sam w BLOKU 0.`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
+| `Z7` | **★★ Twój JEDYNY port bazy to `6187`. Twój JEDYNY port harnessu to `5162 i 5163`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day208-pg`**. **ZAKAZANE:** `6012, 5433, 6047, 6054-6127, 5010-5077, 6404-6411 (odbiory nadzorcy i dyżury wcześniejsze niż 204). Zmierzone WPROST z cfg/body dyżurów równoległych na tym torze: 6144/5078-5079 (dyżur 204), 6145/5080-5081 (dyżur 205), 6146/5084-5085 (dyżur 206 — jego WŁASNY cfg mówi `5084 i 5085`, NIE `5082-5083` jak zgadywał wcześniejszy cfg205; ufaj cfg206, nie cudzej prognozie). Dyżur 207: PORT_DB/PORT_HARNESS NIE ZNALEZIONY w żadnym cfg/body dostępnym z tego miejsca (katalog roboczy `w207` istnieje w scratchu nadzorcy, ale bez configu) — zakres `6147`/`5086-5087` podany Ci przez nadzorcę jako fakt zewnętrzny, NIE zweryfikowany przeze mnie w plikach; potwierdź `lsof`/`docker ps` sam w BLOKU 0 i zapisz wynik. Twój własny, wyłączny przydział: baza `6187`, harness `5162 i 5163`. ★ PORT 5000 ZAJĘTY NA STAŁE przez macOS Control Center. ★ PORT 5037 ZAJĘTY NA STAŁE przez adb. ★ PORTY 5060-5061 potwierdź jako wolne przed startem (dyżur 196, historyczny). Zmierzone TERAZ (2026-08-31, przed wydaniem tej instrukcji): `lsof -nP -iTCP:6144-6149 -iTCP:5078-5091 -sTCP:LISTEN` pokazuje WYŁĄCZNIE `127.0.0.1:6146` (kontener `cx-day206-pg` żywy — dyżur równoległy, NIE dotykaj) — Twoje porty 6187/5162/5163 były WOLNE w chwili pomiaru, ale to migawka, nie gwarancja; zweryfikuj ponownie sam w BLOKU 0.`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
 | `Z8` | **Zero interakcji z Railway** — brak `railway` CLI, brak produkcyjnych env, brak redeployu, brak zdalnych migracji i seedów | Produkcja `consultify.ai` NIETYKALNA (`DEC-2026-08-25-65`) |
 | `Z9` | **Żadnej bazy poza jednorazowym lokalnym kontenerem tego dyżuru** — nigdy demo, staging, produkcja ani cudza retained-DB | **Baza demo i staging to JEDNA baza** (`DEC-2026-08-28-176`) |
 | `Z10` | **★★ Zero nowych flag funkcyjnych i zero zmian wartości domyślnej istniejącej flagi** — w kodzie, w `.env*`, w `docker-compose*`, w `railway*`. Wyjątek: flagi jawnie zamówione w `brak nowych flag i zero zmiany wartości domyślnej istniejącej flagi. Karta czatu i nowa trasa `/adoptions/chat-draft` są ZAWSZE aktywne (żadna flaga ich nie osłania) — zgoda użytkownika (klik „Przekaż do realizacji”) JEST bramką, nie flaga. Jeśli podczas pracy okaże się, że potrzebujesz bramki wyłączającej (np. na czas odbioru), dodaj `ENABLE_CHAT_INITIATIVE_HANDOFF` z `z.boolean().default(true)` (wzorem `ENABLE_TERESA_RECORD_CREATE`, `server/src/config/FeatureFlags.ts:51`) i zapisz w raporcie DLACZEGO — to Twoja decyzja inżynierska, nie zamówienie tej instrukcji.`, wszystkie `default OFF` | Krach 07-12: masowe włączenie flag wizualnych na żywo, „tabelki jak dla trzylatka" (`CLAUDE.md` §9) |
@@ -249,7 +249,7 @@ Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie 
 | `Z37` | **Porównania testów po NAZWACH przypadków (`fullName`), NIGDY po liczbach.** „Było 300 PASS, jest 300 PASS" nie jest dowodem — jeden test mógł zgasnąć, a drugi się zapalić | Wektor maskowania regresji |
 | `Z38` | **Zakaz usuwania i odmontowywania jakiegokolwiek joba CI.** Wolno dodać, wolno poprawić warunek. Usunięcie = STOP z rekomendacją | Bramki znikają łatwiej, niż wracają |
 | `Z39` | **Zakaz uruchamiania realnych workflow GitHub Actions** — `gh workflow run`, `gh run rerun`, `act` z realnymi sekretami, push wyzwalający CI na `main`/`develop`/`Londyn`/`demo`. Dowód robisz **statycznie** | Realny przebieg CI dotyka sekretów i środowisk poza Twoją kontrolą |
-| `Z40` | ★★ **NIE dotykasz ŻADNEGO pliku istniejącego łańcucha governance** — `registerInitiative.ts`, `submitSourceProposal.ts`, `definitionDecision.ts`, `analysisDecision.ts`, `portfolioDecision.ts`, `scheduleDecision.ts`, `handoffAcceptance.ts`, `definitionReadiness.ts`, `analysisReadiness.ts`. Twoja komenda `initiative.adopt-chat-draft` jest SIOSTRĄ `initiative.adopt-accepted-classic`, nie zmienia go, nie woła go, nie go rozszerza. ★★ **NIE modyfikujesz `adoptAcceptedClassicInitiative.ts`** — to wzorzec do CZYTANIA i naśladowania w NOWYM pliku, nie do generalizowania/parametryzowania pod dwa źródła naraz (SWOT-specyficzny JOIN zostaje SWOT-specyficzny). ★★ **NIE budujesz żadnego auto-uzupełniania `initiativeOwnerId`/`projectId` domyślną wartością** (np. aktorem wywołującym adopcję) — to decyzja człowieka; jeśli brakuje, karta pokazuje "co brakuje" i kieruje do ISTNIEJĄCEGO ekranu dokumentu inicjatywy (gdzie `canEditOwner`/właściwości są już edytowalne), NIE zgaduje. ★★ **NIE resurektujesz `InitiativeDraftJourney.tsx`** do renderowania — jest martwy celowo (decyzja "Etap 5 gridu n-Type"), Twoja karta żyje WYŁĄCZNIE w czacie (`AIChat/`), nie w dokumencie inicjatywy. ★★ **NIE wołasz `initiative.register`/`source-proposal.submit` bezpośrednio** z nowej trasy — most jest PRZEZ nową komendę `adopt-chat-draft`, wzorem `adopt-accepted-classic`, nie przez dwuetapowy submit→register (jego content-match trap, patrz T5, jest niepotrzebnym ryzykiem, którego wzorzec `adoptAcceptedClassicInitiative` unika). ★★ **Karta czatu NIE automatyzuje żadnej zgody governance poza samym wejściem do kanonu** — definicja (8 kart), analiza (10 kart), portfel, harmonogram, handoff zostają W CAŁOŚCI ręczne, przez ISTNIEJĄCE ekrany (`primaryLifecycleAction`, `GateReadinessSection`, `InitiativeGatesWorkflowTable`) — karta po udanej adopcji WYŁĄCZNIE nawiguje tam (`/initiatives?open=<id>&mode=doc`), nie wykonuje żadnego kolejnego kroku sama. ★★ **Zero połączeń do bazy zdalnej, demo, stagingu i produkcji.** | Kontekst obowiązkowy: `docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md` §3, wiersz P4: "Inicjatywa z czatu = sierota — draft bez wołania registerInitiative→handoff→execution_case", ruch nazwany wprost: "opcjonalny krok »przekaż do realizacji« za zgodą (łańcuch z planu migracji A4.0)". Zmierzone dziś (31.08, tip `29f004c670`): `server/src/services/ai/tools/generateInitiative.ts` — narzędzie czatu `generate_initiative` (nagłówek, linie 4-9: "no approval gate, because a draft is fully reversible and never promotes") tworzy wiersz w LEGACY tabeli `initiatives` przez `initiativeGenerationService.createInitiative` → `createInitiativeService.ts` (INSERT realny, linie 316-334) — SUROWY INSERT, nie przez żadną komendę materialną, nie przez `executeMaterialCommand`. Front (`UnifiedChatPanel.tsx`, gałąź `payloadKind === 'initiative'`, ok. linii 2219-2237) reaguje na to WYŁĄCZNIE deep-linkiem `/initiatives?open=<id>&mode=doc` + toastem "Initiative created from chat" — ZERO bramki zgody, ZERO wzmianki o governance. Dowód "sieroty": lifecycle kanoniczny (zmierzony w body dyżuru 204, T8: `REGISTERED_DRAFT` → `DEFINED` → `ANALYZING` → `READY_FOR_DECISION` → `APPROVED_BACKLOG` → `SCHEDULED` → `IN_EXECUTION`, każde przejście przez osobną komendę materialną w `initiatives-execution/`) w OGÓLE nie zna wiersza czatowego, bo `registerInitiative` (`registerInitiative.ts:82-129`) wymaga PRZED-ISTNIEJĄCEJ propozycji źródłowej w `initiative_candidates` (`status='pending'`, `evidenceState='READY'`, `duplicateState='CLEAR'`) ORAZ dokładnej zgodności treści (`title`/`problem`/`proposedOutcome`/`projectId`/`visibility`/`initiativeOwnerId` MUSZĄ być identyczne z propozycją, inaczej `MaterialCommandConflictError`) — czatowy draft nie ma takiej propozycji, więc naiwne wywołanie `initiative.register` PADNIE. Endpointy readiness (`GET /initiatives/:id/gates/definition/readiness`, trasa linia 2284; `GET /initiatives/:id/gates/analysis/readiness`, trasa linia 2709) czytają przez `deps.reader.findById` z KANONICZNEGO magazynu agregatów — dla niezarejestrowanego draftu zwrócą `404 NOT_FOUND`, więc karta czatu w OGÓLE nie ma co pokazać jako "co brakuje", dopóki draft nie wejdzie do kanonu. ★ ZNALEZISKO KLUCZOWE: repo JUŻ MA gotowy wzorzec dokładnie tego mostu — `server/src/domain/initiatives-execution/adoptAcceptedClassicInitiative.ts` + trasa `POST /adoptions/accepted-classic` (`initiativesExecutionRuntime.routes.ts`, ok. linii 1750-1808) — komenda materialna `initiative.adopt-accepted-classic`, która bierze ISTNIEJĄCY "klasyczny" wiersz (dziś: zaakceptowany kandydat SWOT z `initiative_candidates`+`swot_candidate_handoffs`+`tool_outputs`, zweryfikowane w transakcji `postgresMaterialCommandUnitOfWork.ts:90-150`, JOIN po `c.status='accepted'` i `o.status='approved'`) i WCHODZI z nim BEZPOŚREDNIO do stanu `REGISTERED_DRAFT`, z pominięciem dwuetapowego `submit-proposal→register` i jego pułapki dopasowania treści. To jest wzorzec do NAŚLADOWANIA (nowy plik-siostra, NIE modyfikacja wzorca) dla źródła `teresa_chat` zamiast `accepted_classic_swot_candidate` — most czytający wprost z wiersza `initiatives` (`source_type='teresa_chat'`, stemplowany w `generateInitiative.ts` funkcją `stampLineage`), bez zależności od SWOT/tool_outputs. Drugie zmierzone ograniczenie: `createInitiativeService.ts` (INSERT, linie 316-334) MA kolumny `owner_business_id`/`owner_execution_id` w schemacie, ale `generateInitiative.ts` NIGDY ich nie przekazuje — każdy draft czatowy jest dziś BEZ właściciela. To nie jest coś do naprawienia w tym dyżurze; to jest "co brakuje", które karta czatu MUSI pokazać uczciwie, zanim zaproponuje adopcję (właściciel i projekt to decyzja CZŁOWIEKA, nie coś do zgadnięcia domyślną wartością — zobacz PUŁAPKA druga w sekcji 3, zbieżna z ostrzeżeniem `selfApprovalAllowed` z dyżuru 204: `authorityId === actorId` bez jawnej zgody jest odrzucane w `definitionDecision.ts:124-126`/`scheduleDecision.ts:194-199`/`portfolioDecision.ts:62-65} — ten sam duch: nie zgaduj autorytetu za człowieka). Trzecie zmierzone: `InitiativeDraftJourney.tsx` (komponent "co dalej" z trzecim krokiem `advance`→"Advance in the process") ISTNIEJE jako plik i export, ale komentarz w `InitiativeDocumentView.tsx` (ok. linii 793-819) mówi wprost: USUNIĘTY z renderowania w ramach "Etap 5 gridu n-Type" (SSOT zakazuje instrukcyjnych pasków dublujących status/Properties/Actions) — "był jedynym callerem w repo". Dziś "następna brama" żyje WYŁĄCZNIE w `nModePropertyFields` (pole tylko-do-odczytu) i w `primaryLifecycleAction` (Menu 1, JEDEN przycisk = przejście stanu). Karta czatu z tego dyżuru MUSI nawigować do TEGO realnego miejsca (dokument inicjatywy, ISTNIEJĄCE UI), nie odtwarzać własnej wersji "co dalej". |
+| `Z40` | ★★ **NIE dotykasz ŻADNEGO pliku istniejącego łańcucha governance** — `registerInitiative.ts`, `submitSourceProposal.ts`, `definitionDecision.ts`, `analysisDecision.ts`, `portfolioDecision.ts`, `scheduleDecision.ts`, `handoffAcceptance.ts`, `definitionReadiness.ts`, `analysisReadiness.ts`. Twoja komenda `initiative.adopt-chat-draft` jest SIOSTRĄ `initiative.adopt-accepted-classic`, nie zmienia go, nie woła go, nie go rozszerza. ★★ **NIE modyfikujesz `adoptAcceptedClassicInitiative.ts`** — to wzorzec do CZYTANIA i naśladowania w NOWYM pliku, nie do generalizowania/parametryzowania pod dwa źródła naraz (SWOT-specyficzny JOIN zostaje SWOT-specyficzny). ★★ **NIE budujesz żadnego auto-uzupełniania `initiativeOwnerId`/`projectId` domyślną wartością** (np. aktorem wywołującym adopcję) — to decyzja człowieka; jeśli brakuje, karta pokazuje "co brakuje" i kieruje do ISTNIEJĄCEGO ekranu dokumentu inicjatywy (gdzie `canEditOwner`/właściwości są już edytowalne), NIE zgaduje. ★★ **NIE resurektujesz `InitiativeDraftJourney.tsx`** do renderowania — jest martwy celowo (decyzja "Etap 5 gridu n-Type"), Twoja karta żyje WYŁĄCZNIE w czacie (`AIChat/`), nie w dokumencie inicjatywy. ★★ **NIE wołasz `initiative.register`/`source-proposal.submit` bezpośrednio** z nowej trasy — most jest PRZEZ nową komendę `adopt-chat-draft`, wzorem `adopt-accepted-classic`, nie przez dwuetapowy submit→register (jego content-match trap, patrz T5, jest niepotrzebnym ryzykiem, którego wzorzec `adoptAcceptedClassicInitiative` unika). ★★ **Karta czatu NIE automatyzuje żadnej zgody governance poza samym wejściem do kanonu** — definicja (8 kart), analiza (10 kart), portfel, harmonogram, handoff zostają W CAŁOŚCI ręczne, przez ISTNIEJĄCE ekrany (`primaryLifecycleAction`, `GateReadinessSection`, `InitiativeGatesWorkflowTable`) — karta po udanej adopcji WYŁĄCZNIE nawiguje tam (`/initiatives?open=<id>&mode=doc`), nie wykonuje żadnego kolejnego kroku sama. ★★ **Zero połączeń do bazy zdalnej, demo, stagingu i produkcji.** | Kontekst obowiązkowy: `docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md` §3, wiersz P4: "Inicjatywa z czatu = sierota — draft bez wołania registerInitiative→handoff→execution_case", ruch nazwany wprost: "opcjonalny krok »przekaż do realizacji« za zgodą (łańcuch z planu migracji A4.0)". Zmierzone dziś (31.08, tip `e99e81301a`): `server/src/services/ai/tools/generateInitiative.ts` — narzędzie czatu `generate_initiative` (nagłówek, linie 4-9: "no approval gate, because a draft is fully reversible and never promotes") tworzy wiersz w LEGACY tabeli `initiatives` przez `initiativeGenerationService.createInitiative` → `createInitiativeService.ts` (INSERT realny, linie 316-334) — SUROWY INSERT, nie przez żadną komendę materialną, nie przez `executeMaterialCommand`. Front (`UnifiedChatPanel.tsx`, gałąź `payloadKind === 'initiative'`, ok. linii 2219-2237) reaguje na to WYŁĄCZNIE deep-linkiem `/initiatives?open=<id>&mode=doc` + toastem "Initiative created from chat" — ZERO bramki zgody, ZERO wzmianki o governance. Dowód "sieroty": lifecycle kanoniczny (zmierzony w body dyżuru 204, T8: `REGISTERED_DRAFT` → `DEFINED` → `ANALYZING` → `READY_FOR_DECISION` → `APPROVED_BACKLOG` → `SCHEDULED` → `IN_EXECUTION`, każde przejście przez osobną komendę materialną w `initiatives-execution/`) w OGÓLE nie zna wiersza czatowego, bo `registerInitiative` (`registerInitiative.ts:82-129`) wymaga PRZED-ISTNIEJĄCEJ propozycji źródłowej w `initiative_candidates` (`status='pending'`, `evidenceState='READY'`, `duplicateState='CLEAR'`) ORAZ dokładnej zgodności treści (`title`/`problem`/`proposedOutcome`/`projectId`/`visibility`/`initiativeOwnerId` MUSZĄ być identyczne z propozycją, inaczej `MaterialCommandConflictError`) — czatowy draft nie ma takiej propozycji, więc naiwne wywołanie `initiative.register` PADNIE. Endpointy readiness (`GET /initiatives/:id/gates/definition/readiness`, trasa linia 2284; `GET /initiatives/:id/gates/analysis/readiness`, trasa linia 2709) czytają przez `deps.reader.findById` z KANONICZNEGO magazynu agregatów — dla niezarejestrowanego draftu zwrócą `404 NOT_FOUND`, więc karta czatu w OGÓLE nie ma co pokazać jako "co brakuje", dopóki draft nie wejdzie do kanonu. ★ ZNALEZISKO KLUCZOWE: repo JUŻ MA gotowy wzorzec dokładnie tego mostu — `server/src/domain/initiatives-execution/adoptAcceptedClassicInitiative.ts` + trasa `POST /adoptions/accepted-classic` (`initiativesExecutionRuntime.routes.ts`, ok. linii 1750-1808) — komenda materialna `initiative.adopt-accepted-classic`, która bierze ISTNIEJĄCY "klasyczny" wiersz (dziś: zaakceptowany kandydat SWOT z `initiative_candidates`+`swot_candidate_handoffs`+`tool_outputs`, zweryfikowane w transakcji `postgresMaterialCommandUnitOfWork.ts:90-150`, JOIN po `c.status='accepted'` i `o.status='approved'`) i WCHODZI z nim BEZPOŚREDNIO do stanu `REGISTERED_DRAFT`, z pominięciem dwuetapowego `submit-proposal→register` i jego pułapki dopasowania treści. To jest wzorzec do NAŚLADOWANIA (nowy plik-siostra, NIE modyfikacja wzorca) dla źródła `teresa_chat` zamiast `accepted_classic_swot_candidate` — most czytający wprost z wiersza `initiatives` (`source_type='teresa_chat'`, stemplowany w `generateInitiative.ts` funkcją `stampLineage`), bez zależności od SWOT/tool_outputs. Drugie zmierzone ograniczenie: `createInitiativeService.ts` (INSERT, linie 316-334) MA kolumny `owner_business_id`/`owner_execution_id` w schemacie, ale `generateInitiative.ts` NIGDY ich nie przekazuje — każdy draft czatowy jest dziś BEZ właściciela. To nie jest coś do naprawienia w tym dyżurze; to jest "co brakuje", które karta czatu MUSI pokazać uczciwie, zanim zaproponuje adopcję (właściciel i projekt to decyzja CZŁOWIEKA, nie coś do zgadnięcia domyślną wartością — zobacz PUŁAPKA druga w sekcji 3, zbieżna z ostrzeżeniem `selfApprovalAllowed` z dyżuru 204: `authorityId === actorId` bez jawnej zgody jest odrzucane w `definitionDecision.ts:124-126`/`scheduleDecision.ts:194-199`/`portfolioDecision.ts:62-65} — ten sam duch: nie zgaduj autorytetu za człowieka). Trzecie zmierzone: `InitiativeDraftJourney.tsx` (komponent "co dalej" z trzecim krokiem `advance`→"Advance in the process") ISTNIEJE jako plik i export, ale komentarz w `InitiativeDocumentView.tsx` (ok. linii 793-819) mówi wprost: USUNIĘTY z renderowania w ramach "Etap 5 gridu n-Type" (SSOT zakazuje instrukcyjnych pasków dublujących status/Properties/Actions) — "był jedynym callerem w repo". Dziś "następna brama" żyje WYŁĄCZNIE w `nModePropertyFields` (pole tylko-do-odczytu) i w `primaryLifecycleAction` (Menu 1, JEDEN przycisk = przejście stanu). Karta czatu z tego dyżuru MUSI nawigować do TEGO realnego miejsca (dokument inicjatywy, ISTNIEJĄCE UI), nie odtwarzać własnej wersji "co dalej". |
 
 ---
 
@@ -360,18 +360,18 @@ cd /private/tmp/cx-day208-inicjatywa-handoff
 
 docker run -d --name cx-day208-pg \
   -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx208 \
-  -p 127.0.0.1:6148:5432 pgvector/pgvector:pg16
+  -p 127.0.0.1:6187:5432 pgvector/pgvector:pg16
 #   ★ `postgres:15` NIE PRZECHODZI migracji — brak rozszerzenia `vector`
 
 until docker exec cx-day208-pg pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
 
 NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
-DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6148/cx208 \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6187/cx208 \
   npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
 
 # DRUGI przebieg — musi byc bezbledny i bez zmian (idempotencja):
 NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
-DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6148/cx208 \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6187/cx208 \
   npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
 ```
 
@@ -387,7 +387,7 @@ cd /private/tmp/cx-day208-inicjatywa-handoff && \
 RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test \
 ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false \
 RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce \
-DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6148/cx208 \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6187/cx208 \
 JWT_SECRET=cx208-test-secret-do-not-reuse \
 npx vitest run server/src/domain/initiatives-execution/__tests__ server/src/routes/pmo/__tests__ src/components/AIChat/__tests__ --retry=0 \
   --reporter=json --outputFile=/private/tmp/cx-day208-inicjatywa-handoff-artefakty/day208-vitest.json
@@ -558,7 +558,7 @@ a zgadywanie karane** (dzień 23 dostał `SUPERVISOR_ACCEPT` za STOP,
 | „Musiałbym odłożyć stan roboczy" | `cp` do `/private/tmp/cx-day208-inicjatywa-handoff-scratch`. `git stash` jest zakazem (`Z27`), nie STOP-em |
 | „Test przeszkadza" | **Nie osłabiasz asercji.** Opisujesz, co blokuje. Osłabienie = odrzucenie pozycji, nie STOP |
 | „Nie zdążę zrobić wszystkich pozycji" | Robisz **rdzeń** (`Jedna pozycja R1 (przekrojowa: nowa komenda materialna + trasa + migracja paragonu + karta czatu). Nie dziel na R1/R2 — most `draft→REGISTERED_DRAFT` i karta zgody w czacie to jeden nierozdzielny łańcuch dowodowy (bez trasy karta nie ma czego wołać; bez karty trasa nie ma wołacza produkcyjnego).`) i **uczciwie opisujesz resztę jako niezrobioną**. Odwrotna kolejność (inwentarze zrobione, rdzeń „częściowo") jest podstawą odrzucenia |
-| „Port `6148` albo `5088 i 5089` jest zajęty" | **To JEST powód do STOP-u całości** — nie bierzesz innego portu (`Z7`) |
+| „Port `6187` albo `5162 i 5163` jest zajęty" | **To JEST powód do STOP-u całości** — nie bierzesz innego portu (`Z7`) |
 
 **Zatrzymanie CAŁEGO dyżuru jest dopuszczalne WYŁĄCZNIE przy:**
 1. **`MARKER BRAK`** (`§0.1`);
@@ -566,7 +566,7 @@ a zgadywanie karane** (dzień 23 dostał `SUPERVISOR_ACCEPT` za STOP,
    (`Z28`) — „przecież to był tylko `SELECT`" nie jest okolicznością łagodzącą;
 3. **ryzyku utraty danych** albo realnej wysyłki e-maila (`Z30`);
 4. **mniej niż 5 GB wolnego dysku** (`§0.1` krok 0);
-5. **zajętym porcie `6148` albo `5088 i 5089`** (`Z7`).
+5. **zajętym porcie `6187` albo `5162 i 5163`** (`Z7`).
 
 Format wpisu STOP:
 
@@ -646,7 +646,7 @@ registerInitiative→handoff→execution_case"**, stan `zerwane`, ruch nazwany
 wprost: *"opcjonalny krok »przekaż do realizacji« za zgodą (łańcuch z planu
 migracji A4.0)"*.
 
-Zmierzone dziś (tip `29f004c670`): narzędzie czatu `generate_initiative`
+Zmierzone dziś (tip `e99e81301a`): narzędzie czatu `generate_initiative`
 (`server/src/services/ai/tools/generateInitiative.ts`, nagłówek linie 4-9:
 *"no approval gate, because a draft is fully reversible and never
 promotes"*) tworzy DRAFT surowym `INSERT INTO initiatives`
@@ -912,7 +912,7 @@ plikami z tabeli powyżej, STOP i zgłoś w raporcie zamiast zgadywać.
   podane jako niezweryfikowany fakt zewnętrzny (dyżur 207).
 - **Każdą cytowaną linię kodu/dokumentu sprawdzasz sam przed wklejeniem do
   raportu.** Numery w tej instrukcji zweryfikowano wobec markera
-  `29f004c670`, ale pliki żyją (repo dzielone z dyżurami równoległymi) —
+  `e99e81301a`, ale pliki żyją (repo dzielone z dyżurami równoległymi) —
   jeśli linia się przesunęła, zaufaj SWOJEMU pomiarowi.
 - **Sekcja "TWIERDZENIA NIEZWERYFIKOWANE" w raporcie jest obowiązkowa.**
   Wypisz w niej wprost co najmniej: (a) czy istniejący endpoint pobierania
