@@ -26,8 +26,23 @@ w tej samej godzinie, w której powstał ten plik** — nie przepisane z pamięc
 worktree** — przed czymkolwiek: `git status`, `git log -1`, sprawdź czy tip się nie
 przesunął pod Tobą (patrz Z-29, §4 niżej).
 
-**Podnieś stanowisko.** Nie istnieje `scripts/dev/stanowisko.sh` — podnoś ręcznie
-dwoma poleceniami, każde w osobnym terminalu:
+**Podnieś stanowisko.** Powstało `scripts/dev/stanowisko.mjs` (commit
+`595b7bf43f`, zacommitowany, `git status` czysty) — jedno narzędzie do
+harnessu (:3020) i strony odbioru (:3030), komendy `start|stop|status|restart|sprawdz`:
+
+```
+node scripts/dev/stanowisko.mjs start
+```
+
+`start` sam sprząta osierocone procesy i podnosi TYLKO tę usługę, która nie
+odpowiada — zdrowej nie rusza (nagłówek pliku: jednego dnia ręczne
+podnoszenie trzy razy zatrzymało pracę właściciela — zniknięte pliki, padnięty
+harness przy podwójnym starcie, osiem osieroconych procesów). `sprawdz`
+weryfikuje nie tylko kod odpowiedzi HTTP, ale czy serwer oddaje sensowną
+treść; kody wyjścia 0/1 nadają się do bramki.
+
+**Awaryjnie** (gdyby `stanowisko.mjs` zawiódł), ręcznie dwoma poleceniami,
+każde w osobnym terminalu:
 
 ```
 npx vite --config dev-render/vite.config.ts --port 3020 --strictPort
@@ -83,7 +98,7 @@ dziura — patrz §3 i §4.
 
 Uszeregowane po priorytecie realnego ryzyka dla właściciela, nie po dacie zgłoszenia.
 
-### ★★ NAJWYŻSZY PRIORYTET — audyt przyrządu, dziś, jeszcze BEZ bezpiecznika
+### ★★ NAJWYŻSZY PRIORYTET — audyt przyrządu, dziś, bezpiecznik napisany ale jeszcze NIEZACOMMITOWANY
 
 `AUDYT_PRZYRZADU_20260901.md` (dyżur 177): na **240/240** plików harnessu zmierzono
 mechanicznie zgodność z produktem. Wynik: **41 ekranów** ma udokumentowaną rozbieżność
@@ -94,11 +109,17 @@ właścicielowi jako gotowe, a mogą pokazywać nieprawdę. Pięć przypadków z
 odtwarza dwukolumnowy układ, który kod produkcji opisuje komentarzem jako **naprawiony
 błąd**; cztery panele Finansów ocenione jako osobne kartki, w produkcie to jedna szuflada
 z zakładkami; `calendar-sync-settings` (A) to przepisany markup z **zerem** wywołań `t()`
-— defekty tłumaczeń nigdy się tu nie ujawnią. Autor audytu **proponuje** bezpiecznik
-(`scripts/check-dev-render-parytet.mjs`, reguły R1/R2/R3 opisane w pliku) — **NIE jest
-jeszcze zbudowany**. Dopóki go nie ma, każda ocena A/B z rejestru może być oceną
-nieistniejącego ekranu. Priorytet: zbudować bezpiecznik PRZED kolejną falą zrzutów,
-potem przejść 29 zagrożonych kart pojedynczo.
+— defekty tłumaczeń nigdy się tu nie ujawnią. **Stan sprawdzony na 2026-09-01, przy pisaniu tego dokumentu:** plik
+`scripts/check-dev-render-parytet.mjs` (614 linii, reguły R1/R2/R3 +
+ostrzeżenie PODPIS opisane w nagłówku) **już istnieje na dysku**, ale jest
+**NIEZACOMMITOWANY** w tym współdzielonym worktree (`git status` pokazuje go
+jako `??`) — nikt jeszcze nie wprowadził go do repozytorium. Uruchomienie:
+`node scripts/check-dev-render-parytet.mjs [--all] [--report] [--update]
+[--ekran=<id>]`; linia bazowa (`scripts/check-dev-render-parytet.baseline.txt`)
+**jeszcze nie istnieje** — bez niej bramka porównuje każde naruszenie do
+pustego zbioru (niesprawdzone uruchomieniem w tym dyżurze, sprawdź przed
+poleganiem). Priorytet nadal #1: zacommitować plik, ustalić linię bazową
+(`--update`), potem przejść 29 zagrożonych kart pojedynczo.
 
 ### Staging kontra demo — analiza gotowa, czeka na decyzję właściciela
 
@@ -186,8 +207,9 @@ panel** to osobny, czwarty wzorzec (Z-27, `processflow-canvas`) — puste okno w
 defekt, choć trzeba było kliknąć węzeł. Jak wykryć każdy z tych czterech: `grep` w `src/`
 za realnym wołaczem komponentu montowanego w pliku harnessu; jeśli para komponentów
 z harnessu nigdy nie występuje razem w żadnym pliku `src/`, to kompozycja wymyślona.
-Bezpiecznik `check-dev-render-parytet.mjs` (proponowany, niezbudowany) ma to łapać
-mechanicznie — patrz §3.
+Bezpiecznik `check-dev-render-parytet.mjs` (napisany, na dysku, ale jeszcze
+NIEZACOMMITOWANY — patrz §3 dla dokładnego stanu i sposobu wywołania) ma to
+łapać mechanicznie.
 
 ### Mechanizm „raport mówi co innego niż obraz" — złapane co najmniej 4 razy dziś
 
