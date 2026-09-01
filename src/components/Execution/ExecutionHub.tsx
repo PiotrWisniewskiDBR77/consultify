@@ -788,6 +788,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [managerCommandRowRightContent, setManagerCommandRowRightContent] =
     useState<React.ReactNode>(null);
   const [rolloutCommandRowContent, setRolloutCommandRowContent] = useState<React.ReactNode>(null);
+  // Odbiór grafiki 165-menu3-pasek (2026-09-01): właściciel zgłosił, że blok
+  // tytuł+opis+filtr między Menu 3 a tabelą na zakładkach Praca/Zasoby/
+  // Sterowanie ma zniknąć — kontrolki (filtr realizacji, akcje) lądują z
+  // prawej strony Menu 2 zamiast rozpychać pion nad tabelą. Ten sam wzorzec
+  // rejestracji co `rolloutCommandRowContent` powyżej, jeden stan per
+  // zakładka (surface sam decyduje o treści węzła).
+  const [workFilterControl, setWorkFilterControl] = useState<React.ReactNode>(null);
+  const [resourcesFilterControl, setResourcesFilterControl] = useState<React.ReactNode>(null);
+  const [controlFilterControl, setControlFilterControl] = useState<React.ReactNode>(null);
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
@@ -2517,8 +2526,26 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // here, so it no longer appears on ANY Implementation sub-tab (Summary,
     // Rollout/*, Reporting, Management).
 
+    // Odbiór grafiki 165-menu3-pasek — filtr realizacji / akcje per-zakładka
+    // (Praca/Zasoby/Sterowanie), zarejestrowane przez sam surface (patrz
+    // `onRegisterFilterControl`). Zastępuje blok tytuł+opis+filtr, który
+    // wcześniej rozpychał pion między Menu 3 a tabelą.
+    const surfaceControl =
+      activeTab === ('work' as ModuleTab)
+        ? workFilterControl
+        : activeTab === ('resources' as ModuleTab)
+          ? resourcesFilterControl
+          : activeTab === ('control' as ModuleTab)
+            ? controlFilterControl
+            : null;
+
     if (!showScope) {
-      return <div className="flex items-center gap-2">{execChip}</div>;
+      return (
+        <div className="flex items-center gap-2">
+          {execChip}
+          {surfaceControl}
+        </div>
+      );
     }
 
     return (
@@ -2527,7 +2554,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {scopeToggle}
       </div>
     );
-  }, [activeTab, currentProjectId, execSnapshotSource, execTopline, scopeToggle, t]);
+  }, [
+    activeTab,
+    currentProjectId,
+    execSnapshotSource,
+    execTopline,
+    scopeToggle,
+    t,
+    workFilterControl,
+    resourcesFilterControl,
+    controlFilterControl,
+  ]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -5698,6 +5735,7 @@ Please return:
             activePreset="all"
             onCountsChange={menu3CountHandlers.work}
             documentId={workIdParts.join(':')}
+            onRegisterFilterControl={setWorkFilterControl}
           />
         );
       }
@@ -5706,6 +5744,7 @@ Please return:
           activePreset={canonicalMenu3Preset.work}
           onCountsChange={menu3CountHandlers.work}
           onOpenDocument={handleOpenWorkDocument}
+          onRegisterFilterControl={setWorkFilterControl}
         />
       );
     }
@@ -5714,6 +5753,7 @@ Please return:
         <ExecutionResourcesSurface
           activePreset={canonicalMenu3Preset.resources}
           onCountsChange={menu3CountHandlers.resources}
+          onRegisterFilterControl={setResourcesFilterControl}
         />
       );
     if (activeTab === ('control' as ModuleTab))
@@ -5722,6 +5762,7 @@ Please return:
           <ExecutionControlSurface
             activePreset={canonicalMenu3Preset.control}
             onCountsChange={menu3CountHandlers.control}
+            onRegisterFilterControl={setControlFilterControl}
           />
         </div>
       );
