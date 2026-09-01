@@ -57,8 +57,9 @@ async function shootTheme({ browser, baseUrl, screen, theme, outDir, rowSelector
     return route.abort();
   });
 
-  const url = `${baseUrl}/?screen=${encodeURIComponent(screen)}&lang=pl&theme=${theme}`;
+  const url = `${baseUrl}/?screen=${encodeURIComponent(screen)}&lang=pl&theme=${theme}&uwagi=0`;
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 });
+  await page.addStyleTag({ content: '[data-dev-render-chrome] { display: none !important; }' });
   await page.locator(rowSelector).first().waitFor({ state: 'visible', timeout: 20_000 });
 
   let previewVisible = await page.locator(previewSelector).first().isVisible().catch(() => false);
