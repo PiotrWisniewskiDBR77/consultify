@@ -398,6 +398,12 @@ const Day231KonspektZWiedzyScreen = React.lazy(
 );
 const Day230PrzepelnienieScreen = React.lazy(() => import('./screens/day230-przepelnienie'));
 const Day232AgentDeckuScreen = React.lazy(() => import('./screens/day232-agent-decku'));
+const Day234WynikiRejestryScreen = React.lazy(
+  () => import('./screens/day234-wyniki-rejestry')
+);
+const Day234WynikiNarzedziaScreen = React.lazy(
+  () => import('./screens/day234-wyniki-narzedzia')
+);
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -1718,6 +1724,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day232 — agent decku: pending/applied/rejected oraz następne ruchy; dane z propsów harnessu, nie z realnego przebiegu.',
     render: () => <Day232AgentDeckuScreen />,
+  },
+  'day234-wyniki-rejestry': {
+    label:
+      'Dyżur 234 — trzy REALNE rejestry Wyników, izolowane per domena. &domain=kpi|roi|okr &ff=off (jawny dowód bramki OFF) &state=ready|loading|empty|error',
+    render: () => <Day234WynikiRejestryScreen />,
+  },
+  'day234-wyniki-narzedzia': {
+    label:
+      'Dyżur 234 — reprezentatywne wycinki REALNYCH pełnych narzędzi KPI/OKR/ROI na ręcznych fixture harnessu. &domain=kpi|roi|okr + parametry domenowe',
+    render: () => <Day234WynikiNarzedziaScreen />,
   },
 };
 
