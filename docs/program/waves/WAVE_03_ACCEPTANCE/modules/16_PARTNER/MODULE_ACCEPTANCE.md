@@ -214,6 +214,18 @@ Date: —
 Accepted-out/deferred: Partner economics remain disabled pending later policy/release authorization.
 Evidence manifest: —
 
+## Day224 — trzy pozycje Partnera po Day188/189 (2026-09-01)
+
+Na markerze `0a35699021` i kanonicznym lokalnym runtime `5122/5123` potwierdzono,
+że stary baner `error && !summary` nie występuje po odpowiedzi earnings-summary `200`;
+żywy ekran pokazuje uczciwy widok ekonomii OFF. `Users: 0` rozstrzygnięto jako dane
+fixture: organizacja istnieje, realny PostgreSQL zwraca `COUNT(*) = 0`, API/UI jest
+zgodne, bez ostrzeżenia zapytania. Dla Organizations dodano wyłącznie lokalny prop
+`minTableWidth="auto"`: sześć kolumn mieści się przy 1280 px, ale zrzut 375 px nadal
+nie pokazuje kolumny Status, więc PRT-D112-003 pozostaje `PARTIAL_MOBILE` i wymaga
+osobnego kontraktu responsywnego. `Current gate` oraz ekonomia OFF pozostają bez zmian.
+Pełny raport i hashe artefaktów: `../../codex/CODEX_DAY224_PARTNER_REPORT.md`.
+
 ## Day126 — weryfikacja palety Partnera (2026-08-29)
 
 Własny pomiar na dokładnym markerze `714faf5f8b0d9cda8204fec9495893c9fe97bed7`, świeżej lokalnej bazie (`863` migracje, drugi przebieg `0`) i kanonicznym runtime `4918/4919` **obalił** tezę, że preferencja Light renderuje ciemną paletę. Jawny wybór Light usuwa klasę `dark` z `<html>` i daje tło `rgb(248,250,252)` oraz tekst `rgb(15,23,42)`; Dark przywraca klasę oraz tło `rgb(15,23,42)` i tekst `rgb(244,247,251)`. Wynik powtórzono dla connected i unconnected: `4/4` obrazy rozróżniają motywy.
