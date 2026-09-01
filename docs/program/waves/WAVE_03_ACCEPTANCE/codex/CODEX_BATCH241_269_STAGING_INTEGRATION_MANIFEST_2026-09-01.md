@@ -63,4 +63,12 @@ Count check: `9 APPLY_NOW + 13 DOC_EVIDENCE_ONLY + 4 HOLD_REVIEW + 2 STOP_NO_PRO
 
 - `git diff --check` was executed after every completed integration atom and before each integration commit.
 - Pre-commit artifact/crimson and density ratchets passed on committed paths.
-- Focused test results and the final candidate SHA are recorded in the final verification commit following this manifest; absence of a runnable dependency or external resource must remain `NOT_PROVEN`, not be converted into success.
+- Focused tests used `--retry=0`. Final unique denominator: `9` test files, `22` tests, all passing after the environment was corrected:
+  - Interview false-save contract: `2/2`;
+  - Day 255 presentation-agent contracts: `5/5`;
+  - Day 256 PPTX/source-traceability contracts: `4/4` with explicit `DB_TYPE=postgres` (the first invocation without that required environment produced `2` honest failures asserting `sqlite`; the corrected no-retry invocation passed `4/4`);
+  - clean Day 257 grounding contract: `2/2`;
+  - click-then-shoot native Node contract: `5/5`;
+  - Day 267 Materials harness/verdict contract: `4/4`.
+- The Day 242 and Day 250 RealPG contracts were not replayed during integration because no integration database/ports were licensed and resource substitution is prohibited. Their branch evidence is preserved, while fresh integration replay remains `NOT_PROVEN`.
+- Final SHA is the commit containing this verification update; it is also verified against the `github-backup` remote after push.
