@@ -123,8 +123,11 @@ export default function MaterialsRegistryScreen() {
     <I18nextProvider i18n={i18n}>
       <FeatureFlagsProvider showDevTools={false}>
         <MemoryRouter initialEntries={['/presentations?tab=all']}>
+          {/* Produkcja: ReportsAndPresentationsHub.tsx — brak max-w w całym hubie
+              (grep potwierdza zero wystąpień `max-w` w pliku); harness dotąd
+              dokładał sztuczny sufit 1400px, którego produkt nie ma. */}
           <div className="min-h-screen bg-c-bg p-6">
-            <div className="mx-auto max-w-[1400px]">
+            <div className="w-full">
               <div className="mb-4" data-dev-render-chrome="true">
                 <h1 className="text-lg font-semibold text-c-text">
                   Materiały — Wszystkie (rejestr wspólny)

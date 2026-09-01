@@ -79,8 +79,13 @@ export default function SuperadminPlatformOperationsDay15Screen(): React.ReactEl
   }, []);
 
   return (
-    <main className="mx-auto max-w-6xl p-6 md:p-8">
-      <PlatformOperationsView />
-    </main>
+    // Produkcja: TabLayout.tsx:102 — obszar treści to `flex-1 min-w-0
+    // overflow-y-auto overflow-x-auto`: pełna szerokość, BEZ paddingu i BEZ
+    // max-w-6xl (harness dotąd dokładał sztuczny margines, którego produkt nie ma).
+    <div className="flex min-h-screen w-full flex-col">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-auto">
+        <PlatformOperationsView />
+      </main>
+    </div>
   );
 }

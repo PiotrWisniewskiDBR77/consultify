@@ -227,8 +227,10 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
   };
 
   return (
+    // Produkcja: MyIdeasListContent.tsx:2012 — panel treści to `flex-1` (pełna
+    // szerokość obszaru contentu), NIE kartka ograniczona do max-w-[1240px].
     <div className="min-h-screen bg-c-bg p-6">
-      <div className="mx-auto max-w-[1240px]">
+      <div className="w-full">
         <div className="mb-3">
           <h1 className="text-lg font-semibold text-c-text">
             {isPl
