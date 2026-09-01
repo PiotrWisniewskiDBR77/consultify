@@ -189,6 +189,11 @@ import {
   isShowcaseInitiativeId,
 } from './initiativesDemoData';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
+// DZIEŃ 2026-09-01: realny loader załączników Inicjatywy (naprawa utraty danych
+// AttachmentsSection.tsx — `fetchAll` wcześniej NIGDY nie wołał serwera dla
+// prawdziwych, nie-showcase'owych inicjatyw, więc stan po odświeżeniu zawsze
+// wracał do pustej listy niezależnie od naprawy w samym uploadzie).
+import { loadInitiativeAttachments } from './sections/AttachmentsSection';
 import {
   DEFAULT_SECTION_ORDER,
   DEFAULT_VISIBLE_SECTIONS,
@@ -2590,6 +2595,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
       // Fetch related data (best-effort, parallel)
       const fetches = [
+        loadInitiativeAttachments(Api, initiativeId)
+          .then((loaded) => setAttachments(loaded))
+          .catch(() => setAttachments([])),
         Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative`)
           .then((ds: any) => {
             const raw = Array.isArray(ds) ? ds : ds?.decisions || [];
