@@ -7,6 +7,25 @@
  * `NotebookContextPanel` (sekcja Powiązania) woła prawdziwe hooki danych
  * (useArtifactOutputsForInitiatives itd.) — mockujemy `Api.*` metody, które
  * te hooki i sam rail wołają, zamiast re-implementować komponent.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * ★ 2026-09-01 — ODTWORZONE otoczenie produkcyjne centrum (audyt przyrządu,
+ * Kategoria 1).
+ *
+ * Ten ekran wcześniej montował szynę SAMĄ obok pustego placeholdera-napisu
+ * ("centrum: dokument Notatnika…") — 2/3 kadru puste. Produkcja
+ * (`NotebookContent.tsx:4256-4273`) zawsze montuje szynę OBOK edytora
+ * notatki, nigdy obok pustki. `NotebookContent` sam jest zbyt stanowy, żeby
+ * zamontować 1:1 (edytor Tiptap, API calls) — więc centrum tego ekranu
+ * odtwarza TĘ SAMĄ szkieletową strukturę (ikona+tytuł+4 linie treści w
+ * `rounded-2xl border border-c-border-subtle bg-c-surface-raised`), którą
+ * production sam renderuje jako stan ładowania notatki
+ * (`NotebookContent.tsx:3260-3274`, `aria-hidden`) — te same klasy layoutu
+ * co realny kod produkcyjny (bez `animate-pulse`, bo ten ekran robi
+ * statyczny zrzut, nie żywy podgląd). Zewnętrzny wiersz
+ * (`flex-1 flex min-w-0 gap-1.5 overflow-hidden`) to byte-for-byte kopia
+ * `NotebookContent.tsx:3231`.
+ * ─────────────────────────────────────────────────────────────────────────
  */
 import React from 'react';
 
@@ -23,9 +42,7 @@ const installMocks = () => {
   api.getInitiatives = async () => [
     { id: 'init-1', title: 'Standard klucza klienta (MDM)', status: 'in_progress' },
   ];
-  api.getTasks = async () => [
-    { id: 'task-1', title: 'Zdefiniować standard MDM', status: 'todo' },
-  ];
+  api.getTasks = async () => [{ id: 'task-1', title: 'Zdefiniować standard MDM', status: 'todo' }];
   api.getDecisions = async () => [];
   api.getNotebookPages = async () => [];
   api.getBacklinks = async () => [];
@@ -40,7 +57,8 @@ const ACTIVE_PAGE: NotebookPage = {
   visibility: 'project',
   tags: ['warsztat', 'migracja'],
   contentJson: null,
-  contentText: 'Warsztat zamknął pytanie, czy migrację da się zrobić bez wcześniejszego uporządkowania klucza klienta…',
+  contentText:
+    'Warsztat zamknął pytanie, czy migrację da się zrobić bez wcześniejszego uporządkowania klucza klienta…',
   maturity: 'growing',
   icon: null,
   summary: 'Warsztat 3 — migracja danych, ustalenia i otwarte wątpliwości.',
@@ -89,9 +107,28 @@ export default function MyWorkNotebookRailSpecAScreen({
   }
   const [activeTab, setActiveTab] = React.useState<'work' | 'context'>('work');
   return (
-    <div className="flex h-screen w-screen items-stretch justify-end bg-c-bg">
-      <div className="flex-1 min-w-0 flex items-center justify-center p-10 text-c-text-muted text-sm">
-        (centrum: dokument Notatnika — ten harness izoluje wyłącznie prawą szynę)
+    <div className="flex h-screen w-screen items-stretch bg-c-bg p-3">
+      {/* NotebookContent.tsx:3231 — byte-for-byte wrapper wokół [edytor, graf, szyna] */}
+      <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
+        {/* NotebookContent.tsx:3238/3260-3274 — realny szkielet ładowania notatki
+            (aria-hidden), użyty tu jako wierny substytut edytora Tiptap, którego
+            ten harness nie montuje 1:1 (silnie stanowy, wymaga edytora/API). */}
+        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface-raised">
+          <div className="flex-1 overflow-hidden">
+            <div className="mx-auto max-w-3xl px-6 py-8" aria-hidden="true">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-c-surface" />
+                <div className="h-7 w-2/3 rounded-lg bg-c-surface" />
+              </div>
+              <div className="space-y-3">
+                <div className="h-4 w-full rounded bg-c-surface" />
+                <div className="h-4 w-11/12 rounded bg-c-surface" />
+                <div className="h-4 w-4/5 rounded bg-c-surface" />
+                <div className="h-4 w-2/3 rounded bg-c-surface" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div className="h-full border-l border-c-border-subtle">
         <NotebookRightRail

@@ -1815,11 +1815,12 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <CanvasNewDocScreen />,
   },
   'canvas-toolbar-md-history': {
-    label: '#87c naprawa: Import Markdown + Historia przeniesiona do kebaba (#87d wciąż otwarte)',
+    label:
+      '#87c naprawa: Import Markdown + Historia przeniesiona do kebaba. ?variant=bar (domyślny, główny pasek)|kebab (kebab otwarty)',
     render: () => <CanvasToolbarMdHistoryScreen />,
   },
   'canvas-kebab-restructure': {
-    label: '#87d: restrukturyzacja kebaba „⋯" — 14 sekcji → 8 nazwanych grup (PRZED/PO)',
+    label: '#87d: restrukturyzacja kebaba „⋯" — 14 sekcji → 8 nazwanych grup (stan PO)',
     render: () => <CanvasKebabRestructureScreen />,
   },
   'chat-split-teresa-right': {
@@ -1849,7 +1850,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <StandardKanbanCardScreen />,
   },
   'mindmap-i18n-smoke': {
-    label: 'Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*)',
+    label:
+      'Smoke i18n fala 2 — M06 Mind Map modale (ideas.mindmap.*). ?variant=assign|attach|evidence (domyślnie assign) — modale są fixed, jeden na raz',
     render: () => <MindmapI18nSmokeScreen />,
   },
   'mm-ppm-measure': {

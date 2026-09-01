@@ -1,47 +1,33 @@
 /**
- * Dev-render host for the Idea Table as a Matryca artefakt (SPEC-A archetype
- * D — grid+toolbar centrum, ARTIFACT_ANATOMY_STANDARD §13).
+ * Dev-render host for the Idea Table (MyWork "Ideas → Table view").
  *
- * Renders the REAL `<IdeasTableContent>` (MyWork "Ideas → Table view" —
- * ResizableTable + built-in row detail flyout via `TableWithPreviewLayout`,
- * the same component `MyIdeasListContent` mounts in production) wrapped in
- * the REAL shared powłoka: `<TopBar>` (Menu 1) from `ExecutiveModuleShell`.
- * No re-implementation: `IdeasTableContent` is pure-presentational (all data
- * + handlers via props, no store/API), so it mounts standalone with a mocked
- * `MyIdea[]` array — the same pattern as
- * `dev-render/screens/assessment-initiatives-table.tsx`.
+ * Renders the REAL `<IdeasTableContent>` (ResizableTable + built-in row
+ * detail flyout via `TableWithPreviewLayout`, the same component
+ * `MyIdeasListContent` mounts in production) in the SAME wrapper shape
+ * production uses — no `<TopBar>`, no sibling panel, sole child of a
+ * column flex. No re-implementation: `IdeasTableContent` is
+ * pure-presentational (all data + handlers via props, no store/API), so it
+ * mounts standalone with a mocked `MyIdea[]` array.
  *
  * ─────────────────────────────────────────────────────────────────────────
- * ★ 2026-09-01 — USUNIĘTY eksploracyjny `<ArtifactRightPanel>` (dyżur 175).
+ * ★ 2026-09-01 — USUNIĘTY `<TopBar>` z `ExecutiveModuleShell` (audyt
+ * przyrządu, Kategoria 1).
  *
  * POWÓD: właściciel TRZY RAZY zgłosił „preview z tej tabeli nie jest zgodny
- * ze standardem/wzorem" (30.08, 01.09 ×2) i dwie naprawy nie trafiły, bo
- * szukały defektu w produkcie. Zmierzone w żywym DOM (1440×900, oba ekrany
- * mountują TEN SAM `IdeasTableContent`):
- *
- *   ?screen=idea-table-production → panel podglądu 403 px  ✔ kanon
- *   ?screen=idea-table            → panel podglądu 340 px  ✘ dno clamp()
- *
- * Kanon §7.2 to `clamp(340px, 28%, 480px)`; przy 1440 px daje 403 px. Ten
- * ekran dokładał z prawej `ArtifactRightPanel` (~440 px), więc 28% liczyło
- * się z ~1000 px = 280 px i podgląd SPADAŁ NA DNO clamp (340 px). Skutkiem
- * ubocznym ekran pokazywał DWA prawe panele obok siebie z powtórzonymi
- * nagłówkami „POWIĄZANIA" i „AI" — w dodatku sprzecznymi („Brak powiązań"
- * w podglądzie vs „1 inicjatywa promowana" w panelu, bo dane panelu były
- * zmyślone TUTAJ, w harnessie).
- *
- * PRODUKCJA TEGO NIE MA: `MyIdeasListContent.tsx:1943` montuje
+ * ze standardem/wzorem" (30.08, 01.09 ×2). Dyżur 175 (patrz historia git tego
+ * pliku) usunął eksploracyjny `<ArtifactRightPanel>`, który wcześniej ściskał
+ * podgląd wiersza na dno clamp() — ale zostawił `<TopBar>` nad tabelą.
+ * Produkcja go NIE MA: `MyIdeasListContent.tsx:1943` montuje
  * `IdeasTableContent` jako JEDYNE dziecko kolumnowego flexa — zero trafień
- * na `RightPanel` w całym pliku. Panel był „exploratory" (tak nazywał go
- * własny komentarz tego pliku i docstring `idea-table-production.tsx`).
- * Właściciel oceniał więc kompozycję, której w produkcie nie ma, a my trzy
- * razy naprawialiśmy produkt, który był zgodny z kanonem. ZŁOTA REGUŁA nr 1
- * (CLAUDE.md): weryfikuj REALNY runtime.
+ * na `TopBar` w całym pliku; `<TopBar>` żyje TYLKO w
+ * `ExecutiveModuleShell/index.tsx:535`, którego ten ekran nigdy nie montuje.
+ * Właściciel oceniał więc kompozycję (obcy pasek breadcrumb+chipy nad
+ * tabelą), której w produkcie nie ma. ZŁOTA REGUŁA nr 1 (CLAUDE.md):
+ * weryfikuj REALNY runtime.
  *
- * OTWARTE PYTANIE PRODUKTOWE (nie rozstrzygam go po cichu): jeśli tabela ma
- * kiedyś być artefaktem SPEC-A z własnym prawym panelem, to podgląd wiersza
- * i panel artefaktu potrzebują reguły WZAJEMNEGO WYKLUCZANIA — inaczej dwa
- * prawe panele zawsze zjadą podgląd na dno clamp(). Do decyzji właściciela.
+ * Ekran mountuje teraz identyczny kształt co
+ * `dev-render/screens/idea-table-production.tsx` (byte-for-byte kopia
+ * wrappera `MyIdeasListContent.tsx:1785-1791`, od 2026-08-12).
  * ─────────────────────────────────────────────────────────────────────────
  *
  * Exercises: sort/resize/filter header, row select → bulk affordance,
@@ -49,13 +35,11 @@
  * (built into the component, right of the grid). Light+dark tokens, zero
  * crimson on focus/status/selection.
  */
-import { Plus } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { IdeasTableContent } from '@/components/MyWork/IdeasTableContent';
 import type { MyIdea, SortDir, SortField } from '@/components/MyWork/myIdeasTypes';
-import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
 import type { ColumnWidths, FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 
 const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
@@ -167,57 +151,33 @@ export function IdeaTableScreen(): React.ReactElement {
       return next;
     });
 
-  const chips: TopBarChipDescriptor[] = useMemo(
-    () => [
-      {
-        id: 'status',
-        label: isPl ? '5 pomysłów' : '5 ideas',
-        kind: 'standard',
-        dotTone: 'neutral',
-      },
-      {
-        id: 'new',
-        label: isPl ? 'Nowy pomysł' : 'New idea',
-        icon: Plus,
-        kind: 'primary',
-        onClick: () => {},
-      },
-    ],
-    [isPl]
-  );
-
   return (
     // IdeasTableContent's row-preview footer renders <ConvertToOutputMenu>, which
     // calls react-router-dom's useNavigate() — needs a Router ancestor even though
     // dev-render never actually navigates (pattern from
     // dev-render/screens/assessment-initiatives-table.tsx).
     <MemoryRouter initialEntries={['/']}>
-      <div className="flex h-screen w-full flex-col bg-c-bg">
-        <TopBar
-          moduleLabel={isPl ? 'Moja praca · Pomysły' : 'My Work · Ideas'}
-          title={isPl ? 'Tabela pomysłów' : 'Idea table'}
-          chips={chips}
-          backLabel={isPl ? 'Wróć do pomysłów' : 'Back to ideas'}
-          onBack={() => {}}
-        />
-        {/*
-          Montaż 1:1 jak produkcja (`MyIdeasListContent.tsx:1943`):
-          `IdeasTableContent` jest JEDYNYM dzieckiem KOLUMNOWEGO flexa.
-          Do 2026-09-01 stał tu flex WIERSZOWY z eksploracyjnym
-          `ArtifactRightPanel` obok — i to ta kompozycja (nie produkt)
-          ściskała podgląd wiersza z kanonicznych 403 px na dno clamp
-          (340 px). Szczegóły i pomiar: docstring na górze pliku.
-
-          Uwaga na przyszłość: poprzedni wariant potrzebował opakowania
-          `min-w-0`, bo root `IdeasTableContent` (`flex-1 min-h-0 bg-c-bg`)
-          nie ma `min-w-0` i jako element flexa WIERSZOWEGO nie schodził
-          poniżej ~1364 px. W kolumnowym flexie problem nie istnieje —
-          dlatego opakowanie znika razem z panelem, zamiast zostać jako
-          martwy ślad po nieistniejącym sąsiedzie.
-        */}
-        <div className="flex min-h-0 flex-1 flex-col">
-            <IdeasTableContent
-              ideas={ideas}
+      {/*
+        Montaż 1:1 jak produkcja (`MyIdeasListContent.tsx:1943`):
+        `IdeasTableContent` jest JEDYNYM dzieckiem KOLUMNOWEGO flexa, PEŁEN
+        viewport, ZERO `<TopBar>`. Do 2026-09-01 stał tu `<TopBar>` z
+        `ExecutiveModuleShell` (breadcrumb + „Wróć do pomysłów" + chipy) —
+        produkcja go nie ma (`MyIdeasListContent.tsx:1943`: zero trafień na
+        `TopBar` w całym pliku; `<TopBar>` żyje TYLKO w
+        `ExecutiveModuleShell/index.tsx:535`, którego ten ekran nigdy nie
+        montuje). Pasek zjadał szerokość pionowo nie zajmował, ale sam fakt
+        obcego elementu nad tabelą to R1 (harness dokłada element, którego
+        produkcja nie renderuje) — usunięty w ramach audytu przyrządu
+        2026-09-01. Zob. też `idea-table-production.tsx`, który od 2026-08-12
+        montuje tę samą treść w identycznym, bez-TopBar kształcie.
+      */}
+      <div
+        className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg"
+        style={{ height: '100vh', width: '100vw' }}
+      >
+        <div className="flex flex-col flex-1 min-h-0">
+          <IdeasTableContent
+            ideas={ideas}
             isPolish={isPl}
             tableFilters={tableFilters}
             availableStageOptions={STAGE_OPTIONS}
@@ -262,11 +222,11 @@ export function IdeaTableScreen(): React.ReactElement {
                 return next;
               })
             }
-              onOpenIdeaInProcessFlow={() => {}}
-              onStartConvert={() => {}}
-              onDeleteIdea={() => {}}
-              onRefresh={() => {}}
-            />
+            onOpenIdeaInProcessFlow={() => {}}
+            onStartConvert={() => {}}
+            onDeleteIdea={() => {}}
+            onRefresh={() => {}}
+          />
         </div>
       </div>
     </MemoryRouter>
