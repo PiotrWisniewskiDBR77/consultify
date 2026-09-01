@@ -16,7 +16,7 @@ import logger from '../utils/Logger.js';
 import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
 import type { PgTransactionClient } from '../utils/queryHelpers.js';
 import { exportsDir } from '../utils/storagePaths.js';
-import { materializePlannedVisual } from './ai/deckVisualsService.js';
+import { buildImageStyleAppendix, materializePlannedVisual } from './ai/deckVisualsService.js';
 import {
   buildContextPack,
   type ContextPack,
@@ -363,6 +363,7 @@ export interface DeckSetup {
   theme: 'corporate' | 'minimal' | 'modern';
   confidentiality: 'confidential' | 'internal' | 'public';
   brandColor?: string;
+  imageStylePreset?: string;
   sourceArtifacts: SourceArtifact[];
 
   /** V3-A01: Traceability — canonical source of this deck */
@@ -1648,6 +1649,7 @@ export async function generateOutline(
               sourceRequirements: templateRuntime.sourceRequirements,
               headerFooter: templateRuntime.headerFooter,
               customTemplate: templateRuntime.customTemplate,
+              imageStylePrompt: templateRuntime.imageStylePrompt,
             }
           : null,
         templateSlotMapping,
@@ -2068,6 +2070,10 @@ export async function generateDeck(
         preferPremium: true,
       });
       const plannedSlides = tieredVisuals.slides;
+      const styleAppendix = buildImageStyleAppendix(
+        templateRuntime?.imageStylePrompt,
+        setup.imageStylePreset
+      );
       // Apply planned visuals back into the slides array (in-place by index)
       for (let i = 0; i < slides.length; i++) slides[i] = plannedSlides[i];
 
@@ -2090,6 +2096,7 @@ export async function generateDeck(
             brandColor,
             priority: visualPriority,
             dataClass: 'no_pii',
+            styleAppendix,
           });
           if (warning) extraWarnings.push(warning);
           if (visual) {
@@ -2107,6 +2114,7 @@ export async function generateDeck(
                       brandColor,
                       priority: visualPriority,
                       dataClass: 'no_pii',
+                      styleAppendix,
                     });
                     return regen.visual?.asset?.path || visual.asset?.path || '';
                   },

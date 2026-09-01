@@ -45,6 +45,8 @@ interface MockTemplate {
   lifecycle_state: 'draft' | 'approved' | 'deprecated';
   // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31).
   color_template_id?: string | null;
+  // Day 228 (2026-09) — "styl obrazu", dopisywany do promptu generacji obrazu AI.
+  layout_policy_json?: { imageStylePrompt?: string | null } | null;
 }
 
 const DRAFT_WITH_HINTS: MockTemplate = {
@@ -93,6 +95,9 @@ const DRAFT_WITH_HINTS: MockTemplate = {
   cloned_from: null,
   lifecycle_state: 'draft',
   color_template_id: 'harvard',
+  layout_policy_json: {
+    imageStylePrompt: 'Gradient fuksji, różu i królewskiego błękitu, subtelne światło studyjne',
+  },
 };
 
 const APPROVED_LOCKED: MockTemplate = {
@@ -246,6 +251,10 @@ export function installPresentationTemplateArchitectApiMock(): () => void {
                 'colorTemplateId' in body
                   ? ((body.colorTemplateId as string | null) ?? null)
                   : t.color_template_id,
+              layout_policy_json:
+                'imageStylePrompt' in body
+                  ? { imageStylePrompt: (body.imageStylePrompt as string | null) ?? null }
+                  : t.layout_policy_json,
             }
           : t
       );
