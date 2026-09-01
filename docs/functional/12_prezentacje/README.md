@@ -483,3 +483,22 @@ CODEX_DAY226…232_GAMMA_*_REPORT.md`. Szczegółowy pomiar plik:linia,
 uporządkowany per system a nie per filar, jest w `AS_IS_2026-09-01.md` obok.
 `docs/program/funkcje/GAMMA_00_PRZEWODNIK.md` pozostaje punktem wejścia do
 surowego materiału źródłowego i ma dopisany odnośnik do tego dokumentu.
+
+
+---
+
+## ★ Potwierdzenie nadzorcy — sufit biblioteki zmierzony PONOWNIE, 1.09
+
+Autor tego dokumentu **uczciwie odmówił** podania sufitu jako własnego pomiaru — jego
+katalog roboczy nie miał zainstalowanych pakietow, wiec zacytowal cudzy pomiar i **napisal
+to wprost**. To jest wzorcowe zachowanie i zapisuje je jako takie.
+
+**Powtorzylem pomiar na zainstalowanej paczce (`pptxgenjs` 4.0.1):**
+
+| Cecha | Wystapien w paczce |
+| --- | ---: |
+| gradient | **0** |
+| osadzanie czcionek | **0** |
+
+**Sufit potwierdzony niezaleznie.** Gradientowego tla i wlasnego kroju pisma ta droga
+**nie dowieziemy** — to brak funkcji w bibliotece, nie trudnosc do pokonania.
