@@ -977,7 +977,7 @@
           "id": "assessment-presentation-view",
           "nazwa": "Prezentacja z oceny (9 slajdow)",
           "ocena": "B",
-          "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu.",
+          "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu. Slajd 6: macierz DRD ze slajdu opakowana komponentem DRDMatrixReadOnly (eksport z DRDAssessmentEditor) — zaakceptowana przez wlasciciela 2026-09-01 jako jedyne zrodlo macierzy w raporcie.",
           "naprawione": [],
           "wyjatki": [
             "Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk"
