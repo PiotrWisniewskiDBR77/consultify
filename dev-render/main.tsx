@@ -369,6 +369,9 @@ const ExcelePrawyPanelStandardScreen = React.lazy(
 );
 const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-ai'));
 const Day214TeresaAdoptCardScreen = React.lazy(() => import('./screens/day214-teresa-adopt-card'));
+const Day228ImageStyleFieldScreen = React.lazy(
+  () => import('./screens/day228-image-style-field')
+);
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -1631,6 +1634,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'FIX-214 pkt 4 — REALNY <GovernedInitiativeHandoffCard> (karta adopcji szkicu z czatu Teresy, za ENABLE_TERESA_ADOPT_CHAT_DRAFT, domyślnie OFF), 4 stany (idle/blocked/ready/adopted) napędzone realnymi kliknięciami przeciw przechwyconemu fetch — dane z fixture w harnessie, NIE z realnego przebiegu (patrz komentarz w pliku ekranu).',
     render: () => <Day214TeresaAdoptCardScreen />,
+  },
+  'day228-image-style-field': {
+    label:
+      'FIX-228 pkt 3 — REALNY <PresentationTemplateArchitectView>, pole „Styl obrazu" za flagą presentationImageStyleUiV1 (domyślnie OFF). &scene=on|off.',
+    render: () => <Day228ImageStyleFieldScreen />,
   },
 };
 
