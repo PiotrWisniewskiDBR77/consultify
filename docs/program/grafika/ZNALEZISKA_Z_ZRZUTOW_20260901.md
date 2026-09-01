@@ -118,3 +118,74 @@ i dwa potwierdzenia kart, których dotąd nie widziano na obrazie.
 
 **Do dopisania do zleceń przeglądowych:** „obejrzyj zrzut także pod kątem rzeczy spoza zlecenia
 i wypisz je osobno jako znaleziska uboczne — nie naprawiaj ich".
+
+---
+
+# Naprawa rodziny R5 (kontrast motywów) — wynik, oglądnięty przez nadzorcę
+
+**Commit `4e1b31939b`**, 4 pliki, 14 linii. Dowód: `evidence/grafika/kontrast-motywow/` (16 PNG).
+
+## Co widać na zrzutach (oglądnięte, nie przepisane z raportu)
+
+**`admin-ai-data-privacy`, motyw ciemny — najmocniejszy dowód.**
+PRZED: karta „Funkcje i prywatność" pokazuje **same opisy, bez ani jednej nazwy funkcji**.
+Użytkownik widzi „Zezwól AI na generowanie ustrukturyzowanej treści (kod, dokumenty, diagramy)"
+i nie wie, co ta opcja włącza — nazwa funkcji jest tam, tylko granatowa na granatowym.
+Tytuł karty też nieobecny: przy ikonie stoi sam opis.
+PO: **osiem nazw wróciło** — „Panel artefaktów", „Kroki rozumowania (Chain of Thought)",
+„Tryby skupienia", „Wyszukiwanie w sieci", „Rozmowy głosowe", „Audytuj wszystkie żądania AI",
+„Audytuj zmiany polityki" oraz tytuł karty „Funkcje AI". Każda biała, półgruba, nad swoim opisem.
+
+To nie jest kosmetyka. **Ekran sterujący polityką AI organizacji był nieużywalny w ciemnym
+motywie** — przełączniki bez nazw.
+
+## ★ Bezpiecznik MD5 zadziałał i dał wynik odwrotny do oczekiwanego
+
+Trzy pary `PRZED__light` / `PO__light` mają **identyczne sumy MD5** — bajt w bajt. Na pierwszy rzut
+oka to sygnał fałszerstwa (znany kształt: *duplikat zamiast motywu*). Robotnik zgłosił to sam,
+z wyjaśnieniem; nadzorca zweryfikował niezależnie:
+
+`navy-900` = `#0F172A` (`tailwind.config.js:190`) · `--c-text` w motywie jasnym = `#0f172a`
+(`src/index.css:62`). **To ten sam kolor.** Podmiana jest w jasnym motywie pikselowo
+nieodróżnialna i działa wyłącznie w ciemnym — dokładnie jak mówiła diagnoza.
+
+**Identyczne sumy są tu dowodem BRAKU REGRESJI w motywie jasnym — matematycznym, nie „na oko".**
+Żadna para light/dark nie dzieli sumy, więc nie podstawiono jednego zrzutu pod dwie nazwy.
+Wniosek do metody: bezpiecznik ma **wyjaśniać** anomalię, nie tylko ją zgłaszać — inaczej
+poprawna praca zostanie odrzucona jako podejrzana.
+
+## ★ Moja diagnoza nr 1 była BŁĘDNA — robotnik ją obalił i miał rację
+
+Twierdziłem, że przyczyną jest `SettingsSection.tsx` (32 konsumentów) i że jedna poprawka tam
+zdejmie defekt z kilkudziesięciu ekranów. **Nieprawda.** Robotnik otworzył cały plik (442 linie):
+nie ma tam ani jednego `text-white` na tle motywowym; własne teksty komponentu już używają
+tokenów. Dwa `text-white`, które są, leżą na tle o stałym kolorze ze sparowanym wariantem —
+czyli poprawnie.
+
+**Defekt jest w 32 konsumentach**, które wstrzykują `text-white` jako dzieci tej sekcji. Poprawka
+w kontenerze tego nie zdejmuje. Mój „jeden ruch na 32 ekrany" nie istnieje — to 32 osobne miejsca.
+**To nadal jest do zrobienia i jest największą pozostałą pozycją tej rodziny.**
+
+Robotnik znalazł za to w tym pliku **inny** defekt tej samej klasy, którego nikt nie szukał:
+wskaźnik „niezapisane zmiany" w kolorze `amber-400` na jasnym tle daje kontrast ~1.7:1
+(nieczytelny). Naprawiony — ale **bez dowodu wzrokowego**, bo pokazuje się dopiero po realnej
+edycji formularza, a harness tego stanu nie osiąga. Odnotowane jako naprawa niezweryfikowana.
+
+## ★ Dwa komponenty o tej samej nazwie — liczba konsumentów w pomiarze była zawyżona
+
+`AISettings/SettingsToggle` ma **4** realnych konsumentów, nie 18. Osiemnastka z `POMIAR_R5` to
+policzone importy `SettingsToggle` z `settings/shared` — **inny komponent o identycznej nazwie**,
+który jest już poprawny (używa `text-c-text`). Pułapka dla każdej dalszej pracy w tej rodzinie:
+`grep` po nazwie komponentu miesza dwa różne pliki.
+
+## Znaleziska uboczne z tych zrzutów (NIE naprawiane, do rejestru)
+
+1. **`ProactivitySelector.tsx:179,240`** — ten sam defekt kontrastu, **potwierdzony wzrokowo**:
+   tytuły „Balanced" i „Proactive" ciemnoszare na ciemnym, gdy wybrany „Reactive" jest biały.
+   Pomiar R5 klasyfikował te linie „przez analogię, nieotwarte" — teraz jest obraz.
+2. **Angielszczyzna w polskim ekranie**: „How should AI interact with you?", „Reactive/Balanced/
+   Proactive", „AI waits for your questions", „Auto-suggestions", „Contextual hints",
+   „Proactive nudges", „Start conversations".
+3. **`AuditLogViewer` ma angielskie napisy zaszyte w kodzie, bez i18n**: „Settings Audit Log",
+   „(N entries)" — na polskim ekranie audytu.
+4. **Osierocona ikona** na `policy-autonomy` nad nagłówkiem — ikona bez etykiety.
