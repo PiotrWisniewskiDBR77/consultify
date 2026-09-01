@@ -2482,6 +2482,24 @@ describe('UnifiedChatPanel (L2)', () => {
       );
     });
 
+    it('JEDYNA widoczna zmiana w interfejsie: pole wpisywania nazywa obiekt', async () => {
+      // Naprawa jest z natury niewidoczna (kontekst jedzie w ładunku), ale ma
+      // jeden skutek na ekranie: `UnifiedChatPanel` buduje placeholder z
+      // `workspaceContext.entityName`. Przed naprawą w doku był tam kontekst
+      // trasy — BEZ nazwy obiektu — więc placeholder był ogólny.
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(
+        <UnifiedChatPanel mode="split" workspaceContext={ROUTE_CONTEXT_FROM_MAIN_LAYOUT} />,
+        '/initiatives/init-42'
+      );
+
+      expect(screen.getByTestId('chat-placeholder').textContent).toContain(
+        'Redukcja kosztów magazynu'
+      );
+    });
+
     it('BEZ kontekstu obiektu ładunek wygląda jak dotąd (wsteczna zgodność)', async () => {
       conversationStoreState.activeConversationId = 'conv-1';
       conversationStoreState.teresaEntityContext = null;
