@@ -485,3 +485,22 @@ druga wymyślona warstwa (`TopBar`), której nikt nie zobaczył, bo nikt nie lic
 **Konsekwencja dla oceny:** ocena wystawiona na ekranie, który bramka zgłasza w R1 albo R2, nie
 jest oceną produktu. Napraw ekran i pokaż właścicielowi ponownie — nie awansuj karty na starym
 zrzucie (reguła 13 i 15).
+
+## ★★ REGUŁA NR 18 — po każdym scaleniu `dev-render/main.tsx`: bezpiecznik pliku (2026-09-01)
+
+Po każdym scaleniu `dev-render/main.tsx` (dwa tory dopisują do niego równolegle) uruchom:
+
+```
+scripts/dev/check-devrender-main.sh      # musi dać kod wyjścia 0
+```
+
+Sprawdza trzy rzeczy naraz: czy plik się parsuje, czy każdy leniwy import wskazuje na istniejący
+plik, czy żaden klucz ekranu nie jest zdublowany (cichy duplikat nadpisuje pierwszy — ekran wygląda
+jak niewidoczny, choć jest zarejestrowany).
+
+**Powód:** narzędzie przejęte od toru „Funkcje" (`scripts/dev/check-devrender-main.sh`,
+`github-backup/codex/m03-admin-20260824`). U nich scalenie metodą „zachowaj obie strony" zgubiło
+klamrę zamykającą i zdublowało klucz ekranu — cały harness nie wstawał na czystym pobraniu, choć
+u autora scalenia działał. U nas ten sam plik dwukrotnie wyglądał jak „ekran się nie renderuje", a
+przy przejęciu bezpiecznika okazało się, że plik ma w tej chwili realny zdublowany klucz
+(`document-studio-blocks-i18n`, linie 1546 i 1559) — dowód, że defekt nie jest teoretyczny.
