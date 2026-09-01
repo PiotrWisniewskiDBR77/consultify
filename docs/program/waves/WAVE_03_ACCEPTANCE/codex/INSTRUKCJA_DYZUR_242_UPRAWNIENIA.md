@@ -1,4 +1,4 @@
-# INSTRUKCJA DYŻURU nr 242 — Codex — „★★ UPRAWNIENIA — TRZY (NIE SZEŚĆ) ŻYWE DZIURY IDOR DZIŚ, WZORZEC NAPRAWY JUŻ CZTERY RAZY UŻYTY W TYM REPO. Zweryfikowane bezpośrednio w kodzie na SHA `0724ae1fae` (nie z cudzego audytu): `PUT /api/permission-requests/:id/approve` i `/:id/reject` (`server/src/routes/permissionRequests.routes.ts:67-102`, `UPDATE permission_requests SET status=... WHERE id = ? AND status = 'pending'`, ZERO porównania z `organization_id` wołającego mimo że kolumna istnieje i jest indeksowana — `server/migrations/794_permission_requests_00base.sql:4,20`) pozwala dowolnemu adminowi zatwierdzić/odrzucić wniosek o uprawnienia złożony w CUDZEJ organizacji; `DELETE /api/videos/:id` (`server/src/routes/videos.routes.ts:56-63`, `DELETE FROM videos WHERE id = ?`) pozwala skasować cudze wideo; `PUT /api/context/:id` ORAZ `DELETE /api/context/:id` (`server/src/routes/context.routes.ts:65-113,116-123`, dwie trasy, nie jedna jak podawał wczorajszy audyt — `UPDATE`/`DELETE FROM ai_contexts WHERE id = ?`) pozwalają nadpisać i skasować cudzy kontekst AI. Wzorzec naprawy (dodanie ownership-check przed handlerem, zwrot `404` nie `403`) jest już CZTERY razy zastosowany w tym repo dziś (`table-platform.routes.ts:2839` `requireFormAccess`, `pmo/project-members.routes.ts:52-67` `projectBelongsToOrg`, `services/StudioService.ts:122-123` inline check, `services/escalationService.ts:169-177` `projectBelongsToOrg`) — to jest PIĄTE, SZÓSTE i SIÓDME zastosowanie tego samego, sprawdzonego kształtu, nie nowy mechanizm."
+# INSTRUKCJA DYŻURU nr 242 — Codex — „★★ UPRAWNIENIA — TRZY (NIE SZEŚĆ) ŻYWE DZIURY IDOR DZIŚ, WZORZEC NAPRAWY JUŻ CZTERY RAZY UŻYTY W TYM REPO. Zweryfikowane bezpośrednio w kodzie na SHA `df7f13056f` (nie z cudzego audytu): `PUT /api/permission-requests/:id/approve` i `/:id/reject` (`server/src/routes/permissionRequests.routes.ts:67-102`, `UPDATE permission_requests SET status=... WHERE id = ? AND status = 'pending'`, ZERO porównania z `organization_id` wołającego mimo że kolumna istnieje i jest indeksowana — `server/migrations/794_permission_requests_00base.sql:4,20`) pozwala dowolnemu adminowi zatwierdzić/odrzucić wniosek o uprawnienia złożony w CUDZEJ organizacji; `DELETE /api/videos/:id` (`server/src/routes/videos.routes.ts:56-63`, `DELETE FROM videos WHERE id = ?`) pozwala skasować cudze wideo; `PUT /api/context/:id` ORAZ `DELETE /api/context/:id` (`server/src/routes/context.routes.ts:65-113,116-123`, dwie trasy, nie jedna jak podawał wczorajszy audyt — `UPDATE`/`DELETE FROM ai_contexts WHERE id = ?`) pozwalają nadpisać i skasować cudzy kontekst AI. Wzorzec naprawy (dodanie ownership-check przed handlerem, zwrot `404` nie `403`) jest już CZTERY razy zastosowany w tym repo dziś (`table-platform.routes.ts:2839` `requireFormAccess`, `pmo/project-members.routes.ts:52-67` `projectBelongsToOrg`, `services/StudioService.ts:122-123` inline check, `services/escalationService.ts:169-177` `projectBelongsToOrg`) — to jest PIĄTE, SZÓSTE i SIÓDME zastosowanie tego samego, sprawdzonego kształtu, nie nowy mechanizm."
 
 Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
 Consultify. Nie masz dostępu do rozmowy, w której powstał, ani do instrukcji
@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `0724ae1fae`**
+> **SHA markera: `df7f13056f`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -37,7 +37,7 @@ wskazanymi ścieżkami w repo.
 Data wystawienia: 2026-09-01.
 Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
 Język pracy i raportowania: **polski**.
-Zakres: ****PRZEKROJOWE — IZOLACJA ORGANIZACJI (`server/src/routes/**`). Naprawa trzech potwierdzonych DZIŚ, WCIĄŻ ŻYWYCH dziur IDOR (Permission Requests approve/reject, Videos DELETE, AI Context PUT+DELETE) + ograniczony, imiennie wyliczony przesiew kolejnej próbki z ~168 nieprzeczytanych kandydatów tras.** Audyt z dzisiejszego rana (`docs/program/funkcje/AUDYT_RODZINY_TRAS_UPRAWNIENIA.md`) zgłosił SZEŚĆ dziur tej klasy. Zanim wydano tę instrukcję, TRZY z sześciu (PMO Project Members, Consultify Studio, Notifications Escalations) zostały już naprawione przez inny tor tego samego dnia — zweryfikowane bezpośrednio w kodzie na SHA `0724ae1fae` (patrz `§1`, dowód negatywny). Pozostałe TRZY są dziś wciąż otwarte i to jest rdzeń tego dyżuru.**.
+Zakres: ****PRZEKROJOWE — IZOLACJA ORGANIZACJI (`server/src/routes/**`). Naprawa trzech potwierdzonych DZIŚ, WCIĄŻ ŻYWYCH dziur IDOR (Permission Requests approve/reject, Videos DELETE, AI Context PUT+DELETE) + ograniczony, imiennie wyliczony przesiew kolejnej próbki z ~168 nieprzeczytanych kandydatów tras.** Audyt z dzisiejszego rana (`docs/program/funkcje/AUDYT_RODZINY_TRAS_UPRAWNIENIA.md`) zgłosił SZEŚĆ dziur tej klasy. Zanim wydano tę instrukcję, TRZY z sześciu (PMO Project Members, Consultify Studio, Notifications Escalations) zostały już naprawione przez inny tor tego samego dnia — zweryfikowane bezpośrednio w kodzie na SHA `df7f13056f` (patrz `§1`, dowód negatywny). Pozostałe TRZY są dziś wciąż otwarte i to jest rdzeń tego dyżuru.**.
 Trasy front: `brak w zakresie ZAPISU tego dyżuru — trzy naprawiane rodziny tras są dziś albo bez frontu (Videos, AI Context — sprawdź samodzielnie w `R1`, czy istnieje żywy konsument w `src/`, i wpisz wynik do raportu jako fakt, nie założenie), albo mają front administracyjny do zweryfikowania (`Permission Requests` — poszukaj wołających `/api/permission-requests` w `src/services/api.ts` i `src/components/Admin/**`, opisz w raporcie, nie zmieniaj)`. Trasy tył: ``server/src/routes/permissionRequests.routes.ts` (naprawiane: `:67-102`) · `server/src/routes/videos.routes.ts` (naprawiane: `:56-63`) · `server/src/routes/context.routes.ts` (naprawiane: `:65-113,116-123`) · wzorce do powielenia: `server/src/routes/table-platform.routes.ts:2839,2851,2869` (`requireFormAccess`, definicja w `server/src/services/tablePlatform/PermissionsService.ts`) · `server/src/routes/pmo/project-members.routes.ts:52-67` (`projectBelongsToOrg`) · `server/src/services/StudioService.ts:104-129` (`getDocument` inline check) · `server/src/services/escalationService.ts:160-177` (`projectBelongsToOrg`) · montaż: `server/src/Gateway.ts:920,1070,1319` (`mountStub`), `:485-516` (`STUB_NAMES_WITH_LIVE_UI_ON_DEMO`) · R2 (przesiew): pliki wypisane imiennie w `§3``.
 
 ---
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day242-uprawnienia
-MARKER=0724ae1fae
+MARKER=df7f13056f
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 0724ae1fae..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 0724ae1fae..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline df7f13056f..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only df7f13056f..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 0724ae1fae..HEAD
+git -C "$WT" diff --name-only df7f13056f..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `9` komend, wszystkie obowiązkowe.**
@@ -660,7 +660,7 @@ bezwarunkowo na demo/produkcji dziś**, trzy (Permission Requests, Videos, AI Co
 innym środowisku** (lokalny dev, CI, staging bez `NODE_ENV=production`, albo natychmiast
 po jednym flipie zmiennej).
 
-**Zanim ta instrukcja powstała, sprawdzono stan na aktualnym SHA `0724ae1fae` — nie
+**Zanim ta instrukcja powstała, sprawdzono stan na aktualnym SHA `df7f13056f` — nie
 przepisano audytu bez weryfikacji.** Wynik: **trzy z sześciu dziur są już naprawione**
 przez inny, równoległy tor tego samego dnia — dokładnie tym samym wzorcem, który audyt
 rekomendował (`projectBelongsToOrg`/inline ownership-check, `404` przy niezgodności).
@@ -763,7 +763,7 @@ priorytet i status aktywności CUDZEGO kontekstu AI — nie tylko go skasować.
 
 | # | Teza | Jak sprawdzasz |
 |---|---|---|
-| T1 | Trzy dziury zgłoszone wczoraj (Project Members, Studio, Notifications Escalations) są już naprawione na SHA `0724ae1fae` tym samym wzorcem (`projectBelongsToOrg`/inline check) | komenda (1) |
+| T1 | Trzy dziury zgłoszone wczoraj (Project Members, Studio, Notifications Escalations) są już naprawione na SHA `df7f13056f` tym samym wzorcem (`projectBelongsToOrg`/inline check) | komenda (1) |
 | T2 | `PUT /api/permission-requests/:id/approve` i `/reject` nie porównują `organization_id`, mimo że `GET`/`POST` tego samego pliku to robią | komenda (2) |
 | T3 | `DELETE /api/videos/:id` nie porównuje `organization_id`, mimo że `GET`/`POST` tego samego pliku to robią | komenda (3) |
 | T4 | ZARÓWNO `PUT` JAK I `DELETE /api/context/:id` nie porównują `organization_id` — audyt źródłowy zgłosił tylko `DELETE` | komenda (4) |
