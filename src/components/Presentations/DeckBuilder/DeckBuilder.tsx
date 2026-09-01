@@ -1180,17 +1180,21 @@ export const DeckBuilder: React.FC = () => {
   );
 
   /**
-   * ⚠️ ZAPARKOWANE 2026-09-01 — BEZ KONSUMENTA, ŚWIADOMIE.
+   * ODPARKOWANE 2026-09-01 (dyżur 172) — most ma znowu konsumenta.
    *
-   * `deckWorkspaceContext` i `handleTeresaDeckIntent` (niżej) karmiły WYŁĄCZNIE
-   * osadzony `UnifiedChatPanel` (`onModuleIntent` = most „Teresa edytuje talię":
-   * prompt → `handleAiPrompt` → `pendingAgentEdit` → banner Zaakceptuj/Odrzuć).
-   * Po decyzji „jedna Teresa, w swoim oknie" osadzonego czatu nie ma, a GŁÓWNE
-   * okno Teresy nie ma dziś odpowiednika `onModuleIntent` — czyli ten most jest
-   * NIEOSIĄGALNY Z EKRANU. Kod zostaje nietknięty (usuwamy wołanie, nie
-   * zdolność) i jest ZGŁOSZONY do toru funkcji jako brak: „główne okno Teresy
-   * nie umie zwrócić propozycji edycji artefaktu do jego ekranu".
-   * Nie udajemy, że działa — dlatego stoi tu ostrzeżenie, a nie cisza.
+   * BYŁO (przez pół dnia): `deckWorkspaceContext` i `handleTeresaDeckIntent`
+   * karmiły WYŁĄCZNIE osadzony `UnifiedChatPanel` (`onModuleIntent` = most
+   * „Teresa edytuje talię": prompt → `handleAiPrompt` → `pendingAgentEdit` →
+   * banner Zaakceptuj/Odrzuć). Decyzja „jedna Teresa, w swoim oknie" zdjęła
+   * osadzony czat, a główne okno nie miało odpowiednika `onModuleIntent` —
+   * most stał się nieosiągalny z ekranu i został tu ZGŁOSZONY, nie skasowany.
+   *
+   * JEST: ekran publikuje handler w `uiSlice.chatModuleIntent`, a
+   * `UnifiedChatPanel` bierze go, gdy nie dostał propsa (dok i pełne okno
+   * jednakowo). Kontekst talii przypina `useOpenChatWithContext` przez
+   * `teresaEntityContext`, więc `deckWorkspaceContext` nie jest już potrzebny
+   * jako props — zostaje jako opis tego, co ekran wie o talii, i zasila
+   * `entityData` przypięcia w `openGlobalTeresa` niżej.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const deckWorkspaceContext = useMemo<WorkspaceContext | null>(() => {
@@ -1238,12 +1242,18 @@ export const DeckBuilder: React.FC = () => {
     });
   }, [activeCard?.card_id, activeCard?.title, deck, openChatWithContext, selectedBlockId, t]);
 
-  /** ⚠️ ZAPARKOWANE — patrz ostrzeżenie przy `deckWorkspaceContext` powyżej. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  /** Most „Teresa sama poprawia prezentację" — patrz nota przy `deckWorkspaceContext`. */
   const handleTeresaDeckIntent = useCallback(
     async (prompt: string) => {
       if (!deck) return false;
       const response = await handleAiPrompt(prompt);
+      // Serwer nie przygotował zmiany talii => to NIE była prośba o edycję,
+      // tylko zwykłe pytanie. Oddajemy turę Teresie (`handled: false` w
+      // `UnifiedChatPanel` przechodzi do normalnego streamu) zamiast połykać
+      // wiadomość. Osadzony czat mógł połykać wszystko, bo był czatem TEJ
+      // talii; jedno globalne okno Teresy nie może.
+      const nextDeck = (response as { deck?: unknown } | null)?.deck;
+      if (!nextDeck) return { handled: false };
       const reply =
         response && typeof response === 'object' && 'reply' in response
           ? String((response as { reply?: unknown }).reply || '')
@@ -1252,8 +1262,23 @@ export const DeckBuilder: React.FC = () => {
       toast.success(reply || fallbackReply);
       return { handled: true, reply: reply || fallbackReply };
     },
-    [deck, handleAiPrompt]
+    [deck, handleAiPrompt, t]
   );
+
+  // ── ODPARKOWANIE MOSTU: rejestracja handlera w jednym oknie Teresy ───────
+  // Ekran talii publikuje `handleTeresaDeckIntent` w `uiSlice`, dokładnie tak
+  // jak publikuje `chatContextActions`. `UnifiedChatPanel` (dok ORAZ pełne
+  // okno) bierze go, gdy nie dostał propsa `onModuleIntent`. Rejestrujemy
+  // tylko gdy talia jest wczytana; sprzątamy po sobie po `owner`, żeby wyjście
+  // z ekranu nie zostawiło mostu działającego na nieistniejącej talii.
+  const setChatModuleIntent = useAppStore((s) => s.setChatModuleIntent);
+  const clearChatModuleIntent = useAppStore((s) => s.clearChatModuleIntent);
+  useEffect(() => {
+    if (!deck?.deck_id) return;
+    const owner = `deckBuilder:${deck.deck_id}`;
+    setChatModuleIntent({ owner, handler: handleTeresaDeckIntent });
+    return () => clearChatModuleIntent(owner);
+  }, [deck?.deck_id, handleTeresaDeckIntent, setChatModuleIntent, clearChatModuleIntent]);
 
   // R4 — Free-text per-slide rewrite. Uses the returned rebuilt `card` to
   // update the card in place (OPTION B) so Undo/Redo keeps working — NOT
