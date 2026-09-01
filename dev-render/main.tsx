@@ -528,6 +528,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Dyżur 237 — realne MeetingHub / MeetingObjectPage / Sidebar; &view=list|object|member-sidebar|member-direct &state=pending|rejected|approved',
     render: () => <Day237SpotkaniaScreen />,
+  },
   'day238-ustawienia': {
     label:
       'Dyżur 238 — REALNY SettingsSidebar + reprezentatywny panel każdej z 10 zmierzonych grup. &section=profile|regional|ai-behavior|notifications-overview|security-dashboard|connected-apps|data-controls|billing|theme|developer &role=OWNER|MEMBER &proof=restricted|allowed|owner',
@@ -1274,10 +1275,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'P-10/P-11/P-12 (2026-07-28) — Nowy dokument: edycja tytułu, Cofnij/Ponów, przyciski paska',
     render: () => <DocumentStudioNowyDokumentMartweprzyciskiScreen />,
-  },
-  'document-studio-blocks-i18n': {
-    label: 'M18 #3 — Document Studio bloki: puste stany i18n (Table/Kpi/Chart)',
-    render: () => <DocumentStudioBlocksI18nScreen />,
   },
   'wave3-creators-crimson': {
     label: 'Fala 3 — ReportBuilder+AIChat+Meeting: crimson-fill CTA sweep (swatch, PO naprawie)',
