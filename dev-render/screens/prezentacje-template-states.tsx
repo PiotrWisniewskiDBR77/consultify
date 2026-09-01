@@ -58,7 +58,28 @@ import { seedRealisticSession } from '../mocks/seedStore';
 seedRealisticSession();
 
 const params = new URLSearchParams(window.location.search);
-const variant = params.get('variant') || 'loading';
+/**
+ * ★ PROSTUJE BŁĄD Z 2026-08-30/09-01 (odbiór grafiki 174-domkniecie).
+ *
+ * Domyślnym wariantem był `loading`, a jego atrapa to `new Promise(() => {})` —
+ * obietnica, która NIGDY się nie rozstrzyga. Kto wszedł na ekran adresem
+ * z rejestru (bez `&variant=`), dostawał samą kręcącą się pastylkę
+ * „Tworzenie prezentacji z szablonu…" na pustej stronie — na zawsze.
+ * Właściciel napisał 01.09: „nie otwiera mi się nic :(" i miał rację co do
+ * obrazu, ale to NIE JEST stan produktu: `Api.post` nakłada twardy timeout
+ * 20 s na każde żądanie bez własnego `AbortSignal`
+ * (`src/services/api.ts:887-903`), więc w produkcie zawieszony
+ * `from-template` odrzuca się po 20 s i widok pokazuje stan blokujący
+ * z wyjściem „Wróć do Biblioteki". Atrapa podmieniała `Api.post` W CAŁOŚCI,
+ * czyli omijała ten timeout i produkowała stan, którego produkt nie ma.
+ *
+ * Dwie poprawki: (1) domyślny wariant to `orphaned` — wejście domyślne
+ * renderuje realny, czytelny ekran; (2) `variant=loading` odrzuca po tych
+ * samych 20 s co transport, więc nawet on kończy się tak jak w produkcie.
+ */
+const variant = params.get('variant') || 'orphaned';
+/** Ten sam próg co domyślny timeout transportu w `src/services/api.ts`. */
+const TIMEOUT_TRANSPORTU_MS = 20000;
 
 // Patrz komentarz nagłówkowy: bez `templateArtifactId` `PrezentacjeView` nigdy
 // nie wchodzi w ścieżkę „Użyj wzorca" i ekran renderuje galerię zamiast stanu.
@@ -85,8 +106,16 @@ if (tenEkran && !g.__PREZ_TPL_STATES_FETCH__) {
     if (String(url).includes('/presentations/decks/from-template')) {
       if (variant === 'orphaned') throw resolveRejection(404, 'TEMPLATE_ORPHANED');
       if (variant === 'forbidden') throw resolveRejection(403, 'TEMPLATE_FORBIDDEN');
-      // 'loading' (default): a promise that never settles.
-      return new Promise(() => {});
+      // 'loading': spinner przez 20 s, potem odrzucenie — dokładnie tak, jak
+      // zachowuje się prawdziwy transport (`Api.post` + AbortController).
+      // NIGDY `new Promise(() => {})`: to produkowało stan nieistniejący
+      // w produkcie i wyglądało jak zepsuty ekran.
+      return new Promise((_resolve, reject) => {
+        setTimeout(
+          () => reject(resolveRejection(408, 'TEMPLATE_RESOLVE_FAILED')),
+          TIMEOUT_TRANSPORTU_MS
+        );
+      });
     }
     return realPost(url, data);
   }) as typeof Api.post;

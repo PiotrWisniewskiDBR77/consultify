@@ -794,7 +794,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'prezentacje-template-states': {
     label:
-      'PREZENTACJE — „Użyj wzorca" z Biblioteki (R11 deck slice): loading + 2 stany blokujące. ?variant=loading|orphaned|forbidden',
+      'PREZENTACJE — „Użyj wzorca" z Biblioteki (R11 deck slice): 2 stany blokujące + ładowanie. ?variant=orphaned (DOMYŚLNY)|forbidden|loading (spinner 20 s = timeout transportu, potem stan blokujący)',
     render: () => <PrezentacjeTemplateStatesScreen />,
   },
   'report-builder-library-template': {
