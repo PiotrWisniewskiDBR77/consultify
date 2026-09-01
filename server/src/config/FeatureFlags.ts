@@ -53,6 +53,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
   ENABLE_TERESA_RECORD_CREATE: z.boolean().default(true),
   ENABLE_ARTIFACT_KNOWLEDGE_INDEX: z.boolean().default(false),
+  ENABLE_AUDITS_WORKSHOP: z.boolean().default(false),
   // Z4 transport (fala „Teresa steruje Ideą przez rejestr"): pozwala frontowi
   // dołożyć do zapytania czatu manifest akcji OTWARTEJ reprezentacji Idei
   // (src/actions/teresaActionManifest.ts). Model widzi je jako narzędzia; ich
@@ -246,6 +247,10 @@ export function loadFeatureFlags(): FeatureFlags {
     // indexer, so OFF is a true no-op rather than a failed indexing attempt.
     ENABLE_ARTIFACT_KNOWLEDGE_INDEX:
       process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
+
+    // Day221 / D-5: scaffold for the future Audits Workshop implementation.
+    // Declaration only; no production caller exists before owner visual acceptance.
+    ENABLE_AUDITS_WORKSHOP: process.env.ENABLE_AUDITS_WORKSHOP === 'true',
 
     // Z4 transport dla akcji otwartej Idei — default ON, jawne `false` jest
     // rollbackiem do lokalnych detektorów bez dwóch aktywnych executorów naraz.
