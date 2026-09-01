@@ -221,8 +221,7 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // Day 227 — opt-in parity between the canonical PPTX pipeline and DeckStyler.
     // The same gate also aligns the named Harvard palette with the product brand token.
-    ENABLE_PPTX_CANONICAL_GEOMETRY:
-      process.env.ENABLE_PPTX_CANONICAL_GEOMETRY === 'true',
+    ENABLE_PPTX_CANONICAL_GEOMETRY: process.env.ENABLE_PPTX_CANONICAL_GEOMETRY === 'true',
 
     // Day 228 — opt-in image style prompt + mandatory OCR/face safety gates.
     // Read at call time by deckVisualsService; this registry is the SSOT.
