@@ -245,6 +245,8 @@ export function buildDeterministicDeckConclusion(facts: DeckConclusionFacts): De
   const weak = confidence === 'low' || confidence === 'insufficient';
   const topFinding = facts.keyFindings[0] || null;
   const topKpi = facts.kpis[0] || null;
+  const countsAreGrounded =
+    facts.initiativesCount > 0 || facts.risksCount > 0 || facts.keyFindings.length === 0;
 
   // Hedge phrase required by `confidence_honest` when confidence is weak.
   const hedge = isPl
@@ -263,12 +265,18 @@ export function buildDeterministicDeckConclusion(facts: DeckConclusionFacts): De
     : 'The priority is to launch Wave 1 and close the gaps that block progress today.';
 
   const k1Text = isPl
-    ? `Diagnoza objęła portfel ${facts.initiativesCount} inicjatyw i ${facts.risksCount} ryzyk.${scorePart} ${
+    ? `${
+        countsAreGrounded
+          ? `Diagnoza objęła portfel ${facts.initiativesCount} inicjatyw i ${facts.risksCount} ryzyk.`
+          : 'Diagnoza opiera się na materiale źródłowym bez ustrukturyzowanej liczby inicjatyw i ryzyk.'
+      }${scorePart} ${
         topFinding ? `Wiodące ustalenie: ${topFinding}.` : 'Materiał źródłowy jest częściowy.'
       }`
-    : `The diagnosis covered a portfolio of ${facts.initiativesCount} initiatives and ${facts.risksCount} risks.${scorePart} ${
-        topFinding ? `Leading finding: ${topFinding}.` : 'The source material is partial.'
-      }`;
+    : `${
+        countsAreGrounded
+          ? `The diagnosis covered a portfolio of ${facts.initiativesCount} initiatives and ${facts.risksCount} risks.`
+          : 'The diagnosis is based on source material without structured initiative and risk counts.'
+      }${scorePart} ${topFinding ? `Leading finding: ${topFinding}.` : 'The source material is partial.'}`;
 
   const kpiClause = topKpi
     ? isPl
@@ -278,8 +286,12 @@ export function buildDeterministicDeckConclusion(facts: DeckConclusionFacts): De
 
   const k2Text =
     (isPl
-      ? `Rozłożenie postępu na ${facts.initiativesCount} inicjatyw bez domknięcia luk o najwyższej dźwigni wydłuża czas do efektu i rozprasza zasoby zespołu.${kpiClause}`
-      : `Spreading progress across ${facts.initiativesCount} initiatives without closing the highest-leverage gaps lengthens time-to-impact and scatters the team's resources.${kpiClause}`) +
+      ? countsAreGrounded
+        ? `Rozłożenie postępu na ${facts.initiativesCount} inicjatyw bez domknięcia luk o najwyższej dźwigni wydłuża czas do efektu i rozprasza zasoby zespołu.${kpiClause}`
+        : `Materiał tekstowy wskazuje luki o wysokiej dźwigni, lecz bez ustrukturyzowanej liczby inicjatyw nie pozwala rzetelnie ocenić rozłożenia postępu.${kpiClause}`
+      : countsAreGrounded
+        ? `Spreading progress across ${facts.initiativesCount} initiatives without closing the highest-leverage gaps lengthens time-to-impact and scatters the team's resources.${kpiClause}`
+        : `The text source identifies high-leverage gaps, but without a structured initiative count it cannot ground how progress is distributed.${kpiClause}`) +
     (weak ? hedge : '');
 
   const k3Actions: DeckConclusionAction[] = [
@@ -318,16 +330,22 @@ export function buildDeterministicDeckConclusion(facts: DeckConclusionFacts): De
             ownerRole: 'Sponsor',
           },
   ];
-  if (facts.risksCount > 0) {
+  if (facts.risksCount > 0 || !countsAreGrounded) {
     k3Actions.push(
       isPl
         ? {
-            action: `Zaadresuj ${facts.risksCount} otwartych ryzyk planem mitygacji`,
+            action:
+              facts.risksCount > 0
+                ? `Zaadresuj ${facts.risksCount} otwartych ryzyk planem mitygacji`
+                : 'Ustrukturyzuj ryzyka opisane w materiale i przypisz im plany mitygacji',
             whyFirst: 'bo materializacja ryzyka cofa postęp Fali 1',
             ownerRole: 'Zespół transformacji',
           }
         : {
-            action: `Address ${facts.risksCount} open risks with a mitigation plan`,
+            action:
+              facts.risksCount > 0
+                ? `Address ${facts.risksCount} open risks with a mitigation plan`
+                : 'Structure the risks described in the source and assign mitigation plans',
             whyFirst: 'because a materialized risk reverses Wave 1 progress',
             ownerRole: 'Transformation team',
           }
