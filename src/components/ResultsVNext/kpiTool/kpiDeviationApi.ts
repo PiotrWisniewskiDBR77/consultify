@@ -40,26 +40,24 @@
  * disguised by a client-side disabled state this package has no authority
  * to invent.
  *
- * -- KNOWN GAP #2 (blocks a fully "cold reopen"-safe Corrective Actions /
- * Effectiveness Verifications list): `kpiDeviationRepository.ts` exports
- * `listCorrectiveActions`/`listEffectivenessVerifications` (confirmed by
- * reading that file — `export async function listCorrectiveActions`
- * L173, `listEffectivenessVerifications` L223), but
- * `kpiDeviation.routes.ts`'s own header comment says explicitly (L46-54)
- * this package's task brief did NOT include `GET .../corrective-actions` or
- * `GET .../effectiveness-verifications` list routes — "left for a future
- * package". `getDeviationCase` (repository L80) also returns only the bare
- * case row, no nested actions/verifications. Net effect: THIS UI CANNOT
- * HONESTLY RE-LOAD an existing case's corrective-action/verification list
- * after a fresh page load — there is no GET endpoint anywhere that returns
- * it. Per server/** being outside this package's allowlist, this is
- * reported as a BLOCKER (see task report), not silently worked around. The
- * subview still lets a user ADD/UPDATE actions and submit verifications
- * (those write endpoints are real and exist) — it just cannot prove, after
- * a reload, what was added before this session. See
- * `KpiDeviationCaseSubview.tsx`'s own header comment for how this is
- * disclosed in the UI itself (an explicit banner, never a silently-empty
- * list pretending to be "no actions yet").
+ * -- KNOWN GAP #2 — CLOSED 2026-09-01 (dyżur 173). The gap this header used
+ * to document ("no GET route anywhere returns a case's corrective actions /
+ * effectiveness verifications, so the subview can only accumulate them
+ * client-side for the current browser session") was already fixed
+ * SERVER-SIDE by the RN-G6-SRV / B3 pass and nobody ever wired the client
+ * to it. Both routes are live in `kpiDeviation.routes.ts`:
+ *   - `GET .../:caseId/corrective-actions`        (:542, responds `{ actions }`)
+ *   - `GET .../:caseId/effectiveness-verifications` (:797, responds `{ verifications }`)
+ * Both are thin wrappers over the repository functions this header already
+ * pointed at (`listCorrectiveActions` L173, `listEffectivenessVerifications`
+ * L223), fully visibility-scoped via `buildVisibilityScopedCte` with
+ * `resourceType: 'kpi'` inherited through the case's own `kpi_id`. Neither
+ * emits a "case not found" 404 by design (D06 — an invisible or nonexistent
+ * caseId returns an empty list rather than leaking existence).
+ * `listCorrectiveActionsForCase`/`listEffectivenessVerificationsForCase`
+ * below are the client wrappers; `KpiDeviationCaseSubview.tsx` now loads
+ * both on mount, so a cold reopen shows the REAL persisted list and the two
+ * "current session only" warning banners are gone.
  */
 import { Api } from '@/services/api';
 import { isNotFoundError, type HttpError } from '../kpiApi';
@@ -197,6 +195,52 @@ export async function getDeviationCase(caseId: string): Promise<DeviationCaseDto
     if (isNotFoundError(err)) return null;
     throw err;
   }
+}
+
+export interface ListCorrectiveActionsParams {
+  status?: CorrectiveActionStatus;
+  limit?: number;
+  offset?: number;
+}
+
+/** `GET .../:caseId/corrective-actions` (`kpiDeviation.routes.ts:542`,
+ * `ListCorrectiveActionsQuerySchema` :143 — `status`/`limit`/`offset`, all
+ * optional). Server responds `{ actions }`; an invisible/nonexistent caseId
+ * yields an empty array, never a 404 (D06 — see file header). */
+export async function listCorrectiveActionsForCase(
+  caseId: string,
+  params: ListCorrectiveActionsParams = {}
+): Promise<CorrectiveActionDto[]> {
+  const qs = new URLSearchParams();
+  if (params.status) qs.set('status', params.status);
+  qs.set('limit', String(params.limit ?? 200));
+  qs.set('offset', String(params.offset ?? 0));
+  const resp = await Api.get(
+    `/vnext/results/kpi/deviation-cases/${encodeURIComponent(caseId)}/corrective-actions?${qs.toString()}`
+  );
+  return (resp?.actions ?? []) as CorrectiveActionDto[];
+}
+
+export interface ListEffectivenessVerificationsParams {
+  limit?: number;
+  offset?: number;
+}
+
+/** `GET .../:caseId/effectiveness-verifications` (`kpiDeviation.routes.ts:797`,
+ * `ListEffectivenessVerificationsQuerySchema` :149 — `limit`/`offset` only).
+ * Server responds `{ verifications }`, newest first (`ORDER BY ev.created_at
+ * DESC`, repository L238). */
+export async function listEffectivenessVerificationsForCase(
+  caseId: string,
+  params: ListEffectivenessVerificationsParams = {}
+): Promise<EffectivenessVerificationDto[]> {
+  const qs = new URLSearchParams();
+  qs.set('limit', String(params.limit ?? 50));
+  qs.set('offset', String(params.offset ?? 0));
+  const resp = await Api.get(
+    `/vnext/results/kpi/deviation-cases/${encodeURIComponent(caseId)}/effectiveness-verifications?${qs.toString()}`
+  );
+  return (resp?.verifications ?? []) as EffectivenessVerificationDto[];
 }
 
 export interface DeviationCaseErrorDetail {
