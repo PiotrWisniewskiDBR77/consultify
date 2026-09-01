@@ -1491,12 +1491,17 @@
           "id": "results-vnext-attention",
           "nazwa": "Uwaga",
           "ocena": "B",
-          "co": "Siedem zakladek uwag z realnymi kodami wskaznikow. Zakladka KPI, kubelek Brak wlasciciela pokazuje tabele z jedyna kolumna KOD KPI i surowymi wartosciami (DPMO-002, DWT-003) bez nazw i bez podpisu wyjasniajacego. Przywrocono z odzyskanego raportu nocnego.",
-          "naprawione": [],
-          "wyjatki": [
-            "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
+          "co": "Trzynascie list roboczych „czym trzeba sie dzis zajac\", kazda z realnym licznikiem: siedem pod KPI (Brak wlasciciela · Zalegle obowiazki · Powtarzajace sie odchylenia · Nieskuteczne dzialania korygujace · Obciazenie wlascicieli · Pokrycie procesow · Rozklad wynikow) i szesc pod OKR (Nieaktualne check-iny · Cele o niskiej pewnosci · Otwarte prosby o wsparcie · Otwarte blokady · Eskalowane zestawy · Zdrowie zespolu). SPROSTOWANIE (01.09): wlasciciel widzial „tylko dwa przyciski w menu 2\" — bo Menu 2 to przelacznik ZRODLA (KPI/OKR), a tresc wybiera Menu 3. Zrzut, na ktory patrzyl, pokazywal najubozszy z trzynastu kubelkow (Brak wlasciciela ma z natury jedna kolumne). Zrzut PO pokazuje kubelek Obciazenie wlascicieli: trzy kolumny, prawdziwe nazwiska.",
+          "naprawione": [
+            "2026-09-01: dorobione WEJSCIE — trasa /results/attention byla sierota, nic w aplikacji do niej nie prowadzilo (grep po RESULTS_ATTENTION i po literalnym adresie: zero odwolan poza definicja trasy i harnessem). Przycisk „Uwaga\" w powloce rejestrow Wynikow (ResultsVNextRegistryShell.tsx), za flaga attentionEntry (default OFF, czeka na odbior)."
           ],
-          "gdzie": "Wyniki → sekcja „Uwaga\" — siedem zakładek z pozycjami wymagającymi uwagi, z realnymi kodami wskaźników."
+          "wyjatki": [
+            "Jednokolumnowa tabela w kubelku „Brak wlasciciela\" — sprawdzone, model serwera naprawde ma jedno pole",
+            "Ekran nie ma naglowka — zaczyna sie od golych pigulek Menu 2/3, wiec nie widac, na co sie patrzy (do naprawy osobno)",
+            "Kubelek startowy to zawsze „Brak wlasciciela\", czyli najubozszy z trzynastu — powinien otwierac sie na tym z najwieksza liczba pozycji (do naprawy osobno)",
+            "Surowe pola: kolumna KOD KPI bez nazwy wskaznika, SET ID i data w formacie 2026-08-01T00:00:00Z (do naprawy osobno)"
+          ],
+          "gdzie": "Wyniki → dowolny rejestr (KPI/OKR/ROI) → przycisk „Uwaga\" nad tabela → Menu 2 wybiera zrodlo (KPI albo OKR), Menu 3 wybiera jedna z trzynastu list. Trasa: /results/attention (routeConfig.ts:192, AppRoutes.tsx:3188). Za ekranem trzy realne punkty serwera: GET /api/vnext/results/kpi/attention, .../okr/attention, .../okr/team-health — ten ekran jest ich JEDYNYM czytelnikiem w interfejsie (czyta je poza nim tylko Teresa w trybie manager_brief)."
         },
         {
           "id": "results-vnext-okr-workspace",
