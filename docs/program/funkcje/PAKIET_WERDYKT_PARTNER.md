@@ -87,16 +87,20 @@ zrzutu weryfikującego widok na żywo.
 1. **Ekonomia OFF (prowizje, wypłaty, accrual)** — świadoma decyzja zakresu MVP,
    `AMD-PRT-ECONOMICS-002`. Rekomendacja: ACCEPT-OUT bez dyskusji, to nie defekt.
 2. **Baner „Rozliczenia partnera są niedostępne” na earnings/statements/payouts/
-   payout-settings** — kod backendu już nie rzuca 500 (dyżur 188, dowód mutacyjny,
-   `odbiór 188+193 SCALONE B+`), ale nikt nie sprawdził w przeglądarce, czy po naprawie
-   ten sam bursztynowy baner nadal się pokazuje sensownie, czy trzeba dopiąć osobną
-   licencję na `EarningsSection.tsx` (raport dnia 188, punkt „Korekty… 5”). Recenzenci
-   sami zapisali: „**baner earnings do decyzji właściciela**”. Rekomendacja: pokazać ten
-   ekran na żywo PRZED podpisaniem, albo świadomie odłożyć jako `DEFERRED_VISUAL_CHECK`.
-3. **Organizations — obcięta prawa kolumna tabeli** (PRT-D112-003) — potwierdzone na
-   zrzucie Day189, nienaprawione. Kosmetyczny, ale realny defekt tabeli.
-4. **Users — „0 users” mimo danych w fixture** — nierozstrzygnięte, czy defekt czy brak
-   kontraktu. Wymaga jednej decyzji: FIX teraz czy accept-out z jasnym ticketem.
+   payout-settings** — **ROZSTRZYGNIĘTE w Day224**: na markerze `0a35699021` żywy
+   `earnings-summary` zwraca `200`, dlatego gałąź `error && !summary` i stary baner
+   z Day189 nie występują. Użytkownik widzi normalny, jawnie ograniczony widok z
+   `POLICY_NOT_APPROVED` i zerami informacyjnymi; ekonomia pozostaje OFF. Dowód Light/Dark
+   i raport: `CODEX_DAY224_PARTNER_REPORT.md`.
+3. **Organizations — obcięta prawa kolumna tabeli** (PRT-D112-003) — Day224 dopisał
+   lokalny opt-in `minTableWidth="auto"`: przy 1280 px wszystkie sześć kolumn jest
+   widocznych. **Mobile 375 px pozostaje PARTIAL**: Status nadal leży poza kadrem, więc
+   pełne DoD nie jest spełnione; potrzebny osobny responsywny kontrakt kolumn poza wąską
+   licencją Day224.
+4. **Users — „0 users”** — **ROZSTRZYGNIĘTE w Day224 jako UCZCIWA LICZBA / DANE
+   FIXTURE**. Organizacja `b1600000-0000-4000-8000-000000000003` istnieje, realne
+   `COUNT(*) FROM users` zwraca `0`, API/UI zwraca `0`, a log nie zawiera ostrzeżenia
+   `getPartnerClients user counts failed`. To nie jest defekt kodu.
 5. **19/25 ekranów ma wyłącznie kosmetyczne resztki angielskiego** (breadcrumb, nazwy
    zasobów) — świadomie nie objęte fixem 189 (fix 189 celował w 4 najgorsze ekrany).
    Rekomendacja: accept-out jako backlog i18n, analogicznie do Organization/Settings
