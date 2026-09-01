@@ -375,6 +375,7 @@ const Day214TeresaAdoptCardScreen = React.lazy(() => import('./screens/day214-te
 const Day231KonspektZWiedzyScreen = React.lazy(
   () => import('./screens/day231-konspekt-z-wiedzy')
 );
+const Day232AgentDeckuScreen = React.lazy(() => import('./screens/day232-agent-decku'));
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
 // statycznych importach ładowały się WSZYSTKIE moduły naraz, więc stub ekranu ładowanego
@@ -1646,6 +1647,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day231 — realny OutlineStep z widocznymi źródłami przy tezach; dane z propsów harnessu, nie z realnego przebiegu.',
     render: () => <Day231KonspektZWiedzyScreen />,
+  },
+  'day232-agent-decku': {
+    label:
+      'Day232 — agent decku: pending/applied/rejected oraz następne ruchy; dane z propsów harnessu, nie z realnego przebiegu.',
+    render: () => <Day232AgentDeckuScreen />,
   },
 };
 
