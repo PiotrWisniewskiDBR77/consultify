@@ -15,9 +15,9 @@ i dlatego jest groźniejsze niż defekt: defekt widać, brak bezpiecznika nie.
 
 | Mechanizm | Co robi | Test regresyjny |
 | --- | --- | --- |
-| Filtr sekcji Ustawień | **Usuwa** 33 z 37 sekcji dla zwykłego użytkownika | **BRAK** |
-| Pozycja Spotkań w menu | **Dekoruje kłódką** (nie usuwa) | **BRAK** |
-| Przekierowanie z niedozwolonej trasy | Przenosi **po cichu**, bez komunikatu | **BRAK** |
+| Filtr sekcji Ustawień | **Usuwa** 33 z 37 sekcji dla zwykłego użytkownika | **JEST** (od 1.09) |
+| Pozycja Spotkań w menu | **Dekoruje kłódką** (nie usuwa) | **JEST** (od 1.09) |
+| Przekierowanie z niedozwolonej trasy | Przenosi **po cichu**, bez komunikatu | **JEST** (od 1.09) |
 
 Sprawdzone przeszukaniem katalogów testowych — **zero trafień**.
 
@@ -57,3 +57,36 @@ po stronie zaplecza nie mówi nic.**
    kłódka czy zniknięcie, i **zawsze komunikat zamiast ciszy**.
 3. **Domknąć trzecią bramkę Spotkań** albo świadomie ją zostawić i to zapisać.
 4. Poprawić opis dowodu w karcie modułu Spotkań zgodnie z ograniczeniem powyżej.
+
+
+---
+
+# DOMKNIĘTE 1.09 — trzy testy założone, każdy udowodniony mutacyjnie
+
+Wszystkie trzy bramki mają teraz test, który **czerwienieje po usunięciu zabezpieczenia**.
+Nie „test istnieje" — **test, który udowodniono, psując kod produkcyjny i przywracając go.**
+
+| Bramka | Mutacja | Dosłowny wynik czerwony |
+| --- | --- | --- |
+| Filtr Ustawień | usunięto filtrowanie pozycji | `expected [...] to have a length of 4 but got 37` |
+| Menu Spotkań | dodano Spotkania do listy widocznych | `Expected the element to have attribute: aria-disabled="true" / Received: null` |
+| Przekierowanie | usunięto warunek roli | `expected "vi.fn()" to not be called at all, but actually been called 1 times` |
+
+**Para dowodowa spełniona w każdej z trzech** — „obcy nie widzi" **oraz** „właściciel widzi".
+Przy bramce przekierowania mutacja wywróciła właśnie **drugi** człon: po jej wprowadzeniu
+**administrator też był przekierowywany**. Dokładnie ten scenariusz, przed którym się
+zabezpieczamy — funkcja przestaje działać **wszystkim**, i bez drugiego członu wyglądałoby
+to na sukces.
+
+## ★ Dwie korekty do treści powyżej — obie od wykonawcy, obie na plus
+1. **Numery linii przekierowania: `330-344`, nie `329-341`.** Poprzedni pomiar podał
+   sąsiedztwo, nie blok.
+2. **Twierdzenie „w bloku jest wyłącznie wpis do dziennika" było BŁĘDNE.**
+   W tym bloku **nie ma żadnego wpisu do dziennika** — jest wyłącznie przekierowanie.
+   Wpis do dziennika i powiadomienie o odmowie dostępu ma **sąsiedni** blok, czyli inny.
+
+   **Czyli to przekierowanie jest jeszcze bardziej ciche, niż zapisaliśmy: nie zostawia
+   śladu ani dla użytkownika, ani dla nas.** Gdyby użytkownik zgłosił „klikam i nic się
+   nie dzieje", **nie znaleźlibyśmy tego w dzienniku.**
+
+Obie korekty pochodzą z **własnego odczytu wykonawcy**, nie z przepisania zlecenia.
