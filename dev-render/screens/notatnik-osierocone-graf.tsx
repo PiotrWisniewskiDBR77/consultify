@@ -2,11 +2,18 @@
  * Dev-render host: Notatnik #18 — graf połączeń (naprawiony) + osierocone notatki.
  *
  * Dwie kolumny:
- *  LEWA  — REALNY <NotebookGraphView/> (produkcyjny komponent, ten sam co w
+ *  LEWA  — REALNY <NotebookGraphPanel/> (produkcyjny komponent, ten sam co w
  *          NotebookContent), zasilony mockiem `window.fetch` zamiast żywego
- *          backendu. Pokazuje 3 stany: notatka z tematami+backlinkami
- *          (tytuły rozwiązane, nie surowe id), notatka pusta (empty-state),
- *          notatka tylko-z-tematami (prawa strona pusta).
+ *          backendu. Panel dokowany (w-72) + przycisk „Pełny ekran" —
+ *          171-pojedyncze (uwaga właściciela 2026-09-01: "zrób ją na całym
+ *          ekranie jedną, bo kilka na jednym ekranie nie daje komfortu
+ *          pracy"). PRZED #171 ten harness stackował TRZY osobne
+ *          <NotebookGraphView/> jeden pod drugim wyłącznie do celów audytu
+ *          (patrz git blame) — właściciel to zobaczył i skomentował jako
+ *          rzeczywisty UX. W realnym produkcie graf renderuje się RAZ, na
+ *          jedną otwartą notatkę (NotebookContent.tsx) — więc PO pokazuje
+ *          dokładnie to (jeden panel, z wyjściem na pełny ekran), a nie dalej
+ *          trzy stosy.
  *  PRAWA — mock paska soczewek + wiersza listy notatnika z nowym filtrem
  *          „Osierocone" aktywnym i odznaką „Bez powiązań" na wierszu — te same
  *          klasy Tailwind/tokeny c-* co w realnym NotebookContent.tsx (patrz
@@ -19,11 +26,14 @@
  *  - węzły backlinków pokazują TYTUŁY (nie "task: a1b2c3d4")
  *  - lewy wachlarz tematów = tylko tematy TEJ notatki (był org-wide bug)
  *  - sidebar: soczewka „Osierocone" + odznaka „Bez powiązań" (c-warning, nie crimson)
+ *
+ * URL: ?screen=notatnik-osierocone-graf&theme=light|dark
+ *      &graf=fullscreen   ← startuje z otwartym pełnym ekranem grafu (evidence PO)
  */
 import { AlertTriangle, Clock, Pin, Sparkles, Unlink } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { NotebookGraphView } from '../../src/components/MyWork/notebook/NotebookGraphView';
+import { NotebookGraphPanel } from '../../src/components/MyWork/notebook/NotebookGraphPanel';
 
 // ── Mock backend: intercepts the exact endpoints NotebookGraphView calls ───
 type MockRoute = { match: (url: string) => boolean; json: unknown };
@@ -79,26 +89,15 @@ const EMBED_CHIPS_CONNECTED = [
   },
 ];
 
-function GraphCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}): React.ReactElement {
-  return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-c-border-subtle bg-c-surface p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// LEWA — 3 stany realnego NotebookGraphView, każdy zasilony osobnym mockiem fetch.
+// LEWA — REALNY <NotebookGraphPanel/> (dokowany w-72 + wyjście na pełny
+// ekran), jedna notatka na raz — dokładnie jak w produkcie (NotebookContent
+// montuje ten sam komponent raz, dla activePage). `&graf=fullscreen` startuje
+// już rozwinięty, dla deterministycznego zrzutu PO bez klikania w skrypcie.
 function GraphColumn({ isPl }: { isPl: boolean }): React.ReactElement {
   const [ready, setReady] = useState(false);
+  const startFullscreen = new URLSearchParams(window.location.search).get('graf') === 'fullscreen';
+  const [dockOpen, setDockOpen] = useState(!startFullscreen);
+  const [fullscreen, setFullscreen] = useState(startFullscreen);
 
   useEffect(() => {
     const uninstall = installFetchMock([
@@ -114,22 +113,6 @@ function GraphColumn({ isPl }: { isPl: boolean }): React.ReactElement {
         match: (u) => u.includes('/notebook/embed-chips/resolve'),
         json: { chips: EMBED_CHIPS_CONNECTED },
       },
-      {
-        match: (u) => u.includes('/notebook/pages/note-topics-only/topics'),
-        json: { data: TOPICS_CONNECTED.slice(0, 1) },
-      },
-      {
-        match: (u) => u.includes('/link-graph/backlinks') && u.includes('id=note-topics-only'),
-        json: [],
-      },
-      {
-        match: (u) => u.includes('/notebook/pages/note-empty/topics'),
-        json: { data: [] },
-      },
-      {
-        match: (u) => u.includes('/link-graph/backlinks') && u.includes('id=note-empty'),
-        json: [],
-      },
     ]);
     setReady(true);
     return uninstall;
@@ -140,42 +123,27 @@ function GraphColumn({ isPl }: { isPl: boolean }): React.ReactElement {
   return (
     <div className="flex h-full min-w-0 flex-col gap-4 overflow-y-auto border-r border-c-border-subtle bg-c-bg p-5">
       <div className="text-sm font-bold text-c-text">
-        {isPl ? 'Graf połączeń — po naprawie #18' : 'Connection graph — after #18 fix'}
+        {isPl
+          ? 'Notatnik — graf połączeń jednej notatki (171-pojedyncze)'
+          : 'Notebook — one note’s connection graph (171-pojedyncze)'}
       </div>
-      <GraphCard
-        title={
-          isPl
-            ? 'Notatka z tematami + backlinkami (tytuły)'
-            : 'Note with topics + backlinks (titled)'
-        }
-      >
-        <NotebookGraphView
+      <p className="max-w-md text-xs text-c-text-muted">
+        {isPl
+          ? 'Dokowany panel (w-72) zostaje wąski — ale ma "Pełny ekran" obok. Kliknij ikonę, żeby zobaczyć ten sam graf bez ścieśnienia.'
+          : 'The docked panel (w-72) stays narrow — but it has "Full screen" next to it. Click the icon to see the same graph without the squeeze.'}
+      </p>
+      <div className="flex flex-1 items-start">
+        <NotebookGraphPanel
+          show={dockOpen}
+          fullscreen={fullscreen}
           pageId="note-connected"
           pageTitle="Ustalenia z rozmowy — wejście na rynek DE"
           isPolish={isPl}
-          height={260}
+          onCloseDock={() => setDockOpen(false)}
+          onExpand={() => setFullscreen(true)}
+          onCollapse={() => setFullscreen(false)}
         />
-      </GraphCard>
-      <GraphCard
-        title={
-          isPl ? 'Notatka tylko z tematem (brak backlinków)' : 'Note with topic only (no backlinks)'
-        }
-      >
-        <NotebookGraphView
-          pageId="note-topics-only"
-          pageTitle="Szkic — regulacje DE"
-          isPolish={isPl}
-          height={220}
-        />
-      </GraphCard>
-      <GraphCard title={isPl ? 'Notatka osierocona (pusty stan)' : 'Orphaned note (empty state)'}>
-        <NotebookGraphView
-          pageId="note-empty"
-          pageTitle="Luźna myśl bez kontekstu"
-          isPolish={isPl}
-          height={180}
-        />
-      </GraphCard>
+      </div>
     </div>
   );
 }

@@ -34681,7 +34681,9 @@
       "conflictReload": "Odśwież",
       "conflictRetry": "Zapisz mimo to",
       "backToList": "Wszystkie notatki",
-      "insertBlock": "Wstaw blok"
+      "insertBlock": "Wstaw blok",
+      "graphExpand": "Pełny ekran",
+      "graphCollapse": "Zamknij pełny ekran"
     },
     "mentionMenu": {
       "ariaLabel": "Wzmiankuj encję",

@@ -24,7 +24,6 @@ import {
   Lightbulb,
   Lock,
   MoreHorizontal,
-  Network,
   Paperclip,
   Pen,
   Pin,
@@ -88,7 +87,7 @@ import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSource
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookExportMenu } from './notebook/NotebookExportMenu';
-import { NotebookGraphView } from './notebook/NotebookGraphView';
+import { NotebookGraphPanel } from './notebook/NotebookGraphPanel';
 import {
   type NotebookConvertTarget,
   NotebookHamburgerMenu,
@@ -1025,6 +1024,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showGraphView, setShowGraphView] = useState(false);
+  // 171-pojedyncze (uwaga właściciela): graf połączeń mieści się w wąskim
+  // panelu w-72 (288px) — "nie daje komfortu pracy". Fullscreen pokazuje TEN
+  // SAM graf jednej notatki na całym ekranie, bez przebudowy dokowanego panelu.
+  const [graphFullscreen, setGraphFullscreen] = useState(false);
   // N1: hamburger ⋯ menu position (null = closed)
   const [hamburgerPos, setHamburgerPos] = useState<{ x: number; y: number } | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -4246,23 +4249,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
           {/* Graph view — toggleable panel (topic+backlink connections). Same
             fixed-width-third-column problem as the right rail below; not
-            offered on mobile for the same documented reason. */}
-          {!isMobile && showGraphView && activePage && (
-            <div className="w-72 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary">
-                  <Network size={13} />
-                  {t('notebook.notebookContent.label84', 'Connection graph')}
-                </div>
-                <button
-                  onClick={() => setShowGraphView(false)}
-                  className="p-0.5 rounded text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                >
-                  <X size={13} />
-                </button>
-              </div>
-              <NotebookGraphView pageId={activePage.id} pageTitle={title} isPolish={isPolish} />
-            </div>
+            offered on mobile for the same documented reason.
+            171-pojedyncze (uwaga właściciela): dokowany panel zostaje wąski
+            (w-72/288px), ale zawsze ma obok "Pełny ekran" — ten sam graf
+            TEJ notatki, bez ścieśnienia. Logika i JSX żyją w
+            NotebookGraphPanel (dzielony z dev-render harnessem, nie kopia). */}
+          {activePage && (
+            <NotebookGraphPanel
+              show={!isMobile && showGraphView}
+              fullscreen={graphFullscreen}
+              pageId={activePage.id}
+              pageTitle={title}
+              isPolish={isPolish}
+              onCloseDock={() => setShowGraphView(false)}
+              onExpand={() => setGraphFullscreen(true)}
+              onCollapse={() => setGraphFullscreen(false)}
+            />
           )}
 
           {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context).
