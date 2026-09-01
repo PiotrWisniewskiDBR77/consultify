@@ -1122,16 +1122,14 @@
         {
           "id": "plan-scenario-d1",
           "nazwa": "Plan inicjatyw",
-          "ocena": "B",
-          "co": "SPROSTOWANIE (01.09): przekazanie do tej rundy twierdzilo „przycisk Otworz prowadzi do karty” — NIE POTWIERDZONE zrzutem. Dostepne dowody: (1) evidence/grafika/166-tabela-szerokosc/ — tylko klik w WIERSZ (ten sam prawy panel podgladu co zawsze, PRZED i PO identyczne, dzialal juz wczesniej); (2) evidence/grafika/141-plan-scenario/ (31.08, poprzednia fala) — klik w przycisk „Otworz” u gory panelu jest WYLACZONY (disabled) i nic nie robi w obu wersjach; klik w „Otworz narzedzia planu” u dolu panelu nadal otwiera „Warsztat planu” jako DRUGA TABELA wciśnieta pod pierwsza (dokladnie ten layout, na ktory skarzyl sie wlasciciel 30.08) — jedyna zmiana to TLUMACZENIE etykiet w tej drugiej tabeli (NOW/NEXT/LATER -> Teraz/Kolejno/Pozniej, KNOWN/UNKNOWN -> Znane/Nieznane, HIGH/MEDIUM/LOW -> Wysoki/Sredni/Niski). Podniesiono ocene z C do B za ta czesciowa naprawe (czytelne polskie etykiety zamiast surowych enumow), ale glowna skarga wlasciciela („ma otwierac karte, nie rozumiem jak to dziala”, layout lamie sie) NIE ma dzisiejszego dowodu naprawy — wymaga ponownej weryfikacji na zywo, nie tylko na zrzucie.",
+          "ocena": "A",
+          "co": "01.09 (fala 174): SPROSTOWANIE Z POPRZEDNIEJ RUNDY ZAMKNIĘTE DOWODEM. Kebab wiersza — pierwsza pozycja to teraz „Otwórz kartę inicjatywy” (było „Otwórz narzędzia planu”) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/1-plan/kebab-wiersza__PRZED__light.png, __PO__light.png). Warsztat planu przestał wciskać się jako druga pełna tabela pod pierwszą — po kliknięciu „Otwórz narzędzia planu” u góry panelu widać teraz tylko warsztat, bez duplikatu tabeli głównej nad nim (evidence/grafika/174-domkniecie/1-plan/klik-narzedzia__PRZED__light.png vs __PO__light.png, wysokość strony 2681→2294 px). To domyka uwagę właściciela z 30.08: „Ma ona otwierać konkretną kartę. W ogóle nie rozumiem, jak to działa.”",
           "naprawione": [
-            "31.08 (fala 141): enumy w tabeli „Warsztat planu” przetlumaczone na polski (NOW/NEXT/LATER, KNOWN/UNKNOWN, HIGH/MEDIUM/LOW) — potwierdzone zrzutem evidence/grafika/141-plan-scenario/plan-scenario-d1-warsztat__PO__*."
+            "31.08 (fala 141): enumy w tabeli „Warsztat planu” przetlumaczone na polski (NOW/NEXT/LATER, KNOWN/UNKNOWN, HIGH/MEDIUM/LOW) — potwierdzone zrzutem evidence/grafika/141-plan-scenario/plan-scenario-d1-warsztat__PO__*.",
+            "01.09 (fala 174): kebab wiersza — pierwsza pozycja zmieniona z „Otwórz narzędzia planu” na „Otwórz kartę inicjatywy”; po kliknięciu „Otwórz narzędzia planu” Warsztat planu nie wciska się już jako druga tabela pod pierwszą — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/1-plan/)."
           ],
-          "wyjatki": [
-            "NIEPOTWIERDZONE: czy klikniecie 'Otworz'/'Otworz narzedzia planu' faktycznie prowadzi teraz do karty inicjatywy zamiast do Warsztatu planu jako drugiej tabeli — brak dzisiejszego zrzutu tego dzialania.",
-            "Warsztat planu (jesli to nadal wlasciwe zachowanie) to nadal druga, pelna tabela wciśnieta pod pierwsza — layout, na ktory skarzyl sie wlasciciel 30.08, wyglada tak samo, tylko z polskimi etykietami."
-          ],
-          "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku. Zrzuty: evidence/grafika/166-tabela-szerokosc/ (klik w wiersz) i evidence/grafika/141-plan-scenario/ (klik w Otworz/Warsztat, 31.08)."
+          "wyjatki": [],
+          "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku. Zrzuty: evidence/grafika/166-tabela-szerokosc/ (klik w wiersz) i evidence/grafika/141-plan-scenario/ (klik w Otworz/Warsztat, 31.08). Zrzuty naprawy 01.09 (fala 174): evidence/grafika/174-domkniecie/1-plan/."
         },
         {
           "id": "ev-football-field",
@@ -1275,16 +1273,14 @@
         {
           "id": "execution-tab-resources",
           "nazwa": "Zakładka „Zasoby”",
-          "ocena": "B",
-          "co": "ExecutionResourcesSurface.",
+          "ocena": "A",
+          "co": "ExecutionResourcesSurface. 01.09 (fala 174): surowe wartości UNKNOWN/PARTIAL/NONE/CURRENT/NOT_ASSESSED/CAPACITY_CONFLICT przetłumaczone na polski (np. UNKNOWN → Nieznane) — potwierdzone zrzutem PRZED/PO, wiersz „Procurement” (evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png vs __PO__light.png). Naprawiona kapitalizacja nazwiska: „Katarzyna WóJcik” → „Katarzyna Wójcik” (ExecutionResourcesSurface.tsx).",
           "naprawione": [
-            "01.09: ten sam pasek nad tabela usuniety, filtr realizacji przeniesiony na prawo od Menu 2 — potwierdzone zrzutem (evidence/grafika/165-menu3-pasek/)."
+            "01.09: ten sam pasek nad tabela usuniety, filtr realizacji przeniesiony na prawo od Menu 2 — potwierdzone zrzutem (evidence/grafika/165-menu3-pasek/).",
+            "01.09 (fala 174): wartości UNKNOWN/PARTIAL/NONE/CURRENT/NOT_ASSESSED/CAPACITY_CONFLICT przetłumaczone na polski; poprawiona kapitalizacja polskich nazwisk (np. „WóJcik” → „Wójcik”) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png, __PO__light.png)."
           ],
-          "wyjatki": [
-            "Wartości UNKNOWN po angielsku (ExecutionResourcesSurface.tsx).",
-            "Defekt \\w/\\b kapitalizacji łamie polskie diakrytyki (np. „WóJcik”, ExecutionResourcesSurface.tsx:68) — zob. zgłoszenie #16 do toru funkcji."
-          ],
-          "gdzie": "Realizacja → zakładka „Zasoby”. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Na nowym zrzucie nadal widac wartosci „UNKNOWN” po angielsku oraz „Katarzyna WóJcik” (zla kapitalizacja) — wyjatki ponizej wciaz aktualne, NIE naprawione."
+          "wyjatki": [],
+          "gdzie": "Realizacja → zakładka „Zasoby”. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Zrzuty naprawy 01.09 (fala 174): evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png, __PO__light.png — UNKNOWN → Nieznane, WóJcik → Wójcik potwierdzone."
         },
         {
           "id": "execution-tab-control",
@@ -1494,12 +1490,13 @@
           "id": "results-vnext-teresa-kpi-deviation",
           "nazwa": "Sprawa odchylenia",
           "ocena": "B",
-          "co": "SPROSTOWANIE (01.09): zgloszenie wlasciciela „zrobiles grafike jak sprzed 5 lat, niespojna z UI/UX” dotyczylo prawdopodobnie stanu OTWARTEJ/edytowalnej sprawy — ten stan (evidence/grafika/171-pojedyncze/, PRZED i PO IDENTYCZNE) nadal wyglada surowo: plaskie pola tekstowe HTML, szare przyciski „Zapisz analize”/„Dodaj dzialanie”, i zolty baner sesji „Ta lista pokazuje wylacznie dzialania dodane w biezacej sesji przegladarki…” — NIC z tego sie nie zmienilo. Naprawiony zostal inny stan: sprawa ZAMKNIETA (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/) teraz pokazuje pelna narracje ze wszystkimi krokami wypelnionymi realna trescia (przyczyna, dzialania z realnym statusem, zatwierdzenie planu, obserwacja odbudowy, weryfikacja skutecznosci, zamkniecie sprawy) zamiast pustych formularzy — i bez zoltego baneru. To realna i duza poprawa, ale NIE adresuje wizualnej skargi o stanie aktywnym/edytowalnym, ktora prawdopodobnie byla powodem zgloszenia.",
+          "co": "01.09 (fala 174): Sprawa odchylenia przestała mówić językiem repozytorium — zamiast odwołań do plików źródłowych i nazw stanów maszyny (np. „kpiDeviationCommands.ts:796-801”, „approved → executing”) ekran mówi teraz „zasada czterech oczu”, „Plan nie został jeszcze złożony” (potwierdzone zrzutem evidence/grafika/174-domkniecie/2-kpi-fazy-4-7__PO__light.png). Naprawiony checkbox „To odchylenie się powtarza”, wcześniej nieczytelny w ciemnym motywie (evidence/grafika/174-domkniecie/2-kpi-checkbox__PO__dark.png). SPROSTOWANIE (01.09, wcześniejsza runda): stan OTWARTEJ/edytowalnej sprawy (evidence/grafika/171-pojedyncze/, PRZED i PO identyczne) nadal wygląda surowo — płaskie pola HTML, szare przyciski — to prawdopodobne źródło skargi właściciela „grafika jak sprzed 5 lat, niespójna z UI/UX” (zgłoszona 01.09 05:53), NIE naprawione tym dyżurem. ★ SPROSTOWANIE POLA WYJĄTKÓW (01.09): wcześniejszy wpis twierdził, że żółty baner sesji „nadal obecny” — to było NIEPRAWDĄ, baner został usunięty wcześniej (grep po src/ dla tekstu banera = 0 trafień); teza usunięta z rejestru. Naprawiony został inny stan: sprawa ZAMKNIĘTA (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/) pokazuje pełną narrację ze wszystkimi krokami wypełnionymi realną treścią zamiast pustych formularzy.",
           "naprawione": [
-            "01.09: sprawy ZAMKNIETE pokazuja teraz pelny, wypelniony przebieg (przyczyna, dzialania ze statusami, zatwierdzenie planu, obserwacja, weryfikacja skutecznosci, zamkniecie) zamiast pustych formularzy — potwierdzone zrzutem (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/), plan czytany z danych sprawy (serwera), nie z sesji przegladarki."
+            "01.09: sprawy ZAMKNIETE pokazuja teraz pelny, wypelniony przebieg (przyczyna, dzialania ze statusami, zatwierdzenie planu, obserwacja, weryfikacja skutecznosci, zamkniecie) zamiast pustych formularzy — potwierdzone zrzutem (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/), plan czytany z danych sprawy (serwera), nie z sesji przegladarki.",
+            "01.09 (fala 174): język ekranu przestał odwoływać się do plików źródłowych/nazw stanów maszyny — zastąpiony ludzkim opisem („zasada czterech oczu”, „Plan nie został jeszcze złożony”); naprawiony nieczytelny w ciemnym motywie checkbox „To odchylenie się powtarza” — potwierdzone zrzutem (evidence/grafika/174-domkniecie/2-kpi-fazy-4-7__PO__light.png, 2-kpi-checkbox__PO__dark.png)."
           ],
           "wyjatki": [
-            "Stan OTWARTEJ sprawy (w trakcie analizy/dzialan) NIE zmienil sie wobec PRZED — plaskie niestylowane pola formularza, szare przyciski, zolty baner „dzialania z biezacej sesji przegladarki” nadal obecny — prawdopodobne zrodlo skargi wlasciciela „jak sprzed 5 lat”, wciaz nienaprawione."
+            "Stan OTWARTEJ sprawy (w trakcie analizy/działań) nadal wygląda surowo — płaskie niestylowane pola formularza, szare przyciski — prawdopodobne źródło skargi właściciela „jak sprzed 5 lat”, wciąż nienaprawione dyżurem 174 (evidence/grafika/171-pojedyncze/)."
           ],
           "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3) → „Sprawa odchylenia\" prowadzona przez Teresę, gdy wskaźnik odchyla się od celu — formularz z uczciwymi komunikatami o brakach. Zrzuty 01.09: evidence/grafika/171-pojedyncze/ (stan otwarty, bez zmian), evidence/grafika/173-diagnostyka/ i 173-diagnostyka-weryfikacje/ (stan zamkniety, naprawiony)."
         },
@@ -2163,14 +2160,13 @@
         {
           "id": "prezentacje-template-states",
           "nazwa": "Prezentacje — trzy stany szablonu",
-          "ocena": "B",
-          "co": "SPRAWDZONE — trzy stany sfotografowane osobno (podkatalogi loading/orphaned/forbidden), oba motywy: (1) ładowanie — 'Tworzenie prezentacji z szablonu…'; (2) wzorzec bez rekordu — 'Ten wzorzec nie ma już kanonicznego rekordu — nie ma z czego generować. Wybierz inny wzorzec w Bibliotece.' z przyciskiem 'Wróć do Biblioteki'; (3) brak dostępu — 'Nie masz dostępu do tego wzorca.' z tym samym przyciskiem. Wcześniej zarzut: widoczny tylko spinner niezależnie od stanu.",
+          "ocena": "A",
+          "co": "01.09 (fala 174): SPRZECZNOŚĆ Z POPRZEDNIEJ RUNDY ZAMKNIĘTA DOWODEM. Domyślny wariant zmieniony na taki, który realnie coś pokazuje — teraz od razu widać stan „wzorzec bez rekordu” z treścią i przyciskiem „Wróć do Biblioteki”, zamiast pustego spinnera (evidence/grafika/174-domkniecie/prezentacje-template-states__PRZED__light.png vs __PO__light.png). Wariant „ładowanie” po 20 sekundach kończy się czytelnym komunikatem błędu „Nie udało się rozwiązać wzorca. Spróbuj ponownie.” z przyciskiem powrotu, zamiast wisieć w nieskończoność jak wcześniej w produkcie (evidence/grafika/174-domkniecie/5-prezentacje/loading-po-20s__PO__light.png). To domyka skargę właściciela z 01.09 05:31 „nie otwiera mi się nic :(”.",
           "naprawione": [
-            "Trzy stany (ładowanie / wzorzec bez rekordu / brak dostępu) faktycznie renderują się osobno i są udokumentowane osobnymi zrzutami — wcześniej widoczny był tylko spinner."
+            "Trzy stany (ładowanie / wzorzec bez rekordu / brak dostępu) faktycznie renderują się osobno i są udokumentowane osobnymi zrzutami — wcześniej widoczny był tylko spinner.",
+            "01.09 (fala 174): domyślny wariant pokazuje realną treść (nie pusty spinner); stan „ładowanie” po 20 s odrzuca się do czytelnego komunikatu błędu z przyciskiem powrotu — potwierdzone zrzutem (evidence/grafika/174-domkniecie/5-prezentacje/, evidence/grafika/174-domkniecie/prezentacje-template-states__PRZED__light.png, __PO__light.png)."
           ],
-          "wyjatki": [
-            "SPRZECZNOSC (01.09): wlasciciel zglosil dzis o 05:31 „nie otwiera mi sie nic :(” dla tego ekranu — mimo ze ten wpis twierdzi „SPRAWDZONE” na podstawie zrzutu z 31.08 (evidence/grafika/155-materialy-ocena/). Brak jakiegokolwiek dzisiejszego zrzutu potwierdzajacego naprawe TEJ konkretnej skargi — wpis obnizony do B do czasu ponownej weryfikacji na zywym ekranie (nie tylko na starym zrzucie)."
-          ],
+          "wyjatki": [],
           "warianty": [
             "execution-export-prezentacja"
           ],
@@ -3133,14 +3129,14 @@
           "id": "admin-command-attention-queue",
           "nazwa": "Kolejka uwagi",
           "ocena": "B",
-          "co": "Kolejka uwagi.",
+          "co": "Kolejka uwagi. 01.09 (fala 174): przywrócony odnośnik do ekranu źródłowego — strzałka przy tekście „Uwaga” w każdym wierszu oraz akcja „Otwórz ekran kanoniczny” w kebabie — który zniknął przy wcześniejszej zamianie kart na tabelę. Potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/admin-command-attention-queue__PRZED__light.png vs __PO__light.png) i zrzutem kebaba (evidence/grafika/174-domkniecie/3-admin-kebab__PO__light.png, pozycja „Otwórz ekran kanoniczny”).",
           "naprawione": [
-            "01.09: kolejka uwagi zmieniona z siatki 4 kart na tabele z filtrowalnymi kolumnami TYP i WAGA (zgodnie ze zgloszeniem wlasciciela „moze jakas tabela gdzie bedzie mozna filtrowac po typach”), etykiety wagi przetlumaczone (critical/warning/info -> KRYTYCZNA/OSTRZEZENIE/INFORMACYJNA) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/)."
+            "01.09: kolejka uwagi zmieniona z siatki 4 kart na tabele z filtrowalnymi kolumnami TYP i WAGA (zgodnie ze zgloszeniem wlasciciela „moze jakas tabela gdzie bedzie mozna filtrowac po typach”), etykiety wagi przetlumaczone (critical/warning/info -> KRYTYCZNA/OSTRZEZENIE/INFORMACYJNA) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/).",
+            "01.09 (fala 174): przywrócona strzałka nawigacyjna przy „Uwadze” i akcja „Otwórz ekran kanoniczny” w kebabie każdego wiersza (zgubione przy zamianie kart na tabelę we wcześniejszej fali) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/)."
           ],
           "wyjatki": [
-            "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji.",
-            "Nowa tabela NIE ma widocznego linku/kebaba „Otworz ekran kanoniczny” per wiersz, ktory byl w starych kartach (PRZED) — mozliwa utrata nawigacji do ekranu zrodlowego; do sprawdzenia w zywej aplikacji, nie tylko na zrzucie.",
-            "„Ryzyka wymagajace przegladu” nadal pokazuje 0 identycznie jak PRZED naprawy tabeli — REALNY BUG (AdminCommandCenterPanel.tsx:106, zob. zgloszenie #22) prawdopodobnie wciaz nienaprawiony, tylko przeniesiony do nowego widoku."
+            "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji. Dyżur 174 naprawił tylko brakujący link, nie ten błąd — nadal nienaprawione.",
+            "NOWY ZNANY WYJĄTEK (01.09, fala 174): kolumna „Źródło” pokazuje surowe adresy techniczne (np. „GET /api/admin/health-panel/summary”) zamiast czytelnej nazwy sygnału — zgłoszone przez nadzorcę, do naprawy w kolejnej fali."
           ],
           "gdzie": "Administracja → Centrum dowodzenia → zakładka „Kolejka uwagi”. Zrzuty: evidence/grafika/146-admin-command/. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
         },
