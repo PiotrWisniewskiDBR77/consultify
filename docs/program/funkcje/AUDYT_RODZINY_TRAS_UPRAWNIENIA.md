@@ -15,11 +15,14 @@ Push wyłącznie na `github-backup` (origin jest publiczny — nie dotknięty).
 
 ## PIERWSZE ZDANIE: ile dziur pozwala ZMIENIAĆ albo KASOWAĆ cudze dane
 
-**Sześć.** Cztery potwierdzone jako **żywe na produkcji/demo w obecnej konfiguracji**
-(montowane bez żadnej bramki), dwie potwierdzone w kodzie ale **obecnie wygaszone na
+**Sześć.** Trzy potwierdzone jako **żywe na produkcji/demo w obecnej konfiguracji**
+(montowane bez żadnej bramki), trzy potwierdzone w kodzie ale **obecnie wygaszone na
 demo przez osobną, niezwiązaną z uprawnieniami flagę `mountStub`/`ENABLE_STUB_ROUTES`**
 (patrz sekcja „Pułapka: kod dziurawy ≠ trasa żywa na demo” — żywe na każdym innym
 środowisku, jeden flip flagi od bycia żywe wszędzie).
+
+Wcześniejsza wersja tego zdania podawała 4+2 — sprostowane 2026-09-01 (dyżur 254)
+po ponownym zliczeniu wierszy szczegółowej sekcji „Pułapka” niżej.
 
 Najgroźniejsza: **PMO Project Members** — obca organizacja może **dopisać samą siebie
 jako ADMIN do cudzego projektu** (nie tylko czytać/kasować — **wstrzyknąć tożsamość**
