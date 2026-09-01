@@ -9,6 +9,21 @@ last_updated: 2026-05-18
 
 # Status — Moja Praca / My Work
 
+> **AKTUALIZACJA 2026-09-01 (dyżur 222).** Ten plik jest z 2026-05-18 i nie
+> odzwierciedla rejestru 56 atomów właścicielskich prowadzonego dziś w
+> `docs/program/waves/WAVE_03_ACCEPTANCE/modules/07_MY_WORK_AGENT/MODULE_ACCEPTANCE.md`
+> (status per atom: `ZROBIONE_W_KODZIE`/`CZĘŚCIOWE`/`NIEZROBIONE`/`WYMAGA_DECYZJI`).
+> Dyżur 222: komentarz AI w zadaniu **naprawiony** — realny `POST` + `GET`
+> readback zamiast lokalnego obiektu udającego zapis (`FIXED_VERIFIED`);
+> zbędny przycisk pobierania załącznika usunięty z wiersza RACI (typ
+> `Stakeholder` nie ma pola załącznika), ale pełny render+klik nie osiągnął
+> tej tabeli z powodu bramki flagi `VITE_ENABLE_LEGACY_C_MODE` — status
+> `PARTIAL`, nie `VERIFIED`. Gate modułu **bez zmiany**:
+> `DAY100_PARTIAL_OWNER_PACKET / NOT_ACCEPTED`. Pełny pomiar, w tym co
+> najmniej 3 warianty ekranu za domyślnie wyłączonymi flagami i 2 funkcje
+> zadeklarowane w rejestrze, które nie istnieją w kodzie wcale:
+> `docs/functional/POMIAR_2026-09-01_AUDYTY_CZAT_PRACA_PARTNER.md` §3.
+
 ## Status Tags (As-Is)
 
 - `real`: `/my-work/*` route is mounted in `AppRoutes.tsx` and points to `MyWorkView`.

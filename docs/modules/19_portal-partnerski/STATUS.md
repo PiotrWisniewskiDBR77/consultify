@@ -9,6 +9,20 @@ last_updated: 2026-05-09
 
 # Status — Portal Partnerski
 
+> **AKTUALIZACJA 2026-09-01 (dyżur 224).** Ten plik jest z 2026-05-09 i jest
+> zbyt ogólny wobec dzisiejszego pomiaru. Najpełniejszy zmierzony mianownik
+> to **25 sekcji** (dyżur 177, 30.08): 17/25 renderuje się, 7/25 kończyło się
+> błędem, 1/25 pusta. **Obalone 1.09, było:** `earnings-summary` zwraca HTTP
+> 500 (`PRT-D62-005`, potwierdzone 28-30.08). **Jest:** na markerze dyżuru 224
+> ta sama trasa zwraca HTTP 200 z uczciwym `reason: 'POLICY_NOT_APPROVED'` —
+> naprawione, ale pozostałe 6 błędnych sekcji z pomiaru 25-sekcyjnego NIE
+> zostały dziś ponownie sprawdzone. `Organizations` — dodano
+> `minTableWidth="auto"`: 6 kolumn mieści się przy 1280px, **nadal nie** przy
+> 375px (`PRT-D112-003` pozostaje `PARTIAL_MOBILE`). „Users: 0" na ekranie
+> Clients potwierdzone jako uczciwa liczba fixture, nie defekt. Ekonomia
+> (accrual/payout) pozostaje świadomie `OFF`. Pełny pomiar:
+> `docs/functional/POMIAR_2026-09-01_AUDYTY_CZAT_PRACA_PARTNER.md` §4.
+
 ## Shipping Status (As-Is)
 
 - Runtime class: `real + partial`

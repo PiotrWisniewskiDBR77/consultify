@@ -9,6 +9,15 @@ last_updated: 2026-07-29
 
 # Status — Czat / Teresa Chat Engine
 
+> **AKTUALIZACJA 2026-09-01 (dyżur 223):** governed proposal (`execution_proposal`)
+> potwierdzona na realnej ścieżce produktowej `/chat/:conversationId`
+> (`UnifiedChatPanel`+`MessageRenderer.tsx`), nie tylko w dev-render. 11 (nie
+> ~10) zadeklarowanych typów akcji czatu było bez producenta; po dyżurze 3
+> dostały realnego producenta, 8 pozostaje bez producenta i czeka na decyzje
+> właściciela per typ. Canvas — bez zmiany, nadal `NO_GO`. Szczegóły i
+> `plik:linia`: `docs/modules/01_czat/09_AS_IS.md` (adnotacja u góry) i
+> `docs/functional/POMIAR_2026-09-01_AUDYTY_CZAT_PRACA_PARTNER.md` §2.
+
 ## Aktualna ocena
 
 - dokumentacja: `B` — kontrakt jest mocny, lecz bramka kompletności nie przeszła;

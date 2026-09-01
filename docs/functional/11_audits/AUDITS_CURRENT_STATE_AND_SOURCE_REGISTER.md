@@ -12,6 +12,39 @@ last_reviewed: 2026-08-13
 
 # Audits — stan obecny i rejestr źródeł (Gate U0)
 
+> ### ★ TEN DOKUMENT JEST HISTORYCZNY — baza `2026-08-13`, moduł zmienił się od tamtej pory
+>
+> **Aktualny punkt odniesienia dla stanu runtime 2026-09-01:**
+> `docs/functional/POMIAR_2026-09-01_AUDYTY_CZAT_PRACA_PARTNER.md` §1, oparty
+> na `CODEX_DAY220_AUDYTY_REJESTR_REPORT.md` i
+> `CODEX_DAY221_AUDYTY_WARSZTAT_REPORT.md`.
+>
+> Poniższe twierdzenia z §2 są **dramatycznie nieaktualne** wobec dzisiejszego
+> pomiaru — **obalone 1.09**:
+> - „cały moduł to 6 plików" — **było:** jeden hub-plik + wizard + presety;
+>   **jest:** hub ma sześć osobnych zakładek, każda z własnym plikiem
+>   `StandardTable`/`StandardPreview` (`AuditLibraryTab.tsx`,
+>   `AuditProcessesTab.tsx`, `AuditOutputsTab.tsx`, `AuditReportsTab.tsx`,
+>   `AuditFindingsTab.tsx`, `AuditInitiativesTab.tsx`) plus trzy serwisy
+>   backendowe (`programService.ts`, `outputService.ts`, `reportService.ts`).
+> - „Brak ekranu artefaktu... Kliknięcie wiersza otwiera wyłącznie preview" —
+>   **jest:** każda zakładka ma `StandardPreview`; kryterium ma osobny
+>   `CriterionWorkspace` (workspace kryterium, potwierdzony zrzutami
+>   `AUD-OWN-004`).
+> - „Brak store'a... moduł nie emituje żadnych zdarzeń domenowych" —
+>   **wymaga ponownego pomiaru**, nie potwierdzone ani obalone dzisiaj;
+>   `programService.ts`/`outputService.ts`/`reportService.ts` istnieją i
+>   obsługują cykl życia, ale emisja zdarzeń domenowych nie była
+>   przedmiotem dyżurów 220-221.
+>
+> Rejestr Audit Packs (§3 niżej: presety ISO 27001 / New Company,
+> `046_compliance.sql`) **NIE był przedmiotem dzisiejszego pomiaru** i
+> pozostaje bez zmiany statusu — traktuj go jako osobno wymagający retestu,
+> nie jako automatycznie aktualny tylko dlatego, że §2 jest przestarzałe.
+>
+> Dokument pozostaje w repo jako **historia** (nie kasowany) — pokazuje
+> stan Gate U0 z 13 sierpnia, punkt startowy dla modelu wprowadzonego w §4.
+
 Dokument powstał z czterech niezależnych sond czytających **kod, migracje i żywy
 schemat bazy**, nie dokumentację. Każde twierdzenie ma wskazany plik. Gdzie
 wcześniejsze dokumenty twierdziły coś innego niż runtime — rozstrzyga runtime.
