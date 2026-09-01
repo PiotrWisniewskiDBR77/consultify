@@ -751,7 +751,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             </p>
           ) : null}
           {correctiveActions.length > 0 ? (
-            <ul className="space-y-2 mb-3">
+            <ul className="space-y-2 mb-3" data-testid="kpi-deviation-actions-list">
               {correctiveActions.map((a) => (
                 <li key={a.actionId} className="rounded-lg border border-c-border-subtle p-2.5">
                   <div className="flex items-center justify-between gap-2">
@@ -1004,7 +1004,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             </p>
           ) : null}
           {verifications.length > 0 ? (
-            <ul className="space-y-1.5 mb-3">
+            <ul className="space-y-1.5 mb-3" data-testid="kpi-deviation-verifications-list">
               {verifications.map((v) => (
                 <li key={v.verificationId} className="flex items-center gap-2">
                   <StatusChip
