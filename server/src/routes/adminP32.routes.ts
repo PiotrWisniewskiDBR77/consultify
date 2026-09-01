@@ -1585,16 +1585,20 @@ async function deleteBillingPaymentMethod(orgId: string, paymentMethodId: string
 }
 
 async function readBillingInvoices(orgId: string) {
-  const rows = await dbAll<any>(
-    `SELECT id, invoice_number, status, amount_due, amount_paid, currency, issue_date, due_date, paid_at
-     FROM invoices
-     WHERE organization_id = ?
-     ORDER BY issue_date DESC, created_at DESC
-     LIMIT 50`,
-    [orgId],
-    { fallback: true }
-  );
-  return rows || [];
+  try {
+    const rows = await dbAll<any>(
+      `SELECT id, invoice_number, status, amount_due, amount_paid, currency, issue_date, due_date, paid_at
+       FROM invoices
+       WHERE organization_id = ?
+       ORDER BY issue_date DESC, created_at DESC
+       LIMIT 50`,
+      [orgId],
+      { fallback: false }
+    );
+    return { status: 'ok' as const, invoices: rows || [] };
+  } catch {
+    return { status: 'unavailable' as const, invoices: [] };
+  }
 }
 
 async function readBillingUsageDetails(orgId: string) {
@@ -2725,8 +2729,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res) => {
     const actor = await getAdminActor(req, res, ['billing:read']);
     if (!actor) return;
-    const invoices = await readBillingInvoices(actor.orgId);
-    return res.json({ organizationId: actor.orgId, invoices });
+    const result = await readBillingInvoices(actor.orgId);
+    return res.json({ organizationId: actor.orgId, ...result });
   })
 );
 

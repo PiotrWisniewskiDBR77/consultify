@@ -79,6 +79,7 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
   const [savingPlan, setSavingPlan] = useState(false);
   const [invoiceFilters, setInvoiceFilters] = useState<FilterChip[]>([]);
   const [paymentFilters, setPaymentFilters] = useState<FilterChip[]>([]);
+  const [invoicesAvailable, setInvoicesAvailable] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -102,6 +103,7 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
         ]);
         setSummary(summaryResult);
         setPaymentMethods(paymentResult?.paymentMethods || []);
+        setInvoicesAvailable(invoiceResult?.status !== 'unavailable');
         setInvoices(invoiceResult?.invoices || []);
         const nextAlerts = Array.isArray(alertResult?.alerts) ? alertResult.alerts : [];
         setAlertsAvailable(alertResult?.available !== false);
@@ -591,7 +593,11 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
           hideRowActions
           activeFilters={invoiceFilters}
           onFilterChange={setInvoiceFilters}
-          emptyMessage="No invoices yet for this workspace."
+          emptyMessage={
+            invoicesAvailable
+              ? 'No invoices yet for this workspace.'
+              : 'Invoices are temporarily unavailable.'
+          }
           persistKey="admin-invoices-table"
           canvasClassName=""
         />
