@@ -209,3 +209,149 @@ i/lub zwijanie całego prawego panelu SPEC-A. Pierwsze uwalnia 280 px
 wspólny dla WIĘCEJ NIŻ TEGO EKRANU (szyna: Word/Deck/Mindmap; panel:
 sześć kart SPEC-A), więc idą przez prototyp + akcept, nie przez dyżur
 szerokości. Dowody: `evidence/grafika/166-tabela-szerokosc/`.
+
+---
+
+## Grupa: do przebudowy, nie do zdjęcia — `results-vnext-okr-workspace` (wpis 2026-09-01)
+
+**Słowa właściciela (01.09, 05:55):** *„To miało być w N-type karcie"*.
+
+**Werdykt: intuicja trafna co do KSZTAŁTU, ale ekranu nie zdejmujemy.**
+`cel-jedna-karta` go nie zastępuje, bo to **inny poziom**. Zgodnie z decyzją
+właściciela z 30.08 (`DECYZJA_WYNIKI_TRZY_POZIOMY.md`) Wyniki mają trzy poziomy:
+rejestr zestawień → **tabela zestawu** → karta pojedynczego celu. Warsztat OKR
+jest poziomem 2 — tym, który właściciel sam kazał dobudować. Karta celu to karta
+jednego wiersza z tabeli, którą warsztat pokazuje.
+
+**Ekran jest żywy na demo:** trasa `/results/okr/sets/:okrSetId`
+(`AppRoutes.tsx:3105-3125`) to główne działanie „Otwórz" w rejestrze zestawów
+(`okrRegistryPresenters.tsx:240-247`, `ResultsOkrHub.tsx:606-608`).
+Zdjęcie odcięłoby: dopasowania celów, prośby o wsparcie, blokady, refleksję
+z Teresą, historię i **cały cykl akceptacji zestawu**. Ryzyko wysokie.
+
+### Plan przebudowy — wzorzec ROI z 30.08
+
+Naśladujemy dokładnie to, co właściciel zatwierdził dla ROI: *„To musi być
+N-karta, gdzie będziemy mieli z nowej strony te zakładki, które teraz masz
+w menu"* — `results-vnext-roi-full-tool` został tego samego dnia przebudowany
+w `roi-jedna-karta` (zakładki poziome → sekcje w lewej kolumnie). Warsztat OKR
+ma **dokładnie tę samą wadę powłoki**: sześć zakładek w poziomie, brak prawego
+panelu kanonu.
+
+**Co trafia do karty N (sekcje lewej kolumny — dzisiejsze zakładki 1:1):**
+
+| Dzisiejsza zakładka | Staje się sekcją karty N |
+| --- | --- |
+| Przegląd | Właściwości zestawu (`ArtifactPropertiesTable`) |
+| Cele i Kluczowe Rezultaty | Tabela celów z zejściem do KR i check-inów |
+| Dopasowania | Dopasowania |
+| Rozmowy i wsparcie | Prośby o wsparcie i blokady |
+| Przegląd i refleksja | Refleksja (tu wchodzi Teresa) |
+| Historia | Historia |
+
+**Co trafia do prawego panelu (`ArtifactRightPanel`, 7 sekcji kanonu):**
+cykl życia zestawu — złożenie, akceptacja, żądanie poprawek, aktywacja,
+anulowanie — jako **blok akcji w prawym panelu**, a nie rząd przycisków pod
+tabelą. Reguły dostępności każdego przycisku zostają wypisane wprost, tak jak
+dziś (nic nie znika, zmienia się miejsce).
+
+**Co zostaje bez zmian:** cała treść i cała mechanika serwera. To przebudowa
+POWŁOKI, nie funkcji.
+
+**Przy okazji, dwie drobne rzeczy widoczne na zrzucie:** pola „Właściciel"
+i „Recenzent" pokazują ucięte `user-ann…` / `user-tom…` zamiast nazwisk. Ten sam
+defekt w ekranie „Uwaga" jest już naprawiony przez odczyt listy członków
+organizacji (`OrganizationApi.getOrganizationMembers`) — rozwiązanie do
+przeniesienia 1:1.
+
+**Skąd wziąć wzorzec:** `dev-render/screens/roi-jedna-karta.tsx` i
+`wskaznik-jedna-karta.tsx` — obie karty N używają wyłącznie wspólnych cegiełek
+SPEC-A (`NModeShell` + `ArtifactRightPanel` + `ArtifactPropertiesTable` +
+`PreviewRelations`), zero własnego layoutu.
+
+**Stan dziś:** ekran zostaje w rejestrze odbioru z obecną oceną `A` i adnotacją,
+że czeka na przebudowę. Dowody stanu zastanego:
+`evidence/grafika/168-odrzucone/results-vnext-okr-workspace__PRZED__*.png`.
+
+---
+
+## ★ SPRAWA DO DECYZJI WŁAŚCICIELA — co zginęło razem z wycofanym hubem Wyników (wpis 2026-09-01)
+
+**To nie jest wpis o wyglądzie. To jest zgłoszenie utraty FUNKCJI.**
+
+Stary hub Wyników (`ResultsHub.tsx`, 2485 linii) został wycofany 24.08
+(commit `8df1cd413d`) i **nie ma dziś żadnej trasy** — `/results` przekierowuje
+na rejestr KPI (`ResultsOwnerReviewEntry.tsx:12`), a `<ResultsHub />` montują już
+tylko pliki testów. Razem z nim przestało być osiągalne wszystko, co tylko on
+montował. Zmierzone (nie z dokumentacji — greppem po realnych wołaczach):
+
+### 1. Diagnostyka odchyleń (`ff_deviationDiagnostics`) — **UTRACONA W CAŁOŚCI**
+
+Trzy silniki serwera **żyją i są zamontowane w routerze**:
+`kpiAnomalyService` (`v8/results.routes.ts:2716`), `kpiForecastService`
+(`:2788`), `deviationRcaSuggestService` (`:1319`). Klienckie owijki też istnieją:
+`getKpiAnomalies` (`src/services/api/v8/results.ts:848`), `getKpiForecast`
+(`:852`), `rca-suggest` (`:861`).
+
+**Wołaczy w interfejsie: ZERO.** `getKpiAnomalies` i `getKpiForecast` nie mają
+ani jednego konsumenta w całym `src/`; `rcaSuggest` ma jednego — martwy
+`KPITimeSeriesDrawer` (`:1347-1372`). Nowy `KpiToolPage`/
+`KpiDeviationCaseSubview` nie odwołuje się do żadnego z nich (grep po
+`anomal|forecast|rca` w `src/components/ResultsVNext/kpiTool/` — zero trafień).
+`kpiTeresaRcaDraft.ts` **nie jest zamiennikiem**: jego własny nagłówek mówi, że
+przepuszcza przez pipeline dokładnie ten tekst, który człowiek już napisał —
+to governance, nie podpowiadanie przyczyn.
+
+### 2. Karta naprawcza (`ff_recoveryCard`) — **CZĘŚCIOWO**, cztery funkcje UTRACONE
+
+`RecoveryCardPanel.tsx` (2101 linii, nagłówek :1-16) prowadzi pełną pętlę
+naprawczą jednej sprawy odchylenia. Następcą jest `KpiDeviationCaseSubview`
+(maszyna 9 stanów). Porównanie **funkcji, nie nazw**:
+
+| Funkcja karty naprawczej | Odpowiednik w nowej karcie wskaźnika | Werdykt |
+| --- | --- | --- |
+| hipoteza → potwierdzona przyczyna | `submitRootCause` (`kpiDeviationApi.ts:284`) | MA ODPOWIEDNIK |
+| działania korygujące (tytuł/właściciel/termin/status) | `addCorrectiveAction`/`updateCorrectiveAction` (`:313`, `:347`) | MA ODPOWIEDNIK |
+| zamknięcie z dowodem + ocena skuteczności | `submitEffectivenessVerification` + `closeDeviationCase` | MA ODPOWIEDNIK |
+| kontynuuj / eskaluj | `escalateDeviationCase`/`deescalateDeviationCase` | MA ODPOWIEDNIK |
+| **powiązanie działania z Zadaniem** (`link-task`, `taskLinkStatus`) | brak — zero trafień `linkedTaskId` w `kpiTool/` | **UTRACONA** |
+| **eksperymenty** (utwórz/recenzuj/rozstrzygnij, werdykt + decyzja) | brak jakiegokolwiek odpowiednika | **UTRACONA** |
+| **zależności i ryzyka** (listy na karcie) | brak pól w `DeviationCaseDto` | **UTRACONA** |
+| **typ działania** IMMEDIATE / DURABLE | brak pola w `CorrectiveActionDto` | **UTRACONA** |
+| punkty kontrolne (seria dat PENDING/MET/MISSED, każdy wpięty w pomiar) | JEDEN `recoveryObservationMeasurementId` | CZĘŚCIOWO — seria → jeden punkt |
+| priorytet LOW…CRITICAL | `severity` warning/critical — to waga WYKRYCIA, nie priorytet planu | CZĘŚCIOWO |
+| kryteria skuteczności ustalane Z GÓRY | weryfikacja po fakcie (`rationale`) + polityka odpowiedzi KPI | CZĘŚCIOWO |
+
+Punkty serwera dla wszystkich tych funkcji **żyją**
+(`v8/results.routes.ts:1885-2239`). Utracone jest wyłącznie **wejście**.
+
+### 3. Szuflada szeregów czasowych KPI (`KPITimeSeriesDrawer`) — **CZĘŚCIOWO**
+
+Jedenaście sekcji (`kpiDomain.ts:10-21`): `summary · deviation · recovery ·
+record · history · definition · targets · lineage · settings · links · danger`.
+Nowy `KpiToolPage` ma sześć sekcji z realnym odczytem i **sam uczciwie
+przyznaje** (nagłówek `KpiToolPage.tsx:23-66`), że dwie są niedostępne, bo nie
+ma tras: **Historia/Rodowód** (`history`/`lineage`) i **Karty wyników
+i konteksty**; „Kontrakt" jest PARTIAL — żaden `GET` nie zwraca wersji definicji
+(nazwa, jednostka, geometria progu, status akceptacji), czyli sekcja `targets`
+starej szuflady nie ma pełnego pokrycia.
+
+### Co z tym zrobić — pytanie do właściciela
+
+**Nic z tego obszaru nie zostało w tym dyżurze zdjęte ani skasowane**, zgodnie
+z zasadą „ekranu nie zdejmuje się z drogi bez zbadania, co za nim stoi".
+Ale sam `results-three-pairs` zszedł do oceny `D`, więc martwy hub przestał być
+widoczny w rejestrze odbioru — a razem z nim przestały być widoczne te trzy
+sprawy. Dlatego są tutaj, wypisane.
+
+Do rozstrzygnięcia, per pozycja:
+1. **Diagnostyka odchyleń** — dobudować wejście w nowym narzędziu KPI (silniki
+   gotowe, trzeba wołacza) czy uznać za świadomie porzuconą?
+2. **Cztery utracone funkcje karty naprawczej** (Zadania, eksperymenty,
+   zależności/ryzyka, typ działania) — przenieść do nowej sprawy odchylenia
+   czy uznać za nadmiarowe?
+3. **Historia/Rodowód wskaźnika** — to brak TRAS serwera, nie brak ekranu;
+   osobna praca po stronie `server/`.
+
+Dopóki nie ma decyzji: `ResultsHub.tsx`, `KPITimeSeriesDrawer.tsx`,
+`RecoveryCardPanel.tsx` i trzy silniki serwera **zostają nietknięte**.
