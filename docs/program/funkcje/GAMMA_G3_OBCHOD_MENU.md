@@ -115,3 +115,64 @@ anything"* + przycisk `Quick edits`.
 Motyw właściciela otwarty w trybie edycji **i zamknięty przez `Cancel`** — żadna
 zmiana nie została zapisana. Wygenerowano jeden deck testowy o Consultify (10
 slajdów) na wyraźną prośbę właściciela.
+
+---
+
+# G-3 (ciąg dalszy) — menu dokumentu. Właściciel: *„poczekaj, to może jeszcze nie koniec"*
+
+Miał rację. Pod przyciskiem `…` siedzi warstwa, której nie było w bocznych paskach.
+
+## ★★★ NAJWAŻNIEJSZE: Gamma sama ostrzega, że PPTX się rozjedzie
+
+Panel eksportu, na naszym własnym decku, **bez pytania**:
+
+> ⚠ **„1 slide has overflowing content"** — *„Layouts may shift after exporting to
+> PowerPoint and Google Slides"* — z przyciskiem **„Go to slides"**.
+
+**To jest potwierdzenie z najlepszego możliwego źródła.** Analityk G-1 przewidział
+ten problem („podmiana kroju zmienia złamania wierszy", „identyczny render w
+PowerPoint/Keynote/Google Slides — NIEMOŻLIWE") i wpisał go jako największe ryzyko.
+Teraz wiemy, że **Gamma, wzorzec, którego nie umiemy dogonić, ma dokładnie ten sam
+problem — i nie udaje, że go nie ma.**
+
+**Ich rozwiązanie do skopiowania 1:1:** wykryj przepełnienie **przed** eksportem,
+powiedz o tym wprost, i **daj link do slajdu, który się nie mieści**. Nie milcz i nie
+próbuj ratować autodopasowaniem (które i tak psuje typografię).
+
+To zamyka też decyzję o formacie dystrybucji: **PDF dla odbiorcy, PPTX dla
+edytujących** — bo tak działa nawet Gamma.
+
+**Jakość eksportu** ma trzy stopnie: `Basic` (mniejszy plik, niższa jakość) ·
+`Standard` (domyślny, rekomendowany) · `Detailed` (najlepsza jakość, duży plik).
+**Formaty:** PDF · PowerPoint · Google Slides.
+
+## ★★ Deck pamięta swoje źródło — „View source prompt"
+
+Pozycja `View source prompt` **cofa do ekranu generowania z zachowanym poleceniem
+ORAZ konspektem**. Czyli prezentacja niesie w sobie pełne pochodzenie: z jakiego
+polecenia powstała i przez jaką narrację przeszła — i da się z tego wygenerować ponownie.
+
+To jest wzorzec, który u nas ma **bezpośredni odpowiednik**: dyżur 207 wprowadził
+`source_type='ai_chat_proposal'` i `source_id` przy zadaniach z czatu. **Ta sama
+zasada, inny obiekt.** Warto ją rozciągnąć na dokumenty i decki.
+
+## Pozostałe pozycje menu dokumentu
+`Settings` · `Undo` · `Add to favorites` · **`Version history`** · `View source prompt` ·
+**`Logo, colors, fonts`** (skrót do edytora motywu) · **`Page setup`** · `Export` ·
+`Comments` · **`Analytics`** (kto oglądał i jak długo) · **`Publish to site`**
+(prezentacja jako strona internetowa) · `Duplicate` · **`Create from this (Remix)`** ·
+**`Save copy as template`** · `Delete`.
+
+Dwie z nich opisują model pracy, którego u nas nie ma:
+- **`Save copy as template`** — szablon powstaje **z gotowego, udanego decku**, a nie
+  jest projektowany osobno. To odwrotność naszego `TemplateBuilder`.
+- **`Publish to site`** — ten sam obiekt jest prezentacją i stroną. Stąd „Fluid" jako
+  domyślne płótno.
+
+## Koszt zmierzony
+Licznik kredytów: **6 108 → 6 018**. Wygenerowanie decku 10 slajdów z obrazami
+kosztowało **90 kredytów**.
+
+## Higiena
+Motyw zamknięty przez `Cancel` — zero zmian. Ekran generowania opuszczony przez
+`Back` — **nie wygenerowano drugiego decku**. Nic nie pobrano, nic nie opublikowano.
