@@ -174,3 +174,10 @@ modułem programu i mogą blokować licznik przez wiele tygodni** — `GEN-5` to
 budowa od zera. Nadzorca ma obowiązek raportować postęp generatorów **osobno**
 od postępu pozostałych piętnastu modułów, żeby licznik `N z 16` nie ukrywał
 stanu prac nad generatorami.
+
+## Dzień 235 — korekta GEN-2/GEN-3/GEN-4 na stan 2026-09-01
+
+- `GEN-2`: decyzja D-8 jest wdrożona jako stała `GROUNDING_ACRONYM_RULE = 'allowed'`; nie jest to flaga środowiskowa (`server/src/services/documentStudio/documentBlockContentGenerator.ts:441-442`, brak trafień `grounding` w `server/src/config/FeatureFlags.ts`). Bramka jakości pozostaje otwarta: jedyny zmierzony plik `day190-real-llm-plan.docx`, SHA-256 `3cf5749e2aea1f2e43f433808a668a2bfefcde1c733ddc1f9f8d009e2314c6ac`, ma 269 słów i K5 `FAIL` (`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY190_DRUGI_KASOWNIK_REPORT.md:215-224`); dyżur 195 nie zostawił pliku po cleanupie (`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY195_DOKUMENT_REPORT.md:104-114`).
+- `GEN-3`: rejestr zawiera 9 identyfikatorów szablonów, w tym pominięte wcześniej `threeScenarioPnL` i `unitEconomics` (`server/src/services/workbook/templates/index.ts:858-936`). Status pozostaje `NOT_ASSESSED`; ten pomiar nie ocenia jakości XLSX rubryką.
+- `GEN-4`: `materializedBrief` jest przekazywany do `mapOutlineBlueprintToDeckSlides` (`server/src/routes/presentations.routes.ts:2445-2468`), a mapper czyta `briefLines` (`server/src/services/presentationTemplateRuntimeService.ts:692-943`). Dwa wejścia renderują wspólny `PresentationBriefModal` (`src/components/AIChat/KimiWorkspace/ArtifactModuleHome.tsx:27,269`; `src/components/ReportsAndPresentations/TemplatesTabContent.tsx:38,193`). Znany residual `default → smart_layout` i status `PARTIAL` pozostają bez zmian.
+- `GEN-5`: architekt jest realnie montowany na zakładce `templates` (`src/components/DocumentStudio/DocumentStudioView.tsx:911-916`), lecz jakość wynikowego DOCX nadal nie ma nowego pomiaru rubryką; nie wpisano `FIXED` ani `VERIFIED`.
