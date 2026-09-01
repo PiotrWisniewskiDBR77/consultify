@@ -1,212 +1,142 @@
 /**
- * Dev-render host dla ODWRÓCONEGO splitu /chat (decyzja Piotra, D17).
+ * Dev-render: ODWRÓCONY split /chat (decyzja Piotra, D17) — artefakt po LEWEJ,
+ * Teresa po PRAWEJ.
  *
- * Doktryna D17 „panel Teresy zawsze po PRAWEJ" obowiązuje LITERALNIE także w
- * konwersacyjnym splicie /chat: artefakt (canvas/dokument) po LEWEJ, rozmowa/
- * Teresa (UnifiedChatPanel) po PRAWEJ — odwrotnie niż idiom ChatGPT/Claude.
+ * ★ NAPRAWA PARYTETU 2026-09-01 (AUDYT_PRZYRZADU_20260901.md, Kategoria 4).
+ * Poprzednia wersja tego pliku miała ATRAPĘ OBU STRON: własny `ArtifactMock`
+ * i własny `TeresaChatMock`, z ręcznie odtworzonymi klasami `lg:order-*`.
+ * Właściciel oceniał więc rysunek układu, nie układ. Nagłówek tłumaczył to
+ * tym, że „realny UnifiedChatPanel ciągnie store/API/logowanie i nie zmontuje
+ * się w harnessie" — sprawdzone: montuje się, jeśli wypełnić store auth
+ * i podstawić wołania listy konwersacji/wiadomości.
  *
- * Realny `<UnifiedChatPanel>` ciągnie store/API/logowanie i nie zmontuje się w
- * harnessie, więc TREŚĆ jest mockowana — ale POWŁOKA/LAYOUT odwzorowuje 1:1
- * klasy zmienione w UnifiedChatPanel.tsx: `lg:order-1` na aside artefaktu,
- * `lg:order-2` na kolumnie czatu, resizer na PRAWEJ krawędzi canvasu
- * (`right-0 translate-x-1/2`). Cel story = ODBIÓR DECYZJI UKŁADU (co po której
- * stronie + gdzie divider). Tokeny c-* (light+dark), zero crimson, focus=c-focus.
- * Bez store/API/logowania. Motyw/lang z URL (?theme, ?lang).
+ * Teraz montujemy REALNY `<UnifiedChatPanel mode="full">`
+ * (`src/components/AIChat/UnifiedChatPanel.tsx`) — ten sam komponent, który
+ * renderuje `/chat`. Podział, o który chodzi w D17, jest JEGO wewnętrznym
+ * układem: `chat-work-panel` (artefakt, `lg:order-1`, linia 7360) po lewej,
+ * kolumna kompozytora rozmowy (`lg:order-2`, linia 6552) po prawej. Panel
+ * artefaktu otwieramy tak, jak robi to produkcja — parametrem adresu
+ * `?workPanel=1` (UnifiedChatPanel.tsx:6360), nie podmianą stanu.
+ *
+ * Zero backendu: podstawiamy tylko wołania, które ten ekran robi przy montażu.
+ * Zrzut robi nadzorca przed odbiorem właściciela (CLAUDE.md #7).
+ *
+ * URL: ?screen=chat-split-teresa-right[&lang=pl|en][&theme=light|dark]
  */
-import { ArrowUp, FileText, History, Plus, Sparkles, UserRound } from 'lucide-react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
-// ── Mock: LEWA strona = artefakt (dokument roboczy w canvasie) ─────────────
-function ArtifactMock({ isPl }: { isPl: boolean }): React.ReactElement {
-  return (
-    <div className="flex h-full flex-col bg-c-surface">
-      {/* pasek artefaktu */}
-      <div className="flex h-[42px] items-center gap-2 border-b border-c-border-subtle bg-c-surface/50 px-4 backdrop-blur-sm">
-        <FileText size={15} className="text-c-text-muted" />
-        <span className="text-sm font-semibold text-c-text">
-          {isPl ? 'Strategia wejścia na rynek DE' : 'DE market-entry strategy'}
-        </span>
-        <span className="ml-auto text-[11px] text-c-text-muted">
-          {isPl ? 'Dokument · roboczy' : 'Document · draft'}
-        </span>
-      </div>
-      {/* treść dokumentu */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        <div className="mx-auto max-w-[560px]">
-          <h1 className="mb-3 text-xl font-bold text-c-text">
-            {isPl ? 'Ekspansja DE — teza i hipotezy' : 'DE expansion — thesis & hypotheses'}
-          </h1>
-          <p className="mb-4 text-sm leading-relaxed text-c-text-secondary">
-            {isPl
-              ? 'Rynek niemiecki oferuje 3,2× większy TAM w segmencie B2B niż rynek krajowy, ale wejście wymaga lokalnego partnera dystrybucyjnego oraz zgodności regulacyjnej.'
-              : 'The German market offers a 3.2× larger B2B TAM than the home market, but entry requires a local distribution partner and regulatory compliance.'}
-          </p>
-          <h2 className="mb-2 mt-6 text-sm font-semibold uppercase tracking-wide text-c-text-muted">
-            {isPl ? 'Kluczowe hipotezy' : 'Key hypotheses'}
-          </h2>
-          <ul className="flex flex-col gap-2">
-            {[
-              isPl
-                ? 'Popyt: 4 z 6 wywiadów potwierdza lukę w kanałach.'
-                : 'Demand: 4 of 6 interviews confirm the channel gap.',
-              isPl
-                ? 'Konkurencja: 2 lokalnych graczy, brak lidera premium.'
-                : 'Competition: 2 local players, no premium leader.',
-              isPl
-                ? 'Ryzyka: bariery regulacyjne DE — do zweryfikowania.'
-                : 'Risks: DE regulatory barriers — to verify.',
-            ].map((t, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
-              >
-                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-c-surface text-[10px] font-semibold text-c-text-muted">
-                  {i + 1}
-                </span>
-                <p className="text-sm leading-snug text-c-text-secondary">{t}</p>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 rounded-xl border border-c-border bg-c-surface-raised px-4 py-3">
-            <p className="text-xs leading-relaxed text-c-text-muted">
-              {isPl
-                ? 'Blok generowany przez Teresę — edytuj w miejscu lub poproś o rozwinięcie z panelu po prawej.'
-                : 'Block generated by Teresa — edit inline or ask for expansion from the right panel.'}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+import { QueryClientProvider } from '@tanstack/react-query';
+
+import { UnifiedChatPanel } from '../../src/components/AIChat/UnifiedChatPanel';
+import { AccessPolicyProvider } from '../../src/contexts/AccessPolicyContext';
+import { AIProvider } from '../../src/contexts/AIContext';
+import { AutoSaveProvider } from '../../src/contexts/AutoSaveContext';
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+import { HelpProvider } from '../../src/contexts/HelpContext';
+import { OrgProvider } from '../../src/contexts/OrgContext';
+import { TeresaVoiceProvider } from '../../src/contexts/TeresaVoiceContext';
+import { TrialProvider } from '../../src/contexts/TrialContext';
+import { createAppQueryClient } from '../../src/lib/createAppQueryClient';
+import { V8Provider } from '../../src/providers/V8Provider';
+import { Api } from '../../src/services/api';
+import { useAppStore } from '../../src/store/useAppStore';
+import { useConversationStore } from '../../src/store/useConversationStore';
+
+const CONVERSATION_ID = 'conv-atelier-toys-0001';
+
+// Ten sam klient co produkcyjny `AppProviders` (src/providers/AppProviders.tsx:23).
+const queryClient = createAppQueryClient();
+
+// Panel artefaktu otwiera się TĄ SAMĄ drogą co w produkcji: parametrem adresu
+// `?workPanel=1` (UnifiedChatPanel.tsx:6360-6369, czyta `window.location`).
+// Dopisujemy go do adresu harnessu, żeby zrzut był deterministyczny bez klikania
+// — nie podmieniamy stanu komponentu.
+{
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has('workPanel')) {
+    url.searchParams.set('workPanel', '1');
+    window.history.replaceState(null, '', url.toString());
+  }
 }
 
-// ── Mock: PRAWA strona = rozmowa / Teresa (UnifiedChatPanel) ───────────────
-function TeresaChatMock({ isPl }: { isPl: boolean }): React.ReactElement {
-  const messages: Array<{ role: 'ai' | 'user'; text: string }> = [
+useAppStore.setState({
+  currentUser: {
+    id: 'usr-piotr',
+    email: 'piotr@atelier-toys.pl',
+    firstName: 'Piotr',
+    lastName: 'Wiśniewski',
+    role: 'OWNER',
+    organizationId: 'org-atelier-toys-0001',
+  },
+  currentOrganization: { id: 'org-atelier-toys-0001', name: 'Atelier Toys Sp. z o.o.' },
+  isAuthInitializing: false,
+} as never);
+
+// Rozmowa po prawej — bez niej kolumna Teresy jest pusta i zrzut nie pokazuje
+// tego, co decyzja D17 rozstrzyga (co stoi po której stronie).
+useConversationStore.setState({
+  activeConversationId: CONVERSATION_ID,
+  activeMessages: [
     {
+      id: 'msg-1',
+      conversationId: CONVERSATION_ID,
       role: 'user',
-      text: isPl ? 'Rozpisz tezę wejścia na rynek DE.' : 'Draft the DE market-entry thesis.',
+      content: 'Rozpisz tezę wejścia na rynek niemiecki.',
+      messageType: 'text',
+      createdAt: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
     },
     {
+      id: 'msg-2',
+      conversationId: CONVERSATION_ID,
       role: 'ai',
-      text: isPl
-        ? 'Gotowe — dodałam tezę i 3 hipotezy do dokumentu po lewej. Chcesz, żebym rozwinęła sekcję ryzyk regulacyjnych?'
-        : 'Done — I added the thesis and 3 hypotheses to the document on the left. Want me to expand the regulatory risks section?',
+      content:
+        'Gotowe — tezę i trzy hipotezy dopisałam do dokumentu po lewej. Rozwinąć sekcję ryzyk regulacyjnych?',
+      messageType: 'text',
+      createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     },
+  ],
+} as never);
+
+Object.assign(Api, {
+  workCanvasListDrafts: async () => [],
+  getConversations: async () => [
     {
-      role: 'user',
-      text: isPl ? 'Tak, rozwiń ryzyka.' : 'Yes, expand the risks.',
+      id: CONVERSATION_ID,
+      title: 'Strategia wejścia na rynek DE',
+      updatedAt: new Date().toISOString(),
     },
-  ];
-  return (
-    <div className="flex h-full flex-col bg-c-bg">
-      {/* header Teresy */}
-      <div className="flex h-[42px] items-center justify-between border-b border-c-border-subtle bg-c-surface/50 px-4 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-c-surface-raised">
-            <Sparkles size={13} className="text-c-text-muted" />
-          </span>
-          <span className="text-sm font-semibold text-c-text">Teresa</span>
-          <span className="text-[11px] text-c-text-muted">
-            {isPl ? '· asystent' : '· assistant'}
-          </span>
-        </div>
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            aria-label={isPl ? 'Historia' : 'History'}
-            className="rounded-lg p-1.5 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          >
-            <History size={16} strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            aria-label={isPl ? 'Nowy czat' : 'New chat'}
-            className="rounded-lg p-1.5 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          >
-            <Plus size={16} strokeWidth={1.75} />
-          </button>
-        </div>
-      </div>
-      {/* strumień wiadomości */}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-        {messages.map((m, i) =>
-          m.role === 'user' ? (
-            <div key={i} className="flex justify-end">
-              <div className="flex max-w-[80%] items-start gap-2">
-                <div className="rounded-2xl rounded-tr-none bg-c-surface-raised px-3 py-2 text-sm text-c-text">
-                  {m.text}
-                </div>
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-c-border-subtle bg-c-surface">
-                  <UserRound size={13} className="text-c-text-muted" />
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div key={i} className="flex justify-start">
-              <div className="flex max-w-[85%] items-start gap-2">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-c-surface-raised">
-                  <Sparkles size={12} className="text-c-text-muted" />
-                </span>
-                <div className="rounded-2xl rounded-tl-none border border-c-border-subtle bg-c-surface px-3 py-2 text-sm leading-relaxed text-c-text-secondary">
-                  {m.text}
-                </div>
-              </div>
-            </div>
-          )
-        )}
-      </div>
-      {/* composer */}
-      <div className="border-t border-c-border-subtle p-3">
-        <div className="flex items-end gap-2 rounded-2xl border border-c-border bg-c-surface px-3 py-2 focus-within:ring-2 focus-within:ring-c-focus">
-          <textarea
-            rows={1}
-            placeholder={isPl ? 'Napisz do Teresy…' : 'Message Teresa…'}
-            className="min-h-[24px] flex-1 resize-none bg-transparent text-sm text-c-text placeholder:text-c-text-muted focus:outline-none"
-          />
-          <button
-            type="button"
-            aria-label={isPl ? 'Wyślij' : 'Send'}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-c-text text-c-bg transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          >
-            <ArrowUp size={15} strokeWidth={2} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+  ],
+  getConversationMessages: async () => [],
+  getMessages: async () => [],
+});
 
 export default function ChatSplitTeresaRightScreen(): React.ReactElement {
-  const isPl =
-    (document.documentElement.lang || 'pl').startsWith('pl') ||
-    new URLSearchParams(window.location.search).get('lang') !== 'en';
-
-  // Odwzorowanie zmiennej szerokości z UnifiedChatPanel (canvas = 42% szer.).
-  const rootStyle = { ['--work-canvas-width' as string]: '42%' } as React.CSSProperties;
-
   return (
-    // 1:1 z UnifiedChatPanel: root=`relative flex h-full overflow-hidden bg-c-bg`
-    <div className="relative flex h-screen w-full overflow-hidden bg-c-bg" style={rootStyle}>
-      {/* PRAWA w DOM, ale lg:order-2 → wizualnie po PRAWEJ: kolumna czatu/Teresy */}
-      <div className="group/composer flex h-full min-w-0 flex-col transition-[width] duration-200 lg:order-2 lg:w-[calc(100%_-_var(--work-canvas-width))]">
-        <TeresaChatMock isPl={isPl} />
-      </div>
-
-      {/* aside artefaktu: lg:order-1 → wizualnie po LEWEJ; resizer na PRAWEJ krawędzi */}
-      <aside className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-c-bg shadow-2xl lg:relative lg:z-auto lg:order-1 lg:w-[var(--work-canvas-width)] lg:shadow-none">
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          tabIndex={0}
-          className="group absolute inset-y-0 right-0 z-50 hidden w-4 translate-x-1/2 cursor-col-resize touch-none outline-none lg:block"
-        >
-          <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-c-border transition-colors group-hover:bg-c-border-strong group-focus:bg-c-focus-solid" />
-        </div>
-        <div className="min-h-0 flex-1">
-          <ArtifactMock isPl={isPl} />
-        </div>
-      </aside>
-    </div>
+    <MemoryRouter initialEntries={['/chat?workPanel=1']}>
+      <QueryClientProvider client={queryClient}>
+        <FeatureFlagsProvider showDevTools={false}>
+          <AutoSaveProvider>
+            <HelpProvider>
+              <V8Provider>
+                <OrgProvider>
+                  <AccessPolicyProvider>
+                    <TrialProvider>
+                      <AIProvider>
+                        <TeresaVoiceProvider>
+                          <div className="h-screen w-screen overflow-hidden bg-c-bg">
+                            <UnifiedChatPanel mode="full" showHistoryTrigger showFocusMode />
+                          </div>
+                        </TeresaVoiceProvider>
+                      </AIProvider>
+                    </TrialProvider>
+                  </AccessPolicyProvider>
+                </OrgProvider>
+              </V8Provider>
+            </HelpProvider>
+          </AutoSaveProvider>
+        </FeatureFlagsProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 }

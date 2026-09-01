@@ -28,15 +28,11 @@ assessment-presentation-view	R1	AssessmentPresentationView	dług zastany 2026-09
 assessment-reports-table	R1	ReportsTable	dług zastany 2026-09-01 (audyt przyrządu): montuje <ReportsTable>, którego żaden plik src/ nie renderuje
 audyty-drd-report	R1	AuditsHub	dług zastany 2026-09-01 (audyt przyrządu): montuje <AuditsHub>, którego żaden plik src/ nie renderuje
 audyty-warsztat-kryterium	R1	CriterionWorkspaceGate	dług zastany 2026-09-01 (audyt przyrządu): montuje <CriterionWorkspaceGate>, którego żaden plik src/ nie renderuje
-calendar-sync-settings	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
-calendar-sync-settings	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
+calendar-sync-settings	R1	SettingsView	FAŁSZYWY ALARM BRAMKI, nie dług: SettingsView JEST renderowany w src/routes/AppRoutes.tsx:3289 (lazyWithRetry + <Route path="*">). Bramka go nie widzi, bo bezKomentarzy() paruje /* … */ zachłannie przez komentarze JSX i zjada ten fragment AppRoutes — ta sama pozycja stoi tu dla ustawienia-grupy. Ekran montuje realny SettingsView na sekcji calendar-sync (naprawa parytetu 2026-09-01).
 canvas-kebab-restructure	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
-canvas-new-doc	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 canvas-toolbar-md-history	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 capability-gate-demo	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 capability-gate-demo	R1	EffectiveAccessOverrideContext	dług zastany 2026-09-01 (audyt przyrządu): montuje <EffectiveAccessOverrideContext>, którego żaden plik src/ nie renderuje
-chat-split-teresa-right	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
-chat-split-teresa-right	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 crimson-mywork-wave2	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 crimson-mywork-wave2	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 crimson-wave-chrome-2026-07-26	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
@@ -80,8 +76,6 @@ idea-table-tool-grouping	R1	PlatformGridView	dług zastany 2026-09-01 (audyt prz
 idea-table-tool-kebab	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
 idea-table-tool-paste	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
 idea-table-tool-sortfilter	R1	PlatformGridView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PlatformGridView>, którego żaden plik src/ nie renderuje
-idea-templates-catalog	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
-idea-templates-catalog	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
 ideas-preview-overlay	PODPIS	naglowek	dług zastany 2026-09-01 (audyt przyrządu): rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut
 initiatives-portfolio-analysis	R1	PortfolioAnalysisView	dług zastany 2026-09-01 (audyt przyrządu): montuje <PortfolioAnalysisView>, którego żaden plik src/ nie renderuje
 karta-task-pelna	R1	(brak montażu)	dług zastany 2026-09-01 (audyt przyrządu): nie montuje ŻADNEGO komponentu produkcyjnego — pokazuje własny markup, nie produkt
