@@ -83,6 +83,8 @@ Zakres wzorca instrukcji obejmuje 87 plików `.tsx`: 33 nazwane jak ekran/hub/vi
 
 Przed dokumentacją: 19 plików, 119 pełnych nazw, 119 PASS, 0 FAIL, 0 SKIP, `--retry=0`. Pakiet zawiera testy PG i jednostkowe; jawny `DATABASE_URL`, `RUN_DB_TESTS=1`, `MOCK_DB=false`, `DB_TYPE=postgres`, strażniki V8/auth/results i JWT były w tej samej linii. Nie przedstawiam tego jako dowodu wszystkich tras HTTP. Pułapka (e) została wyłączona przez realne `\d`, które obaliło założenia o martwych tabelach.
 
+Po dokumentacji: ta sama komenda, 19 plików i 119 pełnych nazw; 119 PASS, 0 FAIL, 0 SKIP. `diff przed-nazwy.txt po-nazwy.txt` ma 0 linii — żadna nazwa nie zniknęła ani nie została dodana.
+
 ## Korekty wobec instrukcji
 
 1. T3 obalona: `assessments.source_type/source_reference` istnieją; producent `730_beta_schema_fixes.sql:36-37` jest żywy.
@@ -100,3 +102,5 @@ Przed dokumentacją: 19 plików, 119 pełnych nazw, 119 PASS, 0 FAIL, 0 SKIP, `-
 ## Artefakty i mianowniki
 
 Artefakty poza repo: `/private/tmp/cx-day240-assessment-artefakty`. Mianowniki: 880/0 migracji; 12 kolumn `assessment_responses`; 87 plików TSX według jawnego globu; 33/54 klasyfikacja nazwowa; 119 testów według pełnych nazw; wszystkie liczby danych 0/0 dotyczą wyłącznie pustej lokalnej bazy.
+
+Pełny manifest SHA-256: `/private/tmp/cx-day240-assessment-artefakty/SHA256SUMS.txt`.
