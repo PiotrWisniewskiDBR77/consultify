@@ -104,3 +104,31 @@ przy każdej z osobna, bo część tras może zwracać dane, których front i ta
 
 **To jest ten sam wzorzec „rodzina naprawiona w części", już czwarty raz tego dnia —
 tym razem WEWNĄTRZ jednego pliku.**
+
+---
+
+# DRUGI PRZYPADEK TEJ SAMEJ PUŁAPKI — znaleziony tego samego dnia, przy odbiorze dyżuru 239
+
+```
+server/src/routes/tasks.routes.ts       ← MARTWY, zero importerow
+server/src/routes/pmo/tasks.routes.ts   ← ZYWY, Gateway.ts:246, montowany pod /api/tasks
+```
+
+**Dokładnie ten sam układ co przy ustawieniach AI: płaski plik martwy, plik w podkatalogu żywy.**
+
+Audytor odbierający dyżur 239 **sam z siebie sprawdził, do którego z nich rozwiązuje się
+cytat w raporcie** — i potwierdził, że wykonawca trafił w **żywy**. Zrobił to, **bo znał
+przypadek z ustawień AI**, nie dlatego, że instrukcja mu kazała.
+
+## Co to zmienia
+**To nie jest pojedynczy wypadek, tylko WZORZEC ORGANIZACJI KODU** w tym repozytorium:
+stary plik zostaje na płasko, nowy powstaje w podkatalogu, **stary nie dostaje żadnego
+oznaczenia**. Trzy niezależne osoby wpadły w pierwszy przypadek jednego dnia; **drugi
+istniał obok i nikt go nie zgłosił.**
+
+**Usunięty** — zero importerów potwierdzone poleceniem z cytowanym wzorcem.
+
+## Zadanie systemowe
+**Przemieść całe `server/src/routes/` w poszukiwaniu par „płaski plik obok pliku
+w podkatalogu o tej samej nazwie".** Każda taka para to potencjalna pułapka tej klasy —
+i **każda wygląda dokładnie jak żywy kod.**
