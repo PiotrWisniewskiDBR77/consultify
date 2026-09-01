@@ -849,7 +849,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   },
   'prawy-pas-jedna-formula': {
     label:
-      'GRAFIKA — Prawy pas jako JEDNA FORMUŁA (szyna 56px: Artefakt · Teresa · narzędzie zależne od typu). Interaktywny — przełącznik notatka/idea i Artefakt/Teresa klikany na ekranie.',
+      'GRAFIKA — Prawy pas jako JEDNA FORMUŁA (szyna 56px: Artefakt · narzędzie zależne od typu). Bez czatu w pasie — decyzja 2026-09-01 „jedna Teresa, w swoim oknie". Interaktywny — przełącznik notatka/idea.',
     render: () => <PrawyPasJednaFormulaScreen />,
   },
   'prawy-pas-jedna-formula-notatka-artefakt': {
@@ -864,7 +864,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     ),
   },
   'prawy-pas-jedna-formula-notatka-teresa': {
-    label: 'GRAFIKA — jw., wariant do zrzutu: Notatka · tryb Teresa (pełna wysokość, własne pole pisania).',
+    label:
+      'GRAFIKA — jw., Notatka. Dawny „tryb Teresa" ODRZUCONY 2026-09-01 („jedna Teresa, w swoim oknie") — adres zostaje, renderuje panel artefaktu z przyciskiem „Zapytaj Teresę o tę notatkę".',
     render: () => (
       <PrawyPasJednaFormulaScreen
         initialObjectType="notatka"
@@ -885,7 +886,8 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     ),
   },
   'prawy-pas-jedna-formula-idea-teresa': {
-    label: 'GRAFIKA — jw., wariant do zrzutu: Idea · tryb Teresa (pełna wysokość, własne pole pisania).',
+    label:
+      'GRAFIKA — jw., Idea. Dawny „tryb Teresa" ODRZUCONY 2026-09-01 („jedna Teresa, w swoim oknie") — adres zostaje, renderuje panel artefaktu z przyciskiem „Zapytaj Teresę o tę ideę".',
     render: () => (
       <PrawyPasJednaFormulaScreen
         initialObjectType="idea"
