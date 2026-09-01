@@ -92,12 +92,17 @@ function SimulatedWorkshopColumn({
   side: 'left' | 'right';
 }): React.ReactElement {
   return (
+    // Kolumna-atrapa harnessu: box zostaje (rezerwuje realne 320px szerokości
+    // dla środkowej flex-1 — to jest jej JEDYNY cel, patrz komentarz wyżej),
+    // tylko etykieta-tekst znika przy zrzutach (bramka PODPIS, 2026-09-01).
     <div
       className={`hidden w-80 shrink-0 bg-c-surface-raised/40 p-3 text-[11px] text-c-text-muted md:block ${
         side === 'left' ? 'border-r border-c-border-subtle' : 'border-l border-c-border-subtle'
       }`}
     >
-      {label} (320px — nie część tego dowodu, symulowana szerokość realnej kolumny)
+      <span data-dev-render-chrome="true">
+        {label} (320px — nie część tego dowodu, symulowana szerokość realnej kolumny)
+      </span>
     </div>
   );
 }
@@ -109,7 +114,11 @@ export default function VaultFolderBlockProofScreen(): React.ReactElement {
     <div className="flex h-screen w-screen items-stretch overflow-hidden bg-c-bg">
       <SimulatedWorkshopColumn label="AgentWorkshopControls" side="left" />
       <div className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-c-bg p-8">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-c-text-muted">
+        {/* Etykieta harnessu (nazwa dowodu) — schowana przy zrzutach (bramka PODPIS, 2026-09-01). */}
+        <h2
+          className="mb-2 text-xs font-semibold uppercase tracking-wider text-c-text-muted"
+          data-dev-render-chrome="true"
+        >
           VLT-FOLDERS — klocek "Vault-kontekst": select Poziom + DRUGI select Folder
         </h2>
         <p className="mb-4 text-[11px] text-c-text-muted">

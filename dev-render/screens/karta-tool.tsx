@@ -320,7 +320,11 @@ export function KartaToolScreen(): React.ReactElement {
             ) : null}
           </div>
           {started && (
-            <div className="shrink-0 border-t border-c-border-subtle bg-c-surface-raised px-4 py-2 text-xs text-c-text-secondary">
+            // Pasek debugowy harnessu (log sesji) — schowany przy zrzutach (bramka PODPIS, 2026-09-01).
+            <div
+              className="shrink-0 border-t border-c-border-subtle bg-c-surface-raised px-4 py-2 text-xs text-c-text-secondary"
+              data-dev-render-chrome="true"
+            >
               <span className="font-semibold text-c-text">Sesja utworzona (harness):</span>{' '}
               <span className="tabular-nums">{started.at}</span> · {started.name} ·{' '}
               <span className="font-mono">{started.toolType}</span> ·{' '}

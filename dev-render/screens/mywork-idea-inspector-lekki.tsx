@@ -95,8 +95,14 @@ export default function MyWorkIdeaInspectorLekkiScreen(): React.ReactElement {
 
   return (
     <div className="flex h-screen w-screen items-stretch justify-end bg-c-bg">
+      {/* Centrum — filler harnessu wyłącznie po to, żeby inspektor po prawej
+          miał realną szerokość-tokenu (jak w produkcie, patrz komentarz niżej).
+          Kontener zostaje (daje layout), tekst-etykieta znika przy zrzutach
+          (bramka PODPIS, 2026-09-01). */}
       <div className="flex-1 min-w-0 flex items-center justify-center p-10 text-c-text-muted text-sm">
-        (centrum: Tabela pomysłów — patrz ekran „idea-table"; ten harness izoluje wyłącznie inspektor)
+        <span data-dev-render-chrome="true">
+          (centrum: Tabela pomysłów — patrz ekran „idea-table"; ten harness izoluje wyłącznie inspektor)
+        </span>
       </div>
       {/*
         Gospodarz o szerokości tokenu — tak samo jak w produkcie

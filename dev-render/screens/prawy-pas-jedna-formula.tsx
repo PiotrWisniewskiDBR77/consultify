@@ -634,7 +634,9 @@ export const TeresaRailPanel: React.FC<{ data: ObjectData }> = ({ data }) => (
 
 const NotatkaCentrum: React.FC<{ data: ObjectData }> = ({ data }) => (
   <div className="mx-auto max-w-[640px] px-8 py-8">
-    <h1 className="mb-1 text-xl font-bold text-c-text">{data.title}</h1>
+    {/* Centrum (mock) — nie jest przedmiotem tego prototypu (przedmiot: prawy
+        pas). Nagłówek schowany przy zrzutach (bramka PODPIS, 2026-09-01). */}
+    <h1 className="mb-1 text-xl font-bold text-c-text" data-dev-render-chrome="true">{data.title}</h1>
     <p className="mb-6 text-xs text-c-text-muted">{data.subtitle}</p>
     {data.centrumParagraphs.map((p, i) => (
       <p key={i} className="mb-3 text-sm leading-relaxed text-c-text-secondary">

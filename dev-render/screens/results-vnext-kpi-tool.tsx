@@ -400,7 +400,7 @@ export default function ResultsVNextKpiToolScreen() {
     <MemoryRouter initialEntries={[initialPath]}>
       <div className="h-screen w-screen">
         <Routes>
-          <Route path={ROUTES.RESULTS_KPI.ROOT} element={<div data-testid="dev-render-back-to-registry" className="p-6 text-c-text">Powrót do rejestru KPI (dev-render marker)</div>} />
+          <Route path={ROUTES.RESULTS_KPI.ROOT} element={<div data-testid="dev-render-back-to-registry" className="p-6 text-c-text" data-dev-render-chrome="true">Powrót do rejestru KPI (dev-render marker)</div>} />
           <Route path={ROUTES.RESULTS_KPI.TOOL} element={<KpiToolPage />} />
           <Route path={ROUTES.RESULTS_KPI.DEVIATION_CASE} element={<KpiDeviationCaseSubview />} />
         </Routes>

@@ -36,7 +36,11 @@ export default function AgentPlanCanvasScreen(): React.ReactElement {
     <div className="h-screen w-screen overflow-y-auto bg-c-bg p-8">
       <div className="grid grid-cols-2 gap-8 max-w-5xl mx-auto">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-2">
+          {/* Etykieta harnessu (nazwa ścieżki) — schowana przy zrzutach (bramka PODPIS, 2026-09-01). */}
+          <h2
+            className="text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-2"
+            data-dev-render-chrome="true"
+          >
             Ścieżka ① — AI proponuje (klasyczny 5-fazowy)
           </h2>
           <React.Suspense fallback={<div className="text-c-text-muted text-sm">Loading…</div>}>
@@ -44,7 +48,11 @@ export default function AgentPlanCanvasScreen(): React.ReactElement {
           </React.Suspense>
         </div>
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-2">
+          {/* Etykieta harnessu (nazwa ścieżki) — schowana przy zrzutach (bramka PODPIS, 2026-09-01). */}
+          <h2
+            className="text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-2"
+            data-dev-render-chrome="true"
+          >
             Ścieżka ② — Ręcznie z klocków (pusty start)
           </h2>
           <React.Suspense fallback={<div className="text-c-text-muted text-sm">Loading…</div>}>

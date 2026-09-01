@@ -192,8 +192,12 @@ if (!g.__COMMENTS_PANEL_FETCH__) {
 }
 
 function SimulatedMenu1(): React.ReactElement {
+  // Pasek harnessu, nie produkt — schowany przy zrzutach (bramka PODPIS, 2026-09-01).
   return (
-    <div className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary">
+    <div
+      className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary"
+      data-dev-render-chrome="true"
+    >
       <span className="font-semibold text-c-text">Consultify</span>
       <span>Finance</span>
       <span className="text-c-text-muted">(symulowane Menu 1 — nie część tego pakietu)</span>

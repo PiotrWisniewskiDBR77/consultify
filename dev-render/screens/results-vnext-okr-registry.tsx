@@ -600,11 +600,11 @@ const ResultsVNextOkrRegistryScreen: React.FC = () => {
           <Route path={ROUTES.RESULTS_OKR.SET} element={<OkrSetToolPage />} />
           <Route
             path={ROUTES.RESULTS_OKR.PROGRAMS}
-            element={<div data-testid="dev-render-okr-programs-marker" className="p-6 text-c-text">Programy OKR (dev-render marker — realna strona: OkrProgramsPage, harness results-vnext-okr-admin.tsx)</div>}
+            element={<div data-testid="dev-render-okr-programs-marker" className="p-6 text-c-text" data-dev-render-chrome="true">Programy OKR (dev-render marker — realna strona: OkrProgramsPage, harness results-vnext-okr-admin.tsx)</div>}
           />
           <Route
             path={ROUTES.RESULTS_OKR.CYCLES}
-            element={<div data-testid="dev-render-okr-cycles-marker" className="p-6 text-c-text">Cykle OKR (dev-render marker — realna strona: OkrCyclesPage, harness results-vnext-okr-admin.tsx)</div>}
+            element={<div data-testid="dev-render-okr-cycles-marker" className="p-6 text-c-text" data-dev-render-chrome="true">Cykle OKR (dev-render marker — realna strona: OkrCyclesPage, harness results-vnext-okr-admin.tsx)</div>}
           />
         </Routes>
       </MemoryRouter>

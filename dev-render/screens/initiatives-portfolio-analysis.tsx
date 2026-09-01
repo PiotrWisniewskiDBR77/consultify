@@ -157,8 +157,12 @@ export default function InitiativesPortfolioAnalysisScreen(): React.ReactElement
   return (
     <div className="flex h-screen w-screen flex-col bg-c-bg">
       {/* Pasek harnessu — NIE jest częścią produktu, służy tylko nawigacji po podwidokach
-          i pokazaniu, czy poszło realne żądanie sieciowe. */}
-      <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-2 dark:border-navy-700 dark:bg-navy-900">
+          i pokazaniu, czy poszło realne żądanie sieciowe. Schowany przy zrzutach
+          (bramka PODPIS, 2026-09-01) — funkcjonalny nadal w interaktywnym podglądzie. */}
+      <div
+        className="shrink-0 border-b border-slate-200 bg-white px-4 py-2 dark:border-navy-700 dark:bg-navy-900"
+        data-dev-render-chrome="true"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             harness · podwidok

@@ -231,7 +231,9 @@ export default function IdeasPreviewOverlayScreen(): React.ReactElement {
     // szerokość obszaru contentu), NIE kartka ograniczona do max-w-[1240px].
     <div className="min-h-screen bg-c-bg p-6">
       <div className="w-full">
-        <div className="mb-3">
+        {/* Pasek harnessu (tytuł story + przełącznik trybu) — schowany przy
+            zrzutach (bramka PODPIS, 2026-09-01). Produkt = TableWithPreviewLayout niżej. */}
+        <div className="mb-3" data-dev-render-chrome="true">
           <h1 className="text-lg font-semibold text-c-text">
             {isPl
               ? 'My Work → Ideas — podgląd desktop jako overlay (#4b)'

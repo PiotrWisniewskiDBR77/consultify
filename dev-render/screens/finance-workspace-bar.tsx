@@ -265,7 +265,8 @@ const VALUE_ROWS: Array<{ label: string; value: FinanceValue }> = [
 function ValuesDemoPanel(): React.ReactElement {
   return (
     <div className="p-6">
-      <h2 className="text-sm font-semibold text-c-text mb-1">
+      {/* Etykieta harnessu (nazwa dowodu-sceny) — schowana przy zrzutach (bramka PODPIS, 2026-09-01). */}
+      <h2 className="text-sm font-semibold text-c-text mb-1" data-dev-render-chrome="true">
         Dowód: brak danych nigdy nie renderuje się jako 0
       </h2>
       <p className="text-xs text-c-text-muted mb-4">
@@ -344,8 +345,12 @@ function ErrorBoundaryScene(): React.ReactElement {
 }
 
 function SimulatedMenu1(): React.ReactElement {
+  // Pasek harnessu, nie produkt — schowany przy zrzutach (bramka PODPIS, 2026-09-01).
   return (
-    <div className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary">
+    <div
+      className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary"
+      data-dev-render-chrome="true"
+    >
       <span className="font-semibold text-c-text">Consultify</span>
       <span>Finance</span>
       <span className="text-c-text-muted">(symulowane Menu 1 — nie część tego pakietu)</span>
