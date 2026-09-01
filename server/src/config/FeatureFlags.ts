@@ -53,6 +53,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
   ENABLE_TERESA_RECORD_CREATE: z.boolean().default(true),
   ENABLE_ARTIFACT_KNOWLEDGE_INDEX: z.boolean().default(false),
+  ENABLE_DECK_FROM_KNOWLEDGE: z.boolean().default(false),
   // Z4 transport (fala „Teresa steruje Ideą przez rejestr"): pozwala frontowi
   // dołożyć do zapytania czatu manifest akcji OTWARTEJ reprezentacji Idei
   // (src/actions/teresaActionManifest.ts). Model widzi je jako narzędzia; ich
@@ -247,6 +248,10 @@ export function loadFeatureFlags(): FeatureFlags {
     ENABLE_ARTIFACT_KNOWLEDGE_INDEX:
       process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
 
+    // Day231: organization-grounded outline generation. Opt-in until owner
+    // accepts the review UI and the content gate on real data.
+    ENABLE_DECK_FROM_KNOWLEDGE: process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true',
+
     // Z4 transport dla akcji otwartej Idei — default ON, jawne `false` jest
     // rollbackiem do lokalnych detektorów bez dwóch aktywnych executorów naraz.
     ENABLE_TERESA_IDEA_ACTIONS: process.env.ENABLE_TERESA_IDEA_ACTIONS !== 'false',
@@ -277,6 +282,10 @@ export const featureFlags = loadFeatureFlags();
 
 export function isArtifactKnowledgeIndexEnabled(): boolean {
   return process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true';
+}
+
+export function isDeckFromKnowledgeEnabled(): boolean {
+  return process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true';
 }
 
 export default featureFlags;

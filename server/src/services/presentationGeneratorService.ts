@@ -7,7 +7,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { isArtifactKnowledgeIndexEnabled } from '../config/FeatureFlags.js';
+import {
+  isArtifactKnowledgeIndexEnabled,
+  isDeckFromKnowledgeEnabled,
+} from '../config/FeatureFlags.js';
 import { all as pooledAll, get as pooledGet, run as pooledRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
@@ -54,6 +57,7 @@ import {
   deckDocumentFromUnifiedJson,
 } from './presentationDeckDocumentService.js';
 import { generateDeckVariants } from './presentationLayoutVariantsService.js';
+import { generateKnowledgeOutline } from './presentationKnowledgeOutlineService.js';
 import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
 import { applyIntentDensityDefaults } from './presentationStudioIntentDensityDefaultsService.js';
@@ -395,6 +399,7 @@ export interface DeckSetup {
    * (zod w DeckSetupSchema ścina nieznane pola), więc zero regresji.
    */
   brief?: string;
+  projectId?: string;
 }
 
 export interface SourceArtifact {
@@ -434,6 +439,9 @@ export interface OutlineItem {
   enabled: boolean;
   sourceRef?: string;
   sourceRefs?: string[];
+  teza?: string;
+  archetyp?: string;
+  zrodla?: Array<{ typ: string; id: string; etykieta: string }>;
   confidence?: number;
   density?: 'visual' | 'balanced' | 'document';
   /**
@@ -1504,7 +1512,8 @@ function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
 
 export async function generateOutline(
   setup: DeckSetup,
-  organizationId: string
+  organizationId: string,
+  actor?: { userId: string; projectId?: string }
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
   let templateOutlineUsed = false;
@@ -1518,7 +1527,27 @@ export async function generateOutline(
     strict: Boolean(setup.sourcePackStrict),
   });
 
-  if (setup.templateId) {
+  if (isDeckFromKnowledgeEnabled() && actor?.userId) {
+    const grounded = await generateKnowledgeOutline({
+      organizationId,
+      userId: actor.userId,
+      projectId: actor.projectId || setup.projectId,
+      title: setup.title,
+      audience: setup.audience,
+      goal: setup.goal,
+      language: setup.language,
+    });
+    outline = grounded.outline.map((item, index) => ({
+      intent: (item.archetyp || (index === 0 ? 'cover' : 'key_messages')) as SlideIntent,
+      title: item.tytul,
+      keyMessage: item.teza,
+      teza: item.teza,
+      archetyp: item.archetyp,
+      zrodla: item.zrodla,
+      sourceRefs: item.zrodla.map((source) => `${source.typ}:${source.id}`),
+      enabled: true,
+    }));
+  } else if (setup.templateId) {
     const template = await dbGet(
       `SELECT * FROM presentation_templates WHERE id = ? AND is_active = TRUE AND (organization_id IS NULL OR organization_id = ?)`,
       [setup.templateId, organizationId]
@@ -1565,9 +1594,13 @@ export async function generateOutline(
   });
 
   const deckId = uuidv4().replace(/-/g, '');
-  const resolvedSourceType =
-    setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
-  const resolvedSourceId = setup.sourceId || sourceArtifacts[0]?.id || null;
+  const knowledgeSources = outline.flatMap((item) => item.zrodla || []);
+  const resolvedSourceType = isDeckFromKnowledgeEnabled()
+    ? 'org_knowledge_outline'
+    : setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
+  const resolvedSourceId = isDeckFromKnowledgeEnabled()
+    ? actor?.projectId || setup.projectId || organizationId
+    : setup.sourceId || sourceArtifacts[0]?.id || null;
   // C7 — initiative linkage: when the deck's canonical source is an initiative
   // (sourceType 'INITIATIVE'/'initiative'), carry the id into the registry so
   // the initiative detail view can list this deck under "Artefakty".
@@ -1576,8 +1609,8 @@ export async function generateOutline(
       ? String(resolvedSourceId)
       : null;
   await dbRun(
-    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
+    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id, source_refs_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)`,
     [
       deckId,
       organizationId,
@@ -1625,6 +1658,7 @@ export async function generateOutline(
       null,
       resolvedSourceType,
       resolvedSourceId,
+      JSON.stringify(knowledgeSources),
     ]
   );
 

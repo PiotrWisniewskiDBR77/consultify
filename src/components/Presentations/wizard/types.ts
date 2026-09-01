@@ -303,6 +303,9 @@ export interface OutlineItem {
   enabled: boolean;
   sourceRef?: string;
   sourceRefs?: string[];
+  teza?: string;
+  archetyp?: string;
+  zrodla?: Array<{ typ: string; id: string; etykieta: string }>;
   confidence?: number;
   density?: 'visual' | 'balanced' | 'document';
   visualPolicy?: string;
