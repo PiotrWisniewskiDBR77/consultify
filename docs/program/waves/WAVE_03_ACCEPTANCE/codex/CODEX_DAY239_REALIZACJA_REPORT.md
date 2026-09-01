@@ -216,6 +216,8 @@ Dry-run (bez `--write`, bez `--confirm-batch`) rozważył 1 inicjatywę i pokaza
 
 Przed zmianą dokumentacji uruchomiono 6 licencjonowanych plików, 20 pełnych nazw, `--retry=0`: 20 PASS, 0 FAIL, 0 SKIP (`day239-przed.json`, `przed-nazwy.txt`). Konfiguracja root wykryła wszystkie wskazane pliki; nie użyto server configu, bo ten zbiór jest zebrany przez root `vitest.config.ts`.
 
+Po zmianie dokumentacji uruchomiono identyczną komendę: 20 PASS, 0 FAIL, 0 SKIP (`day239-po.json`, `po-nazwy.txt`). `diff przed-nazwy.txt po-nazwy.txt` ma 0 linii: żadna pełna nazwa nie została dodana ani usunięta. SHA-256 obu list nazw jest identyczne: `b33511e9707fe592140e019bb28be25c37c73634f1fef2d584a9bdb16e631952`.
+
 Pułapki: (a) `ENABLE_V8_GLOBAL=true`, choć pakiety nie dowodzą HTTP; (b) `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`; (c) `MOCK_DB=false DB_TYPE=postgres` i realny SQL widoczny w logu kontenera; (d) `ENABLE_TEST_AUTH_BYPASS=false`, choć pakiety nie dowodzą auth; (e) numery linii sprawdzono na markerze, a wymagania kanonu potwierdzono w `prepareExecutionTaskCreation`. `RUN_DB_TESTS=1`, jawny loopback `DATABASE_URL`, `NODE_ENV=test`, `JWT_SECRET` i `--retry=0` znajdowały się w tej samej linii polecenia. Nie twierdzę, że te testy dowodzą ścieżki HTTP przez ApiGateway — dowodzą schematu, transakcji i runnera.
 
 ## Korekty wobec instrukcji
@@ -237,3 +239,5 @@ Pułapki: (a) `ENABLE_V8_GLOBAL=true`, choć pakiety nie dowodzą HTTP; (b) `RES
 ## Artefakty
 
 Wszystkie znajdują się poza repo w `/private/tmp/cx-day239-realizacja-artefakty`. Kluczowe: `day239-reconciliation.sql`, `day239-tasks-schema.txt`, `day239-front-callers.txt`, `day239-back-callers.txt`, `day239-task-create-sql.log`, `day239-przed.json`, `przed-nazwy.txt`, rozjazd tipa. Końcowe sumy SHA-256 są odświeżane po przebiegu „po”.
+
+Manifest: `/private/tmp/cx-day239-realizacja-artefakty/SHA256SUMS.txt`. Kluczowe sumy: SQL rozliczeniowy `c1b543e646892166bc9bcea97fc163e6f97c6e77949f522a15d61dc7e75ddb37`; schemat 80 kolumn `5d58c8b9f4368471c84736385c25c1eec3304bff1d89231b176d6a69bd14f792`; log transakcji zadania `efe40d3b2506de6874f962747e2b480dbd48a2847418220b2f80bded1c0ca9eb`; pusty diff nazw `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
