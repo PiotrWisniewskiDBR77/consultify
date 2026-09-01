@@ -453,3 +453,35 @@ ekran — dzień po tym, jak właściciel zaakceptował sąsiedni ekran po polsk
 
 **Test:** jeśli po naprawie dwa sąsiadujące ekrany zaczynają mówić różnymi językami, różnymi
 słowami albo różnym stylem — reguła została rozciągnięta za daleko. Cofnij i zapytaj.
+
+## ★★ REGUŁA NR 17 — ekran harnessu pokazuje PRODUKT, nie własną kompozycję (2026-09-01, po audycie przyrządu)
+
+Ekran `dev-render/screens/*.tsx` istnieje po to, żeby właściciel obejrzał PRODUKT bez logowania.
+Nie wolno mu dokładać paska, panelu ani szyny, których produkcja nie stawia, montować komponentu,
+do którego w `src/` nie prowadzi żaden wołacz, przepisywać markupu zamiast montować komponent, ani
+ściskać treści w `max-w-*`, którego u wołacza nie ma. Kadr ma być tym, co widzi klient — nie
+lepszym, nie węższym, nie bogatszym.
+
+**Przed każdą partią do odbioru (obok reguły 15) obowiązkowo:**
+
+```
+node scripts/check-dev-render-parytet.mjs      # musi dać „CZYSTO" (kod wyjścia 0)
+```
+
+Bramka liczy trzy rzeczy: **R1** — każdy montowany komponent ma realnego wołacza w `src/`
+(a ekran montuje co najmniej jeden komponent produkcyjny); **R2** — każda para komponentów
+montowanych razem współwystępuje w co najmniej jednym pliku produkcyjnym; **R3** (ostrzeżenie) —
+narzucona szerokość istnieje u wołacza. Dług zastany jest w
+`scripts/check-dev-render-parytet.baseline.txt`; przepuszczenie ekranu wymaga wpisu z POWODEM
+(„przyrząd pomiarowy, nie ekran produktu" przechodzi świadomie, nie po cichu).
+
+**Powód:** audyt `AUDYT_PRZYRZADU_20260901.md` znalazł **41 ekranów** pokazujących co innego niż
+produkt, z czego **29 jest w odbiorze z oceną A lub B**. W jednym przypadku (`agent-plan-canvas`)
+właściciel wystawił **najwyższą ocenę REGRESJI** — układowi dwóch wąskich paneli, który kod
+produkcyjny opisuje jako błąd już naprawiony, bo „zjadał połowę ekranu". Defekt 175 (`idea-table`)
+przeżył DWIE naprawy wymierzone dokładnie w ten plik: po usunięciu `ArtifactRightPanel` została
+druga wymyślona warstwa (`TopBar`), której nikt nie zobaczył, bo nikt nie liczył tego mechanicznie.
+
+**Konsekwencja dla oceny:** ocena wystawiona na ekranie, który bramka zgłasza w R1 albo R2, nie
+jest oceną produktu. Napraw ekran i pokaż właścicielowi ponownie — nie awansuj karty na starym
+zrzucie (reguła 13 i 15).
