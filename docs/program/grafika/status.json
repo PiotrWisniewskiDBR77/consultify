@@ -1507,10 +1507,13 @@
           "id": "results-vnext-okr-workspace",
           "nazwa": "Warsztat zestawu OKR",
           "ocena": "A",
-          "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
+          "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami. CZEKA NA PRZEBUDOWE w karte N zestawu (wzorem ROI z 30.08) — plan i mapowanie szesciu zakladek na sekcje: docs/program/grafika/ODLOZONE.md. Wlasciciel (01.09): \"To mialo byc w N-type karcie\" — intuicja trafna co do KSZTALTU powloki, ale ekranu NIE zdejmujemy: karta celu go nie zastepuje, bo to inny poziom (warsztat to ZESTAW, karta to JEDEN cel; POZIOM 2 z DECYZJA_WYNIKI_TRZY_POZIOMY.md).",
           "naprawione": [],
-          "wyjatki": [],
-          "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → warsztat zestawu — pełne narzędzie z cyklem życia i wyjaśnieniami."
+          "wyjatki": [
+            "ADNOTACJA 2026-09-01: powloka do przebudowy — szesc zakladek w poziomie zamiast sekcji karty N, brak prawego panelu kanonu. Tresc i mechanika bez zmian. Plan: ODLOZONE.md",
+            "Pola „Wlasciciel\" i „Recenzent\" pokazuja uciete user-ann… / user-tom… zamiast nazwisk — rozwiazanie gotowe w ekranie „Uwaga\" (OrganizationApi.getOrganizationMembers), do przeniesienia 1:1"
+          ],
+          "gdzie": "Wyniki → OKR → rejestr zestawow → dzialanie „Otworz\" (POZIOM 2) → warsztat zestawu. Trasa /results/okr/sets/:okrSetId (AppRoutes.tsx:3105-3125); wejscie: okrRegistryPresenters.tsx:240-247, ResultsOkrHub.tsx:606-608. ZYWE NA DEMO (VITE_DEMO_ACCEPTANCE wlacza wszystkie trzy rejestry). To JEDYNE wejscie do cyklu zycia zestawu (zlozenie/akceptacja/poprawki/aktywacja/anulowanie), dopasowan, prosb o wsparcie, blokad, refleksji z Teresa i historii — zdjecie odcieloby to wszystko."
         },
         {
           "id": "results-vnext-roi-pir-outcomes",
