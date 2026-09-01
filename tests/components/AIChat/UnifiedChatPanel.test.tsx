@@ -2377,4 +2377,131 @@ describe('UnifiedChatPanel (L2)', () => {
       expect(shown.trim().toLowerCase()).not.toBe('done.');
     });
   });
+
+  // =========================================================================
+  // Dyżur 172 — „JEDNA TERESA": kontekst obiektu MUSI dolecieć do modelu.
+  //
+  // Decyzja właściciela 2026-09-01 zdjęła czaty z paneli artefaktów i zostawiła
+  // przycisk „Zapytaj Teresę o tę inicjatywę". Przycisk otwierał Teresę, ale
+  // KONTEKST OBIEKTU do niej nie docierał — `selectedObjectId`/
+  // `selectedObjectType` w ładunku do modelu były `null`, bo:
+  //   • `MainLayout` podawał propsem kontekst wyliczony z TRASY (bez entityId),
+  //   • pełne okno `/chat` renderuje panel BEZ PROPSA w ogóle.
+  // Te testy patrzą DOKŁADNIE na to, co idzie do modelu (`startStream` arg 3),
+  // a nie na to, że „coś się ustawiło w store".
+  // =========================================================================
+  describe('kontekst obiektu w ładunku do modelu (172)', () => {
+    const INITIATIVE_PIN = {
+      type: 'initiative',
+      entityId: 'init-42',
+      entityName: 'Redukcja kosztów magazynu',
+      entityData: { lifecycle: 'draft' },
+      conversationId: 'conv-1',
+      originPath: '/initiatives/init-42',
+      ts: 1_756_000_000_000,
+    };
+
+    // Kontekst, jaki `MainLayout` wylicza z trasy i podaje propsem do doku
+    // (MainLayout.tsx:155-161, :485-489) — ma `view`/`type`/`projectId`,
+    // NIE MA `entityId`. To on nadpisywał encję przed naprawą.
+    const ROUTE_CONTEXT_FROM_MAIN_LAYOUT: any = {
+      view: 'INITIATIVES',
+      type: 'dashboard',
+      projectId: 'proj-9',
+      timestamp: new Date('2026-09-01T08:00:00Z'),
+    };
+
+    function renderAt(ui: React.ReactElement, path: string) {
+      return render(<MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter>);
+    }
+
+    async function sendAndReadScreenContext() {
+      fireEvent.click(screen.getByTestId('send-button'));
+      await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+      return startStreamMock.mock.calls.at(-1)?.[3]?.screenContext;
+    }
+
+    it('PEŁNE OKNO (/chat, panel bez propsa) dostaje id i typ obiektu', async () => {
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(<UnifiedChatPanel mode="full" />, '/chat/conv-1');
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext).toEqual(
+        expect.objectContaining({
+          selectedObjectId: 'init-42',
+          selectedObjectType: 'initiative',
+        })
+      );
+    });
+
+    it('DOK: kontekst obiektu wygrywa z kontekstem trasy podanym przez MainLayout', async () => {
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(
+        <UnifiedChatPanel mode="split" workspaceContext={ROUTE_CONTEXT_FROM_MAIN_LAYOUT} />,
+        '/initiatives/init-42'
+      );
+
+      const screenContext = await sendAndReadScreenContext();
+      // To jest sedno: props z MainLayout niósł `type: 'dashboard'` i ZERO
+      // entityId. Gdyby nadpisywał — tu byłoby `dashboard`/`null`.
+      expect(screenContext).toEqual(
+        expect.objectContaining({
+          selectedObjectId: 'init-42',
+          selectedObjectType: 'initiative',
+        })
+      );
+    });
+
+    it('po odświeżeniu strony na karcie obiektu kontekst wciąż dociera (ścieżka, nie rozmowa)', async () => {
+      // Po F5 poza trasą /chat store zeruje `activeConversationId` (merge()
+      // w useConversationStore), więc dopasowanie po rozmowie NIE zadziała —
+      // ratuje `originPath` odtworzony z localStorage przez `partialize`.
+      conversationStoreState.activeConversationId = null;
+      conversationStoreState.teresaEntityContext = {
+        ...INITIATIVE_PIN,
+        conversationId: null,
+      };
+      // Po F5 nie ma aktywnej rozmowy — pierwsza wiadomość ją zakłada.
+      createConversationMock.mockResolvedValue({ id: 'conv-po-odswiezeniu' });
+
+      renderAt(
+        <UnifiedChatPanel mode="split" workspaceContext={ROUTE_CONTEXT_FROM_MAIN_LAYOUT} />,
+        '/initiatives/init-42'
+      );
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext).toEqual(
+        expect.objectContaining({
+          selectedObjectId: 'init-42',
+          selectedObjectType: 'initiative',
+        })
+      );
+    });
+
+    it('BEZ kontekstu obiektu ładunek wygląda jak dotąd (wsteczna zgodność)', async () => {
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = null;
+
+      renderAt(<UnifiedChatPanel mode="full" />, '/chat/conv-1');
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext?.selectedObjectId).toBeNull();
+      expect(screenContext?.selectedObjectType).toBeNull();
+    });
+
+    it('kontekst NIE wycieka na obcy ekran w innej rozmowie', async () => {
+      conversationStoreState.activeConversationId = 'conv-inna';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(<UnifiedChatPanel mode="full" />, '/excele');
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext?.selectedObjectId).toBeNull();
+      expect(screenContext?.selectedObjectType).toBeNull();
+    });
+  });
 });
