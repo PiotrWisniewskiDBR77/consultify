@@ -9,6 +9,21 @@ last_updated: 2026-05-11
 
 # Changelog — Rezultaty / Results & Value Realization
 
+## 2026-09-01
+
+- ★ Sprostowanie (dyżur Codex 234, marker `e99e81301ac8c9cc9b945eb44b7365fa7ff055d6`):
+  poprzednie twierdzenie nadzorcy „OKR i ROI są niewidoczne na demo, ~22/33
+  elementów" jest **obalone** — na realnym `demo.consultify.ai` zmienna
+  `VITE_DEMO_ACCEPTANCE` działa jako wczesny `return true` omijający flagi;
+  KPI/OKR/ROI SĄ tam widoczne. Gołe repo: `24/33` nieosiągalne; realne demo:
+  `0/33`. Pełne sprostowanie: `docs/program/funkcje/SPROSTOWANIE_WIDOCZNOSC_WYNIKOW.md`.
+- Wycofano mianownik pokrycia tras `135` (nieodtwarzalny); odtwarzalne są
+  `130`/`146`/`152` zależnie od metody. Wybór kanonicznego mianownika
+  pozostaje otwarty.
+- Potwierdzono: crosswalk/backfill KPI ma zero wołaczy produktowych.
+- Szczegóły i cytaty: `docs/functional/POMIAR_2026-09-01_FINANSE_WYNIKI_MATERIALY.md`.
+- Zaktualizowano `STATUS.md` i `CURRENT_CONTRACT.md` o powyższe fakty.
+
 ## 2026-05-11
 
 - Stabilized docs artifacts after sync regression by removing concatenated duplicates from `functions/RZ_ROI_ANALYSIS.md`, `RAW_TARGET_STATE_2_0_PACKET.md`, `IMPLEMENTATION_TASK_BOARD.md`, and `STATUS.md`.
