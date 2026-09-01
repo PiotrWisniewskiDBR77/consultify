@@ -12,6 +12,18 @@
  *   „Teresa staje się jedną z ikon na stałej szynie prawego pasa — tak jak
  *   jest już w Wordzie. Rozciągamy wzorzec z Worda na całą strukturę."
  *
+ * ★★★ ZASTĄPIONE 2026-09-01 — „JEDNA TERESA, W SWOIM OKNIE" ★★★
+ * Właściciel odrzucił WŁAŚNIE ten wzorzec (tryb „Teresa" jako pełnowysokościowy
+ * czat na szynie) przy odbiorze `-idea-teresa`/`-notatka-teresa`: „nie wiem
+ * dlaczego teresa jest w oknie narzędzia skoro jest osobna teresa". Nowa
+ * decyzja (docs/program/grafika/KANON_Z_ODBIOROW.md, wpis 2026-09-01):
+ * czat NIE wchodzi na szynę w żadnej formie — panel artefaktu dostaje
+ * wyłącznie przycisk-wejście do głównego okna Teresy. Ta flaga i tryb
+ * `teresa` w `ArtifactRightRail.tsx` zostają jako ISTNIEJĄCY (nieużywany
+ * docelowo) mechanizm — nowe powierzchnie NIE powinny go włączać; istniejące
+ * (`NotebookRightRail`) czekają na przepisanie w kolejnej fali. Nowsza
+ * decyzja wygrywa nad cytatem powyżej.
+ *
  * Ta flaga włącza wspólną powłokę `src/components/standard/ArtifactRightRail.tsx`
  * na powierzchni, która ją zadeklaruje. Dziś zadeklarowana jest DOKŁADNIE
  * JEDNA: prawa szyna Notatnika (`NotebookRightRail`). Pozostałe dziesięć szyn

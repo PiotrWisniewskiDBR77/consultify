@@ -311,3 +311,62 @@ Właściciel na pytanie o slajd macierzy: **„tak to jest super"**.
 **★ Powtarzalna treść w wierszu poziomu NIE JEST defektem.** Zapytany wprost, czy `ERP` we wszystkich dziewięciu obszarach na poziomie 6 i `MES` w sześciu z dziewięciu na poziomie 5 to błąd filtra skrótów, właściciel potwierdził, że tak ma być. To systemy obejmujące całą firmę, więc powtarzają się w obszarach — w odróżnieniu od poziomów niższych i wyższych, gdzie treści są zróżnicowane (`CMMS`, `WMS`, `Machine Vision`, `RPA`, `NLP`). **Nie zgłaszać tego jako defektu i nie „naprawiać".**
 
 **Utrzymane cechy macierzy:** wiersze = poziomy (najwyższy u góry), kolumny = obszary, dolny pasek `AREA` z chipami `AS`/`TO`, wypełnienie kumulatywne (schodkowe — poziom 4 oznacza wypełnione 1–4), liczba poziomów per oś z metodyki (7/5/5/7/6/6/5), nieujednolicona. Angielskie nazwy poziomów i technologii zostają (metodyka).
+
+---
+
+## 2026-09-01 — ★ „JEDNA TERESA, W SWOIM OKNIE" — czat znika z paneli narzędzi
+
+Właściciel, dosłownie, przy odbiorze wariantów `-idea-teresa` i `-notatka-teresa` prawego pasa
+(dwa oddzielne odrzucenia tego samego dnia):
+
+> „tutaj zobacz jest okno teresy w panelu tego okna ale przecież teresa ma okno swoje"
+
+> „nie wiem dlaczego teresa jest w oknie narzędzia skoro jest osobna teresa"
+
+**Reguła:** czat Teresy mieszka **wyłącznie w swoim głównym oknie** — jedno miejsce rozmowy
+w całej aplikacji. Panel artefaktu (prawy pas dowolnego narzędzia/ekranu-obiektu) **nie może
+osadzać czatu**. Wolno mu dać wyłącznie **wejście** — jeden przycisk w sekcji „Akcje"
+(„Zapytaj Teresę o ten/tę/to <obiekt>"), który otwiera GŁÓWNE okno Teresy z kontekstem tego
+obiektu. Zero pola pisania, zero strumienia wiadomości, zero trybu „Teresa" na szynie prawego
+pasa — jeśli szyna ma ikonę, ta ikona przenosi do głównego okna, nie renderuje drugiego czatu.
+
+**To jest zasada dla WSZYSTKICH przyszłych artefaktów, nie poprawka dwóch ekranów** (notatka,
+idea). Każdy kolejny archetyp (Rekord/Dokument/Canvas/Matryca/Deck) i każde narzędzie z własnym
+prawym panelem podlegają tej regule tak samo.
+
+**Wzorzec (prototyp, zaakceptowany na czystym zrzucie — dowód `evidence/grafika/167-jedna-teresa/`):**
+`dev-render/screens/prawy-pas-jedna-formula.tsx`, commit `125e3ff82c` — usunięty tryb pasa
+„Teresa" (`TeresaRailPanel`, zostaje w pliku jako martwy eksport, bez konsumenta), usunięta
+ikona „Teresa" z szyny 56px, dodany `TeresaEntryButton` w sekcji Akcje panelu artefaktu.
+Zweryfikowane zrzutami: warianty `-notatka-teresa`/`-idea-teresa` renderują dziś **bajt-identycznie**
+to samo co `-notatka-artefakt`/`-idea-artefakt` — dowód, że drugi czat faktycznie zniknął, nie
+tylko ze zmienionej etykiety.
+
+### ★ Ta decyzja ZASTĘPUJE decyzję z 2026-08-30 („Teresa jako ikona na szynie")
+
+**Uwaga o lokalizacji:** wpis z 30.08 („Teresa staje się jedną z ikon na stałej szynie prawego
+pasa — tak jak jest już w Wordzie. Rozciągamy wzorzec z Worda na całą strukturę") **nie jest
+zapisany w tym pliku** — nie ma go w kanonie z odbiorów. Żyje w nagłówkach kodu:
+`src/utils/artifactRightRailFlag.ts` i `src/components/standard/ArtifactRightRail.tsx`
+(mechanizm „tryb Teresa" szyny, flaga `ff_artifact_right_rail`, domyślnie OFF). Oba pliki
+zostały opatrzone adnotacją „ZASTĄPIONE 2026-09-01" przy tym cytacie — nowa decyzja wygrywa,
+stara zostaje widoczna, nie skasowana.
+
+### Zasięg do posprzątania (dyżur 167, NIE wykonane w tym kroku — do zaplanowania osobną falą)
+
+Sweep `UnifiedChatPanel`/`AIChat*`/`Teresa` w `src/components/**` znalazł **co najmniej pięć**
+miejsc, gdzie czat Teresy (`UnifiedChatPanel`) jest dziś osadzony wewnątrz prawego panelu
+narzędzia — nie tylko dwa ekrany dev-render:
+1. `src/components/standard/ArtifactRightRail.tsx` + `IdeaRightPanel.tsx` — tryb „Teresa" szyny
+   (Idee), za flagą `ff_artifact_right_rail` (OFF domyślnie).
+2. `src/components/MyWork/notebook/NotebookRightRail.tsx` — to samo dla Notatnika, ta sama flaga.
+3. `src/components/Initiatives/InitiativeDocumentView.tsx` — legacy „Slot 9 AI Consultant"
+   (`AIConsultantPanel` → `UnifiedChatPanel`), **żywe, BEZ flagi**, toolbar-toggle.
+4. `src/components/Presentations/DeckBuilder/DeckBuilder.tsx` — aside/`aiEntrySlot` „Teresa"
+   (`UnifiedChatPanel`), **żywy, BEZ flagi**, domyślnie otwarty gdy tor `artifactStudio` OFF.
+5. `src/components/DocumentStudio/DocumentStudioAiEntryPanel.tsx` — kolumna „Teresa z boku"
+   przy tworzeniu dokumentu, za flagą `ff_zai_teresa` (OFF domyślnie).
+
+`src/components/Interview/InsightViewer.tsx` już to zrobił poprawnie wcześniej (#56/D17) —
+własny `AIConsultantPanel` przestał się renderować, zastąpiony wejściem do jednego dokowanego
+okna Teresy. To wzorzec do skopiowania na pozostałe pięć.

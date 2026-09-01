@@ -19,6 +19,21 @@
  *   „Teresa staje się jedną z ikon na stałej szynie prawego pasa — tak jak
  *   jest już w Wordzie. Rozciągamy wzorzec z Worda na całą strukturę."
  *
+ * ★★★ ZASTĄPIONE 2026-09-01 — „JEDNA TERESA, W SWOIM OKNIE" ★★★
+ * Właściciel odrzucił dokładnie TEN wzorzec (tryb ② „Teresa" poniżej — czat
+ * pełnej wysokości na szynie) przy odbiorze prototypu `-idea-teresa`/
+ * `-notatka-teresa`: „nie wiem dlaczego teresa jest w oknie narzędzia skoro
+ * jest osobna teresa" / „przecież teresa ma okno swoje". Nowa decyzja
+ * (docs/program/grafika/KANON_Z_ODBIOROW.md, wpis 2026-09-01): czat NIE
+ * wchodzi na szynę w ŻADNEJ formie, ani jako sekcja akordeonu, ani jako
+ * tryb pełnej wysokości opisany niżej. Panel artefaktu dostaje wyłącznie
+ * JEDEN przycisk-wejście do głównego okna Teresy (sekcja „Akcje").
+ * `TeresaModePanel`/`ArtifactRailTeresaMode` poniżej zostają w kodzie jako
+ * ISTNIEJĄCY mechanizm dla dotychczasowych wołających (`IdeaRightPanel`,
+ * `NotebookRightRail`, za flagą `ff_artifact_right_rail`, domyślnie OFF) —
+ * nowe powierzchnie NIE powinny go włączać; przepisanie istniejących
+ * wołających na wzorzec jednego przycisku to osobna fala (dyżur 167).
+ *
  * Ten komponent jest dla PRAWEGO PASA tym, czym `StandardTable` dla listy:
  * **moduł deklaruje TREŚĆ, komponent narzuca WYGLĄD.** Moduł nie ma tu
  * żadnej swobody wizualnej — nie podaje klas, szerokości, kolejności ikon
