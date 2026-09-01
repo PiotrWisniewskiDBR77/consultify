@@ -16,12 +16,11 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { AreaMatrixTable } from '@/components/Reports/AreaMatrixTable';
-import type {
-  AreaAssessment,
-  MatrixAreaDef,
-  MatrixLevelDef,
-} from '@/components/Reports/AreaMatrixTable';
+import {
+  DRDMatrixGrid,
+  type DRDEditorAnswers,
+} from '@/components/assessment/drd/DRDAssessmentEditor';
+import { DRD_STRUCTURE } from '@/services/drdStructure';
 
 import type { AxisMatrixModel } from '../groupLabels';
 import type { FindingHighlight, PresentationDeckModel } from './buildPresentationDeck';
@@ -183,58 +182,64 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
 //
 // ★ ODBIÓR WŁAŚCICIELA 2026-08-30: „Jeśli to ma być raport, to musi być opis,
 // muszą być na nim macierze, muszą być ich opisy. Teraz nie ma macierzy nawet."
-// Deck miał profil per oś — siedem słupków, jedna liczba na oś. Macierz jest
-// w metodyce NARZĘDZIEM: pokazuje każdy obszar osi na drabinie poziomów naraz,
-// z zaznaczonym stanem obecnym (●) i celem (○).
 //
-// Rysuje REALNY `AreaMatrixTable` (`src/components/Reports/`) — ten sam
-// komponent, którym macierz oglądano na ekranie `drd-macierz-obszary-poziomy`.
-// NIE dotyka `DRDAssessmentEditor.tsx` (macierz sesji, cudza praca w toku):
-// tamten komponent EDYTUJE ocenę, ten ją tylko pokazuje.
+// ★ ESKALACJA 2026-09-01, TRZECIE ZGŁOSZENIE TEJ SAMEJ SPRAWY: „Ciągle nie wiem
+// dlaczego nie używasz mojej macierzy DRD — nie mam już siły serio!! moja macierz
+// jest serio ładna — już ją znalazłeś przecież (zobacz mam to na ekranie
+// **Macierz oceny DRD — obszary x poziomy**)". Te ostatnie słowa to DOSŁOWNA
+// nazwa ekranu `drd-macierz-oceny` z `docs/program/grafika/status.json`, czyli
+// `DRDAssessmentEditor` — i tam właściciel wystawił ocenę B 01.09.
 //
-// ★ Podpisy wierszy. Nazwy poziomów w DRD są per OBSZAR, nie per oś —
-// zmierzone: osie 4–7 mają po cztery obszary z własną drabiną. Dlatego wiersze
-// dostają nazwę tylko wtedy, gdy cała oś dzieli jedną drabinę (osie 1 i 2);
-// inaczej podpisujemy je samym numerem poziomu. Wzięcie nazw z `areas[0]`
-// wypisałoby na osi 4 nazwy poziomów obszaru 4A dla obszarów 4B–4E.
+// Do dziś ten slajd rysował `AreaMatrixTable`. To jest komponent, który
+// właściciel ODRZUCIŁ wprost (`DZIENNIK_GRAFIKA.md` Z-10: „Stary, to nie tak ma
+// wyglądać. Zatrzymaj się z tą pracą."), bo jest PREZENTACJĄ, a nie narzędziem:
+// zmierzone na zrzucie `evidence/grafika/159-macierz-drd/slajd6-macierz__PRZED__light.png`
+// — 63 komórki osi 1, z tego 61 zupełnie PUSTYCH, a pozostałe dwie niosą kropkę.
+// Zero treści merytorycznej, zero wypełnienia schodkowego.
+//
+// Teraz slajd rysuje `DRDMatrixGrid` — DOKŁADNIE tę siatkę, którą właściciel
+// zaakceptował: wiersze = poziomy (najwyższy u góry), kolumny = obszary,
+// nagłówki obszarów w DOLNYM pasku „Area" z chipami `AS n` / `TO n`, komórka
+// niesie wiodącą technologię obszaru na tym poziomie (`MACIERZ_TRESC_KOMOREK.md`
+// §4.3), wypełnienie KUMULATYWNE — poziom 4 wypełnia 1-4 (`KANON_Z_ODBIOROW.md`:
+// „poziom 4 znaczy, że niższe też są osiągnięte").
+//
+// ★ EKSPORT, NIE KOPIA. Kopii tej macierzy w repo jest już kilka
+// (`AreaMatrixTable`, `EmbeddedMatrix`, `DRDMatrixSession`) i to one są powodem
+// trzech pudeł w tej sprawie (Z-12: „kopii jest w tym repo więcej niż
+// oryginałów"). Dokładanie czwartej byłoby powtórzeniem błędu.
+//
+// ★ Liczba poziomów per oś NIE jest ujednolicana: `levelCount` bierzemy z osi
+// w `DRD_STRUCTURE` (7/5/5/7/6/6/5 — `KANON_Z_ODBIOROW.md`).
 // ---------------------------------------------------------------------------
 
-/** Rampa poziomów skopiowana z `MATURITY_LEVELS` (od najniższego do
- * najwyższego) i rozciągana na 5/6/7 poziomów, żeby najniższy był zawsze
- * „zimny", a najwyższy „gorący" niezależnie od liczby wierszy osi. */
-const LEVEL_RAMP = ['#f43f5e', '#f59e0b', '#eab308', '#22c55e', '#3b82f6', '#6366f1', '#ec4899'];
-
-function levelColor(level: number, count: number): string {
-  if (count <= 1) return LEVEL_RAMP[0];
-  const idx = Math.round(((level - 1) / (count - 1)) * (LEVEL_RAMP.length - 1));
-  return LEVEL_RAMP[Math.min(LEVEL_RAMP.length - 1, Math.max(0, idx))];
+/**
+ * Stan oceny w kształcie, którego oczekuje `DRDMatrixGrid` — przepisany 1:1
+ * z zamrożonego Outputu. Żadnej nowej liczby: `currentLevel` → `achievedLevel`,
+ * `targetLevel` → `targetLevel`. Obszar bez pomiaru NIE dostaje wpisu, więc
+ * grid pokazuje go jako kolumnę nieocenioną (a nie jako zmierzone zero).
+ */
+function macierzoweOdpowiedziZOutputu(matrix: AxisMatrixModel): DRDEditorAnswers {
+  const areas: NonNullable<DRDEditorAnswers['areas']> = {};
+  for (const a of matrix.areas) {
+    if (a.currentLevel === null && a.targetLevel === null) continue;
+    areas[a.id] = {
+      achievedLevel: a.currentLevel ?? 0,
+      ...(a.targetLevel !== null ? { targetLevel: a.targetLevel } : {}),
+    };
+  }
+  return { areas };
 }
 
 export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string }> = ({
   matrix,
-  locale,
 }) => {
-  const areas: MatrixAreaDef[] = matrix.areas.map((a) => ({
-    id: a.id,
-    name: `${a.id} · ${a.name}`,
-    namePl: `${a.id} · ${a.name}`,
-  }));
-
-  const levels: MatrixLevelDef[] = matrix.levels.map((l) => {
-    const label = l.title ?? `Poziom ${l.level}`;
-    return { level: l.level, name: label, namePl: label, color: levelColor(l.level, matrix.levelCount) };
-  });
-
-  // Wyłącznie obszary FAKTYCZNIE ocenione. Obszar bez pomiaru nie dostaje
-  // wpisu, więc macierz drukuje w jego kolumnie „-", a nie „0" — to jest
-  // różnica między „nie mierzyliśmy" a „zmierzyliśmy zero".
-  const assessments: AreaAssessment[] = matrix.areas
-    .filter((a) => a.currentLevel !== null || a.targetLevel !== null)
-    .map((a) => ({
-      areaId: a.id,
-      currentLevel: a.currentLevel ?? 0,
-      targetLevel: a.targetLevel ?? 0,
-    }));
+  // Oś metodyki, z której grid bierze obszary i ich drabiny poziomów.
+  // `buildAxisMatrices` zwraca macierze WYŁĄCZNIE dla przypiętej wersji pakietu
+  // DRD (bramka w `listDrdAxisNarratives`), więc trafienie jest tu regułą;
+  // brak trafienia = nie rysujemy nic udającego macierz.
+  const axis = DRD_STRUCTURE.find((a) => a.id === matrix.axisNumber);
+  const value = React.useMemo(() => macierzoweOdpowiedziZOutputu(matrix), [matrix]);
 
   return (
     <PresentationSlideShell
@@ -243,58 +248,44 @@ export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string
       lede={matrix.description ?? undefined}
       footnote={
         <span>
-          Oceniono {matrix.assessedCount} z {matrix.areas.length} obszarów tej osi · skala 1–
-          {matrix.levelCount} · ● stan obecny, ○ cel, „-" obszar nieobjęty oceną.
-          {matrix.hasSharedLadder
-            ? ''
-            : ' Obszary tej osi mają własne, różne nazwy poziomów — wiersze podpisano numerem poziomu.'}
-          {matrix.description && matrix.descriptionLanguage === 'en'
-            ? ' Opis osi w oryginale angielskim — polskiej wersji metodyka w pakiecie jeszcze nie ma.'
-            : ''}
+          Oceniono {matrix.assessedCount} z {matrix.areas.length} obszarów · skala 1–
+          {matrix.levelCount} · wypełnienie kumulatywne · chip „AS" = stan obecny, „TO" = cel.
         </span>
       }
     >
-      {/* Zagęszczenie na slajd: `AreaMatrixTable` jest zbudowany pod stronę
-          raportu (własna biała karta, 24 px marginesu i paddingu, komórki
-          44 px). Na slajdzie 900 px wysokości urywało to wiersze podsumowań
-          i legendę. Nadpisujemy TYLKO geometrię i obudowę karty — kolory
-          i semantyka siatki zostają nietknięte. */}
-      <style>{`
-        .drd-matrix-slide .area-matrix-container {
-          margin: 0;
-          padding: 0;
-          background: transparent;
-          box-shadow: none;
-        }
-        .drd-matrix-slide .matrix-header { margin-bottom: 12px; }
-        .drd-matrix-slide .matrix-cell { height: 30px; }
-        .drd-matrix-slide .level-cell { padding: 6px 12px !important; }
-        .drd-matrix-slide .matrix-table th,
-        .drd-matrix-slide .matrix-table td { padding: 5px; }
-        .drd-matrix-slide .summary-row td { padding: 5px 6px !important; }
-        .drd-matrix-slide .area-header { padding: 6px 4px !important; }
-        /* Kolumna poziomów szersza niż domyślne 140 px: najdłuższa nazwa
-           poziomu w metodyce („Basic Data Registration") łamała się na dwie
-           linie i podwajała wysokość wiersza, przez co legenda wypadała poza
-           slajd. */
-        .drd-matrix-slide .level-header,
-        .drd-matrix-slide .level-cell { min-width: 178px; }
-        .drd-matrix-slide .level-cell .level-name { white-space: nowrap; }
-        .drd-matrix-slide .matrix-cell { height: 26px; }
-        .drd-matrix-slide .level-header { padding: 8px 12px !important; }
-        .drd-matrix-slide .matrix-legend { margin-top: 8px; padding-top: 8px; }
-      `}</style>
-      <div className="drd-matrix-slide max-h-full overflow-auto">
-        <AreaMatrixTable
-          axisId={matrix.axisId}
-          axisName={matrix.axisName}
-          areaAssessments={assessments}
-          areas={areas}
-          levels={levels}
-          language={locale.startsWith('pl') ? 'pl' : 'en'}
-          showAnimation={false}
-        />
-      </div>
+      {axis ? (
+        /* `min-h-0 flex-1` + własne przewijanie: powłoka slajdu centruje treść
+           (`justify-center`), więc bez tego siatka wyższa od kadru jest po
+           cichu PRZYCINANA u dołu — zmierzone: dolny pasek „Area" z chipami
+           AS/TO wypadał poza slajd, czyli znikał dokładnie ten element, o który
+           właściciel się upomina. */
+        <div className="flex min-h-0 w-full flex-1 flex-col">
+          <DRDMatrixGrid
+            fillHeight
+            areas={axis.areas}
+            levelCount={axis.levelCount}
+            value={value}
+            /* Slajd ma 900 px wysokości i do dziewięciu kolumn — gęstość
+               zwykła, tak jak w widoku, który właściciel zaakceptował. */
+            compact
+            columnMinPx={150}
+            /* Raport się OGLĄDA, nie klika — podpowiedź o klikaniu byłaby
+               na slajdzie obietnicą bez pokrycia. */
+            rowHint=""
+            onCellClick={() => {}}
+            onAreaClick={() => {}}
+            areaStripLabel="Area"
+            overflowHint={(n) =>
+              `Jeszcze ${n} ${n === 1 ? 'kolumna' : 'kolumn'} po prawej — przewiń w bok.`
+            }
+          />
+        </div>
+      ) : (
+        <p className="text-sm text-c-text-secondary">
+          Macierzy tej osi nie da się narysować: struktura osi {matrix.axisNumber} nie występuje
+          w metodyce przypiętej do tego Outputu.
+        </p>
+      )}
     </PresentationSlideShell>
   );
 };

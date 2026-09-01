@@ -127,6 +127,13 @@ const MATRIX_DENSITY = {
     cellMinHeight: 'min-h-[60px]',
     rowLabelPadding: 'p-4',
   },
+  /** Slajd raportu — patrz `fillHeight` w `DRDMatrixGridProps`. */
+  report: {
+    gap: 'gap-2',
+    cellPadding: 'p-2',
+    cellMinHeight: 'min-h-[34px]',
+    rowLabelPadding: 'p-3',
+  },
 } as const;
 
 /**
@@ -186,6 +193,18 @@ export type DRDMatrixGridProps = {
   /** etykiety własne ekranu — zostają po angielsku do decyzji właściciela */
   areaStripLabel: string;
   overflowHint: (ukryte: number) => string;
+  /**
+   * `true` = siatka wypełnia wysokość rodzica i przewija się PIONOWO w środku,
+   * zamiast rosnąć w nieskończoność. Domyślnie `false` — oba widoki edytora
+   * zachowują się dokładnie jak dotąd.
+   *
+   * POWÓD (dyżur 2026-09-01): na slajdzie raportu siatka jest wyższa od kadru,
+   * więc dolny pasek „Area" z chipami `AS n` / `TO n` był PRZYCINANY — znikał
+   * dokładnie ten element, o który właściciel się upomina („dwa znaczniki
+   * naraz"). `sticky bottom-0` paska działa dopiero wtedy, gdy przewijanie
+   * pionowe dzieje się WEWNĄTRZ tego kontenera, a nie nad nim.
+   */
+  fillHeight?: boolean;
 };
 
 export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
@@ -202,8 +221,22 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   onAreaClick,
   areaStripLabel,
   overflowHint,
+  fillHeight = false,
 }) => {
-  const density = compact ? MATRIX_DENSITY.compact : MATRIX_DENSITY.spacious;
+  /**
+   * `fillHeight` = slajd raportu: kadr ma stałe 900 px i musi zmieścić WSZYSTKIE
+   * wiersze osi razem z dolnym paskiem obszarów. Zmierzone: przy gęstości
+   * `compact` (40 px na komórkę) oś siedmiopoziomowa przekracza kadr o ~50 px
+   * i pasek „Area" nachodzi na poziom 1. Jedyna różnica to wysokość komórki —
+   * padding, odstępy i kolory zostają te same, żeby slajd był tą samą macierzą,
+   * którą właściciel zaakceptował, a nie jej wariantem.
+   */
+  const density =
+    fillHeight && compact
+      ? MATRIX_DENSITY.report
+      : compact
+        ? MATRIX_DENSITY.compact
+        : MATRIX_DENSITY.spacious;
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [hiddenPx, setHiddenPx] = useState(0);
 
@@ -242,11 +275,13 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   );
 
   return (
-    <div className="mt-6">
-      <div className="relative">
+    <div className={fillHeight ? 'flex min-h-0 flex-1 flex-col' : 'mt-6'}>
+      <div className={`relative${fillHeight ? ' flex min-h-0 flex-1 flex-col' : ''}`}>
         <div
           ref={scrollerRef}
-          className="app-table-scrollbar overflow-x-auto pb-2 rounded-xl border border-c-border bg-c-surface-subtle dark:border-white/10 dark:bg-navy-950 p-2"
+          className={`app-table-scrollbar overflow-x-auto pb-2 rounded-xl border border-c-border bg-c-surface-subtle dark:border-white/10 dark:bg-navy-950 p-2${
+            fillHeight ? ' min-h-0 flex-1 overflow-y-auto' : ''
+          }`}
         >
           <div
             className={`grid ${density.gap}`}
@@ -270,7 +305,13 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                         {label ? ` ${label}` : ''}
                       </div>
                     </div>
-                    <div className="mt-1 text-[11px] text-c-text-muted">{rowHint}</div>
+                    {/* Pusta podpowiedź NIE rezerwuje wysokości: slajd raportu
+                        podaje `rowHint=""` (raport się ogląda, nie klika),
+                        a pusty `div` kosztował ~19 px na wiersz i wypychał
+                        dolny pasek obszarów z kadru. */}
+                    {rowHint ? (
+                      <div className="mt-1 text-[11px] text-c-text-muted">{rowHint}</div>
+                    ) : null}
                   </div>
 
                   {/* Komórki */}
