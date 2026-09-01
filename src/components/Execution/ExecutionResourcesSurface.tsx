@@ -55,25 +55,61 @@ const allocationSourceSummary = (item: any) => {
     .filter(([, source]) => source?.ref)
     .map(
       ([label, source]) =>
-        `${label}: ${source.knowledgeState ?? 'UNKNOWN'} · v${source.version ?? 'UNKNOWN'}`
+        `${label}: ${pl(source.knowledgeState)} · v${source.version ?? '—'}`
     );
   if (item.costRef?.ref)
     refs.push(
-      `Koszt: ${item.costRef.knowledgeState ?? 'KNOWN'} · v${item.costRef.version ?? 'UNKNOWN'}`
+      `Koszt: ${pl(item.costRef.knowledgeState, ETYKIETY_PL.KNOWN)} · v${item.costRef.version ?? '—'}`
     );
-  return refs.length ? refs.join(' · ') : 'EVIDENCE_MISSING';
+  return refs.length ? refs.join(' · ') : 'Brak źródeł dowodowych';
 };
+/**
+ * ★ Odbiór grafiki 174-domkniecie (2026-09-01) — „Katarzyna WóJcik".
+ *
+ * Było: `.replace(/\b\w/g, …)`. W JavaScripcie `\w` to WYŁĄCZNIE `[A-Za-z0-9_]`,
+ * więc „ó" nie jest znakiem słowa — po nim leci granica słowa `\b` i regexp
+ * podnosił na wielką literę ŚRODEK nazwiska: „Wójcik" → „WóJcik". Ten sam
+ * kształt trafiłby każde polskie nazwisko z ą/ć/ę/ł/ń/ó/ś/ź/ż w środku.
+ *
+ * Jest: granica liczona po Unicode (`\p{L}` z flagą `u`) i podnoszona tylko
+ * litera po POCZĄTKU napisu albo po separatorze. Reszta liter nie jest ruszana
+ * (nie ma `toLowerCase`), więc „Wójcik" i „McKenzie" zostają, jak są.
+ */
 const businessLabel = (value: string | null | undefined, fallback: string) =>
   value
-    ? value.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+    ? value
+        .replace(/[-_]+/g, ' ')
+        .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase())
     : fallback;
+/**
+ * ★ Odbiór grafiki 174-domkniecie (2026-09-01) — surowe enumy backendu
+ * w komórkach tabeli. Właściciel widział „UNKNOWN" w kolumnach Dostępność,
+ * Pozostałe, Zakres obciążenia, Koszt/prognoza i Świeżość oraz „NONE",
+ * „CAPACITY_CONFLICT", „NOT_ASSESSED", „CURRENT" w Konflikcie i Świeżości.
+ * Ta powierzchnia pisze etykiety po polsku wprost (bez i18n — patrz nagłówki
+ * kolumn niżej), więc słownik jest tu, przy miejscu użycia. Dane surowe
+ * (`item.*.knowledgeState`) zostają nietknięte — filtry i podgląd nadal
+ * porównują enumy, tłumaczona jest wyłącznie TREŚĆ KOMÓRKI.
+ */
+const ETYKIETY_PL: Record<string, string> = {
+  UNKNOWN: 'Nieznane',
+  KNOWN: 'Znane',
+  PARTIAL: 'Częściowe',
+  NONE: 'Brak',
+  CURRENT: 'Aktualne',
+  STALE: 'Nieaktualne',
+  NOT_ASSESSED: 'Nie oceniono',
+  CAPACITY_CONFLICT: 'Konflikt mocy przerobowej',
+  SKILL_CONFLICT: 'Konflikt kompetencji',
+  CALENDAR_CONFLICT: 'Konflikt kalendarza',
+};
+const pl = (value: string | null | undefined, fallback = 'Nieznane') =>
+  value ? (ETYKIETY_PL[value] ?? value) : fallback;
 const knowledgeValue = (value: any) => {
-  if (!value || value.knowledgeState === 'UNKNOWN') return 'UNKNOWN';
-  if (value.knowledgeState === 'PARTIAL') return 'PARTIAL';
+  if (!value || value.knowledgeState === 'UNKNOWN') return ETYKIETY_PL.UNKNOWN;
+  if (value.knowledgeState === 'PARTIAL') return ETYKIETY_PL.PARTIAL;
   const amount = value.base ?? value.value ?? value.committed ?? value.estimated;
-  return amount === undefined || amount === null
-    ? (value.knowledgeState ?? 'UNKNOWN')
-    : String(amount);
+  return amount === undefined || amount === null ? pl(value.knowledgeState) : String(amount);
 };
 export const ExecutionResourcesSurface = ({
   activePreset,
@@ -233,20 +269,20 @@ export const ExecutionResourcesSurface = ({
         ),
         description: item.taskTitle || `Zadanie ${String(item.taskId || '').slice(-8)}`,
         taskTitle: item.taskTitle || `Zadanie · ${String(item.taskId || '').slice(-8)}`,
-        periodLabel: item.timeBasis?.window || item.timeBasis?.windowUnit || 'UNKNOWN',
+        periodLabel: item.timeBasis?.window || item.timeBasis?.windowUnit || ETYKIETY_PL.UNKNOWN,
         availabilityLabel: knowledgeValue(item.availability ?? item.supply),
         demandLabel: knowledgeValue(item.demand),
         remainingLabel: knowledgeValue(item.remainingDemand ?? item.remainingEstimate),
         loadLabel:
           item.load?.knowledgeState === 'UNKNOWN'
-            ? 'UNKNOWN'
+            ? ETYKIETY_PL.UNKNOWN
             : item.load?.low != null && item.load?.high != null
               ? `${item.load.low}–${item.load.high}`
-              : 'UNKNOWN',
-        skillLabel: item.skillMatch?.label || item.skillMatch?.state || 'UNKNOWN',
+              : ETYKIETY_PL.UNKNOWN,
+        skillLabel: item.skillMatch?.label || pl(item.skillMatch?.state),
         costLabel: knowledgeValue(item.cost ?? item.costForecast),
-        conflictLabel: item.conflict?.state || item.assessment?.state || 'Nie oceniono',
-        freshnessLabel: item.freshness || item.availabilityRef?.freshness || 'UNKNOWN',
+        conflictLabel: pl(item.conflict?.state || item.assessment?.state, 'Nie oceniono'),
+        freshnessLabel: pl(item.freshness || item.availabilityRef?.freshness),
         nextActionLabel: item.nextAction || 'Sprawdź dane i akceptację',
       })),
     [items]
@@ -416,7 +452,7 @@ export const ExecutionResourcesSurface = ({
                       label: allocationStatusLabel(item.status),
                       tone: item.status === 'CONFIRMED' ? 'success' : 'info',
                     },
-                    { label: item.demand?.knowledgeState || 'UNKNOWN', tone: 'neutral' },
+                    { label: pl(item.demand?.knowledgeState), tone: 'neutral' },
                   ],
                   trailing: <span className="text-xs">v{item.version}</span>,
                   recommendation: item.nextAction ?? 'Zweryfikuj dostępność i akceptację.',
@@ -428,20 +464,25 @@ export const ExecutionResourcesSurface = ({
                     {
                       id: 'task',
                       label: 'Zadanie',
-                      value: item.taskTitle || item.taskId || 'UNKNOWN',
+                      value: item.taskTitle || item.taskId || ETYKIETY_PL.UNKNOWN,
                     },
                     {
                       id: 'period',
                       label: 'Okres',
-                      value: item.timeBasis?.window || item.timeBasis?.windowUnit || 'UNKNOWN',
+                      value:
+                        item.timeBasis?.window ||
+                        item.timeBasis?.windowUnit ||
+                        ETYKIETY_PL.UNKNOWN,
                     },
                     {
                       id: 'demand',
                       label: 'Zapotrzebowanie',
                       value:
                         item.demand?.knowledgeState === 'UNKNOWN'
-                          ? 'UNKNOWN'
-                          : String(item.demand?.base ?? item.demand?.value ?? 'UNKNOWN'),
+                          ? ETYKIETY_PL.UNKNOWN
+                          : String(
+                              item.demand?.base ?? item.demand?.value ?? ETYKIETY_PL.UNKNOWN
+                            ),
                     },
                     {
                       id: 'evidence',
@@ -543,8 +584,8 @@ export const ExecutionResourcesSurface = ({
           </div>
           <p className="mt-3 text-sm">Zadanie {selected.taskTitle || selected.taskId}</p>
           <p className="text-sm">
-            Dane {selected.demand?.knowledgeState || 'UNKNOWN'} · okres{' '}
-            {selected.timeBasis?.window || selected.timeBasis?.windowUnit || 'UNKNOWN'}
+            Dane {pl(selected.demand?.knowledgeState)} · okres{' '}
+            {selected.timeBasis?.window || selected.timeBasis?.windowUnit || ETYKIETY_PL.UNKNOWN}
           </p>
         </section>
       )}
