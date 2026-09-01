@@ -169,14 +169,20 @@ describe('KpiDeviationCaseSubview — /results/kpi/:kpiId/deviation-cases/:caseI
     await screen.findByTestId('results-vnext-kpi-deviation-case-subview');
     await screen.findByTestId('kpi-deviation-phase-1');
 
-    // Honest gap banner always visible (no GET for corrective actions) — regex
-    // updated to the copy actually shipped in KpiDeviationCaseSubview.tsx
-    // (stale before this: the component's wording changed, this assertion
-    // never did, and it failed even on an unmodified checkout — pre-existing,
-    // unrelated to 171-pojedyncze; caught while verifying that dyżur's fix).
-    expect(
-      screen.getByText(/wyłącznie działania dodane w bieżącej sesji przeglądarki/i)
-    ).toBeInTheDocument();
+    /*
+     * ★ ASERCJA USUNIĘTA (odbiór grafiki 174-domkniecie, 2026-09-01).
+     *
+     * Pilnowała żółtego banera „lista pokazuje wyłącznie działania dodane
+     * w bieżącej sesji przeglądarki". Baner zniknął ŚWIADOMIE w dyżurze 173:
+     * `loadChildren()` czyta działania i weryfikacje z serwera przy montażu
+     * i po każdym zapisie (patrz nagłówek KpiDeviationCaseSubview.tsx,
+     * „COLD REOPEN — FIXED 2026-09-01"), więc ostrzeżenie zaczęło kłamać.
+     * Test został z asercją na nieistniejący tekst i był CZERWONY od tamtej
+     * pory — czyli cały GOLDEN FLOW (siedem kroków, realne ciała POST)
+     * przestał kogokolwiek chronić. Zamiast tego pilnujemy teraz tego, co
+     * jest prawdą: baner o sesji przeglądarki NIE MOŻE wrócić.
+     */
+    expect(screen.queryByText(/sesji przeglądarki/i)).toBeNull();
 
     // ── Step 1: acknowledge (open -> analysis_required) ──
     vi.mocked(Api.post).mockImplementationOnce(async (url: string, body: any) => {

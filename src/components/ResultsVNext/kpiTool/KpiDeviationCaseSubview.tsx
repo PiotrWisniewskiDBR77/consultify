@@ -460,7 +460,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
     { id: 'manager', label: t('Manager', 'Manager'), value: shortId(kase.managerUserId) },
     { id: 'detected', label: t('Wykryto', 'Detected'), value: formatDateTime(kase.detectedAt, isPolish) },
     { id: 'due', label: t('Termin reakcji', 'Response due'), value: formatDateTime(kase.responseDueAt, isPolish) },
-    { id: 'rowVersion', label: t('Wersja (CAS)', 'Version (CAS)'), value: String(kase.rowVersion), mono: true },
+    { id: 'rowVersion', label: t('Wersja', 'Version'), value: String(kase.rowVersion), mono: true },
   ];
 
   const rightPanelSections: ArtifactRightPanelSection[] = [
@@ -672,7 +672,23 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                   checked={recurrenceFlag}
                   onChange={(e) => setRecurrenceFlag(e.target.checked)}
                   disabled={!isAnalysis}
-                  className="h-3.5 w-3.5 rounded border-c-border"
+                  /*
+                   * Odbiór grafiki 174-domkniecie (2026-09-01): na ciemnym
+                   * motywie ten kwadrat wychodził piaskowo-oliwkowy, obcy
+                   * całej powłoce. Zmierzone: `appearance: auto` + autorskie
+                   * `background-color` — Chromium miesza tło autora z własnym
+                   * malowaniem kontrolki i daje błoto. `color-scheme: dark`
+                   * (src/index.css:238) już rysuje ciemny checkbox poprawnie,
+                   * więc tło NIE MOŻE być nadpisywane; kolor zaznaczenia
+                   * ustawia `accent-color`, a nie `text-*` (to działa tylko
+                   * z pluginem @tailwindcss/forms, którego tu nie ma).
+                   *
+                   * UWAGA: kanoniczna klasa checkboxa w
+                   * `FilterableTable.tsx:394` ma dokładnie ten sam defekt
+                   * (`bg-slate-200 dark:bg-navy-700 text-c-info`) — do
+                   * rozliczenia osobno, poza tym dyżurem.
+                   */
+                  className="h-3.5 w-3.5 accent-c-info focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 />
                 {t('To odchylenie się powtarza', 'This deviation is recurring')}
               </label>
@@ -889,11 +905,19 @@ export const KpiDeviationCaseSubview: React.FC = () => {
           current={isPlanSubmitted}
           done={phase4Done}
         >
+          {/*
+            Odbiór grafiki 174-domkniecie (2026-09-01): dopóki planu nikt nie
+            złożył, ten wiersz pisał „Złożył: — · —" — dwa myślniki zamiast
+            zdania. Pusty rekord ma mówić, czego brakuje, a nie pokazywać
+            interpunkcję w miejscu danych.
+          */}
           <p className="text-xs text-c-text-muted mb-3">
-            {t(
-              `Złożył: ${shortId(kase.planSubmittedBy)} · ${formatDateTime(kase.planSubmittedAt, isPolish)}`,
-              `Submitted by: ${shortId(kase.planSubmittedBy)} · ${formatDateTime(kase.planSubmittedAt, isPolish)}`
-            )}
+            {kase.planSubmittedBy
+              ? t(
+                  `Złożył: ${shortId(kase.planSubmittedBy)} · ${formatDateTime(kase.planSubmittedAt, isPolish)}`,
+                  `Submitted by: ${shortId(kase.planSubmittedBy)} · ${formatDateTime(kase.planSubmittedAt, isPolish)}`
+                )
+              : t('Plan nie został jeszcze złożony.', 'The plan has not been submitted yet.')}
           </p>
           {phase4Settled ? (
             <p className="text-xs text-c-text-secondary">
@@ -906,8 +930,8 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             <>
               <p className="text-[11px] text-c-text-muted mb-2">
                 {t(
-                  'Zasada maker-checker: zatwierdzić może wyłącznie osoba INNA niż złożyła plan i inna niż twórca sprawy (kpiDeviationCommands.ts:796-801).',
-                  'Maker-checker rule: only someone OTHER than the plan submitter and the case creator may approve (kpiDeviationCommands.ts:796-801).'
+                  'Plan zatwierdza ktoś inny niż osoba, która go złożyła, i niż osoba, która założyła sprawę — to zasada czterech oczu.',
+                  'The plan is approved by someone other than the person who submitted it and the person who opened the case — the four-eyes rule.'
                 )}
               </p>
               <button
@@ -948,8 +972,8 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             <>
               <p className="text-xs text-c-text-muted mb-2">
                 {t(
-                  'Pierwsze działanie, które przejdzie w „W trakcie", automatycznie przenosi sprawę approved → executing (decyzja #8).',
-                  'The first action to reach "Active" auto-transitions the case approved → executing (decision #8).'
+                  'Sprawa przechodzi z „Plan zatwierdzony" w „W realizacji" sama — w chwili, gdy pierwsze działanie ruszy.',
+                  'The case moves from "Plan approved" to "In progress" on its own — the moment the first action starts.'
                 )}
               </p>
               <div className="space-y-2">
@@ -1083,7 +1107,7 @@ export const KpiDeviationCaseSubview: React.FC = () => {
                             e.target.checked ? [...prev, m.id] : prev.filter((id) => id !== m.id)
                           )
                         }
-                        className="h-3 w-3"
+                        className="h-3 w-3 accent-c-info focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       />
                       {m.label}
                     </label>
@@ -1139,8 +1163,8 @@ export const KpiDeviationCaseSubview: React.FC = () => {
             <>
               <p className="text-[11px] text-c-text-muted mb-2">
                 {t(
-                  'Zamknięcie wymaga ostatniej weryfikacji skuteczności o statusie akceptowanym przez politykę odpowiedzi KPI (domyślnie: skuteczna/częściowo skuteczna) — closeDeviationCase, kpiDeviationCommands.ts:372-394.',
-                  'Closing requires the latest effectiveness verification to have a status accepted by the KPI response policy (default: effective/partially effective) — closeDeviationCase, kpiDeviationCommands.ts:372-394.'
+                  'Sprawę można zamknąć, gdy ostatnia weryfikacja skuteczności wypadła skutecznie albo częściowo skutecznie.',
+                  'The case can be closed once the latest effectiveness verification came out effective or partially effective.'
                 )}
               </p>
               <button
