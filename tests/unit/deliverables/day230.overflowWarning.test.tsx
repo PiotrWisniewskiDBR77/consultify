@@ -63,4 +63,33 @@ describe('day230 pre-export overflow warning', () => {
       expect.objectContaining({ method: 'GET' })
     );
   });
+
+  // FIX-230 F7: `pewnosc` was computed by the detector and discarded — a
+  // just-over-budget slide ('niska') read identically to a genuinely blown
+  // out one ('wysoka'). Text must now differ.
+  it('F7: pewność "niska" mówi "może się nie zmieścić", nie "nie mieści się"', () => {
+    render(
+      <DeckOverflowWarning
+        warnings={[{ ...warning, pewnosc: 'niska' }]}
+        onJumpToSlide={vi.fn()}
+        onContinueExport={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/może się nie zmieścić/)).toBeTruthy();
+    expect(screen.queryByText(/, która się nie mieści/)).toBeNull();
+  });
+
+  // FIX-230 F8: PDF renders through pdfkit, not the PPTX pipeline these
+  // budgets describe. The client must not even ask — a silent [] from the
+  // server would look identical to "checked, all clear".
+  it('F8: format pdf nigdy nie woła preflightu (żaden fetch)', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    const result = await preflightPresentationExport({ deckId: 'deck-1', format: 'pdf' });
+
+    expect(result).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

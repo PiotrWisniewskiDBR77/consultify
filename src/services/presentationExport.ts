@@ -34,7 +34,12 @@ export async function preflightPresentationExport(
   options: PresentationExportOptions
 ): Promise<PresentationOverflowWarning[]> {
   const format = options.format || 'pptx';
-  if (format !== 'pptx' && format !== 'pdf') return [];
+  // FIX-230 F8: PDF renders through pdfkit, not the PPTX pipeline these
+  // character budgets describe (server route mirrors this: it now always
+  // returns an empty overflowWarnings list for PDF preflight requests).
+  // Don't even ask — a silent [] from the server would look identical to
+  // "checked, all clear" when it actually means "not checked".
+  if (format !== 'pptx') return [];
   const endpoint = endpointFor(options.deckId, format, options.overrideQualityGate);
   const separator = endpoint.url.includes('?') ? '&' : '?';
   const response = await fetch(`${endpoint.url}${separator}preflight=overflow`, {

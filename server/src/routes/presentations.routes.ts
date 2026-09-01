@@ -2939,13 +2939,16 @@ router.get(
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
     if (req.query.preflight === 'overflow') {
+      // FIX-230 F8: PDF does NOT go through the PPTX pipeline — it renders
+      // with pdfkit (see `new PDFDocument` below in this same route). The
+      // character budgets `wykryjPrzepelnienie` checks are PPTX slot
+      // capacities and say nothing about pdfkit layout, so calling the
+      // same detector here would report a PowerPoint-shaped opinion about
+      // a file that isn't PowerPoint-shaped. Always silent for PDF until
+      // a PDF-specific detector exists.
       return res.json({
         success: true,
-        data: {
-          overflowWarnings: isDeckOverflowWarningEnabled()
-            ? wykryjPrzepelnienie(parseDeckPayload(deck))
-            : [],
-        },
+        data: { overflowWarnings: [] },
       });
     }
 

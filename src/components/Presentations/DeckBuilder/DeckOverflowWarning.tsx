@@ -28,6 +28,12 @@ export function DeckOverflowWarning({
 }: DeckOverflowWarningProps) {
   if (warnings.length === 0) return null;
   const first = warnings[0];
+  // FIX-230 F7: `pewnosc` was computed by the detector and thrown away —
+  // a 241-char slide (just over budget, 'niska') read identically to one
+  // genuinely blown out ('wysoka'). Say which one this is instead of
+  // asserting certainty the detector itself doesn't have.
+  const claim =
+    first.pewnosc === 'wysoka' ? 'treść, która się nie mieści' : 'treść, która może się nie zmieścić';
 
   return (
     <div
@@ -36,8 +42,10 @@ export function DeckOverflowWarning({
     >
       <AlertTriangle className="h-5 w-5 shrink-0 text-c-warning" aria-hidden="true" />
       <p className="min-w-[18rem] flex-1 text-sm">
-        <strong>{slideCountLabel(warnings.length)} treść, która się nie mieści.</strong> Układ może
-        się rozjechać po eksporcie do PowerPointa i Google Slides.
+        <strong>
+          {slideCountLabel(warnings.length)} {claim}.
+        </strong>{' '}
+        Układ może się rozjechać po eksporcie do PowerPointa i Google Slides.
       </p>
       <button
         type="button"
