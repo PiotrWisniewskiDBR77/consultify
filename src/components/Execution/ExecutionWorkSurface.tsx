@@ -153,9 +153,20 @@ export const ExecutionWorkSurface = ({
   onCountsChange,
   onOpenDocument,
   documentId,
+  onRegisterFilterControl,
 }: ExecutionMenu3Contract & {
   onOpenDocument?: (row: ExecutionWorkDocumentRef) => void;
   documentId?: string | null;
+  /**
+   * Rejestruje węzeł kontrolki (filtr realizacji + akcje "Nowe…") do
+   * prawej strony Menu 2 gospodarza (ExecutionHub). Ten sam wzorzec co
+   * `RolloutTab.onRegisterCommandRowContent` — właściciel (odbiór grafiki
+   * 165-menu3-pasek, execution-tab-work) zgłosił, że blok tytuł+opis+filtr
+   * NIE powinien rozpychać pionu między Menu 3 a tabelą: "on może spokojnie
+   * być z prawej strony menu 2. W całej aplikacji mamy standard że tabela
+   * zaczyna się pod menu 3."
+   */
+  onRegisterFilterControl?: (node: React.ReactNode) => void;
 }) => {
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [cases, setCases] = useState<Array<any>>([]),
@@ -600,61 +611,78 @@ export const ExecutionWorkSurface = ({
             ? (['assigneeId', 'ownerId', 'slaAt', 'evidenceRefs'] as const)
             : []),
         ];
-  return (
-    <section aria-label="Execution Work" className="p-4">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">
-            {documentId ? selected?.title || 'Element pracy' : 'Praca'}
-          </h2>
-          <p className="text-sm text-c-text-muted">
-            {documentId
-              ? 'Kanoniczny dokument zadania lub decyzji wraz z kontrolami, dowodami i zależnościami.'
-              : 'Zadania i decyzje ze wszystkich dostępnych realizacji; wybór realizacji zawęża listę.'}
-          </p>
-        </div>
-        {!documentId && caseId && (
+  // Menu 2 (prawa strona) — filtr realizacji + akcje "Nowe…". Patrz komentarz
+  // propa `onRegisterFilterControl` powyżej. Rejestruje `null` w widoku
+  // dokumentu (documentId) — tam nie ma listy do filtrowania.
+  useEffect(() => {
+    if (!onRegisterFilterControl) return;
+    if (documentId) {
+      onRegisterFilterControl(null);
+      return;
+    }
+    onRegisterFilterControl(
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          aria-label="Execution Case for work"
+          value={caseId}
+          className="h-9 min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-sm text-c-text-secondary"
+          onChange={(e) => {
+            const nextCaseId = e.target.value;
+            if (nextCaseId) void load(nextCaseId);
+            else {
+              setCaseId('');
+              setSelectedId(null);
+              setShowWorkspace(false);
+              void loadCases();
+            }
+          }}
+        >
+          <option value="">Wszystkie realizacje</option>
+          {cases.map((c) => (
+            <option key={c.executionCaseId} value={c.executionCaseId}>
+              {c.initiativeTitle ||
+                c.title ||
+                `Realizacja · ${String(c.executionCaseId).slice(-8)}`}
+            </option>
+          ))}
+        </select>
+        {caseId && (
           <div className="flex flex-wrap gap-2">
-            <button className="btn-secondary" onClick={() => setToolMode('TASK')}>
+            <button type="button" className="btn-secondary" onClick={() => setToolMode('TASK')}>
               Nowe zadanie
             </button>
-            <button className="btn-secondary" onClick={() => setToolMode('DECISION')}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setToolMode('DECISION')}
+            >
               Nowa decyzja
             </button>
-            <button className="btn-secondary" onClick={() => setToolMode('MILESTONE')}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setToolMode('MILESTONE')}
+            >
               Nowy kamień milowy
             </button>
           </div>
         )}
       </div>
-      {!documentId && (
-        <label className="mb-4 block max-w-md text-xs font-medium text-c-text-muted">
-          Filtr realizacji
-          <select
-            aria-label="Execution Case for work"
-            value={caseId}
-            className="mt-1 block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm"
-            onChange={(e) => {
-              const nextCaseId = e.target.value;
-              if (nextCaseId) void load(nextCaseId);
-              else {
-                setCaseId('');
-                setSelectedId(null);
-                setShowWorkspace(false);
-                void loadCases();
-              }
-            }}
-          >
-            <option value="">Wszystkie realizacje</option>
-            {cases.map((c) => (
-              <option key={c.executionCaseId} value={c.executionCaseId}>
-                {c.initiativeTitle ||
-                  c.title ||
-                  `Realizacja · ${String(c.executionCaseId).slice(-8)}`}
-              </option>
-            ))}
-          </select>
-        </label>
+    );
+    return () => onRegisterFilterControl(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterFilterControl, documentId, caseId, cases]);
+  return (
+    <section aria-label="Execution Work" className="p-4">
+      {documentId && (
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">{selected?.title || 'Element pracy'}</h2>
+            <p className="text-sm text-c-text-muted">
+              Kanoniczny dokument zadania lub decyzji wraz z kontrolami, dowodami i zależnościami.
+            </p>
+          </div>
+        </div>
       )}
       {state === 'LOADING' && <p role="status">Loading canonical work</p>}
       {!caseId && state === 'READY' && rows.length === 0 && (

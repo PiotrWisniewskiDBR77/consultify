@@ -162,3 +162,50 @@ Zrzuty stanu zastanego (wszystkie cztery, `light`, PRZED jakąkolwiek zmianą):
 `evidence/grafika/107-generatory-odstawione/gen-word-content-hints__PRZED__light.png`,
 `evidence/grafika/107-generatory-odstawione/gen-deck-content-hints__PRZED__light.png`,
 `evidence/grafika/107-generatory-odstawione/prezentacje-template-states__PRZED__light.png`.
+
+## Grupa: ESKALACJA — szerokość powłoki arkusza (Excel), wpis 2026-09-01
+
+**To NIE jest wpis „odkładamy ekran".** To zgłoszenie właściciela, którego
+NIE MOŻNA zamknąć zmianą szerokości, bo mierzalnie nie ma czego zmieniać —
+a właściwa naprawa to przebudowa powłoki, wymagająca prototypu i akceptu.
+
+**Ekrany:** `sheet-artifact`, `excele-prawy-panel-standard`
+(oba montują ten sam `SpreadsheetArtifactStudio`).
+
+**Uwaga właściciela (2026-08-30):** „tak jak tabela w Excelu, sama tabela
+powinna zaczynać się od samej góry […] jedna trzecia ekranu jest zużyta
+zupełnie niepotrzebnie na informacje albo funkcje, które mogłyby być
+w panelu bocznym rozwijanym" oraz „musimy usunąć więcej niepotrzebnego
+panelu, aby tabela zajmowała całą centralną część ekranu".
+
+**POMIAR w żywym DOM (okno 1440×900, 2026-09-01):**
+- lewa szyna „Arkusze": 280 px · płótno: 840 px · prawy panel SPEC-A: 320 px
+- tabela: 814 px — czyli **100% wnętrza płótna** (816 px po odjęciu `p-3`
+  i ramki karty). Nic jej nie zwęża.
+- kontrola przy 1920 px: płótno 1320, tabela 1294 — szyny zostają 280/320,
+  tabela bierze CAŁĄ resztę. Zero `max-width`, zero `table-fixed` z sumą
+  mniejszą od kontenera.
+
+**Wniosek:** 600 px (41,7% okna) zjadają dwie powierzchnie, obie kanoniczne:
+1. lewa szyna = ZAKŁADKI ARKUSZY. `ExecutiveModuleShell/index.tsx:752-757`
+   ma jawną decyzję: arbitraż celowo NIE zwija tej szyny, bo „w arkuszu lewa
+   szyna to zakładki arkuszy — bez nich skoroszyt przestaje być skoroszytem".
+   Zwinięta szyna ma 48 px i CHOWA treść (`LeftRail.tsx:50,107`).
+2. prawy panel = `ArtifactRightPanel` SPEC-A, szerokość z tokenu
+   `--ntype-right-panel-width: 320px` (`src/index.css:93`) — ujednolicona
+   dla sześciu kart dopiero 2026-09-01 (dyżur 164). `ArtifactRightPanel`
+   nie ma dziś zwijania CAŁEGO panelu, tylko akordeon per sekcja.
+
+Część uwagi jest już zrobiona i nie wolno robić jej drugi raz: górę ekranu
+wyczyszczono do tytułu + paska narzędzi + paska formuły, a metadane (nazwa
+pliku, format, liczba arkuszy, opis) przeniesiono do prawego panelu —
+komentarz `SpreadsheetArtifactStudio.tsx:2011-2020` cytuje przy tym te same
+słowa właściciela.
+
+**Co zostaje do decyzji właściciela (przebudowa, nie poprawka):**
+zakładki arkuszy jako pasek NA DOLE (jak w Excelu) zamiast szyny 280 px
+i/lub zwijanie całego prawego panelu SPEC-A. Pierwsze uwalnia 280 px
+(tabela 814 → ~1094 px, +34%), drugie kolejne 320 px. Oba ruszają kanon
+wspólny dla WIĘCEJ NIŻ TEGO EKRANU (szyna: Word/Deck/Mindmap; panel:
+sześć kart SPEC-A), więc idą przez prototyp + akcept, nie przez dyżur
+szerokości. Dowody: `evidence/grafika/166-tabela-szerokosc/`.
