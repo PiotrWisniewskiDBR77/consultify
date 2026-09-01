@@ -97,6 +97,24 @@ const KLAWISZE = arg('klawisze', '')
     const [klawisz, ile] = s.split('*');
     return Array.from({ length: Math.max(1, Number(ile) || 1) }, () => klawisz);
   });
+/**
+ * `--klik=<selektor CSS>` — kliknij element PRZED zrzutem (kilka po przecinku,
+ * klikane po kolei).
+ *
+ * POWÓD ISTNIENIA (dyżur rodziny podglądu 2026-09-01): podgląd wiersza
+ * (preview pane) jest wg kanonu §7.1 **domyślnie zamknięty** i otwiera go
+ * dopiero single-click w wiersz. Narzędzie nie umiało kliknąć, więc każdy
+ * zrzut ekranu listowego pokazywał tabelę BEZ podglądu — czyli nie pokazywał
+ * tego, co właściciel zgłosił. Zmierzono: `?screen=idea-table` renderuje
+ * `[data-preview-pane]` = 0 sztuk. Meldunek „podgląd poprawiony" nie mógł
+ * mieć dowodu na obrazie, bo przyrząd tej rzeczy nie umiał wyświetlić.
+ *
+ * Ten sam kształt awarii co `--przewin` i `--klawisze`: narzędzie po cichu
+ * mierzy niewłaściwą rzecz. Dlatego selektor, którego NIE MA na stronie, jest
+ * raportowany jako `klik: BRAK` — cicha porażka kliknięcia wyglądałaby
+ * dokładnie jak defekt produktu.
+ */
+const KLIK = arg('klik', '').split(',').map((s) => s.trim()).filter(Boolean);
 
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
@@ -125,6 +143,7 @@ for (const ekran of EKRANY) {
     const page = await context.newPage();
     const bledy = [];
     const przewinBrak = [];
+    const klikBrak = [];
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
     });
@@ -158,6 +177,16 @@ for (const ekran of EKRANY) {
         await page.waitForTimeout(120);
       }
       if (KLAWISZE.length > 0) await page.waitForTimeout(400);
+      for (const sel of KLIK) {
+        const cel = page.locator(sel).first();
+        if ((await cel.count()) === 0) {
+          klikBrak.push(sel);
+          continue;
+        }
+        await cel.click({ timeout: 5000 }).catch(() => klikBrak.push(sel));
+        await page.waitForTimeout(500);
+      }
+      if (KLIK.length > 0) await page.waitForTimeout(400);
       for (const sel of PRZEWIN) {
         const trafiony = await page.evaluate((s) => {
           const el = document.querySelector(s);
@@ -187,7 +216,10 @@ for (const ekran of EKRANY) {
         szer,
         wys,
         bledy: bledy.length,
-        status: przewinBrak.length > 0 ? `przewin BRAK: ${przewinBrak.join(' ')}` : 'OK',
+        status: [
+          klikBrak.length > 0 ? `klik BRAK: ${klikBrak.join(' ')}` : '',
+          przewinBrak.length > 0 ? `przewin BRAK: ${przewinBrak.join(' ')}` : '',
+        ].filter(Boolean).join(' | ') || 'OK',
       });
     } catch (e) {
       wyniki.push({ ekran, motyw, plik: '—', szer: 0, wys: 0, bledy: bledy.length, status: `BŁĄD: ${e.message.slice(0, 80)}` });
