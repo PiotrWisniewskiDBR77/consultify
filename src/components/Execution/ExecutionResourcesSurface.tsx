@@ -78,7 +78,17 @@ const knowledgeValue = (value: any) => {
 export const ExecutionResourcesSurface = ({
   activePreset,
   onCountsChange,
-}: ExecutionMenu3Contract) => {
+  onRegisterFilterControl,
+}: ExecutionMenu3Contract & {
+  /**
+   * Rejestruje węzeł kontrolki (filtr realizacji + "Zaproponuj przydział")
+   * do prawej strony Menu 2 gospodarza (ExecutionHub) — patrz identyczny
+   * komentarz w `ExecutionWorkSurface`. Odbiór grafiki 165-menu3-pasek,
+   * execution-tab-resources: właściciel zgłosił ten sam problem co na
+   * ekranie "Praca".
+   */
+  onRegisterFilterControl?: (node: React.ReactNode) => void;
+}) => {
   const [cases, setCases] = useState<any[]>([]),
     [caseId, setCaseId] = useState(''),
     [caseVersion, setCaseVersion] = useState(1),
@@ -315,6 +325,46 @@ export const ExecutionResourcesSurface = ({
     setSelected(item);
     setShowWorkspace(true);
   };
+  // Menu 2 (prawa strona) — filtr realizacji + "Zaproponuj przydział". Patrz
+  // komentarz propa `onRegisterFilterControl` powyżej.
+  useEffect(() => {
+    if (!onRegisterFilterControl) return;
+    onRegisterFilterControl(
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          aria-label="Execution Case for resources"
+          value={caseId}
+          onChange={(e) => {
+            const nextCaseId = e.target.value;
+            if (nextCaseId) void load(nextCaseId);
+            else {
+              setCaseId('');
+              setSelected(null);
+              setShowWorkspace(false);
+              void loadCases();
+            }
+          }}
+          className="h-9 min-w-[200px] rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-sm text-c-text-secondary"
+        >
+          <option value="">Wszystkie realizacje</option>
+          {cases.map((c) => (
+            <option key={c.executionCaseId} value={c.executionCaseId}>
+              {c.initiativeTitle ||
+                c.title ||
+                `Realizacja · ${String(c.executionCaseId).slice(-8)}`}
+            </option>
+          ))}
+        </select>
+        {caseId && (
+          <button type="button" className="btn-secondary" onClick={() => setShowProposal(true)}>
+            Zaproponuj przydział
+          </button>
+        )}
+      </div>
+    );
+    return () => onRegisterFilterControl(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterFilterControl, caseId, cases]);
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
@@ -330,46 +380,6 @@ export const ExecutionResourcesSurface = ({
     );
   return (
     <section aria-label="Execution Resources" className="p-4">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">Zasoby</h2>
-          <p className="text-sm text-c-text-muted">
-            Przydziały ze wszystkich dostępnych realizacji; wybór realizacji zawęża listę.
-          </p>
-        </div>
-        {caseId && (
-          <button className="btn-secondary" onClick={() => setShowProposal(true)}>
-            Zaproponuj przydział
-          </button>
-        )}
-      </div>
-      <label className="block max-w-md text-xs font-medium text-c-text-muted">
-        Filtr realizacji
-        <select
-          aria-label="Execution Case for resources"
-          value={caseId}
-          onChange={(e) => {
-            const nextCaseId = e.target.value;
-            if (nextCaseId) void load(nextCaseId);
-            else {
-              setCaseId('');
-              setSelected(null);
-              setShowWorkspace(false);
-              void loadCases();
-            }
-          }}
-          className="mt-1 block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm"
-        >
-          <option value="">Wszystkie realizacje</option>
-          {cases.map((c) => (
-            <option key={c.executionCaseId} value={c.executionCaseId}>
-              {c.initiativeTitle ||
-                c.title ||
-                `Realizacja · ${String(c.executionCaseId).slice(-8)}`}
-            </option>
-          ))}
-        </select>
-      </label>
       {state === 'READY' && items.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
           Brak kanonicznych przydziałów zasobów w dostępnych realizacjach.
