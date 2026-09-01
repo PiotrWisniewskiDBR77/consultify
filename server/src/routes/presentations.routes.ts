@@ -14,6 +14,7 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
 
+import { isDeckOverflowWarningEnabled } from '../config/FeatureFlags.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
@@ -32,6 +33,7 @@ import {
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
 import { resolvePublicDemoPrincipal } from '../services/demo/demoPrincipalGuard.js';
+import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import {
   isTemplateResolveError,
   resolvePresentationTemplateForCreation,
@@ -98,7 +100,6 @@ import {
   completePresentationExport,
   failPresentationExport,
 } from '../services/presentationExport/presentationExportReceiptService.js';
-import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -189,6 +190,7 @@ import {
   applyPdfLayoutTruncationMarker,
   buildPdfLayoutTruncationMarker,
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
+import { wykryjPrzepelnienie } from '../services/report/pptx/deckOverflowDetector.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import { getStorage } from '../services/storage/index.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
@@ -2661,6 +2663,17 @@ router.get(
     if (!deck) return res.status(404).json({ success: false, error: 'Export not available' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
+    if (req.query.preflight === 'overflow') {
+      return res.json({
+        success: true,
+        data: {
+          overflowWarnings: isDeckOverflowWarningEnabled()
+            ? wykryjPrzepelnienie(parseDeckPayload(deck))
+            : [],
+        },
+      });
+    }
+
     if (
       exportMode === 'final' &&
       presentationExportOverride(req).requested &&
@@ -2924,6 +2937,17 @@ router.get(
     )) as any;
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
+
+    if (req.query.preflight === 'overflow') {
+      return res.json({
+        success: true,
+        data: {
+          overflowWarnings: isDeckOverflowWarningEnabled()
+            ? wykryjPrzepelnienie(parseDeckPayload(deck))
+            : [],
+        },
+      });
+    }
 
     if (
       exportMode === 'final' &&

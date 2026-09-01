@@ -49,6 +49,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
   ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE: z.boolean().default(false),
+  ENABLE_DECK_OVERFLOW_WARNING: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
@@ -212,6 +213,10 @@ export function loadFeatureFlags(): FeatureFlags {
     ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE:
       process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true',
 
+    // Day 230: honest, non-blocking pre-export slide overflow warning.
+    // Default OFF until owner acceptance of the measured detector and UI.
+    ENABLE_DECK_OVERFLOW_WARNING: process.env.ENABLE_DECK_OVERFLOW_WARNING === 'true',
+
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated
     // read/write and server-persisted WS graph_patch. Default ON (2026-07-06,
@@ -252,8 +257,7 @@ export function loadFeatureFlags(): FeatureFlags {
     // the Knowledge Vault after their owner write succeeds. Opt-in only: the
     // materialization hooks check this flag before importing or invoking the
     // indexer, so OFF is a true no-op rather than a failed indexing attempt.
-    ENABLE_ARTIFACT_KNOWLEDGE_INDEX:
-      process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
+    ENABLE_ARTIFACT_KNOWLEDGE_INDEX: process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
 
     // Day231: organization-grounded outline generation. Opt-in until owner
     // accepts the review UI and the content gate on real data.
@@ -293,6 +297,10 @@ export function isArtifactKnowledgeIndexEnabled(): boolean {
 
 export function isDeckFromKnowledgeEnabled(): boolean {
   return process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true';
+}
+
+export function isDeckOverflowWarningEnabled(): boolean {
+  return process.env.ENABLE_DECK_OVERFLOW_WARNING === 'true';
 }
 
 export default featureFlags;
