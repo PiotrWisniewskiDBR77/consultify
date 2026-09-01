@@ -29,6 +29,7 @@ const Day235MaterialyPrezentacjeScreen = React.lazy(
 const Day235MaterialyExceleScreen = React.lazy(
   () => import('./screens/day235-materialy-excele')
 );
+const Day238UstawieniaScreen = React.lazy(() => import('./screens/day238-ustawienia'));
 const Day235MaterialyArchitektSzablonowScreen = React.lazy(
   () => import('./screens/day235-materialy-architekt-szablonow')
 );
@@ -521,6 +522,11 @@ const ToolsSwotInitiativeProposalScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'day238-ustawienia': {
+    label:
+      'Dyżur 238 — REALNY SettingsSidebar + reprezentatywny panel każdej z 10 zmierzonych grup. &section=profile|regional|ai-behavior|notifications-overview|security-dashboard|connected-apps|data-controls|billing|theme|developer &role=OWNER|MEMBER &proof=restricted|allowed|owner',
+    render: () => <Day238UstawieniaScreen />,
+  },
   'day235-materialy-dokumenty': {
     label: 'Dyżur 235 — realny Document Studio; &view=registry pokazuje wspólny rejestr Materiałów',
     render: () => <Day235MaterialyDokumentyScreen />,

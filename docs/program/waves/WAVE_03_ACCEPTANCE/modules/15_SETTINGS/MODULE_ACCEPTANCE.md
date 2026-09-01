@@ -116,3 +116,17 @@ Usunięto 62/62 bezspornie martwych wrapperów/stubów tras. Korpus uwag właśc
 ## STAN PO DYŻURZE 124 — 2026-08-29
 
 Na markerze `a1265154b73f` uruchomiono kanoniczny runtime na lokalnej bazie `consultify_w3_settings_owner_day124` (`863` migracje) i wykonano świeży pakiet `5 powierzchni × 2 persony × 2 emulacje motywu`. Powstało `20 z 20` plików, lecz tylko `12 z 20` jest semantycznie zgodnych: MEMBER na czterech z pięciu tras wraca bez komunikatu do Profilu. Ocena pięciu cech daje łącznie `13 z 25`, żadna powierzchnia nie osiąga `5 z 5`; dwa realne motywy nie są udowodnione. Stan pozostaje `PARTIAL`, bez zmiany decyzji `CLOSED_FINAL`, accepted SHA lub tagu. Pełny raport: `../../codex/CODEX_DAY124_USTAWIENIA_OWNER_REPORT.md`.
+
+## Dzień 238 — skala zasłoniętych sekcji i sprzeczność `CLOSED_FINAL`
+
+Pomiar na markerze `e014ba0d8b` daje 37 liści w 10 grupach nawigacyjnych, a nie 11 grup: nagłówki grup są zadeklarowane w `src/components/settings/SettingsSidebar.tsx:167-450`, a liście pod nimi w `src/components/settings/SettingsSidebar.tsx:168-482`.
+
+Rola pilotażowa ma cztery dozwolone sekcje (`profile`, `auth-access`, `language`, `theme`), więc 33 z 37 sekcji, czyli 89%, pozostają poza allowlistą (`src/utils/pilotAccess.ts:15-20`).
+
+Zasłonięcie treści następuje po nawigacji przez przekierowanie do `/settings/profile` w `RouterSync`, a nie przez ukrycie pozycji „Ustawienia” w menu (`src/components/RouterSync.tsx:330-342`; `src/utils/pilotAccess.ts:6-13`; `src/utils/pilotAccess.ts:144-146`).
+
+Łańcuch `SidebarUsage` → `UsageMeters` nie ma produkcyjnego importera poza własnym plikiem: `SidebarUsage` importuje miernik w `src/components/SidebarUsage.tsx:7-47`, natomiast pełny grep `src/**/*.{ts,tsx}` nie znalazł importu `SidebarUsage`; sam miernik żyje w `src/components/billing/UsageMeters.tsx:21-183`, nie we wskazanym wcześniej katalogu `src/components/settings`.
+
+Karta nadal zapisuje G08 i G09 jako `NOT_STARTED` (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:35-36`), podczas gdy spis funkcjonalny zapisuje `CLOSED_FINAL 2026-08-25` i tag `final-02-settings` (`docs/FUNCTIONAL_DOCUMENTATION.md:57`).
+
+Ten dopisek nie rozstrzyga, czy `CLOSED_FINAL` oznacza zamrożenie zakresu, odbiór 21 zrzutów opisany niżej, czy pełny guided replay; stan warstw pozostaje jawnie rozbieżny (`docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:35-37`; `docs/program/waves/WAVE_03_ACCEPTANCE/modules/15_SETTINGS/MODULE_ACCEPTANCE.md:106-110`).
