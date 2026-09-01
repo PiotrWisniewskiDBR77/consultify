@@ -35,9 +35,11 @@ export default function DocumentStudioContextChipScreen(): React.ReactElement {
           oczekiwane: nad polem opisu chip „Kontekst: DBR77 Sp. z o.o."
         </div>
       </div>
-      <div className="mx-auto max-w-4xl">
+      {/* Produkcja: DocumentStudioView.tsx:910 — <main> bez max-w, formularz
+          zajmuje pełną szerokość dostępnego obszaru studia. */}
+      <main className="flex h-full min-h-0 flex-col">
         <DocumentStudioIntakeForm onSubmit={() => undefined} />
-      </div>
+      </main>
     </div>
   );
 }
