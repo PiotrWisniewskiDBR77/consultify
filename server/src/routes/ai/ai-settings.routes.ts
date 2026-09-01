@@ -505,7 +505,17 @@ router.get(
       }
 
       const effective = await AISettingsService.getEffectiveSettings(userId, organizationId);
-      return res.json(effective);
+      const superadmin = transformSettingsToCamelCase(effective.superadmin || {});
+      const org = transformOrgSettingsToCamelCase(effective.org || {});
+      const user = effective.user || {};
+      return res.json({
+        ...superadmin,
+        ...org,
+        ...user,
+        superadmin,
+        org,
+        user,
+      });
     } catch (error: any) {
       logger.error('[AI Settings] Error getting effective settings:', error);
       return res.status(500).json({
