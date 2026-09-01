@@ -857,8 +857,59 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     let pool = declared.filter((c) => !c.isSelect);
     let budget = available - actionsWidth - fixedTotal;
     const floorTotal = pool.reduce((sum, c) => sum + Math.min(c.floor, c.width), 0);
-    // Nawet na podłogach się nie mieści → uczciwe przewijanie, zero udawania.
-    if (budget < floorTotal) return { widths, scale: 1 };
+    /**
+     * NAWET PODŁOGI SIĘ NIE MIESZCZĄ.
+     *
+     * Do 2026-09-01 ta gałąź zwracała szerokości ZADEKLAROWANE, w założeniu
+     * „uczciwe przewijanie poziome, zero udawania". Pomiar pokazał, że to
+     * założenie jest FAŁSZYWE, bo kolumna akcji jest `sticky right-0`
+     * (kanon TRIADA B.16 / R09-1a — ikona jest OBOWIĄZKOWA na każdym odbiorze,
+     * więc odpięcie jej nie wchodzi w grę). Przy przepełnieniu przypięta
+     * kolumna nie „zostawia treść do doscrollowania" — ona ją PRZYKRYWA.
+     *
+     * Zmierzone (`inicjatywy-lista`, podgląd OTWARTY, 1440×900):
+     *   kontener 989 px · tabela 1810 px · nadmiar 821 px · sticky od 926 px
+     *   → PIĘĆ kolumn danych zasłoniętych; nagłówek „NASTĘPNE DZIAŁANIE"
+     *     czytany jako „NAS/DZIA", wartość „Zweryfikuj efekty" jako „Zwer".
+     * KLUCZOWE: każdy span miał `scrollWidth === clientWidth`, czyli ŻADEN
+     * tekst nie przepełniał własnego boksu. To nie było ucięcie tekstu i
+     * wielokropek nie miał tu nic do roboty — to była czysta OKLUZJA.
+     *
+     * Gałąź zwracała przy tym MAKSYMALNY możliwy nadmiar (821 px zamiast
+     * 279 px, jakie dałyby same podłogi), więc była ściśle najgorszym
+     * z wariantów: im ciaśniej, tym bardziej się rozpychała.
+     *
+     * ZMIERZONA GRANICA TEJ POPRAWKI (próba odrzucona, zrzut w
+     * `evidence/grafika/193-proba-scisk/`): „dopasuj ZAWSZE", czyli skalowanie
+     * podłóg współczynnikiem `budget/floorTotal`, faktycznie zeruje nadmiar
+     * i okluzję — ale przy 10 kolumnach schodzi do 86 px na kolumnę i wtedy
+     * `nextAction` łamie się W POŁOWIE WYRAZU („Zweryfik/uj efekty",
+     * „Monitoru/j/realizacj/ę"), a wiersz puchnie z kanonicznych 56 px do
+     * ~130 px. To zamiana okluzji na DWA defekty naraz, w tym złamanie
+     * zamrożonej wysokości wiersza. Dlatego podłóg NIE przekraczamy.
+     *
+     * Zostaje więc poprawka OGRANICZONA, ale ściśle lepsza: gdy podłogi się
+     * nie mieszczą, zjeżdżamy DO PODŁÓG (zamiast zostawiać szerokości
+     * zadeklarowane). Nadmiar `inicjatywy-lista` spada 821 → 279 px, liczba
+     * zasłoniętych kolumn 5 → 3, wysokość wiersza i czytelność bez zmian.
+     * Reszty nie da się usunąć szerokościami — trzeba ZMNIEJSZYĆ LICZBĘ
+     * kolumn, a to wymaga pojęcia priorytetu, którego produkt nie ma.
+     *
+     * ŚWIADOMIE NIE CHOWAMY kolumn „o najniższym priorytecie": `TableColumn`
+     * nie ma pola priorytetu, a dorobienie go tutaj byłoby przemyceniem
+     * nowego mechanizmu produktowego w poprawce szerokości. Produkt ma już
+     * RĘCZNE chowanie (`seedDefaultHiddenColumns`, użyte na 2 ekranach) —
+     * które kolumny są zbędne, to decyzja właściciela, nie tej funkcji.
+     * Patrz raport dyżuru 193.
+     */
+    if (budget <= 0) return { widths, scale: 1 };
+    if (budget < floorTotal) {
+      for (const c of pool) widths[c.id] = Math.min(c.floor, c.width);
+      const naturalPool = pool.reduce((sum, c) => sum + c.width, 0);
+      const flooredPool = pool.reduce((sum, c) => sum + Math.min(c.floor, c.width), 0);
+      const floorScale = naturalPool > 0 ? flooredPool / naturalPool : 1;
+      return { widths, scale: floorScale > 0 && floorScale < 1 ? floorScale : 1 };
+    }
 
     // Rozdział proporcjonalny z klamrowaniem do podłóg (iteracyjnie, bo
     // przyklamrowanie jednej kolumny zmienia budżet dla pozostałych).
