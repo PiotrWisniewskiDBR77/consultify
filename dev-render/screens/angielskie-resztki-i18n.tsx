@@ -82,7 +82,10 @@ const SHEET: FormulaSheet = {
 export default function AngielskieResztkiI18nScreen(): React.ReactElement {
   return (
     <div className="h-screen w-full overflow-auto bg-c-bg p-6 space-y-6">
-      <section className="max-w-3xl rounded-xl border border-c-border bg-c-surface p-4">
+      {/* Produkcja: FinanceValuePanelsSurface.tsx:39 — `mb-3 rounded-xl border
+          border-c-border bg-c-surface p-3`, pełna szerokość kontenera (bez
+          max-w-3xl, którego produkt nie ma). */}
+      <section className="w-full rounded-xl border border-c-border bg-c-surface p-4">
         <MonteCarloNpvPanel fetcher={fetcher} />
       </section>
 

@@ -111,8 +111,12 @@ const SESSION: ToolSession = {
 export default function ToolsSwotInitiativeProposalScreen() {
   return (
     <MemoryRouter>
-      <div className="min-h-screen bg-c-bg p-8">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface">
+      {/* Produkcja: ToolCanvas.tsx:1103 — `h-full overflow-y-auto p-6`, BEZ
+          max-w i BEZ ramki karty (harness dotąd dokładał max-w-3xl +
+          rounded-2xl/border/bg-c-surface, których produkt nie ma — krok
+          renderuje się bezpośrednio w płótnie narzędzia). */}
+      <div className="h-screen bg-c-bg">
+        <div className="h-full overflow-y-auto p-6">
           <SummaryStep
             toolType="dynamic-swot"
             session={SESSION}
