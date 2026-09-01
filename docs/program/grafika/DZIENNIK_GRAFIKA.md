@@ -16,6 +16,37 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-28 · Jeden token, cztery szerokości — prawy pas ujednolicony do 320 px
+**Co się stało:** zgłoszenie właściciela („prawe panele powinny wyglądać tak samo",
+przy Excelu „usunąć więcej niepotrzebnego panelu") miało przyczynę zmierzoną w Z-27:
+prawy pas renderował się w **czterech** szerokościach mimo jednego wspólnego tokenu
+`--ntype-right-panel-width: 320px`. Przemiecenie `src/components/**` i `src/views/**`
+znalazło **szóstą** wartość, której pierwszy pomiar nie widział (`AssessmentToolShell`
+= 340 px). Źródła: `ExecutiveModuleShell` (300 dla powłoki artefaktu, 400 dla
+inspektora elementu), `DeckBuilderMelsView` (jawne 300), `IdeaRightPanel` (360),
+`NotebookRightRail` (360 w dwóch ścieżkach — także tej produkcyjnej, z flagą OFF),
+`IdeaElementInspector` (przybity 360 wewnątrz powłoki 400 → 40 px pustki),
+`AgentWorkshopPalette`/`Controls` (300), `AssessmentToolShell` (340).
+
+**Dlaczego ważne:** wartość 320 px nie była wyborem estetycznym — była JEDYNĄ, którą
+dało się obronić pomiarem. Panel Decka przy 300 px miał **własny poziomy pasek
+przewijania** (treść się nie mieściła); przy 320 px znika. Odwrotnie w drugą stronę:
+przejście z 360 na 320 nie wprowadziło ANI JEDNEGO nowego ucięcia w żadnym panelu
+poza jednym miejscem — pole „Etykieta" w inspektorze Idei mieściło tytuł przy 360 px
+**o trzy piksele**. To nie była gwarancja projektu, tylko przypadek. Naprawa poszła
+treścią, nie wyjątkiem od szerokości: pole tożsamości dostało własny wiersz na pełną
+szerokość (≈288 px zamiast 170 px), czyli więcej miejsca niż miało kiedykolwiek.
+
+**Co z tego wynika:** wpisana ręcznie liczba szerokości odrasta — dlatego wszystkie
+miejsca czytają teraz token, a kontrakt Notatnika pilnuje TOKENU zamiast liczby
+(przedtem test wymagał literału `360` i sam blokowałby to ujednolicenie). Trzeci
+kształt prawego pasa — szyna ikon Worda (`document-artifact`, 56 px + panel
+`useRailState.defaultRightWidth`) — został NIETKNIĘTY, bo jest świadomym wzorcem,
+nie rozjazdem. Dowód: `evidence/grafika/164-szerokosc-panelu` (20 zrzutów, oba
+motywy, z kontrolnym Wordem).
+
+---
+
 ### Z-27 · R2 „prawy panel" — zmierzone: kanon sekcji NIE jest przyczyną, zmiany w komponencie o 61 wołaczach NIE zrobiono
 **Co się stało:** dyżur miał naprawić rodzinę R2 (6 ekranów, „cały ten prawy panel jest do
 przepracowania") u przyczyny, w `ArtifactRightPanel`. Pomiar przed naprawą pokazał, że **przyczyną
