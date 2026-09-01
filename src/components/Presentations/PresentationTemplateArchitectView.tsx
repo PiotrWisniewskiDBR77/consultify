@@ -523,8 +523,6 @@ export const PresentationTemplateArchitectView: React.FC<
         colorTemplateId: editColorTemplateId || null,
         customTemplate: editCustomTemplate,
         imageStylePrompt: editImageStylePrompt || null,
-      } as Parameters<typeof updatePresentationTemplate>[1] & {
-        imageStylePrompt: string | null;
       });
       const fresh = await getPresentationTemplate(selectedTemplate.id);
       setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
