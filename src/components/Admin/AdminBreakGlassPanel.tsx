@@ -9,6 +9,7 @@ import {
   getBreakGlass,
   revokeBreakGlass,
 } from '../../services/adminBreakGlassApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 const EMPTY: BreakGlassData = {
@@ -67,7 +68,7 @@ export const AdminBreakGlassPanel: React.FC = () => {
           admin: s.adminId,
           reason: s.breakGlassReason || '—',
           approver: s.approvedBy || '—',
-          expires: new Date(s.expiresAt).toLocaleString(),
+          expires: formatListDateTime(s.expiresAt),
         })),
       [data]
     );

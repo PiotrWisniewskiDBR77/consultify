@@ -178,9 +178,8 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
   // minimal gap between sections (space-y-2.5), no heavy dividers between bordered cards.
   return (
     <div className="space-y-2.5 pb-1">
-      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
-        <PreviewAIHintStrip hints={aiHints} />
-      </div>
+      {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+      <PreviewAIHintStrip hints={aiHints} />
       {showActionPanel && (
         <ArtifactActionPanel
           variant="compact"

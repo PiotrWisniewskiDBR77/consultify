@@ -170,7 +170,11 @@ export function getToolPhaseAiActions(
         'frame-mission',
         'sparkles',
         'AI Frame',
-        'AI Frame',
+        // Odbiór 2026-08-30 (przegląd całości): `labelPl` był tu skopiowany
+        // 1:1 z `label` angielskim (kopiuj-wklej przy autorstwie) — jedyne
+        // dwa przyciski w tym słowniku bez realnego tłumaczenia, reszta
+        // (np. 'Buduj analizę', 'Buduj portfolio') już ma wzorzec.
+        'Wyostrz z AI',
         'Sharpen the strategic question before analysis',
         'Wyostrz pytanie strategiczne przed analizą'
       ),
@@ -178,7 +182,7 @@ export function getToolPhaseAiActions(
         'draft-session',
         'wand',
         'AI Draft',
-        'AI Draft',
+        'Szkicuj z AI',
         'Generate a controlled first draft of the full tool session',
         'Wygeneruj kontrolowany pierwszy szkic całej sesji narzędzia'
       ),
@@ -191,7 +195,11 @@ export function getToolPhaseAiActions(
         'find-signals',
         'search',
         'Find Signals',
-        'Find Signals',
+        // Odbiór 2026-08-30 (przegląd modułów 04/11/16): `labelPl` był tu
+        // kopią 1:1 angielskiego `label` (ten sam defekt co niegdyś
+        // 'AI Frame' wyżej w tym pliku) — jedyny przycisk kroku „Wejście i
+        // eksploracja", który mówił po angielsku w polskim interfejsie.
+        'Znajdź sygnały',
         'Extract evidence from interview and organization context',
         'Wyciągnij evidence z wywiadu i kontekstu organizacji'
       ),
@@ -218,9 +226,12 @@ export function getToolPhaseAiActions(
         'synthesize-insights',
         'wand',
         'Synthesize',
-        'Synthesize',
+        // Odbiór 2026-08-30 (przegląd modułów 04/11/16): `labelPl` = kopia
+        // 1:1 angielskiego — ten sam defekt co 'find-signals' i 'finalize-outputs'
+        // niżej w tym pliku.
+        'Syntetyzuj',
         'Create trade-offs, tensions, priorities, and recommended moves',
-        'Stwórz trade-offy, napięcia, priorytety i rekomendowane ruchy'
+        'Stwórz kompromisy, napięcia, priorytety i rekomendowane ruchy'
       ),
     ];
   }
@@ -231,9 +242,9 @@ export function getToolPhaseAiActions(
         'finalize-outputs',
         'wand',
         'Finalize',
-        'Finalize',
+        'Finalizuj',
         'Prepare final summary, output candidates, and initiative drafts',
-        'Przygotuj final summary, output candidates i szkice inicjatyw'
+        'Przygotuj podsumowanie końcowe, kandydatów na rezultaty i szkice inicjatyw'
       ),
     ];
   }
@@ -246,7 +257,7 @@ export function getToolPhaseAiActions(
         'finalize-outputs',
         'wand',
         'Finalize',
-        'Finalize',
+        'Finalizuj',
         'Generate a consulting-grade summary for this phase',
         'Wygeneruj konsultingowe podsumowanie tej fazy'
       ),

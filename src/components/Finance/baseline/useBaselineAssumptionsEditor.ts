@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  deleteBaselineAssumption,
   listBaselineAssumptions,
   type ListBaselineAssumptionsParams,
   upsertBaselineAssumptions,
@@ -53,6 +54,15 @@ export interface AssumptionDraftPatch {
   basePeriodId?: string | null;
   /** Notatka lokalna (komentarz) — TYLKO klient, brak endpointu komentarzy w allowlicie tego pakietu (patrz raport §7, EVIDENCE_MISSING). Nie jest zapisywana `POST .../assumptions` (poza kształtem body routera). */
   localComment?: string;
+  /**
+   * 176-dwie-poprawki: TYLKO dla wiersza, który jeszcze nie ma `server`
+   * (świeżo dodany przez "Dodaj założenie") — bez zapisanego wiersza `cells`
+   * nie ma skąd wziąć jednostki, więc domyślnie leciałaby zawsze 'PCT'
+   * (patrz `cells` useMemo niżej), co dla np. DSO_DAYS/USEFUL_LIFE_MONTHS
+   * zapisałoby złą jednostkę. `AssumptionsView` ustawia to przy tworzeniu
+   * wiersza z `driverUnit(driverCode)`, jednorazowo.
+   */
+  unit?: string;
 }
 
 interface UndoEntry {
@@ -101,6 +111,17 @@ export interface UseBaselineAssumptionsEditorResult {
   /** Preflight — komórki MISSING lub poza bezpiecznym zakresem. Nie blokuje zapisu, ostrzega przed zatwierdzeniem zestawu. */
   preflightWarnings: Array<{ key: string; reason: 'MISSING' | 'OUT_OF_RANGE' }>;
   save: () => Promise<{ ok: true; writtenCount: number } | { ok: false; message: string }>;
+  /**
+   * 176-dwie-poprawki: usuwa WIERSZ (nie tylko wartość komórki). Wiersz
+   * NIGDY nie zapisany na serwerze (`cell.server === null` — świeżo dodany
+   * lokalny szkic, patrz `AssumptionsView`'s "Dodaj założenie") jest po
+   * prostu czyszczony z lokalnego draftu, bez wołania API. Wiersz JUŻ
+   * zapisany woła nowy `DELETE .../assumptions/:assumptionId`
+   * (baseline.routes.ts) i odświeża listę.
+   */
+  deleteRow: (
+    key: AssumptionCellKey
+  ) => Promise<{ ok: true; deletedFromServer: boolean } | { ok: false; message: string }>;
 }
 
 function needsCreateRow(
@@ -275,7 +296,7 @@ export function useBaselineAssumptionsEditor(
           : server?.value.valueDecimal !== undefined && server?.value.valueDecimal !== null
             ? Number(server.value.valueDecimal)
             : null;
-      const unit = server?.value.unit ?? 'PCT';
+      const unit = draft?.unit ?? server?.value.unit ?? 'PCT';
       const rangeLow =
         draft?.rangeLow !== undefined
           ? draft.rangeLow
@@ -376,6 +397,34 @@ export function useBaselineAssumptionsEditor(
     }
   }, [businessVersionId, cells, drafts, reload]);
 
+  const deleteRow = useCallback(
+    async (
+      key: AssumptionCellKey
+    ): Promise<{ ok: true; deletedFromServer: boolean } | { ok: false; message: string }> => {
+      const k = cellKeyOf(key);
+      const server = serverByKey.get(k);
+      if (!server) {
+        // Nigdy zapisany na serwerze — czysto lokalny szkic. Usunięcie =
+        // wyczyszczenie draftu, bez wołania API (nie ma czego usuwać zdalnie).
+        setDrafts((prev) => {
+          if (!(k in prev)) return prev;
+          const next = { ...prev };
+          delete next[k];
+          return next;
+        });
+        return { ok: true, deletedFromServer: false };
+      }
+      try {
+        await deleteBaselineAssumption(businessVersionId, server.assumptionId);
+        await reload();
+        return { ok: true, deletedFromServer: true };
+      } catch (e) {
+        return { ok: false, message: describeFinanceV2Error(e).detail };
+      }
+    },
+    [businessVersionId, serverByKey, reload]
+  );
+
   return {
     loading,
     error,
@@ -395,6 +444,7 @@ export function useBaselineAssumptionsEditor(
     isDirty,
     preflightWarnings,
     save,
+    deleteRow,
   };
 }
 

@@ -265,8 +265,12 @@ if (!g.__LINEAGE_NAVIGATOR_FETCH__) {
 }
 
 function SimulatedMenu1(): React.ReactElement {
+  // Pasek harnessu, nie produkt — schowany przy zrzutach (bramka PODPIS, 2026-09-01).
   return (
-    <div className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary">
+    <div
+      className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary"
+      data-dev-render-chrome="true"
+    >
       <span className="font-semibold text-c-text">Consultify</span>
       <span>Finance</span>
       <span className="text-c-text-muted">(symulowane Menu 1 — nie część tego pakietu)</span>
@@ -282,13 +286,20 @@ export default function FinanceLineageNavigatorScreen(): React.ReactElement {
       data-scene={scene}
     >
       <SimulatedMenu1 />
-      <div className="mx-auto mt-4 max-w-xl">
-        <FinanceLineageNavigator
-          businessVersionId={BV_FOCUS}
-          onNavigate={() => {}}
-          onCreateNew={() => {}}
-        />
-      </div>
+      {/* Produkcja: FinanceWorkspaceUtilities.tsx:74-94 — aside w-full + szuflada
+          max-h-[42vh] overflow-auto p-4, NIE osobna kartka max-w-xl. */}
+      <aside
+        className="mt-4 w-full shrink-0 border-t border-c-border-subtle bg-c-surface"
+        data-testid="finance-workspace-utilities"
+      >
+        <div className="max-h-[42vh] overflow-auto border-t border-c-border-subtle p-4">
+          <FinanceLineageNavigator
+            businessVersionId={BV_FOCUS}
+            onNavigate={() => {}}
+            onCreateNew={() => {}}
+          />
+        </div>
+      </aside>
     </div>
   );
 }

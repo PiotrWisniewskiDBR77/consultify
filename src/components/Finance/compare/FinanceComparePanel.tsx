@@ -19,6 +19,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
+import {
+  CANONICAL_LINE_META,
+  type CanonicalLineCode,
+} from '@/components/Finance/baseline/baselineLabels';
 import { useFinanceCompareFlag } from '@/hooks/useFinanceCompareFlag';
 import {
   compareFinanceActualVsForecast,
@@ -89,6 +93,29 @@ function formatNumber(n: number | null): string {
 function formatPct(n: number | null): string {
   if (n === null) return '—';
   return `${(n * 100).toLocaleString('pl-PL', { maximumFractionDigits: 1 })}%`;
+}
+
+/**
+ * Odbiór 2026-08-30 (przegląd całości): kolumna „Wymiary" pokazywała
+ * `row.dimensions` surowo — dla porównań po linii kanonicznej (`canonicalLineId`,
+ * patrz `financeCompareService.ts`) to dawało gołe `REVENUE`/`COGS`/`GROSS_MARGIN`
+ * bez żadnego polskiego słowa obok. `baselineLabels.ts` (ekran Założenia) ma
+ * już ten sam kod → etykietę PL + skrót w nawiasie ("Przychody (REVENUE)") —
+ * CLAUDE.md V-4 pozwala skrótom finansowym zostać po angielsku, więc ten
+ * wzorzec jest zgodny z kanonem, nie omija go. Pozostałe wymiary (identyfikator
+ * podmiotu, okresu, zakres konsolidacji…) nie mają analogicznego słownika i
+ * zostają bez zmian — nie zgaduję etykiety, której nikt nie zdefiniował.
+ */
+function dimensionValueLabel(key: string, value: string): string {
+  if (key === 'canonicalLineId' && value in CANONICAL_LINE_META) {
+    return CANONICAL_LINE_META[value as CanonicalLineCode].labelPl;
+  }
+  return value;
+}
+
+function dimensionsForDisplay(dimensions: Record<string, string>): string {
+  const parts = Object.entries(dimensions).map(([key, value]) => dimensionValueLabel(key, value));
+  return parts.join(' · ');
 }
 
 /**
@@ -300,7 +327,7 @@ export function FinanceComparePanel({
                     data-material={row.materialityFlag ? 'true' : 'false'}
                   >
                     <td className="px-2 py-1.5 text-c-text-primary">
-                      {Object.values(row.dimensions).join(' · ') || '—'}
+                      {dimensionsForDisplay(row.dimensions) || '—'}
                     </td>
                     <td className="px-2 py-1.5">{formatNumber(row.a.fullUnitValue)}</td>
                     <td className="px-2 py-1.5">{formatNumber(row.b.fullUnitValue)}</td>

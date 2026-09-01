@@ -1,7 +1,29 @@
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  DollarSign,
+  Hash,
+  Italic,
+  Percent,
+  Redo2,
+  Undo2,
+  WrapText,
+} from 'lucide-react';
+
+import {
   type ArtifactCommandContext,
+  type ArtifactCommandIcon,
   ArtifactCommandRegistry,
 } from '@/components/shared/ArtifactStudio';
+
+import {
+  DeleteColumnIcon,
+  DeleteRowIcon,
+  InsertColumnIcon,
+  InsertRowIcon,
+} from './spreadsheetToolbarIcons';
 
 export interface SpreadsheetCommandPayload {
   editSelectedCell: () => void;
@@ -79,10 +101,12 @@ export function createSpreadsheetArtifactCommandRegistry(
     labelKey: string,
     category: 'editing' | 'structure',
     execute: () => void,
-    undoPolicy: 'undo' | 'confirm' = 'undo'
+    undoPolicy: 'undo' | 'confirm' = 'undo',
+    icon?: ArtifactCommandIcon
   ) => ({
     commandId,
     labelKey,
+    icon,
     artifactTypes: ['spreadsheet'] as const,
     category,
     canonicalPlacement: 'menu3' as const,
@@ -104,21 +128,27 @@ export function createSpreadsheetArtifactCommandRegistry(
     },
   });
 
-  const formatCommand = (commandId: string, labelKey: string, execute: () => void) =>
-    selectionScoped(commandId, labelKey, 'editing', execute);
+  const formatCommand = (
+    commandId: string,
+    labelKey: string,
+    execute: () => void,
+    icon?: ArtifactCommandIcon
+  ) => selectionScoped(commandId, labelKey, 'editing', execute, 'undo', icon);
 
   const structureCommand = (
     commandId: string,
     labelKey: string,
     execute: () => void,
-    undoPolicy: 'undo' | 'confirm' = 'undo'
-  ) => selectionScoped(commandId, labelKey, 'structure', execute, undoPolicy);
+    undoPolicy: 'undo' | 'confirm' = 'undo',
+    icon?: ArtifactCommandIcon
+  ) => selectionScoped(commandId, labelKey, 'structure', execute, undoPolicy, icon);
 
   return new ArtifactCommandRegistry().registerMany([
     // ── 1. Cofnij / Ponów: ukryte, dopóki nie ma czego cofać ────────────────
     {
       commandId: 'xlsx.history.undo',
       labelKey: 'Cofnij',
+      icon: Undo2,
       artifactTypes: ['spreadsheet'],
       category: 'editing',
       canonicalPlacement: 'menu3',
@@ -136,6 +166,7 @@ export function createSpreadsheetArtifactCommandRegistry(
     {
       commandId: 'xlsx.history.redo',
       labelKey: 'Ponów',
+      icon: Redo2,
       artifactTypes: ['spreadsheet'],
       category: 'editing',
       canonicalPlacement: 'menu3',
@@ -152,29 +183,61 @@ export function createSpreadsheetArtifactCommandRegistry(
     },
 
     // ── 2. Formaty, po które człowiek sięga najczęściej ─────────────────────
-    formatCommand('xlsx.format.currency', 'Waluta', payload.formatCurrency),
-    formatCommand('xlsx.format.percent', 'Procent', payload.formatPercent),
-    formatCommand('xlsx.format.bold', 'Pogrubienie', payload.toggleBold),
+    formatCommand('xlsx.format.currency', 'Waluta', payload.formatCurrency, DollarSign),
+    formatCommand('xlsx.format.percent', 'Procent', payload.formatPercent, Percent),
+    formatCommand('xlsx.format.bold', 'Pogrubienie', payload.toggleBold, Bold),
 
     // ── 3. Struktura: wiersze i kolumny ─────────────────────────────────────
-    structureCommand('xlsx.row.insertAbove', 'Wstaw wiersz', payload.insertRowsAbove),
-    structureCommand('xlsx.row.delete', 'Usuń wiersz', payload.deleteRows, 'confirm'),
-    structureCommand('xlsx.column.insertLeft', 'Wstaw kolumnę', payload.insertColumnsLeft),
-    structureCommand('xlsx.column.delete', 'Usuń kolumnę', payload.deleteColumns, 'confirm'),
+    structureCommand(
+      'xlsx.row.insertAbove',
+      'Wstaw wiersz',
+      payload.insertRowsAbove,
+      'undo',
+      InsertRowIcon
+    ),
+    structureCommand(
+      'xlsx.row.delete',
+      'Usuń wiersz',
+      payload.deleteRows,
+      'confirm',
+      DeleteRowIcon
+    ),
+    structureCommand(
+      'xlsx.column.insertLeft',
+      'Wstaw kolumnę',
+      payload.insertColumnsLeft,
+      'undo',
+      InsertColumnIcon
+    ),
+    structureCommand(
+      'xlsx.column.delete',
+      'Usuń kolumnę',
+      payload.deleteColumns,
+      'confirm',
+      DeleteColumnIcon
+    ),
 
     // ── 4. Reszta — świadomie pod „Więcej" ──────────────────────────────────
-    formatCommand('xlsx.format.number', 'Liczba', payload.formatNumber),
+    formatCommand('xlsx.format.number', 'Liczba', payload.formatNumber, Hash),
     formatCommand('xlsx.format.general', 'Format ogólny', payload.formatGeneral),
-    formatCommand('xlsx.format.italic', 'Kursywa', payload.toggleItalic),
-    formatCommand('xlsx.format.wrap', 'Zawijaj tekst', payload.toggleWrapText),
-    formatCommand('xlsx.format.alignLeft', 'Wyrównaj do lewej', payload.alignLeft),
-    formatCommand('xlsx.format.alignCenter', 'Wyśrodkuj', payload.alignCenter),
-    formatCommand('xlsx.format.alignRight', 'Wyrównaj do prawej', payload.alignRight),
-    structureCommand('xlsx.row.insertBelow', 'Wstaw wiersz niżej', payload.insertRowsBelow),
+    formatCommand('xlsx.format.italic', 'Kursywa', payload.toggleItalic, Italic),
+    formatCommand('xlsx.format.wrap', 'Zawijaj tekst', payload.toggleWrapText, WrapText),
+    formatCommand('xlsx.format.alignLeft', 'Wyrównaj do lewej', payload.alignLeft, AlignLeft),
+    formatCommand('xlsx.format.alignCenter', 'Wyśrodkuj', payload.alignCenter, AlignCenter),
+    formatCommand('xlsx.format.alignRight', 'Wyrównaj do prawej', payload.alignRight, AlignRight),
+    structureCommand(
+      'xlsx.row.insertBelow',
+      'Wstaw wiersz niżej',
+      payload.insertRowsBelow,
+      'undo',
+      InsertRowIcon
+    ),
     structureCommand(
       'xlsx.column.insertRight',
       'Wstaw kolumnę z prawej',
-      payload.insertColumnsRight
+      payload.insertColumnsRight,
+      'undo',
+      InsertColumnIcon
     ),
     {
       commandId: 'xlsx.cell.edit',

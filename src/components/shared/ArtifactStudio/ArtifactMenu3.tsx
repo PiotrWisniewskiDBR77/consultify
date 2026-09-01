@@ -42,7 +42,11 @@ const CommandButton: React.FC<CommandButtonProps> = ({
       ? 'Brak uprawnień'
       : 'Niedostępne w bieżącym stanie dokumentu'
     : undefined;
-
+  const Icon = command.icon;
+  // Excel-typowe ikony (171-pojedyncze, uwaga właściciela): w pasku głównym
+  // ikona zastępuje słowo, etykieta zostaje w `title` (tooltip) + aria-label,
+  // żeby nowy użytkownik nie zgadywał. W rozwijanym „Więcej" ikona i tekst
+  // idą razem — tam jest miejsce i pozycje są rzadziej używane.
   return (
     <button
       type="button"
@@ -50,16 +54,26 @@ const CommandButton: React.FC<CommandButtonProps> = ({
       onClick={disabled ? undefined : onExecute}
       disabled={disabled}
       aria-disabled={disabled || undefined}
+      aria-label={Icon && !menuItem ? label : undefined}
       title={disabledReason ?? label}
       data-command-id={command.commandId}
       data-command-state={state.visibility}
       className={
         menuItem
-          ? 'flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45'
-          : 'inline-flex min-h-10 flex-shrink-0 items-center rounded-lg px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-45'
+          ? 'flex min-h-10 w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45'
+          : Icon
+            ? 'inline-flex size-10 flex-shrink-0 items-center justify-center rounded-lg text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-45'
+            : 'inline-flex min-h-10 flex-shrink-0 items-center rounded-lg px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-45'
       }
     >
-      <span className="truncate">{label}</span>
+      {Icon ? <Icon size={17} className="shrink-0" /> : null}
+      {menuItem ? (
+        <span className="truncate">{label}</span>
+      ) : Icon ? (
+        <span className="sr-only">{label}</span>
+      ) : (
+        <span className="truncate">{label}</span>
+      )}
     </button>
   );
 };

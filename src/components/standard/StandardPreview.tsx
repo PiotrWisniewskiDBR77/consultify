@@ -353,12 +353,10 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
     ai || relations || actionRows.length > 0 || whatsNext ? (
       // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
       <div className="space-y-2.5">
-        {/* Blok 4 — ramka AI */}
-        {ai ? (
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-            <PreviewAIHintStrip {...ai} />
-          </div>
-        ) : null}
+        {/* Blok 4 — ramka AI. Ramkę rysuje sam `PreviewAIHintStrip` (jedno
+            miejsce w całej aplikacji) — tutaj NIE opakowujemy, bo dałoby to
+            podwójną ramkę. Patrz nota w `PreviewAIHintStrip.tsx`. */}
+        {ai ? <PreviewAIHintStrip {...ai} /> : null}
 
         {/* Blok 5 — Relations */}
         {relations ? (

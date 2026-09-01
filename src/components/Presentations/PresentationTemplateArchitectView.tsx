@@ -122,10 +122,10 @@ const GOAL_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   { value: 'align', labelKey: 'presentations.templates.goal.align', fallback: 'Align' },
 ];
 
-const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; fallback: string }[] = [
-  { value: 'corporate', fallback: 'Corporate' },
-  { value: 'minimal', fallback: 'Minimal' },
-  { value: 'modern', fallback: 'Modern' },
+const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; labelKey: string; fallback: string }[] = [
+  { value: 'corporate', labelKey: 'presentations.themes.corporate', fallback: 'Corporate' },
+  { value: 'minimal', labelKey: 'presentations.themes.minimal', fallback: 'Minimal' },
+  { value: 'modern', labelKey: 'presentations.themes.modern', fallback: 'Modern' },
 ];
 
 const DEFAULT_CUSTOM_TEMPLATE: PresentationCustomTemplateDefinition = {
@@ -756,7 +756,16 @@ export const PresentationTemplateArchitectView: React.FC<
           <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
             <span className="font-medium text-c-text">
               {t('presentations.templateArchitect.purpose', 'Purpose')}{' '}
-              <span className="text-danger-500">*</span>
+              {/*
+                KANON (CLAUDE.md §3, odbiór 2026-08-30): crimson/danger WYŁĄCZNIE
+                dla semantyki krytycznej. Ta sama poprawka co
+                `DocumentStudioTemplateArchitectView.tsx` (odbiór 2026-08-30) —
+                czerwona gwiazdka przy polu obowiązkowym to ozdobnik konwencji,
+                nie alarm. Zastąpione tym samym neutralnym wzorcem „(wymagane)".
+              */}
+              <span className="text-xs font-normal text-c-text-muted">
+                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+              </span>
             </span>
             <textarea
               value={purpose}
@@ -831,7 +840,7 @@ export const PresentationTemplateArchitectView: React.FC<
             >
               {THEME_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.fallback}
+                  {t(opt.labelKey, opt.fallback)}
                 </option>
               ))}
             </select>
@@ -1134,7 +1143,7 @@ export const PresentationTemplateArchitectView: React.FC<
                 >
                   {THEME_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
-                      {opt.fallback}
+                      {t(opt.labelKey, opt.fallback)}
                     </option>
                   ))}
                 </select>

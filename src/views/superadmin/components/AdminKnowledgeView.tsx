@@ -20,6 +20,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
+import { DOCUMENT_CATEGORIES } from '@/views/vault/vaultDocuments';
 
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { Api } from '../../../services/api';
@@ -118,8 +119,9 @@ export const AdminKnowledgeView: React.FC = () => {
   const [linkProjectId, setLinkProjectId] = useState<string>('');
   const [linkProjectNotes, setLinkProjectNotes] = useState<string>('');
 
-  // Document categories
-  const DOCUMENT_CATEGORIES = ['Best Practices', 'Methodology', 'Standards', 'Templates', 'Other'];
+  // Document categories — shared source: `src/views/vault/vaultDocuments.ts`
+  // (was a third duplicate of the same raw-English array; see `categoryLabel`
+  // there for why the vault UI now translates these values on display).
   // Idea categories
   const IDEA_CATEGORIES = [
     'Process Improvement',

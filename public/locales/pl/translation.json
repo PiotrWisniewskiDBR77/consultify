@@ -1,4 +1,126 @@
 {
+  "contextBuilder": {
+    "dynamicList": {
+      "actions": "Akcje",
+      "selectPlaceholder": "Wybierz...",
+      "addItem": "Dodaj pozycję",
+      "empty": "Brak pozycji. Dodaj pierwszą!"
+    },
+    "shared": {
+      "refining": "Ulepszanie..."
+    }
+  },
+  "transformationScenarios": {
+    "banner": {
+      "title": "Rekomendowany scenariusz transformacji",
+      "subtitle": "Na podstawie {count} zadeklarowanych wyzwań rekomendowany kierunek to {name}."
+    },
+    "recommended": "Rekomendowany",
+    "cancel": "Anuluj",
+    "selected": "Wybrany",
+    "select": "Wybierz scenariusz",
+    "metricLabels": {
+      "tempo": "Tempo",
+      "ambition": "Ambicja",
+      "risk": "Ryzyko"
+    },
+    "deepDive": {
+      "title": "Szczegóły scenariusza",
+      "subtitle": "Konsekwencje biznesowe {name}",
+      "definition": "Co oznacza ten scenariusz",
+      "aiReasoning": "Dlaczego ten scenariusz pasuje",
+      "aiReasoningRisk": "Adresuje kluczowe ukryte ryzyka związane z **rozdrobnieniem procesów** i **zgodnością**, wykryte w Twoim profilu.",
+      "aiReasoningStrength": "Wykorzystuje mocną stronę organizacji w obszarze **kultury inżynierskiej**, by napędzić zmianę poprzez kluczowy zespół.",
+      "tradeoffs": "Kompromisy",
+      "gains": "Zyski",
+      "sacrifices": "Koszty",
+      "impact": "Wpływ organizacyjny"
+    },
+    "scenarios": {
+      "digital-foundation": {
+        "name": "Fundament cyfrowy",
+        "narrative": "Najpierw fundamenty, potem tempo.",
+        "description": "Zbuduj podstawowe zdolności cyfrowe i infrastrukturę, zanim przyspieszysz transformację.",
+        "gains": [
+          "Stabilna podstawa danych i procesów pod dalsze inicjatywy",
+          "Niższe ryzyko techniczne przy kolejnych wdrożeniach",
+          "Szybsza adaptacja nowych narzędzi w kolejnych fazach"
+        ],
+        "sacrifices": [
+          "Wolniejsze pierwsze efekty biznesowe",
+          "Wymaga dyscypliny inwestycyjnej zanim pojawią się wyniki"
+        ]
+      },
+      "customer-experience": {
+        "name": "Rewolucja doświadczenia klienta",
+        "narrative": "Klient w centrum każdej decyzji.",
+        "description": "Przekształć punkty styku z klientem i sposób zaangażowania klienta.",
+        "gains": [
+          "Wyższa satysfakcja i lojalność klientów",
+          "Krótszy czas reakcji na potrzeby rynku",
+          "Nowe kanały sprzedaży i obsługi"
+        ],
+        "sacrifices": [
+          "Wymaga zmiany kultury organizacyjnej, nie tylko narzędzi",
+          "Wyższe koszty na starcie (badania, prototypy, testy z klientem)"
+        ]
+      },
+      "operational-excellence": {
+        "name": "Doskonałość operacyjna",
+        "narrative": "Ta sama praca, mniej marnotrawstwa.",
+        "description": "Zoptymalizuj procesy i zwiększ efektywność operacyjną.",
+        "gains": [
+          "Mierzalna redukcja kosztów operacyjnych",
+          "Krótszy czas cyklu i mniej wąskich gardeł",
+          "Lepsza jakość dzięki ustandaryzowanym procesom"
+        ],
+        "sacrifices": [
+          "Długi horyzont wdrożenia (12–24 miesiące)",
+          "Opór wobec standaryzacji w zespołach operacyjnych"
+        ]
+      },
+      "ai-powered": {
+        "name": "Transformacja napędzana AI",
+        "narrative": "AI jako dźwignia, nie dodatek.",
+        "description": "Wykorzystaj AI i automatyzację w całej organizacji.",
+        "gains": [
+          "Automatyzacja powtarzalnych zadań na dużą skalę",
+          "Szybsze i trafniejsze decyzje oparte na danych",
+          "Przewaga konkurencyjna w obszarach opartych na danych"
+        ],
+        "sacrifices": [
+          "Wysokie wymagania co do jakości danych i zarządzania nimi",
+          "Najdłuższy i najbardziej złożony horyzont wdrożenia"
+        ]
+      },
+      "business-model-innovation": {
+        "name": "Innowacja modelu biznesowego",
+        "narrative": "Nowa wartość, nie tylko nowe narzędzia.",
+        "description": "Wymyśl na nowo strumienie przychodów i propozycję wartości.",
+        "gains": [
+          "Nowe źródła przychodów niezależne od dotychczasowego rynku",
+          "Większa odporność na dysrupcję branżową"
+        ],
+        "sacrifices": [
+          "Najwyższe ryzyko strategiczne spośród wszystkich scenariuszy",
+          "Wymaga akceptacji zarządu dla eksperymentów bez gwarancji sukcesu"
+        ]
+      },
+      "data-driven": {
+        "name": "Organizacja oparta na danych",
+        "narrative": "Decyzje na danych, nie na przeczuciach.",
+        "description": "Zbuduj zdolności analityczne i kulturę danych.",
+        "gains": [
+          "Decyzje oparte na danych zamiast intuicji",
+          "Jedno źródło prawdy zamiast rozproszonych arkuszy"
+        ],
+        "sacrifices": [
+          "Wymaga konsolidacji danych rozproszonych po silosach",
+          "Zmiana nawyków decyzyjnych zajmuje czas"
+        ]
+      }
+    }
+  },
   "chatSignals": {
     "untitled": "Sygnał bez tytułu",
     "severity": {
@@ -1056,6 +1178,10 @@
       "confidential": "Poufny",
       "internal": "Wewnętrzny",
       "public": "Publiczny"
+    },
+    "languages": {
+      "en": "Angielski",
+      "pl": "Polski"
     },
     "outline": {
       "title": "Konspekt decka",
@@ -2574,6 +2700,7 @@
       "calendar": "Kalendarz",
       "tasks": "Zadania",
       "decisions": "Decyzje",
+      "projects": "Projekty",
       "manager": "Menedżer",
       "agent": "Uruchom agenta",
       "myWork": "Moja Praca",
@@ -2588,6 +2715,7 @@
       "label4": "Kalendarz",
       "label5": "Zadania",
       "label6": "Decyzje",
+      "labelProjects": "Projekty",
       "label7": "Wszystkie",
       "label8": "Zaległe",
       "label9": "Dzisiaj",
@@ -6195,6 +6323,7 @@
       "groupAudit": "Audyt",
       "derivedFromPerspectives": "Zbudowane z {{count}} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora.",
       "actionsLiveInHeaderAndToolbar": "Akcje tego wniosku żyją w nagłówku i na pasku narzędzi.",
+      "actionsZeroDescribesViewNote": "W trybie Podglądu działania są niedostępne. Liczba 0 opisuje ten widok, nie wniosek — to ograniczenie podglądu, nie informacja, że działań nie ma. Przełącz na Edycję, żeby je zobaczyć.",
       "panelActionsHint": "Wybierz stan, aby przenieść wniosek dalej w cyklu życia.",
       "statusOptionLabel": {
         "draft": "Szkic",
@@ -6763,7 +6892,8 @@
       "sessionUnit_many": "sesji",
       "sessionUnit_other": "sesji",
       "usedNTimes": "użyto {{count}}×",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "requiredMarker": "wymagane"
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transkrypcja zatwierdzona.",
@@ -8831,6 +8961,8 @@
       "activePlan": "Aktywny plan",
       "activePlanAria": "Aktywny scenariusz planu",
       "openWorkspace": "Otwórz narzędzia planu",
+      "openInitiativeCard": "Otwórz kartę inicjatywy",
+      "openCardUnavailable": "Kartę inicjatywy otwiera moduł Inicjatywy — ten widok jest tylko planem.",
       "sectionAria": "Scenariusze planu",
       "workbenchAria": "Warsztat scenariusza planu",
       "preview": {
@@ -18621,7 +18753,7 @@
             "p90": "P90",
             "probPositive": "P(NPV > 0)",
             "var5": "VaR (5%)",
-            "empty": "Ustaw drivery i uruchom symulację, aby zobaczyć rozkład NPV.",
+            "empty": "Ustaw czynniki i uruchom symulację, aby zobaczyć rozkład NPV.",
             "error": "Symulacja chwilowo niedostępna — spróbuj ponownie.",
             "driversRequired": "Dodaj co najmniej jeden driver."
           },
@@ -19161,7 +19293,7 @@
       "urlReady": "Link przetworzony."
     },
     "stopTTS": "Zatrzymaj czytanie",
-    "sidebarEmptyHint": "Zapytaj Teresę o kontekst prezentacji albo poproś o propozycję kolejnego kroku.",
+    "sidebarEmptyHint": "Zapytaj Teresę o kontekst tej pracy albo poproś o propozycję kolejnego kroku.",
     "teresaAction": {
       "unconfirmed": "Nie mam potwierdzenia, że akcja „{{action}}” się wykonała — nic tego nie potwierdziło. Sprawdź ręcznie, zanim uznasz to za zrobione.",
       "error": "Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.",
@@ -19557,6 +19689,12 @@
           "succeeded": "Udane",
           "failed": "Nieudane"
         },
+        "types": {
+          "send_invite_email": "Wysyłka e-maila z zaproszeniem",
+          "sync_scim_group": "Synchronizacja grupy SCIM",
+          "export_audit_logs": "Eksport dziennika audytu",
+          "recalculate_seats": "Przeliczenie miejsc"
+        },
         "empty": {
           "title": "Brak zadań",
           "description": "Organizacja nie ma zadań administracyjnych w kolejce."
@@ -19709,6 +19847,12 @@
           "count": "Liczba",
           "amount": "Kwota"
         },
+        "types": {
+          "purchase": "Zakup",
+          "auto_add": "Dodano automatycznie",
+          "manual_adjustment": "Korekta ręczna",
+          "release": "Zwolnienie miejsca"
+        },
         "title": "Miejsca i licencje",
         "description": "Stan puli miejsc dla bieżącej organizacji.",
         "summary": {
@@ -19746,6 +19890,16 @@
           "toPlan": "Plan na",
           "reason": "Powód",
           "actor": "Wykonał"
+        },
+        "actions": {
+          "upgrade": "Podwyższenie planu",
+          "downgrade": "Obniżenie planu",
+          "renewal": "Odnowienie",
+          "cancellation": "Anulowanie",
+          "suspended": "Zawieszono",
+          "reactivated": "Reaktywowano",
+          "dunning_started": "Rozpoczęto windykację",
+          "dunning_exited": "Zakończono windykację"
         },
         "systemActor": "System",
         "title": "Historia zmian planu",
@@ -20294,7 +20448,9 @@
         },
         "values": {
           "unknown": "Nieznane",
-          "unknownLocation": "Nieznana"
+          "unknownLocation": "Nieznana",
+          "unknownDevice": "Nieznane urządzenie",
+          "automationAgent": "Agent automatyzacji"
         },
         "actions": {
           "revoke": "Unieważnij sesję"
@@ -20370,6 +20526,11 @@
         "status": {
           "resolved": "Rozwiązany",
           "open": "Otwarty"
+        },
+        "eventTypes": {
+          "impossible_travel": "Niemożliwa podróż",
+          "repeated_failed_login": "Powtarzające się nieudane logowania",
+          "new_device_login": "Logowanie z nowego urządzenia"
         },
         "metrics": {
           "unresolved": "Nierozwiązane: {{count}}",
@@ -21533,6 +21694,10 @@
           "lastError": "Ostatni błąd",
           "source": "Źródło"
         },
+        "sources": {
+          "llm_health_events": "Monitoring dostępności LLM",
+          "llm_observatory": "Obserwatorium LLM"
+        },
         "noIncidentsInWindow": "Brak incydentów w bieżącym oknie pomiarowym.",
         "empty": {
           "title": "Brak incydentów",
@@ -21606,6 +21771,10 @@
           "exportKind": "Eksport",
           "rows": "Wiersze",
           "format": "Format"
+        },
+        "kinds": {
+          "audit_logs_csv": "Dziennik audytu (CSV)",
+          "compliance_summary_pdf": "Podsumowanie zgodności (PDF)"
         },
         "empty": {
           "title": "Brak eksportów",
@@ -21713,7 +21882,32 @@
         "actions": {
           "openCanonical": "Otwórz ekran kanoniczny"
         },
-        "currentSource": "Źródło: tenant admin API · odczyt bieżący"
+        "currentSource": "Źródło: tenant admin API · odczyt bieżący",
+        "columns": {
+          "type": "Typ",
+          "title": "Uwaga",
+          "severity": "Waga",
+          "detail": "Szczegóły",
+          "source": "Źródło",
+          "freshness": "Świeżość"
+        },
+        "types": {
+          "risk": "Ryzyko",
+          "audit": "Audyt",
+          "billing": "Budżet",
+          "health": "Kondycja usług"
+        },
+        "sourceNames": {
+          "risk": "Panel ryzyka",
+          "audit": "Dziennik audytu",
+          "billing": "Rozliczenia i budżet",
+          "health": "Panel kondycji usług"
+        },
+        "severity": {
+          "critical": "Krytyczna",
+          "warning": "Ostrzeżenie",
+          "info": "Informacyjna"
+        }
       },
       "cost-capacity": {
         "partialSourcesWarning": "Część źródeł kosztu lub pojemności jest niedostępna.",
@@ -21901,6 +22095,12 @@
         "failing": "Awaria",
         "unknown": "Brak wyniku"
       },
+      "kind": {
+        "database": "Baza danych",
+        "internal_service": "Usługa wewnętrzna",
+        "queue": "Kolejka",
+        "external_provider": "Dostawca zewnętrzny"
+      },
       "empty": {
         "title": "Brak zadeklarowanych zależności",
         "description": "Mapa zależności nie zawiera pozycji."
@@ -21909,6 +22109,49 @@
         "title": "Probe’y bez zadeklarowanej zależności",
         "description": "Mapa jest ręczną, weryfikowalną deklaracją. Niewymienione zależności czekają na dowód w kodzie.",
         "none": "Wszystkie zarejestrowane probe’y mają deklarację."
+      }
+    },
+    "ownership": {
+      "title": "Własność organizacji",
+      "desc": "Zarządzaj właścicielem zespołu i zabezpieczeniami przekazania własności",
+      "errors": {
+        "loadTitle": "Informacje o właścicielu są niedostępne",
+        "loadFallback": "Nie udało się wczytać informacji o właścicielu.",
+        "adminsFallback": "Nie udało się wczytać listy administratorów.",
+        "pendingTransferTitle": "Stan oczekującego przekazania jest niedostępny",
+        "pendingTransferFallback": "Nie udało się wczytać stanu oczekującego przekazania własności.",
+        "genericLoad": "Nie udało się wczytać informacji o własności",
+        "noOrganization": "Nie wybrano organizacji"
+      },
+      "toasts": {
+        "selectAdmin": "Wybierz administratora, któremu chcesz przekazać własność",
+        "transferSent": "Wysłano prośbę o przekazanie własności. Nowy właściciel musi zaakceptować przekazanie.",
+        "transferFailed": "Nie udało się rozpocząć przekazania własności",
+        "transferCancelled": "Przekazanie anulowane",
+        "cancelFailed": "Nie udało się anulować przekazania",
+        "acceptedOwnership": "Jesteś teraz właścicielem organizacji!",
+        "acceptFailed": "Nie udało się zaakceptować przekazania"
+      },
+      "pendingBanner": {
+        "title": "Oczekujące przekazanie własności",
+        "description": "Zostałeś wybrany na nowego właściciela tej organizacji.",
+        "accept": "Zaakceptuj własność",
+        "decline": "Odrzuć"
+      },
+      "ownerCard": {
+        "badge": "WŁAŚCICIEL",
+        "since": "Właściciel od",
+        "initialSetup": "Konfiguracja początkowa",
+        "warning": "Właściciela organizacji nie można usunąć z listy zespołu. Aby usunąć tego użytkownika, najpierw przekaż własność."
+      },
+      "transferAction": "Przekaż własność",
+      "modal": {
+        "info": "Przekazanie własności przenosi zabezpieczenia dostępne tylko dla właściciela na wybranego administratora. Zachowasz uprawnienia administratora, ale przestaniesz być właścicielem zespołu.",
+        "selectLabel": "Wybierz nowego właściciela",
+        "selectPlaceholder": "Wybierz administratora...",
+        "reasonLabel": "Powód (opcjonalnie)",
+        "reasonPlaceholder": "Dlaczego przekazujesz własność?",
+        "cancel": "Anuluj"
       }
     },
     "incidentHistory": {
@@ -23448,7 +23691,14 @@
       "addAnalystComment": "Kliknij, aby dodać komentarz analityka...",
       "technicalDetails": "Szczegóły techniczne",
       "lineCode": "Kod linii",
-      "selectedCandidate": "Wybrany kandydat"
+      "selectedCandidate": "Wybrany kandydat",
+      "valueOrigin": {
+        "source": "Źródło",
+        "mapped": "Zmapowane",
+        "manual": "Ręczne",
+        "computed": "Obliczone",
+        "estimated": "Szacowane"
+      }
     },
     "canonicalTable": {
       "ariaLabel": "Tabela sprawozdania finansowego",
@@ -23499,20 +23749,23 @@
       },
       "monteCarlo": {
         "title": "Symulacja Monte Carlo NPV",
-        "subtitle": "Symuluj wyniki NPV w zakresach niepewności driverów.",
-        "driverLabel": "Driver",
+        "subtitle": "Symuluj wyniki NPV w zakresach niepewności czynników.",
+        "driverLabel": "Czynnik",
+        "seedRevenue": "Przychody",
+        "seedCost": "Koszty",
+        "newDriver": "Czynnik {{n}}",
         "min": "Min",
         "mode": "Moda",
         "max": "Maks",
         "weight": "Waga",
-        "addDriver": "+ driver",
+        "addDriver": "+ czynnik",
         "iterations": "Iteracje",
         "seed": "Ziarno (seed)",
         "bins": "Liczba przedziałów histogramu",
         "running": "Symulowanie…",
         "run": "Uruchom symulację",
         "error": "Symulacja chwilowo niedostępna — spróbuj ponownie.",
-        "empty": "Ustaw drivery i uruchom symulację, aby zobaczyć rozkład NPV.",
+        "empty": "Ustaw czynniki i uruchom symulację, aby zobaczyć rozkład NPV.",
         "mean": "Średnie NPV",
         "p10": "P10",
         "p50": "P50 (mediana)",
@@ -23929,6 +24182,412 @@
     }
   },
   "organization": {
+    "goals": {
+      "tabs": {
+        "intent": "Intencja strategiczna",
+        "metrics": "Mierniki sukcesu",
+        "scope": "Zakres i granice",
+        "nogo": "Strefa zakazana",
+        "expectations": "Oczekiwania"
+      },
+      "aiSuggestion": {
+        "title": "Propozycja AI",
+        "bodyPre": "Zauważyłem, że nie uwzględniono",
+        "bodyPost": ". To standardowy KPI dla produkcji. Dodać go?",
+        "addKpi": "Dodaj KPI",
+        "dismiss": "Odrzuć"
+      },
+      "intent": {
+        "primaryObjectiveLabel": "Cel główny (gwiazda północna)",
+        "primaryObjectiveHint": "Jaki jest jeden, najważniejszy cel tej transformacji?",
+        "primaryObjectivePlaceholder": "Np. Zostać liderem rynku w produkcji na zamówienie, skracając czas realizacji o 50%...",
+        "secondaryObjectivesLabel": "Cele drugorzędne",
+        "secondaryObjectivesPlaceholder": "Np. Poprawić retencję pracowników, zmniejszyć ślad węglowy...",
+        "topPrioritiesLabel": "Najważniejsze priorytety (wybierz maks. 3)",
+        "priorities": {
+          "eff": "Efektywność / Redukcja kosztów",
+          "growth": "Wzrost / Zwiększenie sprzedaży",
+          "inv": "Innowacje / Nowe produkty",
+          "qual": "Jakość / Zgodność",
+          "speed": "Szybkość / Zwinność",
+          "cust": "Doświadczenie klienta"
+        }
+      },
+      "metrics": {
+        "title": "Mierniki sukcesu (KPI)",
+        "description": "Zdefiniuj mierzalne wskaźniki śledzące sukces. Użyj „Dodaj pozycję”, aby dodać nowe KPI.",
+        "columns": {
+          "name": "Nazwa KPI",
+          "baseline": "Wartość bazowa",
+          "target": "Cel",
+          "timeframe": "Horyzont czasu"
+        },
+        "placeholders": {
+          "name": "np. OEE",
+          "baseline": "np. 60%",
+          "target": "np. 85%"
+        },
+        "timeframeOptions": {
+          "3m": "3 miesiące",
+          "6m": "6 miesięcy",
+          "12m": "12 miesięcy"
+        }
+      },
+      "scope": {
+        "inTitle": "W zakresie (uwzględnione)",
+        "inDescription": "Obszary, działy lub procesy jednoznacznie uwzględnione.",
+        "outTitle": "Poza zakresem (wykluczone)",
+        "outDescription": "Obszary jednoznacznie wykluczone, by uniknąć rozrostu zakresu.",
+        "columns": {
+          "item": "Pozycja / Obszar",
+          "notes": "Notatki",
+          "reason": "Powód"
+        },
+        "placeholders": {
+          "inItem": "np. Zakład A",
+          "inNotes": "np. Pełny audyt",
+          "outItem": "np. Logistyka",
+          "outReason": "np. Już zoptymalizowane"
+        }
+      },
+      "nogo": {
+        "title": "Strefa zakazana",
+        "description": "Obszary lub tematy niedostępne ze względu na politykę firmy, przepisy lub strategię.",
+        "columns": {
+          "area": "Obszar wrażliwy",
+          "reason": "Powód / Ograniczenie"
+        },
+        "placeholders": {
+          "area": "np. Zatrudnienie",
+          "reason": "np. Rygorystyczna umowa związkowa do 2026"
+        }
+      },
+      "expectations": {
+        "archetype": {
+          "title": "Archetyp transformacji",
+          "hint": "Jak chcesz dostarczać wartość? Określ tempo i głębokość zmiany.",
+          "options": {
+            "fast": {
+              "label": "Pilotaż i skalowanie (Agile)",
+              "desc": "Szybkie prototypowanie, MVP, krótkie pętle informacji zwrotnej. Najlepsze przy dużej niepewności."
+            },
+            "deep": {
+              "label": "Transformacja rdzenia (Waterfall)",
+              "desc": "Głęboka zmiana strukturalna, wdrożenie etapowe, ostrożne podejście do ryzyka. Najlepsze dla systemów legacy."
+            },
+            "targeted": {
+              "label": "Prowadzone wartością / Case’y",
+              "desc": "Skupienie na konkretnych punktach bólu o wysokim ROI. Najlepsze przy ograniczonym budżecie."
+            }
+          }
+        },
+        "aiRole": {
+          "title": "Współpraca człowiek-AI",
+          "hint": "Określ poziom autonomii, jaki przyznajesz AI w tym zaangażowaniu.",
+          "options": {
+            "advisor": {
+              "label": "Doradca strategiczny",
+              "desc": "AI kwestionuje założenia i dostarcza benchmarki. Ty decydujesz."
+            },
+            "partner": {
+              "label": "Współpracujący co-pilot",
+              "desc": "AI przygotowuje treści i plany. Ty je przeglądasz i doprecyzowujesz."
+            },
+            "agent": {
+              "label": "Autonomiczny agent",
+              "desc": "AI wykonuje zdefiniowane przepływy pracy (np. porządkowanie danych) pod nadzorem."
+            }
+          }
+        },
+        "cadence": {
+          "title": "Sterowanie i nadzór",
+          "hint": "Jak będziemy śledzić postępy i zapewniać spójność?",
+          "options": {
+            "weekly": {
+              "label": "Cotygodniowy komitet sterujący",
+              "desc": "Taktyczne dopasowanie sprintów i blokerów."
+            },
+            "monthly": {
+              "label": "Comiesięczny przegląd kwartalny",
+              "desc": "Strategiczny przegląd dostarczonej wartości i mapy drogowej."
+            },
+            "daily": {
+              "label": "Codzienne standupy",
+              "desc": "Ścisła koordynacja operacyjna."
+            },
+            "milestone": {
+              "label": "Oparte na kamieniach milowych",
+              "desc": "Przeglądy wyzwalane kluczowymi produktami."
+            }
+          }
+        }
+      }
+    },
+    "challenges": {
+      "tabs": {
+        "challenges": "Zadeklarowane wyzwania",
+        "rootcause": "Sygnały przyczyn źródłowych",
+        "blockers": "Obiektywne blokery",
+        "evidence": "Dowody"
+      },
+      "declared": {
+        "uploaderTitle": "Zadeklarowane wyzwania",
+        "suggestions": [
+          "Raporty operacyjne",
+          "Dzienniki audytu",
+          "Skargi klientów",
+          "Notatki ze zmian"
+        ],
+        "title": "Zadeklarowane wyzwania",
+        "description": "Oficjalne problemy zgłoszone przez klienta (objawy).",
+        "columns": {
+          "challenge": "Wyzwanie / Objaw",
+          "area": "Obszar funkcjonalny",
+          "severity": "Waga",
+          "notes": "Notatki / Kontekst"
+        },
+        "placeholders": {
+          "challenge": "np. Wysoki wskaźnik braków",
+          "area": "np. Jakość",
+          "notes": "Dodatkowe szczegóły..."
+        },
+        "severityOptions": {
+          "Critical": "Krytyczna",
+          "High": "Wysoka",
+          "Medium": "Średnia",
+          "Low": "Niska"
+        }
+      },
+      "rootcause": {
+        "uploaderTitle": "Sygnały przyczyn źródłowych",
+        "suggestions": [
+          "Raporty incydentów",
+          "Dokumenty 5 Why",
+          "PFMEA",
+          "Diagramy Ishikawy"
+        ],
+        "diagnosticLabel": "Pytania diagnostyczne:",
+        "diagnosticBody": "Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.",
+        "questions": [
+          {
+            "q": "Gdzie utykają decyzje?",
+            "h": "np. Obawy kadry średniego szczebla, brak danych..."
+          },
+          {
+            "q": "Gdzie jest najsilniejszy opór wobec zmiany?",
+            "h": "np. Hala produkcyjna, konkretny dział..."
+          },
+          {
+            "q": "Jakie inicjatywy zawiodły w przeszłości i dlaczego?",
+            "h": "np. Wdrożenie Lean nie powiodło się z powodu braku kontynuacji..."
+          },
+          {
+            "q": "Czy istnieje rozdźwięk między wizją zarządu a rzeczywistością?",
+            "h": "np. Zarząd sądzi, że ERP działa, użytkownicy pracują w Excelu..."
+          }
+        ]
+      },
+      "blockers": {
+        "uploaderTitle": "Obiektywne blokery",
+        "suggestions": [
+          "Ankiety pracownicze",
+          "Rejestr ryzyk",
+          "Prezentacja strategii",
+          "Ocena kulturowa"
+        ],
+        "suggestedTitle": "Sugerowane przeszkody",
+        "suggestedHint": "Kliknij, aby dodać częste problemy do swojej tablicy.",
+        "createCustom": "Utwórz własny",
+        "activeTitle": "Aktywne blokery",
+        "emptyMessage": "Nie zidentyfikowano jeszcze blokerów. Dodaj z sugestii lub utwórz własny.",
+        "removeTitle": "Usuń bloker",
+        "aiDetected": "Wykryte przez AI ({{confidence}})",
+        "titlePlaceholder": "Tytuł blokera",
+        "descPlaceholder": "Opisz przeszkodę i jej wpływ...",
+        "newObstacleTitle": "Nowa przeszkoda",
+        "types": {
+          "Culture": "Kultura",
+          "Process": "Proces",
+          "Technology": "Technologia",
+          "Strategy": "Strategia",
+          "People": "Ludzie"
+        },
+        "library": {
+          "c1": {
+            "title": "Strach przed porażką",
+            "desc": "Pracownicy ukrywają błędy zamiast je zgłaszać."
+          },
+          "c2": {
+            "title": "Nadmiar spotkań",
+            "desc": "Produktywność ginie w nadmiarze spotkań uzgodnieniowych."
+          },
+          "c3": {
+            "title": "Zmęczenie zmianą",
+            "desc": "Zespoły są wypalone nadmiarem inicjatyw."
+          },
+          "c4": {
+            "title": "Rozproszenie danych",
+            "desc": "Kluczowe KPI są ręcznie zbierane w Excelu."
+          }
+        }
+      },
+      "evidence": {
+        "uploaderTitle": "Dowody",
+        "suggestions": [
+          "Surowe eksporty danych",
+          "Dashboardy KPI",
+          "Logi systemowe",
+          "Raporty finansowe"
+        ],
+        "title": "Dowody i punkty danych",
+        "description": "Twarde fakty, wskaźniki lub logi potwierdzające istnienie wyzwań.",
+        "columns": {
+          "metric": "Wskaźnik / Punkt danych",
+          "symptom": "Objaw / Obserwacja",
+          "source": "System źródłowy / Dokument",
+          "link": "Link / Odwołanie"
+        },
+        "placeholders": {
+          "metric": "np. Wskaźnik braków 12%",
+          "symptom": "np. Linia zatrzymuje się co godzinę",
+          "source": "np. Raport SAP",
+          "link": "np. Strona 12"
+        }
+      }
+    },
+    "synthesis": {
+      "tabs": {
+        "risks": "Ukryte ryzyka",
+        "strengths": "Mocne strony i szanse",
+        "scenarios": "Scenariusze transformacji",
+        "summary": "Raport dla zarządu"
+      },
+      "risks": {
+        "bannerTitle": "Logika oceny ryzyka",
+        "bannerPre": "Na podstawie",
+        "bannerChallenges": "{{count}} zadeklarowanych wyzwań",
+        "bannerAnd": "oraz",
+        "bannerConstraints": "{{count}} aktywnych ograniczeń",
+        "bannerPost": "zidentyfikowaliśmy poniższe ryzyka.",
+        "listTitle": "Ukryte ryzyka i zagrożenia",
+        "listDescription": "Co mogłoby wykoleić tę transformację? (wygenerowane z ograniczeń i wyzwań)",
+        "aiSuggestedTitle": "Ryzyko zasugerowane przez AI",
+        "columns": {
+          "risk": "Ryzyko / Zagrożenie",
+          "why": "Dlaczego (przyczyna źródłowa)",
+          "severity": "Waga",
+          "mitigation": "Strategia ograniczania"
+        },
+        "placeholders": {
+          "risk": "np. Opór średniej kadry kierowniczej",
+          "why": "np. Obawa przed redukcją etatów",
+          "mitigation": "np. Program zarządzania zmianą"
+        },
+        "severityOptions": {
+          "Critical": "Krytyczna",
+          "High": "Wysoka",
+          "Medium": "Średnia",
+          "Low": "Niska"
+        },
+        "modal": {
+          "aiInsight": "Wgląd AI",
+          "identifiedDuring": "Zidentyfikowane w fazie syntezy",
+          "severityLevel": "Poziom istotności",
+          "priority": "priorytet",
+          "sourceContext": "Źródło / Kontekst",
+          "sourcePattern": "Silnik rozpoznawania wzorców",
+          "sourceUser": "Ograniczenia użytkownika",
+          "rootCauseAnalysis": "Analiza przyczyny źródłowej",
+          "recommendedMitigation": "Rekomendowane działanie ograniczające",
+          "aiSuggestedNotePre": "To ryzyko zostało zasugerowane, ponieważ podobne organizacje w branży",
+          "aiSuggestedNotePost": "zwykle zmagają się z tą luką zgodności podczas transformacji cyfrowej.",
+          "aiSuggestedIndustry": "Automotive",
+          "close": "Zamknij",
+          "updateStrategy": "Zaktualizuj strategię ryzyka"
+        }
+      },
+      "strengths": {
+        "bannerTitle": "Przewagi strategiczne",
+        "bannerBody": "Na podstawie profilu firmy i celów zidentyfikowaliśmy te kluczowe mocne strony i szanse rynkowe.",
+        "listTitle": "Mocne strony i szanse",
+        "listDescription": "Jakie mocne strony można wykorzystać? (wygenerowane z profilu i szans)",
+        "aiSuggestedTitle": "Szansa zasugerowana przez AI",
+        "columns": {
+          "enabler": "Mocna strona / Szansa",
+          "seen": "Dowód / Gdzie zaobserwowano",
+          "leverage": "Jak wykorzystać"
+        },
+        "placeholders": {
+          "enabler": "np. Silny zespół inżynierski",
+          "seen": "np. Wyniki działu R&D",
+          "leverage": "np. Wykorzystaj jako pilotażowych liderów"
+        },
+        "modal": {
+          "aiOpportunity": "Szansa AI",
+          "identifiedStrength": "Zidentyfikowana mocna strona / szansa",
+          "impactPotential": "Potencjał wpływu",
+          "confidence": "Pewność",
+          "medium": "Średni"
+        }
+      },
+      "executiveBrief": {
+        "heading": "Strategiczne podsumowanie dla zarządu",
+        "subheading": "Synteza strategiczna wygenerowana przez AI na podstawie wprowadzonych danych",
+        "exportPdf": "Eksportuj PDF",
+        "exporting": "Eksportowanie...",
+        "exportToast": "Użyj „Zapisz jako PDF” w oknie drukowania, aby wyeksportować to podsumowanie.",
+        "print": "Drukuj",
+        "share": "Udostępnij",
+        "companyNameFallback": "Brak danych o nazwie organizacji",
+        "industryFallback": "Brak danych o branży",
+        "employeesUnit": "pracowników",
+        "revenueUnit": "przychodu",
+        "currentMaturity": "Bieżąca dojrzałość",
+        "targetMaturity": "Docelowa dojrzałość",
+        "maturityNoData": "Brak danych",
+        "activeConstraints": "Aktywne ograniczenia",
+        "strategicGoals": "Cele strategiczne",
+        "riskProfile": "Profil ryzyka",
+        "highRisk": "Wysokie ryzyko",
+        "manageable": "Do opanowania",
+        "identified": "zidentyfikowanych",
+        "criticalPriorityNote": "wysokiego/krytycznego priorytetu wymagających natychmiastowej uwagi",
+        "topRisks": "Najważniejsze ryzyka",
+        "opportunities": "Szanse",
+        "strong": "Silne",
+        "developing": "Rozwijające się",
+        "keyEnablersNote": "Kluczowe czynniki sukcesu transformacji",
+        "topStrengths": "Najważniejsze mocne strony",
+        "challenges": "Wyzwania",
+        "active": "aktywnych",
+        "declared": "zadeklarowanych",
+        "operationalPainNote": "Operacyjne punkty bólu do rozwiązania",
+        "topChallenges": "Najważniejsze wyzwania",
+        "selectedScenario": "Wybrany scenariusz transformacji",
+        "timeline": "Harmonogram",
+        "investment": "Inwestycja",
+        "riskLevel": "Poziom ryzyka",
+        "noScenarioTitle": "Nie wybrano scenariusza",
+        "noScenarioBody": "Przejdź do zakładki „Scenariusze transformacji”, aby wybrać podejście strategiczne.",
+        "goalsProgressTitle": "Cele strategiczne i mierniki sukcesu",
+        "strategicGoalsLabel": "Cele strategiczne",
+        "noGoalsYet": "Nie zdefiniowano jeszcze celów strategicznych",
+        "successMetricsLabel": "Mierniki sukcesu (KPI)",
+        "noMetricsYet": "Nie zdefiniowano jeszcze mierników sukcesu",
+        "aiRecommendationsTitle": "Rekomendacje strategiczne AI",
+        "immediatePriority": "Priorytet natychmiastowy",
+        "immediatePriorityRisk": "Zajmij się „{{risk}}” przed rozpoczęciem transformacji, aby ograniczyć ryzyko realizacji.",
+        "immediatePriorityManageable": "Profil ryzyka jest do opanowania. Skup się na szybkich sukcesach, by zbudować impet.",
+        "strategicLeverage": "Dźwignia strategiczna",
+        "strategicLeverageWithData": "Wykorzystaj „{{strength}}” jako kluczowy wyróżnik w procesie transformacji.",
+        "strategicLeverageEmpty": "Zidentyfikuj wewnętrznych liderów zmiany, którzy pociągną transformację naprzód.",
+        "nextStep": "Kolejny krok",
+        "nextStepWithScenario": "Opracuj szczegółowy plan wdrożenia dla scenariusza „{{scenario}}”.",
+        "nextStepEmpty": "Wybierz scenariusz transformacji, aby przejść do szczegółowego planowania.",
+        "employeesNoData": "Brak danych o zatrudnieniu",
+        "revenueNoData": "Brak danych o przychodzie"
+      }
+    },
     "sidebar": {
       "title": "Organizacja",
       "subtitle": "Kontekst i administracja",
@@ -24009,6 +24668,97 @@
       }
     },
     "governance": {
+      "sourceTypes": {
+        "organization_profile": "Profil organizacji",
+        "interview_context": "Kontekst wywiadu",
+        "interview_answer": "Odpowiedź z wywiadu",
+        "interview_evidence": "Dowód z wywiadu",
+        "interview": "Wywiad",
+        "organization_metadata": "Metadane organizacji",
+        "organization": "Organizacja",
+        "ai_context": "Kontekst AI",
+        "tool_session": "Sesja narzędzia",
+        "my_work_idea": "Pomysł z Moja Praca",
+        "chat_message": "Wiadomość czatu",
+        "document_extraction": "Wyciąg z dokumentu",
+        "document": "Dokument",
+        "upload": "Wgrany plik",
+        "manual": "Wpis ręczny",
+        "organization_governed_snapshot": "Nadzorowana migawka organizacji"
+      },
+      "reviewStates": {
+        "pending": "Oczekuje na decyzję",
+        "approved": "Zatwierdzone",
+        "rejected": "Odrzucone"
+      },
+      "visibilityScopes": {
+        "organization": "Cała organizacja",
+        "restricted": "Ograniczona widoczność",
+        "private": "Prywatne",
+        "project": "Projekt",
+        "review_shared": "Udostępnione do przeglądu",
+        "demo": "Demo"
+      },
+      "claimPaths": {
+        "profile.companyName": "Nazwa firmy",
+        "profile.description": "Opis firmy",
+        "profile.industry": "Branża",
+        "profile.industryCode": "Kod branży",
+        "profile.industrySubsector": "Podsektor branży",
+        "profile.companySize": "Wielkość firmy",
+        "profile.location": "Lokalizacja",
+        "profile.employeeCount": "Liczba pracowników",
+        "profile.annualRevenue": "Przychód roczny",
+        "profile.website": "Strona internetowa",
+        "profile.defaultLanguage": "Język domyślny",
+        "profile.defaultTimezone": "Strefa czasowa",
+        "profile.currency": "Waluta",
+        "profile.linkedinUrl": "LinkedIn",
+        "profile.twitterUrl": "X / Twitter",
+        "profile.customDomain": "Domena własna",
+        "profile.brandColor": "Kolor marki",
+        "profile.accentColor": "Kolor akcentu",
+        "profile.organizationType": "Typ organizacji",
+        "profile.revenueModel": "Model przychodów",
+        "profile.foundingYear": "Rok założenia",
+        "profile.communicationStyle": "Styl komunikacji",
+        "profile.industryJargonLevel": "Poziom żargonu branżowego",
+        "strategic.goals": "Cele strategiczne",
+        "strategic.priorities": "Priorytety strategiczne",
+        "strategic.mission": "Misja",
+        "strategic.vision": "Wizja",
+        "strategic.competitivePosition": "Pozycja konkurencyjna",
+        "strategic.growthStage": "Etap rozwoju",
+        "strategic.riskAppetite": "Apetyt na ryzyko",
+        "operations.keyMetrics": "Kluczowe wskaźniki",
+        "operations.constraints": "Ograniczenia",
+        "operations.gaps": "Luki",
+        "operations.interviewAnswers": "Odpowiedzi z wywiadu",
+        "operations.deliveryModel": "Model dostawy",
+        "operations.productionArchetype": "Archetyp produkcji",
+        "operations.shiftPattern": "Wzorzec zmianowy",
+        "operations.automationLevel": "Poziom automatyzacji",
+        "systems.stack": "Stos technologiczny",
+        "systems.cloudAdoption": "Adopcja chmury",
+        "systems.integrations": "Integracje",
+        "systems.coreSystems": "Systemy kluczowe",
+        "stakeholders.people": "Interesariusze",
+        "notes.manualContext": "Notatka ręczna",
+        "metadata.custom": "Metadane niestandardowe",
+        "evidence.interview": "Dowód z wywiadu",
+        "evidence.documentExtraction": "Dowód z dokumentu",
+        "signals.interviewInsights": "Wnioski z wywiadu",
+        "signals.interviewFindings": "Ustalenia z wywiadu",
+        "tools.sessionOutput": "Wynik sesji narzędzia",
+        "myWork.idea": "Pomysł z Moja Praca",
+        "chat.explicitContext": "Kontekst z czatu",
+        "integrations.signal": "Sygnał integracji",
+        "finance.statements": "Sprawozdania finansowe",
+        "finance.models": "Modele finansowe",
+        "finance.laneStatus": "Status ścieżki finansowej",
+        "finance.versionStatus": "Status wersji"
+      },
+      "itemIdTooltip": "Identyfikator rekordu: {{id}}",
       "loadError": "Nie udało się załadować nadzorowanego kontekstu. Istniejące dane nie zostały zmienione.",
       "uploaded": "Dokument został wczytany, a oczekujące twierdzenie pojawiło się na liście.",
       "uploadError": "Nie udało się wczytać dokumentu. Żadne twierdzenie nie zostało zaakceptowane.",
@@ -24477,7 +25227,16 @@
       "mentions": "Wzmianki",
       "traverse": "Przejdź graf",
       "provenance": "Proweniencja",
-      "sources": "Źródła"
+      "sources": "Źródła",
+      "entityTypes": {
+        "person": "Osoba",
+        "organization": "Organizacja",
+        "concept": "Pojęcie",
+        "technology": "Technologia",
+        "location": "Lokalizacja",
+        "process": "Proces",
+        "metric": "Miernik"
+      }
     }
   },
   "megatrends": {
@@ -26962,7 +27721,9 @@
     "generateDeck": "Generuj prezentację",
     "generateTable": "Generuj tabelę",
     "docReady": "Dokument gotowy — użyj Podglądu pliku lub Pobierz",
-    "showingRows": "Pokazywanie 25 z {{total}} wierszy",
+    "showingRows": "Pokazywanie pierwszych {{cap}} z {{total}} wierszy",
+    "showingAllRows": "Pokazywanie wszystkich {{total}} wierszy",
+    "showAllRows": "Pokaż wszystkie",
     "excele": {
       "reopenNotFound": "Nie znaleziono treści tego arkusza — dane źródłowe zostały usunięte lub wygasły.",
       "reopenNotFoundToast": "Nie udało się otworzyć arkusza — treść nie została znaleziona.",
@@ -28905,7 +29666,20 @@
       "error": "Błąd",
       "noRunsYet": "Brak uruchomień.",
       "accessRevoked": "; dostęp cofnięty",
-      "accessRevokedWithReason": "; dostęp cofnięty ({{reason}})"
+      "accessRevokedWithReason": "; dostęp cofnięty ({{reason}})",
+      "viewTiles": "Kafle",
+      "viewList": "Lista",
+      "connectorsListAriaLabel": "Lista konektorów",
+      "columns": {
+        "connector": "Konektor",
+        "status": "Status",
+        "freshness": "Świeżość",
+        "oauth": "Dostęp OAuth",
+        "acl": "ACL",
+        "sourceBinding": "Powiązanie źródła",
+        "issue": "Problem"
+      },
+      "noIssue": "Brak"
     },
     "unknown": "nieznana",
     "tokenExpiry": "wygaśnięcie tokenu",
@@ -29662,6 +30436,10 @@
         "note": "Źródło: notatka"
       },
       "newCanvas": "Nowy Canvas",
+      "workspaceDestinations": {
+        "label": "Utwórz w workspace",
+        "title": "Utwórz element workspace z tego Canvasu"
+      },
       "newMenu": {
         "blank": "Czysty dokument",
         "blankTitle": "Nowy dokument",
@@ -30897,7 +31675,8 @@
       "planning": "Planowanie…",
       "submitTemplate": "Generuj z szablonu",
       "submitPlan": "Zaplanuj dokument",
-      "contextChip": "Kontekst: {{organizationName}}"
+      "contextChip": "Kontekst: {{organizationName}}",
+      "sectionBrief": "Treść i tytuł"
     },
     "outline": {
       "addSection": "+ Dodaj sekcję",
@@ -33826,6 +34605,20 @@
       "months": "mies.",
       "labelPlaceholder": "Czynnik bez nazwy",
       "categoryPlaceholder": "Kategoria",
+      "costType": {
+        "investment": "Inwestycja",
+        "recurring": "Powtarzalny"
+      },
+      "benefitType": {
+        "cash": "Gotówkowa",
+        "non_cash": "Niegotówkowa",
+        "risk_avoidance": "Unikanie ryzyka"
+      },
+      "confidence": {
+        "low": "Niska",
+        "medium": "Średnia",
+        "high": "Wysoka"
+      },
       "confidenceHigh": "Wysoka",
       "confidenceMedium": "Średnia",
       "confidenceLow": "Niska",
@@ -34077,7 +34870,9 @@
       "conflictReload": "Odśwież",
       "conflictRetry": "Zapisz mimo to",
       "backToList": "Wszystkie notatki",
-      "insertBlock": "Wstaw blok"
+      "insertBlock": "Wstaw blok",
+      "graphExpand": "Pełny ekran",
+      "graphCollapse": "Zamknij pełny ekran"
     },
     "mentionMenu": {
       "ariaLabel": "Wzmiankuj encję",
@@ -38023,6 +38818,193 @@
     }
   },
   "reportBuilder": {
+    "blockTypesManager": {
+      "category": {
+        "content": "Treść",
+        "data": "Dane",
+        "visual": "Wizualne"
+      },
+      "render": {
+        "markdown": "Markdown",
+        "callout": "Wyróżnienie",
+        "table": "Tabela",
+        "chart": "Wykres",
+        "matrix": "Macierz",
+        "json": "JSON"
+      },
+      "type": {
+        "app": "System",
+        "org": "Organizacja"
+      },
+      "date": {
+        "today": "Dzisiaj",
+        "yesterday": "Wczoraj",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "columns": {
+        "block": "Blok",
+        "type": "Typ",
+        "category": "Kategoria",
+        "render": "Renderowanie",
+        "sources": "Źródła",
+        "updated": "Zaktualizowano"
+      },
+      "rowMenu": {
+        "edit": "Edytuj",
+        "duplicateToOrg": "Duplikuj do organizacji",
+        "comingSoon": "Wkrótce (backend)",
+        "deactivate": "Dezaktywuj",
+        "systemCannotDeactivate": "Bloków systemowych nie można dezaktywować"
+      },
+      "preview": {
+        "sources": "Źródła: {{sources}}",
+        "defaultLength": "Domyślna długość: {{length}}",
+        "defaultStyle": "Domyślny styl: {{style}}",
+        "promptTemplate": "Szablon promptu:"
+      },
+      "moduleBar": {
+        "newBlock": "Nowy blok",
+        "all": "Wszystkie",
+        "selected": "{{count}} wybrano",
+        "selectAll": "Zaznacz wszystkie",
+        "clear": "Wyczyść"
+      },
+      "empty": {
+        "noMatchTitle": "Brak bloków pasujących do wyszukiwania",
+        "noneTitle": "Nie znaleziono bloków",
+        "tryAdjusting": "Spróbuj zmienić kryteria wyszukiwania",
+        "createToStart": "Utwórz nowy blok, aby zacząć"
+      },
+      "modal": {
+        "editTitle": "Edytuj blok",
+        "newTitle": "Nowy blok",
+        "name": "Nazwa",
+        "renderKind": "Rodzaj renderowania",
+        "description": "Opis",
+        "sourcesCsv": "Źródła (CSV)",
+        "sourcesPlaceholder": "ASSESSMENT, TOOL",
+        "length": "Długość",
+        "lengthShort": "Krótka",
+        "lengthMedium": "Średnia",
+        "lengthLong": "Długa",
+        "style": "Styl",
+        "styleBusiness": "Biznesowy",
+        "styleTechnical": "Techniczny",
+        "styleGeneral": "Ogólny",
+        "promptTemplate": "Szablon promptu",
+        "promptPlaceholder": "Np. \"Napisz sekcję o ... używając danych: {{exampleVar}}\"",
+        "cancel": "Anuluj",
+        "saveChanges": "Zapisz zmiany",
+        "createBlock": "Utwórz blok"
+      },
+      "toast": {
+        "updated": "Zaktualizowano blok",
+        "created": "Utworzono blok",
+        "saveFailed": "Nie udało się zapisać",
+        "confirmDeactivate": "Dezaktywować ten typ bloku?",
+        "deactivated": "Zdezaktywowano blok",
+        "deactivateFailed": "Nie udało się zdezaktywować"
+      }
+    },
+    "templatesManager": {
+      "type": {
+        "app": "System",
+        "org": "Organizacja"
+      },
+      "sourceType": {
+        "ASSESSMENT": "Assessment",
+        "INTERVIEW": "Interview",
+        "TOOL": "Tool",
+        "INITIATIVE": "Initiative"
+      },
+      "audience": {
+        "executive": "Zarząd",
+        "manager": "Kierownik",
+        "analyst": "Analityk",
+        "team": "Zespół",
+        "external": "Zewnętrzny",
+        "general": "Ogólny"
+      },
+      "format": {
+        "vertical": "Pionowy",
+        "horizontal": "Poziomy"
+      },
+      "date": {
+        "today": "Dzisiaj",
+        "yesterday": "Wczoraj",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "columns": {
+        "type": "Typ",
+        "template": "Szablon",
+        "module": "Moduł",
+        "audience": "Odbiorca",
+        "format": "Format",
+        "user": "Użytkownik",
+        "sections": "Sekcje",
+        "updated": "Zaktualizowano"
+      },
+      "noSections": "Brak sekcji",
+      "systemAuthor": "System",
+      "copySuffix": "Kopia",
+      "rowMenu": {
+        "duplicateToOrg": "Duplikuj do organizacji",
+        "useTemplate": "Użyj szablonu",
+        "duplicate": "Duplikuj",
+        "systemTemplate": "Szablon systemowy",
+        "systemCannotDelete": "Szablonów systemowych nie można usunąć",
+        "delete": "Usuń"
+      },
+      "preview": {
+        "sections": "Sekcje: {{count}}",
+        "noSections": "Sekcje: brak",
+        "createdBy": "Utworzone przez: {{name}}"
+      },
+      "moduleBar": {
+        "newTemplate": "Nowy szablon",
+        "all": "Wszystkie",
+        "selected": "{{count}} wybrano",
+        "selectAll": "Zaznacz wszystkie",
+        "clear": "Wyczyść"
+      },
+      "empty": {
+        "noMatchTitle": "Brak szablonów pasujących do wyszukiwania",
+        "noneTitle": "Nie znaleziono szablonów",
+        "tryAdjusting": "Spróbuj zmienić kryteria wyszukiwania",
+        "createToStart": "Utwórz nowy szablon, aby zacząć"
+      },
+      "toast": {
+        "confirmDelete": "Czy na pewno chcesz usunąć ten szablon?",
+        "deleted": "Usunięto szablon",
+        "deleteFailed": "Nie udało się usunąć",
+        "duplicated": "Zduplikowano szablon",
+        "duplicateFailed": "Nie udało się zduplikować"
+      }
+    },
+    "newAssessmentReportModal": {
+      "title": "Nowy raport z assessmentu",
+      "subtitle": "Wybierz assessment i szablon. Wersja robocza zostanie wygenerowana.",
+      "close": "Zamknij",
+      "assessment": "Assessment",
+      "noApprovedAssessments": "Brak zatwierdzonych assessmentów",
+      "selectAssessmentPlaceholder": "Wybierz assessment…",
+      "onlyApprovedWarning": "Tylko zatwierdzone assessmenty mogą być użyte do utworzenia raportu. Najpierw zatwierdź assessment.",
+      "template": "Szablon",
+      "notSelected": "Nie wybrano",
+      "fromLibrary": "Z Biblioteki",
+      "choose": "Wybierz",
+      "cancel": "Anuluj",
+      "createDraft": "Utwórz wersję roboczą",
+      "generating": "Generowanie…",
+      "reportTitleWithName": "Raport - {{name}}",
+      "reportTitleFallback": "Raport",
+      "toast": {
+        "creatingReport": "Tworzenie raportu…",
+        "generatingContent": "Generowanie treści raportu przez AI…",
+        "generatedOpening": "Raport wygenerowany — otwieranie edytora",
+        "createFailed": "Nie udało się utworzyć raportu"
+      }
+    },
     "settingsPanel": {
       "primaryColor": "Kolor główny",
       "justNow": "Przed chwilą",
@@ -40466,7 +41448,7 @@
       "groupLabels": [
         "Sesja",
         "Analiza",
-        "Outputs",
+        "Rezultaty",
         "Współpraca",
         "Zapisy"
       ],
@@ -42007,6 +42989,25 @@
       "noMatch": "Żaden klocek nie pasuje do „{{query}}\".",
       "comingSoon": "Wkrótce",
       "approval": "zgoda"
+    },
+    "canvas": {
+      "moduleTag": {
+        "assessment": "Ocena",
+        "control": "Kontrola",
+        "execution": "Realizacja",
+        "finance": "Finanse",
+        "initiatives": "Inicjatywy",
+        "integrations": "Integracje",
+        "interview": "Wywiad",
+        "materials": "Materiały",
+        "meeting": "Spotkania",
+        "myWorkDecisions": "Moja Praca · Decyzje",
+        "myWork": "Moja Praca",
+        "notebook": "Notatnik",
+        "results": "Resultaty",
+        "tables": "Tabele",
+        "vault": "Sejf"
+      }
     }
   },
   "views": {
@@ -42084,6 +43085,9 @@
     "executing": "W trakcie",
     "promoted": "Wypromowane",
     "proposed": "Zaproponowane",
+    "queued": "W kolejce",
+    "running": "W trakcie",
+    "succeeded": "Udane",
     "processing": "Przetwarzanie",
     "uploaded": "Przesłano",
     "editing": "Edycja",
@@ -42104,6 +43108,7 @@
     "accepted": "Zaakceptowane",
     "completed": "Zakończone",
     "done": "Zakończone",
+    "resolved": "Rozwiązane",
     "published": "Opublikowane",
     "ready": "Gotowe",
     "active": "Aktywne",
@@ -42117,6 +43122,8 @@
     "blocked": "Zablokowane",
     "cancelled": "Anulowane",
     "overdue": "Zaległe",
+    "expired": "Wygasło",
+    "revoked": "Cofnięto",
     "unreadable": "Nieczytelny",
     "deleted": "Usunięty",
     "error": "Błąd",
@@ -42193,6 +43200,13 @@
       "levelOrganization": "Sejf organizacji",
       "levelProject": "Sejf projektu"
     },
+    "categories": {
+      "bestPractices": "Najlepsze praktyki",
+      "methodology": "Metodyka",
+      "standards": "Standardy",
+      "templates": "Szablony",
+      "other": "Inne"
+    },
     "folders": {
       "loadFailed": "Nie udało się pobrać folderów",
       "newFolder": "Nowy folder",
@@ -42233,8 +43247,9 @@
     "hidden": "ukryte",
     "unknown": "nieznane",
     "outputsUnavailableReason": "licznik wyników jest niedostępny",
-    "outputStatusHiddenReason": "hub nie pobiera podziału wyników według statusu",
+    "outputStatusHiddenReason": "rozbicie wyników według statusu nie jest jeszcze dostępne",
     "findingsPendingReason": "trwa pobieranie ustaleń",
+    "findingsNotWiredInDemoReason": "rejestr ustaleń nie jest wpięty w trybie demonstracyjnym",
     "findingsLoadFailedReason": "nie udało się pobrać ustaleń",
     "templatesPendingReason": "trwa pobieranie szablonów",
     "templatesLoadFailedReason": "nie udało się pobrać szablonów"
@@ -42257,5 +43272,32 @@
   "standardPreview": {
     "property": "Właściwość",
     "value": "Wartość"
+  },
+  "toolOutputs": {
+    "title": "Wyniki",
+    "loadFailed": "Nie udało się wczytać wyników",
+    "reopenFailed": "Nie udało się ponownie otworzyć wyniku",
+    "backToOutputs": "Wróć do wyników",
+    "viewAsDocument": "Pokaż jako dokument",
+    "viewAsSlides": "Pokaż jako slajdy",
+    "empty": "Brak jeszcze promowanego wyniku dla tej sesji.",
+    "selected": "Wybrany wynik",
+    "reopening": "Otwieranie ponownie…",
+    "reopen": "Otwórz ponownie do korekty",
+    "reports": "Raporty i prezentacje",
+    "noReports": "Brak raportu lub prezentacji wygenerowanych z tego wyniku.",
+    "kindPresentation": "Prezentacja",
+    "kindReport": "Raport",
+    "initiativeProposals": "Propozycje inicjatyw",
+    "noProposals": "Z tego wyniku nie zaproponowano jeszcze żadnej inicjatywy.",
+    "slides": {
+      "fullscreen": "Pełny ekran (F)",
+      "exit": "Wyjdź z trybu slajdów (Esc)",
+      "deckEyebrow": "Prezentacja dla zarządu",
+      "reportEyebrow": "Raport",
+      "previous": "Poprzedni slajd",
+      "goToSlide": "Przejdź do slajdu {{n}}",
+      "next": "Następny slajd"
+    }
   }
 }

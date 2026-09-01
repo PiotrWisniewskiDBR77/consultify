@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import {
   Check,
   CheckCircle2,
@@ -16,6 +17,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
@@ -39,6 +41,7 @@ import {
   useToolStore,
 } from '@/store/useToolStore';
 import { AppView } from '@/types';
+import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import { exportToPDF } from '@/utils/pdfExport';
 
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
@@ -186,8 +189,44 @@ const getConsultingJourneyStage = (stepId?: string) => {
   return 'conversation';
 };
 
-// Status codes are identical in both languages, no translation needed.
-const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED') => status;
+/**
+ * Odbiór 2026-08-30 (przegląd całości): ten komentarz był fałszywy — kody
+ * statusu NIE są identyczne w obu językach ('draft' → „Szkic" w
+ * `statusChip.*`, patrz `public/locales/pl/translation.json`). Poprzednia
+ * wersja zwracała `status` jak leci, więc pigułka pokazywała „DRAFT" po
+ * polsku na każdym ekranie tego widoku (4 miejsca na jednej sesji SWOT —
+ * pasek nagłówka, karta „Misja i kontekst", panel właściwości, log audytu).
+ * `statusChipLabel()` to ten sam, już-używany słownik co `EntityStatusChip`
+ * w tabelach (`statusChip.<kod>` w translation.json) — jedno źródło prawdy
+ * zamiast osobnej (i milczącej) kopii angielskiej tutaj.
+ */
+const statusLabel = (status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED') =>
+  statusChipLabel(status, i18next.t.bind(i18next));
+
+/**
+ * Odbiór 2026-08-30 (przegląd modułów 04/11/16): panel Właściwości pokazywał
+ * SUROWĄ wartość `toolMeta.category` ('strategic'/'operational'/'digital'/
+ * 'automation') wprost jako „Kategoria" — ten sam defekt naprawiony równolegle
+ * w `KnownToolDetailView.tsx` (karta biblioteki). Reużywam te same trzy klucze
+ * i18n co `KnownToolPreviewV3.tsx` zamiast dublować nowe klucze w zakazanym
+ * pliku wspólnym `public/locales/**`.
+ */
+const toolCategoryLabel = (category: 'strategic' | 'operational' | 'digital' | 'automation') => {
+  const t = i18next.t.bind(i18next);
+  if (category === 'operational') return t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations');
+  if (category === 'digital') return t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital');
+  if (category === 'automation') return i18next.language === 'pl' ? 'Automatyzacja' : 'Automation';
+  return t('discoveryToolsMain.knownToolPreviewV3.categoryStrategy', 'Strategy');
+};
+
+/**
+ * Odbiór 2026-08-30 (przegląd modułów 04/11/16): domyślna nazwa sesji (dopóki
+ * konsultant jej nie nazwie) była na sztywno `"${nazwa} — Session"` — jedyny
+ * angielski literał na całym ekranie (nagłówek karty w widoku i eksport PDF).
+ * Trzy miejsca w tym pliku korzystały z tego samego wzorca niezależnie.
+ */
+const defaultSessionName = (toolName: string, isPolish: boolean) =>
+  `${toolName} — ${isPolish ? 'Sesja' : 'Session'}`;
 
 const getPriorityDotClass = (priority: CommentPriority) =>
   priority === 'high' ? 'bg-danger-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
@@ -432,7 +471,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   'discoveryToolsMain.toolDocumentView.recoveryDraftSavedAt',
                   'Saved locally at {{time}}',
                   {
-                    time: new Date(draftSavedAt).toLocaleString(),
+                    // Odbiór 2026-08-30 (przegląd modułów 04/11/16):
+                    // `toLocaleString()` bez argumentu bierze locale z
+                    // przeglądarki — patrz `src/utils/listDateFormat.ts` (SSOT).
+                    time: formatListDateTime(draftSavedAt),
                   }
                 )}
               </p>
@@ -660,7 +702,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       if (!currentSession || currentSession.toolType !== toolType) {
         createSessionInFlightRef.current = true;
         createSession(toolType);
-        const name = `${toolMeta.name} — Session`;
+        const name = defaultSessionName(toolMeta.name, isPolish);
         try {
           const createdId = await toolSync.create({
             toolType,
@@ -1015,7 +1057,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         id: 'category',
         label: { en: 'Category', pl: 'Kategoria' },
         type: 'text',
-        value: toolMeta.category,
+        value: toolCategoryLabel(toolMeta.category),
         onChange: () => {},
         readOnly: true,
       },
@@ -1299,7 +1341,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   {t('discoveryToolsMain.toolDocumentView.created2')}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                  {createdAt ? new Date(createdAt).toLocaleDateString() : '—'}
+                  {formatListDate(createdAt)}
                 </div>
               </div>
               <div>
@@ -1307,7 +1349,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   {t('discoveryToolsMain.toolDocumentView.lastModified')}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                  {lastModified ? new Date(lastModified).toLocaleString() : '—'}
+                  {formatListDateTime(lastModified)}
                 </div>
               </div>
             </div>
@@ -1862,7 +1904,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       {
         id: 'outputs',
         icon: Lightbulb,
-        label: { en: 'Outputs', pl: 'Outputs' },
+        // Odbiór 2026-08-30 (przegląd całości): `pl: 'Outputs'` był 1:1
+        // kopią angielskiego — nagłówek lewej szyny po angielsku obok
+        // przetłumaczonych sąsiadów ("Praca"/"Komentarze"). "Rezultaty" to
+        // to samo słowo, którego już używa `KnownToolDetailView.tsx` dla
+        // "outputs" w tym samym module.
+        label: { en: 'Outputs', pl: 'Rezultaty' },
         badge: generatedInitiatives.length + (swotData?.outputCandidates?.length || 0),
         component: outputsSection,
       },
@@ -2274,7 +2321,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         showModeSwitcher={false}
         header={{
           sticky: true,
-          title: sessionName || `${toolMeta.name} — Session`,
+          title: sessionName || defaultSessionName(toolMeta.name, isPolish),
           onTitleChange: setSessionName,
           titleReadOnly: true,
           artifactId: toolSessionId || toolType,
@@ -2348,7 +2395,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       ) : null}
 
       <div id="tool-report-export" className="hidden p-8 bg-white text-slate-900">
-        <h1 className="text-2xl font-semibold">{sessionName || `${toolMeta.name} — Session`}</h1>
+        <h1 className="text-2xl font-semibold">
+          {sessionName || defaultSessionName(toolMeta.name, isPolish)}
+        </h1>
         <p className="mt-2 text-sm text-slate-600">{toolType}</p>
         <div className="mt-6 space-y-2">
           <div>Status: {statusLabel(toolStatus)}</div>

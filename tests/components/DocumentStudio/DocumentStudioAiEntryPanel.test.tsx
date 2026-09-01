@@ -1,94 +1,107 @@
 /**
  * FAZA B1 (2026-07-27) — `DocumentStudioAiEntryPanel` unit tests.
  *
- * Pins the contract this component exists for (N11/N12 —
- * Harvard/wdrozenie-100/_NAGRANIE_PIOTRA_WIZJA_MATERIALY_2026-07-27.md):
- *   - no intake-form fields anywhere in this component (Type/Density/Goal/
- *     Audience are gone from the SCREEN, not from the system — the parent
- *     builds them, see DocumentStudioView.zaiTeresa.test.tsx);
- *   - the chat panel's `onModuleIntent` is the trigger: the FIRST message
- *     long enough (>=10 chars, same floor as the old form's description
- *     field) fires `onFirstMessage` exactly once and reports `handled: true`
- *     so Teresa's own reply pipeline doesn't also answer it;
- *   - a too-short message does NOT fire generation (falls through to normal
- *     chat instead of hard-blocking like the old required/minLength input).
+ * ★ PRZEPISANE 2026-09-01 — „JEDNA TERESA, W SWOIM OKNIE".
+ * Kontrakt N11/N12 zmienił się w JEDNYM miejscu: brief nie jest już pierwszą
+ * wiadomością osadzonego czatu (`UnifiedChatPanel.onModuleIntent`), tylko
+ * jawnym polem + przyciskiem. Reszta kontraktu stoi bez zmian:
+ *   - ZERO pól starego formularza intake (Type/Density/Goal/Audience) —
+ *     nie zniknęły z systemu, tylko z EKRANU (buduje je rodzic, patrz
+ *     DocumentStudioView.zaiTeresa.test.tsx);
+ *   - próg 10 znaków ten sam co dawne `description.trim().length >= 10`;
+ *   - `onFirstMessage` odpala się DOKŁADNIE RAZ;
+ *   - za krótki brief NIE odpala generacji i mówi DLACZEGO (zamiast milczącego
+ *     wyłączonego przycisku);
+ *   - w panelu NIE MA osadzonego czatu, jest wejście do jednego okna Teresy
+ *     (`data-testid="teresa-entry"`).
  */
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-let capturedChatProps: any = null;
-
-vi.mock('@/components/AIChat/UnifiedChatPanel', () => ({
-  UnifiedChatPanel: (props: any) => {
-    capturedChatProps = props;
-    return <div data-testid="mock-unified-chat" />;
-  },
+const openChatWithContext = vi.fn();
+vi.mock('@/hooks/useOpenChatWithContext', () => ({
+  useOpenChatWithContext: () => openChatWithContext,
+  default: () => openChatWithContext,
 }));
 
 import { DocumentStudioAiEntryPanel } from '@/components/DocumentStudio/DocumentStudioAiEntryPanel';
 
+const BRIEF = 'Przygotuj raport dla zarządu z wynikami audytu Q3.';
+
+const typeBrief = (value: string) => {
+  fireEvent.change(screen.getByTestId('docstudio-ai-entry-brief'), { target: { value } });
+};
+
 describe('DocumentStudioAiEntryPanel', () => {
-  it('renders no intake-form fields (Description/Type/Density/Goal/Audience) — only the document placeholder + chat', () => {
-    const onFirstMessage = vi.fn();
-    render(<DocumentStudioAiEntryPanel onFirstMessage={onFirstMessage} />);
+  it('nie renderuje osadzonego czatu — jest pole briefu i wejście do jednego okna Teresy', () => {
+    render(<DocumentStudioAiEntryPanel onFirstMessage={vi.fn()} />);
 
     expect(screen.getByTestId('document-studio-ai-entry-panel')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-unified-chat')).toBeInTheDocument();
-    // Canary: none of the old form's field labels/roles are present.
+    expect(screen.getByTestId('docstudio-ai-entry-brief')).toBeInTheDocument();
+    expect(screen.getByTestId('teresa-entry')).toBeInTheDocument();
+    // Kanarek regresji: gdyby ktoś wstawił czat z powrotem, pole pisania
+    // czatu przyszłoby razem z nim — a tu ma być DOKŁADNIE jeden textbox.
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    // Kanarek starego formularza intake.
     expect(screen.queryByText(/document type/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/density/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^goal$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/audience/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
-  it('fires onFirstMessage exactly once for the first long-enough chat message, and reports handled:true', () => {
+  it('odpala onFirstMessage dokładnie raz — drugie kliknięcie nie generuje ponownie', () => {
     const onFirstMessage = vi.fn();
     render(<DocumentStudioAiEntryPanel onFirstMessage={onFirstMessage} />);
 
-    expect(capturedChatProps?.onModuleIntent).toBeInstanceOf(Function);
-
-    const result = capturedChatProps.onModuleIntent(
-      'Przygotuj raport dla zarządu z wynikami audytu Q3.'
-    );
-    expect(result).toEqual(
-      expect.objectContaining({ handled: true, reply: expect.any(String) })
-    );
+    typeBrief(BRIEF);
+    const submit = screen.getByTestId('docstudio-ai-entry-submit');
+    fireEvent.click(submit);
     expect(onFirstMessage).toHaveBeenCalledTimes(1);
-    expect(onFirstMessage).toHaveBeenCalledWith(
-      'Przygotuj raport dla zarządu z wynikami audytu Q3.'
-    );
+    expect(onFirstMessage).toHaveBeenCalledWith(BRIEF);
 
-    // A second message must NOT re-trigger generation.
-    const second = capturedChatProps.onModuleIntent('Jeszcze jedna wiadomość, też długa.');
-    expect(second).toBe(false);
+    fireEvent.click(submit);
     expect(onFirstMessage).toHaveBeenCalledTimes(1);
   });
 
-  it('does not fire onFirstMessage for a too-short message (falls through to normal chat)', () => {
+  it('za krótki brief nie generuje i mówi dlaczego', () => {
     const onFirstMessage = vi.fn();
     render(<DocumentStudioAiEntryPanel onFirstMessage={onFirstMessage} />);
 
-    const result = capturedChatProps.onModuleIntent('cześć');
-    expect(result).toBe(false);
+    typeBrief('cześć');
+    expect(screen.getByTestId('docstudio-ai-entry-submit')).toBeDisabled();
+    expect(screen.getByText(/przynajmniej jedno zdanie/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('docstudio-ai-entry-submit'));
     expect(onFirstMessage).not.toHaveBeenCalled();
   });
 
-  it('shows the "back to modes" link only when onBackToModes is provided', () => {
+  it('wejście do Teresy otwiera JEDNO okno z kontekstem dokumentu, nie drugi czat', () => {
+    render(<DocumentStudioAiEntryPanel onFirstMessage={vi.fn()} />);
+    openChatWithContext.mockClear();
+
+    typeBrief(BRIEF);
+    fireEvent.click(screen.getByTestId('teresa-entry'));
+
+    expect(openChatWithContext).toHaveBeenCalledTimes(1);
+    expect(openChatWithContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityType: 'document',
+        contextData: expect.objectContaining({ stage: 'intake', brief: BRIEF }),
+      })
+    );
+  });
+
+  it('pokazuje link „wybór trybu" tylko gdy podano onBackToModes', () => {
     const { rerender } = render(<DocumentStudioAiEntryPanel onFirstMessage={vi.fn()} />);
     expect(screen.queryByText(/wybór trybu/i)).not.toBeInTheDocument();
 
-    rerender(
-      <DocumentStudioAiEntryPanel onFirstMessage={vi.fn()} onBackToModes={vi.fn()} />
-    );
+    rerender(<DocumentStudioAiEntryPanel onFirstMessage={vi.fn()} onBackToModes={vi.fn()} />);
     expect(screen.getByText(/wybór trybu/i)).toBeInTheDocument();
   });
 
-  it('surfaces a passed-in error banner', () => {
-    render(
-      <DocumentStudioAiEntryPanel onFirstMessage={vi.fn()} error="Coś poszło nie tak." />
-    );
+  it('pokazuje przekazany błąd generacji', () => {
+    render(<DocumentStudioAiEntryPanel onFirstMessage={vi.fn()} error="Coś poszło nie tak." />);
     expect(screen.getByRole('alert')).toHaveTextContent('Coś poszło nie tak.');
   });
 });

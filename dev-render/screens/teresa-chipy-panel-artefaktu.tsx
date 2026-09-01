@@ -97,7 +97,7 @@ export default function TeresaChipyPanelArtefaktuScreen(): React.ReactElement {
       <AppProviders>
         <FeatureFlagsProvider showDevTools={false}>
           <div className="relative h-screen w-full bg-c-bg">
-            <div className="border-b border-c-border px-6 py-3">
+            <div className="border-b border-c-border px-6 py-3" data-dev-render-chrome="">
               <div className="text-sm font-semibold text-c-text">
                 Teresa POZIOM 3 (panel artefaktu) — chipy sugestii pod oknem rozmowy (D4)
               </div>

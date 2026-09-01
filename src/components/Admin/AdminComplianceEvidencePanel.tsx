@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { Api } from '../../services/api';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import {
   getAiPolicy,
   getDataResidency,
@@ -49,7 +50,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
         retention,
         aiPolicy,
       });
-      setFreshness(new Date().toLocaleString());
+      setFreshness(formatListDateTime(new Date()));
     } catch (e) {
       setError(e instanceof Error ? e.message : t('admin.audit.compliance-evidence.errors.load'));
     } finally {
@@ -103,7 +104,7 @@ export const AdminComplianceEvidencePanel: React.FC = () => {
       {
         id: 'createdAt',
         label: t('admin.audit.compliance-evidence.columns.time'),
-        render: (row) => row.createdAt ?? row.created_at ?? '—',
+        render: (row) => formatListDateTime(row.createdAt ?? row.created_at),
       },
     ],
     [t]

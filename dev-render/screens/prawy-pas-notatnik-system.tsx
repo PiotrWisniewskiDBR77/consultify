@@ -102,8 +102,12 @@ export default function PrawyPasNotatnikSystemScreen({
   const [activeTab, setActiveTab] = React.useState<'work' | 'context'>('work');
   return (
     <div className="flex h-screen w-screen items-stretch justify-end bg-c-bg">
+      {/* Centrum — filler harnessu, daje prawemu pasowi realny kontekst szerokości.
+          Kontener zostaje (layout), etykieta-tekst znika przy zrzutach (bramka PODPIS, 2026-09-01). */}
       <div className="flex min-w-0 flex-1 items-center justify-center p-10 text-sm text-c-text-muted">
-        (centrum: dokument Notatnika — ten harness izoluje wyłącznie prawy pas)
+        <span data-dev-render-chrome="true">
+          (centrum: dokument Notatnika — ten harness izoluje wyłącznie prawy pas)
+        </span>
       </div>
       <NotebookRightRail
         open

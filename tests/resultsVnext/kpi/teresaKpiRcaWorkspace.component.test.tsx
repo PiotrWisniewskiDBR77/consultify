@@ -167,6 +167,25 @@ function renderAt(path: string) {
   );
 }
 
+/*
+ * ★ Odbiór grafiki 174-domkniecie (2026-09-01) — asercja liczy WŁAŚCIWĄ rzecz.
+ *
+ * Oba testy sprawdzały `Api.get` łącznie: `toHaveBeenCalledTimes(2)` z komentarzem
+ * „initial case load + measurements load, no third". Dyżur 173 dołożył przy montażu
+ * dwa GET-y na dzieci sprawy (działania korygujące + weryfikacje skuteczności —
+ * `loadChildren()`), więc suma to 4 i oba testy były CZERWONE od tamtej pory.
+ * Intencja była jednak węższa: „sprawa NIE ZOSTAŁA pobrana ponownie". Liczymy
+ * więc GET-y pod trasę SAMEJ sprawy, a nie wszystko, co ekran ładuje.
+ */
+const pobraniaSprawy = () =>
+  vi
+    .mocked(Api.get)
+    .mock.calls.filter(
+      ([url]) =>
+        typeof url === 'string' &&
+        /\/vnext\/results\/kpi\/deviation-cases\/[^/?]+$/.test(url)
+    ).length;
+
 describe('KpiDeviationCaseSubview — "Ask Teresa" (reflection_rca, D13 governed pipeline)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -243,7 +262,7 @@ describe('KpiDeviationCaseSubview — "Ask Teresa" (reflection_rca, D13 governed
     expect(executeTeresaProposal).not.toHaveBeenCalled();
     // Negative control: the case was never re-fetched (no onCompleted call),
     // so it is still in analysis_required — no silent write happened.
-    expect(Api.get).toHaveBeenCalledTimes(2); // initial case load + measurements load, no third
+    expect(pobraniaSprawy()).toBe(1); // tylko pierwsze wczytanie sprawy — bez ponownego pobrania
   });
 
   it('DENIAL at execute time renders as blocked and does not refetch the case', async () => {
@@ -284,8 +303,8 @@ describe('KpiDeviationCaseSubview — "Ask Teresa" (reflection_rca, D13 governed
 
     await waitFor(() => expect(executeTeresaProposal).toHaveBeenCalledWith('tprop-kpi-1'));
     expect(await screen.findByTestId('teresa-denied-banner')).toHaveTextContent('DeviationSelfApprovalDeniedError');
-    // No refetch happened — the initial case load + measurements load only.
-    expect(Api.get).toHaveBeenCalledTimes(2);
+    // Bez ponownego pobrania sprawy — tylko pierwsze wczytanie przy montażu.
+    expect(pobraniaSprawy()).toBe(1);
     // Manual form is still there and still usable after a Teresa denial.
     expect(screen.getByTestId('kpi-deviation-root-cause-summary')).toHaveValue('Vendor SLA breach caused the miss');
   });
@@ -349,5 +368,9 @@ describe('KpiDeviationCaseSubview — "Ask Teresa" (reflection_rca, D13 governed
     // The case was RE-FETCHED (getCallCount now 2) — server truth, not a
     // locally-approximated write.
     await waitFor(() => expect(getCallCount).toBeGreaterThan(1));
+    // Kontrola DODATNIA dla `pobraniaSprawy()` z dwóch testów wyżej: ten sam
+    // licznik, który tam ma pokazać 1 (brak ponownego pobrania), tutaj MUSI
+    // pokazać więcej. Bez tej pary licznik mógłby po cichu zawsze zwracać 1.
+    expect(pobraniaSprawy()).toBeGreaterThan(1);
   });
 });

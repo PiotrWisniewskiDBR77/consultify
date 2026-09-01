@@ -50,6 +50,39 @@ function renderValue(value: unknown): string {
   }
 }
 
+// The API returns technical enum codes (source_type, review_state,
+// visibility_scope) and internal claim field paths verbatim -- e.g.
+// 'interview', 'organization', 'approved', 'profile.description'. Piotr
+// flagged these as raw/incomprehensible on org-claims-sources and
+// org-source-conflicts. These three helpers turn every KNOWN code into a
+// Polish label via organization.governance.{sourceTypes,reviewStates,
+// visibilityScopes,claimPaths}; an unrecognized code still falls back to a
+// humanized version of itself (never a blank), so a future backend value
+// degrades gracefully instead of reintroducing a raw string.
+function humanizeCode(raw: string): string {
+  return raw
+    .split(/[._-]/)
+    .filter(Boolean)
+    .map((seg) => seg.charAt(0).toUpperCase() + seg.slice(1))
+    .join(' ');
+}
+
+function sourceTypeLabel(sourceType: string, t: TFunction): string {
+  return t(`organization.governance.sourceTypes.${sourceType}`, humanizeCode(sourceType));
+}
+
+function reviewStateLabel(reviewState: string, t: TFunction): string {
+  return t(`organization.governance.reviewStates.${reviewState}`, humanizeCode(reviewState));
+}
+
+function visibilityScopeLabel(scope: string, t: TFunction): string {
+  return t(`organization.governance.visibilityScopes.${scope}`, humanizeCode(scope));
+}
+
+function claimPathLabel(claimPath: string, t: TFunction): string {
+  return t(`organization.governance.claimPaths.${claimPath}`, humanizeCode(claimPath));
+}
+
 function governedError(error: unknown, fallback: string, t: TFunction): string {
   const candidate = error as { message?: string; status?: number; response?: { status?: number } };
   const status = candidate?.status ?? candidate?.response?.status;
@@ -485,10 +518,17 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
           ) : (
             <ul className="mt-4 space-y-2">
               {sources.map((source) => (
-                <li key={source.itemId} className="rounded-xl bg-c-surface-raised p-3 text-sm">
-                  <p className="font-medium text-c-text">{source.sourceType}</p>
-                  <p className="break-all font-mono text-xs text-c-text-muted">{source.itemId}</p>
-                  <p className="mt-1 text-xs text-c-text-secondary">{source.visibilityScope}</p>
+                <li
+                  key={source.itemId}
+                  className="rounded-xl bg-c-surface-raised p-3 text-sm"
+                  title={t('organization.governance.itemIdTooltip', 'Record id: {{id}}', {
+                    id: source.itemId,
+                  })}
+                >
+                  <p className="font-medium text-c-text">{sourceTypeLabel(source.sourceType, t)}</p>
+                  <p className="mt-1 text-xs text-c-text-secondary">
+                    {visibilityScopeLabel(source.visibilityScope, t)}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -521,7 +561,9 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
                   key={claimPath}
                   className="rounded-xl border border-amber-400/50 bg-amber-50 p-3 dark:bg-amber-950/30"
                 >
-                  <p className="font-medium text-amber-900 dark:text-amber-200">{claimPath}</p>
+                  <p className="font-medium text-amber-900 dark:text-amber-200">
+                    {claimPathLabel(claimPath, t)}
+                  </p>
                   <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
                     {t('organization.governance.conflictSummary', {
                       count: entries.length,
@@ -562,17 +604,17 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
               <li key={claim.claimId} className="rounded-xl border border-c-border-subtle p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-c-text">{claim.claimPath}</p>
+                    <p className="font-medium text-c-text">{claimPathLabel(claim.claimPath, t)}</p>
                     <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-c-surface-raised p-3 text-xs text-c-text-secondary">
                       {renderValue(claim.value)}
                     </pre>
                     <p className="mt-2 text-xs text-c-text-muted">
-                      {claim.sourceType} · {Math.round(claim.confidence * 100)}% ·{' '}
-                      {claim.visibilityScope}
+                      {sourceTypeLabel(claim.sourceType, t)} · {Math.round(claim.confidence * 100)}%
+                      · {visibilityScopeLabel(claim.visibilityScope, t)}
                     </p>
                   </div>
                   <span className="rounded-full bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text-secondary">
-                    {claim.reviewState}
+                    {reviewStateLabel(claim.reviewState, t)}
                   </span>
                 </div>
                 {isAdmin && claim.reviewState === 'pending' && (
@@ -751,7 +793,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
                   key={ref.claimId}
                   className="rounded-lg bg-c-surface px-3 py-2 text-xs text-c-text-secondary"
                 >
-                  <span className="font-medium text-c-text">{ref.sourceType}</span> ·{' '}
+                  <span className="font-medium text-c-text">{sourceTypeLabel(ref.sourceType, t)}</span> ·{' '}
                   {ref.sourceDocId || ref.itemId}
                   {ref.fileHash && (
                     <span className="block break-all font-mono">

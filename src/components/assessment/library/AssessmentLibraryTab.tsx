@@ -44,14 +44,24 @@ import {
 
 type MethodologyId = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
+// Etykieta dwujęzyczna — reszta pliku już stosuje ten wzorzec przez `isPolish`
+// (nagłówki kolumn, przyciski, panel podglądu). Dane katalogu poniżej go NIE
+// stosowały — cały katalog (opis, obszar, warunek dostępu, "co dostajesz")
+// renderował się WYŁĄCZNIE po angielsku niezależnie od języka aplikacji.
+// Znalezione w przeglądzie nocnym 03-wywiad/05-ocena 2026-08-30.
+interface Bilingual {
+  pl: string;
+  en: string;
+}
+
 interface MethodologyRow {
   id: MethodologyId;
   name: string;
-  description: string;
+  description: Bilingual;
   supported: boolean;
-  area: string;
-  accessCondition: string;
-  whatYouGet: string[];
+  area: Bilingual;
+  accessCondition: Bilingual;
+  whatYouGet: Bilingual[];
   legalNotice: string | null;
 }
 
@@ -62,51 +72,98 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
   {
     id: 'DRD',
     name: 'Digital Readiness Diagnosis',
-    description: 'Assess digital maturity across 5 axes, area by area.',
+    description: {
+      pl: 'Ocena dojrzałości cyfrowej w 5 osiach, obszar po obszarze.',
+      en: 'Assess digital maturity across 5 axes, area by area.',
+    },
     supported: true,
-    area: 'Digital transformation',
-    accessCondition: 'Method Core available',
-    whatYouGet: ['Current and target maturity by area', 'Evidence-backed findings', 'Report and initiative inputs'],
+    area: { pl: 'Transformacja cyfrowa', en: 'Digital transformation' },
+    accessCondition: { pl: 'Dostępny Method Core', en: 'Method Core available' },
+    whatYouGet: [
+      { pl: 'Dojrzałość obecna i docelowa per obszar', en: 'Current and target maturity by area' },
+      { pl: 'Wnioski poparte dowodami', en: 'Evidence-backed findings' },
+      { pl: 'Dane wejściowe do raportu i inicjatyw', en: 'Report and initiative inputs' },
+    ],
     legalNotice: FRAMEWORK_CONFIGS.DRD.legalNotice ?? null,
   },
   {
     id: 'SIRI',
     name: 'Smart Industry Readiness Index',
-    description: 'Singapore SIRI Industry 4.0 maturity framework.',
+    description: {
+      pl: 'Singapurskie ramy dojrzałości Przemysłu 4.0 (SIRI).',
+      en: 'Singapore SIRI Industry 4.0 maturity framework.',
+    },
     supported: false,
-    area: 'Smart manufacturing',
-    accessCondition: 'Knowledge available; execution coming soon',
-    whatYouGet: ['Process, technology and organization view', 'Industry 4.0 maturity scale', 'Educational framework context'],
+    area: { pl: 'Inteligentna produkcja', en: 'Smart manufacturing' },
+    accessCondition: {
+      pl: 'Wiedza dostępna; uruchomienie wkrótce',
+      en: 'Knowledge available; execution coming soon',
+    },
+    whatYouGet: [
+      { pl: 'Widok procesu, technologii i organizacji', en: 'Process, technology and organization view' },
+      { pl: 'Skala dojrzałości Przemysłu 4.0', en: 'Industry 4.0 maturity scale' },
+      { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
+    ],
     legalNotice: FRAMEWORK_CONFIGS.SIRI.legalNotice ?? null,
   },
   {
     id: 'ADMA',
     name: 'Advanced Digital Maturity Assessment',
-    description: 'Extended digital maturity model across process dimensions.',
+    description: {
+      pl: 'Rozszerzony model dojrzałości cyfrowej w wymiarach procesowych.',
+      en: 'Extended digital maturity model across process dimensions.',
+    },
     supported: false,
-    area: 'Digital manufacturing',
-    accessCondition: 'Knowledge available; execution coming soon',
-    whatYouGet: ['Five-pillar maturity view', 'Dimension-level assessment structure', 'Educational framework context'],
+    area: { pl: 'Produkcja cyfrowa', en: 'Digital manufacturing' },
+    accessCondition: {
+      pl: 'Wiedza dostępna; uruchomienie wkrótce',
+      en: 'Knowledge available; execution coming soon',
+    },
+    whatYouGet: [
+      { pl: 'Widok pięciu filarów dojrzałości', en: 'Five-pillar maturity view' },
+      { pl: 'Struktura oceny na poziomie wymiarów', en: 'Dimension-level assessment structure' },
+      { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
+    ],
     legalNotice: FRAMEWORK_CONFIGS.ADMA.legalNotice ?? null,
   },
   {
     id: 'CMMI',
     name: 'Capability Maturity Model Integration',
-    description: 'Process capability and maturity model.',
+    description: {
+      pl: 'Model dojrzałości i zdolności procesowych organizacji.',
+      en: 'Process capability and maturity model.',
+    },
     supported: false,
-    area: 'Process capability',
-    accessCondition: 'Knowledge available; execution coming soon',
-    whatYouGet: ['Five maturity levels', 'Practice-area structure', 'Educational framework context'],
+    area: { pl: 'Zdolność procesowa', en: 'Process capability' },
+    accessCondition: {
+      pl: 'Wiedza dostępna; uruchomienie wkrótce',
+      en: 'Knowledge available; execution coming soon',
+    },
+    whatYouGet: [
+      { pl: 'Pięć poziomów dojrzałości', en: 'Five maturity levels' },
+      { pl: 'Struktura wg obszarów praktyk', en: 'Practice-area structure' },
+      { pl: 'Kontekst edukacyjny metodyki', en: 'Educational framework context' },
+    ],
     legalNotice: FRAMEWORK_CONFIGS.CMMI.legalNotice ?? null,
   },
   {
     id: 'LEAN',
     name: 'Lean 4.0',
-    description: 'Lean manufacturing maturity assessment.',
+    description: {
+      pl: 'Ocena dojrzałości Lean w produkcji.',
+      en: 'Lean manufacturing maturity assessment.',
+    },
     supported: false,
-    area: 'Lean and automation',
-    accessCondition: 'Knowledge available; execution coming soon',
-    whatYouGet: ['Measure → Optimize → Automate path', 'Lean maturity perspective', 'Automation and AI opportunity context'],
+    area: { pl: 'Lean i automatyzacja', en: 'Lean and automation' },
+    accessCondition: {
+      pl: 'Wiedza dostępna; uruchomienie wkrótce',
+      en: 'Knowledge available; execution coming soon',
+    },
+    whatYouGet: [
+      { pl: 'Ścieżka Zmierz → Optymalizuj → Automatyzuj', en: 'Measure → Optimize → Automate path' },
+      { pl: 'Perspektywa dojrzałości Lean', en: 'Lean maturity perspective' },
+      { pl: 'Kontekst szans automatyzacji i AI', en: 'Automation and AI opportunity context' },
+    ],
     legalNotice: FRAMEWORK_CONFIGS.LEAN.legalNotice ?? null,
   },
 ];
@@ -283,7 +340,7 @@ export const AssessmentLibraryTab: React.FC = () => {
         id: 'area',
         label: isPolish ? 'Obszar' : 'Area',
         width: '220px',
-        render: (row: MethodologyRow) => row.area,
+        render: (row: MethodologyRow) => (isPolish ? row.area.pl : row.area.en),
       },
       {
         id: 'status',
@@ -402,7 +459,9 @@ export const AssessmentLibraryTab: React.FC = () => {
         rowMenu={rowMenu}
         selectedRowId={selectedId}
         onRowClick={(row: any) => setSelectedId((row as MethodologyRow).id)}
-        rowDescription={(row: any) => (row as MethodologyRow).description}
+        rowDescription={(row: any) =>
+          isPolish ? (row as MethodologyRow).description.pl : (row as MethodologyRow).description.en
+        }
         persistKey="assessment.hub.library"
         empty={{
           icon: LibraryIcon,
@@ -434,11 +493,21 @@ export const AssessmentLibraryTab: React.FC = () => {
                   ],
                 }}
                 details={{
-                  text: `${item.description}\n\n${item.whatYouGet.map((value) => `• ${value}`).join('\n')}${item.legalNotice ? `\n\n${item.legalNotice}` : ''}`,
+                  text: `${isPolish ? item.description.pl : item.description.en}\n\n${item.whatYouGet
+                    .map((value) => `• ${isPolish ? value.pl : value.en}`)
+                    .join('\n')}${item.legalNotice ? `\n\n${item.legalNotice}` : ''}`,
                   showWordCount: false,
                   properties: [
-                    { id: 'area', label: isPolish ? 'Obszar' : 'Area', value: item.area },
-                    { id: 'access', label: isPolish ? 'Dostęp' : 'Access', value: item.accessCondition },
+                    {
+                      id: 'area',
+                      label: isPolish ? 'Obszar' : 'Area',
+                      value: isPolish ? item.area.pl : item.area.en,
+                    },
+                    {
+                      id: 'access',
+                      label: isPolish ? 'Dostęp' : 'Access',
+                      value: isPolish ? item.accessCondition.pl : item.accessCondition.en,
+                    },
                     {
                       id: 'commercial',
                       label: isPolish ? 'Warunki komercyjne' : 'Commercial terms',

@@ -128,7 +128,7 @@ export const ORGANIZATION_MODULES: DomainNavigationModule<
       { id: 'risks-opportunities', label: 'Ryzyka i szanse', icon: Lightbulb },
       { id: 'scenarios', label: 'Scenariusze', icon: CalendarRange },
       { id: 'recommendation', label: 'Rekomendacja', icon: Target },
-      { id: 'executive-brief', label: 'Executive brief', icon: BookOpen },
+      { id: 'executive-brief', label: 'Podsumowanie dla zarządu', icon: BookOpen },
     ],
   },
   {

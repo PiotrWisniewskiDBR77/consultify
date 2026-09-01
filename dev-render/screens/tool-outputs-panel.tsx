@@ -203,8 +203,11 @@ installFetchStub();
 
 export default function ToolOutputsPanelScreen() {
   return (
-    <div className="min-h-screen bg-c-bg p-8">
-      <div className="mx-auto max-w-2xl">
+    // Produkcja: ToolWorkspace.tsx:830 — `border-t border-c-border-subtle
+    // bg-c-bg px-6 py-4`, pełna szerokość paska pod krokami narzędzia (NIE
+    // wyśrodkowana kartka max-w-2xl).
+    <div className="min-h-screen bg-c-bg">
+      <div className="border-t border-c-border-subtle bg-c-bg px-6 py-4">
         <ToolOutputsPanel toolSessionId={SESSION_ID} />
       </div>
     </div>

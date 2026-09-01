@@ -23,7 +23,14 @@ function run(overrides: Partial<ReconciliationRunSummaryDto> & { reconciliationR
     artifactId: 'artifact-1',
     businessVersionId: 'bv-1',
     sourceSystem: 'SAP_EXPORT',
-    status: 'completed',
+    // NAPRAWIONE (sweep 148-finanse-parametry): 'completed'/'MATERIAL_BREAK'
+    // (poniżej) nie są realnymi wartościami tych kolumn — CHECK constraint
+    // (`20260809_finance_v3_b05_exception_ledger.sql:136,161`) dopuszcza
+    // TYLKO CLEAN/WITHIN_TOLERANCE/EXCEEDS_MATERIALITY (status) i
+    // CLEAN/CONDITIONAL/PROVISIONAL (resultQuality) — fikstura testowa
+    // pasowała do BUGA w `qualityTone()` (martwa gałąź `MATERIAL_BREAK`),
+    // nie do prawdziwego kontraktu.
+    status: 'CLEAN',
     resultQuality: 'CLEAN',
     totals: {
       sourceTotal: '1000000',
@@ -101,7 +108,7 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
   it('lists runs newest-first order as given, with quality DESCRIBED in text next to the color, not color alone', () => {
     render(
       <ReconciliationLedgerPanel
-        runs={[run({ reconciliationRunId: 'run-1', resultQuality: 'MATERIAL_BREAK' })]}
+        runs={[run({ reconciliationRunId: 'run-1', resultQuality: 'PROVISIONAL' })]}
         loading={false}
         selectedRunId={null}
         onSelectRun={() => {}}
@@ -111,8 +118,9 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
       />
     );
     const row = screen.getByTestId('reconciliation-run-run-1');
-    // a11y: the quality is legible as TEXT, not just conveyed by a color class.
-    expect(row).toHaveTextContent('MATERIAL_BREAK');
+    // a11y: the quality is legible as human PL TEXT (not the raw enum, not just a color class).
+    expect(row).toHaveTextContent('Prowizoryczny');
+    expect(row).not.toHaveTextContent('PROVISIONAL');
   });
 
   it('selecting a run calls onSelectRun with its id', () => {
@@ -168,8 +176,8 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
       artifactId: 'artifact-1',
       businessVersionId: 'bv-1',
       sourceSystem: 'SAP_EXPORT',
-      status: 'completed',
-      resultQuality: 'WITHIN_TOLERANCE',
+      status: 'WITHIN_TOLERANCE',
+      resultQuality: 'CONDITIONAL',
       residual: '500',
       residualPct: '0.05',
       createdAt: '2026-08-11T00:00:00.000Z',
@@ -190,8 +198,8 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('reconciliation-bucket-breakdown')).toHaveTextContent('MAPPED: 2');
-    expect(screen.getByTestId('reconciliation-bucket-breakdown')).toHaveTextContent('DUPLICATE: 1');
+    expect(screen.getByTestId('reconciliation-bucket-breakdown')).toHaveTextContent('Zmapowane: 2');
+    expect(screen.getByTestId('reconciliation-bucket-breakdown')).toHaveTextContent('Duplikat: 1');
     expect(screen.getByTestId('reconciliation-duplicate-warning')).toHaveTextContent('1 wiersz oznaczony');
   });
 
@@ -201,7 +209,7 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
       artifactId: 'artifact-1',
       businessVersionId: 'bv-1',
       sourceSystem: 'SAP_EXPORT',
-      status: 'completed',
+      status: 'CLEAN',
       resultQuality: 'CLEAN',
       residual: '0',
       residualPct: '0.00',
@@ -235,11 +243,11 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('reconciliation-run-run-1')).toHaveTextContent('CLEAN');
+    expect(screen.getByTestId('reconciliation-run-run-1')).toHaveTextContent('Czysty');
 
     rerender(
       <ReconciliationLedgerPanel
-        runs={[run({ reconciliationRunId: 'run-1', resultQuality: 'MATERIAL_BREAK' })]}
+        runs={[run({ reconciliationRunId: 'run-1', resultQuality: 'PROVISIONAL' })]}
         loading={false}
         selectedRunId={null}
         onSelectRun={() => {}}
@@ -248,7 +256,7 @@ describe('ReconciliationLedgerPanel — real ledger, not a decoration', () => {
         emptyLabel="—"
       />
     );
-    expect(screen.getByTestId('reconciliation-run-run-1')).not.toHaveTextContent('CLEAN');
-    expect(screen.getByTestId('reconciliation-run-run-1')).toHaveTextContent('MATERIAL_BREAK');
+    expect(screen.getByTestId('reconciliation-run-run-1')).not.toHaveTextContent('Czysty');
+    expect(screen.getByTestId('reconciliation-run-run-1')).toHaveTextContent('Prowizoryczny');
   });
 });

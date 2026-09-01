@@ -19,6 +19,7 @@ import { LoadingState } from '../../components/ui/primitives';
 import { AdminApi } from '../../services/api/admin.api';
 import { useAppStore } from '../../store/useAppStore';
 import { OrganizationOwnership, OwnershipTransferRequest, User } from '../../types';
+import { formatListDate } from '../../utils/listDateFormat';
 
 interface OwnershipManagementViewProps {
   className?: string;
@@ -94,18 +95,25 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
         setLoadError(
           ownershipResult.reason instanceof Error
             ? ownershipResult.reason.message
-            : 'Ownership information failed to load.'
+            : t('admin.ownership.errors.loadFallback', 'Ownership information failed to load.')
         );
       }
       if (adminsResult.status === 'rejected') {
-        setPendingTransferLoadError('Admin candidates failed to load.');
+        setPendingTransferLoadError(
+          t('admin.ownership.errors.adminsFallback', 'Admin candidates failed to load.')
+        );
       }
       if (transferResult.status === 'fulfilled') {
         const transferData = transferResult.value;
         setPendingTransfer((transferData as any)?.pendingTransfer || (transferData as any) || null);
       } else {
         setPendingTransfer(null);
-        setPendingTransferLoadError('Pending ownership transfer status failed to load.');
+        setPendingTransferLoadError(
+          t(
+            'admin.ownership.errors.pendingTransferFallback',
+            'Pending ownership transfer status failed to load.'
+          )
+        );
       }
     } catch (error) {
       console.error('Failed to load ownership data:', error);
@@ -113,11 +121,15 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
       setOwnerUser(null);
       setAdmins([]);
       setPendingTransfer(null);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load ownership information');
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : t('admin.ownership.errors.genericLoad', 'Failed to load ownership information')
+      );
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization?.id]);
+  }, [currentOrganization?.id, t]);
 
   useEffect(() => {
     if (currentOrganization?.id) {
@@ -127,25 +139,30 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
   const handleTransferOwnership = async () => {
     if (!selectedAdminId) {
-      toast.error('Please select an admin to transfer ownership to');
+      toast.error(t('admin.ownership.toasts.selectAdmin', 'Please select an admin to transfer ownership to'));
       return;
     }
 
     setSaving(true);
     try {
       if (!currentOrganization?.id) {
-        throw new Error('No organization selected');
+        throw new Error(t('admin.ownership.errors.noOrganization', 'No organization selected'));
       }
 
       await AdminApi.transferOrganizationOwnership(currentOrganization.id, {
         toUserId: selectedAdminId,
         reason: transferReason,
       });
-      toast.success('Ownership transfer request sent. The new owner must accept the transfer.');
+      toast.success(
+        t(
+          'admin.ownership.toasts.transferSent',
+          'Ownership transfer request sent. The new owner must accept the transfer.'
+        )
+      );
       setShowTransferModal(false);
       loadOwnershipData();
     } catch (error) {
-      toast.error('Failed to initiate ownership transfer');
+      toast.error(t('admin.ownership.toasts.transferFailed', 'Failed to initiate ownership transfer'));
     }
     setSaving(false);
   };
@@ -153,28 +170,28 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
   const handleCancelTransfer = async () => {
     try {
       if (!currentOrganization?.id) {
-        throw new Error('No organization selected');
+        throw new Error(t('admin.ownership.errors.noOrganization', 'No organization selected'));
       }
 
       await AdminApi.cancelOrganizationOwnershipTransfer(currentOrganization.id);
-      toast.success('Transfer cancelled');
+      toast.success(t('admin.ownership.toasts.transferCancelled', 'Transfer cancelled'));
       setPendingTransfer(null);
     } catch (error) {
-      toast.error('Failed to cancel transfer');
+      toast.error(t('admin.ownership.toasts.cancelFailed', 'Failed to cancel transfer'));
     }
   };
 
   const handleAcceptTransfer = async () => {
     try {
       if (!currentOrganization?.id) {
-        throw new Error('No organization selected');
+        throw new Error(t('admin.ownership.errors.noOrganization', 'No organization selected'));
       }
 
       await AdminApi.acceptOrganizationOwnershipTransfer(currentOrganization.id);
-      toast.success('You are now the organization owner!');
+      toast.success(t('admin.ownership.toasts.acceptedOwnership', 'You are now the organization owner!'));
       loadOwnershipData();
     } catch (error) {
-      toast.error('Failed to accept transfer');
+      toast.error(t('admin.ownership.toasts.acceptFailed', 'Failed to accept transfer'));
     }
   };
 
@@ -198,7 +215,10 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
       </div>
 
       {loadError ? (
-        <DegradedState title="Ownership information unavailable" description={loadError} />
+        <DegradedState
+          title={t('admin.ownership.errors.loadTitle', 'Ownership information unavailable')}
+          description={loadError}
+        />
       ) : (
         <>
           {/* Pending Transfer Alert */}
@@ -206,16 +226,19 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl"
+              className="p-4 bg-c-info/10 border border-c-info/30 rounded-xl"
             >
               <div className="flex items-start gap-3">
-                <Crown className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />
+                <Crown className="w-5 h-5 text-c-info mt-0.5" />
                 <div className="flex-1">
-                  <h4 className="font-medium text-primary-800 dark:text-primary-200">
-                    Ownership Transfer Pending
+                  <h4 className="font-medium text-c-text">
+                    {t('admin.ownership.pendingBanner.title', 'Ownership Transfer Pending')}
                   </h4>
-                  <p className="text-sm text-primary-600 dark:text-primary-300 mt-1">
-                    You have been selected to become the new organization owner for this team.
+                  <p className="text-sm text-c-text-secondary mt-1">
+                    {t(
+                      'admin.ownership.pendingBanner.description',
+                      'You have been selected to become the new organization owner for this team.'
+                    )}
                   </p>
                   <div className="flex gap-2 mt-3">
                     <button
@@ -223,14 +246,14 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                       className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium"
                     >
                       <Check size={16} />
-                      Accept Ownership
+                      {t('admin.ownership.pendingBanner.accept', 'Accept Ownership')}
                     </button>
                     <button
                       onClick={handleCancelTransfer}
-                      className="flex items-center gap-2 px-4 py-2 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300 rounded-lg text-sm font-medium hover:bg-primary-50 dark:hover:bg-primary-900/30"
+                      className="flex items-center gap-2 px-4 py-2 border border-c-info/40 text-c-info rounded-lg text-sm font-medium hover:bg-c-info/10"
                     >
                       <X size={16} />
-                      Decline
+                      {t('admin.ownership.pendingBanner.decline', 'Decline')}
                     </button>
                   </div>
                 </div>
@@ -240,7 +263,10 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
           {pendingTransferLoadError && (
             <DegradedState
-              title="Pending ownership transfer status unavailable"
+              title={t(
+                'admin.ownership.errors.pendingTransferTitle',
+                'Pending ownership transfer status unavailable'
+              )}
               description={pendingTransferLoadError}
             />
           )}
@@ -257,17 +283,17 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                     {ownerUser?.firstName} {ownerUser?.lastName}
                   </h3>
                   <span className="px-2 py-0.5 bg-amber-500 text-white text-xs rounded-full font-medium">
-                    OWNER
+                    {t('admin.ownership.ownerCard.badge', 'OWNER')}
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                   {ownerUser?.email}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                  Owner since{' '}
+                  {t('admin.ownership.ownerCard.since', 'Owner since')}{' '}
                   {ownership?.createdAt
-                    ? new Date(ownership.createdAt).toLocaleDateString()
-                    : 'Initial Setup'}
+                    ? formatListDate(ownership.createdAt)
+                    : t('admin.ownership.ownerCard.initialSetup', 'Initial Setup')}
                 </p>
               </div>
               {isOwner && (
@@ -276,7 +302,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                   className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                 >
                   <ArrowRight size={16} />
-                  Transfer Ownership
+                  {t('admin.ownership.transferAction', 'Transfer Ownership')}
                 </button>
               )}
             </div>
@@ -285,8 +311,10 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
             <div className="mt-4 p-3 bg-amber-100/50 dark:bg-amber-900/30 rounded-lg flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5" />
               <p className="text-xs text-amber-700 dark:text-amber-300">
-                The organization owner cannot be removed from the team list. To remove this user,
-                transfer ownership first.
+                {t(
+                  'admin.ownership.ownerCard.warning',
+                  'The organization owner cannot be removed from the team list. To remove this user, transfer ownership first.'
+                )}
               </p>
             </div>
           </div>
@@ -309,28 +337,31 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                   <div className="p-6 border-b border-slate-200 dark:border-navy-700">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                       <Crown className="text-amber-500" size={20} />
-                      Transfer Ownership
+                      {t('admin.ownership.transferAction', 'Transfer Ownership')}
                     </h3>
                   </div>
                   <div className="p-6 space-y-4">
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                       <p className="text-sm text-amber-700 dark:text-amber-300">
-                        Transferring ownership moves owner-only team safeguards to the selected
-                        admin. You will retain admin privileges but will no longer be the team
-                        owner.
+                        {t(
+                          'admin.ownership.modal.info',
+                          'Transferring ownership moves owner-only team safeguards to the selected admin. You will retain admin privileges but will no longer be the team owner.'
+                        )}
                       </p>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Select New Owner
+                        {t('admin.ownership.modal.selectLabel', 'Select New Owner')}
                       </label>
                       <select
                         value={selectedAdminId}
                         onChange={(e) => setSelectedAdminId(e.target.value)}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                       >
-                        <option value="">Select an admin...</option>
+                        <option value="">
+                          {t('admin.ownership.modal.selectPlaceholder', 'Select an admin...')}
+                        </option>
                         {admins.map((admin) => (
                           <option key={admin.id} value={admin.id}>
                             {admin.firstName} {admin.lastName} ({admin.email})
@@ -341,13 +372,16 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
 
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Reason (optional)
+                        {t('admin.ownership.modal.reasonLabel', 'Reason (optional)')}
                       </label>
                       <textarea
                         value={transferReason}
                         onChange={(e) => setTransferReason(e.target.value)}
                         rows={2}
-                        placeholder="Why are you transferring ownership?"
+                        placeholder={t(
+                          'admin.ownership.modal.reasonPlaceholder',
+                          'Why are you transferring ownership?'
+                        )}
                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
                       />
                     </div>
@@ -357,7 +391,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                       onClick={() => setShowTransferModal(false)}
                       className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                     >
-                      Cancel
+                      {t('admin.ownership.modal.cancel', 'Cancel')}
                     </button>
                     <button
                       onClick={handleTransferOwnership}
@@ -365,7 +399,7 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
                       className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium disabled:opacity-50"
                     >
                       {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-                      Transfer Ownership
+                      {t('admin.ownership.transferAction', 'Transfer Ownership')}
                     </button>
                   </div>
                 </motion.div>

@@ -21,6 +21,7 @@ import { AppView } from '@/types';
 import type { SidekickContextEventDetail } from '../components/MyWork/mindmap/aiSidekickContext';
 import { getRouteFromAppView } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
+import { trimPinnedEntityData } from '../store/teresaEntityContext';
 import { useConversationStore } from '../store/useConversationStore';
 
 export interface OpenChatOptions {
@@ -62,8 +63,13 @@ const recentEntityConversations = new Map<
 const ENTITY_CONVERSATION_REUSE_WINDOW_MS = 30_000;
 
 export function useOpenChatWithContext() {
-  const { activeConversationId, conversations, createConversation, setWorkspaceContext } =
-    useConversationStore();
+  const {
+    activeConversationId,
+    conversations,
+    createConversation,
+    setWorkspaceContext,
+    setTeresaEntityContext,
+  } = useConversationStore();
 
   const isChatCollapsed = useAppStore((s) => s.isChatCollapsed);
   const toggleChatCollapse = useAppStore((s) => s.toggleChatCollapse);
@@ -91,6 +97,34 @@ export function useOpenChatWithContext() {
   return useCallback(
     async (options: OpenChatOptions) => {
       const { entityType, entityId, entityName, contextData, pmoContext } = options;
+
+      // ── „JEDNA TERESA" 2026-09-01: PRZYPIĘCIE KONTEKSTU OBIEKTU ─────────
+      // `setWorkspaceContext` niżej NIE WYSTARCZA: `MainLayout` przelicza
+      // `workspaceContext` z trasy przy najbliższym renderze i nadpisuje encję
+      // (MainLayout.tsx:155-196, :485-489), a pełne okno `/chat` w ogóle nie
+      // dostaje propsa. Dlatego równolegle przypinamy kontekst do WŁASNEGO,
+      // persystowanego pola store'u — patrz src/store/teresaEntityContext.ts.
+      // Ścieżkę łapiemy TERAZ, przed ewentualną nawigacją na /chat (mobile),
+      // żeby `originPath` niósł trasę OBIEKTU, a nie trasę czatu.
+      const originPath =
+        typeof window !== 'undefined' && window.location ? window.location.pathname : null;
+      const pinEntityContext = (conversationId: string | null) => {
+        try {
+          setTeresaEntityContext({
+            type: entityType,
+            entityId,
+            entityName: entityName || entityType,
+            // Przycięte: pin jest persystowany, a `contextData` u części
+            // wołaczy niesie cały markdown ekranu (`teresaPrompt`).
+            entityData: trimPinnedEntityData(contextData),
+            conversationId,
+            originPath,
+            ts: Date.now(),
+          });
+        } catch {
+          // Kontekst to wzmocnienie, nie warunek otwarcia okna — nie blokuj.
+        }
+      };
 
       // Check if current conversation already has this entity's context
       const activeConv = conversations.find((c) => c.id === activeConversationId);
@@ -134,6 +168,7 @@ export function useOpenChatWithContext() {
           entityName: entityName || entityType,
           entityData: contextData || {},
         } as any);
+        pinEntityContext(activeConversationId);
         return activeConversationId;
       }
 
@@ -182,6 +217,7 @@ export function useOpenChatWithContext() {
         entityName: entityName || entityType,
         entityData: contextData || {},
       } as any);
+      pinEntityContext(conv.id);
 
       // Module-level Teresa prompts (e.g. FinanceHub.buildFinanceTeresaPrompt) live in
       // contextData.teresaPrompt. Stash them so the chat composer can pick them up as a
@@ -237,6 +273,7 @@ export function useOpenChatWithContext() {
       navigate,
       navigateFn,
       setCurrentViewState,
+      setTeresaEntityContext,
       setWorkspaceContext,
       toggleChatCollapse,
     ]

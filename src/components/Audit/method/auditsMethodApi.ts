@@ -472,6 +472,31 @@ export async function seedDemoPack(): Promise<AuditPackSummary | null> {
 // Processes — programy
 // ---------------------------------------------------------------------------
 
+/**
+ * `listPrograms()` raw rows use the service's counter names
+ * (`criteriaTotal`/`criteriaConcluded`/`findingsOpen`), not the UI-facing
+ * ones (`applicableCriteria`/`concludedCriteria`/`openFindings`). Map
+ * explicitly here — same defensive pattern as `getProgramCoverage()` below —
+ * so a server/client contract drift cannot silently render "Postęp" as a
+ * bare "/" and "Ustalenia otwarte" as blank (measured defect, see
+ * `docs/program/grafika/ROZJAZD_NAZW_POL_20260901.md`).
+ */
+function mapProgramSummaryRow(raw: Record<string, unknown>): AuditProgramSummary {
+  const requiredCount = (key: string): number => {
+    const value = raw[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      throw new Error(`AUDITS_API_CONTRACT_ERROR: programs[].${key} must be a non-negative number`);
+    }
+    return value;
+  };
+  return {
+    ...(raw as unknown as AuditProgramSummary),
+    applicableCriteria: requiredCount('criteriaTotal'),
+    concludedCriteria: requiredCount('criteriaConcluded'),
+    openFindings: requiredCount('findingsOpen'),
+  };
+}
+
 export async function listPrograms(
   params: ListProgramsParams = {}
 ): Promise<ListResult<AuditProgramSummary>> {
@@ -483,7 +508,8 @@ export async function listPrograms(
   });
   const res = await Api.get(`/audits/programs${qs}`);
   const payload = unwrapEnvelope(res);
-  const items = toArray<AuditProgramSummary>(payload, 'programs', 'items');
+  const rawItems = toArray<Record<string, unknown>>(payload, 'programs', 'items');
+  const items = rawItems.map(mapProgramSummaryRow);
   return { items, total: toTotal(payload, items.length, 'total') };
 }
 

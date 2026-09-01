@@ -26,19 +26,28 @@ export default function DocumentStudioBlocksI18nScreen(): React.ReactElement {
   return (
     <div className="flex h-screen w-full flex-col gap-6 overflow-y-auto bg-slate-50 p-8 dark:bg-navy-950">
       <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-navy-900">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h3
+          className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          data-dev-render-chrome="true"
+        >
           DocTableBlock — empty state
         </h3>
         <DocTableBlock content={emptyTable} />
       </div>
       <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-navy-900">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h3
+          className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          data-dev-render-chrome="true"
+        >
           DocKpiStrip — empty state
         </h3>
         <DocKpiStrip content={{ items: [] }} />
       </div>
       <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-navy-900">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <h3
+          className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          data-dev-render-chrome="true"
+        >
           DocChartBlock — empty state
         </h3>
         <DocChartBlock content={emptyChart} />

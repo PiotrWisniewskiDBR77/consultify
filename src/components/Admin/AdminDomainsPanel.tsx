@@ -13,6 +13,7 @@ import {
   updateAdminDomain,
   verifyAdminDomain,
 } from '../../services/adminDomainsApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 
@@ -151,7 +152,7 @@ export const AdminDomainsPanel: React.FC = () => {
       {
         id: 'verifiedAt',
         label: t('admin.domains.columns.verifiedAt'),
-        render: (row) => (row.verifiedAt ? new Date(String(row.verifiedAt)).toLocaleString() : '—'),
+        render: (row) => (row.verifiedAt ? formatListDateTime(String(row.verifiedAt)) : '—'),
       },
       {
         id: 'actions',

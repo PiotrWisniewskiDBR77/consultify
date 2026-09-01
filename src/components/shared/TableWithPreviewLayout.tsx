@@ -44,6 +44,18 @@ interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
   onSelect: (id: string | null) => void;
   /** Called when full detail should open (double-click / Enter) */
   onOpenFull?: (id: string) => void;
+  /**
+   * Odbiór 141-plan-scenario (2026-08-31) — prop ADDYTYWNY, lustro kontraktu
+   * `StandardPreview.openDisabledReason` (FIX-1, dyżur 26 chat-signals-front).
+   *
+   * Ten layout, a nie `StandardPreview`, rysuje nagłówek podglądu w trybie
+   * `embedded` — więc bez tego propu powierzchnia bez destynacji ma tylko dwa
+   * wyjścia: przycisk „Otwórz" prowadzący w złe miejsce albo BRAK przycisku
+   * (milczenie o istnieniu obiektu). Podany BEZ `onOpenFull` renderuje
+   * WYŁĄCZONY „Otwórz" z tym powodem w tooltipie. Gdy `onOpenFull` jest
+   * podany, prop jest ignorowany. Brak obu ⇒ zero zmian (przycisku nie ma).
+   */
+  openDisabledReason?: string;
   /** Render the preview body */
   renderPreview: (item: T) => React.ReactNode;
   /** Render preview footer quick actions */
@@ -79,6 +91,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   selectedItem,
   onSelect,
   onOpenFull,
+  openDisabledReason,
   renderPreview,
   renderPreviewFooter,
   renderPreviewActions,
@@ -374,6 +387,17 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                crimsonowy pierscien fokusa z rodziny primary — kanon wymaga `c-focus`. */
             className={PREVIEW_HEADER_OPEN_BUTTON}
             title={t('common.open', 'Open')}
+          >
+            <span>{t('common.open', 'Open')}</span>
+          </button>
+        )}
+        {!onOpenFull && openDisabledReason && (
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            className={PREVIEW_HEADER_OPEN_BUTTON}
+            title={openDisabledReason}
           >
             <span>{t('common.open', 'Open')}</span>
           </button>

@@ -228,6 +228,29 @@ function odbiorPlugin() {
     },
   };
 }
+/**
+ * H2 fix (2026-08-31): without `DEV_RENDER_API_PROXY_TARGET`, vite's SPA
+ * fallback serves `index.html` (200, text/html) for EVERY unmatched path,
+ * including `/api/*`. Any screen's real fetch to a real endpoint then reads
+ * a lying 200 HTML response instead of a clear failure — the harness looks
+ * like it has a backend when it doesn't. When no proxy target is configured,
+ * short-circuit `/api/*` with an honest 404 JSON before the SPA fallback
+ * ever sees it.
+ */
+function apiNoBackendPlugin() {
+  return {
+    name: 'dev-render-api-no-backend',
+    configureServer(server: any) {
+      if (process.env.DEV_RENDER_API_PROXY_TARGET) return;
+      server.middlewares.use('/api', (_req: any, res: any) => {
+        res.statusCode = 404;
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ error: { code: 'DEV_RENDER_NO_BACKEND' } }));
+      });
+    },
+  };
+}
+
 export default defineConfig({
   root: __dirname,
   // Dedykowany cache — node_modules jest symlinkiem do głównego repo, więc
@@ -236,7 +259,7 @@ export default defineConfig({
   cacheDir: path.resolve(__dirname, '.vite-cache'),
   // Serve the app's real /locales/** so i18n HttpBackend loads cleanly.
   publicDir: path.resolve(repoRoot, 'public'),
-  plugins: [react(), pluginUwag(), odbiorPlugin()],
+  plugins: [react(), pluginUwag(), odbiorPlugin(), apiNoBackendPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(repoRoot, 'src'),

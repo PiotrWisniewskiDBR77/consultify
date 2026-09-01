@@ -13,6 +13,12 @@ vi.mock('@/store/useAppStore', () => ({
     setCurrentView: vi.fn(),
     setMyWorkIntent: vi.fn(),
     currentUser: { id: 'u-1', name: 'Tester' },
+    // ★ 2026-09-01 („jedna Teresa"): karta publikuje kontekst i komendy do
+    // JEDNEGO okna Teresy zamiast renderować własny czat, więc czyta z uiSlice
+    // te dwa settery (i sprząta `chatContextActions` przy odmontowaniu).
+    // Bez nich atrapa store'u wywracała odmontowanie widoku.
+    setChatSystemPrompt: vi.fn(),
+    setChatContextActions: vi.fn(),
   }),
 }));
 

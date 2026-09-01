@@ -9,6 +9,18 @@
  *
  * Zero zależności — czysty `node:http`. Uruchomienie:
  *   node scripts/dev/odbior-serwer.mjs            (port 3030)
+ *
+ * NAPRAWA (2026-09-01): pole uwagi zapisywało do `historia` PRZY KAŻDYM
+ * NACIŚNIĘCIU KLAWISZA — jedna uwaga „dalej jest problem" trafiła do bazy
+ * w 11 rosnących wersjach, jeden ekran miał 18 wpisów jednego dnia. Log
+ * historii miał być trwałym zapisem KOLEJNYCH decyzji właściciela, a stał
+ * się zrzutem klatka-po-klatce jego pisania — nieczytelnym i rosnącym bez
+ * potrzeby. Teraz front wysyła uwagę dopiero po ~800 ms ciszy od ostatniego
+ * znaku (plus natychmiast przy opuszczeniu pola i przy zamknięciu karty —
+ * właściciel nie może stracić uwagi, bo `decyzje` aktualizuje się od razu),
+ * a serwer ma dodatkową siatkę bezpieczeństwa: jeśli kolejny zapis dla tego
+ * samego ekranu przychodzi krótko po poprzednim i jest jego PRZEDŁUŻENIEM,
+ * dopisuje się do OSTATNIEGO wiersza historii zamiast tworzyć nowy.
  */
 import http from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
@@ -44,9 +56,29 @@ function indeksZrzutow() {
       if (czesci.length < 3) continue;
       const [id, faza, motywPng] = czesci;
       const motyw = motywPng.replace('.png', '');
+      const pelna = path.join(full, f);
+      const mtime = fs.statSync(pelna).mtimeMs;
       out[id] ??= {};
       out[id][motyw] ??= {};
-      out[id][motyw][faza] = path.join(dir, f);
+      const obecny = out[id][motyw][faza];
+      // PUŁAPKA (2026-08-31, Z-20): katalogi `evidence/grafika/*` sortują się
+      // TEKSTOWO, nie chronologicznie — „15-", „90-", „99-" idą alfabetycznie ZA
+      // „144-"/„146-", bo porównanie jest po znakach, nie po liczbie. Poprzednia
+      // wersja brała OSTATNI plik napotkany w kolejności `fs.readdirSync`, więc
+      // stary zrzut (czasem sprzed napraw) przykrywał dzisiejszy na 120 z 229 kart.
+      // Wygrywa teraz plik o NAJNOWSZYM `mtime`, niezależnie od kolejności katalogów.
+      if (!obecny || mtime > obecny.mtime) {
+        out[id][motyw][faza] = { sciezka: path.join(dir, f), mtime };
+      }
+    }
+  }
+  // Spłaszczamy do samych ścieżek — mtime był potrzebny tylko do wyboru zwycięzcy,
+  // reszta kodu (wybierz PO/PRZED w karta()) oczekuje zwykłego stringa.
+  for (const id of Object.keys(out)) {
+    for (const motyw of Object.keys(out[id])) {
+      for (const faza of Object.keys(out[id][motyw])) {
+        out[id][motyw][faza] = out[id][motyw][faza].sciezka;
+      }
     }
   }
   return out;
@@ -108,12 +140,39 @@ function zapiszDecyzje(ekran, zmiana) {
     `INSERT INTO decyzje (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)
      ON CONFLICT(ekran) DO UPDATE SET decyzja = excluded.decyzja, uwaga = excluded.uwaga, kiedy = excluded.kiedy`
   ).run(ekran, decyzja || null, uwaga || null, teraz);
-  db.prepare('INSERT INTO historia (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)').run(
-    ekran,
-    decyzja || null,
-    uwaga || null,
-    teraz
-  );
+  // SIATKA BEZPIECZEŃSTWA po stronie serwera: gdyby debounce po stronie
+  // przeglądarki zawiódł (np. wysyłka przy zamknięciu karty), nie chcemy
+  // znowu zasypać `historia` klatkami tej samej uwagi. Jeśli poprzedni wiersz
+  // dla TEGO SAMEGO ekranu jest sprzed chwili i jego uwaga jest PREFIKSEM
+  // nowej (czyli to dalej ten sam ciąg pisania, tylko dłuższy), NADPISUJEMY
+  // go zamiast dokładać kolejny — jedna uwaga zostaje jednym wpisem.
+  const PROG_KONTYNUACJI_MS = 5000;
+  const ostatni = db
+    .prepare('SELECT lp, decyzja, uwaga, kiedy FROM historia WHERE ekran = ? ORDER BY lp DESC LIMIT 1')
+    .get(ekran);
+  const toKontynuacja =
+    ostatni &&
+    (decyzja || null) === (ostatni.decyzja || null) &&
+    typeof uwaga === 'string' &&
+    typeof ostatni.uwaga === 'string' &&
+    uwaga !== ostatni.uwaga &&
+    uwaga.startsWith(ostatni.uwaga) &&
+    Date.parse(teraz) - Date.parse(ostatni.kiedy) < PROG_KONTYNUACJI_MS;
+  if (toKontynuacja) {
+    db.prepare('UPDATE historia SET decyzja = ?, uwaga = ?, kiedy = ? WHERE lp = ?').run(
+      decyzja || null,
+      uwaga || null,
+      teraz,
+      ostatni.lp
+    );
+  } else {
+    db.prepare('INSERT INTO historia (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)').run(
+      ekran,
+      decyzja || null,
+      uwaga || null,
+      teraz
+    );
+  }
   // Eksport do czytania i do gita — po KAŻDYM zapisie, żeby plik nigdy nie był starszy niż baza.
   fs.writeFileSync(DECYZJE, JSON.stringify(czytajDecyzje(), null, 1), 'utf8');
   return db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje WHERE ekran = ?').get(ekran);
@@ -400,12 +459,60 @@ document.addEventListener('click', (ev) => {
     });
   }
 });
-let t;
+/**
+ * UWAGA: zapis dopiero po zakończeniu pisania.
+ * Wcześniej każde naciśnięcie klawisza leciało do bazy jako osobny wpis
+ * historii — jedna uwaga rozrastała się do kilkunastu wierszy, każdy o jeden
+ * znak dłuższy. Teraz czekamy ~800 ms ciszy od ostatniego znaku, ZANIM w
+ * ogóle coś wyślemy — a dodatkowo wysyłamy natychmiast (pomijając ciszę),
+ * gdy pole traci fokus albo karta się zamyka, żeby właściciel nigdy nie
+ * stracił uwagi przez samo zamknięcie przeglądarki. Stan per-pole (timer,
+ * ostatnia wysłana wartość) trzymamy w Map po id ekranu, bo wspólny jeden
+ * timer na całą stronę potrafiłby skasować oczekujący zapis innego pola.
+ */
+const uwagiStan = new Map(); // id ekranu -> { timer, ostatnia }
+function stanPola(id) {
+  let s = uwagiStan.get(id);
+  if (!s) { s = { timer: null, ostatnia: undefined }; uwagiStan.set(id, s); }
+  return s;
+}
+function wyslijUwageTeraz(u) {
+  const id = u.dataset.id;
+  const s = stanPola(id);
+  clearTimeout(s.timer);
+  s.timer = null;
+  if (s.ostatnia === u.value) return; // nic się nie zmieniło od ostatniej wysyłki
+  s.ostatnia = u.value;
+  wyslij(id, { uwaga: u.value });
+}
 document.addEventListener('input', (ev) => {
   const u = ev.target.closest('.uw');
   if (!u) return;
-  clearTimeout(t);
-  t = setTimeout(() => wyslij(u.dataset.id, { uwaga: u.value }), 400);
+  const s = stanPola(u.dataset.id);
+  clearTimeout(s.timer);
+  s.timer = setTimeout(() => wyslijUwageTeraz(u), 800);
+});
+document.addEventListener('focusout', (ev) => {
+  const u = ev.target.closest('.uw');
+  if (!u) return;
+  wyslijUwageTeraz(u);
+});
+/**
+ * Zamknięcie karty/przeglądarki nie może ubić oczekującego zapisu — a
+ * zwykły fetch w pagehide/beforeunload bywa ucinany, zanim żądanie
+ * zdąży wylecieć. sendBeacon jest zbudowany dokładnie do tego: kolejkuje
+ * wysyłkę niezależnie od losu strony.
+ */
+window.addEventListener('pagehide', () => {
+  document.querySelectorAll('.uw').forEach((u) => {
+    const s = stanPola(u.dataset.id);
+    if (!s.timer && s.ostatnia === u.value) return;
+    clearTimeout(s.timer);
+    if (s.ostatnia === u.value) return;
+    s.ostatnia = u.value;
+    const cialo = JSON.stringify({ id: u.dataset.id, uwaga: u.value });
+    navigator.sendBeacon('/decyzja', new Blob([cialo], { type: 'application/json' }));
+  });
 });
 licz();
 

@@ -137,7 +137,7 @@ const Screen: React.FC = () => {
   return (
     <div className="min-h-screen bg-c-bg text-c-text p-8">
       <div className="max-w-2xl mx-auto space-y-4">
-        <h1 className="text-sm font-semibold text-c-text-secondary">
+        <h1 className="text-sm font-semibold text-c-text-secondary" data-dev-render-chrome="">
           {isPl
             ? 'F1-A · Kontrolka potwierdzenia Teresy (realny MessageRenderer)'
             : 'F1-A · Teresa confirm chip (real MessageRenderer)'}
@@ -149,6 +149,7 @@ const Screen: React.FC = () => {
         <div
           className="text-xs text-c-text-muted border border-c-border-subtle rounded-lg px-3 py-2"
           data-testid="confirm-log"
+          data-dev-render-chrome=""
         >
           {log}
         </div>

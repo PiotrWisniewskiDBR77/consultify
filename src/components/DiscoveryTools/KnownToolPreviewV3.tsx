@@ -16,6 +16,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
+import { formatListDate } from '@/utils/listDateFormat';
 
 type KnownToolListItem = {
   id: string;
@@ -65,12 +66,12 @@ const clampText = (s: string, max = 120) => {
   return `${t.slice(0, max - 1)}…`;
 };
 
-const formatDate = (iso?: string | null) => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
+/**
+ * Odbiór 2026-08-30 (przegląd modułów 04/11/16): `toLocaleDateString(undefined, …)`
+ * bierze locale z przeglądarki, nie z konta — patrz `src/utils/listDateFormat.ts`
+ * (SSOT, 270 takich wywołań znalezionych 2026-07-27).
+ */
+const formatDate = (iso?: string | null) => formatListDate(iso);
 
 async function refineText(params: {
   text: string;
@@ -509,18 +510,17 @@ export const KnownToolPreviewV3Footer: React.FC<{
 
   return (
     <div className="space-y-0">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2">
-        <PreviewAIHintStrip
-          hints={aiHints}
-          loading={aiLoading || fullLoading}
-          result={aiText}
-          error={aiError}
-          onRunHint={(hint) => void runAi(hintToIntent[hint] ?? 'when_to_use')}
-          onRegenerate={handleRegenerateAi}
-          onCopy={handleCopyAi}
-          onClear={handleClearAi}
-        />
-      </div>
+      {/* Ramkę bloku 4 rysuje sam `PreviewAIHintStrip` — bez opakowania. */}
+      <PreviewAIHintStrip
+        hints={aiHints}
+        loading={aiLoading || fullLoading}
+        result={aiText}
+        error={aiError}
+        onRunHint={(hint) => void runAi(hintToIntent[hint] ?? 'when_to_use')}
+        onRegenerate={handleRegenerateAi}
+        onCopy={handleCopyAi}
+        onClear={handleClearAi}
+      />
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-2" />
 

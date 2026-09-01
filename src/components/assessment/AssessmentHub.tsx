@@ -67,9 +67,11 @@ import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
 import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import {
+  formatPresentationBadge,
   formatPresentationCount,
   knownPresentation,
   partialPresentation,
+  presentationReason,
   unknownPresentation,
 } from '@/utils/presentationState';
 
@@ -1562,10 +1564,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const statusChipOptions = useMemo(() => getStatusesForModule(statusContext), [statusContext]);
   const statusFilterChips = useMemo(
     () =>
-      statusChipOptions.map((opt) => ({
-        id: `status-${opt.id}`,
-        label: isPolish ? opt.labelPL : opt.label,
-        badge: formatPresentationCount(
+      statusChipOptions.map((opt) => {
+        const presentation =
           activeTab !== 'outputs'
             ? knownPresentation(statusCounts[opt.id] ?? 0)
             : outputsCount === null
@@ -1579,21 +1579,37 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                     outputsCount,
                     t(
                       'presentationState.outputStatusHiddenReason',
-                      'the hub does not load the output status breakdown'
+                      'a breakdown by status is not yet available for outputs'
                     )
-                  ),
-          {
-            hidden: t('presentationState.hidden', 'hidden'),
-            unknown: t('presentationState.unknown', 'unknown'),
-          }
-        ),
-        active: statusFilter === opt.id,
-        icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
-        onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
-        title: t('assessment.hub.statusFilterTooltip', 'Filter the list by status "{{status}}".', {
-          status: isPolish ? opt.labelPL : opt.label,
-        }),
-      })),
+                  );
+        // Short, never-truncated badge (kanon MENU_3_BADGE_BASE: max-w-[200px]
+        // truncate) — the honest reason for a partial/unknown count belongs in
+        // the chip's own hover tooltip below as a FULL sentence (still built
+        // via `formatPresentationCount`, same honesty contract as before —
+        // Day 119), not squeezed into the 200px pill where it mid-word-cuts
+        // and reads as a leaked debug note (grafika 2026-08-31,
+        // assessment-artifacts-restart C-grade).
+        const countCopy = {
+          hidden: t('presentationState.hidden', 'hidden'),
+          unknown: t('presentationState.unknown', 'unknown'),
+        };
+        const reason = presentationReason(presentation);
+        const fullReasonSentence = formatPresentationCount(presentation, countCopy);
+        const filterTooltip = t(
+          'assessment.hub.statusFilterTooltip',
+          'Filter the list by status "{{status}}".',
+          { status: isPolish ? opt.labelPL : opt.label }
+        );
+        return {
+          id: `status-${opt.id}`,
+          label: isPolish ? opt.labelPL : opt.label,
+          badge: formatPresentationBadge(presentation, countCopy),
+          active: statusFilter === opt.id,
+          icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
+          onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
+          title: reason ? `${filterTooltip} (${fullReasonSentence})` : filterTooltip,
+        };
+      }),
     [activeTab, isPolish, outputsCount, statusChipOptions, statusCounts, statusFilter, t]
   );
 

@@ -37,6 +37,8 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   executing: 'info',
   promoted: 'info',
   proposed: 'info',
+  queued: 'info',
+  running: 'info',
 
   // warning — waiting on someone
   submitted: 'warning',
@@ -60,6 +62,8 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   active: 'success',
   utilized: 'success',
   tracking: 'success',
+  succeeded: 'success',
+  resolved: 'success',
 
   // danger — needs attention
   sent_back: 'danger',
@@ -68,6 +72,8 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   blocked: 'danger',
   cancelled: 'danger',
   overdue: 'danger',
+  expired: 'danger',
+  revoked: 'danger',
 
   // neutral — terminal-inert or unassigned (explicit, not accidental fallback)
   archived: 'neutral',

@@ -973,7 +973,26 @@ Api.get = (async (url: string, ...rest: unknown[]) => {
 
   if (path === '/audits/programs') {
     const items = empty ? [] : programsStore;
-    return envelope({ programs: items, total: items.length });
+    // NAPRAWA (2026-09-01, ROZJAZD_NAZW_POL): `GET /audits/programs` na
+    // REALNYM serwerze wysyła `ProgramListItem` (`criteriaTotal`/
+    // `criteriaConcluded`/`findingsOpen` —
+    // `server/src/services/audits/programService.ts`), NIE klienckie
+    // `applicableCriteria`/`concludedCriteria`/`openFindings`. Ten mock
+    // wcześniej zwracał wprost `AuditProgramSummary[]` (kształt kliencki) —
+    // dokładnie ta pomyłka ukryła defekt na zrzucie zatwierdzonym przez
+    // właściciela (zakładka „Sesje" nigdy nie została sfotografowana z
+    // realnym kształtem serwera). Serializuj na drucie w kształcie serwera —
+    // `listPrograms()` w `auditsMethodApi.ts` mapuje z powrotem.
+    const wireItems = items.map((item) => {
+      const { applicableCriteria, concludedCriteria, openFindings, ...rest } = item;
+      return {
+        ...rest,
+        criteriaTotal: applicableCriteria,
+        criteriaConcluded: concludedCriteria,
+        findingsOpen: openFindings,
+      };
+    });
+    return envelope({ programs: wireItems, total: wireItems.length });
   }
   const coverage = path.match(/^\/audits\/programs\/([^/]+)\/coverage$/);
   if (coverage) {

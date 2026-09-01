@@ -71,10 +71,12 @@
  */
 import {
   FileSpreadsheet,
+  History as HistoryIcon,
   Lightbulb,
   Link2,
   MessageSquare,
   Repeat,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
@@ -87,10 +89,10 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import {
-  ArtifactRightRail,
   type ArtifactRailTeresaCommand,
   type ArtifactRailTeresaMode,
   type ArtifactRailTypeMode,
+  ArtifactRightRail,
 } from '@/components/standard/ArtifactRightRail';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
@@ -133,8 +135,16 @@ export interface IdeaRightPanelProps {
    * nie renderuje.
    */
   onConvert?: () => void;
-  /** Szerokość panelu (default 360; kanon ArtifactRightPanel 320–420). */
-  width?: number;
+  /**
+   * Szerokość panelu. DOMYŚLNIE token `--ntype-right-panel-width` (320 px) —
+   * ta sama szerokość co karty N i każdy inny prawy pas akordeonowy.
+   *
+   * ★ NAPRAWA 2026-09-01 (dyżur 164): stało tu `360`, przez co dok Teresy
+   * Idei był o 40 px szerszy od kart N. Zmierzone przy 320 px: ZERO nowych
+   * ucięć treści względem 360 px. Nie wpisuj liczby — szerokość ma jedno
+   * źródło (`src/index.css`).
+   */
+  width?: number | string;
   /** PL/EN etykiety nagłówków sekcji. */
   isPolish?: boolean;
 
@@ -185,7 +195,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
   evidenceArtifactId,
   onExport,
   onConvert,
-  width = 360,
+  width = 'var(--ntype-right-panel-width)',
   isPolish = false,
   title,
   onDiscussWithTeresa,
@@ -217,22 +227,37 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
 
     const hasActions = actionButtons.length > 0;
 
-    // Krok 1 (docs/program/grafika/ANALIZA_PRAWY_PANEL.md §7): pięć sekcji
-    // idei (bez 'evidence'/'results' — dziś bez zastosowania tutaj, zobacz
-    // `evidenceArtifactId` niżej, wciąż scalone w Powiązania jak przed Z8)
-    // budujemy jako mapę id→sekcja, a KOLEJNOŚĆ renderu pochodzi z filtracji
-    // kanonicznej `ARTIFACT_PANEL_SECTION_ORDER` — nie z własnej literałowej
-    // listy. Filtr zachowuje 1:1 dawną kolejność (actions, properties,
-    // relations, comments, history).
+    // ★ NAPRAWA 2026-08-30 (przegląd `PRZEGLAD_PRZED_ODBIOREM.md` §Z-2 + kanon
+    // z odbiorów): panel idei łamał kanon w DWÓCH miejscach naraz.
+    //  1. „Źródła i założenia" nie istniały jako sekcja — `EvidencePanelSection`
+    //     był doklejony pod treścią „Powiązań" (scalenie Z8). Czwarta sekcja
+    //     kanonu po prostu nie miała nagłówka, więc na zrzucie jej nie było.
+    //     Teraz jest własną sekcją `evidence`, a gdy idea nie ma jeszcze
+    //     artefaktu dowodowego — mówi to wprost stanem pustym (nie znika).
+    //  2. CAŁA Teresa (komendy + strumień sugestii) siedziała w środku sekcji
+    //     „Historia". To łamie kontrakt `ArtifactRailTeresaMode`
+    //     (`ArtifactRightRail.tsx`): „② Tryb Teresa — pełna wysokość, własne
+    //     pole pisania. NIGDY sekcja akordeonu." Dopóki wspólny pas jest za
+    //     flagą OFF, kanonicznym miejscem wejścia do Teresy jest sekcja AKCJE —
+    //     dokładnie tak, jak w odebranym przez właściciela `deck-artifact`
+    //     („Zapytaj Teresę" jako czwarty przycisk Akcji). „Historia" zostaje
+    //     historią i uczciwie mówi, że jest pusta.
+    // KOLEJNOŚĆ renderu pochodzi z kanonicznej `ARTIFACT_PANEL_SECTION_ORDER`,
+    // nazwy i domknięcie sześciu sekcji narzuca `ArtifactRightPanel`.
     const byId: Partial<Record<ArtifactRightPanelSection['id'], ArtifactRightPanelSection>> = {
       actions: {
         id: 'actions',
         label: isPolish ? 'Akcje' : 'Actions',
         icon: Sparkles,
-        defaultOpen: activeSection === null,
-        isEmpty: !hasActions,
+        defaultOpen: activeSection === null || activeSection === 'teresa',
+        isEmpty: !hasActions && !teresaContent,
         emptyLabel: isPolish ? 'Brak dostępnych akcji.' : 'No actions available.',
-        children: hasActions ? <PreviewActionBar rows={[{ buttons: actionButtons }]} /> : null,
+        children: (
+          <div className="space-y-4">
+            {hasActions ? <PreviewActionBar rows={[{ buttons: actionButtons }]} /> : null}
+            {teresaContent}
+          </div>
+        ),
       },
       properties: {
         id: 'properties',
@@ -246,20 +271,24 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         label: isPolish ? 'Powiązania' : 'Relations',
         icon: Link2,
         defaultOpen: activeSection === 'relations',
-        children: (
-          <div className="space-y-4">
-            {relationsContent}
-            {evidenceArtifactId ? (
-              <div className="border-t border-c-border-subtle pt-3">
-                <EvidencePanelSection
-                  artifactType="canvas"
-                  artifactId={evidenceArtifactId}
-                  isPolish={isPolish}
-                />
-              </div>
-            ) : null}
-          </div>
-        ),
+        children: relationsContent,
+      },
+      evidence: {
+        id: 'evidence',
+        label: isPolish ? 'Źródła i założenia' : 'Sources and assumptions',
+        icon: ShieldCheck,
+        defaultOpen: false,
+        isEmpty: !evidenceArtifactId,
+        emptyLabel: isPolish
+          ? 'Brak zapisanych źródeł i założeń.'
+          : 'No sources or assumptions recorded.',
+        children: evidenceArtifactId ? (
+          <EvidencePanelSection
+            artifactType="canvas"
+            artifactId={evidenceArtifactId}
+            isPolish={isPolish}
+          />
+        ) : null,
       },
       comments: {
         id: 'comments',
@@ -273,9 +302,11 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
       history: {
         id: 'history',
         label: isPolish ? 'Historia' : 'History',
-        icon: Sparkles,
-        children: teresaContent,
-        defaultOpen: activeSection === 'teresa',
+        icon: HistoryIcon,
+        defaultOpen: false,
+        isEmpty: true,
+        emptyLabel: isPolish ? 'Brak zapisanej historii.' : 'No history recorded.',
+        children: null,
       },
     };
     return ARTIFACT_PANEL_SECTION_ORDER.map((id) => byId[id]).filter(
@@ -315,11 +346,7 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
 
   const railTeresaMode = useMemo<ArtifactRailTeresaMode>(
     () => ({
-      contextLabel: title
-        ? isPolish
-          ? `Idea „${title}"`
-          : `Idea "${title}"`
-        : undefined,
+      contextLabel: title ? (isPolish ? `Idea „${title}"` : `Idea "${title}"`) : undefined,
       commands: teresaCommands ?? [],
       // Idea nie ma dziś WŁASNEGO zapisanego wątku rozmowy per-artefakt — jest
       // wspólny dok czatu. Mówimy to wprost (jak notatnik) zamiast rysować
@@ -334,6 +361,16 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
       composeDisabledReason: isPolish
         ? 'Pisanie wprost w pasie będzie możliwe, gdy idea dostanie własny wątek rozmowy.'
         : 'Typing directly in the rail will be possible once the idea has its own conversation thread.',
+      /*
+        ★ 2026-09-01 („jedna Teresa, w swoim oknie"): z całego trybu Teresy
+        powłoka renderuje dziś WYŁĄCZNIE `entryLabel` + `footerAction` — jako
+        przycisk-wejście w sekcji „Akcje". Etykieta nazywa OBIEKT (kanon
+        `TeresaEntryButton`, wzór `prawy-pas-jedna-formula.tsx`), bo
+        „Rozmawiaj z Teresą" nie mówiło, O CZYM będzie rozmowa. Pola wyżej
+        (`commands`/`messages`/`composeDisabledReason`) zostają w deklaracji,
+        ale nie mają już skutku wizualnego — czatu na szynie nie ma.
+      */
+      entryLabel: isPolish ? 'Zapytaj Teresę o tę ideę' : 'Ask Teresa about this idea',
       footerAction: onDiscussWithTeresa
         ? {
             label: isPolish ? 'Rozmawiaj z Teresą' : 'Discuss with Teresa',
@@ -360,7 +397,13 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         teresa={railTeresaMode}
         typeModes={railTypeModes}
         defaultModeId={defaultRailModeId}
-        panelWidth={width}
+        // Szyna ikon (`ArtifactRightRail`) to TRZECI, świadomy kształt prawego
+        // pasa — ten sam co Word (`document-artifact`) — i ma własną szerokość
+        // panelu spójną z `useRailState.defaultRightWidth`. Nadpisujemy ją
+        // tylko wtedy, gdy wołający podał JAWNĄ liczbę; token akordeonu
+        // (string `var(...)`) nie ma tu sensu, bo szyna liczy piksele przy
+        // zmianie rozmiaru.
+        panelWidth={typeof width === 'number' ? width : undefined}
         testId="idea-artifact-right-rail"
       />
     );

@@ -132,18 +132,39 @@ const InspectorSection: React.FC<{
   );
 };
 
-/** Quiet field row: 104px muted label + value/control. No box, no default border. */
-const FieldRow: React.FC<{ label: string; children: React.ReactNode }> = ({
+/**
+ * Quiet field row: 104px muted label + value/control. No box, no default border.
+ *
+ * `stacked` układa etykietę NAD polem (pole na pełną szerokość pasa).
+ *
+ * ★ POWÓD ISTNIENIA `stacked` (2026-09-01, dyżur 164 — ujednolicenie szerokości
+ * prawego pasa do 320 px). Zmierzone na żywym renderze: w układzie dwukolumnowym
+ * pole wartości ma 210 px przy pasie 360 px i 170 px przy pasie 320 px. Pole
+ * „Etykieta" trzyma TYTUŁ elementu — przykładowy tytuł zajmował 207 px, więc
+ * mieścił się przy 360 px o TRZY PIKSELE, a przy 320 px zaczynał się ucinać.
+ * To jedyne miejsce w całej rodzinie prawych paneli, gdzie 320 px cokolwiek
+ * ucinało. Rozwiązanie jest UKŁADEM TREŚCI, nie wyjątkiem od szerokości:
+ * pole tożsamości dostaje własny wiersz na pełną szerokość (≈288 px), czyli
+ * WIĘCEJ miejsca niż miało kiedykolwiek wcześniej.
+ */
+const FieldRow: React.FC<{ label: string; children: React.ReactNode; stacked?: boolean }> = ({
   label,
   children,
-}) => (
-  <div className="flex items-start gap-3 py-1">
-    <span className="w-[104px] shrink-0 pt-px text-xs leading-relaxed text-c-text-muted">
-      {label}
-    </span>
-    <div className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-c-text">{children}</div>
-  </div>
-);
+  stacked = false,
+}) =>
+  stacked ? (
+    <div className="py-1">
+      <span className="block pb-0.5 text-xs leading-relaxed text-c-text-muted">{label}</span>
+      <div className="min-w-0 text-[12.5px] leading-relaxed text-c-text">{children}</div>
+    </div>
+  ) : (
+    <div className="flex items-start gap-3 py-1">
+      <span className="w-[104px] shrink-0 pt-px text-xs leading-relaxed text-c-text-muted">
+        {label}
+      </span>
+      <div className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-c-text">{children}</div>
+    </div>
+  );
 
 /** Quiet control classes shared by inputs/selects/textareas (border only on hover/focus). */
 const quietControlClass =
@@ -260,8 +281,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     const emptyText = t('myWork.ideaInspector.empty', 'Zaznacz element, aby zobaczyć właściwości');
     return (
       <aside
-        className="flex h-full w-[360px] flex-col bg-c-surface"
-        style={{ width: 360, minWidth: 360 }}
+        className="flex h-full w-full flex-col bg-c-surface"
         aria-label={emptyText}
       >
         <div className="m-auto max-w-xs p-6 text-center">
@@ -302,8 +322,16 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   return (
     <aside
       ref={rootRef}
-      className="flex h-full flex-col bg-c-surface text-c-text"
-      style={{ width: 360, minWidth: 360 }}
+      /*
+       * ★ NAPRAWA 2026-09-01 (dyżur 164). Inspektor był PRZYBITY do 360 px
+       * wewnątrz powłoki, która rezerwowała 400 px (`ExecutiveModuleShell`,
+       * `mels-element-inspector-rail`) — 40 px zostawało puste, a uchwyt
+       * zmiany rozmiaru (320–560 px) nic nie robił, bo treść i tak nie
+       * rosła. To jest dosłownie „niepotrzebny panel" ze zgłoszenia
+       * właściciela. Teraz inspektor WYPEŁNIA swojego gospodarza, a jedyną
+       * szerokość ustala powłoka z tokenu `--ntype-right-panel-width`.
+       */
+      className="flex h-full w-full flex-col bg-c-surface text-c-text"
       aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
       onKeyDown={(event) => {
         if (event.key === 'Escape') onReturnToCanvas?.();
@@ -386,7 +414,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
           title={t('myWork.ideaInspector.sections.basics', 'Podstawowe')}
           count={counts.basics}
         >
-          <FieldRow label={t('myWork.ideaInspector.labelField', 'Etykieta')}>
+          <FieldRow label={t('myWork.ideaInspector.labelField', 'Etykieta')} stacked>
             <input
               aria-label={t('myWork.ideaInspector.labelField', 'Etykieta')}
               value={draft.label}

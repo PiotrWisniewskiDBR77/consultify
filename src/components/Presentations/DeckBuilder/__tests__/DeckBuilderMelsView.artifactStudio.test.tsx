@@ -58,10 +58,13 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
   it('removes the fixed Teresa chip and mounts Teresa plus bottom bar in the shared shell', () => {
     renderView(true);
 
+    const panel = screen.getByTestId('artifact-studio-right-panel');
+
     expect(screen.queryByRole('button', { name: 'Teresa' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Theme' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Comments' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument();
+    // „Comments" istnieje wyłącznie jako NAGŁÓWEK SEKCJI prawego panelu
+    // artefaktu (SPEC-A), nie jako pigułka Menu 2.
+    expect(panel).toContainElement(screen.getByRole('button', { name: /Comments/ }));
     expect(screen.getByRole('button', { name: 'Present' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Presentation options' })).toBeInTheDocument();
     expect(screen.getByTestId('deck-builder-mels-view')).toHaveAttribute(
@@ -74,12 +77,61 @@ describe('DeckBuilderMelsView Artifact Studio adapter', () => {
     expect(screen.getByText('Saved Draft')).toBeInTheDocument();
     expect(screen.queryByTestId('mels-right-rail')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Slajdy' })).toHaveAttribute('aria-selected', 'true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Komentarze' }));
-    expect(screen.getByText('Presentation comments workflow')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: 'Źródła' }));
-    expect(screen.getByText('Presentation sources workflow')).toBeInTheDocument();
+    // ★ Komentarze i Źródła NIE są już zakładkami lewej szyny — wróciły do
+    // prawego panelu (SPEC-A §11.2). Lewa szyna to struktura + przegląd QA.
+    expect(screen.queryByRole('tab', { name: 'Komentarze' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Źródła' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'QA i przegląd' }));
     expect(screen.getByText('Presentation QA and approval workflow')).toBeInTheDocument();
+  });
+
+  it('★ prawy panel artefaktu istnieje w trybie warsztatu i trzyma kolejność SPEC-A', () => {
+    /*
+     * BEZPIECZNIK REGRESJI (2026-08-30). Włączenie toru `presentation`
+     * zabierało prezentacji CAŁĄ prawą powierzchnię: powłoka wygasza
+     * `rightRailTools` w trybie warsztatu, a `DeckBuilder` podawał
+     * `aiEntrySlot` wyłącznie przy torze WYŁĄCZONYM. Zmierzone: 417 px → 0 px.
+     * Ten test pada, jeśli ktoś usunie `artifactRightPanelSlot` albo
+     * przestawi kolejność sekcji.
+     */
+    renderView(true);
+
+    const panel = screen.getByTestId('artifact-studio-right-panel');
+    expect(panel).toBeInTheDocument();
+
+    const naglowki = Array.from(panel.querySelectorAll('button'))
+      .map((b) => (b.textContent ?? '').trim())
+      .filter((label) =>
+        [
+          'Actions',
+          'Properties',
+          'Relations',
+          'Sources and assumptions',
+          'Comments',
+          'History',
+        ].some((canon) => label.startsWith(canon))
+      )
+      .map((label) => label.replace(/\d+$/, '').trim());
+
+    // Kolejność kanonu: Akcje · Właściwości · Powiązania · Źródła i założenia
+    // · Komentarze · Historia.
+    // ★ 2026-08-30 (decyzja właściciela po odbiorze `deck-artifact`): sekcja
+    // bez treści NIE znika — jest widoczna, zwinięta i mówi wprost, że jest
+    // pusta. Domknięcie do sześciu robi powłoka `ArtifactRightPanel`, więc
+    // ten adapter nie musi (i nie może) deklarować ich sam.
+    expect(naglowki).toEqual([
+      'Actions',
+      'Properties',
+      'Relations',
+      'Sources and assumptions',
+      'Comments',
+      'History',
+    ]);
+  });
+
+  it('★ prawy panel NIE pojawia się poza trybem warsztatu (zmiana addytywna)', () => {
+    renderView(false);
+    expect(screen.queryByTestId('artifact-studio-right-panel')).not.toBeInTheDocument();
   });
 
   it('uses one Present split button for audience and presenter modes', async () => {

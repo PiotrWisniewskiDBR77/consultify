@@ -32,6 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import {
   StandardModuleBar,
@@ -45,6 +46,8 @@ import {
 } from '@/components/standard';
 import { Api } from '@/services/api';
 import { type EffectiveStakeholder, StakeholderApi } from '@/services/api/stakeholders.api';
+import { ROUTES } from '@/routes/routeConfig';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
 
@@ -143,12 +146,17 @@ interface ProgramRollup {
 type FilterStatus = 'all' | 'active' | 'archived' | 'completed';
 type MainTab = 'projects' | 'programs';
 
-const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '—';
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-};
+/**
+ * Odbiór 2026-08-30 (przegląd całości): dwie osobne wady tej funkcji —
+ * (1) `toLocaleDateString(undefined, …)` bierze locale z PRZEGLĄDARKI, nie
+ *     z języka konta (ten sam mechanizm co N-7 w `listDateFormat.ts`);
+ * (2) kolumny tabeli (`created_at`/`createdAt` niżej) nie wołały TEJ funkcji
+ *     w ogóle — nie miały `render:`, więc StandardTable pokazywał surowe
+ *     ISO `2026-06-11` wprost z mocka. Piąty format daty w aplikacji obok
+ *     kanonu z `listDateFormat.ts`.
+ * Teraz jedna funkcja, kanoniczna, użyta w obu miejscach (preview + tabela).
+ */
+const formatDate = (dateStr?: string) => formatListDate(dateStr, '—');
 
 const formatMoney = (n: number | null | undefined, currency: string) => {
   const v = Number(n) || 0;
@@ -184,6 +192,16 @@ const taskStatusTone = (status?: string): string => {
 export const MyProjects: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
+  // ★ Odbiór 2026-08-30 (droga-dojscia #4): breadcrumb pokazywał „My Work"
+  // jako martwy tekst (ten sam styl co link, zero onClick) — wygląda na
+  // nawigację, nic nie robi po kliknięciu. Kanon breadcrumbs (patrz
+  // SettingsView.tsx/OrganizationView.tsx: pierwszy człon zawsze ma
+  // onClick) — tu wraca do huba Moja Praca, jedynego realnego rodzica
+  // koncepcyjnego tego ekranu.
+  const handleBackToMyWork = useCallback(() => {
+    navigate(ROUTES.MY_WORK);
+  }, [navigate]);
 
   // ── Menu 2: Projekty | Programy (Zwornik D3) ─────────────────────────────
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('projects');
@@ -513,6 +531,7 @@ export const MyProjects: React.FC = () => {
         width: '140px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.created_at || row.createdAt || ''),
+        render: (row: TableRow) => formatDate((row.created_at || row.createdAt) as string | undefined),
       },
     ],
     [t, isPolish, programNameById]
@@ -673,6 +692,7 @@ export const MyProjects: React.FC = () => {
         width: '140px',
         sortable: true,
         sortAccessor: (row: TableRow) => String(row.createdAt || ''),
+        render: (row: TableRow) => formatDate(row.createdAt as string | undefined),
       },
     ],
     [isPolish]
@@ -761,7 +781,7 @@ export const MyProjects: React.FC = () => {
       {/* MENU 1/2/3 — wyłącznie przez fasadę */}
       <StandardModuleBar
         breadcrumbs={[
-          { label: t('sidebar.myWork', 'My Work') },
+          { label: t('sidebar.myWork', 'My Work'), onClick: handleBackToMyWork },
           { label: t('myWork.projects.projects', 'Projects') },
         ]}
         tabs={[

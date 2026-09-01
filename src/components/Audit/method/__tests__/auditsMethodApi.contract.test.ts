@@ -29,15 +29,68 @@ describe('auditsMethodApi canonical response contract', () => {
     await expect(listPacks()).resolves.toEqual({ items: [{ id: 'pack-1' }], total: 17 });
   });
 
-  it('reads the canonical programs list result', async () => {
+  // ROZJAZD_NAZW_POL_20260901: `GET /audits/programs` on the real server
+  // (`server/src/services/audits/programService.ts` `ProgramListItem`) sends
+  // `criteriaTotal`/`criteriaConcluded`/`findingsOpen` — NOT the client-facing
+  // `applicableCriteria`/`concludedCriteria`/`openFindings` that
+  // `AuditProcessesTab.tsx` reads. This test previously fabricated a row with
+  // NEITHER shape (`{ id: 'program-1' }`) and still passed green — it proved
+  // nothing about the mapping. Use the real server shape here so a future
+  // drift in `mapProgramSummaryRow()` fails loudly instead of silently.
+  it('reads the canonical programs list result and maps the service counters onto the UI-facing field names', async () => {
     get.mockResolvedValue({
-      data: { success: true, data: { items: [{ id: 'program-1' }], total: 1 } },
+      data: {
+        success: true,
+        data: {
+          items: [
+            {
+              id: 'program-1',
+              criteriaTotal: 12,
+              criteriaConcluded: 5,
+              findingsOpen: 3,
+            },
+          ],
+          total: 1,
+        },
+      },
     });
 
-    await expect(listPrograms()).resolves.toEqual({
-      items: [{ id: 'program-1' }],
+    await expect(listPrograms()).resolves.toMatchObject({
+      items: [
+        {
+          id: 'program-1',
+          applicableCriteria: 12,
+          concludedCriteria: 5,
+          openFindings: 3,
+        },
+      ],
       total: 1,
     });
+  });
+
+  it('rejects a programs list row missing the service counters instead of rendering "/" and blank cells', async () => {
+    // This is the OLD (wrong) fabricated shape this test used to send —
+    // client-facing field names on the wire, which the real server never
+    // sends. Before the fix this silently produced `undefined` counters
+    // (bare "/" and an empty "Ustalenia otwarte" cell); now it must reject.
+    get.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          items: [
+            {
+              id: 'program-1',
+              applicableCriteria: 12,
+              concludedCriteria: 5,
+              openFindings: 3,
+            },
+          ],
+          total: 1,
+        },
+      },
+    });
+
+    await expect(listPrograms()).rejects.toThrow('AUDITS_API_CONTRACT_ERROR');
   });
 
   it('maps the criterion-service coverage totals without silently rendering 0/0', async () => {

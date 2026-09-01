@@ -1,4 +1,126 @@
 {
+  "contextBuilder": {
+    "dynamicList": {
+      "actions": "Actions",
+      "selectPlaceholder": "Select...",
+      "addItem": "Add Item",
+      "empty": "No items yet. Add one!"
+    },
+    "shared": {
+      "refining": "Refining..."
+    }
+  },
+  "transformationScenarios": {
+    "banner": {
+      "title": "Recommended transformation scenario",
+      "subtitle": "Based on {count} declared challenges, the recommended direction is {name}."
+    },
+    "recommended": "Recommended",
+    "cancel": "Cancel",
+    "selected": "Selected",
+    "select": "Select scenario",
+    "metricLabels": {
+      "tempo": "Tempo",
+      "ambition": "Ambition",
+      "risk": "Risk"
+    },
+    "deepDive": {
+      "title": "Scenario details",
+      "subtitle": "Business implications of {name}",
+      "definition": "What this scenario means",
+      "aiReasoning": "Why this scenario fits",
+      "aiReasoningRisk": "Addresses key hidden risks related to **process fragmentation** and **compliance** found in your profile.",
+      "aiReasoningStrength": "Leverages your organizational strength in **engineering culture** to drive the change via the core team.",
+      "tradeoffs": "Trade-offs",
+      "gains": "Gains",
+      "sacrifices": "Sacrifices",
+      "impact": "Organizational impact"
+    },
+    "scenarios": {
+      "digital-foundation": {
+        "name": "Digital Foundation",
+        "narrative": "Foundations first, speed second.",
+        "description": "Build core digital capabilities and infrastructure",
+        "gains": [
+          "A stable data and process baseline for later initiatives",
+          "Lower technical risk on subsequent rollouts",
+          "Faster adoption of new tools in later phases"
+        ],
+        "sacrifices": [
+          "Slower initial business results",
+          "Requires investment discipline before results appear"
+        ]
+      },
+      "customer-experience": {
+        "name": "Customer Experience Revolution",
+        "narrative": "The customer at the center of every decision.",
+        "description": "Transform customer touchpoints and engagement",
+        "gains": [
+          "Higher customer satisfaction and loyalty",
+          "Faster response to market needs",
+          "New sales and service channels"
+        ],
+        "sacrifices": [
+          "Requires a culture shift, not just new tools",
+          "Higher upfront cost (research, prototypes, customer testing)"
+        ]
+      },
+      "operational-excellence": {
+        "name": "Operational Excellence",
+        "narrative": "The same work, less waste.",
+        "description": "Optimize processes and increase efficiency",
+        "gains": [
+          "Measurable reduction in operating costs",
+          "Shorter cycle time and fewer bottlenecks",
+          "Better quality through standardized processes"
+        ],
+        "sacrifices": [
+          "Long rollout horizon (12-24 months)",
+          "Resistance to standardization in operational teams"
+        ]
+      },
+      "ai-powered": {
+        "name": "AI-Powered Transformation",
+        "narrative": "AI as a lever, not an add-on.",
+        "description": "Leverage AI and automation across the organization",
+        "gains": [
+          "Automation of repetitive work at scale",
+          "Faster, more accurate data-driven decisions",
+          "Competitive edge in data-intensive areas"
+        ],
+        "sacrifices": [
+          "High demands on data quality and governance",
+          "The longest and most complex rollout horizon"
+        ]
+      },
+      "business-model-innovation": {
+        "name": "Business Model Innovation",
+        "narrative": "New value, not just new tools.",
+        "description": "Reinvent revenue streams and value proposition",
+        "gains": [
+          "New revenue streams independent of the current market",
+          "Greater resilience against industry disruption"
+        ],
+        "sacrifices": [
+          "The highest strategic risk of all scenarios",
+          "Requires board buy-in for experiments without a guaranteed payoff"
+        ]
+      },
+      "data-driven": {
+        "name": "Data-Driven Organization",
+        "narrative": "Decisions on data, not on gut feeling.",
+        "description": "Build analytics capabilities and data culture",
+        "gains": [
+          "Decisions based on data instead of intuition",
+          "One source of truth instead of scattered spreadsheets"
+        ],
+        "sacrifices": [
+          "Requires consolidating data spread across silos",
+          "Changing decision-making habits takes time"
+        ]
+      }
+    }
+  },
   "chatSignals": {
     "untitled": "Untitled signal",
     "severity": {
@@ -3293,6 +3415,7 @@
       "calendar": "Calendar",
       "tasks": "Tasks",
       "decisions": "Decisions",
+      "projects": "Projects",
       "manager": "Manager",
       "agent": "Run agent",
       "myWork": "My Work",
@@ -3307,6 +3430,7 @@
       "label4": "Calendar",
       "label5": "Tasks",
       "label6": "Decisions",
+      "labelProjects": "Projects",
       "label7": "All",
       "label8": "Overdue",
       "label9": "Today",
@@ -6881,6 +7005,7 @@
       "groupAudit": "Audit",
       "derivedFromPerspectives": "Derived from {{count}} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.",
       "actionsLiveInHeaderAndToolbar": "Actions for this insight live in the header and toolbar.",
+      "actionsZeroDescribesViewNote": "Actions are unavailable in Preview. The 0 describes this view, not the insight — it is a limit of the preview, not a statement that there are no actions. Switch to Edit to see them.",
       "panelActionsHint": "Pick a state to move this insight forward in its lifecycle.",
       "statusOptionLabel": {
         "draft": "Draft",
@@ -7443,7 +7568,8 @@
       "sessionUnit_one": "session",
       "sessionUnit_other": "sessions",
       "usedNTimes": "used {{count}}×",
-      "close": "Close"
+      "close": "Close",
+      "requiredMarker": "required"
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transcript approved.",
@@ -9463,6 +9589,8 @@
       "activePlan": "Active plan",
       "activePlanAria": "Active Plan Scenario",
       "openWorkspace": "Open plan tools",
+      "openInitiativeCard": "Open initiative card",
+      "openCardUnavailable": "The initiative card opens in the Initiatives module — this view is the plan only.",
       "sectionAria": "Plan scenarios",
       "workbenchAria": "Plan Scenario Workbench",
       "preview": {
@@ -13250,29 +13378,29 @@
     "toast": {
       "chatOpened": "Chat opened",
       "chatOpenError": "Failed to open chat",
-      "selectProjectFirst": "Najpierw wybierz projekt",
-      "reportGenerated": "Raport wygenerowany pomyślnie",
-      "generateError": "Nie udało się wygenerować raportu",
-      "loadSchedulesError": "Nie udało się załadować harmonogramów",
-      "selectProjectForSchedule": "Wybierz projekt dla harmonogramu",
-      "scheduleCreated": "Harmonogram utworzony",
-      "scheduleCreateError": "Nie udało się utworzyć harmonogramu",
-      "scheduleRemoved": "Harmonogram usunięty",
-      "scheduleRemoveError": "Nie udało się usunąć harmonogramu",
-      "loadTemplatesError": "Nie udało się załadować szablonów",
+      "selectProjectFirst": "Select a project first",
+      "reportGenerated": "Report generated successfully",
+      "generateError": "Failed to generate report",
+      "loadSchedulesError": "Failed to load schedules",
+      "selectProjectForSchedule": "Select a project for the schedule",
+      "scheduleCreated": "Schedule created",
+      "scheduleCreateError": "Failed to create schedule",
+      "scheduleRemoved": "Schedule removed",
+      "scheduleRemoveError": "Failed to remove schedule",
+      "loadTemplatesError": "Failed to load templates",
       "templateNameRequired": "Nazwa szablonu jest wymagana",
-      "templateCreated": "Szablon utworzony",
-      "templateCreateError": "Nie udało się utworzyć szablonu",
-      "loadError": "Nie udało się załadować danych",
-      "loadReportError": "Nie udało się załadować raportu",
-      "pdfStarted": "Pobieranie PDF rozpoczęte",
-      "pdfError": "Nie udało się pobrać PDF",
-      "shareLinkCopied": "Link do udostępniania skopiowany",
-      "shareLinkError": "Nie udało się utworzyć linku",
-      "selectProject": "Wybierz projekt",
-      "generateFailed": "Nie udało się wygenerować raportu",
-      "loadHistoryError": "Nie udało się załadować historii",
-      "scheduleError": "Raport wygenerowany, ale harmonogram nie został utworzony"
+      "templateCreated": "Template created",
+      "templateCreateError": "Failed to create template",
+      "loadError": "Failed to load data",
+      "loadReportError": "Failed to load report",
+      "pdfStarted": "PDF download started",
+      "pdfError": "Failed to download PDF",
+      "shareLinkCopied": "Share link copied",
+      "shareLinkError": "Failed to create link",
+      "selectProject": "Select a project",
+      "generateFailed": "Failed to generate report",
+      "loadHistoryError": "Failed to load history",
+      "scheduleError": "Report generated, but the schedule was not created"
     },
     "agent": {
       "changesApplied": "Changes applied",
@@ -13368,14 +13496,14 @@
     "edited": "edited",
     "clickToNavigate": "Click to navigate",
     "export": {
-      "pdfSuccess": "PDF wygenerowany pomyślnie",
-      "pdfError": "Nie udało się wygenerować PDF",
-      "pptxSuccess": "PowerPoint wygenerowany pomyślnie",
-      "pptxError": "Nie udało się wygenerować PowerPoint",
-      "shareLinkCreated": "Link do udostępniania utworzony",
-      "shareLinkError": "Nie udało się utworzyć linku",
-      "linkCopied": "Link skopiowany do schowka",
-      "copyError": "Nie udało się skopiować linku"
+      "pdfSuccess": "PDF generated successfully",
+      "pdfError": "Failed to generate PDF",
+      "pptxSuccess": "PowerPoint generated successfully",
+      "pptxError": "Failed to generate PowerPoint",
+      "shareLinkCreated": "Share link created",
+      "shareLinkError": "Failed to create link",
+      "linkCopied": "Link copied to clipboard",
+      "copyError": "Failed to copy link"
     },
     "actions": {
       "downloadPdf": "Download PDF",
@@ -18343,6 +18471,12 @@
           "succeeded": "Succeeded",
           "failed": "Failed"
         },
+        "types": {
+          "send_invite_email": "Send invite email",
+          "sync_scim_group": "Sync SCIM group",
+          "export_audit_logs": "Export audit logs",
+          "recalculate_seats": "Recalculate seats"
+        },
         "empty": {
           "title": "No jobs",
           "description": "This organization has no queued administrative jobs."
@@ -18495,6 +18629,12 @@
           "count": "Count",
           "amount": "Amount"
         },
+        "types": {
+          "purchase": "Purchase",
+          "auto_add": "Auto-added",
+          "manual_adjustment": "Manual adjustment",
+          "release": "Seat released"
+        },
         "title": "Seats and licences",
         "description": "Seat pool status for the current organization.",
         "summary": {
@@ -18532,6 +18672,16 @@
           "toPlan": "New plan",
           "reason": "Reason",
           "actor": "Performed by"
+        },
+        "actions": {
+          "upgrade": "Plan upgrade",
+          "downgrade": "Plan downgrade",
+          "renewal": "Renewal",
+          "cancellation": "Cancellation",
+          "suspended": "Suspended",
+          "reactivated": "Reactivated",
+          "dunning_started": "Dunning started",
+          "dunning_exited": "Dunning exited"
         },
         "systemActor": "System",
         "title": "Plan change history",
@@ -19080,7 +19230,9 @@
         },
         "values": {
           "unknown": "Unknown",
-          "unknownLocation": "Unknown"
+          "unknownLocation": "Unknown",
+          "unknownDevice": "Unknown device",
+          "automationAgent": "Automation agent"
         },
         "actions": {
           "revoke": "Revoke session"
@@ -19156,6 +19308,11 @@
         "status": {
           "resolved": "Resolved",
           "open": "Open"
+        },
+        "eventTypes": {
+          "impossible_travel": "Impossible travel",
+          "repeated_failed_login": "Repeated failed logins",
+          "new_device_login": "New device login"
         },
         "metrics": {
           "unresolved": "Unresolved: {{count}}",
@@ -20317,6 +20474,10 @@
           "lastError": "Last error",
           "source": "Source"
         },
+        "sources": {
+          "llm_health_events": "LLM availability monitoring",
+          "llm_observatory": "LLM observatory"
+        },
         "noIncidentsInWindow": "No incidents in the current measurement window.",
         "empty": {
           "title": "No incidents",
@@ -20390,6 +20551,10 @@
           "exportKind": "Export",
           "rows": "Rows",
           "format": "Format"
+        },
+        "kinds": {
+          "audit_logs_csv": "Audit log (CSV)",
+          "compliance_summary_pdf": "Compliance summary (PDF)"
         },
         "empty": {
           "title": "No exports",
@@ -20495,7 +20660,32 @@
         "actions": {
           "openCanonical": "Open canonical screen"
         },
-        "currentSource": "Source: tenant admin API · current read"
+        "currentSource": "Source: tenant admin API · current read",
+        "columns": {
+          "type": "Type",
+          "title": "Notice",
+          "severity": "Severity",
+          "detail": "Detail",
+          "source": "Source",
+          "freshness": "Freshness"
+        },
+        "types": {
+          "risk": "Risk",
+          "audit": "Audit",
+          "billing": "Billing",
+          "health": "Service health"
+        },
+        "sourceNames": {
+          "risk": "Risk panel",
+          "audit": "Audit log",
+          "billing": "Billing & budget",
+          "health": "Service health panel"
+        },
+        "severity": {
+          "critical": "Critical",
+          "warning": "Warning",
+          "info": "Info"
+        }
       },
       "cost-capacity": {
         "partialSourcesWarning": "Some cost or capacity sources are unavailable.",
@@ -20681,6 +20871,12 @@
         "failing": "Failing",
         "unknown": "No result"
       },
+      "kind": {
+        "database": "Database",
+        "internal_service": "Internal service",
+        "queue": "Queue",
+        "external_provider": "External provider"
+      },
       "empty": {
         "title": "No declared dependencies",
         "description": "The dependency map contains no entries."
@@ -20689,6 +20885,49 @@
         "title": "Probes without a declared dependency",
         "description": "The map is a manual, verifiable declaration. Unlisted dependencies remain pending until supported by code evidence.",
         "none": "Every registered probe has a declaration."
+      }
+    },
+    "ownership": {
+      "title": "Organization Ownership",
+      "desc": "Manage the team owner and ownership transfer safeguards",
+      "errors": {
+        "loadTitle": "Ownership information unavailable",
+        "loadFallback": "Ownership information failed to load.",
+        "adminsFallback": "Admin candidates failed to load.",
+        "pendingTransferTitle": "Pending ownership transfer status unavailable",
+        "pendingTransferFallback": "Pending ownership transfer status failed to load.",
+        "genericLoad": "Failed to load ownership information",
+        "noOrganization": "No organization selected"
+      },
+      "toasts": {
+        "selectAdmin": "Please select an admin to transfer ownership to",
+        "transferSent": "Ownership transfer request sent. The new owner must accept the transfer.",
+        "transferFailed": "Failed to initiate ownership transfer",
+        "transferCancelled": "Transfer cancelled",
+        "cancelFailed": "Failed to cancel transfer",
+        "acceptedOwnership": "You are now the organization owner!",
+        "acceptFailed": "Failed to accept transfer"
+      },
+      "pendingBanner": {
+        "title": "Ownership Transfer Pending",
+        "description": "You have been selected to become the new organization owner for this team.",
+        "accept": "Accept Ownership",
+        "decline": "Decline"
+      },
+      "ownerCard": {
+        "badge": "OWNER",
+        "since": "Owner since",
+        "initialSetup": "Initial Setup",
+        "warning": "The organization owner cannot be removed from the team list. To remove this user, transfer ownership first."
+      },
+      "transferAction": "Transfer Ownership",
+      "modal": {
+        "info": "Transferring ownership moves owner-only team safeguards to the selected admin. You will retain admin privileges but will no longer be the team owner.",
+        "selectLabel": "Select New Owner",
+        "selectPlaceholder": "Select an admin...",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Why are you transferring ownership?",
+        "cancel": "Cancel"
       }
     },
     "incidentHistory": {
@@ -21521,11 +21760,11 @@
       "contentHints": "Content guidance",
       "contentHintsPlaceholder": "One guidance phrase per line — what this slide should cover (no invented facts). Use \"Refine with AI\" on a new draft to auto-suggest.",
       "keyMessage": "Teza",
-      "keyMessagePlaceholder": "Jednozdaniowa teza tego slajdu (bez wymyślonych faktów).",
+      "keyMessagePlaceholder": "One-sentence thesis for this slide (no invented facts).",
       "dataNeeded": "Dane do zebrania",
-      "dataNeededPlaceholder": "Jedna pozycja na linię — nazwy danych do zebrania, nie wartości.",
+      "dataNeededPlaceholder": "One item per line — names of data to collect, not values.",
       "suggestedVisual": "Sugerowana wizualizacja",
-      "suggestedVisualPlaceholder": "Np. wykres słupkowy, macierz priorytetów, oś czasu.",
+      "suggestedVisualPlaceholder": "E.g. bar chart, priority matrix, timeline.",
       "addSlide": "Add slide",
       "saving": "Saving…",
       "save": "Save template",
@@ -22240,7 +22479,14 @@
       "addAnalystComment": "Click to add analyst comment...",
       "technicalDetails": "Technical details",
       "lineCode": "Line code",
-      "selectedCandidate": "Selected candidate"
+      "selectedCandidate": "Selected candidate",
+      "valueOrigin": {
+        "source": "Source",
+        "mapped": "Mapped",
+        "manual": "Manual",
+        "computed": "Computed",
+        "estimated": "Estimated"
+      }
     },
     "canonicalTable": {
       "ariaLabel": "Financial statement table",
@@ -22293,6 +22539,9 @@
         "title": "Monte Carlo NPV simulation",
         "subtitle": "Simulate NPV outcomes across driver uncertainty ranges.",
         "driverLabel": "Driver",
+        "seedRevenue": "Revenue",
+        "seedCost": "Cost",
+        "newDriver": "Driver {{n}}",
         "min": "Min",
         "mode": "Mode",
         "max": "Max",
@@ -22708,6 +22957,412 @@
     }
   },
   "organization": {
+    "goals": {
+      "tabs": {
+        "intent": "Strategic Intent",
+        "metrics": "Success Metrics",
+        "scope": "Scope & Boundaries",
+        "nogo": "No-Go Zone",
+        "expectations": "Expectations"
+      },
+      "aiSuggestion": {
+        "title": "AI Suggested Addition",
+        "bodyPre": "I noticed you haven't included",
+        "bodyPost": ". This is a standard manufacturing KPI. Shall I add it?",
+        "addKpi": "Add KPI",
+        "dismiss": "Dismiss"
+      },
+      "intent": {
+        "primaryObjectiveLabel": "Primary Objective (North Star)",
+        "primaryObjectiveHint": "What is the single most important goal for this transformation?",
+        "primaryObjectivePlaceholder": "E.g. Become the market leader in customized manufacturing by reducing lead times by 50%...",
+        "secondaryObjectivesLabel": "Secondary Objectives",
+        "secondaryObjectivesPlaceholder": "E.g. Improve employee retention, Reduce carbon footprint...",
+        "topPrioritiesLabel": "Top Priorities (Select max 3)",
+        "priorities": {
+          "eff": "Efficiency / Cost Reduction",
+          "growth": "Growth / Sales Increase",
+          "inv": "Innovation / New Products",
+          "qual": "Quality / Compliance",
+          "speed": "Speed / Agility",
+          "cust": "Customer Experience"
+        }
+      },
+      "metrics": {
+        "title": "Success Metrics (KPIs)",
+        "description": "Define verifiable metrics to track success. Use 'Add Item' to define new KPIs.",
+        "columns": {
+          "name": "KPI Name",
+          "baseline": "Baseline",
+          "target": "Target",
+          "timeframe": "Timeframe"
+        },
+        "placeholders": {
+          "name": "e.g. OEE",
+          "baseline": "e.g. 60%",
+          "target": "e.g. 85%"
+        },
+        "timeframeOptions": {
+          "3m": "3 Months",
+          "6m": "6 Months",
+          "12m": "12 Months"
+        }
+      },
+      "scope": {
+        "inTitle": "In Scope (Included)",
+        "inDescription": "Areas, departments, or processes explicitly included.",
+        "outTitle": "Out of Scope (Excluded)",
+        "outDescription": "Areas explicitly excluded to prevent scope creep.",
+        "columns": {
+          "item": "Item / Area",
+          "notes": "Notes",
+          "reason": "Reason"
+        },
+        "placeholders": {
+          "inItem": "e.g. Plant A",
+          "inNotes": "e.g. Full audit",
+          "outItem": "e.g. Logistics",
+          "outReason": "e.g. Already optimized"
+        }
+      },
+      "nogo": {
+        "title": "No-Go Zone",
+        "description": "Areas or topics that are off-limits due to politics, regulations, or strategy.",
+        "columns": {
+          "area": "Sensitive Area",
+          "reason": "Reason/Constraint"
+        },
+        "placeholders": {
+          "area": "e.g. Headcount",
+          "reason": "e.g. Strict union agreement until 2026"
+        }
+      },
+      "expectations": {
+        "archetype": {
+          "title": "Transformation Archetype",
+          "hint": "How do you want to deliver value? Define the speed and depth of change.",
+          "options": {
+            "fast": {
+              "label": "Pilot & Scale (Agile)",
+              "desc": "Rapid prototyping, MVPs, quick feedback loops. Best for high uncertainty."
+            },
+            "deep": {
+              "label": "Core Transformation (Waterfall)",
+              "desc": "Deep structural change, phased rollout, risk averse. Best for legacy systems."
+            },
+            "targeted": {
+              "label": "Value-Led / Use Case",
+              "desc": "Focus on specific high-ROI pain points. Best for tight budgets."
+            }
+          }
+        },
+        "aiRole": {
+          "title": "Human-AI Collaboration",
+          "hint": "Define the level of autonomy you grant to the AI in this engagement.",
+          "options": {
+            "advisor": {
+              "label": "Strategic Advisor",
+              "desc": "AI challenges assumptions & provides benchmarks. You decide."
+            },
+            "partner": {
+              "label": "Collaborative Co-Pilot",
+              "desc": "AI drafts content & plans. You review & refine."
+            },
+            "agent": {
+              "label": "Autonomous Agent",
+              "desc": "AI executes defined workflows (e.g., data hygiene) with oversight."
+            }
+          }
+        },
+        "cadence": {
+          "title": "Steering & Governance",
+          "hint": "How will we track progress and ensure alignment?",
+          "options": {
+            "weekly": {
+              "label": "Weekly SteerCo",
+              "desc": "Tactical alignment on sprints & blockers."
+            },
+            "monthly": {
+              "label": "Monthly QBR",
+              "desc": "Strategic review of value delivered & roadmap."
+            },
+            "daily": {
+              "label": "Daily Standups",
+              "desc": "High-touch operational coordination."
+            },
+            "milestone": {
+              "label": "Milestone Based",
+              "desc": "Reviews triggered by key deliverables."
+            }
+          }
+        }
+      }
+    },
+    "challenges": {
+      "tabs": {
+        "challenges": "Declared Challenges",
+        "rootcause": "Root Cause Signals",
+        "blockers": "Objective Blockers",
+        "evidence": "Evidence"
+      },
+      "declared": {
+        "uploaderTitle": "Declared Challenges",
+        "suggestions": [
+          "Operational Reports",
+          "Audit Logs",
+          "Customer Complaints",
+          "Shift Handover Notes"
+        ],
+        "title": "Declared Challenges",
+        "description": "Official problems reported by the client (symptoms).",
+        "columns": {
+          "challenge": "Challenge / Symptom",
+          "area": "Functional Area",
+          "severity": "Severity",
+          "notes": "Notes / Context"
+        },
+        "placeholders": {
+          "challenge": "e.g. High Scrap Rate",
+          "area": "e.g. Quality",
+          "notes": "Additional details..."
+        },
+        "severityOptions": {
+          "Critical": "Critical",
+          "High": "High",
+          "Medium": "Medium",
+          "Low": "Low"
+        }
+      },
+      "rootcause": {
+        "uploaderTitle": "Root Cause Signals",
+        "suggestions": [
+          "Incident Reports",
+          "5 Whys Docs",
+          "PFMEA",
+          "Ishikawa Diagrams"
+        ],
+        "diagnosticLabel": "Diagnostic Questions:",
+        "diagnosticBody": "These answers help AI identify hidden root causes behind the declared challenges.",
+        "questions": [
+          {
+            "q": "Where do decisions get stuck?",
+            "h": "e.g. Middle management fear, Lack of data..."
+          },
+          {
+            "q": "Where is the strongest resistance to change?",
+            "h": "e.g. Shop floor, Specific department..."
+          },
+          {
+            "q": "What initiatives failed in the past and why?",
+            "h": "e.g. Lean impl failed due to no follow-up..."
+          },
+          {
+            "q": "Is there a gap between management view and reality?",
+            "h": "e.g. CEO thinks ERP works, users use Excel..."
+          }
+        ]
+      },
+      "blockers": {
+        "uploaderTitle": "Objective Blockers",
+        "suggestions": [
+          "Employee Surveys",
+          "Risk Register",
+          "Strategy Deck",
+          "Cultural Assessment"
+        ],
+        "suggestedTitle": "Suggested Obstacles",
+        "suggestedHint": "Tap to add common issues to your board.",
+        "createCustom": "Create Custom",
+        "activeTitle": "Active Blockers",
+        "emptyMessage": "No blockers identified yet. Add from suggestions or create a custom one.",
+        "removeTitle": "Remove Blocker",
+        "aiDetected": "AI Detected ({{confidence}})",
+        "titlePlaceholder": "Blocker Title",
+        "descPlaceholder": "Describe the obstacle and its impact...",
+        "newObstacleTitle": "New Obstacle",
+        "types": {
+          "Culture": "Culture",
+          "Process": "Process",
+          "Technology": "Technology",
+          "Strategy": "Strategy",
+          "People": "People"
+        },
+        "library": {
+          "c1": {
+            "title": "Fear of Failure",
+            "desc": "Employees hide mistakes instead of reporting them."
+          },
+          "c2": {
+            "title": "Meeting Overload",
+            "desc": "Productivity lost to excessive alignment meetings."
+          },
+          "c3": {
+            "title": "Change Fatigue",
+            "desc": "Teams are burnt out from too many initiatives."
+          },
+          "c4": {
+            "title": "Data Fragmentation",
+            "desc": "Key KPIs are manually aggregated in Excel."
+          }
+        }
+      },
+      "evidence": {
+        "uploaderTitle": "Evidence",
+        "suggestions": [
+          "Raw Data Exports",
+          "KPI Dashboards",
+          "System Logs",
+          "Financial Reports"
+        ],
+        "title": "Evidence & Data Points",
+        "description": "Hard facts, metrics, or logs that prove the existence of challenges.",
+        "columns": {
+          "metric": "Metric / Data Point",
+          "symptom": "Symptom / Observation",
+          "source": "Source System / Doc",
+          "link": "Link / Reference"
+        },
+        "placeholders": {
+          "metric": "e.g. Scrap Rate 12%",
+          "symptom": "e.g. Line stops every hour",
+          "source": "e.g. SAP Report",
+          "link": "e.g. Page 12"
+        }
+      }
+    },
+    "synthesis": {
+      "tabs": {
+        "risks": "Hidden Risks",
+        "strengths": "Strengths & Opportunities",
+        "scenarios": "Transformation Scenarios",
+        "summary": "Executive Report"
+      },
+      "risks": {
+        "bannerTitle": "Risk Assessment Logic",
+        "bannerPre": "Based on your",
+        "bannerChallenges": "{{count}} declared challenges",
+        "bannerAnd": "and",
+        "bannerConstraints": "{{count}} active constraints",
+        "bannerPost": "we have identified the following risks.",
+        "listTitle": "Hidden Risks & Threats",
+        "listDescription": "What could derail this transformation? (Generated from Constraints + Challenges)",
+        "aiSuggestedTitle": "AI Suggested Risk",
+        "columns": {
+          "risk": "Risk / Threat",
+          "why": "Why (Root Cause)",
+          "severity": "Severity",
+          "mitigation": "Mitigation Strategy"
+        },
+        "placeholders": {
+          "risk": "e.g. Middle Management Resistance",
+          "why": "e.g. Fear of redundancy",
+          "mitigation": "e.g. Change Mgmt Program"
+        },
+        "severityOptions": {
+          "Critical": "Critical",
+          "High": "High",
+          "Medium": "Medium",
+          "Low": "Low"
+        },
+        "modal": {
+          "aiInsight": "AI Insight",
+          "identifiedDuring": "Identified during synthesis phase",
+          "severityLevel": "Severity Level",
+          "priority": "Priority",
+          "sourceContext": "Source / Context",
+          "sourcePattern": "Pattern Recognition Engine",
+          "sourceUser": "User Constraints",
+          "rootCauseAnalysis": "Root Cause Analysis",
+          "recommendedMitigation": "Recommended Mitigation",
+          "aiSuggestedNotePre": "This risk was suggested because similar organizations in",
+          "aiSuggestedNotePost": "typically struggle with this compliance gap during digital transformations.",
+          "aiSuggestedIndustry": "Automotive",
+          "close": "Close",
+          "updateStrategy": "Update Risk Strategy"
+        }
+      },
+      "strengths": {
+        "bannerTitle": "Strategic Advantages",
+        "bannerBody": "Based on your Company Profile and Goals, we have identified these key strengths and market opportunities.",
+        "listTitle": "Strengths & Opportunities",
+        "listDescription": "What strengths can you leverage? (Generated from Profile & Opportunities)",
+        "aiSuggestedTitle": "AI Suggested Opportunity",
+        "columns": {
+          "enabler": "Strength / Opportunity",
+          "seen": "Evidence / Where Seen",
+          "leverage": "How to Leverage"
+        },
+        "placeholders": {
+          "enabler": "e.g. Strong Engineering Team",
+          "seen": "e.g. R&D Performance",
+          "leverage": "e.g. Use as Pilot Champions"
+        },
+        "modal": {
+          "aiOpportunity": "AI Opportunity",
+          "identifiedStrength": "Identified Strength / Opportunity",
+          "impactPotential": "Impact Potential",
+          "confidence": "Confidence",
+          "medium": "Medium"
+        }
+      },
+      "executiveBrief": {
+        "heading": "Executive Strategic Summary",
+        "subheading": "AI-synthesized strategic analysis based on your inputs",
+        "exportPdf": "Export PDF",
+        "exporting": "Exporting...",
+        "exportToast": "Use \"Save as PDF\" in the print dialog to export this summary.",
+        "print": "Print",
+        "share": "Share",
+        "companyNameFallback": "No organization name on file",
+        "industryFallback": "No industry on file",
+        "employeesUnit": "employees",
+        "revenueUnit": "revenue",
+        "currentMaturity": "Current Maturity",
+        "targetMaturity": "Target Maturity",
+        "maturityNoData": "No data",
+        "activeConstraints": "Active Constraints",
+        "strategicGoals": "Strategic Goals",
+        "riskProfile": "Risk Profile",
+        "highRisk": "High Risk",
+        "manageable": "Manageable",
+        "identified": "identified",
+        "criticalPriorityNote": "critical/high priority requiring immediate attention",
+        "topRisks": "Top Risks",
+        "opportunities": "Opportunities",
+        "strong": "Strong",
+        "developing": "Developing",
+        "keyEnablersNote": "Key enablers for transformation success",
+        "topStrengths": "Top Strengths",
+        "challenges": "Challenges",
+        "active": "Active",
+        "declared": "declared",
+        "operationalPainNote": "Operational pain points to address",
+        "topChallenges": "Top Challenges",
+        "selectedScenario": "Selected Transformation Scenario",
+        "timeline": "Timeline",
+        "investment": "Investment",
+        "riskLevel": "Risk Level",
+        "noScenarioTitle": "No Scenario Selected",
+        "noScenarioBody": "Go to \"Transformation Scenarios\" tab to select a strategic approach",
+        "goalsProgressTitle": "Strategic Goals & Success Metrics",
+        "strategicGoalsLabel": "Strategic Goals",
+        "noGoalsYet": "No strategic goals defined yet",
+        "successMetricsLabel": "Success Metrics (KPIs)",
+        "noMetricsYet": "No success metrics defined yet",
+        "aiRecommendationsTitle": "AI Strategic Recommendations",
+        "immediatePriority": "Immediate Priority",
+        "immediatePriorityRisk": "Address \"{{risk}}\" before initiating transformation to reduce execution risk.",
+        "immediatePriorityManageable": "Risk profile is manageable. Focus on quick wins to build momentum.",
+        "strategicLeverage": "Strategic Leverage",
+        "strategicLeverageWithData": "Capitalize on \"{{strength}}\" as a key differentiator in your transformation journey.",
+        "strategicLeverageEmpty": "Identify internal champions to drive the transformation forward.",
+        "nextStep": "Next Step",
+        "nextStepWithScenario": "Develop detailed implementation plan for \"{{scenario}}\" scenario.",
+        "nextStepEmpty": "Select a transformation scenario to proceed with detailed planning.",
+        "employeesNoData": "No headcount on file",
+        "revenueNoData": "No revenue on file"
+      }
+    },
     "sidebar": {
       "title": "Organization",
       "subtitle": "Context & Administration",
@@ -22788,6 +23443,97 @@
       }
     },
     "governance": {
+      "sourceTypes": {
+        "organization_profile": "Organization profile",
+        "interview_context": "Interview context",
+        "interview_answer": "Interview answer",
+        "interview_evidence": "Interview evidence",
+        "interview": "Interview",
+        "organization_metadata": "Organization metadata",
+        "organization": "Organization",
+        "ai_context": "AI context",
+        "tool_session": "Tool session",
+        "my_work_idea": "My Work idea",
+        "chat_message": "Chat message",
+        "document_extraction": "Document extract",
+        "document": "Document",
+        "upload": "Uploaded file",
+        "manual": "Manual entry",
+        "organization_governed_snapshot": "Governed organization snapshot"
+      },
+      "reviewStates": {
+        "pending": "Awaiting review",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "visibilityScopes": {
+        "organization": "Whole organization",
+        "restricted": "Restricted visibility",
+        "private": "Private",
+        "project": "Project",
+        "review_shared": "Shared for review",
+        "demo": "Demo"
+      },
+      "claimPaths": {
+        "profile.companyName": "Company name",
+        "profile.description": "Company description",
+        "profile.industry": "Industry",
+        "profile.industryCode": "Industry code",
+        "profile.industrySubsector": "Industry subsector",
+        "profile.companySize": "Company size",
+        "profile.location": "Location",
+        "profile.employeeCount": "Employee count",
+        "profile.annualRevenue": "Annual revenue",
+        "profile.website": "Website",
+        "profile.defaultLanguage": "Default language",
+        "profile.defaultTimezone": "Default timezone",
+        "profile.currency": "Currency",
+        "profile.linkedinUrl": "LinkedIn",
+        "profile.twitterUrl": "X / Twitter",
+        "profile.customDomain": "Custom domain",
+        "profile.brandColor": "Brand color",
+        "profile.accentColor": "Accent color",
+        "profile.organizationType": "Organization type",
+        "profile.revenueModel": "Revenue model",
+        "profile.foundingYear": "Founding year",
+        "profile.communicationStyle": "Communication style",
+        "profile.industryJargonLevel": "Industry jargon level",
+        "strategic.goals": "Strategic goals",
+        "strategic.priorities": "Strategic priorities",
+        "strategic.mission": "Mission",
+        "strategic.vision": "Vision",
+        "strategic.competitivePosition": "Competitive position",
+        "strategic.growthStage": "Growth stage",
+        "strategic.riskAppetite": "Risk appetite",
+        "operations.keyMetrics": "Key metrics",
+        "operations.constraints": "Constraints",
+        "operations.gaps": "Gaps",
+        "operations.interviewAnswers": "Interview answers",
+        "operations.deliveryModel": "Delivery model",
+        "operations.productionArchetype": "Production archetype",
+        "operations.shiftPattern": "Shift pattern",
+        "operations.automationLevel": "Automation level",
+        "systems.stack": "Technology stack",
+        "systems.cloudAdoption": "Cloud adoption",
+        "systems.integrations": "Integrations",
+        "systems.coreSystems": "Core systems",
+        "stakeholders.people": "Stakeholders",
+        "notes.manualContext": "Manual note",
+        "metadata.custom": "Custom metadata",
+        "evidence.interview": "Interview evidence",
+        "evidence.documentExtraction": "Document evidence",
+        "signals.interviewInsights": "Interview insights",
+        "signals.interviewFindings": "Interview findings",
+        "tools.sessionOutput": "Tool session output",
+        "myWork.idea": "My Work idea",
+        "chat.explicitContext": "Chat context",
+        "integrations.signal": "Integration signal",
+        "finance.statements": "Financial statements",
+        "finance.models": "Financial models",
+        "finance.laneStatus": "Finance lane status",
+        "finance.versionStatus": "Version status"
+      },
+      "itemIdTooltip": "Record id: {{id}}",
       "loadError": "Governed context could not be loaded. Your existing data was not changed.",
       "uploaded": "The document was ingested and its pending governed claim was loaded.",
       "uploadError": "The document could not be ingested. No governed claim was accepted.",
@@ -23256,7 +24002,16 @@
       "mentions": "Mentions",
       "traverse": "Traverse",
       "provenance": "Provenance",
-      "sources": "Sources"
+      "sources": "Sources",
+      "entityTypes": {
+        "person": "Person",
+        "organization": "Organization",
+        "concept": "Concept",
+        "technology": "Technology",
+        "location": "Location",
+        "process": "Process",
+        "metric": "Metric"
+      }
     }
   },
   "megatrends": {
@@ -24831,15 +25586,15 @@
       "exportPptx": "Export PPTX",
       "share": "Share",
       "rename": "Rename",
-      "openPreview": "Otwórz podgląd",
+      "openPreview": "Open preview",
       "discuss": "Discuss",
       "askAI": "Zapytaj AI",
       "submitTemplateReview": "Submit for review",
       "newDocumentStudio": "New AI document (Document Studio)",
-      "duplicateAsTemplate": "Duplikuj / Użyj jako szablonu",
+      "duplicateAsTemplate": "Duplicate / Use as template",
       "saveAsTemplate": "Save as template",
       "approveTemplate": "Approve & publish",
-      "newFromTemplate": "Nowy z szablonu",
+      "newFromTemplate": "New from template",
       "openInWorkspace": "Open in workspace",
       "exportXlsx": "Download XLSX",
       "startReview": "Start review"
@@ -24853,9 +25608,9 @@
       "reportsTitle": "Canonical management reports",
       "reportsBody": "This library is organized around the V3 report canon. Start from one of the four sponsor-ready report types below.",
       "reportsHint": "Use the topbar quick chips or create a new report to enter R1, R2, R3, or R4 flow.",
-      "templatesOnboarding": "Biblioteka wzorców",
-      "templatesOnboardingDesc": "Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.",
-      "outputs": "Brak outputów"
+      "templatesOnboarding": "Template library",
+      "templatesOnboardingDesc": "Templates define the structure and standard for reports and presentations. Start from one of the canonical families or create your own template.",
+      "outputs": "No outputs"
     },
     "preview": {
       "useTemplate": "Use this template",
@@ -24870,7 +25625,7 @@
       "reviewGates": "Review gates",
       "migrationHint": "Zamiennik",
       "replacedBy": "Nowy wzorzec",
-      "updatedAt": "Ostatnia zmiana"
+      "updatedAt": "Last updated"
     },
     "toast": {
       "exported": "Exported successfully",
@@ -25445,7 +26200,9 @@
     "generateDeck": "Generate Presentation",
     "generateTable": "Generate Table",
     "docReady": "Document ready — use Preview File or Download",
-    "showingRows": "Showing 25 of {{total}} rows",
+    "showingRows": "Showing first {{cap}} of {{total}} rows",
+    "showingAllRows": "Showing all {{total}} rows",
+    "showAllRows": "Show all",
     "excele": {
       "reopenNotFound": "This spreadsheet's content could not be found — the source data was deleted or has expired.",
       "reopenNotFoundToast": "Could not open the spreadsheet — content was not found.",
@@ -26664,7 +27421,20 @@
       "error": "Error",
       "noRunsYet": "No runs yet.",
       "accessRevoked": "; access revoked",
-      "accessRevokedWithReason": "; access revoked ({{reason}})"
+      "accessRevokedWithReason": "; access revoked ({{reason}})",
+      "viewTiles": "Tiles",
+      "viewList": "List",
+      "connectorsListAriaLabel": "Connector list",
+      "columns": {
+        "connector": "Connector",
+        "status": "Status",
+        "freshness": "Freshness",
+        "oauth": "OAuth access",
+        "acl": "ACL",
+        "sourceBinding": "Source binding",
+        "issue": "Issue"
+      },
+      "noIssue": "None"
     },
     "unknown": "unknown",
     "tokenExpiry": "token expiry",
@@ -28495,7 +29265,8 @@
       "planning": "Planning…",
       "submitTemplate": "Generate from template",
       "submitPlan": "Plan document",
-      "contextChip": "Context: {{organizationName}}"
+      "contextChip": "Context: {{organizationName}}",
+      "sectionBrief": "Brief"
     },
     "outline": {
       "type": "Type",
@@ -31344,6 +32115,20 @@
       "months": "mo",
       "labelPlaceholder": "Untitled driver",
       "categoryPlaceholder": "Category",
+      "costType": {
+        "investment": "Investment",
+        "recurring": "Recurring"
+      },
+      "benefitType": {
+        "cash": "Cash",
+        "non_cash": "Non-cash",
+        "risk_avoidance": "Risk avoidance"
+      },
+      "confidence": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
       "confidenceHigh": "High",
       "confidenceMedium": "Medium",
       "confidenceLow": "Low",
@@ -31592,7 +32377,9 @@
       "conflictBanner": "This page was changed elsewhere. Your edits were not overwritten.",
       "conflictReload": "Reload",
       "conflictRetry": "Save mine anyway",
-      "backToList": "All notes"
+      "backToList": "All notes",
+      "graphExpand": "Full screen",
+      "graphCollapse": "Exit full screen"
     },
     "mentionMenu": {
       "ariaLabel": "Mention an entity",
@@ -35470,6 +36257,193 @@
     }
   },
   "reportBuilder": {
+    "blockTypesManager": {
+      "category": {
+        "content": "Content",
+        "data": "Data",
+        "visual": "Visual"
+      },
+      "render": {
+        "markdown": "Markdown",
+        "callout": "Callout",
+        "table": "Table",
+        "chart": "Chart",
+        "matrix": "Matrix",
+        "json": "JSON"
+      },
+      "type": {
+        "app": "App",
+        "org": "Org"
+      },
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{count}}d ago"
+      },
+      "columns": {
+        "block": "Block",
+        "type": "Type",
+        "category": "Category",
+        "render": "Render",
+        "sources": "Sources",
+        "updated": "Updated"
+      },
+      "rowMenu": {
+        "edit": "Edit",
+        "duplicateToOrg": "Duplicate to organization",
+        "comingSoon": "Coming soon (backend)",
+        "deactivate": "Deactivate",
+        "systemCannotDeactivate": "System blocks cannot be deactivated"
+      },
+      "preview": {
+        "sources": "Sources: {{sources}}",
+        "defaultLength": "Default length: {{length}}",
+        "defaultStyle": "Default style: {{style}}",
+        "promptTemplate": "Prompt template:"
+      },
+      "moduleBar": {
+        "newBlock": "New Block",
+        "all": "All",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "clear": "Clear"
+      },
+      "empty": {
+        "noMatchTitle": "No blocks match your search",
+        "noneTitle": "No blocks found",
+        "tryAdjusting": "Try adjusting your search terms",
+        "createToStart": "Create a new block to get started"
+      },
+      "modal": {
+        "editTitle": "Edit Block",
+        "newTitle": "New Block",
+        "name": "Name",
+        "renderKind": "Render Kind",
+        "description": "Description",
+        "sourcesCsv": "Sources (CSV)",
+        "sourcesPlaceholder": "ASSESSMENT, TOOL",
+        "length": "Length",
+        "lengthShort": "Short",
+        "lengthMedium": "Medium",
+        "lengthLong": "Long",
+        "style": "Style",
+        "styleBusiness": "Business",
+        "styleTechnical": "Technical",
+        "styleGeneral": "General",
+        "promptTemplate": "Prompt Template",
+        "promptPlaceholder": "E.g. \"Write a section about ... using data: {{exampleVar}}\"",
+        "cancel": "Cancel",
+        "saveChanges": "Save Changes",
+        "createBlock": "Create Block"
+      },
+      "toast": {
+        "updated": "Block updated",
+        "created": "Block created",
+        "saveFailed": "Failed to save",
+        "confirmDeactivate": "Deactivate this block type?",
+        "deactivated": "Block deactivated",
+        "deactivateFailed": "Failed to deactivate"
+      }
+    },
+    "templatesManager": {
+      "type": {
+        "app": "App",
+        "org": "Org"
+      },
+      "sourceType": {
+        "ASSESSMENT": "Assessment",
+        "INTERVIEW": "Interview",
+        "TOOL": "Tool",
+        "INITIATIVE": "Initiative"
+      },
+      "audience": {
+        "executive": "Executive",
+        "manager": "Manager",
+        "analyst": "Analyst",
+        "team": "Team",
+        "external": "External",
+        "general": "General"
+      },
+      "format": {
+        "vertical": "Vertical",
+        "horizontal": "Horizontal"
+      },
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{{count}}d ago"
+      },
+      "columns": {
+        "type": "Type",
+        "template": "Template",
+        "module": "Module",
+        "audience": "Audience",
+        "format": "Format",
+        "user": "User",
+        "sections": "Sections",
+        "updated": "Updated"
+      },
+      "noSections": "No sections",
+      "systemAuthor": "System",
+      "copySuffix": "Copy",
+      "rowMenu": {
+        "duplicateToOrg": "Duplicate to organization",
+        "useTemplate": "Use template",
+        "duplicate": "Duplicate",
+        "systemTemplate": "System template",
+        "systemCannotDelete": "System templates cannot be deleted",
+        "delete": "Delete"
+      },
+      "preview": {
+        "sections": "Sections: {{count}}",
+        "noSections": "Sections: none",
+        "createdBy": "Created by: {{name}}"
+      },
+      "moduleBar": {
+        "newTemplate": "New Template",
+        "all": "All",
+        "selected": "{{count}} selected",
+        "selectAll": "Select all",
+        "clear": "Clear"
+      },
+      "empty": {
+        "noMatchTitle": "No templates match your search",
+        "noneTitle": "No templates found",
+        "tryAdjusting": "Try adjusting your search terms",
+        "createToStart": "Create a new template to get started"
+      },
+      "toast": {
+        "confirmDelete": "Are you sure you want to delete this template?",
+        "deleted": "Template deleted",
+        "deleteFailed": "Failed to delete",
+        "duplicated": "Template duplicated",
+        "duplicateFailed": "Failed to duplicate"
+      }
+    },
+    "newAssessmentReportModal": {
+      "title": "New assessment report",
+      "subtitle": "Choose assessment + template. A draft will be generated.",
+      "close": "Close",
+      "assessment": "Assessment",
+      "noApprovedAssessments": "No approved assessments available",
+      "selectAssessmentPlaceholder": "Select assessment…",
+      "onlyApprovedWarning": "Only approved assessments can be used to create reports. Approve an assessment first.",
+      "template": "Template",
+      "notSelected": "Not selected",
+      "fromLibrary": "From Library",
+      "choose": "Choose",
+      "cancel": "Cancel",
+      "createDraft": "Create draft",
+      "generating": "Generating…",
+      "reportTitleWithName": "Report - {{name}}",
+      "reportTitleFallback": "Report",
+      "toast": {
+        "creatingReport": "Creating report…",
+        "generatingContent": "Generating report content with AI…",
+        "generatedOpening": "Report generated — opening editor",
+        "createFailed": "Failed to create report"
+      }
+    },
     "settingsPanel": {
       "primaryColor": "Primary color",
       "justNow": "Just now",
@@ -39454,6 +40428,25 @@
       "noMatch": "No block matches \"{{query}}\".",
       "comingSoon": "Coming soon",
       "approval": "approval"
+    },
+    "canvas": {
+      "moduleTag": {
+        "assessment": "Assessment",
+        "control": "Control",
+        "execution": "Execution",
+        "finance": "Finance",
+        "initiatives": "Initiatives",
+        "integrations": "Integrations",
+        "interview": "Interview",
+        "materials": "Materials",
+        "meeting": "Meeting",
+        "myWorkDecisions": "My Work · Decisions",
+        "myWork": "My Work",
+        "notebook": "Notebook",
+        "results": "Results",
+        "tables": "Tables",
+        "vault": "Vault"
+      }
     }
   },
   "views": {
@@ -39531,6 +40524,9 @@
     "executing": "Executing",
     "promoted": "Promoted",
     "proposed": "Proposed",
+    "queued": "Queued",
+    "running": "Running",
+    "succeeded": "Succeeded",
     "processing": "Processing",
     "uploaded": "Uploaded",
     "editing": "Editing",
@@ -39551,6 +40547,7 @@
     "accepted": "Accepted",
     "completed": "Completed",
     "done": "Done",
+    "resolved": "Resolved",
     "published": "Published",
     "ready": "Ready",
     "active": "Active",
@@ -39564,6 +40561,8 @@
     "blocked": "Blocked",
     "cancelled": "Cancelled",
     "overdue": "Overdue",
+    "expired": "Expired",
+    "revoked": "Revoked",
     "unreadable": "Unreadable",
     "deleted": "Deleted",
     "error": "Error",
@@ -39636,6 +40635,13 @@
       "levelOrganization": "Organization safe",
       "levelProject": "Project safe"
     },
+    "categories": {
+      "bestPractices": "Best Practices",
+      "methodology": "Methodology",
+      "standards": "Standards",
+      "templates": "Templates",
+      "other": "Other"
+    },
     "folders": {
       "loadFailed": "Failed to load folders",
       "newFolder": "New folder",
@@ -39676,8 +40682,9 @@
     "hidden": "hidden",
     "unknown": "unknown",
     "outputsUnavailableReason": "output count is unavailable",
-    "outputStatusHiddenReason": "the hub does not load the output status breakdown",
+    "outputStatusHiddenReason": "a breakdown by status is not yet available for outputs",
     "findingsPendingReason": "findings are loading",
+    "findingsNotWiredInDemoReason": "the findings register is not wired in demo mode",
     "findingsLoadFailedReason": "findings could not be loaded",
     "templatesPendingReason": "templates are loading",
     "templatesLoadFailedReason": "templates could not be loaded"
@@ -39700,5 +40707,32 @@
   "standardPreview": {
     "property": "Property",
     "value": "Value"
+  },
+  "toolOutputs": {
+    "title": "Outputs",
+    "loadFailed": "Failed to load outputs",
+    "reopenFailed": "Failed to reopen output",
+    "backToOutputs": "Back to outputs",
+    "viewAsDocument": "View as document",
+    "viewAsSlides": "View as slides",
+    "empty": "No promoted output yet for this session.",
+    "selected": "Selected output",
+    "reopening": "Reopening…",
+    "reopen": "Reopen for correction",
+    "reports": "Reports & presentations",
+    "noReports": "No report or presentation generated from this output yet.",
+    "kindPresentation": "Presentation",
+    "kindReport": "Report",
+    "initiativeProposals": "Initiative proposals",
+    "noProposals": "No initiative was proposed from this output yet.",
+    "slides": {
+      "fullscreen": "Fullscreen (F)",
+      "exit": "Exit slide mode (Esc)",
+      "deckEyebrow": "Executive presentation",
+      "reportEyebrow": "Report",
+      "previous": "Previous slide",
+      "goToSlide": "Go to slide {{n}}",
+      "next": "Next slide"
+    }
   }
 }

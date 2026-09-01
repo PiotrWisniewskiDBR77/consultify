@@ -29,6 +29,7 @@ import {
   Flag,
   Flame,
   Folder,
+  FolderKanban,
   FolderPlus,
   GanttChart,
   GitBranch,
@@ -218,6 +219,17 @@ const ClientDocumentsVault = lazyWithRetry(() =>
 const AgentHubShell = lazyWithRetry(() =>
   import('../AIChat/AgentHubShell').then((m) => ({ default: m.AgentHubShell }))
 );
+// M03 (dyżur 20260830): brakujące wejście do ekranu Projektów (stakeholder
+// registry + finance rollup, `MyProjects.tsx`) — działał tylko pod trasą
+// `/projects`, do której nic w realnym menu nie prowadziło (WorkCenter.tsx,
+// jedyny caller starej zakładki `PillNavigation`, jest osierocony — patrz
+// komentarz przy `DecisionsPanel.tsx:193`). Ten hub jest jedynym żywym
+// paskiem nawigacji Mojej Pracy, więc zakładka wchodzi TU, tym samym
+// mechanizmem co Vault/Run agent (lazy full-screen mount, zero propsów —
+// `MyProjects` samo pobiera dane po zamontowaniu, jak `ClientDocumentsVault`).
+const MyProjects = lazyWithRetry(() =>
+  import('./MyProjects').then((m) => ({ default: m.MyProjects }))
+);
 
 // Types
 type ModuleTab =
@@ -228,6 +240,7 @@ type ModuleTab =
   | 'calendar'
   | 'tasks'
   | 'decisions'
+  | 'projects'
   | 'manager'
   | 'vault'
   | 'agent';
@@ -318,6 +331,8 @@ const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
     'You are an execution manager. Help the user manage tasks — break down work, estimate effort, identify blockers, suggest delegation, and track progress. Be practical and specific.',
   decisions:
     'You are a decision advisor. Help analyze decisions — weigh pros/cons, assess risks, identify stakeholders, and recommend approaches. Structure thinking clearly.',
+  projects:
+    'You are a project portfolio assistant. The user is reviewing projects and programs — stakeholder registries, finance rollups, team membership. Help them spot budget overruns, missing stakeholders, and grouping opportunities. Be concrete and numbers-first.',
   manager:
     'You are a C-level strategic advisor. The user is a manager reviewing portfolio health, KPIs, and team performance. Focus on high-level insights, risks, and strategic recommendations. Be concise and data-driven.',
   vault:
@@ -363,6 +378,11 @@ const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
     'Summarize pending decisions',
     'Analyze the most urgent decision',
     'What decisions are blocking progress?',
+  ],
+  projects: [
+    'Which projects are over budget?',
+    'Show projects missing stakeholders',
+    'Summarize program rollups',
   ],
   manager: [
     'Give me a 30-second briefing',
@@ -653,6 +673,9 @@ function parseMyWorkPathIntent(
   if (segments[1] === 'ideas') return { tab: 'ideas' };
   if (segments[1] === 'tasks') return { tab: 'tasks' };
   if (segments[1] === 'decisions') return { tab: 'decisions' };
+  // Zwornik (#78): /my-work/projects deep link — same shape as /my-work/manager
+  // below, no document id segment (MyProjects manages its own selection state).
+  if (segments[1] === 'projects') return { tab: 'projects' };
   // Page-level deep link (/my-work/notebook/<pageId>) — used by canvas
   // save-as-note success links and provenance "Otwórz" entries. Previously the
   // pageId segment was DISCARDED, so a valid link landed on the notebooks
@@ -1396,6 +1419,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       calendar: t('myWork.hub.calendar', 'Calendar'),
       tasks: t('myWork.hub.tasks', 'Tasks'),
       decisions: t('myWork.hub.decisions', 'Decisions'),
+      projects: t('myWork.hub.projects', 'Projects'),
       manager: t('myWork.hub.manager', 'Manager'),
       vault: t('myWork.hub.vault', 'Sejf klienta'),
       agent: t('myWork.hub.agent', 'Run agent'),
@@ -1737,6 +1761,18 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Scale size={16} />,
         count: tabCounts.decisions,
         color: 'bg-blue-500',
+        requiresManagerAccess: false,
+      },
+      // Zwornik (#78, relokacja 2026-08-30): `MyProjects.tsx` (stakeholder
+      // registry + finance rollup, Triada standard) miało wyłącznie trasę
+      // `/projects` bez żadnego wejścia w nawigacji — patrz decyzja
+      // właściciela w dyżurze M03. Wchodzi tu, obok Decisions, tym samym
+      // mechanizmem co Vault/Run agent poniżej (lazy full-screen mount).
+      {
+        id: 'projects' as ModuleTab,
+        label: t('myWork.hub.labelProjects', 'Projects'),
+        icon: <FolderKanban size={16} />,
+        color: 'bg-emerald-500',
         requiresManagerAccess: false,
       },
       // VLT-004 (relokacja Client Vault). Same gate as the old sidebar entry
@@ -4165,6 +4201,16 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onBulkBarChange={handleDecisionsBulkBarChange}
             refreshTrigger={refreshTrigger}
           />
+        );
+      case 'projects':
+        // Zwornik (#78) — MyProjects is a self-contained Triada screen
+        // (StandardModuleBar + StandardTable + StandardPreview) that fetches
+        // its own data on mount; mounted the same way as ClientDocumentsVault
+        // below, zero props.
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <MyProjects />
+          </React.Suspense>
         );
       case 'vault':
         // VLT-004 (relokacja Client Vault z menu głównego). ClientDocumentsVault

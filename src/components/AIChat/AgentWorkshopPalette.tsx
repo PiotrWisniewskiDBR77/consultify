@@ -80,7 +80,12 @@ export interface AgentWorkshopPaletteProps {
   onAdd: (entry: AgentBlockCatalogEntry) => void;
   /** Paleta nie pozwala nic dodać (plan już wystartował). */
   disabled?: boolean;
-  width?: number;
+  /**
+   * Szerokość panelu. Domyślnie token `--ntype-right-panel-width` (320 px) —
+   * ★ 2026-09-01 (dyżur 164): stało tu 300 px, czyli piąta szerokość prawego
+   * pasa w aplikacji. Nie wpisuj liczby.
+   */
+  width?: number | string;
 }
 
 const PaletteItem: React.FC<{
@@ -154,7 +159,7 @@ const PaletteItem: React.FC<{
 export const AgentWorkshopPalette: React.FC<AgentWorkshopPaletteProps> = ({
   onAdd,
   disabled = false,
-  width = 300,
+  width = 'var(--ntype-right-panel-width)',
 }) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');

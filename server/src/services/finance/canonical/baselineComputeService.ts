@@ -885,6 +885,47 @@ export async function upsertAssumptionsBatch(params: UpsertAssumptionsBatchParam
   });
 }
 
+// ---------------------------------------------------------------------------
+// deleteBaselineAssumption — 176-dwie-poprawki (zgłoszenie właściciela,
+// odbiór 2026-09-01, DRUGI raz: "dalej nie mam ... możliwości usuwania
+// linii"). Poprzedni dyżur uznał to za wymagające pracy serwerowej i
+// odłożył — sprawdzone: faktycznie ŻADEN endpoint DELETE dla tej tabeli nie
+// istniał (grep `router.delete` w baseline.routes.ts = 0 trafień). Ten
+// dyżur go dopisuje. Hard delete, nie soft-delete: `finance_baseline_
+// assumptions` nie ma kolumny `deleted_at` (migracja `20260809_finance_v3_
+// d05_baseline_01_tables.sql`), a compute silnik czyta ten wiersz PO
+// WARTOŚCI (`requireAssumption`, `assumptions.set(...)`), nigdy po `id` —
+// nic w schemacie nie referencjonuje `finance_baseline_assumptions.id`
+// jako obcy klucz, więc usunięcie wiersza jest bezpieczne (brak kaskady do
+// pilnowania). Scoped org+business-version+id — wołający nie może usunąć
+// cudzego wiersza zgadując samo `id`.
+// ---------------------------------------------------------------------------
+
+export interface DeleteBaselineAssumptionParams {
+  organizationId: string;
+  businessVersionId: string;
+  assumptionId: string;
+}
+
+export async function deleteBaselineAssumption(
+  params: DeleteBaselineAssumptionParams
+): Promise<{ deleted: boolean }> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    const existing = await tx.queryOne<{ id: string }>(
+      `SELECT id FROM finance_baseline_assumptions
+        WHERE organization_id = ? AND business_version_id = ? AND id = ?`,
+      [params.organizationId, params.businessVersionId, params.assumptionId]
+    );
+    if (!existing) return { deleted: false };
+    await tx.queryRun(
+      `DELETE FROM finance_baseline_assumptions
+        WHERE organization_id = ? AND business_version_id = ? AND id = ?`,
+      [params.organizationId, params.businessVersionId, params.assumptionId]
+    );
+    return { deleted: true };
+  });
+}
+
 export interface BaselineOutputListRow {
   id: string;
   organization_id: string;

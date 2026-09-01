@@ -1241,15 +1241,43 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   }, [filteredSessions]);
 
   // Modal chrome stays monochromatic; semantic colors belong to data/status badges only.
-  const getColorClasses = (color: string, variant: 'bg' | 'border' | 'text' | 'ring') => {
-    void color;
-    const colors: Record<'bg' | 'border' | 'text' | 'ring', string> = {
-      bg: 'bg-slate-100 dark:bg-navy-800/80',
-      border: 'border-slate-200 dark:border-white/[0.08]',
-      text: 'text-slate-600 dark:text-slate-300',
-      ring: 'ring-c-focus',
-    };
-    return colors[variant];
+  /**
+   * Ikona każdego typu analizy dostaje WŁASNY kolor z palety identity `c-tag-1..12`
+   * (tailwind.config.js §DATA-PALETTE DECISION GUIDE: „c-tag-1..12: KATEGORIA/TYP/
+   * ŹRÓDŁO — równoważne, bezkolejnościowe «kropki» … ≤5 widocznych serii").
+   * Poprzednia wersja przyjmowała `color` (blue/slate/purple/red/amber/…, ustawiony
+   * per typ w ANALYSIS_TYPES) i GO IGNOROWAŁA (`void color`) — każda karta wychodziła
+   * identycznie szarym kwadratem, stąd uwaga właściciela „nie wygląda jak sekcja
+   * tech" (zero rozróżnienia wizualnego między 12 typami analizy). Numer taga
+   * liczony z POZYCJI W KATEGORII (nie z globalnego indeksu), więc każda z trzech
+   * grup (Podstawowe=5, Zaawansowane=4, Frameworki BCG=3) mieści się w limicie
+   * ≤5 widocznych serii z §15.1 zamiast rozjeżdżać się po całej puli 12 tagów.
+   */
+  // Tailwind's scanner needs the FULL class string literally in source — a
+  // template-literal build like `bg-c-tag-${n}/12` is invisible to it and
+  // would silently ship with zero color (a real, easy-to-miss regression).
+  // So every tag gets its own written-out row instead of being assembled.
+  const TAG_ICON_CLASSES: Array<{ bg: string; text: string; border: string }> = [
+    { bg: 'bg-c-tag-1/12', text: 'text-c-tag-1', border: 'border-c-tag-1/30' },
+    { bg: 'bg-c-tag-2/12', text: 'text-c-tag-2', border: 'border-c-tag-2/30' },
+    { bg: 'bg-c-tag-3/12', text: 'text-c-tag-3', border: 'border-c-tag-3/30' },
+    { bg: 'bg-c-tag-4/12', text: 'text-c-tag-4', border: 'border-c-tag-4/30' },
+    { bg: 'bg-c-tag-5/12', text: 'text-c-tag-5', border: 'border-c-tag-5/30' },
+    { bg: 'bg-c-tag-6/12', text: 'text-c-tag-6', border: 'border-c-tag-6/30' },
+    { bg: 'bg-c-tag-7/12', text: 'text-c-tag-7', border: 'border-c-tag-7/30' },
+    { bg: 'bg-c-tag-8/12', text: 'text-c-tag-8', border: 'border-c-tag-8/30' },
+    { bg: 'bg-c-tag-9/12', text: 'text-c-tag-9', border: 'border-c-tag-9/30' },
+    { bg: 'bg-c-tag-10/12', text: 'text-c-tag-10', border: 'border-c-tag-10/30' },
+    { bg: 'bg-c-tag-11/12', text: 'text-c-tag-11', border: 'border-c-tag-11/30' },
+    { bg: 'bg-c-tag-12/12', text: 'text-c-tag-12', border: 'border-c-tag-12/30' },
+  ];
+
+  const getColorClasses = (
+    tagIndex: number,
+    variant: 'bg' | 'border' | 'text' | 'ring'
+  ) => {
+    if (variant === 'ring') return 'ring-c-focus';
+    return TAG_ICON_CLASSES[(tagIndex - 1) % TAG_ICON_CLASSES.length][variant];
   };
 
   // Handle submit
@@ -1691,14 +1719,15 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     );
   };
 
-  const renderTypeRow = (type: AnalysisType) => {
+  const renderTypeRow = (type: AnalysisType, indexInCategory: number) => {
     const isSelected = selectedTypes.includes(type.id);
     const inputId = `insight-creator-output-type-${type.id}`;
+    const tagIndex = indexInCategory + 1;
     return (
       <label
         key={type.id}
         htmlFor={inputId}
-        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
+        className={`flex cursor-pointer items-center gap-3.5 rounded-xl border px-4 py-3 transition ${
           isSelected
             ? 'border-c-info/60 bg-c-info/10 dark:border-c-info/40 dark:bg-c-info/15'
             : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
@@ -1712,10 +1741,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           className="sr-only"
         />
         <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
-            type.color,
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
+            tagIndex,
             'bg'
-          )} ${getColorClasses(type.color, 'text')}`}
+          )} ${getColorClasses(tagIndex, 'text')}`}
         >
           {type.icon}
         </div>
@@ -1723,7 +1752,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
           <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
             {t(`interview.insightCreatorModal.analysisTypeName.${type.id}`, type.name)}
           </div>
-          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+          <p className="truncate text-[13px] text-slate-500 dark:text-slate-400">
             {t(
               `interview.insightCreatorModal.analysisTypeDescription.${type.id}`,
               type.description
@@ -1748,7 +1777,16 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
             htmlFor="insight-creator-title"
             className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
           >
-            {t('interview.insightCreatorModal.insightTitle')} *
+            {t('interview.insightCreatorModal.insightTitle')}{' '}
+            {/*
+              KANON (CLAUDE.md §3, odbiór 2026-08-30): jedna konwencja pola
+              wymaganego w całej aplikacji — neutralne „(wymagane)", nie
+              gwiazdka (ta była szara, ale wciąż trzecia konwencja obok
+              czerwonej gwiazdki i neutralnego tekstu — ujednolicone).
+            */}
+            <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+              ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+            </span>
           </label>
           <input
             id="insight-creator-title"
@@ -1776,7 +1814,10 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {t('interview.insightCreatorModal.outputType')} *
+              {t('interview.insightCreatorModal.outputType')}{' '}
+              <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+                ({t('interview.insightCreatorModal.requiredMarker', 'wymagane')})
+              </span>
             </label>
             <span className="text-xs text-c-info">
               {t('interview.insightCreatorModal.selectedCountColon', {
@@ -1784,12 +1825,12 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
               })}
             </span>
           </div>
-          <div className="max-h-[280px] space-y-3 overflow-auto pr-1">
+          <div className="max-h-[320px] space-y-4 overflow-auto pr-1">
             {categories.map((cat) => {
               const items = ANALYSIS_TYPES.filter((t) => t.category === cat.key);
               if (items.length === 0) return null;
               return (
-                <div key={cat.key} className="space-y-1.5">
+                <div key={cat.key} className="space-y-2">
                   <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                     {t(
                       `interview.insightCreatorModal.analysisCategoryLabel.${cat.key}`,

@@ -27,7 +27,7 @@
  * per-field (`HonestValueCell`) — also no shell-level special case needed.
  */
 
-import { FileBarChart } from 'lucide-react';
+import { Bell, FileBarChart } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -107,6 +107,32 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
    * anyway, not a same-SPA-subtree hop.
    */
   const managementReportEntryEnabled = isResultsVNextFlagEnabled('managementReportEntry');
+  /**
+   * 2026-09-01 (ANALIZA_ODRZUCONE_20260901.md §3) — wejście do ekranu
+   * „Uwaga" (`ROUTES.RESULTS_ATTENTION`). Ta trasa była SIEROTĄ: poza własną
+   * definicją, montażem i harnessem dev-render nic w aplikacji do niej nie
+   * prowadziło, więc trzynaście wypełnionych kubełków („czym trzeba się dziś
+   * zająć") było osiągalne wyłącznie ręcznym wpisaniem adresu.
+   *
+   * DLACZEGO TUTAJ, A NIE W MENU 2: Menu 2 Wyników
+   * (`resultsDomainNavigation.ts`) przełącza DOMENĘ (KPI/OKR/ROI) i steruje
+   * `getResultsDomainPath`; „Uwaga" świadomie NIE jest czwartą domeną
+   * (D10 — patrz nagłówek `attention/ResultsAttentionPage.tsx`), więc
+   * dopisanie jej tam skłamałoby o kształcie modułu. Powłoka rejestrów jest
+   * jedynym miejscem, z którego jedna zmiana daje to samo wejście wszystkim
+   * czterem powierzchniom Wyników — dokładnie ten sam wzorzec, którym już
+   * tu wchodzi `managementReportEntry`.
+   *
+   * PODWÓJNA BRAMKA (uczciwość): własna flaga `attentionEntry` (default OFF,
+   * kanon #7 — czeka na zrzut + odbiór Piotra) ORAZ bramka SAMEGO CELU —
+   * `ResultsAttentionPage` wymaga `kpiRegistry` I `okrRegistry`, więc bez
+   * nich link prowadziłby do stanu „funkcja wyłączona". Nie linkujemy do
+   * ekranu, którego użytkownik nie otworzy.
+   */
+  const attentionEntryEnabled =
+    isResultsVNextFlagEnabled('attentionEntry') &&
+    isResultsVNextFlagEnabled('kpiRegistry') &&
+    isResultsVNextFlagEnabled('okrRegistry');
   const isPolish = !!i18n.language?.startsWith('pl');
   /**
    * Punkt zakresu 5 (tor PLATFORMY, 2026-08-11) — „Esc zamyka, focus wraca do
@@ -164,16 +190,28 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
             {t('results.sampleData.banner', 'Sample data — not from the database')}
           </div>
         ) : null}
-        {managementReportEntryEnabled ? (
-          <div className="mx-4 mt-3 flex justify-end">
-            <a
-              href={ROUTES.REPORTS.MANAGEMENT}
-              className="inline-flex items-center gap-1.5 rounded-token-md border border-[color:var(--c-border-subtle)] bg-[color:var(--c-surface-raised)] px-3 py-1.5 text-sm text-c-text-secondary hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
-              data-testid="results-vnext-management-report-entry"
-            >
-              <FileBarChart className="h-3.5 w-3.5" aria-hidden="true" />
-              {isPolish ? 'Raport zarządczy' : 'Management report'}
-            </a>
+        {managementReportEntryEnabled || attentionEntryEnabled ? (
+          <div className="mx-4 mt-3 flex justify-end gap-2">
+            {attentionEntryEnabled ? (
+              <a
+                href={ROUTES.RESULTS_ATTENTION}
+                className="inline-flex items-center gap-1.5 rounded-token-md border border-[color:var(--c-border-subtle)] bg-[color:var(--c-surface-raised)] px-3 py-1.5 text-sm text-c-text-secondary hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
+                data-testid="results-vnext-attention-entry"
+              >
+                <Bell className="h-3.5 w-3.5" aria-hidden="true" />
+                {isPolish ? 'Uwaga' : 'Attention'}
+              </a>
+            ) : null}
+            {managementReportEntryEnabled ? (
+              <a
+                href={ROUTES.REPORTS.MANAGEMENT}
+                className="inline-flex items-center gap-1.5 rounded-token-md border border-[color:var(--c-border-subtle)] bg-[color:var(--c-surface-raised)] px-3 py-1.5 text-sm text-c-text-secondary hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
+                data-testid="results-vnext-management-report-entry"
+              >
+                <FileBarChart className="h-3.5 w-3.5" aria-hidden="true" />
+                {isPolish ? 'Raport zarządczy' : 'Management report'}
+              </a>
+            ) : null}
           </div>
         ) : null}
         {forbidden ? (

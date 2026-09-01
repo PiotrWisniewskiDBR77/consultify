@@ -133,7 +133,7 @@ function Pane({
 }): React.ReactElement {
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col border-r border-c-border-subtle last:border-r-0">
-      <header className="border-b border-c-border-subtle px-4 py-2">
+      <header className="border-b border-c-border-subtle px-4 py-2" data-dev-render-chrome="">
         <h2 className="text-sm font-semibold text-c-text">{title}</h2>
         <p className="text-xs leading-snug text-c-text-secondary">{note}</p>
       </header>
@@ -161,7 +161,7 @@ export default function TeresaChipySugestiiScreen(): React.ReactElement {
       <AppProviders>
         <FeatureFlagsProvider showDevTools={false}>
           <div className="flex h-screen w-full flex-col bg-c-bg">
-            <div className="border-b border-c-border px-6 py-3">
+            <div className="border-b border-c-border px-6 py-3" data-dev-render-chrome="">
               <div className="text-sm font-semibold text-c-text">
                 Teresa — chipy sugestii pod oknem rozmowy (D4)
               </div>

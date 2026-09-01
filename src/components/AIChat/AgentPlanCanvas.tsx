@@ -76,6 +76,48 @@ import { PALETTE_DND_MIME } from './AgentWorkshopPalette';
 export type { PlanBlockKind, ToolCatalogEntry };
 export { DEFAULT_TOOL_NAME, TOOL_CATALOG };
 
+/**
+ * Etykieta modułu pod nazwą klocka (`block.moduleType`, patrz
+ * `agentWorkshopCatalog.ts` → pole `module`) — WYŁĄCZNIE dla WYŚWIETLENIA na
+ * schemacie. Odbiór 2026-08-30 (przegląd całości): tag pod klockiem był
+ * gołym angielskim słowem z katalogu ("Assessment", "Finance", "My Work"…)
+ * niezależnie od języka konta — to jest chrom interfejsu (czytelnik widzi
+ * słowo na karcie), NIE zapis biznesowy kroku planu (to różni się od
+ * `toolLabel()`/`TOOL_LABEL_BY_NAME`, które celowo zostają angielskie, bo są
+ * migawką danych zapisywaną z krokiem — patrz komentarz w
+ * `agentWorkshopCatalog.ts`). Katalog i `block.moduleType` NIE są tu
+ * zmieniane — tylko to, co się pokazuje.
+ * `Teresa` i `Vault→Sejf`: `Teresa` to nazwa własna asystenta, zostaje;
+ * `Vault` tłumaczone na `Sejf` zgodnie z resztą aplikacji (`sidebar.clientVault`
+ * = „Sejf klienta", zakładki modułu Vault = „Sejfy/Foldery").
+ */
+const MODULE_TAG_TRANSLATIONS: Record<string, { key: string; fallback: string }> = {
+  Assessment: { key: 'agentPlan.canvas.moduleTag.assessment', fallback: 'Ocena' },
+  Control: { key: 'agentPlan.canvas.moduleTag.control', fallback: 'Kontrola' },
+  Execution: { key: 'agentPlan.canvas.moduleTag.execution', fallback: 'Realizacja' },
+  Finance: { key: 'agentPlan.canvas.moduleTag.finance', fallback: 'Finanse' },
+  Initiatives: { key: 'agentPlan.canvas.moduleTag.initiatives', fallback: 'Inicjatywy' },
+  Integrations: { key: 'agentPlan.canvas.moduleTag.integrations', fallback: 'Integracje' },
+  Interview: { key: 'agentPlan.canvas.moduleTag.interview', fallback: 'Wywiad' },
+  Materials: { key: 'agentPlan.canvas.moduleTag.materials', fallback: 'Materiały' },
+  Meeting: { key: 'agentPlan.canvas.moduleTag.meeting', fallback: 'Spotkania' },
+  'My Work · Decisions': {
+    key: 'agentPlan.canvas.moduleTag.myWorkDecisions',
+    fallback: 'Moja Praca · Decyzje',
+  },
+  'My Work': { key: 'agentPlan.canvas.moduleTag.myWork', fallback: 'Moja Praca' },
+  Notebook: { key: 'agentPlan.canvas.moduleTag.notebook', fallback: 'Notatnik' },
+  Results: { key: 'agentPlan.canvas.moduleTag.results', fallback: 'Resultaty' },
+  Tables: { key: 'agentPlan.canvas.moduleTag.tables', fallback: 'Tabele' },
+  Vault: { key: 'agentPlan.canvas.moduleTag.vault', fallback: 'Sejf' },
+};
+
+function moduleTagLabel(raw: string | undefined, t: (key: string, fallback: string) => string): string | undefined {
+  if (!raw) return raw;
+  const entry = MODULE_TAG_TRANSLATIONS[raw];
+  return entry ? t(entry.key, entry.fallback) : raw;
+}
+
 /** Typ MIME przeciąganego KLOCKA schematu (zmiana kolejności wewnątrz canvasu). */
 export const BLOCK_DND_MIME = 'application/x-consultify-agent-block-move';
 
@@ -240,8 +282,8 @@ const Connector: React.FC = () => (
 );
 
 const EndCap: React.FC<{ label: string; icon: LucideIcon }> = ({ label, icon: Icon }) => (
-  <div className="flex items-center gap-1.5 rounded-full border border-c-border-subtle bg-c-surface-raised/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-    <Icon size={11} />
+  <div className="flex items-center gap-1.5 rounded-full border border-c-border-subtle bg-c-surface-raised/50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+    <Icon size={13} />
     {label}
   </div>
 );
@@ -558,7 +600,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
               <p className="text-xs font-medium text-c-text">
                 {t('agentPlan.canvas.empty', 'Pusty schemat')}
               </p>
-              <p className="mt-1 text-[11px] text-c-text-muted">
+              <p className="mt-1 text-xs text-c-text-muted">
                 {t(
                   'agentPlan.canvas.emptyHint',
                   'Przeciągnij klocek z palety po prawej albo kliknij go, żeby dodać pierwszy krok.'
@@ -611,17 +653,17 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                       setDragging(true);
                     }}
                     onDragEnd={() => setDragging(false)}
-                    className={`rounded-xl border bg-c-surface px-3 py-2.5 transition-shadow ${
+                    className={`rounded-xl border bg-c-surface px-4 py-3 transition-shadow ${
                       isCurrent
                         ? 'border-c-info ring-2 ring-c-info/40 shadow-sm'
                         : 'border-c-border-subtle'
                     } ${annotation ? 'border-dashed bg-c-surface-raised/30' : ''}`}
                   >
-                    <div className="flex items-start gap-2">
-                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-c-border-subtle text-[10px] font-semibold tabular-nums text-c-text-muted">
+                    <div className="flex items-start gap-2.5">
+                      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-c-border-subtle text-[11px] font-semibold tabular-nums text-c-text-muted">
                         {index + 1}
                       </span>
-                      <Icon size={15} className="mt-0.5 shrink-0 text-c-text-muted" />
+                      <Icon size={17} className="mt-0.5 shrink-0 text-c-text-muted" />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -641,7 +683,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                           {isCurrent ? (
                             <span
                               data-testid="canvas-current-badge"
-                              className="shrink-0 rounded-full border border-c-info px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-c-info"
+                              className="shrink-0 rounded-full border border-c-info px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-info"
                             >
                               {t('agentPlan.canvas.now', 'Teraz')}
                             </span>
@@ -656,12 +698,12 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                           ) : null}
                         </div>
 
-                        <p className="mt-0.5 text-[11px] text-c-text-muted">
+                        <p className="mt-1 text-xs text-c-text-muted">
                           {t(
                             BLOCK_KIND_LABEL_KEY[block.kind],
                             BLOCK_KIND_FALLBACK_LABEL[block.kind]
                           )}
-                          {block.moduleType ? ` · ${block.moduleType}` : ''}
+                          {block.moduleType ? ` · ${moduleTagLabel(block.moduleType, t)}` : ''}
                           {block.kind === 'vault-kontekst'
                             ? ` · ${
                                 typeof block.toolInput?.vault_safe_name === 'string'
@@ -685,7 +727,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                         </p>
 
                         {annotation ? (
-                          <p className="mt-1 text-[10px] italic text-c-text-muted">
+                          <p className="mt-1 text-[11px] italic text-c-text-muted">
                             {t(
                               'agentPlan.canvas.noteHint',
                               'Notatka na schemacie — agent jej nie wykonuje.'
@@ -699,7 +741,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                               value={block.kind}
                               onChange={(e) => setBlockKind(index, e.target.value as PlanBlockKind)}
                               aria-label={t('agentPlan.canvas.blockKind', 'Typ klocka')}
-                              className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                              className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             >
                               {ALL_BLOCK_KINDS.map((kind) => (
                                 <option key={kind} value={kind}>
@@ -722,7 +764,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                   setBlockVaultSafe(index, safe);
                                 }}
                                 aria-label={t('agentPlan.canvas.vaultLevel', 'Poziom Vault')}
-                                className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                                className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 <option value="">
                                   {t('agentPlan.canvas.vaultLevelPlaceholder', '— wybierz sejf —')}
@@ -769,7 +811,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                       }}
                                       disabled={entry === 'loading'}
                                       aria-label={t('agentPlan.canvas.vaultFolder', 'Folder Vault')}
-                                      className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+                                      className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
                                     >
                                       <option value="">
                                         {t(
@@ -790,7 +832,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                               : null}
 
                             {block.kind === 'pauza' ? (
-                              <label className="flex items-center gap-1 text-[11px] text-c-text-muted">
+                              <label className="flex items-center gap-1.5 text-xs text-c-text-muted">
                                 <input
                                   type="number"
                                   min={1}
@@ -805,7 +847,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                     'agentPlan.canvas.waitHoursInput',
                                     'Liczba godzin pauzy'
                                   )}
-                                  className="h-7 w-16 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                                  className="h-8 w-16 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                                 />
                                 {t('agentPlan.canvas.waitHoursSuffix', 'godz.')}
                               </label>
@@ -814,7 +856,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                                 value={block.toolName ?? DEFAULT_TOOL_NAME}
                                 onChange={(e) => setBlockTool(index, e.target.value)}
                                 aria-label={t('agentPlan.canvas.blockTool', 'Narzędzie')}
-                                className="h-7 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-1.5 text-[11px] text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                                className="h-8 rounded-lg border border-c-border-subtle bg-c-surface-raised/40 px-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 {TOOL_CATALOG.map((tool) => (
                                   <option key={tool.name} value={tool.name}>
@@ -824,16 +866,16 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                               </select>
                             )}
                             {block.kind === 'vault-kontekst' && vaultSafesError ? (
-                              <span className="text-[10px] text-c-danger">{vaultSafesError}</span>
+                              <span className="text-[11px] text-c-danger">{vaultSafesError}</span>
                             ) : null}
                           </div>
                         ) : null}
                       </div>
 
                       {editable ? (
-                        <div className="flex shrink-0 items-center gap-0.5">
+                        <div className="flex shrink-0 items-center gap-1">
                           <GripVertical
-                            size={13}
+                            size={15}
                             className="cursor-grab text-c-text-muted"
                             aria-hidden="true"
                           />
@@ -842,18 +884,18 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                             aria-label={t('agentPlan.canvas.moveUp', 'Przesuń w górę')}
                             onClick={() => moveBlock(index, -1)}
                             disabled={index === 0}
-                            className="rounded p-0.5 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
-                            <ChevronUp size={13} />
+                            <ChevronUp size={15} />
                           </button>
                           <button
                             type="button"
                             aria-label={t('agentPlan.canvas.moveDown', 'Przesuń w dół')}
                             onClick={() => moveBlock(index, 1)}
                             disabled={index === blocks.length - 1}
-                            className="rounded p-0.5 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
-                            <ChevronDown size={13} />
+                            <ChevronDown size={15} />
                           </button>
                           <button
                             type="button"
@@ -861,7 +903,7 @@ export const AgentPlanCanvas: React.FC<AgentPlanCanvasProps> = ({
                             onClick={() => removeBlock(index)}
                             className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       ) : null}

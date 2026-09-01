@@ -300,7 +300,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'title',
         label: tr('Pozycja', 'Item'),
-        width: '320px',
+        width: '130px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
           return (
@@ -319,12 +319,36 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'kind',
         label: tr('Typ', 'Type'),
-        width: '150px',
+        width: '210px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
+          const label = decisionKindLabel(row.kind);
+          // Defekt „ucinany tekst" (2026-08-31, domknięcie): karta jest wąska
+          // (grid lg:grid-cols-2, kontener tabeli ~506px), a najdłuższa
+          // etykieta „Przeterminowana" (115px tekstu) nie mieściła się
+          // jednowierszowo — ani przycięta (`truncate`+`title`), ani przy
+          // umiarkowanym poszerzeniu (kolumna i tak lądowała na PODŁODZE
+          // dopasowania `FIT_MIN_COLUMN_WIDTH`=112px niezależnie od
+          // deklarowanej szerokości, bo `FilterableTable`/`columnFit`
+          // rozdaje budżet iteracyjnie: kolumny „Pozycja"/„Właściciel"/„Wiek"
+          // miały deklarowane szerokości POWYŻEJ własnej podłogi, więc same
+          // przyklamrowywały się do niej najpierw i to ONE zjadały budżet
+          // kosztem „Typ"). Naprawa: „Pozycja"/„Właściciel"/„Wiek" dostały
+          // deklaracje NA SWOJEJ podłodze (130/120/70 — „Właściciel" dostał
+          // 120, nie mniej, bo nazwisko „Wiśniewski"/nagłówek „Właściciel"
+          // same potrzebują ~75px i przy węższej kolumnie łamały się w
+          // POŁOWIE nazwiska, ten sam defekt piętro niżej) — więc
+          // przyklamrowują się do dokładnie tego, i CAŁA reszta budżetu
+          // kontenera trafia do „Typ" (deklaracja 210px, faktycznie renderuje
+          // ~186px — z zapasem nad potrzebnymi ~147px). `line-clamp-2`
+          // zostaje jako siatka bezpieczeństwa (nigdy „…", najwyżej 2 pełne
+          // linie przy jeszcze węższym viewport/dark-mode reflow), nie jako
+          // główny mechanizm.
           return (
-            <span className={`text-sm font-medium ${band.text}`}>
-              {decisionKindLabel(row.kind)}
+            <span
+              className={`block line-clamp-2 leading-tight text-sm font-medium ${band.text}`}
+            >
+              {label}
             </span>
           );
         },
@@ -332,7 +356,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'owner',
         label: tr('Właściciel', 'Owner'),
-        width: '160px',
+        width: '120px',
         render: (row: any) => (
           <span className="text-sm text-c-text-secondary">{row.ownerName || '—'}</span>
         ),
@@ -340,7 +364,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'age',
         label: tr('Wiek', 'Age'),
-        width: '90px',
+        width: '70px',
         align: 'right',
         render: (row: any) => (
           <span className="text-sm tabular-nums text-c-text-secondary">
@@ -561,6 +585,18 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                   'No decisions, overdue items or blockers require you.'
                 ),
               }}
+              // Defekt „ucinany tekst" (2026-08-31): ta karta żyje w wąskim
+              // `lg:grid-cols-2` (~500px na tabelę), a `FilterableTable`
+              // domyślnie wymusza `min-width: 980px` na elemencie `table`
+              // (`DEFAULT_MIN_TABLE_WIDTH`). Sama kolumna renderowała się na
+              // pełnej (a nawet proporcjonalnie POWIĘKSZONEJ) szerokości, ale
+              // fizycznie POZA widocznym skrawkiem karty — `overflow-x-auto`
+              // ucinał tekst na krawędzi bez wielokropka, nie w komórce.
+              // `minTableWidth="auto"` (prop istnieje dokładnie po to, patrz
+              // `FilterableTable.tsx`) zdejmuje ten sztywny floor i włącza
+              // realne dopasowanie kolumn do kontenera (`columnFit`) — tabela
+              // mieści się w karcie bez ukrytego przewijania.
+              minTableWidth="auto"
             />
           </section>
         </div>

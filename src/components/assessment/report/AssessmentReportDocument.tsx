@@ -18,17 +18,51 @@
  * `c-focus`. The per-dimension table is `StandardTable` — no bespoke,
  * hand-rolled table markup.
  *
- * Licence boundary: does NOT render DRD's curated level titles/definitions
- * (see `drdLabels.ts` header comment) — only structural labels (area/axis
- * name) and generic, non-method-specific interpretive wording
- * (`maturityBands.ts`).
+ * ★ STRUKTURA = FORMUŁA WŁAŚCICIELA (2026-08-30, jego słowami):
+ *   1. Wstęp z opisem, jak było prowadzone badanie.
+ *   2. Siedem osi — dla każdej najpierw opis samej osi, potem obszaru.
+ *   3. Odpowiedzi oraz wstępna paleta wniosków.
+ *   4. Podsumowanie.
+ * Dlatego rozdziały są ponumerowane 1–4 i w tej kolejności; wcześniejszy
+ * układ (osiem równorzędnych kart bez wstępu, bez opisu osi i bez opisu
+ * obszaru) realizował z tej formuły wyłącznie punkt 4 — zmierzone
+ * w `docs/program/grafika/RAPORT_OCENY_STAN.md`.
+ *
+ * Licence boundary: renderuje opis osi (`DRDAxis.description`) oraz tytuł
+ * i opis POZIOMU obszaru (`DRDLevel.title/description`) — za wyraźną zgodą
+ * właściciela metodyki, patrz nagłówek `drdLabels.ts`. Warstwa coachingowa
+ * QBank v2 (przykłady, pułapki oceniania) nadal NIE wychodzi do dokumentu.
+ * Każdy akapit metodyki niesie widoczny znacznik języka źródła — korpus jest
+ * dziś angielski dla osi 1–4 i 7, więc dokument mówi to wprost, zamiast
+ * podawać angielski akapit jako polską treść produktu.
  */
-import { AlertTriangle, CheckCircle2, FileWarning, HelpCircle, Lightbulb, ShieldAlert } from 'lucide-react';
+import {
+  AlertTriangle,
+  BookOpen,
+  CheckCircle2,
+  ClipboardList,
+  FileWarning,
+  HelpCircle,
+  Lightbulb,
+  ShieldAlert,
+  Target,
+} from 'lucide-react';
 import React, { useMemo } from 'react';
+
+import {
+  DRDMatrixReadOnly,
+  drdOdpowiedziZOutputu,
+} from '../drd/DRDMatrixReadOnly';
 
 import { StandardTable, type TableColumn, type TableRow } from '../../standard/StandardTable';
 import { StatusChip } from '../../ui/primitives/chips';
-import { resolveDrdAxisName, resolveDrdUnitLabel } from './drdLabels';
+import {
+  listDrdAxisNarratives,
+  resolveDrdAxisName,
+  resolveDrdLevelNarrative,
+  resolveDrdUnitLabel,
+  type DrdSourceLanguage,
+} from './drdLabels';
 import { describeMaturityPosition } from './maturityBands';
 import type { AssessmentReportData, ReportFinding } from './types';
 
@@ -80,13 +114,65 @@ const SectionCard: React.FC<{
         {eyebrow ? (
           <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">{eyebrow}</p>
         ) : null}
-        <h2 id={id ? `${id}-heading` : undefined} className="text-sm font-semibold text-c-text">
+        {/* h3, nie h2 — od 2026-08-30 karty leżą WEWNĄTRZ numerowanych
+            rozdziałów (`<Chapter>`), które niosą h2. */}
+        <h3 id={id ? `${id}-heading` : undefined} className="text-sm font-semibold text-c-text">
           {title}
-        </h2>
+        </h3>
       </div>
     </div>
     {children}
   </section>
+);
+
+/** Rozdział formuły właściciela — numerowany, żeby dokument dało się czytać
+ * jako raport, a nie jako zestaw równorzędnych kafli. */
+const Chapter: React.FC<{
+  number: number;
+  title: string;
+  lede?: React.ReactNode;
+  icon?: React.ElementType;
+  id: string;
+  children: React.ReactNode;
+}> = ({ number, title, lede, icon: Icon, id, children }) => (
+  <section id={id} aria-labelledby={`${id}-heading`} className="flex flex-col gap-3">
+    <div className="flex items-start gap-3 border-b border-c-border-subtle pb-3">
+      {Icon ? <Icon size={18} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" /> : null}
+      <div className="min-w-0">
+        <h2 id={`${id}-heading`} className="text-base font-semibold text-c-text">
+          {number}. {title}
+        </h2>
+        {lede ? <p className="mt-1 text-xs text-c-text-secondary">{lede}</p> : null}
+      </div>
+    </div>
+    {children}
+  </section>
+);
+
+/**
+ * Akapit pochodzący z metodyki (opis osi, opis poziomu) — zawsze ze
+ * znacznikiem języka źródła. Angielski akapit w polskim dokumencie NIE jest
+ * tu chowany ani „tłumaczony w locie": jest pokazany i nazwany, bo korpus
+ * `drdStructure.ts` po prostu nie ma jeszcze polskiej wersji osi 1–4 i 7
+ * (zmierzone — patrz nagłówek `drdLabels.ts`). Wymyślanie tłumaczenia
+ * w komponencie byłoby wymyślaniem treści metodyki.
+ */
+const MethodologyProse: React.FC<{ text: string; language: DrdSourceLanguage; className?: string }> = ({
+  text,
+  language,
+  className,
+}) => (
+  <p className={`text-xs leading-relaxed text-c-text-secondary ${className ?? ''}`}>
+    {language === 'en' ? (
+      <span
+        className="mr-1.5 rounded border border-c-border-subtle px-1 py-px align-middle text-[9px] font-semibold uppercase tracking-wider text-c-text-muted"
+        title="Źródło: metodyka DRD w oryginale angielskim — polskiego tłumaczenia tej osi jeszcze nie ma w pakiecie."
+      >
+        EN
+      </span>
+    ) : null}
+    {text}
+  </p>
 );
 
 const Property: React.FC<{ label: string; value: React.ReactNode; mono?: boolean }> = ({
@@ -134,6 +220,208 @@ const LevelBar: React.FC<{
         />
       ) : null}
     </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Rozdział jednej osi — punkt 2 formuły właściciela
+// ---------------------------------------------------------------------------
+
+/**
+ * Jeden obszar analityczny: nagłówek z liczbami + DEFINICJA poziomu obecnego
+ * i docelowego prosto z metodyki. To jest to, czego w raporcie nie było —
+ * obszar dostawał sam nagłówek „1A Procesy Sprzedaży" i linijkę cyfr.
+ *
+ * Poziomy bierze `resolveDrdLevelNarrative`, czyli `area.levels` TEGO obszaru
+ * — nigdy `areas[0]` (patrz komentarz przy tej funkcji w `drdLabels.ts`).
+ */
+const AreaBlock: React.FC<{
+  unitId: string;
+  unitName: string;
+  methodPackId: string;
+  methodPackVersion: string;
+  current: number | null;
+  target: number | null;
+  gap: number | null;
+  levelCount: number;
+  hasFinding: boolean;
+}> = ({ unitId, unitName, methodPackId, methodPackVersion, current, target, gap, levelCount, hasFinding }) => {
+  const currentLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, current);
+  const targetLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, target);
+  return (
+    <div className="rounded-xl border border-c-border-subtle px-3.5 py-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="text-xs font-semibold text-c-text">
+          <span className="font-mono text-c-text-muted">{unitId}</span> · {unitName}
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-[11px] tabular-nums text-c-text-secondary">
+            {current === null ? '—' : current} / {target === null ? '—' : target}
+            <span className="text-c-text-muted"> (skala 1–{levelCount})</span>
+          </span>
+          <div className="w-24">
+            <LevelBar current={current} target={target} min={1} max={levelCount} />
+          </div>
+          {gap !== null ? (
+            <span
+              className={`w-10 shrink-0 text-right text-[11px] font-semibold tabular-nums ${gap > 0 ? 'text-c-danger' : 'text-c-success'}`}
+            >
+              {gap > 0 ? `+${gap}` : gap}
+            </span>
+          ) : (
+            <span className="w-10 shrink-0 text-right text-[11px] text-c-text-muted">—</span>
+          )}
+        </div>
+      </div>
+
+      {currentLevel ? (
+        <div className="mt-2.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+            Poziom obecny {currentLevel.level} — {currentLevel.title}
+          </p>
+          <MethodologyProse
+            className="mt-0.5"
+            text={currentLevel.description}
+            language={currentLevel.sourceLanguage}
+          />
+        </div>
+      ) : (
+        <p className="mt-2.5 text-[11px] italic text-c-text-muted">
+          {current === null
+            ? 'Poziom obecny nie został w tej ocenie rozstrzygnięty.'
+            : 'Metodyka przypięta w tym Outpucie nie niesie definicji tego poziomu.'}
+        </p>
+      )}
+
+      {/* Cel osiągnięty → NIE powtarzamy tej samej definicji drugi raz.
+          Bez tego obszar bez luki drukował identyczny akapit dwa razy pod
+          rząd („Poziom obecny 6 — ERP" / „Poziom docelowy 6 — ERP"), co
+          w dokumencie dla zarządu czyta się jak błąd składu. */}
+      {targetLevel && targetLevel.level !== currentLevel?.level ? (
+        <div className="mt-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+            Poziom docelowy {targetLevel.level} — {targetLevel.title}
+          </p>
+          <MethodologyProse
+            className="mt-0.5"
+            text={targetLevel.description}
+            language={targetLevel.sourceLanguage}
+          />
+        </div>
+      ) : targetLevel ? (
+        <p className="mt-2 text-[11px] font-medium text-c-success">
+          Poziom docelowy {targetLevel.level} — osiągnięty; definicja jak wyżej.
+        </p>
+      ) : null}
+
+      {!hasFinding ? (
+        <p className="mt-2 text-[11px] font-medium text-c-warning">
+          Brak przyjętego dowodu dla tego obszaru — liczby powyżej pochodzą z zapisu sesji, ale nie są
+          poparte zaakceptowanym materiałem dowodowym.
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
+/** Rozdział jednej osi: opis osi → jej obszary → obszary nieobjęte oceną. */
+const AxisSection: React.FC<{
+  axis: {
+    readonly axisId: string;
+    readonly axisNumber: number;
+    readonly axisName: string;
+    readonly description: string | null;
+    readonly descriptionLanguage: DrdSourceLanguage;
+    readonly levelCount: number;
+    readonly areas: readonly { readonly id: string; readonly name: string }[];
+  };
+  unitIds: readonly string[];
+  output: AssessmentReportData['output'];
+  aggregatedLevel: number | null | undefined;
+}> = ({ axis, unitIds, output, aggregatedLevel }) => {
+  const findingUnitIds = new Set((output.findings ?? []).map((f) => f.unitId));
+  const assessed = axis.areas.filter((a) => unitIds.includes(a.id));
+  const notAssessed = axis.areas.filter((a) => !unitIds.includes(a.id));
+
+  return (
+    <SectionCard
+      id={`os-${axis.axisNumber}`}
+      eyebrow={`Oś ${axis.axisNumber} z 7 · skala 1–${axis.levelCount} · ${axis.areas.length} obszarów`}
+      title={`${axis.axisNumber}. ${axis.axisName}`}
+    >
+      {axis.description ? (
+        <MethodologyProse text={axis.description} language={axis.descriptionLanguage} className="mb-3" />
+      ) : null}
+
+      <p className="mb-3 text-[11px] text-c-text-muted">
+        Oceniono {assessed.length} z {axis.areas.length} obszarów tej osi.
+        {aggregatedLevel !== null && aggregatedLevel !== undefined
+          ? ` Wynik osi: ${aggregatedLevel} (skala 1–${axis.levelCount}).`
+          : ' Zamrożony Output nie niesie zagregowanego wyniku tej osi.'}
+      </p>
+
+      {assessed.length === 0 ? (
+        <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
+          Żaden obszar tej osi nie został objęty tą oceną. Oś zostaje w dokumencie, żeby było widać, czego
+          badanie nie dotknęło — pominięcie rozdziału zmieniłoby zakres oceny w oczach czytelnika.
+        </p>
+      ) : (
+        <div className="space-y-2.5">
+          {/*
+            ★ MACIERZ OSI — odbiór właściciela 30.08 („Jeśli to ma być raport,
+            to muszą być na nim macierze") i eskalacja 01.09 („Ciągle nie wiem
+            dlaczego nie używasz mojej macierzy DRD"). Do dziś rozdział osi miał
+            same bloki obszarów — czytelnik nie widział drogi rozwoju obszaru
+            po drabinie poziomów, tylko dwie liczby na obszar.
+
+            To jest DOKŁADNIE ta siatka, którą właściciel zaakceptował na ekranie
+            „Macierz oceny DRD — obszary x poziomy" (`drd-macierz-oceny`), a nie
+            jej kopia — patrz `DRDMatrixReadOnly`.
+          */}
+          <DRDMatrixReadOnly
+            axisNumber={axis.axisNumber}
+            value={drdOdpowiedziZOutputu(
+              axis.areas.map((a) => a.id),
+              output.current ?? {},
+              output.target ?? {}
+            )}
+          />
+
+          {assessed.map((area) => (
+            <AreaBlock
+              key={area.id}
+              unitId={area.id}
+              unitName={area.name}
+              methodPackId={output.methodPackId}
+              methodPackVersion={output.methodPackVersion}
+              current={output.current?.[area.id] ?? null}
+              target={output.target?.[area.id] ?? null}
+              gap={output.gap?.[area.id] ?? null}
+              levelCount={axis.levelCount}
+              hasFinding={findingUnitIds.has(area.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {assessed.length > 0 && notAssessed.length > 0 ? (
+        <div className="mt-3">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+            Obszary tej osi nieobjęte oceną ({notAssessed.length})
+          </p>
+          <ul className="flex flex-wrap gap-1.5">
+            {notAssessed.map((area) => (
+              <li
+                key={area.id}
+                className="rounded-full border border-c-border-subtle px-2.5 py-1 text-[11px] text-c-text-muted"
+              >
+                <span className="font-mono">{area.id}</span> {area.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </SectionCard>
   );
 };
 
@@ -211,11 +499,15 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           </div>
         ),
       },
-      { id: 'axisName', label: 'Wymiar (oś)', width: '160px', sortable: true },
+      // Kolumna „Wymiar (oś)" USUNIĘTA 2026-08-30: od kiedy tabela leży jako
+      // zestawienie zbiorcze POD rozdziałami osi, oś jest już nagłówkiem
+      // rozdziału, a tu zjadała 160 px z 880 px kolumny dokumentu — nazwa
+      // jednostki ucinała się do „Procesy S…”. Oś zostaje w danych wiersza
+      // (sortowanie/eksport), znika tylko z widoku.
       {
         id: 'levels',
         label: 'Obecny / Cel',
-        width: '220px',
+        width: '190px',
         render: (row) => (
           <div className="flex items-center gap-2">
             <span className="w-16 shrink-0 text-xs tabular-nums text-c-text">
@@ -249,13 +541,13 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       {
         id: 'bandLabel',
         label: 'Pozycja na skali',
-        width: '170px',
+        width: '140px',
         render: (row) => (row.bandLabel ? <span className="text-xs text-c-text-secondary">{row.bandLabel as string}</span> : <span className="text-c-text-muted">—</span>),
       },
       {
         id: 'hasFinding',
         label: 'Dowody',
-        width: '150px',
+        width: '132px',
         render: (row) =>
           row.hasFinding ? (
             <StatusChip label="Potwierdzone dowodem" tone="success" size="sm" />
@@ -310,6 +602,62 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
 
   const lifecycleTone = superseded ? 'neutral' : 'success';
   const lifecycleLabel = superseded ? 'Zamrożony — zastąpiony nowszą rewizją' : 'Zamrożony (niezmienny)';
+
+  // ── Formuła właściciela, punkt 2: „siedem osi" ────────────────────────────
+  // Rozdziały osi powstają z metodyki (wszystkie 7, także te NIEobjęte tą
+  // oceną — inaczej dokument milczy o tym, czego nie zbadano), a treść per
+  // obszar z zamrożonego Outputu. Pusta lista = pakiet inny niż DRD albo
+  // niezgodna przypięta wersja; wtedy dokument degraduje się do samego
+  // zestawienia zbiorczego, zamiast pokazać opisy z innej wersji metodyki.
+  const axisNarratives = useMemo(
+    () => listDrdAxisNarratives(output.methodPackId, output.methodPackVersion),
+    [output.methodPackId, output.methodPackVersion]
+  );
+
+  const unitIdsByAxis = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const unitId of unitIds) {
+      const label = resolveDrdUnitLabel(output.methodPackId, output.methodPackVersion, unitId);
+      const key = label?.axisId ?? 'axis-nieznana';
+      const bucket = map.get(key);
+      if (bucket) bucket.push(unitId);
+      else map.set(key, [unitId]);
+    }
+    return map;
+  }, [unitIds, output.methodPackId, output.methodPackVersion]);
+
+  /** Jednostki, których metodyka nie umiała przypisać do osi (obcy pakiet,
+   * niezgodna wersja, nieznany identyfikator) — nie wolno ich zgubić między
+   * rozdziałami, więc dostają własny, jawnie nazwany blok. */
+  const unitsOutsideAxes = useMemo(
+    () => unitIdsByAxis.get('axis-nieznana') ?? [],
+    [unitIdsByAxis]
+  );
+
+  const axesCoveredCount = useMemo(
+    () => axisNarratives.filter((a) => (unitIdsByAxis.get(a.axisId) ?? []).length > 0).length,
+    [axisNarratives, unitIdsByAxis]
+  );
+
+  const totalMethodAreas = useMemo(
+    () => axisNarratives.reduce((sum, a) => sum + a.areas.length, 0),
+    [axisNarratives]
+  );
+
+  const levelScaleSummary = useMemo(
+    () => axisNarratives.map((a) => a.levelCount).join('/'),
+    [axisNarratives]
+  );
+
+  /** Największa luka — `gaps` jest już posortowane malejąco po `gap`. */
+  const largestGap = gaps[0] ?? null;
+
+  const surveyModeLabel =
+    session?.mode === 'teresa_led'
+      ? 'prowadzona przez asystenta (Teresa), z zapisem każdego kroku w event-store'
+      : session?.mode === 'guided_manual'
+        ? 'prowadzona przez konsultanta — odpowiedzi i dowody wprowadzane ręcznie w sesji'
+        : 'tryb prowadzenia nie został zapisany w metadanych sesji';
 
   return (
     <article className="mx-auto flex max-w-[880px] flex-col gap-4 pb-16">
@@ -375,18 +723,97 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         ) : null}
       </header>
 
-      {/* ── Ograniczenia i założenia — widoczne od razu, nie schowane ──── */}
-      {output.limitations && output.limitations.length > 0 ? (
-        <SectionCard id="limitations" title="Ograniczenia i założenia" icon={AlertTriangle}>
-          <ul className="list-disc space-y-1.5 pl-5 text-xs text-c-text-secondary">
-            {output.limitations.map((l, i) => (
-              <li key={i}>{l}</li>
-            ))}
-          </ul>
+      {/* ══ 1. WSTĘP — jak prowadzono badanie ═════════════════════════════
+          Formuła właściciela, punkt 1. Wszystko poniżej to fakty już
+          zapisane (metadane sesji, ślad zatwierdzeń, liczniki dowodowe
+          z Outputu) ułożone w prozę — ani jedna liczba nie jest tu
+          przeliczana, ani jedno zdanie nie opisuje badania, którego dane
+          nie potwierdzają. */}
+      <Chapter
+        id="wstep"
+        number={1}
+        title="Jak prowadzono badanie"
+        icon={ClipboardList}
+        lede="Zakres, tryb i granice wiarygodności tej oceny — zanim padnie pierwsza liczba."
+      >
+        <SectionCard id="wstep-przebieg" title="Przebieg oceny">
+          <div className="space-y-2 text-xs leading-relaxed text-c-text-secondary">
+            <p>
+              Ocenę przeprowadzono metodyką <strong className="text-c-text">{output.methodPackId.toUpperCase()}</strong>{' '}
+              w wersji pakietu <span className="font-mono text-[11px]">{output.methodPackVersion}</span>
+              {axisNarratives.length > 0 ? (
+                <>
+                  {' '}— {axisNarratives.length} osi transformacji, łącznie {totalMethodAreas} obszarów
+                  analitycznych, każda oś na własnej skali dojrzałości ({levelScaleSummary} poziomów).
+                </>
+              ) : (
+                '.'
+              )}{' '}
+              Sesja była {surveyModeLabel}.
+            </p>
+            <p>
+              Badanie objęło <strong className="text-c-text">{unitIds.length}</strong>
+              {totalMethodAreas > 0 ? <> z {totalMethodAreas}</> : null} obszarów
+              {axisNarratives.length > 0 ? (
+                <>
+                  {' '}w <strong className="text-c-text">{axesCoveredCount}</strong> z {axisNarratives.length} osi
+                </>
+              ) : null}
+              . Dla {output.findings?.length ?? 0} z nich organizacja dostarczyła dowód, który został przyjęty;
+              dla {unitsWithoutFinding.length} dowodu nie przyjęto — te obszary są w rozdziale 3 wymienione
+              z nazwy i nie są liczone jako zero.
+              {evidenceCompleteness
+                ? ` Kompletność dowodowa tej oceny wynosi ${Math.round((evidenceCompleteness.completenessRatio ?? 0) * 100)}%.`
+                : ''}
+            </p>
+            <p>
+              Wynik zamrożono {formatDateTime(output.frozenAt)}
+              {session?.createdAt ? <>, sesję otwarto {formatDate(session.createdAt)}</> : null}.{' '}
+              {latestApproval ? (
+                <>
+                  Zatwierdzenie zarejestrowano{' '}
+                  {formatDate(latestApproval.createdAt)} (rewizja {latestApproval.revision})
+                  {latestApproval.comment ? <> — „{latestApproval.comment}"</> : null}.
+                </>
+              ) : (
+                <>
+                  Dla tej rewizji <strong className="text-c-text">nie zarejestrowano zatwierdzenia</strong> —
+                  dokument jest odczytem zamrożonego wyniku, nie wynikiem zatwierdzonym.
+                </>
+              )}
+            </p>
+          </div>
+          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+            <Property label="Właściciel sesji" value={session?.ownerUserId ?? '—'} mono={!!session?.ownerUserId} />
+            <Property label="Otwarcie sesji" value={formatDate(session?.createdAt)} />
+            <Property label="Zamrożenie wyniku" value={formatDate(output.frozenAt)} />
+            <Property label="Rewizja sesji" value={session ? `v${session.version}` : '—'} />
+          </dl>
         </SectionCard>
-      ) : null}
 
-      {/* ── 2. Wynik ogólny ─────────────────────────────────────────────── */}
+        {/* Zastrzeżenia metodyczne należą do wstępu, nie do stopki — czytelnik
+            ma je poznać PRZED liczbami, nie po nich. */}
+        {output.limitations && output.limitations.length > 0 ? (
+          <SectionCard id="limitations" title="Ograniczenia i założenia" icon={AlertTriangle}>
+            <ul className="list-disc space-y-1.5 pl-5 text-xs text-c-text-secondary">
+              {output.limitations.map((l, i) => (
+                <li key={i}>{l}</li>
+              ))}
+            </ul>
+          </SectionCard>
+        ) : null}
+      </Chapter>
+
+      {/* ══ 2. SIEDEM OSI ═════════════════════════════════════════════════
+          Tytuł słowami właściciela („Siedem osi") — liczebnik słownie tylko
+          wtedy, gdy metodyka faktycznie ma siedem osi; inaczej cyfra. */}
+      <Chapter
+        id="osie"
+        number={2}
+        title={axisNarratives.length === 7 ? 'Siedem osi metodyki' : `Osie metodyki (${axisNarratives.length})`}
+        icon={BookOpen}
+        lede="Dla każdej osi: czym oś jest, a następnie każdy jej obszar analityczny — z definicją poziomu obecnego i docelowego."
+      >
       <SectionCard id="overall" title="Wynik ogólny" icon={CheckCircle2}>
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <SummaryStat label="Ocenionych jednostek" value={unitIds.length} />
@@ -429,12 +856,77 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         )}
       </SectionCard>
 
-      {/* ── 3. Wynik per jednostka ──────────────────────────────────────── */}
-      <SectionCard id="dimensions" title="Wynik per jednostka oceny" icon={CheckCircle2}>
-        <StandardTable columns={dimensionColumns} data={dimensionRows} minTableWidth="auto" persistKey="assessment.report.dimensions" />
-      </SectionCard>
+        {/* ── Rozdziały osi: opis osi → obszary z definicją poziomów ────── */}
+        {axisNarratives.length === 0 ? (
+          <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
+            Opisy osi i poziomów są dostępne wyłącznie dla pakietu DRD w wersji zgodnej z wersją przypiętą
+            w tym Outpucie ({output.methodPackId} {output.methodPackVersion}). Ten Output przypina wersję,
+            której skompilowany pakiet nie zna — dokument pokazuje więc same liczby, bez definicji metodyki,
+            zamiast opisywać poziomy z innej wersji metodyki niż ta, którą oceniano.
+          </p>
+        ) : (
+          axisNarratives.map((axis) => (
+            <AxisSection
+              key={axis.axisId}
+              axis={axis}
+              unitIds={unitIdsByAxis.get(axis.axisId) ?? []}
+              output={output}
+              aggregatedLevel={output.aggregation?.byGroup?.[axis.axisId]}
+            />
+          ))
+        )}
 
-      {/* ── 4. Mocne strony i luki ──────────────────────────────────────── */}
+        {unitsOutsideAxes.length > 0 ? (
+          <SectionCard id="axis-unmapped" title="Jednostki poza strukturą osi" icon={AlertTriangle}>
+            <p className="mb-2 text-xs text-c-text-secondary">
+              Tych jednostek nie da się przypisać do żadnej osi metodyki przypiętej w tym Outpucie. Są
+              wymienione, żeby nie wypadły z dokumentu między rozdziałami.
+            </p>
+            <ul className="flex flex-wrap gap-1.5">
+              {unitsOutsideAxes.map((unitId) => (
+                <li
+                  key={unitId}
+                  className="rounded-full border border-c-border-subtle px-2.5 py-1 font-mono text-[11px] text-c-text-muted"
+                >
+                  {unitId}
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+        ) : null}
+
+        {/* Zestawienie zbiorcze — jedna tabela na wszystkie jednostki, żeby
+            czytelnik miał obraz całości bez przewijania siedmiu rozdziałów.
+            Kanon: StandardTable, nigdy własna tabela. */}
+        <SectionCard id="dimensions" title="Zestawienie zbiorcze wszystkich jednostek" icon={CheckCircle2}>
+          <StandardTable columns={dimensionColumns} data={dimensionRows} minTableWidth="auto" persistKey="assessment.report.dimensions" />
+        </SectionCard>
+      </Chapter>
+
+      {/* ══ 3. ODPOWIEDZI I WSTĘPNA PALETA WNIOSKÓW ═══════════════════════ */}
+      <Chapter
+        id="odpowiedzi"
+        number={3}
+        title="Odpowiedzi i wstępna paleta wniosków"
+        icon={Lightbulb}
+        lede="Co organizacja pokazała na dowód, czego nie pokazała, i co z tego wynika."
+      >
+        {/* ★ UCZCIWOŚĆ, nie ozdobnik. Właściciel prosi w punkcie 3 o
+            „odpowiedzi". Zamrożony Output NIE niesie treści odpowiedzi —
+            niesie przyjęty poziom i lokalizatory dowodów; treść zdarzeń
+            `ANSWER_CONFIRMED` zostaje w event-store i nie jest kopiowana do
+            `method_findings` (zmierzone: RAPORT_OCENY_STAN.md, wymaganie 3a).
+            Dokument mówi to wprost, zamiast podać dowody jako odpowiedzi. */}
+        <div className="flex items-start gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-xs text-c-text-secondary">
+          <FileWarning size={14} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
+          <p>
+            Zamrożony Output przenosi <strong className="text-c-text">przyjęty poziom i dowody</strong>, a nie
+            dosłowną treść odpowiedzi z sesji — ta zostaje w zapisie zdarzeń sesji. Poniżej jest więc to, co
+            dokument naprawdę ma: materiał dowodowy per obszar, obszary bez dowodu, oraz wnioski wyprowadzone
+            z przyjętych poziomów.
+          </p>
+        </div>
+
       <SectionCard id="strengths-gaps" title="Mocne strony i luki" icon={Lightbulb}>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -549,7 +1041,46 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         )}
       </SectionCard>
 
-      {/* ── 7. Rekomendacje priorytetowe ────────────────────────────────── */}
+      </Chapter>
+
+      {/* ══ 4. PODSUMOWANIE ═══════════════════════════════════════════════ */}
+      <Chapter
+        id="podsumowanie"
+        number={4}
+        title="Podsumowanie"
+        icon={Target}
+        lede="Domknięcie: obraz całości i kolejność działań wynikająca z przyjętych poziomów."
+      >
+        <SectionCard id="closing" title="Obraz całości">
+          <div className="space-y-2 text-xs leading-relaxed text-c-text-secondary">
+            <p>
+              Ocena objęła {unitIds.length}
+              {totalMethodAreas > 0 ? <> z {totalMethodAreas}</> : null} obszarów
+              {axisNarratives.length > 0 ? <> w {axesCoveredCount} z {axisNarratives.length} osi</> : null}.
+              W {strengths.length} obszarach organizacja jest na poziomie docelowym lub powyżej;
+              w {gaps.length} pozostaje luka
+              {largestGap
+                ? (
+                    <>
+                      , największa na obszarze <strong className="text-c-text">{largestGap.unitName}</strong>{' '}
+                      ({largestGap.gap} {largestGap.gap === 1 ? 'poziom' : 'poziomy'})
+                    </>
+                  )
+                : null}
+              .
+            </p>
+            <p>
+              {unitsWithoutFinding.length === 0
+                ? 'Każdy oceniany obszar ma przyjęty dowód — wynik można traktować jako udokumentowany w całości.'
+                : `Dla ${unitsWithoutFinding.length} obszarów nie przyjęto dowodu. To nie są zera: to obszary, o których ta ocena nie rozstrzyga, i pierwsza pozycja do domknięcia w kolejnej rundzie.`}
+            </p>
+            <p>
+              Kolejność działań poniżej wynika wyłącznie z wielkości luki między poziomem obecnym
+              a docelowym — nie z osobnego modelu priorytetyzacji.
+            </p>
+          </div>
+        </SectionCard>
+
       <SectionCard id="recommendations" title="Rekomendacje priorytetowe" icon={Lightbulb}>
         {recommendations.length === 0 ? (
           <p className="text-xs italic text-c-text-muted">Brak rekomendacji w tym Outpucie.</p>
@@ -561,8 +1092,14 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
                   <p className="text-xs font-semibold text-c-text">
                     {idx + 1}. {f.unitName} <span className="font-mono text-c-text-muted">({f.unitId})</span>
                   </p>
-                  {f.gap !== null ? (
+                  {/* „luka 0" wydrukowana tonem ostrzegawczym była sygnałem
+                      wprost odwrotnym do prawdy — obszar bez luki dostawał
+                      w podsumowaniu ten sam czerwony znacznik co obszar
+                      z luką 3. Ton krytyczny należy się WYŁĄCZNIE luce > 0. */}
+                  {f.gap !== null && f.gap > 0 ? (
                     <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-danger">luka {f.gap}</span>
+                  ) : f.gap === 0 ? (
+                    <span className="shrink-0 text-[11px] font-semibold tabular-nums text-c-success">bez luki</span>
                   ) : null}
                 </div>
                 <p className="mt-1 text-xs text-c-text-secondary">{f.recommendation}</p>
@@ -577,8 +1114,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           </ol>
         )}
       </SectionCard>
+      </Chapter>
 
-      {/* ── 8. Stopka ───────────────────────────────────────────────────── */}
+      {/* ── Stopka ──────────────────────────────────────────────────────── */}
       <footer className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-5 text-[11px] text-c-text-muted">
         <p className="mb-2 font-semibold text-c-text-secondary">
           Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana przy

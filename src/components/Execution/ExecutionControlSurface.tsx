@@ -173,7 +173,17 @@ const controlPresets = [
 export const ExecutionControlSurface = ({
   activePreset,
   onCountsChange,
-}: ExecutionMenu3Contract) => {
+  onRegisterFilterControl,
+}: ExecutionMenu3Contract & {
+  /**
+   * Rejestruje węzeł kontrolki ("Dodaj sygnał" / "Przygotuj interwencję")
+   * do prawej strony Menu 2 gospodarza (ExecutionHub) — patrz identyczny
+   * komentarz w `ExecutionWorkSurface`. Odbiór grafiki 165-menu3-pasek,
+   * execution-tab-control: właściciel zgłosił ten sam problem co na
+   * ekranach "Praca" i "Zasoby".
+   */
+  onRegisterFilterControl?: (node: React.ReactNode) => void;
+}) => {
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     [rows, setRows] = useState<Row[]>([]),
     [signalRows, setSignalRows] = useState<SignalRow[]>([]),
@@ -592,6 +602,39 @@ export const ExecutionControlSurface = ({
       setWrite('FAILED');
     }
   };
+  // Menu 2 (prawa strona) — "Dodaj sygnał" / "Przygotuj interwencję". Patrz
+  // komentarz propa `onRegisterFilterControl` powyżej.
+  useEffect(() => {
+    if (!onRegisterFilterControl) return;
+    onRegisterFilterControl(
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => {
+            setInterventionComposerOpen(false);
+            setShowInterventionForm(true);
+            setShowSignalForm(true);
+          }}
+        >
+          Dodaj sygnał
+        </button>
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={draftSignalIds.length === 0}
+          onClick={() => {
+            setShowInterventionForm(true);
+            setInterventionComposerOpen(true);
+          }}
+        >
+          Przygotuj interwencję
+        </button>
+      </div>
+    );
+    return () => onRegisterFilterControl(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterFilterControl, draftSignalIds]);
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
@@ -603,36 +646,6 @@ export const ExecutionControlSurface = ({
     );
   return (
     <section aria-label="Execution Control" className="p-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">Sterowanie</h2>
-          <p className="text-sm text-c-text-muted">
-            Sygnały wymagające reakcji, decyzje zarządcze i kontrola skuteczności interwencji.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            className="btn-secondary"
-            onClick={() => {
-              setInterventionComposerOpen(false);
-              setShowInterventionForm(true);
-              setShowSignalForm(true);
-            }}
-          >
-            Dodaj sygnał
-          </button>
-          <button
-            className="btn-secondary"
-            disabled={draftSignalIds.length === 0}
-            onClick={() => {
-              setShowInterventionForm(true);
-              setInterventionComposerOpen(true);
-            }}
-          >
-            Przygotuj interwencję
-          </button>
-        </div>
-      </div>
       {state === 'LOADING' && <p role="status">Ładowanie interwencji…</p>}
       {showInterventionForm && (
         <section aria-label="Intervention Signal Workbench" className="mt-4">

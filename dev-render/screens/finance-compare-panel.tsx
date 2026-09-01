@@ -139,8 +139,12 @@ if (!g.__COMPARE_PANEL_FETCH__) {
 }
 
 function SimulatedMenu1(): React.ReactElement {
+  // Pasek harnessu, nie produkt — schowany przy zrzutach (bramka PODPIS, 2026-09-01).
   return (
-    <div className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary">
+    <div
+      className="flex h-10 items-center gap-4 border-b border-c-border-subtle bg-c-surface px-4 text-xs text-c-text-secondary"
+      data-dev-render-chrome="true"
+    >
       <span className="font-semibold text-c-text">Consultify</span>
       <span>Finance</span>
       <span className="text-c-text-muted">(symulowane Menu 1 — nie część tego pakietu)</span>
@@ -156,7 +160,23 @@ export default function FinanceComparePanelScreen(): React.ReactElement {
       data-scene={scene}
     >
       <SimulatedMenu1 />
-      <div className="mx-auto mt-4 max-w-3xl">
+      {/*
+       * ★ SZEROKOŚĆ: BEZ `max-w-*` (odbiór grafiki 2026-09-01, uwaga
+       * `finance-compare-panel`: „A może całą szerokość dostępnego ekranu
+       * wykorzystajmy").
+       *
+       * Do 09-01 stało tu `mx-auto mt-4 max-w-3xl` — 768 px kontenera przy
+       * oknie 1440 px, czyli tabela 740 px i 672 px pustki po bokach (46,7%
+       * ekranu). POMIAR w żywym DOM wskazał, że ograniczenie siedziało
+       * WYŁĄCZNIE W TYM PLIKU: `FinanceComparePanel` nie ma żadnego
+       * `max-width`, a jego jedyny produkcyjny montaż
+       * (`src/components/Finance/shared/FinanceWorkspaceUtilities.tsx:101`,
+       * przez `CanonicalFinanceWorkspaceMount` w `FinanceHub.tsx:230`) siedzi
+       * w kontenerze pełnej szerokości. Czyli: właściciel oglądał zwężenie
+       * WPROWADZONE PRZEZ PRZYRZĄD, nie przez produkt — kolejny przypadek
+       * „harness kłamie". Host musi pokazywać to, co widać w produkcie.
+       */}
+      <div className="mt-4">
         <FinanceComparePanel request={REQUEST} />
       </div>
     </div>

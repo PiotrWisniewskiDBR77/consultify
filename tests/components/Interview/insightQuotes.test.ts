@@ -56,6 +56,32 @@ describe('extractQuotedFragments', () => {
     });
   });
 
+  it('REGRESJA: cytat blokowy z własnymi cudzysłowami nie dubluje się i nie niesie pary', () => {
+    // Defekt ze zrzutu `insight-artifact` (2026-08-31): ten sam cytat stał na
+    // ekranie DWA RAZY, raz jako `""…""`. Linia `> "…"` wpadała RÓWNOLEGLE
+    // w skan blokowy (zwracał ją Z cudzysłowami — renderer doklejał drugą parę)
+    // i w skan inline (zwracał ją BEZ cudzysłowów), więc powstawały dwa różne
+    // łańcuchy, których `uniqueNonEmpty` nie miał jak skleić.
+    const content = '> "We have good projects, but not yet a good portfolio story."';
+
+    const fragments = extractQuotedFragments(content);
+
+    fragments.forEach((fragment) => {
+      expect(fragment).not.toMatch(/["„“”]/);
+    });
+    expect(new Set(fragments).size).toBe(1);
+    expect(fragments[0]).toBe('We have good projects, but not yet a good portfolio story.');
+  });
+
+  it('cytat blokowy z DWIEMA parami zostaje nietknięty (zakaz sklejania przez cudzysłów)', () => {
+    const content = '> "Pierwszy cytat wystarczająco długi" oraz "drugi cytat też dostatecznie długi"';
+
+    // Skan blokowy nie zdejmuje tu nic (klasa treści wyklucza cudzysłowy),
+    // a skan inline rozbija linię na dwa czyste fragmenty.
+    expect(extractQuotedFragments(content)).toContain('Pierwszy cytat wystarczająco długi');
+    expect(extractQuotedFragments(content)).toContain('drugi cytat też dostatecznie długi');
+  });
+
   it('zwraca pustą listę dla tekstu bez cudzysłowów', () => {
     const content =
       'Zdanie bez żadnego cytatu, wystarczająco długie, żeby przekroczyć próg szesnastu znaków.';

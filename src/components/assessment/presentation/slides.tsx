@@ -16,6 +16,12 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import {
+  DRDMatrixReadOnly,
+  drdOdpowiedziZOutputu,
+} from '@/components/assessment/drd/DRDMatrixReadOnly';
+
+import type { AxisMatrixModel } from '../groupLabels';
 import type { FindingHighlight, PresentationDeckModel } from './buildPresentationDeck';
 import { MissingNarrativeNote, PresentationSlideShell, StatChip } from './PresentationSlideShell';
 
@@ -146,7 +152,12 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
                   to "Cyfrowe Mode…" on a board-facing deck. `title` stays as
                   the fallback for an unusually long name from another pack.
                   224px (`w-56`) clears the longest DRD axis label, measured at
-                  185px — verified in the dev-render harness, not estimated. */}
+                  185px — verified in the dev-render harness, not estimated.
+                  Slajd 5 świadomie zostaje po polsku (odwrócone 2026-09-01,
+                  patrz komentarz przy `dimensionProfileFrom` w
+                  `buildPresentationDeck.ts`) — spójność ze slajdem 6
+                  (macierz), zaakceptowanym przez właściciela tego samego
+                  dnia z polskim tytułem osi. */}
               <span
                 className="w-56 flex-shrink-0 truncate text-sm font-semibold text-c-text-secondary"
                 title={d.groupName}
@@ -166,6 +177,79 @@ export const DimensionProfileSlide: React.FC<{ model: PresentationDeckModel }> =
           ))}
         </div>
       )}
+    </PresentationSlideShell>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// 5b. MACIERZ obszary × poziomy — jeden slajd na oś
+//
+// ★ ODBIÓR WŁAŚCICIELA 2026-08-30: „Jeśli to ma być raport, to musi być opis,
+// muszą być na nim macierze, muszą być ich opisy. Teraz nie ma macierzy nawet."
+//
+// ★ ESKALACJA 2026-09-01, TRZECIE ZGŁOSZENIE TEJ SAMEJ SPRAWY: „Ciągle nie wiem
+// dlaczego nie używasz mojej macierzy DRD — nie mam już siły serio!! moja macierz
+// jest serio ładna — już ją znalazłeś przecież (zobacz mam to na ekranie
+// **Macierz oceny DRD — obszary x poziomy**)". Te ostatnie słowa to DOSŁOWNA
+// nazwa ekranu `drd-macierz-oceny` z `docs/program/grafika/status.json`, czyli
+// `DRDAssessmentEditor` — i tam właściciel wystawił ocenę B 01.09.
+//
+// Do dziś ten slajd rysował `AreaMatrixTable`. To jest komponent, który
+// właściciel ODRZUCIŁ wprost (`DZIENNIK_GRAFIKA.md` Z-10: „Stary, to nie tak ma
+// wyglądać. Zatrzymaj się z tą pracą."), bo jest PREZENTACJĄ, a nie narzędziem:
+// zmierzone na zrzucie `evidence/grafika/159-macierz-drd/slajd6-macierz__PRZED__light.png`
+// — 63 komórki osi 1, z tego 61 zupełnie PUSTYCH, a pozostałe dwie niosą kropkę.
+// Zero treści merytorycznej, zero wypełnienia schodkowego.
+//
+// Teraz slajd rysuje `DRDMatrixGrid` — DOKŁADNIE tę siatkę, którą właściciel
+// zaakceptował: wiersze = poziomy (najwyższy u góry), kolumny = obszary,
+// nagłówki obszarów w DOLNYM pasku „Area" z chipami `AS n` / `TO n`, komórka
+// niesie wiodącą technologię obszaru na tym poziomie (`MACIERZ_TRESC_KOMOREK.md`
+// §4.3), wypełnienie KUMULATYWNE — poziom 4 wypełnia 1-4 (`KANON_Z_ODBIOROW.md`:
+// „poziom 4 znaczy, że niższe też są osiągnięte").
+//
+// ★ EKSPORT, NIE KOPIA. Kopii tej macierzy w repo jest już kilka
+// (`AreaMatrixTable`, `EmbeddedMatrix`, `DRDMatrixSession`) i to one są powodem
+// trzech pudeł w tej sprawie (Z-12: „kopii jest w tym repo więcej niż
+// oryginałów"). Dokładanie czwartej byłoby powtórzeniem błędu.
+//
+// ★ Liczba poziomów per oś NIE jest ujednolicana: `levelCount` bierzemy z osi
+// w `DRD_STRUCTURE` (7/5/5/7/6/6/5 — `KANON_Z_ODBIOROW.md`).
+// ---------------------------------------------------------------------------
+
+export const AxisMatrixSlide: React.FC<{ matrix: AxisMatrixModel; locale: string }> = ({
+  matrix,
+}) => {
+  const value = React.useMemo(
+    () =>
+      drdOdpowiedziZOutputu(
+        matrix.areas.map((a) => a.id),
+        Object.fromEntries(matrix.areas.map((a) => [a.id, a.currentLevel])),
+        Object.fromEntries(matrix.areas.map((a) => [a.id, a.targetLevel]))
+      ),
+    [matrix]
+  );
+
+  return (
+    <PresentationSlideShell
+      kicker={`Macierz · oś ${matrix.axisNumber}`}
+      title={matrix.axisName}
+      lede={matrix.description ?? undefined}
+      footnote={
+        <span>
+          Oceniono {matrix.assessedCount} z {matrix.areas.length} obszarów · skala 1–
+          {matrix.levelCount} · wypełnienie kumulatywne · chip „AS" = stan obecny, „TO" = cel.
+        </span>
+      }
+    >
+      {/* `min-h-0 flex-1` + przewijanie WEWNĄTRZ siatki: powłoka slajdu centruje
+          treść (`justify-center`), więc bez tego siatka wyższa od kadru jest po
+          cichu PRZYCINANA u dołu — zmierzone: dolny pasek „Area" z chipami
+          AS/TO wypadał poza slajd, czyli znikał dokładnie ten element, o który
+          właściciel się upomina. */}
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <DRDMatrixReadOnly axisNumber={matrix.axisNumber} value={value} fillHeight />
+      </div>
     </PresentationSlideShell>
   );
 };
@@ -345,4 +429,13 @@ export const NextStepsSlide: React.FC<{ model: PresentationDeckModel }> = ({ mod
   </PresentationSlideShell>
 );
 
+/** Liczba slajdów STAŁEGO szkieletu decku (tytuł → … → co dalej). Od
+ * 2026-08-30 deck ma dodatkowo po jednym slajdzie macierzy na każdą ocenioną
+ * oś, więc realną długość liczy `presentationSlideCount(model)` — ta stała
+ * pozostaje kontraktem szkieletu i jest używana jako baza. */
 export const PRESENTATION_SLIDE_COUNT = 9;
+
+/** Realna liczba slajdów dla konkretnego modelu: szkielet + macierze osi. */
+export function presentationSlideCount(model: PresentationDeckModel): number {
+  return PRESENTATION_SLIDE_COUNT + (model.axisMatrices?.length ?? 0);
+}

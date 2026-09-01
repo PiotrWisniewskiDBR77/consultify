@@ -17,6 +17,7 @@ import {
   buildAnalysisKpiColumns,
   computeYoyDelta,
   formatBenchmarkText,
+  formatDownstreamUsesText,
   formatYoyDeltaText,
   groupAnalysisKpiValuesByKpi,
   selectExportColumns,
@@ -290,15 +291,61 @@ describe('buildAnalysisKpiColumns', () => {
     expect(typeof yoyCol?.render).toBe('function');
     expect(typeof benchmarkCol?.render).toBe('function');
   });
+
+  it('KONTROLA NEGATYWNA: kolumna downstreamUses MA `render` sklejający tablicę separatorem — bez niego React renderuje elementy SKLEJONE bez spacji', () => {
+    const columns = buildAnalysisKpiColumns([{ id: 'p1', label: '2025' }]);
+    const downstreamCol = columns.find((c) => c.id === 'downstreamUses');
+    expect(typeof downstreamCol?.render).toBe('function');
+
+    const row = toAnalysisKpiTableRow({
+      group: groupAnalysisKpiValuesByKpi([kpiValue({ kpiValueId: 'kv-2026', periodId: 'p1', value: value('PRESENT_NONZERO', '0.4') })], ['p1'])[0],
+      formulaInfo: {
+        formulaDisplay: '(Przychody − COGS) / Przychody',
+        interpretationGeneral: 'Wyższa = lepiej',
+        downstreamUses: ['Model bazowy — driver marży', 'Raport zarządczy Q3'],
+      },
+      includedInReport: true,
+      markedAsModelInput: false,
+    });
+    // W wierszu nadal TABLICA (dane), tekst powstaje dopiero w `render`.
+    expect(Array.isArray(row.downstreamUses)).toBe(true);
+    const rendered = downstreamCol?.render?.(row);
+    expect(rendered).toBe('Model bazowy — driver marży, Raport zarządczy Q3');
+    // Dowód, że to NIE jest gołe `row[column.id]` (React skleiłby bez separatora).
+    expect(rendered).not.toBe('Model bazowy — driver marżyRaport zarządczy Q3');
+  });
+
+  it('KONTROLA NEGATYWNA: pusty downstreamUses ⇒ "—", nie pusta komórka (isEmptyCell nie łapie `[]`)', () => {
+    const columns = buildAnalysisKpiColumns([{ id: 'p1', label: '2025' }]);
+    const downstreamCol = columns.find((c) => c.id === 'downstreamUses');
+    const row = toAnalysisKpiTableRow({
+      group: groupAnalysisKpiValuesByKpi([kpiValue({ kpiValueId: 'kv-2026', periodId: 'p1', value: value('PRESENT_NONZERO', '0.4') })], ['p1'])[0],
+      formulaInfo: null,
+      includedInReport: true,
+      markedAsModelInput: false,
+    });
+    expect(row.downstreamUses).toEqual([]);
+    expect(downstreamCol?.render?.(row)).toBe('—');
+  });
 });
 
 describe('formatYoyDeltaText / formatBenchmarkText — komórki NIE-string bezpieczne do renderu', () => {
   it('formatYoyDeltaText: COMPUTED renderuje procent ze znakiem, MISSING_*/undefined renderują "—" (nigdy surowy obiekt)', () => {
-    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: 20, percentDelta: 20 })).toBe('+20.0%');
-    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: -5, percentDelta: -12.34 })).toBe('-12.3%');
+    // Polski separator dziesiętny (przecinek) — NAPRAWIONE (powtórka 08-31),
+    // patrz komentarz przy formatPlPercent1 w analysisKpiTable.contract.ts.
+    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: 20, percentDelta: 20 })).toBe('+20,0%');
+    expect(formatYoyDeltaText({ status: 'COMPUTED', absoluteDelta: -5, percentDelta: -12.34 })).toBe('-12,3%');
     expect(formatYoyDeltaText({ status: 'MISSING_CURRENT', absoluteDelta: null, percentDelta: null })).toBe('—');
     expect(formatYoyDeltaText({ status: 'MISSING_PRIOR', absoluteDelta: null, percentDelta: null })).toBe('—');
     expect(formatYoyDeltaText({ status: 'PRIOR_ZERO_PCT_UNDEFINED', absoluteDelta: 50, percentDelta: null })).toContain('nieokreślony');
+  });
+
+  it('formatDownstreamUsesText: pusto/null ⇒ "—"; wiele pozycji ⇒ sklejone przecinkiem ze spacją', () => {
+    expect(formatDownstreamUsesText(undefined)).toBe('—');
+    expect(formatDownstreamUsesText(null)).toBe('—');
+    expect(formatDownstreamUsesText([])).toBe('—');
+    expect(formatDownstreamUsesText(['Model bazowy'])).toBe('Model bazowy');
+    expect(formatDownstreamUsesText(['Model bazowy', 'Raport zarządczy Q3'])).toBe('Model bazowy, Raport zarządczy Q3');
   });
 
   it('formatBenchmarkText: null ⇒ "—"; obecny benchmark ⇒ tekst czytelny dla człowieka', () => {

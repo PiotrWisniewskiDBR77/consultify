@@ -55,7 +55,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={`font-medium ${isDisabled ? 'text-c-text-secondary' : 'text-navy-900'}`}>
+          <span className={`font-medium ${isDisabled ? 'text-c-text-secondary' : 'text-c-text'}`}>
             {label}
           </span>
           {locked && (

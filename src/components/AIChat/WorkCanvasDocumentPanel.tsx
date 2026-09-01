@@ -203,7 +203,7 @@ const starterTemplates: StarterTemplate[] = [
     id: 'thoughts',
     label: 'Zbierz myśli',
     title: 'Working Notes',
-    description: 'Capture raw ideas and sort them into usable business structure.',
+    description: 'Zbierz surowe pomysły i uporządkuj je w użyteczną strukturę biznesową.',
     capability: 'real',
     capabilityNote: 'Markdown document, save, selection and Teresa context are production-backed.',
     markdown: `# Working Notes
@@ -229,7 +229,7 @@ Purpose: Capture rough thinking before it becomes a decision, plan, or deliverab
     id: 'document',
     label: 'Napisz dokument',
     title: 'Company Work Note',
-    description: 'A clean Markdown-canonical document for business work.',
+    description: 'Czysty dokument Markdown do pracy biznesowej.',
     capability: 'real',
     capabilityNote: 'Markdown document, autosave, versions, export and Teresa context are backed.',
     markdown: `# Company Work Note
@@ -256,7 +256,7 @@ Write the situation, goal, constraints, and audience here.
     id: 'research',
     label: 'Zrób research',
     title: 'Market Research Brief',
-    description: 'Start a structured research brief before turning on deep search.',
+    description: 'Zacznij od uporządkowanego briefu badawczego, zanim włączysz głębokie wyszukiwanie.',
     capability: 'partial',
     capabilityNote:
       'Research brief creates a linked ResearchSession; evidence execution remains partial.',
@@ -289,7 +289,7 @@ What do we need to know, and what decision will this research support?
     id: 'decision',
     label: 'Przygotuj decyzję',
     title: 'Decision Memo',
-    description: 'Frame options, trade-offs, risks, and the recommended choice.',
+    description: 'Uporządkuj opcje, kompromisy, ryzyka i rekomendowany wybór.',
     capability: 'partial',
     capabilityNote:
       'Decision memo works; full DecisionCanvas lane and tracked approval remain partial.',
@@ -323,7 +323,7 @@ State the recommended option in one clear paragraph.
     id: 'plan',
     label: 'Rozpisz plan',
     title: 'Execution Plan',
-    description: 'Turn the conversation into clear workstreams and next steps.',
+    description: 'Zamień rozmowę w jasne strumienie prac i kolejne kroki.',
     capability: 'real',
     capabilityNote: 'Markdown execution plan with workflow/output follow-up is backed.',
     markdown: `# Execution Plan
@@ -898,6 +898,32 @@ function WorkCanvasMarkdownDocumentPanel({
   const [isProjectionRefreshing, setIsProjectionRefreshing] = React.useState(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = React.useState(false);
   const [isNewCanvasMenuOpen, setIsNewCanvasMenuOpen] = React.useState(false);
+  // #187 (2026-09-01) — at the split-panel's production default width (60%
+  // of the chat shell, see UnifiedChatPanel's DEFAULT_WORK_CANVAS_WIDTH_PERCENT)
+  // this header's toolbar groups (~930px unclipped) don't fit its column
+  // (~860-900px). `overflow-x-auto` was tried and reverted (see canvas-header
+  // comment below — it silently clips every popover anchored here, because
+  // CSS forces overflow-y to `auto` the moment overflow-x isn't `visible` on
+  // the same box). Instead, measure the header's own rendered width and drop
+  // the redundant "Create in workspace" text CAPTION (not the icons behind
+  // it, not the view switcher, not any button) once it stops fitting — this
+  // was the single largest non-essential chunk of the row.
+  const canvasHeaderRef = React.useRef<HTMLDivElement | null>(null);
+  const [isCanvasHeaderCompact, setIsCanvasHeaderCompact] = React.useState(false);
+  React.useEffect(() => {
+    const el = canvasHeaderRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    // Measured at the production default split width: full-caption content
+    // needs ~1040px; below that the caption is the first thing to go.
+    const COMPACT_BELOW_PX = 1040;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (typeof width !== 'number') return;
+      setIsCanvasHeaderCompact(width < COMPACT_BELOW_PX);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   // #87a — "+" New Canvas menu, 3 explicit start options (flag-gated, see
   // canvasNewDocOptionsFlag). "Z canvasa" lazy-loads the user's other Work
   // Canvas document drafts on first open of that section.
@@ -3219,7 +3245,10 @@ function WorkCanvasMarkdownDocumentPanel({
           isUnavailable
             ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300'
             : isDirtySaveAction
-              ? 'text-danger-500 hover:bg-danger-500/10 hover:text-danger-600 dark:text-danger-400 dark:hover:bg-danger-500/15 dark:hover:text-danger-300'
+              ? // Unsaved/failed save is a normal working state, not a critical
+                // error — red (crimson/danger) is reserved for that. Neutral,
+                // higher-emphasis than idle so the pending save still stands out.
+                'text-slate-900 hover:bg-slate-100 hover:text-slate-950 dark:text-white dark:hover:bg-white/10 dark:hover:text-white'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         data-action-status={isLoading ? 'loading' : availability.status}
@@ -3235,10 +3264,10 @@ function WorkCanvasMarkdownDocumentPanel({
 
   const selectionBlockActions = canvasSelection?.selectedText?.trim() ? (
     <div
-      className="mb-5 rounded-2xl border border-primary-200 bg-primary-50/70 p-3 text-sm dark:border-primary-400/20 dark:bg-primary-400/10"
+      className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm dark:border-white/10 dark:bg-white/[0.04]"
       data-testid="canvas-selection-block-actions"
     >
-      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-700 dark:text-slate-300">
         {t('canvas.panel.selection.turnSelectionIntoBlock', 'Turn selection into a block')}
       </div>
       <div className="flex flex-wrap gap-2">
@@ -3279,34 +3308,34 @@ function WorkCanvasMarkdownDocumentPanel({
         </button>
       </div>
       <div
-        className="mt-3 rounded-2xl border border-primary-200/70 bg-white/80 p-3 dark:border-primary-300/20 dark:bg-white/[0.04]"
+        className="mt-3 rounded-2xl border border-slate-200/70 bg-white/80 p-3 dark:border-white/10 dark:bg-white/[0.04]"
         data-testid="canvas-selection-edit-panel"
       >
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-700 dark:text-slate-200">
           {t('canvas.panel.selection.editSelectedText', 'Edit selected text')}
         </div>
-        <div className="mt-1 line-clamp-2 text-xs text-primary-900/70 dark:text-primary-100/70">
+        <div className="mt-1 line-clamp-2 text-xs text-slate-600 dark:text-slate-400">
           {canvasSelection.selectedText}
         </div>
         <div className="mt-3 flex flex-wrap gap-2" data-testid="canvas-selection-writing-shortcuts">
           <button
             type="button"
             onClick={() => applySelectionEditShortcut('use_selection')}
-            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+            className="rounded-full bg-slate-900/[0.07] px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-900/[0.12] dark:bg-white/10 dark:text-slate-100 dark:hover:bg-white/15"
           >
             {t('canvas.panel.selection.useSelection', 'Use selection')}
           </button>
           <button
             type="button"
             onClick={() => applySelectionEditShortcut('action_list')}
-            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+            className="rounded-full bg-slate-900/[0.07] px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-900/[0.12] dark:bg-white/10 dark:text-slate-100 dark:hover:bg-white/15"
           >
             {t('canvas.panel.selection.actionList', 'Action list')}
           </button>
           <button
             type="button"
             onClick={() => applySelectionEditShortcut('bullet_summary')}
-            className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
+            className="rounded-full bg-slate-900/[0.07] px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-900/[0.12] dark:bg-white/10 dark:text-slate-100 dark:hover:bg-white/15"
           >
             {t('canvas.panel.selection.bulletSummary', 'Bullet summary')}
           </button>
@@ -3322,7 +3351,7 @@ function WorkCanvasMarkdownDocumentPanel({
             'canvas.panel.selection.editReplacementPlaceholder',
             'Write the replacement Markdown here...'
           )}
-          className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-primary-200 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-primary-400 dark:border-primary-300/20 dark:bg-navy-950 dark:text-slate-100"
+          className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-slate-200 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-c-focus-solid dark:border-white/10 dark:bg-navy-950 dark:text-slate-100"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
@@ -3340,7 +3369,7 @@ function WorkCanvasMarkdownDocumentPanel({
           <button
             type="button"
             onClick={() => setSelectionEditDraft('')}
-            className="rounded-full px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:text-primary-200 dark:hover:bg-primary-300/10"
+            className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
           >
             {t('canvas.panel.selection.clear', 'Clear')}
           </button>
@@ -3352,6 +3381,17 @@ function WorkCanvasMarkdownDocumentPanel({
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
       <div
+        // #187 (2026-09-01): tried `overflow-x-auto` here first to stop the
+        // toolbar's overflow from bleeding onto the adjacent chat pane at
+        // narrow split-panel widths. Reverted: CSS computes overflow-y to
+        // `auto` the moment overflow-x is non-`visible` on the SAME element
+        // (spec + verified live), which clipped every popover anchored in
+        // this header (new-canvas menu, diagnostics, share, history — all
+        // `position:absolute` descendants that pop out below the 42px bar).
+        // Fix instead lives in the toolbar itself: `canvasHeaderRef` below
+        // measures available width and collapses the redundant text labels
+        // (not the switcher, not any icon/button) before anything can overlap.
+        ref={canvasHeaderRef}
         className="relative z-30 flex h-[42px] shrink-0 flex-nowrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white/70 px-4 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60"
         data-testid="canvas-header"
       >
@@ -3382,7 +3422,7 @@ function WorkCanvasMarkdownDocumentPanel({
             </span>
           </button>
         ) : null}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
           <label htmlFor="canvas-document-title" className="sr-only">
             Document title
           </label>
@@ -3425,7 +3465,7 @@ function WorkCanvasMarkdownDocumentPanel({
               <button
                 type="button"
                 onClick={() => void persistDraft()}
-                className="rounded px-1 py-0.5 font-semibold text-c-text underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                className="rounded px-1 py-0.5 font-semibold text-c-text underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {t('common.retry', 'Retry')}
               </button>
@@ -3591,10 +3631,19 @@ function WorkCanvasMarkdownDocumentPanel({
           <div
             className="flex items-center gap-2 rounded-full border border-slate-200 px-2 py-0.5 dark:border-white/10"
             data-testid="canvas-workspace-destinations"
-            title="Create a workspace item from this Canvas"
+            title={t(
+              'canvas.panel.workspaceDestinations.title',
+              'Create a workspace item from this Canvas'
+            )}
           >
-            <span className="select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-              Create in workspace
+            <span
+              className={
+                isCanvasHeaderCompact
+                  ? 'sr-only'
+                  : 'select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400'
+              }
+            >
+              {t('canvas.panel.workspaceDestinations.label', 'Create in workspace')}
             </span>
             <div className="flex items-center gap-1" data-testid="canvas-workspace-actions">
               {menuWorkspaceActionIds.map((actionId) => renderCommandButton(actionId))}
@@ -3859,7 +3908,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         onClick={() => setQuickAddElement(id)}
                         className={`rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-colors ${
                           quickAddElement === id
-                            ? 'bg-primary-100 text-primary-800 dark:bg-primary-300/20 dark:text-primary-100'
+                            ? 'bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-slate-100'
                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15'
                         }`}
                       >
@@ -3876,7 +3925,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         'Describe to Teresa what to add...'
                       )}
                       aria-label="Element instruction for Teresa"
-                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                      className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-c-focus-solid dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                     />
                     <button
                       type="button"
@@ -3949,7 +3998,7 @@ function WorkCanvasMarkdownDocumentPanel({
                           'canvas.panel.selection.promptPlaceholder',
                           'Instruction for Teresa on the selected fragment...'
                         )}
-                        className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                        className="min-h-16 w-full resize-y rounded-xl border border-slate-200 bg-white p-2.5 text-xs leading-5 text-slate-800 outline-none focus:border-c-focus-solid dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                       />
                       <div className="mt-2 flex gap-2">
                         <button
@@ -4019,7 +4068,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         onChange={(event) => setTemplateBuilderName(event.target.value)}
                         placeholder={t('canvas.panel.templates.namePlaceholder', 'Template name')}
                         aria-label="Template name"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-c-focus-solid dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderGoal}
@@ -4029,7 +4078,7 @@ function WorkCanvasMarkdownDocumentPanel({
                           'Template goal in one sentence'
                         )}
                         aria-label="Template goal"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-c-focus-solid dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                       />
                       <input
                         value={templateBuilderSections}
@@ -4039,7 +4088,7 @@ function WorkCanvasMarkdownDocumentPanel({
                           'Sections (comma-separated)'
                         )}
                         aria-label="Template sections"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-c-focus-solid dark:border-white/15 dark:bg-navy-950 dark:text-slate-100"
                       />
                       <div className="flex gap-2">
                         <button
@@ -4219,7 +4268,7 @@ function WorkCanvasMarkdownDocumentPanel({
                       onClick={() => void saveToOutputs()}
                       disabled={isSavingToOutputs}
                       data-testid="canvas-save-to-outputs"
-                      className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left font-semibold text-crimson-700 transition-colors hover:bg-crimson-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-crimson-300 dark:hover:bg-crimson-900/20"
+                      className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                       <FolderInput size={14} />
                       <span>
@@ -4465,7 +4514,7 @@ function WorkCanvasMarkdownDocumentPanel({
                           {t('canvas.panel.diagnostics.researchSession', 'ResearchSession')}
                         </span>
                         <strong
-                          className="max-w-[180px] truncate font-semibold text-primary-700 dark:text-primary-300"
+                          className="max-w-[180px] truncate font-semibold"
                           data-testid="canvas-research-session-id"
                           title={documentState.researchSessionId}
                         >
@@ -4502,7 +4551,7 @@ function WorkCanvasMarkdownDocumentPanel({
                         className={
                           isStartingWorkflow
                             ? 'inline-flex cursor-not-allowed items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
-                            : 'inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100'
+                            : 'inline-flex items-center gap-1 rounded-full bg-c-text px-2.5 py-1 font-semibold text-c-bg hover:bg-c-text-secondary'
                         }
                       >
                         {isStartingWorkflow ? 'Starting...' : 'Start workflow'}
@@ -4589,7 +4638,7 @@ function WorkCanvasMarkdownDocumentPanel({
                                     · Lifecycle: {workflow.collaboration?.lifecycle || 'draft'}
                                   </div>
                                   {pendingApproval ? (
-                                    <div className="mt-1 font-semibold text-primary-700 dark:text-primary-200">
+                                    <div className="mt-1 font-semibold text-c-info">
                                       Approval checkpoint: {pendingApproval.stepTitle} awaits
                                       explicit approval.
                                     </div>
@@ -4664,8 +4713,8 @@ function WorkCanvasMarkdownDocumentPanel({
                                 </div>
                               ) : null}
                               {workflow.outputs?.length ? (
-                                <div className="mt-3 rounded-lg bg-primary-50 p-2 dark:bg-primary-400/10">
-                                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-200">
+                                <div className="mt-3 rounded-lg bg-white/70 p-2 dark:bg-white/[0.04]">
+                                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                                     Outputs
                                   </div>
                                   <ul className="mt-1 space-y-1 text-slate-600 dark:text-slate-200">
@@ -4679,7 +4728,7 @@ function WorkCanvasMarkdownDocumentPanel({
                                         {output.url ? (
                                           <a
                                             href={output.url}
-                                            className="font-semibold text-primary-700 hover:text-primary-900 dark:text-primary-200 dark:hover:text-primary-100"
+                                            className="font-semibold text-sky-600 hover:underline dark:text-sky-400"
                                           >
                                             Open
                                           </a>
@@ -4919,7 +4968,7 @@ function WorkCanvasMarkdownDocumentPanel({
             href={absoluteShareUrl(shareInfo)}
             target="_blank"
             rel="noopener noreferrer"
-            className="max-w-[280px] truncate font-mono text-[11px] text-primary-600 hover:underline dark:text-primary-300"
+            className="max-w-[280px] truncate font-mono text-[11px] text-sky-600 hover:underline dark:text-sky-400"
             data-testid="canvas-share-url"
           >
             {absoluteShareUrl(shareInfo)}
@@ -5122,7 +5171,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   onSelect={captureMarkdownSelection}
                   onKeyUp={captureMarkdownSelection}
                   data-testid="canvas-md-view"
-                  className="min-h-[680px] flex-1 resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-primary-300 dark:border-white/10 dark:bg-navy-900 dark:text-slate-100"
+                  className="min-h-[680px] flex-1 resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-c-focus-solid dark:border-white/10 dark:bg-navy-900 dark:text-slate-100"
                   spellCheck={false}
                 />
               </div>

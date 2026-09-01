@@ -20,6 +20,8 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { formatListDate } from '@/utils/listDateFormat';
+
 import { RichTextEditor } from './RichTextEditor';
 
 // Convert content to HTML - handles both raw HTML and Markdown
@@ -349,7 +351,9 @@ export const ReportSection: React.FC<ReportSectionProps> = ({
             )}
           </span>
           <span>
-            v{section.version} • {new Date(section.updatedAt).toLocaleDateString()}
+            {/* Kanon dat — patrz uwaga w `ReportBuilder.tsx` (ta sama naprawa,
+                `toLocaleDateString()` bez argumentu → `formatListDate`). */}
+            v{section.version} • {formatListDate(section.updatedAt)}
           </span>
         </div>
       </div>

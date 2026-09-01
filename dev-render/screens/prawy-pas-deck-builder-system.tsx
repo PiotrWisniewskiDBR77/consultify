@@ -49,7 +49,10 @@ function CanvasMock(): React.ReactElement {
   return (
     <div className="flex h-full items-center justify-center bg-c-surface-raised p-8">
       <div className="aspect-video w-full max-w-3xl rounded-xl border border-c-border bg-c-surface p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-c-text">{TITLE}</h2>
+        {/* CanvasMock — nie jest przedmiotem tego ekranu (przedmiot: prawy pas
+            deck buildera). Nagłówek to placeholder harnessu, schowany przy
+            zrzutach (bramka PODPIS, 2026-09-01). */}
+        <h2 className="text-xl font-semibold text-c-text" data-dev-render-chrome="true">{TITLE}</h2>
         <p className="mt-2 text-sm text-c-text-secondary">Warsztat 3 · wersja robocza</p>
       </div>
     </div>

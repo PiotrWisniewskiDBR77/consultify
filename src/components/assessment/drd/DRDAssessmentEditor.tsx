@@ -24,6 +24,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AssessmentToolShell } from '@/components/assessment/AssessmentToolShell';
+import {
+  czyTerminToPlaceholder,
+  etykietyPoziomowZMetodyki,
+  skrocTerminDoKomorki,
+} from '@/components/assessment/drd/drdMatrixCellContent';
 import { LevelAttachments } from '@/components/assessment/LevelAttachments';
 import { GlossaryPanel } from '@/components/assessment/panels/GlossaryPanel';
 import { Tooltip } from '@/components/ui/primitives';
@@ -122,6 +127,13 @@ const MATRIX_DENSITY = {
     cellMinHeight: 'min-h-[60px]',
     rowLabelPadding: 'p-4',
   },
+  /** Slajd raportu — patrz `fillHeight` w `DRDMatrixGridProps`. */
+  report: {
+    gap: 'gap-2',
+    cellPadding: 'p-2',
+    cellMinHeight: 'min-h-[34px]',
+    rowLabelPadding: 'p-3',
+  },
 } as const;
 
 /**
@@ -143,7 +155,22 @@ const MATRIX_TEXT_IDLE = 'text-slate-600 dark:text-slate-400';
 
 type MatrixCellRef = { areaId: string; level: number };
 
-type DRDMatrixGridProps = {
+/**
+ * ★ EKSPORTOWANE od 2026-09-01 (dyżur „macierz DRD w raporcie").
+ *
+ * Właściciel po raz trzeci zgłosił: „Ciągle nie wiem dlaczego nie używasz
+ * mojej macierzy DRD". Prezentacja z oceny rysowała `AreaMatrixTable` —
+ * komponent, który właściciel odrzucił wprost (`DZIENNIK_GRAFIKA.md` Z-10:
+ * „to nie tak ma wyglądać") i który pokazuje PUSTE komórki z kropką zamiast
+ * treści merytorycznej. Ta siatka jest tą, którą właściciel zaakceptował na
+ * ekranie `drd-macierz-oceny` (`status.json`: „Macierz oceny DRD — obszary
+ * x poziomy" — dokładnie te słowa, którymi wskazał ją 01.09).
+ *
+ * Eksport, a NIE kopia: kopii tej macierzy w repo jest już kilka
+ * (`AreaMatrixTable`, `EmbeddedMatrix`, `DRDMatrixSession`) i to one są
+ * przyczyną trzech pudeł w tej sprawie. Jedna siatka, dwa miejsca użycia.
+ */
+export type DRDMatrixGridProps = {
   areas: DRDArea[];
   levelCount: number;
   value: DRDEditorAnswers | undefined;
@@ -166,9 +193,21 @@ type DRDMatrixGridProps = {
   /** etykiety własne ekranu — zostają po angielsku do decyzji właściciela */
   areaStripLabel: string;
   overflowHint: (ukryte: number) => string;
+  /**
+   * `true` = siatka wypełnia wysokość rodzica i przewija się PIONOWO w środku,
+   * zamiast rosnąć w nieskończoność. Domyślnie `false` — oba widoki edytora
+   * zachowują się dokładnie jak dotąd.
+   *
+   * POWÓD (dyżur 2026-09-01): na slajdzie raportu siatka jest wyższa od kadru,
+   * więc dolny pasek „Area" z chipami `AS n` / `TO n` był PRZYCINANY — znikał
+   * dokładnie ten element, o który właściciel się upomina („dwa znaczniki
+   * naraz"). `sticky bottom-0` paska działa dopiero wtedy, gdy przewijanie
+   * pionowe dzieje się WEWNĄTRZ tego kontenera, a nie nad nim.
+   */
+  fillHeight?: boolean;
 };
 
-const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
+export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   areas,
   levelCount,
   value,
@@ -182,8 +221,22 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   onAreaClick,
   areaStripLabel,
   overflowHint,
+  fillHeight = false,
 }) => {
-  const density = compact ? MATRIX_DENSITY.compact : MATRIX_DENSITY.spacious;
+  /**
+   * `fillHeight` = slajd raportu: kadr ma stałe 900 px i musi zmieścić WSZYSTKIE
+   * wiersze osi razem z dolnym paskiem obszarów. Zmierzone: przy gęstości
+   * `compact` (40 px na komórkę) oś siedmiopoziomowa przekracza kadr o ~50 px
+   * i pasek „Area" nachodzi na poziom 1. Jedyna różnica to wysokość komórki —
+   * padding, odstępy i kolory zostają te same, żeby slajd był tą samą macierzą,
+   * którą właściciel zaakceptował, a nie jej wariantem.
+   */
+  const density =
+    fillHeight && compact
+      ? MATRIX_DENSITY.report
+      : compact
+        ? MATRIX_DENSITY.compact
+        : MATRIX_DENSITY.spacious;
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [hiddenPx, setHiddenPx] = useState(0);
 
@@ -216,12 +269,19 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   const hiddenColumns =
     hiddenPx > 0 ? Math.max(1, Math.ceil(hiddenPx / (effectiveColumnMinPx + 8))) : 0;
 
+  const levelLabels = React.useMemo(
+    () => etykietyPoziomowZMetodyki(areas, levelCount),
+    [areas, levelCount]
+  );
+
   return (
-    <div className="mt-6">
-      <div className="relative">
+    <div className={fillHeight ? 'flex min-h-0 flex-1 flex-col' : 'mt-6'}>
+      <div className={`relative${fillHeight ? ' flex min-h-0 flex-1 flex-col' : ''}`}>
         <div
           ref={scrollerRef}
-          className="app-table-scrollbar overflow-x-auto pb-2 rounded-xl border border-c-border bg-c-surface-subtle dark:border-white/10 dark:bg-navy-950 p-2"
+          className={`app-table-scrollbar overflow-x-auto pb-2 rounded-xl border border-c-border bg-c-surface-subtle dark:border-white/10 dark:bg-navy-950 p-2${
+            fillHeight ? ' min-h-0 flex-1 overflow-y-auto' : ''
+          }`}
         >
           <div
             className={`grid ${density.gap}`}
@@ -231,16 +291,7 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
           >
             {/* Wiersze poziomów (najwyższy u góry — logika pracy, nie ruszać) */}
             {Array.from({ length: levelCount }, (_, i) => levelCount - i).map((level) => {
-              const levelLabels: Record<number, string> = {
-                1: 'Basic / Manual',
-                2: 'Digitized',
-                3: 'Integrated',
-                4: 'Automated',
-                5: 'Optimized',
-                6: 'AI-Driven',
-                7: 'Autonomous',
-              };
-              const label = levelLabels[level] || `Level ${level}`;
+              const label = levelLabels[level] || '';
 
               return (
                 <React.Fragment key={`row-${level}`}>
@@ -250,10 +301,17 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-bold text-c-text">
-                        <span className="text-c-text-secondary">{level}.</span> {label}
+                        <span className="text-c-text-secondary">{level}.</span>
+                        {label ? ` ${label}` : ''}
                       </div>
                     </div>
-                    <div className="mt-1 text-[11px] text-c-text-muted">{rowHint}</div>
+                    {/* Pusta podpowiedź NIE rezerwuje wysokości: slajd raportu
+                        podaje `rowHint=""` (raport się ogląda, nie klika),
+                        a pusty `div` kosztował ~19 px na wiersz i wypychał
+                        dolny pasek obszarów z kadru. */}
+                    {rowHint ? (
+                      <div className="mt-1 text-[11px] text-c-text-muted">{rowHint}</div>
+                    ) : null}
                   </div>
 
                   {/* Komórki */}
@@ -279,36 +337,34 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                         ? `${MATRIX_FILL_TARGET} hover:bg-blue-200 dark:hover:bg-blue-500/25`
                         : `${MATRIX_FILL_IDLE} hover:bg-c-surface-hover dark:hover:bg-white/[0.07]`;
 
-                    // Skróty technologiczne / tytuł poziomu — TREŚĆ jest poza
-                    // zakresem polerowania wyglądu (drugi tor). Zmieniony jest
-                    // wyłącznie sygnał ucięcia: wielokropek + pełny tytuł w
-                    // `title=` (audyt §B4 — urwańce kończące się na „&").
-                    const keyTechs = [
-                      'AI',
-                      'ML',
-                      'RPA',
-                      'IoT',
-                      'AGV',
-                      'WMS',
-                      'MES',
-                      'ERP',
-                      'CRM',
-                      'BI',
-                      'API',
-                      'EDI',
-                      'PLM',
-                      'APS',
-                      'TMS',
-                      'YMS',
-                    ];
-                    const highlighted = techs.filter((t) => keyTechs.includes(t)).slice(0, 2);
+                    /**
+                     * TREŚĆ KOMÓRKI — docs/program/grafika/MACIERZ_TRESC_KOMOREK.md §4.3.
+                     *
+                     * Komórka niesie JEDEN termin: wiodącą technologię tego
+                     * obszaru na tym poziomie, czyli `suggestedTechnologies[0]`
+                     * — pozycję, na którą nakładki wiedzy konsekwentnie wstawiają
+                     * termin z książki. Nazwa poziomu NIE może tu stać: wszystkie
+                     * obszary osi 1 mają te same 7 nazw, więc dałaby dziewięć
+                     * identycznych kolumn (tak wyglądały 1C i 1I do 2026-08-31).
+                     * Nazwa poziomu jest teraz etykietą wiersza, reszta listy
+                     * technologii i pełny opis zostają w popoverze.
+                     *
+                     * Dwóch terminów nie łączymy: kropka `·` czytała się jak „i"
+                     * i sugerowała parę, której książka nie stawia.
+                     */
+                    const surowyTech = techs[0]?.trim() || '';
+                    const leadTech = czyTerminToPlaceholder(surowyTech) ? '' : surowyTech;
                     const fullTitle = areaLevelInfo?.title || '';
-                    const titleWords = fullTitle ? fullTitle.split(' ') : [];
-                    const shortTitle = fullTitle
-                      ? titleWords.slice(0, 3).join(' ') + (titleWords.length > 3 ? '…' : '')
-                      : null;
-                    const displayContent =
-                      highlighted.length > 0 ? highlighted.join(' · ') : shortTitle || '—';
+                    // Fallback bez `slice(0, 3)` — urywał tytuł na spójniku
+                    // („Centralized Data &", „AI as a" — audyt §B4).
+                    const displayContent = leadTech
+                      ? skrocTerminDoKomorki(leadTech)
+                      : fullTitle || '—';
+                    const fullContent = leadTech
+                      ? fullTitle
+                        ? `${leadTech} — ${fullTitle}`
+                        : leadTech
+                      : fullTitle;
 
                     return (
                       <button
@@ -320,7 +376,7 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           dymek już pokazuje pełny tytuł — dwa dymki naraz to
                           szum, nie pomoc.
                         */
-                        title={onCellMouseEnter ? undefined : fullTitle || undefined}
+                        title={onCellMouseEnter ? undefined : fullContent || undefined}
                         className={`group relative rounded-lg border transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                           density.cellPadding
                         } ${
@@ -341,7 +397,7 @@ const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center px-1`}
                         >
                           <span
-                            className={`text-[11px] font-medium leading-tight ${
+                            className={`text-[11px] font-medium leading-tight line-clamp-2 break-words ${
                               isAchieved
                                 ? MATRIX_TEXT_ACHIEVED
                                 : isTarget
@@ -2334,7 +2390,10 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
         left={contentWithExpandButton}
         right={navPanel}
         isRightOpen={isSidebarOpen && !isNavCollapsed}
-        rightWidthClass="w-[320px]"
+        // ★ 2026-09-01 (dyżur 164): usunięte `rightWidthClass="w-[320px]"`.
+        // Ta sama szerokość, ale teraz z tokenu `--ntype-right-panel-width`
+        // (domyślna wartość `AssessmentToolShell`) — nie odrasta przy
+        // następnej zmianie szerokości prawego pasa.
         rightSide="right"
       />
       <GlossaryPanel isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)} />

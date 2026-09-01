@@ -8,6 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -130,7 +131,44 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
     })),
   ];
 
-  const actions = customActions ?? defaultActions;
+  /**
+   * KEBAB BLOKU 3 NIE MOŻE ZNIKAĆ — wbudowane „Kopiuj" jako dno.
+   *
+   * ── CO BYŁO ZMIERZONE (dyżur rodziny podglądu, 2026-09-01) ────────────────
+   * Kanon (`TABLE_AND_PREVIEW_CANON.md` §7.0 wiersz 3) mówi, że blok „Treść"
+   * MA kebab lokalny. Ale kebab renderował się wyłącznie wtedy, gdy ekran sam
+   * podał `customActions` albo któryś z `onCopy`/`onExpand`/`onSummarize` —
+   * czyli kanon był OPCJĄ, którą trzeba pamiętać, a nie własnością bloku.
+   *
+   * Policzone: OSIEM plików produkcyjnych renderowało blok 3 BEZ kebaba —
+   * `MyWork/IdeasTableContent.tsx` (zgłoszony `idea-table`), `AIChat/
+   * AgentHubShell.tsx`, `AIChat/TransformationCasesPanel.tsx`, `Results/
+   * ResultsKpiReportsView.tsx`, `Results/ResultsReportingEnterpriseViews.tsx`,
+   * `Results/ResultsInitiativesView.tsx`, `Results/KpiQueueView.tsx`,
+   * `views/vault/VaultSafesTable.tsx`. Zmierzone na żywym DOM: `idea-table`
+   * ma w nagłówku bloku 3 **0 przycisków**, wzorzec `StandardPreview` ma 1.
+   *
+   * „Kopiuj" nie potrzebuje niczego od ekranu — komponent MA tekst. Więc gdy
+   * ekran nie poda żadnej akcji, a treść jest, dokładamy kopiowanie z własnego
+   * `resolvedText`. Ekran, który poda swoje akcje, nadpisuje to bez zmian.
+   * Dzięki temu naprawa nie odrasta per-wywołanie (pamięć: „naprawa
+   * per-wywolanie odrasta" — ten sam defekt wrócił po 8 tygodniach w 12 plikach).
+   */
+  const builtInCopy: DetailsAction = {
+    id: 'copy',
+    label: t('sharedComponents.previewDetailsSection.copy'),
+    icon: Copy,
+    onClick: () => {
+      navigator.clipboard
+        .writeText(resolvedText)
+        .then(() => toast.success(t('sharedComponents.previewAIHintStrip.copied')))
+        .catch(() => toast.error(t('sharedComponents.previewAIHintStrip.copyFailed')));
+    },
+  };
+
+  const resolvedActions = customActions ?? defaultActions;
+  const actions =
+    resolvedActions.length === 0 && resolvedText.trim() ? [builtInCopy] : resolvedActions;
   const hasMenu = actions.length > 0;
 
   // Word count — only shown when there is content (canon §7.3)

@@ -97,6 +97,22 @@ const MOCK_USERS = [
   },
 ];
 
+// ★ NAPRAWA (2026-08-30, dyżur 131-noc-moja-praca): `DecisionDetailView`
+// (src/components/MyWork/DecisionDetailView.tsx:2219) NIGDY nie woła
+// `Api.getDecision` — czyta dane przez `Api.get('/decisions/:id/detail')`.
+// Stub poniżej mockował metodę, której komponent w ogóle nie wywołuje (dead
+// mock — `Api.getDecision` ma realnych wołających gdzie indziej: Decisions­
+// PanelContent/IdeaMapWorkspace/DecisionPreviewPanel, ale nie tutaj), więc
+// `/decisions/:id/detail` spadało na `realApiGet` → `window.fetch` → siatkę
+// bezpieczeństwa niżej, która dla KAŻDEGO URL-a z `/decisions/` zwraca
+// `{ data: [], items: [] }` (pustą TABLICĘ jako `data`). `decision.title`
+// na tablicy to `undefined` → `setTitle('')` → puste pole tytułu pokazuje
+// swój placeholder „Tytuł decyzji…", „Zakres decyzji" wygląda na pustą
+// sekcję, Termin/Decydent pokazują „—" — mimo że `MOCK_DECISION` niżej ma
+// kompletne, realne dane. To była usterka STANOWISKA POMIAROWEGO (harness
+// mockował niewłaściwą metodę), nie produktu — potwierdzone: `Api.getDecision`
+// zostaje (na wypadek gdyby inny konsument tego chciał), ale `/detail` jest
+// teraz jawnie obsłużony PRZED przejściem do fetch-safety-netu.
 Api.getDecision = (async () => MOCK_DECISION) as typeof Api.getDecision;
 Api.getDecisionHistory = (async () => []) as typeof Api.getDecisionHistory;
 
@@ -104,6 +120,9 @@ const realApiGet = Api.get.bind(Api);
 Api.get = (async (url: string) => {
   if (url === '/users') return { users: MOCK_USERS };
   if (url.includes('/stakeholders')) throw new Error('mock: stakeholders endpoint not stubbed');
+  if (url.includes('/decisions/') && url.includes('/detail')) {
+    return { data: MOCK_DECISION };
+  }
   return realApiGet(url);
 }) as typeof Api.get;
 

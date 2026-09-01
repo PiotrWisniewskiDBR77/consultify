@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { OwnershipManagementView } from '../../views/admin/OwnershipManagementView';
 import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -661,9 +662,12 @@ export const AdminMembersRolesPanel: React.FC<{
       ),
     },
     {
+      // Kolumna szeroka na PEŁNY tekst pigułki statusu (kanon: status = pigułka
+      // z pełnym tekstem, nigdy „Zaakcepto…"). 120px obcinało polskie
+      // "Zaakceptowano" (13 znaków) — zmierzone na zrzucie 149-admin-rodziny.
       id: 'status',
       label: t('admin.membersRoles.columns.status', 'Status'),
-      width: '120px',
+      width: '160px',
       render: (row) => <EntityStatusChip status={String(row.status || 'unknown').toLowerCase()} />,
     },
     {
@@ -680,11 +684,11 @@ export const AdminMembersRolesPanel: React.FC<{
     {
       id: 'expiresAt',
       label: t('admin.membersRoles.invitations.expiry', 'Expires'),
-      width: '190px',
+      width: '170px',
       render: (row) => (
         <span className="text-c-text-secondary">
           {row.expires_at || row.expiresAt
-            ? new Date(row.expires_at || row.expiresAt).toLocaleString()
+            ? formatListDateTime(row.expires_at || row.expiresAt)
             : '—'}
         </span>
       ),
@@ -692,7 +696,7 @@ export const AdminMembersRolesPanel: React.FC<{
     {
       id: 'actions',
       label: t('admin.membersRoles.invitations.actions', 'Actions'),
-      width: '230px',
+      width: '210px',
       render: (row) => {
         const pending = String(row.status || '').toLowerCase() === 'pending';
         const busy = savingInvitationId === row.id;
@@ -737,7 +741,10 @@ export const AdminMembersRolesPanel: React.FC<{
                 {item.role === 'OWNER' ? (
                   <Crown className="h-4 w-4 text-c-warning" />
                 ) : item.role === 'ADMIN' ? (
-                  <Shield className="h-4 w-4 text-c-accent" />
+                  // Poprzednio: token brand/crimson (patrz CLAUDE.md „pułapka nr 1"), użyty
+                  // TYLKO jako dekoracja ikony roli — nie stan krytyczny. Neutralny token,
+                  // spójnie z MEMBER/GUEST obok.
+                  <Shield className="h-4 w-4 text-c-text-muted" />
                 ) : (
                   <Users className="h-4 w-4 text-c-text-muted" />
                 )}
@@ -1111,7 +1118,7 @@ export const AdminMembersRolesPanel: React.FC<{
                             {t('admin.membersRoles.invitations.expiry', 'Expires')}
                           </dt>
                           <dd className="mt-1 text-c-text-secondary">
-                            {expiresAt ? new Date(expiresAt).toLocaleString() : '—'}
+                            {expiresAt ? formatListDateTime(expiresAt) : '—'}
                           </dd>
                         </div>
                       </dl>

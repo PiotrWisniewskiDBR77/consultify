@@ -1,12 +1,35 @@
 /**
  * PROTOTYP DO AKCEPTU (CLAUDE.md #7) — prawy pas jako JEDNA FORMUŁA.
  *
- * SSOT decyzji: docs/program/grafika/ANALIZA_PRAWY_PANEL.md §3/§4/§7 +
- * uzupełnienie „dokumenty" na końcu tego pliku (2026-08-30). Cytat
- * właściciela, dziś zatwierdzony jako rozstrzygnięcie architektoniczne:
+ * ═══ ROZSTRZYGNIĘCIE WŁAŚCICIELA 2026-09-01 — „JEDNA TERESA, W SWOIM OKNIE" ═══
  *
- *   „Teresa staje się jedną z ikon na stałej szynie prawego pasa — tak jak
- *   jest już w Wordzie. Rozciągamy wzorzec z Worda na całą strukturę."
+ * Ten plik miał do 2026-08-31 tryb pasa „Teresa" (czat osadzony w prawym
+ * panelu). Właściciel odrzucił go DWA razy przy odbiorze wariantów
+ * `-idea-teresa` i `-notatka-teresa`:
+ *
+ *   „tutaj zobacz jest okno teresy w panelu tego okna ale przecież teresa
+ *    ma okno swoje"
+ *   „nie wiem dlaczego teresa jest w oknie narzędzia skoro jest osobna teresa"
+ *
+ * Wybrany wariant: **czat znika z prawych paneli narzędzi; w panelu artefaktu
+ * zostaje przycisk „Zapytaj Teresę o …", który otwiera GŁÓWNE okno Teresy
+ * z kontekstem tego obiektu. Jedno miejsce rozmowy w całej aplikacji.**
+ * To zasada dla wszystkich przyszłych artefaktów, nie poprawka dwóch ekranów.
+ * Utrwalone w `docs/program/grafika/KANON_Z_ODBIOROW.md` (wpis 2026-09-01).
+ *
+ * UWAGA — ta decyzja ODWRACA decyzję z 2026-08-30, która brzmiała: „Teresa
+ * staje się jedną z ikon na stałej szynie prawego pasa — tak jak jest już
+ * w Wordzie. Rozciągamy wzorzec z Worda na całą strukturę." Nowsza decyzja
+ * wygrywa. Konsekwencja dla produkcji (szyna Teresy w Studiu Dokumentów,
+ * aside Teresy w DeckBuilderze, `IdeaTeresaSection`, `AIConsultantPanel`)
+ * jest wypisana w raporcie dyżuru 167 i czeka na sekwencjonowanie
+ * per ekran — CLAUDE.md #9 zakazuje hurtowej zmiany wielu ekranów naraz.
+ *
+ * Komponent `TeresaRailPanel` NIE jest usunięty z repozytorium (tak jak nie
+ * kasujemy martwych ekranów) — jest tylko przestał być osadzany w pasie.
+ *
+ * SSOT decyzji o samym panelu artefaktu: docs/program/grafika/ANALIZA_PRAWY_PANEL.md
+ * §3/§4/§7 + uzupełnienie „dokumenty" na końcu tego pliku (2026-08-30).
  *
  * Wzorzec źródłowy (istnieje i działa): rail narzędzi Studia Dokumentów —
  * src/components/DocumentStudio/DocumentStudioDocumentPanel.tsx:2778-2890
@@ -23,13 +46,10 @@
  *     — kanoniczny akordeon 7 sekcji (`ARTIFACT_PANEL_SECTION_ORDER`,
  *     import z SSOT, zero własnej kopii listy — patrz Krok 1 §7 analizy).
  *
- * Nowy element (bo dziś nie istnieje NIGDZIE jako pełnoprawny tryb pasa,
- * tylko jako przycisk-wyjście w notatniku i akordeon-sekcja w ideach):
- * `TeresaRailPanel` — pełna wysokość, własne pole pisania, chipy komend
- * kontekstowych (wzorowane na `IdeaTeresaSection`), strumień wiadomości z
- * jawnym wyróżnieniem ZAŁOŻEŃ przyjętych przez Teresę (§5 analizy: „sekcja
- * Źródła i założenia jest najważniejsza i dziś jej nie ma" — Teresa musi te
- * założenia jawnie pokazywać, nie tylko sekcja Ewidencji).
+ * `TeresaRailPanel` (pełna wysokość, własne pole pisania, chipy komend) —
+ * ODRZUCONY 2026-09-01, zostawiony w pliku jako eksport bez konsumenta.
+ * Nie renderuje go już nic. Jego rolę przejął jeden przycisk w sekcji
+ * „Akcje" panelu artefaktu (`TeresaEntryButton`).
  *
  * DECYZJA „jeden ekran czy dwa" (patrz zadanie robotnika): JEDEN plik,
  * JEDNA funkcja budująca sekcje (`buildArtifactSections`), wołana z DWOMA
@@ -101,6 +121,12 @@ import {
 // ═══════════════════════════════════════════════════════════════════════
 
 type ObjectType = 'notatka' | 'idea';
+/**
+ * Po decyzji 2026-09-01 pas ma już tylko JEDEN tryb treści — 'artefakt'.
+ * Typ zostaje, bo `dev-render/main.tsx` rejestruje warianty `-teresa`
+ * i `-artefakt`; oba renderują dziś to samo (panel artefaktu z wejściem
+ * do Teresy) i to jest właśnie dowód, że tryb „Teresa" zniknął.
+ */
 type RailMode = 'artefakt' | 'teresa';
 
 interface ActionSpec {
@@ -135,6 +161,14 @@ interface ObjectData {
   resultsEmptyNote: string;
   comments: CommentSpec[];
   history: ActivityEvent[];
+  /**
+   * Etykieta JEDYNEGO wejścia do Teresy z panelu artefaktu (decyzja
+   * 2026-09-01). Brzmienie dobrane do sąsiednich etykiet w sekcji „Akcje",
+   * które są krótkimi trybami rozkazującymi („Zamień w zadanie",
+   * „Udostępnij"). Formuła: „Zapytaj Teresę o <ten obiekt>".
+   */
+  teresaEntryLabel: string;
+  /** Materiał odrzuconego trybu pasa — zostaje w pliku, nie jest renderowany. */
   teresaCommands: { label: string; icon: LucideIcon; }[];
   teresaMessages: TeresaMessage[];
   centrumParagraphs: string[];
@@ -212,6 +246,7 @@ const NOTATKA: ObjectData = {
     { id: 'h2', description: 'Teresa wygenerowała podsumowanie z rozmowy (typ: AI).', timestamp: '2026-08-24T14:13:00Z', userName: 'Teresa' },
     { id: 'h3', description: 'Anna Kowalska edytowała sekcję „Otwarte pytania".', timestamp: '2026-08-25T09:02:00Z', userName: 'Anna Kowalska' },
   ],
+  teresaEntryLabel: 'Zapytaj Teresę o tę notatkę',
   teresaCommands: [
     { label: 'Uzupełnij puste', icon: Wand2 },
     { label: 'Streść', icon: Sparkles },
@@ -302,6 +337,7 @@ const IDEA: ObjectData = {
     { id: 'h2', description: 'Teresa zaproponowała gałąź „bariery regulacyjne DE" (typ: AI).', timestamp: '2026-08-22T12:30:00Z', userName: 'Teresa' },
     { id: 'h3', description: 'Piotr W. dodał węzeł „ryzyka".', timestamp: '2026-08-25T11:40:00Z', userName: 'Piotr W.' },
   ],
+  teresaEntryLabel: 'Zapytaj Teresę o tę ideę',
   teresaCommands: [
     { label: 'Uzupełnij puste', icon: Wand2 },
     { label: 'Synteza', icon: Sparkles },
@@ -354,6 +390,30 @@ const AssumptionCallout: React.FC<{ text: string }> = ({ text }) => (
   </div>
 );
 
+/**
+ * JEDYNE wejście do Teresy z panelu artefaktu (decyzja właściciela 2026-09-01).
+ * Nie jest czatem — otwiera GŁÓWNE okno Teresy z kontekstem tego obiektu.
+ *
+ * Kolorystyka świadomie NEUTRALNA (`c-border` / `c-surface-raised` / `c-text`),
+ * fokus niebieski `--c-focus`. Zero crimson: to nie jest stan krytyczny, tylko
+ * przejście do innego okna (CLAUDE.md UI §3).
+ *
+ * Rysowany poza `PreviewActionBar` celowo: doktryna gęstości liczy 5 widocznych
+ * pigułek akcji, a notatka ma ich już 5. Wejście do Teresy jest przejściem, nie
+ * szóstą akcją na obiekcie, więc nie konkuruje z nimi o ten limit.
+ */
+const TeresaEntryButton: React.FC<{ label: string }> = ({ label }) => (
+  <button
+    type="button"
+    onClick={() => undefined}
+    data-testid="teresa-entry"
+    className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+  >
+    <Bot size={13} className="text-c-text-muted" />
+    {label}
+  </button>
+);
+
 const CommentThread: React.FC<{ comments: CommentSpec[] }> = ({ comments }) => (
   <div className="flex flex-col gap-2">
     {comments
@@ -391,21 +451,24 @@ function buildArtifactSections(data: ObjectData): ArtifactRightPanelSection[] {
       icon: Sparkles,
       defaultOpen: true,
       children: (
-        <PreviewActionBar
-          rows={[
-            {
-              columns: 2,
-              buttons: data.actions.map(
-                (a): ActionButton => ({
-                  label: a.label,
-                  icon: a.icon,
-                  colorScheme: 'neutral',
-                  onClick: () => undefined,
-                })
-              ),
-            },
-          ]}
-        />
+        <>
+          <TeresaEntryButton label={data.teresaEntryLabel} />
+          <PreviewActionBar
+            rows={[
+              {
+                columns: 2,
+                buttons: data.actions.map(
+                  (a): ActionButton => ({
+                    label: a.label,
+                    icon: a.icon,
+                    colorScheme: 'neutral',
+                    onClick: () => undefined,
+                  })
+                ),
+              },
+            ]}
+          />
+        </>
       ),
     },
     properties: {
@@ -490,11 +553,13 @@ function buildArtifactSections(data: ObjectData): ArtifactRightPanelSection[] {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// TERESA — tryb pasa, pełna wysokość, własne pole pisania (nowość — dziś
-// nie istnieje jako samodzielny panel nigdzie, patrz nagłówek pliku).
+// TERESA — ODRZUCONY tryb pasa (2026-09-01). Kod zostaje w repozytorium
+// zgodnie z regułą „martwych ekranów nie kasujemy", ale NIE MA KONSUMENTA:
+// żadna ścieżka renderowania go już nie osadza. Eksportowany świadomie, żeby
+// było widać, że to celowo odłożony materiał, a nie zapomniana zmienna.
 // ═══════════════════════════════════════════════════════════════════════
 
-const TeresaRailPanel: React.FC<{ data: ObjectData }> = ({ data }) => (
+export const TeresaRailPanel: React.FC<{ data: ObjectData }> = ({ data }) => (
   <div className="flex h-full flex-col bg-c-surface">
     <div className="border-b border-c-border-subtle px-4 py-3">
       <div className="flex items-center gap-2">
@@ -569,7 +634,9 @@ const TeresaRailPanel: React.FC<{ data: ObjectData }> = ({ data }) => (
 
 const NotatkaCentrum: React.FC<{ data: ObjectData }> = ({ data }) => (
   <div className="mx-auto max-w-[640px] px-8 py-8">
-    <h1 className="mb-1 text-xl font-bold text-c-text">{data.title}</h1>
+    {/* Centrum (mock) — nie jest przedmiotem tego prototypu (przedmiot: prawy
+        pas). Nagłówek schowany przy zrzutach (bramka PODPIS, 2026-09-01). */}
+    <h1 className="mb-1 text-xl font-bold text-c-text" data-dev-render-chrome="true">{data.title}</h1>
     <p className="mb-6 text-xs text-c-text-muted">{data.subtitle}</p>
     {data.centrumParagraphs.map((p, i) => (
       <p key={i} className="mb-3 text-sm leading-relaxed text-c-text-secondary">
@@ -608,8 +675,14 @@ const IdeaCentrum: React.FC<{ data: ObjectData }> = ({ data }) => (
 );
 
 // ═══════════════════════════════════════════════════════════════════════
-// SZYNA — ikony w kolejności Artefakt · Teresa · narzędzie zależne od typu.
-// Trzecia ikona świadomie NIEAKTYWNA dla notatki/idei — kanon dziś nie
+// SZYNA — ikony w kolejności Artefakt · narzędzie zależne od typu.
+//
+// Ikona „Teresa" USUNIĘTA 2026-09-01 (decyzja właściciela: jedna Teresa, w swoim
+// oknie). Gdyby została jako ikona, która tylko przenosi do głównego okna, na
+// nieruchomym zrzucie wyglądałaby identycznie jak odrzucony tryb czatu w pasie —
+// czyli nie dałoby się zobaczyć, że decyzja została wykonana.
+//
+// Druga ikona świadomie NIEAKTYWNA dla notatki/idei — kanon dziś nie
 // definiuje dla nich takiego narzędzia (przykłady z analizy: Kontrola
 // jakości w Wordzie, Struktura w Excelu). Pokazana wyłączona, żeby było
 // widać, że formuła REZERWUJE na to miejsce, a nie że go brakuje.
@@ -618,7 +691,6 @@ const IdeaCentrum: React.FC<{ data: ObjectData }> = ({ data }) => (
 function buildRailTools(objType: ObjectType): RightRailToolDescriptor[] {
   return [
     { id: 'artefakt', label: 'Artefakt', icon: LayoutGrid },
-    { id: 'teresa', label: 'Teresa', icon: Bot },
     {
       id: 'typ-narzedzie',
       label: 'Narzędzie zależne od typu',
@@ -635,6 +707,14 @@ function buildRailTools(objType: ObjectType): RightRailToolDescriptor[] {
 
 export interface PrawyPasJednaFormulaScreenProps {
   initialObjectType?: ObjectType;
+  /**
+   * IGNOROWANY od 2026-09-01. Zostaje w sygnaturze, bo `dev-render/main.tsx`
+   * rejestruje warianty `-notatka-teresa` / `-idea-teresa` i te adresy są
+   * wpisane w `dev-render/odbior-grafika.html`, `status.json` oraz
+   * `ODBIOR_DECYZJE.json`. Po decyzji „jedna Teresa, w swoim oknie" nie ma
+   * już trybu pasa „Teresa" — wszystkie cztery warianty renderują panel
+   * artefaktu z JEDNYM wejściem do Teresy.
+   */
   initialRailMode?: RailMode;
   /** false = brak przełącznika na ekranie (warianty do zrzutów skryptowych). */
   interactive?: boolean;
@@ -642,22 +722,17 @@ export interface PrawyPasJednaFormulaScreenProps {
 
 export function PrawyPasJednaFormulaScreen({
   initialObjectType = 'notatka',
-  initialRailMode = 'artefakt',
   interactive = true,
 }: PrawyPasJednaFormulaScreenProps): React.ReactElement {
   const [objectType, setObjectType] = useState<ObjectType>(initialObjectType);
-  const [railMode, setRailMode] = useState<RailMode>(initialRailMode);
   const data = OBJECTS[objectType];
 
   const tools = useMemo(() => buildRailTools(objectType), [objectType]);
   const sections = useMemo(() => buildArtifactSections(data), [data]);
 
-  const panelContent =
-    railMode === 'artefakt' ? (
-      <ArtifactRightPanel sections={sections} width="100%" className="border-l-0" />
-    ) : (
-      <TeresaRailPanel data={data} />
-    );
+  const panelContent = (
+    <ArtifactRightPanel sections={sections} width="100%" className="border-l-0" />
+  );
 
   return (
     <div className="flex h-screen w-screen flex-col bg-c-surface" data-testid="jedna-formula-root">
@@ -665,7 +740,7 @@ export function PrawyPasJednaFormulaScreen({
         <span className="text-sm font-semibold text-c-text">Prawy pas — jedna formuła</span>
         <span className="text-c-text-muted">·</span>
         <span className="text-xs text-c-text-muted">
-          {objectType === 'notatka' ? 'Notatka' : 'Idea'} · tryb: {railMode === 'artefakt' ? 'Artefakt' : 'Teresa'}
+          {objectType === 'notatka' ? 'Notatka' : 'Idea'} · panel: Artefakt
         </span>
         {interactive ? (
           <div className="ml-auto flex items-center gap-2">
@@ -686,23 +761,6 @@ export function PrawyPasJednaFormulaScreen({
                 </button>
               ))}
             </div>
-            <div className="flex overflow-hidden rounded-lg border border-c-border-subtle">
-              {(['artefakt', 'teresa'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setRailMode(m)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                    railMode === m
-                      ? 'bg-c-focus/10 text-c-focus-solid'
-                      : 'text-c-text-secondary hover:bg-c-surface-raised'
-                  }`}
-                  data-testid={`toggle-tryb-${m}`}
-                >
-                  {m === 'artefakt' ? 'Artefakt' : 'Teresa'}
-                </button>
-              ))}
-            </div>
           </div>
         ) : null}
       </div>
@@ -713,10 +771,8 @@ export function PrawyPasJednaFormulaScreen({
         </div>
         <RightRail
           tools={tools}
-          activeToolId={railMode === 'artefakt' ? 'artefakt' : 'teresa'}
-          onSelectTool={(id) => {
-            if (id === 'artefakt' || id === 'teresa') setRailMode(id);
-          }}
+          activeToolId="artefakt"
+          onSelectTool={() => undefined}
           panelContent={panelContent}
           panelWidth={380}
           collapsed={false}

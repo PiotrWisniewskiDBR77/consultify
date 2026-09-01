@@ -1979,6 +1979,34 @@ export async function applyIdeaTemplate(params: {
   return result;
 }
 
+// ── Filter chip labels ──────────────────────────────────────────────────────
+// The filter state/governance values below stay the raw technical tokens
+// ('all' | 'global' | ... ) because they are compared against
+// governance.scope/category from the template data. Only the user-visible
+// chip TEXT is localized here — the tokens themselves are not translated.
+const SCOPE_FILTER_LABELS_PL: Record<
+  'all' | 'global' | 'organization' | 'project' | 'private',
+  string
+> = {
+  all: 'Wszystkie',
+  global: 'Globalne',
+  organization: 'Organizacja',
+  project: 'Projekt',
+  private: 'Prywatne',
+};
+
+const CATEGORY_FILTER_LABELS_PL: Record<
+  'all' | 'process' | 'system' | 'org' | 'strategy' | 'workshop',
+  string
+> = {
+  all: 'Wszystkie',
+  process: 'Proces',
+  system: 'System',
+  org: 'Organizacja',
+  strategy: 'Strategia',
+  workshop: 'Warsztat',
+};
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 interface IdeaTemplateGalleryProps {
@@ -2177,7 +2205,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                     : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
                 }`}
               >
-                {scope}
+                {isPl ? SCOPE_FILTER_LABELS_PL[scope] : scope}
               </button>
             ))}
             {(['all', 'process', 'system', 'org', 'strategy', 'workshop'] as const).map(
@@ -2192,7 +2220,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                       : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
                   }`}
                 >
-                  {category}
+                  {isPl ? CATEGORY_FILTER_LABELS_PL[category] : category}
                 </button>
               )
             )}
@@ -2228,10 +2256,14 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                           {governance && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                                {governance.category}
+                                {isPl
+                                  ? (CATEGORY_FILTER_LABELS_PL[
+                                      governance.category as keyof typeof CATEGORY_FILTER_LABELS_PL
+                                    ] ?? governance.category)
+                                  : governance.category}
                               </span>
                               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                                {governance.scope}
+                                {isPl ? SCOPE_FILTER_LABELS_PL[governance.scope] : governance.scope}
                               </span>
                               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
                                 v{governance.version}

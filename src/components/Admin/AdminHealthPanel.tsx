@@ -12,6 +12,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { Button } from '../ui/primitives/Button';
 
 type ProbeStatus = 'pass' | 'fail' | 'unknown';
@@ -56,7 +57,7 @@ function formatRanAt(ranAt: string | null): string {
   if (!ranAt) return '—';
   const d = new Date(ranAt);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString();
+  return formatListDateTime(d);
 }
 
 export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({

@@ -24,6 +24,7 @@ import {
   FileQuestion,
   FileText,
   Filter,
+  FolderKanban,
   History,
   Inbox,
   LayoutDashboard,
@@ -323,6 +324,27 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: <Calendar size={18} className="text-primary-500" />,
         category: 'action',
         keywords: ['calendar', 'schedule', 'timeline'],
+        action: () => {
+          // M03 (dyżur 20260830): to wołało `navigate('/projects')` — etykieta
+          // mówiła "kalendarz", cel prowadził do Projektów. Realna trasa
+          // kalendarza to zakładka `calendar` w tym samym hubie
+          // (`MyWorkHub.tsx` → `parseMyWorkPathIntent`, segment `/my-work/calendar`
+          // → `<CalendarView>`), nie osobny ekran. Zob. osobna, poprawnie
+          // podpisana akcja "action-open-projects" niżej dla Projektów.
+          navigate('/my-work/calendar');
+          onClose();
+        },
+      },
+      {
+        id: 'action-open-projects',
+        title: t('command.action.openProjects', 'Projects'),
+        subtitle: t(
+          'command.action.openProjectsDesc',
+          'Stakeholders & project finance rollup'
+        ),
+        icon: <FolderKanban size={18} className="text-slate-500" />,
+        category: 'action',
+        keywords: ['projects', 'projekty', 'stakeholders', 'program', 'finance'],
         action: () => {
           navigate('/projects');
           onClose();

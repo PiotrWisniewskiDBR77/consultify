@@ -19,6 +19,24 @@
  *   „Teresa staje się jedną z ikon na stałej szynie prawego pasa — tak jak
  *   jest już w Wordzie. Rozciągamy wzorzec z Worda na całą strukturę."
  *
+ * ★★★ ZASTĄPIONE 2026-09-01 — „JEDNA TERESA, W SWOIM OKNIE" ★★★
+ * Właściciel odrzucił dokładnie TEN wzorzec (tryb ② „Teresa" poniżej — czat
+ * pełnej wysokości na szynie) przy odbiorze prototypu `-idea-teresa`/
+ * `-notatka-teresa`: „nie wiem dlaczego teresa jest w oknie narzędzia skoro
+ * jest osobna teresa" / „przecież teresa ma okno swoje". Nowa decyzja
+ * (docs/program/grafika/KANON_Z_ODBIOROW.md, wpis 2026-09-01): czat NIE
+ * wchodzi na szynę w ŻADNEJ formie, ani jako sekcja akordeonu, ani jako
+ * tryb pełnej wysokości opisany niżej. Panel artefaktu dostaje wyłącznie
+ * JEDEN przycisk-wejście do głównego okna Teresy (sekcja „Akcje").
+ * ★ WYKONANE (dyżur 169): tryb ② NIE JEST JUŻ RENDEROWANY — ani jako ikona
+ * na szynie, ani jako panel. `TeresaModePanel` i `ArtifactRailTeresaMode`
+ * zostają w pliku jako MARTWY mechanizm (usunięte jest wołanie, nie kod).
+ * Z całego trybu skutek ma dziś wyłącznie para `entryLabel` + `footerAction`:
+ * powłoka renderuje z nich `TeresaEntryButton` jako pierwszy element sekcji
+ * „Akcje" panelu artefaktu. Dotychczasowi wołający (`IdeaRightPanel`,
+ * `NotebookRightRail`) nie musieli zmieniać kształtu propsa — zmieniło się
+ * to, co powłoka z niego robi.
+ *
  * Ten komponent jest dla PRAWEGO PASA tym, czym `StandardTable` dla listy:
  * **moduł deklaruje TREŚĆ, komponent narzuca WYGLĄD.** Moduł nie ma tu
  * żadnej swobody wizualnej — nie podaje klas, szerokości, kolejności ikon
@@ -28,17 +46,19 @@
  * KONSTRUKCJA
  * ═══════════════════════════════════════════════════════════════════════
  *   ┌───────────────────────────┬────┐
- *   │                           │ ▣  │ ← ① Artefakt (akordeon 7 sekcji)
- *   │   PANEL (jeden naraz)     │ ✦  │ ← ② Teresa (pełna wysokość)
- *   │                           │ ⌸  │ ← ③ tryby zależne od typu
- *   └───────────────────────────┴────┘
+ *   │  [Zapytaj Teresę o …]     │ ▣  │ ← ① Artefakt (akordeon 7 sekcji;
+ *   │   PANEL (jeden naraz)     │ ⌸  │      pierwsza sekcja „Akcje" niesie
+ *   │                           │    │      wejście do okna Teresy)
+ *   └───────────────────────────┴────┘   ← ③ tryby zależne od typu
+ *
+ *   ② „Teresa" jako tryb szyny NIE ISTNIEJE od 2026-09-01 (patrz wyżej).
  *
  * Szyna ikon 56 px jest STAŁA — nie chowa się razem z panelem. Gdyby się
  * chowała, doktryna D17 („wszystko korzysta z panelu Teresy, zawsze po
  * prawej") przestawałaby obowiązywać w chwili, w której ktoś zwinie panel.
  *
- * Kolejność trybów jest NARZUCONA i niezmienna: Artefakt → Teresa → tryby
- * zależne od typu (w kolejności deklaracji modułu).
+ * Kolejność trybów jest NARZUCONA i niezmienna: Artefakt → tryby zależne od
+ * typu (w kolejności deklaracji modułu). Teresa nie jest już trybem.
  *
  * ═══════════════════════════════════════════════════════════════════════
  * DLACZEGO TERESA NIE JEST ÓSMĄ SEKCJĄ AKORDEONU
@@ -80,7 +100,7 @@
  * to złamałoby zakaz masowego włączania (CLAUDE.md #9). Do osobnego kroku,
  * po akcepcie tej formuły.
  */
-import { Bot, LayoutGrid, Send, Sparkles, X, type LucideIcon } from 'lucide-react';
+import { Bot, LayoutGrid, type LucideIcon, Send, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -91,10 +111,11 @@ import {
 
 import {
   ARTIFACT_PANEL_SECTION_ORDER,
-  ArtifactRightPanel,
   type ArtifactPanelSectionId,
+  ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from './ArtifactRightPanel';
+import { TeresaEntryButton } from './TeresaEntryButton';
 
 /** Stałe id dwóch trybów, których moduł nie może przemianować ani przestawić. */
 export const ARTIFACT_RAIL_MODE_ARTIFACT = 'artefakt';
@@ -216,6 +237,16 @@ export interface ArtifactRailTeresaMode {
   footerAction?: { label: string; icon?: LucideIcon; onClick: () => void };
   badge?: string | number;
   dotTone?: RightRailToolDescriptor['dotTone'];
+  /**
+   * ★ 2026-09-01 („jedna Teresa, w swoim oknie") — JEDYNE pole tego trybu,
+   * ktore ma dzis skutek wizualny. Etykieta przycisku-wejscia w sekcji
+   * „Akcje", per typ obiektu: „Zapytaj Terese o te notatke" / „…o te idee".
+   * Pominieta → fallback na `footerAction.label` (u dotychczasowych
+   * wolajacych jest to „Open Teresa"), zeby brak etykiety nie skasowal
+   * wejscia. Klikniecie wola `footerAction.onClick` — czyli TEN SAM realny
+   * handler, ktory otwieral glowne okno Teresy ze stopki trybu.
+   */
+  entryLabel?: string;
 }
 
 /**
@@ -273,6 +304,13 @@ const AssumptionCallout: React.FC<{ text: string }> = ({ text }) => (
   </div>
 );
 
+/**
+ * ⚠️ MARTWY OD 2026-09-01 — świadomie NIE usunięty.
+ * Kompletny, działający panel czatu na szynie; nie jest już przez nic wołany
+ * (decyzja „jedna Teresa, w swoim oknie"). Zostaje jako zapis TEGO, co zostało
+ * odrzucone — żeby nikt nie odtworzył go od zera, myśląc, że go nie było.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TeresaModePanel: React.FC<{ mode: ArtifactRailTeresaMode }> = ({ mode }) => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState('');
@@ -516,16 +554,16 @@ export const ArtifactRightRail: React.FC<ArtifactRightRailProps> = ({
         testId: 'artifact-rail-tool-artefakt',
       });
     }
-    if (teresa) {
-      list.push({
-        id: ARTIFACT_RAIL_MODE_TERESA,
-        label: 'Teresa',
-        icon: Bot,
-        badge: teresa.badge,
-        dotTone: teresa.dotTone,
-        testId: 'artifact-rail-tool-teresa',
-      });
-    }
+    /*
+      ★ 2026-09-01: IKONA „Teresa" NIE JEST JUZ REJESTROWANA NA SZYNIE.
+      Decyzja wlasciciela „JEDNA TERESA, W SWOIM OKNIE" (KANON_Z_ODBIOROW.md)
+      odrzucila czat na szynie w KAZDEJ formie — takze ten tryb pelnej
+      wysokosci. `TeresaModePanel` i `ArtifactRailTeresaMode` zostaja w pliku
+      jako martwy mechanizm (usuwamy WOLANIE, nie kod), a z calego trybu ma
+      dzis skutek wylacznie `entryLabel` + `footerAction` — renderowane jako
+      przycisk-wejscie w sekcji „Akcje" panelu artefaktu (patrz
+      `sectionsWithTeresaEntry` nizej).
+    */
     (typeModes ?? []).forEach((mode) => {
       list.push({
         id: mode.id,
@@ -564,11 +602,42 @@ export const ArtifactRightRail: React.FC<ArtifactRightRailProps> = ({
     [artifact, caption]
   );
 
+  /*
+    ★ 2026-09-01 — WEJSCIE DO JEDNEGO OKNA TERESY W SEKCJI „AKCJE".
+    Kanon (`prawy-pas-jedna-formula.tsx`, zaakceptowany na zrzutach) stawia
+    `TeresaEntryButton` jako PIERWSZY element sekcji „Akcje", nad reszta
+    dzialan. Wstrzykujemy go tutaj, w powloce, a nie u wolajacego — inaczej
+    kazdy modul umiescilby go gdzie indziej i to jest dokladnie ten rozjazd,
+    ktory ten komponent ma likwidowac (moduł deklaruje TRESC, powloka narzuca
+    WYGLAD). Gdy modul nie deklaruje sekcji „Akcje" — nie dokladamy jej: pusta
+    sekcja z jednym przyciskiem to dziura, a nie panel.
+  */
+  const sectionsWithTeresaEntry = useMemo<ArtifactRightPanelSection[]>(() => {
+    const entryClick = teresa?.footerAction?.onClick;
+    if (!entryClick) return normalizedSections;
+    const label = teresa?.entryLabel ?? teresa?.footerAction?.label ?? '';
+    if (!label) return normalizedSections;
+    return normalizedSections.map((section) =>
+      section.id === 'actions'
+        ? {
+            ...section,
+            isEmpty: false,
+            children: (
+              <div className="flex flex-col gap-2">
+                <TeresaEntryButton label={label} onClick={entryClick} />
+                {section.children}
+              </div>
+            ),
+          }
+        : section
+    );
+  }, [normalizedSections, teresa]);
+
   const panelBody = useMemo<React.ReactNode>(() => {
     if (currentId === ARTIFACT_RAIL_MODE_ARTIFACT && artifact) {
       return (
         <ArtifactRightPanel
-          sections={normalizedSections}
+          sections={sectionsWithTeresaEntry}
           statusBar={artifact.statusBar}
           width="100%"
           className="border-l-0"
@@ -578,22 +647,12 @@ export const ArtifactRightRail: React.FC<ArtifactRightRailProps> = ({
         />
       );
     }
-    if (currentId === ARTIFACT_RAIL_MODE_TERESA && teresa) {
-      return <TeresaModePanel mode={teresa} />;
-    }
+    /* ★ 2026-09-01: tryb „Teresa" nie ma juz wlasnego panelu — patrz
+       komentarz przy `tools`. `TeresaModePanel` zostaje niewolany. */
     const typeMode = (typeModes ?? []).find((mode) => mode.id === currentId);
     if (typeMode) return <TypeModePanel mode={typeMode} />;
     return null;
-  }, [
-    ariaLabel,
-    artifact,
-    currentId,
-    isPolish,
-    normalizedSections,
-    t,
-    teresa,
-    typeModes,
-  ]);
+  }, [ariaLabel, artifact, currentId, isPolish, sectionsWithTeresaEntry, t, typeModes]);
 
   const panelContent =
     panelBody === null ? null : (

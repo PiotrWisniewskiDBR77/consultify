@@ -1,8 +1,17 @@
-import { AlertTriangle, CheckCircle2, Plug, RefreshCw, ShieldAlert } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  LayoutGrid,
+  List,
+  Plug,
+  RefreshCw,
+  ShieldAlert,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 
 type Wave7Connector = {
   connectorId: string;
@@ -22,6 +31,162 @@ type Wave7Connector = {
   revokedReason?: string | null;
   failureState?: string | null;
   tenantPolicy?: { externalConnectorId?: string | null };
+};
+
+const CONNECTOR_STATUS_TONE: Record<string, string> = {
+  connected: 'text-emerald-600 dark:text-emerald-400',
+  stale: 'text-amber-600 dark:text-amber-400',
+  disconnected: 'text-c-danger',
+  failed: 'text-c-danger',
+};
+
+/**
+ * 171-pojedyncze (uwaga właściciela, odbiór 2026-09-01): "Dodaj tutaj także
+ * wersję w liście. Bo jak będzie dużo pozycji do dołączenia, to może być
+ * trudniej zarządzać, czyli zmiany widoków." — StandardTable (twarda reguła
+ * projektu, zero bespoke tabel), filtrowalna kolumna Status dla skali.
+ * Reszta panelu (rejestracja/test narzędzia/OAuth) zostaje nietknięta —
+ * poza zakresem tej pojedynczej uwagi.
+ */
+const ConnectorsListView: React.FC<{
+  connectors: Wave7Connector[];
+  t: (key: string, options?: Record<string, unknown>) => string;
+}> = ({ connectors, t }) => {
+  const rows = React.useMemo<TableRow[]>(
+    () =>
+      connectors.map((connector) => ({
+        id: connector.connectorId,
+        connector,
+      })),
+    [connectors]
+  );
+
+  const columns = React.useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'connector',
+        label: t('aios.wave7ConnectorAdminPanel.columns.connector'),
+        render: (row) => (
+          <span className="font-medium text-c-text">
+            {(row.connector as Wave7Connector).displayName}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('aios.wave7ConnectorAdminPanel.columns.status'),
+        filterable: true,
+        filterOptions: ['connected', 'stale', 'disconnected', 'failed'].map((value) => ({
+          value,
+          label: t(`aios.wave7ConnectorAdminPanel.${value}`),
+        })),
+        render: (row) => {
+          const connector = row.connector as Wave7Connector;
+          return (
+            <span
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${
+                CONNECTOR_STATUS_TONE[connector.status] || 'text-c-text-secondary'
+              }`}
+            >
+              {connector.status === 'connected' ? (
+                <CheckCircle2 size={13} />
+              ) : (
+                <AlertTriangle size={13} />
+              )}
+              {t(`aios.wave7ConnectorAdminPanel.${connector.status}`)}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'freshness',
+        label: t('aios.wave7ConnectorAdminPanel.columns.freshness'),
+        render: (row) => {
+          const connector = row.connector as Wave7Connector;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {connector.freshnessAgeMinutes ?? t('aios.wave7ConnectorAdminPanel.unknown')} /{' '}
+              {connector.freshnessTtlMinutes ?? t('aios.unknown')} min
+            </span>
+          );
+        },
+      },
+      {
+        id: 'oauth',
+        label: t('aios.wave7ConnectorAdminPanel.columns.oauth'),
+        render: (row) => {
+          const connector = row.connector as Wave7Connector;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {connector.accessState || connector.authState || t('aios.unknown')}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'acl',
+        label: t('aios.wave7ConnectorAdminPanel.columns.acl'),
+        render: (row) => {
+          const connector = row.connector as Wave7Connector;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {(connector.projectIds || []).length ? connector.projectIds?.join(', ') : 'tenant'}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'sourceBinding',
+        label: t('aios.wave7ConnectorAdminPanel.columns.sourceBinding'),
+        render: (row) => {
+          const connector = row.connector as Wave7Connector;
+          return (
+            <span className="text-xs text-c-text-secondary">
+              {connector.tenantPolicy?.externalConnectorId ||
+                t('aios.wave7ConnectorAdminPanel.registryOnly')}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'issue',
+        label: t('aios.wave7ConnectorAdminPanel.columns.issue'),
+        render: (row) => {
+          const connector = row.connector as Wave7Connector;
+          const issue = connector.failureState
+            ? t('aios.wave7ConnectorAdminPanel.failure') + ': ' + connector.failureState
+            : connector.accessRevokedAt
+              ? connector.revokedReason
+                ? t('aios.wave7ConnectorAdminPanel.accessRevokedWithReason', {
+                    reason: connector.revokedReason,
+                  })
+                : t('aios.wave7ConnectorAdminPanel.accessRevoked')
+              : connector.reconnectRequired || connector.tokenExpired
+                ? t('aios.wave7ConnectorAdminPanel.reconnectRequired')
+                : null;
+          return issue ? (
+            <span className="text-xs font-medium text-c-danger">{issue}</span>
+          ) : (
+            <span className="text-xs text-c-text-muted">
+              {t('aios.wave7ConnectorAdminPanel.noIssue')}
+            </span>
+          );
+        },
+      },
+    ],
+    [t]
+  );
+
+  return (
+    <StandardTable
+      columns={columns}
+      data={rows}
+      empty={{
+        title: t('aios.wave7ConnectorAdminPanel.noWave7ConnectorsYet'),
+      }}
+      persistKey="aios.wave7Connectors"
+    />
+  );
 };
 
 export const Wave7ConnectorAdminPanel: React.FC = () => {
@@ -46,6 +211,12 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
   const [aiRunId, setAiRunId] = React.useState('');
   const [message, setMessage] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  // 171-pojedyncze (uwaga właściciela): "Dodaj tutaj także wersję w liście.
+  // Bo jak będzie dużo pozycji do dołączenia, to może być trudniej
+  // zarządzać" — kafle zostają domyślne (mało konektorów = wygodne), lista
+  // (StandardTable — twarda reguła projektu, zero bespoke) jest alternatywą
+  // dla organizacji z wieloma podłączonymi źródłami.
+  const [connectorsView, setConnectorsView] = React.useState<'tiles' | 'list'>('tiles');
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -412,7 +583,41 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
 
         <section className="space-y-4">
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">{t('aios.wave7ConnectorAdminPanel.connectorHealth')}</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold">
+                {t('aios.wave7ConnectorAdminPanel.connectorHealth')}
+              </h2>
+              <div
+                role="group"
+                aria-label={t('aios.wave7ConnectorAdminPanel.connectorsListAriaLabel')}
+                className="inline-flex items-center rounded-md border p-0.5 text-xs dark:border-navy-700"
+              >
+                <button
+                  type="button"
+                  onClick={() => setConnectorsView('tiles')}
+                  aria-pressed={connectorsView === 'tiles'}
+                  className={`inline-flex items-center gap-1.5 rounded px-2 py-1 font-medium transition-colors ${
+                    connectorsView === 'tiles'
+                      ? 'bg-slate-900 text-white dark:bg-sky-600'
+                      : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  }`}
+                >
+                  <LayoutGrid size={13} /> {t('aios.wave7ConnectorAdminPanel.viewTiles')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConnectorsView('list')}
+                  aria-pressed={connectorsView === 'list'}
+                  className={`inline-flex items-center gap-1.5 rounded px-2 py-1 font-medium transition-colors ${
+                    connectorsView === 'list'
+                      ? 'bg-slate-900 text-white dark:bg-sky-600'
+                      : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  }`}
+                >
+                  <List size={13} /> {t('aios.wave7ConnectorAdminPanel.viewList')}
+                </button>
+              </div>
+            </div>
             <div className="mt-3 grid gap-2 text-xs sm:grid-cols-4">
               {[
                 [t('aios.wave7ConnectorAdminPanel.total'), health?.total ?? connectors.length],
@@ -434,72 +639,78 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                 Health API source: `/api/ai-connectors/health`; organization {health.organizationId}
               </div>
             )}
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              {connectors.map((connector) => (
-                <div
-                  key={connector.connectorId}
-                  className="rounded-lg border p-3 text-sm dark:border-navy-700"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium">{connector.displayName}</div>
-                    {connector.status === 'connected' ? (
-                      <CheckCircle2 size={16} className="text-emerald-500" />
-                    ) : (
-                      <AlertTriangle size={16} className="text-amber-500" />
+            {connectorsView === 'tiles' ? (
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {connectors.map((connector) => (
+                  <div
+                    key={connector.connectorId}
+                    className="rounded-lg border p-3 text-sm dark:border-navy-700"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-medium">{connector.displayName}</div>
+                      {connector.status === 'connected' ? (
+                        <CheckCircle2 size={16} className="text-emerald-500" />
+                      ) : (
+                        <AlertTriangle size={16} className="text-amber-500" />
+                      )}
+                    </div>
+                    <div className="mt-2 text-xs text-slate-500">
+                      {t('aios.wave7ConnectorAdminPanel.status')}: {connector.status};{' '}
+                      {t('aios.wave7ConnectorAdminPanel.freshnessAge')}:{' '}
+                      {connector.freshnessAgeMinutes ?? t('aios.wave7ConnectorAdminPanel.unknown')}{' '}
+                      min; TTL: {connector.freshnessTtlMinutes ?? t('aios.unknown')} min
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {t('aios.wave7ConnectorAdminPanel.oauthAccess')}:{' '}
+                      {connector.accessState || connector.authState || t('aios.unknown')};{' '}
+                      {t('aios.wave7ConnectorAdminPanel.tokenExpiry')}:{' '}
+                      {connector.tokenExpiresAt || t('aios.wave7ConnectorAdminPanel.notRecorded')}
+                    </div>
+                    {(connector.reconnectRequired ||
+                      connector.tokenExpired ||
+                      connector.accessRevokedAt) && (
+                      <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                        {t('aios.wave7ConnectorAdminPanel.reconnectRequired')}
+                        {connector.accessRevokedAt
+                          ? connector.revokedReason
+                            ? t('aios.wave7ConnectorAdminPanel.accessRevokedWithReason', {
+                                reason: connector.revokedReason,
+                              })
+                            : t('aios.wave7ConnectorAdminPanel.accessRevoked')
+                          : connector.tokenExpired
+                            ? t('aios.wave7ConnectorAdminPanel.tokenExpired')
+                            : ''}
+                      </div>
+                    )}
+                    <div className="mt-1 text-xs text-slate-500">
+                      ACL:{' '}
+                      {(connector.projectIds || []).length
+                        ? connector.projectIds?.join(', ')
+                        : 'tenant'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {t('aios.wave7ConnectorAdminPanel.sourceBinding')}:{' '}
+                      {connector.tenantPolicy?.externalConnectorId ||
+                        t('aios.wave7ConnectorAdminPanel.registryOnly')}
+                    </div>
+                    {connector.failureState && (
+                      <div className="mt-2 rounded bg-danger-50 p-2 text-xs text-danger-700 dark:bg-danger-900/30 dark:text-danger-200">
+                        {t('aios.wave7ConnectorAdminPanel.failure')}: {connector.failureState}
+                      </div>
                     )}
                   </div>
-                  <div className="mt-2 text-xs text-slate-500">
-                    {t('aios.wave7ConnectorAdminPanel.status')}: {connector.status};{' '}
-                    {t('aios.wave7ConnectorAdminPanel.freshnessAge')}:{' '}
-                    {connector.freshnessAgeMinutes ?? t('aios.wave7ConnectorAdminPanel.unknown')}{' '}
-                    min; TTL: {connector.freshnessTtlMinutes ?? t('aios.unknown')} min
+                ))}
+                {connectors.length === 0 && (
+                  <div className="text-sm text-slate-500">
+                    {t('aios.wave7ConnectorAdminPanel.noWave7ConnectorsYet')}
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {t('aios.wave7ConnectorAdminPanel.oauthAccess')}:{' '}
-                    {connector.accessState || connector.authState || t('aios.unknown')};{' '}
-                    {t('aios.wave7ConnectorAdminPanel.tokenExpiry')}:{' '}
-                    {connector.tokenExpiresAt || t('aios.wave7ConnectorAdminPanel.notRecorded')}
-                  </div>
-                  {(connector.reconnectRequired ||
-                    connector.tokenExpired ||
-                    connector.accessRevokedAt) && (
-                    <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-                      {t('aios.wave7ConnectorAdminPanel.reconnectRequired')}
-                      {connector.accessRevokedAt
-                        ? connector.revokedReason
-                          ? t('aios.wave7ConnectorAdminPanel.accessRevokedWithReason', {
-                              reason: connector.revokedReason,
-                            })
-                          : t('aios.wave7ConnectorAdminPanel.accessRevoked')
-                        : connector.tokenExpired
-                          ? t('aios.wave7ConnectorAdminPanel.tokenExpired')
-                          : ''}
-                    </div>
-                  )}
-                  <div className="mt-1 text-xs text-slate-500">
-                    ACL:{' '}
-                    {(connector.projectIds || []).length
-                      ? connector.projectIds?.join(', ')
-                      : 'tenant'}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {t('aios.wave7ConnectorAdminPanel.sourceBinding')}:{' '}
-                    {connector.tenantPolicy?.externalConnectorId ||
-                      t('aios.wave7ConnectorAdminPanel.registryOnly')}
-                  </div>
-                  {connector.failureState && (
-                    <div className="mt-2 rounded bg-danger-50 p-2 text-xs text-danger-700 dark:bg-danger-900/30 dark:text-danger-200">
-                      {t('aios.wave7ConnectorAdminPanel.failure')}: {connector.failureState}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {connectors.length === 0 && (
-                <div className="text-sm text-slate-500">
-                  {t('aios.wave7ConnectorAdminPanel.noWave7ConnectorsYet')}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-3">
+                <ConnectorsListView connectors={connectors} t={t} />
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">

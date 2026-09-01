@@ -132,10 +132,41 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 };
 
 export default function PlanScenarioD1Screen() {
+  /*
+   * ★ `onOpenInitiative` JEST WYMAGANY, ŻEBY TEN ZRZUT POKAZYWAŁ PRODUKT
+   *   (odbiór grafiki 2026-09-01, uwaga `plan-scenario-d1`).
+   *
+   * Uwaga właściciela z 30.08 brzmiała: „narzędzie otwiera tę wybraną linię
+   * jako tabelę poniżej tej tabeli. Ma ona otwierać konkretną kartę." — czyli
+   * NIE była o szerokości tabeli (pomiar 01.09: tabela 1366 z 1440 px = 94,9%
+   * okna, jedyne ubytki to `p-4` powłoki i ramka karty).
+   *
+   * W PRODUKCIE zgłoszenie jest już naprawione: `InitiativesHub.tsx:1636`
+   * podaje `onOpenInitiative`, które prowadzi do KARTY INICJATYWY (komentarz
+   * przy tym propie mówi wprost: „Wcześniej otwierał warsztat planu pod
+   * tabelą"). Ale TEN host propa nie podawał, a `PlanScenarioSurface`
+   * świadomie degraduje bez niego: `openCardDisabledReason`
+   * (`PlanScenarioSurface.tsx:588`) wyszarza „Otwórz" w podglądzie i wyłącza
+   * dwuklik. Zrzut odbiorowy pokazywał więc DEFEKT, KTÓREGO W PRODUKCIE JUŻ
+   * NIE MA — dokładnie kształt „harness kłamie".
+   *
+   * Handler jest zaślepką (harness nie ma routera modułu Inicjatywy), ale
+   * SAMA JEGO OBECNOŚĆ odblokowuje ścieżkę do karty tak jak w produkcji.
+   */
+  const [otwartaKarta, setOtwartaKarta] = React.useState<string | null>(null);
   return (
     <AppProviders>
       <div className="min-h-screen bg-c-background p-4 text-c-text">
-        <PlanScenarioSurface demoMode={false} initiatives={empty ? [] : initiatives} />
+        <PlanScenarioSurface
+          demoMode={false}
+          initiatives={empty ? [] : initiatives}
+          onOpenInitiative={(id, title) => setOtwartaKarta(`${title} (${id})`)}
+        />
+        {otwartaKarta ? (
+          <p className="mt-3 text-xs text-c-text-muted" data-testid="plan-scenario-otwarta-karta">
+            Harness: żądanie otwarcia karty inicjatywy — {otwartaKarta}
+          </p>
+        ) : null}
       </div>
     </AppProviders>
   );

@@ -7,6 +7,8 @@ import {
   getAdminSessions,
   revokeAdminSession,
 } from '../../services/adminSessionsApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
+import { summarizeUserAgent } from '../../utils/userAgentLabel';
 import { ConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminSessionsPanel: React.FC = () => {
@@ -34,6 +36,7 @@ export const AdminSessionsPanel: React.FC = () => {
       {
         id: 'device',
         label: t('admin.security.sessions.columns.device'),
+        render: (row) => <span title={row.deviceRaw || undefined}>{row.device}</span>,
       },
       {
         id: 'ip',
@@ -59,11 +62,17 @@ export const AdminSessionsPanel: React.FC = () => {
       data.map((s) => ({
         id: s.id,
         user: [s.first_name, s.last_name].filter(Boolean).join(' ') || s.user_email,
-        device: s.device_info || s.user_agent || t('admin.security.sessions.values.unknown'),
+        device:
+          s.device_info ||
+          summarizeUserAgent(s.user_agent, {
+            unknown: t('admin.security.sessions.values.unknownDevice'),
+            automationAgent: t('admin.security.sessions.values.automationAgent'),
+          }),
+        deviceRaw: s.device_info ? null : s.user_agent || null,
         ip: s.ip_address || t('admin.security.sessions.values.unknown'),
         location: s.location || t('admin.security.sessions.values.unknownLocation'),
-        active: s.last_activity ? new Date(s.last_activity).toLocaleString() : '—',
-        expires: s.expires_at ? new Date(s.expires_at).toLocaleString() : '—',
+        active: s.last_activity ? formatListDateTime(s.last_activity) : '—',
+        expires: s.expires_at ? formatListDateTime(s.expires_at) : '—',
       })),
     [data, t]
   );

@@ -40,9 +40,9 @@ const doc: ReportDocument = {
           kind: 'metrics',
           items: [
             { label: 'Budżet wykorzystany', value: '62%', hint: 'z 430k EUR', tone: 'default' },
-            { label: 'Kamienie milowe', value: '5/6', hint: 'on-time', tone: 'good' },
+            { label: 'Kamienie milowe', value: '5/6', hint: 'na czas', tone: 'good' },
             { label: 'Ryzyka wysokie', value: '1', hint: 'systemy/integracje', tone: 'warn' },
-            { label: 'Confidence', value: '78%', tone: 'good' },
+            { label: 'Poziom pewności', value: '78%', tone: 'good' },
           ],
         },
         {
@@ -118,12 +118,16 @@ const doc: ReportDocument = {
 
 export default function ReportArtifactScreen(): React.ReactElement {
   return (
+    // Produkcja: ExecutionHub.tsx:5248 — GeneratedReportView żyje w środku
+    // <aside className="w-[400px] ..."> (StandardPreview), kanon szerokości
+    // podglądu 340-480px. Harness poprzednio pokazywał max-w-3xl (768px) —
+    // ~1,9x za szeroko wobec realnej szuflady podglądu.
     <div className="flex h-screen w-full flex-col bg-c-bg">
-      <div className="mx-auto w-full max-w-3xl flex-1 overflow-y-auto p-6">
+      <aside className="mx-auto w-[400px] shrink-0 flex-1 overflow-y-auto p-3">
         <div className="rounded-xl border border-c-border-subtle bg-c-surface shadow-sm">
           <GeneratedReportView doc={doc} />
         </div>
-      </div>
+      </aside>
     </div>
   );
 }

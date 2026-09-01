@@ -17,6 +17,27 @@ import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  ARTIFACT_PANEL_SECTION_LABELS,
+  ARTIFACT_PANEL_SECTION_ORDER,
+} from '@/components/standard/ArtifactRightPanel';
+
+/**
+ * ★ 2026-08-30: nazwy sekcji kanonu narzuca powłoka
+ * (`ARTIFACT_PANEL_SECTION_LABELS`) i są ZALEŻNE OD JĘZYKA — wcześniej ten
+ * ekran miał je wpisane po polsku na sztywno, niezależnie od konta. Test nie
+ * może więc dopisywać własnych literałów; czyta obie wersje z SSOT.
+ */
+const sectionLabelRe = (id: keyof typeof ARTIFACT_PANEL_SECTION_LABELS): RegExp => {
+  const entry = ARTIFACT_PANEL_SECTION_LABELS[id];
+  const esc = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`${esc(entry.pl)}|${esc(entry.en)}`, 'i');
+};
+const sectionLabelMatches = (
+  text: string,
+  id: keyof typeof ARTIFACT_PANEL_SECTION_LABELS
+): boolean => sectionLabelRe(id).test(text);
+
 let mockCurrentUserId = 'user-lead';
 
 vi.mock('@/store/useAppStore', () => ({
@@ -217,16 +238,18 @@ describe('CriterionWorkspaceV2', () => {
     // Single query, so document order is preserved (unlike concatenating two
     // separately-filtered `expanded:true`/`expanded:false` queries).
     const allButtons = within(aside).getAllByRole('button', { hidden: true }).filter((b) => b.hasAttribute('aria-expanded'));
-    const order = ['Akcje', 'Właściwości', 'Powiązania', 'Źródła i założenia', 'Komentarze', 'Historia'];
-    const positions = order.map((label) => allButtons.findIndex((h) => (h.textContent || '').includes(label)));
+    const order = ARTIFACT_PANEL_SECTION_ORDER.filter((id) => id !== 'results');
+    const positions = order.map((id) =>
+      allButtons.findIndex((h) => sectionLabelMatches(h.textContent || '', id))
+    );
     expect(positions.every((p) => p >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
 
     const expandedLabels = allButtons.filter((b) => b.getAttribute('aria-expanded') === 'true').map((b) => b.textContent || '');
-    expect(expandedLabels.some((h) => h.includes('Akcje'))).toBe(true);
-    expect(expandedLabels.some((h) => h.includes('Właściwości'))).toBe(true);
-    expect(expandedLabels.some((h) => h.includes('Historia'))).toBe(false);
-    expect(expandedLabels.some((h) => h.includes('Komentarze'))).toBe(false);
+    expect(expandedLabels.some((h) => sectionLabelMatches(h, 'actions'))).toBe(true);
+    expect(expandedLabels.some((h) => sectionLabelMatches(h, 'properties'))).toBe(true);
+    expect(expandedLabels.some((h) => sectionLabelMatches(h, 'history'))).toBe(false);
+    expect(expandedLabels.some((h) => sectionLabelMatches(h, 'comments'))).toBe(false);
   });
 
   it('shows the criterion\'s real program name (not a placeholder) in the Menu 1 breadcrumb once auditsMethodApi.getProgram resolves', async () => {
@@ -247,7 +270,7 @@ describe('CriterionWorkspaceV2', () => {
     await waitFor(() => expect(mockedGetCriterion).toHaveBeenCalled());
 
     const aside = await screen.findByRole('complementary');
-    const commentsHeader = within(aside).getByRole('button', { name: /Komentarze/i });
+    const commentsHeader = within(aside).getByRole('button', { name: sectionLabelRe('comments') });
     fireEvent.click(commentsHeader);
     expect(await within(aside).findByText(/Planowane.*brak API komentarzy/i)).toBeInTheDocument();
   });

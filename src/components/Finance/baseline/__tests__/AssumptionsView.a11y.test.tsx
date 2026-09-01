@@ -46,6 +46,7 @@ function fakeEditor(
     isDirty: () => false,
     preflightWarnings: [{ key: 'REVENUE_GROWTH_YOY::ent-1::per-2026-01', reason: 'MISSING' }],
     save: vi.fn().mockResolvedValue({ ok: true, writtenCount: 1 }),
+    deleteRow: vi.fn().mockResolvedValue({ ok: true, deletedFromServer: true }),
     ...overrides,
   };
 }

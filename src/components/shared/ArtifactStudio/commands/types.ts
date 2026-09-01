@@ -1,4 +1,17 @@
+import type { ComponentType } from 'react';
+
 export type ArtifactType = 'document' | 'presentation' | 'spreadsheet';
+
+/**
+ * Optional Excel-typical icon for a toolbar/menu command (171-pojedyncze,
+ * uwaga właściciela: "zamieńmy teraz słowa na typowe dla excela ikony —
+ * każdy chyba już na świecie je zna"). Accepts a plain `lucide-react` icon
+ * component OR a small composed wrapper (e.g. base icon + corner badge, see
+ * `spreadsheetToolbarIcons.tsx`) — both share this call signature. Commands
+ * without an `icon` keep rendering as a text label (Document/Deck menus are
+ * unaffected until they opt in).
+ */
+export type ArtifactCommandIcon = ComponentType<{ size?: number; className?: string }>;
 
 export type ArtifactLifecycle = 'draft' | 'in_review' | 'approved' | 'final';
 
@@ -70,6 +83,8 @@ export interface ArtifactCommandContext<TPayload = unknown> {
 export interface ArtifactCommand<TPayload = unknown, TResult = unknown> {
   commandId: string;
   labelKey: string;
+  /** Optional Excel-typical icon; label stays available via title/aria-label. */
+  icon?: ArtifactCommandIcon;
   artifactTypes: readonly ArtifactType[];
   category: ArtifactCommandCategory;
   canonicalPlacement: ArtifactCommandPlacement;

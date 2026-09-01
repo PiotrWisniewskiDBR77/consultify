@@ -11,7 +11,9 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
+/* `UnifiedChatPanel` NIE jest tu już importowany (2026-09-01, „jedna Teresa"):
+   prezentacja nie renderuje własnego czatu. Komponent żyje dalej — to on JEST
+   jednym oknem Teresy, otwieranym przez `openGlobalTeresa()`. */
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import {
   type ArtifactCommandContext,
@@ -401,7 +403,23 @@ export const DeckBuilder: React.FC = () => {
   const serverVersionRef = useRef<number>(1);
   const [serverVersion, setServerVersion] = useState(1);
 
-  const [teresaOpen, setTeresaOpen] = useState(true);
+  /*
+    ★ STAN `teresaOpen` USUNIĘTY 2026-09-01 — decyzja właściciela
+    „JEDNA TERESA, W SWOIM OKNIE" (docs/program/grafika/KANON_Z_ODBIOROW.md).
+
+    BYŁO: `useState(!isArtifactStudioLaneEnabled('presentation'))`, czyli poza
+    torem warsztatu prezentacja startowała z OSADZONYM czatem Teresy w kolumnie
+    360 px — drugi czat obok głównego okna, z własną historią i własnym
+    kontekstem. Poprzedni komentarz w tym miejscu tłumaczył wyłącznie SZEROKOŚĆ
+    („Teresa zabierała 360 px i kasowała sorter slajdów") — dziś rozstrzygnięcie
+    jest mocniejsze: kolumny czatu nie ma w ogóle, w żadnym torze.
+
+    Wszystkie dotychczasowe wejścia („Zapytaj Teresę" w panelu Akcje, pigułka
+    Menu 2, stopka, paleta poleceń) wołają teraz `openGlobalTeresa()` — JEDNO
+    okno Teresy z kontekstem tej prezentacji. `UnifiedChatPanel` nie jest już
+    w tym pliku renderowany; komponent oczywiście żyje dalej — to on JEST tym
+    jednym oknem.
+  */
   const [showNotes, setShowNotes] = useState(false);
   const [presentMode, setPresentMode] = useState<'off' | 'fullscreen' | 'presenter'>('off');
   const [presentStartIndex, setPresentStartIndex] = useState(0);
@@ -484,7 +502,25 @@ export const DeckBuilder: React.FC = () => {
     lastSavedAt,
     restoreVersion,
     saveManualCheckpoint,
+    // ★ ZAMKNIĘCIE PĘTLI ZAPISU (2026-08-30). Te trzy funkcje istniały
+    // w `useVersionHistory` od 2026-08-01 z komentarzem „woła je JEDYNY pisarz,
+    // `useDeckAutosave`" — ale `useDeckAutosave` przestał być podpięty do
+    // DeckBuildera 2026-08-09 (commit 2d53892c76 usunął import) i od tamtej
+    // pory NIKT ich nie wołał. Skutek zmierzony w przeglądarce: po edycji
+    // slajdu wskaźnik zostaje na „Zapisywanie…" NA ZAWSZE, mimo że PUT
+    // /autosave wychodzi i wraca 200 — a niepowodzenie 500/403 wygląda
+    // dokładnie tak samo. Do czasu przywrócenia kanonicznego pisarza pętlę
+    // domyka pisarz wbudowany niżej.
+    noteSaveStarted,
+    notePersistedSave,
+    noteSaveFailed,
   } = useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
+  /**
+   * Ostatni błąd zapisu — jawny, widoczny komunikat zamiast ciszy.
+   * Powód: pisarz niżej łapał KAŻDY wyjątek pustym `catch {}` i nie sprawdzał
+   * `res.ok`, więc odrzucony zapis nie zostawiał na ekranie żadnego śladu.
+   */
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
     deck,
@@ -812,6 +848,7 @@ export const DeckBuilder: React.FC = () => {
     }
 
     autosaveTimerRef.current = setTimeout(async () => {
+      noteSaveStarted();
       try {
         const res = await fetch(`/api/presentations/decks/${deckForAutosave.deckId}/autosave`, {
           method: 'PUT',
@@ -853,7 +890,23 @@ export const DeckBuilder: React.FC = () => {
             /* keep whatever the 409 body told us */
           }
           setConflict({ serverVersion, pendingServer });
+          noteSaveFailed();
           toast.error(t('presentations.versionConflictDetected'));
+          return;
+        }
+        /*
+          ★ NIE-2xx TO PORAŻKA, NIE CISZA. Ta gałąź nie istniała: kod czytał
+          `res.json()` niezależnie od statusu i kończył bez śladu, więc 500
+          / 403 / 404 wyglądały na ekranie identycznie jak udany zapis.
+        */
+        if (!res.ok) {
+          noteSaveFailed();
+          setAutosaveError(
+            t(
+              'presentations.builder.autosaveFailed',
+              `Nie udało się zapisać prezentacji (błąd ${res.status}). Zmiany są widoczne na ekranie, ale NIE są zapisane na serwerze.`
+            )
+          );
           return;
         }
         const payload = await res.json().catch(() => ({}));
@@ -861,8 +914,18 @@ export const DeckBuilder: React.FC = () => {
           serverVersionRef.current = payload.version;
           setServerVersion(payload.version);
         }
+        setAutosaveError(null);
+        notePersistedSave(deckForAutosave.deck);
       } catch {
-        // Non-blocking; builder remains usable offline-ish.
+        // Sieć padła. Builder zostaje używalny, ale człowiek MUSI wiedzieć,
+        // że to, co widzi, nie jest zapisane.
+        noteSaveFailed();
+        setAutosaveError(
+          t(
+            'presentations.builder.autosaveOffline',
+            'Brak połączenia z serwerem — zmiany są widoczne na ekranie, ale NIE są zapisane.'
+          )
+        );
       }
     }, 800);
 
@@ -1143,6 +1206,24 @@ export const DeckBuilder: React.FC = () => {
     [deck]
   );
 
+  /**
+   * ODPARKOWANE 2026-09-01 (dyżur 172) — most ma znowu konsumenta.
+   *
+   * BYŁO (przez pół dnia): `deckWorkspaceContext` i `handleTeresaDeckIntent`
+   * karmiły WYŁĄCZNIE osadzony `UnifiedChatPanel` (`onModuleIntent` = most
+   * „Teresa edytuje talię": prompt → `handleAiPrompt` → `pendingAgentEdit` →
+   * banner Zaakceptuj/Odrzuć). Decyzja „jedna Teresa, w swoim oknie" zdjęła
+   * osadzony czat, a główne okno nie miało odpowiednika `onModuleIntent` —
+   * most stał się nieosiągalny z ekranu i został tu ZGŁOSZONY, nie skasowany.
+   *
+   * JEST: ekran publikuje handler w `uiSlice.chatModuleIntent`, a
+   * `UnifiedChatPanel` bierze go, gdy nie dostał propsa (dok i pełne okno
+   * jednakowo). Kontekst talii przypina `useOpenChatWithContext` przez
+   * `teresaEntityContext`, więc `deckWorkspaceContext` nie jest już potrzebny
+   * jako props — zostaje jako opis tego, co ekran wie o talii, i zasila
+   * `entityData` przypięcia w `openGlobalTeresa` niżej.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const deckWorkspaceContext = useMemo<WorkspaceContext | null>(() => {
     if (!deck) return null;
     return {
@@ -1188,10 +1269,18 @@ export const DeckBuilder: React.FC = () => {
     });
   }, [activeCard?.card_id, activeCard?.title, deck, openChatWithContext, selectedBlockId, t]);
 
+  /** Most „Teresa sama poprawia prezentację" — patrz nota przy `deckWorkspaceContext`. */
   const handleTeresaDeckIntent = useCallback(
     async (prompt: string) => {
       if (!deck) return false;
       const response = await handleAiPrompt(prompt);
+      // Serwer nie przygotował zmiany talii => to NIE była prośba o edycję,
+      // tylko zwykłe pytanie. Oddajemy turę Teresie (`handled: false` w
+      // `UnifiedChatPanel` przechodzi do normalnego streamu) zamiast połykać
+      // wiadomość. Osadzony czat mógł połykać wszystko, bo był czatem TEJ
+      // talii; jedno globalne okno Teresy nie może.
+      const nextDeck = (response as { deck?: unknown } | null)?.deck;
+      if (!nextDeck) return { handled: false };
       const reply =
         response && typeof response === 'object' && 'reply' in response
           ? String((response as { reply?: unknown }).reply || '')
@@ -1200,8 +1289,29 @@ export const DeckBuilder: React.FC = () => {
       toast.success(reply || fallbackReply);
       return { handled: true, reply: reply || fallbackReply };
     },
-    [deck, handleAiPrompt]
+    [deck, handleAiPrompt, t]
   );
+
+  // ── ODPARKOWANIE MOSTU: rejestracja handlera w jednym oknie Teresy ───────
+  // Ekran talii publikuje `handleTeresaDeckIntent` w `uiSlice`, dokładnie tak
+  // jak publikuje `chatContextActions`. `UnifiedChatPanel` (dok ORAZ pełne
+  // okno) bierze go, gdy nie dostał propsa `onModuleIntent`. Rejestrujemy
+  // tylko gdy talia jest wczytana; sprzątamy po sobie po `owner`, żeby wyjście
+  // z ekranu nie zostawiło mostu działającego na nieistniejącej talii.
+  const setChatModuleIntent = useAppStore((s) => s.setChatModuleIntent);
+  const clearChatModuleIntent = useAppStore((s) => s.clearChatModuleIntent);
+  useEffect(() => {
+    // Strażnik na `typeof === 'function'`: atrapy `useAppStore` w testach bywają
+    // płaskie (`selector({ currentUser: null })`) i oddają `undefined` na każdy
+    // nowy setter. Rejestracja mostu nie może wywracać ekranu, którego test
+    // dotyczy czegoś zupełnie innego.
+    if (!deck?.deck_id || typeof setChatModuleIntent !== 'function') return;
+    const owner = `deckBuilder:${deck.deck_id}`;
+    setChatModuleIntent({ owner, handler: handleTeresaDeckIntent });
+    return () => {
+      if (typeof clearChatModuleIntent === 'function') clearChatModuleIntent(owner);
+    };
+  }, [deck?.deck_id, handleTeresaDeckIntent, setChatModuleIntent, clearChatModuleIntent]);
 
   // R4 — Free-text per-slide rewrite. Uses the returned rebuilt `card` to
   // update the card in place (OPTION B) so Undo/Redo keeps working — NOT
@@ -1313,10 +1423,8 @@ export const DeckBuilder: React.FC = () => {
         setMediaLibraryOpen(false);
         return;
       }
-      if (teresaOpen) {
-        setTeresaOpen(false);
-        return;
-      }
+      /* Esc nie zamyka już Teresy z tego ekranu — jej okno nie należy do
+         prezentacji, tylko do powłoki aplikacji, i to ona nim zarządza. */
       handleBackToPresentations();
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -1332,7 +1440,6 @@ export const DeckBuilder: React.FC = () => {
     analyticsOpen,
     shareModalOpen,
     mediaLibraryOpen,
-    teresaOpen,
     selectedBlockId,
     handleBackToPresentations,
   ]);
@@ -1520,7 +1627,10 @@ export const DeckBuilder: React.FC = () => {
             run: t('presentations.builder.topBar.present', 'Present'),
             runOptions: t('presentations.builder.present.options', 'Presentation options'),
             runFromCurrent: t('presentations.builder.present.fromCurrent', 'From current slide'),
-            runFromStart: t('presentations.builder.present.fromBeginning', 'Present from beginning'),
+            runFromStart: t(
+              'presentations.builder.present.fromBeginning',
+              'Present from beginning'
+            ),
             presenter: t('presentations.builder.present.presenterView', 'Presenter view'),
           }}
           topBarHandlers={{
@@ -1533,7 +1643,10 @@ export const DeckBuilder: React.FC = () => {
             onToggleComments: () =>
               setActiveRailTool((prev) => (prev === 'comments' ? null : 'comments')),
             onShare: () => setShareModalOpen(true),
-            onToggleAgent: () => setTeresaOpen((v) => !v),
+            // „Zapytaj Teresę" (panel Akcje + pigułka Menu 2, DeckBuilderMelsView:472)
+            // — otwiera JEDNO okno Teresy z kontekstem prezentacji, nie przełącza
+            // już własnej kolumny czatu.
+            onToggleAgent: openGlobalTeresa,
             onRun: () => {
               setPresentStartIndex(activeCardIndex);
               setPresentMode('fullscreen');
@@ -1554,7 +1667,9 @@ export const DeckBuilder: React.FC = () => {
             {
               confidentiality: deckConfidentiality,
               governanceVerdict: governanceVerdict ?? null,
-              agentOpen: teresaOpen,
+              // Prezentacja nie ma już WŁASNEGO czatu, więc nie ma też stanu
+              // „mój czat jest otwarty" — pigułka jest wejściem, nie pstryczkiem.
+              agentOpen: false,
               runEnabled: deck.cards.length > 0,
               commentsOpen: activeRailTool === 'comments',
               openCommentCount,
@@ -1599,6 +1714,19 @@ export const DeckBuilder: React.FC = () => {
               </div>
             ) : undefined
           }
+          /*
+            Metadane do sekcji „Właściwości" prawego panelu artefaktu (SPEC-A
+            §11.2). Wcześniej te liczby nie miały gdzie mieszkać: tryb warsztatu
+            wygasza prawą szynę, a górny pasek jest jednoliniowy.
+          */
+          artifactPanelMeta={{
+            slideCount: deck.cards.length,
+            confidentiality: deckConfidentiality,
+            status: (deck.status as string | undefined) ?? 'draft',
+            version: serverVersion ?? null,
+            colorSetId: deck.color_set_id ?? null,
+            lockedSlideCount: deck.cards.filter((c) => c.is_locked).length,
+          }}
           activeRightRailToolId={activeRailTool}
           onActiveRightRailToolChange={setActiveRailTool}
           rightRailState={{
@@ -1676,7 +1804,12 @@ export const DeckBuilder: React.FC = () => {
               registry={presentationArtifactCommands}
               context={presentationArtifactCommandContext}
               resolveLabel={(label) => label}
-              maxVisible={7}
+              // 9 miejsc: Cofnij · Ponów · Nowy slajd · Pole tekstowe · Obraz ·
+              // Motyw · Duplikuj slajd · Zablokuj · Usuń slajd. Domyślne 7
+              // wypychało operacje na slajdzie pod „Więcej", a to one są
+              // odpowiedzią na „nie widzę, gdzie mogę edytować". Pasek jest
+              // pełnej szerokości ekranu (siedzi nad kolumnami powłoki).
+              maxVisible={9}
               ariaLabel={t('presentations.builder.contextTools', 'Narzędzia prezentacji')}
             />
           }
@@ -1744,24 +1877,38 @@ export const DeckBuilder: React.FC = () => {
               />
             </ArtifactContextCommandSurface>
           }
-          aiEntrySlot={
-            !artifactStudioPresentationEnabled && teresaOpen ? (
-              <div className="w-[360px] min-w-[320px] max-w-[420px] h-full">
-                <UnifiedChatPanel
-                  mode="split"
-                  title={t('presentations.builder.teresa.title', 'Teresa')}
-                  workspaceContext={deckWorkspaceContext}
-                  onModuleIntent={handleTeresaDeckIntent}
-                  showModeToggle={false}
-                  showHistoryTrigger
-                  showFocusMode
-                  maxHeight="100%"
-                />
-              </div>
-            ) : null
-          }
+          /*
+            ★ `aiEntrySlot` PUSTY OD 2026-09-01 (decyzja „jedna Teresa").
+            Stał tu `UnifiedChatPanel` w kolumnie 360 px — drugi czat obok
+            głównego okna Teresy. Slot zostaje zadeklarowany jako `undefined`,
+            bo powłoka warsztatu (`DeckBuilderMelsView` → `globalTeresaSlot`)
+            sama układa się bez niego, a jawne `undefined` mówi czytelnikowi,
+            że to decyzja, nie przeoczenie. Wejście do Teresy nie zniknęło:
+            „Zapytaj Teresę" w panelu Akcje, pigułka Menu 2 i stopka wołają
+            `openGlobalTeresa()` z kontekstem tej prezentacji.
+          */
+          aiEntrySlot={undefined}
           bannerSlot={
-            pendingAgentEdit ? (
+            autosaveError ? (
+              /*
+                UCZCIWOŚĆ ZAPISU (2026-08-30). Slajd pokazuje optymistycznie
+                NOWĄ treść, więc odrzucony zapis znaczy, że człowiek widzi
+                zdanie, którego na serwerze nie ma. To gorsze niż brak zapisu:
+                to zapis pozorny. Do dziś nie zostawiał ŻADNEGO śladu na ekranie.
+              */
+              <div
+                role="alert"
+                data-testid="deck-autosave-error"
+                className="flex items-start gap-2 border-b border-c-danger/40 bg-c-danger/10 px-4 py-2.5 text-sm text-c-text"
+              >
+                <AlertTriangle
+                  size={16}
+                  className="mt-0.5 shrink-0 text-c-danger"
+                  aria-hidden="true"
+                />
+                <span className="flex-1">{autosaveError}</span>
+              </div>
+            ) : pendingAgentEdit ? (
               <div className="flex items-center gap-3 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2.5">
                 <span className="text-sm font-medium text-amber-800 dark:text-amber-200 flex-1">
                   {pendingAgentEdit.reply}
@@ -1852,7 +1999,8 @@ export const DeckBuilder: React.FC = () => {
               totalCards={deck.cards.length}
               cardTitle={activeCard?.title || ''}
               onQuickEdits={
-                artifactStudioPresentationEnabled ? openGlobalTeresa : () => setTeresaOpen(true)
+                // Jedno wejscie w obu torach (2026-09-01) — glowne okno Teresy.
+                openGlobalTeresa
               }
               onToggleNotes={() => setShowNotes((v) => !v)}
               notesOpen={showNotes}
@@ -1921,7 +2069,7 @@ export const DeckBuilder: React.FC = () => {
                 onPresent={() => setPresentMode('fullscreen')}
                 onPresentPresenter={() => setPresentMode('presenter')}
                 onExport={handleExport}
-                onToggleAgent={() => setTeresaOpen((v) => !v)}
+                onToggleAgent={openGlobalTeresa}
                 onOpenTheme={() => setThemeSwitcherOpen(true)}
                 onAddCard={() => handleAddBlankCard()}
                 onShare={() => setShareModalOpen(true)}
@@ -1950,8 +2098,8 @@ export const DeckBuilder: React.FC = () => {
             onRedo={redo}
             canUndo={canUndo}
             canRedo={canRedo}
-            onToggleAgent={() => setTeresaOpen((v) => !v)}
-            agentOpen={teresaOpen}
+            onToggleAgent={openGlobalTeresa}
+            agentOpen={false}
             onPresent={() => setPresentMode('fullscreen')}
             onTheme={() => setThemeSwitcherOpen(true)}
             onShare={() => setShareModalOpen(true)}
@@ -2100,20 +2248,11 @@ export const DeckBuilder: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative">
-          {teresaOpen && (
-            <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-c-border-subtle bg-c-surface-raised">
-              <UnifiedChatPanel
-                mode="split"
-                title={t('presentations.builder.teresa.title', 'Teresa')}
-                workspaceContext={deckWorkspaceContext}
-                onModuleIntent={handleTeresaDeckIntent}
-                showModeToggle={false}
-                showHistoryTrigger
-                showFocusMode
-                maxHeight="100%"
-              />
-            </aside>
-          )}
+          {/* ★ 2026-09-01: kolumna 360 px z osadzonym `UnifiedChatPanel`
+              (drugi czat obok głównego okna Teresy) USUNIĘTA — decyzja
+              „jedna Teresa, w swoim oknie". Płótno slajdu odzyskuje te 360 px,
+              a rozmowa toczy się w jednym oknie, otwieranym przez
+              `openGlobalTeresa()` z kontekstem prezentacji. */}
 
           {/* Left: Slide Sorter */}
           <SlideSorter
@@ -2158,14 +2297,22 @@ export const DeckBuilder: React.FC = () => {
             onUpload={() => setMediaLibraryOpen(true)}
           />
 
-          {/* Passive AI Activity Panel — runtime telemetry feed */}
-          {teresaOpen && (
+          {/* Passive AI Activity Panel — runtime telemetry feed.
+              ★ 2026-09-01: bramka `teresaOpen` przestała istnieć razem
+              z osadzonym czatem, a ten panel NIE jest czatem — to bierny
+              dziennik działań agenta i decyzja właściciela go nie dotyczy.
+              Zamiast kasować zdolność albo trzymać kolumnę 288 px na pusto,
+              panel pokazuje się DOKŁADNIE wtedy, gdy ma co powiedzieć
+              (są zdarzenia albo strumień jest zdegradowany). W torze warsztatu
+              ten sam panel ma własne, jawne wejście (szyna, narzędzie
+              `activity` — patrz `railTools` wyżej). */}
+          {runtimeEvents.events.length > 0 || runtimeEvents.degraded ? (
             <AgentActivityPanel
               events={runtimeEvents.events}
               degraded={runtimeEvents.degraded}
               reason={runtimeEvents.reason}
             />
-          )}
+          ) : null}
 
           {/* Version History Panel */}
           <VersionHistoryPanel
@@ -2226,7 +2373,7 @@ export const DeckBuilder: React.FC = () => {
           currentIndex={activeCardIndex}
           totalCards={deck.cards.length}
           cardTitle={activeCard?.title || ''}
-          onQuickEdits={() => setTeresaOpen(true)}
+          onQuickEdits={openGlobalTeresa}
           onToggleNotes={() => setShowNotes((v) => !v)}
           notesOpen={showNotes}
         />
@@ -2248,7 +2395,7 @@ export const DeckBuilder: React.FC = () => {
           onPresent={() => setPresentMode('fullscreen')}
           onPresentPresenter={() => setPresentMode('presenter')}
           onExport={handleExport}
-          onToggleAgent={() => setTeresaOpen((v) => !v)}
+          onToggleAgent={openGlobalTeresa}
           onOpenTheme={() => setThemeSwitcherOpen(true)}
           onAddCard={() => handleAddBlankCard()}
           onShare={() => setShareModalOpen(true)}

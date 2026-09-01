@@ -16,12 +16,27 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../src/i18n';
 
 import ToolsSwotSessionWorkspaceScreen from './screens/tools-swot-session-workspace';
+import { useAppStore } from '../src/store/useAppStore';
 
 const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.setAttribute('data-theme', theme);
+
+// i18n (2026-08-31, Z-21): ten bootstrap nigdy nie wołał i18n.changeLanguage(),
+// więc detektor przeglądarki dawał 'en' w świeżym headless renderze — dokładnie
+// ta sama pułapka co naprawiona 2026-08-27 w tools-outputs-insights-tab-main.tsx
+// (naprawa per wywołanie odrosła w bliźniakach). Konwencja ?lang= jak w main.tsx.
+const lang = params.get('lang') === 'en' ? 'en' : 'pl';
+void i18n.changeLanguage(lang);
+// Naprawa 2026-08-30 (odbiór „prehistoryczna karta"): ekran montuje teraz
+// REALNY `<AppProviders>` (patrz screens/tools-swot-session-workspace.tsx),
+// który zawiera `ThemeSync` — komponent czytający `useAppStore.theme` i
+// nadpisujący klasę `.dark` na <html> w `useLayoutEffect`. Bez tej linii
+// ThemeSync wygrywa wyścig z powyższym `classList.toggle` i `?theme=dark`
+// po cichu wraca do jasnego (ten sam wzorzec co `dev-render/main.tsx:1628`).
+useAppStore.setState({ theme });
 
 const el = document.getElementById('root');
 if (el) {

@@ -351,9 +351,37 @@ export function KnownToolDetailView(props: {
       readOnly: true,
     });
 
+    /**
+     * Odbiór 2026-08-30 (przegląd modułów 04/11/16): panel Właściwości pokazywał
+     * SUROWĄ wartość bazodanową `libraryCategory` (`strategy`/`strategic`/
+     * `operational`/`digital`/`automation`) zamiast etykiety — dokładnie ten
+     * defekt, przed którym ostrzega `src/utils/enumLabels.ts`. `KnownToolPreviewV3.tsx`
+     * (karta w bibliotece) ma już tę etykietę rozwiązaną przez `categoryLabel` —
+     * te same trzy klucze i18n są reużyte tutaj zamiast duplikować nowe klucze
+     * w zakazanym pliku wspólnym `public/locales/**`. `automation` nie ma tam
+     * klucza wcale (ani w PL, ani w EN) — dopisany lokalnie, bo backend
+     * (`KnownToolsService.ts`) go realnie używa.
+     */
+    const categoryLabel = (() => {
+      const raw = tool?.libraryCategory;
+      if (raw === 'strategic' || raw === 'strategy') {
+        return t('discoveryToolsMain.knownToolPreviewV3.categoryStrategy', 'Strategy');
+      }
+      if (raw === 'operational') {
+        return t('discoveryToolsMain.knownToolPreviewV3.categoryOperations', 'Operations');
+      }
+      if (raw === 'digital') {
+        return t('discoveryToolsMain.knownToolPreviewV3.categoryDigital', 'Digital');
+      }
+      if (raw === 'automation') {
+        return isPolish ? 'Automatyzacja' : 'Automation';
+      }
+      return raw || dash;
+    })();
+
     return [
       row('status', 'Status', 'Status', statusText),
-      row('category', 'Category', 'Kategoria', tool?.libraryCategory || dash),
+      row('category', 'Category', 'Kategoria', categoryLabel),
       // „Typ narzędzia" pokazywał SLUG techniczny („dynamic-swot") — identyfikator
       // katalogu, nie nazwa dla czytelnika (2026-07-24). `tool.name` przychodzi
       // z tego samego zapytania `Api.getKnownTool(toolType, { lang })`, więc jest
@@ -2164,7 +2192,16 @@ export function KnownToolDetailView(props: {
         id: 'actions',
         label: t('discoveryToolsMain.knownToolDetailView.panelActions', 'Actions'),
         icon: Sparkles,
-        defaultOpen: false,
+        // ★ NAPRAWA 2026-09-01 (dyżur 164, rodzina „nagie zero"). Było
+        // `defaultOpen: false`. Sekcja pokazywała nagłówek „AKCJE 0" i
+        // CHOWAŁA pod zwiniętym akordeonem jedyne zdanie, które ten licznik
+        // tłumaczy („Ten wpis biblioteczny nie ma własnych akcji — startuj
+        // sesję przyciskiem w nagłówku."). Czyli dokładnie tam, gdzie miało
+        // być widoczne, nie było go widać — a samo „0" wprowadza w błąd.
+        // Wzorzec poprawny obok: `InitiativeDocumentView` (sekcja `actions`
+        // w Podglądzie: licznik 0 + otwarte zdanie wyjaśniające znaczenie
+        // liczby). Patrz docs/program/grafika/KANON_Z_ODBIOROW.md.
+        defaultOpen: true,
         isEmpty: true,
         badge: 0,
         showZeroBadge: true,

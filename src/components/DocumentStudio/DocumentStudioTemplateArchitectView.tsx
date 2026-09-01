@@ -685,7 +685,16 @@ export const DocumentStudioTemplateArchitectView: React.FC<
           <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
             <span className="font-medium text-c-text">
               {t('documentStudio.templateArchitect.purpose', 'Purpose')}{' '}
-              <span className="text-danger-500">*</span>
+              {/*
+                KANON (CLAUDE.md §3, odbiór 2026-08-30): crimson/danger WYŁĄCZNIE
+                dla semantyki krytycznej. Ta sama poprawka co
+                `DocumentStudioIntakeForm.tsx` (odbiór 2026-08-30) — czerwona
+                gwiazdka przy polu obowiązkowym to ozdobnik konwencji, nie alarm.
+                Zastąpione tym samym neutralnym wzorcem „(wymagane)".
+              */}
+              <span className="text-xs font-normal text-c-text-muted">
+                ({t('documentStudio.intake.requiredMarker', 'wymagane')})
+              </span>
             </span>
             <textarea
               value={purpose}

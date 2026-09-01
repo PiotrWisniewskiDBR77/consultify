@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type AdminJob, getAdminJobs } from '../../services/adminJobsApi';
+import { humanizeEnum } from '../../utils/enumLabels';
+import { formatListDateTime } from '../../utils/listDateFormat';
 import { StandardTable, type TableColumn, type TableRow } from '../standard/StandardTable';
 export const AdminJobsPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -38,6 +40,10 @@ export const AdminJobsPanel: React.FC = () => {
       {
         id: 'type',
         label: t('admin.health.queues-jobs.columns.type'),
+        render: (row) =>
+          t(`admin.health.queues-jobs.types.${row.typeRaw}`, {
+            defaultValue: humanizeEnum(row.typeRaw),
+          }),
       },
       {
         id: 'status',
@@ -67,11 +73,12 @@ export const AdminJobsPanel: React.FC = () => {
       jobs.map((j) => ({
         id: j.id,
         type: j.job_type,
+        typeRaw: j.job_type,
         status: j.status,
         attempts: `${j.attempt_count}/${j.max_attempts}`,
         error: j.last_error || '—',
-        available: new Date(j.available_at).toLocaleString(),
-        created: new Date(j.created_at).toLocaleString(),
+        available: formatListDateTime(j.available_at),
+        created: formatListDateTime(j.created_at),
       })),
     [jobs]
   );

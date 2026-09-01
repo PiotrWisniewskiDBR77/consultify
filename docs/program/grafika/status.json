@@ -1,6 +1,6 @@
 {
   "_opis": "Maszynowy stan toru grafiki. Zrodlo dla generatora strony odbioru (scripts/dev/grafika-strona-odbioru.mjs). Oceny: A=do odbioru, B=do odbioru z wyjatkami, C=nie pokazujemy, D=odlozone.",
-  "_zaktualizowano": "2026-08-30",
+  "_zaktualizowano": "2026-09-01",
   "moduly": [
     {
       "katalog": "01-czat",
@@ -29,9 +29,10 @@
           "id": "processflow-canvas",
           "nazwa": "Diagram procesu",
           "ocena": "A",
-          "co": "Start, decyzja, koniec, dwa tory.",
+          "co": "'Proces wdrożenia nowego klienta' — SPRAWDZONE na świeżym zrzucie 151-processflow-typy (2026-08-31, oba motywy): krawędź łącząca 'Poproś o uzupełnienie danych' z węzłem decyzyjnym 'Dane kompletne?' NIE przechodzi już przez etykietę węzła 'Klient składa zgłoszenie' — trasa biegnie czystym korytarzem między wierszami torów 'Klient' i 'Zespół wdrożenia'. Zgłoszony defekt (krawędź wyglądająca jak przekreślenie) NAPRAWIONY, zgodne z commitem 'fix(processflow): poprawny import reactflow'.",
           "naprawione": [
-            "Tekst wylewal sie poza romb decyzyjny i nachodzil na etykiete Tak"
+            "Tekst wylewał się poza romb decyzyjny i nachodził na etykietę 'Tak' — naprawione wcześniej.",
+            "Krawędź Start→'Poproś o uzupełnienie danych'→decyzja przechodziła przez etykietę węzła 'Klient składa zgłoszenie' (wyglądała jak przekreślenie) — NAPRAWIONE, potwierdzone na świeżym zrzucie w obu motywach."
           ],
           "wyjatki": [],
           "warianty": [
@@ -80,8 +81,8 @@
         {
           "id": "melscanvas-workspace",
           "nazwa": "Mala mapa mysli",
-          "ocena": "A",
-          "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie.",
+          "ocena": "B",
+          "co": "Cztery elementy. Zero wezlow na karcie opisuje obiekt, nie widok — uczciwie. Pastylka trybu narzedzia pokazuje surowe SEL zamiast polskiej etykiety (CanvasLeftToolbar.tsx). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "warianty": [
@@ -97,8 +98,8 @@
         {
           "id": "mindmap-canvas",
           "nazwa": "Mapa mysli",
-          "ocena": "A",
-          "co": "Realna mapa mysli z paskiem podpowiedzi AI.",
+          "ocena": "B",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Realna mapa mysli z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku w prawym pasku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Angielski przycisk Apply"
           ],
@@ -111,7 +112,7 @@
             "whiteboard-canvas",
             "whiteboard-workshop"
           ],
-          "gdzie": "Moja praca → Idee → otwarcie idei jako mapy myśli — realny graf doradczy (węzeł centralny + gałęzie + pod-węzły) z paskiem podpowiedzi AI."
+          "gdzie": "Moja praca → Idee → otwarcie idei jako mapy myśli — realny graf doradczy (węzeł centralny + gałęzie + pod-węzły) z paskiem podpowiedzi AI. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "mindmap-i18n-smoke",
@@ -125,8 +126,8 @@
         {
           "id": "chat-signals-feed",
           "nazwa": "Strumien sygnalow",
-          "ocena": "A",
-          "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny.",
+          "ocena": "B",
+          "co": "W calosci po polsku. Crimson uzyty POPRAWNIE — tylko dla Blokada i Krytyczny. Defekt kolumny (za waska, tytuly lamia sie) juz opisany w wyjatkach - obniza ocene. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
           ],
@@ -138,8 +139,8 @@
         {
           "id": "whiteboard-canvas",
           "nazwa": "Tablica",
-          "ocena": "A",
-          "co": "Tablica z paskiem podpowiedzi AI.",
+          "ocena": "B",
+          "co": "Tablica z paskiem podpowiedzi AI. Ta sama pastylka SEL po angielsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Ten sam angielski Apply"
           ],
@@ -157,8 +158,8 @@
         {
           "id": "whiteboard-workshop",
           "nazwa": "Tablica — warsztat",
-          "ocena": "A",
-          "co": "Tablica oddalona, szesc elementow.",
+          "ocena": "B",
+          "co": "Tablica oddalona, szesc elementow. Ta sama pastylka SEL po angielsku, widoczne nawet przy 25% zoom. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Ten sam angielski Apply"
           ],
@@ -250,9 +251,13 @@
           "nazwa": "Graf notatek",
           "ocena": "A",
           "co": "Graf polaczen z soczewka osieroconych.",
-          "naprawione": [],
-          "wyjatki": [],
-          "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań) — pokazuje, które notatki nie mają żadnego powiązania, żeby nie ginęły w archiwum."
+          "naprawione": [
+            "01.09: graf polaczen dostal tryb pelnoekranowy (przycisk „Pelny ekran” obok dokowanego panelu) — zgodnie ze zgloszeniem wlasciciela „zrob to na calym ekranie”; potwierdzone zrzutem, dark w pelni czytelny (evidence/grafika/171-pojedyncze/)."
+          ],
+          "wyjatki": [
+            "Na zrzucie w trybie jasnym (light, fullscreen) etykiety sasiednich wezlow sa przyciete na krawedziach modala (np. „DE (6)”, „ne (3)”, „Ekspa[nsja]”) — w trybie ciemnym te same wezly sa w pelni czytelne, wiec to raczej stan zoomu/pan w danym zrzucie niz twardy defekt, ale warto sprawdzic ponownie."
+          ],
+          "gdzie": "Moja praca → Notatnik → widok grafu połączeń (plus lista notatek bez powiązań) — pokazuje, które notatki nie mają żadnego powiązania, żeby nie ginęły w archiwum. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
         },
         {
           "id": "idea-table-tool-grouping",
@@ -273,10 +278,10 @@
           "id": "mywork-idea-inspector-lekki",
           "nazwa": "Inspektor pomyslu",
           "ocena": "A",
-          "co": "Sekcje z licznikami.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Sekcje z licznikami.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → lekki inspektor po prawej stronie — szybki podgląd właściwości elementu (sekcje z licznikami zamiast pełnej tabeli), żeby nie trzeba było otwierać całej karty."
+          "gdzie": "Moja praca → Idea (mapa myśli) → klik w element → lekki inspektor po prawej stronie — szybki podgląd właściwości elementu (sekcje z licznikami zamiast pełnej tabeli), żeby nie trzeba było otwierać całej karty. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "karta-decision",
@@ -317,10 +322,15 @@
         {
           "id": "karta-task",
           "nazwa": "Karta zadania",
-          "ocena": "A",
-          "co": "Bez odchylen. Czerwien na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona.",
+          "ocena": "B",
+          "co": "Czerwień na Zablokuj i banerze terminu to semantyka krytyczna — dozwolona. Poprzedni zapis „Bez odchyleń” był NIEPRAWDZIWY — odchylenie znalezione w rundzie 2026-08-31 (patrz wyjątki).",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "Przycisk PRIMARY „Wyślij do przeglądu” w NModeHeader używa surowych bg-navy-900 / dark:bg-[#F4F7FB] zamiast tokenów c-* (zweryfikowane w DOM, zob. zgłoszenie #14 do toru funkcji)."
+          ],
+          "warianty": [
+            "karta-task-pelna"
+          ],
           "gdzie": "Moja praca → zakładka Zadania → otwarcie pojedynczego zadania — pełna karta zadania."
         },
         {
@@ -353,22 +363,22 @@
           "id": "ideas-teresa-panel",
           "nazwa": "Panel Teresy",
           "ocena": "A",
-          "co": "Sugestie AI, zero crimsonu.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Sugestie AI, zero crimsonu.",
           "naprawione": [],
           "wyjatki": [],
           "warianty": [
             "idea-confidentiality-control"
           ],
-          "gdzie": "Moja praca → Idee → prawy panel idei (IdeaRightPanel) → sekcja „Teresa\" — sugestie AI dopasowane do kontekstu otwartej idei."
+          "gdzie": "Moja praca → Idee → prawy panel idei (IdeaRightPanel) → sekcja „Teresa\" — sugestie AI dopasowane do kontekstu otwartej idei. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "mywork-notebook-rail-speca",
           "nazwa": "Panel notatnika",
           "ocena": "A",
-          "co": "Prawy panel z uczciwymi pustymi powiazaniami.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: sekcja AKCJE ma przycisk „Zapytaj Teresę o tę notatkę” zamiast wbudowanego czatu — potwierdzone zrzutem (evidence/grafika/169-teresa-szyna/, evidence/grafika/164-szerokosc-panelu/). Prawy panel z uczciwymi pustymi powiazaniami.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Moja praca → Notatnik → prawy panel (accordion: Akcje·Właściwości·Powiązania·Komentarze·Historia i AI) — z uczciwie pokazanym pustym stanem powiązań, gdy notatka nic nie łączy."
+          "gdzie": "Moja praca → Notatnik → prawy panel (accordion: Akcje·Właściwości·Powiązania·Komentarze·Historia i AI) — z uczciwie pokazanym pustym stanem powiązań, gdy notatka nic nie łączy. Zrzuty 01.09: evidence/grafika/169-teresa-szyna/, evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "ideas-preview-overlay",
@@ -396,9 +406,11 @@
           "nazwa": "Projekty",
           "ocena": "A",
           "co": "Lista projektow ze statusami jako pigulki z kropka.",
-          "naprawione": [],
+          "naprawione": [
+            "★ ODBIÓR 30.08 wieczór (dopisane przy przeglądzie nocnym): status poniżej opisywał BRAK DROGI WEJŚCIA jako wciąż otwarty problem — nieaktualne. Commit e98f82bfcc dodał zakładkę „Projects\" (FolderKanban) do głównego menu MyWorkHub.tsx bez żadnej flagi (ten sam wzorzec co Tasks/Decisions, obok — nie warunkowe jak Vault/Run agent), a commit 23d0b8879a tego samego dyżuru poprawił jeszcze kanon dat i kolor CTA na samym ekranie MyProjects. Command Palette naprawiony osobno: akcja podpisana „Otwórz kalendarz\" faktycznie woła teraz /my-work/calendar, a Projekty mają własną, poprawnie podpisaną akcję „action-open-projects\". Zweryfikowane czytaniem src/components/MyWork/MyWorkHub.tsx (wpis w tablicy zakładek) i src/components/MyWork/CommandPalette.tsx (dwie osobne akcje) — nie klikiem w żywej aplikacji."
+          ],
           "wyjatki": [],
-          "gdzie": "Moja praca → zakładka „Projekty\" (Zwornik) — lista projektów ze statusami jako pigułki, z sekcjami interesariuszy, finansów, zespołu i zadań w podglądzie."
+          "gdzie": "Moja praca → zakładka „Projekty\" w głównym menu huba (MyWorkHub.tsx, obok Zadań/Decyzji) — lista projektów ze statusami jako pigułki + sekcje interesariuszy/finansów/zespołu/zadań w podglądzie. Historia problemu (BRAK DROGI WEJŚCIA, pomyłkowa akcja Command Palette) opisana w poprzednich wpisach dziennika/rejestru z 30.08 rano — rozwiązana tego samego dnia wieczorem, patrz pole „naprawione\"."
         },
         {
           "id": "idea-table-tool-empty-filter",
@@ -546,7 +558,8 @@
             "Cztery literowki bez polskich znakow"
           ],
           "wyjatki": [
-            "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku."
+            "★ Bramka parytetu 8 z 9 — BRAK PASKA AKCJI MASOWYCH. Zaznaczenie dwoch wierszy nie wywoluje zadnej reakcji. To zmierzona cena zlamania kanonu tabel w tym pliku.",
+            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane w tej turze): „dalej jest problem — preview z tej tabeli nie jest zgodny ze standardem preview”. Brak dzisiejszej naprawy/zrzutu — zgloszone, nie zrobione."
           ],
           "warianty": [
             "assessment-matryca",
@@ -594,6 +607,29 @@
             "Narzedzie pomiarowe"
           ],
           "gdzie": "To NIE jest osobny ekran produktu — to harness porównawczy (kopiuje 1:1 opakowanie, którego realnie używa `MyIdeasListContent.tsx`), zrobiony do sprawdzenia szerokości tabeli. Docelowo ten sam ekran co „idea-table\", widziany dokładnie tak, jak widzi go użytkownik w Moja praca → Idee → Tabela."
+        },
+        {
+          "id": "mywork-inbox",
+          "nazwa": "Skrzynka (Inbox) — zakładka domyślna",
+          "ocena": "B",
+          "co": "StandardTable (ff_m03InboxStandardTable ON), 9 pozycji.",
+          "naprawione": [],
+          "wyjatki": [
+            "Powłoka MyWorkHub ma ~87 surowych klas navy-*/slate-* — dług systemowy całego huba, nie tylko tego ekranu.",
+            "Stan przeczytane/nieprzeczytane NIE istnieje w danych (InboxContent nie zna isRead)."
+          ],
+          "gdzie": "Moja praca → zakładka „Skrzynka” (Inbox) — zakładka domyślna modułu. Zrzuty: evidence/grafika/145-nowe-ekrany/."
+        },
+        {
+          "id": "mywork-calendar",
+          "nazwa": "Kalendarz (widok bazowy)",
+          "ocena": "B",
+          "co": "CalendarView (ff_myWorkCalendarV2 OFF), 6 wydarzeń.",
+          "naprawione": [],
+          "wyjatki": [
+            "SOURCE_COLORS (src/components/MyWork/Calendar/calendarTypes.ts:91-99) hardkoduje crimson hexy (#A51C30, #D42B3D) jako kolory KATEGORII — Pułapka nr 1 (zob. zgłoszenie #13 do toru funkcji)."
+          ],
+          "gdzie": "Moja praca → zakładka „Kalendarz” (widok bazowy). Zrzuty: evidence/grafika/145-nowe-ekrany/."
         }
       ]
     },
@@ -654,8 +690,8 @@
         {
           "id": "karta-interview",
           "nazwa": "Karta wywiadu",
-          "ocena": "C",
-          "co": "Prawy panel ma trzy z szesciu kanonicznych sekcji.",
+          "ocena": "A",
+          "co": "Prawy panel ma trzy z szesciu kanonicznych sekcji. Na swiezym zrzucie ekran ma wszystkie 6 sekcji prawego panelu (Akcje, Wlasciwosci, Powiazania, Zrodla i zalozenia, Komentarze, Historia) - naprawione przez kogos innego od poprzedniego wpisu. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Brak sekcji Akcje, Zrodla i zalozenia, Komentarze. Przy innych kartach z brakami stoi w kodzie komentarz z decyzja wlasciciela — tu go nie ma. Wymaga decyzji, nie naprawy."
@@ -675,11 +711,10 @@
           "ocena": "A",
           "co": "Pelna powloka artefaktu: menu po lewej, panel po prawej. Tekst wprost mowi, czym narzedzie NIE jest i kiedy go NIE uzywac.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Kategoria pokazywala surowe strategy zamiast etykiety — teraz tlumaczona (KnownToolDetailView.tsx)"
           ],
-          "wyjatki": [
-            "Kategoria pokazuje surowe strategic zamiast polskiej nazwy"
-          ],
+          "wyjatki": [],
           "warianty": [
             "karta-tool"
           ],
@@ -688,13 +723,17 @@
         {
           "id": "tools-swot-live",
           "nazwa": "Dynamiczny SWOT — pole na zywo",
-          "ocena": "A",
+          "ocena": "C",
           "co": "Cztery obszary z punktami oznaczonymi FAKT, HIPOTEZA albo OBSERWACJA. Napiecia SO/WO/ST/WT nazwane z dzialaniem i waga. Na dole sekcja POZA POLEM — nie zaakceptowane, nie wchodzi do wyniku. Uczciwosc wzorcowa.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "AI-PROPOSED/RETHINKING surowe wartosci — tlumaczone (SwotLiveArtifact.tsx)"
           ],
           "wyjatki": [
-            "Dwie etykiety po angielsku na dole: AI-PROPOSED i RETHINKING"
+            "SwotLiveArtifact nie ma zadnego wolacza w produkcie (grep: zero uzyc poza harnessem i komentarzem) — komponent zbudowany, nigdy nie montowany w ToolWorkspace",
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn \"<SwotLiveArtifact\" src/ server/src/ → ZERO trafień poza własnym plikiem i testami; jedyne wystąpienie w produkcji to komentarz w EvidenceEditor.tsx:41. Żadna sesja narzędzia tego nie montuje — pack `dynamicSwot.pack.ts:266` wskazuje renderer `tools/DynamicSWOT`, gdzie live-artefakt nie ma gniazda.",
+            "ZBUDOWANY, ALE NIEPODŁĄCZONY (nie martwy): silnik `swotTensionEngine.ts` i mapowanie `toEvidenceKind` są wspólne z żywym Wynikiem SWOT — brakuje JEDNEGO przewodu: gniazda/zakładki w sesji narzędzia Dynamiczny SWOT. Bez nowej trasy i bez zmian w silniku.",
+            "NIE POKAZUJEMY jako ekranu produktu do czasu podłączenia — właściciel oceniłby funkcję, której użytkownik nie widzi."
           ],
           "gdzie": "Narzędzia → sesja narzędzia „Dynamiczny SWOT\" → pole robocze na żywo — cztery obszary (SO/WO/ST/WT) z punktami oznaczonymi FAKT/HIPOTEZA/OBSERWACJA."
         },
@@ -705,10 +744,11 @@
           "co": "Piec krokow, propozycja AI z uzasadnieniem, liczniki zaakceptowanych punktow.",
           "naprawione": [
             "CRIMSON na przycisku Dodaj wiecej i na stanie zaznaczenia — zmierzone pikselowo przed i po",
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Kategoria surowe strategic — tlumaczona; Find Signals labelPl byl kopia angielskiego — Znajdz sygnaly (toolAiActions.ts)"
           ],
           "wyjatki": [
-            "DRAFT, COPILOT AI i Find Signals po angielsku"
+            "COPILOT AI po angielsku (klucz i18n istnieje, PL = kopia EN literalna)"
           ],
           "gdzie": "Narzędzia → sesja narzędzia „Dynamiczny SWOT\" → warsztat sesji — pięć kroków, propozycje AI z uzasadnieniem, liczniki zaakceptowanych punktów."
         },
@@ -717,22 +757,27 @@
           "nazwa": "Karta narzedzia",
           "ocena": "A",
           "co": "Bez odchylen. Zera przy sekcjach to rozstrzygniecie z 24.07, kazde ma opis po rozwinieciu.",
-          "naprawione": [],
+          "naprawione": [
+            "01.09: sekcja „AKCJE 0” po rozwinieciu pokazuje zdanie wyjasniajace („Ten wpis biblioteczny nie ma wlasnych akcji — startuj sesje przyciskiem w naglowku.”) zamiast golego zera — potwierdzone zrzutem (evidence/grafika/164-szerokosc-panelu/)."
+          ],
           "wyjatki": [],
           "warianty": [
             "tools-swot-library-detail"
           ],
-          "gdzie": "Narzędzia → Biblioteka → otwarcie karty narzędzia (np. znanego narzędzia konsultingowego) — pełna karta z sekcjami rozwijanymi."
+          "gdzie": "Narzędzia → Biblioteka → otwarcie karty narzędzia (np. znanego narzędzia konsultingowego) — pełna karta z sekcjami rozwijanymi. Zrzuty: evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "tools-outputs-insights-tab",
           "nazwa": "Narzedzia — zakladka wnioskow",
-          "ocena": "A",
+          "ocena": "B",
           "co": "Tabela kanoniczna, statusy i daty po polsku.",
           "naprawione": [
             "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "Zakladka Insighty nie jest slowem polskim (tools.hub.tabs.outputs w locale)",
+            "Nazwy narzedzi Value Chain/Dynamic SWOT surowe w tabeli (karta-tool ma je poprawnie po polsku — inna droga danych)"
+          ],
           "warianty": [
             "tools-sesja-wyjscie"
           ],
@@ -762,21 +807,24 @@
           "ocena": "A",
           "co": "Wyniki i gotowosc z paskiem postepu.",
           "naprawione": [],
-          "wyjatki": [],
+          "wyjatki": [
+            "Checklista Mission brief jest jasny — angielskie Mission brief wklejone w polskie zdanie (locale)"
+          ],
           "gdzie": "Narzędzia → sesja „Dynamiczny SWOT\" → podsumowanie sesji — propozycja inicjatyw wynikających z zaakceptowanych ruchów, z paskiem gotowości do przekształcenia w prawdziwą inicjatywę."
         },
         {
           "id": "tools-sesja-wyjscie",
           "nazwa": "Narzedzia — wyjscie z sesji",
-          "ocena": "B",
+          "ocena": "A",
           "co": "Powloka artefaktu z sesja, pytania po polsku.",
           "naprawione": [
             "Ekran nie byl podlaczony do harnessu",
-            "CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po"
+            "CRIMSON na przycisku Dalej i na chipie Dodaj wiecej — zmierzone pikselowo przed i po",
+            "Nazwa sesji Dynamic SWOT - Session na sztywno w fixture — Sesja (dev-render), domyslna nazwa sesji w produkcie tez PL (ToolDocumentView defaultSessionName); Kategoria tlumaczona"
           ],
           "wyjatki": [
-            "Session, DRAFT, COPILOT AI, AI Frame, AI Draft i naglowek OUTPUTS po angielsku",
-            "Surowe dynamic-swot i strategic we wlasciwosciach"
+            "COPILOT AI po angielsku (locale)",
+            "Surowe dynamic-swot w polu Typ narzedzia (identyfikator techniczny, nie nazwa)"
           ],
           "warianty": [
             "tools-outputs-insights-tab"
@@ -789,10 +837,12 @@
           "ocena": "C",
           "co": "Lista rezultatow sesji z wersjami.",
           "naprawione": [
-            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi."
+            "Podlaczony do wspolnej drogi wejscia. KOREKTA: mial wlasne wejscie .html, wiec byl osiagalny — innymi drzwiami, nie zadnymi.",
+            "Data US-format (toLocaleDateString bez locale) — formatListDate (ToolOutputsPanel.tsx)"
           ],
           "wyjatki": [
-            "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy"
+            "Prawie caly ekran po angielsku: Outputs, SELECTED OUTPUT, Reopen for correction, REPORTS & PRESENTATIONS, REPORT, PRESENTATION, INITIATIVE PROPOSALS, data Aug 13, 2026. Po polsku sa tylko statusy",
+            "Przyczyna ustalona: ~15 kluczy toolOutputs.* nie istnieje w ogole w public/locales/{pl,en}/translation.json — component jest i18n-ready, slownik pusty"
           ],
           "gdzie": "Narzędzia → panel rezultatów sesji — lista zapisanych wyjść (outputs) z wersjami, z możliwością ponownego otwarcia."
         }
@@ -851,8 +901,8 @@
         {
           "id": "assessment-output-report",
           "nazwa": "Raport z oceny",
-          "ocena": "A",
-          "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi.",
+          "ocena": "B",
+          "co": "Zrodlo wyniku widoczne, ograniczenia nazwane wprost, zero nagich zer. Nadaje sie do pokazania klientowi. Sekcja Ograniczenia i zalozenia cytuje wprost zargon inzynierski (EventDerivedOutputBridge, vertical-slice demo, businessMeaning/recommendation, aggregation.byGroup) w tekscie pokazywanym klientowi - zrodlo drdSessionRuntime.ts, poza zakresem UI. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → raport z oceny — źródło wyniku widoczne, ograniczenia nazwane wprost, gotowy do pokazania klientowi."
@@ -873,18 +923,16 @@
           "id": "assessment-artifacts-restart",
           "nazwa": "Wnioski z oceny",
           "ocena": "A",
-          "co": "Piec statusow, baner ostrzegawczy.",
+          "co": "SPRAWDZONE: zakładka 'Wnioski', sześć chipów statusu (Wszystkie 3 / Szkic / W przeglądzie / Oczekuje na zatwierdzenie / Zatwierdzony / Odrzucony / Zarchiwizowany) pokazuje teraz krótką etykietę '0 · 3 ukryte' zamiast uciętego surowego tekstu deweloperskiego '0 · 3 ukryte: hub nie pobiera podzia…' — pełne zdanie przeniesione do podpowiedzi, zgodnie z zapowiedzianą naprawą. Tabela z trzema wierszami: 'DBR77 · Digital Readiness — Grupa (runda Q3 2026)' (Ocena, v2, Aktualny, 10/08/2026), 'Segment Manufacturing — DRD Light (pilotaż)' (Ocena, v1, Aktualny), 'DBR77 · Digital Readiness — Grupa (runda Q2 2026)' (Ocena, v1, Zastąpiony).",
           "naprawione": [
-            "Chipy statusu nachodzily na siebie",
-            "Baner bledu nieczytelny w motywie jasnym",
-            "Angielskie Retry"
+            "Ucięty surowy komunikat dev w chipach filtra zamieniony na krótką etykietę '0 · 3 ukryte' (pełne zdanie przeniesione do podpowiedzi)."
           ],
           "wyjatki": [],
           "warianty": [
             "assessment-five-surfaces",
             "assessment-menu3-status-chips"
           ],
-          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" (Outputs) → wewnętrzny segment Wnioski/Raporty/Inicjatywy — pięć statusów artefaktu (m.in. „zastąpiony\" po nowej wersji) z banerem ostrzegawczym."
+          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" (Outputs) → wewnętrzny segment Wnioski/Raporty/Inicjatywy — pięć statusów artefaktu (m.in. „zastąpiony\" po nowej wersji) z banerem ostrzegawczym. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "assessment-five-surfaces",
@@ -902,8 +950,8 @@
         {
           "id": "drd-library-entry",
           "nazwa": "Biblioteka DRD",
-          "ocena": "B",
-          "co": "Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku.",
+          "ocena": "A",
+          "co": "Pasek modulu i tabela kanoniczna, sciezka i zakladki po polsku. Pasek wyjasniajacy flage dla inzyniera nie byl oznaczony jako chrom harnessu - naprawione (data-dev-render-chrome). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Sciezka i zakladki przybite po angielsku",
             "Ekran nie byl podlaczony do harnessu"
@@ -916,8 +964,8 @@
         {
           "id": "assessment-list",
           "nazwa": "Lista ocen",
-          "ocena": "B",
-          "co": "Tabela kanoniczna, statusy po polsku, kreska zamiast zera.",
+          "ocena": "A",
+          "co": "Tabela kanoniczna, statusy po polsku, kreska zamiast zera. Na swiezym zrzucie bez zastrzezen. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Kolumna Aktualizacja ucina naglowek i daty — szerokosc kolumn przy siedmiu kolumnach, defekt wspolnego silnika tabel, nie tego ekranu"
@@ -927,8 +975,8 @@
         {
           "id": "assessment-reports-panel",
           "nazwa": "Panel raportow",
-          "ocena": "B",
-          "co": "Mechanika czysta.",
+          "ocena": "A",
+          "co": "Mechanika czysta. Wyjatek 'obudowa ekranu po angielsku' juz nieaktualny - dzis ekran w 100% polski. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Obudowa ekranu po angielsku — inny komponent niz tabela raportow"
@@ -938,19 +986,21 @@
         {
           "id": "assessment-presentation-view",
           "nazwa": "Prezentacja z oceny (9 slajdow)",
-          "ocena": "B",
-          "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu.",
-          "naprawione": [],
-          "wyjatki": [
-            "Slajd 5 pokazuje paski BEZ nazw osi — gole liczby. Realny defekt na materiale dla zarzadu klienta. Naprawa wymaga zmiany we wspolnym jadrze metodyk"
+          "ocena": "A",
+          "co": "Bardzo dobra uczciwosc jezykowa: rozroznia nie wiem od brak dowodu. Slajd 6: macierz DRD ze slajdu opakowana komponentem DRDMatrixReadOnly (eksport z DRDAssessmentEditor) — zaakceptowana przez wlasciciela 2026-09-01 jako jedyne zrodlo macierzy w raporcie, potwierdzone zrzutem identycznym co do struktury z edytorem zrodlowym (evidence/grafika/159-macierz-drd/). SPROSTOWANIE (01.09): slajd 5 (Profil per wymiar) — wczesniejszy wyjatek „paski BEZ nazw osi, gole liczby” juz NIE jest prawdziwy: na najnowszym zrzucie kazdy pasek ma pelna, polska etykiete wymiaru (Cyfrowe Modele Biznesowe, Procesy Cyfrowe, Produkty Cyfrowe, Cyberbezpieczenstwo) obok wartosci liczbowej — potwierdzone w obu motywach (evidence/grafika/163-slajd5-cofniecie/). Katalog dowodowy nazwany „cofniecie” sugeruje, ze byla to naprawa przez wycofanie wczesniejszej zlej zmiany.",
+          "naprawione": [
+            "01.09: slajd 5 — nazwy wymiarow przywrocone przy kazdym pasku (byly widoczne jako gole liczby bez etykiet) — potwierdzone zrzutem PO, oba motywy."
           ],
-          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → eksport jako prezentacja — 9 slajdów z wyniku oceny."
+          "wyjatki": [
+            "Podtytul slajdu 6 („Assessment of digital transformation across core business processes”) pozostaje po angielsku mimo ze reszta slajdu (tytul, etykiety osi, stopka) jest po polsku — drobna niespojnosc jezykowa, nie blokujaca."
+          ],
+          "gdzie": "Ocena → otwarcie oceny → zakładka „Wnioski\" → eksport jako prezentacja — 9 slajdów z wyniku oceny. Zrzuty 01.09: evidence/grafika/159-macierz-drd/ (slajd 6, macierz DRD), evidence/grafika/163-slajd5-cofniecie/ (slajd 5, nazwy osi)."
         },
         {
           "id": "assessment-initiatives-table",
           "nazwa": "Tablica inicjatyw strategicznych",
-          "ocena": "B",
-          "co": "Tablica inicjatyw.",
+          "ocena": "A",
+          "co": "Tablica inicjatyw. Wyjatek 'obudowa po angielsku' juz nieaktualny - dzis w 100% polski (bledy konsoli fetch to brak backendu harnessu, nie defekt); styl pigulki priorytetu zgloszony osobno, nie obniza oceny (wzorzec ogolnoaplikacyjny). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Ucinane etykiety priorytetu — kolumna poszerzona"
           ],
@@ -978,8 +1028,8 @@
         {
           "id": "assessment-initiatives-panel",
           "nazwa": "Panel inicjatyw",
-          "ocena": "C",
-          "co": "Proces statusow inicjatywy.",
+          "ocena": "A",
+          "co": "Proces statusow inicjatywy. Na swiezym zrzucie ekran w 100% polski, brak bledow konsoli - oba problemy z poprzedniego wpisu juz naprawione. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Caly ekran po angielsku",
@@ -990,8 +1040,8 @@
         {
           "id": "assessment-manage-panel",
           "nazwa": "Panel zarzadzania ocena",
-          "ocena": "C",
-          "co": "Mechanika solidna: postep procesu, tabela etapow bramek.",
+          "ocena": "B",
+          "co": "Mechanika solidna: postep procesu, tabela etapow bramek. Domyslna zakladka Przeplyw jest dzis w 100% polska - wyrazna poprawa od poprzedniego wpisu; pozostale 4 zakladki (Zespol/Raporty/Inicjatywy/Dziennik) nie zostaly jeszcze zweryfikowane. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Caly ekran po angielsku — 884 linie bez ani jednego klucza tlumaczen. Nie naprawiam pojedynczo, to osobne zadanie"
@@ -1006,15 +1056,17 @@
           "naprawione": [],
           "wyjatki": [
             "Prawie w calosci po angielsku, z surowymi parametrami obliczen. To narzedzie wewnetrzne — nie pokazywac klientowi",
-            "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=."
+            "KOREKTA 2026-08-30: pierwotnie oceniony na D jako nierenderujacy sie. Blad pomiaru, nie produktu — ten ekran ma WLASNE wejscie (plik .html), a mierzylismy go tylko wspolna droga ?screen=.",
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn \"siriTierView|runSiriTier|siriTierAvailability\" src/ server/src/ → poza własnym plikiem i testami wyłącznie DWA komentarze w `siriHttpSessionRuntime.ts` (101, 397), z których drugi mówi wprost, że runtime tego NIE woła. Żadna powierzchnia produktu nie renderuje TIER.",
+            "ZBUDOWANY, ALE NIEPODŁĄCZONY: logika (`siriAdapter.prioritise` / `siriPrioritisation.ts`) i testy są gotowe; brakuje widoku w produkcie i wejścia do niego (osobny ekran po zamrożeniu sesji, wg ASSESSMENT_KB_SIRI.md §4 nie wolno go zlać z formularzem Band) — czyli więcej niż jeden przewód: widok + pozycja w menu sesji."
           ],
           "gdzie": "To NIE jest ekran dostępny w aplikacji — macierz priorytetów SIRI istnieje jako czysta logika wyliczeniowa (method-core), bez żadnego komponentu React, który by ją renderował w produkcie; to stanowisko testowe/diagnostyczne dla inżyniera."
         },
         {
           "id": "assessment-matryca",
           "nazwa": "Matryca oceny",
-          "ocena": "D",
-          "co": "Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu.",
+          "ocena": "C",
+          "co": "Nie wiem, jak wyglada — harness nie ma zarejestrowanego tego ekranu. NIEPRAWDA ze harness nie ma tego ekranu - renderuje sie poprawnie (DRDMatrixSession). Realny defekt: lewy panel osi jest po polsku, ale centrum ekranu (MaturityMatrix.tsx) jest w 100% po angielsku - wymaga przesiania przez decyzje 31.08 o angielskiej metodyce. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "Zgloszone do naprawy narzedzia"
@@ -1055,9 +1107,9 @@
         {
           "id": "inicjatywy-lista",
           "nazwa": "Lista inicjatyw",
-          "ocena": "B",
+          "ocena": "C",
           "gdzie": "Inicjatywy → lista główna — jedenaście inicjatyw z cyklem życia, następną bramką, gotowością i właścicielem.",
-          "co": "Ekran istnial, ale byl schowany pod ekranem zrobionym do sprawdzania tlumaczen — dlatego nikt go nie widzial.",
+          "co": "Ekran istnial, ale byl schowany pod ekranem zrobionym do sprawdzania tlumaczen — dlatego nikt go nie widzial. Realny InitiativesHub pada na INITIATIVE_DATA_CONTRACT_ERROR - wyscig localStorage: shouldAllowDemoData() czyta debounce'owany (300ms) zapis do consultify-storage, pierwszy fetch startuje przed zapisem. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1066,8 +1118,8 @@
         {
           "id": "capacity-advisor-a3",
           "nazwa": "Obciazenie zespolu",
-          "ocena": "A",
-          "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy.",
+          "ocena": "B",
+          "co": "Wszedzie jednostki: FTE-tydzien, procenty, zakresy. Kolumny Rola/Zespol, Rodzaj, Presja ucinaja tekst w polowie slowa - StandardTable/FilterableTable za waskie kolumny. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Inicjatywy → zakładka „Obciążenie\" — obciążenie zespołu, wszędzie z jednostką (FTE-tydzień, procenty, zakresy)."
@@ -1076,10 +1128,13 @@
           "id": "plan-scenario-d1",
           "nazwa": "Plan inicjatyw",
           "ocena": "A",
-          "co": "Daty po polsku, stany po polsku.",
-          "naprawione": [],
+          "co": "01.09 (fala 174): SPROSTOWANIE Z POPRZEDNIEJ RUNDY ZAMKNIĘTE DOWODEM. Kebab wiersza — pierwsza pozycja to teraz „Otwórz kartę inicjatywy” (było „Otwórz narzędzia planu”) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/1-plan/kebab-wiersza__PRZED__light.png, __PO__light.png). Warsztat planu przestał wciskać się jako druga pełna tabela pod pierwszą — po kliknięciu „Otwórz narzędzia planu” u góry panelu widać teraz tylko warsztat, bez duplikatu tabeli głównej nad nim (evidence/grafika/174-domkniecie/1-plan/klik-narzedzia__PRZED__light.png vs __PO__light.png, wysokość strony 2681→2294 px). To domyka uwagę właściciela z 30.08: „Ma ona otwierać konkretną kartę. W ogóle nie rozumiem, jak to działa.”",
+          "naprawione": [
+            "31.08 (fala 141): enumy w tabeli „Warsztat planu” przetlumaczone na polski (NOW/NEXT/LATER, KNOWN/UNKNOWN, HIGH/MEDIUM/LOW) — potwierdzone zrzutem evidence/grafika/141-plan-scenario/plan-scenario-d1-warsztat__PO__*.",
+            "01.09 (fala 174): kebab wiersza — pierwsza pozycja zmieniona z „Otwórz narzędzia planu” na „Otwórz kartę inicjatywy”; po kliknięciu „Otwórz narzędzia planu” Warsztat planu nie wciska się już jako druga tabela pod pierwszą — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/1-plan/)."
+          ],
           "wyjatki": [],
-          "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku."
+          "gdzie": "Inicjatywy → zakładka „Plan\" — scenariusz planu inicjatyw, daty i stany po polsku. Zrzuty: evidence/grafika/166-tabela-szerokosc/ (klik w wiersz) i evidence/grafika/141-plan-scenario/ (klik w Otworz/Warsztat, 31.08). Zrzuty naprawy 01.09 (fala 174): evidence/grafika/174-domkniecie/1-plan/."
         },
         {
           "id": "ev-football-field",
@@ -1093,8 +1148,8 @@
         {
           "id": "karta-initiative",
           "nazwa": "Karta inicjatywy",
-          "ocena": "B",
-          "co": "Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza.",
+          "ocena": "A",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ta powloka dzieli wspolny prawy panel z initiative-record/deck-artifact/notatnikiem, gdzie czat Teresy zastapiono przyciskiem wejscia „Zapytaj Teresę o…”. UWAGA UCZCIWA: na TYM konkretnym zrzucie (evidence/grafika/169-teresa-produkt/) PRZED i PO sa PIKSEL W PIKSEL identyczne — bo ekran byl zlapany w trybie Podglad, gdzie sekcja AKCJE pokazuje 0 pozycji z dopiskiem „W trybie Podgladu dzialania sa niedostepne” — wiec przycisku Teresy nie widac w zadnej z wersji i NIE da sie z tego zrzutu potwierdzic wizualnie samej zmiany na tym ekranie (choc jest ona widoczna na initiative-record, deck-artifact i notatniku, ktore dziela ten sam komponent). Powloka zgodna z wzorcem: pasek tozsamosci, prawy panel accordion, lewy rail z licznikami, gesta polska tresc doradcza. Wypelnij z AI faktycznie otwiera dzialajacy panel Konsultant AI z 6 akcjami i czatem z Teresa - nie martwy przycisk; tresc bogata, po polsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Nagie zero przy Akcjach — dopisane zdanie, ze liczba opisuje widok, nie inicjatywe",
             "Angielskie opisy cyklu zycia w sekcji Bramy — naprawione u zrodla, dziala teraz wszedzie"
@@ -1102,21 +1157,23 @@
           "wyjatki": [
             "Zapisano bez daty i godziny",
             "Nawigacja pokazuje liczbe pozycji, nie postep typu 6/9 jak we wzorcu",
-            "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna"
+            "Brak przycisku glownego — przyczyna funkcjonalna (sciezka zapisu statusu rzuca wyjatkiem), nie graficzna",
+            "Zmiana czatu Teresy na przycisk wejscia NIE jest potwierdzona wizualnie na TYM zrzucie (tryb Podglad nie pokazuje AKCJI w ogole) — do ponownego sprawdzenia w trybie Edycji."
           ],
           "warianty": [
             "exe-002-004-ui-audit",
             "initiative-record"
           ],
-          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — pełna karta (pasek tożsamości, prawy panel accordion, lewy rail z licznikami)."
+          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — pełna karta (pasek tożsamości, prawy panel accordion, lewy rail z licznikami). Zrzuty 01.09: evidence/grafika/169-teresa-produkt/ (PRZED=PO, tryb Podglad bez widocznych Akcji)."
         },
         {
           "id": "initiative-record",
           "nazwa": "Rekord inicjatywy",
           "ocena": "B",
-          "co": "Powloka, etykiety i akcje po polsku, dobry rytm.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: prawy panel AKCJE dostal nowy przycisk „Zapytaj Teresę o tę inicjatywę” (dawniej byly tylko „Utwórz wariant” i „Oznacz gotowe”) — czat Teresy zastapiony przyciskiem wejscia, potwierdzone zrzutem PRZED/PO (evidence/grafika/169-teresa-produkt/). Powloka, etykiety i akcje po polsku, dobry rytm.",
           "naprawione": [
-            "Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu"
+            "Ekran istnial jako plik, ale nigdy nie byl podlaczony do harnessu",
+            "01.09: dodano przycisk „Zapytaj Teresę o tę inicjatywę” w sekcji AKCJE — potwierdzone zrzutem PRZED/PO, oba widoczne w evidence/grafika/169-teresa-produkt/."
           ],
           "wyjatki": [
             "Tresc danych demo po angielsku — nie ustalono, czy to defekt, czy wybor danych dla klienta miedzynarodowego"
@@ -1125,7 +1182,7 @@
             "exe-002-004-ui-audit",
             "karta-initiative"
           ],
-          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — ten sam komponent co „Karta inicjatywy\", inny zestaw danych demo."
+          "gdzie": "Inicjatywy → otwarcie pojedynczej inicjatywy — ten sam komponent co „Karta inicjatywy\", inny zestaw danych demo. Zrzuty 01.09: evidence/grafika/169-teresa-produkt/."
         },
         {
           "id": "initiatives-portfolio-analysis",
@@ -1195,6 +1252,87 @@
             "Ekran harnessu wyrejestrowany, plik zostaje"
           ],
           "gdzie": "To NIE istnieje w produkcie — panel sygnałów zmiany w realizacji (ExecutionChangeSignalsPanel) został usunięty jako fantom bez pełnej implementacji."
+        },
+        {
+          "id": "execution-tab-list",
+          "nazwa": "Zakładka „Realizacje”",
+          "ocena": "B",
+          "co": "StandardTable + demo-fallback.",
+          "naprawione": [],
+          "wyjatki": [
+            "Statusy 'Scheduled'/'Blocked' po angielsku obok polskiego 'W realizacji' (STATUS_METADATA, src/services/initiativeLifecycle.ts ~198-217)."
+          ],
+          "gdzie": "Realizacja → zakładka „Realizacje”. Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-work",
+          "nazwa": "Zakładka „Praca”",
+          "ocena": "A",
+          "co": "ExecutionWorkSurface, StandardTable, bogate dane review.",
+          "naprawione": [
+            "01.09: pasek miedzy Menu 3 a tabela (tytul „Praca” + opis + filtr realizacji) usuniety; filtr „Wszystkie realizacje” przeniesiony na prawa strone Menu 2, tabela zaczyna sie od razu pod Menu 3 — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/165-menu3-pasek/)."
+          ],
+          "wyjatki": [],
+          "gdzie": "Realizacja → zakładka „Praca”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json (A/B/C/D). Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
+        },
+        {
+          "id": "execution-tab-resources",
+          "nazwa": "Zakładka „Zasoby”",
+          "ocena": "A",
+          "co": "ExecutionResourcesSurface. 01.09 (fala 174): surowe wartości UNKNOWN/PARTIAL/NONE/CURRENT/NOT_ASSESSED/CAPACITY_CONFLICT przetłumaczone na polski (np. UNKNOWN → Nieznane) — potwierdzone zrzutem PRZED/PO, wiersz „Procurement” (evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png vs __PO__light.png). Naprawiona kapitalizacja nazwiska: „Katarzyna WóJcik” → „Katarzyna Wójcik” (ExecutionResourcesSurface.tsx).",
+          "naprawione": [
+            "01.09: ten sam pasek nad tabela usuniety, filtr realizacji przeniesiony na prawo od Menu 2 — potwierdzone zrzutem (evidence/grafika/165-menu3-pasek/).",
+            "01.09 (fala 174): wartości UNKNOWN/PARTIAL/NONE/CURRENT/NOT_ASSESSED/CAPACITY_CONFLICT przetłumaczone na polski; poprawiona kapitalizacja polskich nazwisk (np. „WóJcik” → „Wójcik”) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png, __PO__light.png)."
+          ],
+          "wyjatki": [],
+          "gdzie": "Realizacja → zakładka „Zasoby”. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Zrzuty naprawy 01.09 (fala 174): evidence/grafika/174-domkniecie/execution-tab-resources__PRZED__light.png, __PO__light.png — UNKNOWN → Nieznane, WóJcik → Wójcik potwierdzone."
+        },
+        {
+          "id": "execution-tab-control",
+          "nazwa": "Zakładka „Sterowanie”",
+          "ocena": "A",
+          "co": "Tabela interwencji, czysto.",
+          "naprawione": [
+            "01.09: pasek nad tabela usuniety, przyciski „Dodaj sygnal”/„Przygotuj interwencje” przeniesione na prawo od Menu 2 — potwierdzone zrzutem, oba motywy (evidence/grafika/165-menu3-pasek/)."
+          ],
+          "wyjatki": [],
+          "gdzie": "Realizacja → zakładka „Sterowanie”. Pomiar dał A- (bez nazwanego wyjątku) — zaokrąglone do A wg skali status.json. Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/."
+        },
+        {
+          "id": "execution-tab-rollout",
+          "nazwa": "„Rollout” (chromeless, deep-link)",
+          "ocena": "B",
+          "co": "Zmierzony tylko podwidok KPI.",
+          "naprawione": [
+            "01.09: zdanie opisowe „Monitoruj operacyjne i finansowe wyniki wdrozenia.” miedzy naglowkiem a tabela usuniete, zgodnie ze zgloszeniem wlasciciela — potwierdzone zrzutem PRZED/PO (evidence/grafika/165-menu3-pasek/)."
+          ],
+          "wyjatki": [
+            "RolloutTab.tsx:987 — błąd sieci gasi całą zakładkę zanim zadziała ścieżka degradacji (zob. zgłoszenie #12 do toru funkcji)."
+          ],
+          "gdzie": "Realizacja → „Rollout” (chromeless, deep-link). Zrzuty: evidence/grafika/145-execution-taby/. Zrzuty naprawy: evidence/grafika/165-menu3-pasek/. Wyjatek RolloutTab.tsx:987 (blad sieci gasi zakladke) NIE jest mozliwy do zweryfikowania na statycznym zrzucie — pozostaje jako niepotwierdzony, nienaprawiony."
+        },
+        {
+          "id": "execution-tab-summary",
+          "nazwa": "„Summary one-look” (chromeless, za flagą summaryOneLook)",
+          "ocena": "B",
+          "co": "Chromeless summary one-look.",
+          "naprawione": [],
+          "wyjatki": [
+            "Flaga ma komentarz „Default OFF do akceptu Piotra”, a logika (executionFeatureFlags.ts:115) włącza ją wszędzie poza public-prod — sprzeczność typu DEC-317, DO WYJAŚNIENIA z właścicielem (zob. zgłoszenie #11 do toru funkcji)."
+          ],
+          "gdzie": "Realizacja → „Summary one-look” (chromeless, za flagą summaryOneLook). Pomiar dał A-, podniesione do B wg skali status.json bo wyjątek jest nazwany i istotny. Zrzuty: evidence/grafika/145-execution-taby/."
+        },
+        {
+          "id": "execution-tab-people_change",
+          "nazwa": "„People & Change” (chromeless, z Action Center)",
+          "ocena": "C",
+          "co": "Bez mocka V8.",
+          "naprawione": [],
+          "wyjatki": [
+            "Banner 'V8 is not enabled' po angielsku + zera.",
+            "Etykiety ITEMS/CRITICAL/ISSUES/BLOCKED po angielsku (ExecutionManagementView.tsx:322)."
+          ],
+          "gdzie": "Realizacja → „People & Change” (chromeless, z Action Center). Zrzuty: evidence/grafika/145-execution-taby/."
         }
       ]
     },
@@ -1206,9 +1344,9 @@
         {
           "id": "cel-jedna-karta",
           "nazwa": "Cel (OKR) jako JEDNA karta N",
-          "ocena": "B",
+          "ocena": "A",
           "gdzie": "Wyniki → OKR → otwarcie celu (PROTOTYP) — Cel, Kluczowe rezultaty, Postęp, Powiązania, Refleksja.",
-          "co": "Naglowek mowi wprost: Zamkniety, 2 z 3 KR osiagniete. Drugi rezultat ma 70% i etykiete NIE OSIAGNIETY, z wyjasnieniem po ludzku dlaczego.",
+          "co": "Naglowek mowi wprost: Zamkniety, 2 z 3 KR osiagniete. Drugi rezultat ma 70% i etykiete NIE OSIAGNIETY, z wyjasnieniem po ludzku dlaczego. Prototyp jednej N-karty celu/OKR - 5 sekcji lewego menu, prawy panel 7 sekcji kanonu, tresc bogata i w 100% polska. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1217,9 +1355,9 @@
         {
           "id": "wskaznik-jedna-karta",
           "nazwa": "Wskaznik jako JEDNA karta N",
-          "ocena": "B",
+          "ocena": "A",
           "gdzie": "Wyniki → KPI → otwarcie wskaźnika (PROTOTYP) — Kontrakt, Pomiary, Odchylenia, Działania korygujące, Rodowód.",
-          "co": "Rodowod pokazuje, kiedy zmienil sie wzor i prog, i ze starych pomiarow NIE przeliczono wstecz. Ta sekcja broni wiarygodnosci liczby.",
+          "co": "Rodowod pokazuje, kiedy zmienil sie wzor i prog, i ze starych pomiarow NIE przeliczono wstecz. Ta sekcja broni wiarygodnosci liczby. Naglowek pokazuje prawdziwa nazwe (KPI - Czas przezbrojenia, linia pakowania L3), numer KPI-0087 to osobne pole referencyjne, nie zastepuje nazwy. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1228,9 +1366,9 @@
         {
           "id": "roi-jedna-karta",
           "nazwa": "ROI jako JEDNA karta N",
-          "ocena": "B",
+          "ocena": "A",
           "gdzie": "Wyniki → ROI → otwarcie analizy (PROTOTYP) — pięć sekcji jednej narracji: Założenia, Model, Wynik, Wyniki po wdrożeniu, Wnioski.",
-          "co": "Sekcja po wdrożeniu pokazuje UCZCIWIE, ze wyszlo gorzej niz prognoza: ROI 71% wobec 104%, rozjazd -166 000 zl wypisany kwartalnie.",
+          "co": "Sekcja po wdrożeniu pokazuje UCZCIWIE, ze wyszlo gorzej niz prognoza: ROI 71% wobec 104%, rozjazd -166 000 zl wypisany kwartalnie. Wszystkie 5 sekcji (zalozenia/model/wynik/wyniki-po-wdrozeniu/wnioski) maja pelna, spojna, dobrze uzrodlowiona tresc; kolor czerwony uzyty tylko semantycznie. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -1261,8 +1399,8 @@
         {
           "id": "results-vnext-kpi-scorecards",
           "nazwa": "Karty wynikow",
-          "ocena": "A",
-          "co": "Lista kart z panelem podgladu.",
+          "ocena": "B",
+          "co": "Lista kart z panelem podgladu. Lista KPI pokazuje surowe, uciete kody (kpi-oee-..., kpi-defe...) bez zadnego wyjasnienia - defekt kontraktu danych KPI (brak pola nazwy), nie grafiki. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Angielskie naglowki podgladu"
           ],
@@ -1272,8 +1410,8 @@
         {
           "id": "results-vnext-roi-model",
           "nazwa": "Model ROI",
-          "ocena": "A",
-          "co": "Baza porownania i polityka kalkulacji.",
+          "ocena": "B",
+          "co": "Baza porownania i polityka kalkulacji. Kolumna PEWNOSC ucieta przez prawy panel (widoczne tylko PEW); wlasciwosc Ziarno analizy pokazuje surowe monthly zamiast etykiety, mimo ze etykieta pola jest po polsku. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Wyniki → ROI → wejście w sprawę ROI (POZIOM 3, pełne narzędzie) — baza porównania i polityka kalkulacji."
@@ -1281,8 +1419,8 @@
         {
           "id": "results-vnext-kpi-tool",
           "nazwa": "Narzedzie wskaznika",
-          "ocena": "A",
-          "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami.",
+          "ocena": "C",
+          "co": "Pelne narzedzie z ostatnim pomiarem i wlasciwosciami. Naglowek H1 calego ekranu to surowy kod OEE-LINIA-PAKOWANIA bez nazwy i bez podpisu wyjasniajacego - najgorszy wariant defektu braku nazwy KPI w calym zakresie. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Surowe statusy pomiaru zamiast etykiet"
           ],
@@ -1347,8 +1485,8 @@
         {
           "id": "results-vnext-kpi-registry",
           "nazwa": "Rejestr wskaznikow",
-          "ocena": "A",
-          "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem.",
+          "ocena": "B",
+          "co": "Pelna tabela wskaznikow ze statusami, filtrami i kebabem. Wszystkie 5 wierszy rejestru KPI pokazuje surowy kod jako glowna etykiete (z uczciwym podpisem Kod KPI (brak nazwy)) - defekt kontraktu danych KPI, nie grafiki. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Wyniki → KPI → rejestr wskaźników (POZIOM 1) — pełna tabela ze statusami, filtrami i kebabem."
@@ -1356,42 +1494,57 @@
         {
           "id": "results-vnext-teresa-kpi-deviation",
           "nazwa": "Sprawa odchylenia",
-          "ocena": "A",
-          "co": "Formularz sprawy z uczciwymi komunikatami o brakach.",
-          "naprawione": [],
-          "wyjatki": [],
-          "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3) → „Sprawa odchylenia\" prowadzona przez Teresę, gdy wskaźnik odchyla się od celu — formularz z uczciwymi komunikatami o brakach."
+          "ocena": "B",
+          "co": "01.09 (fala 174): Sprawa odchylenia przestała mówić językiem repozytorium — zamiast odwołań do plików źródłowych i nazw stanów maszyny (np. „kpiDeviationCommands.ts:796-801”, „approved → executing”) ekran mówi teraz „zasada czterech oczu”, „Plan nie został jeszcze złożony” (potwierdzone zrzutem evidence/grafika/174-domkniecie/2-kpi-fazy-4-7__PO__light.png). Naprawiony checkbox „To odchylenie się powtarza”, wcześniej nieczytelny w ciemnym motywie (evidence/grafika/174-domkniecie/2-kpi-checkbox__PO__dark.png). SPROSTOWANIE (01.09, wcześniejsza runda): stan OTWARTEJ/edytowalnej sprawy (evidence/grafika/171-pojedyncze/, PRZED i PO identyczne) nadal wygląda surowo — płaskie pola HTML, szare przyciski — to prawdopodobne źródło skargi właściciela „grafika jak sprzed 5 lat, niespójna z UI/UX” (zgłoszona 01.09 05:53), NIE naprawione tym dyżurem. ★ SPROSTOWANIE POLA WYJĄTKÓW (01.09): wcześniejszy wpis twierdził, że żółty baner sesji „nadal obecny” — to było NIEPRAWDĄ, baner został usunięty wcześniej (grep po src/ dla tekstu banera = 0 trafień); teza usunięta z rejestru. Naprawiony został inny stan: sprawa ZAMKNIĘTA (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/) pokazuje pełną narrację ze wszystkimi krokami wypełnionymi realną treścią zamiast pustych formularzy.",
+          "naprawione": [
+            "01.09: sprawy ZAMKNIETE pokazuja teraz pelny, wypelniony przebieg (przyczyna, dzialania ze statusami, zatwierdzenie planu, obserwacja, weryfikacja skutecznosci, zamkniecie) zamiast pustych formularzy — potwierdzone zrzutem (evidence/grafika/173-diagnostyka/, evidence/grafika/173-diagnostyka-weryfikacje/), plan czytany z danych sprawy (serwera), nie z sesji przegladarki.",
+            "01.09 (fala 174): język ekranu przestał odwoływać się do plików źródłowych/nazw stanów maszyny — zastąpiony ludzkim opisem („zasada czterech oczu”, „Plan nie został jeszcze złożony”); naprawiony nieczytelny w ciemnym motywie checkbox „To odchylenie się powtarza” — potwierdzone zrzutem (evidence/grafika/174-domkniecie/2-kpi-fazy-4-7__PO__light.png, 2-kpi-checkbox__PO__dark.png)."
+          ],
+          "wyjatki": [
+            "Stan OTWARTEJ sprawy (w trakcie analizy/działań) nadal wygląda surowo — płaskie niestylowane pola formularza, szare przyciski — prawdopodobne źródło skargi właściciela „jak sprzed 5 lat”, wciąż nienaprawione dyżurem 174 (evidence/grafika/171-pojedyncze/)."
+          ],
+          "gdzie": "Wyniki → KPI → wejście w pojedynczy wskaźnik (POZIOM 3) → „Sprawa odchylenia\" prowadzona przez Teresę, gdy wskaźnik odchyla się od celu — formularz z uczciwymi komunikatami o brakach. Zrzuty 01.09: evidence/grafika/171-pojedyncze/ (stan otwarty, bez zmian), evidence/grafika/173-diagnostyka/ i 173-diagnostyka-weryfikacje/ (stan zamkniety, naprawiony)."
         },
         {
           "id": "results-three-pairs",
           "nazwa": "Trzy pary cel-wynik",
-          "ocena": "A",
-          "co": "Pary wskaznik/ROI/OKR z paskiem postepu i 'Brak danych' zamiast nagiego zera.",
+          "ocena": "D",
+          "co": "Ekran historyczny — wlasciciel 01.09: \"To jest jakis historyczny ekran. Chyba juz tak dawno nie wyglada.\" Mial racje: stary hub Wynikow zostal wycofany 24.08 (commit 8df1cd413d), trasa /results przekierowuje na rejestr KPI (ResultsOwnerReviewEntry.tsx:12), a komponent ResultsThreePairsView montuja juz tylko pliki testow.",
           "naprawione": [],
           "wyjatki": [
-            "Ogladana tylko domyslna zakladka"
+            "Zdjete z odbioru 2026-09-01 (docs/program/grafika/ANALIZA_ODRZUCONE_20260901.md §2) — nie duplikuj wiecej",
+            "UWAGA: razem z martwym ResultsHub przestala byc osiagalna diagnostyka odchylen (anomalie/prognoza/podpowiedzi RCA) — sprawa otwarta do decyzji wlasciciela, patrz ODLOZONE.md"
           ],
-          "gdzie": "To NIE jest dziś dostępne w aplikacji — komponent (ResultsThreePairsView) należał do starego huba Wyników, który został wycofany; trasa /results dziś przekierowuje prosto do rejestru KPI (Wyniki vNext)."
+          "gdzie": "BYLO: stary hub Wynikow (ResultsHub.tsx, 2485 linii) za flaga ff_resultsThreePairs. Dzis nieosiagalne: trasa /results -> Navigate na ROUTES.RESULTS_KPI.ROOT (ResultsOwnerReviewEntry.tsx:12); komentarz AppRoutes.tsx:115-117 mowi wprost, ze wycofany ResultsHub nie jest juz osiagalnym wariantem trasy. Zamiennik, ktory widzi dzis uzytkownik: rejestry Wynikow vNext (KPI/OKR/ROI). Kodu nie ruszamy — usuniecie ResultsHub to osobna sprawa, bo ciagnie za soba szuflade szeregow czasowych KPI, karte naprawcza i diagnostyke odchylen."
         },
         {
           "id": "results-vnext-attention",
           "nazwa": "Uwaga",
-          "ocena": "A",
-          "co": "Siedem zakladek uwag z realnymi kodami wskaznikow.",
-          "naprawione": [],
-          "wyjatki": [
-            "Jednokolumnowa tabela — sprawdzone, model serwera naprawde ma jedno pole"
+          "ocena": "B",
+          "co": "Trzynascie list roboczych „czym trzeba sie dzis zajac\", kazda z realnym licznikiem: siedem pod KPI (Brak wlasciciela · Zalegle obowiazki · Powtarzajace sie odchylenia · Nieskuteczne dzialania korygujace · Obciazenie wlascicieli · Pokrycie procesow · Rozklad wynikow) i szesc pod OKR (Nieaktualne check-iny · Cele o niskiej pewnosci · Otwarte prosby o wsparcie · Otwarte blokady · Eskalowane zestawy · Zdrowie zespolu). SPROSTOWANIE (01.09): wlasciciel widzial „tylko dwa przyciski w menu 2\" — bo Menu 2 to przelacznik ZRODLA (KPI/OKR), a tresc wybiera Menu 3. Zrzut, na ktory patrzyl, pokazywal najubozszy z trzynastu kubelkow (Brak wlasciciela ma z natury jedna kolumne). Zrzut PO pokazuje kubelek Obciazenie wlascicieli: trzy kolumny, prawdziwe nazwiska.",
+          "naprawione": [
+            "2026-09-01: dorobione WEJSCIE — trasa /results/attention byla sierota, nic w aplikacji do niej nie prowadzilo (grep po RESULTS_ATTENTION i po literalnym adresie: zero odwolan poza definicja trasy i harnessem). Przycisk „Uwaga\" w powloce rejestrow Wynikow (ResultsVNextRegistryShell.tsx), za flaga attentionEntry (default OFF, czeka na odbior).",
+            "01.09: potwierdzone zrzutem — przycisk „Uwaga” widoczny nad tabela w rejestrze KPI (ResultsVNextRegistryShell), prowadzi do tego ekranu (evidence/grafika/170-odrzucone-wykonanie/wejscie-uwaga-w-rejestrze__PO__light.png)."
           ],
-          "gdzie": "Wyniki → sekcja „Uwaga\" — siedem zakładek z pozycjami wymagającymi uwagi, z realnymi kodami wskaźników."
+          "wyjatki": [
+            "Jednokolumnowa tabela w kubelku „Brak wlasciciela\" — sprawdzone, model serwera naprawde ma jedno pole",
+            "Ekran nie ma naglowka — zaczyna sie od golych pigulek Menu 2/3, wiec nie widac, na co sie patrzy (do naprawy osobno)",
+            "Kubelek startowy to zawsze „Brak wlasciciela\", czyli najubozszy z trzynastu — powinien otwierac sie na tym z najwieksza liczba pozycji (do naprawy osobno)",
+            "Surowe pola: kolumna KOD KPI bez nazwy wskaznika, SET ID i data w formacie 2026-08-01T00:00:00Z (do naprawy osobno)"
+          ],
+          "gdzie": "Wyniki → dowolny rejestr (KPI/OKR/ROI) → przycisk „Uwaga\" nad tabela → Menu 2 wybiera zrodlo (KPI albo OKR), Menu 3 wybiera jedna z trzynastu list. Trasa: /results/attention (routeConfig.ts:192, AppRoutes.tsx:3188). Za ekranem trzy realne punkty serwera: GET /api/vnext/results/kpi/attention, .../okr/attention, .../okr/team-health — ten ekran jest ich JEDYNYM czytelnikiem w interfejsie (czyta je poza nim tylko Teresa w trybie manager_brief)."
         },
         {
           "id": "results-vnext-okr-workspace",
           "nazwa": "Warsztat zestawu OKR",
           "ocena": "A",
-          "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami.",
+          "co": "Pelne narzedzie z cyklem zycia i wyjasnieniami. CZEKA NA PRZEBUDOWE w karte N zestawu (wzorem ROI z 30.08) — plan i mapowanie szesciu zakladek na sekcje: docs/program/grafika/ODLOZONE.md. Wlasciciel (01.09): \"To mialo byc w N-type karcie\" — intuicja trafna co do KSZTALTU powloki, ale ekranu NIE zdejmujemy: karta celu go nie zastepuje, bo to inny poziom (warsztat to ZESTAW, karta to JEDEN cel; POZIOM 2 z DECYZJA_WYNIKI_TRZY_POZIOMY.md).",
           "naprawione": [],
-          "wyjatki": [],
-          "gdzie": "Wyniki → OKR → wejście w zestaw celów (POZIOM 2) → warsztat zestawu — pełne narzędzie z cyklem życia i wyjaśnieniami."
+          "wyjatki": [
+            "ADNOTACJA 2026-09-01: powloka do przebudowy — szesc zakladek w poziomie zamiast sekcji karty N, brak prawego panelu kanonu. Tresc i mechanika bez zmian. Plan: ODLOZONE.md",
+            "Pola „Wlasciciel\" i „Recenzent\" pokazuja uciete user-ann… / user-tom… zamiast nazwisk — rozwiazanie gotowe w ekranie „Uwaga\" (OrganizationApi.getOrganizationMembers), do przeniesienia 1:1"
+          ],
+          "gdzie": "Wyniki → OKR → rejestr zestawow → dzialanie „Otworz\" (POZIOM 2) → warsztat zestawu. Trasa /results/okr/sets/:okrSetId (AppRoutes.tsx:3105-3125); wejscie: okrRegistryPresenters.tsx:240-247, ResultsOkrHub.tsx:606-608. ZYWE NA DEMO (VITE_DEMO_ACCEPTANCE wlacza wszystkie trzy rejestry). To JEDYNE wejscie do cyklu zycia zestawu (zlozenie/akceptacja/poprawki/aktywacja/anulowanie), dopasowan, prosb o wsparcie, blokad, refleksji z Teresa i historii — zdjecie odcieloby to wszystko."
         },
         {
           "id": "results-vnext-roi-pir-outcomes",
@@ -1422,8 +1575,8 @@
         {
           "id": "results-zestawienia",
           "nazwa": "POZIOM 1 — Rejestr zestawien okresowych",
-          "ocena": "B",
-          "co": "Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety.",
+          "ocena": "A",
+          "co": "Nowy, brakujacy poziom wejscia: szesc zestawien okresowych z okresem rozliczeniowym, wlascicielem, liczba wskaznikow w srodku i rozbiciem stanu. Chipy Otwarty/Zamkniety. Poziom 1 rejestru zestawien okresowych w pelni po polsku, czytelny, zero kodow zamiast nazw. Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Kolizja zapamietanych szerokosci kolumn z realnym rejestrem",
             "Siedem kolumn nie miescilo sie przy otwartym podgladzie — scalone i zwezone",
@@ -1519,13 +1672,15 @@
         {
           "id": "finance-analysis-workspace",
           "nazwa": "Analiza",
-          "ocena": "B",
-          "co": "Uczciwy pusty stan i tabela wskaznikow z formulami.",
+          "ocena": "A",
+          "co": "Tabela wskaźników z formułami — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): wszystkie 11 nagłówków pełne, bez ucięcia — 'WSKAŹNIK', 'KATEGORIA', 'WZÓR', 'INTERPRETACJA', 'P-2025', 'ZMIANA R/R', 'P-2026', 'BENCHMARK', 'KOMENTARZ', 'JAKOŚĆ / DOSTĘPNOŚĆ', 'PRZEZNACZENIE'. Sprawdzono też dane w komórkach na całej szerokości tabeli (poprzedni defekt ucinał kolumnę 'Wzór' do 'Prz…') — kolumna 'Wzór' zawija się w pełni, np. wiersz 'Wzrost przychodów r/r' pokazuje cały wzór '(Przychody bieżący okres - Przychody rok wcześniej) / Przychody rok wcześniej', bez znaku ucięcia.",
           "naprawione": [
-            "Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku"
+            "Dublujacy sie naglowek wersji — naprawiony we wspoldzielonym pasku",
+            "11 nagłówków kolumn ucinanych w połowie słowa ('INTERPRETA…', 'PRZEZNACZ…') — teraz pełne na obu motywach, potwierdzone zrzutem 154-finanse-naprawa",
+            "Wartości w komórkach (kolumna 'Wzór') ucinane do 'Prz…' — teraz zawijają się w pełni bez ucięcia"
           ],
           "wyjatki": [
-            "Wartosci wskaznikow bez znaku procenta — brak metadanych jednostki w danych, nie do naprawy w wygladzie"
+            "Wartości wskaźników bez znaku procenta w części wierszy — brak metadanych jednostki w danych, nie do naprawy w wyglądzie."
           ],
           "gdzie": "Finanse → zakładka „Analiza\" → otwarcie analizy — tabela wskaźników z formułami i uczciwym pustym stanem, gdy danych jeszcze nie ma."
         },
@@ -1545,14 +1700,15 @@
         {
           "id": "finance-model-workspace",
           "nazwa": "Model finansowy",
-          "ocena": "B",
-          "co": "Model bazowy z danymi wejsciowymi i bilansem otwarcia.",
+          "ocena": "A",
+          "co": "Model bazowy z danymi wejściowymi i bilansem otwarcia — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): badge 'OPARTE NA / FY2025 / PL • PLN • Zatwierdzony' — surowe 'approved' zastąpione polską etykietą 'Zatwierdzony'. Nagłówek pokazuje 'PLN · Kwartalnie · 36 miesięcy' (potwierdza wcześniejszą naprawę 'quarterly'→'Kwartalnie').",
           "naprawione": [
             "Surowy enum 'quarterly' zamiast etykiety",
-            "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika"
+            "Angielskie nazwy pozycji finansowych mimo istniejacego polskiego slownika",
+            "Surowy status 'approved' w badge 'OPARTE NA' — teraz polska etykieta 'Zatwierdzony', potwierdzone zrzutem 154-finanse-naprawa na obu motywach"
           ],
           "wyjatki": [
-            "Status zrodla po angielsku — spojny z reszta odznak w aplikacji, nie ruszany"
+            "Pozostałe etykiety pól (PRZYCHODY (REVENUE), KOSZT WŁASNY SPRZEDAŻY (COGS) itd.) są dwujęzyczne celowo — akronim w nawiasie, nie surowy enum."
           ],
           "gdzie": "Finanse → zakładka „Modele\" → otwarcie modelu — model bazowy z danymi wejściowymi i bilansem otwarcia."
         },
@@ -1577,12 +1733,13 @@
           "co": "Tabela porownania z roznicami.",
           "naprawione": [
             "Angielska etykieta trybu",
-            "Dodana waluta z istniejacych danych"
+            "Dodana waluta z istniejacych danych",
+            "01.09: tabela porownania rozszerzona z waskiej wyśrodkowanej karty (~740 px) na pelna szerokosc dostepnego ekranu (~1364 px), zgodnie ze zgloszeniem wlasciciela „moze cala szerokosc dostepnego ekranu wykorzystajmy” — potwierdzone zrzutem PRZED/PO, oba motywy (evidence/grafika/166-tabela-szerokosc/)."
           ],
           "wyjatki": [
             "Kody pozycji w kolumnie wymiarow — dane makietowe"
           ],
-          "gdzie": "Finanse → dowolny warsztat → panel porównania okresów — tabela porównania z różnicami."
+          "gdzie": "Finanse → dowolny warsztat → panel porównania okresów — tabela porównania z różnicami. Zrzuty naprawy: evidence/grafika/166-tabela-szerokosc/."
         },
         {
           "id": "finance-prediction-workspace",
@@ -1615,15 +1772,19 @@
         {
           "id": "finance-baseline-workspace",
           "nazwa": "Baza porownania",
-          "ocena": "C",
-          "co": "Trwaly stan bledu — harness nie ma atrapy jednego wywolania.",
+          "ocena": "A",
+          "co": "Założenia (grid 9 wierszy) i wyliczenia — SPRAWDZONE na zrzucie 154-finanse-naprawa (2026-08-31, oba motywy): kolumna 'PODGLĄD WPŁYWU' pokazuje teraz polskie etykiety z kodem w nawiasie, np. 'Zasila: Przychody (REVENUE)', 'Zasila: Koszt własny sprzedaży (COGS), Koszty operacyjne (OPEX)', 'Zasila: Należności (AR), Zapasy, Zobowiązania handlowe (AP)', 'Zasila: Nakłady inwestycyjne (CAPEX), Amortyzacja, Aktywa trwałe', 'Zasila: Dług długoterminowy, Koszty odsetkowe', 'Zasila: Podatek dochodowy' — żadnego samodzielnego surowego kodu. Sprawdzono też, czy tabela nie wyjeżdża poza kontener (poprzedni defekt: kolumna poszerzona, ucinana scrollem) — na pełnowymiarowym zrzucie kolumna 'Podgląd wpływu' mieści się w prawej krawędzi kontenera, bez paska przewijania i bez ucięcia.",
           "naprawione": [
-            "Crimson na linku 'Sprobuj ponownie'"
+            "Crimson na linku 'Spróbuj ponownie'",
+            "PRZYCZYNA trwałego błędu znaleziona i naprawiona: brakująca atrapa GET .../baseline/:id/context w harnessu.",
+            "Wartości PCT w kolumnach 'Wart. historyczna' i 'Wartość prognozy' pokazują teraz '12%' obok surowej wartości edytowalnej (formatPctAwareValue) — POTWIERDZONE na świeżym zrzucie.",
+            "Kolumna 'Podgląd wpływu' pokazywała surowe kody pól (REVENUE/COGS/OPEX/CAPEX/AR/INVENTORY/AP/DEPRECIATION/FIXED_ASSETS/LONG_TERM_DEBT/INTEREST_EXPENSE/TAX_EXPENSE) — teraz polskie etykiety z kodem w nawiasie, potwierdzone zrzutem 154-finanse-naprawa na obu motywach; tabela nie wyjeżdża poza kontener"
           ],
           "wyjatki": [
-            "Nie zweryfikowalem realnej tresci ekranu — komponent zawsze wpada w blad w harnessie. Wymaga uzupelnienia atrapy."
+            "Ujemna gotówka w scenie fundinggap poprawnie czerwona (semantyka krytyczna — alarm, nie ozdoba).",
+            "ZGLOSZENIE WLASCICIELA 01.09 (niezaadresowane): „przyciski w menu tej karty sa kazdy inne, nie wyglada dobrze” + brak przycisku dodawania kolejnych zalozen. Na zrzucie kontrolnym z dzisiaj (evidence/grafika/171-pojedyncze/finance-baseline-workspace__DOWOD-braku-defektu__*) naglowek ma faktycznie rozne style przyciskow obok siebie (pigulka „v1 Wersja robocza”, dwie pigulki „NIEAKTUALNE”, dropdown „Wersja robocza”, czarny przycisk „Przelicz”) i nie widac przycisku dodawania zalozenia w widocznej czesci tabeli — plik nazwany „DOWOD-braku-defektu” sugeruje ze poprzednia runda uznala to za nie-defekt, ale wizualnie niespojnosc jest widoczna. Wymaga decyzji wlasciciela, nie automatycznego zamkniecia."
           ],
-          "gdzie": "Finanse → zakładka „Analiza\" → baza porównania (założenia + wyliczenia) — punkt odniesienia, do którego porównuje się dalsze analizy."
+          "gdzie": "Finanse → zakładka „Analiza\" → baza porównania (założenia + wyliczenia) — punkt odniesienia, do którego porównuje się dalsze analizy. Adres pełny: ?screen=finance-baseline-workspace&view=assumptions|wyliczenia&scene=default|fundinggap&status=DRAFT|APPROVED|IN_REVIEW (widoki i sceny patrz komentarz nagłówkowy pliku)."
         },
         {
           "id": "finance-value-panels",
@@ -1632,7 +1793,10 @@
           "co": "Most wartosci i planer nosnikow.",
           "naprawione": [],
           "wyjatki": [
-            "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu."
+            "Osie wykresu i etykiety po angielsku — to dane makietowe harnessu, komponenty sa jezykowo neutralne. Wymaga polskich danych makietowych, nie zmiany kodu.",
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): SIEDEM montowanych paneli (`DriverPlannerPanel`, `ValueOfficePanel`, `EfficientFrontierPanel`, `MonteCarloNpvPanel`, `RealOptionsPanel`, `ScenarioComputePanel`, `WhatIfSensitivityPanel`) ma po ZERO wołaczy JSX w src/ — grep \"<Nazwa\" nie trafia poza definicję. Finanse w produkcie renderują `FinanceHub` (EconomicsView).",
+            "ZBUDOWANE, ALE NIEPODŁĄCZONE (nie martwe): backend istnieje i zna te panele z nazwy — `server/src/routes/v8/financeValueDemoAllowlist.ts:113,121` wpisuje `ValueOfficePanel.tsx:98/112` jako `productionCaller`. Brakuje jednego przewodu po stronie UI: zakładki/gniazda w `FinanceHub` + przekazania fetcherów. Bez nowej trasy.",
+            "KOREKTA wcześniejszego powodu: „osie wykresu po angielsku, wymaga polskich danych makietowych\" opisywało objaw, nie przyczynę — przyczyną jest brak wołacza, więc to nie jest ekran produktu."
           ],
           "gdzie": "Finanse → panele wartości (Economics panels: granica efektywna, Monte Carlo NPV, opcje realne, kalkulator scenariuszy, wrażliwość what-if) — most wartości i planer nośników."
         },
@@ -1669,7 +1833,7 @@
           "id": "sheet-artifact",
           "nazwa": "Arkusz (podglad)",
           "ocena": "A",
-          "co": "Podglad arkusza kalkulacyjnego.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Podglad arkusza kalkulacyjnego.",
           "naprawione": [
             "Angielskie naglowki Workbook/Sheets"
           ],
@@ -1683,7 +1847,7 @@
             "excele-prawy-panel-standard",
             "excele-reopen-verify"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza — podgląd arkusza kalkulacyjnego."
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza — podgląd arkusza kalkulacyjnego. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "materialy-template-library-slice",
@@ -1697,13 +1861,15 @@
         {
           "id": "template-library-new-entry",
           "nazwa": "Biblioteka wzorcow — nowy szablon",
-          "ocena": "A",
-          "co": "Wejscie sprawdzone klikiem: prowadzi do kreatora.",
-          "naprawione": [],
-          "wyjatki": [
-            "PUSTKA ZAMIERZONA: Dowod wpiecia przycisku, nie ekran danych."
+          "ocena": "B",
+          "co": "SPRAWDZONE: modal 'Nowy szablon' / 'Krok 1 z 3' z polem 'Nazwa szablonu' (przykład 'np. Raport statusu projektu'), podpowiedzią 'Nazwę zmienisz później w builderze.', przyciskami 'Anuluj' / 'Dalej' — kreator TemplateBuilderFlow RZECZYWIŚCIE SIĘ OTWIERA i renderuje po polsku. Główny zarzut 'nie pokazuje kreatora' NAPRAWIONY.",
+          "naprawione": [
+            "Kreator TemplateBuilderFlow (krok 1/3, pole nazwy, przyciski Anuluj/Dalej) faktycznie się renderuje — wcześniej zarzut był 'nie pokazuje kreatora'."
           ],
-          "gdzie": "Materiały → zakładka „Biblioteka wzorców\" → „Nowy szablon\" — wejście prowadzące do kreatora szablonu."
+          "wyjatki": [
+            "Pasek w tle za modalem to nadal uproszczony dev-render (nie realny StandardModuleBar), z widoczną etykietą harnessu 'flaga templateBuilder: ON' w kadrze — sam modal kreatora jest realny i poprawny."
+          ],
+          "gdzie": "Materiały → zakładka „Biblioteka wzorców\" → przycisk „Nowy szablon\" w prawym górnym rogu paska — otwiera TemplateBuilderFlow (wizard→builder), sprawdzone klikiem (src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx). Realny przycisk używa dokładnie tych samych klas co kanoniczny ciemny CTA (bg-navy-900/dark:bg-[#F4F7FB]) i bywa split-buttonem z dodatkową strzałką (Architekt szablonów / Generator arkuszy w Excelu), gdy włączone są flagi deckArchitect/workbookTemplates — dziś domyślnie ON. UWAGA: ten konkretny dev-render to celowo uproszczony dowód wpięcia (własny, ręcznie zbity pasek, NIE realny StandardModuleBar) — PUSTKA ZAMIERZONA, dowód działania przycisku, nie ekran z danymi. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "document-studio-resume-error",
@@ -1741,30 +1907,36 @@
           "id": "deck-artifact",
           "nazwa": "Deck (szesc slajdow)",
           "ocena": "A",
-          "co": "Kreator decka wedlug kanonu artefaktow.",
-          "naprawione": [],
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: przycisk w AKCJACH zmienil etykiete z „Zapytaj Teresę” na „Zapytaj Teresę o tę prezentację” (spojnosc z initiative-record/notatnikiem) — potwierdzone zrzutem PRZED/PO; w obu wersjach nie bylo i nie ma osobnego okna czatu w panelu, wiec to tylko doprecyzowanie etykiety. Kreator decka wedlug kanonu artefaktow.",
+          "naprawione": [
+            "01.09: etykieta przycisku ujednolicona na „Zapytaj Teresę o tę prezentację” — potwierdzone zrzutem (evidence/grafika/169-teresa-produkt/ i 169-teresa-deck-legacy/)."
+          ],
           "wyjatki": [
             "Cienka crimsonowa smuga krazaca wokol pola pisania — USTALONE: to swiadoma ozdoba CHAT-OWN-012 (obrot 12 s, tylko gdy pole puste i nieaktywne). Na nieruchomym zrzucie wyglada jak rysa. Kolor to crimson #85182F przy 55% — kolizja z zasada, ze crimson jest tylko dla semantyki krytycznej. DECYZJA WLASCICIELA."
           ],
-          "gdzie": "Materiały → „Nowy\" → Prezentacja → kreator decka — sześć slajdów wg kanonu artefaktów."
+          "gdzie": "Materiały → „Nowy\" → Prezentacja → kreator decka — sześć slajdów wg kanonu artefaktów. Zrzuty 01.09: evidence/grafika/169-teresa-produkt/, evidence/grafika/169-teresa-deck-legacy/."
         },
         {
           "id": "deck-quality-badge",
           "nazwa": "Deck — ocena jakosci",
-          "ocena": "A",
-          "co": "Wynik kreatora z odznaka jakosci.",
+          "ocena": "C",
+          "co": "SPRAWDZONE: ekran wyniku kreatora prezentacji — 'Twój deck jest gotowy!' / '8 slajdów wygenerowanych pomyślnie', odznaka jakości 'Jakość: 3 ostrzeżeń' 'Wynik 62/100' (kolor bursztynowy/ostrzegawczy, NIE crimson), metadane '8 slajdów · Briefing · Angielski · Wewnętrzny' — surowy kod języka 'EN' zamieniony na polską etykietę 'Angielski' (to język treści decka, nie interfejsu — zgodnie z kryteriami nie jest to defekt). Główny przycisk 'Otwórz Deck Builder' w kolorze neutralnym (navy/biały), nie crimson.",
           "naprawione": [
-            "CRIMSON na przycisku glownym — Pulapka nr 1 z kodeksu",
-            "Surowy angielski enum Internal/Briefing"
+            "Surowy kod języka 'EN' → etykieta 'Angielski'.",
+            "Crimson na przycisku głównym zamieniony na neutralny (Pułapka nr 1)."
           ],
-          "wyjatki": [],
-          "gdzie": "Materiały → kreator prezentacji → ekran wyniku (krok końcowy kreatora) — odznaka jakości wygenerowanego decka."
+          "wyjatki": [
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): harness montuje `ResultStep`, którego JEDYNYM wołaczem jest `PresentationWizard.tsx:323`; sam `PresentationWizard` nie ma w src/ ANI JEDNEGO importu, a trasa `/presentations/wizard` jest redirect-only (AppRoutes.tsx:2741). Ten konkretny ekran jest nieosiągalny.",
+            "MARTWY DUBLET ŻYWEJ FUNKCJI (nie brak funkcji): sama odznaka jakości decka JEST w produkcie — `DeckBuilder.tsx:1930-1959` renderuje „Jakość: N ostrzeżeń\" + wynik krytyka, a DeckBuilder stoi na żywej trasie (AppRoutes.tsx:252, lazy). Właściciel oceniał kopię z wycofanego kreatora.",
+            "DO ZROBIENIA W TORZE GRAFIKI: przepiąć ekran na `DeckBuilder` (żywa ścieżka), nie na kreator. Do tego czasu nie pokazujemy."
+          ],
+          "gdzie": "Materiały → kreator prezentacji → ekran wyniku (krok końcowy kreatora) — odznaka jakości wygenerowanego decka. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "document-artifact",
           "nazwa": "Dokument doradczy (pelny widok)",
           "ocena": "A",
-          "co": "Prawdziwy raport: szesc sekcji, pasek wskaznikow, tabela budzetu, wykres trendu z legenda, uczciwe oznaczenie poufnosci i zrodel.",
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. Prawdziwy raport: szesc sekcji, pasek wskaznikow, tabela budzetu, wykres trendu z legenda, uczciwe oznaczenie poufnosci i zrodel.",
           "naprawione": [
             "Ekran w ogole sie nie renderowal — brak nawigacji w harnessie",
             "Angielskie etykiety w danych testowych"
@@ -1776,7 +1948,7 @@
             "document-studio-nowy-dokument-martwe-przyciski",
             "document-studio-save-as-template"
           ],
-          "gdzie": "Materiały → zakładka „Dokumenty\" → otwarcie dokumentu doradczego (pełny widok) — raport z sekcjami, paskiem wskaźników, tabelą budżetu i wykresem trendu."
+          "gdzie": "Materiały → zakładka „Dokumenty\" → otwarcie dokumentu doradczego (pełny widok) — raport z sekcjami, paskiem wskaźników, tabelą budżetu i wykresem trendu. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "excele-jeden-widok-materialy",
@@ -1822,8 +1994,10 @@
           "id": "excele-prawy-panel-standard",
           "nazwa": "Excel — prawy panel",
           "ocena": "A",
-          "co": "Szyna ikon: Akcje, Powiazania, Zrodla, Rezultaty, Historia. Zgodnie z decyzja z 28.07.",
-          "naprawione": [],
+          "co": "★ ZMIENIONE PO TWOIM AKCEPCIE: ten ekran jest w zestawie „ujednolicona szerokosc prawego pasa (320 px)” z dzisiejszej fali (evidence/grafika/164-szerokosc-panelu/) — jest tam swiezy zrzut PO, ale BEZ odpowiednika PRZED, wiec nie da sie z samych obrazow potwierdzic co dokladnie sie zmienilo w szerokosci wzgledem wersji, ktora widziales wczesniej. Wymaga Twojego ponownego rzutu oka. SPRAWDZONE na świeżym zrzucie 155-materialy-ocena (2026-08-31, oba motywy): arkusz 'Ocena opłacalności projektu (NPV/IRR)', nagłówek kolumny 'Założenie' (był 'Driver' po angielsku) obok kolumny 'Wartość'; przykładowy wiersz 'Nakład początkowy (inwestycja) — 500 000'. Prawy panel w całości po polsku: 'AKCJE' (Kopiuj link wewnętrzny, Zapytaj Teresę), 'WŁAŚCIWOŚCI', 'POWIĄZANIA', 'ŹRÓDŁA I ZAŁOŻENIA', 'KOMENTARZE', 'HISTORIA'.",
+          "naprawione": [
+            "Nagłówek kolumny 'Driver' → 'Założenie' naprawiony w realnym szablonie serwerowym (nie tylko w makiecie)."
+          ],
           "wyjatki": [],
           "warianty": [
             "excele-edytowalna-siatka",
@@ -1834,7 +2008,7 @@
             "excele-reopen-verify",
             "sheet-artifact"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza → prawy panel — szyna ikon (Akcje, Powiązania, Źródła, Rezultaty, Historia) zgodna z decyzją z 28.07 o jednym wspólnym wzorze panelu."
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza → prawy panel — szyna ikon (Akcje, Powiązania, Źródła, Rezultaty, Historia) zgodna z decyzją z 28.07 o jednym wspólnym wzorze panelu. Zrzuty: evidence/grafika/155-materialy-ocena/. Zrzuty 01.09 (tylko PO): evidence/grafika/164-szerokosc-panelu/."
         },
         {
           "id": "excele-engine-reveal",
@@ -1999,13 +2173,16 @@
           "id": "prezentacje-template-states",
           "nazwa": "Prezentacje — trzy stany szablonu",
           "ocena": "A",
-          "co": "Ladowanie, wzorzec bez rekordu, brak dostepu. Wszystkie po polsku.",
-          "naprawione": [],
+          "co": "01.09 (fala 174): SPRZECZNOŚĆ Z POPRZEDNIEJ RUNDY ZAMKNIĘTA DOWODEM. Domyślny wariant zmieniony na taki, który realnie coś pokazuje — teraz od razu widać stan „wzorzec bez rekordu” z treścią i przyciskiem „Wróć do Biblioteki”, zamiast pustego spinnera (evidence/grafika/174-domkniecie/prezentacje-template-states__PRZED__light.png vs __PO__light.png). Wariant „ładowanie” po 20 sekundach kończy się czytelnym komunikatem błędu „Nie udało się rozwiązać wzorca. Spróbuj ponownie.” z przyciskiem powrotu, zamiast wisieć w nieskończoność jak wcześniej w produkcie (evidence/grafika/174-domkniecie/5-prezentacje/loading-po-20s__PO__light.png). To domyka skargę właściciela z 01.09 05:31 „nie otwiera mi się nic :(”.",
+          "naprawione": [
+            "Trzy stany (ładowanie / wzorzec bez rekordu / brak dostępu) faktycznie renderują się osobno i są udokumentowane osobnymi zrzutami — wcześniej widoczny był tylko spinner.",
+            "01.09 (fala 174): domyślny wariant pokazuje realną treść (nie pusty spinner); stan „ładowanie” po 20 s odrzuca się do czytelnego komunikatu błędu z przyciskiem powrotu — potwierdzone zrzutem (evidence/grafika/174-domkniecie/5-prezentacje/, evidence/grafika/174-domkniecie/prezentacje-template-states__PRZED__light.png, __PO__light.png)."
+          ],
           "wyjatki": [],
           "warianty": [
             "execution-export-prezentacja"
           ],
-          "gdzie": "Materiały → zakładka „Prezentacje\" → otwarcie prezentacji z wzorca — trzy stany: ładowanie, wzorzec bez rekordu, brak dostępu."
+          "gdzie": "Materiały → zakładka „Prezentacje\" → otwarcie prezentacji z wzorca — trzy stany: ładowanie, wzorzec bez rekordu, brak dostępu. Zrzuty: evidence/grafika/155-materialy-ocena/"
         },
         {
           "id": "report-artifact",
@@ -2091,12 +2268,13 @@
           "id": "gen-excel-templates-tab",
           "nazwa": "Szablony skoroszytow",
           "ocena": "D",
-          "co": "Zdublowana prezentacja generatora — wlasciciel: \"Nie potrzebny w ogole ten arkusz. Z pozostaloscia w ogole pierwszych jakichs prob.\" (K8, MAPA_UWAG_WLASCICIELA.md).",
+          "co": "Zdublowana ZAKLADKA za wylaczona flaga — wlasciciel (30.08): \"Nie potrzebny w ogole ten arkusz. Z pozostaloscia w ogole pierwszych jakichs prob.\" (K8, MAPA_UWAG_WLASCICIELA.md) i \"To samo nie wiem, po co on jest.\" Zdejmujemy WEJSCIE, nie kod: sam komponent (ExceleParametricTemplates) jest zywym ekranem koncowym kreatora \"Nowy szablon -> Arkusz\".",
           "naprawione": [],
           "wyjatki": [
-            "Zdjete z odbioru 2026-08-30 (docs/program/grafika/ODLOZONE.md) — nie duplikuj wiecej"
+            "Zdjete z odbioru 2026-08-30, potwierdzone 2026-09-01 (ANALIZA_ODRZUCONE_20260901.md §1) — nie duplikuj wiecej",
+            "KODU NIE RUSZAMY: skasowanie komponentu zabiloby kreator szablonow arkusza"
           ],
-          "gdzie": "BYLO: Materialy -> Biblioteka wzorcow -> \"Nowy szablon\" -> Arkusz -> zakladka huba \"Generator szablonow Excel\" (flaga ff_workbook_templates, domyslnie OFF — ten wpis nie byl wejsciem realnych uzytkownikow, tylko trybem podgladu do recenzji). Sam mechanizm (ExceleParametricTemplates, POST /api/workbook/templates/:id/build) zyje dalej i jest osiagalny inaczej: /excele (chat) -> zakladka Szablony, oraz przez \"Nowy szablon\" -> Arkusz -> TemplateBuilderFlow -> \"Zbuduj skoroszyt\" (ff_templateBuilder, domyslnie ON poza publiczna produkcja). Szczegoly i uzasadnienie: docs/program/grafika/ODLOZONE.md."
+          "gdzie": "ZDJETA ZAKLADKA: Materialy -> Biblioteka wzorcow -> \"Nowy szablon\" -> pozycja \"Generator szablonow\" — ta pozycja menu pokazuje sie tylko przy fladze ff_workbook_templates, ktora jest domyslnie OFF na kazdym srodowisku (workbookTemplatesFlag.ts:23; ReportsAndPresentationsHub.tsx:1516-1517). SPROSTOWANIE wczesniejszego opisu: sama POWIERZCHNIA nie sprawdza zadnej flagi (ReportsAndPresentationsHub.tsx:1427-1438) i jest ekranem, na ktory kreator sam przelacza widok po zapisie szablonu, z komunikatem \"Szablon zapisany — wybierz »Zbuduj skoroszyt«\" (tamze:1631-1646); dziala tez stary adres ?tab=workbook_templates (tamze:224-226). Mechanizm (POST /api/workbook/templates/:id/build) zyje dalej i ma drugie wejscie: /excele (chat) -> zakladka Szablony (ArtifactModuleHome.tsx:222-224, bez flagi). Szczegoly: docs/program/grafika/ODLOZONE.md."
         },
         {
           "id": "materialy-draft-template-visibledraft-fix",
@@ -2121,11 +2299,14 @@
         {
           "id": "excele-edytowalna-siatka",
           "nazwa": "Excel — edytowalna siatka",
-          "ocena": "B",
-          "co": "Realny arkusz NPV/IRR z produkcyjnego szablonu.",
-          "naprawione": [],
+          "ocena": "A",
+          "co": "SPRAWDZONE: ten sam arkusz NPV/IRR — kolumna 'Założenie' zamiast 'Driver', wiersze: 'Nakład początkowy (inwestycja) 500 000', 'Przepływ operacyjny brutto — rok 1 220 000', 'Wzrost przepływów % rocznie 0,06', 'Stopa dyskontowa (wymagana stopa zwrotu) 0,1', 'Wartość rezydualna (koniec horyzontu) 50 000', 'Stopa podatkowa 0,19'. Pasek narzędzi w pełni po polsku (Waluta, Procent, Pogrubienie, Wstaw/Usuń wiersz/kolumnę, Liczba, Format ogólny).",
+          "naprawione": [
+            "Nagłówek kolumny 'Driver' → 'Założenie' w realnym, edytowalnym arkuszu produkcyjnym.",
+            "01.09: pasek narzedzi zmieniony ze slow („Waluta, Procent, Pogrubienie, Wstaw wiersz, Usun wiersz, Wstaw kolumne, Usun kolumne, Liczba”) na ikony ($, %, B, ikony wiersza/kolumny, #) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/)."
+          ],
           "wyjatki": [
-            "Naglowek mowi Zadanie ukonczone i zaraz obok 0/8 krokow. Zielony ptaszek stoi obok zera. Dotyczy KAZDEGO ponownego otwarcia zapisanego pliku. To mechanika, zgloszone torowi funkcji"
+            "Mechanika 'Zadanie ukończone' obok '0/8 kroków' przy ponownym otwarciu zapisanego pliku — nie widoczna na tym zrzucie (inny przepływ), nie zweryfikowana w tej rundzie."
           ],
           "warianty": [
             "excele-engine-reveal",
@@ -2136,7 +2317,7 @@
             "excele-reopen-verify",
             "sheet-artifact"
           ],
-          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza z produkcyjnego szablonu (np. NPV/IRR) — realna, edytowalna siatka."
+          "gdzie": "Materiały → zakładka „Arkusze\" → otwarcie arkusza z produkcyjnego szablonu (np. NPV/IRR) — realna, edytowalna siatka. Zrzuty: evidence/grafika/155-materialy-ocena/. NIESPOJNOSC: sasiedni ekran „sheet-artifact” (podglad tego samego typu arkusza) nadal ma pasek ze slowami, nie ikonami — do ujednolicenia (zob. evidence/grafika/166-tabela-szerokosc/sheet-artifact__PO__light.png)."
         },
         {
           "id": "report-builder-library-template",
@@ -2270,8 +2451,14 @@
           "nazwa": "Biblioteka audytow",
           "ocena": "A",
           "co": "Weryfikacja i status publikacji.",
-          "naprawione": [],
-          "wyjatki": [],
+          "naprawione": [
+            "2026-09-01: GET /audits/programs mial 3 pola z rozjazdem front/serwer (applicableCriteria/criteriaTotal, concludedCriteria/criteriaConcluded, openFindings/findingsOpen) — kolumny „Postęp\"/„Ustalenia otwarte\" w zakładce „Sesje\" pokazywaly bare „/\" i pustke. Dodano warstwe mapujaca w listPrograms() (auditsMethodApi.ts, wzorem getProgramCoverage()), poprawiono mock harnessu i test kontraktowy, ktore fabrykowaly dane w ksztalcie klienta zamiast serwera (dlatego defekt nie byl widoczny na testach ani na zrzucie).",
+            "2026-09-01 (reguła 20, sprawdzenie rodziny): kolumny z nazwiskiem (Audytor wiodący / Sesje, Kto / Wyniki, Właściciel / Ustalenia) nachodziły na sąsiednią kolumnę przy dłuższym nazwisku (np. „Aleksandra Dąbrowska15/06/2026\" sklejone) — `truncate` na inline `<span>` bez `block`+`max-w-[…]` nic nie tnie, bo FilterableTable świadomie nie stawia `overflow-hidden` na `<td>`. Naprawiono w AuditProcessesTab.tsx, AuditOutputsTab.tsx, AuditFindingsTab.tsx (ta trzecia nie miała nawet `truncate`). Naprawa jest szerokościowa (max-w = szerokość kolumny − padding), nie kalibrowana pod jedno konkretne nazwisko z dzisiejszych danych demo — działa dla każdej długości."
+          ],
+          "wyjatki": [
+            "OCENA A DOTYCZY WYLACZNIE ZAKLADKI „BIBLIOTEKA\" — zakladka „Sesje\" (AuditProcessesTab, ?tab=processes) NIGDY nie byla sfotografowana ani obejrzana przez wlasciciela w zadnej turze odbioru udokumentowanej w evidence/grafika/ do 2026-09-01. Defekty (patrz „naprawione\") zostaly zmierzone i naprawione 2026-09-01, dowod: evidence/grafika/190-audyty-sesje/ i evidence/grafika/191-audyty-zakladki/ (PRZED/PO, light+dark, wszystkie 6 zakładek osobno: Biblioteka/Sesje/Wyniki/Raporty/Ustalenia/Inicjatywy). DO PONOWNEGO OBEJRZENIA przez wlasciciela: zakladka „Sesje\" (i rodzina Wyniki/Ustalenia) nie ma jeszcze wlasnej oceny — dzisiejsza „A\" nie moze byc czytana jako pokrywajaca te widoki.",
+            "ZDIAGNOZOWANE, NIE NAPRAWIONE (celowo, poza zakresem tego dyżuru): pasek chipów etapu lifecycle (Menu 3, zakładka „Sesje\") jest realnie przewijalny w poziomie (`ModuleNavBar.tsx:307`, zmierzone JS: scrollWidth 1702 > clientWidth 1408 na 1440px), ale bez ŻADNEGO widocznego sygnału — klasa `no-scrollbar` na tym kontenerze jest martwa (nie istnieje w żadnym pliku CSS repo), więc widać tylko domyślny/overlay pasek przeglądarki, niewidoczny w typowej konfiguracji macOS. Ostatni chip „Weryfikacja skuteczności…\" wygląda jak koniec listy. To defekt WSPÓLNEGO mechanizmu `ModuleNavBar`/`StandardModuleBar` (używanego w każdym module z Menu 3), nie tylko Audytów — naprawa wymaga osobnej, nadzorowanej tury (nie punktowej łatki tego ekranu). Zgłoszone jako osobne zadanie w tle."
+          ],
           "gdzie": "Audyty → zakładka „Biblioteka audytów\" — weryfikacja metodyk i status publikacji."
         },
         {
@@ -2346,7 +2533,7 @@
           "co": "Zrodla danych nazwane, zero nagich zer.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Admin (panel administratora organizacji) → sekcja „Trust & Control\" → pięć zakładek (Audyt SOC2 / DLP / Rezydencja danych / Retencja / Polityka AI) — kontrola bezpieczeństwa i zgodności organizacji w jednym miejscu."
+          "gdzie": "„Panel Administratora\" (lewe menu główne, widoczne tylko dla ról Admin/Owner/SuperAdmin) → wewnątrz panelu lewy pasek grup → grupa „Centrum administracyjne\" → zakładki „Audyt SOC2\" / „DLP\" / „Rezydencja danych\" / „Retencja\" / „Polityka AI\" (adres /admin/command/audit itd.), sprawdzone klikiem (src/components/Admin/adminNavigation.ts:175-188, src/views/admin/AdminSettingsModule.tsx). Sam ekran ma własny widoczny nagłówek „Centrum dowodzenia\" — inna nazwa niż etykieta w menu, stąd zamieszanie właściciela. UWAGA: w kodzie ta sekcja bywa nazywana „Trust & Control\" (src/utils/commandCenterFlag.ts) — ten napis NIGDZIE nie pojawia się w interfejsie, to wyłącznie żargon deweloperski. Bez flag: gejtująca flaga commandCenterFlag.ts istnieje, ale jej funkcja isCommandCenterEnabled() nie ma dziś ŻADNEGO wołającego w kodzie — sekcja jest zawsze widoczna, flaga jest martwa (fantom bez efektu)."
         },
         {
           "id": "admin-sso-self-service-card",
@@ -2393,6 +2580,672 @@
             "Reszta tabeli po angielsku — osobny, duzo wiekszy dlug tego ekranu nadzorcy"
           ],
           "gdzie": "SuperAdmin → Model Registry → Katalog modeli AI — lista modeli językowych/obrazowych podłączonych do platformy, ze statusem i kosztem."
+        },
+        {
+          "id": "admin-billing-overview",
+          "nazwa": "Przegląd",
+          "ocena": "D",
+          "co": "Atrapa językowa.",
+          "naprawione": [],
+          "wyjatki": [
+            "Karty po angielsku mimo lang=pl.",
+            "Crimson dekoracja (ikona text-primary-500)."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Przegląd”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-plan-limits",
+          "nazwa": "Plan i limity",
+          "ocena": "C",
+          "co": "Treść po polsku (PL OK).",
+          "naprawione": [],
+          "wyjatki": [
+            "Przycisk „Przydziel plan i limity” variant=\"brand\" = crimson na zwykłym CTA (AdminBillingFinOpsPanel.tsx:511)."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Plan i limity”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-usage-costs",
+          "nazwa": "Wykorzystanie i koszty",
+          "ocena": "D",
+          "co": "Alias ekranu Przegląd (pixel-identyczny).",
+          "naprawione": [],
+          "wyjatki": [
+            "Mylący osobny slot menu dla identycznej treści."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Wykorzystanie i koszty”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-payment-methods",
+          "nazwa": "Metody płatności",
+          "ocena": "D",
+          "co": "Całość po angielsku (zero t()).",
+          "naprawione": [],
+          "wyjatki": [
+            "Surowy FilterableTable, brak kebab."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Metody płatności”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-invoices",
+          "nazwa": "Faktury",
+          "ocena": "D",
+          "co": "Nagłówki INVOICE/STATUS/AMOUNT DUE po angielsku.",
+          "naprawione": [],
+          "wyjatki": [
+            "FilterableTable, hideRowActions.",
+            "Kwoty bez PLN."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Faktury”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-seats-licences",
+          "nazwa": "Miejsca i licencje",
+          "ocena": "A",
+          "co": "'Miejsca i licencje' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): kafle Łącznie 25 / Zajęte 18 / Wolne 7 / Wykorzystanie 72%, tabela historii (Zakup, Dodano automatycznie, Korekta ręczna) z datami DD/MM/RRRR ('01/08/2026 11:12'), w pełni po polsku, bez defektów.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Miejsca i licencje”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-billing-details",
+          "nazwa": "Dane rozliczeniowe",
+          "ocena": "D",
+          "co": "Alias ekranu Budżety i alerty.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Dane rozliczeniowe”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-budgets-alerts",
+          "nazwa": "Budżety i alerty",
+          "ocena": "D",
+          "co": "Spend alerts/Save alerts po angielsku.",
+          "naprawione": [],
+          "wyjatki": [
+            "FilterableTable."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Budżety i alerty”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-billing-plan-history",
+          "nazwa": "Historia zmian planu",
+          "ocena": "A",
+          "co": "'Historia zmian planu' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): tabela z datami DD/MM/RRRR, powody zmian po polsku ('Wzrost zespołu do 18 osób', 'Automatyczne odnowienie'), nazwy planów (Starter/Growth) po angielsku jako nazwy handlowe produktu — akceptowalne jako nazwa własna planu, nie treść interfejsu.",
+          "naprawione": [],
+          "wyjatki": [
+            "Drobne: nazwy planów 'Starter'/'Growth' po angielsku — nazwy handlowe, nie tłumaczone."
+          ],
+          "gdzie": "Administracja → Rozliczenia (billing) → zakładka „Historia zmian planu”. Zrzuty: evidence/grafika/146-admin-billing/."
+        },
+        {
+          "id": "admin-team-members",
+          "nazwa": "Użytkownicy",
+          "ocena": "A",
+          "co": "'Członkowie i role' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): 4 karty ról (Właściciel/Administrator/Członek/Gość) z opisami po polsku, tabela 6 osób z rolami i statusami 'Aktywne'/'Zawieszone' po polsku. Bez defektów.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Użytkownicy”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-invitations",
+          "nazwa": "Zaproszenia",
+          "ocena": "A",
+          "co": "'Zaproszenia' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): statusy teraz w pełni po polsku ('Oczekujące', 'Błąd', 'Wygasło', 'Cofnięto', 'Zaakceptowane' — poprzednio 'expired'/'revoked' po angielsku), daty w formacie DD/MM/RRRR ('10/09/2026 14:00'). Oba wcześniej zgłoszone defekty NAPRAWIONE.",
+          "naprawione": [
+            "Statusy expired/revoked były po angielsku — teraz przetłumaczone (Wygasło/Cofnięto).",
+            "Daty były w formacie US — teraz DD/MM/RRRR."
+          ],
+          "wyjatki": [],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Zaproszenia”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-roles-permissions",
+          "nazwa": "Role i uprawnienia",
+          "ocena": "B",
+          "co": "Lista ról i uprawnień.",
+          "naprawione": [],
+          "wyjatki": [
+            "Daty w formacie US."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Role i uprawnienia”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-teams",
+          "nazwa": "Zespoły",
+          "ocena": "B",
+          "co": "Lista zespołów.",
+          "naprawione": [],
+          "wyjatki": [
+            "Kolumna Typ pokazuje surowe enumy consulting/finance/support."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Zespoły”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-guests-external",
+          "nazwa": "Goście i dostęp zewnętrzny",
+          "ocena": "A",
+          "co": "'Goście i dostęp zewnętrzny' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): statusy 'Aktywne'/'Wygasł'/'Cofnięto' w pełni po polsku (poprzednio 'revoked' po angielsku), daty '01/08/2026 12:00' itd. w formacie DD/MM/RRRR (poprzednio US). Oba zgłoszone defekty NAPRAWIONE.",
+          "naprawione": [
+            "Status 'revoked' był po angielsku — teraz 'Cofnięto'.",
+            "Daty były w formacie US — teraz DD/MM/RRRR."
+          ],
+          "wyjatki": [],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Goście i dostęp zewnętrzny”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-access-requests",
+          "nazwa": "Wnioski o dostęp",
+          "ocena": "B",
+          "co": "Uczciwy placeholder bez mechaniki (celowy stan).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Wnioski o dostęp”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-access-reviews",
+          "nazwa": "Przeglądy dostępów",
+          "ocena": "A",
+          "co": "'Przeglądy dostępów' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): 'Następny przegląd: 29/11/2026' w formacie DD/MM/RRRR (poprzednio US). Defekt NAPRAWIONY.",
+          "naprawione": [
+            "Data 'Następny przegląd' była w formacie US — teraz DD/MM/RRRR."
+          ],
+          "wyjatki": [],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Przeglądy dostępów”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-team-ownership",
+          "nazwa": "Własność",
+          "ocena": "A",
+          "co": "'Własność organizacji' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): ekran w całości po polsku ('Zarządzaj właścicielem zespołu i zabezpieczeniami przekazania własności', pigułka 'WŁAŚCICIEL', 'Właściciel od 15/01/2025', ostrzeżenie 'Właściciela organizacji nie można usunąć z listy zespołu. Aby usunąć tego użytkownika, najpierw przekaż własność.', przycisk 'Przekaż własność'). Zgłoszony defekt ('cały ekran po angielsku') NAPRAWIONY — namespace admin.ownership uzupełniony w pl/translation.json.",
+          "naprawione": [
+            "Cały ekran był po angielsku (brak namespace admin.ownership w pl/translation.json) — NAPRAWIONE, potwierdzone na świeżym zrzucie."
+          ],
+          "wyjatki": [
+            "Kolor wyróżnienia karty właściciela (tło/avatar/pigułka) to ciepły bursztyn/pomarańcz, wizualnie odróżnialny od crimson #85182F używanego gdzie indziej w aplikacji dla stanów krytycznych — nie flagowane jako naruszenie kanonu, ale warto zweryfikować w kodzie kolor dokładny."
+          ],
+          "gdzie": "Administracja → Zespół (team) → zakładka „Własność”. Zrzuty: evidence/grafika/146-admin-team/."
+        },
+        {
+          "id": "admin-security-security-policy",
+          "nazwa": "Polityka bezpieczeństwa",
+          "ocena": "C",
+          "co": "Własny pill-nav.",
+          "naprawione": [],
+          "wyjatki": [
+            "Wzorzec ADM-OWN-001 nienaprawiony tu.",
+            "Surowe klasy slate/navy.",
+            "Ikony crimson dekoracyjnie."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Polityka bezpieczeństwa”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-sso",
+          "nazwa": "SSO",
+          "ocena": "C",
+          "co": "Bitowo identyczny z ekranem Polityka bezpieczeństwa (WIRE_ONLY) — do potwierdzenia z właścicielem.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „SSO”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-scim-lifecycle",
+          "nazwa": "SCIM i cykl życia",
+          "ocena": "D",
+          "co": "Listy jako surowe wiersze tekstu.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nie używa StandardTable."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „SCIM i cykl życia”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-sessions",
+          "nazwa": "Sesje",
+          "ocena": "A",
+          "co": "Tabela sesji.",
+          "naprawione": [],
+          "wyjatki": [
+            "toLocaleString bez locale (format zależny od przeglądarki)."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Sesje”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-api-access",
+          "nazwa": "Dostęp API",
+          "ocena": "D",
+          "co": "Cały ekran po angielsku (zero t()).",
+          "naprawione": [],
+          "wyjatki": [
+            "Bespoke karty.",
+            "Crimson odznaki na każdym kluczu."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Dostęp API”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-domains",
+          "nazwa": "Domeny",
+          "ocena": "A",
+          "co": "Czysto.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Domeny”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-service-accounts",
+          "nazwa": "Konta usługowe",
+          "ocena": "A",
+          "co": "Czysto.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Konta usługowe”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-security-alerts",
+          "nazwa": "Alerty bezpieczeństwa",
+          "ocena": "C",
+          "co": "Lista alertów.",
+          "naprawione": [],
+          "wyjatki": [
+            "Typ/Dotkliwość surowe enumy (impossible_travel, critical)."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Alerty bezpieczeństwa”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-break-glass",
+          "nazwa": "Break-glass",
+          "ocena": "A",
+          "co": "Crimson prawidłowy (akcja realnie krytyczna).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Break-glass”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-security-risk-summary",
+          "nazwa": "Podsumowanie ryzyka",
+          "ocena": "D",
+          "co": "Kolejka jako surowe karty.",
+          "naprawione": [],
+          "wyjatki": [
+            "Status: resolved po angielsku.",
+            "Crimson dekoracyjny."
+          ],
+          "gdzie": "Administracja → Bezpieczeństwo (security) → zakładka „Podsumowanie ryzyka”. Zrzuty: evidence/grafika/146-admin-security/."
+        },
+        {
+          "id": "admin-audit-events",
+          "nazwa": "Zdarzenia",
+          "ocena": "C",
+          "co": "'Dziennik audytu administratora' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): format daty NAPRAWIONY ('30/08/2026 16:22' DD/MM/RRRR), ale kolumna 'Akcja' pokazuje surowe angielskie nazwy zdarzeń ('member removed', 'role change', 'update collaboration controls', 'update data retention policy', 'create scim token', 'export audit logs') a POD NIMI SUROWE ŁADUNKI JSON wprost w interfejsie (np. '{\"removedUser\":\"anna@atelier-toys.pl\"}', '{\"from\":\"member\",\"to\":\"admin\"}') — poważniejszy defekt niż wcześniej odnotowany. Placeholder wyszukiwania nadal ucięty ('Szukaj akcji, wykonaw...' bez wielokropka, pole za wąskie).",
+          "naprawione": [
+            "Daty były w formacie US — teraz DD/MM/RRRR."
+          ],
+          "wyjatki": [
+            "FilterableTable zamiast StandardTable.",
+            "Placeholder szukania obcięty — potwierdzone na świeżym zrzucie ('Szukaj akcji, wykonaw...').",
+            "NOWE, poważniejsze niż wcześniej odnotowane: kolumna 'Akcja' pokazuje surowe nazwy zdarzeń po angielsku i surowe ładunki JSON wprost w UI zamiast czytelnego opisu po polsku."
+          ],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Zdarzenia”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-high-risk-changes",
+          "nazwa": "Zmiany wysokiego ryzyka",
+          "ocena": "D",
+          "co": "Alias ekranu Zdarzenia (zamierzony).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Zmiany wysokiego ryzyka”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-compliance-evidence",
+          "nazwa": "Dowody zgodności",
+          "ocena": "C",
+          "co": "REALNY BUG: kolumny Zdarzenie/Aktor/Ryzyko puste.",
+          "naprawione": [],
+          "wyjatki": [
+            "Frontend czyta action/actor/risk, backend zwraca action_type/admin_id/risk_level (AdminComplianceEvidencePanel.tsx:81-110 vs adminP32.routes.ts:2208-2296) — zob. zgłoszenie #9 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Dowody zgodności”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-retention-export",
+          "nazwa": "Retencja i eksport",
+          "ocena": "D",
+          "co": "Alias ekranu Zdarzenia (zamierzony).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Retencja i eksport”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-integrity",
+          "nazwa": "Integralność",
+          "ocena": "A",
+          "co": "Uczciwa treść.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Integralność”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-legal-hold",
+          "nazwa": "Legal hold",
+          "ocena": "B",
+          "co": "Legal hold.",
+          "naprawione": [],
+          "wyjatki": [
+            "Tytuł po angielsku."
+          ],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Legal hold”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-audit-export-history",
+          "nazwa": "Historia eksportów",
+          "ocena": "A",
+          "co": "'Historia eksportów' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): daty '30/08/2026 12:00', '10/08/2026 11:30', '22/07/2026 16:12' w formacie DD/MM/RRRR (poprzednio US). Defekt NAPRAWIONY. Tabela w pełni po polsku (Kiedy/Kto/Eksport/Wiersze/Format).",
+          "naprawione": [
+            "Daty były w formacie US — teraz DD/MM/RRRR."
+          ],
+          "wyjatki": [],
+          "gdzie": "Administracja → Audyt (audit) → zakładka „Historia eksportów”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-service-status",
+          "nazwa": "Stan usług",
+          "ocena": "D",
+          "co": "Placeholder zamierzony.",
+          "naprawione": [],
+          "wyjatki": [
+            "CAN_ACCESS_PLATFORM_OPERATIONS=false na sztywno, nigdy nie woła API."
+          ],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Stan usług”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-diagnostics",
+          "nazwa": "Diagnostyka",
+          "ocena": "D",
+          "co": "Alias ekranu Stan usług.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Diagnostyka”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-dependencies",
+          "nazwa": "Zależności",
+          "ocena": "A",
+          "co": "'Zależności usług organizacji' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): 4 karty usług (Baza danych PostgreSQL, Brama LLM Anthropic, Kolejka zadań, Magazyn plików) ze statusami i datami DD/MM/RRRR po polsku, sekcja 'Probe'y bez zadeklarowanej zależności'. Bez defektów.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Zależności”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-incident-history",
+          "nazwa": "Historia incydentów",
+          "ocena": "B",
+          "co": "Historia incydentów.",
+          "naprawione": [],
+          "wyjatki": [
+            "Link do nieistniejącego /admin/health/overview (AdminIncidentHistoryPanel.tsx:76) — zob. zgłoszenie #17 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Historia incydentów”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-queues-jobs",
+          "nazwa": "Kolejki i zadania",
+          "ocena": "B",
+          "co": "Kolejki i zadania.",
+          "naprawione": [],
+          "wyjatki": [
+            "Statusy Succeeded/Running/Queued po angielsku; czerwień poprawna semantycznie."
+          ],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Kolejki i zadania”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-sla-slo",
+          "nazwa": "SLA / SLO",
+          "ocena": "A",
+          "co": "Uczciwe „Nie obliczono”.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „SLA / SLO”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-health-platform-operations",
+          "nazwa": "Operacje platformowe",
+          "ocena": "D",
+          "co": "Zamierzony fail-closed gate.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Kondycja platformy (health) → zakładka „Operacje platformowe”. Zrzuty: evidence/grafika/146-admin-audit-health/."
+        },
+        {
+          "id": "admin-ai-policy-autonomy",
+          "nazwa": "Polityka i autonomia",
+          "ocena": "D",
+          "co": "ProactivitySelector.",
+          "naprawione": [],
+          "wyjatki": [
+            "100% po angielsku.",
+            "Crimson na wybranej roli/focus/ikonie.",
+            "Trzeci poziom tabów kolidujący nazewniczo z menu."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Polityka i autonomia”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-personas",
+          "nazwa": "Persony",
+          "ocena": "B",
+          "co": "Karty person.",
+          "naprawione": [],
+          "wyjatki": [
+            "Karty pokazują surowy klucz (advisor_default) zamiast nazwy."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Persony”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-models-providers",
+          "nazwa": "Modele i dostawcy",
+          "ocena": "D",
+          "co": "Katalog modeli i dostawców.",
+          "naprawione": [],
+          "wyjatki": [
+            "2. poziom nawigacji w całości po angielsku.",
+            "Raw <table> z fałszywym self-exempt (ModelsProvidersTab.tsx:649) — zob. zgłoszenie #20 do toru funkcji.",
+            "Crimson na odznace PREMIUM."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Modele i dostawcy”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-limits-budgets",
+          "nazwa": "Limity i budżety",
+          "ocena": "D",
+          "co": "Limity i budżety AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Jak wyżej (2. poziom nawigacji EN) + crimson na suwakach/sub-tabie.",
+            "Nagłówki kart NIEWIDOCZNE w dark (SettingsCard.tsx:74 text-navy-900 bez dark:) — zob. zgłoszenie #18 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Limity i budżety”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-data-privacy",
+          "nazwa": "Dane i prywatność",
+          "ocena": "D",
+          "co": "Dane i prywatność AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Jak wyżej + WSZYSTKIE etykiety przełączników niewidoczne w dark (SettingsToggle.tsx:56 — komponent współdzielony) — zob. zgłoszenie #18 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Dane i prywatność”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-quality-evaluations",
+          "nazwa": "Jakość i ewaluacje",
+          "ocena": "B",
+          "co": "Jakość i ewaluacje AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Wartości positive/negative/Applied po angielsku w tabeli."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Jakość i ewaluacje”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-incidents",
+          "nazwa": "Incydenty AI",
+          "ocena": "A",
+          "co": "'Incydenty AI' — SPRAWDZONE na świeżym zrzucie 149-admin-rodziny (2026-08-31): daty '29/08/2026 05:12', '25/08/2026 13:00' w formacie DD/MM/RRRR (poprzednio US). Defekt NAPRAWIONY. Treść błędów technicznych ('Provider timeout (OpenAI) po 20s', 'Rate limit 429 (Anthropic)') po angielsku w nazwach dostawców — akceptowalne jako komunikaty źródłowe systemu.",
+          "naprawione": [
+            "Daty były w formacie US — teraz DD/MM/RRRR."
+          ],
+          "wyjatki": [],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Incydenty AI”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-configuration-versions",
+          "nazwa": "Wersje konfiguracji",
+          "ocena": "B",
+          "co": "Wersje konfiguracji.",
+          "naprawione": [],
+          "wyjatki": [
+            "Status miesza PL/EN (Rolled back/Canary)."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Wersje konfiguracji”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-operations",
+          "nazwa": "Operacje AI",
+          "ocena": "D",
+          "co": "Operacje AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nawigacja po angielsku.",
+            "Surowe id w polskim zdaniu („Sprawdź, czy connection działa poprawnie”, AIMissionControl.tsx:326)."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Operacje AI”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-ai-ai-audit",
+          "nazwa": "Audyt AI",
+          "ocena": "D",
+          "co": "Audyt AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nawigacja po angielsku.",
+            "„Settings Audit Log” bez t().",
+            "Niewidoczne w LIGHT (AuditLogViewer.tsx:174,322 text-white bez light-variant) — zob. zgłoszenie #18 do toru funkcji (promień rażenia, inny komponent)."
+          ],
+          "gdzie": "Administracja → Sterowanie AI → zakładka „Audyt AI”. Zrzuty: evidence/grafika/146-admin-ai/."
+        },
+        {
+          "id": "admin-command-overview",
+          "nazwa": "Przegląd",
+          "ocena": "A",
+          "co": "Kafle-linki + 5 kafli compliance.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Przegląd”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-attention-queue",
+          "nazwa": "Kolejka uwagi",
+          "ocena": "B",
+          "co": "Kolejka uwagi. 01.09 (fala 174): przywrócony odnośnik do ekranu źródłowego — strzałka przy tekście „Uwaga” w każdym wierszu oraz akcja „Otwórz ekran kanoniczny” w kebabie — który zniknął przy wcześniejszej zamianie kart na tabelę. Potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/admin-command-attention-queue__PRZED__light.png vs __PO__light.png) i zrzutem kebaba (evidence/grafika/174-domkniecie/3-admin-kebab__PO__light.png, pozycja „Otwórz ekran kanoniczny”).",
+          "naprawione": [
+            "01.09: kolejka uwagi zmieniona z siatki 4 kart na tabele z filtrowalnymi kolumnami TYP i WAGA (zgodnie ze zgloszeniem wlasciciela „moze jakas tabela gdzie bedzie mozna filtrowac po typach”), etykiety wagi przetlumaczone (critical/warning/info -> KRYTYCZNA/OSTRZEZENIE/INFORMACYJNA) — potwierdzone zrzutem PRZED/PO (evidence/grafika/171-pojedyncze/).",
+            "01.09 (fala 174): przywrócona strzałka nawigacyjna przy „Uwadze” i akcja „Otwórz ekran kanoniczny” w kebabie każdego wiersza (zgubione przy zamianie kart na tabelę we wcześniejszej fali) — potwierdzone zrzutem PRZED/PO (evidence/grafika/174-domkniecie/)."
+          ],
+          "wyjatki": [
+            "REALNY BUG: sygnał „Ryzyka wymagające przeglądu” zawsze 0/info — AdminCommandCenterPanel.tsx:106 czyta risk?.highRiskCount płasko, backend zwraca zagnieżdżone summary.audit.highRiskCount (adminP32.routes.ts:2942-2950, 2139-2164) — zob. zgłoszenie #22 do toru funkcji. Dyżur 174 naprawił tylko brakujący link, nie ten błąd — nadal nienaprawione.",
+            "NOWY ZNANY WYJĄTEK (01.09, fala 174): kolumna „Źródło” pokazuje surowe adresy techniczne (np. „GET /api/admin/health-panel/summary”) zamiast czytelnej nazwy sygnału — zgłoszone przez nadzorcę, do naprawy w kolejnej fali."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Kolejka uwagi”. Zrzuty: evidence/grafika/146-admin-command/. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
+        },
+        {
+          "id": "admin-command-cost-capacity",
+          "nazwa": "Koszt i pojemność",
+          "ocena": "A",
+          "co": "Koszt i pojemność.",
+          "naprawione": [],
+          "wyjatki": [
+            "Drobne: koszty bez separatora tysięcy/waluty (2490.00)."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Koszt i pojemność”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-organization-defaults",
+          "nazwa": "Ustawienia domyślne organizacji",
+          "ocena": "B",
+          "co": "Ustawienia domyślne organizacji.",
+          "naprawione": [],
+          "wyjatki": [
+            "Surowe label/input bez opakowania nagłówkowego jak siostrzane zakładki."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Ustawienia domyślne organizacji”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-agent-trace",
+          "nazwa": "Ślad agentów",
+          "ocena": "A",
+          "co": "StandardTable sortowalna.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Ślad agentów”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-audit",
+          "nazwa": "Audyt SOC2",
+          "ocena": "A",
+          "co": "Audyt SOC2.",
+          "naprawione": [],
+          "wyjatki": [
+            "Drobne: kolumna OPÓŹNIENIE obcięta do „OPÓŹNIE...”."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Audyt SOC2”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-dlp",
+          "nazwa": "DLP",
+          "ocena": "B",
+          "co": "DLP.",
+          "naprawione": [],
+          "wyjatki": [
+            "Waga „Wysoka” tym samym text-c-danger co „Krytyczna” (CommandCenterDlpTab.tsx:244) — dwa poziomy nieodróżnialne kolorem — zob. zgłoszenie #23 do toru funkcji."
+          ],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „DLP”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-residency",
+          "nazwa": "Rezydencja danych",
+          "ocena": "A",
+          "co": "Rezydencja danych.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Rezydencja danych”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-retention",
+          "nazwa": "Retencja",
+          "ocena": "A",
+          "co": "Retencja. Crimson poprawny (akcja nieodwracalna).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Retencja”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-ai-policy",
+          "nazwa": "Polityka AI",
+          "ocena": "A",
+          "co": "Polityka AI.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Polityka AI”. Zrzuty: evidence/grafika/146-admin-command/."
+        },
+        {
+          "id": "admin-command-benchmark",
+          "nazwa": "Benchmark konsultingowy",
+          "ocena": "A",
+          "co": "Karty statyczne, bez fetch (zamierzone).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Administracja → Centrum dowodzenia → zakładka „Benchmark konsultingowy”. Zrzuty: evidence/grafika/146-admin-command/."
         }
       ]
     },
@@ -2413,6 +3266,243 @@
             "Ten ekran ma DWA warianty. Domyslnie widac stary (naprawiony przez nas). Docelowy, za flaga ff_org_redesign_v1, jest czysty. Naprawa dotyczy tego, co uzytkownik widzi dzis."
           ],
           "gdzie": "Organizacja (osobna pozycja w menu głównym) → profil organizacji — tożsamość i skala firmy, z podpowiedzią Teresy."
+        },
+        {
+          "id": "org-redesign-v1-full-closed-final-20260825",
+          "nazwa": "Organizacja — redesign 21→11, komplet",
+          "ocena": "D",
+          "co": "WIERSZ-DUCH bez dowodu wizualnego w tym drzewie — zastąpiony przez 20 realnych wierszy ekranów Organizacji (org-operating-model … org-summary).",
+          "naprawione": [],
+          "wyjatki": [
+            "WIERSZ-DUCH: zmigrowany z historycznego odbioru (CLOSED_FINAL, DEC-2026-08-24-11 + DEC-2026-08-24-15, tag final-01-organization) BEZ ŻADNEGO zrzutu w tym drzewie roboczym — potwierdzone przeszukaniem evidence/. Realny katalog dowodowy (29 plików) żyje na INNYM branchu (codex/m01-organization-20260824), nieobecny tutaj.",
+            "ZASTĄPIONY realnymi ekranami z rundy 150-ustawienia-organizacja (2026-08-31) — 20 ekranów wariantu domyślnego (flaga orgRedesignV1 OFF) faktycznie zweryfikowanych w kodzie OrganizationSidebar.tsx, każdy z własnym zrzutem i oceną: patrz np. org-operating-model, org-summary, org-strategic-intent.",
+            "Ten wiersz pozostaje w rejestrze jako ślad historii (nie kasujemy), ale ocena D wyklucza go z tego, co widzi właściciel (strona pokazuje tylko A/B)."
+          ],
+          "gdzie": "Organizacja (osobna pozycja w menu głównym) → profil organizacji, redesign 21→11 ekranów za flagą orgRedesignV1 (ON potwierdzona w kodzie wg REJESTR_EKRANOW.md)."
+        },
+        {
+          "id": "org-operating-model",
+          "nazwa": "Organizacja — Model działania",
+          "ocena": "A",
+          "co": "Profil organizacji, kompletność 60%. Sekcja 'Model operacyjny' oraz pigułki 'Główne systemy' (SAP ERP, Salesforce CRM i in. zaznaczone), sekcja 'Rynek i konkurencja' — 'Główne rynki: Polska, DACH'.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Profil organizacji → Model działania (wariant domyślny, flaga orgRedesignV1 OFF). Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "org-position-direction",
+          "nazwa": "Organizacja — Pozycja i kierunek",
+          "ocena": "A",
+          "co": "Sekcja 'Pozycja strategiczna': Pozycja konkurencyjna 'Pretendent', Etap rozwoju 'Skalowanie', Priorytety strategiczne 'Skalowanie praktyki konsultingowej, Wejście na rynek DACH'.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Profil organizacji → Pozycja i kierunek. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "org-technology-culture-constraints",
+          "nazwa": "Organizacja — Technologia, kultura i ograniczenia",
+          "ocena": "A",
+          "co": "Sekcja 'Technologie i cyfryzacja': pola Dojrzałość cyfrowa (1–7), Wykorzystanie chmury, Stos technologiczny (placeholder 'np. AWS, React, Python, SAP'), Budżet cyfrowy; sekcja 'Komunikacja i preferencje AI'.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Profil organizacji → Technologia, kultura i ograniczenia. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "org-strategic-intent",
+          "nazwa": "Organizacja — Intencja strategiczna",
+          "ocena": "A",
+          "co": "SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n (2026-08-31, oba motywy): ekran w całości po polsku. Nagłówek 'Intencja strategiczna', pole 'Cel główny (gwiazda północna)' z przykładem 'Np. Zostać liderem rynku w produkcji na zamówienie, skracając czas realizacji o 50%...', pole 'Cele drugorzędne', sekcja 'Najważniejsze priorytety (wybierz maks. 3)' z sześcioma opcjami PL: 'Efektywność / Redukcja kosztów', 'Wzrost / Zwiększenie sprzedaży', 'Innowacje / Nowe produkty', 'Jakość / Zgodność', 'Szybkość / Zwinność', 'Doświadczenie klienta'. Wcześniej cały formularz był po angielsku ('Primary Objective (North Star)', 'Top Priorities').",
+          "naprawione": [
+            "Cały formularz 'Intencja strategiczna' przetłumaczony na polski (był w całości po angielsku)."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Intencja strategiczna. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-success-metrics",
+          "nazwa": "Organizacja — Mierniki sukcesu",
+          "ocena": "A",
+          "co": "SPRAWDZONE na świeżym zrzucie 156-organizacja-i18n: nagłówek 'Mierniki sukcesu (KPI)', opis 'Zdefiniuj mierzalne wskaźniki śledzące sukces. Użyj „Dodaj pozycję”, aby dodać nowe KPI.', kolumny tabeli 'NAZWA KPI / WARTOŚĆ BAZOWA / CEL / HORYZONT CZASU / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'. Wcześniej cała tabela była po angielsku ('Success Metrics (KPIs)', 'KPI NAME'/'BASELINE'/'TARGET', 'No items yet. Add one!').",
+          "naprawione": [
+            "Nagłówki tabeli i opisy przetłumaczone z angielskiego na polski."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Mierniki sukcesu. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-scope-boundaries",
+          "nazwa": "Organizacja — Zakres i granice",
+          "ocena": "A",
+          "co": "SPRAWDZONE: dwie kolumny 'W zakresie (uwzględnione)' i 'Poza zakresem (wykluczone)', nagłówki tabel 'POZYCJA / OBSZAR / NOTATKI / AKCJE' oraz 'POZYCJA / OBSZAR / POWÓD / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!' w obu kolumnach. Wcześniej: 'In Scope (Included)' / 'Out of Scope (Excluded)' po angielsku.",
+          "naprawione": [
+            "Obie kolumny (nagłówki + puste stany) przetłumaczone na polski."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Zakres i granice. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-stakeholder-expectations",
+          "nazwa": "Organizacja — Oczekiwania interesariuszy",
+          "ocena": "A",
+          "co": "SPRAWDZONE: trzy karty 'Archetyp transformacji', 'Współpraca człowiek-AI', 'Sterowanie i nadzór' z pełnym opisowym tekstem po polsku, np. 'Pilotaż i skalowanie (Agile)' — 'Szybkie prototypowanie, MVP, krótkie pętle informacji zwrotnej. Najlepsze przy dużej niepewności.', 'Doradca strategiczny' — 'AI kwestionuje założenia i dostarcza benchmarki. Ty decydujesz.'. Wcześniej całe karty ('Transformation Archetype' itd.) były po angielsku.",
+          "naprawione": [
+            "Wszystkie trzy kolumny kart (9 opcji) przetłumaczone z angielskiego na polski."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Cele i oczekiwania → Oczekiwania interesariuszy. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-declared-challenges",
+          "nazwa": "Organizacja — Zadeklarowane wyzwania",
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Zadeklarowane wyzwania', badge 'DLA: ZADEKLAROWANE WYZWANIA' (był 'DLA: DECLARED CHALLENGES'), opis 'Oficjalne problemy zgłoszone przez klienta (objawy).', nagłówki tabeli 'WYZWANIE / OBJAW / OBSZAR FUNKCJONALNY / WAGA / NOTATKI / KONTEKST / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
+          "naprawione": [
+            "Badge i nagłówki tabeli przetłumaczone na polski (były w całości po angielsku mimo polskiego menu bocznego)."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Wyzwania → Zadeklarowane wyzwania. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-root-causes",
+          "nazwa": "Organizacja — Przyczyny źródłowe",
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Przyczyny źródłowe', baner 'Pytania diagnostyczne: Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.', cztery pytania po polsku: 'Gdzie utykają decyzje?', 'Gdzie jest najsilniejszy opór wobec zmiany?', 'Jakie inicjatywy zawiodły w przeszłości i dlaczego?', 'Czy istnieje rozdźwięk między wizją zarządu a rzeczywistością?' z polskimi przykładami (np. 'Obawy kadry średniego szczebla, brak danych...'). Wcześniej całość po angielsku.",
+          "naprawione": [
+            "Baner i cztery pytania diagnostyczne (z przykładami) przetłumaczone na polski."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Wyzwania → Przyczyny źródłowe. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-goal-blockers",
+          "nazwa": "Organizacja — Blockery celów",
+          "ocena": "B",
+          "co": "SPRAWDZONE: nagłówek 'Blockery celów', sekcja 'Sugerowane przeszkody' z czterema kategoriami PL ('KULTURA — Strach przed porażką', 'PROCES — Nadmiar spotkań', 'STRATEGIA — Zmęczenie zmianą', 'TECHNOLOGIA — Rozproszenie danych'), 'Aktywne blokery 0', pusty stan 'Nie zidentyfikowano jeszcze blokerów. Dodaj z sugestii lub utwórz własny.'. Treść w pełni przetłumaczona. NOWY DEFEKT (niezwiązany z i18n): ikona lupy przy 'Sugerowane przeszkody' i przycisk '+ Utwórz własny' są w kolorze crimson — akcja niekrytyczna, widoczne w obu motywach.",
+          "naprawione": [
+            "Cała treść ekranu (nagłówki, kategorie, opisy) przetłumaczona z angielskiego."
+          ],
+          "wyjatki": [
+            "Crimson na ikonie lupy i przycisku '+ Utwórz własny' — akcja niekrytyczna, narusza zasadę 'crimson tylko dla semantyki krytycznej' (Pułapka nr 1 z kodeksu)."
+          ],
+          "gdzie": "Organizacja → Wyzwania → Blockery celów. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-evidence",
+          "nazwa": "Organizacja — Dowody",
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Dowody', badge 'DLA: DOWODY', nagłówek sekcji 'Dowody i punkty danych', nagłówki tabeli 'WSKAŹNIK / PUNKT DANYCH / OBJAW / OBSERWACJA / SYSTEM ŹRÓDŁOWY / DOKUMENT / LINK / ODWOŁANIE / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
+          "naprawione": [
+            "Badge i nagłówki tabeli przetłumaczone na polski."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Wyzwania → Dowody. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-risks-opportunities",
+          "nazwa": "Organizacja — Ryzyka i szanse",
+          "ocena": "B",
+          "co": "SPRAWDZONE: nagłówek 'Ryzyka i szanse', baner 'Logika oceny ryzyka — Na podstawie 0 zadeklarowanych wyzwań oraz 0 aktywnych ograniczeń, zidentyfikowaliśmy poniższe ryzyka.', sekcja 'Ukryte ryzyka i zagrożenia', nagłówki tabeli 'RYZYKO / ZAGROŻENIE / DLACZEGO (PRZYCZYNA ŹRÓDŁOWA) / WAGA / STRATEGIA OGRANICZANIA / AKCJE', menu boczne zawiera już 'Podsumowanie dla zarządu' (było 'Executive brief'). Treść w pełni przetłumaczona.",
+          "naprawione": [
+            "Cała treść (baner, tabela, nagłówki) przetłumaczona na polski.",
+            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'."
+          ],
+          "wyjatki": [
+            "Baner 'Logika oceny ryzyka' w kolorze crimson — informacyjny, nie stan krytyczny."
+          ],
+          "gdzie": "Organizacja → Synteza strategiczna → Ryzyka i szanse. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-scenarios",
+          "nazwa": "Organizacja — Scenariusze",
+          "ocena": "B",
+          "co": "SPRAWDZONE (dowód PRZED/PO w evidence/grafika/156-organizacja-i18n): wszystkie sześć kart scenariuszy przetłumaczone — 'Fundament cyfrowy' ('Najpierw fundamenty, potem tempo.'), 'Rewolucja doświadczenia klienta', 'Doskonałość operacyjna', 'Transformacja napędzana AI', 'Innowacja modelu biznesowego', 'Organizacja oparta na danych'; baner 'Rekomendowany scenariusz transformacji — Na podstawie 0 zadeklarowanych wyzwań rekomendowany kierunek to Fundament cyfrowy.'; wskaźniki TEMPO/AMBICJA/RYZYKO. PRZED: całość po angielsku (Digital Foundation, Recommended).",
+          "naprawione": [
+            "Wszystkie 6 kart scenariuszy + baner rekomendacji przetłumaczone na polski (potwierdzone zrzutem PRZED/PO)."
+          ],
+          "wyjatki": [
+            "Pigułka 'REKOMENDOWANY' wypełniona kolorem crimson — dekoracyjna, nie stan krytyczny."
+          ],
+          "gdzie": "Organizacja → Synteza strategiczna → Scenariusze. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-recommendation",
+          "nazwa": "Organizacja — Rekomendacja",
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Rekomendacja', baner (zielony, nie crimson) 'Przewagi strategiczne — Na podstawie profilu firmy i celów zidentyfikowaliśmy te kluczowe mocne strony i szanse rynkowe.', sekcja 'Mocne strony i szanse', nagłówki tabeli 'MOCNA STRONA / SZANSA / DOWÓD / GDZIE ZAOBSERWOWANO / JAK WYKORZYSTAĆ / AKCJE', pusty stan 'Brak pozycji. Dodaj pierwszą!'.",
+          "naprawione": [
+            "Baner i tabela przetłumaczone na polski."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Synteza strategiczna → Rekomendacja. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-executive-brief",
+          "nazwa": "Organizacja — Executive brief",
+          "ocena": "B",
+          "co": "SPRAWDZONE: menu boczne 'Podsumowanie dla zarządu' (było 'Executive brief'), nagłówek 'Strategiczne podsumowanie dla zarządu', PRAWDZIWY profil organizacji w banerze: 'Atelier Toys Sp. z o.o.' / 'Professional Services • 62 pracowników • — przychodu' zamiast literalnego niepodstawionego placeholdera 'Company Name' widocznego wcześniej — GŁÓWNY DEFEKT NAPRAWIONY. Karty 'Profil ryzyka — Do opanowania', 'Szanse — Rozwijające się', 'Wyzwania — 0 aktywnych', 'Nie wybrano scenariusza'.",
+          "naprawione": [
+            "Realny profil organizacji ('Atelier Toys Sp. z o.o.', branża, liczba pracowników) zamiast niepodstawionego placeholdera 'Company Name'.",
+            "Pozycja menu 'Executive brief' → 'Podsumowanie dla zarządu'.",
+            "Treść karty w pełni przetłumaczona."
+          ],
+          "wyjatki": [
+            "Wartość 'Docelowa dojrzałość: Brak danych' wyświetlona w kolorze crimson mimo że to zwykły brak danych, nie stan krytyczny.",
+            "Motyw ciemny: cały baner z profilem firmy ma pełne tło crimson — bardzo widoczne naruszenie Pułapki nr 1, sprawdzone osobno w dark."
+          ],
+          "gdzie": "Organizacja → Synteza strategiczna → Executive brief. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-files",
+          "nazwa": "Organizacja — Pliki",
+          "ocena": "A",
+          "co": "'Pliki organizacji', badge 'NIEZWERYFIKOWANE', komunikat: 'Obecna ekstrakcja dokumentu tworzy wyłącznie propozycje pól. Nie potwierdzono trwałej, wersjonowanej kolekcji plików, dlatego ekran nie pokazuje fikcyjnej listy ani przycisku upload.' — w pełni po polsku, uczciwe komunikowanie stanu funkcji zamiast fikcyjnych danych.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Źródła i wiedza → Pliki. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "org-claims-sources",
+          "nazwa": "Organizacja — Twierdzenia i źródła",
+          "ocena": "A",
+          "co": "SPRAWDZONE: nagłówek 'Twierdzenia i źródła', sekcja 'Nadzorowany kontekst organizacji', 'Źródła (2)' pokazuje 'Wywiad' / 'Dokument' (było 'interview'/'document' małymi literami), 'Konflikty (0)' — 'Brak sprzecznych wartości w widocznych twierdzeniach.', 'Twierdzenia (2)' z kartami 'Opis firmy' (było 'item-1') i 'Branża', treść 'Niezależna firma doradcza z sektora handlu i produkcji.', metadane 'Wywiad · 86% · Cała organizacja' (było 'interview · 86% · organization'), status 'Zatwierdzone' / 'Oczekuje na decyzję' (było 'approved').",
+          "naprawione": [
+            "Surowe wartości 'interview'/'document'/'organization'/'approved'/'item-1' zamienione na polskie etykiety ('Wywiad', 'Dokument', 'Cała organizacja', 'Zatwierdzone', opisowe nazwy pól)."
+          ],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Źródła i wiedza → Twierdzenia i źródła. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-source-conflicts",
+          "nazwa": "Organizacja — Konflikty źródeł",
+          "ocena": "A",
+          "co": "SPRAWDZONE: identyczna naprawa jak 'Twierdzenia i źródła' (ten sam widok renderuje się pod pozycją menu 'Konflikty źródeł') — surowe wartości ('interview'/'item-1'/'organization'/'approved') zamienione na polskie etykiety.",
+          "naprawione": [
+            "Surowe wartości techniczne zamienione na etykiety PL (jak w 'Twierdzenia i źródła')."
+          ],
+          "wyjatki": [
+            "Ekran nie różni się treścią od 'Twierdzenia i źródła' — możliwe, że to celowy wspólny widok; do potwierdzenia, nieblokujące dla i18n."
+          ],
+          "gdzie": "Organizacja → Źródła i wiedza → Konflikty źródeł. Zrzuty: evidence/grafika/156-organizacja-i18n/"
+        },
+        {
+          "id": "org-knowledge-graph",
+          "nazwa": "Organizacja — Graf wiedzy",
+          "ocena": "B",
+          "co": "'Graf wiedzy' — pigułki liczników po polsku (ENCJE 38, RELACJE 74, ŚR. PEWNOŚĆ 79%, NIEAKTUALNE 2, ZREDAGOWANE 0), ale etykiety typów encji po angielsku: 'Process (18)', 'Person (9)', 'System (6)', 'Organization (1)'. Pusty stan wyszukiwania 'Wyszukaj encje aby zobaczyć graf wiedzy' po polsku.",
+          "naprawione": [],
+          "wyjatki": [
+            "Etykiety typów encji (Process/Person/System/Organization) nieprzetłumaczone, reszta ekranu po polsku."
+          ],
+          "gdzie": "Organizacja → Źródła i wiedza → Graf wiedzy. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "org-summary",
+          "nazwa": "Organizacja — Gotowość organizacji",
+          "ocena": "A",
+          "co": "'Gotowość organizacji' — '1 blokada wymaga działania', 4 kafle (Zatwierdzone fakty 1, Otwarte konflikty 0, Oczekuje na decyzję 1, Opublikowana wersja v3), 'Ostatnia publikacja 31.08.2026' (poprawny format DD.MM.RRRR). W pełni po polsku, czytelnie w obu motywach.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Organizacja → Gotowość i nadzór → Gotowość organizacji. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
         }
       ]
     },
@@ -2424,12 +3514,16 @@
         {
           "id": "agent-plan-view",
           "nazwa": "Uruchom agenta",
-          "ocena": "A",
-          "co": "Lista czterech gotowych agentow w falach.",
+          "ocena": "C",
+          "co": "Lista czterech gotowych agentow w falach. Przed utworzeniem planu AgentPlanWorkspace renderuje WYLACZNIE ArtifactRightPanel jako cala zawartosc pelnoszerokiego warsztatu - lista Agenci zajmuje ok 1/4 szerokosci, reszta to pusta, niepodpisana przestrzen (oba motywy, flaga ff_agentPlan). Przywrocono z odzyskanego raportu nocnego.",
           "naprawione": [
             "Naglowek i opis po angielsku — klucze tlumaczen nie istnialy w zadnym jezyku"
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "★ POMIAR 2026-09-01 (naprawa parytetu, Kategoria 4 audytu przyrządu): grep -rn \"AgentPlanView\" src/ server/src/ → ZERO trafień poza `src/views/AgentPlanView.tsx`. Nagłówek pliku harnessu TWIERDZI, że komponent jest wpięty w AppRoutes.tsx + menuConfig.ts — to NIEPRAWDA w tej gałęzi: `/agent-plan` (AppRoutes.tsx:1618) tylko przekierowuje na `Moja praca?tab=agent`.",
+            "MARTWY, ALE FUNKCJA ŻYJE INNĄ DROGĄ (relokacja AGT-003): warsztat agenta użytkownik widzi przez MyWorkHub → AgentHubShell → AgentPlanWorkspace (AgentHubShell.tsx:1700). `AgentPlanView` to osierocona powierzchnia sprzed relokacji — nie ma czego podłączać, jest czego nie pokazywać.",
+            "NIE POKAZUJEMY — ekranem produktu jest Agent Hub, nie ten wrapper."
+          ],
           "gdzie": "Moja praca → zakładka Agent → lista czterech gotowych agentów w falach — starszy widok wejściowy sprzed przebudowy na Agent Hub, do sprawdzenia, czy nadal jest używany."
         },
         {
@@ -2454,7 +3548,9 @@
           "naprawione": [
             "Cala paleta po angielsku mimo gotowych tlumaczen polskich — klucze byly, nikt ich nie wpial"
           ],
-          "wyjatki": [],
+          "wyjatki": [
+            "ZGLOSZENIE WLASCICIELA 01.09 (duza praca, poza zakresem tej fali): oczekuje przesuwalnych/ukladalnych klockow (jak flow w N8N) budowanych rowniez przez AI — obecny schemat tego nie robi. Zgloszone, swiadomie nie zrobione w tej turze."
+          ],
           "gdzie": "Moja praca → zakładka Agent → otwarcie planu agenta → sam schemat (canvas) — dwie ścieżki budowy schematu i paleta klocków."
         },
         {
@@ -2480,9 +3576,9 @@
         {
           "id": "prawy-pas-notatnik-system",
           "nazwa": "Prawy pas — WSPOLNY SYSTEM na notatniku",
-          "ocena": "B",
+          "ocena": "D",
           "gdzie": "Kanon → wspólny system prawego pasa (za flagą, domyślnie wyłączoną) — dowód na jednej powierzchni.",
-          "co": "Przy fladze wylaczonej notatnik wyglada IDENTYCZNIE co do bajtu. Przy wlaczonej: szyna ikon, Teresa jako tryb z pelna wysokoscia.",
+          "co": "Identyfikator BEZ KLUCZA w rejestrze harnessu (dev-render/main.tsx ma tylko lazy-import, linia 169) — ?screen=prawy-pas-notatnik-system oddaje liste awaryjna, nie ekran. Ten sam plik ekranu jest zarejestrowany 3x pod wlasciwymi id: prawy-pas-notatnik-artefakt / -teresa / -struktura (kazdy ze stalym trybem startowym, bo narzedzie zrzutowe nie klika UI). Wiersz zostaje w historii jako slad, ale nie idzie do odbioru. Zweryfikowane 2026-08-31 przez nadzorce (grep rejestru + ls screens).",
           "naprawione": [],
           "wyjatki": [
             "PROTOTYP do Twojej decyzji — zero zmian w tym, co widzi dzis uzytkownik."
@@ -2566,13 +3662,13 @@
           "co": "Szesc wariantow paska. Aktywny filtr neutralny granat, nie czerwien.",
           "naprawione": [],
           "wyjatki": [],
-          "gdzie": "Element wspólny (kanon) — StandardModuleBar, pasek na górze każdego ekranu listowego we WSZYSTKICH modułach — sześć wariantów zawartości paska."
+          "gdzie": "TO NIE JEST EKRAN PRODUKTOWY — to techniczny harness dev-render (galeria wariantów komponentu), nie da się w niego „wejść\" jednym kliknięciem z aplikacji. Sprawdza sześć wariantów właściwości wspólnego paska StandardModuleBar (Menu 1/2/3 na górze ekranów listowych). Każdy wariant to realny fragment innego ekranu: A/B — sam pasek z/bez własnej treści (np. Moja Praca, Assessment→Tabela, Client Vault, Agent Hub); C — zablokowany przycisk „Nowa inicjatywa\" (Initiatives); D — filtry statusu (Execution/Audyty); E — dwa przyciski CTA naraz (Interview); F — przyciski kategorii (Benefits). REKOMENDACJA: rozważyć zdjęcie z listy odbioru ekran-po-ekranie — to zestawienie stanów komponentu (dowód dla programistów), nie osobny ekran, który właściciel kiedykolwiek zobaczy w aplikacji."
         },
         {
           "id": "preview-4-zakladki",
           "nazwa": "Podglad — cztery zakladki",
-          "ocena": "A",
-          "co": "Cztery zakladki obok siebie. Jeden przycisk glowny na ekranie.",
+          "ocena": "C",
+          "co": "PRZEKLASYFIKOWANO 2026-09-01 (audyt przyrządu, tor grafiki): ekran sam siebie opisuje w komentarzu jako „EKRAN PORÓWNAWCZY podglądów, NIE jest ekranem produktu, jest przyrządem pomiarowym” (cztery podglądy obok siebie do porównania, nie realny widok aplikacji). Wcześniejsza ocena A — jeśli to nieporozumienie, zweryfikuj z właścicielem. Cztery zakladki obok siebie. Jeden przycisk glowny na ekranie.",
           "naprawione": [],
           "wyjatki": [],
           "gdzie": "Element wspólny (kanon) — panel podglądu z prawej strony, używany w wielu modułach — wariant z czterema zakładkami obok siebie."
@@ -2591,10 +3687,10 @@
           "nazwa": "Rekord wskaznika OEE",
           "ocena": "A",
           "co": "Karty metryk i panel wlasciwosci.",
-          "naprawione": [],
-          "wyjatki": [
-            "Pola Wlasciciel i Proces pokazuja surowe identyfikatory zamiast nazw — dane testowe"
+          "naprawione": [
+            "Fixture Wlasciciel/Proces pokazywal surowe ID — nazwy (dev-render)"
           ],
+          "wyjatki": [],
           "warianty": [
             "assessment-matryca",
             "idea-table"
@@ -2625,7 +3721,233 @@
           "gdzie": "Element wspólny (kanon) — karta widoku kanban (używana m.in. w Zadaniach, Inicjatywach) — cztery kolumny, pasek pilności, stopka z następną bramą."
         }
       ]
+    },
+    {
+      "katalog": "17-aios",
+      "nazwa": "Internal Tools / AI OS",
+      "opis": "Wewnętrzny panel akceptacyjny silnika AI — dostęp tylko dbr77.com.",
+      "ekrany": [
+        {
+          "id": "aios-home",
+          "nazwa": "AI OS — Home",
+          "ocena": "C",
+          "co": "Panel startowy.",
+          "naprawione": [],
+          "wyjatki": [
+            "Zero t().",
+            "Crimson plakietka."
+          ],
+          "gdzie": "Internal Tools / AI OS (dostęp tylko dbr77.com) → „Home”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-actions",
+          "nazwa": "AI Actions",
+          "ocena": "C",
+          "co": "Lista akcji AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Zero t().",
+            "Crimson."
+          ],
+          "gdzie": "Internal Tools / AI OS → „AI Actions”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-research",
+          "nazwa": "Research Sessions",
+          "ocena": "C",
+          "co": "Sesje badawcze.",
+          "naprawione": [],
+          "wyjatki": [
+            "Zero t().",
+            "Crimson."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Research Sessions”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-artifacts",
+          "nazwa": "Artifacts",
+          "ocena": "C",
+          "co": "PL OK.",
+          "naprawione": [],
+          "wyjatki": [
+            "Crimson eyebrow + crimson Retry (Wave5ArtifactRuntimePanel.tsx:284,295)."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Artifacts”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-memory",
+          "nazwa": "Memory & Scope",
+          "ocena": "B",
+          "co": "Pamięć i zakres.",
+          "naprawione": [],
+          "wyjatki": [
+            "humanizeFactKey/formatFactValue po angielsku na sztywno."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Memory & Scope”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-connectors",
+          "nazwa": "Connectors",
+          "ocena": "B",
+          "co": "Konektory.",
+          "naprawione": [
+            "01.09: dodano przelacznik „Kafle / Lista” nad „Stan konektorow” — widok Lista renderuje sie jako realna tabela (KONEKTOR/STATUS/SWIEZOSC/DOSTEP OAUTH/ACL/POWIAZANIE ZRODLA) — potwierdzone zrzutem, oba widoki (evidence/grafika/171-pojedyncze/)."
+          ],
+          "wyjatki": [
+            "Surowe enumy statusu w polskich zdaniach."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Connectors”. Zrzuty: evidence/grafika/146-aios/. Zrzuty 01.09: evidence/grafika/171-pojedyncze/."
+        },
+        {
+          "id": "aios-agents",
+          "nazwa": "Agents",
+          "ocena": "B",
+          "co": "Agenci.",
+          "naprawione": [],
+          "wyjatki": [
+            "Domyślna wartość pola celu po angielsku."
+          ],
+          "gdzie": "Internal Tools / AI OS → „Agents”. Zrzuty: evidence/grafika/146-aios/."
+        },
+        {
+          "id": "aios-outcomes",
+          "nazwa": "KPI/ROI & AI Ops",
+          "ocena": "B",
+          "co": "KPI/ROI i operacje AI.",
+          "naprawione": [],
+          "wyjatki": [
+            "Domyślne wartości pól i enum PASS po angielsku."
+          ],
+          "gdzie": "Internal Tools / AI OS → „KPI/ROI & AI Ops”. Zrzuty: evidence/grafika/146-aios/."
+        }
+      ]
+    },
+    {
+      "katalog": "18-ustawienia",
+      "nazwa": "Ustawienia",
+      "opis": "Ustawienia osobiste i konta użytkownika — 10 grup nawigacji zweryfikowanych w kodzie (SettingsSidebar.tsx navGroups: PERSONAL, WORKFLOW, AI & AUTOMATION, NOTIFICATIONS, SECURITY, INTEGRATIONS, DATA & PRIVACY, BILLING, APPEARANCE, ADVANCED & HISTORY).",
+      "ekrany": [
+        {
+          "id": "settings-full-module-closed-final-20260825",
+          "nazwa": "Ustawienia — komplet 9 grup × 2 motywy",
+          "ocena": "D",
+          "co": "WIERSZ-DUCH bez dowodu wizualnego w tym drzewie — zastąpiony przez 10 realnych wierszy grup Ustawień (ustawienia-personalne … ustawienia-zaawansowane).",
+          "naprawione": [],
+          "wyjatki": [
+            "WIERSZ-DUCH: zmigrowany z historycznego odbioru (CLOSED_FINAL, DEC-2026-08-25-16, tag final-02-settings) BEZ ŻADNEGO zrzutu w tym drzewie roboczym — potwierdzone przeszukaniem evidence/. Odbiór historyczny nie jest dowodem wizualnym w tej gałęzi.",
+            "ZASTĄPIONY realnymi ekranami z rundy 150-ustawienia-organizacja (2026-08-31) — 10 grup faktycznie zweryfikowanych w kodzie SettingsSidebar.tsx, każda z własnym zrzutem i oceną: patrz np. ustawienia-personalne, ustawienia-wyglad, ustawienia-bezpieczenstwo.",
+            "Ten wiersz pozostaje w rejestrze jako ślad historii (nie kasujemy), ale ocena D wyklucza go z tego, co widzi właściciel (strona pokazuje tylko A/B)."
+          ],
+          "gdzie": "Ustawienia (dolne menu główne) → 9 grup ustawień osobistych (profil, regionalne, powiadomienia, bezpieczeństwo, prywatność/GDPR i inne)."
+        },
+        {
+          "id": "ustawienia-personalne",
+          "nazwa": "Ustawienia — Personalne (profil)",
+          "ocena": "A",
+          "co": "Profil użytkownika: dane osobowe (Imię, Nazwisko, Telefon '+48 601 200 300', Firma 'Atelier Toys Sp. z o.o.', identyfikator LinkedIn) i sekcja zdjęcia profilowego. Wszystko po polsku, bez ucięć, przycisk 'Zapisz zmiany' neutralny (nie crimson).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Ustawienia (dolne menu) → grupa PERSONAL (my-settings) → Profil — REALNY <SettingsView>. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-workflow",
+          "nazwa": "Ustawienia — Workflow (preferencje pracy)",
+          "ocena": "B",
+          "co": "Panel: sekcja 'Preferencje pulpitu nawigacyjnego' z 4 przełącznikami widżetów (Aktywne inicjatywy, AI Insights, Szybkie akcje, Omówienie wskaźników) + 'Opcje wyświetlania' (Tryb kompaktowy, Pokaż wiadomość powitalną).",
+          "naprawione": [],
+          "wyjatki": [
+            "ZNANE ZGŁOSZENIE potwierdzone na zrzucie: w motywie ciemnym 4 przełączniki widżetów pulpitu są nieczytelne — brak wyraźnego kontrastu ON/OFF, gałka ledwo widoczna na ciemnoniebieskim tle (w motywie jasnym te same przełączniki są czytelne)."
+          ],
+          "gdzie": "Ustawienia → grupa WORKFLOW (work-preferences) → Panel. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-ai-automatyzacja",
+          "nazwa": "Ustawienia — AI i automatyzacja (zachowanie AI)",
+          "ocena": "B",
+          "co": "Zachowanie i instrukcje: pole 'Instrukcja systemowa' z przykładową treścią (70/2000 znaków, 'Odpowiadaj rzeczowo, po polsku, z naciskiem na konkretne rekomendacje.'), przełączniki stylu (styl 'Zbalansowany' aktywny), sekcja 'Ton i komunikacja'.",
+          "naprawione": [],
+          "wyjatki": [
+            "ZNANE ZGŁOSZENIE: crimson dekoracyjny — tło ikon w nagłówkach sekcji (dymek czatu, iskierka tonu) różowo-crimsonowe mimo braku stanu krytycznego."
+          ],
+          "gdzie": "Ustawienia → grupa MODULES: AI & AUTOMATION → Zachowanie AI. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-powiadomienia",
+          "nazwa": "Ustawienia — Powiadomienia (przegląd)",
+          "ocena": "B",
+          "co": "Przegląd: tabela 'Aktywność' z 4 wierszami (Przypisania zadań, Aktualizacje zadań, Wzmianki, Kamienie milowe projektu) × 2 kolumny (W aplikacji, E-mail), przyciski 'Włącz wszystko' / 'Minimalne'.",
+          "naprawione": [],
+          "wyjatki": [
+            "ZNANE ZGŁOSZENIE: crimson dekoracyjny — tło ikony dzwonka w nagłówku różowo-crimsonowe, nie stan krytyczny."
+          ],
+          "gdzie": "Ustawienia → grupa MODULES: NOTIFICATIONS → Przegląd. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-bezpieczenstwo",
+          "nazwa": "Ustawienia — Bezpieczeństwo (przegląd)",
+          "ocena": "C",
+          "co": "Przegląd bezpieczeństwa: status ochrony, hasło, lista 'Ostatnia aktywność' (Chrome · macOS, Safari · iPhone), link 'Zobacz pełną historię' ze znacznikiem czasu.",
+          "naprawione": [],
+          "wyjatki": [
+            "ZNANE ZGŁOSZENIE potwierdzone na zrzucie: w motywie JASNYM wiersze 'Ostatnia aktywność' ('Chrome · macOS', 'Safari · iPhone') renderują się bladym/białym tekstem na jasnym tle — praktycznie nieczytelne; w motywie ciemnym ten sam tekst jest w pełni czytelny.",
+            "ZNANE ZGŁOSZENIE potwierdzone: znacznik czasu w formacie amerykańskim '8/31/2026, 9:18:49 AM' (M/D/RRRR + AM/PM) zamiast polskiego DD.MM.RRRR.",
+            "Crimson dekoracyjny w wielu miejscach ekranu (ikona tarczy, ikona klucza, link 'Zobacz pełną historię' w kolorze czerwonym) — nie stan krytyczny."
+          ],
+          "gdzie": "Ustawienia → grupa SECURITY → Przegląd bezpieczeństwa. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-integracje",
+          "nazwa": "Ustawienia — Integracje (połączone aplikacje)",
+          "ocena": "B",
+          "co": "Połączone aplikacje: karty (Gmail, Kalendarz, Slack i in.) z opisami funkcji i tagami (np. 'Email sync', 'Contact import', 'Label mapping').",
+          "naprawione": [],
+          "wyjatki": [
+            "Opisy kart integracji i tagi funkcji (np. 'Sync emails, contacts and labels from your Gmail account', 'Email sync', 'Contact import') renderują się po angielsku mimo polskich nagłówków sekcji — dev-render (connected-apps) wskazuje surowy window.fetch z pominięciem warstwy Api/i18n dla treści kart."
+          ],
+          "gdzie": "Ustawienia → grupa MODULES: INTEGRATIONS → Połączone aplikacje. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-dane-prywatnosc",
+          "nazwa": "Ustawienia — Dane i prywatność (kontrola danych)",
+          "ocena": "B",
+          "co": "Kontrola danych: 5 przełączników zgód (Analityka użycia ON, Personalizacja ON, Komunikacja marketingowa OFF, Udostępnianie danych stronom trzecim OFF, Trenowanie modeli AI OFF) + pigułki retencji danych (30 dni / 90 dni / 6 miesięcy / 1 rok wybrane / Bezterminowo).",
+          "naprawione": [],
+          "wyjatki": [
+            "ZNANE ZGŁOSZENIE: crimson dekoracyjny — baner 'Zgodność z GDPR' i kilka ikon sekcji (tarcza, zegar) w kolorze crimson, mimo że to treść informacyjna, nie stan krytyczny."
+          ],
+          "gdzie": "Ustawienia → grupa DATA & PRIVACY → Kontrola danych. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-billing",
+          "nazwa": "Ustawienia — Płatności (subskrypcja)",
+          "ocena": "C",
+          "co": "ZNALEZISKO: kliknięcie grupy BILLING → 'Subskrypcja i płatności' NIE pokazuje treści rozliczeniowej. renderContent() dla 'billing' zwraca null w SettingsView.tsx:468-472 (komentarz w kodzie: 'Organization billing is owned by Admin'), więc ekran faktycznie renderuje zawartość Profilu (identyczną jak ustawienia-personalne), a pozycja 'Subskrypcja i płatności' w bocznym menu nie jest nawet podświetlona jako aktywna.",
+          "naprawione": [],
+          "wyjatki": [
+            "Nie jest to błąd harnessu — potwierdzone w kodzie realnego komponentu SettingsView.tsx."
+          ],
+          "gdzie": "Ustawienia → grupa BILLING → Subskrypcja i płatności. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-wyglad",
+          "nazwa": "Ustawienia — Wygląd (motyw)",
+          "ocena": "A",
+          "co": "Motyw: 3 opcje kolorystyczne (Jasny / Ciemny wybrany / Systemowy), 6 kolorów akcentu + własny ('#2563EB'), 3 poziomy gęstości interfejsu (Kompaktowy / Wygodny wybrany / Przestronny).",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Ustawienia → grupa APPEARANCE → Motyw. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        },
+        {
+          "id": "ustawienia-zaawansowane",
+          "nazwa": "Ustawienia — Zaawansowane (import/eksport)",
+          "ocena": "A",
+          "co": "Import/eksport ustawień: 8 kategorii do zaznaczenia (Profil i kontakt, Ustawienia bezpieczeństwa, Ustawienia prywatności, Preferencje AI, Powiadomienia, Integracje, Wygląd, Skróty klawiszowe — wszystkie zaznaczone), strefa przeciągnij-i-upuść pliku ustawień.",
+          "naprawione": [],
+          "wyjatki": [],
+          "gdzie": "Ustawienia → grupa ADVANCED & HISTORY → Import/eksport. Zrzuty: evidence/grafika/150-ustawienia-organizacja/"
+        }
+      ]
     }
   ],
-  "_kolejnosc": "16 modułów w kolejności menu bocznego — od Czatu w dół (odbiór modułowy, ustalenie właściciela 2026-08-30)"
+  "_kolejnosc": "18 modułów w kolejności menu bocznego — od Czatu w dół, plus 17-aios (Internal Tools / AI OS, konsola wewnętrzna dbr77.com, poza głównym menu) i 18-ustawienia (dolne menu, zmigrowany bookkeeping) dopisane na końcu 2026-08-31 (odbiór modułowy, ustalenie właściciela 2026-08-30; runda pełna 2026-08-31)."
 }

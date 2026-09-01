@@ -65,6 +65,7 @@ import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/prim
 import { Api } from '@/services/api';
 import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
 import { isDrdReportEnabled } from '@/utils/drdReportFlag';
+import { formatListDate } from '@/utils/listDateFormat';
 
 import {
   type AuditProgram,
@@ -414,11 +415,13 @@ export const AuditsHub: React.FC = () => {
           const r = row as unknown as AuditRow;
           return r.updatedAt ? (
             <span className="text-[11px] text-c-text-muted">
-              {new Date(r.updatedAt).toLocaleDateString(i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
+              {/* Odbiór 2026-08-30 (przegląd całości): `toLocaleDateString`
+                  z `month:'short'` dawał „21 lip 2026"/„Jul 21, 2026" — piąty
+                  format daty w aplikacji obok kanonu z `listDateFormat.ts`
+                  (SSOT list/podglądów, `DD/MM/YYYY`, patrz nagłówek tego
+                  pliku). Ta lista jest z listy przeglądu — kanon istnieje,
+                  ta kolumna go po prostu omijała. */}
+              {formatListDate(r.updatedAt)}
             </span>
           ) : (
             <span className="text-c-text-muted">—</span>
@@ -683,11 +686,13 @@ export const AuditsHub: React.FC = () => {
           const r = row as unknown as DrdReportRow;
           return r.updatedAt ? (
             <span className="text-[11px] text-c-text-muted">
-              {new Date(r.updatedAt).toLocaleDateString(i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
+              {/* Odbiór 2026-08-30 (przegląd całości): `toLocaleDateString`
+                  z `month:'short'` dawał „21 lip 2026"/„Jul 21, 2026" — piąty
+                  format daty w aplikacji obok kanonu z `listDateFormat.ts`
+                  (SSOT list/podglądów, `DD/MM/YYYY`, patrz nagłówek tego
+                  pliku). Ta lista jest z listy przeglądu — kanon istnieje,
+                  ta kolumna go po prostu omijała. */}
+              {formatListDate(r.updatedAt)}
             </span>
           ) : (
             <span className="text-c-text-muted">—</span>
@@ -957,16 +962,8 @@ export const AuditsHub: React.FC = () => {
                             ],
                             trailing: (
                               <span className="text-[11px] font-semibold text-c-text-secondary">
-                                {selectedProgram.updatedAt
-                                  ? new Date(selectedProgram.updatedAt).toLocaleDateString(
-                                      i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US',
-                                      {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                      }
-                                    )
-                                  : '—'}
+                                {/* Kanon dat (patrz uwaga wyżej przy kolumnie AKTUALIZACJA). */}
+                                {formatListDate(selectedProgram.updatedAt)}
                               </span>
                             ),
                           }}

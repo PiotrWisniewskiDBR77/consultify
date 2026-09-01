@@ -29,6 +29,7 @@ import ToolReportView from '@/components/DiscoveryTools/report/ToolReportView';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
 import type { ToolReportDocument } from '@/toolOutputs/types';
+import { formatListDate } from '@/utils/listDateFormat';
 
 interface OutputSummary {
   id: string;
@@ -60,12 +61,14 @@ interface ProposalSummary {
   sourceConclusionId: string;
 }
 
-const formatDate = (iso?: string | null) => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-};
+/**
+ * Odbiór 2026-08-30 (przegląd modułów 04/11/16): `toLocaleDateString(undefined, …)`
+ * bierze locale z PRZEGLĄDARKI, nie z języka konta — dokładnie defekt opisany
+ * w `src/utils/listDateFormat.ts` (270 takich wywołań znalezionych 2026-07-27),
+ * stąd amerykańskie „Aug 13, 2026" na tym ekranie. `formatListDate` to SSOT
+ * kanonu (DD/MM/YYYY, jawny locale z konta, „—" przy braku daty).
+ */
+const formatDate = (iso?: string | null) => formatListDate(iso);
 
 export interface ToolOutputsPanelProps {
   toolSessionId: string;

@@ -24,7 +24,14 @@ if [ -x "$ESB" ]; then
     echo "✓ parsuje sie"
   fi
 else
-  echo "• esbuild niedostepny — pominieto sprawdzenie skladni"
+  echo "• esbuild niedostepny — uzywam kontroli strukturalnej bez zaleznosci"
+fi
+
+# Kontrola strukturalna BEZ zaleznosci — chodzi ZAWSZE, takze gdy esbuild jest.
+# Powod: "pominieto sprawdzenie" bylo czytane jako "przeszlo" i bramka dwa razy
+# przepuscila plik, ktory sie nie parsuje.
+if ! python3 scripts/dev/lib/check-screens-structure.py "$F"; then
+  RC=1
 fi
 
 MISS=0

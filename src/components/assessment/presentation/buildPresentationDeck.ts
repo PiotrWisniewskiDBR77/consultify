@@ -32,7 +32,7 @@ import {
   type ReportGroupResult,
 } from '@/method-core/outputs';
 
-import { groupNameOrId } from '../groupLabels';
+import { buildAxisMatrices, groupNameOrId, type AxisMatrixModel } from '../groupLabels';
 
 // ---------------------------------------------------------------------------
 // Presenter-supplied narrative framing — OPTIONAL, NEVER invented in here.
@@ -125,6 +125,14 @@ export interface PresentationDeckModel {
 
   readonly dimensionProfile: readonly DimensionProfileEntry[];
 
+  /**
+   * Macierze obszary × poziomy, po jednej na oś, w której cokolwiek
+   * zmierzono — odpowiedź na odbiór właściciela „nie ma macierzy nawet".
+   * Puste dla pakietu bez struktury osi; wtedy deck ma dokładnie tyle
+   * slajdów co przed 2026-08-30.
+   */
+  readonly axisMatrices: readonly AxisMatrixModel[];
+
   readonly strengths: readonly FindingHighlight[];
   readonly gapsAndRisks: readonly FindingHighlight[];
   readonly recommendations: readonly string[];
@@ -152,10 +160,22 @@ function dimensionProfileFrom(
   // aggregation key (`groupName: groupId` in `reportSnapshot.ts`), so slide 5
   // used to print `axis-1`/`axis-4` — or, on a pack whose keys are bare
   // ordinals, a naked "1"/"4" with no word at all — where a client expects
-  // "Procesy Cyfrowe". Resolved here, in the BUILDER, against the Output's own
-  // PINNED pack version; unresolvable ids honestly fall back to the raw id.
-  // This is a dictionary lookup, not a recomputation: every NUMBER below is
-  // still copied verbatim from `groupResults`.
+  // an actual axis name. Resolved here, in the BUILDER, against the Output's
+  // own PINNED pack version; unresolvable ids honestly fall back to the raw
+  // id. This is a dictionary lookup, not a recomputation: every NUMBER below
+  // is still copied verbatim from `groupResults`.
+  //
+  // ★ LANGUAGE (odwrócone 2026-09-01, patrz decyzja właściciela poniżej):
+  // slajd 5 zostaje na domyślnym `'pl'` — NIE przekazujemy tu `'en'` jako
+  // 4. argumentu `groupNameOrId`. Właściciel zaakceptował 2026-09-01 slajd 6
+  // (tytuł osi macierzy "Procesy Cyfrowe" po polsku, słowami „tak to jest
+  // super" — `docs/program/grafika/KANON_Z_ODBIOROW.md`, wpis 2026-09-01).
+  // Ta sama prezentacja nie może mieć slajdu 5 po angielsku i slajdu 6 po
+  // polsku — to niespójność w jednym dokumencie. Parametr `language` i
+  // `AXIS_NAME_EN_BY_ID` (`../report/drdLabels.ts`) zostają w kodzie: gdy
+  // kiedyś będziemy budować raport po angielsku dla klienta zagranicznego,
+  // wystarczy tu przekazać `'en'` — infrastruktura jest gotowa, tylko
+  // świadomie nieużywana na tym slajdzie.
   //
   // Sort by level descending (a display ordering — the values themselves
   // are untouched, copied straight from `groupResults`, which is itself
@@ -255,6 +275,16 @@ export function buildPresentationDeck(
     aggregationMappingVersion: output.aggregation.mappingVersion,
 
     dimensionProfile: dimensionProfileFrom(report.groupResults, output),
+
+    // Liczby kopiowane 1:1 z zamrożonego `current`/`target` per obszar —
+    // nie z `aggregation.byGroup`. To jest różnica między macierzą a siedmioma
+    // słupkami: średnia osi nie umie powiedzieć, KTÓRY obszar ją ciągnie.
+    axisMatrices: buildAxisMatrices(
+      output.methodology.methodPackId,
+      output.methodology.version,
+      output.current,
+      output.target
+    ),
 
     strengths,
     gapsAndRisks,

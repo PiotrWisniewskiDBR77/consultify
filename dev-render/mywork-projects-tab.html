@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>M03 — My Work: Projects tab entry — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      M03 (dyżur 20260830) ISOLATED TEST HARNESS — separate entry point from
+      the shared `dev-render/index.html` → `main.tsx` registry ON PURPOSE
+      (CLAUDE.md "Nie ruszaj (cudze)" for this dyżur lists `dev-render/main.tsx`
+      explicitly — no edit to that shared SCREENS registry).
+
+      This entry mounts ONLY the REAL `MyWorkHub` (src/components/MyWork/
+      MyWorkHub.tsx) via `AppProviders`, same pattern as
+      `mw010-vault.html` / `dev-render/screens/mywork-idea-topbar.tsx` — no
+      stub, no dependency on the shared registry.
+
+      URL: /mywork-projects-tab.html
+        [&lang=pl|en]   default pl
+        [&theme=light|dark]  default light
+        [&tab=projects]  land directly on the new "Projekty" tab (otherwise
+                          the hub boots on its normal default tab, "Inbox")
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/mywork-projects-tab-main.tsx"></script>
+  </body>
+</html>

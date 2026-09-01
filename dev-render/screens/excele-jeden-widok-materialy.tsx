@@ -100,7 +100,7 @@ function MaterialySheetsListHost(): React.ReactElement {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-c-bg flex flex-col">
-      <div className="border-b border-c-border px-6 py-3 shrink-0">
+      <div className="border-b border-c-border px-6 py-3 shrink-0" data-dev-render-chrome="true">
         <div className="text-sm font-semibold text-c-text">
           Materiały ▸ Arkusze — 1 wiersz (kind=sheet, sheetOrigin=workbook)
         </div>

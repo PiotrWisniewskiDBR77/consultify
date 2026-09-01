@@ -76,13 +76,49 @@ const INITIAL_BLOCKS: PlanSchemaBlock[] = [
   },
 ];
 
+// Produkcja: AgentPlanPanel.tsx:504-540 — warsztat 3-kolumnowy: lewa kolumna
+// AgentWorkshopControls (320px, token --ntype-right-panel-width), środek
+// `flex min-w-0 flex-1 flex-col` z AgentPlanCanvas, prawa kolumna
+// AgentWorkshopPalette (320px). Ten harness NIE montuje realnych
+// AgentWorkshopControls/AgentWorkshopPalette (patrz komentarz u góry pliku —
+// paleta w tym harnessie przesłaniała canvas), ale odtwarza te same
+// proporcje/szerokości, żeby środkowa kolumna miała realną (nie sztucznie
+// zawężoną max-w-2xl) szerokość flex-1.
+function SimulatedWorkshopColumn({
+  label,
+  side,
+}: {
+  label: string;
+  side: 'left' | 'right';
+}): React.ReactElement {
+  return (
+    // Kolumna-atrapa harnessu: box zostaje (rezerwuje realne 320px szerokości
+    // dla środkowej flex-1 — to jest jej JEDYNY cel, patrz komentarz wyżej),
+    // tylko etykieta-tekst znika przy zrzutach (bramka PODPIS, 2026-09-01).
+    <div
+      className={`hidden w-80 shrink-0 bg-c-surface-raised/40 p-3 text-[11px] text-c-text-muted md:block ${
+        side === 'left' ? 'border-r border-c-border-subtle' : 'border-l border-c-border-subtle'
+      }`}
+    >
+      <span data-dev-render-chrome="true">
+        {label} (320px — nie część tego dowodu, symulowana szerokość realnej kolumny)
+      </span>
+    </div>
+  );
+}
+
 export default function VaultFolderBlockProofScreen(): React.ReactElement {
   const [blocks, setBlocks] = useState<PlanSchemaBlock[]>(INITIAL_BLOCKS);
 
   return (
-    <div className="h-screen w-screen overflow-y-auto bg-c-bg p-8">
-      <div className="mx-auto max-w-2xl">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-c-text-muted">
+    <div className="flex h-screen w-screen items-stretch overflow-hidden bg-c-bg">
+      <SimulatedWorkshopColumn label="AgentWorkshopControls" side="left" />
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-c-bg p-8">
+        {/* Etykieta harnessu (nazwa dowodu) — schowana przy zrzutach (bramka PODPIS, 2026-09-01). */}
+        <h2
+          className="mb-2 text-xs font-semibold uppercase tracking-wider text-c-text-muted"
+          data-dev-render-chrome="true"
+        >
           VLT-FOLDERS — klocek "Vault-kontekst": select Poziom + DRUGI select Folder
         </h2>
         <p className="mb-4 text-[11px] text-c-text-muted">
@@ -91,6 +127,7 @@ export default function VaultFolderBlockProofScreen(): React.ReactElement {
         </p>
         <AgentPlanCanvas blocks={blocks} onChange={setBlocks} />
       </div>
+      <SimulatedWorkshopColumn label="AgentWorkshopPalette" side="right" />
     </div>
   );
 }

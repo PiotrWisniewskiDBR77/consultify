@@ -74,7 +74,7 @@ export default function DocumentStudioTemplateResolveErrorScreen(): React.ReactE
             i wyglądał na niewyśrodkowany, choć w produkcie jest. Pełna wysokość
             z rozciągliwym środkiem, żeby zrzut pokazywał to, co widzi użytkownik. */}
         <div className="flex h-screen w-full flex-col overflow-hidden bg-c-bg">
-          <div className="border-b border-c-border px-6 py-3">
+          <div className="border-b border-c-border px-6 py-3" data-dev-render-chrome="true">
             <div className="text-sm font-semibold text-c-text">
               Document Studio — „Użyj wzorca" odrzucone przez serwer
             </div>

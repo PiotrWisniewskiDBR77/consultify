@@ -21,8 +21,25 @@
  * kontrakt (sheetIndex/rowIndex/columnKey/value|formula) pasuje do klienta.
  *
  * URL: ?screen=excele-edytowalna-siatka&theme=light|dark&lang=pl
- *      &ff_excele_edit=1   ← WYMAGANE, żeby zobaczyć edytowalną siatkę zamiast
- *                             starej tabeli tylko-do-odczytu (flaga domyślnie OFF)
+ *      &ff_excele_edit=1   ← historycznie WYMAGANE; DZIŚ już nie ma znaczenia
+ *                             (patrz notatka niżej).
+ *
+ * ★ USTALENIE (grafika 2026-08-31, przy naprawie "przyrząd zasłania produkt"):
+ * ten opis i `&ff_excele_edit=1` są STALE. `ff_excele_edit`/`EditableSpreadsheetGrid`
+ * żyją WYŁĄCZNIE w starej ścieżce `KimiWorkspaceShell` (`ExceleView.tsx`).
+ * Ale ten sam plik od 2026-08-30 wymusza `ff.artifact_studio`+`ff.spreadsheet_studio_v2`
+ * — a tor `spreadsheet` ma od 2026-08-30 DOMYŚLNIE `true`
+ * (`src/utils/artifactStudioFlags.ts` LANE_DEFAULT_ENABLED, decyzja właściciela
+ * "to co jest — włączyć i wypolerować"). Przy reopen istniejącego skoroszytu
+ * (`effectivePreview?.type === 'xlsx' && effectiveWorkbookId`) `ExceleView.tsx`
+ * renderuje wtedy `SpreadsheetArtifactStudio` (2560 linii, WŁASNY
+ * `EditableSpreadsheetGrid` bez gate'a na `ff_excele_edit` i WŁASNY
+ * `ArtifactRightPanel` zamiast `ExceleRightRail`) — `KimiWorkspaceShell`
+ * (jedyne miejsce, gdzie `ff_excele_edit` cokolwiek zmienia) jest w tej ścieżce
+ * NIEOSIĄGALNY. To dlatego ten zrzut i `excele-prawy-panel-standard.tsx`
+ * (identyczny model WORKBOOK) wychodzą bajt w bajt identyczne — i to jest
+ * ZGODNE ze stanem realnego produktu, nie błąd narzędzia zrzutowego. Naprawiać
+ * nie ma czego: to jest właściwy stan dzisiejszy.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
@@ -64,7 +81,7 @@ const wiersz = (cells: Record<string, { value?: unknown; formula?: string }>) =>
 // horyzont: 3 lata zamiast parametrycznych 3–15).
 const ZALOZENIA = {
   name: 'Założenia',
-  columns: [kol('driver', 'Driver'), kol('wartosc', 'Wartość')],
+  columns: [kol('driver', 'Założenie'), kol('wartosc', 'Wartość')],
   rows: [
     wiersz({ driver: { value: 'Nakład początkowy (inwestycja)' }, wartosc: { value: 500000 } }),
     wiersz({ driver: { value: 'Przepływ operacyjny brutto — rok 1' }, wartosc: { value: 220000 } }),

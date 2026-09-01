@@ -6,6 +6,14 @@
  * the session supervisor can screenshot the artifact BEFORE the owner sees
  * it (CLAUDE.md #7).
  *
+ * ★ ZGŁOSZONE 2026-08-30 (przegląd modułów 04/11/16): `SwotLiveArtifact` nie ma
+ * ŻADNEGO wołacza w produkcie — `grep -rln SwotLiveArtifact src/` poza tym
+ * plikiem i testami trafia tylko na jeden komentarz w `EvidenceEditor.tsx`.
+ * Komponent jest realny i przetestowany, ale nigdzie nie jest montowany w
+ * `ToolWorkspace`/`dedicatedToolTypes` — użytkownik NIGDY nie zobaczy tego
+ * ekranu w aplikacji. Ocena „A" w `status.json` mierzy jakość komponentu, nie
+ * jego obecność w produkcie — do decyzji: podłączyć albo zdjąć z odbioru.
+ *
  * URL: /tools-swot-live.html?theme=light|dark
  */
 import React from 'react';
@@ -100,7 +108,7 @@ export default function ToolsSwotLiveScreen() {
       <div className="mx-auto max-w-3xl">
         <div className="mb-4">
           <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-c-text-muted">
-            Dynamic SWOT · Live Artifact
+            Dynamiczny SWOT · Artefakt na żywo
           </div>
           <h1 className="mt-1 text-xl font-semibold text-c-text">
             Wejście na rynek DACH — pole na żywo

@@ -538,6 +538,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
               rowOrder={assumptionRowOrder}
               periodLabelById={periodLabelById}
               readOnly={readOnly}
+              entityId={entityId}
             />
           ) : (
             <CalculationsView

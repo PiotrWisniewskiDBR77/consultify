@@ -388,6 +388,23 @@ const STATUS_CONFIG: Record<string, { badgeClass: string; icon: React.ReactNode 
   },
 };
 
+// ★ NAPRAWIONE (powtórka 08-31): statusBadge() renderował `status.toUpperCase()`
+// — surowy enum ("DRAFT"/"REVIEW"/"APPROVED") wprost w interfejsie, bez
+// tłumaczenia, mimo że dokładnie ten sam koncept (status modelu/sprawozdania)
+// ma już polskie etykiety gdzie indziej w tym module (finance-hub: Szkic/
+// Zatwierdzone/Przegląd). Etykiety lokalne (nie `t()`/locales — te pliki są
+// poza moim zakresem), zgodne z istniejącym nazewnictwem.
+const STATUS_BADGE_LABEL_PL: Record<string, string> = {
+  draft: 'Szkic',
+  review: 'Do przeglądu',
+  approved: 'Zatwierdzony',
+};
+const STATUS_BADGE_LABEL_EN: Record<string, string> = {
+  draft: 'Draft',
+  review: 'In review',
+  approved: 'Approved',
+};
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -736,13 +753,24 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 
   // ── Render helpers ──
 
+  // ★ NAPRAWIONE (defekt 3/148-finanse-parametry): pasek „Oparte na"
+  // (grounded-on) renderował `source_statement.status` WPROST w zdaniu
+  // (`PL • PLN • approved`) — ten sam surowy enum, ta sama etykieta
+  // `STATUS_BADGE_LABEL_PL`/`_EN` co status modelu bazowego, tylko bez
+  // dzwonka/pigułki. Wydzielone z `statusBadge()`, żeby NIE powstała druga
+  // mapa etykiet — jeden słownik, dwa miejsca renderowania (pigułka + zdanie).
+  const statusLabelText = (status: string): string => {
+    const labels = isPl ? STATUS_BADGE_LABEL_PL : STATUS_BADGE_LABEL_EN;
+    return labels[status] ?? status.toUpperCase();
+  };
+
   const statusBadge = (status: string) => {
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.badgeClass}`}
       >
-        {cfg.icon} {status.toUpperCase()}
+        {cfg.icon} {statusLabelText(status)}
       </span>
     );
   };
@@ -1026,7 +1054,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     </div>
                     <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                       {selectedModel.source_statement
-                        ? `${selectedModel.source_statement.statement_type} • ${selectedModel.source_statement.currency} • ${selectedModel.source_statement.status}`
+                        ? `${selectedModel.source_statement.statement_type} • ${selectedModel.source_statement.currency} • ${statusLabelText(selectedModel.source_statement.status)}`
                         : seedSource?.type === 'statement_pack'
                           ? t('finance.model.seededFromPack', 'Seeded from approved statement pack')
                           : t(

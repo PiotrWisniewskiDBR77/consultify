@@ -765,16 +765,14 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
           {report?.status === 'DRAFT' && (
             <button
               onClick={handleFinalize}
-              // `bg-green-600` (#16a34a) only clears ~3.3:1 against white text —
-              // under the 4.5:1 AA floor (axe color-contrast, serious). The
-              // `--c-success` token was tried first, but it flips lightness
-              // per theme (a bright, foreground-only green in dark mode) and
-              // fails as a solid white-text fill there (~2.5:1). Using
-              // `green-700` instead — already this button's own hover shade —
-              // is a static hex (same in both themes) that clears AA on its
-              // own (white text ~5.0:1); the hover state steps one shade
-              // darker (`green-800`, ~7.1:1) instead of repeating green-700.
-              className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-700 hover:bg-green-800 text-white rounded-lg transition-colors text-sm font-medium"
+              // Odbiór 2026-08-30 (przegląd całości): zielony wypełniony CTA
+              // tu był jedynym takim w aplikacji — kanon (CLAUDE.md §3) chce
+              // neutralne CTA/stany aktywne, czerwień/zieleń tylko dla
+              // semantyki krytycznej/zamknięcia pozytywnego, nie dla
+              // "wykonaj główną akcję". Ten sam neutralny granat-biel co
+              // reszta głównych przycisków akcji w aplikacji
+              // (np. `OnboardingTour.tsx`, `RouteErrorBoundary.tsx`).
+              className="inline-flex items-center gap-2 px-4 py-1.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors text-sm font-medium"
             >
               <CheckCircle className="w-4 h-4" />
               {t('reports.finalize', 'Finalize')}

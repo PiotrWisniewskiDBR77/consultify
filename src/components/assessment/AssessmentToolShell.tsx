@@ -10,7 +10,12 @@ type Props = {
   isRightOpen?: boolean;
   /**
    * Tailwind width class for the right panel when open.
-   * Example: "w-[340px]"
+   *
+   * ★ 2026-09-01 (dyżur 164): domyślna wartość była `w-[340px]` — SZÓSTA
+   * szerokość prawego pasa w aplikacji, przy czym jedyny wołający
+   * (`DRDAssessmentEditor`) i tak podawał `w-[320px]`. Domyślna klasa idzie
+   * teraz z tokenu `--ntype-right-panel-width`, więc następna zmiana
+   * szerokości prawego pasa jest zmianą w jednym pliku (`src/index.css`).
    */
   rightWidthClass?: string;
   /**
@@ -24,7 +29,7 @@ export const AssessmentToolShell: React.FC<Props> = ({
   left,
   right,
   isRightOpen = true,
-  rightWidthClass = 'w-[340px]',
+  rightWidthClass = 'w-[var(--ntype-right-panel-width)]',
   rightSide = 'right',
   className,
 }) => {

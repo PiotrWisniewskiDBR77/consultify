@@ -38,6 +38,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 import { Api } from '../../services/api';
 import {
+  categoryLabel,
   DOCUMENT_CATEGORIES,
   getUploadedDocumentInfo,
   SCOPE_OPTIONS,
@@ -555,7 +556,7 @@ export const VaultDocumentPanel: React.FC<VaultDocumentPanelProps> = ({
                 </option>
                 {DOCUMENT_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
-                    {cat}
+                    {categoryLabel(cat, isPolish, t)}
                   </option>
                 ))}
               </select>

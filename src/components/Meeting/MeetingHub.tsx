@@ -364,7 +364,12 @@ export const MeetingHub: React.FC = () => {
       {
         id: 'status',
         label: t('meeting.columns.status', 'Status'),
-        width: '120px',
+        // 200px, nie 120px: polska etykieta stanu „Po terminie — wymaga
+        // aktualizacji" (meeting.status.pastNeedsUpdate) jest dużo dłuższa
+        // niż angielski domyślny „Past — needs update" i przy 120px ucinała
+        // się w pigułce do „Po terminie — wym…" (noc 2026-08-30, przegląd
+        // modułu Spotkania — realny StatusChip, nie stanowisko pomiarowe).
+        width: '200px',
         filterable: true,
         filterOptions: [
           {

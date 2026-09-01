@@ -247,10 +247,19 @@ export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow
 // funkcji nie widzi tego defektu.
 // ---------------------------------------------------------------------------
 
+// Polski separator dziesiętny (przecinek, nie kropka) — ten sam wzorzec co
+// `formatAnalysisKpiValueForDisplay` (financeV2.types.ts, `toLocaleString('pl-PL')`).
+// NAPRAWIONE (powtórka 08-31): `.toFixed(1)` dawało „+7.1%"/„-12.3%" z kropką —
+// dokładnie ta sama klasa defektu, którą wcześniej zamknięto na
+// finance-valuation-workspace („Kropka zamiast przecinka dziesiętnego").
+function formatPlPercent1(n: number): string {
+  return n.toLocaleString('pl-PL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
 export function formatYoyDeltaText(yoy: YoyDelta): string {
   switch (yoy.status) {
     case 'COMPUTED':
-      return yoy.percentDelta === null ? '—' : `${yoy.percentDelta >= 0 ? '+' : ''}${yoy.percentDelta.toFixed(1)}%`;
+      return yoy.percentDelta === null ? '—' : `${yoy.percentDelta >= 0 ? '+' : ''}${formatPlPercent1(yoy.percentDelta)}%`;
     case 'PRIOR_ZERO_PCT_UNDEFINED':
       return yoy.absoluteDelta === null ? '—' : `${yoy.absoluteDelta >= 0 ? '+' : ''}${yoy.absoluteDelta} (% nieokreślony)`;
     case 'MISSING_CURRENT':
@@ -268,6 +277,22 @@ export function formatBenchmarkText(benchmark: AnalysisKpiValueDto['benchmark'])
   return `${benchmark.rangeLow}–${benchmark.rangeHigh} (${benchmark.industryCode}) · ${benchmark.source}`;
 }
 
+/**
+ * `downstreamUses` w wierszu to TABLICA (`string[]`), a nie string —
+ * `FilterableTable` bez `column.render` robi `row[column.id]` wprost. React
+ * przyjmuje tablicę stringów jako dziecko, ale skleja elementy BEZ separatora
+ * („Model bazowy — driver marżyRaport zarządczy Q3"), a pusta tablica `[]`
+ * NIE jest łapana przez `isEmptyCell` (sprawdza tylko null/undefined/pusty
+ * string), więc komórka renderowała się PUSTA zamiast „—". Ta sama klasa
+ * defektu co `yoyDelta`/`benchmark` piętro wyżej, tylko bez wysypki runtime —
+ * dlatego przeszła sito zrzutu (fixtura `finance-analysis-workspace` nie
+ * wypełnia `downstreamUses`, więc żaden wiersz nie miał treści w tej kolumnie).
+ */
+export function formatDownstreamUsesText(downstreamUses: readonly string[] | null | undefined): string {
+  if (!downstreamUses || downstreamUses.length === 0) return '—';
+  return downstreamUses.join(', ');
+}
+
 // ---------------------------------------------------------------------------
 // Kolumny — persystencja widoku (widoczność/kolejność/pin) jest już
 // zaimplementowana w `StandardTable` (prop `persistKey`, localStorage) — ten
@@ -281,32 +306,86 @@ export function analysisKpiTablePersistKey(businessVersionId: string): string {
   return `${ANALYSIS_KPI_TABLE_PERSIST_KEY_PREFIX}.${businessVersionId}`;
 }
 
+/**
+ * Rodzina „ucinany nagłówek" (2026-08-31, `finance-analysis-workspace`,
+ * `evidence/grafika/148-finanse-parametry`) — ta sama przyczyna co
+ * `OutputsAggregateTabContent.tsx`/`TemplatesManager.tsx` tego dnia:
+ * `FilterableTable`'s `table-fixed` renderuje każdą kolumnę na jej
+ * deklarowanym `width`; BEZ `width` (stan sprzed naprawy) `columnFit` ściska
+ * WSZYSTKIE 11 kolumn do wspólnej podłogi (~120px przy 1440px/11 kolumn),
+ * poniżej naturalnej szerokości nagłówków „OGÓLNA INTERPRETACJA"/
+ * „INTERPRETACJA WYNIKU"/„PRZEZNACZENIE" — stąd ucięcie wielokropkiem.
+ *
+ * Szerokości poniżej zmierzone na żywym DOM-ie w harnessu
+ * `finance-analysis-workspace` (`scene=draft-with-kpis`, 1440px, 6
+ * wskaźników), DWIE osobne miary per kolumna (obie muszą się zmieścić):
+ *  1. nagłówek — `th` sklonowany z `white-space:nowrap` (pełny tekst +
+ *     padding + ikona sortu/filtra w jednej linii);
+ *  2. DANE — `FilterableTable`'s domyślne renderowanie komórki (brak
+ *     `column.render`, albo `render` zwracający goły string) owija treść w
+ *     `CELL_TEXT_CLAMP_CLASS` (`block break-normal overflow-hidden
+ *     text-ellipsis`) — łamie na SPACJACH, ale NAJSZERSZE POJEDYNCZE SŁOWO w
+ *     komórce musi zmieścić się w szerokości kolumny, inaczej TO SŁOWO (nie
+ *     cała komórka) dostaje własny wielokropek („Przychody" → „Prz…").
+ *     Zmierzone na tym samym harnessu: najszersze słowo w kolumnie „Wzór"
+ *     („(Przychody", nawiasy sklejone ze słowem w formule) = 73,49px — WIĘCEJ
+ *     niż nagłówek „Wzór" (68,59px) potrzebuje. Pierwsza wersja tej naprawy
+ *     (2026-08-31, pierwszy przebieg) budżetowała TYLKO nagłówki i dała
+ *     „Wzór" 69px — nagłówek już się mieścił, ale DANE („Przychody / Aktywa
+ *     razem") ucinały się do „Prz…"/„Akt…"/„raz…" na żywym zrzucie —
+ *     dokładnie ten sam kształt defektu piętro niżej, złapany dopiero na
+ *     PEŁNOROZDZIELCZYM zrzucie Playwright (scaled-down zrzut w toku pracy
+ *     tego nie pokazał).
+ *
+ * Pełny tekst wszystkich 11 nagłówków na raz (suma ≈1434px) NIE mieści się w
+ * budżecie (≈1326px na 11 kolumn), a „Wzór" osobno potrzebuje więcej niż
+ * jego własny nagłówek — dwa najdłuższe nagłówki dostają krótszy synonim bez
+ * zmiany znaczenia (właściciel/CLAUDE.md „spróbuj pełny tekst najpierw"):
+ * „Ogólna interpretacja" → „Interpretacja" (ta sama zasada formuły co
+ * „Wzór") i „Benchmark branżowy" → „Benchmark" (branżowość wynika z
+ * kontekstu kolumny — wartość komórki to zawsze zakres branżowy). „Interpretacja
+ * wyniku" (komentarz analityka do KONKRETNEGO wyniku, np. „Marża rośnie
+ * dzięki niższym kosztom materiałów.") → „Komentarz" — trzeci synonim,
+ * DOPISANY w drugim przebiegu tej naprawy: budżet zwolniony stąd (~72px)
+ * przechodzi na „Wzór", który inaczej nie mieści swojego najszerszego słowa.
+ * Kolumny okresów (`P-2025`/`P-2026`, DYNAMICZNE per businessVersion)
+ * dostają stały budżet 80px — z zapasem nad zmierzonym „Q4 2026" (≈84px to
+ * jedyny zmierzony przypadek szerszy niż `P-2025`/`FY2025`).
+ */
 export function buildAnalysisKpiColumns(periodLabels: readonly { id: string; label: string }[]): TableColumn[] {
   const periodColumns: TableColumn[] = periodLabels.map((p) => ({
     id: `period.${p.id}`,
     label: p.label,
     align: 'right',
     sortable: false,
+    width: '80px',
   }));
 
   return [
-    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left' },
-    { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true },
-    { id: 'formulaDisplay', label: 'Wzór', align: 'left' },
-    { id: 'interpretationGeneral', label: 'Ogólna interpretacja', align: 'left' },
+    { id: 'kpiName', label: 'Wskaźnik', sortable: true, align: 'left', width: '120px' },
+    { id: 'category', label: 'Kategoria', sortable: true, align: 'left', filterable: true, width: '122px' },
+    { id: 'formulaDisplay', label: 'Wzór', align: 'left', width: '122px' },
+    { id: 'interpretationGeneral', label: 'Interpretacja', align: 'left', width: '131px' },
     ...periodColumns,
     {
       id: 'yoyDelta',
       label: 'Zmiana r/r',
       align: 'right',
       sortable: true,
+      width: '121px',
       sortAccessor: (row: TableRow) => (row.yoyDelta as YoyDelta).percentDelta ?? Number.NEGATIVE_INFINITY,
       render: (row: TableRow) => formatYoyDeltaText(row.yoyDelta as YoyDelta),
     },
-    { id: 'benchmark', label: 'Benchmark branżowy', align: 'left', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
-    { id: 'interpretationSpecific', label: 'Interpretacja wyniku', align: 'left' },
-    { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true },
-    { id: 'downstreamUses', label: 'Przeznaczenie', align: 'left' },
+    { id: 'benchmark', label: 'Benchmark', align: 'left', width: '110px', render: (row: TableRow) => formatBenchmarkText(row.benchmark as AnalysisKpiValueDto['benchmark']) },
+    { id: 'interpretationSpecific', label: 'Komentarz', align: 'left', width: '116px' },
+    { id: 'qualityFlag', label: 'Jakość / dostępność', align: 'center', filterable: true, width: '176px' },
+    {
+      id: 'downstreamUses',
+      label: 'Przeznaczenie',
+      align: 'left',
+      width: '133px',
+      render: (row: TableRow) => formatDownstreamUsesText(row.downstreamUses as string[]),
+    },
   ];
 }
 

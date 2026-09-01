@@ -617,12 +617,12 @@ export const AdminLLMView: React.FC = () => {
                 <div className="p-4 bg-c-surface/50 border border-white/10 rounded-xl">
                   <div className="flex justify-between items-start mb-2">
                     <div
-                      className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-danger-500/20' : 'bg-primary-500/20'}`}
+                      className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-danger-500/20' : 'bg-c-text-muted/15'}`}
                     >
                       <AlertTriangle
                         size={20}
                         className={
-                          analytics?.error_rate > 0.05 ? 'text-danger-400' : 'text-primary-400'
+                          analytics?.error_rate > 0.05 ? 'text-danger-400' : 'text-c-text-muted'
                         }
                       />
                     </div>

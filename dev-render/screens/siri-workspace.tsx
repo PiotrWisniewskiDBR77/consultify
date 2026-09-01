@@ -295,8 +295,15 @@ function Screen(): React.ReactElement {
 
   return (
     <div style={{ height: '100vh' }}>
+      {/* Pasek pomiarowy harnessu (pokrycie pack'u SIRI dowodami) — NIE część
+          produktu, ginie w realnym ekranie. Bez `data-dev-render-chrome` zrzuty
+          `grafika-zrzuty.mjs` (które chowają elementy z tym atrybutem) pokazywały
+          go jako pływający pasek z surowym enumem "EVIDENCE_MISSING" na kadrze —
+          dokładnie pułapka opisana w CLAUDE.md #7 ("kontrolki harnessu w kadrze").
+          Przegląd nocny 03-wywiad/05-ocena, 2026-08-30. */}
       <div
         data-testid="siri-evidence-missing-summary"
+        data-dev-render-chrome="true"
         style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 5, fontSize: 11, padding: '2px 8px', color: 'var(--c-text-muted)', background: 'var(--c-bg)' }}
       >
         SIRI pack: {evidenceMissing.levelsMarkedEvidenceMissing}/{evidenceMissing.levelsTotal} band descriptors EVIDENCE_MISSING ·{' '}

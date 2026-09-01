@@ -104,7 +104,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
       <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5 -mx-5 -mb-5 p-4 py-3 rounded-b-2xl">
         <div className="flex justify-between items-center text-xs">
           <span className="text-slate-600 dark:text-slate-500 font-bold text-[10px] uppercase">
-            Tempo
+            {t.metricLabels?.tempo || 'Tempo'}
           </span>
           <VisualScale
             value={parseInt(scenario.tempo || '3', 10)}
@@ -113,7 +113,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-slate-600 dark:text-slate-500 font-bold text-[10px] uppercase">
-            Ambition
+            {t.metricLabels?.ambition || 'Ambition'}
           </span>
           <VisualScale
             value={parseInt(scenario.ambition || '3', 10)}
@@ -122,7 +122,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-slate-600 dark:text-slate-500 font-bold text-[10px] uppercase">
-            Risk
+            {t.metricLabels?.risk || 'Risk'}
           </span>
           <VisualScale
             value={parseInt(scenario.risk || '3', 10)}

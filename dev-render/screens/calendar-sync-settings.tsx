@@ -1,164 +1,108 @@
 /**
- * #24b — UI „Połącz kalendarz" (Ustawienia → Calendar Sync).
- * Wierne odwzorowanie markupu src/components/settings/CalendarSyncSettings.tsx
- * z mockiem providerów (Google połączony, Outlook/Apple do połączenia) —
- * zero Api/fetch, żeby nadzorca zrobił zrzut PRZED odbiorem Piotra (CLAUDE.md #7).
+ * #24b — „Synchronizacja kalendarza" (Ustawienia → Integracje → Calendar Sync).
+ *
+ * ★ NAPRAWA PARYTETU 2026-09-01 (AUDYT_PRZYRZADU_20260901.md, Kategoria 4).
+ * Poprzednia wersja tego pliku miała PRZEPISANY markup `CalendarSyncSettings`
+ * z tekstami wbitymi na sztywno po polsku i ZEREM wywołań `t()`. Realny
+ * `src/components/settings/CalendarSyncSettings.tsx` ma 22 wywołania `t()`
+ * i jest montowany przez `src/views/SettingsView.tsx:455` (sekcja
+ * `calendar-sync`) WEWNĄTRZ nawigacji Ustawień — czyli właściciel oceniał
+ * obraz, którego w aplikacji nie ma (m.in. nie widział, czy ekran jest realnie
+ * przetłumaczony, bo harness tłumaczył za niego).
+ *
+ * Teraz montujemy REALNY `<SettingsView>` na sekcji `calendar-sync` — ten sam
+ * wzorzec, co `dev-render/screens/ustawienia-grupy.tsx` (realny sidebar
+ * Ustawień + realny content pane), więc na zrzucie widać dokładnie to, co
+ * użytkownik po kliknięciu „Calendar Sync" w Ustawieniach.
+ *
+ * Mockowane są WYŁĄCZNIE wołania, które ten ekran realnie robi przy montażu
+ * (sprawdzone w kodzie komponentu, nie zgadywane):
+ *   CalendarSyncSettings → Api.getCalendars() (lista dostawców)
+ *                        → Api.getCalendarSettings() (pstryczki synchronizacji)
+ * plus minimum dla samej powłoki `SettingsView` (Api.getMe / Api.get).
+ * Zero prawdziwego backendu — zrzut robi nadzorca przed odbiorem (CLAUDE.md #7).
+ *
+ * URL: ?screen=calendar-sync-settings[&lang=pl|en][&theme=light|dark]
  */
-import { Calendar, Check, ExternalLink, RefreshCw, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
-interface MockProvider {
-  id: string;
-  name: string;
-  connected: boolean;
-  connection?: {
-    externalEmail: string;
-    calendarName: string;
-  } | null;
-}
+import { Api } from '../../src/services/api';
+import SettingsView from '../../src/views/SettingsView';
 
-// Odbiór grafiki 2026-08-30 (Piotr): "zmień to jabłuszko na jakieś normalne, a nie
-// takie jabłko" — surowe emoji (📅/📆/🍎) to dekoracja zakazana przez TRIADA_KANON
-// (patrz precedens: fix(settings) e5fe1d63ad, usunął emoji z AIBehaviorSettings +
-// CalendarSyncSettings toast). lucide-react nie ma logotypów Apple/Outlook — reszta
-// aplikacji (IntegrationSettings.tsx PROVIDER_ICON) już rozwiązuje to samo pytanie
-// jedną neutralną ikoną Calendar dla wszystkich dostawców kalendarza. Idziemy tym
-// samym śladem zamiast rysować nowe SVG.
-const PROVIDERS: MockProvider[] = [
+const CURRENT_USER = {
+  id: 'usr-piotr',
+  email: 'piotr@atelier-toys.pl',
+  firstName: 'Piotr',
+  lastName: 'Wiśniewski',
+  phone: '+48 601 200 300',
+  language: 'pl',
+  role: 'OWNER',
+  organizationId: 'org-atelier-toys-0001',
+  organizationName: 'Atelier Toys Sp. z o.o.',
+  companyName: 'Atelier Toys Sp. z o.o.',
+} as never;
+
+// Kształt 1:1 z `CalendarProvider` w CalendarSyncSettings.tsx.
+const CALENDARS = [
   {
     id: 'google_calendar',
     name: 'Google Calendar',
+    icon: 'calendar',
     connected: true,
     connection: {
-      externalEmail: 'piotr.wisniewski@dbr77.com',
-      calendarName: 'Główny kalendarz',
+      externalEmail: 'piotr@atelier-toys.pl',
+      calendarName: 'Kalendarz główny',
+      lastSyncAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+      syncTasks: true,
+      syncMeetings: true,
     },
   },
   {
     id: 'outlook_calendar',
     name: 'Outlook Calendar',
+    icon: 'calendar',
     connected: false,
     connection: null,
   },
   {
     id: 'apple_calendar',
     name: 'Apple Calendar (iCal)',
+    icon: 'calendar',
     connected: false,
     connection: null,
   },
 ];
 
-const CalendarSyncSettingsScreen: React.FC = () => {
-  const [syncTasks, setSyncTasks] = useState(true);
-  const [syncMeetings, setSyncMeetings] = useState(true);
+const CALENDAR_SETTINGS = { syncTasks: true, syncMeetings: true };
 
+Object.assign(Api, {
+  getCalendars: async () => CALENDARS,
+  getCalendarSettings: async () => CALENDAR_SETTINGS,
+  updateCalendarSettings: async () => ({ success: true }),
+  getMe: async () => CURRENT_USER,
+  updateUser: async () => undefined,
+  get: async (path: string) => {
+    if (path === '/organization-context')
+      return {
+        profile: { defaultLanguage: 'pl', defaultTimezone: 'Europe/Warsaw', currency: 'PLN' },
+      };
+    return {};
+  },
+  put: async () => ({ success: true }),
+});
+
+export default function CalendarSyncSettingsScreen(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-c-bg p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
-              <Calendar size={20} />
-              Synchronizacja kalendarza
-            </h3>
-            <p className="text-sm text-c-text-muted mt-1">
-              Synchronizuj zadania i terminy z zewnętrznymi kalendarzami.
-            </p>
-          </div>
-          <button
-            className="p-2 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
-            title="Odśwież"
-          >
-            <RefreshCw size={18} />
-          </button>
-        </div>
-
-        {/* Calendar Services */}
-        <div className="space-y-3">
-          {PROVIDERS.map((cal) => (
-            <div
-              key={cal.id}
-              className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
-                cal.connected
-                  ? 'bg-green-50/50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30'
-                  : 'bg-c-surface-raised'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Calendar size={22} className="text-c-text-secondary flex-shrink-0" />
-                <div>
-                  <span className="font-medium text-c-text">{cal.name}</span>
-                  {cal.connected && cal.connection && (
-                    <div className="text-sm text-c-text-muted">
-                      {cal.connection.externalEmail} • {cal.connection.calendarName}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {cal.connected ? (
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm">
-                    <Check size={16} />
-                    Połączono
-                  </span>
-                  <button
-                    className="p-1.5 text-c-text-secondary hover:text-danger-500 rounded transition-colors"
-                    title="Rozłącz"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ) : (
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg text-sm hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors">
-                  <ExternalLink size={14} />
-                  Połącz
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Sync Options */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-c-text-secondary">Opcje synchronizacji</h4>
-
-          <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
-            <div>
-              <p className="font-medium text-c-text">Synchronizuj zadania</p>
-              <p className="text-sm text-c-text-muted">Dodawaj terminy zadań do kalendarza</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={syncTasks}
-                onChange={(e) => setSyncTasks(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
-            <div>
-              <p className="font-medium text-c-text">Synchronizuj spotkania</p>
-              <p className="text-sm text-c-text-muted">
-                Dodawaj spotkania projektowe do kalendarza
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={syncMeetings}
-                onChange={(e) => setSyncMeetings(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-c-focus-solid after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-            </label>
-          </div>
-        </div>
+    <MemoryRouter initialEntries={['/settings/calendar-sync']}>
+      <div className="h-screen overflow-hidden">
+        <SettingsView
+          currentUser={CURRENT_USER}
+          onUpdateUser={() => undefined}
+          theme="light"
+          toggleTheme={() => undefined}
+        />
       </div>
-    </div>
+    </MemoryRouter>
   );
-};
-
-export default CalendarSyncSettingsScreen;
+}

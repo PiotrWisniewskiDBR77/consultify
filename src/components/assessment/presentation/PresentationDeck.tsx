@@ -1,7 +1,8 @@
 /**
  * PresentationDeck — the fullscreen slideshow shell: keyboard navigation
  * (←/→/Home/End/Esc), a slide counter, and a fullscreen toggle. Renders one
- * of the 9 `slides.tsx` components per index. Pure chrome — all content
+ * of the `slides.tsx` components per index — deck length is DYNAMIC (see the
+ * `slides` memo below). Pure chrome — all content
  * comes from the `PresentationDeckModel` passed in.
  *
  * Keyboard: ArrowRight/Space → next, ArrowLeft → previous, Home/End → jump,
@@ -14,16 +15,16 @@
  * law #2). No `primary-*`/crimson class anywhere in this file.
  */
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { PresentationDeckModel } from './buildPresentationDeck';
 import {
+  AxisMatrixSlide,
   DimensionProfileSlide,
   GapsAndRisksSlide,
   MethodSlide,
   NextStepsSlide,
   OverallResultSlide,
-  PRESENTATION_SLIDE_COUNT,
   PurposeSlide,
   StrengthsSlide,
   TitleSlide,
@@ -45,14 +46,41 @@ function currentFullscreenElement(): Element | null {
 }
 
 export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, locale = 'pl', initialSlide = 0 }) => {
-  const [slide, setSlide] = useState(() => Math.min(Math.max(initialSlide, 0), PRESENTATION_SLIDE_COUNT - 1));
+  /**
+   * ★ Lista slajdów jest DYNAMICZNA od 2026-08-30. Wcześniej deck miał
+   * sztywne 9 pozycji w `switch`; macierze osi (odbiór właściciela: „nie ma
+   * macierzy nawet") dokładają po jednym slajdzie na ocenioną oś, więc
+   * licznik, pasek postępu i granice nawigacji muszą liczyć realną długość,
+   * a nie stałą. Model bez macierzy (obcy pakiet, niezgodna wersja, atrapa
+   * w teście) daje dokładnie te same 9 slajdów co przed zmianą.
+   */
+  const slides = useMemo<readonly React.ReactElement[]>(
+    () => [
+      <TitleSlide key="title" model={model} locale={locale} />,
+      <PurposeSlide key="purpose" model={model} />,
+      <MethodSlide key="method" model={model} />,
+      <OverallResultSlide key="overall" model={model} />,
+      <DimensionProfileSlide key="profile" model={model} />,
+      ...(model.axisMatrices ?? []).map((matrix) => (
+        <AxisMatrixSlide key={`matrix-${matrix.axisId}`} matrix={matrix} locale={locale} />
+      )),
+      <StrengthsSlide key="strengths" model={model} />,
+      <GapsAndRisksSlide key="gaps" model={model} />,
+      <UnknownsSlide key="unknowns" model={model} />,
+      <NextStepsSlide key="next" model={model} />,
+    ],
+    [model, locale]
+  );
+  const slideCount = slides.length;
+
+  const [slide, setSlide] = useState(() => Math.min(Math.max(initialSlide, 0), slideCount - 1));
   const [isFullscreen, setIsFullscreen] = useState(() => currentFullscreenElement() !== null);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const goNext = useCallback(() => setSlide((s) => Math.min(s + 1, PRESENTATION_SLIDE_COUNT - 1)), []);
+  const goNext = useCallback(() => setSlide((s) => Math.min(s + 1, slideCount - 1)), [slideCount]);
   const goPrev = useCallback(() => setSlide((s) => Math.max(s - 1, 0)), []);
   const goFirst = useCallback(() => setSlide(0), []);
-  const goLast = useCallback(() => setSlide(PRESENTATION_SLIDE_COUNT - 1), []);
+  const goLast = useCallback(() => setSlide(slideCount - 1), [slideCount]);
 
   const toggleFullscreen = useCallback(() => {
     if (currentFullscreenElement()) {
@@ -103,28 +131,8 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
     rootRef.current?.focus();
   }, []);
 
-  const renderSlide = (): React.ReactElement => {
-    switch (slide) {
-      case 0:
-        return <TitleSlide model={model} locale={locale} />;
-      case 1:
-        return <PurposeSlide model={model} />;
-      case 2:
-        return <MethodSlide model={model} />;
-      case 3:
-        return <OverallResultSlide model={model} />;
-      case 4:
-        return <DimensionProfileSlide model={model} />;
-      case 5:
-        return <StrengthsSlide model={model} />;
-      case 6:
-        return <GapsAndRisksSlide model={model} />;
-      case 7:
-        return <UnknownsSlide model={model} />;
-      default:
-        return <NextStepsSlide model={model} />;
-    }
-  };
+  const renderSlide = (): React.ReactElement =>
+    slides[Math.min(Math.max(slide, 0), slideCount - 1)] ?? slides[slides.length - 1];
 
   return (
     <div
@@ -139,7 +147,7 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
       <div className="h-1 flex-shrink-0 bg-c-surface-raised">
         <div
           className="h-full bg-c-text-muted transition-all duration-300"
-          style={{ width: `${((slide + 1) / PRESENTATION_SLIDE_COUNT) * 100}%` }}
+          style={{ width: `${((slide + 1) / slideCount) * 100}%` }}
         />
       </div>
 
@@ -159,7 +167,7 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
 
         <div className="flex items-center gap-4">
           <span className="text-xs font-semibold tabular-nums text-c-text-muted" data-testid="slide-counter">
-            {slide + 1} / {PRESENTATION_SLIDE_COUNT}
+            {slide + 1} / {slideCount}
           </span>
           <button
             type="button"
@@ -176,7 +184,7 @@ export const PresentationDeck: React.FC<PresentationDeckProps> = ({ model, local
         <button
           type="button"
           onClick={goNext}
-          disabled={slide === PRESENTATION_SLIDE_COUNT - 1}
+          disabled={slide === slideCount - 1}
           aria-label="Następny slajd"
           className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-c-text-secondary outline-none transition-colors hover:bg-c-surface-raised focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-30"
         >

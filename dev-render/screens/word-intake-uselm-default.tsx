@@ -11,10 +11,12 @@ import { DocumentStudioIntakeForm } from '@/components/DocumentStudio/DocumentSt
 
 export default function WordIntakeUseLlmDefaultScreen(): React.ReactElement {
   return (
-    <div className="min-h-screen w-full overflow-y-auto bg-c-bg p-8">
-      <div className="mx-auto max-w-2xl">
+    // Produkcja: DocumentStudioView.tsx:910 — <main> bez max-w, formularz
+    // zajmuje pełną szerokość dostępnego obszaru studia (nie kartka max-w-2xl).
+    <div className="h-screen w-full bg-c-bg">
+      <main className="flex h-full min-h-0 flex-col">
         <DocumentStudioIntakeForm onSubmit={() => {}} />
-      </div>
+      </main>
     </div>
   );
 }

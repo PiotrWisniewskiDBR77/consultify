@@ -34,18 +34,31 @@ const LANE_KEYS: Record<ArtifactStudioLane, { query: string; storage: string; en
  * kasować flagę (co odbiera przycisk cofania z `_RUNBOOK_COFANIA.md`),
  * przestawiamy WYŁĄCZNIE domyślną wartość toru `spreadsheet`.
  *
- * ★ TOR `document` (Word) I `presentation` (Deck) ZOSTAJĄ WYŁĄCZONE. To nie
- * jest ostrożność „na wszelki wypadek": `DocumentStudioDocumentPanel.tsx:3549`
- * i `DeckBuilderMelsView.tsx:381` zerują prawy pas ikon dokładnie wtedy, gdy
- * ich tor jest włączony. Wspólne przestawienie domyślnej wartości ZABRAŁOBY
- * Wordowi prawy panel, który właściciel uznaje za działający.
+ * ★ TOR `document` (Word) ZOSTAJE WYŁĄCZONY. To nie jest ostrożność „na
+ * wszelki wypadek": `DocumentStudioDocumentPanel.tsx:3549` zeruje prawy pas
+ * ikon dokładnie wtedy, gdy tor `document` jest włączony. Wspólne przestawienie
+ * domyślnej wartości ZABRAŁOBY Wordowi prawy panel, który właściciel uznaje za
+ * działający.
  *
- * Wyłączenie arkusza z powrotem: `?ff_spreadsheetStudioV2=0` (albo
- * `ff_artifactStudio=0`, albo `VITE_SPREADSHEET_STUDIO_V2=0` na budowie).
+ * ★ TOR `presentation` (Deck) WŁĄCZONY 2026-08-30 — ale DOPIERO PO tym, jak
+ * `DeckBuilderMelsView` dostał własny `artifactRightPanelSlot`. Ta sama pułapka
+ * co w Wordzie istniała tu do dziś (`DeckBuilderMelsView.tsx:381`:
+ * `rightRailTools={artifactStudioMode ? [] : rightTools}` PLUS `DeckBuilder.tsx`
+ * podawał `aiEntrySlot` wyłącznie przy WYŁĄCZONYM torze) — czyli włączenie
+ * flagi bez tej naprawy zabierało prezentacji CAŁĄ prawą powierzchnię:
+ * zmierzone 417 px → 0 px. Kolejność jest istotna: najpierw panel, potem flaga.
+ *
+ * Powód włączenia: bez tego toru nie ma paska `Nowy slajd · Pole tekstowe ·
+ * Obraz · Motyw`, więc edycja slajdów — która działa BEZ żadnej flagi
+ * (`CardCanvas.tsx:138` przekazuje `editable` bezwarunkowo) — jest niewidoczna.
+ * Uwaga właściciela: „nie widzę nigdzie, gdzie mogę edytować".
+ *
+ * Wyłączenie z powrotem: `?ff_spreadsheetStudioV2=0` / `?ff_presentationStudioV2=0`
+ * (albo `ff_artifactStudio=0`, albo `VITE_*_STUDIO_V2=0` na budowie).
  */
 const LANE_DEFAULT_ENABLED: Record<ArtifactStudioLane, boolean> = {
   document: false,
-  presentation: false,
+  presentation: true,
   spreadsheet: true,
 };
 

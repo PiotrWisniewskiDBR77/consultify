@@ -270,6 +270,11 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
   }, [topics, backlinks, pageTitle, t]);
 
   const isEmpty = topics.length === 0 && backlinks.length === 0;
+  // 171-pojedyncze: fullscreen caller passes height="100%" — an inline
+  // `style={{ height: '100%' }}` inside a flex column double-counts the
+  // title row above it and overflows. `flex-1 min-h-0` fills the remaining
+  // space correctly instead; every other caller keeps the fixed pixel height.
+  const fillParent = height === '100%';
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
@@ -286,8 +291,8 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
       </div>
 
       <div
-        className="overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface-raised/40 dark:border-white/10 dark:bg-white/[0.02]"
-        style={{ height }}
+        className={`overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface-raised/40 dark:border-white/10 dark:bg-white/[0.02] ${fillParent ? 'flex-1 min-h-0' : ''}`}
+        style={fillParent ? undefined : { height }}
       >
         {!loading && isEmpty ? (
           <div className="flex h-full items-center justify-center px-4 text-center text-[12px] text-c-text-muted">

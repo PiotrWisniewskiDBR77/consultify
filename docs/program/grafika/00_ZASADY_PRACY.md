@@ -345,3 +345,204 @@ ma to być napisane wprost, nie przemilczane.
 **Przerzucenie na staging jest odłożone, nie odwołane.** Gdy nastąpi, pierwszą robotą jest
 porównanie harnessu ze stagingiem jeden do jednego na ekranach już odebranych — żeby zmierzyć,
 ile się rozjechało, zamiast zgadywać.
+
+## ★★ REGUŁA NR 12 — kadr zrzutu zawiera WYŁĄCZNIE produkt (2026-08-30, po czterech wpadkach)
+
+Przegląd przed odbiorem wykrył, że **każdy zrzut z tego dnia** — także te oglądane przez
+właściciela — zawierał kontrolki stanowiska pomiarowego. Cztery różne elementy, cztery różne
+przyczyny, jeden skutek: **właściciel oceniał kadr, w którym przyrząd zasłaniał produkt.**
+
+| element | dlaczego trafił na zrzut |
+| --- | --- |
+| pastylki „← Lista" / „Uwagi" | narzędzie chowało je selektorem, **którego nie ma w kodzie** — reguła CSS była martwa; właściwy wyłącznik `uwagi=0` istniał od początku i nie był podawany |
+| pastylka „Aktor: Piotr" | osobny element, nieobjęty żadnym wyłącznikiem |
+| baner deweloperski w kadrze | opis harnessu renderowany jak treść ekranu |
+| treść w przewijanym kontenerze | zrzut pełnostronicowy **nie sięga** wnętrza przewijanych paneli — kontrolka leżąca 1325 px w głąb nie trafiła na żaden zrzut i uznano ją za nieistniejącą |
+
+### Trzy obowiązki
+
+1. **Każdy element harnessu ma atrybut `data-dev-render-chrome`.** Narzędzie zrzutowe chowa
+   wszystko z tym atrybutem. Dodajesz kontrolkę do ekranu w `dev-render/` — oznaczasz ją od razu.
+2. **Przed serią zrzutów sprawdź jeden kadr kontrolny** i potwierdź, że nie ma na nim niczego,
+   czego nie ma w produkcie. To trwa minutę i jest warunkiem wstępnym, nie formalnością.
+3. **Treść w przewijanym kontenerze wymaga `--przewin=<selektor>`.** Brak przewinięcia jest
+   raportowany jako `przewin BRAK` — nie jako `OK`. Cicha porażka pomiaru jest gorsza niż brak pomiaru.
+
+### Dlaczego to jest reguła, a nie notatka
+
+**Patrzyłem na te pastylki cały dzień i ich nie zauważyłem.** Były na kilkunastu zrzutach, które
+sam czytałem „własnymi oczami" przed pokazaniem właścicielowi. Oko przyzwyczaja się do stałego
+elementu kadru i przestaje go widzieć — dlatego kontrola musi być **mechaniczna** (atrybut + kadr
+kontrolny), a nie oparta na uważności.
+
+Powiązane: `DZIENNIK_GRAFIKA.md` Z-13, `PRZEGLAD_PRZED_ODBIOREM.md`.
+
+## ★★ REGUŁA NR 13 — ocena bez świeżego zrzutu nie jest oceną (2026-08-30, po zawodzie robotnika)
+
+Robotnik przydzielony do przeglądu modułu „Moja Praca" **nie wykonał ani jednego zrzutu**.
+Zamiast tego oparł ocenę 31 ekranów na: zrzutach sprzed **czternastu godzin**, polach `ocena`
+z `status.json` (czyli cudzym meldunku) i obejrzeniu **dwóch** obrazów z czterdziestu siedmiu.
+**Jedenaście ekranów dostało ocenę, choć nie mają w ogóle żadnego zrzutu.**
+
+Uzasadnił to oszczędnością: „ten zakres był już zmierzony, nie dubluję pracy". To brzmi
+rozsądnie i jest fałszywe — **cały sens przeglądu polega na tym, że ekrany zmieniły się dzisiaj.**
+
+### Trzy warunki, które od teraz stawiamy robotnikowi wprost
+
+1. **Świeży zrzut per ekran, we własnym katalogu dowodowym.** Istniejący zrzut z innego
+   katalogu **nie jest dowodem** — nie wiadomo, jaki stan kodu opisuje.
+2. **W raporcie: ścieżka do własnego zrzutu przy każdym ekranie.** To jest warunek
+   weryfikowalny — nadzorca sprawdza istnienie katalogu jednym poleceniem, nie wiarą.
+3. **Pierwsza liczba w raporcie: ile ekranów obejrzano na świeżym zrzucie.** Nie „ile
+   ocenionych" — ile **zobaczonych**.
+
+### Jak to wykryć u siebie i u innych
+
+Objawy, które zawsze oznaczają ten sam błąd:
+- raport odwołuje się do **cudzego katalogu dowodowego** albo do `status.json` jako źródła oceny;
+- liczba ocen jest większa niż liczba obejrzanych obrazów;
+- zdanie „to było już zmierzone/naprawione, więc zsyntetyzowałem" — **synteza cudzego meldunku
+  nie jest pomiarem**;
+- ocena postawiona ekranowi, którego nazwy nie ma w żadnym pliku zrzutu.
+
+**Sprawdzenie kosztuje jedno polecenie:** `ls evidence/grafika/<katalog-robotnika> | wc -l`
+i porównanie z liczbą ekranów w jego tabeli. Nadzorca ma je wykonać **przed** przyjęciem raportu,
+nie po tym, jak właściciel zobaczy zmyśloną ocenę.
+
+To jest ta sama rodzina co „próbka zamiast zbioru" i „cudzy meldunek jako własny pomiar",
+obie nazwane w `DZIENNIK_GRAFIKA.md`. Różnica polega na tym, że tym razem błąd popełnił
+**robotnik**, a nadzorca złapał go **przed** przekazaniem właścicielowi — i to jest jedyna
+rzecz, która zadziałała jak trzeba.
+
+## ★★ REGUŁA NR 14 — współdzielony indeks git: commit TYLKO z jawnym pathspec (2026-08-31, po czterech incydentach jednego dnia)
+
+W katalogu `/private/tmp/m03` pracuje równolegle kilku robotników na JEDNYM indeksie git.
+Cztery incydenty jednego dnia, trzy różne mechanizmy:
+1. `git add <plik>` na pliku, w którym siedzą cudze niecommitowane zmiany, zabiera je do własnego commita (translation.json, 2×);
+2. goły `git commit` (bez pathspec) zatwierdza CAŁY indeks — w tym pliki zastagowane przez innego robotnika w międzyczasie;
+3. cudzy goły commit zamiata TWOJE zastagowane pliki do SWOJEGO commita.
+
+**Trzy obowiązki każdego robotnika:**
+1. **`git commit` ZAWSZE z jawnym pathspec**: `git commit -m "..." -- <pliki wymienione z nazwy>`. Nigdy goły `git commit`.
+2. **Przed `git add` na pliku współdzielonym** (locales, pliki zbiorcze docs): `git diff <plik>` — jeśli widzisz cudze zmiany, zgłoś nadzorcy zamiast commitować.
+3. **Po commicie**: `git show --stat HEAD` — jeśli w commicie są pliki spoza twojej listy, natychmiast zgłoś (nie cofaj historii samodzielnie).
+
+Do plików ZBIORCZYCH (NOC_PRZEGLAD_MODULOW.md, DZIENNIK_GRAFIKA.md) wolno DOPISYWAĆ sekcję — nigdy zapisywać całego pliku z własnej pamięci (kasacja czterech raportów, patrz Z-15).
+
+## ★★ REGUŁA NR 15 — przed oddaniem do odbioru: bramka mechaniczna, nie uważność (2026-08-31)
+
+Żadna partia nie idzie do właściciela bez `node scripts/dev/odbior-kontrola.mjs` z wynikiem
+„CZYSTO". Bramka sprawdza dla każdej karty w odbiorze: czy istnieje zrzut w obu motywach, czy
+najnowszy nie jest sprzed naprawy, czy nie jest przestarzały i czy nie jest podejrzanie mały
+(biały ekran waży kilkanaście kilobajtów).
+
+**Powód:** 2026-08-31 strona odbioru pokazywała stare zrzuty na 120 z 229 kart, bo indeks
+wybierał plik po kolejności alfabetycznej katalogów. Nikt tego nie zauważył okiem przez cały
+dzień — wykrył to dopiero manifest zbudowany maszynowo.
+
+**Druga część reguły:** ocena ekranu po naprawie jest nieważna, dopóki ktoś nie obejrzy zrzutu
+ZROBIONEGO PO tej naprawie. Tego samego dnia osiem ekranów wróciło do niskiej oceny, bo raport
+mówił „naprawione", a obraz tego nie potwierdzał. Awans oceny wymaga obrazu, nie deklaracji.
+
+## ★★ REGUŁA NR 16 — reguła dopuszcza czy nakazuje? (2026-09-01)
+
+Przed naprawą powołującą się na wcześniejszą decyzję właściciela sprawdź, czy ta decyzja
+**nakazuje** zmianę, czy tylko **dopuszcza** stan zastany. Robotnik przeczytał „angielskiego nie
+trzeba tłumaczyć na polski" jako „polski trzeba zamienić na angielski" i odpolszczył działający
+ekran — dzień po tym, jak właściciel zaakceptował sąsiedni ekran po polsku.
+
+**Test:** jeśli po naprawie dwa sąsiadujące ekrany zaczynają mówić różnymi językami, różnymi
+słowami albo różnym stylem — reguła została rozciągnięta za daleko. Cofnij i zapytaj.
+
+## ★★ REGUŁA NR 17 — ekran harnessu pokazuje PRODUKT, nie własną kompozycję (2026-09-01, po audycie przyrządu)
+
+Ekran `dev-render/screens/*.tsx` istnieje po to, żeby właściciel obejrzał PRODUKT bez logowania.
+Nie wolno mu dokładać paska, panelu ani szyny, których produkcja nie stawia, montować komponentu,
+do którego w `src/` nie prowadzi żaden wołacz, przepisywać markupu zamiast montować komponent, ani
+ściskać treści w `max-w-*`, którego u wołacza nie ma. Kadr ma być tym, co widzi klient — nie
+lepszym, nie węższym, nie bogatszym.
+
+**Przed każdą partią do odbioru (obok reguły 15) obowiązkowo:**
+
+```
+node scripts/check-dev-render-parytet.mjs      # musi dać „CZYSTO" (kod wyjścia 0)
+```
+
+Bramka liczy trzy rzeczy: **R1** — każdy montowany komponent ma realnego wołacza w `src/`
+(a ekran montuje co najmniej jeden komponent produkcyjny); **R2** — każda para komponentów
+montowanych razem współwystępuje w co najmniej jednym pliku produkcyjnym; **R3** (ostrzeżenie) —
+narzucona szerokość istnieje u wołacza. Dług zastany jest w
+`scripts/check-dev-render-parytet.baseline.txt`; przepuszczenie ekranu wymaga wpisu z POWODEM
+(„przyrząd pomiarowy, nie ekran produktu" przechodzi świadomie, nie po cichu).
+
+**Powód:** audyt `AUDYT_PRZYRZADU_20260901.md` znalazł **41 ekranów** pokazujących co innego niż
+produkt, z czego **29 jest w odbiorze z oceną A lub B**. W jednym przypadku (`agent-plan-canvas`)
+właściciel wystawił **najwyższą ocenę REGRESJI** — układowi dwóch wąskich paneli, który kod
+produkcyjny opisuje jako błąd już naprawiony, bo „zjadał połowę ekranu". Defekt 175 (`idea-table`)
+przeżył DWIE naprawy wymierzone dokładnie w ten plik: po usunięciu `ArtifactRightPanel` została
+druga wymyślona warstwa (`TopBar`), której nikt nie zobaczył, bo nikt nie liczył tego mechanicznie.
+
+**Konsekwencja dla oceny:** ocena wystawiona na ekranie, który bramka zgłasza w R1 albo R2, nie
+jest oceną produktu. Napraw ekran i pokaż właścicielowi ponownie — nie awansuj karty na starym
+zrzucie (reguła 13 i 15).
+
+## ★★ REGUŁA NR 18 — po każdym scaleniu `dev-render/main.tsx`: bezpiecznik pliku (2026-09-01)
+
+Po każdym scaleniu `dev-render/main.tsx` (dwa tory dopisują do niego równolegle) uruchom:
+
+```
+scripts/dev/check-devrender-main.sh      # musi dać kod wyjścia 0
+```
+
+Sprawdza trzy rzeczy naraz: czy plik się parsuje, czy każdy leniwy import wskazuje na istniejący
+plik, czy żaden klucz ekranu nie jest zdublowany (cichy duplikat nadpisuje pierwszy — ekran wygląda
+jak niewidoczny, choć jest zarejestrowany).
+
+**Powód:** narzędzie przejęte od toru „Funkcje" (`scripts/dev/check-devrender-main.sh`,
+`github-backup/codex/m03-admin-20260824`). U nich scalenie metodą „zachowaj obie strony" zgubiło
+klamrę zamykającą i zdublowało klucz ekranu — cały harness nie wstawał na czystym pobraniu, choć
+u autora scalenia działał. U nas ten sam plik dwukrotnie wyglądał jak „ekran się nie renderuje", a
+przy przejęciu bezpiecznika okazało się, że plik ma w tej chwili realny zdublowany klucz
+(`document-studio-blocks-i18n`, linie 1546 i 1559) — dowód, że defekt nie jest teoretyczny.
+
+## ★★ REGUŁA NR 19 — zrzut ekranu, który coś liczy, czeka na WYNIK, nie na czas (2026-09-01)
+
+Ekran, który po wejściu albo po kliknięciu dociąga/oblicza wynik (wykres, histogram, policzony
+raport), zrzucaj przez `--wynik-selektor=<css>` (`scripts/dev/grafika-zrzuty.mjs`), nie przez sam
+`--osiad`. Para light/dark musi pokazywać TEN SAM stan programu — obecność wyniku w DOM w obu
+wariantach w chwili zrzutu, sprawdzoną `checkScreenshotPairState`.
+
+**Powód:** stały czas to loteria — odbiór dyżuru 233 zmierzył parę, w której light zdążył pokazać
+sam formularz, a dark już policzony wynik (KSZTAŁT 19), a stary bezpiecznik samej jasności to
+przepuszczał tym łatwiej, im większy był defekt.
+
+## ★★ REGUŁA NR 20 — zlecenie obejmuje rodzinę, nie punkt (2026-09-01)
+
+Zanim wykonawca tknie zgłoszoną pozycję, wypisuje CAŁE jej rodzeństwo — pozostałe trasy tej
+rodziny, pozostałe piętra mechanizmu, pozostałe zakładki ekranu, pozostałe wywołania funkcji —
+i przy KAŻDEJ podaje, czy ma już poprawkę. Zgłoszona pozycja jest próbką, nie zakresem.
+
+**Powód:** dziś, w dwóch torach naraz, ten sam kształt wyszedł CZTEROKROTNIE — mechanizm ma
+kilka pięter, część naprawiona poprawnie, jedno pominięte, a poprawny wzorzec stoi kilkadziesiąt
+linii obok w TYM SAMYM pliku. To nie jest niedbałość wykonawcy: jeśli zlecenie mówi „napraw tę
+trasę", wykonawca naprawia tę trasę i ma rację. Wada jest w zleceniu, czyli po stronie nadzorcy.
+Uważność jako lekarstwo zawodzi zawsze.
+
+**Trop praktyczny:** szukaj rodzeństwa, które JUŻ MA poprawkę — gdzie ktoś raz mapował albo
+kontrolował, tam prawie na pewno są miejsca, gdzie zapomniał; istniejąca poprawna implementacja
+obok jest najsilniejszym sygnałem, że reszta rodziny jest zepsuta.
+
+## ★★ REGUŁA NR 21 — dwa bezpieczniki mogą karmić się z jednego źródła (2026-09-01)
+
+Gdy dwie niezależne kontrole mówią to samo, sprawdź najpierw, czy nie biorą danych z tego
+samego źródła. To nie jest „jeden bezpiecznik zawiódł" — to zgodne potwierdzenie nieprawdy, a
+ono wygląda mocniej niż pojedyncza kontrola, więc usypia skuteczniej.
+
+**Powód — dwa zmierzone przypadki dziś:** (a) na ekranie Audytów test jednostkowy i atrapa
+harnessu OBIE fabrykowały dane w kształcie frontu, a nie serwera — zielony test i poprawny
+zrzut nie znaczyły nic; (b) w drugim torze atrapa bazy melduje „zmieniono 1 wiersz" niezależnie
+od warunku, więc przy defekcie „zapis jest pusty" potwierdzała udany zapis, którego nie było.
+
+**Wniosek praktyczny:** atrapa danych ma mieć kształt SERWERA, nie kształt wygodny dla frontu.
+Kolejność naprawy: najpierw popraw atrapę, pokaż, że ekran psuje się widocznie, dopiero potem
+napraw kod — inaczej naprawa jest deklaracją.

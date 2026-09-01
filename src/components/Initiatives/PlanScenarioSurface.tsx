@@ -88,6 +88,26 @@ interface RegisterRow extends TableRow {
 interface Props extends CanonicalMenu3Contract {
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
   demoMode?: boolean;
+  /**
+   * Odbiór grafiki 141-plan-scenario (2026-08-31) — DEFEKT „Otwórz".
+   *
+   * Kanoniczny przycisk „Otwórz" w nagłówku `StandardPreview` obiecuje OBIEKT
+   * wiersza, czyli KARTĘ INICJATYWY. Był podpięty pod `showWorkspace`, co
+   * montowało warsztat planu POD tabelą (druga tabela pod pierwszą, strona
+   * rosła z 900 px do 2681 px) — przycisk nie prowadził tam, dokąd obiecywał.
+   *
+   * Wzorzec rodzica jest już w module: `PortfolioHealthView` dostaje
+   * `onOpenInitiative?: (id, title) => void`, a `InitiativesHub` wiąże je
+   * z `handleOpenInitiativeDocument` (InitiativesHub.tsx §renderContent).
+   * Ta powierzchnia idzie tą samą drogą.
+   *
+   * Gdy rodzic NIE poda handlera (np. harness dev-render, gdzie nie ma
+   * hosta karty), „Otwórz" renderuje się WYŁĄCZONY z powodem w tooltipie
+   * (kanon FIX-1 `StandardPreview.openDisabledReason`) — zamiast milczeć
+   * albo prowadzić w złe miejsce. Warsztat planu ma własną, uczciwie
+   * nazwaną akcję „Otwórz narzędzia planu".
+   */
+  onOpenInitiative?: (id: string, title: string) => void;
 }
 const formatDate = (value: string | null) => {
   if (!value) return 'UNKNOWN';
@@ -210,6 +230,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   activePreset,
   onCountsChange,
   demoMode = false,
+  onOpenInitiative,
 }) => {
   const { t } = useTranslation();
   const [rows, setRows] = useState<RegisterRow[]>([]);
@@ -550,6 +571,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const showWorkspace = () => {
     if (draft && selectedId) setWorkspaceOpen(true);
   };
+  /**
+   * „Otwórz" = KARTA INICJATYWY (obiekt wiersza), nie warsztat planu.
+   * Zwraca `undefined`, gdy rodzic nie potrafi otworzyć karty — wtedy
+   * `StandardPreview` renderuje wyłączony przycisk z powodem, a nie akcję
+   * prowadzącą w inne miejsce niż napis.
+   */
+  const openInitiativeCard = useCallback(
+    (id: string | null) => {
+      if (!onOpenInitiative || !id) return;
+      const row = planWindowRows.find((item) => item.id === id);
+      onOpenInitiative(id, row?.title ?? id);
+    },
+    [onOpenInitiative, planWindowRows]
+  );
+  const openCardDisabledReason = onOpenInitiative
+    ? undefined
+    : t('initiatives.planScenario.openCardUnavailable', {
+        defaultValue: 'Kartę inicjatywy otwiera moduł Inicjatywy — ten widok jest tylko planem.',
+      });
   const create = () => {
     const periods = createWeeklyPeriods(newStart, newWeekCount);
     if (
@@ -975,7 +1015,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         selectedId={selectedWindowId}
         selectedItem={visiblePlanWindows.find((row) => row.id === selectedWindowId) ?? null}
         onSelect={setSelectedWindowId}
-        onOpenFull={showWorkspace}
+        onOpenFull={onOpenInitiative ? (id) => openInitiativeCard(id) : undefined}
+        openDisabledReason={openCardDisabledReason}
         itemIds={visiblePlanWindows.map((row) => row.id)}
         getItemById={(id) => visiblePlanWindows.find((row) => row.id === id) ?? null}
         previewOpen={!workspaceOpen && Boolean(selectedWindowId)}
@@ -984,7 +1025,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             embedded
             title={row.title}
             onClose={() => setSelectedWindowId(null)}
-            onOpenFull={showWorkspace}
+            onOpenFull={onOpenInitiative ? () => openInitiativeCard(row.id) : undefined}
+            openDisabledReason={openCardDisabledReason}
             meta={{
               pills: [
                 { label: t(planBandKey[row.band] ?? row.band), tone: 'neutral' },
@@ -1040,15 +1082,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 type: 'portfolio',
               },
             ]}
+            /*
+             * Odbiór grafiki 174-domkniecie (2026-09-01): pastylka w stopce
+             * podglądu WIERSZA prowadziła do `showWorkspace`, czyli wsuwała
+             * warsztat planu POD tabelę. Właściciel: „narzędzie otwiera tę
+             * wybraną linię jako tabelę poniżej tej tabeli. Ma ona otwierać
+             * konkretną kartę." Panel jest zakresu WIERSZA, więc jego akcja
+             * musi prowadzić do obiektu wiersza — karty inicjatywy. Warsztat
+             * planu (zakres PLANU) ma własny przycisk w pasku nad tabelą.
+             */
             actions={{
               informational: [
                 {
-                  id: 'open-workspace',
+                  id: 'open-initiative-card',
                   variant: 'neutral',
-                  label: t('initiatives.planScenario.openWorkspace'),
+                  label: t('initiatives.planScenario.openInitiativeCard'),
                   icon: Eye,
                   shortcut: 'O',
-                  onClick: showWorkspace,
+                  onClick: () => openInitiativeCard(row.id),
+                  disabled: !onOpenInitiative,
                 },
               ],
             }}
@@ -1129,14 +1181,29 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           data={visiblePlanWindows}
           selectedRowId={selectedWindowId}
           onRowClick={(row) => setSelectedWindowId(String(row.id))}
-          onRowDoubleClick={showWorkspace}
+          onRowDoubleClick={
+            onOpenInitiative ? (row) => openInitiativeCard(String(row.id)) : undefined
+          }
+          /*
+           * Odbiór grafiki 174-domkniecie (2026-09-01): akcja GŁÓWNA kebaba
+           * wiersza (blok 1 kanonu = „akcja główna encji: View/Open") była
+           * podpięta pod `showWorkspace` — czyli jedyne „Otwórz" dostępne
+           * z wiersza wsuwało DRUGĄ TABELĘ pod pierwszą, a nie kartę encji.
+           * Właściciel nie mógł z tego ekranu dojść do inicjatywy w ogóle.
+           * Teraz blok 1 = karta inicjatywy (ta sama ścieżka co dwuklik
+           * i „Otwórz" w nagłówku podglądu); gdy host nie potrafi otworzyć
+           * karty, pozycja jest wyłączona z powodem, a nie podmieniona na
+           * akcję prowadzącą gdzie indziej niż napis.
+           */
           rowMenu={(row) => ({
             primary: [
               {
-                id: 'open-workspace',
-                label: t('initiatives.planScenario.openWorkspace'),
+                id: 'open-initiative-card',
+                label: t('initiatives.planScenario.openInitiativeCard'),
                 icon: Eye,
-                onClick: showWorkspace,
+                onClick: onOpenInitiative ? () => openInitiativeCard(String(row.id)) : undefined,
+                disabled: !onOpenInitiative,
+                note: openCardDisabledReason,
               },
             ],
             universalHandlers: {
@@ -1221,37 +1288,24 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               </button>
             </div>
           </div>
-          <div className="mb-4">
-            <StandardTable
-              columns={[
-                { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true },
-                { id: 'band', label: t('initiatives.planScenario.columns.window'), sortable: true },
-                {
-                  id: 'target',
-                  label: t('initiatives.planScenario.workbench.proposedWindow'),
-                  sortable: true,
-                },
-                {
-                  id: 'dependency',
-                  label: t('initiatives.planScenario.columns.dependencies'),
-                  sortable: true,
-                },
-                { id: 'capacity', label: t('initiatives.planScenario.columns.capacity'), sortable: true },
-                {
-                  id: 'confidence',
-                  label: t('initiatives.planScenario.workbench.confidence'),
-                  sortable: true,
-                },
-                { id: 'conflict', label: t('initiatives.planScenario.columns.conflict'), sortable: true },
-              ]}
-              data={visiblePlanWindows}
-              persistKey="initiatives.plan-windows.v1"
-              empty={{
-                title: t('initiatives.planScenario.workbench.noMatchingTitle'),
-                description: t('initiatives.planScenario.workbench.noMatchingDescription'),
-              }}
-            />
-          </div>
+          {/*
+            * Odbiór grafiki 174-domkniecie (2026-09-01) — USUNIĘTA DRUGA TABELA.
+            *
+            * Warsztat planu renderował tu `StandardTable` na tym SAMYM zbiorze
+            * `visiblePlanWindows` co tabela główna, tyle że z węższym zestawem
+            * kolumn. Efekt na ekranie: po kliknięciu „Otwórz narzędzia planu"
+            * pod pierwszą tabelą wysuwała się DRUGA tabela z tymi samymi
+            * wierszami. Dokładnie to zgłosił właściciel 2026-08-30:
+            * „narzędzie otwiera tę wybraną linię jako tabelę poniżej tej
+            * tabeli. Ma ona otwierać konkretną kartę. W ogóle nie rozumiem,
+            * jak to działa."
+            *
+            * Duplikat nie niósł żadnej informacji, której nie ma tabela główna
+            * (te same wiersze, podzbiór kolumn, bez podglądu i bez kebaba),
+            * a warsztat i tak edytuje okna niżej — w „Osi czasu" i w edytorze
+            * kolejności. Warsztat zostaje NARZĘDZIEM (horyzont · zakres · oś
+            * czasu · kolejność), a nie powtórzoną listą.
+            */}
           <fieldset className="mb-4 rounded-md border border-c-border p-3">
             <legend className="px-1 text-sm font-medium">
               {t('initiatives.planScenario.workbench.horizon')}
@@ -1506,14 +1560,16 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                                 aria-pressed={active}
                                 className={`min-h-12 w-full p-2 text-xs transition ${
                                   active
-                                    ? 'bg-c-accent text-white'
+                                    ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950'
                                     : 'bg-c-surface hover:bg-c-surface-raised'
                                 }`}
                                 onClick={() =>
                                   assignWindowToPeriod(window.initiativeId, periodIndex)
                                 }
                               >
-                                {active ? window.confidence : '—'}
+                                {active
+                                  ? t(planConfidenceKey[window.confidence] ?? window.confidence)
+                                  : '—'}
                               </button>
                             </td>
                           );
@@ -1643,10 +1699,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                               })
                             }
                           >
-                            <option>UNKNOWN</option>
-                            <option>LOW</option>
-                            <option>MEDIUM</option>
-                            <option>HIGH</option>
+                            {/* Wartość zapisywana zostaje angielska (kontrakt
+                                backendu), tłumaczy się wyłącznie etykieta opcji. */}
+                            {(['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH'] as const).map((level) => (
+                              <option key={level} value={level}>
+                                {t(planConfidenceKey[level] ?? level)}
+                              </option>
+                            ))}
                           </select>
                           <textarea
                             aria-label={t('initiatives.planScenario.workbench.rationaleAria', {
@@ -1695,7 +1754,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                         <div>
                           {window.constraintSnapshot.map((constraint) => (
                             <div key={constraint.constraintId} className="text-xs">
-                              {constraint.state}: {constraint.detail}
+                              {/* ta sama mapa co w kolumnach — bez niej w tej samej
+                                  sekcji zostawało gołe „UNKNOWN:" */}
+                              {t(planReadinessStateKey[constraint.state] ?? constraint.state)}:{' '}
+                              {constraint.detail}
                             </div>
                           ))}
                           <button

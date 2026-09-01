@@ -2377,4 +2377,206 @@ describe('UnifiedChatPanel (L2)', () => {
       expect(shown.trim().toLowerCase()).not.toBe('done.');
     });
   });
+
+  // =========================================================================
+  // Dyżur 172 — „JEDNA TERESA": kontekst obiektu MUSI dolecieć do modelu.
+  //
+  // Decyzja właściciela 2026-09-01 zdjęła czaty z paneli artefaktów i zostawiła
+  // przycisk „Zapytaj Teresę o tę inicjatywę". Przycisk otwierał Teresę, ale
+  // KONTEKST OBIEKTU do niej nie docierał — `selectedObjectId`/
+  // `selectedObjectType` w ładunku do modelu były `null`, bo:
+  //   • `MainLayout` podawał propsem kontekst wyliczony z TRASY (bez entityId),
+  //   • pełne okno `/chat` renderuje panel BEZ PROPSA w ogóle.
+  // Te testy patrzą DOKŁADNIE na to, co idzie do modelu (`startStream` arg 3),
+  // a nie na to, że „coś się ustawiło w store".
+  // =========================================================================
+  describe('kontekst obiektu w ładunku do modelu (172)', () => {
+    const INITIATIVE_PIN = {
+      type: 'initiative',
+      entityId: 'init-42',
+      entityName: 'Redukcja kosztów magazynu',
+      entityData: { lifecycle: 'draft' },
+      conversationId: 'conv-1',
+      originPath: '/initiatives/init-42',
+      ts: 1_756_000_000_000,
+    };
+
+    // Kontekst, jaki `MainLayout` wylicza z trasy i podaje propsem do doku
+    // (MainLayout.tsx:155-161, :485-489) — ma `view`/`type`/`projectId`,
+    // NIE MA `entityId`. To on nadpisywał encję przed naprawą.
+    const ROUTE_CONTEXT_FROM_MAIN_LAYOUT: any = {
+      view: 'INITIATIVES',
+      type: 'dashboard',
+      projectId: 'proj-9',
+      timestamp: new Date('2026-09-01T08:00:00Z'),
+    };
+
+    function renderAt(ui: React.ReactElement, path: string) {
+      return render(<MemoryRouter initialEntries={[path]}>{ui}</MemoryRouter>);
+    }
+
+    async function sendAndReadScreenContext() {
+      fireEvent.click(screen.getByTestId('send-button'));
+      await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+      return startStreamMock.mock.calls.at(-1)?.[3]?.screenContext;
+    }
+
+    it('PEŁNE OKNO (/chat, panel bez propsa) dostaje id i typ obiektu', async () => {
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(<UnifiedChatPanel mode="full" />, '/chat/conv-1');
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext).toEqual(
+        expect.objectContaining({
+          selectedObjectId: 'init-42',
+          selectedObjectType: 'initiative',
+        })
+      );
+    });
+
+    it('DOK: kontekst obiektu wygrywa z kontekstem trasy podanym przez MainLayout', async () => {
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(
+        <UnifiedChatPanel mode="split" workspaceContext={ROUTE_CONTEXT_FROM_MAIN_LAYOUT} />,
+        '/initiatives/init-42'
+      );
+
+      const screenContext = await sendAndReadScreenContext();
+      // To jest sedno: props z MainLayout niósł `type: 'dashboard'` i ZERO
+      // entityId. Gdyby nadpisywał — tu byłoby `dashboard`/`null`.
+      expect(screenContext).toEqual(
+        expect.objectContaining({
+          selectedObjectId: 'init-42',
+          selectedObjectType: 'initiative',
+        })
+      );
+    });
+
+    it('po odświeżeniu strony na karcie obiektu kontekst wciąż dociera (ścieżka, nie rozmowa)', async () => {
+      // Po F5 poza trasą /chat store zeruje `activeConversationId` (merge()
+      // w useConversationStore), więc dopasowanie po rozmowie NIE zadziała —
+      // ratuje `originPath` odtworzony z localStorage przez `partialize`.
+      conversationStoreState.activeConversationId = null;
+      conversationStoreState.teresaEntityContext = {
+        ...INITIATIVE_PIN,
+        conversationId: null,
+      };
+      // Po F5 nie ma aktywnej rozmowy — pierwsza wiadomość ją zakłada.
+      createConversationMock.mockResolvedValue({ id: 'conv-po-odswiezeniu' });
+
+      renderAt(
+        <UnifiedChatPanel mode="split" workspaceContext={ROUTE_CONTEXT_FROM_MAIN_LAYOUT} />,
+        '/initiatives/init-42'
+      );
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext).toEqual(
+        expect.objectContaining({
+          selectedObjectId: 'init-42',
+          selectedObjectType: 'initiative',
+        })
+      );
+    });
+
+    it('JEDYNA widoczna zmiana w interfejsie: pole wpisywania nazywa obiekt', async () => {
+      // Naprawa jest z natury niewidoczna (kontekst jedzie w ładunku), ale ma
+      // jeden skutek na ekranie: `UnifiedChatPanel` buduje placeholder z
+      // `workspaceContext.entityName`. Przed naprawą w doku był tam kontekst
+      // trasy — BEZ nazwy obiektu — więc placeholder był ogólny.
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(
+        <UnifiedChatPanel mode="split" workspaceContext={ROUTE_CONTEXT_FROM_MAIN_LAYOUT} />,
+        '/initiatives/init-42'
+      );
+
+      expect(screen.getByTestId('chat-placeholder').textContent).toContain(
+        'Redukcja kosztów magazynu'
+      );
+    });
+
+    it('BEZ kontekstu obiektu ładunek wygląda jak dotąd (wsteczna zgodność)', async () => {
+      conversationStoreState.activeConversationId = 'conv-1';
+      conversationStoreState.teresaEntityContext = null;
+
+      renderAt(<UnifiedChatPanel mode="full" />, '/chat/conv-1');
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext?.selectedObjectId).toBeNull();
+      expect(screenContext?.selectedObjectType).toBeNull();
+    });
+
+    it('kontekst NIE wycieka na obcy ekran w innej rozmowie', async () => {
+      conversationStoreState.activeConversationId = 'conv-inna';
+      conversationStoreState.teresaEntityContext = INITIATIVE_PIN;
+
+      renderAt(<UnifiedChatPanel mode="full" />, '/excele');
+
+      const screenContext = await sendAndReadScreenContext();
+      expect(screenContext?.selectedObjectId).toBeNull();
+      expect(screenContext?.selectedObjectType).toBeNull();
+    });
+  });
+
+  // =========================================================================
+  // Dyżur 172 — MOST „Teresa sama poprawia artefakt" w jednym oknie Teresy.
+  //
+  // Dopóki czat był OSADZONY w ekranie artefaktu, ekran podawał propsa
+  // `onModuleIntent`. Po decyzji „jedna Teresa, w swoim oknie" tamten props
+  // nie miał kto podać (dok renderuje MainLayout, pełne okno AppRoutes), więc
+  // most `DeckBuilder` (prompt → agent-edit → banner Zaakceptuj/Odrzuć) stał
+  // się nieosiągalny z ekranu. Ekran publikuje teraz handler w `uiSlice`.
+  // =========================================================================
+  describe('most edycji artefaktu z jednego okna Teresy (172)', () => {
+    it('bierze handler opublikowany przez ekran artefaktu, gdy nie ma propsa', async () => {
+      const handler = vi.fn(async () => ({ handled: true, reply: 'Przygotowałam poprawkę talii.' }));
+      appStoreState.chatModuleIntent = { owner: 'deckBuilder:deck-7', handler };
+      conversationStoreState.activeConversationId = 'conv-1';
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+      fireEvent.click(screen.getByTestId('send-button'));
+
+      await waitFor(() => expect(handler).toHaveBeenCalledWith('hello'));
+      // Tura należy do modułu — nie idzie równolegle do modelu.
+      expect(startStreamMock).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(addChatMessageMock).toHaveBeenCalledWith(
+          expect.objectContaining({ role: 'ai', content: 'Przygotowałam poprawkę talii.' })
+        )
+      );
+      appStoreState.chatModuleIntent = null;
+    });
+
+    it('gdy moduł NIE obsłużył wiadomości, tura wraca do Teresy (nic nie jest połykane)', async () => {
+      const handler = vi.fn(async () => ({ handled: false }));
+      appStoreState.chatModuleIntent = { owner: 'deckBuilder:deck-7', handler };
+      conversationStoreState.activeConversationId = 'conv-1';
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+      fireEvent.click(screen.getByTestId('send-button'));
+
+      await waitFor(() => expect(handler).toHaveBeenCalled());
+      await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+      appStoreState.chatModuleIntent = null;
+    });
+
+    it('props onModuleIntent ma pierwszeństwo (wsteczna zgodność osadzonych czatów)', async () => {
+      const fromStore = vi.fn(async () => ({ handled: true, reply: 'ze store' }));
+      const fromProp = vi.fn(async () => ({ handled: true, reply: 'z propsa' }));
+      appStoreState.chatModuleIntent = { owner: 'x', handler: fromStore };
+      conversationStoreState.activeConversationId = 'conv-1';
+
+      renderWithRouter(<UnifiedChatPanel mode="full" onModuleIntent={fromProp} />);
+      fireEvent.click(screen.getByTestId('send-button'));
+
+      await waitFor(() => expect(fromProp).toHaveBeenCalled());
+      expect(fromStore).not.toHaveBeenCalled();
+      appStoreState.chatModuleIntent = null;
+    });
+  });
 });

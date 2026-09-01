@@ -23,6 +23,8 @@ const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
 document.documentElement.classList.toggle('dark', theme === 'dark');
 document.documentElement.setAttribute('data-theme', theme);
 
+const lang = params.get('lang') === 'en' ? 'en' : 'pl';
+
 const el = document.getElementById('root');
 if (el) {
   // KnownToolDetailView calls `.map()` directly on several
@@ -44,9 +46,13 @@ if (el) {
       </React.StrictMode>
     );
   };
+  // i18n (2026-08-31, Z-21): język ustawiamy PO 'initialized' i montujemy w .finally —
+  // wzorzec z tools-outputs-insights-tab-main.tsx (naprawa 2026-08-27); changeLanguage
+  // przed montażem rozstraja sekwencję czekania na init (biały ekran).
+  const start = () => { void i18n.changeLanguage(lang).finally(mount); };
   if (i18n.isInitialized) {
-    mount();
+    start();
   } else {
-    i18n.on('initialized', mount);
+    i18n.on('initialized', start);
   }
 }

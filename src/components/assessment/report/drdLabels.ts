@@ -14,12 +14,61 @@
  * the internal team. So this file deliberately exposes ONLY the
  * structural/topic labels (area name, axis name — e.g. "Procesy Sprzedaży",
  * "Zarządzanie Danymi") needed to say WHICH dimension a frozen number
- * belongs to. It does NOT expose `MethodLevel.title` /
- * `canonicalDefinition` / `description` / `examples` /
- * `technologyExamples` / `misScoringTraps` — the actually-curated QBank v2
- * level content the licence notice names specifically. A report needing
- * that content requires an explicit go-ahead from the methodology owner
- * first (flagged to the coordinator, not decided unilaterally here).
+ * belongs to. It does NOT expose `canonicalDefinition` / `examples` /
+ * `technologyExamples` / `misScoringTraps` — the QBank v2 coaching content
+ * the licence notice names specifically.
+ *
+ * ★★★ 2026-08-31 — ZGODA POSZERZONA DO PEŁNEJ. Słowa właściciela metodyki:
+ *     „W 100% DRD jest moją licencją, możesz korzystać z niej dowolnie.
+ *      A wiodącym językiem i tak jest język angielski."
+ *
+ * Skutki, obowiązujące od tej daty:
+ *  1. Ograniczenie zakresu z 30.08 (opisy poziomów TAK, warstwa coachingowa QBank v2 NIE)
+ *     **przestaje obowiązywać** — wolno korzystać z całej metodyki, w tym `canonicalDefinition`,
+ *     `examples`, `technologyExamples`, `misScoringTraps`.
+ *  2. `usageRestriction: 'internal_only'` z `compileDrdPack.ts` jest wobec właściciela
+ *     bezprzedmiotowe — chroniło jego materiał przed wyciekiem, nie jego własny produkt.
+ *  3. **Angielskie nazwy i opisy poziomów NIE SĄ defektem.** Angielski jest językiem WIODĄCYM
+ *     metodyki; polski obowiązuje w INTERFEJSIE produktu (przyciski, nagłówki, komunikaty).
+ *     Granica i przykłady: docs/program/grafika/KANON_Z_ODBIOROW.md, wpis z 2026-08-31.
+ *
+ * ★★ ZGODA WŁAŚCICIELA METODYKI — POTWIERDZONA WPROST 2026-08-30 (wieczór).
+ * Nadzorca toru grafiki zapytał właściciela dosłownie, czy potwierdza zgodę na
+ * użycie opisów poziomów w raporcie WYCHODZĄCYM DO KLIENTA. Odpowiedź: TAK.
+ * Uzasadnienie właściciela: raport bez definicji poziomów jest szkieletem,
+ * a brak dobrego dokumentu z tego produktu jest jego najdłużej otwartym zarzutem.
+ *
+ * ZAKRES TEJ ZGODY — czytaj, zanim rozszerzysz plik dalej:
+ *   OBJĘTE:      nazwa osi · opis osi · nazwa obszaru · tytuł i opis poziomu.
+ *   NIEOBJĘTE:   warstwa coachingowa QBank v2 — `canonicalDefinition`,
+ *                `examples`, `technologyExamples`, `misScoringTraps`.
+ *                Na nią zgody NIE udzielono i nie wolno jej domniemywać.
+ * Rozszerzenie poza „OBJĘTE" wymaga NOWEGO, osobnego pytania do właściciela.
+ * Zapis decyzji: docs/program/grafika/KANON_Z_ODBIOROW.md.
+ *
+ * ★ 2026-08-30 — ZAKRES ROZSZERZONY O OPIS OSI I OPIS POZIOMU, na wyraźne
+ * polecenie właściciela metodyki (DBR77 / dr Piotr Wiśniewski, ten sam
+ * podmiot, którego dotyczy nota licencyjna). Jego specyfikacja raportu
+ * z oceny brzmi dosłownie: „Siedem osi — dla każdej z nich opisujemy
+ * najpierw samą oś, a następnie obszar". Bez `DRDAxis.description`
+ * i `DRDLevel.title/description` tego zdania nie da się wykonać — raport
+ * drukował sam nagłówek obszaru i liczby (zmierzone:
+ * `docs/program/grafika/RAPORT_OCENY_STAN.md`, wymagania 2b i 2c = BRAK).
+ * To jest właśnie „explicit go-ahead from the methodology owner", o który
+ * prosił poprzedni akapit. Nadal NIE eksponujemy warstwy coachingowej
+ * QBank v2 (przykłady, pułapki oceniania) — tylko definicję osi i definicję
+ * poziomu, bo to one są treścią raportu dla klienta.
+ *
+ * ★ JĘZYK ŹRÓDŁA. Korpus metodyki w repo jest po angielsku dla osi
+ * 1, 2, 3, 4 i 7; po polsku (w większości) dla osi 5 i 6; opisy SAMYCH osi
+ * są angielskie we wszystkich siedmiu. Zmierzone na `DRD_STRUCTURE`
+ * 2026-08-30: 233 tytuły poziomów, z tego PL 0/0/0/0/11/14/0, oraz 233
+ * opisy poziomów, z tego PL 0/0/0/0/27/26/0. Dlatego każdy zwracany opis
+ * niesie `sourceLanguage` — konsument MUSI to pokazać czytelnikowi zamiast
+ * udawać, że angielski akapit w polskim dokumencie jest polski.
+ * Język nie jest tu wpisany na sztywno, tylko liczony z korpusu
+ * (`levelCorpusLanguage`), więc flaga sama się przełączy w dniu, w którym
+ * tłumaczenie wejdzie do `drdStructure.ts`.
  *
  * Everything below is a pure, static DICTIONARY LOOKUP keyed by the
  * Output's OWN PINNED `methodPackVersion` — never a re-score, never a
@@ -59,6 +108,33 @@ function getCompiledDrdPack(): ReturnType<typeof compileDrdPack>['pack'] | null 
  * compiler reads (`DRD_STRUCTURE`) — structural topic labels only. */
 const AXIS_NAME_BY_ID: Record<string, string> = Object.fromEntries(
   DRD_STRUCTURE.map((axis) => [`axis-${axis.id}`, axis.namePL || axis.name])
+);
+
+/**
+ * Axis id -> ENGLISH axis name, same source (`DRD_STRUCTURE.name`), no
+ * `namePL` fallback. NOT a second copy of the structure — one extra field
+ * pick off the same `DRD_STRUCTURE` array the dictionary above already reads.
+ *
+ * ★ PO CO TO ISTNIEJE, SKORO NIC JEJ DZIŚ NIE UŻYWA (2026-09-01): commit
+ * 2c0e2be8f7 wprowadził ten słownik, żeby slajd 5 prezentacji pokazywał
+ * angielskie nazwy osi (interpretacja granicy językowej z CLAUDE.md: "nazwa
+ * osi to treść metodyki, nie chrome UI"). Decyzja WŁAŚCICIELA z 2026-09-01
+ * to cofnęła: angielski jest wiodącym językiem METODYKI (nie trzeba
+ * tłumaczyć angielskiego na polski), ale to nie znaczy, że trzeba
+ * odpolszczać to, co już jest po polsku — a chwilę wcześniej właściciel
+ * zaakceptował slajd 6 (tytuł osi macierzy) PO POLSKU słowami „tak to jest
+ * super" (`docs/program/grafika/KANON_Z_ODBIOROW.md`, wpis 2026-09-01).
+ * Slajd 5 wrócił więc na domyślne `'pl'` (patrz `dimensionProfileFrom` w
+ * `buildPresentationDeck.ts`) — ale sam mechanizm zostaje w kodzie: gdy
+ * kiedyś trzeba będzie zbudować raport PO ANGIELSKU dla klienta
+ * zagranicznego, wystarczy przekazać `language: 'en'` do `resolveDrdAxisName`
+ * / `resolveGroupName` / `groupNameOrId` — nie trzeba pisać tego od nowa.
+ * `AXIS_NAME_BY_ID` powyżej nadal jest domyślnym słownikiem dla WSZYSTKICH
+ * wołających (`resolveDrdUnitLabel`, sekcja "Wynik per wymiar" dokumentu
+ * raportu, tytuł macierzy slajdu 6, i teraz też slajd 5).
+ */
+const AXIS_NAME_EN_BY_ID: Record<string, string> = Object.fromEntries(
+  DRD_STRUCTURE.map((axis) => [`axis-${axis.id}`, axis.name])
 );
 
 /**
@@ -104,15 +180,168 @@ export function resolveDrdUnitLabel(
 export function resolveDrdAxisName(
   methodPackId: string,
   methodPackVersion: string,
-  axisGroupId: string
+  axisGroupId: string,
+  language: DrdSourceLanguage = 'pl'
 ): string | null {
   if (methodPackId !== DRD_METHOD_PACK_ID) return null;
   const pack = getCompiledDrdPack();
   if (!pack) return null;
   if (pack.manifest.version !== methodPackVersion) return null;
-  return AXIS_NAME_BY_ID[axisGroupId] ?? null;
+  const dict = language === 'en' ? AXIS_NAME_EN_BY_ID : AXIS_NAME_BY_ID;
+  return dict[axisGroupId] ?? null;
 }
 
 export function isDrdPack(methodPackId: string): boolean {
   return methodPackId === DRD_METHOD_PACK_ID;
+}
+
+// ---------------------------------------------------------------------------
+// Warstwa OPISOWA metodyki (oś · obszar · poziom) — patrz nagłówek pliku.
+// ---------------------------------------------------------------------------
+
+export type DrdSourceLanguage = 'pl' | 'en';
+
+/** Polskie znaki diakrytyczne — jedyny sygnał języka, jaki niesie korpus
+ * (`drdStructure.ts` nie ma pola `lang`). Świadomie NIE używamy tego na
+ * pojedynczym zdaniu poziomu: siedem polskich zdań w osiach 5 i 6 nie ma
+ * ani jednej diakrytyki („Prowadzona jest analiza ryzyka.") i zostałyby
+ * oznaczone jako angielskie. Dlatego decyzja zapada na CAŁYM korpusie osi
+ * (funkcja niżej), a nie na zdaniu. */
+const PL_DIACRITICS = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
+
+/**
+ * Język korpusu opisów poziomów DANEJ OSI, liczony (nie wpisany na sztywno):
+ * większość opisów z polskimi diakrytykami → oś przetłumaczona. Zmierzone
+ * 2026-08-30: oś 5 = 27/30, oś 6 = 26/30, pozostałe = 0/25..0/63.
+ */
+function levelCorpusLanguage(axis: (typeof DRD_STRUCTURE)[number]): DrdSourceLanguage {
+  let total = 0;
+  let polish = 0;
+  for (const area of axis.areas) {
+    for (const level of area.levels) {
+      total += 1;
+      if (PL_DIACRITICS.test(level.description || level.title || '')) polish += 1;
+    }
+  }
+  if (total === 0) return 'en';
+  return polish * 2 > total ? 'pl' : 'en';
+}
+
+export interface DrdAxisNarrative {
+  /** Klucz grupy agregacji: `axis-1`…`axis-7`. */
+  readonly axisId: string;
+  /** Numer osi wg metodyki (1..7) — kolejność rozdziałów raportu. */
+  readonly axisNumber: number;
+  readonly axisName: string;
+  /** `DRDAxis.description` — definicja osi. `null`, gdy pakiet jej nie ma. */
+  readonly description: string | null;
+  readonly descriptionLanguage: DrdSourceLanguage;
+  /** Ile poziomów ma skala tej osi (7/5/5/7/6/6/5). */
+  readonly levelCount: number;
+  /** Wszystkie obszary analityczne osi — także te NIEobjęte oceną. */
+  readonly areas: readonly { readonly id: string; readonly name: string }[];
+  /** Język korpusu opisów poziomów tej osi. */
+  readonly levelLanguage: DrdSourceLanguage;
+  /**
+   * Drabina poziomów WSPÓLNA dla wszystkich obszarów tej osi, albo `null`,
+   * gdy obszary mają własne, różne nazwy poziomów.
+   *
+   * ★ To NIE jest szczegół implementacyjny — to bezpiecznik przed fałszem.
+   * Zmierzone 2026-08-30 na `DRD_STRUCTURE`: osie 1 i 2 mają jedną drabinę
+   * dla wszystkich obszarów; oś 3 ma jeden obszar odstający (3B), a osie
+   * 4, 5, 6 i 7 mają po CZTERY obszary z własną drabiną. Każdy, kto
+   * podpisze wiersze macierzy nazwami z `axis.areas[0]`, wypisze dla osi
+   * 4–7 nazwy poziomów innego obszaru — dokładnie ten sam błąd, który
+   * generator DOCX popełnia na etykietach (`areas[0]`, patrz niżej).
+   * `null` znaczy: podpisz wiersze samym numerem poziomu.
+   */
+  readonly sharedLevelLadder: readonly { readonly level: number; readonly title: string }[] | null;
+}
+
+/**
+ * Siedem osi metodyki w kolejności metodycznej, z opisem osi i pełną listą
+ * obszarów. Ta sama bramka na PRZYPIĘTĄ wersję pakietu co
+ * `resolveDrdUnitLabel` — niezgodna wersja zwraca pustą listę, a raport
+ * degraduje się do dotychczasowego, płaskiego układu zamiast pokazać opisy
+ * z innej wersji metodyki niż ta, którą zamrożono.
+ */
+export function listDrdAxisNarratives(
+  methodPackId: string,
+  methodPackVersion: string
+): readonly DrdAxisNarrative[] {
+  if (methodPackId !== DRD_METHOD_PACK_ID) return [];
+  const pack = getCompiledDrdPack();
+  if (!pack) return [];
+  if (pack.manifest.version !== methodPackVersion) return [];
+  return DRD_STRUCTURE.map((axis) => ({
+    axisId: `axis-${axis.id}`,
+    axisNumber: axis.id,
+    axisName: axis.namePL || axis.name,
+    description: axis.description ?? null,
+    descriptionLanguage: PL_DIACRITICS.test(axis.description ?? '') ? 'pl' : 'en',
+    levelCount: axis.levelCount,
+    areas: axis.areas.map((a) => ({ id: a.id, name: a.namePL || a.name })),
+    levelLanguage: levelCorpusLanguage(axis),
+    sharedLevelLadder: sharedLevelLadderOf(axis),
+  }));
+}
+
+/** Patrz `DrdAxisNarrative.sharedLevelLadder`. Porównanie po tytułach
+ * poziomów: jeden odstający obszar unieważnia wspólną drabinę dla całej osi
+ * — bo wiersz macierzy jest jeden na całą oś. */
+function sharedLevelLadderOf(
+  axis: (typeof DRD_STRUCTURE)[number]
+): readonly { level: number; title: string }[] | null {
+  const first = axis.areas[0];
+  if (!first) return null;
+  const signature = (a: (typeof axis.areas)[number]): string =>
+    a.levels.map((l) => `${l.level}:${l.title}`).join('|');
+  const base = signature(first);
+  if (!axis.areas.every((a) => signature(a) === base)) return null;
+  return first.levels.map((l) => ({ level: l.level, title: l.title }));
+}
+
+export interface DrdLevelNarrative {
+  readonly level: number;
+  readonly title: string;
+  readonly description: string;
+  readonly sourceLanguage: DrdSourceLanguage;
+}
+
+/**
+ * Opis KONKRETNEGO poziomu KONKRETNEGO obszaru.
+ *
+ * ★ Bierze `area.levels`, czyli poziomy TEGO obszaru. To jest ta sama
+ * pułapka, na której przewrócił się generator DOCX: `resolveDrdLevelLabelPL`
+ * (`server/src/services/assessment/assessmentDrdReportSchemaService.ts:190`)
+ * przy braku etykiet na osi sięga po `axis.areas[0]`, więc obszar 6C
+ * „Ochrona danych" dostawał w wydanym dokumencie nazwę poziomu obszaru 6A
+ * („HR w strategii") — treść nieprawdziwą w dokumencie poufnym klienta
+ * (`docs/program/grafika/RAPORT_OCENY_STAN.md`, Część I). Tu nie ma fallbacku
+ * na inny obszar: nie ma poziomu → `null`.
+ */
+export function resolveDrdLevelNarrative(
+  methodPackId: string,
+  methodPackVersion: string,
+  unitId: string,
+  level: number | null | undefined
+): DrdLevelNarrative | null {
+  if (level === null || level === undefined) return null;
+  if (methodPackId !== DRD_METHOD_PACK_ID) return null;
+  const pack = getCompiledDrdPack();
+  if (!pack) return null;
+  if (pack.manifest.version !== methodPackVersion) return null;
+  for (const axis of DRD_STRUCTURE) {
+    const area = axis.areas.find((a) => a.id === unitId);
+    if (!area) continue;
+    const found = area.levels.find((l) => l.level === level);
+    if (!found) return null;
+    return {
+      level: found.level,
+      title: found.title,
+      description: found.description,
+      sourceLanguage: levelCorpusLanguage(axis),
+    };
+  }
+  return null;
 }

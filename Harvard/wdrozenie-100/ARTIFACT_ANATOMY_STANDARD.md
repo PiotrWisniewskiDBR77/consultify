@@ -769,6 +769,26 @@ Odwołania `①…㊸` = numery elementów z §9.2 / §9.2b.
 1. **Menu 1 `⑫`:** `㉛`breadcrumb ← · ikona-typ · tytuł inline (L2) · `④`status lifecycle · „zapisano" L5 · [indeks] · `①`primary (przejście stanu / udostępnij / generuj).
 2. **Menu 3:** nawigacja wewn. (klasa L) jako `③`pill (poziom modułu) lub `㉜`underline (wewnątrz artefaktu) + view-local + `①`[AI] (prawa). Klasa S: brak Menu 3.
 3. **Prawy panel `⑪`:** `㉝`accordion — sekcje w stałej kolejności: **Akcje 2rz.** (`①`eksport▸/udostępnij) · **Właściwości** (pola: label L4 + wartość L3, `㊲`avatar, `㉓`switch, `㉔`slider) · **Powiązania** (linki do artefaktów — first-class) · **Komentarze** · **Historia/AI** (`sparkles`).
+
+> **★ SPROSTOWANIE 2026-08-30 (decyzja właściciela po odbiorze `deck-artifact`; zapis: `docs/program/grafika/KANON_Z_ODBIOROW.md`).**
+> Punkt 3 wyżej wymienia PIĘĆ sekcji i nazywa ostatnią „Historia/AI" — to jest nieaktualne i było
+> **realną przyczyną rozjazdu**: przegląd `docs/program/grafika/PRZEGLAD_PRZED_ODBIOREM.md` §Z-2 zmierzył
+> kanon prawego panelu realizowany na PIĘĆ różnych sposobów (brak „Źródeł i założeń" w Ideach, Notatniku
+> i Tabeli idei; trzy różne nazwy ostatniej sekcji; brak „Historii" w warsztacie SWOT).
+>
+> Obowiązuje **SZEŚĆ sekcji obowiązkowych w stałej kolejności**:
+> **Akcje · Właściwości · Powiązania · Źródła i założenia · Komentarze · Historia**
+> (+ **Rezultaty** warunkowo, między „Źródłami" a „Komentarzami", tam gdzie artefakt coś produkuje).
+>
+> · Nazwa ostatniej sekcji to **„Historia"** — bez „/ AI" i bez „i AI". AI jest TYPEM WPISU w strumieniu.
+> · **Sekcja pusta jest WIDOCZNA i uczciwa** (zwinięta, ze stanem pustym), a nie ukryta. Dawna reguła
+>   „lepiej brak niż pusty akordeon" jest uchylona — to ona pozwalała gubić sekcje.
+> · **Teresa NIGDY nie jest treścią sekcji „Historia"** (kontrakt `ArtifactRailTeresaMode`). Wejście do
+>   Teresy = przycisk w sekcji **Akcje** (wzorzec odebrany: `deck-artifact`), albo własny tryb wspólnego
+>   pasa `ArtifactRightRail`.
+> · SSOT w kodzie: `ARTIFACT_PANEL_SECTION_ORDER` (kolejność) + `ARTIFACT_PANEL_SECTION_LABELS` (nazwy)
+>   w `src/components/standard/ArtifactRightPanel.tsx`. Powłoka nadpisuje nazwy sekcji kanonu i sama
+>   domyka panel do sześciu — moduł nie ustala już ani nazw, ani obecności.
 4. **PPM/kebab `⑧`, stany `⑭`, overlaye `⑮⑰⑱⑲`** — identyczne jak Lista.
 
 **Delty centrum + Menu 2 per archetyp:**

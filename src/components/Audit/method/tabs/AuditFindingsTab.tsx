@@ -341,7 +341,13 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '150px',
       render: (row: AuditFindingSummary) => (
-        <span className="text-xs text-c-text-secondary">
+        // Same class of bug as AuditProcessesTab's "leadAuditor" column
+        // (2026-09-01, reguła 20 — sprawdzenie rodziny): ten span nie miał
+        // nawet `truncate` — długie nazwisko właściciela renderowało się na
+        // pełną szerokość i wchodziło w kolumnę „Termin", bo FilterableTable
+        // nie stawia `overflow-hidden` na `<td>` (żeby nie ucinać
+        // popoverów/menu renderowanych przez moduł).
+        <span className="text-xs text-c-text-secondary truncate block max-w-[130px]">
           {(row.ownerUserId && userNameById.get(row.ownerUserId)) || (isPolish ? 'Nieprzypisany' : 'Unassigned')}
         </span>
       ),

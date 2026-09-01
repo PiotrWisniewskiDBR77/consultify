@@ -6,20 +6,30 @@
  *
  * Ten story ODTWARZA 1:1 markup + klasy z realnego pliku (bez logowania/
  * store/API — real component ciągnie cały canvas draft store i nie zmontuje
- * się tu), zamontowany w DWÓCH stanach obok siebie, żeby było widać DIFF:
+ * się tu):
  *
- *   (A) Główny pasek — PO: bez ikony "Historia" (usunięta z widoku głównego,
- *       jak chciało zgłoszenie #87c), tylko New/output/promote/file-actions/⋯.
- *   (B) Kebab "⋯" otwarty, przewinięty do sekcji "Manual editing" (z nową
- *       pozycją "Historia wersji") i "Markdown actions" (z nowym "Import
- *       Markdown (.md)" nad "Download Markdown") — oba oznaczone badge'em
- *       NOWE. Reszta mega-kebaba (Widok canvas, Most common actions, Add
- *       element, AI on selection, Starter templates, Workspace actions,
- *       Capabilities/workflow…) jest ŚWIADOMIE pominięta w tym story — to
- *       osobny, nienaprawiony problem (patrz notatka #87d na dole ekranu),
- *       nie część tej naprawy.
+ *   variant=bar (domyślny) — Główny pasek PO: bez ikony "Historia" (usunięta
+ *       z widoku głównego, jak chciało zgłoszenie #87c), tylko
+ *       New/output/promote/file-actions/⋯.
+ *   variant=kebab — Kebab "⋯" otwarty, przewinięty do sekcji "Manual editing"
+ *       (z nową pozycją "Historia wersji") i "Markdown actions" (z nowym
+ *       "Import Markdown (.md)" nad "Download Markdown") — oba oznaczone
+ *       badge'em NOWE. Reszta mega-kebaba jest ŚWIADOMIE pominięta w tym
+ *       story — pełna struktura kebaba (8 grup po restrukturyzacji #87d) żyje
+ *       w `?screen=canvas-kebab-restructure`.
  *
- * URL params: ?screen=canvas-toolbar-md-history&theme=light|dark&lang=pl|en
+ * ─────────────────────────────────────────────────────────────────────────
+ * ★ 2026-09-01 — ROZDZIELONE na `?variant=` (audyt przyrządu, Kategoria 3).
+ *
+ * Ten ekran wcześniej montował pasek PO i otwarty kebab NARAZ, jeden pod
+ * drugim — dwa stany produktu w jednym kadrze, których użytkownik nigdy nie
+ * widzi razem (kebab otwiera się PO kliknięciu „⋯" na pasku, przesłaniając
+ * go, nie obok niego jako osobny blok). Teraz każdy stan jest osobnym
+ * `?variant=`, jeden montaż na raz (wzór: `prezentacje-template-states.tsx`).
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * URL params: ?screen=canvas-toolbar-md-history&variant=bar|kebab
+ *             [&theme=light|dark][&lang=pl|en]
  */
 import {
   ChevronLeft,
@@ -79,7 +89,7 @@ function MainBarAfter({ isPl }: { isPl: boolean }): React.ReactElement {
   return (
     <div>
       <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-        (A) {isPl ? 'Główny pasek — PO' : 'Main bar — AFTER'}
+        {isPl ? 'Główny pasek — PO' : 'Main bar — AFTER'}
       </div>
       <div className="flex h-[42px] shrink-0 items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-4 dark:border-white/[0.06] dark:bg-navy-950/60">
         <div className="min-w-0 flex-1 text-[15px] font-semibold text-slate-950 dark:text-white">
@@ -138,7 +148,6 @@ function KebabOpen({ isPl }: { isPl: boolean }): React.ReactElement {
   return (
     <div>
       <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-        (B){' '}
         {isPl
           ? 'Kebab „⋯" — sekcje Manual editing + Markdown actions (skrót)'
           : 'Kebab "⋯" — Manual editing + Markdown actions sections (excerpt)'}
@@ -208,40 +217,47 @@ function KebabOpen({ isPl }: { isPl: boolean }): React.ReactElement {
   );
 }
 
+type Variant = 'bar' | 'kebab';
+
+function readVariant(): Variant {
+  const raw = new URLSearchParams(window.location.search).get('variant');
+  return raw === 'kebab' ? 'kebab' : 'bar';
+}
+
 export default function CanvasToolbarMdHistoryScreen(): React.ReactElement {
   const params = new URLSearchParams(window.location.search);
   const isPl =
     (params.get('lang') || 'pl') === 'pl' ||
     (document.documentElement.lang || 'pl').startsWith('pl');
+  const variant = readVariant();
 
   return (
     <div className="min-h-screen w-full bg-slate-50 p-8 dark:bg-navy-950">
       <div className="mx-auto max-w-[820px] space-y-8">
-        <MainBarAfter isPl={isPl} />
-        <KebabOpen isPl={isPl} />
+        {variant === 'bar' ? <MainBarAfter isPl={isPl} /> : <KebabOpen isPl={isPl} />}
 
-        <div className="rounded-xl border border-amber-300/60 bg-amber-50 p-4 text-[11px] leading-5 text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
-          <div className="mb-1 font-semibold uppercase tracking-[0.12em]">
-            #87d — {isPl ? 'wciąż otwarte' : 'still open'}
+        {variant === 'kebab' && (
+          <div className="rounded-xl border border-amber-300/60 bg-amber-50 p-4 text-[11px] leading-5 text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="mb-1 font-semibold uppercase tracking-[0.12em]">
+              #87d — {isPl ? 'ten skrót vs. pełny kebab' : 'this excerpt vs. the full kebab'}
+            </div>
+            {isPl ? (
+              <>
+                Ten ekran pokazuje tylko sekcje „Ręczna edycja" i „Akcje Markdown" (skrót #87c).
+                Pełny kebab „⋯" po restrukturyzacji na 8 nazwanych, zwijalnych grup — włącznie z
+                tymi dwiema pozycjami w ich docelowym miejscu — jest osobnym ekranem:
+                <code className="mx-1">?screen=canvas-kebab-restructure</code>.
+              </>
+            ) : (
+              <>
+                This screen shows only the "Manual editing" and "Markdown actions" sections (excerpt
+                #87c). The full "⋯" kebab after restructuring into 8 named, collapsible groups —
+                including these two items in their final home — lives in a separate screen:{' '}
+                <code className="mx-1">?screen=canvas-kebab-restructure</code>.
+              </>
+            )}
           </div>
-          {isPl ? (
-            <>
-              Kebab „⋯" ma płaskie ikony na głównym pasku (bez tradycyjnego overflow-menu) — ALE sam
-              dropdown „⋯" (Canvas menu) jest wciąż mega-kebabem: Widok canvas, Most common actions,
-              Add element, AI on selection, Ręczna edycja (+ nowa Historia), Starter templates +
-              builder, Workspace actions, materializedTo, Markdown actions (+ nowy Import — 12+
-              pozycji), MD file properties, Capabilities i workflow, workflow ledger. #87d NIE jest
-              rozwiązane — jest osobną robotą (restrukturyzacja kebaba na sekcje/karty), poza
-              zakresem tej naprawy.
-            </>
-          ) : (
-            <>
-              The "⋯" trigger itself is a flat icon (no traditional overflow button) — but the
-              dropdown it opens (Canvas menu) is still a mega-kebab with 10+ sections. #87d is NOT
-              resolved; restructuring that dropdown is separate follow-up work, out of scope here.
-            </>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

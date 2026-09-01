@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { LLMProvider } from '../../../types';
+import { localeListy } from '../../../utils/listDateFormat';
 
 interface ProviderStatus {
   id: string;
@@ -483,7 +484,9 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
               <Clock size={12} />
               {t('admin.aiControlCenter.modelsProviders.lastCheck', 'Last check: {{time}}', {
-                time: new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString(),
+                time: new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString(
+                  localeListy()
+                ),
               })}
             </div>
           )}

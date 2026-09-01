@@ -7,6 +7,7 @@ import {
   type DependencyStatus,
   getAdminDependencies,
 } from '../../services/adminDependenciesApi';
+import { formatListDateTime } from '../../utils/listDateFormat';
 
 const statusColors: Record<DependencyStatus, string> = {
   healthy: 'var(--c-success)',
@@ -74,7 +75,9 @@ export const AdminDependenciesPanel: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-semibold text-c-text">{dependency.label}</h3>
-                    <p className="text-xs text-c-text-muted">{dependency.kind}</p>
+                    <p className="text-xs text-c-text-muted">
+                      {t(`admin.dependencies.kind.${dependency.kind}`)}
+                    </p>
                   </div>
                   <span
                     className="text-sm font-medium"
@@ -86,7 +89,7 @@ export const AdminDependenciesPanel: React.FC = () => {
                 <p className="mt-3 text-sm text-c-text-secondary">
                   {t('admin.dependencies.probeCount', { count: dependency.probeIds.length })} ·{' '}
                   {dependency.lastCheckedAt
-                    ? new Date(dependency.lastCheckedAt).toLocaleString()
+                    ? formatListDateTime(dependency.lastCheckedAt)
                     : t('admin.dependencies.neverChecked')}
                 </p>
               </summary>

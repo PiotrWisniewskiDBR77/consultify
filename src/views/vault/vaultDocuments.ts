@@ -48,6 +48,40 @@ export const DOCUMENT_CATEGORIES = [
   'Other',
 ];
 
+/**
+ * categoryLabel — the ONE place that turns a stored `knowledge_docs.category`
+ * enum value into user-facing text. Mirrors `safeLevelLabel` below: the value
+ * SAVED in the DB (and used for filtering) stays the raw English string from
+ * `DOCUMENT_CATEGORIES`; only the DISPLAY goes through i18n. Fixes the
+ * "Kategoria" column/filter/preview showing raw `Methodology`/`Other`/… on
+ * Polish screens — was duplicated as three copies of the same English array
+ * (`vaultDocuments.ts`, `AdminKnowledgeView.tsx`, `DocumentsRAGTab.tsx`) with
+ * no translation anywhere; the other two now import `DOCUMENT_CATEGORIES`
+ * from here instead of redeclaring it.
+ */
+export const categoryLabel = (
+  category: string | undefined | null,
+  isPolish: boolean,
+  t: (key: string, fallback: string) => string
+): string => {
+  if (!category) return '';
+  switch (category) {
+    case 'Best Practices':
+      return t('vault.categories.bestPractices', isPolish ? 'Najlepsze praktyki' : 'Best Practices');
+    case 'Methodology':
+      return t('vault.categories.methodology', isPolish ? 'Metodyka' : 'Methodology');
+    case 'Standards':
+      return t('vault.categories.standards', isPolish ? 'Standardy' : 'Standards');
+    case 'Templates':
+      return t('vault.categories.templates', isPolish ? 'Szablony' : 'Templates');
+    case 'Other':
+      return t('vault.categories.other', isPolish ? 'Inne' : 'Other');
+    default:
+      // Unknown/custom value (legacy data) — show raw rather than fabricate a translation.
+      return category;
+  }
+};
+
 export const SCOPE_OPTIONS: Array<{
   value: VaultScope;
   labelPl: string;
