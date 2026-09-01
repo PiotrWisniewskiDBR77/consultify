@@ -1520,6 +1520,10 @@ export async function generateOutline(
   let templateRuntime: PresentationTemplateRuntime | null = null;
   let templateWarnings: string[] = [];
   let templateSlotMapping: TemplateSlotMappingResult | null = null;
+  // FIX-1 (ODBIOR_231): stempel pochodzenia musi opisywać FAKT wykonania gałęzi wiedzy,
+  // nie samą wartość flagi. Flaga ON + brak `actor` (4 producenccy wołacze bez actora)
+  // dawało fałszywy stempel 'org_knowledge_outline' na konspekcie zrobionym z szablonu.
+  let groundedOutlineUsed = false;
   const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
   const sourcePackPreflight = preflightPresentationSourcePack({
     setup,
@@ -1537,6 +1541,7 @@ export async function generateOutline(
       goal: setup.goal,
       language: setup.language,
     });
+    groundedOutlineUsed = true;
     outline = grounded.outline.map((item, index) => ({
       intent: (item.archetyp || (index === 0 ? 'cover' : 'key_messages')) as SlideIntent,
       title: item.tytul,
@@ -1595,11 +1600,16 @@ export async function generateOutline(
 
   const deckId = uuidv4().replace(/-/g, '');
   const knowledgeSources = outline.flatMap((item) => item.zrodla || []);
-  const resolvedSourceType = isDeckFromKnowledgeEnabled()
+  // FIX-1: stempel wystawiany z FAKTU (groundedOutlineUsed), nie z echa flagi.
+  // Bez tego przebieg bez `actor` (flaga ON) dostawał 'org_knowledge_outline' mimo
+  // że konspekt powstał z szablonu/słów kluczowych — patrz ODBIOR_231.md FIX-1.
+  const resolvedSourceType = groundedOutlineUsed
     ? 'org_knowledge_outline'
     : setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
-  const resolvedSourceId = isDeckFromKnowledgeEnabled()
-    ? actor?.projectId || setup.projectId || organizationId
+  // Brak fallbacku na organizationId: gdy nie ma projectId, nie ma sensownego "źródła"
+  // wiedzy do wskazania — stempel bez identyfikowalnego źródła jest gorszy niż jego brak.
+  const resolvedSourceId = groundedOutlineUsed
+    ? actor?.projectId || setup.projectId || null
     : setup.sourceId || sourceArtifacts[0]?.id || null;
   // C7 — initiative linkage: when the deck's canonical source is an initiative
   // (sourceType 'INITIATIVE'/'initiative'), carry the id into the registry so
