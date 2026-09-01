@@ -580,6 +580,9 @@ const ToolsSwotReportScreen = React.lazy(() => import('./screens/tools-swot-repo
 const ToolsSwotInitiativeProposalScreen = React.lazy(
   () => import('./screens/tools-swot-initiative-proposal')
 );
+const Day267MaterialyHubZrzutyScreen = React.lazy(
+  () => import('./screens/day267-materialy-hub-zrzuty')
+);
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
   'day237-spotkania': {
@@ -2348,6 +2351,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'org-summary': {
     label: 'Organizacja — Gotowość organizacji (REALNY <OrganizationView>, domyślnie OFF, readiness/summary)',
     render: () => <OrgLegacyScreen module="readiness" screen="summary" />,
+  },
+  'day267-materialy-hub-zrzuty': {
+    label:
+      'Day267 — realny ReportsAndPresentationsHub; &tab=outputs_all|outputs_documents|presentations|outputs_sheets|templates &state=ready|empty|loading|error',
+    render: () => <Day267MaterialyHubZrzutyScreen />,
   },
 };
 
