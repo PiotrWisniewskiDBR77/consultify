@@ -158,7 +158,7 @@ describe('T24-PREVIEW-P25 Initiatives preview Details', () => {
 
   it('wires prose Details into the initiatives preview, drops Property/Value, and keeps Open/Duplicate/Delete/preview + relations intact', () => {
     const source = readFileSync(
-      join(process.cwd(), 'src/components/Assessment/AssessmentHub.tsx'),
+      join(process.cwd(), 'src/components/assessment/AssessmentHub.tsx'),
       'utf8'
     );
     // Anchor past the render-switch comment (same landmark T21/T23's guard

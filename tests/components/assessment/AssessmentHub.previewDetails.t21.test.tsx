@@ -126,7 +126,7 @@ describe('T21 Assessment list preview Details', () => {
 
   it('changes list+reports+initiatives Details and keeps canonical block order', () => {
     const source = readFileSync(
-      join(process.cwd(), 'src/components/Assessment/AssessmentHub.tsx'),
+      join(process.cwd(), 'src/components/assessment/AssessmentHub.tsx'),
       'utf8'
     );
     const renderStart = source.indexOf('// Triada standard');

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const source = fs.readFileSync(
-  path.resolve(process.cwd(), 'src/components/initiatives/CanonicalInitiativeCardWorkspace.tsx'),
+  path.resolve(process.cwd(), 'src/components/Initiatives/CanonicalInitiativeCardWorkspace.tsx'),
   'utf8'
 );
 
