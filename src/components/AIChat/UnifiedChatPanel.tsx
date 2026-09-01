@@ -790,7 +790,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   disabled = false,
   maxHeight,
   onMessageSent,
-  onModuleIntent,
+  onModuleIntent: onModuleIntentProp,
   onNavigateToActions,
   systemPrompt,
   roleName,
@@ -833,7 +833,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     currentUser,
     currentOrganization,
     isAuthInitializing,
+    chatModuleIntent,
   } = useAppStore();
+
+  // MOST „Teresa sama poprawia artefakt" (2026-09-01). Props zostaje pierwszy
+  // — osadzone czaty, które jeszcze go podają, działają jak dotąd. Gdy propsa
+  // nie ma (dok z `MainLayout`, pełne okno z `AppRoutes` — ani jeden nie zna
+  // artefaktu), bierzemy handler opublikowany przez EKRAN artefaktu w
+  // `uiSlice.chatModuleIntent`. Bez tego most `DeckBuilder`
+  // (`handleTeresaDeckIntent` → `pendingAgentEdit` → banner Zaakceptuj/Odrzuć)
+  // jest nieosiągalny z ekranu.
+  const onModuleIntent = onModuleIntentProp || chatModuleIntent?.handler;
 
   const {
     activeConversationId,

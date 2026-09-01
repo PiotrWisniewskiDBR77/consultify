@@ -117,6 +117,28 @@ export interface UISlice {
   chatContextActions: ChatContextAction[] | null;
   setChatContextActions: (actions: ChatContextAction[] | null) => void;
 
+  // MOST „Teresa sama poprawia artefakt" dla JEDNEGO okna Teresy (2026-09-01).
+  // Dopóki czat był OSADZONY w ekranie artefaktu, ekran podawał mu propsa
+  // `onModuleIntent` — pierwsza wiadomość szła do modułu, ten wołał swój
+  // agent-edit i oddawał propozycję (banner Zaakceptuj/Odrzuć). Po zdjęciu
+  // osadzonych czatów tamten props nie miał kto podać: dok renderuje
+  // `MainLayout`, pełne okno `AppRoutes` — żaden nie zna artefaktu. Ekran
+  // artefaktu publikuje więc swój handler TUTAJ (dokładnie tak, jak publikuje
+  // `chatContextActions`), a `UnifiedChatPanel` bierze go, gdy nie dostał
+  // propsa. Rejestracja niesie `owner` (identyfikator ekranu/artefaktu), żeby
+  // sprzątanie przy odmontowaniu nie skasowało cudzej rejestracji.
+  chatModuleIntent: {
+    owner: string;
+    handler: (
+      content: string
+    ) =>
+      | Promise<boolean | { handled: boolean; reply?: string }>
+      | boolean
+      | { handled: boolean; reply?: string };
+  } | null;
+  setChatModuleIntent: (registration: UISlice['chatModuleIntent']) => void;
+  clearChatModuleIntent: (owner: string) => void;
+
   // Dynamic breadcrumbs override set by My Work hub
   myWorkBreadcrumbs: string[] | null;
   setMyWorkBreadcrumbs: (crumbs: string[] | null) => void;
@@ -160,6 +182,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   chatSystemPrompt: null,
   chatQuickPrompts: null,
   chatContextActions: null,
+  chatModuleIntent: null,
 
   setNavigateFn: (fn) => {
     const pending = get().pendingNavigation;
@@ -185,6 +208,11 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   setChatSystemPrompt: (prompt) => set({ chatSystemPrompt: prompt }),
   setChatQuickPrompts: (prompts) => set({ chatQuickPrompts: prompts }),
   setChatContextActions: (actions) => set({ chatContextActions: actions }),
+  setChatModuleIntent: (registration) => set({ chatModuleIntent: registration }),
+  clearChatModuleIntent: (owner) =>
+    set((state) =>
+      state.chatModuleIntent?.owner === owner ? { chatModuleIntent: null } : {}
+    ),
 
   myWorkBreadcrumbs: null,
   setMyWorkBreadcrumbs: (crumbs) => set({ myWorkBreadcrumbs: crumbs }),
