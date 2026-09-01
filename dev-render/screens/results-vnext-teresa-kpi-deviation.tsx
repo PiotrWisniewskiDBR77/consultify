@@ -130,16 +130,94 @@ const realGet = Api.get.bind(Api);
 const realPost = Api.post.bind(Api);
 const realPut = Api.put.bind(Api);
 
+// 173-diagnostyka (2026-09-01) — the subview now READS its corrective
+// actions and effectiveness verifications from the live server routes
+// (`GET .../:caseId/corrective-actions` :542, `.../effectiveness-
+// verifications` :797) instead of accumulating them in session memory. These
+// two mock responses are what makes that visible on a COLD LOAD: before the
+// fix, a freshly-opened case rendered an empty list under a warning banner
+// no matter what was in the database. Data mirrors the same L3/SMED story
+// the `&stan=closed` case body tells, so the screen reads as one case.
+const SERVER_ACTIONS = [
+  {
+    actionId: 'act-1',
+    deviationCaseId: CASE_ID,
+    organizationId: ORG_ID,
+    title: 'Wymiana czujnika pozycji na stacji formatu',
+    description: 'Czujnik zamienny z magazynu części zamiennych, kalibracja wg karty 4.2.',
+    ownerUserId: 'user-marek',
+    dueDate: '2026-08-12',
+    status: 'completed' as const,
+    expectedEffect: 'Powrót czasu przezbrojenia do 26 min',
+    actualEffect: 'Czas przezbrojenia 27 min po wymianie',
+    rowVersion: 4,
+    createdBy: 'user-marek',
+    createdAt: '2026-08-09T10:00:00Z',
+    updatedAt: '2026-08-13T07:30:00Z',
+  },
+  {
+    actionId: 'act-2',
+    deviationCaseId: CASE_ID,
+    organizationId: ORG_ID,
+    title: 'Przegląd prewencyjny czujników na pozostałych 3 stacjach',
+    description: 'Rozszerzenie zakresu — ta sama seria czujników pracuje na stacjach 2, 3 i 5.',
+    ownerUserId: 'user-anna',
+    dueDate: '2026-08-19',
+    status: 'active' as const,
+    expectedEffect: 'Wyeliminowanie nawrotu na sąsiednich stacjach',
+    actualEffect: null,
+    rowVersion: 2,
+    createdBy: 'user-marek',
+    createdAt: '2026-08-09T10:05:00Z',
+    updatedAt: '2026-08-14T09:00:00Z',
+  },
+  {
+    actionId: 'act-3',
+    deviationCaseId: CASE_ID,
+    organizationId: ORG_ID,
+    title: 'Dopisanie kontroli czujnika do checklisty zmiany nocnej',
+    description: null,
+    ownerUserId: 'user-marek',
+    dueDate: '2026-08-25',
+    status: 'planned' as const,
+    expectedEffect: 'Wykrycie następnej awarii w ciągu jednej zmiany',
+    actualEffect: null,
+    rowVersion: 1,
+    createdBy: 'user-anna',
+    createdAt: '2026-08-09T10:12:00Z',
+    updatedAt: '2026-08-09T10:12:00Z',
+  },
+];
+
+const SERVER_VERIFICATIONS = [
+  {
+    verificationId: 'ver-1',
+    deviationCaseId: CASE_ID,
+    verificationWindowStart: '2026-08-13T00:00:00Z',
+    verificationWindowEnd: '2026-08-20T23:59:59Z',
+    status: 'effective' as const,
+    rationale: 'Średni czas przezbrojenia 26,4 min w oknie — poniżej progu 28 min przez 7 kolejnych dni.',
+    verifiedBy: 'user-anna',
+    verifiedAt: '2026-08-21T09:00:00Z',
+  },
+];
+
 Api.get = (async (url: string) => {
   if (url.startsWith(`/vnext/results/kpi/${KPI_ID}/measurements`)) return { measurements: [MEASUREMENT] };
   if (url.startsWith('/vnext/results/kpi/deviation-cases/')) {
-    const caseId = url.split('/vnext/results/kpi/deviation-cases/')[1]?.split('?')[0];
+    const path = url.split('/vnext/results/kpi/deviation-cases/')[1]?.split('?')[0] ?? '';
+    const [caseId, child] = path.split('/');
     if (caseId !== CASE_ID) {
       const err: any = new Error('Deviation case not found');
       err.status = 404;
       throw err;
     }
-    return { case: mutableCase };
+    // Both child routes are visibility-scoped server-side and return an
+    // empty list rather than a 404 for an invisible case (D06) — the mock
+    // keeps that contract by only ever answering for the known case above.
+    if (child === 'corrective-actions') return { actions: SERVER_ACTIONS };
+    if (child === 'effectiveness-verifications') return { verifications: SERVER_VERIFICATIONS };
+    if (!child) return { case: mutableCase };
   }
   return realGet(url);
 }) as typeof Api.get;
