@@ -49,7 +49,9 @@
       "zrodlo": "dev-render/main.tsx:1859 label — \"?variant=assign|attach|evidence (domyslnie assign) — modale sa fixed, jeden na raz\"."
     },
     "chat-signals-feed": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedId, useState<string|null>(initialSelectedId) — src/components/AIChat/signalsFeed/ChatSignalsFeed.tsx:34 (POTWIERDZONE zrzutem 144-runda-pelna/chat-signals-feed__PO__light.png: sama tabela, brak podgladu; initialSelectedId domyslnie null w tym harnessie — nie sprawdzono URL-param nadpisania)"
     },
     "whiteboard-canvas": {
       "wejscie": "screen"
@@ -147,7 +149,9 @@
       "wejscie": "screen"
     },
     "vault-sejf-wnetrze": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedId, useState<string|null>(null) — src/views/vault/VaultDocumentsView.tsx:195"
     },
     "exec-summary-onelook": {
       "wejscie": "screen"
@@ -199,7 +203,9 @@
     "interview-sessions-status": {
       "wejscie": "screen",
       "wynikSelektor": "text=Przydzielony",
-      "zrodlo": "scripts/dev/ui-latki-20260828-screenshots.mjs:43-46."
+      "zrodlo": "scripts/dev/ui-latki-20260828-screenshots.mjs:43-46.",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo_klik": "previewSessionId, useState<string|null>(null) — src/components/Interview/InterviewHub.tsx:851"
     },
     "drd-http-workspace": {
       "wejscie": "screen",
@@ -224,7 +230,9 @@
       "wejscie": "screen"
     },
     "tools-outputs-insights-tab": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "previewItemId, useState<string|null>(null) — src/components/Discovery/DiscoveryToolsHub.tsx:770"
     },
     "tools-swot-report": {
       "wejscie": "screen"
@@ -239,7 +247,9 @@
       "wejscie": "screen"
     },
     "assessment-menu3-status-chips": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedAssessmentId, useState<string|null>(null) — src/components/assessment/AssessmentHub.tsx:471"
     },
     "method-workspace": {
       "wejscie": "screen",
@@ -273,7 +283,9 @@
         "initiatives"
       ],
       "parametry": "&tab=<wartosc>; &select=1 i &lineage=1 to dodatkowe QA-flagi, nie zakladki",
-      "zrodlo": "dev-render/main.tsx:633 label — \"<AssessmentHub initialTab=\\\"outputs\\\">... &tab=outputs|reports|initiatives\"."
+      "zrodlo": "dev-render/main.tsx:633 label — \"<AssessmentHub initialTab=\\\"outputs\\\">... &tab=outputs|reports|initiatives\".",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo_klik": "selectedAssessmentId/selectedReportRowId/selectedInitiativeRowId (zalezne od &tab=), useState<string|null>(null) — src/components/assessment/AssessmentHub.tsx:471-473"
     },
     "assessment-five-surfaces": {
       "wejscie": "screen",
@@ -288,10 +300,14 @@
       "zrodlo": "dev-render/screens/assessment-five-surfaces.tsx:4,260 (initialTab z ?tab=, przekazywany do <AssessmentHub>, ta sama 5-tabowa powloka co Audyty); potwierdzone realnym uzyciem w scripts/dev/assessment-fixes-hub-shell-screenshots.mjs:20,32 (tab=initiatives, tab=reports) i scripts/dev/assessment-fixes-library-screenshot.mjs:17 (tab=library)."
     },
     "drd-library-entry": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedRowId, useState<string|null>(null) — dev-render/screens/drd-library-entry.tsx:86"
     },
     "assessment-list": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedRowId, useState<string|null>(null) — dev-render/screens/assessment-list.tsx:121"
     },
     "assessment-reports-panel": {
       "wejscie": "screen"
@@ -345,7 +361,9 @@
       "zrodlo": "dev-render/main.tsx:2020 label — \"&os=1..7\"."
     },
     "capacity-advisor-a3": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedId, useState<string|null>(null) — src/components/Initiatives/CapacityScenarioSurface.tsx:206 (POTWIERDZONE zrzutem 144-runda-pelna-b/capacity-advisor-a3__PO__light.png: sama tabela, brak podgladu)"
     },
     "plan-scenario-d1": {
       "wejscie": "screen",
@@ -362,13 +380,17 @@
       "wejscie": "screen"
     },
     "execution-report-day11": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedDefinitionId, useState<string|null>(null) — src/components/Execution/ExecutionReportsSurface.tsx:153"
     },
     "exe-002-004-ui-audit": {
       "wejscie": "screen"
     },
     "execution-tab-list": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "summaryPreviewInitiativeId (tylko zakladka 'list'/Portfolio), useState<string|null>(null) — src/components/Execution/ExecutionHub.tsx:802"
     },
     "execution-tab-work": {
       "wejscie": "screen"
@@ -439,7 +461,9 @@
         "checkIns"
       ],
       "parametry": "&level=<wartosc> (poziom startowy — dalsza nawigacja to realny klik \"drill\" w harnessu, nie sam URL)",
-      "zrodlo": "dev-render/main.tsx:708 label — \"&level=objectives|keyResults|checkIns (initial level)... Click through the real drill\"."
+      "zrodlo": "dev-render/main.tsx:708 label — \"&level=objectives|keyResults|checkIns (initial level)... Click through the real drill\".",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo_klik": "selectedObjectiveId, useState<string|null>(null) — src/components/ResultsVNext/okr/OkrObjectivesView.tsx:69"
     },
     "results-vnext-kpi-scorecards": {
       "wejscie": "screen",
@@ -448,7 +472,9 @@
         "snapshots"
       ],
       "parametry": "&tab=<wartosc>",
-      "zrodlo": "dev-render/main.tsx:723 label — \"&tab=items|snapshots\"."
+      "zrodlo": "dev-render/main.tsx:723 label — \"&tab=items|snapshots\".",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo_klik": "selectedItemId, useState<string|null>(null) — src/components/ResultsVNext/kpiScorecards/ResultsKpiScorecardDetailPage.tsx:147"
     },
     "results-vnext-roi-model": {
       "wejscie": "screen",
@@ -462,7 +488,9 @@
       "zrodlo": "dev-render/main.tsx:673 label — \"&tab=settings|assumptions|cost-lines|benefit-lines\"."
     },
     "results-vnext-roi-full-tool": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedCaseId, useState<string|null>(...) — src/components/ResultsVNext/roi/ResultsRoiHub.tsx:288"
     },
     "results-vnext-okr-admin": {
       "wejscie": "screen",
@@ -471,7 +499,9 @@
         "cycles"
       ],
       "parametry": "&page=<wartosc>",
-      "zrodlo": "dev-render/main.tsx:718 label — \"&page=programs|cycles\"."
+      "zrodlo": "dev-render/main.tsx:718 label — \"&page=programs|cycles\".",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo_klik": "selectedId, useState<string|null>(null) — src/components/ResultsVNext/okr/OkrProgramsPage.tsx:81"
     },
     "results-vnext-teresa-okr-reflection": {
       "wejscie": "screen"
@@ -497,7 +527,9 @@
     },
     "results-vnext-attention": {
       "wejscie": "screen",
-      "nierozstrzygniete": "Label (main.tsx:748) opisuje \"Menu2 KPI/OKR, Menu3 = bucket (real counts)\" jako nawigacje StandardModuleBar, ale nie zweryfikowalem, czy domyslny (pierwszy) wpis Menu2/Menu3 pokazuje sensowna tresc, ani jakich selektorow uzyc, by dojsc do pozostalych kombinacji Menu2 x Menu3 — nie sprawdzilem kodu tego ekranu w ramach tego przebiegu."
+      "nierozstrzygniete": "Label (main.tsx:748) opisuje \"Menu2 KPI/OKR, Menu3 = bucket (real counts)\" jako nawigacje StandardModuleBar, ale nie zweryfikowalem, czy domyslny (pierwszy) wpis Menu2/Menu3 pokazuje sensowna tresc, ani jakich selektorow uzyc, by dojsc do pozostalych kombinacji Menu2 x Menu3 — nie sprawdzilem kodu tego ekranu w ramach tego przebiegu.",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedRowId, useState<string|null>(null) — src/components/ResultsVNext/attention/ResultsAttentionPage.tsx:142 (POTWIERDZONE zrzutem 170-odrzucone-wykonanie/results-vnext-attention__PO__light.png: sama tabela, brak podgladu)"
     },
     "results-vnext-okr-workspace": {
       "wejscie": "screen",
@@ -507,7 +539,9 @@
       "wejscie": "screen"
     },
     "results-vnext-search-registry": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedId, useState<string|null>(null) — src/components/ResultsVNext/ResultsSearchRegistry.tsx:76"
     },
     "results-zestawienia": {
       "wejscie": "screen"
@@ -583,7 +617,9 @@
       "wejscie": "screen"
     },
     "materialy-template-library-slice": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedId, useState<string|null>(null) — src/components/ReportsAndPresentations/TemplatesTabContent.tsx:96"
     },
     "template-library-new-entry": {
       "wejscie": "screen"
@@ -683,7 +719,9 @@
       "wejscie": "screen"
     },
     "materialy-draft-template-visibledraft-fix": {
-      "wejscie": "screen"
+      "wejscie": "screen",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo": "selectedId, useState<string|null>(null) — src/components/ReportsAndPresentations/TemplatesTabContent.tsx:96"
     },
     "word-quality-badge": {
       "wejscie": "screen"
@@ -731,7 +769,9 @@
         "report"
       ],
       "parametry": "&variant=list|report",
-      "zrodlo": "dev-render/main.tsx:846 label — \"?variant=list|report\"."
+      "zrodlo": "dev-render/main.tsx:846 label — \"?variant=list|report\".",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo_klik": "selectedId, useState<string|null>(null) — src/components/Audit/AuditsHub.tsx:117 (POTWIERDZONE zrzutem 144-runda-pelna-b/audyty-drd-report__PO__light.png: sama tabela, brak podgladu)"
     },
     "public-booking-widget": {
       "wejscie": "screen"
@@ -745,7 +785,9 @@
         "object -> decisions"
       ],
       "parametry": "&view=list|object; przy &view=object dodaj &tab=details|minutes|decisions",
-      "zrodlo": "dev-render/screens/meetings-module.tsx:303-306 (view==\"object\" tylko gdy dokladnie \"object\" inaczej \"list\"; tab tylko \"minutes\"/\"decisions\" inaczej domyslnie details); main.tsx:558."
+      "zrodlo": "dev-render/screens/meetings-module.tsx:303-306 (view==\"object\" tylko gdy dokladnie \"object\" inaczej \"list\"; tab tylko \"minutes\"/\"decisions\" inaczej domyslnie details); main.tsx:558.",
+      "klik": "pierwszy wiersz tabeli: tbody tr:first-child (FilterableTable.tsx nie nadaje wierszom data-testid — zweryfikowane grepem; ten sam wzorzec harness już stosuje w dev-render/screens/admin-team.tsx TeamsAutoSelectWrapper: document.querySelector('tbody tr').click())",
+      "zrodlo_klik": "selectedId, useState<string|null>(null) — src/components/Meeting/MeetingHub.tsx:99 (POTWIERDZONE zrzutem 144-runda-pelna-b/meetings-module__PO__light.png: sama tabela, brak podgladu)"
     },
     "calendar-sync-settings": {
       "wejscie": "screen"
