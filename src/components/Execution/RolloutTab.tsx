@@ -1045,10 +1045,6 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           <SectionHeader
             icon={<TrendingUp className="text-emerald-500" />}
             title={t('execution.rollout.kpi.title', 'KPI Tracking')}
-            subtitle={t(
-              'execution.rollout.kpi.subtitle',
-              'Monitor operational and financial rollout performance.'
-            )}
           />
           {showDerivedKpis ? (
             <div className="space-y-3">
@@ -1100,10 +1096,6 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           <SectionHeader
             icon={<AlertOctagon className="text-crimson-500" />}
             title={t('execution.rollout.risks.title', 'Risk Register')}
-            subtitle={t(
-              'execution.rollout.risks.subtitle',
-              'Track rollout risks, likelihood, impact, and mitigation.'
-            )}
           />
           {showDerivedRisks ? (
             <div className="space-y-3">
@@ -1151,10 +1143,6 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           <SectionHeader
             icon={<Sparkles className="text-amber-500" />}
             title={t('execution.rollout.change.title', 'Change Log')}
-            subtitle={t(
-              'execution.rollout.change.subtitle',
-              'Automatic timeline of rollout changes — logged as approvals and edits land.'
-            )}
           />
           {changes.length === 0 ? (
             <EmptyBox
@@ -1192,10 +1180,6 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
           <SectionHeader
             icon={<CheckSquare className="text-blue-500" />}
             title={t('execution.rollout.closure.title', 'Closure Checklist')}
-            subtitle={t(
-              'execution.rollout.closure.subtitle',
-              'Handover, sign-off, and project closure actions.'
-            )}
           />
           {/* L-05 / DP-6: feed-forward M14→M15 (Results) is preview-only this round.
               No real sync is performed yet — surface a clear, honest label instead
@@ -1273,10 +1257,17 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
+// Odbiór grafiki 165-menu3-pasek (execution-tab-rollout, 2026-09-01):
+// właściciel — "tutaj wcale te słowa pomiędzy tabelą a menu 3 nie sa
+// potrzebne" — zdanie opisowe pod tytułem sekcji usunięte na WSZYSTKICH
+// pięciu wywołaniach (plan/kpi/risks/change/closure), nie tylko na
+// zakładce, na której się zgłosił — to jeden współdzielony komponent.
+// `subtitle` zostaje w sygnaturze jako opcjonalny escape hatch, ale żaden
+// z pięciu wywołujących go już nie podaje.
 const SectionHeader: React.FC<{
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   action?: React.ReactNode;
 }> = ({ icon, title, subtitle, action }) => (
   <div className="flex items-start justify-between gap-3">
@@ -1285,7 +1276,7 @@ const SectionHeader: React.FC<{
         {icon}
         {title}
       </h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+      {subtitle && <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>}
     </div>
     {action}
   </div>
@@ -1554,10 +1545,6 @@ const RolloutPlanView: React.FC<{
       <SectionHeader
         icon={<ClipboardList className="text-blue-500" />}
         title={t('execution.rollout.plan.title', 'Master Rollout Plan')}
-        subtitle={t(
-          'execution.rollout.plan.subtitle',
-          'Initiatives grouped by planned rollout quarter.'
-        )}
       />
       {initiatives.length === 0 ? (
         <EmptyBox
