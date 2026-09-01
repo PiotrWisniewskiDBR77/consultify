@@ -16,6 +16,44 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-26 · Macierz właściciela weszła do raportu — trzecie zgłoszenie, pierwsze wykonanie
+**Co się stało:** właściciel po raz trzeci napisał to samo, tym razem z rezygnacją: *„Ciągle nie wiem
+dlaczego nie używasz mojej macierzy DRD - nie mam już siły serio !! moja macierz jest serio ładna —
+już ją znalazłeś przecież (zobacz mam to na ekranie **Macierz oceny DRD — obszary x poziomy**)"*.
+Te ostatnie słowa to DOSŁOWNA nazwa ekranu `drd-macierz-oceny` z `status.json`, czyli
+`DRDAssessmentEditor` — ten sam, który sam ocenił na B 01.09. Wskazanie było jednoznaczne
+i nie wymagało zgadywania po raz czwarty.
+
+**Co naprawdę było na ekranie (zrzut, nie domysł):** slajd 6/13 prezentacji rysował
+`AreaMatrixTable` — komponent, który właściciel ODRZUCIŁ wprost 30.08 (Z-10: „Stary, to nie tak ma
+wyglądać"). Geometria się zgadzała (poziomy 7→1 w wierszach, obszary 1A–1I w kolumnach), ale
+**61 z 63 komórek osi 1 było zupełnie PUSTYCH**, a pozostałe dwie niosły kropkę. Zero treści
+merytorycznej, zero wypełnienia schodkowego. Dokument raportu (`AssessmentReportDocument`) nie miał
+macierzy w ogóle — `grep "Matrix"` dawał zero trafień.
+
+**Przyrząd też kłamał, i to jest osobna lekcja.** `grafika-zrzuty.mjs` zrzucał zawsze slajd 1
+(tytułowy), bo nie umiał wcisnąć klawisza. Każdy dotychczasowy pomiar `assessment-presentation-view`
+odpowiadał więc na pytanie „jak wygląda strona tytułowa", nie „czy jest macierz". Właściciel napisał
+„nigdzie nie znalazłem macierzy" — a macierz na slajdzie BYŁA, tylko zła. Dodano `--klawisze`.
+To ten sam kształt awarii co `--przewin` i `--klik`: narzędzie po cichu mierzy niewłaściwą rzecz.
+
+**Co zrobiono:** `DRDMatrixGrid` wyeksportowany z `DRDAssessmentEditor` (nie skopiowany) i opakowany
+w `DRDMatrixReadOnly` — jedno wejście dla slajdu i dla rozdziału osi w dokumencie raportu.
+Dowód braku regresji: zrzut edytora po zmianie jest BAJT W BAJT identyczny ze zrzutem sprzed
+(md5 `d54a5ec7…`).
+
+**Sprzeczność w źródłach, rozstrzygnięta pomiarem, nie preferencją:** `UWAGI_ODBIOR_20260901.md` (R8)
+wskazywało w kodzie `EmbeddedMatrix` (decyzja z 30.08), a `DZIENNIK` Z-12 nazywał `EmbeddedMatrix`
+martwym wariantem bocznym. Rozstrzygnął `status.json`: pole `nazwa` ekranu `drd-macierz-oceny` brzmi
+dokładnie „Macierz oceny DRD — obszary x poziomy" — te same słowa, których użył właściciel.
+Wskazanie kodu w R8 jest nieaktualne i tak trzeba je czytać.
+
+**Co z tego wynika:** kiedy dwa dokumenty wskazują różne komponenty, rozstrzyga to, co właściciel
+widzi u siebie na ekranie — a jego słowa bywają dosłownym cytatem z rejestru ekranów. Zanim
+zaczniesz wybierać między dokumentami, sprawdź, czy jego zdanie nie jest po prostu nazwą wiersza.
+
+---
+
 ### Z-25 · Runda pełna: rejestr z 202 do 313 ekranów, 253 karty do odbioru
 **Co się stało:** właściciel polecił objąć rundą odbioru WSZYSTKO — nie tylko ekrany listowe, ale narzędzia, kreatory, powłoki, panel Administracji (7 domen) i konsolę wewnętrzną. Audyt pokrycia wykazał, że rejestr znał 202 ekrany, a produkt ma ich ponad 300. Dorejestrowano 111: siedem zakładek Realizacji (z ośmiu pokryta była jedna), skrzynkę i kalendarz Mojej Pracy (skrzynka jest ekranem STARTOWYM modułu i nie miała wiersza), pełny rekord Zadania (kod-wzorzec, nigdy nieodebrany wzrokiem), 62 ekrany Administracji, 8 ekranów konsoli wewnętrznej, 10 grup Ustawień i 21 ekranów Organizacji.
 **Dwie liczby z dokumentacji okazały się nieprawdziwe:** Ustawienia mają 10 grup, nie 9; Organizacja pokazuje dziś wariant starszy (flaga nowego jest domyślnie wyłączona od 29.08), więc odbieramy 21 ekranów, nie 11.
