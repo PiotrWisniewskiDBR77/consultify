@@ -117,3 +117,19 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
 Evidence manifest: —
+
+## Pomiar dyżuru 234 — 2026-09-01
+
+Stan F.2 nie ma jednego zweryfikowanego mianownika: wcześniejszy raport wpisuje `135` bez komendy odtwarzającej (`tests/integration/results/day46.mutator-tenant-isolation.realpg.test.ts:10-18`), literalne rejestracje `router.post|put|patch|delete` dają `130`, korekta o 6 definicji helperów i 22 ich wywołania daje `146`, a introspekcja faktycznie zbudowanych stosów routerów zamontowanych przez Gateway daje `152` unikalne pary metoda+pełna ścieżka (`server/src/Gateway.ts:1233-1287`).
+
+Komenda `130`: `grep -hE '^router\.(post|put|patch|delete)\(' server/src/routes/resultsVnext/*.routes.ts | wc -l` (`server/src/routes/resultsVnext/*.routes.ts`).
+
+Komenda `146`: `direct=$(grep -hEc '^router\.(post|put|patch|delete)\(' server/src/routes/resultsVnext/*.routes.ts | awk '{s+=$1} END{print s}'); defs=$(grep -hEc '^function mount(Lifecycle|Escalation|Transition|SetTransition)Route' server/src/routes/resultsVnext/*.routes.ts | awk '{s+=$1} END{print s}'); calls=$(grep -hE '^mount(Lifecycle|Escalation|Transition|SetTransition)Route\(' server/src/routes/resultsVnext/*.routes.ts | wc -l); echo $((direct-defs+calls))` (`server/src/routes/resultsVnext/*.routes.ts`).
+
+Komenda `152`: importuje 12 plików routerów oraz nazwany router inicjatyw przez `npx tsx`, iteruje `router.stack`, rozwija `layer.route.methods`, dokleja prefiksy z Gateway i liczy `new Set(method + fullPath)`; zmierzony wynik `RUNTIME_MUTATOR_REGISTRATIONS=152`, `UNIQUE_GATEWAY_METHOD_PATHS=152`, `DUPLICATES=0` (`server/src/Gateway.ts:1233-1287`, `server/src/routes/resultsVnext/*.routes.ts`). Pełna jednowierszowa komenda znajduje się w `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY234_WYNIKI_REPORT.md`.
+
+Pięć rodzin nadal nie ma w tym pakiecie nawet reprezentatywnego dowodu izolacji: KPI legacy, ROI legacy, OKR legacy, KPI deviation-cases i KPI scorecards (`tests/integration/results/day46.mutator-tenant-isolation.realpg.test.ts:14-18`). Cztery nazwane przypadki obejmują tylko KPI, ROI i OKR (`tests/integration/results/day46.mutator-tenant-isolation.realpg.test.ts:130-210`).
+
+Stan dyżuru 170 jest rozdzielony: po FIX-170 mechanika backendu ma ocenę A, ale UI pozostaje C z otwartą bramką B1 do zrzutu (`docs/program/funkcje/ODBIOR_170_OKNA_CHECKIN.md:10-16`).
+
+Crosswalk/backfill istnieje jako tenant-scoped zapis i odczyt (`server/src/services/resultsVnext/kpi/kpiCrosswalkService.ts:31-85`) oraz jawnie niemontowany shadow read (`server/src/services/resultsVnext/kpi/kpiShadowReadService.ts:55-58`), ale wyszukiwanie wołaczy produktowych w `server/src/` i `src/` nie znalazło żadnego wywołania poza definicjami i testami (`server/src/Gateway.ts:1233-1287`).
