@@ -64,7 +64,7 @@ const outputRows = [
   },
   {
     artifactId: 'day267-sheet-index',
-    artifactFamily: 'workbook',
+    artifactFamily: 'sheet',
     outputType: 'sheet',
     originRuntime: 'sheet',
     originRecordId: 'day267-workbook',
@@ -88,7 +88,12 @@ const templateRows = ['report', 'presentation', 'sheet'].map((outputType, index)
   artifactId: `day267-template-index-${index + 1}`,
   artifactFamily: 'template',
   outputType,
-  originRuntime: 'template_library',
+  originRuntime:
+    outputType === 'report'
+      ? 'report_template'
+      : outputType === 'presentation'
+        ? 'presentation_template'
+        : 'sheet_template',
   originRecordId: `day267-template-${index + 1}`,
   resolvedTitle: ['Raport zarządczy', 'Przegląd inicjatyw', 'Model korzyści'][index],
   createdAt: '2026-08-20T08:00:00.000Z',
@@ -96,7 +101,12 @@ const templateRows = ['report', 'presentation', 'sheet'].map((outputType, index)
   originSummary: {
     template: {
       canonicalTemplateId: `canonical-day267-${index + 1}`,
-      originRuntime: 'template_library',
+      originRuntime:
+        outputType === 'report'
+          ? 'report_template'
+          : outputType === 'presentation'
+            ? 'presentation_template'
+            : 'sheet_template',
       source: 'canonical',
       description: 'Zatwierdzony wzorzec organizacji',
       scope: 'organization',
