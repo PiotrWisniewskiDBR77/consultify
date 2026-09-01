@@ -16,6 +16,27 @@ w tej samej godzinie, w której powstał ten plik** — nie przepisane z pamięc
 
 ---
 
+## ★ DWIE DECYZJE CZEKAJĄCE NA WŁAŚCICIELA
+
+**1. Staging.** Nadzorca poprosił o zgodę na dwie rzeczy nieodwracalne i NIE dostał odpowiedzi
+przed końcem sesji: (a) przestawienie automatu wdrożeń na bieżącą linię pracy — dziś wdraża
+z gałęzi martwej od 2 czerwca; **scalenie, nie nadpisanie**; sprawdzone commit po commicie, że
+nic wartościowego nie ginie (0 z 16 do przeniesienia); (b) wykonanie 8 zmian struktury bazy —
+wszystkie dodające, ale baza wspólna z demo, więc dotkną obu środowisk; najpierw kopia zapasowa.
+Rekomendacja nadzorcy: zgoda na oba, w tej kolejności — bez (a) każde kolejne wdrożenie znów
+będzie robotą ręczną, i tak powstał obecny stan. Analiza i plan 9 kroków:
+`ANALIZA_STAGING_DEMO.md`. Intencja właściciela, dosłownie: „nie podnosimy demo o te 11 tysięcy
+commitów, tylko powinniśmy skopiować demo na staging i podnosić je wspólnie… gdy zatwierdzimy
+staging, przeniesiemy to z powrotem na demo… te dwie instancje są jeszcze sobie równe i powinny
+być sobie równe".
+
+**2. Kiedy przegląd 29 ekranów** ocenianych na obrazie niebędącym produktem (patrz
+`AUDYT_PRZYRZADU_20260901.md`). Rekomendacja nadzorcy: nie od razu z właścicielem — najpierw
+jedno przejście z bezpiecznikiem parytetu, naprawa rozbieżności, potem pokazać wyłącznie te
+ekrany, które realnie się zmieniły.
+
+---
+
 ## 1. ZACZNIJ TU
 
 **Kolejność czytania:** ten plik → sekcja 4 „★ CZEGO NIE POWTARZAĆ" (najważniejsza) →
@@ -308,3 +329,30 @@ wtedy właściciel patrzy, do AKCEPTU nie do odkrywania zepsucia.
 - `KANON_Z_ODBIOROW.md` — decyzje zamykające, wiążące na przyszłość (m.in. „jedna Teresa", macierz DRD).
 - `MAPA_UWAG_WLASCICIELA.md` — poprzednik `UWAGI_ODBIOR_20260901.md`, klastry K1–K12 z sesji 30.08.
 - `REJESTR_EKRANOW.md` — inwentarz ekranów z adnotacjami CLOSED_FINAL historycznych modułów.
+
+---
+
+## ★ ZADANIA GOTOWE DO WZIĘCIA
+
+Kolejność wg wartości.
+
+1. **Przejście parytetu** — `node scripts/check-dev-render-parytet.mjs --report`; dziś flaguje
+   91 ekranów (R1 51 · R2 9 · R3 30 · PODPIS 33); linia bazowa trzyma dług; naprawiać rodzinami,
+   nie per ekran.
+2. **Dwie funkcje karty naprawczej KPI** (decyzja CTO ROBIMY, zapisana w `ODLOZONE.md`):
+   powiązanie działania z Zadaniem (~1 dyżur), typ działania natychmiastowe/trwałe (~0,5). To
+   NIE jest dorobienie drzwi — stare i nowe narzędzie zapisują dane w dwóch niepołączonych
+   miejscach, trzeba mostu.
+3. **Warsztat OKR → karta N zestawu**, wzorem ROI. NIE zdejmować — to jedyne wejście do cyklu
+   życia, dopasowań, refleksji i historii.
+4. **`ZGLOSZENIA_DO_TORU_FUNKCJI.md`** — 23 sprawy dla mechaniki; P0: okno 300 ms po
+   przełączeniu trybu demo.
+5. **Kontekst Teresy** — most „Teresa poprawia prezentację" zweryfikowany tylko kodem; jego
+   zestaw testów w ogóle się nie zbiera (dług zastany).
+
+**Ostrzeżenie:** bezpiecznik parytetu NIE łapie zgodności DANYCH mockowych z produktem — panel
+może mówić „1 inicjatywa promowana", a podgląd obok „Brak powiązań"; struktura zgodna, treść
+sprzeczna, nikt tego nie sprawdza.
+
+**Fakt:** nic nie zostało wypchnięte (`git push` świadomie niewykonany — decyzja o zdalnym
+repo należy do właściciela); gałąź `codex/m03-admin-20260824`, ~237 commitów przez dwa dni.
