@@ -48,6 +48,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
+  ENABLE_PRESENTATION_IMAGE_STYLE: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
@@ -203,6 +204,10 @@ export function loadFeatureFlags(): FeatureFlags {
     // at CALL time (not this singleton) so the gate reflects late env changes in
     // background generation; this registry entry is the SSOT/documentation.
     ENABLE_DECK_CONCLUSION_SLIDE: process.env.ENABLE_DECK_CONCLUSION_SLIDE === 'true',
+
+    // Day 228 — opt-in image style prompt + mandatory OCR/face safety gates.
+    // Read at call time by deckVisualsService; this registry is the SSOT.
+    ENABLE_PRESENTATION_IMAGE_STYLE: process.env.ENABLE_PRESENTATION_IMAGE_STYLE === 'true',
 
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated

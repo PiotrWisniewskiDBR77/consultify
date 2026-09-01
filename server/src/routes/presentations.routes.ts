@@ -1563,8 +1563,17 @@ router.put(
       }
     }
 
-    const { name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId } =
-      req.body;
+    const {
+      name,
+      description,
+      audience,
+      goal,
+      theme,
+      outlineJson,
+      maxSlides,
+      colorTemplateId,
+      imageStylePrompt,
+    } = req.body;
 
     // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
@@ -1573,18 +1582,24 @@ router.put(
     // `colorTemplateId === undefined` means "field not sent, leave
     // untouched"; `null` or `''` means "explicitly cleared".
     let layoutPolicyJson: string | null = null;
-    if (colorTemplateId !== undefined) {
+    if (colorTemplateId !== undefined || imageStylePrompt !== undefined) {
       let currentLayoutPolicy: Record<string, unknown> = {};
       if (existing?.layout_policy_json) {
         try {
-          currentLayoutPolicy = JSON.parse(existing.layout_policy_json) || {};
+          currentLayoutPolicy =
+            typeof existing.layout_policy_json === 'string'
+              ? JSON.parse(existing.layout_policy_json) || {}
+              : { ...existing.layout_policy_json };
         } catch {
           currentLayoutPolicy = {};
         }
       }
       layoutPolicyJson = JSON.stringify({
         ...currentLayoutPolicy,
-        colorTemplateId: colorTemplateId || null,
+        ...(colorTemplateId !== undefined ? { colorTemplateId: colorTemplateId || null } : {}),
+        ...(imageStylePrompt !== undefined
+          ? { imageStylePrompt: String(imageStylePrompt || '').trim() || null }
+          : {}),
       });
     }
 
