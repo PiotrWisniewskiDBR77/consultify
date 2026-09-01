@@ -16,6 +16,42 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-36 · Skill kanonu podglądu rozjechał się z normą — poprawiona norma, nieaktualny skill wysyłał w złą stronę
+**Co się stało:** norma `TABLE_AND_PREVIEW_CANON.md` §7.0/§7.3 podaje kolejność stopki preview
+**AI → Relations → Akcje → „Co dalej"** (poprawione już 02.08.2026 po weryfikacji w kodzie), a realny
+`src/components/standard/StandardPreview.tsx` renderuje `whatsNext` bezwarunkowo PO `actionRows` —
+oba źródła zgodne. Ale `.claude/skills/consultify-preview/SKILL.md` — dokument, do którego kanon
+sam odsyła każdego wykonawcę na wstępie pracy — wciąż numerował „Co dalej" jako blok 4 i „Akcje"
+jako blok 5, czyli **kolejność odwrotną**: dokładnie ten błąd, który norma opisuje jako już raz
+naprawiony (i cytuje jako historyczną wpadkę `IdeasTableContent.tsx`, który w międzyczasie sam
+został poprawiony na zgodny z normą). Znalezisko z dyżuru 175, zweryfikowane, zanim cokolwiek
+ruszono: dosłowne brzmienie normy, dosłowne brzmienie skilla, dosłowna kolejność w kodzie —
+trzy źródła sprawdzone osobno, nie jedno przyjęte na wiarę.
+
+**Dlaczego ważne:** to trzecie zgłoszenie tej samej rzeczy przez właściciela. Wykonawca, który
+zaczyna pracę nad preview, czyta skill jako punkt wejścia (kanon go do tego kieruje wprost) —
+skill z odwróconą kolejnością każe mu „naprawić" ekran zgodny z normą, czyli **zepsuć zgodny
+ekran, żeby dopasować go do nieaktualnego opisu**. To ta sama rodzina co „Naprawa per wywołanie
+odrasta" (patrz `naprawa-per-wywolanie-odrasta` w pamięci nadzorcy): jedno źródło prawdy zostało
+poprawione (norma, 02.08), drugie (skill) zostało nieaktualne i przez miesiąc wysyłało w złą
+stronę, bo poprawka normy nigdy nie popłynęła do skilla, który ją cytuje jako rozstrzygniętą.
+
+**Co zrobiono:** `SKILL.md` przepisany zgodnie z normą i kodem — sześć bloków TRIADY (Nagłówek ·
+Meta · Details · AI · Relations · Akcje), „Co dalej" jawnie POZA numeracją i ZAWSZE po Akcjach,
+z jawną adnotacją o poprawce (wzorem adnotacji „ZASTĄPIONE" z Z-35), żeby stara treść zostawała
+widoczna w historii, nie znikała bez śladu. Sprawdzono grepem po realnych ekranach preview
+(`IdeasTableContent.tsx`, `MyIdeasListContent.tsx`, `InterviewInsightPreview.tsx`,
+`CasesListScreen.tsx`, `AssessmentHub.tsx`) — **żaden nie ma odwróconej kolejności w produkcji**;
+`InterviewInsightPreview.tsx` renderuje AI → „Co dalej" bez osobnego bloku Akcji, ale to legalne
+pominięcie bloku bez treści (anty-duplikacja §7.3 pkt 4.4), nie odwrócona kolejność.
+
+**Co z tego wynika:** dokument, który normę tylko CYTUJE (skrót/wejście), starzeje się osobno od
+dokumentu, który normę USTALA — potrzebuje własnej daty poprawki i przeglądu przy każdej zmianie
+normy źródłowej, inaczej rozjazd wraca za każdym razem, gdy ktoś poprawi jedno miejsce i uzna
+sprawę za zamkniętą.
+
+---
+
 ### Z-35 · Runda 01.09 zamknięta decyzjami — jedna Teresa w swoim oknie, cztery odrzucone ekrany rozstrzygnięte pojedynczo
 **Co się stało:** trzy decyzje zamykające rundę trafiły do `KANON_Z_ODBIOROW.md` — tu tylko kontekst,
 który ginie razem z commitem. (1) Panele artefaktów przestają kleić własny czat z Teresą — **jedna

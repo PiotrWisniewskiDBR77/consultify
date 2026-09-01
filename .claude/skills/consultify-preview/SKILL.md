@@ -1,6 +1,6 @@
 ---
 name: consultify-preview
-description: Kanon podglądu (preview pane) Consultify — 6 bloków (nagłówek·meta·treść·What's-next·akcje-pill·kebab). Wywołaj ZAWSZE gdy tworzysz lub zmieniasz jakikolwiek boczny/podglądowy panel (preview pane) otwierany z tabeli/listy/karty przez single-click — w KAŻDYM module (My Work, Assessment, Interview, Initiatives, Execution, Results, Finance, Materiały, Audits, Meeting, Admin). Także przy audycie/odbiorze takiego panelu, przy pracy nad `PreviewPaneShell`/`PreviewActionBar`/`previewStyles.ts`/`ArtifactActionPanel`, lub gdy dodajesz nową akcję/pill w stopce preview. NIE dla pełnego widoku artefaktu po double-click (użyj consultify-artefakty) ani dla samej tabeli/menu/kebaba wiersza (użyj consultify-triada — preview jest jej częścią, ale ma własny, szczegółowy kanon poniżej).
+description: Kanon podglądu (preview pane) Consultify — 6 bloków (nagłówek·meta·treść·AI·relations·akcje-pill) + „Co dalej" poza numeracją, zawsze na końcu, PO akcjach. Wywołaj ZAWSZE gdy tworzysz lub zmieniasz jakikolwiek boczny/podglądowy panel (preview pane) otwierany z tabeli/listy/karty przez single-click — w KAŻDYM module (My Work, Assessment, Interview, Initiatives, Execution, Results, Finance, Materiały, Audits, Meeting, Admin). Także przy audycie/odbiorze takiego panelu, przy pracy nad `PreviewPaneShell`/`PreviewActionBar`/`previewStyles.ts`/`ArtifactActionPanel`, lub gdy dodajesz nową akcję/pill w stopce preview. NIE dla pełnego widoku artefaktu po double-click (użyj consultify-artefakty) ani dla samej tabeli/menu/kebaba wiersza (użyj consultify-triada — preview jest jej częścią, ale ma własny, szczegółowy kanon poniżej).
 ---
 
 # Consultify — Kanon podglądu (Preview Pane)
@@ -23,21 +23,31 @@ podepnij te komponenty.**
    `src/components/shared/PreviewPane/previewStyles.ts`,
    `src/components/shared/artifact-actions/ArtifactActionPanel.tsx`.
 
-## Sześć bloków (góra→dół, kolejność sztywna — MUST)
-1. **Nagłówek** (sticky) — tytuł + pin/kopiuj + „Open" (JEDYNE Open w całym preview) + „×".
+## Sześć bloków TRIADY (góra→dół, kolejność sztywna — MUST) + „Co dalej" poza numeracją
+
+★ **UWAGA (poprawka 2026-09-01, dyżur 175):** wcześniejsza wersja tej sekcji numerowała „Co dalej"
+jako blok 4 i „Akcje" jako blok 5 — kolejność ODWROTNA względem normy i kodu, znalezisko zgłoszone
+przez właściciela trzeci raz. Obowiązuje kolejność poniżej, zgodna z `TABLE_AND_PREVIEW_CANON.md`
+§7.0/§7.3 (poprawionym już 2026-08-02) i z realnym kodem `src/components/standard/StandardPreview.tsx`
+(renderuje `whatsNext` bezwarunkowo PO `actionRows`, komentarze „Blok 1…6" w pliku).
+
+1. **Nagłówek** (sticky) — tytuł + pin + „Open" (JEDYNE Open w całym preview) + „×".
 2. **Meta** — status/typ/data/sesje, poziom +2 (stan, nie treść).
 3. **Treść (Details)** — centrum, scrollowalne, bogaty domyślny szablon (nie jednolinijkowy opis),
-   licznik słów, **kebab lokalny** (Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·Export·Pobierz).
-4. **What's-next / „Co dalej"** (create-strip) — TYLKO gdy encja jest źródłem cross-module
-   (np. Insight → Raport/Deck/Tabela/Idea/Notatka/Inicjatywa); ikona+hue = moduł docelowy (§7.3a).
-5. **Akcje = pill** — `h-9 rounded-full` przez `PreviewActionBar`+`actionPillClass()`;
+   licznik słów, **kebab lokalny** (Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·Export·Pobierz) — OSOBNY
+   kontrakt od `RowActionsMenu` wiersza tabeli/karty (`KEBAB_MENU_STANDARD.md`, §9
+   TABLE_AND_PREVIEW_CANON.md); nie mylić pozycji, nie duplikować.
+4. **AI** — opcjonalna karta stopki: chipy (Podsumuj/Zasugeruj) dopasowane do encji.
+5. **Relations** — opcjonalna karta stopki: klikalne pigułki powiązań albo „Brak powiązań".
+6. **Akcje = pill** — `h-9 rounded-full` przez `PreviewActionBar`+`actionPillClass()`;
    OPCJONALNE — anty-duplikacja: nie dubluj „Open" (już w nagłówku) ani export/pobierz
    (już w kebab bloku 3). Jeśli po odjęciu duplikatów nic nie zostaje → pomiń cały pasek.
-6. **Kebab lokalny ≠ kebab wiersza** — kebab z bloku 3 to OSOBNY kontrakt od `RowActionsMenu`
-   wiersza tabeli/karty (`KEBAB_MENU_STANDARD.md`, §9 TABLE_AND_PREVIEW_CANON.md). Nie mylić
-   pozycji, nie duplikować.
 
-AI (Podsumuj/Zasuguj) i Relations to opcjonalne karty stopki MIĘDZY blokiem 3 i blokiem 4.
+**„Co dalej" / What's-next (create-strip) — POZA numeracją TRIADY, zawsze na końcu, PO bloku 6:**
+renderowany TYLKO gdy encja ma zaimplementowaną konwersję na artefakt innego modułu
+(np. Insight → Raport/Deck/Tabela/Idea/Notatka/Inicjatywa); ikona+hue = moduł docelowy (§7.3a).
+
+**Pełna kolejność stopki (blok 3 → 6 + poza numeracją): Details → AI → Relations → Akcje → Co dalej.**
 Blok bez danych = **ukryty**, nie pusty box; kolejność OBECNYCH bloków się nie zmienia.
 
 ## Twarde zakazy
@@ -52,7 +62,9 @@ Blok bez danych = **ukryty**, nie pusty box; kolejność OBECNYCH bloków się n
   do modułu docelowego — draft zostaje w preview źródłowym do czasu promocji (§7.1).
 
 ## Odbiór — checklist (przejdź literalnie po każdej zmianie)
-- [ ] Kolejność 6 bloków zachowana, brak bloku bez danych renderowanego jako pusty box.
+- [ ] Kolejność 6 bloków zachowana (Nagłówek·Meta·Details·AI·Relations·Akcje), „Co dalej" — jeśli
+      obecne — renderuje się PO akcjach, nigdy przed nimi; brak bloku bez danych renderowanego jako
+      pusty box.
 - [ ] Nagłówek: dokładnie jedno „Open"; „×" zawsze ostatnie po prawej.
 - [ ] Details: licznik słów widoczny gdy treść > 0, kebab lokalny ma wszystkie 5 pozycji (lub ukryte gdy N/A).
 - [ ] „Co dalej" renderuje się TYLKO dla encji cross-module źródło→cel; ikony/hue zgodne z §7.3a.
