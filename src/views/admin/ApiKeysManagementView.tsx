@@ -331,14 +331,14 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                     className={`p-3 rounded-lg ${
                       isKeyExpired(key) || key.revokedAt
                         ? 'bg-danger-100 dark:bg-danger-900/30'
-                        : 'bg-primary-100 dark:bg-primary-900/30'
+                        : 'bg-c-success/10 dark:bg-c-success/20'
                     }`}
                   >
                     <Key
                       className={`w-5 h-5 ${
                         isKeyExpired(key) || key.revokedAt
                           ? 'text-danger-600 dark:text-danger-400'
-                          : 'text-primary-600 dark:text-primary-400'
+                          : 'text-c-success'
                       }`}
                     />
                   </div>
