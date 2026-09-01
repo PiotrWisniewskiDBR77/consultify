@@ -290,3 +290,32 @@ właściciela z 30.08. **Ryzyko wysokie.**
 4. **Czy karta naprawcza KPI (`ff_recoveryCard`) ma odpowiednik w nowej karcie
    wskaźnika** — nie sprawdzałem; jeśli nie ma, zdjęcie starego huba oznacza
    realną utratę funkcji, a nie tylko wyglądu.
+
+---
+
+## Wykonanie (dyżur 170, 2026-09-01) — co z tego zrobiono
+
+| Rekomendacja | Stan |
+| --- | --- |
+| `gen-excel-templates-tab` — zdjąć z odbioru, kodu nie kasować | ZROBIONE. Zostaje `D`; opis sprostowany (powierzchnia nie sprawdza flagi, jest ekranem końcowym kreatora). Kod nietknięty. |
+| `results-three-pairs` — zdjąć | ZROBIONE. `A` → `D`, z adnotacją o otwartej sprawie diagnostyki odchyleń. |
+| `results-vnext-attention` — zostawić, dorobić wejście | ZROBIONE. Przycisk „Uwaga" w `ResultsVNextRegistryShell.tsx` za flagą `attentionEntry` (default OFF, czeka na odbiór). Wpis w `status.json` sprostowany. Zrzuty: `evidence/grafika/170-odrzucone-wykonanie/`. |
+| `results-vnext-okr-workspace` — przebudować, nie zdejmować | ODŁOŻONE ŚWIADOMIE. Ekran zostaje z oceną `A` + adnotacją; plan przebudowy w `ODLOZONE.md`. Przebudowa to osobny dyżur. |
+
+### Odpowiedź na „Czego nie ustaliłem" pkt 4
+
+Pytanie brzmiało: *czy karta naprawcza KPI (`ff_recoveryCard`) ma odpowiednik
+w nowej karcie wskaźnika*. **Sprawdzone.** Odpowiedź: **CZĘŚCIOWO** — rdzeń
+pętli naprawczej ma następcę (`KpiDeviationCaseSubview`), ale **cztery funkcje
+są UTRACONE** (powiązanie działania z Zadaniem, eksperymenty, zależności/ryzyka,
+typ działania IMMEDIATE/DURABLE), a **diagnostyka odchyleń jest UTRACONA
+w całości** — trzy silniki serwera żyją i są zamontowane w routerze, a wołaczy
+w interfejsie jest zero.
+
+Pełna tabela porównawcza funkcja-po-funkcji, z dowodami `plik:linia`, oraz trzy
+pytania do rozstrzygnięcia: **`ODLOZONE.md`, sekcja „SPRAWA DO DECYZJI
+WŁAŚCICIELA — co zginęło razem z wycofanym hubem Wyników"**.
+
+Zgodnie z zasadą „nie zdejmuj niczego z obszaru, w którym coś jest UTRACONE":
+`ResultsHub.tsx`, `KPITimeSeriesDrawer.tsx`, `RecoveryCardPanel.tsx` i trzy
+silniki serwera **zostały nietknięte**.
