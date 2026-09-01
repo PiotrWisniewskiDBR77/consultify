@@ -72,7 +72,37 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
   };
 
   return (
-    <div className="py-1">
+    /**
+     * RAMKA BLOKU 4 MIESZKA TUTAJ — jeden raz w całej aplikacji.
+     *
+     * ── CO BYŁO ZMIERZONE (dyżur rodziny podglądu, 2026-09-01) ───────────────
+     * Kanon (`TABLE_AND_PREVIEW_CANON.md` §7.0/§7.3 pkt 4.1) mówi, że blok AI to
+     * RAMKA z chipami — opcjonalna karta stopki. Ale sama ramka nie mieszkała
+     * nigdzie: każdy z 14 wołaczy doklejał ją sobie sam w `<div>` opakowującym.
+     * Po policzeniu wyszły CZTERY różne ramki i dwa ekrany bez ramki w ogóle:
+     *
+     *   · kanon      `rounded-xl border-c-border-subtle bg-c-surface-raised p-2.5`
+     *                — StandardPreview, DecisionPreviewPanel, InitiativePreviewV3
+     *   · inne tło   `… bg-slate-50/60 dark:bg-white/[0.03] …`  — MyTasksListContent
+     *   · inny token `rounded-token-md border-[var(--c-border-subtle)] …`
+     *                — pięć podglądów Wywiadu
+     *   · surowy slate `border-slate-200/70 dark:border-white/[0.08] …`
+     *                — FinancePreviewPanel, ToolSessionPreviewV3,
+     *                  KnownToolPreviewV3 (ten dodatkowo `p-2`, nie `p-2.5`)
+     *   · BRAK RAMKI — IdeasTableContent, MyIdeasListContent
+     *
+     * To jest dokładnie to, co właściciel zobaczył na ekranie porównawczym:
+     * „pokazuje, jak nieporównywalne są podglądy, które powinny być takie same"
+     * (30.08) i zgłosił drugi raz na `idea-table` (01.09). Poprzednia naprawa
+     * poszła do PRZYRZĄDU (`preview-4-zakladki` przepięty na `StandardPreview`),
+     * a nie do produktu — `IdeasTableContent` dalej składał blok ręcznie.
+     *
+     * Zasada właściciela (`KANON_Z_ODBIOROW.md`): **sekcja mieszka w jednym
+     * miejscu w całej aplikacji.** Ramka jest częścią bloku, nie częścią ekranu,
+     * więc jej miejsce jest tu. Wołacze NIE opakowują — opakowanie u wołacza
+     * daje podwójną ramkę.
+     */
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-500">
           <Sparkles size={12} />
