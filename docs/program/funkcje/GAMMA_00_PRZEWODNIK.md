@@ -114,3 +114,13 @@ za trzy tygodnie**, po zbudowaniu filaru 2 własnymi rękami.
 | `GAMMA_G2_SESJA_NA_ZYWO.md` | Przejście procesu od środka |
 | `GAMMA_G3_OBCHOD_MENU.md` | Obchód wszystkich menu; **mechanizm polecenia stylu** |
 | `GAMMA_ZNALEZISKO_SZESC_STYLOW.md` | Sześć stylów było już w kodzie; **zawiera moje sprostowanie własnego fałszywego twierdzenia** |
+
+## ★ Dokumentacja funkcjonalna dla właściciela — 2026-09-01
+
+`docs/functional/12_prezentacje/README.md` odpowiada wprost na pytanie „co z
+tych dziesięciu dyżurów działa", ustrukturyzowane wg trzech filarów
+właściciela, z rozdziałem: działa · zbudowane ale wyłączone · nie istnieje ·
+niemożliwe. `docs/functional/12_prezentacje/AS_IS_2026-09-01.md` to ten sam
+pomiar, uporządkowany plik:linia per komponent kodu. Prezentacje pozostają
+podsystemem `Materials` (menu 10), nie osobną pozycją menu — patrz
+`docs/functional/10_materials/README.md`.
