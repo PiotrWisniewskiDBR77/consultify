@@ -245,6 +245,10 @@ const ExecutionReportDay11Screen = React.lazy(() => import('./screens/execution-
 // );
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
 const Day200FinancePanelsScreen = React.lazy(() => import('./screens/day200-finance-panels'));
+const Day233FinanseRejestryScreen = React.lazy(
+  () => import('./screens/day233-finanse-rejestry')
+);
+const Day233FinansePaneleScreen = React.lazy(() => import('./screens/day233-finanse-panele'));
 const FinanceHubScreen = React.lazy(() => import('./screens/finance-hub'));
 const FinanceModelWorkspaceScreen = React.lazy(() => import('./screens/finance-model-workspace'));
 const FinanceWorkspaceBarScreen = React.lazy(() => import('./screens/finance-workspace-bar'));
@@ -1057,6 +1061,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'GRAFIKA 17 — REALNY <FinanceHub> (ekran wejściowy Finansów, brakująca „pierwsza karta" — sześć analizowanych spółek, PLN/EUR/USD/GBP). &tab=statements|analysis|models|prediction|valuation',
     render: () => <FinanceHubScreen />,
+  },
+  'day233-finanse-rejestry': {
+    label:
+      'Day233 — realny FinanceHub, pięć rejestrów z fixture owner-review; &tab=statements|analysis|models|prediction|valuation',
+    render: () => <Day233FinanseRejestryScreen />,
+  },
+  'day233-finanse-panele': {
+    label:
+      'Day233 — 21 realnych paneli Finansów; &panel=monte-carlo|real-options|frontier|sensitivity|scenarios|banking|cash-forecast|driver|driver-tree|extended-ratios|headcount|investment-appraisal|rolling-forecast|valuation-visuals|value|value-attribution|value-capture|value-ledger|variance-bridge|variance-narration|ev-basket',
+    render: () => <Day233FinansePaneleScreen />,
   },
   'admin-sso-self-service-card': {
     label: 'HP-24 SSO self-service — SAML skonfigurowany (2 domeny) + panel wyniku testu',
