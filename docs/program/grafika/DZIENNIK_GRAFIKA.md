@@ -16,6 +16,49 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-41 · Dzień naprawy przyrządu i wymiany z torem funkcji — bezpiecznik kłamał w obie strony, a zgłoszenie punktowe znów okazało się próbką
+**Co się stało:** (1) **Dług przyrządu spłacony o ponad ćwierć** — linia bazowa **152 → 112**
+pozycji: wymyślona szerokość **30 → 15** ekranów, podpis przyrządu w kadrze **33 → 24**, komponent
+bez wołacza **51 → 41**. Rejestr: **313** ekranów, **253** do pokazania właścicielowi, **60**
+świadomie odłożonych. (2) **Trzy zgłoszenia właściciela domknięte:** podgląd w tabeli pomysłów
+(zgłaszany **trzy razy**, przyczyną był pasek dokładany przez harness, nie produkt — podgląd
+wrócił z 340 na 403 px); usuwanie założeń w Finansach (przycisk istniał, ale leżał **poza prawą
+krawędzią** — teraz kebab w wierszu, tabela zeszła z 1550 do 1440 px); szerokość kolejki
+w administracji. (3) **Bramka parytetu kłamała w obie strony.** Przyczyna okazała się inna niż
+hipoteza nadzorcy: nie komentarze w kodzie, tylko adres-wzorzec `/settings/*` w łańcuchu znaków,
+czytany jako początek komentarza, zjadający ~600 linii pliku tras. Siedem pozycji długu było
+duchami. Dowód mutacyjny: przed `false`, po `true`. (4) **Wymiana z torem funkcji.** Przejęliśmy
+trzy ich bezpieczniki; jeden od razu znalazł u nas **zdublowany klucz ekranu** (jeden ekran cicho
+nadpisywał drugi — ślad scalania metodą „zachowaj obie strony"). Oddaliśmy im nasz katalog
+sposobów, w jakie kłamie stanowisko. Ich narzędzie przy pierwszym uruchomieniu dało **7 fałszywych
+alarmów na 7** i sami to zgłosili, zanim się przejechaliśmy. (5) **Ekran z oceną A okazał się
+cicho zepsuty.** Audyty, zakładka „Sesje": front pyta o `concludedCriteria`, serwer odsyła
+`criteriaConcluded` → kolumna „Postęp" pokazuje literalny ukośnik. Właściciel dał A, oglądając
+**wyłącznie drugą zakładkę** — feralnej nigdy nie sfotografowano. (6) **Panele wyceny:** pięć par
+przeszło nową kontrolę stanu; starych zrzutów nie było w ogóle, więc właściciel nigdy nie oceniał
+ich na obrazie pokazującym pustkę. Zastrzeżenie: te panele **nie mają wołacza w produkcie**.
+(7) **Sprawa spoza toru, zgłoszona właścicielowi:** tor funkcji znalazł sześć dziur w
+uprawnieniach, trzy żywe. Pliki tras są na gałęzi, z której wdraża się produkcja, podpięte
+bezwarunkowo, trasy istnieją od ponad siedmiu miesięcy. Czego nie wiadomo: czy produkcja jest
+wdrożona i czy ma dane realnych klientów — pytanie postawione właścicielowi, bo tylko on może
+sprawdzić. Do czasu odpowiedzi praca idzie tak, jakby odpowiedź brzmiała „tak".
+
+**Dlaczego ważne:** cztery z powyższych punktów (3, 4, 5, 6) to JEDEN kształt powtórzony w jeden
+dzień, w dwóch torach naraz: zgłoszenie/naprawa objęły punkt, nie rodzinę — bramka parytetu
+zbadana tylko na zgłoszonych plikach, zdublowany klucz ekranu obok poprawnie scalonych, jedna
+zakładka Audytów sfotografowana a druga nie, panele wyceny nigdy nie miały zrzutu porównawczego.
+To nie jest niedbałość wykonawców, tylko wada zleceń. Równolegle: punkty (3) i punkt (a) w
+przypadku bramki parytetu oraz test+atrapa na ekranie Audytów pokazują **bezpiecznik kłamiący
+w obie strony** — dwie kontrole zgodnie milczące albo zgodnie zielone, bo czerpią z tego samego
+skażonego źródła, co wygląda mocniej niż pojedyncza kontrola i dlatego usypia skuteczniej.
+
+**Co z tego wynika:** stąd nowa reguła A (nr 20, rodzina zamiast punktu) i reguła B (nr 21, dwa
+bezpieczniki z jednego źródła) w `00_ZASADY_PRACY.md`. Nowa praktyka: przy ekranach z zakładkami
+fotografować KAŻDĄ osobno, nie tylko tę, którą ktoś akurat otworzył. Pytanie o produkcję i dane
+realnych klientów zostaje priorytetem nr 1, otwarte, dopóki właściciel nie odpowie.
+
+---
+
 ### Z-40 · Moja hipoteza „surowy klucz na ekranie" — OBALONA pomiarem, 0 przypadków
 **Co się stało:** nadzorca zauważył, że polski słownik ma ~2073 klucze więcej niż angielski,
 i sprawdził `src/i18n.ts:81-88`: łańcuch fallbacku to `en: ['en']` — angielski **nie ma** fallbacku

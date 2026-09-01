@@ -515,3 +515,34 @@ wariantach w chwili zrzutu, sprawdzoną `checkScreenshotPairState`.
 **Powód:** stały czas to loteria — odbiór dyżuru 233 zmierzył parę, w której light zdążył pokazać
 sam formularz, a dark już policzony wynik (KSZTAŁT 19), a stary bezpiecznik samej jasności to
 przepuszczał tym łatwiej, im większy był defekt.
+
+## ★★ REGUŁA NR 20 — zlecenie obejmuje rodzinę, nie punkt (2026-09-01)
+
+Zanim wykonawca tknie zgłoszoną pozycję, wypisuje CAŁE jej rodzeństwo — pozostałe trasy tej
+rodziny, pozostałe piętra mechanizmu, pozostałe zakładki ekranu, pozostałe wywołania funkcji —
+i przy KAŻDEJ podaje, czy ma już poprawkę. Zgłoszona pozycja jest próbką, nie zakresem.
+
+**Powód:** dziś, w dwóch torach naraz, ten sam kształt wyszedł CZTEROKROTNIE — mechanizm ma
+kilka pięter, część naprawiona poprawnie, jedno pominięte, a poprawny wzorzec stoi kilkadziesiąt
+linii obok w TYM SAMYM pliku. To nie jest niedbałość wykonawcy: jeśli zlecenie mówi „napraw tę
+trasę", wykonawca naprawia tę trasę i ma rację. Wada jest w zleceniu, czyli po stronie nadzorcy.
+Uważność jako lekarstwo zawodzi zawsze.
+
+**Trop praktyczny:** szukaj rodzeństwa, które JUŻ MA poprawkę — gdzie ktoś raz mapował albo
+kontrolował, tam prawie na pewno są miejsca, gdzie zapomniał; istniejąca poprawna implementacja
+obok jest najsilniejszym sygnałem, że reszta rodziny jest zepsuta.
+
+## ★★ REGUŁA NR 21 — dwa bezpieczniki mogą karmić się z jednego źródła (2026-09-01)
+
+Gdy dwie niezależne kontrole mówią to samo, sprawdź najpierw, czy nie biorą danych z tego
+samego źródła. To nie jest „jeden bezpiecznik zawiódł" — to zgodne potwierdzenie nieprawdy, a
+ono wygląda mocniej niż pojedyncza kontrola, więc usypia skuteczniej.
+
+**Powód — dwa zmierzone przypadki dziś:** (a) na ekranie Audytów test jednostkowy i atrapa
+harnessu OBIE fabrykowały dane w kształcie frontu, a nie serwera — zielony test i poprawny
+zrzut nie znaczyły nic; (b) w drugim torze atrapa bazy melduje „zmieniono 1 wiersz" niezależnie
+od warunku, więc przy defekcie „zapis jest pusty" potwierdzała udany zapis, którego nie było.
+
+**Wniosek praktyczny:** atrapa danych ma mieć kształt SERWERA, nie kształt wygodny dla frontu.
+Kolejność naprawy: najpierw popraw atrapę, pokaż, że ekran psuje się widocznie, dopiero potem
+napraw kod — inaczej naprawa jest deklaracją.
