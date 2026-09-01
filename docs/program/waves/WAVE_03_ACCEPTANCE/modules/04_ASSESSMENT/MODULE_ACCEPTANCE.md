@@ -181,3 +181,12 @@ This is an errata forward on the Day 198 section above, not a rewrite of it. Ful
 - Test `tests/integration/assessment/day198.fixture-reachability.realpg.test.ts` re-run on the fresh fixture: `2/2 PASS` (`RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres`, `--retry=0`).
 
 No product verdict change. `Current gate:` remains unchanged.
+
+## Day 240 — pomiar proweniencji pojedynczej odpowiedzi (2026-09-01)
+
+- `assessment_responses` na świeżej bazie ma score/evidence/AI feedback/autora/czas, ale nie ma `source_type`, `source_id` ani równoważnej kolumny pochodzenia (`server/migrations/20261120_fresh_db_schema_gap_closure.sql:295-309`; realne `\d` w `CODEX_DAY240_ASSESSMENT_REPORT.md`). `ASM-F-010` pozostaje targetem, nie stanem gotowym (`docs/functional/05_assessment/README.md:48,57-60`).
+- Korekta wobec instrukcji: całe `assessments` ma żywe `source_type/source_reference` dzięki `server/migrations/730_beta_schema_fixes.sql:36-37`; nie rozwiązuje to proweniencji pojedynczej odpowiedzi.
+- Korekta wobec instrukcji: `assessment_evidence` i `assessment_ai_scoring_proposals` istnieją na kanonicznie zbudowanej bazie, bo tworzy je `server/migrations/20260719_baseline_gap.sql:1723,1823`. Pierwsza z tych tabel w żywym kształcie nie ma oczekiwanego `evidence_type`.
+- Dokumentacja migracji jest sprzeczna z wykonaniem: `server/migrations/README.md:1-6` wskazuje `server/migrations-v2`, lecz runner domyślnie uruchamia `server/migrations` (`server/scripts/migrate.postgres.ts:816`). Nie podjęto decyzji o kasowaniu żadnego katalogu.
+- Jedyny kompletny, DB-enforced łańcuch typu dowodu potwierdzono dla wąskiego `assessment_axis_evidence` DRD (`server/migrations/20260801_asm005_007_evidence_quality_output.sql:43-45`; `server/src/services/assessment/drdEvidenceScoring.ts:24`; `src/components/assessment/AssessmentQualityReviewPanel.tsx:31,328`).
+- Stan decyzji: `PENDING`. Warianty: jawne `Źródło nieznane`; wspólne `source_type + source_id` przy odpowiedzi; albo pełny cykl propozycja AI → akceptacja człowieka. Niczego nie wdrożono w Day 240.
