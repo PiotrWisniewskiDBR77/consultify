@@ -1,0 +1,16 @@
+NOWY — DYŻUR 239
+
+★ PIERWSZA KOMENDA — odczyt instrukcji z vaulta, NIE z katalogu roboczego:
+
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  fetch github-backup --prune && \
+git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
+  show github-backup/codex/m03-admin-20260824:docs/program/waves/WAVE_03_ACCEPTANCE/codex/INSTRUKCJA_DYZUR_239_REALIZACJA.md
+
+Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 239.
+
+Marker: 9a794efdc0
+Zasoby wyłączne: baza 6188, runtime 5164 i 5165.
+
+Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —
+WIĄŻĄCA JEST INSTRUKCJA.
