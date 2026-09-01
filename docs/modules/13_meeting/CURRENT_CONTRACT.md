@@ -25,6 +25,30 @@ last_reviewed: 2026-07-30
 > nosi etykietę „wkrótce", a kod montuje realny hub i backend. To jest jedna z decyzji
 > otwartych tego modułu, nie stan docelowy.
 
+> ### ★ STAN ZMIERZONY 2026-09-01 (dyżur 237) — pełny pomiar: `docs/functional/POMIAR_2026-09-01_ORGANIZACJA_SPOTKANIA_USTAWIENIA.md`
+>
+> Moduł jest dziś oznaczony jako otwarty (`MODULE_MEETING: 'open'`,
+> `src/utils/betaMenuStatus.ts:57`) i trasa `/meetings` jest na liście
+> dozwolonych tras zwykłego użytkownika (`src/utils/pilotAccess.ts:22-34`,
+> `FIX-181` z 30.08) — **ale pozycja menu nie jest na liście widocznych
+> pozycji** (`PILOT_VISIBLE_MENU_IDS`, `src/utils/pilotAccess.ts:6-12`, brak
+> `MODULE_MEETING`). Skutek zmierzony bezpośrednio: **menu odmawia (kłódka,
+> `Sidebar.tsx:124-149`), a wpisanie adresu wprost przechodzi.** Naprawa
+> `FIX-181` otworzyła dwie z trzech bramek tej funkcji, trzecią (widoczność
+> menu) pominęła — decyzja właściciela otwarta (dodać do widocznych, czy
+> świadomie zostawić kłódkę).
+>
+> ★ Ograniczenie dowodu, zapisane uczciwie: zrzut mający pokazać dostęp
+> zwykłego użytkownika jest bitowo identyczny ze zrzutem zwykłej listy — obie
+> ścieżki renderują ten sam ekran na podstawionym zapleczu. To dowodzi
+> **wyłącznie**, że router front-endu nie blokuje; o uprawnieniach po stronie
+> serwera nie mówi nic.
+>
+> Teza „`MeetingObjectPage` renderuje `0` decyzji, gdy `/decision-records`
+> jest puste" jest **obalona**: UI dokłada zatwierdzone decyzje z notatek
+> (`MeetingObjectPage.tsx:563-572`, `:829-846`); kontrakt regresyjny Day105
+> jest dziś PASS.
+
 
 ## Cel i stan
 
