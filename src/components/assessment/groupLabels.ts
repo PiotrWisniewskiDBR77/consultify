@@ -41,21 +41,26 @@ import { listDrdAxisNarratives, resolveDrdAxisName, type DrdSourceLanguage } fro
 export function resolveGroupName(
   methodPackId: string,
   methodPackVersion: string,
-  groupId: string
+  groupId: string,
+  language: DrdSourceLanguage = 'pl'
 ): string | null {
-  return resolveDrdAxisName(methodPackId, methodPackVersion, groupId);
+  return resolveDrdAxisName(methodPackId, methodPackVersion, groupId, language);
 }
 
 /**
  * Convenience wrapper for the common "name or raw id" call, so consumers do
- * not each re-invent the fallback.
+ * not each re-invent the fallback. `language` defaults to `'pl'` (unchanged
+ * behaviour for every existing caller); pass `'en'` where the axis name is
+ * methodology content that must stay in its source language — see
+ * `AXIS_NAME_EN_BY_ID` in `drdLabels.ts`.
  */
 export function groupNameOrId(
   methodPackId: string,
   methodPackVersion: string,
-  groupId: string
+  groupId: string,
+  language: DrdSourceLanguage = 'pl'
 ): string {
-  return resolveGroupName(methodPackId, methodPackVersion, groupId) ?? groupId;
+  return resolveGroupName(methodPackId, methodPackVersion, groupId, language) ?? groupId;
 }
 
 // ---------------------------------------------------------------------------

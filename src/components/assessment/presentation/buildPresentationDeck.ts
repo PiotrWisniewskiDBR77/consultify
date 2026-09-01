@@ -160,10 +160,16 @@ function dimensionProfileFrom(
   // aggregation key (`groupName: groupId` in `reportSnapshot.ts`), so slide 5
   // used to print `axis-1`/`axis-4` — or, on a pack whose keys are bare
   // ordinals, a naked "1"/"4" with no word at all — where a client expects
-  // "Procesy Cyfrowe". Resolved here, in the BUILDER, against the Output's own
-  // PINNED pack version; unresolvable ids honestly fall back to the raw id.
-  // This is a dictionary lookup, not a recomputation: every NUMBER below is
-  // still copied verbatim from `groupResults`.
+  // an actual axis name. Resolved here, in the BUILDER, against the Output's
+  // own PINNED pack version; unresolvable ids honestly fall back to the raw
+  // id. This is a dictionary lookup, not a recomputation: every NUMBER below
+  // is still copied verbatim from `groupResults`.
+  //
+  // ★ LANGUAGE (CLAUDE.md language boundary, 2026-09-01): an axis name is
+  // methodology content, not UI chrome, so it is requested in `'en'` here —
+  // `groupNameOrId`'s 4th argument — instead of the default `'pl'` that
+  // other callers (report document, slide-6 matrix title) still use. Same
+  // dictionary source (`DRD_STRUCTURE` via `drdLabels.ts`), different field.
   //
   // Sort by level descending (a display ordering — the values themselves
   // are untouched, copied straight from `groupResults`, which is itself
@@ -174,7 +180,8 @@ function dimensionProfileFrom(
       groupName: groupNameOrId(
         output.methodology.methodPackId,
         output.methodology.version,
-        g.groupId
+        g.groupId,
+        'en'
       ),
       currentLevel: g.aggregatedLevel,
     }))

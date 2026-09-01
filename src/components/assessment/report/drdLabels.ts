@@ -111,6 +111,25 @@ const AXIS_NAME_BY_ID: Record<string, string> = Object.fromEntries(
 );
 
 /**
+ * Axis id -> ENGLISH axis name, same source (`DRD_STRUCTURE.name`), no
+ * `namePL` fallback. NOT a second copy of the structure — one extra field
+ * pick off the same `DRD_STRUCTURE` array the dictionary above already reads.
+ *
+ * ★ WHY THIS EXISTS (assessment-presentation-view slide 5, 2026-09-01):
+ * CLAUDE.md's language boundary is explicit — "angielskie nazwy osi,
+ * obszarów i poziomów w metodyce ZOSTAJĄ — nie tłumacz ich. Polski
+ * obowiązuje w interfejsie (etykiety kontrolek, nagłówki sekcji)." An axis
+ * name is methodology content, not UI chrome, so it stays English wherever
+ * a caller asks for it. `AXIS_NAME_BY_ID` above still defaults to Polish
+ * for its EXISTING callers (`resolveDrdUnitLabel`, the report document's
+ * "Wynik per wymiar" section, the slide-6 matrix title) — none of those are
+ * in scope for this fix and changing their language is a separate decision.
+ */
+const AXIS_NAME_EN_BY_ID: Record<string, string> = Object.fromEntries(
+  DRD_STRUCTURE.map((axis) => [`axis-${axis.id}`, axis.name])
+);
+
+/**
  * Resolves a unit id to its structural label, GATED on the Output's own
  * pinned `methodPackId`/`methodPackVersion` matching what's actually
  * compiled here. Returns `null` for a non-DRD pack, a version mismatch, or
@@ -153,13 +172,15 @@ export function resolveDrdUnitLabel(
 export function resolveDrdAxisName(
   methodPackId: string,
   methodPackVersion: string,
-  axisGroupId: string
+  axisGroupId: string,
+  language: DrdSourceLanguage = 'pl'
 ): string | null {
   if (methodPackId !== DRD_METHOD_PACK_ID) return null;
   const pack = getCompiledDrdPack();
   if (!pack) return null;
   if (pack.manifest.version !== methodPackVersion) return null;
-  return AXIS_NAME_BY_ID[axisGroupId] ?? null;
+  const dict = language === 'en' ? AXIS_NAME_EN_BY_ID : AXIS_NAME_BY_ID;
+  return dict[axisGroupId] ?? null;
 }
 
 export function isDrdPack(methodPackId: string): boolean {
