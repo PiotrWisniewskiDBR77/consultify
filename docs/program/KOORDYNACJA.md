@@ -611,3 +611,6 @@ Kolumna `measurement_frequency_days` (częstotliwość pomiaru wskaźnika) **ist
 w bazie**, jest chroniona triggerem i czytana do liczenia zaległości — ale **nie ma
 jej w żadnym schemacie zapisu** (`CreateKpiDraftSchema`, `EditKpiDraftSchema`).
 Zawsze zostanie pusta. Jedno pole do dopisania w dwóch schematach.
+## Moduł 12 Audyty — warsztat D-5 (Day221)
+
+Prototyp warsztatu odbioru jest w `dev-render/screens/day221-audyty-warsztat.tsx` (`?screen=day221-audyty-warsztat`). Status: oczekuje akceptu właściciela na zrzutach jasny/ciemny; nie jest podłączony do produktu. Zarezerwowana flaga przyszłej budowy: `ENABLE_AUDITS_WORKSHOP`, default OFF.

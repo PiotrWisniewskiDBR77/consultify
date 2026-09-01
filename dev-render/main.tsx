@@ -106,6 +106,7 @@ const SuperadminPlatformOperationsDay15Screen = React.lazy(
 );
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const Day207WriteProposalScreen = React.lazy(() => import('./screens/day207-write-proposal'));
+const Day221AudytyWarsztatScreen = React.lazy(() => import('./screens/day221-audyty-warsztat'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
@@ -1047,6 +1048,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'day207-write-proposal': {
     label: 'Day207 — real ExecutionProposalMessage for a same-turn pending WRITE proposal',
     render: () => <Day207WriteProposalScreen />,
+  },
+  'day221-audyty-warsztat': {
+    label: 'Day221 — Audyty D-5: prototyp warsztatu, SPEC-A Rekord L, 18 ogniw / 4 fazy / prawy panel',
+    render: () => <Day221AudytyWarsztatScreen />,
   },
   'agent-hub': {
     label:
