@@ -16,6 +16,57 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-40 · Moja hipoteza „surowy klucz na ekranie" — OBALONA pomiarem, 0 przypadków
+**Co się stało:** nadzorca zauważył, że polski słownik ma ~2073 klucze więcej niż angielski,
+i sprawdził `src/i18n.ts:81-88`: łańcuch fallbacku to `en: ['en']` — angielski **nie ma** fallbacku
+na polski. Z tego wyprowadził hipotezę: klient z interfejsem angielskim zobaczy **surowy klucz**
+(`reports.toast.reportGenerated`) wprost na ekranie. Hipoteza została zameldowana właścicielowi —
+**ostrożnie, jawnie jako niezmierzona** („nie ogłaszam tego jako defektu, bo tego nie zmierzyłem").
+
+**Pomiar ją obalił.** Z 1931 kluczy tylko-w-`pl`, które mają statycznie znalezione wywołanie
+`t()`: **zero** bez drugiego argumentu. Repozytorium ma bardzo konsekwentny zwyczaj podawania
+tekstu awaryjnego przy każdym `t()`. Scenariusz „surowy klucz na ekranie" nie potwierdził się
+**ani razu**.
+
+**Ale pomiar znalazł defekt realny, o innym mechanizmie:** **134 klucze, w których tekst awaryjny
+zaszyty w kodzie jest sam po POLSKU.** Skutek dla klienta angielskiego jest ten sam co
+w hipotezie — widzi polski tekst — ale przyczyna zupełnie inna, więc i naprawa inna.
+Skupiska: `excele` (37), `partner` (25), `billing` (23, głównie `SubscriptionAnalytics.tsx`),
+`rap` (19), `documentStudio` (15).
+
+**Weryfikacja nadzorcy (własnym greppem, nie z raportu) dała dodatkowy wniosek:** klucze
+`organization.readiness.*` (`'Kompletność'`, `'Spójność'`, `'Pięć wymiarów gotowości'`,
+`'Nie można potwierdzić gotowości'`) **nie istnieją ANI w `pl`, ANI w `en`**. Ten ekran
+**działa po polsku wyłącznie dzięki tekstom awaryjnym w kodzie**, nie dzięki słownikowi.
+Dla polskiego klienta wychodzi to przypadkiem dobrze; dla angielskiego jest defektem; a każdy,
+kto „posprząta" te teksty awaryjne, wyłączy polski na tym ekranie, nie wiedząc o tym.
+
+**Dlaczego ważne:** to trzeci raz tego popołudnia, gdy liczba albo teza nadzorcy nie przeżyła
+pomiaru (Z-38 opisuje trzy pierwsze). Tym razem zadziałało zabezpieczenie **po stronie języka
+meldunku**: teza poszła do właściciela z jawną etykietą „niezmierzone", więc jej obalenie nie
+wymagało odwoływania niczego, co zostało powiedziane jako fakt. **Różnica między
+„to jest defekt" a „to może być defekt, mierzę" kosztuje jedno zdanie i ratuje wiarygodność.**
+
+**Co z tego wynika:** (a) hipotezę o mechanizmie zawsze meldować jako hipotezę, z jawnym
+„czego jeszcze nie wiem"; (b) **defekt bywa realny mimo błędnej hipotezy** — nie odrzucać
+zgłoszenia razem z obaloną przyczyną, tylko szukać dalej; (c) osobno do rejestru: **tekst
+awaryjny w kodzie bywa jedynym źródłem polskiego napisu** — to kruche i niewidoczne dla każdego
+audytu liczącego klucze w słowniku (kolejny wariant znanego kształtu „klucz istnieje ≠ przetłumaczony",
+tym razem odwrócony: *tekst działa, chociaż klucza nie ma wcale*).
+
+**Ocena pilności (za raportem, przyjęta przez nadzorcę):** nie pilne. Scenariusz krytyczny
+niepotwierdzony; 134 polskie teksty awaryjne to sprawa średniego priorytetu, dotycząca wyłącznie
+klienta anglojęzycznego. Najpierw `SubscriptionAnalytics.tsx` i `DocumentStudio*`.
+
+**Granice pomiaru podane przez robotnika samodzielnie:** 263 wywołania `t(zmienna)` i 448 wywołań
+z w pełni dynamicznym przedrostkiem — statycznie nierozstrzygalne; 187 kluczy osiągalnych tylko
+przez dynamiczne przedrostki; 286 kluczy bez znalezionego wołacza; kompletność form mnogich
+(`_few`/`_many`) niesprawdzona. Robotnik zgłosił też, że **znalazł i naprawił błąd we własnym
+skrypcie w trakcie pracy** (zła grupa w wyrażeniu regularnym zjadała 9 linii), i zweryfikował
+poprawione liczby wobec źródła przed ich podaniem.
+
+---
+
 ### Z-38 · Trzy pomiary zasięgu obaliły trzy moje własne liczby tego samego popołudnia
 **Co się stało:** nowy nadzorca zlecił trzy równoległe pomiary zasięgu rodzin defektów (crimson,
 kontrast motywów, język), do każdego dołączając WŁASNĄ liczbę wstępną jako punkt odniesienia.
