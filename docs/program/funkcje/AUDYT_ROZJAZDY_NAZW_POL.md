@@ -9,10 +9,45 @@ bare-repo `consultify-recovery-vault-20260820.git`), zbudowana na
 `github-backup/codex/m03-admin-20260824`.
 **SHA tipa bazowego:** `31694daecd6060129caa47e7172e23c41b917d0`.
 
+**Uzupełnienie w trakcie pracy (drugi, równoległy tor):** ten sam ekran (`AuditProcessesTab`,
+`GET /api/audits/programs`) zmierzył niezależnie drugi tor —
+`docs/program/funkcje/ZNALEZISKO_POSTEP_SESJI_AUDYTOW.md` — realnym Postgresem, realnym
+`ApiGateway`, podpisanym tokenem. **To jeden defekt widziany z dwóch stron, nie dwa
+niezależne przypadki**; ich zrzut HTTP włączony niżej jako dowód #2 (podnosi #2 ze śladu
+statycznego do potwierdzenia live-HTTP). Drugi tor ustalił też PRZYCZYNĘ, dla której żaden
+bezpiecznik tego nie łapał — patrz „Metoda: dlaczego testy/atrapy tego nie widzą" niżej —
+to zmieniło sposób prowadzenia dalszej części tego audytu (nie jego zakres).
+
+## Metoda: dlaczego testy/atrapy tego nie widzą (dopisane w trakcie pracy)
+
+**Test jednostkowy i atrapa harnessu potrafią fabrykować dane w kształcie, jakiego
+oczekuje FRONT, a nie w kształcie, który realnie zwraca SERWER.** Skutek: zielony test i
+poprawnie wyglądający zrzut dowodowy **nie są potwierdzeniem** przy tej klasie defektu —
+potwierdzają hipotezę autora atrapy, nie rzeczywistość. Zweryfikowano to na własnym
+znalezisku #2 (sekcja „Dowód dla #2" niżej ma teraz osobną podsekcję z dokładnie tym
+mechanizmem, złapanym na żywym zrzucie ekranu).
+
+**Konsekwencje dla tej tabeli:**
+1. Nazwy pól serwera brane są **wyłącznie** z realnej odpowiedzi trasy albo z kodu, który
+   tę odpowiedź składa (`res.json(...)`, funkcja serwisu) — **nigdy** z testu ani z atrapy.
+   Jeśli test/atrapa ma nazwę zgodną z frontem, to jest sygnał ostrzegawczy, nie dowód.
+2. Tabela niżej ma dodatkową kolumnę: **czy atrapa/test (jeśli istnieje) ma kształt
+   serwera czy kształt frontu.** Kształt frontu = defekt niewidoczny z definicji dla
+   każdego automatycznego bezpiecznika i dla zrzutu dowodowego zbudowanego na tej atrapie.
+3. **Sygnatura wzrokowa (sam separator/pustka)** została użyta jako niezależna, druga
+   droga wykrycia (grep `}/{` w JSX połączony z akcesorami `row.`/`item.`/… — patrz metoda
+   w pierwotnej wersji tego dokumentu). **Zastrzeżenie zmierzone poniżej:** ta droga
+   zawodzi dokładnie wtedy, gdy atrapa/mock ma kształt frontu — bo wtedy liczby wyglądają
+   dobrze (np. `12/42`), nie jak separator na pustce. Dowód: dwa niezależne zrzuty
+   dowodowe (08-25 i 08-26, patrz „Priorytet (a)" niżej) pokazują dokładnie ten fałszywie
+   spokojny obraz. Sygnatura wzrokowa łapie defekt **tylko** gdy materiał dowodowy używa
+   kształtu serwera (realny produkt albo atrapa specjalnie zbudowana inaczej niż front).
+
 ## Pierwsze zdanie wyniku
 
-**2 rozjazdy ZMIERZONE (jeden obejmuje 3 pola na jednym ekranie, drugi obejmuje 15 pól na
-jednym ekranie) i 0 dodatkowych PODEJRZEŃ podniesionych do zgłoszenia** — przesiane
+**2 rozjazdy ZMIERZONE (jeden obejmuje 3 pola na jednym ekranie — potwierdzony NIEZALEŻNIE
+przez równoległy tor live-HTTP-em, drugi obejmuje 15 pól na jednym ekranie) i 0 dodatkowych
+PODEJRZEŃ podniesionych do zgłoszenia** — przesiane
 automatycznie ~40 kandydatów (skrypt `scan.py` w tym worktree, sygnatura słów-w-workaku
 camelCase front ↔ back), z czego **~35 to fałszywe alarmy** zweryfikowane ręcznie (i18n-klucze,
 lokalne zmienne, DB-only snake_case nigdy nie wysyłane do klienta, pola już poprawnie
@@ -29,10 +64,10 @@ nie był badany, nie dlatego że jest czysty.
 
 ## Tabela — od najbardziej widocznych dla użytkownika
 
-| # | Ekran | Pole szukane (front) | Pole zwracane (trasa) | Przemapowanie? | Co widzi użytkownik | Status |
-|---|---|---|---|---|---|---|
-| 1 | **Admin → AI Control Center → Governance → Ustawienia AI organizacji** (`OrgAISettingsView.tsx`, przez `PolicyGovernanceTab.tsx` → `AdminAIControlCenterPanel.tsx` → `AIModule.tsx`) | `policyLevel`, `maxPolicyLevel`, `defaultProactivityMode`, `activeRoles`, `defaultRole`, `enabledModelIds`, `maxAICallsPerDay`, `maxTokensPerMonth`, `monthlyBudgetUSD`, `hardLimitUSD`, `freezeOnLimit`, `webSearchEnabled`, `artifactsEnabled`, `thinkingStepsEnabled`, `focusModesEnabled`, `voiceEnabled`, `auditAllRequests`, `auditPolicyChanges` (15+ pól camelCase) | `policy_level`, `max_policy_level`, `default_proactivity_mode`, `active_roles`, `default_role`, `enabled_model_ids`, `max_ai_calls_per_day`, `max_tokens_per_month`, `monthly_budget_usd`, `hard_limit_usd`, `freeze_on_limit`, `web_search_enabled`, `artifacts_enabled`, `thinking_steps_enabled`, `focus_modes_enabled`, `voice_enabled`, `audit_all_requests`, `audit_policy_changes` (snake_case) | **NIE — w żadną stronę.** `GET` robi `res.json(settings)` surowo; `PUT` robi `const settings = req.body` i czyta `settings.policy_level` z ciała, które ma klucze `policyLevel`. | Cały ekran zawsze pokazuje wartości domyślne (ADVISORY/REACTIVE/0/false…) niezależnie od tego co w bazie. **Zapis jest CICHYM NO-OP-em** — `settings.policy_level ?? current.policy_level` zawsze bierze gałąź `current` (stara wartość z bazy), bo `settings.policy_level` jest `undefined`. Klik „Zapisz" pokazuje sukces, baza się nie zmienia. Weryfikacja po zapisie (`persisted.X === expected.X`, linie 90-111) porównuje domyślne z domyślnymi, więc fałszywie wygląda na spójną. | **ZMIERZONE** |
-| 2 | **Audits → Method → Processes** — tabela programów audytowych (`AuditProcessesTab.tsx`, kolumny „Postęp" i „Ustalenia otwarte", wiersze z `AuditsMethodHub.tsx` → `listPrograms()`) | `row.concludedCriteria`, `row.applicableCriteria`, `row.openFindings` | `criteriaConcluded`, `criteriaTotal`, `findingsOpen` | **NIE** — `listPrograms()` we froncie (`auditsMethodApi.ts:475-486`) rzutuje odpowiedź trasy `1:1` na typ `AuditProgramSummary` bez mapowania; sam typ TS deklaruje złe nazwy (`applicableCriteria`/`concludedCriteria`/`openFindings`), więc TypeScript nie łapie rozjazdu w runtime. | Kolumna „Postęp" pokazuje **literalny ukośnik `/`** (oba liczniki `undefined`), „Ustalenia otwarte" jest **pusta**. (Zgłoszenie źródłowe — potwierdzone ponownie na tej gałęzi.) | **ZMIERZONE** |
+| # | Ekran | Pole szukane (front) | Pole zwracane (trasa) | Przemapowanie? | Kształt atrapy/testu (front czy serwer)? | Co widzi użytkownik | Status |
+|---|---|---|---|---|---|---|---|
+| 1 | **Admin → AI Control Center → Governance → Ustawienia AI organizacji** (`OrgAISettingsView.tsx`, przez `PolicyGovernanceTab.tsx` → `AdminAIControlCenterPanel.tsx` → `AIModule.tsx`) | `policyLevel`, `maxPolicyLevel`, `defaultProactivityMode`, `activeRoles`, `defaultRole`, `enabledModelIds`, `maxAICallsPerDay`, `maxTokensPerMonth`, `monthlyBudgetUSD`, `hardLimitUSD`, `freezeOnLimit`, `webSearchEnabled`, `artifactsEnabled`, `thinkingStepsEnabled`, `focusModesEnabled`, `voiceEnabled`, `auditAllRequests`, `auditPolicyChanges` (15+ pól camelCase) | `policy_level`, `max_policy_level`, `default_proactivity_mode`, `active_roles`, `default_role`, `enabled_model_ids`, `max_ai_calls_per_day`, `max_tokens_per_month`, `monthly_budget_usd`, `hard_limit_usd`, `freeze_on_limit`, `web_search_enabled`, `artifacts_enabled`, `thinking_steps_enabled`, `focus_modes_enabled`, `voice_enabled`, `audit_all_requests`, `audit_policy_changes` (snake_case) | **NIE — w żadną stronę.** `GET` robi `res.json(settings)` surowo; `PUT` robi `const settings = req.body` i czyta `settings.policy_level` z ciała, które ma klucze `policyLevel`. | **Brak testu w ogóle** — `find` nie zwrócił żadnego pliku testowego dla `ai-settings.routes.ts`/`aiSettingsService.ts`/`OrgAISettingsView.tsx`. Zero pokrycia, więc pytanie "czy atrapa ma kształt frontu" nie ma nawet obiektu — bezpiecznik nie istnieje, nie tylko kłamie. | Cały ekran zawsze pokazuje wartości domyślne (ADVISORY/REACTIVE/0/false…) niezależnie od tego co w bazie. **Zapis jest CICHYM NO-OP-em** — `settings.policy_level ?? current.policy_level` zawsze bierze gałąź `current` (stara wartość z bazy), bo `settings.policy_level` jest `undefined`. Klik „Zapisz" pokazuje sukces, baza się nie zmienia. Weryfikacja po zapisie (`persisted.X === expected.X`, linie 90-111) porównuje domyślne z domyślnymi, więc fałszywie wygląda na spójną. | **ZMIERZONE** |
+| 2 | **Audits → Method → Processes** — tabela programów audytowych (`AuditProcessesTab.tsx`, kolumny „Postęp" i „Ustalenia otwarte", wiersze z `AuditsMethodHub.tsx` → `listPrograms()`) | `row.concludedCriteria`, `row.applicableCriteria`, `row.openFindings` | `criteriaConcluded`, `criteriaTotal`, `findingsOpen` | **NIE** — `listPrograms()` we froncie (`auditsMethodApi.ts:475-486`) rzutuje odpowiedź trasy `1:1` na typ `AuditProgramSummary` bez mapowania; sam typ TS deklaruje złe nazwy (`applicableCriteria`/`concludedCriteria`/`openFindings`), więc TypeScript nie łapie rozjazdu w runtime. | **KSZTAŁT FRONTU, potwierdzone w dwóch niezależnych miejscach:** (1) `AuditProcessesTab.test.tsx:23-25` fabrykuje `program: AuditProgramSummary` z `applicableCriteria: 10, concludedCriteria: 4, openFindings: 2` — front-shape, zielony test nie dowodzi nic o realnej trasie. (2) Harness `dev-render/screens/audyty-piec-powierzchni.tsx` (własny docstring: „Kształt mocków ŚCIŚLE odpowiada kontraktowi `auditsMethodApi.ts`" — czyli celowo kopiuje ZEPSUTY kontrakt frontu) ma mock z tymi samymi polami front-shape na liniach 280-282 i kolejnych. **Sąsiedni mock w TYM SAMYM pliku ma kształt serwera** — `MOCK_COVERAGE` (linie ~472-487) używa `applicableTotal`/`concludedTotal`/`evidenceInsufficientTotal`, bo ten konkretny mock naprawiono punktowo 2026-08-26 po innym zgłoszeniu (komentarz w kodzie to opisuje) — `listPrograms`-owy mock listy nigdy nie dostał tej samej naprawy. | Kolumna „Postęp" pokazuje **literalny ukośnik `/`** (oba liczniki `undefined`), „Ustalenia otwarte" jest **pusta**. (Zgłoszenie źródłowe — potwierdzone ponownie na tej gałęzi, i NIEZALEŻNIE przez równoległy tor przez realny Postgres/ApiGateway/token — patrz dowód niżej.) | **ZMIERZONE** |
 
 **Ważna nuansa dla #2:** na tym samym ekranie panel podglądu (prawy panel, właściwość
 „Pokrycie") **jest poprawny** — `getProgramCoverage()` (`auditsMethodApi.ts:537-556`) ma
@@ -197,6 +232,86 @@ render: (row: AuditProgramSummary) => (
   <span>{row.openFindings}</span>
 ),
 ```
+
+### Dowód live-HTTP dla #2 (drugi tor, niezależnie — realny Postgres/ApiGateway/token)
+
+Z `docs/program/funkcje/ZNALEZISKO_POSTEP_SESJI_AUDYTOW.md` (canonical, `owner: piotr`,
+`established: 2026-09-01`), dosłowny zrzut odpowiedzi `GET /api/audits/programs`:
+```
+"criteriaTotal":1, "criteriaConcluded":1, "findingsOpen":1
+```
+zestawione z `AuditProcessesTab.tsx:249` (`row.concludedCriteria / row.applicableCriteria`)
+i `:259` (`row.openFindings`) — **żadna z trzech odczytywanych nazw nie istnieje w realnej
+odpowiedzi**. To podnosi #2 z śladu statycznego (deterministyczny, ale bez zrzutu HTTP) do
+**pełnego dowodu live**, dokładnie takiego, jakiego wymaga zlecenie dla przypadków wysokiego
+ryzyka. Ten sam dokument potwierdza też, że `AuditsMethodHub.tsx:227-266` przekazuje dane z
+`listPrograms()` bez żadnego przemapowania, oraz rozstrzyga (wynikiem „nie ma problemu")
+osobne podejrzenie o `AuditReportsTab`/`AuditInitiativesTab` pokazujące surowe ID zamiast
+nazw — sprawdzone i odrzucone, bo te komponenty w ogóle nie czytają/renderują pól
+`createdBy`/`approvedBy`/`proposedOwnerId`, które trasa zwraca.
+
+## Priorytet (a): ekrany, które właściciel już PRZYJĄŁ
+
+Zasada z uzupełnienia: **ekran przyjęty, a cicho zepsuty, jest gorszy niż ekran odrzucony** —
+nikt nie wraca, żeby go ponownie sprawdzić. Sprawdzono więc, czy ekran #2 (Audits → Sesje)
+ma zapis akceptacji właściciela, i czy ta akceptacja obejmowała zakładkę z defektem.
+
+**Ustalono: TAK, ekran ma zapis akceptacji, i TAK, obejmowała dokładnie tę zakładkę —**
+`docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md:133`,
+**DEC-2026-08-26-81** („Audits r2 — odbiór partii K", **OWNER_ACCEPT_EXCEPT**): *„4/5 uwag
+DEC-66 zamknięte i zaakceptowane (Menu 3 jeden rząd, kolumny 6→9, kebab Raportów z realnym
+Zatwierdź/Opublikuj, **listy na kanonie**) — scalone do m03."* Jedyny wyjątek dotyczył innego
+ekranu (`CriterionWorkspace`/„warsztat kryterium") — nie zakładki Sesje.
+
+Dowód materiału, na którym ta akceptacja stanęła:
+`docs/program/waves/WAVE_03_ACCEPTANCE/modules/12_AUDITS/evidence/owner-review-r2-20260825/01-processes-light.png`
+(cytowany w `INDEX.md` tego katalogu jako część zestawu „listy na kanonie"). **Obejrzano ten
+plik bezpośrednio (nie tylko jego opis w indeksie):** kolumna „POSTĘP" pokazuje `0/42`,
+`12/42`, `27/27`, `40/42`, `39/39` — **liczby, nie ukośnik na pustce.** To jest dokładnie
+mechanizm z sekcji metody wyżej: harness `audyty-piec-powierzchni.tsx` renderował mock o
+kształcie frontu (`applicableCriteria`/`concludedCriteria`), więc zrzut dowodowy pokazuje
+ekran, który *wygląda* na działający — bo mock przypadkiem "naprawia" ten sam błąd, który ma
+demonstrować. **Ten sam wzorzec powtórzył się drugi raz** w kolejnej partii zrzutów,
+`docs/program/waves/WAVE_03_ACCEPTANCE/evidence/audits-polish-20260826/09-hub-sessions-overdue.png`
+(2026-08-26, ten sam harness, scenariusz „po terminie") — obejrzano bezpośrednio, ten sam
+wzorzec `0/42`/`12/42`/`27/27` na kolumnie „POSTĘP".
+
+**Precedens już zapisany w tym samym rejestrze dla tej samej klasy problemu** —
+`OWNER_DECISION_LEDGER_2026-08-24.md:388`, **DEC-2026-08-29-336**: *„Akcept właściciela
+pozostaje ważny i wiążący co do WYGLĄDU (…) Ale nie jest dowodem, że realny produkt tak
+wygląda."* — zapisane przy innym zrzucie z tego samego harnessu (`audits-polish-20260826`),
+ale zasada jest identyczna i dokładnie pasuje do tego przypadku.
+
+**Sprostowanie wobec uzupełnienia (uczciwość ponad zgodność):** uzupełnienie mówiło, że
+„feralnej [zakładki] nigdy nie sfotografowano" i że ekran ma „ocenę A". Nie znaleziono
+literalnego zapisu oceny „A" przypiętego do tego ekranu, **a zakładka Sesje BYŁA
+sfotografowana — dwukrotnie** (08-25 i 08-26), z wynikiem przyjętym przez właściciela
+(DEC-81, OWNER_ACCEPT_EXCEPT). To nie osłabia rdzenia uzupełnienia — **wzmacnia go**: nie
+chodzi o to, że nikt nie spojrzał na tę zakładkę, tylko że to, na co spojrzał, **nie mogło
+pokazać defektu**, bo materiał dowodowy i defekt dzielą to samo błędne założenie o nazwach
+pól. Zrzut istnieje, akceptacja jest realna i wiążąca co do wyglądu (DEC-336) — po prostu
+wygląd na zrzucie i wygląd na produkcji to dwie różne rzeczy, gdy atrapa ma kształt frontu.
+
+## Priorytet (b): sąsiednie funkcje z już poprawnym mapowaniem (trop na kolejne zapomniane pola)
+
+Zasada z uzupełnienia: gdzie ktoś raz mapował poprawnie, tam prawdopodobnie są miejsca,
+gdzie zapomniał. Trzy takie pary znalezione w tym audycie, wypisane osobno:
+
+| Plik | Funkcja/miejsce ZEPSUTE (brak mapowania) | Funkcja/miejsce OBOK, z POPRAWNYM mapowaniem | Co to sugeruje |
+|---|---|---|---|
+| `src/components/Audit/method/auditsMethodApi.ts` | `listPrograms()` (:475-486) — zwraca surowe `criteriaTotal`/`criteriaConcluded`/`findingsOpen` bez zmiany nazw | `getProgramCoverage()` (:537-556) — jawnie mapuje `applicableTotal→applicableCriteria`, `concludedTotal→concludedCriteria`, z komentarzem ostrzegającym o dokładnie tym rozjeździe | Autor **znał** ten wzorzec błędu i się przed nim bronił — ale tylko w jednej z dwóch funkcji czytających pokrewne pola programu. |
+| `server/src/routes/ai/ai-settings.routes.ts` | `GET/PUT /org/:orgId` (:226-227, :270) — `res.json(settings)` surowo, `req.body` czytane bez transformacji | `GET/PUT /superadmin` (:136, :148-182) — `transformSettingsToCamelCase`/`transformSettingsToSnakeCase`, **w tym samym pliku**, kilkadziesiąt linii dalej | Narzędzie naprawy istniało obok zepsutego kodu przez cały czas; nikt nie przeniósł go do sąsiedniej trasy. |
+| `dev-render/screens/audyty-piec-powierzchni.tsx` | Mock listy programów (linie 280-282 i kolejne) — pola front-shape `applicableCriteria`/`concludedCriteria`/`openFindings`, nigdy nie poprawione | `MOCK_COVERAGE` (linie ~472-487) — pola server-shape `applicableTotal`/`concludedTotal`/`evidenceInsufficientTotal`, poprawione 2026-08-26 po INNYM zgłoszeniu (komentarz w kodzie to opisuje wprost) | Chorobę raz już złapano i załatano **w tym samym pliku**, dla pokrewnego pola tego samego ekranu — łatka nie objęła mocka listy, bo naprawiano wtedy inny, węższy problem (błąd przy zaznaczaniu programu), nie ten sam. |
+
+## Pozycja do wchłonięcia zgłoszona przez drugi tor
+
+Ekran `audyty-piec-powierzchni` / zakładka „Sesje" (czyli dokładnie #2 w tabeli wyżej) ma —
+wg zgłoszenia drugiego toru — **łatkę tymczasową** już wprowadzoną po ich stronie, jawnie
+nazwaną naprawą prowizoryczną, do zastąpienia przez systemową warstwę mapującą, gdy ta
+tabela będzie kompletna. Nie zweryfikowano tu samodzielnie istnienia/kształtu tej łatki
+(poza zakresem tego worktree — inna gałąź/tor); zapisane jako informacja od koordynatora,
+do uwzględnienia przy projektowaniu naprawy systemowej, żeby nie zostały dwa równoległe
+mapowania tego samego pola.
 
 ---
 
