@@ -119,6 +119,39 @@ const KLAWISZE = arg('klawisze', '')
  */
 const KLIK = arg('klik', '').split(',').map((s) => s.trim()).filter(Boolean);
 /**
+ * DOMYŚLNY KLIK W WIERSZ — bez potrzeby wpisywania `--klik` per ekran (dyżur
+ * 192, zadanie 1+3).
+ *
+ * POWÓD ISTNIENIA: 29 wpisów `klik` na 253 ekrany to dług, który zgnije —
+ * każdy nowy ekran listowy wymagałby osobnego wpisu. `StandardTable` deleguje
+ * CAŁĄ mechanikę wiersza do `FilterableTable` (`src/components/shared/
+ * ModuleHub/FilterableTable.tsx`), który renderuje PRAWDZIWY `<table>` z
+ * atrybutem `data-min-table-width` (jedyne miejsce w kodzie, które go
+ * nadaje) i zwykłe `<tr>` w `<tbody>` — semantyka HTML, żadnego ARIA-role
+ * nadpisania, więc selektor jest identyczny na KAŻDYM ekranie zbudowanym na
+ * kanonie (`StandardTable`/`FilterableTable`), bez wyjątków per moduł.
+ *
+ * Gdy operator NIE poda `--klik`, przelot PRÓBUJE kliknąć pierwszy wiersz
+ * tym selektorem, zanim zrobi zrzut. Element ZAWSZE ma `onClick` (nawet gdy
+ * ekran nie podał `onRowClick` — wtedy to no-op), więc kliknięcie nigdy nie
+ * jest niebezpieczne ani nie psuje ekranów bez podglądu.
+ *
+ * Jawny `--klik` (istniejące 29 wpisów) ma PIERWSZEŃSTWO i wyłącza tę ścieżkę
+ * całkowicie — zero zmiany zachowania dla wywołań, które już podają swój
+ * selektor. Wyłącznik `--bez-klika-domyslnego=1` dla ekranów, o których z
+ * góry wiadomo, że nie są listowe (rzadki przypadek — samo „nie znaleziono"
+ * już się nie liczy jako błąd, patrz niżej).
+ *
+ * Gdy selektor NIE JEST znaleziony (ekran nie jest listowy, albo tabela jest
+ * pusta — narzędzie NIE zgaduje które), to jest LICZONE i wypisane w
+ * podsumowaniu na końcu przelotu, ale NIGDY nie ustawia kodu wyjścia 1 —
+ * zablokowanie całego przelotu byłoby osobną szkodą (patrz `KLIK` wyżej:
+ * jawny `--klik` blokuje, bo operator explicite oczekiwał tego elementu;
+ * domyślna próba nie ma tej pewności).
+ */
+const DOMYSLNY_KLIK_SELEKTOR = 'table[data-min-table-width] tbody tr';
+const BEZ_KLIKA_DOMYSLNEGO = arg('bez-klika-domyslnego', '0') === '1';
+/**
  * `--wynik-selektor=<css>` — OPCJONALNY. Kilka selektorów po przecinku = WSZYSTKIE
  * muszą być w DOM (AND), jak w `waitFor` z day233.
  *
@@ -190,6 +223,12 @@ for (const ekran of EKRANY) {
     const przewinBrak = [];
     const klikBrak = [];
     const wynikBrak = [];
+    // Domyślny klik w wiersz (zadanie 3, dyżur 192) — poza `status`/`bledy`
+    // celowo: „nie znaleziono" ma być POLICZONE i WIDOCZNE w podsumowaniu,
+    // ale NIGDY nie ustawia kodu wyjścia 1 (patrz komentarz przy
+    // DOMYSLNY_KLIK_SELEKTOR — zablokowanie przelotu to osobna szkoda).
+    let podgladDomyslnyProbowany = false;
+    let podgladDomyslnyBrak = false;
     page.on('console', (m) => {
       if (m.type() === 'error') bledy.push(m.text().slice(0, 200));
     });
@@ -242,6 +281,23 @@ for (const ekran of EKRANY) {
         await page.waitForTimeout(500);
       }
       if (KLIK.length > 0) await page.waitForTimeout(400);
+      // Domyślny klik w wiersz — TYLKO gdy operator nie podał własnego `--klik`
+      // (patrz komentarz przy DOMYSLNY_KLIK_SELEKTOR). Jawny `--klik` = zero
+      // zmiany zachowania względem dotychczasowych wywołań.
+      if (KLIK.length === 0 && !BEZ_KLIKA_DOMYSLNEGO) {
+        podgladDomyslnyProbowany = true;
+        const wiersz = page.locator(DOMYSLNY_KLIK_SELEKTOR).first();
+        if ((await wiersz.count()) === 0) {
+          podgladDomyslnyBrak = true;
+        } else {
+          try {
+            await wiersz.click({ timeout: 5000 });
+            await page.waitForTimeout(500);
+          } catch {
+            podgladDomyslnyBrak = true;
+          }
+        }
+      }
       for (const sel of PRZEWIN) {
         const trafiony = await page.evaluate((s) => {
           const el = document.querySelector(s);
@@ -309,9 +365,23 @@ for (const ekran of EKRANY) {
           przewinBrak.length > 0 ? `przewin BRAK: ${przewinBrak.join(' ')}` : '',
           wynikBrak.length > 0 ? `wynik BRAK: ${wynikBrak.join(' ')}` : '',
         ].filter(Boolean).join(' | ') || 'OK',
+        // Poza `status` CELOWO — patrz komentarz przy deklaracji zmiennych:
+        // to jest LICZONE/WYPISANE, ale nigdy nie ustawia kodu wyjścia 1.
+        podgladDomyslnyProbowany,
+        podgladDomyslnyBrak,
       });
     } catch (e) {
-      wyniki.push({ ekran, motyw, plik: '—', szer: 0, wys: 0, bledy: bledy.length, status: `BŁĄD: ${e.message.slice(0, 80)}` });
+      wyniki.push({
+        ekran,
+        motyw,
+        plik: '—',
+        szer: 0,
+        wys: 0,
+        bledy: bledy.length,
+        status: `BŁĄD: ${e.message.slice(0, 80)}`,
+        podgladDomyslnyProbowany,
+        podgladDomyslnyBrak,
+      });
     }
     await context.close();
   }
@@ -343,13 +413,36 @@ console.log(`\nZrzuty → ${OUT}\n`);
 console.log('ekran                          motyw   status      wys.strony  błędy konsoli');
 console.log('─'.repeat(82));
 for (const w of wyniki) {
+  // Nota o domyślnym kliku jest CELOWO poza `w.status` (nie wpływa na kod
+  // wyjścia) — patrz komentarz przy DOMYSLNY_KLIK_SELEKTOR.
+  const podgladNota = w.podgladDomyslnyProbowany
+    ? w.podgladDomyslnyBrak
+      ? ' | podgląd: BRAK (nie znaleziono wiersza do kliknięcia)'
+      : ' | podgląd: klik wykonany'
+    : '';
   console.log(
-    `${w.ekran.padEnd(30)} ${w.motyw.padEnd(7)} ${w.status.padEnd(24)} ${String(w.wys).padStart(9)}  ${w.bledy > 0 ? `★ ${w.bledy}` : '0'}`
+    `${w.ekran.padEnd(30)} ${w.motyw.padEnd(7)} ${w.status.padEnd(24)} ${String(w.wys).padStart(9)}  ${w.bledy > 0 ? `★ ${w.bledy}` : '0'}${podgladNota}`
   );
 }
 const zle = wyniki.filter((w) => w.status !== 'OK').length;
 console.log(`\n${wyniki.length - zle}/${wyniki.length} zrzutów wykonanych.`);
 if (zle > 0) process.exitCode = 1;
+
+// Podsumowanie domyślnego klika (zadanie 3, dyżur 192) — POLICZONE i
+// WYPISANE, nigdy nie ustawia kodu wyjścia (zablokowanie przelotu to osobna
+// szkoda — patrz komentarz przy DOMYSLNY_KLIK_SELEKTOR).
+if (BEZ_KLIKA_DOMYSLNEGO) {
+  console.log(
+    `★ DOMYŚLNY KLIK W WIERSZ WYŁĄCZONY (--bez-klika-domyslnego=1) — 0/${wyniki.length} zrzutów próbowało otworzyć podgląd.`
+  );
+} else {
+  const probowane = wyniki.filter((w) => w.podgladDomyslnyProbowany);
+  const bezPodgladu = probowane.filter((w) => w.podgladDomyslnyBrak).length;
+  console.log(
+    `Domyślny klik w wiersz (${DOMYSLNY_KLIK_SELEKTOR}): ${probowane.length - bezPodgladu}/${probowane.length} zrzutów kliknęło wiersz przed zrzutem; ` +
+      `${bezPodgladu} sfotografowano BEZ próby otwarcia podglądu (nie znaleziono wiersza do kliknięcia — ekran może nie być listowy, tabela może być pusta).`
+  );
+}
 
 if (WYNIK_SELEKTOR.length > 0) {
   // Zbiorczy plik obok zrzutów (nie sidecar-per-PNG) — patrz uzasadnienie
