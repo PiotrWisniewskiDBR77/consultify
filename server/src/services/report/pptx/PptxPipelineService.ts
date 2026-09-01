@@ -11,7 +11,7 @@
 import JSZip from 'jszip';
 import { createRequire } from 'module';
 
-import { isDeckOverflowWarningEnabled } from '../../../config/FeatureFlags.js';
+import { isDeckOverflowShrinkDisabled } from '../../../config/FeatureFlags.js';
 import logger from '../../../utils/Logger.js';
 import type {
   CustomTemplateLayoutRole,
@@ -488,7 +488,7 @@ export class PptxPipelineService {
       align: 'right',
       margin: 0,
       breakLine: false,
-      ...(isDeckOverflowWarningEnabled() ? {} : { fit: 'shrink' as const }),
+      ...(isDeckOverflowShrinkDisabled() ? {} : { fit: 'shrink' as const }),
     });
   }
 

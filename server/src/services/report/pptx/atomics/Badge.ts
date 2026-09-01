@@ -2,7 +2,7 @@
  * Atomic: Badge
  * Small rounded label — priority, status, category tags.
  */
-import { isDeckOverflowWarningEnabled } from '../../../../config/FeatureFlags.js';
+import { isDeckOverflowShrinkDisabled } from '../../../../config/FeatureFlags.js';
 import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface BadgeProps {
@@ -40,7 +40,7 @@ export function Badge(props: BadgeProps, tokens: DesignTokens): RenderedElement 
         // onto two lines ("CRITICA/L"). Keep it on one line and shrink to fit if
         // the pill is narrow.
         wrap: false,
-        ...(isDeckOverflowWarningEnabled() ? {} : { fit: 'shrink' as const }),
+        ...(isDeckOverflowShrinkDisabled() ? {} : { fit: 'shrink' as const }),
       });
     },
   };

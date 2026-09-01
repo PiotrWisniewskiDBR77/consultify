@@ -2,7 +2,7 @@
  * Atomic: KPI Value
  * Large, bold numeric value — the hero number in a KPI tile.
  */
-import { isDeckOverflowWarningEnabled } from '../../../../config/FeatureFlags.js';
+import { isDeckOverflowShrinkDisabled } from '../../../../config/FeatureFlags.js';
 import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface KpiValueProps {
@@ -64,7 +64,7 @@ export function KpiValue(props: KpiValueProps, tokens: DesignTokens): RenderedEl
         valign: 'middle',
         // Długie liczby walutowe („609 368 EUR") muszą zmieścić się w kafelku
         // na JEDNEJ linii — bez tego zawijały się i nachodziły na sąsiednie pola.
-        ...(isDeckOverflowWarningEnabled() ? {} : { fit: 'shrink' as const }),
+        ...(isDeckOverflowShrinkDisabled() ? {} : { fit: 'shrink' as const }),
         breakLine: false,
         wrap: false,
       });

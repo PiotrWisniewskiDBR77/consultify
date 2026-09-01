@@ -10,8 +10,10 @@ const tokens = getDesignTokens('corporate');
 const position = { x: 0, y: 0, w: 2, h: 1 };
 
 function renderOptions(enabled: boolean) {
-  if (enabled) process.env.ENABLE_DECK_OVERFLOW_WARNING = 'true';
-  else delete process.env.ENABLE_DECK_OVERFLOW_WARNING;
+  // FIX-230 F6: shrink is now gated by its own flag, independent of the
+  // preflight-warning flag (ENABLE_DECK_OVERFLOW_WARNING).
+  if (enabled) process.env.ENABLE_DECK_OVERFLOW_DISABLE_SHRINK = 'true';
+  else delete process.env.ENABLE_DECK_OVERFLOW_DISABLE_SHRINK;
   const addText = vi.fn();
   const slide = { addText, addShape: vi.fn() };
   SlideTitle({ text: 'Bardzo długi tytuł kontrolny', position }, tokens).apply(slide);
@@ -22,7 +24,7 @@ function renderOptions(enabled: boolean) {
 }
 
 describe('day230 shrink flag', () => {
-  afterEach(() => delete process.env.ENABLE_DECK_OVERFLOW_WARNING);
+  afterEach(() => delete process.env.ENABLE_DECK_OVERFLOW_DISABLE_SHRINK);
 
   it('OFF zachowuje dzisiejsze fit shrink', () => {
     expect(renderOptions(false).every((options) => options.fit === 'shrink')).toBe(true);

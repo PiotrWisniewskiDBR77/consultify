@@ -50,6 +50,13 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
   ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE: z.boolean().default(false),
   ENABLE_DECK_OVERFLOW_WARNING: z.boolean().default(false),
+  // FIX-230 F6: split from ENABLE_DECK_OVERFLOW_WARNING. That flag used to
+  // control BOTH the preflight/UI warning AND whether the PPTX renderer's
+  // `fit:'shrink'` auto-shrink ran in 5 atomics — so turning the warning ON
+  // silently made the exported file worse (no more auto-shrink) at the same
+  // time it started warning about it. Two independent decisions, two flags.
+  // Default OFF: unchanged rendering behavior until explicitly opted in.
+  ENABLE_DECK_OVERFLOW_DISABLE_SHRINK: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
@@ -215,7 +222,17 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // Day 230: honest, non-blocking pre-export slide overflow warning.
     // Default OFF until owner acceptance of the measured detector and UI.
+    // FIX-230 F6: this flag now controls ONLY the preflight endpoint +
+    // DeckOverflowWarning banner. It no longer touches renderer shrink
+    // behavior — see ENABLE_DECK_OVERFLOW_DISABLE_SHRINK below.
     ENABLE_DECK_OVERFLOW_WARNING: process.env.ENABLE_DECK_OVERFLOW_WARNING === 'true',
+
+    // FIX-230 F6: independent flag for disabling the PPTX renderer's
+    // `fit:'shrink'` auto-shrink (SlideTitle/KpiValue/Highlight/Badge +
+    // PptxPipelineService). Default OFF — shrink stays on, matching
+    // today's exported-file behavior, regardless of
+    // ENABLE_DECK_OVERFLOW_WARNING's state.
+    ENABLE_DECK_OVERFLOW_DISABLE_SHRINK: process.env.ENABLE_DECK_OVERFLOW_DISABLE_SHRINK === 'true',
 
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated
@@ -301,6 +318,10 @@ export function isDeckFromKnowledgeEnabled(): boolean {
 
 export function isDeckOverflowWarningEnabled(): boolean {
   return process.env.ENABLE_DECK_OVERFLOW_WARNING === 'true';
+}
+
+export function isDeckOverflowShrinkDisabled(): boolean {
+  return process.env.ENABLE_DECK_OVERFLOW_DISABLE_SHRINK === 'true';
 }
 
 export default featureFlags;
