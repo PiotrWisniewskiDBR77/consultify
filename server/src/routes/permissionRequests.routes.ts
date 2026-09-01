@@ -16,6 +16,17 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string; role: string };
 }
 
+const permissionRequestBelongsToOrg = async (
+  requestId: string,
+  organizationId: string | undefined
+): Promise<boolean> => {
+  if (!organizationId) return false;
+  const row = (await dbGet('SELECT organization_id FROM permission_requests WHERE id = ?', [
+    requestId,
+  ])) as { organization_id?: string } | null;
+  return row?.organization_id === organizationId;
+};
+
 router.get(
   '/',
   verifyToken,
@@ -71,6 +82,9 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!(await permissionRequestBelongsToOrg(id, req.user?.organizationId))) {
+      return res.status(404).json({ error: 'Permission request not found' });
+    }
     await dbRun(
       `
     UPDATE permission_requests SET status = 'approved', resolved_by = ?, resolved_at = datetime('now')
@@ -90,6 +104,9 @@ router.put(
     const { id } = req.params;
     const userId = req.user?.id;
     const { rejectionReason } = req.body;
+    if (!(await permissionRequestBelongsToOrg(id, req.user?.organizationId))) {
+      return res.status(404).json({ error: 'Permission request not found' });
+    }
     await dbRun(
       `
     UPDATE permission_requests SET status = 'rejected', resolved_by = ?, resolved_at = datetime('now'),
