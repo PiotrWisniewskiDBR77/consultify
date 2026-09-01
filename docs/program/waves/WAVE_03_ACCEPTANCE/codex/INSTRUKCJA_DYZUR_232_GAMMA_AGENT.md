@@ -1,3 +1,13 @@
+> ★★ **MARKER PODNIESIONY (1.09, nadzorca).** Był `9fb7942a01`, jest `0a35699021`.
+> Powód: dyżur stanął na braku miejsca na dysku **przed** wykonaniem czegokolwiek,
+> a w międzyczasie scalono **218, 219, 226 i 231**. Miejsce zwolnione (14 GiB).
+> **Stan wejściowy jest NOWSZY niż opisy w treści tej instrukcji** — zmierz go sam
+> na starcie i nie ufaj listom plików ani numerom linii w treści.
+> Szczególnie: 226 zmienił obsługę zapisu motywu w `presentations.routes.ts`,
+> a 231 dołożył `presentationKnowledgeOutlineService.ts` i zmienił
+> `presentationGeneratorService.ts` — jeśli Twój dyżur dotyka tych plików,
+> **przeczytaj je na nowo, zanim cokolwiek zmienisz**.
+
 # INSTRUKCJA DYŻURU nr 232 — Codex — „★ AGENT REDAGUJĄCY DECK — operacje na gotowym decku (przeredaguj slajd, skróć, rozbij na dwa, zmień archetyp, dodaj źródło) przez mechanizm „model proponuje, człowiek zatwierdza". ★★ POMIAR ZMIENIA ZAMÓWIENIE: mechanizm propozycji dla decków JUŻ ISTNIEJE (`POST /decks/:deckId/agent-edit` → `/accept` → `/reject`, tabela `presentation_ai_operations`), ale (a) „agent" jest parserem słów kluczowych, nie modelem (`parsePresentationEditIntent` — regexy), oraz (b) **trasa `/accept` NIE SPRAWDZA STANU OPERACJI: `getAiOperation` nie zwraca `status`, a jedyne odwołanie do `op.status` w całym pliku tras to licznik statystyk** — czyli operacja już zastosowana albo już ODRZUCONA daje się zatwierdzić ponownie. Bramy nie ma czego usuwać, bo jej nie ma. Ten dyżur ją stawia i dowodzi mutacją"
 
 Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
@@ -24,7 +34,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `9fb7942a01`**
+> **SHA markera: `0a35699021`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -37,7 +47,7 @@ wskazanymi ścieżkami w repo.
 Data wystawienia: 2026-09-01.
 Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
 Język pracy i raportowania: **polski**.
-Zakres: ****PREZENTACJE × AGENT — BRAMA ZATWIERDZENIA I OPERACJE REDAKCYJNE.** Zmierzone na markerze `9fb7942a01`. Istniejący tor decku: propozycja `server/src/routes/presentations.routes.ts:4004` (`POST /decks/:deckId/agent-edit`, wymaga `presentation_edit`), plan `server/src/services/presentationAgentEditService.ts:53` (`parsePresentationEditIntent` — **regexy i słowa kluczowe, zero modelu**; pole `requiresApproval` ustawiane na sztywno `:62`, `:157`, `:168`), zastosowanie planu `:388` (`applyPresentationEditPlan`), zapis propozycji `presentations.routes.ts:860` (`saveAiOperation` → `INSERT INTO presentation_ai_operations` `:864`), odczyt `:886` (`getAiOperation` — **nie zwraca `status`**), rozwiązanie `:914` (`resolveAiOperation`, `UPDATE … SET status = ?` `:921`), zatwierdzenie `:4128` (`POST /decks/:deckId/agent-edit/:operationId/accept`, wymaga `presentation_approve`), odrzucenie `:4218` (`/reject`). Dziennik: `recordPresentationRuntimeEvent` (`agent_edit_proposal_created`, `agent_edit_applied`, `agent_edit_rejected`, `agent_edit_noop`), historia agenta `presentations.routes.ts:6699`, `:6838`, `:7099`. Wzorzec, który kopiujesz: **brama zatwierdzenia z dyżuru 207** — `server/src/services/aiActionExecutor.ts:867-868` (`if (action.status !== ACTION_STATUS.APPROVED) return { success: false, error: … }`) plus druga warstwa `:887-889` (`UPDATE … SET status='EXECUTING' WHERE id = ? AND status = 'APPROVED'`) plus trzecia w `approveAction` `:668-669` i `:675`; producent propozycji `:331` (`requestChatToolProposal`, `_forceApproval: true` `:355`), `:389` (`requestAction`, `requiresApproval` `:455-457`, status końcowy `:511`), `:863` (`executeAction`). Test, który czerwienieje po usunięciu bramy: `tests/unit/backend/day207.write-proposal.contract.test.ts:238-258`. Kontrakt: `docs/program/funkcje/GAMMA_G3_OBCHOD_MENU.md` (panel `Agent`: dziennik „Created slide 1… 10" + propozycje następnych ruchów „Add 2 more slides", „Find related case studies", „Visualize text-heavy slides") i `docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md` §12**.
+Zakres: ****PREZENTACJE × AGENT — BRAMA ZATWIERDZENIA I OPERACJE REDAKCYJNE.** Zmierzone na markerze `0a35699021`. Istniejący tor decku: propozycja `server/src/routes/presentations.routes.ts:4004` (`POST /decks/:deckId/agent-edit`, wymaga `presentation_edit`), plan `server/src/services/presentationAgentEditService.ts:53` (`parsePresentationEditIntent` — **regexy i słowa kluczowe, zero modelu**; pole `requiresApproval` ustawiane na sztywno `:62`, `:157`, `:168`), zastosowanie planu `:388` (`applyPresentationEditPlan`), zapis propozycji `presentations.routes.ts:860` (`saveAiOperation` → `INSERT INTO presentation_ai_operations` `:864`), odczyt `:886` (`getAiOperation` — **nie zwraca `status`**), rozwiązanie `:914` (`resolveAiOperation`, `UPDATE … SET status = ?` `:921`), zatwierdzenie `:4128` (`POST /decks/:deckId/agent-edit/:operationId/accept`, wymaga `presentation_approve`), odrzucenie `:4218` (`/reject`). Dziennik: `recordPresentationRuntimeEvent` (`agent_edit_proposal_created`, `agent_edit_applied`, `agent_edit_rejected`, `agent_edit_noop`), historia agenta `presentations.routes.ts:6699`, `:6838`, `:7099`. Wzorzec, który kopiujesz: **brama zatwierdzenia z dyżuru 207** — `server/src/services/aiActionExecutor.ts:867-868` (`if (action.status !== ACTION_STATUS.APPROVED) return { success: false, error: … }`) plus druga warstwa `:887-889` (`UPDATE … SET status='EXECUTING' WHERE id = ? AND status = 'APPROVED'`) plus trzecia w `approveAction` `:668-669` i `:675`; producent propozycji `:331` (`requestChatToolProposal`, `_forceApproval: true` `:355`), `:389` (`requestAction`, `requiresApproval` `:455-457`, status końcowy `:511`), `:863` (`executeAction`). Test, który czerwienieje po usunięciu bramy: `tests/unit/backend/day207.write-proposal.contract.test.ts:238-258`. Kontrakt: `docs/program/funkcje/GAMMA_G3_OBCHOD_MENU.md` (panel `Agent`: dziennik „Created slide 1… 10" + propozycje następnych ruchów „Add 2 more slides", „Find related case studies", „Visualize text-heavy slides") i `docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md` §12**.
 Trasy front: `Nie budujesz nowego panelu od zera — zmierz, co jest zamontowane. Punkty wejścia: `src/components/Presentations/DeckBuilder/DeckBuilder.tsx` (`:48`, `:386`, `:668`), `src/components/Presentations/DeckBuilder/DeckBuilderMelsRightRail.tsx`, `src/components/Presentations/DeckBuilder/DeckAuditLogModal.tsx`, `src/components/Presentations/DeckBuilder/DeckGovernanceCardModal.tsx`, `src/services/presentationAgentHistory.ts`, `src/services/presentationRuntimeEvents.ts`. ★★ **Ósmy kształt fałszywego gotowe:** wołacz API istnieje, a komponent nigdy nie jest renderowany — **udowodnij montaż realnym renderem**, nie grepem. Kanon prawego panelu artefaktu: `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (powłoka wspólna, `ArtifactRightPanel`) — deck to archetyp E (Deck). Zrzut: `dev-render/screens/day232-agent-decku.tsx` + wpis w `dev-render/main.tsx` — panel w trzech stanach (propozycja oczekująca / zastosowana / odrzucona), dwa motywy. Tokeny `c-*`, **zero `primary-*` — każdy numer `primary` w tym tailwindzie to crimson `#85182F`** (`CLAUDE.md` §3, §6; hook `scripts/check-artefakt.sh` blokuje w powłoce)`. Trasy tył: ``POST /api/presentations/decks/:deckId/agent-edit` (`server/src/routes/presentations.routes.ts:4004`) · `POST /api/presentations/decks/:deckId/agent-edit/:operationId/accept` (`:4128`) · `POST /api/presentations/decks/:deckId/agent-edit/:operationId/reject` (`:4218`) · `PUT /api/presentations/decks/:deckId/autosave` (`:3907`) · `GET /api/presentations/decks/:deckId/versions` (`:8023`) · historia i statystyki agenta (`:6699`, `:6838`, `:7099`; licznik statusów `:4608`) · `POST /api/presentation-studio/decks/:deckId/slides/:slideIndex/regenerate` (`server/src/routes/presentationStudio.routes.ts:1105`). Tor 207, przez który mają iść propozycje modelu: `POST /api/ai/chat/stream` (`server/src/routes/ai.routes.ts`, `onProposalToolCall` `:4808-4864`), cykl `ai_actions` (`draft`/`approve`/`execute`) w `server/src/services/aiActionExecutor.ts:331`, `:389`, `:664`, `:863`. Routery: `server/src/Gateway.ts:1201` i `:1226``.
 
 ---
@@ -58,7 +68,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day232-gamma-agent
-MARKER=9fb7942a01
+MARKER=0a35699021
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +122,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 9fb7942a01..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 0a35699021..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 0a35699021..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +140,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 9fb7942a01..HEAD
+git -C "$WT" diff --name-only 0a35699021..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `8` komend, wszystkie obowiązkowe.**
@@ -650,7 +660,7 @@ create, or style anything"* + przycisk `Quick edits`.
 U nas to jest **najbliżej gotowe**: pętla narzędziowa (206) i **propozycje zapisu
 z zatwierdzeniem człowieka** (207) zostały zamknięte 31.08.
 
-## ★★ POMIAR ZMIENIA TREŚĆ ZAMÓWIENIA — wykonany na SHA `9fb7942a01`
+## ★★ POMIAR ZMIENIA TREŚĆ ZAMÓWIENIA — wykonany na SHA `0a35699021`
 
 Zamówienie brzmiało „zbuduj operacje na gotowym decku przez mechanizm propozycji".
 **Pomiar pokazał, że mechanizm propozycji dla decków JUŻ ISTNIEJE — i że brakuje w nim bramy.**
@@ -957,7 +967,7 @@ Twoja granica: **wyłącznie trasy `agent-edit` (`:4004`, `:4128`, `:4218`) i tr
 (`:860`, `:886`, `:914`)**. Przed pierwszym commitem:
 
 ```bash
-git -C "$WT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824 -- \
+git -C "$WT" log --oneline 0a35699021..github-backup/codex/m03-admin-20260824 -- \
   server/src/routes/presentations.routes.ts server/src/services/presentationAgentEditService.ts
 ```
 

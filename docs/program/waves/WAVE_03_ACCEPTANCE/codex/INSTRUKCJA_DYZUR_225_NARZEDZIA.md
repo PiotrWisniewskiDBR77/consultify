@@ -1,3 +1,13 @@
+> ★★ **MARKER PODNIESIONY (1.09, nadzorca).** Był `9fb7942a01`, jest `0a35699021`.
+> Powód: dyżur stanął na braku miejsca na dysku **przed** wykonaniem czegokolwiek,
+> a w międzyczasie scalono **218, 219, 226 i 231**. Miejsce zwolnione (14 GiB).
+> **Stan wejściowy jest NOWSZY niż opisy w treści tej instrukcji** — zmierz go sam
+> na starcie i nie ufaj listom plików ani numerom linii w treści.
+> Szczególnie: 226 zmienił obsługę zapisu motywu w `presentations.routes.ts`,
+> a 231 dołożył `presentationKnowledgeOutlineService.ts` i zmienił
+> `presentationGeneratorService.ts` — jeśli Twój dyżur dotyka tych plików,
+> **przeczytaj je na nowo, zanim cokolwiek zmienisz**.
+
 # INSTRUKCJA DYŻURU nr 225 — Codex — „Narzędzia — blokada z komentarza w toolsInsightsWiringFlag.ts nie istnieje (tabela tool_outputs istnieje od 28.08): sprostować trzeci kłamiący komentarz dnia, retestować GET /api/tool-outputs lokalnie z flagą włączoną, flaga zostaje domyślnie WYŁĄCZONA do akceptu właściciela"
 
 Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
@@ -24,7 +34,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `9fb7942a01`**
+> **SHA markera: `0a35699021`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -58,7 +68,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day225-narzedzia
-MARKER=9fb7942a01
+MARKER=0a35699021
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +122,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 9fb7942a01..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 0a35699021..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 0a35699021..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +140,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 9fb7942a01..HEAD
+git -C "$WT" diff --name-only 0a35699021..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `10` komend, wszystkie obowiązkowe.**
@@ -657,7 +667,7 @@ zablokowany, zablokował go komentarz**. To trzeci kłamiący komentarz znalezio
 dnia (obok „NOT MOUNTED YET" przy trasie finansowej i przeterminowanego „shadow mode"
 przy `gate-roles`).
 
-**Zweryfikowane przy pisaniu tej instrukcji (nadzorca, na tipie `9fb7942a01`, 01.09):**
+**Zweryfikowane przy pisaniu tej instrukcji (nadzorca, na tipie `0a35699021`, 01.09):**
 
 1. Komentarz KŁAMIE w **TRZECH** osobnych miejscach tego samego pliku (nie w jednym):
    - nagłówek funkcji rezolucji, ok. `:27-28`: „COFNIĘTE 28.08 (DEC-158): read-only

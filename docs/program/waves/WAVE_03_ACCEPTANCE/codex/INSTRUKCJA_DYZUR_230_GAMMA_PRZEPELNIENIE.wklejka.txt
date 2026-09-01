@@ -9,7 +9,7 @@ git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git \
 
 Przeczytaj wynik w CAŁOŚCI, dopiero potem wykonuj dyżur 230.
 
-Marker: 9fb7942a01
+Marker: 0a35699021
 Zasoby wyłączne: baza 6174, runtime 5136 i 5137.
 
 Jeżeli cokolwiek w tej wklejce różni się od treści instrukcji —

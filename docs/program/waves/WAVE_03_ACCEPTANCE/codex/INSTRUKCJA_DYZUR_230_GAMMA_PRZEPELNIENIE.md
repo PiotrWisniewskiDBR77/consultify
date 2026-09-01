@@ -1,3 +1,13 @@
+> ★★ **MARKER PODNIESIONY (1.09, nadzorca).** Był `9fb7942a01`, jest `0a35699021`.
+> Powód: dyżur stanął na braku miejsca na dysku **przed** wykonaniem czegokolwiek,
+> a w międzyczasie scalono **218, 219, 226 i 231**. Miejsce zwolnione (14 GiB).
+> **Stan wejściowy jest NOWSZY niż opisy w treści tej instrukcji** — zmierz go sam
+> na starcie i nie ufaj listom plików ani numerom linii w treści.
+> Szczególnie: 226 zmienił obsługę zapisu motywu w `presentations.routes.ts`,
+> a 231 dołożył `presentationKnowledgeOutlineService.ts` i zmienił
+> `presentationGeneratorService.ts` — jeśli Twój dyżur dotyka tych plików,
+> **przeczytaj je na nowo, zanim cokolwiek zmienisz**.
+
 # INSTRUKCJA DYŻURU nr 230 — Codex — „Wykrycie przepełnienia slajdu PRZED eksportem i uczciwe ostrzeżenie ze WSKAZANIEM SLAJDU — wzorzec skopiowany z Gammy, potwierdzony na jej własnym eksporcie („1 slide has overflowing content — layouts may shift after exporting to PowerPoint and Google Slides" + przycisk „Go to slides"). Zakaz ratowania automatycznym zmniejszaniem tekstu: `fit:'shrink'` jest dziś emitowane **17 razy** (10 z tego w `DeckStyler`), a sam kod produktu w dwóch miejscach przyznaje, że ten mechanizm bywa przez renderery **ignorowany** — czyli dziś produkt jednocześnie psuje typografię i nie ratuje układu. Do tego trzy stopnie jakości eksportu i rozstrzygnięcie „PDF dla odbiorcy, PPTX dla edytującego""
 
 Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
@@ -24,7 +34,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `9fb7942a01`**
+> **SHA markera: `0a35699021`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -37,7 +47,7 @@ wskazanymi ścieżkami w repo.
 Data wystawienia: 2026-09-01.
 Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
 Język pracy i raportowania: **polski**.
-Zakres: ****EKSPORT DECKU — WYKRYCIE PRZEPEŁNIENIA I KONTRAKT OSTRZEŻENIA.** Zmierzone na markerze `9fb7942a01`: wykrywanie przepełnienia **istnieje**, ale w trzech rozłącznych, heurystycznych warstwach, z których żadna nie mierzy realnego renderu i żadna nie mówi użytkownikowi prawdy przed eksportem. (a) estymacja znakowa w torze zapasowym: `server/src/services/deliverables/DeckStyler.ts:266` (`estimateCharCapacity`, model `glyphAdvance = em*0.52` `:269`, `lineHeight = em*1.25` `:270`), `:289` (`fitProse` — pętla zmniejszająca font `:299-303`, potem twarde ucięcie na granicy słowa + `overflowNote` do notatek `:304-313`), `:212` (`enforceBulletDiscipline`, limity `:179-180`). (b) pomiar szerokości per-glif w torze produkcyjnym: `server/src/services/report/pptx/atomics/SlideTitle.ts:40` (`widthOf`), `:46` (`balancedSplitIndex`), `:80` (`fitTitle`, podłoga `max(16, 0.72*base)` `:93-97`). (c) audyt budżetów znakowych POZA renderem: `server/src/services/presentationStudioLayoutAuditService.ts:45-47` (flagi `layout_overflow_title` / `layout_overflow_key_message` / `layout_overflow_blocks`), detekcja `:296-318`; budżety `server/src/services/presentationStudioLayoutCapacityRegistryService.ts:85-99`; znacznik na slajdzie `server/src/services/report/pptx/composites/LayoutTruncationMarker.ts:92` i `:108`, wstrzykiwany w `server/src/services/report/pptx/PptxPipelineService.ts:363-370`. Wzorzec do skopiowania: `docs/program/funkcje/GAMMA_G3_OBCHOD_MENU.md` („Gamma sama ostrzega, że PPTX się rozjedzie" — treść ostrzeżenia, przycisk, trzy stopnie jakości `Basic`/`Standard`/`Detailed`, formaty PDF · PowerPoint · Google Slides). Zakaz `Z16`: `docs/program/funkcje/GAMMA_G1_SPECYFIKACJA.md` §3.2 („auto-shrink tekstu żeby wcisnąć treść" — rozjeżdża drabinę C4 i stosunek C5; **slajd ma się dzielić, nie kurczyć**)**.
+Zakres: ****EKSPORT DECKU — WYKRYCIE PRZEPEŁNIENIA I KONTRAKT OSTRZEŻENIA.** Zmierzone na markerze `0a35699021`: wykrywanie przepełnienia **istnieje**, ale w trzech rozłącznych, heurystycznych warstwach, z których żadna nie mierzy realnego renderu i żadna nie mówi użytkownikowi prawdy przed eksportem. (a) estymacja znakowa w torze zapasowym: `server/src/services/deliverables/DeckStyler.ts:266` (`estimateCharCapacity`, model `glyphAdvance = em*0.52` `:269`, `lineHeight = em*1.25` `:270`), `:289` (`fitProse` — pętla zmniejszająca font `:299-303`, potem twarde ucięcie na granicy słowa + `overflowNote` do notatek `:304-313`), `:212` (`enforceBulletDiscipline`, limity `:179-180`). (b) pomiar szerokości per-glif w torze produkcyjnym: `server/src/services/report/pptx/atomics/SlideTitle.ts:40` (`widthOf`), `:46` (`balancedSplitIndex`), `:80` (`fitTitle`, podłoga `max(16, 0.72*base)` `:93-97`). (c) audyt budżetów znakowych POZA renderem: `server/src/services/presentationStudioLayoutAuditService.ts:45-47` (flagi `layout_overflow_title` / `layout_overflow_key_message` / `layout_overflow_blocks`), detekcja `:296-318`; budżety `server/src/services/presentationStudioLayoutCapacityRegistryService.ts:85-99`; znacznik na slajdzie `server/src/services/report/pptx/composites/LayoutTruncationMarker.ts:92` i `:108`, wstrzykiwany w `server/src/services/report/pptx/PptxPipelineService.ts:363-370`. Wzorzec do skopiowania: `docs/program/funkcje/GAMMA_G3_OBCHOD_MENU.md` („Gamma sama ostrzega, że PPTX się rozjedzie" — treść ostrzeżenia, przycisk, trzy stopnie jakości `Basic`/`Standard`/`Detailed`, formaty PDF · PowerPoint · Google Slides). Zakaz `Z16`: `docs/program/funkcje/GAMMA_G1_SPECYFIKACJA.md` §3.2 („auto-shrink tekstu żeby wcisnąć treść" — rozjeżdża drabinę C4 i stosunek C5; **slajd ma się dzielić, nie kurczyć**)**.
 Trasy front: `Ten dyżur **nie buduje nowego ekranu produktowego**; buduje **ostrzeżenie w istniejącym**. Zmierz sam, gdzie realnie renderuje się panel eksportu na Twojej bazie — punkty wejścia to `src/components/Presentations/DeckBuilder/DeckBuilder.tsx` (flaga MELS `:48`, bramki jakości `:386`, `:668`), `src/components/Presentations/DeckBuilder/DeckQualityGatesPanel.tsx`, `src/components/Presentations/DeckBuilder/DeckBuilderTopBar.tsx`, `src/components/Presentations/wizard/ResultStep.tsx:21`, `src/services/presentationExport.ts`. ★ **Ósmy kształt fałszywego gotowe:** grep znajduje wołacza API, a komponent nigdy nie jest renderowany. **Udowodnij montaż**, nie istnienie pliku. Zrzut: ekran `dev-render/screens/day230-przepelnienie.tsx` + wpis w `dev-render/main.tsx` — ostrzeżenie w dwóch stanach (deck z przepełnieniem / deck czysty), w dwóch motywach. Tokeny `c-*`, zero `primary-*` (`primary` w tailwindzie tego produktu = crimson `#85182F`, `CLAUDE.md` §3)`. Trasy tył: ``GET /api/presentations/decks/:id/download` (`server/src/routes/presentations.routes.ts:2569`) · `GET /api/presentations/decks/:deckId/export/pdf` (`:2832`, silnik `pdfkit` — `:12`, `:2973`, **nie** konwersja z PPTX) · `POST /api/presentations/decks/:deckId/export/html` (`:3649`) · `POST /api/presentations/decks/:deckId/export/png` (`:7657`) · `GET /api/presentations/decks/:deckId/export-parity` (`:3768` — ★ zmierz, co ta trasa dziś robi, bo jej nazwa obiecuje dokładnie Twój temat) · `POST /api/presentations/decks/:deckId/quality-gates` (`:7640`). Bramka: `server/src/routes/presentationExportGate.ts:24` — **to jest naturalne miejsce montażu ostrzeżenia**, ale ostrzeżenie **nie jest** blokadą: `422 QUALITY_GATE_BLOCKED` zostaje zarezerwowane dla dzisiejszych bramek jakości, a przepełnienie ma **ostrzegać, nie odmawiać** (u Gammy eksport też się wykonuje). Router: `server/src/Gateway.ts:1201``.
 
 ---
@@ -58,7 +68,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day230-gamma-przepelnienie
-MARKER=9fb7942a01
+MARKER=0a35699021
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +122,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 9fb7942a01..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 0a35699021..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 0a35699021..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +140,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 9fb7942a01..HEAD
+git -C "$WT" diff --name-only 0a35699021..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `8` komend, wszystkie obowiązkowe.**
@@ -656,7 +666,7 @@ Google Slides / LibreOffice — **NIEMOŻLIWE**" — `docs/program/funkcje/GAMMA
 
 Ten dyżur robi dokładnie to. Nie robi motywu (229), nie robi treści (231), nie robi agenta (232).
 
-## ★★ Pomiar, który zmienia treść zamówienia — wykonany na SHA `9fb7942a01`
+## ★★ Pomiar, który zmienia treść zamówienia — wykonany na SHA `0a35699021`
 
 **Sprawdź każdą liczbę u siebie** (komendy w `§0`); rozbieżność idzie do „Korekt wobec instrukcji".
 
@@ -931,7 +941,7 @@ czyli w **dwa z trzech** Twoich plików zapisu. Dyżury **226-228** też pracuj�
 Zanim napiszesz pierwszą linię:
 
 ```bash
-git -C "$WT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824 -- \
+git -C "$WT" log --oneline 0a35699021..github-backup/codex/m03-admin-20260824 -- \
   server/src/services/report/pptx/ server/src/routes/presentations.routes.ts
 ```
 
