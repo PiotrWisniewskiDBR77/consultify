@@ -50,9 +50,21 @@ export function parseKnowledgeOutline(text: string): KnowledgeOutlineItem[] {
   })).filter((row) => row.tytul && row.teza);
 }
 
+export function filterOutlineSourcesByEvidence(
+  outline: KnowledgeOutlineItem[],
+  evidence: string
+): KnowledgeOutlineItem[] {
+  return outline.map((item) => ({
+    ...item,
+    zrodla: item.zrodla.filter((source) => evidence.includes(source.id)),
+  }));
+}
+
 export async function generateKnowledgeOutline(
   input: GenerateKnowledgeOutlineInput
 ): Promise<{ outline: KnowledgeOutlineItem[]; provider: string; model: string }> {
+  const toolEvidence: string[] = [];
+  const toolCalls: string[] = [];
   const request: any = {
     capability: 'chatStream',
     purpose: 'presentation_outline_from_organization_knowledge',
@@ -81,6 +93,10 @@ export async function generateKnowledgeOutline(
               organizationId: input.organizationId,
               userId: input.userId,
               projectId: input.projectId,
+            }).then((result) => {
+              toolCalls.push(toolName);
+              toolEvidence.push(typeof result === 'string' ? result : JSON.stringify(result));
+              return result;
             }),
         },
       },
@@ -93,8 +109,13 @@ export async function generateKnowledgeOutline(
   for await (const chunk of response.stream as AsyncIterable<unknown>) {
     if (typeof chunk === 'string') content += chunk;
   }
+  if (!toolCalls.includes('search_knowledge_base')) {
+    throw new Error('KNOWLEDGE_OUTLINE_SEARCH_NOT_CALLED');
+  }
+  const evidence = toolEvidence.join('\n');
+  const outline = filterOutlineSourcesByEvidence(parseKnowledgeOutline(content), evidence);
   return {
-    outline: parseKnowledgeOutline(content),
+    outline,
     provider: String(response?.metadata?.provider || 'unknown'),
     model: String(response?.metadata?.model || 'unknown'),
   };
