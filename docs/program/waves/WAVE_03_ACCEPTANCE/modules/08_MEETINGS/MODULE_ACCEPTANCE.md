@@ -166,3 +166,12 @@ Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
 Evidence manifest: —
+## Dzień 237 — trzecia bramka pilotażowa i kompletne zrzuty
+
+- `MODULE_MEETING` pozostaje `open` w kliencie i mirrorze serwera (`src/utils/betaMenuStatus.ts:57`; `server/src/sharedRuntime/utils/betaMenuStatus.ts:58`).
+- Prefiks `/meetings` należy do `PILOT_ALLOWED_ROUTE_PREFIXES`, natomiast `MODULE_MEETING` nie należy do `PILOT_VISIBLE_MENU_IDS` (`src/utils/pilotAccess.ts:6-13`; `src/utils/pilotAccess.ts:22-40`).
+- Korekta tezy instrukcji: realny Sidebar nie usuwa niedozwolonej pozycji, lecz dekoruje ją `isLocked: true`, dlatego MEMBER widzi „Spotkania” z kłódką (`src/components/navigation/Sidebar/Sidebar.tsx:124-150`; `dev-render/screens/day237-spotkania.tsx:132-145`).
+- Harness montuje realne `MeetingHub`, `MeetingObjectPage` i `Sidebar`, a fixture przełącza stany `proposed`/`rejected`/`approved` oraz receipt `0/0/1` (`dev-render/screens/day237-spotkania.tsx:10-17`; `dev-render/screens/day237-spotkania.tsx:21-28`; `dev-render/screens/day237-spotkania.tsx:73-118`; `dev-render/screens/day237-spotkania.tsx:148-164`).
+- G09 pozostaje nienaprawione: trasa notes czyta `meeting_notes`, a decision-records deleguje do selektu wyłącznie z `meeting_decisions` (`server/src/routes/meeting.routes.ts:656-668`; `server/src/routes/meeting.routes.ts:1039-1055`; `server/src/services/meetingService.ts:640-650`; `server/src/services/meetingBoundary/meetingBoundaryService.ts:321-345`).
+- Żywy przebieg przez `ApiGateway`, podpisany JWT i PostgreSQL zwrócił `200` z zatwierdzoną decyzją dla notes oraz `200 {"decisions":[]}` dla decision-records; pełny log i SQL readback są poza repo w `/private/tmp/cx-day237-spotkania-artefakty/g09-http-proof.log` (`server/src/routes/meeting.routes.ts:656-668`; `server/src/routes/meeting.routes.ts:1039-1055`).
+- Korekta zakresu G09: split backendowy nadal istnieje, ale obecny `MeetingObjectPage` składa do widoku także decyzje z zatwierdzonych notes, więc teza „Decisions & actions renderuje 0” nie jest już prawdziwa dla tego konsumenta (`src/components/Meeting/MeetingObjectPage.tsx:563-572`; `src/components/Meeting/MeetingObjectPage.tsx:829-846`).

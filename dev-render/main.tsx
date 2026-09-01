@@ -20,6 +20,7 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+const Day237SpotkaniaScreen = React.lazy(() => import('./screens/day237-spotkania'));
 const Day235MaterialyDokumentyScreen = React.lazy(
   () => import('./screens/day235-materialy-dokumenty')
 );
@@ -522,6 +523,11 @@ const ToolsSwotInitiativeProposalScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'day237-spotkania': {
+    label:
+      'Dyżur 237 — realne MeetingHub / MeetingObjectPage / Sidebar; &view=list|object|member-sidebar|member-direct &state=pending|rejected|approved',
+    render: () => <Day237SpotkaniaScreen />,
+  },
   'day235-materialy-dokumenty': {
     label: 'Dyżur 235 — realny Document Studio; &view=registry pokazuje wspólny rejestr Materiałów',
     render: () => <Day235MaterialyDokumentyScreen />,
