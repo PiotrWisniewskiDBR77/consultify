@@ -1082,15 +1082,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 type: 'portfolio',
               },
             ]}
+            /*
+             * Odbiór grafiki 174-domkniecie (2026-09-01): pastylka w stopce
+             * podglądu WIERSZA prowadziła do `showWorkspace`, czyli wsuwała
+             * warsztat planu POD tabelę. Właściciel: „narzędzie otwiera tę
+             * wybraną linię jako tabelę poniżej tej tabeli. Ma ona otwierać
+             * konkretną kartę." Panel jest zakresu WIERSZA, więc jego akcja
+             * musi prowadzić do obiektu wiersza — karty inicjatywy. Warsztat
+             * planu (zakres PLANU) ma własny przycisk w pasku nad tabelą.
+             */
             actions={{
               informational: [
                 {
-                  id: 'open-workspace',
+                  id: 'open-initiative-card',
                   variant: 'neutral',
-                  label: t('initiatives.planScenario.openWorkspace'),
+                  label: t('initiatives.planScenario.openInitiativeCard'),
                   icon: Eye,
                   shortcut: 'O',
-                  onClick: showWorkspace,
+                  onClick: () => openInitiativeCard(row.id),
+                  disabled: !onOpenInitiative,
                 },
               ],
             }}
@@ -1174,13 +1184,26 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           onRowDoubleClick={
             onOpenInitiative ? (row) => openInitiativeCard(String(row.id)) : undefined
           }
+          /*
+           * Odbiór grafiki 174-domkniecie (2026-09-01): akcja GŁÓWNA kebaba
+           * wiersza (blok 1 kanonu = „akcja główna encji: View/Open") była
+           * podpięta pod `showWorkspace` — czyli jedyne „Otwórz" dostępne
+           * z wiersza wsuwało DRUGĄ TABELĘ pod pierwszą, a nie kartę encji.
+           * Właściciel nie mógł z tego ekranu dojść do inicjatywy w ogóle.
+           * Teraz blok 1 = karta inicjatywy (ta sama ścieżka co dwuklik
+           * i „Otwórz" w nagłówku podglądu); gdy host nie potrafi otworzyć
+           * karty, pozycja jest wyłączona z powodem, a nie podmieniona na
+           * akcję prowadzącą gdzie indziej niż napis.
+           */
           rowMenu={(row) => ({
             primary: [
               {
-                id: 'open-workspace',
-                label: t('initiatives.planScenario.openWorkspace'),
+                id: 'open-initiative-card',
+                label: t('initiatives.planScenario.openInitiativeCard'),
                 icon: Eye,
-                onClick: showWorkspace,
+                onClick: onOpenInitiative ? () => openInitiativeCard(String(row.id)) : undefined,
+                disabled: !onOpenInitiative,
+                note: openCardDisabledReason,
               },
             ],
             universalHandlers: {
@@ -1265,60 +1288,24 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               </button>
             </div>
           </div>
-          <div className="mb-4">
-            <StandardTable
-              columns={[
-                { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true },
-                // Odbiór 141-plan-scenario (2026-08-31): ta tabela warsztatu jako
-                // JEDYNA w powierzchni renderowała surowe enumy backendu
-                // (NOW/NEXT/LATER/UNSCHEDULED, HIGH/MEDIUM/LOW, KNOWN/UNKNOWN/NONE).
-                // Tabela główna i podgląd tłumaczyły je od 2026-08-30 tymi samymi
-                // mapami — tu ich po prostu nie podpięto. Dane zostają angielskie,
-                // tłumaczona jest wyłącznie etykieta komórki.
-                {
-                  id: 'band',
-                  label: t('initiatives.planScenario.columns.window'),
-                  sortable: true,
-                  render: (row) => t(planBandKey[row.band] ?? row.band),
-                },
-                {
-                  id: 'target',
-                  label: t('initiatives.planScenario.workbench.proposedWindow'),
-                  sortable: true,
-                },
-                {
-                  id: 'dependency',
-                  label: t('initiatives.planScenario.columns.dependencies'),
-                  sortable: true,
-                  render: (row) => t(planReadinessStateKey[row.dependency] ?? row.dependency),
-                },
-                {
-                  id: 'capacity',
-                  label: t('initiatives.planScenario.columns.capacity'),
-                  sortable: true,
-                  render: (row) => t(planReadinessStateKey[row.capacity] ?? row.capacity),
-                },
-                {
-                  id: 'confidence',
-                  label: t('initiatives.planScenario.workbench.confidence'),
-                  sortable: true,
-                  render: (row) => t(planConfidenceKey[row.confidence] ?? row.confidence),
-                },
-                {
-                  id: 'conflict',
-                  label: t('initiatives.planScenario.columns.conflict'),
-                  sortable: true,
-                  render: (row) => t(planConflictStateKey[row.conflict] ?? row.conflict),
-                },
-              ]}
-              data={visiblePlanWindows}
-              persistKey="initiatives.plan-windows.v1"
-              empty={{
-                title: t('initiatives.planScenario.workbench.noMatchingTitle'),
-                description: t('initiatives.planScenario.workbench.noMatchingDescription'),
-              }}
-            />
-          </div>
+          {/*
+            * Odbiór grafiki 174-domkniecie (2026-09-01) — USUNIĘTA DRUGA TABELA.
+            *
+            * Warsztat planu renderował tu `StandardTable` na tym SAMYM zbiorze
+            * `visiblePlanWindows` co tabela główna, tyle że z węższym zestawem
+            * kolumn. Efekt na ekranie: po kliknięciu „Otwórz narzędzia planu"
+            * pod pierwszą tabelą wysuwała się DRUGA tabela z tymi samymi
+            * wierszami. Dokładnie to zgłosił właściciel 2026-08-30:
+            * „narzędzie otwiera tę wybraną linię jako tabelę poniżej tej
+            * tabeli. Ma ona otwierać konkretną kartę. W ogóle nie rozumiem,
+            * jak to działa."
+            *
+            * Duplikat nie niósł żadnej informacji, której nie ma tabela główna
+            * (te same wiersze, podzbiór kolumn, bez podglądu i bez kebaba),
+            * a warsztat i tak edytuje okna niżej — w „Osi czasu" i w edytorze
+            * kolejności. Warsztat zostaje NARZĘDZIEM (horyzont · zakres · oś
+            * czasu · kolejność), a nie powtórzoną listą.
+            */}
           <fieldset className="mb-4 rounded-md border border-c-border p-3">
             <legend className="px-1 text-sm font-medium">
               {t('initiatives.planScenario.workbench.horizon')}

@@ -8951,6 +8951,8 @@
       "activePlan": "Aktywny plan",
       "activePlanAria": "Aktywny scenariusz planu",
       "openWorkspace": "Otwórz narzędzia planu",
+      "openInitiativeCard": "Otwórz kartę inicjatywy",
+      "openCardUnavailable": "Kartę inicjatywy otwiera moduł Inicjatywy — ten widok jest tylko planem.",
       "sectionAria": "Scenariusze planu",
       "workbenchAria": "Warsztat scenariusza planu",
       "preview": {

@@ -9484,6 +9484,8 @@
       "activePlan": "Active plan",
       "activePlanAria": "Active Plan Scenario",
       "openWorkspace": "Open plan tools",
+      "openInitiativeCard": "Open initiative card",
+      "openCardUnavailable": "The initiative card opens in the Initiatives module — this view is the plan only.",
       "sectionAria": "Plan scenarios",
       "workbenchAria": "Plan Scenario Workbench",
       "preview": {
