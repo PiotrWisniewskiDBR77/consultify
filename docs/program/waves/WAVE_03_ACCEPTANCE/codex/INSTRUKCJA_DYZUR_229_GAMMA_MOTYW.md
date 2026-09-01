@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `9fb7942a01`**
+> **SHA markera: `142686b772`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -37,7 +37,7 @@ wskazanymi ścieżkami w repo.
 Data wystawienia: 2026-09-01.
 Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
 Język pracy i raportowania: **polski**.
-Zakres: ****RENDERER PPTX — TOR PRODUKCYJNY.** Zmierzone na markerze `9fb7942a01`: istnieją DWA niezależne renderery. (A) produkcyjny, wołany przez pobranie decku: `server/src/services/report/pptx/PptxPipelineService.ts:268` (`generateFromUnifiedJson`, klasa `:263`), wołany z `server/src/routes/presentations.routes.ts:604-607` przez `ensureCurrentPptxExport()` (`:593`), używany w trasie pobrania `:2569`; tokeny w `server/src/services/report/pptx/designTokens.ts` (286 linii). (B) zapasowy, deliverables: `server/src/services/deliverables/bundlePptxRuntime.ts:517` (`deckPlansToPptxBuffer`) + `server/src/services/deliverables/DeckStyler.ts` (1094 linie) + `themeRegistry.ts`; wołany z `bundleExportRuntime.ts:224` i **bezwarunkowo** z `server/src/services/initiative/initiativeMaterializeService.ts:488`. ★ **Ten dyżur wchodzi WYŁĄCZNIE w tor (A).** Tor (B) czytasz i mierzysz, nie zmieniasz. Kontrakt wizualny: `docs/program/funkcje/GAMMA_G1_SPECYFIKACJA.md` (cechy C1-C15, drabina §1, trzy slajdy wzorcowe §5, bramki §8) + `docs/program/funkcje/GAMMA_G2_SESJA_NA_ZYWO.md` („prototyp jasny był błędem kierunku — Wasze decki są ciemne") + `docs/program/funkcje/GAMMA_G0_POMIAR.md` (sufit `pptxgenjs 4.0.1`) + `docs/program/funkcje/GAMMA_G1_OBRAZY.md` §5 (raster dla materiału, wektor dla znaczenia)**.
+Zakres: ****RENDERER PPTX — TOR PRODUKCYJNY.** Zmierzone na markerze `142686b772`: istnieją DWA niezależne renderery. (A) produkcyjny, wołany przez pobranie decku: `server/src/services/report/pptx/PptxPipelineService.ts:268` (`generateFromUnifiedJson`, klasa `:263`), wołany z `server/src/routes/presentations.routes.ts:604-607` przez `ensureCurrentPptxExport()` (`:593`), używany w trasie pobrania `:2569`; tokeny w `server/src/services/report/pptx/designTokens.ts` (286 linii). (B) zapasowy, deliverables: `server/src/services/deliverables/bundlePptxRuntime.ts:517` (`deckPlansToPptxBuffer`) + `server/src/services/deliverables/DeckStyler.ts` (1094 linie) + `themeRegistry.ts`; wołany z `bundleExportRuntime.ts:224` i **bezwarunkowo** z `server/src/services/initiative/initiativeMaterializeService.ts:488`. ★ **Ten dyżur wchodzi WYŁĄCZNIE w tor (A).** Tor (B) czytasz i mierzysz, nie zmieniasz. Kontrakt wizualny: `docs/program/funkcje/GAMMA_G1_SPECYFIKACJA.md` (cechy C1-C15, drabina §1, trzy slajdy wzorcowe §5, bramki §8) + `docs/program/funkcje/GAMMA_G2_SESJA_NA_ZYWO.md` („prototyp jasny był błędem kierunku — Wasze decki są ciemne") + `docs/program/funkcje/GAMMA_G0_POMIAR.md` (sufit `pptxgenjs 4.0.1`) + `docs/program/funkcje/GAMMA_G1_OBRAZY.md` §5 (raster dla materiału, wektor dla znaczenia)**.
 Trasy front: `Ten dyżur **nie buduje nowego ekranu produktowego**. Front dotykasz w JEDNYM miejscu i tylko po to, żeby zrobić zrzut: nowy ekran `dev-render/screens/day229-gamma-motyw.tsx` + wpis w `dev-render/main.tsx` (wzorzec rejestru: `React.lazy(() => import('./screens/…'))`, ok. `:24-42`; harness czyta `?screen=`, `?theme=light|dark`, `?lang=` — `dev-render/main.tsx:1637-1660`, gdzie motyw jest ustawiany trzema mechanizmami naraz: klasa `.dark` na `documentElement` `:1644`, `useAppStore.setState({theme})` `:1650` i `MutationObserver` przywracający klasę `:1654-1659`). ★★ **Ale zrzut z harnessu NIE JEST dowodem tego dyżuru** — dowodem jest **realnie wyrenderowany slajd z pliku `.pptx`**: `soffice` (`/opt/homebrew/bin/soffice`, LibreOffice 26.2.4.2, zmierzone) konwertuje `.pptx` → PDF, `pdftoppm` (`/opt/homebrew/bin/pdftoppm`, zmierzone) → PNG. Harness służy WYŁĄCZNIE do pokazania palety ról obok siebie. **W raporcie piszesz wprost, który obraz jest czym.** Uczciwość obowiązkowa: render LibreOffice **nie jest** renderem PowerPointa — podmienia kroje i to zmienia złamania wierszy (`GAMMA_G1_SPECYFIKACJA.md` §6.2). Nazywasz to w raporcie`. Trasy tył: `Trasy **istnieją i ich nie budujesz** — sprawdzasz, że Twój motyw przez nie przechodzi: `GET /api/presentations/decks/:id/download` (`server/src/routes/presentations.routes.ts:2569`, render `:604-607`, fail-closed przy błędzie renderu `:680-684`), `POST /api/presentations/generate/deck` (`:1923`), `POST /api/presentations/decks` (`:1981`), `GET /api/presentations/decks/:deckId/export/pdf` (`:2832` — ★ to jest **osobny renderer `pdfkit`** (`import PDFDocument from 'pdfkit'` `:12`, `new PDFDocument` `:2973`), **nie konwersja z PPTX**; czyli PDF i PPTX mogą dziś wyglądać inaczej i to jest ustalenie do raportu, nie do naprawy w tym dyżurze). Router montowany w `server/src/Gateway.ts:1201` za `createBetaGate`. Bramka jakości przed eksportem: `server/src/routes/presentationExportGate.ts:24` (`enforceQualityGateForExport`, 422 `QUALITY_GATE_BLOCKED`) — **nietykalna**`.
 
 ---
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day229-gamma-motyw
-MARKER=9fb7942a01
+MARKER=142686b772
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 9fb7942a01..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 142686b772..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 142686b772..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 9fb7942a01..HEAD
+git -C "$WT" diff --name-only 142686b772..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `9` komend, wszystkie obowiązkowe.**
@@ -656,7 +656,7 @@ Z **pomiaru 29 slajdów w 3 motywach gamma.app**, odczytanych z DOM przez `getCo
 Autor tego pomiaru sam rozdzielił **ZMIERZONE**, **WYWNIOSKOWANE** i **swoją rekomendację** — i Ty
 masz utrzymać ten podział w raporcie.
 
-## ★★ Pomiar, który zmienia treść zamówienia — wykonany na SHA `9fb7942a01`
+## ★★ Pomiar, który zmienia treść zamówienia — wykonany na SHA `142686b772`
 
 Nadzorca zmierzył stan przed napisaniem tej instrukcji. **Sprawdź każdą z tych liczb u siebie**
 (komendy w `§2`); rozbieżność idzie do „Korekt wobec instrukcji", nie do improwizacji.
@@ -1005,7 +1005,7 @@ nadzorcy przed pierwszym commitem**, nie negocjacja w kodzie.
 **Zanim napiszesz pierwszą linię**, wykonaj:
 
 ```bash
-git -C "$WT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824 -- \
+git -C "$WT" log --oneline 142686b772..github-backup/codex/m03-admin-20260824 -- \
   server/src/services/report/pptx/ server/src/services/deliverables/
 ```
 

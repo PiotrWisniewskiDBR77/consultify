@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `9fb7942a01`**
+> **SHA markera: `142686b772`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day227-gamma-geometria
-MARKER=9fb7942a01
+MARKER=142686b772
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 9fb7942a01..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 142686b772..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 142686b772..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 9fb7942a01..HEAD
+git -C "$WT" diff --name-only 142686b772..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `cztery` komend, wszystkie obowiązkowe.**
@@ -224,7 +224,7 @@ Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie 
 | `Z37` | **Porównania testów po NAZWACH przypadków (`fullName`), NIGDY po liczbach.** „Było 300 PASS, jest 300 PASS" nie jest dowodem — jeden test mógł zgasnąć, a drugi się zapalić | Wektor maskowania regresji |
 | `Z38` | **Zakaz usuwania i odmontowywania jakiegokolwiek joba CI.** Wolno dodać, wolno poprawić warunek. Usunięcie = STOP z rekomendacją | Bramki znikają łatwiej, niż wracają |
 | `Z39` | **Zakaz uruchamiania realnych workflow GitHub Actions** — `gh workflow run`, `gh run rerun`, `act` z realnymi sekretami, push wyzwalający CI na `main`/`develop`/`Londyn`/`demo`. Dowód robisz **statycznie** | Realny przebieg CI dotyka sekretów i środowisk poza Twoją kontrolą |
-| `Z40` | ★★ **NIE NAPRAWIASZ WYBORU RENDERERA.** Logika, ktory silnik jest wolany przez ktorego wolajacego (`initiativeMaterializeService.ts`, `bundleExportRuntime.ts`, `bundlePptxRuntime.ts`) jest NIETYKALNA — rozni sie per wolajacy (jeden ma prawdziwy fallback, drugi nie) i to jest osobna decyzja architektoniczna o szerszym zasiegu. **NIE MIGRUJESZ WSZYSTKICH HEXOW** — R2 naprawia WYLACZNIE wpis 'harvard' w `presentationVisualDirectorService.ts:254`, nie pozostale 12 palet Layout Directora ani `themeRegistry.ts`/`paletteLibrary.ts`/kompozyty kanoniczne. **NIE ZMIENIASZ `PptxPipelineService.ts` ani `designTokens.ts`** — sa zrodlem, nie celem. **NIE ZMIENIASZ `slideW`/`slideH`** — oba renderery juz sie zgadzaja co do rozmiaru platna, zmieniasz WYLACZNIE margines i gore tresci. | Zmierzone (GAMMA_G0_POMIAR.md + weryfikacja wlasna na SHA 9fb7942a01): kanoniczny renderer (PptxPipelineService+designTokens.ts) ma margines 0,5 cala i gore tresci 1,0; zapasowy (DeckStyler.ts, NIE themeRegistry.ts jak zakladalo pierwotne zamowienie — themeRegistry.ts ma wylacznie typografie/palete, zero geometrii) ma margines 0,6 i gore 1,7. Zapasowy jest wolany bezwarunkowo, bez flagi, bez fallbacku na kanoniczny z initiativeMaterializeService.ts:488 (potwierdzone: brak if/flagi przed wywolaniem). Zero tokenow CSS produktu (c-accent/c-primary/c-focus) czytanych po stronie serwera — serwer nie ma dostepu do zmiennych CSS przegladarki, mostu nie zbudowano. Nawet wewnetrznie niespojne: paleta 'harvard' (presentationVisualDirectorService.ts:254, #A41034) rozni sie od aktualnego tokenu marki (tailwind.config.js:172, #85182F) i od jego poprzednika (#A51C30) — trzy rozne czerwienie w repo. |
+| `Z40` | ★★ **NIE NAPRAWIASZ WYBORU RENDERERA.** Logika, ktory silnik jest wolany przez ktorego wolajacego (`initiativeMaterializeService.ts`, `bundleExportRuntime.ts`, `bundlePptxRuntime.ts`) jest NIETYKALNA — rozni sie per wolajacy (jeden ma prawdziwy fallback, drugi nie) i to jest osobna decyzja architektoniczna o szerszym zasiegu. **NIE MIGRUJESZ WSZYSTKICH HEXOW** — R2 naprawia WYLACZNIE wpis 'harvard' w `presentationVisualDirectorService.ts:254`, nie pozostale 12 palet Layout Directora ani `themeRegistry.ts`/`paletteLibrary.ts`/kompozyty kanoniczne. **NIE ZMIENIASZ `PptxPipelineService.ts` ani `designTokens.ts`** — sa zrodlem, nie celem. **NIE ZMIENIASZ `slideW`/`slideH`** — oba renderery juz sie zgadzaja co do rozmiaru platna, zmieniasz WYLACZNIE margines i gore tresci. | Zmierzone (GAMMA_G0_POMIAR.md + weryfikacja wlasna na SHA 142686b772): kanoniczny renderer (PptxPipelineService+designTokens.ts) ma margines 0,5 cala i gore tresci 1,0; zapasowy (DeckStyler.ts, NIE themeRegistry.ts jak zakladalo pierwotne zamowienie — themeRegistry.ts ma wylacznie typografie/palete, zero geometrii) ma margines 0,6 i gore 1,7. Zapasowy jest wolany bezwarunkowo, bez flagi, bez fallbacku na kanoniczny z initiativeMaterializeService.ts:488 (potwierdzone: brak if/flagi przed wywolaniem). Zero tokenow CSS produktu (c-accent/c-primary/c-focus) czytanych po stronie serwera — serwer nie ma dostepu do zmiennych CSS przegladarki, mostu nie zbudowano. Nawet wewnetrznie niespojne: paleta 'harvard' (presentationVisualDirectorService.ts:254, #A41034) rozni sie od aktualnego tokenu marki (tailwind.config.js:172, #85182F) i od jego poprzednika (#A51C30) — trzy rozne czerwienie w repo. |
 
 ---
 
@@ -628,7 +628,7 @@ niżej, gdzie pomiar znalazł, że logika wyboru różni się per wołający). T
 **liczby**: sprawia, że niezależnie od tego, który silnik akurat renderuje, wynik ma tę samą
 geometrię i sięga po ten sam, jeden zestaw kolorów marki.
 
-## ★★ Pomiar wykonany na SHA `9fb7942a0117aaf4001836f00bf8bbdc4e717669` — zweryfikuj sam
+## ★★ Pomiar wykonany na SHA `142686b77217aaf4001836f00bf8bbdc4e717669` — zweryfikuj sam
 
 **(K1) ★★ Kanoniczna geometria — potwierdzona dokładnie.** `server/src/services/report/pptx/
 designTokens.ts`, stała `GRID` (blok ok. linii 41-50):
