@@ -20547,7 +20547,26 @@
         "actions": {
           "openCanonical": "Open canonical screen"
         },
-        "currentSource": "Source: tenant admin API · current read"
+        "currentSource": "Source: tenant admin API · current read",
+        "columns": {
+          "type": "Type",
+          "title": "Notice",
+          "severity": "Severity",
+          "detail": "Detail",
+          "source": "Source",
+          "freshness": "Freshness"
+        },
+        "types": {
+          "risk": "Risk",
+          "audit": "Audit",
+          "billing": "Billing",
+          "health": "Service health"
+        },
+        "severity": {
+          "critical": "Critical",
+          "warning": "Warning",
+          "info": "Info"
+        }
       },
       "cost-capacity": {
         "partialSourcesWarning": "Some cost or capacity sources are unavailable.",

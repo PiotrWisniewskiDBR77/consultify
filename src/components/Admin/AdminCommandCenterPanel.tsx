@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 import {
@@ -68,8 +68,10 @@ interface AdminCommandCenterPanelProps {
   aggregationOnly?: boolean;
   screen?: 'attention-queue' | 'cost-capacity' | TabId;
 }
+type AttentionSignalType = 'risk' | 'audit' | 'billing' | 'health';
 interface AttentionSignal {
   id: string;
+  type: AttentionSignalType;
   title: string;
   source: string;
   freshness: string;
@@ -100,6 +102,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (risk)
         next.push({
           id: 'risk',
+          type: 'risk',
           title: t('admin.command.attention-queue.signals.riskTitle'),
           source: 'GET /api/admin/risk/summary',
           freshness,
@@ -112,6 +115,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (audit)
         next.push({
           id: 'audit',
+          type: 'audit',
           title: t('admin.command.attention-queue.signals.auditTitle'),
           source: 'GET /api/admin/audit-logs/stats',
           freshness,
@@ -131,6 +135,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (billingItems)
         next.push({
           id: 'billing',
+          type: 'billing',
           title: t('admin.command.attention-queue.signals.billingTitle'),
           source: 'GET /api/admin/billing/alerts',
           freshness,
@@ -143,6 +148,7 @@ const CommandCenterAttentionQueue: React.FC = () => {
       if (health)
         next.push({
           id: 'health',
+          type: 'health',
           title: t('admin.command.attention-queue.signals.healthTitle'),
           source: 'GET /api/admin/health-panel/summary',
           freshness,
@@ -182,6 +188,107 @@ const CommandCenterAttentionQueue: React.FC = () => {
         {error}
       </div>
     );
+  return <AttentionQueueTable signals={signals} />;
+};
+
+/**
+ * 171-pojedyncze (uwaga właściciela, odbiór 2026-09-01): "a moze lepiej
+ * jakąś tabele gdzie będzie mozna filtrowac po typach uwag. jak ich bedzie
+ * duzo to moze byc ciezko" — 4 karty zamienione na `StandardTable` (twarda
+ * reguła projektu: ekrany listowe WYŁĄCZNIE StandardTable, zero bespoke).
+ * Dwie filtrowalne kolumny (Typ źródła + Waga) pokrywają obie możliwe
+ * interpretacje „typu uwagi" zamiast zgadywać jedną. Klik wiersza = ta sama
+ * nawigacja co dawny klik w całą kartę (`signal.href`), bez kebaba — to
+ * lista skrótów do innych ekranów, nie rekordy z własnym podglądem.
+ */
+const ATTENTION_SEVERITY_TONE: Record<AttentionSignal['severity'], string> = {
+  critical: 'text-c-danger',
+  warning: 'text-c-warning',
+  info: 'text-c-text-secondary',
+};
+const AttentionQueueTable: React.FC<{ signals: AttentionSignal[] }> = ({ signals }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const typeLabel = useCallback(
+    (type: AttentionSignalType) => t(`admin.command.attention-queue.types.${type}`),
+    [t]
+  );
+  const severityLabel = useCallback(
+    (severity: AttentionSignal['severity']) =>
+      t(`admin.command.attention-queue.severity.${severity}`),
+    [t]
+  );
+
+  const rows = useMemo<TableRow[]>(
+    () =>
+      signals.map((signal) => ({
+        id: signal.id,
+        type: signal.type,
+        title: signal.title,
+        severity: signal.severity,
+        detail: signal.detail,
+        source: signal.source,
+        freshness: signal.freshness,
+        href: signal.href,
+      })),
+    [signals]
+  );
+
+  const columns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'type',
+        label: t('admin.command.attention-queue.columns.type'),
+        filterable: true,
+        filterOptions: (['risk', 'audit', 'billing', 'health'] as const).map((type) => ({
+          value: type,
+          label: typeLabel(type),
+        })),
+        render: (row) => typeLabel(row.type as AttentionSignalType),
+      },
+      {
+        id: 'title',
+        label: t('admin.command.attention-queue.columns.title'),
+        render: (row) => <span className="font-medium text-c-text">{row.title}</span>,
+      },
+      {
+        id: 'severity',
+        label: t('admin.command.attention-queue.columns.severity'),
+        filterable: true,
+        filterOptions: (['critical', 'warning', 'info'] as const).map((severity) => ({
+          value: severity,
+          label: severityLabel(severity),
+        })),
+        render: (row) => (
+          <span
+            className={cn(
+              'text-xs font-semibold uppercase tracking-wide',
+              ATTENTION_SEVERITY_TONE[row.severity as AttentionSignal['severity']]
+            )}
+          >
+            {severityLabel(row.severity as AttentionSignal['severity'])}
+          </span>
+        ),
+      },
+      {
+        id: 'detail',
+        label: t('admin.command.attention-queue.columns.detail'),
+      },
+      {
+        id: 'source',
+        label: t('admin.command.attention-queue.columns.source'),
+        render: (row) => <span className="text-xs text-c-text-muted">{row.source}</span>,
+      },
+      {
+        id: 'freshness',
+        label: t('admin.command.attention-queue.columns.freshness'),
+        render: (row) => <span className="text-xs text-c-text-muted">{row.freshness}</span>,
+      },
+    ],
+    [t, typeLabel, severityLabel]
+  );
+
   return (
     <div className="space-y-4">
       <div>
@@ -192,46 +299,17 @@ const CommandCenterAttentionQueue: React.FC = () => {
           {t('admin.command.attention-queue.description')}
         </p>
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {signals.map((signal) => (
-          <Link
-            key={signal.id}
-            to={signal.href}
-            className="rounded-xl border border-c-border bg-c-surface p-4 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 ring-[color:var(--c-focus)]"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="font-semibold text-c-text">{signal.title}</h3>
-              <span
-                className={
-                  signal.severity === 'critical'
-                    ? 'text-xs font-medium text-c-danger'
-                    : 'text-xs font-medium text-c-text-secondary'
-                }
-              >
-                {signal.severity}
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-c-text-secondary">{signal.detail}</p>
-            <dl className="mt-3 space-y-1 text-xs text-c-text-muted">
-              <div>
-                <dt className="inline font-medium">
-                  {t('admin.command.attention-queue.sourceLabel')}
-                </dt>
-                <dd className="inline">{signal.source}</dd>
-              </div>
-              <div>
-                <dt className="inline font-medium">
-                  {t('admin.command.attention-queue.freshnessLabel')}
-                </dt>
-                <dd className="inline">{signal.freshness}</dd>
-              </div>
-            </dl>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-c-text">
-              {t('admin.command.attention-queue.actions.openCanonical')}
-              <ArrowRight className="h-4 w-4" />
-            </span>
-          </Link>
-        ))}
+      <div className="rounded-2xl border border-c-border bg-c-surface p-2">
+        <StandardTable
+          columns={columns}
+          data={rows}
+          onRowClick={(row) => navigate(String(row.href))}
+          empty={{
+            title: t('admin.command.attention-queue.title'),
+            description: t('admin.command.attention-queue.allSourcesError'),
+          }}
+          persistKey="admin.attentionQueue"
+        />
       </div>
     </div>
   );

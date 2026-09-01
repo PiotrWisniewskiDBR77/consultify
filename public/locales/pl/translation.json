@@ -21747,7 +21747,26 @@
         "actions": {
           "openCanonical": "Otwórz ekran kanoniczny"
         },
-        "currentSource": "Źródło: tenant admin API · odczyt bieżący"
+        "currentSource": "Źródło: tenant admin API · odczyt bieżący",
+        "columns": {
+          "type": "Typ",
+          "title": "Uwaga",
+          "severity": "Waga",
+          "detail": "Szczegóły",
+          "source": "Źródło",
+          "freshness": "Świeżość"
+        },
+        "types": {
+          "risk": "Ryzyko",
+          "audit": "Audyt",
+          "billing": "Budżet",
+          "health": "Kondycja usług"
+        },
+        "severity": {
+          "critical": "Krytyczna",
+          "warning": "Ostrzeżenie",
+          "info": "Informacyjna"
+        }
       },
       "cost-capacity": {
         "partialSourcesWarning": "Część źródeł kosztu lub pojemności jest niedostępna.",
