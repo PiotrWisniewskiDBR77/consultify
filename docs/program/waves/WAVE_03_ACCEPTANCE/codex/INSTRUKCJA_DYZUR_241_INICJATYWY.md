@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `9a794efdc0`**
+> **SHA markera: `61fbb7b88f`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day241-inicjatywy
-MARKER=9a794efdc0
+MARKER=61fbb7b88f
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 9a794efdc0..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 9a794efdc0..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 61fbb7b88f..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 61fbb7b88f..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 9a794efdc0..HEAD
+git -C "$WT" diff --name-only 61fbb7b88f..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `9` komend, wszystkie obowiązkowe.**
@@ -265,7 +265,7 @@ Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie 
 | `Z37` | **Porównania testów po NAZWACH przypadków (`fullName`), NIGDY po liczbach.** „Było 300 PASS, jest 300 PASS" nie jest dowodem — jeden test mógł zgasnąć, a drugi się zapalić | Wektor maskowania regresji |
 | `Z38` | **Zakaz usuwania i odmontowywania jakiegokolwiek joba CI.** Wolno dodać, wolno poprawić warunek. Usunięcie = STOP z rekomendacją | Bramki znikają łatwiej, niż wracają |
 | `Z39` | **Zakaz uruchamiania realnych workflow GitHub Actions** — `gh workflow run`, `gh run rerun`, `act` z realnymi sekretami, push wyzwalający CI na `main`/`develop`/`Londyn`/`demo`. Dowód robisz **statycznie** | Realny przebieg CI dotyka sekretów i środowisk poza Twoją kontrolą |
-| `Z40` | **ZAKAZ PODŁĄCZANIA ŻADNEJ DROGI ZAPISU POD `runtime-v1`/`ie_audit_events`.** **ZAKAZ USUWANIA MARTWEGO KODU** (`handleUploadAttachments`/`handleDeleteAttachment`/`handleAddLinkedItem`/`handleRemoveLinkedItem`) — mierzysz i opisujesz, nie sprzątasz, nawet jeśli `§1.6` pokazuje bezpieczny precedens usunięcia. **ZAKAZ NAPRAWY `LAZY_FIELDS`** w `InitiativeController.updateInitiative` — to jest żywy, konkretny defekt, ale naprawa to inny dyżur; w tym dyżurze wolno Ci wyłącznie DODAĆ nowy plik testowy dowodzący go mutacyjnie (`R2.4`), zero zmiany w `InitiativeController.ts` samym. **ZAKAZ ustawiania `EFFECTIVE_ACCESS_ENFORCE`/`EFFECTIVE_ACCESS_SHADOW`** ani żadnej zmiany bramek uprawnień. | Naprawa załączników z dziś (`11308a2699`, `d0ad71d47d`, `9a794efdc0`) udowodniła na żywym przykładzie, że w tym module przewód zapisu potrafi być przerwany w trzech niezależnych miejscach naraz, a naprawa dowolnych dwóch dałaby zielone testy i dalej gubiłaby dane. Ten sam commit zgłosił martwy duplikat tego wzorca w `InitiativeDocumentView.tsx:3859-3865` — funkcje zapisu, których renderowany komponent nigdy nie czyta. Ten dyżur ma policzyć realny rozmiar problemu: ile dróg zapisu istnieje w ogóle, ile z nich zostawia ślad, czy istnieje droga omijająca zatwierdzenie i czy jest żywa czy martwa, oraz wskazać w produkcie moduł (Organizacja), który ma to zbudowane poprawnie — pod decyzję właściciela, nie pod naprawę. |
+| `Z40` | **ZAKAZ PODŁĄCZANIA ŻADNEJ DROGI ZAPISU POD `runtime-v1`/`ie_audit_events`.** **ZAKAZ USUWANIA MARTWEGO KODU** (`handleUploadAttachments`/`handleDeleteAttachment`/`handleAddLinkedItem`/`handleRemoveLinkedItem`) — mierzysz i opisujesz, nie sprzątasz, nawet jeśli `§1.6` pokazuje bezpieczny precedens usunięcia. **ZAKAZ NAPRAWY `LAZY_FIELDS`** w `InitiativeController.updateInitiative` — to jest żywy, konkretny defekt, ale naprawa to inny dyżur; w tym dyżurze wolno Ci wyłącznie DODAĆ nowy plik testowy dowodzący go mutacyjnie (`R2.4`), zero zmiany w `InitiativeController.ts` samym. **ZAKAZ ustawiania `EFFECTIVE_ACCESS_ENFORCE`/`EFFECTIVE_ACCESS_SHADOW`** ani żadnej zmiany bramek uprawnień. | Naprawa załączników z dziś (`11308a2699`, `d0ad71d47d`, `61fbb7b88f`) udowodniła na żywym przykładzie, że w tym module przewód zapisu potrafi być przerwany w trzech niezależnych miejscach naraz, a naprawa dowolnych dwóch dałaby zielone testy i dalej gubiłaby dane. Ten sam commit zgłosił martwy duplikat tego wzorca w `InitiativeDocumentView.tsx:3859-3865` — funkcje zapisu, których renderowany komponent nigdy nie czyta. Ten dyżur ma policzyć realny rozmiar problemu: ile dróg zapisu istnieje w ogóle, ile z nich zostawia ślad, czy istnieje droga omijająca zatwierdzenie i czy jest żywa czy martwa, oraz wskazać w produkcie moduł (Organizacja), który ma to zbudowane poprawnie — pod decyzję właściciela, nie pod naprawę. |
 
 ---
 
@@ -660,7 +660,7 @@ Moduł **05 Inicjatywy** rzekomo **nie ma jednej, nadzorowanej drogi zapisu** �
 inicjatywy mogą zmieniać się wieloma równoległymi ścieżkami, część bez śladu i bez
 zatwierdzenia. To uderza w wiarygodność produktu wobec klienta: firma doradcza sprzedaje
 rzetelność decyzji, nie tylko interfejs. **Świeży, dzisiejszy kontekst z tej samej gałęzi
-(commity `11308a2699`, `d0ad71d47d`, `9a794efdc0` na markerze `9a794efdc0`) właśnie
+(commity `11308a2699`, `d0ad71d47d`, `61fbb7b88f` na markerze `61fbb7b88f`) właśnie
 pokazał, jak realny jest ten problem**: interfejs Inicjatyw mówił „zapisano", a załącznik
 znikał — przewód był przerwany **w trzech miejscach naraz**, i naprawa dwóch dałaby
 zielone testy, dalej gubiąc dane. Zgłoszono też martwy duplikat tego samego wzorca w
@@ -673,7 +673,7 @@ bramki zatwierdzenia, nie podłączasz załączników pod `runtime-v1`, nie usuw
 kodu, nie zmieniasz żadnej trasy ani middleware. Jedyny dozwolony zapis produktowy to wąski
 dopisek do `MODULE_ACCEPTANCE.md` (`R6`) — reszta to raport.
 
-## ★★ POMIAR NA MARKERZE `9a794efdc0` — WSTĘPNE USTALENIA, KAŻDE DO WERYFIKACJI PRZEZ CIEBIE
+## ★★ POMIAR NA MARKERZE `61fbb7b88f` — WSTĘPNE USTALENIA, KAŻDE DO WERYFIKACJI PRZEZ CIEBIE
 
 ### 1. Naprawiony dziś błąd załączników — anatomia trzech przerwanych przewodów naraz
 

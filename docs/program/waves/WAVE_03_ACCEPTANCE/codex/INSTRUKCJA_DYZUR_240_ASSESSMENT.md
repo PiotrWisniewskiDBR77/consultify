@@ -24,7 +24,7 @@ wskazanymi ścieżkami w repo.
 
 > ### ★★ MARKER I STAN WYDANIA
 >
-> **SHA markera: `9a794efdc0`**
+> **SHA markera: `61fbb7b88f`**
 > **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
 > **Stan dokumentu: WYDANY**
 >
@@ -58,7 +58,7 @@ którą MUSISZ obsłużyć — krok (4).**
 ```bash
 VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
 WT=/private/tmp/cx-day240-assessment
-MARKER=9a794efdc0
+MARKER=61fbb7b88f
 
 # (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
 df -h /
@@ -112,8 +112,8 @@ Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
 STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
 
 ```bash
-git -C "$VAULT" log --oneline 9a794efdc0..github-backup/codex/m03-admin-20260824
-git -C "$VAULT" diff --name-only 9a794efdc0..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" log --oneline 61fbb7b88f..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 61fbb7b88f..github-backup/codex/m03-admin-20260824
 ```
 
 Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
@@ -130,7 +130,7 @@ Powtarzasz go **po każdej kolejnej pozycji**.
 **Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
 
 ```bash
-git -C "$WT" diff --name-only 9a794efdc0..HEAD
+git -C "$WT" diff --name-only 61fbb7b88f..HEAD
 ```
 
 **WERYFIKACJA STANU WEJŚCIOWEGO — `9` komend, wszystkie obowiązkowe.**
@@ -664,7 +664,7 @@ kolumny, nie zmieniasz żadnej migracji, nie dopisujesz nowego pola do żadnego 
 routingu. Jedyny dozwolony zapis produktowy to wąski dopisek do `MODULE_ACCEPTANCE.md`
 (`R6`) — reszta to raport.
 
-## ★★ POMIAR NA MARKERZE `9a794efdc0` — WSTĘPNE USTALENIA, KAŻDE DO WERYFIKACJI PRZEZ CIEBIE
+## ★★ POMIAR NA MARKERZE `61fbb7b88f` — WSTĘPNE USTALENIA, KAŻDE DO WERYFIKACJI PRZEZ CIEBIE
 
 ### 1. Nie ma JEDNEJ taksonomii źródeł — jest ich co najmniej sześć, wzajemnie niekompatybilnych
 
