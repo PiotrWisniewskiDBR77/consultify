@@ -1,0 +1,1041 @@
+{
+  "_opis": "Spis parametrow fotografowania dla kazdego z 253 ekranow toru grafiki ocenionych A lub B w docs/program/grafika/status.json (stan 2026-09-01). Zrodlo dla przyszlego przefotografowania calosci scripts/dev/grafika-zrzuty.mjs -- co kazdy ekran wymaga (parametry adresu, klikniecie, klawisze, przewiniecie, zakladki, selektor wyniku), zeby zrzut byl WIARYGODNY, nie tylko renderujacy sie.",
+  "_zaktualizowano": "2026-09-01",
+  "_ustalone_dzisiaj": {
+    "wejscie": "WSZYSTKIE 253 ekrany A/B wchodza przez ?screen=<id> w dev-render/main.tsx SCREENS. Zweryfikowano wprost: zaden z 253 id nie odpowiada nazwie pliku dev-render/*.html (droga --wejscie=html). Cztery ekrany BEZ wpisu w SCREENS (drd-workspace, mw010-vault, mywork-projects-tab, settings-day55) maja ocene D w status.json — poza zakresem tego pliku. Zaden istniejacy skrypt scripts/dev/*.mjs nie uzywa --wejscie=html ani jego rownowaznika.",
+    "zakladki": "Dla kazdego ekranu z realna nawigacja zakladkowa (StandardModuleBar/Menu2/Menu3 wewnatrz JEDNEGO ekranu, sterowana parametrem URL LUB realnym klikiem) wypisano WSZYSTKIE wartosci — zgodnie z zasada ustalona po defekcie ekranu Audytow widocznym tylko na jednej z kilku zakladek. audyty-piec-powierzchni zweryfikowano zrodlowo w AuditsMethodHub.tsx: DOMYSLNA (brak &tab=) zakladka to 'processes', NIE 'library' — latwa pulapka dla kogos, kto zalozylby alfabetyczny/pierwszy porzadek.",
+    "wynik_selektor_kandydaci": "Z szesciu kandydatow z polecenia: finance-value-panels ma ocene C w status.json (zweryfikowane w PANELE_WYCENY_ZRZUTY_20260901.md:61) — POZA ZAKRESEM tego pliku, mimo ze byl wymieniony jako kandydat. Pozostale piec (audyty-raport-dokument, deck-artifact, assessment-presentation-view, canvas-new-doc, assessment-output-report) zweryfikowano indywidualnie w kodzie zrodlowym: trzy maja potwierdzony wynikSelektor z gated stanem 'loading'/SkeletonState PRZED nim (deck-artifact, assessment-presentation-view, canvas-new-doc), jeden nie potrzebuje wynikSelektor (audyty-raport-dokument — dane mockowane synchronicznie), jeden (assessment-output-report) nie ma ZADNEGO data-testid w sciezce renderowania — sprawdzone grepem, nie zgadywane; polega na domyslnym OSIAD bez twardego dowodu DOM."
+  },
+  "_ograniczenia_tego_pomiaru": "1) Ekrany BEZ wzmianki o parametrach w etykiecie main.tsx (187 z 253) oznaczono jako domyslne (samo ?screen=<id>) na podstawie braku wzmianki w etykiecie SCREENS — w tym kodeksie etykiety sa niezwykle dokladnie utrzymywane (zweryfikowano krzyzowo na >60 ekranach z parametrami, gdzie etykieta ZAWSZE zgadzala sie z kodem zrodlowym), ale NIE otworzylem kazdego z 187 plikow dev-render/screens/*.tsx indywidualnie — to jest wnioskowanie z jakosci wzorca, nie wyczerpujacy audyt kazdego pliku. 2) NIE zbadano systematycznie ryzyka >>domyslnie zamkniety panel podgladu<< (preview pane otwierany single-clickiem, patrz komentarz --klik w grafika-zrzuty.mjs) dla ekranow listowych z tego zbioru — sprawdzono tylko ekrany z dedykowanym plikiem harnessu preview (cel-jedna-karta, decision-record, drd-library-entry, fab-rail-kebab, ideas-preview-overlay, roi-jedna-karta, wskaznik-jedna-karta — te montuja preview bezposrednio, bez potrzeby klikania) oraz kilka ekranow z realna ewidencja skryptowa. Kazdy inny ekran typu StandardTable+StandardPreview w tym zbiorze MOZE wymagac klikniecia w wiersz, ktorego to narzedzie nie potwierdza ani nie wyklucza.",
+  "ekrany": {
+    "ntype-analizuj-ai": {
+      "wejscie": "screen"
+    },
+    "chat-split-teresa-right": {
+      "wejscie": "screen"
+    },
+    "processflow-canvas": {
+      "wejscie": "screen"
+    },
+    "canvas-kebab-restructure": {
+      "wejscie": "screen"
+    },
+    "canvas-new-doc": {
+      "wejscie": "screen",
+      "wynikSelektor": "[data-testid=\"canvas-new-menu-v2\"]",
+      "klik": "automatyczny — harness SAM klika [data-testid=\"canvas-new-menu-root\"] button po zamontowaniu (setInterval, max 4s prob), --klik z grafika-zrzuty.mjs NIE jest potrzebny",
+      "parametry": "&fromCanvasState=populated (domyslny) | empty",
+      "zrodlo": "dev-render/screens/canvas-new-doc.tsx:24-25,76-92 (self-klik w useEffect); src/components/AIChat/WorkCanvasDocumentPanel.tsx:3478,3495 (data-testid=\"canvas-new-menu-root\" / \"canvas-new-menu-v2\")."
+    },
+    "canvas-toolbar-md-history": {
+      "wejscie": "screen"
+    },
+    "melscanvas-workspace": {
+      "wejscie": "screen",
+      "parametry": "ff_melsCanvas=1",
+      "zrodlo": "dev-render/main.tsx:1878 label — \"(melsCanvasFlag, default OFF); &ff_melsCanvas=1 dla ON\"."
+    },
+    "mindmap-canvas": {
+      "wejscie": "screen"
+    },
+    "mindmap-i18n-smoke": {
+      "wejscie": "screen",
+      "zakladki": [
+        "assign (domyslny)",
+        "attach",
+        "evidence"
+      ],
+      "parametry": "&variant=<wartosc> (trzy rozne modale i18n — kazdy inny zestaw kluczy do sprawdzenia)",
+      "zrodlo": "dev-render/main.tsx:1859 label — \"?variant=assign|attach|evidence (domyslnie assign) — modale sa fixed, jeden na raz\"."
+    },
+    "chat-signals-feed": {
+      "wejscie": "screen"
+    },
+    "whiteboard-canvas": {
+      "wejscie": "screen"
+    },
+    "whiteboard-workshop": {
+      "wejscie": "screen",
+      "parametry": "ff_whiteboardSessionInPanel=1",
+      "zrodlo": "dev-render/main.tsx:1896 label — \"&ff_whiteboardSessionInPanel=1 dla ON\"."
+    },
+    "teresa-chipy-panel-artefaktu": {
+      "wejscie": "screen"
+    },
+    "teresa-chipy-sugestii": {
+      "wejscie": "screen",
+      "klik": "prawy panel narzędzi -> tekst \"Chipy sugestii\" (getByText, exact) po kliknięciu w textarea i w przycisk narzędzi po prawej",
+      "klawisze": "Escape (na koniec, zamyka)",
+      "zrodlo": "scripts/dev/menu3-104-suggestions-toggle-screenshots.mjs:25-42."
+    },
+    "teresa-confirm-chip": {
+      "wejscie": "screen"
+    },
+    "vault-folder-block-proof": {
+      "wejscie": "screen"
+    },
+    "idea-financial-case-persistence": {
+      "wejscie": "screen"
+    },
+    "notatnik-centrum-mysli": {
+      "wejscie": "screen"
+    },
+    "notatnik-osierocone-graf": {
+      "wejscie": "screen"
+    },
+    "idea-table-tool-grouping": {
+      "wejscie": "screen"
+    },
+    "mywork-idea-inspector-lekki": {
+      "wejscie": "screen"
+    },
+    "karta-decision": {
+      "wejscie": "screen"
+    },
+    "karta-notification": {
+      "wejscie": "screen"
+    },
+    "karta-insight": {
+      "wejscie": "screen"
+    },
+    "karta-task": {
+      "wejscie": "screen"
+    },
+    "idea-templates-catalog": {
+      "wejscie": "screen"
+    },
+    "idea-table-tool-kebab": {
+      "wejscie": "screen"
+    },
+    "ideas-teresa-panel": {
+      "wejscie": "screen",
+      "klik": "nagłówek sekcji (header) — accordion, brak precyzyjnego selektora CSS w skrypcie",
+      "wynikSelektor": "text=Mapa myśli",
+      "zrodlo": "scripts/dev/idee-notatnik-116-screenshots.mjs:18-27 (waitForSelector text=Mapa myśli, potem header.click())."
+    },
+    "mywork-notebook-rail-speca": {
+      "wejscie": "screen",
+      "klik": "nagłówek sekcji (header) — accordion, brak precyzyjnego selektora CSS w skrypcie",
+      "wynikSelektor": "text=Warsztat 3",
+      "zrodlo": "scripts/dev/idee-notatnik-116-screenshots.mjs:40-47."
+    },
+    "ideas-preview-overlay": {
+      "wejscie": "screen"
+    },
+    "idea-confidentiality-control": {
+      "wejscie": "screen"
+    },
+    "zwornik-projects": {
+      "wejscie": "screen"
+    },
+    "idea-table-tool-empty-filter": {
+      "wejscie": "screen"
+    },
+    "idea-table-tool-sortfilter": {
+      "wejscie": "screen"
+    },
+    "notebook-quick-capture": {
+      "wejscie": "screen"
+    },
+    "idea-table-timeline-stuck": {
+      "wejscie": "screen"
+    },
+    "vault-safes-table": {
+      "wejscie": "screen"
+    },
+    "idea-table-tool-paste": {
+      "wejscie": "screen"
+    },
+    "vault-sejf-wnetrze": {
+      "wejscie": "screen"
+    },
+    "exec-summary-onelook": {
+      "wejscie": "screen"
+    },
+    "mywork-idea-topbar": {
+      "wejscie": "screen"
+    },
+    "idea-table-record-templates": {
+      "wejscie": "screen"
+    },
+    "idea-table": {
+      "wejscie": "screen"
+    },
+    "decision-record": {
+      "wejscie": "screen",
+      "parametry": "ff_vf1DecisionSpeca=1",
+      "zrodlo": "dev-render/main.tsx:1846 label — \"&ff_vf1DecisionSpeca=1 wraz z VITE_VF1_DECISION_SPECA=true dla stanow gated\". UWAGA: VITE_VF1_DECISION_SPECA to zmienna budowania (env), nie URL param — jesli build harnessu nie mial tej flagi wlaczonej, gated stany moga byc niedostepne niezaleznie od URL."
+    },
+    "mywork-inbox": {
+      "wejscie": "screen"
+    },
+    "mywork-calendar": {
+      "wejscie": "screen"
+    },
+    "interview-creator-shell": {
+      "wejscie": "screen",
+      "klik": "etykiety krokow (page.getByText(label, {exact:true}).click()) — sekwencja klikow miedzy krokami 1/2/3",
+      "wynikSelektor": "text=Kreator Wniosków AI",
+      "zakladki": [
+        "step 1",
+        "step 2",
+        "step 3"
+      ],
+      "parametry": "&step=1|2|3 (URL ustawia krok startowy); &scene=default|off|empty dodatkowy wariant, zostaw domyslny",
+      "zrodlo": "dev-render/main.tsx:1044 label; scripts/dev/ui-latki-20260828-screenshots.mjs:25-31 (waitForSelector \"Kreator Wniosków AI\", potem klik etykiet krokow)."
+    },
+    "unified-create-launcher": {
+      "wejscie": "screen"
+    },
+    "interview-preview-canon": {
+      "wejscie": "screen",
+      "parametry": "&kebab=1 (otwiera kebab \"Details\" na starcie — bez tego panel jest zamkniety, ten sam ksztalt ryzyka co domyslnie-zamkniety preview z CLAUDE.md); &variant=session|initiative wybiera ktory typ preview",
+      "zakladki": [
+        "session",
+        "initiative"
+      ],
+      "zrodlo": "dev-render/main.tsx:1039 label — \"&variant=session|initiative &kebab=1 (otwiera kebab Details na starcie)\"."
+    },
+    "interview-sessions-status": {
+      "wejscie": "screen",
+      "wynikSelektor": "text=Przydzielony",
+      "zrodlo": "scripts/dev/ui-latki-20260828-screenshots.mjs:43-46."
+    },
+    "drd-http-workspace": {
+      "wejscie": "screen",
+      "zakladki": [
+        "interview",
+        "split",
+        "matrix"
+      ],
+      "parametry": "&view=<wartosc> (uklad interview/split/matrix to trzy realne tryby tego samego workspace, nie tylko QA-stan)",
+      "zrodlo": "dev-render/main.tsx:628 label — \"&view=interview|split|matrix\". Dodatkowe osie (&stage=, &state=, &case=) to warianty scenariuszy QA, zostaw domyslne."
+    },
+    "karta-interview": {
+      "wejscie": "screen"
+    },
+    "tools-swot-library-detail": {
+      "wejscie": "screen"
+    },
+    "tools-swot-session-workspace": {
+      "wejscie": "screen"
+    },
+    "karta-tool": {
+      "wejscie": "screen"
+    },
+    "tools-outputs-insights-tab": {
+      "wejscie": "screen"
+    },
+    "tools-swot-report": {
+      "wejscie": "screen"
+    },
+    "prompt-registry-tab": {
+      "wejscie": "screen"
+    },
+    "tools-swot-initiative-proposal": {
+      "wejscie": "screen"
+    },
+    "tools-sesja-wyjscie": {
+      "wejscie": "screen"
+    },
+    "assessment-menu3-status-chips": {
+      "wejscie": "screen"
+    },
+    "method-workspace": {
+      "wejscie": "screen",
+      "zakladki": [
+        "interview",
+        "split",
+        "matrix"
+      ],
+      "parametry": "&view=<wartosc> (uklad interview/split/matrix to trzy realne tryby tego samego workspace, nie tylko QA-stan)",
+      "zrodlo": "dev-render/main.tsx:638 label — \"&view=interview|split|matrix\". Dodatkowe osie (&stage=, &state=, &case=) to warianty scenariuszy QA, zostaw domyslne."
+    },
+    "assessment-report-contract": {
+      "wejscie": "screen"
+    },
+    "assessment-quality-review-panel": {
+      "wejscie": "screen"
+    },
+    "assessment-output-report": {
+      "wejscie": "screen",
+      "parametry": "variant=happy (domyslny)",
+      "zrodlo": "dev-render/screens/assessment-output-report.tsx:20-261 (variant domyslnie \"happy\"); BRAK data-testid w sciezce renderowania AssessmentReportView/AssessmentReportDocument (sprawdzone grepem) — wynikSelektor NIE JEST DOSTEPNY, fetch jest mockowany SYNCHRONICZNIE (bez sztucznego opoznienia jak w assessment-presentation-view), wiec domyslny OSIAD (2500ms) po networkidle powinien wystarczyc, ale nie ma twardego dowodu DOM jak przy innych czterech kandydatach."
+    },
+    "assessment-reports-table": {
+      "wejscie": "screen"
+    },
+    "assessment-artifacts-restart": {
+      "wejscie": "screen",
+      "zakladki": [
+        "outputs (domyslny, initialTab=\"outputs\")",
+        "reports",
+        "initiatives"
+      ],
+      "parametry": "&tab=<wartosc>; &select=1 i &lineage=1 to dodatkowe QA-flagi, nie zakladki",
+      "zrodlo": "dev-render/main.tsx:633 label — \"<AssessmentHub initialTab=\\\"outputs\\\">... &tab=outputs|reports|initiatives\"."
+    },
+    "assessment-five-surfaces": {
+      "wejscie": "screen",
+      "zakladki": [
+        "library",
+        "processes",
+        "outputs",
+        "reports",
+        "initiatives"
+      ],
+      "parametry": "&tab=<wartosc>",
+      "zrodlo": "dev-render/screens/assessment-five-surfaces.tsx:4,260 (initialTab z ?tab=, przekazywany do <AssessmentHub>, ta sama 5-tabowa powloka co Audyty); potwierdzone realnym uzyciem w scripts/dev/assessment-fixes-hub-shell-screenshots.mjs:20,32 (tab=initiatives, tab=reports) i scripts/dev/assessment-fixes-library-screenshot.mjs:17 (tab=library)."
+    },
+    "drd-library-entry": {
+      "wejscie": "screen"
+    },
+    "assessment-list": {
+      "wejscie": "screen"
+    },
+    "assessment-reports-panel": {
+      "wejscie": "screen"
+    },
+    "assessment-presentation-view": {
+      "wejscie": "screen",
+      "wynikSelektor": "[data-testid=\"presentation-deck\"]",
+      "parametry": "variant=full (domyslny)",
+      "zrodlo": "dev-render/screens/assessment-presentation-view.tsx:209-213 (fetchOutput z 150ms opoznieniem symulujacym siec); src/components/assessment/presentation/AssessmentPresentationView.tsx:47-194 (stan \"ready\" -> <PresentationDeck>, wczesniej \"loading\"); src/components/assessment/presentation/PresentationDeck.tsx:145 (data-testid=\"presentation-deck\"). UWAGA: jesli w przyszlosci trzeba fotografowac KONKRETNY slajd (np. macierz osi na slajdzie 6 w innym ekranie DRD), patrz komentarz --klawisze w grafika-zrzuty.mjs — tu (assessment-presentation-view) nie potwierdzono ktory slajd byl oceniany, domyslnie slajd 1."
+    },
+    "assessment-initiatives-table": {
+      "wejscie": "screen"
+    },
+    "siri-workspace": {
+      "wejscie": "screen",
+      "zakladki": [
+        "interview",
+        "split",
+        "matrix"
+      ],
+      "parametry": "&view=<wartosc> (uklad interview/split/matrix to trzy realne tryby tego samego workspace, nie tylko QA-stan)",
+      "zrodlo": "dev-render/main.tsx:643 label — \"&view=interview|split|matrix\". Dodatkowe osie (&stage=, &state=, &case=) to warianty scenariuszy QA, zostaw domyslne."
+    },
+    "assessment-initiatives-panel": {
+      "wejscie": "screen"
+    },
+    "assessment-manage-panel": {
+      "wejscie": "screen",
+      "zakladki": [
+        "workflow",
+        "team",
+        "reports",
+        "initiatives",
+        "logs"
+      ],
+      "parametry": "&tab=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:1753 label — \"(Workflow/Team/Reports/Initiatives tabs...) — &tab=workflow|team|reports|initiatives|logs\"."
+    },
+    "drd-macierz-oceny": {
+      "wejscie": "screen",
+      "zakladki": [
+        "os=1",
+        "os=2",
+        "os=3",
+        "os=4",
+        "os=5",
+        "os=6",
+        "os=7"
+      ],
+      "parametry": "&os=1..7 (siedem osi macierzy oceny DRD — kazda inna tresc)",
+      "zrodlo": "dev-render/main.tsx:2020 label — \"&os=1..7\"."
+    },
+    "capacity-advisor-a3": {
+      "wejscie": "screen"
+    },
+    "plan-scenario-d1": {
+      "wejscie": "screen",
+      "klik": "tekst przycisku: \"Otwórz narzędzia planu\" (getByRole('button', {name: 'Otwórz narzędzia planu'})) — SKŁADNIA ROLI, nie gotowy selektor CSS dla --klik; ekran renderuje puste narzedzia planu bez tego klikniecia",
+      "zrodlo": "scripts/dev/153-crimson-naprawa-capture.mjs:39."
+    },
+    "ev-football-field": {
+      "wejscie": "screen"
+    },
+    "karta-initiative": {
+      "wejscie": "screen"
+    },
+    "initiative-record": {
+      "wejscie": "screen"
+    },
+    "execution-report-day11": {
+      "wejscie": "screen"
+    },
+    "exe-002-004-ui-audit": {
+      "wejscie": "screen"
+    },
+    "execution-tab-list": {
+      "wejscie": "screen"
+    },
+    "execution-tab-work": {
+      "wejscie": "screen"
+    },
+    "execution-tab-resources": {
+      "wejscie": "screen"
+    },
+    "execution-tab-control": {
+      "wejscie": "screen"
+    },
+    "execution-tab-rollout": {
+      "wejscie": "screen"
+    },
+    "execution-tab-summary": {
+      "wejscie": "screen"
+    },
+    "cel-jedna-karta": {
+      "wejscie": "screen",
+      "zakladki": [
+        "cel",
+        "kluczowe-rezultaty",
+        "postep",
+        "powiazania",
+        "refleksja"
+      ],
+      "parametry": "&sekcja=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:693 label — 5 sekcji lewego menu jednej N-karty."
+    },
+    "wskaznik-jedna-karta": {
+      "wejscie": "screen",
+      "zakladki": [
+        "kontrakt",
+        "pomiary",
+        "odchylenia",
+        "dzialania-korygujace",
+        "rodowod"
+      ],
+      "parametry": "&sekcja=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:688 label — 5 sekcji lewego menu."
+    },
+    "roi-jedna-karta": {
+      "wejscie": "screen",
+      "zakladki": [
+        "zalozenia",
+        "model",
+        "wynik",
+        "wyniki-po-wdrozeniu",
+        "wnioski"
+      ],
+      "parametry": "&sekcja=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:683 label — 5 sekcji lewego menu."
+    },
+    "results-vnext-legacy-archive": {
+      "wejscie": "screen",
+      "zakladki": [
+        "kpi",
+        "roi",
+        "okr"
+      ],
+      "parametry": "&domain=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:743 label — \"&domain=kpi|roi|okr\"."
+    },
+    "results-vnext-okr-objectives": {
+      "wejscie": "screen",
+      "zakladki": [
+        "objectives (domyslny)",
+        "keyResults",
+        "checkIns"
+      ],
+      "parametry": "&level=<wartosc> (poziom startowy — dalsza nawigacja to realny klik \"drill\" w harnessu, nie sam URL)",
+      "zrodlo": "dev-render/main.tsx:708 label — \"&level=objectives|keyResults|checkIns (initial level)... Click through the real drill\"."
+    },
+    "results-vnext-kpi-scorecards": {
+      "wejscie": "screen",
+      "zakladki": [
+        "items",
+        "snapshots"
+      ],
+      "parametry": "&tab=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:723 label — \"&tab=items|snapshots\"."
+    },
+    "results-vnext-roi-model": {
+      "wejscie": "screen",
+      "zakladki": [
+        "settings",
+        "assumptions",
+        "cost-lines",
+        "benefit-lines"
+      ],
+      "parametry": "&tab=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:673 label — \"&tab=settings|assumptions|cost-lines|benefit-lines\"."
+    },
+    "results-vnext-roi-full-tool": {
+      "wejscie": "screen"
+    },
+    "results-vnext-okr-admin": {
+      "wejscie": "screen",
+      "zakladki": [
+        "programs",
+        "cycles"
+      ],
+      "parametry": "&page=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:718 label — \"&page=programs|cycles\"."
+    },
+    "results-vnext-teresa-okr-reflection": {
+      "wejscie": "screen"
+    },
+    "results-vnext-okr-registry": {
+      "wejscie": "screen"
+    },
+    "results-vnext-roi-registry": {
+      "wejscie": "screen",
+      "zakladki": [
+        "all",
+        "benefits"
+      ],
+      "parametry": "&tab=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:668 label — \"&tab=all|benefits\"."
+    },
+    "results-vnext-kpi-registry": {
+      "wejscie": "screen",
+      "nierozstrzygniete": "Ekran ma zakladki My/Org (realny stan \"tab\" w komponencie, domyslnie \"org\" — src/components/ResultsVNext/ResultsKpiRegistryPage.tsx:781,855-856), ale harness (dev-render/screens/results-vnext-kpi-registry.tsx) NIE przekazuje zadnego URL parametru do tego prop — sprawdzono grepem (tylko state/measState/ff sa czytane). Zeby sfotografowac widok \"My\" potrzebny jest REALNY klik w zakladke, a nie znalazlem w kodzie/skryptach zadnego uzytego selektora CSS dla tej zakladki w tym konkretnym harnessu — nie zgaduje selektora."
+    },
+    "results-vnext-teresa-kpi-deviation": {
+      "wejscie": "screen"
+    },
+    "results-vnext-attention": {
+      "wejscie": "screen",
+      "nierozstrzygniete": "Label (main.tsx:748) opisuje \"Menu2 KPI/OKR, Menu3 = bucket (real counts)\" jako nawigacje StandardModuleBar, ale nie zweryfikowalem, czy domyslny (pierwszy) wpis Menu2/Menu3 pokazuje sensowna tresc, ani jakich selektorow uzyc, by dojsc do pozostalych kombinacji Menu2 x Menu3 — nie sprawdzilem kodu tego ekranu w ramach tego przebiegu."
+    },
+    "results-vnext-okr-workspace": {
+      "wejscie": "screen",
+      "nierozstrzygniete": "Label (main.tsx:713) opisuje 6 realnych podzakladek (Przeglad/Cele i KR/Dopasowania/Rozmowy i wsparcie/Przeglad i refleksja/Historia) sterowanych \"real tab clicks\", bez zadnego parametru URL do ich wyboru. Nie znalazlem w dev-render/screens/results-vnext-okr-workspace.tsx ani w zadnym skrypcie scripts/dev/*.mjs konkretnych selektorow CSS dla tych 6 klikow — nie zgaduje."
+    },
+    "results-vnext-roi-pir-outcomes": {
+      "wejscie": "screen"
+    },
+    "results-vnext-search-registry": {
+      "wejscie": "screen"
+    },
+    "results-zestawienia": {
+      "wejscie": "screen"
+    },
+    "finance-comments-panel": {
+      "wejscie": "screen"
+    },
+    "finance-lineage-navigator": {
+      "wejscie": "screen"
+    },
+    "finance-workspace-bar": {
+      "wejscie": "screen"
+    },
+    "finance-hub": {
+      "wejscie": "screen",
+      "zakladki": [
+        "statements",
+        "analysis",
+        "models",
+        "prediction",
+        "valuation"
+      ],
+      "parametry": "&tab=<wartosc>",
+      "zrodlo": "dev-render/main.tsx:1096 label — \"REALNY <FinanceHub>... &tab=statements|analysis|models|prediction|valuation\"."
+    },
+    "finance-saved-views-panel": {
+      "wejscie": "screen"
+    },
+    "finance-analysis-workspace": {
+      "wejscie": "screen",
+      "parametry": "scene=draft-with-kpis (DOMYSLNY w kodzie to \"draft-empty\" — pusty, nieznaczacy stan; realny zrzut z policzonymi KPI wymaga jawnego nadpisania)",
+      "zrodlo": "dev-render/screens/finance-analysis-workspace.tsx:39 (`const scene = params.get('scene') || 'draft-empty'`); scripts/dev/pkgi-a11y-audit.mjs:24 uzywa jawnie scene=draft-with-kpis."
+    },
+    "finance-export-import-panel": {
+      "wejscie": "screen",
+      "klik": "[data-testid=\"import-preview-button\"]",
+      "wynikSelektor": "[data-testid=\"import-preview\"]",
+      "zrodlo": "scripts/dev/ap-client-screenshots.mjs:60-62 (waitForSelector import-parsed przed klikiem, klik import-preview-button, potem czekanie na import-preview)."
+    },
+    "finance-model-workspace": {
+      "wejscie": "screen"
+    },
+    "finance-statement-pack-workspace-v2": {
+      "wejscie": "screen"
+    },
+    "finance-compare-panel": {
+      "wejscie": "screen"
+    },
+    "finance-prediction-workspace": {
+      "wejscie": "screen",
+      "zakladki": [
+        "mode=A / STANDARD_BASE (domyslny)",
+        "mode=B / DRIVER_OVERRIDE",
+        "mode=C / FUNDAMENTAL_INITIATIVE"
+      ],
+      "parametry": "&mode=A|B|C; w kazdym trybie jest DODATKOWO wewnetrzna zakladka \"Zalozenia\"/\"Modele i Wyniki\" wybierana REALNYM klikiem przycisku o tekscie \"Modele/Wyniki\" (brak parametru URL)",
+      "klik": "button:has-text(\"Modele/Wyniki\")",
+      "zrodlo": "dev-render/screens/finance-prediction-workspace.tsx:50-56 (mapowanie mode->tryb, domyslnie STANDARD_BASE); scripts/dev/pkgg-verification-screenshots.mjs:25-30,42 (3 tryby uzyte realnie + realny klik `page.locator('button:has-text(\"Modele/Wyniki\")').first().click()`)."
+    },
+    "finance-valuation-workspace": {
+      "wejscie": "screen"
+    },
+    "finance-baseline-workspace": {
+      "wejscie": "screen",
+      "zakladki": [
+        "assumptions (domyslny)",
+        "wyliczenia"
+      ],
+      "parametry": "&view=assumptions|wyliczenia; &scene=default|fundinggap i &status=DRAFT|APPROVED to dodatkowe warianty, nie zakladki",
+      "zrodlo": "dev-render/screens/finance-baseline-workspace.tsx:60-62 (initialView default \"assumptions\"); realne uzycie obu widokow w scripts/dev/pkgf-baseline-screenshots.mjs:11-24 i pkgi-a11y-audit.mjs:21."
+    },
+    "sheet-artifact": {
+      "wejscie": "screen"
+    },
+    "materialy-template-library-slice": {
+      "wejscie": "screen"
+    },
+    "template-library-new-entry": {
+      "wejscie": "screen"
+    },
+    "document-studio-resume-error": {
+      "wejscie": "screen"
+    },
+    "document-studio-template-resolve-error": {
+      "wejscie": "screen"
+    },
+    "deck-artifact": {
+      "wejscie": "screen",
+      "wynikSelektor": "[data-testid=\"presentation-artifact-status\"]",
+      "zrodlo": "dev-render/screens/deck-artifact.tsx:334-403 (DeckBuilder ladowany leniwie + fetch mockowany asynchronicznie po montowaniu, routing przez navigate()); src/components/Presentations/DeckBuilder/DeckBuilder.tsx:1669-1674 (ten testid jest w drzewie renderowanym DOPIERO po zaladowaniu decku — wczesniej SkeletonState, patrz linia 25)."
+    },
+    "document-artifact": {
+      "wejscie": "screen"
+    },
+    "excele-jeden-widok-materialy": {
+      "wejscie": "screen"
+    },
+    "excele-reopen-verify": {
+      "wejscie": "screen"
+    },
+    "excele-prawy-panel-standard": {
+      "wejscie": "screen"
+    },
+    "excele-engine-reveal": {
+      "wejscie": "screen"
+    },
+    "excele-jeden-widok-pusty": {
+      "wejscie": "screen"
+    },
+    "excele-jeden-widok-recent": {
+      "wejscie": "screen"
+    },
+    "b2-template-gallery": {
+      "wejscie": "screen",
+      "zakladki": [
+        "mindmap",
+        "whiteboard",
+        "process_flow",
+        "table"
+      ],
+      "parametry": "&tool=<wartosc>; &empty=1 to dodatkowy wariant pustej kanwy, nie zakladka",
+      "zrodlo": "dev-render/main.tsx:1901 label — \"galeria szablonow Idei... dla 4 narzedzi; &tool=mindmap|whiteboard|process_flow|table\"."
+    },
+    "word-intake-uselm-default": {
+      "wejscie": "screen"
+    },
+    "gen-word-content-hints": {
+      "wejscie": "screen"
+    },
+    "gen-deck-content-hints": {
+      "wejscie": "screen"
+    },
+    "template-builder-deck": {
+      "wejscie": "screen"
+    },
+    "template-builder-table": {
+      "wejscie": "screen"
+    },
+    "template-builder-doc": {
+      "wejscie": "screen"
+    },
+    "template-create-wizard": {
+      "wejscie": "screen"
+    },
+    "materialy-launcher": {
+      "wejscie": "screen",
+      "zakladki": [
+        "materials",
+        "templates"
+      ],
+      "parametry": "&variant=materials|templates",
+      "zrodlo": "dev-render/main.tsx:782 label — \"&variant=materials|templates\"."
+    },
+    "prezentacje-template-states": {
+      "wejscie": "screen"
+    },
+    "report-artifact": {
+      "wejscie": "screen"
+    },
+    "document-studio-context-chip": {
+      "wejscie": "screen"
+    },
+    "document-studio-menu-pliku": {
+      "wejscie": "screen"
+    },
+    "document-studio-nowy-dokument-martwe-przyciski": {
+      "wejscie": "screen"
+    },
+    "document-studio-blocks-i18n": {
+      "wejscie": "screen"
+    },
+    "document-studio-save-as-template": {
+      "wejscie": "screen"
+    },
+    "materialy-draft-template-visibledraft-fix": {
+      "wejscie": "screen"
+    },
+    "word-quality-badge": {
+      "wejscie": "screen"
+    },
+    "excele-edytowalna-siatka": {
+      "wejscie": "screen"
+    },
+    "report-builder-library-template": {
+      "wejscie": "screen"
+    },
+    "materials-registry": {
+      "wejscie": "screen"
+    },
+    "document-studio-streaming-honesty-n3": {
+      "wejscie": "screen"
+    },
+    "document-studio-ai-teresa": {
+      "wejscie": "screen"
+    },
+    "audyty-warsztat-kryterium": {
+      "wejscie": "screen",
+      "nierozstrzygniete": "Label (main.tsx:598) wylicza 5 rolI x 6 etapow x 3 stany bledu x flage teresa=1 — kombinatoryka zbyt duza, zeby ustalic KTORA kombinacja odpowiada ocenionemu (A/B) zrzutowi bez otwarcia pelnej historii oceny w status.json/evidence dla tego ekranu, czego nie zrobilem w ramach tego przebiegu. Zostawiam wejscie=screen (domyslne parametry z kodu), ale NIE potwierdzam, ze to jest wlasciwa kombinacja do ponownego zdjecia bez utraty jakosci."
+    },
+    "audyty-piec-powierzchni": {
+      "wejscie": "screen",
+      "zakladki": [
+        "library",
+        "processes (domyslny gdy brak &tab=)",
+        "outputs",
+        "reports",
+        "initiatives"
+      ],
+      "parametry": "&tab=<wartosc z listy zakladek>",
+      "zrodlo": "src/components/Audit/method/AuditsMethodHub.tsx:125-129 (nieznana/brak wartosc -> \"processes\", NIGDY \"library\"), :374-406 (5 zakladek z etykietami); dev-render/main.tsx:593 label potwierdza te sama piatke."
+    },
+    "audyty-raport-dokument": {
+      "wejscie": "screen",
+      "parametry": "status=approved (DOMYSLNY w kodzie — pokazuje oba przyciski Menu1/panelu w naturalnym stanie; nie trzeba nadpisywac)",
+      "zrodlo": "dev-render/screens/audyty-raport-dokument.tsx:29-32,72-75 (dane mockowane synchronicznie, brak async — nie potrzeba wynikSelektor)."
+    },
+    "audyty-drd-report": {
+      "wejscie": "screen",
+      "zakladki": [
+        "list (domyslny)",
+        "report"
+      ],
+      "parametry": "&variant=list|report",
+      "zrodlo": "dev-render/main.tsx:846 label — \"?variant=list|report\"."
+    },
+    "public-booking-widget": {
+      "wejscie": "screen"
+    },
+    "meetings-module": {
+      "wejscie": "screen",
+      "zakladki": [
+        "list (widok domyslny, brak &view=)",
+        "object -> details (domyslny tab po &view=object)",
+        "object -> minutes",
+        "object -> decisions"
+      ],
+      "parametry": "&view=list|object; przy &view=object dodaj &tab=details|minutes|decisions",
+      "zrodlo": "dev-render/screens/meetings-module.tsx:303-306 (view==\"object\" tylko gdy dokladnie \"object\" inaczej \"list\"; tab tylko \"minutes\"/\"decisions\" inaczej domyslnie details); main.tsx:558."
+    },
+    "calendar-sync-settings": {
+      "wejscie": "screen"
+    },
+    "admin-command-center-panel": {
+      "wejscie": "screen",
+      "zakladki": [
+        "overview (domyslny, JUZ ZDJETE fala 4/5 wg komentarza — mozna pominac)",
+        "audit",
+        "dlp",
+        "retention",
+        "residency",
+        "ai-policy"
+      ],
+      "parametry": "&tab=<wartosc>",
+      "zrodlo": "dev-render/screens/admin-command-center-panel.tsx:1-13 (dokladna lista wszystkich 6 wartosci &tab= z opisem co kazda pokazuje, plus jawna instrukcja ktora juz zdjeto)."
+    },
+    "admin-sso-self-service-card": {
+      "wejscie": "screen"
+    },
+    "superadmin-platform-operations-day15": {
+      "wejscie": "screen",
+      "parametry": "scene=ready (jawnie w skrypcie referencyjnym — potwierdza domyslny/pozytywny stan; scene=empty i scene=error to dodatkowe warianty QA, zostaw domyslne dla glownego zrzutu)",
+      "zrodlo": "dev-render/main.tsx:1399 label \"&scene=ready|empty|error\"; scripts/dev/superadmin-day15-screenshots.mjs:12-17 (6 kombinacji lang/theme/scene, glowny zestaw to scene=ready)."
+    },
+    "partner-settlements-view": {
+      "wejscie": "screen"
+    },
+    "model-catalog-table": {
+      "wejscie": "screen"
+    },
+    "admin-billing-seats-licences": {
+      "wejscie": "screen"
+    },
+    "admin-billing-plan-history": {
+      "wejscie": "screen"
+    },
+    "admin-team-members": {
+      "wejscie": "screen"
+    },
+    "admin-team-invitations": {
+      "wejscie": "screen"
+    },
+    "admin-team-roles-permissions": {
+      "wejscie": "screen"
+    },
+    "admin-team-teams": {
+      "wejscie": "screen"
+    },
+    "admin-team-guests-external": {
+      "wejscie": "screen"
+    },
+    "admin-team-access-requests": {
+      "wejscie": "screen"
+    },
+    "admin-team-access-reviews": {
+      "wejscie": "screen"
+    },
+    "admin-team-ownership": {
+      "wejscie": "screen"
+    },
+    "admin-security-sessions": {
+      "wejscie": "screen"
+    },
+    "admin-security-domains": {
+      "wejscie": "screen"
+    },
+    "admin-security-service-accounts": {
+      "wejscie": "screen"
+    },
+    "admin-security-break-glass": {
+      "wejscie": "screen"
+    },
+    "admin-audit-integrity": {
+      "wejscie": "screen"
+    },
+    "admin-audit-legal-hold": {
+      "wejscie": "screen"
+    },
+    "admin-audit-export-history": {
+      "wejscie": "screen"
+    },
+    "admin-health-dependencies": {
+      "wejscie": "screen"
+    },
+    "admin-health-incident-history": {
+      "wejscie": "screen"
+    },
+    "admin-health-queues-jobs": {
+      "wejscie": "screen"
+    },
+    "admin-health-sla-slo": {
+      "wejscie": "screen"
+    },
+    "admin-ai-personas": {
+      "wejscie": "screen"
+    },
+    "admin-ai-quality-evaluations": {
+      "wejscie": "screen"
+    },
+    "admin-ai-ai-incidents": {
+      "wejscie": "screen"
+    },
+    "admin-ai-configuration-versions": {
+      "wejscie": "screen"
+    },
+    "admin-command-overview": {
+      "wejscie": "screen"
+    },
+    "admin-command-attention-queue": {
+      "wejscie": "screen"
+    },
+    "admin-command-cost-capacity": {
+      "wejscie": "screen"
+    },
+    "admin-command-organization-defaults": {
+      "wejscie": "screen"
+    },
+    "admin-command-agent-trace": {
+      "wejscie": "screen"
+    },
+    "admin-command-audit": {
+      "wejscie": "screen"
+    },
+    "admin-command-dlp": {
+      "wejscie": "screen"
+    },
+    "admin-command-residency": {
+      "wejscie": "screen"
+    },
+    "admin-command-retention": {
+      "wejscie": "screen"
+    },
+    "admin-command-ai-policy": {
+      "wejscie": "screen"
+    },
+    "admin-command-benchmark": {
+      "wejscie": "screen"
+    },
+    "org-identity-operating": {
+      "wejscie": "screen",
+      "parametry": "ff_org_redesign_v1=1",
+      "zrodlo": "dev-render/main.tsx:563 label — \"flaga orgRedesignV1 ON... Dodaj &ff_org_redesign_v1=1 w URL\"; to jest DOKLADNIE przyklad ostrzegawczy z CLAUDE.md #7 (bez flagi renderuje STARA powierzchnie)."
+    },
+    "org-operating-model": {
+      "wejscie": "screen"
+    },
+    "org-position-direction": {
+      "wejscie": "screen"
+    },
+    "org-technology-culture-constraints": {
+      "wejscie": "screen"
+    },
+    "org-strategic-intent": {
+      "wejscie": "screen"
+    },
+    "org-success-metrics": {
+      "wejscie": "screen"
+    },
+    "org-scope-boundaries": {
+      "wejscie": "screen"
+    },
+    "org-stakeholder-expectations": {
+      "wejscie": "screen"
+    },
+    "org-declared-challenges": {
+      "wejscie": "screen"
+    },
+    "org-root-causes": {
+      "wejscie": "screen"
+    },
+    "org-goal-blockers": {
+      "wejscie": "screen"
+    },
+    "org-evidence": {
+      "wejscie": "screen"
+    },
+    "org-risks-opportunities": {
+      "wejscie": "screen"
+    },
+    "org-scenarios": {
+      "wejscie": "screen"
+    },
+    "org-recommendation": {
+      "wejscie": "screen"
+    },
+    "org-executive-brief": {
+      "wejscie": "screen"
+    },
+    "org-files": {
+      "wejscie": "screen"
+    },
+    "org-claims-sources": {
+      "wejscie": "screen"
+    },
+    "org-source-conflicts": {
+      "wejscie": "screen"
+    },
+    "org-knowledge-graph": {
+      "wejscie": "screen"
+    },
+    "org-summary": {
+      "wejscie": "screen"
+    },
+    "agent-warsztat": {
+      "wejscie": "screen"
+    },
+    "agent-plan-canvas": {
+      "wejscie": "screen"
+    },
+    "agent-hub": {
+      "wejscie": "screen"
+    },
+    "prawy-pas-jedna-formula-idea-teresa": {
+      "wejscie": "screen"
+    },
+    "prawy-pas-jedna-formula-idea-artefakt": {
+      "wejscie": "screen"
+    },
+    "prawy-pas-jedna-formula-notatka-teresa": {
+      "wejscie": "screen"
+    },
+    "prawy-pas-jedna-formula-notatka-artefakt": {
+      "wejscie": "screen"
+    },
+    "mw-007-calendar-narrow-viewport": {
+      "wejscie": "screen"
+    },
+    "standard-grid-card": {
+      "wejscie": "screen"
+    },
+    "standard-module-bar-children": {
+      "wejscie": "screen"
+    },
+    "prawy-panel-szyna-ikon": {
+      "wejscie": "screen"
+    },
+    "rn-g3-class-l-record-shell": {
+      "wejscie": "screen"
+    },
+    "fab-rail-kebab": {
+      "wejscie": "screen"
+    },
+    "standard-kanban-card": {
+      "wejscie": "screen"
+    },
+    "aios-memory": {
+      "wejscie": "screen"
+    },
+    "aios-connectors": {
+      "wejscie": "screen"
+    },
+    "aios-agents": {
+      "wejscie": "screen"
+    },
+    "aios-outcomes": {
+      "wejscie": "screen"
+    },
+    "ustawienia-personalne": {
+      "wejscie": "screen"
+    },
+    "ustawienia-workflow": {
+      "wejscie": "screen"
+    },
+    "ustawienia-ai-automatyzacja": {
+      "wejscie": "screen"
+    },
+    "ustawienia-powiadomienia": {
+      "wejscie": "screen"
+    },
+    "ustawienia-integracje": {
+      "wejscie": "screen"
+    },
+    "ustawienia-dane-prywatnosc": {
+      "wejscie": "screen"
+    },
+    "ustawienia-wyglad": {
+      "wejscie": "screen"
+    },
+    "ustawienia-zaawansowane": {
+      "wejscie": "screen"
+    }
+  },
+  "_podsumowanie": {
+    "ekranow_lacznie": 253,
+    "z_parametrami_innymi_niz_domyslne": 38,
+    "wymagajacych_kliknieca": 8,
+    "z_zakladkami": 28,
+    "zakladek_lacznie": 101,
+    "z_selektorem_wyniku": 8,
+    "nierozstrzygnietych": 4
+  }
+}
