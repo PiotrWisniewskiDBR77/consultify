@@ -30293,6 +30293,10 @@
         "note": "Źródło: notatka"
       },
       "newCanvas": "Nowy Canvas",
+      "workspaceDestinations": {
+        "label": "Utwórz w workspace",
+        "title": "Utwórz element workspace z tego Canvasu"
+      },
       "newMenu": {
         "blank": "Czysty dokument",
         "blankTitle": "Nowy dokument",

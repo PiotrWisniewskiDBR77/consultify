@@ -203,7 +203,7 @@ const starterTemplates: StarterTemplate[] = [
     id: 'thoughts',
     label: 'Zbierz myśli',
     title: 'Working Notes',
-    description: 'Capture raw ideas and sort them into usable business structure.',
+    description: 'Zbierz surowe pomysły i uporządkuj je w użyteczną strukturę biznesową.',
     capability: 'real',
     capabilityNote: 'Markdown document, save, selection and Teresa context are production-backed.',
     markdown: `# Working Notes
@@ -229,7 +229,7 @@ Purpose: Capture rough thinking before it becomes a decision, plan, or deliverab
     id: 'document',
     label: 'Napisz dokument',
     title: 'Company Work Note',
-    description: 'A clean Markdown-canonical document for business work.',
+    description: 'Czysty dokument Markdown do pracy biznesowej.',
     capability: 'real',
     capabilityNote: 'Markdown document, autosave, versions, export and Teresa context are backed.',
     markdown: `# Company Work Note
@@ -256,7 +256,7 @@ Write the situation, goal, constraints, and audience here.
     id: 'research',
     label: 'Zrób research',
     title: 'Market Research Brief',
-    description: 'Start a structured research brief before turning on deep search.',
+    description: 'Zacznij od uporządkowanego briefu badawczego, zanim włączysz głębokie wyszukiwanie.',
     capability: 'partial',
     capabilityNote:
       'Research brief creates a linked ResearchSession; evidence execution remains partial.',
@@ -289,7 +289,7 @@ What do we need to know, and what decision will this research support?
     id: 'decision',
     label: 'Przygotuj decyzję',
     title: 'Decision Memo',
-    description: 'Frame options, trade-offs, risks, and the recommended choice.',
+    description: 'Uporządkuj opcje, kompromisy, ryzyka i rekomendowany wybór.',
     capability: 'partial',
     capabilityNote:
       'Decision memo works; full DecisionCanvas lane and tracked approval remain partial.',
@@ -323,7 +323,7 @@ State the recommended option in one clear paragraph.
     id: 'plan',
     label: 'Rozpisz plan',
     title: 'Execution Plan',
-    description: 'Turn the conversation into clear workstreams and next steps.',
+    description: 'Zamień rozmowę w jasne strumienie prac i kolejne kroki.',
     capability: 'real',
     capabilityNote: 'Markdown execution plan with workflow/output follow-up is backed.',
     markdown: `# Execution Plan
@@ -898,6 +898,32 @@ function WorkCanvasMarkdownDocumentPanel({
   const [isProjectionRefreshing, setIsProjectionRefreshing] = React.useState(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = React.useState(false);
   const [isNewCanvasMenuOpen, setIsNewCanvasMenuOpen] = React.useState(false);
+  // #187 (2026-09-01) — at the split-panel's production default width (60%
+  // of the chat shell, see UnifiedChatPanel's DEFAULT_WORK_CANVAS_WIDTH_PERCENT)
+  // this header's toolbar groups (~930px unclipped) don't fit its column
+  // (~860-900px). `overflow-x-auto` was tried and reverted (see canvas-header
+  // comment below — it silently clips every popover anchored here, because
+  // CSS forces overflow-y to `auto` the moment overflow-x isn't `visible` on
+  // the same box). Instead, measure the header's own rendered width and drop
+  // the redundant "Create in workspace" text CAPTION (not the icons behind
+  // it, not the view switcher, not any button) once it stops fitting — this
+  // was the single largest non-essential chunk of the row.
+  const canvasHeaderRef = React.useRef<HTMLDivElement | null>(null);
+  const [isCanvasHeaderCompact, setIsCanvasHeaderCompact] = React.useState(false);
+  React.useEffect(() => {
+    const el = canvasHeaderRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    // Measured at the production default split width: full-caption content
+    // needs ~1040px; below that the caption is the first thing to go.
+    const COMPACT_BELOW_PX = 1040;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (typeof width !== 'number') return;
+      setIsCanvasHeaderCompact(width < COMPACT_BELOW_PX);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   // #87a — "+" New Canvas menu, 3 explicit start options (flag-gated, see
   // canvasNewDocOptionsFlag). "Z canvasa" lazy-loads the user's other Work
   // Canvas document drafts on first open of that section.
@@ -3219,7 +3245,10 @@ function WorkCanvasMarkdownDocumentPanel({
           isUnavailable
             ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300'
             : isDirtySaveAction
-              ? 'text-danger-500 hover:bg-danger-500/10 hover:text-danger-600 dark:text-danger-400 dark:hover:bg-danger-500/15 dark:hover:text-danger-300'
+              ? // Unsaved/failed save is a normal working state, not a critical
+                // error — red (crimson/danger) is reserved for that. Neutral,
+                // higher-emphasis than idle so the pending save still stands out.
+                'text-slate-900 hover:bg-slate-100 hover:text-slate-950 dark:text-white dark:hover:bg-white/10 dark:hover:text-white'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         data-action-status={isLoading ? 'loading' : availability.status}
@@ -3352,6 +3381,17 @@ function WorkCanvasMarkdownDocumentPanel({
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
       <div
+        // #187 (2026-09-01): tried `overflow-x-auto` here first to stop the
+        // toolbar's overflow from bleeding onto the adjacent chat pane at
+        // narrow split-panel widths. Reverted: CSS computes overflow-y to
+        // `auto` the moment overflow-x is non-`visible` on the SAME element
+        // (spec + verified live), which clipped every popover anchored in
+        // this header (new-canvas menu, diagnostics, share, history — all
+        // `position:absolute` descendants that pop out below the 42px bar).
+        // Fix instead lives in the toolbar itself: `canvasHeaderRef` below
+        // measures available width and collapses the redundant text labels
+        // (not the switcher, not any icon/button) before anything can overlap.
+        ref={canvasHeaderRef}
         className="relative z-30 flex h-[42px] shrink-0 flex-nowrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white/70 px-4 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60"
         data-testid="canvas-header"
       >
@@ -3382,7 +3422,7 @@ function WorkCanvasMarkdownDocumentPanel({
             </span>
           </button>
         ) : null}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
           <label htmlFor="canvas-document-title" className="sr-only">
             Document title
           </label>
@@ -3591,10 +3631,19 @@ function WorkCanvasMarkdownDocumentPanel({
           <div
             className="flex items-center gap-2 rounded-full border border-slate-200 px-2 py-0.5 dark:border-white/10"
             data-testid="canvas-workspace-destinations"
-            title="Create a workspace item from this Canvas"
+            title={t(
+              'canvas.panel.workspaceDestinations.title',
+              'Create a workspace item from this Canvas'
+            )}
           >
-            <span className="select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-              Create in workspace
+            <span
+              className={
+                isCanvasHeaderCompact
+                  ? 'sr-only'
+                  : 'select-none px-1 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400'
+              }
+            >
+              {t('canvas.panel.workspaceDestinations.label', 'Create in workspace')}
             </span>
             <div className="flex items-center gap-1" data-testid="canvas-workspace-actions">
               {menuWorkspaceActionIds.map((actionId) => renderCommandButton(actionId))}
