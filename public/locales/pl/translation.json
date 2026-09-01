@@ -29515,7 +29515,20 @@
       "error": "Błąd",
       "noRunsYet": "Brak uruchomień.",
       "accessRevoked": "; dostęp cofnięty",
-      "accessRevokedWithReason": "; dostęp cofnięty ({{reason}})"
+      "accessRevokedWithReason": "; dostęp cofnięty ({{reason}})",
+      "viewTiles": "Kafle",
+      "viewList": "Lista",
+      "connectorsListAriaLabel": "Lista konektorów",
+      "columns": {
+        "connector": "Konektor",
+        "status": "Status",
+        "freshness": "Świeżość",
+        "oauth": "Dostęp OAuth",
+        "acl": "ACL",
+        "sourceBinding": "Powiązanie źródła",
+        "issue": "Problem"
+      },
+      "noIssue": "Brak"
     },
     "unknown": "nieznana",
     "tokenExpiry": "wygaśnięcie tokenu",

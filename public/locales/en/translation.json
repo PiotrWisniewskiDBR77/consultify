@@ -27292,7 +27292,20 @@
       "error": "Error",
       "noRunsYet": "No runs yet.",
       "accessRevoked": "; access revoked",
-      "accessRevokedWithReason": "; access revoked ({{reason}})"
+      "accessRevokedWithReason": "; access revoked ({{reason}})",
+      "viewTiles": "Tiles",
+      "viewList": "List",
+      "connectorsListAriaLabel": "Connector list",
+      "columns": {
+        "connector": "Connector",
+        "status": "Status",
+        "freshness": "Freshness",
+        "oauth": "OAuth access",
+        "acl": "ACL",
+        "sourceBinding": "Source binding",
+        "issue": "Issue"
+      },
+      "noIssue": "None"
     },
     "unknown": "unknown",
     "tokenExpiry": "token expiry",
