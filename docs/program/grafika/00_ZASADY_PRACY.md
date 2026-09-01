@@ -443,3 +443,13 @@ dzień — wykrył to dopiero manifest zbudowany maszynowo.
 **Druga część reguły:** ocena ekranu po naprawie jest nieważna, dopóki ktoś nie obejrzy zrzutu
 ZROBIONEGO PO tej naprawie. Tego samego dnia osiem ekranów wróciło do niskiej oceny, bo raport
 mówił „naprawione", a obraz tego nie potwierdzał. Awans oceny wymaga obrazu, nie deklaracji.
+
+## ★★ REGUŁA NR 16 — reguła dopuszcza czy nakazuje? (2026-09-01)
+
+Przed naprawą powołującą się na wcześniejszą decyzję właściciela sprawdź, czy ta decyzja
+**nakazuje** zmianę, czy tylko **dopuszcza** stan zastany. Robotnik przeczytał „angielskiego nie
+trzeba tłumaczyć na polski" jako „polski trzeba zamienić na angielski" i odpolszczył działający
+ekran — dzień po tym, jak właściciel zaakceptował sąsiedni ekran po polsku.
+
+**Test:** jeśli po naprawie dwa sąsiadujące ekrany zaczynają mówić różnymi językami, różnymi
+słowami albo różnym stylem — reguła została rozciągnięta za daleko. Cofnij i zapytaj.
