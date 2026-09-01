@@ -470,8 +470,10 @@ router.get(
     const service = EscalationService;
     try {
       const { status } = req.query;
+      const organizationId = req.organizationId || req.user?.organizationId || '';
       const escalations = await service.getEscalations(
         req.params.projectId,
+        organizationId,
         status as string | undefined
       );
       return res.json(escalations);
@@ -506,7 +508,8 @@ router.post(
     }
 
     try {
-      const result = await service.runAutoEscalation(req.params.projectId);
+      const organizationId = req.organizationId || req.user?.organizationId || '';
+      const result = await service.runAutoEscalation(req.params.projectId, organizationId);
       return res.json(result);
     } catch (err: any) {
       // Write (triggers escalation actions) — never fail-soft.

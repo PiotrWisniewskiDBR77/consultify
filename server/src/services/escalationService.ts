@@ -159,9 +159,33 @@ export function getDefaultThresholds(decisionType?: string): { amber: number; re
 
 export class EscalationService {
   /**
+   * A projectId alone carries no org context — without this check, any
+   * authenticated caller who knew/guessed a projectId belonging to another
+   * organization could read (`getEscalations`) or mutate
+   * (`runAutoEscalation`) that project's decision-escalation state via
+   * GET/POST /notifications/escalations/:projectId(/run), bypassing the org
+   * boundary entirely.
+   */
+  private static async projectBelongsToOrg(
+    projectId: string,
+    organizationId: string
+  ): Promise<boolean> {
+    if (!projectId || !organizationId) return false;
+    const project = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+      [projectId, organizationId]
+    );
+    return !!project;
+  }
+
+  /**
    * Get escalations for a project (used by notifications routes)
    */
-  static async getEscalations(projectId: string, status?: string) {
+  static async getEscalations(projectId: string, organizationId: string, status?: string) {
+    if (!(await this.projectBelongsToOrg(projectId, organizationId))) {
+      return [];
+    }
+
     const params: any[] = [projectId];
     let sql = `
       SELECT *
@@ -180,7 +204,11 @@ export class EscalationService {
   /**
    * Run auto-escalation for a specific project (used by notifications routes)
    */
-  static async runAutoEscalation(projectId: string) {
+  static async runAutoEscalation(projectId: string, organizationId: string) {
+    if (!(await this.projectBelongsToOrg(projectId, organizationId))) {
+      return { projectId, processed: 0, amberAlerts: 0, redAlerts: 0, escalated: 0, errors: 0 };
+    }
+
     const decisions = await queryHelpers.queryAll<DecisionRow>(
       `SELECT * FROM decisions
        WHERE project_id = ?
