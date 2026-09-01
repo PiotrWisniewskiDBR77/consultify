@@ -61,7 +61,7 @@ Count check: `9 APPLY_NOW + 13 DOC_EVIDENCE_ONLY + 4 HOLD_REVIEW + 2 STOP_NO_PRO
 
 ## Verification record
 
-- `git diff --check` was executed after every completed integration atom and before each integration commit.
+- Correction after independent skeptical review: per-atom `git diff --check` calls covered the then-current working changes or the new commit boundary; they do **not** establish that the full candidate range is whitespace-clean. `git diff --check 7a733cb63d..19f480e68ccdd5aabfc500da7882745afd02b157` returns `RC=2` exclusively for preserved source-evidence formatting: trailing whitespace in the byte-for-byte reports for Days `243`, `244`, `263`, `264`, `267` and `269`, plus a blank line at EOF in the byte-for-byte reports for Days `248` and `253`. Those source-evidence blobs were deliberately not normalized, so their integrity against the named duty SHAs remains intact. This is a documentation-range whitespace finding, not a product-path test pass.
 - Pre-commit artifact/crimson and density ratchets passed on committed paths.
 - Focused tests used `--retry=0`. Final unique denominator: `9` test files, `22` tests, all passing after the environment was corrected:
   - Interview false-save contract: `2/2`;
@@ -71,4 +71,6 @@ Count check: `9 APPLY_NOW + 13 DOC_EVIDENCE_ONLY + 4 HOLD_REVIEW + 2 STOP_NO_PRO
   - click-then-shoot native Node contract: `5/5`;
   - Day 267 Materials harness/verdict contract: `4/4`.
 - The Day 242 and Day 250 RealPG contracts were not replayed during integration because no integration database/ports were licensed and resource substitution is prohibited. Their branch evidence is preserved, while fresh integration replay remains `NOT_PROVEN`.
-- Final SHA is the commit containing this verification update; it is also verified against the `github-backup` remote after push.
+- Independent replay after the skeptical review again passed the same unique denominator: `9` files / `22` tests, with Vitest explicitly using `--retry=0` and the native Node suite running single-shot (its runner has no retry mechanism). Full command output and test names are preserved at `/private/tmp/cx-batch241-269-integration-artefakty/scoped-9-files-22-tests-replay.txt`, SHA-256 `ecdf93340653f5afdf09b4971c304edee1f7efe8f5cf3238b760d547e98a57b8`.
+- Day 242 and Day 250 fresh RealPG replay remains `NOT_PROVEN` and is a blocker for promotion until a separately licensed integration database and ports are provided.
+- Final SHA is the additive manifest-correction commit containing this record; it is verified against the `github-backup` remote after push.
