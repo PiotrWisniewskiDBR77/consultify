@@ -16,6 +16,74 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-27 · R2 „prawy panel" — zmierzone: kanon sekcji NIE jest przyczyną, zmiany w komponencie o 61 wołaczach NIE zrobiono
+**Co się stało:** dyżur miał naprawić rodzinę R2 (6 ekranów, „cały ten prawy panel jest do
+przepracowania") u przyczyny, w `ArtifactRightPanel`. Pomiar przed naprawą pokazał, że **przyczyną
+nie jest to, co rodzina R2 nazywa**. Nie zmieniono ani jednej linii w `ArtifactRightPanel`.
+
+**Pomiar (sonda DOM + 19 zrzutów obejrzanych okiem, `evidence/grafika/161-prawy-panel*`).**
+Pięć z sześciu ekranów R2 renderuje kanoniczną szóstkę w kanonicznej kolejności:
+
+```
+ideas-teresa-panel           Akcje[R] Właściwości[Z] Powiązania[Z] Źródła i założenia[Z] Komentarze[Z] Historia[Z]
+mywork-notebook-rail-speca   Akcje[R] Właściwości[R] Powiązania[Z] Źródła i założenia[Z] Komentarze 0[Z] Historia[Z]
+deck-artifact                Akcje[R] Właściwości[R] Powiązania[Z] Źródła i założenia[Z] Komentarze[Z] Historia[Z]
+excele-prawy-panel-standard  Akcje[R] Właściwości[R] Powiązania[Z] Źródła i założenia[Z] Komentarze[Z] Historia[Z]
+prawy-panel-szyna-ikon       — to HARNESS komponentu (PRZED/PO `RightRail`), nie ekran produktu
+processflow-canvas           Podstawowe 2 · Treść i głębia 0 · Klasyfikacja 0 · Dowody i źródła 0 ·
+                             Powiązania 1 · Artefakty wyjściowe 0 · Krawędź i tor 1 · Historia i AI 0
+```
+
+Domknięcie do kanonu wprowadzone commitem `23bc57aaf3` **działa** — potwierdzone na dziesięciu
+kolejnych konsumentach (`karta-initiative/task/insight/decision/tool/notification`,
+`sheet-artifact`, `idea-table`, `mindmap-canvas`, `document-artifact`).
+
+**Dlaczego `processflow-canvas` wypada z kanonu:** jego prawy pas to **nie** `ArtifactRightPanel`.
+To `src/components/MyWork/panel/IdeaElementInspector.tsx:101` (`InspectorSection`) — własny
+akordeon z własnym `CountHeading` (`:86`) i własnym słownikiem sekcji. Flaga
+`ff_ideaInspectorRightRail` ma **default ON** (`src/utils/ideaInspectorRightRailFlag.ts:27`),
+więc to jest żywa powierzchnia wszystkich czterech narzędzi Idei (mapa myśli, proces, whiteboard,
+tabela). Wnosi **czwartą** nazwę sekcji `evidence`: kanon „Źródła i założenia", Word „sources",
+Excel „sources", a tu „Dowody i źródła". Dokładnie ten kształt awarii, który `ANALIZA_PRAWY_PANEL.md`
+§„jedno pojęcie, trzy nazwy" opisał jako powód, dla którego temat „przeleciał".
+
+**Czego właściciel naprawdę chciał — z jego własnych słów, nie z nazwy rodziny.** Pięć z sześciu
+ekranów R2 ma jego werdykt **`ok`**; jedyna `poprawka` (`excele-prawy-panel-standard`) mówi
+o szerokości i braku narzędzia arkuszowego, ani słowa o sekcjach. Przy `ideas-teresa-panel` napisał
+wprost: *„Koniecznie trzeba wrzucić to do backlogu, aby przeanalizować, jak ten panel powinien być
+zorganizowany"* — to zlecenie ANALIZY TREŚCI, nie przestawienia sekcji.
+
+**Przy `processflow-canvas` napisał: *„na tym obrazie jak go nie mogę ocnić"* — i miał rację.**
+Panel inspektora jest pusty, dopóki nic nie jest zaznaczone; zrzut bez `--klik` pokazuje wyłącznie
+zdanie „Zaznacz element, aby zobaczyć właściwości". Ocenił obrazek, na którym panelu nie było.
+
+**Zmierzona szerokość prawego pasa — cztery różne wartości przy jednym tokenie
+`--ntype-right-panel-width: 320px` (`src/index.css:93`):**
+
+| 300 px | 320 px | 360 px | 400 px |
+| --- | --- | --- | --- |
+| `excele-prawy-panel-standard` · `sheet-artifact` · `deck-artifact` | karty N (token) | `ideas-teresa-panel` · `mywork-notebook-rail-speca` · inspektor Idei | zewnętrzna powłoka kanwy owijająca inspektor 360 px |
+
+To jest mierzalna treść zdania właściciela *„one powinny wyglądać tak samo"* — i jednocześnie
+źródło skargi z Excela („usunąć więcej niepotrzebnego panelu"). Kolejność sekcji nie ma z tym nic
+wspólnego.
+
+**Przy okazji, poza R2 — jedno realne złamanie kanonu nagiego zera.** `karta-tool` renderuje
+„AKCJE 0" **zwiniętą**, więc zdanie wyjaśniające licznik jest schowane właśnie tam, gdzie miało
+być widoczne (`src/components/DiscoveryTools/KnownToolDetailView.tsx:2195` — `defaultOpen: false`
+przy `showZeroBadge: true`). Wzorzec zrobiony poprawnie stoi obok:
+`src/components/Initiatives/InitiativeDocumentView.tsx:9935` — `defaultOpen: true` plus zdanie
+„Liczba 0 opisuje ten widok, nie inicjatywę". Zgłoszone, nie naprawione w tym dyżurze — to inny
+ekran i inna rodzina.
+
+**Co z tego wynika:** R2 zostaje tam, gdzie właściciel je postawił — w backlogu, jako analiza
+treści i szerokości. Dwie prace, które z tego wychodzą i są mierzalne: (1) jedna szerokość prawego
+pasa zamiast czterech; (2) `IdeaElementInspector` pod kanon albo świadoma decyzja, że inspektor
+WĘZŁA to inna klasa niż panel ARTEFAKTU (`ANALIZA_PRAWY_PANEL.md` §„o artefakcie" vs „po
+artefakcie") — to rozstrzygnięcie produktowe, nie graficzne, i nie wolno go podjąć za właściciela.
+
+---
+
 ### Z-26 · Macierz właściciela weszła do raportu — trzecie zgłoszenie, pierwsze wykonanie
 **Co się stało:** właściciel po raz trzeci napisał to samo, tym razem z rezygnacją: *„Ciągle nie wiem
 dlaczego nie używasz mojej macierzy DRD - nie mam już siły serio !! moja macierz jest serio ładna —
