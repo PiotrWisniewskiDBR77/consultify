@@ -861,6 +861,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       return {
         id: c.id,
         isSelect: c.type === 'select',
+        isPrimary,
         width,
         // Kolumna węższa niż podłoga zostaje na swojej szerokości — podłoga
         // nigdy nie ROZPYCHA, tylko ogranicza kurczenie.
@@ -931,9 +932,32 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
      */
     if (budget <= 0) return { widths, scale: 1 };
     if (budget < floorTotal) {
-      for (const c of pool) widths[c.id] = Math.min(c.floor, c.width);
+      /**
+       * KOLUMNA PIERWOTNA (`title`/`name`) NIE SCHODZI DO PODŁOGI.
+       *
+       * Sprostowanie mojej własnej regresji z dyżuru 193 (zrzut:
+       * `evidence/grafika/193-kolumny-z-podgladem/audyty-piec-powierzchni__PO__light.png`):
+       * zjazd tytułu z ~350 px do podłogi 180 px rozdarł „Cyberbezpieczeństwo)"
+       * na „Cyberbezpieczeństw / o)". Mechanizm: moduły renderują tytuł jako
+       * WŁASNY element, więc nie obejmuje go `CELL_TEXT_CLAMP_CLASS` (jądro
+       * świadomie nie klamruje elementów — `overflow:hidden` przycięłoby
+       * popovery), i zostaje `break-words` z `td`, które łamie w połowie wyrazu.
+       * Wymiana defektu nie jest zyskiem.
+       *
+       * W TEJ gałęzi i tak nie zmieścimy tabeli (dlatego tu jesteśmy), więc
+       * ściskanie NAJWAŻNIEJSZEJ kolumny kupuje kilkadziesiąt pikseli nadmiaru
+       * kosztem rozdartego tytułu — zły interes. Kolumny wtórne schodzą do
+       * podłóg jak dotąd.
+       */
+      for (const c of pool) {
+        if (c.isPrimary) continue;
+        widths[c.id] = Math.min(c.floor, c.width);
+      }
       const naturalPool = pool.reduce((sum, c) => sum + c.width, 0);
-      const flooredPool = pool.reduce((sum, c) => sum + Math.min(c.floor, c.width), 0);
+      const flooredPool = pool.reduce(
+        (sum, c) => sum + (c.isPrimary ? c.width : Math.min(c.floor, c.width)),
+        0
+      );
       const floorScale = naturalPool > 0 ? flooredPool / naturalPool : 1;
       return { widths, scale: floorScale > 0 && floorScale < 1 ? floorScale : 1 };
     }
