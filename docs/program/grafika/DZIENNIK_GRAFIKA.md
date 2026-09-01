@@ -16,6 +16,38 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-37 · Sesja zamknięta — runda odebrana, cztery bezpieczniki, najdroższa lekcja dnia to sam przyrząd
+**Co się stało:** runda odbioru 31.08–01.09 zamknięta liczbowo: **255 ekranów przyjętych, 3 do
+poprawki (wszystkie domknięte tego samego dnia), 2 odrzucone** — z 313 ekranów w rejestrze.
+W ciągu dwóch dni powstały cztery bezpieczniki, każdy jako odpowiedź na konkretną, już zaistniałą
+szkodę, nie na zapas: `scripts/dev/odbior-kontrola.mjs` (kontrola kart przed oddaniem — po Z-24,
+dwunastu kłamstwach przyrządu jednego dnia), `scripts/dev/stanowisko.mjs` (zarządzanie
+stanowiskiem — po trzech ręcznych podnoszeniach, które zatrzymały pracę właściciela), uszczelniona
+bramka crimsona (po Z-23 — kolor stanu krytycznego istniał pod czterema nazwami, bezpiecznik znał
+jedną, piętnaście z piętnastu próbek okazało się dekoracją) i `scripts/check-dev-render-parytet.mjs`
+(parytet harness-produkt — dyżur 177, dziś napisany, jeszcze niezacommitowany).
+
+**Dlaczego ważne:** najdroższa lekcja dnia okazała się dotyczyć samego przyrządu, nie produktu.
+Właściciel **trzy razy** zgłaszał ten sam defekt podglądu; **dwie naprawy poszły w produkt, który
+już był zgodny z kanonem** — bo przyczyną był ekran testowy harnessu, dokładający panel, którego
+aplikacja w ogóle nie ma. Dopiero systemowy audyt (`AUDYT_PRZYRZADU_20260901.md`, 240/240 plików
+zmierzonych mechanicznie) pokazał skalę: **41 ekranów** harnessu rozjeżdża się z produkcją,
+z czego **29 ma dziś ocenę A lub B** — czyli są dziś pokazywane właścicielowi jako gotowe, choć
+mogą pokazywać nieprawdę. Dwa razy tego dnia nadzorca zatrzymał własnych robotników, zanim szkoda
+dotarła do właściciela: raz gdy reguła językowa właściciela została rozciągnięta o krok za daleko
+i działające polskie nazwy zamieniono na angielskie (Z-34), raz przy commicie, który ratował cudzą
+pracę, ale po drodze zabrał jej własny komunikat (Z-17).
+
+**Co z tego wynika:** meldunek dla następcy i dla właściciela ma mówić o pracy konsultanta, nie
+o komponentach — właściciel powiedział dziś wprost „nie wiem, o czym mówisz", gdy nadzorca użył
+żargonu, i to jest twarda granica języka raportu, nie jednorazowa uwaga. Priorytet #1 na jutro
+zostaje niezmieniony od zapisu w §3 `PRZEKAZANIE_20260901.md`: zacommitować
+`check-dev-render-parytet.mjs`, ustalić linię bazową, przejść 29 zagrożonych kart pojedynczo —
+bo żaden z pozostałych trzech bezpieczników nie łapie kłamstwa, które sam przyrząd opowiada
+o sobie.
+
+---
+
 ### Z-36 · Skill kanonu podglądu rozjechał się z normą — poprawiona norma, nieaktualny skill wysyłał w złą stronę
 **Co się stało:** norma `TABLE_AND_PREVIEW_CANON.md` §7.0/§7.3 podaje kolejność stopki preview
 **AI → Relations → Akcje → „Co dalej"** (poprawione już 02.08.2026 po weryfikacji w kodzie), a realny
