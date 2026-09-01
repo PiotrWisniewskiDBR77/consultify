@@ -135,25 +135,60 @@ export interface DriverMeta {
   labelPl: string;
   /** Bezpieczny zakres domyślny gdy `rangeLow`/`rangeHigh` nie są ustawione na wierszu (tylko dla kontrolek procentowych — stepper/suwak wymaga jakichś granic do narysowania się). */
   defaultSafeRangePct?: [number, number];
+  /** Jednostka nowego wiersza przy "Dodaj założenie" (176-dwie-poprawki) — reszta ekranu czyta jednostkę z zapisanego wiersza serwera, ten wiersz jej jeszcze nie ma. */
+  unit: 'PCT' | 'DAYS' | 'MONTHS';
 }
 
 /** Znane drivery (z realnej fikstury `perfSlo.pg.test.ts`) — reszta dostaje etykietę = surowy `driverCode`. */
 export const DRIVER_META: Record<string, DriverMeta> = {
-  REVENUE_GROWTH_YOY: { labelPl: 'Wzrost przychodów r/r', defaultSafeRangePct: [-0.2, 0.4] },
-  COGS_PCT_OF_REVENUE: { labelPl: 'COGS jako % przychodów', defaultSafeRangePct: [0.3, 0.85] },
-  OPEX_PCT_OF_REVENUE: { labelPl: 'OPEX jako % przychodów', defaultSafeRangePct: [0.05, 0.4] },
-  DSO_DAYS: { labelPl: 'Dni należności (DSO)' },
-  DIO_DAYS: { labelPl: 'Dni zapasów (DIO)' },
-  DPO_DAYS: { labelPl: 'Dni zobowiązań (DPO)' },
-  CAPEX_PCT_OF_REVENUE: { labelPl: 'CAPEX jako % przychodów', defaultSafeRangePct: [0.01, 0.15] },
-  USEFUL_LIFE_MONTHS: { labelPl: 'Okres użytkowania (m-ce)' },
-  STATUTORY_TAX_RATE_PCT: { labelPl: 'Stawka podatku CIT', defaultSafeRangePct: [0, 0.35] },
-  CASH_INTEREST_RATE_ANNUAL_PCT: { labelPl: 'Oprocentowanie gotówki (roczne)', defaultSafeRangePct: [0, 0.1] },
+  REVENUE_GROWTH_YOY: { labelPl: 'Wzrost przychodów r/r', defaultSafeRangePct: [-0.2, 0.4], unit: 'PCT' },
+  COGS_PCT_OF_REVENUE: { labelPl: 'COGS jako % przychodów', defaultSafeRangePct: [0.3, 0.85], unit: 'PCT' },
+  OPEX_PCT_OF_REVENUE: { labelPl: 'OPEX jako % przychodów', defaultSafeRangePct: [0.05, 0.4], unit: 'PCT' },
+  DSO_DAYS: { labelPl: 'Dni należności (DSO)', unit: 'DAYS' },
+  DIO_DAYS: { labelPl: 'Dni zapasów (DIO)', unit: 'DAYS' },
+  DPO_DAYS: { labelPl: 'Dni zobowiązań (DPO)', unit: 'DAYS' },
+  CAPEX_PCT_OF_REVENUE: { labelPl: 'CAPEX jako % przychodów', defaultSafeRangePct: [0.01, 0.15], unit: 'PCT' },
+  USEFUL_LIFE_MONTHS: { labelPl: 'Okres użytkowania (m-ce)', unit: 'MONTHS' },
+  STATUTORY_TAX_RATE_PCT: { labelPl: 'Stawka podatku CIT', defaultSafeRangePct: [0, 0.35], unit: 'PCT' },
+  CASH_INTEREST_RATE_ANNUAL_PCT: { labelPl: 'Oprocentowanie gotówki (roczne)', defaultSafeRangePct: [0, 0.1], unit: 'PCT' },
 };
 
 export function driverLabel(driverCode: string): string {
   return DRIVER_META[driverCode]?.labelPl ?? driverCode;
 }
+
+/** Jednostka nowego wiersza — patrz `DriverMeta.unit`. Fallback `'PCT'` tylko dla driverCode spoza katalogu (harmonogramy niepodłączone do silnika — patrz `WIRED_DRIVERS_BY_SCHEDULE`). */
+export function driverUnit(driverCode: string): 'PCT' | 'DAYS' | 'MONTHS' {
+  return DRIVER_META[driverCode]?.unit ?? 'PCT';
+}
+
+/**
+ * 176-dwie-poprawki (dodawanie nowych wierszy założeń, "Dodaj założenie").
+ * Odwrotność wywołań `requireAssumption(ctx, scheduleType, driverCode)` w
+ * `server/src/services/finance/canonical/baselineComputeService.ts`
+ * (linie 419, 511, 515-516, 521-522, 531-533, 537) — TYLKO te 10 par
+ * (scheduleType, driverCode) faktycznie zasila wyliczenia. Reszta driverCode
+ * w tym samym harmonogramie zapisałaby się (POST przyjmuje dowolny string —
+ * `driver_code TEXT NOT NULL — application catalog, not a DB enum`), ale
+ * silnik nigdy by jej nie przeczytał — martwe dane. UI "Dodaj założenie"
+ * pokazuje TYLKO te drivery per harmonogram, żeby dodany wiersz naprawdę
+ * coś liczył, nie tylko wyglądał jak liczy.
+ *
+ * `headcount`/`leases`/`equity_re` celowo nie mają tu wpisu (0 wywołań
+ * `requireAssumption` dla tych harmonogramów — patrz plik nagłówkowy
+ * `baselineComputeService.ts` "headcount/leases schedule types are
+ * intentionally not wired"): dodanie tam wiersza jest dziś zawsze martwe,
+ * niezależnie od driverCode. `AssumptionsView` blokuje dodawanie dla takich
+ * harmonogramów zamiast oferować pusty katalog.
+ */
+export const WIRED_DRIVERS_BY_SCHEDULE: Partial<Record<BaselineScheduleType, string[]>> = {
+  revenue_pvm: ['REVENUE_GROWTH_YOY'],
+  cogs_opex: ['COGS_PCT_OF_REVENUE', 'OPEX_PCT_OF_REVENUE'],
+  capex_depreciation: ['CAPEX_PCT_OF_REVENUE', 'USEFUL_LIFE_MONTHS'],
+  wc_dso_dio_dpo: ['DSO_DAYS', 'DIO_DAYS', 'DPO_DAYS'],
+  debt_maturity: ['CASH_INTEREST_RATE_ANNUAL_PCT'],
+  tax_nol: ['STATUTORY_TAX_RATE_PCT'],
+};
 
 /** Formatuje liczbę wg pl-PL, tabular — MISSING/NA/NOT_APPLICABLE muszą wołać `formatFinanceValueForDisplay`, NIGDY tej funkcji wprost na `null`. */
 export function formatNumberPl(n: number, opts: { maximumFractionDigits?: number } = {}): string {

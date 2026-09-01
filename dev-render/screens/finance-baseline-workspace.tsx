@@ -307,17 +307,30 @@ const MOCK_COMPUTE_RESULT: BaselineComputeResultDto = {
 
 // ── window.fetch mock — patrz nagłówek pliku dlaczego (nie da się łatwo
 // podmienić eksportowanych funkcji `financeV2.api.ts` z zewnątrz modułu). ──
+//
+// 176-dwie-poprawki: `assumptionsState` jest MUTOWALNY (nie stały fixture) —
+// POST dopisuje/aktualizuje wg klucza komórki, DELETE usuwa po `assumptionId`,
+// GET .../context i GET .../assumptions czytają z TEGO SAMEGO stanu. Bez tego
+// harness kłamałby: "Dodaj założenie"/"Usuń" wyglądałyby jak działają na
+// jednym zrzucie, ale po zapisie/przeładowaniu wiersz wracałby do stanu
+// sprzed zmiany (statyczny fixture, nieświadomy własnych zapisów) — dokładnie
+// wzorzec z `docs/program/grafika/*` "harness kłamie" (fałszywe 200/404).
+let assumptionsState: BaselineAssumptionDto[] = MOCK_ASSUMPTIONS.map((a) => ({ ...a }));
+let assumptionsSeq = assumptionsState.length;
+
 const g = window as unknown as { __BASELINE_WORKSPACE_FETCH__?: boolean };
 if (!g.__BASELINE_WORKSPACE_FETCH__) {
   g.__BASELINE_WORKSPACE_FETCH__ = true;
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const method = (init?.method ?? 'GET').toUpperCase();
     const json = (data: unknown, status = 200): Response =>
       new Response(JSON.stringify({ data }), {
         status,
         headers: { 'Content-Type': 'application/json' },
       });
+    const empty204 = (): Response => new Response(null, { status: 204 });
 
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
 
@@ -330,6 +343,11 @@ if (!g.__BASELINE_WORKSPACE_FETCH__) {
     // Context Loader łapał jako trwały błąd niezależny od liczby prób
     // ponowienia (przyczyna zgłoszonego w statusie "trwały stan błędu").
     if (url.includes(`/baseline/${BV_ID}/context`)) {
+      // 176-dwie-poprawki: `assumptionRowOrder` czyta z ŻYWEGO
+      // `assumptionsState` (1:1 z realnym `baselineContextService.ts` —
+      // `SELECT DISTINCT` z istniejących wierszy), nie ze statycznego
+      // `ASSUMPTION_ROW_ORDER` — inaczej dodany-i-zapisany wiersz nigdy nie
+      // "przyjąłby się" jako część kontekstu przy odświeżeniu.
       return json({
         businessVersionId: BV_ID,
         entityId: ENTITY_ID,
@@ -340,16 +358,94 @@ if (!g.__BASELINE_WORKSPACE_FETCH__) {
           periodStart: `${p.yearMonth}-01`,
           periodEnd: `${p.yearMonth}-28`,
         })),
-        assumptionRowOrder: ASSUMPTION_ROW_ORDER,
+        assumptionRowOrder: assumptionsState.map((a) => ({
+          scheduleType: a.scheduleType,
+          driverCode: a.driverCode,
+          entityId: a.entityId,
+          periodId: a.periodId,
+        })),
         version: 1,
       });
     }
 
+    // DELETE .../assumptions/:assumptionId — musi być sprawdzone PRZED
+    // ogólniejszym `.../assumptions` (poniżej), bo ten URL też je zawiera.
+    if (url.includes(`/baseline/${BV_ID}/assumptions/`) && method === 'DELETE') {
+      const assumptionId = url.split('/assumptions/')[1]?.split('?')[0];
+      const before = assumptionsState.length;
+      assumptionsState = assumptionsState.filter((a) => a.assumptionId !== assumptionId);
+      return assumptionsState.length < before ? empty204() : json({ error: 'NOT_FOUND' }, 404);
+    }
+
     if (url.includes(`/baseline/${BV_ID}/assumptions`)) {
-      if ((init?.method ?? 'GET').toUpperCase() === 'POST') {
-        return json({ businessVersionId: BV_ID, writtenCount: 1, assumptions: [] });
+      if (method === 'POST') {
+        const body = init?.body ? JSON.parse(String(init.body)) : {};
+        const inputs: Array<Record<string, unknown>> = Array.isArray(body.assumptions)
+          ? body.assumptions
+          : [];
+        const written: Array<{
+          assumptionId: string;
+          scheduleType: string;
+          driverCode: string;
+          entityId: string;
+          periodId: string;
+        }> = [];
+        for (const a of inputs) {
+          const idx = assumptionsState.findIndex(
+            (r) =>
+              r.scheduleType === a.scheduleType &&
+              r.driverCode === a.driverCode &&
+              r.entityId === a.entityId &&
+              r.periodId === a.periodId
+          );
+          const base: BaselineAssumptionDto =
+            idx >= 0
+              ? assumptionsState[idx]
+              : {
+                  assumptionId: `assumption-added-${assumptionsSeq++}`,
+                  scheduleType: a.scheduleType as BaselineAssumptionDto['scheduleType'],
+                  driverCode: String(a.driverCode),
+                  entityId: String(a.entityId),
+                  periodId: String(a.periodId),
+                  basePeriodId: null,
+                  rule: a.rule as BaselineAssumptionDto['rule'],
+                  value: { status: 'MISSING', valueDecimal: null, unit: String(a.unit) },
+                  rangeLow: null,
+                  rangeHigh: null,
+                  quality: a.quality as BaselineAssumptionDto['quality'],
+                  createdBy: 'user-piotr-demo',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+          const next: BaselineAssumptionDto = {
+            ...base,
+            basePeriodId: typeof a.basePeriodId === 'string' ? a.basePeriodId : base.basePeriodId,
+            rule: (a.rule as BaselineAssumptionDto['rule']) ?? base.rule,
+            value: {
+              status: (a.valueStatus as string) ?? base.value.status,
+              valueDecimal:
+                typeof a.valueDecimal === 'number' ? String(a.valueDecimal) : base.value.valueDecimal,
+              unit: typeof a.unit === 'string' ? a.unit : base.value.unit,
+              sourceRef: base.value.sourceRef,
+            },
+            rangeLow: typeof a.rangeLow === 'number' ? String(a.rangeLow) : base.rangeLow,
+            rangeHigh: typeof a.rangeHigh === 'number' ? String(a.rangeHigh) : base.rangeHigh,
+            quality: (a.quality as BaselineAssumptionDto['quality']) ?? base.quality,
+            updatedAt: new Date().toISOString(),
+          };
+          if (idx >= 0) assumptionsState[idx] = next;
+          else assumptionsState.push(next);
+          written.push({
+            assumptionId: next.assumptionId,
+            scheduleType: next.scheduleType,
+            driverCode: next.driverCode,
+            entityId: next.entityId,
+            periodId: next.periodId,
+          });
+        }
+        return json({ businessVersionId: BV_ID, writtenCount: written.length, assumptions: written });
       }
-      return json(MOCK_ASSUMPTIONS);
+      return json(assumptionsState);
     }
     if (url.includes(`/baseline/${BV_ID}/outputs`)) return json(MOCK_OUTPUTS);
     if (url.includes(`/baseline/${BV_ID}/compute`)) return json(MOCK_COMPUTE_RESULT);

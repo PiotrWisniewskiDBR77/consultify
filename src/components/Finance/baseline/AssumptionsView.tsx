@@ -20,6 +20,7 @@ import {
   type BaselineAssumptionDto,
   type BaselineAssumptionQuality,
   type BaselineAssumptionRule,
+  type BaselineScheduleType,
   type FinanceValue,
   formatFinanceValueForDisplay,
 } from '@/services/api/financeV2.types';
@@ -31,6 +32,8 @@ import {
   type CanonicalLineCode,
   controlKindForUnit,
   driverLabel,
+  driverUnit,
+  WIRED_DRIVERS_BY_SCHEDULE,
 } from './baselineLabels';
 import type {
   AssumptionCellKey,
@@ -129,6 +132,8 @@ export interface AssumptionsViewProps {
   rowOrder: AssumptionRowSpec[];
   periodLabelById?: Record<string, string>;
   readOnly?: boolean;
+  /** 176-dwie-poprawki: encja nowo dodawanego wiersza ("Dodaj założenie") — Baseline jest single-entity, więc to zawsze ta sama wartość co reszta ekranu. */
+  entityId?: string;
 }
 
 export function AssumptionsView({
@@ -136,11 +141,13 @@ export function AssumptionsView({
   rowOrder,
   periodLabelById,
   readOnly = false,
+  entityId: entityIdProp,
 }: AssumptionsViewProps): React.ReactElement {
   const {
     cells,
     setCellValue,
     resetCellToServer,
+    deleteRow,
     undo,
     redo,
     canUndo,
@@ -152,6 +159,136 @@ export function AssumptionsView({
     saveError,
   } = editor;
   const [confirmingDespiteWarnings, setConfirmingDespiteWarnings] = useState(false);
+
+  /*
+   * 176-dwie-poprawki (uwaga właściciela, DRUGIE zgłoszenie: "dalej nie mam
+   * przycisku dodawania założeń i możliwości usuwania linii"). Sprawdzone:
+   * `assumptionRowOrder` (kontekst z serwera, `baselineContextService.ts`)
+   * to `SELECT DISTINCT` z JUŻ ISTNIEJĄCYCH wierszy — serwer nie ma pojęcia
+   * "katalogu" wierszy do wyboru, więc dodanie NOWEGO (scheduleType,
+   * driverCode) po prostu nie pojawia się, dopóki ktoś go nie zapisze.
+   * `extraRows` to wiersze dodane W TEJ SESJI (jeszcze nie odświeżone z
+   * kontekstu) — scalone z `rowOrder` poniżej, znikają z tej listy same,
+   * gdy `rowOrder` faktycznie już je zawiera (po zapisie + przeładowaniu
+   * kontekstu przez rodzica, albo po prostu przy następnym mount).
+   */
+  const [extraRows, setExtraRows] = useState<AssumptionRowSpec[]>([]);
+  /**
+   * Klucze usunięte W TEJ SESJI. Ten sam powód co `extraRows` w drugą
+   * stronę: `rowOrder` (kontekst z serwera) jest pobierany RAZ przy mount
+   * (`BaselineWorkspaceContextLoader`) — `deleteRow` odświeża TYLKO
+   * `editor.rows`/`cells` (`listBaselineAssumptions`), nie kontekst
+   * rodzica. Bez tej listy usunięty wiersz z ORYGINALNEGO `rowOrder`
+   * wracałby natychmiast (żywy dowód: zmierzone w tej sesji — DELETE
+   * naprawdę usuwał wiersz z backendu/mocka, ale UI dalej go pokazywał,
+   * bo `rowOrder` nie wiedział o usunięciu).
+   */
+  const [deletedKeys, setDeletedKeys] = useState<Set<string>>(new Set());
+  const effectiveRowOrder = useMemo(() => {
+    const known = new Set(rowOrder.map((r) => cellKeyOf(r)));
+    return [...rowOrder, ...extraRows.filter((r) => !known.has(cellKeyOf(r)))].filter(
+      (r) => !deletedKeys.has(cellKeyOf(r))
+    );
+  }, [rowOrder, extraRows, deletedKeys]);
+
+  const entityId = entityIdProp ?? rowOrder[0]?.entityId ?? extraRows[0]?.entityId ?? '';
+  const periodOptions = useMemo(
+    () => Object.entries(periodLabelById ?? {}),
+    [periodLabelById]
+  );
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [addScheduleType, setAddScheduleType] = useState<BaselineScheduleType>('revenue_pvm');
+  const [addDriverCode, setAddDriverCode] = useState<string>('');
+  const [addCustomDriverCode, setAddCustomDriverCode] = useState('');
+  const [addPeriodId, setAddPeriodId] = useState<string>('');
+  const [addError, setAddError] = useState<string | null>(null);
+  const addDialogContainerRef = useRef<HTMLDivElement>(null);
+  const addTriggerRef = useRef<HTMLButtonElement>(null);
+  useDialogA11y({
+    open: addOpen,
+    onClose: () => setAddOpen(false),
+    containerRef: addDialogContainerRef,
+    getFallbackFocusTarget: () => addTriggerRef.current,
+  });
+
+  const wiredDrivers = WIRED_DRIVERS_BY_SCHEDULE[addScheduleType] ?? [];
+  const scheduleIsWired = wiredDrivers.length > 0;
+
+  function openAddDialog(): void {
+    setAddScheduleType('revenue_pvm');
+    setAddDriverCode(WIRED_DRIVERS_BY_SCHEDULE.revenue_pvm?.[0] ?? '');
+    setAddCustomDriverCode('');
+    setAddPeriodId(periodOptions[0]?.[0] ?? '');
+    setAddError(null);
+    setAddOpen(true);
+  }
+
+  function submitAddRow(): void {
+    const driverCode = scheduleIsWired ? addDriverCode : addCustomDriverCode.trim();
+    if (!driverCode) {
+      setAddError('Wybierz założenie.');
+      return;
+    }
+    if (!addPeriodId) {
+      setAddError('Wybierz okres.');
+      return;
+    }
+    if (!entityId) {
+      setAddError('Brak identyfikatora encji — nie da się dodać wiersza.');
+      return;
+    }
+    const spec: AssumptionRowSpec = {
+      scheduleType: addScheduleType,
+      driverCode,
+      entityId,
+      periodId: addPeriodId,
+    };
+    const key = cellKeyOf(spec);
+    if (effectiveRowOrder.some((r) => cellKeyOf(r) === key)) {
+      setAddError('Ten wiersz już istnieje w zestawie.');
+      return;
+    }
+    setExtraRows((prev) => [...prev, spec]);
+    setCellValue(spec, {
+      rule: 'MANUAL_OVERRIDE',
+      quality: 'ESTIMATED',
+      valueStatus: 'MISSING',
+      valueDecimal: null,
+      unit: scheduleIsWired ? driverUnit(driverCode) : 'PCT',
+    });
+    setAddOpen(false);
+    addTriggerRef.current?.focus();
+  }
+
+  const [pendingDelete, setPendingDelete] = useState<AssumptionRowSpec | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deleteDialogContainerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({
+    open: pendingDelete !== null,
+    onClose: () => setPendingDelete(null),
+    containerRef: deleteDialogContainerRef,
+  });
+
+  async function confirmDeleteRow(): Promise<void> {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const result = await deleteRow(pendingDelete);
+      if (!result.ok) {
+        setDeleteError(result.message);
+        return;
+      }
+      const key = cellKeyOf(pendingDelete);
+      setExtraRows((prev) => prev.filter((r) => cellKeyOf(r) !== key));
+      setDeletedKeys((prev) => new Set(prev).add(key));
+      setPendingDelete(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   // ★ NAPRAWA a11y (Pakiet I): dialog potwierdzenia zapisu mimo ostrzeżeń
   // nie miał pułapki fokusa/Escape/przywrócenia. Wyzwalacz („Zapisz zestaw
@@ -190,8 +327,8 @@ export function AssumptionsView({
         key: AssumptionCellKey;
         patch: { valueDecimal: number | null; valueStatus: 'PRESENT_NONZERO' | 'PRESENT_ZERO' };
       }> = [];
-      for (let i = 0; i < values.length && startIndex + i < rowOrder.length; i++) {
-        const spec = rowOrder[startIndex + i];
+      for (let i = 0; i < values.length && startIndex + i < effectiveRowOrder.length; i++) {
+        const spec = effectiveRowOrder[startIndex + i];
         const parsed = Number(values[i].replace(',', '.').replace('%', ''));
         if (Number.isNaN(parsed)) continue;
         entries.push({
@@ -204,7 +341,7 @@ export function AssumptionsView({
       }
       if (entries.length > 0) editor.pasteBatch(entries);
     },
-    [editor, rowOrder]
+    [editor, effectiveRowOrder]
   );
 
   return (
@@ -227,6 +364,22 @@ export function AssumptionsView({
           )}
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            ref={addTriggerRef}
+            type="button"
+            disabled={readOnly || periodOptions.length === 0}
+            onClick={openAddDialog}
+            data-testid="baseline-assumptions-add-row"
+            title={
+              periodOptions.length === 0
+                ? 'Brak skonfigurowanych okresów prognozy — nie da się dodać wiersza.'
+                : undefined
+            }
+            className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            + Dodaj założenie
+          </button>
+          <div className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
           <button
             type="button"
             disabled={!canUndo || readOnly}
@@ -309,6 +462,172 @@ export function AssumptionsView({
           </div>
         </div>
       )}
+      {addOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          role="presentation"
+          onMouseDown={() => setAddOpen(false)}
+        >
+          <div
+            ref={addDialogContainerRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-label="Dodaj założenie"
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
+            data-testid="baseline-assumptions-add-dialog"
+          >
+            <p className="text-sm font-semibold text-c-text">Dodaj założenie</p>
+            <div className="mt-3 space-y-3">
+              <label className="block text-xs font-medium text-c-text-secondary">
+                Harmonogram
+                <select
+                  autoFocus
+                  value={addScheduleType}
+                  onChange={(e) => {
+                    const next = e.target.value as BaselineScheduleType;
+                    setAddScheduleType(next);
+                    const drivers = WIRED_DRIVERS_BY_SCHEDULE[next] ?? [];
+                    setAddDriverCode(drivers[0] ?? '');
+                    setAddCustomDriverCode('');
+                  }}
+                  className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-bg px-2 py-1.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  data-testid="baseline-add-schedule-type"
+                >
+                  {Object.entries(BASELINE_SCHEDULE_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {scheduleIsWired ? (
+                <label className="block text-xs font-medium text-c-text-secondary">
+                  Założenie
+                  <select
+                    value={addDriverCode}
+                    onChange={(e) => setAddDriverCode(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-bg px-2 py-1.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    data-testid="baseline-add-driver-code"
+                  >
+                    {wiredDrivers.map((code) => (
+                      <option key={code} value={code}>
+                        {driverLabel(code)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <div>
+                  <label className="block text-xs font-medium text-c-text-secondary">
+                    Nazwa założenia (własna)
+                    <input
+                      type="text"
+                      value={addCustomDriverCode}
+                      onChange={(e) => setAddCustomDriverCode(e.target.value)}
+                      placeholder="np. HEADCOUNT_GROWTH_PCT"
+                      className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-bg px-2 py-1.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      data-testid="baseline-add-driver-custom"
+                    />
+                  </label>
+                  <p className="mt-1 text-[11px] text-c-warning">
+                    Ten harmonogram nie zasila dziś wyliczeń (silnik go jeszcze nie czyta) — wiersz
+                    zapisze się, ale nie zmieni żadnej liczby w „Wyliczeniach".
+                  </p>
+                </div>
+              )}
+
+              <label className="block text-xs font-medium text-c-text-secondary">
+                Okres
+                <select
+                  value={addPeriodId}
+                  onChange={(e) => setAddPeriodId(e.target.value)}
+                  disabled={periodOptions.length === 0}
+                  className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-bg px-2 py-1.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  data-testid="baseline-add-period"
+                >
+                  {periodOptions.map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {addError && (
+              <p role="alert" className="mt-2 text-xs text-c-danger">
+                {addError}
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAddOpen(false)}
+                className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                onClick={submitAddRow}
+                data-testid="baseline-add-submit"
+                className="inline-flex min-h-[2.75rem] items-center rounded-lg bg-c-text px-3.5 text-xs font-semibold text-c-surface hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                Dodaj wiersz
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+          role="presentation"
+          onMouseDown={() => setPendingDelete(null)}
+        >
+          <div
+            ref={deleteDialogContainerRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-label="Usuń wiersz założenia"
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-xl"
+            data-testid="baseline-delete-confirm"
+          >
+            <p className="text-sm font-semibold text-c-text">Usunąć wiersz założenia?</p>
+            <p className="mt-1 text-sm text-c-text-secondary">
+              {driverLabel(pendingDelete.driverCode)} —{' '}
+              {BASELINE_SCHEDULE_TYPE_LABELS[pendingDelete.scheduleType]} (
+              {periodLabelOf(pendingDelete.periodId, periodLabelById)}). Tej operacji nie da się
+              cofnąć przyciskiem „Cofnij" — wiersz usuwa się od razu.
+            </p>
+            {deleteError && (
+              <p role="alert" className="mt-2 text-xs text-c-danger">
+                Nie udało się usunąć: {deleteError}
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="inline-flex min-h-[2.75rem] items-center rounded-lg border border-c-border-subtle px-3.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void confirmDeleteRow()}
+                data-testid="baseline-delete-confirm-submit"
+                className="inline-flex min-h-[2.75rem] items-center rounded-lg bg-c-danger px-3.5 text-xs font-semibold text-white hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {deleting ? 'Usuwam…' : 'Usuń wiersz'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* `pb-16`: patrz uzasadnienie w `CalculationsView.tsx` (punkt 1 orkiestratora) — ostatni wiersz nie chowa się pod pływającą kontrolką w rogu przy przewinięciu do końca. */}
       <div className="flex-1 overflow-auto pb-16">
         {/* prettier-ignore */}
@@ -379,7 +698,7 @@ export function AssumptionsView({
             </tr>
           </thead>
           <tbody>
-            {rowOrder.map((spec, index) => {
+            {effectiveRowOrder.map((spec, index) => {
               const key = cellKeyOf(spec);
               const cell = cells.get(key);
               const server = cell?.server ?? null;
@@ -575,21 +894,37 @@ export function AssumptionsView({
                     {feeds.length > 0 ? `Zasila: ${feeds.map(feedLineLabel).join(', ')}` : '—'}
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <button
-                      type="button"
-                      disabled={!cell?.dirty || readOnly}
-                      onClick={() => resetCellToServer(spec)}
-                      title="Cofnij do ostatniej zapisanej wartości"
-                      className="inline-flex min-h-[2.25rem] items-center rounded-md border border-c-border-subtle px-2 text-[11px] text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
-                      data-testid={`baseline-assumption-reset-${index}`}
-                    >
-                      Reset
-                    </button>
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        disabled={!cell?.dirty || readOnly}
+                        onClick={() => resetCellToServer(spec)}
+                        title="Cofnij do ostatniej zapisanej wartości"
+                        className="inline-flex min-h-[2.25rem] items-center rounded-md border border-c-border-subtle px-2 text-[11px] text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                        data-testid={`baseline-assumption-reset-${index}`}
+                      >
+                        Reset
+                      </button>
+                      {/* 176-dwie-poprawki: usuwanie WIERSZA (nie tylko wartości komórki) — patrz `deleteRow` w useBaselineAssumptionsEditor.ts. */}
+                      <button
+                        type="button"
+                        disabled={readOnly}
+                        onClick={() => {
+                          setDeleteError(null);
+                          setPendingDelete(spec);
+                        }}
+                        title="Usuń wiersz założenia"
+                        className="inline-flex min-h-[2.25rem] items-center rounded-md border border-c-border-subtle px-2 text-[11px] text-c-danger hover:bg-c-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-30"
+                        data-testid={`baseline-assumption-delete-${index}`}
+                      >
+                        Usuń
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
             })}
-            {rowOrder.length === 0 && (
+            {effectiveRowOrder.length === 0 && (
               <tr>
                 <td colSpan={10} className="px-3 py-10 text-center text-sm text-c-text-muted">
                   Ten model nie ma jeszcze żadnych założeń.

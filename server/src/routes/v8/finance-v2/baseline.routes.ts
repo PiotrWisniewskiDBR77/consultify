@@ -29,6 +29,7 @@ import {
 import {
   BASELINE_ASSUMPTION_RULES,
   BASELINE_SCHEDULE_TYPES,
+  deleteBaselineAssumption,
   listBaselineAssumptions,
   listBaselineOutputs,
   runBaselineCompute,
@@ -226,6 +227,36 @@ router.post(
       data: { businessVersionId, writtenCount: written.length, assumptions: written.map((a) => ({ assumptionId: a.id, scheduleType: a.schedule_type, driverCode: a.driver_code, entityId: a.entity_id, periodId: a.period_id })) },
       meta: financeV2Meta(),
     });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// DELETE /baseline/:businessVersionId/assumptions/:assumptionId
+//
+// 176-dwie-poprawki: brakujący endpoint (właściciel zgłosił "nie mam ...
+// możliwości usuwania linii" DRUGI raz). Hard delete, org+business-version
+// scoped — patrz uzasadnienie bezpieczeństwa w
+// `deleteBaselineAssumption` (baselineComputeService.ts).
+// ---------------------------------------------------------------------------
+
+router.delete(
+  '/baseline/:businessVersionId/assumptions/:assumptionId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const businessVersionId = String(req.params.businessVersionId || '');
+    const assumptionId = String(req.params.assumptionId || '');
+
+    const bv = await getBusinessVersion(organizationId, businessVersionId);
+    if (!bv) {
+      return sendError(res, 404, 'NOT_FOUND', 'Business version not found');
+    }
+
+    const result = await deleteBaselineAssumption({ organizationId, businessVersionId, assumptionId });
+    if (!result.deleted) {
+      return sendError(res, 404, 'NOT_FOUND', 'Baseline assumption not found');
+    }
+
+    return res.status(204).send();
   })
 );
 

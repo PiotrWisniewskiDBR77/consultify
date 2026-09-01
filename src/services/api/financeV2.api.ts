@@ -828,6 +828,24 @@ export async function upsertBaselineAssumptions(
 }
 
 /**
+ * Usuwa POJEDYNCZY, już zapisany wiersz założenia (176-dwie-poprawki —
+ * zgłoszenie właściciela "nie mam ... możliwości usuwania linii", drugi
+ * raz; endpoint dopisany tym dyżurem, `baseline.routes.ts` DELETE
+ * `/baseline/:businessVersionId/assumptions/:assumptionId`, 204 bez treści
+ * na sukces). Wiersz, który istnieje TYLKO jako lokalny szkic (nigdy
+ * zapisany) nie woła tego endpointu — patrz `deleteRow` w
+ * `useBaselineAssumptionsEditor.ts`.
+ */
+export async function deleteBaselineAssumption(
+  businessVersionId: string,
+  assumptionId: string
+): Promise<void> {
+  await v8Delete<null>(
+    `${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/assumptions/${encodeURIComponent(assumptionId)}`
+  );
+}
+
+/**
  * Uwaga (OWN-FIN-018, „Compute kończy się timeoutem bez wyniku"): `v8Post`
  * dziedziczy `fetchWithRetry`'ego twardy 20s timeout
  * (`src/services/api/baseClient.ts`). Ten klient NIE łapie timeoutu tutaj —
@@ -1514,6 +1532,7 @@ export const FinanceV2Api = {
   // --- PKG-F Baseline ---
   listBaselineAssumptions,
   upsertBaselineAssumptions,
+  deleteBaselineAssumption,
   computeBaseline,
   listBaselineOutputs,
   // --- /PKG-F Baseline ---
