@@ -531,9 +531,24 @@ const plikiEkranow = fs
   .filter((f) => f.endsWith('.tsx'))
   .sort();
 
+// NAPRAWA 2026-09-01 (rozszerzone pytanie bezpieczników — "co robi, gdy NIKT
+// GO O POMIAR NIE POPROSIŁ"): pusty katalog ekranów (SCREENS_DIR przestawiony,
+// literówka w ścieżce, świeży checkout bez plików) dawał PUSTĄ listę naruszeń
+// i bramka kończyła się "CZYSTO" — dokładnie kształt "brak pomiaru = wynik
+// pozytywny". Pusta lista wejściowa nie jest dowodem braku defektów.
+if (plikiEkranow.length === 0) {
+  console.error(
+    `check-dev-render-parytet: 0 plików .tsx w ${SCREENS_DIR} — pomiar niemożliwy, ` +
+      'to nie jest "czysto" (pusty katalog wejściowy nie jest wynikiem pozytywnym).'
+  );
+  process.exit(2);
+}
+
+let ekranFilterDopasowany = false;
 for (const nazwaPliku of plikiEkranow) {
   const ekran = nazwaPliku.replace(/\.tsx$/, '');
   if (ekranFilter && ekran !== ekranFilter) continue;
+  if (ekranFilter) ekranFilterDopasowany = true;
 
   const sciezka = path.join(SCREENS_DIR, nazwaPliku);
   const surowy = fs.readFileSync(sciezka, 'utf8');
@@ -660,6 +675,19 @@ for (const nazwaPliku of plikiEkranow) {
   }
 }
 
+// NAPRAWA 2026-09-01: `--ekran=<id>` z literówką dopasowuje ZERO plików — pętla
+// wyżej wtedy `continue`-uje na każdej iteracji, `naruszenia` zostaje puste, a
+// bramka (i, gorzej, `--update` niżej) czytała to jako "ekran czysty". To ten
+// sam kształt co pusty katalog: brak dopasowania nie jest dowodem braku defektów,
+// jest dowodem złego argumentu. Zatrzymaj się tu, zanim to dotrze do zapisu.
+if (ekranFilter && !ekranFilterDopasowany) {
+  console.error(
+    `check-dev-render-parytet: --ekran=${ekranFilter} nie dopasował ŻADNEGO pliku w ${SCREENS_DIR} ` +
+      '(literówka w id ekranu?) — pomiar niemożliwy, to nie jest "czysto".'
+  );
+  process.exit(2);
+}
+
 // ── Linia bazowa ──────────────────────────────────────────────────────────────
 
 function kluczNaruszenia(n) {
@@ -680,6 +708,31 @@ function wczytajBaseline() {
 
 if (trybUpdate) {
   const stare = wczytajBaseline();
+
+  const wierszeNowe = naruszenia.map((n) => {
+    const k = kluczNaruszenia(n);
+    const powod = stare.get(k) || `dług zastany 2026-09-01 (audyt przyrządu): ${n.opis}`;
+    return `${k}\t${powod}`;
+  });
+
+  // NAPRAWA 2026-09-01 (rozszerzone pytanie bezpieczników): `--update` bez filtra
+  // to pełna regeneracja (naruszenia = CAŁY przebieg, nadpisanie jest poprawne).
+  // Ale `--update --ekran=<id>` to przebieg TYLKO po jednym ekranie — `naruszenia`
+  // zawiera wyłącznie jego wpisy, bo pętla wyżej `continue`-uje resztę. Stary kod
+  // i tak nadpisywał CAŁY plik tym niepełnym zbiorem, co kasowało linię bazową
+  // pozostałych ~40 ekranów jednym przebiegiem per-ekran — a dokumentacja
+  // (docs/program/grafika/PRZEKAZANIE_20260901.md, DZIENNIK_GRAFIKA.md:195) opisuje
+  // WŁAŚNIE przechodzenie "kart pojedynczo" jako zamierzony tryb pracy. Scal: przy
+  // filtrze zachowaj wszystkie wiersze innych ekranów, zamień tylko wiersze filtrowanego.
+  let wszystkieWiersze = wierszeNowe;
+  if (ekranFilter) {
+    const zachowane = [...stare.entries()]
+      .filter(([klucz]) => klucz.split('\t')[0] !== ekranFilter)
+      .map(([klucz, powod]) => `${klucz}\t${powod}`);
+    wszystkieWiersze = [...zachowane, ...wierszeNowe];
+  }
+  const linie = wszystkieWiersze.sort();
+
   const naglowek = [
     '# check-dev-render-parytet.mjs — BASELINE długu zastanego (ratchet).',
     '# Format: <ekran>\\t<reguła>\\t<szczegół>\\t<powód>. Klucz = trzy pierwsze kolumny.',
@@ -695,20 +748,15 @@ if (trybUpdate) {
     '#',
     '# Regeneruj TYLKO gdy dług ŚWIADOMIE SPADŁ. Nigdy żeby uciszyć nową regresję.',
     `# WYGENEROWANO: ${new Date().toISOString().slice(0, 10)} (node scripts/check-dev-render-parytet.mjs --update)`,
-    `# RAZEM: ${naruszenia.length} pozycji`,
+    `# RAZEM: ${linie.length} pozycji`,
     '',
   ].join('\n');
 
-  const linie = naruszenia
-    .map((n) => {
-      const k = kluczNaruszenia(n);
-      const powod = stare.get(k) || `dług zastany 2026-09-01 (audyt przyrządu): ${n.opis}`;
-      return `${k}\t${powod}`;
-    })
-    .sort();
-
   fs.writeFileSync(BASELINE_FILE, `${naglowek}${linie.join('\n')}\n`);
-  console.log(`Zapisano linię bazową: ${BASELINE_FILE} (${linie.length} pozycji)`);
+  const tryb = ekranFilter
+    ? ` (scalono z istniejącą linią bazową — zmieniono tylko wpisy ekranu ${ekranFilter}, reszta zachowana)`
+    : '';
+  console.log(`Zapisano linię bazową: ${BASELINE_FILE} (${linie.length} pozycji)${tryb}`);
   process.exit(0);
 }
 

@@ -137,6 +137,23 @@ for (const m of status.moduly) {
   }
 }
 
+// NAPRAWA 2026-09-01 (rozszerzone pytanie bezpieczników — "co robi, gdy NIKT
+// GO O POMIAR NIE POPROSIŁ"): literówka w --modul=, albo status.json bez ani
+// jednej karty ocena A/B, dawały PUSTĄ listę `ekranyAB`. Dalej `maProblemy`
+// zostawało `false` (nic nie sprawdzono = nic nie znaleziono), a bramka
+// mówiła „CZYSTO — można oddawać" z 0 sprawdzonych kart — dokładnie kształt
+// „brak pomiaru = wynik pozytywny", tylko że tu bramka odpowiada wprost na
+// pytanie „czy pokazywać właścicielowi" (CLAUDE.md UI pkt 7). Zmierzone:
+// `--modul=NIEISTNIEJACY` dawało EXIT 0 / „można oddawać" bez sprawdzenia
+// czegokolwiek.
+if (ekranyAB.length === 0) {
+  console.error(
+    `Nie sprawdzono ANI JEDNEJ karty (0 pozycji ocena A/B${modulFilter ? ` dla --modul=${modulFilter}` : ''}) — ` +
+      'pomiar niemożliwy. To NIE jest "czysto": sprawdź literówkę w --modul= albo czy status.json ma karty A/B.'
+  );
+  process.exit(2);
+}
+
 // Zbierz problemy
 const problemy = {
   'BRAK ZRZUTU': [],

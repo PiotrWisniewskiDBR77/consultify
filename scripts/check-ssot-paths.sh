@@ -8,11 +8,19 @@ set -uo pipefail
 cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || exit 2
 fail=0
 paths=$(grep -oE '`[A-Za-z0-9_./-]+/[A-Za-z0-9_./-]+\.[a-zA-Z]{2,5}`' CLAUDE.md | tr -d '`' | sort -u)
+# NAPRAWA 2026-09-01: jeśli regex przestanie pasować (np. CLAUDE.md zmieni
+# cytowanie ścieżek), $paths jest puste, pętla nic nie robi, fail zostaje 0 —
+# i skrypt melduje "OK — wszystkie ścieżki istnieją", choć nie sprawdził ANI
+# JEDNEJ. Pusta lista wejściowa nie jest dowodem braku martwych ścieżek.
+if [ -z "$paths" ]; then
+  echo "check-ssot-paths: 0 ścieżek dopasowanych w CLAUDE.md — pomiar niemożliwy (regex się nie trafił?), to NIE jest 'OK'." >&2
+  exit 2
+fi
 for p in $paths; do
   if [ ! -e "$p" ]; then
     echo "MARTWA ŚCIEŻKA SSOT w CLAUDE.md: $p" >&2
     fail=1
   fi
 done
-[ "$fail" -eq 0 ] && echo "check-ssot-paths: OK — wszystkie ścieżki SSOT z CLAUDE.md istnieją."
+[ "$fail" -eq 0 ] && echo "check-ssot-paths: OK — wszystkie ścieżki SSOT z CLAUDE.md istnieją ($(echo "$paths" | wc -l | tr -d ' ') sprawdzonych)."
 exit $fail

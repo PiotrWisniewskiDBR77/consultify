@@ -366,4 +366,19 @@ if (WYNIK_SELEKTOR.length > 0) {
     console.log(`★ ${zlePary} PARA(Y) NIE PRZESZŁY KONTROLI STANU (patrz wyżej) — kod wyjścia 1.`);
     process.exitCode = 1;
   }
+} else {
+  // NAPRAWA 2026-09-01 (rozszerzone pytanie bezpieczników — "co robi, gdy
+  // NIKT GO O POMIAR NIE POPROSIŁ"): `--wynik-selektor` jest OPT-IN (patrz
+  // uzasadnienie przy WYNIK_SELEKTOR wyżej — nie chcemy wywalać dziesiątek
+  // istniejących wywołań, które go nie podają). Ale do dziś ta ścieżka była
+  // CICHA: brak selektora = zero wzmianki w wyjściu, że KSZTAŁT 19 (para
+  // zgodna, różne stany) w ogóle nie był sprawdzany. To ten sam kształt co
+  // "esbuild niedostepny — pominieto sprawdzenie" czytane jako "przeszło".
+  // Cisza ma przestać być cicha: nie blokujemy (exit 0 zostaje), ale mówimy
+  // WPROST, ile zrzutów poszło bez kontroli stanu.
+  console.log(
+    `★ KONTROLA STANU (--wynik-selektor) NIE URUCHOMIONA — 0/${wyniki.length} zrzutów miało sprawdzoną zgodność ` +
+      `light/dark wg KSZTAŁTU 19 (para zgodna, różne stany). Oceniono WYŁĄCZNIE różnicą jasności/wymiarami strony. ` +
+      `Podaj --wynik-selektor=<css>, jeśli ekran ma pokazywać POLICZONY wynik.`
+  );
 }
