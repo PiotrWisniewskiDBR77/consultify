@@ -1,5 +1,7 @@
 import { get as dbGet } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
+import { randomUUID } from 'node:crypto';
+import { isArchetypeId } from './deliverables/slideArchetypes.js';
 
 type EditScope = 'slide' | 'section' | 'global' | 'methodological' | 'none';
 
@@ -212,9 +214,16 @@ function buildAgentReply(appliedActions: string[], isPolish: boolean): string {
       ? 'Nie rozpoznałem instrukcji. Spróbuj np. skrócić deck, dodać summary, dodać notes lub odświeżyć dane.'
       : 'I could not match that instruction. Try asking me to make the deck concise, add a summary, add notes, or refresh the data.';
   }
+  const honestActions = appliedActions.map((action) => {
+    const rewriteMatch = action.match(/^rewrite_slide:(\d+)$/);
+    if (!rewriteMatch) return action;
+    return isPolish
+      ? `podmieniono treść slajdu ${rewriteMatch[1]} na podany tekst`
+      : `replaced slide ${rewriteMatch[1]} content with the supplied text`;
+  });
   return isPolish
-    ? `Zastosowałem: ${appliedActions.join(', ')}.`
-    : `Applied: ${appliedActions.join(', ')}.`;
+    ? `Zastosowałem: ${honestActions.join(', ')}.`
+    : `Applied: ${honestActions.join(', ')}.`;
 }
 
 function getKeywordStems(token: string): string[] {
@@ -491,6 +500,7 @@ export async function applyPresentationEditPlan(params: {
     .toLowerCase();
   const cards = Array.isArray(deck?.cards) ? [...deck.cards] : [];
   const appliedActions: string[] = [];
+  const rejectedArchetypes = new Set<string>();
   const nowIso = new Date().toISOString();
   const explicitValues = extractExplicitValues(prompt);
 
@@ -531,13 +541,23 @@ export async function applyPresentationEditPlan(params: {
       const secondBlocks = blocks.slice(midpoint);
       if (secondBlocks.length === 0 && typeof firstBlocks[0]?.content?.text === 'string') {
         const text = firstBlocks[0].content.text;
-        const splitAt = Math.max(1, Math.ceil(text.length / 2));
+        const midpoint = Math.ceil(text.length / 2);
+        const leftBoundary = text.slice(0, midpoint + 1).search(/\s+\S*$/);
+        const rightOffset = text.slice(midpoint).search(/\s/);
+        const rightBoundary = rightOffset === -1 ? -1 : midpoint + rightOffset;
+        const splitAt =
+          leftBoundary === -1 && rightBoundary === -1
+            ? Math.max(1, midpoint)
+            : rightBoundary === -1 ||
+                (leftBoundary !== -1 && midpoint - leftBoundary <= rightBoundary - midpoint)
+              ? leftBoundary
+              : rightBoundary;
         firstBlocks[0] = { ...firstBlocks[0], content: { ...firstBlocks[0].content, text: text.slice(0, splitAt).trim() } };
         secondBlocks.push({ ...firstBlocks[0], content: { ...firstBlocks[0].content, text: text.slice(splitAt).trim() } });
       }
       const secondCard = {
         ...card,
-        card_id: `${card.card_id || 'card'}-split-${Date.now()}`,
+        card_id: `${card.card_id || 'card'}-split-${randomUUID()}`,
         title: `${card.title || 'Slide'} — 2`,
         blocks: secondBlocks,
       };
@@ -551,6 +571,10 @@ export async function applyPresentationEditPlan(params: {
     const layoutId = match?.[1];
     for (const index of plan.targetSlides) {
       if (!cards[index] || isProtected(index) || !layoutId) continue;
+      if (!isArchetypeId(layoutId)) {
+        rejectedArchetypes.add(layoutId);
+        continue;
+      }
       cards[index].layout_id = layoutId;
       appliedActions.push(`change_archetype:${index + 1}:${layoutId}`);
     }
@@ -887,7 +911,12 @@ export async function applyPresentationEditPlan(params: {
   const skippedLockedSlides = [...skippedIndices].sort((a, b) => a - b).map((idx) => idx + 1);
   return {
     deck: { ...deck, cards: reindexedCards, updated_at: nowIso },
-    reply: buildAgentReply(appliedActions, isPolish),
+    reply:
+      rejectedArchetypes.size > 0
+        ? isPolish
+          ? `Nie zmieniono archetypu: nieznany identyfikator ${[...rejectedArchetypes].join(', ')}.`
+          : `Archetype not changed: unknown identifier ${[...rejectedArchetypes].join(', ')}.`
+        : buildAgentReply(appliedActions, isPolish),
     appliedActions,
     plan,
     skippedLockedSlides,
