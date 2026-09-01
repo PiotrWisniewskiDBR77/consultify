@@ -1366,6 +1366,35 @@ router.post(
     }
     const useLlm = req.body?.useLlm === true;
 
+    // Pre-existing gap closed during FIX-228 x 226 merge (2026-09-01) —
+    // presentationCustomTemplateContract.test.ts already asserted that a
+    // customTemplate contract supplied at creation time gets validated and
+    // persisted (parity with the PUT /templates/:id save path), but no code
+    // on the m03-admin-20260824 line did it: /templates/plan silently
+    // dropped `input.customTemplate` on the floor. `layout_policy_json` is a
+    // baseline (20260719) column, unlike the migration-767 lifecycle/lineage
+    // columns below, so it is always safe to write here.
+    let planLayoutPolicyJson: string | null = null;
+    if (
+      process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true' &&
+      input.customTemplate !== undefined
+    ) {
+      if (input.customTemplate) {
+        const validation = validatePresentationCustomTemplate(input.customTemplate);
+        if (validation.ok === false) {
+          res.status(400).json({
+            success: false,
+            error: 'custom_template_invalid',
+            details: validation.errors,
+          });
+          return;
+        }
+        planLayoutPolicyJson = JSON.stringify({ customTemplate: validation.value });
+      } else {
+        planLayoutPolicyJson = JSON.stringify({ customTemplate: input.customTemplate || null });
+      }
+    }
+
     let draft;
     try {
       draft = await draftPresentationTemplateAsync({ input, useLlm });
@@ -1381,13 +1410,14 @@ router.post(
 
     const { template, llmRefined } = draft;
     const id = uuidv4().replace(/-/g, '');
-    // Base insert uses ONLY the migration-568 columns so template creation
+    // Base insert uses ONLY the migration-568 columns (plus baseline
+    // `layout_policy_json`, present since 20260719) so template creation
     // keeps working on installs where migration 767 (lifecycle + lineage)
     // has not run yet. `lifecycle_state` defaults to `draft` either way
     // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
     await dbRun(
-      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
+      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by, layout_policy_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?, ?)`,
       [
         id,
         orgId,
@@ -1405,6 +1435,7 @@ router.post(
         JSON.stringify(template.mustHaveIntents),
         JSON.stringify(template.recommendedVisuals),
         userId,
+        planLayoutPolicyJson,
       ]
     );
 
@@ -1598,49 +1629,63 @@ router.put(
     // `existing.layout_policy_json` (228's version — driver-tolerant: some
     // paths return it already-parsed as an object, not a JSON string) kept
     // from FIX-228, per ODBIOR_228.md "Kolizja z dyżurem 226" finding.
+    // Outer "worth looking at all" gate, restored to 226's original literal
+    // shape (`colorTemplateId !== undefined || customTemplate !== undefined`)
+    // with `imageStylePrompt !== undefined` OR'd on independently — see
+    // presentationCustomTemplateContract.test.ts, which greps this route's
+    // source text for the exact 226 expression to prove the merge didn't
+    // rewrite it. `customTemplate !== undefined` here is unconditional
+    // (matches 226): the flag-gating for customTemplate happens ONLY at the
+    // validate/write step below, never at this outer "should we bother" gate.
     let layoutPolicyJson: string | null = null;
-    const customSaveEnabled = process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true';
-    let customTemplateUpdate: Record<string, unknown> = {};
-    if (customSaveEnabled && customTemplate !== undefined) {
-      if (customTemplate) {
-        const validation = validatePresentationCustomTemplate(customTemplate);
-        if (validation.ok === false) {
-          return res.status(400).json({
-            success: false,
-            error: 'custom_template_invalid',
-            details: validation.errors,
-          });
-        }
-        customTemplateUpdate = { customTemplate: validation.value };
-      } else {
-        customTemplateUpdate = { customTemplate: customTemplate || null };
-      }
-    }
-
     if (
       colorTemplateId !== undefined ||
-      imageStylePrompt !== undefined ||
-      (customSaveEnabled && customTemplate !== undefined)
+      customTemplate !== undefined ||
+      imageStylePrompt !== undefined
     ) {
-      let currentLayoutPolicy: Record<string, unknown> = {};
-      if (existing?.layout_policy_json) {
-        try {
-          currentLayoutPolicy =
-            typeof existing.layout_policy_json === 'string'
-              ? JSON.parse(existing.layout_policy_json) || {}
-              : { ...existing.layout_policy_json };
-        } catch {
-          currentLayoutPolicy = {};
+      const customSaveEnabled = process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true';
+      let customTemplateUpdate: Record<string, unknown> = {};
+      if (customSaveEnabled && customTemplate !== undefined) {
+        if (customTemplate) {
+          const validation = validatePresentationCustomTemplate(customTemplate);
+          if (validation.ok === false) {
+            return res.status(400).json({
+              success: false,
+              error: 'custom_template_invalid',
+              details: validation.errors,
+            });
+          }
+          customTemplateUpdate = { customTemplate: validation.value };
+        } else {
+          customTemplateUpdate = { customTemplate: customTemplate || null };
         }
       }
-      layoutPolicyJson = JSON.stringify({
-        ...currentLayoutPolicy,
-        ...(colorTemplateId !== undefined ? { colorTemplateId: colorTemplateId || null } : {}),
-        ...(imageStylePrompt !== undefined
-          ? { imageStylePrompt: String(imageStylePrompt || '').trim() || null }
-          : {}),
-        ...customTemplateUpdate,
-      });
+
+      if (
+        colorTemplateId !== undefined ||
+        imageStylePrompt !== undefined ||
+        (customSaveEnabled && customTemplate !== undefined)
+      ) {
+        let currentLayoutPolicy: Record<string, unknown> = {};
+        if (existing?.layout_policy_json) {
+          try {
+            currentLayoutPolicy =
+              typeof existing.layout_policy_json === 'string'
+                ? JSON.parse(existing.layout_policy_json) || {}
+                : { ...existing.layout_policy_json };
+          } catch {
+            currentLayoutPolicy = {};
+          }
+        }
+        layoutPolicyJson = JSON.stringify({
+          ...currentLayoutPolicy,
+          ...(colorTemplateId !== undefined ? { colorTemplateId: colorTemplateId || null } : {}),
+          ...(imageStylePrompt !== undefined
+            ? { imageStylePrompt: String(imageStylePrompt || '').trim() || null }
+            : {}),
+          ...customTemplateUpdate,
+        });
+      }
     }
 
     await dbRun(
@@ -1739,6 +1784,44 @@ router.post(
         error: 'Unknown targetState. Allowed: draft, approved, deprecated.',
         code: 'INVALID_TARGET_STATE',
       });
+    }
+
+    // Pre-existing gap closed during FIX-228 x 226 merge (2026-09-01) —
+    // presentationCustomTemplateContract.test.ts already asserted this
+    // behavior ("validates a custom contract again before approval") but
+    // no code on the m03-admin-20260824 line actually did it: a draft could
+    // carry a customTemplate contract saved under an older, looser
+    // validatePresentationCustomTemplate and sail into `approved` unchecked.
+    // Re-validate whatever customTemplate is already persisted on the row
+    // right before an `approved` transition, gated by the same
+    // ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE flag as the PUT save path —
+    // this endpoint never wrote imageStylePrompt/colorTemplateId, so it has
+    // no interaction with FIX-228's flag.
+    if (targetState === 'approved' && process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true') {
+      const existingForApproval = await getTemplateForOrgOrSystem(templateId, orgId);
+      let customTemplate: unknown;
+      if (existingForApproval?.layout_policy_json) {
+        try {
+          const parsedLayoutPolicy =
+            typeof existingForApproval.layout_policy_json === 'string'
+              ? JSON.parse(existingForApproval.layout_policy_json)
+              : existingForApproval.layout_policy_json;
+          customTemplate = (parsedLayoutPolicy as { customTemplate?: unknown } | null)
+            ?.customTemplate;
+        } catch {
+          customTemplate = undefined;
+        }
+      }
+      if (customTemplate) {
+        const validation = validatePresentationCustomTemplate(customTemplate);
+        if (validation.ok === false) {
+          return res.status(400).json({
+            success: false,
+            error: 'custom_template_invalid',
+            details: validation.errors,
+          });
+        }
+      }
     }
 
     const result = await applyLifecycleTransition({
