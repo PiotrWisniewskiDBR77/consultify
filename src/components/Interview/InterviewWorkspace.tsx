@@ -2727,9 +2727,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               category: String(q.category),
               status: String(q.status),
             }))}
-            onQuestionAnswered={(questionId, answerText) => {
-              handleUpdateQuestion(questionId, { answerText, status: 'answered' as any });
-            }}
+            onQuestionAnswered={(questionId, answerText) =>
+              handleUpdateQuestion(questionId, { answerText, status: 'answered' as any })
+            }
             locked={isLocked}
           />
         ) : runtimeMode === 'single_question' ? (

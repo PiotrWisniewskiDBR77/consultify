@@ -2479,17 +2479,24 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={async () => {
                             setVoiceTranscriptDraft('');
                             setAnswerDraft(currentQuestion?.answerText || '');
                             setInputMode('text_answer');
                             if (currentQuestion) {
-                              void onUpdateQuestion(currentQuestion.id, {
-                                voiceTranscript: '',
-                                voiceTranscriptStatus: 'none',
-                                answerMode: 'text_answer',
-                                status: currentQuestion.answerText ? 'answered' : 'in_progress',
-                              });
+                              try {
+                                await onUpdateQuestion(currentQuestion.id, {
+                                  voiceTranscript: '',
+                                  voiceTranscriptStatus: 'none',
+                                  answerMode: 'text_answer',
+                                  status: currentQuestion.answerText ? 'answered' : 'in_progress',
+                                });
+                              } catch {
+                                toast.error(
+                                  t('interview.singleQuestionRuntime.transcriptDiscardFailed')
+                                );
+                                return;
+                              }
                             }
                             toast.success(t('interview.singleQuestionRuntime.transcriptDiscarded'));
                           }}
