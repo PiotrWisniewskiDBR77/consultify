@@ -50,18 +50,58 @@ Robotnik toru grafiki, przed przelotem przez 253 ekrany:
 
 **Dlatego to musi trafić do właściciela PRZED następną turą zrzutów, nie po.**
 
-## Do rozstrzygnięcia przez właściciela — jedno pytanie
+## Do rozstrzygnięcia przez właściciela — jedno pytanie, JEDNA wspólna rekomendacja
+
 **Czy zrzuty ekranów listowych mają odtąd obejmować stan z otwartym podglądem?**
 
-Koszt: każdy ekran listowy to **dwa zrzuty na motyw zamiast jednego** — czyli **cztery
-zamiast dwóch**. Przy skali obu torów to jest realny koszt czasu.
+### ★ Rekomendacja WSPÓLNA obu torów (moja pierwotna była droższa i została wycofana)
 
-Korzyść: **trzecia część kanonu przestaje być niewidoczna** — a jest to część, w której
-najłatwiej o defekt, bo jest zależna od danych wiersza i **do dziś nikt jej nie oglądał**.
+> **Dwa zrzuty po kliknięciu w wiersz. Cztery tylko tam, gdzie podgląd ZASŁANIA tabelę.
+> Archiwum bez przefotografowania, ale z adnotacją WYMIENIAJĄCĄ Z NAZWY, czego w kadrze
+> nie było.**
 
-**Rekomendacja: TAK, ale nie wstecz.** Przefotografowanie archiwum jest niewykonalne przy
-tej skali. **Od następnej tury — komplet; archiwum zostaje z jawną adnotacją, że pokazuje
-dwie części z trzech.**
+**Koszt: ZERO dodatkowych zrzutów.** Nadal dwa na ekran (jasny i ciemny) — tylko poprzedzone
+kliknięciem. **Zmienia się jedna rzecz w przelocie, nie jego rozmiar.**
+
+**Podstawa — zmierzona po obu stronach:** podgląd w tym produkcie jest **panelem BOCZNYM,
+nie nakładką**, więc **jeden kadr pokazuje tabelę i podgląd naraz**.
+Potwierdzone niezależnie u nas: kanoniczny `StandardPreview.tsx` **nie ma żadnego
+pozycjonowania nakładkowego** (`fixed` / `absolute` / `inset-0` — zero wystąpień),
+czyli jest elementem w przepływie strony. Panel boczny używany w **5** miejscach,
+wariant nakładkowy w **3**.
+
+**Wyjątek nazwany:** tam, gdzie podgląd jest nakładką zasłaniającą tabelę, jeden kadr
+nie wystarczy — **cztery zrzuty, ale tylko tam**. Rozstrzygać **mechanicznie**
+(nakładka czy panel boczny), nigdy per ekran z pamięci.
+
+### Moja pierwotna rekomendacja i dlaczego ją WYCOFUJĘ
+Proponowałem **cztery zrzuty na każdy ekran listowy**. Tor grafiki wykazał, że to podwaja
+koszt bez potrzeby — i **nie chodzi o czas maszyny**:
+
+> **Przy 253 ekranach to jest różnica między 506 a 1012 kadrami do przejrzenia PRZEZ CZŁOWIEKA.
+> Czas maszyny jest tani, jego czas nie.**
+
+**Policzyłem koszt po niewłaściwej stronie.** Liczyłem zrzuty, a wąskim gardłem jest
+**właściciel patrzący na obrazy**.
+
+### Zaostrzenie adnotacji do archiwum — od toru grafiki, przyjęte
+Moje „pokazuje dwie części z trzech" jest **za słabe, bo nie mówi, CZEGO właściciel nie
+widział**. Adnotacja ma **wymieniać z nazwy** brakujące elementy — u nich: blok AI,
+powiązania, akcje i „co dalej".
+
+> **Wtedy właściciel wie, CO ma obejrzeć przy najbliższej okazji, zamiast wiedzieć,
+> że coś mu umknęło.**
+
+## ★ Zastrzeżenie do naszego wspólnego pomiaru — NIE sumować dwóch liczb
+Nasze **0 z 20** i ich **12 z 12** są **zgodne co do kierunku, ale mierzą CO INNEGO**:
+- **my** — czy dowody dyżurów **wspominają** o stanie podglądu;
+- **oni** — czy panel **jest w kadrze**.
+
+**To są dwa różne braki.** Sformułowanie toru grafiki, przyjęte:
+
+> **Nie sumujmy tych liczb i nie podawajmy właścicielowi jako jednego pomiaru — inaczej sami
+> zrobimy to, co dziś ścigaliśmy: dwie kontrole karmiące się z różnych źródeł, zlepione
+> w jedno zdanie mocniejsze niż każda z osobna.**
 
 ## ★ Sprostowanie do wcześniejszego zapisu tego dokumentu
 Zapisaliśmy wcześniej z uznaniem, że tor grafiki „zostawił sześć bezpieczników świadomie,
