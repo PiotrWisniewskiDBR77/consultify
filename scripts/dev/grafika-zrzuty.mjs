@@ -76,6 +76,27 @@ const WEJSCIE = arg('wejscie', 'screen');
  * porażka przewijania wyglądałaby dokładnie jak defekt produktu.
  */
 const PRZEWIN = arg('przewin', '').split(',').map((s) => s.trim()).filter(Boolean);
+/**
+ * `--klawisze=ArrowRight*5,End` — wciśnij klawisze PRZED zrzutem.
+ *
+ * POWÓD ISTNIENIA (dyżur macierzy DRD 2026-09-01): `assessment-presentation-view`
+ * to KOLEKCJA slajdów w jednym komponencie — macierz osi siedzi na slajdzie 6.
+ * Narzędzie zrzucało zawsze slajd 1 (tytułowy), więc każdy pomiar tego ekranu
+ * odpowiadał na pytanie „jak wygląda strona tytułowa", a nie na pytanie zadane.
+ * Właściciel napisał „nigdzie nie znalazłem macierzy" — a macierz na slajdzie
+ * była; przyrząd po prostu nigdy do niej nie doszedł. To ten sam kształt awarii
+ * co `--przewin`: narzędzie po cichu mierzy niewłaściwą rzecz.
+ *
+ * Składnia: nazwy klawiszy Playwrighta po przecinku, `*N` powtarza N razy.
+ */
+const KLAWISZE = arg('klawisze', '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .flatMap((s) => {
+    const [klawisz, ile] = s.split('*');
+    return Array.from({ length: Math.max(1, Number(ile) || 1) }, () => klawisz);
+  });
 
 if (EKRANY.length === 0) {
   console.error('BŁĄD: podaj --ekrany=a,b,c');
@@ -132,6 +153,11 @@ for (const ekran of EKRANY) {
     try {
       await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
       await page.waitForTimeout(OSIAD);
+      for (const k of KLAWISZE) {
+        await page.keyboard.press(k);
+        await page.waitForTimeout(120);
+      }
+      if (KLAWISZE.length > 0) await page.waitForTimeout(400);
       for (const sel of PRZEWIN) {
         const trafiony = await page.evaluate((s) => {
           const el = document.querySelector(s);
