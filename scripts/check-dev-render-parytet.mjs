@@ -132,19 +132,67 @@ for (const arg of process.argv.slice(2)) {
 /**
  * Usuwa komentarze. Powód: audyt zmierzył, że naiwne liczenie `<Komponent>` łapie
  * gałęzie w komentarzach i opisach — a komentarz nie renderuje się na zrzucie.
- * Świadomie prymitywne (nie parser JS): usuwamy bloki /* … *​/ i linie zaczynające
- * się od // lub *, żeby nie zjeść `https://` w środku stringa.
+ *
+ * NAPRAWIONE (2026-09-01, drugi audyt): poprzednia wersja usuwała bloki `/* … *​/`
+ * pojedynczym regexem `/\/\*[\s\S]*?\*\//g` na CAŁYM tekście pliku, bez pojęcia
+ * o stringach. `src/routes/AppRoutes.tsx` ma trasy typu `` `/settings/*` `` —
+ * literalne „/*" na końcu wildcardu w template-stringu. Regex czytał to jako
+ * START komentarza i (leniwie, ale poprawnie w sensie regexu) zjadał wszystko
+ * AŻ DO NASTĘPNEGO „*​/" — które trafiało się dopiero w kolejnym prawdziwym
+ * docblocku, ~600 linii dalej, kasując po drodze `<SettingsView …>` i inne
+ * prawdziwe wołacze. Efekt: R1 fałszywie zgłaszała „komponent bez wołacza"
+ * dla każdego ekranu montującego to, co regex akurat zjadł.
+ *
+ * Naprawa: jednoprzebiegowy automat stanów zamiast regexu. Śledzi, czy jesteśmy
+ * w stringu (`'`, `"`, `` ` ``) — w takim stanie `/*` i `//` NIC nie znaczą,
+ * więc string nigdy nie otwiera komentarza. Nadal prymitywne (nie parser JS:
+ * nie rozróżnia literału regex od dzielenia, `${…}` w template-stringu jest
+ * traktowane jako zwykły tekst stringa), ale te uproszczenia tylko NIE TNĄ
+ * czegoś, co komentarzem nie jest — nigdy nie zjadają więcej niż stary regex.
  */
 function bezKomentarzy(tekst) {
-  const bezBlokow = tekst.replace(/\/\*[\s\S]*?\*\//g, ' ');
-  return bezBlokow
-    .split('\n')
-    .map((l) => {
-      const t = l.trimStart();
-      if (t.startsWith('//') || t.startsWith('*')) return '';
-      return l;
-    })
-    .join('\n');
+  let out = '';
+  let i = 0;
+  const n = tekst.length;
+  /** @type {'code'|'line'|'block'|'squote'|'dquote'|'template'} */
+  let stan = 'code';
+
+  while (i < n) {
+    const c = tekst[i];
+    const c2 = i + 1 < n ? tekst[i + 1] : '';
+
+    if (stan === 'code') {
+      if (c === '/' && c2 === '/') { stan = 'line'; i += 2; continue; }
+      if (c === '/' && c2 === '*') { stan = 'block'; i += 2; continue; }
+      if (c === "'") { stan = 'squote'; out += c; i += 1; continue; }
+      if (c === '"') { stan = 'dquote'; out += c; i += 1; continue; }
+      if (c === '`') { stan = 'template'; out += c; i += 1; continue; }
+      out += c; i += 1; continue;
+    }
+    if (stan === 'line') {
+      if (c === '\n') { stan = 'code'; out += '\n'; i += 1; continue; }
+      i += 1; continue;
+    }
+    if (stan === 'block') {
+      if (c === '*' && c2 === '/') { stan = 'code'; i += 2; out += ' '; continue; }
+      out += c === '\n' ? '\n' : ' '; // zachowaj numerację linii, resztę zgaś
+      i += 1; continue;
+    }
+    if (stan === 'squote' || stan === 'dquote') {
+      const cudzyslow = stan === 'squote' ? "'" : '"';
+      if (c === '\\' && c2) { out += c + c2; i += 2; continue; } // escape — nie kończ stringa
+      out += c;
+      if (c === cudzyslow) stan = 'code';
+      i += 1; continue;
+    }
+    if (stan === 'template') {
+      if (c === '\\' && c2) { out += c + c2; i += 2; continue; }
+      out += c;
+      if (c === '`') stan = 'code';
+      i += 1; continue;
+    }
+  }
+  return out;
 }
 
 /** Nazwy renderowane w JSX: `<Foo`, `<Foo.Bar` → Foo. Tylko z wielkiej litery. */
@@ -153,6 +201,70 @@ function renderowaneNazwy(tekst) {
   for (const m of tekst.matchAll(/<([A-Z][A-Za-z0-9_]*)/g)) out.add(m[1]);
   return out;
 }
+
+/**
+ * Fragmenty TEKSTU WIDOCZNEGO na zrzucie (rozszerzenie reguły PODPIS, 2026-09-01,
+ * audyt `finance-comments-panel`): tekst harnessu zdradzający przyrząd nie zawsze
+ * siedzi w `<h1..h3>` — bywa zwykłym `<span>`/`<div>` (pasek „(symulowane Menu 1 —
+ * nie część tego pakietu)"), którego stara reguła PODPIS w ogóle nie widziała.
+ *
+ * Dwa źródła, oba świadomie wąskie (żeby NIE łapać importów/komentarzy/kodu):
+ *  1. tekst JSX pomiędzy `>` a `<`, bez `{`/`}` (wyrażenia JS pomijamy — literał
+ *     tekstowy, nie zmienna),
+ *  2. wartości propsów, które w praktyce lądują na ekranie jako podpis/etykieta
+ *     (`label`, `title`, `caption`, `heading`, `aria-label`, `placeholder`).
+ */
+function widoczneFragmenty(tekst) {
+  const out = [];
+  for (const m of tekst.matchAll(/>([^<>{}]+)</g)) {
+    const s = m[1].trim();
+    // Sito: `>` / `<` bywają też generykiem TS (`React.FC<{ … }>`) albo końcem
+    // jednego JSX bloku i początkiem następnego, z kodem/komentarzem PO
+    // `bezKomentarzy` (linie `//` znikają, ale puste linie zostają) między nimi
+    // — regex nie rozumie gramatyki, więc czasem „mostkuje" dwa fragmenty przez
+    // pustą przestrzeń kodu. Zmierzone (2026-09-01): jeden taki most w całym
+    // korpusie 240 ekranów (`prawy-pas-jedna-formula`, 309 znaków, złapałby
+    // „mock" z komentarza, który NIGDY nie renderuje się na zrzucie). Realne
+    // podpisy/etykiety w JSX są krótkie — najdłuższa realna z całego korpusu to
+    // 265 znaków (jedna wielolinijkowa etykieta `wave5-internal-crimson`).
+    // Pułap 280 wpuszcza ją i odcina most (309 znaków).
+    if (s && s.length <= 280) out.push(s);
+  }
+  for (const m of tekst.matchAll(
+    /\b(?:label|title|caption|heading|aria-label|placeholder)\s*=\s*["']([^"']+)["']/g,
+  )) {
+    const s = m[1].trim();
+    if (s) out.push(s);
+  }
+  return out;
+}
+
+/**
+ * Wzorce „zdradzają przyrząd" — dobrane PO przejrzeniu realnych trafień w
+ * `dev-render/screens/` (nie zgadywane), patrz raport dyżuru 2026-09-01:
+ *  - symulowane/symulacja → 7 ekranów finansów, wszystkie ten sam pasek
+ *    „(symulowane Menu 1 — nie część tego pakietu)".
+ *  - nie część / nie jest częścią → te same 7 + `vault-folder-block-proof`.
+ *  - harness / dev-render → 8-9 ekranów (etykiety w stylu „harness dev-render",
+ *    „(dev-render marker)", „ten harness izoluje…").
+ *  - mock → 1 ekran (`prawy-panel-szyna-ikon`, już w linii bazowej jako PRZED/PO).
+ *  - przyrząd → 0 trafień w treści widocznej (słowo żyje tylko w komentarzach —
+ *    już usuwanych przez `bezKomentarzy`); zostawione w regule na przyszłość.
+ *  - PRZED/PO jako etykieta → kotwiczone na START fragmentu (`^(PRZED|PO)\b`),
+ *    bo samo „po" jest zwykłym polskim przyimkiem i bez kotwicy zalałoby wynik
+ *    fałszywkami („Kliknij po zapisaniu" itp.) — 6 ekranów, wszystkie diptychy.
+ *  - atrapa → 0 trafień w treści widocznej (jak „przyrząd" — zostawione).
+ */
+const WZORCE_PRZYRZADU = [
+  ['symulowane/symulacja', /symulowan|symulacj/i],
+  ['nie część / nie jest częścią', /nie\s+(?:jest\s+)?część/i],
+  ['atrapa', /atrap/i],
+  ['harness', /\bharness\b/i],
+  ['dev-render', /dev-render/i],
+  ['mock', /\bmock\b/i],
+  ['przyrząd', /przyrz[ąa]d/i],
+  ['PRZED/PO etykieta', /^(PRZED|PO)\b/],
+];
 
 /**
  * Nazwy DEKLAROWANE w pliku — plik definiujący nie liczy się jako własny wołacz.
@@ -506,13 +618,45 @@ for (const nazwaPliku of plikiEkranow) {
   // ── PODPIS — nagłówek harnessu bez data-dev-render-chrome (ostrzeżenie) ──────
   // `grafika-zrzuty.mjs` ukrywa przed zrzutem tylko [data-dev-render-chrome].
   // Nieoznaczony <h1..h3> ląduje na zrzucie, który właściciel ocenia jako produkt.
+  //
+  // Sito fałszywych alarmów (ten sam styl co reszta pliku): jeśli ekran W OGÓLE
+  // używa `data-dev-render-chrome` gdziekolwiek, zakładamy że autor już oznaczył
+  // swoje paski/etykiety — bez tego sita KAŻDY ekran, który poprawnie chowa jeden
+  // podpis, ale ma DRUGI (osobny) nagłówek gdzie indziej w pliku, dostałby fałszywe
+  // trafienie. Cena (uczciwie): to jest per-PLIK, nie per-element — mniej precyzyjne
+  // niż prawdziwy parser JSX, ale ten sam kompromis co reszta tej bramki (patrz sita
+  // R2 wyżej) i tania metoda, która nie wymaga parsować JSX.
+  const chroniony = tekst.includes('data-dev-render-chrome');
+
   const maNaglowek = /<h[123][\s>]/.test(tekst);
-  if (maNaglowek && !tekst.includes('data-dev-render-chrome')) {
+  if (maNaglowek && !chroniony) {
     naruszenia.push({
       ekran, regula: 'PODPIS', szczegol: 'naglowek',
       opis: 'rysuje własny <h1..h3> bez data-dev-render-chrome — podpis trafia na zrzut',
     });
     statEkranow.PODPIS.add(ekran);
+  }
+
+  // ── PODPIS — tekst zdradzający przyrząd poza <h1..h3> (ostrzeżenie) ──────────
+  // Rozszerzenie 2026-09-01 (audyt `finance-comments-panel`): powyższa reguła
+  // łapie tylko własne nagłówki. Pasek „(symulowane Menu 1 — nie część tego
+  // pakietu)" to zwykły `<span>`, więc reguła nagłówkowa go nie widziała.
+  if (!chroniony) {
+    const fragmenty = widoczneFragmenty(tekst);
+    const zlapane = new Set();
+    for (const frag of fragmenty) {
+      for (const [nazwa, wzorzec] of WZORCE_PRZYRZADU) {
+        if (zlapane.has(nazwa)) continue;
+        if (wzorzec.test(frag)) zlapane.add(nazwa);
+      }
+    }
+    for (const nazwa of [...zlapane].sort()) {
+      naruszenia.push({
+        ekran, regula: 'PODPIS', szczegol: `tekst:${nazwa}`,
+        opis: `pokazuje tekst zdradzający przyrząd („${nazwa}") poza data-dev-render-chrome — podpis trafia na zrzut`,
+      });
+      statEkranow.PODPIS.add(ekran);
+    }
   }
 }
 
