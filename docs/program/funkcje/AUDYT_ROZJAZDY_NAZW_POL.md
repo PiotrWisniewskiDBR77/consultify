@@ -376,3 +376,16 @@ commitowane). Prześledzone ręcznie do końca (przeglądarki 4-warstwowej), wsz
 `scan.py`, `front_access.json`, `back_fields.json`, `candidates_reorder.json`,
 `slash_patterns.txt` — w `/private/tmp/przemiatanie-nazw/`. Nie są częścią repo (nie dodane
 do commita), zostawione do wglądu w tym worktree na wypadek kontynuacji.
+
+## Sprostowanie 2026-09-01 (dyżur 251) — defekt Audytów naprawiony
+
+Opisany tu rozjazd pól listy Sesji Audytów jest historycznie prawdziwy dla stanu badanego
+przez ten dokument, lecz nie dla markera `df7f13056f`. Commit `8510fcb01d`, będący jego
+przodkiem, mapuje serwerowe `criteriaTotal`/`criteriaConcluded`/`findingsOpen` na
+`applicableCriteria`/`concludedCriteria`/`openFindings` w `mapProgramSummaryRow()` i rzuca
+`AUDITS_API_CONTRACT_ERROR` przy braku licznika. Naprawa obejmuje także atrapę o kształcie
+serwera, negatywny test kontraktu oraz cztery obrazy PRZED/PO w
+`evidence/grafika/190-audyty-sesje/`. Commit dokumentu `eb9732e513` nie jest potomkiem
+`8510fcb01d` (`git merge-base --is-ancestor` zwraca kod 1): powstał na równoległej gałęzi,
+więc późniejszy czas zapisu nie oznaczał znajomości naprawy. `status.json` wyjaśnia ponadto,
+że ocena A dotyczyła wyłącznie Biblioteki; Sesje pozostają do osobnego odbioru właściciela.

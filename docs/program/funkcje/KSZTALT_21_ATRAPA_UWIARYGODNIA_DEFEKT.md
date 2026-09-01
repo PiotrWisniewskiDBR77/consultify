@@ -82,3 +82,14 @@ Krok 0 (wypisz rodzinę) zadziałał od razu:
 Tor grafiki łata ten ekran **punktowo**, bo ma ocenę A. **To jest naprawa tymczasowa** —
 ma zostać zastąpiona warstwą systemową, nie stać obok. W przeciwnym razie za osiem tygodni
 będzie tu dwanaście plików z własnym mapowaniem, **tak jak już raz w tym produkcie było.**
+
+## Sprostowanie 2026-09-01 (dyżur 251) — reguła zastosowana, defekt naprawiony
+
+Commit `8510fcb01d`, przodek markera `df7f13056f`, zastosował dokładnie opisaną tu
+sekwencję: najpierw mock `/audits/programs` otrzymał kształt serwera, następnie powstał
+dowód wizualny PRZED/PO, a `mapProgramSummaryRow()` dostał jawne mapowanie i błąd
+`AUDITS_API_CONTRACT_ERROR`. Negatywny test chroni brak liczników przed cichym renderem.
+Commit tego dokumentu `bacbf4081c` nie jest potomkiem `8510fcb01d`
+(`git merge-base --is-ancestor` zwraca kod 1), mimo późniejszego czasu ściennego: oba
+powstały równolegle. `status.json` jawnie ogranicza dawną ocenę A do Biblioteki i kieruje
+Sesje do ponownego odbioru; historyczny opis odkrycia pozostaje zachowany.

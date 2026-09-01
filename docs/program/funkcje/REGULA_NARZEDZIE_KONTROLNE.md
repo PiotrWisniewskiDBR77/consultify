@@ -95,7 +95,8 @@ szerokości panelu okazały się **piętnastoma**; dwa paski przyrządu w kadrze
 1. **Dziura w uprawnieniach formularzy** — przemiatanie **uruchomione** (audyt wszystkich
    rodzin tras serwera).
 2. **Fałszywa obietnica zapisu** (kreator formularzy, dziewiąty przypadek) — przemiatanie
-   **wykonane** w Mojej Pracy i Portalu Partnerskim; reszta produktu **nieprzemieciona**.
+   **wykonane** w Mojej Pracy, Portalu Partnerskim, Interview oraz bounded próbce Documents/Wordy,
+   Materials/Tools i pozostałego Admina; reszta produktu **nieprzemieciona**.
 3. **Rozjazd nazw pól front-zaplecze** (kolumna „Postęp" w Audytach pokazująca literalnie
    ukośnik, bo ekran pyta o `concludedCriteria`, a odpowiedź niesie `criteriaConcluded`) —
    **zgłoszone punktowo, obszar NIEPRZEMIECIONY.** To jest dokładnie ten kształt: brakująca

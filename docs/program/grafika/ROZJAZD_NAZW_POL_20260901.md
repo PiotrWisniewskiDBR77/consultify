@@ -233,3 +233,22 @@ realnej aplikacji literalne „/", kolumna „Ustalenia otwarte" — pustkę.
 Uzasadnienie oparte wyłącznie na tym, co zmierzono w tym repo (`m03`), nie na
 zgłoszeniu sąsiedniej sesji — to zgłoszenie posłużyło jedynie jako wzorzec
 kształtu do szukania, nie jako dowód dla tego repo.
+
+## Sprostowanie 2026-09-01 (dyżur 251) — dwa wiersze ZMIERZONE dla Sesji są naprawione
+
+Werdykt „TAK — występuje" i dwa wiersze ZMIERZONE zachowują prawdę o chwili tego audytu,
+ale nie opisują już markera `df7f13056f`. Commit `8510fcb01d`, jego przodek, mapuje
+`criteriaTotal`/`criteriaConcluded`/`findingsOpen` na pola konsumenta i odrzuca brakujące
+liczniki przez `AUDITS_API_CONTRACT_ERROR`. Poprawiono również mock do kształtu serwera,
+dodano negatywny test oraz dowód PRZED/PO w `evidence/grafika/190-audyty-sesje/`.
+Commit dokumentu `5c17eaed6e` nie jest potomkiem naprawy, więc dokument jej nie widział.
+Ocena A w `status.json` dotyczy wyłącznie Biblioteki; zakładka Sesje, choć naprawiona,
+pozostaje bez własnej oceny i wymaga odbioru właściciela.
+## Uzupełnienie dyżuru 252 — śledzenie 21 kandydatów
+
+Pomiar na markerze `df7f13056f` rozdzielił 21 par na 20 przypadkowych kolizji
+nazw oraz jeden wcześniej rozstrzygnięty przypadek. Żadna para nie tworzy
+wspólnego kontraktu JSON front↔serwer; szczegóły i pełne ścieżki dowodowe są w
+`CODEX_DAY252_ROZJAZDY_PRZEMIATANIE_REPORT.md`. Wynik: **0 ZMIERZONE, 21 SZUM,
+0 PODEJRZENIE-nieustalone**. `rawSeverity`/`severityRaw` przepisano z audytu
+funkcyjnego bez ponownego śledzenia, zgodnie z instrukcją.

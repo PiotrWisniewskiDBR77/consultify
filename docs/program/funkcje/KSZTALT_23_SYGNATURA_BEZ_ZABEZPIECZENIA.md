@@ -55,3 +55,14 @@ towarzyszy zachowaniu POPRAWNEMU.**
 To dotyczy każdego zrzutu robionego z realnego serwera — dziś jeszcze nie boli, bo oba tory
 fotografują z danych podstawionych, **ale zaboli natychmiast po przejściu na realny łańcuch,
 i będzie wyglądać jak defekt.**
+## Dzień 249 — przemiatanie serwera
+
+Pomiar na markerze `df7f13056f`: literalna heurystyka AST dała 22 kandydatów, natomiast jawny blok instrukcji zawiera 74 wiersze. Przeczytano 74/74 pełnych funkcji i ich wywołania SQL/delegacje. Wszystkie 74 pozycje jawnej listy sklasyfikowano jako **BEZPIECZNE**; pełna tabela maszynowa z `plik:linia`, granicami funkcji, referencjami parametrów i argumentami wywołań DB: `/private/tmp/cx-day249-sygnatura-bez-ochrony-artefakty/lista-analiza.json` (SHA-256 `765f70c9d15afecea40ca704792d976b0fdd8152afeabe028656a676f3471b32`).
+
+| Przypadek R0 | Klasyfikacja | Dowód |
+|---|---|---|
+| `server/src/services/ai/proactiveNudges.ts:11-69` | BEZPIECZNY | `orgId` nieużyty, lecz wszystkie SELECT-y są scope'owane przez `userId`; użytkownik ma pojedynczą kolumnę `organization_id` |
+| `server/src/services/ai/abTesting.ts:178-193` | DZIURAWY | `userId` nieużyty; UPDATE scope'owany tylko przez `id` |
+| `server/src/services/tablePlatform/FieldPermissionService.ts:34-65` | NIEJEDNOZNACZNY / MARTWY | `userId` nieużyty, ale zero callerów dokładnych metod `canReadField/canWriteField`; warunek wąskiej naprawy nie został spełniony |
+
+Rozbieżność 82/74/22 jest wynikiem pomiaru, nie została wygładzona. Produktu nie zmieniono.

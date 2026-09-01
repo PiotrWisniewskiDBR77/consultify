@@ -57,3 +57,11 @@ dyżur 240 na bazie zbudowanej od zera.
    jest pułapką dla każdego nowego wykonawcy.
 3. **Dyżur 240 ma zmierzyć na bazie od zera**, które tabele oceny realnie powstają —
    i czy asekuracja z komentarza wyżej jest dziś potrzebna, czy jest zabytkiem.
+
+## Aktualizacja 2026-09-01 — zadanie 1 wykonane
+
+Dyżur 254 poprawił oba README w commicie `72fc2c738d`: nowe migracje są teraz
+kierowane do aktywnego `server/migrations/`, czyli domyślnego katalogu runnera.
+Oba dokumenty ostrzegają, że `server/migrations-v2/` i
+`server/migrations-archive/` są wykluczone z uploadu wdrożeniowego. Los tych
+katalogów (zadanie 2) pozostaje decyzją produktową poza zakresem dyżuru 254.

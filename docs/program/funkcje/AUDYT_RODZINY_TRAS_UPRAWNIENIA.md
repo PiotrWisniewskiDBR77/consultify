@@ -192,3 +192,64 @@ bezpośrednio przenaszalny na #1-#3: dodać middleware/inline-check porównując
 nie ujawniać istnienia cudzego obiektu) przy niezgodności. Dla #4-#6 to samo, niezależnie
 od tego że `mountStub` je dziś maskuje — maskowanie nie jest naprawą (patrz sekcja
 „Pułapka" wyżej).
+
+## Dzień 242 — stan po weryfikacji i naprawie
+
+- Permission Requests: pełna rodzina to `GET /`, `POST /`, `PUT /:id/approve`,
+  `PUT /:id/reject`; oba PUT mają teraz wspólny check właściciela i `404`
+  (`server/src/routes/permissionRequests.routes.ts:19-28,78-118`). Dowód mutacyjny:
+  bez checków oba ataki zwracały `200`, po przywróceniu `404`; SQL readback zachował
+  `pending`, a właściciel uzyskał odpowiednio `approved`/`rejected`.
+- AI Context: pełna rodzina to `GET /`, `POST /`, `PUT /:id`, `DELETE /:id`; oba
+  mutatory mają wspólny check (`server/src/routes/context.routes.ts:18-29,79-143`).
+  Bez checków oba ataki zwracały `200`, po przywróceniu `404`; SQL readback potwierdził
+  brak nadpisania/usunięcia, a właściciel nadal wykonał oba zapisy.
+- Videos: pełna rodzina to `GET /`, `POST /`, `DELETE /:id`; DELETE ma check
+  (`server/src/routes/videos.routes.ts:16-25,67-77`), ale pełny live-proof jest
+  `EVIDENCE_MISSING`: po 880 migracjach w świeżym PG brak tabeli `videos` (kontrakt
+  `day242-videos-org-isolation.realpg.test.ts` jest czerwony: `[]` zamiast kolumny
+  `organization_id`).
+- Przesiew R3 ujawnił kolejne statycznie potwierdzone kandydaty poza licencją:
+  AI A/B Testing mutuje eksperymenty po samym `id`
+  (`server/src/services/ai/abTesting.ts:83,165,182-282`), AI Budgets mutuje budżety,
+  alerty i model permissions po samym `id`
+  (`server/src/services/aiBudgetService.ts:235-290,566-572`), a AI Drafts approve/reject
+  wywołuje serwis bez `userId`/`organizationId`, który aktualizuje po `id`
+  (`server/src/routes/ai/ai-drafts.routes.ts:310-389`,
+  `server/src/services/ai/draftService.ts:39-78`). Nie naprawiano ich w Dniu 242.
+## Dzień 246 — domiar: kolejne 60-80 kandydatów przeczytane
+
+Na markerze `df7f13056f` zregenerowano 154 kandydatów i przeczytano 70 rzeczywistych tras (69 z listy + `journeyAnalytics.routes.ts` za barrel `audits/index.ts`). Wynik: 61 bezpiecznych, 6 globalnych/platformowych, 3 dziurawe-niepoprawione. Pełne dowody i liczby endpointów: `CODEX_DAY246_DOMIAR_AUDYTU_REPORT.md`.
+
+| Klasyfikacja | Pliki i dowód |
+|---|---|
+| bezpieczny (61) | Wszystkie wiersze oznaczone BEZPIECZNY w raporcie; dowód `plik:linia` w tabeli R2. |
+| globalny-poza-zakresem (6) | `admin/ai-observability.routes.ts:12`, `admin/backup.routes.ts:13`, `ai-prompts.routes.ts:58`, `billing/billingAdmin.routes.ts:21`, `help.routes.ts:86`, `integrations/webhooks.routes.ts:174`. |
+| dziurawy-niepoprawiony (3) | `assessment-enterprise.routes.ts:16-22`, `enterprise-platform.routes.ts:16-22`, `final-batch.routes.ts:16-22`: klient-kontrolowany fallback `req.query.organizationId`. |
+## Dzień 247 — próba z kategorii już naprawione
+
+Deterministyczna próbka: 18 z odtworzonej populacji 143 (ziarno `20260901`) plus obowiązkowy `table-platform.routes.ts`, razem 19. Szczegółowy zakres i ograniczenia: `CODEX_DAY247_PROBKA_NAPRAWIONE_REPORT.md`.
+
+| Plik | Klasyfikacja | Dowód |
+|---|---|---|
+| `admin/service-accounts.routes.ts` | BEZPIECZNY | `:14` organization context |
+| `benefits.routes.ts` | BEZPIECZNY | `:52` router tenant wall |
+| `finance-enterprise.routes.ts` | BEZPIECZNY | `:20` scoped `userId/orgId` |
+| `method-core.routes.ts` | BEZPIECZNY | `:15`, `:1763` tenant gate + scoped helper |
+| `my-work/home.routes.ts` | POZA ZAKRESEM | brak kwalifikującej mutacji |
+| `organization/branding.routes.ts` | BEZPIECZNY | `:41` org access |
+| `partners.routes.ts` | BEZPIECZNY/GLOBALNY | `:226`; osobne routery super-admin/config |
+| `performance.routes.ts` | POZA ZAKRESEM | brak mutacji |
+| `pmo/projects.routes.ts` | BEZPIECZNY | `:22`, `:180-384` org/capability gates |
+| `presentationStudio.routes.ts` | BEZPIECZNY | `:18` tenant scope |
+| `research.routes.ts` | BEZPIECZNY | `:39` organization context |
+| `results-enterprise.routes.ts` | BEZPIECZNY | `:19` scoped `userId/orgId` |
+| `resultsVnext/okr.routes.ts` | BEZPIECZNY | `:16` `requireOrgAccess` |
+| `share.routes.ts` | BEZPIECZNY DLA KRYTERIUM | `:273-278`, `:607-613`, `:670-675` owner/org checks |
+| `table-platform.relations-explain.routes.ts` | POZA ZAKRESEM | `:25`, brak mutacji |
+| `user/preferences.routes.ts` | BEZPIECZNY | `:14`, zapis po `userId` |
+| `v8/partner.routes.ts` | BEZPIECZNY | `:2` partner-org scope |
+| `wave7-connectors.routes.ts` | BEZPIECZNY | `:20` auth context z organizacją |
+| `table-platform.routes.ts` | **DZIURAWY** | trasy `:2964-2983` → `AutomationService.ts:134-145`; trasy `:4368-4388` → `WebhookRelayService.ts:101-111`, wszędzie zapis tylko po `id` |
+
+**Kryterium: TAK.** Znaleziono co najmniej jedną dodatkową dziurę klasy „mutujący endpoint bez `organization_id` aż do `WHERE`”. Kategoria „już naprawione” **przestaje być kategorią**, na której można polegać bez czytania. Rekomendacja: pełny, niewyrywkowy przegląd całej populacji. Bez naprawy produktu i bez live-proof — zgodnie z licencją dnia 247.

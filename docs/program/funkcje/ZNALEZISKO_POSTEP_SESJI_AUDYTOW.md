@@ -50,3 +50,14 @@ nie ma czego rozwiązywać.
 
 **To jest przykład rozkazu pomiarowego, który dał wynik „nie ma problemu" — i taki
 wynik też jest wart tyle samo co znalezisko.**
+
+## Sprostowanie 2026-09-01 (dyżur 251) — defekt naprawiony
+
+Żywy pomiar PostgreSQL opisany wyżej pozostaje dowodem historycznego defektu, ale defekt
+nie występuje już na markerze `df7f13056f`. Jego przodek `8510fcb01d` dodał jawne
+mapowanie trzech liczników w `mapProgramSummaryRow()` oraz fail-closed
+`AUDITS_API_CONTRACT_ERROR`, poprawił mock `/audits/programs` do kształtu serwera i dodał
+negatywny test kontraktu. Cztery zrzuty PRZED/PO w `evidence/grafika/190-audyty-sesje/`
+pokazują przejście od „/" i pustych komórek do wartości m.in. `0/42`, `12/42`, `27/27`
+oraz liczbowych ustaleń otwartych. Rejestr `status.json` nie przenosi oceny A Biblioteki
+na niesfotografowaną wcześniej zakładkę Sesje — ta zakładka wraca do odbioru.
