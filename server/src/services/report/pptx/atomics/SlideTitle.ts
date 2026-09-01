@@ -2,6 +2,7 @@
  * Atomic: Slide Title
  * Renders the main title text of a slide inside the header bar.
  */
+import { isDeckOverflowWarningEnabled } from '../../../../config/FeatureFlags.js';
 import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface SlideTitleProps {
@@ -140,7 +141,7 @@ export function SlideTitle(props: SlideTitleProps, tokens: DesignTokens): Render
         wrap: fit.wrap,
         // Kept as a defensive fallback only — the fontSize above already
         // guarantees fit by construction, so this should be a no-op.
-        fit: 'shrink',
+        ...(isDeckOverflowWarningEnabled() ? {} : { fit: 'shrink' as const }),
         lineSpacingMultiple: 0.9,
       });
     },
