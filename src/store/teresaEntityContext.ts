@@ -47,6 +47,52 @@ export interface TeresaEntityContext {
   ts: number;
 }
 
+/**
+ * Ile znaków (po serializacji) wolno przypięciu zabrać w localStorage.
+ * Pin jest PERSYSTOWANY, a `contextData` niesie u części wołaczy cały markdown
+ * ekranu (`teresaPrompt` w IdeaMapWorkspace / FinanceHub potrafi mieć kilkadziesiąt
+ * kB). Bez limitu jeden klik zapychałby magazyn przeglądarki i wywracał zapis
+ * całego store'u rozmów. Przypięcie ma NIEŚĆ TOŻSAMOŚĆ OBIEKTU — treść i tak
+ * dociąga serwer po `selectedObjectId`.
+ */
+const MAX_PINNED_ENTITY_DATA_CHARS = 2_000;
+
+/**
+ * Przycina `entityData` do rozmiaru, który wolno persystować. `teresaPrompt`
+ * leci precz zawsze — ma własny kanał (sessionStorage, patrz
+ * useOpenChatWithContext) i nie ma czego szukać w trwałym przypięciu.
+ */
+export function trimPinnedEntityData(
+  data: Record<string, unknown> | undefined | null
+): Record<string, unknown> {
+  if (!data || typeof data !== 'object') return {};
+  const { teresaPrompt: _dropped, ...rest } = data as Record<string, unknown>;
+  try {
+    if (JSON.stringify(rest).length <= MAX_PINNED_ENTITY_DATA_CHARS) return rest;
+  } catch {
+    // Nieserializowalne (cykl, funkcja) => nie persystujemy niczego.
+    return {};
+  }
+  // Za duże: zostawiamy tylko pola skalarne, po nich przycinamy do limitu.
+  const slim: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(rest)) {
+    if (value === null || ['string', 'number', 'boolean'].includes(typeof value)) {
+      if (typeof value === 'string' && value.length > 200) continue;
+      slim[key] = value;
+      try {
+        if (JSON.stringify(slim).length > MAX_PINNED_ENTITY_DATA_CHARS) {
+          delete slim[key];
+          break;
+        }
+      } catch {
+        delete slim[key];
+        break;
+      }
+    }
+  }
+  return slim;
+}
+
 /** Czy przypięty kontekst obowiązuje w danym miejscu aplikacji. */
 export function isTeresaEntityContextInScope(
   pin: TeresaEntityContext | null | undefined,

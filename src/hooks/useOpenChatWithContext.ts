@@ -21,6 +21,7 @@ import { AppView } from '@/types';
 import type { SidekickContextEventDetail } from '../components/MyWork/mindmap/aiSidekickContext';
 import { getRouteFromAppView } from '../routes/routeConfig';
 import { useAppStore } from '../store/useAppStore';
+import { trimPinnedEntityData } from '../store/teresaEntityContext';
 import { useConversationStore } from '../store/useConversationStore';
 
 export interface OpenChatOptions {
@@ -113,7 +114,9 @@ export function useOpenChatWithContext() {
             type: entityType,
             entityId,
             entityName: entityName || entityType,
-            entityData: contextData || {},
+            // Przycięte: pin jest persystowany, a `contextData` u części
+            // wołaczy niesie cały markdown ekranu (`teresaPrompt`).
+            entityData: trimPinnedEntityData(contextData),
             conversationId,
             originPath,
             ts: Date.now(),

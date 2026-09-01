@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isTeresaEntityContextInScope,
   resolveTeresaWorkspaceContext,
+  trimPinnedEntityData,
   type TeresaEntityContext,
 } from '../../src/store/teresaEntityContext';
 
@@ -98,5 +99,30 @@ describe('resolveTeresaWorkspaceContext', () => {
 
   it('brak pinu i brak bazy => null, nie pusty obiekt udający kontekst', () => {
     expect(resolveTeresaWorkspaceContext(null, null, {})).toBeNull();
+  });
+});
+
+describe('trimPinnedEntityData', () => {
+  it('wyrzuca teresaPrompt — ma własny kanał, nie miejsce w trwałym przypięciu', () => {
+    const out = trimPinnedEntityData({
+      teresaPrompt: 'x'.repeat(50_000),
+      lifecycle: 'draft',
+    });
+    expect(out).toEqual({ lifecycle: 'draft' });
+  });
+
+  it('przycina wielki ładunek zamiast zapychać localStorage', () => {
+    const out = trimPinnedEntityData({
+      wielki: 'y'.repeat(40_000),
+      slideCount: 12,
+      tabela: Array.from({ length: 500 }, (_, i) => ({ i })),
+    });
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(2_000);
+    expect(out.slideCount).toBe(12);
+  });
+
+  it('mały ładunek zostaje nietknięty; brak danych => pusty obiekt', () => {
+    expect(trimPinnedEntityData({ a: 1, b: 'dwa' })).toEqual({ a: 1, b: 'dwa' });
+    expect(trimPinnedEntityData(null)).toEqual({});
   });
 });
