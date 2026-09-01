@@ -16,6 +16,62 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-38 · Trzy pomiary zasięgu obaliły trzy moje własne liczby tego samego popołudnia
+**Co się stało:** nowy nadzorca zlecił trzy równoległe pomiary zasięgu rodzin defektów (crimson,
+kontrast motywów, język), do każdego dołączając WŁASNĄ liczbę wstępną jako punkt odniesienia.
+**Dwie z trzech okazały się nieprawdziwe, a trzecia opierała się na nieaktualnym dokumencie.**
+
+1. **Filtr zaniżył pomiar dwukrotnie.** Do policzenia tekstu bez wariantu drugiego motywu użyłem
+   `grep ... | grep -v 'dark:'`. Filtr odrzuca CAŁĄ linię, w której gdziekolwiek pada `dark:` —
+   także wtedy, gdy `dark:` dotyczy innej właściwości niż kolor tekstu. Zmierzone: ta sama komenda
+   bez filtru daje **449** linii, z moim filtrem **221**. Podałem robotnikowi 221 z komentarzem
+   „na pewno zawyżona". Była **zaniżona ponad dwukrotnie**.
+2. **Podałem błędny zakres katalogów — trzy z czterech znanych defektów leżały poza nim.**
+   Zleciłem pomiar w `src/components/settings` i `src/components/admin`. `SettingsCard.tsx`,
+   `SettingsToggle.tsx` i `AuditLogViewer.tsx` leżą w `src/components/AISettings/` — katalogu,
+   którego nie wymieniłem. Robotnik dodał go z własnej inicjatywy; gdyby wykonał zlecenie
+   dosłownie, pomiar nie zobaczyłby **trzech z czterech** przypadków, od których się zaczął.
+3. **Przepisałem nieaktualny fakt zamiast go zmierzyć.** W zleceniu podałem jako „potwierdzony
+   przykład": ~15 kluczy `toolOutputs.*` nie istnieje ani w `pl`, ani w `en`. Robotnik sprawdził
+   `git log`: **defekt był już naprawiony wcześniejszym commitem na tej gałęzi**. Wziąłem to
+   z karty ekranu w `status.json` i podałem dalej jako pomiar. To dokładnie Złota Reguła 1
+   z `CLAUDE.md` — którą sam zacytowałem w dokumencie napisanym pół godziny wcześniej.
+
+**Dlaczego ważne:** wszystkie trzy błędy przeszłyby niezauważone, gdyby robotnicy przyjęli moje
+liczby na wiarę. Złapali je, bo **w każdym zleceniu było zdanie „zweryfikuj tę liczbę sam
+i podaj SWOJĄ; jeśli się różni, powiedz o ile i dlaczego"**. To jedno zdanie kosztuje nic
+i zadziałało trzy razy z trzech. Bez niego nadzorca jest pojedynczym punktem awarii pomiaru —
+a jego liczby, raz wypowiedziane, wracają jako „zweryfikowany fakt" (znany kształt: *hipoteza
+nadzorcy staje się faktem*).
+
+**Co z tego wynika:** (a) **zdanie o samodzielnej weryfikacji liczby jest odtąd obowiązkowe
+w każdym zleceniu pomiarowym**; (b) zakres katalogów w zleceniu podawać JAKO HIPOTEZĘ —
+z jawnym poleceniem „jeśli znany przypadek leży poza tym zakresem, rozszerz go i powiedz o tym";
+(c) każdy fakt przepisany z `status.json` do zlecenia oznaczać jako **niezmierzony** — karty
+ekranów starzeją się szybciej niż kod, który opisują.
+
+---
+
+### Z-39 · `admin` i `Admin` to na tym Macu ten sam katalog — każdy pomiar po obu liczy podwójnie
+**Co się stało:** przy pomiarze zasięgu kontrastu robotnik zauważył 54 „duplikaty" wystąpień
+i sprawdził przyczynę: `src/components/admin` i `src/components/Admin` mają **identyczny numer
+inode** (`462360537` — zweryfikowane niezależnie przez nadzorcę komendą `ls -di`). System plików
+macOS jest domyślnie nieczuły na wielkość liter, więc to jeden fizyczny katalog pod dwiema nazwami.
+
+**Dlaczego ważne:** to **nowy, wcześniej nieopisany sposób kłamstwa przyrządu** — i kłamie
+w stronę zawyżenia. Każde polecenie wymieniające obie nazwy (a w tym repozytorium oba zapisy
+występują w importach) liczy te same pliki dwa razy. Pomiar „ile jest defektów" wychodzi
+zawyżony o rozmiar katalogu, i to w sposób niewidoczny — wyniki wyglądają na poprawne, bo
+ścieżki się różnią. Zagrożone jest każde wcześniejsze zliczanie po `src/components/`, jeśli
+w jego zakresie były obie pisownie.
+
+**Co z tego wynika:** przed każdym zliczaniem po ścieżkach — `ls -di` na katalogach o podobnej
+nazwie. Osobno: sam fakt, że repozytorium ma importy pod dwiema pisowniami tej samej ścieżki,
+jest długiem, który wywróci się na pierwszym systemie plików czułym na wielkość liter (Linux —
+czyli każdy serwer wdrożeniowy). **Zgłoszone do toru funkcji jako sprawa osobna od grafiki.**
+
+---
+
 ### Z-37 · Sesja zamknięta — runda odebrana, cztery bezpieczniki, najdroższa lekcja dnia to sam przyrząd
 **Co się stało:** runda odbioru 31.08–01.09 zamknięta liczbowo: **255 ekranów przyjętych, 3 do
 poprawki (wszystkie domknięte tego samego dnia), 2 odrzucone** — z 313 ekranów w rejestrze.
