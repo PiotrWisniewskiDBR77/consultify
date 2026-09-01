@@ -16,6 +16,170 @@ Nowe wpisy **na górze**. Każdy wpis: co się stało · dlaczego to ważne · c
 
 ---
 
+### Z-35 · Runda 01.09 zamknięta decyzjami — jedna Teresa w swoim oknie, cztery odrzucone ekrany rozstrzygnięte pojedynczo
+**Co się stało:** trzy decyzje zamykające rundę trafiły do `KANON_Z_ODBIOROW.md` — tu tylko kontekst,
+który ginie razem z commitem. (1) Panele artefaktów przestają kleić własny czat z Teresą — **jedna
+Teresa mieszka w jednym oknie**, panel dostaje wyłącznie wejście do niej. Zasada dla WSZYSTKICH
+przyszłych artefaktów, nie punktowa poprawka: zinwentaryzowano pięć miejsc osadzenia w produkcji,
+z czego **dwa żywe bez flagi**; `ArtifactRightRail`/`artifactRightRailFlag.ts` dostały adnotację
+„ZASTĄPIONE 2026-09-01" przy cytacie z 30.08 („Teresa jako ikona szyny"), żeby stara decyzja
+zostawała WIDOCZNA, nie skasowana — nowa po prostu wygrywa. (2) Macierz DRD zaakceptowana —
+patrz Z-33. (3) Cztery odrzucone ekrany z rundy 01.09 NIE zostały omówione hurtem — każdy dostał
+osobny werdykt w `ANALIZA_ODRZUCONE_20260901.md`: dwa zdjąć z produktu, jeden zostawić i dorobić
+wejście, jeden przebudować. Analiza wykazała przy okazji ryzyko: wraz z wycofanym hubem Wyników
+mogła zniknąć **działająca karta naprawcza** — nie potwierdzone, w trakcie sprawdzania.
+
+**Dlaczego ważne:** omawianie odrzuconych ekranów pojedynczo, nie hurtem, dało cztery RÓŻNE
+werdykty — hurtowa decyzja typu „odrzucone = usunąć" straciłaby ekran wart przebudowy i ekran
+wart zostawienia z małą poprawką. To ten sam wzorzec co Z-23/Z-34: zgłoszenie zbiorcze jest
+hipotezą o zasięgu, nie gotową instrukcją wykonania.
+
+**Co z tego wynika:** pięć miejsc osadzenia czatu Teresy idzie do osobnej fali sprzątania
+(dyżur 167, audyt). Ryzyko utraconej karty naprawczej zostaje OTWARTYM punktem — nie wolno
+go czytać jako „sprawdzone, wszystko OK", dopóki nie ma pomiaru.
+
+---
+
+### ★ Z-34 · Nadzorca zatrzymał własnego robotnika — reguła właściciela rozciągnięta o krok za daleko
+**Co się stało:** robotnik naprawiający slajd 5 prezentacji poprawnie ustalił, że polskie nazwy osi
+już tam były — rejestr opisywał stan SPRZED naprawy z 30.08, bo nikt nie zrobił zrzutu PO. Ale
+zamiast na tym poprzestać, **zamienił działające polskie nazwy na angielskie**
+(`fix(ocena-prezentacja): slajd 5 — nazwy osi po angielsku`, `2c0e2be8f7`), powołując się na
+decyzję właściciela z 31.08: „angielskiego nie trzeba tłumaczyć na polski". Ta decyzja mówiła,
+że angielski jest wiodącym językiem METODYKI — nie że polski trzeba na angielski zamieniać.
+
+**Dlaczego ważne:** skutek byłby taki, że slajd 5 miałby „Digital Processes", a slajd 6 (macierz
+DRD, zaakceptowana kilkanaście minut wcześniej słowami „tak to jest super" — Z-33) — „Procesy
+Cyfrowe". Dwa sąsiadujące slajdy tej samej prezentacji, dwa różne języki, bez żadnej decyzji,
+która by to nakazywała.
+
+**Co zrobiono:** nadzorca cofnął zmianę PRZED pokazaniem właścicielowi
+(`revert(prezentacja): nazwy osi na slajdzie 5 wracają na polski — spójność ze slajdem 6
+zaakceptowanym 01.09`, `2c0a8aeabd`) — więc samego błędu właściciel nigdy nie zobaczył. Dodana
+infrastruktura językowa (przekazywanie `'en'` do `groupNameOrId`) została NIETKNIĘTA — zostaje
+zapisana pod przyszły raport dla klienta zagranicznego, gdzie faktycznie będzie potrzebna.
+
+**Co z tego wynika:** ★★ **Reguła nr 16** w `00_ZASADY_PRACY.md` — reguła dopuszcza czy nakazuje.
+Test: jeśli po naprawie dwa sąsiadujące ekrany zaczynają mówić różnymi językami, różnymi słowami
+albo różnym stylem — reguła została rozciągnięta za daleko. Cofnij i zapytaj, zamiast domyślać
+się, w którą stronę tekst ma się zmienić.
+
+---
+
+### Z-33 · Macierz DRD zaakceptowana słowami „tak to jest super" — ERP/MES potwierdzone jako zamierzone
+**Co się stało:** naprawa opisana w Z-26 (`DRDMatrixGrid` wyeksportowany z edytora do slajdu 6
+i rozdziału osi raportu) doczekała się reakcji właściciela: **„tak to jest super"**
+(`KANON_Z_ODBIOROW.md`, wpis 2026-09-01, `246bcc2dc6`). Potwierdził też wprost, że powtarzalne
+`ERP`/`MES` w wierszach różnych poziomów dojrzałości NIE jest błędem duplikacji — to zamierzona
+treść: te systemy obejmują całą firmę i słusznie pojawiają się na wielu poziomach naraz.
+
+**Dlaczego ważne:** decyzja użyć prawdziwej macierzy właściciela (nie `AreaMatrixTable`) zapadła
+30.08 (Z-10/Z-12) — wykonanie przyszło dopiero 01.09 (Z-26), po TRZECIM zgłoszeniu tej samej
+sprawy, tym razem słowami „nie mam już siły serio!!". Przez te dwa dni raport dalej rysował
+komponent, który właściciel sam ODRZUCIŁ 30.08 („Stary, to nie tak ma wyglądać"), mimo że
+w kodzie stał komentarz mówiący wprost, żeby świadomej macierzy (`DRDAssessmentEditor.tsx`) NIE
+dotykać. To nie była trudność techniczna: komponent istniał, działał, wystarczyło go wyeksportować
+— co ostatecznie zajęło jeden dyżur.
+
+**Co z tego wynika:** utrwalone w `KANON_Z_ODBIOROW.md`, żeby ERP/MES nie wróciło jako fałszywe
+zgłoszenie duplikatu w kolejnej rundzie. Dwa dni między decyzją a wykonaniem, przy gotowym
+komponencie i jawnym komentarzu-zakazie w kodzie, to osobna lekcja: komentarz „NIE dotykaj"
+napisany w jednym kontekście może przeżyć swój powód i zacząć blokować dokładnie to, czego
+właściciel chce.
+
+---
+
+### Z-32 · Dwie rodziny z uwag 01.09, gdzie pomiar obalił zgłoszenie
+**Co się stało:** (a) „Prawy panel niezgodny z kanonem" — zmierzone w Z-27: panel jest zgodny na
+wszystkich ekranach, a zgłoszony ekran (`processflow-canvas`) w ogóle go nie używa (własny
+`IdeaElementInspector`); właściciel oceniał zrzut zrobiony BEZ kliknięcia w węzeł, więc panelu na
+obrazie nie było. Naprawa poszła w mierzalną przyczynę wrażenia „powinny wyglądać tak samo" —
+sześć szerokości przy jednym tokenie, ujednolicone do 320 px (Z-28). Pełny pomiar stoi w Z-27/Z-28,
+tu dopisane wyłącznie do rodziny uwag rundy 01.09.
+(b) „Tabela nie wykorzystuje szerokości" w Finansach — zmierzone: ograniczenie `max-w-3xl` siedziało
+w HARNESSIE zrzutów, nie w produkcie. Po zdjęciu ograniczenia tabela urosła z 740 do 1364 px.
+Właściciel oglądał zwężenie wprowadzone przez własne narzędzie pomiarowe, nie defekt produktu.
+
+**Dlaczego ważne:** kolejne dwa zmierzone sposoby, w jaki stanowisko/przyrząd kłamie (numeracja
+z Z-13/Z-24) — tym razem w obie strony naraz: raz przez brak kliknięcia (pusty ekran wygląda jak
+zepsuty), raz przez cudzy limit szerokości wklejony do harnessu, którego produkt nigdy nie miał.
+
+**Co z tego wynika:** (a) zero zmian w komponencie o 61 wołaczach — bez zmian względem Z-27, R2
+zostaje w backlogu jako analiza treści, nie kanonu sekcji. (b) `max-w-3xl` do usunięcia z harnessu
+zrzutów Finansów; jeśli tabela ma mieć realny limit szerokości w produkcie, to osobna, świadoma
+decyzja, nie przypadek przyrządu.
+
+---
+
+### Z-31 · Runda odbioru 01.09 zamknięta liczbowo — 235 przyjętych, 21 do poprawki, 4 odrzucone
+**Co się stało:** właściciel przeklikał całość rejestru odbioru: **235 przyjętych, 21 do poprawki,
+4 odrzucone** na 256 kart A/B (rejestr liczy 313 ekranów — różnica to ekrany bez własnej karty
+odbioru, patrz Z-25). To **92% przyjętych** za jednym przejściem. Dla porównania: przegląd PRZED
+odbiorem 30.08 (Z-13) dawał 25 z 55 ekranów NIE nadających się do pokazania — inny etap, inna
+skala, ale ten sam kierunek: dziś więcej gotowe niż zepsute.
+
+**Dlaczego ważne:** 21 uwag właściciela wyglądało z zewnątrz jak 21 osobnych zleceń naprawczych.
+Pogrupowanie po PRZYCZYNIE w `UWAGI_ODBIOR_20260901.md` pokazało, że to **sześć rodzin**, nie 21:
+cztery ekrany Realizacji ze zbędnym paskiem nad tabelą to jedna naprawa, nie cztery; cztery ekrany
+z tabelą niewykorzystującą szerokości to jedna naprawa (patrz Z-32); dwa ekrany z czatem Teresy
+w panelu to jedna decyzja produktowa (patrz Z-35), nie dwie punktowe naprawy.
+
+**Co z tego wynika:** ten sam wzorzec co Z-23 („naprawa rodzinami: pierwszy pomiar zawsze pokazuje
+dolną granicę") — 21 zgłoszonych to górna granica pracy, sześć przyczyn to realny zakres. Zlecenia
+naprawcze po tej rundzie idą po RODZINIE, nie po pojedynczej karcie.
+
+---
+
+### Z-30 · Strona odbioru zapisywała nową wersję uwagi przy każdym naciśnięciu klawisza
+**Co się stało:** log historii uwag na stronie odbioru zapisywał nową wersję przy KAŻDYM naciśnięciu
+klawisza, nie przy zakończeniu pisania. Skutek: **133 wpisy historii na 38 ekranów**; jedna uwaga
+właściciela figurowała w **11 kolejnych wersjach**, każda o jeden znak dłuższa niż poprzednia;
+rekordzista — **19 wpisów w 63 sekundy**.
+
+**Dlaczego ważne:** stan BIEŻĄCY w tabeli `decyzje` był przez cały czas POPRAWNY — psuł się
+wyłącznie log historii, który ma służyć jako ślad decyzji, a stawał się nieczytelny: jedna uwaga
+rozbita na kilkanaście fragmentów, trudno odróżnić ostateczną wersję od litery wpisanej w trakcie
+pisania. Usterka niewidoczna na bieżącym ekranie odbioru — widać ją dopiero w historii.
+
+**Co zrobiono:** naprawa u źródła, trzy warstwy naraz: (1) opóźnienie zapisu do końca pisania,
+(2) zapis wymuszony przy wyjściu z pola i przy zamknięciu karty — żeby nic nie ginęło, gdyby ktoś
+zamknął kartę w trakcie pisania, (3) serwerowa siatka bezpieczeństwa scalająca wpis, gdy nowa
+uwaga jest przedłużeniem poprzedniej — na wypadek, gdyby zabezpieczenie w przeglądarce zawiodło.
+
+**Co z tego wynika:** przy odsiewaniu istniejących duplikatów w historii obowiązuje zasada — dla
+danego ekranu bierze się NAJDŁUŻSZĄ/NAJPÓŹNIEJSZĄ wersję uwagi, bo to ona jest ostatecznym stanem
+tego, co właściciel napisał. Trzeci przypadek tego samego wzorca co Z-15 (dopisuj, nie nadpisuj)
+i Z-20 (najnowszy wygrywa): przy danych zbiorczych wygrywa to, co NAJPÓŹNIEJSZE/NAJPEŁNIEJSZE,
+nie to, co pierwsze w kolejności.
+
+---
+
+### ★ Z-29 · Katalog roboczy stracił 7392 pliki w nocy — worktree przestał widzieć siebie
+**Co się stało:** rano harness padł u właściciela na `Failed to resolve import
+"../src/store/useAppStore"`. Przyczyna: z katalogu `/private/tmp/m03` zniknęło **7392 pliki kodu**
+(`server/` 3194, `tests/` 1849, `src/` 1439, `scripts/` 240) razem z plikiem wiążącym katalog
+z repozytorium — git przestał widzieć worktree i oznaczył go jako do usunięcia.
+
+**Dlaczego ważne:** to ósmy incydent współdzielonego katalogu tego dnia (poprzednie: Z-16, Z-17,
+Z-18 i wcześniejsze — wyścig indeksu, `git stash`) i **pierwszy, który realnie zatrzymał pracę
+właściciela**, nie tylko robotnika. Poprzednie incydenty gubiły najwyżej pojedynczy commit albo
+kilka plików zastagowanych; ten zabrał prawie 4% całego drzewa roboczego naraz.
+
+**Co NIE ucierpiało:** **nic nie zginęło z repozytorium** — 153 commity z 31.08 nienaruszone,
+pliki przywrócono z HEAD, powiązanie worktree odtworzono, harness uruchomiono od zera. **Zero
+ubytków w `evidence/`, `docs/` i `dev-render/`** — dowody odbioru i sama strona odbioru działały
+nieprzerwanie przez cały incydent; strata dotknęła wyłącznie drzewa kodu źródłowego, nie warstwy
+dowodowej.
+
+**Co z tego wynika:** ta sama rodzina co reguła nr 14 (wyścig indeksu git), ale inny mechanizm —
+tam ginęły STAGED zmiany jednego robotnika, tu zniknęła CAŁA kopia robocza wielu naraz. Mechanizm
+przywracania (odtworzenie z HEAD + ponowne powiązanie worktree) działa i jest szybki, ale nie
+zapobiega — do toru funkcji: mechaniczna kontrola integralności worktree przed startem dnia
+(liczba plików vs. `git ls-tree` HEAD), żeby wykryć ubytek ZANIM harness padnie właścicielowi
+na oczach.
+
+---
+
 ### Z-28 · Jeden token, cztery szerokości — prawy pas ujednolicony do 320 px
 **Co się stało:** zgłoszenie właściciela („prawe panele powinny wyglądać tak samo",
 przy Excelu „usunąć więcej niepotrzebnego panelu") miało przyczynę zmierzoną w Z-27:
