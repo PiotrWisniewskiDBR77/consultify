@@ -95,6 +95,9 @@ const UiFoundationFocus01EvidenceScreen = React.lazy(
 const AdminCommandCenterPanelScreen = React.lazy(
   () => import('./screens/admin-command-center-panel')
 );
+const AdminAIControlCenterPanelScreen = React.lazy(
+  () => import('./screens/admin-ai-control-center-panel')
+);
 const AdminSsoSelfServiceCardScreen = React.lazy(
   () => import('./screens/admin-sso-self-service-card')
 );
@@ -371,6 +374,9 @@ const NTypeAnalizujAiScreen = React.lazy(() => import('./screens/ntype-analizuj-
 const Day214TeresaAdoptCardScreen = React.lazy(() => import('./screens/day214-teresa-adopt-card'));
 const Day228ImageStyleFieldScreen = React.lazy(
   () => import('./screens/day228-image-style-field')
+);
+const Day231KonspektZWiedzyScreen = React.lazy(
+  () => import('./screens/day231-konspekt-z-wiedzy')
 );
 // Ekrany ładujemy LENIWIE (React.lazy) — i to jest wymóg poprawności, nie optymalizacja.
 // Każdy screen instaluje swój stub `window.fetch` jako efekt uboczny importu. Przy
@@ -1011,6 +1017,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
       'F-CC1…F-CC4 Command Center — Overview (już zdjęte)/Audyt SOC2/DLP/Rezydencja/Retencja/Polityka AI (&tab=)',
     render: () => <AdminCommandCenterPanelScreen />,
   },
+  'admin-ai-control-center-panel': {
+    label: 'Day 218 — AI policy honest full/empty/unavailable states (&state=)',
+    render: () => <AdminAIControlCenterPanelScreen />,
+  },
   'finance-hub': {
     label:
       'GRAFIKA 17 — REALNY <FinanceHub> (ekran wejściowy Finansów, brakująca „pierwsza karta" — sześć analizowanych spółek, PLN/EUR/USD/GBP). &tab=statements|analysis|models|prediction|valuation',
@@ -1639,6 +1649,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'FIX-228 pkt 3 — REALNY <PresentationTemplateArchitectView>, pole „Styl obrazu" za flagą presentationImageStyleUiV1 (domyślnie OFF). &scene=on|off.',
     render: () => <Day228ImageStyleFieldScreen />,
+  },
+  'day231-konspekt-z-wiedzy': {
+    label:
+      'Day231 — realny OutlineStep z widocznymi źródłami przy tezach; dane z propsów harnessu, nie z realnego przebiegu.',
+    render: () => <Day231KonspektZWiedzyScreen />,
   },
 };
 

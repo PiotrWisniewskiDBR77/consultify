@@ -20,7 +20,38 @@ ponownie **31.08 wieczorem**, na tipie `9850d2bcd8` — trzynaście dyżurów p�
 | **16 Partner** | „G08: 0/25" | **FAŁSZ — 25/25 przejechane**, 17 czystych, dwa błędy backendu naprawione |
 | **07 Moja praca** | 4 pozycje | **3 z 4 już zamknięte**; zostają dwa drobiazgi |
 
-## ★ Najpoważniejsze znalezisko: ekran Admina pokazuje dane, których NIE MA
+## ★★ SPROSTOWANIE (1.09, pomiar na ŻYWEJ bazie przy pisaniu instrukcji 218)
+
+Poniższa diagnoza jest **prawdziwa tylko w jednej trzeciej**. Robotnik piszący
+instrukcję uruchomił pełny łańcuch migracji na świeżym kontenerze i zmierzył, że
+„Nieznany / 0 / n/d" na ekranie polityk AI ma **trzy różne przyczyny**, nie jedną:
+
+| kafelek | przyczyna |
+| --- | --- |
+| „Stan przeglądu" | **brak tabeli `llm_org_policies`** — jak niżej, potwierdzone |
+| „Poziom zarządzania" / „Postawa modelu" | **niezgodność kontraktu**: front czyta `governanceSummary.policyLevel/.modelCount/.budgetStatus`, a `AIPolicyEngine.getPolicySummary()` (`aiPolicyEngine.ts:48-59,374-395`) zwraca `{currentLevel, description, capabilities}` — **te pola nie istnieją w typie w ogóle** |
+| „Kontrole kontekstu" | to samo: front czyta `.defaultSensitivity/.allowExternalContext`, a `getOrgContextPolicy()` (`contextGovernance.ts:25-28,45-68`) zwraca `{categories, piiRedaction, retention}` |
+
+**Czyli dwie trzecie defektu to rozjazd kontraktu front↔backend, nie brakująca
+migracja.** Gdyby dyżur poszedł z pierwotną diagnozą, dołożyłby tabelę i **ekran
+nadal pokazywałby zera w dwóch z trzech kafelków.**
+
+Pozostałe sprostowania z tego samego pomiaru:
+- **Rozliczenia:** brakuje **wyłącznie `invoices.issue_date`**, nie czterech kolumn.
+  Robotnik obalił przy tym **własną pierwszą hipotezę**, znajdując mechanizm
+  `isSqliteOnlyMigration` (`migrate.postgres.ts:266`), który wyklucza pliki
+  `000_initdb_*` z Postgresa.
+- **SCIM:** z czterech tabel dokładnie **dwie** (`scim_group_mappings`,
+  `scim_sync_logs`) nie mają `organization_id` — bo `20260719_baseline_gap.sql:8628-8649`
+  tworzy je wcześniej niż trasa, bez tej kolumny. Dwie pozostałe mają ją poprawnie.
+- **i18n:** osiem angielskich etykiet w `useBreadcrumbs.ts:7-17` i `:274-286`;
+  tylko jedno miejsce woła `t()`.
+
+---
+
+## Pierwotna diagnoza (częściowo obalona — patrz wyżej)
+
+### Ekran Admina pokazuje dane, których NIE MA
 
 `AI Policy` w module Admin renderuje się poprawnie i po polsku — i pokazuje
 „Nieznany / 0 / n/d". Wygląda jak pusta konfiguracja. **Nie jest pusta — jej nie

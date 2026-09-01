@@ -1,0 +1,905 @@
+# INSTRUKCJA DYŻURU nr 223 — Codex — „Czat — realny render karty propozycji zapisu WEWNĄTRZ prawdziwego UnifiedChatPanel (nie storybook) z parą zrzutów jasny/ciemny i dowodem mean_luma, plus zmierzony i rozstrzygnięty inwentarz widm-akcji z decyzji D-15"
+
+Dokument samodzielny. Zakładam, że dostajesz **TYLKO ten plik** i repozytorium
+Consultify. Nie masz dostępu do rozmowy, w której powstał, ani do instrukcji
+poprzednich dyżurów. Wszystko, czego potrzebujesz, jest poniżej albo pod
+wskazanymi ścieżkami w repo.
+
+> ### ★★ ZAKAZ NR 1 — KATALOG WŁAŚCICIELA. CZYTASZ TO, ZANIM URUCHOMISZ COKOLWIEK.
+>
+> **Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani
+> do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`,
+> ani `git fetch`, ani `git worktree add`.
+> To brudny checkout właściciela produktu i jest **NIETYKALNY**.
+> Jedyny dozwolony kontakt z tą ścieżką to **symlink `node_modules` (odczyt)**
+> wg `DEC-2026-08-26-86`.
+>
+> **★★ TO JEST NAJCZĘSTSZA PRZYCZYNA STRACONEJ GODZINY W TYM PROGRAMIE.**
+> Instrukcja dyżuru 53 kazała wykonać `git fetch --all` i `git worktree add`
+> „w root-repo" — wykonawca zrobił to w katalogu właściciela, `Z5` zablokowało
+> pracę i dyżur stanął na STOP-ie, który nie miał prawa powstać.
+> **Dlatego w `§0.1` masz PEŁNĄ, DOSŁOWNĄ procedurę worktree Z VAULTA.**
+> Nie improwizuj jej i nie zastępuj „swoim sposobem". Twoje miejsce pracy to
+> **wyłącznie** `/private/tmp/cx-day223-czat-render`.
+
+> ### ★★ MARKER I STAN WYDANIA
+>
+> **SHA markera: `9fb7942a01`**
+> **Gałąź bazowa: `github-backup/codex/m03-admin-20260824`**
+> **Stan dokumentu: WYDANY**
+>
+> Jeżeli w polu „Stan dokumentu" widzisz `WYDANY` — możesz zaczynać.
+> Jeżeli widzisz `PROJEKT` albo jakiekolwiek niewypelnione pole szablonu — **dokument nie
+> jest wydany, nie zaczynasz i zgłaszasz to nadzorcy**.
+> Ta ramka jest **jedynym** miejscem, w którym rozstrzyga się stan wydania.
+> Objaśnienia w innych blokach cytowanych **nie** są powodem do STOP-u.
+
+Data wystawienia: 2026-09-01.
+Autor zlecenia: nadzorca sesji głównej, w imieniu właściciela produktu (Piotr).
+Język pracy i raportowania: **polski**.
+Zakres: **13 Czat — src/components/AIChat/UnifiedChatPanel.tsx (panel realny), src/components/AIChat/ExecutionProposalMessage.tsx (karta propozycji), src/components/AIChat/MessageRenderer.tsx (przechwycenie V8_EXECUTION_MESSAGE_TYPES), src/types/domain/chatActions.ts + src/services/chatActionRegistry.ts + src/services/chatActionHandler.ts (katalog 17 akcji czatu, decyzja D-15). Kontrakt: docs/program/funkcje/FALA_Z1_2026-08-31.md sekcja 13 Czat i „Pułapka złapana w samym pomiarze”, docs/program/funkcje/POMIAR_MODULOW_2026-08-31_WIECZOR.md, docs/program/funkcje/DECYZJE_WLASCICIELA_2026-08-30_WIECZOR.md (D-15), docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md (P5), CLAUDE.md reguła 7 (właściciel nigdy nie jest pierwszym testerem wizualnym).**.
+Trasy front: `src/components/AIChat/UnifiedChatPanel.tsx (panel montowany pod trasą /chat i /chat/:conversationId — src/routes/routeConfig.ts:31 AI_CHAT, src/views/AIChatView.tsx) — realny wątek, kompozytor, sliding history panel, chatSuggestions; src/components/AIChat/MessageRenderer.tsx (przechwycenie wiadomości typu execution_proposal przez V8_EXECUTION_MESSAGE_TYPES, zmierz linię na swojej bazie — na markerze :69-73, punkt renderu :643-649) -> src/components/AIChat/ExecutionProposalMessage.tsx; src/components/Chat/ChatSmartSuggestions.tsx + chatSuggestions useMemo w UnifiedChatPanel.tsx (zmierz linię na swojej bazie — na markerze ok. :2781-2920) — producent sugestii NAVIGATE/GENERATE_REPORT/GENERATE_PRESENTATION/BROWSE_TEMPLATES/USE_TEMPLATE/RECORD_KPI; src/types/domain/chatActions.ts (katalog 17 ChatActionType), src/services/chatActionHandler.ts (17 case'ów wykonawczych), src/actions/federatedActionAdapters.ts (manifest, NIE producent)`. Trasy tył: `Ten dyżur NIE dotyka backendu ani jednej trasy API — pozycja (a) jest wyłącznie o DOWODZIE WIZUALNYM istniejącego, już zamontowanego mechanizmu (day207, marker jest jego potomkiem — zmierz sam przez git log/merge-base), pozycja (b) jest wyłącznie o katalogu typów front-endowych (chatActions.ts/chatActionRegistry.ts/chatActionHandler.ts) i ewentualnym dopisaniu producenta do chatSuggestions (front-end, bez nowej trasy) albo usunięciu martwego wpisu z katalogu (front-end)`.
+
+---
+
+### 0.1. ★★ BAZA PRACY, MARKER I GAŁĄŹ — PROCEDURA DOSŁOWNA, Z VAULTA
+
+**Repozytorium, z którego pracujesz, to BARE-vault, a nie checkout właściciela:**
+
+```
+/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+```
+
+Vault ma `extensions.worktreeConfig=true`. **To ma konsekwencję operacyjną,
+którą MUSISZ obsłużyć — krok (4).**
+
+**PIERWSZE KOMENDY DYŻURU — wklej dokładnie tak, po kolei:**
+
+```bash
+VAULT=/Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git
+WT=/private/tmp/cx-day223-czat-render
+MARKER=9fb7942a01
+
+# (0) miejsce na dysku — ponizej 5 GB wolnego to STOP calego dyzuru
+df -h /
+
+# (1) fetch WYLACZNIE z github-backup — NIGDY `--all`
+git -C "$VAULT" fetch github-backup --prune
+
+# (2) marker
+git -C "$VAULT" log --oneline -25 github-backup/codex/m03-admin-20260824
+git -C "$VAULT" merge-base --is-ancestor "$MARKER" github-backup/codex/m03-admin-20260824 \
+  && echo "MARKER OK" || echo "MARKER BRAK"
+
+# (3) worktree — TWORZONY Z VAULTA, nigdy z katalogu wlasciciela
+git -C "$VAULT" worktree add "$WT" -b codex/day223-czat-render-20260901 "$MARKER"
+
+# (4) ★★ BEZ TEGO GIT ODMOWI PRACY W WORKTREE (vault jest BARE)
+printf '[core]\n\tbare = false\n' > "$VAULT/worktrees/cx-day223-czat-render/config.worktree"
+cat "$VAULT/worktrees/cx-day223-czat-render/config.worktree"   # ma wypisac dwie linie
+
+# (5) node_modules przez SYMLINK — jedyny dozwolony kontakt z katalogiem
+#     wlasciciela (DEC-2026-08-26-86, odczyt)
+ln -s /Users/piotrwisniewski/Developer/Consultify/node_modules "$WT/node_modules"
+
+# (6) katalogi pomocnicze POZA repo (Z13)
+mkdir -p /private/tmp/cx-day223-czat-render-scratch
+mkdir -p /private/tmp/cx-day223-czat-render-artefakty
+
+# (7) sanity
+git -C "$WT" rev-parse HEAD
+git -C "$WT" status --short | head -3
+```
+
+**Wynik komend (2) i (7) wklejasz do raportu dosłownie.**
+
+> **★★ PUŁAPKA — REMOTE `icloud-source` JEST MARTWY.**
+> Vault ma trzy remote'y: `github-backup` (żywy, jedyny Twój),
+> `origin` (**zakazany do pushu**, `Z1`) i `icloud-source`, wskazujący na
+> nieistniejący katalog `/private/tmp/consultify-staging-deploy-e6ca`.
+> **Dlatego NIE WOLNO Ci wołać `git fetch --all`.**
+> **Błąd `icloud-source` przy jakimkolwiek fetchu NIE JEST negatywnym wynikiem
+> markera i NIE JEST powodem do STOP-u.** Jedynym negatywnym wynikiem markera
+> jest napis `MARKER BRAK` z komendy `merge-base` powyżej.
+
+**★★ REGUŁA ROZEJŚCIA (`DEC-2026-08-26-95`).**
+Jeżeli marker **nie jest** przodkiem tipa albo gałąź nie istnieje — **STOP
+całego dyżuru**. Nie improwizujesz bazy: nie startujesz z `origin/demo`,
+`main`, `Londyn`, `codex/preserve-*`, `codex/day*-instrukcja-*` ani z żadnej
+gałęzi cudzych dyżurów.
+
+Jeżeli marker **JEST** przodkiem, ale **tip uciekł do przodu — to NIE jest
+STOP**. Startujesz **dokładnie z markera**, a do raportu wpisujesz:
+
+```bash
+git -C "$VAULT" log --oneline 9fb7942a01..github-backup/codex/m03-admin-20260824
+git -C "$VAULT" diff --name-only 9fb7942a01..github-backup/codex/m03-admin-20260824
+```
+
+Scalenie z nowszym tipem wykonuje **nadzorca przy odbiorze**.
+**Rebase w trakcie dyżuru: ZAKAZANY** (`Z3`).
+
+**★★ PUSH PO PIERWSZYM COMMICIE** (`Z34a`), nie na koniec:
+
+```bash
+git -C "$WT" push github-backup codex/day223-czat-render-20260901
+```
+
+Powtarzasz go **po każdej kolejnej pozycji**.
+
+**Komenda bazowa dla listy plików, które dotknąłeś** (do `§0.4a`):
+
+```bash
+git -C "$WT" diff --name-only 9fb7942a01..HEAD
+```
+
+**WERYFIKACJA STANU WEJŚCIOWEGO — `10` komend, wszystkie obowiązkowe.**
+Każda ma podany **oczekiwany wynik autora instrukcji**; rozbieżność idzie do
+„Korekt wobec instrukcji", **nie do improwizacji**.
+
+```bash
+cd /private/tmp/cx-day223-czat-render
+
+# (W1) TEZA 1: dev-render NIE montuje realnego UnifiedChatPanel — jest to udokumentowane w samym repo
+sed -n '1,16p' dev-render/screens/chat-split-teresa-right.tsx
+grep -n "mockowana\|nie zmontuje" dev-render/screens/chat-split-teresa-right.tsx
+#   oczekiwane: naglowek pliku WPROST mowi, ze realny <UnifiedChatPanel> "nie zmontuje sie
+#   w harnessie" (ciagnie store/API/logowanie), wiec TRESC jest mockowana.
+
+# (W2) TEZA 1 c.d.: day207-write-proposal.tsx to pojedynczy komponent na pustej stronie
+cat dev-render/screens/day207-write-proposal.tsx
+#   oczekiwane: WYLACZNIE <ExecutionProposalMessage msg={...} .../> na <main>, zero watku,
+#   zero kompozytora, zero reszty panelu — to jest "storybook", nie dowod renderu.
+
+# (W3) przechwycenie w MessageRenderer jest realne
+grep -n "V8_EXECUTION_MESSAGE_TYPES\|ExecutionProposalMessage" src/components/AIChat/MessageRenderer.tsx
+#   oczekiwane: definicja Setu (ok. :69-73) + uzycie w renderze (ok. :643-649).
+
+# (W4) montaz w prawdziwym UnifiedChatPanel — MessageRenderer jest realnie wolany z panelu
+grep -n "MessageRenderer" src/components/AIChat/UnifiedChatPanel.tsx | head -5
+#   oczekiwane: co najmniej jedno wywolanie <MessageRenderer .../> w petli renderujacej wiadomosci watku.
+
+# (W5) trasa /chat montuje UnifiedChatPanel
+grep -n "AI_CHAT" src/routes/routeConfig.ts
+grep -n "UnifiedChatPanel" src/views/AIChatView.tsx
+#   oczekiwane: AI_CHAT: '/chat'; AIChatView renderuje UnifiedChatPanel.
+
+# (W6) flaga write-proposal (207) jest domyslnie OFF — musisz ja wlaczyc TYLKO lokalnie, zmienna srodowiskowa
+grep -n "ENABLE_TERESA_TOOL_LOOP_WRITE" server/src/config/FeatureFlags.ts
+#   oczekiwane: z.boolean().default(false) — NIE zmieniasz tego pliku, ustawiasz zmienna
+#   srodowiskowa na czas przebiegu runtime'u odbiorowego.
+
+# (W7) TEZA 2: katalog 17 akcji czatu — policz sam
+grep -c "^  | '" src/types/domain/chatActions.ts || true
+grep -n "^export type ChatActionType" -A 20 src/types/domain/chatActions.ts | grep -c "'"
+#   oczekiwane: 17 wariantow typu ChatActionType (NAVIGATE, CREATE_TASK, CREATE_DECISION,
+#   CREATE_INITIATIVE, GENERATE_REPORT, GENERATE_PRESENTATION, USE_TEMPLATE, BROWSE_TEMPLATES,
+#   START_TOOL, OPEN_PREVIEW, ASSIGN_INTERVIEW, RECORD_KPI, START_ARTIFACT_REVIEW,
+#   CHECK_TRUST_STATE, ANALYZE_STATEMENT, REVIEW_MODEL, CHECK_LANE_STATUS).
+
+# (W8) TEZA 2 c.d.: ile z 17 ma realnego producenta poza rejestrem/handlerem/adapterem
+for t in NAVIGATE CREATE_TASK CREATE_DECISION CREATE_INITIATIVE GENERATE_REPORT GENERATE_PRESENTATION START_TOOL OPEN_PREVIEW ASSIGN_INTERVIEW RECORD_KPI START_ARTIFACT_REVIEW CHECK_TRUST_STATE USE_TEMPLATE BROWSE_TEMPLATES ANALYZE_STATEMENT REVIEW_MODEL CHECK_LANE_STATUS; do n=$(grep -rl "'$t'" src server --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v __tests__ | grep -v node_modules | grep -v 'src/types/domain/chatActions.ts' | grep -v 'src/services/chatActionRegistry.ts' | grep -v 'src/services/chatActionHandler.ts' | grep -v 'federatedActionAdapters.ts' | wc -l | tr -d ' '); echo "$t producers:$n"; done
+#   oczekiwane: dokladnie SZESC typow (NAVIGATE, GENERATE_REPORT, GENERATE_PRESENTATION,
+#   BROWSE_TEMPLATES, USE_TEMPLATE, RECORD_KPI) ma >0, reszta (11) ma 0 — zmierz swoj wynik,
+#   liczba jest hipoteza nadzorcy, nie faktem (Z24).
+
+# (W9) alternatywny, REALNY mechanizm dla CREATE_TASK/CREATE_DECISION/CREATE_INITIATIVE
+grep -n "CREATE_DRAFT_TASK\|CREATE_DRAFT_DECISION\|CREATE_DRAFT_INITIATIVE" server/src/services/aiActionExecutor.ts
+#   oczekiwane: trzy stale ACTION_TYPES + case'y w switch (ok. :911-920) — to jest INNY,
+#   dzialajacy mechanizm (ai_actions/governed proposal), nie ten sam katalog co ChatActionType.
+
+# (W10) PORTY I KONTENERY
+lsof -nP -iTCP -sTCP:LISTEN | grep -E ':(6166|5120|5121)\b' || echo "6166/5120/5121 wolne"
+docker ps --format '{{.Names}} {{.Ports}}' | grep -i cx-day22
+#   oczekiwane: wolne; jesli zajete, STOP i zglos kolizje zasobowa.
+```
+
+---
+
+### §0.4a — pomiar zasięgu testów (warunek oddania raportu, patrz `Z24`)
+
+Zanim ogłosisz jakikolwiek wynik testów, zmierz zasięg PEŁNYMI NAZWAMI, nie liczbami:
+
+1. PRZED zmianami produktu: uruchom pakiet(y) testów wskazane w licencji z
+   `--reporter=json` (albo zapisz listę `describe/it` z wyjścia) i zapisz do
+   artefaktów plik `przed-nazwy.txt` — po jednej PEŁNEJ nazwie testu na wiersz.
+2. PO zmianach: to samo do `po-nazwy.txt`.
+3. Do raportu wchodzi: `diff przed-nazwy.txt po-nazwy.txt` — nazwy DODANE (twoje
+   nowe testy) i nazwy ZNIKNIĘTE (każda zniknięta = wyjaśnienie albo STOP).
+   `N passed` bez nazw NIE jest pomiarem. „Ta sama liczba" przy innym składzie
+   nazw to fałszywa zieleń (Z37).
+4. Przepisanie liczby z instrukcji, cudzego raportu albo rejestru = zawyżenie
+   i podstawa odrzucenia raportu. Liczysz sam, u siebie, na swojej bazie.
+
+---
+
+### 0.2. Bezwzględne ZAKAZY — `Z1`–`Z40`
+
+| # | Zakaz | Dlaczego (incydent) |
+| --- | --- | --- |
+| `Z1` | **Żadnego `git push` na `origin`** — na żadną gałąź. Jedyny dozwolony push to `github-backup`, wyłącznie gałęzi `codex/day223-czat-render-20260901` | Push na `origin`/demo wykonuje wyłącznie nadzorca; krach 3/4 wyszedł z pushu wykonawcy |
+| `Z2` | **Nie zmieniasz i nie pushujesz** `origin/demo`, `Londyn`, `codex/m03-admin-20260824` ani żadnej cudzej gałęzi `codex/*`, `fix/*`, `chore/*`, `recovery/*`. **Odczyt (`git show`, `git diff`, `git log`) jest dozwolony i często jawnie zamówiony** | Cudze tory w toku — 28.08 biegło równolegle kilkanaście dyżurów |
+| `Z3` | **Żadnego `--force`, `--force-with-lease`, `git reset --hard` na gałęziach współdzielonych**, żadnego `rebase` w trakcie dyżuru | Krach 3/4: regresja demo z force/reset na złej bazie |
+| `Z4` | **Nie czytasz i nie kopiujesz wariantów WIP właściciela** (`PRESERVED_PRODUCT_WIP` / `NO_COPY`) ani katalogu `server/src/_backup/**` | Warianty produktowe właściciela; `_backup` to śmietnik kolizji TS/JS |
+| `Z5` | **★★ Nie dotykasz katalogu `/Users/piotrwisniewski/Developer/Consultify`** — ani do zapisu, ani do odczytu, ani `git`, ani `cat`, ani `grep -r`, ani `ls`. Jedyny dozwolony kontakt: **symlink `node_modules` (odczyt)**, `DEC-2026-08-26-86` | Brudny checkout właściciela. **Naruszony 28.08: STOP dyżuru 53 kosztował godzinę** |
+| `Z6` | **Nie dotykasz cudzych worktree** w `/private/tmp/consultify-*`, `/private/tmp/cx-*`, `/private/tmp/fix-*`, `/private/tmp/odbior-*`, `/private/tmp/instr-*`, `/private/tmp/finish-*`. **Wyjątek: katalogi, które SAM zakładasz w tym dyżurze, są Twoje** | Żyje ich ponad 100 |
+| `Z7` | **★★ Twój JEDYNY port bazy to `6166`. Twój JEDYNY port harnessu to `5120 i 5121`.** Nazwa kontenera musi nieść numer dyżuru: **`cx-day223-pg`**. **ZAKAZANE:** `na stałe: 5000, 5037, 5060-5061; zajęte przez dyżury wcześniejsze i odbiory nadzorcy: 6012, 5433, 6047, 6054-6164, 5010-5117, 6404-6411; zabronione na przód (fala 18): 6170-6175, 5128-5139; CUDZE w TEJ SAMEJ fali Z1 (222-225, pomijasz własne): baza 6165 (222) / 6167 (224) / 6168 (225), harness 5118-5119 (222) / 5122-5123 (224) / 5124-5125 (225). Twój wyłączny przydział: baza 6166, harness 5120 i 5121, kontener cx-day223-pg`. **Sprawdzasz sam przed startem** (BLOK 0) | Trzy incydenty zapisu do cudzej bazy; `docker ps` 28.08 pokazał żywe `cx-day53-pg:5838`, `cx-day52-pg:5835`, `cx-day50-pg:5830`, `cx-day48-pg:5816` |
+| `Z8` | **Zero interakcji z Railway** — brak `railway` CLI, brak produkcyjnych env, brak redeployu, brak zdalnych migracji i seedów | Produkcja `consultify.ai` NIETYKALNA (`DEC-2026-08-25-65`) |
+| `Z9` | **Żadnej bazy poza jednorazowym lokalnym kontenerem tego dyżuru** — nigdy demo, staging, produkcja ani cudza retained-DB | **Baza demo i staging to JEDNA baza** (`DEC-2026-08-28-176`) |
+| `Z10` | **★★ Zero nowych flag funkcyjnych i zero zmian wartości domyślnej istniejącej flagi** — w kodzie, w `.env*`, w `docker-compose*`, w `railway*`. Wyjątek: flagi jawnie zamówione w `ENABLE_TERESA_TOOL_LOOP_WRITE (server/src/config/FeatureFlags.ts:37, default false) — włączasz WYŁĄCZNIE zmienną środowiskową na czas przebiegu runtime'u odbiorowego tego dyżuru (§0.2b(4)), zero zmiany wartości domyślnej w kodzie; żadnej innej flagi ten dyżur nie tworzy ani nie przełącza`, wszystkie `default OFF` | Krach 07-12: masowe włączenie flag wizualnych na żywo, „tabelki jak dla trzylatka" (`CLAUDE.md` §9) |
+| `Z11` | **★★ NIE ODSŁANIASZ NOWEGO EKRANU BEZ AKCEPTU.** Nowe wizualium ma flagę `default OFF` i idzie do właściciela **na zrzutach zrobionych przez Ciebie**. Zmiana domyślnej na `ON` = **odrzucenie pozycji** | `CLAUDE.md` reguła 7: właściciel NIGDY nie jest pierwszym testerem wizualnym (powód: załamanie 07-11) |
+| `Z12` | **★★ NIE ZMIENIASZ MODELU UPRAWNIEŃ ANI BRAMEK PLATFORMOWYCH.** Nietykalne do zapisu: `server/src/middleware/auth.middleware.ts (verifyToken) · server/src/Gateway.ts (ApiGateway.initializeRoutes) · server/src/middleware/v8FeatureGate.middleware.ts · server/src/middleware/resultsInternalBetaVisibility.middleware.ts · server/src/services/aiRoleGuard.ts · server/src/services/aiPolicyEngine.ts · server/src/services/aiActionExecutor.ts (mechanizm CREATE_DRAFT_* — czytasz jako dowód w W9, nie zmieniasz) — żadnej nie dotykasz`. **Wyjątek — jeżeli istnieje — jest wymieniony imiennie w tabeli licencji** | Pliki przekrojowe; dyżury 37/43/46/52 rozjechały się właśnie na nich |
+| `Z13` | **Nie tworzysz nowych dokumentów rejestrowych.** Dokładnie JEDEN plik raportu: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY223_CZAT_RENDER_REPORT.md`. docs/program/waves/WAVE_03_ACCEPTANCE/modules/13_CHAT/MODULE_ACCEPTANCE.md — WYŁĄCZNIE dopisanie notatki o dowodzie renderu (§R.1) i docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md — WYŁĄCZNIE aktualizacja liczby widm w wierszu P5 (tabela §3), z odsyłaczem do raportu; zero zmiany reszty tych dokumentów. **Zrzuty, logi i pliki wynikowe NIE wchodzą do repo** — leżą w `/private/tmp/cx-day223-czat-render-artefakty`, a raport podaje ścieżki i `shasum -a 256` | Dokumentacja rośnie szybciej niż produkt |
+| `Z14` | **Nie zmieniasz `docs/program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`** i nie podważasz decyzji w kodzie. Uważasz, że decyzja się myli → **errata w raporcie** | SSOT decyzji właściciela |
+| `Z15` | **Zero modelu językowego w tym dyżurze.** Żaden pomiar, strażnik ani ekran nie woła `llmService`, `/api/ai/**` ani `GoogleGenerativeAI` | `DEC-51` — zakaz atrapy AI; bezpieczeństwo nie ma prawa zależeć od sieci |
+| `Z16` | **Nie usuwasz i nie „naprawiasz" uczciwych stanów pustych, `503 not_configured`, `null`, `UNKNOWN` ani nagrobków `410`** | „Zero placebo i atrap"; uczciwy `503` jest wzorcem POPRAWNYM |
+| `Z17` | **Zakaz wszystkiego poza zakresem tego dyżuru** — z imiennymi licencjami z tabeli licencji | Podział front/tył i rozłączność z dyżurami równoległymi |
+| `Z18` | **★★ NAJOSTRZEJSZY — ABSOLUTNY zakaz modyfikowania globalnej infrastruktury testowej:** `tests/setup.ts`, `tests/helpers/**`, `tests/__mocks__/**`, `vitest.config.ts`, każdy `vitest.*.config.ts`, `server/vitest.config*.ts`, `tests/integration/_helpers/assertRealPostgres.ts` | Jedna zmiana globalnego mocka fałszuje wynik całego korpusu |
+| `Z19` | **Nie odmontowujesz i nie kasujesz żadnego routera, middleware ani joba CI zamontowanego dziś** | Odmontowanie trasy potrafi zabić ekran, którego nie mierzysz; bramki znikają łatwiej, niż wracają |
+| `Z20` | **★★ ZAKAZ uruchamiania testów DB bez jawnego kompletu env wskazującego kontener TEGO dyżuru, W TEJ SAMEJ LINII komendy.** Kolejność BLOKU 0 jest wiążąca: **NAJPIERW kontener + pełne migracje, DOPIERO potem jakikolwiek pomiar** | Trzy incydenty zapisu do cudzej bazy |
+| `Z21` | **DoD wymaga DOWODU OSIĄGALNOŚCI, nie istnienia pliku** (`DEC-2026-08-26-104`). Pełna ścieżka: realne wejście HTTP → realny `ApiGateway` → `verifyToken` → trasa → handler → zapytanie → **wiersz w Twojej bazie** → odczyt, który ten wiersz podnosi → konsument w `src/` **albo jawne zdanie „brak konsumenta"** | Istnienie kodu ≠ działanie |
+| `Z22` | **★★ Test wstrzykujący zależności albo montujący router w gołym `express()` NIE dowodzi ścieżki produkcyjnej** (`DEC-2026-08-26-107`). Dowodem jest `ApiGateway.getInstance().initializeRoutes(app)` | Replika rozjeżdża się z produkcją i nikt tego nie zauważa |
+| `Z23` | **★★ ZERO ATRAP.** `200` z pustą kopertą tam, gdzie zapytanie padło, jest atrapą. `0` tam, gdzie wartość jest nieznana, jest atrapą. Ekran, który zapisuje do magazynu, którego nikt nie czyta, jest atrapą. Przycisk bez trasy jest atrapą | `DEC-2026-08-25-21/22`, `DEC-51` |
+| `Z24` | **Pomiar zasięgu testów wg `§0.4a` jest warunkiem oddania raportu.** Zawężony wybór albo **przepisanie cudzej liczby** = zawyżenie i podstawa odrzucenia | Liczby autora instrukcji i nadzorcy krążą po dokumentach i utrwalają się jako „fakt" |
+| `Z25` | **★★ Testy realdb WYŁĄCZNIE z jawnym `DATABASE_URL` wskazującym Twój efemeryczny kontener.** `tests/setup.ts` ma bezpiecznik i rzuca błędem zamiast fallbacku | **Port `5432` NASŁUCHUJE i nie jest Twój** — fallback = zapis do cudzych danych |
+| `Z26` | **★★ Komplet env w tej samej linii — patrz `§0.2c`.** Bez `MOCK_DB=false` odczyty idą cicho na atrapę bazy; bez `ENABLE_V8_GLOBAL=true` część tras daje `404` **przed uwierzytelnieniem**; bez `ENABLE_TEST_AUTH_BYPASS=false` `verifyToken` **jest omijany** | Tak zginął dzień 23 |
+| `Z27` | **★★ ZAKAZ `git stash` w każdej postaci** (`stash`, `stash -u`, `stash pop`, `stash apply`). Stan odkładasz przez `cp` do `/private/tmp/cx-day223-czat-render-scratch` i wracasz przez `cp` | **Schowek jest współdzielony między wszystkimi worktree** tego repozytorium; dwa incydenty kolizji |
+| `Z28` | **★★ ZERO POŁĄCZEŃ DO RAILWAY, DEMO, STAGINGU I PRODUKCJI — w każdą stronę i każdym narzędziem.** Zakaz obejmuje `railway` CLI, `psql`/`docker exec psql` do hosta innego niż `127.0.0.1`, `curl`/`wget`/`fetch` do `*.railway.app`, `demo.consultify.ai`, `consultify.ai`, `staging.*` | Produkcja NIETYKALNA; demo i staging są jedną bazą. **To jedyny zakaz, którego naruszenie zatrzymuje CAŁY dyżur** |
+| `Z29` | **★★ Testy o kształcie „atak odrzucony + readback bez zmian" MUSZĄ biec BEZ PONAWIANIA: `--retry=0` w KAŻDEJ komendzie** i `retry: 0` w opcjach `describe`/`it`, jeśli plik je ustawia | `vitest.config.ts` ustawia `retry: CI ? 3 : 1`. Przy otwartej dziurze pierwszy przebieg realnie zmienia stan, asercja pada, Vitest ponawia — i test **raportuje `PASS` mimo otwartej dziury**. Udowodnione na module Partner |
+| `Z30` | **★★ ZAKAZ REALNEJ WYSYŁKI E-MAILI, ZAPROSZEŃ KALENDARZOWYCH I POWIADOMIEŃ.** Przed pierwszym przebiegiem zapisującym **udowodnij w raporcie**, że dostawca poczty jest atrapą — protokół `§0.2b` | Wysłany e-mail i zaproszenie kalendarzowe są **nieodwracalne** i trafiają do skrzynek osób trzecich |
+| `Z31` | **★★ ZAKAZ PRZYPINANIA STRAŻNIKA TESTU REALDB DO HOSTA, PORTU ALBO NAZWY BAZY.** Wołasz `await assertRealPostgresTestEnvironment()` **BEZ ARGUMENTÓW**, w szczególności bez `expectedDatabase` | Dyżur 43 przypiął strażnik do swojej bazy: po usunięciu kontenera **30 przypadków dowodowych stało się trwałym `SKIP`**, pakiet raportuje `exit 0` i wygląda jak sukces |
+| `Z32` | **★★ ZAKAZ WPISU `FIXED` / `VERIFIED` / `ZROBIONE_WG_DoD` BEZ DOWODU MUTACYJNEGO W OBIE STRONY.** Psujesz kod produkcyjny → test **CZERWONY**; cofasz → test **ZIELONY**; `git diff` po cofnięciu **pusty**. Obie komendy i oba wyniki dosłownie w raporcie. Mutację cofasz przez `cp` (`Z27`), nigdy `git stash` | Dyżur 44 wpisał `FIXED` dla podatności, **która nigdy nie istniała** — test przechodził także przed zmianą, bo asercja była tautologią |
+| `Z33` | **★★ PRZED KAŻDYM POMIAREM SPRAWDZASZ, CZY STRAŻNIK, KTÓRY MIERZYSZ, NIE WYŁĄCZA SIĘ SAM W TRYBIE TESTOWYM** — ramka `§0.2d` | Na `resultsInternalBetaVisibility.middleware.ts` zmierzono **416 fałszywych twierdzeń** o uprawnieniach jednego modułu |
+| `Z34` | **★★ GREP DOWODZI, ŻE ŁAŃCUCH ISTNIEJE, NIE ŻE DZIAŁA.** Zdanie „działa" wolno Ci napisać wyłącznie po realnym żądaniu HTTP przez realny `ApiGateway`, z podpisanym JWT, na realnym Postgresie po pełnych migracjach — **i po zapisaniu KODU ODPOWIEDZI** | 28.08 w module kalendarza zmierzono kompletny łańcuch komponent → `fetch` → trasa → handler → `INSERT`. **Każdy realny `POST` zwracał `500`**, bo `req.db` nigdy nie było ustawiane w tej gałęzi montażu |
+| `Z34a` | **★★ PO PIERWSZYM COMMICIE ROBISZ PUSH NA `github-backup`**, a potem po każdej pozycji | 28.08 trzy dyżury pracowały cały dzień bez kopii zapasowej |
+| `Z35` | **Zakaz „naprawiania" przez wyciszanie:** `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `.skip`, `.todo`, poszerzanie `exclude`/`testIgnore`, obniżanie progów pokrycia, `--max-warnings`, `continue-on-error: true` na jobie testowym. Uznajesz to za jedyne wyjście → **STOP z uzasadnieniem**, nie cichy commit | To jest choroba, którą program leczy, a nie narzędzie do jej leczenia |
+| `Z36` | **Zakaz `eslint --fix` i `prettier --write` na czymkolwiek szerszym niż plik, który i tak zmieniasz z innego powodu.** Zakaz `--fix` na katalogu, na `.`, na globie | Autofix dotknąłby tysięcy plików i skasował pracę **wszystkich** równoległych dyżurów |
+| `Z37` | **Porównania testów po NAZWACH przypadków (`fullName`), NIGDY po liczbach.** „Było 300 PASS, jest 300 PASS" nie jest dowodem — jeden test mógł zgasnąć, a drugi się zapalić | Wektor maskowania regresji |
+| `Z38` | **Zakaz usuwania i odmontowywania jakiegokolwiek joba CI.** Wolno dodać, wolno poprawić warunek. Usunięcie = STOP z rekomendacją | Bramki znikają łatwiej, niż wracają |
+| `Z39` | **Zakaz uruchamiania realnych workflow GitHub Actions** — `gh workflow run`, `gh run rerun`, `act` z realnymi sekretami, push wyzwalający CI na `main`/`develop`/`Londyn`/`demo`. Dowód robisz **statycznie** | Realny przebieg CI dotyka sekretów i środowisk poza Twoją kontrolą |
+| `Z40` | zakaz włączania ENABLE_TERESA_TOOL_LOOP_WRITE w kodzie/`.env*`/`docker-compose*` na stałe (wyłącznie zmienna środowiskowa procesu runtime'u odbiorowego) i zakaz kasowania hurtowego więcej niż jednego typu ChatActionType na commit bez osobnego, imiennego uzasadnienia per typ — CLAUDE.md §9 (zakaz masowego włączania) stosuje się per analogię do masowego gaszenia | D-15 wprost zabrania hurtowego kasowania widm („widma NIE są usuwane hurtem: każde mapowane na narzędzie aplikacji albo świadomie gaszone z uzasadnieniem”) — jeden commit kasujący 11 typów naraz bez osobnego uzasadnienia per typ łamie tę decyzję identycznie jak masowe włączenie flagi wizualnej łamie CLAUDE.md §9 |
+
+---
+
+### 0.2b. ★★ PROTOKÓŁ `Z30` — ZERO WYSYŁKI, A MIMO TO PEŁNY DOWÓD
+
+**(1) Czego NIE WOLNO Ci zrobić — nigdy:**
+- ★ **UWAGA — SPROSTOWANIE 2026-08-30.** Ten szkielet wymieniał tu wcześniej
+  przełącznik `ENABLE_LIVE_EMAIL`. **Taka flaga NIE ISTNIEJE w kodzie** — `grep`
+  po całym `server/src` i `src` daje zero trafień. Był to fantom, powielany
+  w każdej wydanej instrukcji. **Nie szukaj go i nie raportuj, że jest wyłączony.**
+  Realny warunek wysyłki jest inny i opisany w punkcie (2) poniżej: poczta wychodzi
+  wyłącznie wtedy, gdy `emailService.ts:202` zobaczy **jednocześnie** `smtpConfig.host`
+  i `smtpConfig.auth.user`, sklejone **najpierw z tabeli `settings`**, dopiero potem
+  ze zmiennych środowiskowych. Bez tych dwóch wartości serwis pisze na konsolę;
+- ustawić `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_PORT`, `SMTP_FROM`
+  w środowisku, w `.env*`, w `docker-compose*` ani nigdzie indziej;
+- wstawić wiersza konfiguracji SMTP do tabeli ustawień w swojej bazie;
+- uruchomić serwera pełnym `server/src/index.ts` **na potrzeby testów** — tam
+  startują drenaże outboxów; testy montują `ApiGateway`, nie cały serwer
+  (`Z22`);
+- uruchomić `server/src/index.ts` na potrzeby zrzutów inaczej niż przez
+  kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs` i bez spełnienia
+  wszystkich warunków z punktu (4) poniżej;
+- wywołać ręcznie żadnej funkcji `drain*` / `startNotificationOutboxDrainCron`
+  / `outboxWorker`.
+
+**(2) Trzy dowody, które wklejasz do raportu ZANIM uruchomisz cokolwiek
+zapisującego:**
+
+```bash
+cd /private/tmp/cx-day223-czat-render
+
+# (a) srodowisko nie ma ani jednej zmiennej poczty
+env | grep -iE "^(SMTP_|RESEND|SENDGRID|MAIL)" || echo "BRAK ZMIENNYCH POCZTY"
+
+# (b) ★ DRUGIE DNO: emailService czyta SMTP NAJPIERW Z BAZY (emailService.ts:180-185).
+#     Dowod „nie mam zmiennych" NIE WYSTARCZA. Po migracjach uruchom:
+docker exec cx-day223-pg psql -U postgres -d cx223 \
+  -c "SELECT key, left(coalesce(value,''),8) FROM settings WHERE key LIKE 'smtp%';"
+#   oczekiwane: 0 wierszy. Jezeli tabela `settings` nie istnieje — wklej TEN blad,
+#   to tez jest dowod (nie ma skad wziac konfiguracji poczty).
+
+# (c) dla TESTOW: zaden drenaz outboxu nie dziala w procesie testowym
+grep -n "startNotificationOutboxDrainCron\|outboxWorker\|platformOutboxDrainCron" server/src/Gateway.ts
+#   oczekiwane: 0 trafien — drenaze startuja w server/src/index.ts, ktorego NIE uruchamiasz
+```
+
+**(3) Deklaracja obowiązkowa dla TESTÓW w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Nie uruchomiłem `server/src/index.ts` ani
+żadnego drenażu outboxu. Żaden e-mail ani zaproszenie kalendarzowe nie zostało
+wysłane."**
+
+**(4) Wyjątek wyłącznie dla ZRZUTÓW ODBIOROWYCH — pełny produkt, nie replika.**
+Pełny `server/src/index.ts` wolno uruchomić wyłącznie przez kanoniczny
+`scripts/dev/start-wave3-owner-runtime.mjs`, po wykonaniu dowodów (a) i (b),
+oraz tylko gdy wszystkie poniższe warunki są spełnione imiennie:
+
+- runtime pracuje wyłącznie na efemerycznej lokalnej bazie dyżuru pod
+  `127.0.0.1`, na zasobach przydzielonych w instrukcji; nie wolno adoptować
+  bazy zawierającej jakikolwiek klucz `smtp%`;
+- środowisko procesu serwera pochodzi z `childEnv(...)`, ma
+  `DOTENV_DISABLED='1'` i nie zawiera `SMTP_*`, `RESEND`, `SENDGRID` ani
+  `MAIL*`; trzeba to potwierdzić dla uruchomionego procesu, nie tylko dla
+  powłoki wywołującej;
+- zapytanie z dowodu (b), wykonane po wszystkich migracjach i seedach, zwraca
+  `0` wierszy bezpośrednio przed startem runtime'u;
+- nie ustawiasz flag drenaży na `true`, nie wywołujesz żadnego drenażu ręcznie
+  i nie wykonujesz żadnej operacji, która tworzy wiadomość, zaproszenie lub
+  powiadomienie; runtime służy wyłącznie do odczytu i wykonania zrzutów;
+- po starcie ponownie sprawdzasz środowisko należącego do Ciebie procesu oraz
+  log serwera. Trafienie konfiguracji poczty, próby realnego transportu albo
+  niejednoznaczność dowodu oznacza natychmiastowe zatrzymanie runtime'u i STOP
+  całego dyżuru (`Z30`).
+
+Brak konfiguracji nie wyłącza samych drenaży: w runtime z realną bazą startują
+one domyślnie. Ochroną jest fail-closed protokół powyżej — `emailService`
+tworzy realny transporter dopiero przy jednoczesnej obecności hosta i
+użytkownika SMTP; bez nich pozostaje atrapą konsolową. Dowody (a) i (b)
+obowiązują zatem zarówno testy, jak i zrzuty odbiorowe.
+
+**Deklaracja obowiązkowa dla ZRZUTÓW ODBIOROWYCH w raporcie, dosłownie:**
+**„Nie ustawiłem żadnej zmiennej SMTP ani flagi wysyłki. Baza tego dyżuru nie
+zawiera wierszy konfiguracji SMTP. Uruchomiłem `server/src/index.ts` wyłącznie
+przez kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs`, na lokalnej bazie
+dyżuru, tylko w celu wykonania zrzutów. Zweryfikowałem środowisko procesu i log
+serwera zgodnie z `§0.2b` (4). Żaden e-mail, zaproszenie kalendarzowe ani
+powiadomienie zewnętrzne nie zostało wysłane."**
+
+**Ostrzeżenie wsteczne (`DEC-2026-08-29-314`):** dyżury `70`, `72`, `73`,
+`76`, `81` i `85` uruchomiły kanoniczny runtime do zrzutów, przez co
+sześciokrotnie naruszyły wcześniejsze bezwarunkowe brzmienie `§0.2b`. Do szkody
+nie doszło, ponieważ niezależny protokół `Z30` wymagał wykazania, że dostawca
+poczty jest atrapą. To ostrzeżenie nie znosi zakazu ani nie zastępuje dowodów.
+
+---
+
+### 0.2c. ★★ KOMPLET ZMIENNYCH ŚRODOWISKOWYCH — TRZY WARIANTY, ZAWSZE W JEDNEJ LINII
+
+**Zmienna postawiona `export`-em wcześniej NIE LICZY SIĘ.** `vitest.config.ts`
+przybija część wartości (`DB_TYPE='sqlite'`), więc komplet musi stać
+**w tej samej linii komendy** — i masz **udowodnić, że nadpisał**, a nie założyć.
+
+**(A) MIGRACJE — pełny łańcuch, przed jakimkolwiek pomiarem (`Z20`):**
+
+```bash
+cd /private/tmp/cx-day223-czat-render
+
+docker run -d --name cx-day223-pg \
+  -e POSTGRES_PASSWORD=cx -e POSTGRES_DB=cx223 \
+  -p 127.0.0.1:6166:5432 pgvector/pgvector:pg16
+#   ★ `postgres:15` NIE PRZECHODZI migracji — brak rozszerzenia `vector`
+
+until docker exec cx-day223-pg pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
+
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6166/cx223 \
+  npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
+
+# DRUGI przebieg — musi byc bezbledny i bez zmian (idempotencja):
+NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6166/cx223 \
+  npx tsx server/scripts/migrate.postgres.ts 2>&1 | tail -20
+```
+
+**`NODE_ENV=test` jest OBOWIĄZKOWE przy bazie lokalnej** — bez niego strażnik
+localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
+(`server/scripts/migrate.postgres.ts:640-650` opisuje ten mechanizm wprost).
+**Liczbę zastosowanych migracji i wynik obu przebiegów mierzysz sam** (`Z24`).
+
+**(B) PAKIETY DOTYKAJĄCE BAZY — komplet obowiązkowy, gotowy do wklejenia:**
+
+```bash
+cd /private/tmp/cx-day223-czat-render && \
+RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test \
+ENABLE_V8_GLOBAL=true ENABLE_TEST_AUTH_BYPASS=false \
+RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce \
+DATABASE_URL=postgresql://postgres:cx@127.0.0.1:6166/cx223 \
+JWT_SECRET=cx223-test-secret-do-not-reuse \
+npx vitest run dev-render/screens/day223-chat-panel-write-proposal.tsx (NOWY, WYŁĄCZNIE jeśli po W1-W2 potwierdzisz, że nadal nie da się zmontować realnego UnifiedChatPanel w harnessie bez store/API — patrz §A.1) · src/components/AIChat/__tests__/day223.chatActionsInventory.test.ts (NOWY, jednostkowy kontrakt licząc producentów per typ, zapobiega regresji liczby) --retry=0 \
+  --reporter=json --outputFile=/private/tmp/cx-day223-czat-render-artefakty/day223-czat-render.json
+```
+
+Dla testów **serwerowych** dodajesz `--config server/vitest.config.ts`.
+**Uruchomienie `vitest` z roota bez właściwego configu daje
+`No test files found` — a to NIE jest `PASS`.** Sprawdź, którego configu
+wymaga dana ścieżka, i **wpisz to do raportu**.
+
+**(C) PAKIETY CZYSTO JEDNOSTKOWE** (mockują `dbGet`, nigdy nie otwierają
+połączenia — m.in. pomiar zasięgu `§0.4a`):
+
+```bash
+cd /private/tmp/cx-day223-czat-render && \
+RUN_DB_TESTS=0 MOCK_DB=true \
+npx vitest run dev-render/screens/day223-chat-panel-write-proposal.tsx (NOWY, WYŁĄCZNIE jeśli po W1-W2 potwierdzisz, że nadal nie da się zmontować realnego UnifiedChatPanel w harnessie bez store/API — patrz §A.1) · src/components/AIChat/__tests__/day223.chatActionsInventory.test.ts (NOWY, jednostkowy kontrakt licząc producentów per typ, zapobiega regresji liczby) --retry=0 \
+  --reporter=json --outputFile=/private/tmp/cx-day223-czat-render-artefakty/day223-czat-render.json
+```
+
+**To NIE jest naruszenie `Z26`, tylko warunek `Z25`:** bez `DATABASE_URL`
+`tests/setup.ts` rzuciłby błędem przy `RUN_DB_TESTS=1`.
+**Nigdy nie mieszasz: pakiet jednostkowy NIE jest dowodem egzekucji.**
+
+**Znaczenie każdej zmiennej — musisz je znać, zanim ją wpiszesz:**
+
+| Zmienna | Co się stanie, gdy jej zabraknie |
+| --- | --- |
+| `RUN_DB_TESTS=1` | `tests/setup.ts` pomija testy bazodanowe; pakiet raportuje `exit 0` |
+| `MOCK_DB=false` | odczyty idą **cicho** na atrapę bazy, zapisy nigdzie nie lądują |
+| `DB_TYPE=postgres` | `vitest.config.ts` przybija `sqlite` — mierzysz inny silnik, niż myślisz |
+| `NODE_ENV=test` | runner migracji odmawia albo zwraca MOCK przy bazie lokalnej |
+| `ENABLE_V8_GLOBAL=true` | część tras daje **fałszywe `404` PRZED uwierzytelnieniem** |
+| `ENABLE_TEST_AUTH_BYPASS=false` | **`verifyToken` JEST OMIJANY** — każdy test uwierzytelniania przechodzi z fałszywego powodu |
+| `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce` | strażnik przepuszcza wszystko przy `NODE_ENV=test` (416 fałszywych twierdzeń) |
+| `DATABASE_URL` | fallback na `localhost:5432`, który **nasłuchuje i nie jest Twój** |
+| `JWT_SECRET` | podpisany JWT nie przejdzie przez `verifyToken`; dostaniesz `401` z niewłaściwego powodu |
+| `--retry=0` | test „atak odrzucony" **leczy się skutkiem własnego ataku** i raportuje `PASS` |
+
+---
+
+### 0.2d. ★★ ZNANE PUŁAPKI ŚRODOWISKA — OSIEMNAŚCIE, KAŻDA KOSZTOWAŁA GODZINY
+
+**Czytaj to, ZANIM uznasz cokolwiek za zepsute.**
+
+1. **Vault jest BARE + `extensions.worktreeConfig=true`.** Po `git worktree add`
+   **musisz** utworzyć `<vault>/worktrees/cx-day223-czat-render/config.worktree`
+   z treścią `[core]` / `bare = false`, inaczej `git` w worktree odmawia pracy.
+   Komenda dosłowna: `§0.1` krok (4).
+2. **Remote `icloud-source` w vaulcie jest MARTWY** (wskazuje na nieistniejący
+   `/private/tmp/consultify-staging-deploy-e6ca`). **Nie wołaj `git fetch --all`.**
+   Jego błąd **NIE jest** negatywnym wynikiem markera i nie jest powodem STOP-u.
+3. **Host NIE MA binarki `psql`** (`which psql` → `psql not found`).
+   Każde zapytanie: `docker exec cx-day223-pg psql -U postgres -d cx223 -c '…'`.
+4. **Runner migracji wymaga `NODE_ENV=test` przy bazie lokalnej.** Bez tego
+   strażnik localhost odmawia albo `getDatabaseAsync()` zwraca MOCK
+   (`server/scripts/migrate.postgres.ts:640-650`).
+5. **`vitest.config.ts` (ok. `:209-210`) twardo ustawia `test.env.DB_TYPE='sqlite'`.**
+   Zmienna z powłoki bywa nadpisywana — `DB_TYPE=postgres` musi stać
+   **w tej samej linii komendy**, a Ty **udowadniasz w raporcie, że nadpisało**
+   (asercja `expect(process.env.DB_TYPE).toBe('postgres')` w pierwszym `it`
+   każdego nowego pakietu). Pliku **nie zmieniasz** (`Z18`).
+6. **`JSON.parse` na kolumnie typu `json` działa na SQLite i wywala `500` na
+   PostgreSQL** — sterownik `pg` zwraca już zdeserializowany obiekt. Jeżeli
+   kolumny są `TEXT`, kształt `500` nie występuje, ale występuje kształt
+   **cichej utraty danych**. Każdy `500` widoczny na PG a nie na SQLite sprawdź
+   najpierw pod tym kątem (`DEC-2026-08-28-245`).
+7. **CI NIE URUCHAMIA TESTÓW dla naszych gałęzi.** Joby `test-suite.yml` są
+   warunkowane na `main`/`develop`, a my jesteśmy na `Londyn`/`demo`;
+   `lint-typecheck` pada na zastanych błędach `tsc`, a `pr-gate` czyta wynik
+   pominiętego joba jako sukces (`DEC-2026-08-28-246`). **„CI zielone" nie jest
+   w tym repo żadnym dowodem.** Dowodem jest wyłącznie Twój przebieg z `--retry=0`.
+8. **`docker rm -f` bez `-v` NIE kasuje wolumenu.** Sprzątanie: `docker rm -fv cx-day223-pg`.
+9. **Reporter `basic` NIE ISTNIEJE w tej wersji vitest** (`--reporter=basic` →
+   `Failed to load custom Reporter from basic`). Do porównania nazw używasz
+   `--reporter=json --outputFile=<plik poza repo>`.
+10. **`npx vitest run` bywa kończy się `exit 0` mimo czerwonych testów** przy
+    przekierowaniu wyjścia. **Nie ufaj kodowi wyjścia** — liczby i nazwy czytasz
+    z JSON-a.
+11. **Nowe pliki w `tests/` wymagają `git add -f`** (katalog bywa ignorowany
+    częściowo). Sprawdzasz `git status --short` po każdym commicie.
+12. **`| head` na grepie sierot produkuje FAŁSZYWE SIEROTY.** Werdykt „martwy
+    komponent" wymaga grepu **bez obcięcia**, z wykluczeniem `__tests__`
+    i komentarzy.
+13. **ESM nie honoruje `NODE_PATH`.** Skrypt `.mjs` uruchamiany spoza repo nie
+    znajdzie pakietów — rozwiązuj je przez `createRequire(REPO + '/package.json')`.
+14. **Na remote `github-backup` NIE MA gałęzi `main`, `develop`, `Londyn` ani
+    `demo`** — są na `origin` (`origin/develop` **stoi od 2026-06-02**).
+    Pracujemy na linii `Londyn`/`demo`.
+15. **`postgres:15` NIE PRZECHODZI migracji** — brak rozszerzenia `vector`.
+    Obraz obowiązkowy: `pgvector/pgvector:pg16`.
+16. **`prettier` na wielkich plikach potrafi przepisać cały plik.** W repo
+    **nie ma** skryptu `format` — wołasz `npx prettier --write <pliki>` wprost.
+    Jeżeli wynik reformatu przekracza ~3× liczbę Twoich linii merytorycznych —
+    **cofasz reformat** (`cp` z kopii wg `Z27`, nigdy `git stash`), zostawiasz
+    styl zastany i wpisujesz to do raportu.
+17. **Istnieją testy tekstowe przez `readFileSync` + `toContain`,** które
+    asertują **dosłowne linie kodu**. Reformat takiej linii wywala test.
+    Jeżeli test zapali się od Twojego reformatu — **to jest regresja Twojego
+    reformatu, nie „test do poprawienia"**: cofasz reformat.
+18. **`npx vitest` z roota bez właściwego configu daje `No test files found`.**
+    To **nie jest `PASS`** — to jest brak pomiaru.
+
+---
+
+> **★★ RAMKA DO `Z33` — PUŁAPKI, KTÓRE FAŁSZUJĄ ZIELONY PRZEBIEG.**
+> **Zielona suita w tym repozytorium NIE JEST DOWODEM, dopóki nie wiesz, którą
+> pułapkę omija.**
+>
+> **(a) `ENABLE_V8_GLOBAL` nieustawione → fałszywe `404` PRZED uwierzytelnieniem.**
+> `server/src/middleware/v8FeatureGate.middleware.ts:15` czyta
+> `process.env.ENABLE_V8_GLOBAL === 'true'`; przy braku zmiennej bramka odcina
+> trasę **zanim** cokolwiek sprawdzi tożsamość. Twój test „obcy tenant dostaje
+> `404`" przechodzi wtedy z całkiem innego powodu, niż myślisz.
+>
+> **(b) `resultsInternalBetaVisibility.middleware.ts` przepuszcza wszystko przy
+> `NODE_ENV=test`,** dopóki nie ustawisz
+> `RESULTS_INTERNAL_BETA_VISIBILITY_TEST_MODE=enforce`. **Na tym strażniku
+> zmierzono 416 fałszywych twierdzeń o uprawnieniach.**
+>
+> **(c) `vitest.config.ts` twardo ustawia `test.env.DB_TYPE='sqlite'`.** Część
+> „testów bazodanowych" idzie na atrapę. `MOCK_DB=false DB_TYPE=postgres`
+> w tej samej linii to jedyne wyjście; pliku nie zmieniasz (`Z18`).
+>
+> **(d) `ENABLE_TEST_AUTH_BYPASS`.** `server/src/middleware/auth.middleware.ts`
+> zawiera gałąź: `if (NODE_ENV === 'test' && ENABLE_TEST_AUTH_BYPASS === 'true')`
+> — czyli **`verifyToken` potrafi wyłączyć się sam w trybie testowym**.
+>
+> **(e) ★ karta propozycji (`execution_proposal`) jest przechwytywana WARUNKOWO w `MessageRenderer.tsx` przez `V8_EXECUTION_MESSAGE_TYPES.has(msgType)` (ok. `:643`) — jeśli Twój seed/fixture wiadomości nie ustawi `type`/`messageType`/`metadata.messageType` dokładnie na `'execution_proposal'`, karta NIE wyrenderuje się i ekran pokaże zwykłą wiadomość tekstową, co wygląda jak defekt, a jest tylko złym fixture'em; dowód: `grep -n "msgType" src/components/AIChat/MessageRenderer.tsx`**
+>
+> **Obowiązek dowodowy.** Dla **każdego** pakietu uruchomionego jako dowód
+> czegokolwiek raport zawiera akapit: *która z pułapek (a)–(e) dotyczy tego
+> pakietu, jak ją wyłączyłem, i co konkretnie dowodzi, że wyłączyłem*.
+> Akapit „nie dotyczy" jest dopuszczalny **tylko** z komendą pokazującą, że dany
+> strażnik nie leży na ścieżce. **Pomiar bez tego akapitu nie liczy się jako dowód.**
+
+---
+
+### 0.5. Reguła STOP
+
+**Przy jakiejkolwiek wątpliwości MERYTORYCZNEJ: STOP tej POZYCJI i wpis
+w raporcie — nigdy improwizacja. W tym programie zasadny STOP jest NAGRADZANY,
+a zgadywanie karane** (dzień 23 dostał `SUPERVISOR_ACCEPT` za STOP,
+`DEC-2026-08-26-130`).
+
+**Rozróżnij dwa rodzaje:**
+
+- **STOP MERYTORYCZNY** (mile widziany): zmierzyłeś i wyszło inaczej, niż mówi
+  ta instrukcja; brakuje informacji, której nikt poza właścicielem nie
+  dostarczy; naprawa wymaga decyzji produktowej. **Wpisujesz do raportu
+  i IDZIESZ DALEJ do następnej pozycji.**
+- **STOP PROCEDURALNY** (zakazany): „instrukcja jest sprzeczna", „ścieżka nie
+  istnieje", „nie mam licencji na plik". **Ten rodzaj NIE zatrzymuje niczego** —
+  patrz tabela niżej i sekcja końcowa.
+
+### ★★ TABELA: STOP PROCEDURALNY ZAKAZANY — DZIAŁANIE ZASTĘPCZE
+
+| Powód, dla którego chciałbyś stanąć | Co robisz ZAMIAST STOP-u |
+| --- | --- |
+| „Musiałbym zmienić plik przekrojowy (`auth.middleware.ts` / `Gateway.ts` / bramkę platformową)" | **Czerwony kontrakt testowy + brief wynikowy** (tabela licencji, wiersz 1). Pozycja jest wtedy **ZROBIONA**, nie STOP |
+| „Plik, którego potrzebuję, nie jest w tabeli licencji" | Traktujesz go jako **tylko do odczytu** i dajesz czerwony kontrakt + brief. Pozycja **ZROBIONA** |
+| „Instrukcja jest wewnętrznie sprzeczna" | Sekcja **„JEŚLI COŚ JEST SPRZECZNE"** na końcu dokumentu. Wybierasz interpretację **bezpieczniejszą**, opisujesz w „Korektach", **kontynuujesz pozostałe pozycje** |
+| „Ścieżka podana w instrukcji nie istnieje" | Sprawdzasz `ls`, wpisujesz **swój wynik** do „Korekt", szukasz realnego odpowiednika i **idziesz dalej**. Rozbieżność pomiaru z instrukcją **nie jest sprzecznością — jest WYNIKIEM** |
+| „Instrukcja podaje dwie różne liczby" | Mierzysz sam, podajesz **swoją** liczbę z komendą (`Z24`). To **nie jest** powód do STOP-u |
+| „`git fetch` zwrócił błąd `icloud-source`" | To **nie jest** błąd. `§0.2d` pkt 2. Idziesz dalej |
+| „`psql` nie istnieje na hoście" | `docker exec cx-day223-pg psql …`. `§0.2d` pkt 3 |
+| „Hook pre-commit blokuje commit" | **Naprawiasz kodem, nie omijasz.** `--no-verify` jest zakazem, nie STOP-em |
+| „Musiałbym odłożyć stan roboczy" | `cp` do `/private/tmp/cx-day223-czat-render-scratch`. `git stash` jest zakazem (`Z27`), nie STOP-em |
+| „Test przeszkadza" | **Nie osłabiasz asercji.** Opisujesz, co blokuje. Osłabienie = odrzucenie pozycji, nie STOP |
+| „Nie zdążę zrobić wszystkich pozycji" | Robisz **rdzeń** (`§A.1 (dowód renderu) jest rdzeniem obowiązkowym; §A.2 (inwentarz+decyzje D-15) jest rdzeniem w części pomiarowej (inwentarz + klasyfikacja OBOWIĄZKOWE), część wykonawcza (budowa/wygaszenie per widmo) wykonujesz w miarę budżetu, z jawnym STOP MERYTORYCZNYM i wpisem DO DECYZJI WŁAŚCICIELA dla każdego widma, którego nie zdążysz rozstrzygnąć`) i **uczciwie opisujesz resztę jako niezrobioną**. Odwrotna kolejność (inwentarze zrobione, rdzeń „częściowo") jest podstawą odrzucenia |
+| „Port `6166` albo `5120 i 5121` jest zajęty" | **To JEST powód do STOP-u całości** — nie bierzesz innego portu (`Z7`) |
+
+**Zatrzymanie CAŁEGO dyżuru jest dopuszczalne WYŁĄCZNIE przy:**
+1. **`MARKER BRAK`** (`§0.1`);
+2. **faktycznym połączeniu do bazy zdalnej, demo, stagingu albo produkcji**
+   (`Z28`) — „przecież to był tylko `SELECT`" nie jest okolicznością łagodzącą;
+3. **ryzyku utraty danych** albo realnej wysyłki e-maila (`Z30`);
+4. **mniej niż 5 GB wolnego dysku** (`§0.1` krok 0);
+5. **zajętym porcie `6166` albo `5120 i 5121`** (`Z7`).
+
+Format wpisu STOP:
+
+```
+### STOP — <pozycja>
+Rodzaj: MERYTORYCZNY / PROCEDURALNY
+Powód: <jedno zdanie>
+Licencja, którą sprawdziłem: <cytat wiersza z tabeli licencji + wynik>
+Dowód: <plik:linia albo komenda + wynik>
+Co dostarczyłem ZAMIAST zmiany: <czerwony kontrakt / pomiar / gotowy diff / brief>
+Co zrobiłbym, gdyby zapadła decyzja X: <2-3 zdania>
+Rekomendacja dla nadzorcy: <co zmienić, gdzie, jaki promień rażenia>
+Stan: NIE ZACOMMITOWANO / zacommitowano częściowo w <SHA>
+Czy kontynuowałem pozostałe pozycje: TAK / NIE + dlaczego
+```
+
+**★★ STOP bez wypełnionego pola „Licencja, którą sprawdziłem" jest NIEZASADNY
+z definicji. STOP bez wypełnionego pola „Co dostarczyłem ZAMIAST zmiany" jest
+NIEZASADNY z definicji.**
+
+---
+
+## ★★ JEŚLI COŚ W TEJ INSTRUKCJI JEST SPRZECZNE LUB NIEWYKONALNE
+
+**Ta instrukcja była pisana i sprawdzana przez człowieka i model. Może mieć
+błędy. Nie zatrzymuj przez nie dyżuru.**
+
+**Procedura, dosłownie:**
+
+1. **Opisz sprzeczność w raporcie**, w sekcji „Korekty wobec instrukcji":
+   **cytat obu wykluczających się zdań z numerami paragrafów**, na czym polega
+   konflikt, jaki masz dowód i co zrobiłeś.
+2. **Wybierz interpretację BEZPIECZNIEJSZĄ.** Reguły rozstrzygające,
+   w tej kolejności:
+   - **nie ruszaj cudzego pliku** — gdy nie wiesz, czy masz licencję, **nie
+     masz**; traktuj plik jako tylko do odczytu i dostarcz czerwony kontrakt
+     + brief;
+   - **nie osłabiaj asercji** — gdy test przeszkadza, opisujesz go, nie
+     zmieniasz;
+   - **nie kasuj** — gdy werdykt jest niepewny, wpisz `DO DECYZJI WŁAŚCICIELA`
+     ze zdaniem **„czego konkretnie mi zabrakło, żeby rozstrzygnąć
+     samodzielnie"** (wiersz bez tego zdania liczy się jako nierozstrzygnięty);
+   - **nie włączaj** — gdy nie wiesz, czy flaga ma być `ON`, zostaje `OFF`
+     (`Z10`/`Z11`);
+   - **nie wysyłaj niczego na zewnątrz** — gdy nie masz pewności co do `Z30`,
+     nie klikasz;
+   - **nie poszerzaj dostępu** — gdy bramka jest niejednoznaczna, **odmawiasz
+     zamiast przepuszczać**;
+   - **mierz zamiast zgadywać** — gdy instrukcja podaje liczbę, a Twój pomiar
+     daje inną, **wiążący jest Twój pomiar z komendą** (`Z24`).
+3. **KONTYNUUJESZ POZOSTAŁE POZYCJE.** Sprzeczność w jednym paragrafie nie
+   zwalnia z pozostałych ani z raportu.
+4. **Zatrzymanie CAŁEGO dyżuru** — wyłącznie z pięciu powodów wymienionych
+   w `§0.5`.
+5. **Nigdy nie „naprawiaj" instrukcji przez improwizację w kodzie.**
+   Sprzeczność w dokumencie rozwiązuje się **wpisem w raporcie**, nie zmianą
+   w produkcie.
+6. **★ Rozbieżność między pomiarem a tą instrukcją NIE JEST sprzecznością —
+   jest WYNIKIEM.** Każda liczba, linia i teza w tym dokumencie to **rozkaz
+   pomiarowy**, nie prawda objawiona.
+
+**★ Trzy najcenniejsze rzeczy, jakie możesz oddać:** dowód, że coś, co uchodziło
+za działające, nie działa; dowód, że coś, co uchodziło za zepsute, jest sprawne;
+i uczciwe zdanie „tego nie zmierzyłem, bo…".
+
+**★ Ostatnie zdanie tej instrukcji i najważniejsze: obalenie którejkolwiek tezy
+z sekcji „TEZY ZLECENIA…" jest SUKCESEM dyżuru, a nie porażką. Zapisz to
+w „Korektach wobec instrukcji" z dowodem i idź dalej.**
+
+---
+
+# 1. PO CO TEN DYŻUR ISTNIEJE
+
+`docs/program/funkcje/FALA_Z1_2026-08-31.md`, sekcja „★ Pułapka złapana w samym pomiarze":
+`ODBIOR_207.md` prześledził czwarty łańcuch wywołań linia po linii i potwierdził realne
+wywołanie karty propozycji zapisu — **a mimo to jedyny dowód wizualny pozostał
+storybookiem**: pojedynczy komponent na pustej stronie, bez wątku, kompozytora i reszty
+panelu. `CLAUDE.md` reguła 7 mówi, że właściciel nigdy nie jest pierwszym testerem
+wizualnym; storybook tego nie spełnia. Ten dyżur zamyka DWIE, osobne pozycje z tej samej
+fali (`FALA_Z1_2026-08-31.md`, wiersz „13 Czat | 1-2"): (a) prawdziwy dowód renderu karty
+w realnym panelu czatu; (b) zmierzony i rozstrzygnięty inwentarz „widm-akcji" z decyzji D-15.
+
+**Zweryfikowane przy pisaniu tej instrukcji (nadzorca, na tipie `9fb7942a01`, 01.09):**
+
+1. `dev-render/screens/day207-write-proposal.tsx` renderuje WYŁĄCZNIE
+   `<ExecutionProposalMessage msg={...} onApprove={...} onReject={...} onInspect={...} />`
+   na gołym `<main>` — zero wątku wiadomości, zero kompozytora, zero reszty panelu. To jest
+   dokładnie „storybook", nie dowód renderu w kontekście.
+2. **Pułapka nadal aktualna** (zmierzone teraz, nie przyjęte na wiarę): drugi plik
+   harnessu, `dev-render/screens/chat-split-teresa-right.tsx`, ma w swoim WŁASNYM
+   nagłówku (linie 1-13) zdanie wprost: „Realny `<UnifiedChatPanel>` ciągnie
+   store/API/logowanie i **nie zmontuje się w harnessie**, więc TREŚĆ jest mockowana".
+   To jest przyznanie się kodu do własnego ograniczenia, datowane na wcześniejszy dyżur
+   (D17) i wciąż prawdziwe na tym markerze — dev-render **strukturalnie nie może** być
+   dowodem dla reguły 7 w przypadku komponentów zależnych od store/API/sesji.
+3. Realne przechwycenie ISTNIEJE i jest zamontowane: `MessageRenderer.tsx` ma
+   `V8_EXECUTION_MESSAGE_TYPES` (Set z `execution_proposal`/`execution_progress`/
+   `execution_result`, zmierz linię — na markerze ok. `:69-73`) i renderuje
+   `<ExecutionProposalMessage .../>` gdy `msgType` (z `msg.type` albo
+   `msg.messageType` albo `msg.metadata?.messageType`) jest w tym zbiorze (ok. `:643-649`).
+   `MessageRenderer` jest wołany wewnątrz `UnifiedChatPanel.tsx` (7530 linii) w pętli
+   renderującej wiadomości wątku — to NIE jest martwy kod, to jest podłączony mechanizm,
+   któremu brakuje wyłącznie DOWODU WIZUALNEGO w kontekście.
+4. **Katalog 17 akcji czatu** (`src/types/domain/chatActions.ts`, `ChatActionType`) ma
+   producenta (coś, co realnie oferuje tę akcję użytkownikowi jako klikalną sugestię) dla
+   dokładnie SZEŚCIU typów: `NAVIGATE` (via `ChatSmartSuggestions`/`chatSuggestions` useMemo
+   w `UnifiedChatPanel.tsx`, ok. `:2791-2802`), `GENERATE_REPORT`, `GENERATE_PRESENTATION`,
+   `BROWSE_TEMPLATES` (wszystkie trzy — ok. `:2855-2875`, warunkowane obecnością
+   `projectId` w `workspaceContext`), `USE_TEMPLATE` (ok. `:2876-2887`, warunkowane
+   `templateArtifactId`), `RECORD_KPI` (ok. `:2888-2899`, warunkowane `kpiId`). Te sześć to
+   dokładnie cztery pozycje zbudowane wg D-15 („WSZYSTKIE 4 dobudować": `GENERATE_REPORT`,
+   `GENERATE_PRESENTATION`, `USE_TEMPLATE`, `RECORD_KPI`) + `NAVIGATE` (był producentem od
+   zawsze) + `BROWSE_TEMPLATES` (bonus przy okazji budowy tej samej grupy).
+5. **Pozostałe JEDENAŚCIE typów mają ZERO producentów** w całym `src/` i `server/src/`
+   poza plikami rejestru/handlera/adaptera (`chatActions.ts`, `chatActionRegistry.ts`,
+   `chatActionHandler.ts`, `federatedActionAdapters.ts`): `CREATE_TASK`, `CREATE_DECISION`,
+   `CREATE_INITIATIVE`, `START_TOOL`, `OPEN_PREVIEW`, `ASSIGN_INTERVIEW`,
+   `START_ARTIFACT_REVIEW`, `CHECK_TRUST_STATE`, `ANALYZE_STATEMENT`, `REVIEW_MODEL`,
+   `CHECK_LANE_STATUS`. Wszystkie JEDENAŚCIE mają jednak realny `case` w
+   `chatActionHandler.ts` (wykonanie ISTNIEJE, gdyby ktoś je wywołał) — to jest dokładnie
+   wzorzec P5 z `ARCHITEKTURA_AGENTA_TERESY.md`: „handler je zna, nic ich nie produkuje".
+   **To jest 11, nie „~10"** — brief nadzorcy podawał liczbę przybliżoną, Twój pomiar jest
+   wiążący (`Z24`).
+6. **Trzy z jedenastu (`CREATE_TASK`, `CREATE_DECISION`, `CREATE_INITIATIVE`) mają REALNY,
+   działający odpowiednik gdzie indziej** — `server/src/services/aiActionExecutor.ts`
+   (`ACTION_TYPES.CREATE_DRAFT_TASK`/`CREATE_DRAFT_INITIATIVE`/`CREATE_DRAFT_DECISION`,
+   switch ok. `:911-920`) to INNY, niezależny mechanizm (`ai_actions`/governed proposal —
+   ten sam, który dzięki dyżurowi 207 realnie tworzy zadania przez
+   `createPersonalTaskService.ts`). Katalog `ChatActionType` z `chatActions.ts` to TRZECI,
+   martwy sposób robienia tego samego, nie brakujący pierwszy.
+
+---
+
+# 2. TEZY ZLECENIA
+
+| # | Teza | Jak weryfikujesz | Co, jeśli teza padnie |
+| --- | --- | --- | --- |
+| T1 | dev-render nie może zamontować realnego `UnifiedChatPanel` (store/API/logowanie) | `W1` niżej — czytasz nagłówek `chat-split-teresa-right.tsx` własnymi oczami, nie na wiarę | Jeśli od tego dyżuru istnieje sposób montażu realnego panelu w harnessie bez store — użyj go zamiast pełnego runtime'u, opisz w „Korektach" |
+| T2 | `day207-write-proposal.tsx` to pojedynczy komponent, nie dowód w kontekście | `W2` niżej | j.w. — jeśli plik się zmienił, zmierz nowy stan |
+| T3 | 17 typów akcji czatu, 6 z producentem, 11 bez | `W7`-`W8` niżej — Twój własny grep, nie liczba z tej instrukcji | Jeśli inna liczba — Twoja jest wiążąca, wpisz komendę i wynik |
+| T4 | `CREATE_TASK`/`CREATE_DECISION`/`CREATE_INITIATIVE` mają realny odpowiednik w `aiActionExecutor.ts` | `W9` niżej | Jeśli mechanizm zniknął/zmienił się — opisz różnicę, to zmienia rekomendację EXTINGUISH na inną |
+
+---
+
+# 3. POZYCJE DYŻURU
+
+## §A.1 — Dowód wizualny karty propozycji W REALNYM panelu czatu (rdzeń, obowiązkowy)
+
+**Cel:** zrzut jasny + zrzut ciemny karty `ExecutionProposalMessage` (stan
+`pending_review`, `create_task`) renderującej się WEWNĄTRZ prawdziwego wątku
+`UnifiedChatPanel` — z widocznym kompozytorem, historią wiadomości i resztą powłoki —
+zrobiony PRZEZ CIEBIE, zanim właściciel zobaczy cokolwiek (`CLAUDE.md` reguła 7).
+
+**Krok 1 — ustal, czy da się to zrobić bez pełnego runtime'u.** `T1`/`T2` zakładają,
+że NIE — zweryfikuj to sam (`W1`-`W2`) zamiast przyjmować to na wiarę. Jeśli po
+weryfikacji ustalenie się potwierdza, jedyna uczciwa droga to `§0.2b (4)` — pełny
+`server/src/index.ts` przez kanoniczny `scripts/dev/start-wave3-owner-runtime.mjs`,
+na efemerycznej lokalnej bazie TEGO dyżuru, wyłącznie do zrzutów, po dowodach (a)/(b)
+z `§0.2b`.
+
+**Krok 2 — scenariusz w przeglądarce:**
+1. Uruchom runtime, zaloguj się kontem testowym seedowanym w Twojej bazie (NIE realne
+   dane — `Z9`).
+2. Ustaw `ENABLE_TERESA_TOOL_LOOP_WRITE=true` WYŁĄCZNIE w środowisku procesu serwera
+   (nie w kodzie, nie w `.env*` trwale — `§0.2c`, `Z10`).
+3. Otwórz `/chat`, wyślij wiadomość, która prowadzi model do zaproponowania utworzenia
+   zadania (np. „Utwórz zadanie: przygotuj brief warsztatu z klientem"). Jeśli READ/WRITE
+   tool-loop (dyżur 206/207) nie da się wywołać realnym modelem w Twoim budżecie — **wolno
+   Ci wstrzyknąć** wiadomość typu `execution_proposal` bezpośrednio do stanu wątku frontowego
+   (np. przez tymczasowy, NIEZACOMMITOWANY `console`/devtools call albo krótki, jednorazowy
+   skrypt seedujący `conversation_messages` w Twojej bazie z poprawnym `type='execution_proposal'`
+   i `metadata` zgodnym z kształtem z `day207-write-proposal.tsx`) — pod warunkiem że
+   renderowanie i tak przechodzi przez PRAWDZIWY `MessageRenderer`/`UnifiedChatPanel`, nie
+   przez izolowany harness. Zapisz w raporcie, którą z dwóch dróg wybrałeś i dlaczego.
+4. Zrzut **jasny**: cały panel czatu (wątek + karta + kompozytor + sidebar historii, jeśli
+   widoczny), motyw jasny.
+5. Zrzut **ciemny**: identyczny scenariusz, motyw ciemny (przełącznik motywu w UI albo
+   `?theme=dark`, zgodnie z konwencją innych harnessów tego repo).
+
+**Krok 3 — bezpiecznik `mean_luma` (para jasny/ciemny musi się REALNIE różnić — zdarzył
+się w tym programie przypadek dwóch identycznych obrazów pod dwiema nazwami):**
+
+```bash
+node -e "
+const sharp = require('sharp');
+(async () => {
+  for (const f of ['/private/tmp/cx-day223-czat-render-artefakty/day223-chat-light.png', '/private/tmp/cx-day223-czat-render-artefakty/day223-chat-dark.png']) {
+    const { channels } = await sharp(f).stats();
+    const mean = channels.reduce((s, c) => s + c.mean, 0) / channels.length;
+    console.log(f, 'mean_luma=', mean.toFixed(1));
+  }
+})();
+"
+#   oczekiwane: DWIE różne wartości mean_luma, różnica > 20 (jasny wyraźnie jaśniejszy).
+#   Wartości identyczne albo różnica < 5 = para jest DUPLIKATEM pod dwiema nazwami —
+#   to jest odrzucenie pozycji, nie formalność (patrz pamięć programu: „Duplikat zamiast
+#   motywu", trzynasty kształt fałszywego „gotowe").
+```
+
+**DoD `§A.1`:**
+- dwa pliki PNG w `/private/tmp/cx-day223-czat-render-artefakty` (jasny + ciemny), `shasum -a 256` obu w raporcie;
+- `mean_luma` obu policzone i wklejone, różnica > 20, uzasadniona (nie przypadkowa);
+- raport wprost stwierdza, KTÓRĄ z dwóch dróg z kroku 2.3 wybrałeś i dlaczego dev-render
+  nie wystarczył (cytat z `T1`/`T2` + Twój własny pomiar `W1`-`W2`);
+- deklaracja `§0.2b` (poczta jest atrapą) obowiązkowa, bo uruchamiasz pełny
+  `server/src/index.ts`.
+
+## §A.2 — Inwentarz i rozstrzygnięcie „widm-akcji" z decyzji D-15
+
+**Cel:** dokładna, zmierzona lista wszystkich typów `ChatActionType` bez producenta
+(Twój pomiar `W7`-`W8` jest wiążący, nie liczba `~10` z briefu nadzorcy), i dla KAŻDEGO —
+decyzja: zmapowany na realne narzędzie (producent dobudowany) ALBO świadomie zgaszony
+z UZASADNIENIEM PER TYP (zakaz kasowania hurtowego bez uzasadnienia, `Z40`, D-15 wprost).
+
+**Reguła klasyfikacji (stosuj do każdego z 11), zapisz wynik w tabeli w raporcie:**
+
+1. **MA REALNY ALTERNATYWNY MECHANIZM gdzie indziej w produkcie** → rekomendacja
+   `EXTINGUISH` (usuń wpis z `ChatActionType`, z `CHAT_ACTION_DEFINITIONS`, `case` w
+   `chatActionHandler.ts`, wpis w `federatedActionAdapters.ts`), z komentarzem w miejscu
+   usunięcia wskazującym realny mechanizm (plik:linia). **Już zweryfikowane przez Ciebie w
+   `W9`:** `CREATE_TASK`, `CREATE_DECISION`, `CREATE_INITIATIVE` należą tutaj —
+   `aiActionExecutor.ts` (`CREATE_DRAFT_TASK`/`CREATE_DRAFT_INITIATIVE`/`CREATE_DRAFT_DECISION`)
+   to inny, działający, GOVERNED mechanizm (ten sam, który dyżur 207 spiął z
+   `createPersonalTaskService`). Wykonaj to usunięcie jako pierwsze — masz gotowy dowód.
+2. **NIE MA alternatywnego mechanizmu, a dobudowanie producenta jest TANIE** (wzorem
+   `GENERATE_REPORT`/`RECORD_KPI` — nowy warunek w `chatSuggestions` useMemo,
+   `UnifiedChatPanel.tsx` ok. `:2781-2920`, bez nowej trasy backendowej) → dobuduj
+   producenta, analogicznie do istniejącego wzorca. Kandydat wart sprawdzenia jako
+   pierwszy: `OPEN_PREVIEW` (koncepcyjnie najbliższy już istniejącym warunkom
+   `workspaceContext`).
+3. **NIE MA alternatywnego mechanizmu, a decyzja wymaga wiedzy produktowej, której nie
+   masz** (np. „czy `ANALYZE_STATEMENT`/`REVIEW_MODEL` mają w ogóle żyć w czacie, skoro
+   realna analiza finansowa dzieje się w module Finance") → **STOP MERYTORYCZNY tej
+   pod-pozycji**, wpis `DO DECYZJI WŁAŚCICIELA` z jednym zdaniem „czego mi zabrakło, żeby
+   rozstrzygnąć samodzielnie" (`A.8`). To jest DOPUSZCZALNY, NAGRADZANY wynik dla
+   pojedynczego widma — nie dla wszystkich jedenastu naraz bez próby.
+
+**Minimalny wymagany wynik tej pozycji:** wszystkie 11 wpisane do tabeli w raporcie z
+werdyktem (`EXTINGUISH` / `PRODUCER_DOBUDOWANY` / `DO_DECYZJI_WLASCICIELA`) i uzasadnieniem
+per wiersz; **co najmniej trzy** (`CREATE_TASK`/`CREATE_DECISION`/`CREATE_INITIATIVE`)
+faktycznie wykonane jako `EXTINGUISH` w kodzie, z dowodem mutacyjnym (test kontraktowy,
+patrz DoD niżej). Reszta może zostać `DO_DECYZJI_WLASCICIELA`, jeśli budżet dyżuru się
+skończy — ale MUSI być wpisana, nie pominięta milczeniem.
+
+**DoD `§A.2`:**
+- tabela 11 wierszy w raporcie, kompletna;
+- nowy test `src/components/AIChat/__tests__/day223.chatActionsInventory.test.ts` — dowód
+  mutacyjny: liczy producentów per typ (ten sam mechanizm co `W8`, opakowany w test) i
+  PADA, jeśli liczba typów-bez-producenta wzrośnie ponad ustaloną w tym dyżurze (zabezpiecza
+  przed cichym przybyciem kolejnego widma w przyszłości) — dowód czerwony/zielony: dodaj
+  tymczasowo martwy 18. typ, test czerwony; usuń, test zielony;
+- dla KAŻDEGO wpisu `EXTINGUISH` wykonanego w kodzie: `git diff` pokazuje usunięcie z
+  CZTERECH miejsc (`chatActions.ts`, `chatActionRegistry.ts` jeśli dotyczy, `chatActionHandler.ts`,
+  `federatedActionAdapters.ts`) + istniejące testy (jeśli jakiekolwiek odwoływały się do
+  usuniętego typu) albo przechodzą, albo są świadomie zaktualizowane z uzasadnieniem.
+
+## §R.1 — podniesienie karty modułu 13 i architektury modułu 17
+
+Dopisz do `docs/program/waves/WAVE_03_ACCEPTANCE/modules/13_CHAT/MODULE_ACCEPTANCE.md`
+notatkę o dowodzie renderu (`§A.1`) z odsyłaczem do raportu. W
+`docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md`, wiersz `P5` (tabela §3),
+zaktualizuj liczbę „15/17" na Twój zmierzony wynik po wykonanych `EXTINGUISH`
+(np. jeśli usunąłeś 3, zostaje 17-6-3=8 bez producenta z 14 pozostałych typów w katalogu)
+— **wyłącznie tę jedną komórkę tabeli**, zero zmiany reszty dokumentu.
+
+## §R.2 — raport dyżuru
+
+`docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY223_CZAT_RENDER_REPORT.md`.
+Struktura: (1) wynik komend `(2)`/`(7)` z `§0.1`; (2) wynik `W1`-`W10`; (3) `§A.1` —
+obie ścieżki PNG, `shasum -a 256`, `mean_luma` obu, różnica, deklaracja `§0.2b`; (4)
+`§A.2` — tabela 11 wierszy + dowód mutacyjny testu kontraktowego; (5) `§0.4a` — diff
+nazw testów; (6) „Korekty wobec instrukcji"; (7) „TWIERDZENIA NIEZWERYFIKOWANE".
+
+---
+
+# 4. TABELA LICENCJI PLIKOWYCH
+
+| Zakres | Ścieżki |
+| --- | --- |
+| Zapis — WYŁĄCZNIE jeśli §A.1 krok 3 wymaga wstrzyknięcia wiadomości seedującej (skrypt jednorazowy, NIE commitowany do repo produktowego) | `/private/tmp/cx-day223-czat-render-scratch`/seed-execution-proposal.ts (poza repo, `Z13`) |
+| Zapis — NOWY, wyłącznie jeśli dev-render okaże się jednak potrzebny jako pomocniczy dowód uzupełniający (nie zastępujący realnego runtime'u) | `dev-render/screens/day223-chat-panel-write-proposal.tsx` |
+| Zapis — WĄSKA, wyłącznie usunięcie wpisów `EXTINGUISH` | `src/types/domain/chatActions.ts` · `src/services/chatActionRegistry.ts` · `src/services/chatActionHandler.ts` · `src/actions/federatedActionAdapters.ts` |
+| Zapis — WĄSKA, wyłącznie nowy warunek producenta w `chatSuggestions` (jeśli klasyfikacja 2 z reguły w §A.2 wskaże kandydata) | `src/components/AIChat/UnifiedChatPanel.tsx` (plik ma 7530 linii — zakaz dotykania czegokolwiek poza tym jednym `useMemo`) |
+| Zapis — NOWY plik | `src/components/AIChat/__tests__/day223.chatActionsInventory.test.ts` |
+| Zapis — WYŁĄCZNIE dopisanie notatki (§R.1) | `docs/program/waves/WAVE_03_ACCEPTANCE/modules/13_CHAT/MODULE_ACCEPTANCE.md` |
+| Zapis — WYŁĄCZNIE jedna komórka tabeli §3, wiersz P5 (§R.1) | `docs/program/funkcje/ARCHITEKTURA_AGENTA_TERESY.md` |
+| Zapis | `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY223_CZAT_RENDER_REPORT.md` |
+| Odczyt (ZAKAZ ZAPISU) | `src/components/AIChat/MessageRenderer.tsx` · `src/components/AIChat/ExecutionProposalMessage.tsx` — mechanizm już zmontowany, dowodzisz go, nie zmieniasz |
+| Odczyt (ZAKAZ ZAPISU) | `server/src/services/aiActionExecutor.ts` — dowód alternatywnego mechanizmu (W9), NIE zmieniasz |
+| Odczyt (ZAKAZ ZAPISU — `Z18`, bez wyjątku) | `tests/setup.ts` · `tests/helpers/**` · `tests/__mocks__/**` · `vitest.config.ts` · każdy `vitest.*.config.ts` · `server/vitest.config*.ts` |
+| Odczyt | `dev-render/screens/day207-write-proposal.tsx` · `dev-render/screens/chat-split-teresa-right.tsx` — dowód T1/T2, NIE dotykasz |
+| Odczyt | `scripts/dev/start-wave3-owner-runtime.mjs` |
+
+**Nietykalne imiennie:** `tests/setup.ts` i sąsiedzi (`Z18`) · `server/src/services/aiRoleGuard.ts`
+· `server/src/services/aiPolicyEngine.ts` · `server/src/middleware/auth.middleware.ts` ·
+`server/src/Gateway.ts` · żadna trasa backendowa (ten dyżur jest w 100% front-end + dowód
+wizualny).
+
+**Rozłączność z partią równoległą:** `222`/`224`/`225` dotyczą modułów 07/16/03 — zero
+wspólnych plików produktowych. `dev-render/main.tsx` jest WSPÓLNYM plikiem rejestru
+harnessów, dotykanym potencjalnie przez inne dyżury (widziany w `git status` jako
+zmodyfikowany na tej gałęzi) — jeśli dopisujesz nowy wpis, rób to WYŁĄCZNIE dopisaniem
+nowej pozycji na końcu odpowiedniej sekcji, zero zmiany istniejących wpisów, i zgłoś w
+raporcie ewentualną kolizję z `git diff` tego pliku sprzed Twojej zmiany.
+
+---
+
+# 5. TWARDE ZASADY
+
+- ★★ **Reguła 7 CLAUDE.md jest dosłowna: dowód robisz TY, nie właściciel.** Zrzut
+  wykonany przez Ciebie w kanonicznym runtime, nie opis „powinno działać".
+- ★★ **Zakaz kasowania więcej niż `EXTINGUISH`-owanych typów bez osobnego uzasadnienia
+  per typ w tabeli §A.2** — D-15 to zakazuje wprost.
+- ★★ **`mean_luma` obu zrzutów MUSI się różnić o więcej niż 20** — para identyczna albo
+  prawie identyczna jest odrzuceniem pozycji `§A.1`, nie formalnością.
+- ★ **Nie myl `ChatActionType` (front-end, `chatActions.ts`) z `ACTION_TYPES`
+  (`aiActionExecutor.ts`, backend, `ai_actions`)** — to DWA różne katalogi o częściowo
+  pokrywających się nazwach (`CREATE_TASK` vs `CREATE_DRAFT_TASK`). Pomylenie ich w
+  raporcie jest błędem, nie niuansem.
+- ★ **Flaga `ENABLE_TERESA_TOOL_LOOP_WRITE`: WYŁĄCZNIE zmienna środowiskowa na czas
+  przebiegu, zero zmiany `default false` w `FeatureFlags.ts`.**
+- ★ **Zrzuty w `/private/tmp/cx-day223-czat-render-artefakty`, nie w repo** (`Z13`); raport podaje ścieżki i
+  `shasum -a 256`.
+- ★ **Pułapka komentarzy, które kłamią (31.08):** nagłówek `chat-split-teresa-right.tsx`
+  jest akurat PRAWDZIWY (zweryfikowałeś w `W1`) — ale to nie zwalnia Cię z weryfikacji
+  KAŻDEGO kolejnego komentarza, na jaki trafisz w tym dyżurze, tym samym trybem: pomiar,
+  nie zaufanie.
+- ★ **`§0.4a` — pomiar zasięgu testów jest warunkiem oddania raportu** (`Z24`).

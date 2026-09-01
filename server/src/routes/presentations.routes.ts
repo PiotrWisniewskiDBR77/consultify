@@ -168,7 +168,10 @@ import {
   recordGovernanceEvent,
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
-import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
+import {
+  mapOutlineBlueprintToDeckSlides,
+  validatePresentationCustomTemplate,
+} from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -1573,16 +1576,52 @@ router.put(
       maxSlides,
       colorTemplateId,
       imageStylePrompt,
+      customTemplate,
     } = req.body;
 
-    // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
+    // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31) + Day 228 "styl obrazu"
+    // + Day 226 "custom template" contract. Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
     // migration) instead of a new column — see
     // `presentationTemplateCompatibilityService.ts` for the read side.
-    // `colorTemplateId === undefined` means "field not sent, leave
-    // untouched"; `null` or `''` means "explicitly cleared".
+    // `colorTemplateId === undefined` / `imageStylePrompt === undefined` /
+    // `customTemplate === undefined` each mean "field not sent, leave
+    // untouched"; an explicit falsy value (`null`/`''`) clears it.
+    //
+    // Merge note (FIX-228 x 226, 2026-09-01 scalenie na github-backup/codex/
+    // m03-admin-20260824): `imageStylePrompt` writes UNCONDITIONALLY — its
+    // own flag `ENABLE_PRESENTATION_IMAGE_STYLE` is read only downstream by
+    // deckVisualsService at image-generation time, never by this endpoint.
+    // `customTemplate` writes ONLY under `ENABLE_PRESENTATION_TEMPLATE_
+    // CUSTOM_SAVE` (226's own gate + validation, unchanged — do not weaken).
+    // Neither flag conditions the other field's write. `typeof` guard on
+    // `existing.layout_policy_json` (228's version — driver-tolerant: some
+    // paths return it already-parsed as an object, not a JSON string) kept
+    // from FIX-228, per ODBIOR_228.md "Kolizja z dyżurem 226" finding.
     let layoutPolicyJson: string | null = null;
-    if (colorTemplateId !== undefined || imageStylePrompt !== undefined) {
+    const customSaveEnabled = process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true';
+    let customTemplateUpdate: Record<string, unknown> = {};
+    if (customSaveEnabled && customTemplate !== undefined) {
+      if (customTemplate) {
+        const validation = validatePresentationCustomTemplate(customTemplate);
+        if (validation.ok === false) {
+          return res.status(400).json({
+            success: false,
+            error: 'custom_template_invalid',
+            details: validation.errors,
+          });
+        }
+        customTemplateUpdate = { customTemplate: validation.value };
+      } else {
+        customTemplateUpdate = { customTemplate: customTemplate || null };
+      }
+    }
+
+    if (
+      colorTemplateId !== undefined ||
+      imageStylePrompt !== undefined ||
+      (customSaveEnabled && customTemplate !== undefined)
+    ) {
       let currentLayoutPolicy: Record<string, unknown> = {};
       if (existing?.layout_policy_json) {
         try {
@@ -1600,6 +1639,7 @@ router.put(
         ...(imageStylePrompt !== undefined
           ? { imageStylePrompt: String(imageStylePrompt || '').trim() || null }
           : {}),
+        ...customTemplateUpdate,
       });
     }
 
@@ -1930,7 +1970,10 @@ router.post(
     if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const setup: DeckSetup = req.body;
-    const result = await generateOutline(setup, orgId);
+    const result = await generateOutline(setup, orgId, {
+      userId: getUserId(req),
+      projectId: typeof req.body?.projectId === 'string' ? req.body.projectId : undefined,
+    });
     res.json({ success: true, data: result });
   })
 );

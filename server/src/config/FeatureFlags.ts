@@ -49,11 +49,13 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_DECK_CONCLUSION_SLIDE: z.boolean().default(false),
   ENABLE_PRESENTATION_IMAGE_STYLE: z.boolean().default(false),
+  ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
   ENABLE_TERESA_RECORD_CREATE: z.boolean().default(true),
   ENABLE_ARTIFACT_KNOWLEDGE_INDEX: z.boolean().default(false),
+  ENABLE_DECK_FROM_KNOWLEDGE: z.boolean().default(false),
   // Z4 transport (fala „Teresa steruje Ideą przez rejestr"): pozwala frontowi
   // dołożyć do zapytania czatu manifest akcji OTWARTEJ reprezentacji Idei
   // (src/actions/teresaActionManifest.ts). Model widzi je jako narzędzia; ich
@@ -209,6 +211,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // Read at call time by deckVisualsService; this registry is the SSOT.
     ENABLE_PRESENTATION_IMAGE_STYLE: process.env.ENABLE_PRESENTATION_IMAGE_STYLE === 'true',
 
+    // Day 226: opt-in persistence and runtime exposure for Presentation
+    // Template Architect custom theme contracts. Default OFF until owner
+    // acceptance so legacy save/read behavior remains unchanged.
+    ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE:
+      process.env.ENABLE_PRESENTATION_TEMPLATE_CUSTOM_SAVE === 'true',
+
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated
     // read/write and server-persisted WS graph_patch. Default ON (2026-07-06,
@@ -252,6 +260,10 @@ export function loadFeatureFlags(): FeatureFlags {
     ENABLE_ARTIFACT_KNOWLEDGE_INDEX:
       process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true',
 
+    // Day231: organization-grounded outline generation. Opt-in until owner
+    // accepts the review UI and the content gate on real data.
+    ENABLE_DECK_FROM_KNOWLEDGE: process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true',
+
     // Z4 transport dla akcji otwartej Idei — default ON, jawne `false` jest
     // rollbackiem do lokalnych detektorów bez dwóch aktywnych executorów naraz.
     ENABLE_TERESA_IDEA_ACTIONS: process.env.ENABLE_TERESA_IDEA_ACTIONS !== 'false',
@@ -282,6 +294,10 @@ export const featureFlags = loadFeatureFlags();
 
 export function isArtifactKnowledgeIndexEnabled(): boolean {
   return process.env.ENABLE_ARTIFACT_KNOWLEDGE_INDEX === 'true';
+}
+
+export function isDeckFromKnowledgeEnabled(): boolean {
+  return process.env.ENABLE_DECK_FROM_KNOWLEDGE === 'true';
 }
 
 export default featureFlags;
