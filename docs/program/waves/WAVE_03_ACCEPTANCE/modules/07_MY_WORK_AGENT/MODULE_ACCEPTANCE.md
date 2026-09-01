@@ -41,6 +41,12 @@ owner/admin action, stale proposal, duplicate prevention and foreign tenant.
 
 ## Day 100 current-state packet — 2026-08-29
 
+**Day 222 — 2026-09-01.** Na markerze `9fb7942a01` podłączono komentarz generowany
+przez AI do istniejącego zapisu komentarza zadania (POST, następnie GET readback) oraz
+usunięto bezcelową akcję pobierania z wiersza RACI, którego typ `Stakeholder` nie ma
+załącznika. Gate modułu pozostaje bez zmian (`NOT_ACCEPTED`). Dowody, ograniczenia i
+commity: `../../codex/CODEX_DAY222_MOJAPRACA_REPORT.md`.
+
 Status: `PARTIAL / OWNER_REVIEW_POSSIBLE_FOR_INBOX_TASKS_DECISIONS / NOT_ACCEPTED`.
 
 On exact marker `8c7a853a6cb82c9b498210049c5487ea033caa9b`, an owned local
