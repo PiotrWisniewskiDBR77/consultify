@@ -7,7 +7,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { isArtifactKnowledgeIndexEnabled } from '../config/FeatureFlags.js';
+import {
+  isArtifactKnowledgeIndexEnabled,
+  isDeckFromKnowledgeEnabled,
+} from '../config/FeatureFlags.js';
 import { all as pooledAll, get as pooledGet, run as pooledRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
@@ -54,6 +57,7 @@ import {
   deckDocumentFromUnifiedJson,
 } from './presentationDeckDocumentService.js';
 import { generateDeckVariants } from './presentationLayoutVariantsService.js';
+import { generateKnowledgeOutline } from './presentationKnowledgeOutlineService.js';
 import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
 import { applyIntentDensityDefaults } from './presentationStudioIntentDensityDefaultsService.js';
@@ -395,6 +399,7 @@ export interface DeckSetup {
    * (zod w DeckSetupSchema ścina nieznane pola), więc zero regresji.
    */
   brief?: string;
+  projectId?: string;
 }
 
 export interface SourceArtifact {
@@ -434,6 +439,9 @@ export interface OutlineItem {
   enabled: boolean;
   sourceRef?: string;
   sourceRefs?: string[];
+  teza?: string;
+  archetyp?: string;
+  zrodla?: Array<{ typ: string; id: string; etykieta: string }>;
   confidence?: number;
   density?: 'visual' | 'balanced' | 'document';
   /**
@@ -1504,13 +1512,18 @@ function validateOutline(outline: OutlineItem[], setup: DeckSetup): string[] {
 
 export async function generateOutline(
   setup: DeckSetup,
-  organizationId: string
+  organizationId: string,
+  actor?: { userId: string; projectId?: string }
 ): Promise<{ outline: OutlineItem[]; deckId: string; validationWarnings: string[] }> {
   let outline: OutlineItem[];
   let templateOutlineUsed = false;
   let templateRuntime: PresentationTemplateRuntime | null = null;
   let templateWarnings: string[] = [];
   let templateSlotMapping: TemplateSlotMappingResult | null = null;
+  // FIX-1 (ODBIOR_231): stempel pochodzenia musi opisywać FAKT wykonania gałęzi wiedzy,
+  // nie samą wartość flagi. Flaga ON + brak `actor` (4 producenccy wołacze bez actora)
+  // dawało fałszywy stempel 'org_knowledge_outline' na konspekcie zrobionym z szablonu.
+  let groundedOutlineUsed = false;
   const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
   const sourcePackPreflight = preflightPresentationSourcePack({
     setup,
@@ -1518,7 +1531,28 @@ export async function generateOutline(
     strict: Boolean(setup.sourcePackStrict),
   });
 
-  if (setup.templateId) {
+  if (isDeckFromKnowledgeEnabled() && actor?.userId) {
+    const grounded = await generateKnowledgeOutline({
+      organizationId,
+      userId: actor.userId,
+      projectId: actor.projectId || setup.projectId,
+      title: setup.title,
+      audience: setup.audience,
+      goal: setup.goal,
+      language: setup.language,
+    });
+    groundedOutlineUsed = true;
+    outline = grounded.outline.map((item, index) => ({
+      intent: (item.archetyp || (index === 0 ? 'cover' : 'key_messages')) as SlideIntent,
+      title: item.tytul,
+      keyMessage: item.teza,
+      teza: item.teza,
+      archetyp: item.archetyp,
+      zrodla: item.zrodla,
+      sourceRefs: item.zrodla.map((source) => `${source.typ}:${source.id}`),
+      enabled: true,
+    }));
+  } else if (setup.templateId) {
     const template = await dbGet(
       `SELECT * FROM presentation_templates WHERE id = ? AND is_active = TRUE AND (organization_id IS NULL OR organization_id = ?)`,
       [setup.templateId, organizationId]
@@ -1565,9 +1599,18 @@ export async function generateOutline(
   });
 
   const deckId = uuidv4().replace(/-/g, '');
-  const resolvedSourceType =
-    setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
-  const resolvedSourceId = setup.sourceId || sourceArtifacts[0]?.id || null;
+  const knowledgeSources = outline.flatMap((item) => item.zrodla || []);
+  // FIX-1: stempel wystawiany z FAKTU (groundedOutlineUsed), nie z echa flagi.
+  // Bez tego przebieg bez `actor` (flaga ON) dostawał 'org_knowledge_outline' mimo
+  // że konspekt powstał z szablonu/słów kluczowych — patrz ODBIOR_231.md FIX-1.
+  const resolvedSourceType = groundedOutlineUsed
+    ? 'org_knowledge_outline'
+    : setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
+  // Brak fallbacku na organizationId: gdy nie ma projectId, nie ma sensownego "źródła"
+  // wiedzy do wskazania — stempel bez identyfikowalnego źródła jest gorszy niż jego brak.
+  const resolvedSourceId = groundedOutlineUsed
+    ? actor?.projectId || setup.projectId || null
+    : setup.sourceId || sourceArtifacts[0]?.id || null;
   // C7 — initiative linkage: when the deck's canonical source is an initiative
   // (sourceType 'INITIATIVE'/'initiative'), carry the id into the registry so
   // the initiative detail view can list this deck under "Artefakty".
@@ -1576,8 +1619,8 @@ export async function generateOutline(
       ? String(resolvedSourceId)
       : null;
   await dbRun(
-    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
+    `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id, source_refs_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)`,
     [
       deckId,
       organizationId,
@@ -1625,6 +1668,7 @@ export async function generateOutline(
       null,
       resolvedSourceType,
       resolvedSourceId,
+      JSON.stringify(knowledgeSources),
     ]
   );
 

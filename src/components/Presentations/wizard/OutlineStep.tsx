@@ -309,13 +309,29 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
 
               <input
                 value={item.keyMessage || ''}
-                onChange={(e) => updateSlide(index, { keyMessage: e.target.value })}
+                onChange={(e) =>
+                  updateSlide(index, { keyMessage: e.target.value, teza: e.target.value })
+                }
                 placeholder={t(
                   'presentations.outline.keyMessagePlaceholder',
                   'Key message for this slide...'
                 )}
                 className="text-xs text-slate-600 dark:text-slate-300 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus w-full"
               />
+
+              {Array.isArray(item.zrodla) && item.zrodla.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Źródła tezy">
+                  {item.zrodla.map((source) => (
+                    <span
+                      key={`${source.typ}:${source.id}`}
+                      className="text-[10px] px-2 py-1 rounded-md border border-c-border bg-c-surface text-c-text-secondary"
+                      title={`${source.typ}:${source.id}`}
+                    >
+                      {source.etykieta}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* Source references */}
               {(item.sourceRef ||

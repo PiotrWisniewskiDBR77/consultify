@@ -1951,7 +1951,10 @@ router.post(
     if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const setup: DeckSetup = req.body;
-    const result = await generateOutline(setup, orgId);
+    const result = await generateOutline(setup, orgId, {
+      userId: getUserId(req),
+      projectId: typeof req.body?.projectId === 'string' ? req.body.projectId : undefined,
+    });
     res.json({ success: true, data: result });
   })
 );
