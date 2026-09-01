@@ -20,6 +20,18 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'react-hot-toast';
 
 import PanelUwag from './PanelUwag';
+const Day235MaterialyDokumentyScreen = React.lazy(
+  () => import('./screens/day235-materialy-dokumenty')
+);
+const Day235MaterialyPrezentacjeScreen = React.lazy(
+  () => import('./screens/day235-materialy-prezentacje')
+);
+const Day235MaterialyExceleScreen = React.lazy(
+  () => import('./screens/day235-materialy-excele')
+);
+const Day235MaterialyArchitektSzablonowScreen = React.lazy(
+  () => import('./screens/day235-materialy-architekt-szablonow')
+);
 const IdeaFinancialCasePersistenceScreen = React.lazy(
   () => import('./screens/idea-financial-case-persistence')
 );
@@ -499,6 +511,22 @@ const ToolsSwotInitiativeProposalScreen = React.lazy(
 );
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'day235-materialy-dokumenty': {
+    label: 'Dyżur 235 — realny Document Studio; &view=registry pokazuje wspólny rejestr Materiałów',
+    render: () => <Day235MaterialyDokumentyScreen />,
+  },
+  'day235-materialy-prezentacje': {
+    label: 'Dyżur 235 — realny Deck Template Builder, cztery slajdy',
+    render: () => <Day235MaterialyPrezentacjeScreen />,
+  },
+  'day235-materialy-excele': {
+    label: 'Dyżur 235 — realny ExceleView z arkuszem formułowym NPV/IRR',
+    render: () => <Day235MaterialyExceleScreen />,
+  },
+  'day235-materialy-architekt-szablonow': {
+    label: 'Dyżur 235 — realny architekt szablonów Word: draft, approved, deprecated',
+    render: () => <Day235MaterialyArchitektSzablonowScreen />,
+  },
   'calendar-sync-settings': {
     label:
       '#24b — UI „Połącz kalendarz" (Ustawienia → Calendar Sync). Mock providerów (Google połączony, Outlook/Apple do połączenia), zero Api/fetch.',
@@ -1055,6 +1083,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'day221-audyty-warsztat': {
     label: 'Day221 — Audyty D-5: prototyp warsztatu, SPEC-A Rekord L, 18 ogniw / 4 fazy / prawy panel',
     render: () => <Day221AudytyWarsztatScreen />,
+  },
   'day220-audyty-rejestr': {
     label: 'Day220 — Audyty: Sesje/Raporty/Ustalenia, pełne polskie wartości; &view=processes|reports|findings',
     render: () => <Day220AudytyRejestrScreen />,
@@ -1670,6 +1699,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Day230 — realny komponent ostrzeżenia przed eksportem; stan overflow/clean z propsów harnessu.',
     render: () => <Day230PrzepelnienieScreen />,
+  },
   'day232-agent-decku': {
     label:
       'Day232 — agent decku: pending/applied/rejected oraz następne ruchy; dane z propsów harnessu, nie z realnego przebiegu.',

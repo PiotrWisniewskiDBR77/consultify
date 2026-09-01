@@ -344,7 +344,7 @@ const TabeleView = lazyWithRetry(() =>
   }))
 );
 // Excel engine (real .xlsx z formułami) — odsłaniany pod /excele za flagą
-// isExceleEngineEnabled (default OFF → redirect jak dziś). Audyt 2026-07-22.
+// isExceleEngineEnabled (default ON od fb119cefe8, akcept Piotra 2026-07-22).
 const ExceleView = lazyWithRetry(() =>
   import('@/components/AIChat/KimiWorkspace/ExceleView').then((m) => ({
     default: m.default,
@@ -1839,8 +1839,8 @@ export const AppRoutes: React.FC = () => {
         {/* Legacy Excele/Tables route -> canonical Table Studio. */}
         {/*
           Excel engine (real .xlsx z formułami — WorkbookGeneratorService).
-          Za flagą isExceleEngineEnabled (default OFF): ON → montuje ExceleView
-          (realny silnik), OFF → dokładnie dzisiejszy redirect na Table Studio
+          Za flagą isExceleEngineEnabled (default ON od fb119cefe8): ON → montuje
+          ExceleView (realny silnik), OFF → redirect na Table Studio
           (zero regresji na /tabele). Audyt _AUDYT_DOKUMENTY_2026-07-22 — silnik
           formuł był osierocony z UI. Flaga jest bramką (bez BetaGate MODULE_TABELE,
           bo to inny moduł).
