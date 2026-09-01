@@ -5,16 +5,16 @@ import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
 // Admin section titles mapping
-const ADMIN_SECTION_TITLES: Record<string, string> = {
-  overview: 'Overview',
-  people: 'People & Access',
-  members: 'People & Access',
-  security: 'Security & Identity',
-  billing: 'Billing & FinOps',
-  ai: 'AI Governance & Operations',
-  integrations: 'Integrations & Sync',
-  audit: 'Audit, Compliance & Risk',
-  operations: 'Organization Operations',
+const ADMIN_SECTION_TITLES: Record<string, { key: string; fallback: string }> = {
+  overview: { key: 'overview', fallback: 'Overview' },
+  people: { key: 'people', fallback: 'People & Access' },
+  members: { key: 'people', fallback: 'People & Access' },
+  security: { key: 'security', fallback: 'Security & Identity' },
+  billing: { key: 'billing', fallback: 'Billing & FinOps' },
+  ai: { key: 'ai', fallback: 'AI Governance & Operations' },
+  integrations: { key: 'integrations', fallback: 'Integrations & Sync' },
+  audit: { key: 'audit', fallback: 'Audit, Compliance & Risk' },
+  operations: { key: 'operations', fallback: 'Organization Operations' },
 };
 
 /**
@@ -263,27 +263,32 @@ export const useBreadcrumbs = (): string[] | null => {
   else if (viewParts.includes('ADMIN') || location.pathname.startsWith('/admin')) {
     section = t('sidebar.adminPanel', 'Admin Panel');
 
+    const adminSectionTitle = (name: string) => {
+      const title = ADMIN_SECTION_TITLES[name];
+      return t(`sidebar.adminSection.${title.key}`, title.fallback);
+    };
+
     const pathSection = location.pathname.replace(/^\/admin\/?/, '').split('/')[0];
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
     if (pathSection && ADMIN_SECTION_TITLES[pathSection]) {
-      sub = ADMIN_SECTION_TITLES[pathSection];
+      sub = adminSectionTitle(pathSection);
     } else if (tabParam && ADMIN_SECTION_TITLES[tabParam]) {
-      sub = ADMIN_SECTION_TITLES[tabParam];
-    } else if (currentView === AppView.ADMIN_USERS) sub = 'People & Access';
-    else if (currentView === AppView.ADMIN_PROJECTS) sub = 'Organization Operations';
-    else if (currentView === AppView.ADMIN_LLM) sub = 'AI Governance & Operations';
-    else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = 'AI Governance & Operations';
-    else if (currentView === AppView.ADMIN_FEEDBACK) sub = 'Overview';
-    else if (currentView === AppView.ADMIN_BILLING) sub = 'Billing & FinOps';
-    else if (currentView === AppView.ADMIN_ANALYTICS) sub = 'Overview';
-    else if (currentView === AppView.ADMIN_OVERVIEW) sub = t('assessment.overview', 'Overview');
-    else if (currentView === AppView.ADMIN_ORGANIZATION) sub = 'Organization Operations';
-    else if (currentView === AppView.ADMIN_TEAM) sub = 'People & Access';
-    else if (currentView === AppView.ADMIN_WORKSPACE) sub = 'Integrations & Sync';
-    else if (currentView === AppView.ADMIN_AI) sub = 'AI Governance & Operations';
-    else if (currentView === AppView.ADMIN_SECURITY) sub = 'Security & Identity';
-    else sub = 'Overview';
+      sub = adminSectionTitle(tabParam);
+    } else if (currentView === AppView.ADMIN_USERS) sub = adminSectionTitle('people');
+    else if (currentView === AppView.ADMIN_PROJECTS) sub = adminSectionTitle('operations');
+    else if (currentView === AppView.ADMIN_LLM) sub = adminSectionTitle('ai');
+    else if (currentView === AppView.ADMIN_KNOWLEDGE) sub = adminSectionTitle('ai');
+    else if (currentView === AppView.ADMIN_FEEDBACK) sub = adminSectionTitle('overview');
+    else if (currentView === AppView.ADMIN_BILLING) sub = adminSectionTitle('billing');
+    else if (currentView === AppView.ADMIN_ANALYTICS) sub = adminSectionTitle('overview');
+    else if (currentView === AppView.ADMIN_OVERVIEW) sub = adminSectionTitle('overview');
+    else if (currentView === AppView.ADMIN_ORGANIZATION) sub = adminSectionTitle('operations');
+    else if (currentView === AppView.ADMIN_TEAM) sub = adminSectionTitle('people');
+    else if (currentView === AppView.ADMIN_WORKSPACE) sub = adminSectionTitle('integrations');
+    else if (currentView === AppView.ADMIN_AI) sub = adminSectionTitle('ai');
+    else if (currentView === AppView.ADMIN_SECURITY) sub = adminSectionTitle('security');
+    else sub = adminSectionTitle('overview');
   }
   // =====================================================
   // SETTINGS VIEWS
