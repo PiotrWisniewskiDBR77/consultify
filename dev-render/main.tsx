@@ -103,6 +103,7 @@ const SuperadminPlatformOperationsDay15Screen = React.lazy(
 );
 const AgentPlanCanvasScreen = React.lazy(() => import('./screens/agent-plan-canvas'));
 const Day207WriteProposalScreen = React.lazy(() => import('./screens/day207-write-proposal'));
+const Day220AudytyRejestrScreen = React.lazy(() => import('./screens/day220-audyty-rejestr'));
 const AgentPlanViewScreen = React.lazy(() => import('./screens/agent-plan-view'));
 const AgentHubScreen = React.lazy(() => import('./screens/agent-hub'));
 const TabeleFala2PrzedPoScreen = React.lazy(() => import('./screens/tabele-fala2-przed-po'));
@@ -1034,6 +1035,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'day207-write-proposal': {
     label: 'Day207 — real ExecutionProposalMessage for a same-turn pending WRITE proposal',
     render: () => <Day207WriteProposalScreen />,
+  },
+  'day220-audyty-rejestr': {
+    label: 'Day220 — Audyty: Sesje/Raporty/Ustalenia, pełne polskie wartości; &view=processes|reports|findings',
+    render: () => <Day220AudytyRejestrScreen />,
   },
   'agent-hub': {
     label:

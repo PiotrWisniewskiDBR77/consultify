@@ -272,7 +272,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       label: isPolish ? 'Odbiorca' : 'Audience',
       width: '140px',
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary truncate block max-w-[130px]">
+        <span
+          className="text-xs text-c-text-secondary truncate block max-w-[130px]"
+          title={row.audience || undefined}
+        >
           {row.audience || '—'}
         </span>
       ),
@@ -282,7 +285,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       label: isPolish ? 'Poufność' : 'Confidentiality',
       width: '130px',
       render: (row: AuditReportSummary) => (
-        <span className="text-xs text-c-text-secondary truncate block max-w-[120px]">
+        <span
+          className="text-xs text-c-text-secondary truncate block max-w-[120px]"
+          title={row.confidentiality || undefined}
+        >
           {row.confidentiality || '—'}
         </span>
       ),
