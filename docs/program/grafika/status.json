@@ -1478,13 +1478,14 @@
         {
           "id": "results-three-pairs",
           "nazwa": "Trzy pary cel-wynik",
-          "ocena": "A",
-          "co": "Pary wskaznik/ROI/OKR z paskiem postepu i 'Brak danych' zamiast nagiego zera.",
+          "ocena": "D",
+          "co": "Ekran historyczny — wlasciciel 01.09: \"To jest jakis historyczny ekran. Chyba juz tak dawno nie wyglada.\" Mial racje: stary hub Wynikow zostal wycofany 24.08 (commit 8df1cd413d), trasa /results przekierowuje na rejestr KPI (ResultsOwnerReviewEntry.tsx:12), a komponent ResultsThreePairsView montuja juz tylko pliki testow.",
           "naprawione": [],
           "wyjatki": [
-            "Ogladana tylko domyslna zakladka"
+            "Zdjete z odbioru 2026-09-01 (docs/program/grafika/ANALIZA_ODRZUCONE_20260901.md §2) — nie duplikuj wiecej",
+            "UWAGA: razem z martwym ResultsHub przestala byc osiagalna diagnostyka odchylen (anomalie/prognoza/podpowiedzi RCA) — sprawa otwarta do decyzji wlasciciela, patrz ODLOZONE.md"
           ],
-          "gdzie": "To NIE jest dziś dostępne w aplikacji — komponent (ResultsThreePairsView) należał do starego huba Wyników, który został wycofany; trasa /results dziś przekierowuje prosto do rejestru KPI (Wyniki vNext)."
+          "gdzie": "BYLO: stary hub Wynikow (ResultsHub.tsx, 2485 linii) za flaga ff_resultsThreePairs. Dzis nieosiagalne: trasa /results -> Navigate na ROUTES.RESULTS_KPI.ROOT (ResultsOwnerReviewEntry.tsx:12); komentarz AppRoutes.tsx:115-117 mowi wprost, ze wycofany ResultsHub nie jest juz osiagalnym wariantem trasy. Zamiennik, ktory widzi dzis uzytkownik: rejestry Wynikow vNext (KPI/OKR/ROI). Kodu nie ruszamy — usuniecie ResultsHub to osobna sprawa, bo ciagnie za soba szuflade szeregow czasowych KPI, karte naprawcza i diagnostyke odchylen."
         },
         {
           "id": "results-vnext-attention",
@@ -2216,12 +2217,13 @@
           "id": "gen-excel-templates-tab",
           "nazwa": "Szablony skoroszytow",
           "ocena": "D",
-          "co": "Zdublowana prezentacja generatora — wlasciciel: \"Nie potrzebny w ogole ten arkusz. Z pozostaloscia w ogole pierwszych jakichs prob.\" (K8, MAPA_UWAG_WLASCICIELA.md).",
+          "co": "Zdublowana ZAKLADKA za wylaczona flaga — wlasciciel (30.08): \"Nie potrzebny w ogole ten arkusz. Z pozostaloscia w ogole pierwszych jakichs prob.\" (K8, MAPA_UWAG_WLASCICIELA.md) i \"To samo nie wiem, po co on jest.\" Zdejmujemy WEJSCIE, nie kod: sam komponent (ExceleParametricTemplates) jest zywym ekranem koncowym kreatora \"Nowy szablon -> Arkusz\".",
           "naprawione": [],
           "wyjatki": [
-            "Zdjete z odbioru 2026-08-30 (docs/program/grafika/ODLOZONE.md) — nie duplikuj wiecej"
+            "Zdjete z odbioru 2026-08-30, potwierdzone 2026-09-01 (ANALIZA_ODRZUCONE_20260901.md §1) — nie duplikuj wiecej",
+            "KODU NIE RUSZAMY: skasowanie komponentu zabiloby kreator szablonow arkusza"
           ],
-          "gdzie": "BYLO: Materialy -> Biblioteka wzorcow -> \"Nowy szablon\" -> Arkusz -> zakladka huba \"Generator szablonow Excel\" (flaga ff_workbook_templates, domyslnie OFF — ten wpis nie byl wejsciem realnych uzytkownikow, tylko trybem podgladu do recenzji). Sam mechanizm (ExceleParametricTemplates, POST /api/workbook/templates/:id/build) zyje dalej i jest osiagalny inaczej: /excele (chat) -> zakladka Szablony, oraz przez \"Nowy szablon\" -> Arkusz -> TemplateBuilderFlow -> \"Zbuduj skoroszyt\" (ff_templateBuilder, domyslnie ON poza publiczna produkcja). Szczegoly i uzasadnienie: docs/program/grafika/ODLOZONE.md."
+          "gdzie": "ZDJETA ZAKLADKA: Materialy -> Biblioteka wzorcow -> \"Nowy szablon\" -> pozycja \"Generator szablonow\" — ta pozycja menu pokazuje sie tylko przy fladze ff_workbook_templates, ktora jest domyslnie OFF na kazdym srodowisku (workbookTemplatesFlag.ts:23; ReportsAndPresentationsHub.tsx:1516-1517). SPROSTOWANIE wczesniejszego opisu: sama POWIERZCHNIA nie sprawdza zadnej flagi (ReportsAndPresentationsHub.tsx:1427-1438) i jest ekranem, na ktory kreator sam przelacza widok po zapisie szablonu, z komunikatem \"Szablon zapisany — wybierz »Zbuduj skoroszyt«\" (tamze:1631-1646); dziala tez stary adres ?tab=workbook_templates (tamze:224-226). Mechanizm (POST /api/workbook/templates/:id/build) zyje dalej i ma drugie wejscie: /excele (chat) -> zakladka Szablony (ArtifactModuleHome.tsx:222-224, bez flagi). Szczegoly: docs/program/grafika/ODLOZONE.md."
         },
         {
           "id": "materialy-draft-template-visibledraft-fix",
