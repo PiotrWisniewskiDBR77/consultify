@@ -89,6 +89,20 @@ reviewera i dowodu.
 
 ## AS-IS
 
+> **AKTUALIZACJA 2026-09-01 (dyżury 220-221).** Pełny pomiar runtime:
+> `docs/functional/POMIAR_2026-09-01_AUDYTY_CZAT_PRACA_PARTNER.md` §1.
+> Skrót: hub ma jeden route `/audit-programs` i **sześć** żywych zakładek
+> (Biblioteka, Sesje, Wyniki, Raporty, Ustalenia, Inicjatywy) — każda
+> `StandardTable`+`StandardPreview` z realnym backendem (`programService.ts`,
+> `outputService.ts`, `reportService.ts`). **Obalone 1.09, było:** poniższy
+> punkt „brak pełnego modelu blueprint/evidence/test/finding/action" —
+> **jest:** model istnieje i działa end-to-end na sześciu zakładkach (patrz
+> pomiar). Żywy, otwarty defekt: kolumna „Postęp" w Sesjach pokazuje
+> literalny `/` na każdym wierszu — dane są, ekran pyta o inne nazwy pól
+> (`AuditProcessesTab.tsx:249`); zgłoszony, nie naprawiony. Dodatkowy ekran
+> „Warsztat" (widok programu jako 18 ogniw/4 fazy) istnieje wyłącznie jako
+> prototyp `dev-render`, czeka na akcept właściciela — nie jest w produkcie.
+
 - pozycja menu `MODULE_AUDITS`,
 - label `Audits`,
 - status/badge `beta`,
@@ -97,7 +111,8 @@ reviewera i dowodu.
 - realny hub `/audit-programs`, wizard, CRUD i generowanie Interview;
 - statyczne presety nazwane ISO 27001 oraz New Company;
 - testy UI, API i org scoping;
-- brak pełnego modelu blueprint/evidence/test/finding/action;
+- ~~brak pełnego modelu blueprint/evidence/test/finding/action~~ — **obalone
+  1.09**, patrz adnotacja wyżej;
 - raport DRD widoczny w hubie pochodzi z Assessment i nie należy do Audits;
 - historyczna karta audytu: `Harvard/modules/M12-audyty/KARTA_AUDYTU.md`.
 
